@@ -75,7 +75,9 @@
 #define ELEM(a,i) ((char *)(a) + (i) * WIDTH)
 #define LEN(n) ((n) * WIDTH)
 
+#ifndef MIN
 #define MIN(a,b) ((a) <= (b) ? (a) : (b))
+#endif
 #define SUCCESS 0
 #define FAILURE (-1)
 
