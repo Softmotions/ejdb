@@ -31,15 +31,15 @@ int main() {
     bson_oid_t oid;
 
     //Insert one record:
-    //JSON: {'name' : 'John', 'phone' : '333-222-333', 'age' : 58}
+    //JSON: {'name' : 'Bruce', 'phone' : '333-222-333', 'age' : 58}
     bson_init(&bsrec);
-    bson_append_string(&bsrec, "name", "John");
+    bson_append_string(&bsrec, "name", "Bruce");
     bson_append_string(&bsrec, "phone", "333-222-333");
     bson_append_int(&bsrec, "age", 58);
     bson_finish(&bsrec);
     //Save BSON
     ejdbsavebson(coll, &bsrec, &oid);
-    fprintf(stderr, "\nSaved Travolta");
+    fprintf(stderr, "\nSaved Bruce");
     bson_destroy(&bsrec);
 
     //Now execute query
