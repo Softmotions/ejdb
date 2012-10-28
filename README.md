@@ -96,7 +96,7 @@ Prerequisites
 * zlib
 * bzip2
 
-On Debian/Ubuntu linux you can install it as following:
+On Debian/Ubuntu linux you can install it as follows:
 
 ```sh
    sudo apt-get install libcunit1 libcunit1-dev libbz2-1.0 libbz2-dev
@@ -109,7 +109,7 @@ Building
    make install
 ```
 * library name: **tcejdb** (with pkgconfig)
-* main include header: **<tcejdb/ejdb.h>**
+* main include header: ```<tcejdb/ejdb.h>```
 
 Usage
 ===============================
