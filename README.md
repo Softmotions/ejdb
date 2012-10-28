@@ -81,7 +81,7 @@ int main() {
 Features
 ================================
 * LGPL license allows you to embed this library into proprietary software.
-* MongoDB like queries and overall philosophy.
+* MongoDB-like queries and overall philosophy.
 * Collection level write locking.
 
 
@@ -146,7 +146,7 @@ JSON processing API: **bson.h**
 Queries
 ---------------------------------
 
-```C
+```
 /**
  * Create query object.
  * Sucessfully created queries must be destroyed with ejdbquerydel().
@@ -208,3 +208,10 @@ You can find some code samples in:
 
 * /samples
 * /testejdb test cases
+
+Limitations/TODOs
+-----------------------------------
+* Case insensitive string indexes
+* Collect collection index statistic
+* Windows port
+
