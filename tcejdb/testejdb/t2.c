@@ -19,7 +19,7 @@
  * CUnit Test Suite
  */
 
-static EJDB* jb;
+static EJDB *jb;
 
 int init_suite(void) {
     jb = ejdbnew();

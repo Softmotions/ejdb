@@ -18,7 +18,7 @@
  * CUnit Test Suite
  */
 
-static EJDB* jb;
+static EJDB *jb;
 const int RS = 100000;
 const int QRS = 100;
 static bson* recs;

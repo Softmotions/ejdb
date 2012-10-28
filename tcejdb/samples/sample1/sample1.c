@@ -1,7 +1,7 @@
 #include <tcejdb/ejdb.h>
 #include <locale.h>
 
-static EJDB* jb;
+static EJDB *jb;
 
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -46,7 +46,7 @@ int main() {
     bson_append_string(&bq1, "$begin", "Bru");
     bson_append_finish_object(&bq1);
     bson_finish(&bq1);
-    EJQ* q1 = ejdbcreatequery(jb, &bq1, NULL, 0, NULL);
+    EJQ *q1 = ejdbcreatequery(jb, &bq1, NULL, 0, NULL);
 
     uint32_t count;
     TCLIST *res = ejdbqrysearch(coll, q1, &count, 0, NULL);
