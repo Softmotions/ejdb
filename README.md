@@ -147,7 +147,7 @@ Queries
 ---------------------------------
 
 ```C
-**
+/**
  * Create query object.
  * Sucessfully created queries must be destroyed with ejdbquerydel().
  *
