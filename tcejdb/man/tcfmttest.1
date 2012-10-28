@@ -1,0 +1,62 @@
+.TH "TCFMTTEST" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcfmttest \- test cases of the fixed-length database API
+
+.SH DESCRIPTION
+.PP
+The command `\fBtcfmttest\fR' is a utility for facility test under multi\-thread situation.  This command is used in the following format.  `\fIpath\fR' specifies the path of a database file.  `\fItnum\fR' specifies the number of running threads.  `\fIrnum\fR' specifies the number of iterations.  `\fIwidth\fR' specifies the width of the value of each record.  `\fIlimsiz\fR' specifies the limit size of the database file.
+.PP
+.RS
+.br
+\fBtcfmttest write \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB \fR[\fB\fIwidth\fB \fR[\fB\fIlimsiz\fB\fR]\fB\fR]\fB\fR
+.RS
+Store records with keys of 8 bytes.  They change as `00000001', `00000002'...
+.RE
+.br
+\fBtcfmttest read \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-wb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fItnum\fB\fR
+.RS
+Retrieve all records of the database above.
+.RE
+.br
+\fBtcfmttest remove \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fItnum\fB\fR
+.RS
+Remove all records of the database above.
+.RE
+.br
+\fBtcfmttest wicked \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-nc\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB\fR
+.RS
+Perform updating operations selected at random.
+.RE
+.br
+\fBtcfmttest typical \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-nc\fR]\fB \fR[\fB\-rr \fInum\fB\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB \fR[\fB\fIwidth\fB \fR[\fB\fIlimsiz\fB\fR]\fB\fR]\fB\fR
+.RS
+Perform typical operations selected at random.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-nl\fR : enable the option `FDBNOLCK'.
+.br
+\fB\-nb\fR : enable the option `FDBLCKNB'.
+.br
+\fB\-rnd\fR : select keys at random.
+.br
+\fB\-wb\fR : use the function `tcfdbget4' instead of `tcfdbget2'.
+.br
+\fB\-nc\fR : omit the comparison test.
+.br
+\fB\-rr\fR \fInum\fR : specifiy the ratio of reading operation by percentage.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcftest (1),
+.BR tcfmgr (1),
+.BR tcfdb (3),
+.BR tokyocabinet (3)

@@ -1,0 +1,92 @@
+.TH "TCTMTTEST" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tctmttest \- test cases of the table database API
+
+.SH DESCRIPTION
+.PP
+The command `\fBtctmttest\fR' is a utility for facility test under multi\-thread situation.  This command is used in the following format.  `\fIpath\fR' specifies the path of a database file.  `\fItnum\fR' specifies the number of running threads.  `\fIrnum\fR' specifies the number of iterations.  `\fIbnum\fR' specifies the number of buckets.  `\fIapow\fR' specifies the power of the alignment.  `\fIfpow\fR' specifies the power of the free block pool.
+.PP
+.RS
+.br
+\fBtctmttest write \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-rc \fInum\fB\fR]\fB \fR[\fB\-lc \fInum\fB\fR]\fB \fR[\fB\-nc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-ip\fR]\fB \fR[\fB\-is\fR]\fB \fR[\fB\-in\fR]\fB \fR[\fB\-it\fR]\fB \fR[\fB\-if\fR]\fB \fR[\fB\-ix\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Store records with columns "str", "num", "type", and "flag".
+.RE
+.br
+\fBtctmttest read \fR[\fB\-rc \fInum\fB\fR]\fB \fR[\fB\-lc \fInum\fB\fR]\fB \fR[\fB\-nc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fItnum\fB\fR
+.RS
+Retrieve all records of the database above.
+.RE
+.br
+\fBtctmttest remove \fR[\fB\-rc \fInum\fB\fR]\fB \fR[\fB\-lc \fInum\fB\fR]\fB \fR[\fB\-nc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fItnum\fB\fR
+.RS
+Remove all records of the database above.
+.RE
+.br
+\fBtctmttest wicked \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB\fR
+.RS
+Perform updating operations selected at random.
+.RE
+.br
+\fBtctmttest typical \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-rc \fInum\fB\fR]\fB \fR[\fB\-lc \fInum\fB\fR]\fB \fR[\fB\-nc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rr \fInum\fB\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR
+.RS
+Perform typical operations selected at random.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-tl\fR : enable the option `TDBTLARGE'.
+.br
+\fB\-td\fR : enable the option `TDBTDEFLATE'.
+.br
+\fB\-tb\fR : enable the option `TDBTBZIP'.
+.br
+\fB\-tt\fR : enable the option `TDBTTCBS'.
+.br
+\fB\-tx\fR : enable the option `TDBTEXCODEC'.
+.br
+\fB\-rc \fInum\fR\fR : specify the number of cached records.
+.br
+\fB\-lc \fInum\fR\fR : specify the number of cached leaf pages.
+.br
+\fB\-nc \fInum\fR\fR : specify the number of cached non\-leaf pages.
+.br
+\fB\-xm \fInum\fR\fR : specify the size of the extra mapped memory.
+.br
+\fB\-df \fInum\fR\fR : specify the unit step number of auto defragmentation.
+.br
+\fB\-ip\fR : create the number index for the primary key.
+.br
+\fB\-is\fR : create the string index for the column "str".
+.br
+\fB\-in\fR : create the number index for the column "num".
+.br
+\fB\-it\fR : create the string index for the column "type".
+.br
+\fB\-if\fR : create the token inverted index for the column "flag".
+.br
+\fB\-ix\fR : create the q\-gram inverted index for the column "text".
+.br
+\fB\-nl\fR : enable the option `TDBNOLCK'.
+.br
+\fB\-nb\fR : enable the option `TDBLCKNB'.
+.br
+\fB\-rnd\fR : select keys at random.
+.br
+\fB\-nc\fR : omit the comparison test.
+.br
+\fB\-rr \fInum\fR\fR : specify the ratio of reading operation by percentage.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcttest (1),
+.BR tctmgr (1),
+.BR tctdb (3),
+.BR tokyocabinet (3)

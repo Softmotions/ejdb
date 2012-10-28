@@ -1,0 +1,45 @@
+#! /bin/sh
+
+#================================================================
+# diffcheck
+# List files different from ones of another version
+#================================================================
+
+
+# set variables
+LANG=C
+LC_ALL=C
+export LANG LC_ALL
+regex='\.(h|c|cc|cpp|cxx|java|pl|pm|pod|rb|rd|lua|[1-9]|html|txt)$'
+
+
+# check arguments
+if [ $# != 1 ]
+then
+  printf 'diffcheck: usage: diffcheck directory_of_oldversion\n' 1>&2
+  exit 1
+fi
+
+
+# diff files
+find . -type f | egrep $regex |
+while read file
+do
+  old=`printf '%s\n' "$file" | sed 's/^\.\///'`
+  printf 'Checking %s and %s ... ' "$file" "$1/$old"
+  res=`diff -q "$file" "$1/$old"`
+  if [ -z "$res" ]
+  then
+    printf 'same\n'
+  else
+    printf '### !!! DIFFERENT !!! ###\n'
+  fi
+done
+
+
+# exit normally
+exit 0
+
+
+
+# END OF FILE

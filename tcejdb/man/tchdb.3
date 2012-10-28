@@ -1,0 +1,898 @@
+.TH "TCHDB" 3 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tchdb \- the hash database API
+
+.SH DESCRIPTION
+.PP
+Hash database is a file containing a hash table and is handled with the hash database API.
+.PP
+To use the hash database API, include `\fBtcutil.h\fR', `\fBtchdb.h\fR', and related standard header files.  Usually, write the following description near the front of a source file.
+.PP
+.RS
+.br
+\fB#include <tcutil.h>\fR
+.br
+\fB#include <tchdb.h>\fR
+.br
+\fB#include <stdlib.h>\fR
+.br
+\fB#include <time.h>\fR
+.br
+\fB#include <stdbool.h>\fR
+.br
+\fB#include <stdint.h>\fR
+.RE
+.PP
+Objects whose type is pointer to `\fBTCHDB\fR' are used to handle hash databases.  A hash database object is created with the function `\fBtchdbnew\fR' and is deleted with the function `\fBtchdbdel\fR'.  To avoid memory leak, it is important to delete every object when it is no longer in use.
+.PP
+Before operations to store or retrieve records, it is necessary to open a database file and connect the hash database object to it.  The function `\fBtchdbopen\fR' is used to open a database file and the function `\fBtchdbclose\fR' is used to close the database file.  To avoid data missing or corruption, it is important to close every database file when it is no longer in use.  It is forbidden for multible database objects in a process to open the same database at the same time.
+
+.SH API
+.PP
+The function `tchdberrmsg' is used in order to get the message string corresponding to an error code.
+.PP
+.RS
+.br
+\fBconst char *tchdberrmsg(int \fIecode\fB);\fR
+.RS
+`\fIecode\fR' specifies the error code.
+.RE
+.RS
+The return value is the message string of the error code.
+.RE
+.RE
+.PP
+The function `tchdbnew' is used in order to create a hash database object.
+.PP
+.RS
+.br
+\fBTCHDB *tchdbnew(void);\fR
+.RS
+The return value is the new hash database object.
+.RE
+.RE
+.PP
+The function `tchdbdel' is used in order to delete a hash database object.
+.PP
+.RS
+.br
+\fBvoid tchdbdel(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+If the database is not closed, it is closed implicitly.  Note that the deleted object and its derivatives can not be used anymore.
+.RE
+.RE
+.PP
+The function `tchdbecode' is used in order to get the last happened error code of a hash database object.
+.PP
+.RS
+.br
+\fBint tchdbecode(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+The return value is the last happened error code.
+.RE
+.RS
+The following error codes are defined: `TCESUCCESS' for success, `TCETHREAD' for threading error, `TCEINVALID' for invalid operation, `TCENOFILE' for file not found, `TCENOPERM' for no permission, `TCEMETA' for invalid meta data, `TCERHEAD' for invalid record header, `TCEOPEN' for open error, `TCECLOSE' for close error, `TCETRUNC' for trunc error, `TCESYNC' for sync error, `TCESTAT' for stat error, `TCESEEK' for seek error, `TCEREAD' for read error, `TCEWRITE' for write error, `TCEMMAP' for mmap error, `TCELOCK' for lock error, `TCEUNLINK' for unlink error, `TCERENAME' for rename error, `TCEMKDIR' for mkdir error, `TCERMDIR' for rmdir error, `TCEKEEP' for existing record, `TCENOREC' for no record found, and `TCEMISC' for miscellaneous error.
+.RE
+.RE
+.PP
+The function `tchdbsetmutex' is used in order to set mutual exclusion control of a hash database object for threading.
+.PP
+.RS
+.br
+\fBbool tchdbsetmutex(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object which is not opened.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the mutual exclusion control of the database should be set before the database is opened.
+.RE
+.RE
+.PP
+The function `tchdbtune' is used in order to set the tuning parameters of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbtune(TCHDB *\fIhdb\fB, int64_t \fIbnum\fB, int8_t \fIapow\fB, int8_t \fIfpow\fB, uint8_t \fIopts\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object which is not opened.
+.RE
+.RS
+`\fIbnum\fR' specifies the number of elements of the bucket array.  If it is not more than 0, the default value is specified.  The default value is 16381.  Suggested size of the bucket array is about from 0.5 to 4 times of the number of all records to be stored.
+.RE
+.RS
+`\fIapow\fR' specifies the size of record alignment by power of 2.  If it is negative, the default value is specified.  The default value is 4 standing for 2^4=16.
+.RE
+.RS
+`\fIfpow\fR' specifies the maximum number of elements of the free block pool by power of 2.  If it is negative, the default value is specified.  The default value is 10 standing for 2^10=1024.
+.RE
+.RS
+`\fIopts\fR' specifies options by bitwise-or: `HDBTLARGE' specifies that the size of the database can be larger than 2GB by using 64\-bit bucket array, `HDBTDEFLATE' specifies that each record is compressed with Deflate encoding, `HDBTBZIP' specifies that each record is compressed with BZIP2 encoding, `HDBTTCBS' specifies that each record is compressed with TCBS encoding.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the tuning parameters should be set before the database is opened.
+.RE
+.RE
+.PP
+The function `tchdbsetcache' is used in order to set the caching parameters of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbsetcache(TCHDB *\fIhdb\fB, int32_t \fIrcnum\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object which is not opened.
+.RE
+.RS
+`\fIrcnum\fR' specifies the maximum number of records to be cached.  If it is not more than 0, the record cache is disabled.  It is disabled by default.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the caching parameters should be set before the database is opened.
+.RE
+.RE
+.PP
+The function `tchdbsetxmsiz' is used in order to set the size of the extra mapped memory of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbsetxmsiz(TCHDB *\fIhdb\fB, int64_t \fIxmsiz\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object which is not opened.
+.RE
+.RS
+`\fIxmsiz\fR' specifies the size of the extra mapped memory.  If it is not more than 0, the extra mapped memory is disabled.  The default size is 67108864.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the mapping parameters should be set before the database is opened.
+.RE
+.RE
+.PP
+The function `tchdbsetdfunit' is used in order to set the unit step number of auto defragmentation of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbsetdfunit(TCHDB *\fIhdb\fB, int32_t \fIdfunit\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object which is not opened.
+.RE
+.RS
+`\fIdfunit\fR' specifie the unit step number.  If it is not more than 0, the auto defragmentation is disabled.  It is disabled by default.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the defragmentation parameters should be set before the database is opened.
+.RE
+.RE
+.PP
+The function `tchdbopen' is used in order to open a database file and connect a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbopen(TCHDB *\fIhdb\fB, const char *\fIpath\fB, int \fIomode\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object which is not opened.
+.RE
+.RS
+`\fIpath\fR' specifies the path of the database file.
+.RE
+.RS
+`\fIomode\fR' specifies the connection mode: `HDBOWRITER' as a writer, `HDBOREADER' as a reader.  If the mode is `HDBOWRITER', the following may be added by bitwise-or: `HDBOCREAT', which means it creates a new database if not exist, `HDBOTRUNC', which means it creates a new database regardless if one exists, `HDBOTSYNC', which means every transaction synchronizes updated contents with the device.  Both of `HDBOREADER' and `HDBOWRITER' can be added to by bitwise-or: `HDBONOLCK', which means it opens the database file without file locking, or `HDBOLCKNB', which means locking is performed without blocking.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tchdbclose' is used in order to close a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbclose(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Update of a database is assured to be written when the database is closed.  If a writer opens a database but does not close it appropriately, the database will be broken.
+.RE
+.RE
+.PP
+The function `tchdbput' is used in order to store a record into a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbput(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.
+.RE
+.RE
+.PP
+The function `tchdbput2' is used in order to store a string record into a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbput2(TCHDB *\fIhdb\fB, const char *\fIkstr\fB, const char *\fIvstr\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the key.
+.RE
+.RS
+`\fIvstr\fR' specifies the string of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.
+.RE
+.RE
+.PP
+The function `tchdbputkeep' is used in order to store a new record into a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbputkeep(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, this function has no effect.
+.RE
+.RE
+.PP
+The function `tchdbputkeep2' is used in order to store a new string record into a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbputkeep2(TCHDB *\fIhdb\fB, const char *\fIkstr\fB, const char *\fIvstr\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the key.
+.RE
+.RS
+`\fIvstr\fR' specifies the string of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, this function has no effect.
+.RE
+.RE
+.PP
+The function `tchdbputcat' is used in order to concatenate a value at the end of the existing record in a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbputcat(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If there is no corresponding record, a new record is created.
+.RE
+.RE
+.PP
+The function `tchdbputcat2' is used in order to concatenate a string value at the end of the existing record in a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbputcat2(TCHDB *\fIhdb\fB, const char *\fIkstr\fB, const char *\fIvstr\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the key.
+.RE
+.RS
+`\fIvstr\fR' specifies the string of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If there is no corresponding record, a new record is created.
+.RE
+.RE
+.PP
+The function `tchdbputasync' is used in order to store a record into a hash database object in asynchronous fashion.
+.PP
+.RS
+.br
+\fBbool tchdbputasync(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.  Records passed to this function are accumulated into the inner buffer and wrote into the file at a blast.
+.RE
+.RE
+.PP
+The function `tchdbputasync2' is used in order to store a string record into a hash database object in asynchronous fashion.
+.PP
+.RS
+.br
+\fBbool tchdbputasync2(TCHDB *\fIhdb\fB, const char *\fIkstr\fB, const char *\fIvstr\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the key.
+.RE
+.RS
+`\fIvstr\fR' specifies the string of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.  Records passed to this function are accumulated into the inner buffer and wrote into the file at a blast.
+.RE
+.RE
+.PP
+The function `tchdbout' is used in order to remove a record of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbout(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tchdbout2' is used in order to remove a string record of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbout2(TCHDB *\fIhdb\fB, const char *\fIkstr\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the key.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tchdbget' is used in order to retrieve a record in a hash database object.
+.PP
+.RS
+.br
+\fBvoid *tchdbget(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, int *\fIsp\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIsp\fR' specifies the pointer to the variable into which the size of the region of the return value is assigned.
+.RE
+.RS
+If successful, the return value is the pointer to the region of the value of the corresponding record.  `NULL' is returned if no record corresponds.
+.RE
+.RS
+Because an additional zero code is appended at the end of the region of the return value, the return value can be treated as a character string.  Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tchdbget2' is used in order to retrieve a string record in a hash database object.
+.PP
+.RS
+.br
+\fBchar *tchdbget2(TCHDB *\fIhdb\fB, const char *\fIkstr\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the key.
+.RE
+.RS
+If successful, the return value is the string of the value of the corresponding record.  `NULL' is returned if no record corresponds.
+.RE
+.RS
+Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tchdbget3' is used in order to retrieve a record in a hash database object and write the value into a buffer.
+.PP
+.RS
+.br
+\fBint tchdbget3(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, void *\fIvbuf\fB, int \fImax\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the buffer into which the value of the corresponding record is written.
+.RE
+.RS
+`\fImax\fR' specifies the size of the buffer.
+.RE
+.RS
+If successful, the return value is the size of the written data, else, it is \-1.  \-1 is returned if no record corresponds to the specified key.
+.RE
+.RS
+Note that an additional zero code is not appended at the end of the region of the writing buffer.
+.RE
+.RE
+.PP
+The function `tchdbvsiz' is used in order to get the size of the value of a record in a hash database object.
+.PP
+.RS
+.br
+\fBint tchdbvsiz(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+If successful, the return value is the size of the value of the corresponding record, else, it is \-1.
+.RE
+.RE
+.PP
+The function `tchdbvsiz2' is used in order to get the size of the value of a string record in a hash database object.
+.PP
+.RS
+.br
+\fBint tchdbvsiz2(TCHDB *\fIhdb\fB, const char *\fIkstr\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the key.
+.RE
+.RS
+If successful, the return value is the size of the value of the corresponding record, else, it is \-1.
+.RE
+.RE
+.PP
+The function `tchdbiterinit' is used in order to initialize the iterator of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbiterinit(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+The iterator is used in order to access the key of every record stored in a database.
+.RE
+.RE
+.PP
+The function `tchdbiternext' is used in order to get the next key of the iterator of a hash database object.
+.PP
+.RS
+.br
+\fBvoid *tchdbiternext(TCHDB *\fIhdb\fB, int *\fIsp\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIsp\fR' specifies the pointer to the variable into which the size of the region of the return value is assigned.
+.RE
+.RS
+If successful, the return value is the pointer to the region of the next key, else, it is `NULL'.  `NULL' is returned when no record is to be get out of the iterator.
+.RE
+.RS
+Because an additional zero code is appended at the end of the region of the return value, the return value can be treated as a character string.  Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.  It is possible to access every record by iteration of calling this function.  It is allowed to update or remove records whose keys are fetched while the iteration.  However, it is not assured if updating the database is occurred while the iteration.  Besides, the order of this traversal access method is arbitrary, so it is not assured that the order of storing matches the one of the traversal access.
+.RE
+.RE
+.PP
+The function `tchdbiternext2' is used in order to get the next key string of the iterator of a hash database object.
+.PP
+.RS
+.br
+\fBchar *tchdbiternext2(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+If successful, the return value is the string of the next key, else, it is `NULL'.  `NULL' is returned when no record is to be get out of the iterator.
+.RE
+.RS
+Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.  It is possible to access every record by iteration of calling this function.  However, it is not assured if updating the database is occurred while the iteration.  Besides, the order of this traversal access method is arbitrary, so it is not assured that the order of storing matches the one of the traversal access.
+.RE
+.RE
+.PP
+The function `tchdbiternext3' is used in order to get the next extensible objects of the iterator of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbiternext3(TCHDB *\fIhdb\fB, TCXSTR *\fIkxstr\fB, TCXSTR *\fIvxstr\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIkxstr\fR' specifies the object into which the next key is wrote down.
+.RE
+.RS
+`\fIvxstr\fR' specifies the object into which the next value is wrote down.
+.RE
+.RS
+If successful, the return value is true, else, it is false.  False is returned when no record is to be get out of the iterator.
+.RE
+.RE
+.PP
+The function `tchdbfwmkeys' is used in order to get forward matching keys in a hash database object.
+.PP
+.RS
+.br
+\fBTCLIST *tchdbfwmkeys(TCHDB *\fIhdb\fB, const void *\fIpbuf\fB, int \fIpsiz\fB, int \fImax\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIpbuf\fR' specifies the pointer to the region of the prefix.
+.RE
+.RS
+`\fIpsiz\fR' specifies the size of the region of the prefix.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of keys to be fetched.  If it is negative, no limit is specified.
+.RE
+.RS
+The return value is a list object of the corresponding keys.  This function does never fail.  It returns an empty list even if no key corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.  Note that this function may be very slow because every key in the database is scanned.
+.RE
+.RE
+.PP
+The function `tchdbfwmkeys2' is used in order to get forward matching string keys in a hash database object.
+.PP
+.RS
+.br
+\fBTCLIST *tchdbfwmkeys2(TCHDB *\fIhdb\fB, const char *\fIpstr\fB, int \fImax\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIpstr\fR' specifies the string of the prefix.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of keys to be fetched.  If it is negative, no limit is specified.
+.RE
+.RS
+The return value is a list object of the corresponding keys.  This function does never fail.  It returns an empty list even if no key corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.  Note that this function may be very slow because every key in the database is scanned.
+.RE
+.RE
+.PP
+The function `tchdbaddint' is used in order to add an integer to a record in a hash database object.
+.PP
+.RS
+.br
+\fBint tchdbaddint(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, int \fInum\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fInum\fR' specifies the additional value.
+.RE
+.RS
+If successful, the return value is the summation value, else, it is `INT_MIN'.
+.RE
+.RS
+If the corresponding record exists, the value is treated as an integer and is added to.  If no record corresponds, a new record of the additional value is stored.
+.RE
+.RE
+.PP
+The function `tchdbdbadddouble' is used in order to add a real number to a record in a hash database object.
+.PP
+.RS
+.br
+\fBdouble tchdbadddouble(TCHDB *\fIhdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, double \fInum\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fInum\fR' specifies the additional value.
+.RE
+.RS
+If successful, the return value is the summation value, else, it is Not-a-Number.
+.RE
+.RS
+If the corresponding record exists, the value is treated as a real number and is added to.  If no record corresponds, a new record of the additional value is stored.
+.RE
+.RE
+.PP
+The function `tchdbsync' is used in order to synchronize updated contents of a hash database object with the file and the device.
+.PP
+.RS
+.br
+\fBbool tchdbsync(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+This function is useful when another process connects to the same database file.
+.RE
+.RE
+.PP
+The function `tchdboptimize' is used in order to optimize the file of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdboptimize(TCHDB *\fIhdb\fB, int64_t \fIbnum\fB, int8_t \fIapow\fB, int8_t \fIfpow\fB, uint8_t \fIopts\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+`\fIbnum\fR' specifies the number of elements of the bucket array.  If it is not more than 0, the default value is specified.  The default value is two times of the number of records.
+.RE
+.RS
+`\fIapow\fR' specifies the size of record alignment by power of 2.  If it is negative, the current setting is not changed.
+.RE
+.RS
+`\fIfpow\fR' specifies the maximum number of elements of the free block pool by power of 2.  If it is negative, the current setting is not changed.
+.RE
+.RS
+`\fIopts\fR' specifies options by bitwise-or: `HDBTLARGE' specifies that the size of the database can be larger than 2GB by using 64\-bit bucket array, `HDBTDEFLATE' specifies that each record is compressed with Deflate encoding, `HDBTBZIP' specifies that each record is compressed with BZIP2 encoding, `HDBTTCBS' specifies that each record is compressed with TCBS encoding.  If it is `UINT8_MAX', the current setting is not changed.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+This function is useful to reduce the size of the database file with data fragmentation by successive updating.
+.RE
+.RE
+.PP
+The function `tchdbvanish' is used in order to remove all records of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbvanish(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tchdbcopy' is used in order to copy the database file of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbcopy(TCHDB *\fIhdb\fB, const char *\fIpath\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+`\fIpath\fR' specifies the path of the destination file.  If it begins with `@', the trailing substring is executed as a command line.
+.RE
+.RS
+If successful, the return value is true, else, it is false.  False is returned if the executed command returns non\-zero code.
+.RE
+.RS
+The database file is assured to be kept synchronized and not modified while the copying or executing operation is in progress.  So, this function is useful to create a backup file of the database file.
+.RE
+.RE
+.PP
+The function `tchdbtranbegin' is used in order to begin the transaction of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbtranbegin(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+The database is locked by the thread while the transaction so that only one transaction can be activated with a database object at the same time.  Thus, the serializable isolation level is assumed if every database operation is performed in the transaction.  All updated regions are kept track of by write ahead logging while the transaction.  If the database is closed during transaction, the transaction is aborted implicitly.
+.RE
+.RE
+.PP
+The function `tchdbtrancommit' is used in order to commit the transaction of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbtrancommit(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Update in the transaction is fixed when it is committed successfully.
+.RE
+.RE
+.PP
+The function `tchdbtranabort' is used in order to abort the transaction of a hash database object.
+.PP
+.RS
+.br
+\fBbool tchdbtranabort(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Update in the transaction is discarded when it is aborted.  The state of the database is rollbacked to before transaction.
+.RE
+.RE
+.PP
+The function `tchdbpath' is used in order to get the file path of a hash database object.
+.PP
+.RS
+.br
+\fBconst char *tchdbpath(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+The return value is the path of the database file or `NULL' if the object does not connect to any database file.
+.RE
+.RE
+.PP
+The function `tchdbrnum' is used in order to get the number of records of a hash database object.
+.PP
+.RS
+.br
+\fBuint64_t tchdbrnum(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+The return value is the number of records or 0 if the object does not connect to any database file.
+.RE
+.RE
+.PP
+The function `tchdbfsiz' is used in order to get the size of the database file of a hash database object.
+.PP
+.RS
+.br
+\fBuint64_t tchdbfsiz(TCHDB *\fIhdb\fB);\fR
+.RS
+`\fIhdb\fR' specifies the hash database object.
+.RE
+.RS
+The return value is the size of the database file or 0 if the object does not connect to any database file.
+.RE
+.RE
+
+.SH SEE ALSO
+.PP
+.BR tchtest (1),
+.BR tchmttest (1),
+.BR tchmgr (1),
+.BR tokyocabinet (3)

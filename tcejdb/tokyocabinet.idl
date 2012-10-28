@@ -1,0 +1,336 @@
+/*************************************************************************************************
+ * IDL for bindings of scripting languages
+ *                                                               Copyright (C) 2006-2012 FAL Labs
+ * This file is part of Tokyo Cabinet.
+ * Tokyo Cabinet is free software; you can redistribute it and/or modify it under the terms of
+ * the GNU Lesser General Public License as published by the Free Software Foundation; either
+ * version 2.1 of the License or any later version.  Tokyo Cabinet is distributed in the hope
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ * You should have received a copy of the GNU Lesser General Public License along with Tokyo
+ * Cabinet; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+ * Boston, MA 02111-1307 USA.
+ *************************************************************************************************/
+
+
+/**
+ * namespace of Tokyo Cabinet
+ */
+module tokyocabinet {
+  //----------------------------------------------------------------
+  // list of strings (substituted for by the native mechanism)
+  //----------------------------------------------------------------
+  interface List {
+    string get(in long index);
+  };
+  //----------------------------------------------------------------
+  // map of strings (substituted for by the native mechanism)
+  //----------------------------------------------------------------
+  interface Map {
+    string get(in string key);
+  };
+  //----------------------------------------------------------------
+  // the error codes
+  //----------------------------------------------------------------
+  interface ECODE {
+    const long ESUCCESS = 0;
+    const long ETHREAD = 1;
+    const long EINVALID = 2;
+    const long ENOFILE = 3;
+    const long ENOPERM = 4;
+    const long EMETA = 5;
+    const long ERHEAD = 6;
+    const long EOPEN = 7;
+    const long ECLOSE = 8;
+    const long ETRUNC = 9;
+    const long ESYNC = 10;
+    const long ESTAT = 11;
+    const long ESEEK = 12;
+    const long EREAD = 13;
+    const long EWRITE = 14;
+    const long EMMAP = 15;
+    const long ELOCK = 16;
+    const long EUNLINK = 17;
+    const long ERENAME = 18;
+    const long EMKDIR = 19;
+    const long ERMDIR = 20;
+    const long EKEEP = 21;
+    const long ENOREC = 22;
+    const long EMISC = 9999;
+    long ecode();
+    string errmsg(in long ecode);
+  };
+  //----------------------------------------------------------------
+  // the hash database API
+  //----------------------------------------------------------------
+  interface HDB :ECODE {
+    const long TLARGE = 1 << 0;
+    const long TDEFLATE = 1 << 1;
+    const long TBZIP = 1 << 2;
+    const long TTCBS = 1 << 3;
+    const long OREADER = 1 << 0;
+    const long OWRITER = 1 << 1;
+    const long OCREAT = 1 << 2;
+    const long OTRUNC = 1 << 3;
+    const long ONOLCK = 1 << 4;
+    const long OLCKNB = 1 << 5;
+    const long OTSYNC = 1 << 6;
+    boolean tune(in long long bnum, in long apow, in long fpow, in long opts);
+    boolean setcache(in long rcnum);
+    boolean setxmsiz(in long long xmsiz);
+    boolean setdfunit(in long dfunit);
+    boolean open(in string path, in long omode);
+    boolean close();
+    boolean put(in string key, in string value);
+    boolean putkeep(in string key, in string value);
+    boolean putcat(in string key, in string value);
+    boolean putasync(in string key, in string value);
+    boolean out(in string key);
+    string get(in string key);
+    long vsiz(in string key);
+    boolean iterinit();
+    string iternext();
+    List fwmkeys(in string prefix, in long max);
+    long addint(in string key, in long num);
+    double adddouble(in string key, in double num);
+    boolean sync();
+    boolean optimize(in long long bnum, in long apow, in long fpow, in long opts);
+    boolean vanish();
+    boolean copy(in string path);
+    boolean tranbegin();
+    boolean trancommit();
+    boolean tranabort();
+    string path();
+    long long rnum();
+    long long fsiz();
+  };
+  //----------------------------------------------------------------
+  // the B+ tree database API
+  //----------------------------------------------------------------
+  interface BDB :ECODE {
+    const long TLARGE = 1 << 0;
+    const long TDEFLATE = 1 << 1;
+    const long TBZIP = 1 << 2;
+    const long TTCBS = 1 << 3;
+    const long OREADER = 1 << 0;
+    const long OWRITER = 1 << 1;
+    const long OCREAT = 1 << 2;
+    const long OTRUNC = 1 << 3;
+    const long ONOLCK = 1 << 4;
+    const long OLCKNB = 1 << 5;
+    const long OTSYNC = 1 << 6;
+    boolean tune(in long lmemb, in long nmemb,
+                 in long long bnum, in long apow, in long fpow, in long opts);
+    boolean setcache(in long lcnum, in long ncnum);
+    boolean setxmsiz(in long long xmsiz);
+    boolean setdfunit(in long dfunit);
+    boolean open(in string path, in long omode);
+    boolean close();
+    boolean put(in string key, in string value);
+    boolean putkeep(in string key, in string value);
+    boolean putcat(in string key, in string value);
+    boolean putdup(in string key, in string value);
+    boolean putlist(in string key, in List values);
+    boolean out(in string key);
+    boolean outlist(in string key);
+    string get(in string key);
+    List getlist(in string key);
+    long vnum(in string key);
+    long vsiz(in string key);
+    List range(in string bkey, in boolean binc, in string ekey, in boolean einc, in long max);
+    List fwmkeys(in string prefix, in long max);
+    long addint(in string key, in long num);
+    double adddouble(in string key, in double num);
+    boolean sync();
+    boolean optimize(in long lmemb, in long nmemb,
+                     in long long bnum, in long apow, in long fpow, in long opts);
+    boolean vanish();
+    boolean copy(in string path);
+    boolean tranbegin();
+    boolean trancommit();
+    boolean tranabort();
+    string path();
+    long long rnum();
+    long long fsiz();
+  };
+  //----------------------------------------------------------------
+  // the B+ tree cursor API
+  //----------------------------------------------------------------
+  interface BDBCUR {
+    const long CPCURRENT = 0;
+    const long CPBEFORE = 1;
+    const long CPAFTER = 2;
+    boolean first();
+    boolean last();
+    boolean jump(in string key);
+    boolean prev();
+    boolean next();
+    boolean put(in string value, in long cpmode);
+    boolean out();
+    string key();
+    string val();
+  };
+  //----------------------------------------------------------------
+  // the fixed-length database API
+  //----------------------------------------------------------------
+  interface FDB :ECODE {
+    const long OREADER = 1 << 0;
+    const long OWRITER = 1 << 1;
+    const long OCREAT = 1 << 2;
+    const long OTRUNC = 1 << 3;
+    const long ONOLCK = 1 << 4;
+    const long OLCKNB = 1 << 5;
+    const long OTSYNC = 1 << 6;
+    boolean tune(in long width, in long long limsiz);
+    boolean open(in string path, in long omode);
+    boolean close();
+    boolean put(in string key, in string value);
+    boolean putkeep(in string key, in string value);
+    boolean putcat(in string key, in string value);
+    boolean out(in string key);
+    string get(in string key);
+    long vsiz(in string key);
+    boolean iterinit();
+    string iternext();
+    List range(in string interval, in long max);
+    long addint(in string key, in long num);
+    double adddouble(in string key, in double num);
+    boolean sync();
+    boolean optimize(in long width, in long long limsiz);
+    boolean vanish();
+    boolean copy(in string path);
+    boolean tranbegin();
+    boolean trancommit();
+    boolean tranabort();
+    string path();
+    long long rnum();
+    long long fsiz();
+  };
+  //----------------------------------------------------------------
+  // the table database API
+  //----------------------------------------------------------------
+  interface TDB :ECODE {
+    const long TLARGE = 1 << 0;
+    const long TDEFLATE = 1 << 1;
+    const long TBZIP = 1 << 2;
+    const long TTCBS = 1 << 3;
+    const long OREADER = 1 << 0;
+    const long OWRITER = 1 << 1;
+    const long OCREAT = 1 << 2;
+    const long OTRUNC = 1 << 3;
+    const long ONOLCK = 1 << 4;
+    const long OLCKNB = 1 << 5;
+    const long OTSYNC = 1 << 6;
+    const long ITLEXICAL = 0;
+    const long ITDECIMAL = 1;
+    const long ITTOKEN = 2;
+    const long ITQGRAM = 3;
+    const long ITOPT = 9998;
+    const long ITVOID = 9999;
+    const long ITKEEP = 1 << 24;
+    boolean tune(in long long bnum, in long apow, in long fpow, in long opts);
+    boolean setcache(in long rcnum, in long lcnum, in long ncnum);
+    boolean setxmsiz(in long long xmsiz);
+    boolean setdfunit(in long dfunit);
+    boolean open(in string path, in long omode);
+    boolean close();
+    boolean put(in string pkey, in Map cols);
+    boolean putkeep(in string pkey, in Map cols);
+    boolean putcat(in string pkey, in Map cols);
+    boolean out(in string pkey);
+    Map get(in string pkey);
+    long vsiz(in string pkey);
+    boolean iterinit();
+    string iternext();
+    List fwmkeys(in string prefix, in long max);
+    long addint(in string pkey, in long num);
+    double adddouble(in string pkey, in double num);
+    boolean sync();
+    boolean optimize(in long long bnum, in long apow, in long fpow, in long opts);
+    boolean vanish();
+    boolean copy(in string path);
+    boolean tranbegin();
+    boolean trancommit();
+    boolean tranabort();
+    string path();
+    long long rnum();
+    long long fsiz();
+    boolean setindex(in string name, in long type);
+    long long genuid();
+  };
+  //----------------------------------------------------------------
+  // the table query API
+  //----------------------------------------------------------------
+  interface TDBQRY {
+    const long QCSTREQ = 0;
+    const long QCSTRINC = 1;
+    const long QCSTRBW = 2;
+    const long QCSTREW = 3;
+    const long QCSTRAND = 4;
+    const long QCSTROR = 5;
+    const long QCSTROREQ = 6;
+    const long QCSTRRX = 7;
+    const long QCNUMEQ = 8;
+    const long QCNUMGT = 9;
+    const long QCNUMGE = 10;
+    const long QCNUMLT = 11;
+    const long QCNUMLE = 12;
+    const long QCNUMBT = 13;
+    const long QCNUMOREQ = 14;
+    const long QCFTSPH = 15;
+    const long QCFTSAND = 16;
+    const long QCFTSOR = 17;
+    const long QCFTSEX = 18;
+    const long QCNEGATE = 1 << 24;
+    const long QCNOIDX = 1 << 25;
+    const long QOSTRASC = 0;
+    const long QOSTRDESC = 1;
+    const long QONUMASC = 2;
+    const long QONUMDESC = 3;
+    const long MSUNION = 0;
+    const long MSISECT = 1;
+    const long MSDIFF = 2;
+    void addcond(in string name, in long op, in string expr);
+    void setorder(in string name, in long type);
+    void setlimit(in long max, in long skip);
+    List search();
+    boolean searchout();
+    string hint();
+    typedef sequence<TDBQRY> QueryList;
+    List metasearch(in QueryList qrys, in long type);
+  };
+  //----------------------------------------------------------------
+  // the abstract database API
+  //----------------------------------------------------------------
+  interface ADB {
+    boolean open(in string name);
+    boolean close();
+    boolean put(in string key, in string value);
+    boolean putkeep(in string key, in string value);
+    boolean putcat(in string key, in string value);
+    boolean out(in string key);
+    string get(in string key);
+    long vsiz(in string key);
+    boolean iterinit();
+    string iternext();
+    List fwmkeys(in string prefix, in long max);
+    long addint(in string key, in long num);
+    double adddouble(in string key, in double num);
+    boolean sync();
+    boolean optimize(in string params);
+    boolean vanish();
+    boolean copy(in string path);
+    boolean tranbegin();
+    boolean trancommit();
+    boolean tranabort();
+    string path();
+    long long rnum();
+    long long size();
+    List misc(in string name, in List args);
+  };
+};
+
+
+
+/* END OF FILE */

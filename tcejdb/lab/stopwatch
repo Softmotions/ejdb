@@ -1,0 +1,61 @@
+#! /usr/bin/perl
+
+#================================================================
+# stopwatch
+# Measure elapsed time of some test commands.
+#================================================================
+
+use strict;
+use warnings;
+use Time::HiRes qw(gettimeofday);
+
+use constant {
+    TESTCOUNT => 20,
+    REMOVETOP => 2,
+    REMOVEBOTTOM => 8,
+};
+
+my @commands = (
+                "./tchtest write casket 1000000 1000000",
+                "./tchtest read casket",
+                "./tchtest rcat casket 1000000",
+                "./tcbtest write casket 1000000",
+                "./tcbtest read casket",
+                "./tcbtest rcat -lc 256 -nc 128 casket 100000",
+                );
+
+my @table;
+foreach my $command (@commands){
+    system("sync ; sync");
+    my @result;
+    for(my $i = 0; $i < TESTCOUNT; $i++){
+        my $stime = gettimeofday();
+        system("$command >/dev/null 2>&1");
+        $stime = gettimeofday() - $stime;
+        printf("%s\t%d\t%0.5f\n", $command, $i + 1, $stime);
+        push(@result, $stime);
+    }
+    @result = sort { $a <=> $b } @result;
+    for(my $i = 0; $i < REMOVETOP; $i++){
+        shift(@result);
+    }
+    for(my $i = 0; $i < REMOVEBOTTOM; $i++){
+        pop(@result);
+    }
+    my $sum = 0;
+    foreach my $result (@result){
+        $sum += $result;
+    }
+    my $avg = $sum / scalar(@result);
+    push(@table, [$command, $avg]);
+}
+
+printf("\n\nRESULT\n");
+foreach my $row (@table){
+    printf("%s\t%0.5f\n", $$row[0], $$row[1]);
+}
+printf("\n");
+
+
+
+# END OF FILE

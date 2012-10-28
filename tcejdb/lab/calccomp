@@ -1,0 +1,118 @@
+#! /usr/bin/perl
+
+#================================================================
+# calccomp
+# Measure elapsed time and database size of compression algos
+#================================================================
+
+use strict;
+use warnings;
+use Time::HiRes qw(gettimeofday);
+
+use constant {
+    WORDFILE => '/usr/share/dict/words',
+    TSVFILE => 'words.tsv',
+    NULLFILE => '/dev/null',
+    BNUM => 262144,
+    LCNUM => 8192,
+    TESTCOUNT => 20,
+    REMOVETOP => 2,
+    REMOVEBOTTOM => 8,
+};
+
+open(IN, '<' . WORDFILE) or die(WORDFILE . ' could not be opened');
+open(OUT, '>' . TSVFILE) or die(TSVFILE . ' could not be opened');
+while(defined(my $word = <IN>)){
+    $word =~ s/[\t\r\n]//g;
+    next if(length($word) < 1);
+    printf OUT ("%s\t%d\n", $word, int(rand(10000)));
+}
+close(OUT);
+close(IN);
+
+my @commands = (
+    './tchmgr create casket-hash ' . BNUM . ' ; ./tchmgr importtsv casket-hash ' . TSVFILE,
+    './tchmgr list casket-hash >' . NULLFILE,
+    './tcbmgr create casket-btree ' . LCNUM . ' ; ./tcbmgr importtsv casket-btree ' . TSVFILE,
+    './tcbmgr list casket-btree >' . NULLFILE,
+    './tcbmgr create -td casket-bt-td ' . LCNUM . ' ; ./tcbmgr importtsv casket-bt-td ' . TSVFILE,
+    './tcbmgr list casket-bt-td >' . NULLFILE,
+    './tcbmgr create -tb casket-bt-tb ' . LCNUM . ' ; ./tcbmgr importtsv casket-bt-tb ' . TSVFILE,
+    './tcbmgr list casket-bt-tb >' . NULLFILE,
+    './tcbmgr create -tt casket-bt-tt ' . LCNUM . ' ; ./tcbmgr importtsv casket-bt-tt ' . TSVFILE,
+    './tcbmgr list casket-bt-tt >' . NULLFILE,
+    './tcbmgr create -tx casket-bt-tx ' . LCNUM . ' ; ./tcbmgr importtsv casket-bt-tx ' . TSVFILE,
+    './tcbmgr list casket-bt-tx >' . NULLFILE,
+    );
+
+my @names = (
+    'casket-hash',
+    'casket-btree',
+    'casket-bt-td',
+    'casket-bt-tb',
+    'casket-bt-tt',
+    'casket-bt-tx',
+    );
+
+foreach my $name (@names){
+    my @paths = glob("$name*");
+    foreach my $path (@paths){
+        unlink($path);
+    }
+}
+
+my @table;
+foreach my $command (@commands){
+    system('sync ; sync');
+    $ENV{'HIDEPRGR'} = 1;
+    my @result;
+    for(my $i = 0; $i < TESTCOUNT; $i++){
+        my $stime = gettimeofday();
+        system("$command >/dev/null 2>&1");
+        $stime = gettimeofday() - $stime;
+        printf("%s\t%d\t%0.5f\n", $command, $i + 1, $stime);
+        push(@result, $stime);
+    }
+    @result = sort { $a <=> $b } @result;
+    for(my $i = 0; $i < REMOVETOP; $i++){
+        shift(@result);
+    }
+    for(my $i = 0; $i < REMOVEBOTTOM; $i++){
+        pop(@result);
+    }
+    my $sum = 0;
+    foreach my $result (@result){
+        $sum += $result;
+    }
+    my $avg = $sum / scalar(@result);
+    push(@table, [$command, $avg]);
+}
+
+printf("\n\nRESULT\n\n");
+foreach my $row (@table){
+    printf("%s\t%0.5f\n", $$row[0], $$row[1]);
+}
+printf("\n");
+
+my @sizes;
+foreach my $name (@names){
+    my @sbuf = stat($name);
+    my $size = $sbuf[7];
+    printf("%s\t%s\n", $name, $size);
+    push(@sizes, $size);
+}
+my @sbuf = stat(TSVFILE);
+my $size = $sbuf[7];
+printf("\n");
+
+printf("%s,%.5f,%.5f,%d\n", "ORIGINAL", 0, 0, $size);
+printf("%s,%.5f,%.5f,%d\n", "HASH", $table[0][1], $table[1][1], $sizes[0]);
+printf("%s,%.5f,%.5f,%d\n", "BTREE", $table[2][1], $table[3][1], $sizes[1]);
+printf("%s,%.5f,%.5f,%d\n", "BTREE-DEFLATE", $table[4][1], $table[5][1], $sizes[2]);
+printf("%s,%.5f,%.5f,%d\n", "BTREE-BZIP2", $table[6][1], $table[7][1], $sizes[3]);
+printf("%s,%.5f,%.5f,%d\n", "BTREE-TCBS", $table[8][1], $table[9][1], $sizes[4]);
+printf("%s,%.5f,%.5f,%d\n", "BTREE-EXCODEC", $table[10][1], $table[11][1], $sizes[5]);
+
+
+
+# END OF FILE

@@ -1,0 +1,162 @@
+.TH "TCUCODEC" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcucodec \- popular encoders and decoders
+
+.SH DESCRIPTION
+.PP
+The command `\fBtcucodec\fR' is a tool to use encoding and decoding features.  This command is used in the following format.  `\fIfile\fR' specifies a input file.  If it is omitted, the standard input is read.
+.PP
+.RS
+.br
+\fBtcucodec url \fR[\fB\-d\fR]\fB \fR[\fB\-br\fR]\fB \fR[\fB\-rs \fIbase\fB\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform URL encoding and its decoding.
+.RE
+.br
+\fBtcucodec base \fR[\fB\-d\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform Base64 encoding and its decoding.
+.RE
+.br
+\fBtcucodec quote \fR[\fB\-d\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform quoted\-printable encoding and its decoding.
+.RE
+.br
+\fBtcucodec mime \fR[\fB\-d\fR]\fB \fR[\fB\-en \fIname\fB\fR]\fB \fR[\fB\-q\fR]\fB \fR[\fB\-on\fR]\fB \fR[\fB\-hd\fR]\fB \fR[\fB\-bd\fR]\fB \fR[\fB\-part \fInum\fB\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform MIME encoding and its decoding.
+.RE
+.br
+\fBtcucodec hex \fR[\fB\-d\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform hexadecimal encoding and its decoding.
+.RE
+.br
+\fBtcucodec pack \fR[\fB\-d\fR]\fB \fR[\fB\-bwt\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform Packbits encoding and its decoding.
+.RE
+.br
+\fBtcucodec tcbs \fR[\fB\-d\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform TCBS encoding and its decoding.
+.RE
+.br
+\fBtcucodec zlib \fR[\fB\-d\fR]\fB \fR[\fB\-gz\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform ZLIB encoding and its decoding.
+.RE
+.br
+\fBtcucodec bzip \fR[\fB\-d\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform BZIP2 encoding and its decoding.
+.RE
+.br
+\fBtcucodec xml \fR[\fB\-d\fR]\fB \fR[\fB\-br\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Process XML.  By default, escape meta characters.
+.RE
+.br
+\fBtcucodec cstr \fR[\fB\-d\fR]\fB \fR[\fB\-js\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform C\-string escaping and its unescaping.
+.RE
+.br
+\fBtcucodec ucs \fR[\fB\-d\fR]\fB \fR[\fB\-un\fR]\fB \fR[\fB\-kw \fIstr\fB\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Convert UTF\-8 string into UCS\-2 array.
+.RE
+.br
+\fBtcucodec hash \fR[\fB\-crc\fR]\fB \fR[\fB\-ch \fInum\fB\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Calculate the hash value.  By default, use MD5 function.
+.RE
+.br
+\fBtcucodec cipher \fR[\fB\-key \fIstr\fB\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform stream cipher and its decipher.
+.RE
+.br
+\fBtcucodec date \fR[\fB\-ds \fIstr\fB\fR]\fB \fR[\fB\-jl \fInum\fB\fR]\fB \fR[\fB\-wf\fR]\fB \fR[\fB\-rf\fR]\fB\fR
+.RS
+Process date string.  By default, print the current UNIX time.
+.RE
+.br
+\fBtcucodec tmpl \fR[\fB\-var \fIname\fB \fIvalue\fB\fR]\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Perform template serialization.
+.RE
+.br
+\fBtcucodec conf \fR[\fB\-v\fR|\fB\-i\fR|\fB\-l\fR|\fB\-p\fR]\fB\fR
+.RS
+Print some configurations.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-d\fR : perform decoding (unescaping), not encoding (escaping).
+.br
+\fB\-br\fR : break up URL or XML into elements.
+.br
+\fB\-rs \fIbase\fR\fR : specify the base URL and resolve the relative URL.
+.br
+\fB\-en \fIname\fR\fR : specify the input encoding, which is UTF\-8 by default.
+.br
+\fB\-q\fR : use quoted\-printable encoding, which is Base64 by default.
+.br
+\fB\-on\fR : output the charset name when decoding.
+.br
+\fB\-bd\fR : perform MIME parsing and output the body.
+.br
+\fB\-hd\fR : perform MIME parsing and output the headers.
+.br
+\fB\-part \fInum\fR\fR : perform MIME parsing and output the specified part.
+.br
+\fB\-bwt\fR : convert by BWT as preprocessing.
+.br
+\fB\-gz\fR : use GZIP format.
+.br
+\fB\-crc\fR : use CRC32 function.
+.br
+\fB\-js\fR : use JSON compatible format.
+.br
+\fB\-un\fR : perform UCS normalization.
+.br
+\fB\-kw \fIstr\fR\fR : generate KWIC string.
+.br
+\fB\-ch \fInum\fR\fR : use consistent hashing function.
+.br
+\fB\-key \fIstr\fR\fR : specify the cipher key.
+.br
+\fB\-ds \fIstr\fR\fR : specify the time.
+.br
+\fB\-jl \fInum\fR\fR : specify the jet lag.
+.br
+\fB\-wf\fR : format the output in W3CDTF.
+.br
+\fB\-rf\fR : format the output in RFC 1123 format.
+.br
+\fB\-var \fIname\fR \fIvalue\fR\fR : specify a template variable.
+.br
+\fB\-v\fR : show the version number of Tokyo Cabinet.
+.br
+\fB\-i\fR : show options to include the headers of Tokyo Cabinet.
+.br
+\fB\-l\fR : show options to link the library of Tokyo Cabinet.
+.br
+\fB\-p\fR : show the directory path of the commands of Tokyo Cabinet.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcutest (1),
+.BR tcumttest (1),
+.BR tcutil (3),
+.BR tokyocabinet (3)

@@ -1,0 +1,141 @@
+#! /usr/bin/perl
+
+#================================================================
+# reporter
+# Measure elapsed time and database size of DBM brothers
+#================================================================
+
+use strict;
+use warnings;
+use Time::HiRes qw(gettimeofday);
+
+use constant {
+    RECNUM => 1000000,
+    TESTCOUNT => 20,
+    REMOVETOP => 2,
+    REMOVEBOTTOM => 8,
+};
+
+my @commands = (
+                './tctest write casket.tch ' . RECNUM,
+                './tctest read casket.tch ' . RECNUM,
+                './qdbmtest write casket.qdbh ' . RECNUM,
+                './qdbmtest read casket.qdbh ' . RECNUM,
+                './ndbmtest write casket.ndbh ' . RECNUM,
+                './ndbmtest read casket.ndbh ' . RECNUM,
+                './sdbmtest write casket.sdbh ' . RECNUM,
+                './sdbmtest read casket.sdbh ' . RECNUM,
+                './gdbmtest write casket.gdbh ' . RECNUM,
+                './gdbmtest read casket.gdbh ' . RECNUM,
+                './tdbtest write casket.tdbh ' . RECNUM,
+                './tdbtest read casket.tdbh ' . RECNUM,
+                './cdbtest write casket.cdbh ' . RECNUM,
+                './cdbtest read casket.cdbh ' . RECNUM,
+                './bdbtest write casket.bdbh ' . RECNUM,
+                './bdbtest read casket.bdbh ' . RECNUM,
+                './tctest btwrite casket.tcb ' . RECNUM,
+                './tctest btread casket.tcb ' . RECNUM,
+                './tctest btwrite -rnd casket.tcb_r ' . RECNUM,
+                './tctest btread -rnd casket.tcb_r ' . RECNUM,
+                './qdbmtest btwrite casket.qdbb ' . RECNUM,
+                './qdbmtest btread casket.qdbb ' . RECNUM,
+                './qdbmtest btwrite -rnd casket.qdbb_r ' . RECNUM,
+                './qdbmtest btread -rnd casket.qdbb_r ' . RECNUM,
+                './bdbtest btwrite casket.bdbb ' . RECNUM,
+                './bdbtest btread casket.bdbb ' . RECNUM,
+                './bdbtest btwrite -rnd casket.bdbb_r ' . RECNUM,
+                './bdbtest btread -rnd casket.bdbb_r ' . RECNUM,
+                './tctest flwrite casket.tcf ' . RECNUM,
+                './tctest flread casket.tcf ' . RECNUM,
+                );
+
+my @names = (
+             'casket.tch',
+             'casket.qdbh',
+             'casket.ndbh',
+             'casket.sdbh',
+             'casket.gdbh',
+             'casket.tdbh',
+             'casket.cdbh',
+             'casket.bdbh',
+             'casket.tcb',
+             'casket.tcb_r',
+             'casket.qdbb',
+             'casket.qdbb_r',
+             'casket.bdbb',
+             'casket.bdbb_r',
+             'casket.tcf',
+             );
+
+foreach my $name (@names){
+    my @paths = glob("$name*");
+    foreach my $path (@paths){
+        unlink($path);
+    }
+}
+
+my @table;
+foreach my $command (@commands){
+    system('sync ; sync');
+    $ENV{'HIDEPRGR'} = 1;
+    my @result;
+    for(my $i = 0; $i < TESTCOUNT; $i++){
+        my $stime = gettimeofday();
+        system("$command >/dev/null 2>&1");
+        $stime = gettimeofday() - $stime;
+        printf("%s\t%d\t%0.5f\n", $command, $i + 1, $stime);
+        push(@result, $stime);
+    }
+    @result = sort { $a <=> $b } @result;
+    for(my $i = 0; $i < REMOVETOP; $i++){
+        shift(@result);
+    }
+    for(my $i = 0; $i < REMOVEBOTTOM; $i++){
+        pop(@result);
+    }
+    my $sum = 0;
+    foreach my $result (@result){
+        $sum += $result;
+    }
+    my $avg = $sum / scalar(@result);
+    push(@table, [$command, $avg]);
+}
+
+printf("\n\nRESULT\n\n");
+foreach my $row (@table){
+    printf("%s\t%0.5f\n", $$row[0], $$row[1]);
+}
+printf("\n");
+
+my @sizes;
+foreach my $name (@names){
+    my @paths = glob("$name*");
+    my $sum = 0;
+    foreach my $path (@paths){
+        my @sbuf = stat($path);
+        $sum += $sbuf[7];
+    }
+    printf("%s\t%s\n", $name, $sum);
+    push(@sizes, $sum);
+}
+printf("\n");
+
+printf("%s,%.5f,%.5f,%d\n", "TC", $table[0][1], $table[1][1], $sizes[0]);
+printf("%s,%.5f,%.5f,%d\n", "QDBM", $table[2][1], $table[3][1], $sizes[1]);
+printf("%s,%.5f,%.5f,%d\n", "NDBM", $table[4][1], $table[5][1], $sizes[2]);
+printf("%s,%.5f,%.5f,%d\n", "SDBM", $table[6][1], $table[7][1], $sizes[3]);
+printf("%s,%.5f,%.5f,%d\n", "GDBM", $table[8][1], $table[9][1], $sizes[4]);
+printf("%s,%.5f,%.5f,%d\n", "TDB", $table[10][1], $table[11][1], $sizes[5]);
+printf("%s,%.5f,%.5f,%d\n", "CDB", $table[12][1], $table[13][1], $sizes[6]);
+printf("%s,%.5f,%.5f,%d\n", "BDB", $table[14][1], $table[15][1], $sizes[7]);
+printf("%s,%.5f,%.5f,%d\n", "TC-BT-ASC", $table[16][1], $table[17][1], $sizes[8]);
+printf("%s,%.5f,%.5f,%d\n", "TC-BT-RND", $table[18][1], $table[19][1], $sizes[9]);
+printf("%s,%.5f,%.5f,%d\n", "QDBM-BT-ASC", $table[20][1], $table[21][1], $sizes[10]);
+printf("%s,%.5f,%.5f,%d\n", "QDBM-BT-RND", $table[22][1], $table[23][1], $sizes[11]);
+printf("%s,%.5f,%.5f,%d\n", "BDB-BT-ASC", $table[24][1], $table[25][1], $sizes[12]);
+printf("%s,%.5f,%.5f,%d\n", "BDB-BT-RND", $table[26][1], $table[27][1], $sizes[13]);
+printf("%s,%.5f,%.5f,%d\n", "TC-FIXED", $table[28][1], $table[29][1], $sizes[14]);
+
+
+
+# END OF FILE

@@ -1,0 +1,132 @@
+.TH "TOKYOCABINET" 3 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tokyocabinet \- a modern implementation of DBM
+
+.SH INTRODUCTION
+.PP
+Tokyo Cabinet is a library of routines for managing a database.  The database is a simple data file containing records, each is a pair of a key and a value.  Every key and value is serial bytes with variable length.  Both binary data and character string can be used as a key and a value.  There is neither concept of data tables nor data types.  Records are organized in hash table, B+ tree, or fixed\-length array.
+.PP
+As for database of hash table, each key must be unique within a database, so it is impossible to store two or more records with a key overlaps.  The following access methods are provided to the database: storing a record with a key and a value, deleting a record by a key, retrieving a record by a key.  Moreover, traversal access to every key are provided, although the order is arbitrary.  These access methods are similar to ones of DBM (or its followers: NDBM and GDBM) library defined in the UNIX standard.  Tokyo Cabinet is an alternative for DBM because of its higher performance.
+.PP
+As for database of B+ tree, records whose keys are duplicated can be stored.  Access methods of storing, deleting, and retrieving are provided as with the database of hash table.  Records are stored in order by a comparison function assigned by a user.  It is possible to access each record with the cursor in ascending or descending order.  According to this mechanism, forward matching search for strings and range search for integers are realized.
+.PP
+As for database of fixed\-length array, records are stored with unique natural numbers.  It is impossible to store two or more records with a key overlaps.  Moreover, the length of each record is limited by the specified length.  Provided operations are the same as ones of hash database.
+.PP
+Table database is also provided as a variant of hash database.  Each record is identified by the primary key and has a set of named columns.  Although there is no concept of data schema, it is possible to search for records with complex conditions efficiently by using indices of arbitrary columns.
+.PP
+Tokyo Cabinet is written in the C language, and provided as API of C, Perl, Ruby, Java, and Lua.  Tokyo Cabinet is available on platforms which have API conforming to C99 and POSIX.  Tokyo Cabinet is a free software licensed under the GNU Lesser General Public License.
+
+.SH THE DINOSAUR WING OF THE DBM FORKS
+.PP
+Tokyo Cabinet is developed as the successor of GDBM and QDBM on the following purposes.  They are achieved and Tokyo Cabinet replaces conventional DBM products.
+.PP
+.RS
+improves space efficiency : smaller size of database file.
+.br
+improves time efficiency : faster processing speed.
+.br
+improves parallelism : higher performance in multi\-thread environment.
+.br
+improves usability : simplified API.
+.br
+improves robustness : database file is not corrupted even under catastrophic situation.
+.br
+supports 64\-bit architecture : enormous memory space and database file are available.
+.br
+.RE
+.PP
+As with QDBM, the following three restrictions of traditional DBM: a process can handle only one database, the size of a key and a value is bounded, a database file is sparse, are cleared.  Moreover, the following three restrictions of QDBM: the size of a database file is limited to 2GB, environments with different byte orders can not share a database file, only one thread can search a database at the same time, are cleared.
+.PP
+Tokyo Cabinet runs very fast.  For example, elapsed time to store 1 million records is 0.7 seconds for hash database, and 1.6 seconds for B+ tree database.  Moreover, the size of database of Tokyo Cabinet is very small.  For example, overhead for a record is 16 bytes for hash database, and 5 bytes for B+ tree database.  Furthermore, scalability of Tokyo Cabinet is great.  The database size can be up to 8EB (9.22e18 bytes).
+
+.SH EFFECTIVE IMPLEMENTATION OF HASH DATABASE
+.PP
+Tokyo Cabinet uses hash algorithm to retrieve records.  If a bucket array has sufficient number of elements, the time complexity of retrieval is "O(1)".  That is, time required for retrieving a record is constant, regardless of the scale of a database.  It is also the same about storing and deleting.  Collision of hash values is managed by separate chaining.  Data structure of the chains is binary search tree.  Even if a bucket array has unusually scarce elements, the time complexity of retrieval is "O(log n)".
+.PP
+Tokyo Cabinet attains improvement in retrieval by loading RAM with the whole of a bucket array.  If a bucket array is on RAM, it is possible to access a region of a target record by about one path of file operations.  A bucket array saved in a file is not read into RAM with the `read' call but directly mapped to RAM with the `mmap' call.  Therefore, preparation time on connecting to a database is very short, and two or more processes can share the same memory map.
+.PP
+If the number of elements of a bucket array is about half of records stored within a database, although it depends on characteristic of the input, the probability of collision of hash values is about 56.7% (36.8% if the same, 21.3% if twice, 11.5% if four times, 6.0% if eight times).  In such case, it is possible to retrieve a record by two or less paths of file operations.  If it is made into a performance index, in order to handle a database containing one million of records, a bucket array with half a million of elements is needed.  The size of each element is 4 bytes.  That is, if 2M bytes of RAM is available, a database containing one million records can be handled.
+.PP
+Traditional DBM provides two modes of the storing operations: "insert" and "replace".  In the case a key overlaps an existing record, the insert mode keeps the existing value, while the replace mode transposes it to the specified value.  In addition to the two modes, Tokyo Cabinet provides "concatenate" mode.  In the mode, the specified value is concatenated at the end of the existing value and stored.  This feature is useful when adding an element to a value as an array.
+.PP
+Generally speaking, while succession of updating, fragmentation of available regions occurs, and the size of a database grows rapidly.  Tokyo Cabinet deal with this problem by coalescence of dispensable regions and reuse of them.  When overwriting a record with a value whose size is greater than the existing one, it is necessary to remove the region to another position of the file.  Because the time complexity of the operation depends on the size of the region of a record, extending values successively is inefficient.  However, Tokyo Cabinet deal with this problem by alignment.  If increment can be put in padding, it is not necessary to remove the region.
+.PP
+The "free block pool" to reuse dispensable regions efficiently is also implemented.  It keeps a list of dispensable regions and reuse the "best fit" region, that is the smallest region in the list, when a new block is requested.  Because fragmentation is inevitable even then, two kinds of optimization (defragmentation) mechanisms are implemented.  The first is called static optimization which deploys all records into another file and then writes them back to the original file at once.  The second is called dynamic optimization which gathers up dispensable regions by replacing the locations of records and dispensable regions gradually.
+
+.SH USEFUL IMPLEMENTATION OF B+ TREE DATABASE
+.PP
+Although B+ tree database is slower than hash database, it features ordering access to each record.  The order can be assigned by users.  Records of B+ tree are sorted and arranged in logical pages.  Sparse index organized in B tree that is multiway balanced tree are maintained for each page.  Thus, the time complexity of retrieval and so on is "O(log n)".  Cursor is provided to access each record in order.  The cursor can jump to a position specified by a key and can step forward or backward from the current position.  Because each page is arranged as double linked list, the time complexity of stepping cursor is "O(1)".
+.PP
+B+ tree database is implemented, based on above hash database.  Because each page of B+ tree is stored as each record of hash database, B+ tree database inherits efficiency of storage management of hash database.  Because the header of each record is smaller and alignment of each page is adjusted according to the page size, in most cases, the size of database file is cut by half compared to one of hash database.  Although operation of many pages are required to update B+ tree, QDBM expedites the process by caching pages and reducing file operations.  In most cases, because whole of the sparse index is cached on memory, it is possible to retrieve a record by one or less path of file operations.
+.PP
+Each pages of B+ tree can be stored with compressed.  Two compression method; Deflate of ZLIB and Block Sorting of BZIP2, are supported.  Because each record in a page has similar patterns, high efficiency of compression is expected due to the Lempel\-Ziv or the BWT algorithms.  In case handling text data, the size of a database is reduced to about 25%.  If the scale of a database is large and disk I/O is the bottleneck, featuring compression makes the processing speed improved to a large extent.
+
+.SH NAIVE IMPLEMENTATION OF FIXED\-LENGTH DATABASE
+.PP
+Fixed\-length database has restrictions that each key should be a natural number and that the length of each value is limited.  However, time efficiency and space efficiency are higher than the other data structures as long as the use case is within the restriction.
+.PP
+Because the whole region of the database is mapped on memory by the `mmap' call and referred as a multidimensional array, the overhead related to the file I/O is minimized.  Due to this simple structure, fixed\-length database works faster than hash database, and its concurrency in multi\-thread environment is prominent.
+.PP
+The size of the database is proportional to the range of keys and the limit size of each value.  That is, the smaller the range of keys is or the smaller the length of each value is, the higher the space efficiency is.  For example, if the maximum key is 1000000 and the limit size of the value is 100 bytes, the size of the database will be about 100MB.  Because regions around referred records are only loaded on the RAM, you can increase the size of the database to the size of the virtual memory.
+
+.SH FLEXIBLE IMPLEMENTATION OF TABLE DATABASE
+.PP
+Table database does not express simple key/value structure but expresses a structure like a table of relational database.  Each record is identified by the primary key and has a set of multiple columns named with arbitrary strings.  For example, a stuff in your company can be expressed by a record identified by the primary key of the employee ID number and structured by columns of his name, division, salary, and so on.  Unlike relational database, table database does not need to define any data schema and can contain records of various structures different from each other.
+.PP
+Table database supports query functions with not only the primary key but also with conditions about arbitrary columns.  Each column condition is composed of the name of a column and a condition expression.  Operators of full matching, forward matching, regular expression matching, and so on are provided for the string type.  Operators of full matching, range matching and so on are provided for the number type.  Operators for tag search and full-text search are also provided.  A query can contain multiple conditions for logical intersection.  Search by multiple queries for logical union is also available.  The order of the result set can be specified as the ascending or descending order of strings or numbers.
+.PP
+You can create indices for arbitrary columns to improve performance of search and sorting.  Although columns do not have data types, indices have types for strings or numbers.  Inverted indices for space separated tokens and character N-gram tokens are also supported.  The query optimizer uses indices in suitable way according to each query.  Indices are implemented as different files of B+ tree database.
+
+.SH PRACTICAL FUNCTIONALITY
+.PP
+Databases on the filesystem feature transaction mechanisms.  It is possible to commit a series of operations between the beginning and the end of the transaction in a lump, or to abort the transaction and perform rollback to the state before the transaction.  Two isolation levels are supported; serializable and read uncommitted.  Durability is secured by write ahead logging and shadow paging.
+.PP
+Tokyo Cabinet provides two modes to connect to a database: "reader" and "writer".  A reader can perform retrieving but neither storing nor deleting.  A writer can perform all access methods.  Exclusion control between processes is performed when connecting to a database by file locking.  While a writer is connected to a database, neither readers nor writers can be connected.  While a reader is connected to a database, other readers can be connect, but writers can not.  According to this mechanism, data consistency is guaranteed with simultaneous connections in multitasking environment.
+.PP
+Functions of API of Tokyo cabinet are reentrant and available in multi\-thread environment.  Discrete database object can be operated in parallel entirely.  For simultaneous operations of the same database object, read\-write lock is used for exclusion control.  That is, while a writing thread is operating the database, other reading threads and writing threads are blocked.  However, while a reading thread is operating the database, reading threads are not blocked.  The locking granularity of hash database and fixed\-length database is per record, and that of the other databases is per file.
+
+.SH SIMPLE BUT VARIOUS INTERFACES
+.PP
+Tokyo Cabinet provides simple API based on the object oriented design.  Every operation for database is encapsulated and published as lucid methods as `open' (connect), `close' (disconnect), `put' (insert), `out' (remove), `get' (retrieve), and so on.  Because the three of hash, B+ tree, and fixed\-length array database APIs are very similar with each other, porting an application from one to the other is easy.  Moreover, the abstract API is provided to handle these databases with the same interface.  Applications of the abstract API can determine the type of the database in runtime.
+.PP
+The utility API is also provided.  Such fundamental data structure as list and map are included.  And, some useful features; memory pool, string processing, encoding, are also included.
+.PP
+Six kinds of API; the utility API, the hash database API, the B+ tree database API, the fixed\-length database API, the table database API, and the abstract database API, are provided for the C language.  Command line interfaces are also provided corresponding to each API.  They are useful for prototyping, test, and debugging.  Except for C, Tokyo Cabinet provides APIs for Perl, Ruby, Java, and Lua.  APIs for other languages will hopefully be provided by third party.
+.PP
+In cases that multiple processes access a database at the same time or some processes access a database on a remote host, the remote service is useful.  The remote service is composed of a database server and its access library.  Applications can access the database server by using the remote database API.  The server implements HTTP and the memcached protocol partly so that client programs on almost all platforms can access the server easily.
+
+.SH HOW TO USE THE LIBRARY
+.PP
+Tokyo Cabinet provides API of the C language and it is available by programs conforming to the C89 (ANSI C) standard or the C99 standard.  As the header files of Tokyo Cabinet are provided as `\fBtcutil.h\fR', `\fBtchdb.h\fR', and `\fBtcbdb.h\fR', applications should include one or more of them accordingly to use the API.  As the library is provided as `\fBlibtokyocabinet.a\fR' and `\fBlibtokyocabinet.so\fR' and they depends `\fBlibz.so\fR', `\fBlibrt.so\fR', `\fBlibpthread.so\fR', `\fBlibm.so\fR', and `\fBlibc.so\fR', linker options `\fB\-ltokyocabinet\fR', `\fB\-lz\fR', `\fB\-lbz2\fR', `\fB\-lrt\fR', `\fB\-lpthread\fR', `\fB\-lm\fR', and `\fB\-lc\fR' are required for build command.  A typical build command is the following.
+.PP
+.RS
+gcc \-I/usr/local/include tc_example.c \-o tc_example \\
+.br
+  \-L/usr/local/lib \-ltokyocabinet \-lz \-lbz2 \-lrt \-lpthread \-lm \-lc
+.RE
+.PP
+You can also use Tokyo Cabinet in programs written in C++.  Because each header is wrapped in C linkage (`\fBextern "C"\fR' block), you can simply include them into your C++ programs.
+
+.SH LICENSE
+.PP
+Tokyo Cabinet is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License or any later version.
+.PP
+Tokyo Cabinet is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+.PP
+You should have received a copy of the GNU Lesser General Public License along with Tokyo Cabinet (See the file `\fBCOPYING\fR'); if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111\-1307 USA.
+.PP
+Tokyo Cabinet was written by FAL Labs.  You can contact the author by e\-mail to `\fBinfo@fallabs.com\fR'.
+
+.SH SEE ALSO
+.PP
+.BR tcutil (3),
+.BR tchdb (3),
+.BR tcbdb (3),
+.BR tcfdb (3),
+.BR tctdb (3),
+.BR tcadb (3)
+.PP
+Please see
+.I http://1978th.net/tokyocabinet/
+for detail.

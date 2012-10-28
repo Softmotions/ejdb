@@ -1,0 +1,239 @@
+#! /usr/bin/ruby -w
+
+#================================================================
+# wgettsv
+# Collect WWW resources and generate TSV data
+#================================================================
+
+require 'open-uri'
+require 'iconv'
+require 'kconv'
+require 'date'
+require 'time'
+require 'cgi'
+
+def main
+  seeds = []
+  hist = {}
+  filters = []
+  max = 1 << 30
+  lim = 1 << 20
+  wait = 0
+  ndf = false
+  i = 0
+  while i < ARGV.length
+    if seeds.length < 1 && ARGV[i] =~ /^-/
+      if ARGV[i] == '-allow'
+        usage if (i += 1) >= ARGV.length
+        regex = Regexp::new(ARGV[i])
+        filters.push([true, regex]) if regex
+      elsif ARGV[i] == '-deny'
+        usage if (i += 1) >= ARGV.length
+        regex = Regexp::new(ARGV[i])
+        filters.push([false, regex]) if regex
+      elsif ARGV[i] == '-max'
+        usage if (i += 1) >= ARGV.length
+        max = ARGV[i].to_i
+      elsif ARGV[i] == '-lim'
+        usage if (i += 1) >= ARGV.length
+        lim = ARGV[i].to_i
+      elsif ARGV[i] == '-wait'
+        usage if (i += 1) >= ARGV.length
+        wait = ARGV[i].to_f
+      elsif ARGV[i] == '-ndf'
+        ndf = true
+      else
+        usage
+      end
+    else
+      if ARGV[i] =~ /^http:\/\//i
+        seeds.push(ARGV[i])
+        hist[ARGV[i]] = true
+      else
+        usage
+      end
+    end
+    i += 1
+  end
+  usage if seeds.length < 1
+  if !ndf
+    filters.push([false, /\.(txt|text|asc|c|cc|cxx|cpp|h|hxx|hpp|in)$/i])
+    filters.push([false, /\.(css|js|csv|tsv|log|md5|crc|conf|ini|inf|lnk|sys|tmp|bak)$/i])
+    filters.push([false, /\.(xml|xsl|xslt|rdf|rss|dtd|sgml|sgm)$/i])
+    filters.push([false, /\.(pgp|sig|cer|csr|pem|key|b64|uu|uue|[0-9])$/i])
+    filters.push([false, /\.(rtf|pdf|ps|eps|ai|doc|xls|ppt|sxw|sxc|sxi|xdw|jtd|oas|swf)$/i])
+    filters.push([false, /\.(zip|tar|tgz|gz|bz2|tbz2|z|lha|lzh)?$/i])
+    filters.push([false, /\.(7z|lzo|lzma|cpio|shar|cab|rar|sit|ace|hqx)?$/i])
+    filters.push([false, /\.(bin|o|a|so|exe|dll|lib|obj|ocx|class|jar|war)?$/i])
+    filters.push([false, /\.(rpm|deb|qdb|qdb|dbx|dbf|dat|msi|bat|com|iso)?$/i])
+    filters.push([false, /\.(png|gif|jpg|jpeg|tif|tiff|bmp|ico|pbm|pgm|ppm|xbm|xpm|dvi)$/i])
+    filters.push([false, /\.(au|snd|mid|midi|kar|smf|mp2|mp3|m3u|wav|wma|wmp|asx|at3|aif)$/i])
+    filters.push([false, /\.(mpg|mpeg|qt|mov|avi|wmv|wvx|asf|ram|rm)$/i])
+    filters.push([false, /\.(tch|tdb|tdf|tct)$/i])
+    filters.push([false, /\.idx\./i])
+    filters.push([false, /(core|casket|Makefile|README|NEWS|COPYING|LISENCE)($|\/)/i])
+  end
+  return proc(seeds, hist, filters, max, lim, wait) ? 0 : 1
+end
+
+def usage
+  STDERR.printf("%s: collect WWW resources and generate TSV data\n", $progname)
+  STDERR.printf("\n")
+  STDERR.printf("usage:\n")
+  STDERR.printf("  %s [-allow regex] [-deny regex] [-max num] [-lim num] [-wait num]" +
+                " url ...\n", $progname)
+  STDERR.printf("\n")
+  exit(1)
+end
+
+def proc(seeds, hist, filters, max, lim, wait)
+  cnt = 0
+  while (url = seeds.shift) && cnt < max
+    STDERR.printf("%d: getting: %s\n", cnt + 1, url)
+    begin
+      opts = {}
+      OpenURI.open_uri(url, 0, 0, opts) do |sio|
+        baseuri = sio.base_uri
+        if baseuri && baseuri.to_s != url
+          url = baseuri.to_s
+          hist[url] = true
+        end
+        size = sio.size
+        raise "invalid size" if size > lim || size < 3
+        type = sio.content_type
+        type = "text/plain" if !type
+        str = sio.read
+        head = str[0,2048]
+        if (head[0] == 0xfe && head[1] == 0xff) || (head[0] == 0xff && head[1] == 0xfe)
+          str = Kconv::kconv(str, Kconv::UTF8, Kconv::UTF16)
+          charset = "UTF-8"
+        elsif str.include?(0)
+          raise "binary data"
+        end
+        raise "not HTML" if type != "text/html" && head !~ /<html/i && head !~ /<body/i
+        if !charset && head =~ /<\?xml.*encoding=("|')?[-_a-zA-Z0-9]+("|')/im
+          charset = head.gsub(/.*<\?xml.*encoding=["']?([-_a-zA-Z0-9]+)["']?.*/im, '\1')
+        end
+        if !charset && head =~ /<meta.*content-type.*charset=[-_a-zA-Z0-9]+/im
+          charset = head.gsub(/.*<meta.*content-type.*charset=([-_a-zA-Z0-9]+).*/im, '\1')
+        end
+        charset = sio.charset if !charset || charset.length < 1
+        if charset && charset.length > 0
+          if charset !~ /^UTF-?8$/i
+            begin
+              nstr = Iconv.conv("UTF-8", charset, str)
+              str = nstr if nstr && nstr.length > 0
+            rescue
+              str = str.toutf8
+            end
+          end
+        else
+          str = str.toutf8
+        end
+        body = str.gsub(/.*<body[^>]*>/im, "")
+        body = body.gsub(/<\/body>.*/im, "")
+        body = htmltotext(body)
+        if str =~ /<title[^>]*>[^<]*<\/title>/im
+          title = str.gsub(/.*<title[^>]*>([^<]*)<\/title>.*/im, '\1')
+          title = htmltotext(title)
+        end
+        title = "" if !title
+        title = title[0,128] if title.length > 128
+        mtime = sio.last_modified
+        if mtime
+          mtime = Time::parse(mtime.to_s).to_i
+        else
+          mtime = 0
+        end
+        printf("%d", cnt + 1)
+        printf("\turl\t%s", url)
+        printf("\tsize\t%s", size) if size > 0
+        printf("\tmtime\t%s", mtime) if mtime > 0
+        printf("\ttitle\t%s", title) if title.length > 0
+        printf("\tbody\t%s", body) if body.length > 0
+        printf("\n")
+        str.gsub(/<a[^>]*>/im) do |tag|
+          if tag =~ /href=["']?[^"'>]+["']?/
+            href = tag.gsub(/.*href=["']?([^"'>]+)["']?.*/, '\1')
+            href = URI::join(url, href).to_s
+            href = href.gsub(/#.*/, "")
+            if !hist[href] && checkurl(href, filters)
+              seeds.push(href)
+              hist[href] = true
+            end
+          end
+        end
+      end
+      cnt += 1
+    rescue
+      STDERR.printf("%d: failed: %s: %s\n", cnt + 1, url, $!)
+    end
+    sleep(wait) if wait > 0
+  end
+  return 0
+end
+
+def htmltotext(str)
+  str = str.gsub(/<style[^>]*>.*?<\/style>/im, " ")
+  str = str.gsub(/<script[^>]*>.*?<\/script>/im, " ")
+  str = str.gsub(/<\/?(p|br|div|h1|h2|h3|h4|h5|h6|ul|ol|dl|li|dd|dt|td|th|pre)[^>]*>/im, " ")
+  str = str.gsub(/<[^>]*>/, "")
+  str = str.gsub(/&(nbsp|#160|#0160|#xa0|#x00a0);/i, " ")
+  hexrx = Regexp::new("^&#x[0-9a-zA-Z]+;")
+  decrx = Regexp::new("^&#[0-9]+;")
+  str = str.gsub(/&#?[A-Za-z0-9]+;/) do |pat|
+    case pat
+    when "&lt;"
+      pat = '<'
+    when "&gt;"
+      pat = '>'
+    when "&quot;"
+      pat = '"'
+    when "&apos;"
+      pat = "'"
+    when "&nbsp;"
+      pat = " "
+    else
+      begin
+        if pat =~ hexrx
+          pat = [ pat.gsub(/&#x([A-Za-z0-9]+);/i, '\1').hex ].pack("n")
+          pat = Iconv.conv("UTF-8", "UTF-16BE", pat)
+        elsif pat =~ decrx
+          pat = [ pat.gsub(/&#([A-Za-z0-9]+);/i, '\1').to_i ].pack("n")
+          pat = Iconv.conv("UTF-8", "UTF-16BE", pat)
+        else
+          pat = " "
+        end
+      rescue
+        pat = ""
+      end
+    end
+    pat
+  end
+  str = str.gsub(/[\x00-\x20]/, " ")
+  str = str.gsub(/\xe3\x80\x80/, " ")
+  str = str.gsub(/ +/, " ")
+  str = str.gsub(/^ */, "")
+  str = str.gsub(/ *$/, "")
+  return str
+end
+
+def checkurl(url, filters)
+  return false if url !~ /^http:\/\//i;
+  return true if filters.length < 1
+  ok = !filters[0][0]
+  filters.each do |filter|
+    ok = filter[0] if url =~ filter[1]
+  end
+  return ok
+end
+
+STDOUT.sync = true
+$progname = $0.dup
+$progname.gsub!(/.*\//, "")
+srand
+exit(main)
+
+
+
+# END OF FILE

@@ -1,0 +1,140 @@
+.TH "TCTMGR" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tctmgr \- the command line utility of the table database API
+
+.SH DESCRIPTION
+.PP
+The command `\fBtctmgr\fR' is a utility for test and debugging of the table database API and its applications.  `\fIpath\fR' specifies the path of a database file.  `\fIbnum\fR' specifies the number of buckets.  `\fIapow\fR' specifies the power of the alignment.  `\fIfpow\fR' specifies the power of the free block pool.  `\fIpkey\fR' specifies the primary key of a record.  `\fIcols\fR' specifies the names and the values of a record alternately.  `\fIname\fR' specifies the name of a column.  `\fIop\fR' specifies an operator.  `\fIexpr\fR' specifies the condition expression.  `\fIfile\fR' specifies the input file.
+.PP
+.RS
+.br
+\fBtctmgr create \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fIpath\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Create a database file.
+.RE
+.br
+\fBtctmgr inform \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB\fR
+.RS
+Print miscellaneous information to the standard output.
+.RE
+.br
+\fBtctmgr put \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-dk\fR|\fB\-dc\fR|\fB\-dai\fR|\fB\-dad\fR]\fB \fIpath\fB \fIpkey\fB \fR[\fB\fIcols\fB ...\fR]\fB\fR
+.RS
+Store a record.
+.RE
+.br
+\fBtctmgr out \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sx\fR]\fB \fIpath\fB \fIpkey\fB\fR
+.RS
+Remove a record.
+.RE
+.br
+\fBtctmgr get \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-pz\fR]\fB \fIpath\fB \fIpkey\fB\fR
+.RS
+Print the value of a record.
+.RE
+.br
+\fBtctmgr list \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-m \fInum\fB\fR]\fB \fR[\fB\-pv\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-fm \fIstr\fB\fR]\fB \fIpath\fB\fR
+.RS
+Print the primary keys of all records, separated by line feeds.
+.RE
+.br
+\fBtctmgr search \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-ord \fIname\fB \fItype\fB\fR]\fB \fR[\fB\-m \fInum\fB\fR]\fB \fR[\fB\-sk \fInum\fB\fR]\fB \fR[\fB\-kw\fR]\fB \fR[\fB\-pv\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-ph\fR]\fB \fR[\fB\-bt \fInum\fB\fR]\fB \fR[\fB\-rm\fR]\fB \fR[\fB\-ms \fItype\fB\fR]\fB \fIpath\fB \fR[\fB\fIname\fB \fIop\fB \fIexpr\fB ...\fR]\fB\fR
+.RS
+Print records matching conditions, separated by line feeds.
+.RE
+.br
+\fBtctmgr optimize \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-tz\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-df\fR]\fB \fIpath\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Optimize a database file.
+.RE
+.br
+\fBtctmgr setindex \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-it \fItype\fB\fR]\fB \fIpath\fB \fIname\fB\fR
+.RS
+Set the index of a column.
+.RE
+.br
+\fBtctmgr importtsv \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sc\fR]\fB \fIpath\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Store records of TSV in each line of a file.
+.RE
+.br
+\fBtctmgr version\fR
+.RS
+Print the version information of Tokyo Cabinet.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-tl\fR : enable the option `TDBTLARGE'.
+.br
+\fB\-td\fR : enable the option `TDBTDEFLATE'.
+.br
+\fB\-tb\fR : enable the option `TDBTBZIP'.
+.br
+\fB\-tt\fR : enable the option `TDBTTCBS'.
+.br
+\fB\-tx\fR : enable the option `TDBTEXCODEC'.
+.br
+\fB\-nl\fR : enable the option `TDBNOLCK'.
+.br
+\fB\-nb\fR : enable the option `TDBLCKNB'.
+.br
+\fB\-sx\fR : the input data is evaluated as a hexadecimal data string.
+.br
+\fB\-dk\fR : use the function `tctdbputkeep' instead of `tctdbput'.
+.br
+\fB\-dc\fR : use the function `tctdbputcat' instead of `tctdbput'.
+.br
+\fB\-dai\fR : use the function `tctdbaddint' instead of `tctdbput'.
+.br
+\fB\-dad\fR : use the function `tctdbadddouble' instead of `tctdbput'.
+.br
+\fB\-px\fR : the output data is converted into a hexadecimal data string.
+.br
+\fB\-pz\fR : do not append line feed at the end of the output.
+.br
+\fB\-m \fInum\fR\fR : specify the maximum number of the output.
+.br
+\fB\-pv\fR : print values of records also.
+.br
+\fB\-fm \fIstr\fR\fR : specify the prefix of keys.
+.br
+\fB\-ord \fIname\fR \fItype\fR\fR : specify the order of the result.
+.br
+\fB\-sk \fInum\fR\fR : specify the number of skipped records.
+.br
+\fB\-kw\fR : print KWIC string.
+.br
+\fB\-ph\fR : print hint information also.
+.br
+\fB\-bt\fR : specify the number of benchmark tests.
+.br
+\fB\-rm\fR : remove every record in the result.
+.br
+\fB\-ms \fItype\fR\fR : specify the set operation of meta search.
+.br
+\fB\-tz\fR : enable the option `UINT8_MAX'.
+.br
+\fB\-df\fR : perform defragmentation only.
+.br
+\fB\-it \fItype\fR\fR : specify the index type among "lexical", "decimal", "token", "qgram", and "void".
+.br
+\fB\-cd\fR : create the number index instead of the string index.
+.br
+\fB\-cv\fR : remove the existing index.
+.br
+\fB\-sc\fR : normalize keys as lower cases.
+.br
+.RE
+.PP
+The operator of the `search' subcommand is one of "STREQ", "STRINC", "STRBW", "STREW", "STRAND", "STROR", "STROREQ", "STRRX", "NUMEQ", "NUMGT", "NUMGE", "NUMLT", "NUMLE", "NUMBT", "NUMOREQ", "FTSPH", "FTSAND", "FTSOR", and "FTSEX".  If "~" preposes each operator, the logical meaning is reversed.  If "+" preposes each operator, no index is used for the operator.  The type of the `\-ord' option is one of "STRASC", "STRDESC", "NUMASC", and "NUMDESC".  The type of the `\-ms' option is one of "UNION", "ISECT", and "DIFF".  This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcttest (1),
+.BR tctmttest (1),
+.BR tctdb (3),
+.BR tokyocabinet (3)

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+<meta http-equiv="Content-Language" content="en" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta name="author" content="FAL Labs" />
+<meta name="keywords" content="Tokyo Cabinet, tokyocabinet, database, DBM" />
+<meta name="description" content="homepage of Tokyo Cabinet" />
+<link rel="contents" href="./" />
+<link rel="alternate" href="index.ja.html" hreflang="ja" title="the Japanese version" />
+<link rel="stylesheet" href="common.css" />
+<link rel="icon" href="icon16.png" />
+<link rev="made" href="mailto:info@fallabs.com" />
+<title>Tokyo Cabinet: a modern implementation of DBM</title>
+<script type="text/javascript">function startup(){
+  var elem = document.getElementById("headline");
+  if(elem){
+    var now = new Date();
+    if((now.getFullYear() + now.getMonth() + now.getDate() + now.getHours()) % 4 == 0){
+      var label;
+      switch((now.getMonth() + now.getDay() + now.getHours() + now.getMinutes()) % 24){
+      default: label = "Tokyo Cabinet"; break;
+      case 1: label = "Shibuya Cabinet"; break;
+      case 2: label = "Harajuku Cabinet"; break;
+      case 4: label = "Aoyama Cabinet"; break;
+      case 5: label = "Gakudai Cabinet"; break;
+      case 7: label = "Shinjuku Cabinet"; break;
+      case 8: label = "Ikebukuro Cabinet"; break;
+      case 10: label = "Akihabara Cabinet"; break;
+      case 11: label = "Ueno Cabinet"; break;
+      case 13: label = "Sugamo Cabinet"; break;
+      case 14: label = "Akasaka Cabinet"; break;
+      case 16: label = "Roppongi Cabinet"; break;
+      case 17: label = "Yokohama Cabinet"; break;
+      case 19: label = "Saitama Cabinet"; break;
+      case 20: label = "Tokorozawa Cabinet"; break;
+      case 22: label = "Kyoto Cabinet"; break;
+      case 23: label = "Nagoya Cabinet"; break;
+      }
+      var text;
+      switch((now.getMonth() + now.getDate() + now.getMinutes()) % 12){
+      default: text = "super hyper ultra database manager"; break;
+      case 1: text = "much quicker database manager"; break;
+      case 3: text = "the ultimate database manager"; break;
+      case 5: text = "the supreme database manager"; break;
+      case 7: text = "the lightning database manager"; break;
+      case 9: text = "the mighty unbeatable invincible database manager"; break;
+      case 11: text = "the dinosaur wing of database managers"; break;
+      }
+      elem.firstChild.nodeValue = label + ": " + text;
+    }
+  }
+}
+</script>
+</head>
+
+<body onload="startup();">
+
+<h1 id="headline">Tokyo Cabinet: a modern implementation of DBM</h1>
+
+<div class="note">Copyright (C) 2006-2012 FAL Labs</div>
+<div class="note">Last Update: Sat, 18 Aug 2012 11:05:00 +0900</div>
+<div class="navi">[<span class="void">English</span>/<a href="index.ja.html" hreflang="ja">Japanese</a>]</div>
+
+<div class="logo"><img src="logo.png" id="logo" alt="Tokyo Cabinet" width="300" height="110" /></div>
+
+<hr />
+
+<h2 id="overview">Overview</h2>
+
+<p>Tokyo Cabinet is a library of routines for managing a database.  The database is a simple data file containing records, each is a pair of a key and a value.  Every key and value is serial bytes with variable length.  Both binary data and character string can be used as a key and a value.  There is neither concept of data tables nor data types.  Records are organized in hash table, B+ tree, or fixed-length array.</p>
+
+<p>Tokyo Cabinet is developed as the successor of GDBM and QDBM on the following purposes.  They are achieved and Tokyo Cabinet replaces conventional DBM products.</p>
+
+<ul>
+<li>improves space efficiency : smaller size of database file.</li>
+<li>improves time efficiency : faster processing speed.</li>
+<li>improves parallelism : higher performance in multi-thread environment.</li>
+<li>improves usability : simplified API.</li>
+<li>improves robustness : database file is not corrupted even under catastrophic situation.</li>
+<li>supports 64-bit architecture : enormous memory space and database file are available.</li>
+</ul>
+
+<p>Tokyo Cabinet is written in the C language, and provided as API of C, Perl, Ruby, Java, and Lua.  Tokyo Cabinet is available on platforms which have API conforming to C99 and POSIX.  Tokyo Cabinet is a free software licensed under the GNU Lesser General Public License.</p>
+
+<hr />
+
+<h2 id="documents">Documents</h2>
+
+<p>The following are documents of Tokyo Cabinet.  They are contained also in the source package.</p>
+
+<ul>
+<li><a href="spex-en.html">Fundamental Specifications</a></li>
+</ul>
+
+<ul>
+<li><a href="perldoc/">Specifications of Perl API</a></li>
+<li><a href="rubydoc/">Specifications of Ruby API</a></li>
+<li><a href="javadoc/">Specifications of Java API</a></li>
+<li><a href="luadoc/">Specifications of Lua API</a></li>
+</ul>
+
+<ul>
+<li><a href="tokyoproducts.pdf">Presentation</a></li>
+<li><a href="benchmark.pdf">Report of a Benchmark Test</a></li>
+</ul>
+
+<hr />
+
+<h2 id="packages">Packages</h2>
+
+<p>The following are the source packages of Tokyo Cabinet.  As for binary packages, see the site of each distributor.</p>
+
+<ul>
+<li><a href="pkg/">Source Packages of the core library</a></li>
+</ul>
+
+<ul>
+<li><a href="perlpkg/">API for Perl</a></li>
+<li><a href="rubypkg/">API for Ruby</a></li>
+<li><a href="javapkg/">API for Java</a></li>
+<li><a href="luapkg/">API for Lua</a></li>
+</ul>
+
+<ul>
+<li><a href="misc/">Related Packages</a></li>
+</ul>
+
+<hr />
+
+<h2 id="information">Information</h2>
+
+<p>Tokyo Cabinet was written and is maintained by <a href="http://fallabs.com/">FAL Labs</a>.  You can contact the author by e-mail to `info@fallabs.com'.</p>
+
+<p>The following are sibling projects of Tokyo Cabinet.</p>
+
+<ul>
+<li><a href="http://fallabs.com/tokyotyrant/">Remote Service (Tokyo Tyrant)</a></li>
+<li><a href="http://fallabs.com/tokyodystopia/">Full-text Search System (Tokyo Dystopia)</a></li>
+<li><a href="http://fallabs.com/tokyopromenade/">Content Management System (Tokyo Promenade)</a></li>
+</ul>
+
+<ul>
+<li><a href="http://fallabs.com/kyotocabinet/">Straightforward Implementation of DBM (Kyoto Cabinet)</a></li>
+</ul>
+
+<hr />
+
+</body>
+
+</html>
+
+<!-- END OF FILE -->

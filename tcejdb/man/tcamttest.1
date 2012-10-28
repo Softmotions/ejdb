@@ -1,0 +1,35 @@
+.TH "TCAMTTEST" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcamttest \- test cases of the abstract database API
+
+.SH DESCRIPTION
+.PP
+The command `\fBtcamttest\fR' is a utility for facility test under multi\-thread situation.  This command is used in the following format.  `\fIname\fR' specifies the database name.  `\fItnum\fR' specifies the number of running threads.  `\fIrnum\fR' specifies the number of iterations.
+.PP
+.RS
+.br
+\fBtcamttest write \fIname\fB \fItnum\fB \fIrnum\fB\fR
+.RS
+Store records with keys of 8 bytes.  They change as `00000001', `00000002'...
+.RE
+.br
+\fBtcamttest read \fIname\fB \fItnum\fB\fR
+.RS
+Retrieve all records of the database above.
+.RE
+.br
+\fBtcamttest remove \fIname\fB \fItnum\fB\fR
+.RS
+Remove all records of the database above.
+.RE
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcatest (1),
+.BR tcamgr (1),
+.BR tcadb (3),
+.BR tokyocabinet (3)

@@ -1,0 +1,107 @@
+.TH "TCBTEST" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcbtest \- test cases of the B+ tree database API
+
+.SH DESCRIPTION
+The command `\fBtcbtest\fR' is a utility for facility test and performance test.  This command is used in the following format.  `\fIpath\fR' specifies the path of a database file.  `\fIrnum\fR' specifies the number of iterations.  `\fIlmemb\fR' specifies the number of members in each leaf page.  `\fInmemb\fR' specifies the number of members in each non\-leaf page.  `\fIbnum\fR' specifies the number of buckets.  `\fIapow\fR' specifies the power of the alignment.  `\fIfpow\fR' specifies the power of the free block pool.
+.PP
+.RS
+.br
+\fBtcbtest write \fR[\fB\-mt\fR]\fB \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-lc \fInum\fB\fR]\fB \fR[\fB\-nc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-ls \fInum\fB\fR]\fB \fR[\fB\-ca \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fIrnum\fB \fR[\fB\fIlmemb\fB \fR[\fB\fInmemb\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Store records with keys of 8 bytes.  They change as `00000001', `00000002'...
+.RE
+.br
+\fBtcbtest read \fR[\fB\-mt\fR]\fB \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-lc \fInum\fB\fR]\fB \fR[\fB\-nc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-wb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB\fR
+.RS
+Retrieve all records of the database above.
+.RE
+.br
+\fBtcbtest remove \fR[\fB\-mt\fR]\fB \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-lc \fInum\fB\fR]\fB \fR[\fB\-nc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB\fR
+.RS
+Remove all records of the database above.
+.RE
+.br
+\fBtcbtest rcat \fR[\fB\-mt\fR]\fB \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-lc \fInum\fB\fR]\fB \fR[\fB\-nc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-ls \fInum\fB\fR]\fB \fR[\fB\-ca \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-pn \fInum\fB\fR]\fB \fR[\fB\-dai\fR|\fB\-dad\fR|\fB\-rl\fR|\fB\-ru\fR]\fB \fIpath\fB \fIrnum\fB \fR[\fB\fIlmemb\fB \fR[\fB\fInmemb\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Store records with partway duplicated keys using concatenate mode.
+.RE
+.br
+\fBtcbtest queue \fR[\fB\-mt\fR]\fB \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-lc \fInum\fB\fR]\fB \fR[\fB\-nc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-ls \fInum\fB\fR]\fB \fR[\fB\-ca \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB \fIrnum\fB \fR[\fB\fIlmemb\fB \fR[\fB\fInmemb\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Perform queueing and dequeueing.
+.RE
+.br
+\fBtcbtest misc \fR[\fB\-mt\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB \fIrnum\fB\fR
+.RS
+Perform miscellaneous test of various operations.
+.RE
+.br
+\fBtcbtest wicked \fR[\fB\-mt\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB \fIrnum\fB\fR
+.RS
+Perform updating operations selected at random.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-mt\fR : call the function `tchdbsetmutex'.
+.br
+\fB\-cd\fR : use the comparison function `tccmpdecimal'.
+.br
+\fB\-ci\fR : use the comparison function  `tccmpint32'.
+.br
+\fB\-cj\fR : use the comparison function  `tccmpint64'.
+.br
+\fB\-tl\fR : enable the option `BDBTLARGE'.
+.br
+\fB\-td\fR : enable the option `BDBTDEFLATE'.
+.br
+\fB\-tb\fR : enable the option `BDBTBZIP'.
+.br
+\fB\-tt\fR : enable the option `BDBTTCBS'.
+.br
+\fB\-tx\fR : enable the option `BDBTEXCODEC'.
+.br
+\fB\-lc \fInum\fR\fR : specify the number of cached leaf pages.
+.br
+\fB\-nc \fInum\fR\fR : specify the number of cached non\-leaf pages.
+.br
+\fB\-xm \fInum\fR\fR : specify the size of the extra mapped memory.
+.br
+\fB\-df \fInum\fR\fR : specify the unit step number of auto defragmentation.
+.br
+\fB\-ls \fInum\fR\fR : specify the maximum size of each leaf page.
+.br
+\fB\-ca \fInum\fR\fR : specify the capacity number of records.
+.br
+\fB\-nl\fR : enable the option `BDBNOLCK'.
+.br
+\fB\-nb\fR : enable the option `BDBLCKNB'.
+.br
+\fB\-rnd\fR : select keys at random.
+.br
+\fB\-wb\fR : use the function `tcbdbget3' instead of `tcbdbget'.
+.br
+\fB\-pn \fInum\fR\fR : specify the number of patterns.
+.br
+\fB\-dai\fR : use the function `tcbdbaddint' instead of `tcbdbputcat'.
+.br
+\fB\-dad\fR : use the function `tcbdbadddouble' instead of `tcbdbputcat'.
+.br
+\fB\-rl\fR : set the length of values at random.
+.br
+\fB\-ru\fR : select update operations at random.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcbmttest (1),
+.BR tcbmgr (1),
+.BR tcbdb (3),
+.BR tokyocabinet (3)

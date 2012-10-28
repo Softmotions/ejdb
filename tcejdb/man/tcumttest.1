@@ -1,0 +1,41 @@
+.TH "TCUMTTEST" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcutest \- test cases of the on-memory database API
+
+.SH DESCRIPTION
+.PP
+The command `\fBtcumttest\fR' is a utility for facility test under multi\-thread situation.  This command is used in the following format.  `\fIrnum\fR' specifies the number of iterations.  `\fIbnum\fR' specifies the number of buckets.
+.PP
+.RS
+.br
+\fBtcumttest combo \fR[\fB\-rnd\fR]\fB \fItnum\fB \fIrnum\fB \fR[\fB\fIbnum\fB\fR]\fB\fR
+.RS
+Peform storing, retrieving, and removing in turn.
+.RE
+.br
+\fBtcumttest typical \fR[\fB\-nc\fR]\fB \fR[\fB\-rr \fInum\fB\fR]\fB \fItnum\fB \fIrnum\fB \fR[\fB\fIbnum\fB\fR]\fB\fR
+.RS
+Perform typical operations selected at random.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-rnd\fR : select keys at random.
+.br
+\fB\-nc\fR : omit the comparison test.
+.br
+\-rr \fInum\fR : specifiy the ratio of reading operation by percentage.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcutest (1),
+.BR tcucodec (1),
+.BR tcutil (3),
+.BR tokyocabinet (3)

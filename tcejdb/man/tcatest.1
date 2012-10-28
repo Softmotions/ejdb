@@ -1,0 +1,55 @@
+.TH "TCATEST" 3 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcatest \- test cases of the abstract database API
+
+.SH DESCRIPTION
+.PP
+The command `\fBtcatest\fR' is a utility for facility test and performance test.  This command is used in the following format.  `\fIname\fR' specifies the database name.  `\fIrnum\fR' specifies the number of iterations.  `\fItnum\fR' specifies the number of transactions.
+.PP
+.RS
+.br
+\fBtcatest write \fIname\fB \fIrnum\fB\fR
+.RS
+Store records with keys of 8 bytes.  They change as `00000001', `00000002'...
+.RE
+.br
+\fBtcatest read \fIname\fB\fR
+.RS
+Retrieve all records of the database above.
+.RE
+.br
+\fBtcatest remove \fIname\fB\fR
+.RS
+Remove all records of the database above.
+.RE
+.br
+\fBtcatest rcat \fIname\fB \fIrnum\fB\fR
+.RS
+Store records with partway duplicated keys using concatenate mode.
+.RE
+.br
+\fBtcatest misc \fIname\fB \fIrnum\fB\fR
+.RS
+Perform miscellaneous test of various operations.
+.RE
+.br
+\fBtcatest wicked \fIname\fB \fIrnum\fB\fR
+.RS
+Perform updating operations of list and map selected at random.
+.RE
+.br
+\fBtcatest compare \fIname\fB \fItnum\fB \fIrnum\fB\fR
+.RS
+Perform comparison test of database schema.
+.RE
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcamttest (1),
+.BR tcamgr (1),
+.BR tcadb (3),
+.BR tokyocabinet (3)

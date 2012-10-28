@@ -1,0 +1,125 @@
+.TH "TCBMGR" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcbmgr \- the command line utility of the B+ tree database API
+
+.SH DESCRIPTION
+The command `\fBtcbmgr\fR' is a utility for test and debugging of the B+ tree database API and its applications.  `\fIpath\fR' specifies the path of a database file.  `\fIlmemb\fR' specifies the number of members in each leaf page.  `\fInmemb\fR' specifies the number of members in each non\-leaf page.  `\fIbnum\fR' specifies the number of buckets.  `\fIapow\fR' specifies the power of the alignment.  `\fIfpow\fR' specifies the power of the free block pool.  `\fIkey\fR' specifies the key of a record.  `\fIvalue\fR' specifies the value of a record.  `\fIfile\fR' specifies the input file.
+.PP
+.RS
+.br
+\fBtcbmgr create \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fIpath\fB \fR[\fB\fIlmemb\fB \fR[\fB\fInmemb\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Create a database file.
+.RE
+.br
+\fBtcbmgr inform \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB\fR
+.RS
+Print miscellaneous information to the standard output.
+.RE
+.br
+\fBtcbmgr put \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-dk\fR|\fB\-dc\fR|\fB\-dd\fR|\fB\-db\fR|\fB\-dai\fR|\fB\-dad\fR]\fB \fIpath\fB \fIkey\fB \fIvalue\fB\fR
+.RS
+Store a record.
+.RE
+.br
+\fBtcbmgr out \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sx\fR]\fB \fIpath\fB \fIkey\fB\fR
+.RS
+Remove a record.
+.RE
+.br
+\fBtcbmgr get \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-pz\fR]\fB \fIpath\fB \fIkey\fB\fR
+.RS
+Print the value of a record.
+.RE
+.br
+\fBtcbmgr list \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-m \fInum\fB\fR]\fB \fR[\fB\-bk\fR]\fB \fR[\fB\-pv\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-j \fIstr\fB\fR]\fB \fR[\fB\-rb \fIbkey\fB \fIekey\fB\fR]\fB \fR[\fB\-fm \fIstr\fB\fR]\fB \fIpath\fB\fR
+.RS
+Print keys of all records, separated by line feeds.
+.RE
+.br
+\fBtcbmgr optimize \fR[\fB\-cd\fR|\fB\-ci\fR|\fB\-cj\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-tz\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-df\fR]\fB \fIpath\fB \fR[\fB\fIlmemb\fB \fR[\fB\fInmemb\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Optimize a database file.
+.RE
+.br
+\fBtcbmgr importtsv \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sc\fR]\fB \fIpath\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Store records of TSV in each line of a file.
+.RE
+.br
+\fBtcbmgr version\fR
+.RS
+Print the version information of Tokyo Cabinet.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-cd\fR : use the comparison function `tccmpdecimal'.
+.br
+\fB\-ci\fR : use the comparison function  `tccmpint32'.
+.br
+\fB\-cj\fR : use the comparison function  `tccmpint64'.
+.br
+\fB\-tl\fR : enable the option `BDBTLARGE'.
+.br
+\fB\-td\fR : enable the option `BDBTDEFLATE'.
+.br
+\fB\-tb\fR : enable the option `BDBTBZIP'.
+.br
+\fB\-tt\fR : enable the option `BDBTTCBS'.
+.br
+\fB\-tx\fR : enable the option `BDBTEXCODEC'.
+.br
+\fB\-nl\fR : enable the option `BDBNOLCK'.
+.br
+\fB\-nb\fR : enable the option `BDBLCKNB'.
+.br
+\fB\-sx\fR : the input data is evaluated as a hexadecimal data string.
+.br
+\fB\-dk\fR : use the function `tcbdbputkeep' instead of `tcbdbput'.
+.br
+\fB\-dc\fR : use the function `tcbdbputcat' instead of `tcbdbput'.
+.br
+\fB\-dd\fR : use the function `tcbdbputdup' instead of `tcbdbput'.
+.br
+\fB\-db\fR : use the function `tcbdbputdupback' instead of `tcbdbput'.
+.br
+\fB\-dai\fR : use the function `tcbdbaddint' instead of `tcbdbput'.
+.br
+\fB\-dad\fR : use the function `tcbdbadddouble' instead of `tcbdbput'.
+.br
+\fB\-px\fR : the output data is converted into a hexadecimal data string.
+.br
+\fB\-pz\fR : do not append line feed at the end of the output.
+.br
+\fB\-m \fInum\fR\fR : specify the maximum number of the output.
+.br
+\fB\-bk\fR : perform backword scanning.
+.br
+\fB\-pv\fR : print values of records also.
+.br
+\fB\-j \fIstr\fR\fR : specify the key where the cursor jump to.
+.br
+\fB\-rb \fIbkey\fR \fIekey\fR\fR : specify the range of keys.
+.br
+\fB\-fm \fIstr\fR\fR : specify the prefix of keys.
+.br
+\fB\-tz\fR : enable the option `UINT8_MAX'.
+.br
+\fB\-df\fR : perform defragmentation only.
+.br
+\fB\-sc\fR : normalize keys as lower cases.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcbtest (1),
+.BR tcbmttest (1),
+.BR tcbdb (3),
+.BR tokyocabinet (3)

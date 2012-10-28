@@ -1,0 +1,95 @@
+.TH "TCHTEST" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tchtest \- test cases of the hash database API
+
+.SH DESCRIPTION
+.PP
+To use the hash database API easily, the commands `\fBtchtest\fR', `\fBtchmttest\fR', and `\fBtchmgr\fR' are provided.
+.PP
+The command `\fBtchtest\fR' is a utility for facility test and performance test.  This command is used in the following format.  `\fIpath\fR' specifies the path of a database file.  `\fIrnum\fR' specifies the number of iterations.  `\fIbnum\fR' specifies the number of buckets.  `\fIapow\fR' specifies the power of the alignment.  `\fIfpow\fR' specifies the power of the free block pool.
+.PP
+.RS
+.br
+\fBtchtest write \fR[\fB\-mt\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-rc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-as\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fIrnum\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Store records with keys of 8 bytes.  They change as `00000001', `00000002'...
+.RE
+.br
+\fBtchtest read \fR[\fB\-mt\fR]\fB \fR[\fB\-rc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-wb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB\fR
+.RS
+Retrieve all records of the database above.
+.RE
+.br
+\fBtchtest remove \fR[\fB\-mt\fR]\fB \fR[\fB\-rc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB\fR
+.RS
+Remove all records of the database above.
+.RE
+.br
+\fBtchtest rcat \fR[\fB\-mt\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-rc \fInum\fB\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-pn \fInum\fB\fR]\fB \fR[\fB\-dai\fR|\fB\-dad\fR|\fB\-rl\fR|\fB\-ru\fR]\fB \fIpath\fB \fIrnum\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Store records with partway duplicated keys using concatenate mode.
+.RE
+.br
+\fBtchtest misc \fR[\fB\-mt\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB \fIrnum\fB\fR
+.RS
+Perform miscellaneous test of various operations.
+.RE
+.br
+\fBtchtest wicked \fR[\fB\-mt\fR]\fB \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB \fIrnum\fB\fR
+.RS
+Perform updating operations selected at random.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-mt\fR : call the function `tchdbsetmutex'.
+.br
+\fB\-tl\fR : enable the option `HDBTLARGE'.
+.br
+\fB\-td\fR : enable the option `HDBTDEFLATE'.
+.br
+\fB\-tb\fR : enable the option `HDBTBZIP'.
+.br
+\fB\-tt\fR : enable the option `HDBTTCBS'.
+.br
+\fB\-tx\fR : enable the option `HDBTEXCODEC'.
+.br
+\fB\-rc \fInum\fR\fR : specify the number of cached records.
+.br
+\fB\-xm \fInum\fR\fR : specify the size of the extra mapped memory.
+.br
+\fB\-df \fInum\fR\fR : specify the unit step number of auto defragmentation.
+.br
+\fB\-nl\fR : enable the option `HDBNOLCK'.
+.br
+\fB\-nb\fR : enable the option `HDBLCKNB'.
+.br
+\fB\-as\fR : use the function `tchdbputasync' instead of `tchdbput'.
+.br
+\fB\-rnd\fR : select keys at random.
+.br
+\fB\-wb\fR : use the function `tchdbget3' instead of `tchdbget'.
+.br
+\fB\-pn \fInum\fR\fR : specify the number of patterns.
+.br
+\fB\-dai\fR : use the function `tchdbaddint' instead of `tchdbputcat'.
+.br
+\fB\-dad\fR : use the function `tchdbadddouble' instead of `tchdbputcat'.
+.br
+\fB\-rl\fR : set the length of values at random.
+.br
+\fB\-ru\fR : select update operations at random.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tchmttest (1),
+.BR tchmgr (1),
+.BR tchdb (3),
+.BR tokyocabinet (3)

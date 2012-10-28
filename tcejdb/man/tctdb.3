@@ -1,0 +1,1110 @@
+.TH "TCTDB" 3 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tctdb \- the table database API
+
+.SH DESCRIPTION
+.PP
+Table database is a file containing records composed of the primary keys and arbitrary columns and is handled with the table database API.
+.PP
+To use the table database API, include `\fBtcutil.h\fR', `\fBtctdb.h\fR', and related standard header files.  Usually, write the following description near the front of a source file.
+.PP
+.RS
+.br
+\fB#include <tcutil.h>\fR
+.br
+\fB#include <tctdb.h>\fR
+.br
+\fB#include <stdlib.h>\fR
+.br
+\fB#include <stdbool.h>\fR
+.br
+\fB#include <stdint.h>\fR
+.RE
+.PP
+Objects whose type is pointer to `\fBTCTDB\fR' are used to handle table databases.  A table database object is created with the function `\fBtctdbnew\fR' and is deleted with the function `\fBtctdbdel\fR'.  To avoid memory leak, it is important to delete every object when it is no longer in use.
+.PP
+Before operations to store or retrieve records, it is necessary to open a database file and connect the table database object to it.  The function `\fBtctdbopen\fR' is used to open a database file and the function `\fBtctdbclose\fR' is used to close the database file.  To avoid data missing or corruption, it is important to close every database file when it is no longer in use.  It is forbidden for multible database objects in a process to open the same database at the same time.
+
+.SH API
+.PP
+The function `tctdberrmsg' is used in order to get the message string corresponding to an error code.
+.PP
+.RS
+.br
+\fBconst char *tctdberrmsg(int \fIecode\fB);\fR
+.RS
+`\fIecode\fR' specifies the error code.
+.RE
+.RS
+The return value is the message string of the error code.
+.RE
+.RE
+.PP
+The function `tctdbnew' is used in order to create a table database object.
+.PP
+.RS
+.br
+\fBTCTDB *tctdbnew(void);\fR
+.RS
+The return value is the new table database object.
+.RE
+.RE
+.PP
+The function `tctdbdel' is used in order to delete a table database object.
+.PP
+.RS
+.br
+\fBvoid tctdbdel(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+If the database is not closed, it is closed implicitly.  Note that the deleted object and its derivatives can not be used anymore.
+.RE
+.RE
+.PP
+The function `tctdbecode' is used in order to get the last happened error code of a table database object.
+.PP
+.RS
+.br
+\fBint tctdbecode(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+The return value is the last happened error code.
+.RE
+.RS
+The following error codes are defined: `TCESUCCESS' for success, `TCETHREAD' for threading error, `TCEINVALID' for invalid operation, `TCENOFILE' for file not found, `TCENOPERM' for no permission, `TCEMETA' for invalid meta data, `TCERHEAD' for invalid record header, `TCEOPEN' for open error, `TCECLOSE' for close error, `TCETRUNC' for trunc error, `TCESYNC' for sync error, `TCESTAT' for stat error, `TCESEEK' for seek error, `TCEREAD' for read error, `TCEWRITE' for write error, `TCEMMAP' for mmap error, `TCELOCK' for lock error, `TCEUNLINK' for unlink error, `TCERENAME' for rename error, `TCEMKDIR' for mkdir error, `TCERMDIR' for rmdir error, `TCEKEEP' for existing record, `TCENOREC' for no record found, and `TCEMISC' for miscellaneous error.
+.RE
+.RE
+.PP
+The function `tctdbsetmutex' is used in order to set mutual exclusion control of a table database object for threading.
+.PP
+.RS
+.br
+\fBbool tctdbsetmutex(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object which is not opened.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the mutual exclusion control is needed if the object is shared by plural threads and this function should be called before the database is opened.
+.RE
+.RE
+.PP
+The function `tctdbtune' is used in order to set the tuning parameters of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbtune(TCTDB *\fItdb\fB, int64_t \fIbnum\fB, int8_t \fIapow\fB, int8_t \fIfpow\fB, uint8_t \fIopts\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object which is not opened.
+.RE
+.RS
+`\fIbnum\fR' specifies the number of elements of the bucket array.  If it is not more than 0, the default value is specified.  The default value is 131071.  Suggested size of the bucket array is about from 0.5 to 4 times of the number of all records to be stored.
+.RE
+.RS
+`\fIapow\fR' specifies the size of record alignment by power of 2.  If it is negative, the default value is specified.  The default value is 4 standing for 2^4=16.
+.RE
+.RS
+`\fIfpow\fR' specifies the maximum number of elements of the free block pool by power of 2.  If it is negative, the default value is specified.  The default value is 10 standing for 2^10=1024.
+.RE
+.RS
+`\fIopts\fR' specifies options by bitwise-or: `TDBTLARGE' specifies that the size of the database can be larger than 2GB by using 64\-bit bucket array, `TDBTDEFLATE' specifies that each record is compressed with Deflate encoding, `TDBTBZIP' specifies that each record is compressed with BZIP2 encoding, `TDBTTCBS' specifies that each record is compressed with TCBS encoding.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the tuning parameters should be set before the database is opened.
+.RE
+.RE
+.PP
+The function `tctdbsetcache' is set the caching parameters of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbsetcache(TCTDB *\fItdb\fB, int32_t \fIrcnum\fB, int32_t \fIlcnum\fB, int32_t \fIncnum\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object which is not opened.
+.RE
+.RS
+`\fIrcnum\fR' specifies the maximum number of records to be cached.  If it is not more than 0, the record cache is disabled.  It is disabled by default.
+.RE
+.RS
+`\fIlcnum\fR' specifies the maximum number of leaf nodes to be cached.  If it is not more than 0, the default value is specified.  The default value is 4096.
+.RE
+.RS
+`\fIncnum\fR' specifies the maximum number of non\-leaf nodes to be cached.  If it is not more than 0, the default value is specified.  The default value is 512.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the caching parameters should be set before the database is opened.  Leaf nodes and non\-leaf nodes are used in column indices.
+.RE
+.RE
+.PP
+The function `tctdbsetxmsiz' is used in order to set the size of the extra mapped memory of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbsetxmsiz(TCTDB *\fItdb\fB, int64_t \fIxmsiz\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object which is not opened.
+.RE
+.RS
+`\fIxmsiz\fR' specifies the size of the extra mapped memory.  If it is not more than 0, the extra mapped memory is disabled.  The default size is 67108864.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the mapping parameters should be set before the database is opened.
+.RE
+.RE
+.PP
+The function `tctdbsetdfunit' is used in order to set the unit step number of auto defragmentation of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbsetdfunit(TCTDB *\fItdb\fB, int32_t \fIdfunit\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object which is not opened.
+.RE
+.RS
+`\fIdfunit\fR' specifie the unit step number.  If it is not more than 0, the auto defragmentation is disabled.  It is disabled by default.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the defragmentation parameters should be set before the database is opened.
+.RE
+.RE
+.PP
+The function `tctdbopen' is used in order to open a database file and connect a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbopen(TCTDB *\fItdb\fB, const char *\fIpath\fB, int \fIomode\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object which is not opened.
+.RE
+.RS
+`\fIpath\fR' specifies the path of the database file.
+.RE
+.RS
+`\fIomode\fR' specifies the connection mode: `TDBOWRITER' as a writer, `TDBOREADER' as a reader.  If the mode is `TDBOWRITER', the following may be added by bitwise-or: `TDBOCREAT', which means it creates a new database if not exist, `TDBOTRUNC', which means it creates a new database regardless if one exists, `TDBOTSYNC', which means every transaction synchronizes updated contents with the device.  Both of `TDBOREADER' and `TDBOWRITER' can be added to by bitwise-or: `TDBONOLCK', which means it opens the database file without file locking, or `TDBOLCKNB', which means locking is performed without blocking.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tctdbclose' is used in order to close a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbclose(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Update of a database is assured to be written when the database is closed.  If a writer opens a database but does not close it appropriately, the database will be broken.
+.RE
+.RE
+.PP
+The function `tctdbput' is used in order to store a record into a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbput(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB, TCMAP *\fIcols\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIpksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+`\fIcols\fR' specifies a map object containing columns.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.
+.RE
+.RE
+.PP
+The function `tctdbput2' is used in order to store a string record into a table database object with a zero separated column string.
+.PP
+.RS
+.br
+\fBbool tctdbput2(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB, const void *\fIcbuf\fB, int \fIcsiz\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIpksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+`\fIcbuf\fR' specifies the pointer to the region of the zero separated column string where the name and the value of each column are situated one after the other.
+.RE
+.RS
+`\fIcsiz\fR' specifies the size of the region of the column string.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.
+.RE
+.RE
+.PP
+The function `tctdbput3' is used in order to store a string record into a table database object with a tab separated column string.
+.PP
+.RS
+.br
+\fBbool tctdbput3(TCTDB *\fItdb\fB, const char *\fIpkstr\fB, const char *\fIcstr\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkstr\fR' specifies the string of the primary key.
+.RE
+.RS
+`\fIcstr\fR' specifies the string of the the tab separated column string where the name and the value of each column are situated one after the other.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.
+.RE
+.RE
+.PP
+The function `tctdbputkeep' is used in order to store a new record into a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbputkeep(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB, TCMAP *\fIcols\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIpksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+`\fIcols\fR' specifies a map object containing columns.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, this function has no effect.
+.RE
+.RE
+.PP
+The function `tctdbputkeep2' is used in order to store a new string record into a table database object with a zero separated column string.
+.PP
+.RS
+.br
+\fBbool tctdbputkeep2(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB, const void *\fIcbuf\fB, int \fIcsiz\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIpksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+`\fIcbuf\fR' specifies the pointer to the region of the zero separated column string where the name and the value of each column are situated one after the other.
+.RE
+.RS
+`\fIcsiz\fR' specifies the size of the region of the column string.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, this function has no effect.
+.RE
+.RE
+.PP
+The function `tctdbputkeep3' is used in order to store a new string record into a table database object with a tab separated column string.
+.PP
+.RS
+.br
+\fBbool tctdbputkeep3(TCTDB *\fItdb\fB, const char *\fIpkstr\fB, const char *\fIcstr\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkstr\fR' specifies the string of the primary key.
+.RE
+.RS
+`\fIcstr\fR' specifies the string of the the tab separated column string where the name and the value of each column are situated one after the other.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, this function has no effect.
+.RE
+.RE
+.PP
+The function `tctdbputcat' is used in order to concatenate columns of the existing record in a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbputcat(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB, TCMAP *\fIcols\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIpksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+`\fIcols\fR' specifies a map object containing columns.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If there is no corresponding record, a new record is created.
+.RE
+.RE
+.PP
+The function `tctdbputcat2' is used in order to concatenate columns in a table database object with a zero separated column string.
+.PP
+.RS
+.br
+\fBbool tctdbputcat2(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB, const void *\fIcbuf\fB, int \fIcsiz\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIpksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+`\fIcbuf\fR' specifies the pointer to the region of the zero separated column string where the name and the value of each column are situated one after the other.
+.RE
+.RS
+`\fIcsiz\fR' specifies the size of the region of the column string.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If there is no corresponding record, a new record is created.
+.RE
+.RE
+.PP
+The function `tctdbputcat3' is used in order to concatenate columns in a table database object with with a tab separated column string.
+.PP
+.RS
+.br
+\fBbool tctdbputcat3(TCTDB *\fItdb\fB, const char *\fIpkstr\fB, const char *\fIcstr\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkstr\fR' specifies the string of the primary key.
+.RE
+.RS
+`\fIcstr\fR' specifies the string of the the tab separated column string where the name and the value of each column are situated one after the other.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If there is no corresponding record, a new record is created.
+.RE
+.RE
+.PP
+The function `tctdbout' is used in order to remove a record of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbout(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIpksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tctdbout2' is used in order to remove a string record of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbout2(TCTDB *\fItdb\fB, const char *\fIpkstr\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIpkstr\fR' specifies the string of the primary key.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tctdbget' is used in order to retrieve a record in a table database object.
+.PP
+.RS
+.br
+\fBTCMAP *tctdbget(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+`\fIpkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIpksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+If successful, the return value is a map object of the columns of the corresponding record.  `NULL' is returned if no record corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tcmapnew', it should be deleted with the function `tcmapdel' when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tctdbget2' is used in order to retrieve a record in a table database object as a zero separated column string.
+.PP
+.RS
+.br
+\fBchar *tctdbget2(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB, int *\fIsp\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+`\fIpkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIpksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+`\fIsp\fR' specifies the pointer to the variable into which the size of the region of the return value is assigned.
+.RE
+.RS
+If successful, the return value is the pointer to the region of the column string of the corresponding record.  `NULL' is returned if no record corresponds.
+.RE
+.RS
+Because an additional zero code is appended at the end of the region of the return value, the return value can be treated as a character string.  Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tctdbget3' is used in order to retrieve a string record in a table database object as a tab separated column string.
+.PP
+.RS
+.br
+\fBchar *tctdbget3(TCTDB *\fItdb\fB, const char *\fIpkstr\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+`\fIpkstr\fR' specifies the string of the primary key.
+.RE
+.RS
+If successful, the return value is the tab separated column string of the corresponding record.  `NULL' is returned if no record corresponds.
+.RE
+.RS
+Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tctdbvsiz' is used in order to get the size of the value of a record in a table database object.
+.PP
+.RS
+.br
+\fBint tctdbvsiz(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+If successful, the return value is the size of the value of the corresponding record, else, it is \-1.
+.RE
+.RE
+.PP
+The function `tctdbvsiz2' is used in order to get the size of the value of a string record in a table database object.
+.PP
+.RS
+.br
+\fBint tctdbvsiz2(TCTDB *\fItdb\fB, const char *\fIpkstr\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the primary key.
+.RE
+.RS
+If successful, the return value is the size of the value of the corresponding record, else, it is \-1.
+.RE
+.RE
+.PP
+The function `tctdbiterinit' is used in order to initialize the iterator of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbiterinit(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+The iterator is used in order to access the primary key of every record stored in a database.
+.RE
+.RE
+.PP
+The function `tctdbiternext' is used in order to get the next primary key of the iterator of a table database object.
+.PP
+.RS
+.br
+\fBvoid *tctdbiternext(TCTDB *\fItdb\fB, int *\fIsp\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+`\fIsp\fR' specifies the pointer to the variable into which the size of the region of the return value is assigned.
+.RE
+.RS
+If successful, the return value is the pointer to the region of the next primary key, else, it is `NULL'.  `NULL' is returned when no record is to be get out of the iterator.
+.RE
+.RS
+Because an additional zero code is appended at the end of the region of the return value, the return value can be treated as a character string.  Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.  It is possible to access every record by iteration of calling this function.  It is allowed to update or remove records whose keys are fetched while the iteration.  However, it is not assured if updating the database is occurred while the iteration.  Besides, the order of this traversal access method is arbitrary, so it is not assured that the order of storing matches the one of the traversal access.
+.RE
+.RE
+.PP
+The function `tctdbiternext2' is used in order to get the next primary key string of the iterator of a table database object.
+.PP
+.RS
+.br
+\fBchar *tctdbiternext2(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+If successful, the return value is the string of the next primary key, else, it is `NULL'.  `NULL' is returned when no record is to be get out of the iterator.
+.RE
+.RS
+Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.  It is possible to access every record by iteration of calling this function.  However, it is not assured if updating the database is occurred while the iteration.  Besides, the order of this traversal access method is arbitrary, so it is not assured that the order of storing matches the one of the traversal access.
+.RE
+.RE
+.PP
+The function `tctdbiternext3' is used in order to get the columns of the next record of the iterator of a table database object.
+.PP
+.RS
+.br
+\fBTCMAP *tctdbiternext3(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+If successful, the return value is a map object of the columns of the next record, else, it is `NULL'.  `NULL' is returned when no record is to be get out of the iterator.  The primary key is added into the map as a column of an empty string key.
+.RE
+.RS
+Because the object of the return value is created with the function `tcmapnew', it should be deleted with the function `tcmapdel' when it is no longer in use.  It is possible to access every record by iteration of calling this function.  However, it is not assured if updating the database is occurred while the iteration.  Besides, the order of this traversal access method is arbitrary, so it is not assured that the order of storing matches the one of the traversal access.
+.RE
+.RE
+.PP
+The function `tctdbfwmkeys' is used in order to get forward matching primary keys in a table database object.
+.PP
+.RS
+.br
+\fBTCLIST *tctdbfwmkeys(TCTDB *\fItdb\fB, const void *\fIpbuf\fB, int \fIpsiz\fB, int \fImax\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+`\fIpbuf\fR' specifies the pointer to the region of the prefix.
+.RE
+.RS
+`\fIpsiz\fR' specifies the size of the region of the prefix.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of keys to be fetched.  If it is negative, no limit is specified.
+.RE
+.RS
+The return value is a list object of the corresponding keys.  This function does never fail.  It returns an empty list even if no key corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.  Note that this function may be very slow because every key in the database is scanned.
+.RE
+.RE
+.PP
+The function `tctdbfwmkeys2' is used in order to get forward matching string primary keys in a table database object.
+.PP
+.RS
+.br
+\fBTCLIST *tctdbfwmkeys2(TCTDB *\fItdb\fB, const char *\fIpstr\fB, int \fImax\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+`\fIpstr\fR' specifies the string of the prefix.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of keys to be fetched.  If it is negative, no limit is specified.
+.RE
+.RS
+The return value is a list object of the corresponding keys.  This function does never fail.  It returns an empty list even if no key corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.  Note that this function may be very slow because every key in the database is scanned.
+.RE
+.RE
+.PP
+The function `tctdbaddint' is used in order to add an integer to a column of a record in a table database object.
+.PP
+.RS
+.br
+\fBint tctdbaddint(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB, int \fInum\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+`\fInum\fR' specifies the additional value.
+.RE
+.RS
+If successful, the return value is the summation value, else, it is `INT_MIN'.
+.RE
+.RS
+The additional value is stored as a decimal string value of a column whose name is "_num".  If no record corresponds, a new record with the additional value is stored.
+.RE
+.RE
+.PP
+The function `tctdbadddouble' is used in order to add a real number to a column of a record in a table database object.
+.PP
+.RS
+.br
+\fBdouble tctdbadddouble(TCTDB *\fItdb\fB, const void *\fIpkbuf\fB, int \fIpksiz\fB, double \fInum\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the primary key.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the primary key.
+.RE
+.RS
+`\fInum\fR' specifies the additional value.
+.RE
+.RS
+If successful, the return value is the summation value, else, it is Not\-a\-Number.
+.RE
+.RS
+The additional value is stored as a decimal string value of a column whose name is "_num".  If no record corresponds, a new record with the additional value is stored.
+.RE
+.RE
+.PP
+The function `tctdbsync' is used in order to synchronize updated contents of a table database object with the file and the device.
+.PP
+.RS
+.br
+\fBbool tctdbsync(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+This function is useful when another process connects to the same database file.
+.RE
+.RE
+.PP
+The function `tctdboptimize' is used in order to optimize the file of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdboptimize(TCTDB *\fItdb\fB, int64_t \fIbnum\fB, int8_t \fIapow\fB, int8_t \fIfpow\fB, uint8_t \fIopts\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIbnum\fR' specifies the number of elements of the bucket array.  If it is not more than 0, the default value is specified.  The default value is two times of the number of records.
+.RE
+.RS
+`\fIapow\fR' specifies the size of record alignment by power of 2.  If it is negative, the current setting is not changed.
+.RE
+.RS
+`\fIfpow\fR' specifies the maximum number of elements of the free block pool by power of 2.  If it is negative, the current setting is not changed.
+.RE
+.RS
+`\fIopts\fR' specifies options by bitwise-or: `TDBTLARGE' specifies that the size of the database can be larger than 2GB by using 64\-bit bucket array, `TDBTDEFLATE' specifies that each record is compressed with Deflate encoding, `TDBTBZIP' specifies that each record is compressed with BZIP2 encoding, `TDBTTCBS' specifies that each record is compressed with TCBS encoding.  If it is `UINT8_MAX', the current setting is not changed.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+This function is useful to reduce the size of the database file with data fragmentation by successive updating.
+.RE
+.RE
+.PP
+The function `tctdbvanish' is used in order to remove all records of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbvanish(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tctdbcopy' is used in order to copy the database file of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbcopy(TCTDB *\fItdb\fB, const char *\fIpath\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+`\fIpath\fR' specifies the path of the destination file.  If it begins with `@', the trailing substring is executed as a command line.
+.RE
+.RS
+If successful, the return value is true, else, it is false.  False is returned if the executed command returns non\-zero code.
+.RE
+.RS
+The database file is assured to be kept synchronized and not modified while the copying or executing operation is in progress.  So, this function is useful to create a backup file of the database file.
+.RE
+.RE
+.PP
+The function `tctdbtranbegin' is used in order to begin the transaction of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbtranbegin(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+The database is locked by the thread while the transaction so that only one transaction can be activated with a database object at the same time.  Thus, the serializable isolation level is assumed if every database operation is performed in the transaction.  Because all pages are cached on memory while the transaction, the amount of referred records is limited by the memory capacity.  If the database is closed during transaction, the transaction is aborted implicitly.
+.RE
+.RE
+.PP
+The function `tctdbtrancommit' is used in order to commit the transaction of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbtrancommit(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Update in the transaction is fixed when it is committed successfully.
+.RE
+.RE
+.PP
+The function `tctdbtranabort' is used in order to abort the transaction of a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbtranabort(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Update in the transaction is discarded when it is aborted.  The state of the database is rollbacked to before transaction.
+.RE
+.RE
+.PP
+The function `tctdbpath' is used in order to get the file path of a table database object.
+.PP
+.RS
+.br
+\fBconst char *tctdbpath(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+The return value is the path of the database file or `NULL' if the object does not connect to any database file.
+.RE
+.RE
+.PP
+The function `tctdbrnum' is used in order to get the number of records ccccof a table database object.
+.PP
+.RS
+.br
+\fBuint64_t tctdbrnum(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+The return value is the number of records or 0 if the object does not connect to any database file.
+.RE
+.RE
+.PP
+The function `tctdbfsiz' is used in order to get the size of the database file of a table database object.
+.PP
+.RS
+.br
+\fBuint64_t tctdbfsiz(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+The return value is the size of the database file or 0 if the object does not connect to any database file.
+.RE
+.RE
+.PP
+The function `tctdbsetindex' is used in order to set a column index to a table database object.
+.PP
+.RS
+.br
+\fBbool tctdbsetindex(TCTDB *\fItdb\fB, const char *\fIname\fB, int \fItype\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+`\fIname\fR' specifies the name of a column.  If the name of an existing index is specified, the index is rebuilt.  An empty string means the primary key.
+.RE
+.RS
+`\fItype\fR' specifies the index type: `TDBITLEXICAL' for lexical string, `TDBITDECIMAL' for decimal string, `TDBITTOKEN' for token inverted index, `TDBITQGRAM' for q\-gram inverted index.  If it is `TDBITOPT', the index is optimized.  If it is `TDBITVOID', the index is removed.  If `TDBITKEEP' is added by bitwise\-or and the index exists, this function merely returns failure.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the setting indices should be set after the database is opened.
+.RE
+.RE
+.PP
+The function `tctdbgenuid' is used in order to generate a unique ID number of a table database object.
+.PP
+.RS
+.br
+\fBint64_t tctdbgenuid(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object connected as a writer.
+.RE
+.RS
+The return value is the new unique ID number or \-1 on failure.
+.RE
+.RE
+.PP
+The function `tctdbqrynew' is used in order to create a query object.
+.PP
+.RS
+.br
+\fBTDBQRY *tctdbqrynew(TCTDB *\fItdb\fB);\fR
+.RS
+`\fItdb\fR' specifies the table database object.
+.RE
+.RS
+The return value is the new query object.
+.RE
+.RE
+.PP
+The function `tctdbqrydel' is used in order to delete a query object.
+.PP
+.RS
+.br
+\fBvoid tctdbqrydel(TDBQRY *\fIqry\fB);\fR
+.RS
+`\fIqry\fR' specifies the query object.
+.RE
+.RE
+.PP
+The function `tctdbqryaddcond' is used in order to add a narrowing condition to a query object.
+.PP
+.RS
+.br
+\fBvoid tctdbqryaddcond(TDBQRY *\fIqry\fB, const char *\fIname\fB, int \fIop\fB, const char *\fIexpr\fB);\fR
+.RS
+`\fIqry\fR' specifies the query object.
+.RE
+.RS
+`\fIname\fR' specifies the name of a column.  An empty string means the primary key.
+.RE
+.RS
+`\fIop\fR' specifies an operation type: `TDBQCSTREQ' for string which is equal to the expression, `TDBQCSTRINC' for string which is included in the expression, `TDBQCSTRBW' for string which begins with the expression, `TDBQCSTREW' for string which ends with the expression, `TDBQCSTRAND' for string which includes all tokens in the expression, `TDBQCSTROR' for string which includes at least one token in the expression, `TDBQCSTROREQ' for string which is equal to at least one token in the expression, `TDBQCSTRRX' for string which matches regular expressions of the expression, `TDBQCNUMEQ' for number which is equal to the expression, `TDBQCNUMGT' for number which is greater than the expression, `TDBQCNUMGE' for number which is greater than or equal to the expression, `TDBQCNUMLT' for number which is less than the expression, `TDBQCNUMLE' for number which is less than or equal to the expression, `TDBQCNUMBT' for number which is between two tokens of the expression, `TDBQCNUMOREQ' for number which is equal to at least one token in the expression, `TDBQCFTSPH' for full\-text search with the phrase of the expression, `TDBQCFTSAND' for full\-text search with all tokens in the expression, `TDBQCFTSOR' for full\-text search with at least one token in the expression, `TDBQCFTSEX' for full\-text search with the compound expression.  All operations can be flagged by bitwise\-or: `TDBQCNEGATE' for negation, `TDBQCNOIDX' for using no index.
+.RE
+.RS
+`\fIexpr\fR' specifies an operand exression.
+.RE
+.RE
+.PP
+The function `tctdbqrysetorder' is used in order to set the order of a query object.
+.PP
+.RS
+.br
+\fBvoid tctdbqrysetorder(TDBQRY *\fIqry\fB, const char *\fIname\fB, int \fItype\fB);\fR
+.RS
+`\fIqry\fR' specifies the query object.
+.RE
+.RS
+`\fIname\fR' specifies the name of a column.  An empty string means the primary key.
+.RE
+.RS
+`\fItype\fR' specifies the order type: `TDBQOSTRASC' for string ascending, `TDBQOSTRDESC' for string descending, `TDBQONUMASC' for number ascending, `TDBQONUMDESC' for number descending.
+.RE
+.RE
+.PP
+The function `tctdbqrysetlimit' is used in order to set the limit number of records of the result of a query object.
+.PP
+.RS
+.br
+\fBvoid tctdbqrysetlimit(TDBQRY *\fIqry\fB, int \fImax\fB, int \fIskip\fB);\fR
+.RS
+`\fIqry\fR' specifies the query object.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of records of the result.  If it is negative, no limit is specified.
+.RE
+.RS
+`\fIskip\fR' specifies the number of skipped records of the result.  If it is not more than 0, no record is skipped.
+.RE
+.RE
+.PP
+The function `tctdbqrysearch' is used in order to execute the search of a query object.
+.PP
+.RS
+.br
+\fBTCLIST *tctdbqrysearch(TDBQRY *\fIqry\fB);\fR
+.RS
+`\fIqry\fR' specifies the query object.
+.RE
+.RS
+The return value is a list object of the primary keys of the corresponding records.  This function does never fail.  It returns an empty list even if no record corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tctdbqrysearchout' is used in order to remove each record corresponding to a query object.
+.PP
+.RS
+.br
+\fBbool tctdbqrysearchout(TDBQRY *\fIqry\fB);\fR
+.RS
+`\fIqry\fR' specifies the query object of the database connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tctdbqryproc' is used in order to process each record corresponding to a query object.
+.PP
+.RS
+.br
+\fBbool tctdbqryproc(TDBQRY *\fIqry\fB, TDBQRYPROC \fIproc\fB, void *\fIop\fB);\fR
+.RS
+`\fIqry\fR' specifies the query object of the database connected as a writer.
+.RE
+.RS
+`\fIproc\fR' specifies the pointer to the iterator function called for each record.  It receives four parameters.  The first parameter is the pointer to the region of the primary key.  The second parameter is the size of the region of the primary key.  The third parameter is a map object containing columns.  The fourth parameter is the pointer to the optional opaque object.  It returns flags of the post treatment by bitwise-or: `TDBQPPUT' to modify the record, `TDBQPOUT' to remove the record, `TDBQPSTOP' to stop the iteration.
+.RE
+.RS
+`\fIop\fR' specifies an arbitrary pointer to be given as a parameter of the iterator function.  If it is not needed, `NULL' can be specified.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tctdbqryhint' is used in order to get the hint string of a query object.
+.PP
+.RS
+.br
+\fBconst char *tctdbqryhint(TDBQRY *\fIqry\fB);\fR
+.RS
+`\fIqry\fR' specifies the query object.
+.RE
+.RS
+The return value is the hint string.
+.RE
+.RE
+.PP
+The function `tctdbmetasearch' is used in order to retrieve records with multiple query objects and get the set of the result.
+.PP
+.RS
+.br
+\fBTCLIST *tctdbmetasearch(TDBQRY **\fIqrys\fB, int \fInum\fB, int \fItype\fB);\fR
+.RS
+`\fIqrys\fR' specifies an array of the query objects.
+.RE
+.RS
+`\fInum\fR' specifies the number of elements of the array.
+.RE
+.RS
+`\fItype\fR' specifies a set operation type: `TDBMSUNION' for the union set, `TDBMSISECT' for the intersection set, `TDBMSDIFF' for the difference set.
+.RE
+.RS
+The return value is a list object of the primary keys of the corresponding records.  This function does never fail.  It returns an empty list even if no record corresponds.
+.RE
+.RS
+If the first query object has the order setting, the result array is sorted by the order.  Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.
+.RE
+.RE
+
+.SH SEE ALSO
+.PP
+.BR tcttest (1),
+.BR tctmttest (1),
+.BR tctmgr (1),
+.BR tokyocabinet (3)

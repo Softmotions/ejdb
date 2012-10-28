@@ -1,0 +1,19 @@
+# Tokyo Cabinet magic data
+0       string    ToKyO\ CaBiNeT\n   Tokyo Cabinet
+>14     string    x                  \b (%s)
+>32     byte      0                  \b, Hash
+>32     byte      1                  \b, B+ tree
+>32     byte      2                  \b, Fixed-length
+>32     byte      3                  \b, Table
+>33     byte      &1                 \b, [open]
+>33     byte      &2                 \b, [fatal]
+>34     byte      x                  \b, apow=%d
+>35     byte      x                  \b, fpow=%d
+>36     byte      &1                 \b, [large]
+>36     byte      &2                 \b, [deflate]
+>36     byte      &4                 \b, [bzip]
+>36     byte      &8                 \b, [tcbs]
+>36     byte      &16                \b, [excodec]
+>40     lelong    x                  \b, bnum=%d
+>48     lelong    x                  \b, rnum=%d
+>56     lelong    x                  \b, fsiz=%d

@@ -1,0 +1,311 @@
+/*
+ * File:   ejdb.h
+ * Author: adam
+ *
+ * Created on September 8, 2012, 10:09 PM
+ */
+
+#ifndef EJDB_H
+#define        EJDB_H
+
+#include "myconf.h"
+#include "bson.h"
+#include "tcutil.h"
+
+EJDB_EXTERN_C_START
+
+struct EJDB; /**> EJDB database object. */
+typedef struct EJDB EJDB;
+
+struct EJCOLL; /**> EJDB collection handle. */
+typedef struct EJCOLL EJCOLL;
+
+struct EJQ; /**< EJDB query. */
+typedef struct EJQ EJQ;
+
+typedef struct { /**< EJDB collection tuning options. */
+    bool large; /**< Large collection. It can be larger than 2GB. Default false */
+    bool compressed; /**< Collection records will be compressed with DEFLATE compression. Default: false */
+    int64_t records; /**< Expected records number in the collection. Default: 128K */
+    int cachedrecords; /**< Maximum number of cached records. Default: 0 */
+} EJCOLLOPTS;
+
+
+#define JBMAXCOLNAMELEN 128
+
+enum { /** Error codes */
+    JDBEINVALIDCOLNAME = 9000, /**< Invalid collection name. */
+    JDBEINVALIDBSON = 9001, /**< Invalid bson object. */
+    JDBEQINVALIDQCONTROL = 9002, /**< Invalid query control field starting with '$'. */
+    JDBEQINOPNOTARRAY = 9003, /**< $strand, $stror, $in, $nin, $bt keys requires not empty array value. */
+    JDBEMETANVALID = 9004, /**< Inconsistent database metadata. */
+    JDBEFPATHINVALID = 9005, /**< Invalid field path value. */
+    JDBEQINVALIDQRX = 9006, /**< Invalid query regexp value. */
+    JDBEQRSSORTING = 9007, /**< Result set sorting error. */
+    JDBQINVALID = 9008 /**< Query generic error. */
+};
+
+enum { /** Database open modes */
+    JDBOREADER = 1 << 0, /**< Open as a reader. */
+    JDBOWRITER = 1 << 1, /**< Open as a writer. */
+    JDBOCREAT = 1 << 2, /**< Create if db file not exists. */
+    JDBOTRUNC = 1 << 3, /**< Truncate db. */
+    JDBONOLCK = 1 << 4, /**< Open without locking. */
+    JDBOLCKNB = 1 << 5, /**< Lock without blocking. */
+    JDBOTSYNC = 1 << 6 /**< Synchronize every transaction. */
+};
+
+enum { /** Index modes, index types. */
+    JDIDXDROP = 1 << 0, /**< Drop index. */
+    JDIDXDROPALL = 1 << 1, /**< Drop index for all types. */
+    JDIDXOP = 1 << 2, /**< Optimize index. */
+    JDIDXREBLD = 1 << 3, /**< Rebuild index. */
+    JDIDXNUM = 1 << 4, /**< Number index. */
+    JDIDXSTR = 1 << 5, /**< String index.*/
+    JDIDXARR = 1 << 6, /**< Array token index. */
+};
+
+enum { /**> Query search mode flags in ejdbqrysearch() */
+    EJQRYCOUNT = 1 /**> Query only count(*) */
+};
+
+/**
+ * Get the message string corresponding to an error code.
+ * @param ecode `ecode' specifies the error code.
+ * @return The return value is the message string of the error code.
+ */
+EJDB_EXPORT const char *ejdberrmsg(int ecode);
+
+/**
+ * Get the last happened error code of a EJDB database object.
+ * @param jb
+ * @return The return value is the last happened error code.
+ */
+EJDB_EXPORT int ejdbecode(EJDB *jb);
+
+/**
+ * Create a EJDB database object. On error returns NULL.
+ * Created pointer must be freed by ejdbdel()
+ * @return The return value is the new EJDB database object or NULL if error.
+ */
+EJDB_EXPORT EJDB* ejdbnew(void);
+
+/**
+ * Delete database object. If the database is not closed, it is closed implicitly.
+ * Note that the deleted object and its derivatives can not be used anymore
+ * @param jb
+ */
+EJDB_EXPORT void ejdbdel(EJDB *jb);
+
+/**
+ * Close a table database object. If a writer opens a database but does not close it appropriately,
+ * the database will be broken.
+ * @param jb EJDB handle.
+ * @return If successful return true, otherwise return false.
+ */
+EJDB_EXPORT bool ejdbclose(EJDB *jb);
+
+/**
+ * Opens EJDB database.
+ * @param jb   Database object created with `ejdbnew'
+ * @param path Path to the database file.
+ * @param mode Open mode bitmask flags:
+ * `JDBOREADER` Open as a reader.
+ * `JDBOWRITER` Open as a writer.
+ * `JDBOCREAT` Create db if it not exists
+ * `JDBOTRUNC` Truncate db.
+ * `JDBONOLCK` Open without locking.
+ * `JDBOLCKNB` Lock without blocking.
+ * `JDBOTSYNC` Synchronize every transaction.
+ * @return
+ */
+EJDB_EXPORT bool ejdbopen(EJDB *jb, const char *path, int mode);
+
+/**
+ * Retrieve collection handle for collection specified `collname`.
+ * If collection with specified name does't exists it will return NULL.
+ * @param jb EJDB handle.
+ * @param colname Name of collection.
+ * @return If error NULL will be returned.
+ */
+EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char* colname);
+
+/**
+ * Same as ejdbgetcoll() but automatically creates new collection
+ * if it does't exists.
+ *
+ * @param jb EJDB handle.
+ * @param colname Name of collection.
+ * @param opts Options to be applied for newly created collection.
+ * @return Collection handle or NULL if error.
+ */
+EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char* colname, EJCOLLOPTS *opts);
+
+/**
+ * Removes collections specified by `colname`
+ * @param jb EJDB handle.
+ * @param colname Name of collection.
+ * @param unlink It true the collection db file and all of its index files will be removed.
+ * @return If successful return true, otherwise return false.
+ */
+EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char* colname, bool unlinkfile);
+
+/**
+ * Persist BSON object in the collection.
+ * If saved bson does't have _id primary key then `oid` will be set to generated bson _id,
+ * otherwise `oid` will be set to the current bson's _id field.
+ *
+ * @param coll JSON collection handle.
+ * @param bson BSON object id pointer.
+ * @return If successful return true, otherwise return false.
+ */
+EJDB_EXPORT bool ejdbsavebson(EJCOLL* coll, bson* bs, bson_oid_t* oid);
+
+/**
+ * Remove BSON object from collection.
+ * The `oid` argument should points the primary key (_id)
+ * of the bson record to be removed.
+ * @param coll JSON collection ref.
+ * @param oid BSON object id pointer.
+ * @return
+ */
+EJDB_EXPORT bool ejdbrmbson(EJCOLL* coll, bson_oid_t* oid);
+
+/**
+ * Load BSON object with specified 'oid'.
+ * If loaded bson is not NULL it must be freed by bson_del().
+ * @param coll
+ * @param oid
+ * @return BSON object if exists otherwise return NULL.
+ */
+EJDB_EXPORT bson* ejdbloadbson(EJCOLL* coll, const bson_oid_t* oid);
+
+/**
+ * Create query object.
+ * Sucessfully created queries must be destroyed with ejdbquerydel().
+ *
+ * EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
+ *
+ *  - Supported queries:
+ *      - Simple matching of String OR Number OR Array value:
+ *          -   {'bson.field.path' : 'val', ...}
+ *      - $not Negate operation.
+ *          -   {'json.field.path' : {'$not' : val}} //Field not equal to val
+ *          -   {'json.field.path' : {'$not' : {'$begin' : prefix}}} //Field not begins with val
+ *      - $begin String starts with prefix
+ *          -   {'json.field.path' : {'$begin' : prefix}}
+ *      - $gt, $gte (>, >=) and $lt, $lte for number types:
+ *          -   {'json.field.path' : {'$gt' : number}, ...}
+ *      - $bt Between for number types:
+ *          -   {'json.field.path' : {'$bt' : [num1, num2]}}
+ *      - $in String OR Number OR Array val matches to value in specified array:
+ *          -   {'json.field.path' : {'$in' : [val1, val2, val3]}}
+ *      - $nin - Not IN
+ *      - $strand String tokens OR String array val matches all tokens in specified array:
+ *          -   {'json.field.path' : {'$strand' : [val1, val2, val3]}}
+ *      - $stror String tokens OR String array val matches any token in specified array:
+ *          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
+ *
+ *  NOTE: Negate operations: $not and $nin not using indexes
+ *  so they can be slow in comparison to other matching operations.
+ *
+ *  NOTE: Only one index can be used in search query operation.
+ *
+ *  QUERY HINTS (specified by `hints` argument):
+ *      - $max Maximum number in the result set
+ *      - $skip Number of skipped results in the result set
+ *      - $orderby Sorting order of query fields.
+ *          Eg: ORDER BY field1 ASC, field2 DESC
+ *          hints:    {
+ *                      "$orderby" : {
+ *                          "field1" : 1,
+ *                          "field2" : -1
+ *                      }
+ *                    }
+ *
+ * Many query examples can be found in `testejdb/t2.c` test case.
+ *
+ * @param EJDB database handle.
+ * @param qobj Main BSON query object.
+ * @param orqobjs Array of additional OR query objects (joined with OR predicate).
+ * @param orqobjsnum Number of OR query objects.
+ * @param hints BSON object with query hints.
+ * @return On success return query handle. On error returns NULL.
+ */
+EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints);
+
+/**
+ * Destroy query object created with ejdbcreatequery().
+ * @param q
+ */
+EJDB_EXPORT void ejdbquerydel(EJQ* q);
+
+/**
+ * Set index for JSON field in EJDB collection.
+ *
+ *  - Available index types:
+ *      - `JDIDXSTR` String index for JSON string values.
+ *      - `JDIDXNUM` Index for JSON number values.
+ *      - `JDIDXARR` Token index for JSON arrays and string values.
+ *
+ *  - One JSON field can have several indexes for different types.
+ *
+ *  - Available index operations:
+ *      - `JDIDXDROP` Drop index of specified type.
+ *              - Eg: flag = JDIDXDROP | JDIDXNUM (Drop number index)
+ *      - `JDIDXDROPALL` Drop index for all types.
+ *      - `JDIDXREBLD` Rebuild index of specified type.
+ *      - `JDIDXOP` Optimize index of specified type.
+ *
+ *  Examples:
+ *      - Set index for JSON path `addressbook.number` for strings and numbers:
+ *          `ejdbsetindex(ccoll, "album.number", JDIDXSTR | JDIDXNUM)`
+ *      - Set index for array:
+ *          `ejdbsetindex(ccoll, "album.tags", JDIDXARR)`
+ *      - Rebuild previous index:
+ *          `ejdbsetindex(ccoll, "album.tags", JDIDXARR | JDIDXREBLD)`
+ *
+ *   Many index examples can be found in `testejdb/t2.c` test case.
+ *
+ * @param coll Collection handle.
+ * @param ipath BSON field path.
+ * @param flags Index flags.
+ * @return
+ */
+EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
+
+/**
+ * Execute query against EJDB collection.
+ *
+ * @param jcoll EJDB database
+ * @param q Query handle created with ejdbcreatequery()
+ * @param count Output count pointer. Result set size will be stored into it.
+ * @param qflags Execution flag. If EJQRYCOUNT is set the only count of matching records will be computed
+ *         without resultset, this operation is analog of count(*) in SQL and can be faster than operations with resultsets.
+ * @param log Optional extended string to collect debug information during query execution, can be NULL.
+ * @return TCLIST with matched bson records data.
+ * If (qflags & EJQRYCOUNT) then NULL will be returned
+ * and only count reported.
+ */
+EJDB_EXPORT TCLIST* ejdbqrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
+
+/**
+ * Synchronize content of a EJDB collection database with the file on device.
+ * @param jcoll EJDB collection.
+ * @return On success return true.
+ */
+EJDB_EXPORT bool ejdbsyncoll(EJCOLL *jcoll);
+
+/** Begin transaction for EJDB collection. */
+EJDB_EXPORT bool ejdbtranbegin(EJCOLL *coll);
+
+/** Commit transaction for EJDB collection. */
+EJDB_EXPORT bool ejdbtrancommit(EJCOLL *coll);
+
+/** Abort transaction for EJDB collection. */
+EJDB_EXPORT bool ejdbtranabort(EJCOLL *coll);
+
+EJDB_EXTERN_C_END
+
+#endif        /* EJDB_H */
+

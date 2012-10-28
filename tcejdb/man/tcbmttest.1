@@ -1,0 +1,81 @@
+.TH "TCBMTTEST" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcbmttest \- test cases of the B+ tree database API
+
+.SH DESCRIPTION
+.PP
+The command `\fBtcbmttest\fR' is a utility for facility test and performance test.  This command is used in the following format.  `\fIpath\fR' specifies the path of a database file.  `\fItnum\fR' specifies the number of running threads.  `\fIrnum\fR' specifies the number of iterations.  `\fIlmemb\fR' specifies the number of members in each leaf page.  `\fInmemb\fR' specifies the number of members in each non\-leaf page.  `\fIbnum\fR' specifies the number of buckets.  `\fIapow\fR' specifies the power of the alignment.  `\fIfpow\fR' specifies the power of the free block pool.
+.PP
+.RS
+.br
+\fBtcbmttest write \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB \fR[\fB\fIlmemb\fB \fR[\fB\fInmemb\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Store records with keys of 8 bytes.  They change as `00000001', `00000002'...
+.RE
+.br
+\fBtcbmttest read \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-wb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fItnum\fB\fR
+.RS
+Retrieve all records of the database above.
+.RE
+.br
+\fBtcbmttest remove \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-rnd\fR]\fB \fIpath\fB \fItnum\fB\fR
+.RS
+Remove all records of the database above.
+.RE
+.br
+\fBtcbmttest wicked \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-nc\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB\fR
+.RS
+Perform updating operations selected at random.
+.RE
+.br
+\fBtcbmttest typical \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-nc\fR]\fB \fR[\fB\-rr \fInum\fB\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB \fR[\fB\fIlmemb\fB \fR[\fB\fInmemb\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Perform typical operations selected at random.
+.RE
+.br
+\fBtcbmttest race \fR[\fB\-tl\fR]\fB \fR[\fB\-td\fR|\fB\-tb\fR|\fB\-tt\fR|\fB\-tx\fR]\fB \fR[\fB\-xm \fInum\fB\fR]\fB \fR[\fB\-df \fInum\fB\fR]\fB \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB \fItnum\fB \fIrnum\fB \fR[\fB\fIlmemb\fB \fR[\fB\fInmemb\fB \fR[\fB\fIbnum\fB \fR[\fB\fIapow\fB \fR[\fB\fIfpow\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR]\fB\fR
+.RS
+Perform race condition test.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-tl\fR : enable the option `BDBTLARGE'.
+.br
+\fB\-td\fR : enable the option `BDBTDEFLATE'.
+.br
+\fB\-tb\fR : enable the option `BDBTBZIP'.
+.br
+\fB\-tt\fR : enable the option `BDBTTCBS'.
+.br
+\fB\-tx\fR : enable the option `BDBTEXCODEC'.
+.br
+\fB\-xm \fInum\fR\fR : specify the size of the extra mapped memory.
+.br
+\fB\-df \fInum\fR\fR : specify the unit step number of auto defragmentation.
+.br
+\fB\-nl\fR : enable the option `BDBNOLCK'.
+.br
+\fB\-nb\fR : enable the option `BDBLCKNB'.
+.br
+\fB\-rnd\fR : select keys at random.
+.br
+\fB\-wb\fR : use the function `tchdbget3' instead of `tchdbget'.
+.br
+\fB\-nc\fR : omit the comparison test.
+.br
+\fB\-rr \fInum\fR\fR : specify the ratio of reading operation by percentage.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcbtest (1),
+.BR tcbmgr (1),
+.BR tcbdb (3),
+.BR tokyocabinet (3)

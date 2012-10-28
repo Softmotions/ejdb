@@ -1,0 +1,37 @@
+================================================================
+ Tokyo Cabinet: a modern implementation of DBM
+ Copyright (C) 2006-2011 Fal Labs
+================================================================
+
+
+Please read the following documents with a WWW browser.
+How to install Tokyo Cabinet is explained in the specification.
+
+  README         - this file
+  COPYING        - license
+  ChangeLog      - history of enhancement
+  doc/index.html - index of documents
+
+
+Contents of the directory tree is below.
+
+  ./             - sources of Tokyo Cabinet
+  ./doc/         - manuals and specifications
+  ./man/         - manuals for nroff
+  ./example/     - sample code of tutorial
+  ./lab/         - for test and experiment
+  ./bros/        - for comparison with other database managers
+
+
+Tokyo Cabinet is released under the terms of the GNU Lesser General
+Public License.  See the file `COPYING' for details.
+
+Tokyo Cabinet was written by FAL Labs.  You can contact the author
+by e-mail to `hirarin@gmail.com'.
+
+
+Thanks.
+
+
+
+== END OF FILE ==

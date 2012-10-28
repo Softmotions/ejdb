@@ -1,0 +1,81 @@
+.TH "TCUTEST" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcutest \- test cases of the utility API
+
+.SH DESCRIPTION
+.PP
+The command `\fBtcutest\fR' is a utility for facility test and performance test.  This command is used in the following format.  `\fIrnum\fR' specifies the number of iterations.  `\fIanum\fR' specifies the initial number of elements of array.  `\fIbnum\fR' specifies the number of buckets.
+.PP
+.RS
+.br
+\fBtcutest xstr \fIrnum\fB\fR
+.RS
+Perform test of extensible string.
+.RE
+.br
+\fBtcutest list \fR[\fB\-rd\fR]\fB \fIrnum\fB \fR[\fB\fIanum\fB\fR]\fB\fR
+.RS
+Perform test of array list.
+.RE
+.br
+\fBtcutest map \fR[\fB\-rd\fR]\fB \fR[\fB\-tr\fR]\fB \fR[\fB\-rnd\fR]\fB \fR[\fB\-dk\fR|\fB\-dc\fR|\fB\-dai\fR|\fB\-dad\fR|\fB\-dpr\fR]\fB \fIrnum\fB \fR[\fB\fIbnum\fB\fR]\fB\fR
+.RS
+Perform test of hash map.
+.RE
+.br
+\fBtcutest tree \fR[\fB\-rd\fR]\fB \fR[\fB\-tr\fR]\fB \fR[\fB\-rnd\fR]\fB \fR[\fB\-dk\fR|\fB\-dc\fR|\fB\-dai\fR|\fB\-dad\fR|\fB\-dpr\fR]\fB \fIrnum\fB\fR
+.RS
+Perform test of ordered tree.
+.RE
+.br
+\fBtcutest mdb \fR[\fB\-rd\fR]\fB \fR[\fB\-tr\fR]\fB \fR[\fB\-rnd\fR]\fB \fR[\fB\-dk\fR|\fB\-dc\fR|\fB\-dai\fR|\fB\-dad\fR|\fB\-dpr\fR]\fB \fIrnum\fB \fR[\fB\fIbnum\fB\fR]\fB\fR
+.RS
+Perform test of on\-memory hash database.
+.RE
+.br
+\fBtcutest ndb \fR[\fB\-rd\fR]\fB \fR[\fB\-tr\fR]\fB \fR[\fB\-rnd\fR]\fB \fR[\fB\-dk\fR|\fB\-dc\fR|\fB\-dai\fR|\fB\-dad\fR|\fB\-dpr\fR]\fB \fIrnum\fB\fR
+.RS
+Perform test of on\-memory tree database.
+.RE
+.br
+\fBtcutest misc \fIrnum\fB\fR
+.RS
+Perform test of miscellaneous routines.
+.RE
+.br
+\fBtcutest wicked \fIrnum\fB\fR
+.RS
+Perform updating operations of list and map selected at random.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-rd\fR : perform the reading test also.
+.br
+\fB\-tr\fR : perform the iterator test also.
+.br
+\fB\-rnd\fR : select keys at random.
+.br
+\fB\-dk\fR : use the function `tcxxxputkeep' instead of `tcxxxput'.
+.br
+\fB\-dc\fR : use the function `tcxxxputcat' instead of `tcxxxput'.
+.br
+\fB\-dai\fR : use the function `tcxxxaddint' instead of `tcxxxput'.
+.br
+\fB\-dad\fR : use the function `tcxxxadddouble' instead of `tcxxxput'.
+.br
+\fB\-dpr\fR : use the function `tcxxxputproc' instead of `tcxxxput'.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcumttest (1),
+.BR tcucodec (1),
+.BR tcutil (3),
+.BR tokyocabinet (3)

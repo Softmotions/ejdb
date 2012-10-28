@@ -1,0 +1,104 @@
+#! /usr/bin/awk -f
+
+function strip(text){
+  gsub("^ *<[a-zA-Z0-9]*[^>]*>", "", text)
+  gsub("</[a-zA-Z0-9]*> *$", "", text)
+  return text
+}
+
+function unescape(text){
+  gsub("&lt;", "<", text)
+  gsub("&gt;", ">", text)
+  gsub("&quot;", "\"", text)
+  gsub("&amp;", "\\&", text)
+  gsub("-", "\\-", text)
+  return text
+}
+
+BEGIN {
+  date = strftime("%Y-%m-%d")
+  printf(".TH \"%s\" %d \"%s\" \"%s\" \"%s\"\n\n", "INTRO", 3, date, "Man Page", "Tokyo Cabinet")
+}
+
+/ *<h[1-3] *[^>]*>.*<\/h[1-3]> *$/ {
+  text = $0
+  text = strip(text)
+  text = unescape(text)
+  text = toupper(text)
+  printf("\n")
+  printf(".SH %s\n", text)
+}
+
+/ *<p *[^>]*>.*<\/p> *$/ {
+  text = $0
+  text = strip(text)
+  text = gensub("<code *[^>]*>([^<]*)</code>", "\\\\fB\\1\\\\fR", "g", text)
+  text = gensub("<var *[^>]*>([^<]*)</var>", "\\\\fI\\1\\\\fR", "g", text)
+  gsub("<[^>]*>", "", text)
+  text = unescape(text)
+  printf(".PP\n")
+  printf("%s\n", text)
+}
+
+/ *<dl *[^>]*> *$/ {
+  printf(".PP\n")
+  printf(".RS\n")
+}
+/ *<\/dl> *$/ {
+  printf(".RE\n")
+}
+/ *<dt *[^>]*>.*<\/dt> *$/ {
+  text = $0
+  text = strip(text)
+  text = gensub("<var *[^>]*>([^<]*)</var>", "\\\\fI\\1\\\\fB", "g", text)
+  gsub("<[^>]*>", "", text)
+  gsub("[\\||\\[|\\]]", "\\fR&\\fB", text)
+  text = unescape(text)
+  printf(".br\n")
+  printf("\\fB%s\\fR\n", text)
+}
+/ *<dd *[^>]*>.*<\/dd> *$/ {
+  text = $0
+  text = strip(text)
+  text = gensub("<code *[^>]*>([^<]*)</code>", "\\\\fB\\1\\\\fR", "g", text)
+  text = gensub("<var *[^>]*>([^<]*)</var>", "\\\\fI\\1\\\\fR", "g", text)
+  gsub("<[^>]*>", "", text)
+  text = unescape(text)
+  printf(".RS\n")
+  printf("%s\n", text)
+  printf(".RE\n")
+}
+
+/ *<ul *[^>]*> *$/ {
+  printf(".PP\n")
+  printf(".RS\n")
+}
+/ *<\/ul> *$/ {
+  printf(".RE\n")
+}
+/ *<li *[^>]*>.*<\/li> *$/ {
+  text = $0
+  text = strip(text)
+  text = gensub("<code *[^>]*>(.*)</code>", "\\\\fB\\1\\\\fR", "g", text)
+  text = gensub("<var *[^>]*>([^<]*)</var>", "\\\\fI\\1\\\\fR", "g", text)
+  gsub("<[^>]*>", "", text)
+  text = unescape(text)
+  printf("%s\n", text)
+  printf(".br\n")
+}
+
+END {
+  printf("\n")
+  printf(".SH SEE ALSO\n")
+  printf(".PP\n")
+  printf(".BR tcutil (3),\n")
+  printf(".BR tchdb (3),\n")
+  printf(".BR tcbdb (3),\n")
+  printf(".BR tcfdb (3),\n")
+  printf(".BR tctdb (3),\n")
+  printf(".BR tcadb (3)\n")
+  printf(".PP\n")
+  printf("Please see\n")
+  printf(".I http://1978th.net/tokyocabinet/\n")
+  printf("for detail.\n")
+}

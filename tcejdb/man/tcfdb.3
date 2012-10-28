@@ -1,0 +1,975 @@
+.TH "TCFDB" 3 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcfdb \- the fixed-length database API
+
+.SH DESCRIPTION
+.PP
+Fixed\-length database is a file containing an array of fixed\-length elements and is handled with the fixed\-length database API.
+.PP
+To use the fixed\-length database API, include `\fBtcutil.h\fR', `\fBtcfdb.h\fR', and related standard header files.  Usually, write the following description near the front of a source file.
+.PP
+.RS
+.br
+\fB#include <tcutil.h>\fR
+.br
+\fB#include <tcfdb.h>\fR
+.br
+\fB#include <stdlib.h>\fR
+.br
+\fB#include <stdbool.h>\fR
+.br
+\fB#include <stdint.h>\fR
+.RE
+.PP
+Objects whose type is pointer to `\fBTCFDB\fR' are used to handle fixed\-length databases.  A fixed\-length database object is created with the function `\fBtcfdbnew\fR' and is deleted with the function `\fBtcfdbdel\fR'.  To avoid memory leak, it is important to delete every object when it is no longer in use.
+.PP
+Before operations to store or retrieve records, it is necessary to open a database file and connect the fixed\-length database object to it.  The function `\fBtcfdbopen\fR' is used to open a database file and the function `\fBtcfdbclose\fR' is used to close the database file.  To avoid data missing or corruption, it is important to close every database file when it is no longer in use.  It is forbidden for multible database objects in a process to open the same database at the same time.
+
+.SH API
+.PP
+The function `tcfdberrmsg' is used in order to get the message string corresponding to an error code.
+.PP
+.RS
+.br
+\fBconst char *tcfdberrmsg(int \fIecode\fB);\fR
+.RS
+`\fIecode\fR' specifies the error code.
+.RE
+.RS
+The return value is the message string of the error code.
+.RE
+.RE
+.PP
+The function `tcfdbnew' is used in order to create a fixed\-length database object.
+.PP
+.RS
+.br
+\fBTCFDB *tcfdbnew(void);\fR
+.RS
+The return value is the new fixed\-length database object.
+.RE
+.RE
+.PP
+The function `tcfdbdel' is used in order to delete a fixed\-length database object.
+.PP
+.RS
+.br
+\fBvoid tcfdbdel(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+If the database is not closed, it is closed implicitly.  Note that the deleted object and its derivatives can not be used anymore.
+.RE
+.RE
+.PP
+The function `tcfdbecode' is used in order to get the last happened error code of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBint tcfdbecode(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+The return value is the last happened error code.
+.RE
+.RS
+The following error codes are defined: `TCESUCCESS' for success, `TCETHREAD' for threading error, `TCEINVALID' for invalid operation, `TCENOFILE' for file not found, `TCENOPERM' for no permission, `TCEMETA' for invalid meta data, `TCERHEAD' for invalid record header, `TCEOPEN' for open error, `TCECLOSE' for close error, `TCETRUNC' for trunc error, `TCESYNC' for sync error, `TCESTAT' for stat error, `TCESEEK' for seek error, `TCEREAD' for read error, `TCEWRITE' for write error, `TCEMMAP' for mmap error, `TCELOCK' for lock error, `TCEUNLINK' for unlink error, `TCERENAME' for rename error, `TCEMKDIR' for mkdir error, `TCERMDIR' for rmdir error, `TCEKEEP' for existing record, `TCENOREC' for no record found, and `TCEMISC' for miscellaneous error.
+.RE
+.RE
+.PP
+The function `tcfdbsetmutex' is used in order to set mutual exclusion control of a fixed\-length database object for threading.
+.PP
+.RS
+.br
+\fBbool tcfdbsetmutex(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object which is not opened.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the mutual exclusion control is needed if the object is shared by plural threads and this function should be called before the database is opened.
+.RE
+.RE
+.PP
+The function `tcfdbtune' is used in order to set the tuning parameters of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbtune(TCFDB *\fIfdb\fB, int32_t \fIwidth\fB, int64_t \fIlimsiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object which is not opened.
+.RE
+.RS
+`\fIwidth\fR' specifies the width of the value of each record.  If it is not more than 0, the default value is specified.  The default value is 255.
+.RE
+.RS
+`\fIlimsiz\fR' specifies the limit size of the database file.  If it is not more than 0, the default value is specified.  The default value is 268435456.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Note that the tuning parameters should be set before the database is opened.
+.RE
+.RE
+.PP
+The function `tcfdbopen' is used in order to open a database file and connect a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbopen(TCFDB *\fIfdb\fB, const char *\fIpath\fB, int \fIomode\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object which is not opened.
+.RE
+.RS
+`\fIpath\fR' specifies the path of the database file.
+.RE
+.RS
+`\fIomode\fR' specifies the connection mode: `FDBOWRITER' as a writer, `FDBOREADER' as a reader.  If the mode is `FDBOWRITER', the following may be added by bitwise\-or: `FDBOCREAT', which means it creates a new database if not exist, `FDBOTRUNC', which means it creates a new database regardless if one exists, `FDBOTSYNC', which means every transaction synchronizes updated contents with the device.  Both of `FDBOREADER' and `FDBOWRITER' can be added to by bitwise\-or: `FDBONOLCK', which means it opens the database file without file locking, or `FDBOLCKNB', which means locking is performed without blocking.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tcfdbclose' is used in order to close a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbclose(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Update of a database is assured to be written when the database is closed.  If a writer opens a database but does not close it appropriately, the database will be broken.
+.RE
+.RE
+.PP
+The function `tcfdbput' is used in order to store a record into a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbput(TCFDB *\fIfdb\fB, int64_t \fIid\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIid\fR' specifies the ID number.  It should be more than 0.  If it is `FDBIDMIN', the minimum ID number of existing records is specified.  If it is `FDBIDPREV', the number less by one than the minimum ID number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of existing records is specified.  If it is `FDBIDNEXT', the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.  If the size of the value is greater than the width tuning parameter of the database, the size is cut down to the width.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.
+.RE
+.RE
+.PP
+The function `tcfdbput2' is used in order to store a record with a decimal key into a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbput2(TCFDB *\fIfdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "prev", the number less by one than the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.  If it is "next", the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.  If the size of the value is greater than the width tuning parameter of the database, the size is cut down to the width.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.
+.RE
+.RE
+.PP
+The function `tcfdbput3' is used in order to store a string record with a decimal key into a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbput3(TCFDB *\fIfdb\fB, const char *\fIkstr\fB, const void *\fIvstr\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "prev", the number less by one than the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.  If it is "next", the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIvstr\fR' specifies the string of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, it is overwritten.
+.RE
+.RE
+.PP
+The function `tcfdbputkeep' is used in order to store a new record into a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbputkeep(TCFDB *\fIfdb\fB, int64_t \fIid\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIid\fR' specifies the ID number.  It should be more than 0.  If it is `FDBIDMIN', the minimum ID number of existing records is specified.  If it is `FDBIDPREV', the number less by one than the minimum ID number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of existing records is specified.  If it is `FDBIDNEXT', the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.  If the size of the value is greater than the width tuning parameter of the database, the size is cut down to the width.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, this function has no effect.
+.RE
+.RE
+.PP
+The function `tcfdbputkeep2' is used in order to store a new record with a decimal key into a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbputkeep2(TCFDB *\fIfdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "prev", the number less by one than the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.  If it is "next", the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.  If the size of the value is greater than the width tuning parameter of the database, the size is cut down to the width.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, this function has no effect.
+.RE
+.RE
+.PP
+The function `tcfdbputkeep3' is used in order to store a new string record with a decimal key into a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbputkeep3(TCFDB *\fIfdb\fB, const char *\fIkstr\fB, const void *\fIvstr\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "prev", the number less by one than the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.  If it is "next", the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIvstr\fR' specifies the string of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If a record with the same key exists in the database, this function has no effect.
+.RE
+.RE
+.PP
+The function `tcfdbputcat' is used in order to concatenate a value at the end of the existing record in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbputcat(TCFDB *\fIfdb\fB, int64_t \fIid\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIid\fR' specifies the ID number.  It should be more than 0.  If it is `FDBIDMIN', the minimum ID number of existing records is specified.  If it is `FDBIDPREV', the number less by one than the minimum ID number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of existing records is specified.  If it is `FDBIDNEXT', the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.  If the size of the value is greater than the width tuning parameter of the database, the size is cut down to the width.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If there is no corresponding record, a new record is created.
+.RE
+.RE
+.PP
+The function `tcfdbputcat2' is used in order to concatenate a value with a decimal key in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbputcat2(TCFDB *\fIfdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, const void *\fIvbuf\fB, int \fIvsiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "prev", the number less by one than the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.  If it is "next", the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the region of the value.
+.RE
+.RS
+`\fIvsiz\fR' specifies the size of the region of the value.  If the size of the value is greater than the width tuning parameter of the database, the size is cut down to the width.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If there is no corresponding record, a new record is created.
+.RE
+.RE
+.PP
+The function `tcfdbputcat3' is used in order to concatenate a string value with a decimal key in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbputcat3(TCFDB *\fIfdb\fB, const char *\fIkstr\fB, const void *\fIvstr\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "prev", the number less by one than the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.  If it is "next", the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIvstr\fR' specifies the string of the value.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+If there is no corresponding record, a new record is created.
+.RE
+.RE
+.PP
+The function `tcfdbout' is used in order to remove a record of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbout(TCFDB *\fIfdb\fB, int64_t \fIid\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIid\fR' specifies the ID number.  It should be more than 0.  If it is `FDBIDMIN', the minimum ID number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of existing records is specified.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tcfdbout2' is used in order to remove a record with a decimal key of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbout2(TCFDB *\fIfdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tcfdbout3' is used in order to remove a string record with a decimal key of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbout3(TCFDB *\fIfdb\fB, const char *\fIkstr\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tcfdbget' is used in order to retrieve a record in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBvoid *tcfdbget(TCFDB *\fIfdb\fB, int64_t \fIid\fB, int *\fIsp\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIid\fR' specifies the ID number.  It should be more than 0.  If it is `FDBIDMIN', the minimum ID number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIsp\fR' specifies the pointer to the variable into which the size of the region of the return value is assigned.
+.RE
+.RS
+If successful, the return value is the pointer to the region of the value of the corresponding record.  `NULL' is returned if no record corresponds.
+.RE
+.RS
+Because an additional zero code is appended at the end of the region of the return value, the return value can be treated as a character string.  Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tcfdbget2' is used in order to retrieve a record with a decimal key in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBvoid *tcfdbget2(TCFDB *\fIfdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB, int *\fIsp\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+`\fIsp\fR' specifies the pointer to the variable into which the size of the region of the return value is assigned.
+.RE
+.RS
+If successful, the return value is the pointer to the region of the value of the corresponding record.  `NULL' is returned if no record corresponds.
+.RE
+.RS
+Because an additional zero code is appended at the end of the region of the return value, the return value can be treated as a character string.  Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tcfdbget3' is used in order to retrieve a string record with a decimal key in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBchar *tcfdbget3(TCFDB *\fIfdb\fB, const char *\fIkstr\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.
+.RE
+.RS
+If successful, the return value is the string of the value of the corresponding record.  `NULL' is returned if no record corresponds.
+.RE
+.RS
+Because an additional zero code is appended at the end of the region of the return value, the return value can be treated as a character string.  Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tcfdbget4' is used in order to retrieve a record in a fixed\-length database object and write the value into a buffer.
+.PP
+.RS
+.br
+\fBint tcfdbget4(TCFDB *\fIfdb\fB, int64_t \fIid\fB, void *\fIvbuf\fB, int \fImax\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIid\fR' specifies the ID number.  It should be more than 0.  If it is `FDBIDMIN', the minimum ID number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIvbuf\fR' specifies the pointer to the buffer into which the value of the corresponding record is written.
+.RE
+.RS
+`\fImax\fR' specifies the size of the buffer.
+.RE
+.RS
+If successful, the return value is the size of the written data, else, it is \-1.  \-1 is returned if no record corresponds to the specified key.
+.RE
+.RS
+Note that an additional zero code is not appended at the end of the region of the writing buffer.
+.RE
+.RE
+.PP
+The function `tcfdbvsiz' is used in order to get the size of the value of a record in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBint tcfdbvsiz(TCFDB *\fIfdb\fB, int64_t \fIid\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIid\fR' specifies the ID number.  It should be more than 0.  If it is `FDBIDMIN', the minimum ID number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of existing records is specified.
+.RE
+.RS
+If successful, the return value is the size of the value of the corresponding record, else, it is \-1.
+.RE
+.RE
+.PP
+The function `tcfdbvsiz2' is used in order to get the size of the value with a decimal key in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBint tcfdbvsiz2(TCFDB *\fIfdb\fB, const void *\fIkbuf\fB, int \fIksiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIkbuf\fR' specifies the pointer to the region of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIksiz\fR' specifies the size of the region of the key.
+.RE
+.RS
+If successful, the return value is the size of the value of the corresponding record, else, it is \-1.
+.RE
+.RE
+.PP
+The function `tcfdbvsiz3' is used in order to get the size of the string value with a decimal key in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBint tcfdbvsiz3(TCFDB *\fIfdb\fB, const char *\fIkstr\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIkstr\fR' specifies the string of the decimal key.  It should be more than 0.  If it is "min", the minimum ID number of existing records is specified.  If it is "max", the maximum ID number of existing records is specified.
+.RE
+.RS
+If successful, the return value is the size of the value of the corresponding record, else, it is \-1.
+.RE
+.RE
+.PP
+The function `tcfdbiterinit' is used in order to initialize the iterator of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbiterinit(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+The iterator is used in order to access the key of every record stored in a database.
+.RE
+.RE
+.PP
+The function `tcfdbiternext' is used in order to get the next ID number of the iterator of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBuint64_t tcfdbiternext(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+If successful, the return value is the next ID number of the iterator, else, it is 0.  0 is returned when no record is to be get out of the iterator.
+.RE
+.RS
+It is possible to access every record by iteration of calling this function.  It is allowed to update or remove records whose keys are fetched while the iteration.  The order of this traversal access method is ascending of the ID number.
+.RE
+.RE
+.PP
+The function `tcfdbiternext2' is used in order to get the next decimay key of the iterator of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBvoid *tcfdbiternext2(TCFDB *\fIfdb\fB, int *\fIsp\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIsp\fR' specifies the pointer to the variable into which the size of the region of the return value is assigned.
+.RE
+.RS
+If successful, the return value is the pointer to the region of the next decimal key, else, it is `NULL'.  `NULL' is returned when no record is to be get out of the iterator.
+.RE
+.RS
+Because an additional zero code is appended at the end of the region of the return value, the return value can be treated as a character string.  Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.  It is possible to access every record by iteration of calling this function.  It is allowed to update or remove records whose keys are fetched while the iteration.  The order of this traversal access method is ascending of the ID number.
+.RE
+.RE
+.PP
+The function `tcfdbiternext3' is used in order to get the next decimay key string of the iterator of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBchar *tcfdbiternext3(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+If successful, the return value is the string of the next decimal key, else, it is `NULL'.  `NULL' is returned when no record is to be get out of the iterator.
+.RE
+.RS
+Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.  It is possible to access every record by iteration of calling this function.  It is allowed to update or remove records whose keys are fetched while the iteration.  The order of this traversal access method is ascending of the ID number.
+.RE
+.RE
+.PP
+The function `tcfdbrange' is used in order to get range matching ID numbers in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBuint64_t *tcfdbrange(TCFDB *\fIfdb\fB, int64_t \fIlower\fB, int64_t \fIupper\fB, int \fImax\fB, int *\fInp\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIlower\fR' specifies the lower limit of the range.  If it is `FDBIDMIN', the minimum ID is specified.
+.RE
+.RS
+`\fIupper\fR' specifies the upper limit of the range.  If it is `FDBIDMAX', the maximum ID is specified.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of keys to be fetched.  If it is negative, no limit is specified.
+.RE
+.RS
+`\fInp\fR' specifies the pointer to the variable into which the number of elements of the return value is assigned.
+.RE
+.RS
+If successful, the return value is the pointer to an array of ID numbers of the corresponding records.  `NULL' is returned on failure.  This function does never fail.  It returns an empty array even if no key corresponds.
+.RE
+.RS
+Because the region of the return value is allocated with the `malloc' call, it should be released with the `free' call when it is no longer in use.
+.RE
+.RE
+.PP
+The function `tcfdbrange2' is used in order to get range matching decimal keys in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBTCLIST *tcfdbrange2(TCFDB *\fIfdb\fB, const void *\fIlbuf\fB, int \fIlsiz\fB, const void *\fIubuf\fB, int \fIusiz\fB, int \fImax\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIlbuf\fR' specifies the pointer to the region of the lower key.  If it is "min", the minimum ID number of existing records is specified.
+.RE
+.RS
+`\fIlsiz\fR' specifies the size of the region of the lower key.
+.RE
+.RS
+`\fIubuf\fR' specifies the pointer to the region of the upper key.  If it is "max", the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fIusiz\fR' specifies the size of the region of the upper key.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of keys to be fetched.  If it is negative, no limit is specified.
+.RE
+.RS
+The return value is a list object of the corresponding decimal keys.  This function does never fail.  It returns an empty list even if no key corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.  Note that this function may be very slow because every key in the database is scanned.
+.RE
+.RE
+.PP
+The function `tcfdbrange3' is used in order to get range matching decimal keys with strings in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBTCLIST *tcfdbrange3(TCFDB *\fIfdb\fB, const char *\fIlstr\fB, const char *\fIustr\fB, int \fImax\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIlstr\fR' specifies the string of the lower key.  If it is "min", the minimum ID number of existing records is specified.
+.RE
+.RS
+`\fIustr\fR' specifies the string of the upper key.  If it is "max", the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of keys to be fetched.  If it is negative, no limit is specified.
+.RE
+.RS
+The return value is a list object of the corresponding decimal keys.  This function does never fail.  It returns an empty list even if no key corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.  Note that this function may be very slow because every key in the database is scanned.
+.RE
+.RE
+.PP
+The function `tcfdbrange4' is used in order to get keys with an interval notation in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBTCLIST *tcfdbrange4(TCFDB *\fIfdb\fB, const void *\fIibuf\fB, int \fIisiz\fB, int \fImax\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIibuf\fR' specifies the pointer to the region of the interval notation.
+.RE
+.RS
+`\fIisiz\fR' specifies the size of the region of the interval notation.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of keys to be fetched.  If it is negative, no limit is specified.
+.RE
+.RS
+The return value is a list object of the corresponding decimal keys.  This function does never fail.  It returns an empty list even if no key corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.  Note that this function may be very slow because every key in the database is scanned.
+.RE
+.RE
+.PP
+The function `tcfdbrange5' is used in order to get keys with an interval notation string in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBTCLIST *tcfdbrange5(TCFDB *\fIfdb\fB, const void *\fIistr\fB, int \fImax\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIistr\fR' specifies the pointer to the region of the interval notation string.
+.RE
+.RS
+`\fImax\fR' specifies the maximum number of keys to be fetched.  If it is negative, no limit is specified.
+.RE
+.RS
+The return value is a list object of the corresponding decimal keys.  This function does never fail.  It returns an empty list even if no key corresponds.
+.RE
+.RS
+Because the object of the return value is created with the function `tclistnew', it should be deleted with the function `tclistdel' when it is no longer in use.  Note that this function may be very slow because every key in the database is scanned.
+.RE
+.RE
+.PP
+The function `tcfdbaddint' is used in order to add an integer to a record in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBint tcfdbaddint(TCFDB *\fIfdb\fB, int64_t \fIid\fB, int \fInum\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIid\fR' specifies the ID number.  It should be more than 0.  If it is `FDBIDMIN', the minimum ID number of existing records is specified.  If it is `FDBIDPREV', the number less by one than the minimum ID number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of existing records is specified.  If it is `FDBIDNEXT', the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fInum\fR' specifies the additional value.
+.RE
+.RS
+If successful, the return value is the summation value, else, it is `INT_MIN'.
+.RE
+.RS
+If the corresponding record exists, the value is treated as an integer and is added to.  If no record corresponds, a new record of the additional value is stored.
+.RE
+.RE
+.PP
+The function `tcfdbadddouble' is used in order to add a real number to a record in a fixed\-length database object.
+.PP
+.RS
+.br
+\fBdouble tcfdbadddouble(TCFDB *\fIfdb\fB, int64_t \fIid\fB, double \fInum\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIid\fR' specifies the ID number.  It should be more than 0.  If it is `FDBIDMIN', the minimum ID number of existing records is specified.  If it is `FDBIDPREV', the number less by one than the minimum ID number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of existing records is specified.  If it is `FDBIDNEXT', the number greater by one than the maximum ID number of existing records is specified.
+.RE
+.RS
+`\fInum\fR' specifies the additional value.
+.RE
+.RS
+If successful, the return value is the summation value, else, it is Not\-a\-Number.
+.RE
+.RS
+If the corresponding record exists, the value is treated as a real number and is added to.  If no record corresponds, a new record of the additional value is stored.
+.RE
+.RE
+.PP
+The function `tcfdbsync' is used in order to synchronize updated contents of a fixed\-length database object with the file and the device.
+.PP
+.RS
+.br
+\fBbool tcfdbsync(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+This function is useful when another process connects to the same database file.
+.RE
+.RE
+.PP
+The function `tcfdboptimize' is used in order to optimize the file of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdboptimize(TCFDB *\fIfdb\fB, int32_t \fIwidth\fB, int64_t \fIlimsiz\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+`\fIwidth\fR' specifies the width of the value of each record.  If it is not more than 0, the current setting is not changed.
+.RE
+.RS
+`\fIlimsiz\fR' specifies the limit size of the database file.  If it is not more than 0, the current setting is not changed.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tcfdbvanish' is used in order to remove all records of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbvanish(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RE
+.PP
+The function `tcfdbcopy' is used in order to copy the database file of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbcopy(TCFDB *\fIfdb\fB, const char *\fIpath\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+`\fIpath\fR' specifies the path of the destination file.  If it begins with `@', the trailing substring is executed as a command line.
+.RE
+.RS
+If successful, the return value is true, else, it is false.  False is returned if the executed command returns non\-zero code.
+.RE
+.RS
+The database file is assured to be kept synchronized and not modified while the copying or executing operation is in progress.  So, this function is useful to create a backup file of the database file.
+.RE
+.RE
+.PP
+The function `tcfdbtranbegin' is used in order to begin the transaction of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbtranbegin(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+The database is locked by the thread while the transaction so that only one transaction can be activated with a database object at the same time.  Thus, the serializable isolation level is assumed if every database operation is performed in the transaction.  All updated regions are kept track of by write ahead logging while the transaction.  If the database is closed during transaction, the transaction is aborted implicitly.
+.RE
+.RE
+.PP
+The function `tcfdbtrancommit' is used in order to commit the transaction of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbtrancommit(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Update in the transaction is fixed when it is committed successfully.
+.RE
+.RE
+.PP
+The function `tcfdbtranabort' is used in order to abort the transaction of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBbool tcfdbtranabort(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object connected as a writer.
+.RE
+.RS
+If successful, the return value is true, else, it is false.
+.RE
+.RS
+Update in the transaction is discarded when it is aborted.  The state of the database is rollbacked to before transaction.
+.RE
+.RE
+.PP
+The function `tcfdbpath' is used in order to get the file path of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBconst char *tcfdbpath(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+The return value is the path of the database file or `NULL' if the object does not connect to any database file.
+.RE
+.RE
+.PP
+The function `tcfdbrnum' is used in order to get the number of records of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBuint64_t tcfdbrnum(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+The return value is the number of records or 0 if the object does not connect to any database file.
+.RE
+.RE
+.PP
+The function `tcfdbfsiz' is used in order to get the size of the database file of a fixed\-length database object.
+.PP
+.RS
+.br
+\fBuint64_t tcfdbfsiz(TCFDB *\fIfdb\fB);\fR
+.RS
+`\fIfdb\fR' specifies the fixed\-length database object.
+.RE
+.RS
+The return value is the size of the database file or 0 if the object does not connect to any database file.
+.RE
+.RE
+
+.SH SEE ALSO
+.PP
+.BR tcftest (1),
+.BR tcfmttest (1),
+.BR tcfmgr (1),
+.BR tokyocabinet (3)

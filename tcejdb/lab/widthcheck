@@ -1,0 +1,57 @@
+#! /usr/bin/ruby -w
+
+#================================================================
+# widthcheck
+# Find files including too wide lines
+#================================================================
+
+
+LIMITWIDTH = 97
+
+def checkfile(path)
+  printf("Checking: %s\n", path)
+  ok = true
+  open(path, "r") do |file|
+    num = 0
+    file.each do |line|
+      num += 1
+      line.chomp!
+      if line.length > LIMITWIDTH && !line.index("/*") && !line.index("*/")
+        printf("FOUND: %s: %d: %d: %s\n", path, num, line.length, line);
+        ok = false
+      end
+    end
+  end
+  return ok
+end
+
+ok = true
+list = Array::new(ARGV)
+list.push(".") if list.empty?
+while !list.empty?
+  path = list.shift
+  begin
+    if File::ftype(path) == "directory"
+      Dir.entries(path).each do |cpath|
+        if cpath != "." and cpath != ".."
+          list.push(path + "/" + cpath)
+        end
+      end
+    else
+      ok = false if !checkfile(path)
+    end
+  rescue
+  end
+end
+
+if ok
+  printf("ALL OK\n")
+  exit(0)
+else
+  printf("ERROR\n")
+  exit(1)
+end
+
+
+
+# END OF FILE

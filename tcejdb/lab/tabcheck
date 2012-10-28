@@ -1,0 +1,43 @@
+#! /bin/sh
+
+#================================================================
+# tabcheck
+# Find files including dispensable tab and space characters
+#================================================================
+
+
+# set variables
+LANG=C
+LC_ALL=C
+export LANG LC_ALL
+regex='\.(h|c|cc|cpp|cxx|java|pl|pm|pod|rb|rd|lua)$'
+tabcode=`printf '\t'`
+
+
+# find tab
+find . -type f | egrep $regex |
+while read file
+do
+  printf 'Checking %s ... ' $file
+  err=0
+  if grep "$tabcode" $file > /dev/null
+  then
+    printf '### !!! TAB FOUND !!! ###'
+    err=1
+  fi
+  if grep ' $' $file > /dev/null
+  then
+    printf '### !!! TAILING SPACE FOUND !!! ###'
+    err=1
+  fi
+  [ "$err" = 0 ] && printf 'ok'
+  printf '\n'
+done
+
+
+# exit normally
+exit 0
+
+
+
+# END OF FILE

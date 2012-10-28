@@ -1,0 +1,211 @@
+/*
+ * Style Sheets commonly used by documents of Tokyo Cabinet
+ */
+
+html {
+  margin: 0em 0em;
+  padding: 0em 0em;
+  background: #eeeeee none;
+}
+body {
+  margin: 1em 2em;
+  padding: 0em 0em;
+  background: #eeeeee none;
+  color: #111111;
+}
+
+hr {
+  margin: 2.5em 0em 1.5em 0em;
+  height: 1px;
+  border: none;
+  background: #999999 none;
+  color: #999999;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  font-weight: bold;
+}
+h1 {
+  margin: 1.0em 0em 1.3em 0em;
+  padding: 0em 0em;
+  font-size: 180%;
+  color: #000000;
+}
+h2 {
+  margin: 1.0em 0em 1.0em 0.2em;
+  padding: 0.5em 0.5em;
+  width: 60%;
+  border-left: solid 0.6em #445555;
+  border-bottom: solid 1px #bbbbbb;
+  font-size: 150%;
+  color: #000011;
+}
+h3 {
+  margin: 0.8em 0em 0.5em 0.2em;
+  padding: 0em 0em;
+  font-size: 120%;
+  color: #001111;
+}
+
+p {
+  margin: 0.8em 0em;
+  line-height: 140%;
+  text-indent: 0.8em;
+}
+
+div,pre,table {
+  margin: 0.8em 1.5em;
+}
+
+div.note,div.navi {
+  text-align: right;
+  margin: 0em 0.5em;
+  color: #333333;
+}
+span.void {
+  color: #888888;
+}
+
+div.logo {
+  text-align: center;
+  margin: 3em 0em;
+}
+div.logo img {
+  border: inset 2px #ccccdd;
+}
+div.illust {
+  margin: 1em 0em;
+  text-align: center;
+}
+div.illust img {
+  border: solid 1px #ccccdd;
+}
+
+pre {
+  padding: 0.2em;
+  background-color: #ddddee;
+  border: 1px solid #bbbbcc;
+  font-size: 95%;
+}
+
+li,dt,dd {
+  line-height: 130%;
+}
+dt {
+  margin-left: 1.2em;
+}
+dd {
+  margin-left: 2.5em;
+  text-indent: -0.3em;
+}
+dl.api {
+  margin-top: -0.2em;
+}
+dl.api dd {
+  margin-left: 3.0em;
+  font-size: 95%;
+  color: #333333;
+}
+ul {
+  margin: 0.5em 2.0em;
+  padding: 0em;
+}
+ul.options {
+  list-style-type: none;
+  margin: 0.5em 1.5em;
+  font-size: 95%;
+  color: #333333;
+}
+ul ul {
+  margin-top: 0em;
+  margin-bottom: 0em;
+}
+
+table {
+  border-collapse: collapse;
+}
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.1em 0.5em;
+  border: solid 1px #aaaabb;
+  font-size: 95%;
+}
+td.label {
+  border: none;
+  font-size: 80%;
+  color: #333333;
+}
+td.number {
+  text-align: right;
+}
+
+a {
+  color: #0022aa;
+  text-decoration: none;
+}
+a:hover,a:focus {
+  color: #0033ee;
+  text-decoration: underline;
+}
+code,kbd {
+  font-style: normal;
+  font-weight: bold;
+  font-size: 100%;
+  color: #001111;
+}
+var {
+  padding: 0em 0.15em 0em 0em;
+  font-style: italic;
+  color: #001122;
+}
+
+@media print {
+  html,body {
+    margin: 0em 0em;
+    background-color: #ffffff;
+    color: #000000;
+  }
+  h1 {
+    padding: 8em 0em 0.5em 0em;
+    text-align: center;
+  }
+  h2 {
+    page-break-before: always;
+  }
+  div.note {
+    text-align: center;
+  }
+  div.navi,div.logo {
+    display: none;
+  }
+  hr {
+    display: none;
+  }
+  pre {
+    margin: 0.8em 0.8em;
+    background-color: #ffffff;
+    border: 1px solid #aaaaaa;
+    font-size: 90%;
+  }
+  a,code,kbd {
+    color: #000000;
+    text-decoration: none;
+  }
+  h1,h2,h3 {
+    font-family: sans-serif;
+  }
+  p,div,li,dt,dd {
+    font-family: serif;
+  }
+  pre,code,kbd {
+    font-family: monospace;
+  }
+  dd {
+    font-size: 90%;
+  }
+}
+
+
+
+/* END OF FILE */

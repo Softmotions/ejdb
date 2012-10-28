@@ -1,0 +1,26 @@
+#! /bin/sh
+
+#================================================================
+# stepcount
+# Find files including dispensable tab characters
+#================================================================
+
+
+# set variables
+LANG=C
+LC_ALL=C
+export LANG LC_ALL
+regex='(\.h|\.c|\.cc|\.java|\.pl|\.pm|\.xs|\.rb|\.js)$'
+
+
+# count steps
+files=`find . -type f | egrep $regex`
+wc -l $files | sort -n
+
+
+# exit normally
+exit 0
+
+
+
+# END OF FILE

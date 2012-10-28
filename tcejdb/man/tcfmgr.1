@@ -1,0 +1,98 @@
+.TH "TCFMGR" 1 "2012-08-18" "Man Page" "Tokyo Cabinet"
+
+.SH NAME
+tcfmgr \- the command line utility of the fixed-length database API
+
+.SH DESCRIPTION
+.PP
+The command `\fBtcfmgr\fR' is a utility for test and debugging of the fixed\-length database API and its applications.  `\fIpath\fR' specifies the path of a database file.  `\fIwidth\fR' specifies the width of the value of each record.  `\fIlimsiz\fR' specifies the limit size of the database file.  `\fIkey\fR' specifies the key of a record.  `\fIvalue\fR' specifies the value of a record.  `\fIfile\fR' specifies the input file.
+.PP
+.RS
+.br
+\fBtcfmgr create \fIpath\fB \fR[\fB\fIwidth\fB \fR[\fB\fIlimsiz\fB\fR]\fB\fR]\fB\fR
+.RS
+Create a database file.
+.RE
+.br
+\fBtcfmgr inform \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB\fR
+.RS
+Print miscellaneous information to the standard output.
+.RE
+.br
+\fBtcfmgr put \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-dk\fR|\fB\-dc\fR|\fB\-dai\fR|\fB\-dad\fR]\fB \fIpath\fB \fIkey\fB \fIvalue\fB\fR
+.RS
+Store a record.
+.RE
+.br
+\fBtcfmgr out \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sx\fR]\fB \fIpath\fB \fIkey\fB\fR
+.RS
+Remove a record.
+.RE
+.br
+\fBtcfmgr get \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sx\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-pz\fR]\fB \fIpath\fB \fIkey\fB\fR
+.RS
+Print the value of a record.
+.RE
+.br
+\fBtcfmgr list \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-m \fInum\fB\fR]\fB \fR[\fB\-pv\fR]\fB \fR[\fB\-px\fR]\fB \fR[\fB\-rb \fIlkey\fB \fIukey\fB\fR]\fB \fR[\fB\-ri \fIstr\fB\fR]\fB \fIpath\fB\fR
+.RS
+Print keys of all records, separated by line feeds.
+.RE
+.br
+\fBtcfmgr optimize \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fIpath\fB \fR[\fB\fIwidth\fB \fR[\fB\fIlimsiz\fB\fR]\fB\fR]\fB\fR
+.RS
+Optimize a database file.
+.RE
+.br
+\fBtcfmgr importtsv \fR[\fB\-nl\fR|\fB\-nb\fR]\fB \fR[\fB\-sc\fR]\fB \fIpath\fB \fR[\fB\fIfile\fB\fR]\fB\fR
+.RS
+Store records of TSV in each line of a file.
+.RE
+.br
+\fBtcfmgr version\fR
+.RS
+Print the version information of Tokyo Cabinet.
+.RE
+.RE
+.PP
+Options feature the following.
+.PP
+.RS
+\fB\-nl\fR : enable the option `FDBNOLCK'.
+.br
+\fB\-nb\fR : enable the option `FDBLCKNB'.
+.br
+\fB\-sx\fR : the input data is evaluated as a hexadecimal data string.
+.br
+\fB\-dk\fR : use the function `tcfdbputkeep' instead of `tcfdbput'.
+.br
+\fB\-dc\fR : use the function `tcfdbputcat' instead of `tcfdbput'.
+.br
+\fB\-dai\fR : use the function `tcfdbaddint' instead of `tcfdbput'.
+.br
+\fB\-dad\fR : use the function `tcfdbadddouble' instead of `tcfdbput'.
+.br
+\fB\-px\fR : the output data is converted into a hexadecimal data string.
+.br
+\fB\-pz\fR : do not append line feed at the end of the output.
+.br
+\fB\-m \fInum\fR\fR : specify the maximum number of the output.
+.br
+\fB\-pv\fR : print values of records also.
+.br
+\fB\-rb \fIlkey\fR \fIukey\fR\fR : specify the range of keys.
+.br
+\fB\-ri \fIstr\fR\fR : specify the interval notation of keys.
+.br
+\fB\-sc\fR : normalize keys as lower cases.
+.br
+.RE
+.PP
+This command returns 0 on success, another on failure.
+
+.SH SEE ALSO
+.PP
+.BR tcftest (1),
+.BR tcfmttest (1),
+.BR tcfdb (3),
+.BR tokyocabinet (3)
