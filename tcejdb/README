@@ -101,7 +101,7 @@ Prerequisites
 On Debian/Ubuntu linux you can install it as follows:
 
 ```sh
-   sudo apt-get install libcunit1 libcunit1-dev libbz2-1.0 libbz2-dev
+   sudo apt-get install libcunit1 libcunit1-dev libbz2-1.0 libbz2-dev zlib1g zlib1g-dev
 ```
 
 Building
