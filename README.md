@@ -1,5 +1,3 @@
-
-
 EJDB - Embedded JSON Database engine
 ====================================
 
@@ -10,11 +8,10 @@ EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallab
 
 JSON representation of queries and data implemented with API based on [C BSON](https://github.com/mongodb/mongo-c-driver/tree/master/src/)
 
-
 One snippet intro
 -----------------------------------
 
-```C
+~~~~~~
 #include <tcejdb/ejdb.h>
 
 static EJDB *jb;
@@ -76,7 +73,7 @@ int main() {
     ejdbdel(jb);
     return 0;
 }
-```
+~~~~~~
 
 Features
 ================================
@@ -100,16 +97,16 @@ Prerequisites
 
 On Debian/Ubuntu linux you can install it as follows:
 
-```sh
+~~~~~~
    sudo apt-get install libcunit1 libcunit1-dev libbz2-1.0 libbz2-dev zlib1g zlib1g-dev
-```
+~~~~~~
 
 Building
 --------------------------------
-```sh
+~~~~~~
    ./configure --prefix=<installation prefix> && make && make check
    make install
-```
+~~~~~~
 * library name: **tcejdb** (with pkgconfig)
 * main include header: ```<tcejdb/ejdb.h>```
 
@@ -120,24 +117,24 @@ Basic EJDB architecture
 -------------------------------
 **EJDB database files structure**
 
-```
+~~~~~~
 .
 ├── <dbname>
 ├── <dbname>_<collection1>
 ├── ...
 ├── <dbname>_<collectionN>
 └── <dbname>_<collectionN>_<fieldpath>.<index ext>
-```
+~~~~~~
 
 Where
 
-* ```<dbname>``` - name of database. It is metadata DB.
-* ```<collectionN>``` - name of collection. Collection database.
-* ```<fieldpath>``` - JSON field path used in index
-* ```<index ext>``` - Collection index extension:
-    * ```.lex``` String index
-    * ```.dec``` Number index
-    * ```.tok``` Array index
+    * <dbname> - name of database. It is metadata DB.
+    * <collectionN> - name of collection. Collection database.
+    * <fieldpath> - JSON field path used in index
+    * <index_ext> - Collection index extension:
+        * .lex String index
+        * .dec Number index
+        * .tok Array index
 
 API
 ---------------------------------
@@ -148,7 +145,7 @@ JSON processing API: **bson.h**
 Queries
 ---------------------------------
 
-```
+~~~~~~
 /**
  * Create query object.
  * Sucessfully created queries must be destroyed with ejdbquerydel().
@@ -202,7 +199,7 @@ Queries
  * @return On success return query handle. On error returns NULL.
  */
 EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints);
-```
+~~~~~~
 
 Examples
 ------------------------------------
