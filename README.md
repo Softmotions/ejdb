@@ -83,6 +83,8 @@ Features
 * LGPL license allows you to embed this library into proprietary software.
 * MongoDB-like queries and overall philosophy.
 * Collection level write locking.
+* Collection level transactions.
+* String token matching queries: ```$stror``` ```$strand```
 
 
 Building & Installation
