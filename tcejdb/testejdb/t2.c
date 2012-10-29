@@ -1902,7 +1902,7 @@ void testQuery24() {
     bson bshints;
     bson_init_as_query(&bshints);
     bson_append_start_object(&bshints, "$orderby");
-    bson_append_int(&bshints, "name", -1); //DESC order on dblscore
+    bson_append_int(&bshints, "name", -1); //DESC order on name
     bson_append_finish_object(&bshints);
     bson_append_long(&bshints, "$skip", 1);
     bson_finish(&bshints);
@@ -1947,7 +1947,7 @@ void testQuery24() {
 
     bson_init_as_query(&bshints);
     bson_append_start_object(&bshints, "$orderby");
-    bson_append_int(&bshints, "name", -1); //DESC order on dblscore
+    bson_append_int(&bshints, "name", -1); //DESC order on name
     bson_append_finish_object(&bshints);
     bson_append_long(&bshints, "$skip", 1);
     bson_append_long(&bshints, "$max", 2);
@@ -2061,6 +2061,43 @@ void testQuery24() {
     tclistdel(q1res);
     tcxstrdel(log);
     ejdbquerydel(q1);
+
+
+    bson_init_as_query(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    bson_init_as_query(&bshints);
+    bson_append_start_object(&bshints, "$orderby");
+    bson_append_int(&bshints, "name", 1); //ASC
+    bson_append_finish_object(&bshints);
+    bson_append_long(&bshints, "$skip", 3);
+    bson_finish(&bshints);
+    CU_ASSERT_FALSE_FATAL(bshints.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshints);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_EQUAL(count, 1);
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 1);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        if (i == TCLISTNUM(q1res) - 1) {
+            CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
+        }
+    }
+
+    bson_destroy(&bsq1);
+    bson_destroy(&bshints);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
 }
 
 void testQuery25() { //$or

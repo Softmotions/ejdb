@@ -1286,7 +1286,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         for (int i = 0; i < ofsz; ++i) assert(ofs[i] != NULL);
     }
 
-    if (!onlycount && aofsz > 0 && (!midx || mqf->orderseq != 1)) { //Main index is not main order field
+    if (!onlycount && aofsz > 0 && (!midx || mqf->orderseq != 1)) { //Main index is not the main order field
         all = true; //Need all records for ordering for some other fields
     }
 
@@ -1315,7 +1315,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
 
 #define JBQREGREC(_bsbuf, _bsbufsz)   \
     ++count; \
-    if (!onlycount && count > skip) { \
+    if (!onlycount && (all || count > skip)) { \
         TCLISTPUSH(res, _bsbuf, _bsbufsz); \
     } \
     if (_bsbuf) { \
@@ -1690,12 +1690,25 @@ finish:
     if (max < UINT_MAX && max > skip) {
         max = max - skip;
     }
-    if (res && TCLISTNUM(res) > max) { //truncate resulting list if max specified
-        int end = res->start + res->num;
-        TCLISTDATUM *array = res->array;
-        for (int i = (res->start + max); i < end; i++) {
-            TCFREE(array[i].ptr);
-            --(res->num);
+    if (res) {
+        if (all) { //skipping results after full sorting with skip > 0
+            for (int i = 0; i < skip && res->num > 0; ++i) {
+                TCFREE(res->array[res->start].ptr);
+                ++(res->start);
+                --(res->num);
+            }
+        }
+        if ((res->start & 0xff) == 0 && res->start > (res->num >> 1)) {
+            memmove(res->array, res->array + res->start, res->num * sizeof (res->array[0]));
+            res->start = 0;
+        }
+        if (TCLISTNUM(res) > max) { //truncate results if max specified
+            int end = res->start + res->num;
+            TCLISTDATUM *array = res->array;
+            for (int i = (res->start + max); i < end; i++) {
+                TCFREE(array[i].ptr);
+                --(res->num);
+            }
         }
     }
     count = (skip < count) ? count - skip : 0;
