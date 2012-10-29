@@ -10,6 +10,9 @@ using namespace v8;
 namespace ejdb {
 
     void Init(v8::Handle<v8::Object> target) {
+        EJDB *jb = ejdbnew();
+        ejdbdel(jb);
+
 #ifdef __unix
         setlocale(LC_ALL, "en_US.UTF-8"); //todo review it
 #endif
