@@ -83,6 +83,7 @@
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
       <itemPath>Makefile</itemPath>
+      <itemPath>../README.md</itemPath>
       <itemPath>configure</itemPath>
     </logicalFolder>
   </logicalFolder>

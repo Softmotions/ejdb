@@ -1,0 +1,3 @@
+[submodule "node/nodejs"]
+	path = node/nodejs
+	url = https://github.com/joyent/node.git
