@@ -9,9 +9,13 @@
             </df>
             <in>ejdb_native.node</in>
           </df>
+          <in>ejdb_native.node</in>
           <in>linker.lock</in>
         </df>
+        <in>Makefile</in>
+        <in>binding.Makefile</in>
         <in>config.gypi</in>
+        <in>ejdb_native.target.mk</in>
       </df>
       <df name="nodejs">
         <df name="benchmark">
