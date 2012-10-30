@@ -6,7 +6,7 @@ static EJDB *jb;
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     jb = ejdbnew();
-    if (!ejdbopen(jb, "addressbook", JDBOWRITER | JDBOCREAT | JDBOTRUNC)) {
+    if (!ejdbopen(jb, "addressbook", JBOWRITER | JBOCREAT | JBOTRUNC)) {
         return 1;
     }
 

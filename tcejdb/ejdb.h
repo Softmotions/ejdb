@@ -34,39 +34,39 @@ typedef struct { /**< EJDB collection tuning options. */
 #define JBMAXCOLNAMELEN 128
 
 enum { /** Error codes */
-    JDBEINVALIDCOLNAME = 9000, /**< Invalid collection name. */
-    JDBEINVALIDBSON = 9001, /**< Invalid bson object. */
-    JDBEQINVALIDQCONTROL = 9002, /**< Invalid query control field starting with '$'. */
-    JDBEQINOPNOTARRAY = 9003, /**< $strand, $stror, $in, $nin, $bt keys requires not empty array value. */
-    JDBEMETANVALID = 9004, /**< Inconsistent database metadata. */
-    JDBEFPATHINVALID = 9005, /**< Invalid field path value. */
-    JDBEQINVALIDQRX = 9006, /**< Invalid query regexp value. */
-    JDBEQRSSORTING = 9007, /**< Result set sorting error. */
-    JDBQINVALID = 9008 /**< Query generic error. */
+    JBEINVALIDCOLNAME = 9000, /**< Invalid collection name. */
+    JBEINVALIDBSON = 9001, /**< Invalid bson object. */
+    JBEQINVALIDQCONTROL = 9002, /**< Invalid query control field starting with '$'. */
+    JBEQINOPNOTARRAY = 9003, /**< $strand, $stror, $in, $nin, $bt keys requires not empty array value. */
+    JBEMETANVALID = 9004, /**< Inconsistent database metadata. */
+    JBEFPATHINVALID = 9005, /**< Invalid field path value. */
+    JBEQINVALIDQRX = 9006, /**< Invalid query regexp value. */
+    JBEQRSSORTING = 9007, /**< Result set sorting error. */
+    JBEQERROR = 9008 /**< Query generic error. */
 };
 
 enum { /** Database open modes */
-    JDBOREADER = 1 << 0, /**< Open as a reader. */
-    JDBOWRITER = 1 << 1, /**< Open as a writer. */
-    JDBOCREAT = 1 << 2, /**< Create if db file not exists. */
-    JDBOTRUNC = 1 << 3, /**< Truncate db. */
-    JDBONOLCK = 1 << 4, /**< Open without locking. */
-    JDBOLCKNB = 1 << 5, /**< Lock without blocking. */
-    JDBOTSYNC = 1 << 6 /**< Synchronize every transaction. */
+    JBOREADER = 1 << 0, /**< Open as a reader. */
+    JBOWRITER = 1 << 1, /**< Open as a writer. */
+    JBOCREAT = 1 << 2, /**< Create if db file not exists. */
+    JBOTRUNC = 1 << 3, /**< Truncate db. */
+    JBONOLCK = 1 << 4, /**< Open without locking. */
+    JBOLCKNB = 1 << 5, /**< Lock without blocking. */
+    JBOTSYNC = 1 << 6 /**< Synchronize every transaction. */
 };
 
 enum { /** Index modes, index types. */
-    JDIDXDROP = 1 << 0, /**< Drop index. */
-    JDIDXDROPALL = 1 << 1, /**< Drop index for all types. */
-    JDIDXOP = 1 << 2, /**< Optimize index. */
-    JDIDXREBLD = 1 << 3, /**< Rebuild index. */
-    JDIDXNUM = 1 << 4, /**< Number index. */
-    JDIDXSTR = 1 << 5, /**< String index.*/
-    JDIDXARR = 1 << 6, /**< Array token index. */
+    JBIDXDROP = 1 << 0, /**< Drop index. */
+    JBIDXDROPALL = 1 << 1, /**< Drop index for all types. */
+    JBIDXOP = 1 << 2, /**< Optimize index. */
+    JBIDXREBLD = 1 << 3, /**< Rebuild index. */
+    JBIDXNUM = 1 << 4, /**< Number index. */
+    JBIDXSTR = 1 << 5, /**< String index.*/
+    JBIDXARR = 1 << 6, /**< Array token index. */
 };
 
 enum { /*< Query search mode flags in ejdbqrysearch() */
-    EJQRYCOUNT = 1 /*< Query only count(*) */
+    JBQRYCOUNT = 1 /*< Query only count(*) */
 };
 
 /**
@@ -110,13 +110,13 @@ EJDB_EXPORT bool ejdbclose(EJDB *jb);
  * @param jb   Database object created with `ejdbnew'
  * @param path Path to the database file.
  * @param mode Open mode bitmask flags:
- * `JDBOREADER` Open as a reader.
- * `JDBOWRITER` Open as a writer.
- * `JDBOCREAT` Create db if it not exists
- * `JDBOTRUNC` Truncate db.
- * `JDBONOLCK` Open without locking.
- * `JDBOLCKNB` Lock without blocking.
- * `JDBOTSYNC` Synchronize every transaction.
+ * `JBOREADER` Open as a reader.
+ * `JBOWRITER` Open as a writer.
+ * `JBOCREAT` Create db if it not exists
+ * `JBOTRUNC` Truncate db.
+ * `JBONOLCK` Open without locking.
+ * `JBOLCKNB` Lock without blocking.
+ * `JBOTSYNC` Synchronize every transaction.
  * @return
  */
 EJDB_EXPORT bool ejdbopen(EJDB *jb, const char *path, int mode);
@@ -244,26 +244,26 @@ EJDB_EXPORT void ejdbquerydel(EJQ* q);
  * Set index for JSON field in EJDB collection.
  *
  *  - Available index types:
- *      - `JDIDXSTR` String index for JSON string values.
- *      - `JDIDXNUM` Index for JSON number values.
- *      - `JDIDXARR` Token index for JSON arrays and string values.
+ *      - `JBIDXSTR` String index for JSON string values.
+ *      - `JBIDXNUM` Index for JSON number values.
+ *      - `JBIDXARR` Token index for JSON arrays and string values.
  *
  *  - One JSON field can have several indexes for different types.
  *
  *  - Available index operations:
- *      - `JDIDXDROP` Drop index of specified type.
- *              - Eg: flag = JDIDXDROP | JDIDXNUM (Drop number index)
- *      - `JDIDXDROPALL` Drop index for all types.
- *      - `JDIDXREBLD` Rebuild index of specified type.
- *      - `JDIDXOP` Optimize index of specified type.
+ *      - `JBIDXDROP` Drop index of specified type.
+ *              - Eg: flag = JBIDXDROP | JBIDXNUM (Drop number index)
+ *      - `JBIDXDROPALL` Drop index for all types.
+ *      - `JBIDXREBLD` Rebuild index of specified type.
+ *      - `JBIDXOP` Optimize index of specified type.
  *
  *  Examples:
  *      - Set index for JSON path `addressbook.number` for strings and numbers:
- *          `ejdbsetindex(ccoll, "album.number", JDIDXSTR | JDIDXNUM)`
+ *          `ejdbsetindex(ccoll, "album.number", JBIDXSTR | JBIDXNUM)`
  *      - Set index for array:
- *          `ejdbsetindex(ccoll, "album.tags", JDIDXARR)`
+ *          `ejdbsetindex(ccoll, "album.tags", JBIDXARR)`
  *      - Rebuild previous index:
- *          `ejdbsetindex(ccoll, "album.tags", JDIDXARR | JDIDXREBLD)`
+ *          `ejdbsetindex(ccoll, "album.tags", JBIDXARR | JBIDXREBLD)`
  *
  *   Many index examples can be found in `testejdb/t2.c` test case.
  *
@@ -280,11 +280,11 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
  * @param jcoll EJDB database
  * @param q Query handle created with ejdbcreatequery()
  * @param count Output count pointer. Result set size will be stored into it.
- * @param qflags Execution flag. If EJQRYCOUNT is set the only count of matching records will be computed
+ * @param qflags Execution flag. If JBQRYCOUNT is set the only count of matching records will be computed
  *         without resultset, this operation is analog of count(*) in SQL and can be faster than operations with resultsets.
  * @param log Optional extended string to collect debug information during query execution, can be NULL.
  * @return TCLIST with matched bson records data.
- * If (qflags & EJQRYCOUNT) then NULL will be returned
+ * If (qflags & JBQRYCOUNT) then NULL will be returned
  * and only count reported.
  */
 EJDB_EXPORT TCLIST* ejdbqrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);

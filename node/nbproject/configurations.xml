@@ -7,10 +7,7 @@
           <df name="obj.target">
             <df name="ejdb_native">
             </df>
-            <in>ejdb_native.node</in>
           </df>
-          <in>ejdb_native.node</in>
-          <in>linker.lock</in>
         </df>
         <in>Makefile</in>
         <in>binding.Makefile</in>
@@ -3249,7 +3246,15 @@
           </df>
         </df>
       </df>
+      <df name="win32">
+        <in>pthread_mutex.h</in>
+      </df>
+      <in>ejdb_args.h</in>
+      <in>ejdb_cmd.h</in>
+      <in>ejdb_logging.cc</in>
+      <in>ejdb_logging.h</in>
       <in>ejdb_native.cc</in>
+      <in>ejdb_thread.h</in>
     </df>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

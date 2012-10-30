@@ -19,7 +19,7 @@ static EJDB *jb;
 
 int init_suite(void) {
     jb = ejdbnew();
-    if (!ejdbopen(jb, "dbt1", JDBOWRITER | JDBOCREAT | JDBOTRUNC)) {
+    if (!ejdbopen(jb, "dbt1", JBOWRITER | JBOCREAT | JBOTRUNC)) {
         return 1;
     }
     return 0;
