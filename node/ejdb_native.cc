@@ -8,6 +8,7 @@
 #include "ejdb_logging.h"
 #include "ejdb_thread.h"
 
+#include <vector>
 #include <sstream>
 #include <locale.h>
 #include <stdio.h>
@@ -29,11 +30,10 @@ static Persistent<String> sym_query;
 
 namespace ejdb {
 
-    /** Convert V8 object into binary json instance. After using it must be freed by bson_del() */
-    static bson* toBSON(const Handle<Object>& obj) {
+    /** Convert V8 object into binary json instance. After usage, it must be freed by bson_del() */
+    static void toBSON(Handle<Object> obj, bson *bs) {
+        HandleScope scope;
         assert(obj->IsObject());
-        bson *bs = bson_create();
-        bson_init(bs);
         Local<Array> pnames = obj->GetOwnPropertyNames();
         for (uint32_t i = 0; i < pnames->Length(); ++i) {
             Local<Value> pn = pnames->Get(i);
@@ -71,10 +71,20 @@ namespace ejdb {
                     sf.append("m");
                 }
                 bson_append_regex(bs, *spn, *sr, sf.c_str());
+            } else if (pv->IsObject() || pv->IsArray()) {
+                if (pv->IsArray()) {
+                    bson_append_start_array(bs, *spn);
+                } else {
+                    bson_append_start_object(bs, *spn);
+                }
+                toBSON(Handle<Object>::Cast(pv), bs);
+                if (pv->IsArray()) {
+                    bson_append_finish_array(bs);
+                } else {
+                    bson_append_finish_object(bs);
+                }
             }
-            //TODO
         }
-        return bs;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -82,7 +92,28 @@ namespace ejdb {
     ///////////////////////////////////////////////////////////////////////////
 
     class NodeEJDB : public ObjectWrap {
-        typedef EIOCmdTask<NodeEJDB> EJTask;
+
+        enum { //Commands
+            cmdSave = 1 //Save JSON object
+        };
+
+        struct BSONCmdData {
+            std::vector<bson*> bsons;
+
+            BSONCmdData() {
+            }
+
+            ~BSONCmdData() {
+                std::vector<bson*>::iterator it;
+                for (it = bsons.begin(); it < bsons.end(); it++) {
+                    bson *bs = *(it);
+                    bson_del(bs);
+                }
+            }
+        };
+
+        typedef EIOCmdTask<NodeEJDB> EJBTask;
+        typedef EIOCmdTask<NodeEJDB, BSONCmdData> EJBSONTask;
 
         static Persistent<FunctionTemplate> constructor_template;
 
@@ -104,6 +135,21 @@ namespace ejdb {
             return scope.Close(args.This());
         }
 
+        static void s_exec_cmd_eio(uv_work_t *req) {
+            EJBTask *task = static_cast<EJBTask*>(req->data);
+            NodeEJDB *njb = task->wrapped;
+            assert(njb);
+            //TODO njb->exec_cmd(task);
+        }
+
+        static void s_exec_cmd_eio_after(uv_work_t *req) {
+            EJBTask *task = static_cast<EJBTask*>(req->data);
+            NodeEJDB *njb = task->wrapped;
+            assert(njb);
+            //TODO njb->exec_cmd_after(task);
+            delete task;
+        }
+
         static Handle<Value> s_close(const Arguments& args) {
             HandleScope scope;
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
@@ -116,15 +162,30 @@ namespace ejdb {
 
         static Handle<Value> s_save(const Arguments& args) {
             HandleScope scope;
-            REQ_OBJ_ARG(0, obj);
-            bson *bs = toBSON(obj);
-            if (bs->err) {
-                Local<String> msg = String::New(bs->errstr ? bs->errstr : "bson creation failed");
-                bson_del(bs);
-                return scope.Close(ThrowException(Exception::Error(msg)));
+            REQ_ARGS(2);
+            REQ_ARR_ARG(0, oarr);
+            REQ_FUN_ARG(1, cb);
+
+            BSONCmdData *cmdata = new BSONCmdData();
+            for (uint32_t i = 0; i < oarr->Length(); ++i) {
+                Local<Value> v = oarr->Get(i);
+                if (!v->IsObject()) continue;
+                bson *bs = bson_create();
+                assert(bs);
+                toBSON(Handle<Object>::Cast(v), bs);
+                if (bs->err) {
+                    Local<String> msg = String::New(bs->errstr ? bs->errstr : "bson creation failed");
+                    bson_del(bs);
+                    delete cmdata;
+                    return scope.Close(ThrowException(Exception::Error(msg)));
+                }
+                bson_finish(bs);
+                cmdata->bsons.push_back(bs);
             }
-
-
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            assert(njb);
+            EJBSONTask *task = new EJBSONTask(cb, njb, cmdSave, cmdata, EJBSONTask::delete_val);
+            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
             return scope.Close(args.This());
         }
 

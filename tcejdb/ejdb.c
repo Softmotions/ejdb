@@ -2455,12 +2455,14 @@ static bool _bsonoidkey(bson *bs, bson_oid_t *oid) {
     }
     if (t == BSON_STRING) {
         const char* oidstr = bson_iterator_string(&it);
-        if (!_isvalidoidstr(oidstr)) {
-            goto finish;
+        if (_isvalidoidstr(oidstr)) {
+            bson_oid_from_string(oid, oidstr);
+            rv = true;
         }
+    } else {
+        *oid = *bson_iterator_oid(&it);
+        rv = true;
     }
-    *oid = *bson_iterator_oid(&it);
-    rv = true;
 finish:
     return rv;
 }
