@@ -62,7 +62,7 @@ enum { /** Index modes, index types. */
     JBIDXREBLD = 1 << 3, /**< Rebuild index. */
     JBIDXNUM = 1 << 4, /**< Number index. */
     JBIDXSTR = 1 << 5, /**< String index.*/
-    JBIDXARR = 1 << 6, /**< Array token index. */
+    JBIDXARR = 1 << 6 /**< Array token index. */
 };
 
 enum { /*< Query search mode flags in ejdbqrysearch() */
