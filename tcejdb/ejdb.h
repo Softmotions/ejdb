@@ -14,10 +14,10 @@
 
 EJDB_EXTERN_C_START
 
-struct EJDB; /**> EJDB database object. */
+struct EJDB; /**< EJDB database object. */
 typedef struct EJDB EJDB;
 
-struct EJCOLL; /**> EJDB collection handle. */
+struct EJCOLL; /*< EJDB collection handle. */
 typedef struct EJCOLL EJCOLL;
 
 struct EJQ; /**< EJDB query. */
@@ -65,8 +65,8 @@ enum { /** Index modes, index types. */
     JDIDXARR = 1 << 6, /**< Array token index. */
 };
 
-enum { /**> Query search mode flags in ejdbqrysearch() */
-    EJQRYCOUNT = 1 /**> Query only count(*) */
+enum { /*< Query search mode flags in ejdbqrysearch() */
+    EJQRYCOUNT = 1 /*< Query only count(*) */
 };
 
 /**
