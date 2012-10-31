@@ -116,6 +116,7 @@ namespace ejdb {
     } TBSONCTX;
 
     static void toBSON0(Handle<Object> obj, bson *bs, TBSONCTX *ctx) {
+        HandleScope scope
         assert(ctx && obj->IsObject());
         if (ctx->traversed->Get(obj)->IsObject()) {
             bs->err = BSON_ERROR_ANY;
