@@ -67,10 +67,12 @@ namespace ejdb {
                 case BSON_OBJECT:
                 case BSON_ARRAY:
                 {
-                    bson_iterator sit;
-                    bson_iterator_subiterator(it, &sit);
-                    while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
-                        ret->Set(String::New(key), toV8Object(&sit));
+                    int nbt;
+                    bson_iterator nit;
+                    bson_iterator_subiterator(it, &nit);
+                    while ((nbt = bson_iterator_next(&nit)) != BSON_EOO) {
+                        const char* nkey = bson_iterator_key(&nit);
+                        ret->Set(String::New(nkey), toV8Object(&nit));
                     }
                     break;
                 }
@@ -114,7 +116,6 @@ namespace ejdb {
     } TBSONCTX;
 
     static void toBSON0(Handle<Object> obj, bson *bs, TBSONCTX *ctx) {
-        HandleScope scope;
         assert(ctx && obj->IsObject());
         if (ctx->traversed->Get(obj)->IsObject()) {
             bs->err = BSON_ERROR_ANY;
@@ -186,6 +187,9 @@ namespace ejdb {
         ctx.traversed = Object::New();
         toBSON0(obj, bs, &ctx);
     }
+
+    class NodeEJDBCursor;
+    class NodeEJDB;
 
     ///////////////////////////////////////////////////////////////////////////
     //                          Main NodeEJDB                                //
@@ -536,12 +540,133 @@ namespace ejdb {
         }
     };
 
+    ///////////////////////////////////////////////////////////////////////////
+    //                        Result set cursor                              //
+    ///////////////////////////////////////////////////////////////////////////
+
+    class NodeEJDBCursor : public ObjectWrap {
+        friend class NodeEJDB;
+
+        static Persistent<FunctionTemplate> constructor_template;
+
+        TCLIST *m_rs; //result set bsons
+        int m_pos; //current cursor position
+
+        static Handle<Value> s_new_object(const Arguments& args) {
+            HandleScope scope;
+            REQ_ARGS(1);
+            REQ_EXT_ARG(0, rs);
+            NodeEJDBCursor *cursor = new NodeEJDBCursor((TCLIST*) rs->Value());
+            cursor->Wrap(args.This());
+            return scope.Close(args.This());
+        }
+
+        static Handle<Value> s_close(const Arguments& args) {
+            HandleScope scope;
+            NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
+            assert(c);
+            if (c->m_rs) {
+                tclistdel(c->m_rs);
+                c->m_rs = NULL;
+            }
+            return scope.Close(args.This());
+        }
+
+        static Handle<Value> s_has_next(const Arguments& args) {
+            NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
+            assert(c);
+            return Boolean::New(c->m_rs && c->m_pos < TCLISTNUM(c->m_rs));
+        }
+
+        static Handle<Value> s_get_length(Local<String> property, const AccessorInfo &info) {
+            NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (info.This());
+            assert(c);
+            if (!c->m_rs) {
+                return ThrowException(Exception::Error(String::New("Cursor closed")));
+            }
+            return Integer::New(TCLISTNUM(c->m_rs));
+        }
+
+        static Handle<Value> s_get_pos(Local<String> property, const AccessorInfo &info) {
+            NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (info.This());
+            assert(c);
+            if (!c->m_rs) {
+                return ThrowException(Exception::Error(String::New("Cursor closed")));
+            }
+            return Integer::New(c->m_pos);
+        }
+
+        static void s_set_pos(Local<String> property, Local<Value> val, const AccessorInfo &info) {
+            if (!val->IsNumber()) {
+                return;
+            }
+            NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (info.This());
+            assert(c);
+            if (!c->m_rs) {
+                return;
+            }
+            int nval = val->Int32Value();
+            int sz = TCLISTNUM(c->m_rs);
+            if (nval < 0) {
+                nval = sz + nval;
+            }
+            if (nval >= 0 && sz > 0) {
+                nval = (nval >= sz) ? sz - 1 : nval;
+            } else {
+                nval = 0;
+            }
+            c->m_pos = nval;
+        }
+
+        NodeEJDBCursor(TCLIST *rs) : m_rs(rs), m_pos(0) {
+
+        }
+
+        virtual ~NodeEJDBCursor() {
+            if (m_rs) {
+                tclistdel(m_rs);
+            }
+        }
+
+    public:
+
+        static void Init(Handle<Object> target) {
+            HandleScope scope;
+            Local<FunctionTemplate> t = FunctionTemplate::New(s_new_object);
+            constructor_template = Persistent<FunctionTemplate>::New(t);
+            constructor_template->InstanceTemplate()->SetInternalFieldCount(1);
+            constructor_template->SetClassName(String::NewSymbol("NodeEJDBCursor"));
+
+            constructor_template->PrototypeTemplate()
+                    ->SetAccessor(String::NewSymbol("length"), s_get_length, 0, Handle<Value > (), ALL_CAN_READ);
+
+            constructor_template->PrototypeTemplate()
+                    ->SetAccessor(String::NewSymbol("pos"), s_get_pos, s_set_pos, Handle<Value > (), ALL_CAN_READ);
+
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "close", s_close);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "hasNext", s_has_next);
+        }
+
+        void Ref() {
+            ObjectWrap::Ref();
+        }
+
+        void Unref() {
+            ObjectWrap::Unref();
+        }
+
+    };
+
+
+
     Persistent<FunctionTemplate> NodeEJDB::constructor_template;
+    Persistent<FunctionTemplate> NodeEJDBCursor::constructor_template;
 
     void Init(v8::Handle<v8::Object> target) {
 #ifdef __unix
         setlocale(LC_ALL, "en_US.UTF-8"); //todo review it
 #endif
+        ejdb::NodeEJDB::Init(target);
         ejdb::NodeEJDB::Init(target);
     }
 
