@@ -573,30 +573,34 @@ namespace ejdb {
         }
 
         static Handle<Value> s_has_next(const Arguments& args) {
+            HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
             assert(c);
-            return Boolean::New(c->m_rs && c->m_pos < TCLISTNUM(c->m_rs));
+            return scope.Close(Boolean::New(c->m_rs && c->m_pos < TCLISTNUM(c->m_rs)));
         }
 
         static Handle<Value> s_get_length(Local<String> property, const AccessorInfo &info) {
+            HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (info.This());
             assert(c);
             if (!c->m_rs) {
                 return ThrowException(Exception::Error(String::New("Cursor closed")));
             }
-            return Integer::New(TCLISTNUM(c->m_rs));
+            return scope.Close(Integer::New(TCLISTNUM(c->m_rs)));
         }
 
         static Handle<Value> s_get_pos(Local<String> property, const AccessorInfo &info) {
+            HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (info.This());
             assert(c);
             if (!c->m_rs) {
                 return ThrowException(Exception::Error(String::New("Cursor closed")));
             }
-            return Integer::New(c->m_pos);
+            return scope.Close(Integer::New(c->m_pos));
         }
 
         static void s_set_pos(Local<String> property, Local<Value> val, const AccessorInfo &info) {
+            HandleScope scope;
             if (!val->IsNumber()) {
                 return;
             }
