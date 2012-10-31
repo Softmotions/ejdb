@@ -757,6 +757,10 @@ EJDB_EXPORT void bson_destroy(bson *b) {
         b->data = 0;
         b->cur = 0;
         b->finished = 1;
+        if (b->errstr) {
+            bson_free_func(b->errstr);
+            b->errstr = NULL;
+        }
     }
 }
 

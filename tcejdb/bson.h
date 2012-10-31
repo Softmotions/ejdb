@@ -54,7 +54,8 @@ enum bson_validity_t {
     BSON_NOT_UTF8 = (1 << 1), /**< A key or a string is not valid UTF-8. */
     BSON_FIELD_HAS_DOT = (1 << 2), /**< Warning: key contains '.' character. */
     BSON_FIELD_INIT_DOLLAR = (1 << 3), /**< Warning: key starts with '$' character. */
-    BSON_ALREADY_FINISHED = (1 << 4) /**< Trying to modify a finished BSON object. */
+    BSON_ALREADY_FINISHED = (1 << 4), /**< Trying to modify a finished BSON object. */
+    BSON_ERROR_ANY = (1 << 5) /**< Unspecified error */
 };
 
 enum bson_binary_subtype_t {

@@ -9,10 +9,6 @@
             </df>
           </df>
         </df>
-        <in>Makefile</in>
-        <in>binding.Makefile</in>
-        <in>config.gypi</in>
-        <in>ejdb_native.target.mk</in>
       </df>
       <df name="nodejs">
         <df name="benchmark">
@@ -3245,6 +3241,8 @@
             </df>
           </df>
         </df>
+      </df>
+      <df name="tests">
       </df>
       <df name="win32">
         <in>pthread_mutex.h</in>

@@ -150,6 +150,10 @@ EJDB_EXPORT bool ejdbclose(EJDB *jb) {
     return rv;
 }
 
+EJDB_EXPORT bool ejdbisopen(EJDB *jb) {
+    return JBISOPEN(jb);
+}
+
 EJDB_EXPORT bool ejdbopen(EJDB *jb, const char *path, int mode) {
     assert(jb && path);
     assert(jb->metadb);

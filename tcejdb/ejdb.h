@@ -121,6 +121,14 @@ EJDB_EXPORT bool ejdbclose(EJDB *jb);
  */
 EJDB_EXPORT bool ejdbopen(EJDB *jb, const char *path, int mode);
 
+
+/**
+ * Return true if database is in open state
+ * @param jb EJDB database hadle
+ * @return True if database is in open state otherwise false
+ */
+EJDB_EXPORT bool ejdbisopen(EJDB *jb);
+
 /**
  * Retrieve collection handle for collection specified `collname`.
  * If collection with specified name does't exists it will return NULL.
