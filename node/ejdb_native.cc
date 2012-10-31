@@ -1,6 +1,7 @@
 
 #include <v8.h>
 #include <node.h>
+#include <node_buffer.h>
 #include <ejdb.h>
 
 #include "ejdb_args.h"
@@ -25,6 +26,88 @@ static const int CMD_RET_ERROR = 1;
                     v8::ReadOnly|v8::DontDelete))
 
 namespace ejdb {
+
+    static Handle<Object> toV8Object(bson_iterator *it) {
+        HandleScope scope;
+        Local<Object> ret = Object::New();
+        bson_type bt;
+        while ((bt = bson_iterator_next(it)) != BSON_EOO) {
+            const char *key = bson_iterator_key(it);
+            switch (bt) {
+                case BSON_OID:
+                {
+                    char xoid[25];
+                    bson_oid_to_string(bson_iterator_oid(it), xoid);
+                    ret->Set(String::New(key), String::New(xoid, 24));
+                    break;
+                }
+                case BSON_STRING:
+                case BSON_SYMBOL:
+                    ret->Set(String::New(key),
+                            String::New(bson_iterator_string(it), bson_iterator_string_len(it)));
+                    break;
+                case BSON_NULL:
+                    ret->Set(String::New(key), Null());
+                    break;
+                case BSON_UNDEFINED:
+                    ret->Set(String::New(key), Undefined());
+                    break;
+                case BSON_INT:
+                    ret->Set(String::New(key), Integer::New(bson_iterator_int_raw(it)));
+                    break;
+                case BSON_LONG:
+                    ret->Set(String::New(key), Number::New((double) bson_iterator_long_raw(it)));
+                    break;
+                case BSON_DOUBLE:
+                    ret->Set(String::New(key), Number::New(bson_iterator_double_raw(it)));
+                    break;
+                case BSON_BOOL:
+                    ret->Set(String::New(key), Boolean::New(bson_iterator_bool_raw(it)));
+                    break;
+                case BSON_OBJECT:
+                case BSON_ARRAY:
+                {
+                    bson_iterator sit;
+                    bson_iterator_subiterator(it, &sit);
+                    while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
+                        ret->Set(String::New(key), toV8Object(&sit));
+                    }
+                    break;
+                }
+                case BSON_DATE:
+                    ret->Set(String::New(key), Date::New((double) bson_iterator_date(it)));
+                    break;
+                case BSON_BINDATA:
+                    //TODO test it!
+                    ret->Set(String::New(key),
+                            Buffer::New(String::New(bson_iterator_bin_data(it),
+                            bson_iterator_bin_len(it))));
+                    break;
+                case BSON_REGEX:
+                {
+                    const char *re = bson_iterator_regex(it);
+                    const char *ro = bson_iterator_regex_opts(it);
+                    int rflgs = RegExp::kNone;
+                    for (int i = (strlen(ro) - 1); i >= 0; --i) {
+                        if (ro[i] == 'i') {
+                            rflgs |= RegExp::kIgnoreCase;
+                        } else if (ro[i] == 'g') {
+                            rflgs |= RegExp::kGlobal;
+                        } else if (ro[i] == 'm') {
+                            rflgs |= RegExp::kMultiline;
+                        }
+                    }
+                    ret->Set(String::New(key), RegExp::New(String::New(re), (RegExp::Flags) rflgs));
+                    break;
+                }
+
+                default:
+                    //ignore other types
+                    break;
+            }
+        }
+        return scope.Close(ret);
+    }
 
     typedef struct {
         Handle<Object> traversed;
@@ -88,6 +171,10 @@ namespace ejdb {
                 } else {
                     bson_append_finish_object(bs);
                 }
+            } else if (Buffer::HasInstance(pv)) {
+                bson_append_binary(bs, *spn, BSON_BIN_BINARY,
+                        Buffer::Data(Handle<Object>::Cast(pv)),
+                        Buffer::Length(Handle<Object>::Cast(pv)));
             }
         }
     }
@@ -129,7 +216,7 @@ namespace ejdb {
                 std::vector<bson*>::iterator it;
                 for (it = bsons.begin(); it < bsons.end(); it++) {
                     bson *bs = *(it);
-                    bson_del(bs);
+                    if (bs) bson_del(bs);
                 }
             }
         };
@@ -287,6 +374,7 @@ namespace ejdb {
             EJCOLL *coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
             if (!coll) {
                 task->cmd_ret_msg = _jb_error_msg();
+                return;
             }
 
             std::vector<bson*>::iterator it;
@@ -332,12 +420,39 @@ namespace ejdb {
             if (!_check_state((EJBTask*) task)) {
                 return;
             }
-
+            BSONCmdData *cmdata = task->cmd_data;
+            assert(cmdata);
+            EJCOLL *coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
+            if (!coll) {
+                task->cmd_ret_msg = _jb_error_msg();
+                return;
+            }
+            cmdata->bsons.push_back(ejdbloadbson(coll, &task->cmd_data->ref));
         }
 
         void load_after(BSONCmdTask *task) {
             HandleScope scope;
-
+            Local<Value> argv[2];
+            if (task->cmd_ret != 0) {
+                argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
+            } else {
+                argv[0] = Local<Primitive>::New(Null());
+            }
+            bson *bs = (!task->cmd_ret && task->cmd_data->bsons.size() > 0) ?
+                    task->cmd_data->bsons.front() :
+                    NULL;
+            if (bs) {
+                bson_iterator it;
+                bson_iterator_init(&it, bs);
+                argv[1] = Local<Object>::New(toV8Object(&it));
+            } else {
+                argv[1] = Local<Primitive>::New(Null());
+            }
+            TryCatch try_catch;
+            task->cb->Call(Context::GetCurrent()->Global(), 2, argv);
+            if (try_catch.HasCaught()) {
+                FatalException(try_catch);
+            }
         }
 
         bool open(const char* dbpath, int mode) {

@@ -320,7 +320,7 @@ EJDB_EXPORT bson_bool_t bson_iterator_bool(const bson_iterator *i);
  * @return the value of the current BSON object.
  */
 /* these assume you are using the right type */
-double bson_iterator_double_raw(const bson_iterator *i);
+EJDB_EXPORT double bson_iterator_double_raw(const bson_iterator *i);
 
 /**
  * Get the int value of the BSON object currently pointed to by the
@@ -330,7 +330,7 @@ double bson_iterator_double_raw(const bson_iterator *i);
  *
  * @return the value of the current BSON object.
  */
-int bson_iterator_int_raw(const bson_iterator *i);
+EJDB_EXPORT int bson_iterator_int_raw(const bson_iterator *i);
 
 /**
  * Get the long value of the BSON object currently pointed to by the
@@ -340,7 +340,7 @@ int bson_iterator_int_raw(const bson_iterator *i);
  *
  * @return the value of the current BSON object.
  */
-int64_t bson_iterator_long_raw(const bson_iterator *i);
+EJDB_EXPORT int64_t bson_iterator_long_raw(const bson_iterator *i);
 
 /**
  * Get the bson_bool_t value of the BSON object currently pointed to by the
@@ -350,7 +350,7 @@ int64_t bson_iterator_long_raw(const bson_iterator *i);
  *
  * @return the value of the current BSON object.
  */
-bson_bool_t bson_iterator_bool_raw(const bson_iterator *i);
+EJDB_EXPORT bson_bool_t bson_iterator_bool_raw(const bson_iterator *i);
 
 /**
  * Get the bson_oid_t value of the BSON object currently pointed to by the

@@ -457,25 +457,25 @@ EJDB_EXPORT const char *bson_iterator_value(const bson_iterator *i) {
 
 /* types */
 
-int bson_iterator_int_raw(const bson_iterator *i) {
+EJDB_EXPORT int bson_iterator_int_raw(const bson_iterator *i) {
     int out;
     bson_little_endian32(&out, bson_iterator_value(i));
     return out;
 }
 
-double bson_iterator_double_raw(const bson_iterator *i) {
+EJDB_EXPORT double bson_iterator_double_raw(const bson_iterator *i) {
     double out;
     bson_little_endian64(&out, bson_iterator_value(i));
     return out;
 }
 
-int64_t bson_iterator_long_raw(const bson_iterator *i) {
+EJDB_EXPORT int64_t bson_iterator_long_raw(const bson_iterator *i) {
     int64_t out;
     bson_little_endian64(&out, bson_iterator_value(i));
     return out;
 }
 
-bson_bool_t bson_iterator_bool_raw(const bson_iterator *i) {
+EJDB_EXPORT bson_bool_t bson_iterator_bool_raw(const bson_iterator *i) {
     return bson_iterator_value(i)[0];
 }
 

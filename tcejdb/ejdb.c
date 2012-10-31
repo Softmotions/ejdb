@@ -354,7 +354,7 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *jcoll, const bson_oid_t *oid) {
     assert(jcoll && oid);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
-        return false;
+        return NULL;
     }
     JBCLOCKMETHOD(jcoll, false);
     bson *ret = NULL;
