@@ -547,8 +547,16 @@ namespace ejdb {
                 goto finish;
             }
             res = ejdbqrysearch(coll, q, &cmdata->count, cmdata->qflags, NULL);
-
-
+            if (ejdbecode(m_jb) != TCESUCCESS) {
+                if (res) {
+                    tclistdel(res);
+                    res = NULL;
+                }
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+                goto finish;
+            }
+            cmdata->res = res;
 finish:
             if (q) {
                 ejdbquerydel(q);
@@ -558,10 +566,7 @@ finish:
             }
         }
 
-        void query_after(BSONQCmdTask *task) {
-            HandleScope scope;
-
-        }
+        void query_after(BSONQCmdTask *task);
 
         bool open(const char* dbpath, int mode) {
             m_jb = ejdbnew();
@@ -654,14 +659,16 @@ finish:
 
         static Persistent<FunctionTemplate> constructor_template;
 
+        NodeEJDB *m_nejdb;
         TCLIST *m_rs; //result set bsons
         int m_pos; //current cursor position
 
         static Handle<Value> s_new_object(const Arguments& args) {
             HandleScope scope;
-            REQ_ARGS(1);
-            REQ_EXT_ARG(0, rs);
-            NodeEJDBCursor *cursor = new NodeEJDBCursor((TCLIST*) rs->Value());
+            REQ_ARGS(2);
+            REQ_EXT_ARG(0, nejedb);
+            REQ_EXT_ARG(1, rs);
+            NodeEJDBCursor *cursor = new NodeEJDBCursor((NodeEJDB*) nejedb->Value(), (TCLIST*) rs->Value());
             cursor->Wrap(args.This());
             return scope.Close(args.This());
         }
@@ -670,10 +677,7 @@ finish:
             HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
             assert(c);
-            if (c->m_rs) {
-                tclistdel(c->m_rs);
-                c->m_rs = NULL;
-            }
+            c->close();
             return scope.Close(args.This());
         }
 
@@ -727,13 +731,24 @@ finish:
             c->m_pos = nval;
         }
 
-        NodeEJDBCursor(TCLIST *rs) : m_rs(rs), m_pos(0) {
+        void close() {
+            if (m_nejdb) {
+                m_nejdb->Unref();
+                m_nejdb = NULL;
+            }
+            if (m_rs) {
+                tclistdel(m_rs);
+                m_rs = NULL;
+            }
+        }
+
+        NodeEJDBCursor(NodeEJDB *_nejedb, TCLIST *_rs) : m_nejdb(_nejedb), m_rs(_rs), m_pos(0) {
+            assert(m_rs && m_nejdb);
+            this->m_nejdb->Ref();
         }
 
         virtual ~NodeEJDBCursor() {
-            if (m_rs) {
-                tclistdel(m_rs);
-            }
+            close();
         }
 
     public:
@@ -764,16 +779,49 @@ finish:
         }
     };
 
-
     Persistent<FunctionTemplate> NodeEJDB::constructor_template;
     Persistent<FunctionTemplate> NodeEJDBCursor::constructor_template;
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                           rest                                        //
+    ///////////////////////////////////////////////////////////////////////////
+
+    void NodeEJDB::query_after(BSONQCmdTask *task) {
+        HandleScope scope;
+        Local<Value> argv[3];
+        if (task->cmd_ret != 0) {
+            argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
+            TryCatch try_catch;
+            task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+            if (try_catch.HasCaught()) {
+                FatalException(try_catch);
+            }
+            return;
+        }
+        BSONQCmdData *cmdata = task->cmd_data;
+        assert(cmdata);
+        TCLIST *res = cmdata->res;
+        cmdata->res = NULL; //res will be freed by NodeEJDBCursor instead of ~BSONQCmdData()
+        argv[0] = Local<Primitive>::New(Null());
+        Local<Value> cursorArgv[2];
+        cursorArgv[0] = External::New(task->wrapped);
+        cursorArgv[1] = External::New(res);
+        Local<Object> cursor(NodeEJDBCursor::constructor_template->GetFunction()->NewInstance(2, cursorArgv));
+        argv[1] = Local<Object>::New(cursor);
+        argv[2] = Integer::New(cmdata->count);
+        TryCatch try_catch;
+        task->cb->Call(Context::GetCurrent()->Global(), 3, argv);
+        if (try_catch.HasCaught()) {
+            FatalException(try_catch);
+        }
+    }
 
     void Init(v8::Handle<v8::Object> target) {
 #ifdef __unix
         setlocale(LC_ALL, "en_US.UTF-8"); //todo review it
 #endif
         ejdb::NodeEJDB::Init(target);
-        ejdb::NodeEJDB::Init(target);
+        ejdb::NodeEJDBCursor::Init(target);
     }
 
 }

@@ -570,6 +570,7 @@ EJDB_EXPORT TCLIST* ejdbqrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, 
     }
     JBCLOCKMETHOD(jcoll, false);
     TCLIST *res;
+    _ejdbsetecode(jcoll->jb, TCESUCCESS, __FILE__, __LINE__, __func__);
     res = _qrysearch(jcoll, q, count, qflags, log);
     JBCUNLOCKMETHOD(jcoll);
     return res;
