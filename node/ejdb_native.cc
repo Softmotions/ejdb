@@ -411,7 +411,6 @@ namespace ejdb {
         static Handle<Value> s_close(const Arguments& args) {
             HandleScope scope;
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            assert(njb);
             if (!njb->close()) {
                 return scope.Close(ThrowException(Exception::Error(String::New(njb->_jb_error_msg()))));
             }
@@ -433,7 +432,6 @@ namespace ejdb {
             cmdata->ref = oid;
 
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            assert(njb);
             BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdLoad, cmdata, BSONCmdTask::delete_val);
             uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
             return scope.Close(args.This());
@@ -463,7 +461,6 @@ namespace ejdb {
                 cmdata->bsons.push_back(bs);
             }
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            assert(njb);
             BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
             uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
             return scope.Close(args.This());
@@ -507,7 +504,6 @@ namespace ejdb {
                 cmdata->bsons.push_back(bs);
             }
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            assert(njb);
             BSONQCmdTask *task = new BSONQCmdTask(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
             uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
             return scope.Close(args.This());
@@ -787,6 +783,7 @@ finish:
         NodeEJDB *m_nejdb;
         TCLIST *m_rs; //result set bsons
         int m_pos; //current cursor position
+        bool m_no_next; //no next() was called
 
         static Handle<Value> s_new_object(const Arguments& args) {
             HandleScope scope;
@@ -801,22 +798,49 @@ finish:
         static Handle<Value> s_close(const Arguments& args) {
             HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
-            assert(c);
             c->close();
+            return scope.Close(args.This());
+        }
+
+        static Handle<Value> s_reset(const Arguments& args) {
+            HandleScope scope;
+            NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
+            c->m_pos = 0;
+            c->m_no_next = true;
             return scope.Close(args.This());
         }
 
         static Handle<Value> s_has_next(const Arguments& args) {
             HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
-            assert(c);
-            return scope.Close(Boolean::New(c->m_rs && c->m_pos < TCLISTNUM(c->m_rs)));
+            if (!c->m_rs) {
+                return ThrowException(Exception::Error(String::New("Cursor closed")));
+            }
+            int rsz = TCLISTNUM(c->m_rs);
+            return scope.Close(Boolean::New(c->m_rs && ((c->m_no_next && rsz > 0) || (c->m_pos + 1 < rsz))));
+        }
+
+        static Handle<Value> s_next(const Arguments& args) {
+            HandleScope scope;
+            NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
+            if (!c->m_rs) {
+                return ThrowException(Exception::Error(String::New("Cursor closed")));
+            }
+            int rsz = TCLISTNUM(c->m_rs);
+            if (c->m_no_next) {
+                c->m_no_next = false;
+                return scope.Close(Boolean::New(rsz > 0));
+            } else if (c->m_pos + 1 < rsz) {
+                c->m_pos++;
+                return scope.Close(Boolean::New(true));
+            } else {
+                return scope.Close(Boolean::New(false));
+            }
         }
 
         static Handle<Value> s_get_length(Local<String> property, const AccessorInfo &info) {
             HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (info.This());
-            assert(c);
             if (!c->m_rs) {
                 return ThrowException(Exception::Error(String::New("Cursor closed")));
             }
@@ -826,7 +850,6 @@ finish:
         static Handle<Value> s_get_pos(Local<String> property, const AccessorInfo &info) {
             HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (info.This());
-            assert(c);
             if (!c->m_rs) {
                 return ThrowException(Exception::Error(String::New("Cursor closed")));
             }
@@ -839,7 +862,6 @@ finish:
                 return;
             }
             NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (info.This());
-            assert(c);
             if (!c->m_rs) {
                 return;
             }
@@ -854,6 +876,7 @@ finish:
                 nval = 0;
             }
             c->m_pos = nval;
+            c->m_no_next = false;
         }
 
         static Handle<Value> s_field(const Arguments& args) {
@@ -861,7 +884,6 @@ finish:
             REQ_ARGS(1);
             REQ_STR_ARG(0, fpath);
             NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (args.This());
-            assert(c);
             if (!c->m_rs) {
                 return scope.Close(ThrowException(Exception::Error(String::New("Cursor closed"))));
             }
@@ -884,7 +906,6 @@ finish:
         static Handle<Value> s_object(const Arguments& args) {
             HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (args.This());
-            assert(c);
             if (!c->m_rs) {
                 return scope.Close(ThrowException(Exception::Error(String::New("Cursor closed"))));
             }
@@ -912,7 +933,7 @@ finish:
             }
         }
 
-        NodeEJDBCursor(NodeEJDB *_nejedb, TCLIST *_rs) : m_nejdb(_nejedb), m_rs(_rs), m_pos(0) {
+        NodeEJDBCursor(NodeEJDB *_nejedb, TCLIST *_rs) : m_nejdb(_nejedb), m_rs(_rs), m_pos(0), m_no_next(true) {
             assert(m_rs && m_nejdb);
             this->m_nejdb->Ref();
         }
@@ -939,7 +960,9 @@ finish:
 
 
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "close", s_close);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "reset", s_reset);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "hasNext", s_has_next);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "next", s_next);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "field", s_field);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "object", s_object);
         }
