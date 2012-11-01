@@ -27,63 +27,185 @@ static const int CMD_RET_ERROR = 1;
 
 namespace ejdb {
 
-    static Handle<Object> toV8Object(bson_iterator *it) {
+    typedef struct {
+        Handle<Object> traversed;
+    } TBSONCTX;
+
+    static Handle<Object> toV8Object(bson_iterator *it, bson_type obt = BSON_OBJECT);
+    static Handle<Value> toV8Value(bson_iterator *it);
+    static void toBSON0(Handle<Object> obj, bson *bs, TBSONCTX *ctx);
+
+    static Handle<Value> toV8Value(bson_iterator *it) {
         HandleScope scope;
-        Local<Object> ret = Object::New();
+        bson_type bt = bson_iterator_type(it);
+
+        switch (bt) {
+            case BSON_OID:
+            {
+                char xoid[25];
+                bson_oid_to_string(bson_iterator_oid(it), xoid);
+                return scope.Close(String::New(xoid, 24));
+            }
+            case BSON_STRING:
+            case BSON_SYMBOL:
+                return scope.Close(String::New(bson_iterator_string(it), bson_iterator_string_len(it)));
+            case BSON_NULL:
+                return scope.Close(Null());
+            case BSON_UNDEFINED:
+                return scope.Close(Undefined());
+            case BSON_INT:
+                return scope.Close(Integer::New(bson_iterator_int_raw(it)));
+            case BSON_LONG:
+                return scope.Close(Number::New((double) bson_iterator_long_raw(it)));
+            case BSON_DOUBLE:
+                return scope.Close(Number::New(bson_iterator_double_raw(it)));
+            case BSON_BOOL:
+                return scope.Close(Boolean::New(bson_iterator_bool_raw(it)));
+            case BSON_OBJECT:
+            case BSON_ARRAY:
+            {
+                bson_iterator nit;
+                bson_iterator_subiterator(it, &nit);
+                return scope.Close(toV8Object(&nit));
+            }
+            case BSON_DATE:
+                return scope.Close(Date::New((double) bson_iterator_date(it)));
+            case BSON_BINDATA:
+                //TODO test it!
+                return scope.Close(Buffer::New(String::New(bson_iterator_bin_data(it), bson_iterator_bin_len(it))));
+            case BSON_REGEX:
+            {
+                const char *re = bson_iterator_regex(it);
+                const char *ro = bson_iterator_regex_opts(it);
+                int rflgs = RegExp::kNone;
+                for (int i = (strlen(ro) - 1); i >= 0; --i) {
+                    if (ro[i] == 'i') {
+                        rflgs |= RegExp::kIgnoreCase;
+                    } else if (ro[i] == 'g') {
+                        rflgs |= RegExp::kGlobal;
+                    } else if (ro[i] == 'm') {
+                        rflgs |= RegExp::kMultiline;
+                    }
+                }
+                return scope.Close(RegExp::New(String::New(re), (RegExp::Flags) rflgs));
+            }
+            default:
+                break;
+        }
+        return scope.Close(Undefined());
+    }
+
+    static Handle<Object> toV8Object(bson_iterator *it, bson_type obt) {
+        HandleScope scope;
+        Local<Object> ret;
+        uint32_t cxnum = 0;
+        if (obt == BSON_ARRAY) {
+            ret = Array::New();
+        } else if (obt == BSON_OBJECT) {
+            ret = Object::New();
+        } else {
+            assert(0);
+        }
         bson_type bt;
         while ((bt = bson_iterator_next(it)) != BSON_EOO) {
             const char *key = bson_iterator_key(it);
+            if (obt == BSON_ARRAY) {
+                cxnum = tcatoi(key);
+            }
             switch (bt) {
                 case BSON_OID:
                 {
                     char xoid[25];
                     bson_oid_to_string(bson_iterator_oid(it), xoid);
-                    ret->Set(String::New(key), String::New(xoid, 24));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, String::New(xoid, 24));
+                    } else {
+                        ret->Set(String::New(key), String::New(xoid, 24));
+                    }
                     break;
                 }
                 case BSON_STRING:
                 case BSON_SYMBOL:
-                    ret->Set(String::New(key),
-                            String::New(bson_iterator_string(it), bson_iterator_string_len(it)));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum,
+                                String::New(bson_iterator_string(it), bson_iterator_string_len(it)));
+                    } else {
+                        ret->Set(String::New(key),
+                                String::New(bson_iterator_string(it), bson_iterator_string_len(it)));
+                    }
                     break;
                 case BSON_NULL:
-                    ret->Set(String::New(key), Null());
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, Null());
+                    } else {
+                        ret->Set(String::New(key), Null());
+                    }
                     break;
                 case BSON_UNDEFINED:
-                    ret->Set(String::New(key), Undefined());
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, Undefined());
+                    } else {
+                        ret->Set(String::New(key), Undefined());
+                    }
                     break;
                 case BSON_INT:
-                    ret->Set(String::New(key), Integer::New(bson_iterator_int_raw(it)));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, Integer::New(bson_iterator_int_raw(it)));
+                    } else {
+                        ret->Set(String::New(key), Integer::New(bson_iterator_int_raw(it)));
+                    }
                     break;
                 case BSON_LONG:
-                    ret->Set(String::New(key), Number::New((double) bson_iterator_long_raw(it)));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, Number::New((double) bson_iterator_long_raw(it)));
+                    } else {
+                        ret->Set(String::New(key), Number::New((double) bson_iterator_long_raw(it)));
+                    }
                     break;
                 case BSON_DOUBLE:
-                    ret->Set(String::New(key), Number::New(bson_iterator_double_raw(it)));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, Number::New(bson_iterator_double_raw(it)));
+                    } else {
+                        ret->Set(String::New(key), Number::New(bson_iterator_double_raw(it)));
+                    }
                     break;
                 case BSON_BOOL:
-                    ret->Set(String::New(key), Boolean::New(bson_iterator_bool_raw(it)));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, Boolean::New(bson_iterator_bool_raw(it)));
+                    } else {
+                        ret->Set(String::New(key), Boolean::New(bson_iterator_bool_raw(it)));
+                    }
                     break;
                 case BSON_OBJECT:
                 case BSON_ARRAY:
                 {
-                    int nbt;
                     bson_iterator nit;
                     bson_iterator_subiterator(it, &nit);
-                    while ((nbt = bson_iterator_next(&nit)) != BSON_EOO) {
-                        const char* nkey = bson_iterator_key(&nit);
-                        ret->Set(String::New(nkey), toV8Object(&nit));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, toV8Object(&nit, bt));
+                    } else {
+                        ret->Set(String::New(key), toV8Object(&nit, bt));
                     }
                     break;
                 }
                 case BSON_DATE:
-                    ret->Set(String::New(key), Date::New((double) bson_iterator_date(it)));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, Date::New((double) bson_iterator_date(it)));
+                    } else {
+                        ret->Set(String::New(key), Date::New((double) bson_iterator_date(it)));
+                    }
                     break;
                 case BSON_BINDATA:
                     //TODO test it!
-                    ret->Set(String::New(key),
-                            Buffer::New(String::New(bson_iterator_bin_data(it),
-                            bson_iterator_bin_len(it))));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum,
+                                Buffer::New(String::New(bson_iterator_bin_data(it),
+                                bson_iterator_bin_len(it))));
+                    } else {
+                        ret->Set(String::New(key),
+                                Buffer::New(String::New(bson_iterator_bin_data(it),
+                                bson_iterator_bin_len(it))));
+                    }
                     break;
                 case BSON_REGEX:
                 {
@@ -99,21 +221,24 @@ namespace ejdb {
                             rflgs |= RegExp::kMultiline;
                         }
                     }
-                    ret->Set(String::New(key), RegExp::New(String::New(re), (RegExp::Flags) rflgs));
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, RegExp::New(String::New(re), (RegExp::Flags) rflgs));
+                    } else {
+                        ret->Set(String::New(key), RegExp::New(String::New(re), (RegExp::Flags) rflgs));
+                    }
                     break;
                 }
-
                 default:
-                    //ignore other types
+                    if (obt == BSON_ARRAY) {
+                        ret->Set(cxnum, Undefined());
+                    } else {
+                        ret->Set(String::New(key), Undefined());
+                    }
                     break;
             }
         }
         return scope.Close(ret);
     }
-
-    typedef struct {
-        Handle<Object> traversed;
-    } TBSONCTX;
 
     static void toBSON0(Handle<Object> obj, bson *bs, TBSONCTX *ctx) {
         HandleScope scope;
@@ -504,7 +629,7 @@ namespace ejdb {
             if (bs) {
                 bson_iterator it;
                 bson_iterator_init(&it, bs);
-                argv[1] = Local<Object>::New(toV8Object(&it));
+                argv[1] = Local<Object>::New(toV8Object(&it, BSON_OBJECT));
             } else {
                 argv[1] = Local<Primitive>::New(Null());
             }
@@ -719,16 +844,40 @@ finish:
                 return;
             }
             int nval = val->Int32Value();
-            int sz = TCLISTNUM(c->m_rs);
+            int rsz = TCLISTNUM(c->m_rs);
             if (nval < 0) {
-                nval = sz + nval;
+                nval = rsz + nval;
             }
-            if (nval >= 0 && sz > 0) {
-                nval = (nval >= sz) ? sz - 1 : nval;
+            if (nval >= 0 && rsz > 0) {
+                nval = (nval >= rsz) ? rsz - 1 : nval;
             } else {
                 nval = 0;
             }
             c->m_pos = nval;
+        }
+
+        static Handle<Value> s_val(const Arguments& args) {
+            HandleScope scope;
+            REQ_ARGS(1);
+            REQ_STR_ARG(0, fpath);
+            NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (args.This());
+            assert(c);
+            if (!c->m_rs) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Cursor closed"))));
+            }
+            int pos = c->m_pos;
+            int rsz = TCLISTNUM(c->m_rs);
+            if (rsz == 0) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Empty cursor"))));
+            }
+            assert(pos < 0 || pos >= rsz); //m_pos correctly set by s_set_pos
+            void *bsdata = TCLISTVALPTR(c->m_rs, pos);
+            assert(bsdata);
+            bson_iterator it;
+            bson_type bt = bson_find_fieldpath_value2(*fpath, fpath.length(), &it);
+            //TODO !!!
+
+            return scope.Close(Null());
         }
 
         void close() {
@@ -766,8 +915,11 @@ finish:
             constructor_template->PrototypeTemplate()
                     ->SetAccessor(String::NewSymbol("pos"), s_get_pos, s_set_pos, Handle<Value > (), ALL_CAN_READ);
 
+
+
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "close", s_close);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "hasNext", s_has_next);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "value", s_val);
         }
 
         void Ref() {
