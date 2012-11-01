@@ -66,7 +66,7 @@ namespace ejdb {
             {
                 bson_iterator nit;
                 bson_iterator_subiterator(it, &nit);
-                return scope.Close(toV8Object(&nit));
+                return scope.Close(toV8Object(&nit, bt));
             }
             case BSON_DATE:
                 return scope.Close(Date::New((double) bson_iterator_date(it)));
@@ -98,7 +98,7 @@ namespace ejdb {
     static Handle<Object> toV8Object(bson_iterator *it, bson_type obt) {
         HandleScope scope;
         Local<Object> ret;
-        uint32_t cxnum = 0;
+        uint32_t knum = 0;
         if (obt == BSON_ARRAY) {
             ret = Array::New();
         } else if (obt == BSON_OBJECT) {
@@ -110,7 +110,7 @@ namespace ejdb {
         while ((bt = bson_iterator_next(it)) != BSON_EOO) {
             const char *key = bson_iterator_key(it);
             if (obt == BSON_ARRAY) {
-                cxnum = tcatoi(key);
+                knum = tcatoi(key);
             }
             switch (bt) {
                 case BSON_OID:
@@ -118,7 +118,7 @@ namespace ejdb {
                     char xoid[25];
                     bson_oid_to_string(bson_iterator_oid(it), xoid);
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, String::New(xoid, 24));
+                        ret->Set(knum, String::New(xoid, 24));
                     } else {
                         ret->Set(String::New(key), String::New(xoid, 24));
                     }
@@ -127,7 +127,7 @@ namespace ejdb {
                 case BSON_STRING:
                 case BSON_SYMBOL:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum,
+                        ret->Set(knum,
                                 String::New(bson_iterator_string(it), bson_iterator_string_len(it)));
                     } else {
                         ret->Set(String::New(key),
@@ -136,42 +136,42 @@ namespace ejdb {
                     break;
                 case BSON_NULL:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, Null());
+                        ret->Set(knum, Null());
                     } else {
                         ret->Set(String::New(key), Null());
                     }
                     break;
                 case BSON_UNDEFINED:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, Undefined());
+                        ret->Set(knum, Undefined());
                     } else {
                         ret->Set(String::New(key), Undefined());
                     }
                     break;
                 case BSON_INT:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, Integer::New(bson_iterator_int_raw(it)));
+                        ret->Set(knum, Integer::New(bson_iterator_int_raw(it)));
                     } else {
                         ret->Set(String::New(key), Integer::New(bson_iterator_int_raw(it)));
                     }
                     break;
                 case BSON_LONG:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, Number::New((double) bson_iterator_long_raw(it)));
+                        ret->Set(knum, Number::New((double) bson_iterator_long_raw(it)));
                     } else {
                         ret->Set(String::New(key), Number::New((double) bson_iterator_long_raw(it)));
                     }
                     break;
                 case BSON_DOUBLE:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, Number::New(bson_iterator_double_raw(it)));
+                        ret->Set(knum, Number::New(bson_iterator_double_raw(it)));
                     } else {
                         ret->Set(String::New(key), Number::New(bson_iterator_double_raw(it)));
                     }
                     break;
                 case BSON_BOOL:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, Boolean::New(bson_iterator_bool_raw(it)));
+                        ret->Set(knum, Boolean::New(bson_iterator_bool_raw(it)));
                     } else {
                         ret->Set(String::New(key), Boolean::New(bson_iterator_bool_raw(it)));
                     }
@@ -182,7 +182,7 @@ namespace ejdb {
                     bson_iterator nit;
                     bson_iterator_subiterator(it, &nit);
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, toV8Object(&nit, bt));
+                        ret->Set(knum, toV8Object(&nit, bt));
                     } else {
                         ret->Set(String::New(key), toV8Object(&nit, bt));
                     }
@@ -190,7 +190,7 @@ namespace ejdb {
                 }
                 case BSON_DATE:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, Date::New((double) bson_iterator_date(it)));
+                        ret->Set(knum, Date::New((double) bson_iterator_date(it)));
                     } else {
                         ret->Set(String::New(key), Date::New((double) bson_iterator_date(it)));
                     }
@@ -198,7 +198,7 @@ namespace ejdb {
                 case BSON_BINDATA:
                     //TODO test it!
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum,
+                        ret->Set(knum,
                                 Buffer::New(String::New(bson_iterator_bin_data(it),
                                 bson_iterator_bin_len(it))));
                     } else {
@@ -222,7 +222,7 @@ namespace ejdb {
                         }
                     }
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, RegExp::New(String::New(re), (RegExp::Flags) rflgs));
+                        ret->Set(knum, RegExp::New(String::New(re), (RegExp::Flags) rflgs));
                     } else {
                         ret->Set(String::New(key), RegExp::New(String::New(re), (RegExp::Flags) rflgs));
                     }
@@ -230,7 +230,7 @@ namespace ejdb {
                 }
                 default:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(cxnum, Undefined());
+                        ret->Set(knum, Undefined());
                     } else {
                         ret->Set(String::New(key), Undefined());
                     }
@@ -856,7 +856,7 @@ finish:
             c->m_pos = nval;
         }
 
-        static Handle<Value> s_val(const Arguments& args) {
+        static Handle<Value> s_field(const Arguments& args) {
             HandleScope scope;
             REQ_ARGS(1);
             REQ_STR_ARG(0, fpath);
@@ -875,9 +875,30 @@ finish:
             assert(bsdata);
             bson_iterator it;
             bson_type bt = bson_find_fieldpath_value2(*fpath, fpath.length(), &it);
-            //TODO !!!
+            if (bt == BSON_EOO) {
+                return scope.Close(Undefined());
+            }
+            return scope.Close(toV8Value(&it));
+        }
 
-            return scope.Close(Null());
+        static Handle<Value> s_object(const Arguments& args) {
+            HandleScope scope;
+            NodeEJDBCursor *c = ObjectWrap::Unwrap<NodeEJDBCursor > (args.This());
+            assert(c);
+            if (!c->m_rs) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Cursor closed"))));
+            }
+            int pos = c->m_pos;
+            int rsz = TCLISTNUM(c->m_rs);
+            if (rsz == 0) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Empty cursor"))));
+            }
+            assert(pos < 0 || pos >= rsz); //m_pos correctly set by s_set_pos
+            const void *bsdata = TCLISTVALPTR(c->m_rs, pos);
+            assert(bsdata);
+            bson_iterator it;
+            bson_iterator_from_buffer(&it, (const char*) bsdata);
+            return scope.Close(toV8Object(&it, BSON_OBJECT));
         }
 
         void close() {
@@ -919,7 +940,8 @@ finish:
 
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "close", s_close);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "hasNext", s_has_next);
-            NODE_SET_PROTOTYPE_METHOD(constructor_template, "value", s_val);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "field", s_field);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "object", s_object);
         }
 
         void Ref() {
