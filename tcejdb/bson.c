@@ -53,6 +53,14 @@ bson_printf_func bson_errprintf = _bson_errprintf;
 static int ( *oid_fuzz_func)(void) = NULL;
 static int ( *oid_inc_func)(void) = NULL;
 
+static void _bson_reset(bson *b) {
+    b->finished = 0;
+    b->stackPos = 0;
+    b->err = 0;
+    b->errstr = NULL;
+    b->flags = 0;
+}
+
 /* ----------------------------
    READING
    ------------------------------ */
@@ -82,7 +90,6 @@ EJDB_EXPORT int bson_copy(bson *out, const bson *in) {
     bson_init_size(out, bson_size(in));
     memcpy(out->data, in->data, bson_size(in));
     out->finished = 1;
-
     return BSON_OK;
 }
 
@@ -91,18 +98,11 @@ int bson_init_data(bson *b, char *data) {
     return BSON_OK;
 }
 
-int bson_init_finished_data(bson *b, char *data) {
+EJDB_EXPORT int bson_init_finished_data(bson *b, char *data) {
     bson_init_data(b, data);
+    _bson_reset(b);
     b->finished = 1;
     return BSON_OK;
-}
-
-static void _bson_reset(bson *b) {
-    b->finished = 0;
-    b->stackPos = 0;
-    b->err = 0;
-    b->errstr = NULL;
-    b->flags = 0;
 }
 
 EJDB_EXPORT int bson_size(const bson *b) {
@@ -1357,7 +1357,7 @@ EJDB_EXPORT bson* bson_create_from_buffer(const void* buf, int bufsz) {
     bson *rv = bson_create();
     bson_init_size(rv, bufsz);
     bson_ensure_space(rv, bufsz - 4);
-    bson_append(rv, buf + 4, bufsz - (4 + 1/*BSON_EOO*/));
+    bson_append(rv, (char*) buf + 4, bufsz - (4 + 1/*BSON_EOO*/));
     bson_finish(rv);
     return rv;
 }

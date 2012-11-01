@@ -224,18 +224,20 @@ void tchdbdel(TCHDB *hdb){
   assert(hdb);
   if(hdb->fd >= 0) tchdbclose(hdb);
   if(hdb->mmtx){
-    pthread_key_delete(*(pthread_key_t *)hdb->eckey);
     pthread_mutex_destroy(hdb->wmtx);
     pthread_mutex_destroy(hdb->dmtx);
     for(int i = UINT8_MAX; i >= 0; i--){
       pthread_rwlock_destroy((pthread_rwlock_t *)hdb->rmtxs + i);
     }
     pthread_rwlock_destroy(hdb->mmtx);
-    TCFREE(hdb->eckey);
     TCFREE(hdb->wmtx);
     TCFREE(hdb->dmtx);
     TCFREE(hdb->rmtxs);
     TCFREE(hdb->mmtx);
+  }
+  if (hdb->eckey) {
+      pthread_key_delete(*(pthread_key_t *)hdb->eckey);
+      TCFREE(hdb->eckey);
   }
   TCFREE(hdb);
 }
@@ -244,8 +246,7 @@ void tchdbdel(TCHDB *hdb){
 /* Get the last happened error code of a hash database object. */
 int tchdbecode(TCHDB *hdb){
   assert(hdb);
-  return hdb->mmtx ?
-    (int)(intptr_t)pthread_getspecific(*(pthread_key_t *)hdb->eckey) : hdb->ecode;
+  return (hdb->eckey) ? (int)(intptr_t)pthread_getspecific(*(pthread_key_t *)hdb->eckey) : hdb->ecode;
 }
 
 
@@ -263,7 +264,6 @@ bool tchdbsetmutex(TCHDB *hdb){
   TCMALLOC(hdb->rmtxs, (UINT8_MAX + 1) * sizeof(pthread_rwlock_t));
   TCMALLOC(hdb->dmtx, sizeof(pthread_mutex_t));
   TCMALLOC(hdb->wmtx, sizeof(pthread_mutex_t));
-  TCMALLOC(hdb->eckey, sizeof(pthread_key_t));
   bool err = false;
   if(pthread_mutexattr_settype(&rma, PTHREAD_MUTEX_RECURSIVE) != 0) err = true;
   if(pthread_rwlock_init(hdb->mmtx, NULL) != 0) err = true;
@@ -272,16 +272,13 @@ bool tchdbsetmutex(TCHDB *hdb){
   }
   if(pthread_mutex_init(hdb->dmtx, &rma) != 0) err = true;
   if(pthread_mutex_init(hdb->wmtx, NULL) != 0) err = true;
-  if(pthread_key_create(hdb->eckey, NULL) != 0) err = true;
   if(err){
     tchdbsetecode(hdb, TCETHREAD, __FILE__, __LINE__, __func__);
     pthread_mutexattr_destroy(&rma);
-    TCFREE(hdb->eckey);
     TCFREE(hdb->wmtx);
     TCFREE(hdb->dmtx);
     TCFREE(hdb->rmtxs);
     TCFREE(hdb->mmtx);
-    hdb->eckey = NULL;
     hdb->wmtx = NULL;
     hdb->dmtx = NULL;
     hdb->rmtxs = NULL;
@@ -350,6 +347,15 @@ bool tchdbsetdfunit(TCHDB *hdb, int32_t dfunit){
 bool tchdbopen(TCHDB *hdb, const char *path, int omode){
   assert(hdb && path);
   if(!HDBLOCKMETHOD(hdb, true)) return false;
+  if (!hdb->eckey) {
+      TCMALLOC(hdb->eckey, sizeof(pthread_key_t));
+      if(pthread_key_create(hdb->eckey, NULL)) {
+          TCFREE(hdb->eckey);
+          hdb->eckey = NULL;
+          HDBUNLOCKMETHOD(hdb);
+          return false;
+      }
+  }
   if(hdb->fd >= 0){
     tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
     HDBUNLOCKMETHOD(hdb);
@@ -1264,13 +1270,16 @@ void tchdbsetecode(TCHDB *hdb, int ecode, const char *filename, int line, const 
   assert(hdb && filename && line >= 1 && func);
   int myerrno = errno;
   if(!hdb->fatal){
-    if(hdb->mmtx){
-      pthread_setspecific(*(pthread_key_t *)hdb->eckey, (void *)(intptr_t)ecode);
-    } else {
-      hdb->ecode = ecode;
-    }
+      if (hdb->eckey) {
+          pthread_setspecific(*(pthread_key_t *)hdb->eckey, (void *)(intptr_t)ecode);
+      } else {
+          hdb->ecode = ecode;
+      }
   }
-  if(ecode != TCESUCCESS && ecode != TCEINVALID && ecode != TCEKEEP && ecode != TCENOREC){
+  if (ecode == TCESUCCESS) {
+      return;
+  }
+  if(ecode != TCEINVALID && ecode != TCEKEEP && ecode != TCENOREC){
     hdb->fatal = true;
     if(hdb->fd >= 0 && (hdb->omode & HDBOWRITER)) tchdbsetflag(hdb, HDBFFATAL, true);
   }

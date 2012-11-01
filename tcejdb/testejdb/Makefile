@@ -13,7 +13,7 @@ check : all check-t1 check-t2 check-t3;
 
 check-valgrind :
 	rm -rf *.vlog
-	make RUNCMD="valgrind --tool=memcheck --leak-check=full --log-file=%p.vlog" check
+	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check
 	grep ERROR *.vlog | grep -v ' 0 errors' ; true
 	grep 'at exit' *.vlog | grep -v ' 0 bytes' ; true
 

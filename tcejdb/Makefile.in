@@ -594,9 +594,7 @@ check-valgrind :
 	grep 'at exit' *.vlog | grep -v ' 0 bytes' ; true
 
 check-valgrind-ejdb :
-	make RUNCMD="valgrind --tool=memcheck --leak-check=full --log-file=%p.vlog" -C ./testejdb check-valgrind
-	grep ERROR *.vlog | grep -v ' 0 errors' ; true
-	grep 'at exit' *.vlog | grep -v ' 0 bytes' ; true
+	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" -C ./testejdb check
 
 check-large :
 	rm -rf casket*

@@ -116,7 +116,7 @@ namespace ejdb {
     } TBSONCTX;
 
     static void toBSON0(Handle<Object> obj, bson *bs, TBSONCTX *ctx) {
-        HandleScope scope
+        HandleScope scope;
         assert(ctx && obj->IsObject());
         if (ctx->traversed->Get(obj)->IsObject()) {
             bs->err = BSON_ERROR_ANY;
@@ -208,7 +208,7 @@ namespace ejdb {
 
         struct BSONCmdData {
             std::string cname; //Name of collection
-            std::vector<bson*> bsons; //bsons to save
+            std::vector<bson*> bsons; //bsons to save|query
             std::vector<bson_oid_t> ids; //saved updated oids
             bson_oid_t ref; //Bson ref
 
@@ -230,8 +230,11 @@ namespace ejdb {
 
         struct BSONQCmdData : public BSONCmdData {
             TCLIST *res;
+            int qflags;
+            uint32_t count;
 
-            BSONQCmdData(const char* cname) : BSONCmdData::BSONCmdData(cname), res(NULL) {
+            BSONQCmdData(const char* _cname, int _qflags) :
+            BSONCmdData::BSONCmdData(_cname), res(NULL), qflags(_qflags), count(0) {
             }
 
             virtual ~BSONQCmdData() {
@@ -243,7 +246,7 @@ namespace ejdb {
 
         typedef EIOCmdTask<NodeEJDB> EJBTask;
         typedef EIOCmdTask<NodeEJDB, BSONCmdData> BSONCmdTask;
-        typedef EIOCmdTask<NodeEJDB, BSONQCmdData> QueryCmdTask;
+        typedef EIOCmdTask<NodeEJDB, BSONQCmdData> BSONQCmdTask;
 
         static Persistent<FunctionTemplate> constructor_template;
 
@@ -326,7 +329,7 @@ namespace ejdb {
                 assert(bs);
                 toBSON(Handle<Object>::Cast(v), bs);
                 if (bs->err) {
-                    Local<String> msg = String::New(bs->errstr ? bs->errstr : "bson creation failed");
+                    Local<String> msg = String::New(bs->errstr ? bs->errstr : "BSON creation failed");
                     bson_del(bs);
                     delete cmdata;
                     return scope.Close(ThrowException(Exception::Error(msg)));
@@ -341,6 +344,50 @@ namespace ejdb {
             return scope.Close(args.This());
         }
 
+        static Handle<Value> s_query(const Arguments& args) {
+            HandleScope scope;
+            REQ_ARGS(4);
+            REQ_STR_ARG(0, cname)
+            REQ_ARR_ARG(1, qarr);
+            REQ_INT32_ARG(2, qflags);
+            REQ_FUN_ARG(3, cb);
+
+            if (qarr->Length() == 0) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Query array must have at least one element"))));
+            }
+            BSONQCmdData *cmdata = new BSONQCmdData(*cname, qflags);
+            uint32_t len = qarr->Length();
+            for (uint32_t i = 0; i < len; ++i) {
+                Local<Value> qv = qarr->Get(i);
+                if (i > 0 && i == len - 1 && (qv->IsNull() || qv->IsUndefined())) { //Last hints element can be NULL
+                    cmdata->bsons.push_back(NULL);
+                    continue;
+                } else if (!qv->IsObject()) {
+                    delete cmdata;
+                    return scope.Close(ThrowException(
+                            Exception::Error(
+                            String::New("Each element of query array must be an object (except last hints element)"))
+                            ));
+                }
+                bson *bs = bson_create();
+                bson_init(bs);
+                toBSON(Local<Object>::Cast(qv), bs);
+                bson_finish(bs);
+                if (bs->err) {
+                    Local<String> msg = String::New(bs->errstr ? bs->errstr : "BSON error");
+                    bson_del(bs);
+                    delete cmdata;
+                    return scope.Close(ThrowException(Exception::Error(msg)));
+                }
+                cmdata->bsons.push_back(bs);
+            }
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            assert(njb);
+            BSONQCmdTask *task = new BSONQCmdTask(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
+            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+            return scope.Close(args.This());
+        }
+
         ///////////////////////////////////////////////////////////////////////////
         //                            Instance methods                           //
         ///////////////////////////////////////////////////////////////////////////
@@ -348,6 +395,9 @@ namespace ejdb {
         void exec_cmd(EJBTask *task) {
             int cmd = task->cmd;
             switch (cmd) {
+                case cmdQuery:
+                    query((BSONQCmdTask*) task);
+                    break;
                 case cmdLoad:
                     load((BSONCmdTask*) task);
                     break;
@@ -360,6 +410,9 @@ namespace ejdb {
         void exec_cmd_after(EJBTask *task) {
             int cmd = task->cmd;
             switch (cmd) {
+                case cmdQuery:
+                    query_after((BSONQCmdTask*) task);
+                    break;
                 case cmdLoad:
                     load_after((BSONCmdTask*) task);
                     break;
@@ -378,6 +431,7 @@ namespace ejdb {
             assert(cmdata);
             EJCOLL *coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
             if (!coll) {
+                task->cmd_ret = CMD_RET_ERROR;
                 task->cmd_ret_msg = _jb_error_msg();
                 return;
             }
@@ -429,6 +483,7 @@ namespace ejdb {
             assert(cmdata);
             EJCOLL *coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
             if (!coll) {
+                task->cmd_ret = CMD_RET_ERROR;
                 task->cmd_ret_msg = _jb_error_msg();
                 return;
             }
@@ -458,6 +513,54 @@ namespace ejdb {
             if (try_catch.HasCaught()) {
                 FatalException(try_catch);
             }
+        }
+
+        void query(BSONQCmdTask *task) {
+            if (!_check_state((EJBTask*) task)) {
+                return;
+            }
+            bson oqarrstack[8]; //max 8 $or bsons on stack
+            BSONQCmdData *cmdata = task->cmd_data;
+            EJCOLL *coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
+            if (!coll) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+                return;
+            }
+            std::vector<bson*> &bsons = cmdata->bsons;
+            int orsz = (int) bsons.size() - 2; //Minus main qry at begining and hints object at the end
+            if (orsz < 0) orsz = 0;
+            bson *oqarr = ((orsz <= 8) ? oqarrstack : (bson*) malloc(orsz * sizeof (bson)));
+            for (int i = 1; i < (int) bsons.size() - 1; ++i) {
+                oqarr[i - 1] = *(bsons.at(i));
+                break;
+            }
+            TCLIST *res = NULL;
+            EJQ *q = ejdbcreatequery(
+                    m_jb,
+                    bsons.front(),
+                    (orsz > 0 ? oqarr : NULL), orsz,
+                    ((bsons.size() > 1) ? bsons.back() : NULL));
+            if (!q) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+                goto finish;
+            }
+            res = ejdbqrysearch(coll, q, &cmdata->count, cmdata->qflags, NULL);
+
+
+finish:
+            if (q) {
+                ejdbquerydel(q);
+            }
+            if (oqarr && oqarr != oqarrstack) {
+                free(oqarr);
+            }
+        }
+
+        void query_after(BSONQCmdTask *task) {
+            HandleScope scope;
+
         }
 
         bool open(const char* dbpath, int mode) {
@@ -530,6 +633,7 @@ namespace ejdb {
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "close", s_close);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "save", s_save);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "load", s_load);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "query", s_query);
         }
 
         void Ref() {
@@ -542,7 +646,7 @@ namespace ejdb {
     };
 
     ///////////////////////////////////////////////////////////////////////////
-    //                        Result set cursor                              //
+    //                        ResultSet cursor                               //
     ///////////////////////////////////////////////////////////////////////////
 
     class NodeEJDBCursor : public ObjectWrap {
@@ -624,7 +728,6 @@ namespace ejdb {
         }
 
         NodeEJDBCursor(TCLIST *rs) : m_rs(rs), m_pos(0) {
-
         }
 
         virtual ~NodeEJDBCursor() {
@@ -659,9 +762,7 @@ namespace ejdb {
         void Unref() {
             ObjectWrap::Unref();
         }
-
     };
-
 
 
     Persistent<FunctionTemplate> NodeEJDB::constructor_template;
