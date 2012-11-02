@@ -405,7 +405,8 @@ namespace ejdb {
         enum { //Commands
             cmdSave = 1, //Save JSON object
             cmdLoad = 2, //Load BSON by oid
-            cmdQuery = 3 //Query collection
+            cmdRemove = 3, //Remove BSON by oid
+            cmdQuery = 4 //Query collection
         };
 
         //Any bson cmd data
@@ -512,6 +513,26 @@ namespace ejdb {
 
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
             BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdLoad, cmdata, BSONCmdTask::delete_val);
+            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+            return scope.Close(args.This());
+        }
+
+        static Handle<Value> s_remove(const Arguments& args) {
+            HandleScope scope;
+            REQ_ARGS(3);
+            REQ_STR_ARG(0, cname); //Collection name
+            REQ_STR_ARG(1, soid); //String OID
+            REQ_FUN_ARG(2, cb); //Callback
+            if (soid.length() != 24) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Argument 2: Invalid OID string"))));
+            }
+            bson_oid_t oid;
+            bson_oid_from_string(&oid, *soid);
+            BSONCmdData *cmdata = new BSONCmdData(*cname);
+            cmdata->ref = oid;
+
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdRemove, cmdata, BSONCmdTask::delete_val);
             uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
             return scope.Close(args.This());
         }
@@ -659,6 +680,9 @@ namespace ejdb {
                 case cmdSave:
                     save((BSONCmdTask*) task);
                     break;
+                case cmdRemove:
+                    remove((BSONCmdTask*) task);
+                    break;
             }
         }
 
@@ -674,6 +698,42 @@ namespace ejdb {
                 case cmdSave:
                     save_after((BSONCmdTask*) task);
                     break;
+                case cmdRemove:
+                    remove_after((BSONCmdTask*) task);
+                    break;
+            }
+        }
+
+        void remove(BSONCmdTask *task) {
+            if (!_check_state((EJBTask*) task)) {
+                return;
+            }
+            BSONCmdData *cmdata = task->cmd_data;
+            assert(cmdata);
+            EJCOLL *coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
+            if (!coll) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+                return;
+            }
+            if (!ejdbrmbson(coll, &task->cmd_data->ref)) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+            }
+        }
+
+        void remove_after(BSONCmdTask *task) {
+            HandleScope scope;
+            Local<Value> argv[1];
+            if (task->cmd_ret != 0) {
+                argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
+            } else {
+                argv[0] = Local<Primitive>::New(Null());
+            }
+            TryCatch try_catch;
+            task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+            if (try_catch.HasCaught()) {
+                FatalException(try_catch);
             }
         }
 
@@ -905,6 +965,7 @@ finish:
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "close", s_close);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "save", s_save);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "load", s_load);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "remove", s_remove);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "query", s_query);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "lastError", s_ecode);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "ensureCollection", s_ensure_collection);

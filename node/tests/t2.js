@@ -43,6 +43,11 @@ module.exports.testSaveLoad = function(test) {
     });
 };
 
+
+module.exports.testQuery1 = function(test) {
+    test.done();
+};
+
 module.exports.testClose = function(test) {
     test.ok(jb);
     jb.close();
