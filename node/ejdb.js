@@ -1,6 +1,12 @@
 
-var ejdblib = require("./build/Release/ejdb_native");
-var EJDBImpl = ejdblib.NodeEJDB
+var ejdblib;
+try {
+    ejdblib = require("../build/Release/ejdb_native.node");
+} catch(e) {
+    console.error("Warning: Using the DEBUG version of EJDB nodejs binding");
+    ejdblib = require("../build/Debug/ejdb_native.node");
+}
+var EJDBImpl = ejdblib.NodeEJDB;
 
 const DEFAULT_OPEN_MODE = (ejdblib.JBOWRITER | ejdblib.JBOCREAT);
 var EJDB = function(dbFile, openMode) {
@@ -21,7 +27,7 @@ EJDB.open = function(dbFile, openMode) {
 
 EJDB.prototype.close = function() {
     return this._impl.close();
-}
+};
 
 
 module.exports = EJDB;

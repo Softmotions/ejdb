@@ -9,10 +9,6 @@
             </df>
           </df>
         </df>
-        <in>Makefile</in>
-        <in>binding.Makefile</in>
-        <in>config.gypi</in>
-        <in>ejdb_native.target.mk</in>
       </df>
       <df name="build">
         <df name="Release">

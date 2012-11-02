@@ -50,6 +50,9 @@
     <option name="referencePos" value="0" />
     <option name="showLabels" value="true" />
   </component>
+  <component name="UnicodeBrowser">
+    <option name="fontName" value="Lucida Sans Typewriter" />
+  </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
 </project>
 

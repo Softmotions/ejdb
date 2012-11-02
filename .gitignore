@@ -44,5 +44,6 @@
 /tcejdb/testejdb/t3
 
 /node/nbproject/private
-/node/build
+/build
+/var
 
