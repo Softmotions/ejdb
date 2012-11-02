@@ -20,12 +20,91 @@ using namespace v8;
 static const int CMD_RET_ERROR = 1;
 
 #define DEFINE_INT64_CONSTANT(target, constant)                       \
-  (target)->Set(v8::String::NewSymbol(#constant),                         \
-                v8::Number::New((int64_t) constant),                      \
-                static_cast<v8::PropertyAttribute>(                       \
-                    v8::ReadOnly|v8::DontDelete))
+  (target)->Set(String::NewSymbol(#constant),                         \
+                Number::New((int64_t) constant),                      \
+                static_cast<PropertyAttribute>(                       \
+                    ReadOnly|DontDelete))
 
 namespace ejdb {
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                           Some symbols                                //
+    ///////////////////////////////////////////////////////////////////////////
+
+
+    static Persistent<String> sym_large;
+    static Persistent<String> sym_compressed;
+    static Persistent<String> sym_records;
+    static Persistent<String> sym_cachedrecords;
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    //                             Fetch functions                           //
+    ///////////////////////////////////////////////////////////////////////////
+
+    enum eFetchStatus {
+        FETCH_NONE,
+        FETCH_DEFAULT,
+        FETCH_VAL
+    };
+
+    char* fetch_string_data(Handle<Value> sobj, eFetchStatus* fs, const char* def) {
+        HandleScope scope;
+        if (sobj->IsNull() || sobj->IsUndefined()) {
+            if (fs) {
+                *fs = FETCH_DEFAULT;
+            }
+            return def ? strdup(def) : strdup("");
+        }
+        String::Utf8Value value(sobj);
+        const char* data = *value;
+        if (fs) {
+            *fs = FETCH_VAL;
+        }
+        return data ? strdup(data) : strdup("");
+    }
+
+    int64_t fetch_int_data(Handle<Value> sobj, eFetchStatus* fs, int64_t def) {
+        HandleScope scope;
+        if (!(sobj->IsNumber() || sobj->IsInt32() || sobj->IsUint32())) {
+            if (fs) {
+                *fs = FETCH_DEFAULT;
+            }
+            return def;
+        }
+        if (fs) {
+            *fs = FETCH_VAL;
+        }
+        return sobj->ToNumber()->IntegerValue();
+    }
+
+    bool fetch_bool_data(Handle<Value> sobj, eFetchStatus* fs, bool def) {
+        HandleScope scope;
+        if (sobj->IsNull() || sobj->IsUndefined()) {
+            if (fs) {
+                *fs = FETCH_DEFAULT;
+            }
+            return def;
+        }
+        if (fs) {
+            *fs = FETCH_VAL;
+        }
+        return sobj->BooleanValue();
+    }
+
+    double fetch_real_data(Handle<Value> sobj, eFetchStatus* fs, double def) {
+        HandleScope scope;
+        if (!(sobj->IsNumber() || sobj->IsInt32())) {
+            if (fs) {
+                *fs = FETCH_DEFAULT;
+            }
+            return def;
+        }
+        if (fs) {
+            *fs = FETCH_VAL;
+        }
+        return sobj->ToNumber()->NumberValue();
+    }
 
     typedef struct {
         Handle<Object> traversed;
@@ -257,10 +336,10 @@ namespace ejdb {
             if (pv->IsString()) {
                 String::Utf8Value val(pv);
                 bson_append_string(bs, *spn, *val);
-            } else if (pv->IsUint32()) {
-                bson_append_long(bs, *spn, pv->Uint32Value());
             } else if (pv->IsInt32()) {
                 bson_append_int(bs, *spn, pv->Int32Value());
+            } else if (pv->IsUint32()) {
+                bson_append_long(bs, *spn, pv->Uint32Value());
             } else if (pv->IsNumber()) {
                 bson_append_double(bs, *spn, pv->NumberValue());
             } else if (pv->IsNull()) {
@@ -394,14 +473,14 @@ namespace ejdb {
         }
 
         static void s_exec_cmd_eio(uv_work_t *req) {
-            EJBTask *task = static_cast<EJBTask*> (req->data);
+            EJBTask *task = (EJBTask*) (req->data);
             NodeEJDB *njb = task->wrapped;
             assert(njb);
             njb->exec_cmd(task);
         }
 
         static void s_exec_cmd_eio_after(uv_work_t *req) {
-            EJBTask *task = static_cast<EJBTask*> (req->data);
+            EJBTask *task = (EJBTask*) (req->data);
             NodeEJDB *njb = task->wrapped;
             assert(njb);
             njb->exec_cmd_after(task);
@@ -441,15 +520,19 @@ namespace ejdb {
             HandleScope scope;
             REQ_ARGS(3);
             REQ_STR_ARG(0, cname); //Collection name
-            REQ_ARR_ARG(1, oarr); //Array of JAVA objects
+            REQ_ARR_ARG(1, oarr); //Array of JSON objects
             REQ_FUN_ARG(2, cb); //Callback
 
             BSONCmdData *cmdata = new BSONCmdData(*cname);
             for (uint32_t i = 0; i < oarr->Length(); ++i) {
                 Local<Value> v = oarr->Get(i);
-                if (!v->IsObject()) continue;
+                if (!v->IsObject()) {
+                    cmdata->bsons.push_back(NULL);
+                    continue;
+                }
                 bson *bs = bson_create();
                 assert(bs);
+                bson_init(bs);
                 toBSON(Handle<Object>::Cast(v), bs);
                 if (bs->err) {
                     Local<String> msg = String::New(bs->errstr ? bs->errstr : "BSON creation failed");
@@ -509,6 +592,57 @@ namespace ejdb {
             return scope.Close(args.This());
         }
 
+        static Handle<Value> s_ecode(const Arguments& args) {
+            HandleScope scope;
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            if (!njb->m_jb) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Operation on closed EJDB instance"))));
+            }
+            return scope.Close(Integer::New(ejdbecode(njb->m_jb)));
+        }
+
+        static Handle<Value> s_ensure_collection(const Arguments& args) {
+            HandleScope scope;
+            REQ_STR_ARG(0, cname);
+            REQ_OBJ_ARG(1, copts);
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            if (!ejdbisopen(njb->m_jb)) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Operation on closed EJDB instance"))));
+            }
+            EJCOLLOPTS jcopts;
+            memset(&jcopts, 0, sizeof (jcopts));
+            jcopts.cachedrecords = fetch_int_data(copts->Get(sym_cachedrecords), NULL, 0);
+            jcopts.compressed = fetch_bool_data(copts->Get(sym_compressed), NULL, false);
+            jcopts.large = fetch_bool_data(copts->Get(sym_large), NULL, false);
+            jcopts.records = fetch_int_data(copts->Get(sym_records), NULL, 0);
+            EJCOLL *coll = ejdbcreatecoll(njb->m_jb, *cname, &jcopts);
+            if (!coll) {
+                return scope.Close(ThrowException(Exception::Error(String::New(njb->_jb_error_msg()))));
+            }
+            return scope.Close(args.This());
+        }
+
+        static Handle<Value> s_rm_collection(const Arguments& args) {
+            HandleScope scope;
+            REQ_STR_ARG(0, cname);
+            REQ_VAL_ARG(1, prune);
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            if (!ejdbisopen(njb->m_jb)) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Operation on closed EJDB instance"))));
+            }
+            if (!ejdbrmcoll(njb->m_jb, *cname, prune->BooleanValue())) {
+                return scope.Close(ThrowException(Exception::Error(String::New(njb->_jb_error_msg()))));
+            }
+            return scope.Close(args.This());
+        }
+
+        static Handle<Value> s_is_open(const Arguments& args) {
+            HandleScope scope;
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            return scope.Close(Boolean::New(ejdbisopen(njb->m_jb)));
+        }
+
+
         ///////////////////////////////////////////////////////////////////////////
         //                            Instance methods                           //
         ///////////////////////////////////////////////////////////////////////////
@@ -541,7 +675,6 @@ namespace ejdb {
                     save_after((BSONCmdTask*) task);
                     break;
             }
-            delete task;
         }
 
         void save(BSONCmdTask *task) {
@@ -559,10 +692,14 @@ namespace ejdb {
 
             std::vector<bson*>::iterator it;
             for (it = cmdata->bsons.begin(); it < cmdata->bsons.end(); it++) {
-                bson *bs = *(it);
-                assert(bs);
                 bson_oid_t oid;
-                if (!ejdbsavebson(coll, bs, &oid)) {
+                bson *bs = *(it);
+                if (!bs) {
+                    //Zero OID
+                    oid.ints[0] = 0;
+                    oid.ints[1] = 0;
+                    oid.ints[2] = 0;
+                } else if (!ejdbsavebson(coll, bs, &oid)) {
                     task->cmd_ret = CMD_RET_ERROR;
                     task->cmd_ret_msg = _jb_error_msg();
                     break;
@@ -583,10 +720,14 @@ namespace ejdb {
             std::vector<bson_oid_t>::iterator it;
             int32_t c = 0;
             for (it = task->cmd_data->ids.begin(); it < task->cmd_data->ids.end(); it++) {
-                char oidhex[25];
                 bson_oid_t& oid = *it;
-                bson_oid_to_string(&oid, oidhex);
-                oids->Set(Integer::New(c++), String::New(oidhex));
+                if (oid.ints[0] || oid.ints[1] || oid.ints[2]) {
+                    char oidhex[25];
+                    bson_oid_to_string(&oid, oidhex);
+                    oids->Set(Integer::New(c++), String::New(oidhex));
+                } else {
+                    oids->Set(Integer::New(c++), Null());
+                }
             }
             argv[1] = oids;
             TryCatch try_catch;
@@ -727,6 +868,14 @@ finish:
 
         static void Init(Handle<Object> target) {
             HandleScope scope;
+
+            //Symbols
+            sym_large = NODE_PSYMBOL("large");
+            sym_compressed = NODE_PSYMBOL("compressed");
+            sym_records = NODE_PSYMBOL("records");
+            sym_cachedrecords = NODE_PSYMBOL("cachedrecords");
+
+
             Local<FunctionTemplate> t = FunctionTemplate::New(s_new_object);
             constructor_template = Persistent<FunctionTemplate>::New(t);
             constructor_template->InstanceTemplate()->SetInternalFieldCount(1);
@@ -753,13 +902,18 @@ finish:
             //Misc
             NODE_DEFINE_CONSTANT(target, JBQRYCOUNT);
 
-            //Symbols
-            target->Set(v8::String::NewSymbol("NodeEJDB"), constructor_template->GetFunction());
-
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "close", s_close);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "save", s_save);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "load", s_load);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "query", s_query);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "lastError", s_ecode);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "ensureCollection", s_ensure_collection);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "rmCollection", s_rm_collection);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "isOpen", s_is_open);
+
+
+            //Symbols
+            target->Set(String::NewSymbol("NodeEJDB"), constructor_template->GetFunction());
         }
 
         void Ref() {
@@ -1013,7 +1167,7 @@ finish:
         }
     }
 
-    void Init(v8::Handle<v8::Object> target) {
+    void Init(Handle<Object> target) {
 #ifdef __unix
         setlocale(LC_ALL, "en_US.UTF-8"); //todo review it
 #endif

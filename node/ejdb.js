@@ -1,8 +1,7 @@
-
 var ejdblib;
 try {
     ejdblib = require("../build/Release/ejdb_native.node");
-} catch(e) {
+} catch (e) {
     console.error("Warning: Using the DEBUG version of EJDB nodejs binding");
     ejdblib = require("../build/Debug/ejdb_native.node");
 }
@@ -27,6 +26,32 @@ EJDB.open = function(dbFile, openMode) {
 
 EJDB.prototype.close = function() {
     return this._impl.close();
+};
+
+EJDB.prototype.isOpen = function() {
+    return this._impl.isOpen();
+};
+
+EJDB.prototype.ensureCollection = function(cname, copts) {
+    return this._impl.ensureCollection(cname, copts || {});
+};
+
+EJDB.prototype.rmCollection = function(cname, prune) {
+    return this._impl.rmCollection(cname, !!prune);
+};
+
+EJDB.prototype.save = function(cname, jsarr, cb) {
+    if (!jsarr) {
+        return;
+    }
+    if (!cb) {
+        cb = function() {
+        };
+    }
+    if (jsarr.constructor !== Array) {
+        jsarr = [jsarr];
+    }
+    return this._impl.save(cname, jsarr, cb);
 };
 
 

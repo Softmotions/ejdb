@@ -1,4 +1,5 @@
 
+dummy:;
 
 all:
 	npm build .
@@ -6,4 +7,4 @@ all:
 clean:
 	rm -rf ./build
 
-.PHONY:	 all clean
+.PHONY:	 all clean dummy
