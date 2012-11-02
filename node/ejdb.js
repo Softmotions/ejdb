@@ -67,6 +67,10 @@ EJDB.prototype.save = function(cname, jsarr, cb) {
     });
 };
 
+EJDB.prototype.load = function(cname, oid, cb) {
+    return this._impl.load(cname, oid, cb);
+};
+
 
 module.exports = EJDB;
 

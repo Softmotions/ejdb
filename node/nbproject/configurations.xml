@@ -2,6 +2,14 @@
 <configurationDescriptor version="84">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df name="node" root=".">
+      <df name="build">
+        <df name="Debug">
+          <df name="obj.target">
+            <df name="ejdb_native">
+            </df>
+          </df>
+        </df>
+      </df>
       <df name="nodejs">
         <df name="benchmark">
           <df name="arrays">

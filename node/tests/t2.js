@@ -32,7 +32,14 @@ module.exports.testSaveLoad = function(test) {
         test.equal(parrot1["_id"], oids[0]);
         test.ok(oids[1] == null);
         test.equal(parrot2["_id"], oids[2]);
-        test.done();
+
+        jb.load("parrots", parrot2["_id"], function(err, obj) {
+            test.ifError(err);
+            test.ok(obj);
+            test.equal(obj._id, parrot2["_id"]);
+            test.equal(obj.name, "Bounty");
+            test.done();
+        });
     });
 };
 

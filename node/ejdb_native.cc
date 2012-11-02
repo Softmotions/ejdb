@@ -127,7 +127,7 @@ namespace ejdb {
             }
             case BSON_STRING:
             case BSON_SYMBOL:
-                return scope.Close(String::New(bson_iterator_string(it), bson_iterator_string_len(it)));
+                return scope.Close(String::New(bson_iterator_string(it), bson_iterator_string_len(it) - 1));
             case BSON_NULL:
                 return scope.Close(Null());
             case BSON_UNDEFINED:
@@ -207,10 +207,10 @@ namespace ejdb {
                 case BSON_SYMBOL:
                     if (obt == BSON_ARRAY) {
                         ret->Set(knum,
-                                String::New(bson_iterator_string(it), bson_iterator_string_len(it)));
+                                String::New(bson_iterator_string(it), bson_iterator_string_len(it) - 1));
                     } else {
                         ret->Set(String::New(key),
-                                String::New(bson_iterator_string(it), bson_iterator_string_len(it)));
+                                String::New(bson_iterator_string(it), bson_iterator_string_len(it) - 1));
                     }
                     break;
                 case BSON_NULL:
