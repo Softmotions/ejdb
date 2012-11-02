@@ -18,8 +18,8 @@
     "devDependencies" : {
     },
     "scripts" : {
-        "preinstall" : "make all && node-gyp rebuild && make -f tests.mk",
-        "test" : "make -f tests.mk"
+        "preinstall" : "make all && node-gyp rebuild && make -f tests.mk check",
+        "test" : "make -f tests.mk check-all"
     },
     "author" : {
         "name" : "Anton Adamansky",
