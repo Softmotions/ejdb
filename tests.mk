@@ -1,5 +1,5 @@
 
 test :
 	- mkdir -p var
-	make -C ./tcejdb check-ejdb
+	##make -C ./tcejdb check-ejdb
 	nodeunit ./node/tests
