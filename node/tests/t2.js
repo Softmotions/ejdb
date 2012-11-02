@@ -25,10 +25,13 @@ module.exports.testSaveLoad = function(test) {
         "age" : 15,
         "likes" : ["sugar cane"]
     };
-    jb.save("parrots", [parrot1, parrot2], function(err, oids) {
+    jb.save("parrots", [parrot1, null, parrot2], function(err, oids) {
         test.ifError(err);
         test.ok(oids);
-        test.equal(oids.length, 2);
+        test.equal(oids.length, 3);
+        test.equal(parrot1["_id"], oids[0]);
+        test.ok(oids[1] == null);
+        test.equal(parrot2["_id"], oids[2]);
         test.done();
     });
 };

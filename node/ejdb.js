@@ -44,14 +44,27 @@ EJDB.prototype.save = function(cname, jsarr, cb) {
     if (!jsarr) {
         return;
     }
-    if (!cb) {
-        cb = function() {
-        };
-    }
     if (jsarr.constructor !== Array) {
         jsarr = [jsarr];
     }
-    return this._impl.save(cname, jsarr, cb);
+    return this._impl.save(cname, jsarr, function(err, oids) {
+        if (err) {
+            if (cb) {
+                cb(err);
+            }
+            return;
+        }
+        //Assign _id property for newly created objects
+        for (var i = jsarr.length - 1; i >= 0; --i) {
+            var so = jsarr[i];
+            if (so != null && so["_id"] !== oids[i]) {
+                so["_id"] = oids[i];
+            }
+        }
+        if (cb) {
+            cb(err, oids);
+        }
+    });
 };
 
 
