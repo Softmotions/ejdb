@@ -1107,7 +1107,7 @@ finish:
             if (rsz == 0) {
                 return scope.Close(ThrowException(Exception::Error(String::New("Empty cursor"))));
             }
-            assert(pos < 0 || pos >= rsz); //m_pos correctly set by s_set_pos
+            assert(!(pos < 0 || pos >= rsz)); //m_pos correctly set by s_set_pos
             void *bsdata = TCLISTVALPTR(c->m_rs, pos);
             assert(bsdata);
             bson_iterator it;
@@ -1129,7 +1129,7 @@ finish:
             if (rsz == 0) {
                 return scope.Close(ThrowException(Exception::Error(String::New("Empty cursor"))));
             }
-            assert(pos < 0 || pos >= rsz); //m_pos correctly set by s_set_pos
+            assert(!(pos < 0 || pos >= rsz)); //m_pos correctly set by s_set_pos
             const void *bsdata = TCLISTVALPTR(c->m_rs, pos);
             assert(bsdata);
             bson_iterator it;

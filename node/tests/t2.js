@@ -55,6 +55,9 @@ module.exports.testQuery1 = function(test) {
         var c = 0;
         while (cursor.next()) {
             ++c;
+            var rv = cursor.object();
+            test.ok(rv);
+            test.ok(rv["_id"]);
         }
         test.equal(c, 2);
 

@@ -63,8 +63,6 @@
                   </df>
                   <df name="imgcat">
                   </df>
-                  <df name="progress">
-                  </df>
                 </df>
                 <df name="lib">
                 </df>
@@ -155,27 +153,6 @@
                 <df name="bin">
                 </df>
                 <df name="legacy">
-                  <df name="tools">
-                    <df name="gyp">
-                      <df name="buildbot">
-                      </df>
-                      <df name="pylib">
-                        <df name="gyp">
-                          <df name="generator">
-                          </df>
-                        </df>
-                      </df>
-                      <df name="samples">
-                      </df>
-                      <df name="tools">
-                        <df name="Xcode">
-                          <df name="Specifications">
-                          </df>
-                        </df>
-                      </df>
-                      <in>gyp_dummy.c</in>
-                    </df>
-                  </df>
                 </df>
                 <df name="lib">
                 </df>
@@ -459,7 +436,6 @@
                   <in>rc4-x86_64.asm</in>
                 </df>
                 <df name="sha">
-                  <in>sha1-x86_64.asm</in>
                   <in>sha512-x86_64.asm</in>
                 </df>
                 <df name="whrlpool">
@@ -483,10 +459,6 @@
                 </df>
                 <df name="cast">
                   <in>cast-586.s</in>
-                </df>
-                <df name="des">
-                  <in>crypt586.s</in>
-                  <in>des-586.s</in>
                 </df>
                 <df name="md5">
                   <in>md5-586.s</in>
@@ -1695,8 +1667,6 @@
                 <df name="crypto">
                 </df>
                 <df name="HOWTO">
-                </df>
-                <df name="ssl">
                 </df>
               </df>
               <df name="engines">
@@ -3091,8 +3061,6 @@
               <df name="dir">
               </df>
             </df>
-            <df name="test-init-index">
-            </df>
             <df name="test-init-native">
             </df>
           </df>
@@ -3159,8 +3127,6 @@
                 <df name="bin">
                 </df>
                 <df name="lib">
-                </df>
-                <df name="man">
                 </df>
               </df>
               <df name="mkdirp">
@@ -3234,17 +3200,6 @@
           </df>
         </df>
       </df>
-      <df name="tests">
-      </df>
-      <df name="win32">
-        <in>pthread_mutex.h</in>
-      </df>
-      <in>ejdb_args.h</in>
-      <in>ejdb_cmd.h</in>
-      <in>ejdb_logging.cc</in>
-      <in>ejdb_logging.h</in>
-      <in>ejdb_native.cc</in>
-      <in>ejdb_thread.h</in>
     </df>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
