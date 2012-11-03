@@ -10,6 +10,7 @@ module.exports.testSetup = function(test) {
 };
 
 module.exports.testSaveLoad = function(test) {
+    test.ok(jb);
     test.ok(jb.isOpen());
     var parrot1 = {
         "name" : "Grenny",
@@ -45,7 +46,21 @@ module.exports.testSaveLoad = function(test) {
 
 
 module.exports.testQuery1 = function(test) {
-    test.done();
+    test.ok(jb);
+    test.ok(jb.isOpen());
+    jb.query("parrots", {}, function(err, cursor, count) {
+        test.ifError(err);
+        test.equal(count, 2);
+        test.ok(cursor);
+        var c = 0;
+        while (cursor.next()) {
+            ++c;
+        }
+        test.equal(c, 2);
+
+        test.ifError(err);
+        test.done();
+    });
 };
 
 module.exports.testClose = function(test) {

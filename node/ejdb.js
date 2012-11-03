@@ -72,5 +72,51 @@ EJDB.prototype.load = function(cname, oid, cb) {
 };
 
 
+EJDB.prototype.remove = function(cname, oid, cb) {
+    return this._impl.remove(cname, oid, cb);
+};
+
+/**
+ *
+ * Calling variations:
+ *       - query(cname, qobj, qobjarr, hints, cb)
+ *       - query(cname, qobj, hints, cb)
+ *       - query(cname, qobj, cb)
+ *
+ * @param cname
+ * @param qobj
+ * @param orarr
+ * @param hints
+ * @param cb
+ */
+EJDB.prototype.query = function(cname, qobj, orarr, hints, cb) {
+    if (arguments.length == 4) {
+        hints = orarr;
+        cb = hints;
+        orarr = [];
+    } else if (arguments.length == 3) {
+        cb = orarr;
+        orarr = [];
+        hints = {};
+    }
+    if (typeof cb !== "function") {
+        throw new Error("Callback 'cb' argument must be specified");
+    }
+    if (typeof cname !== "string") {
+        throw new Error("Collection name 'cname' argument must be specified");
+    }
+    if (typeof hints !== "object") {
+        hints = {};
+    }
+    if (typeof qobj !== "object") {
+        qobj = {};
+    }
+    return this._impl.query(cname,
+            [qobj].concat(orarr, hints),
+            (hints["onlycount"] ? ejdblib.JBQRYCOUNT : 0),
+            cb);
+};
+
+
 module.exports = EJDB;
 
