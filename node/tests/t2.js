@@ -2,6 +2,7 @@ var fs = require("fs");
 var EJDB = require("../ejdb.js");
 
 
+var now = new Date();
 var jb = null;
 
 module.exports.testSetup = function(test) {
@@ -17,14 +18,18 @@ module.exports.testSaveLoad = function(test) {
         "type" : "African Grey",
         "male" : true,
         "age" : 1,
-        "likes" : ["green color", "night", "toys"]
+        "birthdate" : now,
+        "likes" : ["green color", "night", "toys"],
+        "extra1" : null
     };
     var parrot2 = {
         "name" : "Bounty",
         "type" : "Cockatoo",
         "male" : false,
         "age" : 15,
-        "likes" : ["sugar cane"]
+        "birthdate" : now,
+        "likes" : ["sugar cane"],
+        "extra1" : null
     };
     jb.save("parrots", [parrot1, null, parrot2], function(err, oids) {
         test.ifError(err);
@@ -57,13 +62,25 @@ module.exports.testQuery1 = function(test) {
             ++c;
             var rv = cursor.object();
             test.ok(rv);
-            test.ok(rv["_id"]);
+            test.ok(typeof rv["_id"] === "string");
+            test.ok(typeof rv["name"] === "string");
+            test.ok(typeof rv["age"] === "number");
+            test.ok(rv["birthdate"] && typeof rv["birthdate"] === "object");
+            test.ok(rv["birthdate"].constructor === Date);
+            test.ok(typeof rv["male"] === "boolean");
+            test.ok(rv["extra1"] === null);
+            test.ok(rv["likes"] && typeof rv["likes"] === "object");
+            test.ok(rv["likes"].constructor === Array);
+            test.ok(rv["likes"].length > 0);
         }
         test.equal(c, 2);
-
         test.ifError(err);
         test.done();
     });
+};
+
+module.exports.testQuery2 = function(test) {
+    test.done();
 };
 
 module.exports.testClose = function(test) {

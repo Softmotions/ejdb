@@ -349,7 +349,7 @@ namespace ejdb {
             } else if (pv->IsBoolean()) {
                 bson_append_bool(bs, *spn, pv->BooleanValue());
             } else if (pv->IsDate()) {
-                bson_append_long(bs, *spn, Handle<Date>::Cast(pv)->IntegerValue());
+                bson_append_date(bs, *spn, Handle<Date>::Cast(pv)->IntegerValue());
             } else if (pv->IsRegExp()) {
                 Handle<RegExp> regexp = Handle<RegExp>::Cast(pv);
                 int flags = regexp->GetFlags();
