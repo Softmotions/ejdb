@@ -10,6 +10,14 @@ EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallab
 
 JSON representation of queries and data implemented with API based on [C BSON](https://github.com/mongodb/mongo-c-driver/tree/master/src/)
 
+Features
+================================
+* LGPL license allows you to embed this library into proprietary software.
+* MongoDB-like queries and overall philosophy.
+* Collection level write locking.
+* Collection level transactions.
+* String token matching queries: ```$stror``` ```$strand```
+
 
 One snippet intro
 -----------------------------------
@@ -21,7 +29,7 @@ static EJDB *jb;
 
 int main() {
     jb = ejdbnew();
-    if (!ejdbopen(jb, "addressbook", JDBOWRITER | JDBOCREAT | JDBOTRUNC)) {
+    if (!ejdbopen(jb, "addressbook", JBOWRITER | JBOCREAT | JBOTRUNC)) {
         return 1;
     }
     //Get or create collection 'contacts'
@@ -77,14 +85,6 @@ int main() {
     return 0;
 }
 ```
-
-Features
-================================
-* LGPL license allows you to embed this library into proprietary software.
-* MongoDB-like queries and overall philosophy.
-* Collection level write locking.
-* Collection level transactions.
-* String token matching queries: ```$stror``` ```$strand```
 
 
 Building & Installation
