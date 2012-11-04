@@ -3284,6 +3284,18 @@
             </preprocessorList>
           </ccTool>
         </makeTool>
+        <requiredProjects>
+          <makeArtifact PL="../tcejdb"
+                        CT="0"
+                        CN="Default"
+                        AC="true"
+                        BL="false"
+                        WD="../tcejdb"
+                        BC="${MAKE} -f Makefile"
+                        CC="${MAKE} -f Makefile clean"
+                        OP="libtcejdb.so.9.11.0">
+          </makeArtifact>
+        </requiredProjects>
       </makefileType>
     </conf>
   </confs>

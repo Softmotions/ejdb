@@ -876,7 +876,6 @@ namespace ejdb {
             bson *oqarr = ((orsz <= 8) ? oqarrstack : (bson*) malloc(orsz * sizeof (bson)));
             for (int i = 1; i < (int) bsons.size() - 1; ++i) {
                 oqarr[i - 1] = *(bsons.at(i));
-                break;
             }
             TCLIST *res = NULL;
             EJQ *q = ejdbcreatequery(

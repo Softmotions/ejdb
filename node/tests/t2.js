@@ -109,6 +109,44 @@ module.exports.testQuery2 = function(test) {
 
 };
 
+
+//Test with OR
+module.exports.testQuery3 = function(test) {
+    test.ok(jb);
+    test.ok(jb.isOpen());
+    jb.query("parrots",
+            {}, //main query selector
+            [
+                //OR joined conditions
+                {name : "Grenny"},
+                {name : "Bounty"}
+            ],
+            {$orderby : {name : 1}},
+            function(err, cursor, count) {
+                test.ifError(err);
+                test.ok(cursor);
+                test.equal(count, 2);
+                for (var c = 0; cursor.next(); ++c) {
+                    var rv = cursor.object();
+                    if (c != 1) continue;
+                    test.equal(rv["name"], "Grenny");
+                    test.equal(cursor.field("name"), "Grenny");
+                    test.equal(rv["type"], "African Grey");
+                    test.equal(cursor.field("type"), "African Grey");
+                    test.equal(rv["male"], true);
+                    test.equal(cursor.field("male"), true);
+                    test.equal(rv["age"], 1);
+                    test.equal(cursor.field("age"), 1);
+                    test.equal("" + rv["birthdate"], "" + now);
+                    test.equal("" + cursor.field("birthdate"), "" + now);
+                    test.equal(rv["likes"].join(","), "green color,night,toys");
+                    test.equal(cursor.field("likes").join(","), "green color,night,toys");
+                }
+                test.done();
+            });
+
+};
+
 module.exports.testClose = function(test) {
     test.ok(jb);
     jb.close();

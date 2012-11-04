@@ -8,7 +8,9 @@
             <cpp-extensions>cc,cpp</cpp-extensions>
             <header-extensions>d,h,hpp</header-extensions>
             <sourceEncoding>UTF-8</sourceEncoding>
-            <make-dep-projects/>
+            <make-dep-projects>
+                <make-dep-project>../tcejdb</make-dep-project>
+            </make-dep-projects>
             <sourceRootList>
                 <sourceRootElem>.</sourceRootElem>
             </sourceRootList>
