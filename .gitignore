@@ -1,6 +1,7 @@
 *.o
 *.vlog
 
+/npm-debug.log
 /.idea/workspace.xml
 
 /tcejdb/Makefile

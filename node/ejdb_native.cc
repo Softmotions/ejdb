@@ -11,11 +11,16 @@
 
 #include <vector>
 #include <sstream>
+#include <hash_set>
 #include <locale.h>
-#include <stdio.h>
+
 
 using namespace node;
 using namespace v8;
+
+#ifdef __GNUC__
+using namespace __gnu_cxx;
+#endif
 
 static const int CMD_RET_ERROR = 1;
 
@@ -106,9 +111,25 @@ namespace ejdb {
         return sobj->ToNumber()->NumberValue();
     }
 
-    typedef struct {
-        Handle<Object> traversed;
-    } TBSONCTX;
+    struct V8ObjHash {
+
+        size_t operator()(const Handle<Object>& obj) const {
+            return (size_t) obj->GetIdentityHash();
+        }
+    };
+
+    struct V8ObjEq {
+
+        bool operator()(const Handle<Object>& o1, const Handle<Object>& o2) const {
+            return (o1 == o2);
+        }
+    };
+
+    typedef hash_set<Handle<Object>, V8ObjHash, V8ObjEq> V8ObjSet;
+
+    struct TBSONCTX {
+        V8ObjSet tset; //traversed objects set
+    };
 
     static Handle<Object> toV8Object(bson_iterator *it, bson_type obt = BSON_OBJECT);
     static Handle<Value> toV8Value(bson_iterator *it);
@@ -322,12 +343,13 @@ namespace ejdb {
     static void toBSON0(Handle<Object> obj, bson *bs, TBSONCTX *ctx) {
         HandleScope scope;
         assert(ctx && obj->IsObject());
-        if (ctx->traversed->Get(obj)->IsObject()) {
+        V8ObjSet::iterator it = ctx->tset.find(obj);
+        if (it != ctx->tset.end()) {
             bs->err = BSON_ERROR_ANY;
             bs->errstr = strdup("Circular object reference");
             return;
         }
-        ctx->traversed->Set(obj, obj);
+        ctx->tset.insert(obj);
         Local<Array> pnames = obj->GetOwnPropertyNames();
         for (uint32_t i = 0; i < pnames->Length(); ++i) {
             Local<Value> pn = pnames->Get(i);
@@ -389,7 +411,6 @@ namespace ejdb {
     static void toBSON(Handle<Object> obj, bson *bs) {
         HandleScope scope;
         TBSONCTX ctx;
-        ctx.traversed = Object::New();
         toBSON0(obj, bs, &ctx);
     }
 
@@ -596,7 +617,7 @@ namespace ejdb {
                             ));
                 }
                 bson *bs = bson_create();
-                bson_init(bs);
+                bson_init_as_query(bs);
                 toBSON(Local<Object>::Cast(qv), bs);
                 bson_finish(bs);
                 if (bs->err) {

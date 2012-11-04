@@ -49,6 +49,7 @@ module.exports.testSaveLoad = function(test) {
     });
 };
 
+/*
 
 module.exports.testQuery1 = function(test) {
     test.ok(jb);
@@ -79,8 +80,20 @@ module.exports.testQuery1 = function(test) {
     });
 };
 
+*/
+
 module.exports.testQuery2 = function(test) {
-    test.done();
+    test.ok(jb);
+    test.ok(jb.isOpen());
+    jb.query("parrots",
+            {name : /(grenny|bounty)/ig},
+            {$orderby : {name : 1}},
+            function(err, cursor, count) {
+                test.ifError(err);
+                console.log("count=" + count);
+                test.done();
+            });
+
 };
 
 module.exports.testClose = function(test) {

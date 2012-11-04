@@ -91,8 +91,8 @@ EJDB.prototype.remove = function(cname, oid, cb) {
  */
 EJDB.prototype.query = function(cname, qobj, orarr, hints, cb) {
     if (arguments.length == 4) {
-        hints = orarr;
         cb = hints;
+        hints = orarr;
         orarr = [];
     } else if (arguments.length == 3) {
         cb = orarr;
