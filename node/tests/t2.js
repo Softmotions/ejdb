@@ -49,8 +49,6 @@ module.exports.testSaveLoad = function(test) {
     });
 };
 
-/*
-
 module.exports.testQuery1 = function(test) {
     test.ok(jb);
     test.ok(jb.isOpen());
@@ -80,8 +78,6 @@ module.exports.testQuery1 = function(test) {
     });
 };
 
-*/
-
 module.exports.testQuery2 = function(test) {
     test.ok(jb);
     test.ok(jb.isOpen());
@@ -90,7 +86,24 @@ module.exports.testQuery2 = function(test) {
             {$orderby : {name : 1}},
             function(err, cursor, count) {
                 test.ifError(err);
-                console.log("count=" + count);
+                test.ok(cursor);
+                test.equal(2, count);
+                for (var c = 0; cursor.next(); ++c) {
+                    var rv = cursor.object();
+                    if (c != 0) continue;
+                    test.equal(rv["name"], "Bounty");
+                    test.equal(cursor.field("name"), "Bounty");
+                    test.equal(rv["type"], "Cockatoo");
+                    test.equal(cursor.field("type"), "Cockatoo");
+                    test.equal(rv["male"], false);
+                    test.equal(cursor.field("male"), false);
+                    test.equal(rv["age"], 15);
+                    test.equal(cursor.field("age"), 15);
+                    test.equal("" + rv["birthdate"], "" + now);
+                    test.equal("" + cursor.field("birthdate"), "" + now);
+                    test.equal(rv["likes"].join(","), "sugar cane");
+                    test.equal(cursor.field("likes").join(","), "sugar cane");
+                }
                 test.done();
             });
 

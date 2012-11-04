@@ -1129,9 +1129,10 @@ finish:
                 return scope.Close(ThrowException(Exception::Error(String::New("Empty cursor"))));
             }
             assert(!(pos < 0 || pos >= rsz)); //m_pos correctly set by s_set_pos
-            void *bsdata = TCLISTVALPTR(c->m_rs, pos);
+            const void *bsdata = TCLISTVALPTR(c->m_rs, pos);
             assert(bsdata);
             bson_iterator it;
+            bson_iterator_from_buffer(&it, (const char*) bsdata);
             bson_type bt = bson_find_fieldpath_value2(*fpath, fpath.length(), &it);
             if (bt == BSON_EOO) {
                 return scope.Close(Undefined());
