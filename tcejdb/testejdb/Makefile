@@ -4,7 +4,7 @@ CPPFLAGS = -I. -I.. -DDEBUG -D_DEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS
 CFLAGS = -std=c99 -Wall -fPIC -pedantic -fsigned-char -g -O0
 LDFLAGS = -L. -L..
 CMDLDFLAGS =
-LIBS = -lbz2 -lz -lrt -lpthread -lm -lc -lcunit
+LIBS = -lz -lrt -lpthread -lm -lc -lcunit
 RUNENV = LD_LIBRARY_PATH=.:..
 
 TESTS = t1 t2 t3

@@ -29,7 +29,7 @@
                     '-L../tcejdb',
                     '-Wl,-Bstatic -ltcejdb',
                     '-Wl,-Bdynamic',
-                    '-lbz2 -lz -lrt -lpthread -lm -lc'
+                    '-lz -lrt -lpthread -lm -lc'
                 ]
             }],
         ],

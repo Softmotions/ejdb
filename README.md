@@ -25,6 +25,7 @@ One snippet intro
 ---------------------------------
 ```JavaScript
 var EJDB = require("ejdb");
+//Open zoo DB
 var jb = EJDB.open("zoo", EJDB.DEFAULT_OPEN_MODE | EJDB.JBOTRUNC);
 
 var parrot1 = {
@@ -66,7 +67,7 @@ jb.save("parrots", [parrot1, parrot2], function(err, oids) {
                     console.log(cursor.field("name") + " likes toys!");
                 }
                 cursor.close(); //It's not mandatory to close cursor explicitly
-                jb.close(); //Close database
+                jb.close(); //Close the database
             });
 });
 ```
@@ -75,6 +76,7 @@ Installation
 --------------------------------
 **System libraries:**
 
+* g++
 * cunit
 * zlib
 
