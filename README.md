@@ -28,6 +28,7 @@ Documentation
     * [EJDB NodeJS API](#ejdb-nodejs-api)
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
+    * [C API](#c-api)
 
 
 NodeJS binding
