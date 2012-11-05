@@ -144,7 +144,7 @@ EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char* colname);
  *
  * @param jb EJDB handle.
  * @param colname Name of collection.
- * @param opts Options are applied only for newly created collection.
+ * @param opts Options applied only for newly created collection.
  *              For existing collections it takes no effect.
  *
  * @return Collection handle or NULL if error.
