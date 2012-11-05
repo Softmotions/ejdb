@@ -18,6 +18,78 @@ Features
 * Collection level transactions.
 * String token matching queries: ```$stror``` ```$strand```
 
+NodeJS binding
+=================================
+
+One snippet intro
+---------------------------------
+```JavaScript
+var EJDB = require("ejdb");
+var jb = EJDB.open("zoo", EJDB.DEFAULT_OPEN_MODE | EJDB.JBOTRUNC);
+
+var parrot1 = {
+    "name" : "Grenny",
+    "type" : "African Grey",
+    "male" : true,
+    "age" : 1,
+    "birthdate" : new Date(),
+    "likes" : ["green color", "night", "toys"],
+    "extra1" : null
+};
+var parrot2 = {
+    "name" : "Bounty",
+    "type" : "Cockatoo",
+    "male" : false,
+    "age" : 15,
+    "birthdate" : new Date(),
+    "likes" : ["sugar cane"]
+};
+
+jb.save("parrots", [parrot1, parrot2], function(err, oids) {
+    if (err) {
+        console.error(err);
+        return;
+    }
+    console.log("Grenny OID: " + parrot1["_id"]);
+    console.log("Bounty OID: " + parrot2["_id"]);
+
+    jb.find("parrots",
+            {"likes" : "toys"},
+            {"$orderby" : {"name" : 1}},
+            function(err, cursor, count) {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+                console.log("Found " + count + " parrots");
+                while (cursor.next()) {
+                    console.log(cursor.field("name") + " likes toys!");
+                }
+                cursor.close(); //It's not mandatory to close cursor explicitly
+                jb.close(); //Close database
+            });
+});
+```
+
+Installation
+--------------------------------
+**System libraries:**
+
+* cunit
+* zlib
+
+On Debian/Ubuntu linux you can install it as follows:
+
+```sh
+   sudo apt-get install libcunit1 libcunit1-dev zlib1g zlib1g-dev
+```
+
+**Installation from node package manager:**
+ ```npm install ejdb```
+
+
+EJDB C Library
+==================================
 
 One snippet intro
 -----------------------------------
@@ -88,58 +160,32 @@ int main() {
 
 
 Building & Installation
-================================
+--------------------------------
 
 Prerequisites
 --------------------------------
-**Libraries:**
+**System libraries:**
 
 * cunit
 * zlib
-* bzip2
 
 On Debian/Ubuntu linux you can install it as follows:
 
 ```sh
-   sudo apt-get install libcunit1 libcunit1-dev libbz2-1.0 libbz2-dev zlib1g zlib1g-dev
+   sudo apt-get install libcunit1 libcunit1-dev zlib1g zlib1g-dev
 ```
 
 Building
 --------------------------------
 ```sh
-   ./configure --prefix=<installation prefix> && make && make check
+   cd ./tcejdb
+   ./configure --disable-bzip --prefix=<installation prefix> && make && make check
    make install
 ```
 * library name: **tcejdb** (with pkgconfig)
 * main include header: ```<tcejdb/ejdb.h>```
 
-Usage
-===============================
-
-Basic EJDB architecture
--------------------------------
-**EJDB database files structure**
-
-```
-.
-├── <dbname>
-├── <dbname>_<collection1>
-├── ...
-├── <dbname>_<collectionN>
-└── <dbname>_<collectionN>_<fieldpath>.<index ext>
-```
-
-Where
-
-* ```<dbname>``` - name of database. It is metadata DB.
-* ```<collectionN>``` - name of collection. Collection database.
-* ```<fieldpath>``` - JSON field path used in index
-* ```<index ext>``` - Collection index extension:
-    * ```.lex``` String index
-    * ```.dec``` Number index
-    * ```.tok``` Array index
-
-API
+C API
 ---------------------------------
 EJDB API presented in **ejdb.h** C header file.
 
@@ -157,7 +203,7 @@ Queries
  *
  *  - Supported queries:
  *      - Simple matching of String OR Number OR Array value:
- *          -   {'bson.field.path' : 'val', ...}
+ *          -   {'json.field.path' : 'val', ...}
  *      - $not Negate operation.
  *          -   {'json.field.path' : {'$not' : val}} //Field not equal to val
  *          -   {'json.field.path' : {'$not' : {'$begin' : prefix}}} //Field not begins with val
@@ -174,6 +220,8 @@ Queries
  *          -   {'json.field.path' : {'$strand' : [val1, val2, val3]}}
  *      - $stror String tokens OR String array val matches any token in specified array:
  *          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
+ *      - $exists Field existence matching:
+ *          -   {'json.field.path' : {'$exists' : true|false}}
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
@@ -208,11 +256,34 @@ Examples
 ------------------------------------
 You can find some code samples in:
 
-* /samples
-* /testejdb test cases
+* ./samples
+* ./testejdb test cases
+
+Basic EJDB architecture
+-------------------------------
+**EJDB database files structure**
+
+```
+.
+├── <dbname>
+├── <dbname>_<collection1>
+├── ...
+├── <dbname>_<collectionN>
+└── <dbname>_<collectionN>_<fieldpath>.<index ext>
+```
+
+Where
+
+* ```<dbname>``` - name of database. It is metadata DB.
+* ```<collectionN>``` - name of collection. Collection database.
+* ```<fieldpath>``` - JSON field path used in index
+* ```<index ext>``` - Collection index extension:
+    * ```.lex``` String index
+    * ```.dec``` Number index
+    * ```.tok``` Array index
 
 Limitations/TODOs
------------------------------------
+------------------------------------
 * Case insensitive string indexes
 * Collect collection index statistic
 * Windows port

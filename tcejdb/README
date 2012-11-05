@@ -18,6 +18,8 @@ Features
 * Collection level transactions.
 * String token matching queries: ```$stror``` ```$strand```
 
+EJDB C Library
+==================================
 
 One snippet intro
 -----------------------------------
@@ -88,58 +90,32 @@ int main() {
 
 
 Building & Installation
-================================
+--------------------------------
 
 Prerequisites
 --------------------------------
-**Libraries:**
+**System libraries:**
 
 * cunit
 * zlib
-* bzip2
 
 On Debian/Ubuntu linux you can install it as follows:
 
 ```sh
-   sudo apt-get install libcunit1 libcunit1-dev libbz2-1.0 libbz2-dev zlib1g zlib1g-dev
+   sudo apt-get install libcunit1 libcunit1-dev zlib1g zlib1g-dev
 ```
 
 Building
 --------------------------------
 ```sh
-   ./configure --prefix=<installation prefix> && make && make check
+   cd ./tcejdb
+   ./configure --disable-bzip --prefix=<installation prefix> && make && make check
    make install
 ```
 * library name: **tcejdb** (with pkgconfig)
 * main include header: ```<tcejdb/ejdb.h>```
 
-Usage
-===============================
-
-Basic EJDB architecture
--------------------------------
-**EJDB database files structure**
-
-```
-.
-├── <dbname>
-├── <dbname>_<collection1>
-├── ...
-├── <dbname>_<collectionN>
-└── <dbname>_<collectionN>_<fieldpath>.<index ext>
-```
-
-Where
-
-* ```<dbname>``` - name of database. It is metadata DB.
-* ```<collectionN>``` - name of collection. Collection database.
-* ```<fieldpath>``` - JSON field path used in index
-* ```<index ext>``` - Collection index extension:
-    * ```.lex``` String index
-    * ```.dec``` Number index
-    * ```.tok``` Array index
-
-API
+C API
 ---------------------------------
 EJDB API presented in **ejdb.h** C header file.
 
@@ -157,7 +133,7 @@ Queries
  *
  *  - Supported queries:
  *      - Simple matching of String OR Number OR Array value:
- *          -   {'bson.field.path' : 'val', ...}
+ *          -   {'json.field.path' : 'val', ...}
  *      - $not Negate operation.
  *          -   {'json.field.path' : {'$not' : val}} //Field not equal to val
  *          -   {'json.field.path' : {'$not' : {'$begin' : prefix}}} //Field not begins with val
@@ -174,6 +150,8 @@ Queries
  *          -   {'json.field.path' : {'$strand' : [val1, val2, val3]}}
  *      - $stror String tokens OR String array val matches any token in specified array:
  *          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
+ *      - $exists Field existence matching:
+ *          -   {'json.field.path' : {'$exists' : true|false}}
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
@@ -208,11 +186,35 @@ Examples
 ------------------------------------
 You can find some code samples in:
 
-* /samples
-* /testejdb test cases
+* ./samples
+* ./testejdb test cases
+
+Basic EJDB architecture
+-------------------------------
+**EJDB database files structure**
+
+```
+.
+├── <dbname>
+├── <dbname>_<collection1>
+├── ...
+├── <dbname>_<collectionN>
+└── <dbname>_<collectionN>_<fieldpath>.<index ext>
+```
+
+Where
+
+* ```<dbname>``` - name of database. It is metadata DB.
+* ```<collectionN>``` - name of collection. Collection database.
+* ```<fieldpath>``` - JSON field path used in index
+* ```<index ext>``` - Collection index extension:
+    * ```.lex``` String index
+    * ```.dec``` Number index
+    * ```.tok``` Array index
 
 Limitations/TODOs
------------------------------------
+------------------------------------
 * Case insensitive string indexes
 * Collect collection index statistic
 * Windows port
+

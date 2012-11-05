@@ -2287,7 +2287,7 @@ static int _parse_qobj_impl(EJDB* jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                     }
                     qf.fpath = tcstrjoin(pathStack, '.');
                     qf.fpathsz = strlen(qf.fpath);
-                    tcmapputkeep(qmap, qf.fpath, strlen(qf.fpath), &qf, sizeof (qf));
+                    tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
                     break;
                 } else {
                     bson_iterator sit;
@@ -2321,7 +2321,7 @@ static int _parse_qobj_impl(EJDB* jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                 } else {
                     qf.tcop = TDBQCSTREQ;
                 }
-                tcmapputkeep(qmap, qf.fpath, strlen(qf.fpath), &qf, sizeof (qf));
+                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
                 break;
             }
             case BSON_LONG:
@@ -2353,7 +2353,7 @@ static int _parse_qobj_impl(EJDB* jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                 } else {
                     qf.tcop = TDBQCNUMEQ;
                 }
-                tcmapputkeep(qmap, qf.fpath, strlen(qf.fpath), &qf, sizeof (qf));
+                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
                 break;
             }
             case BSON_REGEX:
@@ -2382,7 +2382,7 @@ static int _parse_qobj_impl(EJDB* jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                     TCFREE(qf.expr);
                     break;
                 }
-                tcmapputkeep(qmap, qf.fpath, strlen(qf.fpath), &qf, sizeof (qf));
+                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
                 break;
             }
             case BSON_NULL:
@@ -2393,6 +2393,20 @@ static int _parse_qobj_impl(EJDB* jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                 qf.expr = tcstrdup(""); //Empty string as expr
                 qf.exprsz = 0;
                 tcmapputkeep(qmap, qf.fpath, strlen(qf.fpath), &qf, sizeof (qf));
+                break;
+
+            case BSON_BOOL:
+                if (isckey && !strcmp("$exists", fkey)) {
+                    qf.tcop = TDBQCEXIST;
+                    qf.fpath = tcstrjoin(pathStack, '.');
+                    qf.fpathsz = strlen(qf.fpath);
+                    qf.expr = tcstrdup(""); //Empty string as expr
+                    qf.exprsz = 0;
+                    if (!bson_iterator_bool_raw(it)) {
+                        qf.negate = !qf.negate;
+                    }
+                    tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                }
                 break;
             default:
                 break;

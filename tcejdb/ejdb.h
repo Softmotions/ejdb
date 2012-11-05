@@ -146,6 +146,7 @@ EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char* colname);
  * @param colname Name of collection.
  * @param opts Options are applied only for newly created collection.
  *              For existing collections it takes no effect.
+ *
  * @return Collection handle or NULL if error.
  */
 EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char* colname, EJCOLLOPTS *opts);
@@ -197,7 +198,7 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL* coll, const bson_oid_t* oid);
  *
  *  - Supported queries:
  *      - Simple matching of String OR Number OR Array value:
- *          -   {'bson.field.path' : 'val', ...}
+ *          -   {'json.field.path' : 'val', ...}
  *      - $not Negate operation.
  *          -   {'json.field.path' : {'$not' : val}} //Field not equal to val
  *          -   {'json.field.path' : {'$not' : {'$begin' : prefix}}} //Field not begins with val
@@ -214,6 +215,8 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL* coll, const bson_oid_t* oid);
  *          -   {'json.field.path' : {'$strand' : [val1, val2, val3]}}
  *      - $stror String tokens OR String array val matches any token in specified array:
  *          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
+ *      - $exists Field existence matching:
+ *          -   {'json.field.path' : {'$exists' : true|false}}
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
