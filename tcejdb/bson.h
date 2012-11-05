@@ -54,7 +54,8 @@ enum bson_validity_t {
     BSON_NOT_UTF8 = (1 << 1), /**< A key or a string is not valid UTF-8. */
     BSON_FIELD_HAS_DOT = (1 << 2), /**< Warning: key contains '.' character. */
     BSON_FIELD_INIT_DOLLAR = (1 << 3), /**< Warning: key starts with '$' character. */
-    BSON_ALREADY_FINISHED = (1 << 4) /**< Trying to modify a finished BSON object. */
+    BSON_ALREADY_FINISHED = (1 << 4), /**< Trying to modify a finished BSON object. */
+    BSON_ERROR_ANY = (1 << 5) /**< Unspecified error */
 };
 
 enum bson_binary_subtype_t {
@@ -319,7 +320,7 @@ EJDB_EXPORT bson_bool_t bson_iterator_bool(const bson_iterator *i);
  * @return the value of the current BSON object.
  */
 /* these assume you are using the right type */
-double bson_iterator_double_raw(const bson_iterator *i);
+EJDB_EXPORT double bson_iterator_double_raw(const bson_iterator *i);
 
 /**
  * Get the int value of the BSON object currently pointed to by the
@@ -329,7 +330,7 @@ double bson_iterator_double_raw(const bson_iterator *i);
  *
  * @return the value of the current BSON object.
  */
-int bson_iterator_int_raw(const bson_iterator *i);
+EJDB_EXPORT int bson_iterator_int_raw(const bson_iterator *i);
 
 /**
  * Get the long value of the BSON object currently pointed to by the
@@ -339,7 +340,7 @@ int bson_iterator_int_raw(const bson_iterator *i);
  *
  * @return the value of the current BSON object.
  */
-int64_t bson_iterator_long_raw(const bson_iterator *i);
+EJDB_EXPORT int64_t bson_iterator_long_raw(const bson_iterator *i);
 
 /**
  * Get the bson_bool_t value of the BSON object currently pointed to by the
@@ -349,7 +350,7 @@ int64_t bson_iterator_long_raw(const bson_iterator *i);
  *
  * @return the value of the current BSON object.
  */
-bson_bool_t bson_iterator_bool_raw(const bson_iterator *i);
+EJDB_EXPORT bson_bool_t bson_iterator_bool_raw(const bson_iterator *i);
 
 /**
  * Get the bson_oid_t value of the BSON object currently pointed to by the
@@ -576,7 +577,7 @@ EJDB_EXPORT void bson_init_as_query(bson *b);
  * @return BSON_OK or BSON_ERROR.
  */
 int bson_init_data(bson *b, char *data);
-int bson_init_finished_data(bson *b, char *data);
+EJDB_EXPORT int bson_init_finished_data(bson *b, char *data);
 
 /**
  * Initialize a BSON object, and set its
@@ -941,8 +942,8 @@ EJDB_EXPORT int bson_append_finish_object(bson *b);
  */
 EJDB_EXPORT int bson_append_finish_array(bson *b);
 
-EJDB_EXPORT void bson_numstr(char *str, long long int i);
-EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, long long int i);
+EJDB_EXPORT void bson_numstr(char *str, int64_t i);
+EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, int64_t i);
 
 //void bson_incnumstr(char *str);
 

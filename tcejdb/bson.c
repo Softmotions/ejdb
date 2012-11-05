@@ -53,6 +53,14 @@ bson_printf_func bson_errprintf = _bson_errprintf;
 static int ( *oid_fuzz_func)(void) = NULL;
 static int ( *oid_inc_func)(void) = NULL;
 
+static void _bson_reset(bson *b) {
+    b->finished = 0;
+    b->stackPos = 0;
+    b->err = 0;
+    b->errstr = NULL;
+    b->flags = 0;
+}
+
 /* ----------------------------
    READING
    ------------------------------ */
@@ -82,7 +90,6 @@ EJDB_EXPORT int bson_copy(bson *out, const bson *in) {
     bson_init_size(out, bson_size(in));
     memcpy(out->data, in->data, bson_size(in));
     out->finished = 1;
-
     return BSON_OK;
 }
 
@@ -91,18 +98,11 @@ int bson_init_data(bson *b, char *data) {
     return BSON_OK;
 }
 
-int bson_init_finished_data(bson *b, char *data) {
+EJDB_EXPORT int bson_init_finished_data(bson *b, char *data) {
     bson_init_data(b, data);
+    _bson_reset(b);
     b->finished = 1;
     return BSON_OK;
-}
-
-static void _bson_reset(bson *b) {
-    b->finished = 0;
-    b->stackPos = 0;
-    b->err = 0;
-    b->errstr = NULL;
-    b->flags = 0;
 }
 
 EJDB_EXPORT int bson_size(const bson *b) {
@@ -457,25 +457,25 @@ EJDB_EXPORT const char *bson_iterator_value(const bson_iterator *i) {
 
 /* types */
 
-int bson_iterator_int_raw(const bson_iterator *i) {
+EJDB_EXPORT int bson_iterator_int_raw(const bson_iterator *i) {
     int out;
     bson_little_endian32(&out, bson_iterator_value(i));
     return out;
 }
 
-double bson_iterator_double_raw(const bson_iterator *i) {
+EJDB_EXPORT double bson_iterator_double_raw(const bson_iterator *i) {
     double out;
     bson_little_endian64(&out, bson_iterator_value(i));
     return out;
 }
 
-int64_t bson_iterator_long_raw(const bson_iterator *i) {
+EJDB_EXPORT int64_t bson_iterator_long_raw(const bson_iterator *i) {
     int64_t out;
     bson_little_endian64(&out, bson_iterator_value(i));
     return out;
 }
 
-bson_bool_t bson_iterator_bool_raw(const bson_iterator *i) {
+EJDB_EXPORT bson_bool_t bson_iterator_bool_raw(const bson_iterator *i) {
     return bson_iterator_value(i)[0];
 }
 
@@ -757,6 +757,10 @@ EJDB_EXPORT void bson_destroy(bson *b) {
         b->data = 0;
         b->cur = 0;
         b->finished = 1;
+        if (b->errstr) {
+            bson_free_func(b->errstr);
+            b->errstr = NULL;
+        }
     }
 }
 
@@ -1099,19 +1103,19 @@ void bson_fatal_msg(int ok, const char *msg) {
 /* Efficiently copy an integer to a string. */
 extern const char bson_numstrs[1000][4];
 
-EJDB_EXPORT void bson_numstr(char *str, long long int i) {
+EJDB_EXPORT void bson_numstr(char *str, int64_t i) {
     if (i < 1000)
         memcpy(str, bson_numstrs[i], 4);
     else
-        bson_sprintf(str, "%lld", i);
+        bson_sprintf(str, "%lld", (long long int) i);
 }
 
-EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, long long int i) {
+EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, int64_t i) {
     if (i < 1000 && maxbuf > 4) {
         memcpy(str, bson_numstrs[i], 4);
         return strlen(bson_numstrs[i]);
     } else {
-        return snprintf(str, maxbuf, "%lld", i);
+        return snprintf(str, maxbuf, "%lld", (long long int) i);
     }
 }
 
@@ -1353,7 +1357,7 @@ EJDB_EXPORT bson* bson_create_from_buffer(const void* buf, int bufsz) {
     bson *rv = bson_create();
     bson_init_size(rv, bufsz);
     bson_ensure_space(rv, bufsz - 4);
-    bson_append(rv, buf + 4, bufsz - (4 + 1/*BSON_EOO*/));
+    bson_append(rv, (char*) buf + 4, bufsz - (4 + 1/*BSON_EOO*/));
     bson_finish(rv);
     return rv;
 }

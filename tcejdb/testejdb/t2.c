@@ -23,7 +23,7 @@ static EJDB *jb;
 
 int init_suite(void) {
     jb = ejdbnew();
-    if (!ejdbopen(jb, "dbt2", JDBOWRITER | JDBOCREAT | JDBOTRUNC)) {
+    if (!ejdbopen(jb, "dbt2", JBOWRITER | JBOCREAT | JBOTRUNC)) {
         return 1;
     }
     return 0;
@@ -74,7 +74,6 @@ void testAddData() {
     bson_append_string(&a1, "country", "Russian Federation");
     bson_append_string(&a1, "zip", "630090");
     bson_append_string(&a1, "street", "Pirogova");
-    bson_append_int(&a1, "room", 335);
     bson_append_finish_object(&a1);
     bson_append_start_array(&a1, "labels");
     bson_append_string(&a1, "0", "red");
@@ -118,11 +117,11 @@ void testAddData() {
 void testSetIndex1() {
     EJCOLL *ccoll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(ccoll);
-    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "ab.c.d", JDIDXSTR));
-    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "ab.c.d", JDIDXSTR | JDIDXNUM));
-    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "ab.c.d", JDIDXDROPALL));
-    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "address.zip", JDIDXSTR));
-    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "name", JDIDXSTR));
+    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "ab.c.d", JBIDXSTR));
+    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "ab.c.d", JBIDXSTR | JBIDXNUM));
+    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "ab.c.d", JBIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "address.zip", JBIDXSTR));
+    CU_ASSERT_TRUE(ejdbsetindex(ccoll, "name", JBIDXSTR));
 
     //Insert new record with active index
     //Record 4
@@ -297,7 +296,7 @@ void testQuery2() {
 void testQuery3() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.zip", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.zip", JBIDXDROPALL));
 
     bson bsq1;
     bson_init_as_query(&bsq1);
@@ -354,7 +353,7 @@ void testQuery3() {
 void testQuery4() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JBIDXDROPALL));
 
     bson bsq1;
     bson_init_as_query(&bsq1);
@@ -442,7 +441,7 @@ void testQuery5() {
 void testQuery6() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "labels", JDIDXARR));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "labels", JBIDXARR));
 
     bson bsq1;
     bson_init_as_query(&bsq1);
@@ -617,7 +616,7 @@ void testQuery8() {
 void testQuery9() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "labels", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "labels", JBIDXDROPALL));
 
     bson bsq1;
     bson_init_as_query(&bsq1);
@@ -675,7 +674,7 @@ void testQuery9() {
 void testQuery10() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.street", JDIDXSTR));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.street", JBIDXSTR));
 
     //"address.street" : {"$in" : ["Pirogova", "Beverly Hills"]}
     bson bsq1;
@@ -740,7 +739,7 @@ void testQuery10() {
 void testQuery11() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.street", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.street", JBIDXDROPALL));
 
     //"address.street" : {"$in" : ["Pirogova", "Beverly Hills"]}
     bson bsq1;
@@ -937,7 +936,7 @@ void testQuery13() {
 void testQuery14() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "drinks", JDIDXARR));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "drinks", JBIDXARR));
 
     //"drinks" : {"$in" : [4, 77676.22]}
     bson bsq1;
@@ -991,7 +990,7 @@ void testQuery14() {
 void testQuery15() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JDIDXNUM));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JBIDXNUM));
 
     bson bsq1;
     bson_init_as_query(&bsq1);
@@ -1037,7 +1036,7 @@ void testQuery15() {
 void testQuery16() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JBIDXDROPALL));
 
     bson bsq1;
     bson_init_as_query(&bsq1);
@@ -1082,7 +1081,7 @@ void testQuery16() {
 void testQuery17() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JDIDXNUM));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JBIDXNUM));
 
     //"dblscore" : {"$bt" : [0.95, 0.3]}
     bson bsq1;
@@ -1144,7 +1143,7 @@ void testQuery17() {
     tclistdel(q1res);
     ejdbquerydel(q1);
 
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JBIDXDROPALL));
 
     bson_init_as_query(&bsq1);
     bson_append_start_object(&bsq1, "dblscore");
@@ -1203,7 +1202,7 @@ void testQuery17() {
 void testQuery18() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JDIDXARR));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JBIDXARR));
 
     //{"name" : {$strand : ["Travolta", "John"]}}
     bson bsq1;
@@ -1258,7 +1257,7 @@ void testQuery18() {
     //Second query
     tcxstrclear(log);
     tclistdel(q1res);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JBIDXDROPALL));
 
     count = 0;
     q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
@@ -1292,7 +1291,7 @@ void testQuery18() {
 void testQuery19() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JDIDXARR));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JBIDXARR));
 
     //{"name" : {$stror : ["Travolta", "Антонов", "John"]}}
     bson bsq1;
@@ -1351,7 +1350,7 @@ void testQuery19() {
     //No-index query
     tcxstrclear(log);
     tclistdel(q1res);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JBIDXDROPALL));
 
     count = 0;
     q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
@@ -1390,7 +1389,7 @@ void testQuery20() {
     //{'dblscore' : {'$gte' : 0.93}}
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JDIDXNUM));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JBIDXNUM));
 
     bson bsq1;
     bson_init_as_query(&bsq1);
@@ -1489,7 +1488,7 @@ void testQuery20() {
     ejdbquerydel(q1);
 
     //NOINDEX
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JBIDXDROPALL));
 
     //NOINDEX GTE
     bson_init_as_query(&bsq1);
@@ -1548,7 +1547,7 @@ void testQuery21() {
     //{'dblscore' : {'lte' : 0.93}}
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JDIDXNUM));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JBIDXNUM));
 
     //LTE
     bson bsq1;
@@ -1656,7 +1655,7 @@ void testQuery21() {
     tcxstrdel(log);
     ejdbquerydel(q1);
 
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "dblscore", JBIDXDROPALL));
 
     //NOINDEX GTE
     bson_init_as_query(&bsq1);
@@ -1714,7 +1713,7 @@ void testQuery21() {
 void testQuery22() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.country", JDIDXSTR));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.country", JBIDXSTR));
 
     //{"address.country" : {$begin : "Ru"}}
     bson bsq1;
@@ -1777,7 +1776,7 @@ void testQuery22() {
     tcxstrdel(log);
     ejdbquerydel(q1);
 
-    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.country", JDIDXDROPALL));
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "address.country", JBIDXDROPALL));
 
     bson_init_as_query(&bsq1);
     bson_append_start_object(&bsq1, "address.country");
@@ -2290,6 +2289,123 @@ void testQuery26() { //$not $nin
     ejdbquerydel(q1);
 }
 
+void testQuery27() { //$exists
+    EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
+
+    //{'address.room' : {$exists : true}}
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "address.room");
+    bson_append_bool(&bsq1, "$exists", true);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "SKIP: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ORDER FIELDS: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ACTIVE CONDITIONS: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "$OR QUERIES: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FETCH ALL: FALSE"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RUN FULLSCAN"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FINAL SORTING: FALSE"));
+    CU_ASSERT_EQUAL(count, 1);
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 1);
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+
+    //{'address.room' : {$exists : true}}
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "address.room");
+    bson_append_bool(&bsq1, "$exists", false);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "SKIP: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ORDER FIELDS: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ACTIVE CONDITIONS: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "$OR QUERIES: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FETCH ALL: FALSE"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RUN FULLSCAN"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 3"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 3"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FINAL SORTING: FALSE"));
+    CU_ASSERT_EQUAL(count, 3);
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 3);
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //{'address.room' : {$not :  {$exists : true}}} is equivalent to {'address.room' : {$exists : false}}
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "address.room");
+    bson_append_start_object(&bsq1, "$not");
+    bson_append_bool(&bsq1, "$exists", true);
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "SKIP: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ORDER FIELDS: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ACTIVE CONDITIONS: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "$OR QUERIES: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FETCH ALL: FALSE"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RUN FULLSCAN"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 3"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 3"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FINAL SORTING: FALSE"));
+    CU_ASSERT_EQUAL(count, 3);
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 3);
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
@@ -2333,7 +2449,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testQuery23", testQuery23)) ||
             (NULL == CU_add_test(pSuite, "testQuery24", testQuery24)) ||
             (NULL == CU_add_test(pSuite, "testQuery25", testQuery25)) ||
-            (NULL == CU_add_test(pSuite, "testQuery26", testQuery26))
+            (NULL == CU_add_test(pSuite, "testQuery26", testQuery26)) ||
+            (NULL == CU_add_test(pSuite, "testQuery27", testQuery27))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

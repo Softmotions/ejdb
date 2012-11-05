@@ -1,9 +1,13 @@
 *.o
 *.vlog
+*.iml
 
-/npm-debug.log
-/.idea/workspace.xml
+/node/nodejs
+/.idea
+/node/nbproject
+/tcejdb/nbproject
 
+/tcejdb/doc
 /tcejdb/Makefile
 /tcejdb/autom4te.cache
 /tcejdb/config.log
@@ -47,6 +51,4 @@
 /node/nbproject/private
 /build
 /var
-/node/samples/zoo*
-
 

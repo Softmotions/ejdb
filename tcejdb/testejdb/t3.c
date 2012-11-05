@@ -26,7 +26,7 @@ static bson* recs;
 int init_suite(void) {
     assert(QRS < RS);
     jb = ejdbnew();
-    if (!ejdbopen(jb, "dbt3", JDBOWRITER | JDBOCREAT | JDBOTRUNC)) {
+    if (!ejdbopen(jb, "dbt3", JBOWRITER | JBOCREAT | JBOTRUNC)) {
         return 1;
     }
     srandom(tcmstime());
@@ -89,7 +89,7 @@ void testPerf1() {
         EJQ *q = ejdbcreatequery(jb, bs, NULL, 0, NULL);
         assert(q);
         uint32_t count;
-        ejdbqrysearch(coll, q, &count, EJQRYCOUNT, NULL);
+        ejdbqrysearch(coll, q, &count, JBQRYCOUNT, NULL);
         assert(count);
         if (count != 1) {
             fprintf(stderr, "CNT=%u\n", count);
@@ -102,7 +102,7 @@ void testPerf1() {
             i, tcmstime() - st, (unsigned long) ((tcmstime() - st) / QRS));
 
     st = tcmstime();
-    CU_ASSERT_TRUE(ejdbsetindex(coll, "rstring", JDIDXSTR));
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "rstring", JBIDXSTR));
     fprintf(stderr, "testPerf1(): SET INDEX 'rstring' TIME: %lu ms\n", tcmstime() - st);
 
     st = tcmstime();
@@ -114,7 +114,7 @@ void testPerf1() {
         EJQ *q = ejdbcreatequery(jb, bs, NULL, 0, NULL);
         assert(q);
         uint32_t count;
-        ejdbqrysearch(coll, q, &count, EJQRYCOUNT, NULL);
+        ejdbqrysearch(coll, q, &count, JBQRYCOUNT, NULL);
         assert(count);
         acount += count;
         ejdbquerydel(q);

@@ -1,0 +1,29 @@
+{
+    "name" : "ejdb",
+    "version" : "1.0.0",
+    "main" : "node/ejdb.js",
+    "description" : "EJDB - Embedded JSON Database engine",
+    "homepage" : "https://github.com/Softmotions/ejdb",
+    "repository" : {
+        "type" : "git",
+        "url" : "https://github.com/Softmotions/ejdb.git"
+    },
+    "engines" : {
+        "node" : "0.8.x"
+    },
+    "dependencies" : {
+        "nodeunit" : ">=0.7.0"
+    },
+    "scripts" : {
+        "preinstall" : "make all && node-gyp rebuild",
+        "test" : "make -f tests.mk check-all",
+        "postinstall" : "make -f tests.mk check"
+    },
+    "author" : {
+        "name" : "Anton Adamansky",
+        "email" : "adamansky@gmail.com"
+    },
+    "contributors" : [
+        "Mikio Hirabayashi <mikio@fallabs.com> (http://fallabs.com/mikio/)"
+    ]
+}

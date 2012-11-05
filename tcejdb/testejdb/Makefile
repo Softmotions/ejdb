@@ -4,7 +4,7 @@ CPPFLAGS = -I. -I.. -DDEBUG -D_DEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS
 CFLAGS = -std=c99 -Wall -fPIC -pedantic -fsigned-char -g -O0
 LDFLAGS = -L. -L..
 CMDLDFLAGS =
-LIBS = -lbz2 -lz -lrt -lpthread -lm -lc -lcunit
+LIBS = -lz -lrt -lpthread -lm -lc -lcunit
 RUNENV = LD_LIBRARY_PATH=.:..
 
 TESTS = t1 t2 t3
@@ -13,7 +13,7 @@ check : all check-t1 check-t2 check-t3;
 
 check-valgrind :
 	rm -rf *.vlog
-	make RUNCMD="valgrind --tool=memcheck --leak-check=full --log-file=%p.vlog" check
+	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check
 	grep ERROR *.vlog | grep -v ' 0 errors' ; true
 	grep 'at exit' *.vlog | grep -v ' 0 bytes' ; true
 
