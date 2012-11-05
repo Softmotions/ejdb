@@ -12,10 +12,10 @@
         "node" : "0.8.x"
     },
     "dependencies" : {
-        "async" : "latest",
         "nodeunit" : ">=0.7.0"
     },
     "devDependencies" : {
+        "nodeunit" : ">=0.7.0"
     },
     "scripts" : {
         "preinstall" : "make all && node-gyp rebuild && make -f tests.mk check",
