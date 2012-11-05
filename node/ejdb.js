@@ -78,9 +78,9 @@ EJDB.prototype.ensureCollection = function(cname, copts) {
  *  Remove collection.
  *
  *  Call variations:
- *      - rmCollection(cname)
- *      - rmCollection(cname, cb)
- *      - rmCollection(cname, prune, cb)
+ *      - removeCollection(cname)
+ *      - removeCollection(cname, cb)
+ *      - removeCollection(cname, prune, cb)
  *
  * @param {String} cname Name of collection.
  * @param {Boolean} [prune=false] If true the collection data will erased from disk.
@@ -211,7 +211,7 @@ EJDB.prototype.remove = function(cname, oid, cb) {
  *                    }
  *
  * Many C API query examples can be found in `tcejdb/testejdb/t2.c` test case.
- *                   *
+ *
  * To traverse selected records cursor object is used:
  *      - Cursor#next() Move cursor to the next record and returns true if next record exists.
  *      - Cursor#hasNext() Returns true if cursor can be placed to the next record.

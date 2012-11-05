@@ -93,7 +93,6 @@ On Debian/Ubuntu linux you can install it as follows:
 EJDB NodeJS API
 ----------------------------------
 
-
 <a name="open" />
 ### EJDB.open(dbFile, openMode)
 
@@ -150,9 +149,9 @@ Remove collection.
 
 Call variations:
 
-    rmCollection(cname)
-    rmCollection(cname, cb)
-    rmCollection(cname, prune, cb)
+    removeCollection(cname)
+    removeCollection(cname, cb)
+    removeCollection(cname, prune, cb)
 
 __Arguments__
 
@@ -177,9 +176,115 @@ Call variations:
     save(cname, json object, [cb])
     save(cname, <Array of json objects>, [cb])
 
- * {String} cname Name of collection.
+__Arguments__
+
+ * {String} **cname** Name of collection.
  * {Array|Object} jsarr Signle JSON object or array of JSON objects to save
  * {Function} `[cb]` Callback function with arguments: (error, {Array} of OIDs for saved objects)
+
+
+--------------------------------------
+
+<a name="load"/>
+### load(cname, oid, cb)
+
+Loads JSON object identified OID from the collection.
+
+__Arguments__
+
+ * {String} cname Name of collection
+ * {String} oid Object identifier (OID)
+ * {Function} cb  Callback function with arguments: (error, obj)
+        `obj`:  Retrieved JSON object or NULL if it is not found.
+
+ --------------------------------------
+
+<a name="remove"/>
+### remove(cname, oid, cb)
+
+Removes JSON object from the collection.
+
+__Arguments__
+
+ * {String} cname Name of collection
+ * {String} oid Object identifier (OID)
+ * {Function} cb  Callback function with arguments: (error)
+
+
+--------------------------------------
+
+<a name="find"/>
+### find(cname, qobj, orarr, hints, cb)
+Execute query on collection.
+EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
+
+    Supported queries:
+      - Simple matching of String OR Number OR Array value:
+          -   {'json.field.path' : 'val', ...}
+      - $not Negate operation.
+          -   {'json.field.path' : {'$not' : val}} //Field not equal to val
+          -   {'json.field.path' : {'$not' : {'$begin' : prefix}}} //Field not begins with val
+      - $begin String starts with prefix
+          -   {'json.field.path' : {'$begin' : prefix}}
+      - $gt, $gte (>, >=) and $lt, $lte for number types:
+          -   {'json.field.path' : {'$gt' : number}, ...}
+      - $bt Between for number types:
+          -   {'json.field.path' : {'$bt' : [num1, num2]}}
+      - $in String OR Number OR Array val matches to value in specified array:
+          -   {'json.field.path' : {'$in' : [val1, val2, val3]}}
+      - $nin - Not IN
+      - $strand String tokens OR String array val matches all tokens in specified array:
+          -   {'json.field.path' : {'$strand' : [val1, val2, val3]}}
+      - $stror String tokens OR String array val matches any token in specified array:
+          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
+      - $exists Field existence matching:
+          -   {'json.field.path' : {'$exists' : true|false}}
+
+    NOTE: Negate operations: $not and $nin not using indexes
+          so they can be slow in comparison to other matching operations.
+
+    NOTE: Only one index can be used in search query operation.
+
+    QUERY HINTS (specified by `hints` argument):
+      - $max Maximum number in the result set
+      - $skip Number of skipped results in the result set
+      - $orderby Sorting order of query fields.
+          Eg: ORDER BY field1 ASC, field2 DESC
+          hints:    {
+                      "$orderby" : {
+                          "field1" : 1,
+                          "field2" : -1
+                      }
+                    }
+
+    Many C API query examples can be found in `tcejdb/testejdb/t2.c` test case.
+
+    To traverse selected records cursor object is used:
+      - Cursor#next() Move cursor to the next record and returns true if next record exists.
+      - Cursor#hasNext() Returns true if cursor can be placed to the next record.
+      - Cursor#field(name) Retrieve value of the specified field of the current JSON object record.
+      - Cursor#object() Retrieve whole JSON object with all fields.
+      - Cursor#reset() Reset cursor to its initial state.
+      - Cursor#length Read-only property: Number of records placed into cursor.
+      - Cursor#pos Read/Write property: You can set cursor position: 0 <= pos < length
+      - Cursor#close() Closes cursor and free cursor resources. Cursor cant be used in closed state.
+
+    Call variations of find():
+       - find(cname, qobj, cb)
+       - find(cname, qobj, hints, cb)
+       - find(cname, qobj, qobjarr, cb)
+       - find(cname, qobj, qobjarr, hints, cb)
+
+ __Arguments__
+
+ * {String} cname Name of collection
+ * {Object} qobj Main JSON query object
+ * {Array} `[orarr]` Array of additional OR query objects (joined with OR predicate).
+ * {Object} `[hints]` JSON object with query hints.
+ * {Function} cb Callback function with arguments: (error, cursor, count) where:
+            `cursor`: Cursor object to traverse records
+            `count`:  Total number of selected records
+
 
 
 
