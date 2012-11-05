@@ -52,7 +52,7 @@ module.exports.testSaveLoad = function(test) {
 module.exports.testQuery1 = function(test) {
     test.ok(jb);
     test.ok(jb.isOpen());
-    jb.query("parrots", {}, function(err, cursor, count) {
+    jb.find("parrots", {}, function(err, cursor, count) {
         test.ifError(err);
         test.equal(count, 2);
         test.ok(cursor);
@@ -81,7 +81,7 @@ module.exports.testQuery1 = function(test) {
 module.exports.testQuery2 = function(test) {
     test.ok(jb);
     test.ok(jb.isOpen());
-    jb.query("parrots",
+    jb.find("parrots",
             {name : /(grenny|bounty)/ig},
             {$orderby : {name : 1}},
             function(err, cursor, count) {
@@ -110,11 +110,11 @@ module.exports.testQuery2 = function(test) {
 };
 
 
-//Test with OR
+//Test with OR, cursor.reset
 module.exports.testQuery3 = function(test) {
     test.ok(jb);
     test.ok(jb.isOpen());
-    jb.query("parrots",
+    jb.find("parrots",
             {}, //main query selector
             [
                 //OR joined conditions
@@ -142,9 +142,111 @@ module.exports.testQuery3 = function(test) {
                     test.equal(rv["likes"].join(","), "green color,night,toys");
                     test.equal(cursor.field("likes").join(","), "green color,night,toys");
                 }
+
+                //test cursor reset
+                cursor.reset();
+                for (c = 0; cursor.next(); ++c);
+                test.equal(c, 2);
+
+                //explicit cursor close
+                cursor.close();
                 test.done();
             });
+};
 
+module.exports.testCircular = function(test) {
+    test.ok(jb);
+    test.ok(jb.isOpen());
+
+    //Circular query object
+    var cirQuery = {};
+    cirQuery.cq = cirQuery;
+    var err = null;
+    try {
+        jb.find("parrots", cirQuery, function(err, cursor, count) {
+        });
+    } catch (e) {
+        err = e;
+    }
+    test.ok(err);
+    test.equal(err.message, "Circular object reference");
+
+    err = null;
+    try {
+        jb.save("parrots", [cirQuery]);
+    } catch (e) {
+        err = e;
+    }
+    test.ok(err);
+    test.equal(err.message, "Circular object reference");
+    test.done();
+};
+
+
+module.exports.testSaveLoadBuffer = function(test) {
+    test.ok(jb);
+    test.ok(jb.isOpen());
+
+    var sally = {
+        "name" : "Sally",
+        "mood" : "Angry",
+        "secret" : new Buffer("Something binary secrect", "utf8")
+    };
+    var molly = {
+        "name" : "Molly",
+        "mood" : "Very angry",
+        "secret" : null
+    };
+
+    jb.save("birds", sally, function(err, oids) {
+        test.ifError(err);
+        test.ok(oids);
+        test.ok(oids.length === 1);
+        test.ok(sally["_id"]);
+        var sallyOid = sally["_id"];
+        jb.load("birds", sallyOid, function(err, obj) {
+            test.ifError(err);
+            test.ok(obj["secret"] instanceof Buffer);
+            test.equal(obj["secret"], "Something binary secrect");
+            jb.save("birds", [sally, molly], function(err, oids) {
+                test.ifError(err);
+                test.ok(oids);
+                test.ok(oids.indexOf(sallyOid) !== -1);
+                test.done();
+            });
+        });
+    });
+};
+
+module.exports.testRemove = function(test) {
+    test.ok(jb);
+    test.ok(jb.isOpen());
+    jb.findOne("birds", {"name" : "Molly"}, function(err, obj) {
+        test.ifError(err);
+        test.ok(obj["_id"]);
+        test.equal(obj["mood"], "Very angry");
+        //Bye bye Molly!
+        jb.remove("birds", obj["_id"], function(err) {
+            test.ifError(err);
+            jb.findOne("birds", {"name" : "Molly"}, function(err, obj) {
+                test.ifError(err);
+                test.ok(obj === null);
+                test.done();
+            });
+        });
+    });
+};
+
+module.exports.testRemoveColls = function(test) {
+    jb.removeCollection("birds", function(err) {
+        test.ifError(err);
+        jb.find("birds", {}, function(err, cursor, count) { //Query on not existing collection
+            test.ifError(err);
+            test.equal(count, 0);
+            test.ok(!cursor.next());
+            test.done();
+        });
+    });
 };
 
 module.exports.testClose = function(test) {

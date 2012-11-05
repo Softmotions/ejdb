@@ -15,7 +15,7 @@ module.exports.testOpenClose = function(test) {
 };
 
 
-module.exports.testEnsureCollection = function(test) {
+module.exports.testEnsureAndRemoveCollection = function(test) {
     var jb = EJDB.open("var/tdbt12", EJDB.JBOWRITER | EJDB.JBOCREAT | EJDB.JBOTRUNC);
     test.equal(jb.isOpen(), true);
     var c1opts = {
@@ -26,17 +26,22 @@ module.exports.testEnsureCollection = function(test) {
     };
     jb.ensureCollection("c1", c1opts);
     test.ok(fs.existsSync("var/tdbt12_c1"));
-    jb.rmCollection("c1", true);
-    test.ok(!fs.existsSync("var/tdbt12_c1"));
-    jb.close();
-    var err = null;
-    try {
-        jb.rmCollection("c1", true);
-    } catch (e) {
-        err = e;
-    }
-    test.ok(err);
-    test.done();
+
+    jb.removeCollection("c1", true, function(err) {
+        test.ifError(err);
+        test.ok(!fs.existsSync("var/tdbt12_c1"));
+
+        //Test operation on closed database instance
+        jb.close();
+        var err = null;
+        try {
+            jb.removeCollection("c1", true);
+        } catch (e) {
+            err = e;
+        }
+        test.ok(err);
+        test.done();
+    });
 };
 
 

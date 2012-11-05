@@ -296,7 +296,6 @@ namespace ejdb {
                     }
                     break;
                 case BSON_BINDATA:
-                    //TODO test it!
                     if (obt == BSON_ARRAY) {
                         ret->Set(knum,
                                 Buffer::New(String::New(bson_iterator_bin_data(it),
@@ -387,6 +386,10 @@ namespace ejdb {
                     sf.append("m");
                 }
                 bson_append_regex(bs, *spn, *sr, sf.c_str());
+            } else if (Buffer::HasInstance(pv)) {
+                bson_append_binary(bs, *spn, BSON_BIN_BINARY,
+                        Buffer::Data(Handle<Object>::Cast(pv)),
+                        Buffer::Length(Handle<Object>::Cast(pv)));
             } else if (pv->IsObject() || pv->IsArray()) {
                 if (pv->IsArray()) {
                     bson_append_start_array(bs, *spn);
@@ -399,10 +402,6 @@ namespace ejdb {
                 } else {
                     bson_append_finish_object(bs);
                 }
-            } else if (Buffer::HasInstance(pv)) {
-                bson_append_binary(bs, *spn, BSON_BIN_BINARY,
-                        Buffer::Data(Handle<Object>::Cast(pv)),
-                        Buffer::Length(Handle<Object>::Cast(pv)));
             }
         }
     }
@@ -427,19 +426,17 @@ namespace ejdb {
             cmdSave = 1, //Save JSON object
             cmdLoad = 2, //Load BSON by oid
             cmdRemove = 3, //Remove BSON by oid
-            cmdQuery = 4 //Query collection
+            cmdQuery = 4, //Query collection
+            cmdRemoveColl = 5 //Remove collection
         };
 
-        //Any bson cmd data
-
-        struct BSONCmdData {
+        struct BSONCmdData { //Any bson related cmd data
             std::string cname; //Name of collection
             std::vector<bson*> bsons; //bsons to save|query
             std::vector<bson_oid_t> ids; //saved updated oids
             bson_oid_t ref; //Bson ref
 
-            BSONCmdData(const char* cname) {
-                this->cname = cname;
+            BSONCmdData(const char* _cname) : cname(_cname) {
                 memset(&ref, 0, sizeof (ref));
             }
 
@@ -452,9 +449,7 @@ namespace ejdb {
             }
         };
 
-        //Query cmd data
-
-        struct BSONQCmdData : public BSONCmdData {
+        struct BSONQCmdData : public BSONCmdData { //query cmd data
             TCLIST *res;
             int qflags;
             uint32_t count;
@@ -470,9 +465,18 @@ namespace ejdb {
             }
         };
 
+        struct RMCollCmdData { //remove collection
+            std::string cname; //Name of collection
+            bool prune;
+
+            RMCollCmdData(const char* _cname, bool _prune) : cname(_cname), prune(_prune) {
+            }
+        };
+
         typedef EIOCmdTask<NodeEJDB> EJBTask;
         typedef EIOCmdTask<NodeEJDB, BSONCmdData> BSONCmdTask;
         typedef EIOCmdTask<NodeEJDB, BSONQCmdData> BSONQCmdTask;
+        typedef EIOCmdTask<NodeEJDB, RMCollCmdData> RMCollCmdTask;
 
         static Persistent<FunctionTemplate> constructor_template;
 
@@ -668,13 +672,14 @@ namespace ejdb {
             HandleScope scope;
             REQ_STR_ARG(0, cname);
             REQ_VAL_ARG(1, prune);
+            REQ_FUN_ARG(2, cb);
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
             if (!ejdbisopen(njb->m_jb)) {
                 return scope.Close(ThrowException(Exception::Error(String::New("Operation on closed EJDB instance"))));
             }
-            if (!ejdbrmcoll(njb->m_jb, *cname, prune->BooleanValue())) {
-                return scope.Close(ThrowException(Exception::Error(String::New(njb->_jb_error_msg()))));
-            }
+            RMCollCmdData *cmdata = new RMCollCmdData(*cname, prune->BooleanValue());
+            RMCollCmdTask *task = new RMCollCmdTask(cb, njb, cmdRemoveColl, cmdata, RMCollCmdTask::delete_val);
+            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
             return scope.Close(args.This());
         }
 
@@ -704,6 +709,9 @@ namespace ejdb {
                 case cmdRemove:
                     remove((BSONCmdTask*) task);
                     break;
+                case cmdRemoveColl:
+                    rm_collection((RMCollCmdTask*) task);
+                    break;
             }
         }
 
@@ -722,6 +730,37 @@ namespace ejdb {
                 case cmdRemove:
                     remove_after((BSONCmdTask*) task);
                     break;
+                case cmdRemoveColl:
+                    rm_collection_after((RMCollCmdTask*) task);
+                    break;
+
+            }
+        }
+
+        void rm_collection(RMCollCmdTask *task) {
+            if (!_check_state((EJBTask*) task)) {
+                return;
+            }
+            RMCollCmdData *cmdata = task->cmd_data;
+            assert(cmdata);
+            if (!ejdbrmcoll(m_jb, cmdata->cname.c_str(), cmdata->prune)) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+            }
+        }
+
+        void rm_collection_after(RMCollCmdTask *task) {
+            HandleScope scope;
+            Local<Value> argv[1];
+            if (task->cmd_ret != 0) {
+                argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
+            } else {
+                argv[0] = Local<Primitive>::New(Null());
+            }
+            TryCatch try_catch;
+            task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+            if (try_catch.HasCaught()) {
+                FatalException(try_catch);
             }
         }
 
@@ -862,12 +901,13 @@ namespace ejdb {
             if (!_check_state((EJBTask*) task)) {
                 return;
             }
+            TCLIST *res = NULL;
             bson oqarrstack[8]; //max 8 $or bsons on stack
             BSONQCmdData *cmdata = task->cmd_data;
-            EJCOLL *coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
-            if (!coll) {
-                task->cmd_ret = CMD_RET_ERROR;
-                task->cmd_ret_msg = _jb_error_msg();
+            EJCOLL *coll = ejdbgetcoll(m_jb, cmdata->cname.c_str());
+            if (!coll) { //No collection -> no results
+                cmdata->res = tclistnew2(1);
+                cmdata->count = 0;
                 return;
             }
             std::vector<bson*> &bsons = cmdata->bsons;
@@ -877,7 +917,6 @@ namespace ejdb {
             for (int i = 1; i < (int) bsons.size() - 1; ++i) {
                 oqarr[i - 1] = *(bsons.at(i));
             }
-            TCLIST *res = NULL;
             EJQ *q = ejdbcreatequery(
                     m_jb,
                     bsons.front(),
@@ -989,9 +1028,8 @@ finish:
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "query", s_query);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "lastError", s_ecode);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "ensureCollection", s_ensure_collection);
-            NODE_SET_PROTOTYPE_METHOD(constructor_template, "rmCollection", s_rm_collection);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "removeCollection", s_rm_collection);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "isOpen", s_is_open);
-
 
             //Symbols
             target->Set(String::NewSymbol("NodeEJDB"), constructor_template->GetFunction());
