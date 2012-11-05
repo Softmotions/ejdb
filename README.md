@@ -24,9 +24,10 @@ Documentation
 ================================
 
 * **[NodeJS binding](#nodejs-binding)**
+    * [Installation](#installation)
     * [EJDB NodeJS API](#ejdb-nodejs-api)
 * **[EJDB C Library](#ejdb-c-library)**
-
+    * [Building & Installation](#building--installation)
 
 
 NodeJS binding
@@ -98,7 +99,8 @@ On Debian/Ubuntu linux you can install it as follows:
 ```
 
 **Installation from node package manager:**
- ```npm install ejdb```
+
+    npm install ejdb
 
 
 EJDB NodeJS API
