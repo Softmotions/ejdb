@@ -17,6 +17,17 @@ Features
 * Collection level write locking.
 * Collection level transactions.
 * String token matching queries: ```$stror``` ```$strand```
+* [Node.js](http://nodejs.org) binding
+
+
+Documentation
+================================
+
+* **[NodeJS binding](#nodejs-binding)**
+    * [EJDB NodeJS API](#ejdb-nodejs-api)
+* **[EJDB C Library](#ejdb-c-library)**
+
+
 
 NodeJS binding
 =================================
@@ -197,7 +208,7 @@ __Arguments__
  * {Function} cb  Callback function with arguments: (error, obj)
         `obj`:  Retrieved JSON object or NULL if it is not found.
 
- --------------------------------------
+--------------------------------------
 
 <a name="remove"/>
 ### remove(cname, oid, cb)
@@ -281,11 +292,52 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
  * {Object} qobj Main JSON query object
  * {Array} `[orarr]` Array of additional OR query objects (joined with OR predicate).
  * {Object} `[hints]` JSON object with query hints.
- * {Function} cb Callback function with arguments: (error, cursor, count) where:
+ * {Function} cb Callback function with arguments: (error, cursor, count)
             `cursor`: Cursor object to traverse records
             `count`:  Total number of selected records
 
+ --------------------------------------------
 
+<a name="findOne"/>
+### findOne(cname, qobj, orarr, hints, cb)
+Same as #find() but retrieves only one matching JSON object.
+
+Call variations of findOne():
+
+    findOne(cname, qobj, cb)
+    findOne(cname, qobj, hints, cb)
+    findOne(cname, qobj, qobjarr, cb)
+    findOne(cname, qobj, qobjarr, hints, cb)
+
+__Arguments__
+
+ * {String} cname Name of collection
+ * {Object} qobj Main JSON query object
+ * {Array} `[orarr]` Array of additional OR query objects (joined with OR predicate).
+ * {Object} `[hints]` JSON object with query hints.
+ * {Function} cb Callback function with arguments: (error, obj)
+             `obj`  Retrieved JSON object or NULL if it is not found.
+
+
+<a name="count"/>
+### count(cname, qobj, orarr, hints, cb)
+Convenient count(*) operation.
+
+Call variations of count():
+
+    count(cname, qobj, cb)
+    count(cname, qobj, hints, cb)
+    count(cname, qobj, qobjarr, cb)
+    count(cname, qobj, qobjarr, hints, cb)
+
+__Arguments__
+
+ * {String} cname Name of collection
+ * {Object} qobj Main JSON query object
+ * {Array} `[orarr]` Array of additional OR query objects (joined with OR predicate).
+ * {Object} `[hints]` JSON object with query hints.
+ * {Function} cbcb Callback function with arguments: (error, count)
+              `count`:  Number of matching records.
 
 
 EJDB C Library
@@ -457,8 +509,8 @@ Examples
 ------------------------------------
 You can find some code samples in:
 
-* ./samples
-* ./testejdb test cases
+* tcejdb/samples
+* tcejdb/testejdb
 
 Basic EJDB architecture
 -------------------------------
