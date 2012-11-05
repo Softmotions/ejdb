@@ -94,6 +94,7 @@ EJDB NodeJS API
 ----------------------------------
 
 
+<a name="EJDB.open" />
 ### EJDB.open(dbFile, openMode)
 
 Open database. Returns database instance handle object.
@@ -108,6 +109,24 @@ __Arguments__
        - `JBOWRITER` Open as a writer.
        - `JBOCREAT` Create db if it not exists
        - `JBOTRUNC` Truncate db.
+
+---------------------------------------
+
+<a name="close" />
+### close()
+
+Close database.
+<br/>If database was not opened it does nothing.
+<br/>This is blocking function.
+
+---------------------------------------
+
+<a name="isOpen"/>
+### isOpen()
+Check if database in opened state.
+
+---------------------------------------
+
 
 
 
