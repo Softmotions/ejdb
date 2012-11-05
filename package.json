@@ -15,8 +15,9 @@
         "nodeunit" : ">=0.7.0"
     },
     "scripts" : {
-        "preinstall" : "make all && node-gyp rebuild && make -f tests.mk check",
-        "test" : "make -f tests.mk check-all"
+        "preinstall" : "make all && node-gyp rebuild",
+        "test" : "make -f tests.mk check-all",
+        "postinstall" : "make -f tests.mk check"
     },
     "author" : {
         "name" : "Anton Adamansky",
