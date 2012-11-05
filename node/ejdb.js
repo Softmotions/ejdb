@@ -60,7 +60,7 @@ EJDB.prototype.isOpen = function() {
 
 /**
  * Automatically creates new collection if it does't exists.
- * Optional collection options `copts`
+ * Collection options `copts`
  * are applied only for newly created collection.
  * For existing collections `copts` takes no effect.
  *
@@ -75,7 +75,7 @@ EJDB.prototype.ensureCollection = function(cname, copts) {
 };
 
 /**
- *  Removes collection.
+ *  Remove collection.
  *
  *  Call variations:
  *      - rmCollection(cname)
