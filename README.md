@@ -83,11 +83,32 @@ Installation
 On Debian/Ubuntu linux you can install it as follows:
 
 ```sh
-   sudo apt-get install libcunit1 libcunit1-dev zlib1g zlib1g-dev
+   sudo apt-get install g++ libcunit1 libcunit1-dev zlib1g zlib1g-dev
 ```
 
 **Installation from node package manager:**
  ```npm install ejdb```
+
+
+EJDB NodeJS API
+----------------------------------
+
+
+### EJDB.open(dbFile, openMode)
+
+Open database. Returns database instance handle object.
+<br/>Default open mode: `JBOWRITER | JBOCREAT`.
+<br/>This is blocking function.
+
+__Arguments__
+
+ * {String} dbFile Database main file name
+ * {Number} `[openMode=JBOWRITER | JBOCREAT]` Bitmast of open modes:
+       - `JBOREADER` Open as a reader.
+       - `JBOWRITER` Open as a writer.
+       - `JBOCREAT` Create db if it not exists
+       - `JBOTRUNC` Truncate db.
+
 
 
 EJDB C Library
@@ -168,13 +189,14 @@ Prerequisites
 --------------------------------
 **System libraries:**
 
+* gcc
 * cunit
 * zlib
 
 On Debian/Ubuntu linux you can install it as follows:
 
 ```sh
-   sudo apt-get install libcunit1 libcunit1-dev zlib1g zlib1g-dev
+   sudo apt-get install gcc libcunit1 libcunit1-dev zlib1g zlib1g-dev
 ```
 
 Building
