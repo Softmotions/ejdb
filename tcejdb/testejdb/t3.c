@@ -77,7 +77,7 @@ void testPerf1() {
         ejdbsavebson(coll, recs + i, &oid);
     }
     ejdbsyncoll(coll);
-    fprintf(stderr, "\ntestPerf1(): SAVE BSONS: %d, TIME %lu ms\n", RS, tcmstime() - st);
+    fprintf(stderr, "\ntestPerf1(): SAVED %d BSON OBJECTS, TIME %lu ms\n", RS, tcmstime() - st);
 
     st = tcmstime();
     uint32_t acount = 0;
