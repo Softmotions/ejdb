@@ -365,9 +365,9 @@ __Arguments__
  * {String} path  JSON field path
  * {Function} `[cb]` Optional callback function. Callback args: (error)
 
- -----------------------------------
+------------------------------------
 
- <a name="optimizeIndexes"/>
+<a name="optimizeIndexes"/>
 ### optimizeIndexes(cname, path, cb)
 Optimize indexes of all types for JSON field path.
 Performs B+ tree index file optimization.
