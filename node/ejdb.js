@@ -385,5 +385,134 @@ EJDB.prototype.count = function(cname, qobj, orarr, hints, cb) {
             });
 };
 
+
+const simpleErrCb = function(err) {
+    if (err) {
+        console.error(err);
+    }
+};
+
+/**
+ * DROP indexes of all types for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.dropIndexes = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXDROPALL, cb);
+};
+
+/**
+ * OPTIMIZE indexes of all types for JSON field path.
+ *  B+ tree index file optimization.
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.optimizeIndexes = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXOP, cb);
+};
+
+/**
+ * Ensure index presence of String type for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.ensureStringIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXSTR, cb);
+};
+
+/**
+ * Rebuild index of String type for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.rebuildStringIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXSTR | ejdblib.JBIDXREBLD, cb);
+};
+
+/**
+ * Drop index of String type for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.dropStringIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXSTR | ejdblib.JBIDXDROP, cb);
+};
+
+/**
+ * Ensure index presence of Number type for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.ensureNumberIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXNUM, cb);
+};
+
+/**
+ * Rebuild index of Number type for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.rebuildNumberIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXNUM | ejdblib.JBIDXREBLD, cb);
+};
+
+/**
+ * Drop index of Number type for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.dropNumberIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXNUM | ejdblib.JBIDXDROP, cb);
+};
+
+/**
+ * Ensure index presence of Array type for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.ensureArrayIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXARR, cb);
+};
+
+/**
+ * Rebuild index of Array type for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.rebuildArrayIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXARR | ejdblib.JBIDXREBLD, cb);
+};
+
+/**
+ * Drop index of Array type for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.dropArrayIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXARR | ejdblib.JBIDXDROP, cb);
+};
+
 module.exports = EJDB;
 

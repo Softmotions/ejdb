@@ -218,6 +218,26 @@ module.exports.testSaveLoadBuffer = function(test) {
     });
 };
 
+module.exports.testUseStringIndex = function(test) {
+    test.ok(jb);
+    test.ok(jb.isOpen());
+    jb.find("birds", {"name" : "Molly"}, {"$explain" : true}, function(err, cursor, count, log) {
+        test.ifError(err);
+        test.ok(cursor);
+        test.ok(count == 1);
+        test.ok(log);
+        test.ok(log.indexOf("RUN FULLSCAN") !== -1);
+        //Now set the name string index
+        jb.ensureStringIndex("birds", "name", function(err) {
+            test.ifError(err);
+            jb.find("birds", {"name" : "Molly"}, {"$explain" : true}, function(err, cursor, count, log) {
+                test.ok(log.indexOf("MAIN IDX: 'sname'") !== -1);
+                test.done();
+            });
+        });
+    });
+};
+
 module.exports.testRemove = function(test) {
     test.ok(jb);
     test.ok(jb.isOpen());

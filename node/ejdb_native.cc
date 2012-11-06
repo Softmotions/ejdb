@@ -41,6 +41,7 @@ namespace ejdb {
     static Persistent<String> sym_compressed;
     static Persistent<String> sym_records;
     static Persistent<String> sym_cachedrecords;
+    static Persistent<String> sym_explain;
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -427,7 +428,8 @@ namespace ejdb {
             cmdLoad = 2, //Load BSON by oid
             cmdRemove = 3, //Remove BSON by oid
             cmdQuery = 4, //Query collection
-            cmdRemoveColl = 5 //Remove collection
+            cmdRemoveColl = 5, //Remove collection
+            cmdSetIndex = 6 //Set index
         };
 
         struct BSONCmdData { //Any bson related cmd data
@@ -453,15 +455,20 @@ namespace ejdb {
             TCLIST *res;
             int qflags;
             uint32_t count;
+            TCXSTR *log;
 
-            BSONQCmdData(const char* _cname, int _qflags) :
-            BSONCmdData::BSONCmdData(_cname), res(NULL), qflags(_qflags), count(0) {
+            BSONQCmdData(const char *_cname, int _qflags) :
+            BSONCmdData::BSONCmdData(_cname), res(NULL), qflags(_qflags), count(0), log(NULL) {
             }
 
             virtual ~BSONQCmdData() {
                 if (res) {
                     tclistdel(res);
                 }
+                if (log) {
+                    tcxstrdel(log);
+                }
+
             }
         };
 
@@ -473,10 +480,21 @@ namespace ejdb {
             }
         };
 
+        struct SetIndexCmdData { //set index
+            std::string cname; //Name of collection
+            std::string ipath; //JSON field path for index
+            int flags; //set index op flags
+
+            SetIndexCmdData(const char *_cname, const char *_ipath, int _flags) :
+            cname(_cname), ipath(_ipath), flags(_flags) {
+            }
+        };
+
         typedef EIOCmdTask<NodeEJDB> EJBTask;
         typedef EIOCmdTask<NodeEJDB, BSONCmdData> BSONCmdTask;
         typedef EIOCmdTask<NodeEJDB, BSONQCmdData> BSONQCmdTask;
         typedef EIOCmdTask<NodeEJDB, RMCollCmdData> RMCollCmdTask;
+        typedef EIOCmdTask<NodeEJDB, SetIndexCmdData> SetIndexCmdTask;
 
         static Persistent<FunctionTemplate> constructor_template;
 
@@ -632,8 +650,31 @@ namespace ejdb {
                 }
                 cmdata->bsons.push_back(bs);
             }
+
+            if (len > 1 && qarr->Get(len - 1)->IsObject()) {
+                Local<Object> hints = Local<Object>::Cast(qarr->Get(len - 1));
+                if (hints->Get(sym_explain)->BooleanValue()) {
+                    cmdata->log = tcxstrnew();
+                }
+            }
+
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
             BSONQCmdTask *task = new BSONQCmdTask(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
+            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+            return scope.Close(args.This());
+        }
+
+        static Handle<Value> s_set_index(const Arguments& args) {
+            HandleScope scope;
+            REQ_ARGS(4);
+            REQ_STR_ARG(0, cname)
+            REQ_STR_ARG(1, ipath)
+            REQ_INT32_ARG(2, flags);
+            REQ_FUN_ARG(3, cb);
+
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            SetIndexCmdData *cmdata = new SetIndexCmdData(*cname, *ipath, flags);
+            SetIndexCmdTask *task = new SetIndexCmdTask(cb, njb, cmdSetIndex, cmdata, SetIndexCmdTask::delete_val);
             uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
             return scope.Close(args.This());
         }
@@ -712,6 +753,9 @@ namespace ejdb {
                 case cmdRemoveColl:
                     rm_collection((RMCollCmdTask*) task);
                     break;
+                case cmdSetIndex:
+                    set_index((SetIndexCmdTask*) task);
+                    break;
             }
         }
 
@@ -733,7 +777,43 @@ namespace ejdb {
                 case cmdRemoveColl:
                     rm_collection_after((RMCollCmdTask*) task);
                     break;
+                case cmdSetIndex:
+                    set_index_after((SetIndexCmdTask*) task);
+                    break;
+            }
+        }
 
+        void set_index(SetIndexCmdTask *task) {
+            if (!_check_state((EJBTask*) task)) {
+                return;
+            }
+            SetIndexCmdData *cmdata = task->cmd_data;
+            assert(cmdata);
+
+            EJCOLL *coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
+            if (!coll) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+                return;
+            }
+            if (!ejdbsetindex(coll, cmdata->ipath.c_str(), cmdata->flags)) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+            }
+        }
+
+        void set_index_after(SetIndexCmdTask *task) {
+            HandleScope scope;
+            Local<Value> argv[1];
+            if (task->cmd_ret != 0) {
+                argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
+            } else {
+                argv[0] = Local<Primitive>::New(Null());
+            }
+            TryCatch try_catch;
+            task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+            if (try_catch.HasCaught()) {
+                FatalException(try_catch);
             }
         }
 
@@ -927,7 +1007,7 @@ namespace ejdb {
                 task->cmd_ret_msg = _jb_error_msg();
                 goto finish;
             }
-            res = ejdbqrysearch(coll, q, &cmdata->count, cmdata->qflags, NULL);
+            res = ejdbqrysearch(coll, q, &cmdata->count, cmdata->qflags, cmdata->log);
             if (ejdbecode(m_jb) != TCESUCCESS) {
                 if (res) {
                     tclistdel(res);
@@ -993,6 +1073,7 @@ finish:
             sym_compressed = NODE_PSYMBOL("compressed");
             sym_records = NODE_PSYMBOL("records");
             sym_cachedrecords = NODE_PSYMBOL("cachedrecords");
+            sym_explain = NODE_PSYMBOL("$explain");
 
 
             Local<FunctionTemplate> t = FunctionTemplate::New(s_new_object);
@@ -1030,6 +1111,7 @@ finish:
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "ensureCollection", s_ensure_collection);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "removeCollection", s_rm_collection);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "isOpen", s_is_open);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "setIndex", s_set_index);
 
             //Symbols
             target->Set(String::NewSymbol("NodeEJDB"), constructor_template->GetFunction());
@@ -1259,7 +1341,10 @@ finish:
 
     void NodeEJDB::query_after(BSONQCmdTask *task) {
         HandleScope scope;
-        Local<Value> argv[3];
+        BSONQCmdData *cmdata = task->cmd_data;
+        assert(cmdata);
+
+        Local<Value> argv[4];
         if (task->cmd_ret != 0) {
             argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
             TryCatch try_catch;
@@ -1269,8 +1354,6 @@ finish:
             }
             return;
         }
-        BSONQCmdData *cmdata = task->cmd_data;
-        assert(cmdata);
         TCLIST *res = cmdata->res;
         cmdata->res = NULL; //res will be freed by NodeEJDBCursor instead of ~BSONQCmdData()
         argv[0] = Local<Primitive>::New(Null());
@@ -1280,8 +1363,11 @@ finish:
         Local<Object> cursor(NodeEJDBCursor::constructor_template->GetFunction()->NewInstance(2, cursorArgv));
         argv[1] = Local<Object>::New(cursor);
         argv[2] = Integer::New(cmdata->count);
+        if (cmdata->log) {
+            argv[3] = String::New((const char*) tcxstrptr(cmdata->log));
+        }
         TryCatch try_catch;
-        task->cb->Call(Context::GetCurrent()->Global(), 3, argv);
+        task->cb->Call(Context::GetCurrent()->Global(), (cmdata->log) ? 4 : 3, argv);
         if (try_catch.HasCaught()) {
             FatalException(try_catch);
         }

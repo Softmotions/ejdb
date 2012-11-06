@@ -267,7 +267,7 @@ EJDB_EXPORT void ejdbquerydel(EJQ* q);
  *              - Eg: flag = JBIDXDROP | JBIDXNUM (Drop number index)
  *      - `JBIDXDROPALL` Drop index for all types.
  *      - `JBIDXREBLD` Rebuild index of specified type.
- *      - `JBIDXOP` Optimize index of specified type.
+ *      - `JBIDXOP` Optimize index of specified type. (Optimize the B+ tree index file)
  *
  *  Examples:
  *      - Set index for JSON path `addressbook.number` for strings and numbers:
