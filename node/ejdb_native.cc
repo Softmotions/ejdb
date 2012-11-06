@@ -429,7 +429,8 @@ namespace ejdb {
             cmdRemove = 3, //Remove BSON by oid
             cmdQuery = 4, //Query collection
             cmdRemoveColl = 5, //Remove collection
-            cmdSetIndex = 6 //Set index
+            cmdSetIndex = 6, //Set index
+            cmdSync = 7 //Sync database
         };
 
         struct BSONCmdData { //Any bson related cmd data
@@ -679,6 +680,15 @@ namespace ejdb {
             return scope.Close(args.This());
         }
 
+        static Handle<Value> s_sync(const Arguments& args) {
+            HandleScope scope;
+            REQ_FUN_ARG(0, cb);
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            EJBTask *task = new EJBTask(cb, njb, cmdSync, NULL, NULL);
+            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+            return scope.Close(args.This());
+        }
+
         static Handle<Value> s_ecode(const Arguments& args) {
             HandleScope scope;
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
@@ -756,6 +766,11 @@ namespace ejdb {
                 case cmdSetIndex:
                     set_index((SetIndexCmdTask*) task);
                     break;
+                case cmdSync:
+                    sync(task);
+                    break;
+                default:
+                    assert(0);
             }
         }
 
@@ -780,6 +795,36 @@ namespace ejdb {
                 case cmdSetIndex:
                     set_index_after((SetIndexCmdTask*) task);
                     break;
+                case cmdSync:
+                    sync_after(task);
+                    break;
+                default:
+                    assert(0);
+            }
+        }
+
+        void sync(EJBTask *task) {
+            if (!_check_state((EJBTask*) task)) {
+                return;
+            }
+            if (!ejdbsyncdb(m_jb)) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+            }
+        }
+
+        void sync_after(EJBTask *task) {
+            HandleScope scope;
+            Local<Value> argv[1];
+            if (task->cmd_ret != 0) {
+                argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
+            } else {
+                argv[0] = Local<Primitive>::New(Null());
+            }
+            TryCatch try_catch;
+            task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+            if (try_catch.HasCaught()) {
+                FatalException(try_catch);
             }
         }
 
@@ -1112,6 +1157,7 @@ finish:
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "removeCollection", s_rm_collection);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "isOpen", s_is_open);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "setIndex", s_set_index);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "sync", s_sync);
 
             //Symbols
             target->Set(String::NewSymbol("NodeEJDB"), constructor_template->GetFunction());

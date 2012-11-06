@@ -257,6 +257,16 @@ module.exports.testRemove = function(test) {
     });
 };
 
+
+module.exports.testSync = function(test) {
+    test.ok(jb);
+    test.ok(jb.isOpen());
+    jb.sync(function(err) {
+        test.ifError(err);
+        test.done();
+    });
+};
+
 module.exports.testRemoveColls = function(test) {
     jb.removeCollection("birds", function(err) {
         test.ifError(err);

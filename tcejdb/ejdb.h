@@ -49,7 +49,7 @@ enum { /** Database open modes */
     JBOREADER = 1 << 0, /**< Open as a reader. */
     JBOWRITER = 1 << 1, /**< Open as a writer. */
     JBOCREAT = 1 << 2, /**< Create if db file not exists. */
-    JBOTRUNC = 1 << 3, /**< Truncate db. */
+    JBOTRUNC = 1 << 3, /**< Truncate db on open. */
     JBONOLCK = 1 << 4, /**< Open without locking. */
     JBOLCKNB = 1 << 5, /**< Lock without blocking. */
     JBOTSYNC = 1 << 6 /**< Synchronize every transaction. */
@@ -307,6 +307,13 @@ EJDB_EXPORT TCLIST* ejdbqrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, 
  * @return On success return true.
  */
 EJDB_EXPORT bool ejdbsyncoll(EJCOLL *jcoll);
+
+/**
+ * Synchronize entire EJDB database and
+ * all its collections with storage.
+ * @param jb Database hand
+ */
+EJDB_EXPORT bool ejdbsyncdb(EJDB *jb);
 
 /** Begin transaction for EJDB collection. */
 EJDB_EXPORT bool ejdbtranbegin(EJCOLL *coll);

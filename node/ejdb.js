@@ -393,6 +393,16 @@ const simpleErrCb = function(err) {
 };
 
 /**
+ * Synchronize entire EJDB database and
+ * all its collections with storage.
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.sync = function(cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.sync(cb);
+};
+
+/**
  * DROP indexes of all types for JSON field path
  * @param {String} cname Name of collection
  * @param {String} path  JSON field path
@@ -405,7 +415,7 @@ EJDB.prototype.dropIndexes = function(cname, path, cb) {
 
 /**
  * OPTIMIZE indexes of all types for JSON field path.
- *  B+ tree index file optimization.
+ *  Performs B+ tree index file optimization.
  * @param {String} cname Name of collection
  * @param {String} path  JSON field path
  * @param {Function} [cb] Optional callback function. Callback args: (error)

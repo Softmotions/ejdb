@@ -120,7 +120,7 @@ __Arguments__
  * {Number} `[openMode=JBOWRITER | JBOCREAT]` Bitmast of open modes:
        - `JBOREADER` Open as a reader.
        - `JBOWRITER` Open as a writer.
-       - `JBOCREAT` Create db if it not exists
+       - `JBOCREAT` Create if db file not exists
        - `JBOTRUNC` Truncate db.
 
 ---------------------------------------
@@ -171,7 +171,7 @@ __Arguments__
 
  * {String} cname Name of collection.
  * {Boolean} `[prune=false]` If true the collection data will erased from disk.
- * {Function} `[cb]` Callback function with arguments: (error)
+ * {Function} `[cb]` Callback args: (error)
 
 ---------------------------------------
 
@@ -194,7 +194,7 @@ __Arguments__
 
  * {String} **cname** Name of collection.
  * {Array|Object} jsarr Signle JSON object or array of JSON objects to save
- * {Function} `[cb]` Callback function with arguments: (error, {Array} of OIDs for saved objects)
+ * {Function} `[cb]` Callback args: (error, {Array} of OIDs for saved objects)
 
 
 --------------------------------------
@@ -208,7 +208,7 @@ __Arguments__
 
  * {String} cname Name of collection
  * {String} oid Object identifier (OID)
- * {Function} cb  Callback function with arguments: (error, obj)
+ * {Function} cb  Callback args: (error, obj)
         `obj`:  Retrieved JSON object or NULL if it is not found.
 
 --------------------------------------
@@ -222,7 +222,7 @@ __Arguments__
 
  * {String} cname Name of collection
  * {String} oid Object identifier (OID)
- * {Function} cb  Callback function with arguments: (error)
+ * {Function} cb  Callback args: (error)
 
 
 --------------------------------------
@@ -295,7 +295,7 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
  * {Object} qobj Main JSON query object
  * {Array} `[orarr]` Array of additional OR query objects (joined with OR predicate).
  * {Object} `[hints]` JSON object with query hints.
- * {Function} cb Callback function with arguments: (error, cursor, count)
+ * {Function} cb Callback args: (error, cursor, count)
             `cursor`: Cursor object to traverse records
             `count`:  Total number of selected records
 
@@ -318,9 +318,10 @@ __Arguments__
  * {Object} qobj Main JSON query object
  * {Array} `[orarr]` Array of additional OR query objects (joined with OR predicate).
  * {Object} `[hints]` JSON object with query hints.
- * {Function} cb Callback function with arguments: (error, obj)
+ * {Function} cb Callback args: (error, obj)
              `obj`  Retrieved JSON object or NULL if it is not found.
 
+-----------------------------------
 
 <a name="count"/>
 ### count(cname, qobj, orarr, hints, cb)
@@ -339,8 +340,90 @@ __Arguments__
  * {Object} qobj Main JSON query object
  * {Array} `[orarr]` Array of additional OR query objects (joined with OR predicate).
  * {Object} `[hints]` JSON object with query hints.
- * {Function} cbcb Callback function with arguments: (error, count)
+ * {Function} cb Callback args: (error, count)
               `count`:  Number of matching records.
+
+-----------------------------------
+
+<a name="sync"/>
+### sync(cb)
+Synchronize entire EJDB database with disk.
+
+__Arguments__
+
+ * {Function} cb Callback args: (error)
+
+-----------------------------------
+
+<a name="dropIndexes"/>
+### dropIndexes(cname, path, cb)
+Drop indexes of all types for JSON field path.
+
+__Arguments__
+
+ * {String} cname Name of collection
+ * {String} path  JSON field path
+ * {Function} `[cb]` Optional callback function. Callback args: (error)
+
+ -----------------------------------
+
+ <a name="optimizeIndexes"/>
+### optimizeIndexes(cname, path, cb)
+Optimize indexes of all types for JSON field path.
+Performs B+ tree index file optimization.
+
+ __Arguments__
+
+  * {String} cname Name of collection
+  * {String} path  JSON field path
+  * {Function} `[cb]` Optional callback function. Callback args: (error)
+
+-----------------------------------
+
+<a name="ensureIndex"/>
+### ensureStringIndex(cname, path, cb)
+### ensureNumberIndex(cname, path, cb)
+### ensureArrayIndex(cname, path, cb)
+
+Ensure index presence of String|Number|Array type for JSON field path
+
+ __Arguments__
+
+  * {String} cname Name of collection
+  * {String} path  JSON field path
+  * {Function} `[cb]` Optional callback function. Callback args: (error)
+
+-----------------------------------
+
+<a name="rebuildIndex"/>
+### rebuildStringIndex(cname, path, cb)
+### rebuildNumberIndex(cname, path, cb)
+### rebuildArrayIndex(cname, path, cb)
+
+Rebuild index of String|Number|Array type for JSON field path
+
+ __Arguments__
+
+  * {String} cname Name of collection
+  * {String} path  JSON field path
+  * {Function} `[cb]` Optional callback function. Callback args: (error)
+
+-----------------------------------
+
+<a name="dropIndex"/>
+### dropStringIndex(cname, path, cb)
+### dropNumberIndex(cname, path, cb)
+### dropArrayIndex(cname, path, cb)
+
+Drop index of String|Number|Array type for JSON field path
+
+ __Arguments__
+
+  * {String} cname Name of collection
+  * {String} path  JSON field path
+  * {Function} `[cb]` Optional callback function. Callback args: (error)
+
+-----------------------------------
 
 
 EJDB C Library

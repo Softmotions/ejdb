@@ -589,6 +589,24 @@ EJDB_EXPORT bool ejdbsyncoll(EJCOLL *jcoll) {
     return rv;
 }
 
+EJDB_EXPORT bool ejdbsyncdb(EJDB *jb) {
+    assert(jb);
+    JBENSUREOPENLOCK(jb, true, false);
+    bool rv = true;
+    EJCOLL *coll = NULL;
+    for (int i = 0; i < jb->cdbsnum; ++i) {
+        coll = jb->cdbs + i;
+        assert(coll);
+        rv = JBCLOCKMETHOD(coll, true);
+        if (!rv) break;
+        rv = tctdbsync(coll->tdb);
+        JBCUNLOCKMETHOD(coll);
+        if (!rv) break;
+    }
+    JBUNLOCKMETHOD(jb);
+    return rv;
+}
+
 EJDB_EXPORT bool ejdbtranbegin(EJCOLL *jcoll) {
     assert(jcoll);
     if (!JBISOPEN(jcoll->jb)) {
