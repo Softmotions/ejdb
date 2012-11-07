@@ -569,6 +569,14 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
     TC_rv = strcmp(TC_s1, TC_s2);
 
 
+#ifdef _UNICODE
+    extern int utf8lcstr(const char *szSrc, int iSrcLen, char **szDst, int *iDstLen);
+#define TOLOWERSTR(TC_src, TC_sz, TC_outp, TC_outsz) \
+                    tf8lcstr((TC_src), (TC_sz), (TC_outp), (TC_outsz))
+#else
+   //TODO
+#endif
+
 #endif                                   // duplication check
 
 
