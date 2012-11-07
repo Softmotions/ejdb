@@ -3,8 +3,7 @@
 EJDB - Embedded JSON Database engine
 ====================================
 
-The main goal of this project to create the fast [MongoDB](http://mongodb.org)-like database engine library **which can be embed
-into C/C++ applications under terms of LGPL license.**
+It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++ applications under terms of LGPL license.**
 
 EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 
