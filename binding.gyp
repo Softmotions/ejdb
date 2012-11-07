@@ -19,6 +19,7 @@
                  '_LARGEFILE_SOURCE',
                  '_FILE_OFFSET_BITS=64',
                  '_GNU_SOURCE',
+                 '_UNICODE',
                  '_GLIBCXX_PERMIT_BACKWARD_HASH',
                ],
             }],

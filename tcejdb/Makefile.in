@@ -826,6 +826,11 @@ ejdb.o : myconf.h ejdb.h ejdb_private.h ejdbutl.h
 
 bson.o : myconf.h bson.h
 
+chartables.o : chartables.h
+
+stringutils.o : chartables.h translators.h stringutils.h
+
+translators.o : chartables.h translators.h
 
 tokyocabinet_all.c : myconf.c tcutil.c md5.c tchdb.c tcbdb.c tcfdb.c tctdb.c tcadb.c
 	cat myconf.c tcutil.c md5.c tchdb.c tcbdb.c tcfdb.c tctdb.c tcadb.c > $@
