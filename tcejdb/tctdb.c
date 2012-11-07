@@ -2239,8 +2239,8 @@ static double tctdbaddnumber(TCTDB *tdb, const void *pkbuf, int pksiz, double nu
     TCFREE(cbuf);
   }
   char numbuf[TDBCOLBUFSIZ];
-  int len = snprintf(numbuf, TDBCOLBUFSIZ - 1, "%f", num);
-  if(len > TDBCOLBUFSIZ - 1){
+  int len = tcftoa(num, numbuf, TDBCOLBUFSIZ, 6);
+  if(len >= TDBCOLBUFSIZ){ //truncation
     tctdbsetecode(tdb, TCEMISC, __FILE__, __LINE__, __func__);
     num = nan("");
   } else {

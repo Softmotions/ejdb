@@ -2542,10 +2542,9 @@ static char* _bsonitstrval(bson_iterator *it, int *vsz, TCLIST *tokens) {
             }
             ret = tcmemdup(nbuff, *vsz);
         } else if (btype == BSON_DOUBLE) {
-            *vsz = snprintf(nbuff, TCNUMBUFSIZ, "%lf", bson_iterator_double(it));
+            *vsz = tcftoa(bson_iterator_double(it), nbuff, TCNUMBUFSIZ, 6);
             if (*vsz >= TCNUMBUFSIZ) {
                 *vsz = TCNUMBUFSIZ - 1;
-                nbuff[TCNUMBUFSIZ - 1] = '\0';
             }
             ret = tcmemdup(nbuff, *vsz);
         }

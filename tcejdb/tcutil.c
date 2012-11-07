@@ -290,11 +290,13 @@ static void tcvxstrprintf(TCXSTR *xstr, const char *format, va_list ap){
           break;
         case 'e': case 'E': case 'f': case 'g': case 'G':
           if(lnum >= 1){
-            tlen = snprintf(tbuf, sizeof(tbuf), cbuf, va_arg(ap, long double));
+            //tlen = snprintf(tbuf, sizeof(tbuf), cbuf, va_arg(ap, long double));
+            tlen = tcftoa(va_arg(ap, long double), tbuf, sizeof(tbuf), 6);
           } else {
-            tlen = snprintf(tbuf, sizeof(tbuf), cbuf, va_arg(ap, double));
+            //tlen = snprintf(tbuf, sizeof(tbuf), cbuf, va_arg(ap, double));
+            tlen = tcftoa(va_arg(ap, double), tbuf, sizeof(tbuf), 6);
           }
-          if(tlen < 0 || tlen > sizeof(tbuf)){
+          if(tlen < 0 || tlen >= sizeof(tbuf)){
             tbuf[sizeof(tbuf)-1] = '*';
             tlen = sizeof(tbuf);
           }
@@ -5249,6 +5251,123 @@ double tcatof(const char *str){
   }
   return num * sign;
 }
+
+
+//Basic code of `ftoa()' taken from scmRTOS https://sourceforge.net/projects/scmrtos
+//Copyright (c) 2009-2012by Anton Gusev aka AHTOXA
+#define FTOA_MAX_PRECISION	(10)
+static const double rounders[FTOA_MAX_PRECISION + 1] = {
+    0.5, // 0
+    0.05, // 1
+    0.005, // 2
+    0.0005, // 3
+    0.00005, // 4
+    0.000005, // 5
+    0.0000005, // 6
+    0.00000005, // 7
+    0.000000005, // 8
+    0.0000000005, // 9
+    0.00000000005 // 10
+};
+
+int tcftoa(long double f, char *buf, int max, int precision) {
+
+#define FTOA_SZSTEP(_step) if ((ret += (_step)) >= max) { \
+                                *ptr = 0; \
+                                return ret; \
+                           }
+    if (max <= 0) {
+        return 0;
+    }
+    char *ptr = buf;
+    char *p = ptr;
+    char c;
+    char *p1;
+    long intPart;
+    int ret = 0;
+
+    // check precision bounds
+    if (precision > FTOA_MAX_PRECISION)
+        precision = FTOA_MAX_PRECISION;
+
+    // sign stuff
+    if (f < 0) {
+        f = -f;
+        FTOA_SZSTEP(1)
+        *ptr++ = '-';
+    }
+    if (precision == -1) {
+        if (f < 1.0) precision = 6;
+        else if (f < 10.0) precision = 5;
+        else if (f < 100.0) precision = 4;
+        else if (f < 1000.0) precision = 3;
+        else if (f < 10000.0) precision = 2;
+        else if (f < 100000.0) precision = 1;
+        else precision = 0;
+    }
+    if (precision) {
+        // round value according the precision
+        f += rounders[precision];
+    }
+    // integer part...
+    intPart = f;
+    f -= intPart;
+
+    if (!intPart) {
+        FTOA_SZSTEP(1)
+        *ptr++ = '0';
+    } else {
+        // save start pointer
+        p = ptr;
+        while (intPart) {
+            if (++ret >= max) { //overflow condition
+                memmove(ptr, ptr + 1, p - ptr);
+                p--;
+            }
+            *p++ = '0' + intPart % 10;
+            intPart /= 10;
+        }
+        // save end pos
+        p1 = p;
+        // reverse result
+        while (p > ptr) {
+            c = *--p;
+            *p = *ptr;
+            *ptr++ = c;
+        }
+        if (ret >= max) {
+            ptr = p1;
+            *ptr = 0;
+            return ret;
+        }
+        // restore end pos
+        ptr = p1;
+    }
+
+    // decimal part
+    if (precision) {
+        // place decimal point
+        if ((ret += 1) + 1 >= max) { //reserve one more after dot
+            *ptr = 0;
+            return ret;
+        }
+        *ptr++ = '.';
+        // convert
+        while (precision--) {
+            f *= 10.0;
+            c = f;
+            FTOA_SZSTEP(1)
+            *ptr++ = '0' + c;
+            f -= c;
+        }
+    }
+    // terminating zero
+    *ptr = 0;
+    return ret;
+
+#undef FTOA_SZSTEP
+}
+
 
 
 /* Check whether a string matches a regular expression. */
