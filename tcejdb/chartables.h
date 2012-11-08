@@ -41,14 +41,14 @@
 
   Unicode lowercase to uppercase conversion mapping table
   http://publib.boulder.ibm.com/infocenter/systems/index.jsp?topic=/nls/rbagslowtoupmaptable.htm&tocNode=int_39940
-*/
+ */
 
 /**
   @fn unsigned int wlc(unsigned int iChar);
   @brief Convert an upper-case letter to the corresponding lower-case letter.
   @param iChar - UCS character
   @return lowercase character if found in translation table or intouched character otherwise
-*/
+ */
 unsigned int wlc(unsigned int iChar);
 
 /**
@@ -56,7 +56,7 @@ unsigned int wlc(unsigned int iChar);
   @brief Convert an lower-case letter to the corresponding upper-case letter.
   @param iChar - UCS character
   @return uppercase character if found in translation table or intouched character otherwise
-*/
+ */
 unsigned int wuc(unsigned int iChar);
 
 #endif /* _CHARTABLES_H__ */

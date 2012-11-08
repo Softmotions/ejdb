@@ -35,7 +35,7 @@
 /*
   @file translatros.h
   @brief Uppercase/lowercase manipulation functions
-*/
+ */
 
 /**
   @fn int wtoutf8(unsigned int iUCS, char * sUTF8);
@@ -43,7 +43,7 @@
   @param iUCS - UCS character
   @param sUTF8 - UTF8 string, at least 6 bytes length
   @return size of UTF8 character if success or -1 otherwise
-*/
+ */
 int wtoutf8(unsigned int iUCS, char * sUTF8);
 
 /**
@@ -53,7 +53,7 @@ int wtoutf8(unsigned int iUCS, char * sUTF8);
   @param iUTF8Length - max. string length
   @param iUCSResult - UCS character
   @return size of UTF8 character if success or -1 otherwise
-*/
+ */
 int utf8tow(const char * sUTF8, int iUTF8Length, unsigned int * iUCSResult);
 
 /**
@@ -64,7 +64,7 @@ int utf8tow(const char * sUTF8, int iUTF8Length, unsigned int * iUCSResult);
   @param szDst - Destination UTF8 string
   @param iDstLen - Destination string length
   @return 0 - if success, -1 - if incorrect input character found,  -2 - if incorrect lowercase character found in translation table ; -3 - if can't reallocate memory.
-*/
+ */
 int utf8lcstr(const char * szSrc, int iSrcLen, char ** szDst, int * iDstLen);
 
 /**
@@ -75,7 +75,7 @@ int utf8lcstr(const char * szSrc, int iSrcLen, char ** szDst, int * iDstLen);
   @param szDst - Destination UTF8 string
   @param iDstLen - Destination string length
   @return 0 - if success, -1 - if incorrect input character found,  -2 - if incorrect lowercase character found in translation table ; -3 - if can't reallocate memory.
-*/
+ */
 int utf8ucstr(const char * szSrc, int iSrcLen, char ** szDst, int * iDstLen);
 
 #endif /* _TRANSLATORS_H__ */

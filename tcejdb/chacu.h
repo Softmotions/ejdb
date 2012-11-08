@@ -35,7 +35,7 @@
 /*
   @file chartables.h
   @brief CHAracter Conversion/manipulation Utility
-*/
+ */
 
 #include "chartables.h"
 #include "translators.h"

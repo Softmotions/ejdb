@@ -35,7 +35,7 @@
 /*
   @file stringutils.h
   @brief UTF8 strings functions
-*/
+ */
 
 /**
   @fn int utf8strlen(const char * szSrc);
@@ -43,7 +43,7 @@
   @param szSrc - Source UTF8 string
   @param iSrcLen - Source string length
   @return >0 (number of utf8 characters) if success, -1 - if incorrect input character found
-*/
+ */
 int utf8strlen(const char * szSrc);
 
 /**
@@ -52,7 +52,7 @@ int utf8strlen(const char * szSrc);
   @param szSrc - Source UTF8 string
   @param iSrcLen - Source string length
   @return >0 (number of utf8 characters) if success, -1 - if incorrect input character found
-*/
+ */
 int utf8strnlen(const char * szSrc, int iSrcLen);
 
 /**
@@ -63,7 +63,7 @@ int utf8strnlen(const char * szSrc, int iSrcLen);
   @param szSrc2 - Second UTF8 string
   @param iSrc2Len - Second string length
   @return +1, 0, -1 according as szSrc1 is lexicographically greater than, equal to, or less than szSrc2. If function return +2 or -2 it means that first or second string contains incorrct UTF8 characters
-*/
+ */
 int utf8strncmp(const char * szSrc1, int iSrc1Len, const char * szSrc2, int iSrc2Len);
 
 /**
@@ -74,7 +74,7 @@ int utf8strncmp(const char * szSrc1, int iSrc1Len, const char * szSrc2, int iSrc
   @param szSrc2 - Second UTF8 string
   @param iSrc2Len - Second string length
    @return +1, 0, -1 according as szSrc1 is lexicographically greater than, equal to, or less than szSrc2 after translation of each corresponding character to lower-case. If function return -2 or +2 it means that first or second string contains incorrect UTF8 characters
-*/
+ */
 int utf8strncasecmp(const char * szSrc1, int iSrc1Len, const char * szSrc2, int iSrc2Len);
 
 #endif /* _STRINGUTILS_H__ */
