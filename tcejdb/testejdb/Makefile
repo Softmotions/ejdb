@@ -5,7 +5,7 @@ CFLAGS = -std=c99 -Wall -fPIC -pedantic -fsigned-char -g -O0
 LDFLAGS = -L. -L..
 CMDLDFLAGS =
 LIBS = -lz -lpthread -lm -lc -lcunit
-RUNENV = LD_LIBRARY_PATH=.:..;DYLD_LIBRARY_PATH=.:..
+RUNENV = LD_LIBRARY_PATH=.:.. DYLD_LIBRARY_PATH=.:..
 
 TESTS = t1 t2 t3
 
