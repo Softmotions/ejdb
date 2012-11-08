@@ -30,8 +30,7 @@ static void __funlockfile(FILE *stream) {
     UnlockFile(hf, 0, 0, li.LowPart, li.HighPart);
 }
 #endif
-#ifdef __unix
-
+#if defined __unix || defined __APPLE__
 static void __flockfile(FILE *stream) {
     flockfile(stream);
 }

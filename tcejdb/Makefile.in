@@ -87,7 +87,7 @@ all : $(LIBRARYFILES) $(COMMANDFILES) $(CGIFILES)
 
 
 clean :
-	rm -rf $(LIBRARYFILES) $(LIBOBJFILES) $(COMMANDFILES) $(CGIFILES) \
+	rm -rf $(LIBRARYFILES) $(LIBOBJFILES) $(COMMANDFILES) $(CGIFILES) static \
 	  *.o a.out tokyocabinet_all.c check.in check.out gmon.out *.vlog words.tsv \
 	  casket casket-* casket.* *.tch *.tcb *.tcf *.tct *.idx.* *.wal *~ hoge moge tako ika
 	make -C ./testejdb clean
@@ -672,7 +672,7 @@ wordtable :
 	./tctmgr importtsv casket words.tsv
 
 
-.PHONY : all clean install check
+.PHONY : all clean install check check-ejdb
 
 
 
@@ -683,6 +683,8 @@ wordtable :
 
 libtcejdb.a : $(LIBOBJFILES)
 	$(AR) $(ARFLAGS) $@ $(LIBOBJFILES)
+	mkdir -p ./static
+	cp ./libtcejdb.a ./static
 
 
 libtcejdb.so.$(LIBVER).$(LIBREV).0 : $(LIBOBJFILES)
