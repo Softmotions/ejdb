@@ -11,9 +11,8 @@
 
 #include <vector>
 #include <sstream>
-#include <hash_set>
 #include <locale.h>
-
+#include <ext/hash_set>
 
 using namespace node;
 using namespace v8;
