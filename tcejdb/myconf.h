@@ -552,11 +552,11 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
 
 #if defined _UNICODE
 
-extern int utf8lcstr2(const char *szSrc, int iSrcLen, char **szDst, int *iDstLen);
-extern int utf8strncmp(const char * szSrc1, int iSrc1Len, const char * szSrc2, int iSrc2Len);
+//extern int utf8lcstr2(const char *szSrc, int iSrcLen, char **szDst, int *iDstLen);
+//extern int utf8strncmp(const char * szSrc1, int iSrc1Len, const char * szSrc2, int iSrc2Len);
 
-#define TOLOWERSTR(TC_src, TC_sz, TC_outp, TC_outsz) \
-    utf8lcstr2((TC_src), (TC_sz), (TC_outp), (TC_outsz))
+#define TOLOWERSTR(TC_src, TC_sz, TC_outp, TC_outsz)
+//utf8lcstr2((TC_src), (TC_sz), (TC_outp), (TC_outsz))
 
 //todo use fixed version utf8strncmp
 #define TCCMPLEXICAL(TC_rv, TC_aptr, TC_asiz, TC_bptr, TC_bsiz) \

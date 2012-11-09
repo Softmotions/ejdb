@@ -828,11 +828,8 @@ ejdb.o : myconf.h ejdb.h ejdb_private.h ejdbutl.h
 
 bson.o : myconf.h bson.h
 
-chartables.o : chartables.h
-
-stringutils.o : chartables.h translators.h stringutils.h
-
-translators.o : chartables.h translators.h
+utf8proc.o: utf8proc.h utf8proc.c utf8proc_data.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o utf8proc.o utf8proc.c
 
 tokyocabinet_all.c : myconf.c tcutil.c md5.c tchdb.c tcbdb.c tcfdb.c tctdb.c tcadb.c
 	cat myconf.c tcutil.c md5.c tchdb.c tcbdb.c tcfdb.c tctdb.c tcadb.c > $@
