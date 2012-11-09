@@ -34,7 +34,6 @@
             }],
 	    [ 'OS=="mac"', {
 		'defines': ['_DARWIN_USE_64_BIT_INODE=1'],
-		'cflags': [ '-Wall', '-pedantic'],	
 		'cflags_cc!' : [ '-fno-exceptions' ],
 		'xcode_settings': {	
 			'GCC_ENABLE_CPP_EXCEPTIONS':'YES',
@@ -44,7 +43,7 @@
 			'OTHER_LDFLAGS': [
 				'-Wl,-search_paths_first',
 				'-L./tcejdb/static',                 		
-                    		'-ltcejdb -lz -lpthread -lm -lc'
+                    		'-lstcejdb -lz -lpthread -lm -lc'
 			]						
 		}
             }]        
