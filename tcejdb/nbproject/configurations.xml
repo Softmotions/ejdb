@@ -3,9 +3,6 @@
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df name="tcejdb" root=".">
       <df name="autom4te.cache">
-        <in>output.0</in>
-        <in>requests</in>
-        <in>traces.0</in>
       </df>
       <df name="bros">
         <in>bdbtest.c</in>
@@ -30,6 +27,8 @@
         <df name="sample1">
           <in>sample1.c</in>
         </df>
+      </df>
+      <df name="static">
       </df>
       <df name="testejdb">
         <in>t1.c</in>
@@ -165,8 +164,15 @@
       <item path="bson.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
-            <Elem>NDEBUG</Elem>
+            <Elem>_MYNOBZIP</Elem>
+            <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
+        </cTool>
+      </item>
+      <item path="chacu.h" ex="true" tool="3" flavor2="0">
+      </item>
+      <item path="chartables.c" ex="false" tool="0" flavor2="2">
+        <cTool>
         </cTool>
       </item>
       <item path="ejdb.c" ex="false" tool="0" flavor2="2">
@@ -221,6 +227,12 @@
       <item path="samples/sample1/sample1.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
+      </item>
+      <item path="stringutils.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="stringutils.h" ex="true" tool="3" flavor2="0">
       </item>
       <item path="tcadb.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -414,6 +426,10 @@
           <preprocessorList>
             <Elem>NDEBUG</Elem>
           </preprocessorList>
+        </cTool>
+      </item>
+      <item path="translators.c" ex="false" tool="0" flavor2="2">
+        <cTool>
         </cTool>
       </item>
     </conf>

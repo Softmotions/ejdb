@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <ctype.h>
+#include <string.h>
 
 /**
   @var typedef unsigned int ((*CaseFn)(unsigned int));
@@ -275,6 +276,17 @@ int changeutf8case(const char * szSrc, int iSrcLen, char ** szDst, int * iDstLen
  */
 int utf8lcstr(const char * szSrc, int iSrcLen, char ** szDst, int * iDstLen) {
     return changeutf8case(szSrc, iSrcLen, szDst, iDstLen, wlc);
+}
+
+
+int utf8lcstr2(const char * szSrc, int iSrcLen, char ** szDst, int * iDstLen) {
+    int ret = changeutf8case(szSrc, iSrcLen, szDst, iDstLen, wlc);
+    if (ret < 0) {
+        *szDst = (char*) malloc(sizeof (char) * iSrcLen);
+        memcpy(*szDst,  szSrc, iSrcLen);
+        *iDstLen = iSrcLen;
+    }
+    return 0;
 }
 
 int asciilcstr(const char * szSrc, int iSrcLen, char ** szDst, int * iDstLen) {

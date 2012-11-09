@@ -2937,6 +2937,482 @@
         </df>
         <df name="lib">
         </df>
+        <df name="out">
+          <df name="Debug">
+            <df name="obj">
+              <df name="gen">
+                <in>debug-support.cc</in>
+                <in>experimental-libraries.cc</in>
+                <in>libraries.cc</in>
+                <in>node_natives.h</in>
+              </df>
+            </df>
+            <df name="obj.host">
+            </df>
+            <df name="obj.target">
+              <df name="deps">
+                <df name="http_parser">
+                </df>
+                <df name="openssl">
+                </df>
+                <df name="uv">
+                </df>
+                <df name="v8">
+                  <df name="tools">
+                    <df name="gyp">
+                    </df>
+                  </df>
+                </df>
+                <df name="zlib">
+                </df>
+              </df>
+              <df name="http_parser">
+                <df name="deps">
+                  <df name="http_parser">
+                  </df>
+                </df>
+              </df>
+              <df name="mksnapshot">
+                <df name="deps">
+                  <df name="v8">
+                    <df name="src">
+                    </df>
+                  </df>
+                </df>
+              </df>
+              <df name="node">
+                <df name="src">
+                </df>
+              </df>
+              <df name="openssl">
+                <df name="deps">
+                  <df name="openssl">
+                    <df name="asm">
+                      <df name="x64-elf-gas">
+                        <df name="aes">
+                        </df>
+                        <df name="bn">
+                        </df>
+                        <df name="md5">
+                        </df>
+                        <df name="rc4">
+                        </df>
+                        <df name="sha">
+                        </df>
+                        <df name="whrlpool">
+                        </df>
+                      </df>
+                    </df>
+                    <df name="openssl">
+                      <df name="crypto">
+                        <df name="aes">
+                        </df>
+                        <df name="asn1">
+                        </df>
+                        <df name="bf">
+                        </df>
+                        <df name="bio">
+                        </df>
+                        <df name="bn">
+                          <df name="asm">
+                          </df>
+                        </df>
+                        <df name="buffer">
+                        </df>
+                        <df name="cast">
+                        </df>
+                        <df name="comp">
+                        </df>
+                        <df name="conf">
+                        </df>
+                        <df name="des">
+                        </df>
+                        <df name="dh">
+                        </df>
+                        <df name="dsa">
+                        </df>
+                        <df name="dso">
+                        </df>
+                        <df name="ec">
+                        </df>
+                        <df name="ecdh">
+                        </df>
+                        <df name="ecdsa">
+                        </df>
+                        <df name="engine">
+                        </df>
+                        <df name="err">
+                        </df>
+                        <df name="evp">
+                        </df>
+                        <df name="hmac">
+                        </df>
+                        <df name="krb5">
+                        </df>
+                        <df name="lhash">
+                        </df>
+                        <df name="md2">
+                        </df>
+                        <df name="md4">
+                        </df>
+                        <df name="md5">
+                        </df>
+                        <df name="modes">
+                        </df>
+                        <df name="objects">
+                        </df>
+                        <df name="ocsp">
+                        </df>
+                        <df name="pem">
+                        </df>
+                        <df name="pkcs12">
+                        </df>
+                        <df name="pkcs7">
+                        </df>
+                        <df name="pqueue">
+                        </df>
+                        <df name="rand">
+                        </df>
+                        <df name="rc2">
+                        </df>
+                        <df name="ripemd">
+                        </df>
+                        <df name="rsa">
+                        </df>
+                        <df name="sha">
+                        </df>
+                        <df name="stack">
+                        </df>
+                        <df name="store">
+                        </df>
+                        <df name="ts">
+                        </df>
+                        <df name="txt_db">
+                        </df>
+                        <df name="ui">
+                        </df>
+                        <df name="whrlpool">
+                        </df>
+                        <df name="x509">
+                        </df>
+                        <df name="x509v3">
+                        </df>
+                      </df>
+                      <df name="engines">
+                      </df>
+                      <df name="ssl">
+                      </df>
+                    </df>
+                  </df>
+                </df>
+              </df>
+              <df name="uv">
+                <df name="deps">
+                  <df name="uv">
+                    <df name="src">
+                      <df name="ares">
+                      </df>
+                      <df name="unix">
+                        <df name="eio">
+                        </df>
+                        <df name="ev">
+                        </df>
+                        <df name="linux">
+                        </df>
+                      </df>
+                    </df>
+                  </df>
+                </df>
+              </df>
+              <df name="v8_base">
+                <df name="deps">
+                  <df name="v8">
+                    <df name="src">
+                      <df name="extensions">
+                      </df>
+                      <df name="x64">
+                      </df>
+                    </df>
+                  </df>
+                </df>
+                <df name="gen">
+                </df>
+              </df>
+              <df name="v8_nosnapshot">
+                <df name="deps">
+                  <df name="v8">
+                    <df name="src">
+                    </df>
+                  </df>
+                </df>
+                <df name="gen">
+                </df>
+              </df>
+              <df name="v8_snapshot">
+                <df name="gen">
+                </df>
+                <df name="geni">
+                  <in>snapshot.cc</in>
+                </df>
+              </df>
+              <df name="zlib">
+                <df name="deps">
+                  <df name="zlib">
+                    <df name="contrib">
+                      <df name="minizip">
+                      </df>
+                    </df>
+                  </df>
+                </df>
+              </df>
+            </df>
+          </df>
+          <df name="deps">
+            <df name="http_parser">
+            </df>
+            <df name="openssl">
+            </df>
+            <df name="uv">
+            </df>
+            <df name="v8">
+              <df name="tools">
+                <df name="gyp">
+                </df>
+              </df>
+            </df>
+            <df name="zlib">
+            </df>
+          </df>
+          <df name="Release">
+            <df name="obj">
+              <df name="gen">
+                <in>debug-support.cc</in>
+                <in>experimental-libraries.cc</in>
+                <in>libraries.cc</in>
+                <in>node_natives.h</in>
+              </df>
+            </df>
+            <df name="obj.host">
+            </df>
+            <df name="obj.target">
+              <df name="deps">
+                <df name="http_parser">
+                </df>
+                <df name="openssl">
+                </df>
+                <df name="uv">
+                </df>
+                <df name="v8">
+                  <df name="tools">
+                    <df name="gyp">
+                    </df>
+                  </df>
+                </df>
+                <df name="zlib">
+                </df>
+              </df>
+              <df name="http_parser">
+                <df name="deps">
+                  <df name="http_parser">
+                  </df>
+                </df>
+              </df>
+              <df name="mksnapshot">
+                <df name="deps">
+                  <df name="v8">
+                    <df name="src">
+                    </df>
+                  </df>
+                </df>
+              </df>
+              <df name="node">
+                <df name="src">
+                </df>
+              </df>
+              <df name="openssl">
+                <df name="deps">
+                  <df name="openssl">
+                    <df name="asm">
+                      <df name="x64-elf-gas">
+                        <df name="aes">
+                        </df>
+                        <df name="bn">
+                        </df>
+                        <df name="md5">
+                        </df>
+                        <df name="rc4">
+                        </df>
+                        <df name="sha">
+                        </df>
+                        <df name="whrlpool">
+                        </df>
+                      </df>
+                    </df>
+                    <df name="openssl">
+                      <df name="crypto">
+                        <df name="aes">
+                        </df>
+                        <df name="asn1">
+                        </df>
+                        <df name="bf">
+                        </df>
+                        <df name="bio">
+                        </df>
+                        <df name="bn">
+                          <df name="asm">
+                          </df>
+                        </df>
+                        <df name="buffer">
+                        </df>
+                        <df name="cast">
+                        </df>
+                        <df name="comp">
+                        </df>
+                        <df name="conf">
+                        </df>
+                        <df name="des">
+                        </df>
+                        <df name="dh">
+                        </df>
+                        <df name="dsa">
+                        </df>
+                        <df name="dso">
+                        </df>
+                        <df name="ec">
+                        </df>
+                        <df name="ecdh">
+                        </df>
+                        <df name="ecdsa">
+                        </df>
+                        <df name="engine">
+                        </df>
+                        <df name="err">
+                        </df>
+                        <df name="evp">
+                        </df>
+                        <df name="hmac">
+                        </df>
+                        <df name="krb5">
+                        </df>
+                        <df name="lhash">
+                        </df>
+                        <df name="md2">
+                        </df>
+                        <df name="md4">
+                        </df>
+                        <df name="md5">
+                        </df>
+                        <df name="modes">
+                        </df>
+                        <df name="objects">
+                        </df>
+                        <df name="ocsp">
+                        </df>
+                        <df name="pem">
+                        </df>
+                        <df name="pkcs12">
+                        </df>
+                        <df name="pkcs7">
+                        </df>
+                        <df name="pqueue">
+                        </df>
+                        <df name="rand">
+                        </df>
+                        <df name="rc2">
+                        </df>
+                        <df name="ripemd">
+                        </df>
+                        <df name="rsa">
+                        </df>
+                        <df name="sha">
+                        </df>
+                        <df name="stack">
+                        </df>
+                        <df name="store">
+                        </df>
+                        <df name="ts">
+                        </df>
+                        <df name="txt_db">
+                        </df>
+                        <df name="ui">
+                        </df>
+                        <df name="whrlpool">
+                        </df>
+                        <df name="x509">
+                        </df>
+                        <df name="x509v3">
+                        </df>
+                      </df>
+                      <df name="engines">
+                      </df>
+                      <df name="ssl">
+                      </df>
+                    </df>
+                  </df>
+                </df>
+              </df>
+              <df name="uv">
+                <df name="deps">
+                  <df name="uv">
+                    <df name="src">
+                      <df name="ares">
+                      </df>
+                      <df name="unix">
+                        <df name="eio">
+                        </df>
+                        <df name="ev">
+                        </df>
+                        <df name="linux">
+                        </df>
+                      </df>
+                    </df>
+                  </df>
+                </df>
+              </df>
+              <df name="v8_base">
+                <df name="deps">
+                  <df name="v8">
+                    <df name="src">
+                      <df name="extensions">
+                      </df>
+                      <df name="x64">
+                      </df>
+                    </df>
+                  </df>
+                </df>
+                <df name="gen">
+                </df>
+              </df>
+              <df name="v8_nosnapshot">
+                <df name="deps">
+                  <df name="v8">
+                    <df name="src">
+                    </df>
+                  </df>
+                </df>
+                <df name="gen">
+                </df>
+              </df>
+              <df name="v8_snapshot">
+                <df name="gen">
+                </df>
+                <df name="geni">
+                  <in>snapshot.cc</in>
+                </df>
+              </df>
+              <df name="zlib">
+                <df name="deps">
+                  <df name="zlib">
+                    <df name="contrib">
+                      <df name="minizip">
+                      </df>
+                    </df>
+                  </df>
+                </df>
+              </df>
+            </df>
+          </df>
+        </df>
         <df name="src">
           <df name="res">
           </df>

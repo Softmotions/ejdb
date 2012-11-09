@@ -109,6 +109,10 @@ int utf8strncmp(const char * szSrc1, int iSrc1Len, const char * szSrc2, int iSrc
 
     unsigned int iUCS1 = 0;
     unsigned int iUCS2 = 0;
+
+    if (iSrc1Len == 0 || iSrc2Len == 0) {
+        return (iSrc1Len - iSrc2Len);
+    }
     for (;;) {
         /* Convert symbol from UTF8 to UCS */
         iProcessedSrc1 = utf8tow(szSrc1, iSrc1Len, &iUCS1);

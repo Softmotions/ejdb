@@ -549,6 +549,30 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
   ((TC_num) < 0x80 ? 1 : (TC_num) < 0x4000 ? 2 : (TC_num) < 0x200000 ? 3 : \
    (TC_num) < 0x10000000 ? 4 : 5)
 
+
+#if defined _UNICODE
+
+extern int utf8lcstr2(const char *szSrc, int iSrcLen, char **szDst, int *iDstLen);
+extern int utf8strncmp(const char * szSrc1, int iSrc1Len, const char * szSrc2, int iSrc2Len);
+
+#define TOLOWERSTR(TC_src, TC_sz, TC_outp, TC_outsz) \
+    utf8lcstr2((TC_src), (TC_sz), (TC_outp), (TC_outsz))
+
+//todo use fixed version utf8strncmp
+#define TCCMPLEXICAL(TC_rv, TC_aptr, TC_asiz, TC_bptr, TC_bsiz) \
+ do { \
+    (TC_rv) = 0; \
+    int _TC_min = (TC_asiz) < (TC_bsiz) ? (TC_asiz) : (TC_bsiz); \
+    for(int _TC_i = 0; _TC_i < _TC_min; _TC_i++){ \
+      if(((unsigned char *)(TC_aptr))[_TC_i] != ((unsigned char *)(TC_bptr))[_TC_i]){ \
+        (TC_rv) = ((unsigned char *)(TC_aptr))[_TC_i] - ((unsigned char *)(TC_bptr))[_TC_i]; \
+        break; \
+      } \
+    } \
+    if((TC_rv) == 0) (TC_rv) = (TC_asiz) - (TC_bsiz); \
+  } while(false)
+#else
+#define TOLOWERSTR(TC_src, TC_sz, TC_outp, TC_outsz) asciilcstr((TC_src), (TC_sz), (TC_outp), (TC_outsz))
 /* compare keys of two records by lexical order */
 #define TCCMPLEXICAL(TC_rv, TC_aptr, TC_asiz, TC_bptr, TC_bsiz) \
   do { \
@@ -562,19 +586,6 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
     } \
     if((TC_rv) == 0) (TC_rv) = (TC_asiz) - (TC_bsiz); \
   } while(false)
-
-
-//TODO fixit
-#define TCCMPLEXICAL2(TC_rv, TC_s1, TC_s2) \
-    TC_rv = strcmp(TC_s1, TC_s2);
-
-
-#ifdef _UNICODE
-    extern int utf8lcstr(const char *szSrc, int iSrcLen, char **szDst, int *iDstLen);
-#define TOLOWERSTR(TC_src, TC_sz, TC_outp, TC_outsz) \
-                    tf8lcstr((TC_src), (TC_sz), (TC_outp), (TC_outsz))
-#else
-   //TODO
 #endif
 
 #endif                                   // duplication check
