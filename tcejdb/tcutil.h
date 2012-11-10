@@ -2484,6 +2484,22 @@ int64_t tcatoix(const char *str);
 double tcatof(const char *str);
 
 
+/**
+ * Fast conversion of a double number into a string.
+ * `cftoa'  do  not write into `buf' more than `max' bytes
+ * (including the terminating null byte ('\0')).
+ *
+ * If returned value >= `max' it indicates truncation occuried.
+ *
+ * @param f Number to convert
+ * @param buf Output buffer.
+ * @param max Maximum number of bytes to write into buffer including termination '\0'
+ * @param precision Number of signs after dot.
+ * @return
+ */
+int tcftoa(long double f, char *buf, int max, int precision);
+
+
 /* Check whether a string matches a regular expression.
    `str' specifies the target string.
    `regex' specifies the regular expression string.  If it begins with `*', the trailing

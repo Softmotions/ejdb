@@ -1,5 +1,6 @@
 *.o
 *.vlog
+*.dylib
 
 /npm-debug.log
 /.idea/workspace.xml
@@ -32,7 +33,9 @@
 /tcejdb/tcumttest
 /tcejdb/tcutest
 /tcejdb/tcejdb.pc
+
 /tcejdb/nbproject/private
+/tcejdb/static
 /tcejdb/check.in
 /tcejdb/check.out
 /tcejdb/casket*

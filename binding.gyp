@@ -29,10 +29,25 @@
                     '-L../tcejdb',
                     '-Wl,-Bstatic -ltcejdb',
                     '-Wl,-Bdynamic',
-                    '-lz -lrt -lpthread -lm -lc'
+                    '-lz -lpthread -lm -lc'
                 ]
             }],
-        ],
+	    [ 'OS=="mac"', {
+		'defines': ['_DARWIN_USE_64_BIT_INODE=1'],
+		'cflags_cc!' : [ '-fno-exceptions' ],
+		'xcode_settings': {	
+			'GCC_ENABLE_CPP_EXCEPTIONS':'YES',
+			'OTHER_CFLAGS': [       			
+				'-fsigned-char', '-pthread', '-Wno-variadic-macros', '-fexceptions'
+          		],
+			'OTHER_LDFLAGS': [
+				'-Wl,-search_paths_first',
+				'-L./tcejdb/static',                 		
+                    		'-lstcejdb -lz -lpthread -lm -lc'
+			]						
+		}
+            }]        
+         ],
         'include_dirs' : ['tcejdb'],
     },
 
