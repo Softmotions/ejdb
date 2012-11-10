@@ -2,6 +2,7 @@
 *.vlog
 *.iml
 
+/misc
 /node/nodejs
 /.idea
 /node/nbproject
