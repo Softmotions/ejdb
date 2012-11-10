@@ -158,7 +158,7 @@ EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char* colname, EJCOLLOPTS *op
  * @param unlink It true the collection db file and all of its index files will be removed.
  * @return If successful return true, otherwise return false.
  */
-EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char* colname, bool unlinkfile);
+EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile);
 
 /**
  * Persist BSON object in the collection.
@@ -169,7 +169,7 @@ EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char* colname, bool unlinkfile);
  * @param bson BSON object id pointer.
  * @return If successful return true, otherwise return false.
  */
-EJDB_EXPORT bool ejdbsavebson(EJCOLL* coll, bson* bs, bson_oid_t* oid);
+EJDB_EXPORT bool ejdbsavebson(EJCOLL *coll, bson *bs, bson_oid_t *oid);
 
 /**
  * Remove BSON object from collection.
@@ -179,7 +179,7 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL* coll, bson* bs, bson_oid_t* oid);
  * @param oid BSON object id pointer.
  * @return
  */
-EJDB_EXPORT bool ejdbrmbson(EJCOLL* coll, bson_oid_t* oid);
+EJDB_EXPORT bool ejdbrmbson(EJCOLL *coll, bson_oid_t *oid);
 
 /**
  * Load BSON object with specified 'oid'.
@@ -188,7 +188,7 @@ EJDB_EXPORT bool ejdbrmbson(EJCOLL* coll, bson_oid_t* oid);
  * @param oid
  * @return BSON object if exists otherwise return NULL.
  */
-EJDB_EXPORT bson* ejdbloadbson(EJCOLL* coll, const bson_oid_t* oid);
+EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
 
 /**
  * Create query object.

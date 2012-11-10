@@ -684,7 +684,7 @@ wordtable :
 libtcejdb.a : $(LIBOBJFILES)
 	$(AR) $(ARFLAGS) $@ $(LIBOBJFILES)
 	mkdir -p ./static
-	cp ./libtcejdb.a ./static
+	cp ./libtcejdb.a ./static/libstcejdb.a
 
 
 libtcejdb.so.$(LIBVER).$(LIBREV).0 : $(LIBOBJFILES)
