@@ -2077,7 +2077,7 @@ MYLIBREV=11
 MYFORMATVER="1.0"
 
 # Targets
-MYHEADERFILES="tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h ejdb.h ejdefs.h bson.h"
+MYHEADERFILES="tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h ejdb.h bson.h"
 MYLIBRARYFILES="libtcejdb.a"
 MYLIBOBJFILES="tcutil.o tchdb.o tcbdb.o tcfdb.o tctdb.o tcadb.o myconf.o md5.o ejdb.o bson.o timsort.o numbers.o encoding.o"
 MYCOMMANDFILES="tcutest tcumttest tcucodec tchtest tchmttest tchmgr"
