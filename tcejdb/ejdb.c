@@ -270,7 +270,11 @@ finish:
 
 /* Save/Update BSON into 'coll' */
 EJDB_EXPORT bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
-    assert(jcoll && bs);
+    assert(jcoll);
+    if (!bs || bs->err || !bs->finished) {
+        _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return false;
+    }
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return false;
@@ -382,6 +386,11 @@ finish:
 }
 
 EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints) {
+    assert(jb);
+    if (!qobj || qobj->err || !qobj->finished) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
     EJQ *q;
     TCCALLOC(q, 1, sizeof (*q));
     if (qobj) {
@@ -405,6 +414,10 @@ EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobj
         }
     }
     if (hints) {
+        if (hints->err || !hints->finished) {
+            _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+            return NULL;
+        }
         q->hints = bson_create();
         if (bson_copy(q->hints, hints)) {
             goto error;
