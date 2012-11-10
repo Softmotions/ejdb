@@ -3,7 +3,7 @@
     "version" : "1.0.5",
     "main" : "node/ejdb.js",
     "description" : "EJDB - Embedded JSON Database engine",
-    "homepage" : "https://github.com/Softmotions/ejdb",
+    "homepage" : "http://ejdb.org",
     "repository" : {
         "type" : "git",
         "url" : "https://github.com/Softmotions/ejdb.git"
