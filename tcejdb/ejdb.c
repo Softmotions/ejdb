@@ -42,36 +42,36 @@ static bool _ejdbunlockmethod(EJDB *ejdb);
 static bool _ejdbcolsetmutex(EJCOLL *coll);
 static bool _ejcollockmethod(EJCOLL *coll, bool wr);
 static bool _ejcollunlockmethod(EJCOLL *coll);
-static bool _bsonoidkey(bson* bs, bson_oid_t* oid);
+static bool _bsonoidkey(bson *bs, bson_oid_t *oid);
 static char* _bsonitstrval(bson_iterator *it, int *vsz, TCLIST *tokens);
 static char* _bsonipathrowldr(TCLIST *tokens, const char *pkbuf, int pksz, const char *rowdata, int rowdatasz,
         const char *ipath, int ipathsz, void *op, int *vsz);
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
         const char *fpath, int fpathsz, void *op, int *vsz);
-EJDB_INLINE bool _isvalidoidstr(const char* oid);
+EJDB_INLINE bool _isvalidoidstr(const char *oid);
 static void _ejdbclear(EJDB *jb);
-static bool _createcoldb(const char* colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB** res);
-static bool _addcoldb0(const char* colname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res);
+static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB** res);
+static bool _addcoldb0(const char *colname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res);
 static void _delcoldb(EJCOLL *cdb);
-static void _delqfdata(const EJQ *q, const EJQF* ejqf);
+static void _delqfdata(const EJQ *q, const EJQF *ejqf);
 static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs, const void *obsdata, int obsdatasz);
 static bool _metasetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
 static bool _metagetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
-static bson* _metagetbson(EJDB *jb, const char *colname, int colnamesz, const char* mkey);
-static bson* _metagetbson2(EJCOLL *jcoll, const char* mkey);
+static bson* _metagetbson(EJDB *jb, const char *colname, int colnamesz, const char *mkey);
+static bson* _metagetbson2(EJCOLL *jcoll, const char *mkey);
 static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
-        const char *mkey, bson* val, bool merge, bool mergeoverwrt);
-static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson* val, bool merge, bool mergeoverwrt);
+        const char *mkey, bson *val, bool merge, bool mergeoverwrt);
+static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
 static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf);
 static TCMAP* _parseqobj(EJDB *jb, bson *qspec);
-static int _parse_qobj_impl(EJDB* jb, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf);
-static int _ejdbsoncmp(const TCLISTDATUM* d1, const TCLISTDATUM* d2, void *opaque);
+static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf);
+static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens);
 static bool _qrycondcheckstror(const char *vbuf, const TCLIST *tokens);
 static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays);
 static bool _qrybsmatch(const EJQF *qf, const void *bsbuf, int bsbufsz);
-static bool _qryormatch(EJCOLL *jcoll, EJQ* ejq, const void *pkbuf, int pkbufsz, const void *bsbuf, int bsbufsz);
+static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz, const void *bsbuf, int bsbufsz);
 static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, const EJQF **qfs, int qfsz,
         const void *pkbuf, int pkbufsz, void **bsbuf, int *bsbufsz);
 static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
@@ -80,7 +80,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qfla
 EJDB_INLINE void _nufetch(_ejdbnum *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_ejdbnum *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp2(_ejdbnum *nu1, _ejdbnum *nu2, bson_type bt);
-static EJCOLL* _getcoll(EJDB *jb, const char* colname);
+static EJCOLL* _getcoll(EJDB *jb, const char *colname);
 
 EJDB_EXPORT const char* ejdberrmsg(int ecode) {
     switch (ecode) {
@@ -174,7 +174,7 @@ EJDB_EXPORT bool ejdbopen(EJDB *jb, const char *path, int mode) {
     if (!rv) {
         goto finish;
     }
-    char* colname = NULL;
+    char *colname = NULL;
     for (int i = 0; i < mdb->hdb->rnum && (colname = tctdbiternext2(mdb)) != NULL; ++i) {
         EJCOLL *cdb;
         EJCOLLOPTS opts;
@@ -187,7 +187,7 @@ finish:
     return rv;
 }
 
-EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char* colname) {
+EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char *colname) {
     assert(colname);
     EJCOLL *coll = NULL;
     JBENSUREOPENLOCK(jb, false, NULL);
@@ -196,7 +196,7 @@ EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char* colname) {
     return coll;
 }
 
-EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char* colname, EJCOLLOPTS *opts) {
+EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
     assert(colname);
     EJCOLL *coll = ejdbgetcoll(jb, colname);
     if (coll) {
@@ -207,7 +207,7 @@ EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char* colname, EJCOLLOPTS *op
         return NULL;
     }
     JBENSUREOPENLOCK(jb, true, NULL);
-    TCTDB* meta = jb->metadb;
+    TCTDB *meta = jb->metadb;
     char *row = tcsprintf("name\t%s", colname);
     if (!tctdbput3(meta, colname, row)) {
         goto finish;
@@ -297,7 +297,7 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
     char *obsdata = NULL; //Old bson
     int obsdatasz = 0;
     if (rowm) { //Save the copy of old bson data
-        const void* tmp = tcmapget(rowm, JDBCOLBSON, JDBCOLBSONL, &obsdatasz);
+        const void *tmp = tcmapget(rowm, JDBCOLBSON, JDBCOLBSONL, &obsdatasz);
         if (tmp && obsdatasz > 0) {
             TCMALLOC(obsdata, obsdatasz);
             memmove(obsdata, tmp, obsdatasz);
@@ -325,7 +325,7 @@ finish:
     return rv;
 }
 
-EJDB_EXPORT bool ejdbrmbson(EJCOLL* jcoll, bson_oid_t* oid) {
+EJDB_EXPORT bool ejdbrmbson(EJCOLL *jcoll, bson_oid_t *oid) {
     assert(jcoll && oid);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -695,7 +695,7 @@ static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, c
     tctdbsetecode(jb->metadb, ecode, filename, line, func);
 }
 
-static EJCOLL* _getcoll(EJDB *jb, const char* colname) {
+static EJCOLL* _getcoll(EJDB *jb, const char *colname) {
     assert(colname);
     EJCOLL *coll = NULL;
     //check if collection exists
@@ -802,7 +802,7 @@ static void _qrydel(EJQ *q, bool freequery) {
     const EJQF *qf = NULL;
     if (q->qobjmap) {
         int ksz;
-        const char* kbuf;
+        const char *kbuf;
         tcmapiterinit(q->qobjmap);
         while ((kbuf = tcmapiternext(q->qobjmap, &ksz)) != NULL) {
             int vsz;
@@ -900,7 +900,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
             assert(tokens);
             const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
             for (int i = 0; i < TCLISTNUM(tokens); ++i) {
-                const char* token = TCLISTVALPTR(tokens, i);
+                const char *token = TCLISTVALPTR(tokens, i);
                 int tokensz = TCLISTVALSIZ(tokens, i);
                 if (TCLISTVALSIZ(tokens, i) == (fvalsz - 1) && !strncmp(token, fval, tokensz)) {
                     rv = true;
@@ -1032,7 +1032,7 @@ static bool _qrybsmatch(const EJQF *qf, const void *bsbuf, int bsbufsz) {
 }
 
 static bool _qryormatch(EJCOLL *jcoll,
-        EJQ* ejq,
+        EJQ *ejq,
         const void *pkbuf, int pkbufsz,
         const void *bsbuf, int bsbufsz) {
     if (ejq->orqobjsnum <= 0 || !ejq->orqobjs) {
@@ -1141,7 +1141,7 @@ typedef struct {
 } _ejbsortctx;
 
 /* RS sorting comparison func */
-static int _ejdbsoncmp(const TCLISTDATUM* d1, const TCLISTDATUM* d2, void *opaque) {
+static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque) {
     _ejbsortctx *ctx = opaque;
     assert(ctx);
     int res = 0;
@@ -1385,7 +1385,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         tcbdbcurdel(cur);
     } else if (mqf->tcop == TDBQCSTREQ) { /* string is equal to */
         assert(midx->type == TDBITLEXICAL);
-        char* expr = mqf->expr;
+        char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
         BDBCUR *cur = tcbdbcurnew(midx->db);
         tcbdbcurjump(cur, expr, exprsz + trim);
@@ -1405,7 +1405,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         tcbdbcurdel(cur);
     } else if (mqf->tcop == TDBQCSTRBW) { /* string begins with */
         assert(midx->type == TDBITLEXICAL);
-        char* expr = mqf->expr;
+        char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
         BDBCUR *cur = tcbdbcurnew(midx->db);
         tcbdbcurjump(cur, expr, exprsz + trim);
@@ -1463,7 +1463,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         tcbdbcurdel(cur);
     } else if (mqf->tcop == TDBQCNUMEQ) { /* number is equal to */
         assert(midx->type == TDBITDECIMAL);
-        char* expr = mqf->expr;
+        char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
         BDBCUR *cur = tcbdbcurnew(midx->db);
         _ejdbnum num;
@@ -1485,7 +1485,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     } else if (mqf->tcop == TDBQCNUMGT || mqf->tcop == TDBQCNUMGE) {
         /* number is greater than | number is greater than or equal to */
         assert(midx->type == TDBITDECIMAL);
-        char* expr = mqf->expr;
+        char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
         BDBCUR *cur = tcbdbcurnew(midx->db);
         _ejdbnum xnum;
@@ -1526,7 +1526,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     } else if (mqf->tcop == TDBQCNUMLT || mqf->tcop == TDBQCNUMLE) {
         /* number is less than | number is less than or equal to */
         assert(midx->type == TDBITDECIMAL);
-        char* expr = mqf->expr;
+        char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
         BDBCUR *cur = tcbdbcurnew(midx->db);
         _ejdbnum xnum;
@@ -1570,7 +1570,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         assert(mqf->exprlist);
         TCLIST *tokens = mqf->exprlist;
         assert(TCLISTNUM(tokens) == 2);
-        const char* expr;
+        const char *expr;
         int exprsz;
         long double lower = tctdbatof(tclistval2(tokens, 0));
         long double upper = tctdbatof(tclistval2(tokens, 1));
@@ -2041,7 +2041,7 @@ static bool _metagetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
 }
 
 static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
-        const char *mkey, bson* val, bool merge, bool mergeoverwrt) {
+        const char *mkey, bson *val, bool merge, bool mergeoverwrt) {
     assert(jb && colname && mkey);
     bool rv = true;
     bson *bsave = NULL;
@@ -2092,13 +2092,13 @@ finish:
     return rv;
 }
 
-static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson* val, bool merge, bool mergeoverwrt) {
+static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge, bool mergeoverwrt) {
     assert(jcoll);
     return _metasetbson(jcoll->jb, jcoll->cname, jcoll->cnamesz, mkey, val, merge, mergeoverwrt);
 }
 
 /**Returned meta BSON data must be freed by 'bson_del' */
-static bson* _metagetbson(EJDB *jb, const char *colname, int colnamesz, const char* mkey) {
+static bson* _metagetbson(EJDB *jb, const char *colname, int colnamesz, const char *mkey) {
     assert(jb && colname && mkey);
     bson *rv = NULL;
     TCMAP *cmeta = tctdbget(jb->metadb, colname, colnamesz);
@@ -2107,7 +2107,7 @@ static bson* _metagetbson(EJDB *jb, const char *colname, int colnamesz, const ch
         return NULL;
     }
     int bsz;
-    const void* raw = tcmapget(cmeta, mkey, strlen(mkey), &bsz);
+    const void *raw = tcmapget(cmeta, mkey, strlen(mkey), &bsz);
     if (!raw || bsz == 0) {
         goto finish;
     }
@@ -2145,7 +2145,7 @@ static bson* _imetaidx(EJCOLL *jcoll, const char *ipath) {
         goto finish;
     }
     int bsz;
-    const void* bsdata = tcmapget(cmeta, fpathkey, klen, &bsz);
+    const void *bsdata = tcmapget(cmeta, fpathkey, klen, &bsz);
     if (bsdata) {
         rv = bson_create();
         bson_init_size(rv, bsz);
@@ -2217,18 +2217,18 @@ static TCLIST* _fetch_bson_str_array(bson_iterator *it, bson_type *type) {
 /** result must be freed by TCFREE */
 static char* _fetch_bson_str_array2(bson_iterator *it, bson_type *type) {
     TCLIST *res = _fetch_bson_str_array(it, type);
-    char* tokens = tcstrjoin(res, ',');
+    char *tokens = tcstrjoin(res, ',');
     tclistdel(res);
     return tokens;
 }
 
-static int _parse_qobj_impl(EJDB* jb, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf) {
+static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf) {
     assert(it && qmap && pathStack);
     int ret = 0;
     bson_type ftype;
     while ((ftype = bson_iterator_next(it)) != BSON_EOO) {
 
-        const char* fkey = bson_iterator_key(it);
+        const char *fkey = bson_iterator_key(it);
         bool isckey = (*fkey == '$'); //Key is a control key: $in, $nin, $not, $all
 
         if (!isckey && pqf && pqf->ftype == BSON_ARRAY) {
@@ -2392,8 +2392,8 @@ static int _parse_qobj_impl(EJDB* jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                 assert(!qf.fpath && !qf.expr);
                 qf.ftype = ftype;
                 qf.tcop = TDBQCSTRRX;
-                char* re = tcstrdup(bson_iterator_regex(it));
-                const char* opts = bson_iterator_regex_opts(it);
+                char *re = tcstrdup(bson_iterator_regex(it));
+                const char *opts = bson_iterator_regex_opts(it);
                 qf.fpath = tcstrjoin(pathStack, '.');
                 qf.fpathsz = strlen(qf.fpath);
                 qf.expr = re;
@@ -2462,7 +2462,7 @@ static int _parse_qobj_impl(EJDB* jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
  *  Created map instance must be freed `tcmapdel`.
  *  Each element of map must be freed by TODO
  */
-static TCMAP* _parseqobj(EJDB* jb, bson *qspec) {
+static TCMAP* _parseqobj(EJDB *jb, bson *qspec) {
     assert(qspec);
     int rv = 0;
     TCMAP *res = tcmapnew();
@@ -2504,7 +2504,7 @@ static bool _bsonoidkey(bson *bs, bson_oid_t *oid) {
         goto finish;
     }
     if (t == BSON_STRING) {
-        const char* oidstr = bson_iterator_string(&it);
+        const char *oidstr = bson_iterator_string(&it);
         if (_isvalidoidstr(oidstr)) {
             bson_oid_from_string(oid, oidstr);
             rv = true;
@@ -2592,7 +2592,7 @@ static char* _bsonipathrowldr(
         const char *pkbuf, int pksz,
         const char *rowdata, int rowdatasz,
         const char *ipath, int ipathsz, void *op, int *vsz) {
-    char* res = NULL;
+    char *res = NULL;
     if (ipath && *ipath == '\0') { //PK
         if (tokens) {
             const unsigned char *sp = (unsigned char *) pkbuf;
@@ -2663,7 +2663,7 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         if (*mkey != 'i' || mkeysz > BSON_MAX_FPATH_LEN + 1) {
             continue;
         }
-        const void* mraw = tcmapget(cmeta, mkey, mkeysz, &bsz);
+        const void *mraw = tcmapget(cmeta, mkey, mkeysz, &bsz);
         if (!mraw || !bsz || (mt = bson_find_from_buffer(&mit, mraw, "iflags")) != BSON_INT) {
             continue;
         }
@@ -2761,9 +2761,9 @@ static void _delcoldb(EJCOLL *jcoll) {
     }
 }
 
-static bool _addcoldb0(const char* cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res) {
+static bool _addcoldb0(const char *cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res) {
     bool rv = true;
-    TCTDB* cdb;
+    TCTDB *cdb;
     rv = _createcoldb(cname, jb, opts, &cdb);
     if (!rv) {
         *res = NULL;
@@ -2781,7 +2781,7 @@ static bool _addcoldb0(const char* cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **r
     return rv;
 }
 
-static bool _createcoldb(const char* colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB **res) {
+static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB **res) {
     assert(jb && jb->metadb);
     if (!JBISVALCOLNAME(colname)) {
         _ejdbsetecode(jb, JBEINVALIDCOLNAME, __FILE__, __LINE__, __func__);
@@ -2807,7 +2807,7 @@ static bool _createcoldb(const char* colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB 
         }
         tctdbtune(cdb, bnum, 0, 0, tflags);
     }
-    const char* mdbpath = jb->metadb->hdb->path;
+    const char *mdbpath = jb->metadb->hdb->path;
     assert(mdbpath);
     TCXSTR *cxpath = tcxstrnew2(mdbpath);
     tcxstrcat2(cxpath, "_");
@@ -2830,7 +2830,7 @@ static void _ejdbclear(EJDB *jb) {
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens) {
     assert(vbuf && tokens);
     for (int i = 0; i < TCLISTNUM(tokens); ++i) {
-        const char* token = TCLISTVALPTR(tokens, i);
+        const char *token = TCLISTVALPTR(tokens, i);
         int tokensz = TCLISTVALSIZ(tokens, i);
         bool found = false;
         const char *str = vbuf;
@@ -2856,7 +2856,7 @@ static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens) {
 /* Check whether a string includes at least one tokens in another string.*/
 static bool _qrycondcheckstror(const char *vbuf, const TCLIST *tokens) {
     for (int i = 0; i < TCLISTNUM(tokens); ++i) {
-        const char* token = TCLISTVALPTR(tokens, i);
+        const char *token = TCLISTVALPTR(tokens, i);
         int tokensz = TCLISTVALSIZ(tokens, i);
         bool found = false;
         const char *str = vbuf;

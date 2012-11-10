@@ -2,8 +2,8 @@ var ejdblib;
 try {
     ejdblib = require("../build/Release/ejdb_native.node");
 } catch (e) {
-    console.error("Warning: Using the DEBUG version of EJDB nodejs binding");
     ejdblib = require("../build/Debug/ejdb_native.node");
+    console.error("Warning: Using the DEBUG version of EJDB nodejs binding");
 }
 var EJDBImpl = ejdblib.NodeEJDB;
 
