@@ -136,7 +136,7 @@ EJDB_EXPORT bool ejdbisopen(EJDB *jb);
  * @param colname Name of collection.
  * @return If error NULL will be returned.
  */
-EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char* colname);
+EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char *colname);
 
 /**
  * Same as ejdbgetcoll() but automatically creates new collection
@@ -149,7 +149,7 @@ EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char* colname);
  *
  * @return Collection handle or NULL if error.
  */
-EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char* colname, EJCOLLOPTS *opts);
+EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
 
 /**
  * Removes collections specified by `colname`
@@ -250,7 +250,7 @@ EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobj
  * Destroy query object created with ejdbcreatequery().
  * @param q
  */
-EJDB_EXPORT void ejdbquerydel(EJQ* q);
+EJDB_EXPORT void ejdbquerydel(EJQ *q);
 
 /**
  * Set index for JSON field in EJDB collection.
