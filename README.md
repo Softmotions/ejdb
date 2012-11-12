@@ -22,9 +22,11 @@ Documentation
 
 * **[NodeJS binding](#nodejs-binding)**
     * [Installation](#installation)
+    * [Samples](#ejdb-nodejs-samples)
     * [NodeJS API](#ejdb-nodejs-api)
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
+    * [Samples](#ejdb-c-samples)
     * [C API](#c-api)
 
 
@@ -33,6 +35,7 @@ NodeJS binding
 
 One snippet intro
 ---------------------------------
+
 ```JavaScript
 var EJDB = require("ejdb");
 //Open zoo DB
@@ -99,6 +102,13 @@ On Debian/Ubuntu linux you can install it as follows:
 **Installation from node package manager:**
 
     npm install ejdb
+
+EJDB NodeJS samples
+---------------------------------
+
+* [node/samples](https://github.com/Softmotions/ejdb/tree/master/node/samples)
+* [node/tests](https://github.com/Softmotions/ejdb/tree/master/node/tests)
+* [nwk-ejdb-address-book](https://github.com/Softmotions/nwk-ejdb-address-book)
 
 
 EJDB NodeJS API
@@ -595,12 +605,12 @@ Queries
 EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints);
 ~~~~~~
 
-Examples
+EJDB C Samples
 ------------------------------------
 You can find some code samples in:
 
-* tcejdb/samples
-* tcejdb/testejdb
+* [tcejdb/samples](https://github.com/Softmotions/ejdb/tree/master/tcejdb/samples)
+* [tcejdb/testejdb](https://github.com/Softmotions/ejdb/tree/master/tcejdb/testejdb)
 
 Basic EJDB architecture
 -------------------------------
