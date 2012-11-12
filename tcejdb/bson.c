@@ -1290,6 +1290,8 @@ EJDB_EXPORT int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, co
         int l1 = bson_iterator_bin_len(&it1);
         int l2 = bson_iterator_bin_len(&it2);
         return memcmp(bson_iterator_bin_data(&it1), bson_iterator_bin_data(&it2), MIN(l1, l2));
+    } else if (t1 == BSON_OID && t2 == BSON_OID) {
+        return memcmp(bson_iterator_oid(&it1), bson_iterator_oid(&it2), sizeof(bson_oid_t));
     }
     return 0;
 }

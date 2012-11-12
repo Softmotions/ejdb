@@ -1,4 +1,7 @@
 
+#include "bson.h"
+
+
 #include <regex.h>
 
 #include "ejdb_private.h"
@@ -853,14 +856,24 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
     switch (qf->tcop) {
         case TDBQCSTREQ:
         {
-            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 0;
-            const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
-            rv = (exprsz == fvalsz - 1) && !memcmp(expr, fval, exprsz);
+            if (bt == BSON_OID) {
+                if (exprsz != 24) {
+                    break;
+                }
+                bson_oid_t *boid = bson_iterator_oid(it);
+                bson_oid_t aoid;
+                bson_oid_from_string(&aoid, expr);
+                rv = !memcmp(&aoid, boid, sizeof (bson_oid_t));
+            } else {
+                int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
+                const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
+                rv = (exprsz == fvalsz - 1) && (exprsz == 0 || !memcmp(expr, fval, exprsz));
+            }
             break;
         }
         case TDBQCSTRINC:
         {
-            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 0;
+            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
             const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
             rv = (exprsz < fvalsz) && strstr(fval, expr);
             break;
@@ -895,7 +908,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         }
         case TDBQCSTROREQ:
         {
-            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 0;
+            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
             TCLIST *tokens = qf->exprlist;
             assert(tokens);
             const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
@@ -1286,6 +1299,9 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     uint32_t max = (ejq->max > 0) ? ejq->max : UINT_MAX;
     uint32_t skip = ejq->skip;
     const TDBIDX *midx = mqf ? mqf->idx : NULL;
+    TCHDB *hdb = jcoll->tdb->hdb;
+    assert(hdb);
+
     if (midx) { //Main index used for ordering
         if (mqf->orderseq == 1 &&
                 !(mqf->tcop == TDBQCSTRAND || mqf->tcop == TDBQCSTROR || mqf->tcop == TDBQCSTRNUMOR)) {
@@ -1342,7 +1358,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     if (max == 0) {
         goto finish;
     }
-    if (!midx) { //Missing main index
+    if (!midx && (!mqf || !(mqf->flags & EJFPKMATCHING))) { //Missing main index & no PK matching
         goto fullscan;
     }
     if (log) {
@@ -1358,12 +1374,46 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         TCFREE(_bsbuf); \
     }
 
-    bool trim = (*midx->name != '\0');
+    bool trim = (midx && *midx->name != '\0');
     if (anum > 0 && !(mqf->flags & EJFEXCLUDED)) {
         anum--;
         mqf->flags |= EJFEXCLUDED;
     }
-    if (mqf->tcop == TDBQTRUE) {
+
+    if (mqf->flags & EJFPKMATCHING) { //PK matching
+        if (log) {
+            tcxstrprintf(log, "PRIMARY KEY MATCHING: %s\n", mqf->expr);
+        }
+        assert(mqf->expr);
+        do {
+            bson_oid_t oid;
+            bson_oid_from_string(&oid, mqf->expr);
+            void *cdata = tchdbget(jcoll->tdb->hdb, &oid, sizeof (oid), &bsbufsz);
+            if (!cdata || !bsbufsz) {
+                break;
+            }
+            bsbuf = tcmaploadone(cdata, bsbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
+            if (!bsbuf || bsbufsz <= 4) {
+                TCFREE(cdata);
+                break;
+            }
+            bool matched = true;
+            for (int i = 0; i < qfsz; ++i) {
+                const EJQF *qf = qfs[i];
+                if (qf->flags & EJFEXCLUDED) continue;
+                if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
+                    matched = false;
+                    break;
+                }
+            }
+            if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid), bsbuf, bsbufsz))) {
+                JBQREGREC(bsbuf, bsbufsz);
+            } else {
+                TCFREE(bsbuf);
+            }
+            TCFREE(cdata);
+        } while (false);
+    } else if (mqf->tcop == TDBQTRUE) {
         BDBCUR *cur = tcbdbcurnew(midx->db);
         if (mqf->order >= 0) {
             tcbdbcurfirst(cur);
@@ -1686,8 +1736,6 @@ fullscan: /* Full scan */
     int lksiz = 0;
     const char *cbuf;
     int cbufsz;
-    TCHDB *hdb = jcoll->tdb->hdb;
-    assert(hdb);
     while ((all || count < max) && (pkbuf = tchdbgetnext3(hdb, lkbuf, lksiz, &pkbufsz, &cbuf, &cbufsz)) != NULL) {
         void *bsbuf = tcmaploadone(cbuf, cbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
         if (!bsbuf) continue;
@@ -1923,6 +1971,13 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf) {
         EJQF *qf = (EJQF*) tcmapget(qmap, mkey, mkeysz, &mvalsz); //discard const
         assert(mvalsz == sizeof (EJQF));
         assert(qf->fpath);
+
+        if (qf->ftype == BSON_OID && qf->tcop == TDBQCSTREQ && !strcmp(JDBIDKEYNAME, qf->fpath)) { //OID PK matching
+            qf->flags |= EJFPKMATCHING;
+            *mqf = qf;
+            break;
+        }
+
         bool firstorderqf = false;
         qf->idxmeta = _imetaidx(jcoll, qf->fpath);
         qf->idx = _qryfindidx(jcoll, qf, qf->idxmeta);
@@ -1989,7 +2044,6 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf) {
             maxiscore = iscore;
         }
     }
-
     if (*mqf == NULL && (oqf && oqf->idx && !oqf->negate)) {
         *mqf = oqf;
     }
@@ -2270,7 +2324,7 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
 
         switch (ftype) {
             case BSON_ARRAY:
-            { 
+            {
                 if (isckey) {
                     if (strcmp("$in", fkey) &&
                             strcmp("$nin", fkey) &&
@@ -2338,6 +2392,20 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                 ret = _parse_qobj_impl(jb, &sit, qmap, pathStack, &qf);
                 break;
             }
+            case BSON_OID:
+            {
+                assert(!qf.fpath && !qf.expr);
+                qf.ftype = ftype;
+                TCMALLOC(qf.expr, 25 * sizeof (char));
+                bson_oid_to_string(bson_iterator_oid(it), qf.expr);
+                qf.exprsz = 24;
+                qf.fpath = tcstrjoin(pathStack, '.');
+                qf.fpathsz = strlen(qf.fpath);
+                qf.tcop = TDBQCSTREQ;
+                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                break;
+            }
+
             case BSON_SYMBOL:
             case BSON_STRING:
             {
@@ -2351,6 +2419,9 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                     qf.tcop = TDBQCSTRBW;
                 } else {
                     qf.tcop = TDBQCSTREQ;
+                    if (!strcmp(JDBIDKEYNAME, fkey)) { //_id
+                        qf.ftype = BSON_OID;
+                    }
                 }
                 tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
                 break;

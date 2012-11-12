@@ -2406,6 +2406,67 @@ void testQuery27() { //$exists
     ejdbquerydel(q1);
 }
 
+void testOIDSMatching() { //OID matching
+    EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
+
+    bson_type bt;
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    CU_ASSERT_TRUE(count > 0);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) { //first
+        char soid[25];
+        bson_oid_t *oid;
+        void *bsdata = TCLISTVALPTR(q1res, i);
+        bson_iterator it2;
+        bt = bson_find_from_buffer(&it2, bsdata, JDBIDKEYNAME);
+        CU_ASSERT_EQUAL_FATAL(bt, BSON_OID);
+        oid = bson_iterator_oid(&it2);
+        bson_oid_to_string(oid, soid);
+        //fprintf(stderr, "\nOID: %s", soid);
+
+        //OID in string form maching
+        bson bsq2;
+        bson_init_as_query(&bsq2);
+
+        if (i % 2 == 0) {
+            bson_append_string(&bsq2, JDBIDKEYNAME, soid);
+        } else {
+            bson_append_oid(&bsq2, JDBIDKEYNAME, oid);
+        }
+
+        bson_finish(&bsq2);
+        CU_ASSERT_FALSE_FATAL(bsq2.err);
+
+        TCXSTR *log2 = tcxstrnew();
+        EJQ *q2 = ejdbcreatequery(jb, &bsq2, NULL, 0, NULL);
+        TCLIST *q2res = ejdbqrysearch(contacts, q2, &count, 0, log2);
+        CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log2), "PRIMARY KEY MATCHING:"));
+        CU_ASSERT_EQUAL(count, 1);
+
+        tcxstrdel(log2);
+        ejdbquerydel(q2);
+        tclistdel(q2res);
+        bson_destroy(&bsq2);
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
@@ -2450,7 +2511,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testQuery24", testQuery24)) ||
             (NULL == CU_add_test(pSuite, "testQuery25", testQuery25)) ||
             (NULL == CU_add_test(pSuite, "testQuery26", testQuery26)) ||
-            (NULL == CU_add_test(pSuite, "testQuery27", testQuery27))
+            (NULL == CU_add_test(pSuite, "testQuery27", testQuery27)) ||
+            (NULL == CU_add_test(pSuite, "testOIDSMatching", testOIDSMatching))
             ) {
         CU_cleanup_registry();
         return CU_get_error();
