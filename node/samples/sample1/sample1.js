@@ -1,4 +1,4 @@
-var EJDB = require("../ejdb");
+var EJDB = require("ejdb");
 var jb = EJDB.open("zoo", EJDB.DEFAULT_OPEN_MODE | EJDB.JBOTRUNC);
 
 var parrot1 = {
