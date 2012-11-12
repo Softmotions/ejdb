@@ -110,7 +110,7 @@ EJDB NodeJS samples
 
 * [node/samples](https://github.com/Softmotions/ejdb/tree/master/node/samples)
 * [node/tests](https://github.com/Softmotions/ejdb/tree/master/node/tests)
-* [nwk-ejdb-address-book] https://github.com/Softmotions/nwk-ejdb-address-book
+* [nwk-ejdb-address-book](https://github.com/Softmotions/nwk-ejdb-address-book)
 
 
 EJDB NodeJS API
