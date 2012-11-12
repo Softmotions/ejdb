@@ -2270,7 +2270,7 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
 
         switch (ftype) {
             case BSON_ARRAY:
-            {
+            { 
                 if (isckey) {
                     if (strcmp("$in", fkey) &&
                             strcmp("$nin", fkey) &&
