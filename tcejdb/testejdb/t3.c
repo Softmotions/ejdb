@@ -284,7 +284,7 @@ int main() {
 
     /* Add the tests to the suite */
     if (
-            //(NULL == CU_add_test(pSuite, "testPerf1", testPerf1)) ||
+            (NULL == CU_add_test(pSuite, "testPerf1", testPerf1)) ||
             (NULL == CU_add_test(pSuite, "testRace1", testRace1))
 
             ) {
