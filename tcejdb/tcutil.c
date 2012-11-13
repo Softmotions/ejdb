@@ -10658,4 +10658,17 @@ static int tcgammadecode(const char *ptr, int size, char *obuf){
 
 
 
+#include "utf8proc.h"
+ssize_t tcicaseformat(const char *str, int strlen, char **dstptr) {
+    ssize_t res = utf8proc_map((uint8_t*)str, strlen, (uint8_t**)dstptr,
+            UTF8PROC_COMPOSE |
+            UTF8PROC_IGNORE |
+            UTF8PROC_LUMP |
+            UTF8PROC_CASEFOLD |
+            UTF8PROC_STRIPMARK);
+    return res;
+}
+
+
+
 // END OF FILE

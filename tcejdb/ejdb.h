@@ -62,7 +62,8 @@ enum { /** Index modes, index types. */
     JBIDXREBLD = 1 << 3, /**< Rebuild index. */
     JBIDXNUM = 1 << 4, /**< Number index. */
     JBIDXSTR = 1 << 5, /**< String index.*/
-    JBIDXARR = 1 << 6 /**< Array token index. */
+    JBIDXARR = 1 << 6, /**< Array token index. */
+    JBIDXISTR = 1 << 7 /**< Case insensitive string index */
 };
 
 enum { /*< Query search mode flags in ejdbqrysearch() */
@@ -257,6 +258,7 @@ EJDB_EXPORT void ejdbquerydel(EJQ *q);
  *
  *  - Available index types:
  *      - `JBIDXSTR` String index for JSON string values.
+ *      - `JBIDXISTR` Case insensitive string index for JSON string values.
  *      - `JBIDXNUM` Index for JSON number values.
  *      - `JBIDXARR` Token index for JSON arrays and string values.
  *

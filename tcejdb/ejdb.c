@@ -49,6 +49,8 @@ static bool _bsonoidkey(bson *bs, bson_oid_t *oid);
 static char* _bsonitstrval(bson_iterator *it, int *vsz, TCLIST *tokens);
 static char* _bsonipathrowldr(TCLIST *tokens, const char *pkbuf, int pksz, const char *rowdata, int rowdatasz,
         const char *ipath, int ipathsz, void *op, int *vsz);
+static char* _bsonipathrowldricase(TCLIST *tokens, const char *pkbuf, int pksz, const char *rowdata, int rowdatasz,
+        const char *ipath, int ipathsz, void *op, int *vsz);
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
         const char *fpath, int fpathsz, void *op, int *vsz);
 EJDB_INLINE bool _isvalidoidstr(const char *oid);
@@ -85,7 +87,13 @@ EJDB_INLINE int _nucmp(_ejdbnum *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp2(_ejdbnum *nu1, _ejdbnum *nu2, bson_type bt);
 static EJCOLL* _getcoll(EJDB *jb, const char *colname);
 
+
+extern const char *utf8proc_errmsg(ssize_t errcode);
+
 EJDB_EXPORT const char* ejdberrmsg(int ecode) {
+    if (ecode > -6 && ecode < 0) { //Hook for negative error codes of utf8proc library
+        return utf8proc_errmsg(ecode);
+    }
     switch (ecode) {
         case JBEINVALIDCOLNAME: return "invalid collection name";
         case JBEINVALIDBSON: return "invalid bson object";
@@ -533,15 +541,19 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
     if (tcitype) {
         if (flags & JBIDXSTR) {
             ipath[0] = 's';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, NULL);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, jcoll);
+        }
+        if (flags & JBIDXISTR) {
+            ipath[0] = 'i';
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldricase, jcoll);
         }
         if (rv && (flags & JBIDXNUM)) {
             ipath[0] = 'n';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, NULL);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, jcoll);
         }
         if (rv && (flags & JBIDXARR)) {
             ipath[0] = 'a';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, NULL);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, jcoll);
         }
         if (idrop) { //Update index meta on drop
             oldiflags &= ~flags;
@@ -559,15 +571,19 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
     } else {
         if ((flags & JBIDXSTR) && (ibld || !(oldiflags & JBIDXSTR))) {
             ipath[0] = 's';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, NULL);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, jcoll);
+        }
+        if ((flags & JBIDXISTR) && (ibld || !(oldiflags & JBIDXISTR))) {
+            ipath[0] = 'i';
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldricase, jcoll);
         }
         if (rv && (flags & JBIDXNUM) && (ibld || !(oldiflags & JBIDXNUM))) {
             ipath[0] = 'n';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITDECIMAL, _bsonipathrowldr, NULL);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITDECIMAL, _bsonipathrowldr, jcoll);
         }
         if (rv && (flags & JBIDXARR) && (ibld || !(oldiflags & JBIDXARR))) {
             ipath[0] = 'a';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITTOKEN, _bsonipathrowldr, NULL);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITTOKEN, _bsonipathrowldr, jcoll);
         }
     }
     JBCUNLOCKMETHOD(jcoll);
@@ -2691,6 +2707,14 @@ static char* _bsonipathrowldr(
     }
     //skip index type prefix char with (fpath + 1)
     return _bsonfpathrowldr(tokens, rowdata, rowdatasz, ipath + 1, ipathsz - 1, op, vsz);
+}
+
+static char* _bsonipathrowldricase(
+        TCLIST *tokens,
+        const char *pkbuf, int pksz,
+        const char *rowdata, int rowdatasz,
+        const char *ipath, int ipathsz, void *op, int *vsz) {
+    return _bsonipathrowldr(tokens, pkbuf, pksz, rowdata, rowdatasz, ipath, ipathsz, op, vsz);
 }
 
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
