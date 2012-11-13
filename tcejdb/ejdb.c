@@ -31,13 +31,20 @@
                                 return JB_ret; \
                             }
 
-/* private function prototypes */
+/* ejdb number */
 typedef union {
     int64_t inum;
     double dnum;
-} _ejdbnum;
+} _EJDBNUM;
 
 
+/* opaque data for `_bsonipathrowldr()`function */
+typedef struct {
+    EJCOLL *jcoll; //current collection
+    bool icase; //ignore case normalization
+} _BSONIPATHROWLDR;
+
+/* private function prototypes */
 static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, const char *func);
 static bool _ejdbsetmutex(EJDB *ejdb);
 static bool _ejdblockmethod(EJDB *ejdb, bool wr);
@@ -48,8 +55,6 @@ static bool _ejcollunlockmethod(EJCOLL *coll);
 static bool _bsonoidkey(bson *bs, bson_oid_t *oid);
 static char* _bsonitstrval(bson_iterator *it, int *vsz, TCLIST *tokens);
 static char* _bsonipathrowldr(TCLIST *tokens, const char *pkbuf, int pksz, const char *rowdata, int rowdatasz,
-        const char *ipath, int ipathsz, void *op, int *vsz);
-static char* _bsonipathrowldricase(TCLIST *tokens, const char *pkbuf, int pksz, const char *rowdata, int rowdatasz,
         const char *ipath, int ipathsz, void *op, int *vsz);
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
         const char *fpath, int fpathsz, void *op, int *vsz);
@@ -82,9 +87,9 @@ static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, const EJQ
 static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
 static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
-EJDB_INLINE void _nufetch(_ejdbnum *nu, const char *sval, bson_type bt);
-EJDB_INLINE int _nucmp(_ejdbnum *nu, const char *sval, bson_type bt);
-EJDB_INLINE int _nucmp2(_ejdbnum *nu1, _ejdbnum *nu2, bson_type bt);
+EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
+EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
+EJDB_INLINE int _nucmp2(_EJDBNUM *nu1, _EJDBNUM *nu2, bson_type bt);
 static EJCOLL* _getcoll(EJDB *jb, const char *colname);
 
 
@@ -538,22 +543,26 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
         rv = false;
         goto finish;
     }
+    _BSONIPATHROWLDR op;
+     op.icase = false;
+     op.jcoll = jcoll;
+
     if (tcitype) {
         if (flags & JBIDXSTR) {
             ipath[0] = 's';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, jcoll);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
         }
         if (flags & JBIDXISTR) {
             ipath[0] = 'i';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldricase, jcoll);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
         }
         if (rv && (flags & JBIDXNUM)) {
             ipath[0] = 'n';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, jcoll);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
         }
         if (rv && (flags & JBIDXARR)) {
             ipath[0] = 'a';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, jcoll);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
         }
         if (idrop) { //Update index meta on drop
             oldiflags &= ~flags;
@@ -571,19 +580,19 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
     } else {
         if ((flags & JBIDXSTR) && (ibld || !(oldiflags & JBIDXSTR))) {
             ipath[0] = 's';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, jcoll);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, &op);
         }
         if ((flags & JBIDXISTR) && (ibld || !(oldiflags & JBIDXISTR))) {
             ipath[0] = 'i';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldricase, jcoll);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, &op);
         }
         if (rv && (flags & JBIDXNUM) && (ibld || !(oldiflags & JBIDXNUM))) {
             ipath[0] = 'n';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITDECIMAL, _bsonipathrowldr, jcoll);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITDECIMAL, _bsonipathrowldr, &op);
         }
         if (rv && (flags & JBIDXARR) && (ibld || !(oldiflags & JBIDXARR))) {
             ipath[0] = 'a';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITTOKEN, _bsonipathrowldr, jcoll);
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITTOKEN, _bsonipathrowldr, &op);
         }
     }
     JBCUNLOCKMETHOD(jcoll);
@@ -1184,7 +1193,7 @@ static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaqu
     return res;
 }
 
-EJDB_INLINE void _nufetch(_ejdbnum *nu, const char *sval, bson_type bt) {
+EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt) {
     if (bt == BSON_INT || bt == BSON_LONG) {
         nu->inum = tctdbatoi(sval);
     } else if (bt == BSON_DOUBLE) {
@@ -1195,7 +1204,7 @@ EJDB_INLINE void _nufetch(_ejdbnum *nu, const char *sval, bson_type bt) {
     }
 }
 
-EJDB_INLINE int _nucmp(_ejdbnum *nu, const char *sval, bson_type bt) {
+EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt) {
     if (bt == BSON_INT || bt == BSON_LONG) {
         int64_t v = tctdbatoi(sval);
         return (nu->inum > v) ? 1 : (nu->inum < v ? -1 : 0);
@@ -1208,7 +1217,7 @@ EJDB_INLINE int _nucmp(_ejdbnum *nu, const char *sval, bson_type bt) {
     return 0;
 }
 
-EJDB_INLINE int _nucmp2(_ejdbnum *nu1, _ejdbnum *nu2, bson_type bt) {
+EJDB_INLINE int _nucmp2(_EJDBNUM *nu1, _EJDBNUM *nu2, bson_type bt) {
     if (bt == BSON_INT || bt == BSON_LONG) {
         return (nu1->inum > nu2->inum) ? 1 : (nu1->inum < nu2->inum ? -1 : 0);
     } else if (bt == BSON_DOUBLE) {
@@ -1532,7 +1541,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
         BDBCUR *cur = tcbdbcurnew(midx->db);
-        _ejdbnum num;
+        _EJDBNUM num;
         _nufetch(&num, expr, mqf->ftype);
         tctdbqryidxcurjumpnum(cur, expr, exprsz, true);
         while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
@@ -1554,12 +1563,12 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
         BDBCUR *cur = tcbdbcurnew(midx->db);
-        _ejdbnum xnum;
+        _EJDBNUM xnum;
         _nufetch(&xnum, expr, mqf->ftype);
         if (mqf->order < 0 && (mqf->flags & EJFORDERUSED)) { //DESC
             tcbdbcurlast(cur);
             while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
-                _ejdbnum knum;
+                _EJDBNUM knum;
                 _nufetch(&knum, kbuf, mqf->ftype);
                 int cmp = _nucmp2(&knum, &xnum, mqf->ftype);
                 if (cmp < 0) break;
@@ -1575,7 +1584,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         } else { //ASC
             tctdbqryidxcurjumpnum(cur, expr, exprsz, true);
             while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
-                _ejdbnum knum;
+                _EJDBNUM knum;
                 _nufetch(&knum, kbuf, mqf->ftype);
                 int cmp = _nucmp2(&knum, &xnum, mqf->ftype);
                 if (cmp > 0 || (mqf->tcop == TDBQCNUMGE && cmp >= 0)) {
@@ -1595,12 +1604,12 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
         BDBCUR *cur = tcbdbcurnew(midx->db);
-        _ejdbnum xnum;
+        _EJDBNUM xnum;
         _nufetch(&xnum, expr, mqf->ftype);
         if (mqf->order >= 0) { //ASC
             tcbdbcurfirst(cur);
             while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
-                _ejdbnum knum;
+                _EJDBNUM knum;
                 _nufetch(&knum, kbuf, mqf->ftype);
                 int cmp = _nucmp2(&knum, &xnum, mqf->ftype);
                 if (cmp > 0) break;
@@ -1616,7 +1625,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         } else {
             tctdbqryidxcurjumpnum(cur, expr, exprsz, false);
             while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
-                _ejdbnum knum;
+                _EJDBNUM knum;
                 _nufetch(&knum, kbuf, mqf->ftype);
                 int cmp = _nucmp2(&knum, &xnum, mqf->ftype);
                 if (cmp < 0 || (cmp <= 0 && mqf->tcop == TDBQCNUMLE)) {
@@ -2679,6 +2688,8 @@ static char* _bsonipathrowldr(
         const char *pkbuf, int pksz,
         const char *rowdata, int rowdatasz,
         const char *ipath, int ipathsz, void *op, int *vsz) {
+    _BSONIPATHROWLDR *odata = (_BSONIPATHROWLDR*) op;
+    assert(odata);
     char *res = NULL;
     if (ipath && *ipath == '\0') { //PK
         if (tokens) {
@@ -2707,14 +2718,6 @@ static char* _bsonipathrowldr(
     }
     //skip index type prefix char with (fpath + 1)
     return _bsonfpathrowldr(tokens, rowdata, rowdatasz, ipath + 1, ipathsz - 1, op, vsz);
-}
-
-static char* _bsonipathrowldricase(
-        TCLIST *tokens,
-        const char *pkbuf, int pksz,
-        const char *rowdata, int rowdatasz,
-        const char *ipath, int ipathsz, void *op, int *vsz) {
-    return _bsonipathrowldr(tokens, pkbuf, pksz, rowdata, rowdatasz, ipath, ipathsz, op, vsz);
 }
 
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
