@@ -31,14 +31,18 @@
                                 return JB_ret; \
                             }
 
+/* string processing/conversion flags */
+typedef enum {
+    JBICASE = 1
+} txtflags_t;
+
 /* ejdb number */
 typedef union {
     int64_t inum;
     double dnum;
 } _EJDBNUM;
 
-
-/* opaque data for `_bsonipathrowldr()`function */
+/* opaque data for `_bsonipathrowldr()` and `_bsonfpathrowldr()` functions */
 typedef struct {
     EJCOLL *jcoll; //current collection
     bool icase; //ignore case normalization
@@ -53,7 +57,7 @@ static bool _ejdbcolsetmutex(EJCOLL *coll);
 static bool _ejcollockmethod(EJCOLL *coll, bool wr);
 static bool _ejcollunlockmethod(EJCOLL *coll);
 static bool _bsonoidkey(bson *bs, bson_oid_t *oid);
-static char* _bsonitstrval(bson_iterator *it, int *vsz, TCLIST *tokens);
+static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens, txtflags_t flags);
 static char* _bsonipathrowldr(TCLIST *tokens, const char *pkbuf, int pksz, const char *rowdata, int rowdatasz,
         const char *ipath, int ipathsz, void *op, int *vsz);
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
@@ -486,7 +490,7 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
     memmove(ikey + 1, fpath, fpathlen + 1);
     ikey[0] = 'i';
     memmove(ipath + 1, fpath, fpathlen + 1);
-    ipath[0] = 's'; //string index type
+    ipath[0] = 's'; //defaulting to string index type
 
     JBENSUREOPENLOCK(jcoll->jb, true, false);
     imeta = _imetaidx(jcoll, fpath);
@@ -544,8 +548,8 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
         goto finish;
     }
     _BSONIPATHROWLDR op;
-     op.icase = false;
-     op.jcoll = jcoll;
+    op.icase = false;
+    op.jcoll = jcoll;
 
     if (tcitype) {
         if (flags & JBIDXSTR) {
@@ -554,6 +558,7 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
         }
         if (flags & JBIDXISTR) {
             ipath[0] = 'i';
+            op.icase = true;
             rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
         }
         if (rv && (flags & JBIDXNUM)) {
@@ -584,6 +589,7 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
         }
         if ((flags & JBIDXISTR) && (ibld || !(oldiflags & JBIDXISTR))) {
             ipath[0] = 'i';
+            op.icase = true;
             rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, &op);
         }
         if (rv && (flags & JBIDXNUM) && (ibld || !(oldiflags & JBIDXNUM))) {
@@ -2618,7 +2624,8 @@ finish:
  * Resulting value size stored into 'vsz'.
  * If returned value is not NULL it must be freed by TCFREE.
  */
-static char* _bsonitstrval(bson_iterator *it, int *vsz, TCLIST *tokens) {
+static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens, txtflags_t flags) {
+    int retlen = 0;
     char *ret = NULL;
     bson_type btype = bson_iterator_type(it);
     if (btype == BSON_STRING) {
@@ -2632,30 +2639,40 @@ static char* _bsonitstrval(bson_iterator *it, int *vsz, TCLIST *tokens) {
                 while (*ep > ' ' && *ep != ',') {
                     ep++;
                 }
-                if (ep > sp) TCLISTPUSH(tokens, sp, ep - sp);
+                if (ep > sp) {
+                    if (flags & JBICASE) { //ignore case mode
+                        char *isp;
+                        int len = tcicaseformat((const char*) sp, ep - sp, &isp);
+                        if (len >= 0) { //success
+                            TCLISTPUSH(tokens, isp, len);
+                            TCFREE(isp);
+                        } else {
+                            _ejdbsetecode(jb, len, __FILE__, __LINE__, __func__);
+                        }
+                    } else {
+                        TCLISTPUSH(tokens, sp, ep - sp);
+                    }
+                }
                 sp = ep;
             }
-            *vsz = 0;
-            ret = NULL;
         } else {
-            *vsz = bson_iterator_string_len(it) - 1;
-            ret = (*vsz > 0) ? tcmemdup(bson_iterator_string(it), *vsz) : NULL;
+            retlen = bson_iterator_string_len(it) - 1;
+            ret = (retlen > 0) ? tcmemdup(bson_iterator_string(it), retlen) : NULL;
         }
     } else if (BSON_IS_NUM_TYPE(btype)) {
         char nbuff[TCNUMBUFSIZ];
         if (btype == BSON_INT || btype == BSON_LONG) {
-            *vsz = bson_numstrn(nbuff, TCNUMBUFSIZ, bson_iterator_long(it));
-            if (*vsz >= TCNUMBUFSIZ) {
-                *vsz = TCNUMBUFSIZ - 1;
-                nbuff[TCNUMBUFSIZ - 1] = '\0';
+            retlen = bson_numstrn(nbuff, TCNUMBUFSIZ, bson_iterator_long(it));
+            if (retlen >= TCNUMBUFSIZ) {
+                retlen = TCNUMBUFSIZ - 1;
             }
-            ret = tcmemdup(nbuff, *vsz);
+            ret = tcmemdup(nbuff, retlen);
         } else if (btype == BSON_DOUBLE) {
-            *vsz = tcftoa(bson_iterator_double(it), nbuff, TCNUMBUFSIZ, 6);
-            if (*vsz >= TCNUMBUFSIZ) {
-                *vsz = TCNUMBUFSIZ - 1;
+            retlen = tcftoa(bson_iterator_double(it), nbuff, TCNUMBUFSIZ, 6);
+            if (retlen >= TCNUMBUFSIZ) {
+                retlen = TCNUMBUFSIZ - 1;
             }
-            ret = tcmemdup(nbuff, *vsz);
+            ret = tcmemdup(nbuff, retlen);
         }
     } else if (btype == BSON_ARRAY) {
         bson_type eltype; //last element bson type
@@ -2664,22 +2681,31 @@ static char* _bsonitstrval(bson_iterator *it, int *vsz, TCLIST *tokens) {
         if (tokens) {
             while ((eltype = bson_iterator_next(&sit)) != BSON_EOO) {
                 int vz = 0;
-                char *v = _bsonitstrval(&sit, &vz, NULL);
+                char *v = _bsonitstrval(jb, &sit, &vz, NULL, flags);
                 if (v) {
                     TCLISTPUSH(tokens, v, vz);
                     TCFREE(v);
                 }
             }
-            ret = NULL;
-            *vsz = 0;
         } else {
             //Array elements are joined with ',' delimeter.
             ret = _fetch_bson_str_array2(&sit, &eltype);
-            *vsz = strlen(ret);
+            retlen = strlen(ret);
         }
-    } else {
-        *vsz = 0;
     }
+    if ((flags & JBICASE) && ret) {
+        char *isp;
+        retlen = tcicaseformat((const char*) ret, retlen, &isp);
+        TCFREE(ret);
+        if (retlen >= 0) { //success
+            ret = isp;
+        } else {
+            _ejdbsetecode(jb, retlen, __FILE__, __LINE__, __func__);
+            ret = NULL;
+            retlen = 0;
+        }
+    }
+    *vsz = retlen;
     return ret;
 }
 
@@ -2713,7 +2739,7 @@ static char* _bsonipathrowldr(
             return res;
         }
     }
-    if (!ipath || ipathsz < 2 || *(ipath + 1) == '\0' || (*ipath != 's' && *ipath != 'n' && *ipath != 'a')) {
+    if (!ipath || ipathsz < 2 || *(ipath + 1) == '\0' || strchr("snai", *ipath) == NULL) {
         return NULL;
     }
     //skip index type prefix char with (fpath + 1)
@@ -2722,6 +2748,8 @@ static char* _bsonipathrowldr(
 
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
         const char *fpath, int fpathsz, void *op, int *vsz) {
+    _BSONIPATHROWLDR *odata = (_BSONIPATHROWLDR*) op;
+    assert(odata && odata->jcoll);
     char *ret = NULL;
     int bsize;
     bson_iterator it;
@@ -2732,7 +2760,7 @@ static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz
     }
     bson_iterator_from_buffer(&it, bsdata);
     bson_find_fieldpath_value2(fpath, fpathsz, &it);
-    ret = _bsonitstrval(&it, vsz, tokens);
+    ret = _bsonitstrval(odata->jcoll->jb, &it, vsz, tokens, (odata->icase ? JBICASE : 0));
     TCFREE(bsdata);
     return ret;
 }
@@ -2774,12 +2802,13 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         char *fvalue = NULL;
         int ofvaluesz = 0;
         char *ofvalue = NULL;
+        txtflags_t textflags = (iflags & JBIDXISTR) ? JBICASE : 0;
 
         if (obsdata && obsdatasz > 0) {
             bson_iterator_from_buffer(&oit, obsdata);
             oft = bson_find_fieldpath_value2(mkey + 1, mkeysz - 1, &oit);
             TCLIST *tokens = (oft == BSON_ARRAY) ? tclistnew() : NULL;
-            ofvalue = BSON_IS_IDXSUPPORTED_TYPE(oft) ? _bsonitstrval(&oit, &ofvaluesz, tokens) : NULL;
+            ofvalue = BSON_IS_IDXSUPPORTED_TYPE(oft) ? _bsonitstrval(jcoll->jb, &oit, &ofvaluesz, tokens, textflags) : NULL;
             if (tokens) {
                 ofvalue = tclistdump(tokens, &ofvaluesz);
                 tclistdel(tokens);
@@ -2789,7 +2818,7 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
             bson_iterator_init(&fit, bs);
             ft = bson_find_fieldpath_value2(mkey + 1, mkeysz - 1, &fit);
             TCLIST *tokens = (ft == BSON_ARRAY) ? tclistnew() : NULL;
-            fvalue = BSON_IS_IDXSUPPORTED_TYPE(ft) ? _bsonitstrval(&fit, &fvaluesz, tokens) : NULL;
+            fvalue = BSON_IS_IDXSUPPORTED_TYPE(ft) ? _bsonitstrval(jcoll->jb, &fit, &fvaluesz, tokens, textflags) : NULL;
             if (tokens) {
                 fvalue = tclistdump(tokens, &fvaluesz);
                 tclistdel(tokens);
@@ -2802,13 +2831,16 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
             imap = tcmapnew2(16);
             rimap = tcmapnew2(16);
         }
-        for (int i = 4; i <= 6; ++i) { /* JBIDXNUM, JBIDXSTR, JBIDXARR */
+        for (int i = 4; i <= 7; ++i) { /* JBIDXNUM, JBIDXSTR, JBIDXARR, JBIDXISTR */
             bool rm = false;
-            if ((1 << i) == JBIDXNUM && (JBIDXNUM & iflags)) {
+            int itype = (1 << i);
+            if (itype == JBIDXNUM && (JBIDXNUM & iflags)) {
                 ikey[0] = 'n';
-            } else if ((1 << i) == JBIDXSTR && (JBIDXSTR & iflags)) {
+            } else if (itype == JBIDXSTR && (JBIDXSTR & iflags)) {
                 ikey[0] = 's';
-            } else if ((1 << i) == JBIDXARR && (JBIDXARR & iflags)) {
+            } else if (itype == JBIDXISTR && (JBIDXISTR & iflags)) {
+                ikey[0] = 'i';
+            } else if (itype == JBIDXARR && (JBIDXARR & iflags)) {
                 ikey[0] = 'a';
                 if (ofvalue && oft == BSON_ARRAY &&
                         (!fvalue || ft != oft || fvaluesz != ofvaluesz || memcmp(fvalue, ofvalue, fvaluesz))) {
