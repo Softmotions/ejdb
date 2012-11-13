@@ -51,7 +51,9 @@ enum { //Query field flags
     EJFEXCLUDED = 1 << 5, //If query field excluded from matching
     EJFNOINDEX = 1 << 6, //Do not use index for field
     EJFORDERUSED = 1 << 7, //This ordering field was used
-    EJFPKMATCHING = 1 << 8 //_id PK field matching
+    EJFPKMATCHING = 1 << 8, //_id PK field matching
+
+    EJCONDICASE = 1 << 9, //Ignore case iin matching
 };
 
 

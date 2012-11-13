@@ -10660,7 +10660,7 @@ static int tcgammadecode(const char *ptr, int size, char *obuf){
 
 #include "utf8proc.h"
 int tcicaseformat(const char *str, int strlen, char **dstptr) {
-    if (strlen == 0 || *str == '\0') {
+    if (strlen <= 0 || *str == '\0') {
         *dstptr = strdup("");
         return 0;
     }

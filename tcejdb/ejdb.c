@@ -1854,7 +1854,7 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
         case TDBQCSTREQ:
         case TDBQCSTRBW:
         case TDBQCSTROREQ:
-            p = 's'; //lexical string index
+            p = (qf->flags & EJCONDICASE) ? 'i' : 's'; //lexical string index
             break;
         case TDBQCNUMEQ:
         case TDBQCNUMGT:
@@ -1880,7 +1880,7 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
         TDBIDX *idx = tdb->idxs + i;
         assert(idx);
         if (p == 'o') {
-            if (*idx->name == 'a') {
+            if (*idx->name == 'a' || *idx->name == 'i') { //token index or icase index not the best solution here
                 continue;
             }
         } else if (*idx->name != p) {
@@ -1891,7 +1891,9 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
         }
     }
     //No direct operation index. Any alternatives?
-    if (idxmeta && (qf->tcop == TDBQCSTREQ || qf->tcop == TDBQCSTROREQ || qf->tcop == TDBQCNUMOREQ)) {
+    if (idxmeta &&
+            !(qf->flags & EJCONDICASE) &&
+            (qf->tcop == TDBQCSTREQ || qf->tcop == TDBQCSTROREQ || qf->tcop == TDBQCNUMOREQ)) {
         bson_iterator it;
         bson_type bt = bson_find(&it, idxmeta, "iflags");
         if (bt != BSON_INT) {
@@ -2272,7 +2274,7 @@ static void _delqfdata(const EJQ *q, const EJQF *qf) {
  * @param it BSON iterator
  * @param type[out] Detected BSON type of last element
  */
-static TCLIST* _fetch_bson_str_array(bson_iterator *it, bson_type *type) {
+static TCLIST* _fetch_bson_str_array(EJDB *jb, bson_iterator *it, bson_type *type, txtflags_t tflags) {
     TCLIST *res = tclistnew();
     *type = BSON_EOO;
     bson_type ftype;
@@ -2281,7 +2283,18 @@ static TCLIST* _fetch_bson_str_array(bson_iterator *it, bson_type *type) {
             case BSON_SYMBOL:
             case BSON_STRING:
                 *type = ftype;
-                tclistpush2(res, bson_iterator_string(it));
+                if (tflags & JBICASE) { //ignore case
+                    char *buf;
+                    int len = tcicaseformat(bson_iterator_string(it), bson_iterator_string_len(it) - 1, &buf);
+                    if (len < 0) {
+                        _ejdbsetecode(jb, len, __FILE__, __LINE__, __func__);
+                        break;
+                    }
+                    tclistpush2(res, buf);
+                    TCFREE(buf);
+                } else {
+                    tclistpush2(res, bson_iterator_string(it));
+                }
                 break;
             case BSON_INT:
             case BSON_LONG:
@@ -2300,8 +2313,8 @@ static TCLIST* _fetch_bson_str_array(bson_iterator *it, bson_type *type) {
 }
 
 /** result must be freed by TCFREE */
-static char* _fetch_bson_str_array2(bson_iterator *it, bson_type *type) {
-    TCLIST *res = _fetch_bson_str_array(it, type);
+static char* _fetch_bson_str_array2(EJDB *jb, bson_iterator *it, bson_type *type, txtflags_t tflags) {
+    TCLIST *res = _fetch_bson_str_array(jb, it, type, tflags);
     char *tokens = tcstrjoin(res, ',');
     tclistdel(res);
     return tokens;
@@ -2350,6 +2363,8 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                 qf.flags |= EJCOMPLTE;
             } else if (!strcmp("$begin", fkey)) {
                 qf.flags |= EJCONDSTARTWITH;
+            } else if (!strcmp("$icase", fkey)) {
+                qf.flags |= EJCONDICASE;
             }
         }
 
@@ -2368,7 +2383,7 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                     bson_iterator sit;
                     bson_iterator_subiterator(it, &sit);
                     bson_type atype = 0;
-                    TCLIST *tokens = _fetch_bson_str_array(&sit, &atype);
+                    TCLIST *tokens = _fetch_bson_str_array(jb, &sit, &atype, (qf.flags & EJCONDICASE) ? JBICASE : 0);
                     if (atype == 0) {
                         ret = JBEQINOPNOTARRAY;
                         tclistdel(tokens);
@@ -2442,8 +2457,18 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
             {
                 assert(!qf.fpath && !qf.expr);
                 qf.ftype = ftype;
-                qf.expr = tcstrdup(bson_iterator_string(it));
-                qf.exprsz = strlen(qf.expr);
+                if (qf.flags & EJCONDICASE) {
+                    qf.exprsz = tcicaseformat(bson_iterator_string(it), bson_iterator_string_len(it) - 1, &qf.expr);
+                    if (qf.exprsz < 0) {
+                        ret = qf.exprsz;
+                        qf.exprsz = 0;
+                        break;
+                    }
+                } else {
+                    qf.expr = tcstrdup(bson_iterator_string(it));
+                    qf.exprsz = strlen(qf.expr);
+                }
+
                 qf.fpath = tcstrjoin(pathStack, '.');
                 qf.fpathsz = strlen(qf.fpath);
                 if (qf.flags & EJCONDSTARTWITH) {
@@ -2624,7 +2649,7 @@ finish:
  * Resulting value size stored into 'vsz'.
  * If returned value is not NULL it must be freed by TCFREE.
  */
-static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens, txtflags_t flags) {
+static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens, txtflags_t tflags) {
     int retlen = 0;
     char *ret = NULL;
     bson_type btype = bson_iterator_type(it);
@@ -2640,12 +2665,12 @@ static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens
                     ep++;
                 }
                 if (ep > sp) {
-                    if (flags & JBICASE) { //ignore case mode
-                        char *isp;
-                        int len = tcicaseformat((const char*) sp, ep - sp, &isp);
+                    if (tflags & JBICASE) { //ignore case mode
+                        char *buf;
+                        int len = tcicaseformat((const char*) sp, ep - sp, &buf);
                         if (len >= 0) { //success
-                            TCLISTPUSH(tokens, isp, len);
-                            TCFREE(isp);
+                            TCLISTPUSH(tokens, buf, len);
+                            TCFREE(buf);
                         } else {
                             _ejdbsetecode(jb, len, __FILE__, __LINE__, __func__);
                         }
@@ -2681,7 +2706,7 @@ static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens
         if (tokens) {
             while ((eltype = bson_iterator_next(&sit)) != BSON_EOO) {
                 int vz = 0;
-                char *v = _bsonitstrval(jb, &sit, &vz, NULL, flags);
+                char *v = _bsonitstrval(jb, &sit, &vz, NULL, tflags);
                 if (v) {
                     TCLISTPUSH(tokens, v, vz);
                     TCFREE(v);
@@ -2689,16 +2714,16 @@ static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens
             }
         } else {
             //Array elements are joined with ',' delimeter.
-            ret = _fetch_bson_str_array2(&sit, &eltype);
+            ret = _fetch_bson_str_array2(jb, &sit, &eltype, tflags);
             retlen = strlen(ret);
         }
     }
-    if ((flags & JBICASE) && ret) {
-        char *isp;
-        retlen = tcicaseformat((const char*) ret, retlen, &isp);
+    if ((tflags & JBICASE) && ret) {
+        char *buf;
+        retlen = tcicaseformat((const char*) ret, retlen, &buf);
         TCFREE(ret);
         if (retlen >= 0) { //success
-            ret = isp;
+            ret = buf;
         } else {
             _ejdbsetecode(jb, retlen, __FILE__, __LINE__, __func__);
             ret = NULL;
