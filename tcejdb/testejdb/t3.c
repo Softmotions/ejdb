@@ -11,6 +11,7 @@
 #include <assert.h>
 #include "ejdb_private.h"
 #include <locale.h>
+#include <pthread.h>
 
 #include "CUnit/Basic.h"
 
@@ -126,6 +127,146 @@ void testPerf1() {
     ejdbrmcoll(jb, coll->cname, true);
 }
 
+
+
+//Race conditions
+
+typedef struct {
+    int id;
+    EJDB *jb;
+
+} TARGRACE;
+
+static void eprint(EJDB *jb, int line, const char *func) {
+    int ecode = ejdbecode(jb);
+    fprintf(stderr, "%d: %s: error: %d: %s\n",
+            line, func, ecode, ejdberrmsg(ecode));
+}
+
+static void *threadrace1(void *_tr) {
+    const int iterations = 500;
+    TARGRACE *tr = (TARGRACE*) _tr;
+    bool err = false;
+
+    bson bq;
+    bson_init_as_query(&bq);
+    bson_append_int(&bq, "tid", tr->id);
+    bson_finish(&bq);
+
+    bson_type bt;
+    bson_iterator it;
+    void *bsdata;
+    bool saved = false;
+    int lastcnt = 0;
+
+    for (int i = 0; !err && i < iterations; ++i) {
+        EJCOLL *coll = ejdbcreatecoll(jb, "threadrace1", NULL);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+        EJQ *q = ejdbcreatequery(jb, &bq, NULL, 0, NULL);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(q);
+
+        bson_oid_t oid2;
+        bson_oid_t *oid = NULL;
+        int cnt = 0;
+        uint32_t count;
+        TCLIST *res = NULL;
+
+        if (ejdbecode(jb) != 0) {
+            eprint(jb, __LINE__, "threadrace1");
+            err = true;
+            goto ffinish;
+        }
+
+        res = ejdbqrysearch(coll, q, &count, 0, NULL);
+
+        if (ejdbecode(jb) != 0) {
+            eprint(jb, __LINE__, "threadrace1.ejdbqrysearch");
+            err = true;
+            goto ffinish;
+        }
+        if (count != 1 && saved) {
+            CU_ASSERT_TRUE_FATAL(false);
+            goto ffinish;
+        }
+        if (count > 0) {
+            bsdata = TCLISTVALPTR(res, 0);
+            CU_ASSERT_PTR_NOT_NULL_FATAL(bsdata);
+            bt = bson_find_from_buffer(&it, bsdata, "cnt");
+            CU_ASSERT_EQUAL_FATAL(bt, BSON_INT);
+            cnt = bson_iterator_int(&it);
+            bt = bson_find_from_buffer(&it, bsdata, "_id");
+            CU_ASSERT_EQUAL_FATAL(bt, BSON_OID);
+            oid = bson_iterator_oid(&it);
+            CU_ASSERT_PTR_NOT_NULL_FATAL(oid);
+        }
+
+        bson sbs;
+        bson_init(&sbs);
+        if (oid) {
+            bson_append_oid(&sbs, "_id", oid);
+        }
+        bson_append_int(&sbs, "tid", tr->id);
+        bson_append_int(&sbs, "cnt", ++cnt);
+        bson_finish(&sbs);
+
+        if (!ejdbsavebson(coll, &sbs, &oid2)) {
+            eprint(jb, __LINE__, "threadrace1.ejdbsavebson");
+            err = true;
+        }
+        bson_destroy(&sbs);
+        lastcnt = cnt;
+ffinish:
+        if (res) tclistdel(res);
+        if (q) ejdbquerydel(q);
+    }
+    bson_destroy(&bq);
+    CU_ASSERT_EQUAL(lastcnt, iterations);
+    //fprintf(stderr, "\nThread %d finished", tr->id);
+    return err ? "error" : NULL;
+}
+
+void testRace1() {
+    CU_ASSERT_PTR_NOT_NULL_FATAL(jb);
+    const int tnum = 50;
+    bool err = false;
+    TARGRACE targs[tnum];
+    pthread_t threads[tnum];
+
+    EJCOLL *coll = ejdbcreatecoll(jb, "threadrace1", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    if (!ejdbsetindex(coll, "tid", JBIDXNUM)) {
+        eprint(jb, __LINE__, "testRace1");
+        err = true;
+    }
+    if (err) {
+        goto finish;
+    }
+
+    for (int i = 0; i < tnum; i++) {
+        targs[i].jb = jb;
+        targs[i].id = i;
+        if (pthread_create(threads + i, NULL, threadrace1, targs + i) != 0) {
+            eprint(jb, __LINE__, "pthread_create");
+            targs[i].id = -1;
+            err = true;
+        }
+    }
+
+    for (int i = 0; i < tnum; i++) {
+        if (targs[i].id == -1) continue;
+        void *rv;
+        if (pthread_join(threads[i], &rv) != 0) {
+            eprint(jb, __LINE__, "pthread_join");
+            err = true;
+        } else if (rv) {
+            err = true;
+        }
+    }
+
+finish:
+    CU_ASSERT_FALSE(err);
+}
+
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
@@ -143,7 +284,8 @@ int main() {
 
     /* Add the tests to the suite */
     if (
-            (NULL == CU_add_test(pSuite, "testPerf1", testPerf1))
+            //(NULL == CU_add_test(pSuite, "testPerf1", testPerf1)) ||
+            (NULL == CU_add_test(pSuite, "testRace1", testRace1))
 
             ) {
         CU_cleanup_registry();
