@@ -262,6 +262,11 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
           -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
       - $exists Field existence matching:
           -   {'json.field.path' : {'$exists' : true|false}}
+      - $icase Case insensitive string matching:
+          -  {'json.field.path' : {'$icase' : 'val1'}} //icase matching
+          Ignore case matching with '$in' operation:
+          -  {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
+           For case insensitive matching you can create special type of string index.
 
     NOTE: Negate operations: $not and $nin not using indexes
           so they can be slow in comparison to other matching operations.
@@ -391,10 +396,12 @@ Performs B+ tree index file optimization.
 
 <a name="ensureIndex"/>
 ### ensureStringIndex(cname, path, cb)
+### ensureIStringIndex(cname, path, cb)
 ### ensureNumberIndex(cname, path, cb)
 ### ensureArrayIndex(cname, path, cb)
 
-Ensure index presence of String|Number|Array type for JSON field path
+Ensure index presence of String|Number|Array type for JSON field path.
+`IString` is the special type of String index for case insensitive matching.
 
  __Arguments__
 
@@ -406,10 +413,12 @@ Ensure index presence of String|Number|Array type for JSON field path
 
 <a name="rebuildIndex"/>
 ### rebuildStringIndex(cname, path, cb)
+### rebuildIStringIndex(cname, path, cb)
 ### rebuildNumberIndex(cname, path, cb)
 ### rebuildArrayIndex(cname, path, cb)
 
-Rebuild index of String|Number|Array type for JSON field path
+Rebuild index of String|Number|Array type for JSON field path.
+`IString` is the special type of String index for case insensitive matching.
 
  __Arguments__
 
@@ -421,10 +430,12 @@ Rebuild index of String|Number|Array type for JSON field path
 
 <a name="dropIndex"/>
 ### dropStringIndex(cname, path, cb)
+### dropIStringIndex(cname, path, cb)
 ### dropNumberIndex(cname, path, cb)
 ### dropArrayIndex(cname, path, cb)
 
-Drop index of String|Number|Array type for JSON field path
+Drop index of String|Number|Array type for JSON field path.
+`IString` is the special type of String index for case insensitive matching.
 
  __Arguments__
 
@@ -577,6 +588,10 @@ Queries
  *          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
  *      - $exists Field existence matching:
  *          -   {'json.field.path' : {'$exists' : true|false}}
+ *        - $icase Case insensitive string matching:
+ *          -    {'json.field.path' : {'$icase' : 'val1'}} //icase matching
+ *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}} //icase matching with '$in' operation
+ *          For case insensitive matching you can create special index of type: `JBIDXISTR`
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
@@ -639,7 +654,7 @@ Where
 
 Limitations/TODOs
 ------------------------------------
-* Case insensitive string indexes
+* ~~Case insensitive string indexes~~ #3
 * Collect collection index statistic
 * Windows port
 

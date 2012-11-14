@@ -3,9 +3,6 @@
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df name="tcejdb" root=".">
       <df name="autom4te.cache">
-        <in>output.0</in>
-        <in>requests</in>
-        <in>traces.0</in>
       </df>
       <df name="bros">
         <in>bdbtest.c</in>
