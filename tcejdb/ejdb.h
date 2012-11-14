@@ -220,7 +220,8 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *          -   {'json.field.path' : {'$exists' : true|false}}
  *      - $icase Case insensitive string matching:
  *          -    {'json.field.path' : {'$icase' : 'val1'}} //icase matching
- *          -    {'name' : {'$icase' : {'$in' : ['théâtre - театр', 'hello world']}}} //icase matching with '$in' operation
+ *          Ignore case matching with '$in' operation:
+ *          -    {'name' : {'$icase' : {'$in' : ['théâtre - театр', 'hello world']}}}
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
  *
  *  NOTE: Negate operations: $not and $nin not using indexes

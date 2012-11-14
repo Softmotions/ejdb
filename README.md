@@ -588,9 +588,10 @@ Queries
  *          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
  *      - $exists Field existence matching:
  *          -   {'json.field.path' : {'$exists' : true|false}}
- *        - $icase Case insensitive string matching:
+ *      - $icase Case insensitive string matching:
  *          -    {'json.field.path' : {'$icase' : 'val1'}} //icase matching
- *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}} //icase matching with '$in' operation
+            Ignore case matching with '$in' operation:
+ *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
