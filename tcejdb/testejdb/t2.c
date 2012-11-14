@@ -2616,8 +2616,6 @@ void testTicket7() { //https://github.com/Softmotions/ejdb/issues/7
         CU_ASSERT_PTR_NOT_NULL_FATAL(bsdata);
     }
     //Now perform $in qry
-
-
     //{_id : {$in : ["oid1", "oid2", "oid3"]}}
     bson bsq2;
     bson_init_as_query(&bsq2);
@@ -2650,6 +2648,12 @@ void testTicket7() { //https://github.com/Softmotions/ejdb/issues/7
     TCXSTR *log2 = tcxstrnew();
     TCLIST *q2res = ejdbqrysearch(coll, q2, &count2, 0, log2);
     //fprintf(stderr, "\n%s", TCXSTRPTR(log2));
+    CU_ASSERT_TRUE(count2 == 3);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log2), "MAIN IDX: 'NONE'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log2), "PRIMARY KEY MATCHING: TRUE"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log2), "RS COUNT: 3"));
+
+    //TODO ID comparison
 
     bson_destroy(&bsq1);
     tclistdel(q1res);

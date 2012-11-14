@@ -1522,37 +1522,89 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
 
     if (mqf->flags & EJFPKMATCHING) { //PK matching
         if (log) {
-            tcxstrprintf(log, "PRIMARY KEY MATCHING: %s\n", mqf->expr);
+            tcxstrprintf(log, "PRIMARY KEY MATCHING: TRUE\n");
         }
         assert(mqf->expr);
-        do {
-            bson_oid_t oid;
-            bson_oid_from_string(&oid, mqf->expr);
-            void *cdata = tchdbget(jcoll->tdb->hdb, &oid, sizeof (oid), &bsbufsz);
-            if (!cdata || !bsbufsz) {
-                break;
-            }
-            bsbuf = tcmaploadone(cdata, bsbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
-            if (!bsbuf || bsbufsz <= 4) {
-                TCFREE(cdata);
-                break;
-            }
-            bool matched = true;
-            for (int i = 0; i < qfsz; ++i) {
-                const EJQF *qf = qfs[i];
-                if (qf->flags & EJFEXCLUDED) continue;
-                if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
-                    matched = false;
+        if (mqf->tcop == TDBQCSTREQ) {
+            do {
+                bson_oid_t oid;
+                bson_oid_from_string(&oid, mqf->expr);
+                void *cdata = tchdbget(jcoll->tdb->hdb, &oid, sizeof (oid), &bsbufsz);
+                if (!cdata) {
                     break;
                 }
+                bsbuf = tcmaploadone(cdata, bsbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
+                if (!bsbuf) {
+                    TCFREE(cdata);
+                    break;
+                }
+                bool matched = true;
+                for (int i = 0; i < qfsz; ++i) {
+                    const EJQF *qf = qfs[i];
+                    if (qf->flags & EJFEXCLUDED) continue;
+                    if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
+                        matched = false;
+                        break;
+                    }
+                }
+                if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid), bsbuf, bsbufsz))) {
+                    JBQREGREC(bsbuf, bsbufsz);
+                } else {
+                    TCFREE(bsbuf);
+                }
+                TCFREE(cdata);
+            } while (false);
+        } else if (mqf->tcop == TDBQCSTROREQ) {
+            TCLIST *tokens = mqf->exprlist;
+            assert(tokens);
+            tclistsort(tokens);
+            for (int i = 1; i < TCLISTNUM(tokens); i++) {
+                if (!strcmp(TCLISTVALPTR(tokens, i), TCLISTVALPTR(tokens, i - 1))) {
+                    TCFREE(tclistremove2(tokens, i));
+                    i--;
+                }
             }
-            if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid), bsbuf, bsbufsz))) {
-                JBQREGREC(bsbuf, bsbufsz);
-            } else {
-                TCFREE(bsbuf);
+            if (mqf->order < 0 && (mqf->flags & EJFORDERUSED)) {
+                tclistinvert(tokens);
             }
-            TCFREE(cdata);
-        } while (false);
+            int tnum = TCLISTNUM(tokens);
+            for (int i = 0; (all || count < max) && i < tnum; i++) {
+                const char *token;
+                int tsiz;
+                TCLISTVAL(token, tokens, i, tsiz);
+                if (tsiz < 1) {
+                    continue;
+                }
+                bson_oid_t oid;
+                bson_oid_from_string(&oid, token);
+                void *cdata = tchdbget(jcoll->tdb->hdb, &oid, sizeof (oid), &bsbufsz);
+                if (!cdata) {
+                    continue;
+                }
+                bsbuf = tcmaploadone(cdata, bsbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
+                if (!bsbuf) {
+                    TCFREE(cdata);
+                    break;
+                }
+                bool matched = true;
+                for (int i = 0; i < qfsz; ++i) {
+                    const EJQF *qf = qfs[i];
+                    if (qf->flags & EJFEXCLUDED) continue;
+                    if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
+                        matched = false;
+                        break;
+                    }
+                }
+                if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid), bsbuf, bsbufsz))) {
+                    JBQREGREC(bsbuf, bsbufsz);
+                } else {
+                    TCFREE(bsbuf);
+                }
+                TCFREE(cdata);
+            }
+        } else {
+            assert(0);
+        }
     } else if (mqf->tcop == TDBQTRUE) {
         BDBCUR *cur = tcbdbcurnew(midx->db);
         if (mqf->order >= 0) {
@@ -2114,7 +2166,8 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf) {
         assert(mvalsz == sizeof (EJQF));
         assert(qf->fpath);
 
-        if (qf->ftype == BSON_OID && qf->tcop == TDBQCSTREQ && !strcmp(JDBIDKEYNAME, qf->fpath)) { //OID PK matching
+        if ((qf->tcop == TDBQCSTREQ || qf->tcop == TDBQCSTROREQ) &&
+                !strcmp(JDBIDKEYNAME, qf->fpath)) { //OID PK matching
             qf->flags |= EJFPKMATCHING;
             *mqf = qf;
             break;
@@ -2550,9 +2603,6 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
             {
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
-                if (isckey) {
-
-                }
                 ret = _parse_qobj_impl(jb, &sit, qmap, pathStack, &qf);
                 break;
             }
