@@ -121,7 +121,7 @@ EJDB_EXPORT const char *bson_data(const bson *b) {
     return (const char *) b->data;
 }
 
-static char hexbyte(char hex) {
+EJDB_INLINE char hexbyte(char hex) {
     if (hex >= '0' && hex <= '9')
         return (hex - '0');
     else if (hex >= 'A' && hex <= 'F')

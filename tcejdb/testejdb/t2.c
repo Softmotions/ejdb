@@ -2503,7 +2503,7 @@ void testICaseIndex() {
     bson a1;
     bson_oid_t oid;
     bson_init(&a1);
-    bson_append_string(&a1, "name", "HeLlo WorlD");  //#1
+    bson_append_string(&a1, "name", "HeLlo WorlD"); //#1
     CU_ASSERT_FALSE_FATAL(a1.err);
     bson_finish(&a1);
     CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
@@ -2590,6 +2590,78 @@ void testICaseIndex() {
     ejdbquerydel(q1);
 }
 
+void testTicket7() { //https://github.com/Softmotions/ejdb/issues/7
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    char xoid[25];
+    bson_iterator it;
+    bson_type bt;
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    const int onum = 3; //number of saved bsons
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_TRUE_FATAL(count >= onum);
+
+    for (int i = 0; i < TCLISTNUM(q1res) && i < onum; ++i) {
+        void *bsdata = TCLISTVALPTR(q1res, i);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(bsdata);
+    }
+    //Now perform $in qry
+
+
+    //{_id : {$in : ["oid1", "oid2", "oid3"]}}
+    bson bsq2;
+    bson_init_as_query(&bsq2);
+    bson_append_start_object(&bsq2, "_id");
+    bson_append_start_array(&bsq2, "$in");
+    for (int i = 0; i < onum; ++i) {
+        char ibuf[10];
+        snprintf(ibuf, 10, "%d", i);
+        bson_oid_t *oid = NULL;
+        bt = bson_find_from_buffer(&it, TCLISTVALPTR(q1res, i), "_id");
+        CU_ASSERT_TRUE_FATAL(bt == BSON_OID);
+        oid = bson_iterator_oid(&it);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(oid);
+        bson_oid_to_string(oid, xoid);
+        //fprintf(stderr, "\ni=%s oid=%s", ibuf, xoid);
+        if (i % 2 == 0) {
+            bson_append_oid(&bsq2, ibuf, oid);
+        } else {
+            bson_append_string(&bsq2, ibuf, xoid);
+        }
+    }
+    bson_append_finish_array(&bsq2);
+    bson_append_finish_object(&bsq2);
+    bson_finish(&bsq2);
+    CU_ASSERT_FALSE_FATAL(bsq2.err);
+
+    EJQ *q2 = ejdbcreatequery(jb, &bsq2, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q2);
+    uint32_t count2 = 0;
+    TCXSTR *log2 = tcxstrnew();
+    TCLIST *q2res = ejdbqrysearch(coll, q2, &count2, 0, log2);
+    //fprintf(stderr, "\n%s", TCXSTRPTR(log2));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    bson_destroy(&bsq2);
+    tclistdel(q2res);
+    tcxstrdel(log2);
+    ejdbquerydel(q2);
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -2638,7 +2710,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testQuery27", testQuery27)) ||
             (NULL == CU_add_test(pSuite, "testOIDSMatching", testOIDSMatching)) ||
             (NULL == CU_add_test(pSuite, "testEmptyFieldIndex", testEmptyFieldIndex)) ||
-            (NULL == CU_add_test(pSuite, "testICaseIndex", testICaseIndex))
+            (NULL == CU_add_test(pSuite, "testICaseIndex", testICaseIndex)) ||
+            (NULL == CU_add_test(pSuite, "testTicket7", testTicket7))
             ) {
         CU_cleanup_registry();
         return CU_get_error();
