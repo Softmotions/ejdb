@@ -1141,6 +1141,7 @@ finish:
             NODE_DEFINE_CONSTANT(target, JBIDXREBLD);
             NODE_DEFINE_CONSTANT(target, JBIDXNUM);
             NODE_DEFINE_CONSTANT(target, JBIDXSTR);
+            NODE_DEFINE_CONSTANT(target, JBIDXISTR);
             NODE_DEFINE_CONSTANT(target, JBIDXARR);
 
             //Misc

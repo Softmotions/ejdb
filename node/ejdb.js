@@ -192,6 +192,11 @@ EJDB.prototype.remove = function(cname, oid, cb) {
  *          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
  *      - $exists Field existence matching:
  *          -   {'json.field.path' : {'$exists' : true|false}}
+ *      - $icase Case insensitive string matching:
+ *          -    {'json.field.path' : {'$icase' : 'val1'}} //icase matching
+ *          icase matching with '$in' operation:
+ *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
+ *          For case insensitive matching you can create special type of string index.
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
@@ -456,6 +461,39 @@ EJDB.prototype.rebuildStringIndex = function(cname, path, cb) {
 EJDB.prototype.dropStringIndex = function(cname, path, cb) {
     if (typeof cb !== "function") cb = simpleErrCb;
     return this._impl.setIndex(cname, path, ejdblib.JBIDXSTR | ejdblib.JBIDXDROP, cb);
+};
+
+/**
+ * Ensure case insensitive String index for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.ensureIStringIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXISTR, cb);
+};
+
+/**
+ * Rebuild case insensitive String index for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.rebuildIStringIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXISTR | ejdblib.JBIDXREBLD, cb);
+};
+
+/**
+ * Drop case insensitive String index for JSON field path
+ * @param {String} cname Name of collection
+ * @param {String} path  JSON field path
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.dropIStringIndex = function(cname, path, cb) {
+    if (typeof cb !== "function") cb = simpleErrCb;
+    return this._impl.setIndex(cname, path, ejdblib.JBIDXISTR | ejdblib.JBIDXDROP, cb);
 };
 
 /**

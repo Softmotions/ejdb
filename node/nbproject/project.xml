@@ -4,9 +4,9 @@
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
             <name>node</name>
-            <c-extensions>c</c-extensions>
-            <cpp-extensions>cc,cpp</cpp-extensions>
-            <header-extensions>d,h,hpp</header-extensions>
+            <c-extensions/>
+            <cpp-extensions>cc</cpp-extensions>
+            <header-extensions>h</header-extensions>
             <sourceEncoding>UTF-8</sourceEncoding>
             <make-dep-projects>
                 <make-dep-project>../tcejdb</make-dep-project>

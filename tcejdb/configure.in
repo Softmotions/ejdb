@@ -21,7 +21,8 @@ MYFORMATVER="1.0"
 # Targets
 MYHEADERFILES="tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h ejdb.h bson.h myconf.h"
 MYLIBRARYFILES="libtcejdb.a"
-MYLIBOBJFILES="tcutil.o tchdb.o tcbdb.o tcfdb.o tctdb.o tcadb.o myconf.o md5.o ejdb.o bson.o timsort.o numbers.o encoding.o"
+MYLIBOBJFILES="tcutil.o tchdb.o tcbdb.o tcfdb.o tctdb.o tcadb.o myconf.o md5.o ejdb.o \
+bson.o timsort.o numbers.o encoding.o utf8proc.o"
 MYCOMMANDFILES="tcutest tcumttest tcucodec tchtest tchmttest tchmgr"
 MYCOMMANDFILES="$MYCOMMANDFILES tcbtest tcbmttest tcbmgr tcftest tcfmttest tcfmgr"
 MYCOMMANDFILES="$MYCOMMANDFILES tcttest tctmttest tctmgr tcatest tcamttest tcamgr"
@@ -38,7 +39,7 @@ MYPCFILES="tcejdb.pc"
 # Building flags
 MYCFLAGS="$MYCFLAGS -std=c99 -Wall -fPIC -fsigned-char -O2"
 MYCPPFLAGS="-I. -I\$(INCLUDEDIR) -I$HOME/include -I/usr/local/include"
-MYCPPFLAGS="$MYCPPFLAGS -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
+MYCPPFLAGS="$MYCPPFLAGS -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
 MYLDFLAGS="-L. -L\$(LIBDIR) -L$HOME/lib -L/usr/local/lib"
 MYCMDLDFLAGS=""
 MYRUNPATH="\$(LIBDIR)"

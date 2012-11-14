@@ -2467,7 +2467,131 @@ void testOIDSMatching() { //OID matching
     ejdbquerydel(q1);
 }
 
+void testEmptyFieldIndex() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXDROPALL));
+
+    bson a1;
+    bson_oid_t oid;
+    bson_init(&a1);
+    bson_append_string(&a1, "name", ""); //Empty but indexed field
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    bson_finish(&a1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
+    bson_destroy(&a1);
+    CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
+
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXISTR)); //Ignore case string index
+    CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
+
+    bson_init(&a1);
+    bson_append_string(&a1, "name", ""); //Empty but indexed field
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    bson_finish(&a1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
+    bson_destroy(&a1);
+    CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
+}
+
+void testICaseIndex() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXISTR)); //Ignore case string index
+
+    //Save one more record
+    bson a1;
+    bson_oid_t oid;
+    bson_init(&a1);
+    bson_append_string(&a1, "name", "HeLlo WorlD");  //#1
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    bson_finish(&a1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
+    bson_destroy(&a1);
+    CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
+
+    bson_init(&a1);
+    bson_append_string(&a1, "name", "THéÂtRE — театр"); //#2
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    bson_finish(&a1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
+    bson_destroy(&a1);
+    CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
+
+
+    //Case insensitive query using index
+    // {"name" : {"$icase" : "HellO woRLD"}}
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "name");
+    bson_append_string(&bsq1, "$icase", "HellO woRLD");
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    CU_ASSERT_TRUE(count == 1);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'iname'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_TRUE(!bson_compare_string("HeLlo WorlD", TCLISTVALPTR(q1res, i), "name"));
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //OK then drop icase index
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXISTR | JBIDXDROP)); //Ignore case string index
+
+    //Same query:
+    //{"name" : {"$icase" : {$in : ["théâtre - театр", "hello world"]}}}
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "name");
+    bson_append_start_object(&bsq1, "$icase");
+    bson_append_start_array(&bsq1, "$in");
+    bson_append_string(&bsq1, "0", "théâtre - театр");
+    bson_append_string(&bsq1, "1", "hello world");
+    bson_append_finish_array(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_TRUE(count == 2);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 2"));
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_TRUE(
+                !bson_compare_string("HeLlo WorlD", TCLISTVALPTR(q1res, i), "name") ||
+                !bson_compare_string("THéÂtRE — театр", TCLISTVALPTR(q1res, i), "name")
+                );
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 int main() {
+
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
 
@@ -2512,7 +2636,9 @@ int main() {
             (NULL == CU_add_test(pSuite, "testQuery25", testQuery25)) ||
             (NULL == CU_add_test(pSuite, "testQuery26", testQuery26)) ||
             (NULL == CU_add_test(pSuite, "testQuery27", testQuery27)) ||
-            (NULL == CU_add_test(pSuite, "testOIDSMatching", testOIDSMatching))
+            (NULL == CU_add_test(pSuite, "testOIDSMatching", testOIDSMatching)) ||
+            (NULL == CU_add_test(pSuite, "testEmptyFieldIndex", testEmptyFieldIndex)) ||
+            (NULL == CU_add_test(pSuite, "testICaseIndex", testICaseIndex))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

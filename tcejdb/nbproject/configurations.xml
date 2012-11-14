@@ -2,6 +2,8 @@
 <configurationDescriptor version="84">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df name="tcejdb" root=".">
+      <df name="autom4te.cache">
+      </df>
       <df name="bros">
         <in>bdbtest.c</in>
         <in>cdbtest.c</in>
@@ -25,6 +27,8 @@
         <df name="sample1">
           <in>sample1.c</in>
         </df>
+      </df>
+      <df name="static">
       </df>
       <df name="testejdb">
         <in>t1.c</in>
@@ -77,6 +81,9 @@
       <in>tcutil.h</in>
       <in>timsort-impl.h</in>
       <in>timsort.c</in>
+      <in>utf8proc.c</in>
+      <in>utf8proc.h</in>
+      <in>utf8proc_data.c</in>
     </df>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -152,7 +159,9 @@
       <item path="bson.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
-            <Elem>NDEBUG</Elem>
+            <Elem>_MYNOBZIP</Elem>
+            <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lz -lrt -lpthread -lm -lc "</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -160,6 +169,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -167,6 +177,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -174,6 +185,7 @@
         <cTool>
           <preprocessorList>
             <Elem>_TC_APPLIBS="-L/usr/local/lib -ltokyocabinet -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </folder>
@@ -181,6 +193,7 @@
         <cTool>
           <preprocessorList>
             <Elem>_TC_APPLIBS="-L/usr/local/lib -ltokyocabinet -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </folder>
@@ -188,6 +201,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -195,6 +209,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -202,6 +217,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -212,7 +228,8 @@
       <item path="tcadb.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
-            <Elem>NDEBUG</Elem>
+            <Elem>_MYNOBZIP</Elem>
+            <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -220,6 +237,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -227,6 +245,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -234,6 +253,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -241,13 +261,15 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
       <item path="tcbdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
-            <Elem>NDEBUG</Elem>
+            <Elem>_MYNOBZIP</Elem>
+            <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -255,6 +277,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -262,6 +285,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -269,13 +293,15 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
       <item path="tcfdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
-            <Elem>NDEBUG</Elem>
+            <Elem>_MYNOBZIP</Elem>
+            <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -283,6 +309,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -290,6 +317,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -297,13 +325,15 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
       <item path="tchdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
-            <Elem>NDEBUG</Elem>
+            <Elem>_MYNOBZIP</Elem>
+            <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -311,6 +341,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -318,6 +349,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -325,13 +357,15 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
       <item path="tctdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
-            <Elem>NDEBUG</Elem>
+            <Elem>_MYNOBZIP</Elem>
+            <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -339,6 +373,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -346,6 +381,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -353,6 +389,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -360,6 +397,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -367,6 +405,7 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -374,13 +413,15 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>
       <item path="tcutil.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
-            <Elem>NDEBUG</Elem>
+            <Elem>_MYNOBZIP</Elem>
+            <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -400,6 +441,21 @@
         <cTool>
           <preprocessorList>
             <Elem>NDEBUG</Elem>
+            <Elem>_UNICODE</Elem>
+          </preprocessorList>
+        </cTool>
+      </item>
+      <item path="utf8proc.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+          <preprocessorList>
+            <Elem>_UNICODE</Elem>
+          </preprocessorList>
+        </cTool>
+      </item>
+      <item path="utf8proc_data.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+          <preprocessorList>
+            <Elem>_UNICODE</Elem>
           </preprocessorList>
         </cTool>
       </item>

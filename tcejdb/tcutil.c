@@ -10656,6 +10656,61 @@ static int tcgammadecode(const char *ptr, int size, char *obuf){
   return wp - obuf;
 }
 
+#include "utf8proc.h"
 
+int tcicaseformat(const char *str, int strl, void *placeholder, int placeholdersz, char **dstptr) {
+    if (strl <= 0 || *str == '\0') {
+        if (placeholder && placeholdersz > 0) {
+            *((char*) placeholder) = '\0';
+            *dstptr = (char*) placeholder;
+        } else {
+            *dstptr = (char*) strdup("");
+        }
+        return 0;
+    }
+    return tcutf8map((const uint8_t*) str, strl, placeholder, placeholdersz, (uint8_t**) dstptr,
+            UTF8PROC_COMPOSE | UTF8PROC_IGNORE | UTF8PROC_LUMP | UTF8PROC_CASEFOLD | UTF8PROC_STRIPMARK);
+}
+
+int tcutf8map(const uint8_t *str, int strl, void *placeholder, int placeholdersz, uint8_t **dstptr, int options) {
+    int32_t *buffer;
+    ssize_t result;
+    *dstptr = NULL;
+    result = utf8proc_decompose(str, strl, NULL, 0, options);
+    if (result < 0) {
+        return result;
+    }
+    if (!placeholder || placeholdersz < (result * sizeof (int32_t) + 1)) {
+        buffer = malloc(result * sizeof (int32_t) + 1);
+        if (!buffer) {
+            return UTF8PROC_ERROR_NOMEM;
+        }
+    } else {
+        buffer = placeholder;
+    }
+    result = utf8proc_decompose(str, strl, buffer, result, options);
+    if (result < 0) {
+        if (buffer != placeholder) {
+            free(buffer);
+        }
+        return result;
+    }
+    result = utf8proc_reencode(buffer, result, options);
+    if (result < 0) {
+        if (buffer != placeholder) {
+            free(buffer);
+        }
+        return result;
+    }
+    if (buffer != placeholder) {
+        int32_t *newptr;
+        newptr = realloc(buffer, (size_t) result + 1);
+        if (newptr) {
+            buffer = newptr;
+        }
+    }
+    *dstptr = (uint8_t *) buffer;
+    return result;
+}
 
 // END OF FILE

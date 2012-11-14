@@ -51,7 +51,9 @@ enum { //Query field flags
     EJFEXCLUDED = 1 << 5, //If query field excluded from matching
     EJFNOINDEX = 1 << 6, //Do not use index for field
     EJFORDERUSED = 1 << 7, //This ordering field was used
-    EJFPKMATCHING = 1 << 8 //_id PK field matching
+    EJFPKMATCHING = 1 << 8, //_id PK field matching
+
+    EJCONDICASE = 1 << 9, //Ignore case iin matching
 };
 
 
@@ -76,6 +78,7 @@ struct EJQF { /**> Matching field and status */
     bson_type ftype; /**> BSON field type */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
+    EJDB *jb; /**> Reference to the EJDB during query processing */
 };
 typedef struct EJQF EJQF;
 

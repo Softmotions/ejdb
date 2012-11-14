@@ -3893,6 +3893,18 @@ double tclog2d(double num);
 uint64_t tcpagealign(uint64_t off);
 
 
+/**
+ * Convert string into case insensitive normalized format.
+ * @param str Str pointer
+ * @param strlen String data length in bytes
+ * @param dstptr Allocated NULL terminated destination buffer
+ * @return In case of success the length of the resulting UTF-8 string is
+ *  returned, otherwise a negative value.
+ */
+int tcicaseformat(const char *str, int strl, void *placeholder, int placeholdersz, char **dstptr);
+int tcutf8map(const uint8_t *str, int strl, void *placeholder, int placeholdersz, uint8_t **dstptr, int options);
+
+
 /* Print debug information with a formatted string as with `printf'. */
 #if __STDC_VERSION__ >= 199901L
 #define TCDPRINTF(...) \

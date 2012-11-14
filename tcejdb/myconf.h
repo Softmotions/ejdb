@@ -549,9 +549,8 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
   ((TC_num) < 0x80 ? 1 : (TC_num) < 0x4000 ? 2 : (TC_num) < 0x200000 ? 3 : \
    (TC_num) < 0x10000000 ? 4 : 5)
 
-/* compare keys of two records by lexical order */
 #define TCCMPLEXICAL(TC_rv, TC_aptr, TC_asiz, TC_bptr, TC_bsiz) \
-  do { \
+ do { \
     (TC_rv) = 0; \
     int _TC_min = (TC_asiz) < (TC_bsiz) ? (TC_asiz) : (TC_bsiz); \
     for(int _TC_i = 0; _TC_i < _TC_min; _TC_i++){ \
@@ -562,12 +561,6 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
     } \
     if((TC_rv) == 0) (TC_rv) = (TC_asiz) - (TC_bsiz); \
   } while(false)
-
-
-//TODO fixit
-#define TCCMPLEXICAL2(TC_rv, TC_s1, TC_s2) \
-    TC_rv = strcmp(TC_s1, TC_s2);
-
 
 #endif                                   // duplication check
 
