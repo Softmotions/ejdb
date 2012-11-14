@@ -2467,7 +2467,7 @@ void testOIDSMatching() { //OID matching
     ejdbquerydel(q1);
 }
 
-void testICaseIndex() { //OID matching
+void testEmptyFieldIndex() {
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
     CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXDROPALL));
@@ -2475,8 +2475,7 @@ void testICaseIndex() { //OID matching
     bson a1;
     bson_oid_t oid;
     bson_init(&a1);
-    bson_append_string(&a1, "name", "ПрИвЕт МйР");
-    bson_append_int(&a1, "age", 1);
+    bson_append_string(&a1, "name", "");  //Empty but indexed field
     CU_ASSERT_FALSE_FATAL(a1.err);
     bson_finish(&a1);
     CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
@@ -2485,6 +2484,33 @@ void testICaseIndex() { //OID matching
 
     CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXISTR)); //Ignore case string index
     CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
+
+    bson_init(&a1);
+    bson_append_string(&a1, "name", "");  //Empty but indexed field
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    bson_finish(&a1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
+    bson_destroy(&a1);
+    CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
+}
+
+
+void testICaseIndex() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXISTR)); //Ignore case string index
+
+    bson a1;
+    bson_oid_t oid;
+    bson_init(&a1);
+    bson_append_string(&a1, "name", "ПрИвЕт МйР");
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    bson_finish(&a1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
+    bson_destroy(&a1);
+    CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
+
+    //todo
 }
 
 int main() {
@@ -2533,6 +2559,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testQuery26", testQuery26)) ||
             (NULL == CU_add_test(pSuite, "testQuery27", testQuery27)) ||
             (NULL == CU_add_test(pSuite, "testOIDSMatching", testOIDSMatching)) ||
+            (NULL == CU_add_test(pSuite, "testEmptyFieldIndex", testEmptyFieldIndex)) ||
             (NULL == CU_add_test(pSuite, "testICaseIndex", testICaseIndex))
             ) {
         CU_cleanup_registry();

@@ -31,6 +31,9 @@
                                 return JB_ret; \
                             }
 
+/* Default size of stack allocated buffer for string conversions eg. tcicaseformat() */
+#define JBSTRINOPBUFFERSZ 512
+
 /* string processing/conversion flags */
 typedef enum {
     JBICASE = 1
@@ -2284,14 +2287,17 @@ static TCLIST* _fetch_bson_str_array(EJDB *jb, bson_iterator *it, bson_type *typ
             case BSON_STRING:
                 *type = ftype;
                 if (tflags & JBICASE) { //ignore case
-                    char *buf;
-                    int len = tcicaseformat(bson_iterator_string(it), bson_iterator_string_len(it) - 1, &buf);
+                    char *buf = NULL;
+                    char sbuf[JBSTRINOPBUFFERSZ];
+                    int len = tcicaseformat(bson_iterator_string(it), bson_iterator_string_len(it) - 1, sbuf, JBSTRINOPBUFFERSZ, &buf);
                     if (len < 0) {
                         _ejdbsetecode(jb, len, __FILE__, __LINE__, __func__);
                         break;
                     }
                     tclistpush2(res, buf);
-                    TCFREE(buf);
+                    if (buf && buf != sbuf) {
+                        TCFREE(buf);
+                    }
                 } else {
                     tclistpush2(res, bson_iterator_string(it));
                 }
@@ -2458,7 +2464,7 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                 assert(!qf.fpath && !qf.expr);
                 qf.ftype = ftype;
                 if (qf.flags & EJCONDICASE) {
-                    qf.exprsz = tcicaseformat(bson_iterator_string(it), bson_iterator_string_len(it) - 1, &qf.expr);
+                    qf.exprsz = tcicaseformat(bson_iterator_string(it), bson_iterator_string_len(it) - 1, NULL, 0, &qf.expr);
                     if (qf.exprsz < 0) {
                         ret = qf.exprsz;
                         qf.exprsz = 0;
@@ -2666,13 +2672,16 @@ static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens
                 }
                 if (ep > sp) {
                     if (tflags & JBICASE) { //ignore case mode
-                        char *buf;
-                        int len = tcicaseformat((const char*) sp, ep - sp, &buf);
+                        char *buf = NULL;
+                        char sbuf[JBSTRINOPBUFFERSZ];
+                        int len = tcicaseformat((const char*) sp, ep - sp, sbuf, JBSTRINOPBUFFERSZ, &buf);
                         if (len >= 0) { //success
                             TCLISTPUSH(tokens, buf, len);
-                            TCFREE(buf);
                         } else {
                             _ejdbsetecode(jb, len, __FILE__, __LINE__, __func__);
+                        }
+                        if (buf && buf != sbuf) {
+                            TCFREE(buf);
                         }
                     } else {
                         TCLISTPUSH(tokens, sp, ep - sp);
@@ -2682,7 +2691,11 @@ static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens
             }
         } else {
             retlen = bson_iterator_string_len(it) - 1;
-            ret = (retlen > 0) ? tcmemdup(bson_iterator_string(it), retlen) : NULL;
+            if (tflags & JBICASE) {
+                retlen = tcicaseformat(bson_iterator_string(it), retlen, NULL, 0, &ret);
+            } else {
+                ret = tcmemdup(bson_iterator_string(it), retlen);
+            }
         }
     } else if (BSON_IS_NUM_TYPE(btype)) {
         char nbuff[TCNUMBUFSIZ];
@@ -2691,12 +2704,15 @@ static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens
             if (retlen >= TCNUMBUFSIZ) {
                 retlen = TCNUMBUFSIZ - 1;
             }
-            ret = tcmemdup(nbuff, retlen);
         } else if (btype == BSON_DOUBLE) {
             retlen = tcftoa(bson_iterator_double(it), nbuff, TCNUMBUFSIZ, 6);
             if (retlen >= TCNUMBUFSIZ) {
                 retlen = TCNUMBUFSIZ - 1;
             }
+        }
+        if (tflags & JBICASE) {
+            retlen = tcicaseformat(nbuff, retlen, NULL, 0, &ret);
+        } else {
             ret = tcmemdup(nbuff, retlen);
         }
     } else if (btype == BSON_ARRAY) {
@@ -2718,17 +2734,10 @@ static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens
             retlen = strlen(ret);
         }
     }
-    if ((tflags & JBICASE) && ret) {
-        char *buf;
-        retlen = tcicaseformat((const char*) ret, retlen, &buf);
-        TCFREE(ret);
-        if (retlen >= 0) { //success
-            ret = buf;
-        } else {
-            _ejdbsetecode(jb, retlen, __FILE__, __LINE__, __func__);
-            ret = NULL;
-            retlen = 0;
-        }
+    if (retlen < 0) {
+        _ejdbsetecode(jb, retlen, __FILE__, __LINE__, __func__);
+        ret = NULL;
+        retlen = 0;
     }
     *vsz = retlen;
     return ret;
@@ -2742,7 +2751,7 @@ static char* _bsonipathrowldr(
     _BSONIPATHROWLDR *odata = (_BSONIPATHROWLDR*) op;
     assert(odata);
     char *res = NULL;
-    if (ipath && *ipath == '\0') { //PK
+    if (ipath && *ipath == '\0') { //PK TODO review
         if (tokens) {
             const unsigned char *sp = (unsigned char *) pkbuf;
             while (*sp != '\0') {
@@ -2768,7 +2777,12 @@ static char* _bsonipathrowldr(
         return NULL;
     }
     //skip index type prefix char with (fpath + 1)
-    return _bsonfpathrowldr(tokens, rowdata, rowdatasz, ipath + 1, ipathsz - 1, op, vsz);
+    res = _bsonfpathrowldr(tokens, rowdata, rowdatasz, ipath + 1, ipathsz - 1, op, vsz);
+    if (*vsz == 0) { //Do not allow empty strings for index opration
+        if (res) TCFREE(res);
+        res = NULL;
+    }
+    return res;
 }
 
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
@@ -2872,7 +2886,7 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
                     tcmapput(rimap, ikey, mkeysz, ofvalue, ofvaluesz);
                     rm = true;
                 }
-                if (fvalue && ft == BSON_ARRAY && (!ofvalue || rm)) {
+                if (fvalue && fvaluesz > 0 && ft == BSON_ARRAY && (!ofvalue || rm)) {
                     tcmapput(imap, ikey, mkeysz, fvalue, fvaluesz);
                 }
                 continue;
@@ -2884,16 +2898,12 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
                 tcmapput(rimap, ikey, mkeysz, ofvalue, ofvaluesz);
                 rm = true;
             }
-            if (fvalue && ft != BSON_ARRAY && (!ofvalue || rm)) {
+            if (fvalue && fvaluesz > 0 && ft != BSON_ARRAY && (!ofvalue || rm)) {
                 tcmapput(imap, ikey, mkeysz, fvalue, fvaluesz);
             }
         }
-        if (fvalue) {
-            TCFREE(fvalue);
-        }
-        if (ofvalue) {
-            TCFREE(ofvalue);
-        }
+        if (fvalue) TCFREE(fvalue);
+        if (ofvalue) TCFREE(ofvalue);
     }
     tcmapdel(cmeta);
     if (rimap && !tctdbidxout2(jcoll->tdb, oid, sizeof (*oid), rimap)) rv = false;
