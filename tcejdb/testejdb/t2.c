@@ -2475,7 +2475,7 @@ void testEmptyFieldIndex() {
     bson a1;
     bson_oid_t oid;
     bson_init(&a1);
-    bson_append_string(&a1, "name", "");  //Empty but indexed field
+    bson_append_string(&a1, "name", ""); //Empty but indexed field
     CU_ASSERT_FALSE_FATAL(a1.err);
     bson_finish(&a1);
     CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
@@ -2486,7 +2486,7 @@ void testEmptyFieldIndex() {
     CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
 
     bson_init(&a1);
-    bson_append_string(&a1, "name", "");  //Empty but indexed field
+    bson_append_string(&a1, "name", ""); //Empty but indexed field
     CU_ASSERT_FALSE_FATAL(a1.err);
     bson_finish(&a1);
     CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
@@ -2494,23 +2494,73 @@ void testEmptyFieldIndex() {
     CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
 }
 
-
 void testICaseIndex() {
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
     CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXISTR)); //Ignore case string index
 
+    //Save one more record
     bson a1;
     bson_oid_t oid;
     bson_init(&a1);
-    bson_append_string(&a1, "name", "ПрИвЕт МйР");
+    bson_append_string(&a1, "name", "HeLlo WorlD");
     CU_ASSERT_FALSE_FATAL(a1.err);
     bson_finish(&a1);
     CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
     bson_destroy(&a1);
     CU_ASSERT_EQUAL(ejdbecode(coll->jb), 0);
 
-    //todo
+    //Case insensitive query using index
+    // {"name" : {"$icase" : "HellO woRLD"}}
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "name");
+    bson_append_string(&bsq1, "$icase", "HellO woRLD");
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    CU_ASSERT_TRUE(count > 0);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'iname'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //OK then drop icase index
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXISTR | JBIDXDROP)); //Ignore case string index
+
+
+    //Same query: {"name" : {"$icase" : "HellO woRLD"}} without index
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "name");
+    bson_append_string(&bsq1, "$icase", "HellO woRLD");
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    fprintf(stderr, "%s", TCXSTRPTR(log));
+
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
 }
 
 int main() {

@@ -78,6 +78,7 @@ struct EJQF { /**> Matching field and status */
     bson_type ftype; /**> BSON field type */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
+    EJDB *jb; /**> Reference to the EJDB during query processing */
 };
 typedef struct EJQF EJQF;
 
