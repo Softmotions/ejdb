@@ -2854,8 +2854,7 @@ static char* _bsonipathrowldr(
         const char *pkbuf, int pksz,
         const char *rowdata, int rowdatasz,
         const char *ipath, int ipathsz, void *op, int *vsz) {
-    _BSONIPATHROWLDR *odata = (_BSONIPATHROWLDR*) op;
-    assert(odata);
+    assert(op);
     char *res = NULL;
     if (ipath && *ipath == '\0') { //PK TODO review
         if (tokens) {

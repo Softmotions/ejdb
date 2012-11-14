@@ -3901,8 +3901,8 @@ uint64_t tcpagealign(uint64_t off);
  * @return In case of success the length of the resulting UTF-8 string is
  *  returned, otherwise a negative value.
  */
-int tcicaseformat(const char *str, int strlen, void *placeholder, int placeholdersz, char **dstptr);
-int tcutf8map(const uint8_t *str, int strlen, void *placeholder, int placeholdersz, uint8_t **dstptr, int options);
+int tcicaseformat(const char *str, int strl, void *placeholder, int placeholdersz, char **dstptr);
+int tcutf8map(const uint8_t *str, int strl, void *placeholder, int placeholdersz, uint8_t **dstptr, int options);
 
 
 /* Print debug information with a formatted string as with `printf'. */
