@@ -34,7 +34,7 @@
 /* Default size of stack allocated buffer for string conversions eg. tcicaseformat() */
 #define JBSTRINOPBUFFERSZ 512
 
-/* Default size of tmp bson buffer on stack for field stripping in _pushstrippedbson() */
+/* Default size of tmp bson buffer on stack for field stripping in _pushstripbson() */
 #define JBSBUFFERSZ 8192
 
 /* string processing/conversion flags */
@@ -96,7 +96,7 @@ static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, const EJQ
         const void *pkbuf, int pkbufsz, void **bsbuf, int *bsbufsz);
 static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
-static void _pushstrippedbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz);
+static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz);
 static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
@@ -1405,9 +1405,22 @@ static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     }
 }
 
+typedef struct {
+    bson *sbson;
+    TCMAP *ifields;
+} _BSONSTRIPVISITORCTX;
+
+static bool _bsonstripvisitor(const char *ipath, int ipathlen, const char *key, int keylen,
+        const bson_iterator *it, void *op) {
+    bool rv = true;
+    _BSONSTRIPVISITORCTX *ictx = op;
+    assert(ictx);
+
+    return rv;
+}
 
 /* push bson into rs with only fields listed in ifields */
-static void _pushstrippedbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz) {
+static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz) {
     if (!ifields || TCMAPRNUM(ifields) <= 0) {
         TCLISTPUSH(rs, bsbuf, bsbufsz);
         return;
@@ -1419,9 +1432,21 @@ static void _pushstrippedbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbuf
     sbson.data = tmpbuf;
     sbson.dataSize = bsbufsz;
 
-    //Now copy filtered bson fields
-    
+    _BSONSTRIPVISITORCTX ictx;
+    ictx.sbson = &sbson;
+    ictx.ifields = ifields;
 
+    //Now copy filtered bson fields
+    bson_iterator it;
+    bson_iterator_from_buffer(&it, bsbuf);
+    bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, _bsonstripvisitor, &ictx);
+    bson_finish(&sbson);
+
+    if (!sbson.err) {
+        TCLISTPUSH(rs, bson_data(&sbson), bson_size(&sbson));
+    }
+    sbson.data = NULL; //this data will be freed at the end of this func
+    bson_destroy(&sbson); //destroy
 
     if (tmpbuf != bstack) {
         TCFREE(tmpbuf);
@@ -1543,7 +1568,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     ++count; \
     if (!onlycount && (all || count > skip)) { \
         if (ifields) {\
-            _pushstrippedbson(res, ifields, (_bsbuf), (_bsbufsz)); \
+            _pushstripbson(res, ifields, (_bsbuf), (_bsbufsz)); \
         } else { \
             TCLISTPUSH(res, (_bsbuf), (_bsbufsz)); \
         } \

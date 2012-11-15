@@ -191,6 +191,19 @@ EJDB_EXPORT bson_type bson_find_from_buffer(bson_iterator *it, const char *buffe
 EJDB_EXPORT bson_type bson_find_fieldpath_value(const char *fieldpath, bson_iterator *it);
 EJDB_EXPORT bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, bson_iterator *it);
 
+/**
+ * BSON object visitor
+ * @param it bson iterator to traverse
+ * @param visitor Visitor function
+ * @param op Opaque data for visitor
+ */
+typedef enum  {
+    BSON_TRAVERSE_ARRAYS_EXCLUDED = 1,
+    BSON_TRAVERSE_OBJECTS_EXCLUDED = 1 << 1
+} traverse_flags_t;
+typedef bool (*BSONVISITOR)(const char *ipath, int ipathlen, const char *key, int keylen, const bson_iterator *curr, void *op);
+EJDB_EXPORT void bson_visit_fields(bson_iterator *it, traverse_flags_t flags, BSONVISITOR visitor, void *op);
+
 
 EJDB_EXPORT bson_iterator* bson_iterator_create(void);
 EJDB_EXPORT void bson_iterator_dispose(bson_iterator*);

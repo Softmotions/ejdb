@@ -316,6 +316,46 @@ EJDB_EXPORT bson_type bson_find_from_buffer(bson_iterator *it, const char *buffe
     return bson_iterator_type(it);
 }
 
+static void bson_visit_fields_impl(traverse_flags_t flags, char* pstack, int curr, bson_iterator *it, BSONVISITOR visitor, void *op) {
+    int klen = 0;
+    bson_type t;
+    bool vret = true;
+    while (vret && (t = bson_iterator_next(it)) != BSON_EOO) {
+        const char* key = bson_iterator_key(it);
+        klen = strlen(key);
+        if (curr + klen > BSON_MAX_FPATH_LEN) {
+            continue;
+        }
+        //PUSH
+        if (curr > 0) { //add leading dot
+            memset(pstack + curr, '.', 1);
+            curr++;
+        }
+        memcpy(pstack + curr, key, klen);
+        curr += klen;
+        //Call visitor
+        bool vret = visitor(pstack, curr, key, klen, it, op);
+        if (vret) {
+            if ((t == BSON_OBJECT && (flags & BSON_TRAVERSE_OBJECTS_EXCLUDED) == 0) ||
+                    (t == BSON_ARRAY && (flags & BSON_TRAVERSE_ARRAYS_EXCLUDED) == 0)) {
+                bson_iterator sit;
+                bson_iterator_subiterator(it, &sit);
+                bson_visit_fields_impl(flags, pstack, curr, it, visitor, op);
+            }
+        }
+        //POP
+        curr -= klen;
+        if (curr > 0) {
+            curr--; //remove leading dot
+        }
+    }
+}
+
+EJDB_EXPORT void bson_visit_fields(bson_iterator *it, traverse_flags_t flags, BSONVISITOR visitor, void *op) {
+    char pstack[BSON_MAX_FPATH_LEN + 1];
+    bson_visit_fields_impl(flags, pstack, 0, it, visitor, op);
+}
+
 static bson_type bson_find_fieldpath_value_impl(char* pstack, int curr, const char *fpath, int fplen, bson_iterator *it) {
     int i;
     int klen = 0;
@@ -360,12 +400,12 @@ EJDB_EXPORT bson_type bson_find_fieldpath_value(const char *fpath, bson_iterator
 }
 
 EJDB_EXPORT bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, bson_iterator *it) {
-    char pstackstack[BSON_MAX_FPATH_LEN];
+    char pstackstack[BSON_MAX_FPATH_LEN + 1];
     char *pstack;
-    if (fplen < BSON_MAX_FPATH_LEN) {
+    if (fplen <= BSON_MAX_FPATH_LEN) {
         pstack = pstackstack;
     } else {
-        pstack = MYMALLOC((fplen + 1) * sizeof(char));
+        pstack = MYMALLOC((fplen + 1) * sizeof (char));
         if (!pstack) {
             return BSON_EOO;
         }
@@ -762,7 +802,9 @@ EJDB_EXPORT int bson_finish(bson *b) {
 
 EJDB_EXPORT void bson_destroy(bson *b) {
     if (b) {
-        bson_free(b->data);
+        if (b->data) {
+            bson_free(b->data);
+        }
         b->err = 0;
         b->data = 0;
         b->cur = 0;
@@ -1301,7 +1343,7 @@ EJDB_EXPORT int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, co
         int l2 = bson_iterator_bin_len(&it2);
         return memcmp(bson_iterator_bin_data(&it1), bson_iterator_bin_data(&it2), MIN(l1, l2));
     } else if (t1 == BSON_OID && t2 == BSON_OID) {
-        return memcmp(bson_iterator_oid(&it1), bson_iterator_oid(&it2), sizeof(bson_oid_t));
+        return memcmp(bson_iterator_oid(&it1), bson_iterator_oid(&it2), sizeof (bson_oid_t));
     }
     return 0;
 }
