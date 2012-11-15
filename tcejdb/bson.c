@@ -316,11 +316,11 @@ EJDB_EXPORT bson_type bson_find_from_buffer(bson_iterator *it, const char *buffe
     return bson_iterator_type(it);
 }
 
-static void bson_visit_fields_impl(traverse_flags_t flags, char* pstack, int curr, bson_iterator *it, BSONVISITOR visitor, void *op) {
+static void bson_visit_fields_impl(bson_traverse_flags_t flags, char* pstack, int curr, bson_iterator *it, BSONVISITOR visitor, void *op) {
     int klen = 0;
     bson_type t;
-    bool vret = true;
-    while (vret && (t = bson_iterator_next(it)) != BSON_EOO) {
+    bson_visitor_cmd_t vcmd;
+    while (!(vcmd & BSON_VCMD_TERMINATE) && (t = bson_iterator_next(it)) != BSON_EOO) {
         const char* key = bson_iterator_key(it);
         klen = strlen(key);
         if (curr + klen > BSON_MAX_FPATH_LEN) {
@@ -334,15 +334,19 @@ static void bson_visit_fields_impl(traverse_flags_t flags, char* pstack, int cur
         memcpy(pstack + curr, key, klen);
         curr += klen;
         //Call visitor
-        bool vret = visitor(pstack, curr, key, klen, it, op);
-        if (vret) {
-            if ((t == BSON_OBJECT && (flags & BSON_TRAVERSE_OBJECTS_EXCLUDED) == 0) ||
-                    (t == BSON_ARRAY && (flags & BSON_TRAVERSE_ARRAYS_EXCLUDED) == 0)) {
-                bson_iterator sit;
-                bson_iterator_subiterator(it, &sit);
-                bson_visit_fields_impl(flags, pstack, curr, it, visitor, op);
-            }
+        vcmd = visitor(pstack, curr, key, klen, it, false, op);
+        if (vcmd & BSON_VCMD_TERMINATE) {
+            break;
         }
+        if (!(vcmd & BSON_VCMD_SKIP_NESTED) &&
+                ((t == BSON_OBJECT && (flags & BSON_TRAVERSE_OBJECTS_EXCLUDED) == 0) ||
+                (t == BSON_ARRAY && (flags & BSON_TRAVERSE_ARRAYS_EXCLUDED) == 0))
+                ) {
+            bson_iterator sit;
+            bson_iterator_subiterator(it, &sit);
+            bson_visit_fields_impl(flags, pstack, curr, it, visitor, op);
+        }
+        vcmd = visitor(pstack, curr, key, klen, it, true, op);
         //POP
         curr -= klen;
         if (curr > 0) {
@@ -351,7 +355,7 @@ static void bson_visit_fields_impl(traverse_flags_t flags, char* pstack, int cur
     }
 }
 
-EJDB_EXPORT void bson_visit_fields(bson_iterator *it, traverse_flags_t flags, BSONVISITOR visitor, void *op) {
+EJDB_EXPORT void bson_visit_fields(bson_iterator *it, bson_traverse_flags_t flags, BSONVISITOR visitor, void *op) {
     char pstack[BSON_MAX_FPATH_LEN + 1];
     bson_visit_fields_impl(flags, pstack, 0, it, visitor, op);
 }
@@ -773,9 +777,24 @@ int bson_ensure_space(bson *b, const int bytesNeeded) {
         }
     }
 
-    b->data = bson_realloc(b->data, new_size);
-    if (!b->data)
+    if (b->flags & BSON_FLAG_STACK_ALLOCATED) { //translate stack memory into heap
+        char *odata = b->data;
+        b->data = bson_malloc_func(new_size);
+        if (!b->data) {
+            bson_fatal_msg(!!b->data, "malloc() failed");
+            return BSON_ERROR;
+        }
+        if (odata) {
+            memcpy(b->data, odata, MIN(new_size, b->dataSize));
+        }
+        b->flags &= ~BSON_FLAG_STACK_ALLOCATED; //reset this flag
+    } else {
+        b->data = bson_realloc(b->data, new_size);
+    }
+    if (!b->data) {
         bson_fatal_msg(!!b->data, "realloc() failed");
+        return BSON_ERROR;
+    }
 
     b->dataSize = new_size;
     b->cur += b->data - orig;
@@ -1196,10 +1215,10 @@ EJDB_EXPORT void bson_swap_endian32(void *outp, const void *inp) {
     out[3] = in[0];
 }
 
-EJDB_EXPORT void bson_append_field_from_iterator(bson_iterator *from, bson *into) {
+EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson *into) {
     bson_type t = bson_iterator_type(from);
-    if (t == BSON_EOO) {
-        return;
+    if (t == BSON_EOO || !into || into->finished) {
+        return BSON_ERROR;
     }
     const char* key = bson_iterator_key(from);
     switch (t) {
@@ -1271,7 +1290,7 @@ EJDB_EXPORT void bson_append_field_from_iterator(bson_iterator *from, bson *into
         default:
             break;
     }
-
+    return BSON_OK;
 }
 
 EJDB_EXPORT int bson_merge(bson *b1, bson *b2, bson_bool_t overwrite, bson *out) {

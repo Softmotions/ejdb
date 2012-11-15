@@ -68,7 +68,8 @@ enum bson_binary_subtype_t {
 };
 
 enum bson_flags_t {
-    BSON_FLAG_QUERY_MODE = 1
+    BSON_FLAG_QUERY_MODE = 1,
+    BSON_FLAG_STACK_ALLOCATED = 1 << 1 /**< If it set BSON data is allocated on stack and realloc should deal with this case */
 };
 
 typedef enum {
@@ -200,9 +201,14 @@ EJDB_EXPORT bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, b
 typedef enum  {
     BSON_TRAVERSE_ARRAYS_EXCLUDED = 1,
     BSON_TRAVERSE_OBJECTS_EXCLUDED = 1 << 1
-} traverse_flags_t;
-typedef bool (*BSONVISITOR)(const char *ipath, int ipathlen, const char *key, int keylen, const bson_iterator *curr, void *op);
-EJDB_EXPORT void bson_visit_fields(bson_iterator *it, traverse_flags_t flags, BSONVISITOR visitor, void *op);
+} bson_traverse_flags_t;
+typedef enum {
+    BSON_VCMD_OK = 0,
+    BSON_VCMD_TERMINATE = 1,
+    BSON_VCMD_SKIP_NESTED = 1 << 1
+} bson_visitor_cmd_t;
+typedef bson_visitor_cmd_t (*BSONVISITOR)(const char *ipath, int ipathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op);
+EJDB_EXPORT void bson_visit_fields(bson_iterator *it, bson_traverse_flags_t flags, BSONVISITOR visitor, void *op);
 
 
 EJDB_EXPORT bson_iterator* bson_iterator_create(void);
@@ -1056,7 +1062,7 @@ EJDB_EXPORT void bson_swap_endian64(void *outp, const void *inp);
  * @param from
  * @param into
  */
-EJDB_EXPORT void bson_append_field_from_iterator(bson_iterator *from, bson *into);
+EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson *into);
 
 
 /**

@@ -3,6 +3,7 @@
 
 
 #include <regex.h>
+#include <asm-generic/ioctls.h>
 
 #include "ejdb_private.h"
 #include "ejdbutl.h"
@@ -1410,13 +1411,32 @@ typedef struct {
     TCMAP *ifields;
 } _BSONSTRIPVISITORCTX;
 
-static bool _bsonstripvisitor(const char *ipath, int ipathlen, const char *key, int keylen,
-        const bson_iterator *it, void *op) {
-    bool rv = true;
+static bson_visitor_cmd_t _bsonstripvisitor(const char *ipath, int ipathlen, const char *key, int keylen,
+        const bson_iterator *it, bool after, void *op) {
     _BSONSTRIPVISITORCTX *ictx = op;
-    assert(ictx);
-
-    return rv;
+    assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
+    TCMAP *ifields = ictx->ifields;
+    const void *buf;
+    int bufsz;
+    bson_type bt = bson_iterator_type(it);
+    if (bt == BSON_EOO) {
+        return BSON_VCMD_OK;
+    }
+    if (bt != BSON_OBJECT && bt != BSON_ARRAY) {
+        if (after) { //simple primitive case
+            return BSON_VCMD_OK;
+        }
+        //const void *tcmapget(const TCMAP *map, const void *kbuf, int ksiz, int *sp);
+        buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
+        if (buf) {
+            bson_append_field_from_iterator(it, ictx->sbson);
+        }
+        return BSON_VCMD_OK;
+    } else { //more complicated case
+        //TODO
+        
+    }
+    return BSON_VCMD_OK;
 }
 
 /* push bson into rs with only fields listed in ifields */
@@ -1430,8 +1450,10 @@ static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz)
     bson sbson;
     bson_reset(&sbson);
     sbson.data = tmpbuf;
-    sbson.dataSize = bsbufsz;
-
+    sbson.dataSize = MAX(bsbufsz, JBSBUFFERSZ);
+    if (sbson.data == bstack) {
+        sbson.flags |= BSON_FLAG_STACK_ALLOCATED;
+    }
     _BSONSTRIPVISITORCTX ictx;
     ictx.sbson = &sbson;
     ictx.ifields = ifields;
@@ -1440,16 +1462,17 @@ static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz)
     bson_iterator it;
     bson_iterator_from_buffer(&it, bsbuf);
     bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, _bsonstripvisitor, &ictx);
-    bson_finish(&sbson);
 
-    if (!sbson.err) {
+    if (bson_finish(&sbson) == BSON_OK) {
         TCLISTPUSH(rs, bson_data(&sbson), bson_size(&sbson));
     }
-    sbson.data = NULL; //this data will be freed at the end of this func
-    bson_destroy(&sbson); //destroy
 
-    if (tmpbuf != bstack) {
-        TCFREE(tmpbuf);
+    //Cleanup
+    char *sdata = sbson.data; //save data ptr to check if it on stack
+    sbson.data = NULL; //this data will be freed at the end of this func
+    bson_destroy(&sbson);
+    if (sdata != bstack) {
+        TCFREE(sdata);
     }
 }
 
