@@ -42,8 +42,8 @@ EJDB_EXTERN_C_START
 #define BSON_OK 0
 #define BSON_ERROR -1
 
-//Maxim field path length
-#define BSON_MAX_FPATH_LEN 255
+//Maximum field path length allocated on stack
+#define BSON_MAX_FPATH_LEN (255)
 
 enum bson_error_t {
     BSON_SIZE_OVERFLOW = 1 /**< Trying to create a BSON object larger than INT_MAX. */
@@ -620,6 +620,8 @@ EJDB_EXPORT int bson_finish(bson *b);
 EJDB_EXPORT void bson_destroy(bson *b);
 
 EJDB_EXPORT void bson_del(bson *b);
+
+EJDB_EXPORT void bson_reset(bson *b);
 
 /**
  * Returns a pointer to a static empty BSON object.

@@ -34,6 +34,9 @@
 /* Default size of stack allocated buffer for string conversions eg. tcicaseformat() */
 #define JBSTRINOPBUFFERSZ 512
 
+/* Default size of tmp bson buffer on stack for field stripping in _pushstrippedbson() */
+#define JBSBUFFERSZ 8192
+
 /* string processing/conversion flags */
 typedef enum {
     JBICASE = 1
@@ -80,7 +83,7 @@ static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
         const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
-static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf);
+static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields);
 static TCMAP* _parseqobj(EJDB *jb, bson *qspec);
 static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf);
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
@@ -93,6 +96,7 @@ static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, const EJQ
         const void *pkbuf, int pkbufsz, void **bsbuf, int *bsbufsz);
 static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
+static void _pushstrippedbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz);
 static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
@@ -1401,6 +1405,29 @@ static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     }
 }
 
+
+/* push bson into rs with only fields listed in ifields */
+static void _pushstrippedbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz) {
+    if (!ifields || TCMAPRNUM(ifields) <= 0) {
+        TCLISTPUSH(rs, bsbuf, bsbufsz);
+        return;
+    }
+    char bstack[JBSBUFFERSZ];
+    void *tmpbuf = (bsbufsz < JBSBUFFERSZ) ? bstack : MYMALLOC(bsbufsz);
+    bson sbson;
+    bson_reset(&sbson);
+    sbson.data = tmpbuf;
+    sbson.dataSize = bsbufsz;
+
+    //Now copy filtered bson fields
+    
+
+
+    if (tmpbuf != bstack) {
+        TCFREE(tmpbuf);
+    }
+}
+
 /** Query */
 static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int qflags, TCXSTR *log) {
     //Clone the query object
@@ -1411,11 +1438,12 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     *outcount = 0;
     bool onlycount = (qflags & JBQRYCOUNT); //quering only for result set count
     bool all = false; //need all records
+
     EJQF *mqf = NULL; //main indexed query condition if exists
+    TCMAP *ifields = NULL; //field names included in result set
 
     TCLIST *res = onlycount ? NULL : tclistnew2(4096);
-    _qrypreprocess(jcoll, ejq, &mqf);
-
+    _qrypreprocess(jcoll, ejq, qflags, &mqf, &ifields);
 
     int anum = 0; //number of active conditions
     const EJQF **ofs = NULL; //order fields
@@ -1433,6 +1461,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     int vbufsz;
     void *bsbuf; //BSON buffer
     int bsbufsz; //BSON buffer size
+    static const bool yes = true; //Simple true const
 
     uint32_t count = 0; //current count
     uint32_t max = (ejq->max > 0) ? ejq->max : UINT_MAX;
@@ -1470,7 +1499,12 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
             for (int j = 0; j < qfsz; ++j) {
                 if (qfs[j]->orderseq == i + 1) { //orderseq starts with 1
                     ofs[i] = qfs[j];
-                    if (!(ofs[i]->flags & EJFORDERUSED)) aofsz++;
+                    if (!(ofs[i]->flags & EJFORDERUSED)) {
+                        aofsz++;
+                        if (ifields) { //add this order field to the list of fetched
+                            tcmapputkeep(ifields, ofs[i]->fpath, ofs[i]->fpathsz, &yes, sizeof (yes));
+                        }
+                    }
                     break;
                 }
             }
@@ -1508,10 +1542,14 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
 #define JBQREGREC(_bsbuf, _bsbufsz)   \
     ++count; \
     if (!onlycount && (all || count > skip)) { \
-        TCLISTPUSH(res, _bsbuf, _bsbufsz); \
+        if (ifields) {\
+            _pushstrippedbson(res, ifields, (_bsbuf), (_bsbufsz)); \
+        } else { \
+            TCLISTPUSH(res, (_bsbuf), (_bsbufsz)); \
+        } \
     } \
-    if (_bsbuf) { \
-        TCFREE(_bsbuf); \
+    if ((_bsbuf)) { \
+        TCFREE((_bsbuf)); \
     }
 
     bool trim = (midx && *midx->name != '\0');
@@ -1563,9 +1601,6 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
                     TCFREE(tclistremove2(tokens, i));
                     i--;
                 }
-            }
-            if (mqf->order < 0 && (mqf->flags & EJFORDERUSED)) {
-                tclistinvert(tokens);
             }
             int tnum = TCLISTNUM(tokens);
             for (int i = 0; (all || count < max) && i < tnum; i++) {
@@ -2003,6 +2038,9 @@ finish:
     if (ofs) {
         TCFREE(ofs);
     }
+    if (ifields) {
+        tcmapdel(ifields);
+    }
     ejdbquerydel(ejq);
 #undef JBQREGREC
     return res;
@@ -2089,13 +2127,13 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
     return NULL;
 }
 
-static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf) {
+static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields) {
     assert(jcoll && ejq && ejq->qobjmap && mqf);
 
+    *ifields = NULL;
     *mqf = NULL;
-    EJQF *oqf = NULL; //Order condition
 
-    //Iterate over query fiels
+    EJQF *oqf = NULL; //Order condition
     TCMAP *qmap = ejq->qobjmap;
     tcmapiterinit(qmap);
     const void *mkey;
@@ -2152,6 +2190,22 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf) {
         if (BSON_IS_NUM_TYPE(bt)) {
             int64_t v = bson_iterator_long(&it);
             ejq->max = (uint32_t) ((v < 0) ? 0 : v);
+        }
+        if (!(qflags & JBQRYCOUNT)) {
+            bt = bson_find(&it, ejq->hints, "$fields"); //Collect required fields
+            if (bt == BSON_OBJECT) {
+                TCMAP *fmap = tcmapnew2(64);
+                static const bool yes = true;
+                bson_iterator_subiterator(&it, &sit);
+                while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
+                    if (!BSON_IS_NUM_TYPE(bt) || bson_iterator_int(&sit) <= 0) {
+                        continue;
+                    }
+                    const char *key = bson_iterator_key(&sit);
+                    tcmapputkeep(fmap, key, strlen(key), &yes, sizeof (yes));
+                }
+                tcmapputkeep(fmap, JDBIDKEYNAME, JDBIDKEYNAMEL, &yes, sizeof (yes));
+            }
         }
     }
 
