@@ -79,6 +79,7 @@ struct EJQF { /**> Matching field and status */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
     EJDB *jb; /**> Reference to the EJDB during query processing */
+    EJQ *q; /**> Query object field embedded into */
 };
 typedef struct EJQF EJQF;
 

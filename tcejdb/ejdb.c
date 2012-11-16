@@ -85,8 +85,8 @@ static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
 static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
 static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields);
-static TCMAP* _parseqobj(EJDB *jb, bson *qspec);
-static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf);
+static TCMAP* _parseqobj(EJDB *jb, EJQ *q, bson *qspec);
+static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf);
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens);
 static bool _qrycondcheckstror(const char *vbuf, const TCLIST *tokens);
@@ -422,7 +422,7 @@ EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobj
     EJQ *q;
     TCCALLOC(q, 1, sizeof (*q));
     if (qobj) {
-        q->qobjmap = _parseqobj(jb, qobj);
+        q->qobjmap = _parseqobj(jb, q, qobj);
         if (!q->qobjmap) {
             goto error;
         }
@@ -1392,6 +1392,7 @@ static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
         while ((kbuf = tcmapiternext(src->qobjmap, &ksz)) != NULL) {
             EJQF qf;
             _qryfieldup(tcmapiterval(kbuf, &vsz), &qf, qflags);
+            qf.q = target;
             tcmapput(target->qobjmap, kbuf, ksz, &qf, sizeof (qf));
         }
     }
@@ -2648,7 +2649,7 @@ static char* _fetch_bson_str_array2(EJDB *jb, bson_iterator *it, bson_type *type
     return tokens;
 }
 
-static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf) {
+static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf) {
     assert(it && qmap && pathStack);
     int ret = 0;
     bson_type ftype;
@@ -2668,6 +2669,7 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
 
         EJQF qf;
         memset(&qf, 0, sizeof (qf));
+        qf.q = q;
 
         if (!isckey) {
             //Push key on top of path stack
@@ -2751,7 +2753,7 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
                 } else {
                     bson_iterator sit;
                     bson_iterator_subiterator(it, &sit);
-                    ret = _parse_qobj_impl(jb, &sit, qmap, pathStack, &qf);
+                    ret = _parse_qobj_impl(jb, q, &sit, qmap, pathStack, &qf);
                     break;
                 }
             }
@@ -2760,7 +2762,7 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
             {
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
-                ret = _parse_qobj_impl(jb, &sit, qmap, pathStack, &qf);
+                ret = _parse_qobj_impl(jb, q, &sit, qmap, pathStack, &qf);
                 break;
             }
             case BSON_OID:
@@ -2914,14 +2916,14 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
  *  Created map instance must be freed `tcmapdel`.
  *  Each element of map must be freed by TODO
  */
-static TCMAP* _parseqobj(EJDB *jb, bson *qspec) {
+static TCMAP* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     assert(qspec);
     int rv = 0;
     TCMAP *res = tcmapnew();
     bson_iterator it;
     bson_iterator_init(&it, qspec);
     TCLIST *pathStack = tclistnew();
-    rv = _parse_qobj_impl(jb, &it, res, pathStack, NULL);
+    rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL);
     if (rv) {
         tcmapdel(res);
         res = NULL;
