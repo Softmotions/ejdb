@@ -274,6 +274,7 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
     QUERY HINTS (specified by `hints` argument):
       - $max Maximum number in the result set
       - $skip Number of skipped results in the result set
+      - $orderby Sorting order of query fields.
       - $fields Set subset of fetched fields
            Example:
            hints:    {
