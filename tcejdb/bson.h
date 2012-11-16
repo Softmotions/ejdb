@@ -205,7 +205,8 @@ typedef enum  {
 typedef enum {
     BSON_VCMD_OK = 0,
     BSON_VCMD_TERMINATE = 1,
-    BSON_VCMD_SKIP_NESTED = 1 << 1
+    BSON_VCMD_SKIP_NESTED = 1 << 1,
+    BSON_VCMD_SKIP_AFTER = 1 << 2
 } bson_visitor_cmd_t;
 typedef bson_visitor_cmd_t (*BSONVISITOR)(const char *ipath, int ipathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op);
 EJDB_EXPORT void bson_visit_fields(bson_iterator *it, bson_traverse_flags_t flags, BSONVISITOR visitor, void *op);

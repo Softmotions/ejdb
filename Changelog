@@ -1,3 +1,7 @@
+2012-11-16 Anton Adamansky. <adamansky@gmail.com>
+    * #8 Field subset selection in queries
+    - Release 1.0.9
+
 2012-11-15 Anton Adamansky. <adamansky@gmail.com>
     * #7 Support PK hash index for $in operation if '_id' field is used in matching
     - Release 1.0.8

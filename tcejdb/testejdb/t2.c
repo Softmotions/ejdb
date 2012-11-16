@@ -2653,7 +2653,28 @@ void testTicket7() { //https://github.com/Softmotions/ejdb/issues/7
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log2), "PRIMARY KEY MATCHING: TRUE"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log2), "RS COUNT: 3"));
 
-    //TODO ID comparison
+    for (int i = 0; i < TCLISTNUM(q2res); ++i) {
+        bson_oid_t *oid1 = NULL;
+        bt = bson_find_from_buffer(&it, TCLISTVALPTR(q2res, i), "_id");
+        CU_ASSERT_TRUE_FATAL(bt == BSON_OID);
+        oid1 = bson_iterator_oid(&it);
+        bool matched = false;
+        for (int j = 0; j < TCLISTNUM(q1res); ++j) {
+            bson_oid_t *oid2 = NULL;
+            bt = bson_find_from_buffer(&it, TCLISTVALPTR(q1res, j), "_id");
+            CU_ASSERT_TRUE_FATAL(bt == BSON_OID);
+            oid2 = bson_iterator_oid(&it);
+            if (!memcmp(oid1, oid2, sizeof (bson_oid_t))) {
+                matched = true;
+                void *ptr = tclistremove2(q1res, j);
+                if (ptr) {
+                    TCFREE(ptr);
+                }
+                break;
+            }
+        }
+        CU_ASSERT_TRUE(matched);
+    }
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -2664,6 +2685,108 @@ void testTicket7() { //https://github.com/Softmotions/ejdb/issues/7
     tclistdel(q2res);
     tcxstrdel(log2);
     ejdbquerydel(q2);
+}
+
+void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    bson bshits1;
+    bson_init_as_query(&bshits1);
+    bson_append_start_object(&bshits1, "$fields");
+    bson_append_int(&bshits1, "phone", 1);
+    bson_append_int(&bshits1, "address.city", 1);
+    bson_append_int(&bshits1, "labels", 1);
+    bson_append_finish_object(&bshits1);
+    bson_finish(&bshits1);
+    CU_ASSERT_FALSE_FATAL(bshits1.err);
+
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshits1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+//    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+//        void *bsdata = TCLISTVALPTR(q1res, i);
+//        bson_print_raw(stderr, bsdata, 0);
+//    }
+
+    bson_type bt;
+    bson_iterator it;
+    int ccount = 0;
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        void *bsdata = TCLISTVALPTR(q1res, i);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(bsdata);
+
+        if (!bson_compare_string("333-222-333", TCLISTVALPTR(q1res, i), "phone")) {
+            ++ccount;
+            bson_iterator_from_buffer(&it, bsdata);
+            bt = bson_find_fieldpath_value("_id", &it);
+            CU_ASSERT_TRUE(bt == BSON_OID);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("address", &it);
+            CU_ASSERT_TRUE(bt == BSON_OBJECT);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("address.city", &it);
+            CU_ASSERT_TRUE(bt == BSON_STRING);
+            CU_ASSERT_FALSE(strcmp("Novosibirsk", bson_iterator_string(&it)));
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("address.zip", &it);
+            CU_ASSERT_TRUE(bt == BSON_EOO);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("age", &it);
+            CU_ASSERT_TRUE(bt == BSON_EOO);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("name", &it);
+            CU_ASSERT_TRUE(bt == BSON_EOO);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("labels", &it);
+            CU_ASSERT_TRUE(bt == BSON_EOO);
+        } else if (!bson_compare_string("444-123-333", TCLISTVALPTR(q1res, i), "phone")) {
+            ++ccount;
+            bson_iterator_from_buffer(&it, bsdata);
+            bt = bson_find_fieldpath_value("_id", &it);
+            CU_ASSERT_TRUE(bt == BSON_OID);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("address", &it);
+            CU_ASSERT_TRUE(bt == BSON_OBJECT);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("address.city", &it);
+            CU_ASSERT_TRUE(bt == BSON_STRING);
+            CU_ASSERT_FALSE(strcmp("Novosibirsk", bson_iterator_string(&it)));
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("address.zip", &it);
+            CU_ASSERT_TRUE(bt == BSON_EOO);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("age", &it);
+            CU_ASSERT_TRUE(bt == BSON_EOO);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("name", &it);
+            CU_ASSERT_TRUE(bt == BSON_EOO);
+            bson_iterator_from_buffer(&it, bsdata);
+            bt =  bson_find_fieldpath_value("labels", &it);
+            CU_ASSERT_TRUE(bt == BSON_ARRAY);
+            CU_ASSERT_FALSE(bson_compare_string("red", bsdata, "labels.0"));
+            CU_ASSERT_FALSE(bson_compare_string("green", bsdata, "labels.1"));
+            CU_ASSERT_FALSE(bson_compare_string("with gap, label", bsdata, "labels.2"));
+        }
+    }
+    CU_ASSERT_TRUE(ccount == 2);
+    bson_destroy(&bsq1);
+    bson_destroy(&bshits1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+
 }
 
 int main() {
@@ -2715,7 +2838,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testOIDSMatching", testOIDSMatching)) ||
             (NULL == CU_add_test(pSuite, "testEmptyFieldIndex", testEmptyFieldIndex)) ||
             (NULL == CU_add_test(pSuite, "testICaseIndex", testICaseIndex)) ||
-            (NULL == CU_add_test(pSuite, "testTicket7", testTicket7))
+            (NULL == CU_add_test(pSuite, "testTicket7", testTicket7)) ||
+            (NULL == CU_add_test(pSuite, "testTicket8", testTicket8))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

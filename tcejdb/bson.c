@@ -319,7 +319,7 @@ EJDB_EXPORT bson_type bson_find_from_buffer(bson_iterator *it, const char *buffe
 static void bson_visit_fields_impl(bson_traverse_flags_t flags, char* pstack, int curr, bson_iterator *it, BSONVISITOR visitor, void *op) {
     int klen = 0;
     bson_type t;
-    bson_visitor_cmd_t vcmd;
+    bson_visitor_cmd_t vcmd = 0;
     while (!(vcmd & BSON_VCMD_TERMINATE) && (t = bson_iterator_next(it)) != BSON_EOO) {
         const char* key = bson_iterator_key(it);
         klen = strlen(key);
@@ -344,9 +344,11 @@ static void bson_visit_fields_impl(bson_traverse_flags_t flags, char* pstack, in
                 ) {
             bson_iterator sit;
             bson_iterator_subiterator(it, &sit);
-            bson_visit_fields_impl(flags, pstack, curr, it, visitor, op);
+            bson_visit_fields_impl(flags, pstack, curr, &sit, visitor, op);
         }
-        vcmd = visitor(pstack, curr, key, klen, it, true, op);
+        if (!(vcmd & BSON_VCMD_SKIP_AFTER)) {
+            vcmd = visitor(pstack, curr, key, klen, it, true, op);
+        }
         //POP
         curr -= klen;
         if (curr > 0) {
@@ -1364,7 +1366,7 @@ EJDB_EXPORT int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, co
     } else if (t1 == BSON_OID && t2 == BSON_OID) {
         return memcmp(bson_iterator_oid(&it1), bson_iterator_oid(&it2), sizeof (bson_oid_t));
     }
-    return 0;
+    return -2;
 }
 
 EJDB_EXPORT int bson_compare(const void *bsdata1, const void *bsdata2, const char* fpath, int fplen) {

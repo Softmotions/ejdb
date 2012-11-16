@@ -35,8 +35,8 @@
 /* Default size of stack allocated buffer for string conversions eg. tcicaseformat() */
 #define JBSTRINOPBUFFERSZ 512
 
-/* Default size of tmp bson buffer on stack for field stripping in _pushstripbson() */
-#define JBSBUFFERSZ 8192
+/* Default size (16K) of tmp bson buffer on stack for field stripping in _pushstripbson() */
+#define JBSBUFFERSZ 16384
 
 /* string processing/conversion flags */
 typedef enum {
@@ -1409,18 +1409,23 @@ static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
 typedef struct {
     bson *sbson;
     TCMAP *ifields;
+    int nstack; //nestet object stack pos
+    int matched; //number of matched include fields
 } _BSONSTRIPVISITORCTX;
 
 static bson_visitor_cmd_t _bsonstripvisitor(const char *ipath, int ipathlen, const char *key, int keylen,
         const bson_iterator *it, bool after, void *op) {
     _BSONSTRIPVISITORCTX *ictx = op;
     assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
+    bson_visitor_cmd_t rv = BSON_VCMD_OK;
     TCMAP *ifields = ictx->ifields;
     const void *buf;
+    const char* ifpath;
     int bufsz;
+
     bson_type bt = bson_iterator_type(it);
-    if (bt == BSON_EOO) {
-        return BSON_VCMD_OK;
+    if (bt == BSON_EOO || (ictx->matched == TCMAPRNUM(ifields))) {
+        return BSON_VCMD_TERMINATE;
     }
     if (bt != BSON_OBJECT && bt != BSON_ARRAY) {
         if (after) { //simple primitive case
@@ -1429,51 +1434,101 @@ static bson_visitor_cmd_t _bsonstripvisitor(const char *ipath, int ipathlen, con
         //const void *tcmapget(const TCMAP *map, const void *kbuf, int ksiz, int *sp);
         buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
         if (buf) {
+            ictx->matched++;
             bson_append_field_from_iterator(it, ictx->sbson);
         }
-        return BSON_VCMD_OK;
+        return (BSON_VCMD_SKIP_AFTER);
     } else { //more complicated case
-        //TODO
-        
+        if (!after) {
+            buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
+            if (buf) { //field hitted
+                bson_iterator cit = *it; //copy iterator
+                bson_append_field_from_iterator(&cit, ictx->sbson);
+                ictx->matched++;
+                return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+            } else { //check prefix
+                tcmapiterinit(ifields);
+                //const char *tcmapiternext2(TCMAP *map);
+                while ((ifpath = tcmapiternext2(ifields)) != NULL) {
+                    int i = 0;
+                    for (; i < ipathlen && *(ifpath + i) == *(ipath + i); ++i);
+                    if (i == ipathlen) { //ipath prefixes some included field
+                        ictx->nstack++;
+                        if (bt == BSON_OBJECT) {
+                            bson_append_start_object(ictx->sbson, key);
+                        } else if (bt == BSON_ARRAY) {
+                            bson_append_start_array(ictx->sbson, key);
+                        } else {
+                            assert(0);
+                        }
+                        break;
+                    }
+                }
+            }
+        } else { //after
+            if (ictx->nstack > 0) {
+                --ictx->nstack;
+                if (bt == BSON_OBJECT) {
+                    bson_append_finish_object(ictx->sbson);
+                } else if (bt == BSON_ARRAY) {
+                    bson_append_finish_array(ictx->sbson);
+                } else {
+                    assert(0);
+                }
+            }
+        }
     }
-    return BSON_VCMD_OK;
+    return rv;
 }
 
 /* push bson into rs with only fields listed in ifields */
 static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz) {
     if (!ifields || TCMAPRNUM(ifields) <= 0) {
-        TCLISTPUSH(rs, bsbuf, bsbufsz);
+        tclistpushmalloc(rs, bsbuf, bsbufsz);
         return;
     }
     char bstack[JBSBUFFERSZ];
     void *tmpbuf = (bsbufsz < JBSBUFFERSZ) ? bstack : MYMALLOC(bsbufsz);
     bson sbson;
+    char *sdata;
     bson_reset(&sbson);
     sbson.data = tmpbuf;
+    sbson.cur = sbson.data + 4;
     sbson.dataSize = MAX(bsbufsz, JBSBUFFERSZ);
     if (sbson.data == bstack) {
         sbson.flags |= BSON_FLAG_STACK_ALLOCATED;
     }
+
     _BSONSTRIPVISITORCTX ictx;
     ictx.sbson = &sbson;
     ictx.ifields = ifields;
+    ictx.nstack = 0;
+    ictx.matched = 0;
 
     //Now copy filtered bson fields
     bson_iterator it;
     bson_iterator_from_buffer(&it, bsbuf);
     bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, _bsonstripvisitor, &ictx);
-
+    assert(ictx.nstack == 0);
     if (bson_finish(&sbson) == BSON_OK) {
-        TCLISTPUSH(rs, bson_data(&sbson), bson_size(&sbson));
+        if (sbson.flags & BSON_FLAG_STACK_ALLOCATED) {
+            sdata = sbson.data;
+            TCLISTPUSH(rs, sbson.data, bson_size(&sbson));
+        } else {
+            sdata = NULL;
+            tclistpushmalloc(rs, sbson.data, bson_size(&sbson));
+        }
+    } else {
+        sdata = sbson.data;
+        assert(0);
     }
-
     //Cleanup
-    char *sdata = sbson.data; //save data ptr to check if it on stack
-    sbson.data = NULL; //this data will be freed at the end of this func
+    sbson.data = NULL; //hide allocated data from bson_destroy()
     bson_destroy(&sbson);
-    if (sdata != bstack) {
+    if (sdata && sdata != bstack) {
         TCFREE(sdata);
     }
+    TCFREE(bsbuf);
 }
 
 /** Query */
@@ -1593,10 +1648,9 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         if (ifields) {\
             _pushstripbson(res, ifields, (_bsbuf), (_bsbufsz)); \
         } else { \
-            TCLISTPUSH(res, (_bsbuf), (_bsbufsz)); \
+            tclistpushmalloc(res, (_bsbuf), _bsbufsz); \
         } \
-    } \
-    if ((_bsbuf)) { \
+    } else if ((_bsbuf)) { \
         TCFREE((_bsbuf)); \
     }
 
@@ -2253,6 +2307,7 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMA
                     tcmapputkeep(fmap, key, strlen(key), &yes, sizeof (yes));
                 }
                 tcmapputkeep(fmap, JDBIDKEYNAME, JDBIDKEYNAMEL, &yes, sizeof (yes));
+                *ifields = fmap;
             }
         }
     }
