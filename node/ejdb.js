@@ -207,11 +207,16 @@ EJDB.prototype.remove = function(cname, oid, cb) {
  *      - $max Maximum number in the result set
  *      - $skip Number of skipped results in the result set
  *      - $orderby Sorting order of query fields.
- *          Eg: ORDER BY field1 ASC, field2 DESC
+ *      - $fields Set subset of fetched fields
+ *          Example:
  *          hints:    {
- *                      "$orderby" : {
+ *                      "$orderby" : { //ORDER BY field1 ASC, field2 DESC
  *                          "field1" : 1,
  *                          "field2" : -1
+ *                      },
+ *                      "$fields" : { //SELECT ONLY {_id, field1, field2}
+ *                          "field1" : 1,
+ *                          "field2" : 1
  *                      }
  *                    }
  *

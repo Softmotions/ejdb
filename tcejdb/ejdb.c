@@ -3,6 +3,7 @@
 
 
 #include <regex.h>
+#include <asm-generic/ioctls.h>
 
 #include "ejdb_private.h"
 #include "ejdbutl.h"
@@ -33,6 +34,9 @@
 
 /* Default size of stack allocated buffer for string conversions eg. tcicaseformat() */
 #define JBSTRINOPBUFFERSZ 512
+
+/* Default size (16K) of tmp bson buffer on stack for field stripping in _pushstripbson() */
+#define JBSBUFFERSZ 16384
 
 /* string processing/conversion flags */
 typedef enum {
@@ -80,7 +84,7 @@ static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
         const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
-static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf);
+static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields);
 static TCMAP* _parseqobj(EJDB *jb, bson *qspec);
 static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf);
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
@@ -93,6 +97,7 @@ static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, const EJQ
         const void *pkbuf, int pkbufsz, void **bsbuf, int *bsbufsz);
 static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
+static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz);
 static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
@@ -877,8 +882,23 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
     const char *expr = qf->expr;
     int exprsz = qf->exprsz;
     char sbuf[JBSTRINOPBUFFERSZ]; //buffer for icase comparisons
+    char oidbuf[25]; //OID buffer
     char *cbuf = NULL;
     int cbufstrlen = 0;
+    int fvalsz;
+    const char *fval;
+
+#define _FETCHSTRFVAL() \
+    do { \
+        fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1; \
+        fval = (bt == BSON_STRING) ? bson_iterator_string(it) : ""; \
+        if (bt == BSON_OID) { \
+            bson_oid_to_string(bson_iterator_oid(it), oidbuf); \
+            fvalsz = 25; \
+            fval = oidbuf; \
+        } \
+    } while(false)
+
 
     if (bt == BSON_ARRAY && expandarrays) { //Iterate over array
         bson_iterator sit;
@@ -893,39 +913,27 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
     switch (qf->tcop) {
         case TDBQCSTREQ:
         {
-            if (bt == BSON_OID) {
-                if (exprsz != 24) {
-                    break;
-                }
-                bson_oid_t *boid = bson_iterator_oid(it);
-                bson_oid_t aoid;
-                bson_oid_from_string(&aoid, expr);
-                rv = !memcmp(&aoid, boid, sizeof (bson_oid_t));
-            } else {
-                int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
-                const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
-                if (qf->flags & EJCONDICASE) {
-                    cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
-                    if (cbufstrlen < 0) {
-                        _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
-                        rv = false;
-                    } else {
-                        rv = (exprsz == cbufstrlen) && (exprsz == 0 || !memcmp(expr, cbuf, exprsz));
-                    }
-                    if (cbuf && cbuf != sbuf) {
-                        TCFREE(cbuf);
-                    }
+            _FETCHSTRFVAL();
+            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+                cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
+                if (cbufstrlen < 0) {
+                    _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
+                    rv = false;
                 } else {
-                    rv = (exprsz == fvalsz - 1) && (exprsz == 0 || !memcmp(expr, fval, exprsz));
+                    rv = (exprsz == cbufstrlen) && (exprsz == 0 || !memcmp(expr, cbuf, exprsz));
                 }
+                if (cbuf && cbuf != sbuf) {
+                    TCFREE(cbuf);
+                }
+            } else {
+                rv = (exprsz == fvalsz - 1) && (exprsz == 0 || !memcmp(expr, fval, exprsz));
             }
             break;
         }
         case TDBQCSTRINC:
         {
-            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
-            const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
-            if (qf->flags & EJCONDICASE) {
+            _FETCHSTRFVAL();
+            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -943,9 +951,8 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         }
         case TDBQCSTRBW:
         {
-            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
-            const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
-            if (qf->flags & EJCONDICASE) {
+            _FETCHSTRFVAL();
+            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -963,9 +970,8 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         }
         case TDBQCSTREW:
         {
-            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
-            const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
-            if (qf->flags & EJCONDICASE) {
+            _FETCHSTRFVAL();
+            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -985,9 +991,8 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         {
             TCLIST *tokens = qf->exprlist;
             assert(tokens);
-            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
-            const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
-            if (qf->flags & EJCONDICASE) {
+            _FETCHSTRFVAL();
+            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1007,9 +1012,8 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         {
             TCLIST *tokens = qf->exprlist;
             assert(tokens);
-            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
-            const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
-            if (qf->flags & EJCONDICASE) {
+            _FETCHSTRFVAL();
+            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1029,9 +1033,8 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         {
             TCLIST *tokens = qf->exprlist;
             assert(tokens);
-            int fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1;
-            const char *fval = (bt == BSON_STRING) ? bson_iterator_string(it) : "";
-            if (qf->flags & EJCONDICASE) {
+            _FETCHSTRFVAL();
+            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1063,7 +1066,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         }
         case TDBQCSTRRX:
         {
-            const char *fval = bson_iterator_string(it);
+            _FETCHSTRFVAL();
             rv = qf->regex && (regexec(qf->regex, fval, 0, NULL, 0) == 0);
             break;
         }
@@ -1166,6 +1169,8 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         }
     }
     return (rv == !qf->negate);
+
+#undef _FETCHSTRFVAL
 }
 
 static bool _qrybsmatch(const EJQF *qf, const void *bsbuf, int bsbufsz) {
@@ -1290,11 +1295,11 @@ static bool _qryallcondsmatch(
 typedef struct {
     const EJQF **ofs;
     int ofsz;
-} _ejbsortctx;
+} _EJBSORTCTX;
 
 /* RS sorting comparison func */
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque) {
-    _ejbsortctx *ctx = opaque;
+    _EJBSORTCTX *ctx = opaque;
     assert(ctx);
     int res = 0;
     for (int i = 0; !res && i < ctx->ofsz; ++i) {
@@ -1401,6 +1406,131 @@ static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     }
 }
 
+typedef struct {
+    bson *sbson;
+    TCMAP *ifields;
+    int nstack; //nestet object stack pos
+    int matched; //number of matched include fields
+} _BSONSTRIPVISITORCTX;
+
+static bson_visitor_cmd_t _bsonstripvisitor(const char *ipath, int ipathlen, const char *key, int keylen,
+        const bson_iterator *it, bool after, void *op) {
+    _BSONSTRIPVISITORCTX *ictx = op;
+    assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
+    bson_visitor_cmd_t rv = BSON_VCMD_OK;
+    TCMAP *ifields = ictx->ifields;
+    const void *buf;
+    const char* ifpath;
+    int bufsz;
+
+    bson_type bt = bson_iterator_type(it);
+    if (bt == BSON_EOO || (ictx->matched == TCMAPRNUM(ifields))) {
+        return BSON_VCMD_TERMINATE;
+    }
+    if (bt != BSON_OBJECT && bt != BSON_ARRAY) {
+        if (after) { //simple primitive case
+            return BSON_VCMD_OK;
+        }
+        //const void *tcmapget(const TCMAP *map, const void *kbuf, int ksiz, int *sp);
+        buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
+        if (buf) {
+            ictx->matched++;
+            bson_append_field_from_iterator(it, ictx->sbson);
+        }
+        return (BSON_VCMD_SKIP_AFTER);
+    } else { //more complicated case
+        if (!after) {
+            buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
+            if (buf) { //field hitted
+                bson_iterator cit = *it; //copy iterator
+                bson_append_field_from_iterator(&cit, ictx->sbson);
+                ictx->matched++;
+                return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+            } else { //check prefix
+                tcmapiterinit(ifields);
+                //const char *tcmapiternext2(TCMAP *map);
+                while ((ifpath = tcmapiternext2(ifields)) != NULL) {
+                    int i = 0;
+                    for (; i < ipathlen && *(ifpath + i) == *(ipath + i); ++i);
+                    if (i == ipathlen) { //ipath prefixes some included field
+                        ictx->nstack++;
+                        if (bt == BSON_OBJECT) {
+                            bson_append_start_object(ictx->sbson, key);
+                        } else if (bt == BSON_ARRAY) {
+                            bson_append_start_array(ictx->sbson, key);
+                        } else {
+                            assert(0);
+                        }
+                        break;
+                    }
+                }
+            }
+        } else { //after
+            if (ictx->nstack > 0) {
+                --ictx->nstack;
+                if (bt == BSON_OBJECT) {
+                    bson_append_finish_object(ictx->sbson);
+                } else if (bt == BSON_ARRAY) {
+                    bson_append_finish_array(ictx->sbson);
+                } else {
+                    assert(0);
+                }
+            }
+        }
+    }
+    return rv;
+}
+
+/* push bson into rs with only fields listed in ifields */
+static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz) {
+    if (!ifields || TCMAPRNUM(ifields) <= 0) {
+        tclistpushmalloc(rs, bsbuf, bsbufsz);
+        return;
+    }
+    char bstack[JBSBUFFERSZ];
+    void *tmpbuf = (bsbufsz < JBSBUFFERSZ) ? bstack : MYMALLOC(bsbufsz);
+    bson sbson;
+    char *sdata;
+    bson_reset(&sbson);
+    sbson.data = tmpbuf;
+    sbson.cur = sbson.data + 4;
+    sbson.dataSize = MAX(bsbufsz, JBSBUFFERSZ);
+    if (sbson.data == bstack) {
+        sbson.flags |= BSON_FLAG_STACK_ALLOCATED;
+    }
+
+    _BSONSTRIPVISITORCTX ictx;
+    ictx.sbson = &sbson;
+    ictx.ifields = ifields;
+    ictx.nstack = 0;
+    ictx.matched = 0;
+
+    //Now copy filtered bson fields
+    bson_iterator it;
+    bson_iterator_from_buffer(&it, bsbuf);
+    bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, _bsonstripvisitor, &ictx);
+    assert(ictx.nstack == 0);
+    if (bson_finish(&sbson) == BSON_OK) {
+        if (sbson.flags & BSON_FLAG_STACK_ALLOCATED) {
+            sdata = sbson.data;
+            TCLISTPUSH(rs, sbson.data, bson_size(&sbson));
+        } else {
+            sdata = NULL;
+            tclistpushmalloc(rs, sbson.data, bson_size(&sbson));
+        }
+    } else {
+        sdata = sbson.data;
+        assert(0);
+    }
+    //Cleanup
+    sbson.data = NULL; //hide allocated data from bson_destroy()
+    bson_destroy(&sbson);
+    if (sdata && sdata != bstack) {
+        TCFREE(sdata);
+    }
+    TCFREE(bsbuf);
+}
+
 /** Query */
 static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int qflags, TCXSTR *log) {
     //Clone the query object
@@ -1411,11 +1541,12 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     *outcount = 0;
     bool onlycount = (qflags & JBQRYCOUNT); //quering only for result set count
     bool all = false; //need all records
+
     EJQF *mqf = NULL; //main indexed query condition if exists
+    TCMAP *ifields = NULL; //field names included in result set
 
     TCLIST *res = onlycount ? NULL : tclistnew2(4096);
-    _qrypreprocess(jcoll, ejq, &mqf);
-
+    _qrypreprocess(jcoll, ejq, qflags, &mqf, &ifields);
 
     int anum = 0; //number of active conditions
     const EJQF **ofs = NULL; //order fields
@@ -1433,6 +1564,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     int vbufsz;
     void *bsbuf; //BSON buffer
     int bsbufsz; //BSON buffer size
+    static const bool yes = true; //Simple true const
 
     uint32_t count = 0; //current count
     uint32_t max = (ejq->max > 0) ? ejq->max : UINT_MAX;
@@ -1470,7 +1602,12 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
             for (int j = 0; j < qfsz; ++j) {
                 if (qfs[j]->orderseq == i + 1) { //orderseq starts with 1
                     ofs[i] = qfs[j];
-                    if (!(ofs[i]->flags & EJFORDERUSED)) aofsz++;
+                    if (!(ofs[i]->flags & EJFORDERUSED)) {
+                        aofsz++;
+                        if (ifields) { //add this order field to the list of fetched
+                            tcmapputkeep(ifields, ofs[i]->fpath, ofs[i]->fpathsz, &yes, sizeof (yes));
+                        }
+                    }
                     break;
                 }
             }
@@ -1508,10 +1645,13 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
 #define JBQREGREC(_bsbuf, _bsbufsz)   \
     ++count; \
     if (!onlycount && (all || count > skip)) { \
-        TCLISTPUSH(res, _bsbuf, _bsbufsz); \
-    } \
-    if (_bsbuf) { \
-        TCFREE(_bsbuf); \
+        if (ifields) {\
+            _pushstripbson(res, ifields, (_bsbuf), (_bsbufsz)); \
+        } else { \
+            tclistpushmalloc(res, (_bsbuf), _bsbufsz); \
+        } \
+    } else if ((_bsbuf)) { \
+        TCFREE((_bsbuf)); \
     }
 
     bool trim = (midx && *midx->name != '\0');
@@ -1522,37 +1662,86 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
 
     if (mqf->flags & EJFPKMATCHING) { //PK matching
         if (log) {
-            tcxstrprintf(log, "PRIMARY KEY MATCHING: %s\n", mqf->expr);
+            tcxstrprintf(log, "PRIMARY KEY MATCHING: TRUE\n");
         }
         assert(mqf->expr);
-        do {
-            bson_oid_t oid;
-            bson_oid_from_string(&oid, mqf->expr);
-            void *cdata = tchdbget(jcoll->tdb->hdb, &oid, sizeof (oid), &bsbufsz);
-            if (!cdata || !bsbufsz) {
-                break;
-            }
-            bsbuf = tcmaploadone(cdata, bsbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
-            if (!bsbuf || bsbufsz <= 4) {
-                TCFREE(cdata);
-                break;
-            }
-            bool matched = true;
-            for (int i = 0; i < qfsz; ++i) {
-                const EJQF *qf = qfs[i];
-                if (qf->flags & EJFEXCLUDED) continue;
-                if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
-                    matched = false;
+        if (mqf->tcop == TDBQCSTREQ) {
+            do {
+                bson_oid_t oid;
+                bson_oid_from_string(&oid, mqf->expr);
+                void *cdata = tchdbget(jcoll->tdb->hdb, &oid, sizeof (oid), &bsbufsz);
+                if (!cdata) {
                     break;
                 }
+                bsbuf = tcmaploadone(cdata, bsbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
+                if (!bsbuf) {
+                    TCFREE(cdata);
+                    break;
+                }
+                bool matched = true;
+                for (int i = 0; i < qfsz; ++i) {
+                    const EJQF *qf = qfs[i];
+                    if (qf->flags & EJFEXCLUDED) continue;
+                    if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
+                        matched = false;
+                        break;
+                    }
+                }
+                if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid), bsbuf, bsbufsz))) {
+                    JBQREGREC(bsbuf, bsbufsz);
+                } else {
+                    TCFREE(bsbuf);
+                }
+                TCFREE(cdata);
+            } while (false);
+        } else if (mqf->tcop == TDBQCSTROREQ) {
+            TCLIST *tokens = mqf->exprlist;
+            assert(tokens);
+            tclistsort(tokens);
+            for (int i = 1; i < TCLISTNUM(tokens); i++) {
+                if (!strcmp(TCLISTVALPTR(tokens, i), TCLISTVALPTR(tokens, i - 1))) {
+                    TCFREE(tclistremove2(tokens, i));
+                    i--;
+                }
             }
-            if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid), bsbuf, bsbufsz))) {
-                JBQREGREC(bsbuf, bsbufsz);
-            } else {
-                TCFREE(bsbuf);
+            int tnum = TCLISTNUM(tokens);
+            for (int i = 0; (all || count < max) && i < tnum; i++) {
+                const char *token;
+                int tsiz;
+                TCLISTVAL(token, tokens, i, tsiz);
+                if (tsiz < 1) {
+                    continue;
+                }
+                bson_oid_t oid;
+                bson_oid_from_string(&oid, token);
+                void *cdata = tchdbget(jcoll->tdb->hdb, &oid, sizeof (oid), &bsbufsz);
+                if (!cdata) {
+                    continue;
+                }
+                bsbuf = tcmaploadone(cdata, bsbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
+                if (!bsbuf) {
+                    TCFREE(cdata);
+                    break;
+                }
+                bool matched = true;
+                for (int i = 0; i < qfsz; ++i) {
+                    const EJQF *qf = qfs[i];
+                    if (qf->flags & EJFEXCLUDED) continue;
+                    if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
+                        matched = false;
+                        break;
+                    }
+                }
+                if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid), bsbuf, bsbufsz))) {
+                    JBQREGREC(bsbuf, bsbufsz);
+                } else {
+                    TCFREE(bsbuf);
+                }
+                TCFREE(cdata);
             }
-            TCFREE(cdata);
-        } while (false);
+        } else {
+            assert(0);
+        }
     } else if (mqf->tcop == TDBQTRUE) {
         BDBCUR *cur = tcbdbcurnew(midx->db);
         if (mqf->order >= 0) {
@@ -1903,7 +2092,7 @@ sorting: /* Sorting resultset */
     if (!res || aofsz <= 0) { //No sorting needed
         goto finish;
     }
-    _ejbsortctx sctx; //sorting context
+    _EJBSORTCTX sctx; //sorting context
     sctx.ofs = ofs;
     sctx.ofsz = ofsz;
     if (ejdbtimsortlist(res, _ejdbsoncmp, &sctx)) {
@@ -1950,6 +2139,9 @@ finish:
     }
     if (ofs) {
         TCFREE(ofs);
+    }
+    if (ifields) {
+        tcmapdel(ifields);
     }
     ejdbquerydel(ejq);
 #undef JBQREGREC
@@ -2037,13 +2229,13 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
     return NULL;
 }
 
-static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf) {
+static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields) {
     assert(jcoll && ejq && ejq->qobjmap && mqf);
 
+    *ifields = NULL;
     *mqf = NULL;
-    EJQF *oqf = NULL; //Order condition
 
-    //Iterate over query fiels
+    EJQF *oqf = NULL; //Order condition
     TCMAP *qmap = ejq->qobjmap;
     tcmapiterinit(qmap);
     const void *mkey;
@@ -2101,6 +2293,23 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf) {
             int64_t v = bson_iterator_long(&it);
             ejq->max = (uint32_t) ((v < 0) ? 0 : v);
         }
+        if (!(qflags & JBQRYCOUNT)) {
+            bt = bson_find(&it, ejq->hints, "$fields"); //Collect required fields
+            if (bt == BSON_OBJECT) {
+                TCMAP *fmap = tcmapnew2(64);
+                static const bool yes = true;
+                bson_iterator_subiterator(&it, &sit);
+                while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
+                    if (!BSON_IS_NUM_TYPE(bt) || bson_iterator_int(&sit) <= 0) {
+                        continue;
+                    }
+                    const char *key = bson_iterator_key(&sit);
+                    tcmapputkeep(fmap, key, strlen(key), &yes, sizeof (yes));
+                }
+                tcmapputkeep(fmap, JDBIDKEYNAME, JDBIDKEYNAMEL, &yes, sizeof (yes));
+                *ifields = fmap;
+            }
+        }
     }
 
     const int scoreexact = 100;
@@ -2114,7 +2323,8 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, EJQF **mqf) {
         assert(mvalsz == sizeof (EJQF));
         assert(qf->fpath);
 
-        if (qf->ftype == BSON_OID && qf->tcop == TDBQCSTREQ && !strcmp(JDBIDKEYNAME, qf->fpath)) { //OID PK matching
+        if ((qf->tcop == TDBQCSTREQ || qf->tcop == TDBQCSTROREQ) &&
+                !strcmp(JDBIDKEYNAME, qf->fpath)) { //OID PK matching
             qf->flags |= EJFPKMATCHING;
             *mqf = qf;
             break;
@@ -2417,6 +2627,12 @@ static TCLIST* _fetch_bson_str_array(EJDB *jb, bson_iterator *it, bson_type *typ
                 *type = ftype;
                 tclistprintf(res, "%f", bson_iterator_double(it));
                 break;
+            case BSON_OID:
+                *type = ftype;
+                char xoid[25];
+                bson_oid_to_string(bson_iterator_oid(it), xoid);
+                tclistprintf(res, "%s", xoid);
+                break;
             default:
                 break;
         }
@@ -2544,9 +2760,6 @@ static int _parse_qobj_impl(EJDB *jb, bson_iterator *it, TCMAP *qmap, TCLIST *pa
             {
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
-                if (isckey) {
-
-                }
                 ret = _parse_qobj_impl(jb, &sit, qmap, pathStack, &qf);
                 break;
             }

@@ -42,8 +42,8 @@ EJDB_EXTERN_C_START
 #define BSON_OK 0
 #define BSON_ERROR -1
 
-//Maxim field path length
-#define BSON_MAX_FPATH_LEN 255
+//Maximum field path length allocated on stack
+#define BSON_MAX_FPATH_LEN (255)
 
 enum bson_error_t {
     BSON_SIZE_OVERFLOW = 1 /**< Trying to create a BSON object larger than INT_MAX. */
@@ -68,7 +68,8 @@ enum bson_binary_subtype_t {
 };
 
 enum bson_flags_t {
-    BSON_FLAG_QUERY_MODE = 1
+    BSON_FLAG_QUERY_MODE = 1,
+    BSON_FLAG_STACK_ALLOCATED = 1 << 1 /**< If it set BSON data is allocated on stack and realloc should deal with this case */
 };
 
 typedef enum {
@@ -190,6 +191,25 @@ EJDB_EXPORT bson_type bson_find_from_buffer(bson_iterator *it, const char *buffe
  */
 EJDB_EXPORT bson_type bson_find_fieldpath_value(const char *fieldpath, bson_iterator *it);
 EJDB_EXPORT bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, bson_iterator *it);
+
+/**
+ * BSON object visitor
+ * @param it bson iterator to traverse
+ * @param visitor Visitor function
+ * @param op Opaque data for visitor
+ */
+typedef enum  {
+    BSON_TRAVERSE_ARRAYS_EXCLUDED = 1,
+    BSON_TRAVERSE_OBJECTS_EXCLUDED = 1 << 1
+} bson_traverse_flags_t;
+typedef enum {
+    BSON_VCMD_OK = 0,
+    BSON_VCMD_TERMINATE = 1,
+    BSON_VCMD_SKIP_NESTED = 1 << 1,
+    BSON_VCMD_SKIP_AFTER = 1 << 2
+} bson_visitor_cmd_t;
+typedef bson_visitor_cmd_t (*BSONVISITOR)(const char *ipath, int ipathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op);
+EJDB_EXPORT void bson_visit_fields(bson_iterator *it, bson_traverse_flags_t flags, BSONVISITOR visitor, void *op);
 
 
 EJDB_EXPORT bson_iterator* bson_iterator_create(void);
@@ -621,6 +641,8 @@ EJDB_EXPORT void bson_destroy(bson *b);
 
 EJDB_EXPORT void bson_del(bson *b);
 
+EJDB_EXPORT void bson_reset(bson *b);
+
 /**
  * Returns a pointer to a static empty BSON object.
  *
@@ -1041,7 +1063,7 @@ EJDB_EXPORT void bson_swap_endian64(void *outp, const void *inp);
  * @param from
  * @param into
  */
-EJDB_EXPORT void bson_append_field_from_iterator(bson_iterator *from, bson *into);
+EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson *into);
 
 
 /**
