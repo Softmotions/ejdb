@@ -545,7 +545,8 @@ On Debian/Ubuntu linux you can install it as follows:
 
 Building
 --------------------------------
-```sh
+
+~~~~~~
    cd ./tcejdb
    ./configure --disable-bzip --prefix=<installation prefix> && make && make check
    make install
@@ -641,14 +642,14 @@ Basic EJDB architecture
 -------------------------------
 **EJDB database files structure**
 
-```
+~~~~~~
 .
 ├── <dbname>
 ├── <dbname>_<collection1>
 ├── ...
 ├── <dbname>_<collectionN>
 └── <dbname>_<collectionN>_<fieldpath>.<index ext>
-```
+~~~~~~
 
 Where
 
