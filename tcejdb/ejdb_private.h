@@ -40,25 +40,29 @@ struct EJCOLL { /**> EJDB Collection. */
     void *mmtx; /*> Mutex for method */
 };
 
-enum { //Query field flags
+enum { /**> Query field flags */
     // Comparison flags
-    EJCOMPGT = 1, //Comparison GT
-    EJCOMPGTE = 1 << 1, //Comparison GTE
-    EJCOMPLT = 1 << 2, //Comparison LT
-    EJCOMPLTE = 1 << 3, //Comparison LTE
-    EJCONDSTARTWITH = 1 << 4, //Starts with
+    EJCOMPGT = 1, /**> Comparison GT */
+    EJCOMPGTE = 1 << 1, /**> Comparison GTE */
+    EJCOMPLT = 1 << 2, /**> Comparison LT */
+    EJCOMPLTE = 1 << 3, /**> Comparison LTE */
+    EJCONDSTARTWITH = 1 << 4, /**> Starts with */
 
-    EJFEXCLUDED = 1 << 5, //If query field excluded from matching
-    EJFNOINDEX = 1 << 6, //Do not use index for field
-    EJFORDERUSED = 1 << 7, //This ordering field was used
-    EJFPKMATCHING = 1 << 8, //_id PK field matching
+    EJFEXCLUDED = 1 << 5, /**> If query field excluded from matching */
+    EJFNOINDEX = 1 << 6, /**> Do not use index for field */
+    EJFORDERUSED = 1 << 7, /**> This ordering field was used */
+    EJFPKMATCHING = 1 << 8, /**> _id PK field matching */
 
-    EJCONDICASE = 1 << 9, //Ignore case iin matching
+    EJCONDICASE = 1 << 9, /**> Ignore case in matching */
+
+    EJCONDSET = 1 << 10, /**> Set field update operation */
+    EJCONDINC = 1 << 11, /**> Inc field update operation */
 };
 
 
-enum { //Query flags
-    EJQINTERNAL = 1 //Internal query object used in _ejdbqrysearch
+enum { /**> Query flags */
+    EJQINTERNAL = 1, /**> Internal query object used in _ejdbqrysearch */
+    EJQUPDATING = 1 << 1 /**> Query in updating mode */
 };
 
 struct EJQF { /**> Matching field and status */

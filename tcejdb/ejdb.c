@@ -437,6 +437,10 @@ EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobj
             if (oq == NULL) {
                 goto error;
             }
+            if (oq->flags & EJQUPDATING) {
+                //propagate update mode into main qry obj
+                q->flags |= EJQUPDATING;
+            }
             q->orqobjs[i] = *oq; //copy struct
             TCFREE(oq);
         }
@@ -623,7 +627,7 @@ EJDB_EXPORT TCLIST* ejdbqrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, 
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return NULL;
     }
-    JBCLOCKMETHOD(jcoll, false);
+    JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);
     TCLIST *res;
     _ejdbsetecode(jcoll->jb, TCESUCCESS, __FILE__, __LINE__, __func__);
     res = _qrysearch(jcoll, q, count, qflags, log);
@@ -1621,6 +1625,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
     }
 
     if (log) {
+        tcxstrprintf(log, "UPDATING MODE: %s\n", (ejq->flags & EJQUPDATING) ? "YES" : "NO");
         tcxstrprintf(log, "MAX: %u\n", max);
         tcxstrprintf(log, "SKIP: %u\n", skip);
         tcxstrprintf(log, "COUNT ONLY: %s\n", onlycount ? "YES" : "NO");
@@ -1628,7 +1633,7 @@ static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int q
         tcxstrprintf(log, "ORDER FIELDS: %d\n", ofsz);
         tcxstrprintf(log, "ACTIVE CONDITIONS: %d\n", anum);
         tcxstrprintf(log, "$OR QUERIES: %d\n", ejq->orqobjsnum);
-        tcxstrprintf(log, "FETCH ALL: %s\n", all ? "TRUE" : "FALSE");
+        tcxstrprintf(log, "FETCH ALL: %s\n", all ? "YES" : "NO");
     }
     if (max < UINT_MAX - skip) {
         max += skip;
@@ -2133,7 +2138,7 @@ finish:
     if (log) {
         tcxstrprintf(log, "RS COUNT: %d\n", count);
         tcxstrprintf(log, "RS SIZE: %d\n", (res ? TCLISTNUM(res) : 0));
-        tcxstrprintf(log, "FINAL SORTING: %s\n", (onlycount || aofsz <= 0) ? "FALSE" : "TRUE");
+        tcxstrprintf(log, "FINAL SORTING: %s\n", (onlycount || aofsz <= 0) ? "NO" : "YES");
     }
     if (qfs) {
         TCFREE(qfs);
@@ -2702,14 +2707,6 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
             case BSON_ARRAY:
             {
                 if (isckey) {
-                    if (strcmp("$in", fkey) &&
-                            strcmp("$nin", fkey) &&
-                            strcmp("$bt", fkey) &&
-                            strcmp("$strand", fkey) &&
-                            strcmp("$stror", fkey)) {
-                        ret = JBEQINVALIDQCONTROL;
-                        break;
-                    }
                     bson_iterator sit;
                     bson_iterator_subiterator(it, &sit);
                     bson_type atype = 0;
@@ -2743,8 +2740,13 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                         }
                     } else if (!strcmp("$strand", fkey)) { //$strand
                         qf.tcop = TDBQCSTRAND;
-                    } else { //$stror
+                    } else if (!strcmp("$stror", fkey)) { //$stror
                         qf.tcop = TDBQCSTROR;
+                    } else {
+                        ret = JBEQINVALIDQCONTROL;
+                        TCFREE(qf.expr);
+                        tclistdel(qf.exprlist);
+                        break;
                     }
                     qf.fpath = tcstrjoin(pathStack, '.');
                     qf.fpathsz = strlen(qf.fpath);
@@ -2760,6 +2762,16 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
 
             case BSON_OBJECT:
             {
+                if (isckey) {
+                    if (!strcmp("$set", fkey)) {
+                        qf.flags |= EJCONDSET;
+                        qf.q->flags |= EJQUPDATING;
+                    } else if (!strcmp("$inc", fkey)) {
+                        qf.flags |= EJCONDINC;
+                        qf.q->flags |= EJQUPDATING;
+                    }
+                }
+
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
                 ret = _parse_qobj_impl(jb, q, &sit, qmap, pathStack, &qf);
