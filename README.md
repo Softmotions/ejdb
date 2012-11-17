@@ -30,6 +30,11 @@ Documentation
     * [C API](#c-api)
 
 
+Community
+================================
+We use [EJDB Google group](http://groups.google.com/group/ejdb) as our mailing list.
+
+
 NodeJS binding
 =================================
 
