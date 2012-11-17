@@ -3,8 +3,6 @@
 
 
 #include <regex.h>
-#include <asm-generic/ioctls.h>
-
 #include "ejdb_private.h"
 #include "ejdbutl.h"
 
