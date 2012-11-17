@@ -435,10 +435,6 @@ EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobj
             if (oq == NULL) {
                 goto error;
             }
-            if (oq->flags & EJQUPDATING) {
-                //propagate update mode into main qry obj
-                q->flags |= EJQUPDATING;
-            }
             q->orqobjs[i] = *oq; //copy struct
             TCFREE(oq);
         }
