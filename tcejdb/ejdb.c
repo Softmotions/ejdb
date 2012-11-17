@@ -1534,6 +1534,21 @@ static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz)
     TCFREE(bsbuf);
 }
 
+static void _qryupdate(EJCOLL *jcoll, const EJQ *ejq) {
+    assert(ejq->flags & EJQUPDATING);
+    const void *kbuf;
+    int kbufsz;
+    int qfsz;
+    TCMAP *qobjmap = ejq->qobjmap;
+    tcmapiterinit(qobjmap);
+    while ((kbuf = tcmapiternext(qobjmap, &kbufsz)) != NULL) {
+        const EJQF *qf = tcmapiterval(kbuf, &qfsz);
+        assert(qfsz == sizeof (EJQF));
+        if (((qf->flags & EJCONDSET) & EJQUPDATING) == 0) continue;
+        //DO IT
+    }
+}
+
 /** Query */
 static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int qflags, TCXSTR *log) {
     //Clone the query object
@@ -1648,6 +1663,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
 
 #define JBQREGREC(_bsbuf, _bsbufsz)   \
     ++count; \
+    if (ejq->flags & EJQUPDATING) _qryupdate(jcoll, ejq); \
     if (!onlycount && (all || count > skip)) { \
         if (ifields) {\
             _pushstripbson(res, ifields, (_bsbuf), (_bsbufsz)); \
