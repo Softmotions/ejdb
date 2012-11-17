@@ -198,7 +198,7 @@ void testQuery1() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     //for (int i = 0; i < TCLISTNUM(q1res); ++i) {
     //    void *bsdata = TCLISTVALPTR(q1res, i);
@@ -261,7 +261,7 @@ void testQuery2() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'saddress.zip'"));
@@ -317,7 +317,7 @@ void testQuery3() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'sname'"));
@@ -374,7 +374,7 @@ void testQuery4() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
@@ -420,7 +420,7 @@ void testQuery5() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ORDER FIELDS: 0"));
@@ -462,7 +462,7 @@ void testQuery6() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -519,7 +519,7 @@ void testQuery7() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -578,7 +578,7 @@ void testQuery8() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -637,7 +637,7 @@ void testQuery9() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
@@ -701,7 +701,7 @@ void testQuery10() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'saddress.street'"));
@@ -766,7 +766,7 @@ void testQuery11() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
@@ -831,7 +831,7 @@ void testQuery12() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -894,7 +894,7 @@ void testQuery13() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
 
@@ -963,7 +963,7 @@ void testQuery14() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1003,7 +1003,7 @@ void testQuery15() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1049,7 +1049,7 @@ void testQuery16() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1109,7 +1109,7 @@ void testQuery17() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1167,7 +1167,7 @@ void testQuery17() {
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
 
     count = 0;
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
@@ -1229,7 +1229,7 @@ void testQuery18() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1260,7 +1260,7 @@ void testQuery18() {
     CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JBIDXDROPALL));
 
     count = 0;
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
@@ -1319,7 +1319,7 @@ void testQuery19() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1353,7 +1353,7 @@ void testQuery19() {
     CU_ASSERT_TRUE(ejdbsetindex(contacts, "name", JBIDXDROPALL));
 
     count = 0;
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1412,7 +1412,7 @@ void testQuery20() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1466,7 +1466,7 @@ void testQuery20() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1510,7 +1510,7 @@ void testQuery20() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1571,7 +1571,7 @@ void testQuery21() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1625,7 +1625,7 @@ void testQuery21() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1677,7 +1677,7 @@ void testQuery21() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1737,7 +1737,7 @@ void testQuery22() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1797,7 +1797,7 @@ void testQuery22() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
@@ -1859,7 +1859,7 @@ void testQuery23() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
@@ -1912,7 +1912,7 @@ void testQuery24() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
@@ -1957,7 +1957,7 @@ void testQuery24() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 2"));
@@ -2001,7 +2001,7 @@ void testQuery24() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 2"));
@@ -2038,7 +2038,7 @@ void testQuery24() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 2"));
@@ -2079,7 +2079,7 @@ void testQuery24() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_EQUAL(count, 1);
@@ -2124,7 +2124,7 @@ void testQuery25() { //$or
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
@@ -2176,7 +2176,7 @@ void testQuery26() { //$not $nin
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
@@ -2218,7 +2218,7 @@ void testQuery26() { //$not $nin
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "SKIP: 0"));
@@ -2260,7 +2260,7 @@ void testQuery26() { //$not $nin
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
@@ -2307,7 +2307,7 @@ void testQuery27() { //$exists
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
@@ -2344,7 +2344,7 @@ void testQuery27() { //$exists
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
@@ -2382,7 +2382,7 @@ void testQuery27() { //$exists
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
@@ -2421,7 +2421,7 @@ void testOIDSMatching() { //OID matching
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(contacts, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
     CU_ASSERT_TRUE(count > 0);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
@@ -2451,7 +2451,7 @@ void testOIDSMatching() { //OID matching
 
         TCXSTR *log2 = tcxstrnew();
         EJQ *q2 = ejdbcreatequery(jb, &bsq2, NULL, 0, NULL);
-        TCLIST *q2res = ejdbqrysearch(contacts, q2, &count, 0, log2);
+        TCLIST *q2res = ejdbqryexecute(contacts, q2, &count, 0, log2);
         CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log2), "PRIMARY KEY MATCHING:"));
         CU_ASSERT_EQUAL(count, 1);
 
@@ -2534,7 +2534,7 @@ void testICaseIndex() {
 
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_TRUE(count == 1);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'iname'"));
@@ -2571,7 +2571,7 @@ void testICaseIndex() {
 
     count = 0;
     log = tcxstrnew();
-    q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
     CU_ASSERT_TRUE(count == 2);
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
@@ -2607,7 +2607,7 @@ void testTicket7() { //https://github.com/Softmotions/ejdb/issues/7
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
     CU_ASSERT_TRUE_FATAL(count >= onum);
 
@@ -2646,7 +2646,7 @@ void testTicket7() { //https://github.com/Softmotions/ejdb/issues/7
     CU_ASSERT_PTR_NOT_NULL_FATAL(q2);
     uint32_t count2 = 0;
     TCXSTR *log2 = tcxstrnew();
-    TCLIST *q2res = ejdbqrysearch(coll, q2, &count2, 0, log2);
+    TCLIST *q2res = ejdbqryexecute(coll, q2, &count2, 0, log2);
     //fprintf(stderr, "\n%s", TCXSTRPTR(log2));
     CU_ASSERT_TRUE(count2 == 3);
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log2), "MAIN IDX: 'NONE'"));
@@ -2711,7 +2711,7 @@ void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
-    TCLIST *q1res = ejdbqrysearch(coll, q1, &count, 0, log);
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
 //    for (int i = 0; i < TCLISTNUM(q1res); ++i) {

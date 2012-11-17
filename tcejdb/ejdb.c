@@ -98,7 +98,7 @@ static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, const EJQ
 static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
 static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz);
-static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
+static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp2(_EJDBNUM *nu1, _EJDBNUM *nu2, bson_type bt);
@@ -621,7 +621,7 @@ finish:
     return rv;
 }
 
-EJDB_EXPORT TCLIST* ejdbqrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
+EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
     assert(jcoll && q && q->qobjmap);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -630,7 +630,7 @@ EJDB_EXPORT TCLIST* ejdbqrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, 
     JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);
     TCLIST *res;
     _ejdbsetecode(jcoll->jb, TCESUCCESS, __FILE__, __LINE__, __func__);
-    res = _qrysearch(jcoll, q, count, qflags, log);
+    res = _qryexecute(jcoll, q, count, qflags, log);
     JBCUNLOCKMETHOD(jcoll);
     return res;
 }
@@ -1537,7 +1537,7 @@ static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz)
 }
 
 /** Query */
-static TCLIST* _qrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int qflags, TCXSTR *log) {
+static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int qflags, TCXSTR *log) {
     //Clone the query object
     EJQ *ejq;
     TCMALLOC(ejq, sizeof (*ejq));

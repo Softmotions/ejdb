@@ -61,7 +61,7 @@ enum { /**> Query field flags */
 
 
 enum { /**> Query flags */
-    EJQINTERNAL = 1, /**> Internal query object used in _ejdbqrysearch */
+    EJQINTERNAL = 1, /**> Internal query object used in _ejdbqryexecute */
     EJQUPDATING = 1 << 1 /**> Query in updating mode */
 };
 

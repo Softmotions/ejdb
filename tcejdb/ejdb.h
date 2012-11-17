@@ -66,7 +66,7 @@ enum { /** Index modes, index types. */
     JBIDXISTR = 1 << 7 /**< Case insensitive string index */
 };
 
-enum { /*< Query search mode flags in ejdbqrysearch() */
+enum { /*< Query search mode flags in ejdbqryexecute() */
     JBQRYCOUNT = 1, /*< Query only count(*) */
     JBQRYUPDATE = 1 << 1 /*< Updating query  */
 };
@@ -312,7 +312,7 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
  * If (qflags & JBQRYCOUNT) then NULL will be returned
  * and only count reported.
  */
-EJDB_EXPORT TCLIST* ejdbqrysearch(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
+EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 
 /**
  * Synchronize content of a EJDB collection database with the file on device.

@@ -1051,7 +1051,7 @@ namespace ejdb {
                 task->cmd_ret_msg = _jb_error_msg();
                 goto finish;
             }
-            res = ejdbqrysearch(coll, q, &cmdata->count, cmdata->qflags, cmdata->log);
+            res = ejdbqryexecute(coll, q, &cmdata->count, cmdata->qflags, cmdata->log);
             if (ejdbecode(m_jb) != TCESUCCESS) {
                 if (res) {
                     tclistdel(res);

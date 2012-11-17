@@ -90,7 +90,7 @@ void testPerf1() {
         EJQ *q = ejdbcreatequery(jb, bs, NULL, 0, NULL);
         assert(q);
         uint32_t count;
-        ejdbqrysearch(coll, q, &count, JBQRYCOUNT, NULL);
+        ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
         assert(count);
         if (count != 1) {
             fprintf(stderr, "CNT=%u\n", count);
@@ -115,7 +115,7 @@ void testPerf1() {
         EJQ *q = ejdbcreatequery(jb, bs, NULL, 0, NULL);
         assert(q);
         uint32_t count;
-        ejdbqrysearch(coll, q, &count, JBQRYCOUNT, NULL);
+        ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
         assert(count);
         acount += count;
         ejdbquerydel(q);
@@ -177,10 +177,10 @@ static void *threadrace1(void *_tr) {
             goto ffinish;
         }
 
-        res = ejdbqrysearch(coll, q, &count, 0, NULL);
+        res = ejdbqryexecute(coll, q, &count, 0, NULL);
 
         if (ejdbecode(jb) != 0) {
-            eprint(jb, __LINE__, "threadrace1.ejdbqrysearch");
+            eprint(jb, __LINE__, "threadrace1.ejdbqryexecute");
             err = true;
             goto ffinish;
         }
