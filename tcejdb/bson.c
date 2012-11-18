@@ -1195,7 +1195,6 @@ EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, int64_t i) {
 EJDB_EXPORT void bson_swap_endian64(void *outp, const void *inp) {
     const char *in = (const char *) inp;
     char *out = (char *) outp;
-
     out[0] = in[7];
     out[1] = in[6];
     out[2] = in[5];
@@ -1210,7 +1209,6 @@ EJDB_EXPORT void bson_swap_endian64(void *outp, const void *inp) {
 EJDB_EXPORT void bson_swap_endian32(void *outp, const void *inp) {
     const char *in = (const char *) inp;
     char *out = (char *) outp;
-
     out[0] = in[3];
     out[1] = in[2];
     out[2] = in[1];
@@ -1295,7 +1293,7 @@ EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson 
     return BSON_OK;
 }
 
-EJDB_EXPORT int bson_merge(bson *b1, bson *b2, bson_bool_t overwrite, bson *out) {
+EJDB_EXPORT int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out) {
     assert(b1 && b2 && out);
     if (!b1->finished || !b2->finished || out->finished) {
         return BSON_ERROR;
@@ -1366,7 +1364,7 @@ EJDB_EXPORT int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, co
     } else if (t1 == BSON_OID && t2 == BSON_OID) {
         return memcmp(bson_iterator_oid(&it1), bson_iterator_oid(&it2), sizeof (bson_oid_t));
     }
-    return -2;
+    return 0;
 }
 
 EJDB_EXPORT int bson_compare(const void *bsdata1, const void *bsdata2, const char* fpath, int fplen) {

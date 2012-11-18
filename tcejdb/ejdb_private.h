@@ -82,6 +82,7 @@ struct EJQF { /**> Matching field and status */
     bson_type ftype; /**> BSON field type */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
+    bson *updateobj; /**> Update bson object for $set and $inc operations */
     EJDB *jb; /**> Reference to the EJDB during query processing */
     EJQ *q; /**> Query object field embedded into */
 };

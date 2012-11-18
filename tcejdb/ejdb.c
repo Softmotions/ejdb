@@ -3,6 +3,7 @@
 
 
 #include <regex.h>
+#include <tcejdb/bson.h>
 #include "ejdb_private.h"
 #include "ejdbutl.h"
 
@@ -323,13 +324,13 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
     char *obsdata = NULL; //Old bson
     int obsdatasz = 0;
     if (rowm) { //Save the copy of old bson data
-        const void *tmp = tcmapget(rowm, JDBCOLBSON, JDBCOLBSONL, &obsdatasz);
-        if (tmp && obsdatasz > 0) {
+        const void *obs = tcmapget(rowm, JDBCOLBSON, JDBCOLBSONL, &obsdatasz);
+        if (obs && obsdatasz > 0) {
             TCMALLOC(obsdata, obsdatasz);
-            memmove(obsdata, tmp, obsdatasz);
+            memmove(obsdata, obs, obsdatasz);
         }
     } else {
-        rowm = tcmapnew2(128);
+        rowm = tcmapnew2(64);
     }
     tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(bs), bson_size(bs));
     if (!tctdbput(tdb, oid, sizeof (*oid), rowm)) {
@@ -1371,6 +1372,9 @@ static void _qryfieldup(const EJQF *src, EJQF *target, uint32_t qflags) {
     if (src->exprlist) {
         target->exprlist = tclistdup(src->exprlist);
     }
+    if (src->updateobj) {
+        target->updateobj = bson_dup(src->updateobj);
+    }
 }
 
 /* Clone query object */
@@ -1530,19 +1534,63 @@ static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz)
     TCFREE(bsbuf);
 }
 
-static void _qryupdate(EJCOLL *jcoll, const EJQ *ejq) {
+static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) {
     assert(ejq->flags & EJQUPDATING);
+
+    bool rv = true;
     const void *kbuf;
     int kbufsz;
     int qfsz;
+    bson_type bt;
+    bson_oid_t *oid;
+    bson_iterator it;
     TCMAP *qobjmap = ejq->qobjmap;
+    TCTDB *tdb = jcoll->tdb;
+    TCMAP *rowm = tcmapnew2(64);
+
+    bson *src = bson_create_from_buffer(bsbuf, bsbufsz);
+    bson bsout;
+    bson_init_size(&bsout, bsbufsz);
+
     tcmapiterinit(qobjmap);
     while ((kbuf = tcmapiternext(qobjmap, &kbufsz)) != NULL) {
         const EJQF *qf = tcmapiterval(kbuf, &qfsz);
         assert(qfsz == sizeof (EJQF));
-        if (((qf->flags & EJCONDSET) & EJQUPDATING) == 0) continue;
-        //DO IT
+        if (qf->updateobj == NULL) {
+            continue;
+        }
+        if (qf->flags & EJCONDSET) { //$set
+            bson_merge(src, qf->updateobj, true, &bsout);
+            break;
+        } else if (qf->flags & EJCONDINC) { //$inc
+            goto finish;
+            //TODO implement it
+            break;
+        } else {
+            assert(0);
+        }
     }
+    bson_finish(src);
+
+    //fetch oid
+    bt = bson_find(&it, src, JDBIDKEYNAME);
+    if (bt != BSON_OID) {
+        rv = false;
+        _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        goto finish;
+    }
+    oid = bson_iterator_oid(&it);
+    tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(&bsout), bson_size(&bsout));
+    rv = tctdbput(tdb, oid, sizeof (*oid), rowm);
+    if (rv) {
+        rv = _updatebsonidx(jcoll, oid, &bsout, bsbuf, bsbufsz);
+    }
+
+finish:
+    bson_del(src);
+    bson_destroy(&bsout);
+    tcmapdel(rowm);
+    return rv;
 }
 
 /** Query */
@@ -1659,7 +1707,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
 
 #define JBQREGREC(_bsbuf, _bsbufsz)   \
     ++count; \
-    if (ejq->flags & EJQUPDATING) _qryupdate(jcoll, ejq); \
+    if (ejq->flags & EJQUPDATING) { \
+        _qryupdate(jcoll, ejq, (_bsbuf), (_bsbufsz)); \
+    } \
     if (!onlycount && (all || count > skip)) { \
         if (ifields) {\
             _pushstripbson(res, ifields, (_bsbuf), (_bsbufsz)); \
@@ -2594,6 +2644,9 @@ static void _delqfdata(const EJQ *q, const EJQF *qf) {
     if (qf->idxmeta) {
         bson_del(qf->idxmeta);
     }
+    if (qf->updateobj) {
+        bson_del(qf->updateobj);
+    }
     if (qf->regex && !(EJQINTERNAL & q->flags)) {
         //We do not clear regex_t data because it not deep copy in internal queries
         regfree(qf->regex);
@@ -2780,8 +2833,20 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                         qf.flags |= EJCONDINC;
                         qf.q->flags |= EJQUPDATING;
                     }
+                    if ((qf.flags & (EJCONDSET | EJCONDINC))) {
+                        assert(qf.updateobj == NULL);
+                        qf.updateobj = bson_create();
+                        bson_init(qf.updateobj);
+                        bson_type sbt;
+                        bson_iterator sit;
+                        bson_iterator_subiterator(it, &sit);
+                        while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
+                            bson_append_field_from_iterator(&sit, qf.updateobj);
+                        }
+                        bson_finish(qf.updateobj);
+                        break;
+                    }
                 }
-
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
                 ret = _parse_qobj_impl(jb, q, &sit, qmap, pathStack, &qf);

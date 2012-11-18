@@ -1079,7 +1079,7 @@ EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson 
  *
  * @return BSON_OK or BSON_ERROR.
  */
-EJDB_EXPORT int bson_merge(bson *b1, bson *b2, bson_bool_t overwrite, bson *out);
+EJDB_EXPORT int bson_merge(const bson *b1,  const bson *b2, bson_bool_t overwrite, bson *out);
 
 
 /**
@@ -1102,10 +1102,10 @@ EJDB_EXPORT int bson_compare_bool(bson_bool_t cv, const void *bsdata, const char
  * @param src BSON
  * @return Finished copy of src
  */
-EJDB_EXPORT bson* bson_dup(const bson* src);
+EJDB_EXPORT bson* bson_dup(const bson *src);
 
 
-EJDB_EXPORT bson* bson_create_from_buffer(const void* buf, int bufsz);
+EJDB_EXPORT bson* bson_create_from_buffer(const void *buf, int bufsz);
 
 
 EJDB_EXTERN_C_END

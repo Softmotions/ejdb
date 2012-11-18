@@ -100,9 +100,9 @@ Installation
 
 On Debian/Ubuntu linux you can install it as follows:
 
-```sh
-   sudo apt-get install g++ libcunit1 libcunit1-dev zlib1g zlib1g-dev
-```
+~~~~~~
+sudo apt-get install g++ libcunit1 libcunit1-dev zlib1g zlib1g-dev
+~~~~~~
 
 **Installation from node package manager:**
 
@@ -669,7 +669,6 @@ Where
 
 Limitations/TODOs
 ------------------------------------
-* ~~Case insensitive string indexes~~ #3
 * Collect collection index statistic
 * Windows port
 
