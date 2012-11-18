@@ -1548,7 +1548,8 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
     TCTDB *tdb = jcoll->tdb;
     TCMAP *rowm = tcmapnew2(64);
 
-    bson *src = bson_create_from_buffer(bsbuf, bsbufsz);
+    bson src;
+    bson_create_from_buffer2(&src, bsbuf, bsbufsz);
     bson bsout;
     bson_init_size(&bsout, bsbufsz);
 
@@ -1560,7 +1561,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
             continue;
         }
         if (qf->flags & EJCONDSET) { //$set
-            bson_merge(src, qf->updateobj, true, &bsout);
+            bson_merge(&src, qf->updateobj, true, &bsout);
             break;
         } else if (qf->flags & EJCONDINC) { //$inc
             goto finish;
@@ -1570,10 +1571,10 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
             assert(0);
         }
     }
-    bson_finish(src);
+    bson_finish(&bsout);
 
     //fetch oid
-    bt = bson_find(&it, src, JDBIDKEYNAME);
+    bt = bson_find(&it, &src, JDBIDKEYNAME);
     if (bt != BSON_OID) {
         rv = false;
         _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -1587,7 +1588,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
     }
 
 finish:
-    bson_del(src);
+    bson_destroy(&src);
     bson_destroy(&bsout);
     tcmapdel(rowm);
     return rv;

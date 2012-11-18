@@ -1425,9 +1425,12 @@ EJDB_EXPORT bson* bson_dup(const bson* src) {
 }
 
 EJDB_EXPORT bson* bson_create_from_buffer(const void* buf, int bufsz) {
+    return bson_create_from_buffer2(bson_create(), buf, bufsz);
+}
+
+EJDB_EXPORT bson* bson_create_from_buffer2(bson *rv, const void* buf, int bufsz) {
     assert(buf);
     assert(bufsz - 4 > 0);
-    bson *rv = bson_create();
     bson_init_size(rv, bufsz);
     bson_ensure_space(rv, bufsz - 4);
     bson_append(rv, (char*) buf + 4, bufsz - (4 + 1/*BSON_EOO*/));

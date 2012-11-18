@@ -1106,6 +1106,7 @@ EJDB_EXPORT bson* bson_dup(const bson *src);
 
 
 EJDB_EXPORT bson* bson_create_from_buffer(const void *buf, int bufsz);
+EJDB_EXPORT bson* bson_create_from_buffer2(bson *bs, const void *buf, int bufsz);
 
 
 EJDB_EXTERN_C_END
