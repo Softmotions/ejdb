@@ -2906,6 +2906,12 @@ void testUpdate1() { //https://github.com/Softmotions/ejdb/issues/9
     ejdbquerydel(q1);
 }
 
+void testUpdate2() { //https://github.com/Softmotions/ejdb/issues/9
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -2957,7 +2963,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testICaseIndex", testICaseIndex)) ||
             (NULL == CU_add_test(pSuite, "testTicket7", testTicket7)) ||
             (NULL == CU_add_test(pSuite, "testTicket8", testTicket8)) ||
-            (NULL == CU_add_test(pSuite, "testUpdate1", testUpdate1))
+            (NULL == CU_add_test(pSuite, "testUpdate1", testUpdate1)) ||
+            (NULL == CU_add_test(pSuite, "testUpdate2", testUpdate2))
             ) {
         CU_cleanup_registry();
         return CU_get_error();
