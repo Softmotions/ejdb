@@ -2854,7 +2854,7 @@ void testUpdate1() { //https://github.com/Softmotions/ejdb/issues/9
     tcxstrdel(log);
     ejdbquerydel(q1);
 
-    
+
 
 
 }

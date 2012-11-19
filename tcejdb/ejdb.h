@@ -69,7 +69,6 @@ enum { /** Index modes, index types. */
 
 enum { /*< Query search mode flags in ejdbqryexecute() */
     JBQRYCOUNT = 1, /*< Query only count(*) */
-    JBQRYUPDATE = 1 << 1 /*< Updating query  */
 };
 
 /**

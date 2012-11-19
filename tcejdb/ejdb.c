@@ -1661,7 +1661,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     EJQ *ejq;
     TCMALLOC(ejq, sizeof (*ejq));
     _qrydup(q, ejq, EJQINTERNAL);
-
+    
     *outcount = 0;
     bool onlycount = (qflags & JBQRYCOUNT); //quering only for result set count
     bool all = false; //need all records
@@ -2898,13 +2898,12 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                 if (isckey) {
                     if (pqf == NULL && !strcmp("$set", fkey)) { //top level set OP
                         qf.flags |= EJCONDSET;
-                        qf.q->flags |= EJQUPDATING;
                     } else if (!strcmp("$inc", fkey)) {
                         qf.flags |= EJCONDINC;
-                        qf.q->flags |= EJQUPDATING;
                     }
                     if ((qf.flags & (EJCONDSET | EJCONDINC))) {
                         assert(qf.updateobj == NULL);
+                        qf.q->flags |= EJQUPDATING;
                         qf.updateobj = bson_create();
                         bson_init(qf.updateobj);
                         bson_type sbt;
