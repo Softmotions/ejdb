@@ -53,6 +53,13 @@ typedef struct {
     bool icase; //ignore case normalization
 } _BSONIPATHROWLDR;
 
+/* context of deffered index updates. See `_updatebsonidx()` */
+typedef struct {
+    bson_oid_t oid;
+    TCMAP *rmap;
+    TCMAP *imap;
+} _DEFFEREDIDXCTX;
+
 /* private function prototypes */
 static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, const char *func);
 static bool _ejdbsetmutex(EJDB *ejdb);
@@ -73,7 +80,8 @@ static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB*
 static bool _addcoldb0(const char *colname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res);
 static void _delcoldb(EJCOLL *cdb);
 static void _delqfdata(const EJQ *q, const EJQF *ejqf);
-static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs, const void *obsdata, int obsdatasz);
+static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
+        const void *obsdata, int obsdatasz, TCLIST *dlist);
 static bool _metasetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
 static bool _metagetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
 static bson* _metagetbson(EJDB *jb, const char *colname, int colnamesz, const char *mkey);
@@ -337,7 +345,7 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
         goto finish;
     }
     //Update indexes
-    rv = _updatebsonidx(jcoll, oid, bs, obsdata, obsdatasz);
+    rv = _updatebsonidx(jcoll, oid, bs, obsdata, obsdatasz, NULL);
 finish:
     JBCUNLOCKMETHOD(jcoll);
     if (rowm) {
@@ -367,7 +375,7 @@ EJDB_EXPORT bool ejdbrmbson(EJCOLL *jcoll, bson_oid_t *oid) {
         goto finish;
     }
     olddata = tcmapget3(rmap, JDBCOLBSON, JDBCOLBSONL, &olddatasz);
-    if (!_updatebsonidx(jcoll, oid, NULL, olddata, olddatasz)) {
+    if (!_updatebsonidx(jcoll, oid, NULL, olddata, olddatasz, NULL)) {
         rv = false;
     }
     if (!tctdbout(jcoll->tdb, oid, sizeof (*oid))) {
@@ -1534,8 +1542,9 @@ static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz)
     TCFREE(bsbuf);
 }
 
-static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) {
+static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, TCLIST *didxctx) {
     assert(ejq->flags & EJQUPDATING);
+    assert(didxctx);
 
     bool rv = true;
     bool update = false;
@@ -1646,7 +1655,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
     tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(&bsout), bson_size(&bsout));
     rv = tctdbput(jcoll->tdb, oid, sizeof (*oid), rowm);
     if (rv) {
-        rv = _updatebsonidx(jcoll, oid, &bsout, bsbuf, bsbufsz);
+        rv = _updatebsonidx(jcoll, oid, &bsout, bsbuf, bsbufsz, didxctx);
     }
 
 finish:
@@ -1699,6 +1708,11 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     const TDBIDX *midx = mqf ? mqf->idx : NULL;
     TCHDB *hdb = jcoll->tdb->hdb;
     assert(hdb);
+
+    TCLIST *didxctx = NULL; //deffered indexing context
+    if (ejq->flags & EJQUPDATING) {
+        didxctx = tclistnew();
+    }
 
     if (midx) { //Main index used for ordering
         if (mqf->orderseq == 1 &&
@@ -1773,7 +1787,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
 #define JBQREGREC(_bsbuf, _bsbufsz)   \
     ++count; \
     if (ejq->flags & EJQUPDATING) { \
-        _qryupdate(jcoll, ejq, (_bsbuf), (_bsbufsz)); \
+        _qryupdate(jcoll, ejq, (_bsbuf), (_bsbufsz), didxctx); \
     } \
     if (!onlycount && (all || count > skip)) { \
         if (ifields) {\
@@ -2265,6 +2279,25 @@ finish:
         tcxstrprintf(log, "RS SIZE: %d\n", (res ? TCLISTNUM(res) : 0));
         tcxstrprintf(log, "FINAL SORTING: %s\n", (onlycount || aofsz <= 0) ? "NO" : "YES");
     }
+
+    //Apply deffered index changes
+    if (didxctx) {
+        for (int i = TCLISTNUM(didxctx) - 1; i >= 0; --i) {
+            _DEFFEREDIDXCTX *di = TCLISTVALPTR(didxctx, i);
+            assert(di);
+            if (di->rmap) {
+                tctdbidxout2(jcoll->tdb, &(di->oid), sizeof (di->oid), di->rmap);
+                tcmapdel(di->rmap);
+            }
+            if (di->imap) {
+                tctdbidxput2(jcoll->tdb, &(di->oid), sizeof (di->oid), di->imap);
+                tcmapdel(di->imap);
+            }
+        }
+        tclistdel(didxctx);
+    }
+
+    //Cleanup
     if (qfs) {
         TCFREE(qfs);
     }
@@ -3290,7 +3323,7 @@ static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz
 }
 
 static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
-        const void *obsdata, int obsdatasz) {
+        const void *obsdata, int obsdatasz, TCLIST *dlist) {
     bool rv = true;
     TCMAP *cmeta = tctdbget(jcoll->jb->metadb, jcoll->cname, jcoll->cnamesz);
     if (!cmeta) {
@@ -3391,8 +3424,19 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         if (ofvalue) TCFREE(ofvalue);
     }
     tcmapdel(cmeta);
-    if (rimap && !tctdbidxout2(jcoll->tdb, oid, sizeof (*oid), rimap)) rv = false;
-    if (imap && !tctdbidxput2(jcoll->tdb, oid, sizeof (*oid), imap)) rv = false;
+
+    if (dlist) { //storage for deffered index ops provided, save changes into
+        _DEFFEREDIDXCTX dctx;
+        dctx.oid = *oid;
+        dctx.rmap = (rimap && TCMAPRNUM(rimap) > 0) ? tcmapdup(rimap) : NULL;
+        dctx.imap = (imap && TCMAPRNUM(imap) > 0) ? tcmapdup(imap) : NULL;
+        if (dctx.imap || dctx.rmap) {
+            TCLISTPUSH(dlist, &dctx, sizeof (dctx));
+        }
+    } else { //apply index changes immediately
+        if (rimap && !tctdbidxout2(jcoll->tdb, oid, sizeof (*oid), rimap)) rv = false;
+        if (imap && !tctdbidxput2(jcoll->tdb, oid, sizeof (*oid), imap)) rv = false;
+    }
     if (imap) tcmapdel(imap);
     if (rimap) tcmapdel(rimap);
     return rv;
