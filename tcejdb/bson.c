@@ -1326,15 +1326,57 @@ EJDB_EXPORT int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite
     return BSON_OK;
 }
 
-EJDB_EXPORT int bson_inplace_set_double(bson_iterator *pos, double val) {
+EJDB_EXPORT int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val) {
     assert(pos);
-    //if (!BSON_IS_NUM_TYPE(bson_))
+    bson_type bt = bson_iterator_type(pos);
+    if (bt != BSON_BOOL) {
+        return BSON_ERROR;
+    }
+    char *t = (char*) pos->cur + 1;
+    t += strlen(t) + 1;
+    *t = (val != 0);
     return BSON_OK;
 }
 
-EJDB_EXPORT int bson_inplace_set_long(bson_iterator *pos, long val) {
+EJDB_EXPORT int bson_inplace_set_long(bson_iterator *pos, int64_t val) {
     assert(pos);
-    
+    bson_type bt = bson_iterator_type(pos);
+    if (!BSON_IS_NUM_TYPE(bt)) {
+        return BSON_ERROR;
+    }
+    char *t = (char*) pos->cur + 1;
+    t += strlen(t) + 1;
+    if (bt == BSON_INT) {
+        bson_little_endian32(t, &val);
+    } else if (bt == BSON_LONG) {
+        bson_little_endian64(t, &val);
+    } else if (bt == BSON_DOUBLE) {
+        double dval = (double) val;
+        bson_little_endian64(t, &dval);
+    } else {
+        return BSON_ERROR;
+    }
+    return BSON_OK;
+}
+
+EJDB_EXPORT int bson_inplace_set_double(bson_iterator *pos, double val) {
+    assert(pos);
+    bson_type bt = bson_iterator_type(pos);
+    if (!BSON_IS_NUM_TYPE(bt)) {
+        return BSON_ERROR;
+    }
+    int64_t ival = (int64_t) val;
+    char *t = (char*) pos->cur + 1;
+    t += strlen(t) + 1;
+    if (bt == BSON_INT) {
+        bson_little_endian32(t, &ival);
+    } else if (bt == BSON_LONG) {
+        bson_little_endian64(t, &ival);
+    } else if (bt == BSON_DOUBLE) {
+        bson_little_endian64(t, &val);
+    } else {
+        return BSON_ERROR;
+    }
     return BSON_OK;
 }
 

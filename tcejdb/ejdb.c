@@ -1572,6 +1572,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
             incqf = qf;
         } else {
             assert(0);
+            break;
         }
     }
     if (setqf) {
@@ -1594,7 +1595,9 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
             if (!BSON_IS_NUM_TYPE(bt)) {
                 continue;
             }
-            bt2 = bson_find(&it2, &bsout, bson_iterator_key(&it));
+            //bt2 = bson_find(&it2, &bsout, bson_iterator_key(&it));
+            bson_iterator_init(&it2, &bsout);
+            bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
             if (!BSON_IS_NUM_TYPE(bt2)) {
                 continue;
             }
@@ -1612,7 +1615,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
                 }
                 update = true;
             } else {
-                long v = bson_iterator_long(&it2);
+                int64_t v = bson_iterator_long(&it2);
                 v += bson_iterator_long(&it);
                 if (bson_inplace_set_long(&it2, v)) {
                     rv = false;
@@ -1661,7 +1664,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     EJQ *ejq;
     TCMALLOC(ejq, sizeof (*ejq));
     _qrydup(q, ejq, EJQINTERNAL);
-    
+
     *outcount = 0;
     bool onlycount = (qflags & JBQRYCOUNT); //quering only for result set count
     bool all = false; //need all records

@@ -2842,10 +2842,12 @@ void testUpdate1() { //https://github.com/Softmotions/ejdb/issues/9
     log = tcxstrnew();
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(1, TCLISTNUM(q1res));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "UPDATING MODE: NO"));
 
+    int age = 58;
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_long(58, TCLISTVALPTR(q1res, i), "age"));
+        CU_ASSERT_FALSE(bson_compare_long(age, TCLISTVALPTR(q1res, i), "age"));
         CU_ASSERT_FALSE(bson_compare_string("black", TCLISTVALPTR(q1res, i), "labels.0"));
         CU_ASSERT_FALSE(bson_compare_string("blue", TCLISTVALPTR(q1res, i), "labels.1"));
     }
@@ -2854,9 +2856,54 @@ void testUpdate1() { //https://github.com/Softmotions/ejdb/issues/9
     tcxstrdel(log);
     ejdbquerydel(q1);
 
+    //q3: {name : 'John Travolta', '$inc' : {'age' : -1}}
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "John Travolta");
+    bson_append_start_object(&bsq1, "$inc");
+    bson_append_int(&bsq1, "age", -1);
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "UPDATING MODE: YES"));
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
 
 
+    //q4: {name : 'John Travolta', age: 57}
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "John Travolta");
+    bson_append_int(&bsq1, "age", 57);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
 
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(1, TCLISTNUM(q1res));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "UPDATING MODE: NO"));
+
+    --age;
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_long(age, TCLISTVALPTR(q1res, i), "age"));
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
 }
 
 int main() {
