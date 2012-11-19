@@ -1298,13 +1298,11 @@ EJDB_EXPORT int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite
     if (!b1->finished || !b2->finished || out->finished) {
         return BSON_ERROR;
     }
-
     bson_iterator it1, it2;
     bson_type bt1, bt2;
 
     bson_iterator_init(&it1, b1);
     bson_iterator_init(&it2, b2);
-
     //Append all fields in B1 overwrited by B2
     while ((bt1 = bson_iterator_next(&it1)) != BSON_EOO) {
         const char* k1 = bson_iterator_key(&it1);
@@ -1317,7 +1315,6 @@ EJDB_EXPORT int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite
 
     bson_iterator_init(&it1, b1);
     bson_iterator_init(&it2, b2);
-
     //Append all fields from B2 missing in B1
     while ((bt2 = bson_iterator_next(&it2)) != BSON_EOO) {
         const char* k2 = bson_iterator_key(&it2);
@@ -1326,6 +1323,18 @@ EJDB_EXPORT int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite
         }
     }
 
+    return BSON_OK;
+}
+
+EJDB_EXPORT int bson_inplace_set_double(bson_iterator *pos, double val) {
+    assert(pos);
+    //if (!BSON_IS_NUM_TYPE(bson_))
+    return BSON_OK;
+}
+
+EJDB_EXPORT int bson_inplace_set_long(bson_iterator *pos, long val) {
+    assert(pos);
+    
     return BSON_OK;
 }
 

@@ -1081,6 +1081,9 @@ EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson 
  */
 EJDB_EXPORT int bson_merge(const bson *b1,  const bson *b2, bson_bool_t overwrite, bson *out);
 
+EJDB_EXPORT int bson_inplace_set_double(bson_iterator *pos, double val);
+EJDB_EXPORT int bson_inplace_set_long(bson_iterator *pos, long val);
+
 
 /**
  * Compares field path primitive values of two BSONs

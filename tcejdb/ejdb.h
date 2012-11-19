@@ -42,7 +42,8 @@ enum { /** Error codes */
     JBEFPATHINVALID = 9005, /**< Invalid field path value. */
     JBEQINVALIDQRX = 9006, /**< Invalid query regexp value. */
     JBEQRSSORTING = 9007, /**< Result set sorting error. */
-    JBEQERROR = 9008 /**< Query generic error. */
+    JBEQERROR = 9008, /**< Query generic error. */
+    JBEQUPDFAILED = 9009 /**< Updating failed. */
 };
 
 enum { /** Database open modes */

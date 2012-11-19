@@ -1538,20 +1538,26 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
     assert(ejq->flags & EJQUPDATING);
 
     bool rv = true;
+    bool update = false;
+
     const void *kbuf;
     int kbufsz;
     int qfsz;
-    bson_type bt;
     bson_oid_t *oid;
-    bson_iterator it;
+    bson_type bt, bt2;
+    bson_iterator it, it2;
     TCMAP *qobjmap = ejq->qobjmap;
-    TCTDB *tdb = jcoll->tdb;
-    TCMAP *rowm = tcmapnew2(TCMAPTINYBNUM);
+    TCMAP *rowm = NULL;
 
     bson src;
     bson_create_from_buffer2(&src, bsbuf, bsbufsz);
-    bson bsout;
-    bson_init_size(&bsout, bsbufsz);
+
+    bson bsout; //Resulting updated bson
+    bsout.data = NULL;
+    bsout.dataSize = 0;
+
+    const EJQF *setqf = NULL;
+    const EJQF *incqf = NULL;
 
     tcmapiterinit(qobjmap);
     while ((kbuf = tcmapiternext(qobjmap, &kbufsz)) != NULL) {
@@ -1560,34 +1566,82 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
         if (qf->updateobj == NULL) {
             continue;
         }
-        if (qf->flags & EJCONDSET) { //$set
-            bson_merge(&src, qf->updateobj, true, &bsout);
-            break;
-        } else if (qf->flags & EJCONDINC) { //$inc
-            goto finish;
-            //TODO implement it
-            break;
+        if (!setqf && qf->flags & EJCONDSET) { //$set
+            setqf = qf;
+        } else if (!incqf && qf->flags & EJCONDINC) {
+            incqf = qf;
         } else {
             assert(0);
+        }
+    }
+    if (setqf) {
+        update = true;
+        bson_init_size(&bsout, bsbufsz);
+        if (bson_merge(&src, setqf->updateobj, true, &bsout)) {
+            rv = false;
+            _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
+        }
+    }
+    if (!rv) {
+        goto finish;
+    }
+    if (incqf) {
+        if (!bsout.data) {
+            bson_create_from_buffer2(&bsout, bsbuf, bsbufsz);
+        }
+        bson_iterator_init(&it, incqf->updateobj);
+        while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+            if (!BSON_IS_NUM_TYPE(bt)) {
+                continue;
+            }
+            bt2 = bson_find(&it2, &bsout, bson_iterator_key(&it));
+            if (!BSON_IS_NUM_TYPE(bt2)) {
+                continue;
+            }
+            if (bt2 == BSON_DOUBLE) {
+                double v = bson_iterator_double(&it2);
+                if (bt == BSON_DOUBLE) {
+                    v += bson_iterator_double(&it);
+                } else {
+                    v += bson_iterator_long(&it);
+                }
+                if (bson_inplace_set_double(&it2, v)) {
+                    rv = false;
+                    _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
+                    break;
+                }
+                update = true;
+            } else {
+                long v = bson_iterator_long(&it2);
+                v += bson_iterator_long(&it);
+                if (bson_inplace_set_long(&it2, v)) {
+                    rv = false;
+                    _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
+                    break;
+                }
+                update = true;
+            }
         }
     }
     bson_finish(&bsout);
     if (bsout.err) {
         rv = false;
-        _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
+    }
+    if (!update || !rv) {
         goto finish;
     }
-
-    //fetch oid
+    //Perform updating
     bt = bson_find(&it, &src, JDBIDKEYNAME);
     if (bt != BSON_OID) {
         rv = false;
-        _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
         goto finish;
     }
     oid = bson_iterator_oid(&it);
+    rowm = tcmapnew2(TCMAPTINYBNUM);
     tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(&bsout), bson_size(&bsout));
-    rv = tctdbput(tdb, oid, sizeof (*oid), rowm);
+    rv = tctdbput(jcoll->tdb, oid, sizeof (*oid), rowm);
     if (rv) {
         rv = _updatebsonidx(jcoll, oid, &bsout, bsbuf, bsbufsz);
     }
@@ -1595,7 +1649,9 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
 finish:
     bson_destroy(&src);
     bson_destroy(&bsout);
-    tcmapdel(rowm);
+    if (rowm) {
+        tcmapdel(rowm);
+    }
     return rv;
 }
 
