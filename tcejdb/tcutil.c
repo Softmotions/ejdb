@@ -960,7 +960,6 @@ void tclistprintf(TCLIST *list, const char *format, ...){
 #define TCMAPZMMINSIZ  131072            // minimum memory size to use nullified region
 #define TCMAPCSUNIT    52                // small allocation unit size of map concatenation
 #define TCMAPCBUNIT    252               // big allocation unit size of map concatenation
-#define TCMAPTINYBNUM  31                // bucket number of a tiny map
 
 /* get the first hash value */
 #define TCMAPHASH1(TC_res, TC_kbuf, TC_ksiz)                            \

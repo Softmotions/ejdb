@@ -578,6 +578,7 @@ void tclistprintf(TCLIST *list, const char *format, ...);
  * hash map
  *************************************************************************************************/
 
+#define TCMAPTINYBNUM  31                // bucket number of a tiny map
 
 typedef struct _TCMAPREC {               /* type of structure for an element of a map */
   int32_t ksiz;                          /* size of the region of the key */

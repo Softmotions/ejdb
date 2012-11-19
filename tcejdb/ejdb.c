@@ -3,7 +3,6 @@
 
 
 #include <regex.h>
-#include <tcejdb/bson.h>
 #include "ejdb_private.h"
 #include "ejdbutl.h"
 
@@ -135,6 +134,7 @@ EJDB_EXPORT EJDB* ejdbnew(void) {
     TCMALLOC(jb, sizeof (*jb));
     _ejdbclear(jb);
     jb->metadb = tctdbnew();
+    tctdbsetcache(jb->metadb, 1024, 0, 0);
 #ifdef _DEBUG
     tchdbsetdbgfd(jb->metadb->hdb, fileno(stderr));
 #endif
@@ -1546,7 +1546,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
     bson_iterator it;
     TCMAP *qobjmap = ejq->qobjmap;
     TCTDB *tdb = jcoll->tdb;
-    TCMAP *rowm = tcmapnew2(64);
+    TCMAP *rowm = tcmapnew2(TCMAPTINYBNUM);
 
     bson src;
     bson_create_from_buffer2(&src, bsbuf, bsbufsz);
@@ -1572,6 +1572,11 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz) 
         }
     }
     bson_finish(&bsout);
+    if (bsout.err) {
+        rv = false;
+        _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        goto finish;
+    }
 
     //fetch oid
     bt = bson_find(&it, &src, JDBIDKEYNAME);
@@ -2363,7 +2368,7 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMA
         if (!(qflags & JBQRYCOUNT)) {
             bt = bson_find(&it, ejq->hints, "$fields"); //Collect required fields
             if (bt == BSON_OBJECT) {
-                TCMAP *fmap = tcmapnew2(64);
+                TCMAP *fmap = tcmapnew2(TCMAPTINYBNUM);
                 static const bool yes = true;
                 bson_iterator_subiterator(&it, &sit);
                 while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
@@ -2389,9 +2394,11 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMA
         EJQF *qf = (EJQF*) tcmapget(qmap, mkey, mkeysz, &mvalsz); //discard const
         assert(mvalsz == sizeof (EJQF));
         assert(qf->fpath);
-
-        if ((qf->tcop == TDBQCSTREQ || qf->tcop == TDBQCSTROREQ) &&
-                !strcmp(JDBIDKEYNAME, qf->fpath)) { //OID PK matching
+        if (qf->flags & (EJCONDSET | EJCONDINC)) { //skip updating qfields
+            continue;
+        }
+        //OID PK matching
+        if ((qf->tcop == TDBQCSTREQ || qf->tcop == TDBQCSTROREQ) && !strcmp(JDBIDKEYNAME, qf->fpath)) {
             qf->flags |= EJFPKMATCHING;
             *mqf = qf;
             break;
@@ -2669,7 +2676,6 @@ static TCLIST* _fetch_bson_str_array(EJDB *jb, bson_iterator *it, bson_type *typ
     bson_type ftype;
     for (int i = 0; (ftype = bson_iterator_next(it)) != BSON_EOO; ++i) {
         switch (ftype) {
-            case BSON_SYMBOL:
             case BSON_STRING:
                 *type = ftype;
                 if (tflags & JBICASE) { //ignore case
@@ -2745,25 +2751,32 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
             tclistpush2(pathStack, fkey);
             qf.ftype = ftype;
         } else {
-            if (!pqf) { //Require parent query object
-                ret = JBEQERROR;
-                break;
-            }
-            qf = *pqf;
-            if (!strcmp("$not", fkey)) {
-                qf.negate = !qf.negate;
-            } else if (!strcmp("$gt", fkey)) {
-                qf.flags |= EJCOMPGT;
-            } else if (!strcmp("$gte", fkey)) {
-                qf.flags |= EJCOMPGTE;
-            } else if (!strcmp("$lt", fkey)) {
-                qf.flags |= EJCOMPLT;
-            } else if (!strcmp("$lte", fkey)) {
-                qf.flags |= EJCOMPLTE;
-            } else if (!strcmp("$begin", fkey)) {
-                qf.flags |= EJCONDSTARTWITH;
-            } else if (!strcmp("$icase", fkey)) {
-                qf.flags |= EJCONDICASE;
+            if (!strcmp("$set", fkey) || !strcmp("$inc", fkey)) {
+                if (pqf) { //Top level ops
+                    ret = JBEQERROR;
+                    break;
+                }
+            } else {
+                if (!pqf) { //Require parent query object
+                    ret = JBEQERROR;
+                    break;
+                }
+                qf = *pqf;
+                if (!strcmp("$not", fkey)) {
+                    qf.negate = !qf.negate;
+                } else if (!strcmp("$gt", fkey)) {
+                    qf.flags |= EJCOMPGT;
+                } else if (!strcmp("$gte", fkey)) {
+                    qf.flags |= EJCOMPGTE;
+                } else if (!strcmp("$lt", fkey)) {
+                    qf.flags |= EJCOMPLT;
+                } else if (!strcmp("$lte", fkey)) {
+                    qf.flags |= EJCOMPLTE;
+                } else if (!strcmp("$begin", fkey)) {
+                    qf.flags |= EJCONDSTARTWITH;
+                } else if (!strcmp("$icase", fkey)) {
+                    qf.flags |= EJCONDICASE;
+                }
             }
         }
 
@@ -2827,7 +2840,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
             case BSON_OBJECT:
             {
                 if (isckey) {
-                    if (!strcmp("$set", fkey)) {
+                    if (pqf == NULL && !strcmp("$set", fkey)) { //top level set OP
                         qf.flags |= EJCONDSET;
                         qf.q->flags |= EJQUPDATING;
                     } else if (!strcmp("$inc", fkey)) {
@@ -2845,6 +2858,14 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                             bson_append_field_from_iterator(&sit, qf.updateobj);
                         }
                         bson_finish(qf.updateobj);
+                        if (qf.updateobj->err) {
+                            ret = JBEQERROR;
+                        }
+                        qf.fpath = strdup(fkey);
+                        qf.fpathsz = strlen(qf.fpath);
+                        qf.tcop = TDBQTRUE;
+                        qf.flags |= EJFEXCLUDED;
+                        tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
                         break;
                     }
                 }
@@ -2866,8 +2887,6 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                 tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
                 break;
             }
-
-            case BSON_SYMBOL:
             case BSON_STRING:
             {
                 assert(!qf.fpath && !qf.expr);
@@ -3275,8 +3294,8 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
             continue;
         }
         if (imap == NULL) {
-            imap = tcmapnew2(16);
-            rimap = tcmapnew2(16);
+            imap = tcmapnew2(TCMAPTINYBNUM);
+            rimap = tcmapnew2(TCMAPTINYBNUM);
         }
         for (int i = 4; i <= 7; ++i) { /* JBIDXNUM, JBIDXSTR, JBIDXARR, JBIDXISTR */
             bool rm = false;

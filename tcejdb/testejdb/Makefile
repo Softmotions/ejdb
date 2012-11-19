@@ -12,8 +12,10 @@ TESTS = t1 t2 t3
 check : all check-t1 check-t2 check-t3;
 
 check-valgrind :
-	rm -rf *.vlog
 	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check
+
+check-valgrind-t2 :
+	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check-t2
 
 check-t1 :
 	$(RUNENV) $(RUNCMD) ./t1

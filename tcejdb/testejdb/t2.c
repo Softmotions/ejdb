@@ -2714,10 +2714,10 @@ void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
-//    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-//        void *bsdata = TCLISTVALPTR(q1res, i);
-//        bson_print_raw(stderr, bsdata, 0);
-//    }
+    //    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+    //        void *bsdata = TCLISTVALPTR(q1res, i);
+    //        bson_print_raw(stderr, bsdata, 0);
+    //    }
 
     bson_type bt;
     bson_iterator it;
@@ -2732,23 +2732,23 @@ void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
             bt = bson_find_fieldpath_value("_id", &it);
             CU_ASSERT_TRUE(bt == BSON_OID);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("address", &it);
+            bt = bson_find_fieldpath_value("address", &it);
             CU_ASSERT_TRUE(bt == BSON_OBJECT);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("address.city", &it);
+            bt = bson_find_fieldpath_value("address.city", &it);
             CU_ASSERT_TRUE(bt == BSON_STRING);
             CU_ASSERT_FALSE(strcmp("Novosibirsk", bson_iterator_string(&it)));
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("address.zip", &it);
+            bt = bson_find_fieldpath_value("address.zip", &it);
             CU_ASSERT_TRUE(bt == BSON_EOO);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("age", &it);
+            bt = bson_find_fieldpath_value("age", &it);
             CU_ASSERT_TRUE(bt == BSON_EOO);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("name", &it);
+            bt = bson_find_fieldpath_value("name", &it);
             CU_ASSERT_TRUE(bt == BSON_EOO);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("labels", &it);
+            bt = bson_find_fieldpath_value("labels", &it);
             CU_ASSERT_TRUE(bt == BSON_EOO);
         } else if (!bson_compare_string("444-123-333", TCLISTVALPTR(q1res, i), "phone")) {
             ++ccount;
@@ -2756,23 +2756,23 @@ void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
             bt = bson_find_fieldpath_value("_id", &it);
             CU_ASSERT_TRUE(bt == BSON_OID);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("address", &it);
+            bt = bson_find_fieldpath_value("address", &it);
             CU_ASSERT_TRUE(bt == BSON_OBJECT);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("address.city", &it);
+            bt = bson_find_fieldpath_value("address.city", &it);
             CU_ASSERT_TRUE(bt == BSON_STRING);
             CU_ASSERT_FALSE(strcmp("Novosibirsk", bson_iterator_string(&it)));
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("address.zip", &it);
+            bt = bson_find_fieldpath_value("address.zip", &it);
             CU_ASSERT_TRUE(bt == BSON_EOO);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("age", &it);
+            bt = bson_find_fieldpath_value("age", &it);
             CU_ASSERT_TRUE(bt == BSON_EOO);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("name", &it);
+            bt = bson_find_fieldpath_value("name", &it);
             CU_ASSERT_TRUE(bt == BSON_EOO);
             bson_iterator_from_buffer(&it, bsdata);
-            bt =  bson_find_fieldpath_value("labels", &it);
+            bt = bson_find_fieldpath_value("labels", &it);
             CU_ASSERT_TRUE(bt == BSON_ARRAY);
             CU_ASSERT_FALSE(bson_compare_string("red", bsdata, "labels.0"));
             CU_ASSERT_FALSE(bson_compare_string("green", bsdata, "labels.1"));
@@ -2785,6 +2785,76 @@ void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
     tclistdel(q1res);
     tcxstrdel(log);
     ejdbquerydel(q1);
+}
+
+void testUpdate1() { //https://github.com/Softmotions/ejdb/issues/9
+
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson_iterator it;
+
+    //q: {name : 'John Travolta', $set : {'labels' : ['black', 'blue'], 'age' : 58}}
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "John Travolta");
+    bson_append_start_object(&bsq1, "$set");
+    bson_append_start_array(&bsq1, "labels");
+    bson_append_string(&bsq1, "0", "black");
+    bson_append_string(&bsq1, "1", "blue");
+    bson_append_finish_array(&bsq1);
+    bson_append_int(&bsq1, "age", 58);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(1, count);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "UPDATING MODE: YES"));
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_TRUE(!bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
+        bson_iterator_from_buffer(&it, TCLISTVALPTR(q1res, i));
+        CU_ASSERT_TRUE(bson_find_from_buffer(&it, TCLISTVALPTR(q1res, i), "age") == BSON_EOO);
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //q2: {name : 'John Travolta', age: 58}
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "John Travolta");
+    bson_append_int(&bsq1, "age", 58);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "UPDATING MODE: NO"));
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_long(58, TCLISTVALPTR(q1res, i), "age"));
+        CU_ASSERT_FALSE(bson_compare_string("black", TCLISTVALPTR(q1res, i), "labels.0"));
+        CU_ASSERT_FALSE(bson_compare_string("blue", TCLISTVALPTR(q1res, i), "labels.1"));
+    }
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    
 
 
 }
@@ -2839,7 +2909,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testEmptyFieldIndex", testEmptyFieldIndex)) ||
             (NULL == CU_add_test(pSuite, "testICaseIndex", testICaseIndex)) ||
             (NULL == CU_add_test(pSuite, "testTicket7", testTicket7)) ||
-            (NULL == CU_add_test(pSuite, "testTicket8", testTicket8))
+            (NULL == CU_add_test(pSuite, "testTicket8", testTicket8)) ||
+            (NULL == CU_add_test(pSuite, "testUpdate1", testUpdate1))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

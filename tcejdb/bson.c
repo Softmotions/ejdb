@@ -1364,7 +1364,7 @@ EJDB_EXPORT int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, co
     } else if (t1 == BSON_OID && t2 == BSON_OID) {
         return memcmp(bson_iterator_oid(&it1), bson_iterator_oid(&it2), sizeof (bson_oid_t));
     }
-    return 0;
+    return (t1 - t2);
 }
 
 EJDB_EXPORT int bson_compare(const void *bsdata1, const void *bsdata2, const char* fpath, int fplen) {
