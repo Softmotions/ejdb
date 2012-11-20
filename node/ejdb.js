@@ -217,7 +217,8 @@ EJDB.prototype.remove = function(cname, oid, cb) {
  *      - $max Maximum number in the result set
  *      - $skip Number of skipped results in the result set
  *      - $orderby Sorting order of query fields.
- *      - $onlycount true|false If `true` only count of matching records will be returned without result set.
+ *      - $onlycount true|false If `true` only count of matching records will be returned
+ *                              without placing records in result set.
  *      - $fields Set subset of fetched fields
  *          Example:
  *          hints:    {
