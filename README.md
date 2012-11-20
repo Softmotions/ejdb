@@ -601,9 +601,9 @@ Building
 
 C API
 ---------------------------------
-EJDB API presented in **ejdb.h** C header file.
+EJDB API presented in **[ejdb.h](https://github.com/Softmotions/ejdb/blob/master/tcejdb/ejdb.h)** C header file.
 
-JSON processing API: **bson.h**
+JSON processing API: **[bson.h](https://github.com/Softmotions/ejdb/blob/master/tcejdb/bson.h)**
 
 Queries
 ---------------------------------
