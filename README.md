@@ -272,7 +272,7 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
            For case insensitive matching you can create special type of string index.
 
     Queries can be used to update records:
-       `$set` and `$inc` operations are supported.
+      `$set` and `$inc` operations are supported.
       `$set` Field set operation.
            - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
        `$inc` Increment operation. Only number types are supported.
@@ -290,6 +290,8 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
       - $max Maximum number in the result set
       - $skip Number of skipped results in the result set
       - $orderby Sorting order of query fields.
+      - $onlycount true|false If `true` only count of matching records will be returned
+                              without placing records in result set.
       - $fields Set subset of fetched fields
            Example:
            hints:    {
