@@ -2918,6 +2918,9 @@ void testUpdate2() { //https://github.com/Softmotions/ejdb/issues/9
     bson_append_start_object(&bsq1, "$inc");
     bson_append_int(&bsq1, "age", 1);
     bson_append_finish_object(&bsq1);
+    bson_append_start_object(&bsq1, "$set");
+    bson_append_bool(&bsq1, "visited", true);
+    bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
@@ -2946,11 +2949,12 @@ void testUpdate2() { //https://github.com/Softmotions/ejdb/issues/9
     count = 0;
     log = tcxstrnew();
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
-    //fprintf(stderr, "%s", TCXSTRPTR(log));
-
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'nage'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX TCOP: 8"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_bool(true, TCLISTVALPTR(q1res, i), "visited"));
+    }
 
     bson_destroy(&bsq1);
     tclistdel(q1res);

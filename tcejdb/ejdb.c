@@ -624,6 +624,18 @@ finish:
     return rv;
 }
 
+EJDB_EXPORT uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log) {
+    assert(jcoll);
+    uint32_t count = 0;
+    EJQ *q = ejdbcreatequery(jcoll->jb, qobj, orqobjs, orqobjsnum, hints);
+    if (q == NULL) {
+        return count;
+    }
+    ejdbqryexecute(jcoll, q, &count, JBQRYCOUNT, log);
+    ejdbquerydel(q);
+    return count;
+}
+
 EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
     assert(jcoll && q && q->qobjmap);
     if (!JBISOPEN(jcoll->jb)) {
@@ -1653,6 +1665,8 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     oid = bson_iterator_oid(&it);
     rowm = tcmapnew2(TCMAPTINYBNUM);
     tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(&bsout), bson_size(&bsout));
+    //fprintf(stderr, "\nAFTER\n");
+    //bson_print_raw(stderr, bson_data(&bsout), 0);
     rv = tctdbput(jcoll->tdb, oid, sizeof (*oid), rowm);
     if (rv) {
         rv = _updatebsonidx(jcoll, oid, &bsout, bsbuf, bsbufsz, didxctx);
@@ -2204,15 +2218,15 @@ fullscan: /* Full scan */
     if (log) {
         tcxstrprintf(log, "RUN FULLSCAN\n");
     }
-    char *pkbuf;
-    int pkbufsz;
-    char *lkbuf = NULL;
-    int lksiz = 0;
-    const char *cbuf;
-    int cbufsz;
-    while ((all || count < max) && (pkbuf = tchdbgetnext3(hdb, lkbuf, lksiz, &pkbufsz, &cbuf, &cbufsz)) != NULL) {
-        void *bsbuf = tcmaploadone(cbuf, cbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
-        if (!bsbuf) continue;
+    if (!tchdbiterinit(hdb)) {
+        goto finish;
+    }
+    TCMAP *updkeys = (ejq->flags & EJQUPDATING) ? tcmapnew2(100 * 1024) : NULL;
+    TCXSTR *skbuf = tcxstrnew3(sizeof (bson_oid_t) + 1);
+    TCXSTR *scbuf = tcxstrnew3(1024);
+    while ((all || count < max) && tchdbiternext3(hdb, skbuf, scbuf)) {
+        void *bsbuf = tcmaploadone(TCXSTRPTR(scbuf), TCXSTRSIZE(scbuf), JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
+        if (!bsbuf) goto wfinish;
         bool matched = true;
         for (int i = 0; i < qfsz; ++i) {
             const EJQF *qf = qfs[i];
@@ -2222,16 +2236,28 @@ fullscan: /* Full scan */
                 break;
             }
         }
-        if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, pkbuf, pkbufsz, bsbuf, bsbufsz))) {
-            JBQREGREC(bsbuf, bsbufsz);
+        if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf), bsbuf, bsbufsz))) {
+            if (updkeys) { //we are in updating mode
+                if (tcmapputkeep(updkeys, TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf), &yes, sizeof (yes))) {
+                    JBQREGREC(bsbuf, bsbufsz);
+                } else {
+                    TCFREE(bsbuf);
+                }
+            } else {
+                JBQREGREC(bsbuf, bsbufsz);
+            }
         } else {
             TCFREE(bsbuf);
         }
-        if (lkbuf) TCFREE(lkbuf);
-        lkbuf = pkbuf;
-        lksiz = pkbufsz;
+wfinish:
+        tcxstrclear(skbuf);
+        tcxstrclear(scbuf);
     }
-    if (lkbuf) TCFREE(lkbuf);
+    if (updkeys) {
+        tcmapdel(updkeys);
+    }
+    tcxstrdel(skbuf);
+    tcxstrdel(scbuf);
 
 sorting: /* Sorting resultset */
     if (!res || aofsz <= 0) { //No sorting needed

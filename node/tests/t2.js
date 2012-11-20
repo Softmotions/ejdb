@@ -238,6 +238,25 @@ module.exports.testUseStringIndex = function(test) {
     });
 };
 
+module.exports.testUpdate1 = function(test) {
+    test.ok(jb);
+    test.ok(jb.isOpen());
+    jb.update("parrots", {"name" : {"$icase" : "GRENNY"}, "$inc" : {"age" : 10}},
+            {"$explain" : true},
+            function(err, count, log) {
+                test.ifError(err);
+                test.equal(count, 1);
+                test.ok(log);
+                test.ok(log.indexOf("UPDATING MODE: YES") !== -1);
+                jb.findOne("parrots", {"age" : 11}, function(err, obj) { //age was incremented 1 + 10
+                    test.ifError(err);
+                    test.ok(obj);
+                    test.equal(obj["name"], "Grenny");
+                    test.done();
+                });
+            });
+};
+
 module.exports.testRemove = function(test) {
     test.ok(jb);
     test.ok(jb.isOpen());

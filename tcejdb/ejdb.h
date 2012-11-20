@@ -68,7 +68,7 @@ enum { /** Index modes, index types. */
 };
 
 enum { /*< Query search mode flags in ejdbqryexecute() */
-    JBQRYCOUNT = 1, /*< Query only count(*) */
+    JBQRYCOUNT = 1 /*< Query only count(*) */
 };
 
 /**
@@ -225,6 +225,17 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *          -    {'name' : {'$icase' : {'$in' : ['théâtre - театр', 'hello world']}}}
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
  *
+ *  - Queries can be used to update records
+ *      `$set` and `$inc` operations are supported.
+ *      `$set` Field set operation.
+ *          - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
+ *      `$inc` Increment operation. Only number types are supported.
+ *          - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
+ *
+ *
+ *  NOTE: It is better to execute update queries with `JBQRYCOUNT`
+ *        control flag to avoid unnecessarily data fetching.
+ *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
  *
@@ -301,6 +312,8 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
 
 /**
  * Execute query against EJDB collection.
+ * It is better to execute update queries with `JBQRYCOUNT` control
+ * flag avoid unnecessarily rows fetching.
  *
  * @param jcoll EJDB database
  * @param q Query handle created with ejdbcreatequery()
@@ -313,6 +326,21 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
  * and only count reported.
  */
 EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
+
+
+/**
+ * Convenient method to execute update queries.
+ *
+ * `$set` and `$inc` operations are supported:
+ *
+ * `$set` Field set operation:
+ *      - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
+ * `$inc` Increment operation. Only number types are supported.
+ *      - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
+ *
+ * @return Number of updated records
+ */
+EJDB_EXPORT uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log);
 
 /**
  * Synchronize content of a EJDB collection database with the file on device.

@@ -271,6 +271,16 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
           -  {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
            For case insensitive matching you can create special type of string index.
 
+    Queries can be used to update records:
+       `$set` and `$inc` operations are supported.
+      `$set` Field set operation.
+           - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
+       `$inc` Increment operation. Only number types are supported.
+           - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
+
+    NOTE: It is better to execute update queries with `$onlycount=true` hint flag
+         or use the special `update()` method to avoid unnecessarily rows fetching.
+
     NOTE: Negate operations: $not and $nin not using indexes
           so they can be slow in comparison to other matching operations.
 
@@ -342,6 +352,33 @@ __Arguments__
  * {Object} `[hints]` JSON object with query hints.
  * {Function} cb Callback args: (error, obj)
              `obj`  Retrieved JSON object or NULL if it is not found.
+
+-----------------------------------
+<a name="findOne"/>
+### update(cname, qobj, orarr, hints, cb)
+Convenient method to execute update queries. The `$set` and `$inc` operations are supported.
+
+ * `$set` Field set operation:
+    - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
+ * `$inc` Increment operation. Only number types are supported.
+    - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
+
+Call variations of update():
+
+    update(cname, qobj, cb)
+    update(cname, qobj, hints, cb)
+    update(cname, qobj, qobjarr, cb)
+    update(cname, qobj, qobjarr, hints, cb)
+
+__Arguments__
+
+ * {String} cname Name of collection
+ * {Object} qobj Update JSON query object
+ * {Array} `[orarr]` Array of additional OR query objects (joined with OR predicate).
+ * {Object} `[hints]` JSON object with query hints.
+ * {Function} cb Callback args: (error, count)
+             `count`  The number of updated records.
+
 
 -----------------------------------
 
@@ -599,7 +636,7 @@ Queries
  *          -   {'json.field.path' : {'$exists' : true|false}}
  *      - $icase Case insensitive string matching:
  *          -    {'json.field.path' : {'$icase' : 'val1'}} //icase matching
-            Ignore case matching with '$in' operation:
+ *          Ignore case matching with '$in' operation:
  *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
  *

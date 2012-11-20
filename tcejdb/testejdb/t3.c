@@ -24,6 +24,8 @@ const int RS = 100000;
 const int QRS = 100;
 static bson* recs;
 
+static void eprint(EJDB *jb, int line, const char *func);
+
 int init_suite(void) {
     assert(QRS < RS);
     jb = ejdbnew();
@@ -124,10 +126,57 @@ void testPerf1() {
     fprintf(stderr, "testPerf1(): %u QUERIES WITH 'rstring' INDEX, TIME: %lu ms, PER QUERY TIME: %lu ms\n",
             i, tcmstime() - st, (unsigned long) ((tcmstime() - st) / QRS));
 
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "$set");
+    bson_append_int(&bsq1, "intv", 1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+
+    EJQ *q = ejdbcreatequery(jb, &bsq1, NULL, JBQRYCOUNT, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q);
+    uint32_t count;
+    st = tcmstime(); //$set op
+    ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
+    if (ejdbecode(jb) != 0) {
+        eprint(jb, __LINE__, "$set test");
+        CU_ASSERT_TRUE(false);
+    }
+    CU_ASSERT_EQUAL(count, RS);
+    fprintf(stderr, "testPerf1(): {'$set' : {'intv' : 1}} FOR %u OBJECTS, TIME %lu ms\n", count, tcmstime() - st);
+    ejdbquerydel(q);
+    bson_destroy(&bsq1);
+
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "$inc");
+    bson_append_int(&bsq1, "intv", 1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+
+    q = ejdbcreatequery(jb, &bsq1, NULL, JBQRYCOUNT, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q);
+    st = tcmstime(); //$inc op
+    ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
+    if (ejdbecode(jb) != 0) {
+        eprint(jb, __LINE__, "$inc test");
+        CU_ASSERT_TRUE(false);
+    }
+    CU_ASSERT_EQUAL(count, RS);
+    fprintf(stderr, "testPerf1(): {'$inc' : {'intv' : 1}} FOR %u OBJECTS, TIME %lu ms\n", count, tcmstime() - st);
+    ejdbquerydel(q);
+    bson_destroy(&bsq1);
+
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "intv", 2);
+    bson_finish(&bsq1);
+    q = ejdbcreatequery(jb, &bsq1, NULL, JBQRYCOUNT, NULL);
+    ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
+    CU_ASSERT_EQUAL(count, RS);
+    ejdbquerydel(q);
+    bson_destroy(&bsq1);
+
     ejdbrmcoll(jb, coll->cname, true);
 }
-
-
 
 //Race conditions
 

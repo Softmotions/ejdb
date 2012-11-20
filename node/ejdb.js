@@ -198,6 +198,16 @@ EJDB.prototype.remove = function(cname, oid, cb) {
  *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
  *          For case insensitive matching you can create special type of string index.
  *
+ *  - Queries can be used to update records
+ *      `$set` and `$inc` operations are supported.
+ *      `$set` Field set operation.
+ *          - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
+ *      `$inc` Increment operation. Only number types are supported.
+ *          - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
+ *
+ *  NOTE: It is better to execute update queries with `$onlycount=true` hint flag
+ *        or use the special `update()` method to avoid unnecessarily data fetching.
+ *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
  *
@@ -207,6 +217,7 @@ EJDB.prototype.remove = function(cname, oid, cb) {
  *      - $max Maximum number in the result set
  *      - $skip Number of skipped results in the result set
  *      - $orderby Sorting order of query fields.
+ *      - $onlycount true|false If `true` only count of matching records will be returned without result set.
  *      - $fields Set subset of fetched fields
  *          Example:
  *          hints:    {
@@ -337,6 +348,67 @@ EJDB.prototype.findOne = function(cname, qobj, orarr, hints, cb) {
                 } else {
                     cb(null, null);
                 }
+            });
+};
+
+
+/**
+ * Convenient method to execute update queries.
+ * The `$set` and `$inc` operations are supported.
+ *
+ * `$set` Field set operation:
+ *    - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
+ * `$inc` Increment operation. Only number types are supported.
+ *    - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
+ *
+ * Call variations of update():
+ *    update(cname, qobj, cb)
+ *    update(cname, qobj, hints, cb)
+ *    update(cname, qobj, qobjarr, cb)
+ *    update(cname, qobj, qobjarr, hints, cb)
+ *
+ * @param {String} cname Name of collection
+ * @param {Object} qobj Main JSON query object
+ * @param {Array} [orarr] Array of additional OR query objects (joined with OR predicate).
+ * @param {Object} [hints] JSON object with query hints.
+ * @param {Function} cb Callback function with arguments: (error, count) where:
+ *          `count`:  The number of updated records.
+ */
+EJDB.prototype.update = function(cname, qobj, orarr, hints, cb) {
+    if (arguments.length == 4) {
+        cb = hints;
+        if (orarr && orarr.constructor === Array) {
+            hints = {};
+        } else {
+            hints = orarr;
+            orarr = [];
+        }
+    } else if (arguments.length == 3) {
+        cb = orarr;
+        orarr = [];
+        hints = {};
+    }
+    if (typeof cb !== "function") {
+        cb = null;
+    }
+    if (typeof cname !== "string") {
+        throw new Error("Collection name 'cname' argument must be specified");
+    }
+    if (!hints || typeof hints !== "object") {
+        hints = {};
+    }
+    if (!qobj || typeof qobj !== "object") {
+        qobj = {};
+    }
+    return this._impl.query(cname,
+            [qobj].concat(orarr, hints),
+            ejdblib.JBQRYCOUNT,
+            function(err, cursor, count, log) {
+                if (err) {
+                    cb(err, null, log);
+                    return;
+                }
+                cb(null, count, log);
             });
 };
 
