@@ -1336,7 +1336,7 @@ finish:
         }
 
         NodeEJDBCursor(NodeEJDB *_nejedb, TCLIST *_rs) : m_nejdb(_nejedb), m_rs(_rs), m_pos(0), m_no_next(true) {
-            assert(m_rs && m_nejdb);
+            assert(m_nejdb);
             this->m_nejdb->Ref();
         }
 
