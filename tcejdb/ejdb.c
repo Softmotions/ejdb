@@ -174,9 +174,11 @@ EJDB_EXPORT bool ejdbclose(EJDB *jb) {
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
     for (int i = 0; i < jb->cdbsnum; ++i) {
+        JBCLOCKMETHOD(jb->cdbs + i, true);
         if (!tctdbclose(jb->cdbs[i].tdb)) {
             rv = false;
         }
+        JBCUNLOCKMETHOD(jb->cdbs + i);
     }
     if (!tctdbclose(jb->metadb)) {
         rv = false;

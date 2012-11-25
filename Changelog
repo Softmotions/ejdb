@@ -1,3 +1,9 @@
+2012-11-25 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed assertion error in nodejs binding when using update queries
+    * Write lock acquired on each collection when closing database by 'ejdbclose()'
+    * Synchronous versions of setIndex and sync function was provided
+    - Release 1.0.13
+
 2012-11-20 Anton Adamansky. <adamansky@gmail.com>
     * #9 In-place update operations `$set` and `$inc`
     - Release 1.0.11

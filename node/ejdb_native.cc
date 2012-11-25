@@ -666,25 +666,46 @@ namespace ejdb {
 
         static Handle<Value> s_set_index(const Arguments& args) {
             HandleScope scope;
-            REQ_ARGS(4);
+            REQ_ARGS(3);
             REQ_STR_ARG(0, cname)
             REQ_STR_ARG(1, ipath)
             REQ_INT32_ARG(2, flags);
-            REQ_FUN_ARG(3, cb);
 
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
             SetIndexCmdData *cmdata = new SetIndexCmdData(*cname, *ipath, flags);
-            SetIndexCmdTask *task = new SetIndexCmdTask(cb, njb, cmdSetIndex, cmdata, SetIndexCmdTask::delete_val);
-            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+
+            Local<Function> cb;
+            if (args[3]->IsFunction()) {
+                cb = Local<Function>::Cast(args[3]);
+                SetIndexCmdTask *task = new SetIndexCmdTask(cb, njb, cmdSetIndex, cmdata, SetIndexCmdTask::delete_val);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+            } else {
+                SetIndexCmdTask task(cb, njb, cmdSetIndex, cmdata, SetIndexCmdTask::delete_val);
+                njb->set_index(&task);
+                njb->set_index_after(&task);
+                if (task.cmd_ret) {
+                    return scope.Close(Exception::Error(String::New(task.cmd_ret_msg.c_str())));
+                }
+            }
             return scope.Close(args.This());
         }
 
         static Handle<Value> s_sync(const Arguments& args) {
             HandleScope scope;
-            REQ_FUN_ARG(0, cb);
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            EJBTask *task = new EJBTask(cb, njb, cmdSync, NULL, NULL);
-            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+            Local<Function> cb;
+            if (args[0]->IsFunction()) {
+                cb = Local<Function>::Cast(args[0]);
+                EJBTask *task = new EJBTask(cb, njb, cmdSync, NULL, NULL);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+            } else {
+                EJBTask task(cb, njb, cmdSync, NULL, NULL);
+                njb->sync(&task);
+                njb->sync_after(&task);
+                if (task.cmd_ret) {
+                    return scope.Close(Exception::Error(String::New(task.cmd_ret_msg.c_str())));
+                }
+            }
             return scope.Close(args.This());
         }
 
@@ -815,6 +836,9 @@ namespace ejdb {
         void sync_after(EJBTask *task) {
             HandleScope scope;
             Local<Value> argv[1];
+            if (task->cb.IsEmpty() || task->cb->IsNull() || task->cb->IsUndefined()) {
+                return;
+            }
             if (task->cmd_ret != 0) {
                 argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
             } else {
@@ -849,6 +873,9 @@ namespace ejdb {
         void set_index_after(SetIndexCmdTask *task) {
             HandleScope scope;
             Local<Value> argv[1];
+            if (task->cb.IsEmpty() || task->cb->IsNull() || task->cb->IsUndefined()) {
+                return;
+            }
             if (task->cmd_ret != 0) {
                 argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
             } else {
