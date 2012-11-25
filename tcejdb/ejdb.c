@@ -340,7 +340,7 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
             memmove(obsdata, obs, obsdatasz);
         }
     } else {
-        rowm = tcmapnew2(64);
+        rowm = tcmapnew2(TCMAPTINYBNUM);
     }
     tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(bs), bson_size(bs));
     if (!tctdbput(tdb, oid, sizeof (*oid), rowm)) {
