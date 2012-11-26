@@ -108,21 +108,25 @@ EJDB.prototype.removeCollection = function(cname, prune, cb) {
  * To identify and update object it should contains `_id` property.
  *
  * Call variations:
- *      - save(cname, json object, [cb])
- *      - save(cname, <Array of json objects>, [cb])
+ *      - save(cname, <json object>|<Array of json objects>, [cb])
+ *      - save(cname, <json object>|<Array of json objects>, [options], [cb])
  *
  * @param {String} cname Name of collection.
  * @param {Array|Object} jsarr Signle JSON object or array of JSON objects to save
  * @param {Function} [cb] Callback function with arguments: (error, {Array} of OIDs for saved objects)
  */
-EJDB.prototype.save = function(cname, jsarr, cb) {
+EJDB.prototype.save = function(cname, jsarr, opts, cb) {
     if (!jsarr) {
         return;
     }
     if (jsarr.constructor !== Array) {
         jsarr = [jsarr];
     }
-    return this._impl.save(cname, jsarr, function(err, oids) {
+    if (typeof opts == "function") {
+        cb = opts;
+        opts = null;
+    }
+    return this._impl.save(cname, jsarr, (opts || {}), function(err, oids) {
         if (err) {
             if (cb) {
                 cb(err);

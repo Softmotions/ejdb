@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="ExportToHTMLSettings">
+    <option name="printScope" value="1" />
+    <option name="OPEN_IN_BROWSER" value="true" />
+    <option name="OUTPUT_DIRECTORY" value="$USER_HOME$/tmp/exp" />
+  </component>
   <component name="GradleSettings">
     <option name="gradleHome" value="$USER_HOME$/JavaSoft/gradle-1.1" />
   </component>

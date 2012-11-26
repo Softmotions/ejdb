@@ -252,7 +252,18 @@ module.exports.testUpdate1 = function(test) {
                     test.ifError(err);
                     test.ok(obj);
                     test.equal(obj["name"], "Grenny");
-                    test.done();
+                    jb.save("parrots", {"_id" : obj["_id"], "extra1" : 1}, {"$merge" : true}, function(err, ids) {
+                        test.ifError(err);
+                        test.ok(ids);
+                        test.equal(ids.length, 1);
+                        jb.load("parrots", ids[0], function(err, obj) {
+                            test.ifError(err);
+                            test.ok(obj);
+                            test.equal(obj["name"], "Grenny");
+                            test.equal(obj["extra1"], 1);
+                            test.done();
+                        });
+                    });
                 });
             });
 };

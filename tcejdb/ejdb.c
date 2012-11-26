@@ -305,8 +305,12 @@ finish:
     return rv;
 }
 
-/* Save/Update BSON into 'coll' */
+/* Save/Update BSON  */
 EJDB_EXPORT bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
+    return ejdbsavebson2(jcoll, bs, oid, false);
+}
+
+EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge) {
     assert(jcoll);
     if (!bs || bs->err || !bs->finished) {
         _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -327,6 +331,7 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
         bson_ensure_space(nbs, bson_size(bs) - 4);
         bson_append(nbs, bson_data(bs) + 4, bson_size(bs) - (4 + 1/*BSON_EOO*/));
         bson_finish(nbs);
+        assert(!nbs->err);
         bs = nbs;
     }
     TCTDB *tdb = jcoll->tdb;
@@ -341,6 +346,14 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
         }
     } else {
         rowm = tcmapnew2(TCMAPTINYBNUM);
+    }
+    if (merge && !nbs && obsdata) {
+        nbs = bson_create();
+        bson_init_size(nbs, MAX(obsdatasz, bson_size(bs)));
+        bson_merge2(obsdata, bson_data(bs), true, nbs);
+        bson_finish(nbs);
+        assert(!nbs->err);
+        bs = nbs;
     }
     tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(bs), bson_size(bs));
     if (!tctdbput(tdb, oid, sizeof (*oid), rowm)) {

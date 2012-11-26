@@ -41,6 +41,7 @@ namespace ejdb {
     static Persistent<String> sym_records;
     static Persistent<String> sym_cachedrecords;
     static Persistent<String> sym_explain;
+    static Persistent<String> sym_merge;
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -437,8 +438,9 @@ namespace ejdb {
             std::vector<bson*> bsons; //bsons to save|query
             std::vector<bson_oid_t> ids; //saved updated oids
             bson_oid_t ref; //Bson ref
+            bool merge; //Merge bson on save
 
-            BSONCmdData(const char* _cname) : cname(_cname) {
+            BSONCmdData(const char* _cname) : cname(_cname), merge(false) {
                 memset(&ref, 0, sizeof (ref));
             }
 
@@ -582,10 +584,11 @@ namespace ejdb {
 
         static Handle<Value> s_save(const Arguments& args) {
             HandleScope scope;
-            REQ_ARGS(3);
+            REQ_ARGS(4);
             REQ_STR_ARG(0, cname); //Collection name
             REQ_ARR_ARG(1, oarr); //Array of JSON objects
-            REQ_FUN_ARG(2, cb); //Callback
+            REQ_OBJ_ARG(2, opts); //Options obj
+            REQ_FUN_ARG(3, cb); //Callback
 
             BSONCmdData *cmdata = new BSONCmdData(*cname);
             for (uint32_t i = 0; i < oarr->Length(); ++i) {
@@ -606,6 +609,9 @@ namespace ejdb {
                 }
                 bson_finish(bs);
                 cmdata->bsons.push_back(bs);
+            }
+            if (opts->Get(sym_merge)->BooleanValue()) {
+                cmdata->merge = true;
             }
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
             BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
@@ -969,8 +975,8 @@ namespace ejdb {
                     //Zero OID
                     oid.ints[0] = 0;
                     oid.ints[1] = 0;
-                    oid.ints[2] = 0;
-                } else if (!ejdbsavebson(coll, bs, &oid)) {
+                    oid.ints[2] = 0;                
+                } else if (!ejdbsavebson2(coll, bs, &oid, cmdata->merge)) {
                     task->cmd_ret = CMD_RET_ERROR;
                     task->cmd_ret_msg = _jb_error_msg();
                     break;
@@ -1145,6 +1151,7 @@ finish:
             sym_records = NODE_PSYMBOL("records");
             sym_cachedrecords = NODE_PSYMBOL("cachedrecords");
             sym_explain = NODE_PSYMBOL("$explain");
+            sym_merge = NODE_PSYMBOL("$merge");
 
 
             Local<FunctionTemplate> t = FunctionTemplate::New(s_new_object);
@@ -1428,13 +1435,17 @@ finish:
             return;
         }
         TCLIST *res = cmdata->res;
-        cmdata->res = NULL; //res will be freed by NodeEJDBCursor instead of ~BSONQCmdData()
         argv[0] = Local<Primitive>::New(Null());
-        Local<Value> cursorArgv[2];
-        cursorArgv[0] = External::New(task->wrapped);
-        cursorArgv[1] = External::New(res);
-        Local<Object> cursor(NodeEJDBCursor::constructor_template->GetFunction()->NewInstance(2, cursorArgv));
-        argv[1] = Local<Object>::New(cursor);
+        if (res) {
+            cmdata->res = NULL; //res will be freed by NodeEJDBCursor instead of ~BSONQCmdData()
+            Local<Value> cursorArgv[2];
+            cursorArgv[0] = External::New(task->wrapped);
+            cursorArgv[1] = External::New(res);
+            Local<Value> cursor(NodeEJDBCursor::constructor_template->GetFunction()->NewInstance(2, cursorArgv));
+            argv[1] = cursor;
+        } else { //this is update query so no result set
+            argv[1] = Local<Primitive>::New(Null());
+        }
         argv[2] = Integer::New(cmdata->count);
         if (cmdata->log) {
             argv[3] = String::New((const char*) tcxstrptr(cmdata->log));

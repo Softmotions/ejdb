@@ -1293,37 +1293,39 @@ EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson 
     return BSON_OK;
 }
 
-EJDB_EXPORT int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out) {
-    assert(b1 && b2 && out);
-    if (!b1->finished || !b2->finished || out->finished) {
-        return BSON_ERROR;
-    }
+EJDB_EXPORT int bson_merge2(const void *b1data, const void *b2data, bson_bool_t overwrite, bson *out) {
     bson_iterator it1, it2;
     bson_type bt1, bt2;
 
-    bson_iterator_init(&it1, b1);
-    bson_iterator_init(&it2, b2);
+    bson_iterator_from_buffer(&it1, b1data);
+    bson_iterator_from_buffer(&it2, b2data);
     //Append all fields in B1 overwrited by B2
     while ((bt1 = bson_iterator_next(&it1)) != BSON_EOO) {
         const char* k1 = bson_iterator_key(&it1);
-        if (overwrite && (bt2 = bson_find(&it2, b2, k1)) != BSON_EOO) {
+        if (overwrite && (bt2 = bson_find_from_buffer(&it2, b2data, k1)) != BSON_EOO) {
             bson_append_field_from_iterator(&it2, out);
         } else {
             bson_append_field_from_iterator(&it1, out);
         }
     }
-
-    bson_iterator_init(&it1, b1);
-    bson_iterator_init(&it2, b2);
+    bson_iterator_from_buffer(&it1, b1data);
+    bson_iterator_from_buffer(&it2, b2data);
     //Append all fields from B2 missing in B1
     while ((bt2 = bson_iterator_next(&it2)) != BSON_EOO) {
         const char* k2 = bson_iterator_key(&it2);
-        if ((bt1 = bson_find(&it1, b1, k2)) == BSON_EOO) {
+        if ((bt1 = bson_find_from_buffer(&it1, b1data, k2)) == BSON_EOO) {
             bson_append_field_from_iterator(&it2, out);
         }
     }
-
     return BSON_OK;
+}
+
+EJDB_EXPORT int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out) {
+    assert(b1 && b2 && out);
+    if (!b1->finished || !b2->finished || out->finished) {
+        return BSON_ERROR;
+    }
+    return bson_merge2(bson_data(b1), bson_data(b2), overwrite, out);
 }
 
 EJDB_EXPORT int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val) {

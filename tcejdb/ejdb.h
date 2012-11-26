@@ -169,9 +169,23 @@ EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile);
  *
  * @param coll JSON collection handle.
  * @param bson BSON object id pointer.
+ * @param oid OID pointer will be set to object's _id
  * @return If successful return true, otherwise return false.
  */
 EJDB_EXPORT bool ejdbsavebson(EJCOLL *coll, bson *bs, bson_oid_t *oid);
+
+/**
+ * Persist BSON object in the collection.
+ * If saved bson does't have _id primary key then `oid` will be set to generated bson _id,
+ * otherwise `oid` will be set to the current bson's _id field.
+ *
+ * @param coll JSON collection handle.
+ * @param bs BSON object id pointer.
+ * @param oid OID pointer will be set to object's _id
+ * @param merge If true the merge will be performend with old and new objects. Otherwise old object will be replaced.
+ * @return If successful return true, otherwise return false.
+ */
+EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge);
 
 /**
  * Remove BSON object from collection.
