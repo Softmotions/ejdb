@@ -56,6 +56,7 @@ enum { /**> Query field flags */
 
     EJCONDSET = 1 << 10, /**> Set field update operation */
     EJCONDINC = 1 << 11, /**> Inc field update operation */
+    EJCONDROPALL = 1 << 12 /**> Drop bson object if matched */
 };
 
 

@@ -127,7 +127,7 @@ EJDB_EXPORT const char* ejdberrmsg(int ecode) {
         case JBEQINVALIDQRX: return "invalid query regexp value";
         case JBEQRSSORTING: return "result set sorting error";
         case JBEQERROR: return "query generic error";
-        case JBEQUPDFAILED : return "bson record update failed";
+        case JBEQUPDFAILED: return "bson record update failed";
         default: return tcerrmsg(ecode);
     }
 }
@@ -1109,7 +1109,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         {
             if (bt == BSON_DOUBLE) {
                 rv = (qf->exprdblval == bson_iterator_double_raw(it));
-            } else if (bt == BSON_INT || bt == BSON_LONG) {
+            } else if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL) {
                 rv = (qf->exprlongval == bson_iterator_long(it));
             } else {
                 rv = false;
@@ -1120,7 +1120,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         {
             if (bt == BSON_DOUBLE) {
                 rv = (qf->exprdblval < bson_iterator_double_raw(it));
-            } else if (bt == BSON_INT || bt == BSON_LONG) {
+            } else if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL) {
                 rv = (qf->exprlongval < bson_iterator_long(it));
             } else {
                 rv = false;
@@ -1131,7 +1131,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         {
             if (bt == BSON_DOUBLE) {
                 rv = (qf->exprdblval <= bson_iterator_double_raw(it));
-            } else if (bt == BSON_INT || bt == BSON_LONG) {
+            } else if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL) {
                 rv = (qf->exprlongval <= bson_iterator_long(it));
             } else {
                 rv = false;
@@ -1142,7 +1142,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         {
             if (bt == BSON_DOUBLE) {
                 rv = (qf->exprdblval > bson_iterator_double_raw(it));
-            } else if (bt == BSON_INT || bt == BSON_LONG) {
+            } else if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL) {
                 rv = (qf->exprlongval > bson_iterator_long(it));
             } else {
                 rv = false;
@@ -1153,7 +1153,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         {
             if (bt == BSON_DOUBLE) {
                 rv = (qf->exprdblval >= bson_iterator_double_raw(it));
-            } else if (bt == BSON_INT || bt == BSON_LONG) {
+            } else if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL) {
                 rv = (qf->exprlongval >= bson_iterator_long(it));
             } else {
                 rv = false;
@@ -1191,7 +1191,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
                         break;
                     }
                 }
-            } else if (bt == BSON_INT || bt == BSON_LONG) {
+            } else if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL) {
                 int64_t nval = bson_iterator_long(it);
                 for (int i = 0; i < TCLISTNUM(tokens); ++i) {
                     if (tctdbatoi(TCLISTVALPTR(tokens, i)) == nval) {
@@ -1348,7 +1348,7 @@ static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaqu
 }
 
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt) {
-    if (bt == BSON_INT || bt == BSON_LONG) {
+    if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL) {
         nu->inum = tctdbatoi(sval);
     } else if (bt == BSON_DOUBLE) {
         nu->dnum = tctdbatof2(sval);
@@ -1359,7 +1359,7 @@ EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt) {
 }
 
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt) {
-    if (bt == BSON_INT || bt == BSON_LONG) {
+    if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL) {
         int64_t v = tctdbatoi(sval);
         return (nu->inum > v) ? 1 : (nu->inum < v ? -1 : 0);
     } else if (bt == BSON_DOUBLE) {
@@ -1372,7 +1372,7 @@ EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt) {
 }
 
 EJDB_INLINE int _nucmp2(_EJDBNUM *nu1, _EJDBNUM *nu2, bson_type bt) {
-    if (bt == BSON_INT || bt == BSON_LONG) {
+    if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL) {
         return (nu1->inum > nu2->inum) ? 1 : (nu1->inum < nu2->inum ? -1 : 0);
     } else if (bt == BSON_DOUBLE) {
         return (nu1->dnum > nu2->dnum) ? 1 : (nu1->dnum < nu2->dnum ? -1 : 0);
@@ -1632,7 +1632,6 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
             if (!BSON_IS_NUM_TYPE(bt)) {
                 continue;
             }
-            //bt2 = bson_find(&it2, &bsout, bson_iterator_key(&it));
             bson_iterator_init(&it2, &bsout);
             bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
             if (!BSON_IS_NUM_TYPE(bt2)) {
@@ -2830,6 +2829,7 @@ static TCLIST* _fetch_bson_str_array(EJDB *jb, bson_iterator *it, bson_type *typ
                 break;
             case BSON_INT:
             case BSON_LONG:
+            case BSON_BOOL:
                 *type = ftype;
                 tclistprintf(res, "%ld", bson_iterator_long(it));
                 break;
@@ -2885,7 +2885,9 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
             tclistpush2(pathStack, fkey);
             qf.ftype = ftype;
         } else {
-            if (!strcmp("$set", fkey) || !strcmp("$inc", fkey)) {
+            if (!strcmp("$set", fkey) ||
+                    !strcmp("$inc", fkey) ||
+                    !strcmp("$dropall", fkey)) {
                 if (pqf) { //Top level ops
                     ret = JBEQERROR;
                     break;
@@ -2936,7 +2938,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                         if (!strcmp("$nin", fkey)) {
                             qf.negate = true;
                         }
-                        if (BSON_IS_NUM_TYPE(atype)) {
+                        if (BSON_IS_NUM_TYPE(atype) || atype == BSON_BOOL) {
                             qf.tcop = TDBQCNUMOREQ;
                         } else {
                             qf.tcop = TDBQCSTROREQ;
@@ -3120,19 +3122,45 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                 tcmapputkeep(qmap, qf.fpath, strlen(qf.fpath), &qf, sizeof (qf));
                 break;
 
-            case BSON_BOOL:
-                if (isckey && !strcmp("$exists", fkey)) {
-                    qf.tcop = TDBQCEXIST;
-                    qf.fpath = tcstrjoin(pathStack, '.');
-                    qf.fpathsz = strlen(qf.fpath);
-                    qf.expr = tcstrdup(""); //Empty string as expr
-                    qf.exprsz = 0;
-                    if (!bson_iterator_bool_raw(it)) {
-                        qf.negate = !qf.negate;
+            case BSON_BOOL: //boolean converted into number
+            {
+                bool bv = bson_iterator_bool_raw(it);
+                if (isckey) {
+                    if (!strcmp("$dropall", fkey) && bv) {
+                        qf.flags |= EJCONDROPALL;
+                        qf.flags |= EJFEXCLUDED;
+                        qf.fpath = tcstrjoin(pathStack, '.');
+                        qf.fpathsz = strlen(qf.fpath);
+                        qf.tcop = TDBQTRUE;
+                        qf.q->flags |= EJQUPDATING;
+                        qf.expr = tcstrdup(""); //Empty string as expr
+                        qf.exprsz = 0;
+                        tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                        break;
                     }
-                    tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                    if (!strcmp("$exists", fkey)) {
+                        qf.tcop = TDBQCEXIST;
+                        qf.fpath = tcstrjoin(pathStack, '.');
+                        qf.fpathsz = strlen(qf.fpath);
+                        qf.expr = tcstrdup(""); //Empty string as expr
+                        qf.exprsz = 0;
+                        if (!bv) {
+                            qf.negate = !qf.negate;
+                        }
+                        tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                        break;
+                    }
                 }
+                qf.tcop = TDBQCNUMEQ;
+                qf.fpath = tcstrjoin(pathStack, '.');
+                qf.fpathsz = strlen(qf.fpath);
+                qf.exprlongval = (bv ? 1 : 0);
+                qf.exprdblval = qf.exprlongval;
+                qf.expr = (bv ? "1" : "0");
+                qf.exprsz = 1;
+                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
                 break;
+            }
             default:
                 break;
         };
@@ -3258,9 +3286,9 @@ static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens
                 ret = tcmemdup(bson_iterator_string(it), retlen);
             }
         }
-    } else if (BSON_IS_NUM_TYPE(btype)) {
+    } else if (BSON_IS_NUM_TYPE(btype) || btype == BSON_BOOL) {
         char nbuff[TCNUMBUFSIZ];
-        if (btype == BSON_INT || btype == BSON_LONG) {
+        if (btype == BSON_INT || btype == BSON_LONG || btype == BSON_BOOL) {
             retlen = bson_numstrn(nbuff, TCNUMBUFSIZ, bson_iterator_long(it));
             if (retlen >= TCNUMBUFSIZ) {
                 retlen = TCNUMBUFSIZ - 1;

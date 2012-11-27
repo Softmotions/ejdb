@@ -547,6 +547,8 @@ EJDB_EXPORT int bson_iterator_int(const bson_iterator *i) {
             return bson_iterator_long_raw(i);
         case BSON_DOUBLE:
             return bson_iterator_double_raw(i);
+        case BSON_BOOL:
+            return bson_iterator_bool_raw(i) ? 1 : 0;
         default:
             return 0;
     }
@@ -560,6 +562,8 @@ EJDB_EXPORT double bson_iterator_double(const bson_iterator *i) {
             return bson_iterator_long_raw(i);
         case BSON_DOUBLE:
             return bson_iterator_double_raw(i);
+        case BSON_BOOL:
+            return bson_iterator_bool_raw(i) ? 1.0 : 0.0;
         default:
             return 0;
     }
@@ -573,6 +577,8 @@ EJDB_EXPORT int64_t bson_iterator_long(const bson_iterator *i) {
             return bson_iterator_long_raw(i);
         case BSON_DOUBLE:
             return bson_iterator_double_raw(i);
+        case BSON_BOOL:
+            return bson_iterator_bool_raw(i) ? 1 : 0;
         default:
             return 0;
     }
