@@ -2963,6 +2963,103 @@ void testUpdate2() { //https://github.com/Softmotions/ejdb/issues/9
 
 }
 
+void testQueryBool() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_bool(&bsq1, "visited", true);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+    CU_ASSERT_EQUAL(count, 1);
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "visited", JBIDXNUM));
+
+    bson_init_as_query(&bsq1);
+    bson_append_bool(&bsq1, "visited", true);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'nvisited'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+    CU_ASSERT_EQUAL(count, 1);
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
+void testDropAll() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXSTR));
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "HeLlo WorlD");
+    bson_append_bool(&bsq1, "$dropall", true);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "$DROPALL ON:"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'sname'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //Select again
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "HeLlo WorlD");
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'sname'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 0"));
+    //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -3015,7 +3112,9 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket7", testTicket7)) ||
             (NULL == CU_add_test(pSuite, "testTicket8", testTicket8)) ||
             (NULL == CU_add_test(pSuite, "testUpdate1", testUpdate1)) ||
-            (NULL == CU_add_test(pSuite, "testUpdate2", testUpdate2))
+            (NULL == CU_add_test(pSuite, "testUpdate2", testUpdate2)) ||
+            (NULL == CU_add_test(pSuite, "testQueryBool", testQueryBool)) ||
+            (NULL == CU_add_test(pSuite, "testDropAll", testDropAll))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

@@ -55,14 +55,14 @@ enum { /**> Query field flags */
     EJCONDICASE = 1 << 9, /**> Ignore case in matching */
 
     EJCONDSET = 1 << 10, /**> Set field update operation */
-    EJCONDINC = 1 << 11, /**> Inc field update operation */
-    EJCONDROPALL = 1 << 12 /**> Drop bson object if matched */
+    EJCONDINC = 1 << 11 /**> Inc field update operation */
 };
 
 
 enum { /**> Query flags */
     EJQINTERNAL = 1, /**> Internal query object used in _ejdbqryexecute */
-    EJQUPDATING = 1 << 1 /**> Query in updating mode */
+    EJQUPDATING = 1 << 1, /**> Query in updating mode */
+    EJQDROPALL =  1 << 2 /**> Drop bson object if matched */
 };
 
 struct EJQF { /**> Matching field and status */

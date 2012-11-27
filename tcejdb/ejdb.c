@@ -391,10 +391,8 @@ EJDB_EXPORT bool ejdbrmbson(EJCOLL *jcoll, bson_oid_t *oid) {
         goto finish;
     }
     olddata = tcmapget3(rmap, JDBCOLBSON, JDBCOLBSONL, &olddatasz);
-    if (!_updatebsonidx(jcoll, oid, NULL, olddata, olddatasz, NULL)) {
-        rv = false;
-    }
-    if (!tctdbout(jcoll->tdb, oid, sizeof (*oid))) {
+    if (!_updatebsonidx(jcoll, oid, NULL, olddata, olddatasz, NULL) ||
+            !tctdbout(jcoll->tdb, oid, sizeof (*oid))) {
         rv = false;
     }
 finish:
@@ -1570,7 +1568,7 @@ static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz)
     TCFREE(bsbuf);
 }
 
-static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, TCLIST *didxctx) {
+static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, TCLIST *didxctx, TCXSTR *log) {
     assert(ejq->flags & EJQUPDATING);
     assert(didxctx);
 
@@ -1586,16 +1584,45 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     TCMAP *qobjmap = ejq->qobjmap;
     TCMAP *rowm = NULL;
 
+    if (ejq->flags & EJQDROPALL) { //Record will be dropped
+        bt = bson_find_from_buffer(&it, bsbuf, JDBIDKEYNAME);
+        if (bt != BSON_OID) {
+            _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
+            return false;
+        }
+        oid = bson_iterator_oid(&it);
+        assert(oid);
+        if (log) {
+            char xoid[25];
+            bson_oid_to_string(oid, xoid);
+            tcxstrprintf(log, "$DROPALL ON: %s\n", xoid);
+        }
+        const void *olddata;
+        int olddatasz = 0;
+        TCMAP *rmap = tctdbget(jcoll->tdb, oid, sizeof (*oid));
+        if (rmap) {
+            olddata = tcmapget3(rmap, JDBCOLBSON, JDBCOLBSONL, &olddatasz);
+            if (!_updatebsonidx(jcoll, oid, NULL, olddata, olddatasz, didxctx) ||
+                    !tctdbout(jcoll->tdb, oid, sizeof (*oid))) {
+                rv = false;
+            }
+            tcmapdel(rmap);
+        }
+        return rv;
+    }
+
+    //Apply update operation
     bson src;
     bson_create_from_buffer2(&src, bsbuf, bsbufsz);
 
-    bson bsout; //Resulting updated bson
+    bson bsout;
     bsout.data = NULL;
     bsout.dataSize = 0;
 
     const EJQF *setqf = NULL;
     const EJQF *incqf = NULL;
 
+    //$set, $inc operations
     tcmapiterinit(qobjmap);
     while ((kbuf = tcmapiternext(qobjmap, &kbufsz)) != NULL) {
         const EJQF *qf = tcmapiterval(kbuf, &qfsz);
@@ -1680,8 +1707,6 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     oid = bson_iterator_oid(&it);
     rowm = tcmapnew2(TCMAPTINYBNUM);
     tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(&bsout), bson_size(&bsout));
-    //fprintf(stderr, "\nAFTER\n");
-    //bson_print_raw(stderr, bson_data(&bsout), 0);
     rv = tctdbput(jcoll->tdb, oid, sizeof (*oid), rowm);
     if (rv) {
         rv = _updatebsonidx(jcoll, oid, &bsout, bsbuf, bsbufsz, didxctx);
@@ -1816,7 +1841,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
 #define JBQREGREC(_bsbuf, _bsbufsz)   \
     ++count; \
     if (ejq->flags & EJQUPDATING) { \
-        _qryupdate(jcoll, ejq, (_bsbuf), (_bsbufsz), didxctx); \
+        _qryupdate(jcoll, ejq, (_bsbuf), (_bsbufsz), didxctx, log); \
     } \
     if (!onlycount && (all || count > skip)) { \
         if (ifields) {\
@@ -3127,12 +3152,12 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                 bool bv = bson_iterator_bool_raw(it);
                 if (isckey) {
                     if (!strcmp("$dropall", fkey) && bv) {
-                        qf.flags |= EJCONDROPALL;
                         qf.flags |= EJFEXCLUDED;
                         qf.fpath = tcstrjoin(pathStack, '.');
                         qf.fpathsz = strlen(qf.fpath);
                         qf.tcop = TDBQTRUE;
                         qf.q->flags |= EJQUPDATING;
+                        qf.q->flags |= EJQDROPALL;
                         qf.expr = tcstrdup(""); //Empty string as expr
                         qf.exprsz = 0;
                         tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
@@ -3156,7 +3181,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                 qf.fpathsz = strlen(qf.fpath);
                 qf.exprlongval = (bv ? 1 : 0);
                 qf.exprdblval = qf.exprlongval;
-                qf.expr = (bv ? "1" : "0");
+                qf.expr = strdup(bv ? "1" : "0");
                 qf.exprsz = 1;
                 tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
                 break;
