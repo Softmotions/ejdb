@@ -261,7 +261,12 @@ module.exports.testUpdate1 = function(test) {
                             test.ok(obj);
                             test.equal(obj["name"], "Grenny");
                             test.equal(obj["extra1"], 1);
-                            test.done();
+                            var q = {"_id" : {"$in" : ids}, "$set" : {"stime" : +new Date}};
+                            jb.update("parrots", q, function(err, count) {
+                                test.ifError(err);
+                                test.equal(count, 1);
+                                test.done();
+                            });
                         });
                     });
                 });

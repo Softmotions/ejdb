@@ -1302,7 +1302,7 @@ EJDB_EXPORT int bson_merge2(const void *b1data, const void *b2data, bson_bool_t 
     //Append all fields in B1 overwriten by B2
     while ((bt1 = bson_iterator_next(&it1)) != BSON_EOO) {
         const char* k1 = bson_iterator_key(&it1);
-        if (overwrite && (bt2 = bson_find_from_buffer(&it2, b2data, k1)) != BSON_EOO) {
+        if (overwrite && strcmp("_id", k1) && (bt2 = bson_find_from_buffer(&it2, b2data, k1)) != BSON_EOO) {
             bson_append_field_from_iterator(&it2, out);
         } else {
             bson_append_field_from_iterator(&it1, out);

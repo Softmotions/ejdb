@@ -127,6 +127,7 @@ EJDB_EXPORT const char* ejdberrmsg(int ecode) {
         case JBEQINVALIDQRX: return "invalid query regexp value";
         case JBEQRSSORTING: return "result set sorting error";
         case JBEQERROR: return "query generic error";
+        case JBEQUPDFAILED : return "bson record update failed";
         default: return tcerrmsg(ecode);
     }
 }
