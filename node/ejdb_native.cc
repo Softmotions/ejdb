@@ -9,6 +9,7 @@
 #include "ejdb_logging.h"
 #include "ejdb_thread.h"
 
+#include <math.h>
 #include <vector>
 #include <sstream>
 #include <locale.h>
@@ -363,7 +364,13 @@ namespace ejdb {
             } else if (pv->IsUint32()) {
                 bson_append_long(bs, *spn, pv->Uint32Value());
             } else if (pv->IsNumber()) {
-                bson_append_double(bs, *spn, pv->NumberValue());
+                double nv = pv->NumberValue();
+                double ipart;
+                if (modf(nv, &ipart) == 0.0) {
+                    bson_append_double(bs, *spn, nv);
+                } else {
+                    bson_append_long(bs, *spn, pv->IntegerValue());
+                }
             } else if (pv->IsNull()) {
                 bson_append_null(bs, *spn);
             } else if (pv->IsUndefined()) {
@@ -975,7 +982,7 @@ namespace ejdb {
                     //Zero OID
                     oid.ints[0] = 0;
                     oid.ints[1] = 0;
-                    oid.ints[2] = 0;                
+                    oid.ints[2] = 0;
                 } else if (!ejdbsavebson2(coll, bs, &oid, cmdata->merge)) {
                     task->cmd_ret = CMD_RET_ERROR;
                     task->cmd_ret_msg = _jb_error_msg();
