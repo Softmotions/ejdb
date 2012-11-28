@@ -143,6 +143,7 @@ enum { /* enumeration for query conditions */
     TDBQCEXIST, /* string|number exists */
     TDBQTRUE,  /* any field always matched */
     TDBQCSTRNUMOR, /* string includes at least one number token in */
+    TDBQCSTRORBW,  /* string begins with at least one token in */
     TDBQCNEGATE = 1 << 24, /* negation flag */
     TDBQCNOIDX = 1 << 25 /* no index flag */
 };

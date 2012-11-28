@@ -3014,7 +3014,6 @@ void testQueryBool() {
 void testDropAll() {
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
-
     CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXSTR));
 
     bson bsq1;
@@ -3053,6 +3052,79 @@ void testDropAll() {
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'sname'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 0"));
     //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
+void testTokens$begin() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXSTR));
+
+    //q: {'name' : {'$begin' : ['Ада', 'John T']}}
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "name");
+    bson_append_start_array(&bsq1, "$begin");
+    bson_append_string(&bsq1, "0", "Ада");
+    bson_append_string(&bsq1, "1", "John T");
+    bson_append_string(&bsq1, "2", "QWE J");
+    bson_append_finish_array(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'sname'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX TCOP: 22"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 2"));
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_TRUE(!bson_compare_string("Адаманский", TCLISTVALPTR(q1res, i), "name") ||
+                !bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //q: {'name' : {'$begin' : ['Ада', 'John T']}}
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "name");
+    bson_append_start_array(&bsq1, "$begin");
+    bson_append_string(&bsq1, "0", "Ада");
+    bson_append_string(&bsq1, "1", "John T");
+    bson_append_string(&bsq1, "2", "QWE J");
+    bson_append_finish_array(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXDROPALL));
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RUN FULLSCAN"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 2"));
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_TRUE(!bson_compare_string("Адаманский", TCLISTVALPTR(q1res, i), "name") ||
+                !bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
+    }
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -3114,7 +3186,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testUpdate1", testUpdate1)) ||
             (NULL == CU_add_test(pSuite, "testUpdate2", testUpdate2)) ||
             (NULL == CU_add_test(pSuite, "testQueryBool", testQueryBool)) ||
-            (NULL == CU_add_test(pSuite, "testDropAll", testDropAll))
+            (NULL == CU_add_test(pSuite, "testDropAll", testDropAll)) ||
+            (NULL == CU_add_test(pSuite, "testTokens$begin", testTokens$begin))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

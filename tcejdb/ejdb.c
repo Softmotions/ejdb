@@ -1076,7 +1076,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
                     for (int i = 0; i < TCLISTNUM(tokens); ++i) {
                         const char *token = TCLISTVALPTR(tokens, i);
                         int tokensz = TCLISTVALSIZ(tokens, i);
-                        if (TCLISTVALSIZ(tokens, i) == cbufstrlen && !strncmp(token, cbuf, tokensz)) {
+                        if (tokensz == cbufstrlen && !strncmp(token, cbuf, tokensz)) {
                             rv = true;
                             break;
                         }
@@ -1089,7 +1089,42 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
                 for (int i = 0; i < TCLISTNUM(tokens); ++i) {
                     const char *token = TCLISTVALPTR(tokens, i);
                     int tokensz = TCLISTVALSIZ(tokens, i);
-                    if (TCLISTVALSIZ(tokens, i) == (fvalsz - 1) && !strncmp(token, fval, tokensz)) {
+                    if (tokensz == (fvalsz - 1) && !strncmp(token, fval, tokensz)) {
+                        rv = true;
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+        case TDBQCSTRORBW:
+        {
+            TCLIST *tokens = qf->exprlist;
+            assert(tokens);
+            _FETCHSTRFVAL();
+            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+                cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
+                if (cbufstrlen < 0) {
+                    _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
+                    rv = false;
+                } else {
+                    for (int i = 0; i < TCLISTNUM(tokens); ++i) {
+                        const char *token = TCLISTVALPTR(tokens, i);
+                        int tokensz = TCLISTVALSIZ(tokens, i);
+                        if (tokensz <= cbufstrlen && !strncmp(token, cbuf, tokensz)) {
+                            rv = true;
+                            break;
+                        }
+                    }
+                }
+                if (cbuf && cbuf != sbuf) {
+                    TCFREE(cbuf);
+                }
+            } else {
+                for (int i = 0; i < TCLISTNUM(tokens); ++i) {
+                    const char *token = TCLISTVALPTR(tokens, i);
+                    int tokensz = TCLISTVALSIZ(tokens, i);
+                    if (tokensz <= (fvalsz - 1) && !strncmp(token, fval, tokensz)) {
                         rv = true;
                         break;
                     }
@@ -2001,6 +2036,44 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             tcbdbcurnext(cur);
         }
         tcbdbcurdel(cur);
+    } else if (mqf->tcop == TDBQCSTRORBW) { /* string begins with one token in */
+        assert(mqf->ftype == BSON_ARRAY);
+        assert(midx->type == TDBITLEXICAL);
+        BDBCUR *cur = tcbdbcurnew(midx->db);
+        TCLIST *tokens = mqf->exprlist;
+        assert(tokens);
+        tclistsort(tokens);
+        for (int i = 1; i < TCLISTNUM(tokens); i++) {
+            if (!strcmp(TCLISTVALPTR(tokens, i), TCLISTVALPTR(tokens, i - 1))) {
+                TCFREE(tclistremove2(tokens, i));
+                i--;
+            }
+        }
+        if (mqf->order < 0 && (mqf->flags & EJFORDERUSED)) {
+            tclistinvert(tokens);
+        }
+        int tnum = TCLISTNUM(tokens);
+        for (int i = 0; (all || count < max) && i < tnum; i++) {
+            const char *token;
+            int tsiz;
+            TCLISTVAL(token, tokens, i, tsiz);
+            if (tsiz < 1) continue;
+            tcbdbcurjump(cur, token, tsiz + trim);
+            while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
+                if (trim) kbufsz -= 3;
+                if (kbufsz >= tsiz && !memcmp(kbuf, token, tsiz)) {
+                    vbuf = tcbdbcurval3(cur, &vbufsz);
+                    if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                            (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
+                        JBQREGREC(bsbuf, bsbufsz);
+                    }
+                } else {
+                    break;
+                }
+                tcbdbcurnext(cur);
+            }
+        }
+        tcbdbcurdel(cur);
     } else if (mqf->tcop == TDBQCSTROREQ) { /* string is equal to at least one token in */
         assert(mqf->ftype == BSON_ARRAY);
         assert(midx->type == TDBITLEXICAL);
@@ -2385,6 +2458,7 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
         case TDBQCSTREQ:
         case TDBQCSTRBW:
         case TDBQCSTROREQ:
+        case TDBQCSTRORBW:
             p = (qf->flags & EJCONDICASE) ? 'i' : 's'; //lexical string index
             break;
         case TDBQCNUMEQ:
@@ -2980,6 +3054,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                         qf.tcop = TDBQCSTRAND;
                     } else if (!strcmp("$stror", fkey)) { //$stror
                         qf.tcop = TDBQCSTROR;
+                    } else if (qf.flags & EJCONDSTARTWITH) { //$begin with some token
+                        qf.tcop = TDBQCSTRORBW;
                     } else {
                         ret = JBEQINVALIDQCONTROL;
                         TCFREE(qf.expr);
