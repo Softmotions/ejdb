@@ -68,13 +68,12 @@ static bool _ejdbunlockmethod(EJDB *ejdb);
 static bool _ejdbcolsetmutex(EJCOLL *coll);
 static bool _ejcollockmethod(EJCOLL *coll, bool wr);
 static bool _ejcollunlockmethod(EJCOLL *coll);
-static bool _bsonoidkey(bson *bs, bson_oid_t *oid);
+static bson_type _bsonoidkey(bson *bs, bson_oid_t *oid);
 static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens, txtflags_t flags);
 static char* _bsonipathrowldr(TCLIST *tokens, const char *pkbuf, int pksz, const char *rowdata, int rowdatasz,
         const char *ipath, int ipathsz, void *op, int *vsz);
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
         const char *fpath, int fpathsz, void *op, int *vsz);
-EJDB_INLINE bool _isvalidoidstr(const char *oid);
 static void _ejdbclear(EJDB *jb);
 static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB** res);
 static bool _addcoldb0(const char *colname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res);
@@ -128,8 +127,20 @@ EJDB_EXPORT const char* ejdberrmsg(int ecode) {
         case JBEQRSSORTING: return "result set sorting error";
         case JBEQERROR: return "query generic error";
         case JBEQUPDFAILED: return "bson record update failed";
+        case JBEINVALIDBSONPK: return "invalid bson _id field";
         default: return tcerrmsg(ecode);
     }
+}
+
+EJDB_EXPORT bool ejdbisvalidoidstr(const char *oid) {
+    if (!oid) {
+        return false;
+    }
+    int i = 0;
+    for (; oid[i] != '\0' &&
+            ((oid[i] >= 0x30 && oid[i] <= 0x39) || /* 1 - 9 */
+            (oid[i] >= 0x61 && oid[i] <= 0x66)); ++i); /* a - f */
+    return (i == 24);
 }
 
 /* Get the last happened error code of a database object. */
@@ -321,10 +332,10 @@ EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool me
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return false;
     }
-    if (!JBCLOCKMETHOD(jcoll, true)) return false;
     bool rv = false;
     bson *nbs = NULL;
-    if (!_bsonoidkey(bs, oid)) { //no _id regenerate new BSON with _id primary key
+    bson_type oidt = _bsonoidkey(bs, oid);
+    if (oidt == BSON_EOO) { //missing _id so generate a new _id
         bson_oid_gen(oid);
         nbs = bson_create();
         bson_init_size(nbs, bson_size(bs) + (strlen(JDBIDKEYNAME) + 1/*key*/ + 1/*type*/ + sizeof (*oid)));
@@ -334,7 +345,11 @@ EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool me
         bson_finish(nbs);
         assert(!nbs->err);
         bs = nbs;
+    } else if (oidt != BSON_OID) { //_oid presented by it is not BSON_OID
+        _ejdbsetecode(jcoll->jb, JBEINVALIDBSONPK, __FILE__, __LINE__, __func__);
+        return false;
     }
+    if (!JBCLOCKMETHOD(jcoll, true)) return false;
     TCTDB *tdb = jcoll->tdb;
     TCMAP *rowm = (tdb->hdb->rnum > 0) ? tctdbget(tdb, oid, sizeof (*oid)) : NULL;
     char *obsdata = NULL; //Old bson
@@ -3302,42 +3317,19 @@ static TCMAP* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     return res;
 }
 
-EJDB_INLINE bool _isvalidoidstr(const char *oid) {
-    if (!oid) {
-        return false;
-    }
-    int i = 0;
-    for (; oid[i] != '\0' &&
-            ((oid[i] >= 0x30 && oid[i] <= 0x39) || /* 1 - 9 */
-            (oid[i] >= 0x61 && oid[i] <= 0x66)); ++i); /* a - f */
-    return (i == 24);
-}
-
 /**
  * Get OID value from the '_id' field of specified bson object.
  * @param bson[in] BSON object
  * @param oid[out] Pointer to OID type
  * @return True if OID value is found int _id field of bson object otherwise False.
  */
-static bool _bsonoidkey(bson *bs, bson_oid_t *oid) {
-    bool rv = false;
+static bson_type _bsonoidkey(bson *bs, bson_oid_t *oid) {
     bson_iterator it;
-    bson_type t = bson_find(&it, bs, JDBIDKEYNAME);
-    if (t != BSON_STRING && t != BSON_OID) {
-        goto finish;
-    }
-    if (t == BSON_STRING) {
-        const char *oidstr = bson_iterator_string(&it);
-        if (_isvalidoidstr(oidstr)) {
-            bson_oid_from_string(oid, oidstr);
-            rv = true;
-        }
-    } else {
+    bson_type bt = bson_find(&it, bs, JDBIDKEYNAME);
+    if (bt == BSON_OID) {
         *oid = *bson_iterator_oid(&it);
-        rv = true;
     }
-finish:
-    return rv;
+    return bt;
 }
 
 /**

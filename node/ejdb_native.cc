@@ -131,6 +131,11 @@ namespace ejdb {
 
     struct TBSONCTX {
         V8ObjSet tset; //traversed objects set
+        int nlevel;
+        bool inquery;
+
+        TBSONCTX() : nlevel(0), inquery(false) {
+        }
     };
 
     static Handle<Object> toV8Object(bson_iterator *it, bson_type obt = BSON_OBJECT);
@@ -350,12 +355,32 @@ namespace ejdb {
             bs->errstr = strdup("Circular object reference");
             return;
         }
+        ctx->nlevel++;
         ctx->tset.insert(obj);
         Local<Array> pnames = obj->GetOwnPropertyNames();
         for (uint32_t i = 0; i < pnames->Length(); ++i) {
+            if (bs->err) {
+                break;
+            }
             Local<Value> pn = pnames->Get(i);
             String::Utf8Value spn(pn);
             Local<Value> pv = obj->Get(pn);
+
+            if (!ctx->inquery && ctx->nlevel == 1 && !strcmp(JDBIDKEYNAME, *spn)) { //top level _id key 
+                if (pv->IsNull() || pv->IsUndefined()) { //skip _id addition for null or undefined vals
+                    continue;
+                }
+                String::Utf8Value idv(pv->ToString());
+                if (ejdbisvalidoidstr(*idv)) {
+                    bson_oid_t oid;
+                    bson_oid_from_string(&oid, *idv);
+                    bson_append_oid(bs, JDBIDKEYNAME, &oid);
+                } else {
+                    bs->err = BSON_ERROR_ANY;
+                    bs->errstr = strdup("Invalid bson _id field value");
+                    break;
+                }
+            }
             if (pv->IsString()) {
                 String::Utf8Value val(pv);
                 bson_append_string(bs, *spn, *val);
@@ -405,6 +430,9 @@ namespace ejdb {
                     bson_append_start_object(bs, *spn);
                 }
                 toBSON0(Handle<Object>::Cast(pv), bs, ctx);
+                if (bs->err) {
+                    break;
+                }
                 if (pv->IsArray()) {
                     bson_append_finish_array(bs);
                 } else {
@@ -412,12 +440,14 @@ namespace ejdb {
                 }
             }
         }
+        ctx->nlevel--;
     }
 
     /** Convert V8 object into binary json instance. After usage, it must be freed by bson_del() */
-    static void toBSON(Handle<Object> obj, bson *bs) {
+    static void toBSON(Handle<Object> obj, bson *bs, bool inquery) {
         HandleScope scope;
         TBSONCTX ctx;
+        ctx.inquery = inquery;
         toBSON0(obj, bs, &ctx);
     }
 
@@ -607,7 +637,7 @@ namespace ejdb {
                 bson *bs = bson_create();
                 assert(bs);
                 bson_init(bs);
-                toBSON(Handle<Object>::Cast(v), bs);
+                toBSON(Handle<Object>::Cast(v), bs, false);
                 if (bs->err) {
                     Local<String> msg = String::New(bs->errstr ? bs->errstr : "BSON creation failed");
                     bson_del(bs);
@@ -653,7 +683,7 @@ namespace ejdb {
                 }
                 bson *bs = bson_create();
                 bson_init_as_query(bs);
-                toBSON(Local<Object>::Cast(qv), bs);
+                toBSON(Local<Object>::Cast(qv), bs, true);
                 bson_finish(bs);
                 if (bs->err) {
                     Local<String> msg = String::New(bs->errstr ? bs->errstr : "BSON error");

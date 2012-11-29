@@ -565,4 +565,10 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
 #endif                                   // duplication check
 
 
+//EJDB Shared
+
+#define JDBIDKEYNAME "_id"  /**> Name of PK _id field in BSONs */
+#define JDBIDKEYNAMEL 3
+
+
 // END OF FILE

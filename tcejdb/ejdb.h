@@ -36,14 +36,15 @@ typedef struct { /**< EJDB collection tuning options. */
 enum { /** Error codes */
     JBEINVALIDCOLNAME = 9000, /**< Invalid collection name. */
     JBEINVALIDBSON = 9001, /**< Invalid bson object. */
-    JBEQINVALIDQCONTROL = 9002, /**< Invalid query control field starting with '$'. */
-    JBEQINOPNOTARRAY = 9003, /**< $strand, $stror, $in, $nin, $bt keys requires not empty array value. */
-    JBEMETANVALID = 9004, /**< Inconsistent database metadata. */
-    JBEFPATHINVALID = 9005, /**< Invalid field path value. */
-    JBEQINVALIDQRX = 9006, /**< Invalid query regexp value. */
-    JBEQRSSORTING = 9007, /**< Result set sorting error. */
-    JBEQERROR = 9008, /**< Query generic error. */
-    JBEQUPDFAILED = 9009 /**< Updating failed. */
+    JBEINVALIDBSONPK = 9002, /**< Invalid bson object id. */
+    JBEQINVALIDQCONTROL = 9003, /**< Invalid query control field starting with '$'. */
+    JBEQINOPNOTARRAY = 9004, /**< $strand, $stror, $in, $nin, $bt keys requires not empty array value. */
+    JBEMETANVALID = 9005, /**< Inconsistent database metadata. */
+    JBEFPATHINVALID = 9006, /**< Invalid field path value. */
+    JBEQINVALIDQRX = 9007, /**< Invalid query regexp value. */
+    JBEQRSSORTING = 9008, /**< Result set sorting error. */
+    JBEQERROR = 9009, /**< Query generic error. */
+    JBEQUPDFAILED = 9010 /**< Updating failed. */
 };
 
 enum { /** Database open modes */
@@ -70,6 +71,8 @@ enum { /** Index modes, index types. */
 enum { /*< Query search mode flags in ejdbqryexecute() */
     JBQRYCOUNT = 1 /*< Query only count(*) */
 };
+
+EJDB_EXPORT bool ejdbisvalidoidstr(const char *oid);
 
 /**
  * Get the message string corresponding to an error code.

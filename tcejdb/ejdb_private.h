@@ -99,10 +99,6 @@ struct EJQ { /**> Query object. */
     const EJQF *lastmatchedorqf; /**> Reference to the last matched or query field */
 };
 
-
-#define JDBIDKEYNAME "_id"  /**> Name of PK _id field in BSONs */
-#define JDBIDKEYNAMEL 3
-
 #define JDBCOLBSON "$"  /**> TCDB colname with BSON byte data */
 #define JDBCOLBSONL 1  /**> TCDB colname with BSON byte data columen len */
 
