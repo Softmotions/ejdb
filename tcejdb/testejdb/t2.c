@@ -611,6 +611,10 @@ void testQuery8() {
     tclistdel(q1res);
     tcxstrdel(log);
     ejdbquerydel(q1);
+
+
+    //todo check hash tokens mode
+    
 }
 
 void testQuery9() {

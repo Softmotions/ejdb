@@ -70,9 +70,10 @@ struct EJQF { /**> Matching field and status */
     int fpathsz; /**>JSON field path size */
     char *expr; /**> Query operand expression, string or TCLIST data */
     int exprsz; /**> Size of query operand expression */
-    int64_t exprlongval; /** Integer value represeintation */
-    double exprdblval; /** Double value representation */
-    TCLIST *exprlist; /** List representation of expression */
+    int64_t exprlongval; /**> Integer value represeintation */
+    double exprdblval; /**> Double value representation */
+    TCLIST *exprlist; /**> List representation of expression */
+    TCMAP *exprmap; /**> Hash map for expression tokens used in $in matching operation. */
     regex_t *regex; /**> Regular expression object */
     int tcop; /**> Matching operation eg. TDBQCSTREQ */
     bool negate; /**> Negate expression */
@@ -103,6 +104,7 @@ struct EJQ { /**> Query object. */
 #define JDBCOLBSONL 1  /**> TCDB colname with BSON byte data columen len */
 
 
+#define JBINOPTMAPTHRESHOLD 16 /**> If number of tokens in `$in` array exeeds it then TCMAP will be used in fullscan matching of tokens */
 
 EJDB_EXTERN_C_END
 

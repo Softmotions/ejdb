@@ -934,6 +934,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
     char *cbuf = NULL;
     int cbufstrlen = 0;
     int fvalsz;
+    int sp;
     const char *fval;
 
 #define _FETCHSTRFVAL() \
@@ -1088,12 +1089,19 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
                     rv = false;
                 } else {
-                    for (int i = 0; i < TCLISTNUM(tokens); ++i) {
-                        const char *token = TCLISTVALPTR(tokens, i);
-                        int tokensz = TCLISTVALSIZ(tokens, i);
-                        if (tokensz == cbufstrlen && !strncmp(token, cbuf, tokensz)) {
+                    if (qf->exprmap) {
+                        if (tcmapget(qf->exprmap, cbuf, cbufstrlen, &sp) != NULL) {
                             rv = true;
                             break;
+                        }
+                    } else {
+                        for (int i = 0; i < TCLISTNUM(tokens); ++i) {
+                            const char *token = TCLISTVALPTR(tokens, i);
+                            int tokensz = TCLISTVALSIZ(tokens, i);
+                            if (tokensz == cbufstrlen && !strncmp(token, cbuf, tokensz)) {
+                                rv = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -1101,12 +1109,19 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
                     TCFREE(cbuf);
                 }
             } else {
-                for (int i = 0; i < TCLISTNUM(tokens); ++i) {
-                    const char *token = TCLISTVALPTR(tokens, i);
-                    int tokensz = TCLISTVALSIZ(tokens, i);
-                    if (tokensz == (fvalsz - 1) && !strncmp(token, fval, tokensz)) {
+                if (qf->exprmap) {
+                    if (tcmapget3(qf->exprmap, cbuf, cbufstrlen, &sp) != NULL) {
                         rv = true;
                         break;
+                    }
+                } else {
+                    for (int i = 0; i < TCLISTNUM(tokens); ++i) {
+                        const char *token = TCLISTVALPTR(tokens, i);
+                        int tokensz = TCLISTVALSIZ(tokens, i);
+                        if (tokensz == (fvalsz - 1) && !strncmp(token, fval, tokensz)) {
+                            rv = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -1455,6 +1470,9 @@ static void _qryfieldup(const EJQF *src, EJQF *target, uint32_t qflags) {
     }
     if (src->exprlist) {
         target->exprlist = tclistdup(src->exprlist);
+    }
+    if (src->exprmap) {
+        target->exprmap = tcmapdup(src->exprmap);
     }
     if (src->updateobj) {
         target->updateobj = bson_dup(src->updateobj);
@@ -1828,6 +1846,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     for (int i = 0; i < qfsz; ++i) {
         kbuf = tcmapiternext(ejq->qobjmap, &kbufsz);
         EJQF *qf = (EJQF*) tcmapget(ejq->qobjmap, kbuf, kbufsz, &vbufsz);
+        if (log && qf->exprmap) {
+            tcxstrprintf(log, "USING HASH TOKENS IN: %s\n", qf->fpath);
+        }
         assert(qf && vbufsz == sizeof (EJQF));
         qf->jb = jcoll->jb;
         qfs[i] = qf;
@@ -2910,6 +2931,9 @@ static void _delqfdata(const EJQ *q, const EJQF *qf) {
     if (qf->exprlist) {
         tclistdel(qf->exprlist);
     }
+    if (qf->exprmap) {
+        tcmapdel(qf->exprmap);
+    }
 }
 
 /**
@@ -2976,6 +3000,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
     assert(it && qmap && pathStack);
     int ret = 0;
     bson_type ftype;
+    bool yes = true;
     while ((ftype = bson_iterator_next(it)) != BSON_EOO) {
 
         const char *fkey = bson_iterator_key(it);
@@ -3056,6 +3081,13 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                             qf.tcop = TDBQCNUMOREQ;
                         } else {
                             qf.tcop = TDBQCSTROREQ;
+                            if (TCLISTNUM(tokens) >= JBINOPTMAPTHRESHOLD) {
+                                assert(!qf.exprmap);
+                                qf.exprmap = tcmapnew2(TCLISTNUM(tokens));
+                                for (int i = 0; i < TCLISTNUM(tokens); ++i) {
+                                    tcmapputkeep(qf.exprmap, TCLISTVALPTR(tokens, i), TCLISTVALSIZ(tokens, i), &yes, sizeof (yes));
+                                }
+                            }
                         }
                     } else if (!strcmp("$bt", fkey)) { //between
                         qf.tcop = TDBQCNUMBT;
