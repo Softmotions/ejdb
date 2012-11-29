@@ -273,6 +273,32 @@ module.exports.testUpdate1 = function(test) {
             });
 };
 
+
+module.exports.test_id$nin = function(test) {
+    jb.findOne("parrots", {}, function(err, obj) {
+        test.ifError(err);
+        test.ok(obj);
+        jb.find("parrots", {"_id" : {"$in" : [obj["_id"]]}}, function(err, cursor, count) {
+            test.ifError(err);
+            test.equal(count, 1);
+            test.ok(cursor.hasNext());
+            test.ok(cursor.next());
+            test.equal(cursor.field("_id"), obj["_id"]);
+            jb.find("parrots", {"_id" : {"$nin" : [obj["_id"]]}}, {"$explain" : true}, function(err, cursor, count, log) {
+                test.ifError(err);
+                test.ok(count > 0);
+                while (cursor.next()) {
+                    test.ok(cursor.field("_id"));
+                    test.ok(cursor.field("_id") != obj["_id"]);
+                    test.ok(log.indexOf("RUN FULLSCAN") !== -1);
+                }
+                test.done();
+            });
+        });
+    });
+};
+
+
 module.exports.testRemove = function(test) {
     test.ok(jb);
     test.ok(jb.isOpen());

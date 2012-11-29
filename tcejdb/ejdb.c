@@ -2645,7 +2645,7 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMA
             continue;
         }
         //OID PK matching
-        if ((qf->tcop == TDBQCSTREQ || qf->tcop == TDBQCSTROREQ) && !strcmp(JDBIDKEYNAME, qf->fpath)) {
+        if (!qf->negate && (qf->tcop == TDBQCSTREQ || qf->tcop == TDBQCSTROREQ) && !strcmp(JDBIDKEYNAME, qf->fpath)) {
             qf->flags |= EJFPKMATCHING;
             *mqf = qf;
             break;

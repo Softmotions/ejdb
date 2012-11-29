@@ -1,6 +1,7 @@
 2012-11-29 Anton Adamansky. <adamansky@gmail.com>
     * More strict `_id` field checking on saving bsons
-    - Release 1.0.19
+    * Fix bug if `_id` used with `$nin` operator
+    - Release 1.0.20
 
 2012-11-28 Anton Adamansky. <adamansky@gmail.com>
     * The $begin query operation now works with tokens. Eg: {'name' : {'$begin' : ['token1', 'token2', ...]}}
