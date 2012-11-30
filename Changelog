@@ -1,3 +1,7 @@
+2012-11-30 Anton Adamansky. <adamansky@gmail.com>
+    * Query optimization in the case of many arguments (>16) in `$in` operator
+    - Release 1.0.21
+
 2012-11-29 Anton Adamansky. <adamansky@gmail.com>
     * More strict `_id` field checking on saving bsons
     * Fixed bug if `_id` used with `$nin` operator
