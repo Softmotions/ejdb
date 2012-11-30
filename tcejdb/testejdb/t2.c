@@ -614,7 +614,62 @@ void testQuery8() {
 
 
     //todo check hash tokens mode
-    
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "labels", JBIDXDROPALL));
+
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "labels");
+    bson_append_start_array(&bsq1, "$in");
+
+    char nbuff[TCNUMBUFSIZ];
+    for (int i = 0; i <= JBINOPTMAPTHRESHOLD; ++i) {
+        bson_numstrn(nbuff, TCNUMBUFSIZ, i);
+        if (i == 2) {
+            bson_append_string(&bsq1, nbuff, "green");
+        } else if (i == 8) {
+            bson_append_string(&bsq1, nbuff, "yellow");
+        } else {
+            bson_append_string(&bsq1, nbuff, nbuff);
+        }
+    }
+    bson_append_finish_array(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    bson_init_as_query(&bshints);
+    bson_append_start_object(&bshints, "$orderby");
+    bson_append_int(&bshints, "name", 1); //ASC order on name
+    bson_append_finish_object(&bshints);
+    bson_finish(&bshints);
+    CU_ASSERT_FALSE_FATAL(bshints.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshints);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "USING HASH TOKENS IN: labels"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RUN FULLSCAN"));
+    CU_ASSERT_EQUAL(count, 2);
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 2);
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        if (i == 0) {
+            CU_ASSERT_FALSE(bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
+            CU_ASSERT_FALSE(bson_compare_string("yellow", TCLISTVALPTR(q1res, i), "labels.0"));
+        } else if (i == 1) {
+            CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, i), "name"));
+            CU_ASSERT_FALSE(bson_compare_string("green", TCLISTVALPTR(q1res, i), "labels.1"));
+        } else {
+            CU_ASSERT_TRUE(false);
+        }
+    }
+
+    bson_destroy(&bsq1);
+    bson_destroy(&bshints);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
 }
 
 void testQuery9() {

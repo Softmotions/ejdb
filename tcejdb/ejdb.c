@@ -1110,7 +1110,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
                 }
             } else {
                 if (qf->exprmap) {
-                    if (tcmapget3(qf->exprmap, cbuf, cbufstrlen, &sp) != NULL) {
+                    if (tcmapget3(qf->exprmap, fval, (fvalsz - 1) , &sp) != NULL) {
                         rv = true;
                         break;
                     }
