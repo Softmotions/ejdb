@@ -1343,6 +1343,30 @@ void testQuery18() {
     bson_destroy(&bsq1);
     bson_destroy(&bshints);
     tclistdel(q1res);
+    ejdbquerydel(q1);
+
+    //Third query
+    CU_ASSERT_TRUE(ejdbsetindex(contacts, "labels", JBIDXARR));
+
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "labels");
+    bson_append_start_array(&bsq1, "$strand");
+    bson_append_string(&bsq1, "0", "green");
+    bson_append_string(&bsq1, "1", "black");
+    bson_append_finish_array(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    count = 0;
+    tcxstrclear(log);
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshints);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
+    fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
     tcxstrdel(log);
     ejdbquerydel(q1);
 }
