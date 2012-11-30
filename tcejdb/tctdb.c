@@ -5612,7 +5612,7 @@ static int tctdbidxcmpkey(const char **a, const char **b){
    The return value is a map object of the primary keys of the corresponding records. */
 TCMAP *tctdbidxgetbytokens(TCTDB *tdb, const TDBIDX *idx, const TCLIST *tokens, int op,
                                   TCXSTR *hint){
-  assert(tdb && idx && tokens && hint);
+  assert(tdb && idx && tokens);
   TCBDB *db = idx->db;
   TCMAP *cc = idx->cc;
   int tnum = TCLISTNUM(tokens);
@@ -5710,7 +5710,9 @@ TCMAP *tctdbidxgetbytokens(TCTDB *tdb, const TDBIDX *idx, const TCLIST *tokens, 
       tcmapdel(res);
       res = wring;
     }
-    tcxstrprintf(hint, "token occurrence: \"%s\" %d\n", token, onum);
+    if (hint) {
+        tcxstrprintf(hint, "token occurrence: \"%s\" %d\n", token, onum);
+    }
     cnt++;
   }
   return res;

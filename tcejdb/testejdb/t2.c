@@ -1351,7 +1351,7 @@ void testQuery18() {
     bson_init_as_query(&bsq1);
     bson_append_start_object(&bsq1, "labels");
     bson_append_start_array(&bsq1, "$strand");
-    bson_append_string(&bsq1, "0", "green");
+    bson_append_string(&bsq1, "0", "red");
     bson_append_string(&bsq1, "1", "black");
     bson_append_finish_array(&bsq1);
     bson_append_finish_object(&bsq1);
@@ -1360,10 +1360,12 @@ void testQuery18() {
 
     count = 0;
     tcxstrclear(log);
-    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshints);
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
-    fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 1"));
+    CU_ASSERT_EQUAL(count, 1);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
