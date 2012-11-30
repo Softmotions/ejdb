@@ -1345,6 +1345,8 @@ void testQuery18() {
     tclistdel(q1res);
     ejdbquerydel(q1);
 
+
+    /*
     //Third query
     CU_ASSERT_TRUE(ejdbsetindex(contacts, "labels", JBIDXARR));
 
@@ -1369,6 +1371,7 @@ void testQuery18() {
     tclistdel(q1res);
     tcxstrdel(log);
     ejdbquerydel(q1);
+     */
 }
 
 void testQuery19() {
