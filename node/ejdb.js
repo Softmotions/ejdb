@@ -203,11 +203,13 @@ EJDB.prototype.remove = function(cname, oid, cb) {
  *          For case insensitive matching you can create special type of string index.
  *
  *  - Queries can be used to update records
- *      `$set` and `$inc` operations are supported.
+ *
  *      `$set` Field set operation.
  *          - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
  *      `$inc` Increment operation. Only number types are supported.
  *          - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
+ *      `$dropall` In-place record removal operation.
+ *          - {some fields for selection, '$dropall' : true}
  *
  *  NOTE: It is better to execute update queries with `$onlycount=true` hint flag
  *        or use the special `update()` method to avoid unnecessarily data fetching.
