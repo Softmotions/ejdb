@@ -175,6 +175,7 @@ static int tchdbvsizimpl(TCHDB *hdb, const char *kbuf, int ksiz, uint64_t bidx, 
 static bool tchdbiterinitimpl(TCHDB *hdb);
 static char *tchdbiternextimpl(TCHDB *hdb, int *sp);
 static bool tchdbiternextintoxstr(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr);
+static bool tchdbiternextintoxstr2(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr);
 static bool tchdboptimizeimpl(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
 static bool tchdbvanishimpl(TCHDB *hdb);
 static bool tchdbcopyimpl(TCHDB *hdb, const char *path);
@@ -797,6 +798,24 @@ bool tchdbiterinit(TCHDB *hdb){
   return rv;
 }
 
+/* Initialize the iterator of a hash database object. */
+bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter){
+  assert(hdb);
+  if(!HDBLOCKMETHOD(hdb, true)) return false;
+  if(hdb->fd < 0){
+    tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
+    HDBUNLOCKMETHOD(hdb);
+    return false;
+  }
+  if(hdb->async && !tchdbflushdrp(hdb)){
+    HDBUNLOCKMETHOD(hdb);
+    return false;
+  }
+  *iter = hdb->frec;
+  HDBUNLOCKMETHOD(hdb);
+  return true;
+}
+
 
 /* Get the next key of the iterator of a hash database object. */
 void *tchdbiternext(TCHDB *hdb, int *sp){
@@ -839,6 +858,25 @@ bool tchdbiternext3(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr){
     return false;
   }
   bool rv = tchdbiternextintoxstr(hdb, kxstr, vxstr);
+  HDBUNLOCKMETHOD(hdb);
+  return rv;
+}
+
+
+/* Get the next extensible objects of the iterator of a hash database object. */
+bool tchdbiternext4(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr){
+  assert(hdb && kxstr && vxstr && iter);
+  if(!HDBLOCKMETHOD(hdb, true)) return false;
+  if(hdb->fd < 0 || *iter < 1){
+    tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
+    HDBUNLOCKMETHOD(hdb);
+    return false;
+  }
+  if(hdb->async && !tchdbflushdrp(hdb)){
+    HDBUNLOCKMETHOD(hdb);
+    return false;
+  }
+  bool rv = tchdbiternextintoxstr2(hdb, iter, kxstr, vxstr);
   HDBUNLOCKMETHOD(hdb);
   return rv;
 }
@@ -4479,13 +4517,17 @@ static char *tchdbiternextimpl(TCHDB *hdb, int *sp){
 
 /* Get the next extensible objects of the iterator of a hash database object. */
 static bool tchdbiternextintoxstr(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr){
+    return tchdbiternextintoxstr2(hdb, &(hdb->iter), kxstr, vxstr);
+}
+
+static bool tchdbiternextintoxstr2(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr){
   assert(hdb && kxstr && vxstr);
   TCHREC rec;
   char rbuf[HDBIOBUFSIZ];
-  while(hdb->iter < hdb->fsiz){
-    rec.off = hdb->iter;
+  while(*iter < hdb->fsiz){
+    rec.off = *iter;
     if(!tchdbreadrec(hdb, &rec, rbuf)) return false;
-    hdb->iter += rec.rsiz;
+    *iter = *iter + rec.rsiz;
     if(rec.magic == HDBMAGICREC){
       if(!rec.vbuf && !tchdbreadrecbody(hdb, &rec)) return false;
       tcxstrclear(kxstr);

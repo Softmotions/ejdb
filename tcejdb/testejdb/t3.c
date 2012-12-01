@@ -208,11 +208,15 @@ static void *threadrace1(void *_tr) {
     bool saved = false;
     int lastcnt = 0;
 
+    EJCOLL *coll = ejdbcreatecoll(jb, "threadrace1", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    EJQ *q = ejdbcreatequery(jb, &bq, NULL, 0, NULL);
+    TCXSTR *log = tcxstrnew();
+
     for (int i = 0; !err && i < iterations; ++i) {
-        EJCOLL *coll = ejdbcreatecoll(jb, "threadrace1", NULL);
-        CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
-        EJQ *q = ejdbcreatequery(jb, &bq, NULL, 0, NULL);
         CU_ASSERT_PTR_NOT_NULL_FATAL(q);
+        tcxstrclear(log);
 
         bson_oid_t oid2;
         bson_oid_t *oid = NULL;
@@ -225,16 +229,15 @@ static void *threadrace1(void *_tr) {
             err = true;
             goto ffinish;
         }
-
-        res = ejdbqryexecute(coll, q, &count, 0, NULL);
-
+        res = ejdbqryexecute(coll, q, &count, 0, log);
         if (ejdbecode(jb) != 0) {
             eprint(jb, __LINE__, "threadrace1.ejdbqryexecute");
             err = true;
             goto ffinish;
         }
         if (count != 1 && saved) {
-            CU_ASSERT_TRUE_FATAL(false);
+            fprintf(stderr, "%d:COUNT=%d it=%d\n", tr->id, count, i);
+            CU_ASSERT_TRUE(false);
             goto ffinish;
         }
         if (count > 0) {
@@ -262,14 +265,15 @@ static void *threadrace1(void *_tr) {
             eprint(jb, __LINE__, "threadrace1.ejdbsavebson");
             err = true;
         }
+        saved = true;
         bson_destroy(&sbs);
         lastcnt = cnt;
 ffinish:
         if (res) tclistdel(res);
-        if (q) ejdbquerydel(q);
     }
+    if (q) ejdbquerydel(q);
     bson_destroy(&bq);
-    //CU_ASSERT_EQUAL(lastcnt, iterations);
+    CU_ASSERT_EQUAL(lastcnt, iterations);
     //fprintf(stderr, "\nThread %d finished", tr->id);
     return err ? "error" : NULL;
 }
@@ -283,7 +287,7 @@ void testRace1() {
 
     EJCOLL *coll = ejdbcreatecoll(jb, "threadrace1", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
-    if (!ejdbsetindex(coll, "tid", JBIDXNUM)) {
+    if (!ejdbsetindex(coll, "tid", JBIDXNUM)) { //INT INDEX
         eprint(jb, __LINE__, "testRace1");
         err = true;
     }
@@ -301,6 +305,48 @@ void testRace1() {
         }
     }
 
+    for (int i = 0; i < tnum; i++) {
+        if (targs[i].id == -1) continue;
+        void *rv;
+        if (pthread_join(threads[i], &rv) != 0) {
+            eprint(jb, __LINE__, "pthread_join");
+            err = true;
+        } else if (rv) {
+            err = true;
+        }
+    }
+
+finish:
+    CU_ASSERT_FALSE(err);
+}
+
+void testRace2() {
+    CU_ASSERT_PTR_NOT_NULL_FATAL(jb);
+    const int tnum = 50;
+    bool err = false;
+    TARGRACE targs[tnum];
+    pthread_t threads[tnum];
+
+    ejdbrmcoll(jb, "threadrace1", true);
+    EJCOLL *coll = ejdbcreatecoll(jb, "threadrace1", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    if (!ejdbsetindex(coll, "tid", JBIDXDROPALL)) { //NO INDEX
+        eprint(jb, __LINE__, "testRace2");
+        err = true;
+    }
+    if (err) {
+        goto finish;
+    }
+
+    for (int i = 0; i < tnum; i++) {
+        targs[i].jb = jb;
+        targs[i].id = i;
+        if (pthread_create(threads + i, NULL, threadrace1, targs + i) != 0) {
+            eprint(jb, __LINE__, "pthread_create");
+            targs[i].id = -1;
+            err = true;
+        }
+    }
     for (int i = 0; i < tnum; i++) {
         if (targs[i].id == -1) continue;
         void *rv;
@@ -334,7 +380,8 @@ int main() {
     /* Add the tests to the suite */
     if (
             (NULL == CU_add_test(pSuite, "testPerf1", testPerf1)) ||
-            (NULL == CU_add_test(pSuite, "testRace1", testRace1))
+            (NULL == CU_add_test(pSuite, "testRace1", testRace1)) ||
+            (NULL == CU_add_test(pSuite, "testRace2", testRace2))
 
             ) {
         CU_cleanup_registry();

@@ -399,6 +399,7 @@ int tchdbvsiz2(TCHDB *hdb, const char *kstr);
    If successful, the return value is true, else, it is false.
    The iterator is used in order to access the key of every record stored in a database. */
 bool tchdbiterinit(TCHDB *hdb);
+bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter);
 
 
 /* Get the next key of the iterator of a hash database object.
@@ -438,6 +439,7 @@ char *tchdbiternext2(TCHDB *hdb);
    If successful, the return value is true, else, it is false.  False is returned when no record
    is to be get out of the iterator. */
 bool tchdbiternext3(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr);
+bool tchdbiternext4(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr);
 
 
 /* Get forward matching keys in a hash database object.

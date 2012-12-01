@@ -333,6 +333,7 @@ EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool me
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return false;
     }
+    if (!JBCLOCKMETHOD(jcoll, true)) return false;
     bool rv = false;
     bson *nbs = NULL;
     bson_type oidt = _bsonoidkey(bs, oid);
@@ -350,7 +351,6 @@ EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool me
         _ejdbsetecode(jcoll->jb, JBEINVALIDBSONPK, __FILE__, __LINE__, __func__);
         return false;
     }
-    if (!JBCLOCKMETHOD(jcoll, true)) return false;
     TCTDB *tdb = jcoll->tdb;
     TCMAP *rowm = (tdb->hdb->rnum > 0) ? tctdbget(tdb, oid, sizeof (*oid)) : NULL;
     char *obsdata = NULL; //Old bson
@@ -2368,19 +2368,27 @@ fullscan: /* Full scan */
     if (log) {
         tcxstrprintf(log, "RUN FULLSCAN\n");
     }
-    if (!tchdbiterinit(hdb)) {
+
+    uint64_t hdbiter;
+    TCMAP *updkeys = (ejq->flags & EJQUPDATING) ? tcmapnew2(100 * 1024) : NULL;
+    if (!tchdbiterinit4(hdb, &hdbiter)) {
         goto finish;
     }
-    TCMAP *updkeys = (ejq->flags & EJQUPDATING) ? tcmapnew2(100 * 1024) : NULL;
     TCXSTR *skbuf = tcxstrnew3(sizeof (bson_oid_t) + 1);
     TCXSTR *scbuf = tcxstrnew3(1024);
-    while ((all || count < max) && tchdbiternext3(hdb, skbuf, scbuf)) {
+    int rows = 0;
+    while ((all || count < max) && tchdbiternext4(hdb, &hdbiter, skbuf, scbuf)) {
+        ++rows;
         void *bsbuf = tcmaploadone(TCXSTRPTR(scbuf), TCXSTRSIZE(scbuf), JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
-        if (!bsbuf) goto wfinish;
+        if (!bsbuf) {
+            goto wfinish;
+        }
         bool matched = true;
         for (int i = 0; i < qfsz; ++i) {
             const EJQF *qf = qfs[i];
-            if (qf->flags & EJFEXCLUDED) continue;
+            if (qf->flags & EJFEXCLUDED) {
+                continue;
+            }
             if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
                 matched = false;
                 break;

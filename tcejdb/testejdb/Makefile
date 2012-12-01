@@ -17,6 +17,9 @@ check-valgrind :
 check-valgrind-t2 :
 	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check-t2
 
+check-valgrind-t3 :
+	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check-t3
+
 check-t1 :
 	$(RUNENV) $(RUNCMD) ./t1
 
