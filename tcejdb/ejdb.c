@@ -154,6 +154,7 @@ EJDB_EXPORT EJDB* ejdbnew(void) {
     TCMALLOC(jb, sizeof (*jb));
     _ejdbclear(jb);
     jb->metadb = tctdbnew();
+    tctdbsetmutex(jb->metadb);
     tctdbsetcache(jb->metadb, 1024, 0, 0);
 #ifdef _DEBUG
     tchdbsetdbgfd(jb->metadb->hdb, fileno(stderr));
@@ -3679,6 +3680,7 @@ static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB 
     }
     bool rv = true;
     TCTDB *cdb = tctdbnew();
+    tctdbsetmutex(cdb);
     if (opts) {
         if (opts->cachedrecords > 0) {
             tctdbsetcache(cdb, opts->cachedrecords, 0, 0);
