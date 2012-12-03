@@ -1,6 +1,6 @@
 {
     "name" : "ejdb",
-    "version" : "1.0.24",
+    "version" : "1.0.25",
     "main" : "node/ejdb.js",
     "description" : "EJDB - Embedded JSON Database engine",
     "homepage" : "http://ejdb.org",

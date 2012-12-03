@@ -190,7 +190,7 @@ module.exports.testSaveLoadBuffer = function(test) {
     var sally = {
         "name" : "Sally",
         "mood" : "Angry",
-        "secret" : new Buffer("Something binary secrect", "utf8")
+        "secret" : new Buffer("Some binary secrect", "utf8")
     };
     var molly = {
         "name" : "Molly",
@@ -207,7 +207,7 @@ module.exports.testSaveLoadBuffer = function(test) {
         jb.load("birds", sallyOid, function(err, obj) {
             test.ifError(err);
             test.ok(obj["secret"] instanceof Buffer);
-            test.equal(obj["secret"], "Something binary secrect");
+            test.equal(obj["secret"], "Some binary secrect");
             jb.save("birds", [sally, molly], function(err, oids) {
                 test.ifError(err);
                 test.ok(oids);
