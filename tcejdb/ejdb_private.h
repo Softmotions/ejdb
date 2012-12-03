@@ -90,7 +90,7 @@ struct EJQF { /**> Matching field and status */
 typedef struct EJQF EJQF;
 
 struct EJQ { /**> Query object. */
-    TCMAP *qobjmap; /**> Mapping of field path (char*) -> *EJQF */
+    TCLIST *qobjlist; /**> List of query objects *EJQF */
     EJQ *orqobjs; /** OR Query objects */
     int orqobjsnum; /** Number of OR query objects */
     bson *hints; /**> Hints bson object */

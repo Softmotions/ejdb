@@ -3217,6 +3217,35 @@ void testTokens$begin() {
     ejdbquerydel(q1);
 }
 
+void testOneFieldManyConditions() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "age");
+    bson_append_int(&bsq1, "$lt", 60);
+    bson_append_int(&bsq1, "$gt", 50);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(count, 1);
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_TRUE(!bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
+    }
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -3272,7 +3301,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testUpdate2", testUpdate2)) ||
             (NULL == CU_add_test(pSuite, "testQueryBool", testQueryBool)) ||
             (NULL == CU_add_test(pSuite, "testDropAll", testDropAll)) ||
-            (NULL == CU_add_test(pSuite, "testTokens$begin", testTokens$begin))
+            (NULL == CU_add_test(pSuite, "testTokens$begin", testTokens$begin)) ||
+            (NULL == CU_add_test(pSuite, "testOneFieldManyConditions", testOneFieldManyConditions))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

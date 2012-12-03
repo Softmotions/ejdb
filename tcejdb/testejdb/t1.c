@@ -161,85 +161,80 @@ void testBuildQuery1() {
     bson_destroy(&q1family_child);
     bson_destroy(&q1family_child_age_IN);
 
-    CU_ASSERT_PTR_NOT_NULL_FATAL(ejq->qobjmap);
-    TCMAP *qmap = ejq->qobjmap;
+    CU_ASSERT_PTR_NOT_NULL_FATAL(ejq->qobjlist);
+    TCLIST *qmap = ejq->qobjlist;
+    CU_ASSERT_EQUAL(qmap->num, 7); 
 
-    CU_ASSERT_EQUAL(qmap->rnum, 7); //
-    int r = qmap->rnum;
-    int sz = 0;
+    for (int i = 0; i < TCLISTNUM(qmap); ++i) {
 
-    tcmapiterinit(qmap);
-    const char* key = tcmapiternext2(qmap);
-    --r;
-    CU_ASSERT_STRING_EQUAL(key, "name");
-    const EJQF *qf = tcmapget(qmap, key, strlen(key), &sz);
-    CU_ASSERT_PTR_NOT_NULL(qf);
-    CU_ASSERT_EQUAL(sz, sizeof (*qf));
-    CU_ASSERT_STRING_EQUAL(qf->expr, "Петров Петр");
-    CU_ASSERT_EQUAL(qf->tcop, TDBQCSTREQ);
+        const EJQF *qf = TCLISTVALPTR(qmap, i);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(qf);
+        const char* key = qf->fpath;
 
-    key = tcmapiternext2(qmap);
-    --r;
-    CU_ASSERT_STRING_EQUAL(key, "age");
-    qf = tcmapget(qmap, key, strlen(key), &sz);
-    CU_ASSERT_PTR_NOT_NULL(qf);
-    CU_ASSERT_EQUAL(sz, sizeof (*qf));
-    CU_ASSERT_STRING_EQUAL(qf->expr, "33");
-    CU_ASSERT_EQUAL(qf->tcop, TDBQCNUMEQ);
-
-    key = tcmapiternext2(qmap);
-    --r;
-    CU_ASSERT_STRING_EQUAL(key, "family.wife.name");
-    qf = tcmapget(qmap, key, strlen(key), &sz);
-    CU_ASSERT_PTR_NOT_NULL(qf);
-    CU_ASSERT_EQUAL(sz, sizeof (*qf));
-    CU_ASSERT_STRING_EQUAL(qf->expr, "Jeniffer");
-    CU_ASSERT_EQUAL(qf->tcop, TDBQCSTREQ);
-
-    key = tcmapiternext2(qmap);
-    --r;
-    CU_ASSERT_STRING_EQUAL(key, "family.wife.age");
-    qf = tcmapget(qmap, key, strlen(key), &sz);
-    CU_ASSERT_PTR_NOT_NULL(qf);
-    CU_ASSERT_EQUAL(sz, sizeof (*qf));
-    CU_ASSERT_STRING_EQUAL(qf->expr, "25");
-    CU_ASSERT_EQUAL(qf->tcop, TDBQCNUMGT);
-
-
-    key = tcmapiternext2(qmap);
-    --r;
-    CU_ASSERT_STRING_EQUAL(key, "family.wife.phone");
-    qf = tcmapget(qmap, key, strlen(key), &sz);
-    CU_ASSERT_PTR_NOT_NULL(qf);
-    CU_ASSERT_EQUAL(sz, sizeof (*qf));
-    CU_ASSERT_STRING_EQUAL(qf->expr, "444-111");
-    CU_ASSERT_EQUAL(qf->tcop, TDBQCSTREQ);
-
-    key = tcmapiternext2(qmap);
-    --r;
-    CU_ASSERT_STRING_EQUAL(key, "family.children.*0.name");
-    qf = tcmapget(qmap, key, strlen(key), &sz);
-    CU_ASSERT_PTR_NOT_NULL(qf);
-    CU_ASSERT_EQUAL(sz, sizeof (*qf));
-    CU_ASSERT_STRING_EQUAL(qf->expr, "Dasha");
-    CU_ASSERT_EQUAL(qf->tcop, TDBQCSTREQ);
-
-    key = tcmapiternext2(qmap);
-    --r;
-    CU_ASSERT_STRING_EQUAL(key, "family.children.*0.age");
-    qf = tcmapget(qmap, key, strlen(key), &sz);
-    CU_ASSERT_PTR_NOT_NULL(qf);
-    CU_ASSERT_EQUAL(sz, sizeof (*qf));
-    CU_ASSERT_EQUAL(qf->ftype, BSON_ARRAY);
-    TCLIST *al = tclistload(qf->expr, qf->exprsz);
-    char* als = tcstrjoin(al, ',');
-    CU_ASSERT_STRING_EQUAL(als, "1,4,10");
-    TCFREE(als);
-    tclistdel(al);
-    CU_ASSERT_EQUAL(qf->tcop, TDBQCNUMOREQ);
-
-    CU_ASSERT_EQUAL(r, 0);
-
+        switch (i) {
+            case 0:
+            {
+                CU_ASSERT_STRING_EQUAL(key, "name");
+                CU_ASSERT_PTR_NOT_NULL(qf);
+                CU_ASSERT_STRING_EQUAL(qf->expr, "Петров Петр");
+                CU_ASSERT_EQUAL(qf->tcop, TDBQCSTREQ);
+                break;
+            }
+            case 1:
+            {
+                CU_ASSERT_STRING_EQUAL(key, "age");
+                CU_ASSERT_PTR_NOT_NULL(qf);
+                CU_ASSERT_STRING_EQUAL(qf->expr, "33");
+                CU_ASSERT_EQUAL(qf->tcop, TDBQCNUMEQ);
+                break;
+            }
+            case 2:
+            {
+                CU_ASSERT_STRING_EQUAL(key, "family.wife.name");
+                CU_ASSERT_PTR_NOT_NULL(qf);
+                CU_ASSERT_STRING_EQUAL(qf->expr, "Jeniffer");
+                CU_ASSERT_EQUAL(qf->tcop, TDBQCSTREQ);
+                break;
+            }
+            case 3:
+            {
+                CU_ASSERT_STRING_EQUAL(key, "family.wife.age");
+                CU_ASSERT_PTR_NOT_NULL(qf);
+                CU_ASSERT_STRING_EQUAL(qf->expr, "25");
+                CU_ASSERT_EQUAL(qf->tcop, TDBQCNUMGT);
+                break;
+            }
+            case 4:
+            {
+                CU_ASSERT_STRING_EQUAL(key, "family.wife.phone");
+                CU_ASSERT_PTR_NOT_NULL(qf);
+                CU_ASSERT_STRING_EQUAL(qf->expr, "444-111");
+                CU_ASSERT_EQUAL(qf->tcop, TDBQCSTREQ);
+                break;
+            }
+            case 5:
+            {
+                CU_ASSERT_STRING_EQUAL(key, "family.children.*0.name");
+                CU_ASSERT_PTR_NOT_NULL(qf);
+                CU_ASSERT_STRING_EQUAL(qf->expr, "Dasha");
+                CU_ASSERT_EQUAL(qf->tcop, TDBQCSTREQ);
+                break;
+            }
+            case 6:
+            {
+                CU_ASSERT_STRING_EQUAL(key, "family.children.*0.age");
+                CU_ASSERT_PTR_NOT_NULL(qf);
+                CU_ASSERT_EQUAL(qf->ftype, BSON_ARRAY);
+                TCLIST *al = tclistload(qf->expr, qf->exprsz);
+                char* als = tcstrjoin(al, ',');
+                CU_ASSERT_STRING_EQUAL(als, "1,4,10");
+                TCFREE(als);
+                tclistdel(al);
+                CU_ASSERT_EQUAL(qf->tcop, TDBQCNUMOREQ);
+                break;
+            }
+        }
+    }
 
     ejdbquerydel(ejq);
 }

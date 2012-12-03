@@ -1,4 +1,8 @@
 2012-12-01 Anton Adamansky. <adamansky@gmail.com>
+    * Allows multiple matching conditions for single query field. Eg: {'age' : {'$lt' : '60', '$gt' : '30'}}
+    - Release 1.0.25
+
+2012-12-01 Anton Adamansky. <adamansky@gmail.com>
     * Fixed various threading issues
     - Release 1.0.24
 

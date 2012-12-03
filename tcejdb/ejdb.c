@@ -90,8 +90,8 @@ static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
 static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
 static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields);
-static TCMAP* _parseqobj(EJDB *jb, EJQ *q, bson *qspec);
-static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf);
+static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec);
+static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf);
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens);
 static bool _qrycondcheckstror(const char *vbuf, const TCLIST *tokens);
@@ -459,8 +459,8 @@ EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobj
     EJQ *q;
     TCCALLOC(q, 1, sizeof (*q));
     if (qobj) {
-        q->qobjmap = _parseqobj(jb, q, qobj);
-        if (!q->qobjmap) {
+        q->qobjlist = _parseqobj(jb, q, qobj);
+        if (!q->qobjlist) {
             goto error;
         }
     }
@@ -667,7 +667,7 @@ EJDB_EXPORT uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int or
 }
 
 EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
-    assert(jcoll && q && q->qobjmap);
+    assert(jcoll && q && q->qobjlist);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return NULL;
@@ -891,19 +891,14 @@ static void _qrydel(EJQ *q, bool freequery) {
         return;
     }
     const EJQF *qf = NULL;
-    if (q->qobjmap) {
-        int ksz;
-        const char *kbuf;
-        tcmapiterinit(q->qobjmap);
-        while ((kbuf = tcmapiternext(q->qobjmap, &ksz)) != NULL) {
-            int vsz;
-            qf = tcmapiterval(kbuf, &vsz);
+    if (q->qobjlist) {
+        for (int i = 0; i < TCLISTNUM(q->qobjlist); ++i) {
+            qf = TCLISTVALPTR(q->qobjlist, i);
             assert(qf);
-            assert(vsz == sizeof (*qf));
             _delqfdata(q, qf);
         }
-        tcmapdel(q->qobjmap);
-        q->qobjmap = NULL;
+        tclistdel(q->qobjlist);
+        q->qobjlist = NULL;
     }
     if (q->orqobjsnum) {
         for (int i = 0; i < q->orqobjsnum; ++i) {
@@ -1111,7 +1106,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
                 }
             } else {
                 if (qf->exprmap) {
-                    if (tcmapget3(qf->exprmap, fval, (fvalsz - 1) , &sp) != NULL) {
+                    if (tcmapget3(qf->exprmap, fval, (fvalsz - 1), &sp) != NULL) {
                         rv = true;
                         break;
                     }
@@ -1296,8 +1291,6 @@ static bool _qryormatch(EJCOLL *jcoll,
     }
     bool rv = false;
     void *nbsbuf = NULL;
-    const void *kbuf = NULL;
-    int kbufsz;
     if (bsbuf == NULL) {
         int cbufsz;
         int lbsbufsz;
@@ -1319,17 +1312,13 @@ static bool _qryormatch(EJCOLL *jcoll,
     }
     for (int i = 0; i < ejq->orqobjsnum; ++i) {
         const EJQ *oq = (ejq->orqobjs + i);
-        const EJQF *qf;
-        int qfsz;
-        TCMAP *qobjmap = oq->qobjmap;
-        assert(qobjmap);
-        tcmapiterinit(qobjmap);
-        while ((kbuf = tcmapiternext(qobjmap, &kbufsz)) != NULL) {
-            qf = tcmapiterval(kbuf, &qfsz);
+        assert(oq && oq->qobjlist);
+        for (int j = 0; j < TCLISTNUM(oq->qobjlist); ++j) {
+            const EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
+            assert(qf);
             if (qf == ejq->lastmatchedorqf) {
                 continue;
             }
-            assert(qfsz == sizeof (EJQF));
             if (_qrybsmatch(qf, bsbuf, bsbufsz)) {
                 ejq->lastmatchedorqf = qf;
                 rv = true;
@@ -1489,16 +1478,14 @@ static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     target->skip = src->skip;
     target->orqobjsnum = src->orqobjsnum;
     target->orqobjs = NULL;
-    const void *kbuf;
-    int ksz, vsz;
-    if (src->qobjmap) {
-        target->qobjmap = tcmapnew2(TCMAPRNUM(src->qobjmap));
-        tcmapiterinit(src->qobjmap);
-        while ((kbuf = tcmapiternext(src->qobjmap, &ksz)) != NULL) {
+
+    if (src->qobjlist) {
+        target->qobjlist = tclistnew2(TCLISTNUM(src->qobjlist));
+        for (int i = 0; i < TCLISTNUM(src->qobjlist); ++i) {
             EJQF qf;
-            _qryfieldup(tcmapiterval(kbuf, &vsz), &qf, qflags);
+            _qryfieldup(TCLISTVALPTR(src->qobjlist, i), &qf, qflags);
             qf.q = target;
-            tcmapput(target->qobjmap, kbuf, ksz, &qf, sizeof (qf));
+            TCLISTPUSH(target->qobjlist, &qf, sizeof (qf));
         }
     }
     if (src->hints) {
@@ -1644,13 +1631,9 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     bool rv = true;
     bool update = false;
 
-    const void *kbuf;
-    int kbufsz;
-    int qfsz;
     bson_oid_t *oid;
     bson_type bt, bt2;
     bson_iterator it, it2;
-    TCMAP *qobjmap = ejq->qobjmap;
     TCMAP *rowm = NULL;
 
     if (ejq->flags & EJQDROPALL) { //Record will be dropped
@@ -1692,10 +1675,8 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     const EJQF *incqf = NULL;
 
     //$set, $inc operations
-    tcmapiterinit(qobjmap);
-    while ((kbuf = tcmapiternext(qobjmap, &kbufsz)) != NULL) {
-        const EJQF *qf = tcmapiterval(kbuf, &qfsz);
-        assert(qfsz == sizeof (EJQF));
+    for (int i = 0; i < TCLISTNUM(ejq->qobjlist); ++i) {
+        const EJQF *qf = TCLISTVALPTR(ejq->qobjlist, i);
         if (qf->updateobj == NULL) {
             continue;
         }
@@ -1812,7 +1793,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     int ofsz = 0; //order fields count
     int aofsz = 0; //active order fields count
     const EJQF **qfs = NULL; //condition fields array
-    const int qfsz = TCMAPRNUM(ejq->qobjmap); //number of all condition fields
+    const int qfsz =  TCLISTNUM(ejq->qobjlist); //number of all condition fields
     if (qfsz > 0) {
         TCMALLOC(qfs, qfsz * sizeof (EJQF*));
     }
@@ -1843,14 +1824,12 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             mqf->flags |= EJFORDERUSED;
         }
     }
-    tcmapiterinit(ejq->qobjmap);
     for (int i = 0; i < qfsz; ++i) {
-        kbuf = tcmapiternext(ejq->qobjmap, &kbufsz);
-        EJQF *qf = (EJQF*) tcmapget(ejq->qobjmap, kbuf, kbufsz, &vbufsz);
+        EJQF *qf = TCLISTVALPTR(ejq->qobjlist, i);
+        assert(qf);
         if (log && qf->exprmap) {
             tcxstrprintf(log, "USING HASH TOKENS IN: %s\n", qf->fpath);
         }
-        assert(qf && vbufsz == sizeof (EJQF));
         qf->jb = jcoll->jb;
         qfs[i] = qf;
         if (qf->fpathsz > 0 && !(qf->flags & EJFEXCLUDED)) {
@@ -2579,17 +2558,13 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
 }
 
 static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields) {
-    assert(jcoll && ejq && ejq->qobjmap && mqf);
+    assert(jcoll && ejq && ejq->qobjlist && mqf);
 
     *ifields = NULL;
     *mqf = NULL;
 
     EJQF *oqf = NULL; //Order condition
-    TCMAP *qmap = ejq->qobjmap;
-    tcmapiterinit(qmap);
-    const void *mkey;
-    int mkeysz;
-    int mvalsz;
+    TCLIST *qlist = ejq->qobjlist;
     bson_iterator it;
     bson_type bt;
 
@@ -2612,7 +2587,14 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMA
                     continue;
                 }
                 EJQF nqf;
-                EJQF *qf = (EJQF*) tcmapget(qmap, ofield, strlen(ofield), &mvalsz); //discard const
+                EJQF *qf = NULL;
+                for (int i = 0; i < TCLISTNUM(qlist); ++i) {
+                    if (!strcmp(ofield, ((EJQF*) TCLISTVALPTR(qlist, i))->fpath)) {
+                        qf = TCLISTVALPTR(qlist, i);
+                        assert(qf);
+                        break;
+                    }
+                }
                 if (qf == NULL) { //Create syntetic query field for orderby ops
                     memset(&nqf, 0, sizeof (EJQF));
                     nqf.fpath = tcstrdup(ofield);
@@ -2625,7 +2607,7 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMA
                     nqf.order = odir;
                     nqf.flags |= EJFEXCLUDED; //field excluded  from matching
                     qf = &nqf;
-                    tcmapput(qmap, ofield, strlen(ofield), qf, sizeof (*qf));
+                    TCLISTPUSH(qlist, qf, sizeof (*qf));
                 } else {
                     qf->orderseq = orderseq++;
                     qf->order = odir;
@@ -2666,11 +2648,10 @@ static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMA
     int maxiscore = 0; //Maximum index score
     int maxselectivity = 0;
 
-    while ((mkey = tcmapiternext(qmap, &mkeysz)) != NULL) {
+    for (int i = 0; i < TCLISTNUM(qlist); ++i) {
         int iscore = 0;
-        EJQF *qf = (EJQF*) tcmapget(qmap, mkey, mkeysz, &mvalsz); //discard const
-        assert(mvalsz == sizeof (EJQF));
-        assert(qf->fpath);
+        EJQF *qf = (EJQF*) TCLISTVALPTR(qlist, i);
+        assert(qf && qf->fpath);
         if (qf->flags & (EJCONDSET | EJCONDINC)) { //skip updating qfields
             continue;
         }
@@ -3005,8 +2986,8 @@ static char* _fetch_bson_str_array2(EJDB *jb, bson_iterator *it, bson_type *type
     return tokens;
 }
 
-static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TCLIST *pathStack, EJQF *pqf) {
-    assert(it && qmap && pathStack);
+static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf) {
+    assert(it && qlist && pathStack);
     int ret = 0;
     bson_type ftype;
     bool yes = true;
@@ -3077,8 +3058,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                         tclistdel(tokens);
                         break;
                     }
-                    assert(!qf.expr);
-                    assert(!qf.fpath);
+                    assert(!qf.expr && !qf.fpath);
                     qf.ftype = BSON_ARRAY;
                     qf.expr = tclistdump(tokens, &qf.exprsz);
                     qf.exprlist = tokens;
@@ -3120,12 +3100,12 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                     }
                     qf.fpath = tcstrjoin(pathStack, '.');
                     qf.fpathsz = strlen(qf.fpath);
-                    tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                    TCLISTPUSH(qlist, &qf, sizeof (qf));
                     break;
                 } else {
                     bson_iterator sit;
                     bson_iterator_subiterator(it, &sit);
-                    ret = _parse_qobj_impl(jb, q, &sit, qmap, pathStack, &qf);
+                    ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf);
                     break;
                 }
             }
@@ -3157,13 +3137,13 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                         qf.fpathsz = strlen(qf.fpath);
                         qf.tcop = TDBQTRUE;
                         qf.flags |= EJFEXCLUDED;
-                        tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                        TCLISTPUSH(qlist, &qf, sizeof (qf));
                         break;
                     }
                 }
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
-                ret = _parse_qobj_impl(jb, q, &sit, qmap, pathStack, &qf);
+                ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf);
                 break;
             }
             case BSON_OID:
@@ -3176,7 +3156,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                 qf.fpath = tcstrjoin(pathStack, '.');
                 qf.fpathsz = strlen(qf.fpath);
                 qf.tcop = TDBQCSTREQ;
-                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                TCLISTPUSH(qlist, &qf, sizeof (qf));
                 break;
             }
             case BSON_STRING:
@@ -3205,7 +3185,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                         qf.ftype = BSON_OID;
                     }
                 }
-                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                TCLISTPUSH(qlist, &qf, sizeof (qf));
                 break;
             }
             case BSON_LONG:
@@ -3237,7 +3217,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                 } else {
                     qf.tcop = TDBQCNUMEQ;
                 }
-                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                TCLISTPUSH(qlist, &qf, sizeof (qf));
                 break;
             }
             case BSON_REGEX:
@@ -3266,7 +3246,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                     TCFREE(qf.expr);
                     break;
                 }
-                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                TCLISTPUSH(qlist, &qf, sizeof (qf));
                 break;
             }
             case BSON_NULL:
@@ -3276,7 +3256,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                 qf.negate = !qf.negate;
                 qf.expr = tcstrdup(""); //Empty string as expr
                 qf.exprsz = 0;
-                tcmapputkeep(qmap, qf.fpath, strlen(qf.fpath), &qf, sizeof (qf));
+                TCLISTPUSH(qlist, &qf, sizeof (qf));
                 break;
 
             case BSON_BOOL: //boolean converted into number
@@ -3292,7 +3272,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                         qf.q->flags |= EJQDROPALL;
                         qf.expr = tcstrdup(""); //Empty string as expr
                         qf.exprsz = 0;
-                        tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                        TCLISTPUSH(qlist, &qf, sizeof (qf));
                         break;
                     }
                     if (!strcmp("$exists", fkey)) {
@@ -3304,7 +3284,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                         if (!bv) {
                             qf.negate = !qf.negate;
                         }
-                        tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                        TCLISTPUSH(qlist, &qf, sizeof (qf));
                         break;
                     }
                 }
@@ -3315,7 +3295,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
                 qf.exprdblval = qf.exprlongval;
                 qf.expr = strdup(bv ? "1" : "0");
                 qf.exprsz = 1;
-                tcmapputkeep(qmap, qf.fpath, qf.fpathsz, &qf, sizeof (qf));
+                TCLISTPUSH(qlist, &qf, sizeof (qf));
                 break;
             }
             default:
@@ -3341,16 +3321,16 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCMAP *qmap, TC
  *  Created map instance must be freed `tcmapdel`.
  *  Each element of map must be freed by TODO
  */
-static TCMAP* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
+static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     assert(qspec);
     int rv = 0;
-    TCMAP *res = tcmapnew();
+    TCLIST *res = tclistnew2(TCLISTINYNUM);
     bson_iterator it;
     bson_iterator_init(&it, qspec);
-    TCLIST *pathStack = tclistnew();
+    TCLIST *pathStack = tclistnew2(TCLISTINYNUM);
     rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL);
     if (rv) {
-        tcmapdel(res);
+        tclistdel(res);
         res = NULL;
     }
     assert(!pathStack->num);

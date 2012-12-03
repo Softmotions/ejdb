@@ -272,6 +272,7 @@ ffinish:
         if (res) tclistdel(res);
     }
     if (q) ejdbquerydel(q);
+    if (log) tcxstrdel(log);
     bson_destroy(&bq);
     CU_ASSERT_EQUAL(lastcnt, iterations);
     //fprintf(stderr, "\nThread %d finished", tr->id);
