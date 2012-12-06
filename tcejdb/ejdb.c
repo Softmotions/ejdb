@@ -1804,6 +1804,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
                 TCFREE(inbuf);
             }
             bson_finish(&bsout);
+            update = true;
         }
     }
 
