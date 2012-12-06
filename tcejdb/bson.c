@@ -1438,6 +1438,7 @@ EJDB_EXPORT int bson_compare_it_current(const bson_iterator *it1, const bson_ite
     } else if (t1 == BSON_OID && t2 == BSON_OID) {
         return memcmp(bson_iterator_oid(it1), bson_iterator_oid(it2), sizeof (bson_oid_t));
     }
+    //todo compare objects & arrays
     return (t1 - t2);
 }
 
