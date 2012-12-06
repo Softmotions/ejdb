@@ -1814,6 +1814,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     if (bsout.err) {
         rv = false;
         _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
+        goto finish;
     }
     //Perform updating
     bt = bson_find(&it, &src, JDBIDKEYNAME);
