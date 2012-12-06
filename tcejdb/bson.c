@@ -1391,37 +1391,52 @@ EJDB_EXPORT int bson_inplace_set_double(bson_iterator *pos, double val) {
 EJDB_EXPORT int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, const char *fpath1, int fplen1, const char *fpath2, int fplen2) {
     assert(bsdata1 && bsdata2 && fpath1 && fpath2);
     bson_iterator it1, it2;
-    bson_type t1, t2;
     bson_iterator_from_buffer(&it1, bsdata1);
     bson_iterator_from_buffer(&it2, bsdata2);
-    t1 = bson_find_fieldpath_value2(fpath1, fplen1, &it1);
-    t2 = bson_find_fieldpath_value2(fpath2, fplen2, &it2);
+    bson_find_fieldpath_value2(fpath1, fplen1, &it1);
+    bson_find_fieldpath_value2(fpath2, fplen2, &it2);
+    return bson_compare_it_current(&it1, &it2);
+}
+
+/**
+ *
+ * Return -1 if value pointing by it1 lesser than from it2.
+ * Return  0 if values equal
+ * Return  1 if value pointing by it1 greater than from it2.
+ * Return -2 if values are not comparable.
+ * @param it1
+ * @param i
+ * @return
+ */
+EJDB_EXPORT int bson_compare_it_current(const bson_iterator *it1, const bson_iterator *it2) {
+    bson_type t1 = bson_iterator_type(it1);
+    bson_type t2 = bson_iterator_type(it2);
     if (t1 == BSON_BOOL || t1 == BSON_EOO || t1 == BSON_NULL || t1 == BSON_UNDEFINED) {
-        int v1 = bson_iterator_bool(&it1);
-        int v2 = bson_iterator_bool(&it2);
+        int v1 = bson_iterator_bool(it1);
+        int v2 = bson_iterator_bool(it2);
         return (v1 > v2) ? 1 : ((v1 < v2) ? -1 : 0);
     } else if (t1 == BSON_INT || t1 == BSON_LONG || t1 == BSON_DATE || t1 == BSON_TIMESTAMP) {
-        int64_t v1 = bson_iterator_long_ext(&it1);
-        int64_t v2 = bson_iterator_long_ext(&it2);
+        int64_t v1 = bson_iterator_long_ext(it1);
+        int64_t v2 = bson_iterator_long_ext(it2);
         return (v1 > v2) ? 1 : ((v1 < v2) ? -1 : 0);
     } else if (t1 == BSON_DOUBLE) {
-        double v1 = bson_iterator_double_raw(&it1);
-        double v2 = bson_iterator_double(&it2);
+        double v1 = bson_iterator_double_raw(it1);
+        double v2 = bson_iterator_double(it2);
         return (v1 > v2) ? 1 : ((v1 < v2) ? -1 : 0);
     } else if (t1 == BSON_STRING || t1 == BSON_SYMBOL) {
-        const char* v1 = bson_iterator_string(&it1);
-        int l1 = bson_iterator_string_len(&it1);
-        const char* v2 = bson_iterator_string(&it2);
-        int l2 = (t2 == BSON_STRING || t2 == BSON_SYMBOL) ? bson_iterator_string_len(&it2) : strlen(v2);
+        const char* v1 = bson_iterator_string(it1);
+        int l1 = bson_iterator_string_len(it1);
+        const char* v2 = bson_iterator_string(it2);
+        int l2 = (t2 == BSON_STRING || t2 == BSON_SYMBOL) ? bson_iterator_string_len(it2) : strlen(v2);
         int rv;
         TCCMPLEXICAL(rv, v1, l1, v2, l2);
         return rv;
     } else if (t1 == BSON_BINDATA && t2 == BSON_BINDATA) {
-        int l1 = bson_iterator_bin_len(&it1);
-        int l2 = bson_iterator_bin_len(&it2);
-        return memcmp(bson_iterator_bin_data(&it1), bson_iterator_bin_data(&it2), MIN(l1, l2));
+        int l1 = bson_iterator_bin_len(it1);
+        int l2 = bson_iterator_bin_len(it2);
+        return memcmp(bson_iterator_bin_data(it1), bson_iterator_bin_data(it2), MIN(l1, l2));
     } else if (t1 == BSON_OID && t2 == BSON_OID) {
-        return memcmp(bson_iterator_oid(&it1), bson_iterator_oid(&it2), sizeof (bson_oid_t));
+        return memcmp(bson_iterator_oid(it1), bson_iterator_oid(it2), sizeof (bson_oid_t));
     }
     return (t1 - t2);
 }

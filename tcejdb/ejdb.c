@@ -1673,8 +1673,10 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
 
     const EJQF *setqf = NULL;
     const EJQF *incqf = NULL;
+    const EJQF *addsetqf = NULL;
+    const EJQF *pullqf = NULL;
 
-    //$set, $inc operations
+    //$set, $inc, $addToSet, $pull operations
     for (int i = 0; i < TCLISTNUM(ejq->qobjlist); ++i) {
         const EJQF *qf = TCLISTVALPTR(ejq->qobjlist, i);
         if (qf->updateobj == NULL) {
@@ -1684,23 +1686,28 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
             setqf = qf;
         } else if (!incqf && qf->flags & EJCONDINC) {
             incqf = qf;
+        } else if (!addsetqf && qf->flags & EJCONDADDSET) {
+            addsetqf = qf;
+        } else if (!pullqf && qf->flags & EJCONDPULL) {
+            pullqf = qf;
         } else {
             assert(0);
             break;
         }
     }
-    if (setqf) {
+    if (setqf) { //$set
         update = true;
         bson_init_size(&bsout, bsbufsz);
         if (bson_merge(&src, setqf->updateobj, true, &bsout)) {
             rv = false;
             _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
         }
+        bson_finish(&bsout);
     }
     if (!rv) {
         goto finish;
     }
-    if (incqf) {
+    if (incqf) { //$inc
         if (!bsout.data) {
             bson_create_from_buffer2(&bsout, bsbuf, bsbufsz);
         }
@@ -1739,13 +1746,73 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
             }
         }
     }
-    bson_finish(&bsout);
+    if (!rv) {
+        goto finish;
+    }
+
+    if (addsetqf) { //$addToSet
+        char* inbuf = (bsout.finished) ? bsout.data : bsbuf;
+        bool allfound = false;
+        bson_iterator_init(&it, addsetqf->updateobj);
+        while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+            bson_iterator_from_buffer(&it2, inbuf);
+            bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
+            if (bt2 == BSON_EOO) { //array missing it will be created
+                allfound = false;
+                break;
+            }
+            if (bt2 != BSON_ARRAY) { //some other field
+                continue;
+            }
+            allfound = false;
+            bson_iterator sit;
+            bson_iterator_subiterator(&it2, &sit);
+            while ((bt2 = bson_iterator_next(&sit)) != BSON_EOO) {
+                if (bson_compare_it_current(&sit, &it) == 0) {
+                    allfound = true;
+                    break;
+                }
+            }
+            if (!allfound) {
+                break;
+            }
+        }
+        if (!allfound) { //Missing $addToSet element in some array field
+            if (bsout.finished) {
+                //reinit `bsout`, `inbuf` already points to `bsout.data` and will be freed later
+                bson_init_size(&bsout, bson_size(&bsout));
+            } else {
+                assert(bsout.data == NULL);
+                bson_init_size(&bsout, bsbufsz);
+            }
+            bson_iterator_from_buffer(&it, inbuf);
+            while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+                if (bt == BSON_ARRAY) {
+                    bson_iterator_init(&it2, addsetqf->updateobj);
+                    bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
+                    if (bt2 == BSON_EOO) {
+                        bson_append_field_from_iterator(&it, &bsout);
+                        continue;
+                    }
+                    //todo compare and append
+                } else {
+                    bson_append_field_from_iterator(&it, &bsout);
+                }
+            }
+            //todo append missing arrays
+            if (inbuf != bsbuf) {
+                TCFREE(inbuf);
+            }
+            bson_finish(&bsout);
+        }
+    }
+
+    if (!update || !rv) {
+        goto finish;
+    }
     if (bsout.err) {
         rv = false;
         _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
-    }
-    if (!update || !rv) {
-        goto finish;
     }
     //Perform updating
     bt = bson_find(&it, &src, JDBIDKEYNAME);
@@ -1793,7 +1860,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     int ofsz = 0; //order fields count
     int aofsz = 0; //active order fields count
     const EJQF **qfs = NULL; //condition fields array
-    const int qfsz =  TCLISTNUM(ejq->qobjlist); //number of all condition fields
+    const int qfsz = TCLISTNUM(ejq->qobjlist); //number of all condition fields
     if (qfsz > 0) {
         TCMALLOC(qfs, qfsz * sizeof (EJQF*));
     }
