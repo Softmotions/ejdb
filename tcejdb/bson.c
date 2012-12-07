@@ -1442,8 +1442,28 @@ EJDB_EXPORT int bson_compare_it_current(const bson_iterator *it1, const bson_ite
         return memcmp(bson_iterator_bin_data(it1), bson_iterator_bin_data(it2), MIN(l1, l2));
     } else if (t1 == BSON_OID && t2 == BSON_OID) {
         return memcmp(bson_iterator_oid(it1), bson_iterator_oid(it2), sizeof (bson_oid_t));
+    } else if (t1 == t2 && (t1 == BSON_OBJECT || t1 == BSON_ARRAY)) {
+        int cv = 0;
+        bson_type bt1, bt2;
+        bson_iterator sit1, sit2;
+        bson_iterator_subiterator(it1, &sit1);
+        bson_iterator_subiterator(it2, &sit2);
+        while ((bt1 = bson_iterator_next(&sit1)) != BSON_EOO) {
+            bt2 = bson_iterator_next(&sit2);
+            if (bt2 == BSON_EOO) {
+                cv = 1;
+                break;
+            }
+            cv = bson_compare_it_current(&sit1, &sit2);
+            if (cv) {
+                break;
+            }
+        }
+        if (cv == 0 && bson_iterator_next(&sit2) != BSON_EOO) {
+            cv = -1;
+        }
+        return cv;
     }
-    //todo compare objects & arrays
     return (t1 - t2);
 }
 
@@ -1555,6 +1575,8 @@ EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bson 
     if (bsout->finished) {
         return BSON_ERROR;
     }
+
+
 
 
     return BSON_OK;
