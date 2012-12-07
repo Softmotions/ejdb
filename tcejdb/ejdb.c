@@ -1752,32 +1752,8 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
 
     if (addsetqf) { //$addToSet
         char* inbuf = (bsout.finished) ? bsout.data : bsbuf;
-        bool allfound = false;
-        bson_iterator_init(&it, addsetqf->updateobj);
-        while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
-            bson_iterator_from_buffer(&it2, inbuf);
-            bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
-            if (bt2 == BSON_EOO) { //array missing it will be created
-                allfound = false;
-                break;
-            }
-            if (bt2 != BSON_ARRAY) { //some other field
-                continue;
-            }
-            allfound = false;
-            bson_iterator sit;
-            bson_iterator_subiterator(&it2, &sit);
-            while ((bt2 = bson_iterator_next(&sit)) != BSON_EOO) {
-                if (bson_compare_it_current(&sit, &it) == 0) {
-                    allfound = true;
-                    break;
-                }
-            }
-            if (!allfound) {
-                break;
-            }
-        }
-        if (!allfound) { //Missing $addToSet element in some array field
+        if (bson_find_unmerged_array_sets(bson_data(setqf->updateobj), inbuf)) {
+            //Missing $addToSet element in some array field found
             if (bsout.finished) {
                 //reinit `bsout`, `inbuf` already points to `bsout.data` and will be freed later
                 bson_init_size(&bsout, bson_size(&bsout));
@@ -1785,21 +1761,11 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
                 assert(bsout.data == NULL);
                 bson_init_size(&bsout, bsbufsz);
             }
-            bson_iterator_from_buffer(&it, inbuf);
-            while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
-                if (bt == BSON_ARRAY) {
-                    bson_iterator_init(&it2, addsetqf->updateobj);
-                    bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
-                    if (bt2 == BSON_EOO) {
-                        bson_append_field_from_iterator(&it, &bsout);
-                        continue;
-                    }
-                    //todo compare and append
-                } else {
-                    bson_append_field_from_iterator(&it, &bsout);
-                }
+            //$addToSet merge
+            if (bson_merge_array_sets(bson_data(setqf->updateobj), inbuf, &bsout)) {
+                rv = false;
+                _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
             }
-            //todo append missing arrays
             if (inbuf != bsbuf) {
                 TCFREE(inbuf);
             }

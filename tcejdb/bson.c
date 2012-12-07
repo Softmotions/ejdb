@@ -1221,12 +1221,12 @@ EJDB_EXPORT void bson_swap_endian32(void *outp, const void *inp) {
     out[3] = in[0];
 }
 
-EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson *into) {
+EJDB_EXPORT int bson_append_field_from_iterator2(const char *key, const bson_iterator *from, bson *into) {
+    assert(key && from && into);
     bson_type t = bson_iterator_type(from);
-    if (t == BSON_EOO || !into || into->finished) {
+    if (t == BSON_EOO || into->finished) {
         return BSON_ERROR;
     }
-    const char* key = bson_iterator_key(from);
     switch (t) {
         case BSON_STRING:
         case BSON_SYMBOL:
@@ -1297,6 +1297,11 @@ EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson 
             break;
     }
     return BSON_OK;
+}
+
+EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson *into) {
+    assert(from && into);
+    return bson_append_field_from_iterator2(bson_iterator_key(from), from, into);
 }
 
 EJDB_EXPORT int bson_merge2(const void *b1data, const void *b2data, bson_bool_t overwrite, bson *out) {
@@ -1487,7 +1492,7 @@ EJDB_EXPORT int bson_compare_bool(bson_bool_t cv, const void *bsdata, const char
     return res;
 }
 
-EJDB_EXPORT bson* bson_dup(const bson* src) {
+EJDB_EXPORT bson* bson_dup(const bson *src) {
     assert(src);
     bson *rv = bson_create();
     const char *raw = bson_data(src);
@@ -1511,4 +1516,47 @@ EJDB_EXPORT bson* bson_create_from_buffer2(bson *rv, const void* buf, int bufsz)
     bson_append(rv, (char*) buf + 4, bufsz - (4 + 1/*BSON_EOO*/));
     bson_finish(rv);
     return rv;
+}
+
+EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inbuf) {
+    assert(mbuf && inbuff);
+    bool allfound = false;
+    bson_iterator it, it2;
+    bson_type bt, bt2;
+    bson_iterator_from_buffer(&it, mbuf);
+    while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+        bson_iterator_from_buffer(&it2, inbuf);
+        bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
+        if (bt2 == BSON_EOO) { //array missing it will be created
+            allfound = false;
+            break;
+        }
+        if (bt2 != BSON_ARRAY) { //some other field
+            continue;
+        }
+        allfound = false;
+        bson_iterator sit;
+        bson_iterator_subiterator(&it2, &sit);
+        while ((bt2 = bson_iterator_next(&sit)) != BSON_EOO) {
+            if (bson_compare_it_current(&sit, &it) == 0) {
+                allfound = true;
+                break;
+            }
+        }
+        if (!allfound) {
+            break;
+        }
+    }
+    return !allfound;
+}
+
+EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bson *bsout) {
+    assert(mbuf && inbuff && bsout);
+    if (bsout->finished) {
+        return BSON_ERROR;
+    }
+
+
+    return BSON_OK;
+
 }

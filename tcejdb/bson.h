@@ -198,17 +198,18 @@ EJDB_EXPORT bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, b
  * @param visitor Visitor function
  * @param op Opaque data for visitor
  */
-typedef enum  {
+typedef enum {
     BSON_TRAVERSE_ARRAYS_EXCLUDED = 1,
     BSON_TRAVERSE_OBJECTS_EXCLUDED = 1 << 1
 } bson_traverse_flags_t;
+
 typedef enum {
     BSON_VCMD_OK = 0,
     BSON_VCMD_TERMINATE = 1,
     BSON_VCMD_SKIP_NESTED = 1 << 1,
     BSON_VCMD_SKIP_AFTER = 1 << 2
 } bson_visitor_cmd_t;
-typedef bson_visitor_cmd_t (*BSONVISITOR)(const char *ipath, int ipathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op);
+typedef bson_visitor_cmd_t(*BSONVISITOR)(const char *ipath, int ipathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op);
 EJDB_EXPORT void bson_visit_fields(bson_iterator *it, bson_traverse_flags_t flags, BSONVISITOR visitor, void *op);
 
 
@@ -1057,13 +1058,24 @@ EJDB_EXPORT void bson_swap_endian32(void *outp, const void *inp);
 EJDB_EXPORT void bson_swap_endian64(void *outp, const void *inp);
 
 
-
 /**
  * Append current field from iterator into bson object.
+ *
  * @param from
  * @param into
+ * @return BSON_OK or BSON_ERROR.
  */
 EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson *into);
+
+/**
+ * Append current field value from iterator into bson object under specified string key.
+ *
+ * @param key Key name.
+ * @param from Source iterator value
+ * @param into Target bsob object
+ * @return BSON_OK or BSON_ERROR.
+ */
+EJDB_EXPORT int bson_append_field_from_iterator2(const char *key, const bson_iterator *from, bson *into);
 
 
 /**
@@ -1079,7 +1091,7 @@ EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson 
  *
  * @return BSON_OK or BSON_ERROR.
  */
-EJDB_EXPORT int bson_merge(const bson *b1,  const bson *b2, bson_bool_t overwrite, bson *out);
+EJDB_EXPORT int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out);
 EJDB_EXPORT int bson_merge2(const void *b1data, const void *b2data, bson_bool_t overwrite, bson *out);
 
 EJDB_EXPORT int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val);
@@ -1113,6 +1125,9 @@ EJDB_EXPORT bson* bson_dup(const bson *src);
 
 EJDB_EXPORT bson* bson_create_from_buffer(const void *buf, int bufsz);
 EJDB_EXPORT bson* bson_create_from_buffer2(bson *bs, const void *buf, int bufsz);
+
+EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inbuf);
+EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bson *bsout);
 
 
 EJDB_EXTERN_C_END
