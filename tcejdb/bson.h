@@ -935,6 +935,7 @@ EJDB_EXPORT int bson_append_time_t(bson *b, const char *name, time_t secs);
  * @return BSON_OK or BSON_ERROR.
  */
 EJDB_EXPORT int bson_append_start_object(bson *b, const char *name);
+EJDB_EXPORT int bson_append_start_object2(bson *b, const char *name, int namelen);
 
 /**
  * Start appending a new array to a bson.
@@ -945,6 +946,7 @@ EJDB_EXPORT int bson_append_start_object(bson *b, const char *name);
  * @return BSON_OK or BSON_ERROR.
  */
 EJDB_EXPORT int bson_append_start_array(bson *b, const char *name);
+EJDB_EXPORT int bson_append_start_array2(bson *b, const char *name, int namelen);
 
 /**
  * Finish appending a new object or array to a bson.

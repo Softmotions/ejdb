@@ -850,8 +850,14 @@ EJDB_EXPORT void bson_del(bson *b) {
     }
 }
 
+static int bson_append_estart2(bson *b, int type, const char *name, int namelen, const int dataSize);
+
 static int bson_append_estart(bson *b, int type, const char *name, const int dataSize) {
-    const int len = strlen(name) + 1;
+    return bson_append_estart2(b, type, name, strlen(name), dataSize);
+}
+
+static int bson_append_estart2(bson *b, int type, const char *name, int namelen, const int dataSize) {
+    const int len = namelen + 1;
 
     if (b->finished) {
         b->err |= BSON_ALREADY_FINISHED;
@@ -1082,8 +1088,19 @@ EJDB_EXPORT int bson_append_start_object(bson *b, const char *name) {
     return BSON_OK;
 }
 
+EJDB_EXPORT int bson_append_start_object2(bson *b, const char *name, int namelen) {
+    if (bson_append_estart2(b, BSON_OBJECT, name, namelen, 5) == BSON_ERROR) return BSON_ERROR;
+    b->stack[ b->stackPos++ ] = b->cur - b->data;
+    bson_append32(b, &zero);
+    return BSON_OK;
+}
+
 EJDB_EXPORT int bson_append_start_array(bson *b, const char *name) {
-    if (bson_append_estart(b, BSON_ARRAY, name, 5) == BSON_ERROR) return BSON_ERROR;
+    return bson_append_start_array2(b, name, strlen(name));
+}
+
+EJDB_EXPORT int bson_append_start_array2(bson *b, const char *name, int namelen) {
+    if (bson_append_estart2(b, BSON_ARRAY, name, namelen, 5) == BSON_ERROR) return BSON_ERROR;
     b->stack[ b->stackPos++ ] = b->cur - b->data;
     bson_append32(b, &zero);
     return BSON_OK;
@@ -1570,15 +1587,143 @@ EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inb
     return !allfound;
 }
 
+typedef struct {
+    bson *bsout;
+    const void *mbuf;
+    int mfields;
+    int ecode;
+    int nstack;
+    bool duty;
+} BSON_MASETS_CTX;
+
+static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op) {
+    BSON_MASETS_CTX *ctx = op;
+    assert(ctx && ctx->mfields >= 0);
+    bson_iterator mit;
+    bson_type bt = bson_iterator_type(it);
+
+    if (bt != BSON_OBJECT && bt != BSON_ARRAY) { //simple primitive case
+        if (after) {
+            return BSON_VCMD_OK;
+        }
+        bson_append_field_from_iterator(it, ctx->bsout);
+        return (BSON_VCMD_SKIP_AFTER);
+    }
+    if (bt == BSON_ARRAY) {
+        bson_iterator_from_buffer(&mit, ctx->mbuf);
+        bt = bson_find_fieldpath_value2(fpath, fpathlen, &mit);
+        if (bt == BSON_EOO) {
+            bson_append_field_from_iterator(it, ctx->bsout);
+            return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+        }
+        if (ctx->mfields > 0) {
+            --ctx->mfields;
+        }
+        //Find and merge
+        bson_iterator ait;
+        bson_iterator_subiterator(it, &ait);
+        bson_append_start_array(ctx->bsout, key);
+        bool found = false;
+        int c = 0;
+        while ((bt = bson_iterator_next(&ait)) != BSON_EOO) {
+            if (!found && !bson_compare_it_current(&ait, &mit)) {
+                found = true;
+            }
+            bson_append_field_from_iterator(&ait, ctx->bsout);
+            ++c;
+        }
+        if (!found) { //uppend missing element into array
+            char kbuf[TCNUMBUFSIZ];
+            bson_numstrn(kbuf, TCNUMBUFSIZ, c);
+            bson_append_field_from_iterator2(kbuf, &mit, ctx->bsout);
+            ctx->duty = true;
+        }
+        bson_append_finish_array(ctx->bsout);
+        return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+    }
+    //bt is BSON_OBJECT
+    if (!after) {
+        bson_iterator_from_buffer(&mit, ctx->mbuf);
+        while ((bt = bson_iterator_next(&mit)) != BSON_EOO) {
+            const char *mkey = bson_iterator_key(&mit);
+            int i = 0;
+            for (; i < fpathlen && *(mkey + i) != '\0' && *(fpath + i) == *(mkey + i); ++i);
+            if (i == fpathlen) { //fpath prefixes some field
+                ctx->nstack++;
+                bson_append_start_object(ctx->bsout, key);
+                break;
+            }
+        }
+    } else { //after
+        if (ctx->nstack > 0) {
+            --ctx->nstack;
+            bson_append_finish_object(ctx->bsout);
+        }
+    }
+    return (BSON_VCMD_OK);
+
+}
+
 EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bson *bsout) {
     assert(mbuf && inbuff && bsout);
     if (bsout->finished) {
         return BSON_ERROR;
     }
+    BSON_MASETS_CTX ctx;
+    ctx.bsout = bsout;
+    ctx.mbuf = mbuf;
+    ctx.mfields = 0;
+    ctx.nstack = 0;
+    ctx.duty = false;
+    ctx.ecode = BSON_OK;
 
-
-
-
-    return BSON_OK;
-
+    bson_type bt, bt2;
+    bson_iterator it, it2;
+    bson_iterator_from_buffer(&it, mbuf);
+    while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+        ctx.mfields++;
+    }
+    bson_iterator_from_buffer(&it, inbuf);
+    bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, bson_merge_array_sets_tf, &ctx);
+    assert(ctx.nstack == 0);
+    if (ctx.mfields == 0) {
+        return ctx.ecode;
+    }
+    //Append missing arrays fields
+    bson_iterator_from_buffer(&it, mbuf);
+    while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+        const char *fpath = bson_iterator_key(&it);
+        bson_iterator_from_buffer(&it2, inbuf);
+        bt2 = bson_find_fieldpath_value(fpath, &it2);
+        if (bt2 != BSON_EOO) continue;
+        int i = 0;
+        int lvl = 0;
+        const char *pdp = fpath;
+        while (*(fpath + i) != '\0') {
+            for (; *(fpath + i) != '\0' && *(fpath + i) != '.'; ++i);
+            bson_iterator_from_buffer(&it2, inbuf);
+            bt2 = bson_find_fieldpath_value2(fpath, i, &it2);
+            if (bt2 == BSON_EOO) {
+                if (*(fpath + i) == '\0') { //EOF
+                    assert((fpath + i) - pdp > 0);
+                    bson_append_start_array2(bsout, pdp, (fpath + i) - pdp);
+                    bson_append_field_from_iterator2("0", &it, bsout);
+                    bson_append_finish_array(bsout);
+                    break;
+                } else {
+                    ++lvl;
+                    assert((fpath + i) - pdp > 0);
+                    bson_append_start_object2(bsout, pdp, (fpath + i) - pdp);
+                }
+            } else if (bt2 != BSON_OBJECT) {
+                break;
+            }
+            pdp = (fpath + i);
+            while (*pdp == '.') ++pdp;
+        }
+        for (; lvl > 0; --lvl) {
+            bson_append_finish_object(bsout);
+        }
+    }
+    return ctx.ecode;
 }
