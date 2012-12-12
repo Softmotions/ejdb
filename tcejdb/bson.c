@@ -354,8 +354,8 @@ static void bson_visit_fields_impl(bson_traverse_flags_t flags, char* pstack, in
         if (curr > 0) {
             curr--; //remove leading dot
         }
+        }
     }
-}
 
 EJDB_EXPORT void bson_visit_fields(bson_iterator *it, bson_traverse_flags_t flags, BSONVISITOR visitor, void *op) {
     char pstack[BSON_MAX_FPATH_LEN + 1];
@@ -868,14 +868,16 @@ static int bson_append_estart2(bson *b, int type, const char *name, int namelen,
         return BSON_ERROR;
     }
 
-    if (bson_check_field_name(b, (const char *) name, len - 1,
+    if (bson_check_field_name(b, (const char *) name, namelen,
             !(b->flags & BSON_FLAG_QUERY_MODE), !(b->flags & BSON_FLAG_QUERY_MODE)) == BSON_ERROR) {
         bson_builder_error(b);
         return BSON_ERROR;
     }
-
     bson_append_byte(b, (char) type);
-    bson_append(b, name, len);
+    memcpy(b->cur, name, namelen);
+    b->cur += namelen;
+    *(b->cur) = '\0';
+    b->cur += 1;
     return BSON_OK;
 }
 
@@ -1719,7 +1721,10 @@ EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bson 
                 break;
             }
             pdp = (fpath + i);
-            while (*pdp == '.') ++pdp;
+            while (*pdp == '.') {
+                ++pdp;
+                ++i;
+            }
         }
         for (; lvl > 0; --lvl) {
             bson_append_finish_object(bsout);

@@ -1670,6 +1670,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     bson bsout;
     bsout.data = NULL;
     bsout.dataSize = 0;
+    bson_reset(&bsout);
 
     const EJQF *setqf = NULL;
     const EJQF *incqf = NULL;
@@ -1752,7 +1753,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
 
     if (addsetqf) { //$addToSet
         char* inbuf = (bsout.finished) ? bsout.data : bsbuf;
-        if (bson_find_unmerged_array_sets(bson_data(setqf->updateobj), inbuf)) {
+        if (bson_find_unmerged_array_sets(bson_data(addsetqf->updateobj), inbuf)) {
             //Missing $addToSet element in some array field found
             if (bsout.finished) {
                 //reinit `bsout`, `inbuf` already points to `bsout.data` and will be freed later
@@ -1762,7 +1763,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
                 bson_init_size(&bsout, bsbufsz);
             }
             //$addToSet merge
-            if (bson_merge_array_sets(bson_data(setqf->updateobj), inbuf, &bsout)) {
+            if (bson_merge_array_sets(bson_data(addsetqf->updateobj), inbuf, &bsout)) {
                 rv = false;
                 _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
             }
@@ -1771,6 +1772,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
             }
             bson_finish(&bsout);
             update = true;
+            //bson_print(stderr, &bsout);
         }
     }
 
@@ -3160,7 +3162,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         assert(qf.updateobj == NULL);
                         qf.q->flags |= EJQUPDATING;
                         qf.updateobj = bson_create();
-                        bson_init(qf.updateobj);
+                        bson_init_as_query(qf.updateobj);
                         bson_type sbt;
                         bson_iterator sit;
                         bson_iterator_subiterator(it, &sit);
