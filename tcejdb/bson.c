@@ -1556,7 +1556,7 @@ EJDB_EXPORT bson* bson_create_from_buffer2(bson *rv, const void* buf, int bufsz)
 }
 
 EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inbuf) {
-    assert(mbuf && inbuff);
+    assert(mbuf && inbuf);
     bool allfound = false;
     bson_iterator it, it2;
     bson_type bt, bt2;
@@ -1575,7 +1575,7 @@ EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inb
         bson_iterator sit;
         bson_iterator_subiterator(&it2, &sit);
         while ((bt2 = bson_iterator_next(&sit)) != BSON_EOO) {
-            if (bson_compare_it_current(&sit, &it) == 0) {
+            if (!bson_compare_it_current(&sit, &it)) {
                 allfound = true;
                 break;
             }
@@ -1665,7 +1665,7 @@ static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathl
 }
 
 EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bson *bsout) {
-    assert(mbuf && inbuff && bsout);
+    assert(mbuf && inbuf && bsout);
     if (bsout->finished) {
         return BSON_ERROR;
     }

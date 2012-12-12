@@ -3051,7 +3051,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
         } else {
             if (!strcmp("$set", fkey) ||
                     !strcmp("$inc", fkey) ||
-                    !strcmp("$dropall", fkey)) {
+                    !strcmp("$dropall", fkey) ||
+                    !strcmp("$addToSet", fkey)) {
                 if (pqf) { //Top level ops
                     ret = JBEQERROR;
                     break;
@@ -3148,12 +3149,14 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             case BSON_OBJECT:
             {
                 if (isckey) {
-                    if (pqf == NULL && !strcmp("$set", fkey)) { //top level set OP
+                    if (!pqf && !strcmp("$set", fkey)) { //top level set OP
                         qf.flags |= EJCONDSET;
+                    } else if (!pqf && !strcmp("$addToSet", fkey)) {
+                        qf.flags |= EJCONDADDSET;
                     } else if (!strcmp("$inc", fkey)) {
                         qf.flags |= EJCONDINC;
                     }
-                    if ((qf.flags & (EJCONDSET | EJCONDINC))) {
+                    if ((qf.flags & (EJCONDSET | EJCONDINC | EJCONDADDSET))) {
                         assert(qf.updateobj == NULL);
                         qf.q->flags |= EJQUPDATING;
                         qf.updateobj = bson_create();
