@@ -3275,7 +3275,6 @@ void test$addToSet() {
     //check updated  data
     bson_init_as_query(&bsq1);
     bson_append_string(&bsq1, "name", "Антонов");
-    bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
@@ -3289,7 +3288,52 @@ void test$addToSet() {
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
         CU_ASSERT_FALSE(bson_compare_string("tag1", TCLISTVALPTR(q1res, i), "personal.tags.0"));
         CU_ASSERT_FALSE(bson_compare_string("green", TCLISTVALPTR(q1res, i), "labels.0"));
-        //bson_print_raw(stderr, TCLISTVALPTR(q1res, i), 0);
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //Uppend more vals
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "Антонов");
+    bson_append_start_object(&bsq1, "$addToSet");
+    bson_append_string(&bsq1, "personal.tags", "tag2");
+    bson_append_string(&bsq1, "labels", "green");
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    count = 0;
+    log = tcxstrnew();
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "UPDATING MODE: YES"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 0"));
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    bson_destroy(&bsq1);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+    
+
+    //check updated  data
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "Антонов");
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);\
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+    //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        bson_print(stderr, TCLISTVALPTR(q1res, i));
     }
 
     bson_destroy(&bsq1);
