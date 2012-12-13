@@ -354,8 +354,8 @@ static void bson_visit_fields_impl(bson_traverse_flags_t flags, char* pstack, in
         if (curr > 0) {
             curr--; //remove leading dot
         }
-        }
     }
+}
 
 EJDB_EXPORT void bson_visit_fields(bson_iterator *it, bson_traverse_flags_t flags, BSONVISITOR visitor, void *op) {
     char pstack[BSON_MAX_FPATH_LEN + 1];
@@ -1594,9 +1594,55 @@ typedef struct {
     const void *mbuf;
     int mfields;
     int ecode;
-    int nstack;
     bool duty;
 } BSON_MASETS_CTX;
+
+static bson_visitor_cmd_t bson_merge_array_sets_pull_tf(const char *fpath, int fpathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op) {
+    BSON_MASETS_CTX *ctx = op;
+    assert(ctx && ctx->mfields >= 0);
+    bson_iterator mit;
+    bson_type bt = bson_iterator_type(it);
+    if (bt != BSON_OBJECT && bt != BSON_ARRAY) { //simple primitive case
+        if (after) {
+            return BSON_VCMD_OK;
+        }
+        bson_append_field_from_iterator(it, ctx->bsout);
+        return (BSON_VCMD_SKIP_AFTER);
+    }
+    if (bt == BSON_ARRAY) {
+        bson_iterator_from_buffer(&mit, ctx->mbuf);
+        bt = bson_find_fieldpath_value2(fpath, fpathlen, &mit);
+        if (bt == BSON_EOO) {
+            bson_append_field_from_iterator(it, ctx->bsout);
+            return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+        }
+        if (ctx->mfields > 0) {
+            --ctx->mfields;
+        }
+        //Find and merge
+        bson_iterator ait;
+        bson_iterator_subiterator(it, &ait);
+        bson_append_start_array(ctx->bsout, key);
+        int c = 0;
+        while ((bt = bson_iterator_next(&ait)) != BSON_EOO) {
+            if (!bson_compare_it_current(&ait, &mit)) {
+                continue;
+            }
+            char kbuf[TCNUMBUFSIZ];
+            bson_numstrn(kbuf, TCNUMBUFSIZ, c++);
+            bson_append_field_from_iterator2(kbuf, &ait, ctx->bsout);
+        }
+        bson_append_finish_array(ctx->bsout);
+        return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+    }
+    //bt is BSON_OBJECT
+    if (!after) {
+        bson_append_start_object(ctx->bsout, key);
+    } else { //after
+        bson_append_finish_object(ctx->bsout);
+    }
+    return (BSON_VCMD_OK);
+}
 
 static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op) {
     BSON_MASETS_CTX *ctx = op;
@@ -1645,28 +1691,15 @@ static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathl
     }
     //bt is BSON_OBJECT
     if (!after) {
-        bson_iterator_from_buffer(&mit, ctx->mbuf);
-        while ((bt = bson_iterator_next(&mit)) != BSON_EOO) {
-            const char *mkey = bson_iterator_key(&mit);
-            int i = 0;
-            for (; i < fpathlen && *(mkey + i) != '\0' && *(fpath + i) == *(mkey + i); ++i);
-            if (i == fpathlen) { //fpath prefixes some field
-                ctx->nstack++;
-                bson_append_start_object(ctx->bsout, key);
-                break;
-            }
-        }
+        bson_append_start_object(ctx->bsout, key);
     } else { //after
-        if (ctx->nstack > 0) {
-            --ctx->nstack;
-            bson_append_finish_object(ctx->bsout);
-        }
+        bson_append_finish_object(ctx->bsout);
     }
     return (BSON_VCMD_OK);
 
 }
 
-EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bson *bsout) {
+EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bson *bsout) {
     assert(mbuf && inbuf && bsout);
     if (bsout->finished) {
         return BSON_ERROR;
@@ -1675,7 +1708,6 @@ EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bson 
     ctx.bsout = bsout;
     ctx.mbuf = mbuf;
     ctx.mfields = 0;
-    ctx.nstack = 0;
     ctx.duty = false;
     ctx.ecode = BSON_OK;
 
@@ -1686,9 +1718,12 @@ EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bson 
         ctx.mfields++;
     }
     bson_iterator_from_buffer(&it, inbuf);
-    bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, bson_merge_array_sets_tf, &ctx);
-    assert(ctx.nstack == 0);
-    if (ctx.mfields == 0) {
+    if (pull) {
+        bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, bson_merge_array_sets_pull_tf, &ctx);
+    } else {
+        bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, bson_merge_array_sets_tf, &ctx);
+    }
+    if (ctx.mfields == 0 || pull) {
         return ctx.ecode;
     }
     //Append missing arrays fields
