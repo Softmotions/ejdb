@@ -656,7 +656,7 @@ Queries
  *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
  *
- *     - Queries can be used to update records:
+ *  - Queries can be used to update records:
  *
  *       $set Field set operation.
  *           - {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
