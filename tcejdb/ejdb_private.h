@@ -56,7 +56,7 @@ enum { /**> Query field flags */
 
     EJCONDSET = 1 << 10, /**> $set Set field update operation */
     EJCONDINC = 1 << 11, /**> $inc Inc field update operation */
-    EJCONDADDSET = 1 << 12, /**> $addToSet Adds value to the array only if its not in the array already */
+    EJCONDADDSET = 1 << 12, /**> $addToSet Adds value to the array only if its not in the array already.  */
     EJCONDPULL = 1 << 13 /**> $pull Removes all occurrences of value from field, if field is an array */
 };
 
