@@ -657,7 +657,6 @@ Queries
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
  *
  *  - Queries can be used to update records:
- *
  *       $set Field set operation.
  *           - {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
  *       $inc Increment operation. Only number types are supported.
