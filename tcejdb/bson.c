@@ -1557,6 +1557,33 @@ EJDB_EXPORT bson* bson_create_from_buffer2(bson *rv, const void* buf, int bufsz)
     return rv;
 }
 
+EJDB_EXPORT bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf) {
+    assert(mbuf && inbuf);
+    bool found = false;
+    bson_iterator it, it2;
+    bson_type bt, bt2;
+    bson_iterator_from_buffer(&it, mbuf);
+    while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+        bson_iterator_from_buffer(&it2, inbuf);
+        bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
+        if (bt2 != BSON_ARRAY) {
+            continue;
+        }
+        bson_iterator sit;
+        bson_iterator_subiterator(&it2, &sit);
+        while ((bt2 = bson_iterator_next(&sit)) != BSON_EOO) {
+            if (!bson_compare_it_current(&sit, &it)) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            break;
+        }
+    }
+    return found;
+}
+
 EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inbuf) {
     assert(mbuf && inbuf);
     bool allfound = false;

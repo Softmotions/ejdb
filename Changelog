@@ -1,6 +1,6 @@
 2012-12-14 Anton Adamansky. <adamansky@gmail.com>
     * Added `$addToSet` and `$pull` operations.
-    - Release 1.0.26
+    - Release 1.0.27
 
 2012-12-04 Anton Adamansky. <adamansky@gmail.com>
     * Allows multiple matching conditions for single query field. Eg: {'age' : {'$lt' : '60', '$gt' : '30'}}

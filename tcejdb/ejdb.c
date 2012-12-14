@@ -1753,7 +1753,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
 
     if (pullqf) { //$pull
         char* inbuf = (bsout.finished) ? bsout.data : bsbuf;
-        if (!bson_find_unmerged_array_sets(bson_data(pullqf->updateobj), inbuf)) {
+        if (bson_find_merged_array_sets(bson_data(pullqf->updateobj), inbuf)) {
             if (bsout.finished) {
                 //reinit `bsout`, `inbuf` already points to `bsout.data` and will be freed later
                 bson_init_size(&bsout, bson_size(&bsout));
