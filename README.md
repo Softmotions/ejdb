@@ -656,6 +656,20 @@ Queries
  *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
  *
+ *     - Queries can be used to update records:
+ *
+ *       $set Field set operation.
+ *           - {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
+ *       $inc Increment operation. Only number types are supported.
+ *           - {.., '$inc' : {'field1' : number, ...,  'field1' : number}
+ *       $dropall In-place record removal operation.
+ *           - {.., '$dropall' : true}
+ *       $addToSet Atomically adds value to the array only if its not in the array already.
+ *                   If containing array is missing it will be created.
+ *           - {.., '$addToSet' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
+ *       $pull - Atomically removes all occurrences of value from field, if field is an array.
+ *           - {.., '$pull' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
+ *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
  *
