@@ -41,6 +41,24 @@ EJDB.open = function(dbFile, openMode) {
     return new EJDB(dbFile, openMode);
 };
 
+
+/**
+ * Returns true if argument is valid object id (OID) string.
+ * @param {String} oid Object id.
+ * @return {Boolean}
+ */
+EJDB.isValidOID = function(oid) {
+    if (typeof oid !== "string" || oid.length !== 24) {
+        return false;
+    }
+    var i = 0;
+    //noinspection StatementWithEmptyBodyJS
+    for (; ((oid[i] >= 0x30 && oid[i] <= 0x39) || /* 1 - 9 */
+            (oid[i] >= 0x61 && oid[i] <= 0x66)); /* a - f */
+           ++i);
+    return (i === 24);
+};
+
 /**
  * Close database.
  * If database was not opened it does nothing.
