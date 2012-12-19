@@ -209,24 +209,25 @@ EJDB.prototype.remove = function(cname, oid, cb) {
  */
 function parseQueryArgs(args) {
     var cname, qobj, orarr, hints, cb;
-    cname = args.shift();
+    var i = 0;
+    cname = args[i++];
     if (typeof cname !== "string") {
         throw new Error("Collection name 'cname' argument must be specified");
     }
-    qobj = args.shift();
-    var next = args.shift();
+    qobj = args[i++];
+    var next = args[i++];
     if (next !== undefined) {
         if (next.constructor === Array) {
             orarr = next;
-            next = args.shift();
+            next = args[i++];
         } else if (typeof next === "object") {
             hints = next;
             orarr = null;
-            next = args.shift();
+            next = args[i++];
         }
         if (!hints && typeof next === "object") {
             hints = next;
-            next = args.shift();
+            next = args[i++];
         }
         if (typeof next === "function") {
             cb = next;
@@ -341,7 +342,7 @@ function parseQueryArgs(args) {
  */
 EJDB.prototype.find = function() {
     //[cname, qobj, orarr, hints, cb]
-    var qa = parseQueryArgs(Array.prototype.slice.call(arguments));
+    var qa = parseQueryArgs(arguments);
     return this._impl.query(qa[0], [qa[1]].concat(qa[2], qa[3]),
             (qa[3]["$onlycount"] ? ejdblib.JBQRYCOUNT : 0),
             qa[4]);
@@ -369,7 +370,7 @@ EJDB.prototype.find = function() {
 
 EJDB.prototype.findOne = function() {
     //[cname, qobj, orarr, hints, cb]
-    var qa = parseQueryArgs(Array.prototype.slice.call(arguments));
+    var qa = parseQueryArgs(arguments);
     qa[3]["$max"] = 1;
     var cb = qa[4];
     if (cb) {
@@ -436,7 +437,7 @@ EJDB.prototype.findOne = function() {
  */
 EJDB.prototype.update = function() {
     //[cname, qobj, orarr, hints, cb]
-    var qa = parseQueryArgs(Array.prototype.slice.call(arguments));
+    var qa = parseQueryArgs(arguments);
     var cb = qa[4];
     if (cb) {
         return this._impl.query(qa[0], [qa[1]].concat(qa[2], qa[3]), ejdblib.JBQRYCOUNT,
@@ -472,7 +473,7 @@ EJDB.prototype.update = function() {
  */
 EJDB.prototype.count = function() {
     //[cname, qobj, orarr, hints, cb]
-    var qa = parseQueryArgs(Array.prototype.slice.call(arguments));
+    var qa = parseQueryArgs(arguments);
     var cb = qa[4];
     if (cb) {
         return this._impl.query(qa[0], [qa[1]].concat(qa[2], qa[3]), ejdblib.JBQRYCOUNT,
