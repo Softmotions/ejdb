@@ -11,7 +11,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(tcejdb, 1.0.0)
+AC_INIT(tcejdb, 1.0.29)
 
 # Package information
 MYLIBVER=9
@@ -19,7 +19,7 @@ MYLIBREV=11
 MYFORMATVER="1.0"
 
 # Targets
-MYHEADERFILES="tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h ejdb.h bson.h myconf.h"
+MYHEADERFILES="tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h ejdb.h ejdb_private.h bson.h myconf.h"
 MYLIBRARYFILES="libtcejdb.a"
 MYLIBOBJFILES="tcutil.o tchdb.o tcbdb.o tcfdb.o tctdb.o tcadb.o myconf.o md5.o ejdb.o \
 bson.o timsort.o numbers.o encoding.o utf8proc.o"
@@ -33,7 +33,7 @@ MYMAN1FILES="$MYMAN1FILES tcttest.1 tctmttest.1 tctmgr.1 tcatest.1 tcamttest.1 t
 MYMAN3FILES="tokyocabinet.3 tcutil.3 tcxstr.3 tclist.3 tcmap.3 tctree.3 tcmdb.3 tcmpool.3"
 MYMAN3FILES="$MYMAN3FILES tchdb.3 tcbdb.3 tcfdb.3 tctdb.3 tcadb.3"
 #MYDOCUMENTFILES="COPYING ChangeLog doc tokyocabinet.idl"
-MYDOCUMENTFILES="COPYING ChangeLog"
+MYDOCUMENTFILES="COPYING ../Changelog"
 MYPCFILES="tcejdb.pc"
 
 # Building flags
@@ -142,6 +142,16 @@ then
   enables="$enables (uyield)"
 fi
 
+
+# Anable BZIP2 compression
+AC_ARG_ENABLE(bzip,
+  AC_HELP_STRING([--enable-bzip], [build with BZIP2 compression]))
+if test "$enable_bzip" = "yes"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYBZIP"
+  enables="$enables (bzip)"
+fi
+
 # Disable the unified buffer cache assumption
 AC_ARG_ENABLE(ubc,
   AC_HELP_STRING([--disable-ubc], [build without the unified buffer cache assumption]))
@@ -158,15 +168,6 @@ if test "$enable_zlib" = "no"
 then
   MYCPPFLAGS="$MYCPPFLAGS -D_MYNOZLIB"
   enables="$enables (no-zlib)"
-fi
-
-# Disable BZIP2 compression
-AC_ARG_ENABLE(bzip,
-  AC_HELP_STRING([--disable-bzip], [build without BZIP2 compression]))
-if test "$enable_bzip" = "no"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYNOBZIP"
-  enables="$enables (no-bzip)"
 fi
 
 # Disable POSIX thread
@@ -266,7 +267,7 @@ if test "$enable_zlib" != "no"
 then
   AC_CHECK_LIB(z, main)
 fi
-if test "$enable_bzip" != "no"
+if test "$enable_bzip" = "yes"
 then
   AC_CHECK_LIB(bz2, main)
 fi
@@ -297,7 +298,7 @@ if test "$enable_zlib" != "no"
 then
   AC_CHECK_HEADER(zlib.h, true, AC_MSG_ERROR([zlib.h is required]))
 fi
-if test "$enable_bzip" != "no"
+if test "$enable_bzip" = "yes"
 then
   AC_CHECK_HEADER(bzlib.h, true, AC_MSG_ERROR([bzlib.h is required]))
 fi

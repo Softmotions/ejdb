@@ -14,7 +14,11 @@
   <component name="IdProvider" IDEtalkID="1E2BEF7F312F13008425AD019CB97F01" />
   <component name="IvyIDEA.ProjectSettings">
     <option name="artifactTypeSettings">
-      <ArtifactTypeSettings />
+      <ArtifactTypeSettings>
+        <option name="classesTypes" value="jar, mar, sar, war, ear, ejb, bundle, test-jar" />
+        <option name="javadocTypes" value="javadoc, doc, docs, apidoc, apidocs, documentation, documents" />
+        <option name="sourcesTypes" value="source, src, sources, srcs" />
+      </ArtifactTypeSettings>
     </option>
     <option name="propertiesSettings">
       <PropertiesSettings />

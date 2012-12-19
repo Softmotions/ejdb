@@ -144,6 +144,14 @@ EJDB_EXPORT bool ejdbisopen(EJDB *jb);
 EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char *colname);
 
 /**
+ * Allocate a new TCLIST populated with shallow copy of all
+ * collection handles (EJCOLL) currently opened.
+ * @param jb EJDB handle.
+ * @return If error NULL will be returned.
+ */
+EJDB_EXPORT TCLIST* ejdbgetcolls(EJDB *jb);
+
+/**
  * Same as ejdbgetcoll() but automatically creates new collection
  * if it does't exists.
  *

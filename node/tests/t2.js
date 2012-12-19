@@ -238,6 +238,20 @@ module.exports.testUseStringIndex = function(test) {
     });
 };
 
+module.exports.testCMeta = function(test) {
+    var dm = jb.getDBMeta();
+    //console.log("dm=" + JSON.stringify(dm));
+    test.ok(dm);
+    test.equal(dm["file"], "var/tdbt2");
+    test.ok(dm["collections"]);
+    test.ok(dm["collections"].constructor == Array);
+    var parrots = dm["collections"][0];
+    test.ok(parrots);
+    test.equal(parrots["name"], "parrots");
+    //todo...
+    test.done();
+};
+
 module.exports.testUpdate1 = function(test) {
     test.ok(jb);
     test.ok(jb.isOpen());

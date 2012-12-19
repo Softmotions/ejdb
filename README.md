@@ -607,7 +607,7 @@ Building
 
 ~~~~~~
    cd ./tcejdb
-   ./configure --disable-bzip --prefix=<installation prefix> && make && make check
+   ./configure --prefix=<installation prefix> && make && make check
    make install
 ~~~~~~
 * library name: **tcejdb** (with pkgconfig)

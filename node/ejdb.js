@@ -663,5 +663,13 @@ EJDB.prototype.dropArrayIndex = function(cname, path, cb) {
     return this._impl.setIndex(cname, path, ejdblib.JBIDXARR | ejdblib.JBIDXDROP, cb);
 };
 
+
+/**
+ * Get description of EJDB database and its collections.
+ */
+EJDB.prototype.getDBMeta = function() {
+    return this._impl.dbMeta();
+};
+
 module.exports = EJDB;
 

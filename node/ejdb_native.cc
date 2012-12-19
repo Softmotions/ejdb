@@ -2,7 +2,7 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
-#include <ejdb.h>
+#include <ejdb_private.h>
 
 #include "ejdb_args.h"
 #include "ejdb_cmd.h"
@@ -32,6 +32,25 @@ static const int CMD_RET_ERROR = 1;
 
 namespace ejdb {
 
+    static bool ejcollockmethod(EJCOLL *coll, bool wr) {
+        assert(coll && coll->jb);
+        if (!coll->mmtx) return false;
+        if (wr ? pthread_rwlock_wrlock((pthread_rwlock_t*) coll->mmtx) != 0 : pthread_rwlock_rdlock((pthread_rwlock_t*) coll->mmtx) != 0) {
+            return false;
+        }
+        return (coll->tdb && coll->tdb->open);
+    }
+
+    static bool ejcollunlockmethod(EJCOLL *coll) {
+        assert(coll && coll->jb);
+        if (!coll->mmtx) return false;
+        if (pthread_rwlock_unlock((pthread_rwlock_t*) coll->mmtx) != 0) {
+            return false;
+        }
+        return true;
+    }
+
+
     ///////////////////////////////////////////////////////////////////////////
     //                           Some symbols                                //
     ///////////////////////////////////////////////////////////////////////////
@@ -43,6 +62,14 @@ namespace ejdb {
     static Persistent<String> sym_cachedrecords;
     static Persistent<String> sym_explain;
     static Persistent<String> sym_merge;
+
+    static Persistent<String> sym_name;
+    static Persistent<String> sym_field;
+    static Persistent<String> sym_indexes;
+    static Persistent<String> sym_options;
+    static Persistent<String> sym_file;
+    static Persistent<String> sym_buckets;
+    static Persistent<String> sym_type;
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -366,7 +393,7 @@ namespace ejdb {
             String::Utf8Value spn(pn);
             Local<Value> pv = obj->Get(pn);
 
-            if (!ctx->inquery && ctx->nlevel == 1 && !strcmp(JDBIDKEYNAME, *spn)) { //top level _id key 
+            if (!ctx->inquery && ctx->nlevel == 1 && !strcmp(JDBIDKEYNAME, *spn)) { //top level _id key
                 if (pv->IsNull() || pv->IsUndefined()) { //skip _id addition for null or undefined vals
                     continue;
                 }
@@ -752,10 +779,74 @@ namespace ejdb {
             return scope.Close(args.This());
         }
 
+        static Handle<Value> s_db_meta(const Arguments& args) {
+            HandleScope scope;
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            Local<Object> ret = Object::New();
+            if (!ejdbisopen(njb->m_jb)) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Operation on closed EJDB instance"))));
+            }
+            TCLIST *cols = ejdbgetcolls(njb->m_jb);
+            if (!cols) {
+                return scope.Close(ThrowException(Exception::Error(String::New(njb->_jb_error_msg()))));
+            }
+            Local<Array> cinfo = Array::New();
+            for (int i = 0; i < TCLISTNUM(cols); ++i) {
+                EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
+                assert(coll);
+                if (!ejcollockmethod(coll, false)) continue;
+                Local<Object> cm = Object::New();
+                cm->Set(sym_name, String::New(coll->cname, coll->cnamesz));
+                cm->Set(sym_file, String::New(coll->tdb->hdb->path));
+                cm->Set(sym_records, Integer::NewFromUnsigned(coll->tdb->hdb->rnum));
+                Local<Object> opts = Object::New();
+                opts->Set(sym_buckets, Integer::NewFromUnsigned(coll->tdb->hdb->bnum));
+                opts->Set(sym_cachedrecords, Integer::NewFromUnsigned(coll->tdb->hdb->rcnum));
+                opts->Set(sym_large, Boolean::New(coll->tdb->opts & TDBTLARGE));
+                opts->Set(sym_compressed, Boolean::New(coll->tdb->opts & TDBTDEFLATE));
+                cm->Set(sym_options, opts);
+                Local<Array> indexes = Array::New();
+                int ic = 0;
+                for (int j = 0; j < coll->tdb->inum; ++j) {
+                    TDBIDX *idx = (coll->tdb->idxs + j);
+                    assert(idx);
+                    if (idx->type != TDBITLEXICAL && idx->type != TDBITDECIMAL && idx->type != TDBITTOKEN) {
+                        continue;
+                    }
+                    Local<Object> imeta = Object::New();
+                    imeta->Set(sym_field, String::New(idx->name + 1));
+                    switch (idx->type) {
+                        case TDBITLEXICAL:
+                            imeta->Set(sym_type, String::New("lexical"));
+                            break;
+                        case TDBITDECIMAL:
+                            imeta->Set(sym_type, String::New("decimal"));
+                            break;
+                        case TDBITTOKEN:
+                            imeta->Set(sym_type, String::New("token"));
+                            break;
+                    }
+                    TCBDB *idb = (TCBDB*) idx->db;
+                    if (idb) {
+                        imeta->Set(sym_records, Integer::NewFromUnsigned(idb->rnum));
+                        imeta->Set(sym_file, String::New(idb->hdb->path));
+                    }
+                    indexes->Set(Integer::New(ic++), imeta);
+                }
+                cm->Set(sym_indexes, indexes);
+                cinfo->Set(Integer::New(i), cm);
+                ejcollunlockmethod(coll);
+            }
+            tclistdel(cols);
+            ret->Set(sym_file, String::New(njb->m_jb->metadb->hdb->path));
+            ret->Set(String::New("collections"), cinfo);
+            return scope.Close(ret);
+        }
+
         static Handle<Value> s_ecode(const Arguments& args) {
             HandleScope scope;
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            if (!njb->m_jb) {
+            if (!njb->m_jb) { //not using ejdbisopen()
                 return scope.Close(ThrowException(Exception::Error(String::New("Operation on closed EJDB instance"))));
             }
             return scope.Close(Integer::New(ejdbecode(njb->m_jb)));
@@ -1190,6 +1281,14 @@ finish:
             sym_explain = NODE_PSYMBOL("$explain");
             sym_merge = NODE_PSYMBOL("$merge");
 
+            sym_name = NODE_PSYMBOL("name");
+            sym_field = NODE_PSYMBOL("field");
+            sym_indexes = NODE_PSYMBOL("indexes");
+            sym_options = NODE_PSYMBOL("options");
+            sym_file = NODE_PSYMBOL("file");
+            sym_buckets = NODE_PSYMBOL("buckets");
+            sym_type = NODE_PSYMBOL("type");
+
 
             Local<FunctionTemplate> t = FunctionTemplate::New(s_new_object);
             constructor_template = Persistent<FunctionTemplate>::New(t);
@@ -1229,6 +1328,7 @@ finish:
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "isOpen", s_is_open);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "setIndex", s_set_index);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "sync", s_sync);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "dbMeta", s_db_meta);
 
             //Symbols
             target->Set(String::NewSymbol("NodeEJDB"), constructor_template->GetFunction());

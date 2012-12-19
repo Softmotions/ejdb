@@ -1,6 +1,6 @@
 
 all:
-	cd tcejdb && ./configure --disable-bzip
+	cd tcejdb && ./configure
 	make -C ./tcejdb
 
 clean:

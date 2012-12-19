@@ -246,6 +246,21 @@ EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char *colname) {
     return coll;
 }
 
+EJDB_EXPORT TCLIST* ejdbgetcolls(EJDB *jb) {
+    assert(jb);
+    EJCOLL *coll = NULL;
+    JBENSUREOPENLOCK(jb, false, NULL);
+    TCLIST *ret = tclistnew2(jb->cdbsnum);
+    for (int i = 0; i < jb->cdbsnum; ++i) {
+        coll = jb->cdbs + i;
+        assert(coll);
+        TCLISTPUSH(ret, coll, sizeof(*coll));
+    }
+    JBUNLOCKMETHOD(jb);
+    return ret;
+}
+
+
 EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
     assert(colname);
     EJCOLL *coll = ejdbgetcoll(jb, colname);

@@ -190,10 +190,10 @@
 #define TCUSEZLIB      1
 #endif
 
-#if defined(_MYNOBZIP)
-#define TCUSEBZIP      0
-#else
+#if defined(_MYBZIP)
 #define TCUSEBZIP      1
+#else
+#define TCUSEBZIP      0
 #endif
 
 #if defined(_MYEXLZMA)
