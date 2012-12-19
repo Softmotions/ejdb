@@ -169,7 +169,7 @@ module.exports.testCircular = function(test) {
         err = e;
     }
     test.ok(err);
-    test.equal(err.message, "Circular object reference");
+    test.equal(err.message, "Converting circular structure to JSON");
 
     err = null;
     try {
@@ -178,7 +178,7 @@ module.exports.testCircular = function(test) {
         err = e;
     }
     test.ok(err);
-    test.equal(err.message, "Circular object reference");
+    test.equal(err.message, "Converting circular structure to JSON");
     test.done();
 };
 

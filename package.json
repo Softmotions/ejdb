@@ -19,6 +19,9 @@
         "test" : "make -f tests.mk check-all",
         "postinstall" : "make -f tests.mk check"
     },
+    "bin" : {
+        "ejdb" : "./bin/cli.js"
+    },
     "author" : {
         "name" : "Anton Adamansky",
         "email" : "adamansky@gmail.com"

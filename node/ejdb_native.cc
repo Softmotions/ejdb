@@ -379,7 +379,7 @@ namespace ejdb {
         V8ObjSet::iterator it = ctx->tset.find(obj);
         if (it != ctx->tset.end()) {
             bs->err = BSON_ERROR_ANY;
-            bs->errstr = strdup("Circular object reference");
+            bs->errstr = strdup("Converting circular structure to JSON");
             return;
         }
         ctx->nlevel++;
@@ -611,19 +611,26 @@ namespace ejdb {
             REQ_ARGS(3);
             REQ_STR_ARG(0, cname); //Collection name
             REQ_STR_ARG(1, soid); //String OID
-            REQ_FUN_ARG(2, cb); //Callback
-            if (soid.length() != 24) {
+            if (!ejdbisvalidoidstr(*soid)) {
                 return scope.Close(ThrowException(Exception::Error(String::New("Argument 2: Invalid OID string"))));
             }
+            Local<Function> cb;
             bson_oid_t oid;
             bson_oid_from_string(&oid, *soid);
             BSONCmdData *cmdata = new BSONCmdData(*cname);
             cmdata->ref = oid;
 
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdLoad, cmdata, BSONCmdTask::delete_val);
-            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
-            return scope.Close(args.This());
+            if (args[2]->IsFunction()) {
+                cb = Local<Function>::Cast(args[2]);
+                BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdLoad, cmdata, BSONCmdTask::delete_val);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                return scope.Close(args.This());
+            } else {
+                BSONCmdTask task(cb, njb, cmdLoad, cmdata, BSONCmdTask::delete_val);
+                njb->load(&task);
+                return scope.Close(njb->load_after(&task));
+            }
         }
 
         static Handle<Value> s_remove(const Arguments& args) {
@@ -631,29 +638,36 @@ namespace ejdb {
             REQ_ARGS(3);
             REQ_STR_ARG(0, cname); //Collection name
             REQ_STR_ARG(1, soid); //String OID
-            REQ_FUN_ARG(2, cb); //Callback
-            if (soid.length() != 24) {
+            if (!ejdbisvalidoidstr(*soid)) {
                 return scope.Close(ThrowException(Exception::Error(String::New("Argument 2: Invalid OID string"))));
             }
+            Local<Function> cb;
             bson_oid_t oid;
             bson_oid_from_string(&oid, *soid);
             BSONCmdData *cmdata = new BSONCmdData(*cname);
             cmdata->ref = oid;
 
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdRemove, cmdata, BSONCmdTask::delete_val);
-            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
-            return scope.Close(args.This());
+            if (args[2]->IsFunction()) {
+                cb = Local<Function>::Cast(args[2]);
+                BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdRemove, cmdata, BSONCmdTask::delete_val);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                return scope.Close(args.This());
+            } else {
+                BSONCmdTask task(cb, njb, cmdRemove, cmdata, BSONCmdTask::delete_val);
+                njb->remove(&task);
+                return scope.Close(njb->remove_after(&task));
+            }
         }
 
         static Handle<Value> s_save(const Arguments& args) {
             HandleScope scope;
-            REQ_ARGS(4);
+            REQ_ARGS(3);
             REQ_STR_ARG(0, cname); //Collection name
             REQ_ARR_ARG(1, oarr); //Array of JSON objects
             REQ_OBJ_ARG(2, opts); //Options obj
-            REQ_FUN_ARG(3, cb); //Callback
 
+            Local<Function> cb;
             BSONCmdData *cmdata = new BSONCmdData(*cname);
             for (uint32_t i = 0; i < oarr->Length(); ++i) {
                 Local<Value> v = oarr->Get(i);
@@ -678,9 +692,17 @@ namespace ejdb {
                 cmdata->merge = true;
             }
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
-            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
-            return scope.Close(args.This());
+
+            if (args[3]->IsFunction()) { //callback provided
+                cb = Local<Function>::Cast(args[3]);
+                BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                return scope.Close(args.This());
+            } else {
+                BSONCmdTask task(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
+                njb->save(&task);
+                return scope.Close(njb->save_after(&task));
+            }
         }
 
         static Handle<Value> s_query(const Arguments& args) {
@@ -1067,7 +1089,7 @@ namespace ejdb {
             }
         }
 
-        void remove_after(BSONCmdTask *task) {
+        Handle<Value> remove_after(BSONCmdTask *task) {
             HandleScope scope;
             Local<Value> argv[1];
             if (task->cmd_ret != 0) {
@@ -1075,10 +1097,18 @@ namespace ejdb {
             } else {
                 argv[0] = Local<Primitive>::New(Null());
             }
-            TryCatch try_catch;
-            task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
-            if (try_catch.HasCaught()) {
-                FatalException(try_catch);
+            if (task->cb.IsEmpty() || task->cb->IsNull() || task->cb->IsUndefined()) {
+                if (task->cmd_ret != 0)
+                    return scope.Close(ThrowException(argv[0]));
+                else
+                    return scope.Close(Undefined());
+            } else {
+                TryCatch try_catch;
+                task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+                if (try_catch.HasCaught()) {
+                    FatalException(try_catch);
+                }
+                return scope.Close(Undefined());
             }
         }
 
@@ -1113,7 +1143,7 @@ namespace ejdb {
             }
         }
 
-        void save_after(BSONCmdTask *task) {
+        Handle<Value> save_after(BSONCmdTask *task) {
             HandleScope scope;
             Local<Value> argv[2];
             if (task->cmd_ret != 0) {
@@ -1135,10 +1165,15 @@ namespace ejdb {
                 }
             }
             argv[1] = oids;
-            TryCatch try_catch;
-            task->cb->Call(Context::GetCurrent()->Global(), 2, argv);
-            if (try_catch.HasCaught()) {
-                FatalException(try_catch);
+            if (task->cb.IsEmpty() || task->cb->IsNull() || task->cb->IsUndefined()) {
+                return (task->cmd_ret != 0) ? scope.Close(ThrowException(argv[0])) : scope.Close(argv[1]);
+            } else {
+                TryCatch try_catch;
+                task->cb->Call(Context::GetCurrent()->Global(), 2, argv);
+                if (try_catch.HasCaught()) {
+                    FatalException(try_catch);
+                }
+                return scope.Close(Undefined());
             }
         }
 
@@ -1157,7 +1192,7 @@ namespace ejdb {
             cmdata->bsons.push_back(ejdbloadbson(coll, &task->cmd_data->ref));
         }
 
-        void load_after(BSONCmdTask *task) {
+        Handle<Value> load_after(BSONCmdTask *task) {
             HandleScope scope;
             Local<Value> argv[2];
             if (task->cmd_ret != 0) {
@@ -1175,10 +1210,15 @@ namespace ejdb {
             } else {
                 argv[1] = Local<Primitive>::New(Null());
             }
-            TryCatch try_catch;
-            task->cb->Call(Context::GetCurrent()->Global(), 2, argv);
-            if (try_catch.HasCaught()) {
-                FatalException(try_catch);
+            if (task->cb.IsEmpty() || task->cb->IsNull() || task->cb->IsUndefined()) {
+                return (task->cmd_ret != 0) ? scope.Close(ThrowException(argv[0])) : scope.Close(argv[1]);
+            } else {
+                TryCatch try_catch;
+                task->cb->Call(Context::GetCurrent()->Global(), 2, argv);
+                if (try_catch.HasCaught()) {
+                    FatalException(try_catch);
+                }
+                return scope.Close(Undefined());
             }
         }
 

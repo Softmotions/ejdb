@@ -57,13 +57,7 @@ repl.on("exit", function() {
 
 function dbstatus(cdb) {
     if (cdb) {
-        var status = {
-            dbpath : cdb.dbpath,
-            opened : !!(cdb.jb && cdb.jb.isOpen()),
-            collections : []
-        };
-        //todo fill collections and indexes
-        return status;
+        return cdb.jb.getDBMeta();
     } else {
         return {};
     }
