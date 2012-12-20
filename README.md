@@ -20,6 +20,7 @@ Features
 Documentation
 ================================
 
+* **[EJDB Command line interface](https://github.com/Softmotions/ejdb/wiki/EJDB-Command-line-interface)**
 * **[NodeJS binding](#nodejs-binding)**
     * [Installation](#installation)
     * [Samples](#ejdb-nodejs-samples)
