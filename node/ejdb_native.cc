@@ -707,15 +707,15 @@ namespace ejdb {
 
         static Handle<Value> s_query(const Arguments& args) {
             HandleScope scope;
-            REQ_ARGS(4);
+            REQ_ARGS(3);
             REQ_STR_ARG(0, cname)
             REQ_ARR_ARG(1, qarr);
             REQ_INT32_ARG(2, qflags);
-            REQ_FUN_ARG(3, cb);
 
             if (qarr->Length() == 0) {
                 return scope.Close(ThrowException(Exception::Error(String::New("Query array must have at least one element"))));
             }
+            Local<Function> cb;
             BSONQCmdData *cmdata = new BSONQCmdData(*cname, qflags);
             uint32_t len = qarr->Length();
             for (uint32_t i = 0; i < len; ++i) {
@@ -751,9 +751,17 @@ namespace ejdb {
             }
 
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            BSONQCmdTask *task = new BSONQCmdTask(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
-            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
-            return scope.Close(args.This());
+
+            if (args[3]->IsFunction()) { //callback provided
+                cb = Local<Function>::Cast(args[3]);
+                BSONQCmdTask *task = new BSONQCmdTask(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                return scope.Close(args.This());
+            } else {
+                BSONQCmdTask task(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
+                njb->query(&task);
+                return scope.Close(njb->query_after(&task));
+            }
         }
 
         static Handle<Value> s_set_index(const Arguments& args) {
@@ -1272,7 +1280,7 @@ finish:
             }
         }
 
-        void query_after(BSONQCmdTask *task);
+        Handle<Value> query_after(BSONQCmdTask *task);
 
         bool open(const char* dbpath, int mode) {
             m_jb = ejdbnew();
@@ -1596,20 +1604,24 @@ finish:
     //                           rest                                        //
     ///////////////////////////////////////////////////////////////////////////
 
-    void NodeEJDB::query_after(BSONQCmdTask *task) {
+    Handle<Value> NodeEJDB::query_after(BSONQCmdTask *task) {
         HandleScope scope;
         BSONQCmdData *cmdata = task->cmd_data;
         assert(cmdata);
 
         Local<Value> argv[4];
-        if (task->cmd_ret != 0) {
-            argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
-            TryCatch try_catch;
-            task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
-            if (try_catch.HasCaught()) {
-                FatalException(try_catch);
+        if (task->cmd_ret != 0) { //error case
+            if (task->cb.IsEmpty() || task->cb->IsNull() || task->cb->IsUndefined()) {
+                return scope.Close(ThrowException(Exception::Error(String::New(task->cmd_ret_msg.c_str()))));
+            } else {
+                argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
+                TryCatch try_catch;
+                task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+                if (try_catch.HasCaught()) {
+                    FatalException(try_catch);
+                }
+                return scope.Close(Undefined());
             }
-            return;
         }
         TCLIST *res = cmdata->res;
         argv[0] = Local<Primitive>::New(Null());
@@ -1627,10 +1639,19 @@ finish:
         if (cmdata->log) {
             argv[3] = String::New((const char*) tcxstrptr(cmdata->log));
         }
-        TryCatch try_catch;
-        task->cb->Call(Context::GetCurrent()->Global(), (cmdata->log) ? 4 : 3, argv);
-        if (try_catch.HasCaught()) {
-            FatalException(try_catch);
+        if (task->cb.IsEmpty() || task->cb->IsNull() || task->cb->IsUndefined()) {
+            if (res) {
+                return scope.Close(argv[1]); //cursor
+            } else {
+                return scope.Close(argv[2]); //count
+            }
+        } else {
+            TryCatch try_catch;
+            task->cb->Call(Context::GetCurrent()->Global(), (cmdata->log) ? 4 : 3, argv);
+            if (try_catch.HasCaught()) {
+                FatalException(try_catch);
+            }
+            return scope.Close(Undefined());
         }
     }
 

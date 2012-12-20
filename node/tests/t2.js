@@ -74,6 +74,23 @@ module.exports.testQuery1 = function(test) {
         }
         test.equal(c, 2);
         test.ifError(err);
+
+        //Query sync
+        cursor = jb.find("parrots", {});
+        test.ok(cursor);
+        test.equal(cursor.length, 2);
+
+        //Query sync, count mode
+        var count = jb.find("parrots", {}, {$onlycount : true});
+        test.equal(typeof count, "number");
+        test.equal(count, 2);
+
+        //Query sync, findOne
+        var obj = jb.findOne("parrots");
+        test.ok(obj);
+        test.ok(typeof obj["name"] === "string");
+        test.ok(typeof obj["age"] === "number");
+
         test.done();
     });
 };

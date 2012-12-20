@@ -391,12 +391,14 @@ EJDB.prototype.findOne = function() {
                     }
                 });
     } else {
-        var cursor = this._impl.query(qa[0], [qa[1]].concat(qa[2], qa[3]), 0, cb);
         var ret = null;
-        if (cursor.next()) {
-            ret = cursor.object();
+        var cursor = this._impl.query(qa[0], [qa[1]].concat(qa[2], qa[3]), 0, cb);
+        if (cursor && typeof cursor === "object") {
+            if (cursor.next()) {
+                ret = cursor.object();
+            }
+            cursor.close();
         }
-        cursor.close();
         return ret;
     }
 };
