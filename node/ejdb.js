@@ -135,7 +135,7 @@ EJDB.prototype.removeCollection = function(cname, prune, cb) {
  * @param {String} cname Name of collection.
  * @param {Array|Object} jsarr Signle JSON object or array of JSON objects to save
  * @param {Function} [cb] Callback function with arguments: (error, {Array} of OIDs for saved objects)
- * @return {Array} of OIDs for saved objects in synchronous mode otherwise undefined.
+ * @return {Array} of OIDs of saved objects in synchronous mode otherwise returns {this}.
  */
 EJDB.prototype.save = function(cname, jsarr, opts, cb) {
     if (!jsarr) {
@@ -181,7 +181,7 @@ EJDB.prototype.save = function(cname, jsarr, opts, cb) {
  * @param {String} oid Object identifier (OID)
  * @param {Function} [cb]  Callback function with arguments: (error, obj)
  *        `obj`:  Retrieved JSON object or NULL if it is not found.
- * @return Retrieved JSON object or NULL if it is not found in synchronous mode otherwise undefined.
+ * @return JSON object or {null} if it is not found in synchronous mode otherwise return {this}.
  */
 EJDB.prototype.load = function(cname, oid, cb) {
     return this._impl.load(cname, oid, cb);
@@ -202,6 +202,7 @@ EJDB.prototype.remove = function(cname, oid, cb) {
 
 
 /*
+ * - (cname, [cb])
  * - (cname, qobj, [cb])
  * - (cname, qobj, hints, [cb])
  * - (cname, qobj, qobjarr, [cb])
@@ -214,8 +215,13 @@ function parseQueryArgs(args) {
     if (typeof cname !== "string") {
         throw new Error("Collection name 'cname' argument must be specified");
     }
-    qobj = args[i++];
     var next = args[i++];
+    if (typeof next === "function") {
+        cb = next;
+    } else {
+        qobj = next;
+    }
+    next = args[i++];
     if (next !== undefined) {
         if (next.constructor === Array) {
             orarr = next;
@@ -232,8 +238,6 @@ function parseQueryArgs(args) {
         if (typeof next === "function") {
             cb = next;
         }
-    } else {
-        orarr = hints = cb = null;
     }
     return [cname, (qobj || {}), (orarr || []), (hints || {}), (cb || null)];
 }
@@ -323,6 +327,7 @@ function parseQueryArgs(args) {
  *      - Cursor#close() Closes cursor and free cursor resources. Cursor cant be used in closed state.
  *
  * Call variations of find():
+ *       - find(cname, [cb])
  *       - find(cname, qobj, [cb])
  *       - find(cname, qobj, hints, [cb])
  *       - find(cname, qobj, qobjarr, [cb])
@@ -335,9 +340,9 @@ function parseQueryArgs(args) {
  * @param {Function} [cb] Callback function with arguments: (error, cursor, count) where:
  *          `cursor`: Cursor object to traverse records
  *          `count`:  Total number of selected records.
- * @return If callback is provided returns undefined.
- *         If no callback and $onlycount hint is set returns count number.
- *         If no callback and no $onlycount hint returns cursor object.
+ * @return If callback is provided returns {this}.
+ *         If no callback and $onlycount hint is set returns count {Number}.
+ *         If no callback and no $onlycount hint returns cursor {Object}.
  *
  */
 EJDB.prototype.find = function() {
@@ -353,6 +358,7 @@ EJDB.prototype.find = function() {
  * If callback is not provided this function will be synchronous.
  *
  * Call variations of findOne():
+ *       - findOne(cname, [cb])
  *       - findOne(cname, qobj, [cb])
  *       - findOne(cname, qobj, hints, [cb])
  *       - findOne(cname, qobj, qobjarr, [cb])
@@ -364,8 +370,8 @@ EJDB.prototype.find = function() {
  * @param {Object} [hints] JSON object with query hints.
  * @param {Function} [cb] Callback function with arguments: (error, obj) where:
  *          `obj`:  Retrieved JSON object or NULL if it is not found.
- * @return  If callback is provided returns undefined.
- *          If no callback is provided returns found object or null.
+ * @return  If callback is provided returns {this}.
+ *          If no callback is provided returns found {Object} or {null}.
  */
 
 EJDB.prototype.findOne = function() {
@@ -434,8 +440,8 @@ EJDB.prototype.findOne = function() {
  * @param {Function} [cb] Callback function with arguments: (error, count) where:
  *          `count`:  The number of updated records.
  *
- * @return  If callback is provided returns undefined.
- *          If no callback is provided returns count of updated object.
+ * @return  If callback is provided returns {this}.
+ *          If no callback is provided returns {Number} of updated objects.
  */
 EJDB.prototype.update = function() {
     //[cname, qobj, orarr, hints, cb]
@@ -459,6 +465,7 @@ EJDB.prototype.update = function() {
  * Convenient count(*) operation.
  *
  * Call variations of count():
+ *       - count(cname, [cb])
  *       - count(cname, qobj, [cb])
  *       - count(cname, qobj, hints, [cb])
  *       - count(cname, qobj, qobjarr, [cb])
@@ -470,8 +477,9 @@ EJDB.prototype.update = function() {
  * @param {Object} [hints] JSON object with query hints.
  * @param {Function} [cb] Callback function with arguments: (error, count) where:
  *          `count`:  Number of matching records.
- * @return  If callback is provided returns undefined.
- *          If no callback is provided returns count of updated object.
+ *
+ * @return  If callback is provided returns {this}.
+ *          If no callback is provided returns {Number} of matched object.
  */
 EJDB.prototype.count = function() {
     //[cname, qobj, orarr, hints, cb]

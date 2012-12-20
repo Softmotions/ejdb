@@ -91,7 +91,14 @@ module.exports.testQuery1 = function(test) {
         test.ok(typeof obj["name"] === "string");
         test.ok(typeof obj["age"] === "number");
 
-        test.done();
+        //Async with one callback
+        jb.find("parrots", function(err, cursor, count) {
+            test.ifError(err);
+            test.equal(count, 2);
+            test.ok(cursor);
+            test.equal(cursor.length, 2);
+            test.done();
+        });
     });
 };
 
