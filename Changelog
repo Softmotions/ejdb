@@ -1,7 +1,7 @@
-2012-12-15 Anton Adamansky. <adamansky@gmail.com>
+2012-12-20 Anton Adamansky. <adamansky@gmail.com>
     * Initial version of EJDB CLI console
     * All db methods are synchronous if no callback provided
-    - Release 1.0.29
+    - Release 1.0.30
 
 2012-12-15 Anton Adamansky. <adamansky@gmail.com>
     * Added EJDB.isValidOID() into nodejs API

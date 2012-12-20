@@ -159,6 +159,14 @@ Check if database in opened state.
 Automatically creates new collection if it does't exists.
 Collection options `copts` applied only for newly created collection.
 For existing collections `copts` takes no effect.
+
+Collection options (copts):
+
+ * cachedrecords : Max number of cached records in shared memory segment. Default: 0
+ * records : Estimated number of records in this collection. Default: 65535.
+ * large : Specifies that the size of the database can be larger than 2GB. Default: false
+ * compress : If true collection records will be compressed with DEFLATE compression. Default: false.
+
 <br/>This is blocking function.
 
 __Arguments__
