@@ -608,7 +608,7 @@ namespace ejdb {
 
         static Handle<Value> s_load(const Arguments& args) {
             HandleScope scope;
-            REQ_ARGS(3);
+            REQ_ARGS(2);
             REQ_STR_ARG(0, cname); //Collection name
             REQ_STR_ARG(1, soid); //String OID
             if (!ejdbisvalidoidstr(*soid)) {
@@ -635,7 +635,7 @@ namespace ejdb {
 
         static Handle<Value> s_remove(const Arguments& args) {
             HandleScope scope;
-            REQ_ARGS(3);
+            REQ_ARGS(2);
             REQ_STR_ARG(0, cname); //Collection name
             REQ_STR_ARG(1, soid); //String OID
             if (!ejdbisvalidoidstr(*soid)) {
