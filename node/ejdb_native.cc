@@ -603,7 +603,7 @@ namespace ejdb {
             if (!njb->close()) {
                 return scope.Close(ThrowException(Exception::Error(String::New(njb->_jb_error_msg()))));
             }
-            return scope.Close(args.This());
+            return scope.Close(Undefined());
         }
 
         static Handle<Value> s_load(const Arguments& args) {
@@ -625,7 +625,7 @@ namespace ejdb {
                 cb = Local<Function>::Cast(args[2]);
                 BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdLoad, cmdata, BSONCmdTask::delete_val);
                 uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
-                return scope.Close(args.This());
+                return scope.Close(Undefined());
             } else {
                 BSONCmdTask task(cb, njb, cmdLoad, cmdata, BSONCmdTask::delete_val);
                 njb->load(&task);
@@ -652,7 +652,7 @@ namespace ejdb {
                 cb = Local<Function>::Cast(args[2]);
                 BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdRemove, cmdata, BSONCmdTask::delete_val);
                 uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
-                return scope.Close(args.This());
+                return scope.Close(Undefined());
             } else {
                 BSONCmdTask task(cb, njb, cmdRemove, cmdata, BSONCmdTask::delete_val);
                 njb->remove(&task);
@@ -697,7 +697,7 @@ namespace ejdb {
                 cb = Local<Function>::Cast(args[3]);
                 BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
                 uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
-                return scope.Close(args.This());
+                return scope.Close(Undefined());
             } else {
                 BSONCmdTask task(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
                 njb->save(&task);
@@ -756,7 +756,7 @@ namespace ejdb {
                 cb = Local<Function>::Cast(args[3]);
                 BSONQCmdTask *task = new BSONQCmdTask(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
                 uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
-                return scope.Close(args.This());
+                return scope.Close(Undefined());
             } else {
                 BSONQCmdTask task(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
                 njb->query(&task);
@@ -787,7 +787,7 @@ namespace ejdb {
                     return scope.Close(Exception::Error(String::New(task.cmd_ret_msg.c_str())));
                 }
             }
-            return scope.Close(args.This());
+            return scope.Close(Undefined());
         }
 
         static Handle<Value> s_sync(const Arguments& args) {
@@ -806,7 +806,7 @@ namespace ejdb {
                     return scope.Close(Exception::Error(String::New(task.cmd_ret_msg.c_str())));
                 }
             }
-            return scope.Close(args.This());
+            return scope.Close(Undefined());
         }
 
         static Handle<Value> s_db_meta(const Arguments& args) {
@@ -900,7 +900,7 @@ namespace ejdb {
             if (!coll) {
                 return scope.Close(ThrowException(Exception::Error(String::New(njb->_jb_error_msg()))));
             }
-            return scope.Close(args.This());
+            return scope.Close(Undefined());
         }
 
         static Handle<Value> s_rm_collection(const Arguments& args) {
@@ -915,7 +915,7 @@ namespace ejdb {
             RMCollCmdData *cmdata = new RMCollCmdData(*cname, prune->BooleanValue());
             RMCollCmdTask *task = new RMCollCmdTask(cb, njb, cmdRemoveColl, cmdata, RMCollCmdTask::delete_val);
             uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
-            return scope.Close(args.This());
+            return scope.Close(Undefined());
         }
 
         static Handle<Value> s_is_open(const Arguments& args) {
@@ -1419,7 +1419,7 @@ finish:
             HandleScope scope;
             NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
             c->close();
-            return scope.Close(args.This());
+            return scope.Close(Undefined());
         }
 
         static Handle<Value> s_reset(const Arguments& args) {
@@ -1427,7 +1427,7 @@ finish:
             NodeEJDBCursor *c = ObjectWrap::Unwrap< NodeEJDBCursor > (args.This());
             c->m_pos = 0;
             c->m_no_next = true;
-            return scope.Close(args.This());
+            return scope.Close(Undefined());
         }
 
         static Handle<Value> s_has_next(const Arguments& args) {

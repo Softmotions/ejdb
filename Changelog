@@ -1,5 +1,6 @@
 2012-12-15 Anton Adamansky. <adamansky@gmail.com>
-    * Initial version of EJDB console
+    * Initial version of EJDB CLI console
+    * All db methods are synchronous if no callback provided
     - Release 1.0.29
 
 2012-12-15 Anton Adamansky. <adamansky@gmail.com>

@@ -20,7 +20,7 @@
         "postinstall" : "make -f tests.mk check"
     },
     "bin" : {
-        "ejdb" : "./bin/cli.js"
+        "ejdb" : "node/bin/cli.js"
     },
     "author" : {
         "name" : "Anton Adamansky",

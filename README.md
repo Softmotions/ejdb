@@ -212,7 +212,7 @@ __Arguments__
 
 __Return__
 
- * {Array} of OIDs of saved objects in synchronous mode otherwise returns {this}.
+ * {Array} of OIDs of saved objects in synchronous mode otherwise returns {undefined}.
 
 --------------------------------------
 
@@ -231,7 +231,7 @@ __Arguments__
 
 __Return__
 
- * JSON object or {null} if it is not found in synchronous mode otherwise return {this}.
+ * JSON object or {null} if it is not found in synchronous mode otherwise return {undefined}.
 
 --------------------------------------
 
@@ -356,7 +356,7 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
 
 __Return__
 
- * If callback is provided returns {this}
+ * If callback is provided returns {undefined}
  * If no callback and `$onlycount` hint is set returns count {Number}.
  * If no callback and no `$onlycount` hint returns cursor {Object}.
 
@@ -385,7 +385,7 @@ __Arguments__
 
 __Return__
 
- * If callback is provided returns {this}
+ * If callback is provided returns {undefined}
  * If no callback is provided returns found {Object} or {null}
 
 -----------------------------------
@@ -424,7 +424,7 @@ __Arguments__
 
 __Return__
 
- * If callback is provided returns {this}.
+ * If callback is provided returns {undefined}.
  * If no callback is provided returns {Number} of updated objects.
 
 
@@ -453,7 +453,7 @@ __Arguments__
 
 __Return__
 
- * If callback is provided returns {this}.
+ * If callback is provided returns {undefined}.
  * If no callback is provided returns {Number} of matched object.
 
 -----------------------------------

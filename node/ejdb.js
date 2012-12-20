@@ -9,7 +9,12 @@ var EJDBImpl = ejdblib.NodeEJDB;
 
 const DEFAULT_OPEN_MODE = (ejdblib.JBOWRITER | ejdblib.JBOCREAT);
 var EJDB = function(dbFile, openMode) {
-    this._impl = new EJDBImpl(dbFile, (openMode > 0) ? openMode : DEFAULT_OPEN_MODE);
+    Object.defineProperty(this, "_impl", {
+        value : new EJDBImpl(dbFile, (openMode > 0) ? openMode : DEFAULT_OPEN_MODE),
+        configurable : false,
+        enumerable : false,
+        writable : false
+    });
     return this;
 };
 
@@ -135,7 +140,7 @@ EJDB.prototype.removeCollection = function(cname, prune, cb) {
  * @param {String} cname Name of collection.
  * @param {Array|Object} jsarr Signle JSON object or array of JSON objects to save
  * @param {Function} [cb] Callback function with arguments: (error, {Array} of OIDs for saved objects)
- * @return {Array} of OIDs of saved objects in synchronous mode otherwise returns {this}.
+ * @return {Array} of OIDs of saved objects in synchronous mode otherwise returns {undefined}.
  */
 EJDB.prototype.save = function(cname, jsarr, opts, cb) {
     if (!jsarr) {
@@ -181,7 +186,7 @@ EJDB.prototype.save = function(cname, jsarr, opts, cb) {
  * @param {String} oid Object identifier (OID)
  * @param {Function} [cb]  Callback function with arguments: (error, obj)
  *        `obj`:  Retrieved JSON object or NULL if it is not found.
- * @return JSON object or {null} if it is not found in synchronous mode otherwise return {this}.
+ * @return JSON object or {null} if it is not found in synchronous mode otherwise return {undefined}.
  */
 EJDB.prototype.load = function(cname, oid, cb) {
     return this._impl.load(cname, oid, cb);
@@ -340,7 +345,7 @@ function parseQueryArgs(args) {
  * @param {Function} [cb] Callback function with arguments: (error, cursor, count) where:
  *          `cursor`: Cursor object to traverse records
  *          `count`:  Total number of selected records.
- * @return If callback is provided returns {this}.
+ * @return If callback is provided returns {undefined}.
  *         If no callback and $onlycount hint is set returns count {Number}.
  *         If no callback and no $onlycount hint returns cursor {Object}.
  *
@@ -370,7 +375,7 @@ EJDB.prototype.find = function() {
  * @param {Object} [hints] JSON object with query hints.
  * @param {Function} [cb] Callback function with arguments: (error, obj) where:
  *          `obj`:  Retrieved JSON object or NULL if it is not found.
- * @return  If callback is provided returns {this}.
+ * @return  If callback is provided returns {undefined}.
  *          If no callback is provided returns found {Object} or {null}.
  */
 
@@ -440,7 +445,7 @@ EJDB.prototype.findOne = function() {
  * @param {Function} [cb] Callback function with arguments: (error, count) where:
  *          `count`:  The number of updated records.
  *
- * @return  If callback is provided returns {this}.
+ * @return  If callback is provided returns {undefined}.
  *          If no callback is provided returns {Number} of updated objects.
  */
 EJDB.prototype.update = function() {
@@ -478,7 +483,7 @@ EJDB.prototype.update = function() {
  * @param {Function} [cb] Callback function with arguments: (error, count) where:
  *          `count`:  Number of matching records.
  *
- * @return  If callback is provided returns {this}.
+ * @return  If callback is provided returns {undefined}.
  *          If no callback is provided returns {Number} of matched object.
  */
 EJDB.prototype.count = function() {
