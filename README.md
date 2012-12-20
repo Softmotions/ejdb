@@ -34,6 +34,7 @@ Documentation
 Community
 ================================
 We use [EJDB Google group](http://groups.google.com/group/ejdb) as our mailing list.
+<br/>News on https://twitter.com/antosha_one
 
 
 NodeJS binding
