@@ -2,12 +2,26 @@
     "name" : "ejdb",
     "version" : "1.0.30",
     "main" : "node/ejdb.js",
-    "description" : "EJDB - Embedded JSON Database engine",
     "homepage" : "http://ejdb.org",
+    "description" : "EJDB - Embedded JSON Database engine",
+    "keywords" : ["ejdb",
+                  "tokyocabinet",
+                  "nosql",
+                  "database",
+                  "storage",
+                  "embedded",
+                  "mongodb",
+                  "cli",
+                  "json"],
     "repository" : {
         "type" : "git",
         "url" : "https://github.com/Softmotions/ejdb.git"
     },
+    "os" : [
+        "linux",
+        "darwin",
+        "sunos"
+    ],
     "engines" : {
         "node" : "0.8.x"
     },
