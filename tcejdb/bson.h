@@ -180,6 +180,17 @@ EJDB_EXPORT bson_type bson_find(bson_iterator *it, const bson *obj, const char *
 
 EJDB_EXPORT bson_type bson_find_from_buffer(bson_iterator *it, const char *buffer, const char *name);
 
+
+
+typedef struct { /**< Find field path context */
+    const char* fpath;
+    int fplen;
+    bson_iterator *input;
+    int curpos;
+    bool stoponarrays;
+} FFPCTX;
+
+
 /**
  * Advance specified iterator 'it' to field value pointing by 'fieldpath'/
  * Field path string format: 'field1.nestedfield1.nestedfield.2'.
@@ -191,6 +202,7 @@ EJDB_EXPORT bson_type bson_find_from_buffer(bson_iterator *it, const char *buffe
  */
 EJDB_EXPORT bson_type bson_find_fieldpath_value(const char *fieldpath, bson_iterator *it);
 EJDB_EXPORT bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, bson_iterator *it);
+EJDB_EXPORT bson_type bson_find_fieldpath_value3(FFPCTX* ffctx);
 
 /**
  * BSON object visitor

@@ -406,17 +406,26 @@ EJDB_EXPORT bson_type bson_find_fieldpath_value(const char *fpath, bson_iterator
 }
 
 EJDB_EXPORT bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, bson_iterator *it) {
+    FFPCTX ffctx;
+    ffctx.fpath = fpath;
+    ffctx.fplen = fplen;
+    ffctx.input = it;
+    ffctx.stoponarrays = false;
+    return bson_find_fieldpath_value3(&ffctx);
+}
+
+EJDB_EXPORT bson_type bson_find_fieldpath_value3(FFPCTX* ffctx) {
     char pstackstack[BSON_MAX_FPATH_LEN + 1];
     char *pstack;
-    if (fplen <= BSON_MAX_FPATH_LEN) {
+    if (ffctx->fplen <= BSON_MAX_FPATH_LEN) {
         pstack = pstackstack;
     } else {
-        pstack = MYMALLOC((fplen + 1) * sizeof (char));
+        pstack = MYMALLOC((ffctx->fplen + 1) * sizeof (char));
         if (!pstack) {
             return BSON_EOO;
         }
     }
-    bson_type bt = bson_find_fieldpath_value_impl(pstack, 0, fpath, fplen, it);
+    bson_type bt = bson_find_fieldpath_value_impl(pstack, 0, ffctx->fpath, ffctx->fplen, ffctx->input);
     if (pstack != pstackstack) {
         MYFREE(pstack);
     }
