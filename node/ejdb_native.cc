@@ -64,6 +64,7 @@ namespace ejdb {
     static Persistent<String> sym_merge;
 
     static Persistent<String> sym_name;
+    static Persistent<String> sym_iname;
     static Persistent<String> sym_field;
     static Persistent<String> sym_indexes;
     static Persistent<String> sym_options;
@@ -845,6 +846,7 @@ namespace ejdb {
                     }
                     Local<Object> imeta = Object::New();
                     imeta->Set(sym_field, String::New(idx->name + 1));
+                    imeta->Set(sym_iname, String::New(idx->name));
                     switch (idx->type) {
                         case TDBITLEXICAL:
                             imeta->Set(sym_type, String::New("lexical"));
@@ -1330,6 +1332,7 @@ finish:
             sym_merge = NODE_PSYMBOL("$merge");
 
             sym_name = NODE_PSYMBOL("name");
+            sym_iname = NODE_PSYMBOL("iname");
             sym_field = NODE_PSYMBOL("field");
             sym_indexes = NODE_PSYMBOL("indexes");
             sym_options = NODE_PSYMBOL("options");
