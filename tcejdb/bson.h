@@ -186,8 +186,8 @@ typedef struct { /**< Find field path context */
     const char* fpath;
     int fplen;
     bson_iterator *input;
-    int curpos;
-    bool stoponarrays;
+    int stopos;
+    bool stopnestedarr;
 } FFPCTX;
 
 

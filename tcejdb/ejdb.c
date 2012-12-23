@@ -254,12 +254,11 @@ EJDB_EXPORT TCLIST* ejdbgetcolls(EJDB *jb) {
     for (int i = 0; i < jb->cdbsnum; ++i) {
         coll = jb->cdbs + i;
         assert(coll);
-        TCLISTPUSH(ret, coll, sizeof(*coll));
+        TCLISTPUSH(ret, coll, sizeof (*coll));
     }
     JBUNLOCKMETHOD(jb);
     return ret;
 }
-
 
 EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
     assert(colname);
@@ -1282,19 +1281,61 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
 #undef _FETCHSTRFVAL
 }
 
+static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx) {
+    assert(qf && ffpctx && ffpctx->stopnestedarr);
+    bson_type bt = bson_find_fieldpath_value3(ffpctx);
+    if (bt == BSON_ARRAY && ffpctx->stopos < ffpctx->fplen) {
+        //we just stopped on some array in our fieldpath, so have to perform recusive iterations
+        if (*(ffpctx->fpath + ffpctx->stopos) == '.') {
+            ffpctx->fplen = ffpctx->fplen - ffpctx->stopos - 1;
+            ffpctx->fpath = ffpctx->fpath + ffpctx->stopos + 1;
+        } else {
+            ffpctx->fplen = ffpctx->fplen - ffpctx->stopos;
+            ffpctx->fpath = ffpctx->fpath + ffpctx->stopos;
+        }
+        bool fpnumber = tcstrisintnum(ffpctx->fpath, ffpctx->fplen); //check the suffix is the number (array index)
+        bson_iterator sit;
+        bson_iterator_subiterator(ffpctx->input, &sit);
+        while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
+            if (bt == BSON_OBJECT || bt == BSON_ARRAY) {
+                bson_iterator sit2;
+                bson_iterator_subiterator(&sit, &sit2);
+                ffpctx->input = &sit2;
+                if (_qrybsrecurrmatch(qf, ffpctx)) {
+                    return true;
+                }
+            } else if (fpnumber) {
+                const char *key = bson_iterator_key(&sit);
+                if (!strncmp(key, ffpctx->fpath, ffpctx->fplen)) {
+                    return _qrybsvalmatch(qf, &sit, false);
+                }
+            }
+        }
+        return false;
+    } else {
+        if (bt == BSON_EOO || bt == BSON_UNDEFINED || bt == BSON_NULL) {
+            return qf->negate; //Field missing
+        } else if (qf->tcop == TDBQCEXIST) {
+            return !qf->negate;
+        }
+        return _qrybsvalmatch(qf, ffpctx->input, true);
+    }
+}
+
 static bool _qrybsmatch(const EJQF *qf, const void *bsbuf, int bsbufsz) {
     if (qf->tcop == TDBQTRUE) {
         return !qf->negate;
     }
     bson_iterator it;
     bson_iterator_from_buffer(&it, bsbuf);
-    bson_type bt = bson_find_fieldpath_value2(qf->fpath, qf->fpathsz, &it);
-    if (bt == BSON_EOO || bt == BSON_UNDEFINED || bt == BSON_NULL) {
-        return qf->negate; //Field missing
-    } else if (qf->tcop == TDBQCEXIST) {
-        return !qf->negate;
-    }
-    return _qrybsvalmatch(qf, &it, true);
+    FFPCTX ffpctx = {
+        .fpath = qf->fpath,
+        .fplen = qf->fpathsz,
+        .input = &it,
+        .stopnestedarr = true,
+        .stopos = 0
+    };
+    return _qrybsrecurrmatch(qf, &ffpctx);
 }
 
 static bool _qryormatch(EJCOLL *jcoll,

@@ -61,6 +61,8 @@ EJDB_EXPORT void bson_reset(bson *b) {
     b->flags = 0;
 }
 
+static bson_bool_t bson_isnumstr(const char *str, int len);
+
 /* ----------------------------
    READING
    ------------------------------ */
@@ -362,10 +364,16 @@ EJDB_EXPORT void bson_visit_fields(bson_iterator *it, bson_traverse_flags_t flag
     bson_visit_fields_impl(flags, pstack, 0, it, visitor, op);
 }
 
-static bson_type bson_find_fieldpath_value_impl(char* pstack, int curr, const char *fpath, int fplen, bson_iterator *it) {
+
+
+
+
+static bson_type bson_find_fieldpath_value_impl(char* pstack, int curr, FFPCTX *ffpctx, bson_iterator *it) {
     int i;
-    int klen = 0;
     bson_type t;
+    int klen = 0;
+    int fplen = ffpctx->fplen;
+    const char *fpath = ffpctx->fpath;
     while ((t = bson_iterator_next(it)) != BSON_EOO) {
         const char* key = bson_iterator_key(it);
         klen = strlen(key);
@@ -381,12 +389,23 @@ static bson_type bson_find_fieldpath_value_impl(char* pstack, int curr, const ch
         curr += klen;
         for (i = 0; i < curr && i < fplen && pstack[i] == fpath[i]; ++i);
         if (i == curr && i == fplen) { //Position matched with field path
+            ffpctx->stopos = i;
             return t;
         }
         if (i == curr && i < fplen && (t == BSON_OBJECT || t == BSON_ARRAY)) { //Only prefix and we can go into nested objects
+            if (ffpctx->stopnestedarr && t == BSON_ARRAY) {
+                int p1 = curr;
+                while (fpath[p1] == '.' && p1 < fplen) p1++;
+                int p2 = p1;
+                while (fpath[p2] != '.' && fpath[p2] > '\0' && p2 < fplen) p2++;
+                if (!bson_isnumstr(fpath + p1, p2 - p1)) { //next fpath sections is not an array index
+                    ffpctx->stopos = i;
+                    return t;
+                }
+            }
             bson_iterator sit;
             bson_iterator_subiterator(it, &sit);
-            bson_type st = bson_find_fieldpath_value_impl(pstack, curr, fpath, fplen, &sit);
+            bson_type st = bson_find_fieldpath_value_impl(pstack, curr, ffpctx, &sit);
             if (st != BSON_EOO) { //Found in nested
                 *it = sit;
                 return st;
@@ -406,11 +425,13 @@ EJDB_EXPORT bson_type bson_find_fieldpath_value(const char *fpath, bson_iterator
 }
 
 EJDB_EXPORT bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, bson_iterator *it) {
-    FFPCTX ffctx;
-    ffctx.fpath = fpath;
-    ffctx.fplen = fplen;
-    ffctx.input = it;
-    ffctx.stoponarrays = false;
+    FFPCTX ffctx = {
+        .fpath = fpath,
+        .fplen = fplen,
+        .input = it,
+        .stopnestedarr = false,
+        .stopos = 0
+    };
     return bson_find_fieldpath_value3(&ffctx);
 }
 
@@ -425,7 +446,7 @@ EJDB_EXPORT bson_type bson_find_fieldpath_value3(FFPCTX* ffctx) {
             return BSON_EOO;
         }
     }
-    bson_type bt = bson_find_fieldpath_value_impl(pstack, 0, ffctx->fpath, ffctx->fplen, ffctx->input);
+    bson_type bt = bson_find_fieldpath_value_impl(pstack, 0, ffctx, ffctx->input);
     if (pstack != pstackstack) {
         MYFREE(pstack);
     }
@@ -1224,6 +1245,25 @@ EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, int64_t i) {
     } else {
         return snprintf(str, maxbuf, "%lld", (long long int) i);
     }
+}
+
+static bson_bool_t bson_isnumstr(const char *str, int len){
+  assert(str);
+  bool isnum = false;
+  while(len > 0 && *str > '\0' && *str <= ' '){
+    str++;
+    len--;
+  }
+  while(len > 0 && *str >= '0' && *str <= '9'){
+    isnum = true;
+    str++;
+    len--;
+  }
+  while(len > 0 && *str > '\0' && *str <= ' '){
+    str++;
+    len--;
+  }
+  return (isnum && (*str == '\0' || len == 0));
 }
 
 EJDB_EXPORT void bson_swap_endian64(void *outp, const void *inp) {

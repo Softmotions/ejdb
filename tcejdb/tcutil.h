@@ -2652,6 +2652,7 @@ typedef struct {                         /* type of structure for a consistent h
    `str' specifies the string to be checked.
    The return value is true if the string is numeric, else, it is false. */
 bool tcstrisnum(const char *str);
+bool tcstrisintnum(const char *str, int len);
 
 
 /* Convert a hexadecimal string to an integer.

@@ -5868,6 +5868,25 @@ bool tcstrisnum(const char *str){
   return isnum && *str == '\0';
 }
 
+bool tcstrisintnum(const char *str, int len){
+  assert(str);
+  bool isnum = false;
+  while(len > 0 && *str > '\0' && *str <= ' '){
+    str++;
+    len--;
+  }
+  while(len > 0 && *str >= '0' && *str <= '9'){
+    isnum = true;
+    str++;
+    len--;
+  }
+  while(len > 0 && *str > '\0' && *str <= ' '){
+    str++;
+    len--;
+  }
+  return isnum && (*str == '\0' || len == 0);
+}
+
 
 /* Convert a hexadecimal string to an integer. */
 int64_t tcatoih(const char *str){

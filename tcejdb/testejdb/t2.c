@@ -57,6 +57,7 @@ void testAddData() {
     bson_append_string(&a1, "zip", "630090");
     bson_append_string(&a1, "street", "Pirogova");
     bson_append_int(&a1, "room", 334);
+    bson_append_finish_object(&a1); //EOF address
     bson_append_start_array(&a1, "complexarr");
     bson_append_start_object(&a1, "0");
     bson_append_string(&a1, "foo", "bar");
@@ -64,8 +65,8 @@ void testAddData() {
     bson_append_start_object(&a1, "1");
     bson_append_string(&a1, "foo", "bar1");
     bson_append_finish_object(&a1);
-    bson_append_finish_array(&a1);
-    bson_append_finish_object(&a1);
+    bson_append_int(&a1, "2", 333);
+    bson_append_finish_array(&a1); //EOF complexarr
     CU_ASSERT_FALSE_FATAL(a1.err);
     bson_finish(&a1);
     ejdbsavebson(ccoll, &a1, &oid);
@@ -3474,6 +3475,57 @@ void testFindInComplexArray() {
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //Check matching positional element
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "complexarr.1.foo", "bar1");
+    bson_finish(&bsq1);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    fprintf(stderr, "\n%s", TCXSTRPTR(log));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //Check simple el
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "complexarr.2", 333);
+    bson_finish(&bsq1);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    fprintf(stderr, "\n%s", TCXSTRPTR(log));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //Check simple el2
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "complexarr", 333);
+    bson_finish(&bsq1);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    fprintf(stderr, "\n%s", TCXSTRPTR(log));
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
