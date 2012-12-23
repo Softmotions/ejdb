@@ -1286,13 +1286,10 @@ static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx) {
     bson_type bt = bson_find_fieldpath_value3(ffpctx);
     if (bt == BSON_ARRAY && ffpctx->stopos < ffpctx->fplen) {
         //we just stopped on some array in our fieldpath, so have to perform recusive iterations
-        if (*(ffpctx->fpath + ffpctx->stopos) == '.') {
-            ffpctx->fplen = ffpctx->fplen - ffpctx->stopos - 1;
-            ffpctx->fpath = ffpctx->fpath + ffpctx->stopos + 1;
-        } else {
-            ffpctx->fplen = ffpctx->fplen - ffpctx->stopos;
-            ffpctx->fpath = ffpctx->fpath + ffpctx->stopos;
-        }
+        int pos1 = ffpctx->stopos;
+        while (ffpctx->fpath[pos1] == '.' && pos1 < ffpctx->fplen) pos1++;
+        ffpctx->fplen = ffpctx->fplen - pos1;
+        ffpctx->fpath = ffpctx->fpath + pos1;
         bool fpnumber = tcstrisintnum(ffpctx->fpath, ffpctx->fplen); //check the suffix is the number (array index)
         bson_iterator sit;
         bson_iterator_subiterator(ffpctx->input, &sit);
