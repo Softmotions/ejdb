@@ -1,6 +1,7 @@
 2012-12-24 Anton Adamansky. <adamansky@gmail.com>
-    * Better array query matching (ticket: #13)
-    - Release 1.0.32
+    * Better array query matching
+    * $elemMatch support in queries (ticket: #13)
+    - Release 1.0.33
 
 2012-12-20 Anton Adamansky. <adamansky@gmail.com>
     * Initial version of EJDB CLI console

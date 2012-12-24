@@ -290,7 +290,10 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
           -  {'json.field.path' : {'$icase' : 'val1'}} //icase matching
           Ignore case matching with '$in' operation:
           -  {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
-           For case insensitive matching you can create special type of string index.
+          For case insensitive matching you can create special type of string index.
+      - $elemMatch The $elemMatch operator matches more than one component within an array element.
+          -  { array: { $elemMatch: { value1 : 1, value2 : { $gt: 1 } } } }
+          Restriction: only one $elemMatch allowed in context of one array field.
 
       - Queries can be used to update records:
 

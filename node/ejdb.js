@@ -286,6 +286,9 @@ function parseQueryArgs(args) {
  *          icase matching with '$in' operation:
  *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
  *          For case insensitive matching you can create special type of string index.
+ *      - $elemMatch The $elemMatch operator matches more than one component within an array element.
+ *          -    { array: { $elemMatch: { value1 : 1, value2 : { $gt: 1 } } } }
+ *          Restriction: only one $elemMatch allowed in context of one array field.
  *
  *  - Queries can be used to update records:
  *
@@ -300,6 +303,7 @@ function parseQueryArgs(args) {
  *          - {.., '$addToSet' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
  *      $pull Atomically removes all occurrences of value from field, if field is an array.
  *          - {.., '$pull' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
+ *
  *
  *  NOTE: It is better to execute update queries with `$onlycount=true` hint flag
  *        or use the special `update()` method to avoid unnecessarily data fetching.

@@ -87,7 +87,8 @@ struct EJQF { /**> Matching field and status */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
     bson *updateobj; /**> Update bson object for $set and $inc operations */
-    int matchgrp; /**> $elemMatch group number */
+    int elmatchgrp; /**> $elemMatch group id */
+    int elmatchpos; /**> $elemMatch fieldpath position */
     EJDB *jb; /**> Reference to the EJDB during query processing */
     EJQ *q; /**> Query object field embedded into */
 };

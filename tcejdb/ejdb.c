@@ -128,6 +128,7 @@ EJDB_EXPORT const char* ejdberrmsg(int ecode) {
         case JBEQERROR: return "query generic error";
         case JBEQUPDFAILED: return "bson record update failed";
         case JBEINVALIDBSONPK: return "invalid bson _id field";
+        case JBEQONEEMATCH: return "only one $elemMatch allowed in the fieldpath"; //todo remove 
         default: return tcerrmsg(ecode);
     }
 }
@@ -1281,7 +1282,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
 #undef _FETCHSTRFVAL
 }
 
-static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx, int arrpos) {
+static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx, int currpos) {
     assert(qf && ffpctx && ffpctx->stopnestedarr);
     bson_type bt = bson_find_fieldpath_value3(ffpctx);
     if (bt == BSON_ARRAY && ffpctx->stopos < ffpctx->fplen) { //a bit of complicated code  in this case =)
@@ -1291,7 +1292,7 @@ static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx, int arrpos) {
         ffpctx->fplen = ffpctx->fplen - ffpctx->stopos;
         assert(ffpctx->fplen > 0);
         ffpctx->fpath = ffpctx->fpath + ffpctx->stopos;
-        arrpos += ffpctx->stopos; //adjust cumulative field position
+        currpos += ffpctx->stopos; //adjust cumulative field position
         bson_iterator sit;
         bson_iterator_subiterator(ffpctx->input, &sit);
         while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
@@ -1299,27 +1300,27 @@ static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx, int arrpos) {
                 bson_iterator sit2;
                 bson_iterator_subiterator(&sit, &sit2);
                 ffpctx->input = &sit2;
-                if (_qrybsrecurrmatch(qf, ffpctx, arrpos)) {
+                if (_qrybsrecurrmatch(qf, ffpctx, currpos)) {
                     bool ret = true;
-                    if (qf->matchgrp > 0) { //$elemMatch matching group exists
+                    if (qf->elmatchgrp > 0 && qf->elmatchpos == currpos) { //$elemMatch matching group exists at right place
                         for (int i = TCLISTNUM(qf->q->qobjlist) - 1; i >= 0; --i) {
                             EJQF *eqf = TCLISTVALPTR(qf->q->qobjlist, i);
-                            if (eqf == qf || (eqf->matchgrp != qf->matchgrp) || (eqf->mflags & EJFEXCLUDED)) {
+                            if (eqf == qf || (eqf->mflags & EJFEXCLUDED) || eqf->elmatchgrp != qf->elmatchgrp) {
                                 continue;
                             }
                             eqf->mflags |= EJFEXCLUDED;
                             bson_iterator_subiterator(&sit, &sit2);
                             FFPCTX nffpctx = *ffpctx;
-                            nffpctx.fplen = eqf->fpathsz - arrpos;
+                            nffpctx.fplen = eqf->fpathsz - eqf->elmatchpos;
                             if (nffpctx.fplen <= 0) { //should never happen if query construction is correct
                                 assert(false);
                                 ret = false;
                                 break;
                             }
-                            nffpctx.fpath = eqf->fpath + arrpos;
+                            nffpctx.fpath = eqf->fpath + eqf->elmatchpos;
                             nffpctx.input = &sit2;
                             nffpctx.stopos = 0;
-                            if (!_qrybsrecurrmatch(eqf, &nffpctx, arrpos)) {
+                            if (!_qrybsrecurrmatch(eqf, &nffpctx, eqf->elmatchpos)) {
                                 ret = false;
                                 break;
                             }
@@ -1525,7 +1526,9 @@ static void _qryfieldup(const EJQF *src, EJQF *target, uint32_t qflags) {
     target->order = src->order;
     target->orderseq = src->orderseq;
     target->tcop = src->tcop;
-    target->matchgrp = src->matchgrp;
+    target->elmatchgrp = src->elmatchgrp;
+    target->elmatchpos = src->elmatchpos;
+
     if (src->expr) {
         TCMEMDUP(target->expr, src->expr, src->exprsz);
         target->exprsz = src->exprsz;
@@ -3135,7 +3138,7 @@ static char* _fetch_bson_str_array2(EJDB *jb, bson_iterator *it, bson_type *type
 //
 //} _PQOBJCTX ;
 
-static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf, int mgrp) {
+static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf, int elmatchgrp) {
     assert(it && qlist && pathStack);
     int ret = 0;
     bson_type ftype;
@@ -3143,12 +3146,13 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
     while ((ftype = bson_iterator_next(it)) != BSON_EOO) {
 
         const char *fkey = bson_iterator_key(it);
-        bool isckey = (*fkey == '$'); //Key is a control key: $in, $nin, $not, $all
+        bool isckey = (*fkey == '$'); //Key is a control key: $in, $nin, $not, $all, ...
         EJQF qf;
         memset(&qf, 0, sizeof (qf));
         qf.q = q;
         if (pqf) {
-            qf.matchgrp = pqf->matchgrp;
+            qf.elmatchgrp = pqf->elmatchgrp;
+            qf.elmatchpos = pqf->elmatchpos;
         }
 
         if (!isckey) {
@@ -3249,7 +3253,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                 } else {
                     bson_iterator sit;
                     bson_iterator_subiterator(it, &sit);
-                    ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf, mgrp);
+                    ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf, elmatchgrp);
                     break;
                 }
             }
@@ -3291,12 +3295,19 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         break;
                     }
                     if (!strcmp("$elemMatch", fkey)) {
-                        qf.matchgrp = ++mgrp;
+                        if (qf.elmatchgrp) { //only one $elemMatch allowed in query field
+                            ret = JBEQERROR;
+                            break;
+                        }
+                        qf.elmatchgrp = ++elmatchgrp;
+                        char *fpath = tcstrjoin(pathStack, '.');
+                        qf.elmatchpos = strlen(fpath) + 1; //+ 1 to skip next dot '.'
+                        free(fpath);
                     }
                 }
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
-                ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf, mgrp);
+                ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf, elmatchgrp);
                 break;
             }
             case BSON_OID:

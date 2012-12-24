@@ -44,7 +44,8 @@ enum { /** Error codes */
     JBEQINVALIDQRX = 9007, /**< Invalid query regexp value. */
     JBEQRSSORTING = 9008, /**< Result set sorting error. */
     JBEQERROR = 9009, /**< Query generic error. */
-    JBEQUPDFAILED = 9010 /**< Updating failed. */
+    JBEQUPDFAILED = 9010, /**< Updating failed. */
+    JBEQONEEMATCH = 9011 /**< Only one $elemMatch allowed in the fieldpath. */
 };
 
 enum { /** Database open modes */
@@ -249,6 +250,9 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *          Ignore case matching with '$in' operation:
  *          -    {'name' : {'$icase' : {'$in' : ['théâtre - театр', 'hello world']}}}
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
+ *      - $elemMatch The $elemMatch operator matches more than one component within an array element.
+ *          -    { array: { $elemMatch: { value1 : 1, value2 : { $gt: 1 } } } }
+ *          Restriction: only one $elemMatch allowed in context of one array field.
  *
  *  - Queries can be used to update records:
  *
