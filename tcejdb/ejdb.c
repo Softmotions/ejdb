@@ -1281,16 +1281,16 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
 #undef _FETCHSTRFVAL
 }
 
+
 static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx) {
     assert(qf && ffpctx && ffpctx->stopnestedarr);
     bson_type bt = bson_find_fieldpath_value3(ffpctx);
     if (bt == BSON_ARRAY && ffpctx->stopos < ffpctx->fplen) {
-        //we just stopped on some array in our fieldpath, so have to perform recusive iterations
+        //we just stepped in some array in middle our fieldpath, so have to perform recusive nexted iterations
         int pos1 = ffpctx->stopos;
         while (ffpctx->fpath[pos1] == '.' && pos1 < ffpctx->fplen) pos1++;
         ffpctx->fplen = ffpctx->fplen - pos1;
         ffpctx->fpath = ffpctx->fpath + pos1;
-        bool fpnumber = tcstrisintnum(ffpctx->fpath, ffpctx->fplen); //check the suffix is the number (array index)
         bson_iterator sit;
         bson_iterator_subiterator(ffpctx->input, &sit);
         while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
@@ -1300,11 +1300,6 @@ static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx) {
                 ffpctx->input = &sit2;
                 if (_qrybsrecurrmatch(qf, ffpctx)) {
                     return true;
-                }
-            } else if (fpnumber) {
-                const char *key = bson_iterator_key(&sit);
-                if (!strncmp(key, ffpctx->fpath, ffpctx->fplen)) {
-                    return _qrybsvalmatch(qf, &sit, false);
                 }
             }
         }

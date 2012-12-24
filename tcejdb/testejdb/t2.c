@@ -3474,7 +3474,11 @@ void testFindInComplexArray() {
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
-    fprintf(stderr, "%s", TCXSTRPTR(log));
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(count, 1);
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
+    }
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -3485,13 +3489,16 @@ void testFindInComplexArray() {
     bson_init_as_query(&bsq1);
     bson_append_string(&bsq1, "complexarr.1.foo", "bar1");
     bson_finish(&bsq1);
-
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     log = tcxstrnew();
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
-    fprintf(stderr, "\n%s", TCXSTRPTR(log));
+    //fprintf(stderr, "\n%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(count, 1);
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_string("bar1", TCLISTVALPTR(q1res, i), "complexarr.1.foo"));
+    }
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -3502,14 +3509,16 @@ void testFindInComplexArray() {
     bson_init_as_query(&bsq1);
     bson_append_int(&bsq1, "complexarr.2", 333);
     bson_finish(&bsq1);
-
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     log = tcxstrnew();
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
-    fprintf(stderr, "\n%s", TCXSTRPTR(log));
-
+    //fprintf(stderr, "\n%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(count, 1);
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_long(333, TCLISTVALPTR(q1res, i), "complexarr.2"));
+    }
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
@@ -3519,14 +3528,70 @@ void testFindInComplexArray() {
     bson_init_as_query(&bsq1);
     bson_append_int(&bsq1, "complexarr", 333);
     bson_finish(&bsq1);
-
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     log = tcxstrnew();
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
-    fprintf(stderr, "\n%s", TCXSTRPTR(log));
+    //fprintf(stderr, "\n%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(count, 1);
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_long(333, TCLISTVALPTR(q1res, i), "complexarr.2"));
+    }
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
 
+
+    //$exists
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "complexarr.foo");
+    bson_append_bool(&bsq1, "$exists", true);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(count, 1);
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+
+    //$exists 2
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "complexarr.1");
+    bson_append_bool(&bsq1, "$exists", true);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(count, 1);
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+
+    //$exists 3
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "complexarr.4");
+    bson_append_bool(&bsq1, "$exists", true);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(count, 0);
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
