@@ -96,7 +96,7 @@ static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaqu
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens);
 static bool _qrycondcheckstror(const char *vbuf, const TCLIST *tokens);
 static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays);
-static bool _qrybsmatch(const EJQF *qf, const void *bsbuf, int bsbufsz);
+static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz);
 static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz, const void *bsbuf, int bsbufsz);
 static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, EJQF **qfs, int qfsz,
         const void *pkbuf, int pkbufsz, void **bsbuf, int *bsbufsz);
@@ -128,7 +128,7 @@ EJDB_EXPORT const char* ejdberrmsg(int ecode) {
         case JBEQERROR: return "query generic error";
         case JBEQUPDFAILED: return "bson record update failed";
         case JBEINVALIDBSONPK: return "invalid bson _id field";
-        case JBEQONEEMATCH: return "only one $elemMatch allowed in the fieldpath"; //todo remove 
+        case JBEQONEEMATCH: return "only one $elemMatch allowed in the fieldpath"; //todo remove
         default: return tcerrmsg(ecode);
     }
 }
@@ -1282,7 +1282,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
 #undef _FETCHSTRFVAL
 }
 
-static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx, int currpos) {
+static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
     assert(qf && ffpctx && ffpctx->stopnestedarr);
     bson_type bt = bson_find_fieldpath_value3(ffpctx);
     if (bt == BSON_ARRAY && ffpctx->stopos < ffpctx->fplen) { //a bit of complicated code  in this case =)
@@ -1341,7 +1341,7 @@ static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx, int currpos) {
     }
 }
 
-static bool _qrybsmatch(const EJQF *qf, const void *bsbuf, int bsbufsz) {
+static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz) {
     if (qf->tcop == TDBQTRUE) {
         return !qf->negate;
     }
@@ -1444,7 +1444,7 @@ static bool _qryallcondsmatch(
     }
     for (int i = 0; i < qfsz; ++i) qfs[i]->mflags = qfs[i]->flags; //reset matching flags
     for (int i = 0; i < qfsz; ++i) {
-        const EJQF *qf = qfs[i];
+        EJQF *qf = qfs[i];
         if (qf->mflags & EJFEXCLUDED) continue;
         if (!_qrybsmatch(qf, *bsbuf, *bsbufsz)) {
             rv = false;
@@ -2076,7 +2076,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 bool matched = true;
                 for (int i = 0; i < qfsz; ++i) qfs[i]->mflags = qfs[i]->flags;
                 for (int i = 0; i < qfsz; ++i) {
-                    const EJQF *qf = qfs[i];
+                    EJQF *qf = qfs[i];
                     if (qf->mflags & EJFEXCLUDED) continue;
                     if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
                         matched = false;
@@ -2122,7 +2122,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 bool matched = true;
                 for (int i = 0; i < qfsz; ++i) qfs[i]->mflags = qfs[i]->flags;
                 for (int i = 0; i < qfsz; ++i) {
-                    const EJQF *qf = qfs[i];
+                    EJQF *qf = qfs[i];
                     if (qf->mflags & EJFEXCLUDED) continue;
                     if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
                         matched = false;
@@ -2512,7 +2512,7 @@ fullscan: /* Full scan */
         bool matched = true;
         for (int i = 0; i < qfsz; ++i) qfs[i]->mflags = qfs[i]->flags;
         for (int i = 0; i < qfsz; ++i) {
-            const EJQF *qf = qfs[i];
+            EJQF *qf = qfs[i];
             if (qf->mflags & EJFEXCLUDED) {
                 continue;
             }
