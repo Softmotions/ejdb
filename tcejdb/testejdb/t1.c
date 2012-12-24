@@ -163,7 +163,7 @@ void testBuildQuery1() {
 
     CU_ASSERT_PTR_NOT_NULL_FATAL(ejq->qobjlist);
     TCLIST *qmap = ejq->qobjlist;
-    CU_ASSERT_EQUAL(qmap->num, 7); 
+    CU_ASSERT_EQUAL(qmap->num, 7);
 
     for (int i = 0; i < TCLISTNUM(qmap); ++i) {
 
@@ -214,7 +214,7 @@ void testBuildQuery1() {
             }
             case 5:
             {
-                CU_ASSERT_STRING_EQUAL(key, "family.children.*0.name");
+                CU_ASSERT_STRING_EQUAL(key, "family.children.0.name");
                 CU_ASSERT_PTR_NOT_NULL(qf);
                 CU_ASSERT_STRING_EQUAL(qf->expr, "Dasha");
                 CU_ASSERT_EQUAL(qf->tcop, TDBQCSTREQ);
@@ -222,7 +222,7 @@ void testBuildQuery1() {
             }
             case 6:
             {
-                CU_ASSERT_STRING_EQUAL(key, "family.children.*0.age");
+                CU_ASSERT_STRING_EQUAL(key, "family.children.0.age");
                 CU_ASSERT_PTR_NOT_NULL(qf);
                 CU_ASSERT_EQUAL(qf->ftype, BSON_ARRAY);
                 TCLIST *al = tclistload(qf->expr, qf->exprsz);

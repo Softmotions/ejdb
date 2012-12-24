@@ -91,14 +91,14 @@ static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
 static void _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields);
 static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec);
-static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf);
+static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf, int mgrp);
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens);
 static bool _qrycondcheckstror(const char *vbuf, const TCLIST *tokens);
 static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays);
 static bool _qrybsmatch(const EJQF *qf, const void *bsbuf, int bsbufsz);
 static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz, const void *bsbuf, int bsbufsz);
-static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, const EJQF **qfs, int qfsz,
+static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, EJQF **qfs, int qfsz,
         const void *pkbuf, int pkbufsz, void **bsbuf, int *bsbufsz);
 static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
@@ -1281,16 +1281,17 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
 #undef _FETCHSTRFVAL
 }
 
-
-static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx) {
+static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx, int arrpos) {
     assert(qf && ffpctx && ffpctx->stopnestedarr);
     bson_type bt = bson_find_fieldpath_value3(ffpctx);
-    if (bt == BSON_ARRAY && ffpctx->stopos < ffpctx->fplen) {
-        //we just stepped in some array in middle our fieldpath, so have to perform recusive nexted iterations
-        int pos1 = ffpctx->stopos;
-        while (ffpctx->fpath[pos1] == '.' && pos1 < ffpctx->fplen) pos1++;
-        ffpctx->fplen = ffpctx->fplen - pos1;
-        ffpctx->fpath = ffpctx->fpath + pos1;
+    if (bt == BSON_ARRAY && ffpctx->stopos < ffpctx->fplen) { //a bit of complicated code  in this case =)
+        //we just stepped in some array in middle of our fieldpath, so have to perform recusive nested iterations
+        //$elemMatch active in this context
+        while (ffpctx->fpath[ffpctx->stopos] == '.' && ffpctx->stopos < ffpctx->fplen) ffpctx->stopos++;
+        ffpctx->fplen = ffpctx->fplen - ffpctx->stopos;
+        assert(ffpctx->fplen > 0);
+        ffpctx->fpath = ffpctx->fpath + ffpctx->stopos;
+        arrpos += ffpctx->stopos; //adjust cumulative field position
         bson_iterator sit;
         bson_iterator_subiterator(ffpctx->input, &sit);
         while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
@@ -1298,8 +1299,33 @@ static bool _qrybsrecurrmatch(const EJQF *qf, FFPCTX *ffpctx) {
                 bson_iterator sit2;
                 bson_iterator_subiterator(&sit, &sit2);
                 ffpctx->input = &sit2;
-                if (_qrybsrecurrmatch(qf, ffpctx)) {
-                    return true;
+                if (_qrybsrecurrmatch(qf, ffpctx, arrpos)) {
+                    bool ret = true;
+                    if (qf->matchgrp > 0) { //$elemMatch matching group exists
+                        for (int i = TCLISTNUM(qf->q->qobjlist) - 1; i >= 0; --i) {
+                            EJQF *eqf = TCLISTVALPTR(qf->q->qobjlist, i);
+                            if (eqf == qf || (eqf->matchgrp != qf->matchgrp) || (eqf->mflags & EJFEXCLUDED)) {
+                                continue;
+                            }
+                            eqf->mflags |= EJFEXCLUDED;
+                            bson_iterator_subiterator(&sit, &sit2);
+                            FFPCTX nffpctx = *ffpctx;
+                            nffpctx.fplen = eqf->fpathsz - arrpos;
+                            if (nffpctx.fplen <= 0) { //should never happen if query construction is correct
+                                assert(false);
+                                ret = false;
+                                break;
+                            }
+                            nffpctx.fpath = eqf->fpath + arrpos;
+                            nffpctx.input = &sit2;
+                            nffpctx.stopos = 0;
+                            if (!_qrybsrecurrmatch(eqf, &nffpctx, arrpos)) {
+                                ret = false;
+                                break;
+                            }
+                        }
+                    }
+                    return ret;
                 }
             }
         }
@@ -1327,7 +1353,7 @@ static bool _qrybsmatch(const EJQF *qf, const void *bsbuf, int bsbufsz) {
         .stopnestedarr = true,
         .stopos = 0
     };
-    return _qrybsrecurrmatch(qf, &ffpctx);
+    return _qrybsrecurrmatch(qf, &ffpctx, 0);
 }
 
 static bool _qryormatch(EJCOLL *jcoll,
@@ -1362,9 +1388,13 @@ static bool _qryormatch(EJCOLL *jcoll,
         const EJQ *oq = (ejq->orqobjs + i);
         assert(oq && oq->qobjlist);
         for (int j = 0; j < TCLISTNUM(oq->qobjlist); ++j) {
-            const EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
+            EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
+            qf->mflags = qf->flags;
+        }
+        for (int j = 0; j < TCLISTNUM(oq->qobjlist); ++j) {
+            EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
             assert(qf);
-            if (qf == ejq->lastmatchedorqf) {
+            if (qf == ejq->lastmatchedorqf || qf->mflags & EJFEXCLUDED) {
                 continue;
             }
             if (_qrybsmatch(qf, bsbuf, bsbufsz)) {
@@ -1384,7 +1414,7 @@ finish:
 /** Caller must TCFREE(*bsbuf) if it return TRUE */
 static bool _qryallcondsmatch(
         bool onlycount, int anum,
-        EJCOLL *jcoll, const EJQF **qfs, int qfsz,
+        EJCOLL *jcoll, EJQF **qfs, int qfsz,
         const void *pkbuf, int pkbufsz,
         void **bsbuf, int *bsbufsz) {
     if (onlycount && anum < 1) {
@@ -1411,9 +1441,10 @@ static bool _qryallcondsmatch(
         TCFREE(cbuf);
         return true;
     }
+    for (int i = 0; i < qfsz; ++i) qfs[i]->mflags = qfs[i]->flags; //reset matching flags
     for (int i = 0; i < qfsz; ++i) {
         const EJQF *qf = qfs[i];
-        if (qf->flags & EJFEXCLUDED) continue;
+        if (qf->mflags & EJFEXCLUDED) continue;
         if (!_qrybsmatch(qf, *bsbuf, *bsbufsz)) {
             rv = false;
             break;
@@ -1429,7 +1460,7 @@ static bool _qryallcondsmatch(
 }
 
 typedef struct {
-    const EJQF **ofs;
+    EJQF **ofs;
     int ofsz;
 } _EJBSORTCTX;
 
@@ -1494,6 +1525,7 @@ static void _qryfieldup(const EJQF *src, EJQF *target, uint32_t qflags) {
     target->order = src->order;
     target->orderseq = src->orderseq;
     target->tcop = src->tcop;
+    target->matchgrp = src->matchgrp;
     if (src->expr) {
         TCMEMDUP(target->expr, src->expr, src->exprsz);
         target->exprsz = src->exprsz;
@@ -1899,10 +1931,10 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     _qrypreprocess(jcoll, ejq, qflags, &mqf, &ifields);
 
     int anum = 0; //number of active conditions
-    const EJQF **ofs = NULL; //order fields
+    EJQF **ofs = NULL; //order fields
     int ofsz = 0; //order fields count
     int aofsz = 0; //active order fields count
-    const EJQF **qfs = NULL; //condition fields array
+    EJQF **qfs = NULL; //condition fields array
     const int qfsz = TCLISTNUM(ejq->qobjlist); //number of all condition fields
     if (qfsz > 0) {
         TCMALLOC(qfs, qfsz * sizeof (EJQF*));
@@ -2039,9 +2071,10 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                     break;
                 }
                 bool matched = true;
+                for (int i = 0; i < qfsz; ++i) qfs[i]->mflags = qfs[i]->flags;
                 for (int i = 0; i < qfsz; ++i) {
                     const EJQF *qf = qfs[i];
-                    if (qf->flags & EJFEXCLUDED) continue;
+                    if (qf->mflags & EJFEXCLUDED) continue;
                     if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
                         matched = false;
                         break;
@@ -2084,9 +2117,10 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                     break;
                 }
                 bool matched = true;
+                for (int i = 0; i < qfsz; ++i) qfs[i]->mflags = qfs[i]->flags;
                 for (int i = 0; i < qfsz; ++i) {
                     const EJQF *qf = qfs[i];
-                    if (qf->flags & EJFEXCLUDED) continue;
+                    if (qf->mflags & EJFEXCLUDED) continue;
                     if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
                         matched = false;
                         break;
@@ -2473,9 +2507,10 @@ fullscan: /* Full scan */
             goto wfinish;
         }
         bool matched = true;
+        for (int i = 0; i < qfsz; ++i) qfs[i]->mflags = qfs[i]->flags;
         for (int i = 0; i < qfsz; ++i) {
             const EJQF *qf = qfs[i];
-            if (qf->flags & EJFEXCLUDED) {
+            if (qf->mflags & EJFEXCLUDED) {
                 continue;
             }
             if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
@@ -3096,7 +3131,11 @@ static char* _fetch_bson_str_array2(EJDB *jb, bson_iterator *it, bson_type *type
     return tokens;
 }
 
-static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf) {
+//typedef struct {
+//
+//} _PQOBJCTX ;
+
+static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf, int mgrp) {
     assert(it && qlist && pathStack);
     int ret = 0;
     bson_type ftype;
@@ -3105,19 +3144,12 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
 
         const char *fkey = bson_iterator_key(it);
         bool isckey = (*fkey == '$'); //Key is a control key: $in, $nin, $not, $all
-
-        if (!isckey && pqf && pqf->ftype == BSON_ARRAY) {
-            //All index keys in array are prefixed with '*'. Eg: 'store.*1.item', 'store.*2.item', ...
-            char akey[TCNUMBUFSIZ];
-            assert(strlen(fkey) <= TCNUMBUFSIZ - 2);
-            akey[0] = '*';
-            memmove(akey + 1, fkey, strlen(fkey) + 1);
-            fkey = akey;
-        }
-
         EJQF qf;
         memset(&qf, 0, sizeof (qf));
         qf.q = q;
+        if (pqf) {
+            qf.matchgrp = pqf->matchgrp;
+        }
 
         if (!isckey) {
             //Push key on top of path stack
@@ -3217,7 +3249,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                 } else {
                     bson_iterator sit;
                     bson_iterator_subiterator(it, &sit);
-                    ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf);
+                    ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf, mgrp);
                     break;
                 }
             }
@@ -3258,10 +3290,13 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         TCLISTPUSH(qlist, &qf, sizeof (qf));
                         break;
                     }
+                    if (!strcmp("$elemMatch", fkey)) {
+                        qf.matchgrp = ++mgrp;
+                    }
                 }
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
-                ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf);
+                ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf, mgrp);
                 break;
             }
             case BSON_OID:
@@ -3446,7 +3481,7 @@ static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     bson_iterator it;
     bson_iterator_init(&it, qspec);
     TCLIST *pathStack = tclistnew2(TCLISTINYNUM);
-    rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL);
+    rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL, 0);
     if (rv) {
         tclistdel(res);
         res = NULL;

@@ -80,12 +80,14 @@ struct EJQF { /**> Matching field and status */
     int tcop; /**> Matching operation eg. TDBQCSTREQ */
     bool negate; /**> Negate expression */
     uint32_t flags; /**> Various field matching|status flags */
+    uint32_t mflags; /**> Temporary matching flags used during single record matching */
     int order; /**> 0 no order, 1 ASC, -1 DESC */
     int orderseq; /**> Seq number for order fields */
     bson_type ftype; /**> BSON field type */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
     bson *updateobj; /**> Update bson object for $set and $inc operations */
+    int matchgrp; /**> $elemMatch group number */
     EJDB *jb; /**> Reference to the EJDB during query processing */
     EJQ *q; /**> Query object field embedded into */
 };

@@ -61,9 +61,12 @@ void testAddData() {
     bson_append_start_array(&a1, "complexarr");
     bson_append_start_object(&a1, "0");
     bson_append_string(&a1, "foo", "bar");
+    bson_append_string(&a1, "foo2", "bar2");
+    bson_append_string(&a1, "foo3", "bar3");
     bson_append_finish_object(&a1);
     bson_append_start_object(&a1, "1");
     bson_append_string(&a1, "foo", "bar1");
+    bson_append_string(&a1, "foo2", "bar3");
     bson_append_finish_object(&a1);
     bson_append_int(&a1, "2", 333);
     bson_append_finish_array(&a1); //EOF complexarr
@@ -3598,6 +3601,37 @@ void testFindInComplexArray() {
     ejdbquerydel(q1);
 }
 
+
+void test$elemMatch() {
+    //{complexarr : {$elemMatch : {foo : 'bar', foo2 : 'bar3'}}}
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "complexarr");
+    bson_append_start_object(&bsq1, "$elemMatch");
+    bson_append_string(&bsq1, "foo", "bar");
+    bson_append_string(&bsq1, "foo2", "bar2");
+    bson_append_string(&bsq1, "foo3", "bar3");
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -3657,7 +3691,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testOneFieldManyConditions", testOneFieldManyConditions)) ||
             (NULL == CU_add_test(pSuite, "test$addToSet", test$addToSet)) ||
             (NULL == CU_add_test(pSuite, "test$pull", test$pull)) ||
-            (NULL == CU_add_test(pSuite, "testFindInComplexArray", testFindInComplexArray))
+            (NULL == CU_add_test(pSuite, "testFindInComplexArray", testFindInComplexArray)) ||
+            (NULL == CU_add_test(pSuite, "test$elemMatch", test$elemMatch))
             ) {
         CU_cleanup_registry();
         return CU_get_error();
