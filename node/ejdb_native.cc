@@ -14,6 +14,7 @@
 #include <sstream>
 #include <locale.h>
 #include <ext/hash_set>
+#include <stdint.h>
 
 using namespace node;
 using namespace v8;
@@ -1404,6 +1405,8 @@ finish:
         static Persistent<FunctionTemplate> constructor_template;
 
         NodeEJDB *m_nejdb;
+        intptr_t m_mem; //amount of memory contained in cursor
+
         TCLIST *m_rs; //result set bsons
         int m_pos; //current cursor position
         bool m_no_next; //no next() was called
@@ -1555,15 +1558,29 @@ finish:
                 tclistdel(m_rs);
                 m_rs = NULL;
             }
+            V8::AdjustAmountOfExternalAllocatedMemory(-m_mem + sizeof(NodeEJDBCursor));
         }
 
         NodeEJDBCursor(NodeEJDB *_nejedb, TCLIST *_rs) : m_nejdb(_nejedb), m_rs(_rs), m_pos(0), m_no_next(true) {
             assert(m_nejdb);
             this->m_nejdb->Ref();
+            m_mem = sizeof (NodeEJDBCursor);
+            if (m_rs) {
+                intptr_t cmem = 0;
+                int i = 0;
+                for (; i < TCLISTNUM(m_rs) && i < 1000; ++i) { //Max 1K iterations
+                    cmem += bson_size2(TCLISTVALPTR(m_rs, i));
+                }
+                if (i > 0) {
+                    m_mem += (intptr_t) (((double) cmem / i) * TCLISTNUM(m_rs));
+                }
+                V8::AdjustAmountOfExternalAllocatedMemory(m_mem);
+            }
         }
 
         virtual ~NodeEJDBCursor() {
             close();
+            V8::AdjustAmountOfExternalAllocatedMemory(-sizeof(NodeEJDBCursor));
         }
 
     public:

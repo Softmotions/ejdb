@@ -115,6 +115,14 @@ EJDB_EXPORT int bson_size(const bson *b) {
     return i;
 }
 
+EJDB_EXPORT int bson_size2(const void *bsdata) {
+    int i;
+    if (!bsdata)
+        return 0;
+    bson_little_endian32(&i, bsdata);
+    return i;
+}
+
 EJDB_EXPORT int bson_buffer_size(const bson *b) {
     return (b->cur - b->data + 1);
 }

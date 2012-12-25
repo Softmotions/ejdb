@@ -143,6 +143,7 @@ EJDB_EXPORT void bson_dispose(bson* b);
  * @return the size.
  */
 EJDB_EXPORT int bson_size(const bson *b);
+EJDB_EXPORT int bson_size2(const void *bsdata);
 EJDB_EXPORT int bson_buffer_size(const bson *b);
 
 /**
