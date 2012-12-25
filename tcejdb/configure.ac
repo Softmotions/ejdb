@@ -11,7 +11,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(tcejdb, 1.0.34)
+AC_INIT(tcejdb, 1.0.35)
 
 # Package information
 MYLIBVER=9
@@ -233,7 +233,7 @@ fi
 
 # Messages
 printf '#================================================================\n'
-printf '# Configuring Tokyo Cabinet version %s%s.\n' "$PACKAGE_VERSION" "$enables"
+printf '# Configuring EJDB version %s%s.\n' "$PACKAGE_VERSION" "$enables"
 printf '#================================================================\n'
 
 

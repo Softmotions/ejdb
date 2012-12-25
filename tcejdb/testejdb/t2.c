@@ -3635,7 +3635,6 @@ void test$elemMatch() {
     tcxstrdel(log);
     ejdbquerydel(q1);
 
-
     bson_init_as_query(&bsq1);
     bson_append_start_object(&bsq1, "complexarr");
     bson_append_start_object(&bsq1, "$elemMatch");
@@ -3673,6 +3672,17 @@ void test$elemMatch() {
     tclistdel(q1res);
     tcxstrdel(log);
     ejdbquerydel(q1);
+}
+
+void testTicket16() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "abcd", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    CU_ASSERT_EQUAL(coll->tdb->inum, 0);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "abcd", JBIDXISTR));
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "abcd", JBIDXNUM));
+    CU_ASSERT_EQUAL(coll->tdb->inum, 2);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "abcd", JBIDXDROPALL));
+    CU_ASSERT_EQUAL(coll->tdb->inum, 0);
 }
 
 int main() {
@@ -3735,7 +3745,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "test$addToSet", test$addToSet)) ||
             (NULL == CU_add_test(pSuite, "test$pull", test$pull)) ||
             (NULL == CU_add_test(pSuite, "testFindInComplexArray", testFindInComplexArray)) ||
-            (NULL == CU_add_test(pSuite, "test$elemMatch", test$elemMatch))
+            (NULL == CU_add_test(pSuite, "test$elemMatch", test$elemMatch)) ||
+            (NULL == CU_add_test(pSuite, "testTicket16", testTicket16))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

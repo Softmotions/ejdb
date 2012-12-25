@@ -579,7 +579,7 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
         if (!idrop && oldiflags != flags) { //Update index meta
             bson imetadelta;
             bson_init(&imetadelta);
-            bson_append_int(&imetadelta, "iflags", flags);
+            bson_append_int(&imetadelta, "iflags", (flags | oldiflags));
             bson_finish(&imetadelta);
             rv = _metasetbson2(jcoll, ikey, &imetadelta, true, true);
             bson_destroy(&imetadelta);
