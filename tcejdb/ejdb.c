@@ -300,11 +300,9 @@ EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile) {
     }
     EJCOLL *cdbs = jb->cdbs;
     for (int i = 0; i < jb->cdbsnum; ++i) {
-        coll = jb->cdbs + i;
+        coll = cdbs + i;
         if (!strcmp(colname, coll->cname)) {
             if (!JBCLOCKMETHOD(coll, true)) return false;
-            jb->cdbsnum--;
-            memmove(cdbs + i, cdbs + i + 1, sizeof (*cdbs) * (jb->cdbsnum - i));
             tctdbout2(jb->metadb, colname);
             tctdbvanish(coll->tdb);
             TCLIST *paths = tclistnew2(10);
@@ -325,6 +323,8 @@ EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile) {
             tclistdel(paths);
             JBCUNLOCKMETHOD(coll);
             _delcoldb(coll);
+            jb->cdbsnum--;
+            memmove(cdbs + i, cdbs + i + 1, sizeof (*cdbs) * (jb->cdbsnum - i));
             break;
         }
     }
