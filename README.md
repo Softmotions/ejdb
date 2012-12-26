@@ -34,7 +34,6 @@ Documentation
 Community
 ================================
 We use [EJDB Google group](http://groups.google.com/group/ejdb) as our mailing list.
-<br/>News on https://twitter.com/antosha_one
 
 
 NodeJS binding
@@ -706,6 +705,9 @@ Queries
  *          Ignore case matching with '$in' operation:
  *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
+ *     - $elemMatch The $elemMatch operator matches more than one component within an array element.
+ *          -  { array: { $elemMatch: { value1 : 1, value2 : { $gt: 1 } } } }
+ *          Restriction: only one $elemMatch allowed in context of one array field.
  *
  *  - Queries can be used to update records:
  *       $set Field set operation.

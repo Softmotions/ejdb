@@ -1,10 +1,7 @@
-
-
 EJDB - Embedded JSON Database engine
 ====================================
 
-The main goal of this project to create the fast [MongoDB](http://mongodb.org)-like database engine library **which can be embed
-into C/C++ applications under terms of LGPL license.**
+It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++ and [NodeJS](http://nodejs.org/) applications under terms of LGPL license.**
 
 EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 
@@ -19,13 +16,31 @@ Features
 * String token matching queries: ```$stror``` ```$strand```
 * [Node.js](http://nodejs.org) binding
 
+
+Documentation
+================================
+
+* **[EJDB Command line interface](https://github.com/Softmotions/ejdb/wiki/EJDB-Command-line-interface)**
+* **[NodeJS binding](#nodejs-binding)**
+    * [Installation](#installation)
+    * [Samples](#ejdb-nodejs-samples)
+    * [NodeJS API](#ejdb-nodejs-api)
+* **[EJDB C Library](#ejdb-c-library)**
+    * [Building & Installation](#building--installation)
+    * [Samples](#ejdb-c-samples)
+    * [C API](#c-api)
+
+Community
+================================
+We use [EJDB Google group](http://groups.google.com/group/ejdb) as our mailing list.
+
 EJDB C Library
 ==================================
 
 One snippet intro
 -----------------------------------
 
-```C
+~~~~~~
 #include <tcejdb/ejdb.h>
 
 static EJDB *jb;
@@ -87,7 +102,7 @@ int main() {
     ejdbdel(jb);
     return 0;
 }
-```
+~~~~~~
 
 You can save this code in `csnippet.c` And build:
 
@@ -96,7 +111,6 @@ You can save this code in `csnippet.c` And build:
 gcc -std=c99 -Wall -pedantic  -c -o csnippet.o csnippet.c
 gcc -std=c99 -Wall -pedantic  -o csnippet csnippet.o  -ltcejdb
 ```
-
 
 Building & Installation
 --------------------------------
@@ -117,24 +131,25 @@ On Debian/Ubuntu linux you can install it as follows:
 
 Building
 --------------------------------
-```sh
+
+~~~~~~
    cd ./tcejdb
    ./configure --prefix=<installation prefix> && make && make check
    make install
-```
+~~~~~~
 * library name: **tcejdb** (with pkgconfig)
 * main include header: ```<tcejdb/ejdb.h>```
 
 C API
 ---------------------------------
-EJDB API presented in **ejdb.h** C header file.
+EJDB API presented in **[ejdb.h](https://github.com/Softmotions/ejdb/blob/master/tcejdb/ejdb.h)** C header file.
 
-JSON processing API: **bson.h**
+JSON processing API: **[bson.h](https://github.com/Softmotions/ejdb/blob/master/tcejdb/bson.h)**
 
 Queries
 ---------------------------------
 
-```
+~~~~~~
 /**
  * Create query object.
  * Sucessfully created queries must be destroyed with ejdbquerydel().
@@ -162,6 +177,27 @@ Queries
  *          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
  *      - $exists Field existence matching:
  *          -   {'json.field.path' : {'$exists' : true|false}}
+ *      - $icase Case insensitive string matching:
+ *          -    {'json.field.path' : {'$icase' : 'val1'}} //icase matching
+ *          Ignore case matching with '$in' operation:
+ *          -    {'name' : {'$icase' : {'$in' : ['tHéâtre - театр', 'heLLo WorlD']}}}
+ *          For case insensitive matching you can create special index of type: `JBIDXISTR`
+ *     - $elemMatch The $elemMatch operator matches more than one component within an array element.
+ *          -  { array: { $elemMatch: { value1 : 1, value2 : { $gt: 1 } } } }
+ *          Restriction: only one $elemMatch allowed in context of one array field.
+ *
+ *  - Queries can be used to update records:
+ *       $set Field set operation.
+ *           - {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
+ *       $inc Increment operation. Only number types are supported.
+ *           - {.., '$inc' : {'field1' : number, ...,  'field1' : number}
+ *       $dropall In-place record removal operation.
+ *           - {.., '$dropall' : true}
+ *       $addToSet Atomically adds value to the array only if its not in the array already.
+ *                   If containing array is missing it will be created.
+ *           - {.., '$addToSet' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
+ *       $pull - Atomically removes all occurrences of value from field, if field is an array.
+ *           - {.., '$pull' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
@@ -172,11 +208,16 @@ Queries
  *      - $max Maximum number in the result set
  *      - $skip Number of skipped results in the result set
  *      - $orderby Sorting order of query fields.
- *          Eg: ORDER BY field1 ASC, field2 DESC
+ *      - $fields Set subset of fetched fields
+ *          Example:
  *          hints:    {
- *                      "$orderby" : {
+ *                      "$orderby" : { //ORDER BY field1 ASC, field2 DESC
  *                          "field1" : 1,
  *                          "field2" : -1
+ *                      },
+ *                      "$fields" : { //SELECT ONLY {_id, field1, field2}
+ *                          "field1" : 1,
+ *                          "field2" : 1
  *                      }
  *                    }
  *
@@ -190,27 +231,27 @@ Queries
  * @return On success return query handle. On error returns NULL.
  */
 EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints);
-```
+~~~~~~
 
-Examples
+EJDB C Samples
 ------------------------------------
 You can find some code samples in:
 
-* tcejdb/samples
-* tcejdb/testejdb
+* [tcejdb/samples](https://github.com/Softmotions/ejdb/tree/master/tcejdb/samples)
+* [tcejdb/testejdb](https://github.com/Softmotions/ejdb/tree/master/tcejdb/testejdb)
 
 Basic EJDB architecture
 -------------------------------
 **EJDB database files structure**
 
-```
+~~~~~~
 .
 ├── <dbname>
 ├── <dbname>_<collection1>
 ├── ...
 ├── <dbname>_<collectionN>
 └── <dbname>_<collectionN>_<fieldpath>.<index ext>
-```
+~~~~~~
 
 Where
 
@@ -224,6 +265,6 @@ Where
 
 Limitations/TODOs
 ------------------------------------
-* Case insensitive string indexes
 * Collect collection index statistic
 * Windows port
+
