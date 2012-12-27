@@ -2304,6 +2304,30 @@ void *tcmaploadone(const void *ptr, int size, const void *kbuf, int ksiz, int *s
   return NULL;
 }
 
+/* Extract a map record from a serialized byte array into extensible string object. */
+int tcmaploadoneintoxstr(const void *ptr, int size, const void *kbuf, int ksiz, TCXSTR *xstr) {
+    assert(ptr && size >= 0 && kbuf && ksiz >= 0 && xstr);
+    const char *rp = ptr;
+    const char *ep = (char *) ptr + size;
+    while (rp < ep) {
+        int step, rsiz;
+        TCREADVNUMBUF(rp, rsiz, step);
+        rp += step;
+        if (rsiz == ksiz && !memcmp(kbuf, rp, rsiz)) {
+            rp += rsiz;
+            TCREADVNUMBUF(rp, rsiz, step);
+            rp += step;
+            TCXSTRCAT(xstr, rp, rsiz);
+            return rsiz;
+        }
+        rp += rsiz;
+        TCREADVNUMBUF(rp, rsiz, step);
+        rp += step;
+        rp += rsiz;
+    }
+    return -1;
+}
+
 
 /* Perform formatted output into a map object. */
 void tcmapprintf(TCMAP *map, const char *kstr, const char *format, ...){

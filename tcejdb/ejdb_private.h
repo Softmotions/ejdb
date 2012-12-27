@@ -104,6 +104,10 @@ struct EJQ { /**> Query object. */
     uint32_t max; /**> Max number of results */
     uint32_t flags; /**> Control flags */
     EJQF *lastmatchedorqf; /**> Reference to the last matched or query field */
+
+    //Temporal buffers used during query processing
+    TCXSTR *colbuf; /**> TCTDB current column buffer */
+    TCXSTR *bsbuf;  /**> current bson object */
 };
 
 #define JDBCOLBSON "$"  /**> TCDB colname with BSON byte data */

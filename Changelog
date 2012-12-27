@@ -1,7 +1,10 @@
+2012-12-28 Anton Adamansky. <adamansky@gmail.com>
+    * Performance enhancements, memory allocs reduced to %20-30%
+    - Release 1.0.37
+
 2012-12-27 Anton Adamansky. <adamansky@gmail.com>
     * Fixed crash when using update qry with single indexed field(ticket: #23)
     - Release 1.0.36
-
 
 2012-12-26 Anton Adamansky. <adamansky@gmail.com>
     * Fixed crash on collection remove (ticket: #18)

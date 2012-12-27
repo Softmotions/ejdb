@@ -353,6 +353,17 @@ bool tchdbout2(TCHDB *hdb, const char *kstr);
 void *tchdbget(TCHDB *hdb, const void *kbuf, int ksiz, int *sp);
 
 
+/**
+ * Retrieve a record into extensibble string.
+ *
+ * @param hdb specifies the hash database object.
+ * @param kbuf specifies the pointer to the region of the key.
+ * @param xstr specifies extensible string object data will be stored into.
+ * @return
+ */
+int tchdbgetintoxstr(TCHDB *hdb, const void *kbuf, int ksiz, TCXSTR *xstr);
+
+
 /* Retrieve a string record in a hash database object.
    `hdb' specifies the hash database object.
    `kstr' specifies the string of the key.

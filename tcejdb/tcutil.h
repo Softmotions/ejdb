@@ -1004,6 +1004,17 @@ const char **tcmapvals2(const TCMAP *map, int *np);
 void *tcmaploadone(const void *ptr, int size, const void *kbuf, int ksiz, int *sp);
 
 
+/* Extract a map record from a serialized byte array into extensible string object.
+   `ptr' specifies the pointer to the region of serialized byte array.
+   `size' specifies the size of the region.
+   `kbuf' specifies the pointer to the region of the key.
+   `ksiz' specifies the size of the region of the key.
+   `xstr' specifies extensible string object data will be placed into.
+   If successful, the return value is >= 0
+   corresponding record.  0 is returned when no record corresponds.*/
+int tcmaploadoneintoxstr(const void *ptr, int size, const void *kbuf, int ksiz, TCXSTR *xstr);
+
+
 /* Perform formatted output into a map object.
    `map' specifies the map object.
    `kstr' specifies the string of the key.
