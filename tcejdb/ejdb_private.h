@@ -64,7 +64,8 @@ enum { /**> Query field flags */
 enum { /**> Query flags */
     EJQINTERNAL = 1, /**> Internal query object used in _ejdbqryexecute */
     EJQUPDATING = 1 << 1, /**> Query in updating mode */
-    EJQDROPALL =  1 << 2 /**> Drop bson object if matched */
+    EJQDROPALL =  1 << 2, /**> Drop bson object if matched */
+    EJQONLYCOUNT = 1 << 3 /**> Only count mode */
 };
 
 struct EJQF { /**> Matching field and status */

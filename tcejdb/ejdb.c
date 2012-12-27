@@ -98,7 +98,7 @@ static bool _qrycondcheckstror(const char *vbuf, const TCLIST *tokens);
 static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays);
 static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz);
 static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz, const void *bsbuf, int bsbufsz);
-static bool _qryallcondsmatch(bool onlycount, int anum, EJCOLL *jcoll, EJQF **qfs, int qfsz,
+static bool _qryallcondsmatch(EJQ *ejq, int anum, EJCOLL *jcoll, EJQF **qfs, int qfsz,
         const void *pkbuf, int pkbufsz, void **bsbuf, int *bsbufsz);
 static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
@@ -1380,6 +1380,7 @@ static bool _qryormatch(EJCOLL *jcoll,
         }
         bsbufsz = lbsbufsz;
         bsbuf = nbsbuf;
+        TCFREE(cbuf);
     }
     if (ejq->lastmatchedorqf && _qrybsmatch(ejq->lastmatchedorqf, bsbuf, bsbufsz)) {
         rv = true;
@@ -1414,11 +1415,12 @@ finish:
 
 /** Caller must TCFREE(*bsbuf) if it return TRUE */
 static bool _qryallcondsmatch(
-        bool onlycount, int anum,
+        EJQ *ejq, int anum,
         EJCOLL *jcoll, EJQF **qfs, int qfsz,
         const void *pkbuf, int pkbufsz,
         void **bsbuf, int *bsbufsz) {
-    if (onlycount && anum < 1) {
+
+    if (!(ejq->flags & EJQUPDATING) && (ejq->flags & EJQONLYCOUNT) && anum < 1) {
         *bsbuf = NULL;
         *bsbufsz = 0;
         return true;
@@ -1709,7 +1711,7 @@ static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz)
 
 static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, TCLIST *didxctx, TCXSTR *log) {
     assert(ejq->flags & EJQUPDATING);
-    assert(didxctx);
+    assert(bsbuf && didxctx);
 
     bool rv = true;
     bool update = false;
@@ -1924,13 +1926,13 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     _qrydup(q, ejq, EJQINTERNAL);
 
     *outcount = 0;
-    bool onlycount = (qflags & JBQRYCOUNT); //quering only for result set count
+    if (qflags & JBQRYCOUNT) {
+        ejq->flags |= EJQONLYCOUNT;
+    };
     bool all = false; //need all records
-
     EJQF *mqf = NULL; //main indexed query condition if exists
     TCMAP *ifields = NULL; //field names included in result set
-
-    TCLIST *res = onlycount ? NULL : tclistnew2(4096);
+    TCLIST *res = (ejq->flags & EJQONLYCOUNT) ? NULL : tclistnew2(4096);
     _qrypreprocess(jcoll, ejq, qflags, &mqf, &ifields);
 
     int anum = 0; //number of active conditions
@@ -1982,7 +1984,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         }
         if (qf->orderseq) {
             ofsz++;
-            if (onlycount) {
+            if (ejq->flags & EJQONLYCOUNT) {
                 qf->flags |= EJFORDERUSED;
             }
         }
@@ -2006,7 +2008,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         for (int i = 0; i < ofsz; ++i) assert(ofs[i] != NULL);
     }
 
-    if (!onlycount && aofsz > 0 && (!midx || mqf->orderseq != 1)) { //Main index is not the main order field
+    if (!(ejq->flags & EJQONLYCOUNT) && aofsz > 0 && (!midx || mqf->orderseq != 1)) { //Main index is not the main order field
         all = true; //Need all records for ordering for some other fields
     }
 
@@ -2014,7 +2016,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         tcxstrprintf(log, "UPDATING MODE: %s\n", (ejq->flags & EJQUPDATING) ? "YES" : "NO");
         tcxstrprintf(log, "MAX: %u\n", max);
         tcxstrprintf(log, "SKIP: %u\n", skip);
-        tcxstrprintf(log, "COUNT ONLY: %s\n", onlycount ? "YES" : "NO");
+        tcxstrprintf(log, "COUNT ONLY: %s\n", (ejq->flags & EJQONLYCOUNT) ? "YES" : "NO");
         tcxstrprintf(log, "MAIN IDX: '%s'\n", midx ? midx->name : "NONE");
         tcxstrprintf(log, "ORDER FIELDS: %d\n", ofsz);
         tcxstrprintf(log, "ACTIVE CONDITIONS: %d\n", anum);
@@ -2034,12 +2036,12 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         tcxstrprintf(log, "MAIN IDX TCOP: %d\n", mqf->tcop);
     }
 
-#define JBQREGREC(_bsbuf, _bsbufsz)   \
+#define JBQREGREC(_pkbuf, _pkbufsz, _bsbuf, _bsbufsz)   \
     ++count; \
     if (ejq->flags & EJQUPDATING) { \
         _qryupdate(jcoll, ejq, (_bsbuf), (_bsbufsz), didxctx, log); \
     } \
-    if (!onlycount && (all || count > skip)) { \
+    if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) { \
         if (ifields) {\
             _pushstripbson(res, ifields, (_bsbuf), (_bsbufsz)); \
         } else { \
@@ -2064,13 +2066,13 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             do {
                 bson_oid_t oid;
                 bson_oid_from_string(&oid, mqf->expr);
-                void *cdata = tchdbget(jcoll->tdb->hdb, &oid, sizeof (oid), &bsbufsz);
-                if (!cdata) {
+                void *cbuf = tchdbget(jcoll->tdb->hdb, &oid, sizeof (oid), &bsbufsz);
+                if (!cbuf) {
                     break;
                 }
-                bsbuf = tcmaploadone(cdata, bsbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
+                bsbuf = tcmaploadone(cbuf, bsbufsz, JDBCOLBSON, JDBCOLBSONL, &bsbufsz);
                 if (!bsbuf) {
-                    TCFREE(cdata);
+                    TCFREE(cbuf);
                     break;
                 }
                 bool matched = true;
@@ -2084,11 +2086,11 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                     }
                 }
                 if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid), bsbuf, bsbufsz))) {
-                    JBQREGREC(bsbuf, bsbufsz);
+                    JBQREGREC(&oid, sizeof (oid), bsbuf, bsbufsz);
                 } else {
                     TCFREE(bsbuf);
                 }
-                TCFREE(cdata);
+                TCFREE(cbuf);
             } while (false);
         } else if (mqf->tcop == TDBQCSTROREQ) {
             TCLIST *tokens = mqf->exprlist;
@@ -2130,7 +2132,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                     }
                 }
                 if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid), bsbuf, bsbufsz))) {
-                    JBQREGREC(bsbuf, bsbufsz);
+                    JBQREGREC(&oid, sizeof (oid), bsbuf, bsbufsz);
                 } else {
                     TCFREE(bsbuf);
                 }
@@ -2149,8 +2151,8 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
             if (trim) kbufsz -= 3;
             vbuf = tcbdbcurval3(cur, &vbufsz);
-            if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz)) {
-                JBQREGREC(bsbuf, bsbufsz);
+            if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz)) {
+                JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
             }
             if (mqf->order >= 0) {
                 tcbdbcurnext(cur);
@@ -2169,9 +2171,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             if (trim) kbufsz -= 3;
             if (kbufsz == exprsz && !memcmp(kbuf, expr, exprsz)) {
                 vbuf = tcbdbcurval3(cur, &vbufsz);
-                if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                         (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                    JBQREGREC(bsbuf, bsbufsz);
+                    JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                 }
             } else {
                 break;
@@ -2189,9 +2191,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             if (trim) kbufsz -= 3;
             if (kbufsz >= exprsz && !memcmp(kbuf, expr, exprsz)) {
                 vbuf = tcbdbcurval3(cur, &vbufsz);
-                if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                         (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                    JBQREGREC(bsbuf, bsbufsz);
+                    JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                 }
             } else {
                 break;
@@ -2226,9 +2228,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (trim) kbufsz -= 3;
                 if (kbufsz >= tsiz && !memcmp(kbuf, token, tsiz)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
-                    if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                    if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                             (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                        JBQREGREC(bsbuf, bsbufsz);
+                        JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                     }
                 } else {
                     break;
@@ -2264,9 +2266,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (trim) kbufsz -= 3;
                 if (kbufsz == tsiz && !memcmp(kbuf, token, tsiz)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
-                    if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                    if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                             (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                        JBQREGREC(bsbuf, bsbufsz);
+                        JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                     }
                 } else {
                     break;
@@ -2286,9 +2288,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
             if (_nucmp(&num, kbuf, mqf->ftype) == 0) {
                 vbuf = tcbdbcurval3(cur, &vbufsz);
-                if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                         (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                    JBQREGREC(bsbuf, bsbufsz);
+                    JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                 }
             } else {
                 break;
@@ -2313,9 +2315,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (cmp < 0) break;
                 if (cmp > 0 || (mqf->tcop == TDBQCNUMGE && cmp >= 0)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
-                    if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                    if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                             (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                        JBQREGREC(bsbuf, bsbufsz);
+                        JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                     }
                 }
                 tcbdbcurprev(cur);
@@ -2328,9 +2330,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 int cmp = _nucmp2(&knum, &xnum, mqf->ftype);
                 if (cmp > 0 || (mqf->tcop == TDBQCNUMGE && cmp >= 0)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
-                    if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                    if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                             (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                        JBQREGREC(bsbuf, bsbufsz);
+                        JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                     }
                 }
                 tcbdbcurnext(cur);
@@ -2354,9 +2356,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (cmp > 0) break;
                 if (cmp < 0 || (cmp <= 0 && mqf->tcop == TDBQCNUMLE)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
-                    if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                    if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                             (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                        JBQREGREC(bsbuf, bsbufsz);
+                        JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                     }
                 }
                 tcbdbcurnext(cur);
@@ -2369,9 +2371,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 int cmp = _nucmp2(&knum, &xnum, mqf->ftype);
                 if (cmp < 0 || (cmp <= 0 && mqf->tcop == TDBQCNUMLE)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
-                    if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                    if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                             (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                        JBQREGREC(bsbuf, bsbufsz);
+                        JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                     }
                 }
                 tcbdbcurprev(cur);
@@ -2400,14 +2402,14 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
             if (tctdbatof(kbuf) > upper) break;
             vbuf = tcbdbcurval3(cur, &vbufsz);
-            if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+            if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                     (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                JBQREGREC(bsbuf, bsbufsz);
+                JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
             }
             tcbdbcurnext(cur);
         }
         tcbdbcurdel(cur);
-        if (!all && !onlycount && mqf->order < 0 && (mqf->flags & EJFORDERUSED)) { //DESC
+        if (!all && !(ejq->flags & EJQONLYCOUNT) && mqf->order < 0 && (mqf->flags & EJFORDERUSED)) { //DESC
             tclistinvert(res);
         }
     } else if (mqf->tcop == TDBQCNUMOREQ) { /* number is equal to at least one token in */
@@ -2437,9 +2439,9 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
                 if (tctdbatof(kbuf) == xnum) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
-                    if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
+                    if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz, &bsbuf, &bsbufsz) &&
                             (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz, bsbuf, bsbufsz))) {
-                        JBQREGREC(bsbuf, bsbufsz);
+                        JBQREGREC(vbuf, vbufsz, bsbuf, bsbufsz);
                     }
                 } else {
                     break;
@@ -2474,15 +2476,15 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         TCMAP *tres = tctdbidxgetbytokens(jcoll->tdb, midx, tokens, mqf->tcop, log);
         tcmapiterinit(tres);
         while ((all || count < max) && (kbuf = tcmapiternext(tres, &kbufsz)) != NULL) {
-            if (_qryallcondsmatch(onlycount, anum, jcoll, qfs, qfsz, kbuf, kbufsz, &bsbuf, &bsbufsz) &&
+            if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, kbuf, kbufsz, &bsbuf, &bsbufsz) &&
                     (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, kbuf, kbufsz, bsbuf, bsbufsz))) {
-                JBQREGREC(bsbuf, bsbufsz);
+                JBQREGREC(kbuf, kbufsz, bsbuf, bsbufsz);
             }
         }
         tcmapdel(tres);
     }
 
-    if (onlycount) {
+    if (ejq->flags & EJQONLYCOUNT) {
         goto finish;
     } else {
         goto sorting;
@@ -2524,12 +2526,12 @@ fullscan: /* Full scan */
         if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf), bsbuf, bsbufsz))) {
             if (updkeys) { //we are in updating mode
                 if (tcmapputkeep(updkeys, TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf), &yes, sizeof (yes))) {
-                    JBQREGREC(bsbuf, bsbufsz);
+                    JBQREGREC(TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf), bsbuf, bsbufsz);
                 } else {
                     TCFREE(bsbuf);
                 }
             } else {
-                JBQREGREC(bsbuf, bsbufsz);
+                JBQREGREC(TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf), bsbuf, bsbufsz);
             }
         } else {
             TCFREE(bsbuf);
@@ -2588,7 +2590,7 @@ finish:
     if (log) {
         tcxstrprintf(log, "RS COUNT: %d\n", count);
         tcxstrprintf(log, "RS SIZE: %d\n", (res ? TCLISTNUM(res) : 0));
-        tcxstrprintf(log, "FINAL SORTING: %s\n", (onlycount || aofsz <= 0) ? "NO" : "YES");
+        tcxstrprintf(log, "FINAL SORTING: %s\n", ((ejq->flags & EJQONLYCOUNT) || aofsz <= 0) ? "NO" : "YES");
     }
 
     //Apply deffered index changes
