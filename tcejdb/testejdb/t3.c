@@ -363,6 +363,37 @@ finish:
     CU_ASSERT_FALSE(err);
 }
 
+void testTransactions1() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "trans1", NULL);
+    bson bs;
+    bson_init(&bs);
+    bson_append_string(&bs, "foo", "bar");
+    bson_finish(&bs);
+
+    bson_oid_t oid;
+    CU_ASSERT_TRUE(ejdbtranbegin(coll));
+    ejdbsavebson(coll, &bs, &oid);
+    CU_ASSERT_TRUE(ejdbtrancommit(coll));
+
+    bson *bres = ejdbloadbson(coll, &oid);
+    CU_ASSERT_PTR_NOT_NULL(bres);
+    if (bres) {
+        bson_del(bres);
+    }
+
+    CU_ASSERT_TRUE(ejdbtranbegin(coll));
+    ejdbsavebson(coll, &bs, &oid);
+    CU_ASSERT_TRUE(ejdbtranabort(coll));
+
+    bres = ejdbloadbson(coll, &oid);
+    CU_ASSERT_PTR_NULL(bres);
+    if (bres) {
+        bson_del(bres);
+    }
+
+    bson_destroy(&bs);
+}
+
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
@@ -382,7 +413,8 @@ int main() {
     if (
             (NULL == CU_add_test(pSuite, "testPerf1", testPerf1)) ||
             (NULL == CU_add_test(pSuite, "testRace1", testRace1)) ||
-            (NULL == CU_add_test(pSuite, "testRace2", testRace2))
+            (NULL == CU_add_test(pSuite, "testRace2", testRace2)) ||
+            (NULL == CU_add_test(pSuite, "testTransactions1", testTransactions1))
 
             ) {
         CU_cleanup_registry();
