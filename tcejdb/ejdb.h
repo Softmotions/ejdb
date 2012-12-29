@@ -401,6 +401,9 @@ EJDB_EXPORT bool ejdbtrancommit(EJCOLL *coll);
 /** Abort transaction for EJDB collection. */
 EJDB_EXPORT bool ejdbtranabort(EJCOLL *coll);
 
+/** Get current transaction status, it will be placed into txActive*/
+EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive);
+
 EJDB_EXTERN_C_END
 
 #endif        /* EJDB_H */

@@ -790,6 +790,18 @@ EJDB_EXPORT bool ejdbtranabort(EJCOLL *jcoll) {
     return !err;
 }
 
+EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
+    assert(jcoll && txactive);
+    if (!JBISOPEN(jcoll->jb)) {
+        _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
+        return false;
+    }
+    if (!JBCLOCKMETHOD(jcoll, true)) return false;
+    *txactive = jcoll->tdb->tran;
+    JBCUNLOCKMETHOD(jcoll);
+    return true;
+}
+
 /*************************************************************************************************
  * private features
  *************************************************************************************************/

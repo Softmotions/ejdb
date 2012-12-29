@@ -496,7 +496,11 @@ namespace ejdb {
             cmdQuery = 4, //Query collection
             cmdRemoveColl = 5, //Remove collection
             cmdSetIndex = 6, //Set index
-            cmdSync = 7 //Sync database
+            cmdSync = 7, //Sync database
+            cmdTxBegin = 8, //Begin collection transaction
+            cmdTxAbort = 9, //Abort collection transaction
+            cmdTxCommit = 10, //Commit collection transaction
+            cmdTxStatus = 11 //Get collection transaction status
         };
 
         struct BSONCmdData { //Any bson related cmd data
@@ -519,7 +523,7 @@ namespace ejdb {
             }
         };
 
-        struct BSONQCmdData : public BSONCmdData { //query cmd data
+        struct BSONQCmdData : public BSONCmdData { //Query cmd data
             TCLIST *res;
             int qflags;
             uint32_t count;
@@ -540,7 +544,7 @@ namespace ejdb {
             }
         };
 
-        struct RMCollCmdData { //remove collection
+        struct RMCollCmdData { //Remove collection command data
             std::string cname; //Name of collection
             bool prune;
 
@@ -548,7 +552,7 @@ namespace ejdb {
             }
         };
 
-        struct SetIndexCmdData { //set index
+        struct SetIndexCmdData { //Set index command data
             std::string cname; //Name of collection
             std::string ipath; //JSON field path for index
             int flags; //set index op flags
@@ -558,11 +562,21 @@ namespace ejdb {
             }
         };
 
-        typedef EIOCmdTask<NodeEJDB> EJBTask;
-        typedef EIOCmdTask<NodeEJDB, BSONCmdData> BSONCmdTask;
-        typedef EIOCmdTask<NodeEJDB, BSONQCmdData> BSONQCmdTask;
-        typedef EIOCmdTask<NodeEJDB, RMCollCmdData> RMCollCmdTask;
-        typedef EIOCmdTask<NodeEJDB, SetIndexCmdData> SetIndexCmdTask;
+        struct TxCmdData { //Transaction control command data
+            std::string cname; //Name of collection
+            bool txactive; //If true we are in transaction
+
+            TxCmdData(const char *_name) : cname(_name), txactive(false) {
+
+            }
+        };
+
+        typedef EIOCmdTask<NodeEJDB> EJBTask; //Most generic task
+        typedef EIOCmdTask<NodeEJDB, BSONCmdData> BSONCmdTask; //Any bson related task
+        typedef EIOCmdTask<NodeEJDB, BSONQCmdData> BSONQCmdTask; //Query task
+        typedef EIOCmdTask<NodeEJDB, RMCollCmdData> RMCollCmdTask; //Remove collection
+        typedef EIOCmdTask<NodeEJDB, SetIndexCmdData> SetIndexCmdTask; //Set index command
+        typedef EIOCmdTask<NodeEJDB, TxCmdData> TxCmdTask; //Transaction control command
 
         static Persistent<FunctionTemplate> constructor_template;
 
@@ -876,6 +890,44 @@ namespace ejdb {
             return scope.Close(ret);
         }
 
+        //transaction control handlers
+
+        static Handle<Value> s_coll_txctl(const Arguments& args) {
+            HandleScope scope;
+            REQ_STR_ARG(0, cname);
+            //operation values:
+            //cmdTxBegin = 8, //Begin collection transaction
+            //cmdTxAbort = 9, //Abort collection transaction
+            //cmdTxCommit = 10, //Commit collection transaction
+            //cmdTxStatus = 11 //Get collection transaction status
+            REQ_INT32_ARG(1, op);
+            //Arg 2 is the optional function callback arg
+            if (!(op == cmdTxBegin ||
+                    op == cmdTxAbort ||
+                    op == cmdTxCommit ||
+                    op == cmdTxStatus)) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Invalid value of 1 argument"))));
+            }
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            assert(njb);
+            EJDB *jb = njb->m_jb;
+            if (!ejdbisopen(jb)) {
+                return scope.Close(ThrowException(Exception::Error(String::New("Operation on closed EJDB instance"))));
+            }
+            TxCmdData *cmdata = new TxCmdData(*cname);
+            Local<Function> cb;
+            if (args[2]->IsFunction()) {
+                cb = Local<Function>::Cast(args[2]);
+                TxCmdTask *task = new TxCmdTask(cb, njb, op, cmdata, TxCmdTask::delete_val);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                return scope.Close(Undefined());
+            } else {
+                TxCmdTask task(cb, njb, op, cmdata, NULL);
+                njb->txctl(&task);
+                return scope.Close(njb->txctl_after(&task));
+            }
+        }
+
         static Handle<Value> s_ecode(const Arguments& args) {
             HandleScope scope;
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
@@ -956,6 +1008,12 @@ namespace ejdb {
                 case cmdSync:
                     sync(task);
                     break;
+                case cmdTxBegin:
+                case cmdTxCommit:
+                case cmdTxAbort:
+                case cmdTxStatus:
+                    txctl((TxCmdTask*) task);
+                    break;
                 default:
                     assert(0);
             }
@@ -984,6 +1042,12 @@ namespace ejdb {
                     break;
                 case cmdSync:
                     sync_after(task);
+                    break;
+                case cmdTxBegin:
+                case cmdTxCommit:
+                case cmdTxAbort:
+                case cmdTxStatus:
+                    txctl_after((TxCmdTask*) task);
                     break;
                 default:
                     assert(0);
@@ -1116,6 +1180,76 @@ namespace ejdb {
             } else {
                 TryCatch try_catch;
                 task->cb->Call(Context::GetCurrent()->Global(), 1, argv);
+                if (try_catch.HasCaught()) {
+                    FatalException(try_catch);
+                }
+                return scope.Close(Undefined());
+            }
+        }
+
+        void txctl(TxCmdTask *task) {
+            if (!_check_state((EJBTask*) task)) {
+                return;
+            }
+            TxCmdData *cmdata = task->cmd_data;
+            assert(cmdata);
+
+            EJCOLL *coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
+            if (!coll) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+                return;
+            }
+            bool ret = false;
+            switch (task->cmd) {
+                case cmdTxBegin:
+                    ret = ejdbtranbegin(coll);
+                    break;
+                case cmdTxCommit:
+                    ret = ejdbtrancommit(coll);
+                    break;
+                case cmdTxAbort:
+                    ret = ejdbtranabort(coll);
+                    break;
+                case cmdTxStatus:
+                    ret = ejdbtranstatus(coll, &(cmdata->txactive));
+                    break;
+                default:
+                    assert(0);
+            }
+            if (!ret) {
+                task->cmd_ret = CMD_RET_ERROR;
+                task->cmd_ret_msg = _jb_error_msg();
+            }
+        }
+
+        Handle<Value> txctl_after(TxCmdTask *task) {
+            HandleScope scope;
+            TxCmdData *cmdata = task->cmd_data;
+            int args = 1;
+            Local<Value> argv[2];
+            if (task->cmd_ret != 0) {
+                argv[0] = Exception::Error(String::New(task->cmd_ret_msg.c_str()));
+            } else {
+                argv[0] = Local<Primitive>::New(Null());
+                if (task->cmd == cmdTxStatus) {
+                    argv[1] = Local<Boolean>::New(Boolean::New(cmdata->txactive));
+                    args = 2;
+                }
+            }
+            if (task->cb.IsEmpty() || task->cb->IsNull() || task->cb->IsUndefined()) {
+                if (task->cmd_ret != 0) {
+                    return scope.Close(ThrowException(argv[0]));
+                } else {
+                    if (task->cmd == cmdTxStatus) {
+                        return scope.Close(argv[1]);
+                    } else {
+                        return scope.Close(Undefined());
+                    }
+                }
+            } else {
+                TryCatch try_catch;
+                task->cb->Call(Context::GetCurrent()->Global(), args, argv);
                 if (try_catch.HasCaught()) {
                     FatalException(try_catch);
                 }
@@ -1381,6 +1515,7 @@ finish:
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "setIndex", s_set_index);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "sync", s_sync);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "dbMeta", s_db_meta);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "_txctl", s_coll_txctl);
 
             //Symbols
             target->Set(String::NewSymbol("NodeEJDB"), constructor_template->GetFunction());
@@ -1558,7 +1693,7 @@ finish:
                 tclistdel(m_rs);
                 m_rs = NULL;
             }
-            V8::AdjustAmountOfExternalAllocatedMemory(-m_mem + sizeof(NodeEJDBCursor));
+            V8::AdjustAmountOfExternalAllocatedMemory(-m_mem + sizeof (NodeEJDBCursor));
         }
 
         NodeEJDBCursor(NodeEJDB *_nejedb, TCLIST *_rs) : m_nejdb(_nejedb), m_rs(_rs), m_pos(0), m_no_next(true) {
@@ -1580,7 +1715,7 @@ finish:
 
         virtual ~NodeEJDBCursor() {
             close();
-            V8::AdjustAmountOfExternalAllocatedMemory(-sizeof(NodeEJDBCursor));
+            V8::AdjustAmountOfExternalAllocatedMemory(-sizeof (NodeEJDBCursor));
         }
 
     public:
