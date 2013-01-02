@@ -294,6 +294,10 @@ function parseQueryArgs(args) {
  *
  *      $set Field set operation.
  *          - {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
+ *      $upsert Atomic upsert. If matching records are found it will be '$set' operation,
+ *              otherwise new record will be inserted
+ *              with fields specified by argment object.
+ *          - {.., '$upsert' : {'field1' : val1, 'fieldN' : valN}}
  *      $inc Increment operation. Only number types are supported.
  *          - {.., '$inc' : {'field1' : number, ...,  'field1' : number}
  *      $dropall In-place record removal operation.
@@ -681,13 +685,55 @@ EJDB.prototype.dropArrayIndex = function(cname, path, cb) {
     return this._impl.setIndex(cname, path, ejdblib.JBIDXARR | ejdblib.JBIDXDROP, cb);
 };
 
-
 /**
  * Get description of EJDB database and its collections.
  */
 EJDB.prototype.getDBMeta = function() {
     return this._impl.dbMeta();
 };
+
+/**
+ * Begin collection transaction.
+ * If callback is not provided this function will be synchronous.
+ * @param {String} cname Name of collection
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.beginTransaction = function(cname, cb) {
+    return this._impl._txctl(cname, 8/*cmdTxBegin*/, cb);
+};
+
+/**
+ * Commit collection transaction.
+ * If callback is not provided this function will be synchronous.
+ * @param {String} cname Name of collection
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.commitTransaction = function(cname, cb) {
+    return this._impl._txctl(cname, 10/*cmdTxCommit*/, cb);
+};
+
+/**
+ * Abort collection transaction.
+ * If callback is not provided this function will be synchronous.
+ * @param {String} cname Name of collection
+ * @param {Function} [cb] Optional callback function. Callback args: (error)
+ */
+EJDB.prototype.rollbackTransaction = function(cname, cb) {
+    return this._impl._txctl(cname, 9/*cmdTxAbort*/, cb);
+};
+
+/**
+ * Get collection transaction status.
+ * If callback is not provided this function will be synchronous.
+ * @param {String} cname Name of collection
+ * @param {Function} [cb] Optional callback function. Callback args: (error, isTxActive)
+ * @return If no callback provided it will return {true} if transaction active otherwise {false}
+ *         or {undefined} if callback presented.
+ */
+EJDB.prototype.getTransactionStatus = function(cname, cb) {
+    return this._impl._txctl(cname, 11/*cmdTxStatus*/, cb);
+};
+
 
 module.exports = EJDB;
 

@@ -298,6 +298,9 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
 
         $set Field set operation.
             - {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
+        $upsert Atomic upsert. If matching records are found it will be '$set' operation,
+                otherwise new record will be inserted with fields specified by argment object.
+           - {.., '$upsert' : {'field1' : val1, 'fieldN' : valN}}
         $inc Increment operation. Only number types are supported.
             - {.., '$inc' : {'field1' : number, ...,  'field1' : number}
         $dropall In-place record removal operation.
@@ -407,6 +410,9 @@ Convenient method to execute update queries.
 
  * `$set` Field set operation:
     - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
+ * `$upsert` Atomic upsert. If matching records are found it will be '$set' operation,
+ otherwise new record will be inserted with fields specified by argment object.
+    - {.., '$upsert' : {'field1' : val1, 'fieldN' : valN}}
  * `$inc` Increment operation. Only number types are supported.
     - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
  * `$dropall` In-place record removal operation.
@@ -712,6 +718,9 @@ Queries
  *  - Queries can be used to update records:
  *       $set Field set operation.
  *           - {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
+ *       $upsert Atomic upsert. If matching records are found it will be '$set' operation,
+ *              otherwise new record will be inserted with fields specified by argment object.
+ *           - {.., '$upsert' : {'field1' : val1, 'fieldN' : valN}}
  *       $inc Increment operation. Only number types are supported.
  *           - {.., '$inc' : {'field1' : number, ...,  'field1' : number}
  *       $dropall In-place record removal operation.

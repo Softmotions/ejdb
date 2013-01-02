@@ -3685,6 +3685,83 @@ void testTicket16() {
     CU_ASSERT_EQUAL(coll->tdb->inum, 0);
 }
 
+void test$upsert() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "abcd", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "cde", "fgh"); //sel condition
+    bson_append_start_object(&bsq1, "$upsert");
+    bson_append_string(&bsq1, "cde", "fgh");
+    bson_append_string(&bsq1, "ijk", "lmnp");
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(count, 1);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        bson_iterator it;
+        CU_ASSERT_TRUE(bson_find_from_buffer(&it, TCLISTVALPTR(q1res, i), "_id") == BSON_OID);
+        CU_ASSERT_FALSE(bson_compare_string("fgh", TCLISTVALPTR(q1res, i), "cde"));
+        CU_ASSERT_FALSE(bson_compare_string("lmnp", TCLISTVALPTR(q1res, i), "ijk"));
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "cde", "fgh"); //sel condition
+    bson_append_start_object(&bsq1, "$upsert");
+    bson_append_string(&bsq1, "cde", "fgh");
+    bson_append_string(&bsq1, "ijk", "lmnp+");
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    log = tcxstrnew();
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(count, 1);
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "cde", "fgh");
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    log = tcxstrnew();
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(count, 1);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_string("fgh", TCLISTVALPTR(q1res, i), "cde"));
+        CU_ASSERT_FALSE(bson_compare_string("lmnp+", TCLISTVALPTR(q1res, i), "ijk"));
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -3746,7 +3823,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "test$pull", test$pull)) ||
             (NULL == CU_add_test(pSuite, "testFindInComplexArray", testFindInComplexArray)) ||
             (NULL == CU_add_test(pSuite, "test$elemMatch", test$elemMatch)) ||
-            (NULL == CU_add_test(pSuite, "testTicket16", testTicket16))
+            (NULL == CU_add_test(pSuite, "testTicket16", testTicket16)) ||
+            (NULL == CU_add_test(pSuite, "test$upsert", test$upsert))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

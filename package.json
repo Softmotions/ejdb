@@ -1,6 +1,6 @@
 {
     "name" : "ejdb",
-    "version" : "1.0.37",
+    "version" : "1.0.38",
     "main" : "node/ejdb.js",
     "homepage" : "http://ejdb.org",
     "description" : "EJDB - Embedded JSON Database engine",
@@ -16,6 +16,9 @@
     "repository" : {
         "type" : "git",
         "url" : "https://github.com/Softmotions/ejdb.git"
+    },
+    "bugs" : {
+        "web" : "https://github.com/Softmotions/ejdb/issues"
     },
     "os" : [
         "linux",
@@ -40,6 +43,12 @@
         "name" : "Anton Adamansky",
         "email" : "adamansky@gmail.com"
     },
+    "licenses" : [
+        {
+            "type" : "LGPL",
+            "url" : "https://github.com/Softmotions/ejdb/blob/master/LICENSE"
+        }
+    ],
     "contributors" : [
         "Mikio Hirabayashi <mikio@fallabs.com> (http://fallabs.com/mikio/)"
     ]

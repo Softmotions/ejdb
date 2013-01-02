@@ -79,6 +79,7 @@ static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB*
 static bool _addcoldb0(const char *colname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res);
 static void _delcoldb(EJCOLL *cdb);
 static void _delqfdata(const EJQ *q, const EJQF *ejqf);
+static bool _ejdbsavebsonimpl(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge);
 static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         const void *obsdata, int obsdatasz, TCLIST *dlist);
 static bool _metasetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
@@ -101,7 +102,7 @@ static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz)
 static bool _qryallcondsmatch(EJQ *ejq, int anum, EJCOLL *jcoll, EJQF **qfs, int qfsz, const void *pkbuf, int pkbufsz);
 static void _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
-static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz);
+static void _pushstripbson(TCLIST *rs, TCMAP *ifields, const void *bsbuf, int bsbufsz);
 static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
@@ -348,61 +349,8 @@ EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool me
         return false;
     }
     if (!JBCLOCKMETHOD(jcoll, true)) return false;
-    bool rv = false;
-    bson *nbs = NULL;
-    bson_type oidt = _bsonoidkey(bs, oid);
-    if (oidt == BSON_EOO) { //missing _id so generate a new _id
-        bson_oid_gen(oid);
-        nbs = bson_create();
-        bson_init_size(nbs, bson_size(bs) + (strlen(JDBIDKEYNAME) + 1/*key*/ + 1/*type*/ + sizeof (*oid)));
-        bson_append_oid(nbs, JDBIDKEYNAME, oid);
-        bson_ensure_space(nbs, bson_size(bs) - 4);
-        bson_append(nbs, bson_data(bs) + 4, bson_size(bs) - (4 + 1/*BSON_EOO*/));
-        bson_finish(nbs);
-        assert(!nbs->err);
-        bs = nbs;
-    } else if (oidt != BSON_OID) { //_oid presented by it is not BSON_OID
-        _ejdbsetecode(jcoll->jb, JBEINVALIDBSONPK, __FILE__, __LINE__, __func__);
-        return false;
-    }
-    TCTDB *tdb = jcoll->tdb;
-    TCMAP *rowm = (tdb->hdb->rnum > 0) ? tctdbget(tdb, oid, sizeof (*oid)) : NULL;
-    char *obsdata = NULL; //Old bson
-    int obsdatasz = 0;
-    if (rowm) { //Save the copy of old bson data
-        const void *obs = tcmapget(rowm, JDBCOLBSON, JDBCOLBSONL, &obsdatasz);
-        if (obs && obsdatasz > 0) {
-            TCMALLOC(obsdata, obsdatasz);
-            memmove(obsdata, obs, obsdatasz);
-        }
-    } else {
-        rowm = tcmapnew2(TCMAPTINYBNUM);
-    }
-    if (merge && !nbs && obsdata) {
-        nbs = bson_create();
-        bson_init_size(nbs, MAX(obsdatasz, bson_size(bs)));
-        bson_merge2(obsdata, bson_data(bs), true, nbs);
-        bson_finish(nbs);
-        assert(!nbs->err);
-        bs = nbs;
-    }
-    tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(bs), bson_size(bs));
-    if (!tctdbput(tdb, oid, sizeof (*oid), rowm)) {
-        goto finish;
-    }
-    //Update indexes
-    rv = _updatebsonidx(jcoll, oid, bs, obsdata, obsdatasz, NULL);
-finish:
+    bool rv = _ejdbsavebsonimpl(jcoll, bs, oid, merge);
     JBCUNLOCKMETHOD(jcoll);
-    if (rowm) {
-        tcmapdel(rowm);
-    }
-    if (obsdata) {
-        TCFREE(obsdata);
-    }
-    if (nbs) {
-        bson_del(nbs);
-    }
     return rv;
 }
 
@@ -1649,7 +1597,7 @@ static bson_visitor_cmd_t _bsonstripvisitor(const char *ipath, int ipathlen, con
 }
 
 /* push bson into rs with only fields listed in ifields */
-static void _pushstripbson(TCLIST *rs, TCMAP *ifields, void *bsbuf, int bsbufsz) {
+static void _pushstripbson(TCLIST *rs, TCMAP *ifields, const void *bsbuf, int bsbufsz) {
     if (!ifields || TCMAPRNUM(ifields) <= 0) {
         tclistpush(rs, bsbuf, bsbufsz);
         return;
@@ -2533,6 +2481,40 @@ wfinish:
         tcmapdel(updkeys);
     }
 
+    //$upsert operation
+    if (count == 0 && (ejq->flags & EJQUPDATING)) { //finding $upsert qf if no updates maden
+        for (int i = 0; i < qfsz; ++i) {
+            if (qfs[i]->flags & EJCONDUPSERT) {
+                bson *updateobj = qfs[i]->updateobj;
+                assert(updateobj);
+                bson_oid_t oid;
+                if (_ejdbsavebsonimpl(jcoll, updateobj, &oid, false)) {
+                    bson *nbs = bson_create();
+                    bson_init_size(nbs, bson_size(updateobj) + (strlen(JDBIDKEYNAME) + 1/*key*/ + 1/*type*/ + sizeof (oid)));
+                    bson_append_oid(nbs, JDBIDKEYNAME, &oid);
+                    bson_ensure_space(nbs, bson_size(updateobj) - 4);
+                    bson_append(nbs, bson_data(updateobj) + 4, bson_size(updateobj) - (4 + 1/*BSON_EOO*/));
+                    bson_finish(nbs);
+                    if (nbs->err) {
+                        _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+                        break;
+                    }
+                    ++count;
+                    if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) {
+                        if (ifields) {
+                            _pushstripbson(res, ifields, bson_data(nbs), bson_size(nbs));
+                        } else {
+                            tclistpush(res, bson_data(nbs), bson_size(nbs));
+                        }
+                    }
+                    bson_del(nbs);
+                }
+                break;
+            }
+        }
+    } //EOF $upsert
+
+
 sorting: /* Sorting resultset */
     if (!res || aofsz <= 0) { //No sorting needed
         goto finish;
@@ -3063,6 +3045,64 @@ static void _delqfdata(const EJQ *q, const EJQF *qf) {
     }
 }
 
+static bool _ejdbsavebsonimpl(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge) {
+    bool rv = false;
+    bson *nbs = NULL;
+    bson_type oidt = _bsonoidkey(bs, oid);
+    if (oidt == BSON_EOO) { //missing _id so generate a new _id
+        bson_oid_gen(oid);
+        nbs = bson_create();
+        bson_init_size(nbs, bson_size(bs) + (strlen(JDBIDKEYNAME) + 1/*key*/ + 1/*type*/ + sizeof (*oid)));
+        bson_append_oid(nbs, JDBIDKEYNAME, oid);
+        bson_ensure_space(nbs, bson_size(bs) - 4);
+        bson_append(nbs, bson_data(bs) + 4, bson_size(bs) - (4 + 1/*BSON_EOO*/));
+        bson_finish(nbs);
+        assert(!nbs->err);
+        bs = nbs;
+    } else if (oidt != BSON_OID) { //_oid presented by it is not BSON_OID
+        _ejdbsetecode(jcoll->jb, JBEINVALIDBSONPK, __FILE__, __LINE__, __func__);
+        return false;
+    }
+    TCTDB *tdb = jcoll->tdb;
+    TCMAP *rowm = (tdb->hdb->rnum > 0) ? tctdbget(tdb, oid, sizeof (*oid)) : NULL;
+    char *obsdata = NULL; //Old bson
+    int obsdatasz = 0;
+    if (rowm) { //Save the copy of old bson data
+        const void *obs = tcmapget(rowm, JDBCOLBSON, JDBCOLBSONL, &obsdatasz);
+        if (obs && obsdatasz > 0) {
+            TCMALLOC(obsdata, obsdatasz);
+            memmove(obsdata, obs, obsdatasz);
+        }
+    } else {
+        rowm = tcmapnew2(TCMAPTINYBNUM);
+    }
+    if (merge && !nbs && obsdata) {
+        nbs = bson_create();
+        bson_init_size(nbs, MAX(obsdatasz, bson_size(bs)));
+        bson_merge2(obsdata, bson_data(bs), true, nbs);
+        bson_finish(nbs);
+        assert(!nbs->err);
+        bs = nbs;
+    }
+    tcmapput(rowm, JDBCOLBSON, JDBCOLBSONL, bson_data(bs), bson_size(bs));
+    if (!tctdbput(tdb, oid, sizeof (*oid), rowm)) {
+        goto finish;
+    }
+    //Update indexes
+    rv = _updatebsonidx(jcoll, oid, bs, obsdata, obsdatasz, NULL);
+finish:
+    if (rowm) {
+        tcmapdel(rowm);
+    }
+    if (obsdata) {
+        TCFREE(obsdata);
+    }
+    if (nbs) {
+        bson_del(nbs);
+    }
+    return rv;
+}
+
 /**
  * Copy BSON array into new TCLIST. TCLIST must be freed by 'tclistdel'.
  * @param it BSON iterator
@@ -3153,6 +3193,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     !strcmp("$inc", fkey) ||
                     !strcmp("$dropall", fkey) ||
                     !strcmp("$addToSet", fkey) ||
+                    !strcmp("$upsert", fkey) ||
                     !strcmp("$pull", fkey)) {
                 if (pqf) { //Top level ops
                     ret = JBEQERROR;
@@ -3259,6 +3300,9 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                             qf.flags |= EJCONDADDSET;
                         } else if (!strcmp("$pull", fkey)) {
                             qf.flags |= EJCONDPULL;
+                        } else if (!strcmp("$upsert", fkey)) {
+                            qf.flags |= EJCONDSET;
+                            qf.flags |= EJCONDUPSERT;
                         }
                     }
                     if ((qf.flags & (EJCONDSET | EJCONDINC | EJCONDADDSET | EJCONDPULL))) {

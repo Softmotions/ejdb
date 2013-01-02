@@ -378,6 +378,50 @@ module.exports.testRemoveColls = function(test) {
     });
 };
 
+
+module.exports.testTx1 = function(test) {
+    test.ok(jb);
+    test.ok(jb.isOpen());
+    var obj = {
+        foo : "bar"
+    };
+    test.ok(jb.getTransactionStatus("bars") === false);
+    jb.beginTransaction("bars", function(err) {
+        test.ifError(err);
+        jb.save("bars", obj);
+        var id = obj["_id"];
+        test.ok(id);
+        obj = jb.load("bars", obj["_id"]);
+        test.ok(obj);
+        test.ok(jb.getTransactionStatus("bars") === true);
+        jb.rollbackTransaction("bars");
+        test.ok(jb.getTransactionStatus("bars") === false);
+        obj = jb.load("bars", obj["_id"]);
+        test.ok(obj == null);
+        jb.beginTransaction("bars", function(err) {
+            test.ifError(err);
+            test.ok(jb.getTransactionStatus("bars") === true);
+            test.ok(jb.load("bars", id) == null);
+            obj = {
+                foo : "bar"
+            };
+            jb.save("bars", obj);
+            id = obj["_id"];
+            test.ok(id);
+            test.ok(jb.load("bars", id));
+            jb.commitTransaction("bars", function(err) {
+                test.ifError(err);
+                jb.getTransactionStatus("bars", function(err, status) {
+                    test.ifError(err);
+                    test.ok(status === false);
+                    test.ok(jb.load("bars", id));
+                    test.done();
+                });
+            });
+        });
+    });
+};
+
 module.exports.testClose = function(test) {
     test.ok(jb);
     jb.close();

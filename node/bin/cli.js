@@ -95,6 +95,18 @@ Object.defineProperty(EJDB.prototype.dropArrayIndex, "_help_",
 Object.defineProperty(EJDB.prototype.getDBMeta, "_help_",
         {value : "Get description of EJDB database and its collections"});
 
+Object.defineProperty(EJDB.prototype.beginTransaction, "_help_",
+        {value : "Begin collection transaction"});
+
+Object.defineProperty(EJDB.prototype.commitTransaction, "_help_",
+        {value : "Commit collection transaction"});
+
+Object.defineProperty(EJDB.prototype.rollbackTransaction, "_help_",
+        {value : "Rollback collection transaction"});
+
+Object.defineProperty(EJDB.prototype.getTransactionStatus, "_help_",
+        {value : "Get collection transaction status"});
+
 repl = require("repl").start({
     prompt : "ejdb> ",
     input : process.stdin,

@@ -17,6 +17,8 @@
         <in>tctest.c</in>
         <in>tdbtest.c</in>
       </df>
+      <df name="deb">
+      </df>
       <df name="doc">
       </df>
       <df name="lab">
@@ -159,16 +161,10 @@
       </item>
       <item path="bson.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="ejdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="encoding.c" ex="false" tool="0" flavor2="2">
@@ -201,8 +197,6 @@
           </preprocessorList>
         </cTool>
       </item>
-      <item path="md5.h" ex="true" tool="3" flavor2="0">
-      </item>
       <item path="myconf.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
@@ -225,160 +219,90 @@
       </item>
       <item path="tcadb.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
-      </item>
-      <item path="tcadb.h" ex="true" tool="3" flavor2="0">
       </item>
       <item path="tcamgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcamttest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcatest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcawmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcbdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcbmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcbmttest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcbtest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcfdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
-      </item>
-      <item path="tcfdb.h" ex="true" tool="3" flavor2="0">
       </item>
       <item path="tcfmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcfmttest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcftest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tchdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tchmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tchmttest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tchtest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tctdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tctmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tctmttest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcttest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcucodec.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcumttest.c" ex="false" tool="0" flavor2="2">
@@ -391,16 +315,10 @@
       </item>
       <item path="tcutest.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="tcutil.c" ex="false" tool="0" flavor2="2">
         <cTool>
-          <preprocessorList>
-            <Elem>_MYNOBZIP</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="testejdb/t1.c" ex="false" tool="0" flavor2="2">
@@ -414,8 +332,6 @@
       <item path="testejdb/t3.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
-      </item>
-      <item path="timsort-impl.h" ex="true" tool="3" flavor2="0">
       </item>
       <item path="timsort.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -431,8 +347,6 @@
             <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
-      </item>
-      <item path="utf8proc.h" ex="true" tool="3" flavor2="0">
       </item>
       <item path="utf8proc_data.c" ex="false" tool="0" flavor2="2">
         <cTool>

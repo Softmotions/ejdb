@@ -258,12 +258,16 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *
  *      $set Field set operation.
  *          - {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
+ *      $upsert Atomic upsert. If matching records are found it will be '$set' operation,
+ *              otherwise new record will be inserted
+ *              with fields specified by argment object.
+ *          - {.., '$upsert' : {'field1' : val1, 'fieldN' : valN}}
  *      $inc Increment operation. Only number types are supported.
  *          - {.., '$inc' : {'field1' : number, ...,  'field1' : number}
  *      $dropall In-place record removal operation.
  *          - {.., '$dropall' : true}
  *      $addToSet Atomically adds value to the array only if its not in the array already.
- *                  If containing array is missing it will be created.
+ *                If containing array is missing it will be created.
  *          - {.., '$addToSet' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
  *      $pull  Atomically removes all occurrences of value from field, if field is an array.
  *          - {.., '$pull' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
