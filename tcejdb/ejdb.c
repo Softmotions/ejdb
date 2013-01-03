@@ -2481,7 +2481,19 @@ wfinish:
         tcmapdel(updkeys);
     }
 
-    //$upsert operation
+sorting: /* Sorting resultset */
+    if (!res || aofsz <= 0) { //No sorting needed
+        goto finish;
+    }
+    _EJBSORTCTX sctx; //sorting context
+    sctx.ofs = ofs;
+    sctx.ofsz = ofsz;
+    if (ejdbtimsortlist(res, _ejdbsoncmp, &sctx)) {
+        _ejdbsetecode(jcoll->jb, JBEQRSSORTING, __FILE__, __LINE__, __func__);
+    }
+
+finish:
+    //check $upsert operation
     if (count == 0 && (ejq->flags & EJQUPDATING)) { //finding $upsert qf if no updates maden
         for (int i = 0; i < qfsz; ++i) {
             if (qfs[i]->flags & EJCONDUPSERT) {
@@ -2514,18 +2526,6 @@ wfinish:
         }
     } //EOF $upsert
 
-
-sorting: /* Sorting resultset */
-    if (!res || aofsz <= 0) { //No sorting needed
-        goto finish;
-    }
-    _EJBSORTCTX sctx; //sorting context
-    sctx.ofs = ofs;
-    sctx.ofsz = ofsz;
-    if (ejdbtimsortlist(res, _ejdbsoncmp, &sctx)) {
-        _ejdbsetecode(jcoll->jb, JBEQRSSORTING, __FILE__, __LINE__, __func__);
-    }
-finish:
     //revert max
     if (max < UINT_MAX && max > skip) {
         max = max - skip;
