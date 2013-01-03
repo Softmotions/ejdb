@@ -773,7 +773,7 @@ You can find some code samples in:
 * [tcejdb/testejdb](https://github.com/Softmotions/ejdb/tree/master/tcejdb/testejdb)
 
 Basic EJDB architecture
--------------------------------
+------------------------------------
 **EJDB database files structure**
 
 ~~~~~~
@@ -799,4 +799,8 @@ Limitations/TODOs
 ------------------------------------
 * Collect collection index statistic
 * Windows port
+
+Related software
+------------------------------------
+[Connect session store backed by EJDB database](https://github.com/Softmotions/connect-session-ejdb)
 
