@@ -5,22 +5,43 @@ const maxInspectRows = 10;
 const maxInspectDepth = 10;
 var useColors = true;
 var quiet = false;
+var cmd = null;
+var pkg = require("../../package.json");
+
 
 //Parse aguments
 (function() {
     var args = process.argv;
     for (var i = 2; i < args.length; ++i) {
         var a = args[i];
-        if (["--no-colors", "-nc"].indexOf(a) != -1) {
+        if (["--help", "-h"].indexOf(a) !== -1) {
+            help();
+        } else if (["--no-colors", "-n"].indexOf(a) !== -1) {
             useColors = false;
-        } else if (["--quiet", "-q"].indexOf(a) != -1) {
+        } else if (["--quiet", "-q"].indexOf(a) !== -1) {
             quiet = true;
+        } else if (["--cmd", "-c"].indexOf(a) !== -1) {
+            cmd = a;
+        } else if (i === args.length - 1) { //last arg
+            cmd = "db.open('" + a + "')";  //todo review
         }
     }
 })();
 
+function help() {
+    var h = [];
+    h.push("EJDB CLI v" + pkg.version);
+    h.push("usage: ejdb [options] [dbfile]");
+    h.push("options:");
+    h.push("\t-h --help\tshow this help tip");
+    h.push("\t-n --no-colors\tdo not use colored output");
+    h.push("\t-q --quiet\trun in quiet output mode");
+    h.push("\t-c --cmd\trun specified javascript command");
+    console.error(h.join("\n"));
+    process.exit(0);
+}
+
 if (!quiet) {
-    var pkg = require("../../package.json");
     console.log("Welcome to EJDB CLI v" + pkg.version);
 }
 
@@ -208,3 +229,8 @@ function error(msg) {
 }
 
 syncdbctx();
+
+
+if (cmd) {
+    repl.rli.write(cmd + "\n");
+}
