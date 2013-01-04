@@ -1,4 +1,7 @@
-EJDB - Embedded JSON Database engine
+![EJDB](https://raw.github.com/Softmotions/ejdb/master/misc/ejdblogo3.png)
+
+
+Embedded JSON Database engine
 ====================================
 
 It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++ and [NodeJS](http://nodejs.org/) applications under terms of LGPL license.**
