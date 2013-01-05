@@ -421,7 +421,7 @@ Convenient method to execute update queries.
  * `$dropall` In-place record removal operation.
     - {some fields for selection, '$dropall' : true}
  * `$addToSet` Atomically adds value to the array only if its not in the array already.
-               If containing array is missing it will be created.
+ If containing array is missing it will be created.
     - {.., '$addToSet' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
  * `$pull` Atomically removes all occurrences of value from field, if field is an array.
     - {.., '$pull' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
