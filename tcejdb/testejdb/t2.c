@@ -3762,6 +3762,53 @@ void test$upsert() {
     ejdbquerydel(q1);
 }
 
+void testPrimitiveCases1() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "abcd", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+    CU_ASSERT_EQUAL(count, 1);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(count, 1);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "SIMPLE COUNT(*): 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 0"));
+
+    bson_destroy(&bsq1);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //$dropall on whole collection
+    bson_init_as_query(&bsq1);
+    bson_append_bool(&bsq1, "$dropall", true);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    count = 0;
+    log = tcxstrnew();
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+    CU_ASSERT_EQUAL(count, 1);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL(count, 1);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "VANISH WHOLE COLLECTION ON $dropall"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 0"));
+
+    bson_destroy(&bsq1);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -3824,7 +3871,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testFindInComplexArray", testFindInComplexArray)) ||
             (NULL == CU_add_test(pSuite, "test$elemMatch", test$elemMatch)) ||
             (NULL == CU_add_test(pSuite, "testTicket16", testTicket16)) ||
-            (NULL == CU_add_test(pSuite, "test$upsert", test$upsert))
+            (NULL == CU_add_test(pSuite, "test$upsert", test$upsert)) ||
+            (NULL == CU_add_test(pSuite, "testPrimitiveCases1", testPrimitiveCases1))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

@@ -1950,6 +1950,14 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         for (int i = 0; i < ofsz; ++i) assert(ofs[i] != NULL);
     }
 
+    if ((ejq->flags & EJQONLYCOUNT) && qfsz == 0) { //primitive count(*) query
+        count = jcoll->tdb->hdb->rnum;
+        if (log) {
+            tcxstrprintf(log, "SIMPLE COUNT(*): %u\n", count);
+        }
+        goto finish;
+    }
+
     if (!(ejq->flags & EJQONLYCOUNT) && aofsz > 0 && (!midx || mqf->orderseq != 1)) { //Main index is not the main order field
         all = true; //Need all records for ordering for some other fields
     }
@@ -2431,10 +2439,25 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
 fullscan: /* Full scan */
     assert(count == 0);
     assert(!res || TCLISTNUM(res) == 0);
+
+    if ((ejq->flags & EJQDROPALL) && (ejq->flags & EJQONLYCOUNT)) {
+        //if we are in primitive $dropall case. Query: {$dropall:true}
+        if (qfsz == 1 && qfs[0]->tcop == TDBQTRUE) { //single $dropall field
+            if (log) {
+                tcxstrprintf(log, "VANISH WHOLE COLLECTION ON $dropall\n");
+            }
+            //write lock already acquired so use impl
+            count = jcoll->tdb->hdb->rnum;
+            if (!tctdbvanish(jcoll->tdb)) {
+                count = 0;
+            }
+            goto finish;
+        }
+    }
+
     if (log) {
         tcxstrprintf(log, "RUN FULLSCAN\n");
     }
-
     uint64_t hdbiter;
     TCMAP *updkeys = (ejq->flags & EJQUPDATING) ? tcmapnew2(100 * 1024) : NULL;
     if (!tchdbiterinit4(hdb, &hdbiter)) {
@@ -2557,7 +2580,7 @@ finish:
     }
     *outcount = count;
     if (log) {
-        tcxstrprintf(log, "RS COUNT: %d\n", count);
+        tcxstrprintf(log, "RS COUNT: %u\n", count);
         tcxstrprintf(log, "RS SIZE: %d\n", (res ? TCLISTNUM(res) : 0));
         tcxstrprintf(log, "FINAL SORTING: %s\n", ((ejq->flags & EJQONLYCOUNT) || aofsz <= 0) ? "NO" : "YES");
     }

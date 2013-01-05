@@ -1,3 +1,10 @@
+2013-01-05 Anton Adamansky. <adamansky@gmail.com>
+    * Optimized count(*) on whole collection (ticket #27)
+    * Optimized $dropall on whole collection (ticket #26)
+    * Database files can be opened directly from CLI command line
+    * Fixed minor bug in $upsert operation
+    - Release 1.0.41
+
 2012-12-31 Anton Adamansky. <adamansky@gmail.com>
     * Added `$upsert` opration (ticket #25)
     * Expose ejdb transactions API in Nodejs binding (ticket #22)
