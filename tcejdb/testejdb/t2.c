@@ -3809,6 +3809,50 @@ void testPrimitiveCases1() {
     ejdbquerydel(q1);
 }
 
+void testTicket29() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXARR));
+
+    bson a1;
+    bson_init(&a1);
+    bson_append_string(&a1, "name", "Hello Мир");
+    bson_append_long(&a1, "longscore", 77);
+    bson_finish(&a1);
+    CU_ASSERT_FALSE_FATAL(a1.err);
+
+    bson_oid_t oid;
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &a1, &oid));
+    bson_destroy(&a1);
+
+    //{"name" : {$strand : ["Hello", "Мир"]}}
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "name");
+    bson_append_start_array(&bsq1, "$strand");
+    bson_append_string(&bsq1, "0", "Hello");
+    bson_append_string(&bsq1, "1", "Мир");
+    bson_append_finish_array(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(count, 1);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "token occurrence: \"Hello\" 1"));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -3872,7 +3916,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "test$elemMatch", test$elemMatch)) ||
             (NULL == CU_add_test(pSuite, "testTicket16", testTicket16)) ||
             (NULL == CU_add_test(pSuite, "test$upsert", test$upsert)) ||
-            (NULL == CU_add_test(pSuite, "testPrimitiveCases1", testPrimitiveCases1))
+            (NULL == CU_add_test(pSuite, "testPrimitiveCases1", testPrimitiveCases1)) ||
+            (NULL == CU_add_test(pSuite, "testTicket29", testTicket29))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

@@ -3768,9 +3768,10 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         if (obsdata && obsdatasz > 0) {
             bson_iterator_from_buffer(&oit, obsdata);
             oft = bson_find_fieldpath_value2(mkey + 1, mkeysz - 1, &oit);
-            TCLIST *tokens = (oft == BSON_ARRAY) ? tclistnew() : NULL;
+            TCLIST *tokens = (oft == BSON_ARRAY || (oft == BSON_STRING && (iflags & JBIDXARR))) ? tclistnew() : NULL;
             ofvalue = BSON_IS_IDXSUPPORTED_TYPE(oft) ? _bsonitstrval(jcoll->jb, &oit, &ofvaluesz, tokens, textflags) : NULL;
             if (tokens) {
+                oft = BSON_ARRAY;
                 ofvalue = tclistdump(tokens, &ofvaluesz);
                 tclistdel(tokens);
             }
@@ -3778,9 +3779,10 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         if (bs) {
             bson_iterator_init(&fit, bs);
             ft = bson_find_fieldpath_value2(mkey + 1, mkeysz - 1, &fit);
-            TCLIST *tokens = (ft == BSON_ARRAY) ? tclistnew() : NULL;
+            TCLIST *tokens = (ft == BSON_ARRAY || (ft == BSON_STRING && (iflags & JBIDXARR))) ? tclistnew() : NULL;
             fvalue = BSON_IS_IDXSUPPORTED_TYPE(ft) ? _bsonitstrval(jcoll->jb, &fit, &fvaluesz, tokens, textflags) : NULL;
             if (tokens) {
+                ft = BSON_ARRAY;
                 fvalue = tclistdump(tokens, &fvaluesz);
                 tclistdel(tokens);
             }
