@@ -1,3 +1,7 @@
+2013-01-07 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed #29
+    - Release 1.0.42
+
 2013-01-05 Anton Adamansky. <adamansky@gmail.com>
     * Optimized count(*) on whole collection (ticket #27)
     * Optimized $dropall on whole collection (ticket #26)
