@@ -367,7 +367,7 @@ module.exports.testSync = function(test) {
 };
 
 module.exports.testRemoveColls = function(test) {
-    jb.removeCollection("birds", function(err) {
+    jb.dropCollection("birds", function(err) {
         test.ifError(err);
         jb.find("birds", {}, function(err, cursor, count) { //Query on not existing collection
             test.ifError(err);

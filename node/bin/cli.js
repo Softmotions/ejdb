@@ -60,9 +60,9 @@ Object.defineProperty(EJDB.prototype.isOpen, "_help_",
         {value : "Check if database in opened state"});
 Object.defineProperty(EJDB.prototype.ensureCollection, "_help_",
         {value : "(cname, [copts]) Creates new collection if it does't exists"});
-Object.defineProperty(EJDB.prototype.removeCollection, "_help_",
-        {value : "(cname, [prune], [cb]) Removes collection, " +
-                "if `prune` is true collection db will be erased from disk."});
+Object.defineProperty(EJDB.prototype.dropCollection, "_help_",
+        {value : "(cname, [prune], [cb]) Drop collection, " +
+                "if `prune` is true collection db files will be erased from disk."});
 Object.defineProperty(EJDB.prototype.save, "_help_",
         {value : "(cname, object|array of object, [opts], [cb]) " +
                 "Save/update specified JSON objects in the collection."});

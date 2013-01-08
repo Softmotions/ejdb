@@ -180,16 +180,16 @@ __Arguments__
 ---------------------------------------
 
 
-<a name="removeCollection"/>
-### removeCollection(cname, prune, cb)
+<a name="dropCollection"/>
+### dropCollection(cname, prune, cb)
 
-Remove collection.
+Drop collection.
 
 Call variations:
 
-    removeCollection(cname)
-    removeCollection(cname, cb)
-    removeCollection(cname, prune, cb)
+    dropCollection(cname)
+    dropCollection(cname, cb)
+    dropCollection(cname, prune, cb)
 
 __Arguments__
 

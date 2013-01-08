@@ -105,19 +105,28 @@ EJDB.prototype.ensureCollection = function(cname, copts) {
     return this._impl.ensureCollection(cname, copts || {});
 };
 
+
 /**
- *  Remove collection.
+ * Please use #dropCollection
+ * @deprecated Will be removed in v1.1 //todo
+ */
+EJDB.prototype.removeCollection = function(cname, prune, cb) {
+    this.dropCollection.apply(this, arguments);
+};
+
+/**
+ *  Drop collection.
  *
  *  Call variations:
- *      - removeCollection(cname)
- *      - removeCollection(cname, cb)
- *      - removeCollection(cname, prune, cb)
+ *      - dropCollection(cname)
+ *      - dropCollection(cname, cb)
+ *      - dropCollection(cname, prune, cb)
  *
  * @param {String} cname Name of collection.
  * @param {Boolean} [prune=false] If true the collection data will erased from disk.
  * @param {Function} [cb] Callback function with arguments: (error)
  */
-EJDB.prototype.removeCollection = function(cname, prune, cb) {
+EJDB.prototype.dropCollection = function(cname, prune, cb) {
     if (arguments.length == 2) {
         cb = prune;
         prune = false;
@@ -126,9 +135,9 @@ EJDB.prototype.removeCollection = function(cname, prune, cb) {
         cb = function() {
         };
     }
+    //noinspection JSDeprecatedSymbols
     return this._impl.removeCollection(cname, !!prune, cb);
 };
-
 
 /**
  * Save/update specified JSON objects in the collection.

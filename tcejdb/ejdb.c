@@ -125,7 +125,7 @@ EJDB_EXPORT const char* ejdberrmsg(int ecode) {
         case JBEFPATHINVALID: return "invalid JSON field path value";
         case JBEQINVALIDQRX: return "invalid query regexp value";
         case JBEQRSSORTING: return "result set sorting error";
-        case JBEQERROR: return "query generic error";
+        case JBEQERROR: return "invalid query";
         case JBEQUPDFAILED: return "bson record update failed";
         case JBEINVALIDBSONPK: return "invalid bson _id field";
         case JBEQONEEMATCH: return "only one $elemMatch allowed in the fieldpath"; //todo remove
@@ -3220,11 +3220,13 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     !strcmp("$pull", fkey)) {
                 if (pqf) { //Top level ops
                     ret = JBEQERROR;
+                    _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
                     break;
                 }
             } else {
                 if (!pqf) { //Require parent query object
                     ret = JBEQERROR;
+                    _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
                     break;
                 }
                 qf = *pqf;
@@ -3256,6 +3258,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     TCLIST *tokens = _fetch_bson_str_array(jb, &sit, &atype, (qf.flags & EJCONDICASE) ? JBICASE : 0);
                     if (atype == 0) {
                         ret = JBEQINOPNOTARRAY;
+                        _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
                         tclistdel(tokens);
                         break;
                     }
@@ -3283,6 +3286,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         qf.tcop = TDBQCNUMBT;
                         if (TCLISTNUM(tokens) != 2) {
                             ret = JBEQINOPNOTARRAY;
+                            _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
                             TCFREE(qf.expr);
                             tclistdel(qf.exprlist);
                             break;
@@ -3295,6 +3299,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         qf.tcop = TDBQCSTRORBW;
                     } else {
                         ret = JBEQINVALIDQCONTROL;
+                        _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
                         TCFREE(qf.expr);
                         tclistdel(qf.exprlist);
                         break;
@@ -3342,6 +3347,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         bson_finish(qf.updateobj);
                         if (qf.updateobj->err) {
                             ret = JBEQERROR;
+                            _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
+                            break;
                         }
                         qf.fpath = strdup(fkey);
                         qf.fpathsz = strlen(qf.fpath);
@@ -3353,6 +3360,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     if (!strcmp("$elemMatch", fkey)) {
                         if (qf.elmatchgrp) { //only one $elemMatch allowed in query field
                             ret = JBEQERROR;
+                            _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
                             break;
                         }
                         qf.elmatchgrp = ++elmatchgrp;
@@ -3387,6 +3395,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     qf.exprsz = tcicaseformat(bson_iterator_string(it), bson_iterator_string_len(it) - 1, NULL, 0, &qf.expr);
                     if (qf.exprsz < 0) {
                         ret = qf.exprsz;
+                        _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
                         qf.exprsz = 0;
                         break;
                     }
@@ -3462,6 +3471,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     memcpy(qf.regex, &rxbuf, sizeof (rxbuf));
                 } else {
                     ret = JBEQINVALIDQRX;
+                    _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
                     TCFREE(qf.fpath);
                     TCFREE(qf.expr);
                     break;
@@ -3527,12 +3537,9 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             TCFREE(tclistpop2(pathStack));
         }
         if (ret) { //cleanup on error condition
-            //TODO better error reporting
-            _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
             break;
         }
     }
-
     return ret;
 }
 

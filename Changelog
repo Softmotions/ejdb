@@ -1,3 +1,8 @@
+2013-01-08 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed #28
+    * Deprecated node.js API removeCollection() use dropCollection() instead.
+    - Release 1.0.43
+
 2013-01-07 Anton Adamansky. <adamansky@gmail.com>
     * Fixed #29
     - Release 1.0.42

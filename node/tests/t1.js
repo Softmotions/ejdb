@@ -27,7 +27,7 @@ module.exports.testEnsureAndRemoveCollection = function(test) {
     jb.ensureCollection("c1", c1opts);
     test.ok(fs.existsSync("var/tdbt12_c1"));
 
-    jb.removeCollection("c1", true, function(err) {
+    jb.dropCollection("c1", true, function(err) {
         test.ifError(err);
         test.ok(!fs.existsSync("var/tdbt12_c1"));
 
@@ -35,7 +35,7 @@ module.exports.testEnsureAndRemoveCollection = function(test) {
         jb.close();
         var err = null;
         try {
-            jb.removeCollection("c1", true);
+            jb.dropCollection("c1", true);
         } catch (e) {
             err = e;
         }
