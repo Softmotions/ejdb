@@ -1,6 +1,9 @@
 2013-01-09 Anton Adamansky. <adamansky@gmail.com>
+    * Critical fixes in ejdb cli console
+    * Fix count(*) query optimization when OR predicates used
     * Collection should be automatically created for $upsert queries (ticket #32)
-    - Release 1.0.45
+    * Test cases are not executed during npm installation
+    - Release 1.0.46
 
 2013-01-09 Anton Adamansky. <adamansky@gmail.com>
     * Fixed crash on sorting (ticket #31)

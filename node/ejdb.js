@@ -245,7 +245,7 @@ function parseQueryArgs(args) {
     }
     next = args[i++];
     if (next !== undefined) {
-        if (next.constructor === Array) {
+        if (Array.isArray(next)) {
             orarr = next;
             next = args[i++];
         } else if (typeof next === "object") {

@@ -1950,7 +1950,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         for (int i = 0; i < ofsz; ++i) assert(ofs[i] != NULL);
     }
 
-    if ((ejq->flags & EJQONLYCOUNT) && qfsz == 0) { //primitive count(*) query
+    if ((ejq->flags & EJQONLYCOUNT) && qfsz == 0 && ejq->orqobjsnum == 0) { //primitive count(*) query
         count = jcoll->tdb->hdb->rnum;
         if (log) {
             tcxstrprintf(log, "SIMPLE COUNT(*): %u\n", count);

@@ -1,6 +1,6 @@
 {
     "name" : "ejdb",
-    "version" : "1.0.45",
+    "version" : "1.0.46",
     "main" : "node/ejdb.js",
     "homepage" : "http://ejdb.org",
     "description" : "EJDB - Embedded JSON Database engine",
@@ -33,8 +33,7 @@
     },
     "scripts" : {
         "preinstall" : "make all && node-gyp rebuild",
-        "test" : "make -f tests.mk check-all",
-        "postinstall" : "make -f tests.mk check"
+        "test" : "make -f tests.mk check-all"
     },
     "bin" : {
         "ejdb" : "node/bin/cli.js"
