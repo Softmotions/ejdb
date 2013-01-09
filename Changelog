@@ -1,3 +1,7 @@
+2013-01-09 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed crash on sorting (ticket #31)
+    - Release 1.0.44
+
 2013-01-08 Anton Adamansky. <adamansky@gmail.com>
     * Fixed #28
     * Deprecated node.js API removeCollection() use dropCollection() instead.

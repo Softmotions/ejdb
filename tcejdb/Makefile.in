@@ -829,6 +829,8 @@ ejdb.o : myconf.h ejdb.h ejdb_private.h ejdbutl.h
 
 bson.o : myconf.h bson.h
 
+ejdbutl.o : ejdbutl.h
+
 utf8proc.o: utf8proc.h utf8proc.c utf8proc_data.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o utf8proc.o utf8proc.c
 

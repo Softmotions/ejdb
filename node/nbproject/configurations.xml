@@ -3284,6 +3284,7 @@
             <incDir>
               <pElem>nodejs/src</pElem>
               <pElem>nodejs/deps/v8/src</pElem>
+              <pElem>nodejs/deps/uv/include</pElem>
               <pElem>../tcejdb</pElem>
             </incDir>
             <preprocessorList>

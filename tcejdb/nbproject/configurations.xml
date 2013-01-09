@@ -17,8 +17,6 @@
         <in>tctest.c</in>
         <in>tdbtest.c</in>
       </df>
-      <df name="deb">
-      </df>
       <df name="doc">
       </df>
       <df name="lab">
@@ -42,6 +40,7 @@
       <in>ejdb.c</in>
       <in>ejdb.h</in>
       <in>ejdb_private.h</in>
+      <in>ejdbutl.c</in>
       <in>ejdbutl.h</in>
       <in>encoding.c</in>
       <in>encoding.h</in>
@@ -81,8 +80,6 @@
       <in>tcutest.c</in>
       <in>tcutil.c</in>
       <in>tcutil.h</in>
-      <in>timsort-impl.h</in>
-      <in>timsort.c</in>
       <in>utf8proc.c</in>
       <in>utf8proc.h</in>
       <in>utf8proc_data.c</in>
@@ -137,28 +134,6 @@
           </cTool>
         </makeTool>
       </makefileType>
-      <item path="bros/bdbtest.c" ex="true" tool="0" flavor2="0">
-      </item>
-      <item path="bros/cdbtest.c" ex="true" tool="0" flavor2="0">
-      </item>
-      <item path="bros/cmpsqltctest.c" ex="true" tool="0" flavor2="0">
-      </item>
-      <item path="bros/gdbmtest.c" ex="true" tool="0" flavor2="0">
-      </item>
-      <item path="bros/maptest.cc" ex="true" tool="1" flavor2="0">
-      </item>
-      <item path="bros/ndbmtest.c" ex="true" tool="0" flavor2="0">
-      </item>
-      <item path="bros/qdbmtest.c" ex="true" tool="0" flavor2="0">
-      </item>
-      <item path="bros/sdbmtest.c" ex="true" tool="0" flavor2="0">
-      </item>
-      <item path="bros/sqltest.c" ex="true" tool="0" flavor2="0">
-      </item>
-      <item path="bros/tctest.c" ex="true" tool="0" flavor2="0">
-      </item>
-      <item path="bros/tdbtest.c" ex="true" tool="0" flavor2="0">
-      </item>
       <item path="bson.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
@@ -331,14 +306,6 @@
       </item>
       <item path="testejdb/t3.c" ex="false" tool="0" flavor2="2">
         <cTool>
-        </cTool>
-      </item>
-      <item path="timsort.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-          <preprocessorList>
-            <Elem>NDEBUG</Elem>
-            <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
-          </preprocessorList>
         </cTool>
       </item>
       <item path="utf8proc.c" ex="false" tool="0" flavor2="2">

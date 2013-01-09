@@ -2511,9 +2511,7 @@ sorting: /* Sorting resultset */
     _EJBSORTCTX sctx; //sorting context
     sctx.ofs = ofs;
     sctx.ofsz = ofsz;
-    if (ejdbtimsortlist(res, _ejdbsoncmp, &sctx)) {
-        _ejdbsetecode(jcoll->jb, JBEQRSSORTING, __FILE__, __LINE__, __func__);
-    }
+    ejdbqsortlist(res, _ejdbsoncmp, &sctx);
 
 finish:
     //check $upsert operation
