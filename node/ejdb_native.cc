@@ -1374,13 +1374,25 @@ namespace ejdb {
             TCLIST *res = NULL;
             bson oqarrstack[8]; //max 8 $or bsons on stack
             BSONQCmdData *cmdata = task->cmd_data;
-            EJCOLL *coll = ejdbgetcoll(m_jb, cmdata->cname.c_str());
-            if (!coll) { //No collection -> no results
-                cmdata->res = tclistnew2(1);
-                cmdata->count = 0;
-                return;
-            }
             std::vector<bson*> &bsons = cmdata->bsons;
+            EJCOLL *coll = ejdbgetcoll(m_jb, cmdata->cname.c_str());
+            if (!coll) {
+                bson *qbs = bsons.front();
+                bson_iterator it;
+                //If we are in $upsert mode so new collection will be created
+                if (qbs && bson_find(&it, qbs, "$upsert") == BSON_OBJECT) {
+                    coll = ejdbcreatecoll(m_jb, cmdata->cname.c_str(), NULL);
+                    if (!coll) {
+                        task->cmd_ret = CMD_RET_ERROR;
+                        task->cmd_ret_msg = _jb_error_msg();
+                        return;
+                    }
+                } else { //No collection -> no results
+                    cmdata->res = tclistnew2(1);
+                    cmdata->count = 0;
+                    return;
+                }
+            }
             int orsz = (int) bsons.size() - 2; //Minus main qry at begining and hints object at the end
             if (orsz < 0) orsz = 0;
             bson *oqarr = ((orsz <= 8) ? oqarrstack : (bson*) malloc(orsz * sizeof (bson)));

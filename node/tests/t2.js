@@ -422,6 +422,22 @@ module.exports.testTx1 = function(test) {
     });
 };
 
+module.exports.testCreateCollectionOn$upsert = function(test) {
+    test.ok(jb);
+    test.ok(jb.isOpen());
+    jb.update("upsertcoll", {foo : "bar", $upsert : {foo : "bar"}}, function(err, count) {
+        test.ifError(err);
+        test.equal(count, 1);
+        jb.findOne("upsertcoll", {foo : "bar"}, function(err, obj) {
+            test.ifError(err);
+            test.ok(obj);
+            test.equal(obj.foo, "bar");
+            test.done();
+        });
+    });
+};
+
+
 module.exports.testClose = function(test) {
     test.ok(jb);
     jb.close();
