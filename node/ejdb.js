@@ -92,7 +92,7 @@ EJDB.prototype.isOpen = function() {
  *      "cachedrecords" : Max number of cached records in shared memory segment. Default: 0
  *      "records" : Estimated number of records in this collection. Default: 65535.
  *      "large" : Specifies that the size of the database can be larger than 2GB. Default: false
- *      "compress" : If true collection records will be compressed with DEFLATE compression. Default: false.
+ *      "compressed" : If true collection records will be compressed with DEFLATE compression. Default: false.
  *  }
  *
  * This is blocking function.
