@@ -99,13 +99,12 @@ Installation
 **System libraries:**
 
 * g++
-* cunit
 * zlib
 
 On Debian/Ubuntu linux you can install it as follows:
 
 ~~~~~~
-sudo apt-get install g++ libcunit1 libcunit1-dev zlib1g zlib1g-dev
+sudo apt-get install g++ zlib1g zlib1g-dev
 ~~~~~~
 
 **Installation from node package manager:**
@@ -652,13 +651,12 @@ Prerequisites
 **System libraries:**
 
 * gcc
-* cunit
 * zlib
 
 On Debian/Ubuntu linux you can install it as follows:
 
 ```sh
-   sudo apt-get install gcc libcunit1 libcunit1-dev zlib1g zlib1g-dev
+   sudo apt-get install gcc zlib1g zlib1g-dev
 ```
 
 Building

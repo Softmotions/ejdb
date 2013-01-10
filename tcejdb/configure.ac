@@ -11,7 +11,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(tcejdb, 1.0.46)
+AC_INIT(tcejdb, 1.0.47)
 
 # Package information
 MYLIBVER=9
@@ -142,8 +142,16 @@ then
   enables="$enables (uyield)"
 fi
 
+# Enable test cases
+AC_ARG_ENABLE(tests,
+  AC_HELP_STRING([--enable-tests], [build with testcases]))
+if test "$enable_tests" = "yes"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYTESTS"
+  enables="$enables (tests)"
+fi
 
-# Anable BZIP2 compression
+# Enable BZIP2 compression
 AC_ARG_ENABLE(bzip,
   AC_HELP_STRING([--enable-bzip], [build with BZIP2 compression]))
 if test "$enable_bzip" = "yes"
@@ -281,7 +289,11 @@ then
 fi
 AC_CHECK_LIB(tcejdb, main, AC_MSG_WARN([old version of EJDB was found]))
 
-AC_CHECK_LIB(cunit, main, true, AC_MSG_ERROR([CUnit lubrary is required]))
+if test "$enable_tests" = "yes"
+then
+  AC_CHECK_LIB(cunit, main, true, AC_MSG_ERROR([CUnit lubrary is required]))
+  AC_CHECK_HEADER(CUnit/Basic.h, true, AC_MSG_ERROR([CUnit/Basic.h is required]))
+fi
 
 # Necessary headers
 AC_CHECK_HEADER(stdlib.h, true, AC_MSG_ERROR([stdlib.h is required]))
