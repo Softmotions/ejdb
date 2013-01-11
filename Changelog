@@ -1,3 +1,7 @@
+2013-01-11 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed crash if null fields presented in queries.
+    - Release 1.0.48
+
 2013-01-10 Anton Adamansky. <adamansky@gmail.com>
     * Removed cunit library dependency for production builds.
     - Release 1.0.47

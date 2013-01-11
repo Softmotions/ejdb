@@ -3484,6 +3484,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                 qf.negate = !qf.negate;
                 qf.expr = tcstrdup(""); //Empty string as expr
                 qf.exprsz = 0;
+                qf.fpath = tcstrjoin(pathStack, '.');
+                qf.fpathsz = strlen(qf.fpath);
                 TCLISTPUSH(qlist, &qf, sizeof (qf));
                 break;
 
