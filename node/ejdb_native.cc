@@ -470,6 +470,10 @@ namespace ejdb {
             }
         }
         ctx->nlevel--;
+        it = ctx->tset.find(obj);
+        if (it != ctx->tset.end()) {
+            ctx->tset.erase(it);
+        }
     }
 
     /** Convert V8 object into binary json instance. After usage, it must be freed by bson_del() */
