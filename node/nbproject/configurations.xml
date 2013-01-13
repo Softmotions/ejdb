@@ -144,6 +144,12 @@
                 </df>
               </df>
               <df name="minimatch">
+                <df name="node_modules">
+                  <df name="sigmund">
+                    <df name="test">
+                    </df>
+                  </df>
+                </df>
                 <df name="test">
                 </df>
               </df>
@@ -156,28 +162,907 @@
               <df name="node-gyp">
                 <df name="bin">
                 </df>
-                <df name="legacy">
-                  <df name="tools">
+                <df name="gyp">
+                  <df name="buildbot">
+                  </df>
+                  <df name="pylib">
                     <df name="gyp">
-                      <df name="buildbot">
+                      <df name="generator">
                       </df>
-                      <df name="pylib">
-                        <df name="gyp">
-                          <df name="generator">
-                          </df>
-                        </df>
-                      </df>
-                      <df name="samples">
-                      </df>
-                      <df name="tools">
-                        <df name="Xcode">
-                          <df name="Specifications">
-                          </df>
-                        </df>
-                      </df>
-                      <in>gyp_dummy.c</in>
                     </df>
                   </df>
+                  <df name="samples">
+                  </df>
+                  <df name="test">
+                    <df name="actions">
+                      <df name="src">
+                        <df name="subdir1">
+                          <in>program.c</in>
+                        </df>
+                        <df name="subdir2">
+                        </df>
+                        <df name="subdir3">
+                        </df>
+                      </df>
+                    </df>
+                    <df name="actions-bare">
+                      <df name="src">
+                      </df>
+                    </df>
+                    <df name="actions-multiple">
+                      <df name="src">
+                        <in>foo.c</in>
+                        <in>main.c</in>
+                      </df>
+                    </df>
+                    <df name="actions-none">
+                      <df name="src">
+                        <in>foo.cc</in>
+                      </df>
+                    </df>
+                    <df name="actions-subdir">
+                      <df name="src">
+                        <df name="subdir">
+                        </df>
+                      </df>
+                    </df>
+                    <df name="additional-targets">
+                      <df name="src">
+                        <df name="dir1">
+                          <in>lib1.c</in>
+                        </df>
+                      </df>
+                    </df>
+                    <df name="assembly">
+                      <df name="src">
+                        <in>lib1.S</in>
+                        <in>lib1.c</in>
+                        <in>program.c</in>
+                      </df>
+                    </df>
+                    <df name="build-option">
+                      <in>hello.c</in>
+                    </df>
+                    <df name="builddir">
+                      <df name="src">
+                        <df name="subdir2">
+                          <df name="subdir3">
+                            <df name="subdir4">
+                              <df name="subdir5">
+                                <in>prog5.c</in>
+                              </df>
+                              <in>prog4.c</in>
+                            </df>
+                            <in>prog3.c</in>
+                          </df>
+                          <in>prog2.c</in>
+                        </df>
+                        <in>func1.c</in>
+                        <in>func2.c</in>
+                        <in>func3.c</in>
+                        <in>func4.c</in>
+                        <in>func5.c</in>
+                        <in>prog1.c</in>
+                      </df>
+                    </df>
+                    <df name="cflags">
+                      <in>cflags.c</in>
+                    </df>
+                    <df name="compilable">
+                      <df name="src">
+                        <in>lib1.cpp</in>
+                        <in>lib1.hpp</in>
+                        <in>program.cpp</in>
+                      </df>
+                    </df>
+                    <df name="compiler-override">
+                      <in>cxxtest.cc</in>
+                      <in>test.c</in>
+                    </df>
+                    <df name="configurations">
+                      <df name="basics">
+                        <in>configurations.c</in>
+                      </df>
+                      <df name="inheritance">
+                        <in>configurations.c</in>
+                      </df>
+                      <df name="invalid">
+                      </df>
+                      <df name="target_platform">
+                        <in>front.c</in>
+                        <in>left.c</in>
+                        <in>right.c</in>
+                      </df>
+                      <df name="x64">
+                        <in>configurations.c</in>
+                      </df>
+                    </df>
+                    <df name="copies">
+                      <df name="src">
+                        <df name="directory">
+                          <df name="subdir">
+                          </df>
+                        </df>
+                        <df name="parentdir">
+                          <df name="subdir">
+                          </df>
+                        </df>
+                      </df>
+                    </df>
+                    <df name="custom-generator">
+                    </df>
+                    <df name="cxxflags">
+                      <in>cxxflags.cc</in>
+                    </df>
+                    <df name="defines">
+                      <in>defines.c</in>
+                    </df>
+                    <df name="defines-escaping">
+                      <in>defines-escaping.c</in>
+                    </df>
+                    <df name="dependencies">
+                      <df name="b">
+                        <in>b.c</in>
+                        <in>b3.c</in>
+                      </df>
+                      <df name="c">
+                        <in>c.c</in>
+                        <in>d.c</in>
+                      </df>
+                      <in>a.c</in>
+                      <in>main.c</in>
+                    </df>
+                    <df name="dependency-copy">
+                      <df name="src">
+                        <in>file1.c</in>
+                        <in>file2.c</in>
+                      </df>
+                    </df>
+                    <df name="errors">
+                    </df>
+                    <df name="escaping">
+                      <df name="colon">
+                      </df>
+                    </df>
+                    <df name="exclusion">
+                      <in>hello.c</in>
+                    </df>
+                    <df name="external-cross-compile">
+                      <df name="src">
+                        <in>bogus1.cc</in>
+                        <in>bogus2.c</in>
+                        <in>program.cc</in>
+                        <in>test1.cc</in>
+                        <in>test2.c</in>
+                        <in>test3.cc</in>
+                        <in>test4.c</in>
+                      </df>
+                    </df>
+                    <df name="generator-output">
+                      <df name="actions">
+                        <df name="build">
+                        </df>
+                        <df name="subdir1">
+                          <df name="actions-out">
+                          </df>
+                          <df name="build">
+                          </df>
+                          <in>program.c</in>
+                        </df>
+                        <df name="subdir2">
+                          <df name="actions-out">
+                          </df>
+                          <df name="build">
+                          </df>
+                        </df>
+                      </df>
+                      <df name="copies">
+                        <df name="build">
+                        </df>
+                        <df name="copies-out">
+                        </df>
+                        <df name="subdir">
+                          <df name="build">
+                          </df>
+                          <df name="copies-out">
+                          </df>
+                        </df>
+                      </df>
+                      <df name="mac-bundle">
+                        <in>header.h</in>
+                        <in>main.c</in>
+                      </df>
+                      <df name="rules">
+                        <df name="build">
+                        </df>
+                        <df name="subdir1">
+                          <df name="build">
+                          </df>
+                          <in>program.c</in>
+                        </df>
+                        <df name="subdir2">
+                          <df name="build">
+                          </df>
+                          <df name="rules-out">
+                          </df>
+                        </df>
+                      </df>
+                      <df name="src">
+                        <df name="build">
+                        </df>
+                        <df name="inc1">
+                          <in>include1.h</in>
+                        </df>
+                        <df name="subdir2">
+                          <df name="build">
+                          </df>
+                          <df name="deeper">
+                            <df name="build">
+                            </df>
+                            <in>deeper.c</in>
+                            <in>deeper.h</in>
+                          </df>
+                          <df name="inc2">
+                            <in>include2.h</in>
+                          </df>
+                          <in>prog2.c</in>
+                        </df>
+                        <df name="subdir3">
+                          <df name="build">
+                          </df>
+                          <df name="inc3">
+                            <in>include3.h</in>
+                          </df>
+                          <in>prog3.c</in>
+                        </df>
+                        <in>inc.h</in>
+                        <in>prog1.c</in>
+                      </df>
+                    </df>
+                    <df name="gyp-defines">
+                    </df>
+                    <df name="hard_dependency">
+                      <df name="src">
+                        <in>a.c</in>
+                        <in>a.h</in>
+                        <in>b.c</in>
+                        <in>b.h</in>
+                        <in>c.c</in>
+                        <in>c.h</in>
+                        <in>d.c</in>
+                      </df>
+                    </df>
+                    <df name="hello">
+                      <in>hello.c</in>
+                      <in>hello2.c</in>
+                    </df>
+                    <df name="home_dot_gyp">
+                      <df name="home">
+                      </df>
+                      <df name="home2">
+                      </df>
+                      <df name="src">
+                        <in>printfoo.c</in>
+                      </df>
+                    </df>
+                    <df name="include_dirs">
+                      <df name="src">
+                        <df name="inc1">
+                          <in>include1.h</in>
+                        </df>
+                        <df name="shadow1">
+                          <in>shadow.h</in>
+                        </df>
+                        <df name="shadow2">
+                          <in>shadow.h</in>
+                        </df>
+                        <df name="subdir">
+                          <df name="inc2">
+                            <in>include2.h</in>
+                          </df>
+                          <in>inc.h</in>
+                          <in>subdir_includes.c</in>
+                        </df>
+                        <in>inc.h</in>
+                        <in>includes.c</in>
+                      </df>
+                    </df>
+                    <df name="intermediate_dir">
+                      <df name="src">
+                      </df>
+                    </df>
+                    <df name="lib">
+                    </df>
+                    <df name="library">
+                      <df name="src">
+                        <in>lib1.c</in>
+                        <in>lib1_moveable.c</in>
+                        <in>lib2.c</in>
+                        <in>lib2_moveable.c</in>
+                        <in>program.c</in>
+                      </df>
+                    </df>
+                    <df name="link-objects">
+                      <in>base.c</in>
+                      <in>extra.c</in>
+                    </df>
+                    <df name="mac">
+                      <df name="action-envvars">
+                        <df name="action">
+                        </df>
+                      </df>
+                      <df name="app-bundle">
+                        <df name="TestApp">
+                          <df name="English.lproj">
+                          </df>
+                          <in>TestAppAppDelegate.h</in>
+                          <in>TestAppAppDelegate.m</in>
+                          <in>main.m</in>
+                        </df>
+                        <in>empty.c</in>
+                      </df>
+                      <df name="archs">
+                        <in>my_file.cc</in>
+                        <in>my_main_file.cc</in>
+                      </df>
+                      <df name="cflags">
+                        <in>ccfile.cc</in>
+                        <in>ccfile_withcflags.cc</in>
+                        <in>cfile.c</in>
+                        <in>cppfile.cpp</in>
+                        <in>cppfile_withcflags.cpp</in>
+                        <in>cxxfile.cxx</in>
+                        <in>cxxfile_withcflags.cxx</in>
+                        <in>mfile.m</in>
+                        <in>mmfile.mm</in>
+                        <in>mmfile_withcflags.mm</in>
+                      </df>
+                      <df name="copy-dylib">
+                        <in>empty.c</in>
+                      </df>
+                      <df name="debuginfo">
+                        <in>file.c</in>
+                      </df>
+                      <df name="depend-on-bundle">
+                        <df name="English.lproj">
+                        </df>
+                        <in>bundle.c</in>
+                        <in>executable.c</in>
+                      </df>
+                      <df name="framework">
+                        <df name="TestFramework">
+                          <df name="English.lproj">
+                          </df>
+                          <in>ObjCVector.h</in>
+                          <in>ObjCVector.mm</in>
+                          <in>ObjCVectorInternal.h</in>
+                        </df>
+                        <in>empty.c</in>
+                      </df>
+                      <df name="framework-dirs">
+                        <in>calculate.c</in>
+                      </df>
+                      <df name="framework-headers">
+                        <in>myframework.h</in>
+                        <in>myframework.m</in>
+                      </df>
+                      <df name="global-settings">
+                        <df name="src">
+                          <df name="dir1">
+                          </df>
+                          <df name="dir2">
+                          </df>
+                        </df>
+                      </df>
+                      <df name="infoplist-process">
+                        <in>main.c</in>
+                      </df>
+                      <df name="installname">
+                        <in>file.c</in>
+                        <in>main.c</in>
+                      </df>
+                      <df name="ldflags">
+                        <df name="subdirectory">
+                          <in>file.c</in>
+                        </df>
+                      </df>
+                      <df name="ldflags-libtool">
+                        <in>file.c</in>
+                      </df>
+                      <df name="libraries">
+                        <df name="subdir">
+                          <in>hello.cc</in>
+                          <in>mylib.c</in>
+                        </df>
+                      </df>
+                      <df name="loadable-module">
+                        <in>module.c</in>
+                      </df>
+                      <df name="missing-cfbundlesignature">
+                        <in>file.c</in>
+                      </df>
+                      <df name="non-strs-flattened-to-env">
+                        <in>main.c</in>
+                      </df>
+                      <df name="objc-gc">
+                        <in>c-file.c</in>
+                        <in>cc-file.cc</in>
+                        <in>main.m</in>
+                        <in>needs-gc-mm.mm</in>
+                        <in>needs-gc.m</in>
+                      </df>
+                      <df name="postbuild-copy-bundle">
+                        <in>empty.c</in>
+                        <in>main.c</in>
+                      </df>
+                      <df name="postbuild-defaults">
+                        <in>main.c</in>
+                      </df>
+                      <df name="postbuild-fail">
+                        <in>file.c</in>
+                      </df>
+                      <df name="postbuild-multiple-configurations">
+                        <in>main.c</in>
+                      </df>
+                      <df name="postbuild-static-library">
+                        <in>empty.c</in>
+                      </df>
+                      <df name="postbuilds">
+                        <df name="script">
+                        </df>
+                        <df name="subdirectory">
+                        </df>
+                        <in>file.c</in>
+                        <in>file_g.c</in>
+                        <in>file_h.c</in>
+                      </df>
+                      <df name="prefixheader">
+                        <in>file.c</in>
+                        <in>file.cc</in>
+                        <in>file.m</in>
+                        <in>file.mm</in>
+                        <in>header.h</in>
+                      </df>
+                      <df name="rebuild">
+                        <in>empty.c</in>
+                        <in>main.c</in>
+                      </df>
+                      <df name="rpath">
+                        <in>file.c</in>
+                        <in>main.c</in>
+                      </df>
+                      <df name="sdkroot">
+                        <in>file.cc</in>
+                      </df>
+                      <df name="sourceless-module">
+                        <in>empty.c</in>
+                      </df>
+                      <df name="strip">
+                        <df name="subdirectory">
+                          <in>nested_file.c</in>
+                        </df>
+                        <in>file.c</in>
+                      </df>
+                      <df name="type_envvars">
+                        <in>file.c</in>
+                      </df>
+                      <df name="xcode-env-order">
+                        <in>main.c</in>
+                      </df>
+                      <df name="xcode-gcc">
+                        <in>valid_c.c</in>
+                        <in>valid_cc.cc</in>
+                        <in>valid_m.m</in>
+                        <in>valid_mm.mm</in>
+                        <in>warn_about_invalid_offsetof_macro.cc</in>
+                        <in>warn_about_missing_newline.c</in>
+                      </df>
+                    </df>
+                    <df name="make">
+                      <df name="noload">
+                        <df name="lib">
+                          <in>shared.c</in>
+                          <in>shared.h</in>
+                        </df>
+                        <in>main.c</in>
+                      </df>
+                      <in>main.cc</in>
+                      <in>main.h</in>
+                    </df>
+                    <df name="many-actions">
+                    </df>
+                    <df name="module">
+                      <df name="src">
+                        <in>lib1.c</in>
+                        <in>lib2.c</in>
+                        <in>program.c</in>
+                      </df>
+                    </df>
+                    <df name="msvs">
+                      <df name="config_attrs">
+                        <in>hello.c</in>
+                      </df>
+                      <df name="express">
+                        <df name="base">
+                        </df>
+                      </df>
+                      <df name="list_excluded">
+                        <in>hello.cpp</in>
+                        <in>hello_mac.cpp</in>
+                      </df>
+                      <df name="missing_sources">
+                      </df>
+                      <df name="props">
+                        <in>hello.c</in>
+                      </df>
+                      <df name="shared_output">
+                        <df name="there">
+                          <in>there.c</in>
+                        </df>
+                        <in>hello.c</in>
+                      </df>
+                      <df name="uldi2010">
+                        <in>hello.c</in>
+                        <in>hello2.c</in>
+                      </df>
+                    </df>
+                    <df name="multiple-targets">
+                      <df name="src">
+                        <in>common.c</in>
+                        <in>prog1.c</in>
+                        <in>prog2.c</in>
+                      </df>
+                    </df>
+                    <df name="ninja">
+                      <df name="action_dependencies">
+                        <df name="src">
+                          <in>a.c</in>
+                          <in>a.h</in>
+                          <in>b.c</in>
+                          <in>b.h</in>
+                          <in>c.c</in>
+                          <in>c.h</in>
+                        </df>
+                      </df>
+                      <df name="chained-dependency">
+                        <in>chained.c</in>
+                      </df>
+                      <df name="normalize-paths-win">
+                        <in>hello.cc</in>
+                      </df>
+                      <df name="s-needs-no-depfiles">
+                        <in>empty.s</in>
+                      </df>
+                      <df name="solibs_avoid_relinking">
+                        <in>main.cc</in>
+                        <in>solib.cc</in>
+                      </df>
+                    </df>
+                    <df name="no-output">
+                      <df name="src">
+                      </df>
+                    </df>
+                    <df name="product">
+                      <in>hello.c</in>
+                    </df>
+                    <df name="relative">
+                      <df name="foo">
+                        <df name="a">
+                          <df name="c">
+                            <in>c.cc</in>
+                          </df>
+                          <in>a.cc</in>
+                        </df>
+                        <df name="b">
+                          <in>b.cc</in>
+                        </df>
+                      </df>
+                    </df>
+                    <df name="rename">
+                      <df name="filecase">
+                        <in>file.c</in>
+                      </df>
+                    </df>
+                    <df name="restat">
+                      <df name="src">
+                      </df>
+                    </df>
+                    <df name="rules">
+                      <df name="src">
+                        <df name="external">
+                        </df>
+                        <df name="noaction">
+                        </df>
+                        <df name="subdir1">
+                          <in>program.c</in>
+                        </df>
+                        <df name="subdir2">
+                        </df>
+                        <df name="subdir3">
+                          <in>program.c</in>
+                        </df>
+                        <df name="subdir4">
+                          <in>asm-function.asm</in>
+                          <in>program.c</in>
+                        </df>
+                        <in>an_asm.S</in>
+                      </df>
+                    </df>
+                    <df name="rules-dirname">
+                      <df name="src">
+                        <df name="subdir">
+                          <df name="a">
+                            <df name="b">
+                            </df>
+                          </df>
+                          <df name="foo">
+                            <df name="bar">
+                            </df>
+                          </df>
+                          <in>main.cc</in>
+                        </df>
+                      </df>
+                    </df>
+                    <df name="rules-rebuild">
+                      <df name="src">
+                        <in>main.c</in>
+                      </df>
+                    </df>
+                    <df name="rules-variables">
+                      <df name="src">
+                        <df name="input_name">
+                          <in>test.c</in>
+                        </df>
+                        <df name="input_path">
+                          <df name="subdir">
+                            <in>test.c</in>
+                          </df>
+                        </df>
+                        <df name="subdir">
+                          <in>input_dirname.c</in>
+                          <in>test.c</in>
+                        </df>
+                        <in>input_ext.c</in>
+                        <in>test.input_root.c</in>
+                      </df>
+                    </df>
+                    <df name="same-gyp-name">
+                      <df name="library">
+                        <df name="one">
+                        </df>
+                        <df name="two">
+                        </df>
+                      </df>
+                      <df name="src">
+                        <df name="subdir1">
+                          <in>main1.cc</in>
+                        </df>
+                        <df name="subdir2">
+                          <in>main2.cc</in>
+                        </df>
+                      </df>
+                    </df>
+                    <df name="same-rule-output-file-name">
+                      <df name="src">
+                        <df name="subdir1">
+                        </df>
+                        <df name="subdir2">
+                        </df>
+                      </df>
+                    </df>
+                    <df name="same-source-file-name">
+                      <df name="src">
+                        <df name="subdir1">
+                          <in>func.c</in>
+                        </df>
+                        <df name="subdir2">
+                          <in>func.c</in>
+                        </df>
+                        <in>func.c</in>
+                        <in>prog1.c</in>
+                        <in>prog2.c</in>
+                      </df>
+                    </df>
+                    <df name="same-target-name">
+                      <df name="src">
+                      </df>
+                    </df>
+                    <df name="same-target-name-different-directory">
+                      <df name="src">
+                        <df name="subdir1">
+                        </df>
+                        <df name="subdir2">
+                        </df>
+                      </df>
+                    </df>
+                    <df name="sanitize-rule-names">
+                      <in>blah.S</in>
+                      <in>hello.cc</in>
+                    </df>
+                    <df name="scons_tools">
+                      <df name="site_scons">
+                        <df name="site_tools">
+                        </df>
+                      </df>
+                      <in>tools.c</in>
+                    </df>
+                    <df name="sibling">
+                      <df name="src">
+                        <df name="build">
+                        </df>
+                        <df name="prog1">
+                          <in>prog1.c</in>
+                        </df>
+                        <df name="prog2">
+                          <in>prog2.c</in>
+                        </df>
+                      </df>
+                    </df>
+                    <df name="small">
+                    </df>
+                    <df name="standalone">
+                    </df>
+                    <df name="standalone-static-library">
+                      <in>mylib.c</in>
+                      <in>prog.c</in>
+                    </df>
+                    <df name="subdirectory">
+                      <df name="src">
+                        <df name="subdir">
+                          <df name="subdir2">
+                            <in>prog3.c</in>
+                          </df>
+                          <in>prog2.c</in>
+                        </df>
+                        <in>prog1.c</in>
+                      </df>
+                    </df>
+                    <df name="toolsets">
+                      <in>main.cc</in>
+                      <in>toolsets.cc</in>
+                    </df>
+                    <df name="toplevel-dir">
+                      <df name="src">
+                        <df name="sub1">
+                          <in>prog1.c</in>
+                        </df>
+                        <df name="sub2">
+                          <in>prog2.c</in>
+                        </df>
+                      </df>
+                    </df>
+                    <df name="variables">
+                      <df name="commands">
+                      </df>
+                      <df name="filelist">
+                        <df name="src">
+                        </df>
+                      </df>
+                      <df name="latelate">
+                        <df name="src">
+                          <in>program.cc</in>
+                        </df>
+                      </df>
+                      <df name="variable-in-path">
+                        <df name="C1">
+                          <in>hello.cc</in>
+                        </df>
+                      </df>
+                    </df>
+                    <df name="variants">
+                      <df name="src">
+                        <in>variants.c</in>
+                      </df>
+                    </df>
+                    <df name="win">
+                      <df name="asm-files">
+                        <in>b.s</in>
+                        <in>c.S</in>
+                        <in>hello.cc</in>
+                      </df>
+                      <df name="batch-file-action">
+                      </df>
+                      <df name="command-quote">
+                        <df name="subdir">
+                          <df name="and">
+                            <df name="another">
+                            </df>
+                          </df>
+                        </df>
+                        <in>a.S</in>
+                      </df>
+                      <df name="compiler-flags">
+                        <df name="subdir">
+                          <in>header.h</in>
+                        </df>
+                        <in>additional-include-dirs.cc</in>
+                        <in>additional-options.cc</in>
+                        <in>buffer-security.cc</in>
+                        <in>character-set-mbcs.cc</in>
+                        <in>character-set-unicode.cc</in>
+                        <in>exception-handling-on.cc</in>
+                        <in>function-level-linking.cc</in>
+                        <in>hello.cc</in>
+                        <in>pdbname.cc</in>
+                        <in>rtti-on.cc</in>
+                        <in>runtime-checks.cc</in>
+                        <in>runtime-library-md.cc</in>
+                        <in>runtime-library-mdd.cc</in>
+                        <in>runtime-library-mt.cc</in>
+                        <in>runtime-library-mtd.cc</in>
+                        <in>uninit.cc</in>
+                        <in>warning-as-error.cc</in>
+                        <in>warning-level1.cc</in>
+                        <in>warning-level2.cc</in>
+                        <in>warning-level3.cc</in>
+                        <in>warning-level4.cc</in>
+                      </df>
+                      <df name="idl-rules">
+                        <in>history_indexer_user.cc</in>
+                      </df>
+                      <df name="importlib">
+                        <in>has-exports.cc</in>
+                        <in>hello.cc</in>
+                      </df>
+                      <df name="linker-flags">
+                        <df name="subdir">
+                        </df>
+                        <in>additional-deps.cc</in>
+                        <in>default-libs.cc</in>
+                        <in>deffile.cc</in>
+                        <in>delay-load.cc</in>
+                        <in>entrypointsymbol.cc</in>
+                        <in>hello.cc</in>
+                        <in>library-adjust.cc</in>
+                        <in>library-directories-define.cc</in>
+                        <in>library-directories-reference.cc</in>
+                        <in>nodefaultlib.cc</in>
+                        <in>opt-icf.cc</in>
+                        <in>opt-ref.cc</in>
+                        <in>subsystem-windows.cc</in>
+                      </df>
+                      <df name="long-command-line">
+                        <in>function.cc</in>
+                        <in>hello.cc</in>
+                      </df>
+                      <df name="precompiled">
+                        <in>hello.c</in>
+                        <in>hello2.c</in>
+                        <in>precomp.c</in>
+                      </df>
+                      <df name="rc-build">
+                        <df name="subdir">
+                          <in>include.h</in>
+                        </df>
+                        <in>Resource.h</in>
+                        <in>hello.cpp</in>
+                        <in>hello.h</in>
+                        <in>targetver.h</in>
+                      </df>
+                      <df name="uldi">
+                        <in>a.cc</in>
+                        <in>b.cc</in>
+                        <in>main.cc</in>
+                      </df>
+                      <df name="vs-macros">
+                        <in>hello.cc</in>
+                        <in>input.S</in>
+                      </df>
+                    </df>
+                  </df>
+                  <df name="tools">
+                    <df name="emacs">
+                      <df name="testdata">
+                      </df>
+                    </df>
+                    <df name="Xcode">
+                      <df name="Specifications">
+                      </df>
+                    </df>
+                  </df>
+                  <in>gyp_dummy.c</in>
+                </df>
+                <df name="legacy">
                 </df>
                 <df name="lib">
                 </df>
@@ -289,6 +1174,8 @@
                 </df>
               </df>
               <df name="rimraf">
+                <df name="test">
+                </df>
               </df>
               <df name="semver">
                 <df name="bin">
@@ -299,7 +1186,11 @@
                 </df>
               </df>
               <df name="tar">
+                <df name="examples">
+                </df>
                 <df name="lib">
+                </df>
+                <df name="test">
                 </df>
               </df>
               <df name="uid-number">
@@ -372,6 +1263,10 @@
                 <df name="npm-test-missing-bindir">
                 </df>
                 <df name="npm-test-optional-deps">
+                </df>
+                <df name="npm-test-peer-deps">
+                </df>
+                <df name="npm-test-peer-deps-invalid">
                 </df>
                 <df name="npm-test-platform">
                 </df>
@@ -2913,6 +3808,8 @@
           <df name="api_assets">
           </df>
           <df name="blog">
+            <df name="feature">
+            </df>
             <df name="module">
             </df>
             <df name="npm">
@@ -2938,6 +3835,253 @@
           </df>
         </df>
         <df name="lib">
+        </df>
+        <df name="out">
+          <df name="deps">
+            <df name="http_parser">
+            </df>
+            <df name="openssl">
+            </df>
+            <df name="uv">
+            </df>
+            <df name="v8">
+              <df name="tools">
+                <df name="gyp">
+                </df>
+              </df>
+            </df>
+            <df name="zlib">
+            </df>
+          </df>
+          <df name="Release">
+            <df name="obj">
+              <df name="gen">
+                <in>debug-support.cc</in>
+                <in>experimental-libraries.cc</in>
+                <in>libraries.cc</in>
+                <in>node_natives.h</in>
+              </df>
+            </df>
+            <df name="obj.host">
+            </df>
+            <df name="obj.target">
+              <df name="deps">
+                <df name="http_parser">
+                </df>
+                <df name="openssl">
+                </df>
+                <df name="uv">
+                </df>
+                <df name="v8">
+                  <df name="tools">
+                    <df name="gyp">
+                    </df>
+                  </df>
+                </df>
+                <df name="zlib">
+                </df>
+              </df>
+              <df name="http_parser">
+                <df name="deps">
+                  <df name="http_parser">
+                  </df>
+                </df>
+              </df>
+              <df name="mksnapshot">
+                <df name="deps">
+                  <df name="v8">
+                    <df name="src">
+                    </df>
+                  </df>
+                </df>
+              </df>
+              <df name="node">
+                <df name="src">
+                </df>
+              </df>
+              <df name="openssl">
+                <df name="deps">
+                  <df name="openssl">
+                    <df name="asm">
+                      <df name="x64-elf-gas">
+                        <df name="aes">
+                        </df>
+                        <df name="bn">
+                        </df>
+                        <df name="md5">
+                        </df>
+                        <df name="rc4">
+                        </df>
+                        <df name="sha">
+                        </df>
+                        <df name="whrlpool">
+                        </df>
+                      </df>
+                    </df>
+                    <df name="openssl">
+                      <df name="crypto">
+                        <df name="aes">
+                        </df>
+                        <df name="asn1">
+                        </df>
+                        <df name="bf">
+                        </df>
+                        <df name="bio">
+                        </df>
+                        <df name="bn">
+                          <df name="asm">
+                          </df>
+                        </df>
+                        <df name="buffer">
+                        </df>
+                        <df name="cast">
+                        </df>
+                        <df name="comp">
+                        </df>
+                        <df name="conf">
+                        </df>
+                        <df name="des">
+                        </df>
+                        <df name="dh">
+                        </df>
+                        <df name="dsa">
+                        </df>
+                        <df name="dso">
+                        </df>
+                        <df name="ec">
+                        </df>
+                        <df name="ecdh">
+                        </df>
+                        <df name="ecdsa">
+                        </df>
+                        <df name="engine">
+                        </df>
+                        <df name="err">
+                        </df>
+                        <df name="evp">
+                        </df>
+                        <df name="hmac">
+                        </df>
+                        <df name="krb5">
+                        </df>
+                        <df name="lhash">
+                        </df>
+                        <df name="md2">
+                        </df>
+                        <df name="md4">
+                        </df>
+                        <df name="md5">
+                        </df>
+                        <df name="modes">
+                        </df>
+                        <df name="objects">
+                        </df>
+                        <df name="ocsp">
+                        </df>
+                        <df name="pem">
+                        </df>
+                        <df name="pkcs12">
+                        </df>
+                        <df name="pkcs7">
+                        </df>
+                        <df name="pqueue">
+                        </df>
+                        <df name="rand">
+                        </df>
+                        <df name="rc2">
+                        </df>
+                        <df name="ripemd">
+                        </df>
+                        <df name="rsa">
+                        </df>
+                        <df name="sha">
+                        </df>
+                        <df name="stack">
+                        </df>
+                        <df name="store">
+                        </df>
+                        <df name="ts">
+                        </df>
+                        <df name="txt_db">
+                        </df>
+                        <df name="ui">
+                        </df>
+                        <df name="whrlpool">
+                        </df>
+                        <df name="x509">
+                        </df>
+                        <df name="x509v3">
+                        </df>
+                      </df>
+                      <df name="engines">
+                      </df>
+                      <df name="ssl">
+                      </df>
+                    </df>
+                  </df>
+                </df>
+              </df>
+              <df name="uv">
+                <df name="deps">
+                  <df name="uv">
+                    <df name="src">
+                      <df name="ares">
+                      </df>
+                      <df name="unix">
+                        <df name="eio">
+                        </df>
+                        <df name="ev">
+                        </df>
+                        <df name="linux">
+                        </df>
+                      </df>
+                    </df>
+                  </df>
+                </df>
+              </df>
+              <df name="v8_base">
+                <df name="deps">
+                  <df name="v8">
+                    <df name="src">
+                      <df name="extensions">
+                      </df>
+                      <df name="x64">
+                      </df>
+                    </df>
+                  </df>
+                </df>
+                <df name="gen">
+                </df>
+              </df>
+              <df name="v8_nosnapshot">
+                <df name="deps">
+                  <df name="v8">
+                    <df name="src">
+                    </df>
+                  </df>
+                </df>
+                <df name="gen">
+                </df>
+              </df>
+              <df name="v8_snapshot">
+                <df name="gen">
+                </df>
+                <df name="geni">
+                  <in>snapshot.cc</in>
+                </df>
+              </df>
+              <df name="zlib">
+                <df name="deps">
+                  <df name="zlib">
+                    <df name="contrib">
+                      <df name="minizip">
+                      </df>
+                    </df>
+                  </df>
+                </df>
+              </df>
+            </df>
+          </df>
         </df>
         <df name="src">
           <df name="res">
@@ -3138,6 +4282,8 @@
                 </df>
                 <df name="node_modules">
                   <df name="graceful-fs">
+                    <df name="test">
+                    </df>
                   </df>
                   <df name="inherits">
                   </df>
@@ -3146,6 +4292,10 @@
                       <df name="lru-cache">
                         <df name="lib">
                         </df>
+                        <df name="test">
+                        </df>
+                      </df>
+                      <df name="sigmund">
                         <df name="test">
                         </df>
                       </df>

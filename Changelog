@@ -1,4 +1,4 @@
-2013-01-11 Anton Adamansky. <adamansky@gmail.com>
+2013-01-13 Anton Adamansky. <adamansky@gmail.com>
     * Fixed #35
     * Fixed incorrect handling of query error codes.
     - Release 1.0.50
