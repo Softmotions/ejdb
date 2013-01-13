@@ -634,10 +634,13 @@ EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count,
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return NULL;
     }
-    JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);
-    TCLIST *res;
+    JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);    
     _ejdbsetecode(jcoll->jb, TCESUCCESS, __FILE__, __LINE__, __func__);
-    res = _qryexecute(jcoll, q, count, qflags, log);
+    if (ejdbecode(jcoll->jb) != TCESUCCESS) { //we are not in fatal state
+        JBCUNLOCKMETHOD(jcoll);
+        return NULL;
+    }
+    TCLIST *res = _qryexecute(jcoll, q, count, qflags, log);
     JBCUNLOCKMETHOD(jcoll);
     return res;
 }
