@@ -3866,6 +3866,22 @@ void testTicket28() {
     CU_ASSERT_EQUAL(ejdbecode(jb), JBEQERROR);
     CU_ASSERT_PTR_NULL(q1);
     bson_destroy(&bsq1);
+
+    //Second step
+    bson_init_as_query(&bsq1);
+    bson_finish(&bsq1);
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_EQUAL(ejdbecode(jb), TCESUCCESS);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+
+    bson_destroy(&bsq1);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+    tclistdel(q1res);
 }
 
 int main() {

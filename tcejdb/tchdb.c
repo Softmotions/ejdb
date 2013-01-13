@@ -1343,10 +1343,37 @@ void tchdbsetecode(TCHDB *hdb, int ecode, const char *filename, int line, const 
   if (ecode == TCESUCCESS) {
       return;
   }
-  if(ecode != TCEINVALID && ecode != TCEKEEP && ecode != TCENOREC){
-    hdb->fatal = true;
-    if(hdb->fd >= 0 && (hdb->omode & HDBOWRITER)) tchdbsetflag(hdb, HDBFFATAL, true);
+
+  switch (ecode) { //Fatal errors
+        case TCETHREAD:
+        case TCENOFILE:
+        case TCENOPERM:
+        case TCEMETA:
+        case TCERHEAD:
+        case TCEOPEN:
+        case TCECLOSE:
+        case TCETRUNC:
+        case TCESYNC:
+        case TCESTAT:
+        case TCESEEK:
+        case TCEREAD:
+        case TCEWRITE:
+        case TCEMMAP:
+        case TCELOCK:
+        case TCEUNLINK:
+        case TCERENAME:
+        case TCEMKDIR:
+        case TCERMDIR:
+        case TCEMISC:
+        {
+            hdb->fatal = true;
+            if (hdb->fd >= 0 && (hdb->omode & HDBOWRITER)) tchdbsetflag(hdb, HDBFFATAL, true);
+            break;
+        }
+        default:
+            break;
   }
+
   if(ecode != TCENOREC && hdb->dbgfd >= 0 && (hdb->dbgfd != UINT16_MAX || hdb->fatal)){
     int dbgfd = (hdb->dbgfd == UINT16_MAX) ? 1 : hdb->dbgfd;
     char obuf[HDBIOBUFSIZ];
