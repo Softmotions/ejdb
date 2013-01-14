@@ -126,6 +126,9 @@ void testAddData() {
     bson_destroy(&a1);
 }
 
+void testInvalidQueries1() {
+}
+
 void testSetIndex1() {
     EJCOLL *ccoll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(ccoll);
@@ -3892,6 +3895,80 @@ void testTicket28() {
     tclistdel(q1res);
 }
 
+void testTicket38() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket38", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    //R: {a: [ 'b', 'c', 'ddd', 3 ]}
+    bson r1;
+    bson_init(&r1);
+    bson_append_start_array(&r1, "a");
+    bson_append_string(&r1, "0", "b");
+    bson_append_string(&r1, "1", "c");
+    bson_append_string(&r1, "2", "ddd");
+    bson_append_int(&r1, "3", 3);
+    bson_append_finish_array(&r1);
+    bson_finish(&r1);
+    CU_ASSERT_FALSE_FATAL(r1.err);
+
+    bson_oid_t oid;
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &r1, &oid));
+    bson_destroy(&r1);
+
+    //Q: {$pullAll:{a:[3, 2, 'c']}
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "$pullAll");
+    bson_append_start_array(&bsq1, "a");
+    bson_append_int(&bsq1, "0", 3);
+    bson_append_int(&bsq1, "1", 2);
+    bson_append_string(&bsq1, "2", "c");
+    bson_append_finish_array(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+    bson_destroy(&bsq1);
+
+    //Q: {}
+    bson_init_as_query(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        void *bsdata = TCLISTVALPTR(q1res, i);
+        bson_iterator it;
+        bson_iterator_from_buffer(&it, bsdata);
+        bson_type bt = bson_find_fieldpath_value("_id", &it);
+        CU_ASSERT_EQUAL(bt, BSON_OID);
+        CU_ASSERT_FALSE(bson_compare_string("b", TCLISTVALPTR(q1res, i), "a.0"));
+        CU_ASSERT_FALSE(bson_compare_string("ddd", TCLISTVALPTR(q1res, i), "a.1"));
+        bt = bson_find_fieldpath_value("a.2", &it);
+        CU_ASSERT_EQUAL(bt, BSON_EOO);
+        bt = bson_find_fieldpath_value("a.3", &it);
+        CU_ASSERT_EQUAL(bt, BSON_EOO);
+    }
+
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -3910,6 +3987,7 @@ int main() {
 
     /* Add the tests to the suite */
     if ((NULL == CU_add_test(pSuite, "testAddData", testAddData)) ||
+            (NULL == CU_add_test(pSuite, "testInvalidQueries1", testInvalidQueries1)) ||
             (NULL == CU_add_test(pSuite, "testSetIndex1", testSetIndex1)) ||
             (NULL == CU_add_test(pSuite, "testQuery1", testQuery1)) ||
             (NULL == CU_add_test(pSuite, "testQuery2", testQuery2)) ||
@@ -3957,7 +4035,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "test$upsert", test$upsert)) ||
             (NULL == CU_add_test(pSuite, "testPrimitiveCases1", testPrimitiveCases1)) ||
             (NULL == CU_add_test(pSuite, "testTicket29", testTicket29)) ||
-            (NULL == CU_add_test(pSuite, "testTicket28", testTicket28))
+            (NULL == CU_add_test(pSuite, "testTicket28", testTicket28)) ||
+            (NULL == CU_add_test(pSuite, "testTicket38", testTicket38))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

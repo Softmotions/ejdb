@@ -1616,7 +1616,11 @@ EJDB_EXPORT bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf
     bson_iterator it, it2;
     bson_type bt, bt2;
     bson_iterator_from_buffer(&it, mbuf);
+
     while (!found && (bt = bson_iterator_next(&it)) != BSON_EOO) {
+        if (expandall && bt != BSON_ARRAY) {
+            continue;
+        }
         bson_iterator_from_buffer(&it2, inbuf);
         bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
         if (bt2 != BSON_ARRAY) {
@@ -1626,13 +1630,10 @@ EJDB_EXPORT bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf
         bson_iterator_subiterator(&it2, &sit);
         while (!found && (bt2 = bson_iterator_next(&sit)) != BSON_EOO) {
             if (expandall) {
-                if (bt2 != BSON_ARRAY) {
-                    continue;
-                }
                 bson_iterator sit2;
-                bson_iterator_subiterator(&sit, &sit2);
+                bson_iterator_subiterator(&it, &sit2);
                 while ((bt2 = bson_iterator_next(&sit2)) != BSON_EOO) {
-                    if (!bson_compare_it_current(&sit, &it)) {
+                    if (!bson_compare_it_current(&sit, &sit2)) {
                         found = true;
                         break;
                     }
@@ -1847,6 +1848,9 @@ EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool 
     bson_iterator it, it2;
     bson_iterator_from_buffer(&it, mbuf);
     while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+        if (expandall && bt != BSON_ARRAY) {
+            continue;
+        }
         ctx.mfields++;
     }
     bson_iterator_from_buffer(&it, inbuf);

@@ -226,27 +226,27 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *
  *  - Supported queries:
  *      - Simple matching of String OR Number OR Array value:
- *          -   {'json.field.path' : 'val', ...}
+ *          -   {'fpath' : 'val', ...}
  *      - $not Negate operation.
- *          -   {'json.field.path' : {'$not' : val}} //Field not equal to val
- *          -   {'json.field.path' : {'$not' : {'$begin' : prefix}}} //Field not begins with val
+ *          -   {'fpath' : {'$not' : val}} //Field not equal to val
+ *          -   {'fpath' : {'$not' : {'$begin' : prefix}}} //Field not begins with val
  *      - $begin String starts with prefix
- *          -   {'json.field.path' : {'$begin' : prefix}}
+ *          -   {'fpath' : {'$begin' : prefix}}
  *      - $gt, $gte (>, >=) and $lt, $lte for number types:
- *          -   {'json.field.path' : {'$gt' : number}, ...}
+ *          -   {'fpath' : {'$gt' : number}, ...}
  *      - $bt Between for number types:
- *          -   {'json.field.path' : {'$bt' : [num1, num2]}}
+ *          -   {'fpath' : {'$bt' : [num1, num2]}}
  *      - $in String OR Number OR Array val matches to value in specified array:
- *          -   {'json.field.path' : {'$in' : [val1, val2, val3]}}
+ *          -   {'fpath' : {'$in' : [val1, val2, val3]}}
  *      - $nin - Not IN
  *      - $strand String tokens OR String array val matches all tokens in specified array:
- *          -   {'json.field.path' : {'$strand' : [val1, val2, val3]}}
+ *          -   {'fpath' : {'$strand' : [val1, val2, val3]}}
  *      - $stror String tokens OR String array val matches any token in specified array:
- *          -   {'json.field.path' : {'$stror' : [val1, val2, val3]}}
+ *          -   {'fpath' : {'$stror' : [val1, val2, val3]}}
  *      - $exists Field existence matching:
- *          -   {'json.field.path' : {'$exists' : true|false}}
+ *          -   {'fpath' : {'$exists' : true|false}}
  *      - $icase Case insensitive string matching:
- *          -    {'json.field.path' : {'$icase' : 'val1'}} //icase matching
+ *          -    {'fpath' : {'$icase' : 'val1'}} //icase matching
  *          Ignore case matching with '$in' operation:
  *          -    {'name' : {'$icase' : {'$in' : ['théâtre - театр', 'hello world']}}}
  *          For case insensitive matching you can create special index of type: `JBIDXISTR`
@@ -268,9 +268,13 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *          - {.., '$dropall' : true}
  *      $addToSet Atomically adds value to the array only if its not in the array already.
  *                If containing array is missing it will be created.
- *          - {.., '$addToSet' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
+ *          - {.., '$addToSet' : {'fpath' : val1, 'fpathN' : valN, ...}}
+ *      $addToSetAll Batch version if $addToSet
+ *          - {.., '$addToSetAll' : {'fpath' : [array of values to add], ...}}
  *      $pull  Atomically removes all occurrences of value from field, if field is an array.
- *          - {.., '$pull' : {'json.field.path' : val1, 'json.field.pathN' : valN, ...}}
+ *          - {.., '$pull' : {'fpath' : val1, 'fpathN' : valN, ...}}
+ *      $pullAll Batch version of $pull
+ *          - {.., '$pullAll' : {'fpath' : [array of values to remove], ...}}
  *
  *
  *  NOTE: It is better to execute update queries with `JBQRYCOUNT`

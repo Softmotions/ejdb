@@ -1849,6 +1849,9 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
         _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
         goto finish;
     }
+    if (bson_size(&bsout) == 0) { //Record was not updated
+        goto finish;
+    }
     //Perform updating
     bt = bson_find(&it, &src, JDBIDKEYNAME);
     if (bt != BSON_OID) {
