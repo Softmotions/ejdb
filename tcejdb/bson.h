@@ -181,8 +181,6 @@ EJDB_EXPORT bson_type bson_find(bson_iterator *it, const bson *obj, const char *
 
 EJDB_EXPORT bson_type bson_find_from_buffer(bson_iterator *it, const char *buffer, const char *name);
 
-
-
 typedef struct { /**< Find field path context */
     const char* fpath;
     int fplen;
@@ -1142,8 +1140,8 @@ EJDB_EXPORT bson* bson_create_from_buffer(const void *buf, int bufsz);
 EJDB_EXPORT bson* bson_create_from_buffer2(bson *bs, const void *buf, int bufsz);
 
 EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inbuf);
-EJDB_EXPORT bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf);
-EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bson *bsout);
+EJDB_EXPORT bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf, bool expandall);
+EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool expandall, bson *bsout);
 
 
 EJDB_EXTERN_C_END

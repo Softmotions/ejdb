@@ -58,7 +58,8 @@ enum { /**> Query field flags */
     EJCONDINC = 1 << 11, /**> $inc Inc field update operation */
     EJCONDADDSET = 1 << 12, /**> $addToSet Adds value to the array only if its not in the array already.  */
     EJCONDPULL = 1 << 13, /**> $pull Removes all occurrences of value from field, if field is an array */
-    EJCONDUPSERT = 1 << 14 /**> $upsert Upsert $set operation */
+    EJCONDUPSERT = 1 << 14, /**> $upsert Upsert $set operation */
+    EJCONDALL  = 1 << 15 /**> 'All' modificator for $pull or $addToSet ($addToSetAll or $pullAll) */
 };
 
 

@@ -3366,8 +3366,14 @@ void test$addToSet() {
     bson_append_finish_object(&bsq1);
     bson_append_start_object(&bsq1, "$addToSet");
     bson_append_string(&bsq1, "personal.tags", "tag3");
-    bson_append_string(&bsq1, "labels", "red");
-    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1); //EOF $addToSet
+    bson_append_start_object(&bsq1, "$addToSetAll");
+    bson_append_start_array(&bsq1, "labels");
+    bson_append_string(&bsq1, "0", "red");
+    bson_append_string(&bsq1, "1", "black");
+    bson_append_string(&bsq1, "2", "green");
+    bson_append_finish_array(&bsq1);
+    bson_append_finish_object(&bsq1); //EOF $addToSetAll
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
@@ -3403,6 +3409,8 @@ void test$addToSet() {
         CU_ASSERT_FALSE(bson_compare_string("tag3", TCLISTVALPTR(q1res, i), "personal.tags.2"));
         CU_ASSERT_FALSE(bson_compare_string("green", TCLISTVALPTR(q1res, i), "labels.0"));
         CU_ASSERT_FALSE(bson_compare_string("red", TCLISTVALPTR(q1res, i), "labels.1"));
+        CU_ASSERT_FALSE(bson_compare_string("black", TCLISTVALPTR(q1res, i), "labels.2"));
+        CU_ASSERT_TRUE(bson_compare_string("green", TCLISTVALPTR(q1res, i), "labels.3"));
     }
 
     bson_destroy(&bsq1);

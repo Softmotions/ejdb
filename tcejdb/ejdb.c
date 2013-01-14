@@ -634,7 +634,7 @@ EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count,
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return NULL;
     }
-    JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);    
+    JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);
     _ejdbsetecode(jcoll->jb, TCESUCCESS, __FILE__, __LINE__, __func__);
     if (ejdbecode(jcoll->jb) != TCESUCCESS) { //we are not in fatal state
         JBCUNLOCKMETHOD(jcoll);
@@ -1696,28 +1696,38 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     bsout.dataSize = 0;
     bson_reset(&bsout);
 
-    const EJQF *setqf = NULL;
-    const EJQF *incqf = NULL;
-    const EJQF *addsetqf = NULL;
-    const EJQF *pullqf = NULL;
+    const EJQF *setqf = NULL; /*$set*/
+    const EJQF *incqf = NULL; /*$inc*/
+    const EJQF * addsetqf[2] = {NULL}; /*$addToSet, $addToSetAll*/
+    const EJQF * pullqf[2] = {NULL}; /*$pull, $pullAll*/
 
-    //$set, $inc, $addToSet, $pull operations
+    //$set, $inc, $addToSet, $addToSetAll, $pull, $pullAll operations
     for (int i = 0; i < TCLISTNUM(ejq->qobjlist); ++i) {
         const EJQF *qf = TCLISTVALPTR(ejq->qobjlist, i);
         if (qf->updateobj == NULL) {
             continue;
         }
-        if (!setqf && qf->flags & EJCONDSET) { //$set
+        if (qf->flags & EJCONDSET) { //$set
             setqf = qf;
-        } else if (!incqf && qf->flags & EJCONDINC) {
+            continue;
+        }
+        if (qf->flags & EJCONDINC) { //$inc
             incqf = qf;
-        } else if (!addsetqf && qf->flags & EJCONDADDSET) {
-            addsetqf = qf;
-        } else if (!pullqf && qf->flags & EJCONDPULL) {
-            pullqf = qf;
-        } else {
-            assert(0);
-            break;
+            continue;
+        }
+        if (qf->flags & EJCONDADDSET) { //$addToSet, $addToSetAll
+            if (qf->flags & EJCONDALL) {
+                addsetqf[1] = qf;
+            } else {
+                addsetqf[0] = qf;
+            }
+        }
+        if (qf->flags & EJCONDPULL) { //$pull, $pullAll
+            if (qf->flags & EJCONDALL) {
+                pullqf[1] = qf;
+            } else {
+                pullqf[0] = qf;
+            }
         }
     }
     if (setqf) { //$set
@@ -1770,14 +1780,18 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
                 update = true;
             }
         }
-    }
-    if (!rv) {
-        goto finish;
+
+        if (!rv) {
+            goto finish;
+        }
     }
 
-    if (pullqf) { //$pull
+
+    for (int i = 0; i < 2; ++i) { //$pull $pullAll
+        const EJQF *qf = pullqf[i];
+        if (!qf) continue;
         char* inbuf = (bsout.finished) ? bsout.data : bsbuf;
-        if (bson_find_merged_array_sets(bson_data(pullqf->updateobj), inbuf)) {
+        if (bson_find_merged_array_sets(bson_data(qf->updateobj), inbuf, (qf->flags & EJCONDALL))) {
             if (bsout.finished) {
                 //reinit `bsout`, `inbuf` already points to `bsout.data` and will be freed later
                 bson_init_size(&bsout, bson_size(&bsout));
@@ -1785,8 +1799,8 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
                 assert(bsout.data == NULL);
                 bson_init_size(&bsout, bsbufsz);
             }
-            //$pull merge
-            if (bson_merge_array_sets(bson_data(pullqf->updateobj), inbuf, true, &bsout)) {
+            //$pull $pullAll merge
+            if (bson_merge_array_sets(bson_data(qf->updateobj), inbuf, true, (qf->flags & EJCONDALL), &bsout)) {
                 rv = false;
                 _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
             }
@@ -1796,14 +1810,16 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
             bson_finish(&bsout);
             update = true;
         }
-    }
-    if (!rv) {
-        goto finish;
+        if (!rv) {
+            goto finish;
+        }
     }
 
-    if (addsetqf) { //$addToSet
+    for (int i = 0; i < 2; ++i) { //$addToSet $addToSetAll
+        const EJQF *qf = addsetqf[i];
+        if (!qf) continue;
         char* inbuf = (bsout.finished) ? bsout.data : bsbuf;
-        if (bson_find_unmerged_array_sets(bson_data(addsetqf->updateobj), inbuf)) {
+        if ((qf->flags & EJCONDALL) || bson_find_unmerged_array_sets(bson_data(qf->updateobj), inbuf)) {
             //Missing $addToSet element in some array field found
             if (bsout.finished) {
                 //reinit `bsout`, `inbuf` already points to `bsout.data` and will be freed later
@@ -1812,8 +1828,8 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
                 assert(bsout.data == NULL);
                 bson_init_size(&bsout, bsbufsz);
             }
-            //$addToSet merge
-            if (bson_merge_array_sets(bson_data(addsetqf->updateobj), inbuf, false, &bsout)) {
+            //$addToSet $addToSetAll merge
+            if (bson_merge_array_sets(bson_data(qf->updateobj), inbuf, false, (qf->flags & EJCONDALL), &bsout)) {
                 rv = false;
                 _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
             }
@@ -1823,12 +1839,12 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
             bson_finish(&bsout);
             update = true;
         }
+        if (!update || !rv) {
+            goto finish;
+        }
     }
 
-    if (!update || !rv) {
-        goto finish;
-    }
-    if (bsout.err) {
+    if (bsout.err) { //Resulting BSON is OK?
         rv = false;
         _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
         goto finish;
@@ -3217,8 +3233,10 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     !strcmp("$inc", fkey) ||
                     !strcmp("$dropall", fkey) ||
                     !strcmp("$addToSet", fkey) ||
+                    !strcmp("$addToSetAll", fkey) ||
                     !strcmp("$upsert", fkey) ||
-                    !strcmp("$pull", fkey)) {
+                    !strcmp("$pull", fkey) ||
+                    !strcmp("$pullAll", fkey)) {
                 if (pqf) { //Top level ops
                     ret = JBEQERROR;
                     _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
@@ -3332,6 +3350,12 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         } else if (!strcmp("$upsert", fkey)) {
                             qf.flags |= EJCONDSET;
                             qf.flags |= EJCONDUPSERT;
+                        } else if (!strcmp("$addToSetAll", fkey)) {
+                            qf.flags |= EJCONDADDSET;
+                            qf.flags |= EJCONDALL;
+                        } else if (!strcmp("$pullAll", fkey)) {
+                            qf.flags |= EJCONDPULL;
+                            qf.flags |= EJCONDALL;
                         }
                     }
                     if ((qf.flags & (EJCONDSET | EJCONDINC | EJCONDADDSET | EJCONDPULL))) {
@@ -3343,6 +3367,10 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         bson_iterator sit;
                         bson_iterator_subiterator(it, &sit);
                         while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
+                            if ((qf.flags & EJCONDALL) && sbt != BSON_ARRAY) {
+                                //$addToSetAll & $pullAll accepts arrays only as argument
+                                continue;
+                            }
                             bson_append_field_from_iterator(&sit, qf.updateobj);
                         }
                         bson_finish(qf.updateobj);
