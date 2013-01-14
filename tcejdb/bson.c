@@ -25,7 +25,6 @@
 #include "bson.h"
 #include "encoding.h"
 #include "myconf.h"
-#include "tcutil.h"
 
 const int initialBufferSize = 128;
 
