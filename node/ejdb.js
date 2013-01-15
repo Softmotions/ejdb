@@ -335,7 +335,8 @@ function parseQueryArgs(args) {
  *      - $orderby Sorting order of query fields.
  *      - $onlycount true|false If `true` only count of matching records will be returned
  *                              without placing records in result set.
- *      - $fields Set subset of fetched fields
+ *      - $fields Set subset of fetched fields.
+ *          If field presented in $orderby clause it will be forced to include in resulting records.
  *          Example:
  *          hints:    {
  *                      "$orderby" : { //ORDER BY field1 ASC, field2 DESC

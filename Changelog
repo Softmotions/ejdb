@@ -1,6 +1,7 @@
 2013-01-15 Anton Adamansky. <adamansky@gmail.com>
     * Minor fix in ejdb.js (merged pull #42)
-    - Release 1.0.52
+    * Result set fields can be excluded (ticket #34)
+    - Release 1.0.53
 
 2013-01-14 Anton Adamansky. <adamansky@gmail.com>
     * $addToSetAll and $pullAll operations implemented.

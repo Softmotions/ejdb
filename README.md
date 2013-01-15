@@ -334,6 +334,7 @@ EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
       - $onlycount true|false If `true` only count of matching records will be returned
                               without placing records in result set.
       - $fields Set subset of fetched fields
+           If a field presented in $orderby clause it will be forced to include in resulting records.
            Example:
            hints:    {
                        "$orderby" : { //ORDER BY field1 ASC, field2 DESC
@@ -423,10 +424,10 @@ Convenient method to execute update queries.
     - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
  * `$dropall` In-place record removal operation.
     - {some fields for selection, '$dropall' : true}
- * `$addToSet` Atomically adds value to the array only if its not in the array already.
+ * `$addToSet` | `$addToSetAll` Atomically adds value to the array only if its not in the array already.
  If containing array is missing it will be created.
     - {.., '$addToSet' : {'fpath' : val1, 'fpathN' : valN, ...}}
- * `$pull` Atomically removes all occurrences of value from field, if field is an array.
+ * `$pull` | `pullAll` Atomically removes all occurrences of value from field, if field is an array.
     - {.., '$pull' : {'fpath' : val1, 'fpathN' : valN, ...}}
 
 Call variations of update():
@@ -731,10 +732,14 @@ Queries
  *       $dropall In-place record removal operation.
  *           - {.., '$dropall' : true}
  *       $addToSet Atomically adds value to the array only if its not in the array already.
- *                   If containing array is missing it will be created.
+ *                    If containing array is missing it will be created.
  *           - {.., '$addToSet' : {'fpath' : val1, 'fpathN' : valN, ...}}
- *       $pull - Atomically removes all occurrences of value from field, if field is an array.
+ *       $addToSetAll Batch version if $addToSet
+ *           - {.., '$addToSetAll' : {'fpath' : [array of values to add], ...}}
+ *       $pull Atomically removes all occurrences of value from field, if field is an array.
  *           - {.., '$pull' : {'fpath' : val1, 'fpathN' : valN, ...}}
+ *       $pullAll Batch version of $pull
+ *           - {.., '$pullAll' : {'fpath' : [array of values to remove], ...}}
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
@@ -746,6 +751,7 @@ Queries
  *      - $skip Number of skipped results in the result set
  *      - $orderby Sorting order of query fields.
  *      - $fields Set subset of fetched fields
+            If a field presented in $orderby clause it will be forced to include in resulting records.
  *          Example:
  *          hints:    {
  *                      "$orderby" : { //ORDER BY field1 ASC, field2 DESC

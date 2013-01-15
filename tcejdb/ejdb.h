@@ -45,7 +45,8 @@ enum { /** Error codes */
     JBEQRSSORTING = 9008, /**< Result set sorting error. */
     JBEQERROR = 9009, /**< Query generic error. */
     JBEQUPDFAILED = 9010, /**< Updating failed. */
-    JBEQONEEMATCH = 9011 /**< Only one $elemMatch allowed in the fieldpath. */
+    JBEQONEEMATCH = 9011, /**< Only one $elemMatch allowed in the fieldpath. */
+    JBEQINCEXCL = 9012 /**< $fields hint cannot mix include and exclude fields */
 };
 
 enum { /** Database open modes */
@@ -290,6 +291,7 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *      - $skip Number of skipped results in the result set
  *      - $orderby Sorting order of query fields.
  *      - $fields Set subset of fetched fields
+ *          If a field presented in $orderby clause it will be forced to include in resulting records.
  *          Example:
  *          hints:    {
  *                      "$orderby" : { //ORDER BY field1 ASC, field2 DESC

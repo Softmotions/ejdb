@@ -2799,6 +2799,7 @@ void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
     bson bshits1;
     bson_init_as_query(&bshits1);
     bson_append_start_object(&bshits1, "$fields");
+    bson_append_int(&bshits1, "_id", 1);
     bson_append_int(&bshits1, "phone", 1);
     bson_append_int(&bshits1, "address.city", 1);
     bson_append_int(&bshits1, "labels", 1);
@@ -2880,11 +2881,90 @@ void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
         }
     }
     CU_ASSERT_TRUE(ccount == 2);
+    bson_destroy(&bshits1);
+    tclistdel(q1res);
+    tcxstrclear(log);
+    ejdbquerydel(q1);
+
+    //NEXT Q
+    bson_init_as_query(&bshits1);
+    bson_append_start_object(&bshits1, "$fields");
+    bson_append_int(&bshits1, "phone", 1);
+    bson_append_int(&bshits1, "address.city", 0);
+    bson_append_int(&bshits1, "labels", 0);
+    bson_append_finish_object(&bshits1);
+    bson_finish(&bshits1);
+    CU_ASSERT_FALSE_FATAL(bshits1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshits1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(ejdbecode(jb), JBEQINCEXCL);
+    ejdbquerydel(q1);
+    tcxstrclear(log);
+    bson_destroy(&bshits1);
+    bson_destroy(&bsq1);
+
+    //NEXT Q
+    bson_init_as_query(&bsq1);
+    //bson_append_string(&bsq1, "name", "Антонов");
+    bson_append_start_object(&bsq1, "address");
+    bson_append_bool(&bsq1, "$exists", true);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    bson_init_as_query(&bshits1);
+    bson_append_start_object(&bshits1, "$fields");
+    bson_append_int(&bshits1, "phone", 0);
+    bson_append_int(&bshits1, "address.city", 0);
+    bson_append_int(&bshits1, "address.room", 0);
+    bson_append_int(&bshits1, "labels", 0);
+    bson_append_int(&bshits1, "complexarr.0", 0);
+    bson_append_int(&bshits1, "_id", 0);
+    bson_append_finish_object(&bshits1);
+    bson_finish(&bshits1);
+    CU_ASSERT_FALSE_FATAL(bshits1.err);
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshits1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(ejdbecode(jb), TCESUCCESS);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        void *bsdata = TCLISTVALPTR(q1res, i);
+        bson_type bt;
+        bson_iterator_from_buffer(&it, bsdata);
+        bt = bson_find_fieldpath_value("_id", &it);
+        CU_ASSERT_TRUE(bt == BSON_EOO);
+        bson_iterator_from_buffer(&it, bsdata);
+        bt = bson_find_fieldpath_value("phone", &it);
+        CU_ASSERT_TRUE(bt == BSON_EOO);
+        bson_iterator_from_buffer(&it, bsdata);
+        bt = bson_find_fieldpath_value("address", &it);
+        CU_ASSERT_TRUE(bt == BSON_OBJECT);
+        bson_iterator_from_buffer(&it, bsdata);
+        //bt = bson_find_fieldpath_value("address.country", &it);
+        //CU_ASSERT_TRUE(bt == BSON_STRING);
+        bson_iterator_from_buffer(&it, bsdata);
+        bt = bson_find_fieldpath_value("address.city", &it);
+        CU_ASSERT_TRUE(bt == BSON_EOO);
+        bson_iterator_from_buffer(&it, bsdata);
+        bt = bson_find_fieldpath_value("address.room", &it);
+        CU_ASSERT_TRUE(bt == BSON_EOO);
+        bson_iterator_from_buffer(&it, bsdata);
+        bt = bson_find_fieldpath_value("labels", &it);
+        CU_ASSERT_TRUE(bt == BSON_EOO);
+        //bson_print_raw(stderr, bsdata, 0);
+    }
+
     bson_destroy(&bsq1);
     bson_destroy(&bshits1);
     tclistdel(q1res);
     tcxstrdel(log);
     ejdbquerydel(q1);
+
 }
 
 void testUpdate1() { //https://github.com/Softmotions/ejdb/issues/9

@@ -1587,12 +1587,10 @@ EJDB_EXPORT int bson_compare_bool(bson_bool_t cv, const void *bsdata, const char
 EJDB_EXPORT bson* bson_dup(const bson *src) {
     assert(src);
     bson *rv = bson_create();
-    const char *raw = bson_data(src);
-    int sz = bson_size(src);
-    bson_init_size(rv, sz);
-    bson_ensure_space(rv, sz - 4);
-    bson_append(rv, raw + 4, sz - (4 + 1/*BSON_EOO*/));
-    bson_finish(rv);
+    int s = bson_size(src);
+    _bson_init_size(rv, s);
+    memmove(rv->data, src->data, s);
+    rv->finished = 1;
     return rv;
 }
 
