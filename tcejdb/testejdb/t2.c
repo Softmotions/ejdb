@@ -4049,6 +4049,18 @@ void testTicket38() {
     tclistdel(q1res);
 }
 
+
+void testTicket43() {
+    /*
+     Assuming fpath contains object id (or its string representation).
+     In query results fpath values will be replaced by loaded bson
+     objects with matching oids from collectionname
+
+     {..., $do : {fpath : {$join : 'collectionname'}} }
+
+    */
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -4116,7 +4128,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testPrimitiveCases1", testPrimitiveCases1)) ||
             (NULL == CU_add_test(pSuite, "testTicket29", testTicket29)) ||
             (NULL == CU_add_test(pSuite, "testTicket28", testTicket28)) ||
-            (NULL == CU_add_test(pSuite, "testTicket38", testTicket38))
+            (NULL == CU_add_test(pSuite, "testTicket38", testTicket38)) ||
+            (NULL == CU_add_test(pSuite, "testTicket43", testTicket43))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

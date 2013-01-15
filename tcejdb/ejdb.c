@@ -3314,7 +3314,9 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     !strcmp("$addToSetAll", fkey) ||
                     !strcmp("$upsert", fkey) ||
                     !strcmp("$pull", fkey) ||
-                    !strcmp("$pullAll", fkey)) {
+                    !strcmp("$pullAll", fkey) ||
+                    !strcmp("$do", fkey)
+                    ) {
                 if (pqf) { //Top level ops
                     ret = JBEQERROR;
                     _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
@@ -3434,8 +3436,11 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         } else if (!strcmp("$pullAll", fkey)) {
                             qf.flags |= EJCONDPULL;
                             qf.flags |= EJCONDALL;
+                        } else if (!strcmp("$do", fkey)) {
+                            qf.flags |= EJCONDOIT;
                         }
                     }
+
                     if ((qf.flags & (EJCONDSET | EJCONDINC | EJCONDADDSET | EJCONDPULL))) {
                         assert(qf.updateobj == NULL);
                         qf.q->flags |= EJQUPDATING;
@@ -3464,6 +3469,31 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         TCLISTPUSH(qlist, &qf, sizeof (qf));
                         break;
                     }
+
+                    if (qf.flags & EJCONDOIT) { //$do
+                        assert(qf.updateobj == NULL);
+                        qf.updateobj = bson_create();
+                        bson_init_as_query(qf.updateobj);
+                        bson_type sbt;
+                        bson_iterator sit;
+                        bson_iterator_subiterator(it, &sit);
+                        while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
+                            bson_append_field_from_iterator(&sit, qf.updateobj);
+                        }
+                        bson_finish(qf.updateobj);
+                        if (qf.updateobj->err) {
+                            ret = JBEQERROR;
+                            _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
+                            break;
+                        }
+                        qf.fpath = strdup(fkey);
+                        qf.fpathsz = strlen(qf.fpath);
+                        qf.tcop = TDBQTRUE;
+                        qf.flags |= EJFEXCLUDED;
+                        TCLISTPUSH(qlist, &qf, sizeof (qf));
+                        break;
+                    }
+
                     if (!strcmp("$elemMatch", fkey)) {
                         if (qf.elmatchgrp) { //only one $elemMatch allowed in query field
                             ret = JBEQERROR;
@@ -3483,6 +3513,11 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             }
             case BSON_OID:
             {
+
+                if (isckey) {
+
+                }
+
                 assert(!qf.fpath && !qf.expr);
                 qf.ftype = ftype;
                 TCMALLOC(qf.expr, 25 * sizeof (char));
