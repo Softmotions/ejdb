@@ -163,7 +163,7 @@ EJDB.prototype.save = function(cname, jsarr, opts, cb) {
     if (!jsarr) {
         return [];
     }
-    if (! (jsarr.constructor.name == "Array")) {
+    if (!Array.isArray(jsarr)) {
         jsarr = [jsarr];
     }
     if (typeof opts == "function") {
