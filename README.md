@@ -1,4 +1,4 @@
-![EJDB](https://raw.github.com/Softmotions/ejdb/master/misc/ejdblogo3.png)
+[![EJDB](https://raw.github.com/Softmotions/ejdb/master/misc/ejdblogo3.png)](http://ejdb.org)
 
 
 Embedded JSON Database engine
