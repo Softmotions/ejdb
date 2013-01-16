@@ -4104,8 +4104,8 @@ void testTicket43() {
      objects with matching oids from collectionname
 
      {..., $do : {fpath : {$join : 'collectionname'}} }
-     Second form:
-     {..., $do : {fpath : {$join : {$ref : 'collectionname', $fields : {foo:1}} }} }
+     $fields applied to the joined object:
+     {..., $do : {fpath : {$join : 'collectionname'}} }, {$fields : {fpath.jonnedfpath : 1}}
      */
 
     bson bsq1;
@@ -4123,6 +4123,10 @@ void testTicket43() {
 
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+
+    
+
     ejdbquerydel(q1);
     bson_destroy(&bsq1);
 }

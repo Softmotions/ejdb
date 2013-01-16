@@ -101,6 +101,7 @@ static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz)
 static bool _qryallcondsmatch(EJQ *ejq, int anum, EJCOLL *jcoll, EJQF **qfs, int qfsz, const void *pkbuf, int pkbufsz);
 static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
+static void _pushprocessedbson(TCLIST *rs, EJQF **qfs, int qfsz, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz);
 static void _pushstripbson(TCLIST *rs, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz);
 static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
@@ -1655,6 +1656,28 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
     return rv;
 }
 
+static void _pushprocessedbson(TCLIST *res, EJQF **qfs, int qfsz,
+        TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz) {
+    bool hasdo = false;
+    for (int i = 0; i < qfsz; ++i) {
+        if (qfs[i]->flags & EJCONDOIT) {
+            hasdo = true;
+            break;
+        }
+    }
+    if (!hasdo && !ifields) { //no $do operations and $fields stripping
+        tclistpush(res, bsbuf, bsbufsz);
+        return;
+    }
+
+    //char bstack[JBSBUFFERSZ];
+
+
+    if (ifields) {
+        _pushstripbson(res, ifields, imode, bsbuf, bsbufsz);
+    }
+}
+
 /* Pushes bson into rs with only fields matched included/excludes in $fields */
 static void _pushstripbson(TCLIST *rs, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz) {
     if (!ifields || TCMAPRNUM(ifields) <= 0) {
@@ -1743,11 +1766,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
         }
         return rv;
     }
-
     //Apply update operation
-    bson src;
-    bson_create_from_buffer2(&src, bsbuf, bsbufsz);
-
     bson bsout;
     bsout.data = NULL;
     bsout.dataSize = 0;
@@ -1790,7 +1809,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     if (setqf) { //$set
         update = true;
         bson_init_size(&bsout, bsbufsz);
-        if (bson_merge(&src, setqf->updateobj, true, &bsout)) {
+        if (bson_merge2(bsbuf, bson_data(setqf->updateobj), true, &bsout)) {
             rv = false;
             _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
         }
@@ -1910,7 +1929,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
         goto finish;
     }
     //Perform updating
-    bt = bson_find(&it, &src, JDBIDKEYNAME);
+    bt = bson_find_from_buffer(&it, bsbuf, JDBIDKEYNAME);
     if (bt != BSON_OID) {
         rv = false;
         _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
@@ -1925,7 +1944,6 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     }
 
 finish:
-    bson_destroy(&src);
     bson_destroy(&bsout);
     if (rowm) {
         tcmapdel(rowm);
@@ -1988,8 +2006,13 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     for (int i = 0; i < qfsz; ++i) {
         EJQF *qf = TCLISTVALPTR(ejq->qobjlist, i);
         assert(qf);
-        if (log && qf->exprmap) {
-            tcxstrprintf(log, "USING HASH TOKENS IN: %s\n", qf->fpath);
+        if (log) {
+            if (qf->exprmap) {
+                tcxstrprintf(log, "USING HASH TOKENS IN: %s\n", qf->fpath);
+            }
+            if (qf->flags & EJCONDOIT) {
+                tcxstrprintf(log, "FIELD: %s HAS $do OPERATION\n", qf->fpath);
+            }
         }
         qf->jb = jcoll->jb;
         qfs[i] = qf;
@@ -2068,11 +2091,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         _qryupdate(jcoll, ejq, (_bsbuf), (_bsbufsz), didxctx, log); \
     } \
     if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) { \
-        if (ifields) {\
-            _pushstripbson(res, ifields, imode, (_bsbuf), (_bsbufsz)); \
-        } else { \
-            tclistpush(res, (_bsbuf), (_bsbufsz)); \
-        } \
+        _pushprocessedbson(res, qfs, qfsz, ifields, imode, (_bsbuf), (_bsbufsz)); \
     }
     //EOF #define JBQREGREC
 
