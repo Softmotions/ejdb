@@ -74,7 +74,6 @@ static char* _bsonipathrowldr(TCLIST *tokens, const char *pkbuf, int pksz, const
         const char *ipath, int ipathsz, void *op, int *vsz);
 static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz,
         const char *fpath, int fpathsz, void *op, int *vsz);
-static void _ejdbclear(EJDB *jb);
 static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB** res);
 static bool _addcoldb0(const char *colname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res);
 static void _delcoldb(EJCOLL *cdb);
@@ -135,6 +134,7 @@ EJDB_EXPORT const char* ejdberrmsg(int ecode) {
         case JBEQONEEMATCH: return "only one $elemMatch allowed in the fieldpath"; //todo remove
         case JBEQINCEXCL: return "$fields hint cannot mix include and exclude fields";
         case JBEQACTKEY: return "action key in $do block can only be one of: $join";
+        case JBEMAXNUMCOLS: return "exceeded the maximum number of collections per database: 1024";
 
         default: return tcerrmsg(ecode);
     }
@@ -159,8 +159,7 @@ EJDB_EXPORT int ejdbecode(EJDB *jb) {
 
 EJDB_EXPORT EJDB* ejdbnew(void) {
     EJDB *jb;
-    TCMALLOC(jb, sizeof (*jb));
-    _ejdbclear(jb);
+    TCCALLOC(jb, 1, sizeof (*jb));
     jb->metadb = tctdbnew();
     tctdbsetmutex(jb->metadb);
     tctdbsetcache(jb->metadb, 1024, 0, 0);
@@ -178,10 +177,13 @@ EJDB_EXPORT EJDB* ejdbnew(void) {
 EJDB_EXPORT void ejdbdel(EJDB *jb) {
     assert(jb && jb->metadb);
     if (JBISOPEN(jb)) ejdbclose(jb);
-    for (int i = 0; i < jb->cdbsnum; ++i) {
-        _delcoldb(jb->cdbs + i);
+    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
+        if (jb->cdbs[i]) {
+            _delcoldb(jb->cdbs[i]);
+            TCFREE(jb->cdbs[i]);
+            jb->cdbs[i] = NULL;
+        }
     }
-    TCFREE(jb->cdbs);
     jb->cdbsnum = 0;
     if (jb->mmtx) {
         pthread_rwlock_destroy(jb->mmtx);
@@ -194,12 +196,14 @@ EJDB_EXPORT void ejdbdel(EJDB *jb) {
 EJDB_EXPORT bool ejdbclose(EJDB *jb) {
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
-    for (int i = 0; i < jb->cdbsnum; ++i) {
-        JBCLOCKMETHOD(jb->cdbs + i, true);
-        if (!tctdbclose(jb->cdbs[i].tdb)) {
-            rv = false;
+    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
+        if (jb->cdbs[i]) {
+            JBCLOCKMETHOD(jb->cdbs[i], true);
+            if (!tctdbclose(jb->cdbs[i]->tdb)) {
+                rv = false;
+            }
+            JBCUNLOCKMETHOD(jb->cdbs[i]);
         }
-        JBCUNLOCKMETHOD(jb->cdbs + i);
     }
     if (!tctdbclose(jb->metadb)) {
         rv = false;
@@ -225,7 +229,6 @@ EJDB_EXPORT bool ejdbopen(EJDB *jb, const char *path, int mode) {
     if (!rv) {
         goto finish;
     }
-    TCMALLOC(jb->cdbs, 1);
     jb->cdbsnum = 0;
     TCTDB *mdb = jb->metadb;
     rv = tctdbiterinit(mdb);
@@ -259,10 +262,11 @@ EJDB_EXPORT TCLIST* ejdbgetcolls(EJDB *jb) {
     EJCOLL *coll = NULL;
     JBENSUREOPENLOCK(jb, false, NULL);
     TCLIST *ret = tclistnew2(jb->cdbsnum);
-    for (int i = 0; i < jb->cdbsnum; ++i) {
-        coll = jb->cdbs + i;
-        assert(coll);
-        TCLISTPUSH(ret, coll, sizeof (*coll));
+    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
+        coll = jb->cdbs[i];
+        if (coll) {
+            TCLISTPUSH(ret, coll, sizeof (*coll));
+        }
     }
     JBUNLOCKMETHOD(jb);
     return ret;
@@ -305,36 +309,35 @@ EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile) {
     if (!coll) {
         goto finish;
     }
-    EJCOLL *cdbs = jb->cdbs;
-    for (int i = 0; i < jb->cdbsnum; ++i) {
-        coll = cdbs + i;
-        if (!strcmp(colname, coll->cname)) {
-            if (!JBCLOCKMETHOD(coll, true)) return false;
-            tctdbout2(jb->metadb, colname);
-            tctdbvanish(coll->tdb);
-            TCLIST *paths = tclistnew2(10);
-            tclistpush2(paths, coll->tdb->hdb->path);
-            for (int j = 0; j < coll->tdb->inum; ++j) {
-                TDBIDX *idx = coll->tdb->idxs + j;
-                const char *ipath = tcbdbpath(idx->db);
-                if (ipath) {
-                    tclistpush2(paths, ipath);
-                }
-            }
-            tctdbclose(coll->tdb);
-            if (unlinkfile) {
-                for (int j = 0; j < TCLISTNUM(paths); ++j) {
-                    unlink(tclistval2(paths, j));
-                }
-            }
-            tclistdel(paths);
-            JBCUNLOCKMETHOD(coll);
-            _delcoldb(coll);
-            jb->cdbsnum--;
-            memmove(cdbs + i, cdbs + i + 1, sizeof (*cdbs) * (jb->cdbsnum - i));
+    if (!JBCLOCKMETHOD(coll, true)) return false;
+    tctdbout2(jb->metadb, colname);
+    tctdbvanish(coll->tdb);
+    TCLIST *paths = tclistnew2(10);
+    tclistpush2(paths, coll->tdb->hdb->path);
+    for (int j = 0; j < coll->tdb->inum; ++j) {
+        TDBIDX *idx = coll->tdb->idxs + j;
+        const char *ipath = tcbdbpath(idx->db);
+        if (ipath) {
+            tclistpush2(paths, ipath);
+        }
+    }
+    tctdbclose(coll->tdb);
+    if (unlinkfile) {
+        for (int i = 0; i < TCLISTNUM(paths); ++i) {
+            unlink(tclistval2(paths, i));
+        }
+    }
+    tclistdel(paths);
+    jb->cdbsnum--;
+    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
+        if (jb->cdbs[i] == coll) {
+            jb->cdbs[i] = NULL;
             break;
         }
     }
+    JBCUNLOCKMETHOD(coll);
+    _delcoldb(coll);
+    TCFREE(coll);
 finish:
     JBUNLOCKMETHOD(jb);
     return rv;
@@ -669,15 +672,14 @@ EJDB_EXPORT bool ejdbsyncdb(EJDB *jb) {
     assert(jb);
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
-    EJCOLL *coll = NULL;
-    for (int i = 0; i < jb->cdbsnum; ++i) {
-        coll = jb->cdbs + i;
-        assert(coll);
-        rv = JBCLOCKMETHOD(coll, true);
-        if (!rv) break;
-        rv = tctdbsync(coll->tdb);
-        JBCUNLOCKMETHOD(coll);
-        if (!rv) break;
+    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
+        if (jb->cdbs[i]) {
+            rv = JBCLOCKMETHOD(jb->cdbs[i], true);
+            if (!rv) break;
+            rv = tctdbsync(jb->cdbs[i]->tdb);
+            JBCUNLOCKMETHOD(jb->cdbs[i]);
+            if (!rv) break;
+        }
     }
     JBUNLOCKMETHOD(jb);
     return rv;
@@ -772,18 +774,12 @@ static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, c
 
 static EJCOLL* _getcoll(EJDB *jb, const char *colname) {
     assert(colname);
-    EJCOLL *coll = NULL;
-    //check if collection exists
-    for (int i = 0; i < jb->cdbsnum; ++i) {
-        coll = jb->cdbs + i;
-        assert(coll);
-        if (!strcmp(colname, coll->cname)) {
-            break;
-        } else {
-            coll = NULL;
+    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
+        if (jb->cdbs[i] && !strcmp(colname, jb->cdbs[i]->cname)) {
+            return jb->cdbs[i];
         }
     }
-    return coll;
+    return NULL;
 }
 
 /* Set mutual exclusion control of a table database object for threading. */
@@ -4024,15 +4020,23 @@ static void _delcoldb(EJCOLL *jcoll) {
 }
 
 static bool _addcoldb0(const char *cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res) {
+    int i;
     bool rv = true;
     TCTDB *cdb;
+
+    for (i = 0; i < EJDB_MAX_COLLECTIONS && jb->cdbs[i]; ++i);
+    if (i == EJDB_MAX_COLLECTIONS) {
+        _ejdbsetecode(jb, JBEMAXNUMCOLS, __FILE__, __LINE__, __func__);
+        return false;
+    }
     rv = _createcoldb(cname, jb, opts, &cdb);
     if (!rv) {
         *res = NULL;
         return rv;
     }
-    TCREALLOC(jb->cdbs, jb->cdbs, sizeof (jb->cdbs[0]) * (++jb->cdbsnum));
-    EJCOLL *jcoll = jb->cdbs + jb->cdbsnum - 1;
+    EJCOLL *jcoll;
+    TCCALLOC(jcoll, 1, sizeof (*jcoll));
+    jb->cdbs[i] = jcoll;
     jcoll->cname = tcstrdup(cname);
     jcoll->cnamesz = strlen(cname);
     jcoll->tdb = cdb;
@@ -4040,6 +4044,7 @@ static bool _addcoldb0(const char *cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **r
     jcoll->mmtx = NULL;
     _ejdbcolsetmutex(jcoll);
     *res = jcoll;
+    ++jb->cdbsnum;
     return rv;
 }
 
@@ -4079,14 +4084,6 @@ static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB 
     *res = rv ? cdb : NULL;
     tcxstrdel(cxpath);
     return rv;
-}
-
-static void _ejdbclear(EJDB *jb) {
-    assert(jb);
-    jb->cdbs = NULL;
-    jb->cdbsnum = 0;
-    jb->metadb = NULL;
-    jb->mmtx = NULL;
 }
 
 /* Check whether a string includes all tokens in another string.*/

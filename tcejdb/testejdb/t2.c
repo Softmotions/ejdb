@@ -4049,8 +4049,55 @@ void testTicket38() {
     tclistdel(q1res);
 }
 
-
 void testTicket43() {
+
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket43", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    EJCOLL *rcoll = ejdbcreatecoll(jb, "ticket43_refs", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(rcoll);
+
+    bson a1;
+    bson_oid_t oid;
+    bson_oid_t ref_oids[2];
+    char xoid[25];
+
+    bson_init(&a1);
+    bson_append_string(&a1, "name", "n1");
+    bson_finish(&a1);
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    CU_ASSERT_TRUE_FATAL(ejdbsavebson(rcoll, &a1, &ref_oids[0]));
+    bson_destroy(&a1);
+
+    bson_init(&a1);
+    bson_append_string(&a1, "name", "n2");
+    bson_finish(&a1);
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    CU_ASSERT_TRUE_FATAL(ejdbsavebson(rcoll, &a1, &ref_oids[1]));
+    bson_destroy(&a1);
+
+    bson_init(&a1);
+    bson_append_string(&a1, "name", "c1");
+    bson_oid_to_string(&ref_oids[0], xoid);
+    bson_append_string(&a1, "refs", xoid);
+    bson_finish(&a1);
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    CU_ASSERT_TRUE_FATAL(ejdbsavebson(coll, &a1, &oid));
+    bson_destroy(&a1);
+
+    bson_init(&a1);
+    bson_append_string(&a1, "name", "c2");
+    bson_append_start_array(&a1, "arrefs");
+    bson_oid_to_string(&ref_oids[0], xoid);
+    bson_append_string(&a1, "0", xoid);
+    bson_append_oid(&a1, "1", &ref_oids[1]);
+    bson_append_finish_array(&a1);
+    bson_finish(&a1);
+    CU_ASSERT_FALSE_FATAL(a1.err);
+    CU_ASSERT_TRUE_FATAL(ejdbsavebson(coll, &a1, &oid));
+    //bson_print_raw(stderr, bson_dat, 0);
+    bson_destroy(&a1);
+
     /*
      Assuming fpath contains object id (or its string representation).
      In query results fpath values will be replaced by loaded bson
@@ -4059,14 +4106,14 @@ void testTicket43() {
      {..., $do : {fpath : {$join : 'collectionname'}} }
      Second form:
      {..., $do : {fpath : {$join : {$ref : 'collectionname', $fields : {foo:1}} }} }
-    */
+     */
 
     bson bsq1;
     bson_init_as_query(&bsq1);
     bson_append_start_object(&bsq1, "$do");
-    bson_append_start_object(&bsq1, "homeref");
+    bson_append_start_object(&bsq1, "refs");
     bson_append_start_object(&bsq1, "$join");
-    bson_append_string(&bsq1, "$join", "home");
+    bson_append_string(&bsq1, "$join", "ticket43_refcoll");
     bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
@@ -4077,7 +4124,6 @@ void testTicket43() {
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     ejdbquerydel(q1);
-
     bson_destroy(&bsq1);
 }
 

@@ -47,7 +47,8 @@ enum { /** Error codes */
     JBEQUPDFAILED = 9010, /**< Updating failed. */
     JBEQONEEMATCH = 9011, /**< Only one $elemMatch allowed in the fieldpath. */
     JBEQINCEXCL = 9012, /**< $fields hint cannot mix include and exclude fields */
-    JBEQACTKEY = 9013 /**< action key in $do block can only be one of: $join */
+    JBEQACTKEY = 9013, /**< action key in $do block can only be one of: $join */
+    JBEMAXNUMCOLS = 9014 /**< Exceeded the maximum number of collections per database */
 };
 
 enum { /** Database open modes */

@@ -24,18 +24,21 @@ EJDB_EXTERN_C_START
                                           atype == BSON_INT || atype == BSON_LONG || atype == BSON_DOUBLE || \
                                           atype == BSON_ARRAY)
 
-struct EJDB {
-    EJCOLL *cdbs; /*> Collection DBs for JSON collections. */
-    int cdbsnum; /*> Count of collection DB. */
-    TCTDB *metadb; /*> Metadata DB. */
-    void *mmtx; /*> Mutex for method */
-};
+#define EJDB_MAX_COLLECTIONS 1024
+
 
 struct EJCOLL { /**> EJDB Collection. */
     char *cname; /**> Collection name. */
     int cnamesz; /**> Collection name length. */
     TCTDB *tdb; /**> Collection TCTDB. */
     EJDB *jb; /**> Database handle. */
+    void *mmtx; /*> Mutex for method */
+};
+
+struct EJDB {
+    EJCOLL * cdbs[EJDB_MAX_COLLECTIONS]; /*> Collection DBs for JSON collections. */
+    int cdbsnum; /*> Count of collection DB. */
+    TCTDB *metadb; /*> Metadata DB. */
     void *mmtx; /*> Mutex for method */
 };
 
@@ -59,15 +62,14 @@ enum { /**> Query field flags */
     EJCONDADDSET = 1 << 12, /**> $addToSet Adds value to the array only if its not in the array already.  */
     EJCONDPULL = 1 << 13, /**> $pull Removes all occurrences of value from field, if field is an array */
     EJCONDUPSERT = 1 << 14, /**> $upsert Upsert $set operation */
-    EJCONDALL  = 1 << 15, /**> 'All' modificator for $pull or $addToSet ($addToSetAll or $pullAll) */
+    EJCONDALL = 1 << 15, /**> 'All' modificator for $pull or $addToSet ($addToSetAll or $pullAll) */
     EJCONDOIT = 1 << 16 /**> $do query field operation */
 };
-
 
 enum { /**> Query flags */
     EJQINTERNAL = 1, /**> Internal query object used in _ejdbqryexecute */
     EJQUPDATING = 1 << 1, /**> Query in updating mode */
-    EJQDROPALL =  1 << 2, /**> Drop bson object if matched */
+    EJQDROPALL = 1 << 2, /**> Drop bson object if matched */
     EJQONLYCOUNT = 1 << 3 /**> Only count mode */
 };
 
@@ -110,7 +112,7 @@ struct EJQ { /**> Query object. */
 
     //Temporal buffers used during query processing
     TCXSTR *colbuf; /**> TCTDB current column buffer */
-    TCXSTR *bsbuf;  /**> current bson object */
+    TCXSTR *bsbuf; /**> current bson object */
 };
 
 #define JDBCOLBSON "$"  /**> TCDB colname with BSON byte data */

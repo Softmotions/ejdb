@@ -806,7 +806,12 @@ Where
     * ```.dec``` Number index
     * ```.tok``` Array index
 
-Limitations/TODOs
+Limitations
+------------------------------------
+* One ejdb database can handle up to 1024 collections.
+* Indexes for objects in nested arrays currently not supported (#37)
+
+TODO
 ------------------------------------
 * Collect collection index statistic
 * Windows port
