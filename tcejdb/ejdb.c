@@ -102,7 +102,7 @@ static bool _qryallcondsmatch(EJQ *ejq, int anum, EJCOLL *jcoll, EJQF **qfs, int
 static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
 static void _pushprocessedbson(TCLIST *rs, EJQF **qfs, int qfsz, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz);
-static void _pushstripbson(TCLIST *rs, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz);
+static bool _stripbson(TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz, bson *bsout);
 static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
@@ -1658,74 +1658,55 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
 
 static void _pushprocessedbson(TCLIST *res, EJQF **qfs, int qfsz,
         TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz) {
-    bool hasdo = false;
+    bool hasdoit = false;
     for (int i = 0; i < qfsz; ++i) {
         if (qfs[i]->flags & EJCONDOIT) {
-            hasdo = true;
+            hasdoit = true;
             break;
         }
     }
-    if (!hasdo && !ifields) { //no $do operations and $fields stripping
+    if (!hasdoit && !ifields) { //no $do operations and $fields stripping
         tclistpush(res, bsbuf, bsbufsz);
         return;
     }
-
-    //char bstack[JBSBUFFERSZ];
-
-
-    if (ifields) {
-        _pushstripbson(res, ifields, imode, bsbuf, bsbufsz);
+    char bstack[JBSBUFFERSZ];
+    bson bsout;
+    bson_reset(&bsout);
+    bsout.data = (bsbufsz < JBSBUFFERSZ) ? bstack : MYMALLOC(bsbufsz);
+    bsout.cur = bsout.data + 4;
+    bsout.dataSize = MAX(bsbufsz, JBSBUFFERSZ);
+    if (bsout.data == bstack) {
+        bsout.flags |= BSON_FLAG_STACK_ALLOCATED;
     }
+    if (ifields) {
+        _stripbson(ifields, imode, bsbuf, bsbufsz, &bsout);
+    }
+    assert(bsout.finished);
+    if (bsout.flags & BSON_FLAG_STACK_ALLOCATED) {
+        TCLISTPUSH(res, bsout.data, bson_size(&bsout));
+    } else {
+        tclistpushmalloc(res, bsout.data, bson_size(&bsout));
+    }
+    bson_destroy(&bsout);
 }
 
 /* Pushes bson into rs with only fields matched included/excludes in $fields */
-static void _pushstripbson(TCLIST *rs, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz) {
-    if (!ifields || TCMAPRNUM(ifields) <= 0) {
-        tclistpush(rs, bsbuf, bsbufsz);
-        return;
+static bool _stripbson(TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz, bson *bsout) {
+    assert(bsbuf && bsout && bsbufsz);
+    if (!ifields || TCMAPRNUM(ifields) <= 0 || bsout->finished) {
+        return false;
     }
-    char bstack[JBSBUFFERSZ];
-    void *tmpbuf = (bsbufsz < JBSBUFFERSZ) ? bstack : MYMALLOC(bsbufsz);
-    bson sbson;
-    char *sdata;
-    bson_reset(&sbson);
-    sbson.data = tmpbuf;
-    sbson.cur = sbson.data + 4;
-    sbson.dataSize = MAX(bsbufsz, JBSBUFFERSZ);
-    if (sbson.data == bstack) {
-        sbson.flags |= BSON_FLAG_STACK_ALLOCATED;
-    }
-
-    _BSONSTRIPVISITORCTX ictx;
-    ictx.sbson = &sbson;
-    ictx.ifields = ifields;
-    ictx.nstack = 0;
-    ictx.matched = 0;
-
-    //Now copy filtered bson fields
+    _BSONSTRIPVISITORCTX ictx = {
+        .sbson = bsout,
+        .ifields = ifields,
+        .nstack = 0,
+        .matched = 0
+    };
     bson_iterator it;
     bson_iterator_from_buffer(&it, bsbuf);
     bson_visit_fields(&it, 0, (imode) ? _bsonstripvisitor_include : _bsonstripvisitor_exclude, &ictx);
-
     assert(ictx.nstack == 0);
-    if (bson_finish(&sbson) == BSON_OK) {
-        if (sbson.flags & BSON_FLAG_STACK_ALLOCATED) {
-            sdata = sbson.data;
-            TCLISTPUSH(rs, sbson.data, bson_size(&sbson));
-        } else {
-            sdata = NULL;
-            tclistpushmalloc(rs, sbson.data, bson_size(&sbson));
-        }
-    } else {
-        sdata = sbson.data;
-        assert(0);
-    }
-    //Cleanup
-    sbson.data = NULL; //hide allocated data from bson_destroy()
-    bson_destroy(&sbson);
-    if (sdata && sdata != bstack) {
-        TCFREE(sdata);
-    }
+    return (bson_finish(bsout) == BSON_OK);
 }
 
 static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, TCLIST *didxctx, TCXSTR *log) {
@@ -2629,11 +2610,7 @@ finish:
                     }
                     ++count;
                     if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) {
-                        if (ifields) {
-                            _pushstripbson(res, ifields, imode, bson_data(nbs), bson_size(nbs));
-                        } else {
-                            tclistpush(res, bson_data(nbs), bson_size(nbs));
-                        }
+                        _pushprocessedbson(res, qfs, qfsz, ifields, imode, bson_data(nbs), bson_size(nbs));
                     }
                     bson_del(nbs);
                 }

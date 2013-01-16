@@ -863,7 +863,7 @@ EJDB_EXPORT int bson_finish(bson *b) {
 
 EJDB_EXPORT void bson_destroy(bson *b) {
     if (b) {
-        if (b->data) {
+        if (b->data && !(b->flags & BSON_FLAG_STACK_ALLOCATED)) {
             bson_free(b->data);
         }
         b->err = 0;
