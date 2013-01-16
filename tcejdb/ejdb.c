@@ -177,12 +177,11 @@ EJDB_EXPORT EJDB* ejdbnew(void) {
 EJDB_EXPORT void ejdbdel(EJDB *jb) {
     assert(jb && jb->metadb);
     if (JBISOPEN(jb)) ejdbclose(jb);
-    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
-        if (jb->cdbs[i]) {
-            _delcoldb(jb->cdbs[i]);
-            TCFREE(jb->cdbs[i]);
-            jb->cdbs[i] = NULL;
-        }
+    for (int i = 0; i < jb->cdbsnum; ++i) {
+        assert(jb->cdbs[i]);
+        _delcoldb(jb->cdbs[i]);
+        TCFREE(jb->cdbs[i]);
+        jb->cdbs[i] = NULL;
     }
     jb->cdbsnum = 0;
     if (jb->mmtx) {
@@ -196,14 +195,13 @@ EJDB_EXPORT void ejdbdel(EJDB *jb) {
 EJDB_EXPORT bool ejdbclose(EJDB *jb) {
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
-    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
-        if (jb->cdbs[i]) {
-            JBCLOCKMETHOD(jb->cdbs[i], true);
-            if (!tctdbclose(jb->cdbs[i]->tdb)) {
-                rv = false;
-            }
-            JBCUNLOCKMETHOD(jb->cdbs[i]);
+    for (int i = 0; i < jb->cdbsnum; ++i) {
+        assert(jb->cdbs[i]);
+        JBCLOCKMETHOD(jb->cdbs[i], true);
+        if (!tctdbclose(jb->cdbs[i]->tdb)) {
+            rv = false;
         }
+        JBCUNLOCKMETHOD(jb->cdbs[i]);
     }
     if (!tctdbclose(jb->metadb)) {
         rv = false;
@@ -262,11 +260,9 @@ EJDB_EXPORT TCLIST* ejdbgetcolls(EJDB *jb) {
     EJCOLL *coll = NULL;
     JBENSUREOPENLOCK(jb, false, NULL);
     TCLIST *ret = tclistnew2(jb->cdbsnum);
-    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
+    for (int i = 0; i < jb->cdbsnum; ++i) {
         coll = jb->cdbs[i];
-        if (coll) {
-            TCLISTPUSH(ret, coll, sizeof (*coll));
-        }
+        TCLISTPUSH(ret, coll, sizeof (*coll));
     }
     JBUNLOCKMETHOD(jb);
     return ret;
@@ -333,6 +329,13 @@ EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile) {
         if (jb->cdbs[i] == coll) {
             jb->cdbs[i] = NULL;
             break;
+        }
+    }
+    //collapse NULL hole
+    for (int i = 0; i < EJDB_MAX_COLLECTIONS - 1; ++i) {
+        if (!jb->cdbs[i] && jb->cdbs[i + 1]) {
+            jb->cdbs[i] = jb->cdbs[i + 1];
+            jb->cdbs[i + 1] = NULL;
         }
     }
     JBCUNLOCKMETHOD(coll);
@@ -672,14 +675,13 @@ EJDB_EXPORT bool ejdbsyncdb(EJDB *jb) {
     assert(jb);
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
-    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
-        if (jb->cdbs[i]) {
-            rv = JBCLOCKMETHOD(jb->cdbs[i], true);
-            if (!rv) break;
-            rv = tctdbsync(jb->cdbs[i]->tdb);
-            JBCUNLOCKMETHOD(jb->cdbs[i]);
-            if (!rv) break;
-        }
+    for (int i = 0; i < jb->cdbsnum; ++i) {
+        assert(jb->cdbs[i]);
+        rv = JBCLOCKMETHOD(jb->cdbs[i], true);
+        if (!rv) break;
+        rv = tctdbsync(jb->cdbs[i]->tdb);
+        JBCUNLOCKMETHOD(jb->cdbs[i]);
+        if (!rv) break;
     }
     JBUNLOCKMETHOD(jb);
     return rv;
@@ -774,8 +776,9 @@ static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, c
 
 static EJCOLL* _getcoll(EJDB *jb, const char *colname) {
     assert(colname);
-    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
-        if (jb->cdbs[i] && !strcmp(colname, jb->cdbs[i]->cname)) {
+    for (int i = 0; i < jb->cdbsnum; ++i) {
+        assert(jb->cdbs[i]);
+        if (!strcmp(colname, jb->cdbs[i]->cname)) {
             return jb->cdbs[i];
         }
     }
@@ -4037,6 +4040,7 @@ static bool _addcoldb0(const char *cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **r
     EJCOLL *jcoll;
     TCCALLOC(jcoll, 1, sizeof (*jcoll));
     jb->cdbs[i] = jcoll;
+    ++jb->cdbsnum;
     jcoll->cname = tcstrdup(cname);
     jcoll->cnamesz = strlen(cname);
     jcoll->tdb = cdb;
@@ -4044,7 +4048,6 @@ static bool _addcoldb0(const char *cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **r
     jcoll->mmtx = NULL;
     _ejdbcolsetmutex(jcoll);
     *res = jcoll;
-    ++jb->cdbsnum;
     return rv;
 }
 
