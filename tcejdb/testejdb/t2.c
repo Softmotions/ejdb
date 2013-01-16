@@ -4057,8 +4057,28 @@ void testTicket43() {
      objects with matching oids from collectionname
 
      {..., $do : {fpath : {$join : 'collectionname'}} }
-
+     Second form:
+     {..., $do : {fpath : {$join : {$ref : 'collectionname', $fields : {foo:1}} }} }
     */
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "$do");
+    bson_append_start_object(&bsq1, "homeref");
+    bson_append_start_object(&bsq1, "$join");
+    bson_append_string(&bsq1, "$join", "home");
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    ejdbquerydel(q1);
+
+    bson_destroy(&bsq1);
 }
 
 int main() {

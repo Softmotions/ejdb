@@ -134,6 +134,7 @@ EJDB_EXPORT const char* ejdberrmsg(int ecode) {
         case JBEINVALIDBSONPK: return "invalid bson _id field";
         case JBEQONEEMATCH: return "only one $elemMatch allowed in the fieldpath"; //todo remove
         case JBEQINCEXCL: return "$fields hint cannot mix include and exclude fields";
+        case JBEQACTKEY: return "action key in $do block can only be one of: $join";
 
         default: return tcerrmsg(ecode);
     }
@@ -3300,6 +3301,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
         if (pqf) {
             qf.elmatchgrp = pqf->elmatchgrp;
             qf.elmatchpos = pqf->elmatchpos;
+            qf.flags = pqf->flags;
         }
 
         if (!isckey) {
@@ -3470,30 +3472,6 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         break;
                     }
 
-                    if (qf.flags & EJCONDOIT) { //$do
-                        assert(qf.updateobj == NULL);
-                        qf.updateobj = bson_create();
-                        bson_init_as_query(qf.updateobj);
-                        bson_type sbt;
-                        bson_iterator sit;
-                        bson_iterator_subiterator(it, &sit);
-                        while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
-                            bson_append_field_from_iterator(&sit, qf.updateobj);
-                        }
-                        bson_finish(qf.updateobj);
-                        if (qf.updateobj->err) {
-                            ret = JBEQERROR;
-                            _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
-                            break;
-                        }
-                        qf.fpath = strdup(fkey);
-                        qf.fpathsz = strlen(qf.fpath);
-                        qf.tcop = TDBQTRUE;
-                        qf.flags |= EJFEXCLUDED;
-                        TCLISTPUSH(qlist, &qf, sizeof (qf));
-                        break;
-                    }
-
                     if (!strcmp("$elemMatch", fkey)) {
                         if (qf.elmatchgrp) { //only one $elemMatch allowed in query field
                             ret = JBEQERROR;
@@ -3504,6 +3482,39 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         char *fpath = tcstrjoin(pathStack, '.');
                         qf.elmatchpos = strlen(fpath) + 1; //+ 1 to skip next dot '.'
                         free(fpath);
+                    }
+                } else {
+                    if (qf.flags & EJCONDOIT) {
+                        qf.updateobj = bson_create();
+                        bson_init_as_query(qf.updateobj);
+                        bson_type sbt;
+                        bson_iterator sit;
+                        bson_iterator_subiterator(it, &sit);
+                        int ac = 0;
+                        while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
+                            const char *akey = bson_iterator_key(&sit);
+                            if (!strcmp("$join", akey)) {
+                                bson_append_field_from_iterator(&sit, qf.updateobj);
+                                ++ac;
+                            }
+                        }
+                        bson_finish(qf.updateobj);
+                        if (qf.updateobj->err) {
+                            ret = JBEQERROR;
+                            _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
+                            break;
+                        }
+                        if (ac == 0) {
+                            ret = JBEQACTKEY;
+                            _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
+                            break;
+                        }
+                        qf.fpath = strdup(fkey);
+                        qf.fpathsz = strlen(qf.fpath);
+                        qf.tcop = TDBQTRUE;
+                        qf.flags |= EJFEXCLUDED;
+                        TCLISTPUSH(qlist, &qf, sizeof (qf));
+                        break;
                     }
                 }
                 bson_iterator sit;

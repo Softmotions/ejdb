@@ -46,7 +46,8 @@ enum { /** Error codes */
     JBEQERROR = 9009, /**< Query generic error. */
     JBEQUPDFAILED = 9010, /**< Updating failed. */
     JBEQONEEMATCH = 9011, /**< Only one $elemMatch allowed in the fieldpath. */
-    JBEQINCEXCL = 9012 /**< $fields hint cannot mix include and exclude fields */
+    JBEQINCEXCL = 9012, /**< $fields hint cannot mix include and exclude fields */
+    JBEQACTKEY = 9013 /**< action key in $do block can only be one of: $join */
 };
 
 enum { /** Database open modes */
