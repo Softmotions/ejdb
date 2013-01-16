@@ -1,3 +1,7 @@
+2013-01-16 Anton Adamansky. <adamansky@gmail.com>
+    * Crash fix #44
+    - Release 1.0.54
+
 2013-01-15 Anton Adamansky. <adamansky@gmail.com>
     * Minor fix in ejdb.js (merged pull #42)
     * Result set fields can be excluded (ticket #34)
