@@ -89,7 +89,7 @@ static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
         const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
-static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields, bool *imode);
+static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **dfields, TCMAP **ifields, bool *imode);
 static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec);
 static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf, int mgrp);
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
@@ -101,7 +101,7 @@ static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz)
 static bool _qryallcondsmatch(EJQ *ejq, int anum, EJCOLL *jcoll, EJQF **qfs, int qfsz, const void *pkbuf, int pkbufsz);
 static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
-static void _pushprocessedbson(TCLIST *rs, EJQF **qfs, int qfsz, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz);
+static void _pushprocessedbson(TCLIST *rs, TCMAP *dfields, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz);
 static bool _stripbson(TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz, bson *bsout);
 static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
@@ -1656,16 +1656,8 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
     return rv;
 }
 
-static void _pushprocessedbson(TCLIST *res, EJQF **qfs, int qfsz,
-        TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz) {
-    bool hasdoit = false;
-    for (int i = 0; i < qfsz; ++i) {
-        if (qfs[i]->flags & EJCONDOIT) {
-            hasdoit = true;
-            break;
-        }
-    }
-    if (!hasdoit && !ifields) { //no $do operations and $fields stripping
+static void _pushprocessedbson(TCLIST *res, TCMAP *dfields, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz) {
+    if (!dfields && !ifields) { //Trivial case: no $do operations or $fields
         tclistpush(res, bsbuf, bsbufsz);
         return;
     }
@@ -1678,9 +1670,17 @@ static void _pushprocessedbson(TCLIST *res, EJQF **qfs, int qfsz,
     if (bsout.data == bstack) {
         bsout.flags |= BSON_FLAG_STACK_ALLOCATED;
     }
-    if (ifields) {
+
+    if (dfields) { //$do fields exists
+        //todo
+        tclistpush(res, bsbuf, bsbufsz);
+        return;
+    }
+
+    if (ifields) { //$fields hints
         _stripbson(ifields, imode, bsbuf, bsbufsz, &bsout);
     }
+
     assert(bsout.finished);
     if (bsout.flags & BSON_FLAG_STACK_ALLOCATED) {
         TCLISTPUSH(res, bsout.data, bson_size(&bsout));
@@ -1693,7 +1693,7 @@ static void _pushprocessedbson(TCLIST *res, EJQF **qfs, int qfsz,
 /* Pushes bson into rs with only fields matched included/excludes in $fields */
 static bool _stripbson(TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz, bson *bsout) {
     assert(bsbuf && bsout && bsbufsz);
-    if (!ifields || TCMAPRNUM(ifields) <= 0 || bsout->finished) {
+    if (!ifields ||  bsout->finished) {
         return false;
     }
     _BSONSTRIPVISITORCTX ictx = {
@@ -1947,7 +1947,8 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     EJQF *mqf = NULL; //main indexed query condition if exists
     bool imode = false; //include(true) / exclude(false) mode for $fields in query
     TCMAP *ifields = NULL; //field names included in result set
-    if (!_qrypreprocess(jcoll, ejq, qflags, &mqf, &ifields, &imode)) {
+    TCMAP *dfields = NULL; //fields with $do operations
+    if (!_qrypreprocess(jcoll, ejq, qflags, &mqf, &dfields, &ifields, &imode)) {
         ejdbquerydel(ejq);
         return NULL;
     }
@@ -2072,7 +2073,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         _qryupdate(jcoll, ejq, (_bsbuf), (_bsbufsz), didxctx, log); \
     } \
     if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) { \
-        _pushprocessedbson(res, qfs, qfsz, ifields, imode, (_bsbuf), (_bsbufsz)); \
+        _pushprocessedbson(res, dfields, ifields, imode, (_bsbuf), (_bsbufsz)); \
     }
     //EOF #define JBQREGREC
 
@@ -2610,7 +2611,7 @@ finish:
                     }
                     ++count;
                     if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) {
-                        _pushprocessedbson(res, qfs, qfsz, ifields, imode, bson_data(nbs), bson_size(nbs));
+                        _pushprocessedbson(res, dfields, ifields, imode, bson_data(nbs), bson_size(nbs));
                     }
                     bson_del(nbs);
                 }
@@ -2769,7 +2770,8 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
     return NULL;
 }
 
-static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **ifields, bool *imode) {
+static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
+        TCMAP **dfields, TCMAP **ifields, bool *imode) {
     assert(jcoll && ejq && ejq->qobjlist && mqf);
 
     if (qflags & JBQRYCOUNT) {
@@ -2778,6 +2780,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMA
 
     *imode = false;
     *ifields = NULL;
+    *dfields = NULL;
     *mqf = NULL;
 
     EJQF *oqf = NULL; //Order condition
@@ -2874,11 +2877,30 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMA
     int maxiscore = 0; //Maximum index score
     int maxselectivity = 0;
 
+    uint32_t skipflags = (//skip field flags
+            EJFNOINDEX |
+            EJCONDSET |
+            EJCONDINC |
+            EJCONDADDSET |
+            EJCONDPULL |
+            EJCONDUPSERT |
+            EJCONDOIT);
+
     for (int i = 0; i < TCLISTNUM(qlist); ++i) {
         int iscore = 0;
         EJQF *qf = (EJQF*) TCLISTVALPTR(qlist, i);
         assert(qf && qf->fpath);
-        if (qf->flags & (EJCONDSET | EJCONDINC)) { //skip updating qfields
+
+        if (qf->flags & EJCONDOIT) { //$do field
+            TCMAP *dmap = *dfields;;
+            if (!dmap) {
+                dmap = tcmapnew2(TCMAPTINYBNUM);
+                *dfields = dmap;
+            }
+            tcmapputkeep(dmap, qf->fpath, qf->fpathsz, qf, sizeof(*qf));
+        }
+
+        if (qf->flags & skipflags) {
             continue;
         }
         //OID PK matching

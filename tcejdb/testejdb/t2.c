@@ -4124,9 +4124,15 @@ void testTicket43() {
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
 
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FIELD: refs HAS $do OPERATION"));
 
-    
 
+    tclistdel(q1res);
     ejdbquerydel(q1);
     bson_destroy(&bsq1);
 }
