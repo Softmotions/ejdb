@@ -101,8 +101,9 @@ static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz)
 static bool _qryallcondsmatch(EJQ *ejq, int anum, EJCOLL *jcoll, EJQF **qfs, int qfsz, const void *pkbuf, int pkbufsz);
 static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
-static void _pushprocessedbson(TCLIST *rs, TCMAP *dfields, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz);
-static bool _stripbson(TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz, bson *bsout);
+static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *rs, TCMAP *dfields, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz);
+static bool _stripbson(EJDB *jb, TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout);
+static bool _exec$do(EJDB *jb, EJQ *q, TCMAP *dfields, const void *bsbuf, bson *bsout);
 static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
@@ -904,6 +905,10 @@ static void _qrydel(EJQ *q, bool freequery) {
         tcxstrdel(q->bsbuf);
         q->bsbuf = NULL;
     }
+    if (q->tmpbuf) {
+        tcxstrdel(q->tmpbuf);
+        q->tmpbuf = NULL;
+    }
     if (freequery) {
         TCFREE(q);
     }
@@ -1535,9 +1540,16 @@ static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
 typedef struct {
     bson *sbson;
     TCMAP *ifields;
-    int nstack; //nestet object stack pos
+    int nstack; //nested object stack pos
     int matched; //number of matched include fields
 } _BSONSTRIPVISITORCTX;
+
+typedef struct { /**> $do action visitor context */
+    EJQ *q;
+    EJDB *jb;
+    TCMAP *dfields;
+    bson *sbson;
+} _BSON$DOVISITORCTX;
 
 /* Discard excluded fields from BSON */
 static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipathlen, const char *key, int keylen,
@@ -1656,44 +1668,155 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
     return rv;
 }
 
-static void _pushprocessedbson(TCLIST *res, TCMAP *dfields, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz) {
+static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const char *key, int keylen,
+        const bson_iterator *it, bool after, void *op) {
+
+    assert(op);
+    _BSON$DOVISITORCTX *ictx = op;
+    EJCOLL *jcoll;
+    TCMAP *dfields = ictx->dfields;
+    bson_type lbt = bson_iterator_type(it), bt;
+    bson_iterator doit, bufit, sit;
+    int sp;
+    const char *sval;
+    const void *dobuf;
+
+    switch (lbt) {
+        case BSON_STRING:
+        case BSON_OID:
+        case BSON_ARRAY:
+        {
+            dobuf = tcmapget(dfields, ipath, ipathlen, &sp);
+            if (!dobuf) {
+                bson_append_field_from_iterator(it, ictx->sbson);
+                break;
+            }
+            bson_iterator_from_buffer(&doit, dobuf);
+            while ((bt = bson_iterator_next(&doit)) != BSON_EOO) {
+                if (bt != BSON_STRING || strcmp("$join", bson_iterator_key(&doit))) continue;
+                jcoll = _getcoll(ictx->jb, bson_iterator_string(&doit));
+                if (!jcoll) break;
+                bson_oid_t loid;
+                if (lbt == BSON_STRING) {
+                    sval = bson_iterator_string(it);
+                    if (!ejdbisvalidoidstr(sval)) break;
+                    bson_oid_from_string(&loid, sval);
+                } else if (lbt == BSON_OID) {
+                    loid = *(bson_iterator_oid(it));
+                }
+                if (lbt == BSON_STRING || lbt == BSON_OID) {
+                    tcxstrclear(ictx->q->colbuf);
+                    tcxstrclear(ictx->q->tmpbuf);
+                    if (!tchdbgetintoxstr(jcoll->tdb->hdb, &loid, sizeof (loid), ictx->q->colbuf) ||
+                            !tcmaploadoneintoxstr(TCXSTRPTR(ictx->q->colbuf), TCXSTRSIZE(ictx->q->colbuf),
+                            JDBCOLBSON, JDBCOLBSONL, ictx->q->tmpbuf)) {
+                        break;
+                    }
+                    bson_iterator_from_buffer(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
+                    bson_append_field_from_iterator2(bson_iterator_key(it), &bufit, ictx->sbson);
+                    break;
+                }
+                if (lbt == BSON_ARRAY) {
+                    bson_iterator_subiterator(it, &sit);
+                    bson_append_start_array(ictx->sbson, bson_iterator_key(it));
+                    while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
+                        if (lbt != BSON_STRING && lbt != BSON_OID) continue;
+                        if (lbt == BSON_STRING) {
+                            sval = bson_iterator_string(it);
+                            if (!ejdbisvalidoidstr(sval)) break;
+                            bson_oid_from_string(&loid, sval);
+                        } else if (lbt == BSON_OID) {
+                            loid = *(bson_iterator_oid(it));
+                        }
+                        tcxstrclear(ictx->q->colbuf);
+                        tcxstrclear(ictx->q->tmpbuf);
+                        if (!tchdbgetintoxstr(jcoll->tdb->hdb, &loid, sizeof (loid), ictx->q->colbuf) ||
+                                !tcmaploadoneintoxstr(TCXSTRPTR(ictx->q->colbuf), TCXSTRSIZE(ictx->q->colbuf),
+                                JDBCOLBSON, JDBCOLBSONL, ictx->q->tmpbuf)) {
+                            break;
+                        }
+                        bson_iterator_from_buffer(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
+                        bson_append_field_from_iterator2(bson_iterator_key(it), &bufit, ictx->sbson);
+                        break;
+                    }
+                    bson_append_finish_array(ictx->sbson);
+                }
+            }
+            break;
+        }
+        default:
+            bson_append_field_from_iterator(it, ictx->sbson);
+
+    }
+    return BSON_VCMD_SKIP_AFTER;
+}
+
+static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TCMAP *ifields,
+        bool imode, const void *bsbuf, int bsbufsz) {
+    assert(bsbuf && bsbufsz);
+    bool rv = true;
     if (!dfields && !ifields) { //Trivial case: no $do operations or $fields
         tclistpush(res, bsbuf, bsbufsz);
-        return;
+        return rv;
     }
     char bstack[JBSBUFFERSZ];
     bson bsout;
-    bson_reset(&bsout);
-    bsout.data = (bsbufsz < JBSBUFFERSZ) ? bstack : MYMALLOC(bsbufsz);
-    bsout.cur = bsout.data + 4;
-    bsout.dataSize = MAX(bsbufsz, JBSBUFFERSZ);
-    if (bsout.data == bstack) {
-        bsout.flags |= BSON_FLAG_STACK_ALLOCATED;
-    }
+    bson_init_on_stack(&bsout, bstack, bsbufsz, JBSBUFFERSZ);
 
     if (dfields) { //$do fields exists
-        //todo
-        tclistpush(res, bsbuf, bsbufsz);
-        return;
+        rv = _exec$do(jb, q, dfields, bsbuf, &bsout);
+        if (rv && bson_finish(&bsout) != BSON_OK) {
+            _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+            rv = false;
+        }
     }
 
-    if (ifields) { //$fields hints
-        _stripbson(ifields, imode, bsbuf, bsbufsz, &bsout);
+    if (rv && ifields) { //$fields hints
+        char* inbuf = (bsout.finished) ? bsout.data : (char*) bsbuf;
+        if (bsout.finished) {
+            bson_init_size(&bsout, bson_size(&bsout));
+        }
+        rv = _stripbson(jb, ifields, imode, bsbuf, &bsout);
+        if (inbuf != bstack) {
+            TCFREE(inbuf);
+        }
+        bson_finish(&bsout);
     }
 
-    assert(bsout.finished);
-    if (bsout.flags & BSON_FLAG_STACK_ALLOCATED) {
-        TCLISTPUSH(res, bsout.data, bson_size(&bsout));
-    } else {
-        tclistpushmalloc(res, bsout.data, bson_size(&bsout));
+    if (rv) {
+        assert(bsout.finished);
+        if (bsout.flags & BSON_FLAG_STACK_ALLOCATED) {
+            TCLISTPUSH(res, bsout.data, bson_size(&bsout));
+        } else {
+            tclistpushmalloc(res, bsout.data, bson_size(&bsout));
+        }
     }
+
     bson_destroy(&bsout);
+    return rv;
+}
+
+static bool _exec$do(EJDB *jb, EJQ *q, TCMAP *dfields, const void *bsbuf, bson *bsout) {
+    assert(dfields);
+    _BSON$DOVISITORCTX ictx = {
+        .q = q,
+        .jb = jb,
+        .dfields = dfields,
+        .sbson = bsout
+    };
+    bson_iterator it;
+    bson_iterator_from_buffer(&it, bsbuf);
+    bson_visit_fields(&it, 0, _bson$dovisitor, &ictx);
+    if (bson_finish(bsout) != BSON_OK) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return false;
+    }
+    return true;
 }
 
 /* Pushes bson into rs with only fields matched included/excludes in $fields */
-static bool _stripbson(TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz, bson *bsout) {
-    assert(bsbuf && bsout && bsbufsz);
-    if (!ifields ||  bsout->finished) {
+static bool _stripbson(EJDB *jb, TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout) {
+    if (!ifields || bsout->finished) {
         return false;
     }
     _BSONSTRIPVISITORCTX ictx = {
@@ -1706,7 +1829,12 @@ static bool _stripbson(TCMAP *ifields, bool imode, const void *bsbuf, int bsbufs
     bson_iterator_from_buffer(&it, bsbuf);
     bson_visit_fields(&it, 0, (imode) ? _bsonstripvisitor_include : _bsonstripvisitor_exclude, &ictx);
     assert(ictx.nstack == 0);
-    return (bson_finish(bsout) == BSON_OK);
+
+    if (bson_finish(bsout) != BSON_OK) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return false;
+    }
+    return true;
 }
 
 static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, TCLIST *didxctx, TCXSTR *log) {
@@ -1954,6 +2082,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     }
 
     bool all = false; //if True we need all records to fetch (sorting)
+    EJDB *jb = jcoll->jb;
     TCHDB *hdb = jcoll->tdb->hdb;
     TCLIST *res = (ejq->flags & EJQONLYCOUNT) ? NULL : tclistnew2(4096);
 
@@ -2073,7 +2202,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         _qryupdate(jcoll, ejq, (_bsbuf), (_bsbufsz), didxctx, log); \
     } \
     if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) { \
-        _pushprocessedbson(res, dfields, ifields, imode, (_bsbuf), (_bsbufsz)); \
+        _pushprocessedbson(jb, ejq, res, dfields, ifields, imode, (_bsbuf), (_bsbufsz)); \
     }
     //EOF #define JBQREGREC
 
@@ -2611,7 +2740,7 @@ finish:
                     }
                     ++count;
                     if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) {
-                        _pushprocessedbson(res, dfields, ifields, imode, bson_data(nbs), bson_size(nbs));
+                        _pushprocessedbson(jb, ejq, res, dfields, ifields, imode, bson_data(nbs), bson_size(nbs));
                     }
                     bson_del(nbs);
                 }
@@ -2892,12 +3021,12 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
         assert(qf && qf->fpath);
 
         if (qf->flags & EJCONDOIT) { //$do field
-            TCMAP *dmap = *dfields;;
+            TCMAP *dmap = *dfields;
             if (!dmap) {
                 dmap = tcmapnew2(TCMAPTINYBNUM);
                 *dfields = dmap;
             }
-            tcmapputkeep(dmap, qf->fpath, qf->fpathsz, qf, sizeof(*qf));
+            tcmapputkeep(dmap, qf->fpath, qf->fpathsz, qf, sizeof (*qf));
         }
 
         if (qf->flags & skipflags) {
@@ -2984,6 +3113,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
     assert(!ejq->colbuf && !ejq->bsbuf);
     ejq->colbuf = tcxstrnew3(1024);
     ejq->bsbuf = tcxstrnew3(1024);
+    ejq->tmpbuf = tcxstrnew();
 
     return true;
 }

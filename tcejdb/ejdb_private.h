@@ -112,7 +112,8 @@ struct EJQ { /**> Query object. */
 
     //Temporal buffers used during query processing
     TCXSTR *colbuf; /**> TCTDB current column buffer */
-    TCXSTR *bsbuf; /**> current bson object */
+    TCXSTR *bsbuf; /**> current bson object buff */
+    TCXSTR *tmpbuf; /**> Tmp buffer */
 };
 
 #define JDBCOLBSON "$"  /**> TCDB colname with BSON byte data */

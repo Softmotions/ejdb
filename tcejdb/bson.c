@@ -758,10 +758,11 @@ EJDB_EXPORT void bson_iterator_subiterator(const bson_iterator *i, bson_iterator
    ------------------------------ */
 
 static void _bson_init_size(bson *b, int size) {
-    if (size == 0)
+    if (size == 0) {
         b->data = NULL;
-    else
+    } else {
         b->data = (char *) bson_malloc(size);
+    }
     b->dataSize = size;
     b->cur = b->data + 4;
     bson_reset(b);
@@ -778,6 +779,16 @@ EJDB_EXPORT void bson_init_as_query(bson *b) {
 
 void bson_init_size(bson *b, int size) {
     _bson_init_size(b, size);
+}
+
+void bson_init_on_stack(bson *b, char *bstack, int mincapacity, int maxonstack) {
+    bson_reset(&b);
+    b->data = (mincapacity < maxonstack) ? bstack : bson_malloc_func(mincapacity);
+    b->cur = b->data + 4;
+    b->dataSize = (mincapacity < maxonstack) ? maxonstack : mincapacity;
+    if (b->data == bstack) {
+        b->flags |= BSON_FLAG_STACK_ALLOCATED;
+    }
 }
 
 void bson_append_byte(bson *b, char c) {

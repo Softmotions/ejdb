@@ -622,6 +622,8 @@ EJDB_EXPORT int bson_init_finished_data(bson *b, char *data);
  */
 void bson_init_size(bson *b, int size);
 
+void bson_init_on_stack(bson *b, char *bstack, int mincapacity, int maxonstack);
+
 /**
  * Grow a bson object.
  *
