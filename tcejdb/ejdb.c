@@ -1513,9 +1513,6 @@ static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     target->max = src->max;
     target->skip = src->skip;
     target->orqobjsnum = src->orqobjsnum;
-    target->orqobjs = NULL;
-    target->bsbuf = NULL;
-    target->colbuf = NULL;
     if (src->qobjlist) {
         target->qobjlist = tclistnew2(TCLISTNUM(src->qobjlist));
         for (int i = 0; i < TCLISTNUM(src->qobjlist); ++i) {
@@ -1777,7 +1774,7 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
             bson_init_size(&bsout, bson_size(&bsout));
         }
         rv = _stripbson(jb, ifields, imode, bsbuf, &bsout);
-        if (inbuf != bstack) {
+        if (inbuf != bsbuf && inbuf != bstack) {
             TCFREE(inbuf);
         }
         bson_finish(&bsout);
@@ -1790,9 +1787,9 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
         } else {
             tclistpushmalloc(res, bsout.data, bson_size(&bsout));
         }
-    }
-
+    } else {
     bson_destroy(&bsout);
+    }
     return rv;
 }
 
