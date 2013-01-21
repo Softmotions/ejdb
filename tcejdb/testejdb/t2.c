@@ -4050,12 +4050,9 @@ void testTicket38() {
 }
 
 void testTicket43() {
-    if (true) return;
-
 
     EJCOLL *coll = ejdbcreatecoll(jb, "ticket43", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
-
     EJCOLL *rcoll = ejdbcreatecoll(jb, "ticket43_refs", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(rcoll);
 
@@ -4066,6 +4063,7 @@ void testTicket43() {
 
     bson_init(&a1);
     bson_append_string(&a1, "name", "n1");
+    bson_append_string(&a1, "name2", "n12");
     bson_finish(&a1);
     CU_ASSERT_FALSE_FATAL(a1.err);
     CU_ASSERT_TRUE_FATAL(ejdbsavebson(rcoll, &a1, &ref_oids[0]));
@@ -4073,6 +4071,7 @@ void testTicket43() {
 
     bson_init(&a1);
     bson_append_string(&a1, "name", "n2");
+    bson_append_string(&a1, "name2", "n22");
     bson_finish(&a1);
     CU_ASSERT_FALSE_FATAL(a1.err);
     CU_ASSERT_TRUE_FATAL(ejdbsavebson(rcoll, &a1, &ref_oids[1]));
@@ -4097,7 +4096,6 @@ void testTicket43() {
     bson_finish(&a1);
     CU_ASSERT_FALSE_FATAL(a1.err);
     CU_ASSERT_TRUE_FATAL(ejdbsavebson(coll, &a1, &oid));
-    //bson_print_raw(stderr, bson_dat, 0);
     bson_destroy(&a1);
 
     /*
@@ -4112,16 +4110,14 @@ void testTicket43() {
 
     bson bsq1;
     bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "c1");
     bson_append_start_object(&bsq1, "$do");
     bson_append_start_object(&bsq1, "refs");
-    bson_append_start_object(&bsq1, "$join");
-    bson_append_string(&bsq1, "$join", "ticket43_refcoll");
-    bson_append_finish_object(&bsq1);
+    bson_append_string(&bsq1, "$join", "ticket43_refs");
     bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
-
 
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
@@ -4129,14 +4125,101 @@ void testTicket43() {
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
-    fprintf(stderr, "%s", TCXSTRPTR(log));
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FIELD: refs HAS $do OPERATION"));
+    CU_ASSERT_EQUAL(count, 1);
 
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_string("n1", TCLISTVALPTR(q1res, i), "refs.name"));
+    }
 
     tclistdel(q1res);
     ejdbquerydel(q1);
     bson_destroy(&bsq1);
+    tcxstrdel(log);
+
+    /////////////////////////////////////////////////////////////////////////////////////
+
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "c2");
+    bson_append_start_object(&bsq1, "$do");
+    bson_append_start_object(&bsq1, "arrefs");
+    bson_append_string(&bsq1, "$join", "ticket43_refs");
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FIELD: arrefs HAS $do OPERATION"));
+    CU_ASSERT_EQUAL(count, 1);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_string("c2", TCLISTVALPTR(q1res, i), "name"));
+        CU_ASSERT_FALSE(bson_compare_string("n1", TCLISTVALPTR(q1res, i), "arrefs.0.name"));
+        CU_ASSERT_FALSE(bson_compare_string("n2", TCLISTVALPTR(q1res, i), "arrefs.1.name"));
+    }
+
+    tclistdel(q1res);
+    ejdbquerydel(q1);
+    bson_destroy(&bsq1);
+    tcxstrdel(log);
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "c2");
+    bson_append_start_object(&bsq1, "$do");
+    bson_append_start_object(&bsq1, "arrefs");
+    bson_append_string(&bsq1, "$join", "ticket43_refs");
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+
+    bson bshits1;
+    bson_init_as_query(&bshits1);
+    bson_append_start_object(&bshits1, "$fields");
+    bson_append_int(&bshits1, "arrefs.0.name", 0);
+    bson_append_finish_object(&bshits1);
+    bson_finish(&bshits1);
+    CU_ASSERT_FALSE_FATAL(bshits1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshits1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FIELD: arrefs HAS $do OPERATION"));
+    CU_ASSERT_EQUAL(count, 1);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        bson_type bt;
+        bson_iterator it;
+        bson_iterator_from_buffer(&it, TCLISTVALPTR(q1res, i));
+        CU_ASSERT_FALSE(bson_compare_string("c2", TCLISTVALPTR(q1res, i), "name"));
+        bt = bson_find_fieldpath_value("arrefs.0.name", &it);
+        CU_ASSERT_TRUE(bt == BSON_EOO);
+        CU_ASSERT_FALSE(bson_compare_string("n2", TCLISTVALPTR(q1res, i), "arrefs.1.name"));
+    }
+
+    tclistdel(q1res);
+    ejdbquerydel(q1);
+    bson_destroy(&bsq1);
+    bson_destroy(&bshits1);
+    tcxstrdel(log);
 }
 
 int main() {

@@ -1304,6 +1304,28 @@ EJDB_EXPORT void bson_swap_endian32(void *outp, const void *inp) {
     out[3] = in[0];
 }
 
+EJDB_EXPORT int bson_append_array_from_iterator(const char *key, bson_iterator *from, bson *into) {
+    assert(key && from && into);
+    bson_type bt;
+    bson_append_start_array(into, key);
+    while ((bt = bson_iterator_next(from)) != BSON_EOO) {
+        bson_append_field_from_iterator(from, into);
+    }
+    bson_append_finish_array(into);
+    return BSON_OK;
+}
+
+EJDB_EXPORT int bson_append_object_from_iterator(const char *key, bson_iterator *from, bson *into) {
+    assert(key && from && into);
+    bson_type bt;
+    bson_append_start_object(into, key);
+    while ((bt = bson_iterator_next(from)) != BSON_EOO) {
+        bson_append_field_from_iterator(from, into);
+    }
+    bson_append_finish_object(into);
+    return BSON_OK;
+}
+
 EJDB_EXPORT int bson_append_field_from_iterator2(const char *key, const bson_iterator *from, bson *into) {
     assert(key && from && into);
     bson_type t = bson_iterator_type(from);

@@ -1091,6 +1091,8 @@ EJDB_EXPORT int bson_append_field_from_iterator(const bson_iterator *from, bson 
  * @return BSON_OK or BSON_ERROR.
  */
 EJDB_EXPORT int bson_append_field_from_iterator2(const char *key, const bson_iterator *from, bson *into);
+EJDB_EXPORT int bson_append_object_from_iterator(const char *key, bson_iterator *from, bson *into);
+EJDB_EXPORT int bson_append_array_from_iterator(const char *key, bson_iterator *from, bson *into);
 
 
 /**
