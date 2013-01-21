@@ -782,7 +782,7 @@ void bson_init_size(bson *b, int size) {
 }
 
 void bson_init_on_stack(bson *b, char *bstack, int mincapacity, int maxonstack) {
-    bson_reset(&b);
+    bson_reset(b);
     b->data = (mincapacity < maxonstack) ? bstack : bson_malloc_func(mincapacity);
     b->cur = b->data + 4;
     b->dataSize = (mincapacity < maxonstack) ? maxonstack : mincapacity;
