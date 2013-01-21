@@ -279,6 +279,11 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *      $pullAll Batch version of $pull
  *          - {.., '$pullAll' : {'fpath' : [array of values to remove], ...}}
  *
+ * - Collection joins supported in the following form:
+ * 
+ *      {..., $do : {fpath : {$join : 'collectionname'}} }
+ *      Where 'fpath' value points to object's OIDs from 'collectionname'. Its value
+ *      can be OID, string representation of OID or array of this pointers.
  *
  *  NOTE: It is better to execute update queries with `JBQRYCOUNT`
  *        control flag to avoid unnecessarily data fetching.

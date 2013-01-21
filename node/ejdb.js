@@ -319,8 +319,13 @@ function parseQueryArgs(args) {
  *      $pull Atomically removes all occurrences of value from field, if field is an array.
  *          - {.., '$pull' : {'fpath' : val1, 'fpathN' : valN, ...}}
  *      $pullAll Batch version of $pull
- *          - {.., '$pullAll' : {'fpath' : [array of values to remove], ...}} 
+ *          - {.., '$pullAll' : {'fpath' : [array of values to remove], ...}}
  *
+ * - Collection joins supported in the following form:
+ *
+ *       {..., $do : {fpath : {$join : 'collectionname'}} }
+ *       Where 'fpath' value points to object's OIDs from 'collectionname'. Its value
+ *       can be OID, string representation of OID or array of this pointers.
  *
  *  NOTE: It is better to execute update queries with `$onlycount=true` hint flag
  *        or use the special `update()` method to avoid unnecessarily data fetching.
