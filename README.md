@@ -10,6 +10,10 @@ EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallab
 
 JSON representation of queries and data implemented with API based on [C BSON](https://github.com/mongodb/mongo-c-driver/tree/master/src/)
 
+News
+===============================
+`2013-01-22` **[Collection joins now supported](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
+
 Features
 ================================
 * LGPL license allows you to embed this library into proprietary software.
