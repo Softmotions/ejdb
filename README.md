@@ -18,6 +18,7 @@ Features
 * Collection level transactions.
 * String token matching queries: ```$stror``` ```$strand```
 * [Node.js](http://nodejs.org) binding
+* [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
 
 
 Documentation
@@ -32,6 +33,7 @@ Documentation
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
     * [C API](#c-api)
+* **[Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
 
 
 Community
