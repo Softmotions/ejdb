@@ -22,7 +22,7 @@ EJDB_EXTERN_C_START
 
 #define BSON_IS_IDXSUPPORTED_TYPE(atype) (atype == BSON_STRING || \
                                           atype == BSON_INT || atype == BSON_LONG || atype == BSON_DOUBLE || \
-                                          atype == BSON_ARRAY)
+                                          atype == BSON_ARRAY || atype == BSON_DATE)
 
 #define EJDB_MAX_COLLECTIONS 1024
 
