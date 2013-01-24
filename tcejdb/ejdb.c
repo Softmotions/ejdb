@@ -3733,12 +3733,13 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             case BSON_LONG:
             case BSON_DOUBLE:
             case BSON_INT:
+            case BSON_DATE:
             {
                 assert(!qf.fpath && !qf.expr);
                 qf.ftype = ftype;
                 qf.fpath = tcstrjoin(pathStack, '.');
                 qf.fpathsz = strlen(qf.fpath);
-                if (ftype == BSON_LONG || ftype == BSON_INT) {
+                if (ftype == BSON_LONG || ftype == BSON_INT || ftype == BSON_DATE) {
                     qf.exprlongval = bson_iterator_long(it);
                     qf.exprdblval = qf.exprlongval;
                     qf.expr = tcsprintf("%ld", qf.exprlongval);
