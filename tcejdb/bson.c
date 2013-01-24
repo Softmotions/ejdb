@@ -593,6 +593,7 @@ EJDB_EXPORT double bson_iterator_double(const bson_iterator *i) {
         case BSON_INT:
             return bson_iterator_int_raw(i);
         case BSON_LONG:
+        case BSON_DATE:
             return bson_iterator_long_raw(i);
         case BSON_DOUBLE:
             return bson_iterator_double_raw(i);
@@ -608,6 +609,7 @@ EJDB_EXPORT int64_t bson_iterator_long(const bson_iterator *i) {
         case BSON_INT:
             return bson_iterator_int_raw(i);
         case BSON_LONG:
+        case BSON_DATE:
             return bson_iterator_long_raw(i);
         case BSON_DOUBLE:
             return bson_iterator_double_raw(i);
@@ -628,6 +630,8 @@ static int64_t bson_iterator_long_ext(const bson_iterator *i) {
             return bson_iterator_long_raw(i);
         case BSON_DOUBLE:
             return bson_iterator_double_raw(i);
+        case BSON_BOOL:
+            return bson_iterator_bool_raw(i) ? 1 : 0;
         default:
             return 0;
     }
@@ -659,6 +663,7 @@ EJDB_EXPORT bson_bool_t bson_iterator_bool(const bson_iterator *i) {
         case BSON_INT:
             return bson_iterator_int_raw(i) != 0;
         case BSON_LONG:
+        case BSON_DATE:
             return bson_iterator_long_raw(i) != 0;
         case BSON_DOUBLE:
             return bson_iterator_double_raw(i) != 0;
@@ -1466,7 +1471,7 @@ EJDB_EXPORT int bson_inplace_set_long(bson_iterator *pos, int64_t val) {
     t += strlen(t) + 1;
     if (bt == BSON_INT) {
         bson_little_endian32(t, &val);
-    } else if (bt == BSON_LONG) {
+    } else if (bt == BSON_LONG || bt == BSON_DATE) {
         bson_little_endian64(t, &val);
     } else if (bt == BSON_DOUBLE) {
         double dval = (double) val;
@@ -1488,7 +1493,7 @@ EJDB_EXPORT int bson_inplace_set_double(bson_iterator *pos, double val) {
     t += strlen(t) + 1;
     if (bt == BSON_INT) {
         bson_little_endian32(t, &ival);
-    } else if (bt == BSON_LONG) {
+    } else if (bt == BSON_LONG || bt == BSON_DATE) {
         bson_little_endian64(t, &ival);
     } else if (bt == BSON_DOUBLE) {
         bson_little_endian64(t, &val);
