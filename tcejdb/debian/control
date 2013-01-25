@@ -1,0 +1,64 @@
+Source: ejdb
+Section: libs
+Priority: standard
+Maintainer: Anton Adamansky <adamansky@gmail.com>
+Build-Depends: autotools-dev,
+               chrpath,
+               debhelper (>= 9),
+               zlib1g-dev
+Standards-Version: 3.9.3
+Homepage: http://ejdb.org
+Vcs-Browser: https://github.com/Softmotions/ejdb
+Vcs-Git: https://github.com/Softmotions/ejdb.git
+
+Package: libejdb1
+Architecture: any
+Multi-Arch: same
+Pre-Depends: multiarch-support, ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Embedded JSON Database engine [runtime]
+ EJDB aims to be a fast MongoDB-like library which can be embedded into C/C++ and NodeJS
+ applications under terms of LGPL license.
+ .
+ This is the runtime package for programs that use the EJDB database
+ library.
+
+Package: libejdb1-dbg
+Priority: extra
+Section: debug
+Architecture: any
+Depends: libejdb1 (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends},
+         libcunit1-dev
+Description: Embedded JSON Database engine [debug]
+ EJDB aims to be a fast MongoDB-like library which can be embedded into C/C++ and NodeJS
+ applications under terms of LGPL license.
+ .
+ This is the debugging symbols for the EJDB database library.
+
+Package: libejdb1-dev
+Section: libdevel
+Priority: extra
+Architecture: any
+Depends: libejdb1 (= ${binary:Version}),
+         ${misc:Depends},
+         libcunit1-dev
+Description: Embedded JSON Database engine [development]
+ EJDB aims to be a fast MongoDB-like library which can be embedded into C/C++ and NodeJS
+ applications under terms of LGPL license.
+ .
+ This is the development package which contains headers and static libraries
+ for the EJDB database library.
+
+Package: libejdb1-doc
+Architecture: all
+Section: doc
+Priority: optional
+Depends: ${misc:Depends}
+Description: Embedded JSON Database engine documentation
+ EJDB aims to be a fast MongoDB-like library which can be embedded into C/C++ and NodeJS
+ applications under terms of LGPL license.
+ .
+ This package contains documentation for all of the API's and utilities
+ provided by EJDB.
