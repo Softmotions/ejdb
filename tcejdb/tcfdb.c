@@ -1129,10 +1129,12 @@ bool tcfdbmemsync(TCFDB *fdb, bool phys){
   tcfdbdumpmeta(fdb, hbuf);
   memcpy(fdb->map, hbuf, FDBOPAQUEOFF);
   if(phys){
+#ifndef __GNU__
     if(msync(fdb->map, fdb->limsiz, MS_SYNC) == -1){
       tcfdbsetecode(fdb, TCEMMAP, __FILE__, __LINE__, __func__);
       err = true;
     }
+#endif
     if(fsync(fdb->fd) == -1){
       tcfdbsetecode(fdb, TCESYNC, __FILE__, __LINE__, __func__);
       err = true;

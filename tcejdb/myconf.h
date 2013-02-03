@@ -175,7 +175,7 @@
 #define TCITOHLL(TC_num)  (TC_num)
 #endif
 
-#if defined(_MYNOUBC)
+#if defined(_MYNOUBC) || defined(__hppa__)
 #define TCUBCACHE      0
 #elif defined(_SYS_LINUX_) || defined(_SYS_FREEBSD_) || defined(_SYS_NETBSD_) || \
   defined(_SYS_MACOSX_) || defined(_SYS_SUNOS_)

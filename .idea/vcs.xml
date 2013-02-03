@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/node/nodejs" vcs="Git" />
+    <mapping directory="$USER_HOME$/tmp/tokyocabinet-debian" vcs="Git" />
   </component>
 </project>
 

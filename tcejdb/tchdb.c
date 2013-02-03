@@ -1430,10 +1430,12 @@ bool tchdbmemsync(TCHDB *hdb, bool phys){
   memcpy(hdb->map, hbuf, HDBOPAQUEOFF);
   if(phys){
     size_t xmsiz = (hdb->xmsiz > hdb->msiz) ? hdb->xmsiz : hdb->msiz;
+#ifndef __GNU__
     if(msync(hdb->map, xmsiz, MS_SYNC) == -1){
       tchdbsetecode(hdb, TCEMMAP, __FILE__, __LINE__, __func__);
       err = true;
     }
+#endif        
     if(fsync(hdb->fd) == -1){
       tchdbsetecode(hdb, TCESYNC, __FILE__, __LINE__, __func__);
       err = true;

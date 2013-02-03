@@ -6,7 +6,7 @@ Build-Depends: autotools-dev,
                chrpath,
                debhelper (>= 9),
                zlib1g-dev
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 Homepage: http://ejdb.org
 Vcs-Browser: https://github.com/Softmotions/ejdb
 Vcs-Git: https://github.com/Softmotions/ejdb.git

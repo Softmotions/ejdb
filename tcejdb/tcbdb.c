@@ -2245,6 +2245,26 @@ static bool tcbdbleafaddrec(TCBDB *bdb, BDBLEAF *leaf, int dmode,
           *(int *)vbuf = *(int *)(dbuf + rec->ksiz + psiz);
           break;
         case BDBPDADDDBL:
+#ifdef __mips__
+	  {
+       	  double _vbuf;
+       	  double _tmp;
+
+          if(rec->vsiz != sizeof(double)){
+            tcbdbsetecode(bdb, TCEKEEP, __FILE__, __LINE__, __func__);
+            return false;
+          }
+        memcpy(&_vbuf, vbuf, sizeof(double));
+        if(_vbuf == 0.0){
+          memcpy(vbuf, dbuf + rec->ksiz + psiz, sizeof(double));
+          return true;
+        }
+        memcpy(&_tmp, dbuf + rec->ksiz + psiz, sizeof(double));
+        _tmp += _vbuf;
+        memcpy(dbuf + rec->ksiz + psiz, &_tmp, sizeof(double));
+        memcpy(vbuf, dbuf + rec->ksiz + psiz, sizeof(double));
+       }
+#else
           if(rec->vsiz != sizeof(double)){
             tcbdbsetecode(bdb, TCEKEEP, __FILE__, __LINE__, __func__);
             return false;
@@ -2255,6 +2275,7 @@ static bool tcbdbleafaddrec(TCBDB *bdb, BDBLEAF *leaf, int dmode,
           }
           *(double *)(dbuf + rec->ksiz + psiz) += *(double *)vbuf;
           *(double *)vbuf = *(double *)(dbuf + rec->ksiz + psiz);
+#endif
           break;
         case BDBPDPROC:
           procptr = *(BDBPDPROCOP **)((char *)kbuf - sizeof(procptr));

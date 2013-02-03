@@ -7,8 +7,9 @@ libexecdir=@libexecdir@
 includedir=@includedir@
 datadir=@datadir@
 
-Name: Tokyo Cabinet EJDB edition
-Description: a modern implementation of DBM
+Name: EJDB
+Description: Embedded JSON database engine
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -ltcejdb @LIBS@
+Libs: -L${libdir} -ltcejdb
+Libs.private: @LIBS@
 Cflags: -I${includedir}
