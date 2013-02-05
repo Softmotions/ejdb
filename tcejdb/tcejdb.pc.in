@@ -8,7 +8,7 @@ includedir=@includedir@
 datadir=@datadir@
 
 Name: EJDB
-Description: Embedded JSON database engine
+Description: Embedded JSON database engine library
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -ltcejdb
 Libs.private: @LIBS@

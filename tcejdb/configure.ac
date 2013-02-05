@@ -27,11 +27,8 @@ MYCOMMANDFILES="tcutest tcumttest tcucodec tchtest tchmttest tchmgr"
 MYCOMMANDFILES="$MYCOMMANDFILES tcbtest tcbmttest tcbmgr tcftest tcfmttest tcfmgr"
 MYCOMMANDFILES="$MYCOMMANDFILES tcttest tctmttest tctmgr tcatest tcamttest tcamgr"
 MYCGIFILES="tcawmgr.cgi"
-MYMAN1FILES="tcutest.1 tcumttest.1 tcucodec.1 tchtest.1 tchmttest.1 tchmgr.1"
-MYMAN1FILES="$MYMAN1FILES tcbtest.1 tcbmttest.1 tcbmgr.1 tcftest.1 tcfmttest.1 tcfmgr.1"
-MYMAN1FILES="$MYMAN1FILES tcttest.1 tctmttest.1 tctmgr.1 tcatest.1 tcamttest.1 tcamgr.1"
-MYMAN3FILES="tokyocabinet.3 tcutil.3 tcxstr.3 tclist.3 tcmap.3 tctree.3 tcmdb.3 tcmpool.3"
-MYMAN3FILES="$MYMAN3FILES tchdb.3 tcbdb.3 tcfdb.3 tctdb.3 tcadb.3"
+MYMAN1FILES=""
+MYMAN3FILES="libtcejdb.3"
 #MYDOCUMENTFILES="COPYING ChangeLog doc tokyocabinet.idl"
 MYDOCUMENTFILES="COPYING ../Changelog"
 MYPCFILES="tcejdb.pc"
@@ -365,6 +362,8 @@ AC_SUBST(MYCMDLDFLAGS)
 AC_SUBST(MYRUNPATH)
 AC_SUBST(MYLDLIBPATHENV)
 AC_SUBST(MYPOSTCMD)
+AC_SUBST(PACKAGE_NAME)
+AC_SUBST(PACKAGE_VERSION)
 
 # Targets
 AC_OUTPUT(Makefile tcejdb.pc)
