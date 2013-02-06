@@ -673,7 +673,11 @@ wordtable :
 	./tctmgr importtsv casket words.tsv
 
 
-.PHONY : all clean install check check-ejdb
+.PHONY : all clean install check check-ejdb deb-packages
+
+
+ deb-packages :
+	debuild
 
 
 

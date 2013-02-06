@@ -8,4 +8,11 @@ clean:
 	rm -rf ./build
 	rm -rf ./var/*
 
-.PHONY: all
+
+ deb-packages:
+	cd ./tcejdb && autoconf && ./configure
+	make -C ./tcejdb deb-packages
+
+
+
+.PHONY: all clean
