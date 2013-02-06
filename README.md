@@ -622,7 +622,7 @@ int main() {
     EJQ *q1 = ejdbcreatequery(jb, &bq1, NULL, 0, NULL);
 
     uint32_t count;
-    TCLIST *res = ejdbqrysearch(coll, q1, &count, 0, NULL);
+    TCLIST *res = ejdbqryexecute(coll, q1, &count, 0, NULL);
     fprintf(stderr, "\n\nRecords found: %d\n", count);
 
     //Now print the result set records
