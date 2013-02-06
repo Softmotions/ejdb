@@ -1,4 +1,4 @@
-libtcejdb (1.0.58) unstable; urgency=low
+libtcejdb (@PACKAGE_VERSION@) unstable; urgency=low
 
   * Initial Release.
 

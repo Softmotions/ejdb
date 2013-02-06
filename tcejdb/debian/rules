@@ -26,3 +26,7 @@ clean:
 	! test -e Makefile || $(MAKE) distclean
 	rm -f build-*-stamp
 
+override_dh_strip:
+	dh_strip --dbg-package=libtcejdb9-dbg
+
+.PHONY: override_dh_strip override_dh_auto_test override_dh_auto_configure clean

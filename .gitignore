@@ -54,3 +54,20 @@
 
 
 
+
+libtcejdb9*.deb
+libtcejdb_*.dsc
+libtcejdb_*.tar.gz
+libtcejdb_*.build
+libtcejdb_*.changes
+
+
+tcejdb/debian/files
+tcejdb/debian/*.log
+tcejdb/debian/*.substvars
+tcejdb/debian/libtcejdb9*/
+tcejdb/debian/tmp/*
+tcejdb/debian/*.debhelper
+
+
+
