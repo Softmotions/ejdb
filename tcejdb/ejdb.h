@@ -182,6 +182,9 @@ EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile);
  * If saved bson does't have _id primary key then `oid` will be set to generated bson _id,
  * otherwise `oid` will be set to the current bson's _id field.
  *
+ * NOTE: Passed `bs` object field names may not contain `$` and `.` characters,
+ *       error condition will be fired in this case.
+ *
  * @param coll JSON collection handle.
  * @param bson BSON object id pointer.
  * @param oid OID pointer will be set to object's _id
@@ -193,6 +196,9 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL *coll, bson *bs, bson_oid_t *oid);
  * Persist BSON object in the collection.
  * If saved bson does't have _id primary key then `oid` will be set to generated bson _id,
  * otherwise `oid` will be set to the current bson's _id field.
+ *
+ * NOTE: Passed `bs` object field names may not contain `$` and `.` characters,
+ *       error condition will be fired in this case.
  *
  * @param coll JSON collection handle.
  * @param bs BSON object id pointer.
@@ -280,7 +286,7 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *          - {.., '$pullAll' : {'fpath' : [array of values to remove], ...}}
  *
  * - Collection joins supported in the following form:
- * 
+ *
  *      {..., $do : {fpath : {$join : 'collectionname'}} }
  *      Where 'fpath' value points to object's OIDs from 'collectionname'. Its value
  *      can be OID, string representation of OID or array of this pointers.

@@ -218,8 +218,11 @@ If callback is not provided this function will be synchronous.
 
 Call variations:
 
-    save(cname, json object, [cb])
-    save(cname, <Array of json objects>, [cb])
+    save(cname, <json object>|<Array of json objects>, [options] [cb])
+    save(cname, <json object>|<Array of json objects>, [cb])
+
+NOTE: JSON objects field names may not contain `$` and `.` characters,
+      error condition will be fired in this case.
 
 __Arguments__
 
