@@ -1,19 +1,21 @@
 
 all:
 	cd tcejdb && ./configure
-	make -C ./tcejdb
+	$(MAKE) -C ./tcejdb
 
 clean:
-	make -C ./tcejdb clean
-	rm -rf ./build
-	rm -rf ./var/*
-
+	- $(MAKE) -C ./tcejdb clean
+	- rm -rf ./build
+	- rm -rf ./var/*
+	- rm -f libtcejdb*.tar.gz libtcejdb*.deb libtcejdb*.changes libtcejdb*.build libtcejdb*.dsc
 
  deb-packages:
-	cp ./Changelog ./tcejdb/Changelog    
+	cp ./Changelog ./tcejdb/Changelog
 	cd ./tcejdb && autoconf && ./configure
-	make -C ./tcejdb deb-packages
+	$(MAKE) -C ./tcejdb deb-packages
 
+ deb-source-packages:
+	$(MAKE) -C ./ deb-packages DEBUILD_OPTS="-S"
 
 
 .PHONY: all clean

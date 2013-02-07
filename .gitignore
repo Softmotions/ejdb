@@ -1,6 +1,7 @@
 *.o
 *.vlog
 *.dylib
+*.upload
 
 /npm-debug.log
 /.idea/workspace.xml

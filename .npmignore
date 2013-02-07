@@ -1,6 +1,7 @@
 *.o
 *.vlog
 *.iml
+*.upload
 
 /misc
 /node/nodejs
