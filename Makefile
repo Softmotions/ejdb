@@ -18,4 +18,4 @@ clean:
 	$(MAKE) -C ./ deb-packages DEBUILD_OPTS="-S"
 
 
-.PHONY: all clean
+.PHONY: all clean deb-packages deb-source-packages
