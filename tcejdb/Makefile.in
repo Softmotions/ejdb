@@ -677,7 +677,7 @@ wordtable :
 
 
  deb-packages :
-	debuild
+	debuild $(DEBUILD_OPTS)
 
 
 

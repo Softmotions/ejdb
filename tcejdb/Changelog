@@ -1,0 +1,175 @@
+2013-01-22 Anton Adamansky. <adamansky@gmail.com>
+    * Collection joins now supported (ticket #43)
+    - Release 1.0.55
+
+2013-01-16 Anton Adamansky. <adamansky@gmail.com>
+    * Crash fix #44
+    - Release 1.0.54
+
+2013-01-15 Anton Adamansky. <adamansky@gmail.com>
+    * Minor fix in ejdb.js (merged pull #42)
+    * Result set fields can be excluded (ticket #34)
+    - Release 1.0.53
+
+2013-01-14 Anton Adamansky. <adamansky@gmail.com>
+    * $addToSetAll and $pullAll operations implemented.
+    - Release 1.0.51
+
+2013-01-13 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed #35
+    * Fixed incorrect handling of query error codes.
+    - Release 1.0.50
+
+2013-01-11 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed crash if null fields presented in queries.
+    - Release 1.0.48
+
+2013-01-10 Anton Adamansky. <adamansky@gmail.com>
+    * Removed cunit library dependency for production builds.
+    - Release 1.0.47
+
+2013-01-09 Anton Adamansky. <adamansky@gmail.com>
+    * Critical fixes in ejdb cli console
+    * Fix count(*) query optimization when OR predicates used
+    * Collection should be automatically created for $upsert queries (ticket #32)
+    * Test cases are not executed during npm installation
+    - Release 1.0.46
+
+2013-01-09 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed crash on sorting (ticket #31)
+    - Release 1.0.44
+
+2013-01-08 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed #28
+    * Deprecated node.js API removeCollection() use dropCollection() instead.
+    - Release 1.0.43
+
+2013-01-07 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed #29
+    - Release 1.0.42
+
+2013-01-05 Anton Adamansky. <adamansky@gmail.com>
+    * Optimized count(*) on whole collection (ticket #27)
+    * Optimized $dropall on whole collection (ticket #26)
+    * Database files can be opened directly from CLI command line
+    * Fixed minor bug in $upsert operation
+    - Release 1.0.41
+
+2012-12-31 Anton Adamansky. <adamansky@gmail.com>
+    * Added `$upsert` opration (ticket #25)
+    * Expose ejdb transactions API in Nodejs binding (ticket #22)
+    - Release 1.0.38
+
+2012-12-28 Anton Adamansky. <adamansky@gmail.com>
+    * Performance enhancements, memory allocs reduced to %20-30%
+    - Release 1.0.37
+
+2012-12-27 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed crash when using update qry with single indexed field(ticket: #23)
+    - Release 1.0.36
+
+2012-12-26 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed crash on collection remove (ticket: #18)
+    * Incorrect dropping of all field indexes (ticket: #16)
+    - Release 1.0.35
+
+2012-12-25 Anton Adamansky. <adamansky@gmail.com>
+    * Nodejs database cursors more GC friendly
+    - Release 1.0.34
+
+2012-12-24 Anton Adamansky. <adamansky@gmail.com>
+    * Better array query matching
+    * $elemMatch support in queries (ticket: #13)
+    - Release 1.0.33
+
+2012-12-20 Anton Adamansky. <adamansky@gmail.com>
+    * Initial version of EJDB CLI console
+    * All db methods are synchronous if no callback provided
+    - Release 1.0.30
+
+2012-12-15 Anton Adamansky. <adamansky@gmail.com>
+    * Added EJDB.isValidOID() into nodejs API
+    - Release 1.0.28
+
+2012-12-14 Anton Adamansky. <adamansky@gmail.com>
+    * Added `$addToSet` and `$pull` operations.
+    - Release 1.0.27
+
+2012-12-04 Anton Adamansky. <adamansky@gmail.com>
+    * Allows multiple matching conditions for single query field. Eg: {'age' : {'$lt' : '60', '$gt' : '30'}}
+    - Release 1.0.25
+
+2012-12-01 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed various threading issues
+    - Release 1.0.24
+
+2012-11-30 Anton Adamansky. <adamansky@gmail.com>
+    * Fix crash when using `$strand` and `$stror` operations
+    - Release 1.0.22
+
+2012-11-30 Anton Adamansky. <adamansky@gmail.com>
+    * Query optimization in the case of many arguments (>16) in `$in` operator
+    - Release 1.0.21
+
+2012-11-29 Anton Adamansky. <adamansky@gmail.com>
+    * More strict `_id` field checking on saving bsons
+    * Fixed bug if `_id` used with `$nin` operator
+    - Release 1.0.20
+
+2012-11-28 Anton Adamansky. <adamansky@gmail.com>
+    * The $begin query operation now works with tokens. Eg: {'name' : {'$begin' : ['token1', 'token2', ...]}}
+    - Release 1.0.18
+
+2012-11-27 Anton Adamansky. <adamansky@gmail.com>
+    * Added $dropall query operation in order to remove matched records
+    * Better boolean type support, boolean values treated as numbers.
+    * Various bugfixes
+    - Release 1.0.17
+
+2012-11-26 Anton Adamansky. <adamansky@gmail.com>
+    * NodeJS: Added merge json object option ($merge) in save() method
+    * Added ejdbsavebson2() with merge option.
+    - Release 1.0.14
+
+2012-11-25 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed assertion error in nodejs binding when using update queries
+    * Write lock acquired on each collection when closing database by 'ejdbclose()'
+    * Synchronous versions of setIndex and sync function was provided
+    - Release 1.0.13
+
+2012-11-20 Anton Adamansky. <adamansky@gmail.com>
+    * #9 In-place update operations `$set` and `$inc`
+    - Release 1.0.11
+
+2012-11-16 Anton Adamansky. <adamansky@gmail.com>
+    * #8 Field subset selection in queries
+    - Release 1.0.9
+
+2012-11-15 Anton Adamansky. <adamansky@gmail.com>
+    * #7 Support PK hash index for $in operation if '_id' field is used in matching
+    - Release 1.0.8
+
+2012-11-14 Anton Adamansky. <adamansky@gmail.com>
+    * New case insensitive field matching query operand: $icase
+    * Case insensitive string indexes support
+    - Release 1.0.7
+
+2012-11-08 Anton Adamansky. <adamansky@gmail.com>
+    * Correct query matching of _id field
+    - Release 1.0.6
+
+2012-11-08 Anton Adamansky. <adamansky@gmail.com>
+    * Better bson checking in query API
+    - Release 1.0.5
+
+2012-11-08 Anton Adamansky. <adamansky@gmail.com>
+    * OSX build fixes
+    - Release 1.0.3
+
+2012-11-06 Anton Adamansky. <adamansky@gmail.com>
+    * Node.js binding
+    - Release 1.0.1
+
+2012-10-27 Anton Adamansky. <adamansky@gmail.com>
+    * Initial release based on Tokyo Cabinet v1.4.48
+    - Release 1.0.0

@@ -11,7 +11,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(tcejdb, 1.0.58)
+AC_INIT(tcejdb, 1.0.59)
 
 # Package information
 MYLIBVER=9
@@ -30,7 +30,7 @@ MYCGIFILES="tcawmgr.cgi"
 MYMAN1FILES=""
 MYMAN3FILES="libtcejdb.3"
 #MYDOCUMENTFILES="COPYING ChangeLog doc tokyocabinet.idl"
-MYDOCUMENTFILES="COPYING ../Changelog"
+MYDOCUMENTFILES="COPYING Changelog"
 MYPCFILES="tcejdb.pc"
 
 # Building flags

@@ -10,6 +10,7 @@ clean:
 
 
  deb-packages:
+	cp ./Changelog ./tcejdb/Changelog    
 	cd ./tcejdb && autoconf && ./configure
 	make -C ./tcejdb deb-packages
 
