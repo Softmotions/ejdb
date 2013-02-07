@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+`2013-02-07` **[Debian packages provided](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)**
 `2013-01-22` **[Collection joins now supported](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
 
 Features
@@ -660,26 +661,18 @@ gcc -std=c99 -Wall -pedantic  -o csnippet csnippet.o  -ltcejdb
 Building & Installation
 --------------------------------
 
-[Debian/Ubuntu installation](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)
+[Installing on Debian/Ubuntu](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)
 
-Manual installation:
---------------------------------
+Manual installation
+-------------------------------
 
-Prerequisites
---------------------------------
+### Prerequisites
 **System libraries:**
 
 * gcc
-* zlib
+* zlib-dev
 
-On Debian/Ubuntu linux you can install it as follows:
-
-```sh
-   sudo apt-get install gcc zlib1g zlib1g-dev
-```
-
-Building
---------------------------------
+### Build and install
 
 ~~~~~~
    cd ./tcejdb
