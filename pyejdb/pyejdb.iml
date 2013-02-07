@@ -10,7 +10,14 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$" />
-    <orderEntry type="jdk" jdkName="Python 3.2.3 (/usr/bin/python3mu)" jdkType="Python SDK" />
+    <content url="file://$USER_HOME$/tmp/mongo-python-driver">
+      <excludeFolder url="file://$USER_HOME$/tmp/mongo-python-driver/doc/api" />
+      <excludeFolder url="file://$USER_HOME$/tmp/mongo-python-driver/test" />
+    </content>
+    <content url="file://$USER_HOME$/tmp/tokyo-python">
+      <excludeFolder url="file://$USER_HOME$/tmp/tokyo-python/tokyo-python/doc" />
+    </content>
+    <orderEntry type="jdk" jdkName="Python 3.2.3 (/usr/bin/python3.2mu)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

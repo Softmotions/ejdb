@@ -53,7 +53,7 @@
 /var
 /node/samples/sample1/zoo*
 
-
+/pyejdb/nbproject/private
 
 
 libtcejdb9*.deb

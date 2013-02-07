@@ -3,13 +3,13 @@
 *.iml
 *.upload
 
+nbproject/
+
 /pyejdb
 
 /misc
 /node/nodejs
 /.idea
-/node/nbproject
-/tcejdb/nbproject
 /tcejdb/static
 
 /tcejdb/doc
@@ -42,7 +42,6 @@
 /tcejdb/tcumttest
 /tcejdb/tcutest
 /tcejdb/tcejdb.pc
-/tcejdb/nbproject/private
 /tcejdb/check.in
 /tcejdb/check.out
 /tcejdb/casket*
@@ -54,7 +53,6 @@
 /tcejdb/testejdb/t2
 /tcejdb/testejdb/t3
 
-/node/nbproject/private
 /build
 /var
 
@@ -63,6 +61,7 @@ libtcejdb_*.dsc
 libtcejdb_*.tar.gz
 libtcejdb_*.build
 libtcejdb_*.changes
+
 /tcejdb/debian/
 
 

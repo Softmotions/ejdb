@@ -3,7 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/node/nodejs" vcs="Git" />
-    <mapping directory="$USER_HOME$/tmp/tokyocabinet-debian" vcs="Git" />
+    <mapping directory="$USER_HOME$/tmp/mongo-python-driver" vcs="Git" />
   </component>
 </project>
 
