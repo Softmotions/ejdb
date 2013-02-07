@@ -660,6 +660,11 @@ gcc -std=c99 -Wall -pedantic  -o csnippet csnippet.o  -ltcejdb
 Building & Installation
 --------------------------------
 
+[Debian/Ubuntu installation](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)
+
+Manual installation:
+--------------------------------
+
 Prerequisites
 --------------------------------
 **System libraries:**
