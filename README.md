@@ -655,7 +655,7 @@ You can save this code in `csnippet.c` And build:
 
 ```sh
 gcc -std=c99 -Wall -pedantic  -c -o csnippet.o csnippet.c
-gcc -std=c99 -Wall -pedantic  -o csnippet csnippet.o  -ltcejdb
+gcc -o csnippet csnippet.o -ltcejdb
 ```
 
 Building & Installation
