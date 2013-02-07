@@ -182,7 +182,7 @@ EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile);
  * If saved bson does't have _id primary key then `oid` will be set to generated bson _id,
  * otherwise `oid` will be set to the current bson's _id field.
  *
- * NOTE: Passed `bs` object field names may not contain `$` and `.` characters,
+ * NOTE: Field names of passed `bs` object may not contain `$` and `.` characters,
  *       error condition will be fired in this case.
  *
  * @param coll JSON collection handle.
@@ -197,7 +197,7 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL *coll, bson *bs, bson_oid_t *oid);
  * If saved bson does't have _id primary key then `oid` will be set to generated bson _id,
  * otherwise `oid` will be set to the current bson's _id field.
  *
- * NOTE: Passed `bs` object field names may not contain `$` and `.` characters,
+ * NOTE: Field names of passed `bs` object may not contain `$` and `.` characters,
  *       error condition will be fired in this case.
  *
  * @param coll JSON collection handle.

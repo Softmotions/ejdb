@@ -154,7 +154,7 @@ EJDB.prototype.dropCollection = function(cname, prune, cb) {
  *      - save(cname, <json object>|<Array of json objects>, cb)
  *      - save(cname, <json object>|<Array of json objects>, options, cb)
  *
- * NOTE: JSON objects field names may not contain `$` and `.` characters,
+ * NOTE: Field names of passed JSON objects may not contain `$` and `.` characters,
  *       error condition will be fired in this case.
  *
  * @param {String} cname Name of collection.
