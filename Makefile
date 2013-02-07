@@ -1,6 +1,5 @@
 
-all:
-	- mkdir -p tcejdb/debian && touch tcejdb/debian/changelog.in
+all: fix-changelogs
 	cd tcejdb && ./configure
 	$(MAKE) -C ./tcejdb
 
@@ -10,13 +9,17 @@ clean:
 	- rm -rf ./var/*
 	- rm -f libtcejdb*.tar.gz libtcejdb*.deb libtcejdb*.changes libtcejdb*.build libtcejdb*.dsc
 
- deb-packages:
-	cp ./Changelog ./tcejdb/Changelog
+deb-packages: fix-changelogs
 	cd ./tcejdb && autoconf && ./configure
 	$(MAKE) -C ./tcejdb deb-packages
 
- deb-source-packages:
+deb-source-packages: fix-changelogs
 	$(MAKE) -C ./ deb-packages DEBUILD_OPTS="-S"
 
 
-.PHONY: all clean deb-packages deb-source-packages
+fix-changelogs:
+	- mkdir -p tcejdb/debian && touch tcejdb/debian/changelog.in
+	cp ./Changelog ./tcejdb/Changelog
+
+
+.PHONY: all clean deb-packages deb-source-packages fix-changelogs
