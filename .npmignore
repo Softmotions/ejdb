@@ -63,6 +63,8 @@ libtcejdb_*.dsc
 libtcejdb_*.tar.gz
 libtcejdb_*.build
 libtcejdb_*.changes
-tcejdb/debian/
+/tcejdb/debian/
+
+
 
 

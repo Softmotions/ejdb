@@ -1,5 +1,6 @@
 
 all:
+	- mkdir -p tcejdb/debian && touch tcejdb/debian/changelog.in
 	cd tcejdb && ./configure
 	$(MAKE) -C ./tcejdb
 
