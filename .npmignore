@@ -3,6 +3,8 @@
 *.iml
 *.upload
 
+/pyejdb
+
 /misc
 /node/nodejs
 /.idea
