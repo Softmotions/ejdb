@@ -8,8 +8,8 @@
 #ifndef PYEJDB_H
 #define	PYEJDB_H
 
-
 #include <Python.h>
+#include <tcejdb/ejdb.h>
 
 #endif	/* PYEJDB_H */
 
