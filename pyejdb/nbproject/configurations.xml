@@ -3,7 +3,7 @@
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="pyejdb">
       <df name="pyejdb">
-        <in>ejdb.c</in>
+        <in>.stub</in>
         <in>pyejdb.c</in>
         <in>pyejdb.h</in>
       </df>
@@ -43,9 +43,7 @@
           </cTool>
         </makeTool>
       </makefileType>
-      <item path="pyejdb/ejdb.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
+      <item path="pyejdb/.stub" ex="false" tool="3" flavor2="0">
       </item>
       <item path="pyejdb/pyejdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
