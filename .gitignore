@@ -70,5 +70,4 @@ tcejdb/debian/libtcejdb9*/
 tcejdb/debian/tmp/*
 tcejdb/debian/*.debhelper
 
-
-
+/pyejdb/build/
