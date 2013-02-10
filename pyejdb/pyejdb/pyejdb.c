@@ -4,7 +4,7 @@
 typedef struct {
     PyObject_HEAD
     EJDB *ejdb;
-} EJDB;
+} PEJDB;
 
 #include "EJDB.c"
 
@@ -43,17 +43,43 @@ PyObject* init_pyejdb() {
 #else
     pyejdb = Py_InitModule3("pyejdb", pyejdb_m_methods, pyejdb_m_doc);
 #endif
-
     if (!pyejdb) {
         return NULL;
     }
     Error = PyErr_NewException("pyejdb.Error", NULL, NULL);
+    Py_XINCREF(Error);
     if (!Error || PyModule_AddObject(pyejdb, "Error", Error)) {
         Py_XDECREF(Error);
         goto fail;
     }
 
-    
+    /* adding types and constants */
+    if (
+            PyModule_AddType(pyejdb, "EJDB", &EJDBType) ||
+
+            PyModule_AddIntMacro(pyejdb, JBOREADER) ||
+            PyModule_AddIntMacro(pyejdb, JBOWRITER) ||
+            PyModule_AddIntMacro(pyejdb, JBOCREAT) ||
+            PyModule_AddIntMacro(pyejdb, JBOTRUNC) ||
+            PyModule_AddIntMacro(pyejdb, JBONOLCK) ||
+            PyModule_AddIntMacro(pyejdb, JBOLCKNB) ||
+            PyModule_AddIntMacro(pyejdb, JBOTSYNC) ||
+
+            PyModule_AddIntMacro(pyejdb, JBIDXDROP) ||
+            PyModule_AddIntMacro(pyejdb, JBIDXDROPALL) ||
+            PyModule_AddIntMacro(pyejdb, JBIDXOP) ||
+            PyModule_AddIntMacro(pyejdb, JBIDXOP) ||
+            PyModule_AddIntMacro(pyejdb, JBIDXREBLD) ||
+            PyModule_AddIntMacro(pyejdb, JBIDXNUM) ||
+            PyModule_AddIntMacro(pyejdb, JBIDXSTR) ||
+            PyModule_AddIntMacro(pyejdb, JBIDXARR) ||
+            PyModule_AddIntMacro(pyejdb, JBIDXISTR) ||
+
+            PyModule_AddIntMacro(pyejdb, JBQRYCOUNT)
+            ) {
+
+        goto fail;
+    }
 
     return pyejdb;
 
@@ -66,13 +92,12 @@ fail:
 
 #if PY_MAJOR_VERSION >= 3
 
-PyMODINIT_FUNC PyInit_cabinet(void) {
+PyMODINIT_FUNC PyInit_pyejdb(void) {
     return init_pyejdb();
 }
 #else
 
-PyMODINIT_FUNC
-initcabinet(void) {
+PyMODINIT_FUNC initcabinet(void) {
     init_pyejdb();
 }
 #endif
