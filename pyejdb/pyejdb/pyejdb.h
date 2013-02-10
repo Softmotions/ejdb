@@ -54,5 +54,11 @@ int PyModule_AddType(PyObject *module, const char *name, PyTypeObject *type) {
     return 0;
 }
 
+/* error handling utils */
+PyObject* set_error(PyObject *type, const char *message) {
+    PyErr_SetString(type, message);
+    return NULL;
+}
+
 #endif	/* PYEJDB_H */
 
