@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="84">
+<configurationDescriptor version="88">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
-    <df name="tcejdb" root=".">
-      <df name="autom4te.cache">
-      </df>
+    <df root="." name="tcejdb">
       <df name="bros">
         <in>bdbtest.c</in>
         <in>cdbtest.c</in>
@@ -17,18 +15,10 @@
         <in>tctest.c</in>
         <in>tdbtest.c</in>
       </df>
-      <df name="doc">
-      </df>
-      <df name="lab">
-      </df>
-      <df name="man">
-      </df>
       <df name="samples">
         <df name="sample1">
           <in>sample1.c</in>
         </df>
-      </df>
-      <df name="static">
       </df>
       <df name="testejdb">
         <in>t1.c</in>
@@ -134,13 +124,72 @@
           </cTool>
         </makeTool>
       </makefileType>
+      <item path="bros/bdbtest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="bros/cdbtest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="bros/cmpsqltctest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="bros/gdbmtest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="bros/maptest.cc" ex="false" tool="1" flavor2="4">
+        <ccTool>
+        </ccTool>
+      </item>
+      <item path="bros/ndbmtest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="bros/qdbmtest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="bros/sdbmtest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="bros/sqltest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="bros/tctest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="bros/tdbtest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
       <item path="bson.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
       </item>
+      <item path="bson.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="ejdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
+          <preprocessorList>
+            <Elem>_MYTESTS</Elem>
+          </preprocessorList>
         </cTool>
+      </item>
+      <item path="ejdb.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="ejdb_private.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="ejdbutl.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="ejdbutl.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="encoding.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -149,6 +198,8 @@
             <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
+      </item>
+      <item path="encoding.h" ex="false" tool="3" flavor2="0">
       </item>
       <folder path="tcejdb/samples">
         <cTool>
@@ -172,6 +223,8 @@
           </preprocessorList>
         </cTool>
       </item>
+      <item path="md5.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="myconf.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
@@ -179,6 +232,8 @@
             <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
+      </item>
+      <item path="myconf.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="numbers.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -195,6 +250,8 @@
       <item path="tcadb.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
+      </item>
+      <item path="tcadb.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="tcamgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -216,6 +273,8 @@
         <cTool>
         </cTool>
       </item>
+      <item path="tcbdb.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="tcbmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
@@ -231,6 +290,8 @@
       <item path="tcfdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
+      </item>
+      <item path="tcfdb.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="tcfmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -248,6 +309,8 @@
         <cTool>
         </cTool>
       </item>
+      <item path="tchdb.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="tchmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
@@ -263,6 +326,8 @@
       <item path="tctdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
+      </item>
+      <item path="tctdb.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="tctmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -296,6 +361,8 @@
         <cTool>
         </cTool>
       </item>
+      <item path="tcutil.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="testejdb/t1.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
@@ -314,6 +381,8 @@
             <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
+      </item>
+      <item path="utf8proc.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="utf8proc_data.c" ex="false" tool="0" flavor2="2">
         <cTool>

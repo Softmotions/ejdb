@@ -1,6 +1,6 @@
 #include "pyejdb.h"
 
-/* HDB */
+/* PEJDB */
 typedef struct {
     PyObject_HEAD
     EJDB *ejdb;
@@ -9,7 +9,7 @@ typedef struct {
 #include "EJDB.c"
 
 PyDoc_STRVAR(ejdb_m_doc, "EJDB http://ejdb.org");
-PyDoc_STRVAR(ejdb_version_doc, "version() -> str\n\n Returns the version string of the underlying EJDB library.");
+PyDoc_STRVAR(ejdb_version_doc, "version() -> str\n\nReturns the version string of the underlying EJDB library.");
 
 static PyObject* ejdb_version(PyObject *module) {
     return PyString_FromString(tcversion);
@@ -26,14 +26,14 @@ static PyMethodDef pyejdb_m_methods[] = {
 /* pyejdb_module */
 static PyModuleDef pyejdb_module = {
     PyModuleDef_HEAD_INIT,
-    "pyejdb", /*m_name*/
+    "_pyejdb", /*m_name*/
     ejdb_m_doc, /*m_doc*/
     -1, /*m_size*/
     pyejdb_m_methods, /*m_methods*/
 };
 #endif
 
-PyObject* init_pyejdb() {
+PyObject* init_pyejdb(void) {
     PyObject *pyejdb;
     if (PyType_Ready(&EJDBType)) {
         return NULL;
@@ -41,12 +41,12 @@ PyObject* init_pyejdb() {
 #if PY_MAJOR_VERSION >= 3
     pyejdb = PyModule_Create(&pyejdb_module);
 #else
-    pyejdb = Py_InitModule3("pyejdb", pyejdb_m_methods, pyejdb_m_doc);
+    pyejdb = Py_InitModule3("_pyejdb", pyejdb_m_methods, pyejdb_m_doc);
 #endif
     if (!pyejdb) {
         return NULL;
     }
-    Error = PyErr_NewException("pyejdb.Error", NULL, NULL);
+    Error = PyErr_NewException("_pyejdb.Error", NULL, NULL);
     Py_XINCREF(Error);
     if (!Error || PyModule_AddObject(pyejdb, "Error", Error)) {
         Py_XDECREF(Error);
@@ -92,12 +92,12 @@ fail:
 
 #if PY_MAJOR_VERSION >= 3
 
-PyMODINIT_FUNC PyInit_pyejdb(void) {
+PyMODINIT_FUNC PyInit__pyejdb(void) {
     return init_pyejdb();
 }
 #else
 
-PyMODINIT_FUNC initcabinet(void) {
+PyMODINIT_FUNC init__pyejdb(void) {
     init_pyejdb();
 }
 #endif

@@ -38,7 +38,7 @@ EJDBType Database.\n\
 \n\
 See http://ejdb.org");
 
-/* HDB.open(path, mode) */
+/* EJDB.open(path, mode) */
 PyDoc_STRVAR(EJDB_open_doc,
         "open(path, mode)\n\
 \n\
@@ -58,18 +58,29 @@ static PyObject* EJDB_open(PEJDB *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+/* EJDB.close() */
+PyDoc_STRVAR(EJDB_close_doc, "close()\n\
+\n\
+Close the database.");
+
+static PyObject* EJDB_close(PEJDB *self) {
+    if (!ejdbclose(self->ejdb)) {
+        return set_ejdb_error(self->ejdb);
+    }
+    Py_RETURN_NONE;
+}
+
 /* EJDBType.tp_methods */
 static PyMethodDef EJDB_tp_methods[] = {
     {"open", (PyCFunction) EJDB_open, METH_VARARGS, EJDB_open_doc},
-    //{"close", (PyCFunction) HDB_close, METH_NOARGS, HDB_close_doc},
+    {"close", (PyCFunction) EJDB_close, METH_NOARGS, EJDB_close_doc},
     {NULL}
 };
 
-
 static PyTypeObject EJDBType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "pyejdb.EJDB",                            /*tp_name*/
-    sizeof (EJDB),                            /*tp_basicsize*/
+    "_pyejdb.EJDB",                            /*tp_name*/
+    sizeof (PEJDB),                            /*tp_basicsize*/
     0,                                        /*tp_itemsize*/
     (destructor) EJDB_tp_dealloc,             /*tp_dealloc*/
     0,                                        /*tp_print*/

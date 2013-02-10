@@ -1,3 +1,9 @@
+libtcejdb (1.0.60) unstable; urgency=low
+
+  * Fixed version number in tcutil.h 
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 10 Feb 2013 15:34:29 +0700
+
 libtcejdb (1.0.59) unstable; urgency=low
 
   * Initial Release.

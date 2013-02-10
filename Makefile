@@ -18,7 +18,6 @@ deb-source-packages: fix-changelogs
 
 
 fix-changelogs:
-	- mkdir -p tcejdb/debian && touch tcejdb/debian/changelog.in
 	cp ./Changelog ./tcejdb/Changelog
 
 

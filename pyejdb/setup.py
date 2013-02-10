@@ -1,7 +1,9 @@
+#!/usr/bin/python3.2
 from platform import python_version
 from os import name as os_name
 from distutils.command.build_ext import build_ext as _build_ext
 from distutils.core import setup, Extension
+
 from ctypes.util import find_library
 from ctypes import cdll, c_char_p
 from sys import argv
@@ -42,14 +44,14 @@ def check_extension(ext):
 
 ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.0.57",
                          "tcversion", "http://ejdb.org",
-                         "pyejdb", ["pyejdb/pyejdb.c"],
+                         "_pyejdb", ["src/pyejdb.c"],
                          libraries=["tcejdb", "z", "pthread", "m", "c"])
 
 class build_ext(_build_ext):
     def finalize_options(self):
         _build_ext.finalize_options(self)
         if "sdist" not in argv:
-            self.extensions = [ext.c_ext for ext in (ejdb_ext) if check_extension(ext)]
+            self.extensions = [ext.c_ext for ext in (ejdb_ext,) if check_extension(ext)]
 
 setup(
     name="pyejdb",

@@ -11,7 +11,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(tcejdb, 1.0.59)
+AC_INIT(tcejdb, 1.0.60)
 
 # Package information
 MYLIBVER=9
@@ -366,7 +366,7 @@ AC_SUBST(PACKAGE_NAME)
 AC_SUBST(PACKAGE_VERSION)
 
 # Targets
-AC_OUTPUT(Makefile tcejdb.pc debian/changelog)
+AC_OUTPUT(Makefile tcejdb.pc)
 
 # Messages
 printf '#================================================================\n'

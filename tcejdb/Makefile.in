@@ -78,7 +78,7 @@ POSTCMD = @MYPOSTCMD@
 #================================================================
 
 
-all : $(LIBRARYFILES) $(COMMANDFILES) $(CGIFILES)
+all : version $(LIBRARYFILES) $(COMMANDFILES) $(CGIFILES)
 	@$(POSTCMD)
 	@printf '\n'
 	@printf '#================================================================\n'
