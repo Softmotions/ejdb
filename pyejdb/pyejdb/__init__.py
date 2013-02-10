@@ -1,6 +1,10 @@
 import _pyejdb
 from pprint import pprint
 
+__all__ = [
+    "EJDB"
+]
+
 class EJDB(object):
     def __init__(self, fpath):
         #pprint (vars(_pyejdb))

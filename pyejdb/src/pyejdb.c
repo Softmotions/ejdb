@@ -4,7 +4,7 @@
 typedef struct {
     PyObject_HEAD
     EJDB *ejdb;
-} PEJDB;
+} PEJDB; 
 
 #include "EJDB.c"
 
@@ -21,8 +21,6 @@ static PyMethodDef pyejdb_m_methods[] = {
     {NULL} /* Sentinel */
 };
 
-
-#if PY_MAJOR_VERSION >= 3
 /* pyejdb_module */
 static PyModuleDef pyejdb_module = {
     PyModuleDef_HEAD_INIT,
@@ -31,18 +29,15 @@ static PyModuleDef pyejdb_module = {
     -1, /*m_size*/
     pyejdb_m_methods, /*m_methods*/
 };
-#endif
 
 PyObject* init_pyejdb(void) {
     PyObject *pyejdb;
     if (PyType_Ready(&EJDBType)) {
         return NULL;
     }
-#if PY_MAJOR_VERSION >= 3
+
     pyejdb = PyModule_Create(&pyejdb_module);
-#else
-    pyejdb = Py_InitModule3("_pyejdb", pyejdb_m_methods, pyejdb_m_doc);
-#endif
+
     if (!pyejdb) {
         return NULL;
     }
@@ -84,21 +79,11 @@ PyObject* init_pyejdb(void) {
     return pyejdb;
 
 fail:
-#if PY_MAJOR_VERSION >= 3
     Py_DECREF(pyejdb);
-#endif
     return NULL;
 }
-
-#if PY_MAJOR_VERSION >= 3
 
 PyMODINIT_FUNC PyInit__pyejdb(void) {
     return init_pyejdb();
 }
-#else
-
-PyMODINIT_FUNC init__pyejdb(void) {
-    init_pyejdb();
-}
-#endif
 
