@@ -1942,7 +1942,7 @@ void testQuery23() {
 
     bson bsq1;
     bson_init_as_query(&bsq1);
-    bson_append_regex(&bsq1, "name", "(IvaNov$|АНтоноВ$)", "i");
+    bson_append_regex(&bsq1, "name", "(IvaNov$|John\\ TraVolta$)", "i");
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
@@ -1974,7 +1974,7 @@ void testQuery23() {
 
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
         if (i == 0) {
-            CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
+            CU_ASSERT_FALSE(bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
         } else if (i == 1) {
             CU_ASSERT_FALSE(bson_compare_string("Ivanov", TCLISTVALPTR(q1res, i), "name"));
         } else {
