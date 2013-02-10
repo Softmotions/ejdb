@@ -71,3 +71,5 @@ tcejdb/debian/tmp/*
 tcejdb/debian/*.debhelper
 
 /pyejdb/build/
+/pyejdb/test/__pycache__
+/pyejdb/testdb*

@@ -66,5 +66,6 @@ libtcejdb_*.changes
 
 
 /pyejdb/build/
-
+/pyejdb/test/__pycache__ 
+/pyejdb/testdb*
 
