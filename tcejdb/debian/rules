@@ -18,7 +18,7 @@ override_dh_auto_test:
 override_dh_auto_configure:
 	dh_auto_configure -- \
 	    $(if $(findstring $(DEB_BUILD_ARCH),s390 s390x),--disable-pthread) \
-	    --enable-devel --enable-off64 --enable-swab \
+	    --enable-devel \
 	    --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH) \
 	    CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
