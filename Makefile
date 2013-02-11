@@ -1,6 +1,6 @@
 
 all: fix-changelogs
-	cd tcejdb && ./configure
+	cd tcejdb && ./configure --enable-off64 --enable-swab
 	$(MAKE) -C ./tcejdb
 
 clean:
