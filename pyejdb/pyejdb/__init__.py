@@ -1,5 +1,6 @@
 import _pyejdb
 from pprint import pprint
+from pyejdb import bson
 
 __all__ = [
     "EJDB"
@@ -14,7 +15,7 @@ class EJDB(object):
     def __init__(self, fpath):
         #pprint (vars(_pyejdb))
         self.__ejdb = _pyejdb.EJDB()
-        self.__ejdb.open(fpath, _pyejdb.JBOWRITER | _pyejdb.JBOCREAT)
+        self.__ejdb.open(fpath, _pyejdb.JBOWRITER | _pyejdb.JBOCREAT | _pyejdb.JBOTSYNC)
 
     def close(self):
         if self.__ejdb:
@@ -23,9 +24,13 @@ class EJDB(object):
 
     def save(self, cname, *jsarr, **kwargs):
         _check_collname(cname)
-        _objs = []
-        for o in jsarr:
-            _objs.append(o)
+        for doc in jsarr:
+            _oid = self.__ejdb.save(cname, bson.serialize_to_bytes(doc), **kwargs)
+            if "_id" not in doc:
+                doc["_id"] = _oid
+                print("ID=%s" % _oid)
+
+
 
 
 

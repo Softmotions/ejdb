@@ -4,7 +4,7 @@ import sys
 import unittest
 
 
-names = ['openclose']
+names = ['one']
 
 def test_suite():
     import pyejdb

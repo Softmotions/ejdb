@@ -4,7 +4,7 @@
 typedef struct {
     PyObject_HEAD
     EJDB *ejdb;
-} PEJDB; 
+} PEJDB;
 
 #include "EJDB.c"
 
@@ -12,7 +12,7 @@ PyDoc_STRVAR(ejdb_m_doc, "EJDB http://ejdb.org");
 PyDoc_STRVAR(ejdb_version_doc, "version() -> str\n\nReturns the version string of the underlying EJDB library.");
 
 static PyObject* ejdb_version(PyObject *module) {
-    return PyString_FromString(tcversion);
+    return PyUnicode_FromString(tcversion);
 }
 
 /* cabinet_module.m_methods */

@@ -109,12 +109,12 @@ import calendar; from calendar import timegm
 import collections; from collections import OrderedDict as odict
 import binascii; from binascii import b2a_hex
 try:
-    import typecheck
+    import pyejdb.typecheck
 except ImportError:
     print("warning: module typecheck.py cannot be imported, type checking is skipped")
     typecheck = lambda x: x; optional = callable = with_attr = lambda *args: True
 else:
-    from typecheck import typecheck, optional, callable, with_attr
+    from pyejdb.typecheck import typecheck, optional, callable, with_attr
 
 ###############################################################################
 

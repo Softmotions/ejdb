@@ -52,48 +52,45 @@ static PyObject* EJDB_close(PEJDB *self) {
 static PyObject* EJDB_save(PEJDB *self, PyObject *args, PyObject *kwargs) {
     const char *cname;
     PyObject *merge = Py_False;
-    Py_buffer *bsonbuff;
+    void *bsonbuf = NULL;
+    int bsonbufz;
+    PyObject *bsonbufpy;
     EJCOLL *ejcoll;
     bson_oid_t oid;
     bson bsonval;
-    bool ret = false;
+    bool bret = false;
     static char *kwlist[] = {"cname", "bson", "merge", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ss*|O:EJDB_save", kwlist,
-            &cname, &bsonbuff, &merge)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sO|O:EJDB_save", kwlist,
+            &cname, &bsonbufpy, &merge)) {
+        return NULL;
+    }
+    if (bytes_to_void(bsonbufpy, &bsonbuf, &bsonbufz)) {
         return NULL;
     }
     if (!PyBool_Check(merge)) {
-        PyBuffer_Release(bsonbuff);
         return set_error(PyExc_TypeError, "'merge' must be an instance of boolean type");
     }
     Py_BEGIN_ALLOW_THREADS
     ejcoll = ejdbcreatecoll(self->ejdb, cname, NULL);
     Py_END_ALLOW_THREADS
     if (!ejcoll) {
-        PyBuffer_Release(bsonbuff);
         return set_ejdb_error(self->ejdb);
     }
-    bson_init_finished_data(&bsonval, bsonbuff->buf);
+    bson_init_finished_data(&bsonval, bsonbuf);
+    //bson_print_raw(stderr, bsonbuf, 0);
+
     Py_BEGIN_ALLOW_THREADS
-    ret = ejdbsavebson2(ejcoll, &bsonval, &oid, (merge == Py_True));
+    bret = ejdbsavebson2(ejcoll, &bsonval, &oid, (merge == Py_True));
     Py_END_ALLOW_THREADS
-    if (!ret) {
-        PyBuffer_Release(bsonbuff);
-        return set_ejdb_error(self->ejdb);
-    }
-    PyBuffer_Release(bsonbuff);
     bsonval.data = NULL;
     bson_destroy(&bsonval);
-
-    //todo return OID
-    //PyString_FromString()
-    Py_RETURN_NONE;
+    if (!bret) {
+        return set_ejdb_error(self->ejdb);
+    }
+    char xoid[25];
+    bson_oid_to_string(&oid, xoid);
+    return PyUnicode_FromString(xoid);
 }
-
-
-//EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
-//EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge);
-
 
 /* EJDBType.tp_methods */
 static PyMethodDef EJDB_tp_methods[] = {
