@@ -20,7 +20,7 @@
     <content url="file://$USER_HOME$/tmp/tokyo-python">
       <excludeFolder url="file://$USER_HOME$/tmp/tokyo-python/tokyo-python/doc" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.2.3 (/usr/bin/python3.2mu)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.2.3 (/usr/bin/python3mu)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

@@ -26,7 +26,8 @@ class EJDB(object):
         _objs = []
         for o in jsarr:
             _objs.append(o)
-        _opts = kwargs["opts"] if kwargs["opts"]  else {}
+
+
 
 
 

@@ -30,22 +30,6 @@ static PyObject* EJDB_tp_new(PyTypeObject *type, PyObject *args, PyObject *kwarg
     return (PyObject *) self;
 }
 
-/* EJDBType.tp_doc */
-PyDoc_STRVAR(EJDB_tp_doc,
-        "EJDBType()\n\
-\n\
-EJDBType Database.\n\
-\n\
-See http://ejdb.org");
-
-/* EJDB.open(path, mode) */
-PyDoc_STRVAR(EJDB_open_doc,
-        "open(path, mode)\n\
-\n\
-Open a database.\n\
-'path': path to the database file.\n\
-'mode': connection mode.");
-
 static PyObject* EJDB_open(PEJDB *self, PyObject *args) {
     const char *path;
     int mode;
@@ -58,11 +42,6 @@ static PyObject* EJDB_open(PEJDB *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
-/* EJDB.close() */
-PyDoc_STRVAR(EJDB_close_doc, "close()\n\
-\n\
-Close the database.");
-
 static PyObject* EJDB_close(PEJDB *self) {
     if (!ejdbclose(self->ejdb)) {
         return set_ejdb_error(self->ejdb);
@@ -70,17 +49,65 @@ static PyObject* EJDB_close(PEJDB *self) {
     Py_RETURN_NONE;
 }
 
+static PyObject* EJDB_save(PEJDB *self, PyObject *args, PyObject *kwargs) {
+    const char *cname;
+    PyObject *merge = Py_False;
+    Py_buffer *bsonbuff;
+    EJCOLL *ejcoll;
+    bson_oid_t oid;
+    bson bsonval;
+    bool ret = false;
+    static char *kwlist[] = {"cname", "bson", "merge", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ss*|O:EJDB_save", kwlist,
+            &cname, &bsonbuff, &merge)) {
+        return NULL;
+    }
+    if (!PyBool_Check(merge)) {
+        PyBuffer_Release(bsonbuff);
+        return set_error(PyExc_TypeError, "'merge' must be an instance of boolean type");
+    }
+    Py_BEGIN_ALLOW_THREADS
+    ejcoll = ejdbcreatecoll(self->ejdb, cname, NULL);
+    Py_END_ALLOW_THREADS
+    if (!ejcoll) {
+        PyBuffer_Release(bsonbuff);
+        return set_ejdb_error(self->ejdb);
+    }
+    bson_init_finished_data(&bsonval, bsonbuff->buf);
+    Py_BEGIN_ALLOW_THREADS
+    ret = ejdbsavebson2(ejcoll, &bsonval, &oid, (merge == Py_True));
+    Py_END_ALLOW_THREADS
+    if (!ret) {
+        PyBuffer_Release(bsonbuff);
+        return set_ejdb_error(self->ejdb);
+    }
+    PyBuffer_Release(bsonbuff);
+    bsonval.data = NULL;
+    bson_destroy(&bsonval);
+
+    //todo return OID
+    //PyString_FromString()
+    Py_RETURN_NONE;
+}
+
+
+//EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
+//EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge);
+
+
 /* EJDBType.tp_methods */
 static PyMethodDef EJDB_tp_methods[] = {
-    {"open", (PyCFunction) EJDB_open, METH_VARARGS, EJDB_open_doc},
-    {"close", (PyCFunction) EJDB_close, METH_NOARGS, EJDB_close_doc},
+    {"open", (PyCFunction) EJDB_open, METH_VARARGS, NULL},
+    {"close", (PyCFunction) EJDB_close, METH_NOARGS, NULL},
+    {"save", (PyCFunction) EJDB_save, METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL}
 };
 
+
 static PyTypeObject EJDBType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "_pyejdb.EJDB",                            /*tp_name*/
-    sizeof (PEJDB),                            /*tp_basicsize*/
+    "_pyejdb.EJDB",                           /*tp_name*/
+    sizeof (PEJDB),                           /*tp_basicsize*/
     0,                                        /*tp_itemsize*/
     (destructor) EJDB_tp_dealloc,             /*tp_dealloc*/
     0,                                        /*tp_print*/
@@ -98,7 +125,7 @@ static PyTypeObject EJDBType = {
     0,                                        /*tp_setattro*/
     0,                                        /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-    EJDB_tp_doc,                              /*tp_doc*/
+    0,                                        /*tp_doc*/
     0,                                        /*tp_traverse*/
     0,                                        /*tp_clear*/
     0,                                        /*tp_richcompare*/
