@@ -163,16 +163,36 @@ Object.defineProperty(EJDB.prototype.commitTransaction, "_help_", {value : "Comm
 Object.defineProperty(EJDB.prototype.rollbackTransaction, "_help_", {value : "Rollback collection transaction"});
 Object.defineProperty(EJDB.prototype.getTransactionStatus, "_help_", {value : "Get collection transaction status"});
 
+
+// collection controllers history (for deletion)
+var cchistory = [];
+
+var bindColCtls = function(dbctrl, nonupdate) {
+    var octrls = nonupdate ? [] : cchistory;
+    var nctrls = [];
+
+    // build collection controllers for all known collections
+    var dbMeta = cdb.jb.getDBMeta();
+    if (dbMeta && dbMeta.collections) {
+        for (var j = 0; j < dbMeta.collections.length; ++j) {
+            var collection = dbMeta.collections[j];
+            nctrls.push(collection.name);
+            var ci;
+            if ((ci = octrls.indexOf(collection.name)) != -1) {
+                octrls.splice(ci, 1);
+            } else {
+                dbctrl[collection.name] = colctl(dbctrl, collection.name);
+            }
+        }
+    }
+    for (var i = 0; i < octrls.length; ++i) {
+        delete dbctrl[octrls[i]];
+    }
+
+    cchistory = nctrls;
+};
+
 var colctl = function (db, cname) {
-    // method names for creating aliases (db.<method>(cname, ...) -> db.cname.<method>(...))
-    var mnames = [
-        "save", "load", "remove", "findOne", "update", "count",
-        "dropIndexes", "optimizeIndexes",
-        "ensureStringIndex", "rebuildStringIndex", "dropStringIndex",
-        "ensureIStringIndex", "rebuildIStringIndex", "dropIStringIndex",
-        "ensureNumberIndex", "rebuildNumberIndex", "dropNumberIndex",
-        "ensureArrayIndex", "rebuildArrayIndex", "dropArrayIndex"
-    ];
     var buildargs = function (args) {
         var result = [cname];
         for (var i = 0; args[i]; ++i) {
@@ -181,27 +201,36 @@ var colctl = function (db, cname) {
 
         return result;
     };
-    var mbind = function (mname) {
+    // method names for creating aliases (db.<method>(cname, ...) -> db.cname.<method>(...))
+    var mnames = [
+        "save", "load", "remove", "find", "findOne", "update", "count",
+        "dropCollection", "dropIndexes", "optimizeIndexes",
+        "ensureStringIndex", "rebuildStringIndex", "dropStringIndex",
+        "ensureIStringIndex", "rebuildIStringIndex", "dropIStringIndex",
+        "ensureNumberIndex", "rebuildNumberIndex", "dropNumberIndex",
+        "ensureArrayIndex", "rebuildArrayIndex", "dropArrayIndex"
+    ];
+    var mbind = function (mname, ccrebind) {
         return function () {
-            return EJDB.prototype[mname].apply(db, buildargs(arguments));
+            var ret = db[mname].apply(db, buildargs(arguments));
+            if (ccrebind) {
+                bindColCtls(db);
+            }
+            return ret;
         }
     };
 
     // collection controller impl
     var colctlimpl = {
-        // manually wrap 'find' method
-        find : function () {
-            return db.find.apply(db, buildargs(arguments));
-        }
     };
-    Object.defineProperty(colctlimpl.find, "_help_", {value : helpGetters["find"](true)});
 
+    var mname;
     // wrap methods
     for (var i = 0; i < mnames.length; ++i) {
-        var method = mnames[i];
-        colctlimpl[method] = mbind(method);
-        if (helpGetters[method]) {
-            Object.defineProperty(colctlimpl[method], '_help_', {value : helpGetters[method](true)});
+        mname = mnames[i];
+        colctlimpl[mname] = mbind(mname);
+        if (helpGetters[mname]) {
+            Object.defineProperty(colctlimpl[mname], '_help_', {value : helpGetters[mname](true)});
         }
     }
 
@@ -300,16 +329,25 @@ function syncdbctx() {
             }
             return ret;
         };
-
-        // build collection controllers for all known collections
-        var dbMeta = cdb.jb.getDBMeta();
-        if (dbMeta && dbMeta.collections) {
-            for (var j = 0; j < dbMeta.collections.length; ++j) {
-                var collection = dbMeta.collections[j];
-                db[collection.name] = colctl(db, collection.name);
-            }
-        }
         Object.defineProperty(db.find, "_help_", {value : EJDB.prototype.find._help_});
+
+        var dbbind = function(db, mname) {
+            return function() {
+                var ret = cdb.jb[mname].apply(cdb.jb, arguments);
+                bindColCtls(db);
+                return ret;
+            }
+        };
+
+        // reload collections statuses for some methods (rebind collection controllers if need)
+        var rbmnames = ["ensureCollection", "dropCollection", "save"];
+        for (var j = 0; j < rbmnames.length; ++j) {
+            db[rbmnames[j]] = dbbind(db, rbmnames[j]);
+            Object.defineProperty(db[rbmnames[j]], "_help_", {value : EJDB.prototype[rbmnames[j]]._help_});
+        }
+
+        // bind collection controllers for all known collections
+        bindColCtls(db, true);
     } else {
         db.__proto__ = dbctl;
     }
