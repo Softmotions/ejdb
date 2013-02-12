@@ -82,7 +82,8 @@ class EJDB(object):
         qobj = bson.serialize_to_bytes(qobj)
         hints = bson.serialize_to_bytes(kwargs["hints"] if "hints" in kwargs else {})
         orarr = [bson.serialize_to_bytes(x) for x in args]
-        return self.__ejdb.find(cname, qobj, orarr, hints)
+        qflags = kwargs["qflags"] if "qflags" in kwargs else 0
+        return self.__ejdb.find(cname, qobj, orarr, hints, qflags)
 
 
 

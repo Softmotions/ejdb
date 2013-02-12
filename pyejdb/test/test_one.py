@@ -11,7 +11,7 @@ class TestOne(unittest.TestCase):
     def setUpClass(cls):
         cls._ejdb = pyejdb.EJDB("testdb", pyejdb.DEFAULT_OPEN_MODE | pyejdb.JBOTRUNC)
 
-    def test_saveload(self):
+    def test(self):
         ejdb = TestOne._ejdb
         self.assertEqual(ejdb.isopen, True)
         doc = {"foo": "bar", "foo2": 2}
@@ -27,11 +27,8 @@ class TestOne(unittest.TestCase):
         self.assertTrue(ldoc is None)
         ejdb.sync()
 
-    def test_find(self):
-        ejdb = TestOne._ejdb
-        self.assertEqual(ejdb.isopen, True)
-        ejdb.find("foocoll")
 
+        ejdb.find("foocoll", {}, {}, hints={})
 
     @classmethod
     def tearDownClass(cls):

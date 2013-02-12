@@ -88,10 +88,10 @@ static PyObject* EJDB_save(PEJDB *self, PyObject *args, PyObject *kwargs) {
         return set_ejdb_error(self->ejdb);
     }
     bson_init_finished_data(&bsonval, bsonbuf);
+    bsonval.flags |= BSON_FLAG_STACK_ALLOCATED;
     Py_BEGIN_ALLOW_THREADS
     bret = ejdbsavebson2(ejcoll, &bsonval, &oid, (merge == Py_True));
     Py_END_ALLOW_THREADS
-    bsonval.data = NULL;
     bson_destroy(&bsonval);
     if (!bret) {
         return set_ejdb_error(self->ejdb);
@@ -158,33 +158,101 @@ static PyObject* EJDB_remove(PEJDB *self, PyObject *args) {
 }
 
 static PyObject* EJDB_find(PEJDB *self, PyObject *args) {
-    //return self.__ejdb.find(cname, qobj, qobj, orarr, hints)
     const char *cname;
-    PyObject *qbsbufpy, *orlistpy, *hintsbufpy;
-    void *qbsbuf, *hintsbsbuf;
-    int qbsbufsz, hintsbsbufsz;
+    PyObject *qbsbufpy, *orlistpy, *hbufpy;
+    void *qbsbuf, *hbsbuf;
+    int qbsbufsz, hbsbufsz;
     bool err = false;
+    Py_ssize_t orsz = 0;
+    bson oqarrstack[8]; //max 8 $or bsons on stack
+    bson *oqarr = NULL;
+    bson qbson = {NULL};
+    bson hbson = {NULL};
+    EJQ *q = NULL;
+    int qflags = 0;
+    TCLIST *qres = NULL;
+    EJCOLL *coll = NULL;
 
-    if (!PyArg_ParseTuple(args, "sOOO:EJDB_find", &cname, &qbsbufpy, &orlistpy, &hintsbufpy)) {
+    //cname, qobj, qobj, orarr, hints, qflags
+    if (!PyArg_ParseTuple(args, "sOOOi:EJDB_find",
+            &cname, &qbsbufpy, &orlistpy, &hbufpy, &qflags)) {
         return NULL;
     }
     if (bytes_to_void(qbsbufpy, &qbsbuf, &qbsbufsz)) {
         return NULL;
     }
-    if (bytes_to_void(hintsbufpy, &hintsbsbuf, &hintsbsbufsz)) {
+    if (bytes_to_void(hbufpy, &hbsbuf, &hbsbufsz)) {
         return NULL;
     }
     if (!PyList_Check(orlistpy)) {
         return set_error(PyExc_TypeError, "'orarr' must be an list object");
     }
-    Py_ssize_t orlen =  PyList_GET_SIZE(orlistpy);
-    
+    orsz =  PyList_GET_SIZE(orlistpy);
+    oqarr = ((orsz <= 8) ? oqarrstack : (bson*) malloc(orsz * sizeof (bson)));
+    if (!oqarr) {
+        return PyErr_NoMemory();
+    }
+    for (Py_ssize_t i = 0; i < orsz; ++i) {
+        void *bsdata;
+        int bsdatasz;
+        PyObject *orpy = PyList_GET_ITEM(orlistpy, i);
+        if (bytes_to_void(orpy, &bsdata, &bsdatasz)) {
+            err = true;
+            orsz = (i > 0) ? (i - 1) : 0;
+            goto finish;
+        }
+        bson_init_finished_data(&oqarr[i], bsdata);
+        oqarr[i].flags |= BSON_FLAG_STACK_ALLOCATED; //prevent bson data to be freed in bson_destroy
+    }
+    bson_init_finished_data(&qbson, qbsbuf);
+    qbson.flags |= BSON_FLAG_STACK_ALLOCATED;
+    bson_init_finished_data(&hbson, hbsbuf);
+    hbson.flags |= BSON_FLAG_STACK_ALLOCATED;
 
+    //create the query
+    q = ejdbcreatequery(self->ejdb, &qbson, orsz > 0 ? oqarr : NULL, orsz, &hbson);
+    if (!q) {
+        err = true;
+        set_ejdb_error(self->ejdb);
+        goto finish;
+    }
+    coll = ejdbgetcoll(self->ejdb, cname);
+    if (!coll) {
+        bson_iterator it;
+        //If we are in $upsert mode a new collection will be created
+        if (bson_find(&it, &qbson, "$upsert") == BSON_OBJECT) {
+            Py_BEGIN_ALLOW_THREADS
+            coll = ejdbcreatecoll(self->ejdb, cname, NULL);
+            Py_END_ALLOW_THREADS
+            if (!coll) {
+                err = true;
+                set_ejdb_error(self->ejdb);
+                goto finish;
+            }
+        }
+    }
+    if (!coll) { //No collection -> no results
+        goto finish;
+    }
+
+    //TODO
 
 finish:
+    for (Py_ssize_t i = 0; i < orsz; ++i) {
+        bson_destroy(&oqarr[i]);
+    }
+    if (oqarr && oqarr != oqarrstack) {
+        free(oqarr);
+    }
+    bson_destroy(&qbson);
+    bson_destroy(&hbson);
+    if (q) {
+        ejdbquerydel(q);
+    }
     if (err) {
         return NULL;
     } else {
+        //cursor?
         Py_RETURN_NONE;
     }
 }
