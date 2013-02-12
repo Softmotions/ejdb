@@ -27,6 +27,12 @@ class TestOne(unittest.TestCase):
         self.assertTrue(ldoc is None)
         ejdb.sync()
 
+    def test_find(self):
+        ejdb = TestOne._ejdb
+        self.assertEqual(ejdb.isopen, True)
+        ejdb.find("foocoll")
+
+
     @classmethod
     def tearDownClass(cls):
         if cls._ejdb:

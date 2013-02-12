@@ -116,7 +116,10 @@ static PyObject* EJDB_load(PEJDB *self, PyObject *args) {
     }
     bson_oid_t oid;
     bson_oid_from_string(&oid, soid);
-    bson *doc = ejdbloadbson(coll, &oid);
+    bson *doc;
+    Py_BEGIN_ALLOW_THREADS
+    doc = ejdbloadbson(coll, &oid);
+    Py_END_ALLOW_THREADS
     if (!doc) {
         if (ejdbecode(self->ejdb) != TCESUCCESS) {
             return set_ejdb_error(self->ejdb);
@@ -132,6 +135,7 @@ static PyObject* EJDB_load(PEJDB *self, PyObject *args) {
 static PyObject* EJDB_remove(PEJDB *self, PyObject *args) {
     const char *cname;
     const char *soid;
+    bool bret = false;
     if (!PyArg_ParseTuple(args, "ss:EJDB_remove", &cname, &soid)) {
         return NULL;
     }
@@ -144,10 +148,45 @@ static PyObject* EJDB_remove(PEJDB *self, PyObject *args) {
     }
     bson_oid_t oid;
     bson_oid_from_string(&oid, soid);
-    if (!ejdbrmbson(coll, &oid)) {
+    Py_BEGIN_ALLOW_THREADS
+    bret = ejdbrmbson(coll, &oid);
+    Py_END_ALLOW_THREADS
+    if (!bret) {
         return set_ejdb_error(self->ejdb);
     }
     Py_RETURN_NONE;
+}
+
+static PyObject* EJDB_find(PEJDB *self, PyObject *args) {
+    //return self.__ejdb.find(cname, qobj, qobj, orarr, hints)
+    const char *cname;
+    PyObject *qbsbufpy, *orlistpy, *hintsbufpy;
+    void *qbsbuf, *hintsbsbuf;
+    int qbsbufsz, hintsbsbufsz;
+    bool err = false;
+
+    if (!PyArg_ParseTuple(args, "sOOO:EJDB_find", &cname, &qbsbufpy, &orlistpy, &hintsbufpy)) {
+        return NULL;
+    }
+    if (bytes_to_void(qbsbufpy, &qbsbuf, &qbsbufsz)) {
+        return NULL;
+    }
+    if (bytes_to_void(hintsbufpy, &hintsbsbuf, &hintsbsbufsz)) {
+        return NULL;
+    }
+    if (!PyList_Check(orlistpy)) {
+        return set_error(PyExc_TypeError, "'orarr' must be an list object");
+    }
+    Py_ssize_t orlen =  PyList_GET_SIZE(orlistpy);
+    
+
+
+finish:
+    if (err) {
+        return NULL;
+    } else {
+        Py_RETURN_NONE;
+    }
 }
 
 /* EJDBType.tp_methods */
@@ -159,6 +198,7 @@ static PyMethodDef EJDB_tp_methods[] = {
     {"load", (PyCFunction) EJDB_load, METH_VARARGS, NULL},
     {"remove", (PyCFunction) EJDB_remove, METH_VARARGS, NULL},
     {"sync", (PyCFunction) EJDB_sync, METH_NOARGS, NULL},
+    {"find", (PyCFunction) EJDB_find, METH_VARARGS, NULL},
     {NULL}
 };
 

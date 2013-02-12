@@ -1,6 +1,8 @@
 import _pyejdb
 from pprint import pprint
+from collections import OrderedDict as odict
 from pyejdb import bson
+from pyejdb.typecheck import *
 import re
 
 __all__ = [
@@ -32,10 +34,6 @@ JBOLCKNB = _pyejdb.JBOLCKNB
 JBOTSYNC = _pyejdb.JBOTSYNC
 DEFAULT_OPEN_MODE = JBOWRITER | JBOCREAT | JBOTSYNC
 
-def check_collname(cname):
-    if not isinstance(cname, str):
-        raise TypeError("Collection name must be an instance of %s" % str.__name__)
-
 
 def check_oid(oid):
     if not isinstance(oid, str) or _oidRE.match(oid) is None:
@@ -58,25 +56,33 @@ class EJDB(object):
     def sync(self):
         return self.__ejdb.sync()
 
-    def save(self, cname, *jsarr, **kwargs):
-        check_collname(cname)
+    @typecheck
+    def save(self, cname : str, *jsarr, **kwargs):
         for doc in jsarr:
             _oid = self.__ejdb.save(cname, bson.serialize_to_bytes(doc), **kwargs)
             if "_id" not in doc:
                 doc["_id"] = _oid
 
-    def load(self, cname, oid):
-        check_collname(cname)
+    @typecheck
+    def load(self, cname : str, oid : str):
         check_oid(oid)
         docbytes = self.__ejdb.load(cname, oid)
         if docbytes is None:
             return None
         return bson.parse_bytes(docbytes)
 
-    def remove(self, cname, oid):
-        check_collname(cname)
+    @typecheck
+    def remove(self, cname : str, oid):
         check_oid(oid)
         return self.__ejdb.remove(cname, oid)
+
+    @typecheck
+    def find(self, cname : str, qobj : optional(dict)=None, *args, **kwargs):
+        if not qobj: qobj = {}
+        qobj = bson.serialize_to_bytes(qobj)
+        hints = bson.serialize_to_bytes(kwargs["hints"] if "hints" in kwargs else {})
+        orarr = [bson.serialize_to_bytes(x) for x in args]
+        return self.__ejdb.find(cname, qobj, orarr, hints)
 
 
 
