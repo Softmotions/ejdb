@@ -26,6 +26,11 @@ static PyObject* PDBCursor_tp_new(PyTypeObject *type, PyObject *db, TCLIST *res)
     return (PyObject *) self;
 }
 
+static int PDBCursor_tp_traverse(PDBCursor *self, visitproc visit, void *arg) {
+    Py_VISIT(self->db);
+    return 0;
+}
+
 static int PDBCursor_tp_clear(PDBCursor *self) {
     Py_CLEAR(self->db);
     return 0;
@@ -42,6 +47,8 @@ static void PDBCursor_tp_dealloc(PDBCursor *self) {
 
 
 #include "EJDB.c"
+
+
 
 PyDoc_STRVAR(ejdb_m_doc, "EJDB http://ejdb.org");
 PyDoc_STRVAR(ejdb_version_doc, "version() -> str\n\nReturns the version string of the underlying EJDB library.");
