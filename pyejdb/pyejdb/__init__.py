@@ -43,10 +43,14 @@ def check_oid(oid):
 
 
 class EJDB(object):
-    def __init__(self, fpath, mode = DEFAULT_OPEN_MODE):
+    def __init__(self, fpath, mode=DEFAULT_OPEN_MODE):
         #pprint (vars(_pyejdb))
         self.__ejdb = _pyejdb.EJDB()
         self.__ejdb.open(fpath, mode)
+
+    @property
+    def isopen(self):
+        return self.__ejdb.isopen()
 
     def close(self):
         if self.__ejdb:
@@ -67,6 +71,12 @@ class EJDB(object):
         if docbytes is None:
             return None
         return bson.parse_bytes(docbytes)
+
+    def remove(self, cname, oid):
+        check_collname(cname)
+        check_oid(oid)
+        return self.__ejdb.remove(cname, oid)
+
 
 
 

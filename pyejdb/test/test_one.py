@@ -13,6 +13,7 @@ class TestOne(unittest.TestCase):
 
     def test_saveload(self):
         ejdb = TestOne._ejdb
+        self.assertEqual(ejdb.isopen, True)
         doc = {"foo": "bar", "foo2": 2}
         ejdb.save("foocoll", doc)
         self.assertIsInstance(doc["_id"], str)
@@ -21,6 +22,9 @@ class TestOne(unittest.TestCase):
         self.assertEqual(doc["_id"], ldoc["_id"])
         self.assertEqual(doc["foo"], ldoc["foo"])
         self.assertEqual(doc["foo2"], ldoc["foo2"])
+        ejdb.remove("foocoll", doc["_id"])
+        ldoc = ejdb.load("foocoll", doc["_id"])
+        self.assertTrue(ldoc is None)
 
     @classmethod
     def tearDownClass(cls):

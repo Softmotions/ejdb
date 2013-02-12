@@ -42,6 +42,10 @@ static PyObject* EJDB_open(PEJDB *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+static PyObject* EJDB_is_open(PEJDB *self) {
+    return PyBool_FromLong(self->ejdb && ejdbisopen(self->ejdb) ? 1L : 0L);
+}
+
 static PyObject* EJDB_close(PEJDB *self) {
     if (!ejdbclose(self->ejdb)) {
         return set_ejdb_error(self->ejdb);
@@ -118,12 +122,35 @@ static PyObject* EJDB_load(PEJDB *self, PyObject *args) {
     return docbytes;
 }
 
+static PyObject* EJDB_remove(PEJDB *self, PyObject *args) {
+    const char *cname;
+    const char *soid;
+    if (!PyArg_ParseTuple(args, "ss:EJDB_remove", &cname, &soid)) {
+        return NULL;
+    }
+    if (!ejdbisvalidoidstr(soid)) {
+        return set_error(PyExc_ValueError, "Invalid OID");
+    }
+    EJCOLL *coll = ejdbgetcoll(self->ejdb, cname);
+    if (!coll) {
+        Py_RETURN_NONE;
+    }
+    bson_oid_t oid;
+    bson_oid_from_string(&oid, soid);
+    if (!ejdbrmbson(coll, &oid)) {
+        return set_ejdb_error(self->ejdb);
+    }
+    Py_RETURN_NONE;
+}
+
 /* EJDBType.tp_methods */
 static PyMethodDef EJDB_tp_methods[] = {
     {"open", (PyCFunction) EJDB_open, METH_VARARGS, NULL},
+    {"isopen", (PyCFunction) EJDB_is_open, METH_NOARGS, NULL},
     {"close", (PyCFunction) EJDB_close, METH_NOARGS, NULL},
     {"save", (PyCFunction) EJDB_save, METH_VARARGS | METH_KEYWORDS, NULL},
     {"load", (PyCFunction) EJDB_load, METH_VARARGS, NULL},
+    {"remove", (PyCFunction) EJDB_remove, METH_VARARGS, NULL},
     {NULL}
 };
 
