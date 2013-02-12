@@ -53,9 +53,10 @@ class EJDB(object):
         return self.__ejdb.isopen()
 
     def close(self):
-        if self.__ejdb:
-            self.__ejdb.close()
-            self.__ejdb = None
+        return self.__ejdb.close()
+
+    def sync(self):
+        return self.__ejdb.sync()
 
     def save(self, cname, *jsarr, **kwargs):
         check_collname(cname)
@@ -76,6 +77,7 @@ class EJDB(object):
         check_collname(cname)
         check_oid(oid)
         return self.__ejdb.remove(cname, oid)
+
 
 
 

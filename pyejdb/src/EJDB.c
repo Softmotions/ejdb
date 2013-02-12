@@ -53,6 +53,13 @@ static PyObject* EJDB_close(PEJDB *self) {
     Py_RETURN_NONE;
 }
 
+static PyObject* EJDB_sync(PEJDB *self) {
+    if (!ejdbsyncdb(self->ejdb)) {
+        return set_ejdb_error(self->ejdb);
+    }
+    Py_RETURN_NONE;
+}
+
 static PyObject* EJDB_save(PEJDB *self, PyObject *args, PyObject *kwargs) {
     const char *cname;
     PyObject *merge = Py_False;
@@ -151,6 +158,7 @@ static PyMethodDef EJDB_tp_methods[] = {
     {"save", (PyCFunction) EJDB_save, METH_VARARGS | METH_KEYWORDS, NULL},
     {"load", (PyCFunction) EJDB_load, METH_VARARGS, NULL},
     {"remove", (PyCFunction) EJDB_remove, METH_VARARGS, NULL},
+    {"sync", (PyCFunction) EJDB_sync, METH_NOARGS, NULL},
     {NULL}
 };
 

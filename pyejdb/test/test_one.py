@@ -25,6 +25,7 @@ class TestOne(unittest.TestCase):
         ejdb.remove("foocoll", doc["_id"])
         ldoc = ejdb.load("foocoll", doc["_id"])
         self.assertTrue(ldoc is None)
+        ejdb.sync()
 
     @classmethod
     def tearDownClass(cls):
