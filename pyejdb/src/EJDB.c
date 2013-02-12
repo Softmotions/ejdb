@@ -77,8 +77,6 @@ static PyObject* EJDB_save(PEJDB *self, PyObject *args, PyObject *kwargs) {
         return set_ejdb_error(self->ejdb);
     }
     bson_init_finished_data(&bsonval, bsonbuf);
-    //bson_print_raw(stderr, bsonbuf, 0);
-
     Py_BEGIN_ALLOW_THREADS
     bret = ejdbsavebson2(ejcoll, &bsonval, &oid, (merge == Py_True));
     Py_END_ALLOW_THREADS
@@ -92,11 +90,40 @@ static PyObject* EJDB_save(PEJDB *self, PyObject *args, PyObject *kwargs) {
     return PyUnicode_FromString(xoid);
 }
 
+static PyObject* EJDB_load(PEJDB *self, PyObject *args) {
+    const char *cname;
+    const char *soid;
+    if (!PyArg_ParseTuple(args, "ss:EJDB_load", &cname, &soid)) {
+        return NULL;
+    }
+    if (!ejdbisvalidoidstr(soid)) {
+        return set_error(PyExc_ValueError, "Invalid OID");
+    }
+    EJCOLL *coll = ejdbgetcoll(self->ejdb, cname);
+    if (!coll) {
+        Py_RETURN_NONE;
+    }
+    bson_oid_t oid;
+    bson_oid_from_string(&oid, soid);
+    bson *doc = ejdbloadbson(coll, &oid);
+    if (!doc) {
+        if (ejdbecode(self->ejdb) != TCESUCCESS) {
+            return set_ejdb_error(self->ejdb);
+        } else {
+            Py_RETURN_NONE;
+        }
+    }
+    PyObject *docbytes = PyBytes_FromStringAndSize(bson_data(doc), bson_size(doc));
+    bson_del(doc);
+    return docbytes;
+}
+
 /* EJDBType.tp_methods */
 static PyMethodDef EJDB_tp_methods[] = {
     {"open", (PyCFunction) EJDB_open, METH_VARARGS, NULL},
     {"close", (PyCFunction) EJDB_close, METH_NOARGS, NULL},
     {"save", (PyCFunction) EJDB_save, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"load", (PyCFunction) EJDB_load, METH_VARARGS, NULL},
     {NULL}
 };
 

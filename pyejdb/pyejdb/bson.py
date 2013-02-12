@@ -427,6 +427,8 @@ class BSON_ObjectId(BSON_Value):
     def __str__(self):
         return "{0:s}(0x{1:s})".format(self.__class__.__name__,
                                        b2a_hex(self._value).decode("ascii"))
+    def _py_value(self):
+        return b2a_hex(self._value).decode("ascii")
 
     def serialize(self, stream):
         stream.write(self._value)

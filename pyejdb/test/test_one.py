@@ -9,12 +9,18 @@ class TestOne(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls._ejdb = pyejdb.EJDB("testdb")
+        cls._ejdb = pyejdb.EJDB("testdb", pyejdb.DEFAULT_OPEN_MODE | pyejdb.JBOTRUNC)
 
-    def test_save1(self):
+    def test_saveload(self):
         ejdb = TestOne._ejdb
-        doc1 = {"foo" : "bar", "foo2" : 2}
-        ejdb.save("foocoll", doc1)
+        doc = {"foo": "bar", "foo2": 2}
+        ejdb.save("foocoll", doc)
+        self.assertIsInstance(doc["_id"], str)
+        ldoc = ejdb.load("foocoll", doc["_id"])
+        self.assertIsInstance(ldoc, dict)
+        self.assertEqual(doc["_id"], ldoc["_id"])
+        self.assertEqual(doc["foo"], ldoc["foo"])
+        self.assertEqual(doc["foo2"], ldoc["foo2"])
 
     @classmethod
     def tearDownClass(cls):
