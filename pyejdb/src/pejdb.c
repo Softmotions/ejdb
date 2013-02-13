@@ -175,6 +175,120 @@ static PyObject* EJDB_load(PEJDB *self, PyObject *args) {
     return docbytes;
 }
 
+static PyObject* EJDB_setIndex(PEJDB *self, PyObject *args) {
+    const char *cname;
+    const char *path;
+    int flags;
+    bool bret;
+    if (!PyArg_ParseTuple(args, "ssi:EJDB_setIndex", &cname, &path, &flags)) {
+        return NULL;
+    }
+    EJCOLL *coll = ejdbcreatecoll(self->ejdb, cname, NULL);
+    if (!coll) {
+        return set_ejdb_error(self->ejdb);
+    }
+    Py_BEGIN_ALLOW_THREADS
+    bret = ejdbsetindex(coll, path, flags);
+    Py_END_ALLOW_THREADS
+    if (!bret) {
+        return set_ejdb_error(self->ejdb);
+    }
+    Py_RETURN_NONE;
+}
+
+static PyObject* EJDB_dbmeta(PEJDB *self, PyObject *args) {
+    PyObject *carr = PyList_New(0);
+    PyObject *pycont = PyDict_New();
+    if (!pycont || !carr) {
+        goto fail;
+    }
+    TCLIST *cols = ejdbgetcolls(self->ejdb);
+    if (!cols) {
+        set_ejdb_error(self->ejdb);
+        goto fail;
+    }
+    for (int i = 0; i < TCLISTNUM(cols); ++i) {
+
+        PyObject *pycoll = NULL;
+        PyObject *pyindexes = NULL;
+        PyObject *pyopts = NULL;
+        PyObject *pyimeta = NULL;
+
+        EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
+        pycoll = PyDict_New();
+        if (!pycoll) {
+            goto ffail;
+        }
+        PyDict_SetItemString(pycoll, "name", PyUnicode_FromStringAndSize(coll->cname, coll->cnamesz));
+        PyDict_SetItemString(pycoll, "file", PyUnicode_FromString(coll->tdb->hdb->path));
+        PyDict_SetItemString(pycoll, "records", PyLong_FromUnsignedLongLong(coll->tdb->hdb->rnum));
+
+        pyopts = PyDict_New();
+        if (!pyopts) {
+            goto ffail;
+        }
+        PyDict_SetItemString(pyopts, "buckets", PyLong_FromUnsignedLongLong(coll->tdb->hdb->bnum));
+        PyDict_SetItemString(pyopts, "cachedrecords", PyLong_FromUnsignedLong(coll->tdb->hdb->rcnum));
+        PyDict_SetItemString(pyopts, "large", PyBool_FromLong(coll->tdb->opts & TDBTLARGE));
+        PyDict_SetItemString(pyopts, "compressed", PyBool_FromLong(coll->tdb->opts & TDBTDEFLATE));
+        PyDict_SetItemString(pycoll, "options", pyopts);
+
+        pyindexes = PyList_New(0);
+        if (!pyindexes) {
+            goto ffail;
+        }
+        for (int j = 0; j < coll->tdb->inum; ++j) {
+            TDBIDX *idx = (coll->tdb->idxs + j);
+            assert(idx);
+            if (idx->type != TDBITLEXICAL && idx->type != TDBITDECIMAL && idx->type != TDBITTOKEN) {
+                continue;
+            }
+            pyimeta = PyDict_New();
+            if (!pyimeta) {
+                goto ffail;
+            }
+            PyDict_SetItemString(pyimeta, "field", PyUnicode_FromString(idx->name + 1));
+            PyDict_SetItemString(pyimeta, "iname", PyUnicode_FromString(idx->name));
+            switch (idx->type) {
+                case TDBITLEXICAL:
+                    PyDict_SetItemString(pyimeta, "type", PyUnicode_FromString("lexical"));
+                    break;
+                case TDBITDECIMAL:
+                    PyDict_SetItemString(pyimeta, "type", PyUnicode_FromString("decimal"));
+                    break;
+                case TDBITTOKEN:
+                    PyDict_SetItemString(pyimeta, "type", PyUnicode_FromString("token"));
+                    break;
+            }
+            TCBDB *idb = (TCBDB*) idx->db;
+            if (idb) {
+                PyDict_SetItemString(pyimeta, "records", PyLong_FromUnsignedLongLong(idb->rnum));
+                PyDict_SetItemString(pyimeta, "file", PyUnicode_FromString(idb->hdb->path));
+            }
+            PyList_Append(pyindexes, pyimeta);
+        }
+        PyDict_SetItemString(pycoll, "indexes", pyindexes);
+        PyList_Append(carr, pycoll);
+        continue;
+
+ffail:
+        Py_XDECREF(pycoll);
+        Py_XDECREF(pyindexes);
+        Py_XDECREF(pyopts);
+        Py_XDECREF(pyimeta);
+        goto fail;
+    }
+
+    PyDict_SetItemString(pycont, "file", PyUnicode_FromString(self->ejdb->metadb->hdb->path));
+    PyDict_SetItemString(pycont, "collections", carr);
+    return pycont;
+
+fail:
+    Py_XDECREF(carr);
+    Py_XDECREF(pycont);
+    return NULL;
+}
+
 static PyObject* EJDB_remove(PEJDB *self, PyObject *args) {
     const char *cname;
     const char *soid;
@@ -330,6 +444,8 @@ static PyMethodDef EJDB_tp_methods[] = {
     {"find", (PyCFunction) EJDB_find, METH_VARARGS, NULL},
     {"ensureCollection", (PyCFunction) EJDB_ensureCollection, METH_VARARGS | METH_KEYWORDS, NULL},
     {"dropCollection", (PyCFunction) EJDB_dropCollection, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"setIndex", (PyCFunction) EJDB_setIndex, METH_VARARGS, NULL},
+    {"dbmeta", (PyCFunction) EJDB_dbmeta, METH_VARARGS, NULL},
     {NULL}
 };
 

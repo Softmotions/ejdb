@@ -81,7 +81,8 @@ ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.0.57",
                          "tcversion", "http://ejdb.org",
                          "_pyejdb", ["src/pyejdb.c"],
                          libraries=["tcejdb", "z", "pthread", "m", "c"],
-                         extra_compile_args=["-std=c99", "-Wall"])
+                         extra_compile_args=["-std=c99", "-Wall"],
+                         include_dirs=["/usr/include/tcejdb"])
 
 class build_ext(_build_ext):
     def finalize_options(self):

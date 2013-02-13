@@ -9,7 +9,7 @@
 #define	PYEJDB_H
 
 #include <Python.h>
-#include <tcejdb/ejdb.h>
+#include <tcejdb/ejdb_private.h>
 
 #if SIZEOF_SIZE_T > SIZEOF_INT
 #define TK_PY_SIZE_T_BIGGER_THAN_INT

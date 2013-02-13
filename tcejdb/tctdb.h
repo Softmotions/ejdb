@@ -28,9 +28,9 @@
 __TCTDB_CLINKAGEBEGIN
 
 
-#include <tcutil.h>
-#include <tchdb.h>
-#include <tcbdb.h>
+#include "tcutil.h"
+#include "tchdb.h"
+#include "tcbdb.h"
 
 
 

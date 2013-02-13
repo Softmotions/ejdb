@@ -74,7 +74,6 @@ PyObject* init_pyejdb(void) {
             PyModule_AddIntMacro(pyejdb, JBIDXDROP) ||
             PyModule_AddIntMacro(pyejdb, JBIDXDROPALL) ||
             PyModule_AddIntMacro(pyejdb, JBIDXOP) ||
-            PyModule_AddIntMacro(pyejdb, JBIDXOP) ||
             PyModule_AddIntMacro(pyejdb, JBIDXREBLD) ||
             PyModule_AddIntMacro(pyejdb, JBIDXNUM) ||
             PyModule_AddIntMacro(pyejdb, JBIDXSTR) ||

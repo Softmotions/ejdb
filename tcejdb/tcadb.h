@@ -27,11 +27,11 @@
 __TCADB_CLINKAGEBEGIN
 
 
-#include <tcutil.h>
-#include <tchdb.h>
-#include <tcbdb.h>
-#include <tcfdb.h>
-#include <tctdb.h>
+#include "tcutil.h"
+#include "tchdb.h"
+#include "tcbdb.h"
+#include "tcfdb.h"
+#include "tctdb.h"
 
 
 

@@ -170,6 +170,9 @@ class EJDB(object):
         kwargs["qflags"] = qflags | JBQRYCOUNT
         return self.find(cname, qobj, *args, **kwargs)
 
+    def dbmeta(self):
+        return self.__ejdb.dbmeta()
+
     @typecheck
     def ensureCollection(self, cname : str, **kwargs):
         return self.__ejdb.ensureCollection(cname, **kwargs)
@@ -178,4 +181,59 @@ class EJDB(object):
     def dropCollection(self, cname : str, **kwargs):
         return self.__ejdb.dropCollection(cname, **kwargs)
 
+    @typecheck
+    def dropIndexes(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXDROPALL)
+
+    @typecheck
+    def optimizeIndexes(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXOP)
+
+    @typecheck
+    def ensureStringIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXSTR)
+
+    @typecheck
+    def rebuildStringIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXSTR | _pyejdb.JBIDXREBLD)
+
+    @typecheck
+    def dropStringIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXSTR | _pyejdb.JBIDXDROP)
+
+    @typecheck
+    def ensureIStringIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXISTR)
+
+    @typecheck
+    def rebuildIStringIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXISTR | _pyejdb.JBIDXREBLD)
+
+    @typecheck
+    def dropIStringIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXISTR | _pyejdb.JBIDXDROP)
+
+    @typecheck
+    def ensureNumberIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXNUM)
+
+    @typecheck
+    def rebuildNumberIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXNUM | _pyejdb.JBIDXREBLD)
+
+    @typecheck
+    def dropNumberIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXNUM | _pyejdb.JBIDXDROP)
+
+    @typecheck
+    def ensureArrayIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXARR)
+
+    @typecheck
+    def rebuildArrayIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXARR | _pyejdb.JBIDXREBLD)
+
+    @typecheck
+    def dropArrayIndex(self, cname : str, path : str):
+        return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXARR | _pyejdb.JBIDXDROP)
 

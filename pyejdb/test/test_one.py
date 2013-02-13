@@ -42,6 +42,10 @@ class TestOne(unittest.TestCase):
         self.assertEqual(ejdb.count("foocoll"), 1)
         self.assertEqual(ejdb.count("foocoll2"), 0)
 
+        ejdb.ensureStringIndex("foocoll", "foo")
+        cur = ejdb.find("foocoll", {"foo": "bar"}, hints={"$fields": {"foo2": 0}})
+        self.assertEqual(len(cur), 1)
+
         ejdb.remove("foocoll", doc["_id"])
         ldoc = ejdb.load("foocoll", doc["_id"])
         self.assertTrue(ldoc is None)
@@ -49,6 +53,9 @@ class TestOne(unittest.TestCase):
 
         ejdb.ensureCollection("ecoll1", records=90000, large=False)
         ejdb.dropCollection("ecoll1", prune=True)
+
+        print("dbmeta=%s" % ejdb.dbmeta())
+
 
     def test2(self):
         pass
