@@ -60,6 +60,42 @@ static PyObject* EJDB_sync(PEJDB *self) {
     Py_RETURN_NONE;
 }
 
+static PyObject* EJDB_dropCollection(PEJDB *self, PyObject *args, PyObject *kwargs) {
+    const char *cname;
+    PyObject *prune = Py_False;
+    static char *kwlist[] = {"cname", "prune", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|O:EJDB_dropCollection", kwlist,
+            &cname, &prune)) {
+        return NULL;
+    }
+    if (!ejdbrmcoll(self->ejdb, cname, (prune == Py_True))) {
+        return set_ejdb_error(self->ejdb);
+    }
+    Py_RETURN_NONE;
+}
+
+static PyObject* EJDB_ensureCollection(PEJDB *self, PyObject *args, PyObject *kwargs) {
+    const char *cname;
+    int cachedrecords = 0, records = 0;
+    PyObject *compressed = Py_False, *large = Py_False;
+
+    static char *kwlist[] = {"cname", "cachedrecords", "compressed", "large", "records", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|iOOi:EJDB_ensureCollection", kwlist,
+            &cname, &cachedrecords, &compressed, &large, &records)) {
+        return NULL;
+    }
+    EJCOLLOPTS jcopts = {NULL};
+    jcopts.cachedrecords = (cachedrecords > 0) ? cachedrecords : 0;
+    jcopts.compressed = (compressed == Py_True);
+    jcopts.large = (large == Py_True);
+    jcopts.records = (records > 0) ? records : 0;
+    EJCOLL *coll = ejdbcreatecoll(self->ejdb, cname, &jcopts);
+    if (!coll) {
+        return set_ejdb_error(self->ejdb);
+    }
+    Py_RETURN_NONE;
+}
+
 static PyObject* EJDB_save(PEJDB *self, PyObject *args, PyObject *kwargs) {
     const char *cname;
     PyObject *merge = Py_False;
@@ -172,6 +208,8 @@ static PyObject* EJDB_find(PEJDB *self, PyObject *args) {
     int qflags = 0;
     TCLIST *qres = NULL;
     EJCOLL *coll = NULL;
+    PyObject *pyret = NULL;
+    uint32_t count = 0;
 
     //cname, qobj, qobj, orarr, hints, qflags
     if (!PyArg_ParseTuple(args, "sOOOi:EJDB_find",
@@ -231,11 +269,27 @@ static PyObject* EJDB_find(PEJDB *self, PyObject *args) {
             }
         }
     }
+
     if (!coll) { //No collection -> no results
-        goto finish;
+        qres = (qflags & JBQRYCOUNT) ? NULL : tclistnew2(1); //empty results
+    } else {
+        Py_BEGIN_ALLOW_THREADS
+        qres = ejdbqryexecute(coll, q, &count, qflags, NULL);
+        Py_END_ALLOW_THREADS
+        if (ejdbecode(self->ejdb) != TCESUCCESS) {
+            err = true;
+            set_ejdb_error(self->ejdb);
+            goto finish;
+        }
     }
 
-    //TODO
+    if (qres) {
+        pyret = PDBCursor_tp_new(&DBCursorType, (PyObject *) self, qres);
+        if (!pyret) {
+            err = true;
+            goto finish;
+        }
+    }
 
 finish:
     for (Py_ssize_t i = 0; i < orsz; ++i) {
@@ -250,10 +304,10 @@ finish:
         ejdbquerydel(q);
     }
     if (err) {
+        Py_XDECREF(pyret);
         return NULL;
     } else {
-        //cursor?
-        Py_RETURN_NONE;
+        return (pyret) ? pyret : PyLong_FromUnsignedLong(count);
     }
 }
 
@@ -267,6 +321,8 @@ static PyMethodDef EJDB_tp_methods[] = {
     {"remove", (PyCFunction) EJDB_remove, METH_VARARGS, NULL},
     {"sync", (PyCFunction) EJDB_sync, METH_NOARGS, NULL},
     {"find", (PyCFunction) EJDB_find, METH_VARARGS, NULL},
+    {"ensureCollection", (PyCFunction) EJDB_ensureCollection, METH_VARARGS | METH_KEYWORDS, NULL},
+    {"dropCollection", (PyCFunction) EJDB_dropCollection, METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL}
 };
 

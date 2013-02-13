@@ -11,13 +11,11 @@ typedef struct {
     PyObject_HEAD
     PyObject *db;
     TCLIST *res;
-    int pos;
 } PDBCursor;
 
 
 #include "pdbcursor.c"
 #include "pejdb.c"
-
 
 PyDoc_STRVAR(ejdb_m_doc, "EJDB http://ejdb.org");
 PyDoc_STRVAR(ejdb_version_doc, "version() -> str\n\nReturns the version string of the underlying EJDB library.");
@@ -26,29 +24,30 @@ static PyObject* ejdb_version(PyObject *module) {
     return PyUnicode_FromString(tcversion);
 }
 
-/* cabinet_module.m_methods */
+/* pyejdb.m_methods */
 static PyMethodDef pyejdb_m_methods[] = {
-    {"version", (PyCFunction) ejdb_version, METH_NOARGS, ejdb_version_doc},
+    {"ejdb_version", (PyCFunction) ejdb_version, METH_NOARGS, ejdb_version_doc},
     {NULL} /* Sentinel */
 };
 
 /* pyejdb_module */
 static PyModuleDef pyejdb_module = {
     PyModuleDef_HEAD_INIT,
-    "_pyejdb", /*m_name*/
-    ejdb_m_doc, /*m_doc*/
-    -1, /*m_size*/
-    pyejdb_m_methods, /*m_methods*/
+    "_pyejdb",          /*m_name*/
+    ejdb_m_doc,         /*m_doc*/
+    -1,                 /*m_size*/
+    pyejdb_m_methods,   /*m_methods*/
 };
 
 PyObject* init_pyejdb(void) {
     PyObject *pyejdb;
-    if (PyType_Ready(&EJDBType)) {
+    if (PyType_Ready(&EJDBType) ||
+            PyType_Ready(&DBCursorType)
+            ) {
         return NULL;
     }
 
     pyejdb = PyModule_Create(&pyejdb_module);
-
     if (!pyejdb) {
         return NULL;
     }
@@ -62,6 +61,7 @@ PyObject* init_pyejdb(void) {
     /* adding types and constants */
     if (
             PyModule_AddType(pyejdb, "EJDB", &EJDBType) ||
+            PyModule_AddType(pyejdb, "DBCursor", &DBCursorType) ||
 
             PyModule_AddIntMacro(pyejdb, JBOREADER) ||
             PyModule_AddIntMacro(pyejdb, JBOWRITER) ||

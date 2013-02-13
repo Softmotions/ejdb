@@ -84,6 +84,10 @@ int bytes_to_void(PyObject *pyvalue, void **value, int *value_len) {
     return 0;
 }
 
+PyObject* void_to_bytes(const void *value, int value_size) {
+    return PyBytes_FromStringAndSize((char *) value, (Py_ssize_t) value_size);
+}
+
 /* error handling utils */
 PyObject* set_error(PyObject *type, const char *message) {
     PyErr_SetString(type, message);

@@ -1,4 +1,4 @@
-#!/usr/bin/python3.2
+#!/usr/bin/python3
 
 from platform import python_version
 from distutils.command.build_ext import build_ext as _build_ext
@@ -110,7 +110,6 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Lesser General Public License (LGPL)",
         "Operating System :: POSIX",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.2",
         "Topic :: Software Development :: Libraries"
     ]
