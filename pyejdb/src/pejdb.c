@@ -64,11 +64,15 @@ static PyObject* EJDB_dropCollection(PEJDB *self, PyObject *args, PyObject *kwar
     const char *cname;
     PyObject *prune = Py_False;
     static char *kwlist[] = {"cname", "prune", NULL};
+    bool bres = false;
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s|O:EJDB_dropCollection", kwlist,
             &cname, &prune)) {
         return NULL;
     }
-    if (!ejdbrmcoll(self->ejdb, cname, (prune == Py_True))) {
+    Py_BEGIN_ALLOW_THREADS
+    bres = ejdbrmcoll(self->ejdb, cname, (prune == Py_True));
+    Py_END_ALLOW_THREADS
+    if (!bres) {
         return set_ejdb_error(self->ejdb);
     }
     Py_RETURN_NONE;
@@ -89,7 +93,10 @@ static PyObject* EJDB_ensureCollection(PEJDB *self, PyObject *args, PyObject *kw
     jcopts.compressed = (compressed == Py_True);
     jcopts.large = (large == Py_True);
     jcopts.records = (records > 0) ? records : 0;
-    EJCOLL *coll = ejdbcreatecoll(self->ejdb, cname, &jcopts);
+    EJCOLL *coll;
+    Py_BEGIN_ALLOW_THREADS
+    coll = ejdbcreatecoll(self->ejdb, cname, &jcopts);
+    Py_END_ALLOW_THREADS
     if (!coll) {
         return set_ejdb_error(self->ejdb);
     }
