@@ -53,6 +53,24 @@ bson_printf_func bson_errprintf = _bson_errprintf;
 static int ( *oid_fuzz_func)(void) = NULL;
 static int ( *oid_inc_func)(void) = NULL;
 
+
+EJDB_EXPORT const char* bson_first_errormsg(bson *bson) {
+    if (bson->errstr) {
+        return bson->errstr;
+    }
+    if (bson->err & BSON_FIELD_HAS_DOT) {
+        return "BSON key contains '.' character";
+    } else if (bson->err & BSON_FIELD_INIT_DOLLAR) {
+        return "BSON key starts with '$' character";
+    } else if (bson->err & BSON_ALREADY_FINISHED) {
+        return "Trying to modify a finished BSON object";
+    } else if (bson->err & BSON_NOT_UTF8) {
+        return "A key or a string is not valid UTF-8";
+    }
+    return "Unspecified BSON error";
+}
+
+
 EJDB_EXPORT void bson_reset(bson *b) {
     b->finished = 0;
     b->stackPos = 0;

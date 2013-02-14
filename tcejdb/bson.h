@@ -128,6 +128,9 @@ typedef struct {
     int t; /* time in seconds */
 } bson_timestamp_t;
 
+
+EJDB_EXPORT const char* bson_first_errormsg(bson *bson);
+
 /* ----------------------------
    READING
    ------------------------------ */
