@@ -20,8 +20,9 @@ import _pyejdb
 from functools import lru_cache
 from pyejdb import bson
 from pyejdb.typecheck import *
-import re
-import numbers
+from collections import OrderedDict as odict
+import re, numbers
+
 
 __all__ = [
 
@@ -192,9 +193,10 @@ class EJDB(object):
                otherwise updated documents will be fully replaced by new instances.
         """
         for doc in jsarr:
-            _oid = self.__ejdb.save(cname, bson.serialize_to_bytes(doc), **kwargs)
-            if "_id" not in doc:
-                doc["_id"] = _oid
+            if doc is not None:
+                _oid = self.__ejdb.save(cname, bson.serialize_to_bytes(doc), **kwargs)
+                if "_id" not in doc:
+                    doc["_id"] = _oid
 
     @typecheck
     def load(self, cname : str, oid : str):
@@ -221,13 +223,14 @@ class EJDB(object):
         return self.__ejdb.remove(cname, oid)
 
     @typecheck
-    def find(self, cname : str, qobj : optional(dict)=None, *args, **kwargs):
+    def find(self, cname : str, qobj : optional(dict)=None,
+             *args, **kwargs):
         """ Execute query on collection.
 
         Sample:
         >>> # Fetch all elements from collection
         >>> ejdb.find("mycoll")
-        >>> # Query document with 'foo==bar' condition, include in result doc only 'foo' and '_id' field
+        >>> # Query document with 'foo==bar' condition, include in resulting doc 'foo' and '_id' fields only
         >>> ejdb.find("mycoll", {'foo' : 'bar'}, hints={$fields : {'foo' : 1, '_id' : 1}});
 
         General format:
@@ -310,26 +313,22 @@ class EJDB(object):
                If field presented in $orderby clause it will be forced to include in resulting records.
                Example:
                hints:    {
-                   "$orderby" : { //ORDER BY field1 ASC, field2 DESC
-                       "field1" : 1,
-                       "field2" : -1
-                   },
+                   "$orderby" : [ //ORDER BY field1 ASC, field2 DESC
+                       ("field1", 1),
+                       ("field2", -1)
+                   ],
                    "$fields" : { //SELECT ONLY {_id, field1, field2}
                        "field1" : 1,
                        "field2" : 1
                    }
                }
 
-        .. NOTE:: In order to preserve ORDER BY fields sequence you have to use OrderedDict:
-                  >>> from collections import OrderedDict as odict
-                  >>> ejdb.find("mycoll", hints={ $orderby : odict([("field1", 1), ("field2", -1)]) })
-
         :Returns:
             Resultset cursor :class:`EJDBCursorWrapper`
         """
         if not qobj: qobj = {}
         qobj = bson.serialize_to_bytes(qobj)
-        hints = bson.serialize_to_bytes(kwargs.get("hints", {}))
+        hints = bson.serialize_to_bytes(self.__preprocessQHints(kwargs.get("hints", {})))
         orarr = [bson.serialize_to_bytes(x) for x in args]
         qflags = kwargs.get("qflags", 0)
         cursor = self.__ejdb.find(cname, qobj, orarr, hints, qflags)
@@ -338,7 +337,7 @@ class EJDB(object):
     def findOne(self, cname : str, qobj : optional(dict)=None, *args, **kwargs):
         """ Same as `#find()` but retrieves only one matching JSON object.
         """
-        hints = kwargs.get("hints", {})
+        hints = self.__preprocessQHints(kwargs.get("hints", {}))
         hints["$max"] = 1
         kwargs["hints"] = hints
         with self.find(cname, qobj, *args, **kwargs) as res:
@@ -393,7 +392,7 @@ class EJDB(object):
 
     @typecheck
     def ensureCollection(self, cname : str, **kwargs):
-        """ Automatically creates new collection if it does't exists.
+        """ Automatically creates new collection if it does not exists.
         Collection options `copts`
         are applied only for newly created collection.
         for existing collections `copts` takes no effect.
@@ -445,37 +444,60 @@ class EJDB(object):
 
     @typecheck
     def ensureIStringIndex(self, cname : str, path : str):
+        """ Ensure case insensitive String index for JSON field path.
+        """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXISTR)
 
     @typecheck
     def rebuildIStringIndex(self, cname : str, path : str):
+        """Rebuild case insensitive String index for JSON field path.
+        """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXISTR | _pyejdb.JBIDXREBLD)
 
     @typecheck
     def dropIStringIndex(self, cname : str, path : str):
+        """Drop case insensitive String index for JSON field path.
+        """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXISTR | _pyejdb.JBIDXDROP)
 
     @typecheck
     def ensureNumberIndex(self, cname : str, path : str):
+        """Ensure index presence of Number type for JSON field path.
+        """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXNUM)
 
     @typecheck
     def rebuildNumberIndex(self, cname : str, path : str):
+        """Rebuild index of Number type for JSON field path.
+        """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXNUM | _pyejdb.JBIDXREBLD)
 
     @typecheck
     def dropNumberIndex(self, cname : str, path : str):
+        """Drop index of Number type for JSON field path.
+        """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXNUM | _pyejdb.JBIDXDROP)
 
     @typecheck
     def ensureArrayIndex(self, cname : str, path : str):
+        """Ensure index presence of Array type for JSON field path.
+        """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXARR)
 
     @typecheck
     def rebuildArrayIndex(self, cname : str, path : str):
+        """Rebuild index of Array type for JSON field path.
+        """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXARR | _pyejdb.JBIDXREBLD)
 
     @typecheck
     def dropArrayIndex(self, cname : str, path : str):
+        """Drop index of Array type for JSON field path.
+        """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXARR | _pyejdb.JBIDXDROP)
 
+    def __preprocessQHints(self, hints : dict):
+        val = hints.get("$orderby")
+        if isinstance(val, list):
+            hints["$orderby"] = odict(val)
+        return hints

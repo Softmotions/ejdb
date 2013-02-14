@@ -15,9 +15,13 @@
 #  if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 #  Boston, MA 02111-1307 USA.
 # *************************************************************************************************
+from datetime import datetime
 
 import unittest
+from pyejdb import bson
 import pyejdb
+import re
+from collections import OrderedDict as odict
 
 class TestOne(unittest.TestCase):
     def __init__(self, *args, **kwargs):
@@ -76,7 +80,65 @@ class TestOne(unittest.TestCase):
 
 
     def test2(self):
-        pass
+        ejdb = TestOne._ejdb
+        self.assertEqual(ejdb.isopen, True)
+        parrot1 = {
+            "name": "Grenny",
+            "type": "African Grey",
+            "male": True,
+            "age": 1,
+            "birthdate": datetime.utcnow(),
+            "likes": ["green color", "night", "toys"],
+            "extra1": None
+        }
+
+        parrot2 = {
+            "name": "Bounty",
+            "type": "Cockatoo",
+            "male": False,
+            "age": 15,
+            "birthdate": datetime.utcnow(),
+            "likes": ["sugar cane"],
+            "extra1": None
+        }
+        ejdb.save("parrots", *[parrot1, None, parrot2])
+        self.assertIsInstance(parrot1["_id"], str)
+        self.assertIsInstance(parrot2["_id"], str)
+        p2 = ejdb.load("parrots", parrot2["_id"])
+        self.assertEqual(p2["_id"], parrot2["_id"])
+
+        cur = ejdb.find("parrots")
+        self.assertEqual(len(cur), 2)
+        self.assertEqual(len(cur[1:]), 1)
+        self.assertEqual(len(cur[2:]), 0)
+
+        cur = ejdb.find("parrots",
+                {"name": bson.BSON_Regex(("(grenny|bounty)", "i"))},
+                        hints={"$orderby": [("name", 1)]})
+        self.assertEqual(len(cur), 2)
+        self.assertEqual(cur[0]["name"], "Bounty")
+        self.assertEqual(cur[0]["age"], 15)
+
+        cur = ejdb.find("parrots", {}, {"name": "Grenny"}, {"name": "Bounty"},
+                        hints={"$orderby": [("name", 1)]})
+        self.assertEqual(len(cur), 2)
+
+        cur = ejdb.find("parrots", {}, {"name": "Grenny"},
+                        hints={"$orderby": [("name", 1)]})
+        self.assertEqual(len(cur), 1)
+
+        sally = {
+            "name": "Sally",
+            "mood": "Angry",
+        }
+        molly = {
+            "name": "Molly",
+            "mood": "Very angry",
+            "secret": None
+        }
+        ejdb.save("birds", *[sally, molly])
+        ejdb.ensureStringIndex("birds", "name")
+
 
     @classmethod
     def tearDownClass(cls):
