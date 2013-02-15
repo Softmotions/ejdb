@@ -1,5 +1,32 @@
-PyEJDB
+Embedded JSON database library Python3 binding
 ============================================================
+
+Installation
+---------------------------------
+
+
+**Required tools/system libraries:**
+
+* gcc
+* zlib-dev
+* **Python3 >= 3.2**
+
+**(A)**
+
+`pip` for python3 should be installed (`sudo apt-get install python3-pip`)
+
+```
+   sudo pip-3.2 install pyejdb
+```
+
+**(B)**
+
+```
+git clone https://github.com/Softmotions/ejdb.git
+cd ./pyejdb
+python3 ./setup.py install
+```
+
 
 
 One snippet intro

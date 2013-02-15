@@ -1,5 +1,13 @@
 #!/usr/bin/python3
 
+
+try:
+    from setuptools import setup, Feature
+except ImportError:
+    from distribute_setup import use_setuptools
+    use_setuptools()
+    from setuptools import setup, Feature
+
 from platform import python_version
 from distutils.command.build_ext import build_ext as _build_ext
 from distutils.core import setup, Extension, Command
@@ -11,7 +19,7 @@ import sys
 import os
 
 py_ver = python_version()
-min_py_vers = {3: "3.2.3"}
+min_py_vers = {3: "3.2.0"}
 if int(py_ver[0]) < 3 or py_ver < min_py_vers[int(py_ver[0])]:
     raise SystemExit("Aborted: EJDB requires Python3 >= {0[3]}".format(min_py_vers))
 
@@ -91,8 +99,9 @@ class build_ext(_build_ext):
 
 setup(
     name="pyejdb",
-    version="1.0.1",
+    version="1.0.2",
     url="http://ejdb.org",
+    keywords=["ejdb", "tokyocabinet", "nosql", "database", "storage", "embedded", "mongodb", "json"],
     description="Python3 binding for EJDB database engine.",
     long_description=open("README.md", "r").read(),
     author="Adamansky Anton",
@@ -112,5 +121,6 @@ setup(
         "Operating System :: POSIX",
         "Programming Language :: Python :: 3.2",
         "Topic :: Software Development :: Libraries"
-    ]
+    ],
+    data_files = [("doc", ["README.md"])]
 )
