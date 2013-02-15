@@ -93,7 +93,7 @@ setup(
     name="pyejdb",
     version="1.0.1",
     url="http://ejdb.org",
-    description="Python binding for EJDB database engine.",
+    description="Python3 binding for EJDB database engine.",
     long_description=open("README.md", "r").read(),
     author="Adamansky Anton",
     author_email="adamansky@gmail.com",

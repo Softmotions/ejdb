@@ -3,7 +3,6 @@
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="pyejdb">
       <df name="src">
-        <in>EJDB.c</in>
         <in>pyejdb.c</in>
         <in>pyejdb.h</in>
       </df>
@@ -46,10 +45,6 @@
           </ccTool>
         </makeTool>
       </makefileType>
-      <item path="src/EJDB.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
       <item path="src/pyejdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
