@@ -10,6 +10,7 @@ Installation
 * gcc
 * zlib-dev
 * **Python3 >= 3.2**
+* EJDB C library **libtcejdb** ([from sources](https://github.com/Softmotions/ejdb#manual-installation) or as [debian packages](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation))
 
 **(A)**
 
@@ -17,6 +18,9 @@ Installation
 
 ```
    sudo pip-3.2 install pyejdb
+
+Upgrading:
+   sudo pip-3.2 install pyejdb --upgrade
 ```
 
 **(B)**
