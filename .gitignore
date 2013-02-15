@@ -73,3 +73,5 @@ tcejdb/debian/*.debhelper
 /pyejdb/build/
 /pyejdb/test/__pycache__
 /pyejdb/testdb*
+/pyejdb/dist/
+/pyejdb/pyejdb.egg-info/
