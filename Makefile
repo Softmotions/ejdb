@@ -8,10 +8,12 @@ clean:
 	- rm -rf ./build
 	- rm -rf ./var/*
 	- rm -f libtcejdb*.tar.gz libtcejdb*.deb libtcejdb*.changes libtcejdb*.build libtcejdb*.dsc
+	- rm -f python*.tar.gz python*.deb python*.changes python*.build python*.dsc
 
 deb-packages: fix-changelogs
 	cd ./tcejdb && autoconf && ./configure
 	$(MAKE) -C ./tcejdb deb-packages
+	$(MAKE) -C ./pyejdb deb-packages
 
 deb-source-packages: fix-changelogs
 	$(MAKE) -C ./ deb-packages DEBUILD_OPTS="-S"
