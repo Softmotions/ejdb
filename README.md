@@ -25,6 +25,7 @@ Features
 * String token matching queries: ```$stror``` ```$strand```
 * [Node.js](http://nodejs.org) binding
 * [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
+* Python binding
 
 
 Documentation
@@ -35,7 +36,7 @@ Documentation
     * [Installation](#installation)
     * [Samples](#ejdb-nodejs-samples)
     * [NodeJS API](#ejdb-nodejs-api)
-* **[Python3 binding](#ejdb-python3-binding)**
+* **[Python3 binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
