@@ -77,7 +77,7 @@ def check_extension(ext):
             raise SystemExit(err_msg.format(ext.name, ext.min_ver, ext.url))
     return lib
 
-ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.0.57",
+ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.0.65",
                          "tcversion", "http://ejdb.org",
                          "_pyejdb", ["src/pyejdb.c"],
                          libraries=["tcejdb", "z", "pthread", "m", "c"],

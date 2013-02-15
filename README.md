@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
 * `2013-02-07` **[Debian packages provided](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)**
 * `2013-01-22` **[Collection joins now supported](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
 
@@ -34,6 +35,7 @@ Documentation
     * [Installation](#installation)
     * [Samples](#ejdb-nodejs-samples)
     * [NodeJS API](#ejdb-nodejs-api)
+* **[Python3 binding](#ejdb-python3-binding)**
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
@@ -578,6 +580,49 @@ Drop index of String|Number|Array type for JSON field path.
   * {Function} `[cb]` Optional callback function. Callback args: (error)
 
 -----------------------------------
+
+
+EJDB Python3 binding
+==================================
+One snippet intro
+---------------------------------
+
+```python
+import pyejdb
+from datetime import datetime
+
+#Open database
+ejdb = pyejdb.EJDB("zoo", pyejdb.DEFAULT_OPEN_MODE | pyejdb.JBOTRUNC)
+
+parrot1 = {
+    "name": "Grenny",
+    "type": "African Grey",
+    "male": True,
+    "age": 1,
+    "birthdate": datetime.utcnow(),
+    "likes": ["green color", "night", "toys"],
+    "extra1": None
+}
+parrot2 = {
+    "name": "Bounty",
+    "type": "Cockatoo",
+    "male": False,
+    "age": 15,
+    "birthdate": datetime.utcnow(),
+    "likes": ["sugar cane"],
+    "extra1": None
+}
+ejdb.save("parrots2", parrot1, parrot2)
+
+with ejdb.find("parrots2", {"likes" : "toys"},
+          hints={"$orderby" : [("name", 1)]}) as cur:
+    print("found %s parrots" % len(cur))
+    for p in cur:
+        print("%s likes toys!" % p["name"])
+
+ejdb.close()
+```
+[EJDB Python3 binding page](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)
 
 
 EJDB C Library
