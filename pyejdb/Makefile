@@ -4,7 +4,7 @@ all:
 
 clean:
 	- rm -f ./testdb*
-	- rm -f ./dist
+	- rm -rf ./dist
 
 deb-packages: clean
 	debuild $(DEBUILD_OPTS)
