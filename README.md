@@ -584,6 +584,7 @@ Drop index of String|Number|Array type for JSON field path.
 
 EJDB Python3 binding
 ==================================
+
 One snippet intro
 ---------------------------------
 
@@ -622,7 +623,7 @@ with ejdb.find("parrots2", {"likes" : "toys"},
 
 ejdb.close()
 ```
-[EJDB Python3 binding page](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)
+**[EJDB Python3 binding page](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
 
 
 EJDB C Library
