@@ -21,6 +21,7 @@ from functools import lru_cache
 from pyejdb import bson
 from pyejdb.typecheck import *
 from collections import OrderedDict as odict
+from io import StringIO as strio
 import re, numbers
 
 
@@ -236,8 +237,17 @@ class EJDB(object):
         General format:
             find(<collection name>, <query object>, <OR joined query objects>,..., hints=<Query Hints>)
 
-        EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
+        :Parameters:
+           - `cname` Collection name
+           - `qobj` Main query object
+           - *args OR joined query object
+           - hints={} (optional) Query hints. See explanations below.
+           - log=StringIO (optional) StringIO buffer for ejdb query log (debugging mode)
 
+        :Returns:
+            Resultset cursor :class:`EJDBCursorWrapper`
+
+        EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
         - Supported queries:
            - Simple matching of String OR Number OR Array value:
                -   {'fpath' : 'val', ...}
@@ -323,15 +333,15 @@ class EJDB(object):
                    }
                }
 
-        :Returns:
-            Resultset cursor :class:`EJDBCursorWrapper`
         """
         if not qobj: qobj = {}
         qobj = bson.serialize_to_bytes(qobj)
         hints = bson.serialize_to_bytes(self.__preprocessQHints(kwargs.get("hints", {})))
         orarr = [bson.serialize_to_bytes(x) for x in args]
         qflags = kwargs.get("qflags", 0)
-        cursor = self.__ejdb.find(cname, qobj, orarr, hints, qflags)
+        log = kwargs.get("log")
+        log = log if isinstance(log, strio) else None
+        cursor = self.__ejdb.find(cname, qobj, orarr, hints, qflags, log)
         return cursor if isinstance(cursor, numbers.Number) else EJDBCursorWrapper(cursor)
 
     def findOne(self, cname : str, qobj : optional(dict)=None, *args, **kwargs):

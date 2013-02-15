@@ -179,8 +179,9 @@ static PyObject* EJDB_load(PEJDB *self, PyObject *args) {
     Py_BEGIN_ALLOW_THREADS
     doc = ejdbloadbson(coll, &oid);
     Py_END_ALLOW_THREADS
-    if (!doc) {
-        if (ejdbecode(self->ejdb) != TCESUCCESS) {
+    if (!doc) {            
+        int ecode = ejdbecode(self->ejdb);
+        if (ecode != TCESUCCESS && ecode != TCENOREC) {
             return set_ejdb_error(self->ejdb);
         } else {
             Py_RETURN_NONE;
@@ -432,6 +433,8 @@ static PyObject* EJDB_remove(PEJDB *self, PyObject *args) {
 static PyObject* EJDB_find(PEJDB *self, PyObject *args) {
     const char *cname;
     PyObject *qbsbufpy, *orlistpy, *hbufpy;
+    PyObject *logio = Py_None;
+    TCXSTR *log = NULL;
     void *qbsbuf, *hbsbuf;
     int qbsbufsz, hbsbufsz;
     bool err = false;
@@ -448,8 +451,8 @@ static PyObject* EJDB_find(PEJDB *self, PyObject *args) {
     uint32_t count = 0;
 
     //cname, qobj, qobj, orarr, hints, qflags
-    if (!PyArg_ParseTuple(args, "sOOOi:EJDB_find",
-            &cname, &qbsbufpy, &orlistpy, &hbufpy, &qflags)) {
+    if (!PyArg_ParseTuple(args, "sOOOi|O:EJDB_find",
+            &cname, &qbsbufpy, &orlistpy, &hbufpy, &qflags, &logio)) {
         return NULL;
     }
     if (bytes_to_void(qbsbufpy, &qbsbuf, &qbsbufsz)) {
@@ -509,8 +512,11 @@ static PyObject* EJDB_find(PEJDB *self, PyObject *args) {
     if (!coll) { //No collection -> no results
         qres = (qflags & JBQRYCOUNT) ? NULL : tclistnew2(1); //empty results
     } else {
+        if (logio && logio != Py_None) {
+            log = tcxstrnew();
+        }
         Py_BEGIN_ALLOW_THREADS
-        qres = ejdbqryexecute(coll, q, &count, qflags, NULL);
+        qres = ejdbqryexecute(coll, q, &count, qflags, log);
         Py_END_ALLOW_THREADS
         if (ejdbecode(self->ejdb) != TCESUCCESS) {
             err = true;
@@ -528,6 +534,15 @@ static PyObject* EJDB_find(PEJDB *self, PyObject *args) {
     }
 
 finish:
+    if (log) {
+        //fprintf(stderr, "\n%s", TCXSTRPTR(log));
+        PyObject *cres = PyObject_CallMethod(logio, "write", "(s)", TCXSTRPTR(log));
+        if (!cres) {
+            err = true;
+        }
+        Py_XDECREF(cres);
+        tcxstrdel(log);
+    }
     for (Py_ssize_t i = 0; i < orsz; ++i) {
         bson_destroy(&oqarr[i]);
     }

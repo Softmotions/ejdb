@@ -107,7 +107,7 @@ import struct; from struct import pack, unpack
 import datetime; from datetime import datetime
 import calendar; from calendar import timegm
 import collections; from collections import OrderedDict as odict
-import binascii; from binascii import b2a_hex
+import binascii; from binascii import hexlify, unhexlify
 try:
     import pyejdb.typecheck
 except ImportError:
@@ -258,6 +258,9 @@ class BSON_Document(BSON_Value):
     @typecheck
     def __init__(self, value: dict):
         self._value = value
+        #fix reserved _id field
+        if "_id" in self._value and isinstance(self._value["_id"], BSON_String):
+            self._value["_id"] = BSON_ObjectId(self._value["_id"]._py_value())
 
     def _py_value(self):
         return odict((k, v._py_value()) for k, v in self._value.items())
@@ -421,14 +424,17 @@ class BSON_ObjectId(BSON_Value):
     _code = b"\x07"
 
     @typecheck
-    def __init__(self, value: lambda x: isinstance(x, bytes) and len(x) == 12):
-        self._value = value
+    def __init__(self, value: lambda x: (isinstance(x, bytes) and len(x) == 12) or (isinstance(x, str) and len(x) == 24)):
+        if isinstance(value, str):
+            self._value = unhexlify(value.encode("ascii"))
+        else:
+            self._value = value
 
     def __str__(self):
         return "{0:s}(0x{1:s})".format(self.__class__.__name__,
-                                       b2a_hex(self._value).decode("ascii"))
+                                       hexlify(self._value).decode("ascii"))
     def _py_value(self):
-        return b2a_hex(self._value).decode("ascii")
+        return hexlify(self._value).decode("ascii")
 
     def serialize(self, stream):
         stream.write(self._value)

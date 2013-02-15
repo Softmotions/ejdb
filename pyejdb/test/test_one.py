@@ -20,8 +20,7 @@ from datetime import datetime
 import unittest
 from pyejdb import bson
 import pyejdb
-import re
-from collections import OrderedDict as odict
+from io import StringIO as strio
 
 class TestOne(unittest.TestCase):
     def __init__(self, *args, **kwargs):
@@ -75,8 +74,6 @@ class TestOne(unittest.TestCase):
 
         ejdb.ensureCollection("ecoll1", records=90000, large=False)
         ejdb.dropCollection("ecoll1", prune=True)
-
-        print("dbmeta=%s" % ejdb.dbmeta())
 
 
     def test2(self):
@@ -137,7 +134,42 @@ class TestOne(unittest.TestCase):
             "secret": None
         }
         ejdb.save("birds", *[sally, molly])
+
+        logbuf = strio()
+        ejdb.find("birds", {"name" : "Molly"}, log=logbuf)
+        self.assertTrue(logbuf.getvalue().find("RUN FULLSCAN") != -1)
+
         ejdb.ensureStringIndex("birds", "name")
+
+        logbuf = strio()
+        ejdb.find("birds", {"name" : "Molly"}, log=logbuf)
+        self.assertTrue(logbuf.getvalue().find("MAIN IDX: 'sname'") != -1)
+        self.assertTrue(logbuf.getvalue().find("RUN FULLSCAN") == -1)
+
+        ##print("dbmeta=%s" % ejdb.dbmeta())
+        bar = {
+            "foo" : "bar"
+        }
+        self.assertEqual(ejdb.isactivetx("bars"), False)
+        ejdb.begintx("bars")
+        self.assertEqual(ejdb.isactivetx("bars"), True)
+        ejdb.save("bars", bar)
+        self.assertTrue(bar["_id"] is not None)
+        ejdb.abortx("bars")
+        self.assertTrue(ejdb.load("bars", bar["_id"]) is None)
+
+        ejdb.begintx("bars")
+        ejdb.save("bars", bar)
+        self.assertTrue(ejdb.load("bars", bar["_id"]) is not None)
+        self.assertEqual(ejdb.isactivetx("bars"), True)
+        ejdb.commitx("bars")
+        self.assertEqual(ejdb.isactivetx("bars"), False)
+        self.assertTrue(ejdb.load("bars", bar["_id"]) is not None)
+
+
+        ejdb.update("upsertcoll",
+                {"foo" : "bar", "$upsert" : {"foo" : "bar"}})
+        self.assertTrue(ejdb.findOne("upsertcoll", {"foo" : "bar"}) is not None)
 
 
     @classmethod
