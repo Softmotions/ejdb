@@ -19,7 +19,7 @@ Section: python
 Architecture: any
 Depends:
  ${misc:Depends},
- ${python3:Depends},
+ python3 (>= 3.2.0),
  ${shlibs:Depends},
  libtcejdb9 (>= 1.0.65)
 Provides:
