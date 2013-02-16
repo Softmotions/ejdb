@@ -64,5 +64,8 @@ libtcejdb_*.changes
 
 /tcejdb/debian/
 
-/pyejdb
+
+/pyejdb/build/
+/pyejdb/test/__pycache__ 
+/pyejdb/testdb*
 
