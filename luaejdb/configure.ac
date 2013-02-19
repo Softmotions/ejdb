@@ -4,10 +4,11 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(ejdb, 1.0.1)
+AC_INIT(ejdb-lua, 1.0.1)
 
 luaver=`lua -e 'v = string.gsub(_VERSION, ".* ", ""); print(v)'`
 
+MYLIBRARYFILES=""
 MYLIBOBJFILES="luaejdb.o"
 MYCFLAGS="-std=c99 -Wall -fPIC -fsigned-char -O2 $MYCFLAGS"
 MYCPPFLAGS="-DNDEBUG -D_GNU_SOURCE=1 $MYCPPFLAGS"
@@ -26,16 +27,20 @@ then
   LD_LIBRARY_PATH="`pkg-config --variable=libdir tcejdb`:`pkg-config --variable=libdir lua$luaver`:$LD_LIBRARY_PATH"
   CPATH="`pkg-config --variable=includedir tcejdb`:`pkg-config --variable=includedir lua$luaver`/lua$luaver:$CPATH"
   export PATH LIBRARY_PATH LD_LIBRARY_PATH CPATH PKG_CONFIG_PATH
-  MYCFLAGS="$MYCFLAGS `pkg-config --cflags tcejdb lua$luaver`"
+  MYCPPFLAGS="$MYCPPFLAGS `pkg-config --cflags tcejdb lua$luaver`"
 fi
 
-prinf "$LIBRARY_PATH"
+printf "$LIBRARY_PATH"
 
 # Shared libraries
 if uname | grep Darwin >/dev/null
 then
+  MYLIBRARYFILES="$MYLIBRARYFILES luaejdb.dylib"
   MYLDLIBPATHENV="DYLD_LIBRARY_PATH"
+else
+  MYLIBRARYFILES="$MYLIBRARYFILES luaejdb.so"
 fi
+
 
 # C compiler
 AC_PROG_CC
@@ -50,6 +55,7 @@ AC_SUBST(MYCFLAGS)
 AC_SUBST(MYCPPFLAGS)
 AC_SUBST(MYLDLIBPATHENV)
 AC_SUBST(MYLDFLAGS)
+AC_SUBST(MYLIBRARYFILES)
 
 # Targets
 AC_OUTPUT(Makefile)
