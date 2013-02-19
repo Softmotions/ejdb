@@ -66,4 +66,5 @@ libtcejdb_*.changes
 
 
 /pyejdb
+/luaejdb
 

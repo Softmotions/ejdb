@@ -3,13 +3,14 @@
 *.dylib
 *.upload
 
+autom4te.cache/
+config.log
+config.status
+
 /npm-debug.log
 /.idea/workspace.xml
 
 /tcejdb/Makefile
-/tcejdb/autom4te.cache
-/tcejdb/config.log
-/tcejdb/config.status
 /tcejdb/libtcejdb.a
 /tcejdb/libtcejdb.so
 /tcejdb/libtcejdb.so.9
@@ -48,12 +49,11 @@
 /tcejdb/testejdb/t2
 /tcejdb/testejdb/t3
 
-/node/nbproject/private
+*/nbproject/private/*
+
 /build
 /var
 /node/samples/sample1/zoo*
-
-/pyejdb/nbproject/private
 
 
 libtcejdb9*.deb
@@ -91,3 +91,5 @@ tcejdb/debian/*.debhelper
 /python-ejdb_*.changes
 /python3-ejdb_*.deb
 
+
+luaejdb/Makefile
