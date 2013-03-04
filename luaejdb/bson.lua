@@ -43,7 +43,6 @@ function string_source(s, i)
   end
 end
 
-
 function object_id_from_string(str)
   assert(type(str) == "string" and #str == 24, string.format("Invalid object id string %s", str));
   local t = {}
@@ -58,6 +57,10 @@ end
 function object_id(str)
   assert(#str == 12)
   return setmetatable({ id = str }, object_id_mt)
+end
+
+function regexp(pattern, opts)
+  return setmetatable({ pattern = pattern, opts = opts }, regexp_mt)
 end
 
 local function string_to_array_of_chars(s)
@@ -125,9 +128,10 @@ local function read_document(get, numerical)
     elseif op == "\10" then -- Null
       v = nil
     elseif op == "\11" then -- Regexp
-      local re = read_terminated_string(get)
-      local opts = read_terminated_string(get)
-      v = setmetatable({re = re, opts = opts}, regexp_mt)
+      v = setmetatable({
+        pattern = read_terminated_string(get),
+        opts = read_terminated_string(get)
+      }, regexp_mt)
     elseif op == "\16" then --int32
       v = ll.le_int_to_num(get(4), 1, 8)
     elseif op == "\17" then --int64
@@ -200,6 +204,10 @@ local function pack(k, v)
   elseif mt == binary_mt then
     return "\5" .. k .. "\0" .. ll.num_to_le_uint(string.len(v.v)) ..
            v.st .. v.v
+  elseif mt == regexp_mt then
+    return "\11" .. k .. "\0" ..
+           (v.pattern == nil and "" or v.pattern) .. "\0" ..
+           (v.opts == nil and "" or v.opts) .. "\0";
   elseif ot == "table" then
     local doc, array = to_bson(v)
     if array then

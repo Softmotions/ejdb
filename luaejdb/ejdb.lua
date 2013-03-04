@@ -7,7 +7,8 @@ local o = {
   d = { 5, 4, 3, 2, 1 };
   e = { { { {} } } };
   f = { [true] = { baz = "mars" } };
-  g = bson.object_id("abcdefghijkl")
+  g = bson.object_id("abcdefghijkl");
+  r = bson.regexp("$.?", "g")
   --z = { [{}] = {} } ; -- Can't test as tables are unique
 }
 
