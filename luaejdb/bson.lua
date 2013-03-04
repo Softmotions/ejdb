@@ -45,21 +45,15 @@ local modname = "bson"
 local M = {}
 _G[modname] = M
 package.loaded[modname] = M
+
+require "middleclass"
+
 setmetatable(M, { __index = _G })
 _ENV = M;
 
 local typeHandlers = {}
 
-BSONValue = {}
 
-BSONString = {
-  new = function(self, o)
-    o = o or {}
-    setmetatable(o, self)
-    self.__index = self
-    return o
-  end
-}
 
 
 
