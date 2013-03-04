@@ -4,7 +4,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(ejdb-lua, 1.0.1)
+AC_INIT(luaejdb, 1.0.1)
 
 luaver=`lua -e 'v = string.gsub(_VERSION, ".* ", ""); print(v)'`
 
@@ -41,6 +41,12 @@ else
   MYLIBRARYFILES="$MYLIBRARYFILES luaejdb.so"
 fi
 
+# Lua library path
+MYLUALIBDIR=`lua tools/libpath.lua`
+if test -z "$MYLUALIBDIR"
+then
+  MYLUALIBDIR="$libdir/lua/$luaver"
+fi
 
 # C compiler
 AC_PROG_CC
@@ -56,7 +62,9 @@ AC_SUBST(MYCPPFLAGS)
 AC_SUBST(MYLDLIBPATHENV)
 AC_SUBST(MYLDFLAGS)
 AC_SUBST(MYLIBRARYFILES)
+AC_SUBST(MYLUALIBDIR)
 
 # Targets
 AC_OUTPUT(Makefile)
+AC_OUTPUT(luaejdb.rockspec)
 

@@ -3,7 +3,6 @@
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="luaejdb">
       <in>Makefile.in</in>
-      <in>configure.in</in>
       <in>luaejdb.c</in>
     </df>
     <logicalFolder name="ExternalFiles"
@@ -45,8 +44,6 @@
         </makeTool>
       </makefileType>
       <item path="Makefile.in" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="configure.in" ex="false" tool="3" flavor2="0">
       </item>
       <item path="luaejdb.c" ex="false" tool="0" flavor2="0">
       </item>

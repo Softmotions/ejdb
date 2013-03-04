@@ -17,3 +17,11 @@ LDFLAGS = @MYLDFLAGS@
 LIBS = @LIBS@
 
 
+# Install destinations
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+datarootdir = @datarootdir@
+LIBDIR = @libdir@
+BINDIR = @bindir@
+LUALIBDIR = @MYLUALIBDIR@
+DESTDIR =
