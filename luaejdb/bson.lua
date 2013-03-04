@@ -16,6 +16,7 @@ end
 
 local binary_mt = {}
 local utc_date = {}
+local regexp_mt = {}
 local object_id_mt = {
   __tostring = function(ob)
     local t = {}
@@ -123,6 +124,10 @@ local function read_document(get, numerical)
       v = ll.le_uint_to_num(get(8), 1, 8)
     elseif op == "\10" then -- Null
       v = nil
+    elseif op == "\11" then -- Regexp
+      local re = read_terminated_string(get)
+      local opts = read_terminated_string(get)
+      v = setmetatable({re = re, opts = opts}, regexp_mt)
     elseif op == "\16" then --int32
       v = ll.le_int_to_num(get(4), 1, 8)
     elseif op == "\17" then --int64
