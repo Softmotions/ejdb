@@ -1,4 +1,4 @@
--- Taken from https://github.com/daurnimator/mongol under MIT license
+-- Based on mongol https://github.com/daurnimator/mongol under MIT license
 
 local modname = (...)
 local M = {}
