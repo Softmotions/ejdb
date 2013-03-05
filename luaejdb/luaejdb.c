@@ -4,7 +4,7 @@
 #include <lauxlib.h>
 #include <tcejdb/ejdb.h>
 
-#define LUA_EJDBLIBNAME	"ejdb"
+#define LUA_EJDBLIBNAME	"luaejdb"
 
 int dbopen(lua_State *L) {
     lua_pushstring(L, "Ha ha ejdb");
@@ -17,7 +17,7 @@ static const luaL_Reg ejdblib[] = {
 };
 
 /* Init */
-int luaopen_ejdb(lua_State *L) {
+int luaopen_luaejdb(lua_State *L) {
     luaL_newlib(L, ejdblib);
     return 1;
 }
