@@ -33,12 +33,12 @@
           <executablePath></executablePath>
           <cTool>
             <incDir>
-              <pElem>/usr/include/lua5.2</pElem>
+              <pElem>/usr/include/lua5.1</pElem>
             </incDir>
           </cTool>
           <ccTool>
             <incDir>
-              <pElem>/usr/include/lua5.2</pElem>
+              <pElem>/usr/include/lua5.1</pElem>
             </incDir>
           </ccTool>
         </makeTool>

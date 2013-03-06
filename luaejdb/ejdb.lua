@@ -1,5 +1,18 @@
 require("bson");
+local luaejdb = require("luaejdb")
+assert(type(luaejdb) == "table")
 
+
+local db = luaejdb.open("mydb", luaejdb.DEFAULT_OPEN_MODE);
+
+for k, v  in pairs(db) do
+   print(k, v)
+end
+
+
+db:close()
+
+--[[
 local o = {
   a = "lol";
   b = "foo";
@@ -48,6 +61,7 @@ end
 assert ( confirm ( o , t ) )
 assert ( bson.to_bson ( t ) == bson.to_bson ( t ) )
 --assert ( bson.to_bson ( t ) == b )
+]]
 
 
 
