@@ -1,11 +1,15 @@
 require("bson");
 local luaejdb = require("luaejdb")
-local inspect = require("inspect")
 assert(type(luaejdb) == "table")
+local inspect = require("inspect")
+local ll = require("ll")
 
 local Q = {}
-local mt_QO = {
-  __index = Q
+local mtQObj = {
+  __index = Q;
+  __tobson = function(q)
+    return q:toBSON()
+  end
 }
 
 function Q:_init(fname, ...)
@@ -109,43 +113,63 @@ function Q:PullAll(val) return self:_rootOp("$pullAll", val) end
 
 function Q:Upsert(val) return self:_rootOp("$upsert", val) end
 
-function Q:DropAll(val) return self:_rootOp("$dropall", val) end
+function Q:DropAll() return self:_rootOp("$dropall", true) end
 
 function Q:Do(val) return self:_rootOp("$do", val) end
 
 function Q:Or(...)
   for i, v in ipairs({ ... }) do
-    local mt = getmetatable(v)
-    assert(mt == mt_QO, "Each 'or' argument must be instance of 'luaejdb.Q' class")
+    assert(getmetatable(v) == mtQObj, "Each 'or' argument must be instance of 'luaejdb.Q' class")
     table.insert(self._or, v)
   end
   return self
 end
 
 function Q:toBSON()
-  print(inspect(self._omap))
+  local bstbl = {}
+  local qarr = {}
+  for k, _ in pairs(self._omap) do
+    qarr[#qarr + 1] = { k, self._omap[k] }
+  end
+  table.sort(qarr, function(o1, o2)
+    return o1[2][1] < o2[2][1]
+  end)
+  for i, qp in ipairs(qarr) do
+    local key = qp[1]
+    local op = qp[2]
+    local val
+    if op[2][1] == nil then
+      val = op[2][2]
+    else
+      val = op[2]
+    end
+    table.insert(bstbl, bson.pack(key, val))
+  end
+  return (ll.num_to_le_uint(#bstbl + 4 + 1) .. table.concat(bstbl) .. "\0"), false
 end
 
 luaejdb["Q"] = setmetatable(Q, {
   __call = function(q, ...)
     local obj = {}
-    setmetatable(obj, mt_QO)
+    setmetatable(obj, mtQObj)
     obj:_init(...)
     return obj;
   end;
 })
 
+--local q = Q("name"):Eq("Anton"):F("age"):Eq(22)
+--q:toBSON()
+--
+--local q = Q("name", "Anton"):F("age", 22):F("score"):Bt({ 1, 3 })
+--q:toBSON()
+--
+--local q = Q("name", "Anton"):F("age", 22):F("score"):Not():Bt({ 1, 3 })
+--q:toBSON()
 
-local q = Q("name"):Eq("Anton"):F("age"):Eq(22)
-q:toBSON()
-
-local q = Q("name", "Anton"):F("age", 22):F("score"):Bt({1, 3})
-q:toBSON()
-
-
-local q = Q("name", "Anton"):F("age", 22):F("score"):Not():Bt({1, 3})
-q:toBSON()
-
+local q = Q("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(Q("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll()
+local bsd = q:toBSON()
+local js = bson.from_bson(bson.string_source(bsd))
+print(inspect(js))
 
 
 --local db = luaejdb.open("mydb", luaejdb.DEFAULT_OPEN_MODE);
@@ -157,7 +181,6 @@ q:toBSON()
 
 --db.find(Q().F("name").Icase().In({1,2,3}).F("score").In({ 30, 231 }).Order("name", 1, "age", 2).Skip(10).Max(100));
 --db:close()
-
 
 --[[local o = {
   a = "lol";

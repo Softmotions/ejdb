@@ -176,11 +176,10 @@ function get_bin_data(v)
 end
 
 function from_bson(get)
-  local t = read_document(get, false)
-  return t
+  return read_document(get, false)
 end
 
-local function pack(k, v)
+function pack(k, v)
   local ot = type(v)
   local mt = getmetatable(v)
 
@@ -208,7 +207,12 @@ local function pack(k, v)
            (v.pattern == nil and "" or v.pattern) .. "\0" ..
            (v.opts == nil and "" or v.opts) .. "\0";
   elseif ot == "table" then
-    local doc, array = to_bson(v)
+    local doc, array
+    if mt and mt.__tobson then
+      doc, array = mt.__tobson(v)
+    else
+      doc, array = to_bson(v)
+    end
     if array then
       return "\4" .. k .. "\0" .. doc
     else
@@ -219,10 +223,6 @@ local function pack(k, v)
   end
 end
 
-
-function to_bson_Q(q)
-  --todo
-end
 
 
 function to_bson(ob)
