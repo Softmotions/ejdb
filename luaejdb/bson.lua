@@ -2,7 +2,6 @@
 
 local modname = (...)
 local M = {}
-
 local ll = require("ll")
 
 _G[modname] = M
@@ -220,6 +219,12 @@ local function pack(k, v)
   end
 end
 
+
+function to_bson_Q(q)
+  --todo
+end
+
+
 function to_bson(ob)
   -- Find out if ob if an array; string->value map; or general table
   local onlyarray = true
@@ -244,8 +249,14 @@ function to_bson(ob)
   local retarray, m = false
   if onlystring then -- Do string first so the case of an empty table is done properly
     local r = {}
-    for k, v in pairs(ob) do
-      table.insert(r, pack(k, v))
+    --sort keys
+    local keys = {}
+    for k, _ in pairs(ob) do
+      keys[#keys + 1] = k
+    end
+    table.sort(keys);
+    for _, k in ipairs(keys) do
+      table.insert(r, pack(k, ob[k]))
     end
     m = table.concat(r)
   elseif onlyarray then
@@ -258,12 +269,10 @@ function to_bson(ob)
     m = table.concat(r, "", low, high_n)
     retarray = true
   else
-    local ni = 1
     local keys, vals = {}, {}
     for k, v in pairs(ob) do
-      keys[ni] = k
-      vals[ni] = v
-      ni = ni + 1
+      keys[#keys + 1] = k
+      vals[#vals + 1] = v
     end
     return to_bson({ _keys = keys, _vals = vals })
   end
