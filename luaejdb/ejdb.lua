@@ -17,8 +17,7 @@ function Q:_init(fname, ...)
   self._omap = {} --field operations
   self._or = {} -- OR joined restrictions
   self._ocnt = 1 -- field order counter
-  self._skip = 0
-  self._limit = 0
+  self._hints = nil -- hints Q
   if fname then
     self:F(fname, ...)
   end
@@ -36,7 +35,24 @@ end
 function Q:_setop(op, val, ...)
   self:_checkop()
   local types, replace = ...
-  val = self:_toopval(val)
+  local ttypes = type(types)
+  if (ttypes == "string") then
+    assert(type(val) == types, "Invalid query argument field: " .. self._field .. " val: " .. inspect(val))
+  elseif (ttypes == "function") then
+    assert(types(val), "Invalid query argument field: " .. self._field .. " val: " .. inspect(val))
+  elseif (ttypes == "table") then
+    local found = false
+    local vtype = type(val)
+    for _, t in ipairs(ttypes) do
+      if (t == vtype) then
+        found = true
+        break
+      end
+    end
+    if not found then
+    end
+  end
+  val = self:_toOpVal(val)
   local olist = self._omap[self._field]
   if not olist then
     olist = { self._ocnt };
@@ -50,13 +66,21 @@ function Q:_setop(op, val, ...)
   table.insert(olist, { op, val })
 end
 
-function Q:_toopval(val)
+function Q:_toOpVal(val)
   return val
 end
 
-function Q:_rootOp(name, val)
+function Q:_hintOp(op, val, ...)
+  if not self._hints then
+    self._hints = Q()
+  end
+  self._hints:_rootOp(op, val, ...)
+end
+
+function Q:_rootOp(name, val, ...)
+  local types = ...
   self:F(name)
-  self:_setop(nil, val, nil, true)
+  self:_setop(nil, val, types, true)
   self:F(nil)
   return self
 end
@@ -125,6 +149,24 @@ function Q:Or(...)
   return self
 end
 
+function Q:Skip(val)
+  self:_hintOp("$skip", val, "number")
+  return self
+end
+
+function Q:Max(val)
+  self:_hintOp("$limit", val, "number")
+  return self
+end
+
+function Q:getJoinedORs()
+  return self._or
+end
+
+function Q:toHintsBSON()
+  return (self._hints or Q()):toBSON()
+end
+
 function Q:toBSON()
   local bstbl = {}
   local qarr = {}
@@ -148,6 +190,7 @@ function Q:toBSON()
   return (ll.num_to_le_uint(#bstbl + 4 + 1) .. table.concat(bstbl) .. "\0"), false
 end
 
+
 luaejdb["Q"] = setmetatable(Q, {
   __call = function(q, ...)
     local obj = {}
@@ -166,11 +209,14 @@ luaejdb["Q"] = setmetatable(Q, {
 --local q = Q("name", "Anton"):F("age", 22):F("score"):Not():Bt({ 1, 3 })
 --q:toBSON()
 
-local q = Q("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(Q("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll()
-local bsd = q:toBSON()
-local js = bson.from_bson(bson.string_source(bsd))
-print(inspect(js))
-
+--local q = Q("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(Q("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll():Max(11):Skip(2)
+--local bsd = q:toBSON()
+--local js = bson.from_bson(bson.string_source(bsd))
+--print(inspect(js))
+--
+--local bsd = q:toHintsBSON()
+--local js = bson.from_bson(bson.string_source(bsd))
+--print(inspect(js))
 
 --local db = luaejdb.open("mydb", luaejdb.DEFAULT_OPEN_MODE);
 --for k, v in pairs(db) do
@@ -183,19 +229,19 @@ print(inspect(js))
 --db:close()
 
 --[[local o = {
-  a = "lol";
-  b = "foo";
-  c = 42;
-  d = { 5, 4, 3, 2, 1 };
-  e = { { { {} } } };
-  f = { [true] = { baz = "mars" } };
-  g = bson.object_id("abcdefghijkl");
-  r = bson.regexp("$.?", "g")
-  --z = { [{}] = {} } ; -- Can't test as tables are unique
+a = "lol";
+b = "foo";
+c = 42;
+d = { 5, 4, 3, 2, 1 };
+e = { { { {} } } };
+f = { [true] = { baz = "mars" } };
+g = bson.object_id("abcdefghijkl");
+r = bson.regexp("$.?", "g")
+--z = { [{}] = {} } ; -- Can't test as tables are unique
 }
 
 for k, v in pairs(o) do
-   print("k=", k);
+print("k=", k);
 end
 
 print("\n\n")
@@ -206,25 +252,25 @@ local b = bson.to_bson(o)
 local t = bson.from_bson(bson.string_source(b))
 
 for k, v in pairs(t) do
-   print("k=", k, "v=", v);
+print("k=", k, "v=", v);
 end
 
 local function confirm ( orig , new , d )
-	d = d or 1
-	local ok = true
-	for k ,v in pairs ( orig ) do
-		local nv = new [ k ]
-		--print(string.rep ( "\t" , d-1) , "KEY", type(k),k, "VAL",type(v),v,"NEWVAL",type(nv),nv)
-		if nv == v then
-		elseif type ( v ) == "table" and type ( nv ) == "table" then
-			--print(string.rep ( "\t" , d-1) , "Descending" , k )
-			ok = ok and confirm ( v , nv , d+1 )
-		else
-			print(string.rep ( "\t" , d-1) , "Failed on" , k , v , nv )
-			ok = false
-		end
-	end
-	return ok
+d = d or 1
+local ok = true
+for k ,v in pairs ( orig ) do
+local nv = new [ k ]
+--print(string.rep ( "\t" , d-1) , "KEY", type(k),k, "VAL",type(v),v,"NEWVAL",type(nv),nv)
+if nv == v then
+elseif type ( v ) == "table" and type ( nv ) == "table" then
+--print(string.rep ( "\t" , d-1) , "Descending" , k )
+ok = ok and confirm ( v , nv , d+1 )
+else
+print(string.rep ( "\t" , d-1) , "Failed on" , k , v , nv )
+ok = false
+end
+end
+return ok
 end
 
 assert ( confirm ( o , t ) )
