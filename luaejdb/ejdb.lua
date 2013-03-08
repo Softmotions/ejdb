@@ -265,8 +265,17 @@ luaejdb.Q = setmetatable(Q, {
 
 -- ------------ EJDB API calls ------------------
 
-function luaejdb:find(q)
-  -- todo
+function luaejdb:find(q, ...)
+  assert(getmetatable(q) == mtQObj, "Query object must be instance of 'luaejdb.Q' class `q = luaejdb.Q()`")
+  local flags = ...
+  if (type(flags) ~= "number") then
+    flags = 0
+  end
+  local orBsons = {}
+  for _, o in ipairs(q:getJoinedORs()) do
+    table.insert(orBsons, o.toBSON())
+  end
+  return luaejdb.find(q.toBSON(), orBsons, q.toHintsBSON(), flags)
 end
 
 --local q = Q("name"):Eq("Anton"):F("age"):Eq(22)
