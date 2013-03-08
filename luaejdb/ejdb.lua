@@ -4,6 +4,15 @@ assert(type(luaejdb) == "table")
 local inspect = require("inspect")
 local ll = require("ll")
 
+-- ------------ Misc -----------------------
+
+function strim(s)
+  local from = s:match("^%s*()")
+  return from > #s and "" or s:match(".*%S", from)
+end
+
+-- ------- EJDB query builder -------------
+
 local Q = {}
 local mtQObj = {
   __index = Q;
@@ -149,13 +158,68 @@ function Q:Or(...)
   return self
 end
 
-function Q:Skip(val)
-  self:_hintOp("$skip", val, "number")
+function Q:Skip(val) self:_hintOp("$skip", val, "number") return self end
+
+function Q:Max(val) self:_hintOp("$limit", val, "number") return self end
+
+function Q:OrderBy(...)
+  local ospec = Q()
+  for _, v in ipairs({ ... }) do
+    local key
+    local oop = 1
+    if type(v) == "string" then
+      v = strim(v)
+      if v:find(" desc", -5) or v:find(" DESC", -5) then
+        oop = -1
+        key = v:sub(1, -6)
+      elseif v:find(" asc", -4) or v:find(" ASC", -4) then
+        oop = 1
+        key = v:sub(1, -5)
+      else --ASC by default
+        oop = 1
+        key = v
+      end
+    elseif type(v) == "table" then
+      for ok, ov in pairs(v) do
+        key = ok
+        oop = tonumber(ov) or 1
+        break
+      end
+    end
+    assert(type(key) == "string" and type(oop) == "number")
+    ospec:F(key):Eq(oop)
+  end
+  self:_hintOp("$orderby", ospec)
   return self
 end
 
-function Q:Max(val)
-  self:_hintOp("$limit", val, "number")
+function Q:Fields(...)
+  return self:_fields(1, ...)
+end
+
+function Q:NotFields(...)
+  return self:_fields(-1, ...)
+end
+
+function Q:_fields(definc, ...)
+  local fspec = Q()
+  for _, v in ipairs({ ... }) do
+    local key
+    local inc = definc
+    if type(v) == "string" then
+      key = v
+      inc = definc
+    elseif type(v) == "table" then
+      for ok, ov in pairs(v) do
+        key = ok
+        inc = tonumber(ov) or definc
+        break
+      end
+    end
+    assert(type(key) == "string" and type(inc) == "number")
+    fspec:F(key):Eq(inc)
+  end
+  self:_hintOp("$fields", fspec)
   return self
 end
 
@@ -190,8 +254,7 @@ function Q:toBSON()
   return (ll.num_to_le_uint(#bstbl + 4 + 1) .. table.concat(bstbl) .. "\0"), false
 end
 
-
-luaejdb["Q"] = setmetatable(Q, {
+luaejdb.Q = setmetatable(Q, {
   __call = function(q, ...)
     local obj = {}
     setmetatable(obj, mtQObj)
@@ -199,6 +262,12 @@ luaejdb["Q"] = setmetatable(Q, {
     return obj;
   end;
 })
+
+-- ------------ EJDB API calls ------------------
+
+function luaejdb:find(q)
+  -- todo
+end
 
 --local q = Q("name"):Eq("Anton"):F("age"):Eq(22)
 --q:toBSON()
@@ -209,14 +278,16 @@ luaejdb["Q"] = setmetatable(Q, {
 --local q = Q("name", "Anton"):F("age", 22):F("score"):Not():Bt({ 1, 3 })
 --q:toBSON()
 
---local q = Q("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(Q("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll():Max(11):Skip(2)
---local bsd = q:toBSON()
---local js = bson.from_bson(bson.string_source(bsd))
---print(inspect(js))
+local q = Q("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(Q("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll():Max(11):Skip(2)
+q:OrderBy("name asc", "age DESC"):OrderBy({ name = -1 }, { age = -1 }, { c = 1 })
+q:NotFields("a", "b")
+local bsd = q:toBSON()
+local js = bson.from_bson(bson.string_source(bsd))
+print(inspect(js))
 --
---local bsd = q:toHintsBSON()
---local js = bson.from_bson(bson.string_source(bsd))
---print(inspect(js))
+local bsd = q:toHintsBSON()
+local js = bson.from_bson(bson.string_source(bsd))
+print(inspect(js))
 
 --local db = luaejdb.open("mydb", luaejdb.DEFAULT_OPEN_MODE);
 --for k, v in pairs(db) do

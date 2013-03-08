@@ -77,6 +77,14 @@ int dbclose(lua_State *L) {
     return 0;
 }
 
+int find(lua_State *L) {
+
+
+    
+}
+
+
+
 
 int dbopen(lua_State *L) {
     int argc = lua_gettop(L);
