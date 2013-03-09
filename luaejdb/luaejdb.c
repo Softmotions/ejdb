@@ -78,13 +78,26 @@ int dbclose(lua_State *L) {
 }
 
 int find(lua_State *L) {
+    //cname, q.toBSON(), orBsons, q.toHintsBSON(), flags
+    luaL_checktype(L, 1, LUA_TTABLE); //self
+    lua_getfield(L, 1, EJDBUDATAKEY);
+    EJDBDATA *data = luaL_checkudata(L, -1, EJDBUDATAMT);
+    const char *cname = luaL_checkstring(L, 2); //collections name
+    const char *qbson = luaL_checkstring(L, 3); //Query bson
+    luaL_checktype(L, 4, LUA_TTABLE); //or joined
+    const char *hbson = luaL_checkstring(L, 5); //Hints bson
+    if (!data || !data->db || !qbson || !hbson) {
+        luaL_error(L, "Illegal arguments");
+    }
+    EJDB *db = data->db;
 
 
-    
+
+    //bson_print_raw(stderr, hbson, 0);
+
+
+    return 0;
 }
-
-
-
 
 int dbopen(lua_State *L) {
     int argc = lua_gettop(L);
@@ -119,6 +132,9 @@ int dbopen(lua_State *L) {
     //Add methods
     lua_pushcfunction(L, dbclose);
     lua_setfield(L, -2, "close");
+
+    lua_pushcfunction(L, find);
+    lua_setfield(L, -2, "_find");
 
     if (lua_gettop(L) - argc != 1) {
         ejdbdel(db);

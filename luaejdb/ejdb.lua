@@ -11,7 +11,7 @@ function strim(s)
   return from > #s and "" or s:match(".*%S", from)
 end
 
--- ------- EJDB query builder -------------
+-- ----------- Meta-tables ----------------
 
 local Q = {}
 local mtQObj = {
@@ -20,6 +20,36 @@ local mtQObj = {
     return q:toBSON()
   end
 }
+
+local DB = {}
+local mtDBObj = {
+  __index = DB
+}
+
+-- ------- EJDB DB ---------------------------
+
+local luaejdb_open = luaejdb.open
+function luaejdb:open(path, omode, ...)
+  if type(omode) ~= "number" then
+    omode = luaejdb.DEFAULT_OPEN_MODE
+  end
+  return setmetatable(luaejdb_open(path, omode), mtDBObj)
+end
+
+function DB:find(cname, q, ...)
+  assert(getmetatable(q) == mtQObj, "Query object must be instance of 'luaejdb.Q' class `q = luaejdb.Q()`")
+  local flags = ...
+  if (type(flags) ~= "number") then
+    flags = 0
+  end
+  local orBsons = {}
+  for _, o in ipairs(q:getJoinedORs()) do
+    table.insert(orBsons, o.toBSON())
+  end
+  return self:_find(cname, q:toBSON(), orBsons, q:toHintsBSON(), flags)
+end
+
+-- ------- EJDB Query  -------------
 
 function Q:_init(fname, ...)
   self._field = nil --current field
@@ -160,7 +190,7 @@ end
 
 function Q:Skip(val) self:_hintOp("$skip", val, "number") return self end
 
-function Q:Max(val) self:_hintOp("$limit", val, "number") return self end
+function Q:Max(val) self:_hintOp("$max", val, "number") return self end
 
 function Q:OrderBy(...)
   local ospec = Q()
@@ -247,7 +277,7 @@ function Q:toBSON()
     if op[2][1] == nil then
       val = op[2][2]
     else
-      val = op[2]
+      val = { [op[2][1]] = op[2][2] }
     end
     table.insert(bstbl, bson.pack(key, val))
   end
@@ -265,19 +295,6 @@ luaejdb.Q = setmetatable(Q, {
 
 -- ------------ EJDB API calls ------------------
 
-function luaejdb:find(q, ...)
-  assert(getmetatable(q) == mtQObj, "Query object must be instance of 'luaejdb.Q' class `q = luaejdb.Q()`")
-  local flags = ...
-  if (type(flags) ~= "number") then
-    flags = 0
-  end
-  local orBsons = {}
-  for _, o in ipairs(q:getJoinedORs()) do
-    table.insert(orBsons, o.toBSON())
-  end
-  return luaejdb.find(q.toBSON(), orBsons, q.toHintsBSON(), flags)
-end
-
 --local q = Q("name"):Eq("Anton"):F("age"):Eq(22)
 --q:toBSON()
 --
@@ -287,25 +304,26 @@ end
 --local q = Q("name", "Anton"):F("age", 22):F("score"):Not():Bt({ 1, 3 })
 --q:toBSON()
 
-local q = Q("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(Q("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll():Max(11):Skip(2)
-q:OrderBy("name asc", "age DESC"):OrderBy({ name = -1 }, { age = -1 }, { c = 1 })
-q:NotFields("a", "b")
-local bsd = q:toBSON()
-local js = bson.from_bson(bson.string_source(bsd))
-print(inspect(js))
---
-local bsd = q:toHintsBSON()
-local js = bson.from_bson(bson.string_source(bsd))
-print(inspect(js))
+--local q = Q("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(Q("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll():Max(11):Skip(2)
+--q:OrderBy("name asc", "age DESC"):OrderBy({ name = -1 }, { age = -1 }, { c = 1 })
+--q:NotFields("a", "b")
+--local bsd = q:toBSON()
+--local js = bson.from_bson(bson.string_source(bsd))
+--print(inspect(js))
+-- --
+--local bsd = q:toHintsBSON()
+--local js = bson.from_bson(bson.string_source(bsd))
+--print(inspect(js))
 
 --local db = luaejdb.open("mydb", luaejdb.DEFAULT_OPEN_MODE);
+
 --for k, v in pairs(db) do
 --  print(k, v)
 --end
 --db:find("mycoll", { { name = "anton", age = { ["$gt"] = 2 } } })
 --db:find("mycoll", "name=?, age>?, ")
 
---db.find(Q().F("name").Icase().In({1,2,3}).F("score").In({ 30, 231 }).Order("name", 1, "age", 2).Skip(10).Max(100));
+--db:find(Q().F("name").Icase().In({1,2,3}).F("score").In({ 30, 231 }).Order("name", 1, "age", 2).Skip(10).Max(100));
 --db:close()
 
 --[[local o = {

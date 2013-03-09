@@ -182,9 +182,18 @@ end
 function pack(k, v)
   local ot = type(v)
   local mt = getmetatable(v)
-
   if ot == "number" then
-    return "\1" .. k .. "\0" .. ll.to_double(v)
+    if v % 1 == 0 then
+      if -2 ^ 31 <= v and v <= 2 ^ 31 then
+        return "\16" .. k .. "\0" .. ll.num_to_le_int(v, 4)
+      elseif -2 ^ 63 <= v and v <= 2 ^ 63 then
+        return "\18" .. k .. "\0" .. ll.num_to_le_int(v, 8)
+      else
+        assert(false, "Invalid number value")
+      end
+    else
+      return "\1" .. k .. "\0" .. ll.to_double(v)
+    end
   elseif ot == "nil" then
     return "\10" .. k .. "\0"
   elseif ot == "string" then
@@ -261,8 +270,7 @@ function to_bson(ob)
     m = table.concat(r)
   elseif onlyarray then
     local r = {}
-    local low = 0
-    --if seen_n [ 0 ] then low = 0 end
+    local low = 1
     for i = low, high_n do
       r[i] = pack(i, seen_n[i])
     end
