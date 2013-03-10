@@ -97,3 +97,4 @@ tcejdb/debian/*.debhelper
 
 
 luaejdb/Makefile
+luaejdb/test/testdb*
