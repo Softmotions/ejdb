@@ -6,21 +6,18 @@
 static void lua_push_bson_value(lua_State *L, bson_iterator *it);
 static void lua_push_bson_table(lua_State *L, bson_iterator *it);
 static void lua_push_bson_array(lua_State *L, bson_iterator *it);
+static void lua_to_bson_impl(lua_State *L, int spos, bson *bs);
 
 void lua_init_bson(lua_State *L) {
     if (!lua_istable(L, -1)) {
-        return luaL_error(L, "luainitbson: Table must be on top of lua stack");
+        luaL_error(L, "luainitbson: Table must be on top of lua stack");
+        return;
     }
     lua_pushcfunction(L, lua_from_bson);
     lua_setfield(L, -2, "lua_from_bson");
 
     lua_pushcfunction(L, lua_to_bson);
     lua_setfield(L, -2, "lua_to_bson");
-}
-
-static int null_value(lua_State *L) {
-    lua_pushnil(L);
-    return 1;
 }
 
 void lua_push_bsontype_table(lua_State* L, int bsontype) {
@@ -133,7 +130,37 @@ int lua_from_bson(lua_State *L) {
 }
 
 int lua_to_bson(lua_State *L) {
-    return 0;
+    bson bs;
+    bson_init_as_query(&bs);
+    lua_to_bson_impl(L, lua_gettop(L), &bs);
+    if (bs.err) {
+        lua_pushstring(L, bson_first_errormsg(&bs));
+        return lua_error(L);
+    }
+    lua_pushlstring(L, bson_data(&bs), bson_size(&bs));
+    return 1;
+}
+
+static void lua_append_bson(lua_State *L, const char *key, int vpos, bson *bs, int tref) {
+    int vtype = lua_type(L, vpos);
+    
+}
+
+static void lua_to_bson_impl(lua_State *L, int tpos, bson *bs) {
+    lua_newtable(L);
+    int tref = luaL_ref(L, LUA_REGISTRYINDEX);
+    for (lua_pushnil(L); lua_next(L, tpos); lua_pop(L, 1)) {
+        int ktype = lua_type(L, -2);
+        if (ktype == LUA_TNUMBER) {
+            char key[TCNUMBUFSIZ];
+            bson_numstrn(key, TCNUMBUFSIZ, (int64_t) lua_tonumber(L, -2));
+            key[TCNUMBUFSIZ - 1] = '\0';
+            lua_append_bson(L, key, -1, bs, tref);
+        } else if (ktype == LUA_TSTRING) {
+            lua_append_bson(L, lua_tostring(L, -2), -1, bs, tref);
+        }
+    }
+    lua_unref(L, tref);
 }
 
 
