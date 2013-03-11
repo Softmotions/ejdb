@@ -96,5 +96,4 @@ tcejdb/debian/*.debhelper
 /python3-ejdb_*.deb
 
 
-luaejdb/Makefile
 luaejdb/test/testdb*
