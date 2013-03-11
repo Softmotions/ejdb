@@ -120,10 +120,7 @@ static void lua_push_bson_array(lua_State *L, bson_iterator *it) {
 }
 
 int lua_from_bson(lua_State *L) {
-    const void *bsdata = lua_tostring(L, -1);
-    if (!bsdata) {
-        return luaL_error(L, "luafrombson: BSON binary string must be on top of stack");
-    }
+    const void *bsdata = luaL_checkstring(L, lua_gettop(L));
     bson_iterator it;
     bson_iterator_from_buffer(&it, bsdata);
     lua_push_bson_table(L, &it);
