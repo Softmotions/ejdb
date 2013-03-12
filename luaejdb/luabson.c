@@ -202,14 +202,19 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                         lua_val_to_bson(L, nbuf, -1, bs, tref);
                     }
                     if (key) bson_append_finish_array(bs);
-                } else if (query) { //special query case
-                    if (key) bson_append_start_object(bs, key);
-                    lua_getfield(L, vpos, "_oarr");
+                } else if (query) { //special query builder case
+                    //oarr format:
+                    //{ {fname1, v1, v2...}, {fname2, v21, v22,..} }
+                    //where: vN: {op, val} OR {val} with '__bval' metafield
+                    //Eg: {fname : {$inc : {...}, $dec : {...}}} -> {fname, {$inc, {}}, {$dec, {}}}
+
+                    lua_getfield(L, vpos, "_oarr"); //+oarr
                     if (!lua_istable(L, -1)) { //it is not array
+                        lua_pop(L, 1);
                         break;
                     }
+                    if (key) bson_append_start_object(bs, key);
                     //iterate over _oarr
-                    //{ {fname1, v1, v2...}, {fname2, v21, v22,..} }
                     int ipos = lua_gettop(L);
                     size_t ilen = lua_objlen(L, ipos);
                     lua_checkstack(L, 3);
@@ -231,20 +236,26 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                                 lua_pop(L, 1); //pop val
                                 break;
                             }
-                            //{fname : {$inc : {}, $dec : {}}} -> {fname, {$inc, {}}, {$dec, {}}}
-                            //{fname : val} -> {fname, {val}} there {val} has __bval metafield
-                            if (i == 2 && luaL_getmetafield(L, -1, "__bval")) { //single value
-                                lua_pop(L, 1); //pop metafield
-                                lua_rawgeti(L, -1, 1); //first value element
+                            int vblkpos = lua_gettop(L);
+                            if (i == 2 && luaL_getmetafield(L, -1, "__bval")) { //{val} single value +metafield
+                                lua_pop(L, 1); //-metafield
+                                lua_rawgeti(L, -1, 1); //+val
                                 lua_val_to_bson(L, fname, lua_gettop(L), bs, tref);
-                                lua_pop(L, 1); //pop val
-                                break;
-                            } else { //op value
-                               if (!wrapped) {
-                                   bson_append_start_object(bs, fname);
-                                   wrapped = true;
-                               }
-                               //todo
+                                lua_pop(L, 1); //-val
+                                break; //Terminate due single val
+                            } else { //{op, val} value
+                                if (!wrapped) {
+                                    bson_append_start_object(bs, fname);
+                                    wrapped = true;
+                                }
+                                lua_rawgeti(L, vblkpos, 1); //+op
+                                const char *op = lua_tostring(L, -1);
+                                if (op) {
+                                    lua_rawgeti(L, vblkpos, 2); //+val
+                                    lua_val_to_bson(L, op, lua_gettop(L), bs, tref);
+                                    lua_pop(L, 1); //-val
+                                }
+                                lua_pop(L, 1); //-op
                             }
                         }
                         if (wrapped) {
