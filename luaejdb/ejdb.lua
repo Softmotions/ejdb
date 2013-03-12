@@ -1,8 +1,6 @@
-require("bson");
 local luaejdb = require("luaejdb")
 assert(type(luaejdb) == "table")
 local inspect = require("inspect")
-local ll = require("ll")
 
 -- ------------ Misc -----------------------
 
@@ -16,9 +14,7 @@ end
 local Q = {}
 local mtQObj = {
   __index = Q;
-  __tobson = function(q)
-    return q:toBSON()
-  end
+  __query = true
 }
 
 local DB = {}
@@ -52,11 +48,12 @@ end
 -- ------- EJDB Query  -------------
 
 function Q:_init(fname, ...)
-  self._field = nil --current field
-  self._omap = {} --field operations
+  self._field = nil -- current field
+  self._omap = {} -- field operations
   self._or = {} -- OR joined restrictions
   self._ocnt = 1 -- field order counter
   self._hints = nil -- hints Q
+  self._qarr = nil -- resulting query array
   if fname then
     self:F(fname, ...)
   end
@@ -261,27 +258,23 @@ function Q:toHintsBSON()
   return (self._hints or Q()):toBSON()
 end
 
-function Q:toBSON()
-  local bstbl = {}
-  local qarr = {}
+function Q:_finish()
+  if (self._qarr) then
+    return
+  end
+  self._qarr = {};
+  local qarr = self._qarr;
   for k, _ in pairs(self._omap) do
     qarr[#qarr + 1] = { k, self._omap[k] }
   end
   table.sort(qarr, function(o1, o2)
     return o1[2][1] < o2[2][1]
   end)
-  for i, qp in ipairs(qarr) do
-    local key = qp[1]
-    local op = qp[2]
-    local val
-    if op[2][1] == nil then
-      val = op[2][2]
-    else
-      val = { [op[2][1]] = op[2][2] }
-    end
-    table.insert(bstbl, bson.pack(key, val))
-  end
-  return (ll.num_to_le_uint(#bstbl + 4 + 1) .. table.concat(bstbl) .. "\0"), false
+end
+
+function Q:toBSON()
+  self:_finish()
+  return luaejdb.query_to_bson(self)
 end
 
 luaejdb.Q = setmetatable(Q, {

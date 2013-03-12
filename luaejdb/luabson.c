@@ -15,10 +15,14 @@ void lua_init_bson(lua_State *L) {
         return;
     }
     lua_pushcfunction(L, lua_from_bson);
-    lua_setfield(L, -2, "lua_from_bson");
+    lua_setfield(L, -2, "from_bson");
 
     lua_pushcfunction(L, lua_to_bson);
-    lua_setfield(L, -2, "lua_to_bson");
+    lua_setfield(L, -2, "to_bson");
+
+    lua_pushcfunction(L, lua_query_to_bson);
+    lua_setfield(L, -2, "query_to_bson");
+
 }
 
 void lua_push_bsontype_table(lua_State* L, int bsontype) {
@@ -293,6 +297,15 @@ static void lua_to_bson_impl(lua_State *L, int tpos, bson *bs) {
         }
     }
     lua_unref(L, tref);
+}
+
+int lua_query_to_bson(lua_State *L) {
+    //todo
+    return 0;
+}
+
+static void lua_query_to_bson_impl(lua_State *L, int tpos, bson *bs) {
+    //todo
 }
 
 
