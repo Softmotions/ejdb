@@ -142,9 +142,7 @@ static int db_find(lua_State *L) {
     EJCOLL *coll = NULL;
     uint32_t count = 0;
 
-    //lua_objlen(L, 4)
-
-    //bson_print_raw(stderr, hbson, 0);
+    bson_print_raw(stderr, qbsonbuf, 0);
 
     return 0;
 }

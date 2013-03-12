@@ -1,4 +1,4 @@
-CFLAGS=-g -O0 -fPIC -std=c99 -Wall
+CFLAGS=-g -O0 -fPIC -std=c99 -Wall -D_GNU_SOURCE
 
 build:
 	luarocks --pack-binary-rock CFLAGS='$(CFLAGS)' make

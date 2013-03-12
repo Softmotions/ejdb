@@ -11,16 +11,20 @@ end
 
 -- ----------- Meta-tables ----------------
 
-local Q = {}
-local mtQObj = {
-  __index = Q;
+local B = {}
+local mtBObj = {  --Meta-table for JSON builder
+  __index = B;
   __query = true
+}
+local mtBVal = { --Meta-table for internal JSON builder value
+  __bval = true
 }
 
 local DB = {}
 local mtDBObj = {
   __index = DB
 }
+
 
 -- ------- EJDB DB ---------------------------
 
@@ -33,7 +37,7 @@ function luaejdb:open(path, omode, ...)
 end
 
 function DB:find(cname, q, ...)
-  assert(getmetatable(q) == mtQObj, "Query object must be instance of 'luaejdb.Q' class `q = luaejdb.Q()`")
+  assert(getmetatable(q) == mtBObj, "Query object must be instance of 'luaejdb.B' class `q = luaejdb.B()`")
   local flags = ...
   if (type(flags) ~= "number") then
     flags = 0
@@ -47,28 +51,27 @@ end
 
 -- ------- EJDB Query  -------------
 
-function Q:_init(fname, ...)
+function B:_init(fname, ...)
   self._field = nil -- current field
-  self._omap = {} -- field operations
   self._or = {} -- OR joined restrictions
-  self._ocnt = 1 -- field order counter
   self._hints = nil -- hints Q
-  self._qarr = nil -- resulting query array
+  self._omap = {} -- field operations
+  self._oarr = {} -- resulting array of field operations
   if fname then
     self:F(fname, ...)
   end
   return self
 end
 
-function Q:_value(val)
+function B:_value(val)
   return val
 end
 
-function Q:_checkop()
+function B:_checkop()
   assert(type(self._field) == "string")
 end
 
-function Q:_setop(op, val, ...)
+function B:_setop(op, val, ...)
   self:_checkop()
   local types, replace = ...
   local ttypes = type(types)
@@ -88,32 +91,37 @@ function Q:_setop(op, val, ...)
     if not found then
     end
   end
+  if op == nil then
+    replace = true
+  end
   val = self:_toOpVal(val)
   local olist = self._omap[self._field]
   if not olist then
-    olist = { self._ocnt };
-    self._ocnt = self._ocnt
+    olist = { self._field }
     self._omap[self._field] = olist
-    self._ocnt = self._ocnt + 1
+    self._oarr[#self._oarr + 1] = olist
   elseif replace then
-    olist = { olist[1] }
-    self._omap[self._field] = olist
+    for i = 2, #olist do olist[i] = nil end
   end
-  table.insert(olist, { op, val })
+  if (op == nil) then
+    table.insert(olist, setmetatable({ val }, mtBVal))
+  else
+    table.insert(olist, { op, val })
+  end
 end
 
-function Q:_toOpVal(val)
+function B:_toOpVal(val)
   return val
 end
 
-function Q:_hintOp(op, val, ...)
+function B:_hintOp(op, val, ...)
   if not self._hints then
-    self._hints = Q()
+    self._hints = B()
   end
   self._hints:_rootOp(op, val, ...)
 end
 
-function Q:_rootOp(name, val, ...)
+function B:_rootOp(name, val, ...)
   local types = ...
   self:F(name)
   self:_setop(nil, val, types, true)
@@ -121,7 +129,7 @@ function Q:_rootOp(name, val, ...)
   return self
 end
 
-function Q:F(fname, ...)
+function B:F(fname, ...)
   assert(fname == nil or type(fname) == "string")
   self._field = fname
   if #{ ... } == 1 then
@@ -131,66 +139,73 @@ function Q:F(fname, ...)
   return self
 end
 
-function Q:Eq(val) self:_setop(nil, val, nil, true) return self end
+-- Generic key=value
+function B:KeyVal(key, val)
+  self:F(key);
+  self:_setop(nil, val, nil, true)
+  return self
+end
 
-function Q:ElemMatch(val) self:_setop("$elemMatch", val) return self end
+function B:Eq(val) self:_setop(nil, val, nil, true) return self end
 
-function Q:Not(val) self:_setop("$not", val) return self end
+function B:ElemMatch(val) self:_setop("$elemMatch", val) return self end
 
-function Q:Gt(val) self:_setop("$gt", val) return self end
+function B:Not(val) self:_setop("$not", val) return self end
 
-function Q:Gte(val) self:_setop("$gte", val) return self end
+function B:Gt(val) self:_setop("$gt", val) return self end
 
-function Q:Lt(val) self:_setop("$lt", val) return self end
+function B:Gte(val) self:_setop("$gte", val) return self end
 
-function Q:Lte(val) self:_setop("$lte", val) return self end
+function B:Lt(val) self:_setop("$lt", val) return self end
 
-function Q:Icase(val) self:_setop("$icase", val) return self end
+function B:Lte(val) self:_setop("$lte", val) return self end
 
-function Q:Begin(val) self:_setop("$begin", val) return self end
+function B:Icase(val) self:_setop("$icase", val) return self end
 
-function Q:In(val) self:_setop("$in", val) return self end
+function B:Begin(val) self:_setop("$begin", val) return self end
 
-function Q:NotIn(val) self:_setop("$nin", val) return self end
+function B:In(val) self:_setop("$in", val) return self end
 
-function Q:Bt(val) self:_setop("$bt", val) return self end
+function B:NotIn(val) self:_setop("$nin", val) return self end
 
-function Q:StrAnd(val) self:_setop("$strand", val) return self end
+function B:Bt(val) self:_setop("$bt", val) return self end
 
-function Q:StrOr(val) self:_setop("$strand", val) return self end
+function B:StrAnd(val) self:_setop("$strand", val) return self end
 
-function Q:Inc(val) self:_setop("$inc", val) return self end
+function B:StrOr(val) self:_setop("$strand", val) return self end
 
-function Q:Set(val) return self:_rootOp("$set", val) end
+function B:Inc(val) self:_setop("$inc", val) return self end
 
-function Q:AddToSet(val) return self:_rootOp("$addToSet", val) end
+function B:Set(val) return self:_rootOp("$set", val) end
 
-function Q:AddToSetAll(val) return self:_rootOp("$addToSetAll", val) end
+function B:AddToSet(val) return self:_rootOp("$addToSet", val) end
 
-function Q:Pull(val) return self:_rootOp("$pull", val) end
+function B:AddToSetAll(val) return self:_rootOp("$addToSetAll", val) end
 
-function Q:PullAll(val) return self:_rootOp("$pullAll", val) end
+function B:Pull(val) return self:_rootOp("$pull", val) end
 
-function Q:Upsert(val) return self:_rootOp("$upsert", val) end
+function B:PullAll(val) return self:_rootOp("$pullAll", val) end
 
-function Q:DropAll() return self:_rootOp("$dropall", true) end
+function B:Upsert(val) return self:_rootOp("$upsert", val) end
 
-function Q:Do(val) return self:_rootOp("$do", val) end
+function B:DropAll() return self:_rootOp("$dropall", true) end
 
-function Q:Or(...)
+function B:Do(val) return self:_rootOp("$do", val) end
+
+function B:Or(...)
   for i, v in ipairs({ ... }) do
-    assert(getmetatable(v) == mtQObj, "Each 'or' argument must be instance of 'luaejdb.Q' class")
+    assert(getmetatable(v) == mtBObj, "Each 'or' argument must be instance of 'luaejdb.B' class")
     table.insert(self._or, v)
   end
   return self
 end
 
-function Q:Skip(val) self:_hintOp("$skip", val, "number") return self end
+function B:Skip(val) self:_hintOp("$skip", val, "number") return self end
 
-function Q:Max(val) self:_hintOp("$max", val, "number") return self end
+function B:Max(val) self:_hintOp("$max", val, "number") return self end
 
-function Q:OrderBy(...)
-  local ospec = Q()
+function B:OrderBy(...)
+  local ospec = B()
   for _, v in ipairs({ ... }) do
     local key
     local oop = 1
@@ -220,16 +235,16 @@ function Q:OrderBy(...)
   return self
 end
 
-function Q:Fields(...)
+function B:Fields(...)
   return self:_fields(1, ...)
 end
 
-function Q:NotFields(...)
+function B:NotFields(...)
   return self:_fields(-1, ...)
 end
 
-function Q:_fields(definc, ...)
-  local fspec = Q()
+function B:_fields(definc, ...)
+  local fspec = B()
   for _, v in ipairs({ ... }) do
     local key
     local inc = definc
@@ -250,37 +265,22 @@ function Q:_fields(definc, ...)
   return self
 end
 
-function Q:getJoinedORs()
+function B:getJoinedORs()
   return self._or
 end
 
-function Q:toHintsBSON()
-  return (self._hints or Q()):toBSON()
+function B:toHintsBSON()
+  return (self._hints or B()):toBSON()
 end
 
-function Q:_finish()
-  if (self._qarr) then
-    return
-  end
-  self._qarr = {};
-  local qarr = self._qarr;
-  for k, _ in pairs(self._omap) do
-    qarr[#qarr + 1] = { k, self._omap[k] }
-  end
-  table.sort(qarr, function(o1, o2)
-    return o1[2][1] < o2[2][1]
-  end)
+function B:toBSON()
+  return luaejdb.to_bson(self)
 end
 
-function Q:toBSON()
-  self:_finish()
-  return luaejdb.query_to_bson(self)
-end
-
-luaejdb.Q = setmetatable(Q, {
+luaejdb.B = setmetatable(B, {
   __call = function(q, ...)
     local obj = {}
-    setmetatable(obj, mtQObj)
+    setmetatable(obj, mtBObj)
     obj:_init(...)
     return obj;
   end;
@@ -288,16 +288,16 @@ luaejdb.Q = setmetatable(Q, {
 
 -- ------------ EJDB API calls ------------------
 
---local q = Q("name"):Eq("Anton"):F("age"):Eq(22)
+--local q = B("name"):Eq("Anton"):F("age"):Eq(22)
 --q:toBSON()
 --
---local q = Q("name", "Anton"):F("age", 22):F("score"):Bt({ 1, 3 })
+--local q = B("name", "Anton"):F("age", 22):F("score"):Bt({ 1, 3 })
 --q:toBSON()
 --
---local q = Q("name", "Anton"):F("age", 22):F("score"):Not():Bt({ 1, 3 })
+--local q = B("name", "Anton"):F("age", 22):F("score"):Not():Bt({ 1, 3 })
 --q:toBSON()
 
---local q = Q("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(Q("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll():Max(11):Skip(2)
+--local q = B("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(B("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll():Max(11):Skip(2)
 --q:OrderBy("name asc", "age DESC"):OrderBy({ name = -1 }, { age = -1 }, { c = 1 })
 --q:NotFields("a", "b")
 --local bsd = q:toBSON()
@@ -316,7 +316,7 @@ luaejdb.Q = setmetatable(Q, {
 --db:find("mycoll", { { name = "anton", age = { ["$gt"] = 2 } } })
 --db:find("mycoll", "name=?, age>?, ")
 
---db:find(Q().F("name").Icase().In({1,2,3}).F("score").In({ 30, 231 }).Order("name", 1, "age", 2).Skip(10).Max(100));
+--db:find(B().F("name").Icase().In({1,2,3}).F("score").In({ 30, 231 }).Order("name", 1, "age", 2).Skip(10).Max(100));
 --db:close()
 
 --[[local o = {
