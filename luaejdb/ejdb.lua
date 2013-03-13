@@ -12,19 +12,82 @@ end
 -- ----------- Meta-tables ----------------
 
 local B = {}
-local mtBObj = {  --Meta-table for JSON builder
+local mtBObj = {
+  --Meta-table for JSON builder
   __index = B;
   __query = true
 }
-local mtBVal = { --Meta-table for internal JSON builder value
+local mtBVal = {
+  --Meta-table for internal JSON builder value
   __bval = true
 }
 
-local DB = {}
+-- BSON types markers
+local mtBSON_OID = {
+  __bsontype = luaejdb.BSON_OID
+}
+
+local mtBSON_DATE = {
+  __bsontype = luaejdb.BSON_DATE
+}
+
+local mtBSON_REGEX = {
+  __bsontype = luaejdb.BSON_REGEX
+}
+
+local mtBSON_BINDATA = {
+  __bsontype = luaejdb.BSON_BINDATA
+}
+
+local mtBSON_NULL = {
+  __bsontype = luaejdb.BSON_NULL
+}
+
+local mtBSON_UNDEFINED = {
+  __bsontype = luaejdb.BSON_UNDEFINED
+}
+
+function luaejdb.toOID(val)
+  assert(type(val) == "string" and #val == 24)
+  return setmetatable({ val }, mtBSON_OID);
+end
+
+function luaejdb.toDate(val)
+  assert(type(val) == "number")
+  return setmetatable({ val }, mtBSON_DATE);
+end
+
+function luaejdb.toRegexp(re, opts)
+  opts = opts or ""
+  assert(type(re) == "string" and type(opts) == "string")
+  return setmetatable({ re, opts }, mtBSON_REGEX);
+end
+
+function luaejdb.toBinData(val)
+  assert(type(val) == "string")
+  return setmetatable({ val }, mtBSON_BINDATA);
+end
+
+function luaejdb.toNull()
+  return setmetatable({}, mtBSON_NULL);
+end
+
+function luaejdb.toUndefined()
+  return setmetatable({}, mtBSON_UNDEFINED);
+end
+
+
+local DB = {
+  toOID = luaejdb.toOID,
+  toDate = luaejdb.toDate,
+  toRegexp = luaejdb.toRegexp,
+  toBinData = luaejdb.toBinData,
+  toNull = luaejdb.toNull,
+  toUndefined = luaejdb.toUndefined
+}
 local mtDBObj = {
   __index = DB
 }
-
 
 -- ------- EJDB DB ---------------------------
 
@@ -145,6 +208,7 @@ function B:KeyVal(key, val)
   self:_setop(nil, val, nil, true)
   return self
 end
+
 
 function B:Eq(val) self:_setop(nil, val, nil, true) return self end
 
@@ -285,88 +349,6 @@ luaejdb.B = setmetatable(B, {
     return obj;
   end;
 })
-
--- ------------ EJDB API calls ------------------
-
---local q = B("name"):Eq("Anton"):F("age"):Eq(22)
---q:toBSON()
---
---local q = B("name", "Anton"):F("age", 22):F("score"):Bt({ 1, 3 })
---q:toBSON()
---
---local q = B("name", "Anton"):F("age", 22):F("score"):Not():Bt({ 1, 3 })
---q:toBSON()
-
---local q = B("name", "Anton"):F("age"):Gt(22):F("address"):ElemMatch(B("city", "Novosibirsk"):F("bld"):Lt(28)):DropAll():Max(11):Skip(2)
---q:OrderBy("name asc", "age DESC"):OrderBy({ name = -1 }, { age = -1 }, { c = 1 })
---q:NotFields("a", "b")
---local bsd = q:toBSON()
---local js = bson.from_bson(bson.string_source(bsd))
---print(inspect(js))
--- --
---local bsd = q:toHintsBSON()
---local js = bson.from_bson(bson.string_source(bsd))
---print(inspect(js))
-
---local db = luaejdb.open("mydb", luaejdb.DEFAULT_OPEN_MODE);
-
---for k, v in pairs(db) do
---  print(k, v)
---end
---db:find("mycoll", { { name = "anton", age = { ["$gt"] = 2 } } })
---db:find("mycoll", "name=?, age>?, ")
-
---db:find(B().F("name").Icase().In({1,2,3}).F("score").In({ 30, 231 }).Order("name", 1, "age", 2).Skip(10).Max(100));
---db:close()
-
---[[local o = {
-a = "lol";
-b = "foo";
-c = 42;
-d = { 5, 4, 3, 2, 1 };
-e = { { { {} } } };
-f = { [true] = { baz = "mars" } };
-g = bson.object_id("abcdefghijkl");
-r = bson.regexp("$.?", "g")
---z = { [{}] = {} } ; -- Can't test as tables are unique
-}
-
-for k, v in pairs(o) do
-print("k=", k);
-end
-
-print("\n\n")
-
-assert(tostring(bson.object_id(bson.object_id_from_string(tostring(o.g)))) == tostring(o.g))
-
-local b = bson.to_bson(o)
-local t = bson.from_bson(bson.string_source(b))
-
-for k, v in pairs(t) do
-print("k=", k, "v=", v);
-end
-
-local function confirm ( orig , new , d )
-d = d or 1
-local ok = true
-for k ,v in pairs ( orig ) do
-local nv = new [ k ]
---print(string.rep ( "\t" , d-1) , "KEY", type(k),k, "VAL",type(v),v,"NEWVAL",type(nv),nv)
-if nv == v then
-elseif type ( v ) == "table" and type ( nv ) == "table" then
---print(string.rep ( "\t" , d-1) , "Descending" , k )
-ok = ok and confirm ( v , nv , d+1 )
-else
-print(string.rep ( "\t" , d-1) , "Failed on" , k , v , nv )
-ok = false
-end
-end
-return ok
-end
-
-assert ( confirm ( o , t ) )
-assert ( bson.to_bson ( t ) == bson.to_bson ( t ) )
-assert ( bson.to_bson ( t ) == b )]]
-
+luaejdb.Q = luaejdb.B -- Name variations
 
 return luaejdb;

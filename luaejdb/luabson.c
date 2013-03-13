@@ -220,9 +220,10 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                     //iterate over _oarr
                     int ipos = lua_gettop(L);
                     size_t ilen = lua_objlen(L, ipos);
-                    lua_checkstack(L, 3);
+                    lua_checkstack(L, 2);
                     for (size_t i = 1; i <= ilen; ++i, lua_pop(L, 1)) {
                         lua_rawgeti(L, ipos, i);
+                        //gettop == 3
                         if (!lua_istable(L, -1)) continue;
                         char *fname = NULL;
                         int jpos = lua_gettop(L);
@@ -240,11 +241,11 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                                 break;
                             }
                             int vblkpos = lua_gettop(L);
-                            if (i == 2 && luaL_getmetafield(L, -1, "__bval")) { //{val} single value +metafield
+                            if (j == 2 && luaL_getmetafield(L, -1, "__bval")) { //{val} single value +metafield
                                 lua_pop(L, 1); //-metafield
                                 lua_rawgeti(L, vblkpos, 1); //+val
                                 lua_val_to_bson(L, fname, lua_gettop(L), bs, tref);
-                                lua_pop(L, 1); //-val
+                                lua_pop(L, 2); //-val -lua_rawgeti
                                 break; //Terminate due single val
                             } else { //{op, val} value
                                 if (!wrapped) {
@@ -270,6 +271,7 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                         }
                     }
                     if (key) bson_append_finish_object(bs);
+                    lua_pop(L, 1); //-oarr
                 } else {
                     if (key) bson_append_start_object(bs, key);
                     for (lua_pushnil(L); lua_next(L, vpos); lua_pop(L, 1)) {
@@ -355,6 +357,8 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                 } else {
                     bson_append_long(bs, key, iv);
                 }
+            } else {
+                bson_append_double(bs, key, numval);
             }
             break;
         }
