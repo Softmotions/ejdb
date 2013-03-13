@@ -23,6 +23,7 @@ void lua_init_bson(lua_State *L) {
 
 }
 
+//-0/+1
 void lua_push_bsontype_table(lua_State* L, int bsontype) {
     lua_newtable(L); //table
     lua_newtable(L); //metatable
@@ -130,6 +131,7 @@ int lua_from_bson(lua_State *L) {
 }
 
 int lua_to_bson(lua_State *L) {
+    int argc = lua_gettop(L);
     luaL_checktype(L, lua_gettop(L), LUA_TTABLE);
     bson bs;
     bson_init_as_query(&bs);
@@ -139,8 +141,11 @@ int lua_to_bson(lua_State *L) {
         bson_destroy(&bs);
         return lua_error(L);
     }
-    lua_pushlstring(L, bson_data(&bs), bson_size(&bs));
+    lua_pushlstring(L, bson_data(&bs), bson_size(&bs)); //+1 bson data as string
     bson_destroy(&bs);
+    if (lua_gettop(L) - argc  != 1) {
+        return luaL_error(L, "lua_to_bson: Invalid stack size: %d should be: %d", (lua_gettop(L) - argc), 1);
+    }
     return 1;
 }
 
@@ -148,7 +153,7 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
     int vtype = lua_type(L, vpos);
     char nbuf[TCNUMBUFSIZ];
     if (key == NULL && vtype != LUA_TTABLE) {
-        assert(false);
+        luaL_error(L, "lua_val_to_bson: Table must be on top of lua stack");
         return;
     }
     switch (vtype) {
@@ -160,20 +165,18 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
             lua_checkstack(L, 3);
             int bsontype_found = luaL_getmetafield(L, vpos, "__bsontype");
             if (!bsontype_found) {
-                //check if registry tbl contains traversed tbl
-                lua_rawgeti(L, LUA_REGISTRYINDEX, tref);
-                lua_pushvalue(L, vpos);
-                lua_rawget(L, -2);
+                lua_rawgeti(L, LUA_REGISTRYINDEX, tref); //+ reg table
+                lua_pushvalue(L, vpos); //+ val
+                lua_rawget(L, -2); //-val +reg table val
                 if (lua_toboolean(L, -1)) { //already traversed
                     lua_pop(L, 2);
                     break;
                 }
-                //setup traversed state
-                lua_pop(L, 1);
+                lua_pop(L, 1); //-reg table val
                 lua_pushvalue(L, vpos);
                 lua_pushboolean(L, 1);
                 lua_rawset(L, -3);
-                lua_pop(L, 1);
+                lua_pop(L, 1); //-reg table
 
                 int len = 0;
                 bool query = false;
@@ -196,15 +199,15 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                 }
                 if (array) {
                     if (key) bson_append_start_array(bs, key);
-                    for (int i = 0; i < len; ++i, lua_pop(L, 1)) {
-                        lua_rawgeti(L, vpos, i + 1);
+                    for (int i = 1; i <= len; ++i, lua_pop(L, 1)) {
+                        lua_rawgeti(L, vpos, i);
                         bson_numstrn(nbuf, TCNUMBUFSIZ, (int64_t) i);
                         lua_val_to_bson(L, nbuf, -1, bs, tref);
                     }
                     if (key) bson_append_finish_array(bs);
                 } else if (query) { //special query builder case
                     //oarr format:
-                    //{ {fname1, v1, v2...}, {fname2, v21, v22,..} }
+                    //{ {fname1, v1, v2...}, {fname2, v21, v22,..}, ... }
                     //where: vN: {op, val} OR {val} with '__bval' metafield
                     //Eg: {fname : {$inc : {...}, $dec : {...}}} -> {fname, {$inc, {}}, {$dec, {}}}
 
@@ -239,7 +242,7 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                             int vblkpos = lua_gettop(L);
                             if (i == 2 && luaL_getmetafield(L, -1, "__bval")) { //{val} single value +metafield
                                 lua_pop(L, 1); //-metafield
-                                lua_rawgeti(L, -1, 1); //+val
+                                lua_rawgeti(L, vblkpos, 1); //+val
                                 lua_val_to_bson(L, fname, lua_gettop(L), bs, tref);
                                 lua_pop(L, 1); //-val
                                 break; //Terminate due single val
@@ -274,25 +277,25 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                         if (ktype == LUA_TNUMBER) {
                             char vkey[TCNUMBUFSIZ];
                             bson_numstrn(vkey, TCNUMBUFSIZ, (int64_t) lua_tointeger(L, -2));
-                            lua_val_to_bson(L, vkey, -1, bs, tref);
+                            lua_val_to_bson(L, vkey, lua_gettop(L), bs, tref);
                         } else if (ktype == LUA_TSTRING) {
                             size_t klen = 0;
                             const char *vkey = lua_tolstring(L, -2, &klen);
                             if (klen == JDBIDKEYNAMEL && !strcmp(JDBIDKEYNAME, vkey)) { //root level OID as string
                                 //pack OID as type table
-                                lua_pushvalue(L, -1); //dup oid on stack
-                                lua_push_bsontype_table(L, BSON_OID); //push type table
+                                lua_push_bsontype_table(L, BSON_OID); //+type table
+                                lua_pushvalue(L, -2); //dup oid on stack
                                 lua_rawseti(L, -2, 1); //pop oid val
                             }
-                            lua_val_to_bson(L, vkey, -1, bs, tref);
+                            lua_val_to_bson(L, vkey, lua_gettop(L), bs, tref);
                         }
                     }
                     if (key) bson_append_finish_object(bs);
                 }
-            } else {
+            } else { //metafield __bsontype on top
                 assert(key);
                 int bson_type = lua_tointeger(L, -1);
-                lua_pop(L, 1); //pop metafield __bsontype
+                lua_pop(L, 1); //-metafield __bsontype
                 lua_rawgeti(L, -1, 1); //get first value
                 switch (bson_type) {
                     case BSON_OID:
@@ -313,10 +316,10 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                         const char* regex = lua_tostring(L, -1);
                         lua_rawgeti(L, -2, 2); // re opts
                         const char* options = lua_tostring(L, -1);
-                        lua_pop(L, 1);
                         if (regex && options) {
                             bson_append_regex(bs, key, regex, options);
                         }
+                        lua_pop(L, 1);
                         break;
                     }
                     case BSON_BINDATA:
@@ -335,6 +338,7 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                     default:
                         break;
                 }
+                lua_pop(L, 1); //-1 first value
             }
             break;
         }
@@ -365,8 +369,8 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
 }
 
 static void lua_to_bson_impl(lua_State *L, int tpos, bson *bs) {
-    lua_newtable(L); //traverse state table
-    int tref = luaL_ref(L, LUA_REGISTRYINDEX);
-    lua_val_to_bson(L, NULL, -1, bs, tref);
+    lua_newtable(L); //+ traverse state table
+    int tref = luaL_ref(L, LUA_REGISTRYINDEX); //- traverse state table into saved ref
+    lua_val_to_bson(L, NULL, lua_gettop(L), bs, tref);
     lua_unref(L, tref);
 }
