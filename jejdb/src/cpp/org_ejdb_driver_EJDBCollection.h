@@ -26,9 +26,9 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropDB
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    syncDB
- * Signature: ()Z
+ * Signature: ()V
  */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB
   (JNIEnv *, jobject);
 
 /*

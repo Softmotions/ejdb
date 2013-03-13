@@ -25,7 +25,7 @@ public class EJDBCollection {
     // todo: bson object for options
     protected native boolean ensureDB(Object opts);
     protected native boolean dropDB(boolean prune);
-    protected native boolean syncDB();
+    protected native void syncDB();
 
     protected native Object loadDB(byte[] oid);
     protected native Object saveDB(byte[] objdata);
@@ -47,8 +47,8 @@ public class EJDBCollection {
         return this.dropDB(prune);
     }
 
-    public boolean sync() {
-        return this.syncDB();
+    public void sync() {
+        this.syncDB();
     }
 
     public BSONObject load(ObjectId oid) {
@@ -73,6 +73,12 @@ public class EJDBCollection {
         return this.removeDB(oid.toByteArray());
     }
 
+
+    public EJDBQuery createQuery(BSONObject query) {
+        return new EJDBQuery(dbPointer, cname, query);
+    }
+
+    ////////////////////////////////////////////////////
     private static Object handleBSONData(ByteBuffer data) {
         byte[] tmp = new byte[data.limit()];
         data.get(tmp);

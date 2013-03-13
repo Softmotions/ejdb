@@ -20,11 +20,10 @@ public class EJDB {
         System.loadLibrary("jejdb");
     }
 
-    // todo: rewrite impls - use `this.db` from c code
     protected native void openDB(String path, int mode);
     protected native boolean isOpenDB();
     protected native void closeDB();
-    protected native boolean syncDB();
+    protected native void syncDB();
 
     private long dbPointer;
 
@@ -46,8 +45,8 @@ public class EJDB {
         this.closeDB();
     }
 
-    public boolean sync() {
-        return this.syncDB();
+    public void sync() {
+        this.syncDB();
     }
 
 
