@@ -24,6 +24,7 @@ void lua_init_bson(lua_State *L) {
 }
 
 //-0/+1
+
 void lua_push_bsontype_table(lua_State* L, int bsontype) {
     lua_newtable(L); //table
     lua_newtable(L); //metatable
@@ -143,7 +144,7 @@ int lua_to_bson(lua_State *L) {
     }
     lua_pushlstring(L, bson_data(&bs), bson_size(&bs)); //+1 bson data as string
     bson_destroy(&bs);
-    if (lua_gettop(L) - argc  != 1) {
+    if (lua_gettop(L) - argc != 1) {
         return luaL_error(L, "lua_to_bson: Invalid stack size: %d should be: %d", (lua_gettop(L) - argc), 1);
     }
     return 1;
@@ -283,7 +284,7 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                         } else if (ktype == LUA_TSTRING) {
                             size_t klen = 0;
                             const char *vkey = lua_tolstring(L, -2, &klen);
-                            if (klen == JDBIDKEYNAMEL && !strcmp(JDBIDKEYNAME, vkey)) { //root level OID as string
+                            if (key == NULL && klen == JDBIDKEYNAMEL && !strcmp(JDBIDKEYNAME, vkey)) { //root level OID as string
                                 //pack OID as type table
                                 lua_push_bsontype_table(L, BSON_OID); //+type table
                                 lua_pushvalue(L, -2); //dup oid on stack

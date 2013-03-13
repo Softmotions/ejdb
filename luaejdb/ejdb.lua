@@ -157,7 +157,7 @@ function B:_setop(op, val, ...)
   if op == nil then
     replace = true
   end
-  val = self:_toOpVal(val)
+  val = self:_toOpVal(op, val)
   local olist = self._omap[self._field]
   if not olist then
     olist = { self._field }
@@ -173,8 +173,12 @@ function B:_setop(op, val, ...)
   end
 end
 
-function B:_toOpVal(val)
-  return val
+function B:_toOpVal(op, val)
+  if op == nil and self._field == "_id" and type(val) == "string" then
+    return luaejdb.toOID(val)
+  else
+    return val
+  end
 end
 
 function B:_hintOp(op, val, ...)
@@ -208,7 +212,6 @@ function B:KeyVal(key, val)
   self:_setop(nil, val, nil, true)
   return self
 end
-
 
 function B:Eq(val) self:_setop(nil, val, nil, true) return self end
 
