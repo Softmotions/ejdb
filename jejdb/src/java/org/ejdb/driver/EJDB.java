@@ -24,6 +24,7 @@ public class EJDB {
     protected native void openDB(String path, int mode);
     protected native boolean isOpenDB();
     protected native void closeDB();
+    protected native boolean syncDB();
 
     private long dbPointer;
 
@@ -43,6 +44,10 @@ public class EJDB {
 
     public void close() {
         this.closeDB();
+    }
+
+    public boolean sync() {
+        return this.syncDB();
     }
 
 
@@ -94,7 +99,6 @@ public class EJDB {
 
         return collection;
     }
-
 
     //////////////////////////////////////////
     @Override

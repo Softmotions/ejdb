@@ -47,6 +47,14 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_isOpenDB
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_closeDB
   (JNIEnv *, jobject);
 
+/*
+ * Class:     org_ejdb_driver_EJDB
+ * Method:    syncDB
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_syncDB
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

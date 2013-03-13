@@ -23,8 +23,9 @@ public class EJDBCollection {
     }
 
     // todo: bson object for options
-    protected native boolean ensureCollectionDB(Object opts);
-    protected native boolean dropCollectionDB(boolean prune);
+    protected native boolean ensureDB(Object opts);
+    protected native boolean dropDB(boolean prune);
+    protected native boolean syncDB();
 
     protected native Object loadDB(byte[] oid);
     protected native Object saveDB(byte[] objdata);
@@ -35,7 +36,7 @@ public class EJDBCollection {
     }
 
     public boolean ensureExists(Object opts) {
-        return this.ensureCollectionDB(opts);
+        return this.ensureDB(opts);
     }
 
     public boolean drop() {
@@ -43,9 +44,12 @@ public class EJDBCollection {
     }
 
     public boolean drop(boolean prune) {
-        return this.dropCollectionDB(prune);
+        return this.dropDB(prune);
     }
 
+    public boolean sync() {
+        return this.syncDB();
+    }
 
     public BSONObject load(ObjectId oid) {
         return (BSONObject) this.loadDB(oid.toByteArray());

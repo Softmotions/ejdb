@@ -9,19 +9,27 @@ extern "C" {
 #endif
 /*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    ensureCollectionDB
+ * Method:    ensureDB
  * Signature: (Ljava/lang/Object;)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_ensureCollectionDB
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB
   (JNIEnv *, jobject, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    dropCollectionDB
+ * Method:    dropDB
  * Signature: (Z)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropCollectionDB
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropDB
   (JNIEnv *, jobject, jboolean);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    syncDB
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB
+  (JNIEnv *, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection

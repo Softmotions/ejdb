@@ -58,11 +58,28 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_closeDB
 };
 
 /*
+ * Class:     org_ejdb_driver_EJDB
+ * Method:    syncDB
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_syncDB
+  (JNIEnv *env, jobject obj) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+
+    // todo: check null?
+    EJDB* db = (EJDB*)dbp;
+
+    return ejdbsyncdb(db);
+};
+
+/*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    ensureCollectionDB
+ * Method:    ensureDB
  * Signature: (Ljava/lang/Object;)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_ensureCollectionDB
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB
   (JNIEnv *env, jobject obj, jobject opts) {
     jclass clazz = (*env)->GetObjectClass(env, obj);
     jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
@@ -90,10 +107,10 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_ensureCollectionD
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    dropCollectionDB
+ * Method:    dropDB
  * Signature: (Z)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropCollectionDB
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropDB
   (JNIEnv *env, jobject obj, jboolean prune) {
     jclass clazz = (*env)->GetObjectClass(env, obj);
     jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
@@ -109,6 +126,34 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropCollectionDB
     cname = (*env)->GetStringUTFChars(env, colname, NULL);
 
     bool status = ejdbrmcoll(db, cname, (prune == JNI_TRUE));
+
+    (*env)->ReleaseStringUTFChars(env, colname, cname);
+
+    return status ? JNI_TRUE : JNI_FALSE;
+};
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    syncDB
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB
+  (JNIEnv *env, jobject obj) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+
+    // todo: check null?
+    EJDB* db = (EJDB*)dbp;
+
+    jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
+    jstring colname = (*env)->GetObjectField(env, obj, colnameID);
+
+    const char *cname;
+    cname = (*env)->GetStringUTFChars(env, colname, NULL);
+
+    EJCOLL * coll = ejdbgetcoll(db, cname);
+    bool status = ejdbsyncoll(coll);
 
     (*env)->ReleaseStringUTFChars(env, colname, cname);
 
@@ -185,15 +230,15 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
     EJCOLL * coll = ejdbgetcoll(db, cname);
 
     bson *bson = bson_create_from_buffer(bdata, blength);
-    bool ss = ejdbsavebson(coll, bson, &oid);
+    bool status = ejdbsavebson(coll, bson, &oid);
     bson_del(bson);
 
     (*env)->ReleaseStringUTFChars(env, colname, cname);
     (*env)->ReleaseByteArrayElements(env, objdata, bdata, 0);
 
 
-    if (!ss) {
-        // todo: error
+    if (!status) {
+        // todo: error?
         return NULL;
     }
 
@@ -230,10 +275,10 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB
     // todo: check
     EJCOLL * coll = ejdbgetcoll(db, cname);
 
-    bool rs = ejdbrmbson(coll, oid);
+    bool status = ejdbrmbson(coll, oid);
 
     (*env)->ReleaseStringUTFChars(env, colname, cname);
     (*env)->ReleaseByteArrayElements(env, oidArray, (jbyte*)oid, 0);
 
-    return rs ? JNI_TRUE : JNI_FALSE;
+    return status ? JNI_TRUE : JNI_FALSE;
 }
