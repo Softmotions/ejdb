@@ -47,6 +47,27 @@ local mtBSON_UNDEFINED = {
   __bsontype = luaejdb.BSON_UNDEFINED
 }
 
+local mtBSON_INT = {
+  __bsontype = luaejdb.BSON_INT
+}
+
+local mtBSON_DOUBLE = {
+  __bsontype = luaejdb.BSON_DOUBLE
+}
+
+local mtBSON_LONG = {
+  __bsontype = luaejdb.BSON_LONG
+}
+
+local mtBSON_OBJECT = {
+  __bsontype = luaejdb.BSON_OBJECT
+}
+
+local mtBSON_BOOL = {
+  __bsontype = luaejdb.BSON_BOOL
+}
+
+
 function luaejdb.toOID(val)
   assert(type(val) == "string" and #val == 24)
   return setmetatable({ val }, mtBSON_OID);
@@ -207,7 +228,7 @@ function B:F(fname, ...)
 end
 
 -- Generic key=value
-function B:KeyVal(key, val)
+function B:KV(key, val)
   self:F(key);
   self:_setop(nil, val, nil, true)
   return self

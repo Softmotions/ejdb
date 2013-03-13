@@ -100,7 +100,6 @@ static void lua_push_bson_value(lua_State *L, bson_iterator *it) {
         }
         default:
             break;
-
     }
 }
 
@@ -124,7 +123,11 @@ static void lua_push_bson_array(lua_State *L, bson_iterator *it) {
 }
 
 int lua_from_bson(lua_State *L) {
-    const void *bsdata = luaL_checkstring(L, lua_gettop(L));
+    size_t slen = 0;
+    const void *bsdata = luaL_checklstring(L, lua_gettop(L), &slen);
+    if (slen <= 4 || !bsdata) {
+        return luaL_error(L, "Invalid bson string at argument #1");
+    }
     bson_iterator it;
     bson_iterator_from_buffer(&it, bsdata);
     lua_push_bson_table(L, &it);
@@ -296,8 +299,11 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                     if (key) bson_append_finish_object(bs);
                 }
             } else { //metafield __bsontype on top
-                assert(key);
                 int bson_type = lua_tointeger(L, -1);
+                if (!key && bson_type != BSON_OBJECT && bson_type != BSON_ARRAY) {
+                    lua_pop(L, 1);
+                    luaL_error(L, "Invalid object structure");
+                }
                 lua_pop(L, 1); //-metafield __bsontype
                 lua_rawgeti(L, -1, 1); //get first value
                 switch (bson_type) {
@@ -337,6 +343,28 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                         break;
                     case BSON_UNDEFINED:
                         bson_append_undefined(bs, key);
+                        break;
+                    case BSON_OBJECT:
+                        if (key) bson_append_start_object(bs, key);
+                        lua_val_to_bson(L, NULL, vpos, bs, tref);
+                        if (key) bson_append_finish_object(bs);
+                        break;
+                    case BSON_ARRAY:
+                        if (key) bson_append_start_array(bs, key);
+                        lua_val_to_bson(L, NULL, vpos, bs, tref);
+                        if (key) bson_append_finish_array(bs);
+                        break;
+                    case BSON_DOUBLE:
+                        bson_append_double(bs, key, (double) lua_tonumber(L, -1));
+                        break;
+                    case BSON_INT:
+                        bson_append_int(bs, key, (int32_t) lua_tonumber(L, -1));
+                        break;
+                    case BSON_LONG:
+                        bson_append_long(bs, key, (int64_t) lua_tonumber(L, -1));
+                        break;
+                    case BSON_BOOL:
+                        bson_append_bool(bs, key, lua_toboolean(L, -1));
                         break;
                     default:
                         break;
