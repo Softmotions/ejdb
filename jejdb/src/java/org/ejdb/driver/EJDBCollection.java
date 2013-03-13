@@ -28,6 +28,7 @@ public class EJDBCollection {
 
     protected native Object loadDB(byte[] oid);
     protected native Object saveDB(byte[] objdata);
+    protected native boolean removeDB(byte[] objdata);
 
     public boolean ensureExists() {
         return this.ensureExists(null);
@@ -62,6 +63,10 @@ public class EJDBCollection {
         }
 
         return result;
+    }
+
+    public boolean remove(ObjectId oid) {
+        return this.removeDB(oid.toByteArray());
     }
 
     private static Object handleBSONData(ByteBuffer data) {

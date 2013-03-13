@@ -39,6 +39,14 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
   (JNIEnv *, jobject, jbyteArray);
 
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    removeDB
+ * Signature: ([B)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB
+  (JNIEnv *, jobject, jbyteArray);
+
 #ifdef __cplusplus
 }
 #endif

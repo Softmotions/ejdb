@@ -133,7 +133,7 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
     jstring colname = (*env)->GetObjectField(env, obj, colnameID);
 
     const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
-    bson_oid_t *oid = (jbyte*)(*env)->GetByteArrayElements(env, oidArray, NULL);
+    bson_oid_t *oid = (void*)(*env)->GetByteArrayElements(env, oidArray, NULL);
 
     // todo: check
     EJCOLL * coll = ejdbgetcoll(db, cname);
@@ -205,5 +205,35 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
         (*env)->DeleteLocalRef(env, buff);
 
     return result;
+}
 
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    removeDB
+ * Signature: ([B)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB
+  (JNIEnv *env, jobject obj, jbyteArray oidArray) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+
+    // todo: check null?
+    EJDB* db = (EJDB*)dbp;
+
+    jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
+    jstring colname = (*env)->GetObjectField(env, obj, colnameID);
+
+    const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
+    bson_oid_t *oid = (void*)(*env)->GetByteArrayElements(env, oidArray, NULL);
+
+    // todo: check
+    EJCOLL * coll = ejdbgetcoll(db, cname);
+
+    bool rs = ejdbrmbson(coll, oid);
+
+    (*env)->ReleaseStringUTFChars(env, colname, cname);
+    (*env)->ReleaseByteArrayElements(env, oidArray, (jbyte*)oid, 0);
+
+    return rs ? JNI_TRUE : JNI_FALSE;
 }
