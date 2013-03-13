@@ -4,10 +4,10 @@
 /*
  * Class:     org_ejdb_driver_EJDB
  * Method:    openDB
- * Signature: (Ljava/lang/String;I)J
+ * Signature: (Ljava/lang/String;I)V
  */
-JNIEXPORT jlong JNICALL Java_org_ejdb_driver_EJDB_openDB
-  (JNIEnv *env, jobject ojb, jstring path, jint mode) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_openDB
+  (JNIEnv *env, jobject obj, jstring path, jint mode) {
     EJDB* db = ejdbnew();
 
     const char *dbpath;
@@ -15,16 +15,25 @@ JNIEXPORT jlong JNICALL Java_org_ejdb_driver_EJDB_openDB
     ejdbopen(db, dbpath, mode);
     (*env)->ReleaseStringUTFChars(env, path, dbpath);
 
-    return (jlong)db;
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    (*env)->SetLongField(env, obj, dbpID, (jlong)db);
+
+    return;
 };
 
 /*
  * Class:     org_ejdb_driver_EJDB
  * Method:    isOpenDB
- * Signature: (J)Z
+ * Signature: ()Z
  */
 JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_isOpenDB
-  (JNIEnv *env, jobject obj, jlong dbp) {
+  (JNIEnv *env, jobject obj) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+
+    // todo: check null?
     EJDB* db = (EJDB*)dbp;
 
     return ejdbisopen(db);
@@ -33,10 +42,15 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_isOpenDB
 /*
  * Class:     org_ejdb_driver_EJDB
  * Method:    closeDB
- * Signature: (J)V
+ * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_closeDB
-  (JNIEnv *env, jobject obj, jlong dbp) {
+  (JNIEnv *env, jobject obj) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+
+    // todo: check null?
     EJDB* db = (EJDB*)dbp;
 
     ejdbclose(db);
@@ -46,11 +60,19 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_closeDB
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    ensureCollectionDB
- * Signature: (JLjava/lang/String;Ljava/lang/Object;)Z
+ * Signature: (Ljava/lang/Object;)Z
  */
 JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_ensureCollectionDB
-  (JNIEnv *env, jobject obj, jlong dbp, jstring colname, jobject opts) {
+  (JNIEnv *env, jobject obj, jobject opts) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+
+    // todo: check null?
     EJDB* db = (EJDB*)dbp;
+
+    jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
+    jstring colname = (*env)->GetObjectField(env, obj, colnameID);
 
     EJCOLLOPTS jcopts;
     memset(&jcopts, 0, sizeof (jcopts));
@@ -69,11 +91,19 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_ensureCollectionD
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    dropCollectionDB
- * Signature: (JLjava/lang/String;Z)Z
+ * Signature: (Z)Z
  */
 JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropCollectionDB
-  (JNIEnv *env, jobject obj, jlong dbp, jstring colname, jboolean prune) {
+  (JNIEnv *env, jobject obj, jboolean prune) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+
+    // todo: check null?
     EJDB* db = (EJDB*)dbp;
+
+    jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
+    jstring colname = (*env)->GetObjectField(env, obj, colnameID);
 
     const char *cname;
     cname = (*env)->GetStringUTFChars(env, colname, NULL);
@@ -88,11 +118,19 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropCollectionDB
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    loadDB
- * Signature: (JLjava/lang/String;[B)Ljava/lang/Object;
+ * Signature: ([B)Ljava/lang/Object;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
-  (JNIEnv *env, jobject obj, jlong dbp, jstring colname, jbyteArray oidArray) {
+  (JNIEnv *env, jobject obj, jbyteArray oidArray) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+
+    // todo: check null?
     EJDB* db = (EJDB*)dbp;
+
+    jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
+    jstring colname = (*env)->GetObjectField(env, obj, colnameID);
 
     const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
     bson_oid_t *oid = (jbyte*)(*env)->GetByteArrayElements(env, oidArray, NULL);
@@ -107,32 +145,14 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
 
     if (!bson) {
         return NULL;
-//        result = (*env)->NewByteArray(env, 0);
     }
-        jclass clazz = (*env)->GetObjectClass(env, obj);
         jmethodID method = (*env)->GetStaticMethodID(env, clazz, "handleBSONData", "(Ljava/nio/ByteBuffer;)Ljava/lang/Object;");
         // todo: checks
 
-//        printf("%d", bson_size(bson));
-
-//        jbyteArray buff = (*env)->NewByteArray(env, bson_size(bson));
-//        memcpy(buff, bson_data(bson), bson_size(bson));
-//        jbyte* tbuff;
-//        (*env)>GetByteArrayRegion(env, buff, 0, bson_size(bson), tbuff);
-//        (*env)>SetByteArrayRegion(env, buff, (jsize)0, (jsize)bson_size(bson), (jbyte*)bson_data(bson));
-//
-//        printf("0x%x", bson_data(bson));
-
-//        void *bb = malloc(bson_size(bson));
-//        memcpy(bb, bson_data(bson), bson_size(bson));
-//
         jobject buff = (*env)->NewDirectByteBuffer(env, (void*)bson_data(bson), bson_size(bson));
         jobject result = (*env)->CallStaticObjectMethod(env, clazz, method, buff);
 
-//        free (bb);
         (*env)->DeleteLocalRef(env, buff);
-//        (*env)->DeleteLocalRef(env, method);
-//        (*env)->DeleteLocalRef(env, clazz);
         bson_del(bson);
 
     return result;
@@ -141,11 +161,19 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    saveDB
- * Signature: (JLjava/lang/String;[B)Ljava/lang/Object;
+ * Signature: ([B)Ljava/lang/Object;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
-  (JNIEnv *env, jobject obj, jlong dbp, jstring colname, jbyteArray objdata) {
+  (JNIEnv *env, jobject obj, jbyteArray objdata) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
+    jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+
+    // todo: check null?
     EJDB* db = (EJDB*)dbp;
+
+    jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
+    jstring colname = (*env)->GetObjectField(env, obj, colnameID);
 
     const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
     jbyte *bdata = (*env)->GetByteArrayElements(env, objdata, NULL);
@@ -169,16 +197,12 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
         return NULL;
     }
 
-    jclass clazz = (*env)->GetObjectClass(env, obj);
     jmethodID method = (*env)->GetStaticMethodID(env, clazz, "handleObjectIdData", "(Ljava/nio/ByteBuffer;)Ljava/lang/Object;");
 
         jobject buff = (*env)->NewDirectByteBuffer(env, (void*)&oid, sizeof(oid));
         jobject result = (*env)->CallStaticObjectMethod(env, clazz, method, buff);
 
-//        free (bb);
         (*env)->DeleteLocalRef(env, buff);
-//        (*env)->DeleteLocalRef(env, method);
-//        (*env)->DeleteLocalRef(env, clazz);
 
     return result;
 

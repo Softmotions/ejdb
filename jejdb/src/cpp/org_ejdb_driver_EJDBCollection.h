@@ -10,34 +10,34 @@ extern "C" {
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    ensureCollectionDB
- * Signature: (JLjava/lang/String;Ljava/lang/Object;)Z
+ * Signature: (Ljava/lang/Object;)Z
  */
 JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_ensureCollectionDB
-  (JNIEnv *, jobject, jlong, jstring, jobject);
+  (JNIEnv *, jobject, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    dropCollectionDB
- * Signature: (JLjava/lang/String;Z)Z
+ * Signature: (Z)Z
  */
 JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropCollectionDB
-  (JNIEnv *, jobject, jlong, jstring, jboolean);
+  (JNIEnv *, jobject, jboolean);
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    loadDB
- * Signature: (JLjava/lang/String;[B)Ljava/lang/Object;
+ * Signature: ([B)Ljava/lang/Object;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
-  (JNIEnv *, jobject, jlong, jstring, jbyteArray);
+  (JNIEnv *, jobject, jbyteArray);
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    saveDB
- * Signature: (JLjava/lang/String;[B)Ljava/lang/Object;
+ * Signature: ([B)Ljava/lang/Object;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
-  (JNIEnv *, jobject, jlong, jstring, jbyteArray);
+  (JNIEnv *, jobject, jbyteArray);
 
 #ifdef __cplusplus
 }

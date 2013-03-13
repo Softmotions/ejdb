@@ -26,26 +26,26 @@ extern "C" {
 /*
  * Class:     org_ejdb_driver_EJDB
  * Method:    openDB
- * Signature: (Ljava/lang/String;I)J
+ * Signature: (Ljava/lang/String;I)V
  */
-JNIEXPORT jlong JNICALL Java_org_ejdb_driver_EJDB_openDB
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_openDB
   (JNIEnv *, jobject, jstring, jint);
 
 /*
  * Class:     org_ejdb_driver_EJDB
  * Method:    isOpenDB
- * Signature: (J)Z
+ * Signature: ()Z
  */
 JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_isOpenDB
-  (JNIEnv *, jobject, jlong);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDB
  * Method:    closeDB
- * Signature: (J)V
+ * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_closeDB
-  (JNIEnv *, jobject, jlong);
+  (JNIEnv *, jobject);
 
 #ifdef __cplusplus
 }

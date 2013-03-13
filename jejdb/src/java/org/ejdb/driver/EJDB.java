@@ -21,11 +21,11 @@ public class EJDB {
     }
 
     // todo: rewrite impls - use `this.db` from c code
-    protected native long openDB(String path, int mode);
-    protected native boolean isOpenDB(long dbp);
-    protected native void closeDB(long dbp);
+    protected native void openDB(String path, int mode);
+    protected native boolean isOpenDB();
+    protected native void closeDB();
 
-    private Long dbp;
+    private long dbPointer;
 
 
     // TODO: move to driver class
@@ -34,18 +34,15 @@ public class EJDB {
     }
 
     public void open(String path, int mode) {
-        dbp = this.openDB(path, mode);
+        this.openDB(path, mode);
     }
 
     public boolean isOpen() {
-        return dbp != null && this.isOpenDB(dbp);
+        return this.isOpenDB();
     }
 
     public void close() {
-        if (dbp != null) {
-            this.closeDB(dbp);
-        }
-        dbp = null;
+        this.closeDB();
     }
 
 
@@ -54,8 +51,8 @@ public class EJDB {
     }
 
     public EJDBCollection ensureCollection(String cname, Object opts) {
-        if (dbp == null) {
-            // todo
+        if (!this.isOpen()) {
+//            todo
             throw new RuntimeException("Connection does not exists");
         }
 
@@ -70,7 +67,7 @@ public class EJDB {
     }
 
     public boolean dropCollection(String cname, boolean prune) {
-        if (dbp == null) {
+        if (!this.isOpen()) {
             // todo
             throw new RuntimeException("Connection does not exists");
         }
@@ -89,7 +86,7 @@ public class EJDB {
     }
 
     public EJDBCollection getCollection(String cname, boolean ecreate, Object opts) {
-        EJDBCollection collection = new EJDBCollection(dbp, cname);
+        EJDBCollection collection = new EJDBCollection(dbPointer, cname);
 
         if (ecreate) {
             collection.ensureExists(opts);

@@ -4,10 +4,9 @@ import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
-import java.awt.image.DataBufferByte;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
@@ -15,28 +14,27 @@ import java.util.Arrays;
  */
 public class EJDBCollection {
 
-    private long dbp;
-    private String name;
+    private long dbPointer;
+    private String cname;
 
-    EJDBCollection(long dbp, String name) {
-        this.dbp = dbp;
-        this.name = name;
+    EJDBCollection(long dbPointer, String cname) {
+        this.dbPointer = dbPointer;
+        this.cname = cname;
     }
 
     // todo: bson object for options
-    protected native boolean ensureCollectionDB(long dbp, String cname, Object opts);
+    protected native boolean ensureCollectionDB(Object opts);
+    protected native boolean dropCollectionDB(boolean prune);
 
-    protected native boolean dropCollectionDB(long dbp, String cname, boolean prune);
-
-    protected native Object loadDB(long dbp, String cname, byte[] oid);
-    protected native Object saveDB(long dbp, String cname, byte[] objdata);
+    protected native Object loadDB(byte[] oid);
+    protected native Object saveDB(byte[] objdata);
 
     public boolean ensureExists() {
         return this.ensureExists(null);
     }
 
     public boolean ensureExists(Object opts) {
-        return this.ensureCollectionDB(dbp, name, opts);
+        return this.ensureCollectionDB(opts);
     }
 
     public boolean drop() {
@@ -44,34 +42,33 @@ public class EJDBCollection {
     }
 
     public boolean drop(boolean prune) {
-        return this.dropCollectionDB(dbp, name, prune);
+        return this.dropCollectionDB(prune);
     }
 
 
     public BSONObject load(ObjectId oid) {
-        return (BSONObject) this.loadDB(dbp, name, oid.toByteArray());
-//        byte[] data = this.loadDB(dbp, name, oid.toByteArray());
-//        if (data.length > 0) {
-//            return BSON.decode(data);
-//        } else {
-//            return null;
-//        }
+        return (BSONObject) this.loadDB(oid.toByteArray());
     }
 
     public ObjectId save(BSONObject object) {
-        return (ObjectId) this.saveDB(dbp, name, BSON.encode(object));
+        return (ObjectId) this.saveDB(BSON.encode(object));
+    }
+
+    public List<ObjectId> save(List<BSONObject> objects) {
+        List<ObjectId> result = new ArrayList<ObjectId>(objects.size());
+
+        for (BSONObject object : objects) {
+            result.add(this.save(object));
+        }
+
+        return result;
     }
 
     private static Object handleBSONData(ByteBuffer data) {
         byte[] tmp = new byte[data.limit()];
         data.get(tmp);
 
-//        System.out.println(data.getClass().getName());
-//        System.out.println(((MappedByteBuffer)data).load().array());
-        //        System.out.println(Arrays.toString(data.array()));
         return BSON.decode(tmp);
-
-//        return null;
     }
 
     private static Object handleObjectIdData(ByteBuffer data) {
