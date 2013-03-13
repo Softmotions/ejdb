@@ -4,7 +4,7 @@ local inspect = require("inspect")
 
 -- ------------ Misc -----------------------
 
-function strim(s)
+local function strim(s)
   local from = s:match("^%s*()")
   return from > #s and "" or s:match(".*%S", from)
 end
@@ -127,8 +127,11 @@ function DB:find(cname, q, ...)
     flags = 0
   end
   local orBsons = {}
-  for _, o in ipairs(q:getJoinedORs()) do
-    table.insert(orBsons, o.toBSON())
+  local ors = q:getJoinedORs()
+  if ors then
+    for _, o in ipairs(ors) do
+      table.insert(orBsons, o.toBSON())
+    end
   end
   return self:_find(cname, q:toBSON(), orBsons, q:toHintsBSON(), flags)
 end
@@ -141,6 +144,7 @@ function B:_init(fname, ...)
   self._hints = nil -- hints Q
   self._omap = {} -- field operations
   self._oarr = {} -- resulting array of field operations
+  self._bson = nil -- cached bson
   if fname then
     self:F(fname, ...)
   end
@@ -192,6 +196,7 @@ function B:_setop(op, val, ...)
   else
     table.insert(olist, { op, val })
   end
+  self._bson = nil
 end
 
 function B:_toOpVal(op, val)
@@ -281,6 +286,7 @@ function B:DropAll() return self:_rootOp("$dropall", true) end
 function B:Do(val) return self:_rootOp("$do", val) end
 
 function B:Or(...)
+  self._or = self._or or {}
   for i, v in ipairs({ ... }) do
     assert(getmetatable(v) == mtBObj, "Each 'or' argument must be instance of 'luaejdb.B' class")
     table.insert(self._or, v)
@@ -362,7 +368,12 @@ function B:toHintsBSON()
 end
 
 function B:toBSON()
-  return luaejdb.to_bson(self)
+  if self._bson then
+    return self._bson
+  else
+    self._bson = luaejdb.to_bson(self)
+    return self._bson
+  end
 end
 
 luaejdb.B = setmetatable(B, {

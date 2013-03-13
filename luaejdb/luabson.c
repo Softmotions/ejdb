@@ -4,11 +4,13 @@
 #include <lauxlib.h>
 #include <math.h>
 #include <string.h>
+#include <tcejdb/tcutil.h>
 
 static void lua_push_bson_value(lua_State *L, bson_iterator *it);
 static void lua_push_bson_table(lua_State *L, bson_iterator *it);
 static void lua_push_bson_array(lua_State *L, bson_iterator *it);
 static void lua_to_bson_impl(lua_State *L, int spos, bson *bs);
+static void bson_print_xstr(TCXSTR* xstr, const char *data, int depth);
 
 void lua_init_bson(lua_State *L) {
     if (!lua_istable(L, -1)) {
@@ -21,6 +23,22 @@ void lua_init_bson(lua_State *L) {
     lua_pushcfunction(L, lua_to_bson);
     lua_setfield(L, -2, "to_bson");
 
+    lua_pushcfunction(L, print_bson);
+    lua_setfield(L, -2, "print_bson");
+
+}
+
+int print_bson(lua_State *L) {
+    size_t slen = 0;
+    const void *bsdata = luaL_checklstring(L, lua_gettop(L), &slen);
+    if (slen <= 4 || !bsdata) {
+        return luaL_error(L, "Invalid bson string at argument #1");
+    }
+    TCXSTR *xstr = tcxstrnew();
+    bson_print_xstr(xstr, bsdata, 0);
+    lua_pushstring(L, TCXSTRPTR(xstr));
+    tcxstrdel(xstr);
+    return 1;
 }
 
 //-0/+1
@@ -406,4 +424,88 @@ static void lua_to_bson_impl(lua_State *L, int tpos, bson *bs) {
     int tref = luaL_ref(L, LUA_REGISTRYINDEX); //- traverse state table into saved ref
     lua_val_to_bson(L, NULL, lua_gettop(L), bs, tref);
     lua_unref(L, tref);
+}
+
+static void bson_print_xstr(TCXSTR* xstr, const char *data, int depth) {
+    bson_iterator i;
+    const char *key;
+    int temp;
+    bson_timestamp_t ts;
+    char oidhex[25];
+    bson scope;
+    bson_iterator_from_buffer(&i, data);
+
+    while (bson_iterator_next(&i)) {
+        bson_type t = bson_iterator_type(&i);
+        if (t == 0)
+            break;
+        key = bson_iterator_key(&i);
+
+        for (temp = 0; temp <= depth; temp++) {
+            tcxstrprintf(xstr, ".");
+        }
+        tcxstrprintf(xstr, "%s(%d)=", key, t);
+        switch (t) {
+            case BSON_DOUBLE:
+                tcxstrprintf(xstr, "%f", bson_iterator_double(&i));
+                break;
+            case BSON_STRING:
+                tcxstrprintf(xstr, "%s", bson_iterator_string(&i));
+                break;
+            case BSON_SYMBOL:
+                tcxstrprintf(xstr, "SYMBOL: %s", bson_iterator_string(&i));
+                break;
+            case BSON_OID:
+                bson_oid_to_string(bson_iterator_oid(&i), oidhex);
+                tcxstrprintf(xstr, "%s", oidhex);
+                break;
+            case BSON_BOOL:
+                tcxstrprintf(xstr, "%s", bson_iterator_bool(&i) ? "true" : "false");
+                break;
+            case BSON_DATE:
+                tcxstrprintf(xstr, "%ld", (long int) bson_iterator_date(&i));
+                break;
+            case BSON_BINDATA:
+                tcxstrprintf(xstr, "BSON_BINDATA");
+                break;
+            case BSON_UNDEFINED:
+                tcxstrprintf(xstr, "BSON_UNDEFINED");
+                break;
+            case BSON_NULL:
+                tcxstrprintf(xstr, "BSON_NULL");
+                break;
+            case BSON_REGEX:
+                tcxstrprintf(xstr, "BSON_REGEX: %s", bson_iterator_regex(&i));
+                break;
+            case BSON_CODE:
+                tcxstrprintf(xstr, "BSON_CODE: %s", bson_iterator_code(&i));
+                break;
+            case BSON_CODEWSCOPE:
+                tcxstrprintf(xstr, "BSON_CODE_W_SCOPE: %s", bson_iterator_code(&i));
+                /* bson_init( &scope ); */ /* review - stepped on by bson_iterator_code_scope? */
+                bson_iterator_code_scope(&i, &scope);
+                tcxstrprintf(xstr, "\n  SCOPE: ");
+                tcxstrprintf(xstr, &scope);
+                /* bson_destroy( &scope ); */ /* review - causes free error */
+                break;
+            case BSON_INT:
+                tcxstrprintf(xstr, "%d", bson_iterator_int(&i));
+                break;
+            case BSON_LONG:
+                tcxstrprintf(xstr, "%lld", (uint64_t) bson_iterator_long(&i));
+                break;
+            case BSON_TIMESTAMP:
+                ts = bson_iterator_timestamp(&i);
+                tcxstrprintf(xstr, "i: %d, t: %d", ts.i, ts.t);
+                break;
+            case BSON_OBJECT:
+            case BSON_ARRAY:
+                tcxstrprintf(xstr, "\n");
+                bson_print_xstr(xstr, bson_iterator_value(&i), depth + 1);
+                break;
+            default:
+                fprintf(stderr, "can't print type : %d\n", t);
+        }
+        tcxstrprintf(xstr, "\n");
+    }
 }
