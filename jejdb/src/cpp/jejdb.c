@@ -73,10 +73,16 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_closeDB
 
 		EJDB* db = (EJDB*)dbp;
 
-		if (!ejdbclose(db)) {
-			set_ejdb_error(env, db);
+		if (ejdbisopen(db)) {
+			if (!ejdbclose(db)) {
+				set_ejdb_error(env, db);
+			}
+			if (NULL != db) {
+				ejdbdel(db);
+			}
 		}
-		ejdbdel(db);
+
+		(*env)->SetLongField(env, obj, dbpID, (jlong)NULL);
 };
 
 /*
@@ -91,6 +97,10 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_syncDB
 		jlong dbp = (*env)->GetLongField(env, obj, dbpID);
 
 		EJDB* db = (EJDB*)dbp;
+		if (!ejdbisopen(db)) {
+			set_error(env, 0, "EJDB not opened");
+			return;
+		}
 
 		if (!ejdbsyncdb(db)) {
 			set_ejdb_error(env, db);
@@ -100,56 +110,73 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_syncDB
 /*
 * Class:     org_ejdb_driver_EJDBCollection
 * Method:    ensureDB
-* Signature: (Ljava/lang/Object;)Z
+* Signature: (Ljava/lang/Object;)V
 */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB
 	(JNIEnv *env, jobject obj, jobject opts) {
 		jclass clazz = (*env)->GetObjectClass(env, obj);
-		jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
-		jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+		jfieldID dboID = (*env)->GetFieldID(env, clazz, "db", "Lorg/ejdb/driver/EJDB;");
+		jobject dbo = (*env)->GetObjectField(env, obj, dboID);
+		jclass dclazz = (*env)->GetObjectClass(env, dbo);
+		jfieldID dbpID = (*env)->GetFieldID(env, dclazz, "dbPointer", "J");
+		jlong dbp = (*env)->GetLongField(env, dbo, dbpID);
 
-		// todo: check null?
 		EJDB* db = (EJDB*)dbp;
+		if (!ejdbisopen(db)) {
+			set_error(env, 0, "EJDB not opened");
+			return;
+		}
 
 		jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
 		jstring colname = (*env)->GetObjectField(env, obj, colnameID);
 
 		EJCOLLOPTS jcopts;
 		memset(&jcopts, 0, sizeof (jcopts));
+		// todo: open options
 
 		const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
 		EJCOLL *coll = ejdbcreatecoll(db, cname, &jcopts);
 		(*env)->ReleaseStringUTFChars(env, colname, cname);
 
-		return !coll ? JNI_FALSE : JNI_TRUE;
+		if (!coll) {
+			set_ejdb_error(env, db);
+			return;
+		}
 };
 
 
 /*
 * Class:     org_ejdb_driver_EJDBCollection
 * Method:    dropDB
-* Signature: (Z)Z
+* Signature: (Z)V
 */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropDB
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_dropDB
 	(JNIEnv *env, jobject obj, jboolean prune) {
 		jclass clazz = (*env)->GetObjectClass(env, obj);
-		jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
-		jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+		jfieldID dboID = (*env)->GetFieldID(env, clazz, "db", "Lorg/ejdb/driver/EJDB;");
+		jobject dbo = (*env)->GetObjectField(env, obj, dboID);
+		jclass dclazz = (*env)->GetObjectClass(env, dbo);
+		jfieldID dbpID = (*env)->GetFieldID(env, dclazz, "dbPointer", "J");
+		jlong dbp = (*env)->GetLongField(env, dbo, dbpID);
 
-		// todo: check null?
 		EJDB* db = (EJDB*)dbp;
+		if (!ejdbisopen(db)) {
+			set_error(env, 0, "EJDB not opened");
+			return;
+		}
 
 		jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
 		jstring colname = (*env)->GetObjectField(env, obj, colnameID);
 
 		const char *cname;
 		cname = (*env)->GetStringUTFChars(env, colname, NULL);
-
 		bool status = ejdbrmcoll(db, cname, (prune == JNI_TRUE));
-
 		(*env)->ReleaseStringUTFChars(env, colname, cname);
 
-		return status ? JNI_TRUE : JNI_FALSE;
+		if (!status) {
+			set_ejdb_error(env, db);
+			return;
+		}
 };
 
 /*
@@ -160,10 +187,17 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_dropDB
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB
 	(JNIEnv *env, jobject obj) {
 		jclass clazz = (*env)->GetObjectClass(env, obj);
-		jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
-		jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+		jfieldID dboID = (*env)->GetFieldID(env, clazz, "db", "Lorg/ejdb/driver/EJDB;");
+		jobject dbo = (*env)->GetObjectField(env, obj, dboID);
+		jclass dclazz = (*env)->GetObjectClass(env, dbo);
+		jfieldID dbpID = (*env)->GetFieldID(env, dclazz, "dbPointer", "J");
+		jlong dbp = (*env)->GetLongField(env, dbo, dbpID);
 
 		EJDB* db = (EJDB*)dbp;
+		if (!ejdbisopen(db)) {
+			set_error(env, 0, "EJDB not opened");
+			return;
+		}
 
 		jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
 		jstring colname = (*env)->GetObjectField(env, obj, colnameID);
@@ -171,7 +205,7 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB
 		const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
 		EJCOLL *coll = ejdbgetcoll(db, cname);
 		(*env)->ReleaseStringUTFChars(env, colname, cname);
-		
+
 		if (!coll) {
 			set_error(env, 0, "Collection not found");
 			return;
@@ -190,10 +224,17 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
 	(JNIEnv *env, jobject obj, jbyteArray oidArray) {
 		jclass clazz = (*env)->GetObjectClass(env, obj);
-		jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
-		jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+		jfieldID dboID = (*env)->GetFieldID(env, clazz, "db", "Lorg/ejdb/driver/EJDB;");
+		jobject dbo = (*env)->GetObjectField(env, obj, dboID);
+		jclass dclazz = (*env)->GetObjectClass(env, dbo);
+		jfieldID dbpID = (*env)->GetFieldID(env, dclazz, "dbPointer", "J");
+		jlong dbp = (*env)->GetLongField(env, dbo, dbpID);
 
 		EJDB* db = (EJDB*)dbp;
+		if (!ejdbisopen(db)) {
+			set_error(env, 0, "EJDB not opened");
+			return NULL;
+		}
 
 		jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
 		jstring colname = (*env)->GetObjectField(env, obj, colnameID);
@@ -230,42 +271,47 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
 	(JNIEnv *env, jobject obj, jbyteArray objdata) {
 		jclass clazz = (*env)->GetObjectClass(env, obj);
-		jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
-		jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+		jfieldID dboID = (*env)->GetFieldID(env, clazz, "db", "Lorg/ejdb/driver/EJDB;");
+		jobject dbo = (*env)->GetObjectField(env, obj, dboID);
+		jclass dclazz = (*env)->GetObjectClass(env, dbo);
+		jfieldID dbpID = (*env)->GetFieldID(env, dclazz, "dbPointer", "J");
+		jlong dbp = (*env)->GetLongField(env, dbo, dbpID);
 
-		// todo: check null?
 		EJDB* db = (EJDB*)dbp;
+		if (!ejdbisopen(db)) {
+			set_error(env, 0, "EJDB not opened");
+			return NULL;
+		}
 
 		jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
 		jstring colname = (*env)->GetObjectField(env, obj, colnameID);
-
 		const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
-		jbyte *bdata = (*env)->GetByteArrayElements(env, objdata, NULL);
-		jsize blength = (*env)->GetArrayLength(env, objdata);
+		// todo: check
+		EJCOLL * coll = ejdbcreatecoll(db, cname, NULL);
+		(*env)->ReleaseStringUTFChars(env, colname, cname);
+
+		if (!coll) {
+			set_ejdb_error(env, db);
+			return NULL;
+		}
 
 		bson_oid_t oid;
 
-		// todo: check
-		EJCOLL * coll = ejdbgetcoll(db, cname);
-
+		jbyte *bdata = (*env)->GetByteArrayElements(env, objdata, NULL);
+		jsize blength = (*env)->GetArrayLength(env, objdata);
 		bson *bson = bson_create_from_buffer(bdata, blength);
 		bool status = ejdbsavebson(coll, bson, &oid);
 		bson_del(bson);
-
-		(*env)->ReleaseStringUTFChars(env, colname, cname);
 		(*env)->ReleaseByteArrayElements(env, objdata, bdata, 0);
 
-
 		if (!status) {
-			// todo: error?
+			set_ejdb_error(env, db);
 			return NULL;
 		}
 
 		jmethodID method = (*env)->GetStaticMethodID(env, clazz, "handleObjectIdData", "(Ljava/nio/ByteBuffer;)Ljava/lang/Object;");
-
 		jobject buff = (*env)->NewDirectByteBuffer(env, (void*)&oid, sizeof(oid));
 		jobject result = (*env)->CallStaticObjectMethod(env, clazz, method, buff);
-
 		(*env)->DeleteLocalRef(env, buff);
 
 		return result;
@@ -274,41 +320,162 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
 /*
 * Class:     org_ejdb_driver_EJDBCollection
 * Method:    removeDB
-* Signature: ([B)Z
+* Signature: ([B)V
 */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB
 	(JNIEnv *env, jobject obj, jbyteArray oidArray) {
 		jclass clazz = (*env)->GetObjectClass(env, obj);
-		jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
-		jlong dbp = (*env)->GetLongField(env, obj, dbpID);
+		jfieldID dboID = (*env)->GetFieldID(env, clazz, "db", "Lorg/ejdb/driver/EJDB;");
+		jobject dbo = (*env)->GetObjectField(env, obj, dboID);
+		jclass dclazz = (*env)->GetObjectClass(env, dbo);
+		jfieldID dbpID = (*env)->GetFieldID(env, dclazz, "dbPointer", "J");
+		jlong dbp = (*env)->GetLongField(env, dbo, dbpID);
 
-		// todo: check null?
 		EJDB* db = (EJDB*)dbp;
+		if (!ejdbisopen(db)) {
+			set_error(env, 0, "EJDB not opened");
+			return;
+		}
 
 		jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
 		jstring colname = (*env)->GetObjectField(env, obj, colnameID);
-
 		const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
-		bson_oid_t *oid = (void*)(*env)->GetByteArrayElements(env, oidArray, NULL);
-
-		// todo: check
 		EJCOLL * coll = ejdbgetcoll(db, cname);
-
-		bool status = ejdbrmbson(coll, oid);
-
 		(*env)->ReleaseStringUTFChars(env, colname, cname);
+		
+		if (!coll) {
+			return;
+		}
+
+		bson_oid_t *oid = (void*)(*env)->GetByteArrayElements(env, oidArray, NULL);
+		bool status = ejdbrmbson(coll, oid);
 		(*env)->ReleaseByteArrayElements(env, oidArray, (jbyte*)oid, 0);
 
-		return status ? JNI_TRUE : JNI_FALSE;
+		if (!status) {
+			set_ejdb_error(env, db);
+			return;
+		}
 }
 
 /*
-* Class:     org_ejdb_driver_EJDBQuery
-* Method:    createDB
-* Signature: (Lorg/bson/BSONObject;)V
+* Class:     org_ejdb_driver_EJDBCollection
+* Method:    setIndexDB
+* Signature: (Ljava/lang/String;I)V
 */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndexDB
+	(JNIEnv *env, jobject obj, jstring pathstr, jint flags) {
+		jclass clazz = (*env)->GetObjectClass(env, obj);
+		jfieldID colnameID = (*env)->GetFieldID(env, clazz, "cname", "Ljava/lang/String;");
+		jstring colname = (*env)->GetObjectField(env, obj, colnameID);
+		jfieldID dboID = (*env)->GetFieldID(env, clazz, "db", "Lorg/ejdb/driver/EJDB;");
+		jobject dbo = (*env)->GetObjectField(env, obj, dboID);
+		jclass dclazz = (*env)->GetObjectClass(env, dbo);
+		jfieldID dbpID = (*env)->GetFieldID(env, dclazz, "dbPointer", "J");
+		jlong dbp = (*env)->GetLongField(env, dbo, dbpID);
+
+		EJDB* db = (EJDB*)dbp;
+		if (!ejdbisopen(db)) {
+			set_error(env, 0, "EJDB not opened");
+			return;
+		}
+
+		const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
+		EJCOLL * coll = ejdbcreatecoll(db, cname, NULL);
+		(*env)->ReleaseStringUTFChars(env, colname, cname);
+
+		if (!coll) {
+			set_ejdb_error(env, db);
+			return;
+		}
+
+		const char * path = (*env)->GetStringUTFChars(env, pathstr, NULL);
+		bool status = ejdbsetindex(coll, path, flags);
+		(*env)->ReleaseStringUTFChars(env, pathstr, path);
+
+		if (!status) {
+			set_ejdb_error(env, db);
+			return;
+		}
+};
+
+/*
+ * Class:     org_ejdb_driver_EJDBQuery
+ * Method:    createDB
+ * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;)V
+ */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBQuery_createDB
-	(JNIEnv *env, jobject obj, jobject qobj) {
-		// todo:
+	(JNIEnv *env, jobject obj, jobject qobj, jobjectArray qorarrobj, jobject hobj) {
+		jclass clazz = (*env)->GetObjectClass(env, obj);
+		jfieldID coID = (*env)->GetFieldID(env, clazz, "coll", "Lorg/ejdb/driver/EJDBCollection;");
+		jobject collobj = (*env)->GetObjectField(env, obj, coID);
+		jclass cclazz = (*env)->GetObjectClass(env, collobj);
+		jfieldID colnameID = (*env)->GetFieldID(env, cclazz, "cname", "Ljava/lang/String;");
+		jstring colname = (*env)->GetObjectField(env, collobj, colnameID);
+		jfieldID dboID = (*env)->GetFieldID(env, cclazz, "db", "Lorg/ejdb/driver/EJDB;");
+		jobject dbo = (*env)->GetObjectField(env, collobj, dboID);
+		jclass dclazz = (*env)->GetObjectClass(env, dbo);
+		jfieldID dbpID = (*env)->GetFieldID(env, dclazz, "dbPointer", "J");
+		jlong dbp = (*env)->GetLongField(env, dbo, dbpID);
+
+		jclass jBSONClazz = (*env)->FindClass(env, "org/bson/BSON");
+		jmethodID encodeMethodID = (*env)->GetStaticMethodID(env, jBSONClazz, "encode", "(Lorg/bson/BSONObject;)[B");
+
+		jbyteArray qobjBA = (*env)->CallStaticObjectMethod(env, jBSONClazz, encodeMethodID, qobj);
+		jbyte *bdata = (*env)->GetByteArrayElements(env, qobjBA, NULL);
+		jsize blength = (*env)->GetArrayLength(env, qobjBA);
+		bson *bson = bson_create_from_buffer(bdata, blength);
+		bson_print(stdout, bson);
+		printf("!!!!!\n\n\n");
+		bson_del(bson);
+		(*env)->ReleaseByteArrayElements(env, qobjBA, bdata, 0);
+
+
+
+
+		return ;
+
+		// TODO: parse parameters
+
+
+
+		EJDB* db = (EJDB*)dbp;
+		if (!ejdbisopen(db)) {
+			set_error(env, 0, "EJDB not opened");
+			return;
+		}
+
+		const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
+		EJCOLL * coll = ejdbgetcoll(db, cname);
+		(*env)->ReleaseStringUTFChars(env, colname, cname);
+
+		if (!coll) {
+			// TODO: check upsert
+		}
+
+
+
+		// TODO:
 		return;
+};
+
+/*
+ * Class:     org_ejdb_driver_EJDBQuery
+ * Method:    executeDB
+ * Signature: ()Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_executeDB
+  (JNIEnv *env, jobject obj) {
+	  // TODO:
+	  return NULL;
+};
+
+/*
+ * Class:     org_ejdb_driver_EJDBQuery
+ * Method:    closeDB
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBQuery_closeDB
+  (JNIEnv *env, jobject obj) {
+	  // TODO:
+	  return;
 };

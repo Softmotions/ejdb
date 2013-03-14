@@ -7,18 +7,20 @@ import org.bson.BSONObject;
  * @version $Id$
  */
 public class EJDBQuery {
-    private long dbPointer;
-    private String cname;
-
+    private EJDBCollection coll;
     private BSONObject query;
 
-    EJDBQuery(long dbPointer, String cname, BSONObject query) {
-        this.dbPointer = dbPointer;
-        this.cname = cname;
+    private long qPointer;
+
+    EJDBQuery(EJDBCollection coll, BSONObject query) {
+        this.coll = coll;
         this.query = query;
 
-        this.createDB(null);
+        this.createDB(this.query, null, null);
     }
 
-    protected native void createDB(BSONObject query);
+    protected native void createDB(BSONObject query, BSONObject[] qors, BSONObject hints);
+    protected native Object executeDB();
+    protected native void closeDB();
+
 }

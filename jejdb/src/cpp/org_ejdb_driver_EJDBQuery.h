@@ -10,10 +10,26 @@ extern "C" {
 /*
  * Class:     org_ejdb_driver_EJDBQuery
  * Method:    createDB
- * Signature: (Lorg/bson/BSONObject;)V
+ * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;)V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBQuery_createDB
-  (JNIEnv *, jobject, jobject);
+  (JNIEnv *, jobject, jobject, jobjectArray, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDBQuery
+ * Method:    executeDB
+ * Signature: ()Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_executeDB
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDBQuery
+ * Method:    closeDB
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBQuery_closeDB
+  (JNIEnv *, jobject);
 
 #ifdef __cplusplus
 }

@@ -14,37 +14,50 @@ import java.util.List;
  */
 public class EJDBCollection {
 
-    private long dbPointer;
+    // Index modes, index types.
+    public final static int JBIDXDROP = 1 << 0; /**< Drop index. */
+    public final static int JBIDXDROPALL = 1 << 1; /**< Drop index for all types. */
+    public final static int JBIDXOP = 1 << 2; /**< Optimize index. */
+    public final static int JBIDXREBLD = 1 << 3; /**< Rebuild index. */
+    public final static int JBIDXNUM = 1 << 4; /**< Number index. */
+    public final static int JBIDXSTR = 1 << 5; /**< String index.*/
+    public final static int JBIDXARR = 1 << 6; /**< Array token index. */
+    public final static int JBIDXISTR = 1 << 7; /**< Case insensitive string index */
+
+    // todo: get dbPointer from db object
+    private EJDB db;
     private String cname;
 
-    EJDBCollection(long dbPointer, String cname) {
-        this.dbPointer = dbPointer;
+    EJDBCollection(EJDB db, String cname) {
+        this.db = db;
         this.cname = cname;
     }
 
     // todo: bson object for options
-    protected native boolean ensureDB(Object opts);
-    protected native boolean dropDB(boolean prune);
+    protected native void ensureDB(Object opts);
+    protected native void dropDB(boolean prune);
     protected native void syncDB();
 
     protected native Object loadDB(byte[] oid);
     protected native Object saveDB(byte[] objdata);
-    protected native boolean removeDB(byte[] objdata);
+    protected native void removeDB(byte[] objdata);
 
-    public boolean ensureExists() {
-        return this.ensureExists(null);
+    protected native void setIndexDB(String path, int flags);
+
+    public void ensureExists() {
+        this.ensureExists(null);
     }
 
-    public boolean ensureExists(Object opts) {
-        return this.ensureDB(opts);
+    public void ensureExists(Object opts) {
+        this.ensureDB(opts);
     }
 
-    public boolean drop() {
-        return this.drop(false);
+    public void drop() {
+        this.drop(false);
     }
 
-    public boolean drop(boolean prune) {
-        return this.dropDB(prune);
+    public void drop(boolean prune) {
+        this.dropDB(prune);
     }
 
     public void sync() {
@@ -69,13 +82,17 @@ public class EJDBCollection {
         return result;
     }
 
-    public boolean remove(ObjectId oid) {
-        return this.removeDB(oid.toByteArray());
+    public void remove(ObjectId oid) {
+        this.removeDB(oid.toByteArray());
+    }
+
+    public void setIndex(String path, int flags) {
+        this.setIndexDB(path, flags);
     }
 
 
     public EJDBQuery createQuery(BSONObject query) {
-        return new EJDBQuery(dbPointer, cname, query);
+        return new EJDBQuery(this, query);
     }
 
     ////////////////////////////////////////////////////

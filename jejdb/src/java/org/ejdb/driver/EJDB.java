@@ -50,8 +50,8 @@ public class EJDB {
     }
 
 
-    public void ensureCollection(String cname) {
-        this.ensureCollection(cname, null);
+    public EJDBCollection ensureCollection(String cname) {
+        return this.ensureCollection(cname, null);
     }
 
     public EJDBCollection ensureCollection(String cname, Object opts) {
@@ -66,11 +66,11 @@ public class EJDB {
         return collection;
     }
 
-    public boolean dropCollection(String cname) {
-        return this.dropCollection(cname, false);
+    public void dropCollection(String cname) {
+        this.dropCollection(cname, false);
     }
 
-    public boolean dropCollection(String cname, boolean prune) {
+    public void dropCollection(String cname, boolean prune) {
         if (!this.isOpen()) {
             // todo
             throw new RuntimeException("Connection does not exists");
@@ -78,7 +78,7 @@ public class EJDB {
 
         EJDBCollection collection = getCollection(cname);
 
-        return collection.drop(prune);
+        collection.drop(prune);
     }
 
     public EJDBCollection getCollection(String cname) {
@@ -90,7 +90,7 @@ public class EJDB {
     }
 
     public EJDBCollection getCollection(String cname, boolean ecreate, Object opts) {
-        EJDBCollection collection = new EJDBCollection(dbPointer, cname);
+        EJDBCollection collection = new EJDBCollection(this/*dbPointer*/, cname);
 
         if (ecreate) {
             collection.ensureExists(opts);
