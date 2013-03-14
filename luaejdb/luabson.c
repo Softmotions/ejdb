@@ -46,9 +46,8 @@ int print_bson(lua_State *L) {
 void lua_push_bsontype_table(lua_State* L, int bsontype) {
     lua_newtable(L); //table
     lua_newtable(L); //metatable
-    lua_pushstring(L, "__bsontype");
     lua_pushinteger(L, bsontype);
-    lua_settable(L, -3);
+    lua_setfield(L, -2, "__bsontype");
     lua_setmetatable(L, -2);
 }
 
@@ -68,7 +67,7 @@ static void lua_push_bson_value(lua_State *L, bson_iterator *it) {
             break;
         case BSON_NULL:
         case BSON_UNDEFINED:
-            lua_pushnil(L);
+            lua_push_bsontype_table(L, bt);
             break;
         case BSON_INT:
             lua_pushinteger(L, bson_iterator_int(it));
