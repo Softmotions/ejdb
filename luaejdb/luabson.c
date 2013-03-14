@@ -29,6 +29,7 @@ void lua_init_bson(lua_State *L) {
 }
 
 int print_bson(lua_State *L) {
+    lua_settop(L, 1);
     size_t slen = 0;
     const void *bsdata = luaL_checklstring(L, lua_gettop(L), &slen);
     if (slen <= 4 || !bsdata) {
@@ -140,6 +141,7 @@ static void lua_push_bson_array(lua_State *L, bson_iterator *it) {
 }
 
 int lua_from_bson(lua_State *L) {
+    lua_settop(L, 1);
     size_t slen = 0;
     const void *bsdata = luaL_checklstring(L, lua_gettop(L), &slen);
     if (slen <= 4 || !bsdata) {
@@ -152,6 +154,7 @@ int lua_from_bson(lua_State *L) {
 }
 
 int lua_to_bson(lua_State *L) {
+    lua_settop(L, 1);
     int argc = lua_gettop(L);
     luaL_checktype(L, lua_gettop(L), LUA_TTABLE);
     bson bs;
