@@ -114,10 +114,17 @@ local mtDBObj = {
 
 local luaejdb_open = luaejdb.open
 function luaejdb:open(path, omode, ...)
-  if type(omode) ~= "number" then
-    omode = luaejdb.DEFAULT_OPEN_MODE
-  end
   return setmetatable(luaejdb_open(path, omode), mtDBObj)
+end
+
+function DB:save(cname, obj, ...)
+  assert(obj and type(obj) == "table", "Invalid arg #2")
+  if getmetatable(obj) == mtBObj then
+    obj = obj:toBSON()
+  else
+    obj = luaejdb.to_bson(obj)
+  end
+  return self:_save(cname, obj, ...)
 end
 
 function DB:find(cname, q, ...)
@@ -149,10 +156,6 @@ function B:_init(fname, ...)
     self:F(fname, ...)
   end
   return self
-end
-
-function B:_value(val)
-  return val
 end
 
 function B:_checkop()

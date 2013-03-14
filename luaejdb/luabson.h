@@ -19,6 +19,7 @@ extern "C" {
     int lua_from_bson(lua_State *L);
     int lua_to_bson(lua_State *L);
     int print_bson(lua_State *L);
+    void lua_push_bsontype_table(lua_State* L, int bsontype);
 
 #ifdef	__cplusplus
 }

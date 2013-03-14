@@ -38,6 +38,12 @@ typedef struct {
 #define EJDBERR(_L, _DB) \
     return luaL_error((_L), "EJDB ERROR %d|%s", ejdbecode(_DB), ejdberrmsg(ejdbecode(_DB)))
 
+static int set_ejdb_error(lua_State *L, EJDB *jb) {
+    int ecode = ejdbecode(jb);
+    const char *emsg = ejdberrmsg(ecode);
+    return luaL_error(L, emsg);
+}
+
 static void init_db_consts(lua_State *L) {
     if (!lua_istable(L, -1)) {
         luaL_error(L, "Table must be on top of lua stack");
@@ -121,6 +127,41 @@ static int db_close(lua_State *L) {
     return 0;
 }
 
+static int db_save(lua_State *L) {
+    int argc = lua_gettop(L);
+    luaL_checktype(L, 1, LUA_TTABLE); //self
+    lua_getfield(L, 1, EJDBUDATAKEY);
+    EJDBDATA *data = luaL_checkudata(L, -1, EJDBUDATAMT);
+    EJDB *jb = data->db;
+    const char *cname = luaL_checkstring(L, 2); //collections name
+    bson bsonval;
+    const char *bsonbuf = luaL_checkstring(L, 3); //Object to save
+    bson_init_finished_data(&bsonval, bsonbuf);
+    bsonval.flags |= BSON_FLAG_STACK_ALLOCATED;
+    bool merge = false;
+    if (lua_isboolean(L, 4)) { //merge flag
+        merge = lua_toboolean(L, 4);
+    }
+    EJCOLL *coll = ejdbcreatecoll(jb, cname, NULL);
+    if (!coll) {
+        return set_ejdb_error(L, jb);
+    }
+    bson_oid_t oid;
+    if (!ejdbsavebson2(coll, &bsonval, &oid, merge)) {
+        bson_destroy(&bsonval);
+        return set_ejdb_error(L, jb);
+    }
+    char xoid[25];
+    bson_oid_to_string(&oid, xoid);
+    lua_pushstring(L, xoid);
+
+    bson_destroy(&bsonval);
+    if (lua_gettop(L) - argc != 2) { //got +lua_getfield(L, 1, EJDBUDATAKEY)
+        return luaL_error(L, "db_save: Invalid stack size: %d should be: %d", (lua_gettop(L) - argc), 1);
+    }
+    return 1;
+}
+
 static int db_find(lua_State *L) {
     //cname, q.toBSON(), orBsons, q.toHintsBSON(), flags
     luaL_checktype(L, 1, LUA_TTABLE); //self
@@ -138,7 +179,7 @@ static int db_find(lua_State *L) {
     bson qbson = {NULL};
     bson hbson = {NULL};
     EJQ *q = NULL;
-    EJDB *db = data->db;
+    EJDB *jb = data->db;
     EJCOLL *coll = NULL;
     uint32_t count = 0;
 
@@ -150,7 +191,30 @@ static int db_find(lua_State *L) {
 static int db_open(lua_State *L) {
     int argc = lua_gettop(L);
     const char *path = luaL_checkstring(L, 1);
-    int mode = lua_isnumber(L, 2) ? lua_tointeger(L, 2) : DEFAULT_OPEN_MODE;
+    int mode = DEFAULT_OPEN_MODE;
+    if (lua_isnumber(L, 2)) {
+        mode = lua_tointeger(L, 2);
+    } else if (lua_isstring(L, 2)) {
+        mode = 0;
+        const char* om = lua_tostring(L, 2);
+        for (int i = 0; om[i] != '\0'; ++i) {
+            mode |= JBOREADER;
+            switch (om[i]) {
+                case 'w':
+                    mode |= JBOWRITER;
+                    break;
+                case 'c':
+                    mode |= JBOCREAT;
+                    break;
+                case 't':
+                    mode |= JBOTRUNC;
+                    break;
+                case 's':
+                    mode |= JBOTSYNC;
+                    break;
+            }
+        }
+    }
 
     //DB table
     lua_newtable(L);
@@ -177,6 +241,9 @@ static int db_open(lua_State *L) {
     //Add methods
     lua_pushcfunction(L, db_close);
     lua_setfield(L, -2, "close");
+
+    lua_pushcfunction(L, db_save);
+    lua_setfield(L, -2, "_save");
 
     lua_pushcfunction(L, db_find);
     lua_setfield(L, -2, "_find");

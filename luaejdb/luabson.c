@@ -487,7 +487,7 @@ static void bson_print_xstr(TCXSTR* xstr, const char *data, int depth) {
                 /* bson_init( &scope ); */ /* review - stepped on by bson_iterator_code_scope? */
                 bson_iterator_code_scope(&i, &scope);
                 tcxstrprintf(xstr, "\n  SCOPE: ");
-                tcxstrprintf(xstr, &scope);
+                bson_print_xstr(xstr, scope.data, 0);
                 /* bson_destroy( &scope ); */ /* review - causes free error */
                 break;
             case BSON_INT:

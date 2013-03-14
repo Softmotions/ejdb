@@ -7,7 +7,9 @@ local ejdb = require("ejdb")
 assert(type(ejdb) == "table")
 
 local Q = ejdb.Q
-local db = ejdb:open("testdb");
+local B = ejdb.B
+
+local db = ejdb:open("testdb", "rwct");
 local q = Q("name", "Andy"):F("_id"):Eq("510f7fa91ad6270a00000000"):F("age"):Gt(20):Lt(40):F("score"):In({ 11, 22.12333, 1362835380447, db.toNull() }):Max(232);
 
 assert([[.name(2)=Andy
@@ -55,6 +57,15 @@ assert(obj.name == "Andy")
 assert(type(obj.bdate) == "table" and getmetatable(obj.bdate).__bsontype == db.BSON_DATE)
 assert(obj.bdate[1] == 1362835380447)
 assert(type(obj.dst) == "table" and getmetatable(obj.dst).__bsontype == db.BSON_NULL)
+
+
+-- Test save
+--
+local oid = db:save("mycoll", {foo="bar"});
+assert(oid and #oid == 24)
+
+oid = db:save("mycoll", B("foo2","bar2"));
+assert(oid and #oid == 24)
 
 
 db:close()
