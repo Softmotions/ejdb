@@ -137,7 +137,7 @@ static int cursor_index(lua_State *L) {
         if (idx < 0) {
             idx = sz - idx + 1;
         }
-        if (idx > 0 && idx <= sz ) {
+        if (idx > 0 && idx <= sz) {
             lua_pushlstring(L, TCLISTVALPTR(qres, idx - 1), TCLISTVALSIZ(qres, idx - 1));
             return 1;
         } else {
@@ -350,6 +350,25 @@ static int db_find(lua_State *L) {
         }
     }
 
+    //+query res
+    if (qres) {
+        CURSORDATA *cdata = lua_newuserdata(L, sizeof (*cdata));
+        cdata->qres = qres;
+        luaL_newmetatable(L, EJDBCURSORMT);
+        lua_setmetatable(L, -2);
+    } else {
+        lua_pushnil(L);
+    }
+
+    //+count
+    lua_pushinteger(L, count);
+
+    //+log
+    if (log) {
+        lua_pushlstring(L, TCXSTRPTR(log), TCXSTRSIZE(log));
+    } else {
+        lua_pushnil(L);
+    }
 
 finish:
 
@@ -364,14 +383,14 @@ finish:
     if (q) {
         ejdbquerydel(q);
     }
-
     if (log) {
         tcxstrdel(log);
     }
     if (jberr) {
         return set_ejdb_error(L, jb);
     }
-    return 0;
+
+    return 3; //qres, count, log
 }
 
 static int db_open(lua_State *L) {
