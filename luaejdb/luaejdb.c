@@ -27,6 +27,10 @@
         lua_settable(L, -3); \
     } while(0)
 
+enum {
+    JBQRYLOG = 1 << 10 //return query execution log string
+};
+
 typedef struct {
     EJDB *db;
 } EJDBDATA;
@@ -42,6 +46,12 @@ static int set_ejdb_error(lua_State *L, EJDB *jb) {
     int ecode = ejdbecode(jb);
     const char *emsg = ejdberrmsg(ecode);
     return luaL_error(L, emsg);
+}
+
+static void check_ejdb(lua_State *L, EJDB *jb) {
+    if (jb == NULL) {
+        luaL_error(L, "Closed EJDB database");
+    }
 }
 
 static void init_db_consts(lua_State *L) {
@@ -64,6 +74,7 @@ static void init_db_consts(lua_State *L) {
     TBLSETNUMCONST(JBIDXISTR);
     TBLSETNUMCONST(JBIDXARR);
     TBLSETNUMCONST(JBQRYCOUNT);
+    TBLSETNUMCONST(JBQRYLOG);
     TBLSETNUMCONST(DEFAULT_OPEN_MODE);
 
     TBLSETNUMCONST(BSON_DOUBLE);
@@ -132,6 +143,7 @@ static int db_save(lua_State *L) {
     luaL_checktype(L, 1, LUA_TTABLE); //self
     lua_getfield(L, 1, EJDBUDATAKEY);
     EJDB *jb = ((EJDBDATA*) luaL_checkudata(L, -1, EJDBUDATAMT))->db;
+    check_ejdb(L, jb);
     lua_pop(L, 1);
     const char *cname = luaL_checkstring(L, 2); //collections name
     bson bsonval;
@@ -167,11 +179,12 @@ static int db_load(lua_State *L) {
     luaL_checktype(L, 1, LUA_TTABLE); //self
     lua_getfield(L, 1, EJDBUDATAKEY);
     EJDB *jb = ((EJDBDATA*) luaL_checkudata(L, -1, EJDBUDATAMT))->db;
+    check_ejdb(L, jb);
     lua_pop(L, 1);
 
     const char *cname = luaL_checkstring(L, 2);
     bson_oid_t oid;
-    memset(&oid, 0, sizeof(oid));
+    memset(&oid, 0, sizeof (oid));
 
     if (lua_type(L, 3) == LUA_TSTRING) {
         const char *soid = lua_tostring(L, 3);
@@ -217,14 +230,14 @@ static int db_find(lua_State *L) {
     luaL_checktype(L, 1, LUA_TTABLE); //self
     lua_getfield(L, 1, EJDBUDATAKEY);
     EJDB *jb = ((EJDBDATA*) luaL_checkudata(L, -1, EJDBUDATAMT))->db;
+    check_ejdb(L, jb);
     lua_pop(L, 1);
     const char *cname = luaL_checkstring(L, 2); //collections name
-    const char *qbsonbuf = luaL_checkstring(L, 3); //Query bson
+    const char *qbsbuf = luaL_checkstring(L, 3); //Query bson
     luaL_checktype(L, 4, LUA_TTABLE); //or joined
-    const char *hbsonbuf = luaL_checkstring(L, 5); //Hints bson
-    if (!jb || !qbsonbuf || !hbsonbuf) {
-        return luaL_error(L, "Illegal arguments");
-    }
+    const char *hbsbuf = luaL_checkstring(L, 5); //Hints bson
+    int qflags = luaL_checkinteger(L, 6);
+
     bson oqarrstack[8]; //max 8 $or bsons on stack
     bson *oqarr = NULL;
     bson qbson = {NULL};
@@ -232,9 +245,82 @@ static int db_find(lua_State *L) {
     EJQ *q = NULL;
     EJCOLL *coll = NULL;
     uint32_t count = 0;
+    TCLIST *qres = NULL;
+    bool jberr = false;
+    TCXSTR *log = NULL;
 
-    bson_print_raw(stderr, qbsonbuf, 0);
+    size_t orsz = lua_objlen(L, 4);
+    oqarr = ((orsz <= 8) ? oqarrstack : (bson*) tcmalloc(orsz * sizeof (bson)));
 
+    for (size_t i = 0; i < orsz; ++i) {
+        const void *bsdata;
+        size_t bsdatasz;
+        lua_rawgeti(L, 4, i + 1);
+        if (lua_type(L, -1) != LUA_TSTRING) {
+            return luaL_error(L, "Invalid 'or' array. Arg #3");
+        }
+        bsdata = lua_tolstring(L, -1, &bsdatasz);
+        bson_init_finished_data(&oqarr[i], bsdata);
+        oqarr[i].flags |= BSON_FLAG_STACK_ALLOCATED; //prevent bson data to be freed in bson_destroy
+    }
+
+    bson_init_finished_data(&qbson, qbsbuf);
+    qbson.flags |= BSON_FLAG_STACK_ALLOCATED;
+    bson_init_finished_data(&hbson, hbsbuf);
+    hbson.flags |= BSON_FLAG_STACK_ALLOCATED;
+
+    q = ejdbcreatequery(jb, &qbson, orsz > 0 ? oqarr : NULL, orsz, &hbson);
+    if (!q) {
+        jberr = true;
+        goto finish;
+    }
+    coll = ejdbgetcoll(jb, cname);
+    if (!coll) {
+        bson_iterator it;
+        //If we are in $upsert mode a new collection will be created
+        if (bson_find(&it, &qbson, "$upsert") == BSON_OBJECT) {
+            coll = ejdbcreatecoll(jb, cname, NULL);
+            if (!coll) {
+                jberr = true;
+                goto finish;
+            }
+        }
+    }
+
+    if (!coll) { //No collection -> no results
+        qres = (qflags & JBQRYCOUNT) ? NULL : tclistnew2(1); //empty results
+    } else {
+        if (qflags & JBQRYLOG) {
+            log = tcxstrnew();
+        }
+        qres = ejdbqryexecute(coll, q, &count, qflags, log);
+        if (ejdbecode(jb) != TCESUCCESS) {
+            jberr = true;
+            goto finish;
+        }
+    }
+
+
+finish:
+
+    for (size_t i = 0; i < orsz; ++i) {
+        bson_destroy(&oqarr[i]);
+    }
+    if (oqarr && oqarr != oqarrstack) {
+        tcfree(oqarr);
+    }
+    bson_destroy(&qbson);
+    bson_destroy(&hbson);
+    if (q) {
+        ejdbquerydel(q);
+    }
+
+    if (log) {
+        tcxstrdel(log);
+    }
+    if (jberr) {
+        return set_ejdb_error(L, jb);
+    }
     return 0;
 }
 
@@ -328,11 +414,15 @@ int luaopen_luaejdb(lua_State *L) {
     //Push cursor methods into metatable
     luaL_newmetatable(L, EJDBCURSORMT);
     lua_newtable(L);
+
     lua_pushcfunction(L, cursor_object);
     lua_setfield(L, -2, "object");
+
     lua_pushcfunction(L, cursor_field);
     lua_setfield(L, -2, "field");
+
     lua_setfield(L, -2, "__index");
+
     lua_settop(L, 1);
 
 

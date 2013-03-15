@@ -82,7 +82,12 @@ oid = db:save("mycoll", B("foo2", "bar2"):KV("g", "d"):KV("e", 1):KV("a", "g"));
 assert(oid and #oid == 24)
 
 obj = db:load("mycoll", oid)
-print(inspect(obj));
+assert(type(obj) == "table")
+assert(obj["_id"] == oid)
+assert(obj.a == "g" and obj.e == 1 and obj.foo2 == "bar2" and obj.g == "d")
+
+
+local cur  = db:find("mycoll", Q("foo", "bar"))
 
 
 db:close()
