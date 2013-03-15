@@ -91,8 +91,8 @@ public class EJDBCollection {
     }
 
 
-    public EJDBQuery createQuery(BSONObject query) {
-        return new EJDBQuery(this, query);
+    public EJDBQuery createQuery(BSONObject query, BSONObject[] qors, BSONObject hints, int flags) {
+        return new EJDBQuery(this, query, qors, hints, flags);
     }
 
     ////////////////////////////////////////////////////

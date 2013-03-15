@@ -342,7 +342,7 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB
 		const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
 		EJCOLL * coll = ejdbgetcoll(db, cname);
 		(*env)->ReleaseStringUTFChars(env, colname, cname);
-		
+
 		if (!coll) {
 			return;
 		}
@@ -399,12 +399,12 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndexDB
 };
 
 /*
- * Class:     org_ejdb_driver_EJDBQuery
- * Method:    createDB
- * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;)V
- */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBQuery_createDB
-	(JNIEnv *env, jobject obj, jobject qobj, jobjectArray qorarrobj, jobject hobj) {
+* Class:     org_ejdb_driver_EJDBQuery
+* Method:    executeDB
+* Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;I)Lorg/ejdb/driver/EJDBQuery$QResult;
+*/
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_executeDB
+	(JNIEnv *env, jobject obj, jobject qobj, jobjectArray qorarrobj, jobject hobj, jint flags) {
 		jclass clazz = (*env)->GetObjectClass(env, obj);
 		jfieldID coID = (*env)->GetFieldID(env, clazz, "coll", "Lorg/ejdb/driver/EJDBCollection;");
 		jobject collobj = (*env)->GetObjectField(env, obj, coID);
@@ -420,62 +420,125 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBQuery_createDB
 		jclass jBSONClazz = (*env)->FindClass(env, "org/bson/BSON");
 		jmethodID encodeMethodID = (*env)->GetStaticMethodID(env, jBSONClazz, "encode", "(Lorg/bson/BSONObject;)[B");
 
-		jbyteArray qobjBA = (*env)->CallStaticObjectMethod(env, jBSONClazz, encodeMethodID, qobj);
-		jbyte *bdata = (*env)->GetByteArrayElements(env, qobjBA, NULL);
-		jsize blength = (*env)->GetArrayLength(env, qobjBA);
-		bson *bson = bson_create_from_buffer(bdata, blength);
-		bson_print(stdout, bson);
-		printf("!!!!!\n\n\n");
-		bson_del(bson);
-		(*env)->ReleaseByteArrayElements(env, qobjBA, bdata, 0);
+		jclass jQResultClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBQuery$QResult");
+		jmethodID initQResultMethodID = (*env)->GetMethodID(env, jQResultClazz, "<init>", "(JJ)V");
+		
+		bson *qbson = NULL;
+		bson *qorbsons = NULL;
+		bson *qhbson = NULL;
 
+		EJQ *q = NULL;
 
-
-
-		return ;
-
-		// TODO: parse parameters
-
-
+		jobject qresult = NULL;
 
 		EJDB* db = (EJDB*)dbp;
 		if (!ejdbisopen(db)) {
 			set_error(env, 0, "EJDB not opened");
-			return;
+			goto finish;
+		}
+
+		jsize blength = 0;
+		jbyte *bdata = NULL;
+		jbyteArray bobjdata;
+
+		bobjdata = (*env)->CallStaticObjectMethod(env, jBSONClazz, encodeMethodID, qobj);
+		bdata = (*env)->GetByteArrayElements(env, bobjdata, NULL);
+		blength = (*env)->GetArrayLength(env, bobjdata);
+		qbson = bson_create_from_buffer(bdata, blength);
+		(*env)->ReleaseByteArrayElements(env, bobjdata, bdata, 0);
+		(*env)->DeleteLocalRef(env, bobjdata);
+
+		// todo: check query bson
+		if (!qbson) {
+			//
+			goto finish;
+		}
+
+		jsize qorz = NULL != qorarrobj ? (*env)->GetArrayLength(env, qorarrobj) : 0;
+		if (qorz > 0) {
+			qorbsons = (bson*)malloc(qorz * sizeof(bson));
+			// todo: check memory allocation
+			if (!qorbsons) {
+				set_error(env, 0, "Not enought memory");
+				goto finish;
+			}
+
+			for (jsize i = 0; i < qorz; ++i) {
+				jobject qorobj = (*env)->GetObjectArrayElement(env, qorarrobj, i);
+
+				bobjdata = (*env)->CallStaticObjectMethod(env, jBSONClazz, encodeMethodID, qorobj);
+				bdata = (*env)->GetByteArrayElements(env, bobjdata, NULL);
+				blength = (*env)->GetArrayLength(env, bobjdata);
+				bson_create_from_buffer2(&qorbsons[i], bdata, blength);
+				(*env)->ReleaseByteArrayElements(env, bobjdata, bdata, 0);
+				(*env)->DeleteLocalRef(env, bobjdata);
+			}
+		}
+
+		if (NULL != hobj){
+			bobjdata = (*env)->CallStaticObjectMethod(env, jBSONClazz, encodeMethodID, hobj);
+			bdata = (*env)->GetByteArrayElements(env, bobjdata, NULL);
+			blength = (*env)->GetArrayLength(env, bobjdata);
+			qhbson = bson_create_from_buffer(bdata, blength);
+			(*env)->ReleaseByteArrayElements(env, bobjdata, bdata, 0);
+			(*env)->DeleteLocalRef(env, bobjdata);
+		}
+
+		q = ejdbcreatequery(db, qbson, qorz > 0 ? qorbsons : NULL, qorz, qhbson);
+		if (!q) {
+			set_ejdb_error(env, db);
+			goto finish;
 		}
 
 		const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
-		EJCOLL * coll = ejdbgetcoll(db, cname);
-		(*env)->ReleaseStringUTFChars(env, colname, cname);
+		EJCOLL *coll = ejdbgetcoll(db, cname);
 
 		if (!coll) {
-			// TODO: check upsert
+			bson_iterator it;
+			//If we are in $upsert mode a new collection will be created
+			if (bson_find(&it, qbson, "$upsert") == BSON_OBJECT) {
+				coll = ejdbcreatecoll(db, cname, NULL);
+				(*env)->ReleaseStringUTFChars(env, colname, cname);
+				if (!coll) {
+					set_ejdb_error(env, db);
+					goto finish;
+				}
+			}
+		} else {
+			(*env)->ReleaseStringUTFChars(env, colname, cname);
 		}
 
+		uint32_t count = 0;
+		TCLIST *qres = NULL;
+		if (!coll) { //No collection -> no results
+			qres = (flags & JBQRYCOUNT) ? NULL : tclistnew2(1); //empty results
+		} else {
+			qres = ejdbqryexecute(coll, q, &count, flags, NULL);
+			if (ejdbecode(db) != TCESUCCESS) {
+				set_ejdb_error(env, db);
+				goto finish;
+			}
+		}
+		
+		qresult = (*env)->NewObject(env, jQResultClazz, initQResultMethodID, (jlong)count, (jlong)qres);
 
+finish:
+		// clear
+		if (qbson) {
+			bson_del(qbson);
+		}
+		if (qorbsons) {
+			for (int i = 0; i < qorz; ++i) {
+				bson_destroy(&qorbsons[i]);
+			}
+			free(qorbsons);
+		}
+		if (qhbson) {
+			bson_del(qhbson);
+		}
+		if (q) {
+			ejdbquerydel(q);
+		}
 
-		// TODO:
-		return;
-};
-
-/*
- * Class:     org_ejdb_driver_EJDBQuery
- * Method:    executeDB
- * Signature: ()Ljava/lang/Object;
- */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_executeDB
-  (JNIEnv *env, jobject obj) {
-	  // TODO:
-	  return NULL;
-};
-
-/*
- * Class:     org_ejdb_driver_EJDBQuery
- * Method:    closeDB
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBQuery_closeDB
-  (JNIEnv *env, jobject obj) {
-	  // TODO:
-	  return;
+		return qresult;
 };

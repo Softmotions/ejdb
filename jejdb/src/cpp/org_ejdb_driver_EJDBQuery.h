@@ -7,29 +7,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*
- * Class:     org_ejdb_driver_EJDBQuery
- * Method:    createDB
- * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;)V
- */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBQuery_createDB
-  (JNIEnv *, jobject, jobject, jobjectArray, jobject);
-
+#undef org_ejdb_driver_EJDBQuery_JBQRYCOUNT
+#define org_ejdb_driver_EJDBQuery_JBQRYCOUNT 1L
 /*
  * Class:     org_ejdb_driver_EJDBQuery
  * Method:    executeDB
- * Signature: ()Ljava/lang/Object;
+ * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;I)Lorg/ejdb/driver/EJDBQuery/QResult;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_executeDB
-  (JNIEnv *, jobject);
-
-/*
- * Class:     org_ejdb_driver_EJDBQuery
- * Method:    closeDB
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBQuery_closeDB
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jobject, jobjectArray, jobject, jint);
 
 #ifdef __cplusplus
 }

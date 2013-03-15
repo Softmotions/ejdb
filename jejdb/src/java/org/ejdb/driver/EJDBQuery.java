@@ -7,20 +7,40 @@ import org.bson.BSONObject;
  * @version $Id$
  */
 public class EJDBQuery {
+
+    // Query search mode flags
+    public static final int JBQRYCOUNT = 1; /*< Query only count(*) */
+
+
     private EJDBCollection coll;
     private BSONObject query;
+    private BSONObject[] qors;
+    private BSONObject hints;
+    private int flags;
 
-    private long qPointer;
-
-    EJDBQuery(EJDBCollection coll, BSONObject query) {
+    EJDBQuery(EJDBCollection coll, BSONObject query, BSONObject[] qors, BSONObject hints, int flags) {
         this.coll = coll;
         this.query = query;
-
-        this.createDB(this.query, null, null);
+        this.qors = qors;
+        this.hints = hints;
+        this.flags = flags;
     }
 
-    protected native void createDB(BSONObject query, BSONObject[] qors, BSONObject hints);
-    protected native Object executeDB();
-    protected native void closeDB();
+    public void execute() {
+        QResult qResult = this.executeDB(query, qors, hints, flags);
+        // TODO: create EJDBResultSet from QResult
+    }
 
+
+    protected native QResult executeDB(BSONObject query, BSONObject[] qors, BSONObject hints, int flags);
+
+    private static class QResult {
+        private long count;
+        private long rsPointer;
+
+        private QResult(long count, long rsPointer) {
+            this.count = count;
+            this.rsPointer = rsPointer;
+        }
+    }
 }
