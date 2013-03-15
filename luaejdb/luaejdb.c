@@ -131,8 +131,8 @@ static int db_save(lua_State *L) {
     int argc = lua_gettop(L);
     luaL_checktype(L, 1, LUA_TTABLE); //self
     lua_getfield(L, 1, EJDBUDATAKEY);
-    EJDBDATA *data = luaL_checkudata(L, -1, EJDBUDATAMT);
-    EJDB *jb = data->db;
+    EJDB *jb = ((EJDBDATA*) luaL_checkudata(L, -1, EJDBUDATAMT))->db;
+    lua_pop(L, 1);
     const char *cname = luaL_checkstring(L, 2); //collections name
     bson bsonval;
     const char *bsonbuf = luaL_checkstring(L, 3); //Object to save
@@ -156,7 +156,57 @@ static int db_save(lua_State *L) {
     lua_pushstring(L, xoid);
 
     bson_destroy(&bsonval);
-    if (lua_gettop(L) - argc != 2) { //got +lua_getfield(L, 1, EJDBUDATAKEY)
+    if (lua_gettop(L) - argc != 1) { //got +lua_getfield(L, 1, EJDBUDATAKEY)
+        return luaL_error(L, "db_save: Invalid stack size: %d should be: %d", (lua_gettop(L) - argc), 1);
+    }
+    return 1;
+}
+
+static int db_load(lua_State *L) {
+    int argc = lua_gettop(L);
+    luaL_checktype(L, 1, LUA_TTABLE); //self
+    lua_getfield(L, 1, EJDBUDATAKEY);
+    EJDB *jb = ((EJDBDATA*) luaL_checkudata(L, -1, EJDBUDATAMT))->db;
+    lua_pop(L, 1);
+
+    const char *cname = luaL_checkstring(L, 2);
+    bson_oid_t oid;
+    memset(&oid, 0, sizeof(oid));
+
+    if (lua_type(L, 3) == LUA_TSTRING) {
+        const char *soid = lua_tostring(L, 3);
+        if (ejdbisvalidoidstr(soid)) {
+            bson_oid_from_string(&oid, soid);
+        }
+    } else if (luaL_getmetafield(L, 3, "__bsontype") && lua_tointeger(L, -1) == BSON_OID) {
+        lua_pop(L, 1);
+        lua_rawgeti(L, 3, 1);
+        const char *soid = lua_tostring(L, -1);
+        if (ejdbisvalidoidstr(soid)) {
+            bson_oid_from_string(&oid, soid);
+        }
+        lua_pop(L, 1);
+    }
+    if (!oid.ints[0] && !oid.ints[1] && !oid.ints[2]) {
+        return luaL_error(L, "Invalid OID arg #2");
+    }
+    EJCOLL *coll = ejdbgetcoll(jb, cname);
+    if (!coll) {
+        lua_pushnil(L);
+        goto finish;
+    }
+    bson *bs = ejdbloadbson(coll, &oid);
+    if (!bs) {
+        lua_pushnil(L);
+        goto finish;
+    }
+    bson_iterator it;
+    bson_iterator_init(&it, bs);
+    lua_push_bson_table(L, &it);
+    bson_del(bs);
+
+finish:
+    if (lua_gettop(L) - argc != 1) { //got
         return luaL_error(L, "db_save: Invalid stack size: %d should be: %d", (lua_gettop(L) - argc), 1);
     }
     return 1;
@@ -166,12 +216,13 @@ static int db_find(lua_State *L) {
     //cname, q.toBSON(), orBsons, q.toHintsBSON(), flags
     luaL_checktype(L, 1, LUA_TTABLE); //self
     lua_getfield(L, 1, EJDBUDATAKEY);
-    EJDBDATA *data = luaL_checkudata(L, -1, EJDBUDATAMT);
+    EJDB *jb = ((EJDBDATA*) luaL_checkudata(L, -1, EJDBUDATAMT))->db;
+    lua_pop(L, 1);
     const char *cname = luaL_checkstring(L, 2); //collections name
     const char *qbsonbuf = luaL_checkstring(L, 3); //Query bson
     luaL_checktype(L, 4, LUA_TTABLE); //or joined
     const char *hbsonbuf = luaL_checkstring(L, 5); //Hints bson
-    if (!data || !data->db || !qbsonbuf || !hbsonbuf) {
+    if (!jb || !qbsonbuf || !hbsonbuf) {
         return luaL_error(L, "Illegal arguments");
     }
     bson oqarrstack[8]; //max 8 $or bsons on stack
@@ -179,7 +230,6 @@ static int db_find(lua_State *L) {
     bson qbson = {NULL};
     bson hbson = {NULL};
     EJQ *q = NULL;
-    EJDB *jb = data->db;
     EJCOLL *coll = NULL;
     uint32_t count = 0;
 
@@ -244,6 +294,9 @@ static int db_open(lua_State *L) {
 
     lua_pushcfunction(L, db_save);
     lua_setfield(L, -2, "_save");
+
+    lua_pushcfunction(L, db_load);
+    lua_setfield(L, -2, "load");
 
     lua_pushcfunction(L, db_find);
     lua_setfield(L, -2, "_find");

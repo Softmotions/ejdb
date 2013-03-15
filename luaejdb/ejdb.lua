@@ -69,7 +69,7 @@ local mtBSON_BOOL = {
 
 
 function luaejdb.toOID(val)
-  assert(type(val) == "string" and #val == 24)
+  luaejdb.check_valid_oid_string(val)
   return setmetatable({ val }, mtBSON_OID);
 end
 

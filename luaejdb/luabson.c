@@ -4,10 +4,9 @@
 #include <lauxlib.h>
 #include <math.h>
 #include <string.h>
-#include <tcejdb/tcutil.h>
+#include <tcejdb/ejdb.h>
 
 static void lua_push_bson_value(lua_State *L, bson_iterator *it);
-static void lua_push_bson_table(lua_State *L, bson_iterator *it);
 static void lua_push_bson_array(lua_State *L, bson_iterator *it);
 static void lua_to_bson_impl(lua_State *L, int spos, bson *bs);
 static void bson_print_xstr(TCXSTR* xstr, const char *data, int depth);
@@ -26,6 +25,19 @@ void lua_init_bson(lua_State *L) {
     lua_pushcfunction(L, print_bson);
     lua_setfield(L, -2, "print_bson");
 
+    lua_pushcfunction(L, check_valid_oid_string);
+    lua_setfield(L, -2, "check_valid_oid_string");
+}
+
+int check_valid_oid_string(lua_State *L) {
+    bool ret = false;
+    if (lua_type(L, 1) == LUA_TSTRING) {
+        ret = ejdbisvalidoidstr(lua_tostring(L, -1));
+    }
+    if (!ret) {
+        return luaL_error(L, "OID is not valid");
+    }
+    return 0;
 }
 
 int print_bson(lua_State *L) {
@@ -121,7 +133,7 @@ static void lua_push_bson_value(lua_State *L, bson_iterator *it) {
     }
 }
 
-static void lua_push_bson_table(lua_State *L, bson_iterator *it) {
+void lua_push_bson_table(lua_State *L, bson_iterator *it) {
     bson_type bt;
     lua_push_bsontype_table(L, BSON_OBJECT);
     while ((bt = bson_iterator_next(it)) != BSON_EOO) {
@@ -298,24 +310,41 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                     lua_pop(L, 1); //-oarr
                 } else {
                     if (key) bson_append_start_object(bs, key);
-                    for (lua_pushnil(L); lua_next(L, vpos); lua_pop(L, 1)) {
-                        int ktype = lua_type(L, -2);
-                        if (ktype == LUA_TNUMBER) {
-                            char vkey[TCNUMBUFSIZ];
-                            bson_numstrn(vkey, TCNUMBUFSIZ, (int64_t) lua_tointeger(L, -2));
-                            lua_val_to_bson(L, vkey, lua_gettop(L), bs, tref);
-                        } else if (ktype == LUA_TSTRING) {
-                            size_t klen = 0;
-                            const char *vkey = lua_tolstring(L, -2, &klen);
-                            if (key == NULL && klen == JDBIDKEYNAMEL && !strcmp(JDBIDKEYNAME, vkey)) { //root level OID as string
-                                //pack OID as type table
-                                lua_push_bsontype_table(L, BSON_OID); //+type table
-                                lua_pushvalue(L, -2); //dup oid on stack
-                                lua_rawseti(L, -2, 1); //pop oid val
-                            }
-                            lua_val_to_bson(L, vkey, lua_gettop(L), bs, tref);
+                    TCLIST *keys = tclistnew();
+                    //we need to sort keys due to unordered nature of lua tables
+                    for (lua_pushnil(L); lua_next(L, vpos);) {
+                        lua_pop(L, 1); //-val
+                        size_t ksize = 0;
+                        int ktype = lua_type(L, -1);
+                        if (ktype == LUA_TSTRING) { //accept only string keys
+                            const char* key = lua_tolstring(L, -1, &ksize);
+                            tclistpush(keys, key, ksize);
                         }
                     }
+                    tclistsort(keys);
+                    for (int i = 0; i < TCLISTNUM(keys); ++i) {
+                        int vkeysz = TCLISTVALSIZ(keys, i);
+                        const char *vkey = TCLISTVALPTR(keys, i);
+                        lua_pushlstring(L, vkey, vkeysz);
+                        lua_rawget(L, vpos); //+val
+                        if (key == NULL && lua_type(L, -1) == LUA_TSTRING &&
+                                vkeysz == JDBIDKEYNAMEL && !strcmp(JDBIDKEYNAME, vkey)) { //root level OID as string
+                            //pack OID as type table
+                            lua_push_bsontype_table(L, BSON_OID); //+type table
+                            lua_pushvalue(L, -2); //dup oid(val) on stack
+                            lua_rawseti(L, -2, 1); //pop oid val
+                            if (ejdbisvalidoidstr(lua_tostring(L, -2))) {
+                                lua_val_to_bson(L, vkey, lua_gettop(L), bs, tref);
+                            } else {
+                                luaL_error(L, "OID _id='%s' is not valid", lua_tostring(L, -2));
+                            }
+                            lua_pop(L, 1); //-type table
+                        } else {
+                            lua_val_to_bson(L, vkey, lua_gettop(L), bs, tref);
+                        }
+                        lua_pop(L, 1); //-val
+                    }
+                    tclistdel(keys);
                     if (key) bson_append_finish_object(bs);
                 }
             } else { //metafield __bsontype on top

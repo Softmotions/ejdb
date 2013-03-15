@@ -6,6 +6,9 @@ local inspect = require("inspect")
 local ejdb = require("ejdb")
 assert(type(ejdb) == "table")
 
+assert(not pcall(function() ejdb.check_valid_oid_string("sss") end));
+assert(pcall(function() ejdb.check_valid_oid_string("510f7fa91ad6270a00000000") end));
+
 local Q = ejdb.Q
 local B = ejdb.B
 
@@ -58,14 +61,28 @@ assert(type(obj.bdate) == "table" and getmetatable(obj.bdate).__bsontype == db.B
 assert(obj.bdate[1] == 1362835380447)
 assert(type(obj.dst) == "table" and getmetatable(obj.dst).__bsontype == db.BSON_NULL)
 
+assert([[._id(7)=510f7fa91ad6270a00000000
+.a(16)=2
+.c(2)=d
+.dd(3)=
+..c(16)=1
+..f(2)=v1
+..gt(8)=true
+
+.ee(2)=t
+]] == ejdb.print_bson(ejdb.to_bson({ c = "d", a = 2, _id = "510f7fa91ad6270a00000000", dd = { f = "v1", gt = true, c = 1 }, ee = "t" })))
+
 
 -- Test save
 --
-local oid = db:save("mycoll", {foo="bar"});
+local oid = db:save("mycoll", { foo = "bar" });
 assert(oid and #oid == 24)
 
-oid = db:save("mycoll", B("foo2","bar2"));
+oid = db:save("mycoll", B("foo2", "bar2"):KV("g", "d"):KV("e", 1):KV("a", "g"));
 assert(oid and #oid == 24)
+
+obj = db:load("mycoll", oid)
+print(inspect(obj));
 
 
 db:close()
