@@ -421,7 +421,7 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_executeDB
 		jmethodID encodeMethodID = (*env)->GetStaticMethodID(env, jBSONClazz, "encode", "(Lorg/bson/BSONObject;)[B");
 
 		jclass jQResultClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBQuery$QResult");
-		jmethodID initQResultMethodID = (*env)->GetMethodID(env, jQResultClazz, "<init>", "(JJ)V");
+		jmethodID initQResultMethodID = (*env)->GetMethodID(env, jQResultClazz, "<init>", "(IJ)V");
 		
 		bson *qbson = NULL;
 		bson *qorbsons = NULL;
@@ -520,7 +520,7 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_executeDB
 			}
 		}
 		
-		qresult = (*env)->NewObject(env, jQResultClazz, initQResultMethodID, (jlong)count, (jlong)qres);
+		qresult = (*env)->NewObject(env, jQResultClazz, initQResultMethodID, (jint)count, (jlong)qres);
 
 finish:
 		// clear
@@ -542,3 +542,86 @@ finish:
 
 		return qresult;
 };
+
+/*
+ * Class:     org_ejdb_driver_EJDBResultSet
+ * Method:    getDB
+ * Signature: (I)Lorg/bson/BSONObject;
+ */
+ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_getDB
+	 (JNIEnv *env, jobject obj, jint indx) {
+		 jclass clazz = (*env)->GetObjectClass(env, obj);
+		 jfieldID rspID = (*env)->GetFieldID(env, clazz, "rsPointer", "J");
+		 jlong rsp = (*env)->GetLongField(env, obj, rspID);
+
+		 TCLIST *rs = (TCLIST *)rsp;
+
+		 if (!rs) {
+			 set_error(env, 0, "Cursor closed");
+			 return NULL;
+		 }
+
+		 if (indx < 0 || indx >= TCLISTNUM(rs)) {
+			 set_error(env, 0, "Invalid cursor position");
+			 return NULL;
+		 }
+
+		 int bsdatasz;
+		 void *bsdata;
+
+		 TCLISTVAL(bsdata, rs, indx, bsdatasz);
+
+		 // decode BSONObject
+		 jclass jBSONClazz = (*env)->FindClass(env, "org/bson/BSON");
+		 jmethodID decodeMethodID = (*env)->GetStaticMethodID(env, jBSONClazz, "decode", "([B)Lorg/bson/BSONObject;");
+
+		 jbyteArray jbsdata = (*env)->NewByteArray(env, bsdatasz);
+		 (*env)->SetByteArrayRegion(env, jbsdata, 0, bsdatasz, (jbyte*)bsdata);
+		 jobject bson = (*env)->CallStaticObjectMethod(env, jBSONClazz, decodeMethodID, jbsdata);
+
+		 (*env)->DeleteLocalRef(env, jbsdata);
+
+		 return bson;
+ };
+
+ /*
+ * Class:     org_ejdb_driver_EJDBResultSet
+ * Method:    lengthDB
+ * Signature: ()I
+ */
+ JNIEXPORT jint JNICALL Java_org_ejdb_driver_EJDBResultSet_lengthDB
+	 (JNIEnv *env, jobject obj) {
+		 jclass clazz = (*env)->GetObjectClass(env, obj);
+		 jfieldID rspID = (*env)->GetFieldID(env, clazz, "rsPointer", "J");
+		 jlong rsp = (*env)->GetLongField(env, obj, rspID);
+
+		 TCLIST *rs = (TCLIST *)rsp;
+
+		 if (!rs) {
+			 return 0;
+		 }
+
+		 return TCLISTNUM(rs);
+ };
+
+ /*
+ * Class:     org_ejdb_driver_EJDBResultSet
+ * Method:    closeDB
+ * Signature: ()V
+ */
+ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBResultSet_closeDB
+	 (JNIEnv *env, jobject obj) {
+		 jclass clazz = (*env)->GetObjectClass(env, obj);
+		 jfieldID rspID = (*env)->GetFieldID(env, clazz, "rsPointer", "J");
+		 jlong rsp = (*env)->GetLongField(env, obj, rspID);
+
+		 TCLIST *rs = (TCLIST *)rsp;
+
+		 if (!rs) {
+			 return;
+		 }
+
+		 tclistdel(rs);
+
+		 (*env)->SetLongField(env, obj, rspID, (jlong)0);
+ };

@@ -26,19 +26,20 @@ public class EJDBQuery {
         this.flags = flags;
     }
 
-    public void execute() {
+    // TODO
+    public EJDBResultSet execute() {
         QResult qResult = this.executeDB(query, qors, hints, flags);
-        // TODO: create EJDBResultSet from QResult
+        return qResult != null ? new EJDBResultSet(qResult.rsPointer) : null;
     }
 
 
     protected native QResult executeDB(BSONObject query, BSONObject[] qors, BSONObject hints, int flags);
 
     private static class QResult {
-        private long count;
+        private int count;
         private long rsPointer;
 
-        private QResult(long count, long rsPointer) {
+        private QResult(int count, long rsPointer) {
             this.count = count;
             this.rsPointer = rsPointer;
         }

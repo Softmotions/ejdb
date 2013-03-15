@@ -7,6 +7,30 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/*
+ * Class:     org_ejdb_driver_EJDBResultSet
+ * Method:    getDB
+ * Signature: (I)Lorg/bson/BSONObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_getDB
+  (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     org_ejdb_driver_EJDBResultSet
+ * Method:    lengthDB
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_ejdb_driver_EJDBResultSet_lengthDB
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDBResultSet
+ * Method:    closeDB
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBResultSet_closeDB
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif
