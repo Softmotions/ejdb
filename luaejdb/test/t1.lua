@@ -86,9 +86,11 @@ assert(type(obj) == "table")
 assert(obj["_id"] == oid)
 assert(obj.a == "g" and obj.e == 1 and obj.foo2 == "bar2" and obj.g == "d")
 
+db:save("mycoll", { foo = "bar3" });
+db:save("mycoll", { foo = "bar4" });
+db:save("mycoll", { foo = "bar6", k2 = "v2" });
 
-local cur  = db:find("mycoll", Q("foo", "bar"))
-
+local cur = db:find("mycoll", Q("foo", "bar"))
 
 db:close()
 

@@ -6,10 +6,11 @@
 
 #include "luabson.h"
 
-#define EJDBLIBNAME	"luaejdb"
+//EJDB db user data
 #define EJDBUDATAKEY "__ejdb__"
-#define EJDBUDATAMT "mt.ejdb.db"
-#define EJDBCURSORMT "mt.ejdb.cur"
+#define EJDBUDATAMT "mtejdb"
+//Cursor user data
+#define EJDBCURSORMT "mtejc"
 
 #define DEFAULT_OPEN_MODE (JBOWRITER | JBOCREAT | JBOTSYNC)
 
@@ -36,7 +37,7 @@ typedef struct {
 } EJDBDATA;
 
 typedef struct {
-    TCLIST *res;
+    TCLIST *qres;
 } CURSORDATA;
 
 #define EJDBERR(_L, _DB) \
@@ -96,23 +97,73 @@ static void init_db_consts(lua_State *L) {
 
 static int cursor_del(lua_State *L) {
     CURSORDATA *cdata = luaL_checkudata(L, 1, EJDBCURSORMT);
-    if (cdata->res) {
-        tclistdel(cdata->res);
-        cdata->res = NULL;
+    if (cdata->qres) {
+        tclistdel(cdata->qres);
+        cdata->qres = NULL;
     }
     return 0;
 }
 
 static int cursor_field(lua_State *L) {
+    //todo
     return 0;
 }
 
 static int cursor_object(lua_State *L) {
+    //todo
     return 0;
 }
 
-static int cursor_iter(lua_State *L) {
+static int cursor_iter_next(lua_State *L) {
+    //todo
     return 0;
+};
+
+static int cursor_iter(lua_State *L) {
+    //todo
+    return 0;
+}
+
+static int cursor_index(lua_State *L) {
+    CURSORDATA *cdata = luaL_checkudata(L, 1, EJDBCURSORMT);
+    TCLIST *qres = cdata->qres;
+    if (!qres) {
+        return luaL_error(L, "Cursor closed");
+    }
+    const int atype = lua_type(L, 2);
+    if (atype == LUA_TNUMBER) { //access by index
+        int idx = lua_tointeger(L, 2);
+        int sz = TCLISTNUM(qres);
+        if (idx < 0) {
+            idx = sz - idx + 1;
+        }
+        if (idx > 0 && idx <= sz ) {
+            lua_pushlstring(L, TCLISTVALPTR(qres, idx - 1), TCLISTVALSIZ(qres, idx - 1));
+            return 1;
+        } else {
+            lua_pushnil(L);
+            return 1;
+        }
+    } else if (atype == LUA_TSTRING) {
+        const char *op = lua_tostring(L, 2);
+        if (!strcmp(op, "iter")) {
+            lua_pushcfunction(L, cursor_iter);
+            return 1;
+        } else if (!strcmp(op, "field")) {
+            lua_pushcfunction(L, cursor_field);
+            return 1;
+        } else if (!strcmp(op, "object")) {
+            lua_pushcfunction(L, cursor_object);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int cursor_len(lua_State *L) {
+    CURSORDATA *cdata = luaL_checkudata(L, 1, EJDBCURSORMT);
+    lua_pushinteger(L, (cdata->qres) ? TCLISTNUM(cdata->qres) : 0);
+    return 1;
 }
 
 static int db_del(lua_State *L) {
@@ -286,7 +337,6 @@ static int db_find(lua_State *L) {
             }
         }
     }
-
     if (!coll) { //No collection -> no results
         qres = (qflags & JBQRYCOUNT) ? NULL : tclistnew2(1); //empty results
     } else {
@@ -400,6 +450,13 @@ static int db_open(lua_State *L) {
     return 1;
 }
 
+static const struct luaL_Reg ejdbcursor_m[] = {
+    {"__index", cursor_index},
+    {"__len", cursor_len},
+    {"__gc", cursor_del},
+    {NULL, NULL}
+};
+
 /* Init */
 int luaopen_luaejdb(lua_State *L) {
     lua_settop(L, 0);
@@ -413,19 +470,10 @@ int luaopen_luaejdb(lua_State *L) {
 
     //Push cursor methods into metatable
     luaL_newmetatable(L, EJDBCURSORMT);
-    lua_newtable(L);
-
-    lua_pushcfunction(L, cursor_object);
-    lua_setfield(L, -2, "object");
-
-    lua_pushcfunction(L, cursor_field);
-    lua_setfield(L, -2, "field");
-
-    lua_setfield(L, -2, "__index");
+    luaL_register(L, NULL, ejdbcursor_m);
+    lua_pop(L, 1);
 
     lua_settop(L, 1);
-
-
     return 1;
 }
 
