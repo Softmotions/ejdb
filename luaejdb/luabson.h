@@ -22,6 +22,8 @@ extern "C" {
     int check_valid_oid_string(lua_State *L);
     void lua_push_bsontype_table(lua_State* L, int bsontype);
     void lua_push_bson_table(lua_State *L, bson_iterator *it);
+    void lua_push_bson_array(lua_State *L, bson_iterator *it);
+    void lua_push_bson_value(lua_State *L, bson_iterator *it);
 
 #ifdef	__cplusplus
 }

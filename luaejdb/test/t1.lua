@@ -72,14 +72,13 @@ assert([[._id(7)=510f7fa91ad6270a00000000
 .ee(2)=t
 ]] == ejdb.print_bson(ejdb.to_bson({ c = "d", a = 2, _id = "510f7fa91ad6270a00000000", dd = { f = "v1", gt = true, c = 1 }, ee = "t" })))
 
-
 -- Test save
 --
-local oid = db:save("mycoll", { foo = "bar" });
-assert(oid and #oid == 24)
+local oid = db:save("mycoll", { foo = "bar", k1 = "v1" });
+ejdb.check_valid_oid_string(oid)
 
 oid = db:save("mycoll", B("foo2", "bar2"):KV("g", "d"):KV("e", 1):KV("a", "g"));
-assert(oid and #oid == 24)
+ejdb.check_valid_oid_string(oid)
 
 obj = db:load("mycoll", oid)
 assert(type(obj) == "table")
@@ -90,7 +89,33 @@ db:save("mycoll", { foo = "bar3" });
 db:save("mycoll", { foo = "bar4" });
 db:save("mycoll", { foo = "bar6", k2 = "v2" });
 
-local cur = db:find("mycoll", Q("foo", "bar"))
+local qres, count, log = db:find("mycoll", Q("foo", "bar"))
+assert(qres)
+assert(count == 1)
+assert(log == nil)
+assert(#qres == 1)
+
+for i = 1, #qres do
+  local vobj = ejdb.from_bson(qres[i]);
+  assert(vobj)
+  assert(vobj["foo"] == "bar")
+  assert(vobj["k1"] == "v1")
+  ejdb.check_valid_oid_string(vobj["_id"])
+end
+
+for i = 1, #qres do
+  assert(qres:field(i, "foo") == "bar")
+  assert(qres:field(i, "k1") == "v1")
+  local vobj = qres:object(i);
+  assert(vobj)
+  assert(vobj["foo"] == "bar")
+  assert(vobj["k1"] == "v1")
+  ejdb.check_valid_oid_string(vobj["_id"])
+end
+
+for o in qres() do
+
+end
 
 db:close()
 

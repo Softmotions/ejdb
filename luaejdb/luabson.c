@@ -6,8 +6,6 @@
 #include <string.h>
 #include <tcejdb/ejdb.h>
 
-static void lua_push_bson_value(lua_State *L, bson_iterator *it);
-static void lua_push_bson_array(lua_State *L, bson_iterator *it);
 static void lua_to_bson_impl(lua_State *L, int spos, bson *bs);
 static void bson_print_xstr(TCXSTR* xstr, const char *data, int depth);
 
@@ -64,7 +62,7 @@ void lua_push_bsontype_table(lua_State* L, int bsontype) {
     lua_setmetatable(L, -2);
 }
 
-static void lua_push_bson_value(lua_State *L, bson_iterator *it) {
+void lua_push_bson_value(lua_State *L, bson_iterator *it) {
     bson_type bt = bson_iterator_type(it);
     switch (bt) {
         case BSON_OID:
@@ -143,7 +141,7 @@ void lua_push_bson_table(lua_State *L, bson_iterator *it) {
     }
 }
 
-static void lua_push_bson_array(lua_State *L, bson_iterator *it) {
+void lua_push_bson_array(lua_State *L, bson_iterator *it) {
     bson_type bt;
     lua_push_bsontype_table(L, BSON_ARRAY);
     for (int i = 1; (bt = bson_iterator_next(it)) != BSON_EOO; ++i) {
