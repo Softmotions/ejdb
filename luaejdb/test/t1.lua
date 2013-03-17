@@ -135,7 +135,7 @@ assert(#qres == 1)
 qres:close()
 assert(#qres == 0)
 
-local r,err = pcall(qres.object, qres, 1);
+local r, err = pcall(qres.object, qres, 1);
 assert(err == "Cursor closed")
 
 
@@ -160,6 +160,14 @@ assert(log == nil)
 local count, log = db:count("mycoll", Q():Or(Q("foo", "bar"), Q("foo", "bar6")), "l");
 assert(count == 2)
 assert(log:find("COUNT ONLY: YES"))
+
+local vobj, count, log = db:findOne("mycoll", Q():Or(Q("foo", "bar"), Q("foo", "bar6")):OrderBy("foo desc"));
+assert(count == 1)
+assert(vobj["foo"] == "bar6")
+
+local vobj, count, log = db:findOne("mycoll", Q():Or(Q("foo", "bar"), Q("foo", "bar6")):OrderBy({ foo = 1 }));
+assert(count == 1)
+assert(vobj["foo"] == "bar")
 
 
 db:close()

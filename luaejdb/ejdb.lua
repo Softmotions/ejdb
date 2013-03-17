@@ -128,7 +128,7 @@ function DB:save(cname, obj, ...)
 end
 
 function DB:find(cname, q, ...)
-  assert(getmetatable(q) == mtBObj, "Query object must be instance of 'luaejdb.B' class `q = luaejdb.B()`")
+  assert(getmetatable(q) == mtBObj, "Query object must be instance of 'luaejdb.Q' class `q = luaejdb.Q()`")
   local sflags = ...
   local orBsons = {}
   local ors = q:getJoinedORs()
@@ -142,7 +142,14 @@ end
 
 
 function DB:findOne(cname, q, ...)
-
+  assert(getmetatable(q) == mtBObj, "Query object must be instance of 'luaejdb.Q' class `q = luaejdb.Q()`")
+  q:Max(1);
+  local qres, count, log = self:find(cname, q, ...)
+  if qres ~= nil and #qres > 0 then
+    return qres:object(1), count, log
+  else
+    return nil, count, log
+  end
 end
 
 function DB:count(cname, q, sflags, ...)
@@ -155,6 +162,10 @@ function DB:count(cname, q, sflags, ...)
   return count, log
 end
 
+
+function DB:update(cname, q, ...)
+   return self:count(cname, q, ...)
+end
 
 -- ------- EJDB Query  -------------
 
