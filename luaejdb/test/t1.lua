@@ -13,6 +13,7 @@ local Q = ejdb.Q
 local B = ejdb.B
 
 local db = ejdb:open("testdb", "rwct");
+assert(db:isOpen() == true)
 local q = Q("name", "Andy"):F("_id"):Eq("510f7fa91ad6270a00000000"):F("age"):Gt(20):Lt(40):F("score"):In({ 11, 22.12333, 1362835380447, db.toNull() }):Max(232);
 
 assert([[.name(2)=Andy
@@ -75,6 +76,7 @@ assert([[._id(7)=510f7fa91ad6270a00000000
 -- Test save
 --
 local oid = db:save("mycoll", { foo = "bar", k1 = "v1" });
+local firstOid = oid;
 ejdb.check_valid_oid_string(oid)
 
 oid = db:save("mycoll", B("foo2", "bar2"):KV("g", "d"):KV("e", 1):KV("a", "g"));
@@ -138,7 +140,6 @@ assert(#qres == 0)
 local r, err = pcall(qres.object, qres, 1);
 assert(err == "Cursor closed")
 
-
 local qres, count, log = db:find("mycoll", Q("foo", "bar"), "l")
 assert(type(log) == "string")
 assert(qres ~= nil)
@@ -169,12 +170,20 @@ local vobj, count, log = db:findOne("mycoll", Q():Or(Q("foo", "bar"), Q("foo", "
 assert(count == 1)
 assert(vobj["foo"] == "bar")
 
+db:ensureCollection("ecoll", { large = true, records = 200000 })
+db:dropCollection("ecoll", true);
 
+assert(db:count("mycoll", Q("_id", firstOid)) == 1)
+db:remove("mycoll", firstOid)
+assert(db:count("mycoll", Q("_id", firstOid)) == 0)
+
+db:sync("mycoll") -- sync only mycoll
+db:sync() -- sync whole db
+
+assert(db:isOpen() == true)
 db:close()
+assert(db:isOpen() == false)
 
 collectgarbage()
 collectgarbage()
 collectgarbage()
-
-
-

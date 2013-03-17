@@ -244,8 +244,6 @@ static int cursor_iter_bsons_next(lua_State *L) {
     }
 };
 
-//return cursor iterator
-
 static int cursor_call(lua_State *L) {
     const char *flags = "";
     CURSORDATA *cdata = luaL_checkudata(L, 1, EJDBCURSORMT);
@@ -264,9 +262,9 @@ static int cursor_call(lua_State *L) {
 
 static int db_del(lua_State *L) {
     EJDBDATA *data = luaL_checkudata(L, 1, EJDBUDATAMT);
-    EJDB *db = data->db;
-    if (db) {
-        ejdbdel(db);
+    EJDB *jb = data->db;
+    if (jb) {
+        ejdbdel(jb);
         data->db = NULL;
     }
     return 0;
@@ -276,12 +274,127 @@ static int db_close(lua_State *L) {
     luaL_checktype(L, 1, LUA_TTABLE); //self
     lua_getfield(L, 1, EJDBUDATAKEY);
     EJDBDATA *data = luaL_checkudata(L, -1, EJDBUDATAMT);
-    EJDB *db = data->db;
-    if (db) {
-        if (!ejdbclose(db)) {
-            EJDBERR(L, db);
+    EJDB *jb = data->db;
+    if (jb) {
+        if (!ejdbclose(jb)) {
+            EJDBERR(L, jb);
         }
     }
+    return 0;
+}
+
+static int db_is_open(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE); //self
+    lua_getfield(L, 1, EJDBUDATAKEY);
+    lua_pushboolean(L, ejdbisopen(((EJDBDATA*) luaL_checkudata(L, -1, EJDBUDATAMT))->db));
+    return 1;
+}
+
+static int db_ensure_collection(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE); //self
+    lua_getfield(L, 1, EJDBUDATAKEY);
+    EJDBDATA *data = luaL_checkudata(L, -1, EJDBUDATAMT);
+    EJDB *jb = data->db;
+    const char *cname = luaL_checkstring(L, 2);
+    EJCOLLOPTS opts = {NULL};
+    if (lua_istable(L, 3)) {
+        lua_getfield(L, 3, "cachedrecords");
+        if (lua_isnumber(L, -1)) {
+            opts.cachedrecords = lua_tointeger(L, -1);
+        }
+        lua_pop(L, 1);
+
+        lua_getfield(L, 3, "records");
+        if (lua_isnumber(L, -1)) {
+            opts.records = lua_tointeger(L, -1);
+        }
+        lua_pop(L, 1);
+
+        lua_getfield(L, 3, "large");
+        opts.large = lua_toboolean(L, -1);
+        lua_pop(L, 1);
+
+        lua_getfield(L, 3, "compressed");
+        opts.compressed = lua_toboolean(L, -1);
+        lua_pop(L, 1); //-field
+    }
+    if (!ejdbcreatecoll(jb, cname, &opts)) {
+        return set_ejdb_error(L, jb);
+    }
+    return 0;
+}
+
+static int db_drop_collection(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE); //self
+    lua_getfield(L, 1, EJDBUDATAKEY);
+    EJDBDATA *data = luaL_checkudata(L, -1, EJDBUDATAMT);
+    EJDB *jb = data->db;
+    const char *cname = luaL_checkstring(L, 2);
+    bool unlink = lua_toboolean(L, 3);
+    if (!ejdbrmcoll(jb, cname, unlink)) {
+        return set_ejdb_error(L, jb);
+    }
+    return 0;
+}
+
+static int db_remove(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE); //self
+    lua_getfield(L, 1, EJDBUDATAKEY);
+    EJDBDATA *data = luaL_checkudata(L, -1, EJDBUDATAMT);
+    EJDB *jb = data->db;
+    bson_oid_t oid;
+    memset(&oid, 0, sizeof (oid));
+    const char *cname = luaL_checkstring(L, 2); //collections name
+    if (lua_isstring(L, 3)) {
+        const char *soid = lua_tostring(L, 3);
+        if (ejdbisvalidoidstr(soid)) {
+            bson_oid_from_string(&oid, soid);
+        }
+    } else if (luaL_getmetafield(L, 3, "__bsontype") && lua_tointeger(L, -1) == BSON_OID) {
+        lua_pop(L, 1);
+        lua_rawgeti(L, 3, 1);
+        const char *soid = lua_tostring(L, -1);
+        if (ejdbisvalidoidstr(soid)) {
+            bson_oid_from_string(&oid, soid);
+        }
+        lua_pop(L, 1);
+    }
+    if (!oid.ints[0] && !oid.ints[1] && !oid.ints[2]) {
+        return luaL_error(L, "Invalid OID arg #2");
+    }
+    EJCOLL *coll = ejdbgetcoll(jb, cname);
+    if (!coll) {
+        return 0;
+    }
+    if (!ejdbrmbson(coll, &oid)) {
+        return set_ejdb_error(L, jb);
+    }
+    return 0;
+}
+
+static int db_sync(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE); //self
+    lua_getfield(L, 1, EJDBUDATAKEY);
+    EJDBDATA *data = luaL_checkudata(L, -1, EJDBUDATAMT);
+    EJDB *jb = data->db;
+    if (lua_isstring(L, 2)) { //sync coll
+        const char *cname = lua_tostring(L, 2);
+        EJCOLL *coll = ejdbgetcoll(jb, cname);
+        if (coll) {
+            if (!ejdbsyncoll(coll)) {
+                return set_ejdb_error(L, jb);
+            }
+        }
+    } else { //sync db
+        if (!ejdbsyncdb(jb)) {
+            return set_ejdb_error(L, jb);
+        }
+    }
+    return 0;
+}
+
+static int db_set_index(lua_State *L) {
+    //todo
     return 0;
 }
 
@@ -568,6 +681,24 @@ static int db_open(lua_State *L) {
 
     lua_pushcfunction(L, db_find);
     lua_setfield(L, -2, "_find");
+
+    lua_pushcfunction(L, db_is_open);
+    lua_setfield(L, -2, "isOpen");
+
+    lua_pushcfunction(L, db_ensure_collection);
+    lua_setfield(L, -2, "ensureCollection");
+
+    lua_pushcfunction(L, db_drop_collection);
+    lua_setfield(L, -2, "dropCollection");
+
+    lua_pushcfunction(L, db_remove);
+    lua_setfield(L, -2, "remove");
+
+    lua_pushcfunction(L, db_sync);
+    lua_setfield(L, -2, "sync");
+
+    lua_pushcfunction(L, db_set_index);
+    lua_setfield(L, -2, "_setIndex");
 
     if (lua_gettop(L) - argc != 1) {
         ejdbdel(db);
