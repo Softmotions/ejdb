@@ -139,6 +139,29 @@ local r,err = pcall(qres.object, qres, 1);
 assert(err == "Cursor closed")
 
 
+local qres, count, log = db:find("mycoll", Q("foo", "bar"), "l")
+assert(type(log) == "string")
+assert(qres ~= nil)
+assert(#qres == 1)
+assert(count == 1)
+assert(log:find("COUNT ONLY: NO"))
+
+local qres, count, log = db:find("mycoll", Q("foo", "bar"), "lc") --COUNT only
+assert(type(log) == "string")
+assert(qres == nil)
+assert(count == 1)
+assert(log:find("COUNT ONLY: YES"))
+
+--db:save("mycoll", { foo = "bar6", k2 = "v2" });
+local count, log = db:count("mycoll", Q():Or(Q("foo", "bar"), Q("foo", "bar6")));
+assert(count == 2)
+assert(log == nil)
+
+local count, log = db:count("mycoll", Q():Or(Q("foo", "bar"), Q("foo", "bar6")), "l");
+assert(count == 2)
+assert(log:find("COUNT ONLY: YES"))
+
+
 db:close()
 
 collectgarbage()

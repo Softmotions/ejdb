@@ -1,12 +1,14 @@
-CFLAGS=-g -O0 -fPIC -std=c99 -Wall -D_GNU_SOURCE
 
 build:
-	luarocks --pack-binary-rock CFLAGS='$(CFLAGS)' make
+	luarocks --pack-binary-rock make
 
-check: build
+build-dbg:
+	luarocks --pack-binary-rock CFLAGS='-g -O0 -fPIC -std=c99 -Wall' make
+
+check: build-dbg
 	make -C ./test
 
-check-valgrind: build
+check-valgrind: build-dbg
 	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check  -C ./test
 
 clean:
@@ -14,4 +16,4 @@ clean:
 	make -C ./test clean
 
 
-.PHONY: build test clean
+.PHONY: build build-dbg check check-valgrind clean

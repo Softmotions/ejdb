@@ -30,7 +30,8 @@ build = {
        sources = {"luaejdb.c", "luabson.c"},
        libraries = {"tcejdb"} ,
        incdirs = {"$(LIBTCEJDB_INCDIR)"},
-       libdirs = {"$(LIBTCEJDB_LIBDIR)"}
+       libdirs = {"$(LIBTCEJDB_LIBDIR)"},
+       defines = {"_GNU_SOURCE"}
     }
   }
 }

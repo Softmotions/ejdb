@@ -144,7 +144,8 @@ void lua_push_bson_table(lua_State *L, bson_iterator *it) {
 void lua_push_bson_array(lua_State *L, bson_iterator *it) {
     bson_type bt;
     lua_push_bsontype_table(L, BSON_ARRAY);
-    for (int i = 1; (bt = bson_iterator_next(it)) != BSON_EOO; ++i) {
+    int i;
+    for (i = 1; (bt = bson_iterator_next(it)) != BSON_EOO; ++i) {
         lua_push_bson_value(L, it);
         lua_rawseti(L, -2, i);
     }
@@ -233,7 +234,8 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                 }
                 if (array) {
                     if (key) bson_append_start_array(bs, key);
-                    for (int i = 1; i <= len; ++i, lua_pop(L, 1)) {
+                    int i;
+                    for (i = 1; i <= len; ++i, lua_pop(L, 1)) {
                         lua_rawgeti(L, vpos, i);
                         bson_numstrn(nbuf, TCNUMBUFSIZ, (int64_t) i);
                         lua_val_to_bson(L, nbuf, -1, bs, tref);
@@ -255,7 +257,8 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                     int ipos = lua_gettop(L);
                     size_t ilen = lua_objlen(L, ipos);
                     lua_checkstack(L, 2);
-                    for (size_t i = 1; i <= ilen; ++i, lua_pop(L, 1)) {
+                    size_t i;
+                    for (i = 1; i <= ilen; ++i, lua_pop(L, 1)) {
                         lua_rawgeti(L, ipos, i);
                         //gettop == 3
                         if (!lua_istable(L, -1)) continue;
@@ -264,7 +267,8 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                         size_t jlen = lua_objlen(L, jpos);
                         lua_checkstack(L, 3);
                         bool wrapped = false;
-                        for (size_t j = 1; j <= jlen; ++j, lua_pop(L, 1)) {
+                        size_t j;
+                        for (j = 1; j <= jlen; ++j, lua_pop(L, 1)) {
                             lua_rawgeti(L, jpos, j);
                             if (j == 1) {
                                 fname = strdup(lua_tostring(L, -1));
@@ -320,7 +324,8 @@ static void lua_val_to_bson(lua_State *L, const char *key, int vpos, bson *bs, i
                         }
                     }
                     tclistsort(keys);
-                    for (int i = 0; i < TCLISTNUM(keys); ++i) {
+                    int i;
+                    for (i = 0; i < TCLISTNUM(keys); ++i) {
                         int vkeysz = TCLISTVALSIZ(keys, i);
                         const char *vkey = TCLISTVALPTR(keys, i);
                         lua_pushlstring(L, vkey, vkeysz);

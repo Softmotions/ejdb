@@ -129,19 +129,32 @@ end
 
 function DB:find(cname, q, ...)
   assert(getmetatable(q) == mtBObj, "Query object must be instance of 'luaejdb.B' class `q = luaejdb.B()`")
-  local flags = ...
-  if (type(flags) ~= "number") then
-    flags = 0
-  end
+  local sflags = ...
   local orBsons = {}
   local ors = q:getJoinedORs()
   if ors then
     for _, o in ipairs(ors) do
-      table.insert(orBsons, o.toBSON())
+      table.insert(orBsons, o:toBSON())
     end
   end
-  return self:_find(cname, q:toBSON(), orBsons, q:toHintsBSON(), flags)
+  return self:_find(cname, q:toBSON(), orBsons, q:toHintsBSON(), sflags)
 end
+
+
+function DB:findOne(cname, q, ...)
+
+end
+
+function DB:count(cname, q, sflags, ...)
+  if type(sflags) ~= "string" then
+    sflags = "c"
+  else
+    sflags = "c" .. sflags --append count flag
+  end
+  local _, count, log = self:find(cname, q, sflags, ...)
+  return count, log
+end
+
 
 -- ------- EJDB Query  -------------
 
@@ -291,7 +304,7 @@ function B:Do(val) return self:_rootOp("$do", val) end
 function B:Or(...)
   self._or = self._or or {}
   for i, v in ipairs({ ... }) do
-    assert(getmetatable(v) == mtBObj, "Each 'or' argument must be instance of 'luaejdb.B' class")
+    assert(getmetatable(v) == mtBObj, "Each 'Or()' argument must be instance of 'luaejdb.B' class")
     table.insert(self._or, v)
   end
   return self

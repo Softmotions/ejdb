@@ -383,8 +383,23 @@ static int db_find(lua_State *L) {
     const char *qbsbuf = luaL_checkstring(L, 3); //Query bson
     luaL_checktype(L, 4, LUA_TTABLE); //or joined
     const char *hbsbuf = luaL_checkstring(L, 5); //Hints bson
-    int qflags = luaL_checkinteger(L, 6);
+    int qflags = 0;
+    if (lua_isstring(L, 6)) {
+        const char *sflags = lua_tostring(L, 6);
+        int i;
+        for (i = 0; sflags[i] != '\0'; ++i) {
+            switch (sflags[i]) {
+                case 'c':
+                    qflags |= JBQRYCOUNT;
+                    break;
+                case 'l':
+                    qflags |= JBQRYLOG;
+                    break;
+            }
+        }
+    }
 
+    size_t i;
     bson oqarrstack[8]; //max 8 $or bsons on stack
     bson *oqarr = NULL;
     bson qbson = {NULL};
@@ -399,7 +414,8 @@ static int db_find(lua_State *L) {
     size_t orsz = lua_objlen(L, 4);
     oqarr = ((orsz <= 8) ? oqarrstack : (bson*) tcmalloc(orsz * sizeof (bson)));
 
-    for (size_t i = 0; i < orsz; ++i) {
+
+    for (i = 0; i < orsz; ++i) {
         const void *bsdata;
         size_t bsdatasz;
         lua_rawgeti(L, 4, i + 1);
@@ -468,7 +484,7 @@ static int db_find(lua_State *L) {
 
 finish:
 
-    for (size_t i = 0; i < orsz; ++i) {
+    for (i = 0; i < orsz; ++i) {
         bson_destroy(&oqarr[i]);
     }
     if (oqarr && oqarr != oqarrstack) {
@@ -498,7 +514,8 @@ static int db_open(lua_State *L) {
     } else if (lua_isstring(L, 2)) {
         mode = 0;
         const char* om = lua_tostring(L, 2);
-        for (int i = 0; om[i] != '\0'; ++i) {
+        int i;
+        for (i = 0; om[i] != '\0'; ++i) {
             mode |= JBOREADER;
             switch (om[i]) {
                 case 'w':
