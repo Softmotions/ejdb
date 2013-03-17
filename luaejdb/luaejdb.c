@@ -134,11 +134,6 @@ static int cursor_field(lua_State *L) {
     }
 }
 
-static int cursor_iter_next(lua_State *L) {
-    //todo
-    return 0;
-};
-
 static int cursor_object(lua_State *L) {
     CURSORDATA *cdata = luaL_checkudata(L, 1, EJDBCURSORMT);
     TCLIST *qres = cdata->qres;
@@ -165,11 +160,11 @@ static int cursor_object(lua_State *L) {
 static int cursor_index(lua_State *L) {
     CURSORDATA *cdata = luaL_checkudata(L, 1, EJDBCURSORMT);
     TCLIST *qres = cdata->qres;
-    if (!qres) {
-        return luaL_error(L, "Cursor closed");
-    }
     const int atype = lua_type(L, 2);
     if (atype == LUA_TNUMBER) { //access by index
+        if (!qres) {
+            return luaL_error(L, "Cursor closed");
+        }
         int idx = lua_tointeger(L, 2);
         int sz = TCLISTNUM(qres);
         if (idx < 0) {
@@ -190,6 +185,9 @@ static int cursor_index(lua_State *L) {
         } else if (!strcmp(op, "object")) {
             lua_pushcfunction(L, cursor_object);
             return 1;
+        } else if (!strcmp(op, "close")) {
+            lua_pushcfunction(L, cursor_del);
+            return 1;
         }
     }
     return 0;
@@ -197,13 +195,71 @@ static int cursor_index(lua_State *L) {
 
 static int cursor_len(lua_State *L) {
     CURSORDATA *cdata = luaL_checkudata(L, 1, EJDBCURSORMT);
+    if (!cdata->qres) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
     lua_pushinteger(L, (cdata->qres) ? TCLISTNUM(cdata->qres) : 0);
     return 1;
 }
 
+static int cursor_iter_next(lua_State *L) {
+    CURSORDATA *cdata = lua_touserdata(L, lua_upvalueindex(1));
+    int idx = luaL_checkinteger(L, lua_upvalueindex(2));
+    TCLIST *qres = cdata->qres;
+    if (!qres) {
+        return 0;
+    }
+    int sz = TCLISTNUM(qres);
+    if (idx > 0 && idx <= sz) {
+        const void *bsbuf = TCLISTVALPTR(qres, idx - 1);
+        bson_iterator it;
+        bson_iterator_from_buffer(&it, bsbuf);
+        lua_push_bson_table(L, &it);
+        lua_pushinteger(L, idx + 1);
+        lua_replace(L, lua_upvalueindex(2));
+        lua_pushinteger(L, idx);
+        return 2; //obj, idx
+    } else {
+        return 0;
+    }
+};
+
+static int cursor_iter_bsons_next(lua_State *L) {
+    CURSORDATA *cdata = lua_touserdata(L, lua_upvalueindex(1));
+    int idx = luaL_checkinteger(L, lua_upvalueindex(2));
+    TCLIST *qres = cdata->qres;
+    if (!qres) {
+        return 0;
+    }
+    int sz = TCLISTNUM(qres);
+    if (idx > 0 && idx <= sz) {
+        lua_pushlstring(L, TCLISTVALPTR(qres, idx - 1), TCLISTVALSIZ(qres, idx - 1));
+        lua_pushinteger(L, idx + 1);
+        lua_replace(L, lua_upvalueindex(2));
+        lua_pushinteger(L, idx);
+        return 2; //bson, idx
+    } else {
+        return 0;
+    }
+};
+
 //return cursor iterator
+
 static int cursor_call(lua_State *L) {
-    return 0;
+    const char *flags = "";
+    CURSORDATA *cdata = luaL_checkudata(L, 1, EJDBCURSORMT);
+    if (lua_isstring(L, 2)) {
+        flags = lua_tostring(L, 2);
+    }
+    lua_pushlightuserdata(L, cdata);
+    lua_pushinteger(L, 1);
+    if (!strcmp(flags, "raw")) {
+        lua_pushcclosure(L, cursor_iter_bsons_next, 2);
+    } else {
+        lua_pushcclosure(L, cursor_iter_next, 2);
+    }
+    return 1;
 }
 
 static int db_del(lua_State *L) {

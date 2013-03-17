@@ -113,9 +113,31 @@ for i = 1, #qres do
   ejdb.check_valid_oid_string(vobj["_id"])
 end
 
-for o in qres() do
-
+for vobj, idx in qres() do
+  assert(idx == 1)
+  assert(vobj["foo"] == "bar")
+  assert(vobj["k1"] == "v1")
+  ejdb.check_valid_oid_string(vobj["_id"])
 end
+
+for vbson, idx in qres("raw") do --iterate over bsons
+  assert(idx == 1)
+  assert(type(vbson) == "string");
+  local vobj = ejdb.from_bson(vbson);
+  assert(vobj)
+  assert(vobj["foo"] == "bar")
+  assert(vobj["k1"] == "v1")
+  ejdb.check_valid_oid_string(vobj["_id"])
+end
+
+--test explist qres closing
+assert(#qres == 1)
+qres:close()
+assert(#qres == 0)
+
+local r,err = pcall(qres.object, qres, 1);
+assert(err == "Cursor closed")
+
 
 db:close()
 
