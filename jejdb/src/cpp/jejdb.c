@@ -59,6 +59,31 @@ static jstring get_coll_name(JNIEnv *env, jobject obj) {
 	return NULL;
 };
 
+static void fill_ejdb_collopts(JNIEnv *env, jobject obj, EJCOLLOPTS *ejcopts) {
+	memset(ejcopts, 0, sizeof (*ejcopts));
+
+	if (NULL == obj) {
+		return;
+	}
+
+	jclass clazz = (*env)->GetObjectClass(env, obj);
+
+	jfieldID recordsFID = (*env)->GetFieldID(env, clazz, "records", "J");
+	jfieldID cachedrecordsFID = (*env)->GetFieldID(env, clazz, "cachedrecords", "I");
+	jfieldID largeFID = (*env)->GetFieldID(env, clazz, "large", "Z");
+	jfieldID compressedFID = (*env)->GetFieldID(env, clazz, "compressed", "Z");
+
+	jlong records = (*env)->GetLongField(env, obj, recordsFID);
+	jint cachedrecords = (*env)->GetIntField(env, obj, cachedrecordsFID);
+	jboolean large = (*env)->GetBooleanField(env, obj, largeFID);
+	jboolean compressed = (*env)->GetBooleanField(env, obj, compressedFID);
+
+	ejcopts->records = records > 0 ? records : 0;
+	ejcopts->cachedrecords = cachedrecords > 0 ? cachedrecords : 0;
+	ejcopts->large = (JNI_TRUE == large);
+	ejcopts->compressed = (JNI_TRUE == compressed);
+};
+
 static bson *encode_bson(JNIEnv *env, jobject jbson, bson *out) {
 	jclass jBSONClazz = (*env)->FindClass(env, "org/bson/BSON");
 	jmethodID encodeMethodID = (*env)->GetStaticMethodID(env, jBSONClazz, "encode", "(Lorg/bson/BSONObject;)[B");
@@ -182,7 +207,7 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_syncDB (JNIEnv *env, jobject ob
 /*
 * Class:     org_ejdb_driver_EJDBCollection
 * Method:    ensureDB
-* Signature: (Ljava/lang/Object;)V
+* Signature: (Lorg/ejdb/driver/EJDBCollection$Options;)V
 */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB (JNIEnv *env, jobject obj, jobject opts) {
 	EJDB* db = get_ejdb_from_object(env, obj);
@@ -193,12 +218,11 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB (JNIEnv *env
 
 	jstring colname = get_coll_name(env, obj);
 
-	EJCOLLOPTS jcopts;
-	memset(&jcopts, 0, sizeof (jcopts));
-	// todo: open options
+	EJCOLLOPTS ejcopts;
+	fill_ejdb_collopts(env, opts, &ejcopts);
 
 	const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
-	EJCOLL *coll = ejdbcreatecoll(db, cname, &jcopts);
+	EJCOLL *coll = ejdbcreatecoll(db, cname, &ejcopts);
 	(*env)->ReleaseStringUTFChars(env, colname, cname);
 
 	if (!coll) {
@@ -261,11 +285,11 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB (JNIEnv *env, 
 };
 
 /*
-* Class:     org_ejdb_driver_EJDBCollection
-* Method:    loadDB
-* Signature: ([B)Ljava/lang/Object;
-*/
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB (JNIEnv *env, jobject obj, jbyteArray oidArray) {
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    loadDB
+ * Signature: (Lorg/bson/types/ObjectId;)Lorg/bson/BSONObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB (JNIEnv *env, jobject obj, jobject joid) {
 	EJDB* db = get_ejdb_from_object(env, obj);		
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -282,9 +306,13 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB (JNIEnv *en
 		return NULL;
 	}
 
-	bson_oid_t *oid = (void*)(*env)->GetByteArrayElements(env, oidArray, NULL);
+	jclass jObjectIdClazz = (*env)->FindClass(env, "org/bson/types/ObjectId");
+	jmethodID encodeMethodID = (*env)->GetMethodID(env, jObjectIdClazz, "toByteArray", "()[B");
+	jbyteArray joiddata = (*env)->CallObjectMethod(env, joid, encodeMethodID);
+	bson_oid_t *oid = (bson_oid_t*)(*env)->GetByteArrayElements(env, joiddata, NULL);
 	bson* bson = ejdbloadbson(coll, oid);
-	(*env)->ReleaseByteArrayElements(env, oidArray, (jbyte*)oid, 0);
+	(*env)->ReleaseByteArrayElements(env, joiddata, (jbyte*)oid, 0);
+	(*env)->DeleteLocalRef(env, joiddata);
 
 	if (!bson) {
 		return NULL;
@@ -297,11 +325,11 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB (JNIEnv *en
 }
 
 /*
-* Class:     org_ejdb_driver_EJDBCollection
-* Method:    saveDB
-* Signature: ([B)Ljava/lang/Object;
-*/
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB (JNIEnv *env, jobject obj, jbyteArray objdata) {
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    saveDB
+ * Signature: (Lorg/bson/BSONObject;)Lorg/bson/types/ObjectId;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB (JNIEnv *env, jobject obj, jobject jdata) {
 	EJDB* db = get_ejdb_from_object(env, obj);
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -322,12 +350,9 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB (JNIEnv *en
 
 	bson_oid_t oid;
 
-	jbyte *bdata = (*env)->GetByteArrayElements(env, objdata, NULL);
-	jsize blength = (*env)->GetArrayLength(env, objdata);
-	bson *bson = bson_create_from_buffer(bdata, blength);
+	bson *bson = encode_bson(env, jdata, NULL);
 	bool status = ejdbsavebson(coll, bson, &oid);
 	bson_del(bson);
-	(*env)->ReleaseByteArrayElements(env, objdata, bdata, 0);
 
 	if (!status) {
 		set_ejdb_error(env, db);
@@ -347,11 +372,11 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB (JNIEnv *en
 }
 
 /*
-* Class:     org_ejdb_driver_EJDBCollection
-* Method:    removeDB
-* Signature: ([B)V
-*/
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB (JNIEnv *env, jobject obj, jbyteArray oidArray) {
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    removeDB
+ * Signature: (Lorg/bson/types/ObjectId;)V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB (JNIEnv *env, jobject obj, jobject joid) {
 	EJDB* db = get_ejdb_from_object(env, obj);
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -367,10 +392,13 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB (JNIEnv *env
 		return;
 	}
 
-	// TODO:
-	bson_oid_t *oid = (void*)(*env)->GetByteArrayElements(env, oidArray, NULL);
+	jclass jObjectIdClazz = (*env)->FindClass(env, "org/bson/types/ObjectId");
+	jmethodID encodeMethodID = (*env)->GetMethodID(env, jObjectIdClazz, "toByteArray", "()[B");
+	jbyteArray joiddata = (*env)->CallObjectMethod(env, joid, encodeMethodID);
+	bson_oid_t *oid = (bson_oid_t*)(*env)->GetByteArrayElements(env, joiddata, NULL);
 	bool status = ejdbrmbson(coll, oid);
-	(*env)->ReleaseByteArrayElements(env, oidArray, (jbyte*)oid, 0);
+	(*env)->ReleaseByteArrayElements(env, joiddata, (jbyte*)oid, 0);
+	(*env)->DeleteLocalRef(env, joiddata);
 
 	if (!status) {
 		set_ejdb_error(env, db);

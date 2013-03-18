@@ -24,7 +24,6 @@ public class EJDBCollection {
     public final static int JBIDXARR = 1 << 6; /**< Array token index. */
     public final static int JBIDXISTR = 1 << 7; /**< Case insensitive string index */
 
-    // todo: get dbPointer from db object
     private EJDB db;
     private String cname;
 
@@ -33,14 +32,13 @@ public class EJDBCollection {
         this.cname = cname;
     }
 
-    // todo: bson object for options
-    protected native void ensureDB(Object opts);
+    protected native void ensureDB(Options opts);
     protected native void dropDB(boolean prune);
     protected native void syncDB();
 
-    protected native Object loadDB(byte[] oid);
-    protected native Object saveDB(byte[] objdata);
-    protected native void removeDB(byte[] objdata);
+    protected native BSONObject loadDB(ObjectId oid);
+    protected native ObjectId saveDB(BSONObject obj);
+    protected native void removeDB(ObjectId oid);
 
     protected native void setIndexDB(String path, int flags);
     protected native void txControlDB(int mode);
@@ -49,7 +47,7 @@ public class EJDBCollection {
         this.ensureExists(null);
     }
 
-    public void ensureExists(Object opts) {
+    public void ensureExists(Options opts) {
         this.ensureDB(opts);
     }
 
@@ -66,11 +64,11 @@ public class EJDBCollection {
     }
 
     public BSONObject load(ObjectId oid) {
-        return (BSONObject) this.loadDB(oid.toByteArray());
+        return this.loadDB(oid);
     }
 
     public ObjectId save(BSONObject object) {
-        return (ObjectId) this.saveDB(BSON.encode(object));
+        return this.saveDB(object);
     }
 
     public List<ObjectId> save(List<BSONObject> objects) {
@@ -84,7 +82,7 @@ public class EJDBCollection {
     }
 
     public void remove(ObjectId oid) {
-        this.removeDB(oid.toByteArray());
+        this.removeDB(oid);
     }
 
     public void setIndex(String path, int flags) {
@@ -93,5 +91,54 @@ public class EJDBCollection {
 
     public EJDBQuery createQuery(BSONObject query, BSONObject[] qors, BSONObject hints, int flags) {
         return new EJDBQuery(this, query, qors, hints, flags);
+    }
+
+    public static class Options {
+        private boolean compressed;
+        private boolean large;
+        private long records;
+        private int cachedrecords;
+
+        public Options() {
+        }
+
+        public Options(boolean compressed, boolean large, long records, int cachedrecords) {
+            this.compressed = compressed;
+            this.large = large;
+            this.records = records;
+            this.cachedrecords = cachedrecords;
+        }
+
+        public boolean isCompressed() {
+            return compressed;
+        }
+
+        public void setCompressed(boolean compressed) {
+            this.compressed = compressed;
+        }
+
+        public boolean isLarge() {
+            return large;
+        }
+
+        public void setLarge(boolean large) {
+            this.large = large;
+        }
+
+        public long getRecords() {
+            return records;
+        }
+
+        public void setRecords(long records) {
+            this.records = records;
+        }
+
+        public int getCachedrecords() {
+            return cachedrecords;
+        }
+
+        public void setCachedrecords(int cachedrecords) {
+            this.cachedrecords = cachedrecords;
+        }
     }
 }

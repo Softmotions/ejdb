@@ -26,7 +26,7 @@ extern "C" {
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    ensureDB
- * Signature: (Ljava/lang/Object;)V
+ * Signature: (Lorg/ejdb/driver/EJDBCollection/Options;)V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB
   (JNIEnv *, jobject, jobject);
@@ -50,26 +50,26 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    loadDB
- * Signature: ([B)Ljava/lang/Object;
+ * Signature: (Lorg/bson/types/ObjectId;)Lorg/bson/BSONObject;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
-  (JNIEnv *, jobject, jbyteArray);
+  (JNIEnv *, jobject, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    saveDB
- * Signature: ([B)Ljava/lang/Object;
+ * Signature: (Lorg/bson/BSONObject;)Lorg/bson/types/ObjectId;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
-  (JNIEnv *, jobject, jbyteArray);
+  (JNIEnv *, jobject, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    removeDB
- * Signature: ([B)V
+ * Signature: (Lorg/bson/types/ObjectId;)V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB
-  (JNIEnv *, jobject, jbyteArray);
+  (JNIEnv *, jobject, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
@@ -78,6 +78,14 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndexDB
   (JNIEnv *, jobject, jstring, jint);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    txControlDB
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_txControlDB
+  (JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus
 }
