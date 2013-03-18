@@ -25,67 +25,67 @@ extern "C" {
 #define org_ejdb_driver_EJDBCollection_JBIDXISTR 128L
 /*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    ensureDB
- * Signature: (Lorg/ejdb/driver/EJDBCollection/Options;)V
- */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB
-  (JNIEnv *, jobject, jobject);
-
-/*
- * Class:     org_ejdb_driver_EJDBCollection
- * Method:    dropDB
- * Signature: (Z)V
- */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_dropDB
-  (JNIEnv *, jobject, jboolean);
-
-/*
- * Class:     org_ejdb_driver_EJDBCollection
- * Method:    syncDB
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB
-  (JNIEnv *, jobject);
-
-/*
- * Class:     org_ejdb_driver_EJDBCollection
- * Method:    loadDB
- * Signature: (Lorg/bson/types/ObjectId;)Lorg/bson/BSONObject;
- */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB
-  (JNIEnv *, jobject, jobject);
-
-/*
- * Class:     org_ejdb_driver_EJDBCollection
- * Method:    saveDB
- * Signature: (Lorg/bson/BSONObject;)Lorg/bson/types/ObjectId;
- */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB
-  (JNIEnv *, jobject, jobject);
-
-/*
- * Class:     org_ejdb_driver_EJDBCollection
- * Method:    removeDB
- * Signature: (Lorg/bson/types/ObjectId;)V
- */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB
-  (JNIEnv *, jobject, jobject);
-
-/*
- * Class:     org_ejdb_driver_EJDBCollection
- * Method:    setIndexDB
- * Signature: (Ljava/lang/String;I)V
- */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndexDB
-  (JNIEnv *, jobject, jstring, jint);
-
-/*
- * Class:     org_ejdb_driver_EJDBCollection
  * Method:    txControlDB
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_txControlDB
   (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    ensureExists
+ * Signature: (Lorg/ejdb/driver/EJDBCollection/Options;)V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureExists
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    drop
+ * Signature: (Z)V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_drop
+  (JNIEnv *, jobject, jboolean);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    sync
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_sync
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    load
+ * Signature: (Lorg/bson/types/ObjectId;)Lorg/bson/BSONObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_load
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    save
+ * Signature: (Lorg/bson/BSONObject;)Lorg/bson/types/ObjectId;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    remove
+ * Signature: (Lorg/bson/types/ObjectId;)V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_remove
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    setIndex
+ * Signature: (Ljava/lang/String;I)V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndex
+  (JNIEnv *, jobject, jstring, jint);
 
 #ifdef __cplusplus
 }

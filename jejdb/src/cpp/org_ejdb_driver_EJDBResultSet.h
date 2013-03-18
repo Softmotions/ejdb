@@ -9,26 +9,26 @@ extern "C" {
 #endif
 /*
  * Class:     org_ejdb_driver_EJDBResultSet
- * Method:    getDB
+ * Method:    get
  * Signature: (I)Lorg/bson/BSONObject;
  */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_getDB
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_get
   (JNIEnv *, jobject, jint);
 
 /*
  * Class:     org_ejdb_driver_EJDBResultSet
- * Method:    lengthDB
+ * Method:    length
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_ejdb_driver_EJDBResultSet_lengthDB
+JNIEXPORT jint JNICALL Java_org_ejdb_driver_EJDBResultSet_length
   (JNIEnv *, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDBResultSet
- * Method:    closeDB
+ * Method:    close
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBResultSet_closeDB
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBResultSet_close
   (JNIEnv *, jobject);
 
 #ifdef __cplusplus

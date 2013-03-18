@@ -28,12 +28,11 @@ public class EJDBQuery {
 
     // TODO
     public EJDBResultSet execute() {
-        QResult qResult = this.executeDB(query, qors, hints, flags);
+        QResult qResult = this.execute(query, qors, hints, flags);
         return qResult != null ? new EJDBResultSet(qResult.rsPointer) : null;
     }
 
-
-    protected native QResult executeDB(BSONObject query, BSONObject[] qors, BSONObject hints, int flags);
+    protected native QResult execute(BSONObject query, BSONObject[] qors, BSONObject hints, int flags);
 
     private static class QResult {
         private int count;

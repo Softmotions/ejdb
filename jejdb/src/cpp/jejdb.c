@@ -26,12 +26,20 @@ static EJDB *get_ejdb_from_object(JNIEnv *env, jobject obj) {
 	if ((*env)->IsInstanceOf(env, obj, jEJDBQueryClazz)) {
 		jfieldID collID = (*env)->GetFieldID(env, jEJDBQueryClazz, "coll", "Lorg/ejdb/driver/EJDBCollection;");
 		obj = (*env)->GetObjectField(env, obj, collID);
+
+		if (NULL == obj) {
+			return 0;
+		}
 	}
 
 	jclass jEJDBCollectionClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection");
 	if ((*env)->IsInstanceOf(env, obj, jEJDBCollectionClazz)) {
 		jfieldID dbID = (*env)->GetFieldID(env, jEJDBCollectionClazz, "db", "Lorg/ejdb/driver/EJDB;");
 		obj = (*env)->GetObjectField(env, obj, dbID);
+
+		if (NULL == obj) {
+			return 0;
+		}
 	}
 
 	jclass jEJDBClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDB");
@@ -134,10 +142,10 @@ static void set_rs_to_object(JNIEnv *env, jobject obj, TCLIST *rs) {
 
 /*
 * Class:     org_ejdb_driver_EJDB
-* Method:    openDB
+* Method:    open
 * Signature: (Ljava/lang/String;I)V
 */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_openDB (JNIEnv *env, jobject obj, jstring path, jint mode) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_open (JNIEnv *env, jobject obj, jstring path, jint mode) {
 	EJDB* db = ejdbnew();
 
 	if (!db) {
@@ -160,19 +168,19 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_openDB (JNIEnv *env, jobject ob
 
 /*
 * Class:     org_ejdb_driver_EJDB
-* Method:    isOpenDB
+* Method:    isOpen
 * Signature: ()Z
 */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_isOpenDB (JNIEnv *env, jobject obj) {
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_isOpen (JNIEnv *env, jobject obj) {
 	return ejdbisopen(get_ejdb_from_object(env, obj));
 };
 
 /*
 * Class:     org_ejdb_driver_EJDB
-* Method:    closeDB
+* Method:    close
 * Signature: ()V
 */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_closeDB (JNIEnv *env, jobject obj) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_close (JNIEnv *env, jobject obj) {
 	EJDB* db = get_ejdb_from_object(env, obj);
 
 	if (ejdbisopen(db)) {
@@ -189,10 +197,10 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_closeDB (JNIEnv *env, jobject o
 
 /*
 * Class:     org_ejdb_driver_EJDB
-* Method:    syncDB
+* Method:    sync
 * Signature: ()V
 */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_syncDB (JNIEnv *env, jobject obj) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_sync (JNIEnv *env, jobject obj) {
 	EJDB* db = get_ejdb_from_object(env, obj);
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -206,10 +214,10 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_syncDB (JNIEnv *env, jobject ob
 
 /*
 * Class:     org_ejdb_driver_EJDBCollection
-* Method:    ensureDB
+* Method:    ensureExists
 * Signature: (Lorg/ejdb/driver/EJDBCollection$Options;)V
 */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB (JNIEnv *env, jobject obj, jobject opts) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureExists (JNIEnv *env, jobject obj, jobject opts) {
 	EJDB* db = get_ejdb_from_object(env, obj);
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -234,10 +242,10 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureDB (JNIEnv *env
 
 /*
 * Class:     org_ejdb_driver_EJDBCollection
-* Method:    dropDB
+* Method:    drop
 * Signature: (Z)V
 */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_dropDB (JNIEnv *env, jobject obj, jboolean prune) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_drop (JNIEnv *env, jobject obj, jboolean prune) {
 	EJDB* db = get_ejdb_from_object(env, obj);		
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -258,10 +266,10 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_dropDB (JNIEnv *env, 
 
 /*
 * Class:     org_ejdb_driver_EJDBCollection
-* Method:    syncDB
+* Method:    sync
 * Signature: ()V
 */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB (JNIEnv *env, jobject obj) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_sync (JNIEnv *env, jobject obj) {
 	EJDB* db = get_ejdb_from_object(env, obj);
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -286,10 +294,10 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_syncDB (JNIEnv *env, 
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    loadDB
+ * Method:    load
  * Signature: (Lorg/bson/types/ObjectId;)Lorg/bson/BSONObject;
  */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB (JNIEnv *env, jobject obj, jobject joid) {
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_load (JNIEnv *env, jobject obj, jobject joid) {
 	EJDB* db = get_ejdb_from_object(env, obj);		
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -326,10 +334,10 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_loadDB (JNIEnv *en
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    saveDB
+ * Method:    save
  * Signature: (Lorg/bson/BSONObject;)Lorg/bson/types/ObjectId;
  */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB (JNIEnv *env, jobject obj, jobject jdata) {
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save (JNIEnv *env, jobject obj, jobject jdata) {
 	EJDB* db = get_ejdb_from_object(env, obj);
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -373,10 +381,10 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_saveDB (JNIEnv *en
 
 /*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    removeDB
+ * Method:    remove
  * Signature: (Lorg/bson/types/ObjectId;)V
  */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB (JNIEnv *env, jobject obj, jobject joid) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_remove (JNIEnv *env, jobject obj, jobject joid) {
 	EJDB* db = get_ejdb_from_object(env, obj);
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -408,10 +416,10 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_removeDB (JNIEnv *env
 
 /*
 * Class:     org_ejdb_driver_EJDBCollection
-* Method:    setIndexDB
+* Method:    setIndex
 * Signature: (Ljava/lang/String;I)V
 */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndexDB (JNIEnv *env, jobject obj, jstring pathstr, jint flags) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndex (JNIEnv *env, jobject obj, jstring pathstr, jint flags) {
 	EJDB* db = get_ejdb_from_object(env, obj);
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -440,10 +448,10 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndexDB (JNIEnv *e
 
 /*
 * Class:     org_ejdb_driver_EJDBQuery
-* Method:    executeDB
+* Method:    execute
 * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;I)Lorg/ejdb/driver/EJDBQuery$QResult;
 */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_executeDB (JNIEnv *env, jobject obj, jobject qobj, jobjectArray qorarrobj, jobject hobj, jint flags) {
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_execute (JNIEnv *env, jobject obj, jobject qobj, jobjectArray qorarrobj, jobject hobj, jint flags) {
 	jclass jQResultClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBQuery$QResult");
 	jmethodID initQResultMethodID = (*env)->GetMethodID(env, jQResultClazz, "<init>", "(IJ)V");
 
@@ -550,10 +558,10 @@ finish:
 
 /*
 * Class:     org_ejdb_driver_EJDBResultSet
-* Method:    getDB
+* Method:    get
 * Signature: (I)Lorg/bson/BSONObject;
 */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_getDB (JNIEnv *env, jobject obj, jint indx) {
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_get (JNIEnv *env, jobject obj, jint indx) {
 	TCLIST *rs = get_rs_from_object(env, obj);
 
 	if (!rs) {
@@ -576,10 +584,10 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_getDB (JNIEnv *env,
 
 /*
 * Class:     org_ejdb_driver_EJDBResultSet
-* Method:    lengthDB
+* Method:    length
 * Signature: ()I
 */
-JNIEXPORT jint JNICALL Java_org_ejdb_driver_EJDBResultSet_lengthDB (JNIEnv *env, jobject obj) {
+JNIEXPORT jint JNICALL Java_org_ejdb_driver_EJDBResultSet_length (JNIEnv *env, jobject obj) {
 	TCLIST *rs = get_rs_from_object(env, obj);
 
 	if (!rs) {
@@ -591,10 +599,10 @@ JNIEXPORT jint JNICALL Java_org_ejdb_driver_EJDBResultSet_lengthDB (JNIEnv *env,
 
 /*
 * Class:     org_ejdb_driver_EJDBResultSet
-* Method:    closeDB
+* Method:    close
 * Signature: ()V
 */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBResultSet_closeDB (JNIEnv *env, jobject obj) {
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBResultSet_close (JNIEnv *env, jobject obj) {
 	TCLIST *rs = get_rs_from_object(env, obj);
 
 	if (!rs) {

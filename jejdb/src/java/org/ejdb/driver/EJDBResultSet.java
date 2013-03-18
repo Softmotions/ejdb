@@ -20,16 +20,15 @@ public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>
         this.position = 0;
     }
 
-    protected native BSONObject getDB(int position);
-    protected native int lengthDB();
-    protected native void closeDB();
+    public native BSONObject get(int position);
+    public native int length();
 
     public Iterator<BSONObject> iterator() {
         return this;
     }
 
     public boolean hasNext() {
-        return position < this.lengthDB();
+        return position < this.length();
     }
 
     public BSONObject next() {
@@ -37,16 +36,14 @@ public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>
             throw new NoSuchElementException();
         }
 
-        return getDB(position++);
+        return get(position++);
     }
 
     public void remove() {
         throw new UnsupportedOperationException();
     }
 
-    public void close() {
-        this.closeDB();
-    }
+    public native void close();
 
     @Override
     protected void finalize() throws Throwable {

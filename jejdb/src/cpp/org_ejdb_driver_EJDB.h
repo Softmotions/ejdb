@@ -25,34 +25,34 @@ extern "C" {
 #define org_ejdb_driver_EJDB_JBO_DEFAULT 70L
 /*
  * Class:     org_ejdb_driver_EJDB
- * Method:    openDB
+ * Method:    open
  * Signature: (Ljava/lang/String;I)V
  */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_openDB
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_open
   (JNIEnv *, jobject, jstring, jint);
 
 /*
  * Class:     org_ejdb_driver_EJDB
- * Method:    isOpenDB
+ * Method:    isOpen
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_isOpenDB
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDB_isOpen
   (JNIEnv *, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDB
- * Method:    closeDB
+ * Method:    close
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_closeDB
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_close
   (JNIEnv *, jobject);
 
 /*
  * Class:     org_ejdb_driver_EJDB
- * Method:    syncDB
+ * Method:    sync
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_syncDB
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_sync
   (JNIEnv *, jobject);
 
 #ifdef __cplusplus

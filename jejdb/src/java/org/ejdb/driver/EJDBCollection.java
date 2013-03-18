@@ -32,44 +32,28 @@ public class EJDBCollection {
         this.cname = cname;
     }
 
-    protected native void ensureDB(Options opts);
-    protected native void dropDB(boolean prune);
-    protected native void syncDB();
-
-    protected native BSONObject loadDB(ObjectId oid);
-    protected native ObjectId saveDB(BSONObject obj);
-    protected native void removeDB(ObjectId oid);
-
-    protected native void setIndexDB(String path, int flags);
+    // TODO:
     protected native void txControlDB(int mode);
+
+
 
     public void ensureExists() {
         this.ensureExists(null);
     }
 
-    public void ensureExists(Options opts) {
-        this.ensureDB(opts);
-    }
+    public native void ensureExists(Options opts);
 
     public void drop() {
         this.drop(false);
     }
 
-    public void drop(boolean prune) {
-        this.dropDB(prune);
-    }
+    public native void drop(boolean prune);
 
-    public void sync() {
-        this.syncDB();
-    }
+    public native void sync();
 
-    public BSONObject load(ObjectId oid) {
-        return this.loadDB(oid);
-    }
+    public native BSONObject load(ObjectId oid);
 
-    public ObjectId save(BSONObject object) {
-        return this.saveDB(object);
-    }
+    public native ObjectId save(BSONObject object);
 
     public List<ObjectId> save(List<BSONObject> objects) {
         List<ObjectId> result = new ArrayList<ObjectId>(objects.size());
@@ -81,13 +65,9 @@ public class EJDBCollection {
         return result;
     }
 
-    public void remove(ObjectId oid) {
-        this.removeDB(oid);
-    }
+    public native void remove(ObjectId oid);
 
-    public void setIndex(String path, int flags) {
-        this.setIndexDB(path, flags);
-    }
+    public native void setIndex(String path, int flags);
 
     public EJDBQuery createQuery(BSONObject query, BSONObject[] qors, BSONObject hints, int flags) {
         return new EJDBQuery(this, query, qors, hints, flags);

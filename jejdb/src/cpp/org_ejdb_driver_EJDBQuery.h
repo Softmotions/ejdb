@@ -11,10 +11,10 @@ extern "C" {
 #define org_ejdb_driver_EJDBQuery_JBQRYCOUNT 1L
 /*
  * Class:     org_ejdb_driver_EJDBQuery
- * Method:    executeDB
+ * Method:    execute
  * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;I)Lorg/ejdb/driver/EJDBQuery/QResult;
  */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_executeDB
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_execute
   (JNIEnv *, jobject, jobject, jobjectArray, jobject, jint);
 
 #ifdef __cplusplus

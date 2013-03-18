@@ -20,46 +20,26 @@ public class EJDB {
         System.loadLibrary("jejdb");
     }
 
-    protected native void openDB(String path, int mode);
-    protected native boolean isOpenDB();
-    protected native void closeDB();
-    protected native void syncDB();
-
     private long dbPointer;
-
 
     // TODO: move to driver class
     public void open(String path) {
         this.open(path, JBO_DEFAULT);
     }
 
-    public void open(String path, int mode) {
-        this.openDB(path, mode);
-    }
+    public native void open(String path, int mode);
 
-    public boolean isOpen() {
-        return this.isOpenDB();
-    }
+    public native boolean isOpen();
 
-    public void close() {
-        this.closeDB();
-    }
+    public native void close();
 
-    public void sync() {
-        this.syncDB();
-    }
-
+    public native void sync();
 
     public EJDBCollection ensureCollection(String cname) {
         return this.ensureCollection(cname, null);
     }
 
     public EJDBCollection ensureCollection(String cname, EJDBCollection.Options opts) {
-        if (!this.isOpen()) {
-//            todo
-            throw new RuntimeException("Connection does not exists");
-        }
-
         EJDBCollection collection = getCollection(cname);
         collection.ensureExists(opts);
 
@@ -71,14 +51,7 @@ public class EJDB {
     }
 
     public void dropCollection(String cname, boolean prune) {
-        if (!this.isOpen()) {
-            // todo
-            throw new RuntimeException("Connection does not exists");
-        }
-
-        EJDBCollection collection = getCollection(cname);
-
-        collection.drop(prune);
+        getCollection(cname).drop(prune);
     }
 
     public EJDBCollection getCollection(String cname) {
