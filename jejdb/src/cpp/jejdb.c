@@ -146,7 +146,14 @@ static void set_rs_to_object(JNIEnv *env, jobject obj, TCLIST *rs) {
 * Signature: (Ljava/lang/String;I)V
 */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_open (JNIEnv *env, jobject obj, jstring path, jint mode) {
-	EJDB* db = ejdbnew();
+
+	EJDB* db = get_ejdb_from_object(env, obj);
+	if (ejdbisopen(db)) {
+		set_error(env, 0, "EJDB already opened");
+		return;
+	}
+	
+	db = ejdbnew();
 
 	if (!db) {
 		set_error(env, 0, "Could not create EJDB");
