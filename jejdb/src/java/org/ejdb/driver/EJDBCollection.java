@@ -43,6 +43,7 @@ public class EJDBCollection {
     protected native void removeDB(byte[] objdata);
 
     protected native void setIndexDB(String path, int flags);
+    protected native void txControlDB(int mode);
 
     public void ensureExists() {
         this.ensureExists(null);
@@ -90,23 +91,7 @@ public class EJDBCollection {
         this.setIndexDB(path, flags);
     }
 
-
     public EJDBQuery createQuery(BSONObject query, BSONObject[] qors, BSONObject hints, int flags) {
         return new EJDBQuery(this, query, qors, hints, flags);
-    }
-
-    ////////////////////////////////////////////////////
-    private static Object handleBSONData(ByteBuffer data) {
-        byte[] tmp = new byte[data.limit()];
-        data.get(tmp);
-
-        return BSON.decode(tmp);
-    }
-
-    private static Object handleObjectIdData(ByteBuffer data) {
-        byte[] tmp = new byte[data.limit()];
-        data.get(tmp);
-
-        return new ObjectId(tmp);
     }
 }
