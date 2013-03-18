@@ -171,7 +171,6 @@ assert(count == 1)
 assert(vobj["foo"] == "bar")
 
 db:ensureCollection("ecoll", { large = true, records = 200000 })
-db:dropCollection("ecoll", true);
 
 assert(db:count("mycoll", Q("_id", firstOid)) == 1)
 db:remove("mycoll", firstOid)
@@ -179,6 +178,31 @@ assert(db:count("mycoll", Q("_id", firstOid)) == 0)
 
 db:sync("mycoll") -- sync only mycoll
 db:sync() -- sync whole db
+
+db:ensureStringIndex("mycoll", "foo")
+local _, log = db:count("mycoll", Q("foo", "bar"), "l")
+assert(log:find("MAIN IDX: 'sfoo'"))
+
+db:dropIndexes("mycoll", "foo")
+
+local _, log = db:count("mycoll", Q("foo", "bar"), "l")
+assert(log:find("MAIN IDX: 'NONE'"))
+
+assert(db:getTransactionStatus("mycoll") == false)
+db:beginTransaction("mycoll")
+assert(db:getTransactionStatus("mycoll") == true)
+db:save("mycoll", {name=1})
+assert(db:findOne("mycoll", Q("name", 1)));
+db:rollbackTransaction("mycoll")
+assert(db:getTransactionStatus("mycoll") == false)
+assert(db:findOne("mycoll", Q("name", 1)) == nil);
+
+
+db:ensureStringIndex("mycoll", "foo")
+
+print(inspect(db:getDBMeta()))
+
+db:dropCollection("ecoll", true);
 
 assert(db:isOpen() == true)
 db:close()

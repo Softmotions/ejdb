@@ -73,7 +73,7 @@ enum { /** Database open modes */
 enum { /** Index modes, index types. */
     JBIDXDROP = 1 << 0, /**< Drop index. */
     JBIDXDROPALL = 1 << 1, /**< Drop index for all types. */
-    JBIDXOP = 1 << 2, /**< Optimize index. */
+    JBIDXOP = 1 << 2, /**< Optimize indexes. */
     JBIDXREBLD = 1 << 3, /**< Rebuild index. */
     JBIDXNUM = 1 << 4, /**< Number index. */
     JBIDXSTR = 1 << 5, /**< String index.*/

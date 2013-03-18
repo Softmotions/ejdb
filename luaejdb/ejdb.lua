@@ -162,9 +162,80 @@ function DB:count(cname, q, sflags, ...)
   return count, log
 end
 
-
 function DB:update(cname, q, ...)
-   return self:count(cname, q, ...)
+  return self:count(cname, q, ...)
+end
+
+function DB:dropIndexes(cname, fpath)
+  return self:_setIndex(cname, fpath, "", "a")
+end
+
+function DB:optimizeIndexes(cname, fpath)
+  return self:_setIndex(cname, fpath, "", "o")
+end
+
+function DB:ensureStringIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "s", "")
+end
+
+function DB:rebuildStringIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "s", "r")
+end
+
+function DB:dropStringIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "s", "d")
+end
+
+function DB:ensureIStringIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "i", "")
+end
+
+function DB:rebuildIStringIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "i", "r")
+end
+
+function DB:dropIStringIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "i", "d")
+end
+
+function DB:ensureNumberIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "n", "")
+end
+
+function DB:rebuildNumberIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "n", "r")
+end
+
+function DB:dropNumberIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "n", "d")
+end
+
+function DB:ensureArrayIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "a", "")
+end
+
+function DB:rebuildArrayIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "a", "r")
+end
+
+function DB:dropArrayIndex(cname, fpath)
+  return self:_setIndex(cname, fpath, "a", "d")
+end
+
+function DB:beginTransaction(cname)
+  return self:_txctl(cname, "b")
+end
+
+function DB:commitTransaction(cname)
+  return self:_txctl(cname, "c")
+end
+
+function DB:rollbackTransaction(cname)
+  return self:_txctl(cname, "a")
+end
+
+function DB:getTransactionStatus(cname)
+  return self:_txctl(cname, "s")
 end
 
 -- ------- EJDB Query  -------------
