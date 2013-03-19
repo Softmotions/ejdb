@@ -1,4 +1,6 @@
 
+all: doc build
+
 build:
 	luarocks --pack-binary-rock make
 
@@ -11,9 +13,14 @@ check: build-dbg
 check-valgrind: build-dbg
 	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check  -C ./test
 
+doc:
+	rm -rf ./doc
+	luadoc -d ./doc ejdb.luadoc
+
 clean:
-	rm -rf *.so *.rock
-	make -C ./test clean
+	- rm -rf *.so *.rock
+	- rm -rf ./doc
+	- make -C ./test clean
 
 
-.PHONY: build build-dbg check check-valgrind clean
+.PHONY: all build build-dbg check check-valgrind clean doc

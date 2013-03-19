@@ -1,0 +1,23 @@
+
+--- The Lua binding of EJDB database.<br/>
+-- <a href="http://ejdb.org">http://ejdb.org</a>
+module("ejdb")
+
+Q = {}
+ejdb = {}
+
+--- Opens EJDB database.
+-- @usage local db = ejdb.open("foodb", "wrc")
+-- @param path {String} Database main file
+-- @param mode {String?} Database open mode flags:<br/>
+--  <code>`w`</code> Open as a writer <br/>
+--  <code>`r`</code> Open as a reader <br/>
+--  <code>`c`</code> Create db if it not exists <br/>
+--  <code>`t`</code> Truncate existing db <br/>
+--  <code>`s`</code> Sycn db after each transaction <br/>
+--  Default open mode: <code>`rws`</code>
+--
+function ejdb.open(path, mode) end
+
+--- Closes opened database.
+function ejdb.close() end
