@@ -620,3 +620,57 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBResultSet_close (JNIEnv *env, jo
 
 	set_rs_to_object(env, obj, NULL);
 };
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    txControl
+ * Signature: (I)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_txControl (JNIEnv *env, jobject obj, jint mode) {
+	EJDB* db = get_ejdb_from_object(env, obj);
+	if (!ejdbisopen(db)) {
+		set_error(env, 0, "EJDB not opened");
+		return JNI_FALSE;
+	}
+
+	jstring colname = get_coll_name(env, obj);
+	const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
+	EJCOLL * coll = ejdbcreatecoll(db, cname, NULL);
+	(*env)->ReleaseStringUTFChars(env, colname, cname);
+
+	if (!coll) {
+		set_ejdb_error(env, db);
+		return JNI_FALSE;
+	}
+
+	bool status = false, txActive = false;
+
+	switch (mode) {
+	case org_ejdb_driver_EJDBCollection_JBTXBEGIN : 
+		status = ejdbtranbegin(coll);
+		break;
+
+	case org_ejdb_driver_EJDBCollection_JBTXCOMMIT : 
+		status = ejdbtrancommit(coll);
+		break;
+
+	case org_ejdb_driver_EJDBCollection_JBTXROLLBACK : 
+		status = ejdbtranabort(coll);
+		break;
+
+	case org_ejdb_driver_EJDBCollection_JBTXSTATUS :
+		status = ejdbtranstatus(coll, &txActive);
+		break;
+
+	default:
+		set_error(env, 0, "Unexpected txControl option");
+		return JNI_FALSE;
+	}
+
+	if (!status) {
+		set_ejdb_error(env, db);
+		return JNI_FALSE;
+	}
+
+	return status ? JNI_TRUE : JNI_FALSE;
+};

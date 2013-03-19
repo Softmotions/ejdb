@@ -23,12 +23,21 @@ extern "C" {
 #define org_ejdb_driver_EJDBCollection_JBIDXARR 64L
 #undef org_ejdb_driver_EJDBCollection_JBIDXISTR
 #define org_ejdb_driver_EJDBCollection_JBIDXISTR 128L
+#undef org_ejdb_driver_EJDBCollection_JBTXBEGIN
+#define org_ejdb_driver_EJDBCollection_JBTXBEGIN 1L
+#undef org_ejdb_driver_EJDBCollection_JBTXCOMMIT
+#define org_ejdb_driver_EJDBCollection_JBTXCOMMIT 2L
+#undef org_ejdb_driver_EJDBCollection_JBTXROLLBACK
+#define org_ejdb_driver_EJDBCollection_JBTXROLLBACK 4L
+#undef org_ejdb_driver_EJDBCollection_JBTXSTATUS
+#define org_ejdb_driver_EJDBCollection_JBTXSTATUS 8L
+
 /*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    txControlDB
- * Signature: (I)V
+ * Method:    txControl
+ * Signature: (I)Z
  */
-JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_txControlDB
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_txControl
   (JNIEnv *, jobject, jint);
 
 /*

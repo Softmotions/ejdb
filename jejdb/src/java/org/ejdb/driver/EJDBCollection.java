@@ -1,10 +1,8 @@
 package org.ejdb.driver;
 
-import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +22,11 @@ public class EJDBCollection {
     public final static int JBIDXARR = 1 << 6; /**< Array token index. */
     public final static int JBIDXISTR = 1 << 7; /**< Case insensitive string index */
 
+    protected final static int JBTXBEGIN = 1 << 0;
+    protected final static int JBTXCOMMIT = 1 << 1;
+    protected final static int JBTXROLLBACK = 1 << 2;
+    protected final static int JBTXSTATUS = 1 << 3;
+
     private EJDB db;
     private String cname;
 
@@ -33,9 +36,7 @@ public class EJDBCollection {
     }
 
     // TODO:
-    protected native void txControlDB(int mode);
-
-
+    protected native boolean txControl(int mode);
 
     public void ensureExists() {
         this.ensureExists(null);
@@ -71,6 +72,22 @@ public class EJDBCollection {
 
     public EJDBQuery createQuery(BSONObject query, BSONObject[] qors, BSONObject hints, int flags) {
         return new EJDBQuery(this, query, qors, hints, flags);
+    }
+
+    public void beginTransaction() {
+        this.txControl(JBTXBEGIN);
+    }
+
+    public void commitTransaction() {
+        this.txControl(JBTXCOMMIT);
+    }
+
+    public void rollbakcTransaction() {
+        this.txControl(JBTXROLLBACK);
+    }
+
+    public boolean isTransactionActive() {
+        return this.txControl(JBTXSTATUS);
     }
 
     public static class Options {
