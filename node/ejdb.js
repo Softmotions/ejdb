@@ -50,7 +50,7 @@ EJDB.DEFAULT_OPEN_MODE = DEFAULT_OPEN_MODE;
  * This is blocking function.
  *
  * @param {String} dbFile Database main file name
- * @param {Number} [openMode=JBOWRITER | JBOCREAT] Bitmast of open modes:
+ * @param {Number} openMode [JBOWRITER | JBOCREAT | ..] Bitmast of open modes:
  *      - `JBOREADER` Open as a reader.
  *      - `JBOWRITER` Open as a writer.
  *      - `JBOCREAT` Create db if it not exists

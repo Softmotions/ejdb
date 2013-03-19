@@ -612,7 +612,7 @@ EJDB_EXPORT void bson_init_as_query(bson *b);
  * @return BSON_OK or BSON_ERROR.
  */
 int bson_init_data(bson *b, char *data);
-EJDB_EXPORT int bson_init_finished_data(bson *b, char *data);
+EJDB_EXPORT int bson_init_finished_data(bson *b, const char *data);
 
 /**
  * Initialize a BSON object, and set its

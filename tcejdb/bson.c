@@ -118,8 +118,8 @@ int bson_init_data(bson *b, char *data) {
     return BSON_OK;
 }
 
-EJDB_EXPORT int bson_init_finished_data(bson *b, char *data) {
-    bson_init_data(b, data);
+EJDB_EXPORT int bson_init_finished_data(bson *b, const char *data) {
+    bson_init_data(b, (char*) data);
     bson_reset(b);
     b->finished = 1;
     return BSON_OK;

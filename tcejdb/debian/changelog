@@ -1,3 +1,9 @@
+libtcejdb (1.0.66) stable; urgency=low
+
+  * Better BSON error reporting
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 11 Mar 2013 00:16:58 +0700
+
 libtcejdb (1.0.65) unstable; urgency=low
 
   * Fix include directives to relative paths 
