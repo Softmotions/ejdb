@@ -15,10 +15,10 @@ check-valgrind: build-dbg
 
 doc:
 	rm -rf ./doc
-	luadoc -d ./doc ejdb.luadoc
+	lua ./tools/ldoc/ldoc.lua -d ./doc -c ./config.ld ejdb.luadoc
 
 clean:
-	- rm -rf *.so *.rock
+	- rm -f *.so *.rock ./ejdb/*.so
 	- rm -rf ./doc
 	- make -C ./test clean
 

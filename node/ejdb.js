@@ -175,6 +175,9 @@ EJDB.prototype.dropCollection = function(cname, prune, cb) {
  *
  * @param {String} cname Name of collection.
  * @param {Array|Object} jsarr Signle JSON object or array of JSON objects to save
+ * @param {Object?} opts Optional options obj.
+ *                  If opts.merge == true saved object will be merged with who's
+ *                  already persisted in db.
  * @param {Function} [cb] Callback function with arguments: (error, {Array} of OIDs for saved objects)
  * @return {Array} of OIDs of saved objects in synchronous mode otherwise returns {undefined}.
  */
@@ -388,7 +391,7 @@ function parseQueryArgs(args) {
  *       - find(cname, qobj, [cb])
  *       - find(cname, qobj, hints, [cb])
  *       - find(cname, qobj, qobjarr, [cb])
- *       - find(cname, qobj, qobjarr, hints, [cb])
+ *       - find(cname, qobj, qobjarr, hnts, [cb])
  *
  * @param {String} cname Name of collection
  * @param {Object} qobj Main JSON query object
