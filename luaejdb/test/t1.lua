@@ -2,7 +2,7 @@
 package.path = "../?.lua;" .. package.path
 package.cpath = "../?.so;" .. package.cpath
 
-local inspect = require("inspect")
+local inspect = require("ejdb.inspect")
 local ejdb = require("ejdb")
 assert(type(ejdb) == "table")
 
@@ -12,7 +12,7 @@ assert(pcall(function() ejdb.check_valid_oid_string("510f7fa91ad6270a00000000") 
 local Q = ejdb.Q
 local B = ejdb.B
 
-local db = ejdb:open("testdb", "rwct");
+local db = ejdb.open("testdb", "rwct");
 assert(db:isOpen() == true)
 local q = Q("name", "Andy"):F("_id"):Eq("510f7fa91ad6270a00000000"):F("age"):Gt(20):Lt(40):F("score"):In({ 11, 22.12333, 1362835380447, db.toNull() }):Max(232);
 
@@ -197,12 +197,17 @@ db:rollbackTransaction("mycoll")
 assert(db:getTransactionStatus("mycoll") == false)
 assert(db:findOne("mycoll", Q("name", 1)) == nil);
 
+assert(db:update("ecoll", Q("k1", "v1"):Upsert({k1="v1"})) == 1)
+assert(db:update("ecoll", Q("k1", "v1"):Upsert(Q("k1", "v2"))) == 1)
+assert(db:count("ecoll", Q("k1", "v2")) == 1)
 
 db:ensureStringIndex("mycoll", "foo")
 
-print(inspect(db:getDBMeta()))
+--print(inspect(db:getDBMeta()))
 
 db:dropCollection("ecoll", true);
+
+assert(db:count("ecoll", Q("k1", "v2")) == 0)
 
 assert(db:isOpen() == true)
 db:close()

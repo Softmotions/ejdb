@@ -1,6 +1,6 @@
 local luaejdb = require("luaejdb")
 assert(type(luaejdb) == "table")
-local inspect = require("inspect")
+local inspect = require("ejdb.inspect")
 
 -- ------------ Misc -----------------------
 
@@ -74,8 +74,15 @@ function luaejdb.toOID(val)
 end
 
 function luaejdb.toDate(val)
+  if type(val) == "table" then
+    val = os.time(val) * 1000
+  end
   assert(type(val) == "number")
   return setmetatable({ val }, mtBSON_DATE);
+end
+
+function luaejdb.toDateNow()
+  return luaejdb.toDate(os.time() * 1000)
 end
 
 function luaejdb.toRegexp(re, opts)
@@ -113,7 +120,7 @@ local mtDBObj = {
 -- ------- EJDB DB ---------------------------
 
 local luaejdb_open = luaejdb.open
-function luaejdb:open(path, omode, ...)
+function luaejdb.open(path, omode, ...)
   return setmetatable(luaejdb_open(path, omode), mtDBObj)
 end
 

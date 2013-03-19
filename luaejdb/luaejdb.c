@@ -519,7 +519,8 @@ static int db_meta(lua_State *L) {
     if (!cols) {
         return set_ejdb_error(L, jb);
     }
-    for (int i = 0; i < TCLISTNUM(cols); ++i) {
+    int i;
+    for (i = 0; i < TCLISTNUM(cols); ++i) {
         EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
         if (!ejcollockmethod(coll, false)) continue;
 
@@ -554,7 +555,8 @@ static int db_meta(lua_State *L) {
         lua_newtable(L); //+ coll indexes
 
         int ic = 0;
-        for (int j = 0; j < coll->tdb->inum; ++j) {
+        int j;
+        for (j = 0; j < coll->tdb->inum; ++j) {
             TDBIDX *idx = (coll->tdb->idxs + j);
             if (idx->type != TDBITLEXICAL && idx->type != TDBITDECIMAL && idx->type != TDBITTOKEN) {
                 continue;

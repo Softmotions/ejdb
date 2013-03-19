@@ -2,7 +2,8 @@
 
 check:
 	$(RUNENV) $(RUNCMD) lua ./t1.lua
+	make clean
 
 clean:
-	rm -rf ./testdb*
+	rm -f ./testdb*
 

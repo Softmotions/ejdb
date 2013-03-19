@@ -26,6 +26,7 @@ build = {
   type = "builtin",
   modules = {
     ["ejdb"]  = "ejdb.lua",
+    ["ejdb.inspect"]  = "ejdb/inspect.lua",
     ["luaejdb"] = {
        sources = {"luaejdb.c", "luabson.c"},
        libraries = {"tcejdb"} ,
