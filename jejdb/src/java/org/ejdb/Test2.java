@@ -1,5 +1,7 @@
 package org.ejdb;
 
+import com.sun.org.apache.xpath.internal.SourceTree;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.ejdb.driver.EJDB;
@@ -24,7 +26,7 @@ public class Test2 {
 
         try {
             db.open("test5");
-            System.out.println("test EJDB opened");
+            System.out.println("test EJDB opened: " + db.getPath());
 
             EJDBCollection test = db.getCollection("test");
 
@@ -50,8 +52,27 @@ public class Test2 {
             for (BSONObject r : rs) {
                 System.out.println(r);
             }
+            rs.close();
 
+            System.out.println();
             System.out.println(query.findOne());
+            System.out.println();
+
+            query = test.createQuery(new BasicBSONObject("randomBoolean", true));
+            System.out.println("Objects with 'randomBoolean==true': " + query.count());
+            rs = query.find();
+            for (BSONObject r : rs) {
+                System.out.println(r);
+            }
+            rs.close();
+
+            query.getQueryObject().put("smallRandom", new BasicBSONObject("$lt", 6));
+            rs = query.find();
+            System.out.println("Objects with 'randomBoolean==true && smallRandom<6': " + rs.length());
+            for (BSONObject r : rs) {
+                System.out.println(r);
+            }
+            rs.close();
 
         } finally {
             db.close();
@@ -67,6 +88,9 @@ public class Test2 {
         bsonObject.put("time", System.currentTimeMillis());
         bsonObject.put("index", INDEX);
         bsonObject.put("random", random.nextLong());
+        bsonObject.put("randomBoolean", random.nextBoolean());
+        bsonObject.put("randomDouble", random.nextDouble());
+        bsonObject.put("smallRandom", random.nextInt(10));
 
         return bsonObject;
     }

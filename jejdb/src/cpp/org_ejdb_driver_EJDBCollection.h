@@ -31,7 +31,6 @@ extern "C" {
 #define org_ejdb_driver_EJDBCollection_JBTXROLLBACK 4L
 #undef org_ejdb_driver_EJDBCollection_JBTXSTATUS
 #define org_ejdb_driver_EJDBCollection_JBTXSTATUS 8L
-
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    txControl

@@ -19,6 +19,9 @@ static void set_ejdb_to_object(JNIEnv *env, jobject obj, EJDB *db) {
 	jclass clazz = (*env)->GetObjectClass(env, obj);
 	jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
 	(*env)->SetLongField(env, obj, dbpID, (jlong)db);
+
+	jfieldID pathID = (*env)->GetFieldID(env, clazz, "path", "Ljava/lang/String;");
+	(*env)->SetObjectField(env, obj, pathID, db ? (*env)->NewStringUTF(env, db->metadb->hdb->path) : NULL);
 };
 
 static EJDB *get_ejdb_from_object(JNIEnv *env, jobject obj) {

@@ -5,15 +5,45 @@ package org.ejdb.driver;
  * @version $Id$
  */
 public class EJDB {
-    // Open modes
-    public static final int JBOREADER = 1 << 0; /**< Open as a reader. */
-    public static final int JBOWRITER = 1 << 1; /**< Open as a writer. */
-    public static final int JBOCREAT = 1 << 2; /**< Create if db file not exists. */
-    public static final int JBOTRUNC = 1 << 3; /**< Truncate db on open. */
-    public static final int JBONOLCK = 1 << 4; /**< Open without locking. */
-    public static final int JBOLCKNB = 1 << 5; /**< Lock without blocking. */
-    public static final int JBOTSYNC = 1 << 6; /**< Synchronize every transaction. */
 
+    /**
+     * Open as a reader.
+     */
+    public static final int JBOREADER = 1 << 0;
+
+    /**
+     * Open as a writer.
+     */
+    public static final int JBOWRITER = 1 << 1;
+
+    /**
+     * Create if db file not exists.
+     */
+    public static final int JBOCREAT = 1 << 2;
+
+    /**
+     * Truncate db on open.
+     */
+    public static final int JBOTRUNC = 1 << 3;
+
+    /**
+     * Open without locking.
+     */
+    public static final int JBONOLCK = 1 << 4;
+
+    /**
+     * Lock without blocking.
+     */
+    public static final int JBOLCKNB = 1 << 5;
+
+    /**
+     * Synchronize every transaction.
+     */
+    public static final int JBOTSYNC = 1 << 6;
+
+    /**
+     * Default open mode
+     */
     public static final int JBO_DEFAULT = (JBOWRITER | JBOCREAT | JBOTSYNC);
 
     static {
@@ -22,7 +52,12 @@ public class EJDB {
 
     private long dbPointer;
 
-    // TODO: move to driver class
+    private String path;
+
+    public String getPath() {
+        return path;
+    }
+
     public void open(String path) {
         this.open(path, JBO_DEFAULT);
     }
