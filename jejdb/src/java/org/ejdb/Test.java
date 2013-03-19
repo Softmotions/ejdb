@@ -7,6 +7,7 @@ import org.bson.types.ObjectId;
 import org.ejdb.driver.EJDB;
 import org.ejdb.driver.EJDBCollection;
 import org.ejdb.driver.EJDBDriver;
+import org.ejdb.driver.EJDBQuery;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -51,9 +52,33 @@ public class Test {
 
             EJDBCollection coll = db.getCollection("test");
             coll.ensureExists();
+            coll.drop();
+
+
+            BSONObject b = new BasicBSONObject("name", "name");
+            EJDBQuery query = coll.createQuery(b, new BSONObject[]{b,b,b,b}, b);
+
+//            if (true) {
+//                return;
+//            }
+
+
+//
+//            db.close();
+//
+//            db.isOpen();
+
+            coll.setIndex("test", EJDBCollection.JBIDXDROPALL | EJDBCollection.JBIDXISTR);
+
+//            if (true) {
+//                return;
+//            }
+//
+//            coll.createQuery(null);
+
             BSONObject bson = coll.load(new ObjectId("513f04d563f08b6400000000"));
             if (bson != null) {
-                System.out.println(bson.toString());
+                System.out.println(bson);
             }
 
             Random rand = new Random();
@@ -66,7 +91,7 @@ public class Test {
                 ri = rand.nextInt();
 //                System.out.println("Random: " + ri);
 
-                ObjectId oid = coll.save(new BasicBSONObject("test", ri));
+                ObjectId oid = coll.save(new BasicBSONObject("random", ri));
                 if (oid == null) {
                     System.out.println("Error saving");
                 } else {
@@ -74,9 +99,38 @@ public class Test {
                     if (bson == null) {
                         System.out.println("Error loading");
                     } else {
-                        System.out.println(bson.toString());
+                        System.out.println(bson);
                         oids.add(oid);
                     }
+                }
+            }
+
+            List<ObjectId> roids = new ArrayList<ObjectId>(oids.size());
+            List<ObjectId> nroids = new ArrayList<ObjectId>(oids.size());
+
+            for (ObjectId oid : oids) {
+                coll.remove(oid);
+                System.out.println("Object removed #" + oid);
+                (true ? roids : nroids).add(oid);
+            }
+
+            System.out.println("Check removed (" + roids.size() + ")");
+            for (ObjectId oid : roids) {
+                bson = coll.load(oid);
+                if (bson != null) {
+                    System.out.println("Achtung! Object exists: " + bson);
+                } else {
+                    System.out.println("Ok! Object not loaded. (#" + oid + ")");
+                }
+            }
+
+            System.out.println("Check not removed (" + nroids.size() + ")");
+            for (ObjectId oid : nroids) {
+                bson = coll.load(oid);
+                if (bson != null) {
+                    System.out.println("Achtung! Object exists: " + bson);
+                } else {
+                    System.out.println("That ok! Object not loaded. (#" + oid + ")");
                 }
             }
 
@@ -108,6 +162,31 @@ public class Test {
                     oids.add(oid);
                 }
             }
+
+            System.out.println("Collection sync: ");coll.sync();
+
+
+            List<BSONObject> objs = new ArrayList<BSONObject>(5);
+            for(int i=0; i < 5; ++i) {
+                objs.add(new BasicBSONObject("random", rand.nextBoolean()));
+            }
+
+            oids = coll.save(objs);
+            for (ObjectId oid2 : oids) {
+                if (oid2 == null) {
+                    System.out.println("Error saving");
+                } else {
+                    bson = coll.load(oid2);
+                    if (bson == null) {
+                        System.out.println("Error loading");
+                    } else {
+                        System.out.println(bson);
+                    }
+                }
+            }
+
+            System.out.println("DB sync: ");db.sync();
+
         } finally {
             db.close();
             System.out.println("DB closed");
