@@ -643,7 +643,7 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_txControl (JNIEnv
 		return JNI_FALSE;
 	}
 
-	bool status = false, txActive = false;
+	bool status = false, txActive = true;
 
 	switch (mode) {
 	case org_ejdb_driver_EJDBCollection_JBTXBEGIN : 
@@ -659,6 +659,7 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_txControl (JNIEnv
 		break;
 
 	case org_ejdb_driver_EJDBCollection_JBTXSTATUS :
+		txActive = false;
 		status = ejdbtranstatus(coll, &txActive);
 		break;
 
@@ -672,5 +673,5 @@ JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_txControl (JNIEnv
 		return JNI_FALSE;
 	}
 
-	return status ? JNI_TRUE : JNI_FALSE;
+	return txActive ? JNI_TRUE : JNI_FALSE;
 };

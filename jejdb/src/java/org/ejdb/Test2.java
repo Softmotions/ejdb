@@ -24,7 +24,7 @@ public class Test2 {
 
         try {
             db.open("test5");
-            System.out.println("test ELDB opened");
+            System.out.println("test EJDB opened");
 
             EJDBCollection test = db.getCollection("test");
 
@@ -42,11 +42,16 @@ public class Test2 {
             test.sync();
             System.out.println("test collection synced");
 
-            EJDBResultSet rs = test.createQuery(new BasicBSONObject(), null, null, 0).execute();
+            EJDBQuery query = test.createQuery(new BasicBSONObject());
+
+            System.out.println("Objects matched: " + query.count());
+
+            EJDBResultSet rs = query.find();
             for (BSONObject r : rs) {
                 System.out.println(r);
             }
-//            test.createQuery(new BasicBSONObject("index", new BasicBSONObject("$lt", 5)), null, null, EJDBQuery.JBQRYCOUNT).execute();
+
+            System.out.println(query.findOne());
 
         } finally {
             db.close();

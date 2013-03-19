@@ -35,7 +35,6 @@ public class EJDBCollection {
         this.cname = cname;
     }
 
-    // TODO:
     protected native boolean txControl(int mode);
 
     public void ensureExists() {
@@ -70,8 +69,20 @@ public class EJDBCollection {
 
     public native void setIndex(String path, int flags);
 
-    public EJDBQuery createQuery(BSONObject query, BSONObject[] qors, BSONObject hints, int flags) {
-        return new EJDBQuery(this, query, qors, hints, flags);
+    public EJDBQuery createQuery(BSONObject query) {
+        return new EJDBQuery(this, query, null, null);
+    }
+
+    public EJDBQuery createQuery(BSONObject query, BSONObject[] qors) {
+        return new EJDBQuery(this, query, qors, null);
+    }
+
+    public EJDBQuery createQuery(BSONObject query, BSONObject hints) {
+        return new EJDBQuery(this, query, null, hints);
+    }
+
+    public EJDBQuery createQuery(BSONObject query, BSONObject[] qors, BSONObject hints) {
+        return new EJDBQuery(this, query, qors, hints);
     }
 
     public void beginTransaction() {
