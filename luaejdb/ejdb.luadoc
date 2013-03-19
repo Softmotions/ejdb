@@ -65,7 +65,7 @@ local DB = {}
 -- <code>`c`</code> Create db if it not exists <br/>
 -- <code>`t`</code> Truncate existing db <br/>
 -- <code>`s`</code> Sycn db after each transaction <br/>
--- Default open mode: <code>`rws`</code>
+-- Default open mode: <code>`rwcs`</code>
 -- @return Database table
 --
 function ejdb.open(path, mode) end
