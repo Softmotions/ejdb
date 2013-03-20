@@ -78,7 +78,7 @@ POSTCMD = @MYPOSTCMD@
 #================================================================
 
 
-all : version $(LIBRARYFILES) $(COMMANDFILES) $(CGIFILES)
+all : $(LIBRARYFILES) $(COMMANDFILES) $(CGIFILES)
 	@$(POSTCMD)
 	@printf '\n'
 	@printf '#================================================================\n'
@@ -673,7 +673,7 @@ wordtable :
 	./tctmgr importtsv casket words.tsv
 
 
-.PHONY : all clean install check check-ejdb deb-packages
+.PHONY : all version clean install check check-ejdb deb-packages
 
 
  deb-packages :

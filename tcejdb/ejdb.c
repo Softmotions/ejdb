@@ -4260,7 +4260,11 @@ static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB 
     TCXSTR *cxpath = tcxstrnew2(mdbpath);
     tcxstrcat2(cxpath, "_");
     tcxstrcat2(cxpath, colname);
-    rv = tctdbopen(cdb, tcxstrptr(cxpath), jb->metadb->hdb->omode);
+    uint32_t mode = jb->metadb->hdb->omode;
+    if (mode & (JBOWRITER | JBOCREAT)) {
+        mode |= JBOCREAT;
+    }
+    rv = tctdbopen(cdb, tcxstrptr(cxpath), mode);
     *res = rv ? cdb : NULL;
     tcxstrdel(cxpath);
     return rv;

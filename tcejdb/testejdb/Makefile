@@ -7,9 +7,9 @@ CMDLDFLAGS =
 LIBS = -lz -lpthread -lm -lc -lcunit
 RUNENV = LD_LIBRARY_PATH=.:.. DYLD_LIBRARY_PATH=.:..
 
-TESTS = t1 t2 t3
+TESTS = t1 t2 t3 t4
 
-check : all check-t1 check-t2 check-t3;
+check : all check-t1 check-t2 check-t3 check-t4;
 
 check-valgrind :
 	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check
@@ -20,6 +20,9 @@ check-valgrind-t2 :
 check-valgrind-t3 :
 	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check-t3
 
+check-valgrind-t4 :
+	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check-t4
+
 check-t1 :
 	$(RUNENV) $(RUNCMD) ./t1
 
@@ -28,6 +31,9 @@ check-t2 :
 
 check-t3 :
 	$(RUNENV) $(RUNCMD) ./t3
+
+check-t4 :
+	$(RUNENV) $(RUNCMD) ./t4
 
 
 all : $(TESTS)
@@ -44,6 +50,9 @@ t2 : t2.o
 t3 : t3.o
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -ltcejdb $(CMDLDFLAGS) $(LIBS)
 
+t4 : t4.o
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -ltcejdb $(CMDLDFLAGS) $(LIBS)
 
-.PHONY : all clean check run-t1 run-t2 run-t3
+
+.PHONY : all clean check check-t1 check-t2 check-t3 check-t4
 
