@@ -10,8 +10,8 @@ Installation
 
 * gcc
 * **Lua >= 5.1**
-* EJDB C library **libtcejdb** ([from sources](https://github.com/Softmotions/ejdb#manual-installation) or as [debian packages](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation))
 * [luarocks](http://luarocks.org/en/Download)
+* EJDB C library **libtcejdb** ([from sources](https://github.com/Softmotions/ejdb#manual-installation) or as [debian packages](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)) 
 
 **(A) Using luarocks from github sources**
 
