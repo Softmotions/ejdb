@@ -15,9 +15,9 @@ Installation
 **(A) Using luarocks from github sources**
 
 ```
+umask 022
 git clone https://github.com/Softmotions/ejdb.git
 cd ./ejdb/luaejdb
-umask 022
 make
 sudo luarocks install ./luaejdb-1.0-2.linux-x86_64.rock
 ```
