@@ -1,4 +1,4 @@
 Embedded JSON database library Lua binding
 ============================================================
 
-TODO
+http://ejdb.org/luadoc/
