@@ -50,6 +50,72 @@
 <p>
 
 </p>
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ -- File: samples/sample1.lua
+
+  local ejdb = require(&quot;ejdb&quot;)
+  local inspect = require(&quot;ejdb.inspect&quot;)
+  local Q = ejdb.Q
+
+  -- Used modes:
+  -- &apos;r&apos; - read
+  -- &apos;w&apos; - write
+  -- &apos;c&apos; - create db if not exists
+  -- &apos;t&apos; - truncate existing db
+  local db = ejdb.open(&quot;zoo&quot;, &quot;rwct&quot;)
+
+  -- Unordered lua table
+  local parrot1 = {
+    name = &quot;Grenny&quot;,
+    type = &quot;African Grey&quot;,
+    male = true,
+    age = 1,
+    birthhdate = ejdb.toDateNow(),
+    likes = { &quot;green color&quot;, &quot;night&quot;, &quot;toys&quot; },
+    extra1 = ejdb.toNull()
+  }
+
+  -- Preserve order of BSON keys
+  local parrot2 = Q();
+  parrot2:KV(&quot;name&quot;, &quot;Bounty&quot;):KV(&quot;type&quot;, &quot;Cockatoo&quot;):KV(&quot;male&quot;, false)
+  parrot2:KV(&quot;age&quot;, 15):KV(&quot;birthdate&quot;,
+                        ejdb.toDate({ year = 2013, month = 1, day = 1,
+                                      hour = 0, sec = 1 }))
+  parrot2:KV(&quot;likes&quot;, { &quot;sugar cane&quot; }):KV(&quot;extra1&quot;, ejdb.toNull())
+
+  --IF YOU WANT SOME DATA INSPECTIONS:
+  --print(ejdb.print_bson(parrot2:toBSON()))
+  --local obj = ejdb.from_bson(parrot2:toBSON())
+  --print(inspect(obj));
+
+  db:save(&quot;parrots2&quot;, parrot1)
+  db:save(&quot;parrots2&quot;, parrot2)
+
+  -- Below two equivalent queries:
+  -- Q1
+  local res, count, log =
+  db:find(&quot;parrots2&quot;, Q(&quot;likes&quot;, &quot;toys&quot;):OrderBy(&quot;name asc&quot;, &quot;age desc&quot;))
+  for i = 1, #res do -- iterate one
+    local ob = res:object(i)
+    print(&quot;&quot; .. ob[&quot;name&quot;] .. &quot; likes toys #1&quot;)
+  end
+
+  -- Q2
+  local res, count, log =
+  db:find(&quot;parrots2&quot;, Q():F(&quot;likes&quot;):Eq(&quot;toys&quot;):OrderBy({ name = 1 }, { age = -1 }))
+  for i = 1, #res do -- iterate one
+    print(&quot;&quot; .. res:field(i, &quot;name&quot;) .. &quot; likes toys #2&quot;)
+  end
+
+  -- Second way to iterate
+  for vobj, idx in res() do
+    print(&quot;&quot; .. vobj[&quot;name&quot;] .. &quot; likes toys #3&quot;)
+  end
+
+  db:close()</pre>
+    </ul>
 
 
 <h2><a href="#Functions">Functions</a></h2>
@@ -139,6 +205,86 @@
 	<td class="summary">Convenient <code>count(*)</code> operation.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#DB:sync">DB:sync&nbsp;(cname)</a></td>
+	<td class="summary">Synchronize EJDB database with storage.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:getDBMeta">DB:getDBMeta&nbsp;()</a></td>
+	<td class="summary">Get table object describes a database structure and its collections.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:beginTransaction">DB:beginTransaction&nbsp;(cname)</a></td>
+	<td class="summary">Begin collection transaction.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:commitTransaction">DB:commitTransaction&nbsp;(cname)</a></td>
+	<td class="summary">Commit collection transaction.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rollbackTransaction">DB:rollbackTransaction&nbsp;(cname)</a></td>
+	<td class="summary">Rollback collection transaction.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:getTransactionStatus">DB:getTransactionStatus&nbsp;(cname)</a></td>
+	<td class="summary">Get collection transaction status.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:dropIndexes">DB:dropIndexes&nbsp;(cname, fpath)</a></td>
+	<td class="summary">DROP indexes of all types for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:optimizeIndexes">DB:optimizeIndexes&nbsp;(cname, fpath)</a></td>
+	<td class="summary">OPTIMIZE indexes of all types for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:ensureStringIndex">DB:ensureStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Ensure index presence of String type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildStringIndex">DB:rebuildStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Rebuild index of String type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:dropStringIndex">DB:dropStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Drop index of String type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:ensureIStringIndex">DB:ensureIStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Ensure case insensitive String index for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildIStringIndex">DB:rebuildIStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Rebuild case insensitive String index for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:dropIStringIndex">DB:dropIStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Drop case insensitive String index for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:ensureNumberIndex">DB:ensureNumberIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Ensure index presence of Number type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildNumberIndex">DB:rebuildNumberIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Rebuild index of Number type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:dropNumberIndex">DB:dropNumberIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Drop index of Number type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:ensureArrayIndex">DB:ensureArrayIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Ensure index presence of Array type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildArrayIndex">DB:rebuildArrayIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Rebuild index of Array type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildArrayIndex">DB:rebuildArrayIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Drop index of Array type for JSON field path.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#RS:object">RS:object&nbsp;(i)</a></td>
 	<td class="summary">Returns result set lua table object at specified position <code>i</code></td>
 	</tr>
@@ -149,6 +295,10 @@
 	<tr>
 	<td class="name" nowrap><a href="#RS.__len">RS.__len&nbsp;()</a></td>
 	<td class="summary">Length of result set.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:KV">Q:KV&nbsp;(key, value)</a></td>
+	<td class="summary">Adds field into current JSON object.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#Q:F">Q:F&nbsp;(fname)</a></td>
@@ -662,7 +812,7 @@
     <ul>
         <li><span class="parameter">cname</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         Name of collection.</li>
+         Collection name.</li>
         <li><span class="parameter">obj</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a> or <a class="type" href="index.html#Q">Q</a></span>
          represents JSON object.</li>
@@ -832,7 +982,7 @@ end
     <ul>
         <li><span class="parameter">cname</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         Name of collection</li>
+         Collection name</li>
         <li><span class="parameter">q</span>
             <span class="types"><a class="type" href="index.html#Q">Q</a></span>
          JSON query object</li>
@@ -885,7 +1035,7 @@ end
     <ul>
         <li><span class="parameter">cname</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         Name of collection</li>
+         Collection name</li>
         <li><span class="parameter">q</span>
             <span class="types"><a class="type" href="index.html#Q">Q</a></span>
          JSON query object</li>
@@ -919,7 +1069,7 @@ end
     <ul>
         <li><span class="parameter">cname</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         Name of collection</li>
+         Collection name</li>
         <li><span class="parameter">q</span>
             <span class="types"><a class="type" href="index.html#Q">Q</a></span>
          JSON query object</li>
@@ -950,7 +1100,7 @@ end
     <ul>
         <li><span class="parameter">cname</span>
             <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         Name of collection</li>
+         Collection name</li>
         <li><span class="parameter">q</span>
             <span class="types"><a class="type" href="index.html#Q">Q</a></span>
          JSON query object</li>
@@ -965,6 +1115,479 @@ end
           <span class="types">optional <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
         Query execution log if <code>l</code> flag presented in the control <code>flags</code></li>
     </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:sync"></a>
+    <strong>DB:sync&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Synchronize EJDB database with storage.
+ If <code>cname</code> is provided only this collection will be synced.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types">optional <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:getDBMeta"></a>
+    <strong>DB:getDBMeta&nbsp;()</strong>
+    </dt>
+    <dd>
+
+<p>Get table object describes a database structure and its collections. </p>
+
+<p> Sample meta:</p>
+
+<pre><code>collections = {
+  ecoll = {
+    file = "testdb_ecoll",
+    indexes = {},
+    name = "ecoll",
+    options = {
+      buckets = 425977,
+      cachedrecords = 0,
+      compressed = false,
+      large = true
+    },
+    records = 1
+  },
+  mycoll = {
+    file = "testdb_mycoll",
+    indexes = { {
+        field = "foo",
+        file = "testdb_mycoll.idx.sfoo.lex",
+        iname = "sfoo",
+        records = 3,
+        type = "lexical"
+      } },
+    name = "mycoll",
+    options = {
+      buckets = 131071,
+      cachedrecords = 0,
+      compressed = false,
+      large = false
+    },
+    records = 4
+  }
+},
+file = "testdb"
+</code></pre>
+
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        Database metadata
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:beginTransaction"></a>
+    <strong>DB:beginTransaction&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Begin collection transaction.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:commitTransaction"></a>
+    <strong>DB:commitTransaction&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Commit collection transaction.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rollbackTransaction"></a>
+    <strong>DB:rollbackTransaction&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Rollback collection transaction.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:getTransactionStatus"></a>
+    <strong>DB:getTransactionStatus&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Get collection transaction status.
+ Returns <code>True</code> if transaction is active.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">bool</span></span>
+
+
+
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:dropIndexes"></a>
+    <strong>DB:dropIndexes&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    DROP indexes of all types for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:optimizeIndexes"></a>
+    <strong>DB:optimizeIndexes&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    OPTIMIZE indexes of all types for JSON field path.
+ Performs B+ tree index file optimization.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:ensureStringIndex"></a>
+    <strong>DB:ensureStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Ensure index presence of String type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildStringIndex"></a>
+    <strong>DB:rebuildStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Rebuild index of String type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:dropStringIndex"></a>
+    <strong>DB:dropStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Drop index of String type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:ensureIStringIndex"></a>
+    <strong>DB:ensureIStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Ensure case insensitive String index for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildIStringIndex"></a>
+    <strong>DB:rebuildIStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Rebuild case insensitive String index for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:dropIStringIndex"></a>
+    <strong>DB:dropIStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Drop case insensitive String index for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:ensureNumberIndex"></a>
+    <strong>DB:ensureNumberIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Ensure index presence of Number type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildNumberIndex"></a>
+    <strong>DB:rebuildNumberIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Rebuild index of Number type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:dropNumberIndex"></a>
+    <strong>DB:dropNumberIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Drop index of Number type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:ensureArrayIndex"></a>
+    <strong>DB:ensureArrayIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Ensure index presence of Array type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildArrayIndex"></a>
+    <strong>DB:rebuildArrayIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Rebuild index of Array type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildArrayIndex"></a>
+    <strong>DB:rebuildArrayIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Drop index of Array type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
 
 
 
@@ -1033,6 +1656,34 @@ end
 
 
 
+
+</dd>
+    <dt>
+    <a name = "Q:KV"></a>
+    <strong>Q:KV&nbsp;(key, value)</strong>
+    </dt>
+    <dd>
+    Adds field into current JSON object.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">key</span>
+
+
+</li>
+        <li><span class="parameter">value</span>
+
+
+</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():KV(<span class="string">"foo"</span>, <span class="string">"bar"</span>):KV(<span class="string">"age"</span>, <span class="number">30</span>) =&gt; {<span class="string">"foo"</span> : <span class="string">"bar"</span>, <span class="string">"age"</span> : <span class="number">30</span>}</pre>
+    </ul>
 
 </dd>
     <dt>
@@ -1924,6 +2575,7 @@ end
 
     <h3>see also:</h3>
     <ul>
+         <li><a href="index.html#Q:KV">Q:KV</a></li>
          <li><a href="index.html#Q:F">Q:F</a></li>
          <li><a href="index.html#Q:Eq">Q:Eq</a></li>
          <li><a href="index.html#Q:ElemMatch">Q:ElemMatch</a></li>

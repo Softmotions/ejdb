@@ -207,7 +207,7 @@ assert(db:count("ecoll", Q():F("k2", 2):F("k3", 0)) == 1)
 
 db:ensureStringIndex("mycoll", "foo")
 
-print(ejdb.print_bson(Q():F("tags"):AddToSetAll({"red", "green"}):toBSON()))
+--print(ejdb.print_bson(Q():F("tags"):AddToSetAll({"red", "green"}):toBSON()))
 --print(inspect(db:getDBMeta()))
 
 db:dropCollection("ecoll", true);
