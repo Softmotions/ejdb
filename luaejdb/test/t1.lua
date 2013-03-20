@@ -191,18 +191,23 @@ assert(log:find("MAIN IDX: 'NONE'"))
 assert(db:getTransactionStatus("mycoll") == false)
 db:beginTransaction("mycoll")
 assert(db:getTransactionStatus("mycoll") == true)
-db:save("mycoll", {name=1})
+db:save("mycoll", { name = 1 })
 assert(db:findOne("mycoll", Q("name", 1)));
 db:rollbackTransaction("mycoll")
 assert(db:getTransactionStatus("mycoll") == false)
 assert(db:findOne("mycoll", Q("name", 1)) == nil);
 
-assert(db:update("ecoll", Q("k1", "v1"):Upsert({k1="v1"})) == 1)
+assert(db:update("ecoll", Q("k1", "v1"):Upsert({ k1 = "v1", k2 = 1, k3 = 2 })) == 1)
 assert(db:update("ecoll", Q("k1", "v1"):Upsert(Q("k1", "v2"))) == 1)
 assert(db:count("ecoll", Q("k1", "v2")) == 1)
 
+-- test $inc
+assert(db:update("ecoll", Q("k1", "v2"):F("k2"):Inc(1):F("k3"):Inc(-2)) == 1);
+assert(db:count("ecoll", Q():F("k2", 2):F("k3", 0)) == 1)
+
 db:ensureStringIndex("mycoll", "foo")
 
+print(ejdb.print_bson(Q():F("tags"):AddToSetAll({"red", "green"}):toBSON()))
 --print(inspect(db:getDBMeta()))
 
 db:dropCollection("ecoll", true);

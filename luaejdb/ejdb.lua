@@ -260,16 +260,17 @@ function B:_init(fname, ...)
   return self
 end
 
-function B:_checkop()
+function B:_checkOp()
   assert(type(self._field) == "string")
 end
 
-function B:_setop(op, val, ...)
-  self:_checkop()
+function B:_setOp(op, val, ...)
+  self:_checkOp()
   local types, replace = ...
   local ttypes = type(types)
   if (ttypes == "string") then
-    assert(type(val) == types, "Invalid query argument field: " .. self._field .. " val: " .. inspect(val))
+    assert(type(val) == types, "Invalid query argument field: " .. self._field ..
+                               " It should have '" .. types .. "' type," .. " got: " .. inspect(val))
   elseif (ttypes == "function") then
     assert(types(val), "Invalid query argument field: " .. self._field .. " val: " .. inspect(val))
   elseif (ttypes == "table") then
@@ -296,12 +297,33 @@ function B:_setop(op, val, ...)
   elseif replace then
     for i = 2, #olist do olist[i] = nil end
   end
-  if (op == nil) then
+  if op == nil then
     table.insert(olist, setmetatable({ val }, mtBVal))
   else
-    table.insert(olist, { op, val })
+    local found = false
+    for i = 2, #olist do
+      if olist[i][1] == op then -- found previous added op
+        found = true
+        olist[i][2] = val -- replace old value
+        break
+      end
+    end
+    if not found then
+      table.insert(olist, { op, val })
+    end
   end
   self._bson = nil
+  return self
+end
+
+function B:_invertOp(op, val, ...)
+  local pf = self._field;
+  assert(type(op) == "string", "Operation must be a string")
+  assert(type(pf) == "string", "You should set field before by Q:F('fname')")
+  self._field = op
+  self:_setOp(pf, val, ...)
+  self._field = pf
+  return self
 end
 
 function B:_toOpVal(op, val)
@@ -317,12 +339,13 @@ function B:_hintOp(op, val, ...)
     self._hints = B()
   end
   self._hints:_rootOp(op, val, ...)
+  return self
 end
 
 function B:_rootOp(name, val, ...)
   local types = ...
   self:F(name)
-  self:_setop(nil, val, types, true)
+  self:_setOp(nil, val, types, true)
   self:F(nil)
   return self
 end
@@ -340,55 +363,61 @@ end
 -- Generic key=value
 function B:KV(key, val)
   self:F(key);
-  self:_setop(nil, val, nil, true)
+  self:_setOp(nil, val, nil, true)
   return self
 end
 
-function B:Eq(val) self:_setop(nil, val, nil, true) return self end
+function B:Eq(val) return self:_setOp(nil, val, nil, true) end
 
-function B:ElemMatch(val) self:_setop("$elemMatch", val) return self end
+function B:ElemMatch(val) return self:_setOp("$elemMatch", val) end
 
-function B:Not(val) self:_setop("$not", val) return self end
+function B:Not(val) return self:_setOp("$not", val) end
 
-function B:Gt(val) self:_setop("$gt", val) return self end
+function B:Gt(val) return self:_setOp("$gt", val, "number") end
 
-function B:Gte(val) self:_setop("$gte", val) return self end
+function B:Gte(val) return self:_setOp("$gte", val, "number") end
 
-function B:Lt(val) self:_setop("$lt", val) return self end
+function B:Lt(val) return self:_setOp("$lt", val, "number") end
 
-function B:Lte(val) self:_setop("$lte", val) return self end
+function B:Lte(val) return self:_setOp("$lte", val, "number") end
 
-function B:Icase(val) self:_setop("$icase", val) return self end
+function B:Icase(val) return self:_setOp("$icase", val) end
 
-function B:Begin(val) self:_setop("$begin", val) return self end
+function B:Begin(val) return self:_setOp("$begin", val, "string") end
 
-function B:In(val) self:_setop("$in", val) return self end
+function B:In(val) return self:_setOp("$in", val, "table") end
 
-function B:NotIn(val) self:_setop("$nin", val) return self end
+function B:NotIn(val) return self:_setOp("$nin", val, "table") end
 
-function B:Bt(val) self:_setop("$bt", val) return self end
+function B:Bt(n1, n2) return self:_setOp("$bt", { n1, n2 }) end
 
-function B:StrAnd(val) self:_setop("$strand", val) return self end
+function B:StrAnd(val) return self:_setOp("$strand", val, "table") end
 
-function B:StrOr(val) self:_setop("$strand", val) return self end
+function B:StrOr(val) return self:_setOp("$stror", val, "table") end
 
-function B:Inc(val) self:_setop("$inc", val) return self end
+function B:Inc(val) return self:_invertOp("$inc", val, "number") end
 
-function B:Set(val) return self:_rootOp("$set", val) end
+function B:Set(val) return self:_rootOp("$set", val, "table") end
 
-function B:AddToSet(val) return self:_rootOp("$addToSet", val) end
+function B:AddToSet(val) return self:_invertOp("$addToSet", val) end
 
-function B:AddToSetAll(val) return self:_rootOp("$addToSetAll", val) end
+function B:AddToSetAll(val) return self:_invertOp("$addToSetAll", val, "table") end
 
-function B:Pull(val) return self:_rootOp("$pull", val) end
+function B:Pull(val) return self:_invertOp("$pull", val) end
 
-function B:PullAll(val) return self:_rootOp("$pullAll", val) end
+function B:PullAll(val) return self:_invertOp("$pullAll", val, "table")  end
 
-function B:Upsert(val) return self:_rootOp("$upsert", val) end
+function B:Upsert(val) return self:_rootOp("$upsert", val, "table") end
 
 function B:DropAll() return self:_rootOp("$dropall", true) end
 
-function B:Do(val) return self:_rootOp("$do", val) end
+function B:Do(val) return self:_rootOp("$do", val, "table") end
+
+function B:Join(cname, fpath)
+  assert(type(cname) == "string", "Type of #1 arg must be string")
+  assert(type(fpath) == "string", "Type of #2 arg must be string")
+  return self:_rootOp("$do", { [fpath] = { ["join"] = cname } })
+end
 
 function B:Or(...)
   self._or = self._or or {}

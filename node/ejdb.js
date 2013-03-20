@@ -333,7 +333,7 @@ function parseQueryArgs(args) {
  *          - {.., '$inc' : {'field1' : number, ...,  'field1' : number}
  *      $dropall In-place record removal operation.
  *          - {.., '$dropall' : true}
- *      $addToSet Atomically adds value to the array only if its not in the array already.
+ *      $addToSet Atomically adds value to the array only if value not in the array already.
  *                  If containing array is missing it will be created.
  *          - {.., '$addToSet' : {'fpath' : val1, 'fpathN' : valN, ...}}
  *      $addToSetAll Batch version if $addToSet
@@ -414,7 +414,7 @@ EJDB.prototype.find = function() {
 };
 
 /**
- * Same as #find() but retrieves only one matching JSON object.
+ * Same as #find() but retrieves only first matching JSON object.
  * If callback is not provided this function will be synchronous.
  *
  * Call variations of findOne():
