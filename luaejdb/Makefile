@@ -19,7 +19,6 @@ doc:
 
 clean:
 	- rm -f *.so *.rock ./ejdb/*.so
-	- rm -rf ./doc
 	- make -C ./test clean
 
 
