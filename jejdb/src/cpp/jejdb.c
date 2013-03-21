@@ -19,9 +19,6 @@ static void set_ejdb_to_object(JNIEnv *env, jobject obj, EJDB *db) {
 	jclass clazz = (*env)->GetObjectClass(env, obj);
 	jfieldID dbpID = (*env)->GetFieldID(env, clazz, "dbPointer", "J");
 	(*env)->SetLongField(env, obj, dbpID, (jlong)db);
-
-	jfieldID pathID = (*env)->GetFieldID(env, clazz, "path", "Ljava/lang/String;");
-	(*env)->SetObjectField(env, obj, pathID, db ? (*env)->NewStringUTF(env, db->metadb->hdb->path) : NULL);
 };
 
 static EJDB *get_ejdb_from_object(JNIEnv *env, jobject obj) {
@@ -80,7 +77,7 @@ static void fill_ejdb_collopts(JNIEnv *env, jobject obj, EJCOLLOPTS *ejcopts) {
 	jclass clazz = (*env)->GetObjectClass(env, obj);
 
 	jfieldID recordsFID = (*env)->GetFieldID(env, clazz, "records", "J");
-	jfieldID cachedrecordsFID = (*env)->GetFieldID(env, clazz, "cachedrecords", "I");
+	jfieldID cachedrecordsFID = (*env)->GetFieldID(env, clazz, "cachedRecords", "I");
 	jfieldID largeFID = (*env)->GetFieldID(env, clazz, "large", "Z");
 	jfieldID compressedFID = (*env)->GetFieldID(env, clazz, "compressed", "Z");
 
@@ -143,6 +140,89 @@ static void set_rs_to_object(JNIEnv *env, jobject obj, TCLIST *rs) {
 	(*env)->SetLongField(env, obj, rspID, (jlong)rs);
 };
 
+static void update_coll_meta(JNIEnv *env, jobject obj, EJCOLL *coll) {
+	jclass clazz = (*env)->GetObjectClass(env, obj);
+	jfieldID existsID = (*env)->GetFieldID(env, clazz, "exists", "Z");
+	(*env)->SetBooleanField(env, obj, existsID, coll ? JNI_TRUE : JNI_FALSE);
+
+	jclass optionsClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection$Options");
+	jfieldID optionsID = (*env)->GetFieldID(env, clazz, "options", "Lorg/ejdb/driver/EJDBCollection$Options;");
+	jobject jopts = (*env)->GetObjectField(env, obj, optionsID);
+	
+	if (!jopts) {
+		jmethodID initOptions = (*env)->GetMethodID(env, optionsClazz, "<init>", "()V");
+		jopts = (*env)->NewObject(env, optionsClazz, initOptions);
+		(*env)->SetObjectField(env, obj, optionsID, jopts);
+	}
+
+	jfieldID bucketsID = (*env)->GetFieldID(env, optionsClazz, "buckets", "J");
+	jfieldID cachedID = (*env)->GetFieldID(env, optionsClazz, "cachedRecords", "I");
+	jfieldID largeID = (*env)->GetFieldID(env, optionsClazz, "large", "Z");
+	jfieldID compressedID = (*env)->GetFieldID(env, optionsClazz, "compressed", "Z");
+
+	(*env)->SetLongField(env, jopts, bucketsID, coll->tdb->hdb->bnum);
+    (*env)->SetIntField(env, jopts, cachedID, coll->tdb->hdb->rcnum);
+	(*env)->SetBooleanField(env, jopts, largeID, coll->tdb->opts & TDBTLARGE ? JNI_TRUE : JNI_FALSE);
+	(*env)->SetBooleanField(env, jopts, compressedID, coll->tdb->opts & TDBTDEFLATE ? JNI_TRUE : JNI_FALSE);
+
+	// TODO: indexes
+	jclass indexClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection$Index");
+	jclass indexTypeClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection$IndexType");
+	jmethodID initIndex = (*env)->GetMethodID(env, indexClazz, "<init>", "()V");
+	jfieldID indexesID = (*env)->GetFieldID(env, clazz, "indexes", "Ljava/util/Collection;");
+
+	jclass arrayListClazz = (*env)->FindClass(env, "Ljava/util/ArrayList;");
+	jmethodID initArrayList = (*env)->GetMethodID(env, arrayListClazz, "<init>", "(I)V");
+	jmethodID addToList = (*env)->GetMethodID(env, arrayListClazz, "add", "(Ljava/lang/Object;)Z");
+
+	jfieldID fieldID = (*env)->GetFieldID(env, indexClazz, "field", "Ljava/lang/String;");
+	jfieldID nameID = (*env)->GetFieldID(env, indexClazz, "name", "Ljava/lang/String;");
+	jfieldID fileID = (*env)->GetFieldID(env, indexClazz, "file", "Ljava/lang/String;");
+	jfieldID typeID = (*env)->GetFieldID(env, indexClazz, "type", "Lorg/ejdb/driver/EJDBCollection$IndexType;");
+	jfieldID recordsID = (*env)->GetFieldID(env, indexClazz, "records", "I");
+
+	jobject indexes = (*env)->NewObject(env, arrayListClazz, initArrayList, coll->tdb->inum);
+
+	for (int j = 0; j < coll->tdb->inum; ++j) {
+		TDBIDX *idx = (coll->tdb->idxs + j);
+		assert(idx);
+		if (idx->type != TDBITLEXICAL && idx->type != TDBITDECIMAL && idx->type != TDBITTOKEN) {
+			continue;
+		}
+
+		jobject index = (*env)->NewObject(env, indexClazz, initIndex);
+
+		(*env)->SetObjectField(env, index, fieldID, (*env)->NewStringUTF(env, idx->name+1));
+		(*env)->SetObjectField(env, index, nameID, (*env)->NewStringUTF(env, idx->name));
+
+		jfieldID indexTypeID = NULL;
+		switch (idx->type) {
+			case TDBITLEXICAL:
+				indexTypeID = (*env)->GetStaticFieldID(env, indexTypeClazz, "Lexical", "Lorg/ejdb/driver/EJDBCollection$IndexType;");
+				break;
+			case TDBITDECIMAL:
+				indexTypeID = (*env)->GetStaticFieldID(env, indexTypeClazz, "Numeric", "Lorg/ejdb/driver/EJDBCollection$IndexType;");
+				break;
+			case TDBITTOKEN:
+				indexTypeID = (*env)->GetStaticFieldID(env, indexTypeClazz, "Token", "Lorg/ejdb/driver/EJDBCollection$IndexType;");
+				break;
+		}
+		if (indexTypeID) {
+			(*env)->SetObjectField(env, index, typeID, (*env)->GetStaticObjectField(env, indexTypeClazz, indexTypeID));
+		}
+
+		TCBDB *idb = (TCBDB*) idx->db;
+		if (idb) {
+			(*env)->SetIntField(env, index, recordsID, idb->rnum);
+			(*env)->SetObjectField(env, index, fileID, (*env)->NewStringUTF(env, idb->hdb->path));
+		}
+
+		(*env)->CallBooleanMethod(env, indexes, addToList, index);
+	}
+
+	(*env)->SetObjectField(env, obj, indexesID, indexes);
+};
+
 /*
 * Class:     org_ejdb_driver_EJDB
 * Method:    open
@@ -173,6 +253,7 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_open (JNIEnv *env, jobject obj,
 	}
 
 	set_ejdb_to_object(env, obj, db);
+	Java_org_ejdb_driver_EJDB_updateMeta(env, obj);
 	return;
 };
 
@@ -203,6 +284,7 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_close (JNIEnv *env, jobject obj
 	}
 
 	set_ejdb_to_object(env, obj, NULL);
+	Java_org_ejdb_driver_EJDB_updateMeta(env, obj);
 };
 
 /*
@@ -220,6 +302,60 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_sync (JNIEnv *env, jobject obj)
 	if (!ejdbsyncdb(db)) {
 		set_ejdb_error(env, db);
 	}
+};
+
+/*
+ * Class:     org_ejdb_driver_EJDB
+ * Method:    updateMeta
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_updateMeta (JNIEnv *env, jobject obj) {
+	jclass clazz = (*env)->GetObjectClass(env, obj);
+	EJDB *db = get_ejdb_from_object(env, obj);
+
+	jfieldID pathID = (*env)->GetFieldID(env, clazz, "path", "Ljava/lang/String;");
+	(*env)->SetObjectField(env, obj, pathID, db ? (*env)->NewStringUTF(env, db->metadb->hdb->path) : NULL);
+
+	jfieldID collectionMapID = (*env)->GetFieldID(env, clazz, "collections", "Ljava/util/Map;");
+	jobject collmapold = (*env)->GetObjectField(env, obj, collectionMapID);
+	jclass mapClazz = (*env)->GetObjectClass(env, collmapold);
+	jmethodID getFromMap = (*env)->GetMethodID(env, mapClazz, "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+
+	jclass hashMapClazz = (*env)->FindClass(env, "java/util/HashMap");
+	jmethodID initHashMap = (*env)->GetMethodID(env, hashMapClazz, "<init>", "(I)V");
+	jmethodID putIntoMap = (*env)->GetMethodID(env, hashMapClazz, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+	jobject collmapnew = (*env)->NewObject(env, hashMapClazz, initHashMap, !db ? 0 : db->cdbsnum);
+
+	if (!db) {
+		(*env)->SetObjectField(env, obj, collectionMapID, collmapnew);
+		return;
+	} 
+
+	TCLIST *colls = ejdbgetcolls(db);
+    if (!colls) {
+        set_ejdb_error(env, db);
+        return;
+    }
+
+	jclass collectionClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection");
+	jmethodID initCollection = (*env)->GetMethodID(env, collectionClazz, "<init>", "(Lorg/ejdb/driver/EJDB;Ljava/lang/String;)V");
+
+    for (int i = 0; i < TCLISTNUM(colls); ++i) {
+		EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(colls, i);
+
+		jstring cname = (*env)->NewStringUTF(env, coll->cname);//, coll->cnamesz);
+
+		jobject cobj = (*env)->CallObjectMethod(env, collmapold, getFromMap, cname);
+		if (!cobj) {
+			cobj = (*env)->NewObject(env, collectionClazz, initCollection, obj, cname);
+		}
+
+		update_coll_meta(env, cobj, coll);
+		
+		(*env)->CallObjectMethod(env, collmapnew, putIntoMap, cname, cobj);
+	}
+
+	(*env)->SetObjectField(env, obj, collectionMapID, collmapnew);
 };
 
 /*
@@ -248,7 +384,6 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureExists (JNIEnv 
 		return;
 	}
 };
-
 
 /*
 * Class:     org_ejdb_driver_EJDBCollection
@@ -300,6 +435,27 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_sync (JNIEnv *env, jo
 	if (!ejdbsyncoll(coll)) {
 		set_ejdb_error(env, db);
 	}
+};
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    updateMeta
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_updateMeta (JNIEnv *env, jobject obj) {
+	EJDB *db = get_ejdb_from_object(env, obj);
+	if (!ejdbisopen(db)) {
+		set_error(env, 0, "EJDB not opened");
+		return;
+	}
+
+	jstring colname = get_coll_name(env, obj);
+
+	const char *cname = (*env)->GetStringUTFChars(env, colname, NULL);
+	EJCOLL * coll = ejdbgetcoll(db, cname);
+	(*env)->ReleaseStringUTFChars(env, colname, cname);
+
+	update_coll_meta(env, obj, coll);
 };
 
 /*

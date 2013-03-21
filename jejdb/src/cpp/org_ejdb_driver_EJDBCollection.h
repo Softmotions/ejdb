@@ -33,14 +33,6 @@ extern "C" {
 #define org_ejdb_driver_EJDBCollection_JBTXSTATUS 8L
 /*
  * Class:     org_ejdb_driver_EJDBCollection
- * Method:    txControl
- * Signature: (I)Z
- */
-JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_txControl
-  (JNIEnv *, jobject, jint);
-
-/*
- * Class:     org_ejdb_driver_EJDBCollection
  * Method:    ensureExists
  * Signature: (Lorg/ejdb/driver/EJDBCollection/Options;)V
  */
@@ -61,6 +53,14 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_drop
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_sync
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    updateMeta
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_updateMeta
   (JNIEnv *, jobject);
 
 /*
@@ -94,6 +94,14 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_remove
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndex
   (JNIEnv *, jobject, jstring, jint);
+
+/*
+ * Class:     org_ejdb_driver_EJDBCollection
+ * Method:    txControl
+ * Signature: (I)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_ejdb_driver_EJDBCollection_txControl
+  (JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus
 }

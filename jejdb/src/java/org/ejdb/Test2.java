@@ -26,9 +26,15 @@ public class Test2 {
 
         try {
             db.open("test5");
-            System.out.println("test EJDB opened: " + db.getPath());
+            System.out.println("test EJDB opened: " + db);
 
             EJDBCollection test = db.getCollection("test");
+
+            test.setIndex("random", EJDBCollection.JBIDXNUM);
+
+            test.updateMeta();
+
+            System.out.println(test);
 
             test.drop(true);
             System.out.println("test collection dropped");

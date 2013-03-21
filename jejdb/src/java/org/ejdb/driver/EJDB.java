@@ -1,5 +1,9 @@
 package org.ejdb.driver;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
@@ -53,6 +57,11 @@ public class EJDB {
     private long dbPointer;
 
     private String path;
+    private Map<String, EJDBCollection> collections;
+
+    {
+        collections = new HashMap<String, EJDBCollection>();
+    }
 
     public String getPath() {
         return path;
@@ -69,6 +78,8 @@ public class EJDB {
     public native void close();
 
     public native void sync();
+
+    public native void updateMeta();
 
     public EJDBCollection ensureCollection(String cname) {
         return this.ensureCollection(cname, null);
@@ -98,7 +109,13 @@ public class EJDB {
     }
 
     public EJDBCollection getCollection(String cname, boolean ecreate, EJDBCollection.Options opts) {
-        EJDBCollection collection = new EJDBCollection(this, cname);
+        if (!this.isOpen()) {
+            // todo: check isOpen
+            throw new RuntimeException("EJDB not opened");
+//            throw new EJDBException(0, "EJDB not opened");
+        }
+
+        EJDBCollection collection = collections.containsKey(cname) ? collections.get(cname) : new EJDBCollection(this, cname);
 
         if (ecreate) {
             collection.ensureExists(opts);
@@ -107,11 +124,28 @@ public class EJDB {
         return collection;
     }
 
-    //////////////////////////////////////////
+    public Collection<String> getCollectionNames() {
+        return collections.keySet();
+    }
+
+    public Collection<EJDBCollection> getCollections() {
+        return collections.values();
+    }
+
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("EJDB");
+        sb.append("{path='").append(path).append('\'');
+        sb.append(", collections=").append(collections.values());
+        sb.append('}');
+        return sb.toString();
+    }
+
     @Override
     protected void finalize() throws Throwable {
         this.close();
         super.finalize();
     }
-
 }

@@ -55,6 +55,14 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_close
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_sync
   (JNIEnv *, jobject);
 
+/*
+ * Class:     org_ejdb_driver_EJDB
+ * Method:    updateMeta
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_updateMeta
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif
