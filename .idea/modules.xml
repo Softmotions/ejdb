@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/luaejdb/luaejdb.iml" filepath="$PROJECT_DIR$/luaejdb/luaejdb.iml" />
       <module fileurl="file://$PROJECT_DIR$/pyejdb/pyejdb.iml" filepath="$PROJECT_DIR$/pyejdb/pyejdb.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rubejdb/rubejdb.iml" filepath="$PROJECT_DIR$/rubejdb/rubejdb.iml" />
       <module fileurl="file://$PROJECT_DIR$/tcejdb/tcejdb.iml" filepath="$PROJECT_DIR$/tcejdb/tcejdb.iml" />
     </modules>
   </component>
