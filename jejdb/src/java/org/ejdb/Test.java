@@ -6,7 +6,6 @@ import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 import org.ejdb.driver.EJDB;
 import org.ejdb.driver.EJDBCollection;
-import org.ejdb.driver.EJDBDriver;
 import org.ejdb.driver.EJDBQuery;
 
 import java.io.IOException;

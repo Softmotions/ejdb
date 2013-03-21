@@ -63,56 +63,151 @@ public class EJDB {
         collections = new HashMap<String, EJDBCollection>();
     }
 
+    /**
+     * @return EJDB path
+     */
     public String getPath() {
         return path;
     }
 
-    public void open(String path) {
+    /**
+     * Open database using default open mode.
+     * <p/>
+     * Default open mode: JBOWRITER | JBOCREAT | JBOTSYNC
+     *
+     * @param path EJDB path
+     * @throws EJDBException
+     */
+    public void open(String path) throws EJDBException {
         this.open(path, JBO_DEFAULT);
     }
 
-    public native void open(String path, int mode);
+    /**
+     * Open database.
+     * <p/>
+     * Default open mode: JBOWRITER | JBOCREAT | JBOTSYNC
+     *
+     * @param path EJDB path
+     * @param mode Open mode
+     * @throws EJDBException
+     */
+    public native void open(String path, int mode) throws EJDBException;
 
+    /**
+     * Check if database in opened state.
+     */
     public native boolean isOpen();
 
-    public native void close();
+    /**
+     * Close database.
+     * If database was not opened it does nothing.
+     *
+     * @throws EJDBException
+     */
+    public native void close() throws EJDBException;
 
-    public native void sync();
+    /**
+     * Synchronize entire EJDB database and all its collections with storage.
+     *
+     * @throws EJDBException
+     */
+    public native void sync() throws EJDBException;
 
-    public native void updateMeta();
+    /**
+     * Update description of EJDB database and its collections.
+     *
+     * @throws EJDBException
+     */
+    public native void updateMeta() throws EJDBException;
 
-    public EJDBCollection ensureCollection(String cname) {
+    /**
+     * Automatically creates new collection if it does't exists with using default collection options
+     *
+     * @param cname Collection name
+     * @throws EJDBException
+     * @see org.ejdb.driver.EJDBCollection#ensureExists()
+     */
+    public EJDBCollection ensureCollection(String cname) throws EJDBException {
         return this.ensureCollection(cname, null);
     }
 
-    public EJDBCollection ensureCollection(String cname, EJDBCollection.Options opts) {
+    /**
+     * Automatically creates new collection if it does't exists.
+     * Collection options `opts` are applied only for newly created collection.
+     * For existing collections `opts` takes no effect.
+     *
+     * @param cname Collection name
+     * @param opts  Collection options
+     * @throws EJDBException
+     * @see EJDBCollection#ensureExists(org.ejdb.driver.EJDBCollection.Options)
+     */
+    public EJDBCollection ensureCollection(String cname, EJDBCollection.Options opts) throws EJDBException {
         EJDBCollection collection = getCollection(cname);
         collection.ensureExists(opts);
 
         return collection;
     }
 
-    public void dropCollection(String cname) {
+    /**
+     * Drop collection by name.
+     *
+     * @param cname Collection name
+     * @throws EJDBException
+     * @see org.ejdb.driver.EJDBCollection#drop()
+     */
+    public void dropCollection(String cname) throws EJDBException {
         this.dropCollection(cname, false);
     }
 
-    public void dropCollection(String cname, boolean prune) {
+    /**
+     * Drop collection.
+     *
+     * @param cname Collection name
+     * @param prune If true the collection data will erased from disk.
+     * @throws EJDBException
+     * @see org.ejdb.driver.EJDBCollection#drop(boolean)
+     */
+    public void dropCollection(String cname, boolean prune) throws EJDBException {
         getCollection(cname).drop(prune);
     }
 
-    public EJDBCollection getCollection(String cname) {
+    /**
+     * Returns collection object (without automatical creation)
+     *
+     * @param cname Collection name
+     * @return collection object
+     * @throws EJDBException
+     * @see EJDB#getCollection(String, boolean, org.ejdb.driver.EJDBCollection.Options)
+     */
+    public EJDBCollection getCollection(String cname) throws EJDBException {
         return this.getCollection(cname, false);
     }
 
-    public EJDBCollection getCollection(String cname, boolean ecreate) {
+    /**
+     * Returns collection object
+     *
+     * @param cname   Collection name
+     * @param ecreate Automatically collection creation flag
+     * @return collection object
+     * @throws EJDBException
+     * @see EJDB#getCollection(String, boolean, org.ejdb.driver.EJDBCollection.Options)
+     */
+    public EJDBCollection getCollection(String cname, boolean ecreate) throws EJDBException {
         return this.getCollection(cname, ecreate, null);
     }
 
-    public EJDBCollection getCollection(String cname, boolean ecreate, EJDBCollection.Options opts) {
+    /**
+     * Returns collection object
+     *
+     * @param cname   Collection name
+     * @param ecreate Automatically collection creation flag
+     * @param opts    Collection options
+     * @return collection object
+     * @throws EJDBException
+     */
+    public EJDBCollection getCollection(String cname, boolean ecreate, EJDBCollection.Options opts) throws EJDBException {
         if (!this.isOpen()) {
-            // todo: check isOpen
-            throw new RuntimeException("EJDB not opened");
-//            throw new EJDBException(0, "EJDB not opened");
+            throw new EJDBException(0, "EJDB not opened");
         }
 
         EJDBCollection collection = collections.containsKey(cname) ? collections.get(cname) : new EJDBCollection(this, cname);
@@ -124,10 +219,16 @@ public class EJDB {
         return collection;
     }
 
+    /**
+     * Returns names of existed collections
+     */
     public Collection<String> getCollectionNames() {
         return collections.keySet();
     }
 
+    /**
+     * Returns collection objects for all existed collections
+     */
     public Collection<EJDBCollection> getCollections() {
         return collections.values();
     }

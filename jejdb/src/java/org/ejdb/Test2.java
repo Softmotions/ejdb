@@ -1,7 +1,5 @@
 package org.ejdb;
 
-import com.sun.org.apache.xpath.internal.SourceTree;
-
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
 import org.ejdb.driver.EJDB;
@@ -9,6 +7,7 @@ import org.ejdb.driver.EJDBCollection;
 import org.ejdb.driver.EJDBQuery;
 import org.ejdb.driver.EJDBResultSet;
 
+import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -21,7 +20,7 @@ public class Test2 {
     public static final int TEST_COUNT = 15;
     public static final Random random = new Random(System.currentTimeMillis());
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         EJDB db = new EJDB();
 
         try {
@@ -29,6 +28,8 @@ public class Test2 {
             System.out.println("test EJDB opened: " + db);
 
             EJDBCollection test = db.getCollection("test");
+
+            System.out.println(test);
 
             test.setIndex("random", EJDBCollection.JBIDXNUM);
 
@@ -79,7 +80,6 @@ public class Test2 {
                 System.out.println(r);
             }
             rs.close();
-
         } finally {
             db.close();
         }
@@ -93,7 +93,7 @@ public class Test2 {
         bsonObject.put("name", "Object#" + INDEX);
         bsonObject.put("time", System.currentTimeMillis());
         bsonObject.put("index", INDEX);
-        bsonObject.put("random", random.nextLong());
+        bsonObject.put("random", (random.nextBoolean() ? -1 : 1) * random.nextInt(65536));
         bsonObject.put("randomBoolean", random.nextBoolean());
         bsonObject.put("randomDouble", random.nextDouble());
         bsonObject.put("smallRandom", random.nextInt(10));

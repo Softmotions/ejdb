@@ -165,7 +165,6 @@ static void update_coll_meta(JNIEnv *env, jobject obj, EJCOLL *coll) {
 	(*env)->SetBooleanField(env, jopts, largeID, coll->tdb->opts & TDBTLARGE ? JNI_TRUE : JNI_FALSE);
 	(*env)->SetBooleanField(env, jopts, compressedID, coll->tdb->opts & TDBTDEFLATE ? JNI_TRUE : JNI_FALSE);
 
-	// TODO: indexes
 	jclass indexClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection$Index");
 	jclass indexTypeClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection$IndexType");
 	jmethodID initIndex = (*env)->GetMethodID(env, indexClazz, "<init>", "()V");
