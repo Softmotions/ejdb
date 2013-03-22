@@ -1,3 +1,7 @@
+2013-03-22 Anton Adamansky. <adamansky@gmail.com>
+    * Fixed number index crash #54
+    - Release 1.0.67
+
 2013-03-20 Anton Adamansky. <adamansky@gmail.com>
     * Python3 binding
     * Lua binding

@@ -1,3 +1,9 @@
+libtcejdb (1.0.67) unstable; urgency=low
+
+  * Fixed number index crash #54
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 22 Mar 2013 18:01:39 +0700
+
 libtcejdb (1.0.66) stable; urgency=low
 
   * Better BSON error reporting
