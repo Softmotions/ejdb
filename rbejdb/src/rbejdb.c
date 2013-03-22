@@ -17,17 +17,19 @@
 #include <tcejdb/ejdb_private.h>
 #include <ruby.h>
 
+#define DEFAULT_OPEN_MODE (JBOWRITER | JBOCREAT | JBOTSYNC)
+
 typedef struct {
     EJDB* ejdb;
-} RUBEJDB;
+} RBEJDB;
 
 EJDB* getEJDB(VALUE self) {
-    RUBEJDB* rejdb;
-    Data_Get_Struct(self, RUBEJDB, rejdb);
+    RBEJDB* rejdb;
+    Data_Get_Struct(self, RBEJDB, rejdb);
     return rejdb->ejdb;
 }
 
-void EJDB_free(RUBEJDB* rejdb) {
+void EJDB_free(RBEJDB* rejdb) {
     if (!rejdb->ejdb) {
         ejdbdel(rejdb->ejdb);
     }
@@ -35,12 +37,12 @@ void EJDB_free(RUBEJDB* rejdb) {
 }
 
 VALUE EJDB_alloc(VALUE klass) {
-    return Data_Wrap_Struct(klass, NULL, EJDB_free, ruby_xmalloc(sizeof(RUBEJDB)));
+    return Data_Wrap_Struct(klass, NULL, EJDB_free, ruby_xmalloc(sizeof(RBEJDB)));
 }
 
 VALUE EJDB_init(VALUE self) {
-    RUBEJDB* rejdb;
-    Data_Get_Struct(self, RUBEJDB, rejdb);
+    RBEJDB* rejdb;
+    Data_Get_Struct(self, RBEJDB, rejdb);
 
     rejdb->ejdb = ejdbnew();
     if (!rejdb->ejdb) {
@@ -64,10 +66,13 @@ VALUE EJDB_is_open(VALUE self) {
 }
 
 
-Init_rubejdb() {
+Init_rbejdb() {
     VALUE ejdbClass = rb_define_class("EJDB", rb_cObject);
     rb_define_alloc_func(ejdbClass, EJDB_alloc);
     rb_define_private_method(ejdbClass, "initialize", RUBY_METHOD_FUNC(EJDB_init), 0);
+
+    rb_define_const(ejdbClass, "DEFAULT_OPEN_MODE", INT2FIX(DEFAULT_OPEN_MODE));
+
     rb_define_method(ejdbClass, "open", RUBY_METHOD_FUNC(EJDB_open), 2);
-    rb_define_method(ejdbClass, "is_open", RUBY_METHOD_FUNC(EJDB_is_open), 0);
+    rb_define_method(ejdbClass, "is_open?", RUBY_METHOD_FUNC(EJDB_is_open), 0);
 }
