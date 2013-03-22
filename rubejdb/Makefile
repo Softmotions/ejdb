@@ -3,6 +3,7 @@ all: doc build
 
 build:
 	ruby extconf.rb
+	make -C ./build
 
 build-dbg:
 
