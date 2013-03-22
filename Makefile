@@ -18,6 +18,7 @@ deb-packages: fix-changelogs
 	$(MAKE) -C ./pyejdb deb-packages
 
 deb-source-packages: fix-changelogs
+	cd tcejdb && autoconf && ./configure
 	$(MAKE) -C ./tcejdb version
 	$(MAKE) -C ./ deb-packages DEBUILD_OPTS="-S"
 
