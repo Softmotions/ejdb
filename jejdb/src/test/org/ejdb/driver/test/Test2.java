@@ -1,4 +1,4 @@
-package org.ejdb;
+package org.ejdb.driver.test;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -20,7 +20,7 @@ public class Test2 {
     public static final int TEST_COUNT = 15;
     public static final Random random = new Random(System.currentTimeMillis());
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         EJDB db = new EJDB();
 
         try {

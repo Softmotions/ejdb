@@ -1,4 +1,4 @@
-package org.ejdb;
+package org.ejdb.driver.test;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -19,7 +19,7 @@ import java.util.Random;
  * @version $Id$
  */
 public class Test {
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws Exception {
         EJDB db = new EJDB();
 
         try {

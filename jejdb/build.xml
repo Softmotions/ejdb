@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jejdb" default="build.and.test">
+
+    <property file="build.properties"/>
+
+    <target name="compile.production" description="Compile module JEJDB; production classes">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.classes}"/>
+        <javac destdir="${build.classes}"
+               target="${javac.target}"
+               source="${javac.source}"
+               debug="${javac.debug}"
+               optimize="${javac.optimize}"
+               encoding="${javac.encoding}"
+               includeantruntime="false">
+            <src path="${source.dir}"/>
+            <classpath>
+                <path refid="lib.bson.classpath"/>
+            </classpath>
+        </javac>
+
+        <copy todir="${build.classes}">
+            <fileset dir="${source.dir}" includes="${resources.patterns}"/>
+        </copy>
+        <path id="jejdb.classpath" location="${build.classes}"/>
+
+        <mkdir dir="${distr.home}"/>
+        <mkdir dir="${distr.lib}"/>
+        <copy todir="${distr.lib}">
+            <fileset refid="lib.bson.fileset"/>
+        </copy>
+
+        <jar destfile="${distr.home}/${distr.name}.jar" basedir="${build.classes}">
+            <!-- TODO: jar manifest-->
+        </jar>
+    </target>
+
+    <target name="compile.tests" depends="compile.production" description="compile module JEJDB; test classes" if="with.tests">
+        <mkdir dir="${build.test.dir}"/>
+        <mkdir dir="${build.test.classes}"/>
+        <javac destdir="${build.test.classes}"
+               target="${javac.target}"
+               source="${javac.source}"
+               debug="${javac.debug}"
+               optimize="${javac.optimize}"
+               encoding="${javac.encoding}"
+               includeantruntime="false">
+            <src path="${source.test.dir}"/>
+            <classpath>
+                <path refid="lib.bson.classpath"/>
+                <path refid="lib.junit.classpath"/>
+                <path refid="jejdb.classpath"/>
+            </classpath>
+        </javac>
+
+        <copy todir="${build.test.classes}">
+            <fileset dir="${source.test.dir}" includes="${resources.patterns}"/>
+        </copy>
+        <path id="jejdb.test.classpath" location="${build.test.classes}"/>
+
+        <mkdir dir="${distr.home}"/>
+        <mkdir dir="${distr.lib}"/>
+        <copy todir="${distr.lib}">
+            <fileset refid="lib.bson.fileset"/>
+        </copy>
+
+        <mkdir dir="${test.data.dir}"/>
+        <mkdir dir="${test.reports.dir}"/>
+        <junit printsummary="on" showoutput="yes" haltonfailure="yes" haltonerror="yes" dir="${test.data.dir}" fork="true">
+            <env key="LD_LIBRARY_PATH" path="${distr.home}"/>
+            <formatter type="plain"/>
+            <classpath>
+                <path refid="lib.bson.classpath"/>
+                <path refid="lib.junit.classpath"/>
+                <path refid="jejdb.classpath"/>
+                <path refid="jejdb.test.classpath"/>
+            </classpath>
+            <test name="org.ejdb.driver.test.EJDBTest" todir="${test.reports.dir}"/>
+        </junit>
+    </target>
+
+    <target name="compile" depends="init, compile.production, compile.tests"/>
+
+    <target name="init" description="Build initialization">
+        <!-- Perform any build initialization in this target -->
+        <path id="lib.bson.classpath">
+            <fileset id="lib.bson.fileset" dir="${lib.dir}">
+                <include name="bson.jar"/>
+            </fileset>
+        </path>
+
+        <path id="lib.junit.classpath">
+            <fileset id="lib.junit.fileset" dir="${lib.dir}">
+                <include name="junit-4.11.jar"/>
+                <include name="hamcrest-core-1.3.jar"/>
+            </fileset>
+        </path>
+    </target>
+
+    <target name="clean" description="Cleanup">
+        <delete dir="${build.dir}"/>
+        <delete file="${distr.home}/${distr.name}.jar"/>
+    </target>
+
+    <target name="build" depends="clean" description="Build">
+        <ant target="compile" inheritall="true" inheritrefs="true"/>
+    </target>
+
+    <target name="build.and.test" depends="clean" description="Build JEJDB and run tests">
+        <property name="with.tests" value="true"/>
+        <ant target="compile" inheritall="true" inheritrefs="true"/>
+    </target>
+
+</project>
