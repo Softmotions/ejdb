@@ -1,4 +1,4 @@
-libtcejdb (1.0.68) unstable; urgency=low
+libtcejdb (1.0.68-1) unstable; urgency=low
 
   * Fixed number index crash #54
 
@@ -12,13 +12,13 @@ libtcejdb (1.0.66) stable; urgency=low
 
 libtcejdb (1.0.65) unstable; urgency=low
 
-  * Fix include directives to relative paths 
+  * Fix include directives to relative paths
 
  -- Anton Adamansky <adamansky@gmail.com>  Wed, 13 Feb 2013 23:17:33 +0700
 
 libtcejdb (1.0.64) unstable; urgency=low
 
-  * Build flags fix 
+  * Build flags fix
 
  -- Anton Adamansky <adamansky@gmail.com>  Tue, 12 Feb 2013 00:50:00 +0700
 

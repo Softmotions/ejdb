@@ -2,7 +2,8 @@ Source: libtcejdb
 Section: libs
 Priority: standard
 Maintainer: Anton Adamansky <adamansky@gmail.com>
-Build-Depends: autotools-dev,
+Build-Depends: autoconf,
+               autotools-dev,
                chrpath,
                debhelper (>= 9),
                zlib1g-dev,
