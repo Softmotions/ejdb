@@ -13,7 +13,6 @@
 #include "CUnit/Basic.h"
 #include <assert.h>
 #include "ejdb_private.h"
-#include "debian/libtcejdb9-dev/usr/include/tcejdb/bson.h"
 #include <locale.h>
 
 /*
