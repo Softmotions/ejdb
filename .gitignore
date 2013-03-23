@@ -97,4 +97,14 @@ tcejdb/debian/*.debhelper
 /python3-ejdb_*.deb
 
 
-luaejdb/test/testdb*
+/luaejdb/debian/files
+/luaejdb/test/testdb*
+/luaejdb/debian/lua51-ejdb*
+/luaejdb/debian/*.log
+/lua-ejdb_*.build
+/lua-ejdb_*.dsc
+/lua-ejdb_*.gz
+/lua-ejdb_*.build
+/lua-ejdb_*.changes
+/lua51-ejdb_*.deb
+

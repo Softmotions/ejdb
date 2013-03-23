@@ -1,11 +1,13 @@
 
+UMASK=022
+
 all: doc build
 
 build:
-	luarocks --pack-binary-rock make
+	umask $(UMASK) && luarocks --pack-binary-rock make
 
 build-dbg:
-	luarocks --pack-binary-rock CFLAGS='-g -O0 -fPIC -std=c99 -Wall' make
+	umask $(UMASK) && luarocks --pack-binary-rock CFLAGS='-g -O0 -fPIC -std=c99 -Wall' make
 
 check: build-dbg
 	make -C ./test
@@ -21,5 +23,17 @@ clean:
 	- rm -f *.so *.rock ./ejdb/*.so
 	- make -C ./test clean
 
+install:
+	$(if $(DESTDIR), $(MAKE) install-deb, $(MAKE) install-ndeb)
 
-.PHONY: all build build-dbg check check-valgrind clean doc
+install-deb:
+	install -d $(DESTDIR)/usr
+	umask $(UMASK) && luarocks --tree=$(DESTDIR)/usr make
+
+install-ndeb:
+	umask $(UMASK) && luarocks make
+
+deb-packages: clean
+	debuild --no-tgz-check $(DEBUILD_OPTS)
+
+.PHONY: all build build-dbg check check-valgrind clean doc install install-ndeb install-deb

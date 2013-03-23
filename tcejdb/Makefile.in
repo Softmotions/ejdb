@@ -677,7 +677,7 @@ wordtable :
 
 
  deb-packages :
-	debuild $(DEBUILD_OPTS)
+	debuild --no-tgz-check $(DEBUILD_OPTS)
 
 
 
