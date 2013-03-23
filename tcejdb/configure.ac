@@ -250,6 +250,9 @@ printf '#================================================================\n'
 # C compiler
 AC_PROG_CC
 
+# BSD install
+AC_PROG_INSTALL
+
 # Reset variables
 if test "$GCC" != "yes"
 then
