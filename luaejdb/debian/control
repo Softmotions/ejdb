@@ -6,7 +6,8 @@ Build-Depends:
  debhelper (>= 9),
  libtcejdb9-dev (>= 1.0.68),
  luarocks (>= 2.0),
- lua-penlight
+ lua-penlight,
+ lua-filesystem
 Standards-Version: 3.9.3
 Homepage: http://ejdb.org
 Vcs-Browser: https://github.com/Softmotions/ejdb
