@@ -23,6 +23,13 @@ make
 sudo luarocks install ./luaejdb-*.rock
 ```
 
+**(B) Installing on Ubuntu/Debian**
+
+```
+sudo add-apt-repository ppa:adamansky/ejdb
+sudo apt-get update
+sudo apt-get install lua51-ejdb
+```
 
 
 
