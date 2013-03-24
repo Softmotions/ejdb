@@ -497,7 +497,7 @@ static void bson_print_xstr(TCXSTR* xstr, const char *data, int depth) {
                 tcxstrprintf(xstr, "%s", bson_iterator_bool(&i) ? "true" : "false");
                 break;
             case BSON_DATE:
-                tcxstrprintf(xstr, "%ld", (long int) bson_iterator_date(&i));
+                tcxstrprintf(xstr, "%lld", (uint64_t) bson_iterator_long(&i));
                 break;
             case BSON_BINDATA:
                 tcxstrprintf(xstr, "BSON_BINDATA");

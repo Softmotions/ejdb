@@ -9,9 +9,7 @@ build:
 build-dbg:
 	umask $(UMASK) && luarocks --pack-binary-rock CFLAGS='-g -O0 -fPIC -std=c99 -Wall' make
 
-check: ;
-
-check-binding: build-dbg
+check: build-dbg
 	make -C ./test
 
 check-valgrind: build-dbg
