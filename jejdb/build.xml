@@ -130,4 +130,23 @@
         <ant target="compile" inheritall="true" inheritrefs="true"/>
     </target>
 
+    <target name="build.doc" depends="init" description="Build JavaDocs for JEJDB">
+        <mkdir dir="${distr.doc}"/>
+        <javadoc destdir="${distr.doc}"
+                 author="true"
+                 version="true"
+                 encoding="utf-8"
+                 charset="utf-8"
+                 docencoding="utf-8"
+                 private="false"
+                 use="true"
+                 breakiterator="true"
+                 windowtitle="JEJDB Doc">
+            <fileset dir="${source.dir}" includes="**/*.java"/>
+            <classpath>
+                <path refid="lib.bson.classpath"/>
+            </classpath>
+        </javadoc>
+    </target>
+
 </project>
