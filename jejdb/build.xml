@@ -68,7 +68,7 @@
         <mkdir dir="${test.data.dir}"/>
         <mkdir dir="${test.reports.dir}"/>
         <junit printsummary="on" showoutput="yes" haltonfailure="yes" haltonerror="yes" dir="${test.data.dir}" fork="true">
-            <env key="LD_LIBRARY_PATH" path="${distr.home}"/>
+            <env key="LD_LIBRARY_PATH" path="${basedir}"/>
             <formatter type="plain"/>
             <classpath>
                 <path refid="lib.bson.classpath"/>

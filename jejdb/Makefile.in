@@ -3,22 +3,22 @@
 #================================================================
 
 
-SHELL = /bin/bash
+SHELL = @SHELL@
 
 # Package information
-PACKAGE = jejdb
-VERSION = 1.0.1
-LIBVER = 9
-LIBREV = 11
-FORMATVER = 1.0
+PACKAGE = @PACKAGE_NAME@
+VERSION = @PACKAGE_VERSION@
+LIBVER = @MYLIBVER@
+LIBREV = @MYLIBREV@
+FORMATVER = @MYFORMATVER@
 
 # Targets
-LIBRARYFILES =  libjejdb.so.9.11.0 libjejdb.so.9 libjejdb.so
+LIBRARYFILES = @MYLIBRARYFILES@
 
 
 # Install destinations
-prefix = /usr
-exec_prefix = ${prefix}
+prefix = @prefix@
+exec_prefix = @exec_prefix@
 LIBDIR = ${exec_prefix}/lib
 DESTDIR =
 
@@ -27,11 +27,11 @@ DESTDIR =
 SRCDIR = ./src/cpp/
 
 # Building configuration
-CC = gcc
-CPPFLAGS = -I. -I. -I../tcejdb -I/usr/lib/jvm/java-6-oracle/include -I/usr/lib/jvm/java-6-oracle/include/linux -I$(INCLUDEDIR) -I/home/tve/include -I/usr/local/include -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__
-CFLAGS =  -std=c99 -Wall -fPIC -fsigned-char -O2
-LDFLAGS = -L. -L$(LIBDIR) -L/home/tve/lib -L/usr/local/lib
-LIBS = -lz -ltcejdb -lrt -lpthread -lm -lc 
+CC = @CC@
+CPPFLAGS = @MYCPPFLAGS@
+CFLAGS = @MYCFLAGS@
+LDFLAGS = @MYLDFLAGS@
+LIBS = @LIBS@
 
 
 #================================================================

@@ -1,7 +1,0 @@
-Testsuite: org.ejdb.driver.test.EJDBTest
-Tests run: 4, Failures: 0, Errors: 0, Time elapsed: 0.36 sec
-
-Testcase: testTransactions took 0.198 sec
-Testcase: testLowLevel took 0.076 sec
-Testcase: testQueries took 0.057 sec
-Testcase: testIndexes took 0.021 sec
