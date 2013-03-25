@@ -17,11 +17,20 @@
 #include <tcejdb/ejdb_private.h>
 #include <ruby.h>
 
+#include "rbbson.h"
+
 #define DEFAULT_OPEN_MODE (JBOWRITER | JBOCREAT | JBOTSYNC)
 
 typedef struct {
     EJDB* ejdb;
 } RBEJDB;
+
+static int set_ejdb_error(EJDB *ejdb) {
+    int ecode = ejdbecode(ejdb);
+    const char *emsg = ejdberrmsg(ecode);
+    rb_raise(rb_eRuntimeError, emsg);
+}
+
 
 EJDB* getEJDB(VALUE self) {
     RBEJDB* rejdb;
@@ -55,7 +64,7 @@ VALUE EJDB_open(VALUE self, VALUE path, VALUE mode) {
     Check_Type(mode, T_FIXNUM);
     EJDB* ejdb = getEJDB(self);
     if (!ejdbopen(ejdb, StringValuePtr(path), FIX2INT(mode))) {
-        return set_ejdb_error(ejdb);
+        set_ejdb_error(ejdb);
     }
     return Qnil;
 }
@@ -65,6 +74,38 @@ VALUE EJDB_is_open(VALUE self) {
     return ejdb && ejdbisopen(ejdb) ? Qtrue : Qfalse;
 }
 
+VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
+    if (argc < 1) {
+        rb_raise(rb_eRuntimeError, "Error calling EJDB.save(): need to specify collection name");
+    }
+
+    EJDB* ejdb = getEJDB(self);
+
+    VALUE collName = argv[0];
+    Check_Type(collName, T_STRING);
+    EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
+    if (!coll) {
+        set_ejdb_error(ejdb);
+    }
+
+    int i;
+    for (i = 1; i < argc; i++) {
+        Check_Type(argv[i], T_OBJECT);
+
+        bson* bsonval;
+        ruby_to_bson(argv[i], &bsonval);
+        bson_print(stdout, bsonval);
+
+        bson_oid_t oid;
+        if (!ejdbsavebson2(coll, bsonval, &oid, true /*TODO read this param*/)) {
+            bson_destroy(bsonval);
+            set_ejdb_error(ejdb);
+        }
+
+        bson_destroy(bsonval);
+    }
+    return Qnil;
+}
 
 Init_rbejdb() {
     VALUE ejdbClass = rb_define_class("EJDB", rb_cObject);
@@ -75,4 +116,5 @@ Init_rbejdb() {
 
     rb_define_method(ejdbClass, "open", RUBY_METHOD_FUNC(EJDB_open), 2);
     rb_define_method(ejdbClass, "is_open?", RUBY_METHOD_FUNC(EJDB_is_open), 0);
+    rb_define_method(ejdbClass, "save", RUBY_METHOD_FUNC(EJDB_save), -1);
 }
