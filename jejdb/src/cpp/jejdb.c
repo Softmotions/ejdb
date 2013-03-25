@@ -145,9 +145,17 @@ static void update_coll_meta(JNIEnv *env, jobject obj, EJCOLL *coll) {
 	jfieldID existsID = (*env)->GetFieldID(env, clazz, "exists", "Z");
 	(*env)->SetBooleanField(env, obj, existsID, coll ? JNI_TRUE : JNI_FALSE);
 
-	jclass optionsClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection$Options");
 	jfieldID optionsID = (*env)->GetFieldID(env, clazz, "options", "Lorg/ejdb/driver/EJDBCollection$Options;");
+	jfieldID indexesID = (*env)->GetFieldID(env, clazz, "indexes", "Ljava/util/Collection;");
+
+	jclass optionsClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection$Options");
 	jobject jopts = (*env)->GetObjectField(env, obj, optionsID);
+
+	if (!coll) {
+	    (*env)->SetObjectField(env, obj, optionsID, NULL);
+	    (*env)->SetObjectField(env, obj, indexesID, NULL);
+	    return;
+	}
 	
 	if (!jopts) {
 		jmethodID initOptions = (*env)->GetMethodID(env, optionsClazz, "<init>", "()V");
@@ -168,7 +176,6 @@ static void update_coll_meta(JNIEnv *env, jobject obj, EJCOLL *coll) {
 	jclass indexClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection$Index");
 	jclass indexTypeClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBCollection$IndexType");
 	jmethodID initIndex = (*env)->GetMethodID(env, indexClazz, "<init>", "()V");
-	jfieldID indexesID = (*env)->GetFieldID(env, clazz, "indexes", "Ljava/util/Collection;");
 
 	jclass arrayListClazz = (*env)->FindClass(env, "Ljava/util/ArrayList;");
 	jmethodID initArrayList = (*env)->GetMethodID(env, arrayListClazz, "<init>", "(I)V");
@@ -382,6 +389,8 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureExists (JNIEnv 
 		set_ejdb_error(env, db);
 		return;
 	}
+
+	update_coll_meta(env, obj, coll);
 };
 
 /*
@@ -406,6 +415,8 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_drop (JNIEnv *env, jo
 		set_ejdb_error(env, db);
 		return;
 	}
+
+	update_coll_meta(env, obj, NULL);
 };
 
 /*
@@ -503,6 +514,10 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_load (JNIEnv *env,
  * Signature: (Lorg/bson/BSONObject;)Lorg/bson/types/ObjectId;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save (JNIEnv *env, jobject obj, jobject jdata) {
+    if (NULL == jdata) {
+        return NULL;
+    }
+
 	EJDB* db = get_ejdb_from_object(env, obj);
 	if (!ejdbisopen(db)) {
 		set_error(env, 0, "EJDB not opened");
@@ -540,6 +555,8 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save (JNIEnv *env,
 	jobject result = (*env)->NewObject(env, jObjectIdClazz, initMethodID, joiddata);
 
 	(*env)->DeleteLocalRef(env, joiddata);
+
+	update_coll_meta(env, obj, coll);
 
 	return result;
 }
@@ -612,13 +629,15 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndex (JNIEnv *env
 };
 
 /*
-* Class:     org_ejdb_driver_EJDBQuery
-* Method:    execute
-* Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;I)Lorg/ejdb/driver/EJDBQuery$QResult;
-*/
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_execute (JNIEnv *env, jobject obj, jobject qobj, jobjectArray qorarrobj, jobject hobj, jint flags) {
+ * Class:     org_ejdb_driver_EJDBQuery
+ * Method:    execute
+ * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;ILjava/io/OutputStream;)Lorg/ejdb/driver/EJDBQuery$QResult;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_execute (JNIEnv *env, jobject obj, jobject qobj, jobjectArray qorarrobj, jobject hobj, jint flags, jobject logstream) {
 	jclass jQResultClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBQuery$QResult");
 	jmethodID initQResultMethodID = (*env)->GetMethodID(env, jQResultClazz, "<init>", "(IJ)V");
+
+    TCXSTR *log = NULL;
 
 	bson *qbson = NULL;
 	bson *qorbsons = NULL;
@@ -691,7 +710,10 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_execute (JNIEnv *env, j
 	if (!coll) { //No collection -> no results
 		qres = (flags & JBQRYCOUNT) ? NULL : tclistnew2(1); //empty results
 	} else {
-		qres = ejdbqryexecute(coll, q, &count, flags, NULL);
+        if (NULL != logstream) {
+            log = tcxstrnew();
+        }
+		qres = ejdbqryexecute(coll, q, &count, flags, log);
 		if (ejdbecode(db) != TCESUCCESS) {
 			set_ejdb_error(env, db);
 			goto finish;
@@ -702,6 +724,22 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_execute (JNIEnv *env, j
 
 finish:
 	// clear
+    if (log) {
+		jclass logstreamClazz = (*env)->GetObjectClass(env, logstream);
+		jmethodID writeMethodID = (*env)->GetMethodID(env, logstreamClazz, "write", "([B)V");
+		jmethodID flushMethodID = (*env)->GetMethodID(env, logstreamClazz, "flush", "()V");
+
+		jsize logLength = TCXSTRSIZE(log);
+
+		jbyteArray jlogdata = (*env)->NewByteArray(env, logLength);
+		(*env)->SetByteArrayRegion(env, jlogdata, 0, logLength, (jbyte*)TCXSTRPTR(log));
+		(*env)->CallVoidMethod(env, logstream, writeMethodID, jlogdata);
+		(*env)->DeleteLocalRef(env, jlogdata);
+
+		(*env)->CallVoidMethod(env, logstream, flushMethodID);
+
+		tcxstrdel(log);
+    }
 	if (qbson) {
 		bson_del(qbson);
 	}

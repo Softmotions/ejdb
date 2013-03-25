@@ -210,7 +210,133 @@ public class EJDBCollection {
      * @param flags
      * @throws EJDBException
      */
-    public native void setIndex(String path, int flags) throws EJDBException;
+    protected native void setIndex(String path, int flags) throws EJDBException;
+
+    /**
+     * Drops indexes of all types for BSON field path.
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void dropIndexes(String path) throws EJDBException {
+        this.setIndex(path, JBIDXDROPALL);
+    }
+
+    /**
+     * Optimize indexes of all types for BSON field path
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void optimizeIndexes(String path) throws EJDBException {
+        this.setIndex(path, JBIDXOP);
+    }
+
+    /**
+     * Ensure index presence of String type for BSON field path
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void ensureStringIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXSTR);
+    }
+
+    /**
+     * Rebuild index of String type for BSON field path.
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void rebuildStringIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXSTR | JBIDXREBLD);
+    }
+
+    /**
+     * Drop index of String type for BSON field path.
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void dropStringIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXSTR | JBIDXDROP);
+    }
+
+    /**
+     * Ensure case insensitive String index for BSON field path
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void ensureIStringIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXISTR);
+    }
+
+    /**
+     * Rebuild case insensitive String index for BSON field path.
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void rebuildIStringIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXISTR | JBIDXREBLD);
+    }
+
+    /**
+     * Drop case insensitive String index for BSON field path.
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void dropIStringIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXISTR | JBIDXDROP);
+    }
+
+    /**
+     * Ensure index presence of Number type for BSON field path
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void ensureNumderIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXNUM);
+    }
+
+    /**
+     * Rebuild index of Number type for BSON field path.
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void rebuildNumderIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXNUM | JBIDXREBLD);
+    }
+
+    /**
+     * Drop index of Number type for BSON field path.
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void dropNumderIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXNUM | JBIDXDROP);
+    }
+
+    /**
+     * Ensure index presence of Array type for BSON field path
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void ensureArrayIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXARR);
+    }
+
+    /**
+     * Rebuild index of Array type for BSON field path.
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void rebuildArrayIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXARR | JBIDXREBLD);
+    }
+
+    /**
+     * Drop index of Array type for BSON field path.
+     * @param path    BSON field path
+     * @throws EJDBException
+     */
+    public void dropArrayIndex(String path) throws EJDBException {
+        this.setIndex(path, JBIDXARR | JBIDXDROP);
+    }
 
     /**
      * @see EJDBCollection#createQuery(org.bson.BSONObject, org.bson.BSONObject[], org.bson.BSONObject)

@@ -34,7 +34,7 @@ extern "C" {
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    ensureExists
- * Signature: (Lorg/ejdb/driver/EJDBCollection/Options;)V
+ * Signature: (Lorg/ejdb/driver/EJDBCollection$Options;)V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_ensureExists
   (JNIEnv *, jobject, jobject);

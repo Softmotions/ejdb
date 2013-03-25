@@ -3,7 +3,7 @@
 
     <property file="build.properties"/>
 
-    <target name="compile.production" description="Compile module JEJDB; production classes">
+    <target name="compile.production" depends="init" description="Compile module JEJDB; production classes">
         <mkdir dir="${build.dir}"/>
         <mkdir dir="${build.classes}"/>
         <javac destdir="${build.classes}"
@@ -35,7 +35,7 @@
         </jar>
     </target>
 
-    <target name="compile.tests" depends="compile.production" description="compile module JEJDB; test classes" if="with.tests">
+    <target name="compile.tests" depends="compile.production" description="Compile module JEJDB; test classes" if="with.tests">
         <mkdir dir="${build.test.dir}"/>
         <mkdir dir="${build.test.classes}"/>
         <javac destdir="${build.test.classes}"
@@ -64,6 +64,7 @@
             <fileset refid="lib.bson.fileset"/>
         </copy>
 
+        <delete dir="${test.data.dir}"/>
         <mkdir dir="${test.data.dir}"/>
         <mkdir dir="${test.reports.dir}"/>
         <junit printsummary="on" showoutput="yes" haltonfailure="yes" haltonerror="yes" dir="${test.data.dir}" fork="true">
@@ -79,7 +80,20 @@
         </junit>
     </target>
 
-    <target name="compile" depends="init, compile.production, compile.tests"/>
+    <target name="compile.headers" depends="compile.production" description="Build JNI headers for JEJDB" if="build.native.headers">
+        <javah destdir="${source.native.dir}">
+            <class name="org.ejdb.driver.EJDB"/>
+            <class name="org.ejdb.driver.EJDBCollection"/>
+            <class name="org.ejdb.driver.EJDBQuery"/>
+            <class name="org.ejdb.driver.EJDBResultSet"/>
+            <classpath>
+                <path refid="lib.bson.classpath"/>
+                <path refid="jejdb.classpath"/>
+            </classpath>
+        </javah>
+    </target>
+
+    <target name="compile" depends="compile.production, compile.tests, compile.headers"/>
 
     <target name="init" description="Build initialization">
         <!-- Perform any build initialization in this target -->
@@ -100,6 +114,11 @@
     <target name="clean" description="Cleanup">
         <delete dir="${build.dir}"/>
         <delete file="${distr.home}/${distr.name}.jar"/>
+    </target>
+
+    <target name="build.native.headers" depends="clean">
+        <property name="build.native.headers" value="true"/>
+        <ant target="compile" inheritall="true" inheritrefs="true"/>
     </target>
 
     <target name="build" depends="clean" description="Build">
