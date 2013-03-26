@@ -15,7 +15,7 @@ end
 parrot1 = Parrot.new("Cacadoo", 12)
 ejdb.save("parrots", parrot1)
 
-parrot2 = {:name => "Mamadoo", :size => 666}
+parrot2 = {:name => "Mamadoo", :size => 666, "likes" => ["green color", "night", ["toys", "joys"], parrot1]}
 ejdb.save("parrots", parrot2)
 
 puts "CONGRATULATIONS!!! EJDB tests have passed completely!"

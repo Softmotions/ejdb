@@ -8,10 +8,28 @@
 #define BSON_RUBY_CLASS "EJDB_BSON"
 
 typedef struct {
-    VALUE obj;
     bson* bsonval;
+
+    VALUE obj;
+    int arrayIndex;
 } RBBSON;
 
+
+VALUE iterate_array_callback(VALUE val, VALUE bsonWrap);
+
+
+VALUE createBsonWrap(bson* bsonval, VALUE rbobj) {
+    VALUE bsonWrapClass = rb_define_class(BSON_RUBY_CLASS, rb_cObject);
+    VALUE bsonWrap = Data_Wrap_Struct(bsonWrapClass, NULL, NULL, ruby_xmalloc(sizeof(RBBSON)));
+
+    RBBSON* rbbson;
+    Data_Get_Struct(bsonWrap, RBBSON, rbbson);
+    rbbson->bsonval = bsonval;
+    rbbson->obj = rbobj;
+    rbbson->arrayIndex = 0;
+
+    return bsonWrap;
+}
 
 int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
     key = rb_funcall(key, rb_intern("to_s"), 0);
@@ -31,6 +49,11 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
             ruby_to_bson(val, &subbson);
             bson_append_bson(b, attrName, subbson);
             break;
+        case T_ARRAY:
+            bson_append_start_array(b, attrName);
+            rb_iterate(rb_each, val, iterate_array_callback, createBsonWrap(b, rbbson->obj));
+            bson_append_finish_array(b);
+            break;
         case T_STRING:
             bson_append_string(b, attrName, StringValuePtr(val));
             break;
@@ -43,11 +66,21 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
         case T_FALSE:
             bson_append_bool(b, attrName, 0);
             break;
+        default:
+            rb_raise(rb_eRuntimeError, "Cannot convert value type to bson: %d", TYPE(val));
     }
     return 0;
 }
 
-VALUE iterate_keys_callback(VALUE key, VALUE bsonWrap) {
+VALUE iterate_array_callback(VALUE val, VALUE bsonWrap) {
+    RBBSON* rbbson;
+    Data_Get_Struct(bsonWrap, RBBSON, rbbson);
+
+    iterate_key_values_callback(INT2NUM(rbbson->arrayIndex++), val, bsonWrap);
+    return val;
+}
+
+VALUE iterate_object_attrs_callback(VALUE key, VALUE bsonWrap) {
     RBBSON* rbbson;
     Data_Get_Struct(bsonWrap, RBBSON, rbbson);
     VALUE val = rb_funcall(rbbson->obj, rb_intern("instance_variable_get"), 1, key);
@@ -63,7 +96,7 @@ void ruby_object_to_bson_internal(VALUE rbobj, VALUE bsonWrap) {
     VALUE attrs = rb_funcall(rbobj, rb_intern("instance_variables"), 0);
     Check_Type(attrs, T_ARRAY);
 
-    rb_iterate(rb_each, attrs, iterate_keys_callback, bsonWrap);
+    rb_iterate(rb_each, attrs, iterate_object_attrs_callback, bsonWrap);
 }
 
 void ruby_hash_to_bson_internal(VALUE rbhash, VALUE bsonWrap) {
@@ -73,13 +106,10 @@ void ruby_hash_to_bson_internal(VALUE rbhash, VALUE bsonWrap) {
 
 
 void ruby_to_bson(VALUE rbobj, bson** bsonresp) {
-    VALUE bsonWrapClass = rb_define_class(BSON_RUBY_CLASS, rb_cObject);
-    VALUE bsonWrap = Data_Wrap_Struct(bsonWrapClass, NULL, NULL, ruby_xmalloc(sizeof(RBBSON)));
-
+    VALUE bsonWrap = createBsonWrap(bson_create(), rbobj);
     RBBSON* rbbson;
     Data_Get_Struct(bsonWrap, RBBSON, rbbson);
-    rbbson->obj = rbobj;
-    rbbson->bsonval = bson_create();
+
     bson_init(rbbson->bsonval);
 
     switch (TYPE(rbobj)) {
