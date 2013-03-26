@@ -127,3 +127,38 @@ void ruby_to_bson(VALUE rbobj, bson** bsonresp) {
 
     *bsonresp = rbbson->bsonval;
 }
+
+
+VALUE bson_to_ruby(bson* bsonval) {
+    VALUE res = rb_hash_new();
+
+    bson_iterator it;
+    bson_iterator_init(&it, bsonval);
+
+    while (bson_iterator_next(&it) != BSON_EOO) {
+        bson_type t = bson_iterator_type(&it);
+        const char* key = bson_iterator_key(&it);
+
+        VALUE val;
+        switch (t) {
+            case BSON_STRING:
+                val = rb_str_new2(bson_iterator_string(&it));
+                break;
+            case BSON_BOOL:
+                val = bson_iterator_bool(&it) ? Qtrue : Qfalse;
+                break;
+            case BSON_INT:
+                val = INT2NUM(bson_iterator_int(&it));
+                break;
+            case BSON_OBJECT:
+            case BSON_ARRAY:
+                val = bson_to_ruby(bson_iterator_value(&it));
+                break;
+            default:
+                rb_raise(rb_eRuntimeError, "Cannot convert object from bson: %d", t);
+        }
+
+        rb_hash_aset(res, rb_str_new2(key), val);
+    }
+    return res;
+}

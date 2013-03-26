@@ -106,6 +106,30 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
     return Qnil;
 }
 
+VALUE EJDB_find(VALUE self, VALUE collName, VALUE q) {
+    EJDB* ejdb = getEJDB(self);
+
+    bson* qbson;
+    ruby_to_bson(q, &qbson);
+
+    EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
+    if (!coll) {
+        set_ejdb_error(ejdb);
+    }
+
+    EJQ *ejq = ejdbcreatequery(ejdb, qbson, NULL, 0, NULL);
+
+    int count;
+    int qflags = 0;
+    TCLIST* qres = ejdbqryexecute(coll, q, &count, qflags, NULL);
+
+    int i;
+    for (i = 0; i < TCLISTNUM(qres); i++) {
+        bson *bsdata = TCLISTVALPTR(qres, i);
+        rb_yield(bson_to_ruby(bsdata));
+    }
+}
+
 Init_rbejdb() {
     VALUE ejdbClass = rb_define_class("EJDB", rb_cObject);
     rb_define_alloc_func(ejdbClass, EJDB_alloc);
@@ -116,4 +140,5 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "open", RUBY_METHOD_FUNC(EJDB_open), 2);
     rb_define_method(ejdbClass, "is_open?", RUBY_METHOD_FUNC(EJDB_is_open), 0);
     rb_define_method(ejdbClass, "save", RUBY_METHOD_FUNC(EJDB_save), -1);
+    rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), 2);
 }
