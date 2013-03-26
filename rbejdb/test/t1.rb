@@ -15,4 +15,7 @@ end
 parrot1 = Parrot.new("Cacadoo", 12)
 ejdb.save("parrots", parrot1)
 
-puts "CONGRATULATIONS!!! EJDB tests has passed completely!"
+parrot2 = {:name => "Mamadoo", :size => 666}
+ejdb.save("parrots", parrot2)
+
+puts "CONGRATULATIONS!!! EJDB tests have passed completely!"

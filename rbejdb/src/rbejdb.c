@@ -60,8 +60,9 @@ VALUE EJDB_init(VALUE self) {
 }
 
 VALUE EJDB_open(VALUE self, VALUE path, VALUE mode) {
-    Check_Type(path, T_STRING);
+    Check_SafeStr(path);
     Check_Type(mode, T_FIXNUM);
+
     EJDB* ejdb = getEJDB(self);
     if (!ejdbopen(ejdb, StringValuePtr(path), FIX2INT(mode))) {
         set_ejdb_error(ejdb);
@@ -90,8 +91,6 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
 
     int i;
     for (i = 1; i < argc; i++) {
-        Check_Type(argv[i], T_OBJECT);
-
         bson* bsonval;
         ruby_to_bson(argv[i], &bsonval);
         bson_print(stdout, bsonval);
