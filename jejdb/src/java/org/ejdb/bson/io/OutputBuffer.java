@@ -1,5 +1,7 @@
 package org.ejdb.bson.io;
 
+import org.ejdb.bson.BSONException;
+
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -92,7 +94,7 @@ public class OutputBuffer {
         try {
             this.write(value.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            throw new BSONException("can not encode string", e);
         }
         this.write((byte) 0x00);
 

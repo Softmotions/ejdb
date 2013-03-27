@@ -42,7 +42,7 @@ class BSONDecoder {
         BSONObject result = this.readObject(input.subBuffer(length - 5));
 
         if (0x00 != input.read()) {
-            throw new IllegalArgumentException("unexpected end of document");
+            throw new BSONException("unexpected end of document");
         }
 
         return result;
@@ -84,7 +84,7 @@ class BSONDecoder {
                     int binlen = input.readInt();
                     byte subtype = input.read();
                     if (0x00 != subtype) {
-                        throw new IllegalArgumentException("unexpected binary type: " + subtype);
+                        throw new BSONException("unexpected binary type: " + subtype);
                     }
                     result.put(name, input.readBytes(binlen));
                     break;
@@ -96,7 +96,7 @@ class BSONDecoder {
                 case BSON.BOOLEAN:
                     byte bvalue = input.read();
                     if (0x00 != bvalue && 0x01 != bvalue) {
-                        throw new IllegalArgumentException("unexpected boolean value");
+                        throw new BSONException("unexpected boolean value");
                     }
                     result.put(name, 0x01 == bvalue);
                     break;
@@ -123,7 +123,7 @@ class BSONDecoder {
                     break;
 
                 default:
-                    throw new IllegalArgumentException("unexpected type: " + type);
+                    throw new BSONException("unexpected type: " + type);
             }
         }
 

@@ -1,5 +1,6 @@
 package org.ejdb.bson.io;
 
+import org.ejdb.bson.BSONException;
 import org.ejdb.bson.BSONObject;
 
 import java.io.UnsupportedEncodingException;
@@ -71,7 +72,7 @@ public class InputBuffer {
         if (length > 0) {
             ensure(length);
             if ((byte) 0x00 != data[offset + position + length - 1]) {
-                throw new IllegalArgumentException("unexpected end of string");
+                throw new BSONException("unexpected end of string");
             }
 
             try {
@@ -79,7 +80,7 @@ public class InputBuffer {
                 position += length;
                 return s;
             } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException("can not decode string", e);
+                throw new BSONException("can not decode string", e);
             }
         }
 
@@ -89,7 +90,7 @@ public class InputBuffer {
         }
 
         if (position + length > limit) {
-            throw new IllegalArgumentException("unexpected end of string");
+            throw new BSONException("unexpected end of string");
         }
 
         String s = new String(data, offset + position, length);
@@ -112,7 +113,7 @@ public class InputBuffer {
 
     protected void ensure(int size) {
         if (size > limit - position) {
-            throw new IllegalArgumentException("can not allocate sub buffer: not enought bytes");
+            throw new BSONException("can not allocate sub buffer: not enought bytes");
         }
     }
 

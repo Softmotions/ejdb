@@ -91,7 +91,7 @@ class BSONEncoder {
         } else if (value instanceof Pattern) {
             writeRegex(name, (Pattern) value);
         } else {
-            throw new IllegalArgumentException("can not serialize object: " + value.getClass().getName());
+            throw new BSONException("can not serialize object: " + value.getClass().getName());
         }
     }
 
@@ -110,7 +110,7 @@ class BSONEncoder {
             writeFieldSpec(BSON.DOUBLE, name);
             output.writeDouble(value.doubleValue());
         } else {
-            throw new IllegalArgumentException("can not serialize object: " + value.getClass().getName());
+            throw new BSONException("can not serialize object: " + value.getClass().getName());
         }
     }
 
