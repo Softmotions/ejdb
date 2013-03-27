@@ -11,11 +11,13 @@
 #include <ruby.h>
 #include <tcejdb/bson.h>
 
+#define RUBY_TO_BSON_AS_QUERY 1
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-    void ruby_to_bson(VALUE rbobj, bson** bsonbuf);
+    void ruby_to_bson(VALUE rbobj, bson** bsonbuf, int flags);
 
     VALUE bson_to_ruby(bson* bsonval);
 

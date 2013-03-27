@@ -12,13 +12,14 @@ typedef struct {
 
     VALUE obj;
     int arrayIndex;
+    int flags;
 } RBBSON;
 
 
 VALUE iterate_array_callback(VALUE val, VALUE bsonWrap);
 
 
-VALUE createBsonWrap(bson* bsonval, VALUE rbobj) {
+VALUE createBsonWrap(bson* bsonval, VALUE rbobj, int flags) {
     VALUE bsonWrapClass = rb_define_class(BSON_RUBY_CLASS, rb_cObject);
     VALUE bsonWrap = Data_Wrap_Struct(bsonWrapClass, NULL, NULL, ruby_xmalloc(sizeof(RBBSON)));
 
@@ -46,12 +47,12 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
     switch (TYPE(val)) {
         case T_OBJECT:
         case T_HASH:
-            ruby_to_bson(val, &subbson);
+            ruby_to_bson(val, &subbson, rbbson->flags);
             bson_append_bson(b, attrName, subbson);
             break;
         case T_ARRAY:
             bson_append_start_array(b, attrName);
-            rb_iterate(rb_each, val, iterate_array_callback, createBsonWrap(b, rbbson->obj));
+            rb_iterate(rb_each, val, iterate_array_callback, createBsonWrap(b, rbbson->obj, rbbson->flags));
             bson_append_finish_array(b);
             break;
         case T_STRING:
@@ -105,12 +106,16 @@ void ruby_hash_to_bson_internal(VALUE rbhash, VALUE bsonWrap) {
 }
 
 
-void ruby_to_bson(VALUE rbobj, bson** bsonresp) {
-    VALUE bsonWrap = createBsonWrap(bson_create(), rbobj);
+void ruby_to_bson(VALUE rbobj, bson** bsonresp, int flags) {
+    VALUE bsonWrap = createBsonWrap(bson_create(), rbobj, flags);
     RBBSON* rbbson;
     Data_Get_Struct(bsonWrap, RBBSON, rbbson);
 
-    bson_init(rbbson->bsonval);
+    if (flags & RUBY_TO_BSON_AS_QUERY) {
+        bson_init_as_query(rbbson->bsonval);
+    } else {
+        bson_init(rbbson->bsonval);
+    }
 
     switch (TYPE(rbobj)) {
         case T_OBJECT:
@@ -141,6 +146,12 @@ VALUE bson_to_ruby(bson* bsonval) {
 
         VALUE val;
         switch (t) {
+            case BSON_OID: {
+                    char oidhex[25];
+                    bson_oid_to_string(bson_iterator_oid(&it), oidhex);
+                    val = rb_str_new2(oidhex);
+                }
+                break;
             case BSON_STRING:
                 val = rb_str_new2(bson_iterator_string(&it));
                 break;

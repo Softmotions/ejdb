@@ -92,7 +92,7 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
     int i;
     for (i = 1; i < argc; i++) {
         bson* bsonval;
-        ruby_to_bson(argv[i], &bsonval);
+        ruby_to_bson(argv[i], &bsonval, 0);
         bson_print(stdout, bsonval);
 
         bson_oid_t oid;
@@ -107,27 +107,33 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
 }
 
 VALUE EJDB_find(VALUE self, VALUE collName, VALUE q) {
-    EJDB* ejdb = getEJDB(self);
+    Check_SafeStr(collName);
 
-    bson* qbson;
-    ruby_to_bson(q, &qbson);
+    EJDB* ejdb = getEJDB(self);
 
     EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
     if (!coll) {
         set_ejdb_error(ejdb);
     }
 
+    bson* qbson;
+    ruby_to_bson(q, &qbson, RUBY_TO_BSON_AS_QUERY);
+
     EJQ *ejq = ejdbcreatequery(ejdb, qbson, NULL, 0, NULL);
 
     int count;
     int qflags = 0;
-    TCLIST* qres = ejdbqryexecute(coll, q, &count, qflags, NULL);
+    TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, NULL);
 
     int i;
     for (i = 0; i < TCLISTNUM(qres); i++) {
-        bson *bsdata = TCLISTVALPTR(qres, i);
-        rb_yield(bson_to_ruby(bsdata));
+        char* bsrawdata = TCLISTVALPTR(qres, i);
+        bson bsonval;
+        bson_init_finished_data(&bsonval, bsrawdata);
+        rb_yield(bson_to_ruby(&bsonval));
     }
+
+    tclistdel(qres);
 }
 
 Init_rbejdb() {

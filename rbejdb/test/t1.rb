@@ -18,4 +18,8 @@ ejdb.save("parrots", parrot1)
 parrot2 = {:name => "Mamadoo", :size => 666, "likes" => ["green color", "night", ["toys", "joys"], parrot1]}
 ejdb.save("parrots", parrot2)
 
+ejdb.find("parrots", {:name => "Cacadoo"}) { |res|
+  puts res.inspect
+}
+
 puts "CONGRATULATIONS!!! EJDB tests have passed completely!"
