@@ -18,7 +18,12 @@ ejdb.save("parrots", parrot1)
 parrot2 = {:name => "Mamadoo", :size => 666, "likes" => ["green color", "night", ["toys", "joys"], parrot1]}
 ejdb.save("parrots", parrot2)
 
+
 ejdb.find("parrots", {:name => "Cacadoo"}) { |res|
+  puts res.inspect
+}
+
+ejdb.find("parrots", {:name => "Mamadoo"}) { |res|
   puts res.inspect
 }
 
