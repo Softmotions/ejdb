@@ -1,6 +1,6 @@
 package org.ejdb.driver;
 
-import org.bson.BSONObject;
+import org.ejdb.bson.BSONObject;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;

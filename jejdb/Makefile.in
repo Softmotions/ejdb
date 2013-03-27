@@ -44,6 +44,8 @@ all: $(LIBRARYFILES) jejdb tests
 	@printf '# Ready to install.\n'
 	@printf '#================================================================\n'
 
+compile-native : $(LIBRARYFILES)
+
 jejdb:
 	ant build
 

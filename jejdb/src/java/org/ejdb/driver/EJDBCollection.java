@@ -1,7 +1,7 @@
 package org.ejdb.driver;
 
-import org.bson.BSONObject;
-import org.bson.types.ObjectId;
+import org.ejdb.bson.BSONObject;
+import org.ejdb.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -339,21 +339,21 @@ public class EJDBCollection {
     }
 
     /**
-     * @see EJDBCollection#createQuery(org.bson.BSONObject, org.bson.BSONObject[], org.bson.BSONObject)
+     * @see EJDBCollection#createQuery(org.ejdb.bson.BSONObject, org.ejdb.bson.BSONObject[], org.ejdb.bson.BSONObject)
      */
     public EJDBQuery createQuery(BSONObject query) {
         return new EJDBQuery(this, query, null, null);
     }
 
     /**
-     * @see EJDBCollection#createQuery(org.bson.BSONObject, org.bson.BSONObject[], org.bson.BSONObject)
+     * @see EJDBCollection#createQuery(org.ejdb.bson.BSONObject, org.ejdb.bson.BSONObject[], org.ejdb.bson.BSONObject)
      */
     public EJDBQuery createQuery(BSONObject query, BSONObject[] qors) {
         return new EJDBQuery(this, query, qors, null);
     }
 
     /**
-     * @see EJDBCollection#createQuery(org.bson.BSONObject, org.bson.BSONObject[], org.bson.BSONObject)
+     * @see EJDBCollection#createQuery(org.ejdb.bson.BSONObject, org.ejdb.bson.BSONObject[], org.ejdb.bson.BSONObject)
      */
     public EJDBQuery createQuery(BSONObject query, BSONObject hints) {
         return new EJDBQuery(this, query, null, hints);

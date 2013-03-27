@@ -2,9 +2,8 @@ package org.ejdb.driver.test;
 
 import junit.framework.TestCase;
 
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
-import org.bson.types.ObjectId;
+import org.ejdb.bson.BSONObject;
+import org.ejdb.bson.types.ObjectId;
 import org.ejdb.driver.EJDB;
 import org.ejdb.driver.EJDBCollection;
 import org.ejdb.driver.EJDBQuery;
@@ -55,7 +54,7 @@ public class EJDBTest extends TestCase {
         coll.ensureExists();
         assertTrue(coll.isExists());
 
-        BSONObject obj = new BasicBSONObject("test", "test").append("test2", 123);
+        BSONObject obj = new BSONObject("test", "test").append("test2", 123);
 
 
         ObjectId oid = coll.save(obj);
@@ -67,7 +66,7 @@ public class EJDBTest extends TestCase {
         assertEquals(obj.get("test"), lobj.get("test"));
         assertEquals(obj.get("test2"), lobj.get("test2"));
 
-        EJDBQuery query = coll.createQuery(new BasicBSONObject());
+        EJDBQuery query = coll.createQuery(new BSONObject());
         EJDBResultSet rs = query.find();
         assertEquals(rs.length(), 1);
         for (BSONObject r : rs) {
@@ -78,13 +77,13 @@ public class EJDBTest extends TestCase {
 
         assertEquals(lobj, query.findOne());
 
-        EJDBQuery query2 = db.getCollection("test2").createQuery(new BasicBSONObject());
+        EJDBQuery query2 = db.getCollection("test2").createQuery(new BSONObject());
         assertNull(query2.findOne());
 
         assertEquals(query.count(), 1);
         assertEquals(query2.count(), 0);
 
-        EJDBQuery query3 = coll.createQuery(new BasicBSONObject("test", "test"), new BasicBSONObject("$fields", new BasicBSONObject("test2", 0)));
+        EJDBQuery query3 = coll.createQuery(new BSONObject("test", "test"), new BSONObject("$fields", new BSONObject("test2", 0)));
         assertEquals(query3.count(), 1);
 
         rs = query3.find();
@@ -104,7 +103,7 @@ public class EJDBTest extends TestCase {
     public void testQueries() throws Exception {
         assertTrue(db.isOpen());
 
-        BSONObject obj1 = new BasicBSONObject("name", "Grenny")
+        BSONObject obj1 = new BSONObject("name", "Grenny")
                 .append("type", "African Grey")
                 .append("male", true)
                 .append("age", 1)
@@ -112,7 +111,7 @@ public class EJDBTest extends TestCase {
                 .append("likes", new String[]{"green color", "night", "toys"})
                 .append("extra1", null);
 
-        BSONObject obj2 = new BasicBSONObject("name", "Bounty")
+        BSONObject obj2 = new BSONObject("name", "Bounty")
                 .append("type", "Cockatoo")
                 .append("male", false)
                 .append("age", 15)
@@ -131,14 +130,14 @@ public class EJDBTest extends TestCase {
         BSONObject obj12 = parrots.load(ss.get(0));
         assertEquals(ss.get(0), obj12.get("_id"));
 
-        EJDBQuery query = parrots.createQuery(new BasicBSONObject());
+        EJDBQuery query = parrots.createQuery(new BSONObject());
         EJDBResultSet rs = query.find();
         assertEquals(rs.length(), 2);
         rs.close();
 
 
-        query = parrots.createQuery(new BasicBSONObject("name", Pattern.compile("(grenny|bounty)", Pattern.CASE_INSENSITIVE)),
-                                    new BasicBSONObject("$orderby", new BasicBSONObject("name", 1)));
+        query = parrots.createQuery(new BSONObject("name", Pattern.compile("(grenny|bounty)", Pattern.CASE_INSENSITIVE)),
+                                    new BSONObject("$orderby", new BSONObject("name", 1)));
 
         rs = query.find();
         assertEquals(rs.length(), 2);
@@ -147,17 +146,17 @@ public class EJDBTest extends TestCase {
         assertEquals(robj1.get("age"), 15);
         rs.close();
 
-        query = parrots.createQuery(new BasicBSONObject(),
-                                    new BSONObject[]{new BasicBSONObject("name", "Grenny"), new BasicBSONObject("name", "Bounty")},
-                                    new BasicBSONObject("$orderby", new BasicBSONObject("name", 1)));
+        query = parrots.createQuery(new BSONObject(),
+                                    new BSONObject[]{new BSONObject("name", "Grenny"), new BSONObject("name", "Bounty")},
+                                    new BSONObject("$orderby", new BSONObject("name", 1)));
 
         rs = query.find();
         assertEquals(rs.length(), 2);
         rs.close();
 
-        query = parrots.createQuery(new BasicBSONObject(),
-                                    new BSONObject[]{new BasicBSONObject("name", "Grenny")},
-                                    new BasicBSONObject("$orderby", new BasicBSONObject("name", 1)));
+        query = parrots.createQuery(new BSONObject(),
+                                    new BSONObject[]{new BSONObject("name", "Grenny")},
+                                    new BSONObject("$orderby", new BSONObject("name", 1)));
 
         assertEquals(query.count(), 1);
     }
@@ -165,15 +164,15 @@ public class EJDBTest extends TestCase {
     public void testIndexes() throws Exception {
         assertTrue(db.isOpen());
 
-        BSONObject sally = new BasicBSONObject("name", "Sally").append("mood", "Angry");
-        BSONObject molly = new BasicBSONObject("name", "Molly").append("mood", "Very angry").append("secret", null);
+        BSONObject sally = new BSONObject("name", "Sally").append("mood", "Angry");
+        BSONObject molly = new BSONObject("name", "Molly").append("mood", "Very angry").append("secret", null);
 
         EJDBCollection birds = db.getCollection("birds");
         birds.save(Arrays.asList(sally, molly));
 
         ByteArrayOutputStream log;
 
-        EJDBQuery query = birds.createQuery(new BasicBSONObject("name", "Molly"));
+        EJDBQuery query = birds.createQuery(new BSONObject("name", "Molly"));
 
         query.find(log = new ByteArrayOutputStream());
         assertTrue(log.toString().contains("RUN FULLSCAN"));
@@ -189,7 +188,7 @@ public class EJDBTest extends TestCase {
         assertTrue(db.isOpen());
 
         ObjectId boid;
-        BasicBSONObject bar = new BasicBSONObject("foo", "bar");
+        BSONObject bar = new BSONObject("foo", "bar");
 
         EJDBCollection bars = db.getCollection("bars");
 

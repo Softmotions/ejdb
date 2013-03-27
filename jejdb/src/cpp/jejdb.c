@@ -93,8 +93,8 @@ static void fill_ejdb_collopts(JNIEnv *env, jobject obj, EJCOLLOPTS *ejcopts) {
 };
 
 static bson *encode_bson(JNIEnv *env, jobject jbson, bson *out) {
-	jclass jBSONClazz = (*env)->FindClass(env, "org/bson/BSON");
-	jmethodID encodeMethodID = (*env)->GetStaticMethodID(env, jBSONClazz, "encode", "(Lorg/bson/BSONObject;)[B");
+	jclass jBSONClazz = (*env)->FindClass(env, "org/ejdb/bson/BSON");
+	jmethodID encodeMethodID = (*env)->GetStaticMethodID(env, jBSONClazz, "encode", "(Lorg/ejdb/bson/BSONObject;)[B");
 
 	jbyteArray bobjdata = (*env)->CallStaticObjectMethod(env, jBSONClazz, encodeMethodID, jbson);
 	jbyte *bdata = (*env)->GetByteArrayElements(env, bobjdata, NULL);
@@ -111,8 +111,8 @@ static bson *encode_bson(JNIEnv *env, jobject jbson, bson *out) {
 };
 
 static jobject decode_bson_from_buffer(JNIEnv *env, const void *buffer, jsize size) {
-	jclass jBSONClazz = (*env)->FindClass(env, "org/bson/BSON");
-	jmethodID decodeMethodID = (*env)->GetStaticMethodID(env, jBSONClazz, "decode", "([B)Lorg/bson/BSONObject;");
+	jclass jBSONClazz = (*env)->FindClass(env, "org/ejdb/bson/BSON");
+	jmethodID decodeMethodID = (*env)->GetStaticMethodID(env, jBSONClazz, "decode", "([B)Lorg/ejdb/bson/BSONObject;");
 
 	jbyteArray jbsdata = (*env)->NewByteArray(env, size);
 	(*env)->SetByteArrayRegion(env, jbsdata, 0, size, (jbyte*)buffer);
@@ -471,7 +471,7 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_updateMeta (JNIEnv *e
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    load
- * Signature: (Lorg/bson/types/ObjectId;)Lorg/bson/BSONObject;
+ * Signature: (Lorg/ejdb/bson/types/ObjectId;)Lorg/ejdb/bson/BSONObject;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_load (JNIEnv *env, jobject obj, jobject joid) {
 	EJDB* db = get_ejdb_from_object(env, obj);		
@@ -490,7 +490,7 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_load (JNIEnv *env,
 		return NULL;
 	}
 
-	jclass jObjectIdClazz = (*env)->FindClass(env, "org/bson/types/ObjectId");
+	jclass jObjectIdClazz = (*env)->FindClass(env, "org/ejdb/bson/types/ObjectId");
 	jmethodID encodeMethodID = (*env)->GetMethodID(env, jObjectIdClazz, "toByteArray", "()[B");
 	jbyteArray joiddata = (*env)->CallObjectMethod(env, joid, encodeMethodID);
 	bson_oid_t *oid = (bson_oid_t*)(*env)->GetByteArrayElements(env, joiddata, NULL);
@@ -511,7 +511,7 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_load (JNIEnv *env,
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    save
- * Signature: (Lorg/bson/BSONObject;)Lorg/bson/types/ObjectId;
+ * Signature: (Lorg/ejdb/bson/BSONObject;)Lorg/ejdb/bson/types/ObjectId;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save (JNIEnv *env, jobject obj, jobject jdata) {
     if (NULL == jdata) {
@@ -547,7 +547,7 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save (JNIEnv *env,
 		return NULL;
 	}
 
-	jclass jObjectIdClazz = (*env)->FindClass(env, "org/bson/types/ObjectId");
+	jclass jObjectIdClazz = (*env)->FindClass(env, "org/ejdb/bson/types/ObjectId");
 	jmethodID initMethodID = (*env)->GetMethodID(env, jObjectIdClazz, "<init>", "([B)V");
 
 	jbyteArray joiddata = (*env)->NewByteArray(env, sizeof(oid));
@@ -555,6 +555,14 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save (JNIEnv *env,
 	jobject result = (*env)->NewObject(env, jObjectIdClazz, initMethodID, joiddata);
 
 	(*env)->DeleteLocalRef(env, joiddata);
+
+	jclass clazz = (*env)->GetObjectClass(env, jdata);
+	jmethodID putMethodID = (*env)->GetMethodID(env, clazz, "put", "(Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/Object;");
+
+	jstring	oidField = (*env)->NewStringUTF(env, "_id");
+	(*env)->CallObjectMethod(env, jdata, putMethodID, oidField, result);
+
+	(*env)->DeleteLocalRef(env, oidField);
 
 	update_coll_meta(env, obj, coll);
 
@@ -564,7 +572,7 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save (JNIEnv *env,
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    remove
- * Signature: (Lorg/bson/types/ObjectId;)V
+ * Signature: (Lorg/ejdb/bson/types/ObjectId;)V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_remove (JNIEnv *env, jobject obj, jobject joid) {
 	EJDB* db = get_ejdb_from_object(env, obj);
@@ -582,7 +590,7 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_remove (JNIEnv *env, 
 		return;
 	}
 
-	jclass jObjectIdClazz = (*env)->FindClass(env, "org/bson/types/ObjectId");
+	jclass jObjectIdClazz = (*env)->FindClass(env, "org/ejdb/bson/types/ObjectId");
 	jmethodID encodeMethodID = (*env)->GetMethodID(env, jObjectIdClazz, "toByteArray", "()[B");
 	jbyteArray joiddata = (*env)->CallObjectMethod(env, joid, encodeMethodID);
 	bson_oid_t *oid = (bson_oid_t*)(*env)->GetByteArrayElements(env, joiddata, NULL);
@@ -631,7 +639,7 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_setIndex (JNIEnv *env
 /*
  * Class:     org_ejdb_driver_EJDBQuery
  * Method:    execute
- * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;ILjava/io/OutputStream;)Lorg/ejdb/driver/EJDBQuery$QResult;
+ * Signature: (Lorg/ejdb/bson/BSONObject;[Lorg/ejdb/bson/BSONObject;Lorg/ejdb/bson/BSONObject;ILjava/io/OutputStream;)Lorg/ejdb/driver/EJDBQuery$QResult;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_execute (JNIEnv *env, jobject obj, jobject qobj, jobjectArray qorarrobj, jobject hobj, jint flags, jobject logstream) {
 	jclass jQResultClazz = (*env)->FindClass(env, "org/ejdb/driver/EJDBQuery$QResult");
@@ -655,9 +663,8 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_execute (JNIEnv *env, j
 
 	qbson = encode_bson(env, qobj, NULL);
 
-	// todo: check query bson
 	if (!qbson) {
-		//
+		// TODO: ?
 		goto finish;
 	}
 
@@ -762,7 +769,7 @@ finish:
 /*
 * Class:     org_ejdb_driver_EJDBResultSet
 * Method:    get
-* Signature: (I)Lorg/bson/BSONObject;
+* Signature: (I)Lorg/ejdb/bson/BSONObject;
 */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_get (JNIEnv *env, jobject obj, jint indx) {
 	TCLIST *rs = get_rs_from_object(env, obj);

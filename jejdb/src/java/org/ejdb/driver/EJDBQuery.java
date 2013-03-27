@@ -1,7 +1,6 @@
 package org.ejdb.driver;
 
-import org.bson.BSONObject;
-import org.bson.BasicBSONObject;
+import org.ejdb.bson.BSONObject;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -80,10 +79,10 @@ public class EJDBQuery {
      * Same as  {@link org.ejdb.driver.EJDBQuery#find()} but retrieves only one matching JSON object.
      */
     public BSONObject findOne(OutputStream log) throws EJDBException, IOException {
-        Map hintsMap = hints != null ? hints.toMap() : new HashMap();
+        Map<String, Object> hintsMap = hints != null ? hints.asMap() : new HashMap();
         hintsMap.put("$max", 1);
 
-        EJDBResultSet rs = this.execute(new BasicBSONObject(hintsMap), 0, null).getResultSet();
+        EJDBResultSet rs = this.execute(new BSONObject(hintsMap), 0, null).getResultSet();
         BSONObject result = rs.hasNext() ? rs.next() : null;
         rs.close();
 
