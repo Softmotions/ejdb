@@ -25,7 +25,7 @@ typedef struct {
     EJDB* ejdb;
 } RBEJDB;
 
-static int set_ejdb_error(EJDB *ejdb) {
+static int raise_ejdb_error(EJDB *ejdb) {
     int ecode = ejdbecode(ejdb);
     const char *emsg = ejdberrmsg(ecode);
     rb_raise(rb_eRuntimeError, emsg);
@@ -40,6 +40,7 @@ EJDB* getEJDB(VALUE self) {
 
 void EJDB_free(RBEJDB* rejdb) {
     if (!rejdb->ejdb) {
+        ejdbclose(rejdb->ejdb);
         ejdbdel(rejdb->ejdb);
     }
     ruby_xfree(rejdb);
@@ -65,7 +66,7 @@ VALUE EJDB_open(VALUE self, VALUE path, VALUE mode) {
 
     EJDB* ejdb = getEJDB(self);
     if (!ejdbopen(ejdb, StringValuePtr(path), FIX2INT(mode))) {
-        set_ejdb_error(ejdb);
+        raise_ejdb_error(ejdb);
     }
     return Qnil;
 }
@@ -73,6 +74,40 @@ VALUE EJDB_open(VALUE self, VALUE path, VALUE mode) {
 VALUE EJDB_is_open(VALUE self) {
     EJDB* ejdb = getEJDB(self);
     return ejdb && ejdbisopen(ejdb) ? Qtrue : Qfalse;
+}
+
+void EJDB_dropCollection(VALUE self, VALUE collName, VALUE prune) {
+    Check_SafeStr(collName);
+
+    EJDB* ejdb = getEJDB(self);
+    if (!ejdbrmcoll(ejdb, StringValuePtr(collName), TYPE(prune) == T_TRUE)) {
+        raise_ejdb_error(ejdb);        
+    }
+}
+
+void EJDB_ensureCollection(VALUE self, VALUE collName, VALUE copts) {
+    Check_SafeStr(collName);
+
+    EJCOLLOPTS jcopts = {NULL};
+    if (TYPE(copts) != T_NIL) {
+        Check_Type(copts, T_HASH);
+
+        VALUE cachedrecords = rb_hash_aref(copts, rb_str_new2("cachedrecords"));
+        VALUE compressed = rb_hash_aref(copts, rb_str_new2("compressed"));
+        VALUE large = rb_hash_aref(copts, rb_str_new2("large"));
+        VALUE records = rb_hash_aref(copts, rb_str_new2("records"));
+
+        jcopts.cachedrecords = TYPE(cachedrecords) != T_NIL ? NUM2INT(cachedrecords) : 0;
+        jcopts.compressed = TYPE(compressed) == T_TRUE;
+        jcopts.large = TYPE(large) == T_TRUE;
+        jcopts.records = TYPE(records) != T_NIL ? NUM2INT(records) : 0;
+    }
+
+    EJDB* ejdb = getEJDB(self);
+
+    if (!ejdbcreatecoll(ejdb, StringValuePtr(collName), &jcopts)) {
+        raise_ejdb_error(ejdb);
+    }
 }
 
 VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
@@ -86,19 +121,18 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
     Check_Type(collName, T_STRING);
     EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
     if (!coll) {
-        set_ejdb_error(ejdb);
+        raise_ejdb_error(ejdb);
     }
 
     int i;
     for (i = 1; i < argc; i++) {
         bson* bsonval;
         ruby_to_bson(argv[i], &bsonval, 0);
-        bson_print(stdout, bsonval);
 
         bson_oid_t oid;
         if (!ejdbsavebson2(coll, bsonval, &oid, true /*TODO read this param*/)) {
             bson_destroy(bsonval);
-            set_ejdb_error(ejdb);
+            raise_ejdb_error(ejdb);
         }
 
         bson_destroy(bsonval);
@@ -113,7 +147,7 @@ VALUE EJDB_find(VALUE self, VALUE collName, VALUE q) {
 
     EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
     if (!coll) {
-        set_ejdb_error(ejdb);
+        raise_ejdb_error(ejdb);
     }
 
     bson* qbson;
@@ -134,6 +168,7 @@ VALUE EJDB_find(VALUE self, VALUE collName, VALUE q) {
     }
 
     tclistdel(qres);
+    ejdbquerydel(ejq);
 }
 
 Init_rbejdb() {
@@ -147,4 +182,7 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "is_open?", RUBY_METHOD_FUNC(EJDB_is_open), 0);
     rb_define_method(ejdbClass, "save", RUBY_METHOD_FUNC(EJDB_save), -1);
     rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), 2);
+
+    rb_define_method(ejdbClass, "dropCollection", RUBY_METHOD_FUNC(EJDB_dropCollection), 2);
+    rb_define_method(ejdbClass, "ensureCollection", RUBY_METHOD_FUNC(EJDB_ensureCollection), 2);
 }

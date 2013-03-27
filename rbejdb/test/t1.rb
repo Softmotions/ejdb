@@ -5,6 +5,10 @@ ejdb.open("zoo", EJDB::DEFAULT_OPEN_MODE)
 
 raise "Failed to open ejdb" unless ejdb.is_open?
 
+ejdb.dropCollection("parrots", true)
+
+ejdb.ensureCollection("parrots", {"large" => true, "records" => 200000})
+
 class Parrot
   def initialize(name, size)
     @name = name
@@ -23,7 +27,7 @@ ejdb.find("parrots", {:name => "Cacadoo"}) { |res|
   puts res.inspect
 }
 
-ejdb.find("parrots", {:name => "Mamadoo"}) { |res|
+ejdb.find("parrots", {:name => {"$in" => ["Mamadoo", "Sauron"]}}) { |res|
   puts res.inspect
 }
 
