@@ -558,11 +558,10 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save (JNIEnv *env,
 
 	jclass clazz = (*env)->GetObjectClass(env, jdata);
 	jmethodID putMethodID = (*env)->GetMethodID(env, clazz, "put", "(Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/Object;");
+	jfieldID idKeyID = (*env)->GetStaticFieldID(env, clazz, "ID_KEY", "Ljava/lang/String;");
+	jstring	oidField = (*env)->GetStaticObjectField(env, clazz, idKeyID);
 
-	jstring	oidField = (*env)->NewStringUTF(env, "_id");
 	(*env)->CallObjectMethod(env, jdata, putMethodID, oidField, result);
-
-	(*env)->DeleteLocalRef(env, oidField);
 
 	update_coll_meta(env, obj, coll);
 

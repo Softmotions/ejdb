@@ -56,15 +56,16 @@ public class EJDBTest extends TestCase {
 
         BSONObject obj = new BSONObject("test", "test").append("test2", 123);
 
-
         ObjectId oid = coll.save(obj);
         assertNotNull(oid);
+        assertEquals(oid, obj.getId());
 
         BSONObject lobj = coll.load(oid);
         assertNotNull(lobj);
-        assertEquals(lobj.get("_id"), oid);
-        assertEquals(obj.get("test"), lobj.get("test"));
-        assertEquals(obj.get("test2"), lobj.get("test2"));
+        assertEquals(obj, lobj);
+//        assertEquals(lobj.get("_id"), oid);
+//        assertEquals(obj.get("test"), lobj.get("test"));
+//        assertEquals(obj.get("test2"), lobj.get("test2"));
 
         EJDBQuery query = coll.createQuery(new BSONObject());
         EJDBResultSet rs = query.find();
@@ -128,13 +129,14 @@ public class EJDBTest extends TestCase {
         assertNotNull(ss.get(2));
 
         BSONObject obj12 = parrots.load(ss.get(0));
-        assertEquals(ss.get(0), obj12.get("_id"));
+        assertNotNull(obj12);
+        assertEquals(ss.get(0), obj12.getId());
+        assertEquals(obj1, obj12);
 
         EJDBQuery query = parrots.createQuery(new BSONObject());
         EJDBResultSet rs = query.find();
         assertEquals(rs.length(), 2);
         rs.close();
-
 
         query = parrots.createQuery(new BSONObject("name", Pattern.compile("(grenny|bounty)", Pattern.CASE_INSENSITIVE)),
                                     new BSONObject("$orderby", new BSONObject("name", 1)));
@@ -212,7 +214,7 @@ public class EJDBTest extends TestCase {
         assertFalse(bars.isTransactionActive());
         BSONObject bar2 = bars.load(boid);
         assertNotNull(bar2);
-        assertEquals(bar2.get("_id"), boid);
-        assertEquals(bar2.get("foo"), bar.get("foo"));
+        assertEquals(bar2.getId(), boid);
+        assertEquals(bar2, bar);
     }
 }

@@ -1,5 +1,7 @@
 package org.ejdb.bson.types;
 
+import java.util.Arrays;
+
 /**
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
@@ -32,6 +34,17 @@ public class ObjectId {
         byte[] result = new byte[12];
         System.arraycopy(data, 0, result, 0, 12);
         return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this == o || null != o && o instanceof ObjectId && Arrays.equals(data, ((ObjectId) o).data);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(data);
     }
 
     @Override

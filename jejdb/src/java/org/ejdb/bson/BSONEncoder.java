@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
  */
-public class BSONEncoder {
+class BSONEncoder {
 
     private OutputBuffer output;
 
@@ -50,6 +50,8 @@ public class BSONEncoder {
         for (String field : object.keySet()) {
             writeField(field, object.get(field));
         }
+
+        output.write((byte) 0x00);
 
         int end = output.getPosition();
 
@@ -153,6 +155,7 @@ public class BSONEncoder {
             writeField(String.valueOf(i), value.next());
             ++i;
         }
+        output.write((byte) 0x00);
         output.writeIntAt(sp, output.getPosition() - sp);
     }
 

@@ -28,13 +28,26 @@ public final class RegexFlag {
 
     public static String regexFlagsToString(int flags) {
         StringBuilder result = new StringBuilder();
-        for (RegexFlag regexFlag : regexFlags) {
-            if ((flags & regexFlag.getFlag()) > 0 && regexFlag.isSupported()) {
-                result.append(regexFlag.getCharacter());
+        for (RegexFlag rf : regexFlags) {
+            if ((flags & rf.getFlag()) > 0 && rf.isSupported()) {
+                result.append(rf.getCharacter());
             }
         }
 
         return result.toString();
+    }
+
+    public static int stringToRegexFlags(String str) {
+        int flags = 0;
+
+        for (int i = 0; i < str.length(); ++i) {
+            RegexFlag rf = characterToRegexFlagMap.get(str.charAt(i));
+            if (rf != null && rf.isSupported()) {
+                flags |= rf.getFlag();
+            }
+        }
+
+        return flags;
     }
 
     public static void registerRegexFlag(int flag, char character, boolean supported) {
