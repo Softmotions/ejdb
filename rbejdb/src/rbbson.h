@@ -17,6 +17,8 @@
 extern "C" {
 #endif
 
+    void init_ruby_to_bson();
+
     void ruby_to_bson(VALUE rbobj, bson** bsonbuf, int flags);
 
     VALUE bson_to_ruby(bson* bsonval);

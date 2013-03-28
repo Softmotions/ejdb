@@ -25,6 +25,18 @@ typedef struct {
     EJDB* ejdb;
 } RBEJDB;
 
+typedef struct {
+    TCLIST* results;
+} RBEJDB_RESULTS;
+
+
+VALUE create_EJDB_query_results(TCLIST* qres);
+
+
+VALUE ejdbClass;
+VALUE ejdbResultsClass;
+
+
 static int raise_ejdb_error(EJDB *ejdb) {
     int ecode = ejdbecode(ejdb);
     const char *emsg = ejdberrmsg(ecode);
@@ -39,7 +51,7 @@ EJDB* getEJDB(VALUE self) {
 }
 
 void EJDB_free(RBEJDB* rejdb) {
-    if (!rejdb->ejdb) {
+    if (rejdb->ejdb) {
         ejdbclose(rejdb->ejdb);
         ejdbdel(rejdb->ejdb);
     }
@@ -80,13 +92,15 @@ void EJDB_dropCollection(VALUE self, VALUE collName, VALUE prune) {
     Check_SafeStr(collName);
 
     EJDB* ejdb = getEJDB(self);
-    if (!ejdbrmcoll(ejdb, StringValuePtr(collName), TYPE(prune) == T_TRUE)) {
+    if (!ejdbrmcoll(ejdb, StringValuePtr(collName), RTEST(prune))) {
         raise_ejdb_error(ejdb);        
     }
 }
 
 void EJDB_ensureCollection(int argc, VALUE* argv, VALUE self) {
-    VALUE collName, copts;
+    VALUE collName;
+    VALUE copts;
+
     rb_scan_args(argc, argv, "11", &collName, &copts);
 
     Check_SafeStr(collName);
@@ -101,8 +115,8 @@ void EJDB_ensureCollection(int argc, VALUE* argv, VALUE self) {
         VALUE records = rb_hash_aref(copts, rb_str_new2("records"));
 
         jcopts.cachedrecords = !NIL_P(cachedrecords) ? NUM2INT(cachedrecords) : 0;
-        jcopts.compressed = TYPE(compressed) == T_TRUE;
-        jcopts.large = TYPE(large) == T_TRUE;
+        jcopts.compressed = RTEST(compressed);
+        jcopts.large = RTEST(large);
         jcopts.records = !NIL_P(records) ? NUM2INT(records) : 0;
     }
 
@@ -143,8 +157,14 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
     return Qnil;
 }
 
-VALUE EJDB_find(VALUE self, VALUE collName, VALUE q) {
+VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
+    VALUE collName;
+    VALUE q;
+
+    rb_scan_args(argc, argv, "11", &collName, &q);
+
     Check_SafeStr(collName);
+    q = !NIL_P(q) ? q :rb_hash_new();
 
     EJDB* ejdb = getEJDB(self);
 
@@ -162,6 +182,35 @@ VALUE EJDB_find(VALUE self, VALUE collName, VALUE q) {
     int qflags = 0;
     TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, NULL);
 
+    return create_EJDB_query_results(qres);
+}
+
+
+void EJDB_results_free(RBEJDB_RESULTS* rbres) {
+    if (rbres->results) {
+        tclistdel(rbres->results);
+    }
+    ruby_xfree(rbres);
+}
+
+VALUE create_EJDB_query_results(TCLIST* qres) {
+    VALUE results = Data_Wrap_Struct(ejdbResultsClass, NULL, EJDB_results_free, ruby_xmalloc(sizeof(RBEJDB_RESULTS)));
+    RBEJDB_RESULTS* rbresults;
+    Data_Get_Struct(results, RBEJDB_RESULTS, rbresults);
+
+    rbresults->results = qres;
+    return results;
+}
+
+VALUE EJDB_results_each(VALUE self) {
+    RBEJDB_RESULTS* rbresults;
+    Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
+
+    if (!rbresults || !rbresults->results) {
+        rb_raise(rb_eRuntimeError, "Each() method called on invalid ejdb query results");
+    }
+
+    TCLIST* qres = rbresults->results;
     int i;
     for (i = 0; i < TCLISTNUM(qres); i++) {
         char* bsrawdata = TCLISTVALPTR(qres, i);
@@ -170,12 +219,14 @@ VALUE EJDB_find(VALUE self, VALUE collName, VALUE q) {
         rb_yield(bson_to_ruby(&bsonval));
     }
 
-    tclistdel(qres);
-    ejdbquerydel(ejq);
+    return Qnil;
 }
 
+
 Init_rbejdb() {
-    VALUE ejdbClass = rb_define_class("EJDB", rb_cObject);
+    init_ruby_to_bson();
+
+    ejdbClass = rb_define_class("EJDB", rb_cObject);
     rb_define_alloc_func(ejdbClass, EJDB_alloc);
     rb_define_private_method(ejdbClass, "initialize", RUBY_METHOD_FUNC(EJDB_init), 0);
 
@@ -184,8 +235,13 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "open", RUBY_METHOD_FUNC(EJDB_open), 2);
     rb_define_method(ejdbClass, "is_open?", RUBY_METHOD_FUNC(EJDB_is_open), 0);
     rb_define_method(ejdbClass, "save", RUBY_METHOD_FUNC(EJDB_save), -1);
-    rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), 2);
+    rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), -1);
 
     rb_define_method(ejdbClass, "dropCollection", RUBY_METHOD_FUNC(EJDB_dropCollection), 2);
     rb_define_method(ejdbClass, "ensureCollection", RUBY_METHOD_FUNC(EJDB_ensureCollection), -1);
+
+
+    ejdbResultsClass = rb_define_class("EJDBResults", rb_cObject);
+    rb_include_module(ejdbResultsClass, rb_mEnumerable);
+    rb_define_method(ejdbResultsClass, "each", RUBY_METHOD_FUNC(EJDB_results_each), 0);
 }

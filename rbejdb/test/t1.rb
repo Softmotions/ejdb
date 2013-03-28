@@ -6,6 +6,7 @@ ejdb.open("zoo", EJDB::DEFAULT_OPEN_MODE)
 raise "Failed to open ejdb" unless ejdb.is_open?
 
 ejdb.dropCollection("parrots", true)
+ejdb.dropCollection("cows", true)
 
 ejdb.ensureCollection("parrots")
 ejdb.ensureCollection("parrots", {"large" => true, "records" => 200000})
@@ -23,13 +24,17 @@ ejdb.save("parrots", parrot1)
 parrot2 = {:name => "Mamadoo", :size => 666, "likes" => ["green color", "night", ["toys", "joys"], parrot1]}
 ejdb.save("parrots", parrot2)
 
+ejdb.save("cows", :name => "moo")
 
-ejdb.find("parrots", {:name => "Cacadoo"}) { |res|
+
+ejdb.find("parrots", {:name => "Cacadoo"}).each { |res|
   puts res.inspect
 }
 
-ejdb.find("parrots", {:name => {"$in" => ["Mamadoo", "Sauron"]}}) { |res|
+ejdb.find("parrots", {:name => {"$in" => ["Mamadoo", "Sauron"]}}).each { |res|
   puts res.inspect
 }
+
+puts ejdb.find("cows", {}).to_a.inspect
 
 puts "CONGRATULATIONS!!! EJDB tests have passed completely!"

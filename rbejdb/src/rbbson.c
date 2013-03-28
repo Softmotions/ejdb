@@ -20,9 +20,18 @@ VALUE iterate_array_callback(VALUE val, VALUE bsonWrap);
 
 VALUE bson_array_to_ruby(bson_iterator* it);
 
+VALUE bsonWrapClass = Qnil;
+
+
+void init_ruby_to_bson() {
+    bsonWrapClass = rb_define_class(BSON_RUBY_CLASS, rb_cObject);
+}
+
 
 VALUE createBsonWrap(bson* bsonval, VALUE rbobj, int flags) {
-    VALUE bsonWrapClass = rb_define_class(BSON_RUBY_CLASS, rb_cObject);
+    if (NIL_P(bsonWrapClass)) {
+        rb_raise(rb_eRuntimeError, "Ruby to BSON library must be initialized");
+    }
     VALUE bsonWrap = Data_Wrap_Struct(bsonWrapClass, NULL, NULL, ruby_xmalloc(sizeof(RBBSON)));
 
     RBBSON* rbbson;
