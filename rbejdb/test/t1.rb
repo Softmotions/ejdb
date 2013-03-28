@@ -7,6 +7,7 @@ raise "Failed to open ejdb" unless ejdb.is_open?
 
 ejdb.dropCollection("parrots", true)
 
+ejdb.ensureCollection("parrots")
 ejdb.ensureCollection("parrots", {"large" => true, "records" => 200000})
 
 class Parrot

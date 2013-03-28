@@ -85,11 +85,14 @@ void EJDB_dropCollection(VALUE self, VALUE collName, VALUE prune) {
     }
 }
 
-void EJDB_ensureCollection(VALUE self, VALUE collName, VALUE copts) {
+void EJDB_ensureCollection(int argc, VALUE* argv, VALUE self) {
+    VALUE collName, copts;
+    rb_scan_args(argc, argv, "11", &collName, &copts);
+
     Check_SafeStr(collName);
 
     EJCOLLOPTS jcopts = {NULL};
-    if (TYPE(copts) != T_NIL) {
+    if (!NIL_P(copts)) {
         Check_Type(copts, T_HASH);
 
         VALUE cachedrecords = rb_hash_aref(copts, rb_str_new2("cachedrecords"));
@@ -97,10 +100,10 @@ void EJDB_ensureCollection(VALUE self, VALUE collName, VALUE copts) {
         VALUE large = rb_hash_aref(copts, rb_str_new2("large"));
         VALUE records = rb_hash_aref(copts, rb_str_new2("records"));
 
-        jcopts.cachedrecords = TYPE(cachedrecords) != T_NIL ? NUM2INT(cachedrecords) : 0;
+        jcopts.cachedrecords = !NIL_P(cachedrecords) ? NUM2INT(cachedrecords) : 0;
         jcopts.compressed = TYPE(compressed) == T_TRUE;
         jcopts.large = TYPE(large) == T_TRUE;
-        jcopts.records = TYPE(records) != T_NIL ? NUM2INT(records) : 0;
+        jcopts.records = !NIL_P(records) ? NUM2INT(records) : 0;
     }
 
     EJDB* ejdb = getEJDB(self);
@@ -184,5 +187,5 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), 2);
 
     rb_define_method(ejdbClass, "dropCollection", RUBY_METHOD_FUNC(EJDB_dropCollection), 2);
-    rb_define_method(ejdbClass, "ensureCollection", RUBY_METHOD_FUNC(EJDB_ensureCollection), 2);
+    rb_define_method(ejdbClass, "ensureCollection", RUBY_METHOD_FUNC(EJDB_ensureCollection), -1);
 }
