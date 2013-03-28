@@ -1,4 +1,4 @@
-libtcejdb (1.0.68-1) unstable; urgency=low
+libtcejdb (1.0.68-2) unstable; urgency=low
 
   * Fixed number index crash #54
 
