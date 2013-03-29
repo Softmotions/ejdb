@@ -7,6 +7,6 @@ clean:
 	- rm -rf ./dist
 
 deb-packages: clean
-	debuild $(DEBUILD_OPTS)
+	debuild --no-tgz-check $(DEBUILD_OPTS)
 
 .PHONY: all clean deb-packages

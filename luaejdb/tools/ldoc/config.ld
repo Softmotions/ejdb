@@ -1,0 +1,7 @@
+project='LDoc'
+title='LDoc documentation'
+description='A Lua documentation tool'
+format='discount'
+file='ldoc.lua'
+dir='out'
+readme='docs/doc.md'

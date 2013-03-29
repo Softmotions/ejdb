@@ -2,14 +2,19 @@
 *.vlog
 *.dylib
 *.upload
+*.rock
+*.so
+*.dll
+
+
+autom4te.cache/
+config.log
+config.status
 
 /npm-debug.log
 /.idea/workspace.xml
 
 /tcejdb/Makefile
-/tcejdb/autom4te.cache
-/tcejdb/config.log
-/tcejdb/config.status
 /tcejdb/libtcejdb.a
 /tcejdb/libtcejdb.so
 /tcejdb/libtcejdb.so.9
@@ -47,13 +52,13 @@
 /tcejdb/testejdb/t1
 /tcejdb/testejdb/t2
 /tcejdb/testejdb/t3
+/tcejdb/testejdb/t4
 
-/node/nbproject/private
+*/nbproject/private/*
+
 /build
 /var
 /node/samples/sample1/zoo*
-
-/pyejdb/nbproject/private
 
 
 libtcejdb9*.deb
@@ -90,4 +95,16 @@ tcejdb/debian/*.debhelper
 /python-ejdb_*.build
 /python-ejdb_*.changes
 /python3-ejdb_*.deb
+
+
+/luaejdb/debian/files
+/luaejdb/test/testdb*
+/luaejdb/debian/lua51-ejdb*
+/luaejdb/debian/*.log
+/lua-ejdb_*.build
+/lua-ejdb_*.dsc
+/lua-ejdb_*.gz
+/lua-ejdb_*.build
+/lua-ejdb_*.changes
+/lua51-ejdb_*.deb
 

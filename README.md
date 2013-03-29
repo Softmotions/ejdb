@@ -4,7 +4,7 @@
 Embedded JSON Database engine
 ====================================
 
-It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++ and [NodeJS](http://nodejs.org/) applications under terms of LGPL license.**
+It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/NodeJS/Python/Lua applications under terms of LGPL license.**
 
 EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 
@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb/blob/master/luaejdb/README.md)**
 * `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
 * `2013-02-07` **[Debian packages provided](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)**
 * `2013-01-22` **[Collection joins now supported](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
@@ -26,6 +27,7 @@ Features
 * [Node.js](http://nodejs.org) binding
 * [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
 * Python binding
+* Lua binding
 
 
 Documentation
@@ -37,6 +39,7 @@ Documentation
     * [Samples](#ejdb-nodejs-samples)
     * [NodeJS API](#ejdb-nodejs-api)
 * **[Python3 binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
+* **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/README.md)**
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
@@ -627,6 +630,75 @@ ejdb.close()
 ```
 **[EJDB Python3 binding page](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
 
+EJDB Lua binding
+==================================
+
+One snippet intro
+---------------------------------
+
+```lua
+local ejdb = require("ejdb")
+local inspect = require("ejdb.inspect")
+local Q = ejdb.Q
+
+-- Used modes:
+-- 'r' - read
+-- 'w' - write
+-- 'c' - create db if not exists
+-- 't' - truncate existing db
+local db = ejdb.open("zoo", "rwct")
+
+-- Unordered lua table
+local parrot1 = {
+  name = "Grenny",
+  type = "African Grey",
+  male = true,
+  age = 1,
+  birthhdate = ejdb.toDateNow(),
+  likes = { "green color", "night", "toys" },
+  extra1 = ejdb.toNull()
+}
+
+-- Preserve order of BSON keys
+local parrot2 = Q();
+parrot2:KV("name", "Bounty"):KV("type", "Cockatoo"):KV("male", false)
+parrot2:KV("age", 15):KV("birthdate",
+  ejdb.toDate({ year = 2013, month = 1, day = 1, hour = 0, sec = 1 }))
+parrot2:KV("likes", { "sugar cane" }):KV("extra1", ejdb.toNull())
+
+--IF YOU WANT SOME DATA INSPECTIONS:
+--print(ejdb.print_bson(parrot2:toBSON()))
+--local obj = ejdb.from_bson(parrot2:toBSON())
+--print(inspect(obj));
+
+db:save("parrots2", parrot1)
+db:save("parrots2", parrot2)
+
+-- Below two equivalent queries:
+-- Q1
+local res, count, log =
+db:find("parrots2", Q("likes", "toys"):OrderBy("name asc", "age desc"))
+for i = 1, #res do -- iterate one
+  local ob = res:object(i)
+  print("" .. ob["name"] .. " likes toys #1")
+end
+
+-- Q2
+local res, count, log =
+db:find("parrots2", Q():F("likes"):Eq("toys"):OrderBy({ name = 1 }, { age = -1 }))
+for i = 1, #res do -- iterate one
+  print("" .. res:field(i, "name") .. " likes toys #2")
+end
+
+-- Second way to iterate
+for vobj, idx in res() do
+  print("" .. vobj["name"] .. " likes toys #3")
+end
+
+db:close()
+```
+* **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/README.md)**
+
 
 EJDB C Library
 ==================================
@@ -874,4 +946,5 @@ TODO
 Related software
 ------------------------------------
 [Connect session store backed by EJDB database](https://github.com/Softmotions/connect-session-ejdb)
+
 

@@ -15,7 +15,7 @@
       <excludeFolder url="file://$MODULE_DIR$/build" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.2.3 (/usr/bin/python3.2mu)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.2.3 (/usr/bin/python3mu)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

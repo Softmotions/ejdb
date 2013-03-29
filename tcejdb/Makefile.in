@@ -57,7 +57,7 @@ LIBS = @LIBS@
 # LDENV = LD_RUN_PATH=/lib:/usr/lib:$(LIBDIR):$(HOME)/lib:/usr/local/lib:@MYRUNPATH@:.
 RUNENV = @MYLDLIBPATHENV@=.
 POSTCMD = @MYPOSTCMD@
-
+INSTALL = @INSTALL@
 
 
 #================================================================
@@ -78,7 +78,7 @@ POSTCMD = @MYPOSTCMD@
 #================================================================
 
 
-all : version $(LIBRARYFILES) $(COMMANDFILES) $(CGIFILES)
+all : $(LIBRARYFILES) $(COMMANDFILES) $(CGIFILES)
 	@$(POSTCMD)
 	@printf '\n'
 	@printf '#================================================================\n'
@@ -110,23 +110,22 @@ untabify :
 
 
 install :
-	install -d $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE) \
+	$(INSTALL) -d $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE) \
 		   $(DESTDIR)$(LIBDIR) \
 		   $(DESTDIR)$(DATADIR) \
 		   $(DESTDIR)$(PCDIR) \
 		   $(DESTDIR)$(MAN3DIR)
-	install -m 644 -t $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE) $(HEADERFILES)
-	cp -Rf $(LIBRARYFILES) $(DESTDIR)$(LIBDIR)
-	chmod -R 755 $(DESTDIR)$(LIBDIR)
-	install -m 644 -t $(DESTDIR)$(DATADIR) $(DOCUMENTFILES)
-	install -m 644 -t $(DESTDIR)$(PCDIR) $(PCFILES)
+	$(INSTALL) -m 644 $(HEADERFILES) $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE)
+	$(INSTALL) -m 755 $(LIBRARYFILES) $(DESTDIR)$(LIBDIR)
+	$(INSTALL) -m 644 $(DOCUMENTFILES) $(DESTDIR)$(DATADIR)
+	$(INSTALL) -m 644 $(PCFILES) $(DESTDIR)$(PCDIR)
 	## mkdir -p $(DESTDIR)$(BINDIR)
 	## cp -Rf $(COMMANDFILES) $(DESTDIR)$(BINDIR)
 	## mkdir -p $(DESTDIR)$(LIBEXECDIR)
 	## cp -Rf $(CGIFILES) $(DESTDIR)$(LIBEXECDIR)
 	## mkdir -p $(DESTDIR)$(MAN1DIR)
 	## cd man && cp -Rf $(MAN1FILES) $(DESTDIR)$(MAN1DIR)
-	cd man && install -m 644 -t $(DESTDIR)$(MAN3DIR) $(MAN3FILES)
+	cd man && $(INSTALL) -m 644 $(MAN3FILES) $(DESTDIR)$(MAN3DIR)
 	-[ "$$UID" = 0 ] && PATH=/sbin:/usr/sbin:$(PATH) ldconfig 2>/dev/null || true
 	@printf '\n'
 	@printf '#================================================================\n'
@@ -673,11 +672,11 @@ wordtable :
 	./tctmgr importtsv casket words.tsv
 
 
-.PHONY : all clean install check check-ejdb deb-packages
+.PHONY : all version clean install check check-ejdb deb-packages
 
 
  deb-packages :
-	debuild $(DEBUILD_OPTS)
+	debuild --no-tgz-check $(DEBUILD_OPTS)
 
 
 

@@ -25,7 +25,7 @@ Depends:
 Provides:
  ${python3:Provides}
 Description: Python3 binding for EJDB
- EJDB aims to be a fast MongoDB-like library which can be embedded into C/C++ and NodeJS
+ EJDB aims to be a fast MongoDB-like library which can be embedded into C/C++/NodeJS/Python/Lua
  applications under terms of LGPL license.
  .
  This package provides a Python3 wrapper for EJDB.
