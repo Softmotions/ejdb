@@ -14,9 +14,9 @@ import java.util.Set;
 
 /**
  * BSON object.
- *
+ * <p/>
  * NOTE:
- *  - {@link BSONObject#ID_KEY} must be valid {@link ObjectId}((@link ObjectId} instance or valid <code>byte[]</code> or <code>String</code>)
+ * - {@link BSONObject#ID_KEY} must be valid {@link ObjectId}((@link ObjectId} instance or valid <code>byte[]</code> or <code>String</code>)
  *
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
@@ -52,8 +52,8 @@ public class BSONObject {
      * Constructs new BSON object with initial data.
      * The same as:
      * <code>
-     *     BSONObject obj = new BSONObject();
-     *     obj.put(key, value);
+     * BSONObject obj = new BSONObject();
+     * obj.put(key, value);
      * </code>
      */
     public BSONObject(String key, Object value) {
@@ -64,8 +64,8 @@ public class BSONObject {
      * Constructs new BSON object and init data from specified Map.
      * The same as
      * <code>
-     *     BSONObject obj = new BSONObject();
-     *     obj.putAll(data);
+     * BSONObject obj = new BSONObject();
+     * obj.putAll(data);
      * </code>
      */
     public BSONObject(Map<String, Object> data) {
@@ -192,15 +192,27 @@ public class BSONObject {
         data.clear();
     }
 
+    /**
+     * If returns <code>true</code> fields order will be checks on equal.
+     */
+    protected boolean isFieldsOrderImportant() {
+        return false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this != o && (null == o || !(o instanceof BSONObject))) {
             return false;
         }
 
-        Map<String, Object> thatData = ((BSONObject) o).data;
+        BSONObject other = (BSONObject) o;
+        Map<String, Object> thatData = other.data;
 
         if (thatData.size() != data.size()) {
+            return false;
+        }
+
+        if ((isFieldsOrderImportant() || other.isFieldsOrderImportant()) && !fields.equals(other.fields())) {
             return false;
         }
 

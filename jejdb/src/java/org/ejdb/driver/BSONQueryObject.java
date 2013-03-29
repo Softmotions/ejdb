@@ -49,4 +49,9 @@ public class BSONQueryObject extends BSONObject {
     public ObjectId getId() {
         return null;
     }
+
+    @Override
+    protected boolean isFieldsOrderImportant() {
+        return true;
+    }
 }
