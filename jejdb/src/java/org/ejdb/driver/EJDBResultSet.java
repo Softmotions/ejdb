@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
  * @version $Id$
  */
 public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject> {
-    private long rsPointer;
+    private transient long rsPointer;
 
     private int position;
 
@@ -38,17 +38,12 @@ public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>
         return position < this.length();
     }
 
-    public BSONObject next() {
+    public BSONObject next() throws EJDBException {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
 
-        try {
-            return get(position++);
-        } catch (EJDBException e) {
-            // TODO: ?
-            throw new RuntimeException(e);
-        }
+        return get(position++);
     }
 
     public void remove() {

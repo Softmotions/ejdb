@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
+ * Util class for convert Java regex flags to BSON string and conversely
+ *
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
  */
@@ -26,6 +28,9 @@ public final class RegexFlag {
         this.supported = supported;
     }
 
+    /**
+     * Convert Java regex flags to BSON string
+     */
     public static String regexFlagsToString(int flags) {
         StringBuilder result = new StringBuilder();
         for (RegexFlag rf : regexFlags) {
@@ -37,6 +42,9 @@ public final class RegexFlag {
         return result.toString();
     }
 
+    /**
+     * Read Java regex flags from BSON string
+     */
     public static int stringToRegexFlags(String str) {
         int flags = 0;
 
@@ -50,20 +58,32 @@ public final class RegexFlag {
         return flags;
     }
 
-    public static void registerRegexFlag(int flag, char character, boolean supported) {
+    /**
+     * Register flag conversation rules
+     */
+    protected static void registerRegexFlag(int flag, char character, boolean supported) {
         RegexFlag rf = new RegexFlag(flag, character, supported);
         regexFlags.add(rf);
         characterToRegexFlagMap.put(rf.getCharacter(), rf);
     }
 
+    /**
+     * @return Java flag
+     */
     public int getFlag() {
         return flag;
     }
 
+    /**
+     * @return BSON character for associated Java regex flag
+     */
     public char getCharacter() {
         return character;
     }
 
+    /**
+     * @return <code>true</code> if BSON supported current Java flag
+     */
     public boolean isSupported() {
         return supported;
     }

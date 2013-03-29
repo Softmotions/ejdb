@@ -3,6 +3,8 @@ package org.ejdb.bson;
 import java.io.OutputStream;
 
 /**
+ * Util class for encode/decode BSON objects
+ *
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
  */
@@ -24,10 +26,16 @@ public final class BSON {
     private BSON() {
     }
 
+    /**
+     * Encode BSON object to plain byte array
+     */
     public static byte[] encode(BSONObject obj){
         return new BSONEncoder().encode(obj);
     }
 
+    /**
+     * Decode BSON object from plain byte array
+     */
     public static BSONObject decode(byte[] data) {
         return new BSONDecoder().decode(data);
     }

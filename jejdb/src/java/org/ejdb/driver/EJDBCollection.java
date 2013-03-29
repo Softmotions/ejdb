@@ -4,6 +4,7 @@ import org.ejdb.bson.BSONObject;
 import org.ejdb.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -339,24 +340,40 @@ public class EJDBCollection {
     }
 
     /**
-     * @see EJDBCollection#createQuery(org.ejdb.bson.BSONObject, org.ejdb.bson.BSONObject[], org.ejdb.bson.BSONObject)
+     * Creates new EJDB Query for current collection.
      */
+    public EJDBQuery createQuery(EJDBQueryBuilder query) {
+        return new EJDBQuery(this, query);
+    }
+
+    /**
+     * @see EJDBCollection#createQuery(org.ejdb.bson.BSONObject, org.ejdb.bson.BSONObject[], org.ejdb.bson.BSONObject)
+     * @deprecated
+     * @use EJDBCollection#createQuery(EJDBQueryBuilder)
+     */
+    @Deprecated
     public EJDBQuery createQuery(BSONObject query) {
-        return new EJDBQuery(this, query, null, null);
+        return this.createQuery(new EJDBQueryBuilder(query, null, null));
     }
 
     /**
      * @see EJDBCollection#createQuery(org.ejdb.bson.BSONObject, org.ejdb.bson.BSONObject[], org.ejdb.bson.BSONObject)
+     * @deprecated
+     * @use EJDBCollection#createQuery(EJDBQueryBuilder)
      */
+    @Deprecated
     public EJDBQuery createQuery(BSONObject query, BSONObject[] qors) {
-        return new EJDBQuery(this, query, qors, null);
+        return this.createQuery(new EJDBQueryBuilder(query, qors != null ? Arrays.asList(qors) : null, null));
     }
 
     /**
      * @see EJDBCollection#createQuery(org.ejdb.bson.BSONObject, org.ejdb.bson.BSONObject[], org.ejdb.bson.BSONObject)
+     * @deprecated
+     * @use EJDBCollection#createQuery(EJDBQueryBuilder)
      */
+    @Deprecated
     public EJDBQuery createQuery(BSONObject query, BSONObject hints) {
-        return new EJDBQuery(this, query, null, hints);
+        return this.createQuery(new EJDBQueryBuilder(query, null, hints));
     }
 
     /**
@@ -367,10 +384,12 @@ public class EJDBCollection {
      * @param query Main BSON query object
      * @param qors  Array of additional OR query objects (joined with OR predicate).
      * @param hints BSON object with query hints.
-     * @return
+     * @deprecated
+     * @use EJDBCollection#createQuery(EJDBQueryBuilder)
      */
+    @Deprecated
     public EJDBQuery createQuery(BSONObject query, BSONObject[] qors, BSONObject hints) {
-        return new EJDBQuery(this, query, qors, hints);
+        return this.createQuery(new EJDBQueryBuilder(query, qors != null ? Arrays.asList(qors) : null, hints));
     }
 
     /**

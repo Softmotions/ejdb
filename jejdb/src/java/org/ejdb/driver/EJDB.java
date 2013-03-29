@@ -54,7 +54,7 @@ public class EJDB {
         System.loadLibrary("jejdb");
     }
 
-    private long dbPointer;
+    private transient long dbPointer;
 
     private String path;
     private Map<String, EJDBCollection> collections;

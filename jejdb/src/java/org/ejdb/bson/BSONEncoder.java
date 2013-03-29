@@ -14,6 +14,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 
 /**
+ * Default BSON object encoder (from Java object to plain byte array)
+ *
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
  */
@@ -21,6 +23,11 @@ class BSONEncoder {
 
     private OutputBuffer output;
 
+    /**
+     * Encode BSON object
+     *
+     * @throws IllegalStateException if other encoding process active with this encoder
+     */
     public byte[] encode(BSONObject object) throws IllegalStateException {
         if (isBusy()) {
             throw new IllegalStateException("other encoding in process");
@@ -38,6 +45,9 @@ class BSONEncoder {
         return result;
     }
 
+    /**
+     * @return <code>true</code> if encoder currently in use
+     */
     public boolean isBusy() {
         return output != null;
     }
@@ -47,7 +57,7 @@ class BSONEncoder {
 
         output.writeInt(0);
 
-        for (String field : object.keySet()) {
+        for (String field : object.fields()) {
             writeField(field, object.get(field));
         }
 

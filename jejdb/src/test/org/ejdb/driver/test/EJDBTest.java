@@ -7,6 +7,7 @@ import org.ejdb.bson.types.ObjectId;
 import org.ejdb.driver.EJDB;
 import org.ejdb.driver.EJDBCollection;
 import org.ejdb.driver.EJDBQuery;
+import org.ejdb.driver.EJDBQueryBuilder;
 import org.ejdb.driver.EJDBResultSet;
 
 import java.io.ByteArrayOutputStream;
@@ -63,11 +64,11 @@ public class EJDBTest extends TestCase {
         BSONObject lobj = coll.load(oid);
         assertNotNull(lobj);
         assertEquals(obj, lobj);
-//        assertEquals(lobj.get("_id"), oid);
-//        assertEquals(obj.get("test"), lobj.get("test"));
-//        assertEquals(obj.get("test2"), lobj.get("test2"));
 
-        EJDBQuery query = coll.createQuery(new BSONObject());
+        EJDBQueryBuilder qb;
+
+        qb = new EJDBQueryBuilder();
+        EJDBQuery query = coll.createQuery(qb);
         EJDBResultSet rs = query.find();
         assertEquals(rs.length(), 1);
         for (BSONObject r : rs) {
@@ -78,11 +79,16 @@ public class EJDBTest extends TestCase {
 
         assertEquals(lobj, query.findOne());
 
-        EJDBQuery query2 = db.getCollection("test2").createQuery(new BSONObject());
+        qb = new EJDBQueryBuilder();
+        EJDBQuery query2 = db.getCollection("test2").createQuery(qb);
         assertNull(query2.findOne());
 
         assertEquals(query.count(), 1);
         assertEquals(query2.count(), 0);
+
+        qb = new EJDBQueryBuilder();
+        qb.field("test", "test")
+                .excludeField("test2");
 
         EJDBQuery query3 = coll.createQuery(new BSONObject("test", "test"), new BSONObject("$fields", new BSONObject("test2", 0)));
         assertEquals(query3.count(), 1);
@@ -133,34 +139,44 @@ public class EJDBTest extends TestCase {
         assertEquals(ss.get(0), obj12.getId());
         assertEquals(obj1, obj12);
 
-        EJDBQuery query = parrots.createQuery(new BSONObject());
+        EJDBQueryBuilder qb;
+
+        qb = new EJDBQueryBuilder();
+        EJDBQuery query = parrots.createQuery(qb);
         EJDBResultSet rs = query.find();
-        assertEquals(rs.length(), 2);
+        assertEquals(2, rs.length());
         rs.close();
 
-        query = parrots.createQuery(new BSONObject("name", Pattern.compile("(grenny|bounty)", Pattern.CASE_INSENSITIVE)),
-                                    new BSONObject("$orderby", new BSONObject("name", 1)));
+        qb = new EJDBQueryBuilder();
+        qb.field("name", Pattern.compile("(grenny|bounty)", Pattern.CASE_INSENSITIVE))
+                .orderBy().asc("name");
+
+        query = parrots.createQuery(qb);
 
         rs = query.find();
         assertEquals(rs.length(), 2);
         BSONObject robj1 = rs.next();
-        assertEquals(robj1.get("name"), "Bounty");
-        assertEquals(robj1.get("age"), 15);
+        assertEquals("Bounty", robj1.get("name"));
+        assertEquals(15, robj1.get("age"));
         rs.close();
 
-        query = parrots.createQuery(new BSONObject(),
-                                    new BSONObject[]{new BSONObject("name", "Grenny"), new BSONObject("name", "Bounty")},
-                                    new BSONObject("$orderby", new BSONObject("name", 1)));
+        qb = new EJDBQueryBuilder();
+        qb
+                .or().field("name", "Grenny")
+                .or().field("name", "Bounty");
+        qb.orderBy().asc("name");
+        query = parrots.createQuery(qb);
 
         rs = query.find();
-        assertEquals(rs.length(), 2);
+        assertEquals(2, rs.length());
         rs.close();
 
-        query = parrots.createQuery(new BSONObject(),
-                                    new BSONObject[]{new BSONObject("name", "Grenny")},
-                                    new BSONObject("$orderby", new BSONObject("name", 1)));
-
-        assertEquals(query.count(), 1);
+        qb = new EJDBQueryBuilder();
+        qb
+                .or().field("name", "Grenny");
+        qb.orderBy().asc("name");
+        query = parrots.createQuery(qb);
+        assertEquals(1, query.count());
     }
 
     public void testIndexes() throws Exception {
@@ -174,7 +190,7 @@ public class EJDBTest extends TestCase {
 
         ByteArrayOutputStream log;
 
-        EJDBQuery query = birds.createQuery(new BSONObject("name", "Molly"));
+        EJDBQuery query = birds.createQuery(new EJDBQueryBuilder().field("name", "Molly"));
 
         query.find(log = new ByteArrayOutputStream());
         assertTrue(log.toString().contains("RUN FULLSCAN"));

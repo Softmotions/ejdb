@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.regex.Pattern;
 
 /**
+ * Default BSON object decoder (from plain byte array to Java object)
+ *
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
  */
@@ -15,7 +17,12 @@ class BSONDecoder {
 
     private InputBuffer input;
 
-    public BSONObject decode(byte[] data) {
+    /**
+     * Decode BSON object
+     *
+     * @throws IllegalStateException if other decoding process active with this decoder
+     */
+    public BSONObject decode(byte[] data) throws IllegalStateException {
         if (isBusy()) {
             throw new IllegalStateException("other decoding in process");
         }
@@ -31,6 +38,9 @@ class BSONDecoder {
         return result;
     }
 
+    /**
+     * @return <code>true</code> if decoder currently in use
+     */
     public boolean isBusy() {
         return input != null;
     }
