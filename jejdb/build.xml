@@ -76,7 +76,11 @@
                 <path refid="jejdb.classpath"/>
                 <path refid="jejdb.test.classpath"/>
             </classpath>
-            <test name="org.ejdb.driver.test.EJDBTest" todir="${test.reports.dir}"/>
+            <batchtest todir="${test.reports.dir}">
+                <fileset dir="${source.test.dir}">
+                    <include name="**/EJDB*Test.java"/>
+                </fileset>
+            </batchtest>
         </junit>
     </target>
 

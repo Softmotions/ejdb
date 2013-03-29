@@ -38,7 +38,7 @@ public class ObjectId {
 
         this.data = new byte[12];
         for (int i = 0; i < 12; ++i) {
-            this.data[i] = Byte.parseByte(value.substring(i << 1, i << 1 + 2), 16);
+            this.data[i] = (byte) (Integer.parseInt(value.substring(i * 2, i * 2 + 2), 16) & 0xFF);
         }
     }
 

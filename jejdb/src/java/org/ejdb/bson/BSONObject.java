@@ -271,6 +271,15 @@ public class BSONObject {
 
     @Override
     public String toString() {
-        return data.toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        String delimiter = "";
+        for (String field : fields) {
+            sb.append(delimiter);
+            sb.append(field).append(":").append(get(field));
+            delimiter = ", ";
+        }
+        sb.append("}");
+        return sb.toString();
     }
 }

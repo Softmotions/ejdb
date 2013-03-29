@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/jejdb/jejdb.iml" filepath="$PROJECT_DIR$/jejdb/jejdb.iml" />
       <module fileurl="file://$PROJECT_DIR$/luaejdb/luaejdb.iml" filepath="$PROJECT_DIR$/luaejdb/luaejdb.iml" />
       <module fileurl="file://$PROJECT_DIR$/pyejdb/pyejdb.iml" filepath="$PROJECT_DIR$/pyejdb/pyejdb.iml" />
       <module fileurl="file://$PROJECT_DIR$/tcejdb/tcejdb.iml" filepath="$PROJECT_DIR$/tcejdb/tcejdb.iml" />

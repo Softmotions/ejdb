@@ -76,17 +76,26 @@ public class EJDBQueryBuilder {
      * @param replace if <code>true</code> all other restrictions will be replaces, otherwise trying to add restrictions for field
      */
     protected EJDBQueryBuilder addOperation(String field, Object value, boolean replace) {
-        if (!query.containsField(field) || replace || !(value instanceof BSONObject)) {
+        if (replace) {
             query.put(field, value);
         } else {
-            Object cvalue = query.get(field);
-            if (cvalue instanceof BSONObject) {
-                ((BSONObject) cvalue).putAll((BSONObject) value);
-            } else {
-                query.put(field, value);
-            }
+            addToBSON(query, field, value);
         }
+
         return this;
+    }
+
+    protected void addToBSON(BSONObject out, String field, Object value) {
+        if (!(value instanceof BSONObject) || !out.containsField(field) || !(out.get(field) instanceof BSONObject)) {
+            out.put(field, value);
+            return;
+        }
+
+        BSONObject iout = (BSONObject) out.get(field);
+        BSONObject ivalue = (BSONObject) value;
+        for (String ifield : ivalue.fields()) {
+            addToBSON(iout, ifield, ivalue.get(ifield));
+        }
     }
 
     /**
@@ -121,7 +130,7 @@ public class EJDBQueryBuilder {
     }
 
     /**
-     * Adds contraint for field
+     * Adds constraint for field
      */
     public Constraint field(String field) {
         return new Constraint(field, false);
@@ -343,7 +352,7 @@ public class EJDBQueryBuilder {
         }
 
         /**
-         * Add <code>$not</code> negatiation contraint
+         * Add <code>$not</code> negatiation constraint
          * <p/>
          * Example:
          * <code>query.field(field).not().eq(value); // {field : { $not : value }}</code>
@@ -351,6 +360,13 @@ public class EJDBQueryBuilder {
          */
         public Constraint not() {
             return new Constraint("$not", this);
+        }
+
+        /**
+         * Add inner constraint
+         */
+        public Constraint field(String field) {
+            return new Constraint(field, this);
         }
 
         /**
@@ -403,8 +419,8 @@ public class EJDBQueryBuilder {
         /**
          * Field value matched <b>any</b> value of specified in values.
          */
-        public EJDBQueryBuilder in(Object... values) {
-            return new Constraint("$in", this).addOperation((Object[]) values);
+        public EJDBQueryBuilder in(Object[] values) {
+            return new Constraint("$in", this).addOperation(values);
         }
 
         /**
@@ -419,8 +435,8 @@ public class EJDBQueryBuilder {
         /**
          * Negation of {@link Constraint#in(Object...)}
          */
-        public EJDBQueryBuilder notIn(Object... values) {
-            return new Constraint("$nin", this).addOperation((Object[]) values);
+        public EJDBQueryBuilder notIn(Object[] values) {
+            return new Constraint("$nin", this).addOperation(values);
         }
 
         /**
@@ -442,8 +458,8 @@ public class EJDBQueryBuilder {
         /**
          * String tokens (or string array vals) matches <b>all</b> tokens in specified array.
          */
-        public EJDBQueryBuilder strAnd(String... values) {
-            return new Constraint("$strand", this).addOperation((String[]) values);
+        public EJDBQueryBuilder strAnd(String[] values) {
+            return new Constraint("$strand", this).addOperation(values);
         }
 
         /**
@@ -458,8 +474,8 @@ public class EJDBQueryBuilder {
         /**
          * String tokens (or string array vals) matches <b>any</b> tokens in specified array.
          */
-        public EJDBQueryBuilder strOr(String... values) {
-            return new Constraint("$stror", this).addOperation((String[]) values);
+        public EJDBQueryBuilder strOr(String[] values) {
+            return new Constraint("$stror", this).addOperation(values);
         }
 
         /**
