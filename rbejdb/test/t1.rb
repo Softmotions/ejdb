@@ -1,7 +1,6 @@
 require "rbejdb"
 
-ejdb = EJDB.new()
-ejdb.open("zoo", EJDB::DEFAULT_OPEN_MODE)
+ejdb = EJDB.open("zoo", EJDB::DEFAULT_OPEN_MODE)
 
 raise "Failed to open ejdb" unless ejdb.is_open?
 
@@ -36,5 +35,11 @@ ejdb.find("parrots", {:name => {"$in" => ["Mamadoo", "Sauron"]}}).each { |res|
 }
 
 puts ejdb.find("cows", {}).to_a.inspect
+
+raise "Error querying cows"  unless ejdb.find("cows", :name => "moo").any? {|res| res["name"] == 'moo'}
+
+ejdb.close
+
+raise "Failed to close ejdb" unless !ejdb.is_open?
 
 puts "CONGRATULATIONS!!! EJDB tests have passed completely!"

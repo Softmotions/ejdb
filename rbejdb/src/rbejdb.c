@@ -50,6 +50,12 @@ EJDB* getEJDB(VALUE self) {
     return rejdb->ejdb;
 }
 
+
+VALUE EJDB_new(VALUE self) {
+    rb_raise(rb_eRuntimeError, "EJDB.open method should be used!");
+    return self;
+}
+
 void EJDB_free(RBEJDB* rejdb) {
     if (rejdb->ejdb) {
         ejdbclose(rejdb->ejdb);
@@ -58,34 +64,36 @@ void EJDB_free(RBEJDB* rejdb) {
     ruby_xfree(rejdb);
 }
 
-VALUE EJDB_alloc(VALUE klass) {
-    return Data_Wrap_Struct(klass, NULL, EJDB_free, ruby_xmalloc(sizeof(RBEJDB)));
-}
 
-VALUE EJDB_init(VALUE self) {
-    RBEJDB* rejdb;
-    Data_Get_Struct(self, RBEJDB, rejdb);
-
-    rejdb->ejdb = ejdbnew();
-    if (!rejdb->ejdb) {
-        rb_raise(rb_eRuntimeError, "Failed to init ejdb!");
-    }
-}
-
-VALUE EJDB_open(VALUE self, VALUE path, VALUE mode) {
+VALUE EJDB_open(VALUE clazz, VALUE path, VALUE mode) {
     Check_SafeStr(path);
     Check_Type(mode, T_FIXNUM);
 
-    EJDB* ejdb = getEJDB(self);
-    if (!ejdbopen(ejdb, StringValuePtr(path), FIX2INT(mode))) {
-        raise_ejdb_error(ejdb);
+    VALUE ejdbWrap = Data_Wrap_Struct(clazz, NULL, EJDB_free, ruby_xmalloc(sizeof(RBEJDB)));
+
+    RBEJDB* rejdb;
+    Data_Get_Struct(ejdbWrap, RBEJDB, rejdb);
+
+    rejdb->ejdb = ejdbnew();
+
+    if (!rejdb->ejdb) {
+        rb_raise(rb_eRuntimeError, "Failed to init ejdb!");
     }
-    return Qnil;
+
+    if (!ejdbopen(rejdb->ejdb, StringValuePtr(path), FIX2INT(mode))) {
+        raise_ejdb_error(rejdb->ejdb);
+    }
+    return ejdbWrap;
 }
 
 VALUE EJDB_is_open(VALUE self) {
     EJDB* ejdb = getEJDB(self);
     return ejdb && ejdbisopen(ejdb) ? Qtrue : Qfalse;
+}
+
+void EJDB_close(VALUE self) {
+    EJDB* ejdb = getEJDB(self);
+    ejdbclose(ejdb);
 }
 
 void EJDB_dropCollection(VALUE self, VALUE collName, VALUE prune) {
@@ -202,7 +210,7 @@ VALUE create_EJDB_query_results(TCLIST* qres) {
     return results;
 }
 
-VALUE EJDB_results_each(VALUE self) {
+void EJDB_results_each(VALUE self) {
     RBEJDB_RESULTS* rbresults;
     Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
 
@@ -218,8 +226,6 @@ VALUE EJDB_results_each(VALUE self) {
         bson_init_finished_data(&bsonval, bsrawdata);
         rb_yield(bson_to_ruby(&bsonval));
     }
-
-    return Qnil;
 }
 
 
@@ -227,13 +233,13 @@ Init_rbejdb() {
     init_ruby_to_bson();
 
     ejdbClass = rb_define_class("EJDB", rb_cObject);
-    rb_define_alloc_func(ejdbClass, EJDB_alloc);
-    rb_define_private_method(ejdbClass, "initialize", RUBY_METHOD_FUNC(EJDB_init), 0);
+    rb_define_private_method(ejdbClass, "new", RUBY_METHOD_FUNC(EJDB_new), 0);
 
     rb_define_const(ejdbClass, "DEFAULT_OPEN_MODE", INT2FIX(DEFAULT_OPEN_MODE));
 
-    rb_define_method(ejdbClass, "open", RUBY_METHOD_FUNC(EJDB_open), 2);
+    rb_define_singleton_method(ejdbClass, "open", RUBY_METHOD_FUNC(EJDB_open), 2);
     rb_define_method(ejdbClass, "is_open?", RUBY_METHOD_FUNC(EJDB_is_open), 0);
+    rb_define_method(ejdbClass, "close", RUBY_METHOD_FUNC(EJDB_close), 0);
     rb_define_method(ejdbClass, "save", RUBY_METHOD_FUNC(EJDB_save), -1);
     rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), -1);
 
