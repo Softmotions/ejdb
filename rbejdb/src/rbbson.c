@@ -22,6 +22,8 @@ VALUE bson_array_to_ruby(bson_iterator* it);
 
 bson_date_t ruby_time_to_bson_internal(VALUE time);
 
+VALUE bson_date_to_ruby(bson_date_t date);
+
 
 VALUE bsonWrapClass = Qnil;
 
@@ -81,6 +83,7 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
             } else {
                 rb_raise(rb_eRuntimeError, "Cannot convert ruby data object to bson");
             }
+            break;
         case T_TRUE:
             bson_append_bool(b, attrName, 1);
             break;
@@ -179,6 +182,9 @@ VALUE bson_iterator_to_ruby(bson_iterator* it, bson_type t) {
         case BSON_INT:
             val = INT2NUM(bson_iterator_int(it));
             break;
+        case BSON_DATE:
+            val = bson_date_to_ruby(bson_iterator_date(it));
+            break;
         case BSON_OBJECT: {
                 bson subbson;
                 bson_iterator_subobject(it, &subbson);
@@ -187,6 +193,9 @@ VALUE bson_iterator_to_ruby(bson_iterator* it, bson_type t) {
             break;
         case BSON_ARRAY:
             val = bson_array_to_ruby(it);
+            break;
+        case BSON_NULL:
+            val = Qnil;
             break;
         default:
             rb_raise(rb_eRuntimeError, "Cannot convert object from bson: %d", t);
@@ -208,8 +217,12 @@ VALUE bson_array_to_ruby(bson_iterator* it) {
     return res;
 }
 
+VALUE bson_date_to_ruby(bson_date_t date) {
+    return rb_funcall(rb_path2class("Time"), rb_intern("at"), 1, INT2NUM(date * 1000));
+}
 
-VALUE bson_to_ruby(bson* bsonval) {
+
+VALUE bson_to_ruby(const bson* bsonval) {
     VALUE res = rb_hash_new();
 
     bson_iterator it;
@@ -222,8 +235,14 @@ VALUE bson_to_ruby(bson* bsonval) {
     return res;
 }
 
-VALUE bson_oid_to_ruby(bson_oid_t* oid) {
+VALUE bson_oid_to_ruby(const bson_oid_t* oid) {
     char oidhex[25];
     bson_oid_to_string(oid, oidhex);
     return rb_str_new2(oidhex);
+}
+
+bson_oid_t ruby_to_bson_oid(VALUE rboid) {
+    bson_oid_t oid;
+    bson_oid_from_string(&oid, StringValuePtr(rboid));
+    return oid;
 }

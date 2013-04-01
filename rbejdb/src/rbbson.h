@@ -21,9 +21,11 @@ extern "C" {
 
     void ruby_to_bson(VALUE rbobj, bson** bsonbuf, int flags);
 
-    VALUE bson_to_ruby(bson* bsonval);
+    VALUE bson_to_ruby(const bson* bsonval);
 
-    VALUE bson_oid_to_ruby(bson_oid_t* oid);
+    VALUE bson_oid_to_ruby(const bson_oid_t* oid);
+
+    bson_oid_t ruby_to_bson_oid(VALUE rboid);
 
 #ifdef	__cplusplus
 }

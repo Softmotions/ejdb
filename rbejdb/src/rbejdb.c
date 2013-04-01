@@ -66,7 +66,7 @@ void EJDB_free(RBEJDB* rejdb) {
 
 
 VALUE EJDB_open(VALUE clazz, VALUE path, VALUE mode) {
-    Check_SafeStr(path);
+    SafeStringValue(path);
     Check_Type(mode, T_FIXNUM);
 
     VALUE ejdbWrap = Data_Wrap_Struct(clazz, NULL, EJDB_free, ruby_xmalloc(sizeof(RBEJDB)));
@@ -97,7 +97,7 @@ void EJDB_close(VALUE self) {
 }
 
 void EJDB_dropCollection(VALUE self, VALUE collName, VALUE prune) {
-    Check_SafeStr(collName);
+    SafeStringValue(collName);
 
     EJDB* ejdb = getEJDB(self);
     if (!ejdbrmcoll(ejdb, StringValuePtr(collName), RTEST(prune))) {
@@ -111,7 +111,7 @@ void EJDB_ensureCollection(int argc, VALUE* argv, VALUE self) {
 
     rb_scan_args(argc, argv, "11", &collName, &copts);
 
-    Check_SafeStr(collName);
+    SafeStringValue(collName);
 
     EJCOLLOPTS jcopts = {NULL};
     if (!NIL_P(copts)) {
@@ -140,18 +140,17 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
         rb_raise(rb_eRuntimeError, "Error calling EJDB.save(): need to specify collection name");
     }
 
-    EJDB* ejdb = getEJDB(self);
-
     VALUE collName = argv[0];
     Check_Type(collName, T_STRING);
 
-    VALUE oids = rb_ary_new();
+    EJDB* ejdb = getEJDB(self);
 
     EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
     if (!coll) {
         raise_ejdb_error(ejdb);
     }
 
+    VALUE oids = rb_ary_new();
     int i;
     for (i = 1; i < argc; i++) {
         VALUE rbobj = argv[i];
@@ -190,13 +189,33 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
     }
 }
 
+VALUE EJDB_load(VALUE self, VALUE collName, VALUE rboid) {
+    SafeStringValue(collName);
+
+    EJDB* ejdb = getEJDB(self);
+
+    EJCOLL *coll = ejdbgetcoll(ejdb, StringValuePtr(collName));
+    if (!coll) {
+        raise_ejdb_error(ejdb);
+    }
+
+    bson_oid_t oid = ruby_to_bson_oid(rboid);
+
+    bson *bs = ejdbloadbson(coll, &oid);
+    if (!bs) {
+        raise_ejdb_error(ejdb);
+    }
+
+    return bson_to_ruby(bs);
+}
+
 VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     VALUE collName;
     VALUE q;
 
     rb_scan_args(argc, argv, "11", &collName, &q);
 
-    Check_SafeStr(collName);
+    SafeStringValue(collName);
     q = !NIL_P(q) ? q :rb_hash_new();
 
     EJDB* ejdb = getEJDB(self);
@@ -270,6 +289,7 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "is_open?", RUBY_METHOD_FUNC(EJDB_is_open), 0);
     rb_define_method(ejdbClass, "close", RUBY_METHOD_FUNC(EJDB_close), 0);
     rb_define_method(ejdbClass, "save", RUBY_METHOD_FUNC(EJDB_save), -1);
+    rb_define_method(ejdbClass, "load", RUBY_METHOD_FUNC(EJDB_load), 2);
     rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), -1);
 
     rb_define_method(ejdbClass, "dropCollection", RUBY_METHOD_FUNC(EJDB_dropCollection), 2);
