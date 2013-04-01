@@ -37,6 +37,15 @@ VALUE ejdbClass;
 VALUE ejdbResultsClass;
 
 
+VALUE get_hash_option(VALUE hash, const char* opt) {
+    Check_Type(hash, T_HASH);
+
+    VALUE symbol = ID2SYM(rb_intern(opt));
+    VALUE res = rb_hash_aref(hash, symbol);
+    return !NIL_P(res) ? res : rb_hash_aref(hash, rb_str_new2(opt));
+}
+
+
 static int raise_ejdb_error(EJDB *ejdb) {
     int ecode = ejdbecode(ejdb);
     const char *emsg = ejdberrmsg(ecode);
@@ -117,10 +126,10 @@ void EJDB_ensureCollection(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(copts)) {
         Check_Type(copts, T_HASH);
 
-        VALUE cachedrecords = rb_hash_aref(copts, rb_str_new2("cachedrecords"));
-        VALUE compressed = rb_hash_aref(copts, rb_str_new2("compressed"));
-        VALUE large = rb_hash_aref(copts, rb_str_new2("large"));
-        VALUE records = rb_hash_aref(copts, rb_str_new2("records"));
+        VALUE cachedrecords = get_hash_option(copts, "cachedrecords");
+        VALUE compressed = get_hash_option(copts, "compressed");
+        VALUE large = get_hash_option(copts, "large");
+        VALUE records = get_hash_option(copts, "records");
 
         jcopts.cachedrecords = !NIL_P(cachedrecords) ? NUM2INT(cachedrecords) : 0;
         jcopts.compressed = RTEST(compressed);
@@ -212,11 +221,16 @@ VALUE EJDB_load(VALUE self, VALUE collName, VALUE rboid) {
 VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     VALUE collName;
     VALUE q;
+    VALUE hints;
 
-    rb_scan_args(argc, argv, "11", &collName, &q);
+    rb_scan_args(argc, argv, "12", &collName, &q, &hints);
 
     SafeStringValue(collName);
     q = !NIL_P(q) ? q :rb_hash_new();
+    hints = !NIL_P(hints) ? hints :rb_hash_new();
+
+    Check_Type(q, T_HASH);
+    Check_Type(hints, T_HASH);
 
     EJDB* ejdb = getEJDB(self);
 
@@ -232,9 +246,23 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
 
     int count;
     int qflags = 0;
+    bool onlycount = RTEST(get_hash_option(hints, "onlycount"));
+    qflags |= onlycount ? EJQONLYCOUNT : 0;
     TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, NULL);
 
-    return create_EJDB_query_results(qres);
+    return !onlycount ? create_EJDB_query_results(qres) : INT2NUM(count);
+}
+
+static VALUE EJDB_block_true(VALUE yielded_object, VALUE context, int argc, VALUE argv[]){
+    return Qtrue;
+}
+
+VALUE EJDB_find_one(int argc, VALUE* argv, VALUE self) {
+    VALUE results = EJDB_find(argc, argv, self);
+    if (TYPE(results) == T_DATA) {
+        return rb_block_call(results, rb_intern("find"), 0, NULL, RUBY_METHOD_FUNC(EJDB_block_true), Qnil); // "find" with "always true" block gets first element
+    }
+    return results;
 }
 
 
@@ -291,6 +319,7 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "save", RUBY_METHOD_FUNC(EJDB_save), -1);
     rb_define_method(ejdbClass, "load", RUBY_METHOD_FUNC(EJDB_load), 2);
     rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), -1);
+    rb_define_method(ejdbClass, "find_one", RUBY_METHOD_FUNC(EJDB_find_one), -1);
 
     rb_define_method(ejdbClass, "dropCollection", RUBY_METHOD_FUNC(EJDB_dropCollection), 2);
     rb_define_method(ejdbClass, "ensureCollection", RUBY_METHOD_FUNC(EJDB_ensureCollection), -1);
