@@ -6,7 +6,7 @@ import org.ejdb.bson.BSONObject;
 import java.io.UnsupportedEncodingException;
 
 /**
- * Utility class for reading BSON object data
+ * Utility class for reading BSON object data from byte array
  *
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$

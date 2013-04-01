@@ -28,7 +28,7 @@ SRCDIR = ./src/cpp/
 
 # Building configuration
 CC = gcc
-CPPFLAGS = -I. -I. -I../tcejdb -I/usr/lib/jvm/java-6-openjdk-amd64/include -I/usr/lib/jvm/java-6-openjdk-amd64/include/linux -I$(INCLUDEDIR) -I/home/tve/include -I/usr/local/include -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__
+CPPFLAGS = -I. -I. -I../tcejdb -I/usr/lib/jvm/java-6-oracle//include -I/usr/lib/jvm/java-6-oracle//include/linux -I$(INCLUDEDIR) -I/home/tve/include -I/usr/local/include -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__
 CFLAGS =  -std=c99 -Wall -fPIC -fsigned-char -O2
 LDFLAGS = -L. -L$(LIBDIR) -L/home/tve/lib -L/usr/local/lib
 LIBS = -lz -ltcejdb -lrt -lpthread -lm -lc 
@@ -70,6 +70,7 @@ install:
 
 clean:
 	rm -rf $(LIBRARYFILES)
+	ant clean
 
 
 #================================================================

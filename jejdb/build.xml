@@ -14,9 +14,6 @@
                encoding="${javac.encoding}"
                includeantruntime="false">
             <src path="${source.dir}"/>
-            <classpath>
-                <path refid="lib.bson.classpath"/>
-            </classpath>
         </javac>
 
         <copy todir="${build.classes}">
@@ -26,9 +23,6 @@
 
         <mkdir dir="${distr.home}"/>
         <mkdir dir="${distr.lib}"/>
-        <copy todir="${distr.lib}">
-            <fileset refid="lib.bson.fileset"/>
-        </copy>
 
         <jar destfile="${distr.home}/${distr.name}.jar" basedir="${build.classes}">
             <!-- TODO: jar manifest-->
@@ -47,7 +41,6 @@
                includeantruntime="false">
             <src path="${source.test.dir}"/>
             <classpath>
-                <path refid="lib.bson.classpath"/>
                 <path refid="lib.junit.classpath"/>
                 <path refid="jejdb.classpath"/>
             </classpath>
@@ -60,9 +53,6 @@
 
         <mkdir dir="${distr.home}"/>
         <mkdir dir="${distr.lib}"/>
-        <copy todir="${distr.lib}">
-            <fileset refid="lib.bson.fileset"/>
-        </copy>
 
         <delete dir="${test.data.dir}"/>
         <mkdir dir="${test.data.dir}"/>
@@ -71,7 +61,6 @@
             <env key="LD_LIBRARY_PATH" path="${basedir}"/>
             <formatter type="plain"/>
             <classpath>
-                <path refid="lib.bson.classpath"/>
                 <path refid="lib.junit.classpath"/>
                 <path refid="jejdb.classpath"/>
                 <path refid="jejdb.test.classpath"/>
@@ -91,7 +80,6 @@
             <class name="org.ejdb.driver.EJDBQuery"/>
             <class name="org.ejdb.driver.EJDBResultSet"/>
             <classpath>
-                <path refid="lib.bson.classpath"/>
                 <path refid="jejdb.classpath"/>
             </classpath>
         </javah>
@@ -101,12 +89,6 @@
 
     <target name="init" description="Build initialization">
         <!-- Perform any build initialization in this target -->
-        <path id="lib.bson.classpath">
-            <fileset id="lib.bson.fileset" dir="${lib.dir}">
-                <include name="bson.jar"/>
-            </fileset>
-        </path>
-
         <path id="lib.junit.classpath">
             <fileset id="lib.junit.fileset" dir="${lib.dir}">
                 <include name="junit-4.11.jar"/>
@@ -117,7 +99,7 @@
 
     <target name="clean" description="Cleanup">
         <delete dir="${build.dir}"/>
-        <delete file="${distr.home}/${distr.name}.jar"/>
+        <delete dir="${distr.home}"/>
     </target>
 
     <target name="build.native.headers" depends="clean">
@@ -135,21 +117,19 @@
     </target>
 
     <target name="build.doc" depends="init" description="Build JavaDocs for JEJDB">
+        <delete dir="${distr.doc}"/>
         <mkdir dir="${distr.doc}"/>
         <javadoc destdir="${distr.doc}"
-                 author="true"
+                 Author="true"
                  version="true"
                  encoding="utf-8"
                  charset="utf-8"
                  docencoding="utf-8"
-                 private="false"
-                 use="true"
+                 Private="false"
+                 Use="true"
                  breakiterator="true"
-                 windowtitle="JEJDB Doc">
+                 Windowtitle="JEJDB Doc">
             <fileset dir="${source.dir}" includes="**/*.java"/>
-            <classpath>
-                <path refid="lib.bson.classpath"/>
-            </classpath>
         </javadoc>
     </target>
 
