@@ -68,6 +68,7 @@ public final class RegexFlag {
     }
 
     /**
+     * Returns Java flag
      * @return Java flag
      */
     public int getFlag() {
@@ -75,6 +76,7 @@ public final class RegexFlag {
     }
 
     /**
+     * Returns BSON character for associated Java regex flag
      * @return BSON character for associated Java regex flag
      */
     public char getCharacter() {
@@ -82,6 +84,7 @@ public final class RegexFlag {
     }
 
     /**
+     * Returns <code>true</code> if BSON supported current Java flag
      * @return <code>true</code> if BSON supported current Java flag
      */
     public boolean isSupported() {

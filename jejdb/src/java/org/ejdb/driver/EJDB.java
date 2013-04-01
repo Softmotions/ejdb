@@ -64,6 +64,7 @@ public class EJDB {
     }
 
     /**
+     * Returns EJDB path
      * @return EJDB path
      */
     public String getPath() {
@@ -233,7 +234,9 @@ public class EJDB {
         return collections.values();
     }
 
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -244,6 +247,9 @@ public class EJDB {
         return sb.toString();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void finalize() throws Throwable {
         this.close();

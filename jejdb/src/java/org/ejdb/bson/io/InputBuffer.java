@@ -6,6 +6,8 @@ import org.ejdb.bson.BSONObject;
 import java.io.UnsupportedEncodingException;
 
 /**
+ * Utility class for reading BSON object data
+ *
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
  */
@@ -22,6 +24,9 @@ public class InputBuffer {
         this.limit = limit;
     }
 
+    /**
+     * Reads one byte from buffer
+     */
     public byte read() {
         ensure(1);
 
@@ -31,6 +36,9 @@ public class InputBuffer {
         return result;
     }
 
+    /**
+     * Reads 4 bytes from buffer as integer value
+     */
     public int readInt() {
         ensure(4);
 
@@ -43,6 +51,9 @@ public class InputBuffer {
         return result;
     }
 
+    /**
+     * Reads 8 bytes from buffer as long value
+     */
     public long readLong() {
         ensure(8);
 
@@ -55,6 +66,10 @@ public class InputBuffer {
         return result;
     }
 
+    /**
+     * Reads bytes from buffer
+     * @param count count of bytes to read
+     */
     public byte[] readBytes(int count) {
         ensure(count);
         byte[] bytes = new byte[count];
@@ -64,10 +79,16 @@ public class InputBuffer {
         return bytes;
     }
 
+    /**
+     * Reads c-string (null-terminated) from buffer
+     */
     public String readString() {
         return readString(0);
     }
 
+    /**
+     * Reads c-string from buffer with specified length
+     */
     public String readString(int length) {
         if (length > 0) {
             ensure(length);
@@ -98,10 +119,17 @@ public class InputBuffer {
         return s;
     }
 
+    /**
+     * Returns <code>true</code> if any bytes available to read from buffer or <code>false</code> otherwise
+     * @return <code>true</code> if any bytes available to read from buffer or <code>false</code> otherwise
+     */
     public boolean isAvailable() {
         return position < limit;
     }
 
+    /**
+     * Get sub buffer with specified length
+     */
     public InputBuffer subBuffer(int limit) {
         ensure(limit);
 
@@ -111,12 +139,19 @@ public class InputBuffer {
         return result;
     }
 
+    /**
+     * Checks is buffer contains needed bytes
+     */
     protected void ensure(int size) {
         if (size > limit - position) {
             throw new BSONException("can not allocate sub buffer: not enought bytes");
         }
     }
 
+
+    /**
+     * Creates {@link InputBuffer} from byte array
+     */
     public static InputBuffer createFromByteArray(byte[] data) {
         return new InputBuffer(data, 0, data.length);
     }

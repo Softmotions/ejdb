@@ -30,14 +30,23 @@ public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>
      */
     public native int length();
 
+    /**
+     * {@inheritDoc}
+     */
     public Iterator<BSONObject> iterator() {
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public boolean hasNext() {
         return position < this.length();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public BSONObject next() throws EJDBException {
         if (!hasNext()) {
             throw new NoSuchElementException();
@@ -46,6 +55,9 @@ public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>
         return get(position++);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void remove() {
         throw new UnsupportedOperationException();
     }
@@ -55,6 +67,9 @@ public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>
      */
     public native void close() throws EJDBException;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void finalize() throws Throwable {
         this.close();

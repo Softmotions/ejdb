@@ -29,11 +29,17 @@ public class BSONQueryObject extends BSONObject {
         super(src);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Object put(String key, Object value) {
         return registerField(key, value);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public BSONQueryObject append(String key, Object value) {
         super.append(key, value);
@@ -41,8 +47,9 @@ public class BSONQueryObject extends BSONObject {
     }
 
     /**
-     * BSON Query objects can not contains dedicated ObjectID
-     * @return
+     * {@inheritDoc}
+     *
+     * @deprecated BSON Query objects can not contains dedicated ObjectID
      */
     @Deprecated
     @Override
@@ -50,6 +57,9 @@ public class BSONQueryObject extends BSONObject {
         return null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected boolean isFieldsOrderImportant() {
         return true;

@@ -51,17 +51,26 @@ public class ObjectId {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object o) {
         return this == o || null != o && o instanceof ObjectId && Arrays.equals(data, ((ObjectId) o).data);
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return Arrays.hashCode(data);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(34);

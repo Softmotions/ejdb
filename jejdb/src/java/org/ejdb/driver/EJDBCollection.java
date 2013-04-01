@@ -65,6 +65,7 @@ public class EJDBCollection {
     }
 
     /**
+     * Returns EJDB object
      * @return EJDB object
      */
     public EJDB getDB() {
@@ -72,6 +73,7 @@ public class EJDBCollection {
     }
 
     /**
+     * Returns collection name
      * @return collection name
      */
     public String getName() {
@@ -79,6 +81,7 @@ public class EJDBCollection {
     }
 
     /**
+     * Returns collection exists status
      * @return collection exists status
      */
     public boolean isExists() {
@@ -86,6 +89,7 @@ public class EJDBCollection {
     }
 
     /**
+     * Returns collection options {@link Options}
      * @return collection options {@link Options}
      */
     public Options getOptions() {
@@ -93,6 +97,7 @@ public class EJDBCollection {
     }
 
     /**
+     * Returns indexes info
      * @return indexes info
      */
     public Collection<Index> getIndexes() {
@@ -430,6 +435,9 @@ public class EJDBCollection {
 
     protected native boolean txControl(int mode) throws EJDBException;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -455,8 +463,8 @@ public class EJDBCollection {
         }
 
         /**
-         * @param compressed       If true collection records will be compressed with DEFLATE compression. Default: false.
-         * @param large            Specifies that the size of the database can be larger than 2GB. Default: false
+         * @param compressed       If <code>true</code> collection records will be compressed with DEFLATE compression. Default: <code>false</code>.
+         * @param large            Specifies that the size of the database can be larger than 2GB. Default: <code>false</code>.
          * @param records          Estimated number of records in this collection. Default: 65535.
          * @param cachedRecords    Max number of cached records in shared memory segment. Default: 0
          */
@@ -483,6 +491,9 @@ public class EJDBCollection {
             return cachedRecords;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder();
@@ -515,26 +526,44 @@ public class EJDBCollection {
         private String file;
         private int records;
 
+        /**
+         * Returns index name
+         */
         public String getName() {
             return name;
         }
 
+        /**
+         * Returns index field path
+         */
         public String getField() {
             return field;
         }
 
+        /**
+         * Returns index type
+         */
         public IndexType getType() {
             return type;
         }
 
+        /**
+         * Returns index file path
+         */
         public String getFile() {
             return file;
         }
 
+        /**
+         * Returns records count in index
+         */
         public int getRecords() {
             return records;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder();

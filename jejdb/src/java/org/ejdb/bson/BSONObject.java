@@ -16,7 +16,7 @@ import java.util.Set;
  * BSON object.
  * <p/>
  * NOTE:
- * - {@link BSONObject#ID_KEY} must be valid {@link ObjectId}((@link ObjectId} instance or valid <code>byte[]</code> or <code>String</code>)
+ *   {@link BSONObject#ID_KEY} must be valid {@link ObjectId} ({@link ObjectId} instance or valid <code>byte[]</code> or <code>String</code>)
  *
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
@@ -140,6 +140,7 @@ public class BSONObject {
     }
 
     /**
+     * Returns fields in adding order
      * @return fields in adding order
      */
     public List<String> fields() {
@@ -147,6 +148,7 @@ public class BSONObject {
     }
 
     /**
+     * Returns id of BSON object (if specified)
      * @return id of BSON object (if specified)
      */
     public ObjectId getId() {
@@ -154,6 +156,7 @@ public class BSONObject {
     }
 
     /**
+     * Returns value of specified field if exists, or <code>null</code> otherwise
      * @return value of specified field if exists, or <code>null</code> otherwise
      */
     public Object get(String key) {
@@ -161,6 +164,7 @@ public class BSONObject {
     }
 
     /**
+     * Returns fields count
      * @return fields count
      */
     public int size() {
@@ -199,6 +203,9 @@ public class BSONObject {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object o) {
         if (this != o && (null == o || !(o instanceof BSONObject))) {
@@ -264,11 +271,17 @@ public class BSONObject {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return data.hashCode();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

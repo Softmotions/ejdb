@@ -38,6 +38,7 @@ public class EJDBQueryBuilder {
     }
 
     /**
+     * Returns main BSON query object
      * @return main BSON query object
      */
     public BSONObject getMainQuery() {
@@ -45,6 +46,7 @@ public class EJDBQueryBuilder {
     }
 
     /**
+     * Returns BSON objects for additional OR queries
      * @return BSON objects for additional OR queries
      */
     public BSONObject[] getOrQueries() {
@@ -62,6 +64,7 @@ public class EJDBQueryBuilder {
     }
 
     /**
+     * Returns BSON hints object
      * @return BSON hints object
      */
     public BSONObject getQueryHints() {
@@ -254,8 +257,9 @@ public class EJDBQueryBuilder {
     }
 
     /**
-     * Make {@se http://github.com/Softmotions/ejdb/wiki/Collection-joins collection join} for select queries.
+     * Make <a href="http://github.com/Softmotions/ejdb/wiki/Collection-joins">collection join</a> for select queries.
      */
+    @SuppressWarnings("JavadocReference")
     public EJDBQueryBuilder join(String fpath, String collname) {
         return new Constraint("$join", new Constraint(fpath, new Constraint("$do", false))).addOperation(collname);
     }
@@ -488,7 +492,7 @@ public class EJDBQueryBuilder {
         }
 
         /**
-         * Field existence matching {@link Constraint#exists(boolean = true)}
+         * Field existence matching {@link Constraint#exists(boolean)}
          */
         public EJDBQueryBuilder exists() {
             return this.exists(true);

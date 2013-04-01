@@ -5,6 +5,8 @@ import org.ejdb.bson.BSONException;
 import java.io.UnsupportedEncodingException;
 
 /**
+ * Utility class for serialize BSON object
+ *
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
  */
@@ -21,34 +23,62 @@ public class OutputBuffer {
         actualSize = 0;
     }
 
+    /**
+     * Returns current position in output
+     * @return current position in output
+     */
     public int getPosition() {
         return position;
     }
 
+    /**
+     * Sets position
+     */
     public void setPosition(int position) {
         this.position = position;
     }
 
+    /**
+     * Returns actual (full) size of buffer (currently writed bytes)
+     * @return actual (full) size of buffer (currently writed bytes)
+     */
     public int getActualSize() {
         return actualSize;
     }
 
+    /**
+     * Returns buffer as byte array
+     * @return buffer as byte array
+     */
     public byte[] getResult() {
         byte[] result = new byte[getActualSize()];
         System.arraycopy(buffer, 0, result, 0, getActualSize());
         return result;
     }
 
+    /**
+     * Writes single byte to buffer
+     */
     public void write(byte data) {
         ensureLength(1);
         buffer[position++] = data;
         actualSize = Math.max(actualSize, position);
     }
 
+    /**
+     * Writes byte array to buffer
+     */
     public void write(byte[] data) {
         this.write(data, 0, data.length);
     }
 
+    /**
+     * Writes part of byte array to buffer
+     *
+     * @param data   source byte array
+     * @param offset start position in source
+     * @param length count bytes to write
+     */
     public void write(byte[] data, int offset, int length) {
         ensureLength(length);
         System.arraycopy(data, offset, buffer, position, length);
@@ -56,6 +86,11 @@ public class OutputBuffer {
         actualSize = Math.max(actualSize, position);
     }
 
+    /**
+     * Writes integer value (4 bytes) at specified position
+     * @param position position to write
+     * @param value value
+     */
     public void writeIntAt(int position, int value) {
         int save = getPosition();
         setPosition(position);
@@ -63,6 +98,9 @@ public class OutputBuffer {
         setPosition(save);
     }
 
+    /**
+     * Writes integer value to buffer as 4 bytes
+     */
     public void writeInt(int value) {
         this.write(new byte[]{
                 (byte) ((value >>> 0) & 0xFF),
@@ -72,6 +110,9 @@ public class OutputBuffer {
         });
     }
 
+    /**
+     * Writes long value to buffer as 8 bytes
+     */
     public void writeLong(long value) {
         this.write(new byte[]{
                 (byte) ((value >>> 0) & 0xFF),
@@ -85,10 +126,17 @@ public class OutputBuffer {
         });
     }
 
+    /**
+     * Writes double value to buffers as 8 bytes
+     */
     public void writeDouble(double value) {
         this.writeLong(Double.doubleToRawLongBits(value));
     }
 
+    /**
+     * Writes {@link String} to buffer as c-style string (null-terminated)
+     * @return count of writed bytes
+     */
     public int writeString(String value) {
         int start = getPosition();
         try {
@@ -101,6 +149,9 @@ public class OutputBuffer {
         return getPosition() - start;
     }
 
+    /**
+     * Checks internal array size to hold needed data and expand it if need.
+     */
     protected void ensureLength(int need) {
         if (need <= buffer.length - position) {
             return;

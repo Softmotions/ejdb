@@ -39,7 +39,8 @@ class BSONDecoder {
     }
 
     /**
-     * @return <code>true</code> if decoder currently in use
+     * Returns <code>true</code> if decoder is currently in use
+     * @return <code>true</code> if decoder is currently in use
      */
     public boolean isBusy() {
         return input != null;

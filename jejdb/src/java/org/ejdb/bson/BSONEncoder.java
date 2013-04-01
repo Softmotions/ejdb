@@ -46,7 +46,8 @@ class BSONEncoder {
     }
 
     /**
-     * @return <code>true</code> if encoder currently in use
+     * Returns <code>true</code> if encoder is currently in use
+     * @return <code>true</code> if encoder is currently in use
      */
     public boolean isBusy() {
         return output != null;
