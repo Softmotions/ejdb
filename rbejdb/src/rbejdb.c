@@ -40,7 +40,7 @@ VALUE ejdbResultsClass;
 static int raise_ejdb_error(EJDB *ejdb) {
     int ecode = ejdbecode(ejdb);
     const char *emsg = ejdberrmsg(ecode);
-    rb_raise(rb_eRuntimeError, emsg);
+    rb_raise(rb_eRuntimeError, "%s", emsg);
 }
 
 
@@ -80,7 +80,7 @@ VALUE EJDB_open(VALUE clazz, VALUE path, VALUE mode) {
         rb_raise(rb_eRuntimeError, "Failed to init ejdb!");
     }
 
-    if (!ejdbopen(rejdb->ejdb, StringValuePtr(path), FIX2INT(mode))) {
+    if (!ejdbopen(rejdb->ejdb, StringValuePtr(path), NUM2INT(mode))) {
         raise_ejdb_error(rejdb->ejdb);
     }
     return ejdbWrap;
@@ -144,6 +144,9 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
 
     VALUE collName = argv[0];
     Check_Type(collName, T_STRING);
+
+    VALUE oids = rb_ary_new();
+
     EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
     if (!coll) {
         raise_ejdb_error(ejdb);
@@ -151,8 +154,14 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
 
     int i;
     for (i = 1; i < argc; i++) {
+        VALUE rbobj = argv[i];
+        if (NIL_P(rbobj)) {
+            rb_ary_push(oids, Qnil);
+            continue;
+        }
+
         bson* bsonval;
-        ruby_to_bson(argv[i], &bsonval, 0);
+        ruby_to_bson(rbobj, &bsonval, 0);
 
         bson_oid_t oid;
         if (!ejdbsavebson2(coll, bsonval, &oid, true /*TODO read this param*/)) {
@@ -161,8 +170,24 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
         }
 
         bson_destroy(bsonval);
+
+        VALUE roid = bson_oid_to_ruby(&oid);
+        rb_ary_push(oids, roid);
+
+        switch(TYPE(rbobj)) {
+            case T_HASH:
+                rb_hash_aset(rbobj, rb_str_new2("_id"), roid);
+                break;
+            default:
+                rb_iv_set(rbobj, "@id", roid);
+        }
     }
-    return Qnil;
+
+    switch (RARRAY_LEN(oids)) {
+        case 0 : return Qnil;
+        case 1: return rb_ary_pop(oids);
+        default: return oids;
+    }
 }
 
 VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
@@ -236,6 +261,10 @@ Init_rbejdb() {
     rb_define_private_method(ejdbClass, "new", RUBY_METHOD_FUNC(EJDB_new), 0);
 
     rb_define_const(ejdbClass, "DEFAULT_OPEN_MODE", INT2FIX(DEFAULT_OPEN_MODE));
+    rb_define_const(ejdbClass, "JBOWRITER", INT2FIX(JBOWRITER));
+    rb_define_const(ejdbClass, "JBOCREAT", INT2FIX(JBOCREAT));
+    rb_define_const(ejdbClass, "JBOTSYNC", INT2FIX(JBOTSYNC));
+    rb_define_const(ejdbClass, "JBOTRUNC", INT2FIX(JBOTRUNC));
 
     rb_define_singleton_method(ejdbClass, "open", RUBY_METHOD_FUNC(EJDB_open), 2);
     rb_define_method(ejdbClass, "is_open?", RUBY_METHOD_FUNC(EJDB_is_open), 0);

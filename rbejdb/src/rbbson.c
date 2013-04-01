@@ -20,6 +20,9 @@ VALUE iterate_array_callback(VALUE val, VALUE bsonWrap);
 
 VALUE bson_array_to_ruby(bson_iterator* it);
 
+bson_date_t ruby_time_to_bson_internal(VALUE time);
+
+
 VALUE bsonWrapClass = Qnil;
 
 
@@ -72,11 +75,20 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
         case T_FIXNUM:
             bson_append_int(b, attrName, FIX2INT(val));
             break;
+        case T_DATA:
+            if (0 == strcmp(rb_obj_classname(val), "Time")) {
+                bson_append_date(b, attrName, ruby_time_to_bson_internal(val));
+            } else {
+                rb_raise(rb_eRuntimeError, "Cannot convert ruby data object to bson");
+            }
         case T_TRUE:
             bson_append_bool(b, attrName, 1);
             break;
         case T_FALSE:
             bson_append_bool(b, attrName, 0);
+            break;
+        case T_NIL:
+            bson_append_null(b, attrName);
             break;
         default:
             rb_raise(rb_eRuntimeError, "Cannot convert value type to bson: %d", TYPE(val));
@@ -99,6 +111,12 @@ VALUE iterate_object_attrs_callback(VALUE key, VALUE bsonWrap) {
 
     iterate_key_values_callback(key, val, bsonWrap);
     return val;
+}
+
+bson_date_t ruby_time_to_bson_internal(VALUE time) {
+    VALUE microsecs = rb_funcall(time, rb_intern("to_f"), 0);
+    Check_Type(microsecs, T_FLOAT);
+    return (bson_date_t) NUM2DBL(microsecs) * 1000;
 }
 
 
@@ -130,6 +148,7 @@ void ruby_to_bson(VALUE rbobj, bson** bsonresp, int flags) {
 
     switch (TYPE(rbobj)) {
         case T_OBJECT:
+        case T_DATA:
             ruby_object_to_bson_internal(rbobj, bsonWrap);
             break;
         case T_HASH:
@@ -148,11 +167,8 @@ void ruby_to_bson(VALUE rbobj, bson** bsonresp, int flags) {
 VALUE bson_iterator_to_ruby(bson_iterator* it, bson_type t) {
     VALUE val;
     switch (t) {
-        case BSON_OID: {
-                char oidhex[25];
-                bson_oid_to_string(bson_iterator_oid(it), oidhex);
-                val = rb_str_new2(oidhex);
-            }
+        case BSON_OID:
+            val = bson_oid_to_ruby(bson_iterator_oid(it));
             break;
         case BSON_STRING:
             val = rb_str_new2(bson_iterator_string(it));
@@ -204,4 +220,10 @@ VALUE bson_to_ruby(bson* bsonval) {
                           bson_iterator_to_ruby(&it, bson_iterator_type(&it)));
     }
     return res;
+}
+
+VALUE bson_oid_to_ruby(bson_oid_t* oid) {
+    char oidhex[25];
+    bson_oid_to_string(oid, oidhex);
+    return rb_str_new2(oidhex);
 }

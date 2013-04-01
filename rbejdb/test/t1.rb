@@ -42,4 +42,4 @@ ejdb.close
 
 raise "Failed to close ejdb" unless !ejdb.is_open?
 
-puts "CONGRATULATIONS!!! EJDB tests have passed completely!"
+puts "CONGRATULATIONS!!! Test batch 1 has passed completely!"

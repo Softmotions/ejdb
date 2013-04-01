@@ -12,5 +12,6 @@ check:
 doc:
 
 clean:
+	rm -rf build
 
 .PHONY: all build check clean doc
