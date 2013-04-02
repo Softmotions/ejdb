@@ -224,7 +224,9 @@ VALUE bson_array_to_ruby(bson_iterator* it) {
 }
 
 VALUE bson_date_to_ruby(bson_date_t date) {
-    return rb_funcall(rb_path2class("Time"), rb_intern("at"), 1, INT2NUM(date * 1000));
+    return rb_funcall(rb_path2class("Time"), rb_intern("at"), 2,
+        INT2NUM(date / 1000), // seconds
+        INT2NUM((date % 1000) * 1000)); // microseconds
 }
 
 
