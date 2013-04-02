@@ -84,6 +84,12 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
                 rb_raise(rb_eRuntimeError, "Cannot convert ruby data object to bson");
             }
             break;
+        case T_REGEXP: {
+                VALUE regexp = rb_funcall(val, rb_intern("inspect"), 0);
+                VALUE source = rb_funcall(val, rb_intern("source"), 0);
+                bson_append_regex(b, attrName, StringValuePtr(source),  StringValuePtr(regexp) + 2 + strlen(StringValuePtr(source))); // "2" for skipping "//" :)
+            }
+            break;
         case T_TRUE:
             bson_append_bool(b, attrName, 1);
             break;

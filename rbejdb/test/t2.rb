@@ -87,4 +87,24 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal(2, results.to_a.length)
   end
 
+  def test_ejdb3_test_query2
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    results = $jb.find("parrots", {:name => /(grenny|bounty)/i}, {:orderby => {:name => 1}})
+
+    assert_not_nil results
+    assert_equal(2, results.to_a.length)
+
+    results.each_with_index { |rv, index|
+      if index == 0
+        assert_equal("Bounty", rv["name"])
+        assert_equal("Cockatoo", rv["type"])
+        assert_equal(false, rv["male"])
+        assert_equal(15, rv["age"])
+        assert_equal($now.inspect, rv["birthdate"].inspect)
+        assert_equal("sugar cane", rv["likes"].join(","))
+      end
+    }
+  end
 end

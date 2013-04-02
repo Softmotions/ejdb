@@ -40,8 +40,17 @@ VALUE ejdbResultsClass;
 VALUE get_hash_option(VALUE hash, const char* opt) {
     Check_Type(hash, T_HASH);
 
-    VALUE symbol = ID2SYM(rb_intern(opt));
-    VALUE res = rb_hash_aref(hash, symbol);
+    VALUE res = Qnil;
+
+    ID symId = rb_intern(opt);
+
+    if (symId) {
+        VALUE symbol = ID2SYM(symId);
+        if (TYPE(symbol) == T_SYMBOL) {
+            res = rb_hash_aref(hash, symbol);
+        }
+    }
+
     return !NIL_P(res) ? res : rb_hash_aref(hash, rb_str_new2(opt));
 }
 
@@ -218,6 +227,17 @@ VALUE EJDB_load(VALUE self, VALUE collName, VALUE rboid) {
     return bson_to_ruby(bs);
 }
 
+
+VALUE prepare_query_hints(VALUE hints) {
+    VALUE res = rb_hash_new();
+    VALUE orderby = get_hash_option(hints, "orderby");
+    if (!NIL_P(orderby)) {
+        rb_hash_aset(res, rb_str_new2("$orderby"), orderby);
+    }
+    return res;
+}
+
+
 VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     VALUE collName;
     VALUE q;
@@ -242,7 +262,10 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     bson* qbson;
     ruby_to_bson(q, &qbson, RUBY_TO_BSON_AS_QUERY);
 
-    EJQ *ejq = ejdbcreatequery(ejdb, qbson, NULL, 0, NULL);
+    bson* hintsbson = NULL;
+    ruby_to_bson(prepare_query_hints(hints), &hintsbson, RUBY_TO_BSON_AS_QUERY);
+
+    EJQ *ejq = ejdbcreatequery(ejdb, qbson, NULL, 0, hintsbson);
 
     int count;
     int qflags = 0;

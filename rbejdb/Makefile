@@ -2,6 +2,7 @@
 all: build check
 
 build:
+	export CFLAGS=-g
 	ruby extconf.rb
 	make -C ./build
 	make install -C ./build
