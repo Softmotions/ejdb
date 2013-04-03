@@ -108,3 +108,9 @@ tcejdb/debian/*.debhelper
 /lua-ejdb_*.changes
 /lua51-ejdb_*.deb
 
+
+/jejdb/build
+/jejdb/target
+/jejdb/*.so
+/jejdb/*.so.*
+
