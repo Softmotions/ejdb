@@ -35,6 +35,7 @@ VALUE create_EJDB_query_results(TCLIST* qres);
 
 VALUE ejdbClass;
 VALUE ejdbResultsClass;
+VALUE ejdbBinaryClass;
 
 
 VALUE get_hash_option(VALUE hash, const char* opt) {
@@ -349,6 +350,36 @@ void EJDB_results_close(VALUE self) {
 }
 
 
+VALUE EJDB_binary_init(VALUE self, VALUE bdata) {
+    Check_Type(bdata, T_ARRAY);
+
+    int length = NUM2INT(rb_funcall(bdata, rb_intern("length"), 0));
+    int i;
+    for (i = 0; i < length; i++) {
+        VALUE byte = rb_ary_entry(bdata, i);
+        if (NUM2INT(byte) > 255 || NUM2INT(byte) < 0) {
+            rb_raise(rb_eRuntimeError, "Invalid value in binary array for EJDBBinary");
+        }
+    }
+
+    rb_iv_set(self, "@data", rb_ary_dup(bdata));
+}
+
+
+static VALUE EJDB_block_proxy_context(VALUE yielded_object, VALUE context, int argc, VALUE argv[]){
+    VALUE block = context;
+    return rb_funcall(block, rb_intern("call"), 1, yielded_object);
+}
+
+void EJDB_binary_each(VALUE self) {
+    VALUE bdata = rb_iv_get(self, "@data");
+    Check_Type(bdata, T_ARRAY);
+
+    VALUE block = rb_block_proc();
+    rb_block_call(bdata, rb_intern("each"), 0, NULL, RUBY_METHOD_FUNC(EJDB_block_proxy_context), block);
+}
+
+
 Init_rbejdb() {
     init_ruby_to_bson();
 
@@ -377,4 +408,10 @@ Init_rbejdb() {
     rb_include_module(ejdbResultsClass, rb_mEnumerable);
     rb_define_method(ejdbResultsClass, "each", RUBY_METHOD_FUNC(EJDB_results_each), 0);
     rb_define_method(ejdbResultsClass, "close", RUBY_METHOD_FUNC(EJDB_results_close), 0);
+
+
+    ejdbBinaryClass = rb_define_class("EJDBBinary", rb_cObject);
+    rb_include_module(ejdbBinaryClass, rb_mEnumerable);
+    rb_define_private_method(ejdbBinaryClass, "initialize", RUBY_METHOD_FUNC(EJDB_binary_init), 1);
+    rb_define_method(ejdbBinaryClass, "each", RUBY_METHOD_FUNC(EJDB_binary_each), 0);
 }

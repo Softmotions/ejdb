@@ -40,6 +40,8 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_not_nil obj
     assert_equal(parrot2["_id"], obj["_id"])
     assert_equal("Bounty", obj["name"])
+
+    puts "test_ejdb1_save_load has passed successfull"
   end
 
 
@@ -86,10 +88,12 @@ class EJDBTestUnit < Test::Unit::TestCase
     results = $jb.find("parrots")
     assert_not_nil results
     assert_equal(2, results.to_a.length)
+
+    puts "test_ejdb2_query1 has passed successfull"
   end
 
 
-  def test_ejdb3_test_query2
+  def test_ejdb3_query2
     assert_not_nil $jb
     assert $jb.is_open?
 
@@ -108,11 +112,12 @@ class EJDBTestUnit < Test::Unit::TestCase
         assert_equal("sugar cane", rv["likes"].join(","))
       end
     }
+
+    puts "test_ejdb3_query2 has passed successfull"
   end
 
 
-  def test_ejdb4_test_query3
-
+  def test_ejdb4_query3
     assert_not_nil $jb
     assert $jb.is_open?
 
@@ -132,7 +137,6 @@ class EJDBTestUnit < Test::Unit::TestCase
       end
     }
 
-
     assert_equal(2, results.to_a.length)
 
     # testing force close
@@ -141,6 +145,80 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_raise(RuntimeError) {
       results.to_a.length
     }
+
+    puts "test_ejdb4_query3 has passed successfull"
+  end
+
+
+=begin
+  test is written but this functionality is rather special an has low priority...
+
+  def test_ejdb5_circular
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    #Circular query object
+    cir_query = {}
+    cir_query["cq"] = cir_query
+
+    err = nil
+    begin
+      $jb.find("parrots", cir_query)
+    rescue Exception => e
+      err = e
+    end
+
+    assert_not_nil err
+    assert_equal(err.message, "Converting circular structure to JSON")
+
+    err = nil
+    begin
+      $jb.find("parrots", [cir_query])
+    rescue Exception => e
+      err = e
+    end
+
+    assert_not_nil err
+    assert_equal(err.message, "Converting circular structure to JSON")
+
+    puts "test_ejdb5_circular has passed successfull"
+  end
+=end
+
+  def test_ejdb6_save_load_buffer
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    sally = {
+        "name" => "Sally",
+        "mood" => "Angry",
+        "secret" => EJDBBinary.new("Some binary secrect".encode("utf-8").bytes.to_a)
+    }
+
+    molly = {
+        "name" => "Molly",
+        "mood" => "Very angry",
+        "secret" => nil
+    }
+
+    sally_oid = $jb.save("birds", sally)
+
+    assert_not_nil sally_oid
+    assert_not_nil sally["_id"]
+
+    obj = $jb.load("birds", sally_oid)
+
+    assert(obj["secret"].is_a? EJDBBinary)
+    assert_equal("Some binary secrect", obj["secret"].to_a.pack("U*"))
+
+    oids = $jb.save("birds", sally, molly)
+
+    assert_not_nil oids
+    assert_not_nil oids.find { |oid|
+      oid == sally_oid
+    }
+
+    puts "test_ejdb6_save_load_buffer has passed successfull"
   end
 
 end

@@ -62,6 +62,25 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
 
     switch (TYPE(val)) {
         case T_OBJECT:
+            if (0 == strcmp(rb_obj_classname(val), "EJDBBinary")) {
+                VALUE bdata = rb_iv_get(val, "@data");
+                Check_Type(bdata, T_ARRAY);
+
+                int length = NUM2INT(rb_funcall(bdata, rb_intern("length"), 0));
+                char* buf = (char*) malloc(sizeof(char) * length);
+                int i;
+
+                for (i = 0; i < length; i++) {
+                    VALUE byte = rb_ary_entry(bdata, i);
+                    buf[i] = (char) NUM2INT(byte);
+                }
+
+                bson_append_binary(b, attrName, BSON_BIN_BINARY, buf, length);
+
+                free(buf);
+                break;
+            }
+            //else same as hash :)
         case T_HASH:
             ruby_to_bson(val, &subbson, rbbson->flags);
             bson_append_bson(b, attrName, subbson);
@@ -72,7 +91,12 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
             bson_append_finish_array(b);
             break;
         case T_STRING:
-            bson_append_string(b, attrName, StringValuePtr(val));
+            if (0 != strcmp("_id", attrName)) {
+                bson_append_string(b, attrName, StringValuePtr(val));
+            } else {
+                bson_oid_t oid = ruby_to_bson_oid(val);
+                bson_append_oid(b, attrName, &oid);
+            }
             break;
         case T_FIXNUM:
             bson_append_int(b, attrName, FIX2INT(val));
@@ -81,7 +105,7 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
             if (0 == strcmp(rb_obj_classname(val), "Time")) {
                 bson_append_date(b, attrName, ruby_time_to_bson_internal(val));
             } else {
-                rb_raise(rb_eRuntimeError, "Cannot convert ruby data object to bson");
+                rb_raise(rb_eRuntimeError, "Cannot convert ruby data object to bson: %s", rb_obj_classname(val));
             }
             break;
         case T_REGEXP: {
@@ -199,6 +223,19 @@ VALUE bson_iterator_to_ruby(bson_iterator* it, bson_type t) {
             break;
         case BSON_ARRAY:
             val = bson_array_to_ruby(it);
+            break;
+        case BSON_BINDATA: {
+                const char* buf = bson_iterator_bin_data(it);
+                int length = bson_iterator_bin_len(it);
+
+                VALUE bdata = rb_ary_new();
+                int i;
+                for (i = 0; i < length; i++) {
+                    rb_ary_push(bdata, INT2NUM(buf[i]));
+                }
+
+                val = rb_funcall(rb_path2class("EJDBBinary"), rb_intern("new"), 1, bdata);
+            }
             break;
         case BSON_NULL:
             val = Qnil;
