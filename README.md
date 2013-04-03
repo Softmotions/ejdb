@@ -4,7 +4,7 @@
 Embedded JSON Database engine
 ====================================
 
-It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/NodeJS/Python/Lua applications under terms of LGPL license.**
+It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/NodeJS/Python/Lua/Java applications under terms of LGPL license.**
 
 EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 
@@ -29,6 +29,7 @@ Features
 * [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
 * Python binding
 * Lua binding
+* Java binding
 
 
 Documentation
@@ -41,6 +42,7 @@ Documentation
     * [NodeJS API](#ejdb-nodejs-api)
 * **[Python3 binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
 * **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/README.md)**
+* **[Java binding](https://github.com/Softmotions/ejdb/blob/master/jejdb/README.md)**
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
