@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jejdb-sample-one" default="run">
+
+    <property file="build.properties"/>
+
+    <target name="init">
+        <available file="${jejdb.dir}" property="jejdb.target.available"/>
+        <fail message="Please build JEJDB library first" unless="jejdb.target.available"/>
+
+        <path id="lib.jejdb.classpath">
+            <fileset id="lib.jejdb.fileset" dir="${jejdb.dir}">
+                <include name="jejdb-*.jar"/>
+            </fileset>
+        </path>
+    </target>
+
+    <target name="build" depends="init" description="Build JEJDB sample">
+        <mkdir dir="${build.dir}/classes"/>
+        <javac destdir="${build.dir}/classes"
+               target="${javac.target}"
+               source="${javac.source}"
+               debug="${javac.debug}"
+               optimize="${javac.optimize}"
+               encoding="${javac.encoding}"
+               includeantruntime="false">
+            <src path="${source.dir}"/>
+            <classpath>
+                <path refid="lib.jejdb.classpath"/>
+            </classpath>
+        </javac>
+        <path id="jejdb.sample-one.classpath" location="${build.dir}/classes"/>
+
+        <manifestclasspath property="jar.lib.jejdb.classpath" jarfile="${basedir}/jejdb-sample1.jar">
+            <classpath>
+                <path refid="lib.jejdb.classpath"/>
+            </classpath>
+        </manifestclasspath>
+
+        <jar destfile="${basedir}/jejdb-sample1.jar" basedir="${build.dir}/classes">
+            <manifest>
+                <attribute name="Main-Class" value="org.ejdb.sample1.Main"/>
+                <attribute name="Class-Path" value="${jar.lib.jejdb.classpath}"/>
+            </manifest>
+        </jar>
+
+        <echo message="Use 'java -jar jejdb-sample1.jar' to run sample"/>
+        <echo message="Ensure that LD_LIBRARY_PATH environment variable contains path to 'libjejdb'"/>
+    </target>
+
+    <target name="run" depends="build" description="Build JEJDB sample and run it">
+        <java jar="${basedir}/jejdb-sample1.jar" fork="true" dir="${build.dir}">
+            <env key="LD_LIBRARY_PATH" path="${jejdb.dir}/.."/>
+        </java>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+</project>
