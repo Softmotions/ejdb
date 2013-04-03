@@ -12,7 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
-* `2013-04-03` **[Java API binding available (*nix OS only)](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
+* `2013-04-03` **[Java API binding available](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
 * `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
 * `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
 * `2013-02-07` **[Debian packages provided](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)**
