@@ -1,9 +1,10 @@
 Embedded JSON database library Java binding
 ============================================================
 
+**[EJDB Java API documentation](http://ejdb.org/javadoc/)**
+
 Installation
 ---------------------------------
-
 
 **Required tools/system libraries:**
 
