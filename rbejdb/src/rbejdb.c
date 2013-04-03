@@ -241,12 +241,18 @@ VALUE prepare_query_hints(VALUE hints) {
 VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     VALUE collName;
     VALUE q;
+    VALUE orarr;
     VALUE hints;
 
-    rb_scan_args(argc, argv, "12", &collName, &q, &hints);
+    VALUE p3;
+    VALUE p4;
+
+    rb_scan_args(argc, argv, "13", &collName, &q, &p3, &p4);
 
     SafeStringValue(collName);
     q = !NIL_P(q) ? q :rb_hash_new();
+    orarr = TYPE(p3) == T_ARRAY ? rb_ary_dup(p3) : rb_ary_new();
+    hints = TYPE(p3) != T_ARRAY ? p3 : p4;
     hints = !NIL_P(hints) ? hints :rb_hash_new();
 
     Check_Type(q, T_HASH);
@@ -262,10 +268,20 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     bson* qbson;
     ruby_to_bson(q, &qbson, RUBY_TO_BSON_AS_QUERY);
 
+    VALUE orarrlng = rb_funcall(orarr, rb_intern("length"), 0);
+    bson* orarrbson = (bson*) malloc(sizeof(bson) * NUM2INT(orarrlng));
+    int i;
+    while(!NIL_P(rb_ary_entry(orarr, 0))) {
+        VALUE orq = rb_ary_shift(orarr);
+        bson* orqbson;
+        ruby_to_bson(orq, &orqbson, RUBY_TO_BSON_AS_QUERY);
+        orarrbson[i++] = *orqbson;
+    }
+
     bson* hintsbson = NULL;
     ruby_to_bson(prepare_query_hints(hints), &hintsbson, RUBY_TO_BSON_AS_QUERY);
 
-    EJQ *ejq = ejdbcreatequery(ejdb, qbson, NULL, 0, hintsbson);
+    EJQ *ejq = ejdbcreatequery(ejdb, qbson, orarrbson, NUM2INT(orarrlng), hintsbson);
 
     int count;
     int qflags = 0;
@@ -273,6 +289,7 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     qflags |= onlycount ? EJQONLYCOUNT : 0;
     TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, NULL);
 
+    free(orarrbson);
     return !onlycount ? create_EJDB_query_results(qres) : INT2NUM(count);
 }
 
@@ -323,6 +340,14 @@ void EJDB_results_each(VALUE self) {
     }
 }
 
+void EJDB_results_close(VALUE self) {
+    RBEJDB_RESULTS* rbresults;
+    Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
+
+    tclistdel(rbresults->results);
+    rbresults->results = NULL;
+}
+
 
 Init_rbejdb() {
     init_ruby_to_bson();
@@ -351,4 +376,5 @@ Init_rbejdb() {
     ejdbResultsClass = rb_define_class("EJDBResults", rb_cObject);
     rb_include_module(ejdbResultsClass, rb_mEnumerable);
     rb_define_method(ejdbResultsClass, "each", RUBY_METHOD_FUNC(EJDB_results_each), 0);
+    rb_define_method(ejdbResultsClass, "close", RUBY_METHOD_FUNC(EJDB_results_close), 0);
 }

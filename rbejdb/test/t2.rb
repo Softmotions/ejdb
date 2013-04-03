@@ -42,6 +42,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal("Bounty", obj["name"])
   end
 
+
   def test_ejdb2_query1
     assert_not_nil $jb
     assert $jb.is_open?
@@ -87,6 +88,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal(2, results.to_a.length)
   end
 
+
   def test_ejdb3_test_query2
     assert_not_nil $jb
     assert $jb.is_open?
@@ -107,4 +109,38 @@ class EJDBTestUnit < Test::Unit::TestCase
       end
     }
   end
+
+
+  def test_ejdb4_test_query3
+
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    results = $jb.find("parrots", {}, [{:name => "Grenny"}, {:name => "Bounty"}], {:orderby => {:name => 1}})
+
+    assert_not_nil results
+    assert_equal(2, results.to_a.length)
+
+    results.each_with_index { |rv, index|
+      if index == 1
+        assert_equal("Grenny", rv["name"])
+        assert_equal("African Grey", rv["type"])
+        assert_equal(true, rv["male"])
+        assert_equal(1, rv["age"])
+        assert_equal($now.inspect, rv["birthdate"].inspect)
+        assert_equal("green color,night,toys", rv["likes"].join(","))
+      end
+    }
+
+
+    assert_equal(2, results.to_a.length)
+
+    # testing force close
+    results.close
+
+    assert_raise(RuntimeError) {
+      results.to_a.length
+    }
+  end
+
 end
