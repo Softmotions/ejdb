@@ -116,7 +116,12 @@ void EJDB_close(VALUE self) {
     ejdbclose(ejdb);
 }
 
-void EJDB_drop_collection(VALUE self, VALUE collName, VALUE prune) {
+void EJDB_drop_collection(int argc, VALUE* argv, VALUE self) {
+    VALUE collName;
+    VALUE prune;
+
+    rb_scan_args(argc, argv, "11", &collName, &prune);
+
     SafeStringValue(collName);
 
     EJDB* ejdb = getEJDB(self);
@@ -588,7 +593,7 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "update", RUBY_METHOD_FUNC(EJDB_update), -1);
     rb_define_method(ejdbClass, "remove", RUBY_METHOD_FUNC(EJDB_remove), 2);
 
-    rb_define_method(ejdbClass, "drop_collection", RUBY_METHOD_FUNC(EJDB_drop_collection), 2);
+    rb_define_method(ejdbClass, "drop_collection", RUBY_METHOD_FUNC(EJDB_drop_collection), -1);
     rb_define_method(ejdbClass, "ensure_collection", RUBY_METHOD_FUNC(EJDB_ensure_collection), -1);
 
     rb_define_method(ejdbClass, "drop_indexes", RUBY_METHOD_FUNC(EJDB_drop_indexes), 2);

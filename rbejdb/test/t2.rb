@@ -338,5 +338,20 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_not_nil $jb
     assert $jb.is_open?
     $jb.sync
+    puts "test_ejdbc_sync has passed successfull"
   end
+
+  def test_ejdbd_remove_colls
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    $jb.drop_collection("birds")
+
+    results = $jb.find("birds", {})
+    assert_equal(0, results.count)
+    assert_nil results.find { true }
+
+    puts "test_ejdbd_remove_colls has passed successfull"
+  end
+
 end
