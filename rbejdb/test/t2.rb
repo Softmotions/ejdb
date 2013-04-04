@@ -292,4 +292,28 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     puts "test_ejdb9_test_update1 has passed successfull"
   end
+
+  def test_ejdba_id_nin
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    obj = $jb.find_one("parrots", {})
+    assert_not_nil obj
+
+    results = $jb.find("parrots", {"_id" => {"$in" => [obj["_id"]]}})
+
+    assert_equal(1, results.count)
+    assert_equal(obj["_id"], results.find { true }["_id"])
+
+    results = $jb.find("parrots", {"_id" => {"$nin" => [obj["_id"]]}}, {:explain => true})
+    assert results.count > 0
+
+    results.each { |other|
+      assert other["_id"]
+      assert other["_id"] != obj["_id"]
+    }
+    assert results.log.include? "RUN FULLSCAN"
+    puts "test_ejdba_id_nin has passed successfull"
+  end
+
 end
