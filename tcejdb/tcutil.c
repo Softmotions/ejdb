@@ -6513,7 +6513,7 @@ TCLIST *tcstrkwic(const char *str, const TCLIST *words, int width, int opts){
         TCMALLOC(tbuf, ti * 5 + 1);
         int wi = 0;
         wi += tcstrutfkwicputtext(oary, nary, 0, ti, nanum, tbuf + wi, uwords, opts);
-        if(!(opts & TCKWNOOVER) && opts & TCKWMUTAB){
+        if(!(opts & TCKWNOOVER) && (opts & TCKWMUTAB)){
           tbuf[wi++] = '\t';
           tbuf[wi++] = '\t';
         }

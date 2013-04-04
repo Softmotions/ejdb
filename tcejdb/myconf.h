@@ -314,7 +314,14 @@ int _tc_dummyfunc(void);
 
 int _tc_dummyfuncv(int a, ...);
 
+/* MAX and MIN are defined in a really funky place in Solaris. */
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
 /*************************************************************************************************
  * notation of filesystems

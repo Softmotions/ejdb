@@ -4,7 +4,7 @@
 Embedded JSON Database engine
 ====================================
 
-It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/NodeJS/Python/Lua applications under terms of LGPL license.**
+It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/NodeJS/Python/Lua/Java applications under terms of LGPL license.**
 
 EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 
@@ -12,8 +12,9 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
-* `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb/blob/master/luaejdb/README.md)**
-* `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
+* `2013-04-03` **[Java API binding available](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
+* `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
+* `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
 * `2013-02-07` **[Debian packages provided](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)**
 * `2013-01-22` **[Collection joins now supported](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
 
@@ -28,6 +29,7 @@ Features
 * [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
 * Python binding
 * Lua binding
+* Java binding
 
 
 Documentation
@@ -38,8 +40,9 @@ Documentation
     * [Installation](#installation)
     * [Samples](#ejdb-nodejs-samples)
     * [NodeJS API](#ejdb-nodejs-api)
-* **[Python3 binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
-* **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/README.md)**
+* **[Python3 binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
+* **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
+* **[Java binding](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
@@ -946,4 +949,5 @@ TODO
 Related software
 ------------------------------------
 [Connect session store backed by EJDB database](https://github.com/Softmotions/connect-session-ejdb)
+
 

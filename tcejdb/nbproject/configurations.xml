@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="88">
+<configurationDescriptor version="84">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
-    <df root="." name="tcejdb">
+    <df name="tcejdb" root=".">
+      <df name="autom4te.cache">
+      </df>
       <df name="bros">
         <in>bdbtest.c</in>
         <in>cdbtest.c</in>
@@ -15,15 +17,140 @@
         <in>tctest.c</in>
         <in>tdbtest.c</in>
       </df>
+      <df name="debian">
+        <df name="libtcejdb9">
+          <df name="DEBIAN">
+          </df>
+          <df name="usr">
+            <df name="lib">
+              <df name="x86_64-linux-gnu">
+              </df>
+            </df>
+            <df name="share">
+              <df name="doc">
+                <df name="libtcejdb9">
+                </df>
+              </df>
+              <df name="lintian">
+                <df name="overrides">
+                </df>
+              </df>
+            </df>
+          </df>
+        </df>
+        <df name="libtcejdb9-dbg">
+          <df name="DEBIAN">
+          </df>
+          <df name="usr">
+            <df name="lib">
+              <df name="debug">
+              </df>
+            </df>
+            <df name="share">
+              <df name="doc">
+                <df name="libtcejdb9-dbg">
+                </df>
+              </df>
+              <df name="lintian">
+                <df name="overrides">
+                </df>
+              </df>
+            </df>
+          </df>
+        </df>
+        <df name="libtcejdb9-dev">
+          <df name="DEBIAN">
+          </df>
+          <df name="usr">
+            <df name="include">
+              <df name="tcejdb">
+                <in>bson.h</in>
+                <in>ejdb.h</in>
+                <in>ejdb_private.h</in>
+                <in>myconf.h</in>
+                <in>tcadb.h</in>
+                <in>tcbdb.h</in>
+                <in>tcfdb.h</in>
+                <in>tchdb.h</in>
+                <in>tctdb.h</in>
+                <in>tcutil.h</in>
+              </df>
+            </df>
+            <df name="lib">
+              <df name="x86_64-linux-gnu">
+                <df name="pkgconfig">
+                </df>
+              </df>
+            </df>
+            <df name="share">
+              <df name="doc">
+                <df name="libtcejdb9-dev">
+                </df>
+              </df>
+              <df name="lintian">
+                <df name="overrides">
+                </df>
+              </df>
+              <df name="man">
+                <df name="man3">
+                </df>
+              </df>
+            </df>
+          </df>
+        </df>
+        <df name="source">
+        </df>
+        <df name="tmp">
+          <df name="usr">
+            <df name="include">
+              <df name="tcejdb">
+                <in>bson.h</in>
+                <in>ejdb.h</in>
+                <in>ejdb_private.h</in>
+                <in>myconf.h</in>
+                <in>tcadb.h</in>
+                <in>tcbdb.h</in>
+                <in>tcfdb.h</in>
+                <in>tchdb.h</in>
+                <in>tctdb.h</in>
+                <in>tcutil.h</in>
+              </df>
+            </df>
+            <df name="lib">
+              <df name="x86_64-linux-gnu">
+                <df name="pkgconfig">
+                </df>
+              </df>
+            </df>
+            <df name="share">
+              <df name="man">
+                <df name="man3">
+                </df>
+              </df>
+              <df name="tcejdb">
+              </df>
+            </df>
+          </df>
+        </df>
+      </df>
+      <df name="doc">
+      </df>
+      <df name="lab">
+      </df>
+      <df name="man">
+      </df>
       <df name="samples">
         <df name="sample1">
           <in>sample1.c</in>
         </df>
       </df>
+      <df name="static">
+      </df>
       <df name="testejdb">
         <in>t1.c</in>
         <in>t2.c</in>
         <in>t3.c</in>
+        <in>t4.c</in>
       </df>
       <in>bson.c</in>
       <in>bson.h</in>
@@ -172,8 +299,6 @@
         <cTool>
         </cTool>
       </item>
-      <item path="bson.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="ejdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
@@ -181,15 +306,9 @@
           </preprocessorList>
         </cTool>
       </item>
-      <item path="ejdb.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="ejdb_private.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="ejdbutl.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
-      </item>
-      <item path="ejdbutl.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="encoding.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -198,8 +317,6 @@
             <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
-      </item>
-      <item path="encoding.h" ex="false" tool="3" flavor2="0">
       </item>
       <folder path="tcejdb/samples">
         <cTool>
@@ -223,8 +340,6 @@
           </preprocessorList>
         </cTool>
       </item>
-      <item path="md5.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="myconf.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <preprocessorList>
@@ -232,8 +347,6 @@
             <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
-      </item>
-      <item path="myconf.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="numbers.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -250,8 +363,6 @@
       <item path="tcadb.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
-      </item>
-      <item path="tcadb.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="tcamgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -273,8 +384,6 @@
         <cTool>
         </cTool>
       </item>
-      <item path="tcbdb.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="tcbmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
@@ -290,8 +399,6 @@
       <item path="tcfdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
-      </item>
-      <item path="tcfdb.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="tcfmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -309,8 +416,6 @@
         <cTool>
         </cTool>
       </item>
-      <item path="tchdb.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="tchmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
@@ -326,8 +431,6 @@
       <item path="tctdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
-      </item>
-      <item path="tctdb.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="tctmgr.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -361,8 +464,6 @@
         <cTool>
         </cTool>
       </item>
-      <item path="tcutil.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="testejdb/t1.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
@@ -381,8 +482,6 @@
             <Elem>_TC_APPLIBS="-L/usr/local/lib -ltcejdb -lbz2 -lz -lrt -lpthread -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
-      </item>
-      <item path="utf8proc.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="utf8proc_data.c" ex="false" tool="0" flavor2="2">
         <cTool>

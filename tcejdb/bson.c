@@ -1270,14 +1270,14 @@ void bson_fatal_msg(int ok, const char *msg) {
 extern const char bson_numstrs[1000][4];
 
 EJDB_EXPORT void bson_numstr(char *str, int64_t i) {
-    if (i < 1000)
+    if (i >= 0 && i < 1000)
         memcpy(str, bson_numstrs[i], 4);
     else
         bson_sprintf(str, "%lld", (long long int) i);
 }
 
 EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, int64_t i) {
-    if (i < 1000 && maxbuf > 4) {
+    if (i >= 0 && i < 1000 && maxbuf > 4) {
         memcpy(str, bson_numstrs[i], 4);
         return strlen(bson_numstrs[i]);
     } else {

@@ -4222,6 +4222,19 @@ void testTicket43() {
     tcxstrdel(log);
 }
 
+void testTicket54() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket54", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    bson b;
+    bson_oid_t oid;
+    bson_init(&b);
+    bson_append_long(&b, "value", -10000000L);
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "value", JBIDXNUM));
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -4290,7 +4303,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket29", testTicket29)) ||
             (NULL == CU_add_test(pSuite, "testTicket28", testTicket28)) ||
             (NULL == CU_add_test(pSuite, "testTicket38", testTicket38)) ||
-            (NULL == CU_add_test(pSuite, "testTicket43", testTicket43))
+            (NULL == CU_add_test(pSuite, "testTicket43", testTicket43)) ||
+            (NULL == CU_add_test(pSuite, "testTicket54", testTicket54))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

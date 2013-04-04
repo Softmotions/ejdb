@@ -2,7 +2,6 @@
 <module type="LUA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$USER_HOME$/Downloads/tokyocabinet-lua-1.10" />
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="Kahlua" jdkType="Lua SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
