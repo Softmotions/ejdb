@@ -334,4 +334,9 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts "test_ejdbb_test_remove has passed successfull"
   end
 
+  def test_ejdbc_sync
+    assert_not_nil $jb
+    assert $jb.is_open?
+    $jb.sync
+  end
 end

@@ -467,6 +467,13 @@ VALUE EJDB_get_db_meta(VALUE self) {
     return res;
 }
 
+void EJDB_sync(VALUE self) {
+    EJDB* ejdb = getEJDB(self);
+    if (!ejdbsyncdb(ejdb)) {
+        raise_ejdb_error(ejdb);
+    }
+}
+
 
 void close_ejdb_results_internal(RBEJDB_RESULTS* rbres) {
     tclistdel(rbres->results);
@@ -600,6 +607,7 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "drop_array_index", RUBY_METHOD_FUNC(EJDB_drop_array_index), 2);
 
     rb_define_method(ejdbClass, "get_db_meta", RUBY_METHOD_FUNC(EJDB_get_db_meta), 0);
+    rb_define_method(ejdbClass, "sync", RUBY_METHOD_FUNC(EJDB_sync), 0);
 
 
     ejdbResultsClass = rb_define_class("EJDBResults", rb_cObject);
