@@ -263,4 +263,33 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts "test_ejdb8_cmeta has passed successfull"
   end
 
+  def test_ejdb9_test_update1
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    result = $jb.update("parrots", {"name" => {"$icase" => "GRENNY"}, "$inc" => {"age" => 10}}, {:explain => true})
+    assert_equal(1, result.count)
+
+    log = result.log
+    assert_not_nil log
+    assert log.include?("UPDATING MODE: YES")
+
+    obj = $jb.find_one("parrots", {"age" => 11})
+    assert_not_nil obj
+    assert_equal("Grenny", obj["name"])
+
+    id = $jb.save("parrots", {"_id" => obj["_id"], "extra1" => 1}, true)
+    assert_not_nil id
+
+    obj = $jb.load("parrots", id)
+    assert_not_nil obj
+    assert_equal("Grenny", obj["name"])
+    assert_equal(1, obj["extra1"])
+
+    q = {"_id" => {"$in" => [id]}, "$set" => {"stime" => Time.now}}
+    result = $jb.update("parrots", q)
+    assert_equal(1, result.count)
+
+    puts "test_ejdb9_test_update1 has passed successfull"
+  end
 end

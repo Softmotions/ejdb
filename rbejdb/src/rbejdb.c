@@ -163,6 +163,8 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
     VALUE collName = argv[0];
     Check_Type(collName, T_STRING);
 
+    bool merge = TYPE(argv[argc - 1]) == T_TRUE;
+
     EJDB* ejdb = getEJDB(self);
 
     EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
@@ -174,6 +176,9 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
     int i;
     for (i = 1; i < argc; i++) {
         VALUE rbobj = argv[i];
+
+        if (merge && i == argc - 1) break;
+
         if (NIL_P(rbobj)) {
             rb_ary_push(oids, Qnil);
             continue;
@@ -183,7 +188,7 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
         ruby_to_bson(rbobj, &bsonval, 0);
 
         bson_oid_t oid;
-        if (!ejdbsavebson2(coll, bsonval, &oid, true /*TODO read this param*/)) {
+        if (!ejdbsavebson2(coll, bsonval, &oid, merge)) {
             bson_destroy(bsonval);
             raise_ejdb_error(ejdb);
         }
@@ -308,6 +313,10 @@ VALUE EJDB_find_one(int argc, VALUE* argv, VALUE self) {
         return rb_block_call(results, rb_intern("find"), 0, NULL, RUBY_METHOD_FUNC(EJDB_block_true), Qnil); // "find" with "always true" block gets first element
     }
     return results;
+}
+
+VALUE EJDB_update(int argc, VALUE* argv, VALUE self) {
+    return EJDB_find(argc, argv, self);
 }
 
 
@@ -551,6 +560,7 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "load", RUBY_METHOD_FUNC(EJDB_load), 2);
     rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), -1);
     rb_define_method(ejdbClass, "find_one", RUBY_METHOD_FUNC(EJDB_find_one), -1);
+    rb_define_method(ejdbClass, "update", RUBY_METHOD_FUNC(EJDB_update), -1);
 
     rb_define_method(ejdbClass, "drop_collection", RUBY_METHOD_FUNC(EJDB_drop_collection), 2);
     rb_define_method(ejdbClass, "ensure_collection", RUBY_METHOD_FUNC(EJDB_ensure_collection), -1);
