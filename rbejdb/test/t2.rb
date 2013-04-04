@@ -316,4 +316,22 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts "test_ejdba_id_nin has passed successfull"
   end
 
+  def test_ejdbb_test_remove
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    obj = $jb.find_one("birds", {"name" => "Molly"})
+    assert_not_nil obj
+    assert_not_nil obj["_id"]
+    assert_equal("Very angry", obj["mood"])
+
+    #Bye bye Molly!
+    $jb.remove("birds", obj["_id"])
+
+    obj = $jb.find_one("birds", {"name" => "Molly"})
+    assert_nil obj
+
+    puts "test_ejdbb_test_remove has passed successfull"
+  end
+
 end

@@ -320,6 +320,24 @@ VALUE EJDB_update(int argc, VALUE* argv, VALUE self) {
 }
 
 
+void EJDB_remove(VALUE self, VALUE collName, VALUE rboid) {
+    SafeStringValue(collName);
+    SafeStringValue(rboid);
+
+    EJDB* ejdb = getEJDB(self);
+
+    EJCOLL *coll = ejdbgetcoll(ejdb, StringValuePtr(collName));
+    if (!coll) {
+        raise_ejdb_error(ejdb);
+    }
+
+    bson_oid_t oid = ruby_to_bson_oid(rboid);
+    if (!ejdbrmbson(coll, &oid)) {
+        raise_ejdb_error(ejdb);
+    }
+}
+
+
 void EJDB_set_index_internal(VALUE self, VALUE collName, VALUE fpath, int flags) {
     SafeStringValue(collName);
     SafeStringValue(fpath);
@@ -561,6 +579,7 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), -1);
     rb_define_method(ejdbClass, "find_one", RUBY_METHOD_FUNC(EJDB_find_one), -1);
     rb_define_method(ejdbClass, "update", RUBY_METHOD_FUNC(EJDB_update), -1);
+    rb_define_method(ejdbClass, "remove", RUBY_METHOD_FUNC(EJDB_remove), 2);
 
     rb_define_method(ejdbClass, "drop_collection", RUBY_METHOD_FUNC(EJDB_drop_collection), 2);
     rb_define_method(ejdbClass, "ensure_collection", RUBY_METHOD_FUNC(EJDB_ensure_collection), -1);
