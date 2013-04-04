@@ -241,6 +241,26 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     results = $jb.find("birds", {"name" => "Molly"}, {:explain => true})
     assert results.log.include? "MAIN IDX: 'sname"
+
+    puts "test_ejdb7_use_string_index has passed successfull"
+  end
+
+
+  def test_ejdb8_cmeta
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    dm = $jb.get_db_meta
+    assert dm
+    assert_equal("tdbt2", dm["file"])
+    assert_not_nil dm["collections"]
+    assert dm["collections"].is_a? Array
+
+    parrots = dm["collections"][0]
+    assert_not_nil parrots
+    assert_equal("parrots", parrots["name"])
+
+    puts "test_ejdb8_cmeta has passed successfull"
   end
 
 end

@@ -383,6 +383,63 @@ void EJDB_drop_array_index(VALUE self, VALUE collName, VALUE fpath) {
     EJDB_set_index_internal(self, collName, fpath, JBIDXARR | JBIDXDROP);
 }
 
+VALUE EJDB_get_db_meta(VALUE self) {
+
+    EJDB* ejdb = getEJDB(self);
+
+    TCLIST *cols = ejdbgetcolls(ejdb);
+    if (!cols) {
+        raise_ejdb_error(ejdb);
+    }
+
+    VALUE res = rb_hash_new();
+    VALUE collections = rb_ary_new();
+    rb_hash_aset(res,  rb_str_new2("collections"), collections);
+    int i, j;
+    for (i = 0; i < TCLISTNUM(cols); ++i) {
+        EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
+
+        VALUE collhash = rb_hash_new();
+        rb_ary_push(collections, collhash);
+        rb_hash_aset(collhash,  rb_str_new2("name"), rb_str_new2(coll->cname));
+        rb_hash_aset(collhash,  rb_str_new2("file"), rb_str_new2(coll->tdb->hdb->path));
+        rb_hash_aset(collhash,  rb_str_new2("records"), INT2NUM(coll->tdb->hdb->rnum));
+
+        VALUE options = rb_hash_new();
+        rb_hash_aset(collhash,  rb_str_new2("options"), options);
+        rb_hash_aset(options,  rb_str_new2("buckets"), INT2NUM(coll->tdb->hdb->bnum));
+        rb_hash_aset(options,  rb_str_new2("cachedrecords"), INT2NUM(coll->tdb->hdb->rcnum));
+        rb_hash_aset(options,  rb_str_new2("large"), coll->tdb->opts & TDBTLARGE ? Qtrue : Qfalse);
+        rb_hash_aset(options,  rb_str_new2("compressed"), coll->tdb->opts & TDBTDEFLATE ? Qtrue : Qfalse);
+
+        VALUE indexes = rb_ary_new();
+        rb_hash_aset(collhash,  rb_str_new2("indexes"), indexes);
+        for (j = 0; j < coll->tdb->inum; ++j) {
+            TDBIDX *idx = (coll->tdb->idxs + j);
+            if (idx->type != TDBITLEXICAL && idx->type != TDBITDECIMAL && idx->type != TDBITTOKEN) {
+                continue;
+            }
+            VALUE imeta = rb_hash_new();
+            rb_ary_push(indexes, imeta);
+            rb_hash_aset(imeta,  rb_str_new2("filed"), rb_str_new2(idx->name + 1));
+            rb_hash_aset(imeta,  rb_str_new2("iname"), rb_str_new2(idx->name));
+            rb_hash_aset(imeta,  rb_str_new2("type"), rb_str_new2(
+                idx->type == TDBITLEXICAL ? "lexical" :
+                idx->type == TDBITDECIMAL ? "decimal" :
+                idx->type == TDBITTOKEN ? "token" : ""
+            ));
+
+            TCBDB *idb = (TCBDB*) idx->db;
+            if (idb) {
+                rb_hash_aset(imeta,  rb_str_new2("records"), INT2NUM(idb->rnum));
+                rb_hash_aset(imeta,  rb_str_new2("file"), rb_str_new2(idb->hdb->path));
+            }
+        }
+    }
+    rb_hash_aset(res,  rb_str_new2("file"), rb_str_new2(ejdb->metadb->hdb->path));
+    return res;
+}
+
 
 void close_ejdb_results_internal(RBEJDB_RESULTS* rbres) {
     tclistdel(rbres->results);
@@ -512,6 +569,8 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "ensure_array_index", RUBY_METHOD_FUNC(EJDB_ensure_array_index), 2);
     rb_define_method(ejdbClass, "rebuild_array_index", RUBY_METHOD_FUNC(EJDB_rebuild_array_index), 2);
     rb_define_method(ejdbClass, "drop_array_index", RUBY_METHOD_FUNC(EJDB_drop_array_index), 2);
+
+    rb_define_method(ejdbClass, "get_db_meta", RUBY_METHOD_FUNC(EJDB_get_db_meta), 0);
 
 
     ejdbResultsClass = rb_define_class("EJDBResults", rb_cObject);
