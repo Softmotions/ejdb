@@ -185,6 +185,7 @@ class EJDBTestUnit < Test::Unit::TestCase
   end
 =end
 
+
   def test_ejdb6_save_load_buffer
     assert_not_nil $jb
     assert $jb.is_open?
@@ -219,6 +220,27 @@ class EJDBTestUnit < Test::Unit::TestCase
     }
 
     puts "test_ejdb6_save_load_buffer has passed successfull"
+  end
+
+
+  def test_ejdb7_use_string_index
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    results = $jb.find("birds", {"name" => "Molly"}, {:explain => true})
+    assert_not_nil results
+    assert_equal(1, results.to_a.length)
+
+    log = results.log
+
+    assert_not_nil log
+    assert log.include? "RUN FULLSCAN"
+
+    #Now set the name string index
+    $jb.ensure_string_index("birds", "name")
+
+    results = $jb.find("birds", {"name" => "Molly"}, {:explain => true})
+    assert results.log.include? "MAIN IDX: 'sname"
   end
 
 end

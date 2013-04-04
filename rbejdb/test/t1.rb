@@ -4,11 +4,11 @@ ejdb = EJDB.open("zoo", EJDB::DEFAULT_OPEN_MODE)
 
 raise "Failed to open ejdb" unless ejdb.is_open?
 
-ejdb.dropCollection("parrots", true)
-ejdb.dropCollection("cows", true)
+ejdb.drop_collection("parrots", true)
+ejdb.drop_collection("cows", true)
 
-ejdb.ensureCollection("parrots")
-ejdb.ensureCollection("parrots", {"large" => true, "records" => 200000})
+ejdb.ensure_collection("parrots")
+ejdb.ensure_collection("parrots", {"large" => true, "records" => 200000})
 
 class Parrot
   def initialize(name, size)

@@ -27,10 +27,11 @@ typedef struct {
 
 typedef struct {
     TCLIST* results;
+    TCXSTR* log;
 } RBEJDB_RESULTS;
 
 
-VALUE create_EJDB_query_results(TCLIST* qres);
+VALUE create_EJDB_query_results(TCLIST* qres, TCXSTR *log);
 
 
 VALUE ejdbClass;
@@ -115,7 +116,7 @@ void EJDB_close(VALUE self) {
     ejdbclose(ejdb);
 }
 
-void EJDB_dropCollection(VALUE self, VALUE collName, VALUE prune) {
+void EJDB_drop_collection(VALUE self, VALUE collName, VALUE prune) {
     SafeStringValue(collName);
 
     EJDB* ejdb = getEJDB(self);
@@ -124,7 +125,7 @@ void EJDB_dropCollection(VALUE self, VALUE collName, VALUE prune) {
     }
 }
 
-void EJDB_ensureCollection(int argc, VALUE* argv, VALUE self) {
+void EJDB_ensure_collection(int argc, VALUE* argv, VALUE self) {
     VALUE collName;
     VALUE copts;
 
@@ -287,11 +288,14 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     int count;
     int qflags = 0;
     bool onlycount = RTEST(get_hash_option(hints, "onlycount"));
+    bool explain = RTEST(get_hash_option(hints, "explain"));
     qflags |= onlycount ? EJQONLYCOUNT : 0;
-    TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, NULL);
+
+    TCXSTR *log = explain ? tcxstrnew() : NULL;
+    TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, log);
 
     free(orarrbson);
-    return !onlycount ? create_EJDB_query_results(qres) : INT2NUM(count);
+    return !onlycount ? create_EJDB_query_results(qres, log) : INT2NUM(count);
 }
 
 static VALUE EJDB_block_true(VALUE yielded_object, VALUE context, int argc, VALUE argv[]){
@@ -307,19 +311,101 @@ VALUE EJDB_find_one(int argc, VALUE* argv, VALUE self) {
 }
 
 
+void EJDB_set_index_internal(VALUE self, VALUE collName, VALUE fpath, int flags) {
+    SafeStringValue(collName);
+    SafeStringValue(fpath);
+
+    EJDB* ejdb = getEJDB(self);
+
+    EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
+    if (!coll) {
+        raise_ejdb_error(ejdb);
+    }
+
+    if (!ejdbsetindex(coll, StringValuePtr(fpath), flags)) {
+        raise_ejdb_error(ejdb);
+    }
+}
+
+void EJDB_drop_indexes(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXDROPALL);
+};
+
+void EJDB_optimize_indexes(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXOP);
+};
+
+void EJDB_ensure_string_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXSTR);
+}
+
+void EJDB_rebuild_string_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXSTR | JBIDXREBLD);
+}
+
+void EJDB_drop_string_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXSTR | JBIDXDROP);
+}
+
+void EJDB_ensure_istring_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXISTR);
+}
+
+void EJDB_rebuild_istring_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXISTR | JBIDXREBLD);
+}
+
+void EJDB_drop_istring_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXISTR | JBIDXDROP);
+}
+
+void EJDB_ensure_number_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXNUM);
+}
+
+void EJDB_rebuild_number_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXNUM | JBIDXREBLD);
+}
+
+void EJDB_drop_number_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXNUM | JBIDXDROP);
+}
+
+void EJDB_ensure_array_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXARR);
+}
+
+void EJDB_rebuild_array_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXARR | JBIDXREBLD);
+}
+
+void EJDB_drop_array_index(VALUE self, VALUE collName, VALUE fpath) {
+    EJDB_set_index_internal(self, collName, fpath, JBIDXARR | JBIDXDROP);
+}
+
+
+void close_ejdb_results_internal(RBEJDB_RESULTS* rbres) {
+    tclistdel(rbres->results);
+    if (rbres->log) {
+        tcxstrdel(rbres->log);
+    }
+}
+
 void EJDB_results_free(RBEJDB_RESULTS* rbres) {
     if (rbres->results) {
-        tclistdel(rbres->results);
+        close_ejdb_results_internal(rbres);
     }
     ruby_xfree(rbres);
 }
 
-VALUE create_EJDB_query_results(TCLIST* qres) {
+VALUE create_EJDB_query_results(TCLIST* qres, TCXSTR *log) {
     VALUE results = Data_Wrap_Struct(ejdbResultsClass, NULL, EJDB_results_free, ruby_xmalloc(sizeof(RBEJDB_RESULTS)));
     RBEJDB_RESULTS* rbresults;
     Data_Get_Struct(results, RBEJDB_RESULTS, rbresults);
 
     rbresults->results = qres;
+    rbresults->log = log;
+
     return results;
 }
 
@@ -341,12 +427,21 @@ void EJDB_results_each(VALUE self) {
     }
 }
 
+VALUE EJDB_results_log(VALUE self) {
+    RBEJDB_RESULTS* rbresults;
+    Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
+
+    return rbresults->log ? rb_str_new2(TCXSTRPTR(rbresults->log)) : Qnil;
+}
+
 void EJDB_results_close(VALUE self) {
     RBEJDB_RESULTS* rbresults;
     Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
 
-    tclistdel(rbresults->results);
+    close_ejdb_results_internal(rbresults);
+
     rbresults->results = NULL;
+    rbresults->log = NULL;
 }
 
 
@@ -400,13 +495,29 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "find", RUBY_METHOD_FUNC(EJDB_find), -1);
     rb_define_method(ejdbClass, "find_one", RUBY_METHOD_FUNC(EJDB_find_one), -1);
 
-    rb_define_method(ejdbClass, "dropCollection", RUBY_METHOD_FUNC(EJDB_dropCollection), 2);
-    rb_define_method(ejdbClass, "ensureCollection", RUBY_METHOD_FUNC(EJDB_ensureCollection), -1);
+    rb_define_method(ejdbClass, "drop_collection", RUBY_METHOD_FUNC(EJDB_drop_collection), 2);
+    rb_define_method(ejdbClass, "ensure_collection", RUBY_METHOD_FUNC(EJDB_ensure_collection), -1);
+
+    rb_define_method(ejdbClass, "drop_indexes", RUBY_METHOD_FUNC(EJDB_drop_indexes), 2);
+    rb_define_method(ejdbClass, "optimize_indexes", RUBY_METHOD_FUNC(EJDB_optimize_indexes), 2);
+    rb_define_method(ejdbClass, "ensure_string_index", RUBY_METHOD_FUNC(EJDB_ensure_string_index), 2);
+    rb_define_method(ejdbClass, "rebuild_string_index", RUBY_METHOD_FUNC(EJDB_rebuild_string_index), 2);
+    rb_define_method(ejdbClass, "drop_string_index", RUBY_METHOD_FUNC(EJDB_drop_string_index), 2);
+    rb_define_method(ejdbClass, "ensure_istring_index", RUBY_METHOD_FUNC(EJDB_ensure_istring_index), 2);
+    rb_define_method(ejdbClass, "rebuild_istring_index", RUBY_METHOD_FUNC(EJDB_rebuild_istring_index), 2);
+    rb_define_method(ejdbClass, "drop_istring_index", RUBY_METHOD_FUNC(EJDB_drop_istring_index), 2);
+    rb_define_method(ejdbClass, "ensure_number_index", RUBY_METHOD_FUNC(EJDB_ensure_number_index), 2);
+    rb_define_method(ejdbClass, "rebuild_number_index", RUBY_METHOD_FUNC(EJDB_rebuild_number_index), 2);
+    rb_define_method(ejdbClass, "drop_number_index", RUBY_METHOD_FUNC(EJDB_drop_number_index), 2);
+    rb_define_method(ejdbClass, "ensure_array_index", RUBY_METHOD_FUNC(EJDB_ensure_array_index), 2);
+    rb_define_method(ejdbClass, "rebuild_array_index", RUBY_METHOD_FUNC(EJDB_rebuild_array_index), 2);
+    rb_define_method(ejdbClass, "drop_array_index", RUBY_METHOD_FUNC(EJDB_drop_array_index), 2);
 
 
     ejdbResultsClass = rb_define_class("EJDBResults", rb_cObject);
     rb_include_module(ejdbResultsClass, rb_mEnumerable);
     rb_define_method(ejdbResultsClass, "each", RUBY_METHOD_FUNC(EJDB_results_each), 0);
+    rb_define_method(ejdbResultsClass, "log", RUBY_METHOD_FUNC(EJDB_results_log), 0);
     rb_define_method(ejdbResultsClass, "close", RUBY_METHOD_FUNC(EJDB_results_close), 0);
 
 
