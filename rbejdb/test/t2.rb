@@ -398,4 +398,18 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     puts "test_ejdbd_tx1 has passed successfull"
   end
+
+  def test_ejdbe_create_collection_on_upsert
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    results = $jb.update("upsertcoll", {:foo => "bar", "$upsert" => {:foo => "bar"}})
+    assert_equal(1, results.count)
+
+    obj = $jb.find_one("upsertcoll", {:foo => "bar"})
+    assert_equal("bar", obj["foo"])
+
+    puts "test_ejdbe_create_collection_on_upsert has passed successfull"
+  end
+
 end
