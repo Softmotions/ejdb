@@ -9,10 +9,10 @@ extern "C" {
 #endif
 /*
  * Class:     org_ejdb_driver_EJDBResultSet
- * Method:    get
- * Signature: (I)Lorg/bson/BSONObject;
+ * Method:    _get
+ * Signature: (I)Lorg/ejdb/bson/BSONObject;
  */
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_get
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet__1get
   (JNIEnv *, jobject, jint);
 
 /*

@@ -73,8 +73,8 @@
         </junit>
     </target>
 
-    <target name="compile.headers" depends="compile.production" description="Build JNI headers for JEJDB" if="build.native.headers">
-        <javah destdir="${source.native.dir}">
+    <target name="compile.headers" depends="compile.production" if="build.native.headers">
+        <javah destdir="${source.native.dir}" verbose="true">
             <class name="org.ejdb.driver.EJDB"/>
             <class name="org.ejdb.driver.EJDBCollection"/>
             <class name="org.ejdb.driver.EJDBQuery"/>
@@ -102,7 +102,7 @@
         <delete dir="${distr.home}"/>
     </target>
 
-    <target name="build.native.headers" depends="clean">
+    <target name="build.native.headers" depends="clean" description="Build JNI headers for JEJDB">
         <property name="build.native.headers" value="true"/>
         <ant target="compile" inheritall="true" inheritrefs="true"/>
     </target>

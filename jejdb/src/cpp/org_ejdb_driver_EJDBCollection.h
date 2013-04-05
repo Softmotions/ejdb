@@ -66,7 +66,7 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_updateMeta
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    load
- * Signature: (Lorg/bson/types/ObjectId;)Lorg/bson/BSONObject;
+ * Signature: (Lorg/ejdb/bson/types/ObjectId;)Lorg/ejdb/bson/BSONObject;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_load
   (JNIEnv *, jobject, jobject);
@@ -74,7 +74,7 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_load
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    save
- * Signature: (Lorg/bson/BSONObject;)Lorg/bson/types/ObjectId;
+ * Signature: (Lorg/ejdb/bson/BSONObject;)Lorg/ejdb/bson/types/ObjectId;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save
   (JNIEnv *, jobject, jobject);
@@ -82,7 +82,7 @@ JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBCollection_save
 /*
  * Class:     org_ejdb_driver_EJDBCollection
  * Method:    remove
- * Signature: (Lorg/bson/types/ObjectId;)V
+ * Signature: (Lorg/ejdb/bson/types/ObjectId;)V
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDBCollection_remove
   (JNIEnv *, jobject, jobject);

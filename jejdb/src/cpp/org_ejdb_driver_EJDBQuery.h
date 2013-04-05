@@ -12,7 +12,7 @@ extern "C" {
 /*
  * Class:     org_ejdb_driver_EJDBQuery
  * Method:    execute
- * Signature: (Lorg/bson/BSONObject;[Lorg/bson/BSONObject;Lorg/bson/BSONObject;ILjava/io/OutputStream;)Lorg/ejdb/driver/EJDBQuery$QResult;
+ * Signature: (Lorg/ejdb/bson/BSONObject;[Lorg/ejdb/bson/BSONObject;Lorg/ejdb/bson/BSONObject;ILjava/io/OutputStream;)Lorg/ejdb/driver/EJDBQuery$QResult;
  */
 JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBQuery_execute
   (JNIEnv *, jobject, jobject, jobjectArray, jobject, jint, jobject);

@@ -2,17 +2,26 @@ package org.ejdb.driver;
 
 import org.ejdb.bson.BSONObject;
 
+import java.io.Closeable;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
  * @author Tyutyunkov Vyacheslav (tve@softmotions.com)
  * @version $Id$
  */
-public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject> {
+public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>, Closeable {
     private transient long rsPointer;
+    private transient Map<Integer, WeakReference<BSONObject>> cache;
 
     private int position;
+
+    {
+        cache = new HashMap<Integer, WeakReference<BSONObject>>();
+    }
 
     EJDBResultSet(long rsPointer) {
         this.rsPointer = rsPointer;
@@ -23,7 +32,23 @@ public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>
     /**
      * Returns object by position
      */
-    public native BSONObject get(int position) throws EJDBException;
+    protected native BSONObject _get(int position) throws EJDBException;
+
+    /**
+     * Returns object by position
+     */
+    public BSONObject get(int position) throws EJDBException {
+        BSONObject obj;
+        WeakReference<BSONObject> wr;
+        if (cache.containsKey(position) && (wr = cache.get(position)).get() != null) {
+            obj = wr.get();
+        } else {
+            obj = _get(position);
+            cache.put(position, new WeakReference<BSONObject>(obj));
+        }
+
+        return obj;
+    }
 
     /**
      * Returns objects count in result set
@@ -34,7 +59,24 @@ public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>
      * {@inheritDoc}
      */
     public Iterator<BSONObject> iterator() {
-        return this;
+        return new Iterator<BSONObject>() {
+            private int pos = 0;
+
+            public boolean hasNext() {
+                return pos < EJDBResultSet.this.length();
+            }
+
+            public BSONObject next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return get(pos++);
+            }
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     /**
@@ -63,7 +105,7 @@ public class EJDBResultSet implements Iterable<BSONObject>, Iterator<BSONObject>
     }
 
     /**
-     * Close result set
+     * {@inheritDoc}
      */
     public native void close() throws EJDBException;
 

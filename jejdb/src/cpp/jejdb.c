@@ -766,11 +766,11 @@ finish:
 };
 
 /*
-* Class:     org_ejdb_driver_EJDBResultSet
-* Method:    get
-* Signature: (I)Lorg/ejdb/bson/BSONObject;
-*/
-JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet_get (JNIEnv *env, jobject obj, jint indx) {
+ * Class:     org_ejdb_driver_EJDBResultSet
+ * Method:    _get
+ * Signature: (I)Lorg/ejdb/bson/BSONObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDBResultSet__1get (JNIEnv *env, jobject obj, jint indx) {
 	TCLIST *rs = get_rs_from_object(env, obj);
 
 	if (!rs) {
