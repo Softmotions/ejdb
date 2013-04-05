@@ -233,7 +233,13 @@ VALUE EJDB_load(VALUE self, VALUE collName, VALUE rboid) {
 
     bson *bs = ejdbloadbson(coll, &oid);
     if (!bs) {
-        raise_ejdb_error(ejdb);
+        int ecode = ejdbecode(ejdb);
+        if (ecode != TCESUCCESS && ecode != TCENOREC) {
+            raise_ejdb_error(ejdb);
+        } else {
+            return Qnil;
+        }
+
     }
 
     return bson_to_ruby(bs);
@@ -416,7 +422,6 @@ void EJDB_drop_array_index(VALUE self, VALUE collName, VALUE fpath) {
 }
 
 VALUE EJDB_get_db_meta(VALUE self) {
-
     EJDB* ejdb = getEJDB(self);
 
     TCLIST *cols = ejdbgetcolls(ejdb);
@@ -475,6 +480,65 @@ VALUE EJDB_get_db_meta(VALUE self) {
 void EJDB_sync(VALUE self) {
     EJDB* ejdb = getEJDB(self);
     if (!ejdbsyncdb(ejdb)) {
+        raise_ejdb_error(ejdb);
+    }
+}
+
+VALUE EJDB_get_transaction_status(VALUE self, VALUE collName) {
+    SafeStringValue(collName);
+
+    EJDB* ejdb = getEJDB(self);
+    EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
+    if (!coll) {
+        raise_ejdb_error(ejdb);
+    }
+
+    bool status;
+    if (!ejdbtranstatus(coll, &status)) {
+        raise_ejdb_error(ejdb);
+    }
+
+    return status ? Qtrue : Qfalse;
+}
+
+void EJDB_begin_transaction(VALUE self, VALUE collName) {
+    SafeStringValue(collName);
+
+    EJDB* ejdb = getEJDB(self);
+    EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
+    if (!coll) {
+        raise_ejdb_error(ejdb);
+    }
+
+    if (!ejdbtranbegin(coll)) {
+        raise_ejdb_error(ejdb);
+    }
+}
+
+void EJDB_commit_transaction(VALUE self, VALUE collName) {
+    SafeStringValue(collName);
+
+    EJDB* ejdb = getEJDB(self);
+    EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
+    if (!coll) {
+        raise_ejdb_error(ejdb);
+    }
+
+    if (!ejdbtrancommit(coll)) {
+        raise_ejdb_error(ejdb);
+    }
+}
+
+void EJDB_rollback_transaction(VALUE self, VALUE collName) {
+    SafeStringValue(collName);
+
+    EJDB* ejdb = getEJDB(self);
+    EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
+    if (!coll) {
+        raise_ejdb_error(ejdb);
+    }
+
+    if (!ejdbtranabort(coll)) {
         raise_ejdb_error(ejdb);
     }
 }
@@ -613,6 +677,11 @@ Init_rbejdb() {
 
     rb_define_method(ejdbClass, "get_db_meta", RUBY_METHOD_FUNC(EJDB_get_db_meta), 0);
     rb_define_method(ejdbClass, "sync", RUBY_METHOD_FUNC(EJDB_sync), 0);
+
+    rb_define_method(ejdbClass, "get_transaction_status", RUBY_METHOD_FUNC(EJDB_get_transaction_status), 1);
+    rb_define_method(ejdbClass, "begin_transaction", RUBY_METHOD_FUNC(EJDB_begin_transaction), 1);
+    rb_define_method(ejdbClass, "commit_transaction", RUBY_METHOD_FUNC(EJDB_commit_transaction), 1);
+    rb_define_method(ejdbClass, "rollback_transaction", RUBY_METHOD_FUNC(EJDB_rollback_transaction), 1);
 
 
     ejdbResultsClass = rb_define_class("EJDBResults", rb_cObject);

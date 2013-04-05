@@ -354,4 +354,48 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts "test_ejdbd_remove_colls has passed successfull"
   end
 
+  def test_ejdbd_tx1
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    obj = {:foo => "bar"}
+
+    assert_equal(false, $jb.get_transaction_status("bars"))
+
+    $jb.begin_transaction("bars")
+
+    $jb.save("bars", obj)
+    id = obj["_id"]
+    assert_not_nil id
+
+    obj = $jb.load("bars", obj["_id"])
+    assert_not_nil obj
+    assert $jb.get_transaction_status("bars")
+
+    $jb.rollback_transaction("bars")
+    assert_equal(false, $jb.get_transaction_status("bars"))
+
+    obj = $jb.load("bars", obj["_id"])
+    assert_nil obj
+
+    $jb.begin_transaction("bars")
+
+    assert $jb.get_transaction_status("bars")
+    assert_nil $jb.load("bars", id)
+    obj = {:foo => "bar"}
+
+    $jb.save("bars", obj)
+    id = obj["_id"]
+    assert_not_nil id
+
+    assert_not_nil $jb.load("bars", id)
+
+    $jb.commit_transaction("bars")
+
+    assert_equal(false, $jb.get_transaction_status("bars"))
+
+    assert_not_nil $jb.load("bars", id)
+
+    puts "test_ejdbd_tx1 has passed successfull"
+  end
 end
