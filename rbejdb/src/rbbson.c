@@ -73,8 +73,6 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
     Data_Get_Struct(bsonWrap, RBBSON, rbbson);
     bson* b = rbbson->bsonval;
 
-    bson* subbson;
-
     switch (TYPE(val)) {
         case T_OBJECT:
             if (0 == strcmp(rb_obj_classname(val), "EJDBBinary")) {
@@ -96,9 +94,11 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
                 break;
             }
             //else same as hash :)
-        case T_HASH:
-            ruby_to_bson_internal(val, &subbson, rbbson->traverse_hash, rbbson->flags);
-            bson_append_bson(b, attrName, subbson);
+        case T_HASH: {
+                bson* subbson;
+                ruby_to_bson_internal(val, &subbson, rbbson->traverse_hash, rbbson->flags);
+                bson_append_bson(b, attrName, subbson);
+            }
             break;
         case T_ARRAY:
             add_ruby_to_traverse(val, rbbson->traverse_hash);

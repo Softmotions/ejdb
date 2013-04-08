@@ -41,7 +41,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal(parrot2["_id"], obj["_id"])
     assert_equal("Bounty", obj["name"])
 
-    puts "test_ejdb1_save_load has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -89,7 +89,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_not_nil results
     assert_equal(2, results.to_a.length)
 
-    puts "test_ejdb2_query1 has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -113,7 +113,7 @@ class EJDBTestUnit < Test::Unit::TestCase
       end
     }
 
-    puts "test_ejdb3_query2 has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -146,7 +146,7 @@ class EJDBTestUnit < Test::Unit::TestCase
       results.to_a.length
     }
 
-    puts "test_ejdb4_query3 has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -192,7 +192,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_not_nil err
     assert_equal(err.message, "Converting circular structure to BSON")
 
-    puts "test_ejdb5_circular has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -229,7 +229,7 @@ class EJDBTestUnit < Test::Unit::TestCase
       oid == sally_oid
     }
 
-    puts "test_ejdb6_save_load_buffer has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -252,7 +252,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     results = $jb.find("birds", {"name" => "Molly"}, {:explain => true})
     assert results.log.include? "MAIN IDX: 'sname"
 
-    puts "test_ejdb7_use_string_index has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -270,7 +270,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_not_nil parrots
     assert_equal("parrots", parrots["name"])
 
-    puts "test_ejdb8_cmeta has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
   def test_ejdb9_test_update1
@@ -300,7 +300,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     result = $jb.update("parrots", q)
     assert_equal(1, result.count)
 
-    puts "test_ejdb9_test_update1 has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -324,7 +324,7 @@ class EJDBTestUnit < Test::Unit::TestCase
       assert other["_id"] != obj["_id"]
     }
     assert results.log.include? "RUN FULLSCAN"
-    puts "test_ejdba_id_nin has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -343,7 +343,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     obj = $jb.find_one("birds", {"name" => "Molly"})
     assert_nil obj
 
-    puts "test_ejdbb_test_remove has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -351,7 +351,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_not_nil $jb
     assert $jb.is_open?
     $jb.sync
-    puts "test_ejdbc_sync has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
@@ -365,11 +365,11 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal(0, results.count)
     assert_nil results.find { true }
 
-    puts "test_ejdbd_remove_colls has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
-  def test_ejdbd_tx1
+  def test_ejdbe_tx1
     assert_not_nil $jb
     assert $jb.is_open?
 
@@ -411,11 +411,11 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     assert_not_nil $jb.load("bars", id)
 
-    puts "test_ejdbd_tx1 has passed successfull"
+    puts __method__.inspect + " has passed successfull"
   end
 
 
-  def test_ejdbe_create_collection_on_upsert
+  def test_ejdbf_create_collection_on_upsert
     assert_not_nil $jb
     assert $jb.is_open?
 
@@ -425,7 +425,25 @@ class EJDBTestUnit < Test::Unit::TestCase
     obj = $jb.find_one("upsertcoll", {:foo => "bar"})
     assert_equal("bar", obj["foo"])
 
-    puts "test_ejdbe_create_collection_on_upsert has passed successfull"
+    puts __method__.inspect + " has passed successfull"
+  end
+
+  def test_ejdbg_close
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    results = $jb.find("parrots", {})
+    assert_not_nil results
+    results.close
+
+    assert_raise(RuntimeError) {
+      results.to_a
+    }
+
+    $jb.close
+
+    assert !$jb.is_open?
+    puts __method__.inspect + " has passed successfull"
   end
 
 end
