@@ -41,6 +41,9 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal(parrot2["_id"], obj["_id"])
     assert_equal("Bounty", obj["name"])
 
+    assert EJDB.check_valid_oid_string(parrot2["_id"])
+    assert !EJDB.check_valid_oid_string("ololo")
+
     puts __method__.inspect + " has passed successfull"
   end
 
@@ -428,7 +431,84 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts __method__.inspect + " has passed successfull"
   end
 
-  def test_ejdbg_close
+
+  def test_ejdbg_max_and_skip_hints
+    assert_not_nil $jb
+    assert $jb.is_open?
+
+    results = $jb.find("parrots", {})
+    assert_not_equal(1, results.count)
+
+    results = $jb.find("parrots", {}, {:max => 1})
+    assert_equal(1, results.count)
+
+    results = $jb.find("parrots", {}, {:skip => 1})
+    assert_equal(1, results.count)
+
+    results = $jb.find("parrots", {}, {:skip => 2})
+    assert_equal(0, results.count)
+
+    puts __method__.inspect + " has passed successfull"
+  end
+
+
+  def test_ejdbh_different_hacks
+    assert_nil $jb.load("monsters", "111")
+    assert_nil $jb.load("parrots", "111")
+    assert_nil $jb.load("parrots", "")
+
+    assert_raise(ArgumentError) {
+      $jb.load
+    }
+    assert_raise(ArgumentError) {
+      $jb.load("parrots")
+    }
+    assert_raise(TypeError) {
+      $jb.load("parrots", :what_is_this?)
+    }
+    assert_raise(ArgumentError) {
+      $jb.load("parrots", "", "sldslk")
+    }
+
+    assert_raise(ArgumentError) {
+      $jb.save
+    }
+    assert_raise(TypeError) {
+      $jb.save({})
+    }
+    $jb.save("monsters")
+    assert_raise(RuntimeError) {
+      $jb.save("monsters", :monster) #Cannot convert object to bson
+    }
+
+    $jb.save("monsters", {})
+    assert_raise(RuntimeError) {
+      $jb.save("@&^3872638126//d\n", {})
+    }
+
+    oid = $jb.save("monsters", {:name => :abracadabra})
+    $jb.load("monsters", oid)
+
+    $jb.save("monsters", {:name => :abracadabra}, true)
+
+    assert_raise(RuntimeError) {
+      $jb.save("monsters", :what_is_this?)
+    }
+    assert_raise(RuntimeError) {
+      $jb.save("monsters", [{:name => :abracadabra}])
+    }
+
+    $jb.save("monsters", nil)
+    $jb.save("monsters", {:name => :abracadabra}, {:name => :chupacabra})
+    $jb.save("monsters", self)
+
+    #puts $jb.find("monsters").to_a.to_s
+    assert_equal(6, $jb.find("monsters").count)
+
+    puts __method__.inspect + " has passed successfull"
+  end
+
+  def test_ejdbi_close
     assert_not_nil $jb
     assert $jb.is_open?
 

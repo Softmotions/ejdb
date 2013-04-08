@@ -56,12 +56,21 @@ VALUE get_hash_option(VALUE hash, const char* opt) {
     return !NIL_P(res) ? res : rb_hash_aref(hash, rb_str_new2(opt));
 }
 
-
 static int raise_ejdb_error(EJDB *ejdb) {
     int ecode = ejdbecode(ejdb);
     const char *emsg = ejdberrmsg(ecode);
     rb_raise(rb_eRuntimeError, "%s", emsg);
 }
+
+static int nil_or_raise_ejdb_error(EJDB *ejdb) {
+    int ecode = ejdbecode(ejdb);
+    if (ecode != TCESUCCESS && ecode != TCENOREC) {
+        raise_ejdb_error(ejdb);
+    } else {
+        return Qnil;
+    }
+}
+
 
 
 EJDB* getEJDB(VALUE self) {
@@ -162,7 +171,7 @@ void EJDB_ensure_collection(int argc, VALUE* argv, VALUE self) {
 
 VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
     if (argc < 1) {
-        rb_raise(rb_eRuntimeError, "Error calling EJDB.save(): need to specify collection name");
+        rb_raise(rb_eArgError, "Error calling EJDB.save(): need to specify collection name");
     }
 
     VALUE collName = argv[0];
@@ -226,35 +235,29 @@ VALUE EJDB_load(VALUE self, VALUE collName, VALUE rboid) {
 
     EJCOLL *coll = ejdbgetcoll(ejdb, StringValuePtr(collName));
     if (!coll) {
-        raise_ejdb_error(ejdb);
+        return nil_or_raise_ejdb_error(ejdb);
     }
 
     bson_oid_t oid = ruby_to_bson_oid(rboid);
-
     bson *bs = ejdbloadbson(coll, &oid);
-    if (!bs) {
-        int ecode = ejdbecode(ejdb);
-        if (ecode != TCESUCCESS && ecode != TCENOREC) {
-            raise_ejdb_error(ejdb);
-        } else {
-            return Qnil;
-        }
 
-    }
-
-    return bson_to_ruby(bs);
+    return bs ? bson_to_ruby(bs) : nil_or_raise_ejdb_error(ejdb);
 }
 
+void prepare_query_hint(VALUE res, VALUE hints, char* hint) {
+    VALUE val = get_hash_option(hints, hint);
+    if (!NIL_P(val)) {
+        rb_hash_aset(res, rb_str_concat(rb_str_new2("$"), rb_str_new2(hint)), val);
+    }
+}
 
 VALUE prepare_query_hints(VALUE hints) {
     VALUE res = rb_hash_new();
-    VALUE orderby = get_hash_option(hints, "orderby");
-    if (!NIL_P(orderby)) {
-        rb_hash_aset(res, rb_str_new2("$orderby"), orderby);
-    }
+    prepare_query_hint(res, hints, "orderby");
+    prepare_query_hint(res, hints, "max");
+    prepare_query_hint(res, hints, "skip");
     return res;
 }
-
 
 VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     VALUE collName;
@@ -544,6 +547,11 @@ void EJDB_rollback_transaction(VALUE self, VALUE collName) {
 }
 
 
+VALUE EJDB_check_valid_oid_string(VALUE clazz, VALUE oid) {
+    return TYPE(oid) == T_STRING && ejdbisvalidoidstr(StringValuePtr(oid)) ? Qtrue : Qfalse;
+}
+
+
 void close_ejdb_results_internal(RBEJDB_RESULTS* rbres) {
     tclistdel(rbres->results);
     if (rbres->log) {
@@ -574,7 +582,7 @@ void EJDB_results_each(VALUE self) {
     Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
 
     if (!rbresults || !rbresults->results) {
-        rb_raise(rb_eRuntimeError, "Each() method called on invalid ejdb query results");
+        rb_raise(rb_eRuntimeError, "each() method called on invalid ejdb query results");
     }
 
     TCLIST* qres = rbresults->results;
@@ -682,6 +690,8 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "begin_transaction", RUBY_METHOD_FUNC(EJDB_begin_transaction), 1);
     rb_define_method(ejdbClass, "commit_transaction", RUBY_METHOD_FUNC(EJDB_commit_transaction), 1);
     rb_define_method(ejdbClass, "rollback_transaction", RUBY_METHOD_FUNC(EJDB_rollback_transaction), 1);
+
+    rb_define_singleton_method(ejdbClass, "check_valid_oid_string", RUBY_METHOD_FUNC(EJDB_check_valid_oid_string), 1);
 
 
     ejdbResultsClass = rb_define_class("EJDBResults", rb_cObject);

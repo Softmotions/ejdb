@@ -114,6 +114,11 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
                 bson_append_oid(b, attrName, &oid);
             }
             break;
+        case T_SYMBOL: {
+                VALUE sname = rb_funcall(val, rb_intern("inspect"), 0);
+                bson_append_symbol(b, attrName, StringValuePtr(sname));
+            }
+            break;
         case T_FIXNUM:
             bson_append_int(b, attrName, FIX2INT(val));
             break;
@@ -205,8 +210,10 @@ void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int fla
         case T_HASH:
             ruby_hash_to_bson_internal(rbobj, bsonWrap);
             break;
-        default:
-            rb_raise(rb_eRuntimeError, "Cannot convert object to bson: %d", TYPE(rbobj));
+        default: {
+            VALUE objStr = rb_funcall(rbobj, rb_intern("inspect"), 0);
+            rb_raise(rb_eRuntimeError, "Cannot convert object to bson: %s: %s", rb_obj_classname(rbobj), StringValuePtr(objStr));
+        }
     }
 
     bson_finish(rbbson->bsonval);
@@ -228,6 +235,9 @@ VALUE bson_iterator_to_ruby(bson_iterator* it, bson_type t) {
             break;
         case BSON_STRING:
             val = rb_str_new2(bson_iterator_string(it));
+            break;
+        case BSON_SYMBOL:
+            val = ID2SYM(rb_intern(bson_iterator_string(it)));
             break;
         case BSON_BOOL:
             val = bson_iterator_bool(it) ? Qtrue : Qfalse;
