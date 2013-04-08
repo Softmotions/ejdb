@@ -150,9 +150,6 @@ class EJDBTestUnit < Test::Unit::TestCase
   end
 
 
-=begin
-  test is written but this functionality is rather special an has low priority...
-
   def test_ejdb5_circular
     assert_not_nil $jb
     assert $jb.is_open?
@@ -169,21 +166,34 @@ class EJDBTestUnit < Test::Unit::TestCase
     end
 
     assert_not_nil err
-    assert_equal(err.message, "Converting circular structure to JSON")
+    assert_equal(err.message, "Converting circular structure to BSON")
 
     err = nil
     begin
-      $jb.find("parrots", [cir_query])
+      $jb.find("parrots", {:q => [cir_query]})
     rescue Exception => e
       err = e
     end
 
     assert_not_nil err
-    assert_equal(err.message, "Converting circular structure to JSON")
+    assert_equal(err.message, "Converting circular structure to BSON")
+
+
+    cir_array = []
+    cir_array[0] = cir_array
+
+    err = nil
+    begin
+      $jb.find("parrots", {:q => cir_array})
+    rescue Exception => e
+      err = e
+    end
+
+    assert_not_nil err
+    assert_equal(err.message, "Converting circular structure to BSON")
 
     puts "test_ejdb5_circular has passed successfull"
   end
-=end
 
 
   def test_ejdb6_save_load_buffer
@@ -293,6 +303,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts "test_ejdb9_test_update1 has passed successfull"
   end
 
+
   def test_ejdba_id_nin
     assert_not_nil $jb
     assert $jb.is_open?
@@ -316,6 +327,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts "test_ejdba_id_nin has passed successfull"
   end
 
+
   def test_ejdbb_test_remove
     assert_not_nil $jb
     assert $jb.is_open?
@@ -334,12 +346,14 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts "test_ejdbb_test_remove has passed successfull"
   end
 
+
   def test_ejdbc_sync
     assert_not_nil $jb
     assert $jb.is_open?
     $jb.sync
     puts "test_ejdbc_sync has passed successfull"
   end
+
 
   def test_ejdbd_remove_colls
     assert_not_nil $jb
@@ -353,6 +367,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     puts "test_ejdbd_remove_colls has passed successfull"
   end
+
 
   def test_ejdbd_tx1
     assert_not_nil $jb
@@ -398,6 +413,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     puts "test_ejdbd_tx1 has passed successfull"
   end
+
 
   def test_ejdbe_create_collection_on_upsert
     assert_not_nil $jb

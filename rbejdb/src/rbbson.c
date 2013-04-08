@@ -13,6 +13,8 @@ typedef struct {
     VALUE obj;
     int arrayIndex;
     int flags;
+
+    VALUE traverse_hash;
 } RBBSON;
 
 
@@ -21,6 +23,8 @@ VALUE iterate_array_callback(VALUE val, VALUE bsonWrap);
 VALUE bson_array_to_ruby(bson_iterator* it);
 
 bson_date_t ruby_time_to_bson_internal(VALUE time);
+
+void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int flags);
 
 VALUE bson_date_to_ruby(bson_date_t date);
 
@@ -33,7 +37,7 @@ void init_ruby_to_bson() {
 }
 
 
-VALUE createBsonWrap(bson* bsonval, VALUE rbobj, int flags) {
+VALUE createBsonWrap(bson* bsonval, VALUE rbobj, VALUE traverse, int flags) {
     if (NIL_P(bsonWrapClass)) {
         rb_raise(rb_eRuntimeError, "Ruby to BSON library must be initialized");
     }
@@ -44,9 +48,20 @@ VALUE createBsonWrap(bson* bsonval, VALUE rbobj, int flags) {
     rbbson->bsonval = bsonval;
     rbbson->obj = rbobj;
     rbbson->arrayIndex = 0;
+    rbbson->traverse_hash = !NIL_P(traverse) ? traverse : rb_hash_new();
 
     return bsonWrap;
 }
+
+void add_ruby_to_traverse(VALUE rbobj, VALUE traverse) {
+    Check_Type(traverse, T_HASH);
+
+    if (!NIL_P(rb_hash_aref(traverse, rbobj))) {
+        rb_raise(rb_eRuntimeError, "Converting circular structure to BSON");
+    }
+    rb_hash_aset(traverse, rbobj, Qtrue);
+}
+
 
 int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
     key = rb_funcall(key, rb_intern("to_s"), 0);
@@ -82,12 +97,13 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
             }
             //else same as hash :)
         case T_HASH:
-            ruby_to_bson(val, &subbson, rbbson->flags);
+            ruby_to_bson_internal(val, &subbson, rbbson->traverse_hash, rbbson->flags);
             bson_append_bson(b, attrName, subbson);
             break;
         case T_ARRAY:
+            add_ruby_to_traverse(val, rbbson->traverse_hash);
             bson_append_start_array(b, attrName);
-            rb_iterate(rb_each, val, iterate_array_callback, createBsonWrap(b, rbbson->obj, rbbson->flags));
+            rb_iterate(rb_each, val, iterate_array_callback, createBsonWrap(b, rbbson->obj, rbbson->traverse_hash, rbbson->flags));
             bson_append_finish_array(b);
             break;
         case T_STRING:
@@ -168,10 +184,12 @@ void ruby_hash_to_bson_internal(VALUE rbhash, VALUE bsonWrap) {
 }
 
 
-void ruby_to_bson(VALUE rbobj, bson** bsonresp, int flags) {
-    VALUE bsonWrap = createBsonWrap(bson_create(), rbobj, flags);
+void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int flags) {
+    VALUE bsonWrap = createBsonWrap(bson_create(), rbobj, traverse, flags);
     RBBSON* rbbson;
     Data_Get_Struct(bsonWrap, RBBSON, rbbson);
+
+    add_ruby_to_traverse(rbobj, rbbson->traverse_hash);
 
     if (flags & RUBY_TO_BSON_AS_QUERY) {
         bson_init_as_query(rbbson->bsonval);
@@ -195,6 +213,11 @@ void ruby_to_bson(VALUE rbobj, bson** bsonresp, int flags) {
 
     *bsonresp = rbbson->bsonval;
 }
+
+void ruby_to_bson(VALUE rbobj, bson** bsonresp, int flags) {
+    ruby_to_bson_internal(rbobj, bsonresp, Qnil, flags);
+}
+
 
 
 VALUE bson_iterator_to_ruby(bson_iterator* it, bson_type t) {
