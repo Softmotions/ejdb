@@ -30,6 +30,13 @@ typedef struct {
     TCXSTR* log;
 } RBEJDB_RESULTS;
 
+typedef struct {
+    bson* qbson;
+    bson* hintsbson;
+    int orarrlng;
+    bson* orarrbson;
+} RBEJDB_QUERY;
+
 
 VALUE create_EJDB_query_results(TCLIST* qres, TCXSTR *log);
 
@@ -37,6 +44,7 @@ VALUE create_EJDB_query_results(TCLIST* qres, TCXSTR *log);
 VALUE ejdbClass;
 VALUE ejdbResultsClass;
 VALUE ejdbBinaryClass;
+VALUE ejdbQueryClass;
 
 
 VALUE get_hash_option(VALUE hash, const char* opt) {
@@ -259,6 +267,23 @@ VALUE prepare_query_hints(VALUE hints) {
     return res;
 }
 
+VALUE EJDB_query_free(RBEJDB_QUERY* rbquery) {
+    if (rbquery->qbson) {
+        bson_destroy(rbquery->qbson);
+    }
+    if (rbquery->hintsbson) {
+        bson_destroy(rbquery->hintsbson);
+    }
+    if (rbquery->orarrbson) {
+        int i;
+        for (i = 0; i < rbquery->orarrlng; i++) {
+            bson_destroy(rbquery->orarrbson + i);
+        }
+        free(rbquery->orarrbson);
+    }
+    ruby_xfree(rbquery);
+}
+
 VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     VALUE collName;
     VALUE q;
@@ -279,41 +304,54 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     Check_Type(q, T_HASH);
     Check_Type(hints, T_HASH);
 
-    EJDB* ejdb = getEJDB(self);
-
-    EJCOLL *coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
-    if (!coll) {
-        raise_ejdb_error(ejdb);
-    }
-
-    bson* qbson;
-    ruby_to_bson(q, &qbson, RUBY_TO_BSON_AS_QUERY);
+    VALUE queryWrap = Data_Wrap_Struct(ejdbQueryClass, NULL, EJDB_query_free, ruby_xmalloc(sizeof(RBEJDB_QUERY)));
+    RBEJDB_QUERY* rbquery;
+    Data_Get_Struct(queryWrap, RBEJDB_QUERY, rbquery);
 
     VALUE orarrlng = rb_funcall(orarr, rb_intern("length"), 0);
-    bson* orarrbson = (bson*) malloc(sizeof(bson) * NUM2INT(orarrlng));
+    rbquery->qbson = NULL;
+    rbquery->hintsbson = NULL;
+    rbquery->orarrbson = NUM2INT(orarrlng) ? (bson*) tcmalloc(rbquery->orarrlng * sizeof(bson)) : NULL;
+    rbquery->orarrlng;
+
+    ruby_to_bson(q, &(rbquery->qbson), RUBY_TO_BSON_AS_QUERY);
+
+    bool onlycount = RTEST(get_hash_option(hints, "onlycount"));
+    bool explain = RTEST(get_hash_option(hints, "explain"));
+
+    EJDB* ejdb = getEJDB(self);
+
+    EJCOLL *coll = ejdbgetcoll(ejdb, StringValuePtr(collName));
+    if (!coll) {
+        bson_iterator it;
+        if (bson_find(&it, rbquery->qbson, "$upsert") == BSON_OBJECT) {
+            coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
+        }
+        if (!coll) {
+            return !onlycount ? create_EJDB_query_results(tclistnew2(1), NULL) : INT2NUM(0);
+        }
+    }
+
     int i;
     while(!NIL_P(rb_ary_entry(orarr, 0))) {
         VALUE orq = rb_ary_shift(orarr);
         bson* orqbson;
         ruby_to_bson(orq, &orqbson, RUBY_TO_BSON_AS_QUERY);
-        orarrbson[i++] = *orqbson;
+        bson_copy(rbquery->orarrbson + (i++), orqbson);
+        bson_destroy(orqbson);
+        rbquery->orarrlng++;
     }
 
-    bson* hintsbson = NULL;
-    ruby_to_bson(prepare_query_hints(hints), &hintsbson, RUBY_TO_BSON_AS_QUERY);
+    ruby_to_bson(prepare_query_hints(hints), &(rbquery->hintsbson), RUBY_TO_BSON_AS_QUERY);
 
-    EJQ *ejq = ejdbcreatequery(ejdb, qbson, orarrbson, NUM2INT(orarrlng), hintsbson);
+    EJQ *ejq = ejdbcreatequery(ejdb, rbquery->qbson, rbquery->orarrbson, NUM2INT(orarrlng), rbquery->hintsbson);
 
     int count;
-    int qflags = 0;
-    bool onlycount = RTEST(get_hash_option(hints, "onlycount"));
-    bool explain = RTEST(get_hash_option(hints, "explain"));
-    qflags |= onlycount ? EJQONLYCOUNT : 0;
-
+    int qflags = onlycount ? EJQONLYCOUNT : 0;
     TCXSTR *log = explain ? tcxstrnew() : NULL;
+
     TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, log);
 
-    free(orarrbson);
     return !onlycount ? create_EJDB_query_results(qres, log) : INT2NUM(count);
 }
 
@@ -705,4 +743,6 @@ Init_rbejdb() {
     rb_include_module(ejdbBinaryClass, rb_mEnumerable);
     rb_define_private_method(ejdbBinaryClass, "initialize", RUBY_METHOD_FUNC(EJDB_binary_init), 1);
     rb_define_method(ejdbBinaryClass, "each", RUBY_METHOD_FUNC(EJDB_binary_each), 0);
+
+    ejdbQueryClass = rb_define_class("EJDBQuery", rb_cObject);
 }

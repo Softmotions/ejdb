@@ -470,6 +470,7 @@ class EJDBTestUnit < Test::Unit::TestCase
       $jb.load("parrots", "", "sldslk")
     }
 
+
     assert_raise(ArgumentError) {
       $jb.save
     }
@@ -504,6 +505,13 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     #puts $jb.find("monsters").to_a.to_s
     assert_equal(6, $jb.find("monsters").count)
+
+
+    assert_raise(ArgumentError) {
+      $jb.find
+    }
+
+    assert_equal(0, $jb.find("dsldajsdlkjasl").count)
 
     puts __method__.inspect + " has passed successfull"
   end
