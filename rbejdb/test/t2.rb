@@ -547,6 +547,20 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal([1, 0, 255], obj["binary"].to_a)
     assert obj["time"].is_a? Time
 
+    #what we can't save
+    assert_raise(RangeError) {
+      $jb.save("monsters", {:toobigint => 3791237293719837192837292})
+    }
+    assert_raise(RuntimeError) {
+      $jb.save("monsters", {:class => Array})
+    }
+    assert_raise(RuntimeError) {
+      $jb.save("monsters", {:data => $jb})
+    }
+    assert_raise(RuntimeError) {
+      $jb.save("monsters", {:module => Math})
+    }
+
     #puts $jb.find("monsters").to_a.to_s
     assert_equal(7, $jb.find("monsters").count)
 
@@ -560,10 +574,14 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     assert_equal(0, $jb.find("monsters", {:name => "abracadabra"}).count)
     assert_equal(0, $jb.find("monsters", {:name => ":abracadabra"}).count)
-    assert_equal(7, $jb.find("monsters", {:name => :abracadabra}).count) #todo: symbol search seems to be not supported yet
-    assert_equal(7, $jb.find("monsters", {:name => :what_is_this?}).count)
+    assert_raise(RuntimeError) {
+      $jb.find("monsters", {:name => :abracadabra}) #todo: symbol search seems to be not supported yet
+    }
 
     assert_equal(0, $jb.find("monsters", {:name => {"$in" => ["what_is_this?"]}}).count)
+
+    assert_equal(1, $jb.find("monsters", {:maxfixnum => {"$exists" => true}}, {:onlycount => true}))
+    assert_equal(6, $jb.find("monsters", {:maxfixnum => {"$exists" => false}}, {:onlycount => true}))
 
     puts __method__.inspect + " has passed successfull"
   end

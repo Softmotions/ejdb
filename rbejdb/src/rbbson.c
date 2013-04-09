@@ -65,6 +65,7 @@ VALUE createBsonContextWrap(bson* bsonval, VALUE rbobj, VALUE traverse, int flag
     rbbsctx->bsonval = bsonval;
     rbbsctx->obj = rbobj;
     rbbsctx->arrayIndex = 0;
+    rbbsctx->flags= flags;
     rbbsctx->traverse_hash = !NIL_P(traverse) ? traverse : rb_hash_new();
 
     return bsonContextWrap;
@@ -144,6 +145,9 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonContextWrap) {
             }
             break;
         case T_SYMBOL: {
+                if (rbbsctx->flags & RUBY_TO_BSON_AS_QUERY) {
+                    rb_raise(rb_eRuntimeError, "Symbol values in queries are not supported");
+                }
                 VALUE sname = rb_funcall(val, rb_intern("to_s"), 0);
                 bson_append_symbol(b, attrName, StringValuePtr(sname));
             }
