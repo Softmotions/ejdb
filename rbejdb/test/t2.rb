@@ -523,7 +523,7 @@ class EJDBTestUnit < Test::Unit::TestCase
         :true => true,
         :false => false,
         :symbol => :symbol,
-        :binary => EJDBBinary.new([1, 1, 1]),
+        :binary => EJDBBinary.new([1, 0, 255]),
         :time => Time.now
     })
 
@@ -544,7 +544,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert !obj["false"]
     assert obj["symbol"].is_a? Symbol
     assert_equal(:symbol, obj["symbol"])
-    assert_equal([1, 1, 1], obj["binary"].to_a)
+    assert_equal([1, 0, 255], obj["binary"].to_a)
     assert obj["time"].is_a? Time
 
     #puts $jb.find("monsters").to_a.to_s

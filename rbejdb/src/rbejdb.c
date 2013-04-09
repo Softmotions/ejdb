@@ -697,7 +697,7 @@ VALUE EJDB_binary_init(VALUE self, VALUE bdata) {
     for (i = 0; i < length; i++) {
         VALUE byte = rb_ary_entry(bdata, i);
         if (NUM2INT(byte) > 255 || NUM2INT(byte) < 0) {
-            rb_raise(rb_eRuntimeError, "Invalid value in binary array for EJDBBinary");
+            rb_raise(rb_eRuntimeError, "Invalid value in binary array for EJDBBinary: %d", NUM2INT(byte));
         }
     }
 

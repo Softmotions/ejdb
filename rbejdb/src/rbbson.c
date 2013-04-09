@@ -310,7 +310,7 @@ VALUE bson_iterator_to_ruby(bson_iterator* it, bson_type t) {
                 VALUE bdata = rb_ary_new();
                 int i;
                 for (i = 0; i < length; i++) {
-                    rb_ary_push(bdata, INT2NUM(buf[i]));
+                    rb_ary_push(bdata, INT2NUM((unsigned char) buf[i]));
                 }
 
                 val = rb_funcall(rb_path2class("EJDBBinary"), rb_intern("new"), 1, bdata);
