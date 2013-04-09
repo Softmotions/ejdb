@@ -33,6 +33,8 @@ void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int fla
 
 VALUE bson_date_to_ruby(bson_date_t date);
 
+VALUE bson_regex_to_ruby(const char* regex, const char* opts);
+
 
 VALUE bsonContextClass = Qnil;
 VALUE bsonWrapClass = Qnil;
@@ -142,12 +144,18 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonContextWrap) {
             }
             break;
         case T_SYMBOL: {
-                VALUE sname = rb_funcall(val, rb_intern("inspect"), 0);
+                VALUE sname = rb_funcall(val, rb_intern("to_s"), 0);
                 bson_append_symbol(b, attrName, StringValuePtr(sname));
             }
             break;
         case T_FIXNUM:
-            bson_append_int(b, attrName, FIX2INT(val));
+            bson_append_long(b, attrName, NUM2LONG(val));
+            break;
+        case T_BIGNUM:
+            bson_append_long(b, attrName,  rb_big2ll(val));
+            break;
+        case T_FLOAT:
+            bson_append_double(b, attrName, NUM2DBL(val));
             break;
         case T_DATA:
             if (0 == strcmp(rb_obj_classname(val), "Time")) {
@@ -171,8 +179,10 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonContextWrap) {
         case T_NIL:
             bson_append_null(b, attrName);
             break;
-        default:
-            rb_raise(rb_eRuntimeError, "Cannot convert value type to bson: %d", TYPE(val));
+        default: {
+            VALUE objStr = rb_funcall(val, rb_intern("inspect"), 0);
+            rb_raise(rb_eRuntimeError, "Cannot convert ruby value to bson: %s: %s", rb_obj_classname(val), StringValuePtr(objStr));
+        }
     }
     return 0;
 }
@@ -272,8 +282,17 @@ VALUE bson_iterator_to_ruby(bson_iterator* it, bson_type t) {
         case BSON_INT:
             val = INT2NUM(bson_iterator_int(it));
             break;
+        case BSON_LONG:
+            val = LONG2NUM(bson_iterator_long(it));
+            break;
+        case BSON_DOUBLE:
+            val = rb_float_new(bson_iterator_double(it));
+            break;
         case BSON_DATE:
             val = bson_date_to_ruby(bson_iterator_date(it));
+            break;
+        case BSON_REGEX:
+            val = bson_regex_to_ruby(bson_iterator_regex(it), bson_iterator_regex_opts(it));
             break;
         case BSON_OBJECT: {
                 bson subbson;
@@ -324,6 +343,15 @@ VALUE bson_date_to_ruby(bson_date_t date) {
     return rb_funcall(rb_path2class("Time"), rb_intern("at"), 2,
         INT2NUM(date / 1000), // seconds
         INT2NUM((date % 1000) * 1000)); // microseconds
+}
+
+VALUE bson_regex_to_ruby(const char* regex, const char* opts) {
+    char* regexbuf = malloc(sizeof(char) * (strlen(regex) + strlen(opts) + 3)); // 3 for // and 0
+    sprintf(regexbuf, "/%s/%s", regex, opts);
+    VALUE res = rb_eval_string(regexbuf);
+
+    free(regexbuf);
+    return res;
 }
 
 

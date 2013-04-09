@@ -457,6 +457,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_nil $jb.load("parrots", "111")
     assert_nil $jb.load("parrots", "")
 
+    #testing load
     assert_raise(ArgumentError) {
       $jb.load
     }
@@ -471,6 +472,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     }
 
 
+    #testing save
     assert_raise(ArgumentError) {
       $jb.save
     }
@@ -504,14 +506,64 @@ class EJDBTestUnit < Test::Unit::TestCase
     $jb.save("monsters", self)
     $jb.save("monsters", nil, false)
 
-    #puts $jb.find("monsters").to_a.to_s
-    assert_equal(6, $jb.find("monsters").count)
+    # what we can save
+    maxfixnum = 2 ** (0.size * 8 -2) - 1
+    minfixnum = -(2**(0.size * 8 -2))
+    oid = $jb.save("monsters", {
+        :nil => nil,
+        :object => Object.new,
+        :float => 0.2323232,
+        :string => "string",
+        :regexp => /regexp.*\\\n/imx,
+        :array => [1, 2, 3, 4, 5],
+        :maxfixnum => maxfixnum,
+        :minfixnum => minfixnum,
+        :hash => {:key => "value"},
+        :bignum => maxfixnum + 1, #but not too big )
+        :true => true,
+        :false => false,
+        :symbol => :symbol,
+        :binary => EJDBBinary.new([1, 1, 1]),
+        :time => Time.now
+    })
 
+    obj = $jb.load("monsters", oid)
+    assert_nil obj["nil"]
+    assert obj["object"].is_a? Object
+    assert_equal(0.2323232, obj["float"])
+    assert_equal("string", obj["string"])
+    assert_equal(/regexp.*\\\n/imx, obj["regexp"])
+    assert_equal([1, 2, 3, 4, 5], obj["array"])
+    assert obj["maxfixnum"].is_a? Fixnum
+    assert obj["minfixnum"].is_a? Fixnum
+    assert obj["hash"].is_a? Hash
+    assert_equal("value", obj["hash"]["key"])
+    assert_equal(maxfixnum + 1, obj["bignum"])
+    assert obj["bignum"].is_a? Bignum
+    assert obj["true"]
+    assert !obj["false"]
+    assert obj["symbol"].is_a? Symbol
+    assert_equal(:symbol, obj["symbol"])
+    assert_equal([1, 1, 1], obj["binary"].to_a)
+    assert obj["time"].is_a? Time
+
+    #puts $jb.find("monsters").to_a.to_s
+    assert_equal(7, $jb.find("monsters").count)
+
+
+    #testing find
     assert_raise(ArgumentError) {
       $jb.find
     }
 
     assert_equal(0, $jb.find("dsldajsdlkjasl").count)
+
+    assert_equal(0, $jb.find("monsters", {:name => "abracadabra"}).count)
+    assert_equal(0, $jb.find("monsters", {:name => ":abracadabra"}).count)
+    assert_equal(7, $jb.find("monsters", {:name => :abracadabra}).count) #todo: symbol search seems to be not supported yet
+    assert_equal(7, $jb.find("monsters", {:name => :what_is_this?}).count)
+
+    assert_equal(0, $jb.find("monsters", {:name => {"$in" => ["what_is_this?"]}}).count)
 
     puts __method__.inspect + " has passed successfull"
   end
