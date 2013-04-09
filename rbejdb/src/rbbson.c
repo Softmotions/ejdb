@@ -5,6 +5,7 @@
 #include <string.h>
 #include <tcejdb/ejdb.h>
 
+#define BSON_CONTEXT_RUBY_CLASS "EJDB_BSON_CONTEXT"
 #define BSON_RUBY_CLASS "EJDB_BSON"
 
 typedef struct {
@@ -15,10 +16,14 @@ typedef struct {
     int flags;
 
     VALUE traverse_hash;
+} RBBSON_CONTEXT;
+
+typedef struct {
+    bson* bsonval;
 } RBBSON;
 
 
-VALUE iterate_array_callback(VALUE val, VALUE bsonWrap);
+VALUE iterate_array_callback(VALUE val, VALUE bsonContextWrap);
 
 VALUE bson_array_to_ruby(bson_iterator* it);
 
@@ -29,27 +34,41 @@ void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int fla
 VALUE bson_date_to_ruby(bson_date_t date);
 
 
+VALUE bsonContextClass = Qnil;
 VALUE bsonWrapClass = Qnil;
 
 
 void init_ruby_to_bson() {
+    bsonContextClass = rb_define_class(BSON_CONTEXT_RUBY_CLASS, rb_cObject);
     bsonWrapClass = rb_define_class(BSON_RUBY_CLASS, rb_cObject);
 }
 
 
-VALUE createBsonWrap(bson* bsonval, VALUE rbobj, VALUE traverse, int flags) {
+VALUE createBsonContextWrap(bson* bsonval, VALUE rbobj, VALUE traverse, int flags) {
+    if (NIL_P(bsonContextClass)) {
+        rb_raise(rb_eRuntimeError, "Ruby to BSON library must be initialized");
+    }
+    VALUE bsonContextWrap = Data_Wrap_Struct(bsonContextClass, NULL, NULL, ruby_xmalloc(sizeof(RBBSON_CONTEXT)));
+
+    RBBSON_CONTEXT* rbbsctx;
+    Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
+    rbbsctx->bsonval = bsonval;
+    rbbsctx->obj = rbobj;
+    rbbsctx->arrayIndex = 0;
+    rbbsctx->traverse_hash = !NIL_P(traverse) ? traverse : rb_hash_new();
+
+    return bsonContextWrap;
+}
+
+VALUE createBsonWrap(bson* bsonval) {
     if (NIL_P(bsonWrapClass)) {
         rb_raise(rb_eRuntimeError, "Ruby to BSON library must be initialized");
     }
     VALUE bsonWrap = Data_Wrap_Struct(bsonWrapClass, NULL, NULL, ruby_xmalloc(sizeof(RBBSON)));
-
     RBBSON* rbbson;
     Data_Get_Struct(bsonWrap, RBBSON, rbbson);
-    rbbson->bsonval = bsonval;
-    rbbson->obj = rbobj;
-    rbbson->arrayIndex = 0;
-    rbbson->traverse_hash = !NIL_P(traverse) ? traverse : rb_hash_new();
 
+    rbbson->bsonval = bsonval;
     return bsonWrap;
 }
 
@@ -63,15 +82,15 @@ void add_ruby_to_traverse(VALUE rbobj, VALUE traverse) {
 }
 
 
-int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
+int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonContextWrap) {
     key = rb_funcall(key, rb_intern("to_s"), 0);
     char* attrName = StringValuePtr(key);
 
     if (attrName[0] == '@') attrName++; // hack, removing @
 
-    RBBSON* rbbson;
-    Data_Get_Struct(bsonWrap, RBBSON, rbbson);
-    bson* b = rbbson->bsonval;
+    RBBSON_CONTEXT* rbbsctx;
+    Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
+    bson* b = rbbsctx->bsonval;
 
     switch (TYPE(val)) {
         case T_OBJECT:
@@ -96,14 +115,14 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
             //else same as hash :)
         case T_HASH: {
                 bson* subbson;
-                ruby_to_bson_internal(val, &subbson, rbbson->traverse_hash, rbbson->flags);
+                ruby_to_bson_internal(val, &subbson, rbbsctx->traverse_hash, rbbsctx->flags);
                 bson_append_bson(b, attrName, subbson);
             }
             break;
         case T_ARRAY:
-            add_ruby_to_traverse(val, rbbson->traverse_hash);
+            add_ruby_to_traverse(val, rbbsctx->traverse_hash);
             bson_append_start_array(b, attrName);
-            rb_iterate(rb_each, val, iterate_array_callback, createBsonWrap(b, rbbson->obj, rbbson->traverse_hash, rbbson->flags));
+            rb_iterate(rb_each, val, iterate_array_callback, createBsonContextWrap(b, rbbsctx->obj, rbbsctx->traverse_hash, rbbsctx->flags));
             bson_append_finish_array(b);
             break;
         case T_STRING:
@@ -150,20 +169,20 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonWrap) {
     return 0;
 }
 
-VALUE iterate_array_callback(VALUE val, VALUE bsonWrap) {
-    RBBSON* rbbson;
-    Data_Get_Struct(bsonWrap, RBBSON, rbbson);
+VALUE iterate_array_callback(VALUE val, VALUE bsonContextWrap) {
+    RBBSON_CONTEXT* rbbsctx;
+    Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
 
-    iterate_key_values_callback(INT2NUM(rbbson->arrayIndex++), val, bsonWrap);
+    iterate_key_values_callback(INT2NUM(rbbsctx->arrayIndex++), val, bsonContextWrap);
     return val;
 }
 
-VALUE iterate_object_attrs_callback(VALUE key, VALUE bsonWrap) {
-    RBBSON* rbbson;
-    Data_Get_Struct(bsonWrap, RBBSON, rbbson);
-    VALUE val = rb_funcall(rbbson->obj, rb_intern("instance_variable_get"), 1, key);
+VALUE iterate_object_attrs_callback(VALUE key, VALUE bsonContextWrap) {
+    RBBSON_CONTEXT* rbbsctx;
+    Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
+    VALUE val = rb_funcall(rbbsctx->obj, rb_intern("instance_variable_get"), 1, key);
 
-    iterate_key_values_callback(key, val, bsonWrap);
+    iterate_key_values_callback(key, val, bsonContextWrap);
     return val;
 }
 
@@ -174,41 +193,41 @@ bson_date_t ruby_time_to_bson_internal(VALUE time) {
 }
 
 
-void ruby_object_to_bson_internal(VALUE rbobj, VALUE bsonWrap) {
+void ruby_object_to_bson_internal(VALUE rbobj, VALUE bsonContextWrap) {
     Check_Type(rbobj, T_OBJECT);
 
     VALUE attrs = rb_funcall(rbobj, rb_intern("instance_variables"), 0);
     Check_Type(attrs, T_ARRAY);
 
-    rb_iterate(rb_each, attrs, iterate_object_attrs_callback, bsonWrap);
+    rb_iterate(rb_each, attrs, iterate_object_attrs_callback, bsonContextWrap);
 }
 
-void ruby_hash_to_bson_internal(VALUE rbhash, VALUE bsonWrap) {
+void ruby_hash_to_bson_internal(VALUE rbhash, VALUE bsonContextWrap) {
     Check_Type(rbhash, T_HASH);
-    rb_hash_foreach(rbhash, iterate_key_values_callback, bsonWrap);
+    rb_hash_foreach(rbhash, iterate_key_values_callback, bsonContextWrap);
 }
 
 
 void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int flags) {
-    VALUE bsonWrap = createBsonWrap(bson_create(), rbobj, traverse, flags);
-    RBBSON* rbbson;
-    Data_Get_Struct(bsonWrap, RBBSON, rbbson);
+    VALUE bsonContextWrap = createBsonContextWrap(bson_create(), rbobj, traverse, flags);
+    RBBSON_CONTEXT* rbbsctx;
+    Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
 
-    add_ruby_to_traverse(rbobj, rbbson->traverse_hash);
+    add_ruby_to_traverse(rbobj, rbbsctx->traverse_hash);
 
     if (flags & RUBY_TO_BSON_AS_QUERY) {
-        bson_init_as_query(rbbson->bsonval);
+        bson_init_as_query(rbbsctx->bsonval);
     } else {
-        bson_init(rbbson->bsonval);
+        bson_init(rbbsctx->bsonval);
     }
 
     switch (TYPE(rbobj)) {
         case T_OBJECT:
         case T_DATA:
-            ruby_object_to_bson_internal(rbobj, bsonWrap);
+            ruby_object_to_bson_internal(rbobj, bsonContextWrap);
             break;
         case T_HASH:
-            ruby_hash_to_bson_internal(rbobj, bsonWrap);
+            ruby_hash_to_bson_internal(rbobj, bsonContextWrap);
             break;
         default: {
             VALUE objStr = rb_funcall(rbobj, rb_intern("inspect"), 0);
@@ -216,9 +235,9 @@ void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int fla
         }
     }
 
-    bson_finish(rbbson->bsonval);
+    bson_finish(rbbsctx->bsonval);
 
-    *bsonresp = rbbson->bsonval;
+    *bsonresp = rbbsctx->bsonval;
 }
 
 void ruby_to_bson(VALUE rbobj, bson** bsonresp, int flags) {
@@ -311,6 +330,26 @@ VALUE bson_to_ruby(const bson* bsonval) {
                           bson_iterator_to_ruby(&it, bson_iterator_type(&it)));
     }
     return res;
+}
+
+VALUE bson_to_ruby_wrapper(VALUE bsonWrap) {
+    RBBSON* rbbson;
+    Data_Get_Struct(bsonWrap, RBBSON, rbbson);
+    return bson_to_ruby(rbbson->bsonval);
+}
+
+VALUE bson_to_ruby_ensure_destroy_wrapper(VALUE bsonWrap, VALUE exception) {
+    RBBSON* rbbson;
+    Data_Get_Struct(bsonWrap, RBBSON, rbbson);
+    if (rbbson->bsonval) {
+        bson_destroy(rbbson->bsonval);
+    }
+    rbbson->bsonval = NULL;
+}
+
+VALUE bson_to_ruby_ensure_destroy(bson* bsonval) {
+    VALUE bsonWrap = createBsonWrap(bsonval);
+    return rb_ensure(bson_to_ruby_wrapper, bsonWrap, bson_to_ruby_ensure_destroy_wrapper, bsonWrap);
 }
 
 VALUE bson_oid_to_ruby(const bson_oid_t* oid) {

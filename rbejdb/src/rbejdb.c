@@ -80,7 +80,6 @@ static int nil_or_raise_ejdb_error(EJDB *ejdb) {
 }
 
 
-
 EJDB* getEJDB(VALUE self) {
     RBEJDB* rejdb;
     Data_Get_Struct(self, RBEJDB, rejdb);
@@ -89,7 +88,7 @@ EJDB* getEJDB(VALUE self) {
 
 
 VALUE EJDB_new(VALUE self) {
-    rb_raise(rb_eRuntimeError, "EJDB.open method should be used!");
+    rb_raise(rb_eRuntimeError, "EJDB.open() method should be used!");
     return self;
 }
 
@@ -129,8 +128,7 @@ VALUE EJDB_is_open(VALUE self) {
 }
 
 void EJDB_close(VALUE self) {
-    EJDB* ejdb = getEJDB(self);
-    ejdbclose(ejdb);
+    ejdbclose(getEJDB(self));
 }
 
 void EJDB_drop_collection(int argc, VALUE* argv, VALUE self) {
@@ -138,7 +136,6 @@ void EJDB_drop_collection(int argc, VALUE* argv, VALUE self) {
     VALUE prune;
 
     rb_scan_args(argc, argv, "11", &collName, &prune);
-
     SafeStringValue(collName);
 
     EJDB* ejdb = getEJDB(self);
@@ -199,7 +196,7 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
     for (i = 1; i < argc; i++) {
         VALUE rbobj = argv[i];
 
-        if (merge && i == argc - 1) break;
+        if (i == argc - 1 && (TYPE(rbobj) == T_TRUE || TYPE(rbobj) == T_FALSE)) break;
 
         if (NIL_P(rbobj)) {
             rb_ary_push(oids, Qnil);
@@ -249,7 +246,7 @@ VALUE EJDB_load(VALUE self, VALUE collName, VALUE rboid) {
     bson_oid_t oid = ruby_to_bson_oid(rboid);
     bson *bs = ejdbloadbson(coll, &oid);
 
-    return bs ? bson_to_ruby(bs) : nil_or_raise_ejdb_error(ejdb);
+    return bs ? bson_to_ruby_ensure_destroy(bs) : nil_or_raise_ejdb_error(ejdb);
 }
 
 
@@ -288,7 +285,6 @@ VALUE EJDB_remove_query_internal(RBEJDB_QUERY* rbquery) {
 }
 
 VALUE EJDB_query_free(RBEJDB_QUERY* rbquery) {
-    EJDB_remove_query_internal(rbquery);
     ruby_xfree(rbquery);
 }
 
@@ -299,7 +295,7 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
     VALUE orarrlng = rb_funcall(orarr, rb_intern("length"), 0);
     rbquery->qbson = NULL;
     rbquery->hintsbson = NULL;
-    rbquery->orarrbson = NUM2INT(orarrlng) ? (bson*) tcmalloc(rbquery->orarrlng * sizeof(bson)) : NULL;
+    rbquery->orarrbson = NUM2INT(orarrlng) ? (bson*) malloc(NUM2INT(orarrlng) * sizeof(bson)) : NULL;
     rbquery->orarrlng = 0;
 
     ruby_to_bson(q, &(rbquery->qbson), RUBY_TO_BSON_AS_QUERY);
@@ -391,6 +387,7 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     rb_ary_push(params, orarr);
     rb_ary_push(params, hints);
 
+    // Even if exception raised during find() we will free memory, taken for query
     return rb_ensure(EJDB_find_internal_wrapper, params, EJDB_find_ensure, queryWrap);
 }
 

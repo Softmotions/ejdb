@@ -502,6 +502,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     $jb.save("monsters", nil)
     $jb.save("monsters", {:name => :abracadabra}, {:name => :chupacabra})
     $jb.save("monsters", self)
+    $jb.save("monsters", nil, false)
 
     #puts $jb.find("monsters").to_a.to_s
     assert_equal(6, $jb.find("monsters").count)

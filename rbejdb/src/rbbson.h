@@ -23,6 +23,9 @@ extern "C" {
 
     VALUE bson_to_ruby(const bson* bsonval);
 
+    VALUE bson_to_ruby_ensure_destroy(bson* bsonval);
+
+
     VALUE bson_oid_to_ruby(const bson_oid_t* oid);
 
     bson_oid_t ruby_to_bson_oid(VALUE rboid);
