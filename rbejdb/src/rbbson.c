@@ -43,12 +43,20 @@ void init_ruby_to_bson() {
     bsonWrapClass = rb_define_class(BSON_RUBY_CLASS, rb_cObject);
 }
 
+void rbbson_context_free(RBBSON_CONTEXT* rbbsctx) {
+    ruby_xfree(rbbsctx);
+}
+
+void rbbson_free(RBBSON* rbbson) {
+    ruby_xfree(rbbson);
+}
+
 
 VALUE createBsonContextWrap(bson* bsonval, VALUE rbobj, VALUE traverse, int flags) {
     if (NIL_P(bsonContextClass)) {
         rb_raise(rb_eRuntimeError, "Ruby to BSON library must be initialized");
     }
-    VALUE bsonContextWrap = Data_Wrap_Struct(bsonContextClass, NULL, NULL, ruby_xmalloc(sizeof(RBBSON_CONTEXT)));
+    VALUE bsonContextWrap = Data_Wrap_Struct(bsonContextClass, NULL, rbbson_context_free, ruby_xmalloc(sizeof(RBBSON_CONTEXT)));
 
     RBBSON_CONTEXT* rbbsctx;
     Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
@@ -64,7 +72,7 @@ VALUE createBsonWrap(bson* bsonval) {
     if (NIL_P(bsonWrapClass)) {
         rb_raise(rb_eRuntimeError, "Ruby to BSON library must be initialized");
     }
-    VALUE bsonWrap = Data_Wrap_Struct(bsonWrapClass, NULL, NULL, ruby_xmalloc(sizeof(RBBSON)));
+    VALUE bsonWrap = Data_Wrap_Struct(bsonWrapClass, NULL, rbbson_free, ruby_xmalloc(sizeof(RBBSON)));
     RBBSON* rbbson;
     Data_Get_Struct(bsonWrap, RBBSON, rbbson);
 

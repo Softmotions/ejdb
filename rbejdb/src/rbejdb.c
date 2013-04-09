@@ -551,6 +551,9 @@ VALUE EJDB_get_db_meta(VALUE self) {
         }
     }
     rb_hash_aset(res,  rb_str_new2("file"), rb_str_new2(ejdb->metadb->hdb->path));
+
+    tclistdel(cols);
+
     return res;
 }
 
@@ -628,8 +631,10 @@ VALUE EJDB_check_valid_oid_string(VALUE clazz, VALUE oid) {
 
 void close_ejdb_results_internal(RBEJDB_RESULTS* rbres) {
     tclistdel(rbres->results);
+    rbres->results = NULL;
     if (rbres->log) {
         tcxstrdel(rbres->log);
+        rbres->log = NULL;
     }
 }
 
@@ -681,9 +686,6 @@ void EJDB_results_close(VALUE self) {
     Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
 
     close_ejdb_results_internal(rbresults);
-
-    rbresults->results = NULL;
-    rbresults->log = NULL;
 }
 
 
