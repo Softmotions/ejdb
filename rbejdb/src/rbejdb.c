@@ -252,6 +252,7 @@ VALUE EJDB_load(VALUE self, VALUE collName, VALUE rboid) {
     return bs ? bson_to_ruby(bs) : nil_or_raise_ejdb_error(ejdb);
 }
 
+
 void prepare_query_hint(VALUE res, VALUE hints, char* hint) {
     VALUE val = get_hash_option(hints, hint);
     if (!NIL_P(val)) {
@@ -267,12 +268,14 @@ VALUE prepare_query_hints(VALUE hints) {
     return res;
 }
 
-VALUE EJDB_query_free(RBEJDB_QUERY* rbquery) {
+VALUE EJDB_remove_query_internal(RBEJDB_QUERY* rbquery) {
     if (rbquery->qbson) {
         bson_destroy(rbquery->qbson);
+        rbquery->qbson = NULL;
     }
     if (rbquery->hintsbson) {
         bson_destroy(rbquery->hintsbson);
+        rbquery->hintsbson = NULL;
     }
     if (rbquery->orarrbson) {
         int i;
@@ -280,8 +283,75 @@ VALUE EJDB_query_free(RBEJDB_QUERY* rbquery) {
             bson_destroy(rbquery->orarrbson + i);
         }
         free(rbquery->orarrbson);
+        rbquery->orarrbson = NULL;
     }
+}
+
+VALUE EJDB_query_free(RBEJDB_QUERY* rbquery) {
+    EJDB_remove_query_internal(rbquery);
     ruby_xfree(rbquery);
+}
+
+VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, VALUE orarr, VALUE hints) {
+    RBEJDB_QUERY* rbquery;
+    Data_Get_Struct(queryWrap, RBEJDB_QUERY, rbquery);
+
+    VALUE orarrlng = rb_funcall(orarr, rb_intern("length"), 0);
+    rbquery->qbson = NULL;
+    rbquery->hintsbson = NULL;
+    rbquery->orarrbson = NUM2INT(orarrlng) ? (bson*) tcmalloc(rbquery->orarrlng * sizeof(bson)) : NULL;
+    rbquery->orarrlng = 0;
+
+    ruby_to_bson(q, &(rbquery->qbson), RUBY_TO_BSON_AS_QUERY);
+
+    int i;
+    while(!NIL_P(rb_ary_entry(orarr, 0))) {
+        VALUE orq = rb_ary_shift(orarr);
+        bson* orqbson;
+        ruby_to_bson(orq, &orqbson, RUBY_TO_BSON_AS_QUERY);
+        bson_copy(rbquery->orarrbson + (i++), orqbson);
+        bson_destroy(orqbson);
+        rbquery->orarrlng++;
+    }
+
+    ruby_to_bson(prepare_query_hints(hints), &(rbquery->hintsbson), RUBY_TO_BSON_AS_QUERY);
+
+    bool onlycount = RTEST(get_hash_option(hints, "onlycount"));
+    bool explain = RTEST(get_hash_option(hints, "explain"));
+
+    EJDB* ejdb = getEJDB(self);
+
+    EJCOLL *coll = ejdbgetcoll(ejdb, StringValuePtr(collName));
+    if (!coll) {
+        bson_iterator it;
+        if (bson_find(&it, rbquery->qbson, "$upsert") == BSON_OBJECT) {
+            coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
+        }
+        if (!coll) {
+            return !onlycount ? create_EJDB_query_results(tclistnew2(1), NULL) : INT2NUM(0);
+        }
+    }
+
+    EJQ *ejq = ejdbcreatequery(ejdb, rbquery->qbson, rbquery->orarrbson, NUM2INT(orarrlng), rbquery->hintsbson);
+
+    int count;
+    int qflags = onlycount ? EJQONLYCOUNT : 0;
+    TCXSTR *log = explain ? tcxstrnew() : NULL;
+
+    TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, log);
+
+    return !onlycount ? create_EJDB_query_results(qres, log) : INT2NUM(count);
+}
+
+VALUE EJDB_find_internal_wrapper(VALUE args) {
+    return EJDB_find_internal(rb_ary_pop(args), rb_ary_pop(args), rb_ary_pop(args),
+                              rb_ary_pop(args), rb_ary_pop(args), rb_ary_pop(args));
+}
+
+VALUE EJDB_find_ensure(VALUE queryWrap, VALUE exception) {
+    RBEJDB_QUERY* rbquery;
+    Data_Get_Struct(queryWrap, RBEJDB_QUERY, rbquery);
+    EJDB_remove_query_internal(rbquery);
 }
 
 VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
@@ -307,52 +377,21 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     VALUE queryWrap = Data_Wrap_Struct(ejdbQueryClass, NULL, EJDB_query_free, ruby_xmalloc(sizeof(RBEJDB_QUERY)));
     RBEJDB_QUERY* rbquery;
     Data_Get_Struct(queryWrap, RBEJDB_QUERY, rbquery);
-
-    VALUE orarrlng = rb_funcall(orarr, rb_intern("length"), 0);
     rbquery->qbson = NULL;
     rbquery->hintsbson = NULL;
-    rbquery->orarrbson = NUM2INT(orarrlng) ? (bson*) tcmalloc(rbquery->orarrlng * sizeof(bson)) : NULL;
-    rbquery->orarrlng;
+    rbquery->orarrbson = NULL;
+    rbquery->orarrlng = 0;
 
-    ruby_to_bson(q, &(rbquery->qbson), RUBY_TO_BSON_AS_QUERY);
 
-    bool onlycount = RTEST(get_hash_option(hints, "onlycount"));
-    bool explain = RTEST(get_hash_option(hints, "explain"));
+    VALUE params = rb_ary_new();
+    rb_ary_push(params, self);
+    rb_ary_push(params, collName);
+    rb_ary_push(params, queryWrap);
+    rb_ary_push(params, q);
+    rb_ary_push(params, orarr);
+    rb_ary_push(params, hints);
 
-    EJDB* ejdb = getEJDB(self);
-
-    EJCOLL *coll = ejdbgetcoll(ejdb, StringValuePtr(collName));
-    if (!coll) {
-        bson_iterator it;
-        if (bson_find(&it, rbquery->qbson, "$upsert") == BSON_OBJECT) {
-            coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
-        }
-        if (!coll) {
-            return !onlycount ? create_EJDB_query_results(tclistnew2(1), NULL) : INT2NUM(0);
-        }
-    }
-
-    int i;
-    while(!NIL_P(rb_ary_entry(orarr, 0))) {
-        VALUE orq = rb_ary_shift(orarr);
-        bson* orqbson;
-        ruby_to_bson(orq, &orqbson, RUBY_TO_BSON_AS_QUERY);
-        bson_copy(rbquery->orarrbson + (i++), orqbson);
-        bson_destroy(orqbson);
-        rbquery->orarrlng++;
-    }
-
-    ruby_to_bson(prepare_query_hints(hints), &(rbquery->hintsbson), RUBY_TO_BSON_AS_QUERY);
-
-    EJQ *ejq = ejdbcreatequery(ejdb, rbquery->qbson, rbquery->orarrbson, NUM2INT(orarrlng), rbquery->hintsbson);
-
-    int count;
-    int qflags = onlycount ? EJQONLYCOUNT : 0;
-    TCXSTR *log = explain ? tcxstrnew() : NULL;
-
-    TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, log);
-
-    return !onlycount ? create_EJDB_query_results(qres, log) : INT2NUM(count);
+    return rb_ensure(EJDB_find_internal_wrapper, params, EJDB_find_ensure, queryWrap);
 }
 
 static VALUE EJDB_block_true(VALUE yielded_object, VALUE context, int argc, VALUE argv[]){

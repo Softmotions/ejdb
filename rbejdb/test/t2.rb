@@ -506,7 +506,6 @@ class EJDBTestUnit < Test::Unit::TestCase
     #puts $jb.find("monsters").to_a.to_s
     assert_equal(6, $jb.find("monsters").count)
 
-
     assert_raise(ArgumentError) {
       $jb.find
     }
