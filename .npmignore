@@ -5,8 +5,6 @@
 
 nbproject/
 
-/pyejdb
-
 /misc
 /node/nodejs
 /.idea
@@ -66,4 +64,6 @@ nbproject/
 
 /pyejdb
 /luaejdb
+/jejdb
+
 
