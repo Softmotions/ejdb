@@ -436,9 +436,9 @@ namespace ejdb {
                 double nv = pv->NumberValue();
                 double ipart;
                 if (modf(nv, &ipart) == 0.0) {
-                    bson_append_double(bs, *spn, nv);
-                } else {
                     bson_append_long(bs, *spn, pv->IntegerValue());
+                } else {
+                    bson_append_double(bs, *spn, nv);
                 }
             } else if (pv->IsNull()) {
                 bson_append_null(bs, *spn);

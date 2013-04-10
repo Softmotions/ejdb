@@ -438,6 +438,15 @@ module.exports.testCreateCollectionOn$upsert = function(test) {
 };
 
 
+module.exports.testFPIssue = function(test) {
+    test.ok(jb);
+    jb.save("test", {x: 2.3434343});
+    var x = jb.findOne("test");
+    test.equal(x.x, 2.3434343);
+    test.done();
+};
+
+
 module.exports.testClose = function(test) {
     test.ok(jb);
     jb.close();
