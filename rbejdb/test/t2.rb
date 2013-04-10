@@ -511,7 +511,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     minfixnum = -(2**(0.size * 8 -2))
     oid = $jb.save("monsters", {
         :nil => nil,
-        :object => Object.new,
+        :object => EJDBTestUnit.new("test"),
         :float => 0.2323232,
         :string => "string",
         :regexp => /regexp.*\\\n/imx,
@@ -529,7 +529,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     obj = $jb.load("monsters", oid)
     assert_nil obj["nil"]
-    assert obj["object"].is_a? Object
+    assert obj["object"].is_a? Hash
     assert_equal(0.2323232, obj["float"])
     assert_equal("string", obj["string"])
     assert_equal(/regexp.*\\\n/imx, obj["regexp"])
@@ -547,18 +547,27 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal([1, 0, 255], obj["binary"].to_a)
     assert obj["time"].is_a? Time
 
-    #what we can't save
+    #what we can't save (yet? :)
     assert_raise(RangeError) {
-      $jb.save("monsters", {:toobigint => 3791237293719837192837292})
+      $jb.save("monsters", :toobigint => 3791237293719837192837292)
     }
     assert_raise(RuntimeError) {
-      $jb.save("monsters", {:class => Array})
+      $jb.save("monsters", :class => Array)
     }
     assert_raise(RuntimeError) {
-      $jb.save("monsters", {:data => $jb})
+      $jb.save("monsters", :data => $jb)
     }
     assert_raise(RuntimeError) {
-      $jb.save("monsters", {:module => Math})
+      $jb.save("monsters", :module => Math)
+    }
+    assert_raise(RuntimeError) {
+      $jb.save("monsters", :range => 0..100500)
+    }
+    assert_raise(RuntimeError) {
+      $jb.save("monsters", :complex => Complex::polar(1, 1))
+    }
+    assert_raise(RuntimeError) {
+      $jb.save("monsters", :file => File::open("/tmp"))
     }
 
     #puts $jb.find("monsters").to_a.to_s
@@ -582,6 +591,9 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     assert_equal(1, $jb.find("monsters", {:maxfixnum => {"$exists" => true}}, {:onlycount => true}))
     assert_equal(6, $jb.find("monsters", {:maxfixnum => {"$exists" => false}}, {:onlycount => true}))
+
+    assert_equal(0, $jb.find("monsters", {:maxfixnum => {"$in" => [maxfixnum - 1, maxfixnum + 1]}}, {:onlycount => true}))
+    assert_equal(1, $jb.find("monsters", {:maxfixnum => {"$gt" => maxfixnum - 1, "$lt" => maxfixnum + 1}}, {:onlycount => true}))
 
     puts __method__.inspect + " has passed successfull"
   end

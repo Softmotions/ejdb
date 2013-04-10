@@ -27,6 +27,7 @@ typedef struct {
 
 typedef struct {
     TCLIST* results;
+    TCLIST* results_raw;
     TCXSTR* log;
 } RBEJDB_RESULTS;
 
@@ -403,8 +404,8 @@ VALUE EJDB_find_one(int argc, VALUE* argv, VALUE self) {
     return results;
 }
 
-VALUE EJDB_update(int argc, VALUE* argv, VALUE self) {
-    return EJDB_find(argc, argv, self);
+void EJDB_update(int argc, VALUE* argv, VALUE self) {
+    EJDB_find(argc, argv, self);
 }
 
 
@@ -630,8 +631,20 @@ VALUE EJDB_check_valid_oid_string(VALUE clazz, VALUE oid) {
 
 
 void close_ejdb_results_internal(RBEJDB_RESULTS* rbres) {
-    tclistdel(rbres->results);
-    rbres->results = NULL;
+    if (rbres->results) {
+        int i;
+        for (i = 0; i < TCLISTNUM(rbres->results); i++) {
+            bson* bsonval = *(bson**) TCLISTVALPTR(rbres->results, i);
+            bson_dispose(bsonval);
+        }
+
+        tclistdel(rbres->results);
+        rbres->results = NULL;
+    }
+    if (rbres->results_raw) {
+        tclistdel(rbres->results_raw);
+        rbres->results_raw = NULL;
+    }
     if (rbres->log) {
         tcxstrdel(rbres->log);
         rbres->log = NULL;
@@ -639,21 +652,29 @@ void close_ejdb_results_internal(RBEJDB_RESULTS* rbres) {
 }
 
 void EJDB_results_free(RBEJDB_RESULTS* rbres) {
-    if (rbres->results) {
-        close_ejdb_results_internal(rbres);
-    }
+    close_ejdb_results_internal(rbres);
     ruby_xfree(rbres);
 }
 
 VALUE create_EJDB_query_results(TCLIST* qres, TCXSTR *log) {
-    VALUE results = Data_Wrap_Struct(ejdbResultsClass, NULL, EJDB_results_free, ruby_xmalloc(sizeof(RBEJDB_RESULTS)));
+    VALUE resultsWrap = Data_Wrap_Struct(ejdbResultsClass, NULL, EJDB_results_free, ruby_xmalloc(sizeof(RBEJDB_RESULTS)));
     RBEJDB_RESULTS* rbresults;
-    Data_Get_Struct(results, RBEJDB_RESULTS, rbresults);
+    Data_Get_Struct(resultsWrap, RBEJDB_RESULTS, rbresults);
 
-    rbresults->results = qres;
+    TCLIST* results = tclistnew2(TCLISTNUM(qres));
+    int i;
+    for (i = 0; i < TCLISTNUM(qres); i++) {
+        char* bsrawdata = TCLISTVALPTR(qres, i);
+        bson* bsonval = bson_create();
+        bson_init_finished_data(bsonval, bsrawdata);
+        tclistpush(results, &bsonval, sizeof(bson*));
+    }
+
+    rbresults->results = results;
+    rbresults->results_raw = qres;
     rbresults->log = log;
 
-    return results;
+    return resultsWrap;
 }
 
 void EJDB_results_each(VALUE self) {
@@ -664,13 +685,11 @@ void EJDB_results_each(VALUE self) {
         rb_raise(rb_eRuntimeError, "each() method called on invalid ejdb query results");
     }
 
-    TCLIST* qres = rbresults->results;
+    TCLIST* results = rbresults->results;
     int i;
-    for (i = 0; i < TCLISTNUM(qres); i++) {
-        char* bsrawdata = TCLISTVALPTR(qres, i);
-        bson bsonval;
-        bson_init_finished_data(&bsonval, bsrawdata);
-        rb_yield(bson_to_ruby(&bsonval));
+    for (i = 0; i < TCLISTNUM(results); i++) {
+        bson* bsonval = *(bson**) TCLISTVALPTR(results, i);
+        rb_yield(bson_to_ruby(bsonval));
     }
 }
 
