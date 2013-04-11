@@ -1,5 +1,13 @@
 require "rbejdb"
 
+TESTDB_DIR = 'testdb'
+
+unless File.exists?(TESTDB_DIR)
+  Dir.mkdir TESTDB_DIR
+end
+
+Dir.chdir TESTDB_DIR
+
 ejdb = EJDB.open("zoo", EJDB::DEFAULT_OPEN_MODE)
 
 raise "Failed to open ejdb" unless ejdb.is_open?
@@ -30,7 +38,7 @@ ejdb.find("parrots", {:name => "Cacadoo"}).each { |res|
   puts res.inspect
 }
 
-ejdb.find("parrots", {:name => {"$in" => ["Mamadoo", "Sauron"]}}).each { |res|
+ejdb.find("parrots", {:name => {"$in" => %w(Mamadoo Sauron)}}).each { |res|
   puts res.inspect
 }
 

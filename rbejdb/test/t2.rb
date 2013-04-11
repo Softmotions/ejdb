@@ -1,6 +1,14 @@
 require "rbejdb"
 require 'test/unit'
 
+TESTDB_DIR = 'testdb'
+
+unless File.exists?(TESTDB_DIR)
+  Dir.mkdir TESTDB_DIR
+end
+
+Dir.chdir TESTDB_DIR
+
 $now = Time.now
 $jb = EJDB.open("tdbt2", EJDB::JBOWRITER | EJDB::JBOCREAT | EJDB::JBOTRUNC)
 

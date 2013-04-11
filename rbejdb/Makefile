@@ -1,10 +1,11 @@
 
-all: build check
+all: build doc
 
 build:
-	export CFLAGS=-g
 	ruby extconf.rb
 	make -C ./build
+
+install:
 	make install -C ./build
 
 check:
@@ -14,5 +15,7 @@ doc:
 
 clean:
 	rm -rf build
+	rm -rf test/testdb
+	rm -f mkmf.log
 
 .PHONY: all build check clean doc
