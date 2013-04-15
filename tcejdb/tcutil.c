@@ -18,6 +18,9 @@
 #include "myconf.h"
 #include "md5.h"
 
+#ifdef _WIN32
+#include <wincrypt.h>
+#endif
 
 
 /*************************************************************************************************
@@ -253,9 +256,13 @@ static void tcvxstrprintf(TCXSTR *xstr, const char *format, va_list ap){
       int cblen = 1;
       int lnum = 0;
       format++;
-      while(strchr("0123456789 .+-hlLz", *format) && *format != '\0' &&
+      while(strchr("0123456789 .+-hlLzI", *format) && *format != '\0' &&
             cblen < TCNUMBUFSIZ - 1){
-        if(*format == 'l' || *format == 'L') lnum++;
+        if(*format == 'l' || *format == 'L') {
+            lnum++;
+        } else if (*format == 'I' && *(format + 1) == '6' && *(format + 2) == '4') {
+            lnum += 2;
+        }
         cbuf[cblen++] = *(format++);
       }
       cbuf[cblen++] = *format;
@@ -2327,7 +2334,6 @@ int tcmaploadoneintoxstr(const void *ptr, int size, const void *kbuf, int ksiz, 
     }
     return -1;
 }
-
 
 /* Perform formatted output into a map object. */
 void tcmapprintf(TCMAP *map, const char *kstr, const char *format, ...){
@@ -4405,7 +4411,7 @@ double tcndbadddouble(TCNDB *ndb, const void *kbuf, int ksiz, double num){
 /* Clear an on-memory tree database object. */
 void tcndbvanish(TCNDB *ndb){
   assert(ndb);
-  if(pthread_mutex_lock((pthread_mutex_t *)ndb->mmtx) != 0);
+  if (pthread_mutex_lock((pthread_mutex_t *)ndb->mmtx) != 0) return;
   tctreeclear(ndb->tree);
   pthread_mutex_unlock((pthread_mutex_t *)ndb->mmtx);
 }
@@ -4414,7 +4420,7 @@ void tcndbvanish(TCNDB *ndb){
 /* Remove fringe records of an on-memory tree database object. */
 void tcndbcutfringe(TCNDB *ndb, int num){
   assert(ndb && num >= 0);
-  if(pthread_mutex_lock((pthread_mutex_t *)ndb->mmtx) != 0);
+  if (pthread_mutex_lock((pthread_mutex_t *)ndb->mmtx) != 0) return;
   tctreecutfringe(ndb->tree, num);
   pthread_mutex_unlock((pthread_mutex_t *)ndb->mmtx);
 }
@@ -4709,15 +4715,10 @@ static void tcmpooldelglobal(void){
  *************************************************************************************************/
 
 
-#define TCRANDDEV      "/dev/urandom"    // path of the random device file
+
 #define TCDISTMAXLEN   4096              // maximum size of a string for distance checking
 #define TCDISTBUFSIZ   16384             // size of a distance buffer
 #define TCLDBLCOLMAX   16                // maximum number of columns of the long double
-
-
-/* File descriptor of random number generator. */
-int tcrandomdevfd = -1;
-
 
 /* private function prototypes */
 static void tcrandomfdclose(void);
@@ -4735,7 +4736,10 @@ long tclmin(long a, long b){
   return (a < b) ? a : b;
 }
 
-
+#ifndef _WIN32
+#define TCRANDDEV      "/dev/urandom"    // path of the random device file
+/* File descriptor of random number generator. */
+int tcrandomdevfd = -1;
 /* Get a random number as long integer based on uniform distribution. */
 unsigned long tclrand(void){
   static uint32_t cnt = 0;
@@ -4744,8 +4748,9 @@ unsigned long tclrand(void){
   static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
   if((cnt & 0xff) == 0 && pthread_mutex_lock(&mutex) == 0){
     if(cnt == 0) seed += time(NULL);
-    if(tcrandomdevfd == -1 && (tcrandomdevfd = open(TCRANDDEV, O_RDONLY, 00644)) != -1)
+    if(tcrandomdevfd == -1 && (tcrandomdevfd = open(TCRANDDEV, O_RDONLY, 00644)) != -1) {
       atexit(tcrandomfdclose);
+    }
     if(tcrandomdevfd == -1 || read(tcrandomdevfd, &mask, sizeof(mask)) != sizeof(mask)){
       double t = tctime();
       uint64_t tmask;
@@ -4758,6 +4763,50 @@ unsigned long tclrand(void){
   uint64_t num = (mask ^ cnt++) ^ seed;
   return TCSWAB64(num);
 }
+
+/* Close the random number generator. */
+static void tcrandomfdclose(void){
+  close(tcrandomdevfd);
+}
+#else
+static HCRYPTPROV hcprov = 0;
+unsigned long tclrand(void) {
+    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    static bool acquired = false;
+    static uint32_t cnt = 0;
+    static uint64_t seed = 0;
+    static uint64_t mask = 0;
+    uint64_t num = 0;
+    if ((cnt & 0xff) == 0 && pthread_mutex_lock(&mutex) == 0) {
+        if(cnt == 0) seed += time(NULL);
+        if (!hcprov) {
+            if (!CryptAcquireContext(&hcprov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
+                hcprov = 0;
+            }
+            if (!acquired) {
+                acquired = true;
+                atexit(tcrandomfdclose);
+            }
+            if (!hcprov || !CryptGenRandom(hcprov, sizeof (mask), (PBYTE) &mask)) {
+                double t = tctime();
+                uint64_t tmask;
+                memcpy(&tmask, &t, tclmin(sizeof (t), sizeof (tmask)));
+                mask = (mask << 8) ^ tmask;
+            }
+        }
+        pthread_mutex_unlock(&mutex);
+    }
+    seed = seed * 123456789012301LL + 211;
+    num = (mask ^ cnt++) ^ seed;
+    return TCSWAB64(num);
+}
+static void tcrandomfdclose(void){
+    if (hcprov) {
+        CryptReleaseContext(hcprov, 0);
+        hcprov = 0;
+    }
+}
+#endif
 
 
 /* Get a random number as double decimal based on uniform distribution. */
@@ -5508,17 +5557,16 @@ void tcarccipher(const void *ptr, int size, const void *kbuf, int ksiz, void *ob
 /* Get the time of day in seconds. */
 double tctime(void){
   struct timeval tv;
-  if(gettimeofday(&tv, NULL) == -1) return 0.0;
+  if(gettimeofday(&tv, NULL)) return 0.0;
   return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0;
 }
 
 /* Get time in milleconds since Epoch. */
 unsigned long tcmstime(void) {
   struct timeval tv;
-  if(gettimeofday(&tv, NULL) == -1) return 0;
+  if(gettimeofday(&tv, NULL)) return 0;
   return (unsigned long long) (tv.tv_sec) * 1000 + (unsigned long long) (tv.tv_usec) / 1000;
 }
-
 
 /* Get the Gregorian calendar of a time. */
 void tccalendar(int64_t t, int jl, int *yearp, int *monp, int *dayp,
@@ -5834,11 +5882,6 @@ int tcdayofweek(int year, int mon, int day){
 }
 
 
-/* Close the random number generator. */
-static void tcrandomfdclose(void){
-  close(tcrandomdevfd);
-}
-
 
 /* Make the GMT from a time structure.
    `tm' specifies the pointer to the time structure.
@@ -5910,7 +5953,6 @@ bool tcstrisintnum(const char *str, int len){
   }
   return isnum && (*str == '\0' || len == 0);
 }
-
 
 /* Convert a hexadecimal string to an integer. */
 int64_t tcatoih(const char *str){
@@ -6513,7 +6555,7 @@ TCLIST *tcstrkwic(const char *str, const TCLIST *words, int width, int opts){
         TCMALLOC(tbuf, ti * 5 + 1);
         int wi = 0;
         wi += tcstrutfkwicputtext(oary, nary, 0, ti, nanum, tbuf + wi, uwords, opts);
-        if(!(opts & TCKWNOOVER) && opts & TCKWMUTAB){
+        if(!(opts & TCKWNOOVER) && (opts & TCKWMUTAB)){
           tbuf[wi++] = '\t';
           tbuf[wi++] = '\t';
         }
@@ -6819,7 +6861,10 @@ void tctopsort(void *base, size_t nmemb, size_t size, size_t top,
 /* Suspend execution of the current thread. */
 bool tcsleep(double sec){
   if(!isnormal(sec) || sec <= 0.0) return false;
-  if(sec <= 1.0 / sysconf(_SC_CLK_TCK)) return sched_yield() == 0;
+#ifdef _WIN32
+  Sleep(sec * 1000);
+#else
+  if(sec <= 1.0 / sysconf_SC_CLK_TCK) return sched_yield() == 0;
   double integ, fract;
   fract = modf(sec, &integ);
   struct timespec req, rem;
@@ -6829,6 +6874,7 @@ bool tcsleep(double sec){
     if(errno != EINTR) return false;
     req = rem;
   }
+#endif
   return true;
 }
 
@@ -6858,10 +6904,10 @@ TCMAP *tcsysinfo(void){
       }
       if(tcstrifwm(line, "VmSize:")){
         int64_t size = tcatoix(rp);
-        if(size > 0) tcmapprintf(info, "size", "%lld", (long long)size);
+        if(size > 0) tcmapprintf(info, "size", "%" PRIdMAX "", (long long)size);
       } else if(tcstrifwm(line, "VmRSS:")){
         int64_t size = tcatoix(rp);
-        if(size > 0) tcmapprintf(info, "rss", "%lld", (long long)size);
+        if(size > 0) tcmapprintf(info, "rss", "%" PRIdMAX "", (long long)size);
       }
     }
     tclistdel(lines);
@@ -6879,13 +6925,13 @@ TCMAP *tcsysinfo(void){
       }
       if(tcstrifwm(line, "MemTotal:")){
         int64_t size = tcatoix(rp);
-        if(size > 0) tcmapprintf(info, "total", "%lld", (long long)size);
+        if(size > 0) tcmapprintf(info, "total", "%" PRIdMAX "", (long long)size);
       } else if(tcstrifwm(line, "MemFree:")){
         int64_t size = tcatoix(rp);
-        if(size > 0) tcmapprintf(info, "free", "%lld", (long long)size);
+        if(size > 0) tcmapprintf(info, "free", "%" PRIdMAX "", (long long)size);
       } else if(tcstrifwm(line, "Cached:")){
         int64_t size = tcatoix(rp);
-        if(size > 0) tcmapprintf(info, "cached", "%lld", (long long)size);
+        if(size > 0) tcmapprintf(info, "cached", "%" PRIdMAX "", (long long)size);
       }
     }
     tclistdel(lines);
@@ -6898,7 +6944,7 @@ TCMAP *tcsysinfo(void){
       const char *line = TCLISTVALPTR(lines, i);
       if(tcstrifwm(line, "processor")) cnum++;
     }
-    if(cnum > 0) tcmapprintf(info, "corenum", "%lld", (long long)cnum);
+    if(cnum > 0) tcmapprintf(info, "corenum", "%" PRIdMAX "", (long long)cnum);
     tclistdel(lines);
   }
   return info;
@@ -6911,9 +6957,22 @@ TCMAP *tcsysinfo(void){
                 rbuf.ru_utime.tv_sec + rbuf.ru_utime.tv_usec / 1000000.0);
     tcmapprintf(info, "stime", "%0.6f",
                 rbuf.ru_stime.tv_sec + rbuf.ru_stime.tv_usec / 1000000.0);
-    long tck = sysconf(_SC_CLK_TCK);
+    long tck = sysconf_SC_CLK_TCK;
     int64_t size = (((double)rbuf.ru_ixrss + rbuf.ru_idrss + rbuf.ru_isrss) / tck) * 1024.0;
-    if(size > 0) tcmapprintf(info, "rss", "%lld", (long long)size);
+    if(size > 0) tcmapprintf(info, "rss", "%" PRIdMAX "", (long long)size);
+  }
+  return info;
+#elif defined(_WIN32)
+  TCMAP *info = tcmapnew2(TCMAPTINYBNUM);
+  FILETIME creat, exit, kernel, user;
+  ULARGE_INTEGER largetime;
+  if (GetProcessTimes(GetCurrentProcess(), &creat, &exit, &kernel, &user)){
+    largetime.LowPart = user.dwLowDateTime;
+    largetime.HighPart = user.dwHighDateTime;
+    tcmapprintf(info, "utime", "%0.6f", largetime.QuadPart / 10000000.0);
+    largetime.LowPart = kernel.dwLowDateTime;
+    largetime.HighPart = kernel.dwHighDateTime;
+    tcmapprintf(info, "stime", "%0.6f", largetime.QuadPart / 10000000.0);
   }
   return info;
 #else
@@ -7073,10 +7132,16 @@ static int tcchidxcmp(const void *a, const void *b){
 
 
 #define TCFILEMODE     00644             // permission of a creating file
+#ifdef _WIN32
+#define TCIOBUFSIZ     65536             // size of an I/O buffer
+#else
 #define TCIOBUFSIZ     16384             // size of an I/O buffer
+#endif
+
 
 
 /* Get the canonicalized absolute path of a file. */
+#ifndef _WIN32
 char *tcrealpath(const char *path){
   assert(path);
   char buf[PATH_MAX+1];
@@ -7104,6 +7169,16 @@ char *tcrealpath(const char *path){
   }
   return NULL;
 }
+#else
+char *tcrealpath(const char *path) {
+    char *ret = _fullpath(NULL, path, _MAX_PATH);
+    if (!ret) {
+        SetLastError(ERROR_INVALID_ACCESS);
+        return NULL;
+    }
+    return ret;
+}
+#endif
 
 
 /* Get the status information of a file. */
@@ -7119,38 +7194,76 @@ bool tcstatfile(const char *path, bool *isdirp, int64_t *sizep, int64_t *mtimep)
 
 
 /* Read whole data of a file. */
-void *tcreadfile(const char *path, int limit, int *sp){
-  int fd = path ? open(path, O_RDONLY, TCFILEMODE) : 0;
-  if(fd == -1) return NULL;
-  if(fd == 0){
-    TCXSTR *xstr = tcxstrnew();
-    char buf[TCIOBUFSIZ];
-    limit = limit > 0 ? limit : INT_MAX;
-    int rsiz;
-    while((rsiz = read(fd, buf, tclmin(TCIOBUFSIZ, limit))) > 0){
-      TCXSTRCAT(xstr, buf, rsiz);
-      limit -= rsiz;
+void *tcreadfile(const char *path, int limit, int *sp) {
+    HANDLE fd;
+    if (path) {
+#ifndef _WIN32
+        fd = open(path, O_RDONLY, TCFILEMODE);
+#else
+        fd = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
+    } else {
+        fd = GET_STDIN_HANDLE();
     }
-    if(sp) *sp = TCXSTRSIZE(xstr);
-    return tcxstrtomalloc(xstr);
-  }
-  struct stat sbuf;
-  if(fstat(fd, &sbuf) == -1 || !S_ISREG(sbuf.st_mode)){
-    close(fd);
-    return NULL;
-  }
-  limit = limit > 0 ? tclmin((int)sbuf.st_size, limit) : sbuf.st_size;
-  char *buf;
-  TCMALLOC(buf, sbuf.st_size + 1);
-  char *wp = buf;
-  int rsiz;
-  while((rsiz = read(fd, wp, limit - (wp - buf))) > 0){
-    wp += rsiz;
-  }
-  *wp = '\0';
-  close(fd);
-  if(sp) *sp = wp - buf;
-  return buf;
+    if (INVALIDHANDLE(fd)) {
+        return NULL;
+    }
+    if (path == NULL) { //stdin
+        TCXSTR *xstr = tcxstrnew();
+        char buf[TCIOBUFSIZ];
+        limit = limit > 0 ? limit : INT_MAX;
+        int rsiz;
+
+        while (1) {
+#ifndef _WIN32
+            rsiz = read(fd, buf, tclmin(TCIOBUFSIZ, limit));
+#else
+            DWORD red;
+            if (!ReadFile(fd, buf, tclmin(TCIOBUFSIZ, limit), &red, NULL)) {
+                rsiz = -1;
+            } else {
+                rsiz = red;
+            }
+#endif
+            if (rsiz <= 0) {
+                break;
+            }
+            TCXSTRCAT(xstr, buf, rsiz);
+            limit -= rsiz;
+        }
+        if (sp) *sp = TCXSTRSIZE(xstr);
+        return tcxstrtomalloc(xstr);
+    }
+    struct stat sbuf;
+    if (fstat(fd, &sbuf) || !S_ISREG(sbuf.st_mode)) {
+        CLOSEFH(fd);
+        return NULL;
+    }
+    limit = (limit > 0) ? tclmin((int) sbuf.st_size, limit) : sbuf.st_size;
+    char *buf;
+    TCMALLOC(buf, limit + 1);
+    char *wp = buf;
+    int rsiz;
+    while (1) {
+#ifndef _WIN32
+        rsiz = read(fd, wp, limit - (wp - buf)));
+#else
+        DWORD red;
+        if (!ReadFile(fd, wp, limit - (wp - buf), &red, NULL)) {
+            rsiz = -1;
+        } else {
+            rsiz = red;
+        }
+#endif
+        if (rsiz <= 0) {
+            break;
+        }
+        wp += rsiz;
+    }
+    *wp = '\0';
+    CLOSEFH(fd);
+    if (sp) *sp = wp - buf;
+    return buf;
 }
 
 
@@ -7187,29 +7300,83 @@ TCLIST *tcreadfilelines(const char *path){
 /* Write data into a file. */
 bool tcwritefile(const char *path, const void *ptr, int size){
   assert(ptr && size >= 0);
-  int fd = 1;
-  if(path && (fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, TCFILEMODE)) == -1) return false;
+  HANDLE fd;
+  if (path) {
+#ifdef _WIN32
+      fd = CreateFile(path, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+#else
+      fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, TCFILEMODE);
+#endif
+  } else {
+      fd = GET_STDOUT_HANDLE();
+  }
+  if (INVALIDHANDLE(fd)) {
+      return false;
+  }
   bool err = false;
   if(!tcwrite(fd, ptr, size)) err = true;
-  if(close(fd) == -1) err = true;
+  if(path && !CLOSEFH(fd)) err = true;
   return !err;
 }
 
 
 /* Copy a file. */
 bool tccopyfile(const char *src, const char *dest){
-  int ifd = open(src, O_RDONLY, TCFILEMODE);
-  if(ifd == -1) return false;
-  int ofd = open(dest, O_WRONLY | O_CREAT | O_TRUNC, TCFILEMODE);
-  if(ofd == -1){
-    close(ifd);
+  HANDLE ifd, ofd;
+#ifndef _WIN32
+  ifd = open(src, O_RDONLY, TCFILEMODE);
+#else
+  ifd = CreateFile(src, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
+  if (INVALIDHANDLE(ifd)) return false;
+
+#ifndef _WIN32
+  ofd = open(dest, O_WRONLY | O_CREAT | O_TRUNC, TCFILEMODE);
+#else
+  ofd = CreateFile(dest, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
+  if(INVALIDHANDLE(ofd)){
+    CLOSEFH(ifd);
     return false;
   }
   bool err = false;
-  while(true){
+  struct stat stat;
+  if (fstat(ifd, &stat)) {
+	  CLOSEFH(ifd);
+	  CLOSEFH(ofd);
+	  return false;
+  }
+  off_t togo = stat.st_size;
+#ifdef _WIN32
+  HANDLE map = CreateFileMapping(ifd, NULL, PAGE_READONLY, 0, 0, NULL);
+  void *mmaped;
+  if (INVALIDHANDLE(map)) {
+	  CLOSEFH(ifd);
+	  CLOSEFH(ofd);
+	  return false;
+  }
+#endif
+  while(togo > 0){
     char buf[TCIOBUFSIZ];
+#ifndef _WIN32
     int size = read(ifd, buf, TCIOBUFSIZ);
+#else
+    size_t toread = min(togo, TCIOBUFSIZ);
+    int size;
+    LARGE_INTEGER offset;
+    offset.QuadPart = stat.st_size - togo;
+    mmaped = MapViewOfFileEx(map, FILE_MAP_READ, offset.HighPart, offset.LowPart, toread, NULL);
+    if (mmaped == NULL){
+    	size = -1;
+    	errno = ESPIPE;
+    } else{
+    	size = toread;
+    	memcpy(buf, mmaped, toread);
+    	UnmapViewOfFile(mmaped);
+    }
+#endif
     if(size > 0){
+      togo -= size;
       if(!tcwrite(ofd, buf, size)){
         err = true;
         break;
@@ -7223,8 +7390,11 @@ bool tccopyfile(const char *src, const char *dest){
       break;
     }
   }
-  if(close(ofd) == -1) err = true;
-  if(close(ifd) == -1) err = true;
+#ifdef _WIN32
+  if(!CLOSEFH(map)) err = true;
+#endif
+  if(!CLOSEFH(ofd)) err = true;
+  if(!CLOSEFH(ifd)) err = true;
   return !err;
 }
 
@@ -7265,7 +7435,7 @@ TCLIST *tcglobpat(const char *pattern){
 bool tcremovelink(const char *path){
   assert(path);
   struct stat sbuf;
-  if(lstat(path, &sbuf) == -1) return false;
+  if(lstat(path, &sbuf)) return false;
   if(unlink(path) == 0) return true;
   TCLIST *list;
   if(!S_ISDIR(sbuf.st_mode) || !(list = tcreaddir(path))) return false;
@@ -7286,13 +7456,59 @@ bool tcremovelink(const char *path){
   return rmdir(path) == 0 ? true : false;
 }
 
+bool tcfseek(HANDLE fd, off_t off, int whence) {
+#ifdef _WIN32
+LARGE_INTEGER loff;
+loff.QuadPart = off;
+int w = FILE_BEGIN;
+if (whence == TCFCUR) {
+    w = FILE_CURRENT;
+} else if (whence == TCFEND) {
+    w = FILE_END;
+}
+return SetFilePointerEx(fd, loff, NULL, w);
+#else
+int w = SEEK_SET;
+if (whence == TCFCUR) {
+    w = SEEK_CUR;
+} else if (whence == TCFEND) {
+    w = SEEK_END;
+}
+return (lseek(fd, off, w) != -1)
+#endif
+}
+
+bool tcftruncate(HANDLE fd, off_t length) {
+#ifdef _WIN32
+    LARGE_INTEGER size;
+    size.QuadPart = length;
+    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    bool err = false;
+    pthread_mutex_lock(&mutex);
+    if (!SetFilePointerEx(fd, size, NULL, FILE_BEGIN)) err = true;
+    if (err == false && !SetEndOfFile(fd)) err = true;
+    pthread_mutex_unlock(&mutex);
+    return !err;
+#else
+    return (ftruncate(fd, length) != -1);
+#endif
+}
 
 /* Write data into a file. */
-bool tcwrite(int fd, const void *buf, size_t size){
-  assert(fd >= 0 && buf && size >= 0);
+bool tcwrite(HANDLE fd, const void *buf, size_t size){
+  assert(!INVALIDHANDLE(fd) && buf && size >= 0);
   const char *rp = buf;
   do {
+#ifndef _WIN32
     int wb = write(fd, rp, size);
+#else
+    DWORD written;
+    int wb;
+    if (!WriteFile(fd, rp, size, &written, NULL))
+    	wb = -1;
+    else
+    	wb = written;
+#endif
     switch(wb){
       case -1: if(errno != EINTR) return false;
       case 0: break;
@@ -7307,11 +7523,20 @@ bool tcwrite(int fd, const void *buf, size_t size){
 
 
 /* Read data from a file. */
-bool tcread(int fd, void *buf, size_t size){
-  assert(fd >= 0 && buf && size >= 0);
+bool tcread(HANDLE fd, void *buf, size_t size){
+  assert(!INVALIDHANDLE(fd) && buf && size >= 0);
   char *wp = buf;
   do {
+#ifndef _WIN32
     int rb = read(fd, wp, size);
+#else
+    int rb;
+    DWORD r;
+    if(!ReadFile(fd, wp, size, &r, NULL))
+    	rb = -1;
+    else
+    	rb = r;
+#endif
     switch(rb){
       case -1: if(errno != EINTR) return false;
       case 0: return size < 1;
@@ -7325,8 +7550,9 @@ bool tcread(int fd, void *buf, size_t size){
 
 
 /* Lock a file. */
-bool tclock(int fd, bool ex, bool nb){
-  assert(fd >= 0);
+bool tclock(HANDLE fd, bool ex, bool nb){
+  assert(!INVALIDHANDLE(fd));
+#ifndef _WIN32
   struct flock lock;
   memset(&lock, 0, sizeof(struct flock));
   lock.l_type = ex ? F_WRLCK : F_RDLCK;
@@ -7338,12 +7564,25 @@ bool tclock(int fd, bool ex, bool nb){
     if(errno != EINTR) return false;
   }
   return true;
+#else
+  DWORD type = 0;	/* shared lock with waiting */
+  OVERLAPPED offset;
+  memset(&offset, 0, sizeof(OVERLAPPED));
+  if (ex) type  = LOCKFILE_EXCLUSIVE_LOCK;
+  if (nb) type |= LOCKFILE_FAIL_IMMEDIATELY;
+  if (LockFileEx(fd, type, 0, ULONG_MAX, ULONG_MAX, &offset)) {
+    return true;
+  } else {
+    return false;
+  }
+#endif
 }
 
 
 /* Unlock a file. */
-bool tcunlock(int fd){
-  assert(fd >= 0);
+bool tcunlock(HANDLE fd){
+  assert(!INVALIDHANDLE(fd));
+#ifndef _WIN32
   struct flock lock;
   memset(&lock, 0, sizeof(struct flock));
   lock.l_type = F_UNLCK;
@@ -7355,6 +7594,15 @@ bool tcunlock(int fd){
     if(errno != EINTR) return false;
   }
   return true;
+#else
+  OVERLAPPED offset;
+  memset(&offset, 0, sizeof(OVERLAPPED));
+  if (UnlockFileEx(fd, 0, ULONG_MAX, ULONG_MAX, &offset)) {
+    return true;
+  } else {
+    return false;
+  }
+#endif
 }
 
 
@@ -9700,6 +9948,48 @@ static void tcmtfdecode(char *ptr, int size);
 static int tcgammaencode(const char *ptr, int size, char *obuf);
 static int tcgammadecode(const char *ptr, int size, char *obuf);
 
+int tcfilerrno2tcerr(int tcerrdef) {
+#ifdef _WIN32
+    switch (GetLastError()) {
+        case ERROR_PATH_NOT_FOUND:
+        case ERROR_FILE_NOT_FOUND:
+            return TCENOFILE;
+        case ERROR_ACCESS_DENIED:
+        case ERROR_WRITE_PROTECT:
+        case ERROR_SHARING_VIOLATION:
+            return TCENOPERM;
+            break;
+        case ERROR_SEEK:
+            return TCESEEK;
+            break;
+        case ERROR_READ_FAULT:
+            return TCEREAD;
+            break;
+        case ERROR_WRITE_FAULT:
+            return TCEWRITE;
+            break;
+        case ERROR_LOCK_VIOLATION:
+            return TCELOCK;
+            break;
+        case ERROR_FILE_EXISTS:
+        case ERROR_ALREADY_EXISTS:
+            return TCEOPEN;
+            break;
+    }
+#endif
+    switch (errno) {
+        case EACCES:
+        case EROFS:
+            return TCENOPERM;
+            break;
+        case ENOENT:
+        case ENOTDIR:
+            return TCENOFILE;
+            break;
+    }
+    return tcerrdef;
+}
+
 
 /* Get the message string corresponding to an error code. */
 const char *tcerrmsg(int ecode){
@@ -9727,6 +10017,7 @@ const char *tcerrmsg(int ecode){
     case TCERMDIR: return "rmdir error";
     case TCEKEEP: return "existing record";
     case TCENOREC: return "no record found";
+    case TCETR: return "illegal transaction state";
     case TCEMISC: return "miscellaneous error";
   }
   return "unknown error";
@@ -10226,21 +10517,30 @@ double tclog2d(double num){
   return log(num) / log(2);
 }
 
+off_t tcpagsize(void) {
+#ifdef _WIN32
+    static off_t g_pagesize = 0;
+    if (!g_pagesize) {
+        SYSTEM_INFO system_info;
+        GetSystemInfo(&system_info);
+        g_pagesize = system_info.dwPageSize;
+    }
+    return g_pagesize;
+#else
+    return sysconf(_SC_PAGESIZE);
+#endif
+}
 
 /* Get the aligned offset of a file offset. */
 uint64_t tcpagealign(uint64_t off){
-  int ps = sysconf(_SC_PAGESIZE);
+  off_t ps = tcpagsize();
   int diff = off & (ps - 1);
-  return (diff > 0) ? off + ps - diff : off;
+  return (diff > 0) ? (off + ps - diff) : off;
 }
 
 
 /* Initialize the global mutex object */
 static void tcglobalinit(void){
-  if(!TCUSEPTHREAD){
-    memset(&tcglobalmutex, 0, sizeof(tcglobalmutex));
-    memset(&tcpathmutex, 0, sizeof(tcpathmutex));
-  }
   if(pthread_rwlock_init(&tcglobalmutex, NULL) != 0) tcmyfatal("rwlock error");
   if(pthread_mutex_init(&tcpathmutex, NULL) != 0) tcmyfatal("mutex error");
   tcpathmap = tcmapnew2(TCMAPTINYBNUM);

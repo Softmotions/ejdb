@@ -576,8 +576,8 @@ static int procmap(int rnum, int bnum, bool rd, bool tr, bool rnd, int dmode){
     }
     if(rnd && rnum > 250) iprintf(" (%08d)\n", inum);
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcmaprnum(map));
-  iprintf("size: %llu\n", (unsigned long long)tcmapmsiz(map));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcmaprnum(map));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcmapmsiz(map));
   sysprint();
   tcmapdel(map);
   iprintf("time: %.3f\n", tctime() - stime);
@@ -652,8 +652,8 @@ static int proctree(int rnum, bool rd, bool tr, bool rnd, int dmode){
     }
     if(rnd && rnum > 250) iprintf(" (%08d)\n", inum);
   }
-  iprintf("record number: %llu\n", (unsigned long long)tctreernum(tree));
-  iprintf("size: %llu\n", (unsigned long long)tctreemsiz(tree));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tctreernum(tree));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tctreemsiz(tree));
   sysprint();
   tctreedel(tree);
   iprintf("time: %.3f\n", tctime() - stime);
@@ -728,8 +728,8 @@ static int procmdb(int rnum, int bnum, bool rd, bool tr, bool rnd, int dmode){
     }
     if(rnd && rnum > 250) iprintf(" (%08d)\n", inum);
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcmdbrnum(mdb));
-  iprintf("size: %llu\n", (unsigned long long)tcmdbmsiz(mdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcmdbrnum(mdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcmdbmsiz(mdb));
   sysprint();
   tcmdbdel(mdb);
   iprintf("time: %.3f\n", tctime() - stime);
@@ -804,8 +804,8 @@ static int procndb(int rnum, bool rd, bool tr, bool rnd, int dmode){
     }
     if(rnd && rnum > 250) iprintf(" (%08d)\n", inum);
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcndbrnum(ndb));
-  iprintf("size: %llu\n", (unsigned long long)tcndbmsiz(ndb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcndbrnum(ndb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcndbmsiz(ndb));
   sysprint();
   tcndbdel(ndb);
   iprintf("time: %.3f\n", tctime() - stime);
@@ -971,7 +971,7 @@ static int procmisc(int rnum){
       buf = tczeromap(myrand(1024*256) + 1);
       tczerounmap(buf);
     }
-    buf = tcmalloc(48);
+    buf = tcmalloc(64);
     date = myrand(INT_MAX - 1000000);
     jl = 3600 * (myrand(23) - 11);
     tcdatestrwww(date, jl, buf);

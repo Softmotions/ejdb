@@ -69,12 +69,12 @@ enum {                                   /* enumeration for open modes */
 
 /* Create an abstract database object.
    The return value is the new abstract database object. */
-TCADB *tcadbnew(void);
+EJDB_EXPORT TCADB *tcadbnew(void);
 
 
 /* Delete an abstract database object.
    `adb' specifies the abstract database object. */
-void tcadbdel(TCADB *adb);
+EJDB_EXPORT void tcadbdel(TCADB *adb);
 
 
 /* Open an abstract database.
@@ -101,7 +101,7 @@ void tcadbdel(TCADB *adb);
    of TCBS option.  "idx" specifies the column name of an index and its type separated by ":".
    For example, "casket.tch#bnum=1000000#opts=ld" means that the name of the database file is
    "casket.tch", and the bucket number is 1000000, and the options are large and Deflate. */
-bool tcadbopen(TCADB *adb, const char *name);
+EJDB_EXPORT bool tcadbopen(TCADB *adb, const char *name);
 
 
 /* Close an abstract database object.
@@ -109,7 +109,7 @@ bool tcadbopen(TCADB *adb, const char *name);
    If successful, the return value is true, else, it is false.
    Update of a database is assured to be written when the database is closed.  If a writer opens
    a database but does not close it appropriately, the database will be broken. */
-bool tcadbclose(TCADB *adb);
+EJDB_EXPORT bool tcadbclose(TCADB *adb);
 
 
 /* Store a record into an abstract database object.
@@ -120,7 +120,7 @@ bool tcadbclose(TCADB *adb);
    `vsiz' specifies the size of the region of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tcadbput(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tcadbput(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Store a string record into an abstract object.
@@ -129,7 +129,7 @@ bool tcadbput(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz
    `vstr' specifies the string of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tcadbput2(TCADB *adb, const char *kstr, const char *vstr);
+EJDB_EXPORT bool tcadbput2(TCADB *adb, const char *kstr, const char *vstr);
 
 
 /* Store a new record into an abstract database object.
@@ -140,7 +140,7 @@ bool tcadbput2(TCADB *adb, const char *kstr, const char *vstr);
    `vsiz' specifies the size of the region of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tcadbputkeep(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tcadbputkeep(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Store a new string record into an abstract database object.
@@ -149,7 +149,7 @@ bool tcadbputkeep(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int 
    `vstr' specifies the string of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tcadbputkeep2(TCADB *adb, const char *kstr, const char *vstr);
+EJDB_EXPORT bool tcadbputkeep2(TCADB *adb, const char *kstr, const char *vstr);
 
 
 /* Concatenate a value at the end of the existing record in an abstract database object.
@@ -160,7 +160,7 @@ bool tcadbputkeep2(TCADB *adb, const char *kstr, const char *vstr);
    `vsiz' specifies the size of the region of the value.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tcadbputcat(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tcadbputcat(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Concatenate a string value at the end of the existing record in an abstract database object.
@@ -169,7 +169,7 @@ bool tcadbputcat(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int v
    `vstr' specifies the string of the value.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tcadbputcat2(TCADB *adb, const char *kstr, const char *vstr);
+EJDB_EXPORT bool tcadbputcat2(TCADB *adb, const char *kstr, const char *vstr);
 
 
 /* Remove a record of an abstract database object.
@@ -177,14 +177,14 @@ bool tcadbputcat2(TCADB *adb, const char *kstr, const char *vstr);
    `kbuf' specifies the pointer to the region of the key.
    `ksiz' specifies the size of the region of the key.
    If successful, the return value is true, else, it is false. */
-bool tcadbout(TCADB *adb, const void *kbuf, int ksiz);
+EJDB_EXPORT bool tcadbout(TCADB *adb, const void *kbuf, int ksiz);
 
 
 /* Remove a string record of an abstract database object.
    `adb' specifies the abstract database object.
    `kstr' specifies the string of the key.
    If successful, the return value is true, else, it is false. */
-bool tcadbout2(TCADB *adb, const char *kstr);
+EJDB_EXPORT bool tcadbout2(TCADB *adb, const char *kstr);
 
 
 /* Retrieve a record in an abstract database object.
@@ -199,7 +199,7 @@ bool tcadbout2(TCADB *adb, const char *kstr);
    the return value can be treated as a character string.  Because the region of the return
    value is allocated with the `malloc' call, it should be released with the `free' call when
    it is no longer in use. */
-void *tcadbget(TCADB *adb, const void *kbuf, int ksiz, int *sp);
+EJDB_EXPORT void *tcadbget(TCADB *adb, const void *kbuf, int ksiz, int *sp);
 
 
 /* Retrieve a string record in an abstract database object.
@@ -209,7 +209,7 @@ void *tcadbget(TCADB *adb, const void *kbuf, int ksiz, int *sp);
    `NULL' is returned if no record corresponds.
    Because the region of the return value is allocated with the `malloc' call, it should be
    released with the `free' call when it is no longer in use. */
-char *tcadbget2(TCADB *adb, const char *kstr);
+EJDB_EXPORT char *tcadbget2(TCADB *adb, const char *kstr);
 
 
 /* Get the size of the value of a record in an abstract database object.
@@ -218,7 +218,7 @@ char *tcadbget2(TCADB *adb, const char *kstr);
    `ksiz' specifies the size of the region of the key.
    If successful, the return value is the size of the value of the corresponding record, else,
    it is -1. */
-int tcadbvsiz(TCADB *adb, const void *kbuf, int ksiz);
+EJDB_EXPORT int tcadbvsiz(TCADB *adb, const void *kbuf, int ksiz);
 
 
 /* Get the size of the value of a string record in an abstract database object.
@@ -226,14 +226,14 @@ int tcadbvsiz(TCADB *adb, const void *kbuf, int ksiz);
    `kstr' specifies the string of the key.
    If successful, the return value is the size of the value of the corresponding record, else,
    it is -1. */
-int tcadbvsiz2(TCADB *adb, const char *kstr);
+EJDB_EXPORT int tcadbvsiz2(TCADB *adb, const char *kstr);
 
 
 /* Initialize the iterator of an abstract database object.
    `adb' specifies the abstract database object.
    If successful, the return value is true, else, it is false.
    The iterator is used in order to access the key of every record stored in a database. */
-bool tcadbiterinit(TCADB *adb);
+EJDB_EXPORT bool tcadbiterinit(TCADB *adb);
 
 
 /* Get the next key of the iterator of an abstract database object.
@@ -250,7 +250,7 @@ bool tcadbiterinit(TCADB *adb);
    However, it is not assured if updating the database is occurred while the iteration.  Besides,
    the order of this traversal access method is arbitrary, so it is not assured that the order of
    storing matches the one of the traversal access. */
-void *tcadbiternext(TCADB *adb, int *sp);
+EJDB_EXPORT void *tcadbiternext(TCADB *adb, int *sp);
 
 
 /* Get the next key string of the iterator of an abstract database object.
@@ -263,7 +263,7 @@ void *tcadbiternext(TCADB *adb, int *sp);
    database is occurred while the iteration.  Besides, the order of this traversal access method
    is arbitrary, so it is not assured that the order of storing matches the one of the traversal
    access. */
-char *tcadbiternext2(TCADB *adb);
+EJDB_EXPORT char *tcadbiternext2(TCADB *adb);
 
 
 /* Get forward matching keys in an abstract database object.
@@ -277,7 +277,7 @@ char *tcadbiternext2(TCADB *adb);
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tcadbfwmkeys(TCADB *adb, const void *pbuf, int psiz, int max);
+EJDB_EXPORT TCLIST *tcadbfwmkeys(TCADB *adb, const void *pbuf, int psiz, int max);
 
 
 /* Get forward matching string keys in an abstract database object.
@@ -290,7 +290,7 @@ TCLIST *tcadbfwmkeys(TCADB *adb, const void *pbuf, int psiz, int max);
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tcadbfwmkeys2(TCADB *adb, const char *pstr, int max);
+EJDB_EXPORT TCLIST *tcadbfwmkeys2(TCADB *adb, const char *pstr, int max);
 
 
 /* Add an integer to a record in an abstract database object.
@@ -301,7 +301,7 @@ TCLIST *tcadbfwmkeys2(TCADB *adb, const char *pstr, int max);
    If successful, the return value is the summation value, else, it is `INT_MIN'.
    If the corresponding record exists, the value is treated as an integer and is added to.  If no
    record corresponds, a new record of the additional value is stored. */
-int tcadbaddint(TCADB *adb, const void *kbuf, int ksiz, int num);
+EJDB_EXPORT int tcadbaddint(TCADB *adb, const void *kbuf, int ksiz, int num);
 
 
 /* Add a real number to a record in an abstract database object.
@@ -312,13 +312,13 @@ int tcadbaddint(TCADB *adb, const void *kbuf, int ksiz, int num);
    If successful, the return value is the summation value, else, it is Not-a-Number.
    If the corresponding record exists, the value is treated as a real number and is added to.  If
    no record corresponds, a new record of the additional value is stored. */
-double tcadbadddouble(TCADB *adb, const void *kbuf, int ksiz, double num);
+EJDB_EXPORT double tcadbadddouble(TCADB *adb, const void *kbuf, int ksiz, double num);
 
 
 /* Synchronize updated contents of an abstract database object with the file and the device.
    `adb' specifies the abstract database object.
    If successful, the return value is true, else, it is false. */
-bool tcadbsync(TCADB *adb);
+EJDB_EXPORT bool tcadbsync(TCADB *adb);
 
 
 /* Optimize the storage of an abstract database object.
@@ -328,13 +328,13 @@ bool tcadbsync(TCADB *adb);
    If successful, the return value is true, else, it is false.
    This function is useful to reduce the size of the database storage with data fragmentation by
    successive updating. */
-bool tcadboptimize(TCADB *adb, const char *params);
+EJDB_EXPORT bool tcadboptimize(TCADB *adb, const char *params);
 
 
 /* Remove all records of an abstract database object.
    `adb' specifies the abstract database object.
    If successful, the return value is true, else, it is false. */
-bool tcadbvanish(TCADB *adb);
+EJDB_EXPORT bool tcadbvanish(TCADB *adb);
 
 
 /* Copy the database file of an abstract database object.
@@ -346,7 +346,7 @@ bool tcadbvanish(TCADB *adb);
    The database file is assured to be kept synchronized and not modified while the copying or
    executing operation is in progress.  So, this function is useful to create a backup file of
    the database file. */
-bool tcadbcopy(TCADB *adb, const char *path);
+EJDB_EXPORT bool tcadbcopy(TCADB *adb, const char *path);
 
 
 /* Begin the transaction of an abstract database object.
@@ -357,14 +357,14 @@ bool tcadbcopy(TCADB *adb, const char *path);
    assumed if every database operation is performed in the transaction.  All updated regions are
    kept track of by write ahead logging while the transaction.  If the database is closed during
    transaction, the transaction is aborted implicitly. */
-bool tcadbtranbegin(TCADB *adb);
+EJDB_EXPORT bool tcadbtranbegin(TCADB *adb);
 
 
 /* Commit the transaction of an abstract database object.
    `adb' specifies the abstract database object.
    If successful, the return value is true, else, it is false.
    Update in the transaction is fixed when it is committed successfully. */
-bool tcadbtrancommit(TCADB *adb);
+EJDB_EXPORT bool tcadbtrancommit(TCADB *adb);
 
 
 /* Abort the transaction of an abstract database object.
@@ -372,7 +372,7 @@ bool tcadbtrancommit(TCADB *adb);
    If successful, the return value is true, else, it is false.
    Update in the transaction is discarded when it is aborted.  The state of the database is
    rollbacked to before transaction. */
-bool tcadbtranabort(TCADB *adb);
+EJDB_EXPORT bool tcadbtranabort(TCADB *adb);
 
 
 /* Get the file path of an abstract database object.
@@ -380,21 +380,21 @@ bool tcadbtranabort(TCADB *adb);
    The return value is the path of the database file or `NULL' if the object does not connect to
    any database.  "*" stands for on-memory hash database.  "+" stands for on-memory tree
    database. */
-const char *tcadbpath(TCADB *adb);
+EJDB_EXPORT const char *tcadbpath(TCADB *adb);
 
 
 /* Get the number of records of an abstract database object.
    `adb' specifies the abstract database object.
    The return value is the number of records or 0 if the object does not connect to any database
    instance. */
-uint64_t tcadbrnum(TCADB *adb);
+EJDB_EXPORT uint64_t tcadbrnum(TCADB *adb);
 
 
 /* Get the size of the database of an abstract database object.
    `adb' specifies the abstract database object.
    The return value is the size of the database or 0 if the object does not connect to any
    database instance. */
-uint64_t tcadbsize(TCADB *adb);
+EJDB_EXPORT uint64_t tcadbsize(TCADB *adb);
 
 
 /* Call a versatile function for miscellaneous operations of an abstract database object.
@@ -412,7 +412,7 @@ uint64_t tcadbsize(TCADB *adb);
    If successful, the return value is a list object of the result.  `NULL' is returned on failure.
    Because the object of the return value is created with the function `tclistnew', it
    should be deleted with the function `tclistdel' when it is no longer in use. */
-TCLIST *tcadbmisc(TCADB *adb, const char *name, const TCLIST *args);
+EJDB_EXPORT TCLIST *tcadbmisc(TCADB *adb, const char *name, const TCLIST *args);
 
 
 
@@ -468,14 +468,14 @@ typedef bool (*ADBMAPPROC)(void *map, const char *kbuf, int ksiz, const char *vb
    `adb' specifies the abstract database object.
    `skel' specifies the extra database skeleton.
    If successful, the return value is true, else, it is false. */
-bool tcadbsetskel(TCADB *adb, ADBSKEL *skel);
+EJDB_EXPORT bool tcadbsetskel(TCADB *adb, ADBSKEL *skel);
 
 
 /* Set the multiple database skeleton to an abstract database object.
    `adb' specifies the abstract database object.
    `num' specifies the number of inner databases.
    If successful, the return value is true, else, it is false. */
-bool tcadbsetskelmulti(TCADB *adb, int num);
+EJDB_EXPORT bool tcadbsetskelmulti(TCADB *adb, int num);
 
 
 /* Get the open mode of an abstract database object.
@@ -483,14 +483,14 @@ bool tcadbsetskelmulti(TCADB *adb, int num);
    The return value is `ADBOVOID' for not opened database, `ADBOMDB' for on-memory hash database,
   `ADBONDB' for on-memory tree database, `ADBOHDB' for hash database, `ADBOBDB' for B+ tree
   database, `ADBOFDB' for fixed-length database, `ADBOTDB' for table database. */
-int tcadbomode(TCADB *adb);
+EJDB_EXPORT int tcadbomode(TCADB *adb);
 
 
 /* Get the concrete database object of an abstract database object.
    `adb' specifies the abstract database object.
    The return value is the concrete database object depend on the open mode or 0 if the object
    does not connect to any database instance. */
-void *tcadbreveal(TCADB *adb);
+EJDB_EXPORT void *tcadbreveal(TCADB *adb);
 
 
 /* Store a record into an abstract database object with a duplication handler.
@@ -504,7 +504,7 @@ void *tcadbreveal(TCADB *adb);
    it is not needed, `NULL' can be specified.
    If successful, the return value is true, else, it is false.
    This function does not work for the table database. */
-bool tcadbputproc(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
+EJDB_EXPORT bool tcadbputproc(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
                   TCPDPROC proc, void *op);
 
 
@@ -514,7 +514,7 @@ bool tcadbputproc(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int 
    `op' specifies an arbitrary pointer to be given as a parameter of the iterator function.  If
    it is not needed, `NULL' can be specified.
    If successful, the return value is true, else, it is false. */
-bool tcadbforeach(TCADB *adb, TCITER iter, void *op);
+EJDB_EXPORT bool tcadbforeach(TCADB *adb, TCITER iter, void *op);
 
 
 /* Map records of an abstract database object into another B+ tree database.
@@ -528,7 +528,7 @@ bool tcadbforeach(TCADB *adb, TCITER iter, void *op);
    `csiz' specifies the size of the cache to sort emitted records.  If it is negative, the
    default size is specified.  The default size is 268435456.
    If successful, the return value is true, else, it is false. */
-bool tcadbmapbdb(TCADB *adb, TCLIST *keys, TCBDB *bdb, ADBMAPPROC proc, void *op, int64_t csiz);
+EJDB_EXPORT bool tcadbmapbdb(TCADB *adb, TCLIST *keys, TCBDB *bdb, ADBMAPPROC proc, void *op, int64_t csiz);
 
 
 /* Emit records generated by the mapping function into the result map.
@@ -537,7 +537,7 @@ bool tcadbmapbdb(TCADB *adb, TCLIST *keys, TCBDB *bdb, ADBMAPPROC proc, void *op
    `vbuf' specifies the pointer to the region of the value.
    `vsiz' specifies the size of the region of the value.
    If successful, the return value is true, else, it is false. */
-bool tcadbmapbdbemit(void *map, const char *kbuf, int ksiz, const char *vbuf, int vsiz);
+EJDB_EXPORT bool tcadbmapbdbemit(void *map, const char *kbuf, int ksiz, const char *vbuf, int vsiz);
 
 
 

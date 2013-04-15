@@ -1,7 +1,6 @@
 # Source of configuration for Tokyo Cabinet
 
 
-
 #================================================================
 # Generic Settings
 #================================================================
@@ -12,6 +11,7 @@ test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
 AC_INIT(tcejdb, 1.0.68)
+AC_CANONICAL_HOST
 
 # Package information
 MYLIBVER=9
@@ -19,10 +19,12 @@ MYLIBREV=11
 MYFORMATVER="1.0"
 
 # Targets
-MYHEADERFILES="tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h ejdb.h ejdb_private.h bson.h myconf.h"
+MYHEADERFILES="tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h ejdb.h ejdb_private.h bson.h myconf.h basedefs.h"
 MYLIBRARYFILES="libtcejdb.a"
+
 MYLIBOBJFILES="tcutil.o tchdb.o tcbdb.o tcfdb.o tctdb.o tcadb.o myconf.o md5.o ejdb.o \
-bson.o numbers.o encoding.o utf8proc.o ejdbutl.o"
+bson.o numbers.o encoding.o utf8proc.o ejdbutl.o platform.o"
+
 MYCOMMANDFILES="tcutest tcumttest tcucodec tchtest tchmttest tchmgr"
 MYCOMMANDFILES="$MYCOMMANDFILES tcbtest tcbmttest tcbmgr tcftest tcfmttest tcfmgr"
 MYCOMMANDFILES="$MYCOMMANDFILES tcttest tctmttest tctmgr tcatest tcamttest tcamgr"
@@ -34,10 +36,10 @@ MYDOCUMENTFILES="COPYING Changelog"
 MYPCFILES="tcejdb.pc"
 
 # Building flags
-MYCFLAGS="$MYCFLAGS -std=c99 -Wall -fPIC -fsigned-char -O2"
-MYCPPFLAGS="-I. -I\$(INCLUDEDIR) -I$HOME/include -I/usr/local/include"
+MYCFLAGS="$MYCFLAGS -std=gnu99 -Wall -fsigned-char -O2 -Wfatal-errors"
+MYCPPFLAGS="-I. -I$HOME/include -I\$(INCLUDEDIR) -I/usr/local/include"
 MYCPPFLAGS="$MYCPPFLAGS -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
-MYLDFLAGS="-L. -L\$(LIBDIR) -L$HOME/lib -L/usr/local/lib"
+MYLDFLAGS="-L. -L\$(LIBDIR) -L$HOME/lib -L/usr/local/lib -L/usr/lib -Wl,-Bstatic"
 MYCMDLDFLAGS=""
 MYRUNPATH="\$(LIBDIR)"
 MYLDLIBPATHENV="LD_LIBRARY_PATH"
@@ -66,8 +68,8 @@ AC_ARG_ENABLE(debug,
   AC_HELP_STRING([--enable-debug], [build for debugging]))
 if test "$enable_debug" = "yes"
 then
-  MYCFLAGS="-std=c99 -Wall -fPIC -pedantic -fsigned-char -g -O0"
-  MYCPPFLAGS="$MYCPPFLAGS -UNDEBUG"
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O0 -Wfatal-errors -Werror"
+  MYCPPFLAGS="$MYCPPFLAGS -UNDEBUG -DEJDB_STATIC"
   MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
   enables="$enables (debug)"
 fi
@@ -77,7 +79,7 @@ AC_ARG_ENABLE(devel,
   AC_HELP_STRING([--enable-devel], [build for development]))
 if test "$enable_devel" = "yes"
 then
-  MYCFLAGS="-std=c99 -Wall -fPIC -pedantic -fsigned-char -g -O2 -pipe"
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O2 -pipe"
   MYCPPFLAGS="$MYCPPFLAGS -UNDEBUG"
   enables="$enables (devel)"
 fi
@@ -87,7 +89,7 @@ AC_ARG_ENABLE(profile,
   AC_HELP_STRING([--enable-profile], [build for profiling]))
 if test "$enable_profile" = "yes"
 then
-  MYCFLAGS="-std=c99 -Wall -fPIC -pedantic -fsigned-char -g -pg -O2 -pipe"
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -pg -O2 -pipe"
   enables="$enables (profile)"
 fi
 
@@ -106,7 +108,7 @@ AC_ARG_ENABLE(fastest,
 if test "$enable_fastest" = "yes"
 then
   MYLIBOBJFILES="tokyocabinet_all.o"
-  MYCFLAGS="-std=c99 -Wall -fPIC -pedantic -fsigned-char -O3"
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -O3"
   MYCFLAGS="$MYCFLAGS -fomit-frame-pointer -fforce-addr -minline-all-stringops"
   MYCPPFLAGS="$MYCPPFLAGS -D_MYFASTEST"
   enables="$enables (fastest)"
@@ -173,15 +175,6 @@ if test "$enable_zlib" = "no"
 then
   MYCPPFLAGS="$MYCPPFLAGS -D_MYNOZLIB"
   enables="$enables (no-zlib)"
-fi
-
-# Disable POSIX thread
-AC_ARG_ENABLE(pthread,
-  AC_HELP_STRING([--disable-pthread], [build without POSIX thread support]))
-if test "$enable_pthread" = "no"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYNOPTHREAD"
-  enables="$enables (no-pthread)"
 fi
 
 # Disable shared object
@@ -266,11 +259,8 @@ AC_C_BIGENDIAN(MYCPPFLAGS="$MYCPPFLAGS -D_MYBIGEND")
 # Underlying libraries
 AC_CHECK_LIB(c, main)
 AC_CHECK_LIB(m, main)
-if test "$enable_pthread" != "no"
-then
-  AC_CHECK_LIB(pthread, main)
-  AC_CHECK_LIB(rt, main)
-fi
+AC_CHECK_LIB(rt, main)
+
 if test "$enable_zlib" != "no"
 then
   AC_CHECK_LIB(z, main)
@@ -287,7 +277,6 @@ if test "$enable_exlzo" = "yes"
 then
   AC_CHECK_LIB(lzo2, main)
 fi
-AC_CHECK_LIB(tcejdb, main, AC_MSG_WARN([old version of EJDB was found]))
 
 if test "$enable_tests" = "yes"
 then
@@ -300,12 +289,9 @@ AC_CHECK_HEADER(stdlib.h, true, AC_MSG_ERROR([stdlib.h is required]))
 AC_CHECK_HEADER(stdint.h, true, AC_MSG_ERROR([stdint.h is required]))
 AC_CHECK_HEADER(unistd.h, true, AC_MSG_ERROR([unistd.h is required]))
 AC_CHECK_HEADER(dirent.h, true, AC_MSG_ERROR([dirent.h is required]))
-AC_CHECK_HEADER(regex.h, true, AC_MSG_ERROR([regex.h is required]))
-AC_CHECK_HEADER(glob.h, true, AC_MSG_ERROR([glob.h is required]))
-if test "$enable_pthread" != "no"
-then
-  AC_CHECK_HEADER(pthread.h, true, AC_MSG_ERROR([pthread.h is required]))
-fi
+AC_CHECK_HEADER(stddef.h, true, AC_MSG_ERROR([stddef.h is required]))
+AC_CHECK_HEADER(pthread.h, true, AC_MSG_ERROR([pthread.h is required]))
+
 if test "$enable_zlib" != "no"
 then
   AC_CHECK_HEADER(zlib.h, true, AC_MSG_ERROR([zlib.h is required]))
@@ -323,21 +309,59 @@ then
   AC_CHECK_HEADER(lzo/lzo1x.h, true, AC_MSG_ERROR([lzo/lzo1x.h is required]))
 fi
 
+case $host_os in
+  mingw*)
+      AC_CHECK_HEADER(windows.h, true, AC_MSG_ERROR([windows.h is required]))
+      AC_CHECK_HEADER(time.h, true, AC_MSG_ERROR([time.h is required]))
+      ;;
+  *)
+      AC_CHECK_HEADER(glob.h, true, AC_MSG_ERROR([glob.h is required]))
+      ;;
+esac
+
+
 # Shared libraries
 if test "$enable_shared" != "no" && test "$enable_profile" != "yes"
 then
-  if uname | grep Darwin >/dev/null
-  then
-    MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.$MYLIBVER.$MYLIBREV.0.dylib"
-    MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.$MYLIBVER.dylib"
-    MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.dylib"
-    MYLDLIBPATHENV="DYLD_LIBRARY_PATH"
-  else
-    MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.so.$MYLIBVER.$MYLIBREV.0"
-    MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.so.$MYLIBVER"
-    MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.so"
-  fi
+  case $host_os in
+    darwin*)
+        MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.$MYLIBVER.$MYLIBREV.0.dylib"
+        MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.$MYLIBVER.dylib"
+        MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.dylib"
+        MYLDLIBPATHENV="DYLD_LIBRARY_PATH"
+        ;;
+    mingw*)
+        MYLIBRARYFILES="$MYLIBRARYFILES tcejdb.dll"
+        MYCPPFLAGS="$MYCPPFLAGS -DEJDB_DLL"
+        ;;
+    *)
+        MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.so.$MYLIBVER.$MYLIBREV.0"
+        MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.so.$MYLIBVER"
+        MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.so"
+        ;;
+  esac
 fi
+
+
+
+case $host_os in
+    mingw*)
+        AC_CHECK_HEADER(pcre.h, true, AC_MSG_ERROR([pcre.h is required]))
+        AC_CHECK_HEADER(pcreposix.h, true, AC_MSG_ERROR([pcreposix.h is required]))
+        AC_CHECK_LIB(pcre, pcre_compile, [], AC_MSG_ERROR([pcre lib is required]))
+        AC_CHECK_LIB(pcreposix, regcomp, [], AC_MSG_ERROR([pcreposix lib is required]))
+        AC_CHECK_LIB(pthreadGC2, main, [], AC_MSG_ERROR([pthreadGC2 lubrary is required]))
+        MYLDFLAGS="-static-libgcc -static-libstdc++ $MYLDFLAGS"
+        MYHEADERFILES="$MYHEADERFILES win32/platform.h"
+        MYCPPFLAGS="$MYCPPFLAGS -DPCRE_STATIC -DPTW32_STATIC_LIB"
+        ;;
+    *)
+        AC_CHECK_HEADER(regex.h, true, AC_MSG_ERROR([regex.h is required]))
+        AC_CHECK_LIB(regex, regcomp, [], AC_MSG_ERROR([regex lib is required]))
+        AC_CHECK_LIB(pthread, main, [], AC_MSG_ERROR([pthread lubrary is required]))
+        MYCFLAGS="$MYCFLAGS -fPIC"
+        ;;
+esac
 
 
 

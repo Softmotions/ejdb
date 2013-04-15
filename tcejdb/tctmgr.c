@@ -21,7 +21,7 @@
 
 /* global variables */
 const char *g_progname;                  // program name
-int g_dbgfd;                             // debugging output
+HANDLE g_dbgfd;                          // debugging output
 
 
 /* function prototypes */
@@ -61,9 +61,16 @@ static int procversion(void);
 /* main routine */
 int main(int argc, char **argv){
   g_progname = argv[0];
-  g_dbgfd = -1;
+  g_dbgfd = INVALID_HANDLE_VALUE;
   const char *ebuf = getenv("TCDBGFD");
-  if(ebuf) g_dbgfd = tcatoix(ebuf);
+  if (ebuf) {
+	  int debugfd = tcatoix(ebuf);
+#ifdef _WIN32
+	  g_dbgfd = (HANDLE) _get_osfhandle(debugfd);
+#else
+	  g_dbgfd = debugfd;
+#endif
+  }
   if(argc < 2) usage();
   int rv = 0;
   if(!strcmp(argv[1], "create")){
@@ -633,7 +640,7 @@ static int runversion(int argc, char **argv){
 /* perform create command */
 static int proccreate(const char *path, int bnum, int apow, int fpow, int opts){
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(!tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(tdb);
   if(!tctdbtune(tdb, bnum, apow, fpow, opts)){
     printerr(tdb);
@@ -658,7 +665,7 @@ static int proccreate(const char *path, int bnum, int apow, int fpow, int opts){
 /* perform inform command */
 static int procinform(const char *path, int omode){
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL);
   if(!tctdbopen(tdb, path, TDBOREADER | omode)){
     printerr(tdb);
@@ -675,9 +682,9 @@ static int procinform(const char *path, int omode){
   if(flags & TDBFOPEN) printf(" open");
   if(flags & TDBFFATAL) printf(" fatal");
   printf("\n");
-  printf("bucket number: %llu\n", (unsigned long long)tctdbbnum(tdb));
+  printf("bucket number: %" PRIuMAX "\n", (unsigned long long)tctdbbnum(tdb));
   if(tdb->hdb->cnt_writerec >= 0)
-    printf("used bucket number: %lld\n", (long long)tctdbbnumused(tdb));
+    printf("used bucket number: %" PRIdMAX "\n", (long long)tctdbbnumused(tdb));
   printf("alignment: %u\n", tctdbalign(tdb));
   printf("free block pool: %u\n", tctdbfbpmax(tdb));
   printf("index number: %d\n", tctdbinum(tdb));
@@ -687,25 +694,25 @@ static int procinform(const char *path, int omode){
     TDBIDX *idxp = idxs + i;
     switch(idxp->type){
       case TDBITLEXICAL:
-        printf("  name=%s, type=lexical, rnum=%lld, fsiz=%lld\n",
+        printf("  name=%s, type=lexical, rnum=%" PRIdMAX ", fsiz=%" PRIdMAX "\n",
                idxp->name, (long long)tcbdbrnum(idxp->db), (long long)tcbdbfsiz(idxp->db));
         break;
       case TDBITDECIMAL:
-        printf("  name=%s, type=decimal, rnum=%lld, fsiz=%lld\n",
+        printf("  name=%s, type=decimal, rnum=%" PRIdMAX ", fsiz=%" PRIdMAX "\n",
                idxp->name, (long long)tcbdbrnum(idxp->db), (long long)tcbdbfsiz(idxp->db));
         break;
       case TDBITTOKEN:
-        printf("  name=%s, type=token, rnum=%lld, fsiz=%lld\n",
+        printf("  name=%s, type=token, rnum=%" PRIdMAX ", fsiz=%" PRIdMAX "\n",
                idxp->name, (long long)tcbdbrnum(idxp->db), (long long)tcbdbfsiz(idxp->db));
         break;
       case TDBITQGRAM:
-        printf("  name=%s, type=qgram, rnum=%lld, fsiz=%lld\n",
+        printf("  name=%s, type=qgram, rnum=%" PRIdMAX ", fsiz=%" PRIdMAX "\n",
                idxp->name, (long long)tcbdbrnum(idxp->db), (long long)tcbdbfsiz(idxp->db));
         break;
     }
   }
-  printf("unique ID seed: %lld\n", (long long)tctdbuidseed(tdb));
-  printf("inode number: %lld\n", (long long)tctdbinode(tdb));
+  printf("unique ID seed: %" PRIdMAX "\n", (long long)tctdbuidseed(tdb));
+  printf("inode number: %" PRIdMAX "\n", (long long)tctdbinode(tdb));
   char date[48];
   tcdatestrwww(tctdbmtime(tdb), INT_MAX, date);
   printf("modified time: %s\n", date);
@@ -717,8 +724,8 @@ static int procinform(const char *path, int omode){
   if(opts & TDBTTCBS) printf(" tcbs");
   if(opts & TDBTEXCODEC) printf(" excodec");
   printf("\n");
-  printf("record number: %llu\n", (unsigned long long)tctdbrnum(tdb));
-  printf("file size: %llu\n", (unsigned long long)tctdbfsiz(tdb));
+  printf("record number: %" PRIuMAX "\n", (unsigned long long)tctdbrnum(tdb));
+  printf("file size: %" PRIuMAX "\n", (unsigned long long)tctdbfsiz(tdb));
   if(!tctdbclose(tdb)){
     if(!err) printerr(tdb);
     err = true;
@@ -732,7 +739,7 @@ static int procinform(const char *path, int omode){
 static int procput(const char *path, const char *pkbuf, int pksiz, TCMAP *cols,
                    int omode, int dmode){
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(!tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(tdb);
   if(!tctdbopen(tdb, path, TDBOWRITER | omode)){
     printerr(tdb);
@@ -742,7 +749,7 @@ static int procput(const char *path, const char *pkbuf, int pksiz, TCMAP *cols,
   bool err = false;
   char pknumbuf[TCNUMBUFSIZ];
   if(pksiz < 1){
-    pksiz = sprintf(pknumbuf, "%lld", (long long)tctdbgenuid(tdb));
+    pksiz = sprintf(pknumbuf, "%" PRIdMAX "", (long long)tctdbgenuid(tdb));
     pkbuf = pknumbuf;
   }
   const char *vbuf;
@@ -794,7 +801,7 @@ static int procput(const char *path, const char *pkbuf, int pksiz, TCMAP *cols,
 /* perform out command */
 static int procout(const char *path, const char *pkbuf, int pksiz, int omode){
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(!tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(tdb);
   if(!tctdbopen(tdb, path, TDBOWRITER | omode)){
     printerr(tdb);
@@ -818,7 +825,7 @@ static int procout(const char *path, const char *pkbuf, int pksiz, int omode){
 /* perform get command */
 static int procget(const char *path, const char *pkbuf, int pksiz, int omode, bool px, bool pz){
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(!tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(tdb);
   if(!tctdbopen(tdb, path, TDBOREADER | omode)){
     printerr(tdb);
@@ -856,7 +863,7 @@ static int procget(const char *path, const char *pkbuf, int pksiz, int omode, bo
 /* perform list command */
 static int proclist(const char *path, int omode, int max, bool pv, bool px, const char *fmstr){
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(!tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(tdb);
   if(!tctdbopen(tdb, path, TDBOREADER | omode)){
     printerr(tdb);
@@ -936,7 +943,7 @@ static int procsearch(const char *path, TCLIST *conds, const char *oname, const 
                       int omode, int max, int skip, bool pv, bool px, bool kw, bool ph, int bt,
                       bool rm, const char *mtype){
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(!tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(tdb);
   if(!tctdbopen(tdb, path, (rm ? TDBOWRITER : TDBOREADER) | omode)){
     printerr(tdb);
@@ -1098,7 +1105,7 @@ static int procsearch(const char *path, TCLIST *conds, const char *oname, const 
 static int procoptimize(const char *path, int bnum, int apow, int fpow, int opts, int omode,
                         bool df){
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(!tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(tdb);
   int64_t msiz = 0;
   TCMAP *info = tcsysinfo();
@@ -1136,7 +1143,7 @@ static int procoptimize(const char *path, int bnum, int apow, int fpow, int opts
 /* perform setindex command */
 static int procsetindex(const char *path, const char *name, int omode, int type){
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(!tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(tdb);
   int64_t msiz = 0;
   TCMAP *info = tcsysinfo();
@@ -1172,7 +1179,7 @@ static int procimporttsv(const char *path, const char *file, int omode, bool sc)
     return 1;
   }
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(!tctdbsetcodecfunc(tdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(tdb);
   int64_t msiz = 0;
   TCMAP *info = tcsysinfo();
@@ -1200,7 +1207,7 @@ static int procimporttsv(const char *path, const char *file, int omode, bool sc)
     if(sc) tcstrutfnorm(line, TCUNSPACE | TCUNLOWER | TCUNNOACC | TCUNWIDTH);
     const char *pkey;
     if(*line == '\0'){
-      sprintf(numbuf, "%lld", (long long)tctdbgenuid(tdb));
+      sprintf(numbuf, "%" PRIdMAX "", (long long)tctdbgenuid(tdb));
       pkey = numbuf;
     } else {
       pkey = line;

@@ -132,7 +132,7 @@ bool tcadbopen(TCADB *adb, const char *name){
     tclistdel(elems);
     return false;
   }
-  int dbgfd = -1;
+  HANDLE dbgfd = INVALID_HANDLE_VALUE;
   int64_t bnum = -1;
   int64_t capnum = -1;
   int64_t capsiz = -1;
@@ -164,7 +164,12 @@ bool tcadbopen(TCADB *adb, const char *name){
     if(!pv) continue;
     *(pv++) = '\0';
     if(!tcstricmp(elem, "dbgfd")){
-      dbgfd = tcatoi(pv);
+    	int dbgdescr = tcatoi(pv);
+#ifndef _WIN32
+    	dbgfd = dbgdescr;
+#else
+    	dbgfd = (HANDLE)_get_osfhandle(dbgdescr);
+#endif
     } else if(!tcstricmp(elem, "bnum")){
       bnum = tcatoix(pv);
     } else if(!tcstricmp(elem, "capnum")){
@@ -233,7 +238,7 @@ bool tcadbopen(TCADB *adb, const char *name){
     adb->omode = ADBONDB;
   } else if(tcstribwm(path, ".tch") || tcstribwm(path, ".hdb")){
     TCHDB *hdb = tchdbnew();
-    if(dbgfd >= 0) tchdbsetdbgfd(hdb, dbgfd);
+    if(!INVALIDHANDLE(dbgfd)) tchdbsetdbgfd(hdb, dbgfd);
     tchdbsetmutex(hdb);
     int opts = 0;
     if(tlmode) opts |= HDBTLARGE;
@@ -259,7 +264,7 @@ bool tcadbopen(TCADB *adb, const char *name){
     adb->omode = ADBOHDB;
   } else if(tcstribwm(path, ".tcb") || tcstribwm(path, ".bdb")){
     TCBDB *bdb = tcbdbnew();
-    if(dbgfd >= 0) tcbdbsetdbgfd(bdb, dbgfd);
+    if(!INVALIDHANDLE(dbgfd)) tcbdbsetdbgfd(bdb, dbgfd);
     tcbdbsetmutex(bdb);
     int opts = 0;
     if(tlmode) opts |= BDBTLARGE;
@@ -287,7 +292,7 @@ bool tcadbopen(TCADB *adb, const char *name){
     adb->omode = ADBOBDB;
   } else if(tcstribwm(path, ".tcf") || tcstribwm(path, ".fdb")){
     TCFDB *fdb = tcfdbnew();
-    if(dbgfd >= 0) tcfdbsetdbgfd(fdb, dbgfd);
+    if(!INVALIDHANDLE(dbgfd)) tcfdbsetdbgfd(fdb, dbgfd);
     tcfdbsetmutex(fdb);
     tcfdbtune(fdb, width, limsiz);
     int omode = owmode ? FDBOWRITER : FDBOREADER;
@@ -305,7 +310,7 @@ bool tcadbopen(TCADB *adb, const char *name){
     adb->omode = ADBOFDB;
   } else if(tcstribwm(path, ".tct") || tcstribwm(path, ".tdb")){
     TCTDB *tdb = tctdbnew();
-    if(dbgfd >= 0) tctdbsetdbgfd(tdb, dbgfd);
+    if(!INVALIDHANDLE(dbgfd)) tctdbsetdbgfd(tdb, dbgfd);
     tctdbsetmutex(tdb);
     int opts = 0;
     if(tlmode) opts |= TDBTLARGE;
@@ -446,7 +451,7 @@ bool tcadbput(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz
       break;
     case ADBOTDB:
       if(ksiz < 1){
-        ksiz = sprintf(numbuf, "%lld", (long long)tctdbgenuid(adb->tdb));
+        ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long)tctdbgenuid(adb->tdb));
         kbuf = numbuf;
       }
       if(!tctdbput2(adb->tdb, kbuf, ksiz, vbuf, vsiz)) err = true;
@@ -522,7 +527,7 @@ bool tcadbputkeep(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int 
       break;
     case ADBOTDB:
       if(ksiz < 1){
-        ksiz = sprintf(numbuf, "%lld", (long long)tctdbgenuid(adb->tdb));
+        ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long)tctdbgenuid(adb->tdb));
         kbuf = numbuf;
       }
       if(!tctdbputkeep2(adb->tdb, kbuf, ksiz, vbuf, vsiz)) err = true;
@@ -594,7 +599,7 @@ bool tcadbputcat(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int v
       break;
     case ADBOTDB:
       if(ksiz < 1){
-        ksiz = sprintf(numbuf, "%lld", (long long)tctdbgenuid(adb->tdb));
+        ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long)tctdbgenuid(adb->tdb));
         kbuf = numbuf;
       }
       if(!tctdbputcat2(adb->tdb, kbuf, ksiz, vbuf, vsiz)) err = true;
@@ -946,7 +951,7 @@ int tcadbaddint(TCADB *adb, const void *kbuf, int ksiz, int num){
       break;
     case ADBOTDB:
       if(ksiz < 1){
-        ksiz = sprintf(numbuf, "%lld", (long long)tctdbgenuid(adb->tdb));
+        ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long)tctdbgenuid(adb->tdb));
         kbuf = numbuf;
       }
       rv = tctdbaddint(adb->tdb, kbuf, ksiz, num);
@@ -1009,7 +1014,7 @@ double tcadbadddouble(TCADB *adb, const void *kbuf, int ksiz, double num){
       break;
     case ADBOTDB:
       if(ksiz < 1){
-        ksiz = sprintf(numbuf, "%lld", (long long)tctdbgenuid(adb->tdb));
+        ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long)tctdbgenuid(adb->tdb));
         kbuf = numbuf;
       }
       rv = tctdbadddouble(adb->tdb, kbuf, ksiz, num);
@@ -1257,7 +1262,7 @@ bool tcadbcopy(TCADB *adb, const char *path){
     case ADBONDB:
       if(*path == '@'){
         char tsbuf[TCNUMBUFSIZ];
-        sprintf(tsbuf, "%llu", (unsigned long long)(tctime() * 1000000));
+        sprintf(tsbuf, "%" PRIuMAX "", (unsigned long long)(tctime() * 1000000));
         const char *args[2];
         args[0] = path + 1;
         args[1] = tsbuf;
@@ -3236,7 +3241,7 @@ TCLIST *tcadbmisc(TCADB *adb, const char *name, const TCLIST *args){
       } else if(!strcmp(name, "genuid")){
         rv = tclistnew2(1);
         char numbuf[TCNUMBUFSIZ];
-        int nsiz = sprintf(numbuf, "%lld", (long long)tctdbgenuid(adb->tdb));
+        int nsiz = sprintf(numbuf, "%" PRIdMAX "", (long long)tctdbgenuid(adb->tdb));
         TCLISTPUSH(rv, numbuf, nsiz);
       } else {
         rv = NULL;
@@ -3930,7 +3935,7 @@ static bool tcadbmulcopy(ADBMUL *mul, const char *path){
       if(!tcadbcopy(adbs[i], path)) err = true;
     }
   } else {
-    if(mkdir(path, ADBDIRMODE) == -1 && errno != EEXIST) return false;
+    if(mkdir(path, ADBDIRMODE) && errno != EEXIST) return false;
     for(int i = 0; i < num; i++){
       TCADB *adb = adbs[i];
       const char *cpath = tcadbpath(adb);

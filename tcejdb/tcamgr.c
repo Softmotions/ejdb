@@ -612,8 +612,8 @@ static int procinform(const char *name){
     case ADBOSKEL: type = "skeleton database"; break;
   }
   printf("database type: %s\n", type);
-  printf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  printf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  printf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  printf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   if(!tcadbclose(adb)){
     printerr(adb);
     err = true;

@@ -206,7 +206,6 @@ int tctdbecode(TCTDB *tdb){
 /* Set mutual exclusion control of a table database object for threading. */
 bool tctdbsetmutex(TCTDB *tdb){
   assert(tdb);
-  if(!TCUSEPTHREAD) return true;
   if(tdb->mmtx || tdb->open){
     tctdbsetecode(tdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return false;
@@ -682,7 +681,7 @@ bool tctdbcopy(TCTDB *tdb, const char *path){
 /* Begin the transaction of a table database object. */
 bool tctdbtranbegin(TCTDB *tdb){
   assert(tdb);
-  for(double wsec = 1.0 / sysconf(_SC_CLK_TCK); true; wsec *= 2){
+  for(double wsec = 1.0 / sysconf_SC_CLK_TCK; true; wsec *= 2){
     if(!TDBLOCKMETHOD(tdb, true)) return false;
     if(!tdb->open || !tdb->wmode){
       tctdbsetecode(tdb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -1016,7 +1015,7 @@ bool tctdbqryproc(TDBQRY *qry, TDBQRYPROC proc, void *op){
     if(flags & TDBQPSTOP) break;
   }
   tclistdel(res);
-  tcxstrprintf(qry->hint, "post treatment: get=%lld, put=%lld, out=%lld\n",
+  tcxstrprintf(qry->hint, "post treatment: get=%" PRIdMAX ", put=%" PRIdMAX ", out=%" PRIdMAX "\n",
                (long long)getnum, (long long)putnum, (long long)outnum);
   TDBUNLOCKMETHOD(tdb);
   return !err;
@@ -1250,14 +1249,14 @@ void tctdbsetecode(TCTDB *tdb, int ecode, const char *filename, int line, const 
 
 
 /* Set the file descriptor for debugging output. */
-void tctdbsetdbgfd(TCTDB *tdb, int fd){
-  assert(tdb && fd >= 0);
+void tctdbsetdbgfd(TCTDB *tdb, HANDLE fd){
+  assert(tdb);
   tchdbsetdbgfd(tdb->hdb, fd);
 }
 
 
 /* Get the file descriptor for debugging output. */
-int tctdbdbgfd(TCTDB *tdb){
+HANDLE tctdbdbgfd(TCTDB *tdb){
   assert(tdb);
   return tchdbdbgfd(tdb->hdb);
 }
@@ -1382,17 +1381,6 @@ uint8_t tctdbopts(TCTDB *tdb){
     return 0;
   }
   return tdb->opts;
-}
-
-
-/* Get the pointer to the opaque field of a table database object. */
-char *tctdbopaque(TCTDB *tdb){
-  assert(tdb);
-  if(!tdb->open){
-    tctdbsetecode(tdb, TCEINVALID, __FILE__, __LINE__, __func__);
-    return NULL;
-  }
-  return tchdbopaque(tdb->hdb) + TDBOPAQUESIZ;
 }
 
 
@@ -1686,7 +1674,7 @@ bool tctdbqryproc2(TDBQRY *qry, TDBQRYPROC proc, void *op){
     TDBUNLOCKMETHOD(tdb);
   }
   tclistdel(res);
-  tcxstrprintf(qry->hint, "post treatment: get=%lld, put=%lld, out=%lld\n",
+  tcxstrprintf(qry->hint, "post treatment: get=%" PRIdMAX ", put=%" PRIdMAX ", out=%" PRIdMAX "\n",
                (long long)getnum, (long long)putnum, (long long)outnum);
   return !err;
 }
@@ -1934,7 +1922,7 @@ static void tctdbclear(TCTDB *tdb){
    If successful, the return value is true, else, it is false. */
 static bool tctdbopenimpl(TCTDB *tdb, const char *path, int omode){
   assert(tdb && path);
-  int dbgfd = tchdbdbgfd(tdb->hdb);
+  HANDLE dbgfd = tchdbdbgfd(tdb->hdb);
   TCCODEC enc, dec;
   void *encop, *decop;
   tchdbcodecfunc(tdb->hdb, &enc, &encop, &dec, &decop);
@@ -2001,7 +1989,7 @@ static bool tctdbopenimpl(TCTDB *tdb, const char *path, int omode){
     char *name = tcurldecode(stem, &nsiz);
     if(!strcmp(ep, "lex") || !strcmp(ep, "dec") || !strcmp(ep, "tok") || !strcmp(ep, "qgr")){
       TCBDB *bdb = tcbdbnew();
-      if(dbgfd >= 0) tcbdbsetdbgfd(bdb, dbgfd);
+      if(!INVALIDHANDLE(dbgfd)) tcbdbsetdbgfd(bdb, dbgfd);
       if(tdb->mmtx) tcbdbsetmutex(bdb);
       if(enc && dec) tcbdbsetcodecfunc(bdb, enc, encop, dec, decop);
       tcbdbsetcache(bdb, tdb->lcnum, tdb->ncnum);
@@ -2295,11 +2283,11 @@ static bool tctdboptimizeimpl(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow
     }
   }
   const char *path = tchdbpath(tdb->hdb);
-  char *tpath = tcsprintf("%s%ctmp%c%llu", path, MYEXTCHR, MYEXTCHR, tchdbinode(tdb->hdb));
+  char *tpath = tcsprintf("%s%ctmp%c%" PRIuMAX "", path, MYEXTCHR, MYEXTCHR, tchdbinode(tdb->hdb));
   TCHDB *thdb = tchdbnew();
   tchdbsettype(thdb, TCDBTTABLE);
-  int dbgfd = tchdbdbgfd(tdb->hdb);
-  if(dbgfd >= 0) tchdbsetdbgfd(thdb, dbgfd);
+  HANDLE dbgfd = tchdbdbgfd(tdb->hdb);
+  if(!INVALIDHANDLE(dbgfd)) tchdbsetdbgfd(thdb, dbgfd);
   TCCODEC enc, dec;
   void *encop, *decop;
   tchdbcodecfunc(hdb, &enc, &encop, &dec, &decop);
@@ -2315,8 +2303,7 @@ static bool tctdboptimizeimpl(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow
   if(opts & TDBTTCBS) hopts |= HDBTTCBS;
   if(opts & TDBTEXCODEC) hopts |= HDBTEXCODEC;
   tchdbtune(thdb, bnum, apow, fpow, hopts);
-  if(tchdbopen(thdb, tpath, HDBOWRITER | HDBOCREAT | HDBOTRUNC)){
-    memcpy(tchdbopaque(thdb), tchdbopaque(hdb), TDBOPAQUESIZ + TDBLEFTOPQSIZ);
+  if(tchdbopen(thdb, tpath, HDBOWRITER | HDBOCREAT | HDBOTRUNC) && tchdbcopyopaque(thdb, hdb, 0, -1)) {
     if(!tchdbiterinit(hdb)) err = true;
     TCXSTR *kxstr = tcxstrnew();
     TCXSTR *vxstr = tcxstrnew();
@@ -2337,17 +2324,17 @@ static bool tctdboptimizeimpl(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow
       err = true;
     }
     if(!err){
-      if(unlink(path) == -1){
-        tctdbsetecode(tdb, TCEUNLINK, __FILE__, __LINE__, __func__);
-        err = true;
-      }
-      if(rename(tpath, path) == -1){
-        tctdbsetecode(tdb, TCERENAME, __FILE__, __LINE__, __func__);
-        err = true;
-      }
       char *npath = tcstrdup(path);
       int omode = (tchdbomode(hdb) & ~HDBOCREAT) & ~HDBOTRUNC;
       if(!tchdbclose(hdb)) err = true;
+      if(unlink(npath)){
+        tctdbsetecode(tdb, TCEUNLINK, __FILE__, __LINE__, __func__);
+        err = true;
+      }
+      if(rename(tpath, npath)){
+        tctdbsetecode(tdb, TCERENAME, __FILE__, __LINE__, __func__);
+        err = true;
+      }
       if(!tchdbopen(hdb, npath, omode)) err = true;
       TCFREE(npath);
     }
@@ -2634,7 +2621,7 @@ static bool tctdbsetindeximpl(TCTDB *tdb, const char *name, int type, TDBRVALOAD
   int inum = tdb->inum;
   for(int i = 0; i < inum; i++){
     TDBIDX *idx = idxs + i;
-    const char *path;
+    char *path;
     if(!strcmp(idx->name, name)){
       if(keep){
         tctdbsetecode(tdb, TCEKEEP, __FILE__, __LINE__, __func__);
@@ -2672,12 +2659,13 @@ static bool tctdbsetindeximpl(TCTDB *tdb, const char *name, int type, TDBRVALOAD
         case TDBITDECIMAL:
         case TDBITTOKEN:
         case TDBITQGRAM:
-          path = tcbdbpath(idx->db);
+          path = tcstrdup(tcbdbpath(idx->db));
+          tcbdbdel(idx->db);
           if(path && unlink(path)){
             tctdbsetecode(tdb, TCEUNLINK, __FILE__, __LINE__, __func__);
             err = true;
           }
-          tcbdbdel(idx->db);
+          TCFREE(path);
           break;
       }
       TCFREE(idx->name);
@@ -2704,7 +2692,7 @@ static bool tctdbsetindeximpl(TCTDB *tdb, const char *name, int type, TDBRVALOAD
   if(homode & HDBONOLCK) bomode |= BDBONOLCK;
   if(homode & HDBOLCKNB) bomode |= BDBOLCKNB;
   if(homode & HDBOTSYNC) bomode |= BDBOTSYNC;
-  int dbgfd = tchdbdbgfd(tdb->hdb);
+  HANDLE dbgfd = tchdbdbgfd(tdb->hdb);
   TCCODEC enc, dec;
   void *encop, *decop;
   tchdbcodecfunc(tdb->hdb, &enc, &encop, &dec, &decop);
@@ -2722,7 +2710,7 @@ static bool tctdbsetindeximpl(TCTDB *tdb, const char *name, int type, TDBRVALOAD
       idx->db = tcbdbnew();
       idx->name = tcstrdup(name);
       tcxstrprintf(pbuf, "%clex", MYEXTCHR);
-      if(dbgfd >= 0) tcbdbsetdbgfd(idx->db, dbgfd);
+      if(!INVALIDHANDLE(dbgfd)) tcbdbsetdbgfd(idx->db, dbgfd);
       if(tdb->mmtx) tcbdbsetmutex(idx->db);
       if(enc && dec) tcbdbsetcodecfunc(idx->db, enc, encop, dec, decop);
       tcbdbtune(idx->db, TDBIDXLMEMB, TDBIDXNMEMB, bbnum, -1, -1, bopts);
@@ -2740,7 +2728,7 @@ static bool tctdbsetindeximpl(TCTDB *tdb, const char *name, int type, TDBRVALOAD
       idx->db = tcbdbnew();
       idx->name = tcstrdup(name);
       tcxstrprintf(pbuf, "%cdec", MYEXTCHR);
-      if(dbgfd >= 0) tcbdbsetdbgfd(idx->db, dbgfd);
+      if(!INVALIDHANDLE(dbgfd)) tcbdbsetdbgfd(idx->db, dbgfd);
       if(tdb->mmtx) tcbdbsetmutex(idx->db);
       tcbdbsetcmpfunc(idx->db, tccmpdecimal, NULL);
       if(enc && dec) tcbdbsetcodecfunc(idx->db, enc, encop, dec, decop);
@@ -2760,7 +2748,7 @@ static bool tctdbsetindeximpl(TCTDB *tdb, const char *name, int type, TDBRVALOAD
       idx->cc = tcmapnew2(TDBIDXICCBNUM);
       idx->name = tcstrdup(name);
       tcxstrprintf(pbuf, "%ctok", MYEXTCHR);
-      if(dbgfd >= 0) tcbdbsetdbgfd(idx->db, dbgfd);
+      if(!INVALIDHANDLE(dbgfd)) tcbdbsetdbgfd(idx->db, dbgfd);
       if(tdb->mmtx) tcbdbsetmutex(idx->db);
       if(enc && dec) tcbdbsetcodecfunc(idx->db, enc, encop, dec, decop);
       tcbdbtune(idx->db, TDBIDXLMEMB, TDBIDXNMEMB, bbnum, -1, -1, bopts);
@@ -2779,7 +2767,7 @@ static bool tctdbsetindeximpl(TCTDB *tdb, const char *name, int type, TDBRVALOAD
       idx->cc = tcmapnew2(TDBIDXICCBNUM);
       idx->name = tcstrdup(name);
       tcxstrprintf(pbuf, "%cqgr", MYEXTCHR);
-      if(dbgfd >= 0) tcbdbsetdbgfd(idx->db, dbgfd);
+      if(!INVALIDHANDLE(dbgfd)) tcbdbsetdbgfd(idx->db, dbgfd);
       if(tdb->mmtx) tcbdbsetmutex(idx->db);
       if(enc && dec) tcbdbsetcodecfunc(idx->db, enc, encop, dec, decop);
       tcbdbtune(idx->db, TDBIDXLMEMB, TDBIDXNMEMB, bbnum, -1, -1, bopts);
@@ -2861,17 +2849,16 @@ static bool tctdbsetindeximpl(TCTDB *tdb, const char *name, int type, TDBRVALOAD
    The return value is the new unique ID number or -1 on failure. */
 static int64_t tctdbgenuidimpl(TCTDB *tdb, int64_t inc){
   assert(tdb);
-  void *opq = tchdbopaque(tdb->hdb);
   uint64_t llnum, uid;
   if(inc < 0){
     uid = -inc - 1;
   } else {
-    memcpy(&llnum, opq, sizeof(llnum));
+    tchdbreadopaque(tdb->hdb, &llnum, 0, sizeof(llnum));
     if(inc == 0) return TCITOHLL(llnum);
     uid = TCITOHLL(llnum) + inc;
   }
   llnum = TCITOHLL(uid);
-  memcpy(opq, &llnum, sizeof(llnum));
+  tchdbwriteopaque(tdb->hdb, &llnum, 0, sizeof(llnum));
   return uid;
 }
 
@@ -4052,7 +4039,7 @@ static TCMAP *tctdbqryidxfetch(TDBQRY *qry, TDBCOND *cond, TDBIDX *idx){
     tcmapdel(nmap);
     nmap = tctdbidxgetbyfts(tdb, idx, cond, hint);
   }
-  tcxstrprintf(hint, "auxiliary result set size: %lld\n", (long long)TCMAPRNUM(nmap));
+  tcxstrprintf(hint, "auxiliary result set size: %" PRIdMAX "\n", (long long)TCMAPRNUM(nmap));
   return nmap;
 }
 
@@ -4792,7 +4779,6 @@ bool tctdbidxput2(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols){
   }
   return !err;
 }
-
 
 /* Add a column of a record into an index of a table database object.
    `tdb' specifies the table database object.
@@ -5651,7 +5637,7 @@ TCMAP *tctdbidxgetbytokens(TCTDB *tdb, const TDBIDX *idx, const TCLIST *tokens, 
           int step;
           TCREADVNUMBUF64(cbuf, tid, step);
           char pkbuf[TCNUMBUFSIZ];
-          int pksiz = sprintf(pkbuf, "%lld", (long long)tid);
+          int pksiz = sprintf(pkbuf, "%" PRIdMAX "", (long long)tid);
           if(cnt < 1){
             tcmapput(res, pkbuf, pksiz, "", 0);
           } else if(wring){
@@ -5691,7 +5677,7 @@ TCMAP *tctdbidxgetbytokens(TCTDB *tdb, const TDBIDX *idx, const TCLIST *tokens, 
           int step;
           TCREADVNUMBUF64(cbuf, tid, step);
           char pkbuf[TCNUMBUFSIZ];
-          int pksiz = sprintf(pkbuf, "%lld", (long long)tid);
+          int pksiz = sprintf(pkbuf, "%" PRIdMAX "", (long long)tid);
           if(cnt < 1){
             tcmapput(res, pkbuf, pksiz, "", 0);
           } else if(wring){
@@ -6103,7 +6089,7 @@ static void tctdbidxgetbyftsunion(TDBIDX *idx, const TCLIST *tokens, bool sign,
         if(off == ocr->off + rem){
           onum++;
           char pkbuf[TCNUMBUFSIZ];
-          int pksiz = sprintf(pkbuf, "%lld", (long long)pkid);
+          int pksiz = sprintf(pkbuf, "%" PRIdMAX "", (long long)pkid);
           if(ores){
             int rsiz;
             if(tcmapget(ores, pkbuf, pksiz, &rsiz)){
@@ -6175,7 +6161,7 @@ static void tctdbidxgetbyftsunion(TDBIDX *idx, const TCLIST *tokens, bool sign,
               if(uniq) tcmapputkeep(uniq, pkbuf, pksiz, "", 0);
             } else {
               char numbuf[TCNUMBUFSIZ];
-              int pksiz = sprintf(numbuf, "%lld", (long long)pkid);
+              int pksiz = sprintf(numbuf, "%" PRIdMAX "", (long long)pkid);
               if(ores){
                 int rsiz;
                 if(tcmapget(ores, numbuf, pksiz, &rsiz)){
@@ -6244,7 +6230,7 @@ static void tctdbidxgetbyftsunion(TDBIDX *idx, const TCLIST *tokens, bool sign,
               if(uniq) tcmapputkeep(uniq, pkbuf, pksiz, "", 0);
             } else {
               char numbuf[TCNUMBUFSIZ];
-              int pksiz = sprintf(numbuf, "%lld", (long long)pkid);
+              int pksiz = sprintf(numbuf, "%" PRIdMAX "", (long long)pkid);
               if(ores){
                 int rsiz;
                 if(tcmapget(ores, numbuf, pksiz, &rsiz)){
@@ -6541,9 +6527,10 @@ static bool tctdbunlockmethod(TCTDB *tdb){
    `tdb' specifies the table database object. */
 void tctdbprintmeta(TCTDB *tdb){
   assert(tdb);
-  int dbgfd = tchdbdbgfd(tdb->hdb);
-  if(dbgfd < 0) return;
-  if(dbgfd == UINT16_MAX) dbgfd = 1;
+  HANDLE dbgfd = tchdbdbgfd(tdb->hdb);
+  if(!INVALIDHANDLE(dbgfd)) {
+	  dbgfd = GET_STDOUT_HANDLE();
+  }
   char buf[TDBPAGEBUFSIZ];
   char *wp = buf;
   wp += sprintf(wp, "META:");
@@ -6554,7 +6541,7 @@ void tctdbprintmeta(TCTDB *tdb){
   wp += sprintf(wp, " opts=%u", tdb->opts);
   wp += sprintf(wp, " lcnum=%d", tdb->lcnum);
   wp += sprintf(wp, " ncnum=%d", tdb->ncnum);
-  wp += sprintf(wp, " iccmax=%lld", (long long)tdb->iccmax);
+  wp += sprintf(wp, " iccmax=%" PRIdMAX "", (long long)tdb->iccmax);
   wp += sprintf(wp, " iccsync=%f", tdb->iccsync);
   wp += sprintf(wp, " idxs=%p", (void *)tdb->idxs);
   wp += sprintf(wp, " inum=%d", tdb->inum);

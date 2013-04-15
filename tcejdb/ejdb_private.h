@@ -15,11 +15,9 @@
  *************************************************************************************************/
 
 #ifndef EJDB_PRIVATE_H
-#define        EJDB_PRIVATE_H
+#define EJDB_PRIVATE_H
 
 #include "ejdb.h"
-
-#include "myconf.h"
 #include "tcutil.h"
 #include "tctdb.h"
 #include "tchdb.h"

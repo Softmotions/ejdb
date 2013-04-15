@@ -211,7 +211,6 @@ int tcbdbecode(TCBDB *bdb){
 /* Set mutual exclusion control of a B+ tree database object for threading. */
 bool tcbdbsetmutex(TCBDB *bdb){
   assert(bdb);
-  if(!TCUSEPTHREAD) return true;
   if(bdb->mmtx || bdb->open){
     tcbdbsetecode(bdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return false;
@@ -818,7 +817,7 @@ bool tcbdbcopy(TCBDB *bdb, const char *path){
 /* Begin the transaction of a B+ tree database object. */
 bool tcbdbtranbegin(TCBDB *bdb){
   assert(bdb);
-  for(double wsec = 1.0 / sysconf(_SC_CLK_TCK); true; wsec *= 2){
+  for(double wsec = 1.0 / sysconf_SC_CLK_TCK; true; wsec *= 2){
     if(!BDBLOCKMETHOD(bdb, true)) return false;
     if(!bdb->open || !bdb->wmode){
       tcbdbsetecode(bdb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -839,7 +838,8 @@ bool tcbdbtranbegin(TCBDB *bdb){
     return false;
   }
   bdb->tran = true;
-  TCMEMDUP(bdb->rbopaque, bdb->opaque, BDBOPAQUESIZ);
+  TCMALLOC(bdb->rbopaque, BDBOPAQUESIZ);
+  tchdbreadopaque(bdb->hdb, bdb->rbopaque, 0, BDBOPAQUESIZ);
   BDBUNLOCKMETHOD(bdb);
   return true;
 }
@@ -880,7 +880,7 @@ bool tcbdbtranabort(TCBDB *bdb){
     return false;
   }
   tcbdbcachepurge(bdb);
-  memcpy(bdb->opaque, bdb->rbopaque, BDBOPAQUESIZ);
+  tchdbwriteopaque(bdb->hdb, bdb->rbopaque, 0, BDBOPAQUESIZ);
   tcbdbloadmeta(bdb);
   TCFREE(bdb->rbopaque);
   bdb->tran = false;
@@ -1311,14 +1311,14 @@ void tcbdbsetecode(TCBDB *bdb, int ecode, const char *filename, int line, const 
 
 
 /* Set the file descriptor for debugging output. */
-void tcbdbsetdbgfd(TCBDB *bdb, int fd){
-  assert(bdb && fd >= 0);
+void tcbdbsetdbgfd(TCBDB *bdb, HANDLE fd){
+  assert(bdb && !INVALIDHANDLE(fd));
   tchdbsetdbgfd(bdb->hdb, fd);
 }
 
 
 /* Get the file descriptor for debugging output. */
-int tcbdbdbgfd(TCBDB *bdb){
+HANDLE tcbdbdbgfd(TCBDB *bdb){
   assert(bdb);
   return tchdbdbgfd(bdb->hdb);
 }
@@ -1487,17 +1487,6 @@ uint8_t tcbdbopts(TCBDB *bdb){
     return 0;
   }
   return bdb->opts;
-}
-
-
-/* Get the pointer to the opaque field of a B+ tree database object. */
-char *tcbdbopaque(TCBDB *bdb){
-  assert(bdb);
-  if(!bdb->open){
-    tcbdbsetecode(bdb, TCEINVALID, __FILE__, __LINE__, __func__);
-    return NULL;
-  }
-  return bdb->opaque + BDBOPAQUESIZ;
 }
 
 
@@ -1721,7 +1710,6 @@ static void tcbdbclear(TCBDB *bdb){
   bdb->mmtx = NULL;
   bdb->cmtx = NULL;
   bdb->hdb = NULL;
-  bdb->opaque = NULL;
   bdb->open = false;
   bdb->wmode = false;
   bdb->lmemb = BDBDEFLMEMB;
@@ -1770,8 +1758,9 @@ static void tcbdbclear(TCBDB *bdb){
    `bdb' specifies the B+ tree database object. */
 static void tcbdbdumpmeta(TCBDB *bdb){
   assert(bdb);
-  memset(bdb->opaque, 0, 64);
-  char *wp = bdb->opaque;
+  char odata[BDBOPAQUESIZ];
+  memset(odata, 0, BDBOPAQUESIZ);
+  char *wp = odata;
   if(bdb->cmp == tccmplexical){
     *(uint8_t *)(wp++) = 0x0;
   } else if(bdb->cmp == tccmpdecimal){
@@ -1818,13 +1807,16 @@ static void tcbdbdumpmeta(TCBDB *bdb){
   llnum = TCHTOILL(llnum);
   memcpy(wp, &llnum, sizeof(llnum));
   wp += sizeof(llnum);
+  tchdbwriteopaque(bdb->hdb, odata, 0, BDBOPAQUESIZ);
 }
 
 
 /* Deserialize meta data from the opaque field.
    `bdb' specifies the B+ tree database object. */
 static void tcbdbloadmeta(TCBDB *bdb){
-  const char *rp = bdb->opaque;
+  char odata[BDBOPAQUESIZ];
+  tchdbreadopaque(bdb->hdb, odata, 0, BDBOPAQUESIZ);
+  const char *rp = odata;
   uint8_t cnum = *(uint8_t *)(rp++);
   if(cnum == 0x0){
     bdb->cmp = tccmplexical;
@@ -1956,7 +1948,7 @@ static bool tcbdbleafsave(TCBDB *bdb, BDBLEAF *leaf){
     }
   }
   bool err = false;
-  step = sprintf(hbuf, "%llx", (unsigned long long)leaf->id);
+  step = sprintf(hbuf, "%" PRIxMAX "", (unsigned long long)leaf->id);
   if(ln < 1 && !tchdbout(bdb->hdb, hbuf, step) && tchdbecode(bdb->hdb) != TCENOREC)
     err = true;
   if(!leaf->dead && !tchdbput(bdb->hdb, hbuf, step, TCXSTRPTR(rbuf), TCXSTRSIZE(rbuf)))
@@ -1985,7 +1977,7 @@ static BDBLEAF *tcbdbleafload(TCBDB *bdb, uint64_t id){
   TCDODEBUG(bdb->cnt_loadleaf++);
   char hbuf[(sizeof(uint64_t)+1)*3];
   int step;
-  step = sprintf(hbuf, "%llx", (unsigned long long)id);
+  step = sprintf(hbuf, "%" PRIxMAX "", (unsigned long long)id);
   char *rbuf = NULL;
   char wbuf[BDBPAGEBUFSIZ];
   const char *rp = NULL;
@@ -2104,7 +2096,7 @@ static bool tcbdbleafcheck(TCBDB *bdb, uint64_t id){
   if(clk) BDBUNLOCKCACHE(bdb);
   if(leaf) return true;
   char hbuf[(sizeof(uint64_t)+1)*3];
-  int step = sprintf(hbuf, "%llx", (unsigned long long)id);
+  int step = sprintf(hbuf, "%" PRIxMAX "", (unsigned long long)id);
   return tchdbvsiz(bdb->hdb, hbuf, step) > 0;
 }
 
@@ -2503,7 +2495,7 @@ static bool tcbdbnodesave(TCBDB *bdb, BDBNODE *node){
     TCXSTRCAT(rbuf, ebuf, idx->ksiz);
   }
   bool err = false;
-  step = sprintf(hbuf, "#%llx", (unsigned long long)(node->id - BDBNODEIDBASE));
+  step = sprintf(hbuf, "#%" PRIxMAX "", (unsigned long long)(node->id - BDBNODEIDBASE));
   if(ln < 1 && !tchdbout(bdb->hdb, hbuf, step) && tchdbecode(bdb->hdb) != TCENOREC)
     err = true;
   if(!node->dead && !tchdbput(bdb->hdb, hbuf, step, TCXSTRPTR(rbuf), TCXSTRSIZE(rbuf)))
@@ -2532,7 +2524,7 @@ static BDBNODE *tcbdbnodeload(TCBDB *bdb, uint64_t id){
   TCDODEBUG(bdb->cnt_loadnode++);
   char hbuf[(sizeof(uint64_t)+1)*2];
   int step;
-  step = sprintf(hbuf, "#%llx", (unsigned long long)(id - BDBNODEIDBASE));
+  step = sprintf(hbuf, "#%" PRIxMAX "", (unsigned long long)(id - BDBNODEIDBASE));
   char *rbuf = NULL;
   char wbuf[BDBPAGEBUFSIZ];
   const char *rp = NULL;
@@ -2983,7 +2975,6 @@ static bool tcbdbopenimpl(TCBDB *bdb, const char *path, int omode){
   bdb->lnum = 0;
   bdb->nnum = 0;
   bdb->rnum = 0;
-  bdb->opaque = tchdbopaque(bdb->hdb);
   bdb->leafc = tcmapnew2(bdb->lcnum * 2 + 1);
   bdb->nodec = tcmapnew2(bdb->ncnum * 2 + 1);
   if(bdb->wmode && tchdbrnum(bdb->hdb) < 1){
@@ -3049,7 +3040,7 @@ static bool tcbdbcloseimpl(TCBDB *bdb){
   bool err = false;
   if(bdb->tran){
     tcbdbcachepurge(bdb);
-    memcpy(bdb->opaque, bdb->rbopaque, BDBOPAQUESIZ);
+    tchdbwriteopaque(bdb->hdb, bdb->rbopaque, 0, BDBOPAQUESIZ);
     tcbdbloadmeta(bdb);
     TCFREE(bdb->rbopaque);
     bdb->tran = false;
@@ -3451,11 +3442,12 @@ static bool tcbdbrangefwm(TCBDB *bdb, const char *pbuf, int psiz, int max, TCLIS
 static bool tcbdboptimizeimpl(TCBDB *bdb, int32_t lmemb, int32_t nmemb,
                               int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts){
   assert(bdb);
-  const char *path = tchdbpath(bdb->hdb);
-  char *tpath = tcsprintf("%s%ctmp%c%llu", path, MYEXTCHR, MYEXTCHR, tchdbinode(bdb->hdb));
+  char *opath = tcstrdup(tchdbpath(bdb->hdb));
+  char *tpath = tcsprintf("%s%ctmp%c%" PRIuMAX "", opath, MYEXTCHR, MYEXTCHR, tchdbinode(bdb->hdb));
+  int omode = (tchdbomode(bdb->hdb) & ~BDBOCREAT) & ~BDBOTRUNC;
   TCBDB *tbdb = tcbdbnew();
-  int dbgfd = tchdbdbgfd(bdb->hdb);
-  if(dbgfd >= 0) tcbdbsetdbgfd(tbdb, dbgfd);
+  HANDLE dbgfd = tchdbdbgfd(bdb->hdb);
+  if(!INVALIDHANDLE(dbgfd)) tcbdbsetdbgfd(tbdb, dbgfd);
   tcbdbsetcmpfunc(tbdb, bdb->cmp, bdb->cmpop);
   TCCODEC enc, dec;
   void *encop, *decop;
@@ -3476,13 +3468,13 @@ static bool tcbdboptimizeimpl(TCBDB *bdb, int32_t lmemb, int32_t nmemb,
   bdb->ncnum = BDBCACHEOUT * 2;
   tbdb->lcnum = BDBLEVELMAX;
   tbdb->ncnum = BDBCACHEOUT * 2;
-  if(!tcbdbopen(tbdb, tpath, BDBOWRITER | BDBOCREAT | BDBOTRUNC)){
-    tcbdbsetecode(bdb, tcbdbecode(tbdb), __FILE__, __LINE__, __func__);
+  if(!tcbdbopen(tbdb, tpath, BDBOWRITER | BDBOCREAT | BDBOTRUNC) ||
+          !tchdbcopyopaque(tbdb->hdb, bdb->hdb, 0, -1)){
     tcbdbdel(tbdb);
     TCFREE(tpath);
+    TCFREE(opath);
     return false;
   }
-  memcpy(tcbdbopaque(tbdb), tcbdbopaque(bdb), BDBLEFTOPQSIZ);
   bool err = false;
   BDBCUR *cur = tcbdbcurnew(bdb);
   tcbdbcurfirstimpl(cur);
@@ -3505,24 +3497,30 @@ static bool tcbdboptimizeimpl(TCBDB *bdb, int32_t lmemb, int32_t nmemb,
   bdb->lcnum = lcnum;
   bdb->ncnum = ncnum;
   tcbdbdel(tbdb);
-  if(unlink(path) == -1){
+  if(err){
+    TCFREE(tpath);
+    TCFREE(opath);
+    return false;
+  }
+  if(!tcbdbcloseimpl(bdb)){
+    TCFREE(opath);
+    return false;
+  }
+  if(unlink(opath)){
     tcbdbsetecode(bdb, TCEUNLINK, __FILE__, __LINE__, __func__);
     err = true;
   }
-  if(rename(tpath, path) == -1){
+  if(rename(tpath, opath)){
     tcbdbsetecode(bdb, TCERENAME, __FILE__, __LINE__, __func__);
     err = true;
   }
   TCFREE(tpath);
-  if(err) return false;
-  tpath = tcstrdup(path);
-  int omode = (tchdbomode(bdb->hdb) & ~BDBOCREAT) & ~BDBOTRUNC;
-  if(!tcbdbcloseimpl(bdb)){
-    TCFREE(tpath);
+  if(err){
+	  TCFREE(opath);
     return false;
   }
-  bool rv = tcbdbopenimpl(bdb, tpath, omode);
-  TCFREE(tpath);
+  bool rv = tcbdbopenimpl(bdb, opath, omode);
+  TCFREE(opath);
   return rv;
 }
 
@@ -4082,27 +4080,28 @@ static bool tcbdbforeachimpl(TCBDB *bdb, TCITER iter, void *op){
    `bdb' specifies the B+ tree database object. */
 void tcbdbprintmeta(TCBDB *bdb){
   assert(bdb);
-  int dbgfd = tchdbdbgfd(bdb->hdb);
-  if(dbgfd < 0) return;
-  if(dbgfd == UINT16_MAX) dbgfd = 1;
+  HANDLE dbgfd = tchdbdbgfd(bdb->hdb);
+  if (INVALIDHANDLE(dbgfd)) {
+      dbgfd = GET_STDOUT_HANDLE();
+  }
   char buf[BDBPAGEBUFSIZ];
   char *wp = buf;
   wp += sprintf(wp, "META:");
   wp += sprintf(wp, " mmtx=%p", (void *)bdb->mmtx);
   wp += sprintf(wp, " cmtx=%p", (void *)bdb->cmtx);
   wp += sprintf(wp, " hdb=%p", (void *)bdb->hdb);
-  wp += sprintf(wp, " opaque=%p", (void *)bdb->opaque);
+  //wp += sprintf(wp, " opaque=%p", (void *)bdb->opaque);
   wp += sprintf(wp, " open=%d", bdb->open);
   wp += sprintf(wp, " wmode=%d", bdb->wmode);
   wp += sprintf(wp, " lmemb=%u", bdb->lmemb);
   wp += sprintf(wp, " nmemb=%u", bdb->nmemb);
   wp += sprintf(wp, " opts=%u", bdb->opts);
-  wp += sprintf(wp, " root=%llx", (unsigned long long)bdb->root);
-  wp += sprintf(wp, " first=%llx", (unsigned long long)bdb->first);
-  wp += sprintf(wp, " last=%llx", (unsigned long long)bdb->last);
-  wp += sprintf(wp, " lnum=%llu", (unsigned long long)bdb->lnum);
-  wp += sprintf(wp, " nnum=%llu", (unsigned long long)bdb->nnum);
-  wp += sprintf(wp, " rnum=%llu", (unsigned long long)bdb->rnum);
+  wp += sprintf(wp, " root=%" PRIxMAX "", (unsigned long long)bdb->root);
+  wp += sprintf(wp, " first=%" PRIxMAX "", (unsigned long long)bdb->first);
+  wp += sprintf(wp, " last=%" PRIxMAX "", (unsigned long long)bdb->last);
+  wp += sprintf(wp, " lnum=%" PRIuMAX "", (unsigned long long)bdb->lnum);
+  wp += sprintf(wp, " nnum=%" PRIuMAX "", (unsigned long long)bdb->nnum);
+  wp += sprintf(wp, " rnum=%" PRIuMAX "", (unsigned long long)bdb->rnum);
   wp += sprintf(wp, " leafc=%p", (void *)bdb->leafc);
   wp += sprintf(wp, " nodec=%p", (void *)bdb->nodec);
   wp += sprintf(wp, " cmp=%p", (void *)(intptr_t)bdb->cmp);
@@ -4111,21 +4110,21 @@ void tcbdbprintmeta(TCBDB *bdb){
   wp += sprintf(wp, " ncnum=%u", bdb->ncnum);
   wp += sprintf(wp, " lsmax=%u", bdb->lsmax);
   wp += sprintf(wp, " lschk=%u", bdb->lschk);
-  wp += sprintf(wp, " capnum=%llu", (unsigned long long)bdb->capnum);
+  wp += sprintf(wp, " capnum=%" PRIuMAX "", (unsigned long long)bdb->capnum);
   wp += sprintf(wp, " hist=%p", (void *)bdb->hist);
   wp += sprintf(wp, " hnum=%d", bdb->hnum);
-  wp += sprintf(wp, " hleaf=%llu", (unsigned long long)bdb->hleaf);
-  wp += sprintf(wp, " lleaf=%llu", (unsigned long long)bdb->lleaf);
+  wp += sprintf(wp, " hleaf=%" PRIuMAX "", (unsigned long long)bdb->hleaf);
+  wp += sprintf(wp, " lleaf=%" PRIuMAX "", (unsigned long long)bdb->lleaf);
   wp += sprintf(wp, " tran=%d", bdb->tran);
-  wp += sprintf(wp, " rbopaque=%p", (void *)bdb->rbopaque);
-  wp += sprintf(wp, " clock=%llu", (unsigned long long)bdb->clock);
-  wp += sprintf(wp, " cnt_saveleaf=%lld", (long long)bdb->cnt_saveleaf);
-  wp += sprintf(wp, " cnt_loadleaf=%lld", (long long)bdb->cnt_loadleaf);
-  wp += sprintf(wp, " cnt_killleaf=%lld", (long long)bdb->cnt_killleaf);
-  wp += sprintf(wp, " cnt_adjleafc=%lld", (long long)bdb->cnt_adjleafc);
-  wp += sprintf(wp, " cnt_savenode=%lld", (long long)bdb->cnt_savenode);
-  wp += sprintf(wp, " cnt_loadnode=%lld", (long long)bdb->cnt_loadnode);
-  wp += sprintf(wp, " cnt_adjnodec=%lld", (long long)bdb->cnt_adjnodec);
+  //wp += sprintf(wp, " rbopaque=%p", (void *)bdb->rbopaque);
+  wp += sprintf(wp, " clock=%" PRIuMAX "", (unsigned long long)bdb->clock);
+  wp += sprintf(wp, " cnt_saveleaf=%" PRIdMAX "", (long long)bdb->cnt_saveleaf);
+  wp += sprintf(wp, " cnt_loadleaf=%" PRIdMAX "", (long long)bdb->cnt_loadleaf);
+  wp += sprintf(wp, " cnt_killleaf=%" PRIdMAX "", (long long)bdb->cnt_killleaf);
+  wp += sprintf(wp, " cnt_adjleafc=%" PRIdMAX "", (long long)bdb->cnt_adjleafc);
+  wp += sprintf(wp, " cnt_savenode=%" PRIdMAX "", (long long)bdb->cnt_savenode);
+  wp += sprintf(wp, " cnt_loadnode=%" PRIdMAX "", (long long)bdb->cnt_loadnode);
+  wp += sprintf(wp, " cnt_adjnodec=%" PRIdMAX "", (long long)bdb->cnt_adjnodec);
   *(wp++) = '\n';
   tcwrite(dbgfd, buf, wp - buf);
 }
@@ -4136,17 +4135,18 @@ void tcbdbprintmeta(TCBDB *bdb){
    `leaf' specifies the leaf object. */
 void tcbdbprintleaf(TCBDB *bdb, BDBLEAF *leaf){
   assert(bdb && leaf);
-  int dbgfd = tchdbdbgfd(bdb->hdb);
+  HANDLE dbgfd = tchdbdbgfd(bdb->hdb);
   TCPTRLIST *recs = leaf->recs;
-  if(dbgfd < 0) return;
-  if(dbgfd == UINT16_MAX) dbgfd = 1;
+  if(INVALIDHANDLE(dbgfd)) {
+      dbgfd = GET_STDOUT_HANDLE();
+  }
   char buf[BDBPAGEBUFSIZ];
   char *wp = buf;
   wp += sprintf(wp, "LEAF:");
-  wp += sprintf(wp, " id:%llx", (unsigned long long)leaf->id);
+  wp += sprintf(wp, " id:%" PRIxMAX "", (unsigned long long)leaf->id);
   wp += sprintf(wp, " size:%u", leaf->size);
-  wp += sprintf(wp, " prev:%llx", (unsigned long long)leaf->prev);
-  wp += sprintf(wp, " next:%llx", (unsigned long long)leaf->next);
+  wp += sprintf(wp, " prev:%" PRIxMAX "", (unsigned long long)leaf->prev);
+  wp += sprintf(wp, " next:%" PRIxMAX "", (unsigned long long)leaf->next);
   wp += sprintf(wp, " dirty:%d", leaf->dirty);
   wp += sprintf(wp, " dead:%d", leaf->dead);
   wp += sprintf(wp, " rnum:%d", TCPTRLISTNUM(recs));
@@ -4174,15 +4174,16 @@ void tcbdbprintleaf(TCBDB *bdb, BDBLEAF *leaf){
    `node' specifies the node object. */
 void tcbdbprintnode(TCBDB *bdb, BDBNODE *node){
   assert(bdb && node);
-  int dbgfd = tchdbdbgfd(bdb->hdb);
+  HANDLE dbgfd = tchdbdbgfd(bdb->hdb);
   TCPTRLIST *idxs = node->idxs;
-  if(dbgfd < 0) return;
-  if(dbgfd == UINT16_MAX) dbgfd = 1;
+  if(INVALIDHANDLE(dbgfd)) {
+      dbgfd = GET_STDOUT_HANDLE();
+  }
   char buf[BDBPAGEBUFSIZ];
   char *wp = buf;
   wp += sprintf(wp, "NODE:");
-  wp += sprintf(wp, " id:%llx", (unsigned long long)node->id);
-  wp += sprintf(wp, " heir:%llx", (unsigned long long)node->heir);
+  wp += sprintf(wp, " id:%" PRIxMAX "", (unsigned long long)node->id);
+  wp += sprintf(wp, " heir:%" PRIxMAX "", (unsigned long long)node->heir);
   wp += sprintf(wp, " dirty:%d", node->dirty);
   wp += sprintf(wp, " dead:%d", node->dead);
   wp += sprintf(wp, " rnum:%d", TCPTRLISTNUM(idxs));
@@ -4192,7 +4193,7 @@ void tcbdbprintnode(TCBDB *bdb, BDBNODE *node){
     wp = buf;
     BDBIDX *idx = TCPTRLISTVAL(idxs, i);
     char *ebuf = (char *)idx + sizeof(*idx);
-    wp += sprintf(wp, " [%llx:%s]", (unsigned long long)idx->pid, ebuf);
+    wp += sprintf(wp, " [%" PRIxMAX ":%s]", (unsigned long long)idx->pid, ebuf);
   }
   *(wp++) = '\n';
   tcwrite(dbgfd, buf, wp - buf);

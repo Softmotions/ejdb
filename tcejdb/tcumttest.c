@@ -318,11 +318,11 @@ static int proccombo(int tnum, int rnum, int bnum, bool tr, bool rnd){
     }
   }
   if(tr){
-    iprintf("record number: %llu\n", (unsigned long long)tcndbrnum(ndb));
-    iprintf("size: %llu\n", (unsigned long long)tcndbmsiz(ndb));
+    iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcndbrnum(ndb));
+    iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcndbmsiz(ndb));
   } else {
-    iprintf("record number: %llu\n", (unsigned long long)tcmdbrnum(mdb));
-    iprintf("size: %llu\n", (unsigned long long)tcmdbmsiz(mdb));
+    iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcmdbrnum(mdb));
+    iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcmdbmsiz(mdb));
   }
   tcndbdel(ndb);
   tcmdbdel(mdb);
@@ -376,11 +376,11 @@ static int proctypical(int tnum, int rnum, int bnum, bool tr, bool nc, int rrati
     }
   }
   if(tr){
-    iprintf("record number: %llu\n", (unsigned long long)tcndbrnum(ndb));
-    iprintf("size: %llu\n", (unsigned long long)tcndbmsiz(ndb));
+    iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcndbrnum(ndb));
+    iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcndbmsiz(ndb));
   } else {
-    iprintf("record number: %llu\n", (unsigned long long)tcmdbrnum(mdb));
-    iprintf("size: %llu\n", (unsigned long long)tcmdbmsiz(mdb));
+    iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcmdbrnum(mdb));
+    iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcmdbmsiz(mdb));
   }
   tcndbdel(ndb);
   tcmdbdel(mdb);

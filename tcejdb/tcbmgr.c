@@ -21,7 +21,7 @@
 
 /* global variables */
 const char *g_progname;                  // program name
-int g_dbgfd;                             // debugging output
+HANDLE g_dbgfd;                          // debugging output
 
 
 /* function prototypes */
@@ -59,9 +59,16 @@ static int procversion(void);
 /* main routine */
 int main(int argc, char **argv){
   g_progname = argv[0];
-  g_dbgfd = -1;
+  g_dbgfd = INVALID_HANDLE_VALUE;
   const char *ebuf = getenv("TCDBGFD");
-  if(ebuf) g_dbgfd = tcatoix(ebuf);
+  if (ebuf) {
+	  int debugfd = tcatoix(ebuf);
+#ifdef _WIN32
+	  g_dbgfd = (HANDLE) _get_osfhandle(debugfd);
+#else
+	  g_dbgfd = debugfd;
+#endif
+  }
   if(argc < 2) usage();
   int rv = 0;
   if(!strcmp(argv[1], "create")){
@@ -595,7 +602,7 @@ static int runversion(int argc, char **argv){
 static int proccreate(const char *path, int lmemb, int nmemb,
                       int bnum, int apow, int fpow, TCCMP cmp, int opts){
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(cmp && !tcbdbsetcmpfunc(bdb, cmp, NULL)) printerr(bdb);
   if(!tcbdbsetcodecfunc(bdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(bdb);
   if(!tcbdbtune(bdb, lmemb, nmemb, bnum, apow, fpow, opts)){
@@ -621,7 +628,7 @@ static int proccreate(const char *path, int lmemb, int nmemb,
 /* perform inform command */
 static int procinform(const char *path, int omode){
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   tcbdbsetcmpfunc(bdb, mycmpfunc, NULL);
   tcbdbsetcodecfunc(bdb, _tc_recencode, NULL, _tc_recdecode, NULL);
   if(!tcbdbopen(bdb, path, BDBOREADER | omode)){
@@ -655,14 +662,14 @@ static int procinform(const char *path, int omode){
   printf("\n");
   printf("max leaf member: %d\n", tcbdblmemb(bdb));
   printf("max node member: %d\n", tcbdbnmemb(bdb));
-  printf("leaf number: %llu\n", (unsigned long long)tcbdblnum(bdb));
-  printf("node number: %llu\n", (unsigned long long)tcbdbnnum(bdb));
-  printf("bucket number: %llu\n", (unsigned long long)tcbdbbnum(bdb));
+  printf("leaf number: %" PRIuMAX "\n", (unsigned long long)tcbdblnum(bdb));
+  printf("node number: %" PRIuMAX "\n", (unsigned long long)tcbdbnnum(bdb));
+  printf("bucket number: %" PRIuMAX "\n", (unsigned long long)tcbdbbnum(bdb));
   if(bdb->hdb->cnt_writerec >= 0)
-    printf("used bucket number: %lld\n", (long long)tcbdbbnumused(bdb));
+    printf("used bucket number: %" PRIdMAX "\n", (long long)tcbdbbnumused(bdb));
   printf("alignment: %u\n", tcbdbalign(bdb));
   printf("free block pool: %u\n", tcbdbfbpmax(bdb));
-  printf("inode number: %lld\n", (long long)tcbdbinode(bdb));
+  printf("inode number: %" PRIdMAX "\n", (long long)tcbdbinode(bdb));
   char date[48];
   tcdatestrwww(tcbdbmtime(bdb), INT_MAX, date);
   printf("modified time: %s\n", date);
@@ -674,8 +681,8 @@ static int procinform(const char *path, int omode){
   if(opts & BDBTTCBS) printf(" tcbs");
   if(opts & BDBTEXCODEC) printf(" excodec");
   printf("\n");
-  printf("record number: %llu\n", (unsigned long long)tcbdbrnum(bdb));
-  printf("file size: %llu\n", (unsigned long long)tcbdbfsiz(bdb));
+  printf("record number: %" PRIuMAX "\n", (unsigned long long)tcbdbrnum(bdb));
+  printf("file size: %" PRIuMAX "\n", (unsigned long long)tcbdbfsiz(bdb));
   if(!tcbdbclose(bdb)){
     if(!err) printerr(bdb);
     err = true;
@@ -689,7 +696,7 @@ static int procinform(const char *path, int omode){
 static int procput(const char *path, const char *kbuf, int ksiz, const char *vbuf, int vsiz,
                    TCCMP cmp, int omode, int dmode){
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(cmp && !tcbdbsetcmpfunc(bdb, cmp, NULL)) printerr(bdb);
   if(!tcbdbsetcodecfunc(bdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(bdb);
   if(!tcbdbopen(bdb, path, BDBOWRITER | omode)){
@@ -762,7 +769,7 @@ static int procput(const char *path, const char *kbuf, int ksiz, const char *vbu
 /* perform out command */
 static int procout(const char *path, const char *kbuf, int ksiz, TCCMP cmp, int omode){
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(cmp && !tcbdbsetcmpfunc(bdb, cmp, NULL)) printerr(bdb);
   if(!tcbdbsetcodecfunc(bdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(bdb);
   if(!tcbdbopen(bdb, path, BDBOWRITER | omode)){
@@ -788,7 +795,7 @@ static int procout(const char *path, const char *kbuf, int ksiz, TCCMP cmp, int 
 static int procget(const char *path, const char *kbuf, int ksiz, TCCMP cmp, int omode,
                    bool px, bool pz){
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(cmp && !tcbdbsetcmpfunc(bdb, cmp, NULL)) printerr(bdb);
   if(!tcbdbsetcodecfunc(bdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(bdb);
   if(!tcbdbopen(bdb, path, BDBOREADER | omode)){
@@ -820,7 +827,7 @@ static int procget(const char *path, const char *kbuf, int ksiz, TCCMP cmp, int 
 static int proclist(const char *path, TCCMP cmp, int omode, int max, bool pv, bool px, bool bk,
                     const char *jstr, const char *bstr, const char *estr, const char *fmstr){
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(cmp && !tcbdbsetcmpfunc(bdb, cmp, NULL)) printerr(bdb);
   if(!tcbdbsetcodecfunc(bdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(bdb);
   if(!tcbdbopen(bdb, path, BDBOREADER | omode)){
@@ -928,7 +935,7 @@ static int proclist(const char *path, TCCMP cmp, int omode, int max, bool pv, bo
 static int procoptimize(const char *path, int lmemb, int nmemb,
                         int bnum, int apow, int fpow, TCCMP cmp, int opts, int omode, bool df){
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(cmp && !tcbdbsetcmpfunc(bdb, cmp, NULL)) printerr(bdb);
   if(!tcbdbsetcodecfunc(bdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(bdb);
   if(!tcbdbopen(bdb, path, BDBOWRITER | omode)){
@@ -965,7 +972,7 @@ static int procimporttsv(const char *path, const char *file, int omode, bool sc)
     return 1;
   }
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(!tcbdbsetcodecfunc(bdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(bdb);
   if(!tcbdbopen(bdb, path, BDBOWRITER | BDBOCREAT | omode)){
     printerr(bdb);

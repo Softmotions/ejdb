@@ -40,6 +40,7 @@ typedef struct {                         /* type of structure for a hash databas
   void *mmtx;                            /* mutex for method */
   void *rmtxs;                           /* mutexes for records */
   void *dmtx;                            /* mutex for the while database */
+  void *smtx;                            /* rw mutex for shared memory */
   void *wmtx;                            /* mutex for write ahead logging */
   void *eckey;                           /* key for thread specific error code */
   char *rpath;                           /* real path for locking */
@@ -50,19 +51,18 @@ typedef struct {                         /* type of structure for a hash databas
   uint8_t fpow;                          /* power of free block pool number */
   uint8_t opts;                          /* options */
   char *path;                            /* path of the database file */
-  int fd;                                /* file descriptor of the database file */
+  HANDLE fd;                             /* file descriptor of the database file */
   uint32_t omode;                        /* open mode */
   uint64_t rnum;                         /* number of the records */
   uint64_t fsiz;                         /* size of the database file */
   uint64_t frec;                         /* offset of the first record */
   uint64_t dfcur;                        /* offset of the cursor for defragmentation */
   uint64_t iter;                         /* offset of the iterator */
-  char *map;                             /* pointer to the mapped memory */
+  volatile char *map;                    /* pointer to the mapped memory */
   uint64_t msiz;                         /* size of the mapped memory */
   uint64_t xmsiz;                        /* size of the extra mapped memory */
   uint64_t xfsiz;                        /* extra size of the file for mapped memory */
-  uint32_t *ba32;                        /* 32-bit bucket array */
-  uint64_t *ba64;                        /* 64-bit bucket array */
+  bool ba64;                             /* using of 64-bit bucket array */
   uint32_t align;                        /* record alignment */
   uint32_t runit;                        /* record reading unit */
   bool zmode;                            /* whether compression is used */
@@ -80,16 +80,16 @@ typedef struct {                         /* type of structure for a hash databas
   void *encop;                           /* opaque object for the encoding functions */
   TCCODEC dec;                           /* pointer to the decoding function */
   void *decop;                           /* opaque object for the decoding functions */
-  int ecode;                             /* last happened error code */
+  volatile int ecode;                    /* last happened error code */
   bool fatal;                            /* whether a fatal error occured */
   uint64_t inode;                        /* inode number */
   time_t mtime;                          /* modification time */
   uint32_t dfunit;                       /* unit step number of auto defragmentation */
   uint32_t dfcnt;                        /* counter of auto defragmentation */
   bool tran;                             /* whether in the transaction */
-  int walfd;                             /* file descriptor of write ahead logging */
+  HANDLE walfd;                          /* file descriptor of write ahead logging */
   uint64_t walend;                       /* end offset of write ahead logging */
-  int dbgfd;                             /* file descriptor for debugging */
+  HANDLE dbgfd;                          /* file descriptor for debugging */
   volatile int64_t cnt_writerec;         /* tesing counter for record write times */
   volatile int64_t cnt_reuserec;         /* tesing counter for record reuse times */
   volatile int64_t cnt_moverec;          /* tesing counter for record move times */
@@ -107,6 +107,9 @@ typedef struct {                         /* type of structure for a hash databas
   volatile int64_t cnt_defrag;           /* tesing counter for defragmentation times */
   volatile int64_t cnt_shiftrec;         /* tesing counter for record shift times */
   volatile int64_t cnt_trunc;            /* tesing counter for truncation times */
+#ifdef _WIN32
+  volatile HANDLE w32hmap;                /* win32 file mappings for mmap */
+#endif
 } TCHDB;
 
 enum {                                   /* enumeration for additional flags */
@@ -136,19 +139,19 @@ enum {                                   /* enumeration for open modes */
 /* Get the message string corresponding to an error code.
    `ecode' specifies the error code.
    The return value is the message string of the error code. */
-const char *tchdberrmsg(int ecode);
+EJDB_EXPORT const char *tchdberrmsg(int ecode);
 
 
 /* Create a hash database object.
    The return value is the new hash database object. */
-TCHDB *tchdbnew(void);
+EJDB_EXPORT TCHDB *tchdbnew(void);
 
 
 /* Delete a hash database object.
    `hdb' specifies the hash database object.
    If the database is not closed, it is closed implicitly.  Note that the deleted object and its
    derivatives can not be used anymore. */
-void tchdbdel(TCHDB *hdb);
+EJDB_EXPORT void tchdbdel(TCHDB *hdb);
 
 
 /* Get the last happened error code of a hash database object.
@@ -163,7 +166,7 @@ void tchdbdel(TCHDB *hdb);
    for unlink error, `TCERENAME' for rename error, `TCEMKDIR' for mkdir error, `TCERMDIR' for
    rmdir error, `TCEKEEP' for existing record, `TCENOREC' for no record found, and `TCEMISC' for
    miscellaneous error. */
-int tchdbecode(TCHDB *hdb);
+EJDB_EXPORT int tchdbecode(TCHDB *hdb);
 
 
 /* Set mutual exclusion control of a hash database object for threading.
@@ -171,7 +174,7 @@ int tchdbecode(TCHDB *hdb);
    If successful, the return value is true, else, it is false.
    Note that the mutual exclusion control is needed if the object is shared by plural threads and
    this function should be called before the database is opened. */
-bool tchdbsetmutex(TCHDB *hdb);
+EJDB_EXPORT bool tchdbsetmutex(TCHDB *hdb);
 
 
 /* Set the tuning parameters of a hash database object.
@@ -189,7 +192,7 @@ bool tchdbsetmutex(TCHDB *hdb);
    BZIP2 encoding, `HDBTTCBS' specifies that each record is compressed with TCBS encoding.
    If successful, the return value is true, else, it is false.
    Note that the tuning parameters should be set before the database is opened. */
-bool tchdbtune(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
+EJDB_EXPORT bool tchdbtune(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
 
 
 /* Set the caching parameters of a hash database object.
@@ -198,7 +201,7 @@ bool tchdbtune(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts)
    record cache is disabled.  It is disabled by default.
    If successful, the return value is true, else, it is false.
    Note that the caching parameters should be set before the database is opened. */
-bool tchdbsetcache(TCHDB *hdb, int32_t rcnum);
+EJDB_EXPORT bool tchdbsetcache(TCHDB *hdb, int32_t rcnum);
 
 
 /* Set the size of the extra mapped memory of a hash database object.
@@ -207,7 +210,7 @@ bool tchdbsetcache(TCHDB *hdb, int32_t rcnum);
    mapped memory is disabled.  The default size is 67108864.
    If successful, the return value is true, else, it is false.
    Note that the mapping parameters should be set before the database is opened. */
-bool tchdbsetxmsiz(TCHDB *hdb, int64_t xmsiz);
+EJDB_EXPORT bool tchdbsetxmsiz(TCHDB *hdb, int64_t xmsiz);
 
 
 /* Set the unit step number of auto defragmentation of a hash database object.
@@ -216,7 +219,7 @@ bool tchdbsetxmsiz(TCHDB *hdb, int64_t xmsiz);
    is disabled.  It is disabled by default.
    If successful, the return value is true, else, it is false.
    Note that the defragmentation parameters should be set before the database is opened. */
-bool tchdbsetdfunit(TCHDB *hdb, int32_t dfunit);
+EJDB_EXPORT bool tchdbsetdfunit(TCHDB *hdb, int32_t dfunit);
 
 
 /* Open a database file and connect a hash database object.
@@ -230,7 +233,7 @@ bool tchdbsetdfunit(TCHDB *hdb, int32_t dfunit);
    bitwise-or: `HDBONOLCK', which means it opens the database file without file locking, or
    `HDBOLCKNB', which means locking is performed without blocking.
    If successful, the return value is true, else, it is false. */
-bool tchdbopen(TCHDB *hdb, const char *path, int omode);
+EJDB_EXPORT bool tchdbopen(TCHDB *hdb, const char *path, int omode);
 
 
 /* Close a hash database object.
@@ -238,7 +241,7 @@ bool tchdbopen(TCHDB *hdb, const char *path, int omode);
    If successful, the return value is true, else, it is false.
    Update of a database is assured to be written when the database is closed.  If a writer opens
    a database but does not close it appropriately, the database will be broken. */
-bool tchdbclose(TCHDB *hdb);
+EJDB_EXPORT bool tchdbclose(TCHDB *hdb);
 
 
 /* Store a record into a hash database object.
@@ -249,7 +252,7 @@ bool tchdbclose(TCHDB *hdb);
    `vsiz' specifies the size of the region of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tchdbput(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tchdbput(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Store a string record into a hash database object.
@@ -258,7 +261,7 @@ bool tchdbput(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz
    `vstr' specifies the string of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tchdbput2(TCHDB *hdb, const char *kstr, const char *vstr);
+EJDB_EXPORT bool tchdbput2(TCHDB *hdb, const char *kstr, const char *vstr);
 
 
 /* Store a new record into a hash database object.
@@ -269,7 +272,7 @@ bool tchdbput2(TCHDB *hdb, const char *kstr, const char *vstr);
    `vsiz' specifies the size of the region of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tchdbputkeep(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tchdbputkeep(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Store a new string record into a hash database object.
@@ -278,7 +281,7 @@ bool tchdbputkeep(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int 
    `vstr' specifies the string of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tchdbputkeep2(TCHDB *hdb, const char *kstr, const char *vstr);
+EJDB_EXPORT bool tchdbputkeep2(TCHDB *hdb, const char *kstr, const char *vstr);
 
 
 /* Concatenate a value at the end of the existing record in a hash database object.
@@ -289,7 +292,7 @@ bool tchdbputkeep2(TCHDB *hdb, const char *kstr, const char *vstr);
    `vsiz' specifies the size of the region of the value.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tchdbputcat(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tchdbputcat(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Concatenate a string value at the end of the existing record in a hash database object.
@@ -298,7 +301,7 @@ bool tchdbputcat(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int v
    `vstr' specifies the string of the value.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tchdbputcat2(TCHDB *hdb, const char *kstr, const char *vstr);
+EJDB_EXPORT bool tchdbputcat2(TCHDB *hdb, const char *kstr, const char *vstr);
 
 
 /* Store a record into a hash database object in asynchronous fashion.
@@ -310,7 +313,7 @@ bool tchdbputcat2(TCHDB *hdb, const char *kstr, const char *vstr);
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten.  Records passed to
    this function are accumulated into the inner buffer and wrote into the file at a blast. */
-bool tchdbputasync(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tchdbputasync(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Store a string record into a hash database object in asynchronous fashion.
@@ -320,7 +323,7 @@ bool tchdbputasync(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten.  Records passed to
    this function are accumulated into the inner buffer and wrote into the file at a blast. */
-bool tchdbputasync2(TCHDB *hdb, const char *kstr, const char *vstr);
+EJDB_EXPORT bool tchdbputasync2(TCHDB *hdb, const char *kstr, const char *vstr);
 
 
 /* Remove a record of a hash database object.
@@ -328,14 +331,14 @@ bool tchdbputasync2(TCHDB *hdb, const char *kstr, const char *vstr);
    `kbuf' specifies the pointer to the region of the key.
    `ksiz' specifies the size of the region of the key.
    If successful, the return value is true, else, it is false. */
-bool tchdbout(TCHDB *hdb, const void *kbuf, int ksiz);
+EJDB_EXPORT bool tchdbout(TCHDB *hdb, const void *kbuf, int ksiz);
 
 
 /* Remove a string record of a hash database object.
    `hdb' specifies the hash database object connected as a writer.
    `kstr' specifies the string of the key.
    If successful, the return value is true, else, it is false. */
-bool tchdbout2(TCHDB *hdb, const char *kstr);
+EJDB_EXPORT bool tchdbout2(TCHDB *hdb, const char *kstr);
 
 
 /* Retrieve a record in a hash database object.
@@ -350,7 +353,7 @@ bool tchdbout2(TCHDB *hdb, const char *kstr);
    the return value can be treated as a character string.  Because the region of the return
    value is allocated with the `malloc' call, it should be released with the `free' call when
    it is no longer in use. */
-void *tchdbget(TCHDB *hdb, const void *kbuf, int ksiz, int *sp);
+EJDB_EXPORT void *tchdbget(TCHDB *hdb, const void *kbuf, int ksiz, int *sp);
 
 
 /**
@@ -361,7 +364,7 @@ void *tchdbget(TCHDB *hdb, const void *kbuf, int ksiz, int *sp);
  * @param xstr specifies extensible string object data will be stored into.
  * @return
  */
-int tchdbgetintoxstr(TCHDB *hdb, const void *kbuf, int ksiz, TCXSTR *xstr);
+EJDB_EXPORT int tchdbgetintoxstr(TCHDB *hdb, const void *kbuf, int ksiz, TCXSTR *xstr);
 
 
 /* Retrieve a string record in a hash database object.
@@ -371,7 +374,7 @@ int tchdbgetintoxstr(TCHDB *hdb, const void *kbuf, int ksiz, TCXSTR *xstr);
    `NULL' is returned if no record corresponds.
    Because the region of the return value is allocated with the `malloc' call, it should be
    released with the `free' call when it is no longer in use. */
-char *tchdbget2(TCHDB *hdb, const char *kstr);
+EJDB_EXPORT char *tchdbget2(TCHDB *hdb, const char *kstr);
 
 
 /* Retrieve a record in a hash database object and write the value into a buffer.
@@ -385,7 +388,7 @@ char *tchdbget2(TCHDB *hdb, const char *kstr);
    returned if no record corresponds to the specified key.
    Note that an additional zero code is not appended at the end of the region of the writing
    buffer. */
-int tchdbget3(TCHDB *hdb, const void *kbuf, int ksiz, void *vbuf, int max);
+EJDB_EXPORT int tchdbget3(TCHDB *hdb, const void *kbuf, int ksiz, void *vbuf, int max);
 
 
 /* Get the size of the value of a record in a hash database object.
@@ -394,7 +397,7 @@ int tchdbget3(TCHDB *hdb, const void *kbuf, int ksiz, void *vbuf, int max);
    `ksiz' specifies the size of the region of the key.
    If successful, the return value is the size of the value of the corresponding record, else,
    it is -1. */
-int tchdbvsiz(TCHDB *hdb, const void *kbuf, int ksiz);
+EJDB_EXPORT int tchdbvsiz(TCHDB *hdb, const void *kbuf, int ksiz);
 
 
 /* Get the size of the value of a string record in a hash database object.
@@ -402,15 +405,15 @@ int tchdbvsiz(TCHDB *hdb, const void *kbuf, int ksiz);
    `kstr' specifies the string of the key.
    If successful, the return value is the size of the value of the corresponding record, else,
    it is -1. */
-int tchdbvsiz2(TCHDB *hdb, const char *kstr);
+EJDB_EXPORT int tchdbvsiz2(TCHDB *hdb, const char *kstr);
 
 
 /* Initialize the iterator of a hash database object.
    `hdb' specifies the hash database object.
    If successful, the return value is true, else, it is false.
    The iterator is used in order to access the key of every record stored in a database. */
-bool tchdbiterinit(TCHDB *hdb);
-bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter);
+EJDB_EXPORT bool tchdbiterinit(TCHDB *hdb);
+EJDB_EXPORT bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter);
 
 
 /* Get the next key of the iterator of a hash database object.
@@ -427,7 +430,7 @@ bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter);
    However, it is not assured if updating the database is occurred while the iteration.  Besides,
    the order of this traversal access method is arbitrary, so it is not assured that the order of
    storing matches the one of the traversal access. */
-void *tchdbiternext(TCHDB *hdb, int *sp);
+EJDB_EXPORT void *tchdbiternext(TCHDB *hdb, int *sp);
 
 
 /* Get the next key string of the iterator of a hash database object.
@@ -440,7 +443,7 @@ void *tchdbiternext(TCHDB *hdb, int *sp);
    database is occurred while the iteration.  Besides, the order of this traversal access method
    is arbitrary, so it is not assured that the order of storing matches the one of the traversal
    access. */
-char *tchdbiternext2(TCHDB *hdb);
+EJDB_EXPORT char *tchdbiternext2(TCHDB *hdb);
 
 
 /* Get the next extensible objects of the iterator of a hash database object.
@@ -449,8 +452,8 @@ char *tchdbiternext2(TCHDB *hdb);
    `vxstr' specifies the object into which the next value is wrote down.
    If successful, the return value is true, else, it is false.  False is returned when no record
    is to be get out of the iterator. */
-bool tchdbiternext3(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr);
-bool tchdbiternext4(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr);
+EJDB_EXPORT bool tchdbiternext3(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr);
+EJDB_EXPORT bool tchdbiternext4(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr);
 
 
 /* Get forward matching keys in a hash database object.
@@ -464,7 +467,7 @@ bool tchdbiternext4(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr);
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tchdbfwmkeys(TCHDB *hdb, const void *pbuf, int psiz, int max);
+EJDB_EXPORT TCLIST *tchdbfwmkeys(TCHDB *hdb, const void *pbuf, int psiz, int max);
 
 
 /* Get forward matching string keys in a hash database object.
@@ -477,7 +480,7 @@ TCLIST *tchdbfwmkeys(TCHDB *hdb, const void *pbuf, int psiz, int max);
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tchdbfwmkeys2(TCHDB *hdb, const char *pstr, int max);
+EJDB_EXPORT TCLIST *tchdbfwmkeys2(TCHDB *hdb, const char *pstr, int max);
 
 
 /* Add an integer to a record in a hash database object.
@@ -488,7 +491,7 @@ TCLIST *tchdbfwmkeys2(TCHDB *hdb, const char *pstr, int max);
    If successful, the return value is the summation value, else, it is `INT_MIN'.
    If the corresponding record exists, the value is treated as an integer and is added to.  If no
    record corresponds, a new record of the additional value is stored. */
-int tchdbaddint(TCHDB *hdb, const void *kbuf, int ksiz, int num);
+EJDB_EXPORT int tchdbaddint(TCHDB *hdb, const void *kbuf, int ksiz, int num);
 
 
 /* Add a real number to a record in a hash database object.
@@ -499,14 +502,14 @@ int tchdbaddint(TCHDB *hdb, const void *kbuf, int ksiz, int num);
    If successful, the return value is the summation value, else, it is Not-a-Number.
    If the corresponding record exists, the value is treated as a real number and is added to.  If
    no record corresponds, a new record of the additional value is stored. */
-double tchdbadddouble(TCHDB *hdb, const void *kbuf, int ksiz, double num);
+EJDB_EXPORT double tchdbadddouble(TCHDB *hdb, const void *kbuf, int ksiz, double num);
 
 
 /* Synchronize updated contents of a hash database object with the file and the device.
    `hdb' specifies the hash database object connected as a writer.
    If successful, the return value is true, else, it is false.
    This function is useful when another process connects to the same database file. */
-bool tchdbsync(TCHDB *hdb);
+EJDB_EXPORT bool tchdbsync(TCHDB *hdb);
 
 
 /* Optimize the file of a hash database object.
@@ -525,13 +528,13 @@ bool tchdbsync(TCHDB *hdb);
    If successful, the return value is true, else, it is false.
    This function is useful to reduce the size of the database file with data fragmentation by
    successive updating. */
-bool tchdboptimize(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
+EJDB_EXPORT bool tchdboptimize(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
 
 
 /* Remove all records of a hash database object.
    `hdb' specifies the hash database object connected as a writer.
    If successful, the return value is true, else, it is false. */
-bool tchdbvanish(TCHDB *hdb);
+EJDB_EXPORT bool tchdbvanish(TCHDB *hdb);
 
 
 /* Copy the database file of a hash database object.
@@ -543,7 +546,7 @@ bool tchdbvanish(TCHDB *hdb);
    The database file is assured to be kept synchronized and not modified while the copying or
    executing operation is in progress.  So, this function is useful to create a backup file of
    the database file. */
-bool tchdbcopy(TCHDB *hdb, const char *path);
+EJDB_EXPORT bool tchdbcopy(TCHDB *hdb, const char *path);
 
 
 /* Begin the transaction of a hash database object.
@@ -554,14 +557,14 @@ bool tchdbcopy(TCHDB *hdb, const char *path);
    assumed if every database operation is performed in the transaction.  All updated regions are
    kept track of by write ahead logging while the transaction.  If the database is closed during
    transaction, the transaction is aborted implicitly. */
-bool tchdbtranbegin(TCHDB *hdb);
+EJDB_EXPORT bool tchdbtranbegin(TCHDB *hdb);
 
 
 /* Commit the transaction of a hash database object.
    `hdb' specifies the hash database object connected as a writer.
    If successful, the return value is true, else, it is false.
    Update in the transaction is fixed when it is committed successfully. */
-bool tchdbtrancommit(TCHDB *hdb);
+EJDB_EXPORT bool tchdbtrancommit(TCHDB *hdb);
 
 
 /* Abort the transaction of a hash database object.
@@ -569,28 +572,28 @@ bool tchdbtrancommit(TCHDB *hdb);
    If successful, the return value is true, else, it is false.
    Update in the transaction is discarded when it is aborted.  The state of the database is
    rollbacked to before transaction. */
-bool tchdbtranabort(TCHDB *hdb);
+EJDB_EXPORT bool tchdbtranabort(TCHDB *hdb);
 
 
 /* Get the file path of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the path of the database file or `NULL' if the object does not connect to
    any database file. */
-const char *tchdbpath(TCHDB *hdb);
+EJDB_EXPORT const char *tchdbpath(TCHDB *hdb);
 
 
 /* Get the number of records of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the number of records or 0 if the object does not connect to any database
    file. */
-uint64_t tchdbrnum(TCHDB *hdb);
+EJDB_EXPORT uint64_t tchdbrnum(TCHDB *hdb);
 
 
 /* Get the size of the database file of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the size of the database file or 0 if the object does not connect to any
    database file. */
-uint64_t tchdbfsiz(TCHDB *hdb);
+EJDB_EXPORT uint64_t tchdbfsiz(TCHDB *hdb);
 
 
 
@@ -605,31 +608,31 @@ uint64_t tchdbfsiz(TCHDB *hdb);
    `file' specifies the file name of the code.
    `line' specifies the line number of the code.
    `func' specifies the function name of the code. */
-void tchdbsetecode(TCHDB *hdb, int ecode, const char *filename, int line, const char *func);
+EJDB_EXPORT void tchdbsetecode(TCHDB *hdb, int ecode, const char *filename, int line, const char *func);
 
 
 /* Set the type of a hash database object.
    `hdb' specifies the hash database object.
    `type' specifies the database type. */
-void tchdbsettype(TCHDB *hdb, uint8_t type);
+EJDB_EXPORT void tchdbsettype(TCHDB *hdb, uint8_t type);
 
 
 /* Set the file descriptor for debugging output.
    `hdb' specifies the hash database object.
    `fd' specifies the file descriptor for debugging output. */
-void tchdbsetdbgfd(TCHDB *hdb, int fd);
+EJDB_EXPORT void tchdbsetdbgfd(TCHDB *hdb, HANDLE fd);
 
 
 /* Get the file descriptor for debugging output.
    `hdb' specifies the hash database object.
    The return value is the file descriptor for debugging output. */
-int tchdbdbgfd(TCHDB *hdb);
+EJDB_EXPORT HANDLE tchdbdbgfd(TCHDB *hdb);
 
 
 /* Check whether mutual exclusion control is set to a hash database object.
    `hdb' specifies the hash database object.
    If mutual exclusion control is set, it is true, else it is false. */
-bool tchdbhasmutex(TCHDB *hdb);
+EJDB_EXPORT bool tchdbhasmutex(TCHDB *hdb);
 
 
 /* Synchronize updating contents on memory of a hash database object.
@@ -643,80 +646,93 @@ bool tchdbmemsync(TCHDB *hdb, bool phys);
    `hdb' specifies the hash database object.
    The return value is the number of elements of the bucket array or 0 if the object does not
    connect to any database file. */
-uint64_t tchdbbnum(TCHDB *hdb);
+EJDB_EXPORT uint64_t tchdbbnum(TCHDB *hdb);
 
 
 /* Get the record alignment of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the record alignment or 0 if the object does not connect to any database
    file. */
-uint32_t tchdbalign(TCHDB *hdb);
+EJDB_EXPORT uint32_t tchdbalign(TCHDB *hdb);
 
 
 /* Get the maximum number of the free block pool of a a hash database object.
    `hdb' specifies the hash database object.
    The return value is the maximum number of the free block pool or 0 if the object does not
    connect to any database file. */
-uint32_t tchdbfbpmax(TCHDB *hdb);
+EJDB_EXPORT uint32_t tchdbfbpmax(TCHDB *hdb);
 
 
 /* Get the size of the extra mapped memory of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the size of the extra mapped memory or 0 if the object does not connect to
    any database file. */
-uint64_t tchdbxmsiz(TCHDB *hdb);
+EJDB_EXPORT uint64_t tchdbxmsiz(TCHDB *hdb);
 
 
 /* Get the inode number of the database file of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the inode number of the database file or 0 if the object does not connect
    to any database file. */
-uint64_t tchdbinode(TCHDB *hdb);
+EJDB_EXPORT uint64_t tchdbinode(TCHDB *hdb);
 
 
 /* Get the modification time of the database file of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the inode number of the database file or 0 if the object does not connect
    to any database file. */
-time_t tchdbmtime(TCHDB *hdb);
+EJDB_EXPORT time_t tchdbmtime(TCHDB *hdb);
 
 
 /* Get the connection mode of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the connection mode. */
-int tchdbomode(TCHDB *hdb);
+EJDB_EXPORT int tchdbomode(TCHDB *hdb);
 
 
 /* Get the database type of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the database type. */
-uint8_t tchdbtype(TCHDB *hdb);
+EJDB_EXPORT uint8_t tchdbtype(TCHDB *hdb);
 
 
 /* Get the additional flags of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the additional flags. */
-uint8_t tchdbflags(TCHDB *hdb);
+EJDB_EXPORT uint8_t tchdbflags(TCHDB *hdb);
 
 
 /* Get the options of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the options. */
-uint8_t tchdbopts(TCHDB *hdb);
+EJDB_EXPORT uint8_t tchdbopts(TCHDB *hdb);
 
 
-/* Get the pointer to the opaque field of a hash database object.
-   `hdb' specifies the hash database object.
-   The return value is the pointer to the opaque field whose size is 128 bytes. */
-char *tchdbopaque(TCHDB *hdb);
+/**
+ * Get opaque data into specified buffer `dst`
+ * `bsiz` Max size to be read.
+ *  Return -1 if error, otherwise number of bytes writen in dst.
+ */
+int tchdbreadopaque(TCHDB *hdb, void *dst, int off, int bsiz);
 
+/**
+ * Write opaque data.
+ * Number of bytes specified bt `nb`
+ * can be truncated if it greater than max opaque data size.
+ * Return -1 if error, otherwise number of bytes read from src.
+ */
+int tchdbwriteopaque(TCHDB *hdb, const void *src, int off, int nb);
+
+/**
+ * Copy opaque data between databases
+ */
+bool tchdbcopyopaque(TCHDB *dst, TCHDB *src, int off, int nb);
 
 /* Get the number of used elements of the bucket array of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the number of used elements of the bucket array or 0 if the object does
    not connect to any database file. */
-uint64_t tchdbbnumused(TCHDB *hdb);
-
+EJDB_EXPORT uint64_t tchdbbnumused(TCHDB *hdb);
 
 /* Set the custom codec functions of a hash database object.
    `hdb' specifies the hash database object.
@@ -734,7 +750,7 @@ uint64_t tchdbbnumused(TCHDB *hdb);
    If successful, the return value is true, else, it is false.
    Note that the custom codec functions should be set before the database is opened and should be
    set every time the database is being opened. */
-bool tchdbsetcodecfunc(TCHDB *hdb, TCCODEC enc, void *encop, TCCODEC dec, void *decop);
+EJDB_EXPORT bool tchdbsetcodecfunc(TCHDB *hdb, TCCODEC enc, void *encop, TCCODEC dec, void *decop);
 
 
 /* Get the custom codec functions of a hash database object.
@@ -747,13 +763,13 @@ bool tchdbsetcodecfunc(TCHDB *hdb, TCCODEC enc, void *encop, TCCODEC dec, void *
    function is assigned
    `dop' specifies the pointer to a variable into which the arbitrary pointer to be given to the
    decoding function is assigned. */
-void tchdbcodecfunc(TCHDB *hdb, TCCODEC *ep, void **eop, TCCODEC *dp, void **dop);
+EJDB_EXPORT void tchdbcodecfunc(TCHDB *hdb, TCCODEC *ep, void **eop, TCCODEC *dp, void **dop);
 
 
 /* Get the unit step number of auto defragmentation of a hash database object.
    `hdb' specifies the hash database object.
    The return value is the unit step number of auto defragmentation. */
-uint32_t tchdbdfunit(TCHDB *hdb);
+EJDB_EXPORT uint32_t tchdbdfunit(TCHDB *hdb);
 
 
 /* Perform dynamic defragmentation of a hash database object.
@@ -761,13 +777,13 @@ uint32_t tchdbdfunit(TCHDB *hdb);
    `step' specifie the number of steps.  If it is not more than 0, the whole file is defragmented
    gradually without keeping a continuous lock.
    If successful, the return value is true, else, it is false. */
-bool tchdbdefrag(TCHDB *hdb, int64_t step);
+EJDB_EXPORT bool tchdbdefrag(TCHDB *hdb, int64_t step);
 
 
 /* Clear the cache of a hash tree database object.
    `hdb' specifies the hash tree database object.
    If successful, the return value is true, else, it is false. */
-bool tchdbcacheclear(TCHDB *hdb);
+EJDB_EXPORT bool tchdbcacheclear(TCHDB *hdb);
 
 
 /* Store a record into a hash database object with a duplication handler.
@@ -789,7 +805,7 @@ bool tchdbcacheclear(TCHDB *hdb);
    If successful, the return value is true, else, it is false.
    Note that the callback function can not perform any database operation because the function
    is called in the critical section guarded by the same locks of database operations. */
-bool tchdbputproc(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
+EJDB_EXPORT bool tchdbputproc(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
                   TCPDPROC proc, void *op);
 
 
@@ -806,7 +822,7 @@ bool tchdbputproc(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int 
    the return value can be treated as a character string.  Because the region of the return
    value is allocated with the `malloc' call, it should be released with the `free' call when
    it is no longer in use. */
-void *tchdbgetnext(TCHDB *hdb, const void *kbuf, int ksiz, int *sp);
+EJDB_EXPORT void *tchdbgetnext(TCHDB *hdb, const void *kbuf, int ksiz, int *sp);
 
 
 /* Retrieve the next string record in a hash database object.
@@ -816,7 +832,7 @@ void *tchdbgetnext(TCHDB *hdb, const void *kbuf, int ksiz, int *sp);
    returned if no record corresponds.
    Because the region of the return value is allocated with the `malloc' call, it should be
    released with the `free' call when it is no longer in use. */
-char *tchdbgetnext2(TCHDB *hdb, const char *kstr);
+EJDB_EXPORT char *tchdbgetnext2(TCHDB *hdb, const char *kstr);
 
 
 /* Retrieve the key and the value of the next record of a record in a hash database object.
@@ -832,7 +848,7 @@ char *tchdbgetnext2(TCHDB *hdb, const char *kstr);
    Because the region of the return value is allocated with the `malloc' call, it should be
    released with the `free' call when it is no longer in use.  The retion pointed to by `vbp'
    should not be released. */
-char *tchdbgetnext3(TCHDB *hdb, const char *kbuf, int ksiz, int *sp, const char **vbp, int *vsp);
+EJDB_EXPORT char *tchdbgetnext3(TCHDB *hdb, const char *kbuf, int ksiz, int *sp, const char **vbp, int *vsp);
 
 
 /* Move the iterator to the record corresponding a key of a hash database object.
@@ -841,7 +857,7 @@ char *tchdbgetnext3(TCHDB *hdb, const char *kbuf, int ksiz, int *sp, const char 
    `ksiz' specifies the size of the region of the key.
    If successful, the return value is true, else, it is false.  False is returned if there is
    no record corresponding the condition. */
-bool tchdbiterinit2(TCHDB *hdb, const void *kbuf, int ksiz);
+EJDB_EXPORT bool tchdbiterinit2(TCHDB *hdb, const void *kbuf, int ksiz);
 
 
 /* Move the iterator to the record corresponding a key string of a hash database object.
@@ -849,7 +865,7 @@ bool tchdbiterinit2(TCHDB *hdb, const void *kbuf, int ksiz);
    `kstr' specifies the string of the key.
    If successful, the return value is true, else, it is false.  False is returned if there is
    no record corresponding the condition. */
-bool tchdbiterinit3(TCHDB *hdb, const char *kstr);
+EJDB_EXPORT bool tchdbiterinit3(TCHDB *hdb, const char *kstr);
 
 
 /* Process each record atomically of a hash database object.
@@ -865,14 +881,14 @@ bool tchdbiterinit3(TCHDB *hdb, const char *kstr);
    If successful, the return value is true, else, it is false.
    Note that the callback function can not perform any database operation because the function
    is called in the critical section guarded by the same locks of database operations. */
-bool tchdbforeach(TCHDB *hdb, TCITER iter, void *op);
+EJDB_EXPORT bool tchdbforeach(TCHDB *hdb, TCITER iter, void *op);
 
 
 /* Void the transaction of a hash database object.
    `hdb' specifies the hash database object connected as a writer.
    If successful, the return value is true, else, it is false.
    This function should be called only when no update in the transaction. */
-bool tchdbtranvoid(TCHDB *hdb);
+EJDB_EXPORT bool tchdbtranvoid(TCHDB *hdb);
 
 
 

@@ -24,7 +24,7 @@
 /* global variables */
 const char *g_progname;                  // program name
 unsigned int g_randseed;                 // random seed
-int g_dbgfd;                             // debugging output
+HANDLE g_dbgfd;                          // debugging output
 
 
 /* function prototypes */
@@ -64,7 +64,14 @@ int main(int argc, char **argv){
   g_randseed = ebuf ? tcatoix(ebuf) : tctime() * 1000;
   srand(g_randseed);
   ebuf = getenv("TCDBGFD");
-  g_dbgfd = ebuf ? tcatoix(ebuf) : UINT16_MAX;
+  if (ebuf) {
+	  int debugfd = tcatoix(ebuf);
+#ifdef _WIN32
+	  g_dbgfd = (HANDLE) _get_osfhandle(debugfd);
+#else
+	  g_dbgfd = debugfd;
+#endif
+  }
   if(argc < 2) usage();
   int rv = 0;
   if(!strcmp(argv[1], "write")){
@@ -592,7 +599,7 @@ static int procwrite(const char *path, int rnum, int bnum, int apow, int fpow,
   bool err = false;
   double stime = tctime();
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(mt && !tctdbsetmutex(tdb)){
     eprint(tdb, __LINE__, "tctdbsetmutex");
     err = true;
@@ -686,8 +693,8 @@ static int procwrite(const char *path, int rnum, int bnum, int apow, int fpow,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tctdbrnum(tdb));
-  iprintf("size: %llu\n", (unsigned long long)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tctdbrnum(tdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -709,7 +716,7 @@ static int procread(const char *path, bool mt, int rcnum, int lcnum, int ncnum,
   bool err = false;
   double stime = tctime();
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(mt && !tctdbsetmutex(tdb)){
     eprint(tdb, __LINE__, "tctdbsetmutex");
     err = true;
@@ -751,8 +758,8 @@ static int procread(const char *path, bool mt, int rcnum, int lcnum, int ncnum,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tctdbrnum(tdb));
-  iprintf("size: %llu\n", (unsigned long long)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tctdbrnum(tdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -774,7 +781,7 @@ static int procremove(const char *path, bool mt, int rcnum, int lcnum, int ncnum
   bool err = false;
   double stime = tctime();
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(mt && !tctdbsetmutex(tdb)){
     eprint(tdb, __LINE__, "tctdbsetmutex");
     err = true;
@@ -813,8 +820,8 @@ static int procremove(const char *path, bool mt, int rcnum, int lcnum, int ncnum
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tctdbrnum(tdb));
-  iprintf("size: %llu\n", (unsigned long long)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tctdbrnum(tdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -841,7 +848,7 @@ static int procrcat(const char *path, int rnum, int bnum, int apow, int fpow,
   bool err = false;
   double stime = tctime();
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(mt && !tctdbsetmutex(tdb)){
     eprint(tdb, __LINE__, "tctdbsetmutex");
     err = true;
@@ -1021,8 +1028,8 @@ static int procrcat(const char *path, int rnum, int bnum, int apow, int fpow,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tctdbrnum(tdb));
-  iprintf("size: %llu\n", (unsigned long long)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tctdbrnum(tdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -1042,7 +1049,7 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
   bool err = false;
   double stime = tctime();
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(mt && !tctdbsetmutex(tdb)){
     eprint(tdb, __LINE__, "tctdbsetmutex");
     err = true;
@@ -1099,7 +1106,7 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(tdb, __LINE__, "tctdbsetindex");
     err = true;
   }
-  if(TCUSEPTHREAD){
+  if(1){
     TCTDB *tdbdup = tctdbnew();
     if(tctdbopen(tdbdup, path, TDBOREADER)){
       eprint(tdb, __LINE__, "(validation)");
@@ -1630,8 +1637,8 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(tdb, __LINE__, "tctdbforeach");
     err = true;
   }
-  iprintf("record number: %llu\n", (unsigned long long)tctdbrnum(tdb));
-  iprintf("size: %llu\n", (unsigned long long)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tctdbrnum(tdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -1651,7 +1658,7 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode){
   bool err = false;
   double stime = tctime();
   TCTDB *tdb = tctdbnew();
-  if(g_dbgfd >= 0) tctdbsetdbgfd(tdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tctdbsetdbgfd(tdb, g_dbgfd);
   if(mt && !tctdbsetmutex(tdb)){
     eprint(tdb, __LINE__, "tctdbsetmutex");
     err = true;
@@ -2044,8 +2051,8 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(tdb, __LINE__, "tctdbsync");
     err = true;
   }
-  iprintf("record number: %llu\n", (unsigned long long)tctdbrnum(tdb));
-  iprintf("size: %llu\n", (unsigned long long)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tctdbrnum(tdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");

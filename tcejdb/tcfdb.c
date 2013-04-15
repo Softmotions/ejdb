@@ -144,7 +144,7 @@ TCFDB *tcfdbnew(void){
 /* Delete a fixed-length database object. */
 void tcfdbdel(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd >= 0) tcfdbclose(fdb);
+  if(!INVALIDHANDLE(fdb->fd)) tcfdbclose(fdb);
   if(fdb->mmtx){
     pthread_key_delete(*(pthread_key_t *)fdb->eckey);
     pthread_mutex_destroy(fdb->wmtx);
@@ -176,8 +176,7 @@ int tcfdbecode(TCFDB *fdb){
 /* Set mutual exclusion control of a fixed-length database object for threading. */
 bool tcfdbsetmutex(TCFDB *fdb){
   assert(fdb);
-  if(!TCUSEPTHREAD) return true;
-  if(fdb->mmtx || fdb->fd >= 0){
+  if(fdb->mmtx || !INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return false;
   }
@@ -218,7 +217,7 @@ bool tcfdbsetmutex(TCFDB *fdb){
 /* Set the tuning parameters of a fixed-length database object. */
 bool tcfdbtune(TCFDB *fdb, int32_t width, int64_t limsiz){
   assert(fdb);
-  if(fdb->fd >= 0){
+  if(!INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return false;
   }
@@ -235,7 +234,7 @@ bool tcfdbtune(TCFDB *fdb, int32_t width, int64_t limsiz){
 bool tcfdbopen(TCFDB *fdb, const char *path, int omode){
   assert(fdb && path);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd >= 0){
+  if(!INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -274,7 +273,7 @@ bool tcfdbopen(TCFDB *fdb, const char *path, int omode){
 bool tcfdbclose(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -292,7 +291,7 @@ bool tcfdbclose(TCFDB *fdb){
 bool tcfdbput(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz){
   assert(fdb && vbuf && vsiz >= 0);
   if(!FDBLOCKMETHOD(fdb, id < 1)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER)){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -340,7 +339,7 @@ bool tcfdbput3(TCFDB *fdb, const char *kstr, const void *vstr){
 bool tcfdbputkeep(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz){
   assert(fdb && vbuf && vsiz >= 0);
   if(!FDBLOCKMETHOD(fdb, id < 1)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER)){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -388,7 +387,7 @@ bool tcfdbputkeep3(TCFDB *fdb, const char *kstr, const void *vstr){
 bool tcfdbputcat(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz){
   assert(fdb && vbuf && vsiz >= 0);
   if(!FDBLOCKMETHOD(fdb, id < 1)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER)){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -436,7 +435,7 @@ bool tcfdbputcat3(TCFDB *fdb, const char *kstr, const void *vstr){
 bool tcfdbout(TCFDB *fdb, int64_t id){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER)){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -480,7 +479,7 @@ bool tcfdbout3(TCFDB *fdb, const char *kstr){
 void *tcfdbget(TCFDB *fdb, int64_t id, int *sp){
   assert(fdb && sp);
   if(!FDBLOCKMETHOD(fdb, false)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -526,7 +525,7 @@ char *tcfdbget3(TCFDB *fdb, const char *kstr){
 int tcfdbget4(TCFDB *fdb, int64_t id, void *vbuf, int max){
   assert(fdb && vbuf && max >= 0);
   if(!FDBLOCKMETHOD(fdb, false)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -563,7 +562,7 @@ int tcfdbget4(TCFDB *fdb, int64_t id, void *vbuf, int max){
 int tcfdbvsiz(TCFDB *fdb, int64_t id){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, false)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -609,7 +608,7 @@ int tcfdbvsiz3(TCFDB *fdb, const char *kstr){
 bool tcfdbiterinit(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -624,7 +623,7 @@ bool tcfdbiterinit(TCFDB *fdb){
 uint64_t tcfdbiternext(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -641,7 +640,7 @@ void *tcfdbiternext2(TCFDB *fdb, int *sp){
   uint64_t id = tcfdbiternextimpl(fdb);
   if(id < 1) return NULL;
   char kbuf[TCNUMBUFSIZ];
-  int ksiz = sprintf(kbuf, "%llu", (unsigned long long)id);
+  int ksiz = sprintf(kbuf, "%" PRIuMAX "", (unsigned long long)id);
   *sp = ksiz;
   return tcmemdup(kbuf, ksiz);
 }
@@ -659,7 +658,7 @@ char *tcfdbiternext3(TCFDB *fdb){
 uint64_t *tcfdbrange(TCFDB *fdb, int64_t lower, int64_t upper, int max, int *np){
   assert(fdb && np);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     *np = 0;
@@ -687,7 +686,7 @@ TCLIST *tcfdbrange2(TCFDB *fdb, const void *lbuf, int lsiz, const void *ubuf, in
   TCLIST *keys = tclistnew2(num);
   for(int i = 0; i < num; i++){
     char kbuf[TCNUMBUFSIZ];
-    int ksiz = sprintf(kbuf, "%llu", (unsigned long long)ids[i]);
+    int ksiz = sprintf(kbuf, "%" PRIuMAX "", (unsigned long long)ids[i]);
     TCLISTPUSH(keys, kbuf, ksiz);
   }
   TCFREE(ids);
@@ -769,7 +768,7 @@ TCLIST *tcfdbrange4(TCFDB *fdb, const void *ibuf, int isiz, int max){
   TCLIST *keys = tclistnew2(num);
   for(int i = 0; i < num; i++){
     char kbuf[TCNUMBUFSIZ];
-    int ksiz = sprintf(kbuf, "%llu", (unsigned long long)ids[i]);
+    int ksiz = sprintf(kbuf, "%" PRIuMAX "", (unsigned long long)ids[i]);
     TCLISTPUSH(keys, kbuf, ksiz);
   }
   TCFREE(ids);
@@ -788,7 +787,7 @@ TCLIST *tcfdbrange5(TCFDB *fdb, const void *istr, int max){
 int tcfdbaddint(TCFDB *fdb, int64_t id, int num){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, id < 1)) return INT_MIN;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER)){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return INT_MIN;
@@ -822,7 +821,7 @@ int tcfdbaddint(TCFDB *fdb, int64_t id, int num){
 double tcfdbadddouble(TCFDB *fdb, int64_t id, double num){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, id < 1)) return nan("");
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER)){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return nan("");
@@ -856,7 +855,7 @@ double tcfdbadddouble(TCFDB *fdb, int64_t id, double num){
 bool tcfdbsync(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER) || fdb->tran){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER) || fdb->tran){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -871,7 +870,7 @@ bool tcfdbsync(TCFDB *fdb){
 bool tcfdboptimize(TCFDB *fdb, int32_t width, int64_t limsiz){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER) || fdb->tran){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER) || fdb->tran){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -887,7 +886,7 @@ bool tcfdboptimize(TCFDB *fdb, int32_t width, int64_t limsiz){
 bool tcfdbvanish(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER) || fdb->tran){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER) || fdb->tran){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -903,7 +902,7 @@ bool tcfdbvanish(TCFDB *fdb){
 bool tcfdbcopy(TCFDB *fdb, const char *path){
   assert(fdb && path);
   if(!FDBLOCKMETHOD(fdb, false)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -923,9 +922,9 @@ bool tcfdbcopy(TCFDB *fdb, const char *path){
 /* Begin the transaction of a fixed-length database object. */
 bool tcfdbtranbegin(TCFDB *fdb){
   assert(fdb);
-  for(double wsec = 1.0 / sysconf(_SC_CLK_TCK); true; wsec *= 2){
+  for(double wsec = 1.0 / sysconf_SC_CLK_TCK; true; wsec *= 2){
     if(!FDBLOCKMETHOD(fdb, true)) return false;
-    if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER) || fdb->fatal){
+    if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER) || fdb->fatal){
       tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
       FDBUNLOCKMETHOD(fdb);
       return false;
@@ -939,22 +938,21 @@ bool tcfdbtranbegin(TCFDB *fdb){
     FDBUNLOCKMETHOD(fdb);
     return false;
   }
-  if((fdb->omode & FDBOTSYNC) && fsync(fdb->fd) == -1){
+  if((fdb->omode & FDBOTSYNC) && fsync(fdb->fd)){
     tcfdbsetecode(fdb, TCESYNC, __FILE__, __LINE__, __func__);
     return false;
   }
-  if(fdb->walfd < 0){
+  if(INVALIDHANDLE(fdb->walfd)){
     char *tpath = tcsprintf("%s%c%s", fdb->path, MYEXTCHR, FDBWALSUFFIX);
-    int walfd = open(tpath, O_RDWR | O_CREAT | O_TRUNC, FDBFILEMODE);
+    HANDLE walfd;
+#ifndef _WIN32
+    walfd = open(tpath, O_RDWR | O_CREAT | O_TRUNC, FDBFILEMODE);
+#else
+    walfd = CreateFile(tpath, (GENERIC_READ | GENERIC_WRITE), FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
     TCFREE(tpath);
-    if(walfd < 0){
-      int ecode = TCEOPEN;
-      switch(errno){
-        case EACCES: ecode = TCENOPERM; break;
-        case ENOENT: ecode = TCENOFILE; break;
-        case ENOTDIR: ecode = TCENOFILE; break;
-      }
-      tcfdbsetecode(fdb, ecode, __FILE__, __LINE__, __func__);
+    if(INVALIDHANDLE(walfd)){
+      tcfdbsetecode(fdb, tcfilerrno2tcerr(TCEOPEN), __FILE__, __LINE__, __func__);
       FDBUNLOCKMETHOD(fdb);
       return false;
     }
@@ -977,14 +975,14 @@ bool tcfdbtranbegin(TCFDB *fdb){
 bool tcfdbtrancommit(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER) || fdb->fatal || !fdb->tran){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER) || fdb->fatal || !fdb->tran){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
   }
   bool err = false;
   if(!tcfdbmemsync(fdb, fdb->omode & FDBOTSYNC)) err = true;
-  if(!err && ftruncate(fdb->walfd, 0) == -1){
+  if(!err && !tcftruncate(fdb->walfd, 0)){
     tcfdbsetecode(fdb, TCETRUNC, __FILE__, __LINE__, __func__);
     err = true;
   }
@@ -998,7 +996,7 @@ bool tcfdbtrancommit(TCFDB *fdb){
 bool tcfdbtranabort(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER) || !fdb->tran){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER) || !fdb->tran){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -1007,7 +1005,7 @@ bool tcfdbtranabort(TCFDB *fdb){
   if(!tcfdbmemsync(fdb, false)) err = true;
   if(!tcfdbwalrestore(fdb, fdb->path)) err = true;
   char hbuf[FDBHEADSIZ];
-  if(lseek(fdb->fd, 0, SEEK_SET) == -1){
+  if(!tcfseek(fdb->fd, 0, TCFSTART)){
     tcfdbsetecode(fdb, TCESEEK, __FILE__, __LINE__, __func__);
     err = false;
   } else if(!tcread(fdb->fd, hbuf, FDBHEADSIZ)){
@@ -1026,7 +1024,7 @@ bool tcfdbtranabort(TCFDB *fdb){
 const char *tcfdbpath(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, false)) return NULL;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return NULL;
@@ -1041,7 +1039,7 @@ const char *tcfdbpath(TCFDB *fdb){
 uint64_t tcfdbrnum(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, false)) return 0;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return 0;
@@ -1056,7 +1054,7 @@ uint64_t tcfdbrnum(TCFDB *fdb){
 uint64_t tcfdbfsiz(TCFDB *fdb){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, false)) return 0;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return 0;
@@ -1076,35 +1074,91 @@ uint64_t tcfdbfsiz(TCFDB *fdb){
 /* Set the error code of a fixed-length database object. */
 void tcfdbsetecode(TCFDB *fdb, int ecode, const char *filename, int line, const char *func){
   assert(fdb && filename && line >= 1 && func);
-  int myerrno = errno;
-  if(!fdb->fatal){
-    fdb->ecode = ecode;
-    if(fdb->mmtx) pthread_setspecific(*(pthread_key_t *)fdb->eckey, (void *)(intptr_t)ecode);
+  if(!fdb->fatal) {
+      if (fdb->eckey) {
+          pthread_setspecific(*(pthread_key_t *)fdb->eckey, (void *)(intptr_t)ecode);
+      }
+      fdb->ecode = ecode;
   }
-  if(ecode != TCEINVALID && ecode != TCEKEEP && ecode != TCENOREC){
-    fdb->fatal = true;
-    if(fdb->fd >= 0 && (fdb->omode & FDBOWRITER)) tcfdbsetflag(fdb, FDBFFATAL, true);
+  switch (ecode) { //Fatal errors
+        case TCETHREAD:
+        case TCENOFILE:
+        case TCENOPERM:
+        case TCEMETA:
+        case TCERHEAD:
+        case TCEOPEN:
+        case TCECLOSE:
+        case TCETRUNC:
+        case TCESYNC:
+        case TCESTAT:
+        case TCESEEK:
+        case TCEREAD:
+        case TCEWRITE:
+        case TCEMMAP:
+        case TCELOCK:
+        case TCEUNLINK:
+        case TCERENAME:
+        case TCEMKDIR:
+        case TCERMDIR:
+        {
+            fdb->fatal = true;
+            if (!INVALIDHANDLE(fdb->fd) && (fdb->omode & FDBOWRITER)) tcfdbsetflag(fdb, FDBFFATAL, true);
+            break;
+        }
+        case TCESUCCESS:
+        case TCENOREC:
+        case TCEKEEP:
+          return;
+          break;
+        default:
+          break;
   }
-  if(fdb->dbgfd >= 0 && (fdb->dbgfd != UINT16_MAX || fdb->fatal)){
-    int dbgfd = (fdb->dbgfd == UINT16_MAX) ? 1 : fdb->dbgfd;
+#ifdef _WIN32
+  DWORD winerrno = GetLastError();
+#endif
+  int stderrno = errno;
+  if(!INVALIDHANDLE(fdb->dbgfd) || fdb->fatal) {
+    HANDLE dbgfd = INVALIDHANDLE(fdb->dbgfd) ? GET_STDERR_HANDLE() : (fdb->dbgfd);
     char obuf[FDBIOBUFSIZ];
-    int osiz = sprintf(obuf, "ERROR:%s:%d:%s:%s:%d:%s:%d:%s\n", filename, line, func,
-                       fdb->path ? fdb->path : "-", ecode, tcfdberrmsg(ecode),
-                       myerrno, strerror(myerrno));
+#ifdef _WIN32
+    LPTSTR errorText = NULL;
+    if (winerrno > 0) {
+        DWORD ret = FormatMessage(
+            FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL, winerrno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &errorText, 0, NULL);
+        if (!ret) {
+            if (errorText) LocalFree(errorText);
+            errorText = NULL;
+        }
+    }
+    int osiz = sprintf(obuf, "ERROR:%s:%d:%s:%s:%d:%s:%d:%s:%d:%s\n",
+                       filename, line,
+                       func, (fdb->path ? fdb->path : "-"),
+                       ecode, tcfdberrmsg(ecode),
+                       winerrno, (errorText ? errorText : "-"),
+                       stderrno, (stderrno > 0 ? strerror(stderrno) : "-"));
+    if (errorText) LocalFree(errorText);
+#else
+    int osiz = sprintf(obuf, "ERROR:%s:%d:%s:%s:%d:%s:%d:%s\n",
+                       filename, line,
+                       func, (fdb->path ? fdb->path : "-"),
+                       ecode, tcfdberrmsg(ecode),
+                       stderrno, strerror(stderrno));
+#endif
     tcwrite(dbgfd, obuf, osiz);
   }
 }
 
 
 /* Set the file descriptor for debugging output. */
-void tcfdbsetdbgfd(TCFDB *fdb, int fd){
-  assert(fdb && fd >= 0);
+void tcfdbsetdbgfd(TCFDB *fdb, HANDLE fd){
+  assert(fdb);
   fdb->dbgfd = fd;
 }
 
 
 /* Get the file descriptor for debugging output. */
-int tcfdbdbgfd(TCFDB *fdb){
+HANDLE tcfdbdbgfd(TCFDB *fdb){
   assert(fdb);
   return fdb->dbgfd;
 }
@@ -1120,7 +1174,7 @@ bool tcfdbhasmutex(TCFDB *fdb){
 /* Synchronize updating contents on memory of a fixed-length database object. */
 bool tcfdbmemsync(TCFDB *fdb, bool phys){
   assert(fdb);
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER)){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return false;
   }
@@ -1129,13 +1183,18 @@ bool tcfdbmemsync(TCFDB *fdb, bool phys){
   tcfdbdumpmeta(fdb, hbuf);
   memcpy(fdb->map, hbuf, FDBOPAQUEOFF);
   if(phys){
-#ifndef __GNU__
-    if(msync(fdb->map, fdb->limsiz, MS_SYNC) == -1){
+#ifdef _WIN32
+    if(!FlushViewOfFile(fdb->map, fdb->limsiz)){
+      tcfdbsetecode(fdb, TCEMMAP, __FILE__, __LINE__, __func__);
+      err = true;
+    }
+#elif !defined  __GNU__
+    if(msync(fdb->map, fdb->limsiz, MS_SYNC)){
       tcfdbsetecode(fdb, TCEMMAP, __FILE__, __LINE__, __func__);
       err = true;
     }
 #endif
-    if(fsync(fdb->fd) == -1){
+    if(fsync(fdb->fd)){
       tcfdbsetecode(fdb, TCESYNC, __FILE__, __LINE__, __func__);
       err = true;
     }
@@ -1147,7 +1206,7 @@ bool tcfdbmemsync(TCFDB *fdb, bool phys){
 /* Get the minimum ID number of records of a fixed-length database object. */
 uint64_t tcfdbmin(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1158,7 +1217,7 @@ uint64_t tcfdbmin(TCFDB *fdb){
 /* Get the maximum ID number of records of a fixed-length database object. */
 uint64_t tcfdbmax(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1169,7 +1228,7 @@ uint64_t tcfdbmax(TCFDB *fdb){
 /* Get the width of the value of each record of a fixed-length database object. */
 uint32_t tcfdbwidth(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1180,7 +1239,7 @@ uint32_t tcfdbwidth(TCFDB *fdb){
 /* Get the limit file size of a fixed-length database object. */
 uint64_t tcfdblimsiz(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1191,7 +1250,7 @@ uint64_t tcfdblimsiz(TCFDB *fdb){
 /* Get the limit ID number of a fixed-length database object. */
 uint64_t tcfdblimid(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1202,7 +1261,7 @@ uint64_t tcfdblimid(TCFDB *fdb){
 /* Get the inode number of the database file of a fixed-length database object. */
 uint64_t tcfdbinode(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1213,7 +1272,7 @@ uint64_t tcfdbinode(TCFDB *fdb){
 /* Get the modification time of the database file of a fixed-length database object. */
 time_t tcfdbmtime(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1224,7 +1283,7 @@ time_t tcfdbmtime(TCFDB *fdb){
 /* Get the connection mode of a fixed-length database object. */
 int tcfdbomode(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1235,7 +1294,7 @@ int tcfdbomode(TCFDB *fdb){
 /* Get the database type of a fixed-length database object. */
 uint8_t tcfdbtype(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1246,7 +1305,7 @@ uint8_t tcfdbtype(TCFDB *fdb){
 /* Get the additional flags of a fixed-length database object. */
 uint8_t tcfdbflags(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return 0;
   }
@@ -1257,7 +1316,7 @@ uint8_t tcfdbflags(TCFDB *fdb){
 /* Get the pointer to the opaque field of a fixed-length database object. */
 char *tcfdbopaque(TCFDB *fdb){
   assert(fdb);
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return NULL;
   }
@@ -1269,7 +1328,7 @@ char *tcfdbopaque(TCFDB *fdb){
 bool tcfdbputproc(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, TCPDPROC proc, void *op){
   assert(fdb && proc);
   if(!FDBLOCKMETHOD(fdb, id < 1)) return false;
-  if(fdb->fd < 0 || !(fdb->omode & FDBOWRITER)){
+  if(INVALIDHANDLE(fdb->fd) || !(fdb->omode & FDBOWRITER)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -1327,7 +1386,7 @@ bool tcfdbputproc(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, TCPDPROC p
 bool tcfdbiterinit2(TCFDB *fdb, int64_t id){
   assert(fdb);
   if(!FDBLOCKMETHOD(fdb, true)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -1366,7 +1425,7 @@ bool tcfdbiterinit4(TCFDB *fdb, const char *kstr){
 bool tcfdbforeach(TCFDB *fdb, TCITER iter, void *op){
   assert(fdb && iter);
   if(!FDBLOCKMETHOD(fdb, false)) return false;
-  if(fdb->fd < 0){
+  if(INVALIDHANDLE(fdb->fd)){
     tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
     FDBUNLOCKMETHOD(fdb);
     return false;
@@ -1482,7 +1541,7 @@ static void tcfdbclear(TCFDB *fdb){
   fdb->rsiz = 0;
   fdb->limid = 0;
   fdb->path = NULL;
-  fdb->fd = -1;
+  fdb->fd = INVALID_HANDLE_VALUE;
   fdb->omode = 0;
   fdb->rnum = 0;
   fdb->fsiz = 0;
@@ -1496,9 +1555,9 @@ static void tcfdbclear(TCFDB *fdb){
   fdb->inode = 0;
   fdb->mtime = 0;
   fdb->tran = false;
-  fdb->walfd = -1;
+  fdb->walfd = INVALID_HANDLE_VALUE;
   fdb->walend = 0;
-  fdb->dbgfd = -1;
+  fdb->dbgfd = INVALID_HANDLE_VALUE;
   fdb->cnt_writerec = -1;
   fdb->cnt_readrec = -1;
   fdb->cnt_truncfile = -1;
@@ -1529,11 +1588,11 @@ static void tcfdbsetflag(TCFDB *fdb, int flag, bool sign){
    If successful, the return value is true, else, it is false. */
 static bool tcfdbwalinit(TCFDB *fdb){
   assert(fdb);
-  if(lseek(fdb->walfd, 0, SEEK_SET) == -1){
+  if(!tcfseek(fdb->walfd, 0, TCFSTART)){
     tcfdbsetecode(fdb, TCESEEK, __FILE__, __LINE__, __func__);
     return false;
   }
-  if(ftruncate(fdb->walfd, 0) == -1){
+  if(!tcftruncate(fdb->walfd, 0)){
     tcfdbsetecode(fdb, TCETRUNC, __FILE__, __LINE__, __func__);
     return false;
   }
@@ -1582,7 +1641,7 @@ static bool tcfdbwalwrite(TCFDB *fdb, uint64_t off, int64_t size){
     return false;
   }
   if(buf != stack) TCFREE(buf);
-  if((fdb->omode & FDBOTSYNC) && fsync(fdb->walfd) == -1){
+  if((fdb->omode & FDBOTSYNC) && fsync(fdb->walfd)){
     tcfdbsetecode(fdb, TCESYNC, __FILE__, __LINE__, __func__);
     FDBUNLOCKWAL(fdb);
     return false;
@@ -1599,33 +1658,36 @@ static bool tcfdbwalwrite(TCFDB *fdb, uint64_t off, int64_t size){
 static int tcfdbwalrestore(TCFDB *fdb, const char *path){
   assert(fdb && path);
   char *tpath = tcsprintf("%s%c%s", path, MYEXTCHR, FDBWALSUFFIX);
-  int walfd = open(tpath, O_RDONLY, FDBFILEMODE);
+  HANDLE walfd;
+#ifndef _WIN32
+  walfd = open(tpath, O_RDONLY, FDBFILEMODE);
+#else
+  walfd = CreateFile(tpath, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
   TCFREE(tpath);
-  if(walfd < 0) return false;
+  if(INVALIDHANDLE(walfd)) return false;
   bool err = false;
   uint64_t walsiz = 0;
   struct stat sbuf;
-  if(fstat(walfd, &sbuf) == 0){
+  if(!fstat(walfd, &sbuf)){
     walsiz = sbuf.st_size;
   } else {
     tcfdbsetecode(fdb, TCESTAT, __FILE__, __LINE__, __func__);
     err = true;
   }
   if(walsiz >= sizeof(walsiz) + FDBHEADSIZ){
-    int dbfd = fdb->fd;
-    int tfd = -1;
+    HANDLE dbfd = fdb->fd;
+    HANDLE tfd = INVALID_HANDLE_VALUE;
     if(!(fdb->omode & FDBOWRITER)){
+#ifndef _WIN32
       tfd = open(path, O_WRONLY, FDBFILEMODE);
-      if(tfd >= 0){
+#else
+      tfd = CreateFile(path, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
+      if(!INVALIDHANDLE(tfd)){
         dbfd = tfd;
       } else {
-        int ecode = TCEOPEN;
-        switch(errno){
-          case EACCES: ecode = TCENOPERM; break;
-          case ENOENT: ecode = TCENOFILE; break;
-          case ENOTDIR: ecode = TCENOFILE; break;
-        }
-        tcfdbsetecode(fdb, ecode, __FILE__, __LINE__, __func__);
+        tcfdbsetecode(fdb, tcfilerrno2tcerr(TCEOPEN), __FILE__, __LINE__, __func__);
         err = true;
       }
     }
@@ -1675,7 +1737,7 @@ static int tcfdbwalrestore(TCFDB *fdb, const char *path){
       uint64_t off = *(uint64_t *)rec;
       rec += sizeof(off);
       size -= sizeof(off);
-      if(lseek(dbfd, off, SEEK_SET) == -1){
+      if(!tcfseek(dbfd, off, TCFSTART)){
         tcfdbsetecode(fdb, TCESEEK, __FILE__, __LINE__, __func__);
         err = true;
         break;
@@ -1687,22 +1749,22 @@ static int tcfdbwalrestore(TCFDB *fdb, const char *path){
       }
     }
     tclistdel(list);
-    if(ftruncate(dbfd, fsiz) == -1){
+    if(!tcftruncate(dbfd, fsiz)){
       tcfdbsetecode(fdb, TCETRUNC, __FILE__, __LINE__, __func__);
       err = true;
     }
-    if((fdb->omode & FDBOTSYNC) && fsync(dbfd) == -1){
+    if((fdb->omode & FDBOTSYNC) && fsync(dbfd)){
       tcfdbsetecode(fdb, TCESYNC, __FILE__, __LINE__, __func__);
       err = true;
     }
-    if(tfd >= 0 && close(tfd) == -1){
+    if(!INVALIDHANDLE(tfd) && !CLOSEFH(tfd)){
       tcfdbsetecode(fdb, TCECLOSE, __FILE__, __LINE__, __func__);
       err = true;
     }
   } else {
     err = true;
   }
-  if(close(walfd) == -1){
+  if(!CLOSEFH(walfd)){
     tcfdbsetecode(fdb, TCECLOSE, __FILE__, __LINE__, __func__);
     err = true;
   }
@@ -1718,7 +1780,7 @@ static bool tcfdbwalremove(TCFDB *fdb, const char *path){
   assert(fdb && path);
   char *tpath = tcsprintf("%s%c%s", path, MYEXTCHR, FDBWALSUFFIX);
   bool err = false;
-  if(unlink(tpath) == -1 && errno != ENOENT){
+  if(unlink(tpath) && errno != ENOENT){
     tcfdbsetecode(fdb, TCEUNLINK, __FILE__, __LINE__, __func__);
     err = true;
   }
@@ -1734,44 +1796,55 @@ static bool tcfdbwalremove(TCFDB *fdb, const char *path){
    If successful, the return value is true, else, it is false. */
 static bool tcfdbopenimpl(TCFDB *fdb, const char *path, int omode){
   assert(fdb && path);
+  HANDLE fd;
+#ifndef _WIN32
   int mode = O_RDONLY;
   if(omode & FDBOWRITER){
     mode = O_RDWR;
     if(omode & FDBOCREAT) mode |= O_CREAT;
   }
-  int fd = open(path, mode, FDBFILEMODE);
-  if(fd < 0){
-    int ecode = TCEOPEN;
-    switch(errno){
-      case EACCES: ecode = TCENOPERM; break;
-      case ENOENT: ecode = TCENOFILE; break;
-      case ENOTDIR: ecode = TCENOFILE; break;
-    }
-    tcfdbsetecode(fdb, ecode, __FILE__, __LINE__, __func__);
+  fd = open(path, mode, FDBFILEMODE);
+#else
+  DWORD mode, cmode;
+  mode = GENERIC_READ;
+  cmode = OPEN_EXISTING;
+  if(omode & FDBOWRITER) {
+    mode |= GENERIC_WRITE;
+  if(omode & (FDBOTRUNC|FDBOCREAT))
+	cmode = CREATE_ALWAYS;
+  else if(omode & FDBOTRUNC)
+	cmode = TRUNCATE_EXISTING;
+  else if(omode & FDBOCREAT)
+	cmode = CREATE_NEW;
+  }
+  fd = CreateFile(path, mode, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, cmode, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
+  if(INVALIDHANDLE(fd)){
+    tcfdbsetecode(fdb, tcfilerrno2tcerr(TCEOPEN), __FILE__, __LINE__, __func__);
     return false;
   }
   if(!(omode & FDBONOLCK)){
     if(!tclock(fd, omode & FDBOWRITER, omode & FDBOLCKNB)){
       tcfdbsetecode(fdb, TCELOCK, __FILE__, __LINE__, __func__);
-      close(fd);
+      CLOSEFH(fd);
       return false;
     }
   }
   if((omode & FDBOWRITER) && (omode & FDBOTRUNC)){
-    if(ftruncate(fd, 0) == -1){
+    if(!tcftruncate(fd, 0)){
       tcfdbsetecode(fdb, TCETRUNC, __FILE__, __LINE__, __func__);
-      close(fd);
+      CLOSEFH(fd);
       return false;
     }
     if(!tcfdbwalremove(fdb, path)){
-      close(fd);
+      CLOSEFH(fd);
       return false;
     }
   }
   struct stat sbuf;
-  if(fstat(fd, &sbuf) == -1 || !S_ISREG(sbuf.st_mode)){
+  if(fstat(fd, &sbuf) || !S_ISREG(sbuf.st_mode)){
     tcfdbsetecode(fdb, TCESTAT, __FILE__, __LINE__, __func__);
-    close(fd);
+    CLOSEFH(fd);
     return false;
   }
   char hbuf[FDBHEADSIZ];
@@ -1784,37 +1857,37 @@ static bool tcfdbopenimpl(TCFDB *fdb, const char *path, int omode){
     tcfdbdumpmeta(fdb, hbuf);
     if(!tcwrite(fd, hbuf, FDBHEADSIZ)){
       tcfdbsetecode(fdb, TCEWRITE, __FILE__, __LINE__, __func__);
-      close(fd);
+      CLOSEFH(fd);
       return false;
     }
     sbuf.st_size = fdb->fsiz;
   }
-  if(lseek(fd, 0, SEEK_SET) == -1){
+  if(!tcfseek(fd, 0, TCFSTART)){
     tcfdbsetecode(fdb, TCESEEK, __FILE__, __LINE__, __func__);
-    close(fd);
+    CLOSEFH(fd);
     return false;
   }
   if(!tcread(fd, hbuf, FDBHEADSIZ)){
     tcfdbsetecode(fdb, TCEREAD, __FILE__, __LINE__, __func__);
-    close(fd);
+    CLOSEFH(fd);
     return false;
   }
   int type = fdb->type;
   tcfdbloadmeta(fdb, hbuf);
   if((fdb->flags & FDBFOPEN) && tcfdbwalrestore(fdb, path)){
-    if(lseek(fd, 0, SEEK_SET) == -1){
+    if(!tcfseek(fd, 0, TCFSTART)){
       tcfdbsetecode(fdb, TCESEEK, __FILE__, __LINE__, __func__);
-      close(fd);
+      CLOSEFH(fd);
       return false;
     }
     if(!tcread(fd, hbuf, FDBHEADSIZ)){
       tcfdbsetecode(fdb, TCEREAD, __FILE__, __LINE__, __func__);
-      close(fd);
+      CLOSEFH(fd);
       return false;
     }
     tcfdbloadmeta(fdb, hbuf);
     if(!tcfdbwalremove(fdb, path)){
-      close(fd);
+      CLOSEFH(fd);
       return false;
     }
   }
@@ -1823,16 +1896,28 @@ static bool tcfdbopenimpl(TCFDB *fdb, const char *path, int omode){
        fdb->width < 1 || sbuf.st_size < fdb->fsiz || fdb->limsiz < FDBHEADSIZ ||
        fdb->fsiz > fdb->limsiz){
       tcfdbsetecode(fdb, TCEMETA, __FILE__, __LINE__, __func__);
-      close(fd);
+      CLOSEFH(fd);
       return false;
     }
     if(sbuf.st_size > fdb->fsiz) fdb->fsiz = sbuf.st_size;
   }
-  void *map = mmap(0, fdb->limsiz, PROT_READ | ((omode & FDBOWRITER) ? PROT_WRITE : 0),
+#ifndef _WIN32
+  void *map = mmap(0, fdb->limsiz, (PROT_READ | ((omode & FDBOWRITER) ? PROT_WRITE : 0)),
                    MAP_SHARED, fd, 0);
   if(map == MAP_FAILED){
+#else
+  LARGE_INTEGER limit;
+  limit.QuadPart = fdb->limsiz;
+  fdb->fileMapping = CreateFileMapping(fd, NULL,
+                                      ((omode & FDBOWRITER) ? PAGE_READWRITE : PAGE_READONLY),
+                                      limit.HighPart, limit.LowPart, NULL);
+  void *map = MapViewOfFile(fdb->fileMapping,
+                           ((omode & FDBOWRITER) ? FILE_MAP_WRITE : FILE_MAP_READ),
+                           0, 0, 0);
+  if(map == NULL){
+#endif
     tcfdbsetecode(fdb, TCEMMAP, __FILE__, __LINE__, __func__);
-    close(fd);
+    CLOSEFH(fd);
     return false;
   }
   if(fdb->width <= UINT8_MAX){
@@ -1855,7 +1940,7 @@ static bool tcfdbopenimpl(TCFDB *fdb, const char *path, int omode){
   fdb->inode = (uint64_t)sbuf.st_ino;
   fdb->mtime = sbuf.st_mtime;
   fdb->tran = false;
-  fdb->walfd = -1;
+  fdb->walfd = INVALID_HANDLE_VALUE;
   fdb->walend = 0;
   if(fdb->omode & FDBOWRITER) tcfdbsetflag(fdb, FDBFOPEN, true);
   return true;
@@ -1870,7 +1955,12 @@ static bool tcfdbcloseimpl(TCFDB *fdb){
   bool err = false;
   if(fdb->omode & FDBOWRITER) tcfdbsetflag(fdb, FDBFOPEN, false);
   if((fdb->omode & FDBOWRITER) && !tcfdbmemsync(fdb, false)) err = true;
-  if(munmap(fdb->map, fdb->limsiz) == -1){
+#ifndef _WIN32
+  if(munmap(fdb->map, fdb->limsiz)){
+#else
+  if(UnmapViewOfFile(fdb->map) && CloseHandle(fdb->fileMapping));
+  else{
+#endif
     tcfdbsetecode(fdb, TCEMMAP, __FILE__, __LINE__, __func__);
     err = true;
   }
@@ -1878,20 +1968,20 @@ static bool tcfdbcloseimpl(TCFDB *fdb){
     if(!tcfdbwalrestore(fdb, fdb->path)) err = true;
     fdb->tran = false;
   }
-  if(fdb->walfd >= 0){
-    if(close(fdb->walfd) == -1){
+  if(!INVALIDHANDLE(fdb->walfd)){
+    if(!CLOSEFH(fdb->walfd)){
       tcfdbsetecode(fdb, TCECLOSE, __FILE__, __LINE__, __func__);
       err = true;
     }
     if(!fdb->fatal && !tcfdbwalremove(fdb, fdb->path)) err = true;
   }
-  if(close(fdb->fd) == -1){
+  if(!CLOSEFH(fdb->fd)){
     tcfdbsetecode(fdb, TCECLOSE, __FILE__, __LINE__, __func__);
     err = true;
   }
   TCFREE(fdb->path);
   fdb->path = NULL;
-  fdb->fd = -1;
+  fdb->fd = INVALID_HANDLE_VALUE;
   return !err;
 }
 
@@ -1994,7 +2084,7 @@ static bool tcfdbputimpl(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, int
         return false;
       }
       if(nsiz + fdb->rsiz * FDBTRUNCALW < fdb->limsiz) nsiz += fdb->rsiz * FDBTRUNCALW;
-      if(ftruncate(fdb->fd, nsiz) == -1){
+      if(!tcftruncate(fdb->fd, nsiz)){
         tcfdbsetecode(fdb, TCETRUNC, __FILE__, __LINE__, __func__);
         FDBUNLOCKATTR(fdb);
         return false;
@@ -2387,7 +2477,9 @@ static uint64_t *tcfdbrangeimpl(TCFDB *fdb, int64_t lower, int64_t upper, int ma
    If successful, the return value is true, else, it is false. */
 static bool tcfdboptimizeimpl(TCFDB *fdb, int32_t width, int64_t limsiz){
   assert(fdb);
-  char *tpath = tcsprintf("%s%ctmp%c%llu", fdb->path, MYEXTCHR, MYEXTCHR, fdb->inode);
+  char *tpath = tcsprintf("%s%ctmp%c%" PRIuMAX "", fdb->path, MYEXTCHR, MYEXTCHR, fdb->inode);
+  char *opath;
+  int omode = (fdb->omode & ~FDBOCREAT) & ~FDBOTRUNC;
   TCFDB *tfdb = tcfdbnew();
   tfdb->dbgfd = fdb->dbgfd;
   if(width < 1) width = fdb->width;
@@ -2414,24 +2506,27 @@ static bool tcfdboptimizeimpl(TCFDB *fdb, int32_t width, int64_t limsiz){
     err = true;
   }
   tcfdbdel(tfdb);
-  if(unlink(fdb->path) == -1){
+  opath = tcstrdup(fdb->path);
+  if(!tcfdbcloseimpl(fdb)){
+    TCFREE(tpath);
+    TCFREE(opath);
+    return false;
+  }
+  if(unlink(opath)){
     tcfdbsetecode(fdb, TCEUNLINK, __FILE__, __LINE__, __func__);
     err = true;
   }
-  if(rename(tpath, fdb->path) == -1){
+  if(rename(tpath, opath)){
     tcfdbsetecode(fdb, TCERENAME, __FILE__, __LINE__, __func__);
     err = true;
   }
   TCFREE(tpath);
-  if(err) return false;
-  tpath = tcstrdup(fdb->path);
-  int omode = (fdb->omode & ~FDBOCREAT) & ~FDBOTRUNC;
-  if(!tcfdbcloseimpl(fdb)){
-    TCFREE(tpath);
+  if(err) {
+	  TCFREE(opath);
     return false;
   }
-  bool rv = tcfdbopenimpl(fdb, tpath, omode);
-  TCFREE(tpath);
+  bool rv = tcfdbopenimpl(fdb, opath, omode);
+  TCFREE(opath);
   return rv;
 }
 
@@ -2468,7 +2563,7 @@ static bool tcfdbcopyimpl(TCFDB *fdb, const char *path){
   }
   if(*path == '@'){
     char tsbuf[TCNUMBUFSIZ];
-    sprintf(tsbuf, "%llu", (unsigned long long)(tctime() * 1000000));
+    sprintf(tsbuf, "%" PRIuMAX "", (unsigned long long)(tctime() * 1000000));
     const char *args[3];
     args[0] = path + 1;
     args[1] = fdb->path;
@@ -2523,7 +2618,7 @@ static bool tcfdbforeachimpl(TCFDB *fdb, TCITER iter, void *op){
     const void *vbuf = tcfdbgetimpl(fdb, id, &vsiz);
     if(vbuf){
       char kbuf[TCNUMBUFSIZ];
-      int ksiz = sprintf(kbuf, "%llu", (unsigned long long)id);
+      int ksiz = sprintf(kbuf, "%" PRIuMAX "", (unsigned long long)id);
       if(!iter(kbuf, ksiz, vbuf, vsiz, op)) break;
     } else {
       tcfdbsetecode(fdb, TCEMISC, __FILE__, __LINE__, __func__);
@@ -2699,8 +2794,7 @@ static bool tcfdbunlockwal(TCFDB *fdb){
    `fdb' specifies the fixed-length database object. */
 void tcfdbprintmeta(TCFDB *fdb){
   assert(fdb);
-  if(fdb->dbgfd < 0) return;
-  int dbgfd = (fdb->dbgfd == UINT16_MAX) ? 1 : fdb->dbgfd;
+  HANDLE dbgfd = INVALIDHANDLE(fdb->dbgfd) ? GET_STDOUT_HANDLE() : fdb->dbgfd;
   char buf[FDBIOBUFSIZ];
   char *wp = buf;
   wp += sprintf(wp, "META:");
@@ -2714,31 +2808,31 @@ void tcfdbprintmeta(TCFDB *fdb){
   wp += sprintf(wp, " type=%02X", fdb->type);
   wp += sprintf(wp, " flags=%02X", fdb->flags);
   wp += sprintf(wp, " width=%u", fdb->width);
-  wp += sprintf(wp, " limsiz=%llu", (unsigned long long)fdb->limsiz);
+  wp += sprintf(wp, " limsiz=%" PRIuMAX "", (unsigned long long)fdb->limsiz);
   wp += sprintf(wp, " wsiz=%u", fdb->wsiz);
   wp += sprintf(wp, " rsiz=%u", fdb->rsiz);
-  wp += sprintf(wp, " limid=%llu", (unsigned long long)fdb->limid);
+  wp += sprintf(wp, " limid=%" PRIuMAX "", (unsigned long long)fdb->limid);
   wp += sprintf(wp, " path=%s", fdb->path ? fdb->path : "-");
   wp += sprintf(wp, " fd=%d", fdb->fd);
   wp += sprintf(wp, " omode=%u", fdb->omode);
-  wp += sprintf(wp, " rnum=%llu", (unsigned long long)fdb->rnum);
-  wp += sprintf(wp, " fsiz=%llu", (unsigned long long)fdb->fsiz);
-  wp += sprintf(wp, " min=%llu", (unsigned long long)fdb->min);
-  wp += sprintf(wp, " max=%llu", (unsigned long long)fdb->max);
-  wp += sprintf(wp, " iter=%llu", (unsigned long long)fdb->iter);
+  wp += sprintf(wp, " rnum=%" PRIuMAX "", (unsigned long long)fdb->rnum);
+  wp += sprintf(wp, " fsiz=%" PRIuMAX "", (unsigned long long)fdb->fsiz);
+  wp += sprintf(wp, " min=%" PRIuMAX "", (unsigned long long)fdb->min);
+  wp += sprintf(wp, " max=%" PRIuMAX "", (unsigned long long)fdb->max);
+  wp += sprintf(wp, " iter=%" PRIuMAX "", (unsigned long long)fdb->iter);
   wp += sprintf(wp, " map=%p", (void *)fdb->map);
   wp += sprintf(wp, " array=%p", (void *)fdb->array);
   wp += sprintf(wp, " ecode=%d", fdb->ecode);
   wp += sprintf(wp, " fatal=%u", fdb->fatal);
-  wp += sprintf(wp, " inode=%llu", (unsigned long long)fdb->inode);
-  wp += sprintf(wp, " mtime=%llu", (unsigned long long)fdb->mtime);
+  wp += sprintf(wp, " inode=%" PRIuMAX "", (unsigned long long)fdb->inode);
+  wp += sprintf(wp, " mtime=%" PRIuMAX "", (unsigned long long)fdb->mtime);
   wp += sprintf(wp, " tran=%d", fdb->tran);
   wp += sprintf(wp, " walfd=%d", fdb->walfd);
-  wp += sprintf(wp, " walend=%llu", (unsigned long long)fdb->walend);
+  wp += sprintf(wp, " walend=%" PRIuMAX "", (unsigned long long)fdb->walend);
   wp += sprintf(wp, " dbgfd=%d", fdb->dbgfd);
-  wp += sprintf(wp, " cnt_writerec=%lld", (long long)fdb->cnt_writerec);
-  wp += sprintf(wp, " cnt_readrec=%lld", (long long)fdb->cnt_readrec);
-  wp += sprintf(wp, " cnt_truncfile=%lld", (long long)fdb->cnt_truncfile);
+  wp += sprintf(wp, " cnt_writerec=%" PRIdMAX "", (long long)fdb->cnt_writerec);
+  wp += sprintf(wp, " cnt_readrec=%" PRIdMAX "", (long long)fdb->cnt_readrec);
+  wp += sprintf(wp, " cnt_truncfile=%" PRIdMAX "", (long long)fdb->cnt_truncfile);
   *(wp++) = '\n';
   tcwrite(dbgfd, buf, wp - buf);
 }

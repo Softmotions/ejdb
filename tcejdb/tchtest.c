@@ -24,7 +24,7 @@
 /* global variables */
 const char *g_progname;                  // program name
 unsigned int g_randseed;                 // random seed
-int g_dbgfd;                             // debugging output
+HANDLE g_dbgfd;                          // debugging output
 
 
 /* function prototypes */
@@ -60,12 +60,21 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode);
 
 /* main routine */
 int main(int argc, char **argv){
+
   g_progname = argv[0];
   const char *ebuf = getenv("TCRNDSEED");
   g_randseed = ebuf ? tcatoix(ebuf) : tctime() * 1000;
   srand(g_randseed);
+  g_dbgfd = INVALID_HANDLE_VALUE;
   ebuf = getenv("TCDBGFD");
-  g_dbgfd = ebuf ? tcatoix(ebuf) : UINT16_MAX;
+  if (ebuf) {
+	  int debugfd = tcatoix(ebuf);
+#ifdef _WIN32
+	  g_dbgfd = (HANDLE) _get_osfhandle(debugfd);
+#else
+	  g_dbgfd = debugfd;
+#endif
+  }
   if(argc < 2) usage();
   int rv = 0;
   if(!strcmp(argv[1], "write")){
@@ -144,25 +153,29 @@ static void eprint(TCHDB *hdb, int line, const char *func){
 /* print members of hash database */
 static void mprint(TCHDB *hdb){
   if(hdb->cnt_writerec < 0) return;
-  iprintf("bucket number: %lld\n", (long long)tchdbbnum(hdb));
-  iprintf("used bucket number: %lld\n", (long long)tchdbbnumused(hdb));
-  iprintf("cnt_writerec: %lld\n", (long long)hdb->cnt_writerec);
-  iprintf("cnt_reuserec: %lld\n", (long long)hdb->cnt_reuserec);
-  iprintf("cnt_moverec: %lld\n", (long long)hdb->cnt_moverec);
-  iprintf("cnt_readrec: %lld\n", (long long)hdb->cnt_readrec);
-  iprintf("cnt_searchfbp: %lld\n", (long long)hdb->cnt_searchfbp);
-  iprintf("cnt_insertfbp: %lld\n", (long long)hdb->cnt_insertfbp);
-  iprintf("cnt_splicefbp: %lld\n", (long long)hdb->cnt_splicefbp);
-  iprintf("cnt_dividefbp: %lld\n", (long long)hdb->cnt_dividefbp);
-  iprintf("cnt_mergefbp: %lld\n", (long long)hdb->cnt_mergefbp);
-  iprintf("cnt_reducefbp: %lld\n", (long long)hdb->cnt_reducefbp);
-  iprintf("cnt_appenddrp: %lld\n", (long long)hdb->cnt_appenddrp);
-  iprintf("cnt_deferdrp: %lld\n", (long long)hdb->cnt_deferdrp);
-  iprintf("cnt_flushdrp: %lld\n", (long long)hdb->cnt_flushdrp);
-  iprintf("cnt_adjrecc: %lld\n", (long long)hdb->cnt_adjrecc);
-  iprintf("cnt_defrag: %lld\n", (long long)hdb->cnt_defrag);
-  iprintf("cnt_shiftrec: %lld\n", (long long)hdb->cnt_shiftrec);
-  iprintf("cnt_trunc: %lld\n", (long long)hdb->cnt_trunc);
+  iprintf("bucket number: %" PRIdMAX "\n", (long long)tchdbbnum(hdb));
+  iprintf("used bucket number: %" PRIdMAX "\n", (long long)tchdbbnumused(hdb));
+  iprintf("msiz: %" PRIdMAX "\n", hdb->msiz);
+  iprintf("xmsiz: %" PRIdMAX "\n", hdb->xmsiz);
+  iprintf("fbpnum: %" PRIdMAX "\n", hdb->fbpnum);
+  iprintf("fbpool: %p\n", hdb->fbpool);
+  iprintf("cnt_writerec: %" PRIdMAX "\n", (long long)hdb->cnt_writerec);
+  iprintf("cnt_reuserec: %" PRIdMAX "\n", (long long)hdb->cnt_reuserec);
+  iprintf("cnt_moverec: %" PRIdMAX "\n", (long long)hdb->cnt_moverec);
+  iprintf("cnt_readrec: %" PRIdMAX "\n", (long long)hdb->cnt_readrec);
+  iprintf("cnt_searchfbp: %" PRIdMAX "\n", (long long)hdb->cnt_searchfbp);
+  iprintf("cnt_insertfbp: %" PRIdMAX "\n", (long long)hdb->cnt_insertfbp);
+  iprintf("cnt_splicefbp: %" PRIdMAX "\n", (long long)hdb->cnt_splicefbp);
+  iprintf("cnt_dividefbp: %" PRIdMAX "\n", (long long)hdb->cnt_dividefbp);
+  iprintf("cnt_mergefbp: %" PRIdMAX "\n", (long long)hdb->cnt_mergefbp);
+  iprintf("cnt_reducefbp: %" PRIdMAX "\n", (long long)hdb->cnt_reducefbp);
+  iprintf("cnt_appenddrp: %" PRIdMAX "\n", (long long)hdb->cnt_appenddrp);
+  iprintf("cnt_deferdrp: %" PRIdMAX "\n", (long long)hdb->cnt_deferdrp);
+  iprintf("cnt_flushdrp: %" PRIdMAX "\n", (long long)hdb->cnt_flushdrp);
+  iprintf("cnt_adjrecc: %" PRIdMAX "\n", (long long)hdb->cnt_adjrecc);
+  iprintf("cnt_defrag: %" PRIdMAX "\n", (long long)hdb->cnt_defrag);
+  iprintf("cnt_shiftrec: %" PRIdMAX "\n", (long long)hdb->cnt_shiftrec);
+  iprintf("cnt_trunc: %" PRIdMAX "\n", (long long)hdb->cnt_trunc);
 }
 
 
@@ -579,7 +592,7 @@ static int procwrite(const char *path, int rnum, int bnum, int apow, int fpow,
   bool err = false;
   double stime = tctime();
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(mt && !tchdbsetmutex(hdb)){
     eprint(hdb, __LINE__, "tchdbsetmutex");
     err = true;
@@ -630,8 +643,8 @@ static int procwrite(const char *path, int rnum, int bnum, int apow, int fpow,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %llu\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -653,7 +666,7 @@ static int procread(const char *path, bool mt, int rcnum, int xmsiz, int dfunit,
   bool err = false;
   double stime = tctime();
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(mt && !tchdbsetmutex(hdb)){
     eprint(hdb, __LINE__, "tchdbsetmutex");
     err = true;
@@ -705,8 +718,8 @@ static int procread(const char *path, bool mt, int rcnum, int xmsiz, int dfunit,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %llu\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -728,7 +741,7 @@ static int procremove(const char *path, bool mt, int rcnum, int xmsiz, int dfuni
   bool err = false;
   double stime = tctime();
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(mt && !tchdbsetmutex(hdb)){
     eprint(hdb, __LINE__, "tchdbsetmutex");
     err = true;
@@ -767,8 +780,8 @@ static int procremove(const char *path, bool mt, int rcnum, int xmsiz, int dfuni
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %llu\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -795,7 +808,7 @@ static int procrcat(const char *path, int rnum, int bnum, int apow, int fpow,
   bool err = false;
   double stime = tctime();
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(mt && !tchdbsetmutex(hdb)){
     eprint(hdb, __LINE__, "tchdbsetmutex");
     err = true;
@@ -923,8 +936,8 @@ static int procrcat(const char *path, int rnum, int bnum, int apow, int fpow,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %llu\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -945,7 +958,7 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
   bool err = false;
   double stime = tctime();
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(mt && !tchdbsetmutex(hdb)){
     eprint(hdb, __LINE__, "tchdbsetmutex");
     err = true;
@@ -974,7 +987,7 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(hdb, __LINE__, "tchdbopen");
     err = true;
   }
-  if(TCUSEPTHREAD){
+  if(1){
     TCHDB *hdbdup = tchdbnew();
     if(tchdbopen(hdbdup, path, HDBOREADER)){
       eprint(hdb, __LINE__, "(validation)");
@@ -1585,7 +1598,7 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(hdb, __LINE__, "tchdbtranabort");
     err = true;
   }
-  iprintf("checking consistency:\n");
+  iprintf("checking consistency: %d %d\n", (int)tchdbrnum(hdb), (int)  ornum);
   if(tchdbrnum(hdb) != ornum || tchdbfsiz(hdb) != ofsiz || tchdbrnum(hdb) != tcmaprnum(map)){
     eprint(hdb, __LINE__, "(validation)");
     err = true;
@@ -1684,8 +1697,8 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(hdb, __LINE__, "tchdbforeach");
     err = true;
   }
-  iprintf("record number: %llu\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %llu\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -1706,7 +1719,7 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode){
   bool err = false;
   double stime = tctime();
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(mt && !tchdbsetmutex(hdb)){
     eprint(hdb, __LINE__, "tchdbsetmutex");
     err = true;
@@ -2109,8 +2122,8 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(hdb, __LINE__, "(validation)");
     err = true;
   }
-  iprintf("record number: %llu\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %llu\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   tcmapdel(map);

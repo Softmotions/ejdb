@@ -52,7 +52,7 @@ typedef struct {                         /* type of structure for a fixed-length
   int rsiz;                              /* size of each record */
   uint64_t limid;                        /* limit ID number */
   char *path;                            /* path of the database file */
-  int fd;                                /* file descriptor of the database file */
+  HANDLE fd;                                /* file descriptor of the database file */
   uint32_t omode;                        /* open mode */
   uint64_t rnum;                         /* number of the records */
   uint64_t fsiz;                         /* size of the database file */
@@ -61,17 +61,20 @@ typedef struct {                         /* type of structure for a fixed-length
   uint64_t iter;                         /* ID number of the iterator */
   char *map;                             /* pointer to the mapped memory */
   unsigned char *array;                  /* pointer to the array region */
-  int ecode;                             /* last happened error code */
+  volatile int ecode;                    /* last happened error code */
   bool fatal;                            /* whether a fatal error occured */
   uint64_t inode;                        /* inode number */
   time_t mtime;                          /* modification time */
   bool tran;                             /* whether in the transaction */
-  int walfd;                             /* file descriptor of write ahead logging */
+  HANDLE walfd;                             /* file descriptor of write ahead logging */
   uint64_t walend;                       /* end offset of write ahead logging */
-  int dbgfd;                             /* file descriptor for debugging */
+  HANDLE dbgfd;                             /* file descriptor for debugging */
   int64_t cnt_writerec;                  /* tesing counter for record write times */
   int64_t cnt_readrec;                   /* tesing counter for record read times */
   int64_t cnt_truncfile;                 /* tesing counter for file truncate times */
+#ifdef _WIN32
+  volatile HANDLE fileMapping;			 /* win32 file mappings for mmap */
+#endif
 } TCFDB;
 
 enum {                                   /* enumeration for additional flags */
@@ -675,13 +678,13 @@ void tcfdbsetecode(TCFDB *fdb, int ecode, const char *filename, int line, const 
 /* Set the file descriptor for debugging output.
    `fdb' specifies the fixed-length database object.
    `fd' specifies the file descriptor for debugging output. */
-void tcfdbsetdbgfd(TCFDB *fdb, int fd);
+void tcfdbsetdbgfd(TCFDB *fdb, HANDLE fd);
 
 
 /* Get the file descriptor for debugging output.
    `fdb' specifies the fixed-length database object.
    The return value is the file descriptor for debugging output. */
-int tcfdbdbgfd(TCFDB *fdb);
+HANDLE tcfdbdbgfd(TCFDB *fdb);
 
 
 /* Check whether mutual exclusion control is set to a fixed-length database object.

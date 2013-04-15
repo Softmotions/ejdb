@@ -17,7 +17,6 @@
 #ifndef EJDB_H
 #define        EJDB_H
 
-#include "myconf.h"
 #include "bson.h"
 #include "tcutil.h"
 

@@ -380,8 +380,8 @@ static void sethtmlheader(PARAMS *params, TCXSTR *obuf, TCADB *db){
 /* set the footer of HTML */
 static void sethtmlfooter(PARAMS *params, TCXSTR *obuf, TCADB *db){
   XP("<hr />\n");
-  XP("<div>record number: %lld</div>\n", (long long)tcadbrnum(db));
-  XP("<div>size: %lld</div>\n", (long long)tcadbsize(db));
+  XP("<div>record number: %" PRIdMAX "</div>\n", (long long)tcadbrnum(db));
+  XP("<div>size: %" PRIdMAX "</div>\n", (long long)tcadbsize(db));
   XP("</body>\n");
   XP("\n");
   XP("</html>\n");

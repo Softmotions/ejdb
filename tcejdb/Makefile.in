@@ -49,7 +49,7 @@ CC = @CC@
 CPPFLAGS = @MYCPPFLAGS@ \
   -D_TC_PREFIX="\"$(prefix)\"" -D_TC_INCLUDEDIR="\"$(INCLUDEDIR)\"" \
   -D_TC_LIBDIR="\"$(LIBDIR)\"" -D_TC_BINDIR="\"$(BINDIR)\"" -D_TC_LIBEXECDIR="\"$(LIBEXECDIR)\"" \
-  -D_TC_APPINC="\"-I$(INCLUDEDIR)\"" -D_TC_APPLIBS="\"-L$(LIBDIR) -ltcejdb @LIBS@\""
+  -D_TC_APPINC="\"-I$(INCLUDEDIR)\"" -D_TC_APPLIBS="\"-L$(LIBDIR) @LIBS@\""
 CFLAGS = @MYCFLAGS@
 LDFLAGS = @MYLDFLAGS@
 CMDLDFLAGS = @MYCMDLDFLAGS@
@@ -295,7 +295,7 @@ check-hdb :
 	$(RUNENV) $(RUNCMD) ./tchmgr get casket four > check.out
 	$(RUNENV) $(RUNCMD) ./tchmgr get casket five > check.out
 	$(RUNENV) $(RUNCMD) ./tchmgr list -pv casket > check.out
-	rm -rf casket*
+#	rm -rf casket*
 
 
 check-bdb :
@@ -724,6 +724,9 @@ libtcejdb.$(LIBVER).dylib : libtcejdb.$(LIBVER).$(LIBREV).0.dylib
 libtcejdb.dylib : libtcejdb.$(LIBVER).$(LIBREV).0.dylib
 	ln -f -s libtcejdb.$(LIBVER).$(LIBREV).0.dylib $@
 
+tcejdb.dll : $(LIBOBJFILES)
+	$(CC) $(CFLAGS) -shared -Wl,--subsystem,windows -o $@ \
+	      $(LIBOBJFILES) $(LDFLAGS) $(LIBS)
 
 tcutest : tcutest.o $(LIBRARYFILES)
 	$(LDENV) $(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) -ltcejdb $(LIBS)
@@ -800,39 +803,38 @@ tcamgr : tcamgr.o $(LIBRARYFILES)
 tcawmgr.cgi : tcawmgr.o $(LIBRARYFILES)
 	$(LDENV) $(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) -ltcejdb $(LIBS)
 
+myconf.o : basedefs.h myconf.h
 
-myconf.o : myconf.h
+tcutil.o : basedefs.h myconf.h tcutil.h md5.h
 
-tcutil.o : myconf.h tcutil.h md5.h
+tchdb.o : basedefs.h myconf.h tcutil.h tchdb.h
 
-tchdb.o : myconf.h tcutil.h tchdb.h
+tcbdb.o : basedefs.h myconf.h tcutil.h tchdb.h tcbdb.h
 
-tcbdb.o : myconf.h tcutil.h tchdb.h tcbdb.h
+tcfdb.o : basedefs.h myconf.h tcutil.h tcfdb.h
 
-tcfdb.o : myconf.h tcutil.h tcfdb.h
+tctdb.o : basedefs.h myconf.h tcutil.h tchdb.h tctdb.h
 
-tctdb.o : myconf.h tcutil.h tchdb.h tctdb.h
+tcadb.o : basedefs.h myconf.h tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h
 
-tcadb.o : myconf.h tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h
+tcutest.o tcucodec.o : basedefs.h myconf.h tcutil.h
 
-tcutest.o tcucodec.o : myconf.h tcutil.h
+tchtest.o tchmttest.o tchmgr.o : basedefs.h myconf.h tcutil.h tchdb.h
 
-tchtest.o tchmttest.o tchmgr.o : myconf.h tcutil.h tchdb.h
+tcbtest.o tcbmttest.o tcbmgr.o : basedefs.h myconf.h tcutil.h tchdb.h tcbdb.h
 
-tcbtest.o tcbmttest.o tcbmgr.o : myconf.h tcutil.h tchdb.h tcbdb.h
+tcftest.o tcfmttest.o tcfmgr.o : basedefs.h myconf.h tcutil.h tcfdb.h
 
-tcftest.o tcfmttest.o tcfmgr.o : myconf.h tcutil.h tcfdb.h
-
-tcttest.o tctmttest.o tctmgr.o : myconf.h tcutil.h tchdb.h tcbdb.h tctdb.h
+tcttest.o tctmttest.o tctmgr.o : basedefs.h myconf.h tcutil.h tchdb.h tcbdb.h tctdb.h
 
 tcatest.o tcamttest.o tcamgr.o tcawmgr.o : \
-  myconf.h tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h
+  basedefs.h myconf.h tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h
 
-ejdb.o : myconf.h ejdb.h ejdb_private.h ejdbutl.h
+ejdb.o : basedefs.h myconf.h ejdb.h ejdb_private.h ejdbutl.h
 
-bson.o : myconf.h bson.h
+bson.o : basedefs.h myconf.h bson.h
 
-ejdbutl.o : ejdbutl.h
+ejdbutl.o : basedefs.h tcutil.h ejdbutl.h
 
 utf8proc.o: utf8proc.h utf8proc.c utf8proc_data.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o utf8proc.o utf8proc.c
@@ -842,6 +844,6 @@ tokyocabinet_all.c : myconf.c tcutil.c md5.c tchdb.c tcbdb.c tcfdb.c tctdb.c tca
 
 tokyocabinet_all.o : myconf.h tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h
 
-
+platform.o : basedefs.h platform.c
 
 # END OF FILE
