@@ -603,10 +603,30 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal(0, $jb.find("monsters", {:maxfixnum => {"$in" => [maxfixnum - 1, maxfixnum + 1]}}, {:onlycount => true}))
     assert_equal(1, $jb.find("monsters", {:maxfixnum => {"$gt" => maxfixnum - 1, "$lt" => maxfixnum + 1}}, {:onlycount => true}))
 
+    results = $jb.find("monsters", {}, {:orderby => {:name => -1, :maxfixnum => -1}})
+    assert_not_nil results.to_a[0]
+    assert_equal(:chupacabra, results.to_a[0]["name"])
+
+    #wow, we have oredered hash!
+    results = $jb.find("monsters", {}, {:orderby => {:maxfixnum => -1, :name => -1}})
+    assert_not_nil results.to_a[0]
+    assert_not_equal(:chupacabra, results.to_a[0]["name"])
+
+
     puts __method__.inspect + " has passed successfull"
   end
 
-  def test_ejdbi_close
+  def test_ejdbi_internal_rbejdb_classes
+    assert_raise(RuntimeError) {
+      EJDB.new
+    }
+    assert_raise(RuntimeError) {
+      EJDBResults.new
+    }
+    puts __method__.inspect + " has passed successfull"
+  end
+
+  def test_ejdbj_close
     assert_not_nil $jb
     assert $jb.is_open?
 

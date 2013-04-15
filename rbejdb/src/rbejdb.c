@@ -48,6 +48,11 @@ VALUE ejdbBinaryClass;
 VALUE ejdbQueryClass;
 
 
+void private_new_method_stub(VALUE clazz) {
+    rb_raise(rb_eRuntimeError, "%s class is internal EJDB class and cannot be instanciated!", rb_inspect(clazz));
+}
+
+
 VALUE get_hash_option(VALUE hash, const char* opt) {
     Check_Type(hash, T_HASH);
 
@@ -742,7 +747,7 @@ Init_rbejdb() {
     init_ruby_to_bson();
 
     ejdbClass = rb_define_class("EJDB", rb_cObject);
-    rb_define_private_method(ejdbClass, "new", RUBY_METHOD_FUNC(EJDB_new), 0);
+    rb_define_singleton_method(ejdbClass, "new", RUBY_METHOD_FUNC(EJDB_new), 0);
 
     rb_define_const(ejdbClass, "DEFAULT_OPEN_MODE", INT2FIX(DEFAULT_OPEN_MODE));
     rb_define_const(ejdbClass, "JBOWRITER", INT2FIX(JBOWRITER));
@@ -790,6 +795,7 @@ Init_rbejdb() {
 
 
     ejdbResultsClass = rb_define_class("EJDBResults", rb_cObject);
+    rb_define_singleton_method(ejdbResultsClass, "new", RUBY_METHOD_FUNC(private_new_method_stub), 0);
     rb_include_module(ejdbResultsClass, rb_mEnumerable);
     rb_define_method(ejdbResultsClass, "each", RUBY_METHOD_FUNC(EJDB_results_each), 0);
     rb_define_method(ejdbResultsClass, "log", RUBY_METHOD_FUNC(EJDB_results_log), 0);

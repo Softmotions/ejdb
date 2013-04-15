@@ -45,6 +45,11 @@ void init_ruby_to_bson() {
     bsonWrapClass = rb_define_class(BSON_RUBY_CLASS, rb_cObject);
 }
 
+void rbbson_context_mark(RBBSON_CONTEXT* rbbsctx) {
+    ruby_gc_mark(rbbsctx->obj);
+    ruby_gc_mark(rbbsctx->traverse_hash);
+}
+
 void rbbson_context_free(RBBSON_CONTEXT* rbbsctx) {
     ruby_xfree(rbbsctx);
 }
@@ -58,7 +63,7 @@ VALUE createBsonContextWrap(bson* bsonval, VALUE rbobj, VALUE traverse, int flag
     if (NIL_P(bsonContextClass)) {
         rb_raise(rb_eRuntimeError, "Ruby to BSON library must be initialized");
     }
-    VALUE bsonContextWrap = Data_Wrap_Struct(bsonContextClass, NULL, rbbson_context_free, ruby_xmalloc(sizeof(RBBSON_CONTEXT)));
+    VALUE bsonContextWrap = Data_Wrap_Struct(bsonContextClass, rbbson_context_mark, rbbson_context_free, ruby_xmalloc(sizeof(RBBSON_CONTEXT)));
 
     RBBSON_CONTEXT* rbbsctx;
     Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
@@ -169,7 +174,7 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonContextWrap) {
             }
             break;
         case T_REGEXP: {
-                VALUE regexp = rb_funcall(val, rb_intern("inspect"), 0);
+                VALUE regexp = rb_inspect(val);
                 VALUE source = rb_funcall(val, rb_intern("source"), 0);
                 bson_append_regex(b, attrName, StringValuePtr(source),  StringValuePtr(regexp) + 2 + strlen(StringValuePtr(source))); // "2" for skipping "//" :)
             }
@@ -184,7 +189,7 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonContextWrap) {
             bson_append_null(b, attrName);
             break;
         default: {
-            VALUE objStr = rb_funcall(val, rb_intern("inspect"), 0);
+            VALUE objStr = rb_inspect(val);
             rb_raise(rb_eRuntimeError, "Cannot convert ruby value to bson: %s: %s", rb_obj_classname(val), StringValuePtr(objStr));
         }
     }
@@ -252,7 +257,7 @@ void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int fla
             ruby_hash_to_bson_internal(rbobj, bsonContextWrap);
             break;
         default: {
-            VALUE objStr = rb_funcall(rbobj, rb_intern("inspect"), 0);
+            VALUE objStr = rb_inspect(rbobj);
             rb_raise(rb_eRuntimeError, "Cannot convert object to bson: %s: %s", rb_obj_classname(rbobj), StringValuePtr(objStr));
         }
     }
