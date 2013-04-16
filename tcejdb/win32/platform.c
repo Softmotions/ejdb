@@ -7,8 +7,8 @@ struct tm *gmtime_r(const time_t *timep, struct tm *result) {
     pthread_mutex_lock(&mutex);
     struct tm *cas = gmtime(timep);
     pthread_mutex_unlock(&mutex);
-    if (result == NULL) {
-        return NULL; /* was:cas */
+    if (result == NULL || cas == NULL) {
+        return NULL;
     }
     memcpy(result, cas, sizeof (struct tm));
     return result;
@@ -19,7 +19,7 @@ struct tm *localtime_r(const time_t *timep, struct tm *result) {
     pthread_mutex_lock(&mutex);
     struct tm *cas = localtime(timep);
     pthread_mutex_unlock(&mutex);
-    if (result == NULL) {
+    if (result == NULL || cas == NULL) {
         return NULL;
     }
     memcpy(result, cas, sizeof (struct tm));
