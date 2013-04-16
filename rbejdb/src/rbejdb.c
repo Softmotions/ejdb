@@ -49,7 +49,8 @@ VALUE ejdbQueryClass;
 
 
 void private_new_method_stub(VALUE clazz) {
-    rb_raise(rb_eRuntimeError, "%s class is internal EJDB class and cannot be instanciated!", rb_inspect(clazz));
+    VALUE className = rb_inspect(clazz);
+    rb_raise(rb_eRuntimeError, "%s is internal EJDB class and cannot be instantiated!", StringValuePtr(className));
 }
 
 

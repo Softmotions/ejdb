@@ -40,9 +40,16 @@ VALUE bsonContextClass = Qnil;
 VALUE bsonWrapClass = Qnil;
 
 
+void rbbson_private_new_method_stub(VALUE clazz) {
+    VALUE className = rb_inspect(clazz);
+    rb_raise(rb_eRuntimeError, "%s is internal EJDB class and cannot be instantiated!", StringValuePtr(className));
+}
+
 void init_ruby_to_bson() {
     bsonContextClass = rb_define_class(BSON_CONTEXT_RUBY_CLASS, rb_cObject);
     bsonWrapClass = rb_define_class(BSON_RUBY_CLASS, rb_cObject);
+    rb_define_singleton_method(bsonContextClass, "new", RUBY_METHOD_FUNC(rbbson_private_new_method_stub), 0);
+    rb_define_singleton_method(bsonWrapClass, "new", RUBY_METHOD_FUNC(rbbson_private_new_method_stub), 0);
 }
 
 void rbbson_context_mark(RBBSON_CONTEXT* rbbsctx) {
