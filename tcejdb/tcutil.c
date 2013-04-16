@@ -7209,7 +7209,7 @@ bool tcunlinkfile(const char *path) {
         } else {
             return true;
         }
-        if (wsec > 10.0) {
+        if (wsec > 8.0) {
             break;
         }
         tcsleep(wsec);
@@ -7233,7 +7233,7 @@ bool tcrenamefile(const char *from, const char* to) {
         } else {
             return true;
         }
-        if (wsec > 10.0) {
+        if (wsec > 8.0) {
             break;
         }
         tcsleep(wsec);
@@ -10567,17 +10567,17 @@ double tclog2d(double num){
 }
 
 off_t tcpagsize(void) {
-#ifdef _WIN32
     static off_t g_pagesize = 0;
     if (!g_pagesize) {
+#ifdef _WIN32
         SYSTEM_INFO system_info;
         GetSystemInfo(&system_info);
         g_pagesize = system_info.dwPageSize;
+#else
+        g_pagesize = sysconf(_SC_PAGESIZE);
+#endif
     }
     return g_pagesize;
-#else
-    return sysconf(_SC_PAGESIZE);
-#endif
 }
 
 /* Get the aligned offset of a file offset. */

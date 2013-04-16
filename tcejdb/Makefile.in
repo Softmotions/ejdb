@@ -295,7 +295,7 @@ check-hdb :
 	$(RUNENV) $(RUNCMD) ./tchmgr get casket four > check.out
 	$(RUNENV) $(RUNCMD) ./tchmgr get casket five > check.out
 	$(RUNENV) $(RUNCMD) ./tchmgr list -pv casket > check.out
-#	rm -rf casket*
+	rm -rf casket*
 
 
 check-bdb :

@@ -874,7 +874,7 @@ bool tcbdbtrancommit(TCBDB *bdb){
 bool tcbdbtranabort(TCBDB *bdb){
   assert(bdb);
   if(!BDBLOCKMETHOD(bdb, true)) return false;
-  if(!bdb->open || !bdb->wmode || !bdb->tran){
+  if(!bdb->open || !bdb->wmode || !bdb->tran || !bdb->rbopaque){
     tcbdbsetecode(bdb, TCEINVALID, __FILE__, __LINE__, __func__);
     BDBUNLOCKMETHOD(bdb);
     return false;
@@ -3506,17 +3506,17 @@ static bool tcbdboptimizeimpl(TCBDB *bdb, int32_t lmemb, int32_t nmemb,
     TCFREE(opath);
     return false;
   }
-  if(unlink(opath)){
+  if(!tcunlinkfile(opath)){
     tcbdbsetecode(bdb, TCEUNLINK, __FILE__, __LINE__, __func__);
     err = true;
   }
-  if(rename(tpath, opath)){
+  if(!tcrenamefile(tpath, opath)){
     tcbdbsetecode(bdb, TCERENAME, __FILE__, __LINE__, __func__);
     err = true;
   }
   TCFREE(tpath);
   if(err){
-	  TCFREE(opath);
+	TCFREE(opath);
     return false;
   }
   bool rv = tcbdbopenimpl(bdb, opath, omode);

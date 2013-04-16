@@ -2087,7 +2087,7 @@ static bool tchdbseekwrite2(TCHDB *hdb, off_t off, const void *buf, size_t size,
   if(hdb->tran && !(opts & HDBWRITENOWALL) && !tchdbwalwrite(hdb, off, size)) return false;
   off_t end = off + size;
   if(end >= hdb->xfsiz){
-      if(!tchdbftruncate2(hdb, end + HDBXFSIZINC, opts)){
+      if(!tchdbftruncate2(hdb, end, opts)){
         tchdbsetecode(hdb, TCETRUNC, __FILE__, __LINE__, __func__);
         return false;
       }
@@ -5038,7 +5038,7 @@ static bool tchdboptimizeimpl(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow
       err = true;
     }
   }
-  
+
   if(!tcrenamefile(tpath, opath)){
     tchdbsetecode(hdb, TCERENAME, __FILE__, __LINE__, __func__);
     err = true;
@@ -5485,9 +5485,13 @@ static bool tchdbftruncate(TCHDB *hdb, off_t length) {
 static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
 #ifndef _WIN32
     length = length ? tcpagealign(length) : 0;
-    if (!(hdb->omode & HDBOWRITER) ||
-            ((length <= hdb->xfsiz || length <= hdb->fsiz) && !(opts & HDBTRUNCSHRINKFILE))) {
+    if (!(hdb->omode & HDBOWRITER) || (length <= hdb->xfsiz && !(opts & HDBTRUNCSHRINKFILE))) {
         return true;
+    }
+    if (length > hdb->xfsiz && !(opts & HDBTRUNCSHRINKFILE)) {
+        off_t o1 = tcpagealign((_maxof(off_t) - length < HDBXFSIZINC) ? length : length + HDBXFSIZINC);
+        off_t o2 = tcpagealign(((long double) 1.5) * length);
+        length = MAX(o1, o2);
     }
     if (ftruncate(hdb->fd, length) == 0) {
         hdb->xfsiz = length;
@@ -5502,12 +5506,16 @@ static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
     size.QuadPart = (hdb->omode & HDBOWRITER) ?  tcpagealign((length == 0) ? 1 : length) : length;
     if (hdb->map &&
         length > 0 &&
-        (!(hdb->omode & HDBOWRITER) ||
-            ((size.QuadPart <= hdb->xfsiz || size.QuadPart <= hdb->fsiz) && !(opts & HDBTRUNCSHRINKFILE)))) {
+        (!(hdb->omode & HDBOWRITER) || (size.QuadPart <= hdb->xfsiz && !(opts & HDBTRUNCSHRINKFILE)))) {
         return true;
     }
     if (!(opts & HDBWRITENOLOCK) && !HDBLOCKSMEM(hdb, true)) {
         return false;
+    }
+    if ((hdb->omode & HDBOWRITER) && size.QuadPart > hdb->xfsiz && !(opts & HDBTRUNCSHRINKFILE)) {
+        off_t o1 = tcpagealign((_maxof(off_t) - size.QuadPart < HDBXFSIZINC) ? size.QuadPart : size.QuadPart + HDBXFSIZINC);
+        off_t o2 = tcpagealign(((long double) 1.5) * size.QuadPart);
+        size.QuadPart = MAX(o1, o2);
     }
     if (hdb->map) {
         FlushViewOfFile((PCVOID) hdb->map, 0);
