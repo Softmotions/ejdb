@@ -7192,6 +7192,55 @@ bool tcstatfile(const char *path, bool *isdirp, int64_t *sizep, int64_t *mtimep)
   return true;
 }
 
+/**
+ * Unlink (delete) the specified file
+ * @param path Path of file
+ * @return true of success
+ */
+bool tcunlinkfile(const char *path) {
+#ifndef _WIN32
+    return (unlink(path) == 0);
+#else
+    for (double wsec = 1.0 / sysconf_SC_CLK_TCK; true; wsec *= 2) {
+        if (unlink(path)) {
+            if (errno != EACCES) {
+                break;
+            }
+        } else {
+            return true;
+        }
+        if (wsec > 10.0) {
+            break;
+        }
+        tcsleep(wsec);
+    }
+    return false;
+#endif
+}
+
+/**
+ * Rename the specified file
+ */
+bool tcrenamefile(const char *from, const char* to) {
+#ifndef _WIN32
+    return (rename(from, to) == 0);
+#else
+    for (double wsec = 1.0 / sysconf_SC_CLK_TCK; true; wsec *= 2) {
+        if (rename(from, to)) {
+            if (errno != EACCES) {
+                break;
+            }
+        } else {
+            return true;
+        }
+        if (wsec > 10.0) {
+            break;
+        }
+        tcsleep(wsec);
+    }
+    return false;
+#endif
+}
 
 /* Read whole data of a file. */
 void *tcreadfile(const char *path, int limit, int *sp) {

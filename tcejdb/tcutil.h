@@ -2881,6 +2881,17 @@ EJDB_EXPORT bool tcstatfile(const char *path, bool *isdirp, int64_t *sizep, int6
    longer in use.  */
 EJDB_EXPORT void *tcreadfile(const char *path, int limit, int *sp);
 
+/**
+ * Unlink (delete) the specified file
+ * @param path Path of file
+ * @return true of success
+ */
+EJDB_EXPORT bool tcunlinkfile(const char *path);
+
+/**
+ * Rename the specified file
+ */
+EJDB_EXPORT bool tcrenamefile(const char *from, const char* to);
 
 /* Read every line of a file.
    `path' specifies the path of the file.  If it is `NULL', the standard input is specified.

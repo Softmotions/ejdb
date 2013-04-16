@@ -46,11 +46,10 @@
 
 #ifdef _WIN32
 #define HDBDEFXMSIZ    _maxof(off_t)     // default size of the extra mapped memory
-#define HDBXFSIZINC    1048576           // 1MB on win32
 #else
 #define HDBDEFXMSIZ    (64LL<<20)        // default size of the extra mapped memory
-#define HDBXFSIZINC    32768             // increment of extra file size
 #endif
+#define HDBXFSIZINC    1048576           // 1MB increment of extra file size
 #define HDBMINRUNIT    48                // minimum record reading unit
 #define HDBMAXHSIZ     32                // maximum record header size
 #define HDBFBPALWRAT   2                 // allowance ratio of the free block pool
@@ -107,7 +106,8 @@ typedef struct {                         // type of structure for a duplication 
 
 enum {
     HDBWRITENOWALL = 1,                 //do not write into wall in tchdbseekwrite
-    HDBWRITENOLOCK = 1 << 1             //do not use shared write lock in tchdbseekwrite & tchdbftruncate
+    HDBWRITENOLOCK = 1 << 1,            //do not use shared write lock in tchdbseekwrite & tchdbftruncate
+    HDBTRUNCSHRINKFILE = 1 << 2         //resize file on truncation
 };
 
 /* private macros */
@@ -1236,7 +1236,9 @@ bool tchdbtranbegin(TCHDB *hdb){
 #ifndef _WIN32
     HANDLE walfd = open(tpath, O_RDWR | O_CREAT | O_TRUNC, HDBFILEMODE);
 #else
-    HANDLE walfd = CreateFile(tpath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE walfd = CreateFile(tpath, GENERIC_READ | GENERIC_WRITE,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                              NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 #endif
     TCFREE(tpath);
     if(INVALIDHANDLE(walfd)){
@@ -1484,11 +1486,12 @@ bool tchdbmemsync(TCHDB *hdb, bool phys){
     tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
     return false;
   }
-  tchdbdumpmeta(hdb, hbuf);
   if (!HDBLOCKSMEM(hdb, true)) return false;
+  tchdbdumpmeta(hdb, hbuf);
   memcpy((void *) hdb->map, hbuf, HDBOPAQUEOFF);
   HDBUNLOCKSMEM(hdb);
-  if(phys){
+
+  if (phys) {
     if (!HDBLOCKSMEM(hdb, false)) return false;
 #ifdef _WIN32
     if(!FlushViewOfFile((PCVOID) hdb->map, 0)){
@@ -1502,11 +1505,11 @@ bool tchdbmemsync(TCHDB *hdb, bool phys){
       err = true;
     }
 #endif
+    HDBUNLOCKSMEM(hdb);
     if(fsync(hdb->fd)){
       tchdbsetecode(hdb, TCESYNC, __FILE__, __LINE__, __func__);
       err = true;
     }
-    HDBUNLOCKSMEM(hdb);
   }
   return !err;
 }
@@ -3376,21 +3379,26 @@ static void tchdbcacheadjust(TCHDB *hdb){
    If successful, the return value is true, else, it is false. */
 static bool tchdbwalinit(TCHDB *hdb){
   assert(hdb);
+  if (!HDBLOCKWAL(hdb)) return false;
   if(!tcfseek(hdb->walfd, 0, TCFSTART)){
     tchdbsetecode(hdb, TCESEEK, __FILE__, __LINE__, __func__);
+    HDBUNLOCKWAL(hdb);
     return false;
   }
   if(!tcftruncate(hdb->walfd, 0)){
     tchdbsetecode(hdb, TCETRUNC, __FILE__, __LINE__, __func__);
+    HDBUNLOCKWAL(hdb);
     return false;
   }
   uint64_t llnum = hdb->fsiz;
   llnum = TCHTOILL(llnum);
   if(!tcwrite(hdb->walfd, &llnum, sizeof(llnum))){
     tchdbsetecode(hdb, TCEWRITE, __FILE__, __LINE__, __func__);
+    HDBUNLOCKWAL(hdb);
     return false;
   }
   hdb->walend = hdb->fsiz;
+  HDBUNLOCKWAL(hdb);
   if(!tchdbwalwrite(hdb, 0, HDBHEADSIZ)) return false;
   return true;
 }
@@ -3453,14 +3461,14 @@ static bool tchdbwalrestore(TCHDB *hdb, const char *path) {
     bool err = false;
     uint64_t walsiz = 0;
     HANDLE walfd;
-    if (!HDBLOCKWAL(hdb)) {
-        return false;
-    }
+    if (!HDBLOCKWAL(hdb)) return false;
     char *tpath = tcsprintf("%s%c%s", path, MYEXTCHR, HDBWALSUFFIX);
 #ifndef _WIN32
     walfd = open(tpath, O_RDONLY, HDBFILEMODE);
 #else
-    walfd = CreateFile(tpath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    walfd = CreateFile(tpath, GENERIC_READ | GENERIC_WRITE,
+                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 #endif
     TCFREE(tpath);
     if (INVALIDHANDLE(walfd)) {
@@ -3564,12 +3572,14 @@ finish:
    If successful, the return value is true, else, it is false. */
 static bool tchdbwalremove(TCHDB *hdb, const char *path){
   assert(hdb && path);
+  if (!HDBLOCKWAL(hdb)) return false;
   char *tpath = tcsprintf("%s%c%s", path, MYEXTCHR, HDBWALSUFFIX);
   bool err = false;
-  if(unlink(tpath) && errno != ENOENT){
+  if(!tcunlinkfile(tpath) && errno != ENOENT){
     tchdbsetecode(hdb, TCEUNLINK, __FILE__, __LINE__, __func__);
     err = true;
   }
+  HDBUNLOCKWAL(hdb);
   TCFREE(tpath);
   return !err;
 }
@@ -3604,7 +3614,9 @@ static bool tchdbopenimpl(TCHDB *hdb, const char *path, int omode){
   } else if (omode & HDBOCREAT) {
 	cmode = CREATE_NEW;
   }
-  fd = CreateFile(path, mode, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, cmode, FILE_ATTRIBUTE_NORMAL, NULL);
+  fd = CreateFile(path, mode,
+                  FILE_SHARE_READ | FILE_SHARE_WRITE,
+                  NULL, cmode, FILE_ATTRIBUTE_NORMAL, NULL);
 #endif
   if(INVALIDHANDLE(fd)){
     tchdbsetecode(hdb, tcfilerrno2tcerr(TCEOPEN), __FILE__, __LINE__, __func__);
@@ -3620,7 +3632,7 @@ static bool tchdbopenimpl(TCHDB *hdb, const char *path, int omode){
   hdb->omode = omode;
   hdb->fd = fd;
   if((omode & HDBOWRITER) && (omode & HDBOTRUNC)){
-    if(!tchdbftruncate(hdb, 0)){
+    if(!tchdbftruncate2(hdb, 0, HDBTRUNCSHRINKFILE)){
       tchdbsetecode(hdb, TCETRUNC, __FILE__, __LINE__, __func__);
       CLOSEFH(fd);
       return false;
@@ -3808,16 +3820,17 @@ static bool tchdbcloseimpl(TCHDB *hdb){
     TCFREE(hdb->fbpool);
     tchdbsetflag(hdb, HDBFOPEN, false);
   }
-  if((hdb->omode & HDBOWRITER) && !tchdbmemsync(hdb, false)) err = true;
-  if((hdb->omode & HDBOWRITER) && !tchdbftruncate(hdb, hdb->fsiz)){
-    tchdbsetecode(hdb, TCETRUNC, __FILE__, __LINE__, __func__);
-    err = true;
-  }
-  if(hdb->tran){ //todo!!
+  if(hdb->tran){
     if(!tchdbwalrestore(hdb, hdb->path)) {
         err = true;
     }
     hdb->tran = false;
+  } else if ((hdb->omode & HDBOWRITER) && !tchdbmemsync(hdb, false)) {
+        err = true;
+  }
+  if((hdb->omode & HDBOWRITER) && !tchdbftruncate2(hdb, hdb->fsiz, HDBTRUNCSHRINKFILE)){
+    tchdbsetecode(hdb, TCETRUNC, __FILE__, __LINE__, __func__);
+    err = true;
   }
 
   if (!HDBLOCKSMEM(hdb, true)) err = true;
@@ -4953,42 +4966,43 @@ static bool tchdboptimizeimpl(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow
       break;
     }
     off += rec.rsiz;
-    if(rec.magic == HDBMAGICREC){
-      if(!rec.vbuf && !tchdbreadrecbody(hdb, &rec)){
-        TCFREE(rec.bbuf);
-        err = true;
-      } else {
-        if(hdb->zmode){
-          int zsiz;
-          char *zbuf;
-          if(hdb->opts & HDBTDEFLATE){
-            zbuf = _tc_inflate(rec.vbuf, rec.vsiz, &zsiz, _TCZMRAW);
-          } else if(hdb->opts & HDBTBZIP){
-            zbuf = _tc_bzdecompress(rec.vbuf, rec.vsiz, &zsiz);
-          } else if(hdb->opts & HDBTTCBS){
-            zbuf = tcbsdecode(rec.vbuf, rec.vsiz, &zsiz);
-          } else {
-            zbuf = hdb->dec(rec.vbuf, rec.vsiz, &zsiz, hdb->decop);
-          }
-          if(zbuf){
-            if(!tchdbput(thdb, rec.kbuf, rec.ksiz, zbuf, zsiz)){
-              tchdbsetecode(hdb, thdb->ecode, __FILE__, __LINE__, __func__);
-              err = true;
-            }
-            TCFREE(zbuf);
-          } else {
-            tchdbsetecode(hdb, TCEMISC, __FILE__, __LINE__, __func__);
-            err = true;
-          }
-        } else {
-          if(!tchdbput(thdb, rec.kbuf, rec.ksiz, rec.vbuf, rec.vsiz)){
-            tchdbsetecode(hdb, thdb->ecode, __FILE__, __LINE__, __func__);
-            err = true;
-          }
-        }
-      }
-      TCFREE(rec.bbuf);
+    if(rec.magic != HDBMAGICREC){
+       continue;
     }
+    if(!rec.vbuf && !tchdbreadrecbody(hdb, &rec)){
+      if (rec.bbuf) TCFREE(rec.bbuf);
+      err = true;
+      break;
+    }
+    if(hdb->zmode){
+      int zsiz;
+      char *zbuf;
+      if(hdb->opts & HDBTDEFLATE){
+        zbuf = _tc_inflate(rec.vbuf, rec.vsiz, &zsiz, _TCZMRAW);
+      } else if(hdb->opts & HDBTBZIP){
+        zbuf = _tc_bzdecompress(rec.vbuf, rec.vsiz, &zsiz);
+      } else if(hdb->opts & HDBTTCBS){
+        zbuf = tcbsdecode(rec.vbuf, rec.vsiz, &zsiz);
+      } else {
+        zbuf = hdb->dec(rec.vbuf, rec.vsiz, &zsiz, hdb->decop);
+      }
+      if(zbuf){
+        if(!tchdbput(thdb, rec.kbuf, rec.ksiz, zbuf, zsiz)){
+          tchdbsetecode(hdb, thdb->ecode, __FILE__, __LINE__, __func__);
+          err = true;
+        }
+        TCFREE(zbuf);
+      } else {
+        tchdbsetecode(hdb, TCEMISC, __FILE__, __LINE__, __func__);
+        err = true;
+      }
+    } else {
+      if(!tchdbput(thdb, rec.kbuf, rec.ksiz, rec.vbuf, rec.vsiz)){
+        tchdbsetecode(hdb, thdb->ecode, __FILE__, __LINE__, __func__);
+        err = true;
+      }
+    }
+    TCFREE(rec.bbuf);
   }
   if(!tchdbclose(thdb)){
     tchdbsetecode(hdb, thdb->ecode, __FILE__, __LINE__, __func__);
@@ -5010,20 +5024,22 @@ static bool tchdboptimizeimpl(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow
     TCFREE(tpath);
     return false;
   }
+
   if(esc){
     char *bpath = tcsprintf("%s%cbroken", tpath, MYEXTCHR);
-    if(rename(opath, bpath)){
+    if(!tcrenamefile(opath, bpath)){
       tchdbsetecode(hdb, TCEUNLINK, __FILE__, __LINE__, __func__);
       err = true;
     }
     TCFREE(bpath);
   } else {
-    if(unlink(opath)){
+    if(!tcunlinkfile(opath)){
       tchdbsetecode(hdb, TCEUNLINK, __FILE__, __LINE__, __func__);
       err = true;
     }
   }
-  if(rename(tpath, opath)){
+  
+  if(!tcrenamefile(tpath, opath)){
     tchdbsetecode(hdb, TCERENAME, __FILE__, __LINE__, __func__);
     err = true;
   }
@@ -5176,12 +5192,12 @@ static bool tchdbdefragimpl(TCHDB *hdb, int64_t step){
     } else {
         err = true;
     }
-    if(hdb->iter >= hdb->fsiz) hdb->iter = UINT64_MAX;
-    if(!hdb->tran){
-      if(!tchdbftruncate(hdb, hdb->fsiz)){
+    if(hdb->iter >= hdb->fsiz) {
+        hdb->iter = UINT64_MAX;
+    }
+    if(!hdb->tran && !tchdbftruncate(hdb, hdb->fsiz)){
         tchdbsetecode(hdb, TCETRUNC, __FILE__, __LINE__, __func__);
         return false;
-      }
     }
   }
   return !err;
@@ -5468,17 +5484,26 @@ static bool tchdbftruncate(TCHDB *hdb, off_t length) {
 
 static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
 #ifndef _WIN32
-    if (!(hdb->omode & HDBOWRITER)) {
+    length = length ? tcpagealign(length) : 0;
+    if (!(hdb->omode & HDBOWRITER) ||
+            ((length <= hdb->xfsiz || length <= hdb->fsiz) && !(opts & HDBTRUNCSHRINKFILE))) {
         return true;
     }
-    bool err = (ftruncate(hdb->fd, length) != -1);
-    hdb->xfsiz = (err ? 0 : length);
-    return !err;
+    if (ftruncate(hdb->fd, length) == 0) {
+        hdb->xfsiz = length;
+        return true;
+    } else {
+        return false;
+    }
 #else
     bool err = false;
     LARGE_INTEGER size;
-    size.QuadPart = (hdb->omode & HDBOWRITER) ?  tcpagealign((length == 0) ? 1 : length) : length; //MSDN: Applications should test for files with a length of 0 (zero) and reject those files.
-    if (hdb->map && length > 0 && (size.QuadPart <= hdb->xfsiz || size.QuadPart <= hdb->fsiz || !(hdb->omode & HDBOWRITER))) {
+    //MSDN: Applications should test for files with a length of 0 (zero) and reject those files.
+    size.QuadPart = (hdb->omode & HDBOWRITER) ?  tcpagealign((length == 0) ? 1 : length) : length;
+    if (hdb->map &&
+        length > 0 &&
+        (!(hdb->omode & HDBOWRITER) ||
+            ((size.QuadPart <= hdb->xfsiz || size.QuadPart <= hdb->fsiz) && !(opts & HDBTRUNCSHRINKFILE)))) {
         return true;
     }
     if (!(opts & HDBWRITENOLOCK) && !HDBLOCKSMEM(hdb, true)) {
