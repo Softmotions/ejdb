@@ -16,9 +16,23 @@
 
 /*
  * Document-class: EJDB
- *    Main EJDB class that contains all database control methods. Instance should be created by EJDB::open
+ * Main EJDB class that contains all database control methods. Instance should be created by EJDB::open
  */
 
+/*
+ * Document-class: EJDBResults
+ * Class for accessing EJDB query resuts. Access to results is provided by methods of {Enumerble}[http://ruby-doc.org/core-1.9.1/Enumerable.html] mixin.
+ * Instance of this class can be created only by calling EJDB.find method.
+ */
+
+/*
+ * Document-class: EJDBBinary
+ * Class for wrapping ruby binary data array to save as BSON binary. Access to data array is provided by methods of {Enumerble}[http://ruby-doc.org/core-1.9.1/Enumerable.html] mixin.
+ *
+ * Example:
+ *  secret = EJDBBinary.new("Some binary secrect".encode("utf-8").bytes.to_a)
+ *  our_string_back = secret.to_a.pack("U*")
+ */
 
 #include <tcejdb/ejdb_private.h>
 #include <ruby.h>
@@ -1193,6 +1207,13 @@ void EJDB_results_each(VALUE self) {
         rb_yield(bson_to_ruby(bsonval));
     }
 }
+
+/*
+ * call-seq:
+ *   results.count -> Number
+ *
+ * Returns total number of query result objects
+ */
 VALUE EJDB_results_count(VALUE self) {
     RBEJDB_RESULTS* rbresults;
     Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
@@ -1204,6 +1225,14 @@ VALUE EJDB_results_count(VALUE self) {
     return INT2NUM(rbresults->count);
 }
 
+/*
+ * call-seq:
+ *   results.log -> String or nil
+ *
+ * Returns query log.
+ * To get this log +:explain+ option must be passed to +hints+ argument of query.
+ * Otherwise method returns +nil+.
+ */
 VALUE EJDB_results_log(VALUE self) {
     RBEJDB_RESULTS* rbresults;
     Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
@@ -1218,7 +1247,13 @@ void EJDB_results_close(VALUE self) {
     close_ejdb_results_internal(rbresults);
 }
 
-
+/*
+ * call-seq:
+ *   EJDBBinary.initialize(bdata) -> self
+ *
+ * - +bdata+ (Array) - array of binary data. All elements of array must be numbers in range [0..255]
+ *
+ */
 VALUE EJDB_binary_init(VALUE self, VALUE bdata) {
     Check_Type(bdata, T_ARRAY);
 
@@ -1232,6 +1267,7 @@ VALUE EJDB_binary_init(VALUE self, VALUE bdata) {
     }
 
     rb_iv_set(self, "@data", rb_ary_dup(bdata));
+    return self;
 }
 
 
@@ -1315,5 +1351,6 @@ Init_rbejdb() {
     rb_define_private_method(ejdbBinaryClass, "initialize", RUBY_METHOD_FUNC(EJDB_binary_init), 1);
     rb_define_method(ejdbBinaryClass, "each", RUBY_METHOD_FUNC(EJDB_binary_each), 0);
 
+    /* :nodoc: */
     ejdbQueryClass = rb_define_class("EJDBQuery", rb_cObject);
 }
