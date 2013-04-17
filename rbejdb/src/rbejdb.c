@@ -1212,7 +1212,7 @@ void EJDB_results_each(VALUE self) {
  * call-seq:
  *   results.count -> Number
  *
- * Returns total number of query result objects
+ * Returns total number of query result objects.
  */
 VALUE EJDB_results_count(VALUE self) {
     RBEJDB_RESULTS* rbresults;
@@ -1240,11 +1240,19 @@ VALUE EJDB_results_log(VALUE self) {
     return rbresults->log ? rb_str_new2(TCXSTRPTR(rbresults->log)) : Qnil;
 }
 
-void EJDB_results_close(VALUE self) {
+/*
+ * call-seq:
+ *   results.close -> nil
+ *
+ * Closes query results and immediately frees memory taken for results.
+ * Calling this method invalidates results container and any further access attempts will cause +RuntimeError+.
+ */
+VALUE EJDB_results_close(VALUE self) {
     RBEJDB_RESULTS* rbresults;
     Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
 
     close_ejdb_results_internal(rbresults);
+    return Qnil;
 }
 
 /*
@@ -1351,6 +1359,8 @@ Init_rbejdb() {
     rb_define_private_method(ejdbBinaryClass, "initialize", RUBY_METHOD_FUNC(EJDB_binary_init), 1);
     rb_define_method(ejdbBinaryClass, "each", RUBY_METHOD_FUNC(EJDB_binary_each), 0);
 
-    /* :nodoc: */
+    /*
+     * Internal EJDB class. :nodoc:
+     */
     ejdbQueryClass = rb_define_class("EJDBQuery", rb_cObject);
 }
