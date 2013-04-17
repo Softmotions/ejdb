@@ -16,7 +16,7 @@ $jb = EJDB.open("tdbt2", EJDB::JBOWRITER | EJDB::JBOCREAT | EJDB::JBOTRUNC)
 class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdb1_save_load
-    assert $jb.is_open?
+    assert $jb.open?
 
     parrot1 = {
         "name" => "Grenny",
@@ -58,7 +58,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdb2_query1
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     results = $jb.find("parrots", {})
 
@@ -106,7 +106,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdb3_query2
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     results = $jb.find("parrots", {:name => /(grenny|bounty)/i}, {:orderby => {:name => 1}})
 
@@ -130,7 +130,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdb4_query3
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     results = $jb.find("parrots", {}, [{:name => "Grenny"}, {:name => "Bounty"}], {:orderby => {:name => 1}})
 
@@ -163,7 +163,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdb5_circular
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     #Circular query object
     cir_query = {}
@@ -209,7 +209,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdb6_save_load_buffer
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     sally = {
         "name" => "Sally",
@@ -246,7 +246,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdb7_use_string_index
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     results = $jb.find("birds", {"name" => "Molly"}, {:explain => true})
     assert_not_nil results
@@ -269,7 +269,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdb8_cmeta
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     dm = $jb.get_db_meta
     assert dm
@@ -286,7 +286,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdb9_test_update1
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     result = $jb.update("parrots", {"name" => {"$icase" => "GRENNY"}, "$inc" => {"age" => 10}}, {:explain => true})
     assert_equal(1, result.count)
@@ -317,7 +317,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdba_id_nin
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     obj = $jb.find_one("parrots", {})
     assert_not_nil obj
@@ -341,7 +341,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdbb_test_remove
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     obj = $jb.find_one("birds", {"name" => "Molly"})
     assert_not_nil obj
@@ -360,7 +360,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdbc_sync
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
     $jb.sync
     puts __method__.inspect + " has passed successfull"
   end
@@ -368,7 +368,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdbd_remove_colls
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     $jb.drop_collection("birds")
 
@@ -382,7 +382,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdbe_tx1
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     obj = {:foo => "bar"}
 
@@ -428,7 +428,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdbf_create_collection_on_upsert
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     results = $jb.update("upsertcoll", {:foo => "bar", "$upsert" => {:foo => "bar"}})
     assert_equal(1, results.count)
@@ -442,7 +442,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdbg_max_and_skip_hints
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     results = $jb.find("parrots", {})
     assert_not_equal(1, results.count)
@@ -628,7 +628,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
   def test_ejdbj_close
     assert_not_nil $jb
-    assert $jb.is_open?
+    assert $jb.open?
 
     results = $jb.find("parrots", {})
     assert_not_nil results
@@ -638,9 +638,9 @@ class EJDBTestUnit < Test::Unit::TestCase
       results.to_a
     }
 
-    $jb.close
+    assert_nil $jb.close
 
-    assert !$jb.is_open?
+    assert !$jb.open?
     puts __method__.inspect + " has passed successfull"
   end
 

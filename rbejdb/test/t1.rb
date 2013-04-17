@@ -10,7 +10,7 @@ Dir.chdir TESTDB_DIR
 
 ejdb = EJDB.open("zoo", EJDB::DEFAULT_OPEN_MODE)
 
-raise "Failed to open ejdb" unless ejdb.is_open?
+raise "Failed to open ejdb" unless ejdb.open?
 
 ejdb.drop_collection("parrots", true)
 ejdb.drop_collection("cows", true)
@@ -48,6 +48,6 @@ raise "Error querying cows"  unless ejdb.find("cows", :name => "moo").any? {|res
 
 ejdb.close
 
-raise "Failed to close ejdb" unless !ejdb.is_open?
+raise "Failed to close ejdb" unless !ejdb.open?
 
 puts "CONGRATULATIONS!!! Test batch 1 has passed completely!"
