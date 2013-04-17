@@ -908,6 +908,48 @@ VALUE EJDB_drop_array_index(VALUE self, VALUE collName, VALUE fpath) {
     return EJDB_set_index_internal(self, collName, fpath, JBIDXARR | JBIDXDROP);
 }
 
+/*
+ * call-seq:
+ *   ejdb.get_db_meta -> Hash
+ *
+ * Get hash that describes a database structure and collections.<br/>
+ * Sample meta:
+ *  {
+ *    "collections" => [
+ *      {
+ *        "file" => "testdb_ecoll",
+ *        "indexes" => [],
+ *        "name" => "ecoll",
+ *        "options" => {
+ *          "buckets" => 425977,
+ *          "cachedrecords" => 0,
+ *          "compressed" => false,
+ *          "large" => true
+ *        },
+ *        "records" => 1
+ *      },
+ *      {
+ *        "file" => "testdb_mycoll",
+ *        "indexes" => [ {
+ *          "field" => "foo",
+ *          "file" => "testdb_mycoll.idx.sfoo.lex",
+ *          "iname" => "sfoo",
+ *          "records" => 3,
+ *          "type" => "lexical"
+ *         }],
+ *        "name" => "mycoll",
+ *        "options" => {
+ *          "buckets" => 131071,
+ *          "cachedrecords" => 0,
+ *          "compressed" => false,
+ *          "large" => false
+ *        },
+ *        "records" => 4
+ *      }
+ *    ],
+ *    "file" => "testdb"
+ *  }
+ */
 VALUE EJDB_get_db_meta(VALUE self) {
     EJDB* ejdb = getEJDB(self);
 
@@ -981,6 +1023,14 @@ VALUE EJDB_sync(VALUE self) {
     return Qnil;
 }
 
+/*
+ * call-seq:
+ *   ejdb.get_transaction_status(collName) -> true|false
+ *
+ * Get collection transaction status. Returns true if transaction is active.
+ *
+ * - +collName+ (String) - name of collection
+ */
 VALUE EJDB_get_transaction_status(VALUE self, VALUE collName) {
     SafeStringValue(collName);
 
@@ -998,7 +1048,15 @@ VALUE EJDB_get_transaction_status(VALUE self, VALUE collName) {
     return status ? Qtrue : Qfalse;
 }
 
-void EJDB_begin_transaction(VALUE self, VALUE collName) {
+/*
+ * call-seq:
+ *   ejdb.begin_transaction(collName) -> nil
+ *
+ * Begin collection transaction.
+ *
+ * - +collName+ (String) - name of collection
+ */
+VALUE EJDB_begin_transaction(VALUE self, VALUE collName) {
     SafeStringValue(collName);
 
     EJDB* ejdb = getEJDB(self);
@@ -1010,9 +1068,18 @@ void EJDB_begin_transaction(VALUE self, VALUE collName) {
     if (!ejdbtranbegin(coll)) {
         raise_ejdb_error(ejdb);
     }
+    return Qnil;
 }
 
-void EJDB_commit_transaction(VALUE self, VALUE collName) {
+/*
+ * call-seq:
+ *   ejdb.commit_transaction(collName) -> nil
+ *
+ * Commit collection transaction.
+ *
+ * - +collName+ (String) - name of collection
+ */
+VALUE EJDB_commit_transaction(VALUE self, VALUE collName) {
     SafeStringValue(collName);
 
     EJDB* ejdb = getEJDB(self);
@@ -1024,9 +1091,18 @@ void EJDB_commit_transaction(VALUE self, VALUE collName) {
     if (!ejdbtrancommit(coll)) {
         raise_ejdb_error(ejdb);
     }
+    return Qnil;
 }
 
-void EJDB_rollback_transaction(VALUE self, VALUE collName) {
+/*
+ * call-seq:
+ *   ejdb.rollback_transaction(collName) -> nil
+ *
+ * Rollback collection transaction.
+ *
+ * - +collName+ (String) - name of collection
+ */
+VALUE EJDB_rollback_transaction(VALUE self, VALUE collName) {
     SafeStringValue(collName);
 
     EJDB* ejdb = getEJDB(self);
@@ -1038,10 +1114,18 @@ void EJDB_rollback_transaction(VALUE self, VALUE collName) {
     if (!ejdbtranabort(coll)) {
         raise_ejdb_error(ejdb);
     }
+    return Qnil;
 }
 
-
-VALUE EJDB_check_valid_oid_string(VALUE clazz, VALUE oid) {
+/*
+ * call-seq:
+ *   EJDB::valid_oid_string?(oid) -> true|false
+ *
+ * Returns true if argument string contains valid oid. <br/>
+ *
+ * - +oid+ (String) - oid as string
+ */
+VALUE EJDB_is_valid_oid_string(VALUE clazz, VALUE oid) {
     return TYPE(oid) == T_STRING && ejdbisvalidoidstr(StringValuePtr(oid)) ? Qtrue : Qfalse;
 }
 
@@ -1214,7 +1298,7 @@ Init_rbejdb() {
     rb_define_method(ejdbClass, "commit_transaction", RUBY_METHOD_FUNC(EJDB_commit_transaction), 1);
     rb_define_method(ejdbClass, "rollback_transaction", RUBY_METHOD_FUNC(EJDB_rollback_transaction), 1);
 
-    rb_define_singleton_method(ejdbClass, "check_valid_oid_string", RUBY_METHOD_FUNC(EJDB_check_valid_oid_string), 1);
+    rb_define_singleton_method(ejdbClass, "valid_oid_string?", RUBY_METHOD_FUNC(EJDB_is_valid_oid_string), 1);
 
 
     ejdbResultsClass = rb_define_class("EJDBResults", rb_cObject);

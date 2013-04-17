@@ -49,8 +49,8 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal(parrot2["_id"], obj["_id"])
     assert_equal("Bounty", obj["name"])
 
-    assert EJDB.check_valid_oid_string(parrot2["_id"])
-    assert !EJDB.check_valid_oid_string("ololo")
+    assert EJDB.valid_oid_string?(parrot2["_id"])
+    assert !EJDB.valid_oid_string?("ololo")
 
     puts __method__.inspect + " has passed successfull"
   end
