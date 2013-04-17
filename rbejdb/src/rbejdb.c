@@ -34,6 +34,7 @@ typedef struct {
 typedef struct {
     TCLIST* results;
     TCLIST* results_raw;
+    int count;
     TCXSTR* log;
 } RBEJDB_RESULTS;
 
@@ -45,7 +46,7 @@ typedef struct {
 } RBEJDB_QUERY;
 
 
-VALUE create_EJDB_query_results(TCLIST* qres, TCXSTR *log);
+VALUE create_EJDB_query_results(TCLIST* qres, int count, TCXSTR *log);
 
 
 VALUE ejdbClass;
@@ -251,13 +252,12 @@ VALUE EJDB_drop_collection(int argc, VALUE* argv, VALUE self) {
  *
  * NOTE: Field names of passed objects may not contain $ and . characters, error condition will be fired in this case.
  * - +collName+ (String) - name of collection
- * - +obj+ (Hash or Object) - zero or more objects to save
+ * - +obj+ (Hash or Object) - one or more objects to save
  * - +merge+ (Hash or Object) - if true a saved objects will be merged with who's
  *
  * <br/>
  * Returns:
- * - nil, if no objects provided in arguments
- * - oid of saved object, as String if one object provided in arguments
+ * - oid of saved object, as string, if single object provided in arguments
  * - array of oids, in other case
  */
 VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
@@ -453,7 +453,7 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
             coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
         }
         if (!coll) {
-            return !onlycount ? create_EJDB_query_results(tclistnew2(1), NULL) : INT2NUM(0);
+            return !onlycount || explain ? create_EJDB_query_results(tclistnew2(1), 0, NULL) : INT2NUM(0);
         }
     }
 
@@ -465,7 +465,7 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
 
     TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, log);
 
-    return !onlycount ? create_EJDB_query_results(qres, log) : INT2NUM(count);
+    return !onlycount || explain ? create_EJDB_query_results(qres, count, log) : INT2NUM(count);
 }
 
 VALUE EJDB_find_internal_wrapper(VALUE args) {
@@ -482,7 +482,7 @@ VALUE EJDB_find_ensure(VALUE queryWrap, VALUE exception) {
 
 /*
  * call-seq:
- *   ejdb.find(collName, [q = {}, orarr = [], hints = {}]) -> nil
+ *   ejdb.find(collName, [q = {}, orarr = [], hints = {}]) -> EJDBResults or Number
  *
  * Execute query on collection. EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.
  * Both in query and in +hints+ strings or symbols may be used as keys (f. e. "fpath" and :fpath are equal).
@@ -551,16 +551,16 @@ VALUE EJDB_find_ensure(VALUE queryWrap, VALUE exception) {
  * [:orderby] Sorting order of query fields.
  * [:onlycount] If `true` only count of matching records will be returned without placing records in result set.
  * [:fields] Set subset of fetched fields
- * If a field presented in $orderby clause it will be forced to include in resulting records.<br/>
+ * If a field presented in +:orderby+ clause it will be forced to include in resulting records.<br/>
  * Example:<br/>
- *  hints:    {
- *    "$orderby" : { //ORDER BY field1 ASC, field2 DESC
- *        "field1" : 1,
- *        "field2" : -1
+ *  hints = {
+ *    :orderby => { //ORDER BY field1 ASC, field2 DESC
+ *        "field1" => 1,
+ *        "field2" => -1
  *    },
- *    "$fields" : { //SELECT ONLY {_id, field1, field2}
- *        "field1" : 1,
- *        "field2" : 1
+ *    :fields => { //SELECT ONLY {_id, field1, field2}
+ *        "field1" => 1,
+ *        "field2" => 1
  *    }
  *  }
  *
@@ -571,6 +571,12 @@ VALUE EJDB_find_ensure(VALUE queryWrap, VALUE exception) {
  * - +orarr+ (Array) - array of additional OR query objects (joined with OR predicate). If 3rd argument is not array it
  * will be recognized as +hints+ argument
  * - +hints+ (Hash or Object) - object with query hints
+ *
+ * <br/>
+ * Returns:
+ * - EJDBResults object, if no +:onlycount+ hint specified or :explain hint specified
+ * - results count as Number, otherwise
+ *
  */
 VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     VALUE collName;
@@ -600,7 +606,6 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     rbquery->orarrbson = NULL;
     rbquery->orarrlng = 0;
 
-
     VALUE params = rb_ary_new();
     rb_ary_push(params, self);
     rb_ary_push(params, collName);
@@ -613,10 +618,29 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     return rb_ensure(EJDB_find_internal_wrapper, params, EJDB_find_ensure, queryWrap);
 }
 
-static VALUE EJDB_block_true(VALUE yielded_object, VALUE context, int argc, VALUE argv[]){
+VALUE EJDB_block_true(VALUE yielded_object, VALUE context, int argc, VALUE argv[]){
     return Qtrue;
 }
 
+
+/*
+ * call-seq:
+ *   ejdb.find_one(collName, oid) -> Hash or Number or nil
+ *
+ * Same as +find+ but retrieves only one matching object.
+ *
+ * - +collName+ (String) - name of collection
+ * - +q+ (Hash or Object) - query object. In most cases it will be easier to use hash to specify EJDB queries
+ * - +orarr+ (Array) - array of additional OR query objects (joined with OR predicate). If 3rd argument is not array it
+ * will be recognized as +hints+ argument
+ * - +hints+ (Hash or Object) - object with query hints
+ *
+ * <br/>
+ * Returns:
+ * - found object as hash, if no +:onlycount+ hint specified
+ * - nil, if no +:onlycount+ hint specified and nothing found
+ * - results count as Number, otherwise
+ */
 VALUE EJDB_find_one(int argc, VALUE* argv, VALUE self) {
     VALUE results = EJDB_find(argc, argv, self);
     if (TYPE(results) == T_DATA) {
@@ -625,8 +649,60 @@ VALUE EJDB_find_one(int argc, VALUE* argv, VALUE self) {
     return results;
 }
 
-void EJDB_update(int argc, VALUE* argv, VALUE self) {
-    EJDB_find(argc, argv, self);
+
+/*
+ * call-seq:
+ *   ejdb.update(collName, oid) -> EJDBResults or Number
+ *
+ * Convenient method to execute update queries.
+ *
+ *  - $set Field set operation:
+ *    - {some fields for selection, "$set" => {"field1" => obj, ..., "fieldN" => obj}}
+ *  - $upsert Atomic upsert. If matching records are found it will be "$set" operation, otherwise new record will be inserted with fields specified by argment object.
+ *    - {.., "$upsert" => {"field1" => val1, "fieldN" => valN}}
+ *  - $inc Increment operation. Only number types are supported.
+ *    - {some fields for selection, "$inc" => {"field1" => number, ..., "fieldN" => number}
+ *  - $dropall In-place record removal operation.
+ *    - {some fields for selection, "$dropall" => true}
+ *  - $addToSet | $addToSetAll Atomically adds value to the array only if its not in the array already. If containing array is missing it will be created.
+ *    - {.., "$addToSet" => {"fpath" => val1, "fpathN" => valN, ...}}
+ *  - $pull | pullAll Atomically removes all occurrences of value from field, if field is an array.
+ *    - {.., "$pull" => {"fpath" => val1, "fpathN" => valN, ...}}
+ *
+ * <br/>
+ * - +collName+ (String) - name of collection
+ * - +q+ (Hash or Object) - query object. In most cases it will be easier to use hash to specify EJDB queries
+ * - +orarr+ (Array) - array of additional OR query objects (joined with OR predicate). If 3rd argument is not array it
+ * will be recognized as +hints+ argument
+ * - +hints+ (Hash or Object) - object with query hints
+ *
+ * <br/>
+ * Returns:
+ * Returns:
+ * - EJDBResults object, with only +count+ and +log+ methods available if :explain hint specified
+ * - updated objects count as Number, otherwise
+ */
+VALUE EJDB_update(int argc, VALUE* argv, VALUE self) {
+
+    VALUE collName;
+    VALUE q;
+    VALUE orarr;
+    VALUE hints;
+
+    VALUE p3;
+    VALUE p4;
+
+    rb_scan_args(argc, argv, "13", &collName, &q, &p3, &p4);
+
+    orarr = TYPE(p3) == T_ARRAY ? p3 : rb_ary_new();
+    hints = TYPE(p3) != T_ARRAY ? p3 : p4;
+    hints = !NIL_P(hints) ? hints : rb_hash_new();
+
+    Check_Type(hints, T_HASH);
+    rb_hash_aset(hints, rb_str_new2("onlycount"), Qtrue);
+
+    VALUE findargs[4] = {collName, q, orarr, hints};
+    return EJDB_find(4, findargs, self);
 }
 
 
@@ -860,7 +936,7 @@ void EJDB_results_free(RBEJDB_RESULTS* rbres) {
     ruby_xfree(rbres);
 }
 
-VALUE create_EJDB_query_results(TCLIST* qres, TCXSTR *log) {
+VALUE create_EJDB_query_results(TCLIST* qres, int count, TCXSTR *log) {
     VALUE resultsWrap = Data_Wrap_Struct(ejdbResultsClass, NULL, EJDB_results_free, ruby_xmalloc(sizeof(RBEJDB_RESULTS)));
     RBEJDB_RESULTS* rbresults;
     Data_Get_Struct(resultsWrap, RBEJDB_RESULTS, rbresults);
@@ -876,6 +952,7 @@ VALUE create_EJDB_query_results(TCLIST* qres, TCXSTR *log) {
 
     rbresults->results = results;
     rbresults->results_raw = qres;
+    rbresults->count = count;
     rbresults->log = log;
 
     return resultsWrap;
@@ -895,6 +972,16 @@ void EJDB_results_each(VALUE self) {
         bson* bsonval = *(bson**) TCLISTVALPTR(results, i);
         rb_yield(bson_to_ruby(bsonval));
     }
+}
+VALUE EJDB_results_count(VALUE self) {
+    RBEJDB_RESULTS* rbresults;
+    Data_Get_Struct(self, RBEJDB_RESULTS, rbresults);
+
+    if (!rbresults) {
+        rb_raise(rb_eRuntimeError, "count() method called on invalid ejdb query results");
+    }
+
+    return INT2NUM(rbresults->count);
 }
 
 VALUE EJDB_results_log(VALUE self) {
@@ -998,6 +1085,7 @@ Init_rbejdb() {
     rb_define_singleton_method(ejdbResultsClass, "new", RUBY_METHOD_FUNC(private_new_method_stub), 0);
     rb_include_module(ejdbResultsClass, rb_mEnumerable);
     rb_define_method(ejdbResultsClass, "each", RUBY_METHOD_FUNC(EJDB_results_each), 0);
+    rb_define_method(ejdbResultsClass, "count", RUBY_METHOD_FUNC(EJDB_results_count), 0);
     rb_define_method(ejdbResultsClass, "log", RUBY_METHOD_FUNC(EJDB_results_log), 0);
     rb_define_method(ejdbResultsClass, "close", RUBY_METHOD_FUNC(EJDB_results_close), 0);
 

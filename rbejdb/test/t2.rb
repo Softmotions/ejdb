@@ -308,8 +308,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_equal(1, obj["extra1"])
 
     q = {"_id" => {"$in" => [id]}, "$set" => {"stime" => Time.now}}
-    result = $jb.update("parrots", q)
-    assert_equal(1, result.count)
+    assert_equal(1, $jb.update("parrots", q))
 
     puts __method__.inspect + " has passed successfull"
   end
@@ -430,8 +429,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_not_nil $jb
     assert $jb.open?
 
-    results = $jb.update("upsertcoll", {:foo => "bar", "$upsert" => {:foo => "bar"}})
-    assert_equal(1, results.count)
+    assert_equal(1, $jb.update("upsertcoll", {:foo => "bar", "$upsert" => {:foo => "bar"}}))
 
     obj = $jb.find_one("upsertcoll", {:foo => "bar"})
     assert_equal("bar", obj["foo"])
@@ -612,6 +610,7 @@ class EJDBTestUnit < Test::Unit::TestCase
     assert_not_nil results.to_a[0]
     assert_not_equal(:chupacabra, results.to_a[0]["name"])
 
+    assert_nil $jb.find_one("monsters", {:name => "Sauron"})
 
     puts __method__.inspect + " has passed successfull"
   end
