@@ -18,4 +18,4 @@ clean:
 	rm -rf test/testdb
 	rm -f mkmf.log
 
-.PHONY: all build check clean doc
+.PHONY: all build install check doc clean

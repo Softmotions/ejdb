@@ -683,7 +683,6 @@ VALUE EJDB_find_one(int argc, VALUE* argv, VALUE self) {
  * - updated objects count as Number, otherwise
  */
 VALUE EJDB_update(int argc, VALUE* argv, VALUE self) {
-
     VALUE collName;
     VALUE q;
     VALUE orarr;
@@ -707,7 +706,7 @@ VALUE EJDB_update(int argc, VALUE* argv, VALUE self) {
 
 
 
-void EJDB_set_index_internal(VALUE self, VALUE collName, VALUE fpath, int flags) {
+VALUE EJDB_set_index_internal(VALUE self, VALUE collName, VALUE fpath, int flags) {
     SafeStringValue(collName);
     SafeStringValue(fpath);
 
@@ -721,62 +720,192 @@ void EJDB_set_index_internal(VALUE self, VALUE collName, VALUE fpath, int flags)
     if (!ejdbsetindex(coll, StringValuePtr(fpath), flags)) {
         raise_ejdb_error(ejdb);
     }
+    return Qnil;
 }
 
-void EJDB_drop_indexes(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXDROPALL);
+/*
+ * call-seq:
+ *   ejdb.drop_indexes(collName, fpath) -> nil
+ *
+ * Drop indexes of all types for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_drop_indexes(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXDROPALL);
 };
 
-void EJDB_optimize_indexes(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXOP);
+/*
+ * call-seq:
+ *   ejdb.optimize_indexes(collName, fpath) -> nil
+ *
+ * Optimize indexes of all types for BSON field path. Performs B+ tree index file optimization.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_optimize_indexes(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXOP);
 };
 
-void EJDB_ensure_string_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXSTR);
+/*
+ * call-seq:
+ *   ejdb.ensure_string_index(collName, fpath) -> nil
+ *
+ * Ensure index presence of String type for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_ensure_string_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXSTR);
 }
 
-void EJDB_rebuild_string_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXSTR | JBIDXREBLD);
+/*
+ * call-seq:
+ *   ejdb.rebuild_string_index(collName, fpath) -> nil
+ *
+ * Rebuild index of String type for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_rebuild_string_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXSTR | JBIDXREBLD);
 }
 
-void EJDB_drop_string_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXSTR | JBIDXDROP);
+/*
+ * call-seq:
+ *   ejdb.drop_string_index(collName, fpath) -> nil
+ *
+ * Drop index of String type for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_drop_string_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXSTR | JBIDXDROP);
 }
 
-void EJDB_ensure_istring_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXISTR);
+/*
+ * call-seq:
+ *   ejdb.ensure_istring_index(collName, fpath) -> nil
+ *
+ * Ensure index presence of IString type for BSON field path.<br/>
+ * IString is the special type of String index for case insensitive matching.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_ensure_istring_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXISTR);
 }
 
-void EJDB_rebuild_istring_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXISTR | JBIDXREBLD);
+/*
+ * call-seq:
+ *   ejdb.rebuild_istring_index(collName, fpath) -> nil
+ *
+ * Rebuild index of IString type for BSON field path.<br/>
+ * IString is the special type of String index for case insensitive matching.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_rebuild_istring_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXISTR | JBIDXREBLD);
 }
 
-void EJDB_drop_istring_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXISTR | JBIDXDROP);
+/*
+ * call-seq:
+ *   ejdb.drop_istring_index(collName, fpath) -> nil
+ *
+ * Drop index of IString type for BSON field path.<br/>
+ * IString is the special type of String index for case insensitive matching.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_drop_istring_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXISTR | JBIDXDROP);
 }
 
-void EJDB_ensure_number_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXNUM);
+/*
+ * call-seq:
+ *   ejdb.ensure_number_index(collName, fpath) -> nil
+ *
+ * Ensure index of Number type for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_ensure_number_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXNUM);
 }
 
-void EJDB_rebuild_number_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXNUM | JBIDXREBLD);
+/*
+ * call-seq:
+ *   ejdb.rebuild_number_index(collName, fpath) -> nil
+ *
+ * Rebuild index of Number type for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_rebuild_number_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXNUM | JBIDXREBLD);
 }
 
-void EJDB_drop_number_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXNUM | JBIDXDROP);
+/*
+ * call-seq:
+ *   ejdb.drop_number_index(collName, fpath) -> nil
+ *
+ * Drop index of Number type for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_drop_number_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXNUM | JBIDXDROP);
 }
 
-void EJDB_ensure_array_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXARR);
+/*
+ * call-seq:
+ *   ejdb.ensure_array_index(collName, fpath) -> nil
+ *
+ * Ensure index presence of Array type for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_ensure_array_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXARR);
 }
 
-void EJDB_rebuild_array_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXARR | JBIDXREBLD);
+/*
+ * call-seq:
+ *   ejdb.rebuild_array_index(collName, fpath) -> nil
+ *
+ * Rebuild index of Array type for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_rebuild_array_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXARR | JBIDXREBLD);
 }
 
-void EJDB_drop_array_index(VALUE self, VALUE collName, VALUE fpath) {
-    EJDB_set_index_internal(self, collName, fpath, JBIDXARR | JBIDXDROP);
+/*
+ * call-seq:
+ *   ejdb.drop_array_index(collName, fpath) -> nil
+ *
+ * Drop index of Array type for BSON field path.
+ *
+ * - +collName+ (String) - name of collection
+ * - +oid+ (String) - BSON field path
+ */
+VALUE EJDB_drop_array_index(VALUE self, VALUE collName, VALUE fpath) {
+    return EJDB_set_index_internal(self, collName, fpath, JBIDXARR | JBIDXDROP);
 }
 
 VALUE EJDB_get_db_meta(VALUE self) {
@@ -838,11 +967,18 @@ VALUE EJDB_get_db_meta(VALUE self) {
     return res;
 }
 
-void EJDB_sync(VALUE self) {
+/*
+ * call-seq:
+ *   ejdb.sync -> nil
+ *
+ * Synchronize entire EJDB database with disk.
+ */
+VALUE EJDB_sync(VALUE self) {
     EJDB* ejdb = getEJDB(self);
     if (!ejdbsyncdb(ejdb)) {
         raise_ejdb_error(ejdb);
     }
+    return Qnil;
 }
 
 VALUE EJDB_get_transaction_status(VALUE self, VALUE collName) {
