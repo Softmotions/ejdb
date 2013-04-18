@@ -66,8 +66,8 @@ void init_ruby_to_bson() {
 }
 
 void rbbson_context_mark(RBBSON_CONTEXT* rbbsctx) {
-    ruby_gc_mark(rbbsctx->obj);
-    ruby_gc_mark(rbbsctx->traverse_hash);
+    rb_gc_mark(rbbsctx->obj);
+    rb_gc_mark(rbbsctx->traverse_hash);
 }
 
 void rbbson_context_free(RBBSON_CONTEXT* rbbsctx) {

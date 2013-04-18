@@ -303,6 +303,10 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
             continue;
         }
 
+        if (TYPE(rbobj) != T_HASH && TYPE(rbobj) != T_OBJECT && TYPE(rbobj) != T_DATA) {
+            rb_raise(rb_eArgError, "Cannot save passed ruby value: %s", rb_obj_classname(rbobj));
+        }
+
         bson* bsonval;
         ruby_to_bson(rbobj, &bsonval, 0);
 

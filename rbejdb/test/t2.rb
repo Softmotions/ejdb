@@ -486,7 +486,7 @@ class EJDBTestUnit < Test::Unit::TestCase
       $jb.save({})
     }
     $jb.save("monsters")
-    assert_raise(RuntimeError) {
+    assert_raise(ArgumentError) {
       $jb.save("monsters", :monster) #Cannot convert object to bson
     }
 
@@ -500,10 +500,7 @@ class EJDBTestUnit < Test::Unit::TestCase
 
     $jb.save("monsters", {:name => :abracadabra}, true)
 
-    assert_raise(RuntimeError) {
-      $jb.save("monsters", :what_is_this?)
-    }
-    assert_raise(RuntimeError) {
+    assert_raise(ArgumentError) {
       $jb.save("monsters", [{:name => :abracadabra}])
     }
 
