@@ -1257,7 +1257,7 @@ VALUE EJDB_results_close(VALUE self) {
 
 /*
  * call-seq:
- *   EJDBBinary.initialize(bdata) -> self
+ *   EJDBBinary.new(bdata) -> EJDBBinary
  *
  * - +bdata+ (Array) - array of binary data. All elements of array must be numbers in range [0..255]
  *

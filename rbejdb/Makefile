@@ -12,9 +12,11 @@ check:
 	make -C ./test
 
 doc:
+	rdoc src
 
 clean:
 	rm -rf build
+	rm -rf doc
 	rm -rf test/testdb
 	rm -f mkmf.log
 
