@@ -36,15 +36,13 @@ class EJDBAdvancedTestUnit < Test::Unit::TestCase
     }
 
     puts "Saving..."
-
     st = Time.now
     recs.each { |rec| $jb.save("pcoll1", rec) }
-
     puts "Saved #{RS} objects, time: #{Time.now - st} s"
-    assert_equal(RS, $jb.find("pcoll1", {}, :onlycount => true))
 
     puts "Checking saved..."
-    (recs).each { |rec|
+    assert_equal(RS, $jb.find("pcoll1", {}, :onlycount => true))
+    recs.each { |rec|
       assert_equal(1, $jb.find("pcoll1", rec, :onlycount => true))
     }
 
@@ -55,7 +53,7 @@ class EJDBAdvancedTestUnit < Test::Unit::TestCase
       $jb.find("pcoll1", recs.sample, :onlycount => true)
     }
     secs = Time.now - st
-    puts "#{QRS} queries, time: #{secs} s, #{'%.6f' % (secs / QRS)} s per query"
+    puts "#{QRS} queries, time: #{secs} s, #{'%.7f' % (secs / QRS)} s per query"
 
 
     puts "Setting index..."
@@ -71,7 +69,7 @@ class EJDBAdvancedTestUnit < Test::Unit::TestCase
       $jb.find("pcoll1", recs.sample, :onlycount => true)
     }
     secs = Time.now - st
-    puts "#{QRS} queries with rstring index, time: #{secs} s, #{'%.6f' % (secs / QRS)} s per query"
+    puts "#{QRS} queries with rstring index, time: #{secs} s, #{'%.7f' % (secs / QRS)} s per query"
 
 
     puts "Quering with $set..."
@@ -85,5 +83,6 @@ class EJDBAdvancedTestUnit < Test::Unit::TestCase
     puts "Update query ($inc) time: #{Time.now - st}"
 
     assert_equal(RS, $jb.find("pcoll1", {"intv" => 2}, :onlycount => true))
+
   end
 end
