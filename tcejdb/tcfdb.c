@@ -89,11 +89,11 @@ enum {
 #define FDBTHREADYIELD(TC_fdb)                          \
   do { if((TC_fdb)->mmtx) sched_yield(); } while(false)
 #define FDBLOCKSMEM(TC_fdb, TC_wr)                       \
-  ((TC_fdb)->smtx ? tcfdblocksmem((TC_fdb), (TC_wr)) : ((TC_fdb)->map != NULL))
+  ((TC_fdb)->mmtx ? tcfdblocksmem((TC_fdb), (TC_wr)) : ((TC_fdb)->map != NULL))
 #define FDBLOCKSMEM2(TC_fdb, TC_wr)                       \
-  ((TC_fdb)->smtx ? tcfdblocksmem2((TC_fdb), (TC_wr)) : true)
+  ((TC_fdb)->mmtx ? tcfdblocksmem2((TC_fdb), (TC_wr)) : true)
 #define FDBUNLOCKSMEM(TC_fdb)                             \
-  ((TC_fdb)->smtx ? tcfdbunlocksmem(TC_fdb) : true)
+  ((TC_fdb)->mmtx ? tcfdbunlocksmem(TC_fdb) : true)
 
 /* private function prototypes */
 static void tcfdbdumpmeta(TCFDB *fdb, char *hbuf);
@@ -165,12 +165,12 @@ void tcfdbdel(TCFDB *fdb) {
     if (fdb->mmtx) {
         pthread_key_delete(*(pthread_key_t *) fdb->eckey);
         pthread_mutex_destroy(fdb->wmtx);
-        pthread_mutex_destroy(fdb->smtx);
         pthread_mutex_destroy(fdb->tmtx);
         for (int i = FDBRMTXNUM - 1; i >= 0; i--) {
             pthread_rwlock_destroy((pthread_rwlock_t *) fdb->rmtxs + i);
         }
         pthread_mutex_destroy(fdb->amtx);
+        pthread_rwlock_destroy(fdb->smtx);
         pthread_rwlock_destroy(fdb->mmtx);
         TCFREE(fdb->eckey);
         TCFREE(fdb->wmtx);
@@ -179,6 +179,7 @@ void tcfdbdel(TCFDB *fdb) {
         TCFREE(fdb->rmtxs);
         TCFREE(fdb->amtx);
         TCFREE(fdb->mmtx);
+        fdb->mmtx = NULL;
     }
     TCFREE(fdb);
 }
