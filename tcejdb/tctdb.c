@@ -1962,7 +1962,7 @@ static bool tctdbopenimpl(TCTDB *tdb, const char *path, int omode){
     TCLIST *paths = tcglobpat(tpath);
     int pnum = TCLISTNUM(paths);
     for(int i = 0; i < pnum; i++){
-      unlink(TCLISTVALPTR(paths, i));
+      tcunlinkfile(TCLISTVALPTR(paths, i));
     }
     tclistdel(paths);
   }
@@ -2327,11 +2327,11 @@ static bool tctdboptimizeimpl(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow
       char *npath = tcstrdup(path);
       int omode = (tchdbomode(hdb) & ~HDBOCREAT) & ~HDBOTRUNC;
       if(!tchdbclose(hdb)) err = true;
-      if(unlink(npath)){
+      if(!tcunlinkfile(npath)){
         tctdbsetecode(tdb, TCEUNLINK, __FILE__, __LINE__, __func__);
         err = true;
       }
-      if(rename(tpath, npath)){
+      if(!tcrenamefile(tpath, npath)){
         tctdbsetecode(tdb, TCERENAME, __FILE__, __LINE__, __func__);
         err = true;
       }
@@ -2661,7 +2661,7 @@ static bool tctdbsetindeximpl(TCTDB *tdb, const char *name, int type, TDBRVALOAD
         case TDBITQGRAM:
           path = tcstrdup(tcbdbpath(idx->db));
           tcbdbdel(idx->db);
-          if(path && unlink(path)){
+          if(path && !tcunlinkfile(path)){
             tctdbsetecode(tdb, TCEUNLINK, __FILE__, __LINE__, __func__);
             err = true;
           }
