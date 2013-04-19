@@ -24,6 +24,7 @@
 #define __TCBDB_CLINKAGEBEGIN
 #define __TCBDB_CLINKAGEEND
 #endif
+
 __TCBDB_CLINKAGEBEGIN
 
 
@@ -37,81 +38,81 @@ __TCBDB_CLINKAGEBEGIN
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for a B+ tree database */
-  void *mmtx;                            /* mutex for method */
-  void *cmtx;                            /* mutex for cache */
-  TCHDB *hdb;                            /* internal database object */
-  bool open;                             /* whether the internal database is opened */
-  bool wmode;                            /* whether to be writable */
-  uint32_t lmemb;                        /* number of members in each leaf */
-  uint32_t nmemb;                        /* number of members in each node */
-  uint8_t opts;                          /* options */
-  uint64_t root;                         /* ID number of the root page */
-  uint64_t first;                        /* ID number of the first leaf */
-  uint64_t last;                         /* ID number of the last leaf */
-  uint64_t lnum;                         /* number of leaves */
-  uint64_t nnum;                         /* number of nodes */
-  uint64_t rnum;                         /* number of records */
-  TCMAP *leafc;                          /* cache for leaves */
-  TCMAP *nodec;                          /* cache for nodes */
-  TCCMP cmp;                             /* pointer to the comparison function */
-  void *cmpop;                           /* opaque object for the comparison function */
-  uint32_t lcnum;                        /* maximum number of cached leaves */
-  uint32_t ncnum;                        /* maximum number of cached nodes */
-  uint32_t lsmax;                        /* maximum size of each leaf */
-  uint32_t lschk;                        /* counter for leaf size checking */
-  uint64_t capnum;                       /* capacity number of records */
-  uint64_t *hist;                        /* history array of visited nodes */
-  int hnum;                              /* number of element of the history array */
-  volatile uint64_t hleaf;               /* ID number of the leaf referred by the history */
-  volatile uint64_t lleaf;               /* ID number of the last visited leaf */
-  bool tran;                             /* whether in the transaction */
-  char *rbopaque;                        /* opaque for rollback */
-  volatile uint64_t clock;               /* logical clock */
-  volatile int64_t cnt_saveleaf;         /* tesing counter for leaf save times */
-  volatile int64_t cnt_loadleaf;         /* tesing counter for leaf load times */
-  volatile int64_t cnt_killleaf;         /* tesing counter for leaf kill times */
-  volatile int64_t cnt_adjleafc;         /* tesing counter for node cache adjust times */
-  volatile int64_t cnt_savenode;         /* tesing counter for node save times */
-  volatile int64_t cnt_loadnode;         /* tesing counter for node load times */
-  volatile int64_t cnt_adjnodec;         /* tesing counter for node cache adjust times */
+typedef struct { /* type of structure for a B+ tree database */
+    void *mmtx; /* mutex for method */
+    void *cmtx; /* mutex for cache */
+    TCHDB *hdb; /* internal database object */
+    bool open; /* whether the internal database is opened */
+    bool wmode; /* whether to be writable */
+    uint32_t lmemb; /* number of members in each leaf */
+    uint32_t nmemb; /* number of members in each node */
+    uint8_t opts; /* options */
+    uint64_t root; /* ID number of the root page */
+    uint64_t first; /* ID number of the first leaf */
+    uint64_t last; /* ID number of the last leaf */
+    uint64_t lnum; /* number of leaves */
+    uint64_t nnum; /* number of nodes */
+    uint64_t rnum; /* number of records */
+    TCMAP *leafc; /* cache for leaves */
+    TCMAP *nodec; /* cache for nodes */
+    TCCMP cmp; /* pointer to the comparison function */
+    void *cmpop; /* opaque object for the comparison function */
+    uint32_t lcnum; /* maximum number of cached leaves */
+    uint32_t ncnum; /* maximum number of cached nodes */
+    uint32_t lsmax; /* maximum size of each leaf */
+    uint32_t lschk; /* counter for leaf size checking */
+    uint64_t capnum; /* capacity number of records */
+    uint64_t *hist; /* history array of visited nodes */
+    int hnum; /* number of element of the history array */
+    volatile uint64_t hleaf; /* ID number of the leaf referred by the history */
+    volatile uint64_t lleaf; /* ID number of the last visited leaf */
+    bool tran; /* whether in the transaction */
+    char *rbopaque; /* opaque for rollback */
+    volatile uint64_t clock; /* logical clock */
+    volatile int64_t cnt_saveleaf; /* tesing counter for leaf save times */
+    volatile int64_t cnt_loadleaf; /* tesing counter for leaf load times */
+    volatile int64_t cnt_killleaf; /* tesing counter for leaf kill times */
+    volatile int64_t cnt_adjleafc; /* tesing counter for node cache adjust times */
+    volatile int64_t cnt_savenode; /* tesing counter for node save times */
+    volatile int64_t cnt_loadnode; /* tesing counter for node load times */
+    volatile int64_t cnt_adjnodec; /* tesing counter for node cache adjust times */
 } TCBDB;
 
-enum {                                   /* enumeration for additional flags */
-  BDBFOPEN = HDBFOPEN,                   /* whether opened */
-  BDBFFATAL = HDBFFATAL                  /* whether with fatal error */
+enum { /* enumeration for additional flags */
+    BDBFOPEN = HDBFOPEN, /* whether opened */
+    BDBFFATAL = HDBFFATAL /* whether with fatal error */
 };
 
-enum {                                   /* enumeration for tuning options */
-  BDBTLARGE = 1 << 0,                    /* use 64-bit bucket array */
-  BDBTDEFLATE = 1 << 1,                  /* compress each page with Deflate */
-  BDBTBZIP = 1 << 2,                     /* compress each record with BZIP2 */
-  BDBTTCBS = 1 << 3,                     /* compress each page with TCBS */
-  BDBTEXCODEC = 1 << 4                   /* compress each record with outer functions */
+enum { /* enumeration for tuning options */
+    BDBTLARGE = 1 << 0, /* use 64-bit bucket array */
+    BDBTDEFLATE = 1 << 1, /* compress each page with Deflate */
+    BDBTBZIP = 1 << 2, /* compress each record with BZIP2 */
+    BDBTTCBS = 1 << 3, /* compress each page with TCBS */
+    BDBTEXCODEC = 1 << 4 /* compress each record with outer functions */
 };
 
-enum {                                   /* enumeration for open modes */
-  BDBOREADER = 1 << 0,                   /* open as a reader */
-  BDBOWRITER = 1 << 1,                   /* open as a writer */
-  BDBOCREAT = 1 << 2,                    /* writer creating */
-  BDBOTRUNC = 1 << 3,                    /* writer truncating */
-  BDBONOLCK = 1 << 4,                    /* open without locking */
-  BDBOLCKNB = 1 << 5,                    /* lock without blocking */
-  BDBOTSYNC = 1 << 6                     /* synchronize every transaction */
+enum { /* enumeration for open modes */
+    BDBOREADER = 1 << 0, /* open as a reader */
+    BDBOWRITER = 1 << 1, /* open as a writer */
+    BDBOCREAT = 1 << 2, /* writer creating */
+    BDBOTRUNC = 1 << 3, /* writer truncating */
+    BDBONOLCK = 1 << 4, /* open without locking */
+    BDBOLCKNB = 1 << 5, /* lock without blocking */
+    BDBOTSYNC = 1 << 6 /* synchronize every transaction */
 };
 
-typedef struct {                         /* type of structure for a B+ tree cursor */
-  TCBDB *bdb;                            /* database object */
-  uint64_t clock;                        /* logical clock */
-  uint64_t id;                           /* ID number of the leaf */
-  int32_t kidx;                          /* number of the key */
-  int32_t vidx;                          /* number of the value */
+typedef struct { /* type of structure for a B+ tree cursor */
+    TCBDB *bdb; /* database object */
+    uint64_t clock; /* logical clock */
+    uint64_t id; /* ID number of the leaf */
+    int32_t kidx; /* number of the key */
+    int32_t vidx; /* number of the value */
 } BDBCUR;
 
-enum {                                   /* enumeration for cursor put mode */
-  BDBCPCURRENT,                          /* current */
-  BDBCPBEFORE,                           /* before */
-  BDBCPAFTER                             /* after */
+enum { /* enumeration for cursor put mode */
+    BDBCPCURRENT, /* current */
+    BDBCPBEFORE, /* before */
+    BDBCPAFTER /* after */
 };
 
 
@@ -194,7 +195,7 @@ EJDB_EXPORT bool tcbdbsetcmpfunc(TCBDB *bdb, TCCMP cmp, void *cmpop);
    If successful, the return value is true, else, it is false.
    Note that the tuning parameters should be set before the database is opened. */
 EJDB_EXPORT bool tcbdbtune(TCBDB *bdb, int32_t lmemb, int32_t nmemb,
-               int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
+        int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
 
 
 /* Set the caching parameters of a B+ tree database object.
@@ -472,7 +473,7 @@ EJDB_EXPORT int tcbdbvsiz2(TCBDB *bdb, const char *kstr);
    Because the object of the return value is created with the function `tclistnew', it should
    be deleted with the function `tclistdel' when it is no longer in use. */
 EJDB_EXPORT TCLIST *tcbdbrange(TCBDB *bdb, const void *bkbuf, int bksiz, bool binc,
-                   const void *ekbuf, int eksiz, bool einc, int max);
+        const void *ekbuf, int eksiz, bool einc, int max);
 
 
 /* Get string keys of ranged records in a B+ tree database object.
@@ -490,7 +491,7 @@ EJDB_EXPORT TCLIST *tcbdbrange(TCBDB *bdb, const void *bkbuf, int bksiz, bool bi
    Because the object of the return value is created with the function `tclistnew', it should
    be deleted with the function `tclistdel' when it is no longer in use. */
 EJDB_EXPORT TCLIST *tcbdbrange2(TCBDB *bdb, const char *bkstr, bool binc,
-                    const char *ekstr, bool einc, int max);
+        const char *ekstr, bool einc, int max);
 
 
 /* Get forward matching keys in a B+ tree database object.
@@ -568,7 +569,7 @@ EJDB_EXPORT bool tcbdbsync(TCBDB *bdb);
    This function is useful to reduce the size of the database file with data fragmentation by
    successive updating. */
 EJDB_EXPORT bool tcbdboptimize(TCBDB *bdb, int32_t lmemb, int32_t nmemb,
-                   int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
+        int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
 
 
 /* Remove all records of a B+ tree database object.
@@ -1046,7 +1047,7 @@ EJDB_EXPORT bool tcbdbputdupback2(TCBDB *bdb, const char *kstr, const char *vstr
    Note that the callback function can not perform any database operation because the function
    is called in the critical section guarded by the same locks of database operations. */
 EJDB_EXPORT bool tcbdbputproc(TCBDB *bdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
-                  TCPDPROC proc, void *op);
+        TCPDPROC proc, void *op);
 
 
 /* Move a cursor object to the rear of records corresponding a key.

@@ -225,6 +225,12 @@
 #define sysconf_SC_CLK_TCK sysconf(_SC_CLK_TCK)
 #endif
 
+#define CLOSEFH2(_fd) \
+    do {              \
+        CLOSEFH(_fd); \
+        (_fd) = INVALID_HANDLE_VALUE; \
+    } while(0)
+
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>

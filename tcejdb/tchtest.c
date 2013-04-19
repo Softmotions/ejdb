@@ -159,6 +159,7 @@ static void mprint(TCHDB *hdb){
   iprintf("xmsiz: %" PRIdMAX "\n", hdb->xmsiz);
   iprintf("fbpnum: %" PRIdMAX "\n", hdb->fbpnum);
   iprintf("fbpool: %p\n", hdb->fbpool);
+#ifndef NDEBUG
   iprintf("cnt_writerec: %" PRIdMAX "\n", (long long)hdb->cnt_writerec);
   iprintf("cnt_reuserec: %" PRIdMAX "\n", (long long)hdb->cnt_reuserec);
   iprintf("cnt_moverec: %" PRIdMAX "\n", (long long)hdb->cnt_moverec);
@@ -176,6 +177,7 @@ static void mprint(TCHDB *hdb){
   iprintf("cnt_defrag: %" PRIdMAX "\n", (long long)hdb->cnt_defrag);
   iprintf("cnt_shiftrec: %" PRIdMAX "\n", (long long)hdb->cnt_shiftrec);
   iprintf("cnt_trunc: %" PRIdMAX "\n", (long long)hdb->cnt_trunc);
+#endif
 }
 
 

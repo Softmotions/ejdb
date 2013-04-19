@@ -180,15 +180,17 @@ static void eprint(TCFDB *fdb, int line, const char *func){
 
 /* print members of fixed-length database */
 static void mprint(TCFDB *fdb){
-  if(fdb->cnt_writerec < 0) return;
   iprintf("minimum ID number: %" PRIuMAX "\n", (unsigned long long)tcfdbmin(fdb));
   iprintf("maximum ID number: %" PRIuMAX "\n", (unsigned long long)tcfdbmax(fdb));
   iprintf("width of the value: %u\n", (unsigned int)tcfdbwidth(fdb));
   iprintf("limit file size: %" PRIuMAX "\n", (unsigned long long)tcfdblimsiz(fdb));
   iprintf("limit ID number: %" PRIuMAX "\n", (unsigned long long)tcfdblimid(fdb));
+#ifndef NDEBUG
+  if(fdb->cnt_writerec < 0) return;
   iprintf("cnt_writerec: %" PRIdMAX "\n", (long long)fdb->cnt_writerec);
   iprintf("cnt_readrec: %" PRIdMAX "\n", (long long)fdb->cnt_readrec);
   iprintf("cnt_truncfile: %" PRIdMAX "\n", (long long)fdb->cnt_truncfile);
+#endif
 }
 
 

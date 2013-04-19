@@ -24,6 +24,7 @@
 #define __TCHDB_CLINKAGEBEGIN
 #define __TCHDB_CLINKAGEEND
 #endif
+
 __TCHDB_CLINKAGEBEGIN
 
 
@@ -36,103 +37,106 @@ __TCHDB_CLINKAGEBEGIN
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for a hash database */
-  void *mmtx;                            /* mutex for method */
-  void *rmtxs;                           /* mutexes for records */
-  void *dmtx;                            /* mutex for the while database */
-  void *smtx;                            /* rw mutex for shared memory */
-  void *wmtx;                            /* mutex for write ahead logging */
-  void *eckey;                           /* key for thread specific error code */
-  char *rpath;                           /* real path for locking */
-  uint8_t type;                          /* database type */
-  uint8_t flags;                         /* additional flags */
-  uint64_t bnum;                         /* number of the bucket array */
-  uint8_t apow;                          /* power of record alignment */
-  uint8_t fpow;                          /* power of free block pool number */
-  uint8_t opts;                          /* options */
-  char *path;                            /* path of the database file */
-  HANDLE fd;                             /* file descriptor of the database file */
-  uint32_t omode;                        /* open mode */
-  uint64_t rnum;                         /* number of the records */
-  uint64_t fsiz;                         /* size of the database file */
-  uint64_t frec;                         /* offset of the first record */
-  uint64_t dfcur;                        /* offset of the cursor for defragmentation */
-  uint64_t iter;                         /* offset of the iterator */
-  volatile char *map;                    /* pointer to the mapped memory */
-  uint64_t msiz;                         /* size of the mapped memory */
-  uint64_t xmsiz;                        /* size of the extra mapped memory */
-  uint64_t xfsiz;                        /* extra size of the file for mapped memory */
-  bool ba64;                             /* using of 64-bit bucket array */
-  uint32_t align;                        /* record alignment */
-  uint32_t runit;                        /* record reading unit */
-  bool zmode;                            /* whether compression is used */
-  int32_t fbpmax;                        /* maximum number of the free block pool */
-  void *fbpool;                          /* free block pool */
-  int32_t fbpnum;                        /* number of the free block pool */
-  int32_t fbpmis;                        /* number of missing retrieval of the free block pool */
-  bool async;                            /* whether asynchronous storing is called */
-  TCXSTR *drpool;                        /* delayed record pool */
-  TCXSTR *drpdef;                        /* deferred records of the delayed record pool */
-  uint64_t drpoff;                       /* offset of the delayed record pool */
-  TCMDB *recc;                           /* cache for records */
-  uint32_t rcnum;                        /* maximum number of cached records */
-  TCCODEC enc;                           /* pointer to the encoding function */
-  void *encop;                           /* opaque object for the encoding functions */
-  TCCODEC dec;                           /* pointer to the decoding function */
-  void *decop;                           /* opaque object for the decoding functions */
-  volatile int ecode;                    /* last happened error code */
-  bool fatal;                            /* whether a fatal error occured */
-  uint64_t inode;                        /* inode number */
-  time_t mtime;                          /* modification time */
-  uint32_t dfunit;                       /* unit step number of auto defragmentation */
-  uint32_t dfcnt;                        /* counter of auto defragmentation */
-  bool tran;                             /* whether in the transaction */
-  HANDLE walfd;                          /* file descriptor of write ahead logging */
-  uint64_t walend;                       /* end offset of write ahead logging */
-  HANDLE dbgfd;                          /* file descriptor for debugging */
-  volatile int64_t cnt_writerec;         /* tesing counter for record write times */
-  volatile int64_t cnt_reuserec;         /* tesing counter for record reuse times */
-  volatile int64_t cnt_moverec;          /* tesing counter for record move times */
-  volatile int64_t cnt_readrec;          /* tesing counter for record read times */
-  volatile int64_t cnt_searchfbp;        /* tesing counter for FBP search times */
-  volatile int64_t cnt_insertfbp;        /* tesing counter for FBP insert times */
-  volatile int64_t cnt_splicefbp;        /* tesing counter for FBP splice times */
-  volatile int64_t cnt_dividefbp;        /* tesing counter for FBP divide times */
-  volatile int64_t cnt_mergefbp;         /* tesing counter for FBP merge times */
-  volatile int64_t cnt_reducefbp;        /* tesing counter for FBP reduce times */
-  volatile int64_t cnt_appenddrp;        /* tesing counter for DRP append times */
-  volatile int64_t cnt_deferdrp;         /* tesing counter for DRP defer times */
-  volatile int64_t cnt_flushdrp;         /* tesing counter for DRP flush times */
-  volatile int64_t cnt_adjrecc;          /* tesing counter for record cache adjust times */
-  volatile int64_t cnt_defrag;           /* tesing counter for defragmentation times */
-  volatile int64_t cnt_shiftrec;         /* tesing counter for record shift times */
-  volatile int64_t cnt_trunc;            /* tesing counter for truncation times */
+typedef struct { /* type of structure for a hash database */
+    bool ba64; /* using of 64-bit bucket array */
+    bool tran; /* whether in the transaction */
+    bool zmode; /* whether compression is used */
+    bool async; /* whether asynchronous storing is called */
+    bool fatal; /* whether a fatal error occured */
+    uint8_t type; /* database type */
+    uint8_t flags; /* additional flags */
+    uint8_t apow; /* power of record alignment */
+    uint8_t fpow; /* power of free block pool number */
+    uint8_t opts; /* options */
+    void *mmtx; /* mutex for method */
+    void *rmtxs; /* mutexes for records */
+    void *dmtx; /* mutex for the while database */
+    void *smtx; /* rw mutex for shared memory */
+    void *wmtx; /* mutex for write ahead logging */
+    void *eckey; /* key for thread specific error code */
+    char *rpath; /* real path for locking */
+    char *path; /* path of the database file */
+    void *fbpool; /* free block pool */
+    char *map; /* pointer to the mapped memory */
+    TCXSTR *drpool; /* delayed record pool */
+    TCXSTR *drpdef; /* deferred records of the delayed record pool */
+    TCCODEC enc; /* pointer to the encoding function */
+    TCCODEC dec; /* pointer to the decoding function */
+    TCMDB *recc; /* cache for records */
+    void *encop; /* opaque object for the encoding functions */
+    void *decop; /* opaque object for the decoding functions */
+    volatile int ecode; /* last happened error code */
+    int32_t fbpmax; /* maximum number of the free block pool */
+    int32_t fbpnum; /* number of the free block pool */
+    int32_t fbpmis; /* number of missing retrieval of the free block pool */
+    uint32_t align; /* record alignment */
+    uint32_t runit; /* record reading unit */
+    uint32_t rcnum; /* maximum number of cached records */
+    uint32_t dfunit; /* unit step number of auto defragmentation */
+    uint32_t dfcnt; /* counter of auto defragmentation */
+    uint32_t omode; /* open mode */
+    HANDLE fd; /* file descriptor of the database file */
+    HANDLE walfd; /* file descriptor of write ahead logging */
+    HANDLE dbgfd; /* file descriptor for debugging */
 #ifdef _WIN32
-  volatile HANDLE w32hmap;                /* win32 file mappings for mmap */
+    HANDLE w32hmap; /* win32 file mappings for mmap */
+#endif
+    time_t mtime; /* modification time */
+    uint64_t bnum; /* number of the bucket array */
+    uint64_t rnum; /* number of the records */
+    uint64_t fsiz; /* size of the database file */
+    uint64_t frec; /* offset of the first record */
+    uint64_t dfcur; /* offset of the cursor for defragmentation */
+    uint64_t iter; /* offset of the iterator */
+    uint64_t msiz; /* size of the mapped memory */
+    uint64_t xmsiz; /* size of the extra mapped memory */
+    uint64_t xfsiz; /* extra size of the file for mapped memory */
+    uint64_t drpoff; /* offset of the delayed record pool */
+    uint64_t inode; /* inode number */
+    uint64_t walend; /* end offset of write ahead logging */
+
+#ifndef NDEBUG
+    volatile int64_t cnt_writerec; /* tesing counter for record write times */
+    volatile int64_t cnt_reuserec; /* tesing counter for record reuse times */
+    volatile int64_t cnt_moverec; /* tesing counter for record move times */
+    volatile int64_t cnt_readrec; /* tesing counter for record read times */
+    volatile int64_t cnt_searchfbp; /* tesing counter for FBP search times */
+    volatile int64_t cnt_insertfbp; /* tesing counter for FBP insert times */
+    volatile int64_t cnt_splicefbp; /* tesing counter for FBP splice times */
+    volatile int64_t cnt_dividefbp; /* tesing counter for FBP divide times */
+    volatile int64_t cnt_mergefbp; /* tesing counter for FBP merge times */
+    volatile int64_t cnt_reducefbp; /* tesing counter for FBP reduce times */
+    volatile int64_t cnt_appenddrp; /* tesing counter for DRP append times */
+    volatile int64_t cnt_deferdrp; /* tesing counter for DRP defer times */
+    volatile int64_t cnt_flushdrp; /* tesing counter for DRP flush times */
+    volatile int64_t cnt_adjrecc; /* tesing counter for record cache adjust times */
+    volatile int64_t cnt_defrag; /* tesing counter for defragmentation times */
+    volatile int64_t cnt_shiftrec; /* tesing counter for record shift times */
+    volatile int64_t cnt_trunc; /* tesing counter for truncation times */
 #endif
 } TCHDB;
 
-enum {                                   /* enumeration for additional flags */
-  HDBFOPEN = 1 << 0,                     /* whether opened */
-  HDBFFATAL = 1 << 1                     /* whether with fatal error */
+enum { /* enumeration for additional flags */
+    HDBFOPEN = 1 << 0, /* whether opened */
+    HDBFFATAL = 1 << 1 /* whether with fatal error */
 };
 
-enum {                                   /* enumeration for tuning options */
-  HDBTLARGE = 1 << 0,                    /* use 64-bit bucket array */
-  HDBTDEFLATE = 1 << 1,                  /* compress each record with Deflate */
-  HDBTBZIP = 1 << 2,                     /* compress each record with BZIP2 */
-  HDBTTCBS = 1 << 3,                     /* compress each record with TCBS */
-  HDBTEXCODEC = 1 << 4                   /* compress each record with custom functions */
+enum { /* enumeration for tuning options */
+    HDBTLARGE = 1 << 0, /* use 64-bit bucket array */
+    HDBTDEFLATE = 1 << 1, /* compress each record with Deflate */
+    HDBTBZIP = 1 << 2, /* compress each record with BZIP2 */
+    HDBTTCBS = 1 << 3, /* compress each record with TCBS */
+    HDBTEXCODEC = 1 << 4 /* compress each record with custom functions */
 };
 
-enum {                                   /* enumeration for open modes */
-  HDBOREADER = 1 << 0,                   /* open as a reader */
-  HDBOWRITER = 1 << 1,                   /* open as a writer */
-  HDBOCREAT = 1 << 2,                    /* writer creating */
-  HDBOTRUNC = 1 << 3,                    /* writer truncating */
-  HDBONOLCK = 1 << 4,                    /* open without locking */
-  HDBOLCKNB = 1 << 5,                    /* lock without blocking */
-  HDBOTSYNC = 1 << 6                     /* synchronize every transaction */
+enum { /* enumeration for open modes */
+    HDBOREADER = 1 << 0, /* open as a reader */
+    HDBOWRITER = 1 << 1, /* open as a writer */
+    HDBOCREAT = 1 << 2, /* writer creating */
+    HDBOTRUNC = 1 << 3, /* writer truncating */
+    HDBONOLCK = 1 << 4, /* open without locking */
+    HDBOLCKNB = 1 << 5, /* lock without blocking */
+    HDBOTSYNC = 1 << 6 /* synchronize every transaction */
 };
 
 
@@ -806,7 +810,7 @@ EJDB_EXPORT bool tchdbcacheclear(TCHDB *hdb);
    Note that the callback function can not perform any database operation because the function
    is called in the critical section guarded by the same locks of database operations. */
 EJDB_EXPORT bool tchdbputproc(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
-                  TCPDPROC proc, void *op);
+        TCPDPROC proc, void *op);
 
 
 /* Retrieve the next record of a record in a hash database object.

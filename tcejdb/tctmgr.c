@@ -683,8 +683,10 @@ static int procinform(const char *path, int omode){
   if(flags & TDBFFATAL) printf(" fatal");
   printf("\n");
   printf("bucket number: %" PRIuMAX "\n", (unsigned long long)tctdbbnum(tdb));
+#ifndef NDEBUG
   if(tdb->hdb->cnt_writerec >= 0)
     printf("used bucket number: %" PRIdMAX "\n", (long long)tctdbbnumused(tdb));
+#endif  
   printf("alignment: %u\n", tctdbalign(tdb));
   printf("free block pool: %u\n", tctdbfbpmax(tdb));
   printf("index number: %d\n", tctdbinum(tdb));

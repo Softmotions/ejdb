@@ -665,8 +665,12 @@ static int procinform(const char *path, int omode){
   printf("leaf number: %" PRIuMAX "\n", (unsigned long long)tcbdblnum(bdb));
   printf("node number: %" PRIuMAX "\n", (unsigned long long)tcbdbnnum(bdb));
   printf("bucket number: %" PRIuMAX "\n", (unsigned long long)tcbdbbnum(bdb));
+
+#ifndef NDEBUG
   if(bdb->hdb->cnt_writerec >= 0)
     printf("used bucket number: %" PRIdMAX "\n", (long long)tcbdbbnumused(bdb));
+#endif  
+
   printf("alignment: %u\n", tcbdbalign(bdb));
   printf("free block pool: %u\n", tcbdbfbpmax(bdb));
   printf("inode number: %" PRIdMAX "\n", (long long)tcbdbinode(bdb));

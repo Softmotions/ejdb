@@ -24,6 +24,7 @@
 #define __TCFDB_CLINKAGEBEGIN
 #define __TCFDB_CLINKAGEEND
 #endif
+
 __TCFDB_CLINKAGEBEGIN
 
 
@@ -36,67 +37,70 @@ __TCFDB_CLINKAGEBEGIN
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for a fixed-length database */
-  void *mmtx;                            /* mutex for method */
-  void *amtx;                            /* mutex for attribute */
-  void *rmtxs;                           /* mutexes for records */
-  void *tmtx;                            /* mutex for transaction */
-  void *wmtx;                            /* mutex for write ahead logging */
-  void *eckey;                           /* key for thread specific error code */
-  char *rpath;                           /* real path for locking */
-  uint8_t type;                          /* database type */
-  uint8_t flags;                         /* additional flags */
-  uint32_t width;                        /* width of the value of each record */
-  uint64_t limsiz;                       /* limit size of the file */
-  int wsiz;                              /* size of the width region */
-  int rsiz;                              /* size of each record */
-  uint64_t limid;                        /* limit ID number */
-  char *path;                            /* path of the database file */
-  HANDLE fd;                                /* file descriptor of the database file */
-  uint32_t omode;                        /* open mode */
-  uint64_t rnum;                         /* number of the records */
-  uint64_t fsiz;                         /* size of the database file */
-  uint64_t min;                          /* minimum ID number */
-  uint64_t max;                          /* maximum ID number */
-  uint64_t iter;                         /* ID number of the iterator */
-  char *map;                             /* pointer to the mapped memory */
-  unsigned char *array;                  /* pointer to the array region */
-  volatile int ecode;                    /* last happened error code */
-  bool fatal;                            /* whether a fatal error occured */
-  uint64_t inode;                        /* inode number */
-  time_t mtime;                          /* modification time */
-  bool tran;                             /* whether in the transaction */
-  HANDLE walfd;                             /* file descriptor of write ahead logging */
-  uint64_t walend;                       /* end offset of write ahead logging */
-  HANDLE dbgfd;                             /* file descriptor for debugging */
-  int64_t cnt_writerec;                  /* tesing counter for record write times */
-  int64_t cnt_readrec;                   /* tesing counter for record read times */
-  int64_t cnt_truncfile;                 /* tesing counter for file truncate times */
+typedef struct { /* type of structure for a fixed-length database */
+    bool fatal; /* whether a fatal error occured */
+    bool tran; /* whether in the transaction */
+    uint8_t type; /* database type */
+    uint8_t flags; /* additional flags */
+    void *mmtx; /* mutex for method */
+    void *smtx; /* rw lock for shared memory  */
+    void *amtx; /* mutex for attribute */
+    void *rmtxs; /* mutexes for records */
+    void *tmtx; /* mutex for transaction */
+    void *wmtx; /* mutex for write ahead logging */
+    void *eckey; /* key for thread specific error code */
+    char *path; /* path of the database file */
+    char *rpath; /* real path for locking */
+    volatile char *map; /* pointer to the mapped memory */
+    volatile int ecode; /* last happened error code */
+    int wsiz; /* size of the width region */
+    int rsiz; /* size of each record */
+    uint32_t width; /* width of the value of each record */
+    uint32_t omode; /* open mode */
+    HANDLE fd; /* file descriptor of the database file */
+    HANDLE walfd; /* file descriptor of write ahead logging */
+    HANDLE dbgfd; /* file descriptor for debugging */
 #ifdef _WIN32
-  volatile HANDLE fileMapping;			 /* win32 file mappings for mmap */
+    HANDLE w32hmap; /* win32 file mappings for mmap */
+#endif
+    time_t mtime; /* modification time */
+    uint64_t limsiz; /* limit size of the file */
+    uint64_t rnum; /* number of the records */
+    uint64_t fsiz; /* size of the database file */
+    uint64_t min; /* minimum ID number */
+    uint64_t max; /* maximum ID number */
+    uint64_t iter; /* ID number of the iterator */
+    uint64_t inode; /* inode number */
+    uint64_t walend; /* end offset of write ahead logging */
+    uint64_t limid; /* limit ID number */
+
+#ifndef NDEBUG
+    int64_t cnt_writerec; /* tesing counter for record write times */
+    int64_t cnt_readrec; /* tesing counter for record read times */
+    int64_t cnt_truncfile; /* tesing counter for file truncate times */
 #endif
 } TCFDB;
 
-enum {                                   /* enumeration for additional flags */
-  FDBFOPEN = 1 << 0,                     /* whether opened */
-  FDBFFATAL = 1 << 1                     /* whether with fatal error */
+enum { /* enumeration for additional flags */
+    FDBFOPEN = 1 << 0, /* whether opened */
+    FDBFFATAL = 1 << 1 /* whether with fatal error */
 };
 
-enum {                                   /* enumeration for open modes */
-  FDBOREADER = 1 << 0,                   /* open as a reader */
-  FDBOWRITER = 1 << 1,                   /* open as a writer */
-  FDBOCREAT = 1 << 2,                    /* writer creating */
-  FDBOTRUNC = 1 << 3,                    /* writer truncating */
-  FDBONOLCK = 1 << 4,                    /* open without locking */
-  FDBOLCKNB = 1 << 5,                    /* lock without blocking */
-  FDBOTSYNC = 1 << 6                     /* synchronize every transaction */
+enum { /* enumeration for open modes */
+    FDBOREADER = 1 << 0, /* open as a reader */
+    FDBOWRITER = 1 << 1, /* open as a writer */
+    FDBOCREAT = 1 << 2, /* writer creating */
+    FDBOTRUNC = 1 << 3, /* writer truncating */
+    FDBONOLCK = 1 << 4, /* open without locking */
+    FDBOLCKNB = 1 << 5, /* lock without blocking */
+    FDBOTSYNC = 1 << 6 /* synchronize every transaction */
 };
 
-enum {                                   /* enumeration for ID constants */
-  FDBIDMIN = -1,                         /* minimum number */
-  FDBIDPREV = -2,                        /* less by one than the minimum */
-  FDBIDMAX = -3,                         /* maximum number */
-  FDBIDNEXT = -4                         /* greater by one than the miximum */
+enum { /* enumeration for ID constants */
+    FDBIDMIN = -1, /* minimum number */
+    FDBIDPREV = -2, /* less by one than the minimum */
+    FDBIDMAX = -3, /* maximum number */
+    FDBIDNEXT = -4 /* greater by one than the miximum */
 };
 
 
@@ -766,12 +770,25 @@ uint8_t tcfdbtype(TCFDB *fdb);
    The return value is the additional flags. */
 uint8_t tcfdbflags(TCFDB *fdb);
 
+/**
+ * Get opaque data into specified buffer `dst`
+ * `bsiz` Max size to be read.
+ *  Return -1 if error, otherwise number of bytes writen in dst.
+ */
+int tcfdbreadopaque(TCFDB *fdb, void *dst, int off, int bsiz);
 
-/* Get the pointer to the opaque field of a fixed-length database object.
-   `fdb' specifies the fixed-length database object.
-   The return value is the pointer to the opaque field whose size is 128 bytes. */
-char *tcfdbopaque(TCFDB *fdb);
+/**
+ * Write opaque data.
+ * Number of bytes specified bt `nb`
+ * can be truncated if it greater than max opaque data size.
+ * Return -1 if error, otherwise number of bytes read from src.
+ */
+int tcfdbwriteopaque(TCFDB *fdb, const void *src, int off, int nb);
 
+/**
+ * Copy opaque data between databases
+ */
+bool tcfdbcopyopaque(TCFDB *dst, TCFDB *src, int off, int nb);
 
 /* Store a record into a fixed-length database object with a duplication handler.
    `fdb' specifies the fixed-length database object connected as a writer.
