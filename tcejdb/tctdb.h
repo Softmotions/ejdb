@@ -141,9 +141,9 @@ enum { /* enumeration for query conditions */
     TDBQCFTSOR, /* full-text search with at least one token in */
     TDBQCFTSEX, /* full-text search with the compound expression of */
     TDBQCEXIST, /* string|number exists */
-    TDBQTRUE,  /* any field always matched */
+    TDBQTRUE, /* any field always matched */
     TDBQCSTRNUMOR, /* string includes at least one number token in */
-    TDBQCSTRORBW,  /* string begins with at least one token in */
+    TDBQCSTRORBW, /* string begins with at least one token in */
     TDBQCNEGATE = 1 << 24, /* negation flag */
     TDBQCNOIDX = 1 << 25 /* no index flag */
 };
@@ -185,9 +185,9 @@ typedef int (*TDBQRYPROC)(const void *pkbuf, int pksiz, TCMAP *cols, void *op);
     `op' opaque data for this function.
     `vsz' resulting value size. */
 typedef char* (*TDBRVALOADER)(TCLIST *tokens,
-                             const char *pkbuf, int pksz,
-                             const char *rowdata, int rowdatasz,
-                             const char *cname, int cnamesz, void *op, int *vsz);
+        const char *pkbuf, int pksz,
+        const char *rowdata, int rowdatasz,
+        const char *cname, int cnamesz, void *op, int *vsz);
 
 
 /* Get the message string corresponding to an error code.
