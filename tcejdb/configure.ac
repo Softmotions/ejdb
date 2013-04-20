@@ -69,7 +69,7 @@ AC_ARG_ENABLE(debug,
 if test "$enable_debug" = "yes"
 then
   MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O0 -Wfatal-errors -Werror"
-  MYCPPFLAGS="$MYCPPFLAGS -UNDEBUG -DEJDB_STATIC"
+  MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG -DEJDB_STATIC"
   MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
   enables="$enables (debug)"
 fi
@@ -80,7 +80,7 @@ AC_ARG_ENABLE(devel,
 if test "$enable_devel" = "yes"
 then
   MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O2 -pipe"
-  MYCPPFLAGS="$MYCPPFLAGS -UNDEBUG"
+  MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG"
   enables="$enables (devel)"
 fi
 

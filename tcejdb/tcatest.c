@@ -340,6 +340,9 @@ static int runmisc(int argc, char **argv){
     }
   }
   if(!name || !rstr) usage();
+  if (*name == '#') {
+      *name = '*';
+  }
   int rnum = tcatoix(rstr);
   if(rnum < 1) usage();
   int rv = procmisc(name, rnum);
@@ -363,6 +366,9 @@ static int runwicked(int argc, char **argv){
     }
   }
   if(!name || !rstr) usage();
+  if (*name == '#') {
+      *name = '*';
+  }
   int rnum = tcatoix(rstr);
   if(rnum < 1) usage();
   int rv = procwicked(name, rnum);

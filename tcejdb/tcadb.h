@@ -24,6 +24,7 @@
 #define __TCADB_CLINKAGEBEGIN
 #define __TCADB_CLINKAGEEND
 #endif
+
 __TCADB_CLINKAGEBEGIN
 
 
@@ -40,30 +41,30 @@ __TCADB_CLINKAGEBEGIN
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for an abstract database */
-  int omode;                             /* open mode */
-  TCMDB *mdb;                            /* on-memory hash database object */
-  TCNDB *ndb;                            /* on-memory tree database object */
-  TCHDB *hdb;                            /* hash database object */
-  TCBDB *bdb;                            /* B+ tree database object */
-  TCFDB *fdb;                            /* fixed-length databae object */
-  TCTDB *tdb;                            /* table database object */
-  int64_t capnum;                        /* capacity number of records */
-  int64_t capsiz;                        /* capacity size of using memory */
-  uint32_t capcnt;                       /* count for capacity check */
-  BDBCUR *cur;                           /* cursor of B+ tree */
-  void *skel;                            /* skeleton database */
+typedef struct { /* type of structure for an abstract database */
+    int omode; /* open mode */
+    TCMDB *mdb; /* on-memory hash database object */
+    TCNDB *ndb; /* on-memory tree database object */
+    TCHDB *hdb; /* hash database object */
+    TCBDB *bdb; /* B+ tree database object */
+    TCFDB *fdb; /* fixed-length databae object */
+    TCTDB *tdb; /* table database object */
+    int64_t capnum; /* capacity number of records */
+    int64_t capsiz; /* capacity size of using memory */
+    uint32_t capcnt; /* count for capacity check */
+    BDBCUR *cur; /* cursor of B+ tree */
+    void *skel; /* skeleton database */
 } TCADB;
 
-enum {                                   /* enumeration for open modes */
-  ADBOVOID,                              /* not opened */
-  ADBOMDB,                               /* on-memory hash database */
-  ADBONDB,                               /* on-memory tree database */
-  ADBOHDB,                               /* hash database */
-  ADBOBDB,                               /* B+ tree database */
-  ADBOFDB,                               /* fixed-length database */
-  ADBOTDB,                               /* table database */
-  ADBOSKEL                               /* skeleton database */
+enum { /* enumeration for open modes */
+    ADBOVOID, /* not opened */
+    ADBOMDB, /* on-memory hash database */
+    ADBONDB, /* on-memory tree database */
+    ADBOHDB, /* hash database */
+    ADBOBDB, /* B+ tree database */
+    ADBOFDB, /* fixed-length database */
+    ADBOTDB, /* table database */
+    ADBOSKEL /* skeleton database */
 };
 
 
@@ -414,42 +415,40 @@ EJDB_EXPORT uint64_t tcadbsize(TCADB *adb);
    should be deleted with the function `tclistdel' when it is no longer in use. */
 EJDB_EXPORT TCLIST *tcadbmisc(TCADB *adb, const char *name, const TCLIST *args);
 
-
-
 /*************************************************************************************************
  * features for experts
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for a extra database skeleton */
-  void *opq;                             /* opaque pointer */
-  void (*del)(void *);                   /* destructor */
-  bool (*open)(void *, const char *);
-  bool (*close)(void *);
-  bool (*put)(void *, const void *, int, const void *, int);
-  bool (*putkeep)(void *, const void *, int, const void *, int);
-  bool (*putcat)(void *, const void *, int, const void *, int);
-  bool (*out)(void *, const void *, int);
-  void *(*get)(void *, const void *, int, int *);
-  int (*vsiz)(void *, const void *, int);
-  bool (*iterinit)(void *);
-  void *(*iternext)(void *, int *);
-  TCLIST *(*fwmkeys)(void *, const void *, int, int);
-  int (*addint)(void *, const void *, int, int);
-  double (*adddouble)(void *, const void *, int, double);
-  bool (*sync)(void *);
-  bool (*optimize)(void *, const char *);
-  bool (*vanish)(void *);
-  bool (*copy)(void *, const char *);
-  bool (*tranbegin)(void *);
-  bool (*trancommit)(void *);
-  bool (*tranabort)(void *);
-  const char *(*path)(void *);
-  uint64_t (*rnum)(void *);
-  uint64_t (*size)(void *);
-  TCLIST *(*misc)(void *, const char *, const TCLIST *);
-  bool (*putproc)(void *, const void *, int, const void *, int, TCPDPROC, void *);
-  bool (*foreach)(void *, TCITER, void *);
+typedef struct { /* type of structure for a extra database skeleton */
+    void *opq; /* opaque pointer */
+    void (*del)(void *); /* destructor */
+    bool (*open)(void *, const char *);
+    bool (*close)(void *);
+    bool (*put)(void *, const void *, int, const void *, int);
+    bool (*putkeep)(void *, const void *, int, const void *, int);
+    bool (*putcat)(void *, const void *, int, const void *, int);
+    bool (*out)(void *, const void *, int);
+    void *(*get)(void *, const void *, int, int *);
+    int (*vsiz)(void *, const void *, int);
+    bool (*iterinit)(void *);
+    void *(*iternext)(void *, int *);
+    TCLIST * (*fwmkeys)(void *, const void *, int, int);
+    int (*addint)(void *, const void *, int, int);
+    double (*adddouble)(void *, const void *, int, double);
+    bool (*sync)(void *);
+    bool (*optimize)(void *, const char *);
+    bool (*vanish)(void *);
+    bool (*copy)(void *, const char *);
+    bool (*tranbegin)(void *);
+    bool (*trancommit)(void *);
+    bool (*tranabort)(void *);
+    const char *(*path)(void *);
+    uint64_t(*rnum)(void *);
+    uint64_t(*size)(void *);
+    TCLIST * (*misc)(void *, const char *, const TCLIST *);
+    bool (*putproc)(void *, const void *, int, const void *, int, TCPDPROC, void *);
+    bool (*foreach)(void *, TCITER, void *);
 } ADBSKEL;
 
 /* type of the pointer to a mapping function.
@@ -461,7 +460,7 @@ typedef struct {                         /* type of structure for a extra databa
    `op' specifies the pointer to the optional opaque object.
    The return value is true to continue iteration or false to stop iteration. */
 typedef bool (*ADBMAPPROC)(void *map, const char *kbuf, int ksiz, const char *vbuf, int vsiz,
-                           void *op);
+        void *op);
 
 
 /* Set an extra database sleleton to an abstract database object.
@@ -505,7 +504,7 @@ EJDB_EXPORT void *tcadbreveal(TCADB *adb);
    If successful, the return value is true, else, it is false.
    This function does not work for the table database. */
 EJDB_EXPORT bool tcadbputproc(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
-                  TCPDPROC proc, void *op);
+        TCPDPROC proc, void *op);
 
 
 /* Process each record atomically of an abstract database object.

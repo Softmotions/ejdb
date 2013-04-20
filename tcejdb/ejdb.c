@@ -178,9 +178,6 @@ static const bool no = false;
     jb->metadb = tctdbnew();
     tctdbsetmutex(jb->metadb);
     tctdbsetcache(jb->metadb, 1024, 0, 0);
-#ifdef _DEBUG
-    tchdbsetdbgfd(jb->metadb->hdb, fileno(stderr));
-#endif
     if (!_ejdbsetmutex(jb)) {
         tctdbdel(jb->metadb);
         TCFREE(jb);

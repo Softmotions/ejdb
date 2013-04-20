@@ -125,7 +125,7 @@ int glob(const char *pattern, int flags,
     pglob->gl_offs = 10;
     if ((pglob->gl_pathv = calloc(10, sizeof (char *))) == NULL)
         return GLOB_NOSPACE;
-    char *separator = strrchr(pattern, '/');
+    char *separator = strrchr(pattern, MYPATHCHR);
 
     if (separator != NULL) {
         directory = tccalloc(1, separator - pattern + 2);
@@ -149,7 +149,7 @@ int glob(const char *pattern, int flags,
         pglob->gl_pathv[pglob->gl_pathc++] = entry;
         if (pglob->gl_pathc == pglob->gl_offs) {
             /* increase array size */
-            void *tmp = realloc(pglob->gl_pathv, sizeof (char *)*(pglob->gl_offs + 10));
+            void *tmp = realloc(pglob->gl_pathv, sizeof (char *) * (pglob->gl_offs + 10));
             if (tmp == NULL) {
                 globfree(pglob);
                 if (directory != NULL)
@@ -167,6 +167,7 @@ int glob(const char *pattern, int flags,
 }
 
 #ifdef EJDB_DLL
+
 BOOL WINAPI DllMain(HINSTANCE hinstDll, DWORD fdwReason, LPVOID lpvReserved) {
     BOOL result = PTW32_TRUE;
     switch (fdwReason) {

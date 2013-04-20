@@ -346,7 +346,7 @@ bool tchdbsetcache(TCHDB *hdb, int32_t rcnum) {
 
 /* Set the size of the extra mapped memory of a hash database object. */
 bool tchdbsetxmsiz(TCHDB *hdb, int64_t xmsiz) {
-#ifdef _WIN32
+#if defined (_WIN32) && defined(_DEBUG)
     fprintf(stderr, "\ntchdbsetxmsiz does not takes effect on windows platform\n");
     return true;
 #else

@@ -3608,7 +3608,7 @@ static bool tcadbmulopen(ADBMUL *mul, const char *name){
     if(otmode){
       for(int i = 0; i < cnum; i++){
         const char *cpath = TCLISTVALPTR(cpaths, i);
-        if(unlink(cpath) != 0) err = true;
+        if(!tcunlinkfile(cpath) != 0) err = true;
       }
       tclistclear(cpaths);
       cnum = 0;

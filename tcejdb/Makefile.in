@@ -510,8 +510,8 @@ check-adb :
 	$(RUNENV) $(RUNCMD) ./tcatest read 'casket.tcf#mode=r'
 	$(RUNENV) $(RUNCMD) ./tcatest remove 'casket.tcf#mode=w'
 	$(RUNENV) $(RUNCMD) ./tcatest write '*#bnum=5000#cap=100' 50000
-	$(RUNENV) $(RUNCMD) ./tcatest misc '*' 5000
-	$(RUNENV) $(RUNCMD) ./tcatest wicked '*' 5000
+	$(RUNENV) $(RUNCMD) ./tcatest misc '#' 5000
+	$(RUNENV) $(RUNCMD) ./tcatest wicked '#' 5000
 	$(RUNENV) $(RUNCMD) ./tcatest write '%casket-mul.tch#mode=wct#bnum=500' 50000
 	$(RUNENV) $(RUNCMD) ./tcatest read '%casket-mul.tch#mode=r'
 	$(RUNENV) $(RUNCMD) ./tcatest remove '%casket-mul.tch#mode=w'
