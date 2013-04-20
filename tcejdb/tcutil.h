@@ -40,13 +40,13 @@ __TCUTIL_CLINKAGEBEGIN
 
 
 
-/*************************************************************************************************
- * basic utilities
- *************************************************************************************************/
+        /*************************************************************************************************
+         * basic utilities
+         *************************************************************************************************/
 
 
-/* String containing the version information. */
-extern EJDB_EXPORT const char *tcversion;
+        /* String containing the version information. */
+        extern EJDB_EXPORT const char *tcversion;
 
 
 /* Pointer to the call back function for handling a fatal error.
@@ -62,7 +62,7 @@ extern EJDB_EXPORT void (*tcfatalfunc)(const char *);
    This function handles failure of memory allocation implicitly.  Because the region of the
    return value is allocated with the `malloc' call, it should be released with the `free' call
    when it is no longer in use. */
- EJDB_EXPORT void *tcmalloc(size_t size);
+EJDB_EXPORT void *tcmalloc(size_t size);
 
 
 /* Allocate a nullified region on memory.
@@ -156,17 +156,15 @@ typedef void *(*TCPDPROC)(const void *vbuf, int vsiz, int *sp, void *op);
    The return value is true to continue iteration or false to stop iteration. */
 typedef bool (*TCITER)(const void *kbuf, int ksiz, const void *vbuf, int vsiz, void *op);
 
-
-
 /*************************************************************************************************
  * extensible string
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for an extensible string object */
-  char *ptr;                             /* pointer to the region */
-  int size;                              /* size of the region */
-  int asize;                             /* size of the allocated region */
+typedef struct { /* type of structure for an extensible string object */
+    char *ptr; /* pointer to the region */
+    int size; /* size of the region */
+    int asize; /* size of the allocated region */
 } TCXSTR;
 
 
@@ -280,23 +278,21 @@ EJDB_EXPORT void *tcxstrtomalloc(TCXSTR *xstr);
    Note that the specified region is released when the object is deleted. */
 EJDB_EXPORT TCXSTR *tcxstrfrommalloc(void *ptr, int size);
 
-
-
 /*************************************************************************************************
  * array list
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for an element of a list */
-  char *ptr;                             /* pointer to the region */
-  int size;                              /* size of the effective region */
+typedef struct { /* type of structure for an element of a list */
+    char *ptr; /* pointer to the region */
+    int size; /* size of the effective region */
 } TCLISTDATUM;
 
-typedef struct {                         /* type of structure for an array list */
-  TCLISTDATUM *array;                    /* array of data */
-  int anum;                              /* number of the elements of the array */
-  int start;                             /* start index of used elements */
-  int num;                               /* number of used elements */
+typedef struct { /* type of structure for an array list */
+    TCLISTDATUM *array; /* array of data */
+    int anum; /* number of the elements of the array */
+    int start; /* start index of used elements */
+    int num; /* number of used elements */
 } TCLIST;
 
 
@@ -583,23 +579,23 @@ EJDB_EXPORT void tclistprintf(TCLIST *list, const char *format, ...);
 #define TCMAPTINYBNUM  31                // bucket number of a tiny map
 #define TCLISTINYNUM  31                // number of elements in a tiny list
 
-typedef struct _TCMAPREC {               /* type of structure for an element of a map */
-  int32_t ksiz;                          /* size of the region of the key */
-  int32_t vsiz;                          /* size of the region of the value */
-  struct _TCMAPREC *left;                /* pointer to the left child */
-  struct _TCMAPREC *right;               /* pointer to the right child */
-  struct _TCMAPREC *prev;                /* pointer to the previous element */
-  struct _TCMAPREC *next;                /* pointer to the next element */
+typedef struct _TCMAPREC { /* type of structure for an element of a map */
+    int32_t ksiz; /* size of the region of the key */
+    int32_t vsiz; /* size of the region of the value */
+    struct _TCMAPREC *left; /* pointer to the left child */
+    struct _TCMAPREC *right; /* pointer to the right child */
+    struct _TCMAPREC *prev; /* pointer to the previous element */
+    struct _TCMAPREC *next; /* pointer to the next element */
 } TCMAPREC;
 
-typedef struct {                         /* type of structure for a map */
-  TCMAPREC **buckets;                    /* bucket array */
-  TCMAPREC *first;                       /* pointer to the first element */
-  TCMAPREC *last;                        /* pointer to the last element */
-  TCMAPREC *cur;                         /* pointer to the current element */
-  uint32_t bnum;                         /* number of buckets */
-  uint64_t rnum;                         /* number of records */
-  uint64_t msiz;                         /* total size of records */
+typedef struct { /* type of structure for a map */
+    TCMAPREC **buckets; /* bucket array */
+    TCMAPREC *first; /* pointer to the first element */
+    TCMAPREC *last; /* pointer to the last element */
+    TCMAPREC *cur; /* pointer to the current element */
+    uint32_t bnum; /* number of buckets */
+    uint64_t rnum; /* number of records */
+    uint64_t msiz; /* total size of records */
 } TCMAP;
 
 
@@ -881,7 +877,7 @@ EJDB_EXPORT void tcmapput3(TCMAP *map, const void *kbuf, int ksiz, const char *v
    `lvsiz' specifies the size of the latter region of the value.
    If a record with the same key exists in the map, it is overwritten. */
 EJDB_EXPORT void tcmapput4(TCMAP *map, const void *kbuf, int ksiz,
-               const void *fvbuf, int fvsiz, const void *lvbuf, int lvsiz);
+        const void *fvbuf, int fvsiz, const void *lvbuf, int lvsiz);
 
 
 /* Concatenate a value at the existing record and make it semivolatile in a map object.
@@ -912,7 +908,7 @@ EJDB_EXPORT void tcmapputcat3(TCMAP *map, const void *kbuf, int ksiz, const void
    it is not needed, `NULL' can be specified.
    If successful, the return value is true, else, it is false. */
 EJDB_EXPORT bool tcmapputproc(TCMAP *map, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
-                  TCPDPROC proc, void *op);
+        TCPDPROC proc, void *op);
 
 
 /* Retrieve a semivolatile record in a map object.
@@ -1028,27 +1024,25 @@ EJDB_EXPORT int tcmaploadoneintoxstr(const void *ptr, int size, const void *kbuf
    The other arguments are used according to the format string. */
 EJDB_EXPORT void tcmapprintf(TCMAP *map, const char *kstr, const char *format, ...);
 
-
-
 /*************************************************************************************************
  * ordered tree
  *************************************************************************************************/
 
 
-typedef struct _TCTREEREC {              /* type of structure for an element of a tree */
-  int32_t ksiz;                          /* size of the region of the key */
-  int32_t vsiz;                          /* size of the region of the value */
-  struct _TCTREEREC *left;               /* pointer to the left child */
-  struct _TCTREEREC *right;              /* pointer to the right child */
+typedef struct _TCTREEREC { /* type of structure for an element of a tree */
+    int32_t ksiz; /* size of the region of the key */
+    int32_t vsiz; /* size of the region of the value */
+    struct _TCTREEREC *left; /* pointer to the left child */
+    struct _TCTREEREC *right; /* pointer to the right child */
 } TCTREEREC;
 
-typedef struct {                         /* type of structure for a tree */
-  TCTREEREC *root;                       /* pointer to the root element */
-  TCTREEREC *cur;                        /* pointer to the current element */
-  uint64_t rnum;                         /* number of records */
-  uint64_t msiz;                         /* total size of records */
-  TCCMP cmp;                             /* pointer to the comparison function */
-  void *cmpop;                           /* opaque object for the comparison function */
+typedef struct { /* type of structure for a tree */
+    TCTREEREC *root; /* pointer to the root element */
+    TCTREEREC *cur; /* pointer to the current element */
+    uint64_t rnum; /* number of records */
+    uint64_t msiz; /* total size of records */
+    TCCMP cmp; /* pointer to the comparison function */
+    void *cmpop; /* opaque object for the comparison function */
 } TCTREE;
 
 
@@ -1158,7 +1152,7 @@ EJDB_EXPORT void tctreeputcat2(TCTREE *tree, const char *kstr, const char *vstr)
    it is not needed, `NULL' can be specified.
    If successful, the return value is true, else, it is false. */
 EJDB_EXPORT bool tctreeputproc(TCTREE *tree, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
-                   TCPDPROC proc, void *op);
+        TCPDPROC proc, void *op);
 
 
 /* Remove a record of a tree object.
@@ -1452,18 +1446,16 @@ EJDB_EXPORT void *tctreeloadone(const void *ptr, int size, const void *kbuf, int
    The other arguments are used according to the format string. */
 EJDB_EXPORT void tctreeprintf(TCTREE *tree, const char *kstr, const char *format, ...);
 
-
-
 /*************************************************************************************************
  * on-memory hash database
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for a on-memory hash database */
-  void **mmtxs;                          /* mutexes for method */
-  void *imtx;                            /* mutex for iterator */
-  TCMAP **maps;                          /* internal map objects */
-  int iter;                              /* index of maps for the iterator */
+typedef struct { /* type of structure for a on-memory hash database */
+    void **mmtxs; /* mutexes for method */
+    void *imtx; /* mutex for iterator */
+    TCMAP **maps; /* internal map objects */
+    int iter; /* index of maps for the iterator */
 } TCMDB;
 
 
@@ -1731,7 +1723,7 @@ EJDB_EXPORT void tcmdbput3(TCMDB *mdb, const void *kbuf, int ksiz, const char *v
    `lvsiz' specifies the size of the latter region of the value.
    If a record with the same key exists in the database, it is overwritten. */
 EJDB_EXPORT void tcmdbput4(TCMDB *mdb, const void *kbuf, int ksiz,
-               const void *fvbuf, int fvsiz, const void *lvbuf, int lvsiz);
+        const void *fvbuf, int fvsiz, const void *lvbuf, int lvsiz);
 
 
 /* Concatenate a value and make it semivolatile in on-memory hash database object.
@@ -1762,7 +1754,7 @@ EJDB_EXPORT void tcmdbputcat3(TCMDB *mdb, const void *kbuf, int ksiz, const void
    it is not needed, `NULL' can be specified.
    If successful, the return value is true, else, it is false. */
 EJDB_EXPORT bool tcmdbputproc(TCMDB *mdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
-                  TCPDPROC proc, void *op);
+        TCPDPROC proc, void *op);
 
 
 /* Retrieve a record and move it astern in an on-memory hash database object.
@@ -1807,16 +1799,14 @@ EJDB_EXPORT void tcmdbiterinit3(TCMDB *mdb, const char *kstr);
    it is not needed, `NULL' can be specified. */
 EJDB_EXPORT void tcmdbforeach(TCMDB *mdb, TCITER iter, void *op);
 
-
-
 /*************************************************************************************************
  * on-memory tree database
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for a on-memory tree database */
-  void *mmtx;                            /* mutex for method */
-  TCTREE *tree;                          /* internal tree object */
+typedef struct { /* type of structure for a on-memory tree database */
+    void *mmtx; /* mutex for method */
+    TCTREE *tree; /* internal tree object */
 } TCNDB;
 
 
@@ -2117,7 +2107,7 @@ EJDB_EXPORT void tcndbputcat3(TCNDB *ndb, const void *kbuf, int ksiz, const void
    it is not needed, `NULL' can be specified.
    If successful, the return value is true, else, it is false. */
 EJDB_EXPORT bool tcndbputproc(TCNDB *ndb, const void *kbuf, int ksiz, const void *vbuf, int vsiz,
-                  TCPDPROC proc, void *op);
+        TCPDPROC proc, void *op);
 
 
 /* Retrieve a record in an on-memory tree database object without balancing nodes.
@@ -2163,23 +2153,21 @@ EJDB_EXPORT void tcndbiterinit3(TCNDB *ndb, const char *kstr);
    it is not needed, `NULL' can be specified. */
 EJDB_EXPORT void tcndbforeach(TCNDB *ndb, TCITER iter, void *op);
 
-
-
 /*************************************************************************************************
  * memory pool
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of an element of memory pool */
-  void *ptr;                             /* pointer */
-  void (*del)(void *);                   /* deleting function */
+typedef struct { /* type of an element of memory pool */
+    void *ptr; /* pointer */
+    void (*del)(void *); /* deleting function */
 } TCMPELEM;
 
-typedef struct {                         /* type of structure for a memory pool object */
-  void *mutex;                           /* mutex for operations */
-  TCMPELEM *elems;                       /* array of elements */
-  int anum;                              /* number of the elements of the array */
-  int num;                               /* number of used elements */
+typedef struct { /* type of structure for a memory pool object */
+    void *mutex; /* mutex for operations */
+    TCMPELEM *elems; /* array of elements */
+    int anum; /* number of the elements of the array */
+    int num; /* number of used elements */
 } TCMPOOL;
 
 
@@ -2583,7 +2571,7 @@ EJDB_EXPORT unsigned long tcmstime(void);
    `secp' specifies the pointer to a variable to which the seconds is assigned.  If it is `NULL',
    it is not used. */
 EJDB_EXPORT void tccalendar(int64_t t, int jl, int *yearp, int *monp, int *dayp,
-                int *hourp, int *minp, int *secp);
+        int *hourp, int *minp, int *secp);
 
 
 /* Format a date as a string in W3CDTF.
@@ -2628,36 +2616,34 @@ EJDB_EXPORT int tcjetlag(void);
    The return value is the day of week of the date.  0 means Sunday and 6 means Saturday. */
 EJDB_EXPORT int tcdayofweek(int year, int mon, int day);
 
-
-
 /*************************************************************************************************
  * miscellaneous utilities (for experts)
  *************************************************************************************************/
 
 
-enum {                                   /* enumeration for UCS normalization */
-  TCUNSPACE = 1 << 0,                    /* white space normalization */
-  TCUNLOWER = 1 << 1,                    /* lower case normalization */
-  TCUNNOACC = 1 << 2,                    /* strip accent marks */
-  TCUNWIDTH = 1 << 3                     /* half-width normalization */
+enum { /* enumeration for UCS normalization */
+    TCUNSPACE = 1 << 0, /* white space normalization */
+    TCUNLOWER = 1 << 1, /* lower case normalization */
+    TCUNNOACC = 1 << 2, /* strip accent marks */
+    TCUNWIDTH = 1 << 3 /* half-width normalization */
 };
 
-enum {                                   /* enumeration for KWIC generator */
-  TCKWMUTAB = 1 << 0,                    /* mark up by tabs */
-  TCKWMUCTRL = 1 << 1,                   /* mark up by control characters */
-  TCKWMUBRCT = 1 << 2,                   /* mark up by brackets */
-  TCKWNOOVER = 1 << 24,                  /* no overlap */
-  TCKWPULEAD = 1 << 25                   /* pick up the lead string */
+enum { /* enumeration for KWIC generator */
+    TCKWMUTAB = 1 << 0, /* mark up by tabs */
+    TCKWMUCTRL = 1 << 1, /* mark up by control characters */
+    TCKWMUBRCT = 1 << 2, /* mark up by brackets */
+    TCKWNOOVER = 1 << 24, /* no overlap */
+    TCKWPULEAD = 1 << 25 /* pick up the lead string */
 };
 
-typedef struct {                         /* type of structure for a consistent hashing node */
-  uint32_t seq;                          /* sequential number */
-  uint32_t hash;                         /* hash value */
+typedef struct { /* type of structure for a consistent hashing node */
+    uint32_t seq; /* sequential number */
+    uint32_t hash; /* hash value */
 } TCCHIDXNODE;
 
-typedef struct {                         /* type of structure for a consistent hashing object */
-  TCCHIDXNODE *nodes;                    /* node array */
-  int nnum;                              /* number of the node array */
+typedef struct { /* type of structure for a consistent hashing object */
+    TCCHIDXNODE *nodes; /* node array */
+    int nnum; /* number of the node array */
 } TCCHIDX;
 
 
@@ -2797,7 +2783,7 @@ EJDB_EXPORT void *tcstrjoin4(const TCMAP *map, int *sp);
    of elements.  The comparing function should returns positive if the former is big, negative
    if the latter is big, 0 if both are equal. */
 EJDB_EXPORT void tctopsort(void *base, size_t nmemb, size_t size, size_t top,
-               int(*compar)(const void *, const void *));
+        int(*compar)(const void *, const void *));
 
 
 /* Suspend execution of the current thread.
@@ -2942,11 +2928,10 @@ EJDB_EXPORT TCLIST *tcglobpat(const char *pattern);
    does not exist or the permission is denied. */
 EJDB_EXPORT bool tcremovelink(const char *path);
 
-
 enum {
-    TCFSTART = 0,                       /* file start */
-    TCFCUR = 1,                         /* file current pos */
-    TCFEND = 2                          /* file end */
+    TCFSTART = 0, /* file start */
+    TCFCUR = 1, /* file current pos */
+    TCFEND = 2 /* file end */
 };
 
 /* File seek implementation */
@@ -3400,18 +3385,16 @@ EJDB_EXPORT char *tcjsonescape(const char *str);
    released with the `free' call if when is no longer in use. */
 EJDB_EXPORT char *tcjsonunescape(const char *str);
 
-
-
 /*************************************************************************************************
  * template serializer
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for a template */
-  TCLIST *elems;                         /* elements separated by the separators */
-  char *begsep;                          /* beginning separator */
-  char *endsep;                          /* ending separator */
-  TCMAP *conf;                           /* configuration variables */
+typedef struct { /* type of structure for a template */
+    TCLIST *elems; /* elements separated by the separators */
+    char *begsep; /* beginning separator */
+    char *endsep; /* ending separator */
+    TCMAP *conf; /* configuration variables */
 } TCTMPL;
 
 
@@ -3512,18 +3495,16 @@ EJDB_EXPORT void tcmapputlist(TCMAP *map, const char *kstr, const TCLIST *obj);
    `obj' specifies the map object to be stored. */
 EJDB_EXPORT void tcmapputmap(TCMAP *map, const char *kstr, const TCMAP *obj);
 
-
-
 /*************************************************************************************************
  * pointer list
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for a pointer list */
-  void **array;                          /* array of pointers */
-  int anum;                              /* number of the elements of the array */
-  int start;                             /* start index of used elements */
-  int num;                               /* number of used elements */
+typedef struct { /* type of structure for a pointer list */
+    void **array; /* array of pointers */
+    int anum; /* number of the elements of the array */
+    int start; /* start index of used elements */
+    int num; /* number of used elements */
 } TCPTRLIST;
 
 
@@ -3620,21 +3601,19 @@ EJDB_EXPORT void tcptrlistover(TCPTRLIST *ptrlist, int index, void *ptr);
    All elements are removed. */
 EJDB_EXPORT void tcptrlistclear(TCPTRLIST *ptrlist);
 
-
-
 /*************************************************************************************************
  * bit operation utilities
  *************************************************************************************************/
 
 
-typedef struct {                         /* type of structure for a bit stream object */
-  uint8_t *sp;                           /* start pointer */
-  uint8_t *cp;                           /* current pointer */
-  int idx;                               /* bit index */
-  int size;                              /* size of used region */
+typedef struct { /* type of structure for a bit stream object */
+    uint8_t *sp; /* start pointer */
+    uint8_t *cp; /* current pointer */
+    int idx; /* bit index */
+    int size; /* size of used region */
 } TCBITSTRM;
 
-typedef unsigned char TCBITMAP;          /* type of a bit map object */
+typedef unsigned char TCBITMAP; /* type of a bit map object */
 
 
 /* Create a bitmap object. */
@@ -3748,39 +3727,39 @@ typedef unsigned char TCBITMAP;          /* type of a bit map object */
 #define _TC_LIBVER     911
 #define _TC_FORMATVER  "1.0"
 
-enum {                                   /* enumeration for error codes */
-  TCESUCCESS,                            /* success */
-  TCETHREAD,                             /* threading error */
-  TCEINVALID,                            /* invalid operation */
-  TCENOFILE,                             /* file not found */
-  TCENOPERM,                             /* no permission */
-  TCEMETA,                               /* invalid meta data */
-  TCERHEAD,                              /* invalid record header */
-  TCEOPEN,                               /* open error */
-  TCECLOSE,                              /* close error */
-  TCETRUNC,                              /* trunc error */
-  TCESYNC,                               /* sync error */
-  TCESTAT,                               /* stat error */
-  TCESEEK,                               /* seek error */
-  TCEREAD,                               /* read error */
-  TCEWRITE,                              /* write error */
-  TCEMMAP,                               /* mmap error */
-  TCELOCK,                               /* lock error */
-  TCEUNLINK,                             /* unlink error */
-  TCERENAME,                             /* rename error */
-  TCEMKDIR,                              /* mkdir error */
-  TCERMDIR,                              /* rmdir error */
-  TCEKEEP,                               /* existing record */
-  TCENOREC,                              /* no record found */
-  TCETR,                                 /* illegal transaction state */
-  TCEMISC = 9999                         /* miscellaneous error */
+enum { /* enumeration for error codes */
+    TCESUCCESS, /* success */
+    TCETHREAD, /* threading error */
+    TCEINVALID, /* invalid operation */
+    TCENOFILE, /* file not found */
+    TCENOPERM, /* no permission */
+    TCEMETA, /* invalid meta data */
+    TCERHEAD, /* invalid record header */
+    TCEOPEN, /* open error */
+    TCECLOSE, /* close error */
+    TCETRUNC, /* trunc error */
+    TCESYNC, /* sync error */
+    TCESTAT, /* stat error */
+    TCESEEK, /* seek error */
+    TCEREAD, /* read error */
+    TCEWRITE, /* write error */
+    TCEMMAP, /* mmap error */
+    TCELOCK, /* lock error */
+    TCEUNLINK, /* unlink error */
+    TCERENAME, /* rename error */
+    TCEMKDIR, /* mkdir error */
+    TCERMDIR, /* rmdir error */
+    TCEKEEP, /* existing record */
+    TCENOREC, /* no record found */
+    TCETR, /* illegal transaction state */
+    TCEMISC = 9999 /* miscellaneous error */
 };
 
-enum {                                   /* enumeration for database type */
-  TCDBTHASH,                             /* hash table */
-  TCDBTBTREE,                            /* B+ tree */
-  TCDBTFIXED,                            /* fixed-length */
-  TCDBTTABLE                             /* table */
+enum { /* enumeration for database type */
+    TCDBTHASH, /* hash table */
+    TCDBTBTREE, /* B+ tree */
+    TCDBTFIXED, /* fixed-length */
+    TCDBTTABLE /* table */
 };
 
 
@@ -4086,9 +4065,14 @@ EJDB_EXPORT int tcutf8map(const uint8_t *str, int strl, void *placeholder, int p
 #define TCALIGNOF(TC_a) \
   ((int)offsetof(struct { int8_t TC_top; TC_a TC_bot; }, TC_bot))
 
-
 /* Get the size of padding bytes for pointer alignment. */
-typedef union { int32_t i; int64_t l; double d; void *p; TCCMP f; } tcgeneric_t;
+typedef union {
+    int32_t i;
+    int64_t l;
+    double d;
+    void *p;
+    TCCMP f;
+} tcgeneric_t;
 #define TCALIGNPAD(TC_hsiz) \
   (((TC_hsiz | ~-TCALIGNOF(tcgeneric_t)) + 1) - TC_hsiz)
 
