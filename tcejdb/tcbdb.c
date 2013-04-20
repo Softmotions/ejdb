@@ -1244,7 +1244,7 @@ void tcbdbsetecode(TCBDB *bdb, int ecode, const char *filename, int line, const 
 
 /* Set the file descriptor for debugging output. */
 void tcbdbsetdbgfd(TCBDB *bdb, HANDLE fd) {
-    assert(bdb && !INVALIDHANDLE(fd));
+    assert(bdb);
     tchdbsetdbgfd(bdb->hdb, fd);
 }
 
