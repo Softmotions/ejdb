@@ -3522,12 +3522,10 @@ static bool tchdbopenimpl(TCHDB *hdb, const char *path, int omode) {
     cmode = OPEN_EXISTING;
     if (omode & HDBOWRITER) {
         mode |= GENERIC_WRITE;
-        if (omode & (HDBOTRUNC | HDBOCREAT)) {
+        if (omode & HDBOTRUNC) {
             cmode = CREATE_ALWAYS;
-        } else if (omode & HDBOTRUNC) {
-            cmode = TRUNCATE_EXISTING;
         } else if (omode & HDBOCREAT) {
-            cmode = CREATE_NEW;
+            cmode = OPEN_ALWAYS;
         }
     }
     fd = CreateFile(path, mode,

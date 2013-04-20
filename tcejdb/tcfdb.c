@@ -1869,12 +1869,10 @@ static bool tcfdbopenimpl(TCFDB *fdb, const char *path, int omode) {
     cmode = OPEN_EXISTING;
     if (omode & FDBOWRITER) {
         mode |= GENERIC_WRITE;
-        if (omode & (FDBOTRUNC | FDBOCREAT)) {
+        if (omode & FDBOTRUNC) {
             cmode = CREATE_ALWAYS;
-        } else if (omode & FDBOTRUNC) {
-            cmode = TRUNCATE_EXISTING;
         } else if (omode & FDBOCREAT) {
-            cmode = CREATE_NEW;
+            cmode = OPEN_ALWAYS;
         }
     }
     fd = CreateFile(path, mode,
