@@ -1,10 +1,10 @@
 
-CC=gcc
-CPPFLAGS = -I. -I.. -DDEBUG -D_DEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__
-CFLAGS = -std=c99 -Wall -fPIC -pedantic -fsigned-char -g -O0
-LDFLAGS = -L. -L..
+CC=@CC@
+CPPFLAGS = -I../ @MYCPPFLAGS@
+CFLAGS = @MYCFLAGS@
+LDFLAGS = -L../ @MYLDFLAGS@
 CMDLDFLAGS =
-LIBS = -lz -lpthread -lm -lc -lcunit
+LIBS = -lcunit -ltcejdb @LIBS@
 RUNENV = LD_LIBRARY_PATH=.:.. DYLD_LIBRARY_PATH=.:..
 
 TESTS = t1 t2 t3 t4
@@ -42,16 +42,16 @@ clean :
 	rm -rf *.o $(TESTS) db* *.vlog
 
 t1 : t1.o
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -ltcejdb $(CMDLDFLAGS) $(LIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) $(LIBS)
 
 t2 : t2.o
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -ltcejdb $(CMDLDFLAGS) $(LIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) $(LIBS)
 
 t3 : t3.o
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -ltcejdb $(CMDLDFLAGS) $(LIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) $(LIBS)
 
 t4 : t4.o
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) -ltcejdb $(CMDLDFLAGS) $(LIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) $(LIBS)
 
 
 .PHONY : all clean check check-t1 check-t2 check-t3 check-t4

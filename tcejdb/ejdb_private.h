@@ -25,6 +25,12 @@
 #include <assert.h>
 #include <pthread.h>
 
+#ifdef _WIN32
+#include <pcreposix.h>
+#else
+#include <regex.h>
+#endif
+
 EJDB_EXTERN_C_START
 
 #define BSON_IS_IDXSUPPORTED_TYPE(atype) (atype == BSON_STRING || \

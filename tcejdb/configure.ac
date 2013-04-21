@@ -393,7 +393,7 @@ AC_SUBST(PACKAGE_NAME)
 AC_SUBST(PACKAGE_VERSION)
 
 # Targets
-AC_OUTPUT(Makefile tcejdb.pc)
+AC_OUTPUT(Makefile tcejdb.pc testejdb/Makefile)
 
 # Messages
 printf '#================================================================\n'
