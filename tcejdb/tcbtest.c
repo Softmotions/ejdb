@@ -24,7 +24,7 @@
 /* global variables */
 const char *g_progname;                  // program name
 unsigned int g_randseed;                 // random seed
-int g_dbgfd;                             // debugging output
+HANDLE g_dbgfd;                          // debugging output
 
 
 /* function prototypes */
@@ -72,7 +72,14 @@ int main(int argc, char **argv){
   g_randseed = ebuf ? tcatoix(ebuf) : tctime() * 1000;
   srand(g_randseed);
   ebuf = getenv("TCDBGFD");
-  g_dbgfd = ebuf ? tcatoix(ebuf) : UINT16_MAX;
+  if (ebuf) {
+	  int debugfd = tcatoix(ebuf);
+#ifdef _WIN32
+	  g_dbgfd = (HANDLE) _get_osfhandle(debugfd);
+#else
+	  g_dbgfd = debugfd;
+#endif
+  }
   if(argc < 2) usage();
   int rv = 0;
   if(!strcmp(argv[1], "write")){
@@ -159,34 +166,34 @@ static void mprint(TCBDB *bdb){
   if(bdb->hdb->cnt_writerec < 0) return;
   iprintf("max leaf member: %d\n", tcbdblmemb(bdb));
   iprintf("max node member: %d\n", tcbdbnmemb(bdb));
-  iprintf("leaf number: %lld\n", (long long)tcbdblnum(bdb));
-  iprintf("node number: %lld\n", (long long)tcbdbnnum(bdb));
-  iprintf("bucket number: %lld\n", (long long)tcbdbbnum(bdb));
-  iprintf("used bucket number: %lld\n", (long long)tcbdbbnumused(bdb));
-  iprintf("cnt_saveleaf: %lld\n", (long long)bdb->cnt_saveleaf);
-  iprintf("cnt_loadleaf: %lld\n", (long long)bdb->cnt_loadleaf);
-  iprintf("cnt_killleaf: %lld\n", (long long)bdb->cnt_killleaf);
-  iprintf("cnt_adjleafc: %lld\n", (long long)bdb->cnt_adjleafc);
-  iprintf("cnt_savenode: %lld\n", (long long)bdb->cnt_savenode);
-  iprintf("cnt_loadnode: %lld\n", (long long)bdb->cnt_loadnode);
-  iprintf("cnt_adjnodec: %lld\n", (long long)bdb->cnt_adjnodec);
-  iprintf("cnt_writerec: %lld\n", (long long)bdb->hdb->cnt_writerec);
-  iprintf("cnt_reuserec: %lld\n", (long long)bdb->hdb->cnt_reuserec);
-  iprintf("cnt_moverec: %lld\n", (long long)bdb->hdb->cnt_moverec);
-  iprintf("cnt_readrec: %lld\n", (long long)bdb->hdb->cnt_readrec);
-  iprintf("cnt_searchfbp: %lld\n", (long long)bdb->hdb->cnt_searchfbp);
-  iprintf("cnt_insertfbp: %lld\n", (long long)bdb->hdb->cnt_insertfbp);
-  iprintf("cnt_splicefbp: %lld\n", (long long)bdb->hdb->cnt_splicefbp);
-  iprintf("cnt_dividefbp: %lld\n", (long long)bdb->hdb->cnt_dividefbp);
-  iprintf("cnt_mergefbp: %lld\n", (long long)bdb->hdb->cnt_mergefbp);
-  iprintf("cnt_reducefbp: %lld\n", (long long)bdb->hdb->cnt_reducefbp);
-  iprintf("cnt_appenddrp: %lld\n", (long long)bdb->hdb->cnt_appenddrp);
-  iprintf("cnt_deferdrp: %lld\n", (long long)bdb->hdb->cnt_deferdrp);
-  iprintf("cnt_flushdrp: %lld\n", (long long)bdb->hdb->cnt_flushdrp);
-  iprintf("cnt_adjrecc: %lld\n", (long long)bdb->hdb->cnt_adjrecc);
-  iprintf("cnt_defrag: %lld\n", (long long)bdb->hdb->cnt_defrag);
-  iprintf("cnt_shiftrec: %lld\n", (long long)bdb->hdb->cnt_shiftrec);
-  iprintf("cnt_trunc: %lld\n", (long long)bdb->hdb->cnt_trunc);
+  iprintf("leaf number: %" PRIdMAX "\n", (long long)tcbdblnum(bdb));
+  iprintf("node number: %" PRIdMAX "\n", (long long)tcbdbnnum(bdb));
+  iprintf("bucket number: %" PRIdMAX "\n", (long long)tcbdbbnum(bdb));
+  iprintf("used bucket number: %" PRIdMAX "\n", (long long)tcbdbbnumused(bdb));
+  iprintf("cnt_saveleaf: %" PRIdMAX "\n", (long long)bdb->cnt_saveleaf);
+  iprintf("cnt_loadleaf: %" PRIdMAX "\n", (long long)bdb->cnt_loadleaf);
+  iprintf("cnt_killleaf: %" PRIdMAX "\n", (long long)bdb->cnt_killleaf);
+  iprintf("cnt_adjleafc: %" PRIdMAX "\n", (long long)bdb->cnt_adjleafc);
+  iprintf("cnt_savenode: %" PRIdMAX "\n", (long long)bdb->cnt_savenode);
+  iprintf("cnt_loadnode: %" PRIdMAX "\n", (long long)bdb->cnt_loadnode);
+  iprintf("cnt_adjnodec: %" PRIdMAX "\n", (long long)bdb->cnt_adjnodec);
+  iprintf("cnt_writerec: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_writerec);
+  iprintf("cnt_reuserec: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_reuserec);
+  iprintf("cnt_moverec: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_moverec);
+  iprintf("cnt_readrec: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_readrec);
+  iprintf("cnt_searchfbp: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_searchfbp);
+  iprintf("cnt_insertfbp: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_insertfbp);
+  iprintf("cnt_splicefbp: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_splicefbp);
+  iprintf("cnt_dividefbp: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_dividefbp);
+  iprintf("cnt_mergefbp: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_mergefbp);
+  iprintf("cnt_reducefbp: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_reducefbp);
+  iprintf("cnt_appenddrp: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_appenddrp);
+  iprintf("cnt_deferdrp: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_deferdrp);
+  iprintf("cnt_flushdrp: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_flushdrp);
+  iprintf("cnt_adjrecc: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_adjrecc);
+  iprintf("cnt_defrag: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_defrag);
+  iprintf("cnt_shiftrec: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_shiftrec);
+  iprintf("cnt_trunc: %" PRIdMAX "\n", (long long)bdb->hdb->cnt_trunc);
 }
 
 
@@ -773,7 +780,7 @@ static int procwrite(const char *path, int rnum, int lmemb, int nmemb, int bnum,
   bool err = false;
   double stime = tctime();
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(mt && !tcbdbsetmutex(bdb)){
     eprint(bdb, __LINE__, "tcbdbsetmutex");
     err = true;
@@ -841,8 +848,8 @@ static int procwrite(const char *path, int rnum, int lmemb, int nmemb, int bnum,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcbdbrnum(bdb));
-  iprintf("size: %llu\n", (unsigned long long)tcbdbfsiz(bdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcbdbrnum(bdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcbdbfsiz(bdb));
   mprint(bdb);
   sysprint();
   if(!tcbdbclose(bdb)){
@@ -866,7 +873,7 @@ static int procread(const char *path, bool mt, TCCMP cmp, int lcnum, int ncnum,
   bool err = false;
   double stime = tctime();
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(mt && !tcbdbsetmutex(bdb)){
     eprint(bdb, __LINE__, "tcbdbsetmutex");
     err = true;
@@ -935,8 +942,8 @@ static int procread(const char *path, bool mt, TCCMP cmp, int lcnum, int ncnum,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcbdbrnum(bdb));
-  iprintf("size: %llu\n", (unsigned long long)tcbdbfsiz(bdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcbdbrnum(bdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcbdbfsiz(bdb));
   mprint(bdb);
   sysprint();
   if(!tcbdbclose(bdb)){
@@ -959,7 +966,7 @@ static int procremove(const char *path, bool mt, TCCMP cmp, int lcnum, int ncnum
   bool err = false;
   double stime = tctime();
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(mt && !tcbdbsetmutex(bdb)){
     eprint(bdb, __LINE__, "tcbdbsetmutex");
     err = true;
@@ -1015,8 +1022,8 @@ static int procremove(const char *path, bool mt, TCCMP cmp, int lcnum, int ncnum
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcbdbrnum(bdb));
-  iprintf("size: %llu\n", (unsigned long long)tcbdbfsiz(bdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcbdbrnum(bdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcbdbfsiz(bdb));
   mprint(bdb);
   sysprint();
   if(!tcbdbclose(bdb)){
@@ -1046,7 +1053,7 @@ static int procrcat(const char *path, int rnum,
   bool err = false;
   double stime = tctime();
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(mt && !tcbdbsetmutex(bdb)){
     eprint(bdb, __LINE__, "tcbdbsetmutex");
     err = true;
@@ -1211,8 +1218,8 @@ static int procrcat(const char *path, int rnum,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcbdbrnum(bdb));
-  iprintf("size: %llu\n", (unsigned long long)tcbdbfsiz(bdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcbdbrnum(bdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcbdbfsiz(bdb));
   mprint(bdb);
   sysprint();
   if(!tcbdbclose(bdb)){
@@ -1239,7 +1246,7 @@ static int procqueue(const char *path, int rnum, int lmemb, int nmemb, int bnum,
   bool err = false;
   double stime = tctime();
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(mt && !tcbdbsetmutex(bdb)){
     eprint(bdb, __LINE__, "tcbdbsetmutex");
     err = true;
@@ -1341,8 +1348,8 @@ static int procqueue(const char *path, int rnum, int lmemb, int nmemb, int bnum,
     break;
   }
   tcbdbcurdel(cur);
-  iprintf("record number: %llu\n", (unsigned long long)tcbdbrnum(bdb));
-  iprintf("size: %llu\n", (unsigned long long)tcbdbfsiz(bdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcbdbrnum(bdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcbdbfsiz(bdb));
   mprint(bdb);
   sysprint();
   if(!tcbdbclose(bdb)){
@@ -1363,7 +1370,7 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
   bool err = false;
   double stime = tctime();
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(mt && !tcbdbsetmutex(bdb)){
     eprint(bdb, __LINE__, "tcbdbsetmutex");
     err = true;
@@ -1392,7 +1399,7 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(bdb, __LINE__, "tcbdbopen");
     err = true;
   }
-  if(TCUSEPTHREAD){
+  if(1){
     TCBDB *bdbdup = tcbdbnew();
     if(tcbdbopen(bdbdup, path, BDBOREADER)){
       eprint(bdb, __LINE__, "(validation)");
@@ -2176,8 +2183,8 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
     err = true;
   }
   tcbdbcurdel(cur);
-  iprintf("record number: %llu\n", (unsigned long long)tcbdbrnum(bdb));
-  iprintf("size: %llu\n", (unsigned long long)tcbdbfsiz(bdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcbdbrnum(bdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcbdbfsiz(bdb));
   mprint(bdb);
   sysprint();
   if(!tcbdbclose(bdb)){
@@ -2198,7 +2205,7 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode){
   bool err = false;
   double stime = tctime();
   TCBDB *bdb = tcbdbnew();
-  if(g_dbgfd >= 0) tcbdbsetdbgfd(bdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcbdbsetdbgfd(bdb, g_dbgfd);
   if(mt && !tcbdbsetmutex(bdb)){
     eprint(bdb, __LINE__, "tcbdbsetmutex");
     err = true;
@@ -2566,8 +2573,8 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode){
     err = true;
   }
   tcbdbcurdel(cur);
-  iprintf("record number: %llu\n", (unsigned long long)tcbdbrnum(bdb));
-  iprintf("size: %llu\n", (unsigned long long)tcbdbfsiz(bdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcbdbrnum(bdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcbdbfsiz(bdb));
   mprint(bdb);
   sysprint();
   tcmapdel(map);

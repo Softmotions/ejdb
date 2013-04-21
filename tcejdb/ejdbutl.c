@@ -32,6 +32,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 /* Byte-wise swap two items of size SIZE. */
 #define SWAP(a, b, size)						      \

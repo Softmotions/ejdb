@@ -15,17 +15,21 @@
  *************************************************************************************************/
 
 #ifndef EJDB_PRIVATE_H
-#define        EJDB_PRIVATE_H
+#define EJDB_PRIVATE_H
 
 #include "ejdb.h"
-
-#include "myconf.h"
 #include "tcutil.h"
 #include "tctdb.h"
 #include "tchdb.h"
 
 #include <assert.h>
 #include <pthread.h>
+
+#ifdef _WIN32
+#include <pcreposix.h>
+#else
+#include <regex.h>
+#endif
 
 EJDB_EXTERN_C_START
 

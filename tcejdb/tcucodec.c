@@ -1223,7 +1223,7 @@ static int procdate(const char *str, int jl, bool wf, bool rf){
     tcdatestrhttp(t, jl, buf);
     printf("%s\n", buf);
   } else {
-    printf("%lld\n", (long long int)t);
+    printf("%" PRIdMAX "\n", (long long int)t);
   }
   return 0;
 }
@@ -1271,22 +1271,22 @@ static int procconf(int mode){
       printf("myconf(bigend): %d\n", TCBIGEND);
       printf("myconf(usezlib): %d\n", TCUSEZLIB);
       printf("myconf(usebzip): %d\n", TCUSEBZIP);
-      printf("type(bool): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(bool): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(bool), (int)_alignof(bool), TCALIGNOF(bool),
              (unsigned long long)true);
-      printf("type(char): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(char): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(char), (int)_alignof(char), TCALIGNOF(char),
              (unsigned long long)CHAR_MAX);
-      printf("type(short): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(short): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(short), (int)_alignof(short), TCALIGNOF(short),
              (unsigned long long)SHRT_MAX);
-      printf("type(int): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(int): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(int), (int)_alignof(int), TCALIGNOF(int),
              (unsigned long long)INT_MAX);
-      printf("type(long): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(long): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(long), (int)_alignof(long), TCALIGNOF(long),
              (unsigned long long)LONG_MAX);
-      printf("type(long long): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(long long): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(long long), (int)_alignof(long long), TCALIGNOF(long long),
              (unsigned long long)LLONG_MAX);
       printf("type(float): size=%d align=%d offset=%d max=%g\n",
@@ -1300,39 +1300,41 @@ static int procconf(int mode){
              (long double)LDBL_MAX);
       printf("type(void *): size=%d align=%d offset=%d\n",
              (int)sizeof(void *), (int)_alignof(void *), TCALIGNOF(void *));
-      printf("type(intptr_t): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(intptr_t): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(intptr_t), (int)_alignof(intptr_t), TCALIGNOF(intptr_t),
              (unsigned long long)INTPTR_MAX);
-      printf("type(size_t): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(size_t): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(size_t), (int)_alignof(size_t), TCALIGNOF(size_t),
              (unsigned long long)SIZE_MAX);
-      printf("type(ptrdiff_t): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(ptrdiff_t): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(ptrdiff_t), (int)_alignof(ptrdiff_t), TCALIGNOF(ptrdiff_t),
              (unsigned long long)PTRDIFF_MAX);
-      printf("type(wchar_t): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(wchar_t): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(wchar_t), (int)_alignof(wchar_t), TCALIGNOF(wchar_t),
              (unsigned long long)WCHAR_MAX);
-      printf("type(sig_atomic_t): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(sig_atomic_t): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(sig_atomic_t), (int)_alignof(sig_atomic_t), TCALIGNOF(sig_atomic_t),
              (unsigned long long)SIG_ATOMIC_MAX);
-      printf("type(time_t): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(time_t): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(time_t), (int)_alignof(time_t), TCALIGNOF(time_t),
              (unsigned long long)_maxof(time_t));
-      printf("type(off_t): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(off_t): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(off_t), (int)_alignof(off_t), TCALIGNOF(off_t),
              (unsigned long long)_maxof(off_t));
-      printf("type(ino_t): size=%d align=%d offset=%d max=%llu\n",
+      printf("type(ino_t): size=%d align=%d offset=%d max=%" PRIuMAX "\n",
              (int)sizeof(ino_t), (int)_alignof(ino_t), TCALIGNOF(ino_t),
              (unsigned long long)_maxof(ino_t));
       printf("type(tcgeneric_t): size=%d align=%d offset=%d\n",
              (int)sizeof(tcgeneric_t), (int)_alignof(tcgeneric_t), TCALIGNOF(tcgeneric_t));
-      printf("macro(RAND_MAX): %llu\n", (unsigned long long)RAND_MAX);
-      printf("macro(PATH_MAX): %llu\n", (unsigned long long)PATH_MAX);
-      printf("macro(NAME_MAX): %llu\n", (unsigned long long)NAME_MAX);
+      printf("macro(RAND_MAX): %" PRIuMAX "\n", (unsigned long long)RAND_MAX);
+      printf("macro(PATH_MAX): %" PRIuMAX "\n", (unsigned long long)PATH_MAX);
+      printf("macro(NAME_MAX): %" PRIuMAX "\n", (unsigned long long)NAME_MAX);
+#ifndef _WIN32
       printf("macro(P_tmpdir): %s\n", P_tmpdir);
-      printf("sysconf(_SC_CLK_TCK): %ld\n", sysconf(_SC_CLK_TCK));
       printf("sysconf(_SC_OPEN_MAX): %ld\n", sysconf(_SC_OPEN_MAX));
-      printf("sysconf(_SC_PAGESIZE): %ld\n", sysconf(_SC_PAGESIZE));
+#endif
+      printf("sysconf(_SC_CLK_TCK): %ld\n", sysconf_SC_CLK_TCK);
+      printf("sysconf(_SC_PAGESIZE): %ld\n", tcpagsize());
       TCMAP *info = tcsysinfo();
       if(info){
         tcmapiterinit(info);
@@ -1346,7 +1348,9 @@ static int procconf(int mode){
       if(stat(MYCDIRSTR, &sbuf) == 0){
         printf("stat(st_uid): %d\n", (int)sbuf.st_uid);
         printf("stat(st_gid): %d\n", (int)sbuf.st_gid);
+#ifndef _WIN32
         printf("stat(st_blksize): %d\n", (int)sbuf.st_blksize);
+#endif
       }
   }
   return 0;

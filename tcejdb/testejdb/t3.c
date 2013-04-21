@@ -5,15 +5,10 @@
  * Created on Oct 26, 2012, 12:12:45 PM
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <assert.h>
+#include "myconf.h"
 #include "ejdb_private.h"
-#include <locale.h>
-#include <pthread.h>
-
 #include "CUnit/Basic.h"
+#include <stdlib.h>
 
 /*
  * CUnit Test Suite
@@ -32,7 +27,7 @@ int init_suite(void) {
     if (!ejdbopen(jb, "dbt3", JBOWRITER | JBOCREAT | JBOTRUNC)) {
         return 1;
     }
-    srandom(tcmstime());
+    srand(tcmstime());
     recs = malloc(RS * sizeof (bson));
     if (!recs) {
         return 1;
@@ -44,11 +39,11 @@ int init_suite(void) {
         char str[128];
         int len = 0;
         do {
-            len = random() % 128;
+            len = rand() % 128;
         } while (len <= 0);
         str[0] = 'A' + (i % 26);
         for (int j = 1; j < len; ++j) {
-            str[j] = 'a' + random() % 26;
+            str[j] = 'a' + rand() % 26;
         }
         str[len] = '\0';
         bson_append_string(&bs, "rstring", str);
@@ -86,7 +81,7 @@ void testPerf1() {
     uint32_t acount = 0;
     int i;
     for (i = 0; i < QRS; ++i) {
-        int idx = random() % QRS;
+        int idx = rand() % QRS;
         bson *bs = recs + idx;
         assert(bs);
         EJQ *q = ejdbcreatequery(jb, bs, NULL, 0, NULL);
@@ -111,7 +106,7 @@ void testPerf1() {
     st = tcmstime();
     acount = 0;
     for (i = 0; i < QRS; ++i) {
-        int idx = random() % QRS;
+        int idx = rand() % QRS;
         bson *bs = recs + idx;
         assert(bs);
         EJQ *q = ejdbcreatequery(jb, bs, NULL, 0, NULL);

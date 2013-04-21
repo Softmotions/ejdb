@@ -5,15 +5,9 @@
  * Created on Oct 1, 2012, 3:13:44 PM
  */
 
-#include "bson.h"
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include "CUnit/Basic.h"
-#include <assert.h>
+#include "myconf.h"
 #include "ejdb_private.h"
-#include <locale.h>
+#include "CUnit/Basic.h"
 
 /*
  * CUnit Test Suite

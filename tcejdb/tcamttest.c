@@ -43,7 +43,7 @@ typedef struct {                         // type of structure for remove thread
 /* global variables */
 const char *g_progname;                  // program name
 unsigned int g_randseed;                 // random seed
-int g_dbgfd;                             // debugging output
+HANDLE g_dbgfd;                          // debugging output
 
 
 /* function prototypes */
@@ -72,7 +72,14 @@ int main(int argc, char **argv){
   g_randseed = ebuf ? tcatoix(ebuf) : tctime() * 1000;
   srand(g_randseed);
   ebuf = getenv("TCDBGFD");
-  g_dbgfd = ebuf ? tcatoix(ebuf) : UINT16_MAX;
+  if (ebuf) {
+	  int debugfd = tcatoix(ebuf);
+#ifdef _WIN32
+	  g_dbgfd = (HANDLE) _get_osfhandle(debugfd);
+#else
+	  g_dbgfd = debugfd;
+#endif
+  }
   if(argc < 2) usage();
   int rv = 0;
   if(!strcmp(argv[1], "write")){
@@ -310,8 +317,8 @@ static int procwrite(const char *name, int tnum, int rnum){
       }
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -380,8 +387,8 @@ static int procread(const char *name, int tnum){
       }
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -450,8 +457,8 @@ static int procremove(const char *name, int tnum){
       }
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");

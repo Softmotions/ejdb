@@ -21,19 +21,10 @@
 #ifndef BSON_H_
 #define BSON_H_
 
-#include "myconf.h"
-
-#ifdef EJDB_BIG_ENDIAN
-#define bson_little_endian64(out, in) ( bson_swap_endian64(out, in) )
-#define bson_little_endian32(out, in) ( bson_swap_endian32(out, in) )
-#define bson_big_endian64(out, in) ( memcpy(out, in, 8) )
-#define bson_big_endian32(out, in) ( memcpy(out, in, 4) )
-#else
-#define bson_little_endian64(out, in) ( memcpy(out, in, 8) )
-#define bson_little_endian32(out, in) ( memcpy(out, in, 4) )
-#define bson_big_endian64(out, in) ( bson_swap_endian64(out, in) )
-#define bson_big_endian32(out, in) ( bson_swap_endian32(out, in) )
-#endif
+#include "basedefs.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #define BSON_IS_NUM_TYPE(atype) (atype == BSON_INT || atype == BSON_LONG || atype == BSON_DOUBLE)
 
@@ -993,18 +984,12 @@ EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, int64_t i);
 
 /* bson_err_handlers shouldn't return!!! */
 typedef void( *bson_err_handler)(const char *errmsg);
-
 typedef int (*bson_printf_func)(const char *, ...);
-typedef int (*bson_fprintf_func)(FILE *, const char *, ...);
-typedef int (*bson_sprintf_func)(char *, const char *, ...);
 
 extern void *(*bson_malloc_func)(size_t);
 extern void *(*bson_realloc_func)(void *, size_t);
 extern void ( *bson_free_func)(void *);
 
-extern bson_printf_func bson_printf;
-extern bson_fprintf_func bson_fprintf;
-extern bson_sprintf_func bson_sprintf;
 extern bson_printf_func bson_errprintf;
 
 EJDB_EXPORT void bson_free(void *ptr);

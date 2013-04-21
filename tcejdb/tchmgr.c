@@ -21,7 +21,7 @@
 
 /* global variables */
 const char *g_progname;                  // program name
-int g_dbgfd;                             // debugging output
+HANDLE g_dbgfd;                          // debugging output
 
 
 /* function prototypes */
@@ -55,9 +55,16 @@ static int procversion(void);
 /* main routine */
 int main(int argc, char **argv){
   g_progname = argv[0];
-  g_dbgfd = -1;
+  g_dbgfd = INVALID_HANDLE_VALUE;
   const char *ebuf = getenv("TCDBGFD");
-  if(ebuf) g_dbgfd = tcatoix(ebuf);
+  if (ebuf) {
+	  int debugfd = tcatoix(ebuf);
+#ifdef _WIN32
+	  g_dbgfd = (HANDLE) _get_osfhandle(debugfd);
+#else
+	  g_dbgfd = debugfd;
+#endif
+  }
   if(argc < 2) usage();
   int rv = 0;
   if(!strcmp(argv[1], "create")){
@@ -505,7 +512,7 @@ static int runversion(int argc, char **argv){
 /* perform create command */
 static int proccreate(const char *path, int bnum, int apow, int fpow, int opts){
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(!tchdbsetcodecfunc(hdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(hdb);
   if(!tchdbtune(hdb, bnum, apow, fpow, opts)){
     printerr(hdb);
@@ -530,7 +537,7 @@ static int proccreate(const char *path, int bnum, int apow, int fpow, int opts){
 /* perform inform command */
 static int procinform(const char *path, int omode){
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   tchdbsetcodecfunc(hdb, _tc_recencode, NULL, _tc_recdecode, NULL);
   if(!tchdbopen(hdb, path, HDBOREADER | omode)){
     printerr(hdb);
@@ -554,12 +561,12 @@ static int procinform(const char *path, int omode){
   if(flags & HDBFOPEN) printf(" open");
   if(flags & HDBFFATAL) printf(" fatal");
   printf("\n");
-  printf("bucket number: %llu\n", (unsigned long long)tchdbbnum(hdb));
+  printf("bucket number: %" PRIuMAX "\n", (unsigned long long)tchdbbnum(hdb));
   if(hdb->cnt_writerec >= 0)
-    printf("used bucket number: %lld\n", (long long)tchdbbnumused(hdb));
+    printf("used bucket number: %" PRIdMAX "\n", (long long)tchdbbnumused(hdb));
   printf("alignment: %u\n", tchdbalign(hdb));
   printf("free block pool: %u\n", tchdbfbpmax(hdb));
-  printf("inode number: %lld\n", (long long)tchdbinode(hdb));
+  printf("inode number: %" PRIdMAX "\n", (long long)tchdbinode(hdb));
   char date[48];
   tcdatestrwww(tchdbmtime(hdb), INT_MAX, date);
   printf("modified time: %s\n", date);
@@ -571,8 +578,8 @@ static int procinform(const char *path, int omode){
   if(opts & HDBTTCBS) printf(" tcbs");
   if(opts & HDBTEXCODEC) printf(" excodec");
   printf("\n");
-  printf("record number: %llu\n", (unsigned long long)tchdbrnum(hdb));
-  printf("file size: %llu\n", (unsigned long long)tchdbfsiz(hdb));
+  printf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
+  printf("file size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
   if(!tchdbclose(hdb)){
     if(!err) printerr(hdb);
     err = true;
@@ -586,7 +593,7 @@ static int procinform(const char *path, int omode){
 static int procput(const char *path, const char *kbuf, int ksiz, const char *vbuf, int vsiz,
                    int omode, int dmode){
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(!tchdbsetcodecfunc(hdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(hdb);
   if(!tchdbopen(hdb, path, HDBOWRITER | omode)){
     printerr(hdb);
@@ -646,7 +653,7 @@ static int procput(const char *path, const char *kbuf, int ksiz, const char *vbu
 /* perform out command */
 static int procout(const char *path, const char *kbuf, int ksiz, int omode){
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(!tchdbsetcodecfunc(hdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(hdb);
   if(!tchdbopen(hdb, path, HDBOWRITER | omode)){
     printerr(hdb);
@@ -670,7 +677,7 @@ static int procout(const char *path, const char *kbuf, int ksiz, int omode){
 /* perform get command */
 static int procget(const char *path, const char *kbuf, int ksiz, int omode, bool px, bool pz){
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(!tchdbsetcodecfunc(hdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(hdb);
   if(!tchdbopen(hdb, path, HDBOREADER | omode)){
     printerr(hdb);
@@ -700,7 +707,7 @@ static int procget(const char *path, const char *kbuf, int ksiz, int omode, bool
 /* perform list command */
 static int proclist(const char *path, int omode, int max, bool pv, bool px, const char *fmstr){
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(!tchdbsetcodecfunc(hdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(hdb);
   if(!tchdbopen(hdb, path, HDBOREADER | omode)){
     printerr(hdb);
@@ -759,7 +766,7 @@ static int proclist(const char *path, int omode, int max, bool pv, bool px, cons
 static int procoptimize(const char *path, int bnum, int apow, int fpow, int opts, int omode,
                         bool df){
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(!tchdbsetcodecfunc(hdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(hdb);
   if(!tchdbopen(hdb, path, HDBOWRITER | omode)){
     printerr(hdb);
@@ -795,7 +802,7 @@ static int procimporttsv(const char *path, const char *file, int omode, bool sc)
     return 1;
   }
   TCHDB *hdb = tchdbnew();
-  if(g_dbgfd >= 0) tchdbsetdbgfd(hdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
   if(!tchdbsetcodecfunc(hdb, _tc_recencode, NULL, _tc_recdecode, NULL)) printerr(hdb);
   if(!tchdbopen(hdb, path, HDBOWRITER | HDBOCREAT | omode)){
     printerr(hdb);

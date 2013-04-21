@@ -1,10 +1,7 @@
 
-#include <locale.h>
-#include <pthread.h>
+#include "myconf.h"
 #include "ejdb_private.h"
-
 #include "CUnit/Basic.h"
-
 /*
  * CUnit Test Suite
  */
@@ -28,7 +25,7 @@ void testTicket53() {
     if (!coll) {
         eprint(jb, __LINE__, "testTicket53");
     }
-    CU_ASSERT_TRUE(coll);
+    CU_ASSERT_TRUE(coll != NULL);
     ejdbclose(jb);
     ejdbdel(jb);
 }

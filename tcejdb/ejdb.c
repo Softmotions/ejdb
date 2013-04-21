@@ -14,10 +14,8 @@
  *  Boston, MA 02111-1307 USA.
  *************************************************************************************************/
 
+#include "myconf.h"
 #include "bson.h"
-
-
-#include <regex.h>
 #include "ejdb_private.h"
 #include "ejdbutl.h"
 
@@ -34,7 +32,7 @@
 
 #define JBISOPEN(JB_jb) ((JB_jb) && (JB_jb)->metadb && (JB_jb)->metadb->open) ? true : false
 
-#define JBISVALCOLNAME(JB_cname) ((JB_cname) && strlen(JB_cname) < JBMAXCOLNAMELEN && !index((JB_cname), '.'))
+#define JBISVALCOLNAME(JB_cname) ((JB_cname) && strlen(JB_cname) < JBMAXCOLNAMELEN && !strchr((JB_cname), '.'))
 
 #define JBENSUREOPENLOCK(JB_jb, JB_lock, JB_ret)  \
                             assert(JB_jb); \
@@ -99,7 +97,7 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
 static bool _metasetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
 static bool _metagetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
 static bson* _metagetbson(EJDB *jb, const char *colname, int colnamesz, const char *mkey);
-static bson* _metagetbson2(EJCOLL *jcoll, const char *mkey);
+static bson* _metagetbson2(EJCOLL *jcoll, const char *mkey) __attribute__ ((unused));
 static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
         const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge, bool mergeoverwrt);
@@ -132,7 +130,7 @@ extern const char *utf8proc_errmsg(ssize_t errcode);
 static const bool yes = true;
 static const bool no = false;
 
-EJDB_EXPORT const char* ejdberrmsg(int ecode) {
+ const char* ejdberrmsg(int ecode) {
     if (ecode > -6 && ecode < 0) { //Hook for negative error codes of utf8proc library
         return utf8proc_errmsg(ecode);
     }
@@ -157,7 +155,7 @@ EJDB_EXPORT const char* ejdberrmsg(int ecode) {
     }
 }
 
-EJDB_EXPORT bool ejdbisvalidoidstr(const char *oid) {
+ bool ejdbisvalidoidstr(const char *oid) {
     if (!oid) {
         return false;
     }
@@ -169,20 +167,17 @@ EJDB_EXPORT bool ejdbisvalidoidstr(const char *oid) {
 }
 
 /* Get the last happened error code of a database object. */
-EJDB_EXPORT int ejdbecode(EJDB *jb) {
+ int ejdbecode(EJDB *jb) {
     assert(jb && jb->metadb);
     return tctdbecode(jb->metadb);
 }
 
-EJDB_EXPORT EJDB* ejdbnew(void) {
+ EJDB* ejdbnew(void) {
     EJDB *jb;
     TCCALLOC(jb, 1, sizeof (*jb));
     jb->metadb = tctdbnew();
     tctdbsetmutex(jb->metadb);
     tctdbsetcache(jb->metadb, 1024, 0, 0);
-#ifdef _DEBUG
-    tchdbsetdbgfd(jb->metadb->hdb, fileno(stderr));
-#endif
     if (!_ejdbsetmutex(jb)) {
         tctdbdel(jb->metadb);
         TCFREE(jb);
@@ -191,7 +186,7 @@ EJDB_EXPORT EJDB* ejdbnew(void) {
     return jb;
 }
 
-EJDB_EXPORT void ejdbdel(EJDB *jb) {
+ void ejdbdel(EJDB *jb) {
     assert(jb && jb->metadb);
     if (JBISOPEN(jb)) ejdbclose(jb);
     for (int i = 0; i < jb->cdbsnum; ++i) {
@@ -209,7 +204,7 @@ EJDB_EXPORT void ejdbdel(EJDB *jb) {
     TCFREE(jb);
 }
 
-EJDB_EXPORT bool ejdbclose(EJDB *jb) {
+ bool ejdbclose(EJDB *jb) {
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
     for (int i = 0; i < jb->cdbsnum; ++i) {
@@ -227,11 +222,11 @@ EJDB_EXPORT bool ejdbclose(EJDB *jb) {
     return rv;
 }
 
-EJDB_EXPORT bool ejdbisopen(EJDB *jb) {
+ bool ejdbisopen(EJDB *jb) {
     return JBISOPEN(jb);
 }
 
-EJDB_EXPORT bool ejdbopen(EJDB *jb, const char *path, int mode) {
+ bool ejdbopen(EJDB *jb, const char *path, int mode) {
     assert(jb && path);
     assert(jb->metadb);
     if (!JBLOCKMETHOD(jb, true)) return false;
@@ -263,7 +258,7 @@ finish:
     return rv;
 }
 
-EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char *colname) {
+ EJCOLL* ejdbgetcoll(EJDB *jb, const char *colname) {
     assert(colname);
     EJCOLL *coll = NULL;
     JBENSUREOPENLOCK(jb, false, NULL);
@@ -272,7 +267,7 @@ EJDB_EXPORT EJCOLL* ejdbgetcoll(EJDB *jb, const char *colname) {
     return coll;
 }
 
-EJDB_EXPORT TCLIST* ejdbgetcolls(EJDB *jb) {
+ TCLIST* ejdbgetcolls(EJDB *jb) {
     assert(jb);
     EJCOLL *coll = NULL;
     JBENSUREOPENLOCK(jb, false, NULL);
@@ -285,7 +280,7 @@ EJDB_EXPORT TCLIST* ejdbgetcolls(EJDB *jb) {
     return ret;
 }
 
-EJDB_EXPORT EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
+ EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
     assert(colname);
     EJCOLL *coll = ejdbgetcoll(jb, colname);
     if (coll) {
@@ -314,7 +309,7 @@ finish:
     return coll;
 }
 
-EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile) {
+ bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile) {
     assert(colname);
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
@@ -364,11 +359,11 @@ finish:
 }
 
 /* Save/Update BSON  */
-EJDB_EXPORT bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
+ bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
     return ejdbsavebson2(jcoll, bs, oid, false);
 }
 
-EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge) {
+ bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge) {
     assert(jcoll);
     if (!bs || bs->err || !bs->finished) {
         _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -384,7 +379,7 @@ EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool me
     return rv;
 }
 
-EJDB_EXPORT bool ejdbrmbson(EJCOLL *jcoll, bson_oid_t *oid) {
+ bool ejdbrmbson(EJCOLL *jcoll, bson_oid_t *oid) {
     assert(jcoll && oid);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -411,7 +406,7 @@ finish:
     return rv;
 }
 
-EJDB_EXPORT bson* ejdbloadbson(EJCOLL *jcoll, const bson_oid_t *oid) {
+ bson* ejdbloadbson(EJCOLL *jcoll, const bson_oid_t *oid) {
     assert(jcoll && oid);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -442,7 +437,7 @@ finish:
     return ret;
 }
 
-EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints) {
+ EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints) {
     assert(jb);
     if (!qobj || qobj->err || !qobj->finished) {
         _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -486,12 +481,12 @@ error:
     return NULL;
 }
 
-EJDB_EXPORT void ejdbquerydel(EJQ *q) {
+ void ejdbquerydel(EJQ *q) {
     _qrydel(q, true);
 }
 
 /** Set index */
-EJDB_EXPORT bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
+ bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
     assert(jcoll && fpath);
     bool rv = true;
     bson *imeta = NULL;
@@ -646,7 +641,7 @@ finish:
     return rv;
 }
 
-EJDB_EXPORT uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log) {
+ uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log) {
     assert(jcoll);
     uint32_t count = 0;
     EJQ *q = ejdbcreatequery(jcoll->jb, qobj, orqobjs, orqobjsnum, hints);
@@ -658,7 +653,7 @@ EJDB_EXPORT uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int or
     return count;
 }
 
-EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
+ TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
     assert(jcoll && q && q->qobjlist);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -675,7 +670,7 @@ EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count,
     return res;
 }
 
-EJDB_EXPORT bool ejdbsyncoll(EJCOLL *jcoll) {
+ bool ejdbsyncoll(EJCOLL *jcoll) {
     assert(jcoll);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -688,7 +683,7 @@ EJDB_EXPORT bool ejdbsyncoll(EJCOLL *jcoll) {
     return rv;
 }
 
-EJDB_EXPORT bool ejdbsyncdb(EJDB *jb) {
+ bool ejdbsyncdb(EJDB *jb) {
     assert(jb);
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
@@ -704,13 +699,13 @@ EJDB_EXPORT bool ejdbsyncdb(EJDB *jb) {
     return rv;
 }
 
-EJDB_EXPORT bool ejdbtranbegin(EJCOLL *jcoll) {
+ bool ejdbtranbegin(EJCOLL *jcoll) {
     assert(jcoll);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return false;
     }
-    for (double wsec = 1.0 / sysconf(_SC_CLK_TCK); true; wsec *= 2) {
+    for (double wsec = 1.0 / sysconf_SC_CLK_TCK; true; wsec *= 2) {
         if (!JBCLOCKMETHOD(jcoll, true)) return false;
         if (!jcoll->tdb->open || !jcoll->tdb->wmode) {
             _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -731,7 +726,7 @@ EJDB_EXPORT bool ejdbtranbegin(EJCOLL *jcoll) {
     return true;
 }
 
-EJDB_EXPORT bool ejdbtrancommit(EJCOLL *jcoll) {
+ bool ejdbtrancommit(EJCOLL *jcoll) {
     assert(jcoll);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -750,7 +745,7 @@ EJDB_EXPORT bool ejdbtrancommit(EJCOLL *jcoll) {
     return !err;
 }
 
-EJDB_EXPORT bool ejdbtranabort(EJCOLL *jcoll) {
+ bool ejdbtranabort(EJCOLL *jcoll) {
     assert(jcoll);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -769,7 +764,7 @@ EJDB_EXPORT bool ejdbtranabort(EJCOLL *jcoll) {
     return !err;
 }
 
-EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
+ bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
     assert(jcoll && txactive);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -805,7 +800,6 @@ static EJCOLL* _getcoll(EJDB *jb, const char *colname) {
 /* Set mutual exclusion control of a table database object for threading. */
 static bool _ejdbsetmutex(EJDB *ejdb) {
     assert(ejdb);
-    if (!TCUSEPTHREAD) return true;
     if (ejdb->mmtx || JBISOPEN(ejdb)) {
         _ejdbsetecode(ejdb, TCEINVALID, __FILE__, __LINE__, __func__);
         return false;
@@ -850,7 +844,6 @@ static bool _ejdbunlockmethod(EJDB *ejdb) {
 
 static bool _ejdbcolsetmutex(EJCOLL *coll) {
     assert(coll && coll->jb);
-    if (!TCUSEPTHREAD) return true;
     if (coll->mmtx) {
         _ejdbsetecode(coll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return false;

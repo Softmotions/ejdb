@@ -15,9 +15,8 @@
  *************************************************************************************************/
 
 #ifndef EJDBUTL_H
-#define        EJDBUTL_H
+#define EJDBUTL_H
 
-#include "myconf.h"
 #include "tcutil.h"
 
 EJDB_EXTERN_C_START

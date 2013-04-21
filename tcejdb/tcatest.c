@@ -123,12 +123,38 @@ static void iputchar(int c){
   putchar(c);
   fflush(stdout);
 }
-
-
 /* print error message of abstract database */
-static void eprint(TCADB *adb, int line, const char *func){
-  const char *path = adb ? tcadbpath(adb) : NULL;
-  fprintf(stderr, "%s: %s: %d: %s: error\n", g_progname, path ? path : "-", line, func);
+static void eprint(TCADB *adb, int line, const char *func) {
+    const char *path = adb ? tcadbpath(adb) : NULL;
+#ifdef _WIN32
+    DWORD winerrno = GetLastError();
+#endif
+    int stderrno = errno;
+#ifdef _WIN32
+    LPTSTR errorText = NULL;
+    if (winerrno > 0) {
+        DWORD ret = FormatMessage(
+                FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL, winerrno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) & errorText, 0, NULL);
+        if (!ret) {
+            if (errorText) LocalFree(errorText);
+            errorText = NULL;
+        }
+    }
+    fprintf(stderr,
+            "ERROR:%s:%d:%s:%s:%d:%s:%d:%s\n",
+            g_progname, line,
+            func, (path ? path : "-"),
+            winerrno, (errorText ? errorText : "-"),
+            stderrno, (stderrno > 0 ? strerror(stderrno) : "-"));
+    if (errorText) LocalFree(errorText);
+#else
+    fprintf(stderr,
+            "ERROR:%s:%d:%s:%s:%d:%s\n",
+            g_progname, line,
+            func, (path ? path : "-"),
+            stderrno, strerror(stderrno));
+#endif
 }
 
 
@@ -314,6 +340,9 @@ static int runmisc(int argc, char **argv){
     }
   }
   if(!name || !rstr) usage();
+  if (*name == '#') {
+      *name = '*';
+  }
   int rnum = tcatoix(rstr);
   if(rnum < 1) usage();
   int rv = procmisc(name, rnum);
@@ -337,6 +366,9 @@ static int runwicked(int argc, char **argv){
     }
   }
   if(!name || !rstr) usage();
+  if (*name == '#') {
+      *name = '*';
+  }
   int rnum = tcatoix(rstr);
   if(rnum < 1) usage();
   int rv = procwicked(name, rnum);
@@ -410,8 +442,8 @@ static int procwrite(const char *name, int rnum){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -467,8 +499,8 @@ static int procread(const char *name){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -521,8 +553,8 @@ static int procremove(const char *name){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -576,8 +608,8 @@ static int procrcat(const char *name, int rnum){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -1078,8 +1110,8 @@ static int procmisc(const char *name, int rnum){
     eprint(adb, __LINE__, "tcadbforeach");
     err = true;
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -1283,8 +1315,8 @@ static int procwicked(const char *name, int rnum){
     eprint(adb, __LINE__, "(validation)");
     err = true;
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %llu\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
   sysprint();
   tcmapdel(map);
   if(!tcadbclose(adb)){
@@ -1308,7 +1340,7 @@ static int proccompare(const char *name, int tnum, int rnum){
   TCMDB *mdb = tcmdbnew2(rnum / 2);
   TCNDB *ndb = tcndbnew();
   TCHDB *hdb = tchdbnew();
-  tchdbsetdbgfd(hdb, UINT16_MAX);
+  tchdbsetdbgfd(hdb, INVALID_HANDLE_VALUE);
   int hopts = 0;
   if(myrand(2) == 1) hopts |= HDBTLARGE;
   if(myrand(2) == 1) hopts |= HDBTBZIP;
@@ -1336,7 +1368,7 @@ static int proccompare(const char *name, int tnum, int rnum){
     err = true;
   }
   TCBDB *bdb = tcbdbnew();
-  tcbdbsetdbgfd(bdb, UINT16_MAX);
+  tcbdbsetdbgfd(bdb, INVALID_HANDLE_VALUE);
   int bopts = 0;
   if(myrand(2) == 1) bopts |= BDBTLARGE;
   if(myrand(2) == 1) bopts |= BDBTBZIP;

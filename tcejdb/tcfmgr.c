@@ -21,7 +21,7 @@
 
 /* global variables */
 const char *g_progname;                  // program name
-int g_dbgfd;                             // debugging output
+HANDLE g_dbgfd;                          // debugging output
 
 
 /* function prototypes */
@@ -55,9 +55,16 @@ static int procversion(void);
 /* main routine */
 int main(int argc, char **argv){
   g_progname = argv[0];
-  g_dbgfd = -1;
+  g_dbgfd = INVALID_HANDLE_VALUE;
   const char *ebuf = getenv("TCDBGFD");
-  if(ebuf) g_dbgfd = tcatoix(ebuf);
+  if (ebuf) {
+	  int debugfd = tcatoix(ebuf);
+#ifdef _WIN32
+	  g_dbgfd = (HANDLE) _get_osfhandle(debugfd);
+#else
+	  g_dbgfd = debugfd;
+#endif
+  }
   if(argc < 2) usage();
   int rv = 0;
   if(!strcmp(argv[1], "create")){
@@ -470,7 +477,7 @@ static int runversion(int argc, char **argv){
 /* perform create command */
 static int proccreate(const char *path, int width, int64_t limsiz){
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(!tcfdbtune(fdb, width, limsiz)){
     printerr(fdb);
     tcfdbdel(fdb);
@@ -494,7 +501,7 @@ static int proccreate(const char *path, int width, int64_t limsiz){
 /* perform inform command */
 static int procinform(const char *path, int omode){
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(!tcfdbopen(fdb, path, FDBOREADER | omode)){
     printerr(fdb);
     tcfdbdel(fdb);
@@ -517,17 +524,17 @@ static int procinform(const char *path, int omode){
   if(flags & FDBFOPEN) printf(" open");
   if(flags & FDBFFATAL) printf(" fatal");
   printf("\n");
-  printf("minimum ID number: %llu\n", (unsigned long long)tcfdbmin(fdb));
-  printf("maximum ID number: %llu\n", (unsigned long long)tcfdbmax(fdb));
+  printf("minimum ID number: %" PRIuMAX "\n", (unsigned long long)tcfdbmin(fdb));
+  printf("maximum ID number: %" PRIuMAX "\n", (unsigned long long)tcfdbmax(fdb));
   printf("width of the value: %u\n", (unsigned int)tcfdbwidth(fdb));
-  printf("limit file size: %llu\n", (unsigned long long)tcfdblimsiz(fdb));
-  printf("limit ID number: %llu\n", (unsigned long long)tcfdblimid(fdb));
-  printf("inode number: %lld\n", (long long)tcfdbinode(fdb));
+  printf("limit file size: %" PRIuMAX "\n", (unsigned long long)tcfdblimsiz(fdb));
+  printf("limit ID number: %" PRIuMAX "\n", (unsigned long long)tcfdblimid(fdb));
+  printf("inode number: %" PRIdMAX "\n", (long long)tcfdbinode(fdb));
   char date[48];
   tcdatestrwww(tcfdbmtime(fdb), INT_MAX, date);
   printf("modified time: %s\n", date);
-  printf("record number: %llu\n", (unsigned long long)tcfdbrnum(fdb));
-  printf("file size: %llu\n", (unsigned long long)tcfdbfsiz(fdb));
+  printf("record number: %" PRIuMAX "\n", (unsigned long long)tcfdbrnum(fdb));
+  printf("file size: %" PRIuMAX "\n", (unsigned long long)tcfdbfsiz(fdb));
   if(!tcfdbclose(fdb)){
     if(!err) printerr(fdb);
     err = true;
@@ -541,7 +548,7 @@ static int procinform(const char *path, int omode){
 static int procput(const char *path, const char *kbuf, int ksiz, const char *vbuf, int vsiz,
                    int omode, int dmode){
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(!tcfdbopen(fdb, path, FDBOWRITER | omode)){
     printerr(fdb);
     tcfdbdel(fdb);
@@ -600,7 +607,7 @@ static int procput(const char *path, const char *kbuf, int ksiz, const char *vbu
 /* perform out command */
 static int procout(const char *path, const char *kbuf, int ksiz, int omode){
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(!tcfdbopen(fdb, path, FDBOWRITER | omode)){
     printerr(fdb);
     tcfdbdel(fdb);
@@ -623,7 +630,7 @@ static int procout(const char *path, const char *kbuf, int ksiz, int omode){
 /* perform get command */
 static int procget(const char *path, const char *kbuf, int ksiz, int omode, bool px, bool pz){
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(!tcfdbopen(fdb, path, FDBOREADER | omode)){
     printerr(fdb);
     tcfdbdel(fdb);
@@ -653,7 +660,7 @@ static int procget(const char *path, const char *kbuf, int ksiz, int omode, bool
 static int proclist(const char *path, int omode, int max, bool pv, bool px,
                     const char *rlstr, const char *rustr, const char *ristr){
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(!tcfdbopen(fdb, path, FDBOREADER | omode)){
     printerr(fdb);
     tcfdbdel(fdb);
@@ -686,7 +693,7 @@ static int proclist(const char *path, int omode, int max, bool pv, bool px,
     int cnt = 0;
     uint64_t id;
     while((id = tcfdbiternext(fdb)) > 0){
-      printf("%llu", (unsigned long long)id);
+      printf("%" PRIuMAX "", (unsigned long long)id);
       if(pv){
         int vsiz;
         char *vbuf = tcfdbget(fdb, id, &vsiz);
@@ -712,7 +719,7 @@ static int proclist(const char *path, int omode, int max, bool pv, bool px,
 /* perform optimize command */
 static int procoptimize(const char *path, int width, int64_t limsiz, int omode){
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(!tcfdbopen(fdb, path, FDBOWRITER | omode)){
     printerr(fdb);
     tcfdbdel(fdb);
@@ -740,7 +747,7 @@ static int procimporttsv(const char *path, const char *file, int omode, bool sc)
     return 1;
   }
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(!tcfdbopen(fdb, path, FDBOWRITER | FDBOCREAT | omode)){
     printerr(fdb);
     tcfdbdel(fdb);

@@ -25,7 +25,7 @@
 /* global variables */
 const char *g_progname;                  // program name
 unsigned int g_randseed;                 // random seed
-int g_dbgfd;                             // debugging output
+HANDLE g_dbgfd;                          // debugging output
 
 
 /* function prototypes */
@@ -61,8 +61,16 @@ int main(int argc, char **argv){
   const char *ebuf = getenv("TCRNDSEED");
   g_randseed = ebuf ? tcatoix(ebuf) : tctime() * 1000;
   srand(g_randseed);
+  g_dbgfd = INVALID_HANDLE_VALUE;
   ebuf = getenv("TCDBGFD");
-  g_dbgfd = ebuf ? tcatoix(ebuf) : UINT16_MAX;
+  if (ebuf) {
+	  int debugfd = tcatoix(ebuf);
+#ifdef _WIN32
+	  g_dbgfd = (HANDLE) _get_osfhandle(debugfd);
+#else
+	  g_dbgfd = debugfd;
+#endif
+  }
   if(argc < 2) usage();
   int rv = 0;
   if(!strcmp(argv[1], "write")){
@@ -130,22 +138,59 @@ static void iputchar(int c){
 static void eprint(TCFDB *fdb, int line, const char *func){
   const char *path = tcfdbpath(fdb);
   int ecode = tcfdbecode(fdb);
-  fprintf(stderr, "%s: %s: %d: %s: error: %d: %s\n",
-          g_progname, path ? path : "-", line, func, ecode, tcfdberrmsg(ecode));
+  int stderrno = errno;
+#ifdef _WIN32
+ DWORD myerrno = GetLastError();
+ LPTSTR errorText = NULL;
+ DWORD ret = FormatMessage(
+    // use system message tables to retrieve error text
+    FORMAT_MESSAGE_FROM_SYSTEM
+    // allocate buffer on local heap for error text
+    |FORMAT_MESSAGE_ALLOCATE_BUFFER
+    // Important! will fail otherwise, since we're not
+    // (and CANNOT) pass insertion parameters
+    |FORMAT_MESSAGE_IGNORE_INSERTS,
+    NULL,    // unused with FORMAT_MESSAGE_FROM_SYSTEM
+    myerrno,
+    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+    (LPTSTR)&errorText,  // output
+    0, // minimum size for output buffer
+    NULL);   // arguments - see note
+    if (!ret) {
+       if (errorText) LocalFree(errorText);
+       errorText = NULL;
+    }
+    fprintf(stderr, "%s: %s: %d: %s: error: %d:%s:%d:%s:%d:%s\n",
+          g_progname, path ? path : "-",
+          line, func,
+          ecode, tcfdberrmsg(ecode),
+          myerrno, errorText ? errorText : "-",
+          stderrno, strerror(stderrno));
+
+    if (errorText) LocalFree(errorText);
+#else
+  fprintf(stderr, "%s: %s: %d: %s: error: %d:%s:%d:%s\n",
+          g_progname, path ? path : "-",
+          line, func,
+          ecode, tcfdberrmsg(ecode),
+          stderrno, strerror(stderrno));
+#endif
 }
 
 
 /* print members of fixed-length database */
 static void mprint(TCFDB *fdb){
-  if(fdb->cnt_writerec < 0) return;
-  iprintf("minimum ID number: %llu\n", (unsigned long long)tcfdbmin(fdb));
-  iprintf("maximum ID number: %llu\n", (unsigned long long)tcfdbmax(fdb));
+  iprintf("minimum ID number: %" PRIuMAX "\n", (unsigned long long)tcfdbmin(fdb));
+  iprintf("maximum ID number: %" PRIuMAX "\n", (unsigned long long)tcfdbmax(fdb));
   iprintf("width of the value: %u\n", (unsigned int)tcfdbwidth(fdb));
-  iprintf("limit file size: %llu\n", (unsigned long long)tcfdblimsiz(fdb));
-  iprintf("limit ID number: %llu\n", (unsigned long long)tcfdblimid(fdb));
-  iprintf("cnt_writerec: %lld\n", (long long)fdb->cnt_writerec);
-  iprintf("cnt_readrec: %lld\n", (long long)fdb->cnt_readrec);
-  iprintf("cnt_truncfile: %lld\n", (long long)fdb->cnt_truncfile);
+  iprintf("limit file size: %" PRIuMAX "\n", (unsigned long long)tcfdblimsiz(fdb));
+  iprintf("limit ID number: %" PRIuMAX "\n", (unsigned long long)tcfdblimid(fdb));
+#ifndef NDEBUG
+  if(fdb->cnt_writerec < 0) return;
+  iprintf("cnt_writerec: %" PRIdMAX "\n", (long long)fdb->cnt_writerec);
+  iprintf("cnt_readrec: %" PRIdMAX "\n", (long long)fdb->cnt_readrec);
+  iprintf("cnt_truncfile: %" PRIdMAX "\n", (long long)fdb->cnt_truncfile);
+#endif
 }
 
 
@@ -449,12 +494,12 @@ static int runwicked(int argc, char **argv){
 /* perform write command */
 static int procwrite(const char *path, int rnum, int width, int64_t limsiz,
                      bool mt, int omode, bool rnd){
-  iprintf("<Writing Test>\n  seed=%u  path=%s  rnum=%d  width=%d  limsiz=%lld  mt=%d  omode=%d"
+  iprintf("<Writing Test>\n  seed=%u  path=%s  rnum=%d  width=%d  limsiz=%" PRIdMAX "  mt=%d  omode=%d"
           "  rnd=%d\n\n", g_randseed, path, rnum, width, (long long)limsiz, mt, omode, rnd);
   bool err = false;
   double stime = tctime();
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(mt && !tcfdbsetmutex(fdb)){
     eprint(fdb, __LINE__, "tcfdbsetmutex");
     err = true;
@@ -481,8 +526,8 @@ static int procwrite(const char *path, int rnum, int width, int64_t limsiz,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcfdbrnum(fdb));
-  iprintf("size: %llu\n", (unsigned long long)tcfdbfsiz(fdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcfdbrnum(fdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcfdbfsiz(fdb));
   mprint(fdb);
   sysprint();
   if(!tcfdbclose(fdb)){
@@ -503,7 +548,7 @@ static int procread(const char *path, bool mt, int omode, bool wb, bool rnd){
   bool err = false;
   double stime = tctime();
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(mt && !tcfdbsetmutex(fdb)){
     eprint(fdb, __LINE__, "tcfdbsetmutex");
     err = true;
@@ -539,8 +584,8 @@ static int procread(const char *path, bool mt, int omode, bool wb, bool rnd){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcfdbrnum(fdb));
-  iprintf("size: %llu\n", (unsigned long long)tcfdbfsiz(fdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcfdbrnum(fdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcfdbfsiz(fdb));
   mprint(fdb);
   sysprint();
   if(!tcfdbclose(fdb)){
@@ -561,7 +606,7 @@ static int procremove(const char *path, bool mt, int omode, bool rnd){
   bool err = false;
   double stime = tctime();
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(mt && !tcfdbsetmutex(fdb)){
     eprint(fdb, __LINE__, "tcfdbsetmutex");
     err = true;
@@ -584,8 +629,8 @@ static int procremove(const char *path, bool mt, int omode, bool rnd){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcfdbrnum(fdb));
-  iprintf("size: %llu\n", (unsigned long long)tcfdbfsiz(fdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcfdbrnum(fdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcfdbfsiz(fdb));
   mprint(fdb);
   sysprint();
   if(!tcfdbclose(fdb)){
@@ -603,14 +648,14 @@ static int procremove(const char *path, bool mt, int omode, bool rnd){
 static int procrcat(const char *path, int rnum, int width, int64_t limsiz,
                     bool mt, int omode, int pnum, bool dai, bool dad, bool rl, bool ru){
   iprintf("<Random Concatenating Test>\n"
-          "  seed=%u  path=%s  rnum=%d  width=%d  limsiz=%lld  mt=%d  omode=%d  pnum=%d"
+          "  seed=%u  path=%s  rnum=%d  width=%d  limsiz=%" PRIdMAX "  mt=%d  omode=%d  pnum=%d"
           "  dai=%d  dad=%d  rl=%d  ru=%d\n\n",
           g_randseed, path, rnum, width, (long long)limsiz, mt, omode, pnum, dai, dad, rl, ru);
   if(pnum < 1) pnum = rnum;
   bool err = false;
   double stime = tctime();
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(mt && !tcfdbsetmutex(fdb)){
     eprint(fdb, __LINE__, "tcfdbsetmutex");
     err = true;
@@ -717,8 +762,8 @@ static int procrcat(const char *path, int rnum, int width, int64_t limsiz,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcfdbrnum(fdb));
-  iprintf("size: %llu\n", (unsigned long long)tcfdbfsiz(fdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcfdbrnum(fdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcfdbfsiz(fdb));
   mprint(fdb);
   sysprint();
   if(!tcfdbclose(fdb)){
@@ -739,7 +784,7 @@ static int procmisc(const char *path, int rnum, bool mt, int omode){
   bool err = false;
   double stime = tctime();
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(mt && !tcfdbsetmutex(fdb)){
     eprint(fdb, __LINE__, "tcfdbsetmutex");
     err = true;
@@ -752,7 +797,7 @@ static int procmisc(const char *path, int rnum, bool mt, int omode){
     eprint(fdb, __LINE__, "tcfdbopen");
     err = true;
   }
-  if(TCUSEPTHREAD){
+  if(1){
     TCFDB *fdbdup = tcfdbnew();
     if(tcfdbopen(fdbdup, path, FDBOREADER)){
       eprint(fdb, __LINE__, "(validation)");
@@ -1356,8 +1401,8 @@ static int procmisc(const char *path, int rnum, bool mt, int omode){
       err = true;
     }
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcfdbrnum(fdb));
-  iprintf("size: %llu\n", (unsigned long long)tcfdbfsiz(fdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcfdbrnum(fdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcfdbfsiz(fdb));
   mprint(fdb);
   sysprint();
   if(!tcfdbclose(fdb)){
@@ -1378,7 +1423,7 @@ static int procwicked(const char *path, int rnum, bool mt, int omode){
   bool err = false;
   double stime = tctime();
   TCFDB *fdb = tcfdbnew();
-  if(g_dbgfd >= 0) tcfdbsetdbgfd(fdb, g_dbgfd);
+  if(!INVALIDHANDLE(g_dbgfd)) tcfdbsetdbgfd(fdb, g_dbgfd);
   if(mt && !tcfdbsetmutex(fdb)){
     eprint(fdb, __LINE__, "tcfdbsetmutex");
     err = true;
@@ -1399,7 +1444,7 @@ static int procwicked(const char *path, int rnum, bool mt, int omode){
   for(int i = 1; i <= rnum && !err; i++){
     uint64_t id = myrand(rnum) + 1;
     char kbuf[RECBUFSIZ];
-    int ksiz = sprintf(kbuf, "%llu", (unsigned long long)id);
+    int ksiz = sprintf(kbuf, "%" PRIuMAX "", (unsigned long long)id);
     char vbuf[RECBUFSIZ];
     int vsiz = myrand(RECBUFSIZ);
     memset(vbuf, '*', vsiz);
@@ -1675,8 +1720,8 @@ static int procwicked(const char *path, int rnum, bool mt, int omode){
     eprint(fdb, __LINE__, "(validation)");
     err = true;
   }
-  iprintf("record number: %llu\n", (unsigned long long)tcfdbrnum(fdb));
-  iprintf("size: %llu\n", (unsigned long long)tcfdbfsiz(fdb));
+  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcfdbrnum(fdb));
+  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcfdbfsiz(fdb));
   mprint(fdb);
   sysprint();
   tcmapdel(map);

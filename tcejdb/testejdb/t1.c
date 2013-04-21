@@ -5,11 +5,10 @@
  * Created on Sep 18, 2012, 10:42:19 PM
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "CUnit/Basic.h"
-#include <assert.h>
+#include "myconf.h"
 #include "ejdb_private.h"
+#include "CUnit/Basic.h"
+
 
 /*
  * CUnit Test Suite

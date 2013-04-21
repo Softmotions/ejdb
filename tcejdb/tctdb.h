@@ -141,9 +141,9 @@ enum { /* enumeration for query conditions */
     TDBQCFTSOR, /* full-text search with at least one token in */
     TDBQCFTSEX, /* full-text search with the compound expression of */
     TDBQCEXIST, /* string|number exists */
-    TDBQTRUE,  /* any field always matched */
+    TDBQTRUE, /* any field always matched */
     TDBQCSTRNUMOR, /* string includes at least one number token in */
-    TDBQCSTRORBW,  /* string begins with at least one token in */
+    TDBQCSTRORBW, /* string begins with at least one token in */
     TDBQCNEGATE = 1 << 24, /* negation flag */
     TDBQCNOIDX = 1 << 25 /* no index flag */
 };
@@ -185,27 +185,27 @@ typedef int (*TDBQRYPROC)(const void *pkbuf, int pksiz, TCMAP *cols, void *op);
     `op' opaque data for this function.
     `vsz' resulting value size. */
 typedef char* (*TDBRVALOADER)(TCLIST *tokens,
-                             const char *pkbuf, int pksz,
-                             const char *rowdata, int rowdatasz,
-                             const char *cname, int cnamesz, void *op, int *vsz);
+        const char *pkbuf, int pksz,
+        const char *rowdata, int rowdatasz,
+        const char *cname, int cnamesz, void *op, int *vsz);
 
 
 /* Get the message string corresponding to an error code.
    `ecode' specifies the error code.
    The return value is the message string of the error code. */
-const char *tctdberrmsg(int ecode);
+EJDB_EXPORT const char *tctdberrmsg(int ecode);
 
 
 /* Create a table database object.
    The return value is the new table database object. */
-TCTDB *tctdbnew(void);
+EJDB_EXPORT TCTDB *tctdbnew(void);
 
 
 /* Delete a table database object.
    `tdb' specifies the table database object.
    If the database is not closed, it is closed implicitly.  Note that the deleted object and its
    derivatives can not be used anymore. */
-void tctdbdel(TCTDB *tdb);
+EJDB_EXPORT void tctdbdel(TCTDB *tdb);
 
 
 /* Get the last happened error code of a table database object.
@@ -220,7 +220,7 @@ void tctdbdel(TCTDB *tdb);
    for unlink error, `TCERENAME' for rename error, `TCEMKDIR' for mkdir error, `TCERMDIR' for
    rmdir error, `TCEKEEP' for existing record, `TCENOREC' for no record found, and `TCEMISC' for
    miscellaneous error. */
-int tctdbecode(TCTDB *tdb);
+EJDB_EXPORT int tctdbecode(TCTDB *tdb);
 
 
 /* Set mutual exclusion control of a table database object for threading.
@@ -228,7 +228,7 @@ int tctdbecode(TCTDB *tdb);
    If successful, the return value is true, else, it is false.
    Note that the mutual exclusion control is needed if the object is shared by plural threads and
    this function should be called before the database is opened. */
-bool tctdbsetmutex(TCTDB *tdb);
+EJDB_EXPORT bool tctdbsetmutex(TCTDB *tdb);
 
 
 /* Set the tuning parameters of a table database object.
@@ -246,7 +246,7 @@ bool tctdbsetmutex(TCTDB *tdb);
    BZIP2 encoding, `TDBTTCBS' specifies that each record is compressed with TCBS encoding.
    If successful, the return value is true, else, it is false.
    Note that the tuning parameters should be set before the database is opened. */
-bool tctdbtune(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
+EJDB_EXPORT bool tctdbtune(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
 
 
 /* Set the caching parameters of a table database object.
@@ -260,7 +260,7 @@ bool tctdbtune(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts)
    If successful, the return value is true, else, it is false.
    Note that the caching parameters should be set before the database is opened.  Leaf nodes and
    non-leaf nodes are used in column indices. */
-bool tctdbsetcache(TCTDB *tdb, int32_t rcnum, int32_t lcnum, int32_t ncnum);
+EJDB_EXPORT bool tctdbsetcache(TCTDB *tdb, int32_t rcnum, int32_t lcnum, int32_t ncnum);
 
 
 /* Set the size of the extra mapped memory of a table database object.
@@ -269,7 +269,7 @@ bool tctdbsetcache(TCTDB *tdb, int32_t rcnum, int32_t lcnum, int32_t ncnum);
    mapped memory is disabled.  The default size is 67108864.
    If successful, the return value is true, else, it is false.
    Note that the mapping parameters should be set before the database is opened. */
-bool tctdbsetxmsiz(TCTDB *tdb, int64_t xmsiz);
+EJDB_EXPORT bool tctdbsetxmsiz(TCTDB *tdb, int64_t xmsiz);
 
 
 /* Set the unit step number of auto defragmentation of a table database object.
@@ -278,7 +278,7 @@ bool tctdbsetxmsiz(TCTDB *tdb, int64_t xmsiz);
    is disabled.  It is disabled by default.
    If successful, the return value is true, else, it is false.
    Note that the defragmentation parameters should be set before the database is opened. */
-bool tctdbsetdfunit(TCTDB *tdb, int32_t dfunit);
+EJDB_EXPORT bool tctdbsetdfunit(TCTDB *tdb, int32_t dfunit);
 
 
 /* Open a database file and connect a table database object.
@@ -292,7 +292,7 @@ bool tctdbsetdfunit(TCTDB *tdb, int32_t dfunit);
    bitwise-or: `TDBONOLCK', which means it opens the database file without file locking, or
    `TDBOLCKNB', which means locking is performed without blocking.
    If successful, the return value is true, else, it is false. */
-bool tctdbopen(TCTDB *tdb, const char *path, int omode);
+EJDB_EXPORT bool tctdbopen(TCTDB *tdb, const char *path, int omode);
 
 
 /* Close a table database object.
@@ -300,7 +300,7 @@ bool tctdbopen(TCTDB *tdb, const char *path, int omode);
    If successful, the return value is true, else, it is false.
    Update of a database is assured to be written when the database is closed.  If a writer opens
    a database but does not close it appropriately, the database will be broken. */
-bool tctdbclose(TCTDB *tdb);
+EJDB_EXPORT bool tctdbclose(TCTDB *tdb);
 
 
 /* Store a record into a table database object.
@@ -310,7 +310,7 @@ bool tctdbclose(TCTDB *tdb);
    `cols' specifies a map object containing columns.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tctdbput(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
+EJDB_EXPORT bool tctdbput(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
 
 
 /* Store a string record into a table database object with a zero separated column string.
@@ -322,7 +322,7 @@ bool tctdbput(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
    `csiz' specifies the size of the region of the column string.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tctdbput2(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, int csiz);
+EJDB_EXPORT bool tctdbput2(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, int csiz);
 
 
 /* Store a string record into a table database object with a tab separated column string.
@@ -332,7 +332,7 @@ bool tctdbput2(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, int c
    value of each column are situated one after the other.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tctdbput3(TCTDB *tdb, const char *pkstr, const char *cstr);
+EJDB_EXPORT bool tctdbput3(TCTDB *tdb, const char *pkstr, const char *cstr);
 
 
 /* Store a new record into a table database object.
@@ -342,7 +342,7 @@ bool tctdbput3(TCTDB *tdb, const char *pkstr, const char *cstr);
    `cols' specifies a map object containing columns.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tctdbputkeep(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
+EJDB_EXPORT bool tctdbputkeep(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
 
 
 /* Store a new string record into a table database object with a zero separated column string.
@@ -354,7 +354,7 @@ bool tctdbputkeep(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
    `csiz' specifies the size of the region of the column string.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tctdbputkeep2(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, int csiz);
+EJDB_EXPORT bool tctdbputkeep2(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, int csiz);
 
 
 /* Store a new string record into a table database object with a tab separated column string.
@@ -364,7 +364,7 @@ bool tctdbputkeep2(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, i
    value of each column are situated one after the other.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tctdbputkeep3(TCTDB *tdb, const char *pkstr, const char *cstr);
+EJDB_EXPORT bool tctdbputkeep3(TCTDB *tdb, const char *pkstr, const char *cstr);
 
 
 /* Concatenate columns of the existing record in a table database object.
@@ -374,7 +374,7 @@ bool tctdbputkeep3(TCTDB *tdb, const char *pkstr, const char *cstr);
    `cols' specifies a map object containing columns.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tctdbputcat(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
+EJDB_EXPORT bool tctdbputcat(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
 
 
 /* Concatenate columns in a table database object with a zero separated column string.
@@ -386,7 +386,7 @@ bool tctdbputcat(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
    `csiz' specifies the size of the region of the column string.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tctdbputcat2(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, int csiz);
+EJDB_EXPORT bool tctdbputcat2(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, int csiz);
 
 
 /* Concatenate columns in a table database object with with a tab separated column string.
@@ -396,7 +396,7 @@ bool tctdbputcat2(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, in
    value of each column are situated one after the other.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tctdbputcat3(TCTDB *tdb, const char *pkstr, const char *cstr);
+EJDB_EXPORT bool tctdbputcat3(TCTDB *tdb, const char *pkstr, const char *cstr);
 
 
 /* Remove a record of a table database object.
@@ -404,14 +404,14 @@ bool tctdbputcat3(TCTDB *tdb, const char *pkstr, const char *cstr);
    `pkbuf' specifies the pointer to the region of the primary key.
    `pksiz' specifies the size of the region of the primary key.
    If successful, the return value is true, else, it is false. */
-bool tctdbout(TCTDB *tdb, const void *pkbuf, int pksiz);
+EJDB_EXPORT bool tctdbout(TCTDB *tdb, const void *pkbuf, int pksiz);
 
 
 /* Remove a string record of a table database object.
    `tdb' specifies the table database object connected as a writer.
    `pkstr' specifies the string of the primary key.
    If successful, the return value is true, else, it is false. */
-bool tctdbout2(TCTDB *tdb, const char *pkstr);
+EJDB_EXPORT bool tctdbout2(TCTDB *tdb, const char *pkstr);
 
 
 /* Retrieve a record in a table database object.
@@ -422,7 +422,7 @@ bool tctdbout2(TCTDB *tdb, const char *pkstr);
    `NULL' is returned if no record corresponds.
    Because the object of the return value is created with the function `tcmapnew', it should be
    deleted with the function `tcmapdel' when it is no longer in use. */
-TCMAP *tctdbget(TCTDB *tdb, const void *pkbuf, int pksiz);
+EJDB_EXPORT TCMAP *tctdbget(TCTDB *tdb, const void *pkbuf, int pksiz);
 
 
 /* Retrieve a record in a table database object as a zero separated column string.
@@ -437,7 +437,7 @@ TCMAP *tctdbget(TCTDB *tdb, const void *pkbuf, int pksiz);
    the return value can be treated as a character string.  Because the region of the return
    value is allocated with the `malloc' call, it should be released with the `free' call when
    it is no longer in use. */
-char *tctdbget2(TCTDB *tdb, const void *pkbuf, int pksiz, int *sp);
+EJDB_EXPORT char *tctdbget2(TCTDB *tdb, const void *pkbuf, int pksiz, int *sp);
 
 
 /* Retrieve a string record in a table database object as a tab separated column string.
@@ -447,7 +447,7 @@ char *tctdbget2(TCTDB *tdb, const void *pkbuf, int pksiz, int *sp);
    record.  `NULL' is returned if no record corresponds.
    Because the region of the return value is allocated with the `malloc' call, it should be
    released with the `free' call when it is no longer in use. */
-char *tctdbget3(TCTDB *tdb, const char *pkstr);
+EJDB_EXPORT char *tctdbget3(TCTDB *tdb, const char *pkstr);
 
 
 /* Get the size of the value of a record in a table database object.
@@ -456,7 +456,7 @@ char *tctdbget3(TCTDB *tdb, const char *pkstr);
    `ksiz' specifies the size of the region of the primary key.
    If successful, the return value is the size of the value of the corresponding record, else,
    it is -1. */
-int tctdbvsiz(TCTDB *tdb, const void *pkbuf, int pksiz);
+EJDB_EXPORT int tctdbvsiz(TCTDB *tdb, const void *pkbuf, int pksiz);
 
 
 /* Get the size of the value of a string record in a table database object.
@@ -464,7 +464,7 @@ int tctdbvsiz(TCTDB *tdb, const void *pkbuf, int pksiz);
    `kstr' specifies the string of the primary key.
    If successful, the return value is the size of the value of the corresponding record, else,
    it is -1. */
-int tctdbvsiz2(TCTDB *tdb, const char *pkstr);
+EJDB_EXPORT int tctdbvsiz2(TCTDB *tdb, const char *pkstr);
 
 
 /* Initialize the iterator of a table database object.
@@ -472,7 +472,7 @@ int tctdbvsiz2(TCTDB *tdb, const char *pkstr);
    If successful, the return value is true, else, it is false.
    The iterator is used in order to access the primary key of every record stored in a
    database. */
-bool tctdbiterinit(TCTDB *tdb);
+EJDB_EXPORT bool tctdbiterinit(TCTDB *tdb);
 
 
 /* Get the next primary key of the iterator of a table database object.
@@ -489,7 +489,7 @@ bool tctdbiterinit(TCTDB *tdb);
    However, it is not assured if updating the database is occurred while the iteration.  Besides,
    the order of this traversal access method is arbitrary, so it is not assured that the order of
    storing matches the one of the traversal access. */
-void *tctdbiternext(TCTDB *tdb, int *sp);
+EJDB_EXPORT void *tctdbiternext(TCTDB *tdb, int *sp);
 
 
 /* Get the next primary key string of the iterator of a table database object.
@@ -502,7 +502,7 @@ void *tctdbiternext(TCTDB *tdb, int *sp);
    database is occurred while the iteration.  Besides, the order of this traversal access method
    is arbitrary, so it is not assured that the order of storing matches the one of the traversal
    access. */
-char *tctdbiternext2(TCTDB *tdb);
+EJDB_EXPORT char *tctdbiternext2(TCTDB *tdb);
 
 
 /* Get the columns of the next record of the iterator of a table database object.
@@ -516,7 +516,7 @@ char *tctdbiternext2(TCTDB *tdb);
    the database is occurred while the iteration.  Besides, the order of this traversal access
    method is arbitrary, so it is not assured that the order of storing matches the one of the
    traversal access. */
-TCMAP *tctdbiternext3(TCTDB *tdb);
+EJDB_EXPORT TCMAP *tctdbiternext3(TCTDB *tdb);
 
 
 /* Get forward matching primary keys in a table database object.
@@ -530,7 +530,7 @@ TCMAP *tctdbiternext3(TCTDB *tdb);
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tctdbfwmkeys(TCTDB *tdb, const void *pbuf, int psiz, int max);
+EJDB_EXPORT TCLIST *tctdbfwmkeys(TCTDB *tdb, const void *pbuf, int psiz, int max);
 
 
 /* Get forward matching string primary keys in a table database object.
@@ -543,7 +543,7 @@ TCLIST *tctdbfwmkeys(TCTDB *tdb, const void *pbuf, int psiz, int max);
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tctdbfwmkeys2(TCTDB *tdb, const char *pstr, int max);
+EJDB_EXPORT TCLIST *tctdbfwmkeys2(TCTDB *tdb, const char *pstr, int max);
 
 
 /* Add an integer to a column of a record in a table database object.
@@ -554,7 +554,7 @@ TCLIST *tctdbfwmkeys2(TCTDB *tdb, const char *pstr, int max);
    If successful, the return value is the summation value, else, it is `INT_MIN'.
    The additional value is stored as a decimal string value of a column whose name is "_num".
    If no record corresponds, a new record with the additional value is stored. */
-int tctdbaddint(TCTDB *tdb, const void *pkbuf, int pksiz, int num);
+EJDB_EXPORT int tctdbaddint(TCTDB *tdb, const void *pkbuf, int pksiz, int num);
 
 
 /* Add a real number to a column of a record in a table database object.
@@ -565,14 +565,14 @@ int tctdbaddint(TCTDB *tdb, const void *pkbuf, int pksiz, int num);
    If successful, the return value is the summation value, else, it is Not-a-Number.
    The additional value is stored as a decimal string value of a column whose name is "_num".
    If no record corresponds, a new record with the additional value is stored. */
-double tctdbadddouble(TCTDB *tdb, const void *pkbuf, int pksiz, double num);
+EJDB_EXPORT double tctdbadddouble(TCTDB *tdb, const void *pkbuf, int pksiz, double num);
 
 
 /* Synchronize updated contents of a table database object with the file and the device.
    `tdb' specifies the table database object connected as a writer.
    If successful, the return value is true, else, it is false.
    This function is useful when another process connects to the same database file. */
-bool tctdbsync(TCTDB *tdb);
+EJDB_EXPORT bool tctdbsync(TCTDB *tdb);
 
 
 /* Optimize the file of a table database object.
@@ -591,13 +591,13 @@ bool tctdbsync(TCTDB *tdb);
    If successful, the return value is true, else, it is false.
    This function is useful to reduce the size of the database file with data fragmentation by
    successive updating. */
-bool tctdboptimize(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
+EJDB_EXPORT bool tctdboptimize(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts);
 
 
 /* Remove all records of a table database object.
    `tdb' specifies the table database object connected as a writer.
    If successful, the return value is true, else, it is false. */
-bool tctdbvanish(TCTDB *tdb);
+EJDB_EXPORT bool tctdbvanish(TCTDB *tdb);
 
 
 /* Copy the database file of a table database object.
@@ -609,7 +609,7 @@ bool tctdbvanish(TCTDB *tdb);
    The database file is assured to be kept synchronized and not modified while the copying or
    executing operation is in progress.  So, this function is useful to create a backup file of
    the database file. */
-bool tctdbcopy(TCTDB *tdb, const char *path);
+EJDB_EXPORT bool tctdbcopy(TCTDB *tdb, const char *path);
 
 
 /* Begin the transaction of a table database object.
@@ -621,14 +621,14 @@ bool tctdbcopy(TCTDB *tdb, const char *path);
    cached on memory while the transaction, the amount of referred records is limited by the
    memory capacity.  If the database is closed during transaction, the transaction is aborted
    implicitly. */
-bool tctdbtranbegin(TCTDB *tdb);
+EJDB_EXPORT bool tctdbtranbegin(TCTDB *tdb);
 
 
 /* Commit the transaction of a table database object.
    `tdb' specifies the table database object connected as a writer.
    If successful, the return value is true, else, it is false.
    Update in the transaction is fixed when it is committed successfully. */
-bool tctdbtrancommit(TCTDB *tdb);
+EJDB_EXPORT bool tctdbtrancommit(TCTDB *tdb);
 
 
 /* Abort the transaction of a table database object.
@@ -636,28 +636,28 @@ bool tctdbtrancommit(TCTDB *tdb);
    If successful, the return value is true, else, it is false.
    Update in the transaction is discarded when it is aborted.  The state of the database is
    rollbacked to before transaction. */
-bool tctdbtranabort(TCTDB *tdb);
+EJDB_EXPORT bool tctdbtranabort(TCTDB *tdb);
 
 
 /* Get the file path of a table database object.
    `tdb' specifies the table database object.
    The return value is the path of the database file or `NULL' if the object does not connect to
    any database file. */
-const char *tctdbpath(TCTDB *tdb);
+EJDB_EXPORT const char *tctdbpath(TCTDB *tdb);
 
 
 /* Get the number of records ccccof a table database object.
    `tdb' specifies the table database object.
    The return value is the number of records or 0 if the object does not connect to any database
    file. */
-uint64_t tctdbrnum(TCTDB *tdb);
+EJDB_EXPORT uint64_t tctdbrnum(TCTDB *tdb);
 
 
 /* Get the size of the database file of a table database object.
    `tdb' specifies the table database object.
    The return value is the size of the database file or 0 if the object does not connect to any
    database file. */
-uint64_t tctdbfsiz(TCTDB *tdb);
+EJDB_EXPORT uint64_t tctdbfsiz(TCTDB *tdb);
 
 
 /* Set a column index to a table database object.
@@ -670,26 +670,26 @@ uint64_t tctdbfsiz(TCTDB *tdb);
    `TDBITKEEP' is added by bitwise-or and the index exists, this function merely returns failure.
    If successful, the return value is true, else, it is false.
    Note that the setting indices should be set after the database is opened. */
-bool tctdbsetindex(TCTDB *tdb, const char *name, int type);
+EJDB_EXPORT bool tctdbsetindex(TCTDB *tdb, const char *name, int type);
 
-bool tctdbsetindexrldr(TCTDB *tdb, const char *name, int type, TDBRVALOADER rvldr, void* rvldrop);
+EJDB_EXPORT bool tctdbsetindexrldr(TCTDB *tdb, const char *name, int type, TDBRVALOADER rvldr, void* rvldrop);
 
 
 /* Generate a unique ID number of a table database object.
    `tdb' specifies the table database object connected as a writer.
    The return value is the new unique ID number or -1 on failure. */
-int64_t tctdbgenuid(TCTDB *tdb);
+EJDB_EXPORT int64_t tctdbgenuid(TCTDB *tdb);
 
 
 /* Create a query object.
    `tdb' specifies the table database object.
    The return value is the new query object. */
-TDBQRY *tctdbqrynew(TCTDB *tdb);
+EJDB_EXPORT TDBQRY *tctdbqrynew(TCTDB *tdb);
 
 
 /* Delete a query object.
    `qry' specifies the query object. */
-void tctdbqrydel(TDBQRY *qry);
+EJDB_EXPORT void tctdbqrydel(TDBQRY *qry);
 
 
 /* Add a narrowing condition to a query object.
@@ -712,7 +712,7 @@ void tctdbqrydel(TDBQRY *qry);
    full-text search with the compound expression.  All operations can be flagged by bitwise-or:
    `TDBQCNEGATE' for negation, `TDBQCNOIDX' for using no index.
    `expr' specifies an operand exression. */
-void tctdbqryaddcond(TDBQRY *qry, const char *name, int op, const char *expr);
+EJDB_EXPORT void tctdbqryaddcond(TDBQRY *qry, const char *name, int op, const char *expr);
 
 
 /* Set the order of a query object.
@@ -720,7 +720,7 @@ void tctdbqryaddcond(TDBQRY *qry, const char *name, int op, const char *expr);
    `name' specifies the name of a column.  An empty string means the primary key.
    `type' specifies the order type: `TDBQOSTRASC' for string ascending, `TDBQOSTRDESC' for
    string descending, `TDBQONUMASC' for number ascending, `TDBQONUMDESC' for number descending. */
-void tctdbqrysetorder(TDBQRY *qry, const char *name, int type);
+EJDB_EXPORT void tctdbqrysetorder(TDBQRY *qry, const char *name, int type);
 
 
 /* Set the limit number of records of the result of a query object.
@@ -729,7 +729,7 @@ void tctdbqrysetorder(TDBQRY *qry, const char *name, int type);
    specified.
    `skip' specifies the number of skipped records of the result.  If it is not more than 0, no
    record is skipped. */
-void tctdbqrysetlimit(TDBQRY *qry, int max, int skip);
+EJDB_EXPORT void tctdbqrysetlimit(TDBQRY *qry, int max, int skip);
 
 
 /* Execute the search of a query object.
@@ -738,13 +738,13 @@ void tctdbqrysetlimit(TDBQRY *qry, int max, int skip);
    function does never fail.  It returns an empty list even if no record corresponds.
    Because the object of the return value is created with the function `tclistnew', it should
    be deleted with the function `tclistdel' when it is no longer in use. */
-TCLIST *tctdbqrysearch(TDBQRY *qry);
+EJDB_EXPORT TCLIST *tctdbqrysearch(TDBQRY *qry);
 
 
 /* Remove each record corresponding to a query object.
    `qry' specifies the query object of the database connected as a writer.
    If successful, the return value is true, else, it is false. */
-bool tctdbqrysearchout(TDBQRY *qry);
+EJDB_EXPORT bool tctdbqrysearchout(TDBQRY *qry);
 
 
 /* Process each record corresponding to a query object.
@@ -758,7 +758,7 @@ bool tctdbqrysearchout(TDBQRY *qry);
    `op' specifies an arbitrary pointer to be given as a parameter of the iterator function.  If
    it is not needed, `NULL' can be specified.
    If successful, the return value is true, else, it is false. */
-bool tctdbqryproc(TDBQRY *qry, TDBQRYPROC proc, void *op);
+EJDB_EXPORT bool tctdbqryproc(TDBQRY *qry, TDBQRYPROC proc, void *op);
 
 
 /* Get the hint string of a query object.
@@ -766,7 +766,7 @@ bool tctdbqryproc(TDBQRY *qry, TDBQRYPROC proc, void *op);
    The return value is the hint string.
    This function should be called after the query execution by `tctdbqrysearch' and so on.  The
    region of the return value is overwritten when this function is called again. */
-const char *tctdbqryhint(TDBQRY *qry);
+EJDB_EXPORT const char *tctdbqryhint(TDBQRY *qry);
 
 
 /* Retrieve records with multiple query objects and get the set of the result.
@@ -779,7 +779,7 @@ const char *tctdbqryhint(TDBQRY *qry);
    If the first query object has the order setting, the result array is sorted by the order.
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use. */
-TCLIST *tctdbmetasearch(TDBQRY **qrys, int num, int type);
+EJDB_EXPORT TCLIST *tctdbmetasearch(TDBQRY **qrys, int num, int type);
 
 
 
@@ -794,25 +794,25 @@ TCLIST *tctdbmetasearch(TDBQRY **qrys, int num, int type);
    `file' specifies the file name of the code.
    `line' specifies the line number of the code.
    `func' specifies the function name of the code. */
-void tctdbsetecode(TCTDB *tdb, int ecode, const char *filename, int line, const char *func);
+EJDB_EXPORT void tctdbsetecode(TCTDB *tdb, int ecode, const char *filename, int line, const char *func);
 
 
 /* Set the file descriptor for debugging output.
    `tdb' specifies the table database object.
    `fd' specifies the file descriptor for debugging output. */
-void tctdbsetdbgfd(TCTDB *tdb, int fd);
+EJDB_EXPORT void tctdbsetdbgfd(TCTDB *tdb, HANDLE fd);
 
 
 /* Get the file descriptor for debugging output.
    `tdb' specifies the table database object.
    The return value is the file descriptor for debugging output. */
-int tctdbdbgfd(TCTDB *tdb);
+EJDB_EXPORT HANDLE tctdbdbgfd(TCTDB *tdb);
 
 
 /* Check whether mutual exclusion control is set to a table database object.
    `tdb' specifies the table database object.
    If mutual exclusion control is set, it is true, else it is false. */
-bool tctdbhasmutex(TCTDB *tdb);
+EJDB_EXPORT bool tctdbhasmutex(TCTDB *tdb);
 
 
 /* Synchronize updating contents on memory of a table database object.
@@ -826,79 +826,73 @@ bool tctdbmemsync(TCTDB *tdb, bool phys);
    `tdb' specifies the table database object.
    The return value is the number of elements of the bucket array or 0 if the object does not
    connect to any database file. */
-uint64_t tctdbbnum(TCTDB *tdb);
+EJDB_EXPORT uint64_t tctdbbnum(TCTDB *tdb);
 
 
 /* Get the record alignment of a table database object.
    `tdb' specifies the table database object.
    The return value is the record alignment or 0 if the object does not connect to any database
    file. */
-uint32_t tctdbalign(TCTDB *tdb);
+EJDB_EXPORT uint32_t tctdbalign(TCTDB *tdb);
 
 
 /* Get the maximum number of the free block pool of a table database object.
    `tdb' specifies the table database object.
    The return value is the maximum number of the free block pool or 0 if the object does not
    connect to any database file. */
-uint32_t tctdbfbpmax(TCTDB *tdb);
+EJDB_EXPORT uint32_t tctdbfbpmax(TCTDB *tdb);
 
 
 /* Get the inode number of the database file of a table database object.
    `tdb' specifies the table database object.
    The return value is the inode number of the database file or 0 if the object does not connect
    to any database file. */
-uint64_t tctdbinode(TCTDB *tdb);
+EJDB_EXPORT uint64_t tctdbinode(TCTDB *tdb);
 
 
 /* Get the modification time of the database file of a table database object.
    `tdb' specifies the table database object.
    The return value is the inode number of the database file or 0 if the object does not connect
    to any database file. */
-time_t tctdbmtime(TCTDB *tdb);
+EJDB_EXPORT time_t tctdbmtime(TCTDB *tdb);
 
 
 /* Get the additional flags of a table database object.
    `tdb' specifies the table database object.
    The return value is the additional flags. */
-uint8_t tctdbflags(TCTDB *tdb);
+EJDB_EXPORT uint8_t tctdbflags(TCTDB *tdb);
 
 
 /* Get the options of a table database object.
    `tdb' specifies the table database object.
    The return value is the options. */
-uint8_t tctdbopts(TCTDB *tdb);
-
-
-/* Get the pointer to the opaque field of a table database object.
-   `tdb' specifies the table database object.
-   The return value is the pointer to the opaque field whose size is 128 bytes. */
-char *tctdbopaque(TCTDB *tdb);
+EJDB_EXPORT uint8_t tctdbopts(TCTDB *tdb);
 
 
 /* Get the number of used elements of the bucket array of a table database object.
    `tdb' specifies the table database object.
    The return value is the number of used elements of the bucket array or 0 if the object does not
    connect to any database file. */
-uint64_t tctdbbnumused(TCTDB *tdb);
+EJDB_EXPORT uint64_t tctdbbnumused(TCTDB *tdb);
 
 
 /* Get the number of column indices of a table database object.
    `tdb' specifies the table database object.
    The return value is the number of column indices or 0 if the object does not connect to any
    database file. */
-int tctdbinum(TCTDB *tdb);
+EJDB_EXPORT int tctdbinum(TCTDB *tdb);
 
 
 /* Get the seed of unique ID unumbers of a table database object.
    `tdb' specifies the table database object.
    The return value is the seed of unique ID numbers or -1 on failure. */
-int64_t tctdbuidseed(TCTDB *tdb);
+EJDB_EXPORT int64_t tctdbuidseed(TCTDB *tdb);
 
 
 /* Set the seed of unique ID unumbers of a table database object.
    `tdb' specifies the table database object connected as a writer.
    If successful, the return value is true, else, it is false. */
-bool tctdbsetuidseed(TCTDB *tdb, int64_t seed);
+EJDB_EXPORT bool tctdbsetuidseed(TCTDB *tdb, int64_t seed);
 
 
 /* Set the parameters of the inverted cache of a table database object.
@@ -909,7 +903,7 @@ bool tctdbsetuidseed(TCTDB *tdb, int64_t seed);
    specified.  The default value is 0.01.
    If successful, the return value is true, else, it is false.
    Note that the caching parameters should be set before the database is opened. */
-bool tctdbsetinvcache(TCTDB *tdb, int64_t iccmax, double iccsync);
+EJDB_EXPORT bool tctdbsetinvcache(TCTDB *tdb, int64_t iccmax, double iccsync);
 
 
 /* Set the custom codec functions of a table database object.
@@ -928,13 +922,13 @@ bool tctdbsetinvcache(TCTDB *tdb, int64_t iccmax, double iccsync);
    If successful, the return value is true, else, it is false.
    Note that the custom codec functions should be set before the database is opened and should be
    set every time the database is being opened. */
-bool tctdbsetcodecfunc(TCTDB *tdb, TCCODEC enc, void *encop, TCCODEC dec, void *decop);
+EJDB_EXPORT bool tctdbsetcodecfunc(TCTDB *tdb, TCCODEC enc, void *encop, TCCODEC dec, void *decop);
 
 
 /* Get the unit step number of auto defragmentation of a table database object.
    `tdb' specifies the table database object.
    The return value is the unit step number of auto defragmentation. */
-uint32_t tctdbdfunit(TCTDB *tdb);
+EJDB_EXPORT uint32_t tctdbdfunit(TCTDB *tdb);
 
 
 /* Perform dynamic defragmentation of a table database object.
@@ -942,13 +936,13 @@ uint32_t tctdbdfunit(TCTDB *tdb);
    `step' specifie the number of steps.  If it is not more than 0, the whole file is defragmented
    gradually without keeping a continuous lock.
    If successful, the return value is true, else, it is false. */
-bool tctdbdefrag(TCTDB *tdb, int64_t step);
+EJDB_EXPORT bool tctdbdefrag(TCTDB *tdb, int64_t step);
 
 
 /* Clear the cache of a table tree database object.
    `tdb' specifies the table tree database object.
    If successful, the return value is true, else, it is false. */
-bool tctdbcacheclear(TCTDB *tdb);
+EJDB_EXPORT bool tctdbcacheclear(TCTDB *tdb);
 
 
 /* Store a record into a table database object with a duplication handler.
@@ -971,7 +965,7 @@ bool tctdbcacheclear(TCTDB *tdb);
    If successful, the return value is true, else, it is false.
    Note that the callback function can not perform any database operation because the function
    is called in the critical section guarded by the same locks of database operations. */
-bool tctdbputproc(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, int csiz,
+EJDB_EXPORT bool tctdbputproc(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, int csiz,
         TCPDPROC proc, void *op);
 
 
@@ -989,7 +983,7 @@ bool tctdbputproc(TCTDB *tdb, const void *pkbuf, int pksiz, const void *cbuf, in
    the return value can be treated as a character string.  Because the region of the return
    value is allocated with the `malloc' call, it should be released with the `free' call when
    it is no longer in use. */
-char *tctdbget4(TCTDB *tdb, const void *pkbuf, int pksiz, const void *nbuf, int nsiz, int *sp);
+EJDB_EXPORT char *tctdbget4(TCTDB *tdb, const void *pkbuf, int pksiz, const void *nbuf, int nsiz, int *sp);
 
 
 /* Move the iterator to the record corresponding a key of a table database object.
@@ -998,7 +992,7 @@ char *tctdbget4(TCTDB *tdb, const void *pkbuf, int pksiz, const void *nbuf, int 
    `pksiz' specifies the size of the region of the primary key.
    If successful, the return value is true, else, it is false.  False is returned if there is
    no record corresponding the condition. */
-bool tctdbiterinit2(TCTDB *tdb, const void *pkbuf, int pksiz);
+EJDB_EXPORT bool tctdbiterinit2(TCTDB *tdb, const void *pkbuf, int pksiz);
 
 
 /* Move the iterator to the record corresponding a key string of a table database object.
@@ -1006,7 +1000,7 @@ bool tctdbiterinit2(TCTDB *tdb, const void *pkbuf, int pksiz);
    `kstr' specifies the string of the primary key.
    If successful, the return value is true, else, it is false.  False is returned if there is
    no record corresponding the condition. */
-bool tctdbiterinit3(TCTDB *tdb, const char *kstr);
+EJDB_EXPORT bool tctdbiterinit3(TCTDB *tdb, const char *kstr);
 
 
 /* Process each record atomically of a table database object.
@@ -1022,7 +1016,7 @@ bool tctdbiterinit3(TCTDB *tdb, const char *kstr);
    If successful, the return value is true, else, it is false.
    Note that the callback function can not perform any database operation because the function
    is called in the critical section guarded by the same locks of database operations. */
-bool tctdbforeach(TCTDB *tdb, TCITER iter, void *op);
+EJDB_EXPORT bool tctdbforeach(TCTDB *tdb, TCITER iter, void *op);
 
 
 /* Process each record corresponding to a query object with non-atomic fashion.
@@ -1036,31 +1030,31 @@ bool tctdbforeach(TCTDB *tdb, TCITER iter, void *op);
    `op' specifies an arbitrary pointer to be given as a parameter of the iterator function.  If
    it is not needed, `NULL' can be specified.
    If successful, the return value is true, else, it is false. */
-bool tctdbqryproc2(TDBQRY *qry, TDBQRYPROC proc, void *op);
+EJDB_EXPORT bool tctdbqryproc2(TDBQRY *qry, TDBQRYPROC proc, void *op);
 
 
 /* Remove each record corresponding to a query object with non-atomic fashion.
    `qry' specifies the query object of the database connected as a writer.
    If successful, the return value is true, else, it is false. */
-bool tctdbqrysearchout2(TDBQRY *qry);
+EJDB_EXPORT bool tctdbqrysearchout2(TDBQRY *qry);
 
 
 /* Convert a string into the index type number.
    `str' specifies a string.
    The return value is the index type number or -1 on failure. */
-int tctdbstrtoindextype(const char *str);
+EJDB_EXPORT int tctdbstrtoindextype(const char *str);
 
 
 /* Convert a string into the meta search type number.
    `str' specifies a string.
    The return value is the meta search type number or -1 on failure. */
-int tctdbstrtometasearcytype(const char *str);
+EJDB_EXPORT int tctdbstrtometasearcytype(const char *str);
 
 
 /* Get the count of corresponding records of a query object.
    `qry' specifies the query object.
    The return value is the count of corresponding records. */
-int tctdbqrycount(TDBQRY *qry);
+EJDB_EXPORT int tctdbqrycount(TDBQRY *qry);
 
 
 /* Generate keyword-in-context strings from a query object.
@@ -1077,25 +1071,25 @@ int tctdbqrycount(TDBQRY *qry);
    The return value is the list object whose elements are strings around keywords.
    Because the object of the return value is created with the function `tclistnew', it should
    be deleted with the function `tclistdel' when it is no longer in use. */
-TCLIST *tctdbqrykwic(TDBQRY *qry, TCMAP *cols, const char *name, int width, int opts);
+EJDB_EXPORT TCLIST *tctdbqrykwic(TDBQRY *qry, TCMAP *cols, const char *name, int width, int opts);
 
 
 /* Convert a string into the query operation number.
    `str' specifies a string.
    The return value is the query operation number or -1 on failure. */
-int tctdbqrystrtocondop(const char *str);
+EJDB_EXPORT int tctdbqrystrtocondop(const char *str);
 
 
 /* Convert a string into the query order type number.
    `str' specifies a string.
    The return value is the query order type or -1 on failure. */
-int tctdbqrystrtoordertype(const char *str);
+EJDB_EXPORT int tctdbqrystrtoordertype(const char *str);
 
 
 /* Convert a string into the set operation type number.
    `str' specifies a string.
    The return value is the set operation type or -1 on failure. */
-int tctdbmetastrtosettype(const char *str);
+EJDB_EXPORT int tctdbmetastrtosettype(const char *str);
 
 
 /* Add a record into indices of a table database object.
@@ -1162,7 +1156,9 @@ int tdbcmppkeynumdesc(const TCLISTDATUM *a, const TCLISTDATUM *b);
 TCMAP *tctdbidxgetbytokens(TCTDB *tdb, const TDBIDX *idx, const TCLIST *tokens, int op, TCXSTR *hint);
 
 bool tctdbtranbeginimpl(TCTDB *tdb);
+
 bool tctdbtrancommitimpl(TCTDB *tdb);
+
 bool tctdbtranabortimpl(TCTDB *tdb);
 
 #define TDBDEFBNUM     131071            // default bucket number

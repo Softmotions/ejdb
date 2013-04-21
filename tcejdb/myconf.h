@@ -91,33 +91,11 @@
 
 #endif
 
-
+#include "basedefs.h"
 
 /*************************************************************************************************
  * common settings
  *************************************************************************************************/
-
-#ifdef __cplusplus
-#define EJDB_EXTERN_C_START extern "C" {
-#define EJDB_EXTERN_C_END }
-#else
-#define EJDB_EXTERN_C_START
-#define EJDB_EXTERN_C_END
-#endif
-
-#ifdef __GNUC__
-#define EJDB_INLINE static __inline__
-#define EJDB_EXPORT
-#else
-#define EJDB_INLINE static
-#ifdef EJDB_STATIC_BUILD
-#define EJDB_EXPORT
-#elif defined(MONGO_DLL_BUILD)
-#define EJDB_EXPORT __declspec(dllexport)
-#else
-#define EJDB_EXPORT __declspec(dllimport)
-#endif
-#endif
 
 
 #if defined(NDEBUG)
@@ -178,7 +156,7 @@
 #if defined(_MYNOUBC) || defined(__hppa__)
 #define TCUBCACHE      0
 #elif defined(_SYS_LINUX_) || defined(_SYS_FREEBSD_) || defined(_SYS_NETBSD_) || \
-  defined(_SYS_MACOSX_) || defined(_SYS_SUNOS_)
+  defined(_SYS_MACOSX_) || defined(_SYS_SUNOS_) || defined(_WIN32)
 #define TCUBCACHE      1
 #else
 #define TCUBCACHE      0
@@ -208,12 +186,6 @@
 #define TCUSEEXLZO     0
 #endif
 
-#if defined(_MYNOPTHREAD)
-#define TCUSEPTHREAD   0
-#else
-#define TCUSEPTHREAD   1
-#endif
-
 #if defined(_MYMICROYIELD)
 #define TCMICROYIELD   1
 #else
@@ -231,6 +203,33 @@
  * general headers
  *************************************************************************************************/
 
+
+#ifdef _WIN32
+#include <pcreposix.h>
+#include "win32/platform.h"
+#define GET_STDOUT_HANDLE() GetStdHandle(STD_OUTPUT_HANDLE)
+#define GET_STDERR_HANDLE() GetStdHandle(STD_ERROR_HANDLE)
+#define GET_STDIN_HANDLE() GetStdHandle(STD_INPUT_HANDLE)
+#define CLOSEFH(_fd) (CloseHandle(_fd))
+#else
+#include <regex.h>
+#include <glob.h>
+#include <sys/mman.h>
+#include <sys/times.h>
+#include <sys/wait.h>
+#include <sys/resource.h>
+#define GET_STDOUT_HANDLE() (1)
+#define GET_STDERR_HANDLE() (2)
+#define GET_STDIN_HANDLE() (0)
+#define CLOSEFH(_fd) (close(_fd) != -1)
+#define sysconf_SC_CLK_TCK sysconf(_SC_CLK_TCK)
+#endif
+
+#define CLOSEFH2(_fd) \
+    do {              \
+        CLOSEFH(_fd); \
+        (_fd) = INVALID_HANDLE_VALUE; \
+    } while(0)
 
 #include <assert.h>
 #include <ctype.h>
@@ -256,24 +255,15 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 #include <sys/time.h>
-#include <sys/times.h>
-#include <sys/wait.h>
-#include <sys/resource.h>
+
 #include <fcntl.h>
 #include <dirent.h>
-#include <regex.h>
-#include <glob.h>
-
-#if TCUSEPTHREAD
 #include <pthread.h>
+
 #if defined(_POSIX_PRIORITY_SCHEDULING)
 #include <sched.h>
 #endif
-#endif
-
-
 
 /*************************************************************************************************
  * miscellaneous hacks
@@ -327,9 +317,14 @@ int _tc_dummyfuncv(int a, ...);
  * notation of filesystems
  *************************************************************************************************/
 
-
+#ifdef _WIN32
+#define MYPATHCHR       '\\'
+#define MYPATHSTR       "\\"
+#else
 #define MYPATHCHR       '/'
 #define MYPATHSTR       "/"
+#endif
+
 #define MYEXTCHR        '.'
 #define MYEXTSTR        "."
 #define MYCDIRSTR       "."
@@ -377,61 +372,7 @@ void *_tc_recencode(const void *ptr, int size, int *sp, void *op);
 
 void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
 
-
-
-/*************************************************************************************************
- * for POSIX thread disability
- *************************************************************************************************/
-
-
-#if ! TCUSEPTHREAD
-
-#define pthread_t                        intptr_t
-
-#define pthread_once_t                   intptr_t
-#undef PTHREAD_ONCE_INIT
-#define PTHREAD_ONCE_INIT                0
-#define pthread_once(TC_a, TC_b)         _tc_dummyfuncv((intptr_t)(TC_a), (TC_b))
-
-#define pthread_mutexattr_t              intptr_t
-#undef PTHREAD_MUTEX_RECURSIVE
-#define PTHREAD_MUTEX_RECURSIVE          0
-#define pthread_mutexattr_init(TC_a)     _tc_dummyfuncv((intptr_t)(TC_a))
-#define pthread_mutexattr_destroy(TC_a)  _tc_dummyfuncv((intptr_t)(TC_a))
-#define pthread_mutexattr_settype(TC_a, TC_b)  _tc_dummyfuncv((intptr_t)(TC_a), (TC_b))
-
-#define pthread_mutex_t                  intptr_t
-#undef PTHREAD_MUTEX_INITIALIZER
-#define PTHREAD_MUTEX_INITIALIZER        0
-#define pthread_mutex_init(TC_a, TC_b)   _tc_dummyfuncv((intptr_t)(TC_a), (TC_b))
-#define pthread_mutex_destroy(TC_a)      _tc_dummyfuncv((intptr_t)(TC_a))
-#define pthread_mutex_lock(TC_a)         _tc_dummyfuncv((intptr_t)(TC_a))
-#define pthread_mutex_unlock(TC_a)       _tc_dummyfuncv((intptr_t)(TC_a))
-
-#define pthread_rwlock_t                 intptr_t
-#undef PTHREAD_RWLOCK_INITIALIZER
-#define PTHREAD_RWLOCK_INITIALIZER       0
-#define pthread_rwlock_init(TC_a, TC_b)  _tc_dummyfuncv((intptr_t)(TC_a), (TC_b))
-#define pthread_rwlock_destroy(TC_a)     _tc_dummyfuncv((intptr_t)(TC_a))
-#define pthread_rwlock_rdlock(TC_a)      _tc_dummyfuncv((intptr_t)(TC_a))
-#define pthread_rwlock_wrlock(TC_a)      _tc_dummyfuncv((intptr_t)(TC_a))
-#define pthread_rwlock_unlock(TC_a)      _tc_dummyfuncv((intptr_t)(TC_a))
-
-#define pthread_key_t                    intptr_t
-#define pthread_key_create(TC_a, TC_b)   _tc_dummyfuncv((intptr_t)(TC_a), (TC_b))
-#define pthread_key_delete(TC_a)         _tc_dummyfuncv((intptr_t)(TC_a))
-#define pthread_setspecific(TC_a, TC_b)  _tc_dummyfuncv((intptr_t)(TC_a))
-#define pthread_getspecific(TC_a)        _tc_dummyfuncv((intptr_t)(TC_a))
-
-#define pthread_create(TC_th, TC_attr, TC_func, TC_arg) \
-  (*(TC_th) = 0, (TC_func)(TC_arg), 0)
-#define pthread_join(TC_th, TC_rv)       (*(TC_rv) = NULL, 0)
-#define pthread_detach(TC_th)            0
-#define sched_yield()                    _tc_dummyfunc()
-
-#endif
-
-#if TCUSEPTHREAD && TCMICROYIELD
+#if TCMICROYIELD
 #define TCTESTYIELD() \
   do { \
     if(((++_tc_dummy_cnt) & (0x20 - 1)) == 0){ \
@@ -458,7 +399,7 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
   } while(false)
 #endif
 
-#if !defined(_POSIX_PRIORITY_SCHEDULING) && TCUSEPTHREAD
+#ifndef _POSIX_PRIORITY_SCHEDULING
 #define sched_yield()                    usleep(1000 * 20)
 #endif
 
@@ -570,12 +511,5 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
   } while(false)
 
 #endif                                   // duplication check
-
-
-//EJDB Shared
-
-#define JDBIDKEYNAME "_id"  /**> Name of PK _id field in BSONs */
-#define JDBIDKEYNAMEL 3
-
 
 // END OF FILE
