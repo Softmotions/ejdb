@@ -39,7 +39,7 @@ MYPCFILES="tcejdb.pc"
 MYCFLAGS="$MYCFLAGS -std=gnu99 -Wall -fsigned-char -O2 -Wfatal-errors"
 MYCPPFLAGS="-I. -I$HOME/include -I\$(INCLUDEDIR) -I/usr/local/include"
 MYCPPFLAGS="$MYCPPFLAGS -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
-MYLDFLAGS="-L. -L\$(LIBDIR) -L$HOME/lib -L/usr/local/lib -L/usr/lib -Wl,-Bstatic"
+MYLDFLAGS="-L. -L\$(LIBDIR) -L$HOME/lib -L/usr/local/lib -L/usr/lib"
 MYCMDLDFLAGS=""
 MYRUNPATH="\$(LIBDIR)"
 MYLDLIBPATHENV="LD_LIBRARY_PATH"
@@ -351,13 +351,13 @@ case $host_os in
         AC_CHECK_LIB(pcre, pcre_compile, [], AC_MSG_ERROR([pcre lib is required]))
         AC_CHECK_LIB(pcreposix, regcomp, [], AC_MSG_ERROR([pcreposix lib is required]))
         AC_CHECK_LIB(pthreadGC2, main, [], AC_MSG_ERROR([pthreadGC2 lubrary is required]))
-        MYLDFLAGS="-static-libgcc -static-libstdc++ $MYLDFLAGS"
+        MYLDFLAGS="-static-libgcc -static-libstdc++ $MYLDFLAGS -Wl,-Bstatic"
         MYHEADERFILES="$MYHEADERFILES win32/platform.h"
         MYCPPFLAGS="$MYCPPFLAGS -DPCRE_STATIC -DPTW32_STATIC_LIB"
         ;;
     *)
+        MYHEADERFILES="$MYHEADERFILES nix/platform.h"
         AC_CHECK_HEADER(regex.h, true, AC_MSG_ERROR([regex.h is required]))
-        AC_CHECK_LIB(regex, regcomp, [], AC_MSG_ERROR([regex lib is required]))
         AC_CHECK_LIB(pthread, main, [], AC_MSG_ERROR([pthread lubrary is required]))
         MYCFLAGS="$MYCFLAGS -fPIC"
         ;;

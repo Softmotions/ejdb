@@ -119,7 +119,7 @@ static bool tcfdbvanishimpl(TCFDB *fdb);
 static bool tcfdbcopyimpl(TCFDB *fdb, const char *path);
 static bool tcfdbiterjumpimpl(TCFDB *fdb, int64_t id);
 static bool tcfdbforeachimpl(TCFDB *fdb, TCITER iter, void *op);
-static bool tcfdbftruncate(TCFDB *fdb, off_t length);
+static bool tcfdbftruncate(TCFDB *fdb, off_t length) __attribute__ ((unused));
 static bool tcfdbftruncate2(TCFDB *fdb, off_t length, int opts);
 
 EJDB_INLINE bool tcfdblockmethod(TCFDB *fdb, bool wr);
@@ -667,7 +667,7 @@ void *tcfdbiternext2(TCFDB *fdb, int *sp) {
     uint64_t id = tcfdbiternext(fdb);
     if (id < 1) return NULL;
     char kbuf[TCNUMBUFSIZ];
-    int ksiz = sprintf(kbuf, "%" PRIuMAX "", (unsigned long long) id);
+    int ksiz = sprintf(kbuf, "%" PRIuMAX "", (uint64_t) id);
     *sp = ksiz;
     return tcmemdup(kbuf, ksiz);
 }
@@ -714,7 +714,7 @@ TCLIST *tcfdbrange2(TCFDB *fdb, const void *lbuf, int lsiz, const void *ubuf, in
     TCLIST *keys = tclistnew2(num);
     for (int i = 0; i < num; i++) {
         char kbuf[TCNUMBUFSIZ];
-        int ksiz = sprintf(kbuf, "%" PRIuMAX "", (unsigned long long) ids[i]);
+        int ksiz = sprintf(kbuf, "%" PRIuMAX "", (uint64_t) ids[i]);
         TCLISTPUSH(keys, kbuf, ksiz);
     }
     TCFREE(ids);
@@ -794,7 +794,7 @@ TCLIST *tcfdbrange4(TCFDB *fdb, const void *ibuf, int isiz, int max) {
     TCLIST *keys = tclistnew2(num);
     for (int i = 0; i < num; i++) {
         char kbuf[TCNUMBUFSIZ];
-        int ksiz = sprintf(kbuf, "%" PRIuMAX "", (unsigned long long) ids[i]);
+        int ksiz = sprintf(kbuf, "%" PRIuMAX "", (uint64_t) ids[i]);
         TCLISTPUSH(keys, kbuf, ksiz);
     }
     TCFREE(ids);
@@ -1589,7 +1589,9 @@ static void tcfdbclear(TCFDB *fdb) {
     fdb->max = 0;
     fdb->iter = 0;
     fdb->map = NULL;
+#ifdef _WIN32
     fdb->w32hmap = NULL;
+#endif
     fdb->ecode = TCESUCCESS;
     fdb->fatal = false;
     fdb->inode = 0;
@@ -2700,7 +2702,7 @@ static bool tcfdbcopyimpl(TCFDB *fdb, const char *path) {
     }
     if (*path == '@') {
         char tsbuf[TCNUMBUFSIZ];
-        sprintf(tsbuf, "%" PRIuMAX "", (unsigned long long) (tctime() * 1000000));
+        sprintf(tsbuf, "%" PRIuMAX "", (uint64_t) (tctime() * 1000000));
         const char *args[3];
         args[0] = path + 1;
         args[1] = fdb->path;
@@ -2760,7 +2762,7 @@ static bool tcfdbforeachimpl(TCFDB *fdb, TCITER iter, void *op) {
         FDBUNLOCKSMEM(fdb);
         if (vbuf) {
             char kbuf[TCNUMBUFSIZ];
-            int ksiz = sprintf(kbuf, "%" PRIuMAX "", (unsigned long long) id);
+            int ksiz = sprintf(kbuf, "%" PRIuMAX "", (uint64_t) id);
             if (!iter(kbuf, ksiz, vbuf, vsiz, op)) {
                 break;
             }
@@ -3070,31 +3072,31 @@ void tcfdbprintmeta(TCFDB *fdb) {
     wp += sprintf(wp, " type=%02X", fdb->type);
     wp += sprintf(wp, " flags=%02X", fdb->flags);
     wp += sprintf(wp, " width=%u", fdb->width);
-    wp += sprintf(wp, " limsiz=%" PRIuMAX "", (unsigned long long) fdb->limsiz);
+    wp += sprintf(wp, " limsiz=%" PRIuMAX "", (uint64_t) fdb->limsiz);
     wp += sprintf(wp, " wsiz=%u", fdb->wsiz);
     wp += sprintf(wp, " rsiz=%u", fdb->rsiz);
-    wp += sprintf(wp, " limid=%" PRIuMAX "", (unsigned long long) fdb->limid);
+    wp += sprintf(wp, " limid=%" PRIuMAX "", (uint64_t) fdb->limid);
     wp += sprintf(wp, " path=%s", fdb->path ? fdb->path : "-");
     wp += sprintf(wp, " fd=%d", fdb->fd);
     wp += sprintf(wp, " omode=%u", fdb->omode);
-    wp += sprintf(wp, " rnum=%" PRIuMAX "", (unsigned long long) fdb->rnum);
-    wp += sprintf(wp, " fsiz=%" PRIuMAX "", (unsigned long long) fdb->fsiz);
-    wp += sprintf(wp, " min=%" PRIuMAX "", (unsigned long long) fdb->min);
-    wp += sprintf(wp, " max=%" PRIuMAX "", (unsigned long long) fdb->max);
-    wp += sprintf(wp, " iter=%" PRIuMAX "", (unsigned long long) fdb->iter);
+    wp += sprintf(wp, " rnum=%" PRIuMAX "", (uint64_t) fdb->rnum);
+    wp += sprintf(wp, " fsiz=%" PRIuMAX "", (uint64_t) fdb->fsiz);
+    wp += sprintf(wp, " min=%" PRIuMAX "", (uint64_t) fdb->min);
+    wp += sprintf(wp, " max=%" PRIuMAX "", (uint64_t) fdb->max);
+    wp += sprintf(wp, " iter=%" PRIuMAX "", (uint64_t) fdb->iter);
     wp += sprintf(wp, " map=%p", (void *) fdb->map);
     wp += sprintf(wp, " ecode=%d", fdb->ecode);
     wp += sprintf(wp, " fatal=%u", fdb->fatal);
-    wp += sprintf(wp, " inode=%" PRIuMAX "", (unsigned long long) fdb->inode);
-    wp += sprintf(wp, " mtime=%" PRIuMAX "", (unsigned long long) fdb->mtime);
+    wp += sprintf(wp, " inode=%" PRIuMAX "", (uint64_t) fdb->inode);
+    wp += sprintf(wp, " mtime=%" PRIuMAX "", (uint64_t) fdb->mtime);
     wp += sprintf(wp, " tran=%d", fdb->tran);
     wp += sprintf(wp, " walfd=%d", fdb->walfd);
-    wp += sprintf(wp, " walend=%" PRIuMAX "", (unsigned long long) fdb->walend);
+    wp += sprintf(wp, " walend=%" PRIuMAX "", (uint64_t) fdb->walend);
     wp += sprintf(wp, " dbgfd=%d", fdb->dbgfd);
 #ifndef NDEBUG
-    wp += sprintf(wp, " cnt_writerec=%" PRIdMAX "", (long long) fdb->cnt_writerec);
-    wp += sprintf(wp, " cnt_readrec=%" PRIdMAX "", (long long) fdb->cnt_readrec);
-    wp += sprintf(wp, " cnt_truncfile=%" PRIdMAX "", (long long) fdb->cnt_truncfile);
+    wp += sprintf(wp, " cnt_writerec=%" PRIdMAX "", (int64_t) fdb->cnt_writerec);
+    wp += sprintf(wp, " cnt_readrec=%" PRIdMAX "", (int64_t) fdb->cnt_readrec);
+    wp += sprintf(wp, " cnt_truncfile=%" PRIdMAX "", (int64_t) fdb->cnt_truncfile);
 #endif
     *(wp++) = '\n';
     tcwrite(dbgfd, buf, wp - buf);

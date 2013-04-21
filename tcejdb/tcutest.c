@@ -576,8 +576,8 @@ static int procmap(int rnum, int bnum, bool rd, bool tr, bool rnd, int dmode){
     }
     if(rnd && rnum > 250) iprintf(" (%08d)\n", inum);
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcmaprnum(map));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcmapmsiz(map));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tcmaprnum(map));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tcmapmsiz(map));
   sysprint();
   tcmapdel(map);
   iprintf("time: %.3f\n", tctime() - stime);
@@ -652,8 +652,8 @@ static int proctree(int rnum, bool rd, bool tr, bool rnd, int dmode){
     }
     if(rnd && rnum > 250) iprintf(" (%08d)\n", inum);
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tctreernum(tree));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tctreemsiz(tree));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tctreernum(tree));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tctreemsiz(tree));
   sysprint();
   tctreedel(tree);
   iprintf("time: %.3f\n", tctime() - stime);
@@ -728,8 +728,8 @@ static int procmdb(int rnum, int bnum, bool rd, bool tr, bool rnd, int dmode){
     }
     if(rnd && rnum > 250) iprintf(" (%08d)\n", inum);
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcmdbrnum(mdb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcmdbmsiz(mdb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tcmdbrnum(mdb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tcmdbmsiz(mdb));
   sysprint();
   tcmdbdel(mdb);
   iprintf("time: %.3f\n", tctime() - stime);
@@ -804,8 +804,8 @@ static int procndb(int rnum, bool rd, bool tr, bool rnd, int dmode){
     }
     if(rnd && rnum > 250) iprintf(" (%08d)\n", inum);
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcndbrnum(ndb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcndbmsiz(ndb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tcndbrnum(ndb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tcndbmsiz(ndb));
   sysprint();
   tcndbdel(ndb);
   iprintf("time: %.3f\n", tctime() - stime);
@@ -1386,7 +1386,7 @@ static int procwicked(int rnum){
       case 3:
         iputchar('3');
         tcxstrprintf(xstr, "[%s:%d:%llu:%b:%llb]\n",
-                     kbuf, i, (long long)i * 65521, i, (unsigned long long)i * 65521);
+                     kbuf, i, (int64_t) i * 65521, i, (unsigned long long)i * 65521);
         break;
       case 4:
         iputchar('4');

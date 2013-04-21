@@ -682,11 +682,11 @@ static int procinform(const char *path, int omode){
   if(flags & TDBFOPEN) printf(" open");
   if(flags & TDBFFATAL) printf(" fatal");
   printf("\n");
-  printf("bucket number: %" PRIuMAX "\n", (unsigned long long)tctdbbnum(tdb));
+  printf("bucket number: %" PRIuMAX "\n", (uint64_t)tctdbbnum(tdb));
 #ifndef NDEBUG
   if(tdb->hdb->cnt_writerec >= 0)
-    printf("used bucket number: %" PRIdMAX "\n", (long long)tctdbbnumused(tdb));
-#endif  
+    printf("used bucket number: %" PRIdMAX "\n", (int64_t)tctdbbnumused(tdb));
+#endif
   printf("alignment: %u\n", tctdbalign(tdb));
   printf("free block pool: %u\n", tctdbfbpmax(tdb));
   printf("index number: %d\n", tctdbinum(tdb));
@@ -697,24 +697,24 @@ static int procinform(const char *path, int omode){
     switch(idxp->type){
       case TDBITLEXICAL:
         printf("  name=%s, type=lexical, rnum=%" PRIdMAX ", fsiz=%" PRIdMAX "\n",
-               idxp->name, (long long)tcbdbrnum(idxp->db), (long long)tcbdbfsiz(idxp->db));
+               idxp->name, (int64_t)tcbdbrnum(idxp->db), (int64_t)tcbdbfsiz(idxp->db));
         break;
       case TDBITDECIMAL:
         printf("  name=%s, type=decimal, rnum=%" PRIdMAX ", fsiz=%" PRIdMAX "\n",
-               idxp->name, (long long)tcbdbrnum(idxp->db), (long long)tcbdbfsiz(idxp->db));
+               idxp->name, (int64_t)tcbdbrnum(idxp->db), (int64_t)tcbdbfsiz(idxp->db));
         break;
       case TDBITTOKEN:
         printf("  name=%s, type=token, rnum=%" PRIdMAX ", fsiz=%" PRIdMAX "\n",
-               idxp->name, (long long)tcbdbrnum(idxp->db), (long long)tcbdbfsiz(idxp->db));
+               idxp->name, (int64_t)tcbdbrnum(idxp->db), (int64_t)tcbdbfsiz(idxp->db));
         break;
       case TDBITQGRAM:
         printf("  name=%s, type=qgram, rnum=%" PRIdMAX ", fsiz=%" PRIdMAX "\n",
-               idxp->name, (long long)tcbdbrnum(idxp->db), (long long)tcbdbfsiz(idxp->db));
+               idxp->name, (int64_t)tcbdbrnum(idxp->db), (int64_t)tcbdbfsiz(idxp->db));
         break;
     }
   }
-  printf("unique ID seed: %" PRIdMAX "\n", (long long)tctdbuidseed(tdb));
-  printf("inode number: %" PRIdMAX "\n", (long long)tctdbinode(tdb));
+  printf("unique ID seed: %" PRIdMAX "\n", (int64_t)tctdbuidseed(tdb));
+  printf("inode number: %" PRIdMAX "\n", (int64_t)tctdbinode(tdb));
   char date[48];
   tcdatestrwww(tctdbmtime(tdb), INT_MAX, date);
   printf("modified time: %s\n", date);
@@ -726,8 +726,8 @@ static int procinform(const char *path, int omode){
   if(opts & TDBTTCBS) printf(" tcbs");
   if(opts & TDBTEXCODEC) printf(" excodec");
   printf("\n");
-  printf("record number: %" PRIuMAX "\n", (unsigned long long)tctdbrnum(tdb));
-  printf("file size: %" PRIuMAX "\n", (unsigned long long)tctdbfsiz(tdb));
+  printf("record number: %" PRIuMAX "\n", (uint64_t)tctdbrnum(tdb));
+  printf("file size: %" PRIuMAX "\n", (uint64_t)tctdbfsiz(tdb));
   if(!tctdbclose(tdb)){
     if(!err) printerr(tdb);
     err = true;
@@ -751,7 +751,7 @@ static int procput(const char *path, const char *pkbuf, int pksiz, TCMAP *cols,
   bool err = false;
   char pknumbuf[TCNUMBUFSIZ];
   if(pksiz < 1){
-    pksiz = sprintf(pknumbuf, "%" PRIdMAX "", (long long)tctdbgenuid(tdb));
+    pksiz = sprintf(pknumbuf, "%" PRIdMAX "", (int64_t)tctdbgenuid(tdb));
     pkbuf = pknumbuf;
   }
   const char *vbuf;
@@ -1209,7 +1209,7 @@ static int procimporttsv(const char *path, const char *file, int omode, bool sc)
     if(sc) tcstrutfnorm(line, TCUNSPACE | TCUNLOWER | TCUNNOACC | TCUNWIDTH);
     const char *pkey;
     if(*line == '\0'){
-      sprintf(numbuf, "%" PRIdMAX "", (long long)tctdbgenuid(tdb));
+      sprintf(numbuf, "%" PRIdMAX "", (int64_t)tctdbgenuid(tdb));
       pkey = numbuf;
     } else {
       pkey = line;

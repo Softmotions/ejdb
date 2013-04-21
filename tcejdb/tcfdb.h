@@ -51,7 +51,7 @@ typedef struct { /* type of structure for a fixed-length database */
     void *eckey; /* key for thread specific error code */
     char *path; /* path of the database file */
     char *rpath; /* real path for locking */
-    volatile char *map; /* pointer to the mapped memory */
+    char *map; /* pointer to the mapped memory */
     volatile int ecode; /* last happened error code */
     int wsiz; /* size of the width region */
     int rsiz; /* size of each record */

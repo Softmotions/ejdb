@@ -97,7 +97,7 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
 static bool _metasetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
 static bool _metagetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
 static bson* _metagetbson(EJDB *jb, const char *colname, int colnamesz, const char *mkey);
-static bson* _metagetbson2(EJCOLL *jcoll, const char *mkey) __attribute__ ((unused));
+static bson* _metagetbson2(EJCOLL *jcoll, const char *mkey) __attribute__((unused));
 static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
         const char *mkey, bson *val, bool merge, bool mergeoverwrt);
 static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge, bool mergeoverwrt);
@@ -130,7 +130,7 @@ extern const char *utf8proc_errmsg(ssize_t errcode);
 static const bool yes = true;
 static const bool no = false;
 
- const char* ejdberrmsg(int ecode) {
+const char* ejdberrmsg(int ecode) {
     if (ecode > -6 && ecode < 0) { //Hook for negative error codes of utf8proc library
         return utf8proc_errmsg(ecode);
     }
@@ -155,7 +155,7 @@ static const bool no = false;
     }
 }
 
- bool ejdbisvalidoidstr(const char *oid) {
+bool ejdbisvalidoidstr(const char *oid) {
     if (!oid) {
         return false;
     }
@@ -167,12 +167,12 @@ static const bool no = false;
 }
 
 /* Get the last happened error code of a database object. */
- int ejdbecode(EJDB *jb) {
+int ejdbecode(EJDB *jb) {
     assert(jb && jb->metadb);
     return tctdbecode(jb->metadb);
 }
 
- EJDB* ejdbnew(void) {
+EJDB* ejdbnew(void) {
     EJDB *jb;
     TCCALLOC(jb, 1, sizeof (*jb));
     jb->metadb = tctdbnew();
@@ -186,7 +186,7 @@ static const bool no = false;
     return jb;
 }
 
- void ejdbdel(EJDB *jb) {
+void ejdbdel(EJDB *jb) {
     assert(jb && jb->metadb);
     if (JBISOPEN(jb)) ejdbclose(jb);
     for (int i = 0; i < jb->cdbsnum; ++i) {
@@ -204,7 +204,7 @@ static const bool no = false;
     TCFREE(jb);
 }
 
- bool ejdbclose(EJDB *jb) {
+bool ejdbclose(EJDB *jb) {
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
     for (int i = 0; i < jb->cdbsnum; ++i) {
@@ -222,11 +222,11 @@ static const bool no = false;
     return rv;
 }
 
- bool ejdbisopen(EJDB *jb) {
+bool ejdbisopen(EJDB *jb) {
     return JBISOPEN(jb);
 }
 
- bool ejdbopen(EJDB *jb, const char *path, int mode) {
+bool ejdbopen(EJDB *jb, const char *path, int mode) {
     assert(jb && path);
     assert(jb->metadb);
     if (!JBLOCKMETHOD(jb, true)) return false;
@@ -258,7 +258,7 @@ finish:
     return rv;
 }
 
- EJCOLL* ejdbgetcoll(EJDB *jb, const char *colname) {
+EJCOLL* ejdbgetcoll(EJDB *jb, const char *colname) {
     assert(colname);
     EJCOLL *coll = NULL;
     JBENSUREOPENLOCK(jb, false, NULL);
@@ -267,7 +267,7 @@ finish:
     return coll;
 }
 
- TCLIST* ejdbgetcolls(EJDB *jb) {
+TCLIST* ejdbgetcolls(EJDB *jb) {
     assert(jb);
     EJCOLL *coll = NULL;
     JBENSUREOPENLOCK(jb, false, NULL);
@@ -280,7 +280,7 @@ finish:
     return ret;
 }
 
- EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
+EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
     assert(colname);
     EJCOLL *coll = ejdbgetcoll(jb, colname);
     if (coll) {
@@ -309,7 +309,7 @@ finish:
     return coll;
 }
 
- bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile) {
+bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile) {
     assert(colname);
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
@@ -359,11 +359,11 @@ finish:
 }
 
 /* Save/Update BSON  */
- bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
+bool ejdbsavebson(EJCOLL *jcoll, bson *bs, bson_oid_t *oid) {
     return ejdbsavebson2(jcoll, bs, oid, false);
 }
 
- bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge) {
+bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge) {
     assert(jcoll);
     if (!bs || bs->err || !bs->finished) {
         _ejdbsetecode(jcoll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -379,7 +379,7 @@ finish:
     return rv;
 }
 
- bool ejdbrmbson(EJCOLL *jcoll, bson_oid_t *oid) {
+bool ejdbrmbson(EJCOLL *jcoll, bson_oid_t *oid) {
     assert(jcoll && oid);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -406,7 +406,7 @@ finish:
     return rv;
 }
 
- bson* ejdbloadbson(EJCOLL *jcoll, const bson_oid_t *oid) {
+bson* ejdbloadbson(EJCOLL *jcoll, const bson_oid_t *oid) {
     assert(jcoll && oid);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -437,7 +437,7 @@ finish:
     return ret;
 }
 
- EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints) {
+EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints) {
     assert(jb);
     if (!qobj || qobj->err || !qobj->finished) {
         _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -481,12 +481,12 @@ error:
     return NULL;
 }
 
- void ejdbquerydel(EJQ *q) {
+void ejdbquerydel(EJQ *q) {
     _qrydel(q, true);
 }
 
 /** Set index */
- bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
+bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
     assert(jcoll && fpath);
     bool rv = true;
     bson *imeta = NULL;
@@ -641,7 +641,7 @@ finish:
     return rv;
 }
 
- uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log) {
+uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log) {
     assert(jcoll);
     uint32_t count = 0;
     EJQ *q = ejdbcreatequery(jcoll->jb, qobj, orqobjs, orqobjsnum, hints);
@@ -653,7 +653,7 @@ finish:
     return count;
 }
 
- TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
+TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
     assert(jcoll && q && q->qobjlist);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -670,7 +670,7 @@ finish:
     return res;
 }
 
- bool ejdbsyncoll(EJCOLL *jcoll) {
+bool ejdbsyncoll(EJCOLL *jcoll) {
     assert(jcoll);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -683,7 +683,7 @@ finish:
     return rv;
 }
 
- bool ejdbsyncdb(EJDB *jb) {
+bool ejdbsyncdb(EJDB *jb) {
     assert(jb);
     JBENSUREOPENLOCK(jb, true, false);
     bool rv = true;
@@ -699,7 +699,7 @@ finish:
     return rv;
 }
 
- bool ejdbtranbegin(EJCOLL *jcoll) {
+bool ejdbtranbegin(EJCOLL *jcoll) {
     assert(jcoll);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -726,7 +726,7 @@ finish:
     return true;
 }
 
- bool ejdbtrancommit(EJCOLL *jcoll) {
+bool ejdbtrancommit(EJCOLL *jcoll) {
     assert(jcoll);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -745,7 +745,7 @@ finish:
     return !err;
 }
 
- bool ejdbtranabort(EJCOLL *jcoll) {
+bool ejdbtranabort(EJCOLL *jcoll) {
     assert(jcoll);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -764,7 +764,7 @@ finish:
     return !err;
 }
 
- bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
+bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
     assert(jcoll && txactive);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);

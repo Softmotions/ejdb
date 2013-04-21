@@ -1457,7 +1457,7 @@ bool tchdbmemsync(TCHDB *hdb, bool phys) {
 #elif !defined __GNU__
         size_t xmsiz = (hdb->xmsiz > hdb->msiz) ? hdb->xmsiz : hdb->msiz;
         if (!hdb->map || msync(hdb->map, xmsiz, MS_SYNC)) {
-            tchmdbsetecode(hdb, TCEMMAP, __FILE__, __LINE__, __func__);
+            tchdbsetecode(hdb, TCEMMAP, __FILE__, __LINE__, __func__);
             err = true;
         }
 #endif
@@ -4990,7 +4990,7 @@ static bool tchdbcopyimpl(TCHDB *hdb, const char *path) {
     }
     if (*path == '@') {
         char tsbuf[TCNUMBUFSIZ];
-        sprintf(tsbuf, "%" PRIuMAX "", (unsigned long long) (tctime() * 1000000));
+        sprintf(tsbuf, "%" PRIuMAX "", (uint64_t) (tctime() * 1000000));
         const char *args[3];
         args[0] = path + 1;
         args[1] = hdb->path;
@@ -5495,20 +5495,20 @@ void tchdbprintmeta(TCHDB *hdb) {
     wp += sprintf(wp, " rpath=%s", hdb->rpath ? hdb->rpath : "-");
     wp += sprintf(wp, " type=%02X", hdb->type);
     wp += sprintf(wp, " flags=%02X", hdb->flags);
-    wp += sprintf(wp, " bnum=%" PRIuMAX "", (unsigned long long) hdb->bnum);
+    wp += sprintf(wp, " bnum=%" PRIuMAX "", (uint64_t) hdb->bnum);
     wp += sprintf(wp, " apow=%u", hdb->apow);
     wp += sprintf(wp, " fpow=%u", hdb->fpow);
     wp += sprintf(wp, " opts=%u", hdb->opts);
     wp += sprintf(wp, " path=%s", hdb->path ? hdb->path : "-");
     wp += sprintf(wp, " fd=%d", hdb->fd);
     wp += sprintf(wp, " omode=%u", hdb->omode);
-    wp += sprintf(wp, " rnum=%" PRIuMAX "", (unsigned long long) hdb->rnum);
-    wp += sprintf(wp, " fsiz=%" PRIuMAX "", (unsigned long long) hdb->fsiz);
-    wp += sprintf(wp, " frec=%" PRIuMAX "", (unsigned long long) hdb->frec);
-    wp += sprintf(wp, " dfcur=%" PRIuMAX "", (unsigned long long) hdb->dfcur);
-    wp += sprintf(wp, " iter=%" PRIuMAX "", (unsigned long long) hdb->iter);
+    wp += sprintf(wp, " rnum=%" PRIuMAX "", (uint64_t) hdb->rnum);
+    wp += sprintf(wp, " fsiz=%" PRIuMAX "", (uint64_t) hdb->fsiz);
+    wp += sprintf(wp, " frec=%" PRIuMAX "", (uint64_t) hdb->frec);
+    wp += sprintf(wp, " dfcur=%" PRIuMAX "", (uint64_t) hdb->dfcur);
+    wp += sprintf(wp, " iter=%" PRIuMAX "", (uint64_t) hdb->iter);
     wp += sprintf(wp, " map=%p", (void *) hdb->map);
-    wp += sprintf(wp, " msiz=%" PRIuMAX "", (unsigned long long) hdb->msiz);
+    wp += sprintf(wp, " msiz=%" PRIuMAX "", (uint64_t) hdb->msiz);
     wp += sprintf(wp, " ba64=%d", hdb->ba64);
     wp += sprintf(wp, " align=%u", hdb->align);
     wp += sprintf(wp, " runit=%u", hdb->runit);
@@ -5519,38 +5519,38 @@ void tchdbprintmeta(TCHDB *hdb) {
     wp += sprintf(wp, " fbpmis=%d", hdb->fbpmis);
     wp += sprintf(wp, " drpool=%p", (void *) hdb->drpool);
     wp += sprintf(wp, " drpdef=%p", (void *) hdb->drpdef);
-    wp += sprintf(wp, " drpoff=%" PRIuMAX "", (unsigned long long) hdb->drpoff);
+    wp += sprintf(wp, " drpoff=%" PRIuMAX "", (uint64_t) hdb->drpoff);
     wp += sprintf(wp, " recc=%p", (void *) hdb->recc);
     wp += sprintf(wp, " rcnum=%u", hdb->rcnum);
     wp += sprintf(wp, " ecode=%d", hdb->ecode);
     wp += sprintf(wp, " fatal=%u", hdb->fatal);
-    wp += sprintf(wp, " inode=%" PRIuMAX "", (unsigned long long) (uint64_t) hdb->inode);
-    wp += sprintf(wp, " mtime=%" PRIuMAX "", (unsigned long long) (uint64_t) hdb->mtime);
+    wp += sprintf(wp, " inode=%" PRIuMAX "", (uint64_t) (uint64_t) hdb->inode);
+    wp += sprintf(wp, " mtime=%" PRIuMAX "", (uint64_t) (uint64_t) hdb->mtime);
     wp += sprintf(wp, " dfunit=%u", hdb->dfunit);
     wp += sprintf(wp, " dfcnt=%u", hdb->dfcnt);
     wp += sprintf(wp, " tran=%d", hdb->tran);
     wp += sprintf(wp, " walfd=%d", hdb->walfd);
-    wp += sprintf(wp, " walend=%" PRIuMAX "", (unsigned long long) hdb->walend);
+    wp += sprintf(wp, " walend=%" PRIuMAX "", (uint64_t) hdb->walend);
     wp += sprintf(wp, " dbgfd=%d", hdb->dbgfd);
 
 #ifndef NDEBUG
-    wp += sprintf(wp, " cnt_writerec=%" PRIdMAX "", (long long) hdb->cnt_writerec);
-    wp += sprintf(wp, " cnt_reuserec=%" PRIdMAX "", (long long) hdb->cnt_reuserec);
-    wp += sprintf(wp, " cnt_moverec=%" PRIdMAX "", (long long) hdb->cnt_moverec);
-    wp += sprintf(wp, " cnt_readrec=%" PRIdMAX "", (long long) hdb->cnt_readrec);
-    wp += sprintf(wp, " cnt_searchfbp=%" PRIdMAX "", (long long) hdb->cnt_searchfbp);
-    wp += sprintf(wp, " cnt_insertfbp=%" PRIdMAX "", (long long) hdb->cnt_insertfbp);
-    wp += sprintf(wp, " cnt_splicefbp=%" PRIdMAX "", (long long) hdb->cnt_splicefbp);
-    wp += sprintf(wp, " cnt_dividefbp=%" PRIdMAX "", (long long) hdb->cnt_dividefbp);
-    wp += sprintf(wp, " cnt_mergefbp=%" PRIdMAX "", (long long) hdb->cnt_mergefbp);
-    wp += sprintf(wp, " cnt_reducefbp=%" PRIdMAX "", (long long) hdb->cnt_reducefbp);
-    wp += sprintf(wp, " cnt_appenddrp=%" PRIdMAX "", (long long) hdb->cnt_appenddrp);
-    wp += sprintf(wp, " cnt_deferdrp=%" PRIdMAX "", (long long) hdb->cnt_deferdrp);
-    wp += sprintf(wp, " cnt_flushdrp=%" PRIdMAX "", (long long) hdb->cnt_flushdrp);
-    wp += sprintf(wp, " cnt_adjrecc=%" PRIdMAX "", (long long) hdb->cnt_adjrecc);
-    wp += sprintf(wp, " cnt_defrag=%" PRIdMAX "", (long long) hdb->cnt_defrag);
-    wp += sprintf(wp, " cnt_shiftrec=%" PRIdMAX "", (long long) hdb->cnt_shiftrec);
-    wp += sprintf(wp, " cnt_trunc=%" PRIdMAX "", (long long) hdb->cnt_trunc);
+    wp += sprintf(wp, " cnt_writerec=%" PRIdMAX "", (int64_t) hdb->cnt_writerec);
+    wp += sprintf(wp, " cnt_reuserec=%" PRIdMAX "", (int64_t) hdb->cnt_reuserec);
+    wp += sprintf(wp, " cnt_moverec=%" PRIdMAX "", (int64_t) hdb->cnt_moverec);
+    wp += sprintf(wp, " cnt_readrec=%" PRIdMAX "", (int64_t) hdb->cnt_readrec);
+    wp += sprintf(wp, " cnt_searchfbp=%" PRIdMAX "", (int64_t) hdb->cnt_searchfbp);
+    wp += sprintf(wp, " cnt_insertfbp=%" PRIdMAX "", (int64_t) hdb->cnt_insertfbp);
+    wp += sprintf(wp, " cnt_splicefbp=%" PRIdMAX "", (int64_t) hdb->cnt_splicefbp);
+    wp += sprintf(wp, " cnt_dividefbp=%" PRIdMAX "", (int64_t) hdb->cnt_dividefbp);
+    wp += sprintf(wp, " cnt_mergefbp=%" PRIdMAX "", (int64_t) hdb->cnt_mergefbp);
+    wp += sprintf(wp, " cnt_reducefbp=%" PRIdMAX "", (int64_t) hdb->cnt_reducefbp);
+    wp += sprintf(wp, " cnt_appenddrp=%" PRIdMAX "", (int64_t) hdb->cnt_appenddrp);
+    wp += sprintf(wp, " cnt_deferdrp=%" PRIdMAX "", (int64_t) hdb->cnt_deferdrp);
+    wp += sprintf(wp, " cnt_flushdrp=%" PRIdMAX "", (int64_t) hdb->cnt_flushdrp);
+    wp += sprintf(wp, " cnt_adjrecc=%" PRIdMAX "", (int64_t) hdb->cnt_adjrecc);
+    wp += sprintf(wp, " cnt_defrag=%" PRIdMAX "", (int64_t) hdb->cnt_defrag);
+    wp += sprintf(wp, " cnt_shiftrec=%" PRIdMAX "", (int64_t) hdb->cnt_shiftrec);
+    wp += sprintf(wp, " cnt_trunc=%" PRIdMAX "", (int64_t) hdb->cnt_trunc);
 #endif
 
     *(wp++) = '\n';
@@ -5569,18 +5569,18 @@ void tchdbprintrec(TCHDB *hdb, TCHREC *rec) {
     char buf[HDBIOBUFSIZ];
     char *wp = buf;
     wp += sprintf(wp, "REC:");
-    wp += sprintf(wp, " off=%" PRIuMAX "", (unsigned long long) rec->off);
+    wp += sprintf(wp, " off=%" PRIuMAX "", (uint64_t) rec->off);
     wp += sprintf(wp, " rsiz=%u", rec->rsiz);
     wp += sprintf(wp, " magic=%02X", rec->magic);
     wp += sprintf(wp, " hash=%02X", rec->hash);
-    wp += sprintf(wp, " left=%" PRIuMAX "", (unsigned long long) rec->left);
-    wp += sprintf(wp, " right=%" PRIuMAX "", (unsigned long long) rec->right);
+    wp += sprintf(wp, " left=%" PRIuMAX "", (uint64_t) rec->left);
+    wp += sprintf(wp, " right=%" PRIuMAX "", (uint64_t) rec->right);
     wp += sprintf(wp, " ksiz=%u", rec->ksiz);
     wp += sprintf(wp, " vsiz=%u", rec->vsiz);
     wp += sprintf(wp, " psiz=%u", rec->psiz);
     wp += sprintf(wp, " kbuf=%p", (void *) rec->kbuf);
     wp += sprintf(wp, " vbuf=%p", (void *) rec->vbuf);
-    wp += sprintf(wp, " boff=%" PRIuMAX "", (unsigned long long) rec->boff);
+    wp += sprintf(wp, " boff=%" PRIuMAX "", (uint64_t) rec->boff);
     wp += sprintf(wp, " bbuf=%p", (void *) rec->bbuf);
     *(wp++) = '\n';
     tcwrite(dbgfd, buf, wp - buf);

@@ -153,30 +153,30 @@ static void eprint(TCHDB *hdb, int line, const char *func){
 /* print members of hash database */
 static void mprint(TCHDB *hdb){
   if(hdb->cnt_writerec < 0) return;
-  iprintf("bucket number: %" PRIdMAX "\n", (long long)tchdbbnum(hdb));
-  iprintf("used bucket number: %" PRIdMAX "\n", (long long)tchdbbnumused(hdb));
+  iprintf("bucket number: %" PRIdMAX "\n", (int64_t)tchdbbnum(hdb));
+  iprintf("used bucket number: %" PRIdMAX "\n", (int64_t)tchdbbnumused(hdb));
   iprintf("msiz: %" PRIdMAX "\n", hdb->msiz);
   iprintf("xmsiz: %" PRIdMAX "\n", hdb->xmsiz);
   iprintf("fbpnum: %" PRIdMAX "\n", hdb->fbpnum);
   iprintf("fbpool: %p\n", hdb->fbpool);
 #ifndef NDEBUG
-  iprintf("cnt_writerec: %" PRIdMAX "\n", (long long)hdb->cnt_writerec);
-  iprintf("cnt_reuserec: %" PRIdMAX "\n", (long long)hdb->cnt_reuserec);
-  iprintf("cnt_moverec: %" PRIdMAX "\n", (long long)hdb->cnt_moverec);
-  iprintf("cnt_readrec: %" PRIdMAX "\n", (long long)hdb->cnt_readrec);
-  iprintf("cnt_searchfbp: %" PRIdMAX "\n", (long long)hdb->cnt_searchfbp);
-  iprintf("cnt_insertfbp: %" PRIdMAX "\n", (long long)hdb->cnt_insertfbp);
-  iprintf("cnt_splicefbp: %" PRIdMAX "\n", (long long)hdb->cnt_splicefbp);
-  iprintf("cnt_dividefbp: %" PRIdMAX "\n", (long long)hdb->cnt_dividefbp);
-  iprintf("cnt_mergefbp: %" PRIdMAX "\n", (long long)hdb->cnt_mergefbp);
-  iprintf("cnt_reducefbp: %" PRIdMAX "\n", (long long)hdb->cnt_reducefbp);
-  iprintf("cnt_appenddrp: %" PRIdMAX "\n", (long long)hdb->cnt_appenddrp);
-  iprintf("cnt_deferdrp: %" PRIdMAX "\n", (long long)hdb->cnt_deferdrp);
-  iprintf("cnt_flushdrp: %" PRIdMAX "\n", (long long)hdb->cnt_flushdrp);
-  iprintf("cnt_adjrecc: %" PRIdMAX "\n", (long long)hdb->cnt_adjrecc);
-  iprintf("cnt_defrag: %" PRIdMAX "\n", (long long)hdb->cnt_defrag);
-  iprintf("cnt_shiftrec: %" PRIdMAX "\n", (long long)hdb->cnt_shiftrec);
-  iprintf("cnt_trunc: %" PRIdMAX "\n", (long long)hdb->cnt_trunc);
+  iprintf("cnt_writerec: %" PRIdMAX "\n", (int64_t)hdb->cnt_writerec);
+  iprintf("cnt_reuserec: %" PRIdMAX "\n", (int64_t)hdb->cnt_reuserec);
+  iprintf("cnt_moverec: %" PRIdMAX "\n", (int64_t)hdb->cnt_moverec);
+  iprintf("cnt_readrec: %" PRIdMAX "\n", (int64_t)hdb->cnt_readrec);
+  iprintf("cnt_searchfbp: %" PRIdMAX "\n", (int64_t)hdb->cnt_searchfbp);
+  iprintf("cnt_insertfbp: %" PRIdMAX "\n", (int64_t)hdb->cnt_insertfbp);
+  iprintf("cnt_splicefbp: %" PRIdMAX "\n", (int64_t)hdb->cnt_splicefbp);
+  iprintf("cnt_dividefbp: %" PRIdMAX "\n", (int64_t)hdb->cnt_dividefbp);
+  iprintf("cnt_mergefbp: %" PRIdMAX "\n", (int64_t)hdb->cnt_mergefbp);
+  iprintf("cnt_reducefbp: %" PRIdMAX "\n", (int64_t)hdb->cnt_reducefbp);
+  iprintf("cnt_appenddrp: %" PRIdMAX "\n", (int64_t)hdb->cnt_appenddrp);
+  iprintf("cnt_deferdrp: %" PRIdMAX "\n", (int64_t)hdb->cnt_deferdrp);
+  iprintf("cnt_flushdrp: %" PRIdMAX "\n", (int64_t)hdb->cnt_flushdrp);
+  iprintf("cnt_adjrecc: %" PRIdMAX "\n", (int64_t)hdb->cnt_adjrecc);
+  iprintf("cnt_defrag: %" PRIdMAX "\n", (int64_t)hdb->cnt_defrag);
+  iprintf("cnt_shiftrec: %" PRIdMAX "\n", (int64_t)hdb->cnt_shiftrec);
+  iprintf("cnt_trunc: %" PRIdMAX "\n", (int64_t)hdb->cnt_trunc);
 #endif
 }
 
@@ -645,8 +645,8 @@ static int procwrite(const char *path, int rnum, int bnum, int apow, int fpow,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -720,8 +720,8 @@ static int procread(const char *path, bool mt, int rcnum, int xmsiz, int dfunit,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -782,8 +782,8 @@ static int procremove(const char *path, bool mt, int rcnum, int xmsiz, int dfuni
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -938,8 +938,8 @@ static int procrcat(const char *path, int rnum, int bnum, int apow, int fpow,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -1699,8 +1699,8 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(hdb, __LINE__, "tchdbforeach");
     err = true;
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   if(!tchdbclose(hdb)){
@@ -2124,8 +2124,8 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(hdb, __LINE__, "(validation)");
     err = true;
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tchdbrnum(hdb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tchdbfsiz(hdb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tchdbrnum(hdb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tchdbfsiz(hdb));
   mprint(hdb);
   sysprint();
   tcmapdel(map);

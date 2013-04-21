@@ -446,7 +446,7 @@ bool tcadbput(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int vsiz
             break;
         case ADBOTDB:
             if (ksiz < 1) {
-                ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long) tctdbgenuid(adb->tdb));
+                ksiz = sprintf(numbuf, "%" PRIdMAX "", (int64_t) tctdbgenuid(adb->tdb));
                 kbuf = numbuf;
             }
             if (!tctdbput2(adb->tdb, kbuf, ksiz, vbuf, vsiz)) err = true;
@@ -520,7 +520,7 @@ bool tcadbputkeep(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int 
             break;
         case ADBOTDB:
             if (ksiz < 1) {
-                ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long) tctdbgenuid(adb->tdb));
+                ksiz = sprintf(numbuf, "%" PRIdMAX "", (int64_t) tctdbgenuid(adb->tdb));
                 kbuf = numbuf;
             }
             if (!tctdbputkeep2(adb->tdb, kbuf, ksiz, vbuf, vsiz)) err = true;
@@ -590,7 +590,7 @@ bool tcadbputcat(TCADB *adb, const void *kbuf, int ksiz, const void *vbuf, int v
             break;
         case ADBOTDB:
             if (ksiz < 1) {
-                ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long) tctdbgenuid(adb->tdb));
+                ksiz = sprintf(numbuf, "%" PRIdMAX "", (int64_t) tctdbgenuid(adb->tdb));
                 kbuf = numbuf;
             }
             if (!tctdbputcat2(adb->tdb, kbuf, ksiz, vbuf, vsiz)) err = true;
@@ -929,7 +929,7 @@ int tcadbaddint(TCADB *adb, const void *kbuf, int ksiz, int num) {
             break;
         case ADBOTDB:
             if (ksiz < 1) {
-                ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long) tctdbgenuid(adb->tdb));
+                ksiz = sprintf(numbuf, "%" PRIdMAX "", (int64_t) tctdbgenuid(adb->tdb));
                 kbuf = numbuf;
             }
             rv = tctdbaddint(adb->tdb, kbuf, ksiz, num);
@@ -991,7 +991,7 @@ double tcadbadddouble(TCADB *adb, const void *kbuf, int ksiz, double num) {
             break;
         case ADBOTDB:
             if (ksiz < 1) {
-                ksiz = sprintf(numbuf, "%" PRIdMAX "", (long long) tctdbgenuid(adb->tdb));
+                ksiz = sprintf(numbuf, "%" PRIdMAX "", (int64_t) tctdbgenuid(adb->tdb));
                 kbuf = numbuf;
             }
             rv = tctdbadddouble(adb->tdb, kbuf, ksiz, num);
@@ -1235,7 +1235,7 @@ bool tcadbcopy(TCADB *adb, const char *path) {
         case ADBONDB:
             if (*path == '@') {
                 char tsbuf[TCNUMBUFSIZ];
-                sprintf(tsbuf, "%" PRIuMAX "", (unsigned long long) (tctime() * 1000000));
+                sprintf(tsbuf, "%" PRIuMAX "", (uint64_t) (tctime() * 1000000));
                 const char *args[2];
                 args[0] = path + 1;
                 args[1] = tsbuf;
@@ -3207,7 +3207,7 @@ TCLIST *tcadbmisc(TCADB *adb, const char *name, const TCLIST *args) {
             } else if (!strcmp(name, "genuid")) {
                 rv = tclistnew2(1);
                 char numbuf[TCNUMBUFSIZ];
-                int nsiz = sprintf(numbuf, "%" PRIdMAX "", (long long) tctdbgenuid(adb->tdb));
+                int nsiz = sprintf(numbuf, "%" PRIdMAX "", (int64_t) tctdbgenuid(adb->tdb));
                 TCLISTPUSH(rv, numbuf, nsiz);
             } else {
                 rv = NULL;

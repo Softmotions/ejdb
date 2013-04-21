@@ -212,6 +212,9 @@
 #define GET_STDIN_HANDLE() GetStdHandle(STD_INPUT_HANDLE)
 #define CLOSEFH(_fd) (CloseHandle(_fd))
 #else
+#ifdef __unix
+#include "nix/platform.h"
+#endif
 #include <regex.h>
 #include <glob.h>
 #include <sys/mman.h>
@@ -221,7 +224,7 @@
 #define GET_STDOUT_HANDLE() (1)
 #define GET_STDERR_HANDLE() (2)
 #define GET_STDIN_HANDLE() (0)
-#define CLOSEFH(_fd) (close(_fd) != -1)
+#define CLOSEFH(_fd) (closefd(_fd))
 #define sysconf_SC_CLK_TCK sysconf(_SC_CLK_TCK)
 #endif
 

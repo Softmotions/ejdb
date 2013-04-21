@@ -961,7 +961,7 @@ bool tctdbqryproc(TDBQRY *qry, TDBQRYPROC proc, void *op) {
     }
     tclistdel(res);
     tcxstrprintf(qry->hint, "post treatment: get=%" PRIdMAX ", put=%" PRIdMAX ", out=%" PRIdMAX "\n",
-            (long long) getnum, (long long) putnum, (long long) outnum);
+            (int64_t) getnum, (int64_t) putnum, (int64_t) outnum);
     TDBUNLOCKMETHOD(tdb);
     return !err;
 }
@@ -1591,7 +1591,7 @@ bool tctdbqryproc2(TDBQRY *qry, TDBQRYPROC proc, void *op) {
     }
     tclistdel(res);
     tcxstrprintf(qry->hint, "post treatment: get=%" PRIdMAX ", put=%" PRIdMAX ", out=%" PRIdMAX "\n",
-            (long long) getnum, (long long) putnum, (long long) outnum);
+            (int64_t) getnum, (int64_t) putnum, (int64_t) outnum);
     return !err;
 }
 
@@ -3930,7 +3930,7 @@ static TCMAP *tctdbqryidxfetch(TDBQRY *qry, TDBCOND *cond, TDBIDX *idx) {
         tcmapdel(nmap);
         nmap = tctdbidxgetbyfts(tdb, idx, cond, hint);
     }
-    tcxstrprintf(hint, "auxiliary result set size: %" PRIdMAX "\n", (long long) TCMAPRNUM(nmap));
+    tcxstrprintf(hint, "auxiliary result set size: %" PRIdMAX "\n", (int64_t) TCMAPRNUM(nmap));
     return nmap;
 }
 
@@ -5499,7 +5499,7 @@ TCMAP *tctdbidxgetbytokens(TCTDB *tdb, const TDBIDX *idx, const TCLIST *tokens, 
                     int step;
                     TCREADVNUMBUF64(cbuf, tid, step);
                     char pkbuf[TCNUMBUFSIZ];
-                    int pksiz = sprintf(pkbuf, "%" PRIdMAX "", (long long) tid);
+                    int pksiz = sprintf(pkbuf, "%" PRIdMAX "", (int64_t) tid);
                     if (cnt < 1) {
                         tcmapput(res, pkbuf, pksiz, "", 0);
                     } else if (wring) {
@@ -5539,7 +5539,7 @@ TCMAP *tctdbidxgetbytokens(TCTDB *tdb, const TDBIDX *idx, const TCLIST *tokens, 
                     int step;
                     TCREADVNUMBUF64(cbuf, tid, step);
                     char pkbuf[TCNUMBUFSIZ];
-                    int pksiz = sprintf(pkbuf, "%" PRIdMAX "", (long long) tid);
+                    int pksiz = sprintf(pkbuf, "%" PRIdMAX "", (int64_t) tid);
                     if (cnt < 1) {
                         tcmapput(res, pkbuf, pksiz, "", 0);
                     } else if (wring) {
@@ -5949,7 +5949,7 @@ static void tctdbidxgetbyftsunion(TDBIDX *idx, const TCLIST *tokens, bool sign,
                 if (off == ocr->off + rem) {
                     onum++;
                     char pkbuf[TCNUMBUFSIZ];
-                    int pksiz = sprintf(pkbuf, "%" PRIdMAX "", (long long) pkid);
+                    int pksiz = sprintf(pkbuf, "%" PRIdMAX "", (int64_t) pkid);
                     if (ores) {
                         int rsiz;
                         if (tcmapget(ores, pkbuf, pksiz, &rsiz)) {
@@ -6021,7 +6021,7 @@ static void tctdbidxgetbyftsunion(TDBIDX *idx, const TCLIST *tokens, bool sign,
                             if (uniq) tcmapputkeep(uniq, pkbuf, pksiz, "", 0);
                         } else {
                             char numbuf[TCNUMBUFSIZ];
-                            int pksiz = sprintf(numbuf, "%" PRIdMAX "", (long long) pkid);
+                            int pksiz = sprintf(numbuf, "%" PRIdMAX "", (int64_t) pkid);
                             if (ores) {
                                 int rsiz;
                                 if (tcmapget(ores, numbuf, pksiz, &rsiz)) {
@@ -6090,7 +6090,7 @@ static void tctdbidxgetbyftsunion(TDBIDX *idx, const TCLIST *tokens, bool sign,
                             if (uniq) tcmapputkeep(uniq, pkbuf, pksiz, "", 0);
                         } else {
                             char numbuf[TCNUMBUFSIZ];
-                            int pksiz = sprintf(numbuf, "%" PRIdMAX "", (long long) pkid);
+                            int pksiz = sprintf(numbuf, "%" PRIdMAX "", (int64_t) pkid);
                             if (ores) {
                                 int rsiz;
                                 if (tcmapget(ores, numbuf, pksiz, &rsiz)) {
@@ -6391,7 +6391,7 @@ void tctdbprintmeta(TCTDB *tdb) {
     wp += sprintf(wp, " opts=%u", tdb->opts);
     wp += sprintf(wp, " lcnum=%d", tdb->lcnum);
     wp += sprintf(wp, " ncnum=%d", tdb->ncnum);
-    wp += sprintf(wp, " iccmax=%" PRIdMAX "", (long long) tdb->iccmax);
+    wp += sprintf(wp, " iccmax=%" PRIdMAX "", (int64_t) tdb->iccmax);
     wp += sprintf(wp, " iccsync=%f", tdb->iccsync);
     wp += sprintf(wp, " idxs=%p", (void *) tdb->idxs);
     wp += sprintf(wp, " inum=%d", tdb->inum);

@@ -442,8 +442,8 @@ static int procwrite(const char *name, int rnum){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -499,8 +499,8 @@ static int procread(const char *name){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -553,8 +553,8 @@ static int procremove(const char *name){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -608,8 +608,8 @@ static int procrcat(const char *name, int rnum){
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -1110,8 +1110,8 @@ static int procmisc(const char *name, int rnum){
     eprint(adb, __LINE__, "tcadbforeach");
     err = true;
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tcadbsize(adb));
   sysprint();
   if(!tcadbclose(adb)){
     eprint(adb, __LINE__, "tcadbclose");
@@ -1315,8 +1315,8 @@ static int procwicked(const char *name, int rnum){
     eprint(adb, __LINE__, "(validation)");
     err = true;
   }
-  iprintf("record number: %" PRIuMAX "\n", (unsigned long long)tcadbrnum(adb));
-  iprintf("size: %" PRIuMAX "\n", (unsigned long long)tcadbsize(adb));
+  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tcadbrnum(adb));
+  iprintf("size: %" PRIuMAX "\n", (uint64_t)tcadbsize(adb));
   sysprint();
   tcmapdel(map);
   if(!tcadbclose(adb)){
