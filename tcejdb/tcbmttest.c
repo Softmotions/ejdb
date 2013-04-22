@@ -194,13 +194,14 @@ static void eprint(TCBDB *bdb, int line, const char *func) {
 
 /* print members of hash database */
 static void mprint(TCBDB *bdb) {
-    if (bdb->hdb->cnt_writerec < 0) return;
     iprintf("max leaf member: %d\n", tcbdblmemb(bdb));
     iprintf("max node member: %d\n", tcbdbnmemb(bdb));
     iprintf("leaf number: %" PRIdMAX "\n", (int64_t) tcbdblnum(bdb));
     iprintf("node number: %" PRIdMAX "\n", (int64_t) tcbdbnnum(bdb));
     iprintf("bucket number: %" PRIdMAX "\n", (int64_t) tcbdbbnum(bdb));
     iprintf("used bucket number: %" PRIdMAX "\n", (int64_t) tcbdbbnumused(bdb));
+#ifndef NDEBUG
+    if (bdb->hdb->cnt_writerec < 0) return;
     iprintf("cnt_saveleaf: %" PRIdMAX "\n", (int64_t) bdb->cnt_saveleaf);
     iprintf("cnt_loadleaf: %" PRIdMAX "\n", (int64_t) bdb->cnt_loadleaf);
     iprintf("cnt_killleaf: %" PRIdMAX "\n", (int64_t) bdb->cnt_killleaf);
@@ -225,6 +226,7 @@ static void mprint(TCBDB *bdb) {
     iprintf("cnt_defrag: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_defrag);
     iprintf("cnt_shiftrec: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_shiftrec);
     iprintf("cnt_trunc: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_trunc);
+#endif
 }
 
 /* print system information */

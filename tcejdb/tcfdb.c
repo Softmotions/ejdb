@@ -1600,9 +1600,12 @@ static void tcfdbclear(TCFDB *fdb) {
     fdb->walfd = INVALID_HANDLE_VALUE;
     fdb->walend = 0;
     fdb->dbgfd = INVALID_HANDLE_VALUE;
+#ifndef NDEBUG
     fdb->cnt_writerec = -1;
     fdb->cnt_readrec = -1;
     fdb->cnt_truncfile = -1;
+#endif
+
     TCDODEBUG(fdb->cnt_writerec = 0);
     TCDODEBUG(fdb->cnt_readrec = 0);
     TCDODEBUG(fdb->cnt_truncfile = 0);

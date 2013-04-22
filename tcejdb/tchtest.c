@@ -146,7 +146,6 @@ static void eprint(TCHDB *hdb, int line, const char *func) {
 
 /* print members of hash database */
 static void mprint(TCHDB *hdb) {
-    if (hdb->cnt_writerec < 0) return;
     iprintf("bucket number: %" PRIdMAX "\n", (int64_t) tchdbbnum(hdb));
     iprintf("used bucket number: %" PRIdMAX "\n", (int64_t) tchdbbnumused(hdb));
     iprintf("msiz: %" PRIdMAX "\n", hdb->msiz);
@@ -154,6 +153,7 @@ static void mprint(TCHDB *hdb) {
     iprintf("fbpnum: %" PRIdMAX "\n", hdb->fbpnum);
     iprintf("fbpool: %p\n", hdb->fbpool);
 #ifndef NDEBUG
+    if (hdb->cnt_writerec < 0) return;
     iprintf("cnt_writerec: %" PRIdMAX "\n", (int64_t) hdb->cnt_writerec);
     iprintf("cnt_reuserec: %" PRIdMAX "\n", (int64_t) hdb->cnt_reuserec);
     iprintf("cnt_moverec: %" PRIdMAX "\n", (int64_t) hdb->cnt_moverec);

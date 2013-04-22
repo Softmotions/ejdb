@@ -550,8 +550,10 @@ static int procinform(const char *path, int omode) {
     if (flags & HDBFFATAL) printf(" fatal");
     printf("\n");
     printf("bucket number: %" PRIuMAX "\n", (uint64_t) tchdbbnum(hdb));
+#ifndef NDEBUG
     if (hdb->cnt_writerec >= 0)
         printf("used bucket number: %" PRIdMAX "\n", (int64_t) tchdbbnumused(hdb));
+#endif
     printf("alignment: %u\n", tchdbalign(hdb));
     printf("free block pool: %u\n", tchdbfbpmax(hdb));
     printf("inode number: %" PRIdMAX "\n", (int64_t) tchdbinode(hdb));
