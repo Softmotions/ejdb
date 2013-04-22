@@ -66,7 +66,7 @@ typedef struct { /* type of structure for a fixed-length database */
     time_t mtime; /* modification time */
     uint64_t limsiz; /* limit size of the file */
     uint64_t rnum; /* number of the records */
-    uint64_t fsiz; /* size of the database file */
+    volatile uint64_t fsiz; /* size of the database file */
     uint64_t min; /* minimum ID number */
     uint64_t max; /* maximum ID number */
     uint64_t iter; /* ID number of the iterator */

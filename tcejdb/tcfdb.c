@@ -119,7 +119,7 @@ static bool tcfdbvanishimpl(TCFDB *fdb);
 static bool tcfdbcopyimpl(TCFDB *fdb, const char *path);
 static bool tcfdbiterjumpimpl(TCFDB *fdb, int64_t id);
 static bool tcfdbforeachimpl(TCFDB *fdb, TCITER iter, void *op);
-static bool tcfdbftruncate(TCFDB *fdb, off_t length) __attribute__ ((unused));
+static bool tcfdbftruncate(TCFDB *fdb, off_t length) __attribute__((unused));
 static bool tcfdbftruncate2(TCFDB *fdb, off_t length, int opts);
 
 EJDB_INLINE bool tcfdblockmethod(TCFDB *fdb, bool wr);
@@ -2147,6 +2147,7 @@ static bool tcfdbputimpl(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, int
     if (vsiz > (int64_t) fdb->width) vsiz = fdb->width;
     TCDODEBUG(fdb->cnt_readrec++);
     uint64_t nsiz = FDBHEADSIZ + id * fdb->rsiz;
+
     if (nsiz > fdb->fsiz) {
         if (nsiz > fdb->limsiz) {
             tcfdbsetecode(fdb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -2203,10 +2204,12 @@ static bool tcfdbputimpl(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, int
                     fdb->max = id;
                 }
             }
+            FDBUNLOCKATTR(fdb);
+            FDBUNLOCKSMEM(fdb);
+            return !err;
         }
         FDBUNLOCKATTR(fdb);
         FDBUNLOCKSMEM(fdb);
-        return !err;
     }
 
     //Take a read lock on shared mem because
@@ -2982,9 +2985,13 @@ static bool tcfdbftruncate(TCFDB *fdb, off_t length) {
 
 static bool tcfdbftruncate2(TCFDB *fdb, off_t length, int opts) {
 #ifndef _WIN32
+    bool err = false;
     length = length ? tcpagealign(length) : 0;
     if (!(fdb->omode & FDBOWRITER) || (length <= fdb->fsiz && !(opts & FDBTRALLOWSHRINK))) {
         return true;
+    }
+    if (!(opts & FDBWRITENOLOCK) && !FDBLOCKSMEM2(fdb, true)) {
+        return false;
     }
     if (length > fdb->fsiz && !(opts & FDBTRALLOWSHRINK)) {
         off_t o1 = tcpagealign((_maxof(off_t) - length < FDBXFSIZINC) ? length : length + FDBXFSIZINC);
@@ -2996,10 +3003,11 @@ static bool tcfdbftruncate2(TCFDB *fdb, off_t length, int opts) {
     }
     if (ftruncate(fdb->fd, length) == 0) {
         fdb->fsiz = length;
-        return true;
     } else {
-        return false;
+        err = true;
     }
+    if (!(opts & FDBWRITENOLOCK)) FDBUNLOCKSMEM(fdb);
+    return !err;
 #else
     bool err = false;
     LARGE_INTEGER size;

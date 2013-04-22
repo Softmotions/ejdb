@@ -807,12 +807,15 @@ static void *threadwrite(void *targ) {
     int base = id * rnum;
     for (int i = 1; i <= rnum; i++) {
         char buf[RECBUFSIZ];
+
+        
         int len = sprintf(buf, "%08d", base + (rnd ? myrand(i) + 1 : i));
         if (!tcfdbput2(fdb, buf, len, buf, len)) {
             eprint(fdb, __LINE__, "tcfdbput2");
             err = true;
             break;
         }
+
         if (id == 0 && rnum > 250 && i % (rnum / 250) == 0) {
             iputchar('.');
             if (i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
