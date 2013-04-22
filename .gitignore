@@ -48,6 +48,7 @@ config.status
 /tcejdb/samples/sample1/sample1
 /tcejdb/samples/sample1/addressbook*
 
+/tcejdb/testejdb/Makefile
 /tcejdb/testejdb/dbt*
 /tcejdb/testejdb/t1
 /tcejdb/testejdb/t2
@@ -113,4 +114,7 @@ tcejdb/debian/*.debhelper
 /jejdb/target
 /jejdb/*.so
 /jejdb/*.so.*
+/jejdb/Makefile
+
+
 

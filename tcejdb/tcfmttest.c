@@ -63,7 +63,7 @@ typedef struct { // type of structure for typical thread
 /* global variables */
 const char *g_progname; // program name
 unsigned int g_randseed; // random seed
-HANDLE g_dbgfd; // debugging output
+HANDLE g_dbgfd = INVALID_HANDLE_VALUE; // debugging output
 
 
 /* function prototypes */
