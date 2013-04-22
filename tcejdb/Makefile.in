@@ -90,7 +90,7 @@ clean :
 	rm -rf $(LIBRARYFILES) $(LIBOBJFILES) $(COMMANDFILES) $(CGIFILES) static \
 	  *.o a.out tokyocabinet_all.c check.in check.out gmon.out *.vlog words.tsv \
 	  casket casket-* casket.* *.tch *.tcb *.tcf *.tct *.idx.* *.wal *~ hoge moge tako ika
-	make -C ./testejdb clean
+	- make -C ./testejdb clean
 
 
 version :

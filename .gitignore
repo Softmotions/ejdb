@@ -5,6 +5,7 @@
 *.rock
 *.so
 *.dll
+*.exe
 
 
 autom4te.cache/
