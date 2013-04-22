@@ -3693,10 +3693,6 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             case BSON_OID:
             {
 
-                if (isckey) {
-
-                }
-
                 assert(!qf.fpath && !qf.expr);
                 qf.ftype = ftype;
                 TCMALLOC(qf.expr, 25 * sizeof (char));

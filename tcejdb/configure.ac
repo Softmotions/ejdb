@@ -35,8 +35,119 @@ MYMAN3FILES="libtcejdb.3"
 MYDOCUMENTFILES="COPYING Changelog"
 MYPCFILES="tcejdb.pc"
 
+case $host_os in
+  mingw*)
+CCOPT=`gcc -O2 -Q --help=optimizers | grep enabled | sed 's/\[enabled\]//' | tr '\n' ' ' | sed 's/[[:blank:]]\+/ /g'`
+  CCOPT1="-falign-functions \
+-falign-jumps \
+-falign-labels \
+-falign-loops \
+-fasynchronous-unwind-tables \
+-fbranch-count-reg \
+-fcaller-saves \
+-fcombine-stack-adjustments \
+-fcommon \
+-fcompare-elim \
+-fcprop-registers \
+-fcrossjumping  \
+-fcse-follow-jumps \
+-fdce \
+-fdefer-pop \
+-fdelete-null-pointer-checks \
+-fdevirtualize  \
+-fdse \
+-fearly-inlining \
+-fexpensive-optimizations \
+-fforward-propagate  \
+-fgcse \
+-fgcse-lm \
+-fguess-branch-probability \
+-fif-conversion \
+-fif-conversion2 \
+-finline-atomics \
+-finline-functions-called-once \
+-finline-small-functions \
+-fipa-cp \
+-fipa-profile \
+-fipa-pure-const \
+-fipa-reference \
+-fipa-sra \
+-fivopts \
+-fjump-tables \
+-fmath-errno \
+-fmerge-constants \
+-fmove-loop-invariants \
+-foptimize-register-move \
+-foptimize-sibling-calls \
+-foptimize-strlen \
+-fpeephole \
+-fpeephole2 \
+-fregmove \
+-frename-registers \
+-freorder-blocks \
+-freorder-functions \
+-frerun-cse-after-loop \
+-fsched-critical-path-heuristic \
+-fsched-dep-count-heuristic \
+-fsched-group-heuristic \
+-fsched-interblock \
+-fsched-last-insn-heuristic \
+-fsched-rank-heuristic \
+-fsched-spec \
+-fsched-spec-insn-heuristic \
+-fsched-stalled-insns-dep \
+-fschedule-insns2 \
+-fset-stack-executable \
+-fshort-enums \
+-fshrink-wrap \
+-fsigned-zeros \
+-fsplit-ivs-in-unroller \
+-fsplit-wide-types \
+-fstrict-aliasing \
+-fthread-jumps \
+-ftoplevel-reorder \
+-ftrapping-math \
+-ftree-bit-ccp  \
+-ftree-builtin-call-dce \
+-ftree-ccp \
+-ftree-ch \
+-ftree-copy-prop \
+-ftree-copyrename \
+-ftree-cselim \
+-ftree-dce \
+-ftree-dominator-opts \
+-ftree-dse \
+-ftree-forwprop \
+-ftree-fre \
+-ftree-loop-if-convert  \
+-ftree-loop-im \
+-ftree-loop-ivcanon \
+-ftree-loop-optimize \
+-ftree-phiprop \
+-ftree-pre \
+-ftree-pta \
+-ftree-reassoc \
+-ftree-scev-cprop \
+-ftree-sink \
+-ftree-slp-vectorize \
+-ftree-sra \
+-ftree-switch-conversion \
+-ftree-tail-merge \
+-ftree-ter \
+-ftree-vect-loop-version \
+-ftree-vrp \
+-funit-at-a-time \
+-fvar-tracking-assignments \
+-fvect-cost-model \
+-fweb"
+      ;;
+  *)
+    CCOPT="-O3"
+      ;;
+esac
+
 # Building flags
-MYCFLAGS="$MYCFLAGS -std=gnu99 -Wall -fsigned-char -O2 -Wfatal-errors"
+MYCFLAGS="$MYCFLAGS -std=gnu99 -Wall -fsigned-char $CCOPT -Wfatal-errors"
 MYCPPFLAGS="-I. -I$HOME/include -I\$(INCLUDEDIR) -I/usr/local/include"
 MYCPPFLAGS="$MYCPPFLAGS -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
 MYLDFLAGS="-L. -L\$(LIBDIR) -L$HOME/lib -L/usr/local/lib -L/usr/lib"
@@ -79,7 +190,7 @@ AC_ARG_ENABLE(devel,
   AC_HELP_STRING([--enable-devel], [build for development]))
 if test "$enable_devel" = "yes"
 then
-  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O2 -pipe"
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g $CCOPT -pipe"
   MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG"
   enables="$enables (devel)"
 fi
@@ -89,7 +200,7 @@ AC_ARG_ENABLE(profile,
   AC_HELP_STRING([--enable-profile], [build for profiling]))
 if test "$enable_profile" = "yes"
 then
-  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -pg -O2 -pipe"
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -pg $CCOPT -pipe -Wfatal-errors"
   enables="$enables (profile)"
 fi
 
