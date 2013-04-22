@@ -51,7 +51,7 @@ enum { // enumeration for duplication behavior
     FDBPDCAT, // concatenate values
     FDBPDADDINT, // add an integer
     FDBPDADDDBL, // add a real number
-    FDBPDPROC // process by a callback function
+    FDBPDPROC // process by a callback fun
 };
 
 typedef struct { // type of structure for a duplication callback
@@ -2196,8 +2196,12 @@ static bool tcfdbputimpl(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, int
                 }
                 TCDODEBUG(fdb->cnt_writerec++);
                 fdb->rnum++;
-                if (fdb->min < 1 || id < fdb->min) fdb->min = id;
-                if (fdb->max < 1 || id > fdb->max) fdb->max = id;
+                if (fdb->min < 1 || id < fdb->min) {
+                    fdb->min = id;
+                }
+                if (fdb->max < 1 || id > fdb->max) {
+                    fdb->max = id;
+                }
             }
         }
         FDBUNLOCKATTR(fdb);
@@ -2342,8 +2346,12 @@ static bool tcfdbputimpl(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, int
                         fdb->max = fdb->min;
                     }
                 } else {
-                    if (id == fdb->min) fdb->min = tcfdbnextid(fdb, id);
-                    if (id == fdb->max) fdb->max = tcfdbprevid(fdb, id);
+                    if (id == fdb->min) {
+                        fdb->min = tcfdbnextid(fdb, id);
+                    }
+                    if (id == fdb->max) {
+                        fdb->max = tcfdbprevid(fdb, id);
+                    }
                 }
                 FDBUNLOCKATTR(fdb);
                 goto finish;
@@ -2422,8 +2430,12 @@ static bool tcfdbputimpl(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, int
             goto finish;
         }
         fdb->rnum++;
-        if (fdb->min < 1 || id < fdb->min) fdb->min = id;
-        if (fdb->max < 1 || id > fdb->max) fdb->max = id;
+        if (fdb->min < 1 || id < fdb->min) {
+            fdb->min = id;
+        }
+        if (fdb->max < 1 || id > fdb->max) {
+            fdb->max = id;
+        }
         FDBUNLOCKATTR(fdb);
     }
 finish:
@@ -2494,8 +2506,12 @@ static bool tcfdboutimpl(TCFDB *fdb, int64_t id) {
             fdb->max = fdb->min;
         }
     } else {
-        if (id == fdb->min) fdb->min = tcfdbnextid(fdb, id);
-        if (id == fdb->max) fdb->max = tcfdbprevid(fdb, id);
+        if (id == fdb->min) {
+            fdb->min = tcfdbnextid(fdb, id);
+        }
+        if (id == fdb->max) {
+            fdb->max = tcfdbprevid(fdb, id);
+        }
     }
     FDBUNLOCKATTR(fdb);
 finish:
@@ -2583,8 +2599,12 @@ static uint64_t *tcfdbrangeimpl(TCFDB *fdb, int64_t lower, int64_t upper, int ma
     if (!FDBLOCKSMEM(fdb, false)) {
         return NULL;
     }
-    if (lower < fdb->min) lower = fdb->min;
-    if (upper > fdb->max) upper = fdb->max;
+    if (lower < fdb->min) {
+        lower = fdb->min;
+    }
+    if (upper > fdb->max) {
+        upper = fdb->max;
+    }
     if (max < 0) max = INT_MAX;
     int anum = FDBIDARYUNIT;
     uint64_t *ids;

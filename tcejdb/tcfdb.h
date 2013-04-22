@@ -75,9 +75,9 @@ typedef struct { /* type of structure for a fixed-length database */
     uint64_t limid; /* limit ID number */
 
 #ifndef NDEBUG
-    int64_t cnt_writerec; /* tesing counter for record write times */
-    int64_t cnt_readrec; /* tesing counter for record read times */
-    int64_t cnt_truncfile; /* tesing counter for file truncate times */
+    volatile int64_t cnt_writerec; /* tesing counter for record write times */
+    volatile int64_t cnt_readrec; /* tesing counter for record read times */
+    volatile int64_t cnt_truncfile; /* tesing counter for file truncate times */
 #endif
 } TCFDB;
 
