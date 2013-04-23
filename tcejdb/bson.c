@@ -224,11 +224,8 @@ time_t bson_oid_generated_time(bson_oid_t *oid) {
     return out;
 }
 
-void bson_print(FILE *f, const bson *b) {
-    bson_print_raw(f, b->data, 0);
-}
-
-void bson_print_raw(FILE *f, const char *data, int depth) {
+void bson_print_raw(const char *data, int depth) {
+    FILE *f = stdout;
     bson_iterator i;
     const char *key;
     int temp;
@@ -286,7 +283,7 @@ void bson_print_raw(FILE *f, const char *data, int depth) {
                 /* bson_init( &scope ); */ /* review - stepped on by bson_iterator_code_scope? */
                 bson_iterator_code_scope(&i, &scope);
                 fprintf(f, "\n\t SCOPE: ");
-                bson_print(f, &scope);
+                bson_print_raw(&scope, 0);
                 /* bson_destroy( &scope ); */ /* review - causes free error */
                 break;
             case BSON_INT:
@@ -302,7 +299,7 @@ void bson_print_raw(FILE *f, const char *data, int depth) {
             case BSON_OBJECT:
             case BSON_ARRAY:
                 fprintf(f, "\n");
-                bson_print_raw(f, bson_iterator_value(&i), depth + 1);
+                bson_print_raw(bson_iterator_value(&i), depth + 1);
                 break;
             default:
                 bson_errprintf("can't print type : %d\n", t);

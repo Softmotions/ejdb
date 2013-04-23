@@ -24,7 +24,9 @@
 #include "basedefs.h"
 #include <stdio.h>
 #include <stdint.h>
+#if ! defined(__cplusplus)
 #include <stdbool.h>
+#endif
 #include <time.h>
 
 #define BSON_IS_NUM_TYPE(atype) (atype == BSON_INT || atype == BSON_LONG || atype == BSON_DOUBLE)
@@ -142,13 +144,6 @@ EJDB_EXPORT int bson_size2(const void *bsdata);
 EJDB_EXPORT int bson_buffer_size(const bson *b);
 
 /**
- * Print a string representation of a BSON object.
- *
- * @param b the BSON object to print.
- */
-EJDB_EXPORT void bson_print(FILE *f, const bson *b);
-
-/**
  * Return a pointer to the raw buffer stored by this bson object.
  *
  * @param b a BSON object
@@ -161,7 +156,7 @@ EJDB_EXPORT const char *bson_data(const bson *b);
  * @param bson the raw data to print.
  * @param depth the depth to recurse the object.x
  */
-EJDB_EXPORT void bson_print_raw(FILE *f, const char *bson, int depth);
+EJDB_EXPORT void bson_print_raw(const char *bson, int depth);
 
 /**
  * Advance a bson_iterator to the named field.

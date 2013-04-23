@@ -211,7 +211,7 @@ void testQuery1() {
 
     //for (int i = 0; i < TCLISTNUM(q1res); ++i) {
     //    void *bsdata = TCLISTVALPTR(q1res, i);
-    //    bson_print_raw(stderr, bsdata, 0);
+    //    bson_print_raw(bsdata, 0);
     //}
     //fprintf(stderr, "%s", TCXSTRPTR(log));
 
@@ -2811,7 +2811,7 @@ void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
 
     //    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
     //        void *bsdata = TCLISTVALPTR(q1res, i);
-    //        bson_print_raw(stderr, bsdata, 0);
+    //        bson_print_raw(bsdata, 0);
     //    }
 
     bson_type bt;
@@ -2950,7 +2950,7 @@ void testTicket8() { //https://github.com/Softmotions/ejdb/issues/8
         bson_iterator_from_buffer(&it, bsdata);
         bt = bson_find_fieldpath_value("labels", &it);
         CU_ASSERT_TRUE(bt == BSON_EOO);
-        //bson_print_raw(stderr, bsdata, 0);
+        //bson_print_raw(bsdata, 0);
     }
 
     bson_destroy(&bsq1);
@@ -3423,7 +3423,7 @@ void test$addToSet() {
     //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
 
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        //bson_print_raw(stderr, TCLISTVALPTR(q1res, i), 0);
+        //bson_print_raw(TCLISTVALPTR(q1res, i), 0);
         CU_ASSERT_FALSE(bson_compare_string("tag1", TCLISTVALPTR(q1res, i), "personal.tags.0"));
         CU_ASSERT_FALSE(bson_compare_string("tag2", TCLISTVALPTR(q1res, i), "personal.tags.1"));
         CU_ASSERT_FALSE(bson_compare_string("green", TCLISTVALPTR(q1res, i), "labels.0"));
@@ -3480,7 +3480,7 @@ void test$addToSet() {
     //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
 
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        //bson_print_raw(stderr, TCLISTVALPTR(q1res, i), 0);
+        //bson_print_raw(TCLISTVALPTR(q1res, i), 0);
         CU_ASSERT_FALSE(bson_compare_string("tag1", TCLISTVALPTR(q1res, i), "personal.tags.0"));
         CU_ASSERT_FALSE(bson_compare_string("tag2", TCLISTVALPTR(q1res, i), "personal.tags.1"));
         CU_ASSERT_FALSE(bson_compare_string("tag3", TCLISTVALPTR(q1res, i), "personal.tags.2"));
@@ -3535,7 +3535,7 @@ void test$pull() {
     //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
 
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        //bson_print_raw(stderr, TCLISTVALPTR(q1res, i), 0);
+        //bson_print_raw(TCLISTVALPTR(q1res, i), 0);
         CU_ASSERT_FALSE(bson_compare_string("tag1", TCLISTVALPTR(q1res, i), "personal.tags.0"));
         CU_ASSERT_FALSE(bson_compare_string("tag3", TCLISTVALPTR(q1res, i), "personal.tags.1"));
         CU_ASSERT_FALSE(bson_compare_string("red", TCLISTVALPTR(q1res, i), "labels.0"));

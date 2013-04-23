@@ -341,7 +341,7 @@ then
         MYLDLIBPATHENV="DYLD_LIBRARY_PATH"
         ;;
     mingw*)
-        MYLIBRARYFILES="$MYLIBRARYFILES tcejdb.dll"
+        MYLIBRARYFILES="$MYLIBRARYFILES tcejdbdll.dll libtcejdbdll.a tcejdbdll.def tcejdbdll.lib tcejdbdll.exp"
         MYCPPFLAGS="$MYCPPFLAGS -DEJDB_DLL"
         ;;
     *)

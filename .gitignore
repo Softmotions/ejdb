@@ -4,10 +4,17 @@
 *.upload
 *.rock
 *.so
+*.a
 *.dll
 *.exe
+*.sdf
+*.suo
+*.def
+*.exp
+*.lib
+.dep.inc
 
-
+addressbook*
 autom4te.cache/
 config.log
 config.status
@@ -48,6 +55,12 @@ config.status
 /tcejdb/casket*
 /tcejdb/samples/sample1/sample1
 /tcejdb/samples/sample1/addressbook*
+/tcejdb/samples/sample1_win32/Debug
+/tcejdb/samples/sample1_win32/Release
+/tcejdb/samples/sample1_win32/sample1_win32/Debug
+/tcejdb/samples/sample1_win32/sample1_win32/Release
+/tcejdb/samples/sample1_win32/ipch
+/tcejdb/samples/sample1_mingw/nbproject/private
 
 /tcejdb/testejdb/Makefile
 /tcejdb/testejdb/dbt*

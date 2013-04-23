@@ -724,9 +724,17 @@ libtcejdb.$(LIBVER).dylib : libtcejdb.$(LIBVER).$(LIBREV).0.dylib
 libtcejdb.dylib : libtcejdb.$(LIBVER).$(LIBREV).0.dylib
 	ln -f -s libtcejdb.$(LIBVER).$(LIBREV).0.dylib $@
 
-tcejdb.dll : $(LIBOBJFILES)
-	$(CC) $(CFLAGS) -shared -Wl,--subsystem,windows -o $@ \
+
+tcejdbdll.dll libtcejdbdll.a tcejdbdll.def : $(LIBOBJFILES)
+	$(CC) $(CFLAGS) -shared \
+	      -Wl,--output-def,tcejdbdll.def \
+	      -Wl,--out-implib,libtcejdbdll.a \
+	      -Wl,--subsystem,windows -o $@ \
 	      $(LIBOBJFILES) $(LDFLAGS) $(LIBS)
+
+tcejdbdll.lib tcejdbdll.exp : tcejdbdll.dll libtcejdbdll.a tcejdbdll.def
+	lib /def:tcejdbdll.def
+
 
 tcutest : tcutest.o $(LIBRARYFILES)
 	$(LDENV) $(CC) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) -ltcejdb $(LIBS)

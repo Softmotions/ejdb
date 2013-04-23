@@ -1,9 +1,13 @@
-#include <tcejdb/ejdb.h>
+// sample1_win32.cpp : Defines the entry point for the console application.
+//
+
+#include "stdafx.h"
+#include <ejdb.h>
 #include <locale.h>
 
 static EJDB *jb;
 
-int main() {
+int _tmain(int argc, _TCHAR* argv[]) {
     setlocale(LC_ALL, "en_US.UTF-8");
     jb = ejdbnew();
     if (!ejdbopen(jb, "addressbook", JBOWRITER | JBOCREAT | JBOTRUNC)) {
@@ -54,7 +58,7 @@ int main() {
 
     for (int i = 0; i < TCLISTNUM(res); ++i) {
         void *bsdata = TCLISTVALPTR(res, i);
-        bson_print_raw(bsdata, 0);
+        bson_print_raw((char*) bsdata, 0);
     }
     fprintf(stderr, "\n");
 
@@ -68,5 +72,11 @@ int main() {
     //Close database
     ejdbclose(jb);
     ejdbdel(jb);
+
+	getc(stdin);
     return 0;
 }
+
+
+
+
