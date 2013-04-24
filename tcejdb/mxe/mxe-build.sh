@@ -45,5 +45,5 @@ autoconf
 make clean
 make
 make win-archive
-
+make -C testejdb/ all
 

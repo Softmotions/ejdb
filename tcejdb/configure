@@ -2208,278 +2208,7 @@ MYMAN3FILES="libtcejdb.3"
 MYDOCUMENTFILES="COPYING Changelog"
 MYPCFILES="tcejdb.pc"
 
-case $host_os in
-  mingw*)
-    #durty hack fixes weird behaviour of gcc -O[123] optimizations with ejdb test cases on win32
-    #CCOPT=`gcc -O2 -Q --help=optimizers | grep enabled | sed 's/\[[enabled\]]//' | tr '\n' ' ' | sed 's/[[[:blank:]]]\+/ /g'`
-    CCOPT="-O2"
-      ;;
-  *)
-    CCOPT="-O3"
-      ;;
-esac
-
-# Building flags
-MYCFLAGS="$MYCFLAGS -std=gnu99 -Wall -fsigned-char $CCOPT -Wfatal-errors"
-MYCPPFLAGS="-I. -I$HOME/include -I\$(INCLUDEDIR) -I/usr/local/include"
-MYCPPFLAGS="$MYCPPFLAGS -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
-MYLDFLAGS="-L. -L\$(LIBDIR) -L$HOME/lib -L/usr/local/lib -L/usr/lib"
-MYCMDLDFLAGS=""
-MYRUNPATH="\$(LIBDIR)"
-MYLDLIBPATHENV="LD_LIBRARY_PATH"
-MYPOSTCMD="true"
-
-# Building paths
-PATH="$PATH:$HOME/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
-PATH="$PATH:/opt/SUNWspro/bin:/usr/ccs/bin:/usr/xpg4/bin:/usr/xpg6/bin:/usr/ucb"
-CPATH="$HOME/include:/usr/local/include:$CPATH"
-LIBRARY_PATH="$HOME/lib:/usr/local/lib:$LIBRARY_PATH"
-LD_LIBRARY_PATH="$HOME/lib:/usr/local/lib:$LD_LIBRARY_PATH"
-PKG_CONFIG_PATH="$HOME/lib/pkgconfig:/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
-export PATH CPATH LIBRARY_PATH LD_LIBRARY_PATH PKG_CONFIG_PATH
-
-
-#================================================================
-# Options
-#================================================================
-
-
-# Internal variables
-enables=""
-
-# Debug mode
-# Check whether --enable-debug was given.
-if test "${enable_debug+set}" = set; then :
-  enableval=$enable_debug;
-fi
-
-if test "$enable_debug" = "yes"
-then
-  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O0 -Wfatal-errors"
-  MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG -DEJDB_STATIC"
-  MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
-  enables="$enables (debug)"
-else
-  MYLDFLAGS="$MYLDFLAGS -s"
-fi
-
-# Developping mode
-# Check whether --enable-devel was given.
-if test "${enable_devel+set}" = set; then :
-  enableval=$enable_devel;
-fi
-
-if test "$enable_devel" = "yes"
-then
-  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g $CCOPT -pipe"
-  MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG"
-  enables="$enables (devel)"
-fi
-
-# Profiling mode
-# Check whether --enable-profile was given.
-if test "${enable_profile+set}" = set; then :
-  enableval=$enable_profile;
-fi
-
-if test "$enable_profile" = "yes"
-then
-  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -pg $CCOPT -pipe -Wfatal-errors"
-  enables="$enables (profile)"
-fi
-
-# Static mode
-# Check whether --enable-static was given.
-if test "${enable_static+set}" = set; then :
-  enableval=$enable_static;
-fi
-
-if test "$enable_static" = "yes"
-then
-  MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
-  enables="$enables (static)"
-fi
-
-# Fastest mode
-# Check whether --enable-fastest was given.
-if test "${enable_fastest+set}" = set; then :
-  enableval=$enable_fastest;
-fi
-
-if test "$enable_fastest" = "yes"
-then
-  MYLIBOBJFILES="tokyocabinet_all.o"
-  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -O3"
-  MYCFLAGS="$MYCFLAGS -fomit-frame-pointer -fforce-addr -minline-all-stringops"
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYFASTEST"
-  enables="$enables (fastest)"
-fi
-
-# 64-bit offset mode
-# Check whether --enable-off64 was given.
-if test "${enable_off64+set}" = set; then :
-  enableval=$enable_off64;
-fi
-
-if test "$enable_off64" = "yes"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_FILE_OFFSET_BITS=64"
-  enables="$enables (off64)"
-fi
-
-# Swapping byte-orders mode
-# Check whether --enable-swab was given.
-if test "${enable_swab+set}" = set; then :
-  enableval=$enable_swab;
-fi
-
-if test "$enable_swab" = "yes"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYSWAB"
-  enables="$enables (swab)"
-fi
-
-# Micro yield mode
-# Check whether --enable-uyield was given.
-if test "${enable_uyield+set}" = set; then :
-  enableval=$enable_uyield;
-fi
-
-if test "$enable_uyield" = "yes"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYMICROYIELD"
-  enables="$enables (uyield)"
-fi
-
-# Enable test cases
-# Check whether --enable-tests was given.
-if test "${enable_tests+set}" = set; then :
-  enableval=$enable_tests;
-fi
-
-if test "$enable_tests" = "yes"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYTESTS"
-  enables="$enables (tests)"
-fi
-
-# Enable BZIP2 compression
-# Check whether --enable-bzip was given.
-if test "${enable_bzip+set}" = set; then :
-  enableval=$enable_bzip;
-fi
-
-if test "$enable_bzip" = "yes"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYBZIP"
-  enables="$enables (bzip)"
-fi
-
-# Disable the unified buffer cache assumption
-# Check whether --enable-ubc was given.
-if test "${enable_ubc+set}" = set; then :
-  enableval=$enable_ubc;
-fi
-
-if test "$enable_ubc" = "no"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYNOUBC"
-  enables="$enables (no-ubc)"
-fi
-
-# Disable ZLIB compression
-# Check whether --enable-zlib was given.
-if test "${enable_zlib+set}" = set; then :
-  enableval=$enable_zlib;
-fi
-
-if test "$enable_zlib" = "no"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYNOZLIB"
-  enables="$enables (no-zlib)"
-fi
-
-# Disable shared object
-# Check whether --enable-shared was given.
-if test "${enable_shared+set}" = set; then :
-  enableval=$enable_shared;
-fi
-
-if test "$enable_shared" = "no"
-then
-  enables="$enables (no-shared)"
-fi
-
-# Enable custom codec functions of LZMA
-# Check whether --enable-exlzma was given.
-if test "${enable_exlzma+set}" = set; then :
-  enableval=$enable_exlzma;
-fi
-
-if test "$enable_exlzma" = "yes"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYEXLZMA"
-  enables="$enables (exlzma)"
-fi
-
-# Enable custom codec functions of LZO
-# Check whether --enable-exlzo was given.
-if test "${enable_exlzo+set}" = set; then :
-  enableval=$enable_exlzo;
-fi
-
-if test "$enable_exlzo" = "yes"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -D_MYEXLZO"
-  enables="$enables (exlzo)"
-fi
-
-# Specify the installation path of ZLIB
-
-# Check whether --with-zlib was given.
-if test "${with_zlib+set}" = set; then :
-  withval=$with_zlib;
-fi
-
-if test -n "$with_zlib"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -I$with_zlib/include"
-  MYLDFLAGS="$MYLDFLAGS -L$with_zlib/lib"
-  MYRUNPATH="$MYRUNPATH:$with_zlib/lib"
-  CPATH="$CPATH:$with_zlib/include"
-  LIBRARY_PATH="$LIBRARY_PATH:$with_zlib/lib"
-  LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$with_zlib/lib"
-fi
-
-# Specify the installation path of BZIP2
-
-# Check whether --with-bzip was given.
-if test "${with_bzip+set}" = set; then :
-  withval=$with_bzip;
-fi
-
-if test -n "$with_bzip"
-then
-  MYCPPFLAGS="$MYCPPFLAGS -I$with_bzip/include"
-  MYLDFLAGS="$MYLDFLAGS -L$with_bzip/lib"
-  MYRUNPATH="$MYRUNPATH:$with_bzip/lib"
-  CPATH="$CPATH:$with_bzip/include"
-  LIBRARY_PATH="$LIBRARY_PATH:$with_bzip/lib"
-  LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$with_bzip/lib"
-fi
-
-# Messages
-printf '#================================================================\n'
-printf '# Configuring EJDB version %s%s.\n' "$PACKAGE_VERSION" "$enables"
-printf '#================================================================\n'
-
-
-
-#================================================================
-# Checking Commands and Libraries
-#================================================================
-
-# C compiler
+#C compiler
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -3269,6 +2998,278 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+
+
+case $host_os in
+  mingw*)
+    #durty hack fixes weird behaviour of gcc -O[123] optimizations with ejdb test cases on win32
+    CCOPT=`$CC -O2 -Q --help=optimizers | grep enabled | sed 's/\[enabled\]//' | tr '\n' ' ' | sed 's/[[:blank:]]\+/ /g'`
+    #CCOPT="-O2"
+      ;;
+  *)
+    CCOPT="-O3"
+      ;;
+esac
+
+# Building flags
+MYCFLAGS="$MYCFLAGS -std=gnu99 -Wall -fsigned-char $CCOPT -Wfatal-errors"
+MYCPPFLAGS="-I. -I\$(INCLUDEDIR)"
+MYCPPFLAGS="$MYCPPFLAGS -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
+MYLDFLAGS="-L. -L\$(LIBDIR)"
+MYCMDLDFLAGS=""
+MYRUNPATH="\$(LIBDIR)"
+MYLDLIBPATHENV="LD_LIBRARY_PATH"
+MYPOSTCMD="true"
+
+# Building paths
+PATH="$PATH:$HOME/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
+PATH="$PATH:/opt/SUNWspro/bin:/usr/ccs/bin:/usr/xpg4/bin:/usr/xpg6/bin:/usr/ucb"
+CPATH="$HOME/include:/usr/local/include:$CPATH"
+LIBRARY_PATH="$HOME/lib:/usr/local/lib:$LIBRARY_PATH"
+LD_LIBRARY_PATH="$HOME/lib:/usr/local/lib:$LD_LIBRARY_PATH"
+PKG_CONFIG_PATH="$HOME/lib/pkgconfig:/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
+export PATH CPATH LIBRARY_PATH LD_LIBRARY_PATH PKG_CONFIG_PATH
+
+
+#================================================================
+# Options
+#================================================================
+
+
+# Internal variables
+enables=""
+
+# Debug mode
+# Check whether --enable-debug was given.
+if test "${enable_debug+set}" = set; then :
+  enableval=$enable_debug;
+fi
+
+if test "$enable_debug" = "yes"
+then
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O0 -Wfatal-errors"
+  MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG -DEJDB_STATIC"
+  MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
+  enables="$enables (debug)"
+else
+  MYLDFLAGS="$MYLDFLAGS -s"
+fi
+
+# Developping mode
+# Check whether --enable-devel was given.
+if test "${enable_devel+set}" = set; then :
+  enableval=$enable_devel;
+fi
+
+if test "$enable_devel" = "yes"
+then
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g $CCOPT -pipe"
+  MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG"
+  enables="$enables (devel)"
+fi
+
+# Profiling mode
+# Check whether --enable-profile was given.
+if test "${enable_profile+set}" = set; then :
+  enableval=$enable_profile;
+fi
+
+if test "$enable_profile" = "yes"
+then
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -pg $CCOPT -pipe -Wfatal-errors"
+  enables="$enables (profile)"
+fi
+
+# Static mode
+# Check whether --enable-static was given.
+if test "${enable_static+set}" = set; then :
+  enableval=$enable_static;
+fi
+
+if test "$enable_static" = "yes"
+then
+  MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
+  enables="$enables (static)"
+fi
+
+# Fastest mode
+# Check whether --enable-fastest was given.
+if test "${enable_fastest+set}" = set; then :
+  enableval=$enable_fastest;
+fi
+
+if test "$enable_fastest" = "yes"
+then
+  MYLIBOBJFILES="tokyocabinet_all.o"
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -O3"
+  MYCFLAGS="$MYCFLAGS -fomit-frame-pointer -fforce-addr -minline-all-stringops"
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYFASTEST"
+  enables="$enables (fastest)"
+fi
+
+# 64-bit offset mode
+# Check whether --enable-off64 was given.
+if test "${enable_off64+set}" = set; then :
+  enableval=$enable_off64;
+fi
+
+if test "$enable_off64" = "yes"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_FILE_OFFSET_BITS=64"
+  enables="$enables (off64)"
+fi
+
+# Swapping byte-orders mode
+# Check whether --enable-swab was given.
+if test "${enable_swab+set}" = set; then :
+  enableval=$enable_swab;
+fi
+
+if test "$enable_swab" = "yes"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYSWAB"
+  enables="$enables (swab)"
+fi
+
+# Micro yield mode
+# Check whether --enable-uyield was given.
+if test "${enable_uyield+set}" = set; then :
+  enableval=$enable_uyield;
+fi
+
+if test "$enable_uyield" = "yes"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYMICROYIELD"
+  enables="$enables (uyield)"
+fi
+
+# Enable test cases
+# Check whether --enable-tests was given.
+if test "${enable_tests+set}" = set; then :
+  enableval=$enable_tests;
+fi
+
+if test "$enable_tests" = "yes"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYTESTS"
+  enables="$enables (tests)"
+fi
+
+# Enable BZIP2 compression
+# Check whether --enable-bzip was given.
+if test "${enable_bzip+set}" = set; then :
+  enableval=$enable_bzip;
+fi
+
+if test "$enable_bzip" = "yes"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYBZIP"
+  enables="$enables (bzip)"
+fi
+
+# Disable the unified buffer cache assumption
+# Check whether --enable-ubc was given.
+if test "${enable_ubc+set}" = set; then :
+  enableval=$enable_ubc;
+fi
+
+if test "$enable_ubc" = "no"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYNOUBC"
+  enables="$enables (no-ubc)"
+fi
+
+# Disable ZLIB compression
+# Check whether --enable-zlib was given.
+if test "${enable_zlib+set}" = set; then :
+  enableval=$enable_zlib;
+fi
+
+if test "$enable_zlib" = "no"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYNOZLIB"
+  enables="$enables (no-zlib)"
+fi
+
+# Disable shared object
+# Check whether --enable-shared was given.
+if test "${enable_shared+set}" = set; then :
+  enableval=$enable_shared;
+fi
+
+if test "$enable_shared" = "no"
+then
+  enables="$enables (no-shared)"
+fi
+
+# Enable custom codec functions of LZMA
+# Check whether --enable-exlzma was given.
+if test "${enable_exlzma+set}" = set; then :
+  enableval=$enable_exlzma;
+fi
+
+if test "$enable_exlzma" = "yes"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYEXLZMA"
+  enables="$enables (exlzma)"
+fi
+
+# Enable custom codec functions of LZO
+# Check whether --enable-exlzo was given.
+if test "${enable_exlzo+set}" = set; then :
+  enableval=$enable_exlzo;
+fi
+
+if test "$enable_exlzo" = "yes"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -D_MYEXLZO"
+  enables="$enables (exlzo)"
+fi
+
+# Specify the installation path of ZLIB
+
+# Check whether --with-zlib was given.
+if test "${with_zlib+set}" = set; then :
+  withval=$with_zlib;
+fi
+
+if test -n "$with_zlib"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -I$with_zlib/include"
+  MYLDFLAGS="$MYLDFLAGS -L$with_zlib/lib"
+  MYRUNPATH="$MYRUNPATH:$with_zlib/lib"
+  CPATH="$CPATH:$with_zlib/include"
+  LIBRARY_PATH="$LIBRARY_PATH:$with_zlib/lib"
+  LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$with_zlib/lib"
+fi
+
+# Specify the installation path of BZIP2
+
+# Check whether --with-bzip was given.
+if test "${with_bzip+set}" = set; then :
+  withval=$with_bzip;
+fi
+
+if test -n "$with_bzip"
+then
+  MYCPPFLAGS="$MYCPPFLAGS -I$with_bzip/include"
+  MYLDFLAGS="$MYLDFLAGS -L$with_bzip/lib"
+  MYRUNPATH="$MYRUNPATH:$with_bzip/lib"
+  CPATH="$CPATH:$with_bzip/include"
+  LIBRARY_PATH="$LIBRARY_PATH:$with_bzip/lib"
+  LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$with_bzip/lib"
+fi
+
+# Messages
+printf '#================================================================\n'
+printf '# Configuring EJDB version %s%s.\n' "$PACKAGE_VERSION" "$enables"
+printf '#================================================================\n'
+
+
+
+#================================================================
+# Checking Commands and Libraries
+#================================================================
 
 # BSD install
 # Find a good install program.  We prefer a C program (faster),

@@ -35,11 +35,15 @@ MYMAN3FILES="libtcejdb.3"
 MYDOCUMENTFILES="COPYING Changelog"
 MYPCFILES="tcejdb.pc"
 
+#C compiler
+AC_PROG_CC
+
+
 case $host_os in
   mingw*)
     #durty hack fixes weird behaviour of gcc -O[123] optimizations with ejdb test cases on win32
-    #CCOPT=`gcc -O2 -Q --help=optimizers | grep enabled | sed 's/\[[enabled\]]//' | tr '\n' ' ' | sed 's/[[[:blank:]]]\+/ /g'`
-    CCOPT="-O2"
+    CCOPT=`$CC -O2 -Q --help=optimizers | grep enabled | sed 's/\[[enabled\]]//' | tr '\n' ' ' | sed 's/[[[:blank:]]]\+/ /g'`
+    #CCOPT="-O2"
       ;;
   *)
     CCOPT="-O3"
@@ -48,9 +52,9 @@ esac
 
 # Building flags
 MYCFLAGS="$MYCFLAGS -std=gnu99 -Wall -fsigned-char $CCOPT -Wfatal-errors"
-MYCPPFLAGS="-I. -I$HOME/include -I\$(INCLUDEDIR) -I/usr/local/include"
+MYCPPFLAGS="-I. -I\$(INCLUDEDIR)"
 MYCPPFLAGS="$MYCPPFLAGS -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
-MYLDFLAGS="-L. -L\$(LIBDIR) -L$HOME/lib -L/usr/local/lib -L/usr/lib"
+MYLDFLAGS="-L. -L\$(LIBDIR)"
 MYCMDLDFLAGS=""
 MYRUNPATH="\$(LIBDIR)"
 MYLDLIBPATHENV="LD_LIBRARY_PATH"
@@ -252,9 +256,6 @@ printf '#================================================================\n'
 #================================================================
 # Checking Commands and Libraries
 #================================================================
-
-# C compiler
-AC_PROG_CC
 
 # BSD install
 AC_PROG_INSTALL
