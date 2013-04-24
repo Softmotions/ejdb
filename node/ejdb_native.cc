@@ -659,7 +659,7 @@ namespace ejdb {
             if (args[2]->IsFunction()) {
                 cb = Local<Function>::Cast(args[2]);
                 BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdLoad, cmdata, BSONCmdTask::delete_val);
-                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, (uv_after_work_cb)s_exec_cmd_eio_after);
                 return scope.Close(Undefined());
             } else {
                 BSONCmdTask task(cb, njb, cmdLoad, cmdata, BSONCmdTask::delete_val);
@@ -686,7 +686,7 @@ namespace ejdb {
             if (args[2]->IsFunction()) {
                 cb = Local<Function>::Cast(args[2]);
                 BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdRemove, cmdata, BSONCmdTask::delete_val);
-                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, (uv_after_work_cb)s_exec_cmd_eio_after);
                 return scope.Close(Undefined());
             } else {
                 BSONCmdTask task(cb, njb, cmdRemove, cmdata, BSONCmdTask::delete_val);
@@ -731,7 +731,7 @@ namespace ejdb {
             if (args[3]->IsFunction()) { //callback provided
                 cb = Local<Function>::Cast(args[3]);
                 BSONCmdTask *task = new BSONCmdTask(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
-                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, (uv_after_work_cb)s_exec_cmd_eio_after);
                 return scope.Close(Undefined());
             } else {
                 BSONCmdTask task(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
@@ -790,7 +790,7 @@ namespace ejdb {
             if (args[3]->IsFunction()) { //callback provided
                 cb = Local<Function>::Cast(args[3]);
                 BSONQCmdTask *task = new BSONQCmdTask(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
-                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, (uv_after_work_cb)s_exec_cmd_eio_after);
                 return scope.Close(Undefined());
             } else {
                 BSONQCmdTask task(cb, njb, cmdQuery, cmdata, BSONQCmdTask::delete_val);
@@ -813,7 +813,7 @@ namespace ejdb {
             if (args[3]->IsFunction()) {
                 cb = Local<Function>::Cast(args[3]);
                 SetIndexCmdTask *task = new SetIndexCmdTask(cb, njb, cmdSetIndex, cmdata, SetIndexCmdTask::delete_val);
-                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, (uv_after_work_cb)s_exec_cmd_eio_after);
             } else {
                 SetIndexCmdTask task(cb, njb, cmdSetIndex, cmdata, SetIndexCmdTask::delete_val);
                 njb->set_index(&task);
@@ -832,7 +832,7 @@ namespace ejdb {
             if (args[0]->IsFunction()) {
                 cb = Local<Function>::Cast(args[0]);
                 EJBTask *task = new EJBTask(cb, njb, cmdSync, NULL, NULL);
-                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, (uv_after_work_cb)s_exec_cmd_eio_after);
             } else {
                 EJBTask task(cb, njb, cmdSync, NULL, NULL);
                 njb->sync(&task);
@@ -938,7 +938,7 @@ namespace ejdb {
             if (args[2]->IsFunction()) {
                 cb = Local<Function>::Cast(args[2]);
                 TxCmdTask *task = new TxCmdTask(cb, njb, op, cmdata, TxCmdTask::delete_val);
-                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, (uv_after_work_cb)s_exec_cmd_eio_after);
                 return scope.Close(Undefined());
             } else {
                 TxCmdTask task(cb, njb, op, cmdata, NULL);
@@ -988,7 +988,7 @@ namespace ejdb {
             }
             RMCollCmdData *cmdata = new RMCollCmdData(*cname, prune->BooleanValue());
             RMCollCmdTask *task = new RMCollCmdTask(cb, njb, cmdRemoveColl, cmdata, RMCollCmdTask::delete_val);
-            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, s_exec_cmd_eio_after);
+            uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, (uv_after_work_cb)s_exec_cmd_eio_after);
             return scope.Close(Undefined());
         }
 
