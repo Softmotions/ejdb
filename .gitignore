@@ -14,6 +14,7 @@
 *.lib
 .dep.inc
 
+
 addressbook*
 autom4te.cache/
 config.log
@@ -22,6 +23,7 @@ config.status
 /npm-debug.log
 /.idea/workspace.xml
 
+/tcejdb/tools/win32
 /tcejdb/Makefile
 /tcejdb/libtcejdb.a
 /tcejdb/libtcejdb.so

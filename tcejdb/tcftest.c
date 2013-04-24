@@ -159,7 +159,7 @@ static void eprint(TCFDB *fdb, int line, const char *func) {
             g_progname, path ? path : "-",
             line, func,
             ecode, tcfdberrmsg(ecode),
-            myerrno, errorText ? errorText : "-",
+            (int) myerrno, errorText ? errorText : "-",
             stderrno, strerror(stderrno));
 
     if (errorText) LocalFree(errorText);

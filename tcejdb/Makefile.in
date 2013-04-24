@@ -733,7 +733,7 @@ tcejdbdll.dll libtcejdbdll.a tcejdbdll.def : $(LIBOBJFILES)
 	      $(LIBOBJFILES) $(LDFLAGS) $(LIBS)
 
 tcejdbdll.lib tcejdbdll.exp : tcejdbdll.dll libtcejdbdll.a tcejdbdll.def
-	lib /def:tcejdbdll.def
+	wine tools/win32/lib.exe /def:tcejdbdll.def
 
 
 tcutest : tcutest.o $(LIBRARYFILES)

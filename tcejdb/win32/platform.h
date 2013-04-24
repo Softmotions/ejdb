@@ -41,8 +41,6 @@ typedef struct {
 
 int glob(const char *pattern, int flags, int (*errfunc) (const char *epath, int eerrno), glob_t *pglob);
 void globfree(glob_t *pglob);
-struct tm *gmtime_r(const time_t *timep, struct tm *result);
-struct tm *localtime_r(const time_t *timep, struct tm *result);
 int win_fstat(HANDLE fh, struct stat *buf);
 ssize_t win_pwrite(HANDLE fd, const void *buf, size_t count, off_t offset);
 ssize_t win_pread(HANDLE fd, void *buf, size_t size, off_t off);

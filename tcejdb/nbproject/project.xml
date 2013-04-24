@@ -5,7 +5,7 @@
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
             <name>tcejdb</name>
             <c-extensions>c</c-extensions>
-            <cpp-extensions>cc</cpp-extensions>
+            <cpp-extensions>cc,cpp</cpp-extensions>
             <header-extensions>h</header-extensions>
             <sourceEncoding>UTF-8</sourceEncoding>
             <make-dep-projects/>
@@ -15,6 +15,10 @@
             <confList>
                 <confElem>
                     <name>Default</name>
+                    <type>0</type>
+                </confElem>
+                <confElem>
+                    <name>Win32</name>
                     <type>0</type>
                 </confElem>
             </confList>

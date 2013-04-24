@@ -1392,7 +1392,7 @@ void tchdbsetecode(TCHDB *hdb, int ecode, const char *filename, int line, const 
                 filename, line,
                 func, (hdb->path ? hdb->path : "-"),
                 ecode, tchdberrmsg(ecode),
-                winerrno, (errorText ? errorText : "-"),
+                (int) winerrno, (errorText ? errorText : "-"),
                 stderrno, (stderrno > 0 ? strerror(stderrno) : "-"));
         if (errorText) LocalFree(errorText);
 #else
@@ -1450,7 +1450,7 @@ bool tchdbmemsync(TCHDB *hdb, bool phys) {
     if (phys) {
         if (!HDBLOCKSMEM(hdb, false)) return false;
 #ifdef _WIN32
-        if (!hdb->map || !FlushViewOfFile((PCVOID) hdb->map, 0)) {
+        if (!hdb->map || !FlushViewOfFile((LPCVOID) hdb->map, 0)) {
             tchdbsetecode(hdb, TCEMMAP, __FILE__, __LINE__, __func__);
             err = true;
         }
@@ -3703,7 +3703,7 @@ static bool tchdbopenimpl(TCHDB *hdb, const char *path, int omode) {
             TCFREE(hdb->fbpool);
             if (hdb->map) {
 #ifdef _WIN32
-                FlushViewOfFile((PCVOID) hdb->map, 0);
+                FlushViewOfFile((LPCVOID) hdb->map, 0);
                 UnmapViewOfFile((LPCVOID) hdb->map);
                 CLOSEFH2(hdb->w32hmap);
 #else
@@ -3754,8 +3754,8 @@ static bool tchdbcloseimpl(TCHDB *hdb) {
     if (!hdb->map || munmap(hdb->map, xmsiz)) {
 #else
     if (hdb->map) {
-        FlushViewOfFile((PCVOID) hdb->map, 0);
-        UnmapViewOfFile((LPVOID) hdb->map);
+        FlushViewOfFile((LPCVOID) hdb->map, 0);
+        UnmapViewOfFile((LPCVOID) hdb->map);
         CloseHandle(hdb->w32hmap);
         hdb->w32hmap = INVALID_HANDLE_VALUE;
     } else {
@@ -5424,7 +5424,7 @@ static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
         size.QuadPart = MAX(o1, o2);
     }
     if (hdb->map) {
-        FlushViewOfFile((PCVOID) hdb->map, 0);
+        FlushViewOfFile((LPCVOID) hdb->map, 0);
         if (!UnmapViewOfFile((LPCVOID) hdb->map) || !CloseHandle(hdb->w32hmap)) {
             tchdbsetecode(hdb, TCEMMAP, __FILE__, __LINE__, __func__);
             err = true;
@@ -5500,7 +5500,6 @@ void tchdbprintmeta(TCHDB *hdb) {
     wp += sprintf(wp, " fpow=%u", hdb->fpow);
     wp += sprintf(wp, " opts=%u", hdb->opts);
     wp += sprintf(wp, " path=%s", hdb->path ? hdb->path : "-");
-    wp += sprintf(wp, " fd=%d", hdb->fd);
     wp += sprintf(wp, " omode=%u", hdb->omode);
     wp += sprintf(wp, " rnum=%" PRIuMAX "", (uint64_t) hdb->rnum);
     wp += sprintf(wp, " fsiz=%" PRIuMAX "", (uint64_t) hdb->fsiz);
@@ -5529,9 +5528,12 @@ void tchdbprintmeta(TCHDB *hdb) {
     wp += sprintf(wp, " dfunit=%u", hdb->dfunit);
     wp += sprintf(wp, " dfcnt=%u", hdb->dfcnt);
     wp += sprintf(wp, " tran=%d", hdb->tran);
-    wp += sprintf(wp, " walfd=%d", hdb->walfd);
     wp += sprintf(wp, " walend=%" PRIuMAX "", (uint64_t) hdb->walend);
+#ifndef _WIN32
+    wp += sprintf(wp, " fd=%d", hdb->fd);
+    wp += sprintf(wp, " walfd=%d", hdb->walfd);
     wp += sprintf(wp, " dbgfd=%d", hdb->dbgfd);
+#endif
 
 #ifndef NDEBUG
     wp += sprintf(wp, " cnt_writerec=%" PRIdMAX "", (int64_t) hdb->cnt_writerec);

@@ -1296,8 +1296,8 @@ static int procconf(int mode) {
             printf("macro(P_tmpdir): %s\n", P_tmpdir);
             printf("sysconf(_SC_OPEN_MAX): %ld\n", sysconf(_SC_OPEN_MAX));
 #endif
-            printf("sysconf(_SC_CLK_TCK): %ld\n", sysconf_SC_CLK_TCK);
-            printf("sysconf(_SC_PAGESIZE): %ld\n", tcpagsize());
+            printf("sysconf(_SC_CLK_TCK): %ld\n", (long int) sysconf_SC_CLK_TCK);
+            printf("sysconf(_SC_PAGESIZE): %ld\n", (long int) tcpagsize());
             TCMAP *info = tcsysinfo();
             if (info) {
                 tcmapiterinit(info);

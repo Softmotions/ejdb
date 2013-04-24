@@ -145,7 +145,7 @@ static void eprint(TCADB *adb, int line, const char *func) {
             "ERROR:%s:%d:%s:%s:%d:%s:%d:%s\n",
             g_progname, line,
             func, (path ? path : "-"),
-            winerrno, (errorText ? errorText : "-"),
+            (int) winerrno, (errorText ? errorText : "-"),
             stderrno, (stderrno > 0 ? strerror(stderrno) : "-"));
     if (errorText) LocalFree(errorText);
 #else

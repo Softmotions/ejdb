@@ -283,7 +283,7 @@ void bson_print_raw(const char *data, int depth) {
                 /* bson_init( &scope ); */ /* review - stepped on by bson_iterator_code_scope? */
                 bson_iterator_code_scope(&i, &scope);
                 fprintf(f, "\n\t SCOPE: ");
-                bson_print_raw(&scope, 0);
+                bson_print_raw((const char*) &scope, 0);
                 /* bson_destroy( &scope ); */ /* review - causes free error */
                 break;
             case BSON_INT:

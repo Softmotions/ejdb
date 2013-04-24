@@ -38,7 +38,8 @@ MYPCFILES="tcejdb.pc"
 case $host_os in
   mingw*)
     #durty hack fixes weird behaviour of gcc -O[123] optimizations with ejdb test cases on win32
-    CCOPT=`gcc -O2 -Q --help=optimizers | grep enabled | sed 's/\[[enabled\]]//' | tr '\n' ' ' | sed 's/[[[:blank:]]]\+/ /g'`
+    #CCOPT=`gcc -O2 -Q --help=optimizers | grep enabled | sed 's/\[[enabled\]]//' | tr '\n' ' ' | sed 's/[[[:blank:]]]\+/ /g'`
+    CCOPT="-O2"
       ;;
   *)
     CCOPT="-O3"
@@ -78,7 +79,7 @@ AC_ARG_ENABLE(debug,
   AC_HELP_STRING([--enable-debug], [build for debugging]))
 if test "$enable_debug" = "yes"
 then
-  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O0 -Wfatal-errors -Werror"
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O0 -Wfatal-errors"
   MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG -DEJDB_STATIC"
   MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
   enables="$enables (debug)"
@@ -360,10 +361,11 @@ case $host_os in
         AC_CHECK_HEADER(pcreposix.h, true, AC_MSG_ERROR([pcreposix.h is required]))
         AC_CHECK_LIB(pcre, pcre_compile, [], AC_MSG_ERROR([pcre lib is required]))
         AC_CHECK_LIB(pcreposix, regcomp, [], AC_MSG_ERROR([pcreposix lib is required]))
-        AC_CHECK_LIB(pthreadGC2, main, [], AC_MSG_ERROR([pthreadGC2 lubrary is required]))
+        AC_CHECK_LIB(winpthread, main, [], AC_MSG_ERROR([winpthread lubrary is required]))
         MYLDFLAGS="-static-libgcc -static-libstdc++ $MYLDFLAGS -Wl,-Bstatic"
         MYHEADERFILES="$MYHEADERFILES win32/platform.h"
-        MYCPPFLAGS="$MYCPPFLAGS -DPCRE_STATIC -DPTW32_STATIC_LIB"
+        MYCPPFLAGS="$MYCPPFLAGS -DPCRE_STATIC -D__USE_MINGW_ANSI_STDIO"
+        MYCFLAGS="$MYCFLAGS -Wno-pedantic-ms-format"
         ;;
     *)
         MYHEADERFILES="$MYHEADERFILES nix/platform.h"

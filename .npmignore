@@ -10,6 +10,7 @@ nbproject/
 /.idea
 /tcejdb/static
 
+/tcejdb/tools
 /tcejdb/doc
 /tcejdb/deb
 /tcejdb/Makefile

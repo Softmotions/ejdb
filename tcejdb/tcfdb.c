@@ -1144,7 +1144,7 @@ void tcfdbsetecode(TCFDB *fdb, int ecode, const char *filename, int line, const 
                 filename, line,
                 func, (fdb->path ? fdb->path : "-"),
                 ecode, tcfdberrmsg(ecode),
-                winerrno, (errorText ? errorText : "-"),
+                (int) winerrno, (errorText ? errorText : "-"),
                 stderrno, (stderrno > 0 ? strerror(stderrno) : "-"));
         if (errorText) LocalFree(errorText);
 #else
@@ -1192,7 +1192,7 @@ bool tcfdbmemsync(TCFDB *fdb, bool phys) {
     memcpy((void *) fdb->map, hbuf, FDBOPAQUEOFF);
     if (phys) {
 #ifdef _WIN32
-        if (!FlushViewOfFile((PCVOID) fdb->map, 0)) {
+        if (!FlushViewOfFile((LPCVOID) fdb->map, 0)) {
             tcfdbsetecode(fdb, TCEMMAP, __FILE__, __LINE__, __func__);
             err = true;
         }
@@ -2035,8 +2035,8 @@ static bool tcfdbcloseimpl(TCFDB *fdb) {
     if (fdb->map == NULL || munmap(fdb->map, fdb->limsiz)) {
 #else
     if (fdb->map) {
-        FlushViewOfFile((PCVOID) fdb->map, 0);
-        UnmapViewOfFile((LPVOID) fdb->map);
+        FlushViewOfFile((LPCVOID) fdb->map, 0);
+        UnmapViewOfFile((LPCVOID) fdb->map);
         CLOSEFH2(fdb->w32hmap);
         fdb->w32hmap = INVALID_HANDLE_VALUE;
     } else {
@@ -3033,7 +3033,7 @@ static bool tcfdbftruncate2(TCFDB *fdb, off_t length, int opts) {
         size.QuadPart = fdb->limsiz;
     }
     if (fdb->map) {
-        FlushViewOfFile((PCVOID) fdb->map, 0);
+        FlushViewOfFile((LPCVOID) fdb->map, 0);
         if (!UnmapViewOfFile((LPCVOID) fdb->map) || !CloseHandle(fdb->w32hmap)) {
             tcfdbsetecode(fdb, TCEMMAP, __FILE__, __LINE__, __func__);
             err = true;
@@ -3108,7 +3108,6 @@ void tcfdbprintmeta(TCFDB *fdb) {
     wp += sprintf(wp, " rsiz=%u", fdb->rsiz);
     wp += sprintf(wp, " limid=%" PRIuMAX "", (uint64_t) fdb->limid);
     wp += sprintf(wp, " path=%s", fdb->path ? fdb->path : "-");
-    wp += sprintf(wp, " fd=%d", fdb->fd);
     wp += sprintf(wp, " omode=%u", fdb->omode);
     wp += sprintf(wp, " rnum=%" PRIuMAX "", (uint64_t) fdb->rnum);
     wp += sprintf(wp, " fsiz=%" PRIuMAX "", (uint64_t) fdb->fsiz);
@@ -3120,10 +3119,13 @@ void tcfdbprintmeta(TCFDB *fdb) {
     wp += sprintf(wp, " fatal=%u", fdb->fatal);
     wp += sprintf(wp, " inode=%" PRIuMAX "", (uint64_t) fdb->inode);
     wp += sprintf(wp, " mtime=%" PRIuMAX "", (uint64_t) fdb->mtime);
-    wp += sprintf(wp, " tran=%d", fdb->tran);
-    wp += sprintf(wp, " walfd=%d", fdb->walfd);
     wp += sprintf(wp, " walend=%" PRIuMAX "", (uint64_t) fdb->walend);
+    wp += sprintf(wp, " tran=%d", fdb->tran);
+#ifndef _WIN32
+    wp += sprintf(wp, " fd=%d", fdb->fd);
+    wp += sprintf(wp, " walfd=%d", fdb->walfd);
     wp += sprintf(wp, " dbgfd=%d", fdb->dbgfd);
+#endif    
 #ifndef NDEBUG
     wp += sprintf(wp, " cnt_writerec=%" PRIdMAX "", (int64_t) fdb->cnt_writerec);
     wp += sprintf(wp, " cnt_readrec=%" PRIdMAX "", (int64_t) fdb->cnt_readrec);

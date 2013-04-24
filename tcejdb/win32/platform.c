@@ -2,30 +2,6 @@
 #include "../tcutil.h"
 #include "../myconf.h"
 
-struct tm *gmtime_r(const time_t *timep, struct tm *result) {
-    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_lock(&mutex);
-    struct tm *cas = gmtime(timep);
-    pthread_mutex_unlock(&mutex);
-    if (result == NULL || cas == NULL) {
-        return NULL;
-    }
-    memcpy(result, cas, sizeof (struct tm));
-    return result;
-}
-
-struct tm *localtime_r(const time_t *timep, struct tm *result) {
-    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_lock(&mutex);
-    struct tm *cas = localtime(timep);
-    pthread_mutex_unlock(&mutex);
-    if (result == NULL || cas == NULL) {
-        return NULL;
-    }
-    memcpy(result, cas, sizeof (struct tm));
-    return result;
-}
-
 static int file_attr_to_st_mode(DWORD attr) {
     int fMode = S_IREAD;
     if (attr & FILE_ATTRIBUTE_DIRECTORY)
@@ -166,8 +142,7 @@ int glob(const char *pattern, int flags,
     return 0;
 }
 
-#ifdef EJDB_DLL
-
+#if defined(EJDB_DLL) && defined(PTW32_VERSION)
 BOOL WINAPI DllMain(HINSTANCE hinstDll, DWORD fdwReason, LPVOID lpvReserved) {
     BOOL result = PTW32_TRUE;
     switch (fdwReason) {
