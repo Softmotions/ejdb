@@ -83,7 +83,7 @@ int main() {
     //Now print the result set records
     for (int i = 0; i < TCLISTNUM(res); ++i) {
         void *bsdata = TCLISTVALPTR(res, i);
-        bson_print_raw(stderr, bsdata, 0);
+        bson_print_raw(bsdata, 0);
     }
     fprintf(stderr, "\n");
 
