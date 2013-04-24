@@ -100,7 +100,9 @@ all : $(LIBRARYFILES) $(COMMANDFILES) $(CGIFILES)
 clean :
 	rm -rf $(LIBRARYFILES) $(LIBOBJFILES) $(COMMANDFILES) $(CGIFILES) static \
 	  *.o a.out tokyocabinet_all.c check.in check.out gmon.out *.vlog words.tsv \
-	  casket casket-* casket.* *.tch *.tcb *.tcf *.tct *.idx.* *.wal *~ hoge moge tako ika
+	  casket casket-* casket.* *.tch *.tcb *.tcf *.tct *.idx.* *.wal *~ hoge moge tako ika \
+	  *.zip
+	- rm -rf $(HOST_NAME)
 	- make -C ./testejdb clean
 
 
@@ -113,6 +115,7 @@ version :
 
 
 install :
+	- rm -rf $(HOST_NAME)
 	$(INSTALL) -d $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE) \
 		   $(DESTDIR)$(LIBDIR) \
 		   $(DESTDIR)$(DATADIR) \
