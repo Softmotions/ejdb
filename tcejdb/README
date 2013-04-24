@@ -4,11 +4,19 @@
 Embedded JSON Database engine
 ====================================
 
-It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++ and [NodeJS](http://nodejs.org/) applications under terms of LGPL license.**
+It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/NodeJS/Python/Lua/Java applications under terms of LGPL license.**
 
 EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 
 JSON representation of queries and data implemented with API based on [C BSON](https://github.com/mongodb/mongo-c-driver/tree/master/src/)
+
+News
+===============================
+* `2013-04-03` **[Java API binding available](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
+* `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
+* `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
+* `2013-02-07` **[Debian packages provided](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)**
+* `2013-01-22` **[Collection joins now supported](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
 
 Features
 ================================
@@ -18,24 +26,10 @@ Features
 * Collection level transactions.
 * String token matching queries: ```$stror``` ```$strand```
 * [Node.js](http://nodejs.org) binding
-
-
-Documentation
-================================
-
-* **[EJDB Command line interface](https://github.com/Softmotions/ejdb/wiki/EJDB-Command-line-interface)**
-* **[NodeJS binding](#nodejs-binding)**
-    * [Installation](#installation)
-    * [Samples](#ejdb-nodejs-samples)
-    * [NodeJS API](#ejdb-nodejs-api)
-* **[EJDB C Library](#ejdb-c-library)**
-    * [Building & Installation](#building--installation)
-    * [Samples](#ejdb-c-samples)
-    * [C API](#c-api)
-
-Community
-================================
-We use [EJDB Google group](http://groups.google.com/group/ejdb) as our mailing list.
+* [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
+* Python binding
+* Lua binding
+* Java binding
 
 EJDB C Library
 ==================================
@@ -83,7 +77,7 @@ int main() {
     EJQ *q1 = ejdbcreatequery(jb, &bq1, NULL, 0, NULL);
 
     uint32_t count;
-    TCLIST *res = ejdbqrysearch(coll, q1, &count, 0, NULL);
+    TCLIST *res = ejdbqryexecute(coll, q1, &count, 0, NULL);
     fprintf(stderr, "\n\nRecords found: %d\n", count);
 
     //Now print the result set records
@@ -112,27 +106,24 @@ You can save this code in `csnippet.c` And build:
 
 ```sh
 gcc -std=c99 -Wall -pedantic  -c -o csnippet.o csnippet.c
-gcc -std=c99 -Wall -pedantic  -o csnippet csnippet.o  -ltcejdb
+gcc -o csnippet csnippet.o -ltcejdb
 ```
 
 Building & Installation
 --------------------------------
 
-Prerequisites
---------------------------------
+[Installing on Debian/Ubuntu](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)
+
+Manual installation
+-------------------------------
+
+### Prerequisites
 **System libraries:**
 
 * gcc
-* zlib
+* zlib-dev
 
-On Debian/Ubuntu linux you can install it as follows:
-
-```sh
-   sudo apt-get install gcc zlib1g zlib1g-dev
-```
-
-Building
---------------------------------
+### Build and install
 
 ~~~~~~
    cd ./tcejdb
@@ -281,8 +272,9 @@ Limitations
 TODO
 ------------------------------------
 * Collect collection index statistic
-* Windows port
 
 Related software
 ------------------------------------
 [Connect session store backed by EJDB database](https://github.com/Softmotions/connect-session-ejdb)
+
+

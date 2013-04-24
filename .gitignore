@@ -4,6 +4,7 @@
 *.upload
 *.rock
 *.so
+*.so.*
 *.a
 *.dll
 *.exe
@@ -12,8 +13,8 @@
 *.def
 *.exp
 *.lib
+*.zip
 .dep.inc
-
 
 addressbook*
 autom4te.cache/
@@ -23,6 +24,8 @@ config.status
 /npm-debug.log
 /.idea/workspace.xml
 
+/tcejdb/i686-w64*
+/tcejdb/x86_64-w64*
 /tcejdb/tools/win32
 /tcejdb/Makefile
 /tcejdb/libtcejdb.a

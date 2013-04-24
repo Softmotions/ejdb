@@ -9,15 +9,26 @@
 
 # Generic settings
 SHELL = @SHELL@
+HOST_NAME = @host@
+HOST_CPU = @host_cpu@
+HOST_OS = @host_os@
 
 # Package information
 PACKAGE = @PACKAGE_NAME@
 VERSION = @PACKAGE_VERSION@
 PACKAGEDIR = $(PACKAGE)-$(VERSION)
-PACKAGETGZ = $(PACKAGE)-$(VERSION).tar.gz
+PACKAGEBASE = $(PACKAGE)-$(VERSION)-$(HOST_OS)-$(HOST_CPU)
+PACKAGETGZ = $(PACKAGEBASE).tar.gz
+
 LIBVER = @MYLIBVER@
 LIBREV = @MYLIBREV@
 FORMATVER = @MYFORMATVER@
+
+ifeq ($(HOST_CPU),x86_64)
+MACHINE = X64
+else
+MACHINE = X86
+endif
 
 # Targets
 HEADERFILES = @MYHEADERFILES@
@@ -101,21 +112,16 @@ version :
 	[ -f tcutil.h~ ] && mv -f tcutil.h~ tcutil.h
 
 
-untabify :
-	ls *.c *.h *.idl | while read name ; \
-	  do \
-	    sed -e 's/\t/        /g' -e 's/ *$$//' $$name > $$name~; \
-	    [ -f $$name~ ] && mv -f $$name~ $$name ; \
-	  done
-
-
 install :
 	$(INSTALL) -d $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE) \
 		   $(DESTDIR)$(LIBDIR) \
 		   $(DESTDIR)$(DATADIR) \
 		   $(DESTDIR)$(PCDIR) \
 		   $(DESTDIR)$(MAN3DIR)
-	$(INSTALL) -m 644 $(HEADERFILES) $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE)
+
+	$(foreach HF,$(HEADERFILES), \
+	    $(INSTALL) -m 644 -D $(HF) $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE)/$(HF); \
+	)
 	$(INSTALL) -m 755 $(LIBRARYFILES) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(DOCUMENTFILES) $(DESTDIR)$(DATADIR)
 	$(INSTALL) -m 644 $(PCFILES) $(DESTDIR)$(PCDIR)
@@ -132,14 +138,11 @@ install :
 	@printf '# Thanks for using Tokyo Cabinet EJDB edition.\n'
 	@printf '#================================================================\n'
 
-
-install-strip :
-	make DESTDIR=$(DESTDIR) install
-	cd $(DESTDIR)$(BINDIR) && strip $(COMMANDFILES)
-
+win-archive : install
+	cd $(HOST_NAME) && zip -r ../$(PACKAGEBASE).zip ./*
 
 uninstall :
-	- cd $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE) && rm -f $(HEADERFILES)
+	- cd $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE) && rm -rf $(HEADERFILES)
 	- cd $(DESTDIR)$(LIBDIR) && rm -f $(LIBRARYFILES)
 	## cd $(DESTDIR)$(BINDIR) && rm -f $(COMMANDFILES)
 	## cd $(DESTDIR)$(LIBEXECDIR) && rm -f $(CGIFILES)
@@ -152,7 +155,6 @@ uninstall :
 
 dist :
 	make version
-	make untabify
 	make distclean
 	cd .. && tar cvf - $(PACKAGEDIR) | gzip -c > $(PACKAGETGZ)
 	sync ; sync
@@ -733,7 +735,7 @@ tcejdbdll.dll libtcejdbdll.a tcejdbdll.def : $(LIBOBJFILES)
 	      $(LIBOBJFILES) $(LDFLAGS) $(LIBS)
 
 tcejdbdll.lib tcejdbdll.exp : tcejdbdll.dll libtcejdbdll.a tcejdbdll.def
-	wine tools/win32/lib.exe /def:tcejdbdll.def
+	wine tools/win32/lib.exe /def:tcejdbdll.def /machine:$(MACHINE)
 
 
 tcutest : tcutest.o $(LIBRARYFILES)

@@ -5332,13 +5332,14 @@ void tccalendar(int64_t t, int jl, int *yearp, int *monp, int *dayp,
         if (hourp) *hourp = 0;
         if (minp) *minp = 0;
         if (secp) *secp = 0;
+    } else {
+        if (yearp) *yearp = ts.tm_year + 1900;
+        if (monp) *monp = ts.tm_mon + 1;
+        if (dayp) *dayp = ts.tm_mday;
+        if (hourp) *hourp = ts.tm_hour;
+        if (minp) *minp = ts.tm_min;
+        if (secp) *secp = ts.tm_sec;
     }
-    if (yearp) *yearp = ts.tm_year + 1900;
-    if (monp) *monp = ts.tm_mon + 1;
-    if (dayp) *dayp = ts.tm_mday;
-    if (hourp) *hourp = ts.tm_hour;
-    if (minp) *minp = ts.tm_min;
-    if (secp) *secp = ts.tm_sec;
 }
 
 /* Format a date as a string in W3CDTF. */

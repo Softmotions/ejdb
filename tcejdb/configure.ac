@@ -10,7 +10,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(tcejdb, 1.0.68)
+AC_INIT(tcejdb, 1.1.0)
 AC_CANONICAL_HOST
 
 # Package information
@@ -83,6 +83,8 @@ then
   MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG -DEJDB_STATIC"
   MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
   enables="$enables (debug)"
+else
+  MYLDFLAGS="$MYLDFLAGS -s"
 fi
 
 # Developping mode
@@ -382,6 +384,9 @@ esac
 #================================================================
 
 # Export variables
+AC_SUBST(host)
+AC_SUBST(host_cpu)
+AC_SUBST(host_os)
 AC_SUBST(MYLIBVER)
 AC_SUBST(MYLIBREV)
 AC_SUBST(MYFORMATVER)

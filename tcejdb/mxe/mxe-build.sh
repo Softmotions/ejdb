@@ -42,7 +42,8 @@ export WINEDEBUG=fixme-all
 set -x
 autoconf
 ./configure --host="${HOST}" --prefix=${PREFIX} ${CONFLAGS}
-make clean
+#make clean
 make
+make win-archive
 
 

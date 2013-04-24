@@ -944,7 +944,6 @@ Limitations
 TODO
 ------------------------------------
 * Collect collection index statistic
-* Windows port
 
 Related software
 ------------------------------------
