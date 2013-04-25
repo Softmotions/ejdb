@@ -85,7 +85,7 @@ Sample code can be found in `./tcejdb/samples/`
 Notes
 --------------------------------
 
-* In order to build MSVC static library we need Microsoft's `lib.exe` tool,
+* In order to build MSVC import library we need Microsoft's `lib.exe` tool,
 it automatically downloaded by `mxe-build.sh` from my dropbox account. So do not be surprised =)
 
 * Database files size on windows 32-bit are limited to 2GB, because on win32 all data is memmory mapped.
