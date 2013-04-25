@@ -1,5 +1,7 @@
 *.o
 *.vlog
+*.log
+*.status
 *.dylib
 *.upload
 *.rock
@@ -7,6 +9,7 @@
 *.so.*
 *.a
 *.dll
+*.exp
 *.exe
 *.sdf
 *.suo
@@ -14,8 +17,12 @@
 *.exp
 *.lib
 *.zip
+*.cache
+*.tag.gz
+*.tgz
 .dep.inc
 
+/Makefile
 addressbook*
 autom4te.cache/
 config.log
