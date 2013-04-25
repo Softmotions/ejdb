@@ -7,13 +7,15 @@ Prerequsties
 ------------------------------------------
 
  * Install **Linux x64 OS** (tested on debian/ubuntu)
- * Install thise packages:
+ * Install all thise packages:
 
-
+```
     autoconf automake bash bison bzip2 cmake
     flex gcc intltool libtool make openssl
     patch perl pkg-config scons sed unzip
     wget xz-utils yasm zip wine git
+```
+
 
 Creating build environment
 -----------------------------------------
