@@ -1,3 +1,10 @@
+libtcejdb (1.1.0-2) testing; urgency=low
+
+  * Various bugfixes
+  * EJDB & TokyoCabinet ported to windows
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 25 Apr 2013 13:22:39 +0700
+
 libtcejdb (1.0.68-2) unstable; urgency=low
 
   * Fixed number index crash #54

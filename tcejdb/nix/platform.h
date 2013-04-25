@@ -8,7 +8,7 @@
 #ifndef PLATFORM_H
 #define	PLATFORM_H
 
-#include "basedefs.h"
+#include "../basedefs.h"
 #include <stdbool.h>
 
 EJDB_EXTERN_C_START
