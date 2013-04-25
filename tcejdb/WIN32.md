@@ -20,7 +20,7 @@ Prerequsties
 Creating build environment
 -----------------------------------------
 
-You need checkout specific branch of [MXE cross build environmen](http://mxe.cc/)
+You need to checkout specific branch of [MXE cross build environmen](http://mxe.cc/)
 to build win32 and win64 binaries:
 
     git clone https://github.com/tonytheodore/mxe.git
