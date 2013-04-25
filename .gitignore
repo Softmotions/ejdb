@@ -22,7 +22,6 @@
 *.tgz
 .dep.inc
 
-/Makefile
 addressbook*
 autom4te.cache/
 config.log
