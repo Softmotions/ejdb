@@ -42,11 +42,11 @@ AC_PROG_CC
 case $host_os in
   mingw*)
     #durty hack fixes weird behaviour of gcc -O[123] optimizations with ejdb test cases on win32
-    CCOPT=`$CC -O2 -Q --help=optimizers | grep enabled | sed 's/\[[enabled\]]//' | tr '\n' ' ' | sed 's/[[[:blank:]]]\+/ /g'`
-    #CCOPT="-O2"
+    #CCOPT=`$CC -O2 -Q --help=optimizers | grep enabled | sed 's/\[[enabled\]]//' | tr '\n' ' ' | sed 's/[[[:blank:]]]\+/ /g'`
+    CCOPT="-O2"
       ;;
   *)
-    CCOPT="-O3"
+    CCOPT="-O2"
       ;;
 esac
 
@@ -246,13 +246,6 @@ then
   LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$with_bzip/lib"
 fi
 
-# Messages
-printf '#================================================================\n'
-printf '# Configuring EJDB version %s%s.\n' "$PACKAGE_VERSION" "$enables"
-printf '#================================================================\n'
-
-
-
 #================================================================
 # Checking Commands and Libraries
 #================================================================
@@ -415,9 +408,8 @@ AC_OUTPUT(Makefile tcejdb.pc testejdb/Makefile)
 
 # Messages
 printf '#================================================================\n'
-printf '# Ready to make.\n'
+printf '# Ready to make EJDB version %s%s.\n' "$PACKAGE_VERSION" "$enables"
 printf '#================================================================\n'
-
 
 
 # END OF FILE
