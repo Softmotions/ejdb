@@ -1,3 +1,7 @@
+2013-04-25 Anton Adamansky. <adamansky@gmail.com>
+    * EJDB and TokyoCabinet API ported to Windows (ticket #12)
+    - Release 1.1.0
+
 2013-03-22 Anton Adamansky. <adamansky@gmail.com>
     * Fixed number index crash #54
     - Release 1.0.68

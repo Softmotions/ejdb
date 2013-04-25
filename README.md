@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-04-25` **[EJDB and TokyoCabinet API ported to Windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)**
 * `2013-04-03` **[Java API binding available](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
 * `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
 * `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
@@ -21,6 +22,7 @@ News
 Features
 ================================
 * LGPL license allows you to embed this library into proprietary software.
+* [EJDB and TokyoCabinet API ported to Windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)
 * MongoDB-like queries and overall philosophy.
 * Collection level write locking.
 * Collection level transactions.
