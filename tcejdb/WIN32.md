@@ -7,7 +7,7 @@ Prerequsties
 ------------------------------------------
 
  * Install **Linux x64 OS** (tested on debian/ubuntu)
- * Install all thise packages:
+ * Install all these packages:
 
 ```
     autoconf automake bash bison bzip2 cmake
