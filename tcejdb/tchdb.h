@@ -38,8 +38,8 @@ __TCHDB_CLINKAGEBEGIN
 
 
 typedef struct { /* type of structure for a hash database */
+    volatile bool tran; /* whether in the transaction */
     bool ba64; /* using of 64-bit bucket array */
-    bool tran; /* whether in the transaction */
     bool zmode; /* whether compression is used */
     bool async; /* whether asynchronous storing is called */
     bool fatal; /* whether a fatal error occured */
@@ -67,13 +67,13 @@ typedef struct { /* type of structure for a hash database */
     void *decop; /* opaque object for the decoding functions */
     volatile int ecode; /* last happened error code */
     int32_t fbpmax; /* maximum number of the free block pool */
-    int32_t fbpnum; /* number of the free block pool */
     int32_t fbpmis; /* number of missing retrieval of the free block pool */
     uint32_t align; /* record alignment */
     uint32_t runit; /* record reading unit */
     uint32_t rcnum; /* maximum number of cached records */
     uint32_t dfunit; /* unit step number of auto defragmentation */
-    uint32_t dfcnt; /* counter of auto defragmentation */
+    int32_t fbpnum; /* number of the free block pool */
+    volatile uint32_t dfcnt; /* counter of auto defragmentation */
     uint32_t omode; /* open mode */
     HANDLE fd; /* file descriptor of the database file */
     HANDLE walfd; /* file descriptor of write ahead logging */

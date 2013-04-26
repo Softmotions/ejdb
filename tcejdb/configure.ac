@@ -41,12 +41,10 @@ AC_PROG_CC
 
 case $host_os in
   mingw*)
-    #durty hack fixes weird behaviour of gcc -O[123] optimizations with ejdb test cases on win32
-    #CCOPT=`$CC -O2 -Q --help=optimizers | grep enabled | sed 's/\[[enabled\]]//' | tr '\n' ' ' | sed 's/[[[:blank:]]]\+/ /g'`
-    CCOPT="-O2 -mfpmath=sse -flto"
+    CCOPT="-O2"
       ;;
   *)
-    CCOPT="-O2 -mfpmath=sse -flto"
+    CCOPT="-O2"
       ;;
 esac
 

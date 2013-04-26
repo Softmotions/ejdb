@@ -2926,10 +2926,10 @@ static bool tchdbwriterec(TCHDB *hdb, TCHREC *rec, uint64_t bidx, off_t entoff) 
         return false;
     }
     if (finc != 0) {
+        if (!HDBLOCKSMEM(hdb, false)) return false;
         hdb->fsiz += finc;
         uint64_t llnum = hdb->fsiz;
         llnum = TCHTOILL(llnum);
-        if (!HDBLOCKSMEM(hdb, false)) return false;
         memcpy((void *) (hdb->map + HDBFSIZOFF), &llnum, sizeof (llnum));
         HDBUNLOCKSMEM(hdb);
     }
