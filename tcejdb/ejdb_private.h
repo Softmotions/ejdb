@@ -87,29 +87,29 @@ enum { /**> Query flags */
 };
 
 struct EJQF { /**> Matching field and status */
-    char *fpath; /**>JSON field path */
-    int fpathsz; /**>JSON field path size */
-    char *expr; /**> Query operand expression, string or TCLIST data */
-    int exprsz; /**> Size of query operand expression */
-    int64_t exprlongval; /**> Integer value represeintation */
-    double exprdblval; /**> Double value representation */
-    TCLIST *exprlist; /**> List representation of expression */
-    TCMAP *exprmap; /**> Hash map for expression tokens used in $in matching operation. */
-    regex_t *regex; /**> Regular expression object */
-    int tcop; /**> Matching operation eg. TDBQCSTREQ */
     bool negate; /**> Negate expression */
+    int fpathsz; /**>JSON field path size */
+    int exprsz; /**> Size of query operand expression */
+    int tcop; /**> Matching operation eg. TDBQCSTREQ */
+    bson_type ftype; /**> BSON field type */
     uint32_t flags; /**> Various field matching|status flags */
     uint32_t mflags; /**> Temporary matching flags used during single record matching */
     int order; /**> 0 no order, 1 ASC, -1 DESC */
     int orderseq; /**> Seq number for order fields */
-    bson_type ftype; /**> BSON field type */
+    int elmatchgrp; /**> $elemMatch group id */
+    int elmatchpos; /**> $elemMatch fieldpath position */
+    char *fpath; /**>JSON field path */
+    char *expr; /**> Query operand expression, string or TCLIST data */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
     bson *updateobj; /**> Update bson object for $set and $inc operations */
-    int elmatchgrp; /**> $elemMatch group id */
-    int elmatchpos; /**> $elemMatch fieldpath position */
+    TCLIST *exprlist; /**> List representation of expression */
+    TCMAP *exprmap; /**> Hash map for expression tokens used in $in matching operation. */
+    regex_t *regex; /**> Regular expression object */
     EJDB *jb; /**> Reference to the EJDB during query processing */
     EJQ *q; /**> Query object field embedded into */
+    double exprdblval; /**> Double value representation */
+    int64_t exprlongval; /**> Integer value represeintation */
 };
 typedef struct EJQF EJQF;
 

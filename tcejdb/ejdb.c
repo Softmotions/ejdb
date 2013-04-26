@@ -1231,13 +1231,13 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
             assert(tokens);
             assert(TCLISTNUM(tokens) == 2);
             if (bson_iterator_type(it) == BSON_DOUBLE) {
-                double v1 = tctdbatof2(tclistval2(tokens, 0));
-                double v2 = tctdbatof2(tclistval2(tokens, 1));
+                double v1 = tcatof(tclistval2(tokens, 0));
+                double v2 = tcatof(tclistval2(tokens, 1));
                 double val = bson_iterator_double(it);
                 rv = (v2 > v1) ? (v2 >= val && v1 <= val) : (v2 <= val && v1 >= val);
             } else {
-                int64_t v1 = tctdbatoi(tclistval2(tokens, 0));
-                int64_t v2 = tctdbatoi(tclistval2(tokens, 1));
+                int64_t v1 = tcatoi(tclistval2(tokens, 0));
+                int64_t v2 = tcatoi(tclistval2(tokens, 1));
                 int64_t val = bson_iterator_long(it);
                 rv = (v2 > v1) ? (v2 >= val && v1 <= val) : (v2 <= val && v1 >= val);
             }
@@ -1250,7 +1250,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
             if (bt == BSON_DOUBLE) {
                 double nval = bson_iterator_double_raw(it);
                 for (int i = 0; i < TCLISTNUM(tokens); ++i) {
-                    if (tctdbatof2(TCLISTVALPTR(tokens, i)) == nval) {
+                    if (tcatof(TCLISTVALPTR(tokens, i)) == nval) {
                         rv = true;
                         break;
                     }
@@ -1258,7 +1258,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
             } else if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL || bt == BSON_DATE) {
                 int64_t nval = bson_iterator_long(it);
                 for (int i = 0; i < TCLISTNUM(tokens); ++i) {
-                    if (tctdbatoi(TCLISTVALPTR(tokens, i)) == nval) {
+                    if (tcatoi(TCLISTVALPTR(tokens, i)) == nval) {
                         rv = true;
                         break;
                     }
@@ -1443,9 +1443,9 @@ static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaqu
 
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt) {
     if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL || bt == BSON_DATE) {
-        nu->inum = tctdbatoi(sval);
+        nu->inum = tcatoi(sval);
     } else if (bt == BSON_DOUBLE) {
-        nu->dnum = tctdbatof2(sval);
+        nu->dnum = tcatof(sval);
     } else {
         nu->inum = 0;
         assert(0);
@@ -1454,10 +1454,10 @@ EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt) {
 
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt) {
     if (bt == BSON_INT || bt == BSON_LONG || bt == BSON_BOOL || bt == BSON_DATE) {
-        int64_t v = tctdbatoi(sval);
+        int64_t v = tcatoi(sval);
         return (nu->inum > v) ? 1 : (nu->inum < v ? -1 : 0);
     } else if (bt == BSON_DOUBLE) {
-        double v = tctdbatof2(sval);
+        double v = tcatof(sval);
         return (nu->dnum > v) ? 1 : (nu->dnum < v ? -1 : 0);
     } else {
         assert(0);
@@ -2557,8 +2557,8 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         assert(TCLISTNUM(tokens) == 2);
         const char *expr;
         int exprsz;
-        long double lower = tctdbatof(tclistval2(tokens, 0));
-        long double upper = tctdbatof(tclistval2(tokens, 1));
+        long double lower = tcatof2(tclistval2(tokens, 0));
+        long double upper = tcatof2(tclistval2(tokens, 1));
         expr = tclistval2(tokens, (lower > upper) ? 1 : 0);
         exprsz = strlen(expr);
         if (lower > upper) {
@@ -2569,7 +2569,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         BDBCUR *cur = tcbdbcurnew(midx->db);
         tctdbqryidxcurjumpnum(cur, expr, exprsz, true);
         while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
-            if (tctdbatof(kbuf) > upper) break;
+            if (tcatof2(kbuf) > upper) break;
             vbuf = tcbdbcurval3(cur, &vbufsz);
             if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
                     (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
@@ -2589,7 +2589,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         assert(tokens);
         tclistsortex(tokens, tdbcmppkeynumasc);
         for (int i = 1; i < TCLISTNUM(tokens); i++) {
-            if (tctdbatof(TCLISTVALPTR(tokens, i)) == tctdbatof(TCLISTVALPTR(tokens, i - 1))) {
+            if (tcatof2(TCLISTVALPTR(tokens, i)) == tcatof2(TCLISTVALPTR(tokens, i - 1))) {
                 TCFREE(tclistremove2(tokens, i));
                 i--;
             }
@@ -2603,10 +2603,10 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             int tsiz;
             TCLISTVAL(token, tokens, i, tsiz);
             if (tsiz < 1) continue;
-            long double xnum = tctdbatof(token);
+            long double xnum = tcatof2(token);
             tctdbqryidxcurjumpnum(cur, token, tsiz, true);
             while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
-                if (tctdbatof(kbuf) == xnum) {
+                if (tcatof2(kbuf) == xnum) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
                     if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
                             (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
@@ -2628,7 +2628,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         if (mqf->tcop == TDBQCSTRNUMOR) {
             tclistsortex(tokens, tdbcmppkeynumasc);
             for (int i = 1; i < TCLISTNUM(tokens); i++) {
-                if (tctdbatof(TCLISTVALPTR(tokens, i)) == tctdbatof(TCLISTVALPTR(tokens, i - 1))) {
+                if (tcatof2(TCLISTVALPTR(tokens, i)) == tcatof2(TCLISTVALPTR(tokens, i - 1))) {
                     TCFREE(tclistremove2(tokens, i));
                     i--;
                 }

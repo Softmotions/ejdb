@@ -4978,6 +4978,8 @@ int64_t tcatoi(const char *str) {
     } else if (*str == '+') {
         str++;
     }
+    if (tcstrifwm(str, "inf")) return (INT64_MAX * sign);
+    if (tcstrifwm(str, "nan")) return 0;
     while (*str != '\0') {
         if (*str < '0' || *str > '9') break;
         num = num * 10 + *str - '0';
@@ -5051,6 +5053,49 @@ double tcatof(const char *str) {
         str++;
     }
     if (tcstrifwm(str, "inf")) return HUGE_VAL * sign;
+    if (tcstrifwm(str, "nan")) return nan("");
+    long double num = 0;
+    int col = 0;
+    while (*str != '\0') {
+        if (*str < '0' || *str > '9') break;
+        num = num * 10 + *str - '0';
+        str++;
+        if (num > 0) col++;
+    }
+    if (*str == '.') {
+        str++;
+        long double fract = 0.0;
+        long double base = 10;
+        while (col < TCLDBLCOLMAX && *str != '\0') {
+            if (*str < '0' || *str > '9') break;
+            fract += (*str - '0') / base;
+            str++;
+            col++;
+            base *= 10;
+        }
+        num += fract;
+    }
+    if (*str == 'e' || *str == 'E') {
+        str++;
+        num *= pow(10, tcatoi(str));
+    }
+    return num * sign;
+}
+
+
+long double tcatof2(const char *str) {
+    assert(str);
+    while (*str > '\0' && *str <= ' ') {
+        str++;
+    }
+    int sign = 1;
+    if (*str == '-') {
+        str++;
+        sign = -1;
+    } else if (*str == '+') {
+        str++;
+    }
+    if (tcstrifwm(str, "inf")) return HUGE_VALL * sign;
     if (tcstrifwm(str, "nan")) return nan("");
     long double num = 0;
     int col = 0;

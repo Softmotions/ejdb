@@ -153,6 +153,7 @@ static bool tctdbforeachimpl(TCTDB *tdb, TCITER iter, void *op);
 static int tctdbqryprocoutcb(const void *pkbuf, int pksiz, TCMAP *cols, void *op);
 static bool tctdblockmethod(TCTDB *tdb, bool wr);
 static bool tctdbunlockmethod(TCTDB *tdb);
+static long double tctdbatof(const char *str);
 
 
 /* debugging function prototypes */
@@ -3971,69 +3972,6 @@ long double tctdbatof(const char *str) {
             base *= 10;
         }
         num += fract;
-    }
-    return num * sign;
-}
-
-double tctdbatof2(const char *str) {
-    assert(str);
-    while (*str > '\0' && *str <= ' ') {
-        str++;
-    }
-    int sign = 1;
-    if (*str == '-') {
-        str++;
-        sign = -1;
-    } else if (*str == '+') {
-        str++;
-    }
-    if (tcstrifwm(str, "inf")) return HUGE_VALL * sign;
-    if (tcstrifwm(str, "nan")) return nan("");
-    double num = 0;
-    int col = 0;
-    while (*str != '\0') {
-        if (*str < '0' || *str > '9') break;
-        num = num * 10 + *str - '0';
-        str++;
-        if (num > 0) col++;
-    }
-    if (*str == '.') {
-        str++;
-        double fract = 0.0;
-        double base = 10;
-        while (col < TDBNUMCOLMAX && *str != '\0') {
-            if (*str < '0' || *str > '9') break;
-            fract += (*str - '0') / base;
-            str++;
-            col++;
-            base *= 10;
-        }
-        num += fract;
-    }
-    return num * sign;
-}
-
-int64_t tctdbatoi(const char *str) {
-    assert(str);
-    while (*str > '\0' && *str <= ' ') {
-        str++;
-    }
-    int sign = 1;
-    if (*str == '-') {
-        str++;
-        sign = -1;
-    } else if (*str == '+') {
-        str++;
-    }
-    if (tcstrifwm(str, "inf")) return (INT64_MAX * sign);
-    if (tcstrifwm(str, "nan")) return 0;
-    int64_t num = 0;
-    int col = 0;
-    while (*str != '\0') {
-        if (*str < '0' || *str > '9') break;
-        num = num * 10 + *str - '0';
-        str++;
-        if (num > 0) col++;
     }
     return num * sign;
 }

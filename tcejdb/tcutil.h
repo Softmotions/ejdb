@@ -2486,6 +2486,8 @@ EJDB_EXPORT int64_t tcatoix(const char *str);
    This function is equivalent to `atof' except that it does not depend on the locale. */
 EJDB_EXPORT double tcatof(const char *str);
 
+EJDB_EXPORT long double tcatof2(const char *str);
+
 
 /**
  * Fast conversion of a double number into a string.

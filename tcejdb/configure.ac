@@ -10,7 +10,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(tcejdb, 1.1.0)
+AC_INIT(tcejdb, 1.1.1)
 AC_CANONICAL_HOST
 
 # Package information
@@ -43,10 +43,10 @@ case $host_os in
   mingw*)
     #durty hack fixes weird behaviour of gcc -O[123] optimizations with ejdb test cases on win32
     #CCOPT=`$CC -O2 -Q --help=optimizers | grep enabled | sed 's/\[[enabled\]]//' | tr '\n' ' ' | sed 's/[[[:blank:]]]\+/ /g'`
-    CCOPT="-O2"
+    CCOPT="-O2 -mfpmath=sse -flto"
       ;;
   *)
-    CCOPT="-O2"
+    CCOPT="-O2 -mfpmath=sse -flto"
       ;;
 esac
 
@@ -54,7 +54,7 @@ esac
 MYCFLAGS="$MYCFLAGS -std=gnu99 -Wall -fsigned-char $CCOPT -Wfatal-errors"
 MYCPPFLAGS="-I. -I\$(INCLUDEDIR)"
 MYCPPFLAGS="$MYCPPFLAGS -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
-MYLDFLAGS="-L. -L\$(LIBDIR)"
+MYLDFLAGS="-L. -L\$(LIBDIR) -L/usr/local/lib"
 MYCMDLDFLAGS=""
 MYRUNPATH="\$(LIBDIR)"
 MYLDLIBPATHENV="LD_LIBRARY_PATH"
@@ -83,12 +83,12 @@ AC_ARG_ENABLE(debug,
   AC_HELP_STRING([--enable-debug], [build for debugging]))
 if test "$enable_debug" = "yes"
 then
-  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -g -O0 -Wfatal-errors"
+  MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -ggdb -O0 -Wfatal-errors"
   MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG -DEJDB_STATIC"
   MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
   enables="$enables (debug)"
 else
-  MYLDFLAGS="$MYLDFLAGS -s"
+  MYLDFLAGS="$MYLDFLAGS"
 fi
 
 # Developping mode

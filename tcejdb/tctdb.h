@@ -1118,18 +1118,6 @@ bool tctdbidxout2(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols);
    If successful, the return value is true, else, it is false. */
 bool tctdbqryidxcurjumpnum(BDBCUR *cur, const char *kbuf, int ksiz, bool first);
 
-/* Convert a string to a real number.
-   `str' specifies the string.
-   The return value is the real number. */
-long double tctdbatof(const char *str);
-
-double tctdbatof2(const char *str);
-
-/* Convert a string to a integer number.
-   `str' specifies the string.
-   The return value is the int64_t number. */
-int64_t tctdbatoi(const char *str);
-
 /* Compare two primary keys by number ascending.
    `a' specifies a key.
    `b' specifies of the other key.
