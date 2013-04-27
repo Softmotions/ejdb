@@ -1,4 +1,4 @@
-libtcejdb (1.1.1-0) testing; urgency=low
+libtcejdb (1.1.1-1) testing; urgency=low
 
   * Various bugfixes
   * EJDB & TokyoCabinet ported to windows
