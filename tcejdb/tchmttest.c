@@ -866,7 +866,7 @@ static int procwicked(const char *path, int tnum, int rnum, int opts, int omode,
     bool err = false;
     double stime = tctime();
     TCHDB *hdb = tchdbnew();
-    tchdbsetdbgfd(hdb, g_dbgfd);
+    if (!INVALIDHANDLE(g_dbgfd)) tchdbsetdbgfd(hdb, g_dbgfd);
     if (!tchdbsetmutex(hdb)) {
         eprint(hdb, __LINE__, "tchdbsetmutex");
         err = true;
@@ -1486,7 +1486,9 @@ static void *threadwicked(void *targ) {
         if (id == 0) {
             if (i % 50 == 0) iprintf(" (%08d)\n", i);
             if (id == 0 && i == rnum / 4) {
-                if (!tchdboptimize(hdb, rnum / 50, -1, -1, -1) && tchdbecode(hdb) != TCEINVALID) {
+                if (!tchdboptimize(hdb, rnum / 50, -1, -1, -1) &&
+                        tchdbecode(hdb) != TCEINVALID &&
+                        tchdbecode(hdb) != TCETR) {
                     eprint(hdb, __LINE__, "tchdboptimize");
                     err = true;
                 }

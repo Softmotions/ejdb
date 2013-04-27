@@ -52,19 +52,19 @@ esac
 MYCFLAGS="$MYCFLAGS -std=gnu99 -Wall -fsigned-char $CCOPT -Wfatal-errors"
 MYCPPFLAGS="-I. -I\$(INCLUDEDIR)"
 MYCPPFLAGS="$MYCPPFLAGS -D_UNICODE -DNDEBUG -D_GNU_SOURCE=1 -D_REENTRANT -D__EXTENSIONS__"
-MYLDFLAGS="-L. -L\$(LIBDIR) -L/usr/local/lib"
+MYLDFLAGS="-L. -L\$(LIBDIR) -L/usr/lib"
 MYCMDLDFLAGS=""
 MYRUNPATH="\$(LIBDIR)"
 MYLDLIBPATHENV="LD_LIBRARY_PATH"
 MYPOSTCMD="true"
 
 # Building paths
-PATH="$PATH:$HOME/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
+PATH="$PATH:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
 PATH="$PATH:/opt/SUNWspro/bin:/usr/ccs/bin:/usr/xpg4/bin:/usr/xpg6/bin:/usr/ucb"
-CPATH="$HOME/include:/usr/local/include:$CPATH"
-LIBRARY_PATH="$HOME/lib:/usr/local/lib:$LIBRARY_PATH"
-LD_LIBRARY_PATH="$HOME/lib:/usr/local/lib:$LD_LIBRARY_PATH"
-PKG_CONFIG_PATH="$HOME/lib/pkgconfig:/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
+CPATH="$CPATH:/usr/local/include"
+LIBRARY_PATH="$LIBRARY_PATH:/usr/local/lib"
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
+PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 export PATH CPATH LIBRARY_PATH LD_LIBRARY_PATH PKG_CONFIG_PATH
 
 
