@@ -97,9 +97,6 @@ it automatically downloaded by `mxe-build.sh` from my dropbox account. So do not
 
 * Database files size on windows 32-bit are limited to 2GB, because on win32 all data is memory mapped.
 
-* Due to strange reasons any generic gcc optimizations `-O1` `-O2` `-O3` generate bad EJDB testing code on win32, as
-workaround for this: all gcc optimization flags related to `O2` level are explicitly specified for gcc command (but without `-O2` arg).
-
 * HDB `tchdbsetxmsiz()` takes no effect because all file data is memory mapped on windows platform.
 
 
