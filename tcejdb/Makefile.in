@@ -165,7 +165,6 @@ dist :
 
 distclean : clean
 	## cd example && make clean
-	cd bros && make clean
 	rm -rf Makefile tcejdb.pc config.cache config.log config.status autom4te.cache
 
 
