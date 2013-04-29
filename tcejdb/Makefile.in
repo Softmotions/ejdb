@@ -123,7 +123,8 @@ install :
 		   $(DESTDIR)$(MAN3DIR)
 
 	$(foreach HF,$(HEADERFILES), \
-	    $(INSTALL) -m 644 -D $(HF) $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE)/$(HF); \
+	    mkdir -p `dirname $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE)/$(HF)`; \
+	    $(INSTALL) -m 644 $(HF) $(DESTDIR)$(INCLUDEDIR)/$(PACKAGE)/$(HF); \
 	)
 	$(INSTALL) -m 755 $(LIBRARYFILES) $(DESTDIR)$(LIBDIR)
 	$(INSTALL) -m 644 $(DOCUMENTFILES) $(DESTDIR)$(DATADIR)
