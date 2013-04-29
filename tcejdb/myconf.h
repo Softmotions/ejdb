@@ -212,7 +212,7 @@
 #define GET_STDIN_HANDLE() GetStdHandle(STD_INPUT_HANDLE)
 #define CLOSEFH(_fd) (CloseHandle(_fd))
 #else
-#ifdef __unix
+#if defined(__unix) || defined(__APPLE__)
 #include "nix/platform.h"
 #endif
 #include <regex.h>

@@ -2,7 +2,7 @@
 #include "win32/platform.c"
 #endif
 
-#ifdef __unix
+#if defined(__unix) || defined(__APPLE__)
 #include "nix/platform.c"
 #endif
 
