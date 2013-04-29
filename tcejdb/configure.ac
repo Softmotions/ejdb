@@ -83,7 +83,14 @@ if test "$enable_debug" = "yes"
 then
   MYCFLAGS="-std=gnu99 -Wall -pedantic -fsigned-char -ggdb -O0 -Wfatal-errors"
   MYCPPFLAGS="$MYCPPFLAGS -D_DEBUG -UNDEBUG -DEJDB_STATIC"
-  MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
+  case $host_os in
+    darwin*)
+
+        ;;
+    *)
+      MYCMDLDFLAGS="$MYCMDLDFLAGS -static"
+        ;;
+  esac
   enables="$enables (debug)"
 else
   MYLDFLAGS="$MYLDFLAGS"
