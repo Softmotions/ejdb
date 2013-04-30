@@ -1,4 +1,4 @@
-lua-ejdb (1.0.3-1) testing; urgency=low
+lua-ejdb (1.0.3-2) testing; urgency=low
 
   * EJDB 1.1.x migration
 

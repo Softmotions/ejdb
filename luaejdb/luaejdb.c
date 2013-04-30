@@ -6,6 +6,8 @@
 
 #include "luabson.h"
 
+#include <string.h>
+
 //EJDB db user data
 #define EJDBUDATAKEY "__ejdb__"
 #define EJDBUDATAMT "mtejdb"

@@ -5,6 +5,7 @@
 #include <math.h>
 #include <string.h>
 #include <tcejdb/ejdb.h>
+#include <tcejdb/myconf.h>
 
 static void lua_to_bson_impl(lua_State *L, int spos, bson *bs);
 static void bson_print_xstr(TCXSTR* xstr, const char *data, int depth);
