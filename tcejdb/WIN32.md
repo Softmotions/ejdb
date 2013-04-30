@@ -1,8 +1,8 @@
 Precompiled windows binaries
 =========================================
 
-* [tcejdb-1.1.1-mingw32-i686](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.1-mingw32-i686.zip)
-* [tcejdb-1.1.1-mingw32-x86_64](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.1-mingw32-x86_64.zip)
+* [tcejdb-1.1.2-mingw32-i686](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.2-mingw32-i686.zip)
+* [tcejdb-1.1.2-mingw32-x86_64](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.2-mingw32-x86_64.zip)
 
 
 Building EJDB and TokyoCabinet for windows

@@ -1166,7 +1166,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         case TDBQCSTRRX:
         {
             _FETCHSTRFVAL();
-            rv = qf->regex && (regexec(qf->regex, fval, 0, NULL, 0) == 0);
+            rv = qf->regex && (regexec((regex_t *)qf->regex, fval, 0, NULL, 0) == 0);
             break;
         }
         case TDBQCNUMEQ:
@@ -3320,7 +3320,7 @@ static void _delqfdata(const EJQ *q, const EJQF *qf) {
     }
     if (qf->regex && !(EJQINTERNAL & q->flags)) {
         //We do not clear regex_t data because it not deep copy in internal queries
-        regfree(qf->regex);
+        regfree((regex_t *) qf->regex);
         TCFREE(qf->regex);
     }
     if (qf->exprlist) {

@@ -1,3 +1,9 @@
+libtcejdb (1.1.2-0) testing; urgency=low
+
+  * Minor optimizations in the header files
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 30 Apr 2013 13:02:48 +0700
+
 libtcejdb (1.1.1-1) testing; urgency=low
 
   * Various bugfixes

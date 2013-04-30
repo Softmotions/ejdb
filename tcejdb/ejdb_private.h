@@ -25,12 +25,6 @@
 #include <assert.h>
 #include <pthread.h>
 
-#ifdef _WIN32
-#include <pcreposix.h>
-#else
-#include <regex.h>
-#endif
-
 EJDB_EXTERN_C_START
 
 #define BSON_IS_IDXSUPPORTED_TYPE(atype) (atype == BSON_STRING || \
@@ -105,7 +99,7 @@ struct EJQF { /**> Matching field and status */
     bson *updateobj; /**> Update bson object for $set and $inc operations */
     TCLIST *exprlist; /**> List representation of expression */
     TCMAP *exprmap; /**> Hash map for expression tokens used in $in matching operation. */
-    regex_t *regex; /**> Regular expression object */
+    void *regex; /**> Regular expression object */
     EJDB *jb; /**> Reference to the EJDB during query processing */
     EJQ *q; /**> Query object field embedded into */
     double exprdblval; /**> Double value representation */
