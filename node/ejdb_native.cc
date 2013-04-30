@@ -28,8 +28,13 @@
 #include <vector>
 #include <sstream>
 #include <locale.h>
-#include <ext/hash_set>
 #include <stdint.h>
+
+#ifdef _WIN32
+#include <hash_set>
+#else
+#include <ext/hash_set>
+#endif
 
 using namespace node;
 using namespace v8;
@@ -47,25 +52,6 @@ static const int CMD_RET_ERROR = 1;
                     ReadOnly|DontDelete))
 
 namespace ejdb {
-
-    static bool ejcollockmethod(EJCOLL *coll, bool wr) {
-        assert(coll && coll->jb);
-        if (!coll->mmtx) return false;
-        if (wr ? pthread_rwlock_wrlock((pthread_rwlock_t*) coll->mmtx) != 0 : pthread_rwlock_rdlock((pthread_rwlock_t*) coll->mmtx) != 0) {
-            return false;
-        }
-        return (coll->tdb && coll->tdb->open);
-    }
-
-    static bool ejcollunlockmethod(EJCOLL *coll) {
-        assert(coll && coll->jb);
-        if (!coll->mmtx) return false;
-        if (pthread_rwlock_unlock((pthread_rwlock_t*) coll->mmtx) != 0) {
-            return false;
-        }
-        return true;
-    }
-
 
     ///////////////////////////////////////////////////////////////////////////
     //                           Some symbols                                //

@@ -76,11 +76,11 @@ typedef struct {
 /* private function prototypes */
 static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, const char *func);
 static bool _ejdbsetmutex(EJDB *ejdb);
-static bool _ejdblockmethod(EJDB *ejdb, bool wr);
-static bool _ejdbunlockmethod(EJDB *ejdb);
-static bool _ejdbcolsetmutex(EJCOLL *coll);
-static bool _ejcollockmethod(EJCOLL *coll, bool wr);
-static bool _ejcollunlockmethod(EJCOLL *coll);
+EJDB_INLINE bool _ejdblockmethod(EJDB *ejdb, bool wr);
+EJDB_INLINE bool _ejdbunlockmethod(EJDB *ejdb);
+EJDB_INLINE bool _ejdbcolsetmutex(EJCOLL *coll);
+EJDB_INLINE bool _ejcollockmethod(EJCOLL *coll, bool wr);
+EJDB_INLINE bool _ejcollunlockmethod(EJCOLL *coll);
 static bson_type _bsonoidkey(bson *bs, bson_oid_t *oid);
 static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens, txtflags_t flags);
 static char* _bsonipathrowldr(TCLIST *tokens, const char *pkbuf, int pksz, const char *rowdata, int rowdatasz,
@@ -819,7 +819,7 @@ static bool _ejdbsetmutex(EJDB *ejdb) {
    `tdb' specifies the table database object.
    `wr' specifies whether the lock is writer or not.
    If successful, the return value is true, else, it is false. */
-static bool _ejdblockmethod(EJDB *ejdb, bool wr) {
+EJDB_INLINE bool _ejdblockmethod(EJDB *ejdb, bool wr) {
     assert(ejdb);
     if (wr ? pthread_rwlock_wrlock(ejdb->mmtx) != 0 : pthread_rwlock_rdlock(ejdb->mmtx) != 0) {
         _ejdbsetecode(ejdb, TCETHREAD, __FILE__, __LINE__, __func__);
@@ -832,7 +832,7 @@ static bool _ejdblockmethod(EJDB *ejdb, bool wr) {
 /* Unlock a method of the table database object.
    `tdb' specifies the table database object.
    If successful, the return value is true, else, it is false. */
-static bool _ejdbunlockmethod(EJDB *ejdb) {
+EJDB_INLINE bool _ejdbunlockmethod(EJDB *ejdb) {
     assert(ejdb);
     if (pthread_rwlock_unlock(ejdb->mmtx) != 0) {
         _ejdbsetecode(ejdb, TCETHREAD, __FILE__, __LINE__, __func__);
@@ -842,7 +842,7 @@ static bool _ejdbunlockmethod(EJDB *ejdb) {
     return true;
 }
 
-static bool _ejdbcolsetmutex(EJCOLL *coll) {
+EJDB_INLINE bool _ejdbcolsetmutex(EJCOLL *coll) {
     assert(coll && coll->jb);
     if (coll->mmtx) {
         _ejdbsetecode(coll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -859,7 +859,7 @@ static bool _ejdbcolsetmutex(EJCOLL *coll) {
     return true;
 }
 
-static bool _ejcollockmethod(EJCOLL *coll, bool wr) {
+EJDB_INLINE bool _ejcollockmethod(EJCOLL *coll, bool wr) {
     assert(coll && coll->jb);
     if (wr ? pthread_rwlock_wrlock(coll->mmtx) != 0 : pthread_rwlock_rdlock(coll->mmtx) != 0) {
         _ejdbsetecode(coll->jb, TCETHREAD, __FILE__, __LINE__, __func__);
@@ -869,7 +869,7 @@ static bool _ejcollockmethod(EJCOLL *coll, bool wr) {
     return (coll->tdb && coll->tdb->open);
 }
 
-static bool _ejcollunlockmethod(EJCOLL *coll) {
+EJDB_INLINE bool _ejcollunlockmethod(EJCOLL *coll) {
     assert(coll && coll->jb);
     if (pthread_rwlock_unlock(coll->mmtx) != 0) {
         _ejdbsetecode(coll->jb, TCETHREAD, __FILE__, __LINE__, __func__);
@@ -877,6 +877,14 @@ static bool _ejcollunlockmethod(EJCOLL *coll) {
     }
     TCTESTYIELD();
     return true;
+}
+
+bool ejcollockmethod(EJCOLL *coll, bool wr) {
+    return _ejcollockmethod(coll, wr);
+}
+
+bool ejcollunlockmethod(EJCOLL *coll) {
+    return _ejcollunlockmethod(coll);
 }
 
 static void _qrydel(EJQ *q, bool freequery) {

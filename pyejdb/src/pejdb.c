@@ -179,7 +179,7 @@ static PyObject* EJDB_load(PEJDB *self, PyObject *args) {
     Py_BEGIN_ALLOW_THREADS
     doc = ejdbloadbson(coll, &oid);
     Py_END_ALLOW_THREADS
-    if (!doc) {            
+    if (!doc) {
         int ecode = ejdbecode(self->ejdb);
         if (ecode != TCESUCCESS && ecode != TCENOREC) {
             return set_ejdb_error(self->ejdb);
@@ -279,7 +279,7 @@ static PyObject* EJDB_dbmeta(PEJDB *self, PyObject *args) {
         goto fail;
     }
     for (int i = 0; i < TCLISTNUM(cols); ++i) {
-
+        bool locked = false;
         PyObject *pycoll = NULL;
         PyObject *pyindexes = NULL;
         PyObject *pyopts = NULL;
@@ -290,6 +290,10 @@ static PyObject* EJDB_dbmeta(PEJDB *self, PyObject *args) {
         if (!pycoll) {
             goto ffail;
         }
+        if (!ejcollockmethod(coll, false)) {
+            goto ffail;
+        }
+        locked = true;
         val = PyUnicode_FromStringAndSize(coll->cname, coll->cnamesz);
         PyDict_SetItemString(pycoll, "name", val);
         Py_XDECREF(val);
@@ -381,9 +385,16 @@ static PyObject* EJDB_dbmeta(PEJDB *self, PyObject *args) {
         Py_XDECREF(pyindexes);
 
         PyList_Append(carr, pycoll);
+        if (locked) {
+            ejcollunlockmethod(coll);
+            locked = false;
+        }
         continue;
 
 ffail:
+        if (locked) {
+            ejcollunlockmethod(coll);
+        }
         Py_XDECREF(pycoll);
         Py_XDECREF(pyindexes);
         Py_XDECREF(pyopts);

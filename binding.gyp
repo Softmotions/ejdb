@@ -6,14 +6,33 @@
     'target_defaults': {
         'configurations': {
             'Debug': {
+                'defines': [ '_DEBUG' ],
+                'msvs_settings': {
+                    'VCCLCompilerTool': {
+                      'RuntimeLibrary':'MultiThreadedDebugDLL'
+                    }
+                },
             },
             'Release':{
                 'defines': [ 'NDEBUG' ],
+                'msvs_settings': {
+                    'VCCLCompilerTool': {
+                      'RuntimeLibrary':'MultiThreadedDLL'
+                    }
+                }
             }
         },
         'conditions': [
             ['OS == "win"', {
-
+               'variables': {
+                  'EJDB_HOME%': 'C:/EJDB'
+               },
+               'defines': [
+                 '_UNICODE',
+               ],
+               'libraries': [
+                 '-l<(EJDB_HOME)/lib/tcejdbdll.lib'
+               ],
             }, {
                'defines': [
                  '_LARGEFILE_SOURCE',
@@ -33,22 +52,22 @@
                     '-lz -lpthread -lm -lc'
                 ]
             }],
-	    [ 'OS=="mac"', {
-		'defines': ['_DARWIN_USE_64_BIT_INODE=1'],
-		'cflags_cc!' : [ '-fno-exceptions' ],
-		'xcode_settings': {	
-			'GCC_ENABLE_CPP_EXCEPTIONS':'YES',
-			'OTHER_CFLAGS': [       			
-				'-fsigned-char', '-pthread', '-Wno-variadic-macros', '-fexceptions'
-          		],
-			'OTHER_LDFLAGS': [
-				'-Wl,-search_paths_first',
-				'-L./tcejdb/static',                 		
-                    		'-lstcejdb -lz -lpthread -lm -lc'
-			]						
-		}
-            }]        
-         ],
+            [ 'OS=="mac"', {
+                'defines': ['_DARWIN_USE_64_BIT_INODE=1'],
+                'cflags_cc!' : [ '-fno-exceptions' ],
+                'xcode_settings': {
+                    'GCC_ENABLE_CPP_EXCEPTIONS':'YES',
+                    'OTHER_CFLAGS': [
+                        '-fsigned-char', '-pthread', '-Wno-variadic-macros', '-fexceptions'
+                        ],
+                    'OTHER_LDFLAGS': [
+                        '-Wl,-search_paths_first',
+                        '-L./tcejdb/static',
+                        '-lstcejdb -lz -lpthread -lm -lc'
+                    ]
+                }
+           }]
+        ],
         'include_dirs' : ['tcejdb'],
     },
 

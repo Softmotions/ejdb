@@ -52,24 +52,6 @@ static int set_ejdb_error(lua_State *L, EJDB *jb) {
     return luaL_error(L, emsg);
 }
 
-static bool ejcollockmethod(EJCOLL *coll, bool wr) {
-    assert(coll && coll->jb);
-    if (!coll->mmtx) return false;
-    if (wr ? pthread_rwlock_wrlock((pthread_rwlock_t*) coll->mmtx) != 0 : pthread_rwlock_rdlock((pthread_rwlock_t*) coll->mmtx) != 0) {
-        return false;
-    }
-    return (coll->tdb && coll->tdb->open);
-}
-
-static bool ejcollunlockmethod(EJCOLL *coll) {
-    assert(coll && coll->jb);
-    if (!coll->mmtx) return false;
-    if (pthread_rwlock_unlock((pthread_rwlock_t*) coll->mmtx) != 0) {
-        return false;
-    }
-    return true;
-}
-
 static EJDB *check_ejdb(lua_State *L, EJDB *jb) {
     if (jb == NULL) {
         luaL_error(L, "Closed EJDB database");

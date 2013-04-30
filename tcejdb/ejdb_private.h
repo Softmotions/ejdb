@@ -23,7 +23,6 @@
 #include "tchdb.h"
 
 #include <assert.h>
-#include <pthread.h>
 
 EJDB_EXTERN_C_START
 
@@ -128,6 +127,10 @@ struct EJQ { /**> Query object. */
 
 
 #define JBINOPTMAPTHRESHOLD 16 /**> If number of tokens in `$in` array exeeds it then TCMAP will be used in fullscan matching of tokens */
+
+
+EJDB_EXPORT  bool ejcollockmethod(EJCOLL *coll, bool wr);
+EJDB_EXPORT  bool ejcollunlockmethod(EJCOLL *coll);
 
 EJDB_EXTERN_C_END
 
