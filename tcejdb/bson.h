@@ -403,7 +403,7 @@ EJDB_EXPORT const char *bson_iterator_string(const bson_iterator *i);
  *
  * @return the length of the current BSON object.
  */
-int bson_iterator_string_len(const bson_iterator *i);
+EJDB_EXPORT int bson_iterator_string_len(const bson_iterator *i);
 
 /**
  * Get the code value of the BSON object currently pointed to by the
@@ -598,7 +598,7 @@ EJDB_EXPORT void bson_init_as_query(bson *b);
  *
  * @return BSON_OK or BSON_ERROR.
  */
-int bson_init_data(bson *b, char *data);
+EJDB_EXPORT int bson_init_data(bson *b, char *data);
 EJDB_EXPORT int bson_init_finished_data(bson *b, const char *data);
 
 /**
@@ -610,9 +610,9 @@ EJDB_EXPORT int bson_init_finished_data(bson *b, const char *data);
  *
  * @return BSON_OK or BSON_ERROR.
  */
-void bson_init_size(bson *b, int size);
+EJDB_EXPORT void bson_init_size(bson *b, int size);
 
-void bson_init_on_stack(bson *b, char *bstack, int mincapacity, int maxonstack);
+EJDB_EXPORT void bson_init_on_stack(bson *b, char *bstack, int mincapacity, int maxonstack);
 
 /**
  * Grow a bson object.
@@ -623,7 +623,7 @@ void bson_init_on_stack(bson *b, char *bstack, int mincapacity, int maxonstack);
  * @return BSON_OK or BSON_ERROR with the bson error object set.
  *   Exits if allocation fails.
  */
-int bson_ensure_space(bson *b, const int bytesNeeded);
+EJDB_EXPORT int bson_ensure_space(bson *b, const int bytesNeeded);
 
 /**
  * Finalize a bson object.
@@ -988,7 +988,7 @@ extern void ( *bson_free_func)(void *);
 
 extern bson_printf_func bson_errprintf;
 
-EJDB_EXPORT void bson_free(void *ptr);
+ void bson_free(void *ptr);
 
 /**
  * Allocates memory and checks return value, exiting fatally if malloc() fails.
@@ -999,7 +999,7 @@ EJDB_EXPORT void bson_free(void *ptr);
  *
  * @sa malloc(3)
  */
-EJDB_EXPORT void *bson_malloc(int size);
+void *bson_malloc(int size);
 
 /**
  * Changes the size of allocated memory and checks return value,
@@ -1052,7 +1052,6 @@ void bson_builder_error(bson *b);
  *
  */
 EJDB_EXPORT double bson_int64_to_double(int64_t i64);
-
 EJDB_EXPORT void bson_swap_endian32(void *outp, const void *inp);
 EJDB_EXPORT void bson_swap_endian64(void *outp, const void *inp);
 
