@@ -1836,7 +1836,7 @@ finish:
 #endif
         ejdb::NodeEJDB::Init(target);
         ejdb::NodeEJDBCursor::Init(target);
-    }
+}
 
 }
 
