@@ -1,4 +1,4 @@
-libtcejdb (1.1.2-0) testing; urgency=low
+libtcejdb (1.1.3-0) testing; urgency=low
 
   * Minor optimizations in the header files
 

@@ -101,7 +101,7 @@ clean :
 	rm -rf $(LIBRARYFILES) $(LIBOBJFILES) $(COMMANDFILES) $(CGIFILES) static \
 	  *.o a.out tokyocabinet_all.c check.in check.out gmon.out *.vlog words.tsv \
 	  casket casket-* casket.* *.tch *.tcb *.tcf *.tct *.idx.* *.wal *~ hoge moge tako ika \
-	  *.zip
+	  *.zip *.a *.dll *.so *.so.* i686-w64-mingw32 x86_64-w64-mingw32
 	- rm -rf $(HOST_NAME)
 	- make -C ./testejdb clean
 
