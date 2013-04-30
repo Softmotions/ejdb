@@ -29,7 +29,15 @@
 #include <sstream>
 #include <locale.h>
 #include <stdint.h>
+
+#ifdef _MSC_VER
 #include <unordered_set>
+#else
+#include <ext/hash_set>
+#ifdef __GNUC__
+using namespace __gnu_cxx;
+#endif
+#endif
 
 using namespace node;
 using namespace v8;
@@ -147,7 +155,11 @@ namespace ejdb {
         }
     };
 
+#ifdef _MSC_VER
 	typedef std::unordered_set<Handle<Object>, V8ObjHash, V8ObjEq> V8ObjSet;
+#else
+    typedef hash_set<Handle<Object>, V8ObjHash, V8ObjEq> V8ObjSet;
+#endif
 
 
     struct TBSONCTX {
