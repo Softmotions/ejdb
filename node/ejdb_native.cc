@@ -29,19 +29,10 @@
 #include <sstream>
 #include <locale.h>
 #include <stdint.h>
-
-#ifdef _WIN32
-#include <hash_set>
-#else
-#include <ext/hash_set>
-#endif
+#include <unordered_set>
 
 using namespace node;
 using namespace v8;
-
-#ifdef __GNUC__
-using namespace __gnu_cxx;
-#endif
 
 static const int CMD_RET_ERROR = 1;
 
@@ -143,13 +134,12 @@ namespace ejdb {
         return sobj->ToNumber()->NumberValue();
     }
 
-    struct V8ObjHash {
+	struct V8ObjHash {
 
         size_t operator()(const Handle<Object>& obj) const {
             return (size_t) obj->GetIdentityHash();
         }
     };
-
     struct V8ObjEq {
 
         bool operator()(const Handle<Object>& o1, const Handle<Object>& o2) const {
@@ -157,7 +147,8 @@ namespace ejdb {
         }
     };
 
-    typedef hash_set<Handle<Object>, V8ObjHash, V8ObjEq> V8ObjSet;
+	typedef std::unordered_set<Handle<Object>, V8ObjHash, V8ObjEq> V8ObjSet;
+
 
     struct TBSONCTX {
         V8ObjSet tset; //traversed objects set
@@ -197,7 +188,7 @@ namespace ejdb {
             case BSON_DOUBLE:
                 return scope.Close(Number::New(bson_iterator_double_raw(it)));
             case BSON_BOOL:
-                return scope.Close(Boolean::New(bson_iterator_bool_raw(it)));
+                return scope.Close(Boolean::New(bson_iterator_bool_raw(it) ? true : false));
             case BSON_OBJECT:
             case BSON_ARRAY:
             {
@@ -247,7 +238,7 @@ namespace ejdb {
         while ((bt = bson_iterator_next(it)) != BSON_EOO) {
             const char *key = bson_iterator_key(it);
             if (obt == BSON_ARRAY) {
-                knum = tcatoi(key);
+                knum = (uint32_t) tcatoi(key);
             }
             switch (bt) {
                 case BSON_OID:
@@ -308,9 +299,9 @@ namespace ejdb {
                     break;
                 case BSON_BOOL:
                     if (obt == BSON_ARRAY) {
-                        ret->Set(knum, Boolean::New(bson_iterator_bool_raw(it)));
+                        ret->Set(knum, Boolean::New(bson_iterator_bool_raw(it) ? true : false));
                     } else {
-                        ret->Set(String::New(key), Boolean::New(bson_iterator_bool_raw(it)));
+                        ret->Set(String::New(key), Boolean::New(bson_iterator_bool_raw(it) ? true : false));
                     }
                     break;
                 case BSON_OBJECT:
@@ -535,7 +526,7 @@ namespace ejdb {
             TCXSTR *log;
 
             BSONQCmdData(const char *_cname, int _qflags) :
-            BSONCmdData::BSONCmdData(_cname), res(NULL), qflags(_qflags), count(0), log(NULL) {
+            BSONCmdData(_cname), res(NULL), qflags(_qflags), count(0), log(NULL) {
             }
 
             virtual ~BSONQCmdData() {
@@ -849,12 +840,12 @@ namespace ejdb {
                 Local<Object> cm = Object::New();
                 cm->Set(sym_name, String::New(coll->cname, coll->cnamesz));
                 cm->Set(sym_file, String::New(coll->tdb->hdb->path));
-                cm->Set(sym_records, Integer::NewFromUnsigned(coll->tdb->hdb->rnum));
+                cm->Set(sym_records, Integer::NewFromUnsigned((uint32_t) coll->tdb->hdb->rnum));
                 Local<Object> opts = Object::New();
-                opts->Set(sym_buckets, Integer::NewFromUnsigned(coll->tdb->hdb->bnum));
+                opts->Set(sym_buckets, Integer::NewFromUnsigned((uint32_t) coll->tdb->hdb->bnum));
                 opts->Set(sym_cachedrecords, Integer::NewFromUnsigned(coll->tdb->hdb->rcnum));
                 opts->Set(sym_large, Boolean::New(coll->tdb->opts & TDBTLARGE));
-                opts->Set(sym_compressed, Boolean::New(coll->tdb->opts & TDBTDEFLATE));
+                opts->Set(sym_compressed, Boolean::New((coll->tdb->opts & TDBTDEFLATE) ? true : false));
                 cm->Set(sym_options, opts);
                 Local<Array> indexes = Array::New();
                 int ic = 0;
@@ -880,7 +871,7 @@ namespace ejdb {
                     }
                     TCBDB *idb = (TCBDB*) idx->db;
                     if (idb) {
-                        imeta->Set(sym_records, Integer::NewFromUnsigned(idb->rnum));
+                        imeta->Set(sym_records, Integer::NewFromUnsigned((uint32_t) idb->rnum));
                         imeta->Set(sym_file, String::New(idb->hdb->path));
                     }
                     indexes->Set(Integer::New(ic++), imeta);
@@ -952,7 +943,7 @@ namespace ejdb {
             }
             EJCOLLOPTS jcopts;
             memset(&jcopts, 0, sizeof (jcopts));
-            jcopts.cachedrecords = fetch_int_data(copts->Get(sym_cachedrecords), NULL, 0);
+            jcopts.cachedrecords = (int) fetch_int_data(copts->Get(sym_cachedrecords), NULL, 0);
             jcopts.compressed = fetch_bool_data(copts->Get(sym_compressed), NULL, false);
             jcopts.large = fetch_bool_data(copts->Get(sym_large), NULL, false);
             jcopts.records = fetch_int_data(copts->Get(sym_records), NULL, 0);
@@ -1732,7 +1723,7 @@ finish:
 
         virtual ~NodeEJDBCursor() {
             close();
-            V8::AdjustAmountOfExternalAllocatedMemory(-sizeof (NodeEJDBCursor));
+            V8::AdjustAmountOfExternalAllocatedMemory((int)sizeof (NodeEJDBCursor) * -1);
         }
 
     public:
