@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-05-02` **[NodeJS win32 module available](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md#ejdb-nodejs-module-installation)**
 * `2013-04-25` **[EJDB and TokyoCabinet API ported to Windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)**
 * `2013-04-03` **[Java API binding available](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
 * `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
@@ -126,9 +127,12 @@ On Debian/Ubuntu linux you can install it as follows:
 sudo apt-get install g++ zlib1g zlib1g-dev
 ~~~~~~
 
-**Installation from node package manager:**
+**Installation from node package manager on linux/macos:**
 
     npm install ejdb
+
+**[Installing EJDB NodeJS win32 module](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md#ejdb-nodejs-module-installation)**
+
 
 EJDB NodeJS samples
 ---------------------------------

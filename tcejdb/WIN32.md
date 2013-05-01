@@ -4,6 +4,8 @@ Precompiled windows binaries
 * [tcejdb-1.1.3-mingw32-i686](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.3-mingw32-i686.zip)
 * [tcejdb-1.1.3-mingw32-x86_64](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.3-mingw32-x86_64.zip)
 
+**[Installing EJDB NodeJS win32 module](#ejdb-nodejs-module-installation)**
+
 
 Building EJDB and TokyoCabinet for windows
 ==========================================
@@ -99,6 +101,19 @@ it automatically downloaded by `mxe-build.sh` from my dropbox account. So do not
 
 * HDB `tchdbsetxmsiz()` takes no effect because all file data is memory mapped on windows platform.
 
+
+EJDB NodeJS module installation
+==================================
+
+To install nodejs ejdb binding you need:
+
+ * MSVC 2010 express edition
+ * Installed node v0.8.x or v0.10.x
+ * Manually installed `npm install adm-zip` package  (because it needed during installation process)
+
+ Then star MSVC cmd window and run:
+
+    npm install ejdb
 
 
 
