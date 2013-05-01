@@ -111,7 +111,7 @@ To install nodejs ejdb binding you need:
  * Installed node v0.8.x or v0.10.x
  * Manually installed `npm install adm-zip` package  (because it needed during installation process)
 
- Then star MSVC cmd window and run:
+ Then start MSVC cmd window and run:
 
     npm install ejdb
 
