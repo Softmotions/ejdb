@@ -10,7 +10,7 @@ var AdmZip = require("adm-zip");
 if (process.platform === "win32") {
     win();
 } else {
-    win();
+    nix();
 }
 
 function exithandler(cmd, cb) {
