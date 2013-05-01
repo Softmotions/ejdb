@@ -131,7 +131,7 @@ sudo apt-get install g++ zlib1g zlib1g-dev
 
     npm install ejdb
 
-**[Installing EJDB NodeJS win32 module](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md#ejdb-nodejs-module-installation)**
+**[Installing EJDB NodeJS module on windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md#ejdb-nodejs-module-installation)**
 
 
 EJDB NodeJS samples
