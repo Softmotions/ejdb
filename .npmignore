@@ -26,6 +26,8 @@
 *.changes
 .dep.inc
 */nbproject/private/*
+/ejdbdll
+/node_modules
 
 addressbook*
 /.idea/workspace.xml
@@ -91,4 +93,3 @@ addressbook*
 /node/nodejs
 nbproject
 .idea
-

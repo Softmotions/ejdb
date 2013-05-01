@@ -21,6 +21,8 @@
 *.tag.gz
 *.tgz
 .dep.inc
+/ejdbdll
+/node_modules
 
 addressbook*
 autom4te.cache/
@@ -108,6 +110,7 @@ tcejdb/debian/*.debhelper
 /pyejdb/pyejdb.egg-info/
 
 
+__pycache__
 /pyejdb/debian/files
 /pyejdb/debian/python3-ejdb.debhelper.log
 /pyejdb/debian/python3-ejdb.postinst.debhelper
