@@ -3,6 +3,8 @@
 
     },
 
+    'includes': ['configure.gypi'],
+
     'target_defaults': {
         'configurations': {
             'Debug': {
@@ -24,7 +26,6 @@
         },
         'conditions': [
             ['OS == "win"', {
-			   'includes': ['configure.gypi'],		
                'defines': [
                  '_UNICODE',
                ],

@@ -30,6 +30,9 @@ function nix() {
 
         case "preinstall":
         {
+            var config = {};
+            fs.writeFileSync("configure.gypi", JSON.stringify(config));
+
             console.log("Building EJDB...");
             var m = spawn("make", ["all"], {"stdio" : "inherit"});
             m.on("close", exithandler("make all", function() {
@@ -106,7 +109,7 @@ function win() {
                     });
                     res.on("end", function() {
                         console.log("\n%d bytes received", len);
-						setTimeout(processArchive, 2000);
+                        setTimeout(processArchive, 2000);
                     });
                     res.pipe(wf);
                 });
@@ -116,30 +119,30 @@ function win() {
             }
 
             function processArchive() {
-				var AdmZip = require("adm-zip");
+                var AdmZip = require("adm-zip");
                 console.log("Unzip archive '%s'", zfile);
                 var azip = new AdmZip(zfile);
                 azip.extractAllTo(sdir, true);
                 sdir = path.resolve(sdir);
-				
-				var config = {};
-				config["variables"] = {
-					"EJDB_HOME" : sdir
-				};
-				fs.writeFileSync("configure.gypi", JSON.stringify(config));
-			
+
+                var config = {};
+                config["variables"] = {
+                    "EJDB_HOME" : sdir
+                };
+                fs.writeFileSync("configure.gypi", JSON.stringify(config));
+
                 var args = ["configure", "rebuild"];
                 console.log("node-gyp %j", args);
                 var ng = spawn("node-gyp.cmd", args, {stdio : "inherit"});
-				ng.on("error", function(ev) {
-					console.log("Spawn error: " + ev);
-					process.exit(1);
-				});
+                ng.on("error", function(ev) {
+                    console.log("Spawn error: " + ev);
+                    process.exit(1);
+                });
                 ng.on("close", exithandler("node-gyp", function() {
-					copyFile(path.join(sdir, "lib/tcejdbdll.dll"), 
-							 "build/Release/tcejdbdll.dll", 
-							 exithandler("copy tcejdbdll.dll"));
-				}));
+                    copyFile(path.join(sdir, "lib/tcejdbdll.dll"),
+                            "build/Release/tcejdbdll.dll",
+                            exithandler("copy tcejdbdll.dll"));
+                }));
             }
         }
     }
@@ -147,23 +150,23 @@ function win() {
 
 
 function copyFile(source, target, cb) {
-  var cbCalled = false;
-  var rd = fs.createReadStream(source);
-  rd.on("error", function(err) {
-    done(err);
-  });
-  var wr = fs.createWriteStream(target);
-  wr.on("error", function(err) {
-    done(err);
-  });
-  wr.on("close", function(ex) {
-    done();
-  });
-  rd.pipe(wr);
-  function done(err) {
-    if (!cbCalled) {
-      cb(err);
-      cbCalled = true;
+    var cbCalled = false;
+    var rd = fs.createReadStream(source);
+    rd.on("error", function(err) {
+        done(err);
+    });
+    var wr = fs.createWriteStream(target);
+    wr.on("error", function(err) {
+        done(err);
+    });
+    wr.on("close", function(ex) {
+        done();
+    });
+    rd.pipe(wr);
+    function done(err) {
+        if (!cbCalled) {
+            cb(err);
+            cbCalled = true;
+        }
     }
-  }
 }
