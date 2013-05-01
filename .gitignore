@@ -23,6 +23,7 @@
 .dep.inc
 /ejdbdll
 /node_modules
+/configure.gypi
 
 addressbook*
 autom4te.cache/

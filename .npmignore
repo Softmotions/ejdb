@@ -28,6 +28,7 @@
 */nbproject/private/*
 /ejdbdll
 /node_modules
+/configure.gypi
 
 addressbook*
 /.idea/workspace.xml

@@ -24,9 +24,7 @@
         },
         'conditions': [
             ['OS == "win"', {
-               'variables': {
-                  'EJDB_HOME%': 'C:/EJDB'
-               },
+			   'includes': ['configure.gypi'],		
                'defines': [
                  '_UNICODE',
                ],
