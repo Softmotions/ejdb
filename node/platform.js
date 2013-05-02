@@ -5,6 +5,7 @@ var fs = require("fs");
 var path = require("path");
 var http = require("http");
 var util = require("util");
+var os = require("os");
 
 if (process.platform === "win32") {
     win();
@@ -57,7 +58,7 @@ function win() {
 
         case "preinstall":
         {
-            var dlurl = process.env["npm_package_config_windownloadurl"] || "http://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.3-mingw32-i686.zip";
+            var dlurl = process.env["npm_package_config_windownloadurl_" + os.arch()];
             if (dlurl == null) {
                 console.log("Invalid package configuration, missing windows binaries download url");
                 process.exit(1);
