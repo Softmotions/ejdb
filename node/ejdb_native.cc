@@ -219,7 +219,7 @@ namespace ejdb {
                 const char *re = bson_iterator_regex(it);
                 const char *ro = bson_iterator_regex_opts(it);
                 int rflgs = RegExp::kNone;
-                for (int i = (strlen(ro) - 1); i >= 0; --i) {
+                for (int i = ((int) strlen(ro) - 1); i >= 0; --i) {
                     if (ro[i] == 'i') {
                         rflgs |= RegExp::kIgnoreCase;
                     } else if (ro[i] == 'g') {
@@ -352,7 +352,7 @@ namespace ejdb {
                     const char *re = bson_iterator_regex(it);
                     const char *ro = bson_iterator_regex_opts(it);
                     int rflgs = RegExp::kNone;
-                    for (int i = (strlen(ro) - 1); i >= 0; --i) {
+                    for (int i = ((int) strlen(ro) - 1); i >= 0; --i) {
                         if (ro[i] == 'i') {
                             rflgs |= RegExp::kIgnoreCase;
                         } else if (ro[i] == 'g') {
@@ -456,7 +456,7 @@ namespace ejdb {
             } else if (Buffer::HasInstance(pv)) {
                 bson_append_binary(bs, *spn, BSON_BIN_BINARY,
                         Buffer::Data(Handle<Object>::Cast(pv)),
-                        Buffer::Length(Handle<Object>::Cast(pv)));
+                        (int) Buffer::Length(Handle<Object>::Cast(pv)));
             } else if (pv->IsObject() || pv->IsArray()) {
                 if (pv->IsArray()) {
                     bson_append_start_array(bs, *spn);

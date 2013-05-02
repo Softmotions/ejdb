@@ -148,7 +148,7 @@ namespace ejdb {
     }
 
     void EJError::errPrint() {
-        ej_log_intern(LOG_ERROR, this->location.c_str(), this->line, "%s, %s",
+        ej_log_intern(LOG_ERROR, this->location.c_str(), (int) this->line, "%s, %s",
                 this->msg.c_str(),
                 strerror(this->errno_code));
     }
