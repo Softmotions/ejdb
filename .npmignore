@@ -92,5 +92,6 @@ addressbook*
 /jejdb
 /misc
 /node/nodejs
+/node/tests/bench
 nbproject
 .idea
