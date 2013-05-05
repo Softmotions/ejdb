@@ -2,19 +2,6 @@
 <configurationDescriptor version="88">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="tcejdb">
-      <df name="bros">
-        <in>bdbtest.c</in>
-        <in>cdbtest.c</in>
-        <in>cmpsqltctest.c</in>
-        <in>gdbmtest.c</in>
-        <in>maptest.cc</in>
-        <in>ndbmtest.c</in>
-        <in>qdbmtest.c</in>
-        <in>sdbmtest.c</in>
-        <in>sqltest.c</in>
-        <in>tctest.c</in>
-        <in>tdbtest.c</in>
-      </df>
       <df name="nix">
         <in>platform.h</in>
       </df>
@@ -108,7 +95,7 @@
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
-          <executablePath>tcfmttest</executablePath>
+          <executablePath>testejdb/t4</executablePath>
           <cTool>
             <preprocessorList>
               <Elem>_GNU_SOURCE=1</Elem>
@@ -127,50 +114,6 @@
         </makeTool>
       </makefileType>
       <item path="basedefs.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="bros/bdbtest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/cdbtest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/cmpsqltctest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/gdbmtest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/maptest.cc" ex="false" tool="1" flavor2="4">
-        <ccTool>
-        </ccTool>
-      </item>
-      <item path="bros/ndbmtest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/qdbmtest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/sdbmtest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/sqltest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/tctest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/tdbtest.c" ex="false" tool="0" flavor2="2">
-        <cTool>
-        </cTool>
       </item>
       <item path="bson.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -225,15 +168,6 @@
       </item>
       <item path="encoding.h" ex="false" tool="3" flavor2="0">
       </item>
-      <folder path="tcejdb/bros">
-        <cTool>
-          <incDir>
-            <pElem>../../../../include</pElem>
-            <pElem>.</pElem>
-            <pElem>/usr/local/include</pElem>
-          </incDir>
-        </cTool>
-      </folder>
       <folder path="tcejdb/samples">
         <cTool>
           <incDir>
@@ -639,50 +573,6 @@
       </makefileType>
       <item path="basedefs.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="bros/bdbtest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/cdbtest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/cmpsqltctest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/gdbmtest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/maptest.cc" ex="false" tool="1" flavor2="0">
-        <ccTool>
-        </ccTool>
-      </item>
-      <item path="bros/ndbmtest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/qdbmtest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/sdbmtest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/sqltest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/tctest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
-      <item path="bros/tdbtest.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
-      </item>
       <item path="bson.c" ex="false" tool="0" flavor2="0">
         <cTool>
           <incDir>
@@ -736,15 +626,6 @@
       </item>
       <item path="encoding.h" ex="false" tool="3" flavor2="0">
       </item>
-      <folder path="tcejdb/bros">
-        <cTool>
-          <incDir>
-            <pElem>../../../../include</pElem>
-            <pElem>.</pElem>
-            <pElem>/usr/local/include</pElem>
-          </incDir>
-        </cTool>
-      </folder>
       <folder path="tcejdb/samples">
         <cTool>
           <incDir>
@@ -815,8 +696,6 @@
         </cTool>
       </item>
       <item path="samples/sample1/sample1.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
       </item>
       <item path="tcadb.c" ex="false" tool="0" flavor2="0">
         <cTool>
@@ -1072,20 +951,12 @@
       <item path="tcutil.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="testejdb/t1.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
       </item>
       <item path="testejdb/t2.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
       </item>
       <item path="testejdb/t3.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
       </item>
       <item path="testejdb/t4.c" ex="false" tool="0" flavor2="0">
-        <cTool>
-        </cTool>
       </item>
       <item path="utf8proc.c" ex="false" tool="0" flavor2="0">
         <cTool>

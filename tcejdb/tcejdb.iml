@@ -6,9 +6,9 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/nbproject" />
     </content>
-    <content url="file://$USER_HOME$/tmp/tokyocabinet-win" />
     <orderEntry type="jdk" jdkName="1.7" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Node.js v0.10.5 Core Library" level="application" />
   </component>
 </module>
 

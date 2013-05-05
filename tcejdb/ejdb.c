@@ -1174,7 +1174,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
         case TDBQCSTRRX:
         {
             _FETCHSTRFVAL();
-            rv = qf->regex && (regexec((regex_t *)qf->regex, fval, 0, NULL, 0) == 0);
+            rv = qf->regex && (regexec((regex_t *) qf->regex, fval, 0, NULL, 0) == 0);
             break;
         }
         case TDBQCNUMEQ:
@@ -2892,7 +2892,12 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
     //No direct operation index. Any alternatives?
     if (idxmeta &&
             !(qf->flags & EJCONDICASE) && //if not case insensitive query
-            (qf->tcop == TDBQCSTREQ || qf->tcop == TDBQCSTROREQ || qf->tcop == TDBQCNUMOREQ)) {
+            (
+            qf->tcop == TDBQCSTREQ ||
+            qf->tcop == TDBQCSTROREQ ||
+            qf->tcop == TDBQCNUMOREQ ||
+            qf->tcop == TDBQCNUMEQ)
+            ) {
         bson_iterator it;
         bson_type bt = bson_find(&it, idxmeta, "iflags");
         if (bt != BSON_INT) {
@@ -2905,6 +2910,14 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
                 if (!strcmp(qf->fpath, idx->name + 1)) {
                     if (qf->tcop == TDBQCSTREQ) {
                         qf->tcop = TDBQCSTROR;
+                        qf->exprlist = tclistnew2(1);
+                        TCLISTPUSH(qf->exprlist, qf->expr, qf->exprsz);
+                        if (qf->expr) TCFREE(qf->expr);
+                        qf->expr = tclistdump(qf->exprlist, &qf->exprsz);
+                        qf->ftype = BSON_ARRAY;
+                        return idx;
+                    } else if (qf->tcop == TDBQCNUMEQ) {
+                        qf->tcop = TDBQCSTRNUMOR;
                         qf->exprlist = tclistnew2(1);
                         TCLISTPUSH(qf->exprlist, qf->expr, qf->exprsz);
                         if (qf->expr) TCFREE(qf->expr);
