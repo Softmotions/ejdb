@@ -20,7 +20,7 @@ function run(opts, prepareCb, saveCb) {
     var lvlindexedfields = opts["lvlindexedfields"] != null ? opts["lvlindexedfields"] : 2; //max number of indexed field for each level
 
     var qfields = {};
-    var types = ["s", "i", "f", "a", "ia", "o"];
+    var types = ["s", "s", "s", "s", "i", "i", "f", "a", "ia", "o", "o", "o"];
     var parents = [];
     parents[0] = {};
     for (var l = 0; l < maxlevels; ++l) {
