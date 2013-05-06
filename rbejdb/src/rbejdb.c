@@ -48,7 +48,7 @@ typedef struct {
 typedef struct {
     TCLIST* results;
     TCLIST* results_raw;
-    int count;
+    uint32_t count;
     TCXSTR* log;
 } RBEJDB_RESULTS;
 
@@ -60,7 +60,7 @@ typedef struct {
 } RBEJDB_QUERY;
 
 
-VALUE create_EJDB_query_results(TCLIST* qres, int count, TCXSTR *log);
+VALUE create_EJDB_query_results(TCLIST* qres, uint32_t count, TCXSTR *log);
 
 
 VALUE ejdbClass;
@@ -102,9 +102,8 @@ int nil_or_raise_ejdb_error(EJDB *ejdb) {
     int ecode = ejdbecode(ejdb);
     if (ecode != TCESUCCESS && ecode != TCENOREC) {
         raise_ejdb_error(ejdb);
-    } else {
-        return Qnil;
     }
+    return Qnil;
 }
 
 
@@ -412,7 +411,7 @@ VALUE prepare_query_hints(VALUE hints) {
     return res;
 }
 
-VALUE EJDB_remove_query_internal(RBEJDB_QUERY* rbquery) {
+void EJDB_remove_query_internal(RBEJDB_QUERY* rbquery) {
     if (rbquery->qbson) {
         bson_destroy(rbquery->qbson);
         rbquery->qbson = NULL;
@@ -433,6 +432,7 @@ VALUE EJDB_remove_query_internal(RBEJDB_QUERY* rbquery) {
 
 VALUE EJDB_query_free(RBEJDB_QUERY* rbquery) {
     ruby_xfree(rbquery);
+    return Qnil;
 }
 
 VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, VALUE orarr, VALUE hints) {
@@ -447,7 +447,7 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
 
     ruby_to_bson(q, &(rbquery->qbson), RUBY_TO_BSON_AS_QUERY);
 
-    int i;
+    int i = 0;
     while(!NIL_P(rb_ary_entry(orarr, 0))) {
         VALUE orq = rb_ary_shift(orarr);
         bson* orqbson;
@@ -477,13 +477,13 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
 
     EJQ *ejq = ejdbcreatequery(ejdb, rbquery->qbson, rbquery->orarrbson, NUM2INT(orarrlng), rbquery->hintsbson);
 
-    int count;
+    uint32_t count;
     int qflags = onlycount ? EJQONLYCOUNT : 0;
     TCXSTR *log = explain ? tcxstrnew() : NULL;
 
     TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, log);
 
-    return !onlycount || explain ? create_EJDB_query_results(qres, count, log) : INT2NUM(count);
+    return !onlycount || explain ? create_EJDB_query_results(qres, count, log) : UINT2NUM(count);
 }
 
 VALUE EJDB_find_internal_wrapper(VALUE args) {
@@ -495,6 +495,7 @@ VALUE EJDB_find_ensure(VALUE queryWrap, VALUE exception) {
     RBEJDB_QUERY* rbquery;
     Data_Get_Struct(queryWrap, RBEJDB_QUERY, rbquery);
     EJDB_remove_query_internal(rbquery);
+    return Qnil;
 }
 
 
@@ -1174,7 +1175,7 @@ void EJDB_results_free(RBEJDB_RESULTS* rbres) {
     ruby_xfree(rbres);
 }
 
-VALUE create_EJDB_query_results(TCLIST* qres, int count, TCXSTR *log) {
+VALUE create_EJDB_query_results(TCLIST* qres, uint32_t count, TCXSTR *log) {
     VALUE resultsWrap = Data_Wrap_Struct(ejdbResultsClass, NULL, EJDB_results_free, ruby_xmalloc(sizeof(RBEJDB_RESULTS)));
     RBEJDB_RESULTS* rbresults;
     Data_Get_Struct(resultsWrap, RBEJDB_RESULTS, rbresults);
@@ -1226,7 +1227,7 @@ VALUE EJDB_results_count(VALUE self) {
         rb_raise(rb_eRuntimeError, "count() method called on invalid ejdb query results");
     }
 
-    return INT2NUM(rbresults->count);
+    return UINT2NUM(rbresults->count);
 }
 
 /*
@@ -1297,7 +1298,7 @@ void EJDB_binary_each(VALUE self) {
 }
 
 
-Init_rbejdb() {
+void Init_rbejdb() {
     init_ruby_to_bson();
 
     ejdbClass = rb_define_class("EJDB", rb_cObject);

@@ -410,6 +410,7 @@ VALUE bson_to_ruby_ensure_destroy_wrapper(VALUE bsonWrap, VALUE exception) {
         bson_destroy(rbbson->bsonval);
     }
     rbbson->bsonval = NULL;
+    return Qnil;
 }
 
 VALUE bson_to_ruby_ensure_destroy(bson* bsonval) {

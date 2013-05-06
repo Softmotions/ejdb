@@ -12,4 +12,5 @@ end
 
 Dir.chdir BUILD_DIR
 
+$CFLAGS << ' -Wall '
 create_makefile("rbejdb", '../src')
