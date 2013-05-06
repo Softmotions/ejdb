@@ -8,7 +8,7 @@ Installation
 
 * gcc
 * **ruby >= 1.9.1 and ruby-dev**
-* EJDB C library **libtcejdb** ([from sources](https://github.com/Softmotions/ejdb#manual-installation) or as [debian packages](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation))
+* EJDB C library **libtcejdb-dev** ([from sources](https://github.com/Softmotions/ejdb#manual-installation) or as [debian packages](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation))
 
 **(A) Installing directly from sources**
 
