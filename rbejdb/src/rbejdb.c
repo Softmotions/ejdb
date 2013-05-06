@@ -19,11 +19,11 @@
  * Main EJDB class that contains all database control methods. Instance should be created by EJDB::open
  */
 
- /*
-  * Document-class: EJDBQuery
-  * :nodoc:
-  * Internal EJDB class
-  */
+/*
+ * Document-class: EJDBQuery
+ * :nodoc:
+ * Internal EJDB class
+ */
 
 /*
  * Document-class: EJDBResults
