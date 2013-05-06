@@ -12,5 +12,6 @@ end
 
 Dir.chdir BUILD_DIR
 
-$CFLAGS << ' -Wall '
+$CFLAGS << ' -Wall'
+CONFIG['warnflags'].gsub!('-Wdeclaration-after-statement', '')
 create_makefile("rbejdb", '../src')
