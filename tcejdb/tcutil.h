@@ -3936,6 +3936,16 @@ EJDB_EXPORT int tcicaseformat(const char *str, int strl, void *placeholder, int 
 EJDB_EXPORT int tcutf8map(const uint8_t *str, int strl, void *placeholder, int placeholdersz, uint8_t **dstptr, int options);
 
 
+/**
+ * Get the hash value by MurMur hashing.
+ * @param buf the source buffer.
+ * @param size the size of the source buffer.
+ * @return the hash value.
+ */
+EJDB_EXPORT uint64_t hashmurmur64(const void* buf, size_t size, uint32_t seed);
+EJDB_EXPORT uint32_t hashmurmur32(const void* buf, size_t size, uint32_t seed);
+
+
 /* Print debug information with a formatted string as with `printf'. */
 #if __STDC_VERSION__ >= 199901L
 #define TCDPRINTF(...) \

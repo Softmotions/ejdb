@@ -513,6 +513,39 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
     if((TC_rv) == 0) (TC_rv) = (TC_asiz) - (TC_bsiz); \
   } while(false)
 
+
+
+
+/*************************************************************************************************
+ * atomics
+ *************************************************************************************************/
+
+#if !defined(__GNUC__) || \
+    ((__GNUC__ - 0) * 100 + (__GNUC_MINOR__ - 0)) < 407 || \
+    defined(__INTEL_COMPILER) || defined(__clang__)
+#define __atomic_load_n(ptr,order) *(ptr)
+#define __atomic_store_n(ptr,val,order) (*(ptr) = (val), (void)0)
+#define __atomic_exchange_n(ptr,val,order) __sync_lock_test_and_set(ptr, val)
+#define __atomic_compare_exchange_n(ptr,expected,desired,weak,order1,order2) \
+    __sync_bool_compare_and_swap(ptr, *(expected), desired) ? 1 : \
+    (*(expected) = *(ptr), 0)
+
+#define __atomic_add_fetch(ptr,val,order) __sync_add_and_fetch(ptr, val)
+#define __atomic_sub_fetch(ptr,val,order) __sync_sub_and_fetch(ptr, val)
+#define __atomic_or_fetch(ptr,val,order) __sync_or_and_fetch(ptr, val)
+#define __atomic_and_fetch(ptr,val,order) __sync_and_and_fetch(ptr, val)
+#define __atomic_xor_fetch(ptr,val,order) __sync_xor_and_fetch(ptr, val)
+#define __atomic_nand_fetch(ptr,val,order) __sync_nand_and_fetch(ptr, val)
+
+#define __atomic_fetch_add(ptr,val,order) __sync_fetch_and_add(ptr, val)
+#define __atomic_fetch_sub(ptr,val,order) __sync_fetch_and_sub(ptr, val)
+#define __atomic_fetch_or(ptr,val,order) __sync_fetch_and_or(ptr, val)
+#define __atomic_fetch_and(ptr,val,order) __sync_fetch_and_and(ptr, val)
+#define __atomic_fetch_xor(ptr,val,order) __sync_fetch_and_xor(ptr, val)
+#define __atomic_fetch_nand(ptr,val,order) __sync_fetch_and_nand(ptr, val)
+#endif
+
+
 #endif                                   // duplication check
 
 // END OF FILE
