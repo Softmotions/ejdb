@@ -56,7 +56,8 @@ enum { /** Error codes */
     JBEQONEEMATCH = 9011, /**< Only one $elemMatch allowed in the fieldpath. */
     JBEQINCEXCL = 9012, /**< $fields hint cannot mix include and exclude fields */
     JBEQACTKEY = 9013, /**< action key in $do block can only be one of: $join */
-    JBEMAXNUMCOLS = 9014 /**< Exceeded the maximum number of collections per database */
+    JBEMAXNUMCOLS = 9014, /**< Exceeded the maximum number of collections per database */
+    JBEEI = 9015 /**< EJDB export/import error */
 };
 
 enum { /** Database open modes */
@@ -434,6 +435,22 @@ EJDB_EXPORT bool ejdbtranabort(EJCOLL *coll);
 
 /** Get current transaction status, it will be placed into txActive*/
 EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive);
+
+
+/** Export settings */
+enum {
+    JBJSONEXPORT = 1 //If set json collection data will be exported into JSON instead of BSON
+};
+
+/**
+ * Export database data to the specified location. Read lock will be taken on each collection
+ * @param path Directory name in which data will exported.
+ * @param colnames List of collection names to export. If NULL all collections will be exported.
+ * @param flags. Reserved for future use.
+ * @return on sucess `true`
+ */
+EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags);
+
 
 EJDB_EXTERN_C_END
 

@@ -49,6 +49,8 @@
 /* Default size (16K) of tmp bson buffer on stack for field stripping in _pushstripbson() */
 #define JBSBUFFERSZ 16384
 
+#define JBFILEMODE 00644             // permission of created files
+
 /* string processing/conversion flags */
 typedef enum {
     JBICASE = 1
@@ -74,6 +76,7 @@ typedef struct {
 } _DEFFEREDIDXCTX;
 
 /* private function prototypes */
+static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags);
 static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, const char *func);
 static bool _ejdbsetmutex(EJDB *ejdb);
 EJDB_INLINE bool _ejdblockmethod(EJDB *ejdb, bool wr);
@@ -150,6 +153,7 @@ const char* ejdberrmsg(int ecode) {
         case JBEQINCEXCL: return "$fields hint cannot mix include and exclude fields";
         case JBEQACTKEY: return "action key in $do block can only be one of: $join";
         case JBEMAXNUMCOLS: return "exceeded the maximum number of collections per database: 1024";
+        case JBEEI: return "export/import error";
 
         default: return tcerrmsg(ecode);
     }
@@ -776,9 +780,161 @@ bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
     return true;
 }
 
+bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags) {
+    assert(jb && path);
+    bool err = false;
+    bool isdir = false;
+    if (!tcstatfile(path, &isdir, NULL, NULL)) {
+        return false;
+    }
+    if (!isdir) {
+        if (mkdir(path, 00755)) {
+            _ejdbsetecode(jb, TCEMKDIR, __FILE__, __LINE__, __func__);
+            return false;
+        }
+    }
+    TCLIST *_cnames = cnames;
+    if (_cnames == NULL) {
+        _cnames = ejdbgetcolls(jb);
+        if (_cnames == NULL) {
+            return false;
+        }
+    }
+    for (int i = 0; i < TCLISTNUM(cnames); ++i) {
+        const char *cn = TCLISTVALPTR(cnames, i);
+        assert(cn);
+        EJCOLL *coll = ejdbgetcoll(jb, cn);
+        if (!coll) continue;
+        if (!JBCLOCKMETHOD(coll, false)) {
+            err = true;
+            goto finish;
+        }
+        if (!_exportcoll(coll, path, flags)) {
+            err = true;
+        }
+        JBCUNLOCKMETHOD(coll);
+    }
+
+finish:
+    if (_cnames != cnames) {
+        tclistdel(_cnames);
+    }
+    return !err;
+}
+
 /*************************************************************************************************
  * private features
  *************************************************************************************************/
+
+static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags) {
+    bool err = false;
+    char *fpath = tcsprintf("%s%c%s%s", dpath, MYPATHCHR, coll->cname, ".bson");
+    char *fpathm = tcsprintf("%s%c%s%s", dpath, MYPATHCHR, coll->cname, "-meta.json");
+    TCHDB *hdb = coll->tdb->hdb;
+    TCXSTR *skbuf = tcxstrnew3(sizeof (bson_oid_t) + 1);
+    TCXSTR *colbuf = tcxstrnew3(1024);
+    TCXSTR *bsbuf = tcxstrnew3(1024);
+    int sz = 0;
+    uint64_t hdbiter;
+#ifndef _WIN32
+    HANDLE fd = open(fpath, O_RDWR | O_CREAT | O_TRUNC, JBFILEMODE);
+    HANDLE fdm = open(fpathm, O_RDWR | O_CREAT | O_TRUNC, JBFILEMODE);
+#else
+    HANDLE fd = CreateFile(fpath, GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    HANDLE fdm = CreateFile(fpath, GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
+    if (INVALIDHANDLE(fd) || INVALIDHANDLE(fdm)) {
+        _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+        err = true;
+        goto finish;
+    }
+    if (!tchdbiterinit4(hdb, &hdbiter)) {
+        goto finish;
+    }
+    while (!err && tchdbiternext4(hdb, &hdbiter, skbuf, colbuf)) {
+        sz = tcmaploadoneintoxstr(TCXSTRPTR(colbuf), TCXSTRSIZE(colbuf), JDBCOLBSON, JDBCOLBSONL, bsbuf);
+        if (sz > 0) {
+            char *wbuf = NULL;
+            int wsiz;
+            if (flags & JBJSONEXPORT) {
+                if (bson2json(TCXSTRPTR(bsbuf), &wbuf, &wsiz) != BSON_OK) {
+                    _ejdbsetecode(coll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+                    goto wfinish;
+                }
+            } else {
+                wbuf = TCXSTRPTR(bsbuf);
+                wsiz = TCXSTRSIZE(bsbuf);
+            }
+            if (!tcwrite(fd, wbuf, wsiz)) {
+                _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+                goto wfinish;
+            }
+wfinish:
+            if (wbuf && wbuf != TCXSTRPTR(bsbuf)) {
+                TCFREE(wbuf);
+            }
+        }
+        tcxstrclear(skbuf);
+        tcxstrclear(colbuf);
+        tcxstrclear(bsbuf);
+    }
+
+    if (!err) { //export collection meta
+        TCMAP *cmeta = tctdbget(coll->jb->metadb, coll->cname, coll->cnamesz);
+        if (!cmeta) {
+            goto finish;
+        }
+        bson mbs;
+        bson_init(&mbs);
+        tcmapiterinit(cmeta);
+        const char *mkey = NULL;
+        while ((mkey = tcmapiternext2(cmeta)) != NULL) {
+            if (!mkey || (*mkey != 'i' && strcmp(mkey, "opts"))) {
+                continue; //allowing only index & opts meta bsons
+            }
+            bson *bs = _metagetbson(coll->jb, coll->cname, coll->cnamesz, mkey);
+            if (bs) {
+                bson_append_bson(&mbs, mkey, bs);
+                bson_del(bs);
+            }
+        }
+        bson_finish(&mbs);
+        char *wbuf = NULL;
+        int wsiz;
+        if (bson2json(bson_data(&mbs), &wbuf, &wsiz) != BSON_OK) {
+            err = true;
+            _ejdbsetecode(coll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+            bson_destroy(&mbs);
+            goto finish;
+        }
+        bson_destroy(&mbs);
+        if (!tcwrite(fdm, wbuf, wsiz)) {
+            err = true;
+            _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+        }
+        TCFREE(wbuf);
+    }
+
+finish:
+    if (!INVALIDHANDLE(fd) && !CLOSEFH(fd)) {
+        _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+        err = true;
+    }
+    if (!INVALIDHANDLE(fdm) && !CLOSEFH(fdm)) {
+        _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+        err = true;
+    }
+    tcxstrdel(skbuf);
+    tcxstrdel(colbuf);
+    tcxstrdel(bsbuf);
+    TCFREE(fpath);
+    return !err;
+}
 
 /* Set the error code of a table database object. */
 static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, const char *func) {

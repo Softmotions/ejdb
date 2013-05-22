@@ -25,6 +25,7 @@
 #include "bson.h"
 #include "encoding.h"
 #include "myconf.h"
+#include "tcutil.h"
 
 #ifdef _MYBIGEND
 #define bson_little_endian64(out, in) ( bson_swap_endian64(out, in) )
@@ -1959,3 +1960,172 @@ int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool e
     }
     return ctx.ecode;
 }
+
+typedef struct {
+    int nlvl; //nesting level
+    TCXSTR *out; //output buffer
+} _BSON2JSONCTX;
+
+static void _jsonxstrescaped(TCXSTR *xstr, const char *str) {
+    size_t sz = strlen(str);
+    int s = 0;
+    int e = 0;
+    char hb[7];
+    hb[0] = '\\';
+    hb[1] = 'u';
+    hb[2] = '0';
+    hb[3] = '0';
+    hb[6] = '\0';
+    while (e < sz) {
+        const char * ebuf = NULL;
+        switch (str[e]) {
+            case '\r': ebuf = "\\r";
+                break;
+            case '\n': ebuf = "\\n";
+                break;
+            case '\\': ebuf = "\\\\";
+                break;
+            case '/':
+                break;
+            case '"': ebuf = "\\\"";
+                break;
+            case '\f': ebuf = "\\f";
+                break;
+            case '\b': ebuf = "\\b";
+                break;
+            case '\t': ebuf = "\\t";
+                break;
+            default:
+                if ((unsigned char) str[e] < 0x20) {
+                    static const char *hexchar = "0123456789ABCDEF";
+                    hb[4] = hexchar[str[e] >> 4];
+                    hb[5] = hexchar[str[e] & 0x0F];
+                    ebuf = hb;
+                }
+                break;
+        }
+        if (ebuf != NULL) {
+            if (e > s) {
+                tcxstrcat(xstr, str + s, e - s);
+            }
+            tcxstrcat2(xstr, ebuf);
+            s = ++e;
+        } else {
+            ++e;
+        }
+    }
+    tcxstrcat(xstr, (str + s), e - s);
+}
+
+static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
+
+#define BSPAD(_n) \
+    for (int i = 0; i < ctx->nlvl + (_n); ++i) tcxstrcat2(ctx->out, " ")
+
+    bson_type bt;
+    TCXSTR *out = ctx->out;
+    BSPAD(0);
+    tcxstrcat2(ctx->out, "{\n");
+    ctx->nlvl += 4;
+    int c = 0;
+    while ((bt = bson_iterator_next(it)) != BSON_EOO) {
+        if (c++ > 0) {
+            tcxstrcat2(out, ",\n");
+        }
+        const char *key = bson_iterator_key(it);
+        BSPAD(0);
+        _jsonxstrescaped(out, key);
+        tcxstrcat2(out, " : ");
+        switch (bt) {
+            case BSON_LONG:
+            case BSON_INT:
+                tcxstrprintf(out, "%lld", (int64_t) bson_iterator_long_ext(it));
+                break;
+            case BSON_DOUBLE:
+            {
+                tcxstrprintf(out, "%llf", bson_iterator_double(it));
+                break;
+            }
+            case BSON_STRING:
+            case BSON_SYMBOL:
+            {
+                _jsonxstrescaped(out, bson_iterator_string(it));
+                break;
+            }
+            case BSON_OBJECT:
+            case BSON_ARRAY:
+            {
+                bson_iterator sit;
+                bson_iterator_subiterator(it, &sit);
+                _bson2json(ctx, &sit);
+            }
+            case BSON_NULL:
+                tcxstrcat2(out, "null");
+            case BSON_UNDEFINED:
+                break;
+            case BSON_DATE:
+            {
+                bson_date_t t = bson_iterator_date(it);
+                char dbuf[49];
+                tcdatestrwww(t, INT_MAX, dbuf);
+                tcxstrprintf(out, "%s", dbuf);
+                break;
+            }
+            case BSON_BOOL:
+                tcxstrcat2(out, bson_iterator_bool(it) ? "true" : "false");
+                break;
+            case BSON_OID:
+            {
+                char xoid[25];
+                bson_oid_t *oid = bson_iterator_oid(it);
+                bson_oid_to_string(oid, xoid);
+                tcxstrprintf(out, "%s", xoid);
+                break;
+            }
+            case BSON_REGEX:
+            {
+               tcxstrprintf(out, "%s", bson_iterator_regex(it));
+               break;
+            }
+            case BSON_BINDATA:
+            {
+                const char *buf = bson_iterator_bin_data(it);
+                int bsz = bson_iterator_bin_len(it);
+                char *b64data = tcbaseencode(buf, bsz);
+                tcxstrcat2(out, "\"");
+                tcxstrcat2(out, b64data);
+                tcxstrcat2(out, "\"");
+                TCFREE(b64data);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    BSPAD(-4);
+    tcxstrcat2(out, "\n}\n");
+    return 0;
+#undef BSPAD
+}
+
+int bson2json(const char *bsdata, char **buf, int *sp) {
+    assert(bsdata && buf && sp);
+    bson_iterator it;
+    bson_iterator_from_buffer(&it, bsdata);
+    TCXSTR *out = tcxstrnew();
+    _BSON2JSONCTX ctx = {
+        .nlvl = 0,
+        .out = out
+    };
+    int ret = _bson2json(&ctx, &it);
+    if (ret == BSON_OK) {
+        *sp = TCXSTRSIZE(out);
+        *buf = tcxstrtomalloc(out);
+    } else {
+        *sp = 0;
+        *buf = NULL;
+        tcxstrclear(out);
+    }
+    return ret;
+}
+

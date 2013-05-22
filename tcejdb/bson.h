@@ -1131,5 +1131,15 @@ EJDB_EXPORT bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf
 EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool expandall, bson *bsout);
 
 
+/**
+ * Convert BSON into JSON buffer
+ * @param src BSON data
+ * @param buf Allocated buffer with resulting JSON data
+ * @param sp JSON data length will be stored into
+ * @return BSON_OK or BSON_ERROR
+ */
+EJDB_EXPORT int bson2json(const char *bsdata, char **buf, int *sp);
+
+
 EJDB_EXTERN_C_END
 #endif
