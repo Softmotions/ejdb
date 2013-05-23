@@ -417,7 +417,7 @@ EJDB_EXPORT int tchdbvsiz2(TCHDB *hdb, const char *kstr);
    If successful, the return value is true, else, it is false.
    The iterator is used in order to access the key of every record stored in a database. */
 EJDB_EXPORT bool tchdbiterinit(TCHDB *hdb);
-EJDB_EXPORT bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter);
+bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter);
 
 
 /* Get the next key of the iterator of a hash database object.
@@ -457,7 +457,7 @@ EJDB_EXPORT char *tchdbiternext2(TCHDB *hdb);
    If successful, the return value is true, else, it is false.  False is returned when no record
    is to be get out of the iterator. */
 EJDB_EXPORT bool tchdbiternext3(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr);
-EJDB_EXPORT bool tchdbiternext4(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr);
+bool tchdbiternext4(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr);
 
 
 /* Get forward matching keys in a hash database object.

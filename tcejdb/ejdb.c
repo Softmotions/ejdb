@@ -66,6 +66,10 @@ typedef struct {
     bool icase; //ignore case normalization
 } _BSONIPATHROWLDR;
 
+
+/* Maximum number of objects keeped to update deffered indexes */
+#define JBMAXDEFFEREDIDXNUM 512
+
 /* context of deffered index updates. See `_updatebsonidx()` */
 typedef struct {
     bson_oid_t oid;
@@ -4186,6 +4190,22 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         dctx.imap = (imap && TCMAPRNUM(imap) > 0) ? tcmapdup(imap) : NULL;
         if (dctx.imap || dctx.rmap) {
             TCLISTPUSH(dlist, &dctx, sizeof (dctx));
+        }
+        //flush deffered indexes if number pending objects greater JBMAXDEFFEREDIDXNUM
+        if (TCLISTNUM(dlist) >= JBMAXDEFFEREDIDXNUM) {
+            for (int i =  0; i < TCLISTNUM(dlist); ++i) {
+                _DEFFEREDIDXCTX *di = TCLISTVALPTR(dlist, i);
+                assert(di);
+                if (di->rmap) {
+                    tctdbidxout2(jcoll->tdb, &(di->oid), sizeof (di->oid), di->rmap);
+                    tcmapdel(di->rmap);
+                }
+                if (di->imap) {
+                    tctdbidxput2(jcoll->tdb, &(di->oid), sizeof (di->oid), di->imap);
+                    tcmapdel(di->imap);
+                }
+            }
+            TCLISTTRUNC(dlist, 0);
         }
     } else { //apply index changes immediately
         if (rimap && !tctdbidxout2(jcoll->tdb, oid, sizeof (*oid), rimap)) rv = false;
