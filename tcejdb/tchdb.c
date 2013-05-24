@@ -2453,7 +2453,6 @@ static void tchdbsetbucket(TCHDB *hdb, uint64_t bidx, uint64_t off) {
 static bool tchdbsavefbp(TCHDB *hdb) {
     assert(hdb);
     bool err = false;
-//    if (!HDBLOCKDB(hdb)) return false;
     if (hdb->fbpnum > hdb->fbpmax) {
         tchdbfbpmerge(hdb);
     } else if (hdb->fbpnum > 1) {
@@ -2481,7 +2480,6 @@ static bool tchdbsavefbp(TCHDB *hdb) {
         base = noff;
         cur++;
     }
-//    HDBUNLOCKDB(hdb);
     *(wp++) = '\0';
     *(wp++) = '\0';
     if (!tchdbseekwrite(hdb, hdb->msiz, buf, wp - buf)) {
@@ -2644,9 +2642,6 @@ static void tchdbfbpinsert(TCHDB *hdb, uint64_t off, uint32_t rsiz) {
         return;
     }
     __atomic_add_fetch(&hdb->dfcnt, 1, __ATOMIC_RELEASE);
-//    if (!HDBLOCKDB(hdb)) {
-//        return;
-//    }
     HDBFB *pv = hdb->fbpool;
     if (hdb->fbpnum >= hdb->fbpmax * HDBFBPALWRAT) {
         tchdbfbpmerge(hdb);
@@ -2686,7 +2681,6 @@ static void tchdbfbpinsert(TCHDB *hdb, uint64_t off, uint32_t rsiz) {
     pv->off = off;
     pv->rsiz = rsiz;
     hdb->fbpnum++;
-//    HDBUNLOCKDB(hdb);
 }
 
 /* Search the free block pool for the minimum region.
@@ -2696,13 +2690,9 @@ static void tchdbfbpinsert(TCHDB *hdb, uint64_t off, uint32_t rsiz) {
 static bool tchdbfbpsearch(TCHDB *hdb, TCHREC *rec) {
     assert(hdb && rec);
     TCDODEBUG(hdb->cnt_searchfbp++);
-//    if (!HDBLOCKDB(hdb)) {
-//        return false;
-//    }
     if (hdb->fbpnum < 1) {
         rec->off = hdb->fsiz;
         rec->rsiz = 0;
-//        HDBUNLOCKDB(hdb);
         return true;
     }
     uint32_t rsiz = rec->rsiz;
@@ -2743,7 +2733,6 @@ static bool tchdbfbpsearch(TCHDB *hdb, TCHREC *rec) {
         rec->rsiz = pv->rsiz;
         memmove(pv, pv + 1, sizeof (*pv) * (num - cand - 1));
         hdb->fbpnum--;
-//        HDBUNLOCKDB(hdb);
         return true;
     }
     rec->off = hdb->fsiz;
@@ -2753,7 +2742,6 @@ static bool tchdbfbpsearch(TCHDB *hdb, TCHREC *rec) {
         tchdbfbpmerge(hdb);
         tcfbpsortbyrsiz(hdb->fbpool, hdb->fbpnum);
     }
-//    HDBUNLOCKDB(hdb);
     return true;
 }
 
@@ -2774,7 +2762,6 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
         if (tchdbseekread2(hdb, off, &magic, sizeof (magic), HDBSEEKTRY) && magic != HDBMAGICFB) {
             return false;
         }
-        //if (!HDBLOCKDB(hdb)) return false;
         HDBFB *pv = hdb->fbpool;
         HDBFB *ep = pv + hdb->fbpnum;
         while (pv < ep) {
@@ -2784,12 +2771,10 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
                 rec->rsiz += pv->rsiz;
                 memmove(pv, pv + 1, sizeof (*pv) * ((ep - pv) - 1));
                 hdb->fbpnum--;
-                //HDBUNLOCKDB(hdb);
                 return true;
             }
             pv++;
         }
-        //HDBUNLOCKDB(hdb);
         return false;
     }
     uint64_t off = rec->off + rec->rsiz;
@@ -2838,7 +2823,6 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
 static void tchdbfbptrim(TCHDB *hdb, uint64_t base, uint64_t next, uint64_t off, uint32_t rsiz) {
     assert(hdb && base > 0 && next > 0);
     if (hdb->fpow < 1) return;
-//    if (!HDBLOCKDB(hdb)) return;
     if (hdb->fbpnum < 1) {
         if (off > 0) {
             HDBFB *fbpool = hdb->fbpool;
@@ -2846,7 +2830,6 @@ static void tchdbfbptrim(TCHDB *hdb, uint64_t base, uint64_t next, uint64_t off,
             fbpool->rsiz = rsiz;
             hdb->fbpnum = 1;
         }
-//        HDBUNLOCKDB(hdb);
         return;
     }
     HDBFB *wp = hdb->fbpool;
@@ -2873,7 +2856,6 @@ static void tchdbfbptrim(TCHDB *hdb, uint64_t base, uint64_t next, uint64_t off,
         off = 0;
     }
     hdb->fbpnum = wp - (HDBFB *) hdb->fbpool;
-//    HDBUNLOCKDB(hdb);
 }
 
 /* Write a free block into the file.
