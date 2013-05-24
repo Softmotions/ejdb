@@ -20,7 +20,7 @@
 #include "myconf.h"
 
 #define HDBFILEMODE    00644             // permission of created files
-#define HDBIOBUFSIZ    8192              // size of an I/O buffer
+#define HDBIOBUFSIZ    16384             // size of an I/O buffer
 
 #define HDBMAGICDATA   "ToKyO CaBiNeT"   // magic data for identification
 #define HDBHEADSIZ     256               // size of the region of the header
