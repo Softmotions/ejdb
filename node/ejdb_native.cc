@@ -1450,10 +1450,10 @@ finish:
 
         bool close() {
             if (m_jb) {
-                ejdbclose(m_jb);
+                bool rv = ejdbclose(m_jb);
                 ejdbdel(m_jb);
                 m_jb = NULL;
-                return true;
+                return rv;
             } else {
                 return false;
             }
