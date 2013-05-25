@@ -1,3 +1,9 @@
+libtcejdb (1.1.6) testing; urgency=low
+
+  * Better error reporting in the case of lack pthread resources. 
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sat, 25 May 2013 18:22:07 +0700
+
 libtcejdb (1.1.5-0) testing; urgency=low
 
   * TCHDB locking optimization 

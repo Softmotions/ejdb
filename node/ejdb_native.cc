@@ -1449,7 +1449,14 @@ finish:
         }
 
         bool close() {
-            return m_jb ? ejdbclose(m_jb) : false;
+            if (m_jb) {
+                ejdbclose(m_jb);
+                ejdbdel(m_jb);
+                m_jb = NULL;
+                return true;
+            } else {
+                return false;
+            }
         }
 
         const char* _jb_error_msg() {

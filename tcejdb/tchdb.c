@@ -391,6 +391,7 @@ bool tchdbopen(TCHDB *hdb, const char *path, int omode) {
             TCFREE(hdb->eckey);
             hdb->eckey = NULL;
             HDBUNLOCKMETHOD(hdb);
+            tchdbsetecode(hdb, TCETHREAD, __FILE__, __LINE__, __func__);
             return false;
         }
     }
