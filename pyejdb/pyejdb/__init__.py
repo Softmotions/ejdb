@@ -171,8 +171,7 @@ class EJDB(object):
     def sync(self):
         return self.__ejdb.sync()
 
-    @typecheck
-    def save(self, cname : str, *jsarr, **kwargs):
+    def save(self, cname, *jsarr, **kwargs):
         """ Save/update specified `dict` documents into collection `cname`.
 
         Samples:
@@ -199,8 +198,7 @@ class EJDB(object):
                 if "_id" not in doc:
                     doc["_id"] = _oid
 
-    @typecheck
-    def load(self, cname : str, oid : str):
+    def load(self, cname, oid):
         """ Loads `dict` documents identified by `oid` from `cname` collection.
         Sample:
         >>> ejdb.load('mycoll', '511c72ae7922641d00000000');
@@ -216,16 +214,13 @@ class EJDB(object):
             return None
         return bson.parse_bytes(docbytes)
 
-    @typecheck
-    def remove(self, cname : str, oid):
+    def remove(self, cname, oid):
         """ Removes from `cname` collection the document identified by `oid`
         """
         check_oid(oid)
         return self.__ejdb.remove(cname, oid)
 
-    @typecheck
-    def find(self, cname : str, qobj : optional(dict)=None,
-             *args, **kwargs):
+    def find(self, cname, qobj=None, *args, **kwargs):
         """ Execute query on collection.
 
         Sample:
@@ -344,7 +339,7 @@ class EJDB(object):
         cursor = self.__ejdb.find(cname, qobj, orarr, hints, qflags, log)
         return cursor if isinstance(cursor, numbers.Number) else EJDBCursorWrapper(cursor)
 
-    def findOne(self, cname : str, qobj : optional(dict)=None, *args, **kwargs):
+    def findOne(self, cname, qobj=None, *args, **kwargs):
         """ Same as `#find()` but retrieves only one matching JSON object.
         """
         hints = self.__preprocessQHints(kwargs.get("hints", {}))
@@ -353,7 +348,7 @@ class EJDB(object):
         with self.find(cname, qobj, *args, **kwargs) as res:
             return res[0] if len(res) > 0 else None
 
-    def update(self, cname : str, qobj : optional(dict)=None, *args, **kwargs):
+    def update(self, cname, qobj=None, *args, **kwargs):
         """ Convenient method to execute update queries.
         :Returns:
             Count of updated objects
@@ -362,7 +357,7 @@ class EJDB(object):
         kwargs["qflags"] = qflags | JBQRYCOUNT
         return self.find(cname, qobj, *args, **kwargs)
 
-    def count(self, cname : str, qobj : optional(dict)=None, *args, **kwargs):
+    def count(self, cname, qobj=None, *args, **kwargs):
         """ Counts matched documents.
         :Returns:
             Count of matched objects
@@ -371,37 +366,32 @@ class EJDB(object):
         kwargs["qflags"] = qflags | JBQRYCOUNT
         return self.find(cname, qobj, *args, **kwargs)
 
-    def dbmeta(self) -> dict:
+    def dbmeta(self):
         """ Retrieve metainfo object describing database structure.
         """
         return self.__ejdb.dbmeta()
 
-    @typecheck
-    def begintx(self, cname : str):
+    def begintx(self, cname):
         """ Begin collection transaction.
         """
         return self.__ejdb.txcontrol(cname, _pyejdb.PYEJDBTXBEGIN)
 
-    @typecheck
-    def commitx(self, cname : str):
+    def commitx(self, cname):
         """ Commit collection transaction.
         """
         return self.__ejdb.txcontrol(cname, _pyejdb.PYEJDBTXCOMMIT)
 
-    @typecheck
-    def abortx(self, cname : str):
+    def abortx(self, cname):
         """ Abort collection transaction.
         """
         return self.__ejdb.txcontrol(cname, _pyejdb.PYEJDBTXABORT)
 
-    @typecheck
-    def isactivetx(self, cname : str) -> bool:
+    def isactivetx(self, cname):
         """ Is collection transaction active
         """
         return self.__ejdb.txcontrol(cname, _pyejdb.PYEJDBTXSTATUS)
 
-    @typecheck
-    def ensureCollection(self, cname : str, **kwargs):
+    def ensureCollection(self, cname, **kwargs):
         """ Automatically creates new collection if it does not exists.
         Collection options `copts`
         are applied only for newly created collection.
@@ -416,97 +406,82 @@ class EJDB(object):
         """
         return self.__ejdb.ensureCollection(cname, **kwargs)
 
-    @typecheck
-    def dropCollection(self, cname : str, **kwargs):
+    def dropCollection(self, cname, **kwargs):
         """ Removes database collection.
         """
         return self.__ejdb.dropCollection(cname, **kwargs)
 
-    @typecheck
-    def dropIndexes(self, cname : str, path : str):
+    def dropIndexes(self, cname, path):
         """ Drops indexes of all types for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXDROPALL)
 
-    @typecheck
-    def optimizeIndexes(self, cname : str, path : str):
+    def optimizeIndexes(self, cname, path):
         """ Optimize indexes of all types for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXOP)
 
-    @typecheck
-    def ensureStringIndex(self, cname : str, path : str):
+    def ensureStringIndex(self, cname, path):
         """ Ensure index presence of String type for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXSTR)
 
-    @typecheck
-    def rebuildStringIndex(self, cname : str, path : str):
+    def rebuildStringIndex(self, cname, path):
         """ Rebuild index of String type for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXSTR | _pyejdb.JBIDXREBLD)
 
-    @typecheck
-    def dropStringIndex(self, cname : str, path : str):
+    def dropStringIndex(self, cname, path):
         """ Drop index of String type for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXSTR | _pyejdb.JBIDXDROP)
 
-    @typecheck
-    def ensureIStringIndex(self, cname : str, path : str):
+    def ensureIStringIndex(self, cname, path):
         """ Ensure case insensitive String index for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXISTR)
 
-    @typecheck
-    def rebuildIStringIndex(self, cname : str, path : str):
+    def rebuildIStringIndex(self, cname, path):
         """Rebuild case insensitive String index for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXISTR | _pyejdb.JBIDXREBLD)
 
-    @typecheck
-    def dropIStringIndex(self, cname : str, path : str):
+    def dropIStringIndex(self, cname, path):
         """Drop case insensitive String index for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXISTR | _pyejdb.JBIDXDROP)
 
-    @typecheck
-    def ensureNumberIndex(self, cname : str, path : str):
+    def ensureNumberIndex(self, cname, path):
         """Ensure index presence of Number type for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXNUM)
 
-    @typecheck
-    def rebuildNumberIndex(self, cname : str, path : str):
+    def rebuildNumberIndex(self, cname, path):
         """Rebuild index of Number type for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXNUM | _pyejdb.JBIDXREBLD)
 
-    @typecheck
-    def dropNumberIndex(self, cname : str, path : str):
+    def dropNumberIndex(self, cname, path):
         """Drop index of Number type for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXNUM | _pyejdb.JBIDXDROP)
 
-    @typecheck
-    def ensureArrayIndex(self, cname : str, path : str):
+    def ensureArrayIndex(self, cname, path):
         """Ensure index presence of Array type for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXARR)
 
-    @typecheck
-    def rebuildArrayIndex(self, cname : str, path : str):
+    def rebuildArrayIndex(self, cname, path):
         """Rebuild index of Array type for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXARR | _pyejdb.JBIDXREBLD)
 
-    @typecheck
-    def dropArrayIndex(self, cname : str, path : str):
+    def dropArrayIndex(self, cname, path):
         """Drop index of Array type for JSON field path.
         """
         return self.__ejdb.setIndex(cname, path, _pyejdb.JBIDXARR | _pyejdb.JBIDXDROP)
 
-    def __preprocessQHints(self, hints : dict):
+    def __preprocessQHints(self, hints):
         val = hints.get("$orderby")
         if isinstance(val, list):
             hints["$orderby"] = odict(val)
