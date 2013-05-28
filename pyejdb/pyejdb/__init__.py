@@ -16,14 +16,18 @@
 #  Boston, MA 02111-1307 USA.
 # *************************************************************************************************
 
+from __future__ import with_statement
+from __future__ import division
+from __future__ import print_function
+
 import _pyejdb
-from functools import lru_cache
+import sys
 from pyejdb import bson
-from pyejdb.typecheck import *
 from collections import OrderedDict as odict
 from io import StringIO as strio
 import re, numbers
 
+PY3 = sys.version_info[0] == 3
 
 __all__ = [
 
@@ -111,6 +115,9 @@ class EJDBCursorWrapper(object):
             raise StopIteration
         self.__pos += 1
         return self.get(self.__pos - 1)
+
+    def next(self):
+        return self.__next__()
 
     def __enter__(self):
         return self
