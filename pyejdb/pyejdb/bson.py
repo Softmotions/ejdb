@@ -276,8 +276,7 @@ class BSON_LazyDict():
         return self._check_lazy().__getitem__(key)
 
     def __repr__(self):
-        dictrepr = self._check_lazy().__repr__()
-        return '%s(%s)' % (type(self).__name__, dictrepr)
+        return '%s' % type(self).__name__
 
     def update(self, *args, **kwargs):
         return self._check_lazy().update(*args, **kwargs)
@@ -763,6 +762,7 @@ if PY3:
         float: lambda f: BSON_Double(f),
         str: lambda s: BSON_String(s),
         dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
+        BSON_LazyDict: lambda d: BSON_Document(d._check_lazy()),
         list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
         int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(
             i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
@@ -779,6 +779,7 @@ else:
         str: lambda s: BSON_String(s),
         unicode: lambda s: BSON_String(s),
         dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
+        BSON_LazyDict: lambda d: BSON_Document(d._check_lazy()),
         list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
         int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(
             i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
