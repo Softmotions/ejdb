@@ -6,10 +6,10 @@ if sys.version < '3':
         return x
 
     def u(x):
-        return codecs.unicode_escape_decode(x)[0]
+        return unicode(x, "unicode_escape")
 else:
     def b(x):
-        return codecs.latin_1_encode(x)[0]
+        return x.encode("latin-1")
 
     def u(x):
         return x
