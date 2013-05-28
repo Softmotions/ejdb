@@ -107,6 +107,7 @@ __all__ = [
 ###############################################################################
 
 import sys
+
 if sys.version > "3":
     long = int
 from datetime import datetime
@@ -152,7 +153,7 @@ class BSON_Value:
         return self
 
     def __eq__(self, other):
-        return self.__class__ is other.__class__ and \
+        return self.__class__ is other.__class__ and\
                self._value == other._value
 
     def __ne__(self, other):
@@ -255,6 +256,92 @@ class BSON_String(BSON_Value):
 BSON_Value._register_type(BSON_String)
 
 ###############################################################################
+
+class BSON_LazyDict():
+    def __init__(self, buf):
+        self._buf = buf
+        self._vdict = None
+
+    def _check_lazy(self):
+        if self._vdict is None:
+            self._vdict = BSON_Document.parse(self._buf)._py_value()
+            self._buf.close()
+            self._buf = None
+        return self._vdict
+
+    def __setitem__(self, key, value):
+        return self._check_lazy().__setitem__(key, value)
+
+    def __getitem__(self, key):
+        return self._check_lazy().__getitem__(key)
+
+    def __repr__(self):
+        dictrepr = self._check_lazy().__repr__()
+        return '%s(%s)' % (type(self).__name__, dictrepr)
+
+    def update(self, *args, **kwargs):
+        return self._check_lazy().update(*args, **kwargs)
+
+    def __len__(self):
+        return self._check_lazy().__len__()
+
+    def __iter__(self):
+        return self._check_lazy().__iter__()
+
+    def __sizeof__(self):
+        return self._check_lazy().__sizeof__()
+
+    def __ge__(self, y):
+        return self._check_lazy().__ge__(y)
+
+    def __gt__(self, y):
+        return self._check_lazy().__gt__(y)
+
+    def __eq__(self, y):
+        return self._check_lazy().__eq__(y)
+
+    def __ne__(self, y):
+        return self._check_lazy().__ne__(y)
+
+    def __le__(self, y):
+        return self._check_lazy().__le__(y)
+
+    def __lt__(self, y):
+        return self._check_lazy().__lt__(y)
+
+    def __delitem__(self, y):
+        return self._check_lazy().__delitem__(y)
+
+    def __contains__(self, k):
+        return self._check_lazy().__contains__(k)
+
+    def setdefault(self, k, d=None):
+        return self._check_lazy().setdefault(k, d)
+
+    def items(self):
+        return self._check_lazy().items()
+
+    def popitem(self):
+        return self._check_lazy().popitem()
+
+    def keys(self):
+        return self._check_lazy().keys()
+
+    def get(self, k, d=None):
+        return self._check_lazy().get(k, d)
+
+    def copy(self):
+        return self._check_lazy().copy()
+
+    def values(self):
+        return self._check_lazy().values()
+
+    def clear(self):
+        return self._check_lazy().clear()
+
+    def pop(self, k, d=None):
+        return self._check_lazy().pop(k, d)
+
 
 class BSON_Document(BSON_Value):
     _code = b"\x03"
@@ -677,7 +764,8 @@ if PY3:
         str: lambda s: BSON_String(s),
         dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
         list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
-        int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
+        int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(
+            i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
         bytes: lambda b: BSON_Binary_Generic(b),
         BytesIO: lambda b: BSON_Binary_Generic(b.getvalue()),
         bool: lambda b: BSON_Boolean(b),
@@ -692,8 +780,10 @@ else:
         unicode: lambda s: BSON_String(s),
         dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
         list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
-        int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
-        long: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
+        int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(
+            i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
+        long: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(
+            i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
         BytesIO: lambda b: BSON_Binary_Generic(b.getvalue()),
         bool: lambda b: BSON_Boolean(b),
         datetime: lambda dt: BSON_Datetime(dt),
@@ -732,6 +822,9 @@ def parse_bytes(serialized):
     stream = BytesIO(serialized)
     return parse_stream(stream)
 
+def parse_bytes_lazy(serialized):
+    return BSON_LazyDict(BytesIO(serialized))
+
 
 def parse_stream(stream):
     return bs_to_py(BSON_Document.parse(stream))
@@ -746,11 +839,14 @@ if __name__ == "__main__": # self-test
         import expected
     except ImportError:
         print("warning: module expected.py cannot be imported, exception tests are skipped")
+
         class expected:
             def __init__(self, *args, **kwargs):
                 pass
+
             def __enter__(self):
                 pass
+
             def __exit__(self, t, v, tb):
                 return True
     else:
@@ -762,7 +858,7 @@ if __name__ == "__main__": # self-test
 
     ###################################
 
-    print("utilities: ", end = "")
+    print("utilities: ", end="")
 
     assert cstrify("") == b"\x00"
     assert cstrify("foo") == b"foo\x00"
@@ -772,7 +868,7 @@ if __name__ == "__main__": # self-test
 
     ###################################
 
-    print("exact byte sequences: ", end = "")
+    print("exact byte sequences: ", end="")
 
     def test_type(t, v, b):
         bio = BytesIO()
@@ -782,31 +878,31 @@ if __name__ == "__main__": # self-test
         assert t.parse(bio).value == v
         assert bio.tell() == len(bio.getvalue())
 
-    test_type(BSON_Double,     0.0, b"\x00\x00\x00\x00\x00\x00\x00\x00")
-    test_type(BSON_Double,     1.0, b"\x00\x00\x00\x00\x00\x00\xf0?")
-    test_type(BSON_Double,    -1.0, b"\x00\x00\x00\x00\x00\x00\xf0\xbf")
-    test_type(BSON_Double,   1e308, b"\xa0\xc8\xeb\x85\xf3\xcc\xe1\x7f")
-    test_type(BSON_Double,  1e-308, b"\xd2\xe8\x19x\xd60\x07\x00")
-    test_type(BSON_Double,  -1e308, b"\xa0\xc8\xeb\x85\xf3\xcc\xe1\xff")
+    test_type(BSON_Double, 0.0, b"\x00\x00\x00\x00\x00\x00\x00\x00")
+    test_type(BSON_Double, 1.0, b"\x00\x00\x00\x00\x00\x00\xf0?")
+    test_type(BSON_Double, -1.0, b"\x00\x00\x00\x00\x00\x00\xf0\xbf")
+    test_type(BSON_Double, 1e308, b"\xa0\xc8\xeb\x85\xf3\xcc\xe1\x7f")
+    test_type(BSON_Double, 1e-308, b"\xd2\xe8\x19x\xd60\x07\x00")
+    test_type(BSON_Double, -1e308, b"\xa0\xc8\xeb\x85\xf3\xcc\xe1\xff")
     test_type(BSON_Double, -1e-308, b"\xd2\xe8\x19x\xd60\x07\x80")
 
-    test_type(BSON_Int32,       0, b"\x00\x00\x00\x00")
-    test_type(BSON_Int32,       1, b"\x01\x00\x00\x00")
-    test_type(BSON_Int32,      -1, b"\xff\xff\xff\xff")
-    test_type(BSON_Int32, 2**31-1, b"\xff\xff\xff\x7f")
-    test_type(BSON_Int32,  -2**31, b"\x00\x00\x00\x80")
+    test_type(BSON_Int32, 0, b"\x00\x00\x00\x00")
+    test_type(BSON_Int32, 1, b"\x01\x00\x00\x00")
+    test_type(BSON_Int32, -1, b"\xff\xff\xff\xff")
+    test_type(BSON_Int32, 2 ** 31 - 1, b"\xff\xff\xff\x7f")
+    test_type(BSON_Int32, -2 ** 31, b"\x00\x00\x00\x80")
 
-    test_type(BSON_Int64,       0, b"\x00\x00\x00\x00\x00\x00\x00\x00")
-    test_type(BSON_Int64,       1, b"\x01\x00\x00\x00\x00\x00\x00\x00")
-    test_type(BSON_Int64,      -1, b"\xff\xff\xff\xff\xff\xff\xff\xff")
-    test_type(BSON_Int64, 2**63-1, b"\xff\xff\xff\xff\xff\xff\xff\x7f")
-    test_type(BSON_Int64,  -2**63, b"\x00\x00\x00\x00\x00\x00\x00\x80")
+    test_type(BSON_Int64, 0, b"\x00\x00\x00\x00\x00\x00\x00\x00")
+    test_type(BSON_Int64, 1, b"\x01\x00\x00\x00\x00\x00\x00\x00")
+    test_type(BSON_Int64, -1, b"\xff\xff\xff\xff\xff\xff\xff\xff")
+    test_type(BSON_Int64, 2 ** 63 - 1, b"\xff\xff\xff\xff\xff\xff\xff\x7f")
+    test_type(BSON_Int64, -2 ** 63, b"\x00\x00\x00\x00\x00\x00\x00\x80")
 
     test_type(BSON_String, "", b"\x01\x00\x00\x00\x00")
     test_type(BSON_String, "foo", b"\x04\x00\x00\x00foo\x00")
     test_type(BSON_String, u"абв", b"\x07\x00\x00\x00\xd0\xb0\xd0\xb1\xd0\xb2\x00")
 
-    test_type(BSON_Boolean,  True, b"\x01")
+    test_type(BSON_Boolean, True, b"\x01")
     test_type(BSON_Boolean, False, b"\x00")
 
     test_type(BSON_ObjectId, b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x10\x11\x12",
@@ -818,10 +914,10 @@ if __name__ == "__main__": # self-test
     test_type(BSON_JavaScript, u"/* комментарий */",
               b"\x1d\x00\x00\x00/* \xd0\xba\xd0\xbe\xd0\xbc\xd0\xbc\xd0\xb5\xd0\xbd\xd1\x82\xd0\xb0\xd1\x80\xd0\xb8\xd0\xb9 */\x00")
 
-    test_type(BSON_Timestamp,       1, b"\x01\x00\x00\x00\x00\x00\x00\x00")
-    test_type(BSON_Timestamp,      -1, b"\xff\xff\xff\xff\xff\xff\xff\xff")
-    test_type(BSON_Timestamp, 2**63-1, b"\xff\xff\xff\xff\xff\xff\xff\x7f")
-    test_type(BSON_Timestamp,  -2**63, b"\x00\x00\x00\x00\x00\x00\x00\x80")
+    test_type(BSON_Timestamp, 1, b"\x01\x00\x00\x00\x00\x00\x00\x00")
+    test_type(BSON_Timestamp, -1, b"\xff\xff\xff\xff\xff\xff\xff\xff")
+    test_type(BSON_Timestamp, 2 ** 63 - 1, b"\xff\xff\xff\xff\xff\xff\xff\x7f")
+    test_type(BSON_Timestamp, -2 ** 63, b"\x00\x00\x00\x00\x00\x00\x00\x80")
 
     test_type(BSON_Datetime, datetime(1970, 1, 1, 0, 0, 0), b"\x00\x00\x00\x00\x00\x00\x00\x00")
     test_type(BSON_Datetime, datetime(1970, 1, 1, 0, 0, 1), b"\xe8\x03\x00\x00\x00\x00\x00\x00")
@@ -831,9 +927,9 @@ if __name__ == "__main__": # self-test
     test_type(BSON_Symbol, u"символ",
               b"\x0d\x00\x00\x00\xd1\x81\xd0\xb8\xd0\xbc\xd0\xb2\xd0\xbe\xd0\xbb\x00")
 
-    test_type(BSON_JavaScriptWithScope, ("var i = j + 1;", BSON_Document({ "j": BSON_Int32(0) })),
+    test_type(BSON_JavaScriptWithScope, ("var i = j + 1;", BSON_Document({"j": BSON_Int32(0)})),
               b"\x23\x00\x00\x00\x0f\x00\x00\x00var i = j + 1;\x00\x0c\x00\x00\x00\x10j\x00\x00\x00\x00\x00\x00")
-    test_type(BSON_JavaScriptWithScope, ("foo(s);", BSON_Document({ "s": BSON_String(u"абв") })),
+    test_type(BSON_JavaScriptWithScope, ("foo(s);", BSON_Document({"s": BSON_String(u"абв")})),
               b"\x23\x00\x00\x00\x08\x00\x00\x00foo(s);\x00\x13\x00\x00\x00\x02s\x00\x07\x00\x00\x00\xd0\xb0\xd0\xb1\xd0\xb2\x00\x00")
 
     test_type(BSON_Regex, ("", ""), b"\x00\x00")
@@ -846,21 +942,22 @@ if __name__ == "__main__": # self-test
     test_type(BSON_Binary_UserDefined, b"value", b"\x05\x00\x00\x00\x80value")
 
     test_type(BSON_Document, {}, b"\x05\x00\x00\x00\x00")
-    test_type(BSON_Document, { "foo": BSON_Null(None) }, b"\x0a\x00\x00\x00\x0afoo\x00\x00")
+    test_type(BSON_Document, {"foo": BSON_Null(None)}, b"\x0a\x00\x00\x00\x0afoo\x00\x00")
 
     print("ok")
 
     ###################################
 
-    print("forward type mapping: ", end = "")
+    print("forward type mapping: ", end="")
 
     assert py_to_bs(1.0) == BSON_Double(1.0)
     assert py_to_bs("foo") == BSON_String("foo")
     assert py_to_bs(True) == BSON_Boolean(True)
-    dt = datetime.now(); assert py_to_bs(dt) == BSON_Datetime(dt)
+    dt = datetime.now();
+    assert py_to_bs(dt) == BSON_Datetime(dt)
     assert py_to_bs(None) == BSON_Null(None)
-    assert py_to_bs(2**31-1) == BSON_Int32(2**31-1)
-    assert py_to_bs(2**31) == BSON_Int64(2**31)
+    assert py_to_bs(2 ** 31 - 1) == BSON_Int32(2 ** 31 - 1)
+    assert py_to_bs(2 ** 31) == BSON_Int64(2 ** 31)
 
     def py_to_bs_same(v):
         return py_to_bs(v) is v
@@ -869,44 +966,43 @@ if __name__ == "__main__": # self-test
     assert py_to_bs_same(BSON_Regex(("^$", "i")))
     assert py_to_bs_same(BSON_JavaScript("var i = 1;"))
     assert py_to_bs_same(BSON_Symbol("class"))
-    assert py_to_bs_same(BSON_JavaScriptWithScope(("var i = j;", BSON_Document({ "j": BSON_Int32(10) }))))
+    assert py_to_bs_same(BSON_JavaScriptWithScope(("var i = j;", BSON_Document({"j": BSON_Int32(10)}))))
     assert py_to_bs_same(BSON_Timestamp(0x7fffffffffffffff))
-
 
     assert py_to_bs([]) == BSON_Array([])
     assert py_to_bs(
-            [
-                b"implicit" if PY3 else BytesIO("implicit"),
-                BSON_Binary_Generic(b"generic"),
-                BSON_Binary_Function(b"function"),
-                BSON_Binary_UUID(b"uuid"),
-                BSON_Binary_MD5(b"md5"),
-                BSON_Binary_UserDefined(b"userdefined"),
-            ]) == \
-            BSON_Array(
-            [
-                BSON_Binary_Generic(b"implicit"),
-                BSON_Binary_Generic(b"generic"),
-                BSON_Binary_Function(b"function"),
-                BSON_Binary_UUID(b"uuid"),
-                BSON_Binary_MD5(b"md5"),
-                BSON_Binary_UserDefined(b"userdefined"),
-            ])
+        [
+            b"implicit" if PY3 else BytesIO("implicit"),
+            BSON_Binary_Generic(b"generic"),
+            BSON_Binary_Function(b"function"),
+            BSON_Binary_UUID(b"uuid"),
+            BSON_Binary_MD5(b"md5"),
+            BSON_Binary_UserDefined(b"userdefined"),
+            ]) ==\
+           BSON_Array(
+               [
+                   BSON_Binary_Generic(b"implicit"),
+                   BSON_Binary_Generic(b"generic"),
+                   BSON_Binary_Function(b"function"),
+                   BSON_Binary_UUID(b"uuid"),
+                   BSON_Binary_MD5(b"md5"),
+                   BSON_Binary_UserDefined(b"userdefined"),
+                   ])
 
     assert py_to_bs({}) == BSON_Document({})
     assert py_to_bs(
             {
-                "array": [{}, {}],
-                "document": { "key": [] },
-            }) == \
-            BSON_Document(
-            {
-                "array": BSON_Array([ BSON_Document({}), BSON_Document({}) ]),
-                "document": BSON_Document({ "key": BSON_Array([]) }),
-            })
+            "array": [{}, {}],
+            "document": {"key": []},
+            }) ==\
+           BSON_Document(
+                   {
+                   "array": BSON_Array([BSON_Document({}), BSON_Document({})]),
+                   "document": BSON_Document({"key": BSON_Array([])}),
+                   })
 
     with expected(BSON_ConversionError, "cannot implicitly convert int value 9223372036854775808"):
-        py_to_bs(2**63)
+        py_to_bs(2 ** 63)
 
     with expected(BSON_ConversionError, "cannot implicitly convert tuple value \(\)"):
         py_to_bs(())
@@ -915,7 +1011,7 @@ if __name__ == "__main__": # self-test
 
     ###################################
 
-    print("document key ordering: ", end = "")
+    print("document key ordering: ", end="")
 
     class Foo(int):
         pass
@@ -932,15 +1028,16 @@ if __name__ == "__main__": # self-test
 
     ###################################
 
-    print("reverse type mapping: ", end = "")
+    print("reverse type mapping: ", end="")
 
     assert bs_to_py(BSON_Double(1.0)) == 1.0
     assert bs_to_py(BSON_String("foo")) == "foo"
     assert bs_to_py(BSON_Boolean(True)) == True
-    dt = datetime.now(); assert bs_to_py(BSON_Datetime(dt)) == dt
+    dt = datetime.now();
+    assert bs_to_py(BSON_Datetime(dt)) == dt
     assert bs_to_py(BSON_Null(None)) == None
-    assert bs_to_py(BSON_Int32(2**31-1)) == 2**31-1
-    assert bs_to_py(BSON_Int64(2**31)) == 2**31
+    assert bs_to_py(BSON_Int32(2 ** 31 - 1)) == 2 ** 31 - 1
+    assert bs_to_py(BSON_Int64(2 ** 31)) == 2 ** 31
 
     def bs_to_py_same(v):
         return bs_to_py(v) is v
@@ -951,44 +1048,43 @@ if __name__ == "__main__": # self-test
     assert bs_to_py_same(BSON_Regex(("^$", "")))
     assert bs_to_py_same(BSON_JavaScript("var i = 0;"))
     assert bs_to_py_same(BSON_Symbol("class"))
-    assert bs_to_py_same(BSON_JavaScriptWithScope(("var i = j;", BSON_Document({ "j": -1 }))))
+    assert bs_to_py_same(BSON_JavaScriptWithScope(("var i = j;", BSON_Document({"j": -1}))))
     assert bs_to_py_same(BSON_Timestamp(0x7fffffffffffffff))
 
     assert bs_to_py(BSON_Array([])) == []
 
-
     assert bs_to_py(BSON_Array(
-           [
-               BSON_Binary_Generic(b"generic"),
-               BSON_Binary_Function(b"function"),
-               BSON_Binary_UUID(b"uuid"),
-               BSON_Binary_MD5(b"md5"),
-               BSON_Binary_UserDefined(b"userdefined"),
-           ])) == \
+        [
+            BSON_Binary_Generic(b"generic"),
+            BSON_Binary_Function(b"function"),
+            BSON_Binary_UUID(b"uuid"),
+            BSON_Binary_MD5(b"md5"),
+            BSON_Binary_UserDefined(b"userdefined"),
+            ])) ==\
            [
                b"generic" if PY3 else BSON_Binary_Generic(b"generic"),
                BSON_Binary_Function(b"function"),
                BSON_Binary_UUID(b"uuid"),
                BSON_Binary_MD5(b"md5"),
                BSON_Binary_UserDefined(b"userdefined"),
-           ]
+               ]
 
     assert bs_to_py(BSON_Document({})) == {}
     assert bs_to_py(BSON_Document(
-           {
-               "array": BSON_Array([ BSON_Document({}), BSON_Document({}) ]),
-               "document": BSON_Document({ "key": BSON_Array([]) }),
-           })) == \
+            {
+            "array": BSON_Array([BSON_Document({}), BSON_Document({})]),
+            "document": BSON_Document({"key": BSON_Array([])}),
+            })) ==\
            {
                "array": [{}, {}],
-               "document": { "key": [] },
-           }
+               "document": {"key": []},
+               }
 
     print("ok")
 
     ###################################
 
-    print("deprecated quirks: ", end = "")
+    print("deprecated quirks: ", end="")
 
     bio = BytesIO(b"\x05\x00\x00\x00\x02value")
     assert BSON_Binary.parse(bio) == BSON_Binary_Generic(b"value")
@@ -1003,106 +1099,110 @@ if __name__ == "__main__": # self-test
 
     ###################################
 
-    print("specification samples: ", end = "")
+    print("specification samples: ", end="")
 
-    assert serialize_to_bytes({ "hello": "world" }) == \
+    assert serialize_to_bytes({"hello": "world"}) ==\
            b"\x16\x00\x00\x00\x02hello\x00\x06\x00\x00\x00world\x00\x00"
 
-    assert parse_bytes(b"\x16\x00\x00\x00\x02hello\x00\x06\x00\x00\x00world\x00\x00") == \
-           { "hello": "world" }
+    assert parse_bytes(b"\x16\x00\x00\x00\x02hello\x00\x06\x00\x00\x00world\x00\x00") ==\
+           {"hello": "world"}
 
-    assert serialize_to_bytes({ "BSON": [ "awesome", 5.05, 1986 ] }) == \
-           b"1\x00\x00\x00\x04BSON\x00&\x00\x00\x00\x020\x00\x08\x00\x00\x00" \
+    assert serialize_to_bytes({"BSON": ["awesome", 5.05, 1986]}) ==\
+           b"1\x00\x00\x00\x04BSON\x00&\x00\x00\x00\x020\x00\x08\x00\x00\x00"\
            b"awesome\x00\x011\x00333333\x14@\x102\x00\xc2\x07\x00\x00\x00\x00"
 
     assert parse_bytes(b"1\x00\x00\x00\x04BSON\x00&\x00\x00\x00\x020\x00\x08\x00\x00\x00"
-                       b"awesome\x00\x011\x00333333\x14@\x102\x00\xc2\x07\x00\x00\x00\x00") == \
-           { "BSON": [ "awesome", 5.05, 1986 ] }
+                       b"awesome\x00\x011\x00333333\x14@\x102\x00\xc2\x07\x00\x00\x00\x00") ==\
+           {"BSON": ["awesome", 5.05, 1986]}
 
     print("ok")
 
     ###################################
 
-    print("single type values: ", end = "")
+    print("single type values: ", end="")
 
-    b = serialize_to_bytes({ "double": 1.0 })
-    assert b == serialize_to_bytes({ "double": BSON_Double(1.0) })
-    assert parse_bytes(b) == { "double": 1.0 }
+    b = serialize_to_bytes({"double": 1.0})
+    assert b == serialize_to_bytes({"double": BSON_Double(1.0)})
+    assert parse_bytes(b) == {"double": 1.0}
 
-    b = serialize_to_bytes({ "string": u"абв" })
-    assert b == serialize_to_bytes({ "string": BSON_String(u"абв") })
-    assert parse_bytes(b) == { "string": u"абв" }
+    b = serialize_to_bytes({"string": u"абв"})
+    assert b == serialize_to_bytes({"string": BSON_String(u"абв")})
+    assert parse_bytes(b) == {"string": u"абв"}
 
-    b = serialize_to_bytes({ "boolean": True })
-    assert b == serialize_to_bytes({ "boolean": BSON_Boolean(True) })
-    assert parse_bytes(b) == { "boolean": True }
+    b = serialize_to_bytes({"boolean": True})
+    assert b == serialize_to_bytes({"boolean": BSON_Boolean(True)})
+    assert parse_bytes(b) == {"boolean": True}
 
     dt = datetime.now()
-    b = serialize_to_bytes({ "datetime": dt })
-    assert b == serialize_to_bytes({ "datetime": BSON_Datetime(dt) })
+    b = serialize_to_bytes({"datetime": dt})
+    assert b == serialize_to_bytes({"datetime": BSON_Datetime(dt)})
     r = parse_bytes(b)
-    dt2 = r.pop("datetime"); assert not r
-    dt = dt.replace(microsecond = 0); dt2 = dt2.replace(microsecond = 0)
+    dt2 = r.pop("datetime")
+    assert not r
+    dt = dt.replace(microsecond=0)
+    dt2 = dt2.replace(microsecond=0)
     assert dt == dt2
 
-    b = serialize_to_bytes({ "null": None })
-    assert b == serialize_to_bytes({ "null": BSON_Null(None) })
-    assert parse_bytes(b) == { "null": None }
+    b = serialize_to_bytes({"null": None})
+    assert b == serialize_to_bytes({"null": BSON_Null(None)})
+    assert parse_bytes(b) == {"null": None}
 
-    b = serialize_to_bytes({ "int32": 2**31-1 })
-    assert b == serialize_to_bytes({ "int32": BSON_Int32(2**31-1) })
-    assert parse_bytes(b) == { "int32": 2**31-1 }
+    b = serialize_to_bytes({"int32": 2 ** 31 - 1})
+    assert b == serialize_to_bytes({"int32": BSON_Int32(2 ** 31 - 1)})
+    assert parse_bytes(b) == {"int32": 2 ** 31 - 1}
 
-    b = serialize_to_bytes({ "int64": 2**63-1 })
-    assert b == serialize_to_bytes({ "int64": BSON_Int64(2**63-1) })
-    assert parse_bytes(b) == { "int64": 2**63-1 }
+    b = serialize_to_bytes({"int64": 2 ** 63 - 1})
+    assert b == serialize_to_bytes({"int64": BSON_Int64(2 ** 63 - 1)})
+    assert parse_bytes(b) == {"int64": 2 ** 63 - 1}
 
-    bin = bytes([ i for i in range(256) ])
-    b = serialize_to_bytes({ "bytes": BytesIO(bin) })
-    assert b == serialize_to_bytes({ "bytes": BSON_Binary_Generic(bin) })
-    assert parse_bytes(b) == { "bytes": bin if PY3 else BSON_Binary_Generic(bin)}
+    bin = bytes([i for i in range(256)])
+    b = serialize_to_bytes({"bytes": BytesIO(bin)})
+    assert b == serialize_to_bytes({"bytes": BSON_Binary_Generic(bin)})
+    assert parse_bytes(b) == {"bytes": bin if PY3 else BSON_Binary_Generic(bin)}
 
-    b = serialize_to_bytes({ "function": BSON_Binary_Function(b"function") })
-    assert parse_bytes(b) == { "function": BSON_Binary_Function(b"function") }
+    b = serialize_to_bytes({"function": BSON_Binary_Function(b"function")})
+    assert parse_bytes(b) == {"function": BSON_Binary_Function(b"function")}
 
-    b = serialize_to_bytes({ "uuid": BSON_Binary_UUID(b"uuid") })
-    assert parse_bytes(b) == { "uuid": BSON_Binary_UUID(b"uuid") }
+    b = serialize_to_bytes({"uuid": BSON_Binary_UUID(b"uuid")})
+    assert parse_bytes(b) == {"uuid": BSON_Binary_UUID(b"uuid")}
 
-    b = serialize_to_bytes({ "md5": BSON_Binary_MD5(b"md5") })
-    assert parse_bytes(b) == { "md5": BSON_Binary_MD5(b"md5") }
+    b = serialize_to_bytes({"md5": BSON_Binary_MD5(b"md5")})
+    assert parse_bytes(b) == {"md5": BSON_Binary_MD5(b"md5")}
 
-    b = serialize_to_bytes({ "userdefined": BSON_Binary_UserDefined(b"userdefined") })
-    assert parse_bytes(b) == { "userdefined": BSON_Binary_UserDefined(b"userdefined") }
+    b = serialize_to_bytes({"userdefined": BSON_Binary_UserDefined(b"userdefined")})
+    assert parse_bytes(b) == {"userdefined": BSON_Binary_UserDefined(b"userdefined")}
 
-    b = serialize_to_bytes({ "objectid": BSON_ObjectId(b"\xff" * 12) })
-    assert parse_bytes(b) == { "objectid": BSON_ObjectId(b"\xff" * 12)._py_value() }
+    b = serialize_to_bytes({"objectid": BSON_ObjectId(b"\xff" * 12)})
+    assert parse_bytes(b) == {"objectid": BSON_ObjectId(b"\xff" * 12)._py_value()}
 
-    b = serialize_to_bytes({ "regex": BSON_Regex(("^$", "i")) })
-    assert parse_bytes(b) == { "regex": BSON_Regex(("^$", "i")) }
+    b = serialize_to_bytes({"regex": BSON_Regex(("^$", "i"))})
+    assert parse_bytes(b) == {"regex": BSON_Regex(("^$", "i"))}
 
-    b = serialize_to_bytes({ "javascript": BSON_JavaScript("var i = 1;") })
-    assert parse_bytes(b) == { "javascript": BSON_JavaScript("var i = 1;") }
+    b = serialize_to_bytes({"javascript": BSON_JavaScript("var i = 1;")})
+    assert parse_bytes(b) == {"javascript": BSON_JavaScript("var i = 1;")}
 
-    b = serialize_to_bytes({ "symbol": BSON_Symbol("class") })
-    assert parse_bytes(b) == { "symbol": BSON_Symbol("class") }
+    b = serialize_to_bytes({"symbol": BSON_Symbol("class")})
+    assert parse_bytes(b) == {"symbol": BSON_Symbol("class")}
 
-    b = serialize_to_bytes({ "javascript_ws": BSON_JavaScriptWithScope(("var i = j;", BSON_Document({ "i": BSON_Int32(1) }))) })
-    assert parse_bytes(b) == { "javascript_ws": BSON_JavaScriptWithScope(("var i = j;", BSON_Document({ "i": BSON_Int32(1) }))) }
+    b = serialize_to_bytes(
+            {"javascript_ws": BSON_JavaScriptWithScope(("var i = j;", BSON_Document({"i": BSON_Int32(1)})))})
+    assert parse_bytes(b) == {
+        "javascript_ws": BSON_JavaScriptWithScope(("var i = j;", BSON_Document({"i": BSON_Int32(1)})))}
 
-    b = serialize_to_bytes({ "timestamp": BSON_Timestamp(0) })
-    assert parse_bytes(b) == { "timestamp": BSON_Timestamp(0) }
+    b = serialize_to_bytes({"timestamp": BSON_Timestamp(0)})
+    assert parse_bytes(b) == {"timestamp": BSON_Timestamp(0)}
 
-    b = serialize_to_bytes({ "document": {} })
-    assert parse_bytes(b) == { "document": {} }
+    b = serialize_to_bytes({"document": {}})
+    assert parse_bytes(b) == {"document": {}}
 
-    b = serialize_to_bytes({ "array": [] })
-    assert parse_bytes(b) == { "array": [] }
+    b = serialize_to_bytes({"array": []})
+    assert parse_bytes(b) == {"array": []}
 
     print("ok")
 
     ###################################
 
-    print("parsing errors: ", end = "")
+    print("parsing errors: ", end="")
 
     with expected(BSON_ParsingError, "incorrect structure length at offset 4"):
         parse_bytes(b"\x00\x00\x00\x00")

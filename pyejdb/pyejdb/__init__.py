@@ -130,12 +130,12 @@ class EJDBCursorWrapper(object):
         """
         self.__pos = 0
 
-    @lru_cache(maxsize=8192)
+    #@lru_cache(maxsize=8192)
     def get(self, idx):
         """Return JSON document at the specified position `idx`
         """
         bsdata = self.__cursor.get(idx)
-        return bson.parse_bytes(bsdata) if bsdata is not None else None
+        return bson.parse_bytes_lazy(bsdata) if bsdata is not None else None
 
     def close(self):
         """ Closes cursor and frees all allocated resources.
