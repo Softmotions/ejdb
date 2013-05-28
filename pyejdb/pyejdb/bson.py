@@ -115,7 +115,6 @@ from struct import pack, unpack
 from calendar import timegm
 from collections import OrderedDict as odict
 from binascii import hexlify, unhexlify
-from interop import *
 
 PY3 = sys.version_info[0] == 3
 
