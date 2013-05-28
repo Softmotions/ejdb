@@ -248,7 +248,7 @@ class BSON_String(BSON_Value):
             raise BSON_ParsingError("incorrect string length at offset {0:d}".\
             format(stream.tell())) # tested
         value_b = cls._read(stream, length)
-        if value_b[-1]:
+        if value_b[-1] if PY3 else ord(value_b[-1]):
             raise BSON_ParsingError("expected null terminated string "
                                     "at offset {0:d}".format(stream.tell()))
         return cls(value_b[:-1].decode("utf-8")) # tested
@@ -415,18 +415,20 @@ class BSON_ObjectId(BSON_Value):
     _code = b"\x07"
 
     def __init__(self, value):
-        if not ((isinstance(value, bytes) and len(value) == 12) or (isinstance(value, str) and len(value) == 24)):
+        if not (isinstance(value, bytes) and len(value) == 12) or (isinstance(value, str) and len(value) == 24):
             raise BSON_ConversionError("Ivalid representation of object ID")
-        if isinstance(value, str):
-            self._value = unhexlify(value.encode("ascii"))
-        else:
+        if isinstance(value, bytes) and len(value) == 12:
             self._value = value
+        else:
+            self._value = unhexlify(value.encode("ascii"))
+
 
     def __str__(self):
         return "{0:s}(0x{1:s})".format(self.__class__.__name__,
                                        hexlify(self._value).decode("ascii"))
 
     def _py_value(self):
+        print(self._value)
         return hexlify(self._value).decode("ascii")
 
     def serialize(self, stream):
@@ -455,6 +457,8 @@ class BSON_Boolean(BSON_Value):
     @classmethod
     def parse(cls, stream):
         b = cls._read(stream, 1)[0]
+        if not PY3:
+            b = ord(b)
         if b not in (0, 1):
             raise BSON_ParsingError("incorrect boolean value at offset {0:d}".\
             format(stream.tell())) # tested
@@ -667,18 +671,32 @@ def _py_no_bs(v):
     raise BSON_ConversionError("cannot implicitly convert {0:s} value {1}".\
     format(v.__class__.__name__, v)) # tested
 
-_py_to_bs =\
-    {
-    float: lambda f: BSON_Double(f),
-    str: lambda s: BSON_String(s),
-    dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
-    list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
-    int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
-    bytes: lambda b: BSON_Binary_Generic(b),
-    bool: lambda b: BSON_Boolean(b),
-    datetime: lambda dt: BSON_Datetime(dt),
-    type(None): lambda n: BSON_Null(n),
-    }
+if PY3:
+    _py_to_bs =\
+        {
+        float: lambda f: BSON_Double(f),
+        str: lambda s: BSON_String(s),
+        dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
+        list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
+        int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
+        bytes: lambda b: BSON_Binary_Generic(b),
+        bool: lambda b: BSON_Boolean(b),
+        datetime: lambda dt: BSON_Datetime(dt),
+        type(None): lambda n: BSON_Null(n),
+        }
+else:
+    _py_to_bs =\
+        {
+        float: lambda f: BSON_Double(f),
+        str: lambda s: BSON_String(s),
+        dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
+        list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
+        int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
+        BytesIO: lambda b: BSON_Binary_Generic(b.getvalue()),
+        bool: lambda b: BSON_Boolean(b),
+        datetime: lambda dt: BSON_Datetime(dt),
+        type(None): lambda n: BSON_Null(n),
+        }
 
 def py_to_bs(v):
     if isinstance(v, BSON_Value):
@@ -746,7 +764,10 @@ if __name__ == "__main__": # self-test
 
     assert cstrify("") == b"\x00"
     assert cstrify("foo") == b"foo\x00"
-    assert cstrify("абв") == b"\xd0\xb0\xd0\xb1\xd0\xb2\x00"
+    if PY3:
+        assert cstrify("абв") == b"\xd0\xb0\xd0\xb1\xd0\xb2\x00"
+    else:
+        assert cstrify(u"абв") == b"\xd0\xb0\xd0\xb1\xd0\xb2\x00"
 
     print("ok")
 
@@ -784,7 +805,7 @@ if __name__ == "__main__": # self-test
 
     test_type(BSON_String, "", b"\x01\x00\x00\x00\x00")
     test_type(BSON_String, "foo", b"\x04\x00\x00\x00foo\x00")
-    test_type(BSON_String, "абв", b"\x07\x00\x00\x00\xd0\xb0\xd0\xb1\xd0\xb2\x00")
+    test_type(BSON_String, u"абв", b"\x07\x00\x00\x00\xd0\xb0\xd0\xb1\xd0\xb2\x00")
 
     test_type(BSON_Boolean,  True, b"\x01")
     test_type(BSON_Boolean, False, b"\x00")
@@ -795,7 +816,7 @@ if __name__ == "__main__": # self-test
     test_type(BSON_Null, None, b"")
 
     test_type(BSON_JavaScript, "var i = 1;", b"\x0b\x00\x00\x00var i = 1;\x00")
-    test_type(BSON_JavaScript, "/* комментарий */",
+    test_type(BSON_JavaScript, u"/* комментарий */",
               b"\x1d\x00\x00\x00/* \xd0\xba\xd0\xbe\xd0\xbc\xd0\xbc\xd0\xb5\xd0\xbd\xd1\x82\xd0\xb0\xd1\x80\xd0\xb8\xd0\xb9 */\x00")
 
     test_type(BSON_Timestamp,       1, b"\x01\x00\x00\x00\x00\x00\x00\x00")
@@ -808,12 +829,12 @@ if __name__ == "__main__": # self-test
     test_type(BSON_Datetime, datetime(2010, 12, 12, 15, 11, 43), b"\x98\x27\x23\xdb\x2c\x01\x00\x00")
 
     test_type(BSON_Symbol, "foo", b"\x04\x00\x00\x00foo\x00")
-    test_type(BSON_Symbol, "символ",
+    test_type(BSON_Symbol, u"символ",
               b"\x0d\x00\x00\x00\xd1\x81\xd0\xb8\xd0\xbc\xd0\xb2\xd0\xbe\xd0\xbb\x00")
 
     test_type(BSON_JavaScriptWithScope, ("var i = j + 1;", BSON_Document({ "j": BSON_Int32(0) })),
               b"\x23\x00\x00\x00\x0f\x00\x00\x00var i = j + 1;\x00\x0c\x00\x00\x00\x10j\x00\x00\x00\x00\x00\x00")
-    test_type(BSON_JavaScriptWithScope, ("foo(s);", BSON_Document({ "s": BSON_String("абв") })),
+    test_type(BSON_JavaScriptWithScope, ("foo(s);", BSON_Document({ "s": BSON_String(u"абв") })),
               b"\x23\x00\x00\x00\x08\x00\x00\x00foo(s);\x00\x13\x00\x00\x00\x02s\x00\x07\x00\x00\x00\xd0\xb0\xd0\xb1\xd0\xb2\x00\x00")
 
     test_type(BSON_Regex, ("", ""), b"\x00\x00")
@@ -1004,9 +1025,9 @@ if __name__ == "__main__": # self-test
     assert b == serialize_to_bytes({ "double": BSON_Double(1.0) })
     assert parse_bytes(b) == { "double": 1.0 }
 
-    b = serialize_to_bytes({ "string": "абв" })
-    assert b == serialize_to_bytes({ "string": BSON_String("абв") })
-    assert parse_bytes(b) == { "string": "абв" }
+    b = serialize_to_bytes({ "string": u"абв" })
+    assert b == serialize_to_bytes({ "string": BSON_String(u"абв") })
+    assert parse_bytes(b) == { "string": u"абв" }
 
     b = serialize_to_bytes({ "boolean": True })
     assert b == serialize_to_bytes({ "boolean": BSON_Boolean(True) })
