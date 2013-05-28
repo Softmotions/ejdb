@@ -1,4 +1,4 @@
-# Source of configuration for Tokyo Cabinet
+# Source of configuration for EJDB
 
 
 #================================================================
@@ -32,7 +32,7 @@ MYCGIFILES="tcawmgr.cgi"
 MYMAN1FILES=""
 MYMAN3FILES="libtcejdb.3"
 #MYDOCUMENTFILES="COPYING ChangeLog doc tokyocabinet.idl"
-MYDOCUMENTFILES="COPYING Changelog"
+MYDOCUMENTFILES="COPYING"
 MYPCFILES="tcejdb.pc"
 
 #C compiler

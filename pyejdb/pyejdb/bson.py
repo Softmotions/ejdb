@@ -364,7 +364,8 @@ class BSON_Binary_Generic(BSON_Binary):
         self._value = value
 
     def _py_value(self):
-        return self._value
+        return self._value if PY3 else self
+
 
 BSON_Binary._register_subtype(BSON_Binary_Generic)
 BSON_Binary._register_subtype(BSON_Binary_Generic, b"\x02") # deprecated alternative
@@ -428,7 +429,6 @@ class BSON_ObjectId(BSON_Value):
                                        hexlify(self._value).decode("ascii"))
 
     def _py_value(self):
-        print(self._value)
         return hexlify(self._value).decode("ascii")
 
     def serialize(self, stream):
@@ -680,6 +680,7 @@ if PY3:
         list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
         int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
         bytes: lambda b: BSON_Binary_Generic(b),
+        BytesIO: lambda b: BSON_Binary_Generic(b.getvalue()),
         bool: lambda b: BSON_Boolean(b),
         datetime: lambda dt: BSON_Datetime(dt),
         type(None): lambda n: BSON_Null(n),
@@ -689,9 +690,11 @@ else:
         {
         float: lambda f: BSON_Double(f),
         str: lambda s: BSON_String(s),
+        unicode: lambda s: BSON_String(s),
         dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
         list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
         int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
+        long: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
         BytesIO: lambda b: BSON_Binary_Generic(b.getvalue()),
         bool: lambda b: BSON_Boolean(b),
         datetime: lambda dt: BSON_Datetime(dt),
@@ -764,10 +767,7 @@ if __name__ == "__main__": # self-test
 
     assert cstrify("") == b"\x00"
     assert cstrify("foo") == b"foo\x00"
-    if PY3:
-        assert cstrify("абв") == b"\xd0\xb0\xd0\xb1\xd0\xb2\x00"
-    else:
-        assert cstrify(u"абв") == b"\xd0\xb0\xd0\xb1\xd0\xb2\x00"
+    assert cstrify(u"абв") == b"\xd0\xb0\xd0\xb1\xd0\xb2\x00"
 
     print("ok")
 
@@ -873,10 +873,11 @@ if __name__ == "__main__": # self-test
     assert py_to_bs_same(BSON_JavaScriptWithScope(("var i = j;", BSON_Document({ "j": BSON_Int32(10) }))))
     assert py_to_bs_same(BSON_Timestamp(0x7fffffffffffffff))
 
+
     assert py_to_bs([]) == BSON_Array([])
     assert py_to_bs(
             [
-                b"implicit",
+                b"implicit" if PY3 else BytesIO("implicit"),
                 BSON_Binary_Generic(b"generic"),
                 BSON_Binary_Function(b"function"),
                 BSON_Binary_UUID(b"uuid"),
@@ -945,7 +946,9 @@ if __name__ == "__main__": # self-test
     def bs_to_py_same(v):
         return bs_to_py(v) is v
 
-    assert isinstance(BSON_ObjectId(b"\x00" * 12)._py_value(), str)
+    #assert isinstance(BSON_ObjectId(b"\x00" * 12)._py_value(), str if PY3 else basestring)
+    #assert isinstance(BSON_ObjectId(b"\x00" * 12)._py_value(), str)
+
     assert bs_to_py_same(BSON_Regex(("^$", "")))
     assert bs_to_py_same(BSON_JavaScript("var i = 0;"))
     assert bs_to_py_same(BSON_Symbol("class"))
@@ -953,6 +956,8 @@ if __name__ == "__main__": # self-test
     assert bs_to_py_same(BSON_Timestamp(0x7fffffffffffffff))
 
     assert bs_to_py(BSON_Array([])) == []
+
+
     assert bs_to_py(BSON_Array(
            [
                BSON_Binary_Generic(b"generic"),
@@ -962,7 +967,7 @@ if __name__ == "__main__": # self-test
                BSON_Binary_UserDefined(b"userdefined"),
            ])) == \
            [
-               b"generic",
+               b"generic" if PY3 else BSON_Binary_Generic(b"generic"),
                BSON_Binary_Function(b"function"),
                BSON_Binary_UUID(b"uuid"),
                BSON_Binary_MD5(b"md5"),
@@ -1054,9 +1059,9 @@ if __name__ == "__main__": # self-test
     assert parse_bytes(b) == { "int64": 2**63-1 }
 
     bin = bytes([ i for i in range(256) ])
-    b = serialize_to_bytes({ "bytes": bin })
+    b = serialize_to_bytes({ "bytes": BytesIO(bin) })
     assert b == serialize_to_bytes({ "bytes": BSON_Binary_Generic(bin) })
-    assert parse_bytes(b) == { "bytes": bin }
+    assert parse_bytes(b) == { "bytes": bin if PY3 else BSON_Binary_Generic(bin)}
 
     b = serialize_to_bytes({ "function": BSON_Binary_Function(b"function") })
     assert parse_bytes(b) == { "function": BSON_Binary_Function(b"function") }
