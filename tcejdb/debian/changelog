@@ -1,3 +1,9 @@
+libtcejdb (1.1.7) testing; urgency=low
+
+  * Fixed memleak #65
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 28 May 2013 12:35:56 +0700
+
 libtcejdb (1.1.6) testing; urgency=low
 
   * Better error reporting in the case of lack pthread resources. 
