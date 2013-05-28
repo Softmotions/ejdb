@@ -3205,6 +3205,7 @@ static bool _metagetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
     if (BSON_IS_NUM_TYPE(bt)) {
         opts->records = bson_iterator_long(&it);
     }
+    bson_del(bsopts);
     return rv;
 }
 
