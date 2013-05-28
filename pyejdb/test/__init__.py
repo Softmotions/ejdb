@@ -1,5 +1,3 @@
-
-
 import sys
 import unittest
 
@@ -11,6 +9,7 @@ def test_suite():
     # Go
     modules = ['test.test_%s' % n for n in names]
     return unittest.defaultTestLoader.loadTestsFromNames(modules)
+
 
 def main():
     unittest.main(module=__name__, defaultTest='test_suite', argv=sys.argv[:1])

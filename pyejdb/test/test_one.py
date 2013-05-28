@@ -127,7 +127,7 @@ class TestOne(unittest.TestCase):
         sally = {
             "name": "Sally",
             "mood": "Angry",
-        }
+            }
         molly = {
             "name": "Molly",
             "mood": "Very angry",
@@ -136,19 +136,19 @@ class TestOne(unittest.TestCase):
         ejdb.save("birds", *[sally, molly])
 
         logbuf = strio()
-        ejdb.find("birds", {"name" : "Molly"}, log=logbuf)
+        ejdb.find("birds", {"name": "Molly"}, log=logbuf)
         self.assertTrue(logbuf.getvalue().find("RUN FULLSCAN") != -1)
 
         ejdb.ensureStringIndex("birds", "name")
 
         logbuf = strio()
-        ejdb.find("birds", {"name" : "Molly"}, log=logbuf)
+        ejdb.find("birds", {"name": "Molly"}, log=logbuf)
         self.assertTrue(logbuf.getvalue().find("MAIN IDX: 'sname'") != -1)
         self.assertTrue(logbuf.getvalue().find("RUN FULLSCAN") == -1)
 
         ##print("dbmeta=%s" % ejdb.dbmeta())
         bar = {
-            "foo" : "bar"
+            "foo": "bar"
         }
         self.assertEqual(ejdb.isactivetx("bars"), False)
         ejdb.begintx("bars")
@@ -166,10 +166,9 @@ class TestOne(unittest.TestCase):
         self.assertEqual(ejdb.isactivetx("bars"), False)
         self.assertTrue(ejdb.load("bars", bar["_id"]) is not None)
 
-
         ejdb.update("upsertcoll",
-                {"foo" : "bar", "$upsert" : {"foo" : "bar"}})
-        self.assertTrue(ejdb.findOne("upsertcoll", {"foo" : "bar"}) is not None)
+                {"foo": "bar", "$upsert": {"foo": "bar"}})
+        self.assertTrue(ejdb.findOne("upsertcoll", {"foo": "bar"}) is not None)
 
 
     @classmethod

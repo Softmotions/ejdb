@@ -22,6 +22,7 @@ from __future__ import print_function
 
 import _pyejdb
 import sys
+from lrucache import lru_cache
 from pyejdb import bson
 from collections import OrderedDict as odict
 from io import StringIO as strio
@@ -130,7 +131,7 @@ class EJDBCursorWrapper(object):
         """
         self.__pos = 0
 
-    #@lru_cache(maxsize=8192)
+    @lru_cache(maxsize=4096)
     def get(self, idx):
         """Return JSON document at the specified position `idx`
         """
