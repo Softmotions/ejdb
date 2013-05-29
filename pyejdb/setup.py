@@ -26,9 +26,6 @@ PY3 = sys.version_info[0] == 3
 if py_ver < min_py_vers[int(py_ver[0])]:
     raise SystemExit("Aborted: EJDB requires Python >= {0[3]}".format(min_py_vers))
 
-if os.name != "posix":
-    raise SystemExit("Aborted: os '{0}' not supported".format(os.name))
-
 
 class TestCommand(Command):
     """Command for running unittests without install."""
@@ -102,7 +99,7 @@ class build_ext(_build_ext):
 
 setup(
     name="pyejdb",
-    version="1.0.9",
+    version="1.0.10",
     url="http://ejdb.org",
     keywords=["ejdb", "tokyocabinet", "nosql", "database", "storage", "embedded", "mongodb", "json"],
     description="Python 2.7/3.x binding for EJDB database engine.",
