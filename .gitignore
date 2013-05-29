@@ -20,6 +20,7 @@
 *.cache
 *.tag.gz
 *.tgz
+*.pyc
 .dep.inc
 /ejdbdll
 /node_modules

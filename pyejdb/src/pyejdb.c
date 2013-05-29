@@ -38,7 +38,6 @@ typedef struct {
 #include "pdbcursor.c"
 #include "pejdb.c"
 
-PyDoc_STRVAR(ejdb_m_doc, "EJDB http://ejdb.org");
 PyDoc_STRVAR(ejdb_version_doc, "version() -> str\n\nReturns the version string of the underlying EJDB library.");
 
 static PyObject* ejdb_version(PyObject *module) {
@@ -51,6 +50,11 @@ static PyMethodDef pyejdb_m_methods[] = {
     {NULL} /* Sentinel */
 };
 
+
+#if PY_MAJOR_VERSION >= 3
+PyDoc_STRVAR(ejdb_m_doc, "EJDB http://ejdb.org");
+#define INITERROR return NULL
+
 /* pyejdb_module */
 static PyModuleDef pyejdb_module = {
     PyModuleDef_HEAD_INIT,
@@ -59,18 +63,26 @@ static PyModuleDef pyejdb_module = {
     -1,                 /*m_size*/
     pyejdb_m_methods,   /*m_methods*/
 };
+#else
+#define INITERROR return
+#endif
 
-PyObject* init_pyejdb(void) {
+PyMODINIT_FUNC init_pyejdb(void) {
     PyObject *pyejdb;
     if (PyType_Ready(&EJDBType) ||
             PyType_Ready(&DBCursorType)
             ) {
-        return NULL;
+        INITERROR;
     }
 
+#if PY_MAJOR_VERSION >= 3
     pyejdb = PyModule_Create(&pyejdb_module);
+#else
+    pyejdb = Py_InitModule("_pyejdb", pyejdb_m_methods);
+#endif
+
     if (!pyejdb) {
-        return NULL;
+        INITERROR;
     }
     Error = PyErr_NewException("_pyejdb.Error", NULL, NULL);
     Py_XINCREF(Error);
@@ -112,11 +124,15 @@ PyObject* init_pyejdb(void) {
         goto fail;
     }
 
+#if PY_MAJOR_VERSION >= 3
     return pyejdb;
+#else
+    return;
+#endif
 
 fail:
     Py_DECREF(pyejdb);
-    return NULL;
+    INITERROR;
 }
 
 PyMODINIT_FUNC PyInit__pyejdb(void) {

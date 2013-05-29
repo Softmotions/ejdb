@@ -20,6 +20,13 @@
 #include <Python.h>
 #include <tcejdb/ejdb_private.h>
 
+#if PY_MAJOR_VERSION >= 3
+#define BYTES_FORMAT_STRING "y#"
+#else
+#define BYTES_FORMAT_STRING "s#"
+#endif
+
+
 #if SIZEOF_SIZE_T > SIZEOF_INT
 #define TK_PY_SIZE_T_BIGGER_THAN_INT
 #define TK_PY_MAX_LEN ((Py_ssize_t)INT_MAX)

@@ -15,16 +15,30 @@
 #  if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 #  Boston, MA 02111-1307 USA.
 # *************************************************************************************************
+from __future__ import with_statement
+from __future__ import division
+from __future__ import print_function
+
 from datetime import datetime
+import sys
+
+PY3 = sys.version_info[0] == 3
 
 import unittest
 from pyejdb import bson
 import pyejdb
-from io import StringIO as strio
+
+if PY3:
+    from io import StringIO as strio
+else:
+    from io import BytesIO as strio
+
+
 
 class TestOne(unittest.TestCase):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(TestOne, self).__init__(*args, **kwargs)
+        #super().__init__(*args, **kwargs)
 
     _ejdb = None
 
@@ -39,7 +53,7 @@ class TestOne(unittest.TestCase):
         self.assertEqual(ejdb.isopen, True)
         doc = {"foo": "bar", "foo2": 2}
         ejdb.save("foocoll", doc)
-        self.assertIsInstance(doc["_id"], str)
+        self.assertEqual(type(doc["_id"]).__name__, "str" if PY3 else "unicode")
         ldoc = ejdb.load("foocoll", doc["_id"])
         self.assertIsInstance(ldoc, dict)
         self.assertEqual(doc["_id"], ldoc["_id"])
@@ -99,8 +113,8 @@ class TestOne(unittest.TestCase):
             "extra1": None
         }
         ejdb.save("parrots", *[parrot1, None, parrot2])
-        self.assertIsInstance(parrot1["_id"], str)
-        self.assertIsInstance(parrot2["_id"], str)
+        self.assertEqual(type(parrot1["_id"]).__name__, "str" if PY3 else "unicode")
+        self.assertEqual(type(parrot2["_id"]).__name__, "str" if PY3 else "unicode")
         p2 = ejdb.load("parrots", parrot2["_id"])
         self.assertEqual(p2["_id"], parrot2["_id"])
 
@@ -137,6 +151,7 @@ class TestOne(unittest.TestCase):
 
         logbuf = strio()
         ejdb.find("birds", {"name": "Molly"}, log=logbuf)
+        #print("LB=%s" % logbuf.getvalue())
         self.assertTrue(logbuf.getvalue().find("RUN FULLSCAN") != -1)
 
         ejdb.ensureStringIndex("birds", "name")

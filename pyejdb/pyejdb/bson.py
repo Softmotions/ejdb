@@ -501,9 +501,15 @@ class BSON_ObjectId(BSON_Value):
     _code = b"\x07"
 
     def __init__(self, value):
-        if not (isinstance(value, bytes) and len(value) == 12) or (isinstance(value, str) and len(value) == 24):
-            raise BSON_ConversionError("Ivalid representation of object ID")
-        if isinstance(value, bytes) and len(value) == 12:
+        if PY3:
+            if not (isinstance(value, bytes) and len(value) == 12) and not (isinstance(value, str) and len(value) == 24):
+                raise BSON_ConversionError("Invalid representation of object ID")
+        else:
+            tn = type(value).__name__
+            if not (len(value) == 12 and tn == "str") and not (len(value) == 24 and (tn == "str" or tn == "unicode")):
+                raise BSON_ConversionError("Invalid representation of object ID")
+
+        if len(value) == 12:
             self._value = value
         else:
             self._value = unhexlify(value.encode("ascii"))
@@ -1034,7 +1040,7 @@ if __name__ == "__main__": # self-test
     assert bs_to_py(BSON_Double(1.0)) == 1.0
     assert bs_to_py(BSON_String("foo")) == "foo"
     assert bs_to_py(BSON_Boolean(True)) == True
-    dt = datetime.now();
+    dt = datetime.now()
     assert bs_to_py(BSON_Datetime(dt)) == dt
     assert bs_to_py(BSON_Null(None)) == None
     assert bs_to_py(BSON_Int32(2 ** 31 - 1)) == 2 ** 31 - 1
@@ -1043,9 +1049,7 @@ if __name__ == "__main__": # self-test
     def bs_to_py_same(v):
         return bs_to_py(v) is v
 
-    #assert isinstance(BSON_ObjectId(b"\x00" * 12)._py_value(), str if PY3 else basestring)
-    #assert isinstance(BSON_ObjectId(b"\x00" * 12)._py_value(), str)
-
+    assert type(BSON_ObjectId(b"\x00" * 12)._py_value()).__name__ == 'str' if PY3 else 'unicode'
     assert bs_to_py_same(BSON_Regex(("^$", "")))
     assert bs_to_py_same(BSON_JavaScript("var i = 0;"))
     assert bs_to_py_same(BSON_Symbol("class"))

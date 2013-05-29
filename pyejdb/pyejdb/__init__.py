@@ -22,11 +22,12 @@ from __future__ import print_function
 
 import _pyejdb
 import sys
-from lrucache import lru_cache
+from pyejdb.lrucache import lru_cache
 from pyejdb import bson
 from collections import OrderedDict as odict
-from io import StringIO as strio
+from io import StringIO, BytesIO
 import re, numbers
+
 
 PY3 = sys.version_info[0] == 3
 
@@ -76,8 +77,13 @@ JBQRYCOUNT = _pyejdb.JBQRYCOUNT
 
 #Misc
 def check_oid(oid):
-    if not isinstance(oid, str) or _oidRE.match(oid) is None:
-        raise ValueError("Invalid OID: %s" % oid)
+    if PY3:
+        if not isinstance(oid, str) or _oidRE.match(oid) is None:
+            raise ValueError("Invalid OID: %s" % oid)
+    else:
+        tn = type(oid).__name__
+        if (tn != "unicode" and tn != "str") or _oidRE.match(oid) is None:
+            raise ValueError("Invalid OID: %s" % oid)
 
 
 class EJDBCursorWrapper(object):
@@ -131,7 +137,7 @@ class EJDBCursorWrapper(object):
         """
         self.__pos = 0
 
-    @lru_cache(maxsize=4096)
+    #@lru_cache(maxsize=1024)
     def get(self, idx):
         """Return JSON document at the specified position `idx`
         """
@@ -343,7 +349,7 @@ class EJDB(object):
         orarr = [bson.serialize_to_bytes(x) for x in args]
         qflags = kwargs.get("qflags", 0)
         log = kwargs.get("log")
-        log = log if isinstance(log, strio) else None
+        log = log if isinstance(log, StringIO) or isinstance(log, BytesIO) else None
         cursor = self.__ejdb.find(cname, qobj, orarr, hints, qflags, log)
         return cursor if isinstance(cursor, numbers.Number) else EJDBCursorWrapper(cursor)
 
