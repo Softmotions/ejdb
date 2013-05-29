@@ -24,7 +24,7 @@ min_py_vers = {3: "3.2.0", 2: "2.7.2"}
 PY3 = sys.version_info[0] == 3
 
 if py_ver < min_py_vers[int(py_ver[0])]:
-    raise SystemExit("Aborted: EJDB requires Python >= {0[3]}".format(min_py_vers))
+    raise SystemExit("Aborted: EJDB requires Python >= {0}".format(min_py_vers[int(py_ver[0])]))
 
 
 class TestCommand(Command):
