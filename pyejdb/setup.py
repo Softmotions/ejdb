@@ -99,14 +99,13 @@ class build_ext(_build_ext):
 
 setup(
     name="pyejdb",
-    version="1.0.10",
+    version="1.0.11",
     url="http://ejdb.org",
     keywords=["ejdb", "tokyocabinet", "nosql", "database", "storage", "embedded", "mongodb", "json"],
     description="Python 2.7/3.x binding for EJDB database engine.",
     long_description=open("README.md", "r").read(),
     author="Adamansky Anton",
     author_email="adamansky@gmail.com",
-    platforms=["POSIX"],
     license="GNU Lesser General Public License (LGPL)",
     packages=["pyejdb"],
     cmdclass={
@@ -119,6 +118,8 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
         "Operating System :: POSIX",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: Microsoft :: Windows",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3.2",

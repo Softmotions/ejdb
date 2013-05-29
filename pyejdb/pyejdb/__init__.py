@@ -51,7 +51,7 @@ __all__ = [
     "libejdb_version"
 ]
 
-version_tuple = (1, 0, 10)
+version_tuple = (1, 0, 11)
 
 def get_version_string():
     return '.'.join(map(str, version_tuple))
