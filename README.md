@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-05-29` **[EJDB Python 2.7.x binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
 * `2013-05-06` **[Ruby binding available](https://github.com/Softmotions/ejdb/blob/master/rbejdb/README.md)**
 * `2013-05-02` **[NodeJS win32 module available](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md#ejdb-nodejs-module-installation)**
 * `2013-04-25` **[EJDB and TokyoCabinet API ported to Windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)**
@@ -42,7 +43,7 @@ Documentation
     * [Installation](#installation)
     * [Samples](#ejdb-nodejs-samples)
     * [NodeJS API](#ejdb-nodejs-api)
-* **[Python3 binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
+* **[Python 2.7/3.x binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
 * **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
 * **[Java binding](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
 * **[Ruby binding](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
@@ -595,7 +596,7 @@ Drop index of String|Number|Array type for JSON field path.
 -----------------------------------
 
 
-EJDB Python3 binding
+EJDB Python binding
 ==================================
 
 One snippet intro
@@ -636,7 +637,7 @@ with ejdb.find("parrots2", {"likes" : "toys"},
 
 ejdb.close()
 ```
-**[EJDB Python3 binding page](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
+**[EJDB Python 2.7/3.x binding page](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
 
 EJDB Lua binding
 ==================================
