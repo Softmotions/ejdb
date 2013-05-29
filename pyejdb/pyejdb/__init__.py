@@ -137,7 +137,7 @@ class EJDBCursorWrapper(object):
         """
         self.__pos = 0
 
-    #@lru_cache(maxsize=1024)
+    @lru_cache(maxsize=1024)
     def get(self, idx):
         """Return JSON document at the specified position `idx`
         """
