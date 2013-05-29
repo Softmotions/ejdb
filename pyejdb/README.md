@@ -8,10 +8,12 @@ Installation
 **Required tools/system libraries:**
 
 * gcc
-* **Python3 >= 3.2 or Python2: 2.7.x**
+* **Python >= 3.x|2.7.x**
 * EJDB C library **libtcejdb** ([from sources](https://github.com/Softmotions/ejdb#manual-installation) or as [debian packages](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation))
 
-**(A) Using pip**
+**Python binding published:** http://pypi.python.org/pypi/pyejdb
+
+**(A) Installing using pip**
 
 `pip` for python3 or python2 should be installed (`sudo apt-get install python3-pip` | `sudo apt-get install python-pip`)
 
