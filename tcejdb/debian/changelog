@@ -1,3 +1,9 @@
+libtcejdb (1.1.8) testing; urgency=low
+
+  * Fullscan selects stability improvements
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 30 May 2013 17:45:00 +0700
+
 libtcejdb (1.1.7) testing; urgency=low
 
   * Fixed memleak #65
