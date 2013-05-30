@@ -85,7 +85,7 @@ def check_extension(ext):
             raise SystemExit(err_msg.format(ext.name, ext.min_ver, ext.url))
     return lib
 
-ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.1.3",
+ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.1",
                          "tcversion", "http://ejdb.org",
                          "_pyejdb", ["src/pyejdb.c"],
                          libraries=["tcejdb", "z", "pthread", "m", "c"],
@@ -99,7 +99,7 @@ class build_ext(_build_ext):
 
 setup(
     name="pyejdb",
-    version="1.0.11",
+    version="1.0.12",
     url="http://ejdb.org",
     keywords=["ejdb", "tokyocabinet", "nosql", "database", "storage", "embedded", "mongodb", "json"],
     description="Python 2.7/3.x binding for EJDB database engine.",
