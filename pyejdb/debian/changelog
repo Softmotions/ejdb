@@ -1,3 +1,9 @@
+python-ejdb (1.0.11) testing; urgency=low
+
+  * Unified 2.7.x & 3.x python binding
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 30 May 2013 18:03:41 +0700
+
 python-ejdb (1.0.7-1) unstable; urgency=low
 
   * Initial release.
