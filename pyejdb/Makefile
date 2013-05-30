@@ -1,6 +1,6 @@
 
 all:
-	./setup.py clean build sdist
+	python3 ./setup.py clean build sdist
 
 clean:
 	- rm -f ./testdb*
