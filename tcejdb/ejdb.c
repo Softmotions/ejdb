@@ -2693,16 +2693,16 @@ fullscan: /* Full scan */
     if (log) {
         tcxstrprintf(log, "RUN FULLSCAN\n");
     }
-    uint64_t hdbiter;
     TCMAP *updkeys = (ejq->flags & EJQUPDATING) ? tcmapnew2(100 * 1024) : NULL;
-    if (!tchdbiterinit4(hdb, &hdbiter)) {
+    TCHDBITER *hdbiter = tchdbiter2init(hdb);
+    if (!hdbiter) {
         goto finish;
     }
     TCXSTR *skbuf = tcxstrnew3(sizeof (bson_oid_t) + 1);
     tcxstrclear(ejq->colbuf);
     tcxstrclear(ejq->bsbuf);
     int rows = 0;
-    while ((all || count < max) && tchdbiternext4(hdb, &hdbiter, skbuf, ejq->colbuf)) {
+    while ((all || count < max) && tchdbiter2next(hdb, hdbiter, skbuf, ejq->colbuf)) {
         ++rows;
         sz = tcmaploadoneintoxstr(TCXSTRPTR(ejq->colbuf), TCXSTRSIZE(ejq->colbuf), JDBCOLBSON, JDBCOLBSONL, ejq->bsbuf);
         if (sz <= 0) {
@@ -2734,6 +2734,7 @@ wfinish:
         tcxstrclear(ejq->colbuf);
         tcxstrclear(ejq->bsbuf);
     }
+    tchdbiter2dispose(hdb, hdbiter);
     tcxstrdel(skbuf);
     if (updkeys) {
         tcmapdel(updkeys);

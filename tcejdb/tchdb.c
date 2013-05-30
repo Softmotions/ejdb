@@ -276,6 +276,14 @@ void tchdbdel(TCHDB *hdb) {
         pthread_key_delete(*(pthread_key_t *) hdb->eckey);
         TCFREE(hdb->eckey);
     }
+    if (hdb->iter2list) {
+        for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
+            TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
+            assert(pit && *pit);
+            TCFREE(*pit);
+        }
+        tclistdel(hdb->iter2list);
+    }
     TCFREE(hdb);
 }
 
@@ -840,10 +848,59 @@ bool tchdbiterinit(TCHDB *hdb) {
 }
 
 /* Initialize the iterator of a hash database object. */
-bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter) {
+TCHDBITER* tchdbiter2init(TCHDB *hdb) {
     assert(hdb);
+    if (!HDBLOCKMETHOD(hdb, true)) return NULL;
+    if (INVALIDHANDLE(hdb->fd)) {
+        tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
+        HDBUNLOCKMETHOD(hdb);
+        return NULL;
+    }
+    if (hdb->async && !tchdbflushdrp(hdb)) {
+        HDBUNLOCKMETHOD(hdb);
+        return NULL;
+    }
+    if (hdb->iter2list == NULL) {
+        hdb->iter2list = tclistnew2(16);
+    }
+    TCHDBITER *it;
+    TCMALLOC(it, sizeof(*it));
+    it->pos = hdb->frec;
+    TCLISTPUSH(hdb->iter2list, &it, sizeof(it));
+    HDBUNLOCKMETHOD(hdb);
+    return it;
+}
+
+bool tchdbiter2dispose(TCHDB *hdb, TCHDBITER* iter) {
+    assert(hdb);
+    if (!iter) return false;
     if (!HDBLOCKMETHOD(hdb, true)) return false;
     if (INVALIDHANDLE(hdb->fd)) {
+        tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
+        HDBUNLOCKMETHOD(hdb);
+        return false;
+    }
+    bool found = false;
+    for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
+        TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
+        assert(pit && *pit);
+        if (*pit == iter) {
+            TCFREE(tclistremove2(hdb->iter2list, i));
+            found = true;
+            break;
+        }
+    }
+    if (found) {
+        TCFREE(iter);
+    }
+    HDBUNLOCKMETHOD(hdb);
+    return found;
+}
+
+EJDB_EXPORT bool tchdbiter2next(TCHDB *hdb, TCHDBITER* iter, TCXSTR *kxstr, TCXSTR *vxstr) {
+    assert(hdb && kxstr && vxstr && iter);
+    if (!HDBLOCKMETHOD(hdb, false)) return false;
+    if (INVALIDHANDLE(hdb->fd) || iter->pos < 1) {
         tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
         HDBUNLOCKMETHOD(hdb);
         return false;
@@ -852,9 +909,9 @@ bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter) {
         HDBUNLOCKMETHOD(hdb);
         return false;
     }
-    *iter = hdb->frec;
+    bool rv = tchdbiternextintoxstr2(hdb, &iter->pos, kxstr, vxstr);
     HDBUNLOCKMETHOD(hdb);
-    return true;
+    return rv;
 }
 
 /* Get the next key of the iterator of a hash database object. */
@@ -896,24 +953,6 @@ bool tchdbiternext3(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr) {
         return false;
     }
     bool rv = tchdbiternextintoxstr(hdb, kxstr, vxstr);
-    HDBUNLOCKMETHOD(hdb);
-    return rv;
-}
-
-/* Get the next extensible objects of the iterator of a hash database object. */
-bool tchdbiternext4(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr) {
-    assert(hdb && kxstr && vxstr && iter);
-    if (!HDBLOCKMETHOD(hdb, true)) return false;
-    if (INVALIDHANDLE(hdb->fd) || *iter < 1) {
-        tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
-        HDBUNLOCKMETHOD(hdb);
-        return false;
-    }
-    if (hdb->async && !tchdbflushdrp(hdb)) {
-        HDBUNLOCKMETHOD(hdb);
-        return false;
-    }
-    bool rv = tchdbiternextintoxstr2(hdb, iter, kxstr, vxstr);
     HDBUNLOCKMETHOD(hdb);
     return rv;
 }
@@ -2278,6 +2317,7 @@ static void tchdbclear(TCHDB *hdb) {
     hdb->frec = 0;
     hdb->dfcur = 0;
     hdb->iter = 0;
+    hdb->iter2list = NULL;
     hdb->map = NULL;
     hdb->msiz = 0;
     hdb->xmsiz = HDBDEFXMSIZ;
@@ -2621,6 +2661,12 @@ static void tchdbfbpmerge(TCHDB *hdb) {
             if (cur->off + cur->rsiz == next->off && cur->rsiz + next->rsiz <= HDBFBMAXSIZ) {
                 if (hdb->dfcur == next->off) hdb->dfcur += next->rsiz;
                 if (hdb->iter == next->off) hdb->iter += next->rsiz;
+                if (hdb->iter2list) {
+                    for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
+                        TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
+                        if ((*pit)->pos == next->off) (*pit)->pos += next->rsiz;
+                    }
+                }
                 cur->rsiz += next->rsiz;
                 next->off = 0;
             }
@@ -2770,6 +2816,12 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
             if (pv->off == off && rsiz + pv->rsiz >= nsiz) {
                 if (hdb->dfcur == pv->off) hdb->dfcur += pv->rsiz;
                 if (hdb->iter == pv->off) hdb->iter += pv->rsiz;
+                if (hdb->iter2list) {
+                    for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
+                        TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
+                        if ((*pit)->pos == pv->off) (*pit)->pos += pv->rsiz;
+                    }
+                }
                 rec->rsiz += pv->rsiz;
                 memmove(pv, pv + 1, sizeof (*pv) * ((ep - pv) - 1));
                 hdb->fbpnum--;
@@ -2788,6 +2840,12 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
         if (nrec.magic != HDBMAGICFB) break;
         if (hdb->dfcur == off) hdb->dfcur += nrec.rsiz;
         if (hdb->iter == off) hdb->iter += nrec.rsiz;
+        if (hdb->iter2list) {
+            for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
+                TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
+                if ((*pit)->pos == off) (*pit)->pos += nrec.rsiz;
+            }
+        }
         off += nrec.rsiz;
     }
     uint32_t jsiz = off - rec->off;
@@ -3797,6 +3855,15 @@ static bool tchdbopenimpl(TCHDB *hdb, const char *path, int omode) {
     hdb->path = tcstrdup(path);
     hdb->dfcur = hdb->frec;
     hdb->iter = 0;
+    if (hdb->iter2list) {
+        for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
+            TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
+            assert(pit && *pit);
+            TCFREE(*pit);
+        }
+        tclistdel(hdb->iter2list);
+        hdb->iter2list = NULL;
+    }
     hdb->ba64 = (hdb->opts & HDBTLARGE);
     hdb->msiz = msiz;
     hdb->align = 1 << hdb->apow;
@@ -4895,17 +4962,29 @@ static bool tchdbiternextintoxstr(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr) {
     return tchdbiternextintoxstr2(hdb, &hdb->iter, kxstr, vxstr);
 }
 
-/* #METHOD WLOCK */
+/* #METHOD RWLOCK  */
 static bool tchdbiternextintoxstr2(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr) {
     assert(hdb && kxstr && vxstr);
     TCHREC rec;
     char rbuf[HDBIOBUFSIZ];
-    while (*iter < hdb->fsiz) {
+    while (1) {
+        if (!HDBLOCKDB(hdb)) { //needed in the case of #METHOD WLOCK
+            return false;
+        }
+        if (*iter >= hdb->fsiz) {
+            HDBUNLOCKDB(hdb);
+            break;
+        }
+        HDBUNLOCKDB(hdb);
         rec.off = *iter;
-        if (!tchdbreadrec(hdb, &rec, rbuf)) return false;
+        if (!tchdbreadrec(hdb, &rec, rbuf)) {
+            return false;
+        }
         *iter = *iter + rec.rsiz;
         if (rec.magic == HDBMAGICREC) {
-            if (!rec.vbuf && !tchdbreadrecbody(hdb, &rec)) return false;
+            if (!rec.vbuf && !tchdbreadrecbody(hdb, &rec)) {
+                return false;
+            }
             tcxstrclear(kxstr);
             TCXSTRCAT(kxstr, rec.kbuf, rec.ksiz);
             tcxstrclear(vxstr);
@@ -5149,6 +5228,12 @@ static bool tchdbdefragimpl(TCHDB *hdb, int64_t step) {
     uint64_t dest = base;
     uint64_t cur = base;
     if (hdb->iter == cur) hdb->iter += rec.rsiz;
+    if (hdb->iter2list) {
+        for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
+            TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
+            if ((*pit)->pos == cur) (*pit)->pos += rec.rsiz;
+        }
+    }
     cur += rec.rsiz;
     uint64_t fbsiz = cur - dest;
     step++;
@@ -5172,6 +5257,12 @@ static bool tchdbdefragimpl(TCHDB *hdb, int64_t step) {
             step--;
         } else {
             if (hdb->iter == cur) hdb->iter += rec.rsiz;
+            if (hdb->iter2list) {
+                for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
+                    TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
+                    if ((*pit)->pos == cur) (*pit)->pos += rec.rsiz;
+                }
+            }
             fbsiz += rec.rsiz;
         }
         cur += rsiz;
