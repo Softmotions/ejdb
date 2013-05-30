@@ -1,4 +1,4 @@
-libtcejdb (1.1.9) testing; urgency=low
+libtcejdb (1.1.10) testing; urgency=low
 
   * Threading consistency improvements 
 

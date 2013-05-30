@@ -2845,7 +2845,6 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
         if (hdb->iter2list) {
             for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                 TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-                if ((*pit)->pos == off) (*pit)->pos += nrec.rsiz;
                 TCAS(&((*pit)->pos), nrec.off, nrec.off + nrec.rsiz);
             }
         }
@@ -5256,6 +5255,12 @@ static bool tchdbdefragimpl(TCHDB *hdb, int64_t step) {
                 return false;
             }
             if (hdb->iter == cur) hdb->iter = dest;
+            if (hdb->iter2list) {
+                for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
+                    TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
+                    TCAS(&((*pit)->pos), cur, dest);
+                }
+            }
             dest += rec.rsiz;
             step--;
         } else {
