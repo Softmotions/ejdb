@@ -1,3 +1,9 @@
+libtcejdb (1.1.9) testing; urgency=low
+
+  * Threading consistency improvements 
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 30 May 2013 20:43:15 +0700
+
 libtcejdb (1.1.8) testing; urgency=low
 
   * Fullscan selects stability improvements

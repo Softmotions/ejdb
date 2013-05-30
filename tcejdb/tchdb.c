@@ -909,7 +909,9 @@ EJDB_EXPORT bool tchdbiter2next(TCHDB *hdb, TCHDBITER* iter, TCXSTR *kxstr, TCXS
         HDBUNLOCKMETHOD(hdb);
         return false;
     }
-    bool rv = tchdbiternextintoxstr2(hdb, &iter->pos, kxstr, vxstr);
+    uint64_t pos = __atomic_load_n(&iter->pos, __ATOMIC_ACQUIRE);
+    bool rv = tchdbiternextintoxstr2(hdb, &pos, kxstr, vxstr);
+    __atomic_store_n(&iter->pos, pos, __ATOMIC_RELEASE);
     HDBUNLOCKMETHOD(hdb);
     return rv;
 }
@@ -2664,7 +2666,7 @@ static void tchdbfbpmerge(TCHDB *hdb) {
                 if (hdb->iter2list) {
                     for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                         TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-                        if ((*pit)->pos == next->off) (*pit)->pos += next->rsiz;
+                        TCAS(&((*pit)->pos), next->off, next->off + next->rsiz);
                     }
                 }
                 cur->rsiz += next->rsiz;
@@ -2819,7 +2821,7 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
                 if (hdb->iter2list) {
                     for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                         TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-                        if ((*pit)->pos == pv->off) (*pit)->pos += pv->rsiz;
+                        TCAS(&((*pit)->pos), pv->off, pv->off + pv->rsiz);
                     }
                 }
                 rec->rsiz += pv->rsiz;
@@ -2844,6 +2846,7 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
             for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                 TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
                 if ((*pit)->pos == off) (*pit)->pos += nrec.rsiz;
+                TCAS(&((*pit)->pos), nrec.off, nrec.off + nrec.rsiz);
             }
         }
         off += nrec.rsiz;
@@ -5231,7 +5234,7 @@ static bool tchdbdefragimpl(TCHDB *hdb, int64_t step) {
     if (hdb->iter2list) {
         for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
             TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-            if ((*pit)->pos == cur) (*pit)->pos += rec.rsiz;
+            TCAS(&((*pit)->pos), cur, cur + rec.rsiz);
         }
     }
     cur += rec.rsiz;
@@ -5260,7 +5263,7 @@ static bool tchdbdefragimpl(TCHDB *hdb, int64_t step) {
             if (hdb->iter2list) {
                 for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                     TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-                    if ((*pit)->pos == cur) (*pit)->pos += rec.rsiz;
+                    TCAS(&((*pit)->pos), cur, cur + rec.rsiz);
                 }
             }
             fbsiz += rec.rsiz;

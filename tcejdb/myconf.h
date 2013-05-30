@@ -546,6 +546,7 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
 #define __atomic_fetch_nand(ptr,val,order) __sync_fetch_and_nand(ptr, val)
 #endif
 
+#define TCAS(ptr, expected, desired) __sync_bool_compare_and_swap(ptr, expected, desired)
 
 #endif                                   // duplication check
 
