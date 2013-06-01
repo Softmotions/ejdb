@@ -29,7 +29,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sample1_win32.cpp">
+    <ClCompile Include="ejdb_dynamic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
