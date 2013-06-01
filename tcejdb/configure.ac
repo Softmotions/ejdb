@@ -365,7 +365,7 @@ case $host_os in
         AC_CHECK_LIB(winpthread, main, [], AC_MSG_ERROR([winpthread lubrary is required]))
         MYLDFLAGS="-static-libgcc -static-libstdc++ $MYLDFLAGS -Wl,-Bstatic"
         MYHEADERFILES="$MYHEADERFILES win32/platform.h"
-        MYCPPFLAGS="$MYCPPFLAGS -DPCRE_STATIC -D__USE_MINGW_ANSI_STDIO"
+        MYCPPFLAGS="$MYCPPFLAGS -DPCRE_STATIC"
         MYCFLAGS="$MYCFLAGS -Wno-pedantic-ms-format"
         ;;
     *)
