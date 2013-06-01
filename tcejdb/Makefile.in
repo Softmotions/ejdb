@@ -143,6 +143,14 @@ install :
 	@printf '#================================================================\n'
 
 win-archive : install
+	cp $(MXE)/usr/lib/gcc/$(HOST_NAME)/*/libgcc.a ./$(HOST_NAME)/lib
+	cp $(MXE)/usr/$(HOST_NAME)/lib/libmingwex.a ./$(HOST_NAME)/lib
+	cp $(MXE)/usr/$(HOST_NAME)/lib/libpcre.a ./$(HOST_NAME)/lib
+	cp $(MXE)/usr/$(HOST_NAME)/lib/libpcreposix.a ./$(HOST_NAME)/lib
+	cp $(MXE)/usr/$(HOST_NAME)/lib/libwinpthread.a ./$(HOST_NAME)/lib
+	cp $(MXE)/usr/$(HOST_NAME)/lib/libz.a ./$(HOST_NAME)/lib
+	test -d $(HOST_NAME)/samples || mkdir $(HOST_NAME)/samples
+	cp -R ./samples/win32/* $(HOST_NAME)/samples
 	cd $(HOST_NAME) && zip -r ../$(PACKAGEBASE).zip ./*
 
 uninstall :

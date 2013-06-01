@@ -44,6 +44,6 @@ autoconf
 ./configure --host="${HOST}" --prefix=${PREFIX} ${CONFLAGS}
 make clean
 make
-make win-archive
+make MXE=${MXE_HOME} win-archive
 make -C testejdb/ all
 
