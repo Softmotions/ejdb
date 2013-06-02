@@ -37,12 +37,12 @@
           <executablePath></executablePath>
           <cTool>
             <incDir>
-              <pElem>/usr/include/python3.2mu</pElem>
+              <pElem>/usr/include/python2.7</pElem>
             </incDir>
           </cTool>
           <ccTool>
             <incDir>
-              <pElem>/usr/include/python3.2mu</pElem>
+              <pElem>/usr/include/python2.7</pElem>
             </incDir>
           </ccTool>
         </makeTool>
