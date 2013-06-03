@@ -3726,7 +3726,7 @@ typedef unsigned char TCBITMAP; /* type of a bit map object */
 
 #include <stdio.h>
 
-#define _TC_VERSION    "1.1.11"
+#define _TC_VERSION    "1.1.12"
 #define _TC_LIBVER     911
 #define _TC_FORMATVER  "1.0"
 

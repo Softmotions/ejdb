@@ -899,7 +899,7 @@ bool tchdbiter2dispose(TCHDB *hdb, TCHDBITER* iter) {
 
 EJDB_EXPORT bool tchdbiter2next(TCHDB *hdb, TCHDBITER* iter, TCXSTR *kxstr, TCXSTR *vxstr) {
     assert(hdb && kxstr && vxstr && iter);
-    if (!HDBLOCKMETHOD(hdb, false)) return false;
+    if (!HDBLOCKMETHOD(hdb, true)) return false;
     if (INVALIDHANDLE(hdb->fd) || iter->pos < 1) {
         tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
         HDBUNLOCKMETHOD(hdb);
@@ -909,9 +909,7 @@ EJDB_EXPORT bool tchdbiter2next(TCHDB *hdb, TCHDBITER* iter, TCXSTR *kxstr, TCXS
         HDBUNLOCKMETHOD(hdb);
         return false;
     }
-    uint64_t pos = __atomic_load_n(&iter->pos, __ATOMIC_ACQUIRE);
-    bool rv = tchdbiternextintoxstr2(hdb, &pos, kxstr, vxstr);
-    __atomic_store_n(&iter->pos, pos, __ATOMIC_RELEASE);
+    bool rv = tchdbiternextintoxstr2(hdb, &iter->pos, kxstr, vxstr);
     HDBUNLOCKMETHOD(hdb);
     return rv;
 }
@@ -2666,7 +2664,7 @@ static void tchdbfbpmerge(TCHDB *hdb) {
                 if (hdb->iter2list) {
                     for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                         TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-                        TCAS(&((*pit)->pos), next->off, next->off + next->rsiz);
+                        if ((*pit)->pos == next->off) (*pit)->pos += next->rsiz;
                     }
                 }
                 cur->rsiz += next->rsiz;
@@ -2821,7 +2819,7 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
                 if (hdb->iter2list) {
                     for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                         TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-                        TCAS(&((*pit)->pos), pv->off, pv->off + pv->rsiz);
+                        if ((*pit)->pos == pv->off) (*pit)->pos += pv->rsiz;
                     }
                 }
                 rec->rsiz += pv->rsiz;
@@ -2845,7 +2843,7 @@ static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
         if (hdb->iter2list) {
             for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                 TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-                TCAS(&((*pit)->pos), nrec.off, nrec.off + nrec.rsiz);
+                if ((*pit)->pos == nrec.off) (*pit)->pos += nrec.rsiz;
             }
         }
         off += nrec.rsiz;
@@ -4964,20 +4962,12 @@ static bool tchdbiternextintoxstr(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr) {
     return tchdbiternextintoxstr2(hdb, &hdb->iter, kxstr, vxstr);
 }
 
-/* #METHOD RWLOCK  */
+/* #METHOD WLOCK  */
 static bool tchdbiternextintoxstr2(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr) {
     assert(hdb && kxstr && vxstr);
     TCHREC rec;
     char rbuf[HDBIOBUFSIZ];
-    while (1) {
-        if (!HDBLOCKDB(hdb)) { //needed in the case of #METHOD WLOCK
-            return false;
-        }
-        if (*iter >= hdb->fsiz) {
-            HDBUNLOCKDB(hdb);
-            break;
-        }
-        HDBUNLOCKDB(hdb);
+    while (*iter < hdb->fsiz) {
         rec.off = *iter;
         if (!tchdbreadrec(hdb, &rec, rbuf)) {
             return false;
@@ -5233,7 +5223,7 @@ static bool tchdbdefragimpl(TCHDB *hdb, int64_t step) {
     if (hdb->iter2list) {
         for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
             TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-            TCAS(&((*pit)->pos), cur, cur + rec.rsiz);
+            if ((*pit)->pos == cur) (*pit)->pos += rec.rsiz;
         }
     }
     cur += rec.rsiz;
@@ -5258,7 +5248,7 @@ static bool tchdbdefragimpl(TCHDB *hdb, int64_t step) {
             if (hdb->iter2list) {
                 for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                     TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-                    TCAS(&((*pit)->pos), cur, dest);
+                    if ((*pit)->pos == cur) (*pit)->pos = dest;
                 }
             }
             dest += rec.rsiz;
@@ -5268,7 +5258,7 @@ static bool tchdbdefragimpl(TCHDB *hdb, int64_t step) {
             if (hdb->iter2list) {
                 for (int i = TCLISTNUM(hdb->iter2list) - 1; i >= 0; --i) {
                     TCHDBITER **pit = TCLISTVALPTR(hdb->iter2list, i);
-                    TCAS(&((*pit)->pos), cur, cur + rec.rsiz);
+                    if ((*pit)->pos == cur) (*pit)->pos += rec.rsiz;
                 }
             }
             fbsiz += rec.rsiz;
