@@ -146,5 +146,7 @@ __pycache__
 /jejdb/*.so.*
 /jejdb/Makefile
 
+/nejdb/bin/
+/nejdb/test-results/
 
 
