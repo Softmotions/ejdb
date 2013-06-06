@@ -22,18 +22,59 @@ using System.Diagnostics;
 
 namespace Ejdb.SON {
 
-	public sealed class BSONIteratorValue {
+	/**
+	 * <summary>BSON field value</summary>
+	 **/
+	[Serializable]
+	public sealed class BSONValue {
 		public readonly BSONType Type;
 		public readonly string Key;
 		public readonly object Value;
 
-		public BSONIteratorValue(BSONType type, string key, object value) {
+		public BSONValue(BSONType type, string key, object value) {
 			this.Type = type;
 			this.Key = key;
 			this.Value = value;
 		}
 
-		public BSONIteratorValue(BSONType type, string key) : this(type, key, null) {
+		public BSONValue(BSONType type, string key) : this(type, key, null) {
+		}
+	}
+
+	/**
+	 * <summary>BSON document deserialized data wrapper</summary>
+	 **/
+	[Serializable]
+	public sealed class BSONDocument {
+		Dictionary<string, BSONValue> _fields;
+		readonly List<BSONValue> _fieldslist;
+
+		public BSONDocument() {
+			this._fields = null;
+			this._fieldslist = new List<BSONValue>();
+		}
+
+		public BSONDocument Add(BSONValue bv) {
+			_fieldslist.Add(bv);
+			if (_fields != null) {
+				_fields.Add(bv.Key, bv);
+			}
+			return this;
+		}
+
+		public BSONValue GetBSONValue(string key) {
+			CheckFields();
+			return _fields[key];
+		}
+
+		void CheckFields() {
+			if (_fields != null) {
+				return;
+			}
+			_fields = new Dictionary<string, BSONValue>(Math.Max(_fieldslist.Count + 1, 32));
+			foreach (var bv in _fieldslist) {
+				_fields.Add(bv.Key, bv);
+			}
 		}
 	}
 
@@ -45,7 +86,7 @@ namespace Ejdb.SON {
 		string _entryKey;
 		int _entryLen;
 		bool _entryDataSkipped;
-		BSONIteratorValue _entryDataValue;
+		BSONValue _entryDataValue;
 
 		public int DocumentLength {
 			get { return this._doclen; }
@@ -150,7 +191,7 @@ namespace Ejdb.SON {
 			return _ctype;
 		}
 
-		public BSONIteratorValue FetchIteratorValue() {
+		public BSONValue FetchIteratorValue() {
 			if (_entryDataSkipped) {
 				return _entryDataValue;
 			}
@@ -159,7 +200,7 @@ namespace Ejdb.SON {
 				case BSONType.EOO:					 
 				case BSONType.UNDEFINED:
 				case BSONType.NULL:
-					_entryDataValue = new BSONIteratorValue(_ctype, _entryKey);
+					_entryDataValue = new BSONValue(_ctype, _entryKey);
 					break;	
 				case BSONType.BOOL:
 					break;
