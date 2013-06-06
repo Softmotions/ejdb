@@ -14,14 +14,17 @@
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
 using System;
+using System.Text;
 
 namespace Ejdb.SON {
 
-	public sealed class BSONOid {
+	[Serializable]
+	public sealed class BSONOid : IComparable<BSONOid> {
 
-		private byte[] _bytes;
+		byte[] _bytes;
+		string _cachedString;
 
-		private BSONOid() {
+		BSONOid() {
 		}
 
 		public BSONOid(string val) {
@@ -39,7 +42,7 @@ namespace Ejdb.SON {
 			Array.Copy(val, _bytes, 12);
 		}
 
-		private bool IsValidOid(string oid) {
+		bool IsValidOid(string oid) {
 			var i = 0;
 			for (; i < oid.Length &&
             	   ((oid[i] >= 0x30 && oid[i] <= 0x39) || (oid[i] >= 0x61 && oid[i] <= 0x66)); 
@@ -48,21 +51,75 @@ namespace Ejdb.SON {
 			return (i == 24);
 		}
 
-		private void ParseOIDString(string val) {
+		void ParseOIDString(string val) {
 			if (!IsValidOid(val)) {
 				throw new ArgumentException("Invalid oid string");
 			}
 			var vlen = val.Length;
 			_bytes = new byte[vlen / 2];
 			for (var i = 0; i < vlen; i += 2) {
-				try {
-					_bytes[i / 2] = Convert.ToByte(val.Substring(i, 2), 16);
-				} catch {
-					//failed to convert these 2 chars, they may contain illegal charracters
-					_bytes[i / 2] = 0;
-				}
+				_bytes[i / 2] = Convert.ToByte(val.Substring(i, 2), 16);
 			}
+		}
+
+		public int CompareTo(BSONOid other) {
+			if (ReferenceEquals(other, null)) {
+				return 1;
+			}
+			var obytes = other._bytes;
+			for (var x = 0; x < _bytes.Length; x++) {
+				if (_bytes[x] < obytes[x]) {
+					return -1;
+				}
+				if (_bytes[x] > obytes[x]) {
+					return 1;
+				}			
+			}
+			return 0;
+		}
+
+		public override string ToString() {
+			if (_cachedString == null) {
+				_cachedString = BitConverter.ToString(_bytes).Replace("-", "").ToLower();
+			}
+			return _cachedString;
+		}
+
+		public override bool Equals(object obj) {
+			if (obj is BSONOid) {
+				return (CompareTo((BSONOid) obj) == 0);
+			}
+			return false;
+		}
+
+		public override int GetHashCode() {
+			return ToString().GetHashCode();
+		}
+
+		public static bool operator ==(BSONOid a, BSONOid b) {
+			if (ReferenceEquals(a, b)) {
+				return true;
+			}
+			if (a == null || b == null) {
+				return false;
+			}
+			return a.Equals(b);
+		}
+
+		public static bool operator !=(BSONOid a, BSONOid b) {
+			return !(a == b);
+		}
+
+		public static bool operator >(BSONOid a, BSONOid b) {
+			return a.CompareTo(b) > 0;
+		}
+
+		public static bool operator <(BSONOid a, BSONOid b) {
+			return a.CompareTo(b) < 0;
+		}
+
+		public static explicit operator BSONOid(string val) {
+			return new BSONOid(val);
 		}
 	}
 }
-

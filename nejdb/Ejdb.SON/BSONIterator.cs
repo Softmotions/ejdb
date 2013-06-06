@@ -51,7 +51,7 @@ namespace Ejdb.SON {
 			this._doclen = _input.ReadInt32();
 			if (this._doclen < 5) {
 				Dispose();
-				throw new InvalidBSONDataException();
+				throw new InvalidBSONDataException("Unexpected end of BSON document");
 			}
 		}
 
@@ -67,10 +67,10 @@ namespace Ejdb.SON {
 		}
 
 		public BSONType Next() {
+			if (_ctype == BSONType.EOO) {
+				return BSONType.EOO;
+			}
 			if (_ctype != BSONType.UNKNOWN) {
-				if (_ctype == BSONType.EOO) {
-					return BSONType.EOO;
-				}
 				SkipData();
 			}
 			byte bv = _input.ReadByte();
@@ -88,6 +88,7 @@ namespace Ejdb.SON {
 					return BSONType.EOO;
 				case BSONType.UNDEFINED:
 				case BSONType.NULL:
+					_entryLen = 0;
 					break;
 				case BSONType.BOOL:
 					_entryLen = 1;
@@ -107,29 +108,61 @@ namespace Ejdb.SON {
 				case BSONType.STRING:
 				case BSONType.CODE:
 				case BSONType.SYMBOL:
+					_entryLen = 4 + _input.ReadInt32();
 					break;
+				case BSONType.DBREF:
+					_entryLen = 4 + 12 + _input.ReadInt32();
+					break;
+				case BSONType.BINDATA:
+					_entryLen = 4 + 1 + _input.ReadInt32();
+					break;
+				case BSONType.OBJECT:
+				case BSONType.ARRAY:
+				case BSONType.CODEWSCOPE:
+					_entryLen = 4 + _input.ReadInt32(); 
+					break;
+				default:
+					throw new InvalidBSONDataException("Unknown entry type: " + _ctype);
 			}
-			return BSONType.EOO;
+			return _ctype;
 		}
 
-		private void SkipData() {
+		object PeekData() {
+			//todo implement it
+			return null;
+		}
+
+		void SkipData() {
 			if (_entryLen > 0) {
-				var len = _input.BaseStream.Seek(_entryLen, SeekOrigin.Current);
+				int cpos = _input.BaseStream.Position;
+				if ((cpos + _entryLen) != _input.BaseStream.Seek(_entryLen, SeekOrigin.Current)) {
+					throw new IOException("Inconsitent seek within input BSON stream");
+				}
 				_entryLen = 0;
+			} else if (_ctype == BSONType.REGEX) {
+				SkipCString();
+				SkipCString();
 			}
 		}
 
-		private string ReadKey() {
-			//todo
-			return string.Empty;
+		string ReadKey() {
+			_entryKey = ReadCString();
+			return _entryKey;
 		}
 
-		private string ReadCString() {
-			//todo
-			return string.Empty;
+		string ReadCString() {
+			List<byte> sb = new List<byte>(64);
+			byte bv;
+			while ((bv = _input.ReadByte()) != 0x00) {
+				sb.Add(bv);
+			}
+			return Encoding.UTF8.GetString(sb.ToArray());
 		}
 
-
+		void SkipCString() {
+			while ((_input.ReadByte()) != 0x00)
+				;
+		}
 	}
 }
 
