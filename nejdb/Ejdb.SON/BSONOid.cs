@@ -15,33 +15,54 @@
 // ============================================================================================
 using System;
 
-
-
 namespace Ejdb.SON {
 
-	/** <summary> BSON types according to the bsonspec (http://bsonspec.org/)</summary> */ 
+	public sealed class BSONOid {
 
-	public enum BSONType : byte {
-		UNKNOWN = 0xfe,
-		EOO = 0,
-		DOUBLE = 1,
-		STRING = 2,
-		OBJECT = 3,
-		ARRAY = 4,
-		BINDATA = 5,
-		UNDEFINED = 6,
-		OID = 7,
-		BOOL = 8,
-		DATE = 9,
-		NULL = 10,
-		REGEX = 11,
-		DBREF = 12, /**< Deprecated. */
-		CODE = 13,
-		SYMBOL = 14,
-		CODEWSCOPE = 15,
-		INT = 16,
-		TIMESTAMP = 17,
-		LONG = 18	
+		private byte[] _bytes;
+
+		private BSONOid() {
+		}
+
+		public BSONOid(string val) {
+			if (val == null) {
+				throw new ArgumentNullException("val");
+			}
+			ParseOIDString(val);
+		}
+
+		public BSONOid(byte[] val) {
+			if (val == null) {
+				throw new ArgumentNullException("val");
+			}
+			_bytes = new byte[12];
+			Array.Copy(val, _bytes, 12);
+		}
+
+		private bool IsValidOid(string oid) {
+			var i = 0;
+			for (; i < oid.Length &&
+            	   ((oid[i] >= 0x30 && oid[i] <= 0x39) || (oid[i] >= 0x61 && oid[i] <= 0x66)); 
+			     ++i) {
+			}
+			return (i == 24);
+		}
+
+		private void ParseOIDString(string val) {
+			if (!IsValidOid(val)) {
+				throw new ArgumentException("Invalid oid string");
+			}
+			var vlen = val.Length;
+			_bytes = new byte[vlen / 2];
+			for (var i = 0; i < vlen; i += 2) {
+				try {
+					_bytes[i / 2] = Convert.ToByte(val.Substring(i, 2), 16);
+				} catch {
+					//failed to convert these 2 chars, they may contain illegal charracters
+					_bytes[i / 2] = 0;
+				}
+			}
+		}
 	}
 }
 

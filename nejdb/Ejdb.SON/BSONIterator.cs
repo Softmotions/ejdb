@@ -17,15 +17,17 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Collections;
+using System.Text;
 
 namespace Ejdb.SON {
 
-	public class BSONIterator : IDisposable, IEnumerable<BSONType>, IEnumerator<BSONType> {
+	public class BSONIterator : IDisposable {
 
-		private readonly BinaryReader _input;
-		private BSONType _ctype;
+		private BinaryReader _input;
 		private int _doclen;
-		private bool _first = true;
+		private BSONType _ctype = BSONType.UNKNOWN;
+		private string _entryKey;
+		private int _entryLen;
 
 		public int DocumentLength {
 			get { return this._doclen; }
@@ -36,44 +38,98 @@ namespace Ejdb.SON {
 		}
 
 		public BSONIterator(Stream input) {
-			this._input = new BinaryReader(input);
-			this._doclen = _input.ReadInt32();
-			byte bv = _input.ReadByte();
-			if (!Enum.IsDefined(typeof(BSONType), (object) bv)) {
-				throw new InvalidBSONDataException("Unknown bson type: " + bv);
+			if (!input.CanRead) {
+				Dispose();
+				throw new IOException("Input stream must be readable");
 			}
-			this._ctype = (BSONType) bv;
+			if (!input.CanSeek) {
+				Dispose();
+				throw new IOException("Input stream must be seekable");
+			}
+			this._input = new BinaryReader(input, Encoding.UTF8);
+			this._ctype = BSONType.EOO;
+			this._doclen = _input.ReadInt32();
+			if (this._doclen < 5) {
+				Dispose();
+				throw new InvalidBSONDataException();
+			}
 		}
 
 		~BSONIterator() {
 			Dispose();
 		}
 
-		public BSONType Current {
-			get {
-				return this._ctype;
-			}
-		}
-
-		BSONType IEnumerator.Current {
-			get {
-				return this._ctype;
-			}
-		}
-
-		IEnumerator IEnumerable.GetEnumerator() { 
-			return GetEnumerator();
-		}
-
-		public IEnumerator<BSONType> GetEnumerator() {
-			return this;
-		}
-
 		public void Dispose() {
 			if (_input != null) {
 				_input.Close();
+				_input = null;
 			}
 		}
+
+		public BSONType Next() {
+			if (_ctype != BSONType.UNKNOWN) {
+				if (_ctype == BSONType.EOO) {
+					return BSONType.EOO;
+				}
+				SkipData();
+			}
+			byte bv = _input.ReadByte();
+			if (!Enum.IsDefined(typeof(BSONType), (object) bv)) {
+				throw new InvalidBSONDataException("Unknown bson type: " + bv);
+			}
+			_ctype = (BSONType) bv;
+			_entryKey = null;
+			_entryLen = 0;
+			if (_ctype != BSONType.EOO) {
+				ReadKey();
+			}
+			switch (_ctype) {
+				case BSONType.EOO:
+					return BSONType.EOO;
+				case BSONType.UNDEFINED:
+				case BSONType.NULL:
+					break;
+				case BSONType.BOOL:
+					_entryLen = 1;
+					break;
+				case BSONType.INT:
+					_entryLen = 4;
+					break;
+				case BSONType.LONG:
+				case BSONType.DOUBLE:
+				case BSONType.TIMESTAMP:
+				case BSONType.DATE:
+					_entryLen = 8;
+					break;
+				case BSONType.OID:
+					_entryLen = 12;
+					break;	
+				case BSONType.STRING:
+				case BSONType.CODE:
+				case BSONType.SYMBOL:
+					break;
+			}
+			return BSONType.EOO;
+		}
+
+		private void SkipData() {
+			if (_entryLen > 0) {
+				var len = _input.BaseStream.Seek(_entryLen, SeekOrigin.Current);
+				_entryLen = 0;
+			}
+		}
+
+		private string ReadKey() {
+			//todo
+			return string.Empty;
+		}
+
+		private string ReadCString() {
+			//todo
+			return string.Empty;
+		}
+
+
 	}
 }
 

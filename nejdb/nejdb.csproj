@@ -44,6 +44,8 @@
     <Compile Include="Ejdb.SON\BSONIterator.cs" />
     <Compile Include="Ejdb.SON\BSONType.cs" />
     <Compile Include="Ejdb.SON\InvalidBSONDataException.cs" />
+    <Compile Include="Ejdb.SON\BSONUtils.cs" />
+    <Compile Include="Ejdb.SON\BSONOid.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
