@@ -18,16 +18,34 @@ using System.IO;
 using System.Collections.Generic;
 using System.Collections;
 using System.Text;
+using System.Diagnostics;
 
 namespace Ejdb.SON {
 
+	public sealed class BSONIteratorValue {
+		public readonly BSONType Type;
+		public readonly string Key;
+		public readonly object Value;
+
+		public BSONIteratorValue(BSONType type, string key, object value) {
+			this.Type = type;
+			this.Key = key;
+			this.Value = value;
+		}
+
+		public BSONIteratorValue(BSONType type, string key) : this(type, key, null) {
+		}
+	}
+
 	public class BSONIterator : IDisposable {
 
-		private BinaryReader _input;
-		private int _doclen;
-		private BSONType _ctype = BSONType.UNKNOWN;
-		private string _entryKey;
-		private int _entryLen;
+		BinaryReader _input;
+		int _doclen;
+		BSONType _ctype = BSONType.UNKNOWN;
+		string _entryKey;
+		int _entryLen;
+		bool _entryDataSkipped;
+		BSONIteratorValue _entryDataValue;
 
 		public int DocumentLength {
 			get { return this._doclen; }
@@ -74,11 +92,13 @@ namespace Ejdb.SON {
 				SkipData();
 			}
 			byte bv = _input.ReadByte();
-			if (!Enum.IsDefined(typeof(BSONType), (object) bv)) {
+			if (!Enum.IsDefined(typeof(BSONType), bv)) {
 				throw new InvalidBSONDataException("Unknown bson type: " + bv);
 			}
-			_ctype = (BSONType) bv;
+			_entryDataSkipped = false;
+			_entryDataValue = null;
 			_entryKey = null;
+			_ctype = (BSONType) bv;
 			_entryLen = 0;
 			if (_ctype != BSONType.EOO) {
 				ReadKey();
@@ -121,28 +141,50 @@ namespace Ejdb.SON {
 				case BSONType.CODEWSCOPE:
 					_entryLen = 4 + _input.ReadInt32(); 
 					break;
+				case BSONType.REGEX:
+					_entryLen = 0;
+					break;
 				default:
 					throw new InvalidBSONDataException("Unknown entry type: " + _ctype);
 			}
 			return _ctype;
 		}
 
-		object PeekData() {
-			//todo implement it
-			return null;
+		public BSONIteratorValue FetchIteratorValue() {
+			if (_entryDataSkipped) {
+				return _entryDataValue;
+			}
+			_entryDataSkipped = true;
+			switch (_ctype) {
+				case BSONType.EOO:					 
+				case BSONType.UNDEFINED:
+				case BSONType.NULL:
+					_entryDataValue = new BSONIteratorValue(_ctype, _entryKey);
+					break;	
+				case BSONType.BOOL:
+					break;
+
+			}
+			return _entryDataValue;
 		}
 
 		void SkipData() {
-			if (_entryLen > 0) {
-				int cpos = _input.BaseStream.Position;
+			if (_entryDataSkipped) {
+				return;
+			}
+			_entryDataValue = null;
+			_entryDataSkipped = true;
+			if (_ctype == BSONType.REGEX) {
+				SkipCString();
+				SkipCString();
+				Debug.Assert(_entryLen == 0);
+			} else if (_entryLen > 0) {
+				long cpos = _input.BaseStream.Position;
 				if ((cpos + _entryLen) != _input.BaseStream.Seek(_entryLen, SeekOrigin.Current)) {
 					throw new IOException("Inconsitent seek within input BSON stream");
 				}
 				_entryLen = 0;
-			} else if (_ctype == BSONType.REGEX) {
-				SkipCString();
-				SkipCString();
-			}
+			} 
 		}
 
 		string ReadKey() {
