@@ -15,11 +15,12 @@
 // ============================================================================================
 using System;
 using System.Text;
+using System.IO;
 
 namespace Ejdb.SON {
 
 	[Serializable]
-	public sealed class BSONOid : IComparable<BSONOid> {
+	public sealed class BSONOid : IComparable<BSONOid>, IBSONValue {
 
 		byte[] _bytes;
 		string _cachedString;
@@ -28,18 +29,23 @@ namespace Ejdb.SON {
 		}
 
 		public BSONOid(string val) {
-			if (val == null) {
-				throw new ArgumentNullException("val");
-			}
 			ParseOIDString(val);
 		}
 
 		public BSONOid(byte[] val) {
-			if (val == null) {
-				throw new ArgumentNullException("val");
-			}
 			_bytes = new byte[12];
 			Array.Copy(val, _bytes, 12);
+		}
+
+		public BSONOid(BinaryReader reader) {
+			_bytes = reader.ReadBytes(12);
+		}
+		
+
+		public BSONType BSONType {
+			get {
+				return BSONType.OID;
+			}
 		}
 
 		bool IsValidOid(string oid) {

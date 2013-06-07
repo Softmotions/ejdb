@@ -13,15 +13,64 @@
 //   if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
-
 using System;
 
 namespace Ejdb.SON {
 
+	/// <summary>
+	/// BSON Timestamp complex value.
+	/// </summary>
+	[Serializable]
+	public class BSONTimestamp : IBSONValue {
 
-	public class BSONMarshaller {
+		readonly int inc;
+		readonly int ts;
 
-		public BSONMarshaller() {
+		BSONTimestamp() {
+		}
+
+		public BSONTimestamp(int inc, int ts) {
+			this.inc = inc;
+			this.ts = ts;
+		}
+
+		public BSONType BSONType {
+			get {
+				return BSONType.TIMESTAMP;
+			}
+		}
+
+		public int Inc {
+			get {
+				return this.inc;
+			}
+		}
+
+		public int Ts {
+			get {
+				return this.ts;
+			}
+		}
+
+		public override string ToString() {
+			return string.Format("[BSONTimestamp: inc={0}, ts={1}]", inc, ts);
+		}
+
+		public override bool Equals(object obj) {
+			if (obj == null)
+				return false;
+			if (ReferenceEquals(this, obj))
+				return true;
+			if (obj.GetType() != typeof(BSONTimestamp))
+				return false;
+			BSONTimestamp other = (BSONTimestamp) obj;
+			return inc == other.inc && ts == other.ts;
+		}
+
+		public override int GetHashCode() {
+			unchecked {
+				return inc.GetHashCode() ^ ts.GetHashCode();
+			}
 		}
 	}
 }
