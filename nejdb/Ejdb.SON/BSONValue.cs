@@ -18,18 +18,34 @@ using System;
 namespace Ejdb.SON {
 
 	/// <summary>
-	/// Various BSON processing constants and shared values.
+	/// BSON field value.
 	/// </summary>
-	public static class BSONConstants {
-
-		static BSONConstants() {
-			Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-		}
+	[Serializable]
+	public sealed class BSONValue : IBSONValue {	
 
 		/// <summary>
-		/// Gets or sets the epoch.
+		/// BSON.Type
 		/// </summary>
-		public static DateTime Epoch { get; private set; }
+		public BSONType BSONType { get; internal set; }
+
+		/// <summary>
+		/// BSON field key.
+		/// </summary>
+		public string Key { get; internal set; }
+
+		/// <summary>
+		/// Deserialized BSON field value.
+		/// </summary>
+		public object Value { get; internal set; }
+
+		public BSONValue(BSONType type, string key, object value) {
+			this.BSONType = type;
+			this.Key = key;
+			this.Value = value;
+		}
+
+		public BSONValue(BSONType type, string key) : this(type, key, null) {
+		}
 	}
 }
 

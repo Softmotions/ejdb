@@ -17,19 +17,13 @@ using System;
 
 namespace Ejdb.SON {
 
-	/// <summary>
-	/// Various BSON processing constants and shared values.
-	/// </summary>
-	public static class BSONConstants {
+	public class BSONArray : BSONObject {
 
-		static BSONConstants() {
-			Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+		public override BSONType BSONType {
+			get {
+				return BSONType.ARRAY;
+			}
 		}
-
-		/// <summary>
-		/// Gets or sets the epoch.
-		/// </summary>
-		public static DateTime Epoch { get; private set; }
 	}
 }
 

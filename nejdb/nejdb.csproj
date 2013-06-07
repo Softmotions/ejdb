@@ -49,6 +49,10 @@
     <Compile Include="Ejdb.SON\BSONTimestamp.cs" />
     <Compile Include="Ejdb.SON\BSONRegexp.cs" />
     <Compile Include="Ejdb.SON\IBSONValue.cs" />
+    <Compile Include="Ejdb.SON\BSONValue.cs" />
+    <Compile Include="Ejdb.SON\BSONIterator.cs" />
+    <Compile Include="Ejdb.SON\BSONObject.cs" />
+    <Compile Include="Ejdb.SON\BSONArray.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
