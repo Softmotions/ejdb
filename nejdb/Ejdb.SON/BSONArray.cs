@@ -17,7 +17,7 @@ using System;
 
 namespace Ejdb.SON {
 
-	public class BSONArray : BSONObject {
+	public class BSONArray : BSONDocument {
 
 		public override BSONType BSONType {
 			get {

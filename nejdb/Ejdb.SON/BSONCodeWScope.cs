@@ -17,62 +17,31 @@ using System;
 
 namespace Ejdb.SON {
 
-	/// <summary>
-	/// BSON Regexp complex value.
-	/// </summary>
-	[Serializable]
-	public class BSONRegexp : IBSONValue {
+	public class BSONCodeWScope : BSONDocument {
 
-		readonly string _re;
+		readonly string _code;
 
-		readonly string _opts;
-
-		BSONRegexp() {
-		}
-
-		public BSONRegexp(string re, string opts) {
-			this._re = re;
-			this._opts = opts;
-		}
-
-		public BSONType BSONType {
+		public override BSONType BSONType {
 			get {
-				return BSONType.REGEX;
+				return BSONType.CODEWSCOPE;
 			}
 		}
 
-		public string Re {
+		public string Code {
 			get {
-				return this._re;
+				return _code;
 			}
 		}
 
-		public string Opts {
+		public BSONDocument Scope {
 			get {
-				return this._opts;
+				return this;
 			}
 		}
-	
-		public override string ToString() {
-			return string.Format("[BSONRegexp: re={0}, opts={1}]", _re, _opts);
-		}
 
-		public override bool Equals(object obj) {
-			if (obj == null)
-				return false;
-			if (ReferenceEquals(this, obj))
-				return true;
-			if (obj.GetType() != typeof(BSONRegexp))
-				return false;
-			BSONRegexp other = (BSONRegexp) obj;
-			return _re == other._re && _opts == other._opts;
+		public BSONCodeWScope(string code) {
+			this._code = code;
 		}
-
-		public override int GetHashCode() {
-			unchecked {
-				return (_re != null ? _re.GetHashCode() : 0) ^ (_opts != null ? _opts.GetHashCode() : 0);
-			}
-		}			
 	}
 }
 

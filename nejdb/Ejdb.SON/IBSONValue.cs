@@ -22,7 +22,7 @@ namespace Ejdb.SON {
 	public interface IBSONValue {
 
 		/// <summary>
-		/// BSON Type of complex value
+		/// BSON Type of complex value.
 		/// </summary>
 		/// <value>The type of the BSON.</value>
 		BSONType BSONType { get; }

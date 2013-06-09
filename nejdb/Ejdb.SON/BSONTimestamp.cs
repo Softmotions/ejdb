@@ -23,15 +23,15 @@ namespace Ejdb.SON {
 	[Serializable]
 	public class BSONTimestamp : IBSONValue {
 
-		readonly int inc;
-		readonly int ts;
+		readonly int _inc;
+		readonly int _ts;
 
 		BSONTimestamp() {
 		}
 
 		public BSONTimestamp(int inc, int ts) {
-			this.inc = inc;
-			this.ts = ts;
+			this._inc = inc;
+			this._ts = ts;
 		}
 
 		public BSONType BSONType {
@@ -42,18 +42,18 @@ namespace Ejdb.SON {
 
 		public int Inc {
 			get {
-				return this.inc;
+				return _inc;
 			}
 		}
 
 		public int Ts {
 			get {
-				return this.ts;
+				return _ts;
 			}
 		}
 
 		public override string ToString() {
-			return string.Format("[BSONTimestamp: inc={0}, ts={1}]", inc, ts);
+			return string.Format("[BSONTimestamp: inc={0}, ts={1}]", _inc, _ts);
 		}
 
 		public override bool Equals(object obj) {
@@ -64,12 +64,12 @@ namespace Ejdb.SON {
 			if (obj.GetType() != typeof(BSONTimestamp))
 				return false;
 			BSONTimestamp other = (BSONTimestamp) obj;
-			return inc == other.inc && ts == other.ts;
+			return _inc == other._inc && _ts == other._ts;
 		}
 
 		public override int GetHashCode() {
 			unchecked {
-				return inc.GetHashCode() ^ ts.GetHashCode();
+				return _inc.GetHashCode() ^ _ts.GetHashCode();
 			}
 		}
 	}

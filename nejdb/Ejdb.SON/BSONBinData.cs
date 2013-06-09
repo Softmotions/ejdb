@@ -14,65 +14,30 @@
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
 using System;
+using System.IO;
 
 namespace Ejdb.SON {
 
-	/// <summary>
-	/// BSON Regexp complex value.
-	/// </summary>
-	[Serializable]
-	public class BSONRegexp : IBSONValue {
+	public class BSONBinData {
+		readonly byte _subtype;
+		readonly byte[] _data;
 
-		readonly string _re;
-
-		readonly string _opts;
-
-		BSONRegexp() {
-		}
-
-		public BSONRegexp(string re, string opts) {
-			this._re = re;
-			this._opts = opts;
-		}
-
-		public BSONType BSONType {
+		public byte Subtype {
 			get {
-				return BSONType.REGEX;
+				return _subtype;
 			}
 		}
 
-		public string Re {
+		public byte[] Data {
 			get {
-				return this._re;
+				return _data;
 			}
 		}
 
-		public string Opts {
-			get {
-				return this._opts;
-			}
+		internal BSONBinData(byte subtype, int len, BinaryReader input) {
+			_subtype = subtype;
+			_data = input.ReadBytes(len);
 		}
-	
-		public override string ToString() {
-			return string.Format("[BSONRegexp: re={0}, opts={1}]", _re, _opts);
-		}
-
-		public override bool Equals(object obj) {
-			if (obj == null)
-				return false;
-			if (ReferenceEquals(this, obj))
-				return true;
-			if (obj.GetType() != typeof(BSONRegexp))
-				return false;
-			BSONRegexp other = (BSONRegexp) obj;
-			return _re == other._re && _opts == other._opts;
-		}
-
-		public override int GetHashCode() {
-			unchecked {
-				return (_re != null ? _re.GetHashCode() : 0) ^ (_opts != null ? _opts.GetHashCode() : 0);
-			}
-		}			
 	}
 }
 

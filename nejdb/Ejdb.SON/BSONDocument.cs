@@ -15,6 +15,7 @@
 // ============================================================================================
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Ejdb.SON {
 
@@ -22,14 +23,9 @@ namespace Ejdb.SON {
 	/// BSON document deserialized data wrapper.
 	/// </summary>
 	[Serializable]
-	public class BSONObject : IBSONValue {
+	public class BSONDocument : IBSONValue {
 		Dictionary<string, BSONValue> _fields;
 		readonly List<BSONValue> _fieldslist;
-
-		public BSONObject() {
-			this._fields = null;
-			this._fieldslist = new List<BSONValue>();
-		}
 
 		public virtual BSONType BSONType {
 			get {
@@ -37,7 +33,34 @@ namespace Ejdb.SON {
 			}
 		}
 
-		public BSONObject Add(BSONValue bv) {
+		public BSONDocument() {
+			this._fields = null;
+			this._fieldslist = new List<BSONValue>();
+		}
+
+		public BSONDocument(BSONIterator it) : this() {
+			while (it.Next() != BSONType.EOO) {
+				Add(it.FetchCurrentValue());
+			}
+		}
+
+		public BSONDocument(byte[] bsdata) : this() {
+			using (BSONIterator it = new BSONIterator(bsdata)) {
+				while (it.Next() != BSONType.EOO) {
+					Add(it.FetchCurrentValue());
+				}
+			}
+		}
+
+		public BSONDocument(Stream bstream) : this() {
+			using (BSONIterator it = new BSONIterator(bstream)) {
+				while (it.Next() != BSONType.EOO) {
+					Add(it.FetchCurrentValue());
+				}
+			}
+		}
+
+		public BSONDocument Add(BSONValue bv) {
 			_fieldslist.Add(bv);
 			if (_fields != null) {
 				_fields.Add(bv.Key, bv);

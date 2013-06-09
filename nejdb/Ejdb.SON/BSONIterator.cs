@@ -31,6 +31,12 @@ namespace Ejdb.SON {
 		bool _entryDataSkipped;
 		BSONValue _entryDataValue;
 
+		public bool Disposed {
+			get {
+				return (_input == null);
+			}
+		}
+
 		public int DocumentLength {
 			get { return this._doclen; }
 			private set { this._doclen = value; }
@@ -57,6 +63,15 @@ namespace Ejdb.SON {
 			}
 		}
 
+		BSONIterator(BinaryReader input, int doclen) {
+			this._input = input;
+			this._doclen = doclen;
+			if (this._doclen < 5) {
+				Dispose();
+				throw new InvalidBSONDataException("Unexpected end of BSON document");
+			}
+		}
+
 		~BSONIterator() {
 			Dispose();
 		}
@@ -68,7 +83,14 @@ namespace Ejdb.SON {
 			}
 		}
 
+		void CheckDisposed() {
+			if (Disposed) {
+				throw new Exception("BSONIterator already disposed");
+			}
+		}
+
 		public BSONType Next() {
+			CheckDisposed();
 			if (_ctype == BSONType.EOO) {
 				return BSONType.EOO;
 			}
@@ -134,7 +156,8 @@ namespace Ejdb.SON {
 			return _ctype;
 		}
 
-		public BSONValue FetchIteratorValue() {
+		public BSONValue FetchCurrentValue() {
+			CheckDisposed();
 			if (_entryDataSkipped) {
 				return _entryDataValue;
 			}
@@ -153,9 +176,10 @@ namespace Ejdb.SON {
 				case BSONType.CODE:
 				case BSONType.SYMBOL:
 					{						
-						Debug.Assert(_entryLen - 4 >= 0);						
-						string sv = Encoding.UTF8.GetString(_input.ReadBytes(_entryLen - 4));
+						Debug.Assert(_entryLen - 5 >= 0);						
+						string sv = Encoding.UTF8.GetString(_input.ReadBytes(_entryLen - 5)); 
 						_entryDataValue = new BSONValue(_ctype, _entryKey, sv);
+						Debug.Assert(_input.ReadByte() == 0x00); //trailing zero byte
 						break;
 					}
 				case BSONType.BOOL:
@@ -164,24 +188,77 @@ namespace Ejdb.SON {
 				case BSONType.INT:
 					_entryDataValue = new BSONValue(_ctype, _entryKey, _input.ReadInt32());
 					break;
+				case BSONType.OBJECT:
+				case BSONType.ARRAY:
+					{
+						BSONDocument doc = (_ctype == BSONType.OBJECT ? new BSONDocument() : new BSONArray());
+						BSONIterator sit = new BSONIterator(this._input, _entryLen - 4);
+						while (sit.Next() != BSONType.EOO) {
+							doc.Add(sit.FetchCurrentValue());
+						}
+						_entryDataValue = new BSONValue(_ctype, _entryKey, doc); 
+						break;
+					}
 				case BSONType.DOUBLE:
 					_entryDataValue = new BSONValue(_ctype, _entryKey, _input.ReadDouble());
 					break;
 				case BSONType.LONG:				
 					_entryDataValue = new BSONValue(_ctype, _entryKey, _input.ReadInt64());
 					break;			
-				case BSONType.TIMESTAMP:
 				case BSONType.DATE:
+					_entryDataValue = new BSONValue(_ctype, _entryKey, 
+					                                BSONConstants.Epoch.AddMilliseconds(_input.ReadInt64()));
 					break;
-
-
+				case BSONType.TIMESTAMP:
+					{
+						int inc = _input.ReadInt32();
+						int ts = _input.ReadInt32(); 
+						_entryDataValue = new BSONValue(_ctype, _entryKey,
+						                                new BSONTimestamp(inc, ts));
+						break;
+					}
+				case BSONType.REGEX:
+					{
+						string re = ReadCString();
+						string opts = ReadCString();
+						_entryDataValue = new BSONValue(_ctype, _entryKey, 
+						                                new BSONRegexp(re, opts));	
+						break;
+					}
+				case BSONType.BINDATA:
+					{
+						byte subtype = _input.ReadByte();
+						BSONBinData bd = new BSONBinData(subtype, _entryLen - 4, _input);
+						_entryDataValue = new BSONValue(_ctype, _entryKey, bd);
+						break;
+					}
+				case BSONType.DBREF:
+					{
+						SkipData(true);
+						_entryDataValue = new BSONValue(_ctype, _entryKey);
+						break;
+					}
+				case BSONType.CODEWSCOPE:
+					{
+						int cwlen = _entryLen - 4;
+						Debug.Assert(cwlen > 5);
+						int clen = _input.ReadInt32(); //code length
+						string code = Encoding.UTF8.GetString(_input.ReadBytes(clen));
+						BSONCodeWScope cw = new BSONCodeWScope(code);
+						BSONIterator sit = new BSONIterator(_input, _input.ReadInt32());
+						while (sit.Next() != BSONType.EOO) {
+							cw.Add(sit.FetchCurrentValue());
+						}
+						_entryDataValue = new BSONValue(_ctype, _entryKey, cw);
+						break;
+					}
 
 			}
 			return _entryDataValue;
 		}
 
-		void SkipData() {
-			if (_entryDataSkipped) {
+		void SkipData(bool force = false) {
+			if (_entryDataSkipped && !force) {
 				return;
 			}
 			_entryDataValue = null;

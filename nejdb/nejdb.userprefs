@@ -1,13 +1,12 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.SON/BSONArray.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.SON/BSONIterator.cs">
     <Files>
-      <File FileName="Ejdb.SON/BSON.cs" Line="39" Column="3" />
-      <File FileName="Ejdb.SON/BSONValue.cs" Line="4" Column="3" />
-      <File FileName="Ejdb.SON/BSONObject.cs" Line="25" Column="2" />
-      <File FileName="Ejdb.SON/BSONIterator.cs" Line="21" Column="1" />
-      <File FileName="Ejdb.SON/BSONArray.cs" Line="22" Column="29" />
-      <File FileName="Ejdb.SON/BSONTimestamp.cs" Line="8" Column="67" />
+      <File FileName="Ejdb.SON/BSONIterator.cs" Line="185" Column="3" />
+      <File FileName="Ejdb.SON/BSONCodeWScope.cs" Line="44" Column="4" />
+      <File FileName="Ejdb.SON/BSONDocument.cs" Line="37" Column="35" />
+      <File FileName="Ejdb.SON/BSONType.cs" Line="31" Column="3" />
+      <File FileName="Ejdb.SON/BSONBinData.cs" Line="37" Column="3" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -17,7 +16,7 @@
             <Node name="References" expanded="True" />
             <Node name="Ejdb.DB" expanded="True" />
             <Node name="Ejdb.SON" expanded="True">
-              <Node name="BSONArray.cs" selected="True" />
+              <Node name="BSONIterator.cs" selected="True" />
             </Node>
             <Node name="Ejdb.Tests" expanded="True" />
           </Node>
