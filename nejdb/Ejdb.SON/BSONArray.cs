@@ -24,6 +24,97 @@ namespace Ejdb.SON {
 				return BSONType.ARRAY;
 			}
 		}
+
+		public BSONDocument SetNull(int idx) {
+			return base.SetNull(idx.ToString());
+		}
+
+		public BSONDocument SetUndefined(int idx) {
+			return base.SetUndefined(idx.ToString());
+		}
+
+		public BSONDocument SetMaxKey(int idx) {
+			return base.SetMaxKey(idx.ToString());
+		}
+
+		public BSONDocument SetMinKey(int idx) {
+			return base.SetMinKey(idx.ToString());
+		}
+
+		public BSONDocument SetOID(int idx, string oid) {
+			return base.SetOID(idx.ToString(), oid);
+		}
+
+		public BSONDocument SetOID(int idx, BSONOid oid) {
+			return base.SetOID(idx.ToString(), oid); 
+		}
+
+		public BSONDocument SetBool(int idx, bool val) {
+			return base.SetBool(idx.ToString(), val);
+		}
+
+		public BSONDocument SetNumber(int idx, int val) {
+			return base.SetNumber(idx.ToString(), val);
+		}
+
+		public BSONDocument SetNumber(int idx, long val) {
+			return base.SetNumber(idx.ToString(), val);
+		}
+
+		public BSONDocument SetNumber(int idx, double val) {
+			return base.SetNumber(idx.ToString(), val); 
+		}
+
+		public BSONDocument SetNumber(int idx, float val) {
+			return base.SetNumber(idx.ToString(), val); 
+		}
+
+		public BSONDocument SetString(int idx, string val) {
+			return base.SetString(idx.ToString(), val); 
+		}
+
+		public BSONDocument SetCode(int idx, string val) {
+			return base.SetCode(idx.ToString(), val);
+		}
+
+		public BSONDocument SetSymbol(int idx, string val) {
+			return base.SetSymbol(idx.ToString(), val);
+		}
+
+		public BSONDocument SetDate(int idx, DateTime val) {
+			return base.SetDate(idx.ToString(), val);
+		}
+
+		public BSONDocument SetRegexp(int idx, BSONRegexp val) {
+			return base.SetRegexp(idx.ToString(), val);
+		}
+
+		public BSONDocument SetBinData(int idx, BSONBinData val) {
+			return base.SetBinData(idx.ToString(), val);
+		}
+
+		public BSONDocument SetObject(int idx, BSONDocument val) {
+			return base.SetObject(idx.ToString(), val);
+		}
+
+		public BSONDocument SetArray(int idx, BSONArray val) {
+			return base.SetArray(idx.ToString(), val);
+		}
+
+		public BSONDocument SetTimestamp(int idx, BSONTimestamp val) {
+			return base.SetTimestamp(idx.ToString(), val);
+		}
+
+		public BSONDocument SetCodeWScope(int idx, BSONCodeWScope val) {
+			return base.SetCodeWScope(idx.ToString(), val);
+		}
+
+		protected override void CheckKey(string key) {
+			int idx;
+			if (key == null || !int.TryParse(key, out idx) || idx < 0) {
+				throw new InvalidBSONDataException(string.Format("Invalid array key: {0}", key));
+			}
+		}
 	}
 }
 

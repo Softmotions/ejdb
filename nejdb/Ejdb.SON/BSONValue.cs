@@ -46,6 +46,10 @@ namespace Ejdb.SON {
 
 		public BSONValue(BSONType type, string key) : this(type, key, null) {
 		}
+
+		public override string ToString() {
+			return string.Format("[BSONValue: BSONType={0}, Key={1}, Value={2}]", BSONType, Key, Value);
+		}
 	}
 }
 

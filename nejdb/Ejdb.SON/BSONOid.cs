@@ -25,6 +25,12 @@ namespace Ejdb.SON {
 		internal byte[] Bytes;
 		string _cachedString;
 
+		public BSONType BSONType {
+			get {
+				return BSONType.OID;
+			}
+		}
+
 		BSONOid() {
 		}
 
@@ -39,13 +45,6 @@ namespace Ejdb.SON {
 
 		public BSONOid(BinaryReader reader) {
 			Bytes = reader.ReadBytes(12);
-		}
-		
-
-		public BSONType BSONType {
-			get {
-				return BSONType.OID;
-			}
 		}
 
 		bool IsValidOid(string oid) {

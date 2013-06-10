@@ -15,62 +15,11 @@
 // ============================================================================================
 using System;
 
-namespace Ejdb.SON {
+namespace Ejdb.Tests {
 
-	/// <summary>
-	/// BSON Regexp complex value.
-	/// </summary>
-	[Serializable]
-	public sealed class BSONRegexp : IBSONValue {
-
-		readonly string _re;
-		readonly string _opts;
-
-		public BSONType BSONType {
-			get {
-				return BSONType.REGEX;
-			}
-		}
-
-		public string Re {
-			get {
-				return this._re;
-			}
-		}
-
-		public string Opts {
-			get {
-				return this._opts;
-			}
-		}
-
-		BSONRegexp() {
-		}
-
-		public BSONRegexp(string re, string opts) {
-			this._re = re;
-			this._opts = opts;
-		}
-
-		public override string ToString() {
-			return string.Format("[BSONRegexp: re={0}, opts={1}]", _re, _opts);
-		}
-
-		public override bool Equals(object obj) {
-			if (obj == null)
-				return false;
-			if (ReferenceEquals(this, obj))
-				return true;
-			if (obj.GetType() != typeof(BSONRegexp))
-				return false;
-			BSONRegexp other = (BSONRegexp) obj;
-			return _re == other._re && _opts == other._opts;
-		}
-
-		public override int GetHashCode() {
-			unchecked {
-				return (_re != null ? _re.GetHashCode() : 0) ^ (_opts != null ? _opts.GetHashCode() : 0);
-			}
+	public static class TestUtils {
+		internal static string ToHexString(byte[] bv) {
+			return BitConverter.ToString(bv);
 		}
 	}
 }

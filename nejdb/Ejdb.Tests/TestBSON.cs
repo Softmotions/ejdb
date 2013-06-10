@@ -13,24 +13,36 @@
 //   if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
-
 using System;
 using NUnit.Framework;
 using Ejdb.SON;
+using System.IO;
 
 namespace Ejdb.Tests {
 
-	[TestFixture()]
-	public class TestOne {
-		[Test()]
-		public void TestCase() {
-			//BSONType t;
-			Console.WriteLine("isdef=" + Enum.IsDefined(typeof(BSONType), (byte)1));
+	[TestFixture]
+	public class TestBSON {
+
+		[Test]
+		public void TestSerializeEmpty() {
+			MemoryStream ms = new MemoryStream();
+			BSONDocument doc = new BSONDocument();
+			doc.Serialize(ms);
+			string hv = TestUtils.ToHexString(ms.ToArray());
+			ms.Close();
+			Assert.AreEqual("05-00-00-00-00", hv); 
 		}
 
 		[Test]
-		public void TestCase2() {
+		public void TestSerializeSimple() {
+			MemoryStream ms = new MemoryStream();
+			BSONDocument doc = new BSONDocument();
+			doc.Serialize(ms);
+			string hv = TestUtils.ToHexString(ms.ToArray());
+			ms.Close();
+			Console.WriteLine("HV=" + hv);
 		}
+
 	}
 }
 

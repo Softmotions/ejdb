@@ -18,7 +18,8 @@ using System.IO;
 
 namespace Ejdb.SON {
 
-	public class BSONBinData {
+	[Serializable]
+	public sealed class BSONBinData {
 		readonly byte _subtype;
 		readonly byte[] _data;
 
@@ -32,6 +33,12 @@ namespace Ejdb.SON {
 			get {
 				return _data;
 			}
+		}
+
+		public BSONBinData(byte subtype, byte[] data) {
+			_subtype = subtype;
+			_data = new byte[data.Length];
+			Array.Copy(data, _data, data.Length); 
 		}
 
 		internal BSONBinData(byte subtype, int len, BinaryReader input) {

@@ -19,6 +19,7 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 using Ejdb.IO;
+using Ejdb.SON;
 
 namespace Ejdb.SON {
 
@@ -63,49 +64,88 @@ namespace Ejdb.SON {
 			}
 		}
 
-		public BSONDocument Add(BSONValue bv) {
-			_fieldslist.Add(bv);
-			if (_fields != null) {
-				_fields.Add(bv.Key, bv);
-			}
-			return this;
+		public BSONDocument SetNull(string key) {
+			return SetBSONValue(new BSONValue(BSONType.NULL, key));
 		}
 
-		public BSONValue this[string key] {
-			get { 
-				return GetBSONValue(key);
-			}
-			set {
-				SetBSONValue(key, value);
-			}
+		public BSONDocument SetUndefined(string key) {
+			return SetBSONValue(new BSONValue(BSONType.UNKNOWN, key));
 		}
 
-		public BSONValue GetBSONValue(string key) {
-			CheckFields();
-			return _fields[key];
+		public BSONDocument SetMaxKey(string key) {
+			return SetBSONValue(new BSONValue(BSONType.MAXKEY, key));
 		}
 
-		public void SetBSONValue(string key, BSONValue val) {
-			CheckFields();
-			var ov = _fields[key];
-			if (ov != null) {
-				ov.Key = val.Key;
-				ov.BSONType = val.BSONType;
-				ov.Value = val.Value;
-			} else {
-				_fieldslist.Add(val);
-				_fields[key] = val;
-			}
+		public BSONDocument SetMinKey(string key) {
+			return SetBSONValue(new BSONValue(BSONType.MINKEY, key));
 		}
 
-		public object GetObjectValue(string key) {
-			CheckFields();
-			var bv = _fields[key];
-			return bv != null ? bv.Value : null;
+		public BSONDocument SetOID(string key, string oid) {
+			return SetBSONValue(new BSONValue(BSONType.OID, key, new BSONOid(oid)));
 		}
 
-		public BSONValue SetObjectValue(string key, object value) {
-			throw new NotImplementedException();
+		public BSONDocument SetOID(string key, BSONOid oid) {
+			return SetBSONValue(new BSONValue(BSONType.OID, key, oid));
+		}
+
+		public BSONDocument SetBool(string key, bool val) {
+			return SetBSONValue(new BSONValue(BSONType.BOOL, key, val));
+		}
+
+		public BSONDocument SetNumber(string key, int val) {
+			return SetBSONValue(new BSONValue(BSONType.INT, key, val));
+		}
+
+		public BSONDocument SetNumber(string key, long val) {
+			return SetBSONValue(new BSONValue(BSONType.LONG, key, val));
+		}
+
+		public BSONDocument SetNumber(string key, double val) {
+			return SetBSONValue(new BSONValue(BSONType.DOUBLE, key, val));
+		}
+
+		public BSONDocument SetNumber(string key, float val) {
+			return SetBSONValue(new BSONValue(BSONType.DOUBLE, key, val));
+		}
+
+		public BSONDocument SetString(string key, string val) {
+			return SetBSONValue(new BSONValue(BSONType.STRING, key, val));
+		}
+
+		public BSONDocument SetCode(string key, string val) {
+			return SetBSONValue(new BSONValue(BSONType.CODE, key, val));
+		}
+
+		public BSONDocument SetSymbol(string key, string val) {
+			return SetBSONValue(new BSONValue(BSONType.SYMBOL, key, val));
+		}
+
+		public BSONDocument SetDate(string key, DateTime val) {
+			return SetBSONValue(new BSONValue(BSONType.DATE, key, val));
+		}
+
+		public BSONDocument SetRegexp(string key, BSONRegexp val) {
+			return SetBSONValue(new BSONValue(BSONType.REGEX, key, val));
+		}
+
+		public BSONDocument SetBinData(string key, BSONBinData val) {
+			return SetBSONValue(new BSONValue(BSONType.BINDATA, key, val));
+		}
+
+		public BSONDocument SetObject(string key, BSONDocument val) {
+			return SetBSONValue(new BSONValue(BSONType.OBJECT, key, val));
+		}
+
+		public BSONDocument SetArray(string key, BSONArray val) {
+			return SetBSONValue(new BSONValue(BSONType.ARRAY, key, val));
+		}
+
+		public BSONDocument SetTimestamp(string key, BSONTimestamp val) {
+			return SetBSONValue(new BSONValue(BSONType.TIMESTAMP, key, val));
+		}
+
+		public BSONDocument SetCodeWScope(string key, BSONCodeWScope val) {
+			return SetBSONValue(new BSONValue(BSONType.CODEWSCOPE, key, val));
 		}
 
 		public BSONValue DropValue(string key) {
@@ -147,10 +187,53 @@ namespace Ejdb.SON {
 					bw.Write((byte) 0x00); 
 				}
 			}
+			os.Flush();
 		}
 		//.//////////////////////////////////////////////////////////////////
 		// 						Private staff										  
 		//.//////////////////////////////////////////////////////////////////
+		internal BSONValue this[string key] {
+			get { 
+				return GetBSONValue(key);
+			}
+		}
+
+		internal BSONDocument Add(BSONValue bv) {
+			_fieldslist.Add(bv);
+			if (_fields != null) {
+				_fields[bv.Key] = bv;
+			}
+			return this;
+		}
+
+		internal BSONValue GetBSONValue(string key) {
+			CheckFields();
+			return _fields[key];
+		}
+
+		internal BSONDocument SetBSONValue(BSONValue val) {
+			CheckFields();
+			var ov = _fields[val.Key];
+			if (ov != null) {
+				ov.Key = val.Key;
+				ov.BSONType = val.BSONType;
+				ov.Value = val.Value;
+			} else {
+				_fieldslist.Add(val);
+				_fields[val.Key] = val;
+			}
+			return this;
+		}
+
+		internal object GetObjectValue(string key) {
+			CheckFields();
+			var bv = _fields[key];
+			return bv != null ? bv.Value : null;
+		}
+
+		protected virtual void CheckKey(string key) {
+		}
+
 		protected void WriteBSONValue(BSONValue bv, ExtBinaryWriter bw) {
 			BSONType bt = bv.BSONType;
 			switch (bt) {

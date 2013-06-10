@@ -41,11 +41,9 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Ejdb.DB\EJDB.cs" />
-    <Compile Include="Ejdb.Tests\TestOne.cs" />
     <Compile Include="Ejdb.SON\BSONType.cs" />
     <Compile Include="Ejdb.SON\InvalidBSONDataException.cs" />
     <Compile Include="Ejdb.SON\BSONOid.cs" />
-    <Compile Include="Ejdb.SON\BSON.cs" />
     <Compile Include="Ejdb.SON\BSONTimestamp.cs" />
     <Compile Include="Ejdb.SON\BSONRegexp.cs" />
     <Compile Include="Ejdb.SON\IBSONValue.cs" />
@@ -57,6 +55,9 @@
     <Compile Include="Ejdb.SON\BSONDocument.cs" />
     <Compile Include="Ejdb.IO\ExtBinaryReader.cs" />
     <Compile Include="Ejdb.IO\ExtBinaryWriter.cs" />
+    <Compile Include="Ejdb.SON\BSONConstants.cs" />
+    <Compile Include="Ejdb.Tests\TestBSON.cs" />
+    <Compile Include="Ejdb.Tests\TestUtils.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
