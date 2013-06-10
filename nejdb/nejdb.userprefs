@@ -1,14 +1,16 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.IO/ExtBinaryReader.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.Tests/TestBSON.cs">
     <Files>
-      <File FileName="Ejdb.SON/BSONValue.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.DB/EJDB.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.IO/ExtBinaryWriter.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.IO/ExtBinaryReader.cs" Line="27" Column="73" />
-      <File FileName="Ejdb.SON/BSONIterator.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.SON/IBSONValue.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.SON/BSONDocument.cs" Line="1" Column="1" />
+      <File FileName="Ejdb.Tests/TestBSON.cs" Line="31" Column="12" />
+      <File FileName="Ejdb.SON/BSONDocument.cs" Line="348" Column="3" />
+      <File FileName="Ejdb.SON/BSONOid.cs" Line="31" Column="5" />
+      <File FileName="Ejdb.SON/BSONIterator.cs" Line="246" Column="7" />
+      <File FileName="Ejdb.SON/BSONValue.cs" Line="40" Column="3" />
+      <File FileName="Ejdb.SON/BSONCodeWScope.cs" Line="20" Column="2" />
+      <File FileName="Ejdb.SON/BSONBinData.cs" Line="22" Column="2" />
+      <File FileName="Ejdb.SON/BSONArray.cs" Line="34" Column="4" />
+      <File FileName="Ejdb.SON/BSONTimestamp.cs" Line="24" Column="2" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -17,11 +19,11 @@
           <Node name="nejdb" expanded="True">
             <Node name="References" expanded="True" />
             <Node name="Ejdb.DB" expanded="True" />
-            <Node name="Ejdb.IO" expanded="True">
-              <Node name="ExtBinaryReader.cs" selected="True" />
-            </Node>
+            <Node name="Ejdb.IO" expanded="True" />
             <Node name="Ejdb.SON" expanded="True" />
-            <Node name="Ejdb.Tests" expanded="True" />
+            <Node name="Ejdb.Tests" expanded="True">
+              <Node name="TestBSON.cs" selected="True" />
+            </Node>
           </Node>
         </State>
       </Pad>
@@ -33,8 +35,19 @@
       <Pad Id="MonoDevelop.Debugger.WatchPad">
         <State />
       </Pad>
+      <Pad Id="ConnectionManagerPad">
+        <State selected="True" />
+      </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
-        <State expanded="True" selected="True" />
+        <State expanded="True">
+          <Node name="nejdb" expanded="True">
+            <Node name="Ejdb" expanded="True">
+              <Node name="Tests" expanded="True">
+                <Node name="TestBSON" expanded="True" selected="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>
