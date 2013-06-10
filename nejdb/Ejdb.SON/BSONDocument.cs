@@ -16,6 +16,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Diagnostics;
+using Ejdb.IO;
 
 namespace Ejdb.SON {
 
@@ -113,6 +116,148 @@ namespace Ejdb.SON {
 			_fields.Remove(key);
 			_fieldslist.RemoveAll(x => x.Key == key);
 			return bv;
+		}
+
+		public void Serialize(Stream os) {
+			if (os.CanSeek) {
+				long start = os.Position;
+				os.Position += 4; //skip int32 document size
+				using (var bw = new ExtBinaryWriter(os, Encoding.UTF8, true)) {
+					foreach (BSONValue bv in _fieldslist) {
+						WriteBSONValue(bv, bw);
+					}
+					bw.Write((byte) 0x00);
+					long end = os.Position;
+					os.Position = start;
+					bw.Write((int) (end - start));
+					os.Position = end; //go to the end
+				}
+			} else {
+				byte[] darr;
+				var ms = new MemoryStream();
+				using (var bw = new ExtBinaryWriter(ms)) {
+					foreach (BSONValue bv in _fieldslist) {
+						WriteBSONValue(bv, bw);
+					}
+					darr = ms.ToArray();
+				}	
+				using (var bw = new ExtBinaryWriter(os, Encoding.UTF8, true)) {
+					bw.Write(darr.Length + 4/*doclen*/ + 1/*0x00*/);
+					bw.Write(darr);
+					bw.Write((byte) 0x00); 
+				}
+			}
+		}
+		//.//////////////////////////////////////////////////////////////////
+		// 						Private staff										  
+		//.//////////////////////////////////////////////////////////////////
+		protected void WriteBSONValue(BSONValue bv, ExtBinaryWriter bw) {
+			BSONType bt = bv.BSONType;
+			switch (bt) {
+				case BSONType.EOO:
+					break;
+				case BSONType.NULL:
+				case BSONType.UNDEFINED:	
+				case BSONType.MAXKEY:
+				case BSONType.MINKEY:
+					WriteTypeAndKey(bv, bw);
+					break;
+				case BSONType.OID:
+					{
+						WriteTypeAndKey(bv, bw);
+						BSONOid oid = (BSONOid) bv.Value;
+						Debug.Assert(oid.Bytes.Length == 12);
+						bw.Write(oid.Bytes);
+						break;
+					}
+				case BSONType.STRING:
+				case BSONType.CODE:
+				case BSONType.SYMBOL:										
+					WriteTypeAndKey(bv, bw);
+					bw.WriteBSONString((string) bv.Value);
+					break;
+				case BSONType.BOOL:
+					WriteTypeAndKey(bv, bw);
+					bw.Write((bool) bv.Value);
+					break;
+				case BSONType.INT:
+					WriteTypeAndKey(bv, bw);
+					bw.Write((int) bv.Value);
+					break;
+				case BSONType.LONG:
+					WriteTypeAndKey(bv, bw);
+					bw.Write((long) bv.Value);
+					break;
+				case BSONType.ARRAY:
+				case BSONType.OBJECT:
+					{					
+						BSONDocument doc = (BSONDocument) bv.Value;
+						WriteTypeAndKey(bv, bw);
+						doc.Serialize(bw.BaseStream);
+						break;
+					}
+				case BSONType.DATE:
+					{	
+						DateTime dt = (DateTime) bv.Value;
+						var diff = dt.ToUniversalTime() - BSONConstants.Epoch;
+						long time = (long) Math.Floor(diff.TotalMilliseconds);
+						WriteTypeAndKey(bv, bw);
+						bw.Write(time);
+						break;
+					}
+				case BSONType.DOUBLE:
+					WriteTypeAndKey(bv, bw);
+					bw.Write((double) bv.Value);
+					break;	
+				case BSONType.REGEX:
+					{
+						BSONRegexp rv = (BSONRegexp) bv.Value;		
+						WriteTypeAndKey(bv, bw);
+						bw.WriteCString(rv.Re ?? "");
+						bw.WriteCString(rv.Opts ?? "");						
+						break;
+					}				
+				case BSONType.BINDATA:
+					{						
+						BSONBinData bdata = (BSONBinData) bv.Value;
+						WriteTypeAndKey(bv, bw);
+						bw.Write(bdata.Data.Length);
+						bw.Write(bdata.Subtype);
+						bw.Write(bdata.Data);						
+						break;		
+					}
+				case BSONType.DBREF:
+					//Unsupported DBREF!
+					break;
+				case BSONType.TIMESTAMP:
+					{
+						BSONTimestamp ts = (BSONTimestamp) bv.Value;
+						WriteTypeAndKey(bv, bw);
+						bw.Write(ts.Inc);
+						bw.Write(ts.Ts);
+						break;										
+					}		
+				case BSONType.CODEWSCOPE:
+					{
+						BSONCodeWScope cw = (BSONCodeWScope) bv.Value;						
+						WriteTypeAndKey(bv, bw);						
+						using (var cwwr = new ExtBinaryWriter(new MemoryStream())) {							
+							cwwr.WriteBSONString(cw.Code);
+							cw.Scope.Serialize(cwwr.BaseStream);					
+							byte[] cwdata = ((MemoryStream) cwwr.BaseStream).ToArray();
+							bw.Write(cwdata.Length);
+							bw.Write(cwdata);
+						}
+						break;
+					}
+				default:
+					throw new InvalidBSONDataException("Unknown entry type: " + bt);											
+			}		
+		}
+
+		protected void WriteTypeAndKey(BSONValue bv, ExtBinaryWriter bw) {
+			bw.Write((byte) bv.BSONType);
+			bw.WriteBSONString(bv.Key);
 		}
 
 		protected void CheckFields() {

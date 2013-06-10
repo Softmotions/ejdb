@@ -14,16 +14,16 @@
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using System.IO;
+using Ejdb.IO;
 
 namespace Ejdb.SON {
 
 	public class BSONIterator : IDisposable {
 
-		BinaryReader _input;
+		ExtBinaryReader _input;
 		int _doclen;
 		BSONType _ctype = BSONType.UNKNOWN;
 		string _entryKey;
@@ -54,7 +54,7 @@ namespace Ejdb.SON {
 				Dispose();
 				throw new IOException("Input stream must be seekable");
 			}
-			this._input = new BinaryReader(input, Encoding.UTF8);
+			this._input = new ExtBinaryReader(input);
 			this._ctype = BSONType.EOO;
 			this._doclen = _input.ReadInt32();
 			if (this._doclen < 5) {
@@ -63,7 +63,7 @@ namespace Ejdb.SON {
 			}
 		}
 
-		BSONIterator(BinaryReader input, int doclen) {
+		BSONIterator(ExtBinaryReader input, int doclen) {
 			this._input = input;
 			this._doclen = doclen;
 			if (this._doclen < 5) {
@@ -114,6 +114,8 @@ namespace Ejdb.SON {
 					return BSONType.EOO;
 				case BSONType.UNDEFINED:
 				case BSONType.NULL:
+				case BSONType.MAXKEY:
+				case BSONType.MINKEY:	
 					_entryLen = 0;
 					break;
 				case BSONType.BOOL:
@@ -137,6 +139,7 @@ namespace Ejdb.SON {
 					_entryLen = 4 + _input.ReadInt32();
 					break;
 				case BSONType.DBREF:
+					//Unsupported DBREF!
 					_entryLen = 4 + 12 + _input.ReadInt32();
 					break;
 				case BSONType.BINDATA:
@@ -149,7 +152,7 @@ namespace Ejdb.SON {
 					break;
 				case BSONType.REGEX:
 					_entryLen = 0;
-					break;
+					break;				
 				default:
 					throw new InvalidBSONDataException("Unknown entry type: " + _ctype);
 			}
@@ -166,6 +169,8 @@ namespace Ejdb.SON {
 				case BSONType.EOO:					 
 				case BSONType.UNDEFINED:
 				case BSONType.NULL:
+				case BSONType.MAXKEY:
+				case BSONType.MINKEY:
 					_entryDataValue = new BSONValue(_ctype, _entryKey);
 					break;	
 				case BSONType.OID:
@@ -219,8 +224,8 @@ namespace Ejdb.SON {
 					}
 				case BSONType.REGEX:
 					{
-						string re = ReadCString();
-						string opts = ReadCString();
+						string re = _input.ReadCString();
+						string opts = _input.ReadCString();
 						_entryDataValue = new BSONValue(_ctype, _entryKey, 
 						                                new BSONRegexp(re, opts));	
 						break;
@@ -234,6 +239,7 @@ namespace Ejdb.SON {
 					}
 				case BSONType.DBREF:
 					{
+						//Unsupported DBREF!
 						SkipData(true);
 						_entryDataValue = new BSONValue(_ctype, _entryKey);
 						break;
@@ -251,8 +257,7 @@ namespace Ejdb.SON {
 						}
 						_entryDataValue = new BSONValue(_ctype, _entryKey, cw);
 						break;
-					}
-
+					}				
 			}
 			return _entryDataValue;
 		}
@@ -264,8 +269,8 @@ namespace Ejdb.SON {
 			_entryDataValue = null;
 			_entryDataSkipped = true;
 			if (_ctype == BSONType.REGEX) {
-				SkipCString();
-				SkipCString();
+				_input.SkipCString();
+				_input.SkipCString();
 				Debug.Assert(_entryLen == 0);
 			} else if (_entryLen > 0) {
 				long cpos = _input.BaseStream.Position;
@@ -277,22 +282,8 @@ namespace Ejdb.SON {
 		}
 
 		string ReadKey() {
-			_entryKey = ReadCString();
+			_entryKey = _input.ReadCString();
 			return _entryKey;
-		}
-
-		string ReadCString() {
-			List<byte> sb = new List<byte>(64);
-			byte bv;
-			while ((bv = _input.ReadByte()) != 0x00) {
-				sb.Add(bv);
-			}
-			return Encoding.UTF8.GetString(sb.ToArray());
-		}
-
-		void SkipCString() {
-			while ((_input.ReadByte()) != 0x00)
-				;
 		}
 	}
 }

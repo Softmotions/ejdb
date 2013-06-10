@@ -14,11 +14,43 @@
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
 using System;
+using System.IO;
+using System.Text;
 
-namespace Ejdb.SON {
+namespace Ejdb.IO {
 
-	public static class BSONUtils {
-		static BSONUtils() {
+	public class ExtBinaryWriter : BinaryWriter {
+
+		public static Encoding DEFAULT_ENCODING = Encoding.UTF8;
+		Encoding _encoding;
+
+		public ExtBinaryWriter() {
+			_encoding = DEFAULT_ENCODING;
+		}
+
+		public ExtBinaryWriter(Stream output) : this(output, DEFAULT_ENCODING, false) {
+		}
+
+		public ExtBinaryWriter(Stream output, Encoding encoding, bool leaveopen) : base(output, encoding, leaveopen) {
+			_encoding = encoding;
+		}
+
+		public ExtBinaryWriter(Stream output, Encoding encoding) : this(output, encoding, false) {
+		}
+
+		public ExtBinaryWriter(Stream output, bool leaveopen) : this(output, DEFAULT_ENCODING, leaveopen) {		
+		}
+
+		public void WriteBSONString(string val) {
+			byte[] buf = _encoding.GetBytes(val);
+			Write(buf.Length + 1);
+			Write(buf);
+			Write((byte) 0x00);
+		}
+
+		public void WriteCString(string val) {
+			Write(_encoding.GetBytes(val));
+			Write((byte) 0x00);
 		}
 	}
 }

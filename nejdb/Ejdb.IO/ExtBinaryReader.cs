@@ -13,33 +13,42 @@
 //   if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
-namespace Ejdb.SON {
+using System;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
 
-	/** <summary> BSON types according to the bsonspec (http://bsonspec.org/)</summary> */ 
+namespace Ejdb.IO {
 
-	public enum BSONType : byte {
-		UNKNOWN = 0xfe,
-		EOO = 0x00,
-		DOUBLE = 0x01,
-		STRING = 0x02,
-		OBJECT = 0x03,
-		ARRAY = 0x04,
-		BINDATA = 0x05,
-		UNDEFINED = 0x06,
-		OID = 0x07,
-		BOOL = 0x08,
-		DATE = 0x09,
-		NULL = 0x0A,
-		REGEX = 0x0B,
-		DBREF = 0x0C,
-		CODE = 0x0D,
-		SYMBOL = 0x0E,
-		CODEWSCOPE = 0x0F,
-		INT = 0x10,
-		TIMESTAMP = 0x11,
-		LONG = 0x12,
-		MAXKEY = 0xFF,
-		MINKEY = 0x7F
+	public class ExtBinaryReader : BinaryReader {
+
+		public static Encoding DEFAULT_ENCODING = Encoding.UTF8;
+
+		public ExtBinaryReader(Stream input) : this(input, DEFAULT_ENCODING) {
+		}
+
+		public ExtBinaryReader(Stream input, Encoding encoding) : this(input, encoding, false) {
+		}
+
+		public ExtBinaryReader(Stream input, bool leaveOpen) : this(input, DEFAULT_ENCODING, leaveOpen) {
+		}
+
+		public ExtBinaryReader(Stream input, Encoding encoding, bool leaveOpen) : base(input, encoding, leaveOpen) {
+		}
+
+		public string ReadCString() {
+			List<byte> sb = new List<byte>(64);
+			byte bv;
+			while ((bv = ReadByte()) != 0x00) {
+				sb.Add(bv);
+			}
+			return Encoding.UTF8.GetString(sb.ToArray());
+		}
+
+		public void SkipCString() {
+			while ((ReadByte()) != 0x00)
+				;
+		}
 	}
 }
 
