@@ -49,6 +49,8 @@ namespace Ejdb.SON {
 			{typeof(BSONTimestamp), (d, k, v) => d.SetTimestamp(k, (BSONTimestamp) v)},
 			{typeof(BSONCodeWScope), (d, k, v) => d.SetCodeWScope(k, (BSONCodeWScope) v)},
 			{typeof(BSONBinData), (d, k, v) => d.SetBinData(k, (BSONBinData) v)},
+			{typeof(BSONDocument), (d, k, v) => d.SetDocument(k, (BSONDocument) v)},
+			{typeof(BSONArray), (d, k, v) => d.SetArray(k, (BSONArray) v)},
 		};
 		readonly List<BSONValue> _fieldslist;
 		[NonSerializedAttribute]
@@ -268,7 +270,7 @@ namespace Ejdb.SON {
 			return SetBSONValue(new BSONValue(BSONType.BINDATA, key, val));
 		}
 
-		public BSONDocument SetObject(string key, BSONDocument val) {
+		public BSONDocument SetDocument(string key, BSONDocument val) {
 			return SetBSONValue(new BSONValue(BSONType.OBJECT, key, val));
 		}
 

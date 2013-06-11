@@ -101,7 +101,7 @@ namespace Ejdb.SON {
 		}
 
 		public BSONDocument SetObject(int idx, BSONDocument val) {
-			return base.SetObject(idx.ToString(), val);
+			return base.SetDocument(idx.ToString(), val);
 		}
 
 		public BSONDocument SetArray(int idx, BSONArray val) {

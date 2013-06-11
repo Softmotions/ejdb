@@ -2,7 +2,7 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.SON/BSONDocument.cs">
     <Files>
-      <File FileName="Ejdb.SON/BSONDocument.cs" Line="71" Column="3" />
+      <File FileName="Ejdb.SON/BSONDocument.cs" Line="26" Column="15" />
       <File FileName="Ejdb.Tests/TestBSON.cs" Line="46" Column="4" />
     </Files>
     <Pads>
