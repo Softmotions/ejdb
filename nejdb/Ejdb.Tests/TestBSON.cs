@@ -25,24 +25,60 @@ namespace Ejdb.Tests {
 
 		[Test]
 		public void TestSerializeEmpty() {
-			MemoryStream ms = new MemoryStream();
 			BSONDocument doc = new BSONDocument();
-			doc.Serialize(ms);
-			string hv = TestUtils.ToHexString(ms.ToArray());
-			ms.Close();
-			Assert.AreEqual("05-00-00-00-00", hv); 
+			Assert.AreEqual("05-00-00-00-00", doc.ToDebugDataString()); 
 		}
 
 		[Test]
-		public void TestSerializeSimple() {
-			MemoryStream ms = new MemoryStream();
+		public void TestSerialize1() {
+			byte[] bdata;
 			BSONDocument doc = new BSONDocument();
-			doc.Serialize(ms);
-			string hv = TestUtils.ToHexString(ms.ToArray());
-			ms.Close();
-			Console.WriteLine("HV=" + hv);
-		}
+			doc.SetNumber("0", 1);
+			//0C-00-00-00 	len
+			//10		  	type
+			//30-00 		key
+			//01-00-00-00	int val
+			//00			zero term
+			bdata = doc.ToByteArray();
+			Assert.AreEqual("0C-00-00-00-10-30-00-01-00-00-00-00", doc.ToDebugDataString());
+			Assert.AreEqual(bdata.Length, (int) Convert.ToByte(doc.ToDebugDataString().Substring(0, 2), 16));
 
+			BSONDocument doc2 = new BSONDocument(doc.ToByteArray());
+			Assert.AreEqual(1, doc2.KeysCount);
+			int c = 0;
+			foreach (BSONValue bv in doc2) {
+				c++;		
+				Assert.IsNotNull(bv);
+				Assert.AreEqual(BSONType.INT, bv.BSONType);
+				Assert.AreEqual("0", bv.Key);
+				Assert.AreEqual(1, bv.Value);
+			}
+			Assert.That(c > 0);
+			doc2.SetNumber("0", 2);
+			Assert.AreEqual(1, doc2.KeysCount);
+			object ival = doc2["0"];
+			Assert.IsInstanceOfType(typeof(int), ival);
+			Assert.AreEqual(2, ival);
+
+			doc2.SetNumber("1", Int32.MaxValue);
+			//13-00-00-00
+			//10
+			//30-00
+			//02-00-00-00
+			//10-31-00
+			//FF-FF-FF-7F
+			//00
+			Assert.AreEqual("13-00-00-00-10-30-00-02-00-00-00-10-31-00-FF-FF-FF-7F-00", 
+			                doc2.ToDebugDataString());
+
+			doc2 = new BSONDocument(doc2);
+			Assert.AreEqual("13-00-00-00-10-30-00-02-00-00-00-10-31-00-FF-FF-FF-7F-00", 
+			                doc2.ToDebugDataString());
+
+			doc2 = new BSONDocument(doc2.ToByteArray());
+			Assert.AreEqual("13-00-00-00-10-30-00-02-00-00-00-10-31-00-FF-FF-FF-7F-00", 
+			                doc2.ToDebugDataString());
+		}
 	}
 }
 

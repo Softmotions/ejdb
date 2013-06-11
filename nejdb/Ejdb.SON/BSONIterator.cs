@@ -55,7 +55,7 @@ namespace Ejdb.SON {
 				throw new IOException("Input stream must be seekable");
 			}
 			this._input = new ExtBinaryReader(input);
-			this._ctype = BSONType.EOO;
+			this._ctype = BSONType.UNKNOWN;
 			this._doclen = _input.ReadInt32();
 			if (this._doclen < 5) {
 				Dispose();
@@ -94,7 +94,7 @@ namespace Ejdb.SON {
 			if (_ctype == BSONType.EOO) {
 				return BSONType.EOO;
 			}
-			if (_ctype != BSONType.UNKNOWN) {
+			if (!_entryDataSkipped && _ctype != BSONType.UNKNOWN) {
 				SkipData();
 			}
 			byte bv = _input.ReadByte();

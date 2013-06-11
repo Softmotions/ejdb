@@ -91,6 +91,12 @@ namespace Ejdb.SON {
 		}
 
 		public override bool Equals(object obj) {
+			if (obj == null) {
+				return false;
+			}
+			if (ReferenceEquals(this, obj)) {
+				return true;
+			}
 			if (obj is BSONOid) {
 				return (CompareTo((BSONOid) obj) == 0);
 			}
@@ -102,10 +108,9 @@ namespace Ejdb.SON {
 		}
 
 		public static bool operator ==(BSONOid a, BSONOid b) {
-			if (ReferenceEquals(a, b)) {
+			if (ReferenceEquals(a, b))
 				return true;
-			}
-			if (a == null || b == null) {
+			if ((object) a == null || (object) b == null) {
 				return false;
 			}
 			return a.Equals(b);

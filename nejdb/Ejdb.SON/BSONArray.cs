@@ -25,6 +25,12 @@ namespace Ejdb.SON {
 			}
 		}
 
+		public object this[int key] {
+			get {
+				return GetObjectValue(key.ToString());
+			}
+		}
+
 		public BSONDocument SetNull(int idx) {
 			return base.SetNull(idx.ToString());
 		}

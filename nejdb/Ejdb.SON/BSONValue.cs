@@ -21,7 +21,7 @@ namespace Ejdb.SON {
 	/// BSON field value.
 	/// </summary>
 	[Serializable]
-	public sealed class BSONValue : IBSONValue {	
+	public sealed class BSONValue : IBSONValue, ICloneable {	
 
 		/// <summary>
 		/// BSON.Type
@@ -47,8 +47,53 @@ namespace Ejdb.SON {
 		public BSONValue(BSONType type, string key) : this(type, key, null) {
 		}
 
+		public override bool Equals(object obj) {
+			if (obj == null) {
+				return false;
+			}
+			if (ReferenceEquals(this, obj)) {
+				return true;
+			}
+			if (obj.GetType() != typeof(BSONValue)) {
+				return false;
+			}
+			BSONValue other = (BSONValue) obj;
+			if (BSONType != other.BSONType || Key != other.Key) {
+				return false;
+			}
+			if (Value != null) {
+				return Value.Equals(other.Value);
+			} else {
+				return (Value == other.Value);
+			}
+		}
+
+		public static bool operator ==(BSONValue v1, BSONValue v2) {
+			if (ReferenceEquals(v1, v2)) {
+				return true;
+			}
+			if ((object) v1 == null || (object) v2 == null) {
+				return false;
+			}
+			return v1.Equals(v2);
+		}
+
+		public static bool operator !=(BSONValue v1, BSONValue v2) {
+			return !(v1 == v2);
+		}
+
+		public override int GetHashCode() {
+			unchecked {
+				return BSONType.GetHashCode() ^ (Value != null ? Value.GetHashCode() : 0);
+			}
+		}
+
 		public override string ToString() {
 			return string.Format("[BSONValue: BSONType={0}, Key={1}, Value={2}]", BSONType, Key, Value);
+		}
+
+		public object Clone() {
+			return new BSONValue(this.BSONType, this.Key, this.Value);
 		}
 	}
 }

@@ -27,13 +27,40 @@ namespace Ejdb.SON {
 	/// BSON document deserialized data wrapper.
 	/// </summary>
 	[Serializable]
-	public class BSONDocument : IBSONValue {
+	public class BSONDocument : IBSONValue, IEnumerable<BSONValue> {
 		Dictionary<string, BSONValue> _fields;
 		readonly List<BSONValue> _fieldslist;
+		int? _cachedhash;
 
+		/// <summary>
+		/// BSON Type this document. 
+		/// </summary>
+		/// <remarks>
+		/// Type can be either <see cref="Ejdb.SON.BSONType.OBJECT"/> or <see cref="Ejdb.SON.BSONType.ARRAY"/>
+		/// </remarks>
+		/// <value>The type of the BSON.</value>
 		public virtual BSONType BSONType {
 			get {
 				return BSONType.OBJECT;
+			}
+		}
+
+		/// <summary>
+		/// Gets the document keys.
+		/// </summary>
+		public ICollection<string> Keys {
+			get {
+				CheckFields();
+				return _fields.Keys;
+			}
+		}
+
+		/// <summary>
+		/// Gets count of document keys.
+		/// </summary>
+		public int KeysCount {
+			get {
+				return _fieldslist.Count;
 			}
 		}
 
@@ -61,6 +88,78 @@ namespace Ejdb.SON {
 				while (it.Next() != BSONType.EOO) {
 					Add(it.FetchCurrentValue());
 				}
+			}
+		}
+
+		public BSONDocument(BSONDocument doc) : this() {
+			foreach (var bv in doc) {
+				Add((BSONValue) bv.Clone());
+			}
+		}
+
+		public IEnumerator<BSONValue> GetEnumerator() {
+			return _fieldslist.GetEnumerator();
+		}
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
+			return GetEnumerator();
+		}
+
+		/// <summary>
+		/// Convert BSON document object into BSON binary data byte array.
+		/// </summary>
+		/// <returns>The byte array.</returns>
+		public byte[] ToByteArray() {
+			byte[] res;
+			using (var ms = new MemoryStream()) {
+				Serialize(ms);
+				res = ms.ToArray();
+			}
+			return res;
+		}
+
+		public string ToDebugDataString() {
+			return BitConverter.ToString(ToByteArray());
+		}
+
+		/// <summary>
+		/// Gets the field value.
+		/// </summary>
+		/// <returns>The BSON value.</returns>
+		/// <see cref="Ejdb.SON.BSONValue"/>
+		/// <param name="key">Document field name</param>
+		public BSONValue GetBSONValue(string key) {
+			CheckFields();
+			BSONValue ov;
+			if (_fields.TryGetValue(key, out ov)) {
+				return ov;
+			} else {
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the field value object. 
+		/// </summary>
+		/// <returns>The object value.</returns>
+		/// <see cref="Ejdb.SON.BSONValue"/>
+		/// <param name="key">Key.</param>
+		/// <returns>Key object </c> or <c>null</c> if the key is not exists or value type is either 
+		/// <see cref="Ejdb.SON.BSONType.NULL"/> or <see cref="Ejdb.SON.BSONType.UNDEFINED"/></returns>
+		public object GetObjectValue(string key) {
+			var bv = GetBSONValue(key);
+			return bv != null ? bv.Value : null;
+		}
+
+		/// <summary>
+		/// Gets the <see cref="Ejdb.SON.BSONDocument"/> with the specified key.
+		/// </summary>
+		/// <param name="key">Key.</param>
+		/// <returns>Key object </c> or <c>null</c> if the key is not exists or value type is either 
+		/// <see cref="Ejdb.SON.BSONType.NULL"/> or <see cref="Ejdb.SON.BSONType.UNDEFINED"/></returns>
+		public object this[string key] {
+			get {
+				return GetObjectValue(key);
 			}
 		}
 
@@ -149,13 +248,26 @@ namespace Ejdb.SON {
 		}
 
 		public BSONValue DropValue(string key) {
-			var bv = this[key];
+			var bv = GetBSONValue(key);
 			if (bv == null) {
 				return bv;
 			}
+			_cachedhash = null;
 			_fields.Remove(key);
 			_fieldslist.RemoveAll(x => x.Key == key);
 			return bv;
+		}
+
+		/// <summary>
+		/// Removes all data from document.
+		/// </summary>
+		public void Clear() {
+			_cachedhash = null;
+			_fieldslist.Clear();
+			if (_fields != null) {
+				_fields.Clear();
+				_fields = null;
+			}
 		}
 
 		public void Serialize(Stream os) {
@@ -189,16 +301,57 @@ namespace Ejdb.SON {
 			}
 			os.Flush();
 		}
+
+		public override bool Equals(object obj) {
+			if (obj == null) {
+				return false;
+			}
+			if (ReferenceEquals(this, obj)) {
+				return true;
+			}
+			if (!(obj is BSONDocument)) {
+				return false;
+			}
+			BSONDocument d1 = this;
+			BSONDocument d2 = ((BSONDocument) obj);
+			if (d1.KeysCount != d2.KeysCount) {
+				return false;
+			}
+			foreach (BSONValue bv1 in d1._fieldslist) {
+				BSONValue bv2 = d2.GetBSONValue(bv1.Key);
+				if (bv1 != bv2) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		public override int GetHashCode() {
+			if (_cachedhash != null) {
+				return (int) _cachedhash;
+			}
+			unchecked {
+				int hash = 1;
+				foreach (var bv in _fieldslist) {
+					hash = (hash * 31) + bv.GetHashCode(); 
+				}
+				_cachedhash = hash;
+			}
+			return (int) _cachedhash;
+		}
+
+		public static bool operator ==(BSONDocument d1, BSONDocument d2) {
+			return Equals(d1, d2);
+		}
+
+		public static bool operator !=(BSONDocument d1, BSONDocument d2) {
+			return !(d1 == d2);
+		}
 		//.//////////////////////////////////////////////////////////////////
 		// 						Private staff										  
 		//.//////////////////////////////////////////////////////////////////
-		internal BSONValue this[string key] {
-			get { 
-				return GetBSONValue(key);
-			}
-		}
-
 		internal BSONDocument Add(BSONValue bv) {
+			_cachedhash = null;
 			_fieldslist.Add(bv);
 			if (_fields != null) {
 				_fields[bv.Key] = bv;
@@ -206,29 +359,19 @@ namespace Ejdb.SON {
 			return this;
 		}
 
-		internal BSONValue GetBSONValue(string key) {
-			CheckFields();
-			return _fields[key];
-		}
-
 		internal BSONDocument SetBSONValue(BSONValue val) {
+			_cachedhash = null;
 			CheckFields();
-			var ov = _fields[val.Key];
-			if (ov != null) {
+			BSONValue ov;
+			if (_fields.TryGetValue(val.Key, out ov)) {
 				ov.Key = val.Key;
 				ov.BSONType = val.BSONType;
 				ov.Value = val.Value;
 			} else {
 				_fieldslist.Add(val);
-				_fields[val.Key] = val;
+				_fields.Add(val.Key, val);
 			}
 			return this;
-		}
-
-		internal object GetObjectValue(string key) {
-			CheckFields();
-			var bv = _fields[key];
-			return bv != null ? bv.Value : null;
 		}
 
 		protected virtual void CheckKey(string key) {
@@ -340,7 +483,7 @@ namespace Ejdb.SON {
 
 		protected void WriteTypeAndKey(BSONValue bv, ExtBinaryWriter bw) {
 			bw.Write((byte) bv.BSONType);
-			bw.WriteBSONString(bv.Key);
+			bw.WriteCString(bv.Key);
 		}
 
 		protected void CheckFields() {
