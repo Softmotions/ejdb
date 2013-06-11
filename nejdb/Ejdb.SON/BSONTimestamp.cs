@@ -21,7 +21,7 @@ namespace Ejdb.SON {
 	/// BSON Timestamp complex value.
 	/// </summary>
 	[Serializable]
-	public class BSONTimestamp : IBSONValue {
+	public sealed class BSONTimestamp : IBSONValue {
 
 		readonly int _inc;
 		readonly int _ts;
@@ -52,25 +52,28 @@ namespace Ejdb.SON {
 			}
 		}
 
-		public override string ToString() {
-			return string.Format("[BSONTimestamp: inc={0}, ts={1}]", _inc, _ts);
-		}
-
 		public override bool Equals(object obj) {
-			if (obj == null)
+			if (obj == null) {
 				return false;
-			if (ReferenceEquals(this, obj))
+			}
+			if (ReferenceEquals(this, obj)) {
 				return true;
-			if (obj.GetType() != typeof(BSONTimestamp))
+			}
+			if (!(obj is BSONTimestamp)) {
 				return false;
+			}
 			BSONTimestamp other = (BSONTimestamp) obj;
-			return _inc == other._inc && _ts == other._ts;
+			return (_inc == other._inc && _ts == other._ts);
 		}
 
 		public override int GetHashCode() {
 			unchecked {
-				return _inc.GetHashCode() ^ _ts.GetHashCode();
+				return (_inc.GetHashCode() ^ _ts.GetHashCode());
 			}
+		}
+
+		public override string ToString() {
+			return string.Format("[BSONTimestamp: inc={0}, ts={1}]", _inc, _ts);
 		}
 	}
 }

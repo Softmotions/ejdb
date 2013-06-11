@@ -22,7 +22,7 @@ namespace Ejdb.SON {
 	[Serializable]
 	public sealed class BSONOid : IComparable<BSONOid>, IBSONValue {
 
-		internal byte[] Bytes;
+		internal byte[] _bytes;
 		string _cachedString;
 
 		public BSONType BSONType {
@@ -39,12 +39,12 @@ namespace Ejdb.SON {
 		}
 
 		public BSONOid(byte[] val) {
-			Bytes = new byte[12];
-			Array.Copy(val, Bytes, 12);
+			_bytes = new byte[12];
+			Array.Copy(val, _bytes, 12);
 		}
 
 		public BSONOid(BinaryReader reader) {
-			Bytes = reader.ReadBytes(12);
+			_bytes = reader.ReadBytes(12);
 		}
 
 		bool IsValidOid(string oid) {
@@ -61,9 +61,9 @@ namespace Ejdb.SON {
 				throw new ArgumentException("Invalid oid string");
 			}
 			var vlen = val.Length;
-			Bytes = new byte[vlen / 2];
+			_bytes = new byte[vlen / 2];
 			for (var i = 0; i < vlen; i += 2) {
-				Bytes[i / 2] = Convert.ToByte(val.Substring(i, 2), 16);
+				_bytes[i / 2] = Convert.ToByte(val.Substring(i, 2), 16);
 			}
 		}
 
@@ -71,12 +71,12 @@ namespace Ejdb.SON {
 			if (ReferenceEquals(other, null)) {
 				return 1;
 			}
-			var obytes = other.Bytes;
-			for (var x = 0; x < Bytes.Length; x++) {
-				if (Bytes[x] < obytes[x]) {
+			var obytes = other._bytes;
+			for (var x = 0; x < _bytes.Length; x++) {
+				if (_bytes[x] < obytes[x]) {
 					return -1;
 				}
-				if (Bytes[x] > obytes[x]) {
+				if (_bytes[x] > obytes[x]) {
 					return 1;
 				}			
 			}
@@ -85,7 +85,7 @@ namespace Ejdb.SON {
 
 		public override string ToString() {
 			if (_cachedString == null) {
-				_cachedString = BitConverter.ToString(Bytes).Replace("-", "").ToLower();
+				_cachedString = BitConverter.ToString(_bytes).Replace("-", "").ToLower();
 			}
 			return _cachedString;
 		}

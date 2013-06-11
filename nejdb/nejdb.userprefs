@@ -1,15 +1,9 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.SON/BSONValue.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.SON/BSONDocument.cs">
     <Files>
-      <File FileName="Ejdb.Tests/TestBSON.cs" Line="56" Column="23" />
-      <File FileName="Ejdb.SON/BSONDocument.cs" Line="321" Column="12" />
-      <File FileName="Ejdb.SON/BSONValue.cs" Line="84" Column="3" />
-      <File FileName="Ejdb.SON/BSONOid.cs" Line="107" Column="36" />
-      <File FileName="Ejdb.SON/BSONIterator.cs" Line="160" Column="1" />
-      <File FileName="Ejdb.SON/BSONType.cs" Line="26" Column="8" />
-      <File FileName="Ejdb.Tests/TestUtils.cs" Line="22" Column="36" />
-      <File FileName="Ejdb.SON/BSONArray.cs" Line="30" Column="5" />
+      <File FileName="Ejdb.SON/BSONDocument.cs" Line="71" Column="3" />
+      <File FileName="Ejdb.Tests/TestBSON.cs" Line="46" Column="4" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -20,7 +14,7 @@
             <Node name="Ejdb.DB" expanded="True" />
             <Node name="Ejdb.IO" expanded="True" />
             <Node name="Ejdb.SON" expanded="True">
-              <Node name="BSONValue.cs" selected="True" />
+              <Node name="BSONDocument.cs" selected="True" />
             </Node>
             <Node name="Ejdb.Tests" expanded="True" />
           </Node>
@@ -38,13 +32,11 @@
         <State selected="True" />
       </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
-        <State expanded="True">
+        <State expanded="True" selected="True">
           <Node name="nejdb" expanded="True">
             <Node name="Ejdb" expanded="True">
               <Node name="Tests" expanded="True">
-                <Node name="TestBSON" expanded="True">
-                  <Node name="TestSerialize1" selected="True" />
-                </Node>
+                <Node name="TestBSON" expanded="True" />
               </Node>
             </Node>
           </Node>

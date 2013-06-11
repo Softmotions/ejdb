@@ -27,9 +27,33 @@ namespace Ejdb.SON {
 	/// BSON document deserialized data wrapper.
 	/// </summary>
 	[Serializable]
-	public class BSONDocument : IBSONValue, IEnumerable<BSONValue> {
-		Dictionary<string, BSONValue> _fields;
+	public class BSONDocument : IBSONValue, IEnumerable<BSONValue>, ICloneable {
+		static Dictionary<Type, Action<BSONDocument, string, object>> TYPE_SETTERS = 
+		new Dictionary<Type, Action<BSONDocument, string, object>> {
+			{typeof(bool), (d, k, v) => d.SetBool(k, (bool) v)},
+			{typeof(byte), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(sbyte), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(ushort), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(short), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(uint), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(int), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(ulong), (d, k, v) => d.SetNumber(k, (long) v)},
+			{typeof(long), (d, k, v) => d.SetNumber(k, (long) v)},
+			{typeof(float), (d, k, v) => d.SetNumber(k, (float) v)},
+			{typeof(double), (d, k, v) => d.SetNumber(k, (double) v)},
+			{typeof(char), (d, k, v) => d.SetString(k, v.ToString())},
+			{typeof(string), (d, k, v) => d.SetString(k, (string) v)},
+			{typeof(BSONOid), (d, k, v) => d.SetOID(k, (BSONOid) v)},
+			{typeof(BSONRegexp), (d, k, v) => d.SetRegexp(k, (BSONRegexp) v)},
+			{typeof(BSONValue), (d, k, v) => d.SetBSONValue((BSONValue) v)},
+			{typeof(BSONTimestamp), (d, k, v) => d.SetTimestamp(k, (BSONTimestamp) v)},
+			{typeof(BSONCodeWScope), (d, k, v) => d.SetCodeWScope(k, (BSONCodeWScope) v)},
+			{typeof(BSONBinData), (d, k, v) => d.SetBinData(k, (BSONBinData) v)},
+		};
 		readonly List<BSONValue> _fieldslist;
+		[NonSerializedAttribute]
+		Dictionary<string, BSONValue> _fields;
+		[NonSerializedAttribute]
 		int? _cachedhash;
 
 		/// <summary>
@@ -160,6 +184,19 @@ namespace Ejdb.SON {
 		public object this[string key] {
 			get {
 				return GetObjectValue(key);
+			}
+			set {
+				object v = value;
+				if (v == null) {
+					SetNull(key);
+					return;
+				}
+				Action<BSONDocument, string, object> setter;
+				TYPE_SETTERS.TryGetValue(v.GetType(), out setter);
+				if (setter == null) {
+					throw new Exception(string.Format("Unsupported value type: {0} for doc[key] assign operation", v.GetType()));
+				}
+				setter(this, key, v);
 			}
 		}
 
@@ -347,6 +384,14 @@ namespace Ejdb.SON {
 		public static bool operator !=(BSONDocument d1, BSONDocument d2) {
 			return !(d1 == d2);
 		}
+
+		public object Clone() {
+			return new BSONDocument(this);
+		}
+
+		public override string ToString() {
+			return string.Format("[{0}: {1}]", GetType().Name, _fieldslist);
+		}
 		//.//////////////////////////////////////////////////////////////////
 		// 						Private staff										  
 		//.//////////////////////////////////////////////////////////////////
@@ -392,8 +437,8 @@ namespace Ejdb.SON {
 					{
 						WriteTypeAndKey(bv, bw);
 						BSONOid oid = (BSONOid) bv.Value;
-						Debug.Assert(oid.Bytes.Length == 12);
-						bw.Write(oid.Bytes);
+						Debug.Assert(oid._bytes.Length == 12);
+						bw.Write(oid._bytes);
 						break;
 					}
 				case BSONType.STRING:

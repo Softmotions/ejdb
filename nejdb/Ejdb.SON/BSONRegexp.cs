@@ -52,25 +52,28 @@ namespace Ejdb.SON {
 			this._opts = opts;
 		}
 
-		public override string ToString() {
-			return string.Format("[BSONRegexp: re={0}, opts={1}]", _re, _opts);
-		}
-
 		public override bool Equals(object obj) {
-			if (obj == null)
+			if (obj == null) {
 				return false;
-			if (ReferenceEquals(this, obj))
+			}
+			if (ReferenceEquals(this, obj)) {
 				return true;
-			if (obj.GetType() != typeof(BSONRegexp))
+			}
+			if (!(obj is BSONRegexp)) {
 				return false;
+			}
 			BSONRegexp other = (BSONRegexp) obj;
-			return _re == other._re && _opts == other._opts;
+			return (_re == other._re && _opts == other._opts);
 		}
 
 		public override int GetHashCode() {
 			unchecked {
 				return (_re != null ? _re.GetHashCode() : 0) ^ (_opts != null ? _opts.GetHashCode() : 0);
 			}
+		}
+
+		public override string ToString() {
+			return string.Format("[BSONRegexp: re={0}, opts={1}]", _re, _opts);
 		}
 	}
 }
