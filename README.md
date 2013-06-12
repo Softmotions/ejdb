@@ -41,6 +41,7 @@ Features
 Documentation
 ================================
 
+* **[The great intro to the EJDB](http://blog.abigopal.com/post/51616277039/ejdb)**
 * **[EJDB Command line interface](https://github.com/Softmotions/ejdb/wiki/EJDB-Command-line-interface)**
 * **[NodeJS binding](#nodejs-binding)**
     * [Installation](#installation)
