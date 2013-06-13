@@ -57,6 +57,7 @@
     <Compile Include="Ejdb.IO\ExtBinaryWriter.cs" />
     <Compile Include="Ejdb.SON\BSONConstants.cs" />
     <Compile Include="Ejdb.Tests\TestBSON.cs" />
+    <Compile Include="Ejdb.Utils\TypeExtension.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -64,6 +65,7 @@
     <Folder Include="Ejdb.Tests\" />
     <Folder Include="Ejdb.SON\" />
     <Folder Include="Ejdb.IO\" />
+    <Folder Include="Ejdb.Utils\" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

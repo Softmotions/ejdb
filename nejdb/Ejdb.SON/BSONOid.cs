@@ -128,8 +128,9 @@ namespace Ejdb.SON {
 			return a.CompareTo(b) < 0;
 		}
 
-		public static explicit operator BSONOid(string val) {
+		public static implicit operator BSONOid(string val) {
 			return new BSONOid(val);
 		}
+
 	}
 }

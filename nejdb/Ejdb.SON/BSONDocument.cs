@@ -20,6 +20,8 @@ using System.Text;
 using System.Diagnostics;
 using Ejdb.IO;
 using Ejdb.SON;
+using Ejdb.Utils;
+using System.Reflection;
 
 namespace Ejdb.SON {
 
@@ -194,11 +196,30 @@ namespace Ejdb.SON {
 					return;
 				}
 				Action<BSONDocument, string, object> setter;
-				TYPE_SETTERS.TryGetValue(v.GetType(), out setter);
+				Type vtype = v.GetType();
+				TYPE_SETTERS.TryGetValue(vtype, out setter);
 				if (setter == null) {
-					throw new Exception(string.Format("Unsupported value type: {0} for doc[key] assign operation", v.GetType()));
+					if (vtype.IsAnonymousType()) {
+						setter = SetAnonType;
+					} else {
+						throw new Exception(string.Format("Unsupported value type: {0} for doc[key] assign operation", v.GetType()));
+					}
 				}
 				setter(this, key, v);
+			}
+		}
+
+		public static void SetAnonType(BSONDocument doc, string key, object val) {
+			BSONDocument ndoc = (key == null) ? doc : new BSONDocument();
+			Type vtype = val.GetType();
+			foreach (PropertyInfo pi in vtype.GetProperties()) {
+				if (!pi.CanRead) {
+					continue;
+				}
+				ndoc[pi.Name] = pi.GetValue(val, null);
+			}
+			if (key != null) {
+				doc.SetDocument(key, ndoc);
 			}
 		}
 
@@ -385,6 +406,23 @@ namespace Ejdb.SON {
 
 		public static bool operator !=(BSONDocument d1, BSONDocument d2) {
 			return !(d1 == d2);
+		}
+
+		public static BSONDocument ValueOf(object val) {
+			if (val == null) {
+				return new BSONDocument();
+			}
+			Type vtype = val.GetType();
+			if (val is BSONDocument) {
+				return new BSONDocument((BSONDocument) val);
+			} else if (vtype == typeof(byte[])) {
+				return new BSONDocument((byte[]) val);
+			} else if (vtype.IsAnonymousType()) {
+				BSONDocument doc = new BSONDocument();
+				SetAnonType(doc, null, val);
+				return doc;
+			} 
+			throw new InvalidCastException(string.Format("Unsupported cast type: {0}", vtype));
 		}
 
 		public object Clone() {

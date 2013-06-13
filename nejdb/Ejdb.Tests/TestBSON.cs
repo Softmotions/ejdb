@@ -79,10 +79,20 @@ namespace Ejdb.Tests {
 			Assert.AreEqual("13-00-00-00-10-30-00-02-00-00-00-10-31-00-FF-FF-FF-7F-00", 
 			                doc2.ToDebugDataString());
 
-
 			doc = new BSONDocument();
 			doc["a"] = 1;
-			Assert.AreEqual("0C-00-00-00-10-61-00-01-00-00-00-00", doc.ToDebugDataString());
+			Assert.AreEqual("0C-00-00-00-10-61-00-01-00-00-00-00", doc.ToDebugDataString());		
+		}
+
+		[Test]
+		public void TestAnonTypes() {
+			BSONDocument doc = BSONDocument.ValueOf(new {a = "b", c = 1});
+			//15-00-00-00
+			//02-61-00
+			//02-00-00-00
+			//62-00
+			//10-63-00-01-00-00-00-00
+			Console.WriteLine(doc.ToDebugDataString());
 		}
 	}
 }
