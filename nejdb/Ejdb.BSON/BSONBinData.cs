@@ -14,66 +14,36 @@
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
 using System;
+using System.IO;
 
-namespace Ejdb.SON {
+namespace Ejdb.BSON {
 
-	/// <summary>
-	/// BSON Timestamp complex value.
-	/// </summary>
 	[Serializable]
-	public sealed class BSONTimestamp : IBSONValue {
+	public sealed class BSONBinData {
+		readonly byte _subtype;
+		readonly byte[] _data;
 
-		readonly int _inc;
-		readonly int _ts;
-
-		BSONTimestamp() {
-		}
-
-		public BSONTimestamp(int inc, int ts) {
-			this._inc = inc;
-			this._ts = ts;
-		}
-
-		public BSONType BSONType {
+		public byte Subtype {
 			get {
-				return BSONType.TIMESTAMP;
+				return _subtype;
 			}
 		}
 
-		public int Inc {
+		public byte[] Data {
 			get {
-				return _inc;
+				return _data;
 			}
 		}
 
-		public int Ts {
-			get {
-				return _ts;
-			}
+		public BSONBinData(byte subtype, byte[] data) {
+			_subtype = subtype;
+			_data = new byte[data.Length];
+			Array.Copy(data, _data, data.Length); 
 		}
 
-		public override bool Equals(object obj) {
-			if (obj == null) {
-				return false;
-			}
-			if (ReferenceEquals(this, obj)) {
-				return true;
-			}
-			if (!(obj is BSONTimestamp)) {
-				return false;
-			}
-			BSONTimestamp other = (BSONTimestamp) obj;
-			return (_inc == other._inc && _ts == other._ts);
-		}
-
-		public override int GetHashCode() {
-			unchecked {
-				return (_inc.GetHashCode() ^ _ts.GetHashCode());
-			}
-		}
-
-		public override string ToString() {
-			return string.Format("[BSONTimestamp: inc={0}, ts={1}]", _inc, _ts);
+		internal BSONBinData(byte subtype, int len, BinaryReader input) {
+			_subtype = subtype;
+			_data = input.ReadBytes(len);
 		}
 	}
 }

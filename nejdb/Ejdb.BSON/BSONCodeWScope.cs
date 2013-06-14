@@ -13,18 +13,57 @@
 //   if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
+using System;
 
-namespace Ejdb.SON {
+namespace Ejdb.BSON {
 
-	/// <summary>
-	/// Base interface of any BSON complex values like Regexp or BSON Timestamp.
-	/// </summary>
-	public interface IBSONValue {
+	[Serializable]
+	public sealed class BSONCodeWScope : BSONDocument {
 
-		/// <summary>
-		/// BSON Type of complex value.
-		/// </summary>
-		/// <value>The type of the BSON.</value>
-		BSONType BSONType { get; }
+		readonly string _code;
+
+		public override BSONType BSONType {
+			get {
+				return BSONType.CODEWSCOPE;
+			}
+		}
+
+		public string Code {
+			get {
+				return _code;
+			}
+		}
+
+		public BSONDocument Scope {
+			get {
+				return this;
+			}
+		}
+
+		public BSONCodeWScope(string code) {
+			this._code = code;
+		}
+
+		public override bool Equals(object obj) {
+			if (obj == null) {
+				return false;
+			}
+			if (ReferenceEquals(this, obj)) {
+				return true;
+			}
+			if (!(obj is BSONCodeWScope)) {
+				return false;
+			}
+			BSONCodeWScope cw = (BSONCodeWScope) obj;
+			if (_code != cw._code) {
+				return false;
+			}
+			return base.Equals(obj);
+		}
+
+		public override int GetHashCode() {
+			return (_code != null ? _code.GetHashCode() : 0) ^ base.GetHashCode();
+		}
 	}
 }
+

@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.IO;
 using Ejdb.IO;
 
-namespace Ejdb.SON {
+namespace Ejdb.BSON {
 
 	public class BSONIterator : IDisposable {
 

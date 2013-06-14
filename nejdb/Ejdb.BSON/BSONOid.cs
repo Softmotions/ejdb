@@ -17,7 +17,7 @@ using System;
 using System.Text;
 using System.IO;
 
-namespace Ejdb.SON {
+namespace Ejdb.BSON {
 
 	[Serializable]
 	public sealed class BSONOid : IComparable<BSONOid>, IBSONValue {

@@ -15,7 +15,7 @@
 // ============================================================================================
 using System;
 using NUnit.Framework;
-using Ejdb.SON;
+using Ejdb.BSON;
 using System.IO;
 
 namespace Ejdb.Tests {

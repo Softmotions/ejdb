@@ -37,35 +37,38 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Ejdb.DB\EJDB.cs" />
-    <Compile Include="Ejdb.SON\BSONType.cs" />
-    <Compile Include="Ejdb.SON\InvalidBSONDataException.cs" />
-    <Compile Include="Ejdb.SON\BSONOid.cs" />
-    <Compile Include="Ejdb.SON\BSONTimestamp.cs" />
-    <Compile Include="Ejdb.SON\BSONRegexp.cs" />
-    <Compile Include="Ejdb.SON\IBSONValue.cs" />
-    <Compile Include="Ejdb.SON\BSONValue.cs" />
-    <Compile Include="Ejdb.SON\BSONIterator.cs" />
-    <Compile Include="Ejdb.SON\BSONArray.cs" />
-    <Compile Include="Ejdb.SON\BSONCodeWScope.cs" />
-    <Compile Include="Ejdb.SON\BSONBinData.cs" />
-    <Compile Include="Ejdb.SON\BSONDocument.cs" />
     <Compile Include="Ejdb.IO\ExtBinaryReader.cs" />
     <Compile Include="Ejdb.IO\ExtBinaryWriter.cs" />
-    <Compile Include="Ejdb.SON\BSONConstants.cs" />
     <Compile Include="Ejdb.Tests\TestBSON.cs" />
     <Compile Include="Ejdb.Utils\TypeExtension.cs" />
+    <Compile Include="Ejdb.BSON\BSONType.cs" />
+    <Compile Include="Ejdb.BSON\InvalidBSONDataException.cs" />
+    <Compile Include="Ejdb.BSON\BSONOid.cs" />
+    <Compile Include="Ejdb.BSON\BSONTimestamp.cs" />
+    <Compile Include="Ejdb.BSON\BSONRegexp.cs" />
+    <Compile Include="Ejdb.BSON\IBSONValue.cs" />
+    <Compile Include="Ejdb.BSON\BSONValue.cs" />
+    <Compile Include="Ejdb.BSON\BSONIterator.cs" />
+    <Compile Include="Ejdb.BSON\BSONArray.cs" />
+    <Compile Include="Ejdb.BSON\BSONCodeWScope.cs" />
+    <Compile Include="Ejdb.BSON\BSONBinData.cs" />
+    <Compile Include="Ejdb.BSON\BSONDocument.cs" />
+    <Compile Include="Ejdb.BSON\BSONConstants.cs" />
+    <Compile Include="Ejdb.JSON\JSONReader.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Ejdb.DB\" />
     <Folder Include="Ejdb.Tests\" />
-    <Folder Include="Ejdb.SON\" />
     <Folder Include="Ejdb.IO\" />
     <Folder Include="Ejdb.Utils\" />
+    <Folder Include="Ejdb.BSON\" />
+    <Folder Include="Ejdb.JSON\" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

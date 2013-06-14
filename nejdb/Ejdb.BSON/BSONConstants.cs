@@ -15,7 +15,7 @@
 // ============================================================================================
 using System;
 
-namespace Ejdb.SON {
+namespace Ejdb.BSON {
 
 	/// <summary>
 	/// Various BSON processing constants and shared values.

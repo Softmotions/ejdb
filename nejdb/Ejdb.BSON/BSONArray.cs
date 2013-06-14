@@ -15,7 +15,7 @@
 // ============================================================================================
 using System;
 
-namespace Ejdb.SON {
+namespace Ejdb.BSON {
 
 	[Serializable]
 	public class BSONArray : BSONDocument {

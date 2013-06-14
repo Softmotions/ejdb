@@ -15,54 +15,10 @@
 // ============================================================================================
 using System;
 
-namespace Ejdb.SON {
+namespace Ejdb.JSON {
 
-	[Serializable]
-	public sealed class BSONCodeWScope : BSONDocument {
-
-		readonly string _code;
-
-		public override BSONType BSONType {
-			get {
-				return BSONType.CODEWSCOPE;
-			}
-		}
-
-		public string Code {
-			get {
-				return _code;
-			}
-		}
-
-		public BSONDocument Scope {
-			get {
-				return this;
-			}
-		}
-
-		public BSONCodeWScope(string code) {
-			this._code = code;
-		}
-
-		public override bool Equals(object obj) {
-			if (obj == null) {
-				return false;
-			}
-			if (ReferenceEquals(this, obj)) {
-				return true;
-			}
-			if (!(obj is BSONCodeWScope)) {
-				return false;
-			}
-			BSONCodeWScope cw = (BSONCodeWScope) obj;
-			if (_code != cw._code) {
-				return false;
-			}
-			return base.Equals(obj);
-		}
-
-		public override int GetHashCode() {
-			return (_code != null ? _code.GetHashCode() : 0) ^ base.GetHashCode();
+	public class JSONReader {
+		public JSONReader() {
 		}
 	}
 }

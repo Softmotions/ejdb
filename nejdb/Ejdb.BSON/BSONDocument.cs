@@ -19,11 +19,11 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 using Ejdb.IO;
-using Ejdb.SON;
+using Ejdb.BSON;
 using Ejdb.Utils;
 using System.Reflection;
 
-namespace Ejdb.SON {
+namespace Ejdb.BSON {
 
 	/// <summary>
 	/// BSON document deserialized data wrapper.
@@ -64,7 +64,7 @@ namespace Ejdb.SON {
 		/// BSON Type this document. 
 		/// </summary>
 		/// <remarks>
-		/// Type can be either <see cref="Ejdb.SON.BSONType.OBJECT"/> or <see cref="Ejdb.SON.BSONType.ARRAY"/>
+		/// Type can be either <see cref="Ejdb.BSON.BSONType.OBJECT"/> or <see cref="Ejdb.BSON.BSONType.ARRAY"/>
 		/// </remarks>
 		/// <value>The type of the BSON.</value>
 		public virtual BSONType BSONType {
@@ -154,7 +154,7 @@ namespace Ejdb.SON {
 		/// Gets the field value.
 		/// </summary>
 		/// <returns>The BSON value.</returns>
-		/// <see cref="Ejdb.SON.BSONValue"/>
+		/// <see cref="Ejdb.BSON.BSONValue"/>
 		/// <param name="key">Document field name</param>
 		public BSONValue GetBSONValue(string key) {
 			CheckFields();
@@ -170,21 +170,21 @@ namespace Ejdb.SON {
 		/// Gets the field value object. 
 		/// </summary>
 		/// <returns>The object value.</returns>
-		/// <see cref="Ejdb.SON.BSONValue"/>
+		/// <see cref="Ejdb.BSON.BSONValue"/>
 		/// <param name="key">Key.</param>
 		/// <returns>Key object </c> or <c>null</c> if the key is not exists or value type is either 
-		/// <see cref="Ejdb.SON.BSONType.NULL"/> or <see cref="Ejdb.SON.BSONType.UNDEFINED"/></returns>
+		/// <see cref="Ejdb.BSON.BSONType.NULL"/> or <see cref="Ejdb.BSON.BSONType.UNDEFINED"/></returns>
 		public object GetObjectValue(string key) {
 			var bv = GetBSONValue(key);
 			return bv != null ? bv.Value : null;
 		}
 
 		/// <summary>
-		/// Gets the <see cref="Ejdb.SON.BSONDocument"/> with the specified key.
+		/// Gets the <see cref="Ejdb.BSON.BSONDocument"/> with the specified key.
 		/// </summary>
 		/// <param name="key">Key.</param>
 		/// <returns>Key object </c> or <c>null</c> if the key is not exists or value type is either 
-		/// <see cref="Ejdb.SON.BSONType.NULL"/> or <see cref="Ejdb.SON.BSONType.UNDEFINED"/></returns>
+		/// <see cref="Ejdb.BSON.BSONType.NULL"/> or <see cref="Ejdb.BSON.BSONType.UNDEFINED"/></returns>
 		public object this[string key] {
 			get {
 				return GetObjectValue(key);
