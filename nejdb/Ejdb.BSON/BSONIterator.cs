@@ -18,10 +18,11 @@ using System.Text;
 using System.Diagnostics;
 using System.IO;
 using Ejdb.IO;
+using System.Collections.Generic;
 
 namespace Ejdb.BSON {
 
-	public class BSONIterator : IDisposable {
+	public class BSONIterator : IDisposable, IEnumerable<BSONType> {
 
 		ExtBinaryReader _input;
 		int _doclen;
@@ -38,8 +39,12 @@ namespace Ejdb.BSON {
 		}
 
 		public int DocumentLength {
-			get { return this._doclen; }
-			private set { this._doclen = value; }
+			get { return _doclen; }
+			private set { _doclen = value; }
+		}
+
+		public string CurrentKey {
+			get { return _entryKey; }
 		}
 
 		public BSONIterator(BSONDocument doc) : this(doc.ToByteArray()) {
@@ -88,8 +93,18 @@ namespace Ejdb.BSON {
 
 		void CheckDisposed() {
 			if (Disposed) {
-				throw new Exception("BSONIterator already disposed");
+				throw new ObjectDisposedException("BSONIterator");
 			}
+		}
+
+		public IEnumerator<BSONType> GetEnumerator() {
+			while (Next() != BSONType.EOO) {
+				yield return _ctype;
+			}
+		}
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
+			return GetEnumerator();
 		}
 
 		public BSONType Next() {
@@ -114,6 +129,7 @@ namespace Ejdb.BSON {
 			}
 			switch (_ctype) {
 				case BSONType.EOO:
+					Dispose();
 					return BSONType.EOO;
 				case BSONType.UNDEFINED:
 				case BSONType.NULL:
@@ -139,19 +155,20 @@ namespace Ejdb.BSON {
 				case BSONType.STRING:
 				case BSONType.CODE:
 				case BSONType.SYMBOL:
-					_entryLen = 4 + _input.ReadInt32();
+					_entryLen = _input.ReadInt32();
 					break;
 				case BSONType.DBREF:
 					//Unsupported DBREF!
-					_entryLen = 4 + 12 + _input.ReadInt32();
+					_entryLen = 12 + _input.ReadInt32();
 					break;
 				case BSONType.BINDATA:
-					_entryLen = 4 + 1 + _input.ReadInt32();
+					_entryLen = 1 + _input.ReadInt32();
 					break;
 				case BSONType.OBJECT:
 				case BSONType.ARRAY:
 				case BSONType.CODEWSCOPE:
-					_entryLen = 4 + _input.ReadInt32(); 
+					_entryLen = _input.ReadInt32() - 4; 
+					Debug.Assert(_entryLen > 0);
 					break;
 				case BSONType.REGEX:
 					_entryLen = 0;
@@ -184,8 +201,8 @@ namespace Ejdb.BSON {
 				case BSONType.CODE:
 				case BSONType.SYMBOL:
 					{						
-						Debug.Assert(_entryLen - 5 >= 0);						
-						string sv = Encoding.UTF8.GetString(_input.ReadBytes(_entryLen - 5)); 
+						Debug.Assert(_entryLen - 1 >= 0);						
+						string sv = Encoding.UTF8.GetString(_input.ReadBytes(_entryLen - 1)); 
 						_entryDataValue = new BSONValue(_ctype, _entryKey, sv);
 						Debug.Assert(_input.ReadByte() == 0x00); //trailing zero byte
 						break;
@@ -200,7 +217,7 @@ namespace Ejdb.BSON {
 				case BSONType.ARRAY:
 					{
 						BSONDocument doc = (_ctype == BSONType.OBJECT ? new BSONDocument() : new BSONArray());
-						BSONIterator sit = new BSONIterator(this._input, _entryLen - 4);
+						BSONIterator sit = new BSONIterator(this._input, _entryLen + 4);
 						while (sit.Next() != BSONType.EOO) {
 							doc.Add(sit.FetchCurrentValue());
 						}
@@ -236,7 +253,7 @@ namespace Ejdb.BSON {
 				case BSONType.BINDATA:
 					{
 						byte subtype = _input.ReadByte();
-						BSONBinData bd = new BSONBinData(subtype, _entryLen - 4, _input);
+						BSONBinData bd = new BSONBinData(subtype, _entryLen - 1, _input);
 						_entryDataValue = new BSONValue(_ctype, _entryKey, bd);
 						break;
 					}
@@ -249,7 +266,7 @@ namespace Ejdb.BSON {
 					}
 				case BSONType.CODEWSCOPE:
 					{
-						int cwlen = _entryLen - 4;
+						int cwlen = _entryLen + 4;
 						Debug.Assert(cwlen > 5);
 						int clen = _input.ReadInt32(); //code length
 						string code = Encoding.UTF8.GetString(_input.ReadBytes(clen));

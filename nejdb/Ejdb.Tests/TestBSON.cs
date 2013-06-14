@@ -107,16 +107,92 @@ namespace Ejdb.Tests {
 			                doc.ToDebugDataString());
 		}
 
-
 		[Test]
 		public void TestIterate1() {
 			var doc = new BSONDocument();
 			doc["a"] = "av";
 			doc["bb"] = 24;
-			doc["ccc"] = BSONDocument.ValueOf(new{na1 = 1, nb = "2"});
-			doc["d"] = new BSONOid("51b9f3af98195c4600000000");
+			//doc["ccc"] = BSONDocument.ValueOf(new{na1 = 1, nb = "2"});
+			//doc["d"] = new BSONOid("51b9f3af98195c4600000000");
 
-			//todo 
+			//17-00-00-00 						+4
+			//02-61-00-03-00-00-00-61-76-00		+10
+			//10-62-62-00-18-00-00-00			+8
+			//00								+1
+			Assert.AreEqual("17-00-00-00-02-61-00-03-00-00-00-61-76-00-10-62-62-00-18-00-00-00-00", 
+			                doc.ToDebugDataString());
+			BSONIterator it = new BSONIterator(doc);
+			Assert.AreEqual(doc.ToByteArray().Length, it.DocumentLength);
+			var c = "";
+			while (it.Next() != BSONType.EOO) {
+				c += it.CurrentKey;
+			}	
+			Assert.AreEqual("abb", c);
+			it.Dispose();
+
+			it = new BSONIterator(doc);
+			var cnt = 0;
+			while (it.Next() != BSONType.EOO) {
+				BSONValue bv = it.FetchCurrentValue();
+				Assert.IsNotNull(bv);
+				if (cnt == 0) {
+					Assert.IsTrue(bv.BSONType == BSONType.STRING);										
+					Assert.IsTrue(bv.Key == "a");										
+					Assert.AreEqual("av", bv.Value);										
+				} 
+				if (cnt == 1) {
+					Assert.IsTrue(bv.BSONType == BSONType.INT);										
+					Assert.IsTrue(bv.Key == "bb");										
+					Assert.AreEqual(24, bv.Value);
+				}
+				cnt++;
+			}
+		}
+
+		[Test]
+		public void testIterate2() {
+			var doc = new BSONDocument();
+			doc["a"] = "av";
+			doc["b"] = BSONDocument.ValueOf(new{cc = 1});
+			doc["d"] = new BSONOid("51b9f3af98195c4600000000");
+			Assert.AreEqual(3, doc.KeysCount);
+			//Console.WriteLine(doc.KeysCount);
+			//Console.WriteLine(doc.ToDebugDataString());
+			//2E-00-00-00					   	+4
+			//02-61-00-03-00-00-00-61-76-00		+10 (14)
+			//03-62-00							+3  (17) "d" = 
+			//0D-00-00-00						+4  (21) doc len = 13
+			//10-63-63-00-01-00-00-00 -00		+9 	(30)	
+			//07-64-00							+3 	(33)
+			//51-B9-F3-AF-98-19-5C-46-00-00-00-00	 +12 (45)
+			//00									+1 (46)
+			Assert.AreEqual("2E-00-00-00-" +
+				"02-61-00-03-00-00-00-61-76-00-" +
+				"03-62-00-" +
+				"0D-00-00-00-" +
+				"10-63-63-00-01-00-00-00-00-" +
+				"07-64-00-" +
+				"51-B9-F3-AF-98-19-5C-46-00-00-00-00-" +
+				"00", doc.ToDebugDataString());
+			BSONIterator it = new BSONIterator(doc);
+			int c = 0;
+			foreach (var bt in it) {
+				if (c == 0) {
+					Assert.IsTrue(bt == BSONType.STRING);
+				}
+				if (c == 1) {
+					Assert.IsTrue(bt == BSONType.OBJECT);
+				}
+				if (c == 2) {
+					Assert.IsTrue(bt == BSONType.OID);
+				}
+				++c;
+			}
+			Assert.IsTrue(it.Disposed);
+
+
+
+
 		}
 	}
 }

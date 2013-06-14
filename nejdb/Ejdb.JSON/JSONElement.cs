@@ -14,35 +14,11 @@
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
 using System;
-using System.IO;
-using System.Collections.Generic;
 
 namespace Ejdb.JSON {
 
-	public class JSONReader : IEnumerable<JSONElement>, IDisposable {
-
-		BinaryReader _input;
-
-		public JSONReader(Stream jstream) {
-			this._input = new BinaryReader(jstream);				
-		}
-
-		public IEnumerator<JSONElement> GetEnumerator() {
-
-
-
-			yield return new JSONElement();
-		}
-
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
-			return GetEnumerator();
-		}
-
-		public void Dispose() {
-			if (_input != null) {
-				_input.Close();
-				_input = null;
-			}
+	public class JSONElement {
+		public JSONElement() {
 		}
 	}
 }

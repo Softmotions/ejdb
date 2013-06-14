@@ -60,6 +60,7 @@
     <Compile Include="Ejdb.BSON\BSONDocument.cs" />
     <Compile Include="Ejdb.BSON\BSONConstants.cs" />
     <Compile Include="Ejdb.JSON\JSONReader.cs" />
+    <Compile Include="Ejdb.JSON\JSONElement.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
