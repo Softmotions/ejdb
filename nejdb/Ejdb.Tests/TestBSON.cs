@@ -92,7 +92,31 @@ namespace Ejdb.Tests {
 			//02-00-00-00
 			//62-00
 			//10-63-00-01-00-00-00-00
-			Console.WriteLine(doc.ToDebugDataString());
+			Assert.AreEqual("15-00-00-00-02-61-00-02-00-00-00-62-00-10-63-00-01-00-00-00-00", 
+			                doc.ToDebugDataString());
+			doc["d"] = new{e=new BSONRegexp("r1", "o2")}; //subdocument
+			//26-00-00-00-02-61-00-02-00-00-00-62-00-10-63-00-01-00-00-00-
+			//03
+			//64-00
+			//0E-00-00-00
+			//0B
+			//65-00
+			//72-31-00-6F-32-00-00-00
+			Assert.AreEqual("26-00-00-00-02-61-00-02-00-00-00-62-00-10-63-00-01-00-00-00-" +
+				"03-64-00-0E-00-00-00-0B-65-00-72-31-00-6F-32-00-00-00", 
+			                doc.ToDebugDataString());
+		}
+
+
+		[Test]
+		public void TestIterate1() {
+			var doc = new BSONDocument();
+			doc["a"] = "av";
+			doc["bb"] = 24;
+			doc["ccc"] = BSONDocument.ValueOf(new{na1 = 1, nb = "2"});
+			doc["d"] = new BSONOid("51b9f3af98195c4600000000");
+
+			//todo 
 		}
 	}
 }

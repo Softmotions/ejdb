@@ -42,6 +42,9 @@ namespace Ejdb.SON {
 			private set { this._doclen = value; }
 		}
 
+		public BSONIterator(BSONDocument doc) : this(doc.ToByteArray()) {
+		}
+
 		public BSONIterator(byte[] bbuf) : this(new MemoryStream(bbuf)) {
 		}
 
