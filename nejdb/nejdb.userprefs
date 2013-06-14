@@ -1,10 +1,15 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.JSON/JSONReader.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.Tests/TestBSON.cs">
     <Files>
-      <File FileName="Ejdb.BSON/BSONArray.cs" Line="27" Column="4" />
+      <File FileName="Ejdb.BSON/BSONArray.cs" Line="12" Column="61" />
       <File FileName="Ejdb.BSON/InvalidBSONDataException.cs" Line="30" Column="1" />
-      <File FileName="Ejdb.JSON/JSONReader.cs" Line="21" Column="24" />
+      <File FileName="Ejdb.JSON/JSONReader.cs" Line="33" Column="4" />
+      <File FileName="Ejdb.JSON/JSONElement.cs" Line="26" Column="1" />
+      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="141" Column="15" />
+      <File FileName="Ejdb.Tests/TestBSON.cs" Line="183" Column="18" />
+      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="234" Column="9" />
+      <File FileName="Ejdb.BSON/BSONType.cs" Line="29" Column="14" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -15,10 +20,10 @@
             <Node name="Ejdb.BSON" expanded="True" />
             <Node name="Ejdb.DB" expanded="True" />
             <Node name="Ejdb.IO" expanded="True" />
-            <Node name="Ejdb.JSON" expanded="True">
-              <Node name="JSONReader.cs" selected="True" />
+            <Node name="Ejdb.JSON" expanded="True" />
+            <Node name="Ejdb.Tests" expanded="True">
+              <Node name="TestBSON.cs" selected="True" />
             </Node>
-            <Node name="Ejdb.Tests" expanded="True" />
             <Node name="Ejdb.Utils" expanded="True" />
           </Node>
         </State>
@@ -29,10 +34,23 @@
         </State>
       </Pad>
       <Pad Id="MonoDevelop.Debugger.WatchPad">
-        <State />
+        <State>
+          <Value>_entryKey</Value>
+          <Value>_entryLen</Value>
+          <Value>_ctype</Value>
+          <Value>_input.BaseStream.Position</Value>
+        </State>
       </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
-        <State expanded="True" selected="True" />
+        <State expanded="True" selected="True">
+          <Node name="nejdb" expanded="True">
+            <Node name="Ejdb" expanded="True">
+              <Node name="Tests" expanded="True">
+                <Node name="TestBSON" expanded="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
       </Pad>
       <Pad Id="ConnectionManagerPad">
         <State selected="True" />
