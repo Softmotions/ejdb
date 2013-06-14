@@ -150,7 +150,7 @@ namespace Ejdb.Tests {
 		}
 
 		[Test]
-		public void testIterate2() {
+		public void TestIterate2() {
 			var doc = new BSONDocument();
 			doc["a"] = "av";
 			doc["b"] = BSONDocument.ValueOf(new{cc = 1});
@@ -188,11 +188,70 @@ namespace Ejdb.Tests {
 				}
 				++c;
 			}
+			bool thrown = false;
 			Assert.IsTrue(it.Disposed);
+			try {
+				it.Next();
+			} catch (ObjectDisposedException) {
+				thrown = true;
+			}
+			Assert.IsTrue(thrown);
 
+			c = 0;
+			it = new BSONIterator(doc);
+			foreach (var bv in it.Values()) {
+				if (c == 0) {
+					Assert.AreEqual("a", bv.Key);
+					Assert.AreEqual("av", bv.Value);
+				}
+				if (c == 1) {
+					Assert.AreEqual("b", bv.Key);
+					BSONDocument sdoc = bv.Value as BSONDocument;
+					Assert.IsNotNull(sdoc);
+					foreach (var bv2 in new BSONIterator(sdoc).Values()) {
+						Assert.AreEqual("cc", bv2.Key);
+						Assert.AreEqual(1, bv2.Value);
+						Assert.AreEqual(BSONType.INT, bv2.BSONType);
+					}
+				}
+				if (c == 2) {
+					Assert.AreEqual(BSONType.OID, bv.BSONType);
+					Assert.IsInstanceOfType(typeof(BSONOid), bv.Value);
+					var oid = bv.Value as BSONOid;
+					Assert.AreEqual("51b9f3af98195c4600000000", oid.ToString());
+				}
+				c++;
+			}
+		}
 
-
-
+		[Test]
+		public void TestIterateRE() {
+			var doc = new BSONDocument();
+			doc["a"] = new BSONRegexp("b", "c");
+			doc["d"] = 1;
+			doc["e"] = BSONDocument.ValueOf(new {f = new BSONRegexp("g", "")});
+			doc["h"] = 2;
+			//28-00-00-00
+			//0B-61-00-62-00-63-00
+			//10-64-00-01-00-00-00
+			//03-65-00-0B-00-00-00
+			//0B-66-00-67-00-00-00
+			//10-68-00-02-00-00-00-00
+			var cs = "";
+			foreach (var bt in new BSONIterator(doc)) {
+				cs += bt.ToString();
+			}
+			Assert.AreEqual("REGEXINTOBJECTINT", cs);
+			cs = "";
+			foreach (var bv in new BSONIterator(doc).Values()) {
+				if (bv.Key == "a") {
+					cs += ((BSONRegexp) bv.Value).Re;
+					cs += ((BSONRegexp) bv.Value).Opts;
+				} else {
+					cs += bv.Value;
+				}
+			}
+			Assert.AreEqual("bc1[BSONDocument: [BSONValue: BSONType=REGEX, Key=f, Value=[BSONRegexp: re=g, opts=]]]2", cs);
 		}
 	}
 }

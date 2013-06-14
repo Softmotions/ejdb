@@ -22,6 +22,7 @@ using Ejdb.IO;
 using Ejdb.BSON;
 using Ejdb.Utils;
 using System.Reflection;
+using System.Linq;
 
 namespace Ejdb.BSON {
 
@@ -430,7 +431,8 @@ namespace Ejdb.BSON {
 		}
 
 		public override string ToString() {
-			return string.Format("[{0}: {1}]", GetType().Name, _fieldslist);
+			return string.Format("[{0}: {1}]", GetType().Name, 
+			                     string.Join(", ", from bv in _fieldslist select bv.ToString())); 
 		}
 		//.//////////////////////////////////////////////////////////////////
 		// 						Private staff										  

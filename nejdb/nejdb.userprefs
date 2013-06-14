@@ -3,13 +3,14 @@
   <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.Tests/TestBSON.cs">
     <Files>
       <File FileName="Ejdb.BSON/BSONArray.cs" Line="12" Column="61" />
-      <File FileName="Ejdb.BSON/InvalidBSONDataException.cs" Line="30" Column="1" />
       <File FileName="Ejdb.JSON/JSONReader.cs" Line="33" Column="4" />
-      <File FileName="Ejdb.JSON/JSONElement.cs" Line="26" Column="1" />
-      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="141" Column="15" />
-      <File FileName="Ejdb.Tests/TestBSON.cs" Line="183" Column="18" />
-      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="234" Column="9" />
-      <File FileName="Ejdb.BSON/BSONType.cs" Line="29" Column="14" />
+      <File FileName="Ejdb.JSON/JSONElement.cs" Line="1" Column="1" />
+      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="322" Column="1" />
+      <File FileName="Ejdb.Tests/TestBSON.cs" Line="133" Column="31" />
+      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="308" Column="37" />
+      <File FileName="Ejdb.BSON/BSONType.cs" Line="39" Column="20" />
+      <File FileName="Ejdb.BSON/BSONOid.cs" Line="1" Column="1" />
+      <File FileName="Ejdb.IO/ExtBinaryWriter.cs" Line="54" Column="5" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -41,9 +42,12 @@
           <Value>_input.BaseStream.Position</Value>
         </State>
       </Pad>
+      <Pad Id="ConnectionManagerPad">
+        <State selected="True" />
+      </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
-        <State expanded="True" selected="True">
-          <Node name="nejdb" expanded="True">
+        <State expanded="True">
+          <Node name="nejdb" expanded="True" selected="True">
             <Node name="Ejdb" expanded="True">
               <Node name="Tests" expanded="True">
                 <Node name="TestBSON" expanded="True" />
@@ -51,9 +55,6 @@
             </Node>
           </Node>
         </State>
-      </Pad>
-      <Pad Id="ConnectionManagerPad">
-        <State selected="True" />
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>

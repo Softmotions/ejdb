@@ -49,7 +49,9 @@ namespace Ejdb.IO {
 		}
 
 		public void WriteCString(string val) {
-			Write(_encoding.GetBytes(val));
+			if (val.Length > 0) {
+				Write(_encoding.GetBytes(val));
+			}
 			Write((byte) 0x00);
 		}
 	}

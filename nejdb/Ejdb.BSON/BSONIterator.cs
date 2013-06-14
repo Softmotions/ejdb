@@ -25,6 +25,8 @@ namespace Ejdb.BSON {
 	public class BSONIterator : IDisposable, IEnumerable<BSONType> {
 
 		ExtBinaryReader _input;
+		bool _closeOnDispose = true;
+		bool _disposed;
 		int _doclen;
 		BSONType _ctype = BSONType.UNKNOWN;
 		string _entryKey;
@@ -34,7 +36,7 @@ namespace Ejdb.BSON {
 
 		public bool Disposed {
 			get {
-				return (_input == null);
+				return _disposed;
 			}
 		}
 
@@ -85,7 +87,8 @@ namespace Ejdb.BSON {
 		}
 
 		public void Dispose() {
-			if (_input != null) {
+			_disposed = true;
+			if (_closeOnDispose && _input != null) {
 				_input.Close();
 				_input = null;
 			}
@@ -105,6 +108,13 @@ namespace Ejdb.BSON {
 
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
 			return GetEnumerator();
+		}
+
+		public IEnumerable<BSONValue> Values() {
+			while (Next() != BSONType.EOO) {
+				yield return FetchCurrentValue();
+			}
+
 		}
 
 		public BSONType Next() {
@@ -218,6 +228,7 @@ namespace Ejdb.BSON {
 					{
 						BSONDocument doc = (_ctype == BSONType.OBJECT ? new BSONDocument() : new BSONArray());
 						BSONIterator sit = new BSONIterator(this._input, _entryLen + 4);
+						sit._closeOnDispose = false;
 						while (sit.Next() != BSONType.EOO) {
 							doc.Add(sit.FetchCurrentValue());
 						}
