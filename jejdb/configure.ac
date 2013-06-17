@@ -9,7 +9,7 @@ test -n "$CFLAGS" && MYCFLAGS="$CFLAGS $MYCFLAGS"
 test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
-AC_INIT(jejdb, 1.0.1)
+AC_INIT(jejdb, 1.0.2)
 AC_PREFIX_DEFAULT(/usr)
 
 # Package information

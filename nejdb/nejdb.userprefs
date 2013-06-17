@@ -2,15 +2,11 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.DB/EJDB.cs">
     <Files>
-      <File FileName="Ejdb.BSON/BSONArray.cs" Line="12" Column="61" />
-      <File FileName="Ejdb.JSON/JSONReader.cs" Line="32" Column="4" />
-      <File FileName="Ejdb.JSON/JSONElement.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="322" Column="1" />
-      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.BSON/BSONType.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.BSON/BSONOid.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.IO/ExtBinaryWriter.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.DB/EJDB.cs" Line="22" Column="3" />
+      <File FileName="Ejdb.Tests/TestBSON.cs" Line="27" Column="37" />
+      <File FileName="Ejdb.DB/EJDB.cs" Line="26" Column="38" />
+      <File FileName="Ejdb.DB/EJDBException.cs" Line="25" Column="4" />
+      <File FileName="Ejdb.BSON/InvalidBSONDataException.cs" Line="22" Column="36" />
+      <File FileName="Ejdb.BSON/BSONType.cs" Line="20" Column="15" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -46,15 +42,7 @@
         <State selected="True" />
       </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
-        <State expanded="True">
-          <Node name="nejdb" expanded="True" selected="True">
-            <Node name="Ejdb" expanded="True">
-              <Node name="Tests" expanded="True">
-                <Node name="TestBSON" expanded="True" />
-              </Node>
-            </Node>
-          </Node>
-        </State>
+        <State expanded="True" selected="True" />
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>

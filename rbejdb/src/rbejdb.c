@@ -45,7 +45,7 @@
 
 #include "rbbson.h"
 
-#define DEFAULT_OPEN_MODE (JBOWRITER | JBOCREAT | JBOTSYNC)
+#define DEFAULT_OPEN_MODE (JBOWRITER | JBOCREAT)
 
 typedef struct {
     EJDB* ejdb;

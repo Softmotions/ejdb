@@ -70,7 +70,7 @@ JBOTRUNC = _pyejdb.JBOTRUNC
 JBONOLCK = _pyejdb.JBONOLCK
 JBOLCKNB = _pyejdb.JBOLCKNB
 JBOTSYNC = _pyejdb.JBOTSYNC
-DEFAULT_OPEN_MODE = JBOWRITER | JBOCREAT | JBOTSYNC
+DEFAULT_OPEN_MODE = JBOWRITER | JBOCREAT
 
 #Query flags
 JBQRYCOUNT = _pyejdb.JBQRYCOUNT
@@ -168,7 +168,7 @@ class EJDB(object):
             JBOLCKNB - Lock without blocking
             JBOTSYNC - Synchronize db on every transaction
 
-    Default open mode: DEFAULT_OPEN_MODE = JBOWRITER | JBOCREAT | JBOTSYNC
+    Default open mode: DEFAULT_OPEN_MODE = JBOWRITER | JBOCREAT
     """
 
     def __init__(self, fpath, mode=DEFAULT_OPEN_MODE):

@@ -48,7 +48,7 @@ public class EJDB {
     /**
      * Default open mode
      */
-    public static final int JBO_DEFAULT = (JBOWRITER | JBOCREAT | JBOTSYNC);
+    public static final int JBO_DEFAULT = (JBOWRITER | JBOCREAT);
 
     static {
         System.loadLibrary("jejdb");
@@ -74,7 +74,7 @@ public class EJDB {
     /**
      * Open database using default open mode.
      * <p/>
-     * Default open mode: JBOWRITER | JBOCREAT | JBOTSYNC
+     * Default open mode: JBOWRITER | JBOCREAT
      *
      * @param path EJDB path
      * @throws EJDBException
@@ -86,7 +86,7 @@ public class EJDB {
     /**
      * Open database.
      * <p/>
-     * Default open mode: JBOWRITER | JBOCREAT | JBOTSYNC
+     * Default open mode: JBOWRITER | JBOCREAT
      *
      * @param path EJDB path
      * @param mode Open mode

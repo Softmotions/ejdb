@@ -38,6 +38,7 @@
     </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="Mono.Posix" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="Ejdb.BSON\BSONConstants.cs" />
     <Compile Include="Ejdb.JSON\JSONReader.cs" />
     <Compile Include="Ejdb.JSON\JSONElement.cs" />
+    <Compile Include="Ejdb.DB\EJDBException.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
