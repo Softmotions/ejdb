@@ -20,7 +20,12 @@ namespace Ejdb.DB {
 
 	public class EJDB {
 
+		IntPtr dbptr;
+
 		public EJDB() {
+		}
+
+		~EJDB() {
 		}
 	}
 }

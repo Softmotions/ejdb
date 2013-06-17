@@ -108,6 +108,7 @@ static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
 static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **dfields, TCMAP **ifields, bool *imode);
 static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec);
+static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, void *qspecbsdata);
 static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf, int mgrp);
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens);
@@ -485,6 +486,67 @@ error:
     return NULL;
 }
 
+EJQ* ejdbcreatequery2(EJDB *jb, void *qbsdata) {
+    assert(jb);
+    if (!qbsdata) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    EJQ *q;
+    TCCALLOC(q, 1, sizeof (*q));
+    q->qobjlist = _parseqobj2(jb, q, qbsdata);
+    if (!q->qobjlist) {
+        goto error;
+    }
+    return q;
+error:
+    ejdbquerydel(q);
+    return NULL;
+}
+
+EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, void *orbsdata) {
+    assert(jb && q);
+    if (!orbsdata) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    EJQ *oq = ejdbcreatequery2(jb, orbsdata);
+    if (oq == NULL) {
+        return NULL;
+    }
+    q->orqobjsnum++;
+    if (q->orqobjsnum == 1) {
+        TCMALLOC(q->orqobjs, sizeof (*(q->orqobjs)) * q->orqobjsnum);
+    } else {
+        TCREALLOC(q->orqobjs, q->orqobjs, q->orqobjsnum);
+    }
+    q->orqobjs[q->orqobjsnum - 1] = *oq; //copy
+    TCFREE(oq);
+    return q;
+}
+
+EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, void *hintsbsdata) {
+    assert(jb && q);
+    if (!hintsbsdata) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    bson_iterator it;
+    bson_iterator_from_buffer(&it, hintsbsdata);
+    bson *bs = bson_create_from_iterator(&it);
+    if (bs->err) {
+        bson_del(bs);
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    if (q->hints) {
+        bson_del(q->hints);
+        q->hints = NULL;
+    }
+    q->hints = bs;
+    return q;
+}
+
 void ejdbquerydel(EJQ *q) {
     _qrydel(q, true);
 }
@@ -657,7 +719,7 @@ uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bs
     return count;
 }
 
-TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
+EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
     assert(jcoll && q && q->qobjlist);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -672,6 +734,21 @@ TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags,
     TCLIST *res = _qryexecute(jcoll, q, count, qflags, log);
     JBCUNLOCKMETHOD(jcoll);
     return res;
+}
+
+int ejdbqresultnum(EJQRESULT qr) {
+    return qr ? tclistnum(qr) : 0;
+}
+
+const void* ejdbqresultbsondata(EJQRESULT qr, int idx) {
+    if (!qr || idx < 0) return NULL;
+    return tclistval2(qr, idx);
+}
+
+void ejdbqresultdispose(EJQRESULT qr) {
+    if (qr) {
+        tclistdel(qr);
+    }
 }
 
 bool ejdbsyncoll(EJCOLL *jcoll) {
@@ -3912,6 +3989,23 @@ static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     return res;
 }
 
+static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, void *qspecbsdata) {
+    assert(qspec);
+    int rv = 0;
+    TCLIST *res = tclistnew2(TCLISTINYNUM);
+    bson_iterator it;
+    bson_iterator_from_buffer(&it, qspecbsdata);
+    TCLIST *pathStack = tclistnew2(TCLISTINYNUM);
+    rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL, 0);
+    if (rv) {
+        tclistdel(res);
+        res = NULL;
+    }
+    assert(!pathStack->num);
+    tclistdel(pathStack);
+    return res;
+}
+
 /**
  * Get OID value from the '_id' field of specified bson object.
  * @param bson[in] BSON object
@@ -4195,7 +4289,7 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         }
         //flush deffered indexes if number pending objects greater JBMAXDEFFEREDIDXNUM
         if (TCLISTNUM(dlist) >= JBMAXDEFFEREDIDXNUM) {
-            for (int i =  0; i < TCLISTNUM(dlist); ++i) {
+            for (int i = 0; i < TCLISTNUM(dlist); ++i) {
                 _DEFFEREDIDXCTX *di = TCLISTVALPTR(dlist, i);
                 assert(di);
                 if (di->rmap) {

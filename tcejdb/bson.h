@@ -1123,6 +1123,7 @@ EJDB_EXPORT int bson_compare_bool(bson_bool_t cv, const void *bsdata, const char
 EJDB_EXPORT bson* bson_dup(const bson *src);
 
 
+EJDB_EXPORT bson* bson_create_from_iterator(bson_iterator *from);
 EJDB_EXPORT bson* bson_create_from_buffer(const void *buf, int bufsz);
 EJDB_EXPORT bson* bson_create_from_buffer2(bson *bs, const void *buf, int bufsz);
 

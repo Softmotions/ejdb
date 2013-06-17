@@ -39,6 +39,8 @@ typedef struct { /**< EJDB collection tuning options. */
 } EJCOLLOPTS;
 
 
+typedef TCLIST* EJQRESULT; /**< EJDB query result */
+
 #define JBMAXCOLNAMELEN 128
 
 enum { /** Error codes */
@@ -327,7 +329,7 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *
  * Many query examples can be found in `testejdb/t2.c` test case.
  *
- * @param EJDB database handle.
+ * @param jb EJDB database handle.
  * @param qobj Main BSON query object.
  * @param orqobjs Array of additional OR query objects (joined with OR predicate).
  * @param orqobjsnum Number of OR query objects.
@@ -335,6 +337,33 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  * @return On success return query handle. On error returns NULL.
  */
 EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints);
+
+
+/**
+ * Alternative query creation method convenient to use
+ * with `ejdbqueryaddor` and `ejdbqueryhints` methods.
+ * @param jb EJDB database handle.
+ * @param qobj Main query object BSON data.
+ * @return On success return query handle. On error returns NULL.
+ */
+EJDB_EXPORT EJQ* ejdbcreatequery2(EJDB *jb, void *qbsdata);
+
+/**
+ * Add OR restriction to query object.
+ * @param jb EJDB database handle.
+ * @param q Query handle.
+ * @param orbsdata OR restriction BSON data.
+ * @return NULL on error.
+ */
+EJDB_EXPORT EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, void *orbsdata);
+
+/**
+ * Set hints for the query.
+ * @param jb EJDB database handle.
+ * @param hintsbsdata Query hints BSON data.
+ * @return NULL on error.
+ */
+EJDB_EXPORT EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, void *hintsbsdata);
 
 /**
  * Destroy query object created with ejdbcreatequery().
@@ -378,8 +407,8 @@ EJDB_EXPORT void ejdbquerydel(EJQ *q);
 EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
 
 /**
- * Execute query against EJDB collection.
- * It is better to execute update queries with `JBQRYCOUNT` control
+ * Execute the query against EJDB collection.
+ * It is better to execute update queries with specified `JBQRYCOUNT` control
  * flag avoid unnecessarily rows fetching.
  *
  * @param jcoll EJDB database
@@ -392,8 +421,26 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
  * If (qflags & JBQRYCOUNT) then NULL will be returned
  * and only count reported.
  */
-EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
+EJDB_EXPORT EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 
+/**
+ * Returns the number of elements in the query result set.
+ * @param qr Query result set. Can be `NULL` in this case 0 is returned.
+ */
+EJDB_EXPORT int ejdbqresultnum(EJQRESULT qr);
+
+/**
+ * Gets the pointer of query result BSON data buffer at the specified index `idx`.
+ * If `qr` is `NULL` or `idx` is put of index range then the `NULL` pointer will be returned.
+ * @param qr Query result set object.
+ * @param idx Zero based index of the record.
+ */
+EJDB_EXPORT const void* ejdbqresultbsondata(EJQRESULT qr, int idx);
+
+/**
+ * Disposes the query result set and frees a records buffers.
+ */
+EJDB_EXPORT void ejdbqresultdispose(EJQRESULT qr);
 
 /**
  * Convenient method to execute update queries.

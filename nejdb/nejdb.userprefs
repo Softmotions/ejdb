@@ -1,16 +1,16 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.Tests/TestBSON.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.DB/EJDB.cs">
     <Files>
       <File FileName="Ejdb.BSON/BSONArray.cs" Line="12" Column="61" />
-      <File FileName="Ejdb.JSON/JSONReader.cs" Line="33" Column="4" />
+      <File FileName="Ejdb.JSON/JSONReader.cs" Line="32" Column="4" />
       <File FileName="Ejdb.JSON/JSONElement.cs" Line="1" Column="1" />
       <File FileName="Ejdb.BSON/BSONDocument.cs" Line="322" Column="1" />
-      <File FileName="Ejdb.Tests/TestBSON.cs" Line="133" Column="31" />
-      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="308" Column="37" />
-      <File FileName="Ejdb.BSON/BSONType.cs" Line="39" Column="20" />
+      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="1" Column="1" />
+      <File FileName="Ejdb.BSON/BSONType.cs" Line="1" Column="1" />
       <File FileName="Ejdb.BSON/BSONOid.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.IO/ExtBinaryWriter.cs" Line="54" Column="5" />
+      <File FileName="Ejdb.IO/ExtBinaryWriter.cs" Line="1" Column="1" />
+      <File FileName="Ejdb.DB/EJDB.cs" Line="22" Column="3" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -19,12 +19,12 @@
           <Node name="nejdb" expanded="True">
             <Node name="References" expanded="True" />
             <Node name="Ejdb.BSON" expanded="True" />
-            <Node name="Ejdb.DB" expanded="True" />
+            <Node name="Ejdb.DB" expanded="True">
+              <Node name="EJDB.cs" selected="True" />
+            </Node>
             <Node name="Ejdb.IO" expanded="True" />
             <Node name="Ejdb.JSON" expanded="True" />
-            <Node name="Ejdb.Tests" expanded="True">
-              <Node name="TestBSON.cs" selected="True" />
-            </Node>
+            <Node name="Ejdb.Tests" expanded="True" />
             <Node name="Ejdb.Utils" expanded="True" />
           </Node>
         </State>

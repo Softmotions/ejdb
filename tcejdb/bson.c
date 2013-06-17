@@ -1651,6 +1651,18 @@ bson* bson_dup(const bson *src) {
     return rv;
 }
 
+bson* bson_create_from_iterator(bson_iterator *from) {
+    assert(from);
+    bson_type bt;
+    bson *bs = bson_create();
+    while ((bt = bson_iterator_next(from)) != BSON_EOO) {
+        bson_append_field_from_iterator(from, bs);
+    }
+    bson_finish(bs);
+    return bs;
+}
+
+
 bson* bson_create_from_buffer(const void* buf, int bufsz) {
     return bson_create_from_buffer2(bson_create(), buf, bufsz);
 }
