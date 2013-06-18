@@ -1677,6 +1677,13 @@ bson* bson_create_from_buffer2(bson *rv, const void* buf, int bufsz) {
     return rv;
 }
 
+void bson_init_with_data(bson *bs, const void *bsdata) {
+    memset(bs, 0, sizeof(*bs));
+    bs->data = (char*) bsdata;
+    bson_little_endian32(&bs->dataSize, bsdata);
+    bs->finished = true;
+}
+
 bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf, bool expandall) {
     assert(mbuf && inbuf);
     bool found = false;

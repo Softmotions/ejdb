@@ -1126,6 +1126,7 @@ EJDB_EXPORT bson* bson_dup(const bson *src);
 EJDB_EXPORT bson* bson_create_from_iterator(bson_iterator *from);
 EJDB_EXPORT bson* bson_create_from_buffer(const void *buf, int bufsz);
 EJDB_EXPORT bson* bson_create_from_buffer2(bson *bs, const void *buf, int bufsz);
+EJDB_EXPORT void bson_init_with_data(bson *bs, const void *bsdata);
 
 EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inbuf);
 EJDB_EXPORT bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf, bool expandall);

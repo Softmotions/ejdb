@@ -449,6 +449,9 @@ namespace Ejdb.BSON {
 		internal BSONDocument SetBSONValue(BSONValue val) {
 			_cachedhash = null;
 			CheckFields();
+			if (val.BSONType == BSONType.STRING && val.Key == "_id") {
+				val = new BSONValue(BSONType.OID, val.Key, new BSONOid((string) val.Value));
+			}
 			BSONValue ov;
 			if (_fields.TryGetValue(val.Key, out ov)) {
 				ov.Key = val.Key;

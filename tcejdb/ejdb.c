@@ -384,6 +384,12 @@ bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge) {
     return rv;
 }
 
+bool ejdbsavebson3(EJCOLL *jcoll, void *bsdata, bson_oid_t *oid, bool merge) {
+    bson bs;
+    bson_init_with_data(&bs, bsdata);
+    return ejdbsavebson2(jcoll, &bs, oid, merge);
+}
+
 bool ejdbrmbson(EJCOLL *jcoll, bson_oid_t *oid) {
     assert(jcoll && oid);
     if (!JBISOPEN(jcoll->jb)) {

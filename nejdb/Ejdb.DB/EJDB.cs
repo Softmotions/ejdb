@@ -15,6 +15,9 @@
 // ============================================================================================
 using System;
 using System.Runtime.InteropServices;
+using Mono.Unix;
+using System.Text;
+using Ejdb.BSON;
 
 namespace Ejdb.DB {
 
@@ -29,7 +32,7 @@ namespace Ejdb.DB {
 		public const int JBOTSYNC = 1 << 6;
 		public const int DEFAULT_OPEN_MODE = (JBOWRITER | JBOCREAT);
 		public const string EJDB_LIB_NAME = "tcejdb";
-		IntPtr _db = (IntPtr) 0x0;
+		IntPtr _db = IntPtr.Zero;
 		#region Functions
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbnew")]
 		static extern IntPtr _ejdbnew();
@@ -37,8 +40,17 @@ namespace Ejdb.DB {
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbdel")]
 		static extern IntPtr _ejdbdel(IntPtr db);
 
-		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbopen", CharSet=CharSet.Auto)]
-		static extern bool _ejdbopen(IntPtr db, string path, int mode);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbopen")]
+		static extern bool _ejdbopen(IntPtr db, IntPtr path, int mode);
+
+		static bool _ejdbopen(IntPtr db, string path, int mode) {
+			IntPtr pptr = UnixMarshal.StringToHeap(path, Encoding.UTF8);
+			try {
+				return _ejdbopen(db, pptr, mode);
+			} finally {
+				UnixMarshal.FreeHeap(pptr);
+			}
+		}
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbclose")]
 		static extern bool _ejdbclose(IntPtr db);
@@ -50,7 +62,22 @@ namespace Ejdb.DB {
 		static extern int _ejdbecode(IntPtr db);
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdberrmsg")]
-		static extern string _ejdberrmsg(int ecode);
+		static extern IntPtr _ejdberrmsg(int ecode);
+
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbgetcoll")]
+		static extern IntPtr _ejdbgetcoll(IntPtr db, IntPtr cname);
+
+		static IntPtr _ejdbgetcoll(IntPtr db, string cname) {
+			IntPtr cptr = UnixMarshal.StringToHeap(cname, Encoding.UTF8);
+			try {
+				return _ejdbgetcoll(db, cptr);
+			} finally {
+				UnixMarshal.FreeHeap(cptr);
+			}
+		}
+		//EJDB_EXPORT bool ejdbsavebson3(EJCOLL *jcoll, void *bsdata, bson_oid_t *oid, bool merge);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbsavebson3")]
+		static extern IntPtr _ejdbsavebson(IntPtr coll, [In] byte[] bsdata, [Out] byte[] oid, bool merge);
 		#endregion
 		/// <summary>
 		/// Gets the last DB error code or <c>null</c> if underlying native database object does not exist.
@@ -58,7 +85,7 @@ namespace Ejdb.DB {
 		/// <value>The last DB error code.</value>
 		public int? LastDBErrorCode {
 			get {
-				return (_db.ToInt32() != 0x0) ? (int?) _ejdbecode(_db) : null;
+				return (_db != IntPtr.Zero) ? (int?) _ejdbecode(_db) : null;
 			}
 		}
 
@@ -68,7 +95,10 @@ namespace Ejdb.DB {
 		public string LastDBErrorMsg {
 			get {		
 				int? ecode = LastDBErrorCode;
-				return ecode != null ? _ejdberrmsg((int) ecode) : null;
+				if (ecode == null) {
+					return null;
+				}
+				return UnixMarshal.PtrToString(_ejdberrmsg((int) ecode), Encoding.UTF8);
 			}
 		}
 
@@ -87,10 +117,10 @@ namespace Ejdb.DB {
 		/// </summary>
 		/// <param name="path">The main database file path.</param>
 		/// <param name="omode">Open mode.</param>
-		public EJDB(string path, int omode) {
+		public EJDB(string path, int omode=DEFAULT_OPEN_MODE) {
 			bool rv;
 			_db = _ejdbnew();
-			if (_db.ToInt32() == 0x0) {
+			if (_db == IntPtr.Zero) {
 				throw new EJDBException("Unable to create ejdb instance");
 			}
 			try {
@@ -109,13 +139,35 @@ namespace Ejdb.DB {
 		}
 
 		public void Dispose() {
-			if (_db.ToInt32() != 0x0) {
+			if (_db != IntPtr.Zero) {
 				IntPtr db = _db;
-				_db = (IntPtr) 0x0;
-				if (db.ToInt32() != 0x0) {
+				_db = IntPtr.Zero;
+				if (_db != IntPtr.Zero) {
 					_ejdbdel(db);
 				}
 			}
+		}
+
+		/// <summary>
+		/// Save the BSON document doc into the collection cname.
+		/// </summary>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="doc">BSON document to save.</param>
+		/// <param name="merge">If set to <c>true</c> 
+		/// If true the merge will be performend with old and new objects. 
+		/// Otherwise old object will be replaced.</param>
+		/// <returns>True on success.</returns>
+		public bool Save(string cname, BSONDocument doc, bool merge) {
+			bool rv = false;
+			IntPtr cptr = _ejdbgetcoll(_db, cname);
+			if (cptr == IntPtr.Zero) {
+				return false;
+			}
+			BSONValue bv = doc.GetBSONValue("_id");
+			byte[] bdoc = doc.ToByteArray();
+			//todo
+
+			return  rv;
 		}
 	}
 }
