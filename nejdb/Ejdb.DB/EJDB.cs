@@ -57,17 +57,18 @@ namespace Ejdb.DB {
 		public const string EJDB_LIB_NAME = "tcejdb";
 
 		IntPtr _db = IntPtr.Zero;
-		#region Functions
+		//
+		#region NativeRefs
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbnew")]
-		static extern IntPtr _ejdbnew();
+		internal static extern IntPtr _ejdbnew();
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbdel")]
-		static extern IntPtr _ejdbdel([In] IntPtr db);
+		internal static extern IntPtr _ejdbdel([In] IntPtr db);
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbopen")]
-		static extern bool _ejdbopen([In] IntPtr db, [In] IntPtr path, int mode);
+		internal static extern bool _ejdbopen([In] IntPtr db, [In] IntPtr path, int mode);
 
-		static bool _ejdbopen(IntPtr db, string path, int mode) {
+		internal static bool _ejdbopen(IntPtr db, string path, int mode) {
 			IntPtr pptr = UnixMarshal.StringToHeap(path, Encoding.UTF8);
 			try {
 				return _ejdbopen(db, pptr, mode);
@@ -77,21 +78,21 @@ namespace Ejdb.DB {
 		}
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbclose")]
-		static extern bool _ejdbclose([In] IntPtr db);
+		internal static extern bool _ejdbclose([In] IntPtr db);
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbisopen")]
-		static extern bool _ejdbisopen([In] IntPtr db);
+		internal static extern bool _ejdbisopen([In] IntPtr db);
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbecode")]
-		static extern int _ejdbecode([In] IntPtr db);
+		internal static extern int _ejdbecode([In] IntPtr db);
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdberrmsg")]
-		static extern IntPtr _ejdberrmsg(int ecode);
+		internal static extern IntPtr _ejdberrmsg(int ecode);
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbgetcoll")]
-		static extern IntPtr _ejdbgetcoll([In] IntPtr db, [In] IntPtr cname);
+		internal static extern IntPtr _ejdbgetcoll([In] IntPtr db, [In] IntPtr cname);
 
-		static IntPtr _ejdbgetcoll(IntPtr db, string cname) {
+		internal static IntPtr _ejdbgetcoll(IntPtr db, string cname) {
 			IntPtr cptr = UnixMarshal.StringToHeap(cname, Encoding.UTF8);
 			try {
 				return _ejdbgetcoll(db, cptr);
@@ -101,9 +102,9 @@ namespace Ejdb.DB {
 		}
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbcreatecoll")]
-		static extern IntPtr _ejdbcreatecoll([In] IntPtr db, [In] IntPtr cname, ref EJDBCollectionOptionsN? opts);
+		internal static extern IntPtr _ejdbcreatecoll([In] IntPtr db, [In] IntPtr cname, ref EJDBCollectionOptionsN? opts);
 
-		static IntPtr _ejdbcreatecoll(IntPtr db, String cname, EJDBCollectionOptionsN? opts) {
+		internal static IntPtr _ejdbcreatecoll(IntPtr db, String cname, EJDBCollectionOptionsN? opts) {
 			IntPtr cptr = UnixMarshal.StringToHeap(cname, Encoding.UTF8);
 			try {
 				return _ejdbcreatecoll(db, cptr, ref opts);
@@ -113,16 +114,16 @@ namespace Ejdb.DB {
 		}
 		//EJDB_EXPORT bool ejdbsavebson3(EJCOLL *jcoll, void *bsdata, bson_oid_t *oid, bool merge);
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbsavebson3")]
-		static extern bool _ejdbsavebson([In] IntPtr coll, [In] byte[] bsdata, [Out] byte[] oid, [In] bool merge);
+		internal static extern bool _ejdbsavebson([In] IntPtr coll, [In] byte[] bsdata, [Out] byte[] oid, [In] bool merge);
 		//EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbloadbson")]
-		static extern IntPtr _ejdbloadbson([In] IntPtr coll, [In] byte[] oid);
+		internal static extern IntPtr _ejdbloadbson([In] IntPtr coll, [In] byte[] oid);
 		//EJDB_EXPORT const char* bson_data2(const bson *b, int *bsize);
 		[DllImport(EJDB_LIB_NAME, EntryPoint="bson_data2")]
-		static extern IntPtr _bson_data2([In] IntPtr bsptr, out int size);
+		internal static extern IntPtr _bson_data2([In] IntPtr bsptr, out int size);
 		//EJDB_EXPORT void bson_del(bson *b);
 		[DllImport(EJDB_LIB_NAME, EntryPoint="bson_del")]
-		static extern void _bson_del([In] IntPtr bsptr);
+		internal static extern void _bson_del([In] IntPtr bsptr);
 		#endregion
 		/// <summary>
 		/// Gets the last DB error code or <c>null</c> if underlying native database object does not exist.
@@ -264,11 +265,19 @@ namespace Ejdb.DB {
 		/// <returns>The query object.</returns>
 		/// <param name="qdoc">BSON query spec.</param>
 		public EJDBQuery CreateQuery(BSONDocument qdoc) {
-			return new EJDBQuery(qdoc);
+			CheckDisposed();
+			return new EJDBQuery(this, qdoc);
 		}
 		//.//////////////////////////////////////////////////////////////////
 		// 						 Private staff							   //	  
 		//.//////////////////////////////////////////////////////////////////
+		internal IntPtr DBPtr {
+			get {
+				CheckDisposed();
+				return _db;
+			}
+		}
+
 		byte[] BsonPtrIntoByteArray(IntPtr bsptr, bool deletebsptr = true) {
 			if (bsptr == IntPtr.Zero) {
 				return new byte[0];
@@ -283,7 +292,7 @@ namespace Ejdb.DB {
 			return bsdata;
 		}
 
-		void CheckDisposed() {
+		internal void CheckDisposed() {
 			if (_db == IntPtr.Zero) {
 				throw new ObjectDisposedException("Database is disposed");
 			}

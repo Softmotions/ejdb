@@ -746,9 +746,14 @@ int ejdbqresultnum(EJQRESULT qr) {
     return qr ? tclistnum(qr) : 0;
 }
 
-const void* ejdbqresultbsondata(EJQRESULT qr, int idx) {
-    if (!qr || idx < 0) return NULL;
-    return tclistval2(qr, idx);
+const void* ejdbqresultbsondata(EJQRESULT qr, int pos, int *size) {
+    if (!qr || pos < 0) {
+        *size = 0;
+        return NULL;
+    }
+    const void *bsdata = tclistval2(qr, pos);
+    *size = (bsdata != NULL) ? bson_size2(bsdata) : 0;
+    return bsdata;
 }
 
 void ejdbqresultdispose(EJQRESULT qr) {
@@ -3101,6 +3106,8 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
         if (BSON_IS_NUM_TYPE(bt)) {
             int64_t v = bson_iterator_long(&it);
             ejq->max = (uint32_t) ((v < 0) ? 0 : v);
+        } else if (qflags & JBQRYFINDONE) {
+            ejq->max = (uint32_t) 1;
         }
         if (!(qflags & JBQRYCOUNT)) {
             bt = bson_find(&it, ejq->hints, "$fields"); //Collect required fields

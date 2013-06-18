@@ -83,7 +83,8 @@ enum { /** Index modes, index types. */
 };
 
 enum { /*< Query search mode flags in ejdbqryexecute() */
-    JBQRYCOUNT = 1 /*< Query only count(*) */
+    JBQRYCOUNT = 1, /*< Query only count(*) */
+    JBQRYFINDONE = 1 << 1 /*< Fetch first record only */
 };
 
 EJDB_EXPORT bool ejdbisvalidoidstr(const char *oid);
@@ -432,12 +433,12 @@ EJDB_EXPORT EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *coun
 EJDB_EXPORT int ejdbqresultnum(EJQRESULT qr);
 
 /**
- * Gets the pointer of query result BSON data buffer at the specified index `idx`.
+ * Gets the pointer of query result BSON data buffer at the specified position `pos`.
  * If `qr` is `NULL` or `idx` is put of index range then the `NULL` pointer will be returned.
  * @param qr Query result set object.
- * @param idx Zero based index of the record.
+ * @param pos Zero based position of the record.
  */
-EJDB_EXPORT const void* ejdbqresultbsondata(EJQRESULT qr, int idx);
+EJDB_EXPORT const void* ejdbqresultbsondata(EJQRESULT qr, int pos, int *size);
 
 /**
  * Disposes the query result set and frees a records buffers.
