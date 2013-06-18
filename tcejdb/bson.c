@@ -156,6 +156,11 @@ const char *bson_data(const bson *b) {
     return (const char *) b->data;
 }
 
+const char* bson_data2(const bson *b, int *bsize) {
+    *bsize = bson_size(b);
+    return b->data;
+}
+
 EJDB_INLINE char hexbyte(char hex) {
     if (hex >= '0' && hex <= '9')
         return (hex - '0');

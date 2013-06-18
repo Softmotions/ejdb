@@ -22,8 +22,7 @@ using System.Collections.Generic;
 
 namespace Ejdb.BSON {
 
-	public class BSONIterator : IDisposable, IEnumerable<BSONType> {
-
+	public sealed class BSONIterator : IDisposable, IEnumerable<BSONType> {
 		ExtBinaryReader _input;
 		bool _closeOnDispose = true;
 		bool _disposed;
@@ -40,6 +39,12 @@ namespace Ejdb.BSON {
 			}
 		}
 
+		public bool Empty {
+			get {
+				return (_ctype == BSONType.EOO);
+			}
+		}
+
 		public int DocumentLength {
 			get { return _doclen; }
 			private set { _doclen = value; }
@@ -47,6 +52,10 @@ namespace Ejdb.BSON {
 
 		public string CurrentKey {
 			get { return _entryKey; }
+		}
+
+		public BSONIterator() { //empty iterator
+			this._ctype = BSONType.EOO;
 		}
 
 		public BSONIterator(BSONDocument doc) : this(doc.ToByteArray()) {
@@ -114,7 +123,10 @@ namespace Ejdb.BSON {
 			while (Next() != BSONType.EOO) {
 				yield return FetchCurrentValue();
 			}
+		}
 
+		public BSONDocument ToBSONDocument() {
+			return new BSONDocument(this);
 		}
 
 		public BSONType Next() {

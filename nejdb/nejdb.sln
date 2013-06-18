@@ -52,6 +52,7 @@ Global
 		$4.SpacesBeforeBrackets = False
 		$4.SpacesAfterTypecast = True
 		$4.BlankLinesBeforeFirstDeclaration = 1
+		$4.BlankLinesBetweenFields = 1
 		$4.BlankLinesBetweenEventFields = 1
 		$4.inheritsSet = Mono
 		$4.inheritsScope = text/x-csharp

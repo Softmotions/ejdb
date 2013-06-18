@@ -14,7 +14,6 @@
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
 using System;
-using System.Text;
 using System.IO;
 
 namespace Ejdb.BSON {
@@ -83,6 +82,12 @@ namespace Ejdb.BSON {
 			return 0;
 		}
 
+		public byte[] ToBytes() {
+			var b = new byte[12];
+			Array.Copy(_bytes, b, 12);
+			return b;
+		}
+
 		public override string ToString() {
 			if (_cachedString == null) {
 				_cachedString = BitConverter.ToString(_bytes).Replace("-", "").ToLower();
@@ -131,6 +136,5 @@ namespace Ejdb.BSON {
 		public static implicit operator BSONOid(string val) {
 			return new BSONOid(val);
 		}
-
 	}
 }

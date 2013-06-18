@@ -64,6 +64,7 @@
     <Compile Include="Ejdb.JSON\JSONElement.cs" />
     <Compile Include="Ejdb.DB\EJDBException.cs" />
     <Compile Include="Ejdb.Tests\TestEJDB.cs" />
+    <Compile Include="Ejdb.DB\EJDBQuery.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

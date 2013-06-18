@@ -384,7 +384,7 @@ bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge) {
     return rv;
 }
 
-bool ejdbsavebson3(EJCOLL *jcoll, void *bsdata, bson_oid_t *oid, bool merge) {
+bool ejdbsavebson3(EJCOLL *jcoll, const void *bsdata, bson_oid_t *oid, bool merge) {
     bson bs;
     bson_init_with_data(&bs, bsdata);
     return ejdbsavebson2(jcoll, &bs, oid, merge);
@@ -3996,7 +3996,7 @@ static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
 }
 
 static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, void *qspecbsdata) {
-    assert(qspec);
+    assert(qspecbsdata);
     int rv = 0;
     TCLIST *res = tclistnew2(TCLISTINYNUM);
     bson_iterator it;

@@ -149,6 +149,7 @@ EJDB_EXPORT int bson_buffer_size(const bson *b);
  * @param b a BSON object
  */
 EJDB_EXPORT const char *bson_data(const bson *b);
+EJDB_EXPORT const char* bson_data2(const bson *b, int *bsize);
 
 /**
  * Print a string representation of a BSON object.

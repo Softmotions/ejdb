@@ -16,11 +16,13 @@
 using System;
 using NUnit.Framework;
 using Ejdb.DB;
+using Ejdb.BSON;
 
 namespace Ejdb.Tests {
 
 	[TestFixture]
 	public class TestEJDB {
+	
 
 		[Test]
 		public void TestOpenClose() {
@@ -33,9 +35,38 @@ namespace Ejdb.Tests {
 			jb.Dispose(); //double dispose
 		}
 
+		[Test]
+		public void TestEnsureCollection() {
+			EJDB jb = new EJDB("testdb1", EJDB.DEFAULT_OPEN_MODE | EJDB.JBOTRUNC);
+			EJDBCollectionOptionsN co = new EJDBCollectionOptionsN();
+			co.large = true;
+			co.compressed = false;
+			co.records = 50000;
+			Assert.IsTrue(jb.EnsureCollection("mycoll2", co));
+			jb.Dispose(); 
+		}
 
+		[Test]
+		public void TestSaveLoad() {
+			EJDB jb = new EJDB("testdb1", EJDB.DEFAULT_OPEN_MODE | EJDB.JBOTRUNC);
+			Assert.IsTrue(jb.IsOpen);
+			BSONDocument doc = new BSONDocument().SetNumber("age", 33);
+			Assert.IsNull(doc["_id"]);
+			bool rv = jb.Save("mycoll", doc);
+			Assert.IsTrue(rv);
+			Assert.IsNotNull(doc["_id"]);
+			Assert.IsInstanceOfType(typeof(BSONOid), doc["_id"]); 
+			rv = jb.Save("mycoll", doc);
+			Assert.IsTrue(rv);
 
+			BSONIterator it = jb.Load("mycoll", doc["_id"] as BSONOid);
+			Assert.IsNotNull(it);
 
+			BSONDocument doc2 = it.ToBSONDocument();
+			Assert.AreEqual(doc.ToDebugDataString(), doc2.ToDebugDataString());
+			Assert.IsTrue(doc == doc2);
+			jb.Dispose(); 
+		}
 	}
 }
 
