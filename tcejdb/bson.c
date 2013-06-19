@@ -1660,6 +1660,7 @@ bson* bson_create_from_iterator(bson_iterator *from) {
     assert(from);
     bson_type bt;
     bson *bs = bson_create();
+    bson_init_as_query(bs);
     while ((bt = bson_iterator_next(from)) != BSON_EOO) {
         bson_append_field_from_iterator(from, bs);
     }

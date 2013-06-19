@@ -105,6 +105,9 @@ namespace Ejdb.DB {
 			get {
 				return _defaultcollection;
 			}
+			set {
+				_defaultcollection = value;
+			}
 		}
 
 		internal EJDBQuery(EJDB jb, BSONDocument qdoc, string defaultcollection = null) {
@@ -276,6 +279,11 @@ namespace Ejdb.DB {
 				_jb = null;
 			}
 			_hints = null;
+		}
+
+		public EJDBQuery SetDefaultCollection(string cname) {
+			_defaultcollection = cname;
+			return this;
 		}
 		//.//////////////////////////////////////////////////////////////////
 		// 						Privates								   //									  

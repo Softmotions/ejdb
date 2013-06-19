@@ -34,26 +34,49 @@ namespace Ejdb.BSON {
 		static Dictionary<Type, Action<BSONDocument, string, object>> TYPE_SETTERS = 
 		new Dictionary<Type, Action<BSONDocument, string, object>> {
 			{typeof(bool), (d, k, v) => d.SetBool(k, (bool) v)},
+			{typeof(bool[]), (d, k, v) => d.SetArray(k, new BSONArray((bool[]) v))},
 			{typeof(byte), (d, k, v) => d.SetNumber(k, (int) v)},
 			{typeof(sbyte), (d, k, v) => d.SetNumber(k, (int) v)},
 			{typeof(ushort), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(ushort[]), (d, k, v) => d.SetArray(k, new BSONArray((ushort[]) v))},
 			{typeof(short), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(short[]), (d, k, v) => d.SetArray(k, new BSONArray((short[]) v))},
 			{typeof(uint), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(uint[]), (d, k, v) => d.SetArray(k, new BSONArray((uint[]) v))},
 			{typeof(int), (d, k, v) => d.SetNumber(k, (int) v)},
+			{typeof(int[]), (d, k, v) => d.SetArray(k, new BSONArray((int[]) v))},
 			{typeof(ulong), (d, k, v) => d.SetNumber(k, (long) v)},
+			{typeof(ulong[]), (d, k, v) => d.SetArray(k, new BSONArray((ulong[]) v))},
 			{typeof(long), (d, k, v) => d.SetNumber(k, (long) v)},
+			{typeof(long[]), (d, k, v) => d.SetArray(k, new BSONArray((long[]) v))},
 			{typeof(float), (d, k, v) => d.SetNumber(k, (float) v)},
+			{typeof(float[]), (d, k, v) => d.SetArray(k, new BSONArray((float[]) v))},
 			{typeof(double), (d, k, v) => d.SetNumber(k, (double) v)},
+			{typeof(double[]), (d, k, v) => d.SetArray(k, new BSONArray((double[]) v))},
 			{typeof(char), (d, k, v) => d.SetString(k, v.ToString())},
 			{typeof(string), (d, k, v) => d.SetString(k, (string) v)},
+			{typeof(string[]), (d, k, v) => d.SetArray(k, new BSONArray((string[]) v))},
 			{typeof(BSONOid), (d, k, v) => d.SetOID(k, (BSONOid) v)},
+			{typeof(BSONOid[]), (d, k, v) => d.SetArray(k, new BSONArray((BSONOid[]) v))},
 			{typeof(BSONRegexp), (d, k, v) => d.SetRegexp(k, (BSONRegexp) v)},
+			{typeof(BSONRegexp[]), (d, k, v) => d.SetArray(k, new BSONArray((BSONRegexp[]) v))},
 			{typeof(BSONValue), (d, k, v) => d.SetBSONValue((BSONValue) v)},
 			{typeof(BSONTimestamp), (d, k, v) => d.SetTimestamp(k, (BSONTimestamp) v)},
+			{typeof(BSONTimestamp[]), (d, k, v) => d.SetArray(k, new BSONArray((BSONTimestamp[]) v))},
 			{typeof(BSONCodeWScope), (d, k, v) => d.SetCodeWScope(k, (BSONCodeWScope) v)},
+			{typeof(BSONCodeWScope[]), (d, k, v) => d.SetArray(k, new BSONArray((BSONCodeWScope[]) v))},
 			{typeof(BSONBinData), (d, k, v) => d.SetBinData(k, (BSONBinData) v)},
+			{typeof(BSONBinData[]), (d, k, v) => d.SetArray(k, new BSONArray((BSONBinData[]) v))},
 			{typeof(BSONDocument), (d, k, v) => d.SetDocument(k, (BSONDocument) v)},
+			{typeof(BSONDocument[]), (d, k, v) => d.SetArray(k, new BSONArray((BSONDocument[]) v))},
 			{typeof(BSONArray), (d, k, v) => d.SetArray(k, (BSONArray) v)},
+			{typeof(BSONArray[]), (d, k, v) => d.SetArray(k, new BSONArray((BSONArray[]) v))},
+			{typeof(DateTime), (d, k, v) => d.SetDate(k, (DateTime) v)},
+			{typeof(DateTime[]), (d, k, v) => d.SetArray(k, new BSONArray((DateTime[]) v))},
+			{typeof(BSONUndefined), (d, k, v) => d.SetUndefined(k)},
+			{typeof(BSONUndefined[]), (d, k, v) => d.SetArray(k, new BSONArray((BSONUndefined[]) v))},
+			{typeof(BSONull), (d, k, v) => d.SetNull(k)},
+			{typeof(BSONull[]), (d, k, v) => d.SetArray(k, new BSONArray((BSONull[]) v))}
 		};
 
 		readonly List<BSONValue> _fieldslist;
@@ -72,7 +95,7 @@ namespace Ejdb.BSON {
 		/// </remarks>
 		/// <value>The type of the BSON.</value>
 		public virtual BSONType BSONType {
-			get {
+			get { 
 				return BSONType.OBJECT;
 			}
 		}
@@ -527,7 +550,7 @@ namespace Ejdb.BSON {
 				case BSONType.DATE:
 					{	
 						DateTime dt = (DateTime) bv.Value;
-						var diff = dt.ToUniversalTime() - BSONConstants.Epoch;
+						var diff = dt.ToLocalTime() - BSONConstants.Epoch;
 						long time = (long) Math.Floor(diff.TotalMilliseconds);
 						WriteTypeAndKey(bv, bw);
 						bw.Write(time);

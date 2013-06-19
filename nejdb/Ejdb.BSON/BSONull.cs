@@ -17,43 +17,15 @@ using System;
 
 namespace Ejdb.BSON {
 
-	/// <summary>
-	/// BSON Regexp complex value.
-	/// </summary>
 	[Serializable]
-	public sealed class BSONRegexp : IBSONValue {
+	public sealed class BSONull : IBSONValue {
 
-		readonly string _re;
-
-		readonly string _opts;
+		public static BSONull VALUE = new BSONull();
 
 		public BSONType BSONType {
 			get {
-				return BSONType.REGEX;
+				return BSONType.NULL;
 			}
-		}
-
-		public string Re {
-			get {
-				return this._re;
-			}
-		}
-
-		public string Opts {
-			get {
-				return this._opts;
-			}
-		}
-
-		BSONRegexp() {
-		}
-
-		public BSONRegexp(string re) : this(re, "") {
-		}
-
-		public BSONRegexp(string re, string opts) {
-			this._re = re;
-			this._opts = opts;
 		}
 
 		public override bool Equals(object obj) {
@@ -63,21 +35,18 @@ namespace Ejdb.BSON {
 			if (ReferenceEquals(this, obj)) {
 				return true;
 			}
-			if (!(obj is BSONRegexp)) {
+			if (!(obj is BSONull)) {
 				return false;
 			}
-			BSONRegexp other = (BSONRegexp) obj;
-			return (_re == other._re && _opts == other._opts);
+			return true;
 		}
 
 		public override int GetHashCode() {
-			unchecked {
-				return (_re != null ? _re.GetHashCode() : 0) ^ (_opts != null ? _opts.GetHashCode() : 0);
-			}
+			return 0;
 		}
 
 		public override string ToString() {
-			return string.Format("[BSONRegexp: re={0}, opts={1}]", _re, _opts);
+			return "[BSONull]";
 		}
 	}
 }

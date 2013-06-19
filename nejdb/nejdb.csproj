@@ -67,6 +67,8 @@
     <Compile Include="Ejdb.DB\EJDBQuery.cs" />
     <Compile Include="Ejdb.DB\EJDBQueryException.cs" />
     <Compile Include="Ejdb.DB\EJDBQCursor.cs" />
+    <Compile Include="Ejdb.BSON\BSONull.cs" />
+    <Compile Include="Ejdb.BSON\BSONUndefined.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

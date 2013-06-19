@@ -100,11 +100,58 @@ namespace Ejdb.Tests {
 			}
 			q.Max(10);
 			using (EJDBQCursor cursor = q.Find(null, EJDBQuery.EXPLAIN_FLAG)) {
-				Console.WriteLine(cursor.Log);
+				Assert.IsTrue(cursor.Log.IndexOf("MAX: 10") != -1);
 			}
 
 			q.Dispose();
 			jb.Dispose(); 
+		}
+
+		[Test]
+		public void Test4Q2() {
+			EJDB jb = new EJDB("testdb1", EJDB.DEFAULT_OPEN_MODE | EJDB.JBOTRUNC);
+			Assert.IsTrue(jb.IsOpen);
+
+			var parrot1 = BSONDocument.ValueOf(new{
+				name = "Grenny",
+				type = "African Grey",
+				male = true, 
+				age = 1,
+				birthdate = DateTime.Now,
+				likes = new string[] { "green color", "night", "toys" },
+				extra1 = BSONull.VALUE
+			});
+
+			var parrot2 = BSONDocument.ValueOf(new{
+				name = "Bounty",
+				type = "Cockatoo",
+				male = false,
+				age = 15,
+				birthdate = DateTime.Now,
+				likes = new string[] { "sugar cane" },
+				extra1 = BSONull.VALUE
+			});
+			Assert.IsTrue(jb.Save("parrots", parrot1, parrot2));
+			Assert.AreEqual(2, jb.CreateQueryFor("parrots").Count()); 
+
+			var q = jb.CreateQuery(new{
+					name = new BSONRegexp("(grenny|bounty)", "i")
+			}).SetDefaultCollection("parrots").OrderBy("name");
+
+			using (var cur = q.Find()) {
+				Assert.AreEqual(2, cur.Length);
+
+				var doc = cur[0].ToBSONDocument();
+				Assert.AreEqual("Bounty", doc["name"]);
+				Assert.AreEqual(15, doc["age"]);
+
+				doc = cur[1].ToBSONDocument();
+				Assert.AreEqual("Grenny", doc["name"]);
+				Assert.AreEqual(1, doc["age"]);
+			}
+
+			q.Dispose();
+			jb.Dispose();
 		}
 	}
 }

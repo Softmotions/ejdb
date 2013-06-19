@@ -211,21 +211,48 @@ namespace Ejdb.DB {
 		}
 
 		/// <summary>
-		/// Save the BSON document doc into the collection cname.
+		/// Save the BSON document doc into the collection.
 		/// </summary>
 		/// <param name="cname">Name of collection.</param>
-		/// <param name="doc">BSON document to save.</param>
-		/// <param name="merge">If set to <c>true</c> 
-		/// If true the merge will be performend with old and new objects. 
-		/// Otherwise old object will be replaced.</param>
+		/// <param name="docs">BSON documents to save.</param>
 		/// <returns>True on success.</returns>
-		public bool Save(string cname, BSONDocument doc, bool merge = false) {
+		public bool Save(string cname, params BSONDocument[] docs) {
 			CheckDisposed();
-			bool rv;
 			IntPtr cptr = _ejdbcreatecoll(_db, cname, null);
 			if (cptr == IntPtr.Zero) {
 				return false;
 			}
+			foreach (var doc in docs) {
+				if (!Save(cptr, doc, false)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// Save the BSON document doc into the collection.
+		/// And merge each doc object identified by <c>_id</c> with doc stored in DB.
+		/// </summary>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="docs">BSON documents to save.</param>
+		/// <returns>True on success.</returns>
+		public bool SaveMerge(string cname, params BSONDocument[] docs) {
+			CheckDisposed();
+			IntPtr cptr = _ejdbcreatecoll(_db, cname, null);
+			if (cptr == IntPtr.Zero) {
+				return false;
+			}
+			foreach (var doc in docs) {
+				if (!Save(cptr, doc, true)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		bool Save(IntPtr cptr, BSONDocument doc, bool merge) {
+			bool rv;
 			BSONValue bv = doc.GetBSONValue("_id");
 			byte[] bsdata = doc.ToByteArray();
 			byte[] oiddata = new byte[12];
@@ -265,9 +292,14 @@ namespace Ejdb.DB {
 		/// <returns>The query object.</returns>
 		/// <param name="qdoc">BSON query spec.</param>
 		/// <param name="defaultcollection">Name of the collection used by default.</param>
-		public EJDBQuery CreateQuery(BSONDocument qdoc, string defaultcollection = null) {
+		public EJDBQuery CreateQuery(object qv = null, string defaultcollection = null) {
 			CheckDisposed();
-			return new EJDBQuery(this, qdoc, defaultcollection);
+			return new EJDBQuery(this, BSONDocument.ValueOf(qv), defaultcollection);
+		}
+
+		public EJDBQuery CreateQueryFor(string defaultcollection) {
+			CheckDisposed();
+			return new EJDBQuery(this, new BSONDocument(), defaultcollection);
 		}
 		//.//////////////////////////////////////////////////////////////////
 		// 						 Private staff							   //	  

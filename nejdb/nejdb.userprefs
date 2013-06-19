@@ -2,12 +2,13 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.Tests/TestEJDB.cs">
     <Files>
-      <File FileName="Ejdb.DB/EJDB.cs" Line="275" Column="3" />
-      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="25" Column="2" />
-      <File FileName="Ejdb.DB/EJDBQuery.cs" Line="196" Column="21" />
-      <File FileName="Ejdb.DB/EJDBQCursor.cs" Line="26" Column="66" />
-      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="144" Column="3" />
-      <File FileName="Ejdb.Tests/TestEJDB.cs" Line="24" Column="23" />
+      <File FileName="Ejdb.DB/EJDB.cs" Line="295" Column="16" />
+      <File FileName="Ejdb.DB/EJDBQuery.cs" Line="286" Column="16" />
+      <File FileName="Ejdb.DB/EJDBQCursor.cs" Line="71" Column="60" />
+      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="224" Column="35" />
+      <File FileName="Ejdb.Tests/TestEJDB.cs" Line="112" Column="4" />
+      <File FileName="Ejdb.BSON/BSONRegexp.cs" Line="53" Column="3" />
+      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="133" Column="20" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -38,13 +39,11 @@
         <State selected="True" />
       </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
-        <State expanded="True">
+        <State expanded="True" selected="True">
           <Node name="nejdb" expanded="True">
             <Node name="Ejdb" expanded="True">
               <Node name="Tests" expanded="True">
-                <Node name="TestEJDB" expanded="True">
-                  <Node name="Test4Q1" selected="True" />
-                </Node>
+                <Node name="TestEJDB" expanded="True" />
               </Node>
             </Node>
           </Node>
@@ -53,9 +52,7 @@
     </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore>
-      <Breakpoint file="/home/adam/Projects/softmotions/ejdb/nejdb/Ejdb.Tests/TestEJDB.cs" line="101" column="8" />
-    </BreakpointStore>
+    <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
 </Properties>

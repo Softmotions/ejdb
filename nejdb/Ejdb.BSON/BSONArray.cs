@@ -14,6 +14,7 @@
 //   Boston, MA 02111-1307 USA.
 // ============================================================================================
 using System;
+using System.IO;
 
 namespace Ejdb.BSON {
 
@@ -29,6 +30,129 @@ namespace Ejdb.BSON {
 		public object this[int key] {
 			get {
 				return GetObjectValue(key.ToString());
+			}
+		}
+
+		public BSONArray() {
+		}
+
+		public BSONArray(BSONUndefined[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetUndefined(i);
+			}
+		}
+
+		public BSONArray(BSONull[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetNull(i);
+			}
+		}
+
+		public BSONArray(ushort[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetNumber(i, (int) arr[i]);
+			}
+		}
+
+		public BSONArray(uint[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetNumber(i, (long) arr[i]);
+			}
+		}
+
+		public BSONArray(ulong[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetNumber(i, (long) arr[i]);
+			}
+		}
+
+		public BSONArray(short[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetNumber(i, (int) arr[i]);
+			}
+		}
+
+		public BSONArray(string[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetString(i, arr[i]);
+			}
+		}
+
+		public BSONArray(int[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetNumber(i, arr[i]);
+			}
+		}
+
+		public BSONArray(long[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetNumber(i, arr[i]);
+			}
+		}
+
+		public BSONArray(float[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetNumber(i, arr[i]);
+			}
+		}
+
+		public BSONArray(double[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetNumber(i, arr[i]);
+			}
+		}
+
+		public BSONArray(bool[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetBool(i, arr[i]);
+			}
+		}
+
+		public BSONArray(BSONOid[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetOID(i, arr[i]);
+			}
+		}
+
+		public BSONArray(DateTime[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetDate(i, arr[i]);
+			}
+		}
+
+		public BSONArray(BSONDocument[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetObject(i, arr[i]);
+			}
+		}
+
+		public BSONArray(BSONArray[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetArray(i, arr[i]);
+			}
+		}
+
+		public BSONArray(BSONRegexp[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetRegexp(i, arr[i]);
+			}
+		}
+
+		public BSONArray(BSONTimestamp[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetTimestamp(i, arr[i]);
+			}
+		}
+
+		public BSONArray(BSONCodeWScope[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetCodeWScope(i, arr[i]);
+			}
+		}
+
+		public BSONArray(BSONBinData[] arr) {
+			for (var i = 0; i < arr.Length; ++i) {
+				SetBinData(i, arr[i]);
 			}
 		}
 

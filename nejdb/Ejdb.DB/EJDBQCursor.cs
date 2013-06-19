@@ -66,20 +66,28 @@ namespace Ejdb.DB {
 			_len = len;
 		}
 
+		public BSONIterator this[int idx] {
+			get {
+				if (_qresptr == IntPtr.Zero || idx >= _len || idx < 0) {
+					return null;
+				}
+				//static extern IntPtr _ejdbqresultbsondata([In] IntPtr qres, [In] int idx, out int size)
+				int size;
+				IntPtr bsdataptr = _ejdbqresultbsondata(_qresptr, idx, out size);
+				if (bsdataptr == IntPtr.Zero) {
+					return null;
+				}
+				byte[] bsdata = new byte[size];
+				Marshal.Copy(bsdataptr, bsdata, 0, bsdata.Length);
+				return new BSONIterator(bsdata);
+			}
+		}
+
 		public BSONIterator Next() {
 			if (_qresptr == IntPtr.Zero || _pos >= _len) {
 				return null;
 			}
-			//static extern IntPtr _ejdbqresultbsondata([In] IntPtr qres, [In] int idx, out int size)
-			int size;
-			IntPtr bsdataptr = _ejdbqresultbsondata(_qresptr, _pos, out size);
-			if (bsdataptr == IntPtr.Zero) {
-				return null;
-			}
-			byte[] bsdata = new byte[size];
-			Marshal.Copy(bsdataptr, bsdata, 0, bsdata.Length);
-			_pos++;
-			return new BSONIterator(bsdata);
+			return this[_pos++];
 		}
 
 		public IEnumerator<BSONIterator> GetEnumerator() {
