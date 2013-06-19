@@ -1,13 +1,13 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.DB/EJDBQuery.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.Tests/TestEJDB.cs">
     <Files>
-      <File FileName="Ejdb.DB/EJDB.cs" Line="281" Column="37" />
+      <File FileName="Ejdb.DB/EJDB.cs" Line="275" Column="3" />
       <File FileName="Ejdb.BSON/BSONIterator.cs" Line="25" Column="2" />
-      <File FileName="Ejdb.DB/EJDBQuery.cs" Line="25" Column="38" />
-      <File FileName="Ejdb.DB/EJDBQueryException.cs" Line="21" Column="48" />
-      <File FileName="Ejdb.DB/EJDBQCursor.cs" Line="67" Column="18" />
-      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="63" Column="3" />
+      <File FileName="Ejdb.DB/EJDBQuery.cs" Line="196" Column="21" />
+      <File FileName="Ejdb.DB/EJDBQCursor.cs" Line="26" Column="66" />
+      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="144" Column="3" />
+      <File FileName="Ejdb.Tests/TestEJDB.cs" Line="24" Column="23" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -16,12 +16,12 @@
           <Node name="nejdb" expanded="True">
             <Node name="References" expanded="True" />
             <Node name="Ejdb.BSON" expanded="True" />
-            <Node name="Ejdb.DB" expanded="True">
-              <Node name="EJDBQuery.cs" selected="True" />
-            </Node>
+            <Node name="Ejdb.DB" expanded="True" />
             <Node name="Ejdb.IO" expanded="True" />
             <Node name="Ejdb.JSON" expanded="True" />
-            <Node name="Ejdb.Tests" expanded="True" />
+            <Node name="Ejdb.Tests" expanded="True">
+              <Node name="TestEJDB.cs" selected="True" />
+            </Node>
             <Node name="Ejdb.Utils" expanded="True" />
           </Node>
         </State>
@@ -32,23 +32,19 @@
         </State>
       </Pad>
       <Pad Id="MonoDevelop.Debugger.WatchPad">
-        <State>
-          <Value>_entryKey</Value>
-          <Value>_entryLen</Value>
-          <Value>_ctype</Value>
-          <Value>_input.BaseStream.Position</Value>
-        </State>
+        <State />
       </Pad>
       <Pad Id="ConnectionManagerPad">
         <State selected="True" />
       </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
-        <State expanded="True" selected="True">
+        <State expanded="True">
           <Node name="nejdb" expanded="True">
             <Node name="Ejdb" expanded="True">
               <Node name="Tests" expanded="True">
-                <Node name="TestBSON" expanded="True" />
-                <Node name="TestEJDB" expanded="True" />
+                <Node name="TestEJDB" expanded="True">
+                  <Node name="Test4Q1" selected="True" />
+                </Node>
               </Node>
             </Node>
           </Node>
@@ -57,7 +53,9 @@
     </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
+    <BreakpointStore>
+      <Breakpoint file="/home/adam/Projects/softmotions/ejdb/nejdb/Ejdb.Tests/TestEJDB.cs" line="101" column="8" />
+    </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
 </Properties>
