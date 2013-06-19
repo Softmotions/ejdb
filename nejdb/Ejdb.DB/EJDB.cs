@@ -264,9 +264,10 @@ namespace Ejdb.DB {
 		/// </summary>
 		/// <returns>The query object.</returns>
 		/// <param name="qdoc">BSON query spec.</param>
-		public EJDBQuery CreateQuery(BSONDocument qdoc) {
+		/// <param name="defaultcollection">Name of the collection used by default.</param>
+		public EJDBQuery CreateQuery(BSONDocument qdoc, string defaultcollection = null) {
 			CheckDisposed();
-			return new EJDBQuery(this, qdoc);
+			return new EJDBQuery(this, qdoc, defaultcollection);
 		}
 		//.//////////////////////////////////////////////////////////////////
 		// 						 Private staff							   //	  

@@ -59,7 +59,6 @@ namespace Ejdb.Tests {
 			object ival = doc2["0"];
 			Assert.IsInstanceOfType(typeof(int), ival);
 			Assert.AreEqual(2, ival);
-
 			doc2.SetNumber("1", Int32.MaxValue);
 			//13-00-00-00
 			//10

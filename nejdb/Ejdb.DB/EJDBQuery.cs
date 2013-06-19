@@ -16,6 +16,8 @@
 using System;
 using Ejdb.BSON;
 using System.Runtime.InteropServices;
+using Mono.Unix;
+using System.Text;
 
 namespace Ejdb.DB {
 
@@ -55,6 +57,16 @@ namespace Ejdb.DB {
 		/// Last used query hints document.
 		/// </summary>
 		BSONDocument _hints;
+
+		/// <summary>
+		/// Name of the collection used by default.
+		/// </summary>
+		string _defaultcollection;
+
+		/// <summary>
+		/// If true query hints need to be saved in the native query object.
+		/// </summary>
+		bool _dutyhints;
 		//
 		#region NativeRefs
 		//EJDB_EXPORT void ejdbquerydel(EJQ *q);
@@ -72,13 +84,36 @@ namespace Ejdb.DB {
 		//EJDB_EXPORT EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log)
 		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="ejdbqryexecute")]
 		static extern IntPtr _ejdbqryexecute([In] IntPtr jcoll, [In] IntPtr q, out int count, [In] int qflags, [In] IntPtr logxstr);
+		//EJDB_EXPORT TCXSTR *tcxstrnew(void)
+		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="tcxstrnew")]
+		static extern IntPtr _tcxstrnew();
+		//EJDB_EXPORT void tcxstrdel(TCXSTR *xstr);
+		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="tcxstrdel")]
+		static extern IntPtr _tcxstrdel([In] IntPtr strptr);
+		//EJDB_EXPORT int tcxstrsize(const TCXSTR *xstr);
+		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="tcxstrsize")]
+		static extern int _tcxstrsize([In] IntPtr strptr);
+		//EJDB_EXPORT int tcxstrptr(const TCXSTR *xstr);
+		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="tcxstrptr")]
+		static extern IntPtr _tcxstrptr([In] IntPtr strptr);
 		#endregion
-		internal EJDBQuery(EJDB jb, BSONDocument qdoc) {
+		/// <summary>
+		/// Name of default collection used by this query.
+		/// </summary>
+		/// <value>Name of EJDB collection.</value>
+		public string DefaultCollection {
+			get {
+				return _defaultcollection;
+			}
+		}
+
+		internal EJDBQuery(EJDB jb, BSONDocument qdoc, string defaultcollection = null) {
 			_qptr = _ejdbcreatequery(jb.DBPtr, qdoc.ToByteArray());
 			if (_qptr == IntPtr.Zero) {
 				throw new EJDBQueryException(jb);
 			}
 			_jb = jb;
+			_defaultcollection = defaultcollection;
 		}
 
 		/// <summary>
@@ -106,6 +141,7 @@ namespace Ejdb.DB {
 		/// <param name="hints">Hints document.</param>
 		public EJDBQuery SetHints(BSONDocument hints) {
 			CheckDisposed();
+			//0F-00-00-00-10-24-6D-61-78-00-0A-00-00-00-00
 			//static extern IntPtr _ejdbqueryhints([In] IntPtr jb, [In] IntPtr qptr, [In] byte[] bsdata);
 			IntPtr qptr = _ejdbqueryhints(_jb.DBPtr, _qptr, hints.ToByteArray());
 			if (qptr == IntPtr.Zero) {
@@ -115,33 +151,119 @@ namespace Ejdb.DB {
 			return this;
 		}
 
-		public EJDBQCursor Find(string cname, int flags = 0) {
+		public EJDBQCursor Find(string cname = null, int qflags = 0) {
+			CheckDisposed();
+			if (cname == null) {
+				cname = _defaultcollection;
+			}
+			if (cname == null) {
+				throw new ArgumentException("Collection name must be provided");
+			}
 			IntPtr cptr = EJDB._ejdbgetcoll(_jb.DBPtr, cname);
 			if (cptr == IntPtr.Zero) {
 				return new EJDBQCursor(IntPtr.Zero, 0);
 			}
-			//static extern IntPtr _ejdbqryexecute([In] IntPtr jcoll, [In] IntPtr q, out int count, [In] int qflags, [In] IntPtr logxstr);
-			//todo
-			//return new EJDBQCursor();
-			return null;
+			if (_dutyhints) {
+				SetHints(_hints);
+				_dutyhints = false;
+			}
+			int count;
+			IntPtr logsptr = IntPtr.Zero;
+			if ((qflags & EXPLAIN_FLAG) != 0) {
+				//static extern IntPtr _tcxstrnew();
+				logsptr = _tcxstrnew(); //Create dynamic query execution log buffer
+			}
+			EJDBQCursor cur = null;
+			try {
+				//static extern IntPtr _ejdbqryexecute([In] IntPtr jcoll, [In] IntPtr q, out int count, [In] int qflags, [In] IntPtr logxstr);
+				IntPtr qresptr = _ejdbqryexecute(cptr, _qptr, out count, qflags, logsptr);
+				cur = new EJDBQCursor(qresptr, count);
+			} finally {
+				if (logsptr != IntPtr.Zero) {
+					try {
+						if (cur != null) {
+							//static extern IntPtr _tcxstrptr([In] IntPtr strptr);
+							IntPtr sbptr = _tcxstrptr(logsptr);
+							cur.Log = UnixMarshal.PtrToString(sbptr, Encoding.UTF8);
+						}
+					} finally {
+						//static extern IntPtr _tcxstrdel([In] IntPtr strptr);
+						_tcxstrdel(logsptr);
+					}
+				}
+			}
+			int ecode = _jb.LastDBErrorCode ?? 0;
+			if (ecode != 0) {
+				cur.Dispose();
+				throw new EJDBException(_jb);
+			}
+			return cur;
 		}
 
-		public BSONIterator FinOne(string cname, int flags = 0) {
-			using (EJDBQCursor cur = Find(cname, flags | JBQRYFINDONE_FLAG)) {
+		public BSONIterator FinOne(string cname = null, int qflags = 0) {
+			using (EJDBQCursor cur = Find(cname, qflags | JBQRYFINDONE_FLAG)) {
 				return cur.Next();
 			}
 		}
 
-		public int Count(string cname, int flags = 0) {
-			using (EJDBQCursor cur = Find(cname, flags | JBQRYCOUNT_FLAG)) {
+		public int Count(string cname = null, int qflags = 0) {
+			using (EJDBQCursor cur = Find(cname, qflags | JBQRYCOUNT_FLAG)) {
 				return cur.Length;
 			}
 		}
 
-		public int Update(string cname, int flags = 0) {
-			using (EJDBQCursor cur = Find(cname, flags | JBQRYCOUNT_FLAG)) {
+		public int Update(string cname = null, int qflags = 0) {
+			using (EJDBQCursor cur = Find(cname, qflags | JBQRYCOUNT_FLAG)) {
 				return cur.Length;
 			}
+		}
+		//.//////////////////////////////////////////////////////////////////
+		// 						 Hints helpers							   //  	
+		//.//////////////////////////////////////////////////////////////////	
+		public EJDBQuery Max(int max) {
+			if (max < 0) {
+				throw new ArgumentException("Max limit cannot be negative");
+			}
+			if (_hints == null) {
+				_hints = new BSONDocument();
+			}
+			_hints["$max"] = max;
+			_dutyhints = true;
+			return this;
+		}
+
+		public EJDBQuery Skip(int skip) {
+			if (skip < 0) {
+				throw new ArgumentException("Skip value cannot be negative");
+			}
+			if (_hints == null) {
+				_hints = new BSONDocument();
+			}
+			_hints["$skip"] = skip;
+			_dutyhints = true;
+			return this;
+		}
+
+		public EJDBQuery OrderBy(string field, bool asc = true) {
+			if (_hints == null) {
+				_hints = new BSONDocument();
+			}
+			BSONDocument oby = _hints["$orderby"] as BSONDocument;
+			if (oby == null) {
+				oby = new BSONDocument();
+				_hints["$orderby"] = oby;
+			}
+			oby[field] = (asc) ? 1 : -1;
+			_dutyhints = true;
+			return this;
+		}
+
+		public EJDBQuery IncludeFields(params string[] fields) {
+			return IncExFields(fields, 1);
+		}
+
+		public EJDBQuery ExcludeFields(params string[] fields) {
+			return IncExFields(fields, 0);
 		}
 
 		public void Dispose() {
@@ -154,6 +276,24 @@ namespace Ejdb.DB {
 				_jb = null;
 			}
 			_hints = null;
+		}
+		//.//////////////////////////////////////////////////////////////////
+		// 						Privates								   //									  
+		//.//////////////////////////////////////////////////////////////////
+		EJDBQuery IncExFields(string[] fields, int inc) {
+			if (_hints == null) {
+				_hints = new BSONDocument();
+			}
+			BSONDocument fdoc = _hints["$fields"] as BSONDocument;
+			if (fdoc == null) {
+				fdoc = new BSONDocument();
+				_hints["$fields"] = fdoc;
+			}
+			foreach (var fn in fields) {
+				fdoc[fn] = inc;
+			}
+			_dutyhints = true;
+			return this;
 		}
 
 		internal void CheckDisposed() {

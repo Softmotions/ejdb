@@ -349,7 +349,7 @@ EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobj
  * @param qobj Main query object BSON data.
  * @return On success return query handle. On error returns NULL.
  */
-EJDB_EXPORT EJQ* ejdbcreatequery2(EJDB *jb, void *qbsdata);
+EJDB_EXPORT EJQ* ejdbcreatequery2(EJDB *jb, const void *qbsdata);
 
 /**
  * Add OR restriction to query object.
@@ -358,7 +358,7 @@ EJDB_EXPORT EJQ* ejdbcreatequery2(EJDB *jb, void *qbsdata);
  * @param orbsdata OR restriction BSON data.
  * @return NULL on error.
  */
-EJDB_EXPORT EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, void *orbsdata);
+EJDB_EXPORT EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, const void *orbsdata);
 
 /**
  * Set hints for the query.
@@ -366,7 +366,7 @@ EJDB_EXPORT EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, void *orbsdata);
  * @param hintsbsdata Query hints BSON data.
  * @return NULL on error.
  */
-EJDB_EXPORT EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, void *hintsbsdata);
+EJDB_EXPORT EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, const void *hintsbsdata);
 
 /**
  * Destroy query object created with ejdbcreatequery().

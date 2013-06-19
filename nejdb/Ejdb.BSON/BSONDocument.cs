@@ -55,9 +55,12 @@ namespace Ejdb.BSON {
 			{typeof(BSONDocument), (d, k, v) => d.SetDocument(k, (BSONDocument) v)},
 			{typeof(BSONArray), (d, k, v) => d.SetArray(k, (BSONArray) v)},
 		};
+
 		readonly List<BSONValue> _fieldslist;
+
 		[NonSerializedAttribute]
 		Dictionary<string, BSONValue> _fields;
+
 		[NonSerializedAttribute]
 		int? _cachedhash;
 
@@ -178,6 +181,15 @@ namespace Ejdb.BSON {
 		public object GetObjectValue(string key) {
 			var bv = GetBSONValue(key);
 			return bv != null ? bv.Value : null;
+		}
+
+		/// <summary>
+		/// Determines whether this document has the specified key.
+		/// </summary>
+		/// <returns><c>true</c> if this document hasthe specified key; otherwise, <c>false</c>.</returns>
+		/// <param name="key">Key.</param>
+		public bool HasKey(string key) {
+			return (GetBSONValue(key) != null);
 		}
 
 		/// <summary>

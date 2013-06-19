@@ -56,11 +56,13 @@ namespace Ejdb.DB {
 			get {
 				return _log;
 			}
+			internal set {
+				_log = value;
+			}
 		}
 
-		internal EJDBQCursor(IntPtr qresptr, int len, string log = null) {
+		internal EJDBQCursor(IntPtr qresptr, int len) {
 			_qresptr = qresptr;
-			_log = log;
 			_len = len;
 		}
 
@@ -89,6 +91,13 @@ namespace Ejdb.DB {
 
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
 			return GetEnumerator();
+		}
+
+		/// <summary>
+		/// Reset cursor position state to its initial value.
+		/// </summary>
+		public void Reset() {
+			_pos = 0;
 		}
 
 		public void Dispose() {

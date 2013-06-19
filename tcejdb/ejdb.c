@@ -108,7 +108,7 @@ static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
 static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **dfields, TCMAP **ifields, bool *imode);
 static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec);
-static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, void *qspecbsdata);
+static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, const void *qspecbsdata);
 static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf, int mgrp);
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens);
@@ -492,7 +492,7 @@ error:
     return NULL;
 }
 
-EJQ* ejdbcreatequery2(EJDB *jb, void *qbsdata) {
+EJQ* ejdbcreatequery2(EJDB *jb, const void *qbsdata) {
     assert(jb);
     if (!qbsdata) {
         _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -510,7 +510,7 @@ error:
     return NULL;
 }
 
-EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, void *orbsdata) {
+EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, const void *orbsdata) {
     assert(jb && q);
     if (!orbsdata) {
         _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -531,7 +531,7 @@ EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, void *orbsdata) {
     return q;
 }
 
-EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, void *hintsbsdata) {
+EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, const void *hintsbsdata) {
     assert(jb && q);
     if (!hintsbsdata) {
         _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -4002,7 +4002,7 @@ static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     return res;
 }
 
-static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, void *qspecbsdata) {
+static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, const void *qspecbsdata) {
     assert(qspecbsdata);
     int rv = 0;
     TCLIST *res = tclistnew2(TCLISTINYNUM);
