@@ -3103,11 +3103,11 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
             ejq->skip = (uint32_t) ((v < 0) ? 0 : v);
         }
         bt = bson_find(&it, ejq->hints, "$max");
-        if (BSON_IS_NUM_TYPE(bt)) {
+         if (qflags & JBQRYFINDONE) {
+            ejq->max = (uint32_t) 1;
+        } else if (BSON_IS_NUM_TYPE(bt)) {
             int64_t v = bson_iterator_long(&it);
             ejq->max = (uint32_t) ((v < 0) ? 0 : v);
-        } else if (qflags & JBQRYFINDONE) {
-            ejq->max = (uint32_t) 1;
         }
         if (!(qflags & JBQRYCOUNT)) {
             bt = bson_find(&it, ejq->hints, "$fields"); //Collect required fields
