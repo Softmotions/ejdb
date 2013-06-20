@@ -24,13 +24,21 @@ namespace Ejdb.BSON {
 
 	public sealed class BSONIterator : IDisposable, IEnumerable<BSONType> {
 		ExtBinaryReader _input;
+
 		bool _closeOnDispose = true;
+
 		bool _disposed;
+
 		int _doclen;
+
 		BSONType _ctype = BSONType.UNKNOWN;
+
 		string _entryKey;
+
 		int _entryLen;
+
 		bool _entryDataSkipped;
+
 		BSONValue _entryDataValue;
 
 		public bool Disposed {
@@ -304,7 +312,9 @@ namespace Ejdb.BSON {
 			}
 			return _entryDataValue;
 		}
-
+		//.//////////////////////////////////////////////////////////////////
+		// 							Private staff								  
+		//.//////////////////////////////////////////////////////////////////
 		void SkipData(bool force = false) {
 			if (_entryDataSkipped && !force) {
 				return;

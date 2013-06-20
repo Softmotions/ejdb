@@ -2,15 +2,12 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.DB/EJDB.cs">
     <Files>
-      <File FileName="Ejdb.DB/EJDB.cs" Line="278" Column="17" />
+      <File FileName="Ejdb.DB/EJDB.cs" Line="599" Column="5" />
       <File FileName="Ejdb.DB/EJDBQuery.cs" Line="124" Column="5" />
-      <File FileName="Ejdb.DB/EJDBQCursor.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.Tests/TestEJDB.cs" Line="77" Column="29" />
-      <File FileName="Ejdb.BSON/BSONRegexp.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.JSON/JSONElement.cs" Line="15" Column="96" />
-      <File FileName="Ejdb.BSON/BSONType.cs" Line="20" Column="29" />
+      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="334" Column="60" />
+      <File FileName="Ejdb.Tests/TestEJDB.cs" Line="176" Column="13" />
+      <File FileName="Ejdb.BSON/BSONType.cs" Line="24" Column="17" />
+      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="78" Column="29" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -19,7 +16,9 @@
           <Node name="nejdb" expanded="True">
             <Node name="References" expanded="True" />
             <Node name="Ejdb.BSON" expanded="True" />
-            <Node name="Ejdb.DB" expanded="True" />
+            <Node name="Ejdb.DB" expanded="True">
+              <Node name="EJDB.cs" selected="True" />
+            </Node>
             <Node name="Ejdb.IO" expanded="True" />
             <Node name="Ejdb.Tests" expanded="True" />
             <Node name="Ejdb.Utils" expanded="True" />
@@ -43,7 +42,9 @@
             <Node name="Ejdb" expanded="True">
               <Node name="Tests" expanded="True">
                 <Node name="TestBSON" expanded="True" />
-                <Node name="TestEJDB" expanded="True" selected="True" />
+                <Node name="TestEJDB" expanded="True">
+                  <Node name="Test4Q2" selected="True" />
+                </Node>
               </Node>
             </Node>
           </Node>

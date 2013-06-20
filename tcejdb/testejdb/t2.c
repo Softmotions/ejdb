@@ -4229,6 +4229,18 @@ void testTicket54() {
     CU_ASSERT_TRUE(ejdbsetindex(coll, "value", JBIDXNUM));
 }
 
+void testMetaInfo() {
+    bson *meta = ejdbmeta(jb);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(meta);
+    const char *metabsdata = bson_data(meta);
+    CU_ASSERT_FALSE(bson_compare_string("dbt2", metabsdata, "file"));
+    CU_ASSERT_FALSE(bson_compare_string("contacts", metabsdata, "collections.0.name"));
+    CU_ASSERT_FALSE(bson_compare_string("dbt2_contacts", metabsdata, "collections.0.file"));
+    CU_ASSERT_FALSE(bson_compare_long(131071, metabsdata, "collections.0.options.buckets"));
+    CU_ASSERT_FALSE(bson_compare_long(8, metabsdata, "collections.0.records"));
+    bson_del(meta);
+}
+
 int main() {
 
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -4298,7 +4310,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket28", testTicket28)) ||
             (NULL == CU_add_test(pSuite, "testTicket38", testTicket38)) ||
             (NULL == CU_add_test(pSuite, "testTicket43", testTicket43)) ||
-            (NULL == CU_add_test(pSuite, "testTicket54", testTicket54))
+            (NULL == CU_add_test(pSuite, "testTicket54", testTicket54)) ||
+            (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

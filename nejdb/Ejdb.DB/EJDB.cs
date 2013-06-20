@@ -230,6 +230,18 @@ namespace Ejdb.DB {
 		//EJDB_EXPORT bson* ejdbmeta(EJDB *jb)
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbmeta")]
 		internal static extern IntPtr _ejdbmeta([In] IntPtr db);
+		//EJDB_EXPORT bool ejdbtranbegin(EJCOLL *coll);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbtranbegin")]
+		internal static extern bool _ejdbtranbegin([In] IntPtr coll);
+		//EJDB_EXPORT bool ejdbtrancommit(EJCOLL *coll);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbtrancommit")]
+		internal static extern bool _ejdbtrancommit([In] IntPtr coll);
+		//EJDB_EXPORT bool ejdbtranabort(EJCOLL *coll);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbtranabort")]
+		internal static extern bool _ejdbtranabort([In] IntPtr coll);
+		//EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbtranstatus")]
+		internal static extern bool _ejdbtranstatus([In] IntPtr coll, out bool txactive);
 
 		internal static bool _ejdbsetindex(IntPtr coll, string ipath, int flags) {
 			IntPtr ipathptr = UnixMarshal.StringToHeap(ipath, Encoding.UTF8);
@@ -274,18 +286,26 @@ namespace Ejdb.DB {
 		}
 
 		/// <summary>
-		/// Gets description of EJDB database and its collections.
+		/// Gets info of EJDB database itself and its collections.
 		/// </summary>
 		/// <value>The DB meta.</value>
 		public BSONDocument DBMeta {
 			get {
 				CheckDisposed(true);
-				//internal static extern IntPtr ejdbmeta([In] IntPtr db);
-				//IntPtr bsptr = 
-
-
-				BSONDocument meta = new BSONDocument();
-				return meta;
+				//internal static extern IntPtr _ejdbmeta([In] IntPtr db);
+				IntPtr bsptr = _ejdbmeta(_db);
+				if (bsptr == IntPtr.Zero) {
+					throw new EJDBException(this);
+				}
+				try {
+					int size;
+					IntPtr bsdataptr = _bson_data2(bsptr, out size);
+					byte[] bsdata = new byte[size];
+					Marshal.Copy(bsdataptr, bsdata, 0, bsdata.Length);
+					return new BSONDocument(bsdata);
+				} finally {
+					_bson_del(bsptr);
+				}
 			}
 		}
 
@@ -519,6 +539,65 @@ namespace Ejdb.DB {
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool DropArrayIndex(string cname, string ipath) {
 			return IndexOperation(cname, ipath, JBIDXARR | JBIDXDROP);
+		}
+
+		/// <summary>
+		/// Begin transaction for EJDB collection.
+		/// </summary>
+		/// <returns><c>true</c>, if begin was transactioned, <c>false</c> otherwise.</returns>
+		/// <param name="cname">Cname.</param>
+		public bool TransactionBegin(string cname) {
+			CheckDisposed();
+			IntPtr cptr = _ejdbgetcoll(_db, cname);
+			if (cptr == IntPtr.Zero) {
+				return true;
+			}
+			//internal static extern bool _ejdbtranbegin([In] IntPtr coll);
+			return _ejdbtranbegin(cptr);
+		}
+
+		/// <summary>
+		/// Commit the transaction.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		public bool TransactionCommit(string cname) {
+			CheckDisposed();
+			IntPtr cptr = _ejdbgetcoll(_db, cname);
+			if (cptr == IntPtr.Zero) {
+				return true;
+			}
+			//internal static extern bool _ejdbtrancommit([In] IntPtr coll);
+			return _ejdbtrancommit(cptr);
+		}
+
+		/// <summary>
+		/// Abort the transaction.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		public bool AbortTransaction(string cname) {
+			CheckDisposed();
+			IntPtr cptr = _ejdbgetcoll(_db, cname);
+			if (cptr == IntPtr.Zero) {
+				return true;
+			}
+			//internal static extern bool _ejdbtranabort([In] IntPtr coll);
+			return _ejdbtranabort(cptr);
+		}
+
+		/// <summary>
+		/// Get the transaction status.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="active">Out parameter. It <c>true</c> transaction is active.</param>
+		public bool TransactionStatus(string cname, out bool active) {
+			CheckDisposed();
+			IntPtr cptr = _ejdbgetcoll(_db, cname);
+			if (cptr == IntPtr.Zero) {
+				active = false;
+				return false;
+			}
+			return _ejdbtranstatus(cptr, out active);
 		}
 
 		/// <summary>

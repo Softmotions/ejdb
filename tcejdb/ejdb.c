@@ -869,22 +869,21 @@ bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
 }
 
 bson* ejdbmeta(EJDB *jb) {
-    if (!JBISOPEN(jb)) {
-        _ejdbsetecode(jb, TCEINVALID, __FILE__, __LINE__, __func__);
-        return NULL;
-    }
+    JBENSUREOPENLOCK(jb, false, NULL);
     char nbuff[TCNUMBUFSIZ];
     bson *bs = bson_create();
     bson_init(bs);
     bson_append_string(bs, "file", jb->metadb->hdb->path);
-    bson_append_start_array(bs, "collections");
+    bson_append_start_array(bs, "collections"); //collections
     TCLIST *cols = ejdbgetcolls(jb);
     for (int i = 0; i < TCLISTNUM(cols); ++i) {
-        if (!JBISOPEN(jb)) {
-            break;
-        }
         EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
-        if (!coll || !_ejcollockmethod(coll, false)) continue;
+        if (!JBCLOCKMETHOD(coll, false)) {
+            tclistdel(cols);
+            bson_del(bs);
+            JBUNLOCKMETHOD(jb);
+            return NULL;
+        }
         bson_numstrn(nbuff, TCNUMBUFSIZ, i);
         bson_append_start_object(bs, nbuff); //coll obj
         bson_append_string_n(bs, "name", coll->cname, coll->cnamesz);
@@ -930,11 +929,17 @@ bson* ejdbmeta(EJDB *jb) {
         }
         bson_append_finish_array(bs); //eof coll.indexes[]
         bson_append_finish_object(bs); //eof coll
-        _ejcollunlockmethod(coll);
+        JBCUNLOCKMETHOD(coll);
     }
     bson_append_finish_array(bs); //eof collections
     bson_finish(bs);
     tclistdel(cols);
+    JBUNLOCKMETHOD(jb);
+    if (bs->err) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        bson_del(bs);
+        bs = NULL;
+    }
     return bs;
 }
 
