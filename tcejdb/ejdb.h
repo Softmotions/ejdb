@@ -468,7 +468,7 @@ EJDB_EXPORT bool ejdbsyncoll(EJCOLL *jcoll);
 
 /**
  * Synchronize entire EJDB database and
- * all its collections with storage.
+ * all of its collections with storage.
  * @param jb Database hand
  */
 EJDB_EXPORT bool ejdbsyncdb(EJDB *jb);
@@ -484,6 +484,9 @@ EJDB_EXPORT bool ejdbtranabort(EJCOLL *coll);
 
 /** Get current transaction status, it will be placed into txActive*/
 EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive);
+
+/** Gets description of EJDB database and its collections. */
+EJDB_EXPORT bson* ejdbmeta(EJDB *jb);
 
 EJDB_EXTERN_C_END
 

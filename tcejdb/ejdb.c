@@ -524,7 +524,7 @@ EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, const void *orbsdata) {
     if (q->orqobjsnum == 1) {
         TCMALLOC(q->orqobjs, sizeof (*(q->orqobjs)) * q->orqobjsnum);
     } else {
-        TCREALLOC(q->orqobjs, q->orqobjs, q->orqobjsnum);
+        TCREALLOC(q->orqobjs, q->orqobjs, sizeof (*(q->orqobjs)) * q->orqobjsnum);
     }
     q->orqobjs[q->orqobjsnum - 1] = *oq; //copy
     TCFREE(oq);
@@ -866,6 +866,76 @@ bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
     *txactive = jcoll->tdb->tran;
     JBCUNLOCKMETHOD(jcoll);
     return true;
+}
+
+bson* ejdbmeta(EJDB *jb) {
+    if (!JBISOPEN(jb)) {
+        _ejdbsetecode(jb, TCEINVALID, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    char nbuff[TCNUMBUFSIZ];
+    bson *bs = bson_create();
+    bson_init(bs);
+    bson_append_string(bs, "file", jb->metadb->hdb->path);
+    bson_append_start_array(bs, "collections");
+    TCLIST *cols = ejdbgetcolls(jb);
+    for (int i = 0; i < TCLISTNUM(cols); ++i) {
+        if (!JBISOPEN(jb)) {
+            break;
+        }
+        EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
+        if (!coll || !_ejcollockmethod(coll, false)) continue;
+        bson_numstrn(nbuff, TCNUMBUFSIZ, i);
+        bson_append_start_object(bs, nbuff); //coll obj
+        bson_append_string_n(bs, "name", coll->cname, coll->cnamesz);
+        bson_append_string(bs, "file", coll->tdb->hdb->path);
+        bson_append_long(bs, "records", coll->tdb->hdb->rnum);
+
+        bson_append_start_object(bs, "options"); //coll.options
+        bson_append_long(bs, "buckets", coll->tdb->hdb->bnum);
+        bson_append_long(bs, "cachedrecords", coll->tdb->hdb->rcnum);
+        bson_append_bool(bs, "large", (coll->tdb->opts & TDBTLARGE));
+        bson_append_bool(bs, "compressed", (coll->tdb->opts & TDBTDEFLATE));
+        bson_append_finish_object(bs); //eof coll.options
+
+        bson_append_start_array(bs, "indexes"); //coll.indexes[]
+        for (int j = 0; j < coll->tdb->inum; ++j) {
+            TDBIDX *idx = (coll->tdb->idxs + j);
+            if (idx->type != TDBITLEXICAL &&
+                    idx->type != TDBITDECIMAL &&
+                    idx->type != TDBITTOKEN) {
+                continue;
+            }
+            bson_numstrn(nbuff, TCNUMBUFSIZ, j);
+            bson_append_start_object(bs, nbuff); //coll.indexes.index
+            bson_append_string(bs, "field", idx->name + 1);
+            bson_append_string(bs, "iname", idx->name);
+            switch (idx->type) {
+                case TDBITLEXICAL:
+                    bson_append_string(bs, "type", "lexical");
+                    break;
+                case TDBITDECIMAL:
+                    bson_append_string(bs, "type", "decimal");
+                    break;
+                case TDBITTOKEN:
+                    bson_append_string(bs, "type", "token");
+                    break;
+            }
+            TCBDB *idb = (TCBDB*) idx->db;
+            if (idb) {
+                bson_append_long(bs, "records", idb->rnum);
+                bson_append_string(bs, "file", idb->hdb->path);
+            }
+            bson_append_finish_object(bs); //eof coll.indexes.index
+        }
+        bson_append_finish_array(bs); //eof coll.indexes[]
+        bson_append_finish_object(bs); //eof coll
+        _ejcollunlockmethod(coll);
+    }
+    bson_append_finish_array(bs); //eof collections
+    bson_finish(bs);
+    tclistdel(cols);
+    return bs;
 }
 
 /*************************************************************************************************
@@ -3103,7 +3173,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
             ejq->skip = (uint32_t) ((v < 0) ? 0 : v);
         }
         bt = bson_find(&it, ejq->hints, "$max");
-         if (qflags & JBQRYFINDONE) {
+        if (qflags & JBQRYFINDONE) {
             ejq->max = (uint32_t) 1;
         } else if (BSON_IS_NUM_TYPE(bt)) {
             int64_t v = bson_iterator_long(&it);

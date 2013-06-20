@@ -64,6 +64,17 @@ namespace Ejdb.Tests {
 			BSONDocument doc2 = it.ToBSONDocument();
 			Assert.AreEqual(doc.ToDebugDataString(), doc2.ToDebugDataString());
 			Assert.IsTrue(doc == doc2);
+
+			Assert.AreEqual(1, jb.CreateQueryFor("mycoll").Count());
+			Assert.IsTrue(jb.Remove("mycoll", doc["_id"] as BSONOid));
+			Assert.AreEqual(0, jb.CreateQueryFor("mycoll").Count());
+
+			jb.Save("mycoll", doc);
+			Assert.AreEqual(1, jb.CreateQueryFor("mycoll").Count());
+			Assert.IsTrue(jb.DropCollection("mycoll"));
+			Assert.AreEqual(0, jb.CreateQueryFor("mycoll").Count());
+
+			Assert.IsTrue(jb.Sync());
 			jb.Dispose(); 
 		}
 
@@ -149,6 +160,18 @@ namespace Ejdb.Tests {
 				Assert.AreEqual("Grenny", doc["name"]);
 				Assert.AreEqual(1, doc["age"]);
 			}
+			q.Dispose();
+
+			q = jb.CreateQueryFor("parrots");
+			Assert.AreEqual(2, q.Count());
+			q.AddOR(new{
+				name = "Grenny"
+			});
+			Assert.AreEqual(1, q.Count());
+			q.AddOR(new{
+				name = "Bounty"
+			});
+			Assert.AreEqual(2, q.Count());
 
 			q.Dispose();
 			jb.Dispose();

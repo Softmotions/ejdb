@@ -36,28 +36,107 @@ namespace Ejdb.DB {
 		public int cachedrecords;
 	}
 
+	/// <summary>
+	/// EJDB database native wrapper.
+	/// </summary>
 	public class EJDB : IDisposable {
-		//Open modes
+		//.//////////////////////////////////////////////////////////////////
+		// 						Native open modes									  
+		//.//////////////////////////////////////////////////////////////////
+		/// <summary>
+		/// Open as a reader.
+		/// </summary>
 		public const int JBOREADER = 1 << 0;
 
+		/// <summary>
+		/// Open as a writer.
+		/// </summary>
 		public const int JBOWRITER = 1 << 1;
 
+		/// <summary>
+		/// Create if db file not exists. 
+		/// </summary>
 		public const int JBOCREAT = 1 << 2;
 
+		/// <summary>
+		/// Truncate db on open.
+		/// </summary>
 		public const int JBOTRUNC = 1 << 3;
 
+		/// <summary>
+		/// Open without locking. 
+		/// </summary>
 		public const int JBONOLCK = 1 << 4;
 
+		/// <summary>
+		/// Lock without blocking.
+		/// </summary>
 		public const int JBOLCKNB = 1 << 5;
 
+		/// <summary>
+		/// Synchronize every transaction with storage.
+		/// </summary>
 		public const int JBOTSYNC = 1 << 6;
 
+		/// <summary>
+		/// The default open mode <c>(JBOWRITER | JBOCREAT)</c>
+		/// </summary>
 		public const int DEFAULT_OPEN_MODE = (JBOWRITER | JBOCREAT);
+		//.//////////////////////////////////////////////////////////////////
+		// 				 Native index operations & types (ejdb.h)									  
+		//.//////////////////////////////////////////////////////////////////
+		/// <summary>
+		/// Drop index.
+		/// </summary>
+		const int JBIDXDROP = 1 << 0;
 
+		/// <summary>
+		/// Drop index for all types.
+		/// </summary>
+		const int JBIDXDROPALL = 1 << 1;
+
+		/// <summary>
+		/// Optimize indexes.
+		/// </summary>
+		const int JBIDXOP = 1 << 2;
+
+		/// <summary>
+		/// Rebuild index.
+		/// </summary>
+		const int JBIDXREBLD = 1 << 3;
+
+		/// <summary>
+		/// Number index.
+		/// </summary>
+		const int JBIDXNUM = 1 << 4;
+
+		/// <summary>
+		/// String index.
+		/// </summary>
+		const int JBIDXSTR = 1 << 5;
+
+		/// <summary>
+		/// Array token index.
+		/// </summary>
+		const int JBIDXARR = 1 << 6;
+
+		/// <summary>
+		/// Case insensitive string index.
+		/// </summary>
+		const int JBIDXISTR = 1 << 7;
+
+		/// <summary>
+		/// Name if EJDB library
+		/// </summary>
 		public const string EJDB_LIB_NAME = "tcejdb";
 
+		/// <summary>
+		/// Pointer to the native EJDB instance.
+		/// </summary>
 		IntPtr _db = IntPtr.Zero;
-		//
+		//.//////////////////////////////////////////////////////////////////
+		//   				Native functions refs									  
+		//.//////////////////////////////////////////////////////////////////
 		#region NativeRefs
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbnew")]
 		internal static extern IntPtr _ejdbnew();
@@ -112,6 +191,18 @@ namespace Ejdb.DB {
 				UnixMarshal.FreeHeap(cptr);
 			}
 		}
+		//EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbrmcoll")]
+		internal static extern bool _ejdbrmcoll([In] IntPtr db, [In] IntPtr cname, bool unlink);
+
+		internal static bool _ejdbrmcoll(IntPtr db, string cname, bool unlink) {
+			IntPtr cptr = UnixMarshal.StringToHeap(cname, Encoding.UTF8);
+			try {
+				return _ejdbrmcoll(db, cptr, unlink);
+			} finally {
+				UnixMarshal.FreeHeap(cptr);
+			}
+		}
 		//EJDB_EXPORT bool ejdbsavebson3(EJCOLL *jcoll, void *bsdata, bson_oid_t *oid, bool merge);
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbsavebson3")]
 		internal static extern bool _ejdbsavebson([In] IntPtr coll, [In] byte[] bsdata, [Out] byte[] oid, [In] bool merge);
@@ -124,6 +215,30 @@ namespace Ejdb.DB {
 		//EJDB_EXPORT void bson_del(bson *b);
 		[DllImport(EJDB_LIB_NAME, EntryPoint="bson_del")]
 		internal static extern void _bson_del([In] IntPtr bsptr);
+		//EJDB_EXPORT bool ejdbrmbson(EJCOLL *coll, bson_oid_t *oid);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbrmbson")]
+		internal static extern bool _ejdbrmbson([In] IntPtr cptr, [In] byte[] oid);
+		//EJDB_EXPORT bool ejdbsyncdb(EJDB *jb)
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbsyncdb")]
+		internal static extern bool _ejdbsyncdb([In] IntPtr db);
+		//EJDB_EXPORT bool ejdbsyncoll(EJDB *jb)
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbsyncoll")]
+		internal static extern bool _ejdbsyncoll([In] IntPtr coll);
+		//EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbsetindex")]
+		internal static extern bool _ejdbsetindex([In] IntPtr coll, [In] IntPtr ipathptr, int flags);
+		//EJDB_EXPORT bson* ejdbmeta(EJDB *jb)
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbmeta")]
+		internal static extern IntPtr _ejdbmeta([In] IntPtr db);
+
+		internal static bool _ejdbsetindex(IntPtr coll, string ipath, int flags) {
+			IntPtr ipathptr = UnixMarshal.StringToHeap(ipath, Encoding.UTF8);
+			try {
+				return _ejdbsetindex(coll, ipathptr, flags);
+			} finally {
+				UnixMarshal.FreeHeap(ipathptr);
+			}
+		}
 		#endregion
 		/// <summary>
 		/// Gets the last DB error code or <c>null</c> if underlying native database object does not exist.
@@ -155,6 +270,22 @@ namespace Ejdb.DB {
 		public bool IsOpen {
 			get {
 				return _ejdbisopen(_db);
+			}
+		}
+
+		/// <summary>
+		/// Gets description of EJDB database and its collections.
+		/// </summary>
+		/// <value>The DB meta.</value>
+		public BSONDocument DBMeta {
+			get {
+				CheckDisposed(true);
+				//internal static extern IntPtr ejdbmeta([In] IntPtr db);
+				//IntPtr bsptr = 
+
+
+				BSONDocument meta = new BSONDocument();
+				return meta;
 			}
 		}
 
@@ -208,6 +339,186 @@ namespace Ejdb.DB {
 			CheckDisposed();
 			IntPtr cptr = _ejdbcreatecoll(_db, cname, copts);		
 			return (cptr != IntPtr.Zero);
+		}
+
+		/// <summary>
+		/// Removes collection indetified by <c>cname</c>.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of the collection.</param>
+		/// <param name="unlink">If set to <c>true</c> then the collection data file will be removed.</param>
+		public bool DropCollection(string cname, bool unlink = false) {
+			CheckDisposed();
+			return _ejdbrmcoll(_db, cname, unlink);
+		}
+
+		/// <summary>
+		/// Synchronize entire EJDB database and
+		/// all of its collections with storage.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		public bool Sync() {
+			CheckDisposed();
+			//internal static extern bool _ejdbsyncdb([In] IntPtr db);
+			return _ejdbsyncdb(_db);
+		}
+
+		/// <summary>
+		/// Synchronize content of a EJDB collection database with the file on device.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		public bool SyncCollection(string cname) {
+			CheckDisposed();
+			IntPtr cptr = _ejdbgetcoll(_db, cname);
+			if (cptr == IntPtr.Zero) {
+				return true;
+			}
+			//internal static extern bool _ejdbsyncoll([In] IntPtr coll);
+			return _ejdbsyncoll(cptr);
+		}
+
+		/// <summary>
+		/// DROP indexes of all types for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool DropIndexes(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXDROPALL);
+		}
+
+		/// <summary>
+		/// OPTIMIZE indexes of all types for JSON field path.
+		/// </summary>
+		/// <remarks>
+		/// Performs B+ tree index file optimization.
+		/// </remarks>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool OptimizeIndexes(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXOP);
+		}
+
+		/// <summary>
+		/// Ensure index presence of String type for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool EnsureStringIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXSTR);
+		}
+
+		/// <summary>
+		/// Rebuild index of String type for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool RebuildStringIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXSTR | JBIDXREBLD);
+		}
+
+		/// <summary>
+		/// Drop index of String type for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool DropStringIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXSTR | JBIDXDROP);
+		}
+
+		/// <summary>
+		/// Ensure case insensitive String index for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool EnsureIStringIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXISTR);
+		}
+
+		/// <summary>
+		/// Rebuild case insensitive String index for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool RebuildIStringIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXISTR | JBIDXREBLD);
+		}
+
+		/// <summary>
+		/// Drop case insensitive String index for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool DropIStringIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXISTR | JBIDXDROP);
+		}
+
+		/// <summary>
+		/// Ensure index presence of Number type for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool EnsureNumberIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXNUM);
+		}
+
+		/// <summary>
+		/// Rebuild index of Number type for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool RebuildNumberIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXNUM | JBIDXREBLD);
+		}
+
+		/// <summary>
+		/// Drop index of Number type for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool DropNumberIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXNUM | JBIDXDROP);
+		}
+
+		/// <summary>
+		/// Ensure index presence of Array type for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool EnsureArrayIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXARR);
+		}
+
+		/// <summary>
+		/// Rebuild index of Array type for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool RebuildArrayIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXARR | JBIDXREBLD);
+		}
+
+		/// <summary>
+		/// Drop index of Array type for JSON field path.
+		/// </summary>
+		/// <returns><c>false</c>, if error occurred.</returns>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="ipath">JSON indexed field path</param>
+		public bool DropArrayIndex(string cname, string ipath) {
+			return IndexOperation(cname, ipath, JBIDXARR | JBIDXDROP);
 		}
 
 		/// <summary>
@@ -287,6 +598,26 @@ namespace Ejdb.DB {
 		}
 
 		/// <summary>
+		/// Removes stored objects from the collection.
+		/// </summary>
+		/// <param name="cname">Name of collection.</param>
+		/// <param name="oids">Object identifiers.</param>
+		public bool Remove(string cname, params BSONOid[] oids) {
+			CheckDisposed();
+			IntPtr cptr = _ejdbgetcoll(_db, cname);
+			if (cptr == IntPtr.Zero) {
+				return true;
+			}
+			//internal static extern bool _ejdbrmbson([In] IntPtr cptr, [In] byte[] oid);
+			foreach (var oid in oids) {
+				if (!_ejdbrmbson(cptr, oid.ToBytes())) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/// <summary>
 		/// Creates the query.
 		/// </summary>
 		/// <returns>The query object.</returns>
@@ -325,9 +656,24 @@ namespace Ejdb.DB {
 			return bsdata;
 		}
 
-		internal void CheckDisposed() {
+		bool IndexOperation(string cname, string ipath, int flags) {
+			CheckDisposed(true);
+			IntPtr cptr = _ejdbgetcoll(_db, cname);
+			if (cptr == IntPtr.Zero) {
+				return true;
+			}
+			//internal static bool _ejdbsetindex(IntPtr coll, string ipath, int flags)
+			return _ejdbsetindex(cptr, ipath, flags);
+		}
+
+		internal void CheckDisposed(bool checkopen = false) {
 			if (_db == IntPtr.Zero) {
 				throw new ObjectDisposedException("Database is disposed");
+			}
+			if (checkopen) {
+				if (!IsOpen) {
+					throw new ObjectDisposedException("Operation on closed EJDB instance"); 
+				}
 			}
 		}
 	}

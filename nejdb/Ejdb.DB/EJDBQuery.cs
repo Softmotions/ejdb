@@ -124,8 +124,9 @@ namespace Ejdb.DB {
 		/// </summary>
 		/// <returns>This query object.</returns>
 		/// <param name="doc">Query document.</param>
-		public EJDBQuery AppendOR(BSONDocument doc) {
+		public EJDBQuery AddOR(object docobj) {
 			CheckDisposed();
+			BSONDocument doc = BSONDocument.ValueOf(docobj);
 			//static extern IntPtr _ejdbqueryaddor([In] IntPtr jb, [In] IntPtr qptr, [In] byte[] bsdata);
 			IntPtr qptr = _ejdbqueryaddor(_jb.DBPtr, _qptr, doc.ToByteArray());
 			if (qptr == IntPtr.Zero) {

@@ -837,65 +837,17 @@ namespace ejdb {
         static Handle<Value> s_db_meta(const Arguments& args) {
             HandleScope scope;
             NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
-            Local<Object> ret = Object::New();
             if (!ejdbisopen(njb->m_jb)) {
                 return scope.Close(ThrowException(Exception::Error(String::New("Operation on closed EJDB instance"))));
             }
-            TCLIST *cols = ejdbgetcolls(njb->m_jb);
-            if (!cols) {
+            bson *meta = ejdbmeta(njb->m_jb);
+            if (!meta) {
                 return scope.Close(ThrowException(Exception::Error(String::New(njb->_jb_error_msg()))));
             }
-            Local<Array> cinfo = Array::New();
-            for (int i = 0; i < TCLISTNUM(cols); ++i) {
-                EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
-                assert(coll);
-                if (!ejcollockmethod(coll, false)) continue;
-                Local<Object> cm = Object::New();
-                cm->Set(sym_name, String::New(coll->cname, coll->cnamesz));
-                cm->Set(sym_file, String::New(coll->tdb->hdb->path));
-                cm->Set(sym_records, Integer::NewFromUnsigned((uint32_t) coll->tdb->hdb->rnum));
-                Local<Object> opts = Object::New();
-                opts->Set(sym_buckets, Integer::NewFromUnsigned((uint32_t) coll->tdb->hdb->bnum));
-                opts->Set(sym_cachedrecords, Integer::NewFromUnsigned(coll->tdb->hdb->rcnum));
-                opts->Set(sym_large, Boolean::New(coll->tdb->opts & TDBTLARGE));
-                opts->Set(sym_compressed, Boolean::New((coll->tdb->opts & TDBTDEFLATE) ? true : false));
-                cm->Set(sym_options, opts);
-                Local<Array> indexes = Array::New();
-                int ic = 0;
-                for (int j = 0; j < coll->tdb->inum; ++j) {
-                    TDBIDX *idx = (coll->tdb->idxs + j);
-                    assert(idx);
-                    if (idx->type != TDBITLEXICAL && idx->type != TDBITDECIMAL && idx->type != TDBITTOKEN) {
-                        continue;
-                    }
-                    Local<Object> imeta = Object::New();
-                    imeta->Set(sym_field, String::New(idx->name + 1));
-                    imeta->Set(sym_iname, String::New(idx->name));
-                    switch (idx->type) {
-                        case TDBITLEXICAL:
-                            imeta->Set(sym_type, String::New("lexical"));
-                            break;
-                        case TDBITDECIMAL:
-                            imeta->Set(sym_type, String::New("decimal"));
-                            break;
-                        case TDBITTOKEN:
-                            imeta->Set(sym_type, String::New("token"));
-                            break;
-                    }
-                    TCBDB *idb = (TCBDB*) idx->db;
-                    if (idb) {
-                        imeta->Set(sym_records, Integer::NewFromUnsigned((uint32_t) idb->rnum));
-                        imeta->Set(sym_file, String::New(idb->hdb->path));
-                    }
-                    indexes->Set(Integer::New(ic++), imeta);
-                }
-                cm->Set(sym_indexes, indexes);
-                cinfo->Set(Integer::New(i), cm);
-                ejcollunlockmethod(coll);
-            }
-            tclistdel(cols);
-            ret->Set(sym_file, String::New(njb->m_jb->metadb->hdb->path));
-            ret->Set(String::New("collections"), cinfo);
+            bson_iterator it;
+            bson_iterator_init(&it, meta);
+            Handle<Object> ret = toV8Object(&it);
+            bson_del(meta);
             return scope.Close(ret);
         }
 

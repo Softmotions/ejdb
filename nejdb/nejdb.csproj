@@ -37,7 +37,6 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="Mono.Posix" />
   </ItemGroup>
   <ItemGroup>
@@ -60,8 +59,6 @@
     <Compile Include="Ejdb.BSON\BSONBinData.cs" />
     <Compile Include="Ejdb.BSON\BSONDocument.cs" />
     <Compile Include="Ejdb.BSON\BSONConstants.cs" />
-    <Compile Include="Ejdb.JSON\JSONReader.cs" />
-    <Compile Include="Ejdb.JSON\JSONElement.cs" />
     <Compile Include="Ejdb.DB\EJDBException.cs" />
     <Compile Include="Ejdb.Tests\TestEJDB.cs" />
     <Compile Include="Ejdb.DB\EJDBQuery.cs" />
@@ -77,7 +74,6 @@
     <Folder Include="Ejdb.IO\" />
     <Folder Include="Ejdb.Utils\" />
     <Folder Include="Ejdb.BSON\" />
-    <Folder Include="Ejdb.JSON\" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
