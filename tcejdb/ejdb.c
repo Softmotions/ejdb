@@ -135,6 +135,10 @@ extern const char *utf8proc_errmsg(ssize_t errcode);
 static const bool yes = true;
 static const bool no = false;
 
+const char *ejdbversion() {
+    return _TC_VERSION;
+}
+
 const char* ejdberrmsg(int ecode) {
     if (ecode > -6 && ecode < 0) { //Hook for negative error codes of utf8proc library
         return utf8proc_errmsg(ecode);
@@ -145,7 +149,7 @@ const char* ejdberrmsg(int ecode) {
         case JBEQINVALIDQCONTROL: return "invalid query control field starting with '$'";
         case JBEQINOPNOTARRAY: return "$strand, $stror, $in, $nin, $bt keys requires not empty array value";
         case JBEMETANVALID: return "inconsistent database metadata";
-        case JBEFPATHINVALID: return "invalid JSON field path value";
+        case JBEFPATHINVALID: return "invalid JSEJDB_EXPORT const char *ejdbversion();ON field path value";
         case JBEQINVALIDQRX: return "invalid query regexp value";
         case JBEQRSSORTING: return "result set sorting error";
         case JBEQERROR: return "invalid query";

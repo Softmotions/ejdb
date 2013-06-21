@@ -10,14 +10,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
+		DebugUnix|Any CPU = DebugUnix|Any CPU
+		ReleaseUnix|Any CPU = ReleaseUnix|Any CPU
+		DebugWindows|Any CPU = DebugWindows|Any CPU
+		ReleaseWindows|Any CPU = ReleaseWindows|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.DebugUnix|Any CPU.ActiveCfg = DebugUnix|Any CPU
+		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.DebugUnix|Any CPU.Build.0 = DebugUnix|Any CPU
+		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.DebugWindows|Any CPU.ActiveCfg = DebugWindows|Any CPU
+		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.DebugWindows|Any CPU.Build.0 = DebugWindows|Any CPU
+		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.ReleaseUnix|Any CPU.ActiveCfg = ReleaseUnix|Any CPU
+		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.ReleaseUnix|Any CPU.Build.0 = ReleaseUnix|Any CPU
+		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.ReleaseWindows|Any CPU.ActiveCfg = ReleaseWindows|Any CPU
+		{A24C964C-771F-4359-8C93-4BFCBE451D8B}.ReleaseWindows|Any CPU.Build.0 = ReleaseWindows|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

@@ -8,7 +8,6 @@
 *.so
 *.so.*
 *.a
-*.dll
 *.exp
 *.exe
 *.sdf

@@ -126,10 +126,23 @@ namespace Ejdb.DB {
 		const int JBIDXISTR = 1 << 7;
 
 		/// <summary>
+		/// The EJDB library version
+		/// </summary>
+		static string _LIBVERSION;
+
+		/// <summary>
+		/// The EJDB library version hex code.
+		/// </summary>
+		static long _LIBHEXVERSION;
+
+		/// <summary>
 		/// Name if EJDB library
 		/// </summary>
+		#if EJDBDLL
+		public const string EJDB_LIB_NAME = "tcejdbdll";
+#else
 		public const string EJDB_LIB_NAME = "tcejdb";
-
+		#endif
 		/// <summary>
 		/// Pointer to the native EJDB instance.
 		/// </summary>
@@ -242,6 +255,9 @@ namespace Ejdb.DB {
 		//EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive);
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbtranstatus")]
 		internal static extern bool _ejdbtranstatus([In] IntPtr coll, out bool txactive);
+		//EJDB_EXPORT const char *ejdbversion();
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbversion")]
+		internal static extern IntPtr _ejdbversion();
 
 		internal static bool _ejdbsetindex(IntPtr coll, string ipath, int flags) {
 			IntPtr ipathptr = UnixMarshal.StringToHeap(ipath, Encoding.UTF8);
@@ -310,11 +326,59 @@ namespace Ejdb.DB {
 		}
 
 		/// <summary>
+		/// Gets the EJDB library version.
+		/// </summary>
+		/// <value>The LIB version.</value>
+		public static string LIBVersion {
+			get {
+				if (_LIBVERSION != null) {
+					return _LIBVERSION;
+				}
+				lock (typeof(EJDB)) {
+					if (_LIBVERSION != null) {
+						return _LIBVERSION;
+					}
+					IntPtr vres = _ejdbversion();
+					if (vres == IntPtr.Zero) {
+						throw new Exception("Unable to get ejdb library version");
+					}
+					_LIBVERSION = UnixMarshal.PtrToString(vres, Encoding.UTF8);
+				}
+				return _LIBVERSION;
+			}		
+		}
+
+		/// <summary>
+		/// Gets the EJDB library hex encoded version.
+		/// </summary>
+		/// <remarks>
+		/// E.g: for the version "1.1.13" return value will be: 0x1113
+		/// </remarks>
+		/// <value>The lib hex version.</value>
+		public static long LibHexVersion {
+			get {
+				if (_LIBHEXVERSION != 0) {
+					return _LIBHEXVERSION;
+				}
+				lock (typeof(EJDB)) {
+					if (_LIBHEXVERSION != 0) {
+						return _LIBHEXVERSION;
+					}
+					_LIBHEXVERSION = Convert.ToInt64("0x" + LIBVersion.Replace(".", ""), 16);
+				}
+				return _LIBHEXVERSION;
+			}
+		}
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="Ejdb.DB.EJDB"/> class.
 		/// </summary>
 		/// <param name="path">The main database file path.</param>
 		/// <param name="omode">Open mode.</param>
-		public EJDB(string path, int omode=DEFAULT_OPEN_MODE) {
+		public EJDB(string path, int omode=DEFAULT_OPEN_MODE) {		
+			if (EJDB.LibHexVersion < 0x1113) {
+				throw new EJDBException("EJDB library version must be at least '1.1.13' or greater");
+			}
 			bool rv;
 			_db = _ejdbnew();
 			if (_db == IntPtr.Zero) {

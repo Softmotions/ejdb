@@ -23,6 +23,7 @@ namespace Ejdb.IO {
 
 		public static Encoding DEFAULT_ENCODING = Encoding.UTF8;
 		Encoding _encoding;
+		bool _leaveopen;
 
 		public ExtBinaryWriter() {
 			_encoding = DEFAULT_ENCODING;
@@ -31,14 +32,19 @@ namespace Ejdb.IO {
 		public ExtBinaryWriter(Stream output) : this(output, DEFAULT_ENCODING, false) {
 		}
 
-		public ExtBinaryWriter(Stream output, Encoding encoding, bool leaveopen) : base(output, encoding, leaveopen) {
+		public ExtBinaryWriter(Stream output, Encoding encoding, bool leaveopen) : base(output, encoding) {
 			_encoding = encoding;
+			_leaveopen = leaveopen;
 		}
 
 		public ExtBinaryWriter(Stream output, Encoding encoding) : this(output, encoding, false) {
 		}
 
 		public ExtBinaryWriter(Stream output, bool leaveopen) : this(output, DEFAULT_ENCODING, leaveopen) {		
+		}
+
+		protected override void Dispose(bool disposing) {
+			base.Dispose(!_leaveopen);
 		}
 
 		public void WriteBSONString(string val) {

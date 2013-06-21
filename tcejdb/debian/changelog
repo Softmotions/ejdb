@@ -1,3 +1,10 @@
+libtcejdb (1.1.13) testing; urgency=low
+
+  * .Net binding
+  * BSON processing fixes 
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 21 Jun 2013 12:40:28 +0700
+
 libtcejdb (1.1.12) testing; urgency=low
 
   * Threading consistency improvements

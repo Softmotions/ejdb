@@ -87,6 +87,16 @@ enum { /*< Query search mode flags in ejdbqryexecute() */
     JBQRYFINDONE = 1 << 1 /*< Fetch first record only */
 };
 
+/**
+ * Returns EJDB library version string. Eg: "1.1.13"
+ */
+EJDB_EXPORT const char *ejdbversion();
+
+/**
+ * Return true if passed `oid` string cat be converted to valid
+ * 12 bit BSON object identifier (OID).
+ * @param oid String
+ */
 EJDB_EXPORT bool ejdbisvalidoidstr(const char *oid);
 
 /**

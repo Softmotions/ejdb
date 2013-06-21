@@ -24,6 +24,8 @@ namespace Ejdb.IO {
 
 		public static Encoding DEFAULT_ENCODING = Encoding.UTF8;
 
+		bool _leaveopen;
+
 		public ExtBinaryReader(Stream input) : this(input, DEFAULT_ENCODING) {
 		}
 
@@ -33,7 +35,12 @@ namespace Ejdb.IO {
 		public ExtBinaryReader(Stream input, bool leaveOpen) : this(input, DEFAULT_ENCODING, leaveOpen) {
 		}
 
-		public ExtBinaryReader(Stream input, Encoding encoding, bool leaveOpen) : base(input, encoding, leaveOpen) {
+		public ExtBinaryReader(Stream input, Encoding encoding, bool leaveopen) : base(input, encoding) {
+			this._leaveopen = leaveopen;
+		}
+
+		protected override void Dispose(bool disposing) {
+			base.Dispose(!_leaveopen);
 		}
 
 		public string ReadCString() {

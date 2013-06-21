@@ -91,6 +91,7 @@ addressbook*
 /pyejdb
 /luaejdb
 /jejdb
+/nejdb
 /misc
 /node/nodejs
 /node/tests/bench

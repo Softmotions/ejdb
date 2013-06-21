@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configurationDescriptor version="88">
+<configurationDescriptor version="89">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="tcejdb">
       <df name="nix">
@@ -96,7 +96,7 @@
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
-          <executablePath>./tchmttest</executablePath>
+          <executablePath>testejdb/t1</executablePath>
           <cTool>
             <preprocessorList>
               <Elem>_GNU_SOURCE=1</Elem>
