@@ -2,8 +2,8 @@
     "name" : "ejdb",
     "version" : "1.1.13-0",
     "config" : {
-        "windownloadurl_ia32" : "http://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.12-mingw32-i686.zip",
-        "windownloadurl_x64" : "http://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.12-mingw32-x86_64.zip"
+        "windownloadurl_ia32" : "http://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.13-mingw32-i686.zip",
+        "windownloadurl_x64" : "http://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.13-mingw32-x86_64.zip"
     },
     "main" : "node/ejdb.js",
     "homepage" : "http://ejdb.org",

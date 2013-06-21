@@ -33,6 +33,7 @@ config.status
 /npm-debug.log
 /.idea/workspace.xml
 
+/tcejdb/*.dll
 /tcejdb/i686-w64*
 /tcejdb/x86_64-w64*
 /tcejdb/tools/win32
