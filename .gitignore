@@ -8,7 +8,6 @@
 *.so
 *.so.*
 *.a
-*.dll
 *.exp
 *.exe
 *.sdf
@@ -146,5 +145,7 @@ __pycache__
 /jejdb/*.so.*
 /jejdb/Makefile
 
+/nejdb/bin/
+/nejdb/test-results/
 
 

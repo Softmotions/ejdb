@@ -66,6 +66,8 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  bson_create@Base 1.1.8
  bson_create_from_buffer2@Base 1.1.8
  bson_create_from_buffer@Base 1.1.8
+ bson_create_from_iterator@Base 1.1.13
+ bson_data2@Base 1.1.13
  bson_data@Base 1.1.8
  bson_del@Base 1.1.8
  bson_destroy@Base 1.1.8
@@ -93,6 +95,7 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  bson_init_finished_data@Base 1.1.8
  bson_init_on_stack@Base 1.1.8
  bson_init_size@Base 1.1.8
+ bson_init_with_data@Base 1.1.13
  bson_inplace_set_bool@Base 1.1.8
  bson_inplace_set_double@Base 1.1.8
  bson_inplace_set_long@Base 1.1.8
@@ -159,6 +162,7 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  ejcollunlockmethod@Base 1.1.8
  ejdbclose@Base 1.1.8
  ejdbcreatecoll@Base 1.1.8
+ ejdbcreatequery2@Base 1.1.13
  ejdbcreatequery@Base 1.1.8
  ejdbdel@Base 1.1.8
  ejdbecode@Base 1.1.8
@@ -168,15 +172,22 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  ejdbisopen@Base 1.1.8
  ejdbisvalidoidstr@Base 1.1.8
  ejdbloadbson@Base 1.1.8
+ ejdbmeta@Base 1.1.13
  ejdbnew@Base 1.1.8
  ejdbopen@Base 1.1.8
+ ejdbqresultbsondata@Base 1.1.13
+ ejdbqresultdispose@Base 1.1.13
+ ejdbqresultnum@Base 1.1.13
  ejdbqryexecute@Base 1.1.8
  ejdbqsort@Base 1.1.8
  ejdbqsortlist@Base 1.1.8
+ ejdbqueryaddor@Base 1.1.13
  ejdbquerydel@Base 1.1.8
+ ejdbqueryhints@Base 1.1.13
  ejdbrmbson@Base 1.1.8
  ejdbrmcoll@Base 1.1.8
  ejdbsavebson2@Base 1.1.8
+ ejdbsavebson3@Base 1.1.13
  ejdbsavebson@Base 1.1.8
  ejdbsetindex@Base 1.1.8
  ejdbsyncdb@Base 1.1.8
@@ -186,6 +197,7 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  ejdbtrancommit@Base 1.1.8
  ejdbtranstatus@Base 1.1.8
  ejdbupdate@Base 1.1.8
+ ejdbversion@Base 1.1.13
  hashmurmur32@Base 1.1.8
  hashmurmur64@Base 1.1.8
  initialBufferSize@Base 1.1.8

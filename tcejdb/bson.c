@@ -156,6 +156,11 @@ const char *bson_data(const bson *b) {
     return (const char *) b->data;
 }
 
+const char* bson_data2(const bson *b, int *bsize) {
+    *bsize = bson_size(b);
+    return b->data;
+}
+
 EJDB_INLINE char hexbyte(char hex) {
     if (hex >= '0' && hex <= '9')
         return (hex - '0');
@@ -218,9 +223,8 @@ void bson_oid_gen(bson_oid_t *oid) {
 }
 
 time_t bson_oid_generated_time(bson_oid_t *oid) {
-    time_t out;
+    time_t out = 0;
     bson_big_endian32(&out, &oid->ints[0]);
-
     return out;
 }
 
@@ -1652,6 +1656,19 @@ bson* bson_dup(const bson *src) {
     return rv;
 }
 
+bson* bson_create_from_iterator(bson_iterator *from) {
+    assert(from);
+    bson_type bt;
+    bson *bs = bson_create();
+    bson_init_as_query(bs);
+    while ((bt = bson_iterator_next(from)) != BSON_EOO) {
+        bson_append_field_from_iterator(from, bs);
+    }
+    bson_finish(bs);
+    return bs;
+}
+
+
 bson* bson_create_from_buffer(const void* buf, int bufsz) {
     return bson_create_from_buffer2(bson_create(), buf, bufsz);
 }
@@ -1664,6 +1681,13 @@ bson* bson_create_from_buffer2(bson *rv, const void* buf, int bufsz) {
     bson_append(rv, (char*) buf + 4, bufsz - (4 + 1/*BSON_EOO*/));
     bson_finish(rv);
     return rv;
+}
+
+void bson_init_with_data(bson *bs, const void *bsdata) {
+    memset(bs, 0, sizeof(*bs));
+    bs->data = (char*) bsdata;
+    bson_little_endian32(&bs->dataSize, bsdata);
+    bs->finished = true;
 }
 
 bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf, bool expandall) {

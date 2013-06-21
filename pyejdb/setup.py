@@ -99,7 +99,7 @@ class build_ext(_build_ext):
 
 setup(
     name="pyejdb",
-    version="1.0.12",
+    version="1.0.13",
     url="http://ejdb.org",
     keywords=["ejdb", "tokyocabinet", "nosql", "database", "storage", "embedded", "mongodb", "json"],
     description="Python 2.7/3.x binding for EJDB database engine.",

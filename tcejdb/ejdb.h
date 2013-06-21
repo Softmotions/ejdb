@@ -39,6 +39,8 @@ typedef struct { /**< EJDB collection tuning options. */
 } EJCOLLOPTS;
 
 
+typedef TCLIST* EJQRESULT; /**< EJDB query result */
+
 #define JBMAXCOLNAMELEN 128
 
 enum { /** Error codes */
@@ -81,9 +83,20 @@ enum { /** Index modes, index types. */
 };
 
 enum { /*< Query search mode flags in ejdbqryexecute() */
-    JBQRYCOUNT = 1 /*< Query only count(*) */
+    JBQRYCOUNT = 1, /*< Query only count(*) */
+    JBQRYFINDONE = 1 << 1 /*< Fetch first record only */
 };
 
+/**
+ * Returns EJDB library version string. Eg: "1.1.13"
+ */
+EJDB_EXPORT const char *ejdbversion();
+
+/**
+ * Return true if passed `oid` string cat be converted to valid
+ * 12 bit BSON object identifier (OID).
+ * @param oid String
+ */
 EJDB_EXPORT bool ejdbisvalidoidstr(const char *oid);
 
 /**
@@ -216,6 +229,8 @@ EJDB_EXPORT bool ejdbsavebson(EJCOLL *coll, bson *bs, bson_oid_t *oid);
  */
 EJDB_EXPORT bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge);
 
+EJDB_EXPORT bool ejdbsavebson3(EJCOLL *jcoll, const void *bsdata, bson_oid_t *oid, bool merge);
+
 /**
  * Remove BSON object from collection.
  * The `oid` argument should points the primary key (_id)
@@ -327,7 +342,7 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *
  * Many query examples can be found in `testejdb/t2.c` test case.
  *
- * @param EJDB database handle.
+ * @param jb EJDB database handle.
  * @param qobj Main BSON query object.
  * @param orqobjs Array of additional OR query objects (joined with OR predicate).
  * @param orqobjsnum Number of OR query objects.
@@ -335,6 +350,33 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  * @return On success return query handle. On error returns NULL.
  */
 EJDB_EXPORT EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints);
+
+
+/**
+ * Alternative query creation method convenient to use
+ * with `ejdbqueryaddor` and `ejdbqueryhints` methods.
+ * @param jb EJDB database handle.
+ * @param qobj Main query object BSON data.
+ * @return On success return query handle. On error returns NULL.
+ */
+EJDB_EXPORT EJQ* ejdbcreatequery2(EJDB *jb, const void *qbsdata);
+
+/**
+ * Add OR restriction to query object.
+ * @param jb EJDB database handle.
+ * @param q Query handle.
+ * @param orbsdata OR restriction BSON data.
+ * @return NULL on error.
+ */
+EJDB_EXPORT EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, const void *orbsdata);
+
+/**
+ * Set hints for the query.
+ * @param jb EJDB database handle.
+ * @param hintsbsdata Query hints BSON data.
+ * @return NULL on error.
+ */
+EJDB_EXPORT EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, const void *hintsbsdata);
 
 /**
  * Destroy query object created with ejdbcreatequery().
@@ -378,8 +420,8 @@ EJDB_EXPORT void ejdbquerydel(EJQ *q);
 EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
 
 /**
- * Execute query against EJDB collection.
- * It is better to execute update queries with `JBQRYCOUNT` control
+ * Execute the query against EJDB collection.
+ * It is better to execute update queries with specified `JBQRYCOUNT` control
  * flag avoid unnecessarily rows fetching.
  *
  * @param jcoll EJDB database
@@ -392,8 +434,26 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
  * If (qflags & JBQRYCOUNT) then NULL will be returned
  * and only count reported.
  */
-EJDB_EXPORT TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
+EJDB_EXPORT EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 
+/**
+ * Returns the number of elements in the query result set.
+ * @param qr Query result set. Can be `NULL` in this case 0 is returned.
+ */
+EJDB_EXPORT int ejdbqresultnum(EJQRESULT qr);
+
+/**
+ * Gets the pointer of query result BSON data buffer at the specified position `pos`.
+ * If `qr` is `NULL` or `idx` is put of index range then the `NULL` pointer will be returned.
+ * @param qr Query result set object.
+ * @param pos Zero based position of the record.
+ */
+EJDB_EXPORT const void* ejdbqresultbsondata(EJQRESULT qr, int pos, int *size);
+
+/**
+ * Disposes the query result set and frees a records buffers.
+ */
+EJDB_EXPORT void ejdbqresultdispose(EJQRESULT qr);
 
 /**
  * Convenient method to execute update queries.
@@ -418,7 +478,7 @@ EJDB_EXPORT bool ejdbsyncoll(EJCOLL *jcoll);
 
 /**
  * Synchronize entire EJDB database and
- * all its collections with storage.
+ * all of its collections with storage.
  * @param jb Database hand
  */
 EJDB_EXPORT bool ejdbsyncdb(EJDB *jb);
@@ -434,6 +494,9 @@ EJDB_EXPORT bool ejdbtranabort(EJCOLL *coll);
 
 /** Get current transaction status, it will be placed into txActive*/
 EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive);
+
+/** Gets description of EJDB database and its collections. */
+EJDB_EXPORT bson* ejdbmeta(EJDB *jb);
 
 EJDB_EXTERN_C_END
 

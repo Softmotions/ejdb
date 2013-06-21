@@ -149,6 +149,7 @@ EJDB_EXPORT int bson_buffer_size(const bson *b);
  * @param b a BSON object
  */
 EJDB_EXPORT const char *bson_data(const bson *b);
+EJDB_EXPORT const char* bson_data2(const bson *b, int *bsize);
 
 /**
  * Print a string representation of a BSON object.
@@ -1123,8 +1124,10 @@ EJDB_EXPORT int bson_compare_bool(bson_bool_t cv, const void *bsdata, const char
 EJDB_EXPORT bson* bson_dup(const bson *src);
 
 
+EJDB_EXPORT bson* bson_create_from_iterator(bson_iterator *from);
 EJDB_EXPORT bson* bson_create_from_buffer(const void *buf, int bufsz);
 EJDB_EXPORT bson* bson_create_from_buffer2(bson *bs, const void *buf, int bufsz);
+EJDB_EXPORT void bson_init_with_data(bson *bs, const void *bsdata);
 
 EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inbuf);
 EJDB_EXPORT bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf, bool expandall);
