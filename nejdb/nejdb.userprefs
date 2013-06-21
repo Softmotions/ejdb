@@ -1,13 +1,10 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="DebugUnix" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.DB/EJDB.cs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="DebugWindows" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.DB\EJDB.cs">
     <Files>
-      <File FileName="Ejdb.DB/EJDB.cs" Line="356" Column="17" />
-      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.Tests/TestEJDB.cs" Line="28" Column="19" />
-      <File FileName="Ejdb.BSON/BSONType.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.IO/ExtBinaryReader.cs" Line="48" Column="12" />
-      <File FileName="Ejdb.IO/ExtBinaryWriter.cs" Line="41" Column="4" />
+      <File FileName="Ejdb.DB\EJDB.cs" Line="199" Column="58" />
+      <File FileName="c:\Projects\ejdb\nejdb\Ejdb.Tests\TestBSON.cs" Line="1" Column="1" />
+      <File FileName="Ejdb.Tests\TestEJDB.cs" Line="1" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -32,9 +29,6 @@
       </Pad>
       <Pad Id="MonoDevelop.Debugger.WatchPad">
         <State />
-      </Pad>
-      <Pad Id="ConnectionManagerPad">
-        <State selected="True" />
       </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
         <State expanded="True" selected="True">

@@ -138,11 +138,11 @@ namespace Ejdb.DB {
 		/// <summary>
 		/// Name if EJDB library
 		/// </summary>
-		#if EJDBDLL
+#if EJDBDLL
 		public const string EJDB_LIB_NAME = "tcejdbdll";
 #else
 		public const string EJDB_LIB_NAME = "tcejdb";
-		#endif
+#endif
 		/// <summary>
 		/// Pointer to the native EJDB instance.
 		/// </summary>
@@ -194,12 +194,20 @@ namespace Ejdb.DB {
 		}
 
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbcreatecoll")]
-		internal static extern IntPtr _ejdbcreatecoll([In] IntPtr db, [In] IntPtr cname, ref EJDBCollectionOptionsN? opts);
+		internal static extern IntPtr _ejdbcreatecoll([In] IntPtr db, [In] IntPtr cname, IntPtr opts);
+
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbcreatecoll")]
+		internal static extern IntPtr _ejdbcreatecoll([In] IntPtr db, [In] IntPtr cname, ref EJDBCollectionOptionsN opts);
 
 		internal static IntPtr _ejdbcreatecoll(IntPtr db, String cname, EJDBCollectionOptionsN? opts) {
 			IntPtr cptr = UnixMarshal.StringToHeap(cname, Encoding.UTF8);
 			try {
-				return _ejdbcreatecoll(db, cptr, ref opts);
+				if (opts == null) {
+					return _ejdbcreatecoll(db, cptr, IntPtr.Zero);
+				} else {
+					EJDBCollectionOptionsN nopts = (EJDBCollectionOptionsN) opts;
+					return _ejdbcreatecoll(db, cptr, ref nopts);
+				}
 			} finally {
 				UnixMarshal.FreeHeap(cptr);
 			}
