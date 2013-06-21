@@ -37,7 +37,8 @@ deb-source-packages-luaejdb:
 init:
 	cd ./tcejdb && ./configure
 	$(MAKE) -C ./tcejdb version
-	cp ./Changelog ./tcejdb/Changelog
+	- cp ./tcejdb/debian/changelog ./Changelog 
+	- cp ./tcejdb/debian/changelog ./tcejdb/Changelog
 
 
 .PHONY: all clean deb-packages deb-source-packages init initdeb
