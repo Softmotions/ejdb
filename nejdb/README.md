@@ -1,5 +1,4 @@
-
-EJDB .Net Binding
+[EJDB](http://ejdb.org) .Net Binding
 ===========================================
 
 
