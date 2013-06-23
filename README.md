@@ -34,7 +34,7 @@ Features
 * String token matching queries: ```$stror``` ```$strand```
 * [Node.js](http://nodejs.org) binding
 * [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
-* Python/Lua/Java/Ruby bindings
+* Python/Lua/Java/Ruby/.Net bindings
 * [Adobe Air Native Extension (ANE) for EJDB] (https://github.com/thejustinwalsh/airejdb)
 * [Pike language binding] (https://github.com/hww3/pike_modules-ejdb)
 
