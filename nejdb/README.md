@@ -25,7 +25,7 @@ Use the following solution configs to debug and test: `DebugUnix`, `ReleaseUnix`
 Windows
 --------------------------------
 Download appropriate [EJDB binary distribution](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md).
-Then add the `tcejdbdll.dll` directory into search `PATH`.
+Then add the directory containing the `tcejdbdll.dll` into search `PATH`.
 Use the following solution configs to debug and test: `DebugWindows`, `ReleaseWindows`
 
 

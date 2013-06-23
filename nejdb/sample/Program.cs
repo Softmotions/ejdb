@@ -56,7 +56,7 @@ namespace sample {
 			using (var cur = q.Find()) {
 				Console.WriteLine("Found " + cur.Length + " parrots");
 				foreach (var e in cur) {
-					//fetch `name` and the first element of likes array from current BSON iterator.
+					//fetch  the `name` and the first element of likes array from the current BSON iterator.
 					//alternatively you can fetch whole document from the iterator: `e.ToBSONDocument()`
 					BSONDocument rdoc = e.ToBSONDocument("name", "likes.0");	
 					Console.WriteLine(string.Format("{0} likes the '{1}'", rdoc["name"], rdoc["likes.0"]));
