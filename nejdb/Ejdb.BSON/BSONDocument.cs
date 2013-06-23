@@ -130,6 +130,55 @@ namespace Ejdb.BSON {
 			}
 		}
 
+		public BSONDocument(BSONIterator it, string[] fields) : this() {
+			Array.Sort(fields);
+			BSONType bt;
+			int ind = -1;
+			int nfc = 0;
+			foreach (string f in fields) {
+				if (f != null) {
+					nfc++;
+				}
+			}
+			while ((bt = it.Next()) != BSONType.EOO) {
+				if (nfc < 1) {
+					continue;
+				}
+				string kk = it.CurrentKey;
+				if ((ind = Array.IndexOf(fields, kk)) != -1) {
+					Add(it.FetchCurrentValue());
+					fields[ind] = null;
+					nfc--;
+				} else if (bt == BSONType.OBJECT || bt == BSONType.ARRAY) {
+					string[] narr = null;
+					for (var i = 0; i < fields.Length; ++i) {
+						var f = fields[i];
+						if (f == null) {
+							continue;
+						}
+						if (f.IndexOf(kk, StringComparison.Ordinal) == 0 && 
+							f.Length > kk.Length + 1 && 
+							f[kk.Length] == '.') {
+							if (narr == null) {
+								narr = new string[fields.Length];
+							}
+							narr[i] = f.Substring(kk.Length + 1);
+							fields[i] = null;
+							nfc--;
+						}
+					}
+					if (narr != null) {
+						BSONIterator nit = new BSONIterator(it);
+						BSONDocument ndoc = new BSONDocument(nit, narr);
+						if (ndoc.KeysCount > 0) {
+							Add(new BSONValue(bt, kk, ndoc));
+						}
+					}
+				}
+			}
+			it.Dispose();
+		}
+
 		public BSONDocument(byte[] bsdata) : this() {
 			using (BSONIterator it = new BSONIterator(bsdata)) {
 				while (it.Next() != BSONType.EOO) {
@@ -196,11 +245,11 @@ namespace Ejdb.BSON {
 		/// <summary>
 		/// Gets the field value object. 
 		/// </summary>
-		/// <returns>The object value.</returns>
+		/// <remarks>
+		/// Hierarchical field paths are NOT supported. Use <c>[]</c> operator instead.
+		/// </remarks>
+		/// <param name="key">BSON document key</param>
 		/// <see cref="Ejdb.BSON.BSONValue"/>
-		/// <param name="key">Key.</param>
-		/// <returns>Key object </c> or <c>null</c> if the key is not exists or value type is either 
-		/// <see cref="Ejdb.BSON.BSONType.NULL"/> or <see cref="Ejdb.BSON.BSONType.UNDEFINED"/></returns>
 		public object GetObjectValue(string key) {
 			var bv = GetBSONValue(key);
 			return bv != null ? bv.Value : null;
@@ -209,7 +258,7 @@ namespace Ejdb.BSON {
 		/// <summary>
 		/// Determines whether this document has the specified key.
 		/// </summary>
-		/// <returns><c>true</c> if this document hasthe specified key; otherwise, <c>false</c>.</returns>
+		/// <returns><c>true</c> if this document has the specified key; otherwise, <c>false</c>.</returns>
 		/// <param name="key">Key.</param>
 		public bool HasKey(string key) {
 			return (GetBSONValue(key) != null);
@@ -218,12 +267,25 @@ namespace Ejdb.BSON {
 		/// <summary>
 		/// Gets the <see cref="Ejdb.BSON.BSONDocument"/> with the specified key.
 		/// </summary>
+		/// <remarks>
+		/// Hierarchical field paths are supported.
+		/// </remarks>
 		/// <param name="key">Key.</param>
 		/// <returns>Key object </c> or <c>null</c> if the key is not exists or value type is either 
 		/// <see cref="Ejdb.BSON.BSONType.NULL"/> or <see cref="Ejdb.BSON.BSONType.UNDEFINED"/></returns>
 		public object this[string key] {
 			get {
-				return GetObjectValue(key);
+				int ind;
+				if ((ind = key.IndexOf(".", StringComparison.Ordinal)) == -1) {
+					return GetObjectValue(key);
+				} else {
+					string prefix = key.Substring(0, ind);
+					BSONDocument doc = GetObjectValue(prefix) as BSONDocument;
+					if (doc == null || key.Length < ind + 2) {
+						return null;
+					}
+					return doc[key.Substring(ind + 1)];
+				}
 			}
 			set {
 				object v = value;
@@ -450,7 +512,7 @@ namespace Ejdb.BSON {
 			}
 			Type vtype = val.GetType();
 			if (val is BSONDocument) {
-				return new BSONDocument((BSONDocument) val);
+				return (BSONDocument) val;
 			} else if (vtype == typeof(byte[])) {
 				return new BSONDocument((byte[]) val);
 			} else if (vtype.IsAnonymousType()) {

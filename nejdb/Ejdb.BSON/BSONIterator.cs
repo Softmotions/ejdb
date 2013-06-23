@@ -41,23 +41,35 @@ namespace Ejdb.BSON {
 
 		BSONValue _entryDataValue;
 
+		/// <summary>
+		/// Returns <c>true</c> if this <see cref="Ejdb.BSON.BSONIterator"/> is disposed. 
+		/// </summary>
 		public bool Disposed {
 			get {
 				return _disposed;
 			}
 		}
 
+		/// <summary>
+		/// Gets a value indicating whether this <see cref="Ejdb.BSON.BSONIterator"/> is empty.
+		/// </summary>
 		public bool Empty {
 			get {
 				return (_ctype == BSONType.EOO);
 			}
 		}
 
+		/// <summary>
+		/// Gets the length of the document in bytes represented by this iterator.
+		/// </summary>
 		public int DocumentLength {
 			get { return _doclen; }
 			private set { _doclen = value; }
 		}
 
+		/// <summary>
+		/// Gets the current document key pointed by this iterator.
+		/// </summary>
 		public string CurrentKey {
 			get { return _entryKey; }
 		}
@@ -99,6 +111,11 @@ namespace Ejdb.BSON {
 			}
 		}
 
+		internal BSONIterator(BSONIterator it) : this(it._input, it._entryLen + 4) {
+			_closeOnDispose = false;
+			it._entryDataSkipped = true;
+		}
+
 		~BSONIterator() {
 			Dispose();
 		}
@@ -133,8 +150,12 @@ namespace Ejdb.BSON {
 			}
 		}
 
-		public BSONDocument ToBSONDocument() {
-			return new BSONDocument(this);
+		public BSONDocument ToBSONDocument(params string[] fields) {
+			if (fields.Length > 0) {
+				return new BSONDocument(this, fields);
+			} else {
+				return new BSONDocument(this);
+			}
 		}
 
 		public BSONType Next() {
@@ -247,8 +268,7 @@ namespace Ejdb.BSON {
 				case BSONType.ARRAY:
 					{
 						BSONDocument doc = (_ctype == BSONType.OBJECT ? new BSONDocument() : new BSONArray());
-						BSONIterator sit = new BSONIterator(this._input, _entryLen + 4);
-						sit._closeOnDispose = false;
+						BSONIterator sit = new BSONIterator(this);
 						while (sit.Next() != BSONType.EOO) {
 							doc.Add(sit.FetchCurrentValue());
 						}
@@ -315,7 +335,7 @@ namespace Ejdb.BSON {
 		//.//////////////////////////////////////////////////////////////////
 		// 							Private staff								  
 		//.//////////////////////////////////////////////////////////////////
-		void SkipData(bool force = false) {
+		internal void SkipData(bool force = false) {
 			if (_entryDataSkipped && !force) {
 				return;
 			}

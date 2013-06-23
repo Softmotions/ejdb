@@ -4,7 +4,7 @@
 Embedded JSON Database engine
 ====================================
 
-It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/NodeJS/Python/Lua/Java/Ruby applications under terms of LGPL license.**
+It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/.Net/NodeJS/Python/Lua/Java/Ruby applications under terms of LGPL license.**
 
 EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 
@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-06-23` **[C# .Net binding] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
 * `2013-06-02` **[Adobe Air Native Extension (ANE) for EJDB (Thanks to @thejustinwalsh)] (https://github.com/thejustinwalsh/airejdb)**
 * `2013-05-29` **[EJDB Python 2.7.x binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
 * `2013-05-06` **[Ruby binding available](https://github.com/Softmotions/ejdb/blob/master/rbejdb/README.md)**

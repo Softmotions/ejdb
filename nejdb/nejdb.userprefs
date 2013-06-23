@@ -1,24 +1,20 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="DebugWindows" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.DB\EJDB.cs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="DebugUnix" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="sample/Program.cs">
     <Files>
-      <File FileName="Ejdb.DB\EJDB.cs" Line="199" Column="58" />
-      <File FileName="c:\Projects\ejdb\nejdb\Ejdb.Tests\TestBSON.cs" Line="1" Column="1" />
-      <File FileName="Ejdb.Tests\TestEJDB.cs" Line="1" Column="1" />
+      <File FileName="sample/Program.cs" Line="59" Column="70" />
+      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="155" Column="24" />
+      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="148" Column="27" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
-          <Node name="Solution Items" expanded="True" />
           <Node name="nejdb" expanded="True">
-            <Node name="References" expanded="True" />
             <Node name="Ejdb.BSON" expanded="True" />
-            <Node name="Ejdb.DB" expanded="True">
-              <Node name="EJDB.cs" selected="True" />
-            </Node>
-            <Node name="Ejdb.IO" expanded="True" />
-            <Node name="Ejdb.Tests" expanded="True" />
-            <Node name="Ejdb.Utils" expanded="True" />
+          </Node>
+          <Node name="sample" expanded="True">
+            <Node name="Properties" expanded="True" />
+            <Node name="Program.cs" selected="True" />
           </Node>
         </State>
       </Pad>
@@ -28,13 +24,22 @@
         </State>
       </Pad>
       <Pad Id="MonoDevelop.Debugger.WatchPad">
-        <State />
+        <State>
+          <Value>it.CurrentKey</Value>
+          <Value>fields</Value>
+          <Value>fields[i]</Value>
+          <Value>nfc</Value>
+        </State>
+      </Pad>
+      <Pad Id="ConnectionManagerPad">
+        <State selected="True" />
       </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
         <State expanded="True" selected="True">
           <Node name="nejdb" expanded="True">
             <Node name="Ejdb" expanded="True">
               <Node name="Tests" expanded="True">
+                <Node name="TestBSON" expanded="True" />
                 <Node name="TestEJDB" expanded="True" />
               </Node>
             </Node>
@@ -44,7 +49,9 @@
     </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
+    <BreakpointStore>
+      <Breakpoint file="/home/adam/Projects/softmotions/ejdb/nejdb/Ejdb.Tests/TestBSON.cs" line="279" column="1" />
+    </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
 </Properties>

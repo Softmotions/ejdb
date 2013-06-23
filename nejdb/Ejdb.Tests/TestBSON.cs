@@ -252,6 +252,36 @@ namespace Ejdb.Tests {
 			}
 			Assert.AreEqual("bc1[BSONDocument: [BSONValue: BSONType=REGEX, Key=f, Value=[BSONRegexp: re=g, opts=]]]2", cs);
 		}
+
+		[Test]
+		public void TestFilteredDoc() {
+			var doc = new BSONDocument();
+			doc["c"] = "d";
+			doc["aaa"] = 11;
+			doc["ndoc"] = BSONDocument.ValueOf(new {
+				aaaa = "nv1",
+				d = "nv2",
+				nnd = BSONDocument.ValueOf(new {
+					nnv = true,
+					nns = "s"
+				})
+			});
+			doc["ndoc2"] = BSONDocument.ValueOf(new {
+				n = "v"
+			});
+			doc["f"] = "f";
+			BSONIterator it = new BSONIterator(doc);
+			BSONDocument doc2 = it.ToBSONDocument("c", "ndoc.d", "ndoc.nnd.nns", "f");
+			Assert.AreEqual(3, doc2.KeysCount);
+			Assert.AreEqual("d", doc2["c"]);
+			Assert.AreEqual(2, ((BSONDocument) doc2["ndoc"]).KeysCount);
+			Assert.AreEqual("nv2", ((BSONDocument) doc2["ndoc"])["d"]);
+			Assert.AreEqual("s", ((BSONDocument) ((BSONDocument) doc2["ndoc"])["nnd"])["nns"]);
+			Assert.AreEqual("s", doc2["ndoc.nnd.nns"]);
+			Assert.AreEqual("f", "f");
+			//Console.WriteLine("doc2=" + doc2);
+
+		}
 	}
 }
 

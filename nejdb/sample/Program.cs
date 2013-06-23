@@ -1,38 +1,18 @@
-
-EJDB .Net Binding
-===========================================
-
-
-**Note: The .Net EJDB binding designed for .Net 4.0/4.5 and tested on Mono 3 for Unix and Windows.**
-
-
-Prerequisites
---------------------------------
-
- * EJDB C library >= v1.1.13
- * Mono 3.0
- * Monodevelop 4.x
-
-
-Unix
----------------------------------
-
-Install the tcejdb >= 1.1.13 as system-wide library.
-The `tcejdb.so` shared library should be visible to the system linker.
-Use the following solution configs to debug and test: `DebugUnix`, `ReleaseUnix`
-
-
-Windows
---------------------------------
-Download appropriate [EJDB binary distribution](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md).
-Then add the `tcejdbdll.dll` directory into search `PATH`.
-Use the following solution configs to debug and test: `DebugWindows`, `ReleaseWindows`
-
-
-One snippet intro
----------------------------------
-
-```c#
+// ============================================================================================
+//   .NET API for EJDB database library http://ejdb.org
+//   Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
+//
+//   This file is part of EJDB.
+//   EJDB is free software; you can redistribute it and/or modify it under the terms of
+//   the GNU Lesser General Public License as published by the Free Software Foundation; either
+//   version 2.1 of the License or any later version.  EJDB is distributed in the hope
+//   that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+//   License for more details.
+//   You should have received a copy of the GNU Lesser General Public License along with EJDB;
+//   if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+//   Boston, MA 02111-1307 USA.
+// ============================================================================================
 using System;
 using Ejdb.DB;
 using Ejdb.BSON;
@@ -78,7 +58,7 @@ namespace sample {
 				foreach (var e in cur) {
 					//fetch `name` and the first element of likes array from current BSON iterator.
 					//alternatively you can fetch whole document from the iterator: `e.ToBSONDocument()`
-					BSONDocument rdoc = e.ToBSONDocument("name", "likes.0");
+					BSONDocument rdoc = e.ToBSONDocument("name", "likes.0");	
 					Console.WriteLine(string.Format("{0} likes the '{1}'", rdoc["name"], rdoc["likes.0"]));
 				}
 			}
@@ -87,4 +67,3 @@ namespace sample {
 		}
 	}
 }
-```

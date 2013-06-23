@@ -19,9 +19,8 @@
       <excludeFolder url="file://$USER_HOME$/tmp/mongo-python-driver/doc" />
       <excludeFolder url="file://$USER_HOME$/tmp/mongo-python-driver/test" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 2.7" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.3.1 (/usr/bin/python3m)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Node.js v0.10.5 Core Library" level="application" />
   </component>
 </module>
 

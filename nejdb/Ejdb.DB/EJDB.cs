@@ -138,15 +138,17 @@ namespace Ejdb.DB {
 		/// <summary>
 		/// Name if EJDB library
 		/// </summary>
-#if EJDBDLL
+		#if EJDBDLL
 		public const string EJDB_LIB_NAME = "tcejdbdll";
 #else
 		public const string EJDB_LIB_NAME = "tcejdb";
-#endif
+		#endif
 		/// <summary>
 		/// Pointer to the native EJDB instance.
 		/// </summary>
 		IntPtr _db = IntPtr.Zero;
+
+		bool _throwonfail = true;
 		//.//////////////////////////////////////////////////////////////////
 		//   				Native functions refs									  
 		//.//////////////////////////////////////////////////////////////////
@@ -276,6 +278,20 @@ namespace Ejdb.DB {
 			}
 		}
 		#endregion
+		/// <summary>
+		/// If true <see cref="Ejdb.DB.EJDBException"/> will be thrown in the case of failed operation 
+		/// otherwise method will return boolean status flag. Default value: <c>true</c> 
+		/// </summary>
+		/// <value><c>true</c> if throw exception on fail; otherwise, <c>false</c>.</value>
+		public bool ThrowExceptionOnFail {
+			get {
+				return _throwonfail;
+			}
+			set {
+				_throwonfail = value;
+			}
+		}
+
 		/// <summary>
 		/// Gets the last DB error code or <c>null</c> if underlying native database object does not exist.
 		/// </summary>
@@ -430,7 +446,11 @@ namespace Ejdb.DB {
 		public bool EnsureCollection(string cname, EJDBCollectionOptionsN? copts = null) {
 			CheckDisposed();
 			IntPtr cptr = _ejdbcreatecoll(_db, cname, copts);		
-			return (cptr != IntPtr.Zero);
+			bool rv = (cptr != IntPtr.Zero);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -441,7 +461,11 @@ namespace Ejdb.DB {
 		/// <param name="unlink">If set to <c>true</c> then the collection data file will be removed.</param>
 		public bool DropCollection(string cname, bool unlink = false) {
 			CheckDisposed();
-			return _ejdbrmcoll(_db, cname, unlink);
+			bool rv = _ejdbrmcoll(_db, cname, unlink);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -452,7 +476,11 @@ namespace Ejdb.DB {
 		public bool Sync() {
 			CheckDisposed();
 			//internal static extern bool _ejdbsyncdb([In] IntPtr db);
-			return _ejdbsyncdb(_db);
+			bool rv = _ejdbsyncdb(_db);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -467,7 +495,11 @@ namespace Ejdb.DB {
 				return true;
 			}
 			//internal static extern bool _ejdbsyncoll([In] IntPtr coll);
-			return _ejdbsyncoll(cptr);
+			bool rv = _ejdbsyncoll(cptr);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -477,7 +509,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool DropIndexes(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXDROPALL);
+			bool rv = IndexOperation(cname, ipath, JBIDXDROPALL);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -490,7 +526,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool OptimizeIndexes(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXOP);
+			bool rv = IndexOperation(cname, ipath, JBIDXOP);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -500,7 +540,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool EnsureStringIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXSTR);
+			bool rv = IndexOperation(cname, ipath, JBIDXSTR);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -510,7 +554,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool RebuildStringIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXSTR | JBIDXREBLD);
+			bool rv = IndexOperation(cname, ipath, JBIDXSTR | JBIDXREBLD);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -520,7 +568,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool DropStringIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXSTR | JBIDXDROP);
+			bool rv = IndexOperation(cname, ipath, JBIDXSTR | JBIDXDROP);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -530,7 +582,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool EnsureIStringIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXISTR);
+			bool rv = IndexOperation(cname, ipath, JBIDXISTR);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -540,7 +596,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool RebuildIStringIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXISTR | JBIDXREBLD);
+			bool rv = IndexOperation(cname, ipath, JBIDXISTR | JBIDXREBLD);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -550,7 +610,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool DropIStringIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXISTR | JBIDXDROP);
+			bool rv = IndexOperation(cname, ipath, JBIDXISTR | JBIDXDROP);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -560,7 +624,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool EnsureNumberIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXNUM);
+			bool rv = IndexOperation(cname, ipath, JBIDXNUM);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -570,7 +638,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool RebuildNumberIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXNUM | JBIDXREBLD);
+			bool rv = IndexOperation(cname, ipath, JBIDXNUM | JBIDXREBLD);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -580,7 +652,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool DropNumberIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXNUM | JBIDXDROP);
+			bool rv = IndexOperation(cname, ipath, JBIDXNUM | JBIDXDROP);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -590,7 +666,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool EnsureArrayIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXARR);
+			bool rv = IndexOperation(cname, ipath, JBIDXARR);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -600,7 +680,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool RebuildArrayIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXARR | JBIDXREBLD);
+			bool rv = IndexOperation(cname, ipath, JBIDXARR | JBIDXREBLD);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -610,7 +694,11 @@ namespace Ejdb.DB {
 		/// <param name="cname">Name of collection.</param>
 		/// <param name="ipath">JSON indexed field path</param>
 		public bool DropArrayIndex(string cname, string ipath) {
-			return IndexOperation(cname, ipath, JBIDXARR | JBIDXDROP);
+			bool rv = IndexOperation(cname, ipath, JBIDXARR | JBIDXDROP);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -625,7 +713,11 @@ namespace Ejdb.DB {
 				return true;
 			}
 			//internal static extern bool _ejdbtranbegin([In] IntPtr coll);
-			return _ejdbtranbegin(cptr);
+			bool rv = _ejdbtranbegin(cptr);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -639,7 +731,11 @@ namespace Ejdb.DB {
 				return true;
 			}
 			//internal static extern bool _ejdbtrancommit([In] IntPtr coll);
-			return _ejdbtrancommit(cptr);
+			bool rv = _ejdbtrancommit(cptr);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -653,7 +749,11 @@ namespace Ejdb.DB {
 				return true;
 			}
 			//internal static extern bool _ejdbtranabort([In] IntPtr coll);
-			return _ejdbtranabort(cptr);
+			bool rv = _ejdbtranabort(cptr);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
 		}
 
 		/// <summary>
@@ -667,9 +767,35 @@ namespace Ejdb.DB {
 			IntPtr cptr = _ejdbgetcoll(_db, cname);
 			if (cptr == IntPtr.Zero) {
 				active = false;
-				return false;
+				return true;
 			}
-			return _ejdbtranstatus(cptr, out active);
+			bool rv = _ejdbtranstatus(cptr, out active);
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
+			}
+			return rv;
+		}
+
+		public bool Save(string cname, params object[] docs) {
+			CheckDisposed();
+			IntPtr cptr = _ejdbcreatecoll(_db, cname, null);
+			if (cptr == IntPtr.Zero) {
+				if (_throwonfail) {
+					throw new EJDBException(this);
+				} else {
+					return false;
+				}
+			}
+			foreach (var doc in docs) {
+				if (!Save(cptr, BSONDocument.ValueOf(doc), false)) {
+					if (_throwonfail) {
+						throw new EJDBException(this);
+					} else {
+						return false;
+					}
+				}
+			}
+			return true;
 		}
 
 		/// <summary>
@@ -682,11 +808,19 @@ namespace Ejdb.DB {
 			CheckDisposed();
 			IntPtr cptr = _ejdbcreatecoll(_db, cname, null);
 			if (cptr == IntPtr.Zero) {
-				return false;
+				if (_throwonfail) {
+					throw new EJDBException(this);
+				} else {
+					return false;
+				}
 			}
 			foreach (var doc in docs) {
 				if (!Save(cptr, doc, false)) {
-					return false;
+					if (_throwonfail) {
+						throw new EJDBException(this);
+					} else {
+						return false;
+					}
 				}
 			}
 			return true;
@@ -703,11 +837,19 @@ namespace Ejdb.DB {
 			CheckDisposed();
 			IntPtr cptr = _ejdbcreatecoll(_db, cname, null);
 			if (cptr == IntPtr.Zero) {
-				return false;
+				if (_throwonfail) {
+					throw new EJDBException(this);
+				} else {
+					return false;
+				}
 			}
 			foreach (var doc in docs) {
 				if (!Save(cptr, doc, true)) {
-					return false;
+					if (_throwonfail) {
+						throw new EJDBException(this);
+					} else {
+						return false;
+					}
 				}
 			}
 			return true;
@@ -722,6 +864,9 @@ namespace Ejdb.DB {
 			rv = _ejdbsavebson(cptr, bsdata, oiddata, merge);
 			if (rv && bv == null) {
 				doc.SetOID("_id", new BSONOid(oiddata));
+			}
+			if (_throwonfail && !rv) {
+				throw new EJDBException(this);
 			}
 			return  rv;
 		}
@@ -762,7 +907,11 @@ namespace Ejdb.DB {
 			//internal static extern bool _ejdbrmbson([In] IntPtr cptr, [In] byte[] oid);
 			foreach (var oid in oids) {
 				if (!_ejdbrmbson(cptr, oid.ToBytes())) {
-					return false;
+					if (_throwonfail) {
+						throw new EJDBException(this);
+					} else {
+						return false;
+					}
 				}
 			}
 			return true;
