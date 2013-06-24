@@ -54,7 +54,7 @@ namespace Ejdb.Tests {
 			bool rv = jb.Save("mycoll", doc);
 			Assert.IsTrue(rv);
 			Assert.IsNotNull(doc["_id"]);
-			Assert.IsInstanceOfType(typeof(BSONOid), doc["_id"]); 
+			Assert.IsInstanceOf(typeof(BSONOid), doc["_id"]); 
 			rv = jb.Save("mycoll", doc);
 			Assert.IsTrue(rv);
 

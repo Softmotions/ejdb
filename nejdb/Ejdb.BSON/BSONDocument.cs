@@ -268,7 +268,7 @@ namespace Ejdb.BSON {
 		/// Gets the <see cref="Ejdb.BSON.BSONDocument"/> with the specified key.
 		/// </summary>
 		/// <remarks>
-		/// Hierarchical field paths are supported.
+		/// Getter for hierarchical field paths are supported.
 		/// </remarks>
 		/// <param name="key">Key.</param>
 		/// <returns>Key object </c> or <c>null</c> if the key is not exists or value type is either 

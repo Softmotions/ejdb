@@ -19,7 +19,7 @@ using System.Runtime.CompilerServices;
 namespace Ejdb.Utils {
 
 	/// <summary>
-	/// Check if specified type if anonymous.
+	/// Check if specified type is anonymous.
 	/// </summary>
 	public static class TypeExtension {
 		public static bool IsAnonymousType(this Type type) {

@@ -1,27 +1,26 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="DebugUnix" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="sample/Program.cs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="ReleaseUnix" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.Tests/TestEJDB.cs">
     <Files>
-      <File FileName="sample/Program.cs" Line="59" Column="70" />
-      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="155" Column="24" />
-      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="148" Column="27" />
+      <File FileName="Ejdb.Tests/TestEJDB.cs" Line="153" Column="36" />
+      <File FileName="Ejdb.Tests/TestBSON.cs" Line="279" Column="31" />
+      <File FileName="Ejdb.DB/EJDB.cs" Line="5" Column="10" />
+      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="279" Column="68" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State expanded="True">
-          <Node name="nejdb" expanded="True">
+          <Node name="nejdb" expanded="True" selected="True">
+            <Node name="References" expanded="True" />
             <Node name="Ejdb.BSON" expanded="True" />
+            <Node name="Ejdb.DB" expanded="True" />
+            <Node name="Ejdb.Tests" expanded="True" />
           </Node>
-          <Node name="sample" expanded="True">
-            <Node name="Properties" expanded="True" />
-            <Node name="Program.cs" selected="True" />
-          </Node>
+          <Node name="sample" expanded="True" />
         </State>
       </Pad>
       <Pad Id="ClassPad">
-        <State expanded="True" selected="True">
-          <Node name="nejdb" expanded="True" />
-        </State>
+        <State expanded="True" selected="True" />
       </Pad>
       <Pad Id="MonoDevelop.Debugger.WatchPad">
         <State>

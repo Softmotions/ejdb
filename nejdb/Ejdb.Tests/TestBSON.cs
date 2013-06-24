@@ -57,7 +57,7 @@ namespace Ejdb.Tests {
 			doc2.SetNumber("0", 2);
 			Assert.AreEqual(1, doc2.KeysCount);
 			object ival = doc2["0"];
-			Assert.IsInstanceOfType(typeof(int), ival);
+			Assert.IsInstanceOf(typeof(int), ival);
 			Assert.AreEqual(2, ival);
 			doc2.SetNumber("1", Int32.MaxValue);
 			//13-00-00-00
@@ -215,7 +215,7 @@ namespace Ejdb.Tests {
 				}
 				if (c == 2) {
 					Assert.AreEqual(BSONType.OID, bv.BSONType);
-					Assert.IsInstanceOfType(typeof(BSONOid), bv.Value);
+					Assert.IsInstanceOf(typeof(BSONOid), bv.Value);
 					var oid = bv.Value as BSONOid;
 					Assert.AreEqual("51b9f3af98195c4600000000", oid.ToString());
 				}
