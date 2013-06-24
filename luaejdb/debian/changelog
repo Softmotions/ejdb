@@ -1,3 +1,9 @@
+lua-ejdb (1.0.4-1) testing; urgency=low
+
+  * EJDB 1.1.13 
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 24 Jun 2013 12:38:50 +0700
+
 lua-ejdb (1.0.3-2) testing; urgency=low
 
   * EJDB 1.1.x migration

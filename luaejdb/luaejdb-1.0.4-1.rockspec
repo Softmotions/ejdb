@@ -1,5 +1,5 @@
 package = "luaejdb"
-version = "1.0.4-0"
+version = "1.0.4-1"
 source = {
   url = "https://github.com/Softmotions/ejdb.git"
 }
