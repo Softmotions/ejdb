@@ -1,11 +1,13 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="ReleaseUnix" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.Tests/TestEJDB.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.BSON/BSONIterator.cs">
     <Files>
-      <File FileName="Ejdb.Tests/TestEJDB.cs" Line="153" Column="36" />
-      <File FileName="Ejdb.Tests/TestBSON.cs" Line="279" Column="31" />
-      <File FileName="Ejdb.DB/EJDB.cs" Line="5" Column="10" />
-      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="279" Column="68" />
+      <File FileName="Ejdb.Tests/TestEJDB.cs" Line="155" Column="30" />
+      <File FileName="Ejdb.Tests/TestBSON.cs" Line="1" Column="1" />
+      <File FileName="Ejdb.BSON/BSONDocument.cs" Line="129" Column="1" />
+      <File FileName="Ejdb.DB/EJDB.cs" Line="133" Column="16" />
+      <File FileName="Ejdb.BSON/BSONIterator.cs" Line="230" Column="18" />
+      <File FileName="Ejdb.DB/EJDBQuery.cs" Line="158" Column="3" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -23,12 +25,7 @@
         <State expanded="True" selected="True" />
       </Pad>
       <Pad Id="MonoDevelop.Debugger.WatchPad">
-        <State>
-          <Value>it.CurrentKey</Value>
-          <Value>fields</Value>
-          <Value>fields[i]</Value>
-          <Value>nfc</Value>
-        </State>
+        <State />
       </Pad>
       <Pad Id="ConnectionManagerPad">
         <State selected="True" />
@@ -38,7 +35,6 @@
           <Node name="nejdb" expanded="True">
             <Node name="Ejdb" expanded="True">
               <Node name="Tests" expanded="True">
-                <Node name="TestBSON" expanded="True" />
                 <Node name="TestEJDB" expanded="True" />
               </Node>
             </Node>
@@ -50,6 +46,8 @@
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>
       <Breakpoint file="/home/adam/Projects/softmotions/ejdb/nejdb/Ejdb.Tests/TestBSON.cs" line="279" column="1" />
+      <Breakpoint file="/home/adam/Projects/softmotions/ejdb/nejdb/Ejdb.Tests/TestEJDB.cs" line="155" column="34" />
+      <Breakpoint file="/home/adam/Projects/softmotions/ejdb/nejdb/Ejdb.BSON/BSONIterator.cs" line="154" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />

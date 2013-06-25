@@ -147,7 +147,7 @@ const char* ejdberrmsg(int ecode) {
         case JBEINVALIDCOLNAME: return "invalid collection name";
         case JBEINVALIDBSON: return "invalid bson object";
         case JBEQINVALIDQCONTROL: return "invalid query control field starting with '$'";
-        case JBEQINOPNOTARRAY: return "$strand, $stror, $in, $nin, $bt keys requires not empty array value";
+        case JBEQINOPNOTARRAY: return "$strand, $stror, $in, $nin, $bt keys require not empty array value";
         case JBEMETANVALID: return "inconsistent database metadata";
         case JBEFPATHINVALID: return "invalid JSEJDB_EXPORT const char *ejdbversion();ON field path value";
         case JBEQINVALIDQRX: return "invalid query regexp value";

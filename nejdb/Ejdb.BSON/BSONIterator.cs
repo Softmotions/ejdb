@@ -255,7 +255,8 @@ namespace Ejdb.BSON {
 						Debug.Assert(_entryLen - 1 >= 0);						
 						string sv = Encoding.UTF8.GetString(_input.ReadBytes(_entryLen - 1)); 
 						_entryDataValue = new BSONValue(_ctype, _entryKey, sv);
-						Debug.Assert(_input.ReadByte() == 0x00); //trailing zero byte
+						var rb = _input.ReadByte();
+						Debug.Assert(rb == 0x00); //trailing zero byte
 						break;
 					}
 				case BSONType.BOOL:
