@@ -769,7 +769,7 @@ if PY3:
         float: lambda f: BSON_Double(f),
         str: lambda s: BSON_String(s),
         dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
-        BSON_LazyDict: lambda d: BSON_Document(d._check_lazy()),
+        BSON_LazyDict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
         list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
         int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(
             i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
@@ -786,7 +786,7 @@ else:
         str: lambda s: BSON_String(s),
         unicode: lambda s: BSON_String(s),
         dict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
-        BSON_LazyDict: lambda d: BSON_Document(d._check_lazy()),
+        BSON_LazyDict: lambda d: BSON_Document(odict((str(k), py_to_bs(v)) for k, v in d.items())),
         list: lambda l: BSON_Array([py_to_bs(v) for v in l]),
         int: lambda i: BSON_Int32(i) if -2 ** 31 <= i <= 2 ** 31 - 1 else BSON_Int64(
             i) if -2 ** 63 <= i <= 2 ** 63 - 1 else _py_no_bs(i),
