@@ -18,6 +18,8 @@ Installation
 `pip` for python3 or python2 should be installed (`sudo apt-get install python3-pip` | `sudo apt-get install python-pip`)
 
 ```
+umask 022
+
    sudo pip install pyejdb
 
 Upgrading:
@@ -27,6 +29,8 @@ Upgrading:
 **(B) Installing directly from sources**
 
 ```
+umask 022
+
 git clone https://github.com/Softmotions/ejdb.git
 cd ./pyejdb
 sudo python3 ./setup.py install
