@@ -93,6 +93,7 @@ addressbook*
 /jejdb
 /nejdb
 /rbejdb
+/goejdb
 /misc
 /node/nodejs
 /node/tests/bench
