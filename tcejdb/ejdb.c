@@ -129,6 +129,7 @@ EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp2(_EJDBNUM *nu1, _EJDBNUM *nu2, bson_type bt);
 static EJCOLL* _getcoll(EJDB *jb, const char *colname);
+static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags);
 
 
 extern const char *utf8proc_errmsg(ssize_t errcode);
@@ -949,6 +950,47 @@ bson* ejdbmeta(EJDB *jb) {
     return bs;
 }
 
+bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags) {
+    assert(jb && path);
+    bool err = false;
+    bool isdir = false;
+    if (!tcstatfile(path, &isdir, NULL, NULL)) {
+        return false;
+    }
+    if (!isdir) {
+        if (mkdir(path, 00755)) {
+            _ejdbsetecode(jb, TCEMKDIR, __FILE__, __LINE__, __func__);
+            return false;
+        }
+    }
+    TCLIST *_cnames = cnames;
+    if (_cnames == NULL) {
+        _cnames = ejdbgetcolls(jb);
+        if (_cnames == NULL) {
+            return false;
+        }
+    }
+    for (int i = 0; i < TCLISTNUM(cnames); ++i) {
+        const char *cn = TCLISTVALPTR(cnames, i);
+        assert(cn);
+        EJCOLL *coll = ejdbgetcoll(jb, cn);
+        if (!coll) continue;
+        if (!JBCLOCKMETHOD(coll, false)) {
+            err = true;
+            goto finish;
+        }
+        if (!_exportcoll(coll, path, flags)) {
+            err = true;
+        }
+        JBCUNLOCKMETHOD(coll);
+    }
+finish:
+    if (_cnames != cnames) {
+        tclistdel(_cnames);
+    }
+    return !err;
+}
+
 /*************************************************************************************************
  * private features
  *************************************************************************************************/
@@ -962,7 +1004,6 @@ static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags) {
     TCXSTR *colbuf = tcxstrnew3(1024);
     TCXSTR *bsbuf = tcxstrnew3(1024);
     int sz = 0;
-    uint64_t hdbiter;
 #ifndef _WIN32
     HANDLE fd = open(fpath, O_RDWR | O_CREAT | O_TRUNC, JBFILEMODE);
     HANDLE fdm = open(fpathm, O_RDWR | O_CREAT | O_TRUNC, JBFILEMODE);
@@ -980,10 +1021,11 @@ static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags) {
         err = true;
         goto finish;
     }
-    if (!tchdbiterinit4(hdb, &hdbiter)) {
+    TCHDBITER *it = tchdbiter2init(hdb);
+    if (!it) {
         goto finish;
     }
-    while (!err && tchdbiternext4(hdb, &hdbiter, skbuf, colbuf)) {
+    while (!err && tchdbiter2next(hdb, it, skbuf, colbuf)) {
         sz = tcmaploadoneintoxstr(TCXSTRPTR(colbuf), TCXSTRSIZE(colbuf), JDBCOLBSON, JDBCOLBSONL, bsbuf);
         if (sz > 0) {
             char *wbuf = NULL;
