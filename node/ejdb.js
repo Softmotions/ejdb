@@ -23,7 +23,7 @@ try {
 }
 var EJDBImpl = ejdblib.NodeEJDB;
 
-const DEFAULT_OPEN_MODE = (ejdblib.JBOWRITER | ejdblib.JBOCREAT | ejdblib.JBOTSYNC);
+const DEFAULT_OPEN_MODE = (ejdblib.JBOWRITER | ejdblib.JBOCREAT);
 var EJDB = function(dbFile, openMode) {
     Object.defineProperty(this, "_impl", {
         value : new EJDBImpl(dbFile, (openMode > 0) ? openMode : DEFAULT_OPEN_MODE),

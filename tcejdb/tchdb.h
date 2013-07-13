@@ -1,6 +1,7 @@
 /*************************************************************************************************
  * The hash database API of Tokyo Cabinet
  *                                                               Copyright (C) 2006-2012 FAL Labs
+ *                                                               Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
  * This file is part of Tokyo Cabinet.
  * Tokyo Cabinet is free software; you can redistribute it and/or modify it under the terms of
  * the GNU Lesser General Public License as published by the Free Software Foundation; either
@@ -35,6 +36,10 @@ __TCHDB_CLINKAGEBEGIN
 /*************************************************************************************************
  * API
  *************************************************************************************************/
+
+typedef struct { /** HDB alternative iterator */
+    uint64_t pos;
+} TCHDBITER;
 
 
 typedef struct { /* type of structure for a hash database */
@@ -88,6 +93,7 @@ typedef struct { /* type of structure for a hash database */
     uint64_t frec; /* offset of the first record */
     uint64_t dfcur; /* offset of the cursor for defragmentation */
     uint64_t iter; /* offset of the iterator */
+    TCLIST *iter2list; /* list of pointers to active `TCHDBITER` iterators */
     uint64_t msiz; /* size of the mapped memory */
     uint64_t xmsiz; /* size of the extra mapped memory */
     uint64_t xfsiz; /* extra size of the file for mapped memory */
@@ -115,6 +121,7 @@ typedef struct { /* type of structure for a hash database */
     volatile int64_t cnt_trunc; /* tesing counter for truncation times */
 #endif
 } TCHDB;
+
 
 enum { /* enumeration for additional flags */
     HDBFOPEN = 1 << 0, /* whether opened */
@@ -417,7 +424,37 @@ EJDB_EXPORT int tchdbvsiz2(TCHDB *hdb, const char *kstr);
    If successful, the return value is true, else, it is false.
    The iterator is used in order to access the key of every record stored in a database. */
 EJDB_EXPORT bool tchdbiterinit(TCHDB *hdb);
-EJDB_EXPORT bool tchdbiterinit4(TCHDB *hdb, uint64_t *iter);
+
+/* Initialize the iterator of a hash database object and returns alloacted iterator.
+ * The `tchdbiter2dispose()` must be calledto finish using the iterator and dispose resources.
+ * Returns iterator handle or `NULL` if error.
+ */
+EJDB_EXPORT TCHDBITER* tchdbiter2init(TCHDB *hdb);
+
+EJDB_EXPORT bool tchdbiter2next(TCHDB *hdb, TCHDBITER* iter, TCXSTR *kxstr, TCXSTR *vxstr);
+
+/**
+ * Disposes iterator handle.
+ */
+EJDB_EXPORT bool tchdbiter2dispose(TCHDB *hdb, TCHDBITER* iter);
+
+
+/* Move the iterator to the record corresponding a key of a hash database object.
+   `hdb' specifies the hash database object.
+   `kbuf' specifies the pointer to the region of the key.
+   `ksiz' specifies the size of the region of the key.
+   If successful, the return value is true, else, it is false.  False is returned if there is
+   no record corresponding the condition. */
+EJDB_EXPORT bool tchdbiterinit2(TCHDB *hdb, const void *kbuf, int ksiz);
+
+
+/* Move the iterator to the record corresponding a key string of a hash database object.
+   `hdb' specifies the hash database object.
+   `kstr' specifies the string of the key.
+   If successful, the return value is true, else, it is false.  False is returned if there is
+   no record corresponding the condition. */
+EJDB_EXPORT bool tchdbiterinit3(TCHDB *hdb, const char *kstr);
+
 
 
 /* Get the next key of the iterator of a hash database object.
@@ -457,7 +494,6 @@ EJDB_EXPORT char *tchdbiternext2(TCHDB *hdb);
    If successful, the return value is true, else, it is false.  False is returned when no record
    is to be get out of the iterator. */
 EJDB_EXPORT bool tchdbiternext3(TCHDB *hdb, TCXSTR *kxstr, TCXSTR *vxstr);
-EJDB_EXPORT bool tchdbiternext4(TCHDB *hdb, uint64_t *iter, TCXSTR *kxstr, TCXSTR *vxstr);
 
 
 /* Get forward matching keys in a hash database object.
@@ -853,23 +889,6 @@ EJDB_EXPORT char *tchdbgetnext2(TCHDB *hdb, const char *kstr);
    released with the `free' call when it is no longer in use.  The retion pointed to by `vbp'
    should not be released. */
 EJDB_EXPORT char *tchdbgetnext3(TCHDB *hdb, const char *kbuf, int ksiz, int *sp, const char **vbp, int *vsp);
-
-
-/* Move the iterator to the record corresponding a key of a hash database object.
-   `hdb' specifies the hash database object.
-   `kbuf' specifies the pointer to the region of the key.
-   `ksiz' specifies the size of the region of the key.
-   If successful, the return value is true, else, it is false.  False is returned if there is
-   no record corresponding the condition. */
-EJDB_EXPORT bool tchdbiterinit2(TCHDB *hdb, const void *kbuf, int ksiz);
-
-
-/* Move the iterator to the record corresponding a key string of a hash database object.
-   `hdb' specifies the hash database object.
-   `kstr' specifies the string of the key.
-   If successful, the return value is true, else, it is false.  False is returned if there is
-   no record corresponding the condition. */
-EJDB_EXPORT bool tchdbiterinit3(TCHDB *hdb, const char *kstr);
 
 
 /* Process each record atomically of a hash database object.

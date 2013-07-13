@@ -1,4 +1,4 @@
-# Source of configuration for Tokyo Cabinet
+# Source of configuration for EJDB
 
 
 #================================================================
@@ -10,7 +10,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(tcejdb, 1.1.4)
+AC_INIT(tcejdb, 1.1.13)
 AC_CANONICAL_HOST
 
 # Package information
@@ -32,7 +32,7 @@ MYCGIFILES="tcawmgr.cgi"
 MYMAN1FILES=""
 MYMAN3FILES="libtcejdb.3"
 #MYDOCUMENTFILES="COPYING ChangeLog doc tokyocabinet.idl"
-MYDOCUMENTFILES="COPYING Changelog"
+MYDOCUMENTFILES="COPYING"
 MYPCFILES="tcejdb.pc"
 
 #C compiler
@@ -365,7 +365,7 @@ case $host_os in
         AC_CHECK_LIB(winpthread, main, [], AC_MSG_ERROR([winpthread lubrary is required]))
         MYLDFLAGS="-static-libgcc -static-libstdc++ $MYLDFLAGS -Wl,-Bstatic"
         MYHEADERFILES="$MYHEADERFILES win32/platform.h"
-        MYCPPFLAGS="$MYCPPFLAGS -DPCRE_STATIC -D__USE_MINGW_ANSI_STDIO"
+        MYCPPFLAGS="$MYCPPFLAGS -DPCRE_STATIC"
         MYCFLAGS="$MYCFLAGS -Wno-pedantic-ms-format"
         ;;
     *)

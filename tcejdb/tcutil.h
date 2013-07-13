@@ -1,6 +1,7 @@
 /*************************************************************************************************
  * The utility API of Tokyo Cabinet
  *                                                               Copyright (C) 2006-2012 FAL Labs
+ *                                                               Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
  * This file is part of Tokyo Cabinet.
  * Tokyo Cabinet is free software; you can redistribute it and/or modify it under the terms of
  * the GNU Lesser General Public License as published by the Free Software Foundation; either
@@ -3725,7 +3726,7 @@ typedef unsigned char TCBITMAP; /* type of a bit map object */
 
 #include <stdio.h>
 
-#define _TC_VERSION    "1.1.4"
+#define _TC_VERSION    "1.1.13"
 #define _TC_LIBVER     911
 #define _TC_FORMATVER  "1.0"
 

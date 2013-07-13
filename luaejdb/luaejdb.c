@@ -14,7 +14,7 @@
 //Cursor user data
 #define EJDBCURSORMT "mtejc"
 
-#define DEFAULT_OPEN_MODE (JBOWRITER | JBOCREAT | JBOTSYNC)
+#define DEFAULT_OPEN_MODE (JBOWRITER | JBOCREAT)
 
 #define TBLSETNUMCONST(_CN) \
     do { \

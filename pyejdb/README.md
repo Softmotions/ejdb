@@ -1,4 +1,4 @@
-Embedded JSON database library Python3 binding
+Embedded JSON database library Python 2.7/3.x binding
 ============================================================
 
 Installation
@@ -8,30 +8,36 @@ Installation
 **Required tools/system libraries:**
 
 * gcc
-* **Python3 >= 3.2**
+* **Python >= 3.x|2.7.x**
 * EJDB C library **libtcejdb** ([from sources](https://github.com/Softmotions/ejdb#manual-installation) or as [debian packages](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation))
 
-**(A) Using pip**
+**Python binding published:** http://pypi.python.org/pypi/pyejdb
 
-`pip` for python3 should be installed (`sudo apt-get install python3-pip`)
+**(A) Installing using pip**
+
+`pip` for python3 or python2 should be installed (`sudo apt-get install python3-pip` | `sudo apt-get install python-pip`)
 
 ```
-   sudo pip-3.2 install pyejdb
+umask 022
+
+   sudo pip install pyejdb
 
 Upgrading:
-   sudo pip-3.2 install pyejdb --upgrade
+   sudo pip install pyejdb --upgrade
 ```
 
 **(B) Installing directly from sources**
 
 ```
+umask 022
+
 git clone https://github.com/Softmotions/ejdb.git
 cd ./pyejdb
 sudo python3 ./setup.py install
 ```
 
 
-**(C) Installing on Ubuntu/Debian**
+**(C) Installing on Ubuntu/Debian (only for Python3.2)**
 
 ```
 sudo add-apt-repository ppa:adamansky/ejdb

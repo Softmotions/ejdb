@@ -24,6 +24,7 @@
 *.dsc
 *.build
 *.changes
+*.pyc
 .dep.inc
 */nbproject/private/*
 /ejdbdll
@@ -90,6 +91,9 @@ addressbook*
 /pyejdb
 /luaejdb
 /jejdb
+/nejdb
+/rbejdb
+/goejdb
 /misc
 /node/nodejs
 /node/tests/bench

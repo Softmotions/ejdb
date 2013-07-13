@@ -1,6 +1,7 @@
 /*************************************************************************************************
  * The fixed-length database API of Tokyo Cabinet
  *                                                               Copyright (C) 2006-2012 FAL Labs
+ *                                                               Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
  * This file is part of Tokyo Cabinet.
  * Tokyo Cabinet is free software; you can redistribute it and/or modify it under the terms of
  * the GNU Lesser General Public License as published by the Free Software Foundation; either
@@ -3125,7 +3126,7 @@ void tcfdbprintmeta(TCFDB *fdb) {
     wp += sprintf(wp, " fd=%d", fdb->fd);
     wp += sprintf(wp, " walfd=%d", fdb->walfd);
     wp += sprintf(wp, " dbgfd=%d", fdb->dbgfd);
-#endif    
+#endif
 #ifndef NDEBUG
     wp += sprintf(wp, " cnt_writerec=%" PRIdMAX "", (int64_t) fdb->cnt_writerec);
     wp += sprintf(wp, " cnt_readrec=%" PRIdMAX "", (int64_t) fdb->cnt_readrec);

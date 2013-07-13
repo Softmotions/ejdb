@@ -1258,9 +1258,15 @@ static int procconf(int mode) {
             printf("type(double): size=%d align=%d offset=%d max=%g\n",
                     (int) sizeof (double), (int) _alignof(double), TCALIGNOF(double),
                     (double) DBL_MAX);
+#ifdef __MINGW32__
+            printf("type(long double): size=%d align=%d offset=%d max=%g\n",
+                    (int) sizeof (long double), (int) _alignof(long double), TCALIGNOF(long double),
+                    (double) LDBL_MAX);
+#else
             printf("type(long double): size=%d align=%d offset=%d max=%Lg\n",
                     (int) sizeof (long double), (int) _alignof(long double), TCALIGNOF(long double),
                     (long double) LDBL_MAX);
+#endif
             printf("type(void *): size=%d align=%d offset=%d\n",
                     (int) sizeof (void *), (int) _alignof(void *), TCALIGNOF(void *));
             printf("type(intptr_t): size=%d align=%d offset=%d max=%" PRIuMAX "\n",

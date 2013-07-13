@@ -1,6 +1,7 @@
 /*************************************************************************************************
  * System-dependent configurations of Tokyo Cabinet
  *                                                               Copyright (C) 2006-2012 FAL Labs
+ *                                                               Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
  * This file is part of Tokyo Cabinet.
  * Tokyo Cabinet is free software; you can redistribute it and/or modify it under the terms of
  * the GNU Lesser General Public License as published by the Free Software Foundation; either
@@ -545,6 +546,7 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
 #define __atomic_fetch_nand(ptr,val,order) __sync_fetch_and_nand(ptr, val)
 #endif
 
+#define TCAS(ptr, expected, desired) __sync_bool_compare_and_swap(ptr, expected, desired)
 
 #endif                                   // duplication check
 

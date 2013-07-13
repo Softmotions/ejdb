@@ -68,6 +68,10 @@ typedef struct {
     bool icase; //ignore case normalization
 } _BSONIPATHROWLDR;
 
+
+/* Maximum number of objects keeped to update deffered indexes */
+#define JBMAXDEFFEREDIDXNUM 512
+
 /* context of deffered index updates. See `_updatebsonidx()` */
 typedef struct {
     bson_oid_t oid;
@@ -76,7 +80,6 @@ typedef struct {
 } _DEFFEREDIDXCTX;
 
 /* private function prototypes */
-static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags);
 static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, const char *func);
 static bool _ejdbsetmutex(EJDB *ejdb);
 EJDB_INLINE bool _ejdblockmethod(EJDB *ejdb, bool wr);
@@ -107,6 +110,7 @@ static bool _metasetbson2(EJCOLL *jcoll, const char *mkey, bson *val, bool merge
 static bson* _imetaidx(EJCOLL *jcoll, const char *ipath);
 static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf, TCMAP **dfields, TCMAP **ifields, bool *imode);
 static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec);
+static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, const void *qspecbsdata);
 static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf, int mgrp);
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens);
@@ -133,6 +137,10 @@ extern const char *utf8proc_errmsg(ssize_t errcode);
 static const bool yes = true;
 static const bool no = false;
 
+const char *ejdbversion() {
+    return _TC_VERSION;
+}
+
 const char* ejdberrmsg(int ecode) {
     if (ecode > -6 && ecode < 0) { //Hook for negative error codes of utf8proc library
         return utf8proc_errmsg(ecode);
@@ -141,9 +149,9 @@ const char* ejdberrmsg(int ecode) {
         case JBEINVALIDCOLNAME: return "invalid collection name";
         case JBEINVALIDBSON: return "invalid bson object";
         case JBEQINVALIDQCONTROL: return "invalid query control field starting with '$'";
-        case JBEQINOPNOTARRAY: return "$strand, $stror, $in, $nin, $bt keys requires not empty array value";
+        case JBEQINOPNOTARRAY: return "$strand, $stror, $in, $nin, $bt keys require not empty array value";
         case JBEMETANVALID: return "inconsistent database metadata";
-        case JBEFPATHINVALID: return "invalid JSON field path value";
+        case JBEFPATHINVALID: return "invalid JSEJDB_EXPORT const char *ejdbversion();ON field path value";
         case JBEQINVALIDQRX: return "invalid query regexp value";
         case JBEQRSSORTING: return "result set sorting error";
         case JBEQERROR: return "invalid query";
@@ -153,7 +161,6 @@ const char* ejdberrmsg(int ecode) {
         case JBEQINCEXCL: return "$fields hint cannot mix include and exclude fields";
         case JBEQACTKEY: return "action key in $do block can only be one of: $join";
         case JBEMAXNUMCOLS: return "exceeded the maximum number of collections per database: 1024";
-        case JBEEI: return "export/import error";
 
         default: return tcerrmsg(ecode);
     }
@@ -383,6 +390,12 @@ bool ejdbsavebson2(EJCOLL *jcoll, bson *bs, bson_oid_t *oid, bool merge) {
     return rv;
 }
 
+bool ejdbsavebson3(EJCOLL *jcoll, const void *bsdata, bson_oid_t *oid, bool merge) {
+    bson bs;
+    bson_init_with_data(&bs, bsdata);
+    return ejdbsavebson2(jcoll, &bs, oid, merge);
+}
+
 bool ejdbrmbson(EJCOLL *jcoll, bson_oid_t *oid) {
     assert(jcoll && oid);
     if (!JBISOPEN(jcoll->jb)) {
@@ -483,6 +496,67 @@ EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *
 error:
     ejdbquerydel(q);
     return NULL;
+}
+
+EJQ* ejdbcreatequery2(EJDB *jb, const void *qbsdata) {
+    assert(jb);
+    if (!qbsdata) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    EJQ *q;
+    TCCALLOC(q, 1, sizeof (*q));
+    q->qobjlist = _parseqobj2(jb, q, qbsdata);
+    if (!q->qobjlist) {
+        goto error;
+    }
+    return q;
+error:
+    ejdbquerydel(q);
+    return NULL;
+}
+
+EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, const void *orbsdata) {
+    assert(jb && q);
+    if (!orbsdata) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    EJQ *oq = ejdbcreatequery2(jb, orbsdata);
+    if (oq == NULL) {
+        return NULL;
+    }
+    q->orqobjsnum++;
+    if (q->orqobjsnum == 1) {
+        TCMALLOC(q->orqobjs, sizeof (*(q->orqobjs)) * q->orqobjsnum);
+    } else {
+        TCREALLOC(q->orqobjs, q->orqobjs, sizeof (*(q->orqobjs)) * q->orqobjsnum);
+    }
+    q->orqobjs[q->orqobjsnum - 1] = *oq; //copy
+    TCFREE(oq);
+    return q;
+}
+
+EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, const void *hintsbsdata) {
+    assert(jb && q);
+    if (!hintsbsdata) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    bson_iterator it;
+    bson_iterator_from_buffer(&it, hintsbsdata);
+    bson *bs = bson_create_from_iterator(&it);
+    if (bs->err) {
+        bson_del(bs);
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    if (q->hints) {
+        bson_del(q->hints);
+        q->hints = NULL;
+    }
+    q->hints = bs;
+    return q;
 }
 
 void ejdbquerydel(EJQ *q) {
@@ -657,7 +731,7 @@ uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bs
     return count;
 }
 
-TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
+EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
     assert(jcoll && q && q->qobjlist);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -672,6 +746,26 @@ TCLIST* ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags,
     TCLIST *res = _qryexecute(jcoll, q, count, qflags, log);
     JBCUNLOCKMETHOD(jcoll);
     return res;
+}
+
+int ejdbqresultnum(EJQRESULT qr) {
+    return qr ? tclistnum(qr) : 0;
+}
+
+const void* ejdbqresultbsondata(EJQRESULT qr, int pos, int *size) {
+    if (!qr || pos < 0) {
+        *size = 0;
+        return NULL;
+    }
+    const void *bsdata = tclistval2(qr, pos);
+    *size = (bsdata != NULL) ? bson_size2(bsdata) : 0;
+    return bsdata;
+}
+
+void ejdbqresultdispose(EJQRESULT qr) {
+    if (qr) {
+        tclistdel(qr);
+    }
 }
 
 bool ejdbsyncoll(EJCOLL *jcoll) {
@@ -780,46 +874,79 @@ bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
     return true;
 }
 
-bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags) {
-    assert(jb && path);
-    bool err = false;
-    bool isdir = false;
-    if (!tcstatfile(path, &isdir, NULL, NULL)) {
-        return false;
-    }
-    if (!isdir) {
-        if (mkdir(path, 00755)) {
-            _ejdbsetecode(jb, TCEMKDIR, __FILE__, __LINE__, __func__);
-            return false;
-        }
-    }
-    TCLIST *_cnames = cnames;
-    if (_cnames == NULL) {
-        _cnames = ejdbgetcolls(jb);
-        if (_cnames == NULL) {
-            return false;
-        }
-    }
-    for (int i = 0; i < TCLISTNUM(cnames); ++i) {
-        const char *cn = TCLISTVALPTR(cnames, i);
-        assert(cn);
-        EJCOLL *coll = ejdbgetcoll(jb, cn);
-        if (!coll) continue;
+bson* ejdbmeta(EJDB *jb) {
+    JBENSUREOPENLOCK(jb, false, NULL);
+    char nbuff[TCNUMBUFSIZ];
+    bson *bs = bson_create();
+    bson_init(bs);
+    bson_append_string(bs, "file", jb->metadb->hdb->path);
+    bson_append_start_array(bs, "collections"); //collections
+    TCLIST *cols = ejdbgetcolls(jb);
+    for (int i = 0; i < TCLISTNUM(cols); ++i) {
+        EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
         if (!JBCLOCKMETHOD(coll, false)) {
-            err = true;
-            goto finish;
+            tclistdel(cols);
+            bson_del(bs);
+            JBUNLOCKMETHOD(jb);
+            return NULL;
         }
-        if (!_exportcoll(coll, path, flags)) {
-            err = true;
+        bson_numstrn(nbuff, TCNUMBUFSIZ, i);
+        bson_append_start_object(bs, nbuff); //coll obj
+        bson_append_string_n(bs, "name", coll->cname, coll->cnamesz);
+        bson_append_string(bs, "file", coll->tdb->hdb->path);
+        bson_append_long(bs, "records", coll->tdb->hdb->rnum);
+
+        bson_append_start_object(bs, "options"); //coll.options
+        bson_append_long(bs, "buckets", coll->tdb->hdb->bnum);
+        bson_append_long(bs, "cachedrecords", coll->tdb->hdb->rcnum);
+        bson_append_bool(bs, "large", (coll->tdb->opts & TDBTLARGE));
+        bson_append_bool(bs, "compressed", (coll->tdb->opts & TDBTDEFLATE));
+        bson_append_finish_object(bs); //eof coll.options
+
+        bson_append_start_array(bs, "indexes"); //coll.indexes[]
+        for (int j = 0; j < coll->tdb->inum; ++j) {
+            TDBIDX *idx = (coll->tdb->idxs + j);
+            if (idx->type != TDBITLEXICAL &&
+                    idx->type != TDBITDECIMAL &&
+                    idx->type != TDBITTOKEN) {
+                continue;
+            }
+            bson_numstrn(nbuff, TCNUMBUFSIZ, j);
+            bson_append_start_object(bs, nbuff); //coll.indexes.index
+            bson_append_string(bs, "field", idx->name + 1);
+            bson_append_string(bs, "iname", idx->name);
+            switch (idx->type) {
+                case TDBITLEXICAL:
+                    bson_append_string(bs, "type", "lexical");
+                    break;
+                case TDBITDECIMAL:
+                    bson_append_string(bs, "type", "decimal");
+                    break;
+                case TDBITTOKEN:
+                    bson_append_string(bs, "type", "token");
+                    break;
+            }
+            TCBDB *idb = (TCBDB*) idx->db;
+            if (idb) {
+                bson_append_long(bs, "records", idb->rnum);
+                bson_append_string(bs, "file", idb->hdb->path);
+            }
+            bson_append_finish_object(bs); //eof coll.indexes.index
         }
+        bson_append_finish_array(bs); //eof coll.indexes[]
+        bson_append_finish_object(bs); //eof coll
         JBCUNLOCKMETHOD(coll);
     }
-
-finish:
-    if (_cnames != cnames) {
-        tclistdel(_cnames);
+    bson_append_finish_array(bs); //eof collections
+    bson_finish(bs);
+    tclistdel(cols);
+    JBUNLOCKMETHOD(jb);
+    if (bs->err) {
+        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        bson_del(bs);
+        bs = NULL;
     }
-    return !err;
+    return bs;
 }
 
 /*************************************************************************************************
@@ -2845,16 +2972,16 @@ fullscan: /* Full scan */
     if (log) {
         tcxstrprintf(log, "RUN FULLSCAN\n");
     }
-    uint64_t hdbiter;
     TCMAP *updkeys = (ejq->flags & EJQUPDATING) ? tcmapnew2(100 * 1024) : NULL;
-    if (!tchdbiterinit4(hdb, &hdbiter)) {
+    TCHDBITER *hdbiter = tchdbiter2init(hdb);
+    if (!hdbiter) {
         goto finish;
     }
     TCXSTR *skbuf = tcxstrnew3(sizeof (bson_oid_t) + 1);
     tcxstrclear(ejq->colbuf);
     tcxstrclear(ejq->bsbuf);
     int rows = 0;
-    while ((all || count < max) && tchdbiternext4(hdb, &hdbiter, skbuf, ejq->colbuf)) {
+    while ((all || count < max) && tchdbiter2next(hdb, hdbiter, skbuf, ejq->colbuf)) {
         ++rows;
         sz = tcmaploadoneintoxstr(TCXSTRPTR(ejq->colbuf), TCXSTRSIZE(ejq->colbuf), JDBCOLBSON, JDBCOLBSONL, ejq->bsbuf);
         if (sz <= 0) {
@@ -2886,6 +3013,7 @@ wfinish:
         tcxstrclear(ejq->colbuf);
         tcxstrclear(ejq->bsbuf);
     }
+    tchdbiter2dispose(hdb, hdbiter);
     tcxstrdel(skbuf);
     if (updkeys) {
         tcmapdel(updkeys);
@@ -3166,7 +3294,9 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
             ejq->skip = (uint32_t) ((v < 0) ? 0 : v);
         }
         bt = bson_find(&it, ejq->hints, "$max");
-        if (BSON_IS_NUM_TYPE(bt)) {
+        if (qflags & JBQRYFINDONE) {
+            ejq->max = (uint32_t) 1;
+        } else if (BSON_IS_NUM_TYPE(bt)) {
             int64_t v = bson_iterator_long(&it);
             ejq->max = (uint32_t) ((v < 0) ? 0 : v);
         }
@@ -3357,6 +3487,7 @@ static bool _metagetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
     if (BSON_IS_NUM_TYPE(bt)) {
         opts->records = bson_iterator_long(&it);
     }
+    bson_del(bsopts);
     return rv;
 }
 
@@ -4062,6 +4193,23 @@ static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     return res;
 }
 
+static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, const void *qspecbsdata) {
+    assert(qspecbsdata);
+    int rv = 0;
+    TCLIST *res = tclistnew2(TCLISTINYNUM);
+    bson_iterator it;
+    bson_iterator_from_buffer(&it, qspecbsdata);
+    TCLIST *pathStack = tclistnew2(TCLISTINYNUM);
+    rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL, 0);
+    if (rv) {
+        tclistdel(res);
+        res = NULL;
+    }
+    assert(!pathStack->num);
+    tclistdel(pathStack);
+    return res;
+}
+
 /**
  * Get OID value from the '_id' field of specified bson object.
  * @param bson[in] BSON object
@@ -4342,6 +4490,22 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         dctx.imap = (imap && TCMAPRNUM(imap) > 0) ? tcmapdup(imap) : NULL;
         if (dctx.imap || dctx.rmap) {
             TCLISTPUSH(dlist, &dctx, sizeof (dctx));
+        }
+        //flush deffered indexes if number pending objects greater JBMAXDEFFEREDIDXNUM
+        if (TCLISTNUM(dlist) >= JBMAXDEFFEREDIDXNUM) {
+            for (int i = 0; i < TCLISTNUM(dlist); ++i) {
+                _DEFFEREDIDXCTX *di = TCLISTVALPTR(dlist, i);
+                assert(di);
+                if (di->rmap) {
+                    tctdbidxout2(jcoll->tdb, &(di->oid), sizeof (di->oid), di->rmap);
+                    tcmapdel(di->rmap);
+                }
+                if (di->imap) {
+                    tctdbidxput2(jcoll->tdb, &(di->oid), sizeof (di->oid), di->imap);
+                    tcmapdel(di->imap);
+                }
+            }
+            TCLISTTRUNC(dlist, 0);
         }
     } else { //apply index changes immediately
         if (rimap && !tctdbidxout2(jcoll->tdb, oid, sizeof (*oid), rimap)) rv = false;

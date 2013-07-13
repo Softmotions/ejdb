@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 
 try:
@@ -19,12 +19,12 @@ import sys
 import os
 
 py_ver = python_version()
-min_py_vers = {3: "3.2.0"}
-if int(py_ver[0]) < 3 or py_ver < min_py_vers[int(py_ver[0])]:
-    raise SystemExit("Aborted: EJDB requires Python3 >= {0[3]}".format(min_py_vers))
+min_py_vers = {3: "3.2.0", 2: "2.7.2"}
 
-if os.name != "posix":
-    raise SystemExit("Aborted: os '{0}' not supported".format(os.name))
+PY3 = sys.version_info[0] == 3
+
+if py_ver < min_py_vers[int(py_ver[0])]:
+    raise SystemExit("Aborted: EJDB requires Python >= {0}".format(min_py_vers[int(py_ver[0])]))
 
 
 class TestCommand(Command):
@@ -85,7 +85,7 @@ def check_extension(ext):
             raise SystemExit(err_msg.format(ext.name, ext.min_ver, ext.url))
     return lib
 
-ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.1.3",
+ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.1",
                          "tcversion", "http://ejdb.org",
                          "_pyejdb", ["src/pyejdb.c"],
                          libraries=["tcejdb", "z", "pthread", "m", "c"],
@@ -99,14 +99,13 @@ class build_ext(_build_ext):
 
 setup(
     name="pyejdb",
-    version="1.0.7",
+    version="1.0.14",
     url="http://ejdb.org",
     keywords=["ejdb", "tokyocabinet", "nosql", "database", "storage", "embedded", "mongodb", "json"],
-    description="Python3 binding for EJDB database engine.",
+    description="Python 2.7/3.x binding for EJDB database engine.",
     long_description=open("README.md", "r").read(),
     author="Adamansky Anton",
     author_email="adamansky@gmail.com",
-    platforms=["POSIX"],
     license="GNU Lesser General Public License (LGPL)",
     packages=["pyejdb"],
     cmdclass={
@@ -119,7 +118,12 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
         "Operating System :: POSIX",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: Microsoft :: Windows",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Libraries"
     ],

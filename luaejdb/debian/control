@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Anton Adamansky <adamansky@gmail.com>
 Build-Depends:
  debhelper (>= 9),
- libtcejdb9-dev (>= 1.1.3),
+ libtcejdb9-dev (>= 1.1.13),
  luarocks (>= 2.0),
  lua-penlight,
  lua-filesystem
@@ -18,7 +18,7 @@ Architecture: any
 Depends:
  ${misc:Depends},
  ${shlibs:Depends},
- libtcejdb9 (>= 1.1.3)
+ libtcejdb9 (>= 1.1.13)
 Recommends: lua5.1
 Description: Lua binding for EJDB
  EJDB aims to be a fast MongoDB-like library which can be embedded into C/C++/NodeJS/Python/Lua

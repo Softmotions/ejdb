@@ -1,8 +1,8 @@
-// sample1_win32.cpp : Defines the entry point for the console application.
+// ejdb_static.cpp : Defines the entry point for the console application.
 //
 
 #include "stdafx.h"
-#include <ejdb.h>
+#include <tcejdb/ejdb.h>
 #include <locale.h>
 
 static EJDB *jb;
@@ -76,7 +76,3 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	getc(stdin);
     return 0;
 }
-
-
-
-
