@@ -2,6 +2,7 @@
 #include "myconf.h"
 #include "ejdb_private.h"
 #include "CUnit/Basic.h"
+
 /*
  * CUnit Test Suite
  */
@@ -30,6 +31,60 @@ void testTicket53() {
     ejdbdel(jb);
 }
 
+void testBSONExportImport() {
+    EJDB *jb = ejdbnew();
+    CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT | JBOTRUNC));
+    EJCOLL *coll = ejdbcreatecoll(jb, "col1", NULL);
+    if (!coll) {
+        eprint(jb, __LINE__, "testBSONExportImport");
+    }
+    CU_ASSERT_TRUE(coll != NULL);
+    bson_oid_t oid;
+
+    bson bv1;
+    bson_init(&bv1);
+    bson_append_int(&bv1, "a", 1);
+    bson_append_string(&bv1, "c", "d");
+    bson_finish(&bv1);
+    ejdbsavebson(coll, &bv1, &oid);
+    bson_destroy(&bv1);
+
+    EJCOLLOPTS copts = {0};
+    copts.large = true;
+    copts.records = 200000;
+    coll = ejdbcreatecoll(jb, "col2", &copts);
+    if (!coll) {
+        eprint(jb, __LINE__, "testBSONExportImport");
+    }
+    CU_ASSERT_TRUE(coll != NULL);
+    bson_init(&bv1);
+    bson_append_int(&bv1, "e", 1);
+    bson_append_string(&bv1, "f", "g");
+    bson_finish(&bv1);
+    ejdbsavebson(coll, &bv1, &oid);
+    bson_destroy(&bv1);
+
+    bson_init(&bv1);
+    bson_append_int(&bv1, "e", 2);
+    bson_append_string(&bv1, "f", "g2");
+    bson_finish(&bv1);
+    ejdbsavebson(coll, &bv1, &oid);
+    bson_destroy(&bv1);
+
+
+    TCLIST* cnames = tclistnew();
+    tclistpush2(cnames, "col1");
+    tclistpush2(cnames, "col2");
+
+    bool rv = ejdbexport(jb, "testBSONExportImport", cnames, 0);
+    if (!rv) {
+        eprint(jb, __LINE__, "testBSONExportImport");
+    }
+    CU_ASSERT_TRUE(rv);
+    ejdbclose(jb);
+    ejdbdel(jb);
+}
+
 int init_suite(void) {
     return 0;
 }
@@ -37,7 +92,6 @@ int init_suite(void) {
 int clean_suite(void) {
     return 0;
 }
-
 
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -56,7 +110,8 @@ int main() {
 
     /* Add the tests to the suite */
     if (
-            (NULL == CU_add_test(pSuite, "testTicket53", testTicket53))
+            (NULL == CU_add_test(pSuite, "testTicket53", testTicket53)) ||
+            (NULL == CU_add_test(pSuite, "testBSONExportImport", testBSONExportImport))
 
             ) {
         CU_cleanup_registry();

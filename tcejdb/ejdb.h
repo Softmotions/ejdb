@@ -507,10 +507,11 @@ enum {
 };
 
 /**
- * Export database data to the specified location. Read lock will be taken on each collection
+ * Export database collections data to the specified location.
+ * Database read lock will be taken on each collection
  * @param path Directory name in which data will exported.
  * @param colnames List of collection names to export. If NULL all collections will be exported.
- * @param flags. Reserved for future use.
+ * @param flags. Can be set to `JBJSONEXPORT` in order to export collection data into JSON instead of BSON.
  * @return on sucess `true`
  */
 EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags);

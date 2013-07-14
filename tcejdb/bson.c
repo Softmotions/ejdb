@@ -2048,7 +2048,6 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
 
     bson_type bt;
     TCXSTR *out = ctx->out;
-    BSPAD(0);
     tcxstrcat2(ctx->out, "{\n");
     ctx->nlvl += 4;
     int c = 0;
@@ -2082,6 +2081,7 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
                 _bson2json(ctx, &sit);
+                break;
             }
             case BSON_NULL:
                 tcxstrcat2(out, "null");
@@ -2126,8 +2126,10 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
                 break;
         }
     }
+    tcxstrcat2(out, "\n");
     BSPAD(-4);
-    tcxstrcat2(out, "\n}\n");
+    tcxstrcat2(out, "}\n");
+    ctx->nlvl -= 4;
     return 0;
 #undef BSPAD
 }
