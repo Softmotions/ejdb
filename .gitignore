@@ -83,6 +83,7 @@ config.status
 /tcejdb/testejdb/t2
 /tcejdb/testejdb/t3
 /tcejdb/testejdb/t4
+/tcejdb/testejdb/test*
 
 */nbproject/private/*
 

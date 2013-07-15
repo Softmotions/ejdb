@@ -954,9 +954,7 @@ bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags) {
     assert(jb && path);
     bool err = false;
     bool isdir = false;
-    if (!tcstatfile(path, &isdir, NULL, NULL)) {
-        return false;
-    }
+    tcstatfile(path, &isdir, NULL, NULL);
     if (!isdir) {
         if (mkdir(path, 00755)) {
             _ejdbsetecode(jb, TCEMKDIR, __FILE__, __LINE__, __func__);
@@ -997,7 +995,7 @@ finish:
 
 static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags) {
     bool err = false;
-    char *fpath = tcsprintf("%s%c%s%s", dpath, MYPATHCHR, coll->cname, ".bson");
+    char *fpath = tcsprintf("%s%c%s%s", dpath, MYPATHCHR, coll->cname, (flags & JBJSONEXPORT) ? ".json" : ".bson");
     char *fpathm = tcsprintf("%s%c%s%s", dpath, MYPATHCHR, coll->cname, "-meta.json");
     TCHDB *hdb = coll->tdb->hdb;
     TCXSTR *skbuf = tcxstrnew3(sizeof (bson_oid_t) + 1);
@@ -1073,6 +1071,9 @@ wfinish:
             }
         }
         bson_finish(&mbs);
+        bson_print_raw(bson_data(&mbs), 0);
+
+
         char *wbuf = NULL;
         int wsiz;
         if (bson2json(bson_data(&mbs), &wbuf, &wsiz) != BSON_OK) {

@@ -503,18 +503,32 @@ EJDB_EXPORT bson* ejdbmeta(EJDB *jb);
 
 /** Export settings */
 enum {
-    JBJSONEXPORT = 1 //If set json collection data will be exported into JSON instead of BSON
+    JBJSONEXPORT = 1, //If set json collection data will be exported into JSON instead of BSON.
+    JBIMPORTUPDATE = 2, //Update existing collection entries with imported ones. Collection options are ignored.
+    JBIMPORTREPLACE = 3 //Recreate existing collections and replace all collection entries with imported data.
+
 };
 
 /**
  * Export database collections data to the specified location.
  * Database read lock will be taken on each collection
  * @param path Directory name in which data will exported.
- * @param colnames List of collection names to export. If NULL all collections will be exported.
+ * @param colnames List of collection names to export. If its value is `NULL` then all existing collections will be exported.
  * @param flags. Can be set to `JBJSONEXPORT` in order to export collection data into JSON instead of BSON.
  * @return on sucess `true`
  */
 EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags);
+
+
+/**
+ * 
+ * @param jb
+ * @param path
+ * @param cnames
+ * @param flags
+ * @return
+ */
+EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags);
 
 
 EJDB_EXTERN_C_END
