@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-07-15` **[Google Go binding] (https://github.com/mkilling/goejdb)**
 * `2013-06-23` **[C# .Net binding] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
 * `2013-06-02` **[Adobe Air Native Extension (ANE) for EJDB (Thanks to @thejustinwalsh)] (https://github.com/thejustinwalsh/airejdb)**
 * `2013-05-29` **[EJDB Python 2.7.x binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
@@ -53,6 +54,7 @@ Documentation
 * **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
 * **[Java binding](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
 * **[Ruby binding](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
+* **[Go binding](https://github.com/mkilling/goejdb/)**
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
