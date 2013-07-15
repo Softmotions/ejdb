@@ -501,12 +501,11 @@ EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive);
 EJDB_EXPORT bson* ejdbmeta(EJDB *jb);
 
 
-/** Export settings */
+/** Export/Import settings used in `ejdbexport()` and `ejdbimport()` functions. */
 enum {
-    JBJSONEXPORT = 1, //If set json collection data will be exported into JSON instead of BSON.
+    JBJSONEXPORT = 1, //If set json collection data will be exported as JSON files instead of BSON.
     JBIMPORTUPDATE = 2, //Update existing collection entries with imported ones. Collection options are ignored.
-    JBIMPORTREPLACE = 3 //Recreate existing collections and replace all collection entries with imported data.
-
+    JBIMPORTREPLACE = 3 //Recreate existing collections and replace all collection data with imported entries.
 };
 
 /**
@@ -519,9 +518,8 @@ enum {
  */
 EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags);
 
-
 /**
- * 
+ * TODO
  * @param jb
  * @param path
  * @param cnames

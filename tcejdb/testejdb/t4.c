@@ -57,6 +57,7 @@ void testBSONExportImport() {
         eprint(jb, __LINE__, "testBSONExportImport");
     }
     CU_ASSERT_TRUE(coll != NULL);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "f", JBIDXSTR | JBIDXNUM));
     bson_init(&bv1);
     bson_append_int(&bv1, "e", 1);
     bson_append_string(&bv1, "f", "g");
