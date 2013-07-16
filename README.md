@@ -45,16 +45,16 @@ Documentation
 
 * **[The great intro to the EJDB](http://blog.abigopal.com/post/51616277039/ejdb)**
 * **[EJDB Command line interface](https://github.com/Softmotions/ejdb/wiki/EJDB-Command-line-interface)**
-* **[C# .Net binding] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
-* **[NodeJS binding](#nodejs-binding)**
+* **[C# .Net] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
+* **[NodeJS](#nodejs-binding)**
     * [Installation](#installation)
     * [Samples](#ejdb-nodejs-samples)
     * [NodeJS API](#ejdb-nodejs-api)
 * **[Python 2.7/3.x binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
-* **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
-* **[Java binding](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
-* **[Ruby binding](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
-* **[Go binding](https://github.com/mkilling/goejdb/)**
+* **[Lua](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
+* **[Java](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
+* **[Ruby](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
+* **[Go](https://github.com/mkilling/goejdb/)**
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
