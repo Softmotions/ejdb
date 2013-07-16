@@ -4,7 +4,7 @@
 Embedded JSON Database engine
 ====================================
 
-It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/.Net/NodeJS/Python/Lua/Java/Ruby applications under terms of LGPL license.**
+It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/.Net/NodeJS/Python/Lua/Java/Ruby/Go applications under terms of LGPL license.**
 
 EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 
