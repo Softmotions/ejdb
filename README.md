@@ -56,6 +56,7 @@ Documentation
 * **[Ruby](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
 * **[Go](https://github.com/mkilling/goejdb/)**
 * **[Pike language] (https://github.com/hww3/pike_modules-ejdb)**
+* **[Adobe Air] (https://github.com/thejustinwalsh/airejdb)**
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
