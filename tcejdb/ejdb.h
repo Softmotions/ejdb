@@ -22,6 +22,11 @@
 
 EJDB_EXTERN_C_START
 
+#ifndef EJDB_MAX_IMPORTED_BSON_SIZE
+//64 MB is the default maximum size of bson object imported with `ejdbimport()`
+#define EJDB_MAX_IMPORTED_BSON_SIZE 67108864
+#endif
+
 struct EJDB; /**< EJDB database object. */
 typedef struct EJDB EJDB;
 
@@ -60,7 +65,8 @@ enum { /** Error codes */
     JBEQACTKEY = 9013, /**< action key in $do block can only be one of: $join */
     JBEMAXNUMCOLS = 9014, /**< Exceeded the maximum number of collections per database */
     JBEEI = 9015, /**< EJDB export/import error */
-    JBEEJSONPARSE = 9016 /**< JSON parsing failed */
+    JBEEJSONPARSE = 9016, /**< JSON parsing failed */
+    JBETOOBIGBSON = 9017 /**< BSON size is too big */
 };
 
 enum { /** Database open modes */

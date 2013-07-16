@@ -73,9 +73,11 @@ void testBSONExportImport() {
     bson_destroy(&bv1);
 
 
-    TCLIST* cnames = tclistnew();
+    TCXSTR *log = tcxstrnew();
+    TCLIST *cnames = tclistnew();
     tclistpush2(cnames, "col1");
     tclistpush2(cnames, "col2");
+
 
     bool rv = ejdbexport(jb, "testBSONExportImport", cnames, 0, log);
     if (!rv) {
@@ -90,7 +92,6 @@ void testBSONExportImport() {
     jb = ejdbnew();
     CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT | JBOTRUNC));
 
-    TCXSTR *log = tcxstrnew();
     rv = ejdbimport(jb, "testBSONExportImport", cnames, 0, log);
     CU_ASSERT_TRUE(rv);
 

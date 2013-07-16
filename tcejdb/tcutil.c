@@ -6925,15 +6925,6 @@ static int tcchidxcmp(const void *a, const void *b) {
  *************************************************************************************************/
 
 
-#define TCFILEMODE     00644             // permission of a creating file
-#ifdef _WIN32
-#define TCIOBUFSIZ     65536             // size of an I/O buffer
-#else
-#define TCIOBUFSIZ     16384             // size of an I/O buffer
-#endif
-
-
-
 /* Get the canonicalized absolute path of a file. */
 #ifndef _WIN32
 

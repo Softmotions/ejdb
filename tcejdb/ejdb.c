@@ -168,6 +168,7 @@ const char* ejdberrmsg(int ecode) {
         case JBEMAXNUMCOLS: return "exceeded the maximum number of collections per database: 1024";
         case JBEEJSONPARSE: return "JSON parsing failed";
         case JBEEI: return "data export/import failed";
+        case JBETOOBIGBSON: return "bson size exceeds the maximum allowed size limit";
         default: return tcerrmsg(ecode);
     }
 }
@@ -1061,7 +1062,7 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
     char *pp = strrchr(bspath, MYPATHCHR);
     if (!dp || !pp || pp > dp) {
         if (log) {
-            tcxstrprintf(log, "ERROR: Invalid file path: '%s'", bspath);
+            tcxstrprintf(log, "\nERROR: Invalid file path: '%s'", bspath);
         }
         _ejdbsetecode2(jb, JBEEI, __FILE__, __LINE__, __func__, true);
         return false;
@@ -1093,7 +1094,7 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
     if (!mjson) {
         err = true;
         if (log) {
-            tcxstrprintf(log, "ERROR: Error reading file: '%s'", tcxstrptr(xmetapath));
+            tcxstrprintf(log, "\nERROR: Error reading file: '%s'", tcxstrptr(xmetapath));
         }
         _ejdbsetecode2(jb, TCEREAD, __FILE__, __LINE__, __func__, true);
         goto finish;
@@ -1102,17 +1103,20 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
     if (!mbson) {
         err = true;
         if (log) {
-            tcxstrprintf(log, "ERROR: Invalid JSON in the file: '%s'", tcxstrptr(xmetapath));
+            tcxstrprintf(log, "\nERROR: Invalid JSON in the file: '%s'", tcxstrptr(xmetapath));
         }
         _ejdbsetecode2(jb, JBEEJSONPARSE, __FILE__, __LINE__, __func__, true);
     }
     coll = ejdbgetcoll(jb, cname);
     if (coll && (flags & JBIMPORTREPLACE)) {
-        if (!ejdbrmcoll(jb, cname, true)) {
+        err = !(_rmcollimpl(jb, coll, true));
+        _delcoldb(coll);
+        TCFREE(coll);
+        coll = NULL;
+        if (err) {
             if (log) {
-                tcxstrprintf(log, "ERROR: Failed to remove collection: '%s'", cname);
+                tcxstrprintf(log, "\nERROR: Failed to remove collection: '%s'", cname);
             }
-            err = true;
             goto finish;
         }
     }
@@ -1135,16 +1139,71 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
                 }
             }
         }
-        coll = ejdbcreatecoll(jb, cname, &cops);
+        coll = _createcollimpl(jb, cname, &cops);
         if (!coll) {
+            err = true;
             if (log) {
-                tcxstrprintf(log, "ERROR: Error creating collection: '%s'", cname);
+                tcxstrprintf(log, "\nERROR: Error creating collection: '%s'", cname);
             }
+            goto finish;
         }
     }
-
-    //todo lock coll & read bson collection data
-
+    int fd = open(bspath, O_RDONLY, TCFILEMODE);
+    if (fd == -1) {
+        err = true;
+        if (log) {
+            tcxstrprintf(log, "\nERROR: Error reading file: '%s'", bspath);
+        }
+        _ejdbsetecode2(jb, TCEREAD, __FILE__, __LINE__, __func__, true);
+        goto finish;
+    }
+    if (!JBCLOCKMETHOD(coll, true)) {
+        err = true;
+        goto finish;
+    }
+    int maxdocsiz = 0, docsiz = 0, numdocs = 0;
+    void *docbuf;
+    TCMALLOC(docbuf, 1);
+    while (true) {
+        numdocs = 0;
+        sp = read(fd, &docsiz, 4);
+        if (sp < 4) {
+            break;
+        }
+        docsiz = TCHTOIL(docsiz);
+        if (docsiz > EJDB_MAX_IMPORTED_BSON_SIZE) {
+            err = true;
+            _ejdbsetecode2(jb, JBETOOBIGBSON, __FILE__, __LINE__, __func__, true);
+            break;
+        }
+        if (docsiz < 4) {
+            break;
+        }
+        if (maxdocsiz < docsiz) {
+            maxdocsiz = docsiz;
+            TCREALLOC(docbuf, docbuf, maxdocsiz);
+        }
+        sp = read(fd, docbuf, docsiz);
+        if (sp < docsiz) {
+            break;
+        }
+        bson_oid_t oid;
+        if (!ejdbsavebson3(coll, docbuf, &oid, false)) {
+            err = true;
+            break;
+        }
+        ++numdocs;
+    }
+    if (docbuf) {
+        TCFREE(docbuf);
+    }
+    if (!ejdbsyncoll(coll)) {
+        err = true;
+    }
+    if (!err && log) {
+        tcxstrprintf(log, "\n%s imported %d entries", cname, numdocs);
+    }
+    JBCUNLOCKMETHOD(coll);
 finish:
     if (mbson) {
         bson_del(mbson);
@@ -1154,6 +1213,9 @@ finish:
     }
     tcxstrdel(xmetapath);
     TCFREE(cname);
+    if (err && log) {
+         tcxstrprintf(log, "\nERROR: Importing data into: '%s' failed with error: '%s'", cname, ejdberrmsg(ejdbecode(jb)));
+    }
     return !err;
 }
 

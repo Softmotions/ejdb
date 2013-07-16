@@ -2834,6 +2834,13 @@ EJDB_EXPORT int tcchidxhash(TCCHIDX *chidx, const void *ptr, int size);
  * filesystem utilities
  *************************************************************************************************/
 
+#define TCFILEMODE     00644             // permission of a creating file
+#ifdef _WIN32
+#define TCIOBUFSIZ     65536             // size of an I/O buffer
+#else
+#define TCIOBUFSIZ     16384             // size of an I/O buffer
+#endif
+
 
 /* Get the canonicalized absolute path of a file.
    `path' specifies the path of the file.
