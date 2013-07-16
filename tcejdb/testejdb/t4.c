@@ -84,6 +84,15 @@ void testBSONExportImport() {
     CU_ASSERT_TRUE(rv);
     ejdbclose(jb);
     ejdbdel(jb);
+
+    //Restore data:
+
+    jb = ejdbnew();
+    CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT | JBOTRUNC));
+
+    ejdbclose(jb);
+    ejdbdel(jb);
+
 }
 
 int init_suite(void) {

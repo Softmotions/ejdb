@@ -130,6 +130,7 @@ EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp2(_EJDBNUM *nu1, _EJDBNUM *nu2, bson_type bt);
 static EJCOLL* _getcoll(EJDB *jb, const char *colname);
 static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags);
+static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags);
 
 
 extern const char *utf8proc_errmsg(ssize_t errcode);
@@ -989,9 +990,57 @@ finish:
     return !err;
 }
 
+bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags) {
+    assert(jb && path);
+    bool err = false;
+    bool isdir = false;
+    if (!tcstatfile(path, &isdir, NULL, NULL) || !isdir) {
+        _ejdbsetecode(jb, TCENOFILE, __FILE__, __LINE__, __func__);
+        return false;
+    }
+    bool tail = (path[0] != '\0' && path[strlen(path) - 1] == MYPATHCHR);
+    char *bsonpat = tail ? tcsprintf("%s*.bson") : tcsprintf("%s%c*.bson", path, MYPATHCHR);
+    TCLIST *bspaths = tcglobpat(bsonpat);
+    for (int i = 0; i < TCLISTNUM(bspaths); ++i) {
+        const char* bspath = TCLISTVALPTR(bspaths, i);
+        if (!_importcoll(jb, bspath, cnames, flags)) {
+            err = true;
+            goto finish;
+        }
+    }
+finish:
+    if (bsonpat) {
+        TCFREE(bsonpat);
+    }
+    if (bspaths) {
+        tclistdel(bspaths);
+    }
+    return !err;
+
+}
+
 /*************************************************************************************************
  * private features
  *************************************************************************************************/
+
+static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags) {
+    bool err = false;
+    // /foo/bar.bson
+    char *dp = strrchr(bspath, '.');
+    char *pp = strrchr(bspath, MYPATHCHR);
+    if (pp > dp) {
+        return false;
+    }
+    int i = 0;
+    char *cname;
+    TCMALLOC(cname, dp - pp + 1);
+    while (++pp != dp) {
+        cname[i++] = *pp;
+    }
+    cname[i] = '\0';
+    fprintf(stderr, "\ncname=%s", cname);
+    return !err;
+}
 
 static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags) {
     bool err = false;
@@ -1071,9 +1120,6 @@ wfinish:
             }
         }
         bson_finish(&mbs);
-        bson_print_raw(bson_data(&mbs), 0);
-
-
         char *wbuf = NULL;
         int wsiz;
         if (bson2json(bson_data(&mbs), &wbuf, &wsiz) != BSON_OK) {

@@ -2128,7 +2128,7 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
     }
     tcxstrcat2(out, "\n");
     BSPAD(-4);
-    tcxstrcat2(out, "}\n");
+    tcxstrcat2(out, "}");
     ctx->nlvl -= 4;
     return 0;
 #undef BSPAD
