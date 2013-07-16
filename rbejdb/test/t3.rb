@@ -13,7 +13,7 @@ $jb = EJDB.open("tdbt3", EJDB::JBOWRITER | EJDB::JBOCREAT | EJDB::JBOTRUNC)
 
 class EJDBAdvancedTestUnit < Test::Unit::TestCase
   RS = 100000
-  QRS = 10000
+  QRS = 100
 
   def test_ejdbadv1_performance
     assert_not_nil $jb
@@ -45,6 +45,8 @@ class EJDBAdvancedTestUnit < Test::Unit::TestCase
     recs.each { |rec|
       assert_equal(1, $jb.find("pcoll1", rec, :onlycount => true))
     }
+
+    $jb.drop_string_index("pcoll1", "rstring")
 
     puts "Quering..."
 
