@@ -50,7 +50,7 @@ Documentation
     * [Installation](#installation)
     * [Samples](#ejdb-nodejs-samples)
     * [NodeJS API](#ejdb-nodejs-api)
-* **[Python 2.7/3.x binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
+* **[Python 2.7/3.x](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
 * **[Lua](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
 * **[Java](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
 * **[Ruby](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
