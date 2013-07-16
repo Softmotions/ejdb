@@ -2196,7 +2196,7 @@ MYHEADERFILES="tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h ejdb.h ejdb_priv
 MYLIBRARYFILES="libtcejdb.a"
 
 MYLIBOBJFILES="tcutil.o tchdb.o tcbdb.o tcfdb.o tctdb.o tcadb.o myconf.o md5.o ejdb.o \
-bson.o numbers.o encoding.o utf8proc.o ejdbutl.o platform.o"
+bson.o numbers.o encoding.o utf8proc.o ejdbutl.o platform.o nxjson.o"
 
 MYCOMMANDFILES="tcutest tcumttest tcucodec tchtest tchmttest tchmgr"
 MYCOMMANDFILES="$MYCOMMANDFILES tcbtest tcbmttest tcbmgr tcftest tcfmttest tcfmgr"

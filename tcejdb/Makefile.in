@@ -853,7 +853,7 @@ tcatest.o tcamttest.o tcamgr.o tcawmgr.o : \
 
 ejdb.o : basedefs.h myconf.h ejdb.h ejdb_private.h ejdbutl.h
 
-bson.o : basedefs.h myconf.h bson.h
+bson.o : basedefs.h myconf.h bson.h nxjson.h
 
 ejdbutl.o : basedefs.h tcutil.h ejdbutl.h
 
@@ -866,5 +866,7 @@ tokyocabinet_all.c : myconf.c tcutil.c md5.c tchdb.c tcbdb.c tcfdb.c tctdb.c tca
 tokyocabinet_all.o : myconf.h tcutil.h tchdb.h tcbdb.h tcfdb.h tctdb.h tcadb.h
 
 platform.o : basedefs.h platform.c win32/platform.c nix/platform.c
+
+nxjson.o : nxjson.h
 
 # END OF FILE

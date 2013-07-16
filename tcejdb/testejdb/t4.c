@@ -77,7 +77,7 @@ void testBSONExportImport() {
     tclistpush2(cnames, "col1");
     tclistpush2(cnames, "col2");
 
-    bool rv = ejdbexport(jb, "testBSONExportImport", cnames, 0);
+    bool rv = ejdbexport(jb, "testBSONExportImport", cnames, 0, log);
     if (!rv) {
         eprint(jb, __LINE__, "testBSONExportImport");
     }
@@ -90,8 +90,14 @@ void testBSONExportImport() {
     jb = ejdbnew();
     CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT | JBOTRUNC));
 
+    TCXSTR *log = tcxstrnew();
+    rv = ejdbimport(jb, "testBSONExportImport", cnames, 0, log);
+    CU_ASSERT_TRUE(rv);
+
+    tcxstrdel(log);
     ejdbclose(jb);
     ejdbdel(jb);
+    tclistdel(cnames);
 
 }
 

@@ -649,6 +649,7 @@ EJDB_EXPORT uint64_t tchdbfsiz(TCHDB *hdb);
    `line' specifies the line number of the code.
    `func' specifies the function name of the code. */
 EJDB_EXPORT void tchdbsetecode(TCHDB *hdb, int ecode, const char *filename, int line, const char *func);
+EJDB_EXPORT void tchdbsetecode2(TCHDB *hdb, int ecode, const char *filename, int line, const char *func, bool notfatal);
 
 
 /* Set the type of a hash database object.

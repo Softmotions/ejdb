@@ -1135,13 +1135,20 @@ EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool 
 
 
 /**
- * Convert BSON into JSON buffer
+ * Convert BSON into JSON buffer.
  * @param src BSON data
  * @param buf Allocated buffer with resulting JSON data
  * @param sp JSON data length will be stored into
  * @return BSON_OK or BSON_ERROR
  */
 EJDB_EXPORT int bson2json(const char *bsdata, char **buf, int *sp);
+
+/**
+ * Convert JSON into BSON object.
+ * @param jsonstr NULL terminated JSON string
+ * @return Allocated BSON object filled with given JSON data or NULL on error
+ */
+EJDB_EXPORT bson* json2bson(const char *jsonstr);
 
 
 EJDB_EXTERN_C_END

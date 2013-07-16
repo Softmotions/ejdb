@@ -864,9 +864,9 @@ TCHDBITER* tchdbiter2init(TCHDB *hdb) {
         hdb->iter2list = tclistnew2(16);
     }
     TCHDBITER *it;
-    TCMALLOC(it, sizeof(*it));
+    TCMALLOC(it, sizeof (*it));
     it->pos = hdb->frec;
-    TCLISTPUSH(hdb->iter2list, &it, sizeof(it));
+    TCLISTPUSH(hdb->iter2list, &it, sizeof (it));
     HDBUNLOCKMETHOD(hdb);
     return it;
 }
@@ -1397,13 +1397,17 @@ uint64_t tchdbfsiz(TCHDB *hdb) {
     return rv;
 }
 
-
 /*************************************************************************************************
  * features for experts
  *************************************************************************************************/
 
 /* Set the error code of a hash database object. */
 void tchdbsetecode(TCHDB *hdb, int ecode, const char *filename, int line, const char *func) {
+    tchdbsetecode2(hdb, ecode, filename, line, func, false);
+}
+
+/* Set the error code of a hash database object. */
+void tchdbsetecode2(TCHDB *hdb, int ecode, const char *filename, int line, const char *func, bool notfatal) {
     assert(hdb && filename && line >= 1 && func);
     if (!hdb->fatal) {
         if (hdb->eckey) {
@@ -1432,8 +1436,10 @@ void tchdbsetecode(TCHDB *hdb, int ecode, const char *filename, int line, const 
         case TCEMKDIR:
         case TCERMDIR:
         {
-            hdb->fatal = true;
-            if (!INVALIDHANDLE(hdb->fd) && (hdb->omode & HDBOWRITER)) tchdbsetflag(hdb, HDBFFATAL, true);
+            if (!notfatal) {
+                hdb->fatal = true;
+                if (!INVALIDHANDLE(hdb->fd) && (hdb->omode & HDBOWRITER)) tchdbsetflag(hdb, HDBFFATAL, true);
+            }
             break;
         }
         case TCESUCCESS:
@@ -2223,9 +2229,9 @@ static bool tchdbseekread2(TCHDB *hdb, off_t off, void *buf, size_t size, int op
             off += rb;
         } else if (rb == -1) {
             //if (errno != EINTR) {
-                tchdbsetecode(hdb, TCEREAD, __FILE__, __LINE__, __func__);
-                err = true;
-                break;
+            tchdbsetecode(hdb, TCEREAD, __FILE__, __LINE__, __func__);
+            err = true;
+            break;
             //}
         } else {
             if (size > 0) {

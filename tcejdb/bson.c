@@ -1669,7 +1669,6 @@ bson* bson_create_from_iterator(bson_iterator *from) {
     return bs;
 }
 
-
 bson* bson_create_from_buffer(const void* buf, int bufsz) {
     return bson_create_from_buffer2(bson_create(), buf, bufsz);
 }
@@ -1685,7 +1684,7 @@ bson* bson_create_from_buffer2(bson *rv, const void* buf, int bufsz) {
 }
 
 void bson_init_with_data(bson *bs, const void *bsdata) {
-    memset(bs, 0, sizeof(*bs));
+    memset(bs, 0, sizeof (*bs));
     bs->data = (char*) bsdata;
     bson_little_endian32(&bs->dataSize, bsdata);
     bs->finished = true;
@@ -2057,8 +2056,9 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
         }
         const char *key = bson_iterator_key(it);
         BSPAD(0);
+        tcxstrcat2(out, "\"");
         _jsonxstrescaped(out, key);
-        tcxstrcat2(out, " : ");
+        tcxstrcat2(out, "\" : ");
         switch (bt) {
             case BSON_LONG:
             case BSON_INT:
@@ -2072,7 +2072,9 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
             case BSON_STRING:
             case BSON_SYMBOL:
             {
+                tcxstrcat2(out, "\"");
                 _jsonxstrescaped(out, bson_iterator_string(it));
+                tcxstrcat2(out, "\"");
                 break;
             }
             case BSON_OBJECT:
@@ -2092,7 +2094,7 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
                 bson_date_t t = bson_iterator_date(it);
                 char dbuf[49];
                 tcdatestrwww(t, INT_MAX, dbuf);
-                tcxstrprintf(out, "%s", dbuf);
+                tcxstrprintf(out, "\"%s\"", dbuf);
                 break;
             }
             case BSON_BOOL:
@@ -2103,13 +2105,15 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
                 char xoid[25];
                 bson_oid_t *oid = bson_iterator_oid(it);
                 bson_oid_to_string(oid, xoid);
-                tcxstrprintf(out, "%s", xoid);
+                tcxstrprintf(out, "\"%s\"", xoid);
                 break;
             }
             case BSON_REGEX:
             {
-               tcxstrprintf(out, "%s", bson_iterator_regex(it));
-               break;
+                tcxstrcat2(out, "\"");
+                _jsonxstrescaped(out, bson_iterator_regex(it));
+                tcxstrcat2(out, "\"");
+                break;
             }
             case BSON_BINDATA:
             {
@@ -2153,5 +2157,95 @@ int bson2json(const char *bsdata, char **buf, int *sp) {
         tcxstrclear(out);
     }
     return ret;
+}
+
+
+#include "nxjson.h"
+
+static void _json2bson(bson *out, const nx_json *json) {
+    const char *key = json->key;
+    switch (json->type) {
+        case NX_JSON_NULL:
+            assert(key);
+            bson_append_null(out, key);
+            break;
+        case NX_JSON_OBJECT:
+        {
+            if (key) {
+                bson_append_start_object(out, key);
+            }
+            for (nx_json* js = json->child; js; js = js->next) {
+                _json2bson(out, js);
+            }
+            if (key) {
+                bson_append_finish_object(out);
+            }
+            break;
+        }
+        case NX_JSON_ARRAY:
+        {
+            if (key) {
+                bson_append_start_array(out, key);
+            }
+            for (nx_json* js = json->child; js; js = js->next) {
+                _json2bson(out, js);
+            }
+            if (key) {
+                bson_append_finish_array(out);
+            }
+            break;
+        }
+        case NX_JSON_STRING:
+            assert(key);
+            bson_append_string(out, key, json->text_value);
+            break;
+        case NX_JSON_INTEGER:
+            assert(key);
+            if (json->int_value <= INT_MAX && json->int_value >= INT_MIN) {
+                bson_append_int(out, key, (int) json->int_value);
+            } else {
+                bson_append_long(out, key, json->int_value);
+            }
+            break;
+        case NX_JSON_DOUBLE:
+            assert(key);
+            bson_append_double(out, key, json->dbl_value);
+            break;
+        case NX_JSON_BOOL:
+            assert(key);
+            bson_append_bool(out, key, json->int_value ? true : false);
+            break;
+        default:
+            break;
+    }
+}
+
+bson* json2bson(const char *jsonstr) {
+    bool err = false;
+    bson *out = NULL;
+    char *json = strdup(jsonstr); //nxjson uses inplace data modification
+    if (!json) {
+        return NULL;
+    }
+    out = bson_create();
+    bson_init_as_query(out);
+    const nx_json *nxjson = nx_json_parse_utf8(json);
+    if (!nxjson) {
+        err = true;
+        goto finish;
+    }
+    _json2bson(out, nxjson);
+    bson_finish(out);
+    err = out->err;
+finish:
+    free(json);
+    if (nxjson) {
+        nx_json_free(nxjson);
+    }
+    if (err && out) {
+        bson_del(out);
+        out = NULL;
+    }
+    return out;
 }
 

@@ -59,7 +59,8 @@ enum { /** Error codes */
     JBEQINCEXCL = 9012, /**< $fields hint cannot mix include and exclude fields */
     JBEQACTKEY = 9013, /**< action key in $do block can only be one of: $join */
     JBEMAXNUMCOLS = 9014, /**< Exceeded the maximum number of collections per database */
-    JBEEI = 9015 /**< EJDB export/import error */
+    JBEEI = 9015, /**< EJDB export/import error */
+    JBEEJSONPARSE = 9016 /**< JSON parsing failed */
 };
 
 enum { /** Database open modes */
@@ -514,9 +515,10 @@ enum {
  * @param path Directory name in which data will exported.
  * @param colnames List of collection names to export. If its value is `NULL` then all existing collections will be exported.
  * @param flags. Can be set to `JBJSONEXPORT` in order to export collection data into JSON instead of BSON.
+ * @param log Optional opration log buffer.
  * @return on sucess `true`
  */
-EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags);
+EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *log);
 
 /**
  * TODO
@@ -524,9 +526,10 @@ EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  * @param path
  * @param cnames
  * @param flags
+ * @param log Optional opration log buffer.
  * @return
  */
-EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags);
+EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *log);
 
 
 EJDB_EXTERN_C_END

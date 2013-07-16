@@ -1187,8 +1187,13 @@ TCLIST *tctdbmetasearch(TDBQRY **qrys, int num, int type) {
 
 /* Set the error code of a table database object. */
 void tctdbsetecode(TCTDB *tdb, int ecode, const char *filename, int line, const char *func) {
+    tctdbsetecode2(tdb, ecode, filename, line, func, false);
+}
+
+/* Set the error code of a table database object. */
+void tctdbsetecode2(TCTDB *tdb, int ecode, const char *filename, int line, const char *func, bool notfatal) {
     assert(tdb && filename && line >= 1 && func);
-    tchdbsetecode(tdb->hdb, ecode, filename, line, func);
+    tchdbsetecode2(tdb->hdb, ecode, filename, line, func, notfatal);
 }
 
 /* Set the file descriptor for debugging output. */

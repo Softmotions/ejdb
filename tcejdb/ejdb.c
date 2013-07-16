@@ -81,6 +81,7 @@ typedef struct {
 
 /* private function prototypes */
 static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, const char *func);
+static void _ejdbsetecode2(EJDB *jb, int ecode, const char *filename, int line, const char *func, bool notfatal);
 static bool _ejdbsetmutex(EJDB *ejdb);
 EJDB_INLINE bool _ejdblockmethod(EJDB *ejdb, bool wr);
 EJDB_INLINE bool _ejdbunlockmethod(EJDB *ejdb);
@@ -129,8 +130,10 @@ EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp(_EJDBNUM *nu, const char *sval, bson_type bt);
 EJDB_INLINE int _nucmp2(_EJDBNUM *nu1, _EJDBNUM *nu2, bson_type bt);
 static EJCOLL* _getcoll(EJDB *jb, const char *colname);
-static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags);
-static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags);
+static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags, TCXSTR *log);
+static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags, TCXSTR *log);
+static EJCOLL* _createcollimpl(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
+static bool _rmcollimpl(EJDB *jb, EJCOLL *coll, bool unlinkfile);
 
 
 extern const char *utf8proc_errmsg(ssize_t errcode);
@@ -163,7 +166,8 @@ const char* ejdberrmsg(int ecode) {
         case JBEQINCEXCL: return "$fields hint cannot mix include and exclude fields";
         case JBEQACTKEY: return "action key in $do block can only be one of: $join";
         case JBEMAXNUMCOLS: return "exceeded the maximum number of collections per database: 1024";
-
+        case JBEEJSONPARSE: return "JSON parsing failed";
+        case JBEEI: return "data export/import failed";
         default: return tcerrmsg(ecode);
     }
 }
@@ -299,26 +303,9 @@ EJCOLL* ejdbcreatecoll(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
     if (coll) {
         return coll;
     }
-    if (!JBISVALCOLNAME(colname)) {
-        _ejdbsetecode(jb, JBEINVALIDCOLNAME, __FILE__, __LINE__, __func__);
-        return NULL;
-    }
     JBENSUREOPENLOCK(jb, true, NULL);
-    TCTDB *meta = jb->metadb;
-    char *row = tcsprintf("name\t%s", colname);
-    if (!tctdbput3(meta, colname, row)) {
-        goto finish;
-    }
-    if (!_addcoldb0(colname, jb, opts, &coll)) {
-        tctdbout2(meta, colname); //cleaning
-        goto finish;
-    }
-    _metasetopts(jb, colname, opts);
-finish:
+    coll = _createcollimpl(jb, colname, opts);
     JBUNLOCKMETHOD(jb);
-    if (row) {
-        TCFREE(row);
-    }
     return coll;
 }
 
@@ -331,38 +318,7 @@ bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile) {
         goto finish;
     }
     if (!JBCLOCKMETHOD(coll, true)) return false;
-    tctdbout2(jb->metadb, colname);
-    tctdbvanish(coll->tdb);
-    TCLIST *paths = tclistnew2(10);
-    tclistpush2(paths, coll->tdb->hdb->path);
-    for (int j = 0; j < coll->tdb->inum; ++j) {
-        TDBIDX *idx = coll->tdb->idxs + j;
-        const char *ipath = tcbdbpath(idx->db);
-        if (ipath) {
-            tclistpush2(paths, ipath);
-        }
-    }
-    tctdbclose(coll->tdb);
-    if (unlinkfile) {
-        for (int i = 0; i < TCLISTNUM(paths); ++i) {
-            unlink(tclistval2(paths, i));
-        }
-    }
-    tclistdel(paths);
-    jb->cdbsnum--;
-    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
-        if (jb->cdbs[i] == coll) {
-            jb->cdbs[i] = NULL;
-            break;
-        }
-    }
-    //collapse NULL hole
-    for (int i = 0; i < EJDB_MAX_COLLECTIONS - 1; ++i) {
-        if (!jb->cdbs[i] && jb->cdbs[i + 1]) {
-            jb->cdbs[i] = jb->cdbs[i + 1];
-            jb->cdbs[i + 1] = NULL;
-        }
-    }
+    rv = _rmcollimpl(jb, coll, unlinkfile);
     JBCUNLOCKMETHOD(coll);
     _delcoldb(coll);
     TCFREE(coll);
@@ -951,14 +907,14 @@ bson* ejdbmeta(EJDB *jb) {
     return bs;
 }
 
-bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags) {
+bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *log) {
     assert(jb && path);
     bool err = false;
     bool isdir = false;
     tcstatfile(path, &isdir, NULL, NULL);
     if (!isdir) {
         if (mkdir(path, 00755)) {
-            _ejdbsetecode(jb, TCEMKDIR, __FILE__, __LINE__, __func__);
+            _ejdbsetecode2(jb, TCEMKDIR, __FILE__, __LINE__, __func__, true);
             return false;
         }
     }
@@ -966,49 +922,54 @@ bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags) {
     if (_cnames == NULL) {
         _cnames = ejdbgetcolls(jb);
         if (_cnames == NULL) {
+            _ejdbsetecode2(jb, TCEINVALID, __FILE__, __LINE__, __func__, true);
             return false;
         }
     }
+    JBENSUREOPENLOCK(jb, false, false);
     for (int i = 0; i < TCLISTNUM(cnames); ++i) {
         const char *cn = TCLISTVALPTR(cnames, i);
         assert(cn);
-        EJCOLL *coll = ejdbgetcoll(jb, cn);
+        EJCOLL *coll = _getcoll(jb, cn);
         if (!coll) continue;
         if (!JBCLOCKMETHOD(coll, false)) {
             err = true;
             goto finish;
         }
-        if (!_exportcoll(coll, path, flags)) {
+        if (!_exportcoll(coll, path, flags, log)) {
             err = true;
         }
         JBCUNLOCKMETHOD(coll);
     }
 finish:
+    JBUNLOCKMETHOD(jb);
     if (_cnames != cnames) {
         tclistdel(_cnames);
     }
     return !err;
 }
 
-bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags) {
+bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *log) {
     assert(jb && path);
     bool err = false;
     bool isdir = false;
     if (!tcstatfile(path, &isdir, NULL, NULL) || !isdir) {
-        _ejdbsetecode(jb, TCENOFILE, __FILE__, __LINE__, __func__);
+        _ejdbsetecode2(jb, TCENOFILE, __FILE__, __LINE__, __func__, true);
         return false;
     }
     bool tail = (path[0] != '\0' && path[strlen(path) - 1] == MYPATHCHR);
     char *bsonpat = tail ? tcsprintf("%s*.bson") : tcsprintf("%s%c*.bson", path, MYPATHCHR);
     TCLIST *bspaths = tcglobpat(bsonpat);
+    JBENSUREOPENLOCK(jb, true, false);
     for (int i = 0; i < TCLISTNUM(bspaths); ++i) {
         const char* bspath = TCLISTVALPTR(bspaths, i);
-        if (!_importcoll(jb, bspath, cnames, flags)) {
+        if (!_importcoll(jb, bspath, cnames, flags, log)) {
             err = true;
             goto finish;
         }
     }
 finish:
+    JBUNLOCKMETHOD(jb);
     if (bsonpat) {
         TCFREE(bsonpat);
     }
@@ -1023,26 +984,180 @@ finish:
  * private features
  *************************************************************************************************/
 
-static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags) {
+/**
+ * In order to cleanup resources you need:
+ *      _delcoldb(coll);
+ *      TCFREE(coll);
+ * after this method completion with any return status.
+ */
+static bool _rmcollimpl(EJDB *jb, EJCOLL *coll, bool unlinkfile) {
+    assert(jb && coll);
+    bool rv = true;
+    tctdbout(jb->metadb, coll->cname, coll->cnamesz);
+    tctdbvanish(coll->tdb);
+    TCLIST *paths = tclistnew2(10);
+    tclistpush2(paths, coll->tdb->hdb->path);
+    for (int j = 0; j < coll->tdb->inum; ++j) {
+        TDBIDX *idx = coll->tdb->idxs + j;
+        const char *ipath = tcbdbpath(idx->db);
+        if (ipath) {
+            tclistpush2(paths, ipath);
+        }
+    }
+    tctdbclose(coll->tdb);
+    if (unlinkfile) {
+        for (int i = 0; i < TCLISTNUM(paths); ++i) {
+            unlink(tclistval2(paths, i));
+        }
+    }
+    tclistdel(paths);
+    jb->cdbsnum--;
+    for (int i = 0; i < EJDB_MAX_COLLECTIONS; ++i) {
+        if (jb->cdbs[i] == coll) {
+            jb->cdbs[i] = NULL;
+            break;
+        }
+    }
+    //collapse the NULL hole
+    for (int i = 0; i < EJDB_MAX_COLLECTIONS - 1; ++i) {
+        if (!jb->cdbs[i] && jb->cdbs[i + 1]) {
+            jb->cdbs[i] = jb->cdbs[i + 1];
+            jb->cdbs[i + 1] = NULL;
+        }
+    }
+    return rv;
+}
+
+static EJCOLL* _createcollimpl(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
+    EJCOLL *coll;
+    if (!JBISVALCOLNAME(colname)) {
+        _ejdbsetecode(jb, JBEINVALIDCOLNAME, __FILE__, __LINE__, __func__);
+        return NULL;
+    }
+    TCTDB *meta = jb->metadb;
+    char *row = tcsprintf("name\t%s", colname);
+    if (!tctdbput3(meta, colname, row)) {
+        goto finish;
+    }
+    if (!_addcoldb0(colname, jb, opts, &coll)) {
+        tctdbout2(meta, colname); //cleaning
+        goto finish;
+    }
+    _metasetopts(jb, colname, opts);
+finish:
+    if (row) {
+        TCFREE(row);
+    }
+    return coll;
+}
+
+static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags, TCXSTR *log) {
+    if (log) {
+        tcxstrprintf(log, "\nImporting '%s'", bspath);
+    }
     bool err = false;
     // /foo/bar.bson
     char *dp = strrchr(bspath, '.');
     char *pp = strrchr(bspath, MYPATHCHR);
-    if (pp > dp) {
+    if (!dp || !pp || pp > dp) {
+        if (log) {
+            tcxstrprintf(log, "ERROR: Invalid file path: '%s'", bspath);
+        }
+        _ejdbsetecode2(jb, JBEEI, __FILE__, __LINE__, __func__, true);
         return false;
     }
+    char *lastsep = pp;
     int i = 0;
-    char *cname;
+    char *cname, *mjson;
+    bson_type bt;
+    bson *mbson; //meta bson
+    bson_iterator mbsonit;
+    int sp;
+    EJCOLL *coll;
+
     TCMALLOC(cname, dp - pp + 1);
+    TCXSTR *xmetapath = tcxstrnew();
+
     while (++pp != dp) {
         cname[i++] = *pp;
     }
     cname[i] = '\0';
-    fprintf(stderr, "\ncname=%s", cname);
+    if (cnames != NULL) {
+        if (tclistlsearch(cnames, cname, i) == -1) {
+            goto finish;
+        }
+    }
+    tcxstrcat(xmetapath, bspath, lastsep - bspath + 1);
+    tcxstrprintf(xmetapath, "%s-meta.json", cname);
+    mjson = tcreadfile(tcxstrptr(xmetapath), 0, &sp);
+    if (!mjson) {
+        err = true;
+        if (log) {
+            tcxstrprintf(log, "ERROR: Error reading file: '%s'", tcxstrptr(xmetapath));
+        }
+        _ejdbsetecode2(jb, TCEREAD, __FILE__, __LINE__, __func__, true);
+        goto finish;
+    }
+    mbson = json2bson(mjson);
+    if (!mbson) {
+        err = true;
+        if (log) {
+            tcxstrprintf(log, "ERROR: Invalid JSON in the file: '%s'", tcxstrptr(xmetapath));
+        }
+        _ejdbsetecode2(jb, JBEEJSONPARSE, __FILE__, __LINE__, __func__, true);
+    }
+    coll = ejdbgetcoll(jb, cname);
+    if (coll && (flags & JBIMPORTREPLACE)) {
+        if (!ejdbrmcoll(jb, cname, true)) {
+            if (log) {
+                tcxstrprintf(log, "ERROR: Failed to remove collection: '%s'", cname);
+            }
+            err = true;
+            goto finish;
+        }
+    }
+    if (!coll) {
+        bson_iterator_init(&mbsonit, mbson);
+        EJCOLLOPTS cops = {0};
+        if (bson_find_fieldpath_value("opts", &mbsonit) == BSON_OBJECT) {
+            bson_iterator sit;
+            bson_iterator_subiterator(&mbsonit, &sit);
+            while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
+                const char *key = bson_iterator_key(&sit);
+                if (strcmp("compressed", key) == 0 && bt == BSON_BOOL) {
+                    cops.compressed = bson_iterator_bool(&sit);
+                } else if (strcmp("large", key) == 0 && bt == BSON_BOOL) {
+                    cops.large = bson_iterator_bool(&sit);
+                } else if (strcmp("cachedrecords", key) == 0 && BSON_IS_NUM_TYPE(bt)) {
+                    cops.cachedrecords = bson_iterator_int(&sit);
+                } else if (strcmp("records", key) == 0 && BSON_IS_NUM_TYPE(bt)) {
+                    cops.records = bson_iterator_long(&sit);
+                }
+            }
+        }
+        coll = ejdbcreatecoll(jb, cname, &cops);
+        if (!coll) {
+            if (log) {
+                tcxstrprintf(log, "ERROR: Error creating collection: '%s'", cname);
+            }
+        }
+    }
+
+    //todo lock coll & read bson collection data
+
+finish:
+    if (mbson) {
+        bson_del(mbson);
+    }
+    if (mjson) {
+        TCFREE(mjson);
+    }
+    tcxstrdel(xmetapath);
+    TCFREE(cname);
     return !err;
 }
 
-static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags) {
+static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags, TCXSTR *log) {
     bool err = false;
     char *fpath = tcsprintf("%s%c%s%s", dpath, MYPATHCHR, coll->cname, (flags & JBJSONEXPORT) ? ".json" : ".bson");
     char *fpathm = tcsprintf("%s%c%s%s", dpath, MYPATHCHR, coll->cname, "-meta.json");
@@ -1064,7 +1179,7 @@ static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags) {
             NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 #endif
     if (INVALIDHANDLE(fd) || INVALIDHANDLE(fdm)) {
-        _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+        _ejdbsetecode2(coll->jb, JBEEI, __FILE__, __LINE__, __func__, true);
         err = true;
         goto finish;
     }
@@ -1079,7 +1194,7 @@ static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags) {
             int wsiz;
             if (flags & JBJSONEXPORT) {
                 if (bson2json(TCXSTRPTR(bsbuf), &wbuf, &wsiz) != BSON_OK) {
-                    _ejdbsetecode(coll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+                    _ejdbsetecode2(coll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__, true);
                     goto wfinish;
                 }
             } else {
@@ -1087,7 +1202,7 @@ static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags) {
                 wsiz = TCXSTRSIZE(bsbuf);
             }
             if (!tcwrite(fd, wbuf, wsiz)) {
-                _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+                _ejdbsetecode2(coll->jb, JBEEI, __FILE__, __LINE__, __func__, true);
                 goto wfinish;
             }
 wfinish:
@@ -1124,25 +1239,25 @@ wfinish:
         int wsiz;
         if (bson2json(bson_data(&mbs), &wbuf, &wsiz) != BSON_OK) {
             err = true;
-            _ejdbsetecode(coll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+            _ejdbsetecode2(coll->jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__, true);
             bson_destroy(&mbs);
             goto finish;
         }
         bson_destroy(&mbs);
         if (!tcwrite(fdm, wbuf, wsiz)) {
             err = true;
-            _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+            _ejdbsetecode2(coll->jb, JBEEI, __FILE__, __LINE__, __func__, true);
         }
         TCFREE(wbuf);
     }
 
 finish:
     if (!INVALIDHANDLE(fd) && !CLOSEFH(fd)) {
-        _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+        _ejdbsetecode2(coll->jb, JBEEI, __FILE__, __LINE__, __func__, true);
         err = true;
     }
     if (!INVALIDHANDLE(fdm) && !CLOSEFH(fdm)) {
-        _ejdbsetecode(coll->jb, JBEEI, __FILE__, __LINE__, __func__);
+        _ejdbsetecode2(coll->jb, JBEEI, __FILE__, __LINE__, __func__, true);
         err = true;
     }
     tcxstrdel(skbuf);
@@ -1154,8 +1269,12 @@ finish:
 
 /* Set the error code of a table database object. */
 static void _ejdbsetecode(EJDB *jb, int ecode, const char *filename, int line, const char *func) {
+    _ejdbsetecode2(jb, ecode, filename, line, func, false);
+}
+
+static void _ejdbsetecode2(EJDB *jb, int ecode, const char *filename, int line, const char *func, bool notfatal) {
     assert(jb && filename && line >= 1 && func);
-    tctdbsetecode(jb->metadb, ecode, filename, line, func);
+    tctdbsetecode2(jb->metadb, ecode, filename, line, func, notfatal);
 }
 
 static EJCOLL* _getcoll(EJDB *jb, const char *colname) {

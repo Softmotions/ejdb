@@ -797,6 +797,8 @@ EJDB_EXPORT TCLIST *tctdbmetasearch(TDBQRY **qrys, int num, int type);
    `func' specifies the function name of the code. */
 EJDB_EXPORT void tctdbsetecode(TCTDB *tdb, int ecode, const char *filename, int line, const char *func);
 
+EJDB_EXPORT void tctdbsetecode2(TCTDB *tdb, int ecode, const char *filename, int line, const char *func, bool notfatal);
+
 
 /* Set the file descriptor for debugging output.
    `tdb' specifies the table database object.
