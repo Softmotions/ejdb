@@ -164,6 +164,141 @@ void testBSONExportImport() {
     tclistdel(cnames);
 }
 
+void testBSONExportImport2() {
+    EJDB *jb = ejdbnew();
+    CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT | JBOTRUNC));
+    EJCOLL *coll = ejdbcreatecoll(jb, "col1", NULL);
+    if (!coll) {
+        eprint(jb, __LINE__, "testBSONExportImport2");
+    }
+    CU_ASSERT_TRUE(coll != NULL);
+    bson_oid_t oid;
+
+    bson bv1;
+    bson_init(&bv1);
+    bson_append_int(&bv1, "a", 1);
+    bson_append_string(&bv1, "c", "d");
+    bson_finish(&bv1);
+    ejdbsavebson(coll, &bv1, &oid);
+    bson_destroy(&bv1);
+
+    EJCOLLOPTS copts = {0};
+    copts.large = true;
+    copts.records = 200000;
+    coll = ejdbcreatecoll(jb, "col2", &copts);
+    if (!coll) {
+        eprint(jb, __LINE__, "testBSONExportImport2");
+    }
+    CU_ASSERT_TRUE(coll != NULL);
+    CU_ASSERT_TRUE(ejdbsetindex(coll, "f", JBIDXSTR | JBIDXNUM));
+    bson_init(&bv1);
+    bson_append_int(&bv1, "e", 1);
+    bson_append_string(&bv1, "f", "g");
+    bson_finish(&bv1);
+    ejdbsavebson(coll, &bv1, &oid);
+    bson_destroy(&bv1);
+
+    bson_init(&bv1);
+    bson_append_int(&bv1, "e", 2);
+    bson_append_string(&bv1, "f", "g2");
+    bson_finish(&bv1);
+    ejdbsavebson(coll, &bv1, &oid);
+    bson_destroy(&bv1);
+
+    TCXSTR *log = tcxstrnew();
+    TCLIST *cnames = tclistnew();
+    tclistpush2(cnames, "col1");
+    tclistpush2(cnames, "col2");
+
+
+    //TODO!!!
+    bool rv = ejdbexport(jb, "testBSONExportImport2", cnames, 0, log);
+    if (!rv) {
+        eprint(jb, __LINE__, "testBSONExportImport2");
+    }
+    CU_ASSERT_TRUE(rv);
+
+    bson *ometa = ejdbmeta(jb);
+    CU_ASSERT_TRUE_FATAL(ometa != NULL);
+
+    ejdbclose(jb);
+    ejdbdel(jb);
+
+    //Restore data:
+
+    jb = ejdbnew();
+    CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT));
+
+    coll = ejdbgetcoll(jb, "col1");
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    bson_init(&bv1);
+    bson_append_int(&bv1, "e", 2);
+    bson_finish(&bv1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &bv1, &oid));
+    bson_destroy(&bv1);
+
+    //TODO!!!
+    rv = ejdbimport(jb, "testBSONExportImport2", cnames, JBIMPORTREPLACE, log);
+    CU_ASSERT_TRUE(rv);
+
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "Reading 'testBSONExportImport2/col1.bson'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "Replacing all data in 'col1'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "1 objects imported into 'col1'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "2 objects imported into 'col2'"));
+
+    bson *nmeta = ejdbmeta(jb);
+    CU_ASSERT_TRUE_FATAL(nmeta != NULL);
+
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.0.name", strlen("collections.0.name")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.0.records", strlen("collections.0.records")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.name", strlen("collections.1.name")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.records", strlen("collections.1.records")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.options.buckets", strlen("collections.1.options.buckets")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.options.large", strlen("collections.1.options.large")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.indexes.0.field", strlen("collections.1.indexes.0.field")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.indexes.0.type", strlen("collections.1.indexes.0.type")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.indexes.0.records", strlen("collections.1.indexes.0.records")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.indexes.1.field", strlen("collections.1.indexes.1.field")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.indexes.1.type", strlen("collections.1.indexes.1.type")) == 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.indexes.1.records", strlen("collections.1.indexes.1.records")) == 0);
+
+    ejdbclose(jb);
+    ejdbdel(jb);
+
+    jb = ejdbnew();
+    CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT | JBOTRUNC));
+
+    coll = ejdbcreatecoll(jb, "col1", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    bson_init(&bv1);
+    bson_append_int(&bv1, "e", 2);
+    bson_finish(&bv1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &bv1, &oid));
+
+    EJQ *q = ejdbcreatequery(jb, &bv1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q);
+    uint32_t count = 0;
+    ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
+    CU_ASSERT_EQUAL(count, 1);
+
+    //TODO!!!
+    rv = ejdbimport(jb, "testBSONExportImport2", NULL, JBIMPORTUPDATE, NULL);
+    CU_ASSERT_TRUE(rv);
+
+    coll = ejdbcreatecoll(jb, "col1", NULL);
+    ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
+    CU_ASSERT_EQUAL(count, 1);
+
+    ejdbquerydel(q);
+    bson_destroy(&bv1);
+    ejdbclose(jb);
+    ejdbdel(jb);
+
+    bson_del(ometa);
+    bson_del(nmeta);
+    tcxstrdel(log);
+    tclistdel(cnames);
+}
 
 int init_suite(void) {
     return 0;
@@ -191,8 +326,8 @@ int main() {
     /* Add the tests to the suite */
     if (
             (NULL == CU_add_test(pSuite, "testTicket53", testTicket53)) ||
-            (NULL == CU_add_test(pSuite, "testBSONExportImport", testBSONExportImport))
-
+            (NULL == CU_add_test(pSuite, "testBSONExportImport", testBSONExportImport)) ||
+            (NULL == CU_add_test(pSuite, "testBSONExportImport2", testBSONExportImport2))
             ) {
         CU_cleanup_registry();
         return CU_get_error();
