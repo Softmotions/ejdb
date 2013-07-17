@@ -570,7 +570,7 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  *
  *    Command response:
  *       {
- *          "log" : string,        //Diagnostic log about execution this command
+ *          "log" : string,        //Diagnostic log about executing this command
  *          "error" : string|null, //ejdb error message
  *          "errorCode" : int|0,   //ejdb error code
  *       }
@@ -585,7 +585,7 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  *
  *     Command response:
  *       {
- *          "log" : string,        //Diagnostic log about execution this command
+ *          "log" : string,        //Diagnostic log about executing this command
  *          "error" : string|null, //ejdb error message
  *          "errorCode" : int|0,   //ejdb error code
  *       }
