@@ -49,7 +49,6 @@
       <in>tcftest.c</in>
       <in>tchdb.c</in>
       <in>tchdb.h</in>
-      <in>tchdb2.h</in>
       <in>tchmgr.c</in>
       <in>tchmttest.c</in>
       <in>tchtest.c</in>
@@ -96,7 +95,7 @@
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
-          <executablePath>testejdb/t1</executablePath>
+          <executablePath>testejdb/t4</executablePath>
           <cTool>
             <preprocessorList>
               <Elem>_GNU_SOURCE=1</Elem>
@@ -130,12 +129,13 @@
       <item path="ejdb.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <incDir>
-            <pElem>../../../../include</pElem>
             <pElem>.</pElem>
             <pElem>/usr/local/include</pElem>
           </incDir>
           <preprocessorList>
-            <Elem>_MYTESTS</Elem>
+            <Elem>EJDB_STATIC</Elem>
+            <Elem>_DEBUG</Elem>
+            <Elem>_TC_APPLIBS="-L/usr/local/lib -lpthread -lz -lrt -lm -lc "</Elem>
           </preprocessorList>
         </cTool>
       </item>
@@ -841,8 +841,6 @@
         </cTool>
       </item>
       <item path="tchdb.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="tchdb2.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="tchmgr.c" ex="false" tool="0" flavor2="0">
         <cTool>

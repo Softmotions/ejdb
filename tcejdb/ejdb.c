@@ -134,6 +134,7 @@ static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags, TCXSTR *log)
 static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags, TCXSTR *log);
 static EJCOLL* _createcollimpl(EJDB *jb, const char *colname, EJCOLLOPTS *opts);
 static bool _rmcollimpl(EJDB *jb, EJCOLL *coll, bool unlinkfile);
+static bool _setindeximpl(EJCOLL *jcoll, const char *fpath, int flags, bool nolock);
 
 
 extern const char *utf8proc_errmsg(ssize_t errcode);
@@ -524,158 +525,7 @@ void ejdbquerydel(EJQ *q) {
 
 /** Set index */
 bool ejdbsetindex(EJCOLL *jcoll, const char *fpath, int flags) {
-    assert(jcoll && fpath);
-    bool rv = true;
-    bson *imeta = NULL;
-    bson_iterator it;
-    int tcitype = 0; //TCDB index type
-    int oldiflags = 0; //Old index flags stored in meta
-    bool ibld = (flags & JBIDXREBLD);
-    if (ibld) {
-        flags &= ~JBIDXREBLD;
-    }
-    bool idrop = (flags & JBIDXDROP);
-    if (idrop) {
-        flags &= ~JBIDXDROP;
-    }
-    bool idropall = (flags & JBIDXDROPALL);
-    if (idropall) {
-        idrop = true;
-        flags &= ~JBIDXDROPALL;
-    }
-    bool iop = (flags & JBIDXOP);
-    if (iop) {
-        flags &= ~JBIDXOP;
-    }
-
-    char ipath[BSON_MAX_FPATH_LEN + 2]; //add 2 bytes for one char prefix and '\0'term
-    char ikey[BSON_MAX_FPATH_LEN + 2]; //add 2 bytes for one char prefix and '\0'term
-    int fpathlen = strlen(fpath);
-    if (fpathlen > BSON_MAX_FPATH_LEN) {
-        _ejdbsetecode(jcoll->jb, JBEFPATHINVALID, __FILE__, __LINE__, __func__);
-        rv = false;
-        goto finish;
-    }
-    memmove(ikey + 1, fpath, fpathlen + 1);
-    ikey[0] = 'i';
-    memmove(ipath + 1, fpath, fpathlen + 1);
-    ipath[0] = 's'; //defaulting to string index type
-
-    JBENSUREOPENLOCK(jcoll->jb, true, false);
-    imeta = _imetaidx(jcoll, fpath);
-    if (!imeta) {
-        if (idrop) { //Cannot drop/optimize not existent index;
-            JBUNLOCKMETHOD(jcoll->jb);
-            goto finish;
-        }
-        if (iop) {
-            iop = false; //New index will be created
-        }
-        imeta = bson_create();
-        bson_init(imeta);
-        bson_append_string(imeta, "ipath", fpath);
-        bson_append_int(imeta, "iflags", flags);
-        bson_finish(imeta);
-        rv = _metasetbson2(jcoll, ikey, imeta, false, false);
-        if (!rv) {
-            JBUNLOCKMETHOD(jcoll->jb);
-            goto finish;
-        }
-    } else {
-        if (bson_find(&it, imeta, "iflags") != BSON_EOO) {
-            oldiflags = bson_iterator_int(&it);
-        }
-        if (!idrop && oldiflags != flags) { //Update index meta
-            bson imetadelta;
-            bson_init(&imetadelta);
-            bson_append_int(&imetadelta, "iflags", (flags | oldiflags));
-            bson_finish(&imetadelta);
-            rv = _metasetbson2(jcoll, ikey, &imetadelta, true, true);
-            bson_destroy(&imetadelta);
-            if (!rv) {
-                JBUNLOCKMETHOD(jcoll->jb);
-                goto finish;
-            }
-        }
-    }
-    JBUNLOCKMETHOD(jcoll->jb);
-
-    if (idrop) {
-        tcitype = TDBITVOID;
-        if (idropall && oldiflags) {
-            flags = oldiflags; //Drop index only for existing types
-        }
-    } else if (iop) {
-        tcitype = TDBITOPT;
-        if (oldiflags) {
-            flags = oldiflags; //Optimize index for all existing types
-        }
-    }
-
-    if (!JBCLOCKMETHOD(jcoll, true)) {
-        rv = false;
-        goto finish;
-    }
-    _BSONIPATHROWLDR op;
-    op.icase = false;
-    op.jcoll = jcoll;
-
-    if (tcitype) {
-        if (flags & JBIDXSTR) {
-            ipath[0] = 's';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
-        }
-        if (flags & JBIDXISTR) {
-            ipath[0] = 'i';
-            op.icase = true;
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
-        }
-        if (rv && (flags & JBIDXNUM)) {
-            ipath[0] = 'n';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
-        }
-        if (rv && (flags & JBIDXARR)) {
-            ipath[0] = 'a';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
-        }
-        if (idrop) { //Update index meta on drop
-            oldiflags &= ~flags;
-            if (oldiflags) { //Index dropped only for some types
-                bson imetadelta;
-                bson_init(&imetadelta);
-                bson_append_int(&imetadelta, "iflags", oldiflags);
-                bson_finish(&imetadelta);
-                rv = _metasetbson2(jcoll, ikey, &imetadelta, true, true);
-                bson_destroy(&imetadelta);
-            } else { //Index dropped completely
-                rv = _metasetbson2(jcoll, ikey, NULL, false, false);
-            }
-        }
-    } else {
-        if ((flags & JBIDXSTR) && (ibld || !(oldiflags & JBIDXSTR))) {
-            ipath[0] = 's';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, &op);
-        }
-        if ((flags & JBIDXISTR) && (ibld || !(oldiflags & JBIDXISTR))) {
-            ipath[0] = 'i';
-            op.icase = true;
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, &op);
-        }
-        if (rv && (flags & JBIDXNUM) && (ibld || !(oldiflags & JBIDXNUM))) {
-            ipath[0] = 'n';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITDECIMAL, _bsonipathrowldr, &op);
-        }
-        if (rv && (flags & JBIDXARR) && (ibld || !(oldiflags & JBIDXARR))) {
-            ipath[0] = 'a';
-            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITTOKEN, _bsonipathrowldr, &op);
-        }
-    }
-    JBCUNLOCKMETHOD(jcoll);
-finish:
-    if (imeta) {
-        bson_del(imeta);
-    }
-    return rv;
+    return _setindeximpl(jcoll, fpath, flags, false);
 }
 
 uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log) {
@@ -954,6 +804,9 @@ bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *l
     assert(jb && path);
     bool err = false;
     bool isdir = false;
+    if (flags == 0) {
+        flags |= JBIMPORTUPDATE;
+    }
     if (!tcstatfile(path, &isdir, NULL, NULL) || !isdir) {
         _ejdbsetecode2(jb, TCENOFILE, __FILE__, __LINE__, __func__, true);
         return false;
@@ -984,6 +837,172 @@ finish:
 /*************************************************************************************************
  * private features
  *************************************************************************************************/
+
+static bool _setindeximpl(EJCOLL *jcoll, const char *fpath, int flags, bool nolock) {
+    assert(jcoll && fpath);
+    bool rv = true;
+    bson *imeta = NULL;
+    bson_iterator it;
+    int tcitype = 0; //TCDB index type
+    int oldiflags = 0; //Old index flags stored in meta
+    bool ibld = (flags & JBIDXREBLD);
+    if (ibld) {
+        flags &= ~JBIDXREBLD;
+    }
+    bool idrop = (flags & JBIDXDROP);
+    if (idrop) {
+        flags &= ~JBIDXDROP;
+    }
+    bool idropall = (flags & JBIDXDROPALL);
+    if (idropall) {
+        idrop = true;
+        flags &= ~JBIDXDROPALL;
+    }
+    bool iop = (flags & JBIDXOP);
+    if (iop) {
+        flags &= ~JBIDXOP;
+    }
+    char ipath[BSON_MAX_FPATH_LEN + 2]; //add 2 bytes for one char prefix and '\0'term
+    char ikey[BSON_MAX_FPATH_LEN + 2]; //add 2 bytes for one char prefix and '\0'term
+    int fpathlen = strlen(fpath);
+    if (fpathlen > BSON_MAX_FPATH_LEN) {
+        _ejdbsetecode(jcoll->jb, JBEFPATHINVALID, __FILE__, __LINE__, __func__);
+        rv = false;
+        goto finish;
+    }
+    memmove(ikey + 1, fpath, fpathlen + 1);
+    ikey[0] = 'i';
+    memmove(ipath + 1, fpath, fpathlen + 1);
+    ipath[0] = 's'; //defaulting to string index type
+
+    if (!nolock) {
+        JBENSUREOPENLOCK(jcoll->jb, true, false);
+    }
+    imeta = _imetaidx(jcoll, fpath);
+    if (!imeta) {
+        if (idrop) { //Cannot drop/optimize not existent index;
+            if (!nolock) {
+                JBUNLOCKMETHOD(jcoll->jb);
+            }
+            goto finish;
+        }
+        if (iop) {
+            iop = false; //New index will be created
+        }
+        imeta = bson_create();
+        bson_init(imeta);
+        bson_append_string(imeta, "ipath", fpath);
+        bson_append_int(imeta, "iflags", flags);
+        bson_finish(imeta);
+        rv = _metasetbson2(jcoll, ikey, imeta, false, false);
+        if (!rv) {
+            if (!nolock) {
+                JBUNLOCKMETHOD(jcoll->jb);
+            }
+            goto finish;
+        }
+    } else {
+        if (bson_find(&it, imeta, "iflags") != BSON_EOO) {
+            oldiflags = bson_iterator_int(&it);
+        }
+        if (!idrop && oldiflags != flags) { //Update index meta
+            bson imetadelta;
+            bson_init(&imetadelta);
+            bson_append_int(&imetadelta, "iflags", (flags | oldiflags));
+            bson_finish(&imetadelta);
+            rv = _metasetbson2(jcoll, ikey, &imetadelta, true, true);
+            bson_destroy(&imetadelta);
+            if (!rv) {
+                if (!nolock) {
+                    JBUNLOCKMETHOD(jcoll->jb);
+                }
+                goto finish;
+            }
+        }
+    }
+    if (!nolock) {
+        JBUNLOCKMETHOD(jcoll->jb);
+    }
+    if (idrop) {
+        tcitype = TDBITVOID;
+        if (idropall && oldiflags) {
+            flags = oldiflags; //Drop index only for existing types
+        }
+    } else if (iop) {
+        tcitype = TDBITOPT;
+        if (oldiflags) {
+            flags = oldiflags; //Optimize index for all existing types
+        }
+    }
+
+    if (!nolock) {
+        if (!JBCLOCKMETHOD(jcoll, true)) {
+            rv = false;
+            goto finish;
+        }
+    }
+    _BSONIPATHROWLDR op;
+    op.icase = false;
+    op.jcoll = jcoll;
+    if (tcitype) {
+        if (flags & JBIDXSTR) {
+            ipath[0] = 's';
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
+        }
+        if (flags & JBIDXISTR) {
+            ipath[0] = 'i';
+            op.icase = true;
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
+        }
+        if (rv && (flags & JBIDXNUM)) {
+            ipath[0] = 'n';
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
+        }
+        if (rv && (flags & JBIDXARR)) {
+            ipath[0] = 'a';
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, tcitype, _bsonipathrowldr, &op);
+        }
+        if (idrop) { //Update index meta on drop
+            oldiflags &= ~flags;
+            if (oldiflags) { //Index dropped only for some types
+                bson imetadelta;
+                bson_init(&imetadelta);
+                bson_append_int(&imetadelta, "iflags", oldiflags);
+                bson_finish(&imetadelta);
+                rv = _metasetbson2(jcoll, ikey, &imetadelta, true, true);
+                bson_destroy(&imetadelta);
+            } else { //Index dropped completely
+                rv = _metasetbson2(jcoll, ikey, NULL, false, false);
+            }
+        }
+    } else {
+        if ((flags & JBIDXSTR) && (ibld || !(oldiflags & JBIDXSTR))) {
+            ipath[0] = 's';
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, &op);
+        }
+        if ((flags & JBIDXISTR) && (ibld || !(oldiflags & JBIDXISTR))) {
+            ipath[0] = 'i';
+            op.icase = true;
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITLEXICAL, _bsonipathrowldr, &op);
+        }
+        if (rv && (flags & JBIDXNUM) && (ibld || !(oldiflags & JBIDXNUM))) {
+            ipath[0] = 'n';
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITDECIMAL, _bsonipathrowldr, &op);
+        }
+        if (rv && (flags & JBIDXARR) && (ibld || !(oldiflags & JBIDXARR))) {
+            ipath[0] = 'a';
+            rv = tctdbsetindexrldr(jcoll->tdb, ipath, TDBITTOKEN, _bsonipathrowldr, &op);
+        }
+    }
+    if (!nolock) {
+        JBCUNLOCKMETHOD(jcoll);
+    }
+finish:
+    if (imeta) {
+        bson_del(imeta);
+    }
+    return rv;
+}
 
 /**
  * In order to cleanup resources you need:
@@ -1054,7 +1073,7 @@ finish:
 
 static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags, TCXSTR *log) {
     if (log) {
-        tcxstrprintf(log, "\nImporting '%s'", bspath);
+        tcxstrprintf(log, "\n\nReading '%s'", bspath);
     }
     bool err = false;
     // /foo/bar.bson
@@ -1107,8 +1126,11 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
         }
         _ejdbsetecode2(jb, JBEEJSONPARSE, __FILE__, __LINE__, __func__, true);
     }
-    coll = ejdbgetcoll(jb, cname);
+    coll = _getcoll(jb, cname);
     if (coll && (flags & JBIMPORTREPLACE)) {
+        if (log) {
+            tcxstrprintf(log, "\nReplacing all data in '%s'", cname);
+        }
         err = !(_rmcollimpl(jb, coll, true));
         _delcoldb(coll);
         TCFREE(coll);
@@ -1121,6 +1143,7 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
         }
     }
     if (!coll) {
+        //Build collection options
         bson_iterator_init(&mbsonit, mbson);
         EJCOLLOPTS cops = {0};
         if (bson_find_fieldpath_value("opts", &mbsonit) == BSON_OBJECT) {
@@ -1148,6 +1171,41 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
             goto finish;
         }
     }
+
+    //Register collection indexes
+    bson_iterator_init(&mbsonit, mbson);
+    while ((bt = bson_iterator_next(&mbsonit)) != BSON_EOO) {
+        const char *key = bson_iterator_key(&mbsonit);
+        if (bt != BSON_OBJECT || strlen(key) < 2 || key[0] != 'i') {
+            continue;
+        }
+        char *ipath = NULL;
+        int iflags = 0;
+        bson_iterator sit;
+
+        bson_iterator_subiterator(&mbsonit, &sit);
+        bt = bson_find_fieldpath_value("ipath", &sit);
+        if (bt == BSON_STRING) {
+            ipath = strdup(bson_iterator_string(&sit));
+        }
+
+        bson_iterator_subiterator(&mbsonit, &sit);
+        bt = bson_find_fieldpath_value("iflags", &sit);
+        if (bt == BSON_INT || bt == BSON_LONG) {
+            iflags = bson_iterator_int(&sit);
+        }
+        if (ipath) {
+            if (!_setindeximpl(coll, ipath, iflags, true)) {
+                err = true;
+                if (log) {
+                    tcxstrprintf(log, "\nERROR: Error creating collection index. Collection: '%s' Field: '%s'", cname, ipath);
+                }
+                TCFREE(ipath);
+            }
+            TCFREE(ipath);
+        }
+    }
+
     int fd = open(bspath, O_RDONLY, TCFILEMODE);
     if (fd == -1) {
         err = true;
@@ -1161,34 +1219,45 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
         err = true;
         goto finish;
     }
-    int maxdocsiz = 0, docsiz = 0, numdocs = 0;
-    void *docbuf;
-    TCMALLOC(docbuf, 1);
+    int32_t maxdocsiz = 0, docsiz = 0, numdocs = 0;
+    char *docbuf;
+    TCMALLOC(docbuf, 4);
     while (true) {
-        numdocs = 0;
-        sp = read(fd, &docsiz, 4);
+        sp = read(fd, docbuf, 4);
         if (sp < 4) {
             break;
         }
+        memcpy(&docsiz, docbuf, 4);
         docsiz = TCHTOIL(docsiz);
         if (docsiz > EJDB_MAX_IMPORTED_BSON_SIZE) {
             err = true;
+            if (log) {
+                tcxstrprintf(log, "\nERROR: BSON document size: %d exceeds the maximum allowed size limit: %d for import operation",
+                        docsiz, EJDB_MAX_IMPORTED_BSON_SIZE);
+            }
             _ejdbsetecode2(jb, JBETOOBIGBSON, __FILE__, __LINE__, __func__, true);
             break;
         }
-        if (docsiz < 4) {
+        if (docsiz < 5) {
             break;
         }
         if (maxdocsiz < docsiz) {
             maxdocsiz = docsiz;
             TCREALLOC(docbuf, docbuf, maxdocsiz);
         }
-        sp = read(fd, docbuf, docsiz);
-        if (sp < docsiz) {
+        sp = read(fd, docbuf + 4, docsiz - 4);
+        if (sp < docsiz - 4) {
             break;
         }
         bson_oid_t oid;
-        if (!ejdbsavebson3(coll, docbuf, &oid, false)) {
+        bson savebs;
+        bson_init_with_data(&savebs, docbuf);
+        if (docbuf[docsiz - 1] != '\0' || savebs.err || !savebs.finished) {
+            err = true;
+            _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+            break;
+        }
+        if (!_ejdbsavebsonimpl(coll, &savebs, &oid, false)) {
             err = true;
             break;
         }
@@ -1197,11 +1266,11 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
     if (docbuf) {
         TCFREE(docbuf);
     }
-    if (!ejdbsyncoll(coll)) {
+    if (!tctdbsync(coll->tdb)) {
         err = true;
     }
     if (!err && log) {
-        tcxstrprintf(log, "\n%s imported %d entries", cname, numdocs);
+        tcxstrprintf(log, "\n%d objects imported into '%s'", numdocs, cname);
     }
     JBCUNLOCKMETHOD(coll);
 finish:
@@ -1214,7 +1283,7 @@ finish:
     tcxstrdel(xmetapath);
     TCFREE(cname);
     if (err && log) {
-         tcxstrprintf(log, "\nERROR: Importing data into: '%s' failed with error: '%s'", cname, ejdberrmsg(ejdbecode(jb)));
+        tcxstrprintf(log, "\nERROR: Importing data into: '%s' failed with error: '%s'", cname, (ejdbecode(jb) != 0) ? ejdberrmsg(ejdbecode(jb)) : "Unknown");
     }
     return !err;
 }
@@ -1296,6 +1365,8 @@ wfinish:
                 bson_del(bs);
             }
         }
+        tcmapdel(cmeta);
+
         bson_finish(&mbs);
         char *wbuf = NULL;
         int wsiz;
@@ -1326,6 +1397,7 @@ finish:
     tcxstrdel(colbuf);
     tcxstrdel(bsbuf);
     TCFREE(fpath);
+    TCFREE(fpathm);
     return !err;
 }
 
