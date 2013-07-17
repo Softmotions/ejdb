@@ -559,8 +559,8 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  *
  * Supported commands:
  *
- * EJDBEXPORT:
- *    Exports database collections data. See ejdbexport() method.
+ *
+ *  1) Exports database collections data. See ejdbexport() method.
  *
  *    "export" : {
  *          "path" : string,                    //Exports database collections data
@@ -570,13 +570,12 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  *
  *    Command response:
  *       {
- *          "log" : string,        //Diagnostic log about executing this command
+ *          "log" : string,        //Diagnostic log about execution this command
  *          "error" : string|null, //ejdb error message
  *          "errorCode" : int|0,   //ejdb error code
  *       }
  *
- * EJDBIMPORT:
- *    Imports previously exported collections data into ejdb.
+ *  2) Imports previously exported collections data into ejdb.
  *
  *    "import" : {
  *          "path" : string                     //The directory path in which data resides
@@ -586,7 +585,7 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  *
  *     Command response:
  *       {
- *          "log" : string,        //Diagnostic log about executing this command
+ *          "log" : string,        //Diagnostic log about execution this command
  *          "error" : string|null, //ejdb error message
  *          "errorCode" : int|0,   //ejdb error code
  *       }
