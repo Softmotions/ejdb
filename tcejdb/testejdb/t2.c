@@ -4234,10 +4234,10 @@ void testMetaInfo() {
     CU_ASSERT_PTR_NOT_NULL_FATAL(meta);
     const char *metabsdata = bson_data(meta);
     CU_ASSERT_FALSE(bson_compare_string("dbt2", metabsdata, "file"));
-    CU_ASSERT_FALSE(bson_compare_string("contacts", metabsdata, "collections.0.name"));
-    CU_ASSERT_FALSE(bson_compare_string("dbt2_contacts", metabsdata, "collections.0.file"));
-    CU_ASSERT_FALSE(bson_compare_long(131071, metabsdata, "collections.0.options.buckets"));
-    CU_ASSERT_FALSE(bson_compare_long(8, metabsdata, "collections.0.records"));
+    CU_ASSERT_FALSE(bson_compare_string("contacts", metabsdata, "collections.1.name"));
+    CU_ASSERT_FALSE(bson_compare_string("dbt2_contacts", metabsdata, "collections.1.file"));
+    CU_ASSERT_FALSE(bson_compare_long(131071, metabsdata, "collections.1.options.buckets"));
+    CU_ASSERT_FALSE(bson_compare_long(8, metabsdata, "collections.1.records"));
     bson_del(meta);
 }
 
