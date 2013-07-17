@@ -562,7 +562,7 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  * EJDBEXPORT:
  *    Exports database collections data. See ejdbexport() method.
  *
- *    "ejdbexport" : {
+ *    "export" : {
  *          "path" : string,                    //Exports database collections data
  *          "cnames" : [string array]|null,     //List of collection names to export
  *          "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdbexport() method
@@ -578,7 +578,7 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  * EJDBIMPORT:
  *    Imports previously exported collections data into ejdb.
  *
- *    "ejdbexport" : {
+ *    "import" : {
  *          "path" : string                     //The directory path in which data resides
  *          "cnames" : [string array]|null,     //List of collection names to import
  *          "mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method

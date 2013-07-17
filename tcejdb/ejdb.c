@@ -684,6 +684,12 @@ bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive) {
     return true;
 }
 
+static int _cmpcolls(const TCLISTDATUM *d1, const TCLISTDATUM *d2) {
+    EJCOLL *c1 = (EJCOLL*) d1->ptr;
+    EJCOLL *c2 = (EJCOLL*) d2->ptr;
+    return memcmp(c1->cname, c2->cname, MIN(c1->cnamesz, c2->cnamesz));
+}
+
 bson* ejdbmeta(EJDB *jb) {
     JBENSUREOPENLOCK(jb, false, NULL);
     char nbuff[TCNUMBUFSIZ];
@@ -691,7 +697,10 @@ bson* ejdbmeta(EJDB *jb) {
     bson_init(bs);
     bson_append_string(bs, "file", jb->metadb->hdb->path);
     bson_append_start_array(bs, "collections"); //collections
+
     TCLIST *cols = ejdbgetcolls(jb);
+    tclistsortex(cols, _cmpcolls);
+
     for (int i = 0; i < TCLISTNUM(cols); ++i) {
         EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
         if (!JBCLOCKMETHOD(coll, false)) {
@@ -849,7 +858,7 @@ bson* ejdbcommand(EJDB *jb, bson *cmd) {
 
     while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
         const char *key = bson_iterator_key(&it);
-        if (!strcmp("ejdbexport", key) || !strcmp("ejdbimport", key)) {
+        if (!strcmp("export", key) || !strcmp("import", key)) {
             xlog = tcxstrnew();
             char *path = NULL;
             int flags = 0;
@@ -881,9 +890,9 @@ bson* ejdbcommand(EJDB *jb, bson *cmd) {
                 ecode = JBEINVALIDCMD;
                 goto finish;
             }
-            if (!strcmp("ejdbexport", key)) {
+            if (!strcmp("export", key)) {
                 rv = ejdbexport(jb, path, cnames, flags, xlog);
-            } else { //ejdbimport
+            } else { //import
                 rv = ejdbimport(jb, path, cnames, flags, xlog);
             }
             if (!rv) {

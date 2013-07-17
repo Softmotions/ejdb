@@ -173,6 +173,7 @@ void testBSONExportImport2() {
     }
     CU_ASSERT_TRUE(coll != NULL);
     bson_oid_t oid;
+    const char *log = NULL;
 
     bson bv1;
     bson_init(&bv1);
@@ -205,18 +206,28 @@ void testBSONExportImport2() {
     ejdbsavebson(coll, &bv1, &oid);
     bson_destroy(&bv1);
 
-    TCXSTR *log = tcxstrnew();
-    TCLIST *cnames = tclistnew();
-    tclistpush2(cnames, "col1");
-    tclistpush2(cnames, "col2");
+    bson cmd;
+    bson_init(&cmd);
+    bson_append_start_object(&cmd, "export");
+    bson_append_string(&cmd, "path", "testBSONExportImport2");
+    bson_append_start_array(&cmd, "cnames");
+    bson_append_string(&cmd, "0", "col1");
+    bson_append_string(&cmd, "1", "col2");
+    bson_append_finish_array(&cmd);
+    bson_append_finish_object(&cmd);
+    bson_finish(&cmd);
+    bson *bret = ejdbcommand(jb, &cmd);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(bret);
+    bson_destroy(&cmd);
 
-
-    //TODO!!!
-    bool rv = ejdbexport(jb, "testBSONExportImport2", cnames, 0, log);
-    if (!rv) {
-        eprint(jb, __LINE__, "testBSONExportImport2");
-    }
-    CU_ASSERT_TRUE(rv);
+    bson_iterator it;
+    bson_iterator_init(&it, bret);
+    CU_ASSERT_TRUE(bson_find_fieldpath_value("error", &it) == BSON_EOO);
+    bson_iterator_init(&it, bret);
+    CU_ASSERT_TRUE(bson_compare_long(0, bson_data(bret), "errorCode") == 0);
+    bson_iterator_init(&it, bret);
+    CU_ASSERT_TRUE(bson_find_fieldpath_value("log", &it) == BSON_STRING);
+    bson_del(bret);
 
     bson *ometa = ejdbmeta(jb);
     CU_ASSERT_TRUE_FATAL(ometa != NULL);
@@ -225,7 +236,6 @@ void testBSONExportImport2() {
     ejdbdel(jb);
 
     //Restore data:
-
     jb = ejdbnew();
     CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT));
 
@@ -237,14 +247,30 @@ void testBSONExportImport2() {
     CU_ASSERT_TRUE(ejdbsavebson(coll, &bv1, &oid));
     bson_destroy(&bv1);
 
-    //TODO!!!
-    rv = ejdbimport(jb, "testBSONExportImport2", cnames, JBIMPORTREPLACE, log);
-    CU_ASSERT_TRUE(rv);
+    bson_init(&cmd);
+    bson_append_start_object(&cmd, "import");
+    bson_append_string(&cmd, "path", "testBSONExportImport2");
+    bson_append_int(&cmd, "mode", JBIMPORTREPLACE);
+    bson_append_start_array(&cmd, "cnames");
+    bson_append_string(&cmd, "0", "col1");
+    bson_append_string(&cmd, "1", "col2");
+    bson_append_finish_array(&cmd);
+    bson_append_finish_object(&cmd);
+    bson_finish(&cmd);
+    bret = ejdbcommand(jb, &cmd);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(bret);
+    bson_destroy(&cmd);
 
-    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "Reading 'testBSONExportImport2/col1.bson'"));
-    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "Replacing all data in 'col1'"));
-    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "1 objects imported into 'col1'"));
-    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "2 objects imported into 'col2'"));
+    bson_iterator_init(&it, bret);
+    CU_ASSERT_TRUE_FATAL(bson_find_fieldpath_value("log", &it) == BSON_STRING);
+    log = bson_iterator_string(&it);
+
+    CU_ASSERT_PTR_NOT_NULL(strstr(log, "Reading 'testBSONExportImport2/col1.bson'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(log, "Replacing all data in 'col1'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(log, "1 objects imported into 'col1'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(log, "2 objects imported into 'col2'"));
+    bson_del(bret);
+    log = NULL;
 
     bson *nmeta = ejdbmeta(jb);
     CU_ASSERT_TRUE_FATAL(nmeta != NULL);
@@ -281,9 +307,16 @@ void testBSONExportImport2() {
     ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
     CU_ASSERT_EQUAL(count, 1);
 
-    //TODO!!!
-    rv = ejdbimport(jb, "testBSONExportImport2", NULL, JBIMPORTUPDATE, NULL);
-    CU_ASSERT_TRUE(rv);
+    bson_init(&cmd);
+    bson_append_start_object(&cmd, "import");
+    bson_append_string(&cmd, "path", "testBSONExportImport2");
+    bson_append_int(&cmd, "mode", JBIMPORTUPDATE);
+    bson_append_finish_object(&cmd);
+    bson_finish(&cmd);
+    bret = ejdbcommand(jb, &cmd);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(bret);
+    bson_destroy(&cmd);
+    bson_del(bret);
 
     coll = ejdbcreatecoll(jb, "col1", NULL);
     ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
@@ -296,8 +329,6 @@ void testBSONExportImport2() {
 
     bson_del(ometa);
     bson_del(nmeta);
-    tcxstrdel(log);
-    tclistdel(cnames);
 }
 
 int init_suite(void) {
