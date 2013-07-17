@@ -66,7 +66,8 @@ enum { /** Error codes */
     JBEMAXNUMCOLS = 9014, /**< Exceeded the maximum number of collections per database */
     JBEEI = 9015, /**< EJDB export/import error */
     JBEEJSONPARSE = 9016, /**< JSON parsing failed */
-    JBETOOBIGBSON = 9017 /**< BSON size is too big */
+    JBETOOBIGBSON = 9017, /**< BSON size is too big */
+    JBEINVALIDCMD = 9018 /**< Invalid ejdb command specified */
 };
 
 enum { /** Database open modes */
@@ -507,7 +508,6 @@ EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive);
 /** Gets description of EJDB database and its collections. */
 EJDB_EXPORT bson* ejdbmeta(EJDB *jb);
 
-
 /** Export/Import settings used in `ejdbexport()` and `ejdbimport()` functions. */
 enum {
     JBJSONEXPORT = 1, //If set json collection data will be exported as JSON files instead of BSON.
@@ -554,9 +554,48 @@ EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  */
 EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *log);
 
-
-EJDB_EXPORT bool ejdbcommand(EJDB *jb)
-
+/**
+ * Execute ejdb database command.
+ *
+ * Supported commands:
+ *
+ * EJDBEXPORT:
+ *    Exports database collections data. See ejdbexport() method.
+ *
+ *    "ejdbexport" : {
+ *          "path" : string,                    //Exports database collections data
+ *          "cnames" : [string array]|null,     //List of collection names to export
+ *          "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdbexport() method
+ *    }
+ *
+ *    Command response:
+ *       {
+ *          "log" : string,        //Diagnostic log about executing this command
+ *          "error" : string|null, //ejdb error message
+ *          "errorCode" : int|0,   //ejdb error code
+ *       }
+ *
+ * EJDBIMPORT:
+ *    Imports previously exported collections data into ejdb.
+ *
+ *    "ejdbexport" : {
+ *          "path" : string                     //The directory path in which data resides
+ *          "cnames" : [string array]|null,     //List of collection names to import
+ *          "mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method
+ *     }
+ *
+ *     Command response:
+ *       {
+ *          "log" : string,        //Diagnostic log about executing this command
+ *          "error" : string|null, //ejdb error message
+ *          "errorCode" : int|0,   //ejdb error code
+ *       }
+ *
+ * @param jb    EJDB database handle.
+ * @param cmd   BSON command spec.
+ * @return Allocated BSON command response object. Caller shoud call `bson_del()` on it.
+ */
+EJDB_EXPORT bson* ejdbcommand(EJDB *jb, bson *cmd);
 
 EJDB_EXTERN_C_END
 

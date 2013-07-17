@@ -30,15 +30,12 @@ Features
 * LGPL license allows you to embed this library into proprietary software.
 * [EJDB and TokyoCabinet API ported to Windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)
 * MongoDB-like queries and overall philosophy.
+* [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
 * Collection level write locking.
 * Collection level transactions.
-* String token matching queries: ```$stror``` ```$strand```
-* [Node.js](http://nodejs.org) binding
-* [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
-* Python/Lua/Java/Ruby/.Net/Go bindings
+* Node.js/Python/Lua/Java/Ruby/.Net/Go bindings
 * [Adobe Air Native Extension (ANE) for EJDB] (https://github.com/thejustinwalsh/airejdb)
 * [Pike language binding] (https://github.com/hww3/pike_modules-ejdb)
-
 
 Documentation
 ================================
@@ -67,7 +64,7 @@ Community
 * **We use [EJDB Google group](http://groups.google.com/group/ejdb) as our mailing list.**
 * [Projects using EJDB](https://github.com/Softmotions/ejdb/wiki/Projects-using-EJDB)
 
-NodeJS binding
+EJDB NodeJS
 =================================
 
 One snippet intro
@@ -121,9 +118,9 @@ jb.save("parrots", [parrot1, parrot2], function(err, oids) {
             });
 });
 ```
-**[EJDB NodeJS binding page](https://github.com/Softmotions/ejdb/blob/master/node/README.md)**
+**[EJDB NodeJS binding page](https://github.com/Softmotions/ejdb/blob/master/node)**
 
-EJDB Python binding
+EJDB Python
 ==================================
 
 One snippet intro
@@ -164,9 +161,9 @@ with ejdb.find("parrots2", {"likes" : "toys"},
 
 ejdb.close()
 ```
-**[EJDB Python 2.7/3.x binding page](https://github.com/Softmotions/ejdb/blob/master/pyejdb/README.md)**
+**[EJDB Python 2.7/3.x binding page](https://github.com/Softmotions/ejdb/blob/master/pyejdb)**
 
-EJDB Lua binding
+EJDB Lua
 ==================================
 
 One snippet intro
@@ -233,8 +230,155 @@ end
 
 db:close()
 ```
-* **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/README.md)**
+**[EJDB Lua binding page](https://github.com/Softmotions/ejdb/blob/master/luaejdb)**
 
+EJDB Go binding
+==================================
+
+One snippet intro
+-----------------------------------
+
+```go
+package ejdbtutorial
+
+import (
+    "fmt"
+    "github.com/mkilling/goejdb"
+    "labix.org/v2/mgo/bson"
+    "os"
+)
+
+func main() {
+    // Create a new database file and open it
+    jb, err := goejdb.Open("addressbook", JBOWRITER | JBOCREAT | JBOTRUNC)
+    if err != nil {
+        os.Exit(1)
+    }
+    // Get or create collection 'contacts'
+    coll, _ := jb.CreateColl("contacts", nil)
+
+    // Insert one record:
+    // JSON: {'name' : 'Bruce', 'phone' : '333-222-333', 'age' : 58}
+    rec := map[string]interface{} {"name" : "Bruce", "phone" : "333-222-333", "age" : 58}
+    bsrec, _ := bson.Marshal(rec)
+    coll.SaveBson(bsrec)
+    fmt.Printf("\nSaved Bruce")
+
+    // Now execute query
+    res, _ := coll.Find(`{"name" : {"$begin" : "Bru"}}`) // Name starts with 'Bru' string
+    fmt.Printf("\n\nRecords found: %d\n", len(res))
+
+    // Now print the result set records
+    for _, bs := range res {
+        var m map[string]interface{}
+        bson.Unmarshal(bs, &m)
+        fmt.Println(m)
+    }
+
+    // Close database
+    jb.Close()
+}
+```
+**[EJDB Go binding page](https://github.com/mkilling/goejdb)**
+
+
+EJDB Ruby binding
+==================================
+
+One snippet intro
+---------------------------------
+
+```Ruby
+require "rbejdb"
+
+#Open zoo DB
+jb = EJDB.open("zoo", EJDB::DEFAULT_OPEN_MODE | EJDB::JBOTRUNC)
+
+parrot1 = {
+    "name" => "Grenny",
+    "type" => "African Grey",
+    "male" => true,
+    "age" => 1,
+    "birthdate" => Time.now,
+    "likes" => ["green color", "night", "toys"],
+    "extra1" => nil
+}
+parrot2 = {
+    "name" => "Bounty",
+    "type" => "Cockatoo",
+    "male" => false,
+    "age" => 15,
+    "birthdate" => Time.now,
+    "likes" => ["sugar cane"],
+    "extra1" => nil
+}
+
+jb.save("parrots", parrot1, parrot2)
+puts "Grenny OID: #{parrot1["_id"]}"
+puts "Bounty OID: #{parrot2["_id"]}"
+
+results = jb.find("parrots", {"likes" => "toys"}, {"$orderby" => {"name" => 1}})
+
+puts "Found #{results.count} parrots"
+
+results.each { |res|
+  puts "#{res['name']} likes toys!"
+}
+
+results.close #It's not mandatory to close cursor explicitly
+jb.close #Close the database
+
+```
+**[EJDB Ruby binding page](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
+
+
+EJDB Adobe AIR binding
+==================================
+
+One snippet intro
+---------------------------------
+
+```as3
+// Open the zoo DB
+var db:EJDBDatabase = EJDB.open("zoo", EJDB.DEFAULT_OPEN_MODE | EJDB.JBOTRUNC) as EJDBDatabase;
+
+var parrot1:Object = {
+	"name" : "Grenny",
+	"type" : "African Grey",
+	"male" : true,
+	"age" : 1,
+	"birthdate" : new Date(),
+	"likes" : ["green color", "night", "toys"],
+	"extra1" : null
+};
+var parrot2:Object = {
+	"name" : "Bounty",
+	"type" : "Cockatoo",
+	"male" : false,
+	"age" : 15,
+	"birthdate" : new Date(),
+	"likes" : ["sugar cane"]
+};
+
+var oids:Array = db.save("parrots", [parrot1, parrot2]);
+trace("Grenny OID: " + parrot1._id);
+trace("Bounty OID: " + parrot2._id);
+
+var cursor:EJDBCursor = db.find("parrots",
+	{"likes" : "toys"},
+	[],
+	{"$orderby" : {"name" : 1}}
+);
+
+trace("Found " + cursor.length + " parrots");
+while (cursor.next()) {
+	trace(cursor.field("name") + " likes toys!");
+}
+
+cursor.close(); // It IS mandatory to close cursor explicitly to free up resources
+db.close(); // Close the database
+```
+**[Adobe Air Native Extension (ANE) for EJDB] (https://github.com/thejustinwalsh/airejdb)**
 
 EJDB C Library
 ==================================
@@ -308,7 +452,6 @@ int main() {
 
 You can save this code in `csnippet.c` And build:
 
-
 ```sh
 gcc -std=c99 -Wall -pedantic  -c -o csnippet.o csnippet.c
 gcc -o csnippet csnippet.o -ltcejdb
@@ -330,7 +473,7 @@ Manual installation
 
 ### Build and install
 
-```
+```sh
    cd ./tcejdb
    ./configure --prefix=<installation prefix> && make && make check
    make install
@@ -477,9 +620,3 @@ Limitations
 TODO
 ------------------------------------
 * Collect collection index statistic
-
-Related software
-------------------------------------
-[Connect session store backed by EJDB database](https://github.com/Softmotions/connect-session-ejdb)
-
-

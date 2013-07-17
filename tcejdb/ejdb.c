@@ -170,6 +170,7 @@ const char* ejdberrmsg(int ecode) {
         case JBEEJSONPARSE: return "JSON parsing failed";
         case JBEEI: return "data export/import failed";
         case JBETOOBIGBSON: return "bson size exceeds the maximum allowed size limit";
+        case JBEINVALIDCMD: return "invalid ejdb command specified";
         default: return tcerrmsg(ecode);
     }
 }
@@ -831,7 +832,85 @@ finish:
         tclistdel(bspaths);
     }
     return !err;
+}
 
+bson* ejdbcommand(EJDB *jb, bson *cmd) {
+    bson *ret = bson_create();
+    int ecode = 0;
+    const char *err = NULL;
+    TCXSTR *xlog = NULL;
+    TCLIST *cnames = NULL;
+    bool rv = true;
+
+    bson_init(ret);
+    bson_type bt;
+    bson_iterator it;
+    bson_iterator_init(&it, cmd);
+
+    while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+        const char *key = bson_iterator_key(&it);
+        if (!strcmp("ejdbexport", key) || !strcmp("ejdbimport", key)) {
+            xlog = tcxstrnew();
+            char *path = NULL;
+            int flags = 0;
+            bson_iterator sit;
+            bson_iterator_subiterator(&it, &sit);
+            if (bson_find_fieldpath_value("path", &sit) == BSON_STRING) {
+                path = strdup(bson_iterator_string(&sit));
+            }
+            bson_iterator_subiterator(&it, &sit);
+            if (bson_find_fieldpath_value("mode", &sit) == BSON_INT) {
+                flags = bson_iterator_int(&sit);
+            }
+            bson_iterator_subiterator(&it, &sit);
+            if (bson_find_fieldpath_value("cnames", &sit) == BSON_ARRAY) {
+                bson_iterator ait;
+                bson_iterator_subiterator(&sit, &ait);
+                while ((bt = bson_iterator_next(&ait)) != BSON_EOO) {
+                    if (bt == BSON_STRING) {
+                        if (cnames == NULL) {
+                            cnames = tclistnew();
+                        }
+                        const char *sv = bson_iterator_string(&ait);
+                        TCLISTPUSH(cnames, sv, strlen(sv));
+                    }
+                }
+            }
+            if (path == NULL) {
+                err = "Missing required 'path' field";
+                ecode = JBEINVALIDCMD;
+                goto finish;
+            }
+            if (!strcmp("ejdbexport", key)) {
+                rv = ejdbexport(jb, path, cnames, flags, xlog);
+            } else { //ejdbimport
+                rv = ejdbimport(jb, path, cnames, flags, xlog);
+            }
+            if (!rv) {
+                ecode = ejdbecode(jb);
+                err = ejdberrmsg(ecode);
+            }
+            TCFREE(path);
+        } else {
+            err = "Unknown command";
+            ecode = JBEINVALIDCMD;
+            goto finish;
+        }
+    }
+finish:
+    if (err) {
+        bson_append_string(ret, "error", err);
+        bson_append_int(ret, "errorCode", ecode);
+    }
+    if (xlog) {
+        bson_append_string(ret, "log", TCXSTRPTR(xlog));
+        tcxstrdel(xlog);
+    }
+    if (cnames) {
+        tclistdel(cnames);
+    }
+    bson_finish(ret);
+    return ret;
 }
 
 /*************************************************************************************************
