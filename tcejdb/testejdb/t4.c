@@ -84,7 +84,6 @@ void testBSONExportImport() {
     }
     CU_ASSERT_TRUE(rv);
 
-
     bson *ometa = ejdbmeta(jb);
     CU_ASSERT_TRUE_FATAL(ometa != NULL);
 
@@ -95,10 +94,17 @@ void testBSONExportImport() {
 
     jb = ejdbnew();
     CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT));
+
+    coll = ejdbgetcoll(jb, "col1");
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    bson_init(&bv1);
+    bson_append_int(&bv1, "e", 2);
+    bson_finish(&bv1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &bv1, &oid));
+    bson_destroy(&bv1);
+
     rv = ejdbimport(jb, "testBSONExportImport", cnames, JBIMPORTREPLACE, log);
     CU_ASSERT_TRUE(rv);
-
-    fprintf(stderr, "\n Import log: %s\n", TCXSTRPTR(log));
 
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "Reading 'testBSONExportImport/col1.bson'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "Replacing all data in 'col1'"));
@@ -121,14 +127,43 @@ void testBSONExportImport() {
     CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.indexes.1.type", strlen("collections.1.indexes.1.type")) == 0);
     CU_ASSERT_TRUE(bson_compare(bson_data(ometa), bson_data(nmeta), "collections.1.indexes.1.records", strlen("collections.1.indexes.1.records")) == 0);
 
-    bson_del(ometa);
-    bson_del(nmeta);
-
-    tcxstrdel(log);
     ejdbclose(jb);
     ejdbdel(jb);
+
+    jb = ejdbnew();
+    CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT | JBOTRUNC));
+
+    coll = ejdbcreatecoll(jb, "col1", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    bson_init(&bv1);
+    bson_append_int(&bv1, "e", 2);
+    bson_finish(&bv1);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &bv1, &oid));
+
+    EJQ *q = ejdbcreatequery(jb, &bv1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q);
+    uint32_t count = 0;
+    ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
+    CU_ASSERT_EQUAL(count, 1);
+
+    rv = ejdbimport(jb, "testBSONExportImport", NULL, JBIMPORTUPDATE, NULL);
+    CU_ASSERT_TRUE(rv);
+
+    coll = ejdbcreatecoll(jb, "col1", NULL);
+    ejdbqryexecute(coll, q, &count, JBQRYCOUNT, NULL);
+    CU_ASSERT_EQUAL(count, 1);
+
+    ejdbquerydel(q);
+    bson_destroy(&bv1);
+    ejdbclose(jb);
+    ejdbdel(jb);
+
+    bson_del(ometa);
+    bson_del(nmeta);
+    tcxstrdel(log);
     tclistdel(cnames);
 }
+
 
 int init_suite(void) {
     return 0;

@@ -511,31 +511,51 @@ EJDB_EXPORT bson* ejdbmeta(EJDB *jb);
 /** Export/Import settings used in `ejdbexport()` and `ejdbimport()` functions. */
 enum {
     JBJSONEXPORT = 1, //If set json collection data will be exported as JSON files instead of BSON.
-    JBIMPORTUPDATE = 2, //Update existing collection entries with imported ones. Collections will not be recreated and its options are ignored.
-    JBIMPORTREPLACE = 3 //Recreate existing collections and replace all collection data with imported entries.
+    JBIMPORTUPDATE = 1 << 1, //Update existing collection entries with imported ones. Collections will not be recreated and its options are ignored.
+    JBIMPORTREPLACE = 1 << 2 //Recreate existing collections and replace all collection data with imported entries.
 };
 
 /**
- * Export database collections data to the specified location.
- * Database read lock will be taken on each collection
- * @param path Directory name in which data will exported.
- * @param colnames List of collection names to export. If its value is `NULL` then all existing collections will be exported.
- * @param flags. Can be set to `JBJSONEXPORT` in order to export collection data into JSON instead of BSON.
- * @param log Optional opration log buffer.
+ * Exports database collections data to the specified directory.
+ * Database read lock will be taken on each collection.
+ *
+ * NOTE: Only data exported as BSONs can be imported with `ejdbimport()`
+ *
+ * @param jb EJDB database handle.
+ * @param path The directory path in which data will be exported.
+ * @param cnames List of collection names to export. `NULL` implies that all existing collections will be exported.
+ * @param flags. Can be set to `JBJSONEXPORT` in order to export data as JSON files instead exporting into BSONs.
+ * @param log Optional operation string log buffer.
  * @return on sucess `true`
  */
 EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *log);
 
 /**
- * TODO
- * @param jb
- * @param path
- * @param cnames
- * @param flags
- * @param log Optional opration log buffer.
+ * Imports previously exported collections data into ejdb.
+ * Global database write lock will be applied during import operation.
+ *
+ * NOTE: Only data exported as BSONs can be imported with `ejdbimport()`
+ *
+ * @param jb EJDB database handle.
+ * @param path The directory path in which data resides.
+ * @param cnames List of collection names to import. `NULL` implies that all collections found in `path` will be imported.
+ * @param flags Can be one of:
+ *             `JBIMPORTUPDATE`  Update existing collection entries with imported ones.
+ *                               Existing collections will not be recreated.
+ *                               For existing collections options will not be imported.
+ *
+ *             `JBIMPORTREPLACE` Recreate existing collections and replace
+ *                               all their data with imported entries.
+ *                               Collections options will be imported.
+ *
+ *             `0`              Implies `JBIMPORTUPDATE`
+ * @param log Optional operation log buffer.
  * @return
  */
 EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *log);
+
+
+EJDB_EXPORT bool ejdbcommand(EJDB *jb)
 
 
 EJDB_EXTERN_C_END

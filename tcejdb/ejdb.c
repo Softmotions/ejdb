@@ -1113,7 +1113,7 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
     if (!mjson) {
         err = true;
         if (log) {
-            tcxstrprintf(log, "\nERROR: Error reading file: '%s'", tcxstrptr(xmetapath));
+            tcxstrprintf(log, "\nERROR: Error reading the file: '%s'", tcxstrptr(xmetapath));
         }
         _ejdbsetecode2(jb, TCEREAD, __FILE__, __LINE__, __func__, true);
         goto finish;
