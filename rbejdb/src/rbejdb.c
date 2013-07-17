@@ -631,13 +631,7 @@ VALUE EJDB_find(int argc, VALUE* argv, VALUE self) {
     rbquery->orarrbson = NULL;
     rbquery->orarrlng = 0;
 
-    VALUE params = rb_ary_new();
-    rb_ary_push(params, self);
-    rb_ary_push(params, collName);
-    rb_ary_push(params, queryWrap);
-    rb_ary_push(params, q);
-    rb_ary_push(params, orarr);
-    rb_ary_push(params, hints);
+    VALUE params = rb_ary_new3(6, self, collName, queryWrap, q, orarr, hints);
 
     // Even if exception raised during find() we will free memory, taken for query
     return rb_ensure(EJDB_find_internal_wrapper, params, EJDB_find_ensure, queryWrap);
