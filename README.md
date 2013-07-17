@@ -4,7 +4,7 @@
 Embedded JSON Database engine
 ====================================
 
-It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++/.Net/NodeJS/Python/Lua/Java/Ruby applications under terms of LGPL license.**
+It aims to be a fast [MongoDB](http://mongodb.org)-like library **which can be embedded into C/C++, .Net, NodeJS, Python, Lua, Java, Ruby, Go applications under terms of LGPL license.**
 
 EJDB is the C library based on modified version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 
@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-07-15` **[Google Go binding] (https://github.com/mkilling/goejdb)**
 * `2013-06-23` **[C# .Net binding] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
 * `2013-06-02` **[Adobe Air Native Extension (ANE) for EJDB (Thanks to @thejustinwalsh)] (https://github.com/thejustinwalsh/airejdb)**
 * `2013-05-29` **[EJDB Python 2.7.x binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
@@ -34,7 +35,7 @@ Features
 * String token matching queries: ```$stror``` ```$strand```
 * [Node.js](http://nodejs.org) binding
 * [Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)
-* Python/Lua/Java/Ruby/.Net bindings
+* Python/Lua/Java/Ruby/.Net/Go bindings
 * [Adobe Air Native Extension (ANE) for EJDB] (https://github.com/thejustinwalsh/airejdb)
 * [Pike language binding] (https://github.com/hww3/pike_modules-ejdb)
 
@@ -44,15 +45,18 @@ Documentation
 
 * **[The great intro to the EJDB](http://blog.abigopal.com/post/51616277039/ejdb)**
 * **[EJDB Command line interface](https://github.com/Softmotions/ejdb/wiki/EJDB-Command-line-interface)**
-* **[C# .Net binding] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
-* **[NodeJS binding](#nodejs-binding)**
+* **[C# .Net] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
+* **[NodeJS](#nodejs-binding)**
     * [Installation](#installation)
     * [Samples](#ejdb-nodejs-samples)
     * [NodeJS API](#ejdb-nodejs-api)
-* **[Python 2.7/3.x binding](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
-* **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
-* **[Java binding](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
-* **[Ruby binding](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
+* **[Python 2.7/3.x](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
+* **[Lua](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
+* **[Java](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
+* **[Ruby](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
+* **[Go](https://github.com/mkilling/goejdb/)**
+* **[Pike language] (https://github.com/hww3/pike_modules-ejdb)**
+* **[Adobe Air] (https://github.com/thejustinwalsh/airejdb)**
 * **[EJDB C Library](#ejdb-c-library)**
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
@@ -713,63 +717,6 @@ end
 db:close()
 ```
 * **[Lua binding](https://github.com/Softmotions/ejdb/blob/master/luaejdb/README.md)**
-
-
-EJDB Go binding
-==================================
-
-One snippet intro
------------------------------------
-
-~~~~~~
-package ejdbtutorial
-
-import (
-    "fmt"
-    "github.com/mkilling/ejdb/goejdb"
-    "labix.org/v2/mgo/bson"
-    "os"
-)
-
-func main() {
-    // Create a new database file and open it
-    jb, err := goejdb.Open("addressbook", JBOWRITER | JBOCREAT | JBOTRUNC)
-    if err != nil {
-        os.Exit(1)
-    }
-    // Get or create collection 'contacts'
-    coll, _ := jb.CreateColl("contacts", nil)
-
-    // Insert one record:
-    // JSON: {'name' : 'Bruce', 'phone' : '333-222-333', 'age' : 58}
-    rec := map[string]interface{} {"name" : "Bruce", "phone" : "333-222-333", "age" : 58}
-    bsrec, _ := bson.Marshal(rec)
-    coll.SaveBson(bsrec)
-    fmt.Printf("\nSaved Bruce")
-
-    // Now execute query
-    res, _ := coll.Find(`{"name" : {"$begin" : "Bru"}}`) // Name starts with 'Bru' string
-    fmt.Printf("\n\nRecords found: %d\n", len(res))
-
-    // Now print the result set records
-    for _, bs := range res {
-        var m map[string]interface{}
-        bson.Unmarshal(bs, &m)
-        fmt.Println(m)
-    }
-
-    // Close database
-    jb.Close()
-}
-~~~~~~
-
-You can save this code in `ejdbtutorial.go` And build:
-
-
-```sh
-go build ejdbtutorial.go
-./ejdbtutorial
-```
 
 
 EJDB C Library
