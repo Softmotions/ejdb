@@ -1176,9 +1176,9 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
     }
     char *lastsep = pp;
     int i = 0;
-    char *cname, *mjson;
+    char *cname, *mjson = NULL;
     bson_type bt;
-    bson *mbson; //meta bson
+    bson *mbson = NULL; //meta bson
     bson_iterator mbsonit;
     int sp;
     EJCOLL *coll;
@@ -1369,10 +1369,10 @@ finish:
         TCFREE(mjson);
     }
     tcxstrdel(xmetapath);
-    TCFREE(cname);
     if (err && log) {
         tcxstrprintf(log, "\nERROR: Importing data into: '%s' failed with error: '%s'", cname, (ejdbecode(jb) != 0) ? ejdberrmsg(ejdbecode(jb)) : "Unknown");
     }
+    TCFREE(cname);
     return !err;
 }
 
@@ -1393,7 +1393,7 @@ static bool _exportcoll(EJCOLL *coll, const char *dpath, int flags, TCXSTR *log)
             FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    HANDLE fdm = CreateFile(fpath, GENERIC_READ | GENERIC_WRITE,
+    HANDLE fdm = CreateFile(fpathm, GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 #endif

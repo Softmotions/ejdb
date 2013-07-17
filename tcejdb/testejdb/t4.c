@@ -105,8 +105,8 @@ void testBSONExportImport() {
 
     rv = ejdbimport(jb, "testBSONExportImport", cnames, JBIMPORTREPLACE, log);
     CU_ASSERT_TRUE(rv);
+    //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
 
-    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "Reading 'testBSONExportImport/col1.bson'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "Replacing all data in 'col1'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "1 objects imported into 'col1'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "2 objects imported into 'col2'"));
@@ -265,7 +265,6 @@ void testBSONExportImport2() {
     CU_ASSERT_TRUE_FATAL(bson_find_fieldpath_value("log", &it) == BSON_STRING);
     log = bson_iterator_string(&it);
 
-    CU_ASSERT_PTR_NOT_NULL(strstr(log, "Reading 'testBSONExportImport2/col1.bson'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(log, "Replacing all data in 'col1'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(log, "1 objects imported into 'col1'"));
     CU_ASSERT_PTR_NOT_NULL(strstr(log, "2 objects imported into 'col2'"));
