@@ -46,6 +46,8 @@ Documentation
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
     * [C API](#c-api)
+* **[Data Import/Export](https://github.com/Softmotions/ejdb/wiki/Data-Import-Export)**
+* **[Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
 * **Bindings**
     * **[C# .Net] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
     * **[NodeJS] (https://github.com/Softmotions/ejdb/blob/master/node/)**
@@ -56,7 +58,7 @@ Documentation
     * **[Go](https://github.com/mkilling/goejdb/)**
     * **[Pike language] (https://github.com/hww3/pike_modules-ejdb)**
     * **[Adobe Air] (https://github.com/thejustinwalsh/airejdb)**
-* **[Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
+
 
 
 Community
