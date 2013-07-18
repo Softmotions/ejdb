@@ -481,7 +481,7 @@ EJDB.prototype.findOne = function() {
  *    "export" : {
  *          "path" : string,                    //Exports database collections data
  *          "cnames" : [string array]|null,     //List of collection names to export
- *          "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdbexport() method
+ *          "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdb.h#ejdbexport() method
  *    }
  *
  *    Command response:
@@ -496,7 +496,7 @@ EJDB.prototype.findOne = function() {
  *    "import" : {
  *          "path" : string                     //The directory path in which data resides
  *          "cnames" : [string array]|null,     //List of collection names to import
- *          "mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method
+ *          "mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdb.h#ejdbimport() method
  *     }
  *
  *     Command response:
