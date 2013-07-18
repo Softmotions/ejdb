@@ -269,7 +269,7 @@ module.exports.testCMeta = function(test) {
     test.equal(dm["file"], "var/tdbt2");
     test.ok(dm["collections"]);
     test.ok(dm["collections"].constructor == Array);
-    var parrots = dm["collections"][0];
+    var parrots = dm["collections"][1];
     test.ok(parrots);
     test.equal(parrots["name"], "parrots");
     //todo...
@@ -444,6 +444,17 @@ module.exports.testFPIssue = function(test) {
     var x = jb.findOne("test");
     test.equal(x.x, 2.3434343);
     test.done();
+};
+
+module.exports.testEJDBCommand = function(test) {
+    jb.command({
+        "ping" : {}
+    }, function(err, pong) {
+        test.ifError(err);
+        test.ok(pong);
+        test.equal("pong", pong["log"]);
+        test.done();
+    })
 };
 
 

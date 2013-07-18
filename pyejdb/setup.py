@@ -14,6 +14,7 @@ from distutils.core import setup, Extension, Command
 
 from ctypes.util import find_library
 from ctypes import cdll, c_char_p
+from distutils.version import StrictVersion
 
 import sys
 import os
@@ -81,11 +82,12 @@ def check_extension(ext):
         raise SystemExit(err_msg.format(ext.name, ext.min_ver, ext.url))
     elif lib:
         curr_ver = c_char_p.in_dll(cdll.LoadLibrary(lib), ext.ver_char_p).value
-        if curr_ver.decode() < ext.min_ver:
+        if StrictVersion(curr_ver.decode()) < StrictVersion(ext.min_ver):
             raise SystemExit(err_msg.format(ext.name, ext.min_ver, ext.url))
+
     return lib
 
-ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.1",
+ejdb_ext = EJDBPythonExt(True, "tcejdb", "EJDB", "1.1.14",
                          "tcversion", "http://ejdb.org",
                          "_pyejdb", ["src/pyejdb.c"],
                          libraries=["tcejdb", "z", "pthread", "m", "c"],
@@ -99,7 +101,7 @@ class build_ext(_build_ext):
 
 setup(
     name="pyejdb",
-    version="1.0.14",
+    version="1.0.15",
     url="http://ejdb.org",
     keywords=["ejdb", "tokyocabinet", "nosql", "database", "storage", "embedded", "mongodb", "json"],
     description="Python 2.7/3.x binding for EJDB database engine.",

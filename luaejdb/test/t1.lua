@@ -214,6 +214,12 @@ db:dropCollection("ecoll", true);
 
 assert(db:count("ecoll", Q("k1", "v2")) == 0)
 
+local cret = db:command({ping = {}});
+assert(cret["log"] == "pong");
+
+
+--print(ejdb.version());
+
 assert(db:isOpen() == true)
 db:close()
 assert(db:isOpen() == false)

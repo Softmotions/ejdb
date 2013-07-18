@@ -1,3 +1,10 @@
+libtcejdb (1.1.14) testing; urgency=low
+
+  * Supports generic ejdb commands interface
+  * Export/Import database data implemented
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 18 Jul 2013 15:44:31 +0700
+
 libtcejdb (1.1.13) testing; urgency=low
 
   * .Net binding

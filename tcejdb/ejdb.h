@@ -436,8 +436,10 @@ EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
  * @param jcoll EJDB database
  * @param q Query handle created with ejdbcreatequery()
  * @param count Output count pointer. Result set size will be stored into it.
- * @param qflags Execution flag. If JBQRYCOUNT is set the only count of matching records will be computed
- *         without resultset, this operation is analog of count(*) in SQL and can be faster than operations with resultsets.
+ * @param qflags Execution flag.
+ *          * `JBQRYCOUNT` The only count of matching records will be computed
+ *                         without resultset, this operation is analog of count(*)
+ *                         in SQL and can be faster than operations with resultsets.
  * @param log Optional extended string to collect debug information during query execution, can be NULL.
  * @return TCLIST with matched bson records data.
  * If (qflags & JBQRYCOUNT) then NULL will be returned

@@ -1,3 +1,9 @@
+python-ejdb (1.0.15) testing; urgency=low
+
+  * EJDB 1.1.14
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 18 Jul 2013 18:00:55 +0700
+
 python-ejdb (1.0.14) testing; urgency=low
 
   * Critical bugfix: error on saving docs.

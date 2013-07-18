@@ -12,6 +12,7 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  _tc_md5_init@Base 1.1.8
  _tc_recdecode@Base 1.1.8
  _tc_recencode@Base 1.1.8
+ bson2json@Base 1.1.14
  bson_append32@Base 1.1.8
  bson_append64@Base 1.1.8
  bson_append@Base 1.1.8
@@ -161,14 +162,17 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  ejcollockmethod@Base 1.1.8
  ejcollunlockmethod@Base 1.1.8
  ejdbclose@Base 1.1.8
+ ejdbcommand@Base 1.1.14
  ejdbcreatecoll@Base 1.1.8
  ejdbcreatequery2@Base 1.1.13
  ejdbcreatequery@Base 1.1.8
  ejdbdel@Base 1.1.8
  ejdbecode@Base 1.1.8
  ejdberrmsg@Base 1.1.8
+ ejdbexport@Base 1.1.14
  ejdbgetcoll@Base 1.1.8
  ejdbgetcolls@Base 1.1.8
+ ejdbimport@Base 1.1.14
  ejdbisopen@Base 1.1.8
  ejdbisvalidoidstr@Base 1.1.8
  ejdbloadbson@Base 1.1.8
@@ -201,6 +205,13 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  hashmurmur32@Base 1.1.8
  hashmurmur64@Base 1.1.8
  initialBufferSize@Base 1.1.8
+ json2bson@Base 1.1.14
+ nx_json_free@Base 1.1.14
+ nx_json_get@Base 1.1.14
+ nx_json_item@Base 1.1.14
+ nx_json_parse@Base 1.1.14
+ nx_json_parse_utf8@Base 1.1.14
+ nx_json_unicode_to_utf8@Base 1.1.14
  set_bson_err_handler@Base 1.1.8
  tcadbadddouble@Base 1.1.8
  tcadbaddint@Base 1.1.8
@@ -533,6 +544,7 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  tchdbsetcodecfunc@Base 1.1.8
  tchdbsetdbgfd@Base 1.1.8
  tchdbsetdfunit@Base 1.1.8
+ tchdbsetecode2@Base 1.1.14
  tchdbsetecode@Base 1.1.8
  tchdbsetmutex@Base 1.1.8
  tchdbsettype@Base 1.1.8
@@ -892,6 +904,7 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  tctdbsetcodecfunc@Base 1.1.8
  tctdbsetdbgfd@Base 1.1.8
  tctdbsetdfunit@Base 1.1.8
+ tctdbsetecode2@Base 1.1.14
  tctdbsetecode@Base 1.1.8
  tctdbsetindex@Base 1.1.8
  tctdbsetindexrldr@Base 1.1.8

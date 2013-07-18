@@ -484,115 +484,29 @@ static int db_txctl(lua_State *L) {
 }
 
 static int db_meta(lua_State *L) {
-    lua_checkstack(L, 6);
     int argc = lua_gettop(L);
     luaL_checktype(L, 1, LUA_TTABLE); //self
     lua_getfield(L, 1, EJDBUDATAKEY);
     EJDB *jb = ((EJDBDATA*) luaL_checkudata(L, -1, EJDBUDATAMT))->db;
     check_ejdb(L, jb);
-    bool jbret = true;
     lua_pop(L, 1);
-
-    lua_newtable(L); //+root info
-
-    lua_pushstring(L, jb->metadb->hdb->path);
-    lua_setfield(L, -2, "file");
-
-    lua_newtable(L); //+collections
-    TCLIST *cols = ejdbgetcolls(jb);
-    if (!cols) {
-        return set_ejdb_error(L, jb);
+    bson *meta = ejdbmeta(jb);
+    if (meta == NULL) {
+        lua_pushnil(L);
+        return 1;
     }
-    int i;
-    for (i = 0; i < TCLISTNUM(cols); ++i) {
-        EJCOLL *coll = (EJCOLL*) TCLISTVALPTR(cols, i);
-        if (!ejcollockmethod(coll, false)) continue;
-
-        lua_pushlstring(L, coll->cname, coll->cnamesz); //coll key
-
-        lua_newtable(L); //+ coll table
-
-        lua_pushlstring(L, coll->cname, coll->cnamesz);
-        lua_setfield(L, -2, "name");
-
-        lua_pushstring(L, coll->tdb->hdb->path);
-        lua_setfield(L, -2, "file");
-
-        lua_pushinteger(L, coll->tdb->hdb->rnum);
-        lua_setfield(L, -2, "records");
-
-        lua_newtable(L); //+ coll options
-
-        lua_pushinteger(L, coll->tdb->hdb->bnum);
-        lua_setfield(L, -2, "buckets");
-
-        lua_pushinteger(L, coll->tdb->hdb->rcnum);
-        lua_setfield(L, -2, "cachedrecords");
-
-        lua_pushboolean(L, coll->tdb->opts & TDBTLARGE);
-        lua_setfield(L, -2, "large");
-
-        lua_pushboolean(L, coll->tdb->opts & TDBTDEFLATE);
-        lua_setfield(L, -2, "compressed");
-        lua_setfield(L, -2, "options");
-
-        lua_newtable(L); //+ coll indexes
-
-        int ic = 0;
-        int j;
-        for (j = 0; j < coll->tdb->inum; ++j) {
-            TDBIDX *idx = (coll->tdb->idxs + j);
-            if (idx->type != TDBITLEXICAL && idx->type != TDBITDECIMAL && idx->type != TDBITTOKEN) {
-                continue;
-            }
-            lua_newtable(L); //+ index details
-
-            lua_pushstring(L, idx->name + 1);
-            lua_setfield(L, -2, "field");
-
-            lua_pushstring(L, idx->name);
-            lua_setfield(L, -2, "iname");
-
-            switch (idx->type) {
-                case TDBITLEXICAL:
-                    lua_pushstring(L, "lexical");
-                    lua_setfield(L, -2, "type");
-                    break;
-                case TDBITDECIMAL:
-                    lua_pushstring(L, "decimal");
-                    lua_setfield(L, -2, "type");
-                    break;
-                case TDBITTOKEN:
-                    lua_pushstring(L, "token");
-                    lua_setfield(L, -2, "type");
-                    break;
-            }
-            TCBDB *idb = (TCBDB*) idx->db;
-            if (idb) {
-                lua_pushinteger(L, idb->rnum);
-                lua_setfield(L, -2, "records");
-
-                lua_pushstring(L, idb->hdb->path);
-                lua_setfield(L, -2, "file");
-            }
-            lua_rawseti(L, -2, ++ic);
-        }
-        lua_setfield(L, -2, "indexes");
-        lua_settable(L, -3);
-
-        ejcollunlockmethod(coll);
-    }
-    lua_setfield(L, -2, "collections");
-
-    if (cols) {
-        tclistdel(cols);
-    }
-    if (!jbret) {
-        return set_ejdb_error(L, jb);
-    }
+    bson_iterator it;
+    bson_iterator_init(&it, meta);
+    lua_push_bson_table(L, &it);
+    bson_del(meta);
     if (lua_gettop(L) - argc != 1) {
         return luaL_error(L, "db_meta: Invalid stack size: %d should be: %d", (lua_gettop(L) - argc), 1);
     }
+    return 1;
+}
+
+static int db_version(lua_State *L) {
+    lua_pushstring(L, ejdbversion());
     return 1;
 }
 
@@ -631,6 +545,36 @@ static int db_save(lua_State *L) {
     }
     return 1;
 }
+
+static int db_command(lua_State *L) {
+    int argc = lua_gettop(L);
+    luaL_checktype(L, 1, LUA_TTABLE); //self
+    lua_getfield(L, 1, EJDBUDATAKEY);
+    EJDB *jb = ((EJDBDATA*) luaL_checkudata(L, -1, EJDBUDATAMT))->db;
+    check_ejdb(L, jb);
+    lua_pop(L, 1);
+    bson bsonval;
+    const char *bsonbuf = luaL_checkstring(L, 2); //Object to save
+    bson_init_finished_data(&bsonval, bsonbuf);
+    bsonval.flags |= BSON_FLAG_STACK_ALLOCATED;
+    bson *bs = ejdbcommand(jb, &bsonval);
+    if (!bs) {
+        lua_pushnil(L);
+        goto finish;
+    }
+    bson_iterator it;
+    bson_iterator_init(&it, bs);
+    lua_push_bson_table(L, &it);
+    bson_del(bs);
+
+finish:
+    if (lua_gettop(L) - argc != 1) { //got
+        return luaL_error(L, "db_command: Invalid stack size: %d should be: %d", (lua_gettop(L) - argc), 1);
+    }
+    bson_destroy(&bsonval);
+    return 1;
+}
+
 
 static int db_load(lua_State *L) {
     int argc = lua_gettop(L);
@@ -678,7 +622,7 @@ static int db_load(lua_State *L) {
 
 finish:
     if (lua_gettop(L) - argc != 1) { //got
-        return luaL_error(L, "db_save: Invalid stack size: %d should be: %d", (lua_gettop(L) - argc), 1);
+        return luaL_error(L, "db_load: Invalid stack size: %d should be: %d", (lua_gettop(L) - argc), 1);
     }
     return 1;
 }
@@ -877,6 +821,9 @@ static int db_open(lua_State *L) {
     lua_pushcfunction(L, db_load);
     lua_setfield(L, -2, "load");
 
+    lua_pushcfunction(L, db_command);
+    lua_setfield(L, -2, "_command");
+
     lua_pushcfunction(L, db_find);
     lua_setfield(L, -2, "_find");
 
@@ -935,6 +882,9 @@ int luaopen_luaejdb(lua_State *L) {
 
     lua_pushcfunction(L, db_open);
     lua_setfield(L, -2, "open");
+
+    lua_pushcfunction(L, db_version);
+    lua_setfield(L, -2, "version");
 
     //Push cursor methods into metatable
     luaL_newmetatable(L, EJDBCURSORMT);

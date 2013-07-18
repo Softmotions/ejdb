@@ -185,8 +185,20 @@
 	<td class="summary">Builds BSON_UNDEFINED value .</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#DB.version">DB.version&nbsp;()</a></td>
+	<td class="summary">Returns EJDB version string eg: "1.1.14"</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#DB:save">DB:save&nbsp;(cname, obj, ...)</a></td>
 	<td class="summary">Save/update specified JSON objects in the collection.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:load">DB:load&nbsp;(cname, oid)</a></td>
+	<td class="summary">Loads JSON object identified by OID from the collection.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:command">DB:command&nbsp;(cmd)</a></td>
+	<td class="summary">Executes ejdb command.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#DB:find">DB:find&nbsp;(cname, q, flags)</a></td>
@@ -797,6 +809,19 @@
 
 </dd>
     <dt>
+    <a name = "DB.version"></a>
+    <strong>DB.version&nbsp;()</strong>
+    </dt>
+    <dd>
+    Returns EJDB version string eg: "1.1.14"
+
+
+
+
+
+
+</dd>
+    <dt>
     <a name = "DB:save"></a>
     <strong>DB:save&nbsp;(cname, obj, ...)</strong>
     </dt>
@@ -828,6 +853,85 @@
         <li><pre class="example">dQ:save(<span class="string">"parrots2"</span>, {foo = <span class="string">"bar"</span>})</pre></li>
         <li><pre class="example">dQ:save(<span class="string">"parrots2"</span>, Q(<span class="string">"foo"</span>, <span class="string">"bar"</span>), <span class="keyword">true</span>) -- merge option is on</pre></li>
     </ul>
+
+</dd>
+    <dt>
+    <a name = "DB:load"></a>
+    <strong>DB:load&nbsp;(cname, oid)</strong>
+    </dt>
+    <dd>
+    Loads JSON object identified by OID from the collection.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">oid</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a> or <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         24 hex chars BSON_OID or BSON oid table</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:command"></a>
+    <strong>DB:command&nbsp;(cmd)</strong>
+    </dt>
+    <dd>
+
+<p>Executes ejdb command.
+ Supported commands:</p>
+<pre><code>1) Exports database collections data. See ejdbexport() method.
+
+  "export" : {
+        "path" : string,                    //Exports database collections data
+        "cnames" : [string array]|null,     //List of collection names to export
+        "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdbexport() method
+  }
+
+  Command response:
+     {
+        "log" : string,        //Diagnostic log about executing this command
+        "error" : string|null, //ejdb error message
+        "errorCode" : int|0,   //ejdb error code
+     }
+
+2) Imports previously exported collections data into ejdb.
+
+  "import" : {
+        "path" : string                     //The directory path in which data resides
+        "cnames" : [string array]|null,     //List of collection names to import
+        "mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method
+   }
+
+   Command response:
+     {
+        "log" : string,        //Diagnostic log about executing this command
+        "error" : string|null, //ejdb error message
+        "errorCode" : int|0,   //ejdb error code
+     }
+</code></pre>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cmd</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a> or <a class="type" href="index.html#Q">Q</a></span>
+         Command object.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Command response table
+    </ol>
+
+
+
 
 </dd>
     <dt>

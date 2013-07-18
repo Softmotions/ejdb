@@ -124,6 +124,18 @@ function luaejdb.open(path, omode, ...)
   return setmetatable(luaejdb_open(path, omode), mtDBObj)
 end
 
+
+function DB:command(cmd)
+  assert(cmd and type(cmd) == "table", "Invalid arg #1")
+  if getmetatable(cmd) == mtBObj then
+    cmd = cmd:toBSON()
+  else
+    cmd = luaejdb.to_bson(cmd)
+  end
+  return self:_command(cmd)
+end
+
+
 function DB:save(cname, obj, ...)
   assert(obj and type(obj) == "table", "Invalid arg #2")
   if getmetatable(obj) == mtBObj then

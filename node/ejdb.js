@@ -471,6 +471,80 @@ EJDB.prototype.findOne = function() {
 
 
 /**
+ * Execute ejdb database command.
+ *
+ * Supported commands:
+ *
+ *
+ *  1) Exports database collections data. See ejdbexport() method.
+ *
+ *    "export" : {
+ *          "path" : string,                    //Exports database collections data
+ *          "cnames" : [string array]|null,     //List of collection names to export
+ *          "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdbexport() method
+ *    }
+ *
+ *    Command response:
+ *       {
+ *          "log" : string,        //Diagnostic log about executing this command
+ *          "error" : string|null, //ejdb error message
+ *          "errorCode" : int|0,   //ejdb error code
+ *       }
+ *
+ *  2) Imports previously exported collections data into ejdb.
+ *
+ *    "import" : {
+ *          "path" : string                     //The directory path in which data resides
+ *          "cnames" : [string array]|null,     //List of collection names to import
+ *          "mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method
+ *     }
+ *
+ *     Command response:
+ *       {
+ *          "log" : string,        //Diagnostic log about executing this command
+ *          "error" : string|null, //ejdb error message
+ *          "errorCode" : int|0,   //ejdb error code
+ *       }
+ *
+ * If callback is not provided this function will be synchronous.
+ *
+ * @param {Object} cmd   BSON command spec.
+ * @param {Function} [cb] Callback function with arguments: (error, obj) where:
+ *          `obj`:  Command response JSON object.
+ * @return Command response JSON object if callback is not provided.
+ */
+EJDB.prototype.command = function(cmd, cb) {
+    if (cb) {
+        this._impl.command(cmd, function(err, cursor) {
+            if (err) {
+                cb(err);
+                return;
+            }
+            if (cursor.next()) {
+                try {
+                    cb(null, cursor.object());
+                } finally {
+                    cursor.close();
+                }
+            } else {
+                cb(null, null);
+            }
+        });
+    } else {
+        var ret = null;
+        var cursor = this._impl.command(cmd);
+        if (cursor && typeof cursor === "object") {
+            if (cursor.next()) {
+                ret = cursor.object();
+            }
+            cursor.close();
+        }
+        return ret;
+    }
+};
+
+
+/**
  * Convenient method to execute update queries.
  * If callback is not provided this function will be synchronous.
  *

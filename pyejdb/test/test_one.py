@@ -186,6 +186,14 @@ class TestOne(unittest.TestCase):
         self.assertTrue(ejdb.findOne("upsertcoll", {"foo": "bar"}) is not None)
 
 
+        cmd = {
+            "ping" : {}
+        }
+        cmdret = ejdb.command(cmd)
+        self.assertIsNotNone(cmdret)
+        self.assertEquals(cmdret["log"], "pong")
+
+
     @classmethod
     def tearDownClass(cls):
         if cls._ejdb:

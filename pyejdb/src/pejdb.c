@@ -119,6 +119,30 @@ static PyObject* EJDB_ensureCollection(PEJDB *self, PyObject *args, PyObject *kw
     Py_RETURN_NONE;
 }
 
+static PyObject* EJDB_command(PEJDB *self, PyObject *args) {
+    bson bscmd;
+    void *bsonbuf = NULL;
+    int bsonbufz;
+    PyObject *bsonbufpy;
+    bson *cmdret = NULL;
+    if (!PyArg_ParseTuple(args, "O:command", &bsonbufpy)) {
+        return NULL;
+    }
+    if (bytes_to_void(bsonbufpy, &bsonbuf, &bsonbufz)) {
+        return NULL;
+    }
+    bson_init_finished_data(&bscmd, bsonbuf);
+    bscmd.flags |= BSON_FLAG_STACK_ALLOCATED;
+    Py_BEGIN_ALLOW_THREADS
+    cmdret = ejdbcommand(self->ejdb, &bscmd);
+    Py_END_ALLOW_THREADS
+
+    bson_destroy(&bscmd);
+    PyObject *docbytes = PyBytes_FromStringAndSize(bson_data(cmdret), bson_size(cmdret));
+    bson_del(cmdret);
+    return docbytes;
+}
+
 static PyObject* EJDB_save(PEJDB *self, PyObject *args, PyObject *kwargs) {
     const char *cname;
     PyObject *merge = Py_False;
@@ -588,6 +612,7 @@ static PyMethodDef EJDB_tp_methods[] = {
     {"setIndex", (PyCFunction) EJDB_setIndex, METH_VARARGS, NULL},
     {"txcontrol", (PyCFunction) EJDB_txcontrol, METH_VARARGS, NULL},
     {"dbmeta", (PyCFunction) EJDB_dbmeta, METH_VARARGS, NULL},
+    {"command", (PyCFunction) EJDB_command, METH_VARARGS, NULL},
     {NULL}
 };
 

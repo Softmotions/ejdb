@@ -509,7 +509,8 @@ namespace ejdb {
             cmdTxBegin = 8, //Begin collection transaction
             cmdTxAbort = 9, //Abort collection transaction
             cmdTxCommit = 10, //Commit collection transaction
-            cmdTxStatus = 11 //Get collection transaction status
+            cmdTxStatus = 11, //Get collection transaction status
+            cmdCmd = 12 //Execute EJDB command
         };
 
         struct BSONCmdData { //Any bson related cmd data
@@ -727,6 +728,37 @@ namespace ejdb {
                 BSONCmdTask task(cb, njb, cmdSave, cmdata, BSONCmdTask::delete_val);
                 njb->save(&task);
                 return scope.Close(njb->save_after(&task));
+            }
+        }
+
+        static Handle<Value> s_cmd(const Arguments& args) {
+            HandleScope scope;
+            REQ_ARGS(1);
+            REQ_OBJ_ARG(0, cmdobj);
+
+            Local<Function> cb;
+            BSONQCmdData *cmdata = new BSONQCmdData("", 0);
+            bson *bs = bson_create();
+            bson_init_as_query(bs);
+            toBSON(cmdobj, bs, false);
+            if (bs->err) {
+                Local<String> msg = String::New(bson_first_errormsg(bs));
+                bson_del(bs);
+                delete cmdata;
+                return scope.Close(ThrowException(Exception::Error(msg)));
+            }
+            bson_finish(bs);
+            cmdata->bsons.push_back(bs);
+            NodeEJDB *njb = ObjectWrap::Unwrap< NodeEJDB > (args.This());
+            if (args[1]->IsFunction()) { //callback provided
+                cb = Local<Function>::Cast(args[1]);
+                BSONQCmdTask *task = new BSONQCmdTask(cb, njb, cmdCmd, cmdata, BSONQCmdTask::delete_val);
+                uv_queue_work(uv_default_loop(), &task->uv_work, s_exec_cmd_eio, (uv_after_work_cb)s_exec_cmd_eio_after);
+                return scope.Close(Undefined());
+            } else {
+                BSONQCmdTask task(cb, njb, cmdCmd, cmdata, BSONQCmdTask::delete_val);
+                njb->ejdbcmd(&task);
+                return scope.Close(njb->ejdbcmd_after(&task));
             }
         }
 
@@ -975,6 +1007,9 @@ namespace ejdb {
                 case cmdTxStatus:
                     txctl((TxCmdTask*) task);
                     break;
+                case cmdCmd:
+                    ejdbcmd((BSONQCmdTask*) task);
+                    break;
                 default:
                     assert(0);
             }
@@ -1009,6 +1044,9 @@ namespace ejdb {
                 case cmdTxAbort:
                 case cmdTxStatus:
                     txctl_after((TxCmdTask*) task);
+                    break;
+                case cmdCmd:
+                    ejdbcmd_after((BSONQCmdTask*) task);
                     break;
                 default:
                     assert(0);
@@ -1328,6 +1366,30 @@ namespace ejdb {
             }
         }
 
+
+        void ejdbcmd(BSONQCmdTask *task) {
+            if (!_check_state((EJBTask*) task)) {
+                return;
+            }
+            BSONQCmdData *cmdata = task->cmd_data;
+            std::vector<bson*> &bsons = cmdata->bsons;
+            bson *qbs = bsons.front();
+            assert(qbs);
+            TCLIST *res = tclistnew2(1);
+            bson *bret = ejdbcommand(m_jb, qbs);
+            assert(bret);
+            tclistpush(res, bson_data(bret), bson_size(bret));
+            bson_del(bret);
+            cmdata->res = res;
+            cmdata->count = TCLISTNUM(cmdata->res);
+            cmdata->qflags = 0;
+        }
+
+        Handle<Value> ejdbcmd_after(BSONQCmdTask *task) {
+            return query_after(task);
+        }
+
+
         void query(BSONQCmdTask *task) {
             if (!_check_state((EJBTask*) task)) {
                 return;
@@ -1495,6 +1557,7 @@ finish:
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "setIndex", s_set_index);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "sync", s_sync);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "dbMeta", s_db_meta);
+            NODE_SET_PROTOTYPE_METHOD(constructor_template, "command", s_cmd);
             NODE_SET_PROTOTYPE_METHOD(constructor_template, "_txctl", s_coll_txctl);
 
             //Symbols

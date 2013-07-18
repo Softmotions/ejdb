@@ -235,6 +235,9 @@ function DB.toNull() end
 -- @see ejdb.toUndefined
 function DB.toUndefined() end
 
+--- Returns EJDB version string eg: "1.1.14"
+function DB.version() end
+
 --- Save/update specified JSON objects in the collection.
 -- If collection with `cname` does not exists it will be created.
 -- Each persistent object has unique identifier (OID) placed in the `_id` property.
@@ -247,6 +250,46 @@ function DB.toUndefined() end
 -- @usage dQ:save("parrots2", {foo = "bar"})
 -- @usage dQ:save("parrots2", Q("foo", "bar"), true) -- merge option is on
 function DB:save(cname, obj, ...) end
+
+--- Loads JSON object identified by OID from the collection.
+-- @tparam string cname Collection name
+-- @tparam string|table oid 24 hex chars BSON_OID or BSON oid table
+function DB:load(cname, oid) end
+
+--- Executes ejdb command.
+-- Supported commands:
+--    1) Exports database collections data. See ejdbexport() method.
+--
+--      "export" : {
+--            "path" : string,                    //Exports database collections data
+--            "cnames" : [string array]|null,     //List of collection names to export
+--            "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdbexport() method
+--      }
+--
+--      Command response:
+--         {
+--            "log" : string,        //Diagnostic log about executing this command
+--            "error" : string|null, //ejdb error message
+--            "errorCode" : int|0,   //ejdb error code
+--         }
+--
+--    2) Imports previously exported collections data into ejdb.
+--
+--      "import" : {
+--            "path" : string                     //The directory path in which data resides
+--            "cnames" : [string array]|null,     //List of collection names to import
+--            "mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method
+--       }
+--
+--       Command response:
+--         {
+--            "log" : string,        //Diagnostic log about executing this command
+--            "error" : string|null, //ejdb error message
+--            "errorCode" : int|0,   //ejdb error code
+--         }
+-- @tparam table|Q cmd Command object.
+-- @return Command response table
+function DB:command(cmd) end
 
 --- Execute query on collection.
 --

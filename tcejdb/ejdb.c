@@ -547,16 +547,16 @@ EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflag
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return NULL;
     }
-    JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);
-    _ejdbsetecode(jcoll->jb, TCESUCCESS, __FILE__, __LINE__, __func__);
-    if (ejdbecode(jcoll->jb) != TCESUCCESS) { //we are not in fatal state
+        JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);
+        _ejdbsetecode(jcoll->jb, TCESUCCESS, __FILE__, __LINE__, __func__);
+        if (ejdbecode(jcoll->jb) != TCESUCCESS) { //we are not in fatal state
+            JBCUNLOCKMETHOD(jcoll);
+            return NULL;
+        }
+        TCLIST *res = _qryexecute(jcoll, q, count, qflags, log);
         JBCUNLOCKMETHOD(jcoll);
-        return NULL;
+        return res;
     }
-    TCLIST *res = _qryexecute(jcoll, q, count, qflags, log);
-    JBCUNLOCKMETHOD(jcoll);
-    return res;
-}
 
 int ejdbqresultnum(EJQRESULT qr) {
     return qr ? tclistnum(qr) : 0;
@@ -900,6 +900,9 @@ bson* ejdbcommand(EJDB *jb, bson *cmd) {
                 err = ejdberrmsg(ecode);
             }
             TCFREE(path);
+        } else if (!strcmp("ping", key)) {
+            xlog = tcxstrnew();
+            tcxstrprintf(xlog, "pong");
         } else {
             err = "Unknown command";
             ecode = JBEINVALIDCMD;
