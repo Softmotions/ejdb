@@ -596,7 +596,8 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  * @param cmd   BSON command spec.
  * @return Allocated BSON command response object. Caller shoud call `bson_del()` on it.
  */
-EJDB_EXPORT bson* ejdbcommand(EJDB *jb, bson *cmd);
+EJDB_EXPORT bson* ejdbcommand(EJDB *jb, bson *cmdbson);
+EJDB_EXPORT bson* ejdbcommand2(EJDB *jb, void *cmdbsondata);
 
 EJDB_EXTERN_C_END
 

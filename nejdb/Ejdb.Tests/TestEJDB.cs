@@ -182,6 +182,14 @@ namespace Ejdb.Tests {
 			//[BSONValue: BSONType=ARRAY, Key=collections, Value=[BSONArray: [BSONValue: BSONType=OBJECT, Key=0, Value=[BSONDocument: [BSONValue: BSONType=STRING, Key=name, Value=parrots], [BSONValue: BSONType=STRING, Key=file, Value=testdb1_parrots], [BSONValue: BSONType=LONG, Key=records, Value=2], [BSONValue: BSONType=OBJECT, Key=options, Value=[BSONDocument: [BSONValue: BSONType=LONG, Key=buckets, Value=131071], [BSONValue: BSONType=LONG, Key=cachedrecords, Value=0], [BSONValue: BSONType=BOOL, Key=large, Value=False], [BSONValue: BSONType=BOOL, Key=compressed, Value=False]]], [BSONValue: BSONType=ARRAY, Key=indexes, Value=[BSONArray: ]]]]]]]
 
 			q.Dispose();
+
+			//Test command execution
+			BSONDocument cmret = jb.Command(BSONDocument.ValueOf(new {
+				ping = ""
+			}));
+			Assert.IsNotNull(cmret);
+			Assert.AreEqual("pong", cmret["log"]);
+
 			jb.Dispose();
 		}
 	}

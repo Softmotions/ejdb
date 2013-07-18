@@ -843,6 +843,13 @@ finish:
     return !err;
 }
 
+bson* ejdbcommand2(EJDB *jb, void *cmdbsondata) {
+    bson cmd;
+    bson_init_with_data(&cmd, cmdbsondata);
+    bson *bret = ejdbcommand(jb, &cmd);
+    return bret;
+}
+
 bson* ejdbcommand(EJDB *jb, bson *cmd) {
     bson *ret = bson_create();
     int ecode = 0;

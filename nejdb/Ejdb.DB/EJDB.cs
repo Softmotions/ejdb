@@ -226,6 +226,9 @@ namespace Ejdb.DB {
 				UnixMarshal.FreeHeap(cptr);
 			}
 		}
+		//EJDB_EXPORT bson* ejdbcommand(EJDB *jb, bson *cmd);
+		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbcommand2")]
+		internal static extern IntPtr _ejdbcommand([In] IntPtr db, [In] byte[] cmd);
 		//EJDB_EXPORT bool ejdbsavebson3(EJCOLL *jcoll, void *bsdata, bson_oid_t *oid, bool merge);
 		[DllImport(EJDB_LIB_NAME, EntryPoint="ejdbsavebson3")]
 		internal static extern bool _ejdbsavebson([In] IntPtr coll, [In] byte[] bsdata, [Out] byte[] oid, [In] bool merge);
@@ -799,6 +802,60 @@ namespace Ejdb.DB {
 		}
 
 		/// <summary>
+		/// Executes EJDB command.
+		/// </summary>
+		/// <remarks>
+		/// Supported commands:
+		///
+		/// 1) Exports database collections data. See ejdbexport() method.
+		/// 
+		/// 	"export" : {
+		/// 	"path" : string,                    //Exports database collections data
+		/// 	"cnames" : [string array]|null,     //List of collection names to export
+		/// 	"mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdbexport() method
+		/// }
+		/// 
+		/// Command response:
+		/// {
+		/// 	"log" : string,        //Diagnostic log about executing this command
+		/// 	"error" : string|null, //ejdb error message
+		/// 	"errorCode" : int|0,   //ejdb error code
+		/// }
+		/// 
+		/// 2) Imports previously exported collections data into ejdb.
+		/// 
+		/// 	"import" : {
+		/// 	"path" : string                     //The directory path in which data resides
+		/// 		"cnames" : [string array]|null,     //List of collection names to import
+		/// 		"mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method
+		/// }
+		/// 
+		/// Command response:
+		/// {
+		/// 	"log" : string,        //Diagnostic log about executing this command
+		/// 	"error" : string|null, //ejdb error message
+		/// 	"errorCode" : int|0,   //ejdb error code
+		/// }
+		/// </remarks>
+		/// <param name="cmd">Command object</param>
+		/// <returns>Command response.</returns>
+		public BSONDocument Command(BSONDocument cmd)  {
+			CheckDisposed();
+			byte[] cmdata = cmd.ToByteArray();
+			//internal static extern IntPtr _ejdbcommand([In] IntPtr db, [In] byte[] cmd);
+			IntPtr cmdret = _ejdbcommand(_db, cmdata);
+			if (cmdret == IntPtr.Zero) {
+				return null;
+			}
+			byte[] bsdata = BsonPtrIntoByteArray(cmdret);
+			if (bsdata.Length == 0) {
+				return null;
+			}
+			BSONIterator it = new BSONIterator(bsdata);
+			return it.ToBSONDocument();
+		}
+
+		/// <summary>
 		/// Save the BSON document doc into the collection.
 		/// </summary>
 		/// <param name="cname">Name of collection.</param>
@@ -854,6 +911,7 @@ namespace Ejdb.DB {
 			}
 			return true;
 		}
+	
 
 		bool Save(IntPtr cptr, BSONDocument doc, bool merge) {
 			bool rv;

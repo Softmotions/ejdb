@@ -162,6 +162,7 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  ejcollockmethod@Base 1.1.8
  ejcollunlockmethod@Base 1.1.8
  ejdbclose@Base 1.1.8
+ ejdbcommand2@Base 1.1.14
  ejdbcommand@Base 1.1.14
  ejdbcreatecoll@Base 1.1.8
  ejdbcreatequery2@Base 1.1.13
