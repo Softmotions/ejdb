@@ -234,7 +234,7 @@ db:close()
 ```
 **[EJDB Lua binding page](https://github.com/Softmotions/ejdb/blob/master/luaejdb)**
 
-EJDB Go binding
+EJDB Go
 ==================================
 
 One snippet intro
@@ -284,7 +284,7 @@ func main() {
 **[EJDB Go binding page](https://github.com/mkilling/goejdb)**
 
 
-EJDB Ruby binding
+EJDB Ruby
 ==================================
 
 One snippet intro
@@ -334,7 +334,7 @@ jb.close #Close the database
 **[EJDB Ruby binding page](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
 
 
-EJDB Adobe AIR binding
+EJDB Adobe AIR
 ==================================
 
 One snippet intro
