@@ -70,7 +70,7 @@ EJDB NodeJS
 One snippet intro
 ---------------------------------
 
-```
+```JavaScript
 var EJDB = require("ejdb");
 //Open zoo DB
 var jb = EJDB.open("zoo", EJDB.DEFAULT_OPEN_MODE | EJDB.JBOTRUNC);
