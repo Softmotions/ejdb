@@ -23,6 +23,7 @@
 
 typedef struct {
     bson* bsonval;
+    int owns_bsonval;
 
     VALUE obj;
     int arrayIndex;
@@ -71,6 +72,9 @@ void rbbson_context_mark(RBBSON_CONTEXT* rbbsctx) {
 }
 
 void rbbson_context_free(RBBSON_CONTEXT* rbbsctx) {
+    if (rbbsctx->bsonval && rbbsctx->owns_bsonval) {
+        bson_del(rbbsctx->bsonval);
+    }
     ruby_xfree(rbbsctx);
 }
 
@@ -79,8 +83,11 @@ void rbbson_free(RBBSON* rbbson) {
 }
 
 
-VALUE createBsonContextWrap(bson* bsonval, VALUE rbobj, VALUE traverse, int flags) {
+VALUE createBsonContextWrap(bson* bsonval, int owns_bsonval, VALUE rbobj, VALUE traverse, int flags) {
     if (NIL_P(bsonContextClass)) {
+        if (owns_bsonval) {
+            bson_del(bsonval);
+        }
         rb_raise(rb_eRuntimeError, "Ruby to BSON library must be initialized");
     }
     VALUE bsonContextWrap = Data_Wrap_Struct(bsonContextClass, rbbson_context_mark, rbbson_context_free, ruby_xmalloc(sizeof(RBBSON_CONTEXT)));
@@ -88,6 +95,7 @@ VALUE createBsonContextWrap(bson* bsonval, VALUE rbobj, VALUE traverse, int flag
     RBBSON_CONTEXT* rbbsctx;
     Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
     rbbsctx->bsonval = bsonval;
+    rbbsctx->owns_bsonval = owns_bsonval;
     rbbsctx->obj = rbobj;
     rbbsctx->arrayIndex = 0;
     rbbsctx->flags= flags;
@@ -158,7 +166,7 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonContextWrap) {
         case T_ARRAY:
             add_ruby_to_traverse(val, rbbsctx->traverse_hash);
             bson_append_start_array(b, attrName);
-            rb_iterate(rb_each, val, iterate_array_callback, createBsonContextWrap(b, rbbsctx->obj, rbbsctx->traverse_hash, rbbsctx->flags));
+            rb_iterate(rb_each, val, iterate_array_callback, createBsonContextWrap(b, 0, rbbsctx->obj, rbbsctx->traverse_hash, rbbsctx->flags));
             bson_append_finish_array(b);
             break;
         case T_STRING:
@@ -256,17 +264,20 @@ void ruby_hash_to_bson_internal(VALUE rbhash, VALUE bsonContextWrap) {
 
 
 void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int flags) {
-    VALUE bsonContextWrap = createBsonContextWrap(bson_create(), rbobj, traverse, flags);
+
+    bson* bsonval = bson_create();
+
+    if (flags & RUBY_TO_BSON_AS_QUERY) {
+        bson_init_as_query(bsonval);
+    } else {
+        bson_init(bsonval);
+    }
+
+    VALUE bsonContextWrap = createBsonContextWrap(bsonval, 1, rbobj, traverse, flags);
     RBBSON_CONTEXT* rbbsctx;
     Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
 
     add_ruby_to_traverse(rbobj, rbbsctx->traverse_hash);
-
-    if (flags & RUBY_TO_BSON_AS_QUERY) {
-        bson_init_as_query(rbbsctx->bsonval);
-    } else {
-        bson_init(rbbsctx->bsonval);
-    }
 
     switch (TYPE(rbobj)) {
         case T_OBJECT:
@@ -284,7 +295,8 @@ void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int fla
 
     bson_finish(rbbsctx->bsonval);
 
-    *bsonresp = rbbsctx->bsonval;
+    *bsonresp = bson_create();
+    bson_copy(*bsonresp, rbbsctx->bsonval);
 }
 
 void ruby_to_bson(VALUE rbobj, bson** bsonresp, int flags) {

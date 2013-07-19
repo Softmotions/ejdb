@@ -482,12 +482,17 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
     }
 
     EJQ *ejq = ejdbcreatequery(ejdb, rbquery->qbson, rbquery->orarrbson, NUM2INT(orarrlng), rbquery->hintsbson);
+    if (!ejq) {
+        raise_ejdb_error(ejdb);
+    }
 
     uint32_t count;
     int qflags = onlycount ? EJQONLYCOUNT : 0;
     TCXSTR *log = explain ? tcxstrnew() : NULL;
 
     TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, log);
+
+    ejdbquerydel(ejq);
 
     return !onlycount || explain ? create_EJDB_query_results(qres, count, log) : UINT2NUM(count);
 }
