@@ -2052,13 +2052,20 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it, bool array) {
     int c = 0;
     while ((bt = bson_iterator_next(it)) != BSON_EOO) {
         if (c++ > 0) {
+            if (array) {
+                tcxstrcat2(out, "\n");
+                BSPAD(0);
+            }
             tcxstrcat2(out, ",\n");
         }
         const char *key = bson_iterator_key(it);
         BSPAD(0);
-        tcxstrcat2(out, "\"");
-        _jsonxstrescaped(out, key);
-        tcxstrcat2(out, "\" : ");
+        if (!array) {
+            tcxstrcat2(out, "\"");
+            _jsonxstrescaped(out, key);
+            tcxstrcat2(out, "\" : ");
+        }
+
         switch (bt) {
             case BSON_LONG:
             case BSON_INT:
