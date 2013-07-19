@@ -2040,14 +2040,14 @@ static void _jsonxstrescaped(TCXSTR *xstr, const char *str) {
     tcxstrcat(xstr, (str + s), e - s);
 }
 
-static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
+static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it, bool array) {
 
 #define BSPAD(_n) \
     for (int i = 0; i < ctx->nlvl + (_n); ++i) tcxstrcat2(ctx->out, " ")
 
     bson_type bt;
     TCXSTR *out = ctx->out;
-    tcxstrcat2(ctx->out, "{\n");
+    tcxstrcat2(ctx->out, array ? "[\n" : "{\n");
     ctx->nlvl += 4;
     int c = 0;
     while ((bt = bson_iterator_next(it)) != BSON_EOO) {
@@ -2082,7 +2082,7 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
             {
                 bson_iterator sit;
                 bson_iterator_subiterator(it, &sit);
-                _bson2json(ctx, &sit);
+                _bson2json(ctx, &sit, bt == BSON_ARRAY);
                 break;
             }
             case BSON_NULL:
@@ -2132,7 +2132,7 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it) {
     }
     tcxstrcat2(out, "\n");
     BSPAD(-4);
-    tcxstrcat2(out, "}");
+    tcxstrcat2(out, array ? "]" : "}");
     ctx->nlvl -= 4;
     return 0;
 #undef BSPAD
@@ -2147,7 +2147,7 @@ int bson2json(const char *bsdata, char **buf, int *sp) {
         .nlvl = 0,
         .out = out
     };
-    int ret = _bson2json(&ctx, &it);
+    int ret = _bson2json(&ctx, &it, false);
     if (ret == BSON_OK) {
         *sp = TCXSTRSIZE(out);
         *buf = tcxstrtomalloc(out);
