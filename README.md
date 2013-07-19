@@ -46,6 +46,8 @@ Documentation
     * [Building & Installation](#building--installation)
     * [Samples](#ejdb-c-samples)
     * [C API](#c-api)
+* **[Data Import/Export](https://github.com/Softmotions/ejdb/wiki/Data-Import-Export)**
+* **[Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
 * **Bindings**
     * **[C# .Net] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
     * **[NodeJS] (https://github.com/Softmotions/ejdb/blob/master/node/)**
@@ -56,7 +58,7 @@ Documentation
     * **[Go](https://github.com/mkilling/goejdb/)**
     * **[Pike language] (https://github.com/hww3/pike_modules-ejdb)**
     * **[Adobe Air] (https://github.com/thejustinwalsh/airejdb)**
-* **[Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
+
 
 
 Community
@@ -232,7 +234,7 @@ db:close()
 ```
 **[EJDB Lua binding page](https://github.com/Softmotions/ejdb/blob/master/luaejdb)**
 
-EJDB Go binding
+EJDB Go
 ==================================
 
 One snippet intro
@@ -282,7 +284,7 @@ func main() {
 **[EJDB Go binding page](https://github.com/mkilling/goejdb)**
 
 
-EJDB Ruby binding
+EJDB Ruby
 ==================================
 
 One snippet intro
@@ -332,7 +334,7 @@ jb.close #Close the database
 **[EJDB Ruby binding page](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
 
 
-EJDB Adobe AIR binding
+EJDB Adobe AIR
 ==================================
 
 One snippet intro
