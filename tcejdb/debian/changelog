@@ -1,4 +1,4 @@
-libtcejdb (1.1.14-1) testing; urgency=low
+libtcejdb (1.1.14-2) testing; urgency=low
 
   * Fix of arrays exporting in json export mode
 
