@@ -557,7 +557,7 @@ EJDB_EXPORT bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flag
 EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *log);
 
 /**
- * Execute ejdb database command.
+ * Execute the ejdb database command.
  *
  * Supported commands:
  *
