@@ -403,19 +403,19 @@ VALUE bson_to_ruby_wrapper(VALUE bsonWrap) {
     return bson_to_ruby(rbbson->bsonval);
 }
 
-VALUE bson_to_ruby_ensure_destroy_wrapper(VALUE bsonWrap, VALUE exception) {
+VALUE bson_to_ruby_ensure_del_wrapper(VALUE bsonWrap, VALUE exception) {
     RBBSON* rbbson;
     Data_Get_Struct(bsonWrap, RBBSON, rbbson);
     if (rbbson->bsonval) {
-        bson_destroy(rbbson->bsonval);
+        bson_del(rbbson->bsonval);
     }
     rbbson->bsonval = NULL;
     return Qnil;
 }
 
-VALUE bson_to_ruby_ensure_destroy(bson* bsonval) {
+VALUE bson_to_ruby_ensure_del(bson* bsonval) {
     VALUE bsonWrap = createBsonWrap(bsonval);
-    return rb_ensure(bson_to_ruby_wrapper, bsonWrap, bson_to_ruby_ensure_destroy_wrapper, bsonWrap);
+    return rb_ensure(bson_to_ruby_wrapper, bsonWrap, bson_to_ruby_ensure_del_wrapper, bsonWrap);
 }
 
 VALUE bson_oid_to_ruby(const bson_oid_t* oid) {

@@ -317,11 +317,11 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
 
         bson_oid_t oid;
         if (!ejdbsavebson2(coll, bsonval, &oid, merge)) {
-            bson_destroy(bsonval);
+            bson_del(bsonval);
             raise_ejdb_error(ejdb);
         }
 
-        bson_destroy(bsonval);
+        bson_del(bsonval);
 
         VALUE roid = bson_oid_to_ruby(&oid);
         rb_ary_push(oids, roid);
@@ -370,7 +370,7 @@ VALUE EJDB_load(VALUE self, VALUE collName, VALUE rboid) {
     bson_oid_t oid = ruby_to_bson_oid(rboid);
     bson *bs = ejdbloadbson(coll, &oid);
 
-    return bs ? bson_to_ruby_ensure_destroy(bs) : nil_or_raise_ejdb_error(ejdb);
+    return bs ? bson_to_ruby_ensure_del(bs) : nil_or_raise_ejdb_error(ejdb);
 }
 
 /*
@@ -419,11 +419,11 @@ VALUE prepare_query_hints(VALUE hints) {
 
 void EJDB_remove_query_internal(RBEJDB_QUERY* rbquery) {
     if (rbquery->qbson) {
-        bson_destroy(rbquery->qbson);
+        bson_del(rbquery->qbson);
         rbquery->qbson = NULL;
     }
     if (rbquery->hintsbson) {
-        bson_destroy(rbquery->hintsbson);
+        bson_del(rbquery->hintsbson);
         rbquery->hintsbson = NULL;
     }
     if (rbquery->orarrbson) {
@@ -459,7 +459,7 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
         bson* orqbson;
         ruby_to_bson(orq, &orqbson, RUBY_TO_BSON_AS_QUERY);
         bson_copy(rbquery->orarrbson + (i++), orqbson);
-        bson_destroy(orqbson);
+        bson_del(orqbson);
         rbquery->orarrlng++;
     }
 
@@ -722,6 +722,63 @@ VALUE EJDB_update(int argc, VALUE* argv, VALUE self) {
     return EJDB_find(4, findargs, self);
 }
 
+/**
+ * call-seq:
+ *   ejdb.command(cmd) -> Hash
+ *
+ * Execute the ejdb database command.
+ *
+ * Supported commands:
+ *
+ *  1) Exports database collections data. See ejdbexport() method.
+ *
+ *    :export => {
+ *          :path => string,                    //Exports database collections data
+ *          :cnames => [string array]|nil,      //List of collection names to export
+ *          :mode => int|nil                    //Values: null|`JBJSONEXPORT` See ejdbexport() method
+ *    }
+ *
+ *    Command response:
+ *       {
+ *          "log" => string,        //Diagnostic log about executing this command
+ *          "error" => string|nil, //ejdb error message
+ *          "errorCode" => int|0,   //ejdb error code
+ *       }
+ *
+ *  2) Imports previously exported collections data into ejdb.
+ *
+ *    :import => {
+ *          :path => string                     //The directory path in which data resides
+ *          :cnames => [string array]|nil,      //List of collection names to import
+ *          :mode => int|nil                    //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method
+ *     }
+ *
+ *     Command response:
+ *       {
+ *          "log" => string,        //Diagnostic log about executing this command
+ *          "error" => string|nil,  //ejdb error message
+ *          "errorCode" => int|0,    //ejdb error code
+ *       }
+ *
+ * - +cmd+ (Hash or Object) - command spec.
+ *
+ * Returns allocated command response object as hash.
+ */
+VALUE EJDB_command(VALUE self, VALUE command) {
+    EJDB* ejdb = getEJDB(self);
+
+    bson* bsoncmd;
+    ruby_to_bson(command, &bsoncmd, 0);
+
+    bson* res = ejdbcommand(ejdb, bsoncmd);
+    bson_del(bsoncmd);
+
+    if (!res) {
+        raise_ejdb_error(ejdb);
+    }
+
+    return bson_to_ruby_ensure_del(res);
+}
 
 
 VALUE EJDB_set_index_internal(VALUE self, VALUE collName, VALUE fpath, int flags) {
@@ -1319,6 +1376,8 @@ void Init_rbejdb() {
     rb_define_method(ejdbClass, "find_one", RUBY_METHOD_FUNC(EJDB_find_one), -1);
     rb_define_method(ejdbClass, "update", RUBY_METHOD_FUNC(EJDB_update), -1);
     rb_define_method(ejdbClass, "remove", RUBY_METHOD_FUNC(EJDB_remove), 2);
+
+    rb_define_method(ejdbClass, "command", RUBY_METHOD_FUNC(EJDB_command), 1);
 
     rb_define_method(ejdbClass, "drop_collection", RUBY_METHOD_FUNC(EJDB_drop_collection), -1);
     rb_define_method(ejdbClass, "ensure_collection", RUBY_METHOD_FUNC(EJDB_ensure_collection), -1);

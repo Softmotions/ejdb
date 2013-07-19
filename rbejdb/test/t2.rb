@@ -458,7 +458,20 @@ class EJDBTestUnit < Test::Unit::TestCase
   end
 
 
-  def test_ejdbh_different_hacks
+  def test_ejdbh_command
+    assert_not_nil $jb
+    assert $jb.open?
+
+    cmdret = $jb.command(:ping => {})
+
+    assert_not_nil cmdret
+    assert_equal("pong", cmdret["log"])
+
+    puts __method__.inspect + " has passed successfull"
+  end
+
+
+  def test_ejdbi_different_hacks
     assert_nil $jb.load("monsters", "111")
     assert_nil $jb.load("parrots", "111")
     assert_nil $jb.load("parrots", "")
@@ -612,7 +625,8 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts __method__.inspect + " has passed successfull"
   end
 
-  def test_ejdbi_internal_rbejdb_classes
+
+  def test_ejdbj_internal_rbejdb_classes
     assert_raise(RuntimeError) {
       EJDB.new
     }
@@ -622,7 +636,8 @@ class EJDBTestUnit < Test::Unit::TestCase
     puts __method__.inspect + " has passed successfull"
   end
 
-  def test_ejdbj_close
+
+  def test_ejdbk_close
     assert_not_nil $jb
     assert $jb.open?
 
