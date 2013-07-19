@@ -1,3 +1,9 @@
+libtcejdb (1.1.14-1) testing; urgency=low
+
+  * Fix of arrays exporting in json export mode
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 19 Jul 2013 10:43:45 +0700
+
 libtcejdb (1.1.14) testing; urgency=low
 
   * Supports generic ejdb commands interface
