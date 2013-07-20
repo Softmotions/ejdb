@@ -78,7 +78,7 @@ void testBSONExportImport() {
     tclistpush2(cnames, "col2");
 
 
-    bool rv = ejdbexport(jb, "testBSONExportImport", cnames, 0, log);
+    bool rv = ejdbexport(jb, "testBSONExportImport", NULL, 0, log);
     if (!rv) {
         eprint(jb, __LINE__, "testBSONExportImport");
     }

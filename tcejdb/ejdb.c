@@ -781,15 +781,21 @@ bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *l
     }
     TCLIST *_cnames = cnames;
     if (_cnames == NULL) {
-        _cnames = ejdbgetcolls(jb);
-        if (_cnames == NULL) {
+        TCLIST *colls = ejdbgetcolls(jb);
+        if (colls == NULL) {
             _ejdbsetecode2(jb, TCEINVALID, __FILE__, __LINE__, __func__, true);
             return false;
         }
+        _cnames = tclistnew2(TCLISTNUM(colls));
+        for (int i = 0; i < TCLISTNUM(colls); ++i) {
+            EJCOLL *c = TCLISTVALPTR(colls, i);
+            TCLISTPUSH(_cnames, c->cname, c->cnamesz);
+        }
+        tclistdel(colls);
     }
     JBENSUREOPENLOCK(jb, false, false);
-    for (int i = 0; i < TCLISTNUM(cnames); ++i) {
-        const char *cn = TCLISTVALPTR(cnames, i);
+    for (int i = 0; i < TCLISTNUM(_cnames); ++i) {
+        const char *cn = TCLISTVALPTR(_cnames, i);
         assert(cn);
         EJCOLL *coll = _getcoll(jb, cn);
         if (!coll) continue;
