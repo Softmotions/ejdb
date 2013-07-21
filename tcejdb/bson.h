@@ -578,7 +578,7 @@ EJDB_EXPORT void bson_append(bson *b, const void *data, int len);
  *  object using this function.
  *
  *  @note When finished, you must pass the bson object to
- *      bson_destroy( ).
+ *      bson_del( ).
  */
 EJDB_EXPORT void bson_init(bson *b);
 
@@ -632,18 +632,22 @@ EJDB_EXPORT int bson_ensure_space(bson *b, const int bytesNeeded);
  * @param b the bson object to finalize.
  *
  * @return the standard error code. To deallocate memory,
- *   call bson_destroy on the bson object.
+ *   call bson_del on the bson object.
  */
 EJDB_EXPORT int bson_finish(bson *b);
 
 /**
  * Destroy a bson object.
- *
+ * Clears bson object and frees internal memory buffers held by bson
+ * object BUT does not delete bson object itself
  * @param b the bson object to destroy.
- *
  */
 EJDB_EXPORT void bson_destroy(bson *b);
 
+/**
+ * The bson_del() performs bson_destroy() then frees bson object itself.
+ * @param b
+ */
 EJDB_EXPORT void bson_del(bson *b);
 
 EJDB_EXPORT void bson_reset(bson *b);
