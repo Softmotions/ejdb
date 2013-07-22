@@ -547,16 +547,16 @@ EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflag
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return NULL;
     }
-        JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);
-        _ejdbsetecode(jcoll->jb, TCESUCCESS, __FILE__, __LINE__, __func__);
-        if (ejdbecode(jcoll->jb) != TCESUCCESS) { //we are not in fatal state
-            JBCUNLOCKMETHOD(jcoll);
-            return NULL;
-        }
-        TCLIST *res = _qryexecute(jcoll, q, count, qflags, log);
+    JBCLOCKMETHOD(jcoll, (q->flags & EJQUPDATING) ? true : false);
+    _ejdbsetecode(jcoll->jb, TCESUCCESS, __FILE__, __LINE__, __func__);
+    if (ejdbecode(jcoll->jb) != TCESUCCESS) { //we are not in fatal state
         JBCUNLOCKMETHOD(jcoll);
-        return res;
+        return NULL;
     }
+    TCLIST *res = _qryexecute(jcoll, q, count, qflags, log);
+    JBCUNLOCKMETHOD(jcoll);
+    return res;
+}
 
 int ejdbqresultnum(EJQRESULT qr) {
     return qr ? tclistnum(qr) : 0;
@@ -779,17 +779,17 @@ bool ejdbexport(EJDB *jb, const char *path, TCLIST *cnames, int flags, TCXSTR *l
             return false;
         }
     }
+    JBENSUREOPENLOCK(jb, false, false);
     TCLIST *_cnames = cnames;
     if (_cnames == NULL) {
-        _cnames = ejdbgetcolls(jb);
-        if (_cnames == NULL) {
-            _ejdbsetecode2(jb, TCEINVALID, __FILE__, __LINE__, __func__, true);
-            return false;
+        _cnames = tclistnew2(jb->cdbsnum);
+        for (int i = 0; i < jb->cdbsnum; ++i) {
+            EJCOLL *c = jb->cdbs[i];
+            TCLISTPUSH(_cnames, c->cname, c->cnamesz);
         }
     }
-    JBENSUREOPENLOCK(jb, false, false);
-    for (int i = 0; i < TCLISTNUM(cnames); ++i) {
-        const char *cn = TCLISTVALPTR(cnames, i);
+    for (int i = 0; i < TCLISTNUM(_cnames); ++i) {
+        const char *cn = TCLISTVALPTR(_cnames, i);
         assert(cn);
         EJCOLL *coll = _getcoll(jb, cn);
         if (!coll) continue;

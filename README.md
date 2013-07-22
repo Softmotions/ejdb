@@ -48,6 +48,7 @@ Documentation
     * [C API](#c-api)
 * **[Data Import/Export](https://github.com/Softmotions/ejdb/wiki/Data-Import-Export)**
 * **[Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
+* **[Development FAQ](https://github.com/Softmotions/ejdb/wiki/Development-FAQ)**
 * **Bindings**
     * **[C# .Net] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
     * **[NodeJS] (https://github.com/Softmotions/ejdb/blob/master/node/)**
@@ -63,6 +64,7 @@ Documentation
 
 Community
 ================================
+* **[ejdblab@twitter.com](https://twitter.com/ejdblab)**
 * **We use [EJDB Google group](http://groups.google.com/group/ejdb) as our mailing list.**
 * [Projects using EJDB](https://github.com/Softmotions/ejdb/wiki/Projects-using-EJDB)
 
