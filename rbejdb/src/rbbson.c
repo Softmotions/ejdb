@@ -23,7 +23,7 @@
 
 typedef struct {
     bson* bsonval;
-    int owns_bsonval;
+    bool owns_bsonval;
 
     VALUE obj;
     int arrayIndex;
@@ -83,7 +83,7 @@ void rbbson_free(RBBSON* rbbson) {
 }
 
 
-VALUE createBsonContextWrap(bson* bsonval, int owns_bsonval, VALUE rbobj, VALUE traverse, int flags) {
+VALUE createBsonContextWrap(bson* bsonval, bool owns_bsonval, VALUE rbobj, VALUE traverse, int flags) {
     if (NIL_P(bsonContextClass)) {
         if (owns_bsonval) {
             bson_del(bsonval);
@@ -161,12 +161,13 @@ int iterate_key_values_callback(VALUE key, VALUE val, VALUE bsonContextWrap) {
                 bson* subbson;
                 ruby_to_bson_internal(val, &subbson, rbbsctx->traverse_hash, rbbsctx->flags);
                 bson_append_bson(b, attrName, subbson);
+                bson_del(subbson);
             }
             break;
         case T_ARRAY:
             add_ruby_to_traverse(val, rbbsctx->traverse_hash);
             bson_append_start_array(b, attrName);
-            rb_iterate(rb_each, val, iterate_array_callback, createBsonContextWrap(b, 0, rbbsctx->obj, rbbsctx->traverse_hash, rbbsctx->flags));
+            rb_iterate(rb_each, val, iterate_array_callback, createBsonContextWrap(b, false, rbbsctx->obj, rbbsctx->traverse_hash, rbbsctx->flags));
             bson_append_finish_array(b);
             break;
         case T_STRING:
@@ -273,7 +274,7 @@ void ruby_to_bson_internal(VALUE rbobj, bson** bsonresp, VALUE traverse, int fla
         bson_init(bsonval);
     }
 
-    VALUE bsonContextWrap = createBsonContextWrap(bsonval, 1, rbobj, traverse, flags);
+    VALUE bsonContextWrap = createBsonContextWrap(bsonval, true, rbobj, traverse, flags);
     RBBSON_CONTEXT* rbbsctx;
     Data_Get_Struct(bsonContextWrap, RBBSON_CONTEXT, rbbsctx);
 

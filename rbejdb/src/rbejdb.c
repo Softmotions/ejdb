@@ -316,12 +316,12 @@ VALUE EJDB_save(int argc, VALUE *argv, VALUE self) {
         ruby_to_bson(rbobj, &bsonval, 0);
 
         bson_oid_t oid;
-        if (!ejdbsavebson2(coll, bsonval, &oid, merge)) {
-            bson_del(bsonval);
+        bool saved = ejdbsavebson2(coll, bsonval, &oid, merge);
+        bson_del(bsonval);
+
+        if (!saved) {
             raise_ejdb_error(ejdb);
         }
-
-        bson_del(bsonval);
 
         VALUE roid = bson_oid_to_ruby(&oid);
         rb_ary_push(oids, roid);
@@ -467,6 +467,7 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
 
     bool onlycount = RTEST(get_hash_option(hints, "onlycount"));
     bool explain = RTEST(get_hash_option(hints, "explain"));
+    bool createResults = !onlycount || explain;
 
     EJDB* ejdb = getEJDB(self);
 
@@ -477,7 +478,7 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
             coll = ejdbcreatecoll(ejdb, StringValuePtr(collName), NULL);
         }
         if (!coll) {
-            return !onlycount || explain ? create_EJDB_query_results(tclistnew2(1), 0, NULL) : INT2NUM(0);
+            return createResults ? create_EJDB_query_results(tclistnew2(1), 0, NULL) : INT2NUM(0);
         }
     }
 
@@ -491,10 +492,13 @@ VALUE EJDB_find_internal(VALUE self, VALUE collName, VALUE queryWrap, VALUE q, V
     TCXSTR *log = explain ? tcxstrnew() : NULL;
 
     TCLIST* qres = ejdbqryexecute(coll, ejq, &count, qflags, log);
-
     ejdbquerydel(ejq);
 
-    return !onlycount || explain ? create_EJDB_query_results(qres, count, log) : UINT2NUM(count);
+    if (!createResults) {
+        tclistdel(qres);
+    }
+
+    return createResults ? create_EJDB_query_results(qres, count, log) : UINT2NUM(count);
 }
 
 VALUE EJDB_find_internal_wrapper(VALUE args) {
