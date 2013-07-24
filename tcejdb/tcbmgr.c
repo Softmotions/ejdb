@@ -985,6 +985,10 @@ static int procimporttsv(const char *path, const char *file, int omode, bool sc)
         cnt++;
     }
     printf(" (%08d)\n", cnt);
+    if (!tcbdbsync(bdb)) {
+        printerr(bdb);
+        err = true;
+    }
     if (!tcbdbclose(bdb)) {
         if (!err) printerr(bdb);
         err = true;

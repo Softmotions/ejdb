@@ -2806,6 +2806,9 @@ static bool tchdbfbpsearch(TCHDB *hdb, TCHREC *rec) {
    The return value is whether splicing succeeded or not. */
 static bool tchdbfbpsplice(TCHDB *hdb, TCHREC *rec, uint32_t nsiz) {
     assert(hdb && rec && nsiz > 0);
+    if (nsiz > (0x80000000 - hdb->align)) {
+        return false;
+    }
     if (hdb->mmtx) {
         if (hdb->fbpnum < 1) {
             return false;
