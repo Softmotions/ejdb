@@ -1,5 +1,7 @@
 package org.ejdb.driver;
 
+import org.ejdb.bson.BSONObject;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -219,6 +221,44 @@ public class EJDB {
 
         return collection;
     }
+
+    /**
+     * Executes ejdb database command.
+     *
+     * Supported commands:
+     * 1) Exports database collections data. See ejdbexport() method.
+     *      "export" : {
+     *          "path" : string,                    //Exports database collections data
+     *          "cnames" : [string array]|null,     //List of collection names to export
+     *          "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdb.h#ejdbexport() method
+     *      }
+     *
+     *      Command response:
+     *      {
+     *          "log" : string,        //Diagnostic log about executing this command
+     *          "error" : string|null, //ejdb error message
+     *          "errorCode" : int|0,   //ejdb error code
+     *      }
+     *
+     * 2) Imports previously exported collections data into ejdb.
+     *      "import" : {
+     *          "path" : string                     //The directory path in which data resides
+     *          "cnames" : [string array]|null,     //List of collection names to import
+     *          "mode" : int|null                   //Values: null| JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdb.h#ejdbimport() method
+     *      }
+     *
+     *      Command response:
+     *      {
+     *          "log" : string,        //Diagnostic log about executing this command
+     *          "error" : string|null, //ejdb error message
+     *          "errorCode" : int|0,   //ejdb error code
+     *      }
+     *
+     * @param command Command BSON object
+     * @return command response BSON object
+     * @throws EJDBException
+     */
+    public native BSONObject executeCommand(BSONObject command) throws EJDBException;
 
     /**
      * Returns names of existed collections

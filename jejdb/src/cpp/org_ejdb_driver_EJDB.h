@@ -22,7 +22,8 @@ extern "C" {
 #undef org_ejdb_driver_EJDB_JBOTSYNC
 #define org_ejdb_driver_EJDB_JBOTSYNC 64L
 #undef org_ejdb_driver_EJDB_JBO_DEFAULT
-#define org_ejdb_driver_EJDB_JBO_DEFAULT 70L
+#define org_ejdb_driver_EJDB_JBO_DEFAULT 6L
+
 /*
  * Class:     org_ejdb_driver_EJDB
  * Method:    open
@@ -62,6 +63,14 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_sync
  */
 JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_updateMeta
   (JNIEnv *, jobject);
+
+/*
+ * Class:     org_ejdb_driver_EJDB
+ * Method:    executeCommand
+ * Signature: (Lorg/ejdb/bson/BSONObject;)Lorg/ejdb/bson/BSONObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDB_executeCommand
+  (JNIEnv *, jobject, jobject);
 
 #ifdef __cplusplus
 }

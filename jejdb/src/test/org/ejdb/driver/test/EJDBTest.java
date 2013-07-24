@@ -2,6 +2,7 @@ package org.ejdb.driver.test;
 
 import junit.framework.TestCase;
 
+import org.ejdb.bson.BSON;
 import org.ejdb.bson.BSONObject;
 import org.ejdb.bson.types.ObjectId;
 import org.ejdb.driver.EJDB;
@@ -232,5 +233,16 @@ public class EJDBTest extends TestCase {
         assertNotNull(bar2);
         assertEquals(bar2.getId(), boid);
         assertEquals(bar2, bar);
+    }
+
+    public void testCommand() throws Exception {
+        assertTrue(db.isOpen());
+
+        BSONObject cmd = new BSONObject("ping", new BSONObject());
+
+        BSONObject cmdret = db.executeCommand(cmd);
+
+        assertNotNull(cmdret);
+        assertEquals(cmdret.get("log"), "pong");
     }
 }

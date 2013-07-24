@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "jejdb.h"
 
 static void set_error(JNIEnv * env, int code, const char *message) {
@@ -363,6 +364,33 @@ JNIEXPORT void JNICALL Java_org_ejdb_driver_EJDB_updateMeta (JNIEnv *env, jobjec
 
 	(*env)->SetObjectField(env, obj, collectionMapID, collmapnew);
 };
+
+/*
+ * Class:     org_ejdb_driver_EJDB
+ * Method:    executeCommand
+ * Signature: (Lorg/ejdb/bson/BSONObject;)Lorg/ejdb/bson/BSONObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_ejdb_driver_EJDB_executeCommand
+  (JNIEnv *env, jobject obj, jobject jcommand) {
+	EJDB* db = get_ejdb_from_object(env, obj);
+	if (!ejdbisopen(db)) {
+		set_error(env, 0, "EJDB not opened");
+		return NULL;
+	}
+
+    bson *cmdret = NULL;
+
+	bson *cmd = encode_bson(env, jcommand, NULL);
+    cmdret = ejdbcommand(db, cmd);
+	bson_del(cmd);
+
+    jobject result = decode_bson(env, cmdret);
+    bson_del(cmdret);
+
+    return result;
+};
+
+
 
 /*
 * Class:     org_ejdb_driver_EJDBCollection
