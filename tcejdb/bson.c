@@ -1503,38 +1503,68 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
         return BSON_OK;
     }
 
-    //apply remaining merge fields
-    char pbuf[BSON_MAX_FPATH_LEN + 1];
+    //apply the remaining merge fields
+    char key[BSON_MAX_FPATH_LEN + 1];
+    int keylen = 0;
     tcmapiterinit(mfields);
     const char *fpath;
     while ((fpath = tcmapiternext2(mfields)) != NULL) {
-        bson_iterator_from_buffer(&it1, bsdata1);
         const char *fp = fpath;
         int fplen = strlen(fp);
-        int nl = 0; //nested level
-        while (fplen >= 0) { //split fpath with '.' delim
+        if (fplen >= BSON_MAX_FPATH_LEN) { //protect me silently
+            continue;
+        }
+        int nl = 0; //nesting level
+        bool generated = false; //if `true` a missing parts of bson object are generated
+        while (fplen > 0) { //split fpath with '.' delim
             const char *rp = fp;
             const char *ep = fp + fplen;
             while (rp < ep) {
                 if (*rp == '.') break;
                 rp++;
             }
-            int tlen = (rp - fp);
-            if (tlen < BSON_MAX_FPATH_LEN) {
-                memcpy(pbuf, fp, tlen);
-                pbuf[tlen + 1] = '\0';
-            }
+            keylen = (rp - fp);
+            memcpy(key, fp, keylen);
+            key[keylen + 1] = '\0';
             rp++;
-            fplen -= (rp - fp);
-            fp = rp;
-            if (tlen >= BSON_MAX_FPATH_LEN) {
-                continue;
+            fplen -= keylen;
+
+            if (fplen <= 0) { //last part of fp
+                bson_iterator_from_buffer(&it2, bsdata2);
+                if (bson_find_fieldpath_value(fpath, &it2) != BSON_EOO) {
+                    bson_append_field_from_iterator2(key, &it2, out);
+                }
+                while (nl-- > 0) {
+                    bson_append_finish_object(out); //arrays are covered also
+                }
+            } else { //intermediate part
+                if (!generated) {
+                    bson_iterator_from_buffer(&it1, bsdata1);
+                    bt = bson_find_fieldpath_value2(fpath, (fp - fpath) + keylen, &it1);
+                    if (bt == BSON_EOO) {
+                        generated = true;
+                    } else if (bt == BSON_OBJECT) {
+                        if (bson_isnumstr(key, keylen)) {
+                            break;
+                        }
+                    } else if (bt == BSON_ARRAY) {
+                        if (!bson_isnumstr(key, keylen)) {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                } else if (bson_isnumstr(key, keylen)) {
+                    nl++;
+                    bson_append_start_array2(out, key, keylen);
+                } else {
+                    nl++;
+                    bson_append_start_object2(out, key, keylen);
+                }
             }
-            //todo
-            nl++;
+            fp = rp;
         }
     }
-
     tcmapdel(mfields);
     return BSON_OK;
 }
