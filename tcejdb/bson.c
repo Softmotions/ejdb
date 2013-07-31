@@ -1451,78 +1451,35 @@ static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, 
         const bson_iterator *it, bool after, void *op) {
     _BSON_MERGE3_CTX *ctx = op;
     assert(ctx && ctx->bsout && ctx->mfields && ipath && key && it && op);
-
-    bson_visitor_cmd_t rv = BSON_VCMD_OK;
-    TCMAP *mfields = ctx->mfields;
+    if (after) {
+        return BSON_VCMD_OK;
+    }
     const void *buf;
     int bufsz;
+    bson_bool_t allset = (ctx->matched == TCMAPRNUM(ctx->mfields));
+    buf = allset ? NULL : tcmapget(ctx->mfields, ipath, ipathlen, &bufsz);
+    if (buf) {
+        ctx->matched++;
+        bson_iterator it2;
+        bson_iterator_from_buffer(&it2, ctx->bsdata2);
+        const char *it2start = it2.cur;
 
-    bson_iterator it2;
-    bson_iterator_from_buffer(&it2, ctx->bsdata2);
-    const char *it2start = it2.cur;
-
-    bson_type bt = bson_iterator_type(it);
-    bson_bool_t allset = (ctx->matched == TCMAPRNUM(mfields));
-
-    if (bt != BSON_OBJECT && bt != BSON_ARRAY) {
-        if (after) { //simple primitive case
-            return BSON_VCMD_OK;
-        }
-        buf = allset ? NULL : tcmapget(mfields, ipath, ipathlen, &bufsz);
-        if (buf) {
-            ctx->matched++;
-            off_t it2off;
-            assert(bufsz == sizeof(it2off));
-            memcpy(&it2off, buf, sizeof(it2off));
-            assert(it2off >= 0);
-            it2.cur = it2start + it2off;
-            it2.first = (it2off == 0);
-            bson_append_field_from_iterator(&it2, ctx->bsout);
-        } else {
-            bson_append_field_from_iterator(it, ctx->bsout);
-        }
-        return (BSON_VCMD_SKIP_AFTER);
-    } else { //more complicated case
-        if (!after) {
-            buf = allset ? NULL : tcmapget(mfields, ipath, ipathlen, &bufsz);
-            if (buf) { //field hitted
-                ctx->matched++;
-                off_t it2off;
-                assert(bufsz == sizeof(it2off));
-                memcpy(&it2off, buf, sizeof(it2off));
-                assert(it2off >= 0);
-                it2.cur = it2start + it2off;
-                it2.first = (it2off == 0);
-                bson_append_field_from_iterator(&it2, ctx->bsout);
-                return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
-            } else { //replay object or array
-                ctx->nstack++;
-                if (bt == BSON_OBJECT) {
-                    bson_append_start_object(ctx->bsout, key);
-                } else if (bt == BSON_ARRAY) {
-                    bson_append_start_array(ctx->bsout, key);
-                } else {
-                    assert(0);
-                }
-            }
-        } else { //after
-            if (ctx->nstack > 0) {
-                --ctx->nstack;
-                if (bt == BSON_OBJECT) {
-                    bson_append_finish_object(ctx->bsout);
-                } else if (bt == BSON_ARRAY) {
-                    bson_append_finish_array(ctx->bsout);
-                } else {
-                    assert(0);
-                }
-            }
-        }
+        off_t it2off;
+        assert(bufsz == sizeof (it2off));
+        memcpy(&it2off, buf, sizeof (it2off));
+        assert(it2off >= 0);
+        it2.cur = it2start + it2off;
+        it2.first = (it2off == 0);
+        bson_append_field_from_iterator(&it2, ctx->bsout);
+    } else {
+        bson_append_field_from_iterator(it, ctx->bsout);
     }
-    return rv;
+    return (BSON_VCMD_SKIP_AFTER | BSON_VCMD_SKIP_NESTED);
 }
 
 
 //merge with fpath support
+
 int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
     assert(bsdata1 && bsdata2 && out);
     bson_iterator it1, it2;
@@ -1541,8 +1498,8 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
     //collect fpaths of active bsons
     while ((bt = bson_iterator_next(&it2)) != BSON_EOO) {
         const char* key = bson_iterator_key(&it2);
-        off_t i2off = (it2.cur - it2start);
-        tcmapput(mfields, key, strlen(key), &i2off, sizeof (i2off));
+        off_t it2off = (it2.cur - it2start);
+        tcmapput(mfields, key, strlen(key), &it2off, sizeof (it2off));
     }
     bson_visit_fields(&it1, 0, _bson_merge3_visitor, &ctx);
     assert(ctx.nstack == 0);
