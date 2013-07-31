@@ -3137,6 +3137,10 @@ void testUpdate2() { //https://github.com/Softmotions/ejdb/issues/9
 
 }
 
+void testUpdate3() {
+
+}
+
 void testQueryBool() {
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
