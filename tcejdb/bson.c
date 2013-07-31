@@ -1451,25 +1451,20 @@ static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, 
         const bson_iterator *it, bool after, void *op) {
     _BSON_MERGE3_CTX *ctx = op;
     assert(ctx && ctx->bsout && ctx->mfields && ipath && key && it && op);
-    if (after) {
-        return BSON_VCMD_OK;
-    }
     const void *buf;
     int bufsz;
-    bson_bool_t allset = (ctx->matched == TCMAPRNUM(ctx->mfields));
-    buf = allset ? NULL : tcmapget(ctx->mfields, ipath, ipathlen, &bufsz);
+    buf = TCMAPRNUM(ctx->mfields) == 0 ? NULL : tcmapget(ctx->mfields, ipath, ipathlen, &bufsz);
     if (buf) {
-        ctx->matched++;
         bson_iterator it2;
         bson_iterator_from_buffer(&it2, ctx->bsdata2);
         const char *it2start = it2.cur;
-
         off_t it2off;
         assert(bufsz == sizeof (it2off));
         memcpy(&it2off, buf, sizeof (it2off));
         assert(it2off >= 0);
         it2.cur = it2start + it2off;
         it2.first = (it2off == 0);
+        tcmapout(ctx->mfields, ipath, ipathlen);
         bson_append_field_from_iterator(&it2, ctx->bsout);
     } else {
         bson_append_field_from_iterator(it, ctx->bsout);
@@ -1503,6 +1498,13 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
     }
     bson_visit_fields(&it1, 0, _bson_merge3_visitor, &ctx);
     assert(ctx.nstack == 0);
+    if (TCMAPRNUM(mfields) == 0) { //all merged fields applied
+        tcmapdel(mfields);
+        return BSON_OK;
+    }
+
+    //todo apply remaining merged fields!!!
+
     tcmapdel(mfields);
     return BSON_OK;
 }
