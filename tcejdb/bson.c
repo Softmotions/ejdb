@@ -1465,7 +1465,7 @@ static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, 
         it2.cur = it2start + it2off;
         it2.first = (it2off == 0);
         tcmapout(ctx->mfields, ipath, ipathlen);
-        bson_append_field_from_iterator(&it2, ctx->bsout);
+        bson_append_field_from_iterator2(key, &it2, ctx->bsout);
     } else {
         bson_append_field_from_iterator(it, ctx->bsout);
     }
@@ -1498,12 +1498,42 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
     }
     bson_visit_fields(&it1, 0, _bson_merge3_visitor, &ctx);
     assert(ctx.nstack == 0);
-    if (TCMAPRNUM(mfields) == 0) { //all merged fields applied
+    if (TCMAPRNUM(mfields) == 0) { //all merge fields applied
         tcmapdel(mfields);
         return BSON_OK;
     }
 
-    //todo apply remaining merged fields!!!
+    //apply remaining merge fields
+    char pbuf[BSON_MAX_FPATH_LEN + 1];
+    tcmapiterinit(mfields);
+    const char *fpath;
+    while ((fpath = tcmapiternext2(mfields)) != NULL) {
+        bson_iterator_from_buffer(&it1, bsdata1);
+        const char *fp = fpath;
+        int fplen = strlen(fp);
+        int nl = 0; //nested level
+        while (fplen >= 0) { //split fpath with '.' delim
+            const char *rp = fp;
+            const char *ep = fp + fplen;
+            while (rp < ep) {
+                if (*rp == '.') break;
+                rp++;
+            }
+            int tlen = (rp - fp);
+            if (tlen < BSON_MAX_FPATH_LEN) {
+                memcpy(pbuf, fp, tlen);
+                pbuf[tlen + 1] = '\0';
+            }
+            rp++;
+            fplen -= (rp - fp);
+            fp = rp;
+            if (tlen >= BSON_MAX_FPATH_LEN) {
+                continue;
+            }
+            //todo
+            nl++;
+        }
+    }
 
     tcmapdel(mfields);
     return BSON_OK;
