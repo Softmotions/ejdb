@@ -56,6 +56,7 @@ Documentation
     * **[Lua](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
     * **[Java](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
     * **[Ruby](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
+    * **[Objective-C](https://github.com/johnnyd/EJDBKit)
     * **[Go](https://github.com/mkilling/goejdb/)**
     * **[Pike language] (https://github.com/hww3/pike_modules-ejdb)**
     * **[Adobe Air] (https://github.com/thejustinwalsh/airejdb)**
