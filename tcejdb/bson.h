@@ -1105,12 +1105,11 @@ EJDB_EXPORT int bson_merge2(const void *b1data, const void *b2data, bson_bool_t 
  * `bsdata2` may contain field path keys (eg: 'foo.bar').
  * @param bsdata1 BSON data to to be merged in `out`
  * @param bsdata2 Second BSON data to to be merged in `out`
- * @param overwrite if `true` all `bsdata1` fields will be overwriten by corresponding `bsdata2` fields
  * @param out Resulting `out` bson must be allocated and not finished.
  *
  * @return BSON_OK or BSON_ERROR.
  */
-EJDB_EXPORT int bson_merge3(const void *bsdata1, const void *bsdata2, bson_bool_t overwrite, bson *out);
+EJDB_EXPORT int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out);
 
 EJDB_EXPORT int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val);
 EJDB_EXPORT int bson_inplace_set_long(bson_iterator *pos, int64_t val);

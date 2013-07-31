@@ -1445,7 +1445,6 @@ typedef struct {
     const void *bsdata2; //bsdata to merge with
     int nstack; //nested object stack pos
     int matched; //number of matched merge fields
-    bson_bool_t overwrite; //overwrite bson1 fields with merged
 } _BSON_MERGE3_CTX;
 
 static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, const char *key, int keylen,
@@ -1524,7 +1523,7 @@ static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, 
 
 
 //merge with fpath support
-int bson_merge3(const void *bsdata1, const void *bsdata2, bson_bool_t overwrite, bson *out) {
+int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
     assert(bsdata1 && bsdata2 && out);
     bson_iterator it1, it2;
     bson_type bt;
@@ -1537,8 +1536,7 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson_bool_t overwrite,
         .mfields = mfields,
         .bsdata2 = bsdata2,
         .matched = 0,
-        .nstack = 0,
-        .overwrite = overwrite
+        .nstack = 0
     };
     //collect fpaths of active bsons
     while ((bt = bson_iterator_next(&it2)) != BSON_EOO) {
