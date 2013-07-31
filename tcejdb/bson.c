@@ -1508,12 +1508,12 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
     int keylen = 0;
     tcmapiterinit(mfields);
     const char *fpath;
-    while ((fpath = tcmapiternext2(mfields)) != NULL) {
-        const char *fp = fpath;
-        int fplen = strlen(fp);
+    int fplen;
+    while ((fpath = tcmapiternext(mfields, &fplen)) != NULL) {
         if (fplen >= BSON_MAX_FPATH_LEN) { //protect me silently
             continue;
         }
+        const char *fp = fpath;
         int nl = 0; //nesting level
         bool generated = false; //if `true` a missing parts of bson object are generated
         while (fplen > 0) { //split fpath with '.' delim
