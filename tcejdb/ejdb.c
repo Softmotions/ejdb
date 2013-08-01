@@ -2309,9 +2309,9 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
                     if (i == ipathlen) { //ipath prefixes some exclude object field
                         ictx->nstack++;
                         if (bt == BSON_OBJECT) {
-                            bson_append_start_object(ictx->sbson, key);
+                            bson_append_start_object2(ictx->sbson, key, keylen);
                         } else if (bt == BSON_ARRAY) {
-                            bson_append_start_array(ictx->sbson, key);
+                            bson_append_start_array2(ictx->sbson, key, keylen);
                         }
                         return (BSON_VCMD_OK);
                     }
@@ -2378,9 +2378,9 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
                     if (i == ipathlen) { //ipath prefixes some included field
                         ictx->nstack++;
                         if (bt == BSON_OBJECT) {
-                            bson_append_start_object(ictx->sbson, key);
+                            bson_append_start_object2(ictx->sbson, key, keylen);
                         } else if (bt == BSON_ARRAY) {
-                            bson_append_start_array(ictx->sbson, key);
+                            bson_append_start_array2(ictx->sbson, key, keylen);
                         } else {
                             assert(0);
                         }
@@ -2666,7 +2666,8 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     if (setqf) { //$set
         update = true;
         bson_init_size(&bsout, bsbufsz);
-        if (bson_merge2(bsbuf, bson_data(setqf->updateobj), true, &bsout)) {
+        int err = bson_merge3(bsbuf, bson_data(setqf->updateobj), &bsout);
+        if (err) {
             rv = false;
             _ejdbsetecode(jcoll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
         }

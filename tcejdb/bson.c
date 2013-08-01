@@ -1453,25 +1453,47 @@ static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, 
     assert(ctx && ctx->bsout && ctx->mfields && ipath && key && it && op);
     const void *buf;
     int bufsz;
-    buf = TCMAPRNUM(ctx->mfields) == 0 ? NULL : tcmapget(ctx->mfields, ipath, ipathlen, &bufsz);
+    bson_type bt = bson_iterator_type(it);
+    buf = (TCMAPRNUM(ctx->mfields) == 0) ? NULL : tcmapget(ctx->mfields, ipath, ipathlen, &bufsz);
     if (buf) {
         bson_iterator it2;
         bson_iterator_from_buffer(&it2, ctx->bsdata2);
-        const char *it2start = it2.cur;
         off_t it2off;
         assert(bufsz == sizeof (it2off));
         memcpy(&it2off, buf, sizeof (it2off));
         assert(it2off >= 0);
-        it2.cur = it2start + it2off;
+        it2.cur = it2.cur + it2off;
         it2.first = (it2off == 0);
         tcmapout(ctx->mfields, ipath, ipathlen);
         bson_append_field_from_iterator2(key, &it2, ctx->bsout);
+        return (BSON_VCMD_SKIP_AFTER | BSON_VCMD_SKIP_NESTED);
     } else {
-        bson_append_field_from_iterator(it, ctx->bsout);
+        if (bt == BSON_OBJECT || bt == BSON_ARRAY) {
+            if (!after) {
+                ctx->nstack++;
+                if (bt == BSON_OBJECT) {
+                    bson_append_start_object2(ctx->bsout, key, keylen);
+                } else if (bt == BSON_ARRAY) {
+                    bson_append_start_array2(ctx->bsout, key, keylen);
+                }
+                return BSON_VCMD_OK;
+            } else {
+                if (ctx->nstack > 0) {
+                    ctx->nstack--;
+                    if (bt == BSON_OBJECT) {
+                        bson_append_finish_object(ctx->bsout);
+                    } else if (bt == BSON_ARRAY) {
+                        bson_append_finish_array(ctx->bsout);
+                    }
+                }
+                return BSON_VCMD_OK;
+            }
+        } else {
+            bson_append_field_from_iterator(it, ctx->bsout);
+            return BSON_VCMD_SKIP_AFTER;
+        }
     }
-    return (BSON_VCMD_SKIP_AFTER | BSON_VCMD_SKIP_NESTED);
 }
-
 
 //merge with fpath support
 
@@ -1490,7 +1512,7 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
         .matched = 0,
         .nstack = 0
     };
-    //collect fpaths of active bsons
+    //collect active fpaths
     while ((bt = bson_iterator_next(&it2)) != BSON_EOO) {
         const char* key = bson_iterator_key(&it2);
         off_t it2off = (it2.cur - it2start);
@@ -1525,7 +1547,7 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
             }
             keylen = (rp - fp);
             memcpy(key, fp, keylen);
-            key[keylen + 1] = '\0';
+            key[keylen] = '\0';
             rp++;
             fplen -= keylen;
 
@@ -1566,7 +1588,7 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
         }
     }
     tcmapdel(mfields);
-    return BSON_OK;
+    return out->err;
 }
 
 int bson_merge2(const void *b1data, const void *b2data, bson_bool_t overwrite, bson *out) {

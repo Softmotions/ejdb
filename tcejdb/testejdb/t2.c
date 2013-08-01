@@ -2983,10 +2983,12 @@ void testUpdate1() { //https://github.com/Softmotions/ejdb/issues/9
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_TRUE(ejdbecode(jb) == 0);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_TRUE(ejdbecode(jb) == 0);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
     CU_ASSERT_EQUAL(1, count);
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "UPDATING MODE: YES"));
