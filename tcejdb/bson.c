@@ -1454,7 +1454,7 @@ static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, 
     const void *buf;
     int bufsz;
     bson_type bt = bson_iterator_type(it);
-    buf = (TCMAPRNUM(ctx->mfields) == 0) ? NULL : tcmapget(ctx->mfields, ipath, ipathlen, &bufsz);
+    buf = (TCMAPRNUM(ctx->mfields) == 0 || after) ? NULL : tcmapget(ctx->mfields, ipath, ipathlen, &bufsz);
     if (buf) {
         bson_iterator it2;
         bson_iterator_from_buffer(&it2, ctx->bsdata2);
