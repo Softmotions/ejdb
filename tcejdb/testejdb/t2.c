@@ -3139,8 +3139,52 @@ void testUpdate2() { //https://github.com/Softmotions/ejdb/issues/9
 
 }
 
-void testUpdate3() {
+void testTicket88() { //https://github.com/Softmotions/ejdb/issues/88
+    EJCOLL *ccoll = ejdbcreatecoll(jb, "ticket88", NULL);
+    CU_ASSERT_PTR_NOT_NULL(ccoll);
 
+    bson r;
+    bson_oid_t oid;
+    for (int i = 0; i < 1000; ++i) {
+        bson_init(&r);
+        bson_append_start_array(&r, "arr1");
+        bson_append_start_object(&r, "0");
+        bson_append_int(&r, "f1", 1 + i);
+        bson_append_finish_object(&r);
+        bson_append_start_object(&r, "1");
+        bson_append_int(&r, "f1", 2 + i);
+        bson_append_finish_object(&r);
+        bson_append_finish_array(&r);
+        bson_finish(&r);
+        CU_ASSERT_TRUE(ejdbsavebson(ccoll, &r, &oid));
+        bson_destroy(&r);
+    }
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "$set");
+    bson_append_int(&bsq1, "arr1.1", 1111);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    ejdbqryexecute(ccoll, q1, &count, JBQRYCOUNT, NULL);
+    CU_ASSERT_TRUE(ejdbecode(jb) == 0);
+    CU_ASSERT_EQUAL(count, 1000);
+    ejdbquerydel(q1);
+    bson_destroy(&bsq1);
+
+    bson bsq2;
+    bson_init_as_query(&bsq2);
+    bson_append_int(&bsq1, "arr1.1", 1111);
+    bson_finish(&bsq2);
+    q1 = ejdbcreatequery(jb, &bsq2, NULL, 0, NULL);
+    ejdbqryexecute(ccoll, q1, &count, JBQRYCOUNT, NULL);
+    CU_ASSERT_EQUAL(count, 1000);
+    ejdbquerydel(q1);
+    bson_destroy(&bsq2);
 }
 
 void testQueryBool() {
@@ -4301,6 +4345,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket8", testTicket8)) ||
             (NULL == CU_add_test(pSuite, "testUpdate1", testUpdate1)) ||
             (NULL == CU_add_test(pSuite, "testUpdate2", testUpdate2)) ||
+            (NULL == CU_add_test(pSuite, "testTicket88", testTicket88)) ||
             (NULL == CU_add_test(pSuite, "testQueryBool", testQueryBool)) ||
             (NULL == CU_add_test(pSuite, "testDropAll", testDropAll)) ||
             (NULL == CU_add_test(pSuite, "testTokens$begin", testTokens$begin)) ||
