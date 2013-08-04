@@ -1537,7 +1537,7 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
         }
         const char *fp = fpath;
         int nl = 0; //nesting level
-        bool generated = false; //if `true` a missing parts of bson object are generated
+        bool appendmissing = false; //if `true` a missing parts of bson object are generated
         while (fplen > 0) { //split fpath with '.' delim
             const char *rp = fp;
             const char *ep = fp + fplen;
@@ -1560,11 +1560,11 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
                     bson_append_finish_object(out); //arrays are covered also
                 }
             } else { //intermediate part
-                if (!generated) {
+                if (!appendmissing) {
                     bson_iterator_from_buffer(&it1, bsdata1);
                     bt = bson_find_fieldpath_value2(fpath, (fp - fpath) + keylen, &it1);
                     if (bt == BSON_EOO) {
-                        generated = true;
+                        appendmissing = true;
                     } else if (bt == BSON_OBJECT) {
                         if (bson_isnumstr(key, keylen)) {
                             break;
@@ -1576,12 +1576,15 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
                     } else {
                         break;
                     }
-                } else if (bson_isnumstr(key, keylen)) {
-                    nl++;
-                    bson_append_start_array2(out, key, keylen);
-                } else {
-                    nl++;
-                    bson_append_start_object2(out, key, keylen);
+                }
+                if (appendmissing) {
+                    if (bson_isnumstr(key, keylen)) {
+                        nl++;
+                        bson_append_start_array2(out, key, keylen);
+                    } else {
+                        nl++;
+                        bson_append_start_object2(out, key, keylen);
+                    }
                 }
             }
             fp = rp;
