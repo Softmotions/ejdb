@@ -304,7 +304,7 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *              with fields specified by argment object.
  *          - {.., '$upsert' : {'field1' : val1, 'fieldN' : valN}}
  *      $inc Increment operation. Only number types are supported.
- *          - {.., '$inc' : {'field1' : number, ...,  'field1' : number}
+ *          - {.., '$inc' : {'fpath1' : number, ...,  'fpath2' : number}
  *      $dropall In-place record removal operation.
  *          - {.., '$dropall' : true}
  *      $addToSet Atomically adds value to the array only if its not in the array already.

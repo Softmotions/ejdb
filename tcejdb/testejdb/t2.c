@@ -3163,6 +3163,7 @@ void testTicket88() { //https://github.com/Softmotions/ejdb/issues/88
     bson bsq1;
     bson_init_as_query(&bsq1);
     bson_append_start_object(&bsq1, "$set");
+    bson_append_string(&bsq1, "arr1.0.f2", "x");
     bson_append_int(&bsq1, "arr1.1", 1111);
     bson_append_string(&bsq1, "a.b", "c");
     bson_append_finish_object(&bsq1);
@@ -3179,6 +3180,7 @@ void testTicket88() { //https://github.com/Softmotions/ejdb/issues/88
 
     bson bsq2;
     bson_init_as_query(&bsq2);
+    bson_append_string(&bsq2, "arr1.0.f2", "x");
     bson_append_int(&bsq2, "arr1.1", 1111);
     bson_append_string(&bsq2, "a.b", "c");
     bson_finish(&bsq2);
