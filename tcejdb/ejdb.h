@@ -298,11 +298,11 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *  - Queries can be used to update records:
  *
  *      $set Field set operation.
- *          - {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
+ *          - {.., '$set' : {'fpath1' : val1, 'fpathN' : valN}}
  *      $upsert Atomic upsert. If matching records are found it will be '$set' operation,
  *              otherwise new record will be inserted
  *              with fields specified by argment object.
- *          - {.., '$upsert' : {'field1' : val1, 'fieldN' : valN}}
+ *          - {.., '$upsert' : {'fpath1' : val1, 'fpathN' : valN}}
  *      $inc Increment operation. Only number types are supported.
  *          - {.., '$inc' : {'fpath1' : number, ...,  'fpath2' : number}
  *      $dropall In-place record removal operation.
