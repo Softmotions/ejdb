@@ -2006,9 +2006,17 @@ static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathl
         return (BSON_VCMD_SKIP_AFTER);
     }
     if (bt == BSON_ARRAY) {
+        if (after) {
+            bson_append_finish_array(ctx->bsout);
+            return (BSON_VCMD_OK);
+        }
         bson_iterator_from_buffer(&mit, ctx->mbuf);
         bt = bson_find_fieldpath_value2(fpath, fpathlen, &mit);
-        if (bt == BSON_EOO || (ctx->expandall && bt != BSON_ARRAY)) {
+        if (bt == BSON_EOO) {
+            bson_append_start_array(ctx->bsout, key);
+            return (BSON_VCMD_OK);
+        }
+        if (ctx->expandall && bt != BSON_ARRAY) {
             bson_append_field_from_iterator(it, ctx->bsout);
             return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
         }
@@ -2097,9 +2105,9 @@ int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool e
     }
     bson_iterator_from_buffer(&it, inbuf);
     if (pull) {
-        bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, bson_merge_array_sets_pull_tf, &ctx);
+        bson_visit_fields(&it, 0, bson_merge_array_sets_pull_tf, &ctx);
     } else {
-        bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, bson_merge_array_sets_tf, &ctx);
+        bson_visit_fields(&it, 0, bson_merge_array_sets_tf, &ctx);
     }
     if (ctx.mfields == 0 || pull) {
         return ctx.ecode;

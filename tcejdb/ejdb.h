@@ -472,9 +472,9 @@ EJDB_EXPORT void ejdbqresultdispose(EJQRESULT qr);
  * `$set` and `$inc` operations are supported:
  *
  * `$set` Field set operation:
- *      - {some fields for selection, '$set' : {'field1' : {obj}, ...,  'field1' : {obj}}}
+ *      - {some fields for selection, '$set' : {'fpath1' : {obj}, ...,  'fpathN' : {obj}}}
  * `$inc` Increment operation. Only number types are supported.
- *      - {some fields for selection, '$inc' : {'field1' : number, ...,  'field1' : {number}}
+ *      - {some fields for selection, '$inc' : {'fpath1' : number, ...,  'fpathN' : {number}}
  *
  * @return Number of updated records
  */
