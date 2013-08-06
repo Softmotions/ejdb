@@ -4398,8 +4398,6 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket8", testTicket8)) ||
             (NULL == CU_add_test(pSuite, "testUpdate1", testUpdate1)) ||
             (NULL == CU_add_test(pSuite, "testUpdate2", testUpdate2)) ||
-            (NULL == CU_add_test(pSuite, "testTicket88", testTicket88)) ||
-            (NULL == CU_add_test(pSuite, "testTicket89", testTicket89)) ||
             (NULL == CU_add_test(pSuite, "testQueryBool", testQueryBool)) ||
             (NULL == CU_add_test(pSuite, "testDropAll", testDropAll)) ||
             (NULL == CU_add_test(pSuite, "testTokens$begin", testTokens$begin)) ||
@@ -4416,6 +4414,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket38", testTicket38)) ||
             (NULL == CU_add_test(pSuite, "testTicket43", testTicket43)) ||
             (NULL == CU_add_test(pSuite, "testTicket54", testTicket54)) ||
+            (NULL == CU_add_test(pSuite, "testTicket88", testTicket88)) ||
+            (NULL == CU_add_test(pSuite, "testTicket89", testTicket89)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
             ) {
         CU_cleanup_registry();
