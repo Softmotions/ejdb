@@ -2947,7 +2947,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) { \
         _pushprocessedbson(jb, ejq, res, dfields, ifields, imode, (_bsbuf), (_bsbufsz)); \
     }
-    //EOF #define JBQREGREC
+//EOF #define JBQREGREC
 
     bool trim = (midx && *midx->name != '\0');
     if (anum > 0 && !(mqf->flags & EJFEXCLUDED)) {
@@ -4215,7 +4215,9 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             tclistpush2(pathStack, fkey);
             qf.ftype = ftype;
         } else {
-            if (!strcmp("$set", fkey) ||
+            if (!strcmp("$or", fkey)) { //Both levels operators.
+                  //
+            } else if (!strcmp("$set", fkey) ||
                     !strcmp("$inc", fkey) ||
                     !strcmp("$dropall", fkey) ||
                     !strcmp("$addToSet", fkey) ||
@@ -4223,8 +4225,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     !strcmp("$upsert", fkey) ||
                     !strcmp("$pull", fkey) ||
                     !strcmp("$pullAll", fkey) ||
-                    !strcmp("$do", fkey) ||
-                    !strcmp("$or", fkey)
+                    !strcmp("$do", fkey)
                     ) {
                 if (pqf) { //Top level ops
                     ret = JBEQERROR;
@@ -4267,7 +4268,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                             if (bt != BSON_OBJECT) {
                                 continue;
                             }
-                            if (ejdbqueryaddor(jb, q, bson_iterator_value(&sit)) == NULL) {
+                            EJQ *oq = (pqf != NULL) ? pqf->q : q;
+                            if (ejdbqueryaddor(jb, oq, bson_iterator_value(&sit)) == NULL) {
                                 break;
                             }
                         }
