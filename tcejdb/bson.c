@@ -89,6 +89,7 @@ void bson_reset(bson *b) {
 
 static bson_bool_t bson_isnumstr(const char *str, int len);
 static void bson_append_fpath_from_iterator(const char *fpath, const bson_iterator *from, bson *into);
+static const char *bson_iterator_value2(const bson_iterator *i, int *klen);
 
 /* ----------------------------
    READING
@@ -490,13 +491,11 @@ bson_bool_t bson_iterator_more(const bson_iterator *i) {
 }
 
 bson_type bson_iterator_next(bson_iterator *i) {
-    int ds;
-
+    int ds, out, klen = 0;
     if (i->first) {
         i->first = 0;
         return (bson_type) (*i->cur);
     }
-
     switch (bson_iterator_type(i)) {
         case BSON_EOO:
             return BSON_EOO; /* don't advance */
@@ -522,22 +521,26 @@ bson_type bson_iterator_next(bson_iterator *i) {
         case BSON_STRING:
         case BSON_SYMBOL:
         case BSON_CODE:
-            ds = 4 + bson_iterator_int_raw(i);
+            bson_little_endian32(&out, bson_iterator_value2(i, &klen));
+            ds = 4 + out;
             break;
         case BSON_BINDATA:
-            ds = 5 + bson_iterator_int_raw(i);
+            bson_little_endian32(&out, bson_iterator_value2(i, &klen));
+            ds = 5 + out;
             break;
         case BSON_OBJECT:
         case BSON_ARRAY:
         case BSON_CODEWSCOPE:
-            ds = bson_iterator_int_raw(i);
+            bson_little_endian32(&out, bson_iterator_value2(i, &klen));
+            ds = out;
             break;
         case BSON_DBREF:
-            ds = 4 + 12 + bson_iterator_int_raw(i);
+            bson_little_endian32(&out, bson_iterator_value2(i, &klen));
+            ds = 4 + 12 + out;
             break;
         case BSON_REGEX:
         {
-            const char *s = bson_iterator_value(i);
+            const char *s = bson_iterator_value2(i, &klen);
             const char *p = s;
             p += strlen(p) + 1;
             p += strlen(p) + 1;
@@ -553,9 +556,10 @@ bson_type bson_iterator_next(bson_iterator *i) {
             return 0;
         }
     }
-
-    i->cur += 1 + strlen(i->cur + 1) + 1 + ds;
-
+    if (klen == 0) {
+        for (; *(i->cur + 1 + klen) != '\0'; ++klen);
+    }
+    i->cur += (1 + klen + 1 + ds);
     return (bson_type) (*i->cur);
 }
 
@@ -1333,6 +1337,13 @@ void bson_swap_endian32(void *outp, const void *inp) {
     out[1] = in[2];
     out[2] = in[1];
     out[3] = in[0];
+}
+
+static const char *bson_iterator_value2(const bson_iterator *i, int *klen) {
+    const char *t = i->cur + 1;
+    *klen = strlen(t);
+    t += (*klen + 1);
+    return t;
 }
 
 int bson_append_array_from_iterator(const char *key, bson_iterator *from, bson *into) {

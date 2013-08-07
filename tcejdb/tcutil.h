@@ -41,13 +41,13 @@ __TCUTIL_CLINKAGEBEGIN
 
 
 
-        /*************************************************************************************************
-         * basic utilities
-         *************************************************************************************************/
+/*************************************************************************************************
+ * basic utilities
+ *************************************************************************************************/
 
 
-        /* String containing the version information. */
-        extern EJDB_EXPORT const char *tcversion;
+/* String containing the version information. */
+extern EJDB_EXPORT const char *tcversion;
 
 
 /* Pointer to the call back function for handling a fatal error.
