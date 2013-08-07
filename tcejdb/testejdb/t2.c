@@ -4399,8 +4399,15 @@ void testMetaInfo() {
     bson_del(meta);
 }
 
-int main() {
+void testTicket81() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket81", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    //todo
+    //(a=1 OR c=2) AND (g=5 OR d=7)
+    //{ $and : [ {$or : [{a : 1}, {c : 2}]}, {$or : [{g : 5}, {d : 7}]} ] }
+}
 
+int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
 
@@ -4472,6 +4479,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket54", testTicket54)) ||
             (NULL == CU_add_test(pSuite, "testTicket88", testTicket88)) ||
             (NULL == CU_add_test(pSuite, "testTicket89", testTicket89)) ||
+            (NULL == CU_add_test(pSuite, "testTicket81", testTicket81)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
             ) {
         CU_cleanup_registry();

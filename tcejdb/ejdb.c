@@ -119,6 +119,8 @@ static bool _qrycondcheckstror(const char *vbuf, const TCLIST *tokens);
 static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays);
 static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz);
 static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz);
+static bool _qryormatch2(EJCOLL *jcoll, EJQ *ejq, const void *bsbuf, int bsbufsz);
+static bool _qryormatch3(EJCOLL *jcoll, EJQ *ejq, EJQ *oq, const void *bsbuf, int bsbufsz);
 static bool _qryallcondsmatch(EJQ *ejq, int anum, EJCOLL *jcoll, EJQF **qfs, int qfsz, const void *pkbuf, int pkbufsz);
 static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
@@ -2088,26 +2090,54 @@ static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz)
         bsbufsz = TCXSTRSIZE(ejq->bsbuf);
         bsbuf = TCXSTRPTR(ejq->bsbuf);
     }
-    if (ejq->lastmatchedorqf && _qrybsmatch(ejq->lastmatchedorqf, bsbuf, bsbufsz)) {
+    return _qryormatch2(jcoll, ejq, bsbuf, bsbufsz);
+}
+
+static bool _qryormatch3(EJCOLL *jcoll, EJQ *ejq, EJQ *oq, const void *bsbuf, int bsbufsz) {
+    for (int j = 0; j < TCLISTNUM(oq->qobjlist); ++j) {
+        EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
+        qf->mflags = qf->flags;
+    }
+    int j = 0;
+    int jm = TCLISTNUM(oq->qobjlist);
+    for (; j < jm; ++j) {
+        EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
+        assert(qf);
+        if (qf->mflags & EJFEXCLUDED) {
+            continue;
+        }
+        if (!_qrybsmatch(qf, bsbuf, bsbufsz)) {
+            break;
+        }
+    }
+    if (j == jm) { //all fields in oq are matched
+        if (oq->orqlist && TCLISTNUM(oq->orqlist) > 0) { //we have additional nested $or fields
+            if (_qryormatch2(jcoll, oq, bsbuf, bsbufsz)) {
+                return true;
+            }
+        } else { //we've found matched $or
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool _qryormatch2(EJCOLL *jcoll, EJQ *ejq, const void *bsbuf, int bsbufsz) {
+    if (!ejq->orqlist || TCLISTNUM(ejq->orqlist) < 1) {
+        return true;
+    }
+    if (ejq->lastmatchedorq && _qryormatch3(jcoll, ejq, ejq->lastmatchedorq, bsbuf, bsbufsz)) {
         return true;
     }
     for (int i = 0; i < TCLISTNUM(ejq->orqlist); ++i) {
-        const EJQ *oq = TCLISTVALPTR(ejq->orqlist, i);
+        EJQ *oq = TCLISTVALPTR(ejq->orqlist, i);
         assert(oq && oq->qobjlist);
-        for (int j = 0; j < TCLISTNUM(oq->qobjlist); ++j) {
-            EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
-            qf->mflags = qf->flags;
+        if (ejq->lastmatchedorq == oq) {
+            continue;
         }
-        for (int j = 0; j < TCLISTNUM(oq->qobjlist); ++j) {
-            EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
-            assert(qf);
-            if (qf == ejq->lastmatchedorqf || qf->mflags & EJFEXCLUDED) {
-                continue;
-            }
-            if (_qrybsmatch(qf, bsbuf, bsbufsz)) {
-                ejq->lastmatchedorqf = qf;
-                return true;
-            }
+        if (_qryormatch3(jcoll, ejq, oq, bsbuf, bsbufsz)) {
+            ejq->lastmatchedorq = oq;
+            return true;
         }
     }
     return false;
@@ -2947,7 +2977,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     if (!(ejq->flags & EJQONLYCOUNT) && (all || count > skip)) { \
         _pushprocessedbson(jb, ejq, res, dfields, ifields, imode, (_bsbuf), (_bsbufsz)); \
     }
-//EOF #define JBQREGREC
+    //EOF #define JBQREGREC
 
     bool trim = (midx && *midx->name != '\0');
     if (anum > 0 && !(mqf->flags & EJFEXCLUDED)) {
@@ -4216,7 +4246,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             qf.ftype = ftype;
         } else {
             if (!strcmp("$or", fkey)) { //Both levels operators.
-                  //
+                //
             } else if (!strcmp("$set", fkey) ||
                     !strcmp("$inc", fkey) ||
                     !strcmp("$dropall", fkey) ||
@@ -4261,6 +4291,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             case BSON_ARRAY:
             {
                 if (isckey) {
+                    //{ $or : [ {a="b", $or : []}, {c="d", $or : []} ] }
                     if (!strcmp("$or", fkey)) {
                         bson_iterator sit;
                         bson_iterator_subiterator(it, &sit);

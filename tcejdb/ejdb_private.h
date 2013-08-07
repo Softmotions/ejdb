@@ -113,7 +113,7 @@ struct EJQ { /**> Query object. */
     uint32_t skip; /**> Number of records to skip. */
     uint32_t max; /**> Max number of results */
     uint32_t flags; /**> Control flags */
-    EJQF *lastmatchedorqf; /**> Reference to the last matched or query field */
+    EJQ *lastmatchedorq; /**> Reference to the last matched $or query */
 
     //Temporal buffers used during query processing
     TCXSTR *colbuf; /**> TCTDB current column buffer */
