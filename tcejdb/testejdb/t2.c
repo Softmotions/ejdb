@@ -2252,6 +2252,61 @@ void testQuery25() { //$or
     }
 }
 
+void testQuery25_2() { //$or alternative
+    EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_array(&bsq1, "$or");
+
+    bson_append_start_object(&bsq1, "0");
+    bson_append_string(&bsq1, "name", "Ivanov");
+    bson_append_finish_object(&bsq1);
+
+    bson_append_start_object(&bsq1, "1");
+    bson_append_string(&bsq1, "name", "Антонов");
+    bson_append_finish_object(&bsq1);
+
+    bson_append_finish_array(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAX: 4294967295"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "SKIP: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "COUNT ONLY: NO"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'NONE'"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ORDER FIELDS: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ACTIVE CONDITIONS: 0"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "$OR QUERIES: 2"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FETCH ALL: NO"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RUN FULLSCAN"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 2"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 2"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "FINAL SORTING: NO"));
+    CU_ASSERT_EQUAL(count, 2);
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 2);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_TRUE(
+                !bson_compare_string("Ivanov", TCLISTVALPTR(q1res, i), "name") ||
+                !bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
+
+    }
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 void testQuery26() { //$not $nin
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
@@ -4389,6 +4444,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testQuery23", testQuery23)) ||
             (NULL == CU_add_test(pSuite, "testQuery24", testQuery24)) ||
             (NULL == CU_add_test(pSuite, "testQuery25", testQuery25)) ||
+            (NULL == CU_add_test(pSuite, "testQuery25_2", testQuery25_2)) ||
             (NULL == CU_add_test(pSuite, "testQuery26", testQuery26)) ||
             (NULL == CU_add_test(pSuite, "testQuery27", testQuery27)) ||
             (NULL == CU_add_test(pSuite, "testOIDSMatching", testOIDSMatching)) ||

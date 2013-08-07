@@ -485,7 +485,7 @@ EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, const void *orbsdata) {
     if (q->orqlist == NULL) {
         q->orqlist = tclistnew2(TCLISTINYNUM);
     }
-    tclistpush(q->orqlist, oq, sizeof(*oq)); //copy root EJQ struct
+    tclistpush(q->orqlist, oq, sizeof (*oq)); //copy root EJQ struct
     TCFREE(oq);
     return q;
 }
@@ -2260,7 +2260,7 @@ static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
         for (int i = 0; i < TCLISTNUM(src->orqlist); ++i) {
             EJQ q;
             if (_qrydup(TCLISTVALPTR(src->orqlist, i), &q, qflags)) {
-                tclistpush(target->orqlist, &q, sizeof(q));
+                tclistpush(target->orqlist, &q, sizeof (q));
             }
         }
     }
@@ -4193,17 +4193,12 @@ static char* _fetch_bson_str_array2(EJDB *jb, bson_iterator *it, bson_type *type
     return tokens;
 }
 
-//typedef struct {
-//
-//} _PQOBJCTX ;
-
 static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, TCLIST *pathStack, EJQF *pqf, int elmatchgrp) {
     assert(it && qlist && pathStack);
     int ret = 0;
-    bson_type ftype;
+    bson_type ftype, bt;
 
     while ((ftype = bson_iterator_next(it)) != BSON_EOO) {
-
         const char *fkey = bson_iterator_key(it);
         bool isckey = (*fkey == '$'); //Key is a control key: $in, $nin, $not, $all, ...
         EJQF qf;
@@ -4228,7 +4223,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     !strcmp("$upsert", fkey) ||
                     !strcmp("$pull", fkey) ||
                     !strcmp("$pullAll", fkey) ||
-                    !strcmp("$do", fkey)
+                    !strcmp("$do", fkey) ||
+                    !strcmp("$or", fkey)
                     ) {
                 if (pqf) { //Top level ops
                     ret = JBEQERROR;
@@ -4264,62 +4260,76 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             case BSON_ARRAY:
             {
                 if (isckey) {
-                    bson_iterator sit;
-                    bson_iterator_subiterator(it, &sit);
-                    bson_type atype = 0;
-                    TCLIST *tokens = _fetch_bson_str_array(jb, &sit, &atype, (qf.flags & EJCONDICASE) ? JBICASE : 0);
-                    if (atype == 0) {
-                        ret = JBEQINOPNOTARRAY;
-                        _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
-                        tclistdel(tokens);
-                        break;
-                    }
-                    assert(!qf.expr && !qf.fpath);
-                    qf.ftype = BSON_ARRAY;
-                    qf.expr = tclistdump(tokens, &qf.exprsz);
-                    qf.exprlist = tokens;
-                    if (!strcmp("$in", fkey) || !strcmp("$nin", fkey)) {
-                        if (!strcmp("$nin", fkey)) {
-                            qf.negate = true;
-                        }
-                        if (BSON_IS_NUM_TYPE(atype) || atype == BSON_BOOL || atype == BSON_DATE) {
-                            qf.tcop = TDBQCNUMOREQ;
-                        } else {
-                            qf.tcop = TDBQCSTROREQ;
-                            if (TCLISTNUM(tokens) >= JBINOPTMAPTHRESHOLD) {
-                                assert(!qf.exprmap);
-                                qf.exprmap = tcmapnew2(TCLISTNUM(tokens));
-                                for (int i = 0; i < TCLISTNUM(tokens); ++i) {
-                                    tcmapputkeep(qf.exprmap, TCLISTVALPTR(tokens, i), TCLISTVALSIZ(tokens, i), &yes, sizeof (yes));
-                                }
+                    if (!strcmp("$or", fkey)) {
+                        bson_iterator sit;
+                        bson_iterator_subiterator(it, &sit);
+                        while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
+                            if (bt != BSON_OBJECT) {
+                                continue;
+                            }
+                            if (ejdbqueryaddor(jb, q, bson_iterator_value(&sit)) == NULL) {
+                                break;
                             }
                         }
-                    } else if (!strcmp("$bt", fkey)) { //between
-                        qf.tcop = TDBQCNUMBT;
-                        if (TCLISTNUM(tokens) != 2) {
+                        break;
+                    } else {
+                        bson_iterator sit;
+                        bson_iterator_subiterator(it, &sit);
+                        bson_type atype = 0;
+                        TCLIST *tokens = _fetch_bson_str_array(jb, &sit, &atype, (qf.flags & EJCONDICASE) ? JBICASE : 0);
+                        if (atype == 0) {
                             ret = JBEQINOPNOTARRAY;
+                            _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
+                            tclistdel(tokens);
+                            break;
+                        }
+                        assert(!qf.expr && !qf.fpath);
+                        qf.ftype = BSON_ARRAY;
+                        qf.expr = tclistdump(tokens, &qf.exprsz);
+                        qf.exprlist = tokens;
+                        if (!strcmp("$in", fkey) || !strcmp("$nin", fkey)) {
+                            if (!strcmp("$nin", fkey)) {
+                                qf.negate = true;
+                            }
+                            if (BSON_IS_NUM_TYPE(atype) || atype == BSON_BOOL || atype == BSON_DATE) {
+                                qf.tcop = TDBQCNUMOREQ;
+                            } else {
+                                qf.tcop = TDBQCSTROREQ;
+                                if (TCLISTNUM(tokens) >= JBINOPTMAPTHRESHOLD) {
+                                    assert(!qf.exprmap);
+                                    qf.exprmap = tcmapnew2(TCLISTNUM(tokens));
+                                    for (int i = 0; i < TCLISTNUM(tokens); ++i) {
+                                        tcmapputkeep(qf.exprmap, TCLISTVALPTR(tokens, i), TCLISTVALSIZ(tokens, i), &yes, sizeof (yes));
+                                    }
+                                }
+                            }
+                        } else if (!strcmp("$bt", fkey)) { //between
+                            qf.tcop = TDBQCNUMBT;
+                            if (TCLISTNUM(tokens) != 2) {
+                                ret = JBEQINOPNOTARRAY;
+                                _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
+                                TCFREE(qf.expr);
+                                tclistdel(qf.exprlist);
+                                break;
+                            }
+                        } else if (!strcmp("$strand", fkey)) { //$strand
+                            qf.tcop = TDBQCSTRAND;
+                        } else if (!strcmp("$stror", fkey)) { //$stror
+                            qf.tcop = TDBQCSTROR;
+                        } else if (qf.flags & EJCONDSTARTWITH) { //$begin with some token
+                            qf.tcop = TDBQCSTRORBW;
+                        } else {
+                            ret = JBEQINVALIDQCONTROL;
                             _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
                             TCFREE(qf.expr);
                             tclistdel(qf.exprlist);
                             break;
                         }
-                    } else if (!strcmp("$strand", fkey)) { //$strand
-                        qf.tcop = TDBQCSTRAND;
-                    } else if (!strcmp("$stror", fkey)) { //$stror
-                        qf.tcop = TDBQCSTROR;
-                    } else if (qf.flags & EJCONDSTARTWITH) { //$begin with some token
-                        qf.tcop = TDBQCSTRORBW;
-                    } else {
-                        ret = JBEQINVALIDQCONTROL;
-                        _ejdbsetecode(jb, ret, __FILE__, __LINE__, __func__);
-                        TCFREE(qf.expr);
-                        tclistdel(qf.exprlist);
+                        qf.fpath = tcstrjoin(pathStack, '.');
+                        qf.fpathsz = strlen(qf.fpath);
+                        TCLISTPUSH(qlist, &qf, sizeof (qf));
                         break;
                     }
-                    qf.fpath = tcstrjoin(pathStack, '.');
-                    qf.fpathsz = strlen(qf.fpath);
-                    TCLISTPUSH(qlist, &qf, sizeof (qf));
-                    break;
                 } else {
                     bson_iterator sit;
                     bson_iterator_subiterator(it, &sit);
