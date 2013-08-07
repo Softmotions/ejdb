@@ -100,16 +100,15 @@ struct EJQF { /**> Matching field and status */
     TCMAP *exprmap; /**> Hash map for expression tokens used in $in matching operation. */
     void *regex; /**> Regular expression object */
     EJDB *jb; /**> Reference to the EJDB during query processing */
-    EJQ *q; /**> Query object field embedded into */
+    EJQ *q; /**> Query object in which this field embedded */
     double exprdblval; /**> Double value representation */
     int64_t exprlongval; /**> Integer value represeintation */
 };
 typedef struct EJQF EJQF;
 
 struct EJQ { /**> Query object. */
-    TCLIST *qobjlist; /**> List of query objects *EJQF */
-    EJQ *orqobjs; /** OR Query objects */
-    int orqobjsnum; /** Number of OR query objects */
+    TCLIST *qobjlist; /**> List of query field objects *EJQF */
+    TCLIST *orqlist; /**> List of OR joined query objects *EJQ */
     bson *hints; /**> Hints bson object */
     uint32_t skip; /**> Number of records to skip. */
     uint32_t max; /**> Max number of results */
@@ -129,8 +128,8 @@ struct EJQ { /**> Query object. */
 #define JBINOPTMAPTHRESHOLD 16 /**> If number of tokens in `$in` array exeeds it then TCMAP will be used in fullscan matching of tokens */
 
 
-EJDB_EXPORT  bool ejcollockmethod(EJCOLL *coll, bool wr);
-EJDB_EXPORT  bool ejcollunlockmethod(EJCOLL *coll);
+EJDB_EXPORT bool ejcollockmethod(EJCOLL *coll, bool wr);
+EJDB_EXPORT bool ejcollunlockmethod(EJCOLL *coll);
 
 EJDB_EXTERN_C_END
 

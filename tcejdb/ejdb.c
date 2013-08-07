@@ -429,18 +429,13 @@ EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *
             goto error;
         }
     }
-    if (orqobjs && orqobjsnum) {
-        q->orqobjsnum = orqobjsnum;
-        TCMALLOC(q->orqobjs, sizeof (*(q->orqobjs)) * q->orqobjsnum);
+    if (orqobjs && orqobjsnum > 0) {
         for (int i = 0; i < orqobjsnum; ++i) {
             bson *oqb = (orqobjs + i);
             assert(oqb);
-            EJQ *oq = ejdbcreatequery(jb, oqb, NULL, 0, NULL);
-            if (oq == NULL) {
+            if (ejdbqueryaddor(jb, q, bson_data(oqb)) == NULL) {
                 goto error;
             }
-            q->orqobjs[i] = *oq; //copy struct
-            TCFREE(oq);
         }
     }
     if (hints) {
@@ -478,7 +473,7 @@ error:
 }
 
 EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, const void *orbsdata) {
-    assert(jb && q);
+    assert(jb && q && orbsdata);
     if (!orbsdata) {
         _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
         return NULL;
@@ -487,13 +482,10 @@ EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, const void *orbsdata) {
     if (oq == NULL) {
         return NULL;
     }
-    q->orqobjsnum++;
-    if (q->orqobjsnum == 1) {
-        TCMALLOC(q->orqobjs, sizeof (*(q->orqobjs)) * q->orqobjsnum);
-    } else {
-        TCREALLOC(q->orqobjs, q->orqobjs, sizeof (*(q->orqobjs)) * q->orqobjsnum);
+    if (q->orqlist == NULL) {
+        q->orqlist = tclistnew2(TCLISTINYNUM);
     }
-    q->orqobjs[q->orqobjsnum - 1] = *oq; //copy
+    tclistpush(q->orqlist, oq, sizeof(*oq)); //copy root EJQ struct
     TCFREE(oq);
     return q;
 }
@@ -1624,13 +1616,13 @@ static void _qrydel(EJQ *q, bool freequery) {
         tclistdel(q->qobjlist);
         q->qobjlist = NULL;
     }
-    if (q->orqobjsnum) {
-        for (int i = 0; i < q->orqobjsnum; ++i) {
-            _qrydel(q->orqobjs + i, false);
+    if (q->orqlist) {
+        for (int i = 0; i < TCLISTNUM(q->orqlist); ++i) {
+            EJQ *oq = TCLISTVALPTR(q->orqlist, i);
+            _qrydel(oq, false);
         }
-        TCFREE(q->orqobjs);
-        q->orqobjsnum = 0;
-        q->orqobjs = NULL;
+        tclistdel(q->orqlist);
+        q->orqlist = NULL;
     }
     if (q->hints) {
         bson_del(q->hints);
@@ -2079,7 +2071,7 @@ static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz) {
 }
 
 static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz) {
-    if (ejq->orqobjsnum <= 0 || !ejq->orqobjs) {
+    if (!ejq->orqlist || TCLISTNUM(ejq->orqlist) < 1) {
         return true;
     }
     void *bsbuf = TCXSTRPTR(ejq->bsbuf);
@@ -2099,8 +2091,8 @@ static bool _qryormatch(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz)
     if (ejq->lastmatchedorqf && _qrybsmatch(ejq->lastmatchedorqf, bsbuf, bsbufsz)) {
         return true;
     }
-    for (int i = 0; i < ejq->orqobjsnum; ++i) {
-        const EJQ *oq = (ejq->orqobjs + i);
+    for (int i = 0; i < TCLISTNUM(ejq->orqlist); ++i) {
+        const EJQ *oq = TCLISTVALPTR(ejq->orqlist, i);
         assert(oq && oq->qobjlist);
         for (int j = 0; j < TCLISTNUM(oq->qobjlist); ++j) {
             EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
@@ -2251,7 +2243,6 @@ static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     target->flags = src->flags | qflags;
     target->max = src->max;
     target->skip = src->skip;
-    target->orqobjsnum = src->orqobjsnum;
     if (src->qobjlist) {
         target->qobjlist = tclistnew2(TCLISTNUM(src->qobjlist));
         for (int i = 0; i < TCLISTNUM(src->qobjlist); ++i) {
@@ -2264,10 +2255,13 @@ static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     if (src->hints) {
         target->hints = bson_dup(src->hints);
     }
-    if (src->orqobjsnum > 0 && src->orqobjs) {
-        TCMALLOC(target->orqobjs, sizeof (*(target->orqobjs)) * src->orqobjsnum);
-        for (int i = 0; i < src->orqobjsnum; ++i) {
-            _qrydup(src->orqobjs + i, target->orqobjs + i, qflags);
+    if (src->orqlist) {
+        target->orqlist = tclistnew2(TCLISTNUM(src->orqlist));
+        for (int i = 0; i < TCLISTNUM(src->orqlist); ++i) {
+            EJQ q;
+            if (_qrydup(TCLISTVALPTR(src->orqlist, i), &q, qflags)) {
+                tclistpush(target->orqlist, &q, sizeof(q));
+            }
         }
     }
     return true;
@@ -2909,7 +2903,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         for (int i = 0; i < ofsz; ++i) assert(ofs[i] != NULL);
     }
 
-    if ((ejq->flags & EJQONLYCOUNT) && qfsz == 0 && ejq->orqobjsnum == 0) { //primitive count(*) query
+    if ((ejq->flags & EJQONLYCOUNT) && qfsz == 0 && (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1)) { //primitive count(*) query
         count = jcoll->tdb->hdb->rnum;
         if (log) {
             tcxstrprintf(log, "SIMPLE COUNT(*): %u\n", count);
@@ -2929,7 +2923,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         tcxstrprintf(log, "MAIN IDX: '%s'\n", midx ? midx->name : "NONE");
         tcxstrprintf(log, "ORDER FIELDS: %d\n", ofsz);
         tcxstrprintf(log, "ACTIVE CONDITIONS: %d\n", anum);
-        tcxstrprintf(log, "$OR QUERIES: %d\n", ejq->orqobjsnum);
+        tcxstrprintf(log, "$OR QUERIES: %d\n", ejq->orqlist ? TCLISTNUM(ejq->orqlist) : 0);
         tcxstrprintf(log, "FETCH ALL: %s\n", all ? "YES" : "NO");
     }
     if (max < UINT_MAX - skip) {
@@ -2990,7 +2984,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                         break;
                     }
                 }
-                if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid)))) {
+                if (matched && (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, &oid, sizeof (oid)))) {
                     JBQREGREC(&oid, sizeof (oid), TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                 }
             } while (false);
@@ -3034,7 +3028,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                         break;
                     }
                 }
-                if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, &oid, sizeof (oid)))) {
+                if (matched && (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, &oid, sizeof (oid)))) {
                     JBQREGREC(&oid, sizeof (oid), TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                 }
             }
@@ -3052,7 +3046,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             if (trim) kbufsz -= 3;
             vbuf = tcbdbcurval3(cur, &vbufsz);
             if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                    (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                    (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                 JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
             }
             if (mqf->order >= 0) {
@@ -3073,7 +3067,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             if (kbufsz == exprsz && !memcmp(kbuf, expr, exprsz)) {
                 vbuf = tcbdbcurval3(cur, &vbufsz);
                 if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                        (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                        (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                     JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                 }
             } else {
@@ -3093,7 +3087,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             if (kbufsz >= exprsz && !memcmp(kbuf, expr, exprsz)) {
                 vbuf = tcbdbcurval3(cur, &vbufsz);
                 if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                        (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                        (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                     JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                 }
             } else {
@@ -3130,7 +3124,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (kbufsz >= tsiz && !memcmp(kbuf, token, tsiz)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
                     if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                            (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                            (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                         JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                     }
                 } else {
@@ -3168,7 +3162,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (kbufsz == tsiz && !memcmp(kbuf, token, tsiz)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
                     if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                            (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                            (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                         JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                     }
                 } else {
@@ -3190,7 +3184,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             if (_nucmp(&num, kbuf, mqf->ftype) == 0) {
                 vbuf = tcbdbcurval3(cur, &vbufsz);
                 if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                        (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                        (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                     JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                 }
             } else {
@@ -3217,7 +3211,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (cmp > 0 || (mqf->tcop == TDBQCNUMGE && cmp >= 0)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
                     if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                            (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                            (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                         JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                     }
                 }
@@ -3232,7 +3226,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (cmp > 0 || (mqf->tcop == TDBQCNUMGE && cmp >= 0)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
                     if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                            (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                            (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                         JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                     }
                 }
@@ -3258,7 +3252,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (cmp < 0 || (cmp <= 0 && mqf->tcop == TDBQCNUMLE)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
                     if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                            (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                            (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                         JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                     }
                 }
@@ -3273,7 +3267,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (cmp < 0 || (cmp <= 0 && mqf->tcop == TDBQCNUMLE)) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
                     if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                            (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                            (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                         JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                     }
                 }
@@ -3304,7 +3298,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
             if (tcatof2(kbuf) > upper) break;
             vbuf = tcbdbcurval3(cur, &vbufsz);
             if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                    (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                    (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                 JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
             }
             tcbdbcurnext(cur);
@@ -3341,7 +3335,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
                 if (tcatof2(kbuf) == xnum) {
                     vbuf = tcbdbcurval3(cur, &vbufsz);
                     if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, vbuf, vbufsz) &&
-                            (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
+                            (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, vbuf, vbufsz))) {
                         JBQREGREC(vbuf, vbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
                     }
                 } else {
@@ -3378,7 +3372,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         tcmapiterinit(tres);
         while ((all || count < max) && (kbuf = tcmapiternext(tres, &kbufsz)) != NULL) {
             if (_qryallcondsmatch(ejq, anum, jcoll, qfs, qfsz, kbuf, kbufsz) &&
-                    (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, kbuf, kbufsz))) {
+                    (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, kbuf, kbufsz))) {
                 JBQREGREC(kbuf, kbufsz, TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
             }
         }
@@ -3440,7 +3434,7 @@ fullscan: /* Full scan */
                 break;
             }
         }
-        if (matched && (ejq->orqobjsnum == 0 || _qryormatch(jcoll, ejq, TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf)))) {
+        if (matched && (ejq->orqlist == NULL || TCLISTNUM(ejq->orqlist) < 1 || _qryormatch(jcoll, ejq, TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf)))) {
             if (updkeys) { //we are in updating mode
                 if (tcmapputkeep(updkeys, TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf), &yes, sizeof (yes))) {
                     JBQREGREC(TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf), TCXSTRPTR(ejq->bsbuf), TCXSTRSIZE(ejq->bsbuf));
