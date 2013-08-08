@@ -108,7 +108,8 @@ typedef struct EJQF EJQF;
 
 struct EJQ { /**> Query object. */
     TCLIST *qobjlist; /**> List of query field objects *EJQF */
-    TCLIST *orqlist; /**> List of OR joined query objects *EJQ */
+    TCLIST *orqlist; /**> List of $or joined query objects *EJQ */
+    TCLIST *andqlist; /**> List of $and joined query objects *EJQ */
     bson *hints; /**> Hints bson object */
     uint32_t skip; /**> Number of records to skip. */
     uint32_t max; /**> Max number of results */
