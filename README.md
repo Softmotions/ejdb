@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-08-08` **[Now supported $and & $or mongodb operators] (https://github.com/Softmotions/ejdb/issues/81)**
 * `2013-07-15` **[Google Go binding] (https://github.com/mkilling/goejdb)**
 * `2013-06-23` **[C# .Net binding] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
 * `2013-06-02` **[Adobe Air Native Extension (ANE) for EJDB (Thanks to @thejustinwalsh)] (https://github.com/thejustinwalsh/airejdb)**
@@ -531,6 +532,10 @@ Queries
  *     - $elemMatch The $elemMatch operator matches more than one component within an array element.
  *          -  { array: { $elemMatch: { value1 : 1, value2 : { $gt: 1 } } } }
  *          Restriction: only one $elemMatch allowed in context of one array field.
+ *      - $and, $or joining:
+ *          -   {..., $and : [subq1, subq2, ...] }
+ *          -   {..., $or  : [subq1, subq2, ...] }
+ *          Example: {z : 33, $and : [ {$or : [{a : 1}, {b : 2}]}, {$or : [{c : 5}, {d : 7}]} ] }
  *
  *  - Queries can be used to update records:
  *       $set Field set operation.
