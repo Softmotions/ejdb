@@ -4402,9 +4402,107 @@ void testMetaInfo() {
 void testTicket81() {
     EJCOLL *coll = ejdbcreatecoll(jb, "ticket81", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
-    //todo
-    //(a=1 OR c=2) AND (g=5 OR d=7)
-    //{ $and : [ {$or : [{a : 1}, {c : 2}]}, {$or : [{g : 5}, {d : 7}]} ] }
+
+    bson b;
+    bson_oid_t oid;
+
+    bson_init(&b); //true
+    bson_append_int(&b, "z", 33);
+    bson_append_int(&b, "a", 1);
+    bson_append_int(&b, "b", 3);
+    bson_append_int(&b, "c", 10);
+    bson_append_int(&b, "d", 7);
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+    bson_init(&b); //false
+    bson_append_int(&b, "z", 33);
+    bson_append_int(&b, "a", 11);
+    bson_append_int(&b, "b", 22);
+    bson_append_int(&b, "c", 5);
+    bson_append_int(&b, "d", 7);
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+    bson_init(&b); //true
+    bson_append_int(&b, "z", 33);
+    bson_append_int(&b, "b", 2);
+    bson_append_int(&b, "d", 7);
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+    bson_init(&b); //true
+    bson_append_int(&b, "z", 22);
+    bson_append_int(&b, "a", 1);
+    bson_append_int(&b, "b", 3);
+    bson_append_int(&b, "c", 10);
+    bson_append_int(&b, "d", 7);
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+    //z=33 AND (a=1 OR b=2) AND (c=5 OR d=7)
+    //{z : 33, $and : [ {$or : [{a : 1}, {b : 2}]}, {$or : [{c : 5}, {d : 7}]} ] }
+    bson_init_as_query(&b);
+    bson_append_int(&b, "z", 33);
+    bson_append_start_array(&b, "$and");
+
+    //{$or : [{a : 1}, {b : 2}]}
+    bson_append_start_object(&b, "0");
+    bson_append_start_array(&b, "$or");
+    //{a : 1}
+    bson_append_start_object(&b, "0");
+    bson_append_int(&b, "a", 1);
+    bson_append_finish_object(&b);
+    //{b : 2}
+    bson_append_start_object(&b, "1");
+    bson_append_int(&b, "b", 2);
+    bson_append_finish_object(&b);
+    bson_append_finish_array(&b);
+    bson_append_finish_object(&b); //eof {$or : [{a : 1}, {b : 2}]}
+
+    //{$or : [{c : 5}, {d : 7}]}
+    bson_append_start_object(&b, "1");
+    bson_append_start_array(&b, "$or");
+    //{c : 5}
+    bson_append_start_object(&b, "0");
+    bson_append_int(&b, "c", 5);
+    bson_append_finish_object(&b);
+    //{d : 7}
+    bson_append_start_object(&b, "1");
+    bson_append_int(&b, "d", 7);
+    bson_append_finish_object(&b);
+    bson_append_finish_array(&b);
+    bson_append_finish_object(&b); //eof {$or : [{c : 5}, {d : 7}]}
+    bson_append_finish_array(&b); //eof $and
+    bson_finish(&b);
+
+    TCXSTR *log = tcxstrnew();
+    uint32_t count = 0;
+    EJQ *q1 = ejdbcreatequery(jb, &b, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    bson_destroy(&b);
+
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(count, 2);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "ACTIVE CONDITIONS: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "$AND QUERIES: 2"));
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        //z=33 AND (a=1 OR b=2) AND (c=5 OR d=7)
+        CU_ASSERT_FALSE(bson_compare_long(33, TCLISTVALPTR(q1res, i), "z"));
+        CU_ASSERT_TRUE(!bson_compare_long(1, TCLISTVALPTR(q1res, i), "a") || !bson_compare_long(2, TCLISTVALPTR(q1res, i), "b"));
+        CU_ASSERT_TRUE(!bson_compare_long(5, TCLISTVALPTR(q1res, i), "c") || !bson_compare_long(7, TCLISTVALPTR(q1res, i), "d"));
+    }
+    tclistdel(q1res);
+    ejdbquerydel(q1);
+    bson_destroy(&b);
+    tcxstrdel(log);
 }
 
 int main() {

@@ -2093,6 +2093,7 @@ static bool _qry_$and_$or_match(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int 
     }
     void *bsbuf = TCXSTRPTR(ejq->bsbuf);
     int bsbufsz = TCXSTRSIZE(ejq->bsbuf);
+
     if (!bsbuf || bsbufsz <= 0) {
         tcxstrclear(ejq->colbuf);
         tcxstrclear(ejq->bsbuf);
@@ -2110,7 +2111,7 @@ static bool _qry_$and_$or_match(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int 
     } else if (isor) {
         return _qryormatch2(jcoll, ejq, bsbuf, bsbufsz);
     } else {
-        return false;
+        return true;
     }
 }
 
@@ -3032,7 +3033,8 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         tcxstrprintf(log, "MAIN IDX: '%s'\n", midx ? midx->name : "NONE");
         tcxstrprintf(log, "ORDER FIELDS: %d\n", ofsz);
         tcxstrprintf(log, "ACTIVE CONDITIONS: %d\n", anum);
-        tcxstrprintf(log, "$OR QUERIES: %d\n", ((ejq->orqlist) ? TCLISTNUM(ejq->orqlist) : 0));
+        tcxstrprintf(log, "ROOT $OR QUERIES: %d\n", ((ejq->orqlist) ? TCLISTNUM(ejq->orqlist) : 0));
+        tcxstrprintf(log, "ROOT $AND QUERIES: %d\n", ((ejq->andqlist) ? TCLISTNUM(ejq->andqlist) : 0));
         tcxstrprintf(log, "FETCH ALL: %s\n", all ? "YES" : "NO");
     }
     if (max < UINT_MAX - skip) {
