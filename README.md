@@ -1,5 +1,6 @@
 [![EJDB](https://raw.github.com/Softmotions/ejdb/master/misc/ejdblogo3.png)](http://ejdb.org)
 
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/Softmotions/ejdb/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
 Embedded JSON Database engine
 ====================================
