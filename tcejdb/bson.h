@@ -126,6 +126,14 @@ typedef struct {
 
 EJDB_EXPORT const char* bson_first_errormsg(bson *bson);
 
+
+#define BSON_ITERATOR_FROM_BUFFER(_bs_I, _bs_B) \
+    (_bs_I)->cur = ((char*) (_bs_B)) + 4;       \
+    (_bs_I)->first = 1;
+
+#define BSON_ITERATOR_SUBITERATOR(_bs_I, _bs_S) \
+    BSON_ITERATOR_FROM_BUFFER((_bs_S), bson_iterator_value(_bs_I))
+
 /* ----------------------------
    READING
    ------------------------------ */
@@ -1119,7 +1127,7 @@ EJDB_EXPORT int bson_inplace_set_double(bson_iterator *pos, double val);
 /**
  * Include or exclude fpaths in the specified BSON and put resulting data into `bsout`.
  * On completion it finishes `bsout` object.
- * 
+ *
  * @param ifields Map of fieldpaths. Map values are a simple boolean bufs.
  * @param imode If true fpaths will be included. Otherwise fpaths will be excluded from bson.
  * @param bsbuf BSON buffer to process.

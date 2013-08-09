@@ -500,7 +500,7 @@ EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, const void *hintsbsdata) {
         return NULL;
     }
     bson_iterator it;
-    bson_iterator_from_buffer(&it, hintsbsdata);
+    BSON_ITERATOR_FROM_BUFFER(&it, hintsbsdata);
     bson *bs = bson_create_from_iterator(&it);
     if (bs->err) {
         bson_del(bs);
@@ -865,18 +865,18 @@ bson* ejdbcommand(EJDB *jb, bson *cmd) {
             char *path = NULL;
             int flags = 0;
             bson_iterator sit;
-            bson_iterator_subiterator(&it, &sit);
+            BSON_ITERATOR_SUBITERATOR(&it, &sit);
             if (bson_find_fieldpath_value("path", &sit) == BSON_STRING) {
                 path = strdup(bson_iterator_string(&sit));
             }
-            bson_iterator_subiterator(&it, &sit);
+            BSON_ITERATOR_SUBITERATOR(&it, &sit);
             if (bson_find_fieldpath_value("mode", &sit) == BSON_INT) {
                 flags = bson_iterator_int(&sit);
             }
-            bson_iterator_subiterator(&it, &sit);
+            BSON_ITERATOR_SUBITERATOR(&it, &sit);
             if (bson_find_fieldpath_value("cnames", &sit) == BSON_ARRAY) {
                 bson_iterator ait;
-                bson_iterator_subiterator(&sit, &ait);
+                BSON_ITERATOR_SUBITERATOR(&sit, &ait);
                 while ((bt = bson_iterator_next(&ait)) != BSON_EOO) {
                     if (bt == BSON_STRING) {
                         if (cnames == NULL) {
@@ -1241,7 +1241,7 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
         EJCOLLOPTS cops = {0};
         if (bson_find_fieldpath_value("opts", &mbsonit) == BSON_OBJECT) {
             bson_iterator sit;
-            bson_iterator_subiterator(&mbsonit, &sit);
+            BSON_ITERATOR_SUBITERATOR(&mbsonit, &sit);
             while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
                 const char *key = bson_iterator_key(&sit);
                 if (strcmp("compressed", key) == 0 && bt == BSON_BOOL) {
@@ -1276,13 +1276,13 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
         int iflags = 0;
         bson_iterator sit;
 
-        bson_iterator_subiterator(&mbsonit, &sit);
+        BSON_ITERATOR_SUBITERATOR(&mbsonit, &sit);
         bt = bson_find_fieldpath_value("ipath", &sit);
         if (bt == BSON_STRING) {
             ipath = strdup(bson_iterator_string(&sit));
         }
 
-        bson_iterator_subiterator(&mbsonit, &sit);
+        BSON_ITERATOR_SUBITERATOR(&mbsonit, &sit);
         bt = bson_find_fieldpath_value("iflags", &sit);
         if (bt == BSON_INT || bt == BSON_LONG) {
             iflags = bson_iterator_int(&sit);
@@ -1689,7 +1689,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
 
     if (bt == BSON_ARRAY && expandarrays) { //Iterate over array
         bson_iterator sit;
-        bson_iterator_subiterator(it, &sit);
+        BSON_ITERATOR_SUBITERATOR(it, &sit);
         while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
             if (_qrybsvalmatch(qf, &sit, false)) {
                 return true;
@@ -2021,11 +2021,11 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
         ffpctx->fpath = ffpctx->fpath + ffpctx->stopos;
         currpos += ffpctx->stopos; //adjust cumulative field position
         bson_iterator sit;
-        bson_iterator_subiterator(ffpctx->input, &sit);
+        BSON_ITERATOR_SUBITERATOR(ffpctx->input, &sit);
         while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
             if (bt == BSON_OBJECT || bt == BSON_ARRAY) {
                 bson_iterator sit2;
-                bson_iterator_subiterator(&sit, &sit2);
+                BSON_ITERATOR_SUBITERATOR(&sit, &sit2);
                 ffpctx->input = &sit2;
                 if (_qrybsrecurrmatch(qf, ffpctx, currpos)) {
                     bool ret = true;
@@ -2036,7 +2036,7 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
                                 continue;
                             }
                             eqf->mflags |= EJFEXCLUDED;
-                            bson_iterator_subiterator(&sit, &sit2);
+                            BSON_ITERATOR_SUBITERATOR(&sit, &sit2);
                             FFPCTX nffpctx = *ffpctx;
                             nffpctx.fplen = eqf->fpathsz - eqf->elmatchpos;
                             if (nffpctx.fplen <= 0) { //should never happen if query construction is correct
@@ -2073,7 +2073,7 @@ static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz) {
         return !qf->negate;
     }
     bson_iterator it;
-    bson_iterator_from_buffer(&it, bsbuf);
+    BSON_ITERATOR_FROM_BUFFER(&it, bsbuf);
     FFPCTX ffpctx = {
         .fpath = qf->fpath,
         .fplen = qf->fpathsz,
@@ -2439,12 +2439,12 @@ static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const
                             JDBCOLBSON, JDBCOLBSONL, ictx->q->tmpbuf)) {
                         break;
                     }
-                    bson_iterator_from_buffer(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
+                    BSON_ITERATOR_FROM_BUFFER(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
                     bson_append_object_from_iterator(bson_iterator_key(it), &bufit, ictx->sbson);
                     break;
                 }
                 if (lbt == BSON_ARRAY) {
-                    bson_iterator_subiterator(it, &sit);
+                    BSON_ITERATOR_SUBITERATOR(it, &sit);
                     bson_append_start_array(ictx->sbson, bson_iterator_key(it));
                     while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
                         if (bt != BSON_STRING && bt != BSON_OID) {
@@ -2466,7 +2466,7 @@ static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const
                             bson_append_field_from_iterator(&sit, ictx->sbson);
                             continue;
                         }
-                        bson_iterator_from_buffer(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
+                        BSON_ITERATOR_FROM_BUFFER(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
                         bson_append_object_from_iterator(bson_iterator_key(&sit), &bufit, ictx->sbson);
                     }
                     bson_append_finish_array(ictx->sbson);
@@ -2533,7 +2533,7 @@ static bool _exec$do(EJDB *jb, EJQ *q, TCMAP *dfields, const void *bsbuf, bson *
         .sbson = bsout
     };
     bson_iterator it;
-    bson_iterator_from_buffer(&it, bsbuf);
+    BSON_ITERATOR_FROM_BUFFER(&it, bsbuf);
     bson_visit_fields(&it, 0, _bson$dovisitor, &ictx);
     if (bson_finish(bsout) != BSON_OK) {
         _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
@@ -3637,7 +3637,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
         bt = bson_find(&it, ejq->hints, "$orderby");
         if (bt == BSON_OBJECT) {
             int orderseq = 1;
-            bson_iterator_subiterator(&it, &sit);
+            BSON_ITERATOR_SUBITERATOR(&it, &sit);
             while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
                 if (!BSON_IS_NUM_TYPE(bt)) {
                     continue;
@@ -3692,7 +3692,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
             bt = bson_find(&it, ejq->hints, "$fields"); //Collect required fields
             if (bt == BSON_OBJECT) {
                 TCMAP *fmap = tcmapnew2(TCMAPTINYBNUM);
-                bson_iterator_subiterator(&it, &sit);
+                BSON_ITERATOR_SUBITERATOR(&it, &sit);
                 for (int i = 0; (bt = bson_iterator_next(&sit)) != BSON_EOO; ++i) {
                     if (!BSON_IS_NUM_TYPE(bt)) {
                         continue;
@@ -4217,7 +4217,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                 if (isckey) {
                     if (!strcmp("$and", fkey)) {
                         bson_iterator sit;
-                        bson_iterator_subiterator(it, &sit);
+                        BSON_ITERATOR_SUBITERATOR(it, &sit);
                         while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
                             if (bt != BSON_OBJECT) {
                                 continue;
@@ -4229,7 +4229,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         break;
                     } else if (!strcmp("$or", fkey)) {
                         bson_iterator sit;
-                        bson_iterator_subiterator(it, &sit);
+                        BSON_ITERATOR_SUBITERATOR(it, &sit);
                         while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
                             if (bt != BSON_OBJECT) {
                                 continue;
@@ -4241,7 +4241,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         break;
                     } else {
                         bson_iterator sit;
-                        bson_iterator_subiterator(it, &sit);
+                        BSON_ITERATOR_SUBITERATOR(it, &sit);
                         bson_type atype = 0;
                         TCLIST *tokens = _fetch_bson_str_array(jb, &sit, &atype, (qf.flags & EJCONDICASE) ? JBICASE : 0);
                         if (atype == 0) {
@@ -4299,7 +4299,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     }
                 } else {
                     bson_iterator sit;
-                    bson_iterator_subiterator(it, &sit);
+                    BSON_ITERATOR_SUBITERATOR(it, &sit);
                     ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf, elmatchgrp);
                     break;
                 }
@@ -4338,7 +4338,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         bson_init_as_query(qf.updateobj);
                         bson_type sbt;
                         bson_iterator sit;
-                        bson_iterator_subiterator(it, &sit);
+                        BSON_ITERATOR_SUBITERATOR(it, &sit);
                         while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
                             if ((qf.flags & EJCONDALL) && sbt != BSON_ARRAY) {
                                 //$addToSetAll & $pullAll accepts arrays only as argument
@@ -4377,7 +4377,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         bson_init_as_query(qf.updateobj);
                         bson_type sbt;
                         bson_iterator sit;
-                        bson_iterator_subiterator(it, &sit);
+                        BSON_ITERATOR_SUBITERATOR(it, &sit);
                         int ac = 0;
                         while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
                             const char *akey = bson_iterator_key(&sit);
@@ -4406,7 +4406,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                     }
                 }
                 bson_iterator sit;
-                bson_iterator_subiterator(it, &sit);
+                BSON_ITERATOR_SUBITERATOR(it, &sit);
                 ret = _parse_qobj_impl(jb, q, &sit, qlist, pathStack, &qf, elmatchgrp);
                 break;
             }
@@ -4610,7 +4610,7 @@ static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, const void *qspecbsdata) {
     int rv = 0;
     TCLIST *res = tclistnew2(TCLISTINYNUM);
     bson_iterator it;
-    bson_iterator_from_buffer(&it, qspecbsdata);
+    BSON_ITERATOR_FROM_BUFFER(&it, qspecbsdata);
     TCLIST *pathStack = tclistnew2(TCLISTINYNUM);
     rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL, 0);
     if (rv) {
@@ -4705,7 +4705,7 @@ static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens
     } else if (btype == BSON_ARRAY) {
         bson_type eltype; //last element bson type
         bson_iterator sit;
-        bson_iterator_subiterator(it, &sit);
+        BSON_ITERATOR_SUBITERATOR(it, &sit);
         if (tokens) {
             while ((eltype = bson_iterator_next(&sit)) != BSON_EOO) {
                 int vz = 0;
@@ -4783,7 +4783,7 @@ static char* _bsonfpathrowldr(TCLIST *tokens, const char *rowdata, int rowdatasz
         *vsz = 0;
         return NULL;
     }
-    bson_iterator_from_buffer(&it, bsdata);
+    BSON_ITERATOR_FROM_BUFFER(&it, bsdata);
     bson_find_fieldpath_value2(fpath, fpathsz, &it);
     ret = _bsonitstrval(odata->jcoll->jb, &it, vsz, tokens, (odata->icase ? JBICASE : 0));
     TCFREE(bsdata);
@@ -4830,7 +4830,7 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
         txtflags_t textflags = (iflags & JBIDXISTR) ? JBICASE : 0;
 
         if (obsdata && obsdatasz > 0) {
-            bson_iterator_from_buffer(&oit, obsdata);
+            BSON_ITERATOR_FROM_BUFFER(&oit, obsdata);
             oft = bson_find_fieldpath_value2(mkey + 1, mkeysz - 1, &oit);
             TCLIST *tokens = (oft == BSON_ARRAY || (oft == BSON_STRING && (iflags & JBIDXARR))) ? tclistnew() : NULL;
             ofvalue = BSON_IS_IDXSUPPORTED_TYPE(oft) ? _bsonitstrval(jcoll->jb, &oit, &ofvaluesz, tokens, textflags) : NULL;
