@@ -127,7 +127,6 @@ static EJQ* _qryaddand(EJDB *jb, EJQ *q, const void *andbsdata);
 static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags);
 static void _qrydel(EJQ *q, bool freequery);
 static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *rs, TCMAP *dfields, TCMAP *ifields, bool imode, const void *bsbuf, int bsbufsz);
-static bool _stripbson(EJDB *jb, TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout);
 static bool _exec$do(EJDB *jb, EJQ *q, TCMAP *dfields, const void *bsbuf, bson *bsout);
 static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log);
 EJDB_INLINE void _nufetch(_EJDBNUM *nu, const char *sval, bson_type bt);
@@ -2375,13 +2374,6 @@ static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     return true;
 }
 
-typedef struct {
-    bson *sbson;
-    TCMAP *ifields;
-    int nstack; //nested object stack pos
-    int matched; //number of matched include fields
-} _BSONSTRIPVISITORCTX;
-
 typedef struct { /**> $do action visitor context */
     EJQ *q;
     EJDB *jb;
@@ -2389,122 +2381,6 @@ typedef struct { /**> $do action visitor context */
     bson *sbson;
 } _BSON$DOVISITORCTX;
 
-/* Discard excluded fields from BSON */
-static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipathlen, const char *key, int keylen,
-        const bson_iterator *it, bool after, void *op) {
-    _BSONSTRIPVISITORCTX *ictx = op;
-    assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
-    TCMAP *ifields = ictx->ifields;
-    const void *buf;
-    int bufsz;
-    const char* ifpath;
-    bson_type bt = bson_iterator_type(it);
-
-    buf = after ? NULL : tcmapget(ifields, ipath, ipathlen, &bufsz);
-    if (!buf) {
-        if (bt == BSON_OBJECT || bt == BSON_ARRAY) {
-            if (!after) {
-                tcmapiterinit(ifields); //check prefix
-                while ((ifpath = tcmapiternext2(ifields)) != NULL) {
-                    int i = 0;
-                    for (; i < ipathlen && *(ifpath + i) == *(ipath + i); ++i);
-                    if (i == ipathlen) { //ipath prefixes some exclude object field
-                        ictx->nstack++;
-                        if (bt == BSON_OBJECT) {
-                            bson_append_start_object2(ictx->sbson, key, keylen);
-                        } else if (bt == BSON_ARRAY) {
-                            bson_append_start_array2(ictx->sbson, key, keylen);
-                        }
-                        return (BSON_VCMD_OK);
-                    }
-                }
-                bson_append_field_from_iterator(it, ictx->sbson);
-                return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
-            } else {
-                if (ictx->nstack > 0) {
-                    --ictx->nstack;
-                    if (bt == BSON_OBJECT) {
-                        bson_append_finish_object(ictx->sbson);
-                    } else if (bt == BSON_ARRAY) {
-                        bson_append_finish_array(ictx->sbson);
-                    }
-                }
-                return (BSON_VCMD_OK);
-            }
-        } else {
-            bson_append_field_from_iterator(it, ictx->sbson);
-            return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
-        }
-    }
-    return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
-}
-
-/* Accept only included fields into BSON */
-static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipathlen, const char *key, int keylen,
-        const bson_iterator *it, bool after, void *op) {
-    _BSONSTRIPVISITORCTX *ictx = op;
-    assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
-    bson_visitor_cmd_t rv = BSON_VCMD_OK;
-    TCMAP *ifields = ictx->ifields;
-    const void *buf;
-    const char* ifpath;
-    int bufsz;
-
-    bson_type bt = bson_iterator_type(it);
-    if (ictx->matched == TCMAPRNUM(ifields)) {
-        return BSON_VCMD_TERMINATE;
-    }
-    if (bt != BSON_OBJECT && bt != BSON_ARRAY) {
-        if (after) { //simple primitive case
-            return BSON_VCMD_OK;
-        }
-        buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
-        if (buf) {
-            ictx->matched++;
-            bson_append_field_from_iterator(it, ictx->sbson);
-        }
-        return (BSON_VCMD_SKIP_AFTER);
-    } else { //more complicated case
-        if (!after) {
-            buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
-            if (buf) { //field hitted
-                bson_iterator cit = *it; //copy iterator
-                bson_append_field_from_iterator(&cit, ictx->sbson);
-                ictx->matched++;
-                return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
-            } else { //check prefix
-                tcmapiterinit(ifields);
-                while ((ifpath = tcmapiternext2(ifields)) != NULL) {
-                    int i = 0;
-                    for (; i < ipathlen && *(ifpath + i) == *(ipath + i); ++i);
-                    if (i == ipathlen) { //ipath prefixes some included field
-                        ictx->nstack++;
-                        if (bt == BSON_OBJECT) {
-                            bson_append_start_object2(ictx->sbson, key, keylen);
-                        } else if (bt == BSON_ARRAY) {
-                            bson_append_start_array2(ictx->sbson, key, keylen);
-                        } else {
-                            assert(0);
-                        }
-                        break;
-                    }
-                }
-            }
-        } else { //after
-            if (ictx->nstack > 0) {
-                --ictx->nstack;
-                if (bt == BSON_OBJECT) {
-                    bson_append_finish_object(ictx->sbson);
-                } else if (bt == BSON_ARRAY) {
-                    bson_append_finish_array(ictx->sbson);
-                } else {
-                    assert(0);
-                }
-            }
-        }
-    }
-    return rv;
-}
 
 static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const char *key, int keylen,
         const bson_iterator *it, bool after, void *op) {
@@ -2627,7 +2503,9 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
         if (bsout.finished) {
             bson_init_size(&bsout, bson_size(&bsout));
         }
-        rv = _stripbson(jb, ifields, imode, inbuf, &bsout);
+        if (bson_strip(ifields, imode, inbuf, &bsout) != BSON_OK) {
+            _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
+        }
         if (inbuf != bsbuf && inbuf != bstack) {
             TCFREE(inbuf);
         }
@@ -2657,29 +2535,6 @@ static bool _exec$do(EJDB *jb, EJQ *q, TCMAP *dfields, const void *bsbuf, bson *
     bson_iterator it;
     bson_iterator_from_buffer(&it, bsbuf);
     bson_visit_fields(&it, 0, _bson$dovisitor, &ictx);
-    if (bson_finish(bsout) != BSON_OK) {
-        _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
-        return false;
-    }
-    return true;
-}
-
-/* Pushes bson into rs with only fields matched included/excludes in $fields */
-static bool _stripbson(EJDB *jb, TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout) {
-    if (!ifields || bsout->finished) {
-        return false;
-    }
-    _BSONSTRIPVISITORCTX ictx = {
-        .sbson = bsout,
-        .ifields = ifields,
-        .nstack = 0,
-        .matched = 0
-    };
-    bson_iterator it;
-    bson_iterator_from_buffer(&it, bsbuf);
-    bson_visit_fields(&it, 0, (imode) ? _bsonstripvisitor_include : _bsonstripvisitor_exclude, &ictx);
-    assert(ictx.nstack == 0);
-
     if (bson_finish(bsout) != BSON_OK) {
         _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
         return false;

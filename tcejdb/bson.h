@@ -28,6 +28,7 @@
 #include <stdbool.h>
 #endif
 #include <time.h>
+#include <tcutil.h>
 
 #define BSON_IS_NUM_TYPE(atype) (atype == BSON_INT || atype == BSON_LONG || atype == BSON_DOUBLE)
 
@@ -1114,6 +1115,18 @@ EJDB_EXPORT int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out)
 EJDB_EXPORT int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val);
 EJDB_EXPORT int bson_inplace_set_long(bson_iterator *pos, int64_t val);
 EJDB_EXPORT int bson_inplace_set_double(bson_iterator *pos, double val);
+
+/**
+ * Include or exclude fpaths in the specified BSON and put resulting data into `bsout`.
+ * On completion it finishes `bsout` object.
+ * 
+ * @param ifields Map of fieldpaths. Map values are a simple boolean bufs.
+ * @param imode If true fpaths will be included. Otherwise fpaths will be excluded from bson.
+ * @param bsbuf BSON buffer to process.
+ * @param bsout Allocated output not finished bson* object
+ * @return BSON error code
+ */
+EJDB_EXPORT int bson_strip(TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout);
 
 
 /**

@@ -1649,6 +1649,151 @@ int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out)
     return bson_merge2(bson_data(b1), bson_data(b2), overwrite, out);
 }
 
+
+typedef struct {
+    bson *sbson;
+    TCMAP *ifields;
+    int nstack; //nested object stack pos
+    int matched; //number of matched include fields
+} _BSONSTRIPVISITORCTX;
+
+
+/* Discard excluded fields from BSON */
+static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipathlen, const char *key, int keylen,
+        const bson_iterator *it, bool after, void *op) {
+    _BSONSTRIPVISITORCTX *ictx = op;
+    assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
+    TCMAP *ifields = ictx->ifields;
+    const void *buf;
+    int bufsz;
+    const char* ifpath;
+    bson_type bt = bson_iterator_type(it);
+
+    buf = after ? NULL : tcmapget(ifields, ipath, ipathlen, &bufsz);
+    if (!buf) {
+        if (bt == BSON_OBJECT || bt == BSON_ARRAY) {
+            if (!after) {
+                tcmapiterinit(ifields); //check prefix
+                while ((ifpath = tcmapiternext2(ifields)) != NULL) {
+                    int i = 0;
+                    for (; i < ipathlen && *(ifpath + i) == *(ipath + i); ++i);
+                    if (i == ipathlen) { //ipath prefixes some exclude object field
+                        ictx->nstack++;
+                        if (bt == BSON_OBJECT) {
+                            bson_append_start_object2(ictx->sbson, key, keylen);
+                        } else if (bt == BSON_ARRAY) {
+                            bson_append_start_array2(ictx->sbson, key, keylen);
+                        }
+                        return (BSON_VCMD_OK);
+                    }
+                }
+                bson_append_field_from_iterator(it, ictx->sbson);
+                return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+            } else {
+                if (ictx->nstack > 0) {
+                    --ictx->nstack;
+                    if (bt == BSON_OBJECT) {
+                        bson_append_finish_object(ictx->sbson);
+                    } else if (bt == BSON_ARRAY) {
+                        bson_append_finish_array(ictx->sbson);
+                    }
+                }
+                return (BSON_VCMD_OK);
+            }
+        } else {
+            bson_append_field_from_iterator(it, ictx->sbson);
+            return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+        }
+    }
+    return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+}
+
+/* Accept only included fields into BSON */
+static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipathlen, const char *key, int keylen,
+        const bson_iterator *it, bool after, void *op) {
+    _BSONSTRIPVISITORCTX *ictx = op;
+    assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
+    bson_visitor_cmd_t rv = BSON_VCMD_OK;
+    TCMAP *ifields = ictx->ifields;
+    const void *buf;
+    const char* ifpath;
+    int bufsz;
+
+    bson_type bt = bson_iterator_type(it);
+    if (ictx->matched == TCMAPRNUM(ifields)) {
+        return BSON_VCMD_TERMINATE;
+    }
+    if (bt != BSON_OBJECT && bt != BSON_ARRAY) {
+        if (after) { //simple primitive case
+            return BSON_VCMD_OK;
+        }
+        buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
+        if (buf) {
+            ictx->matched++;
+            bson_append_field_from_iterator(it, ictx->sbson);
+        }
+        return (BSON_VCMD_SKIP_AFTER);
+    } else { //more complicated case
+        if (!after) {
+            buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
+            if (buf) { //field hitted
+                bson_iterator cit = *it; //copy iterator
+                bson_append_field_from_iterator(&cit, ictx->sbson);
+                ictx->matched++;
+                return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
+            } else { //check prefix
+                tcmapiterinit(ifields);
+                while ((ifpath = tcmapiternext2(ifields)) != NULL) {
+                    int i = 0;
+                    for (; i < ipathlen && *(ifpath + i) == *(ipath + i); ++i);
+                    if (i == ipathlen) { //ipath prefixes some included field
+                        ictx->nstack++;
+                        if (bt == BSON_OBJECT) {
+                            bson_append_start_object2(ictx->sbson, key, keylen);
+                        } else if (bt == BSON_ARRAY) {
+                            bson_append_start_array2(ictx->sbson, key, keylen);
+                        } else {
+                            assert(0);
+                        }
+                        break;
+                    }
+                }
+            }
+        } else { //after
+            if (ictx->nstack > 0) {
+                --ictx->nstack;
+                if (bt == BSON_OBJECT) {
+                    bson_append_finish_object(ictx->sbson);
+                } else if (bt == BSON_ARRAY) {
+                    bson_append_finish_array(ictx->sbson);
+                } else {
+                    assert(0);
+                }
+            }
+        }
+    }
+    return rv;
+}
+
+/* Include or exclude fpaths in the specified BSON and put resulting data into `bsout`. */
+int bson_strip(TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout) {
+        if (!ifields || bsout->finished) {
+        return false;
+    }
+    _BSONSTRIPVISITORCTX ictx = {
+        .sbson = bsout,
+        .ifields = ifields,
+        .nstack = 0,
+        .matched = 0
+    };
+    bson_iterator it;
+    bson_iterator_from_buffer(&it, bsbuf);
+    bson_visit_fields(&it, 0, (imode) ? _bsonstripvisitor_include : _bsonstripvisitor_exclude, &ictx);
+    assert(ictx.nstack == 0);
+    return bson_finish(bsout);
+}
+
+
 int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val) {
     assert(pos);
     bson_type bt = bson_iterator_type(pos);
