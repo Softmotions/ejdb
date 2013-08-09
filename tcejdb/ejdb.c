@@ -166,7 +166,7 @@ const char* ejdberrmsg(int ecode) {
         case JBEQERROR: return "invalid query";
         case JBEQUPDFAILED: return "bson record update failed";
         case JBEINVALIDBSONPK: return "invalid bson _id field";
-        case JBEQONEEMATCH: return "only one $elemMatch allowed in the fieldpath"; //todo remove
+        case JBEQONEEMATCH: return "only one $elemMatch allowed in the fieldpath";
         case JBEQINCEXCL: return "$fields hint cannot mix include and exclude fields";
         case JBEQACTKEY: return "action key in $do block can only be one of: $join";
         case JBEMAXNUMCOLS: return "exceeded the maximum number of collections per database: 1024";
@@ -4585,8 +4585,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
 
 /**
  * Convert bson query spec into field path -> EJQF instance.
- *  Created map instance must be freed `tcmapdel`.
- *  Each element of map must be freed by TODO
+ *  Created map instance must be freed by `tcmapdel`.
+ *  Each element of map must be freed by `ejdbquerydel`.
  */
 static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     assert(qspec);
