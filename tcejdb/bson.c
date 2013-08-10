@@ -464,7 +464,8 @@ bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, bson_iterator
         .fplen = fplen,
         .input = it,
         .stopnestedarr = false,
-        .stopos = 0
+        .stopos = 0,
+        .marrind = -1
     };
     return bson_find_fieldpath_value3(&ffctx);
 }

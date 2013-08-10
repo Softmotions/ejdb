@@ -188,6 +188,7 @@ typedef struct { /**< Find field path context */
     bson_iterator *input;
     int stopos;
     bool stopnestedarr;
+    int marrind; /**< Index of first matched array field */
 } FFPCTX;
 
 

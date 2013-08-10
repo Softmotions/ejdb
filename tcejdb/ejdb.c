@@ -2090,7 +2090,9 @@ static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz) {
         .fplen = qf->fpathsz,
         .input = &it,
         .stopnestedarr = true,
-        .stopos = 0
+        .stopos = 0,
+        .marrind = -1
+
     };
     return _qrybsrecurrmatch(qf, &ffpctx, 0);
 }
@@ -2527,8 +2529,10 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
                 EJQF *qf = TCLISTVALPTR(q->qobjlist, i);
                 const char *fpath = tcmapget(q->$ifields, qf->fpath, qf->fpathsz, &sp);
                 if (fpath) {
-                    //todo!!!!!
-                    fprintf(stderr, "\n\nfpath=%s", fpath);
+
+                    //todo...
+                    //static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
+
                 }
             }
         }
@@ -3753,7 +3757,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
                             EJQF *qf = TCLISTVALPTR(qlist, i);
                             int j;
                             for (j = 0; *(key + j) != '\0' && *(key + j) == *(qf->fpath + j); ++j);
-                            if (key + j == pptr || key + j == pptr + 1) { //existing QF matched $(projection) prefix
+                            if (key + j == pptr || key + j == pptr + 1) { //existing QF matched the $(projection) prefix
                                 if (!ejq->$ifields) {
                                     ejq->$ifields = tcmapnew2(TCMAPTINYBNUM);
                                 }
