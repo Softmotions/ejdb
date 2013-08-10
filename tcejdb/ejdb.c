@@ -511,6 +511,10 @@ EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, const void *hintsbsdata) {
         bson_del(q->hints);
         q->hints = NULL;
     }
+    if (q->$ifields) {
+        tcmapdel(q->$ifields);
+        q->$ifields = NULL;
+    }
     q->hints = bs;
     return q;
 }
@@ -1642,6 +1646,10 @@ static void _qrydel(EJQ *q, bool freequery) {
         bson_del(q->hints);
         q->hints = NULL;
     }
+    if (q->$ifields) {
+        tcmapdel(q->$ifields);
+        q->$ifields = NULL;
+    }
     if (q->colbuf) {
         tcxstrdel(q->colbuf);
         q->colbuf = NULL;
@@ -2352,6 +2360,9 @@ static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     }
     if (src->hints) {
         target->hints = bson_dup(src->hints);
+    }
+    if (src->$ifields) {
+        target->$ifields = tcmapdup(src->$ifields);
     }
     if (src->orqlist) {
         target->orqlist = tclistnew2(TCLISTNUM(src->orqlist));
@@ -3703,8 +3714,34 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
                         _ejdbsetecode(jcoll->jb, JBEQINCEXCL, __FILE__, __LINE__, __func__);
                         return false;
                     }
+
                     *imode = inc;
                     const char *key = bson_iterator_key(&sit);
+
+                    char *pptr;
+                    //Checking the $(projection) operator.
+                    if (inc && (pptr = strstr(key, ".$")) && (*(pptr + 2) == '\0' || *(pptr + 2) == '.')) {// '.$' || '.$.'
+                        int dc = 0;
+                        for (int i = 0; *(key + i) != '\0'; ++i) {
+                            if (*(key + i) == '$' && (dc++ > 0)) break;
+                        }
+                        if (dc != 1) { //More than one '$' chars in projection it is invalid
+                            continue;
+                        }
+                        for (int i = 0; i < TCLISTNUM(qlist); ++i) {
+                            EJQF *qf = TCLISTVALPTR(qlist, i);
+                            int j;
+                            for (j = 0; *(key + j) != '\0' && *(key + j) == *(qf->fpath + j); ++j);
+                            if (key + j == pptr || key + j == pptr + 1) { //existing QF matched $(projection) prefix
+                                if (!ejq->$ifields) {
+                                    ejq->$ifields = tcmapnew2(TCMAPTINYBNUM);
+                                }
+                                tcmapput(ejq->$ifields, qf->fpath, qf->fpathsz, key, strlen(key));
+                                break;
+                            }
+                        }
+                        continue; //skip registering this fields in the fmap
+                    }
                     tcmapputkeep(fmap, key, strlen(key), &yes, sizeof (yes));
                 }
                 if (TCMAPRNUM(fmap) == 0) { //if {$fields : {}} we will force {$fields : {_id:1}}

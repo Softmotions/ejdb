@@ -111,6 +111,11 @@ struct EJQ { /**> Query object. */
     TCLIST *orqlist; /**> List of $or joined query objects *EJQ */
     TCLIST *andqlist; /**> List of $and joined query objects *EJQ */
     bson *hints; /**> Hints bson object */
+    /**> Include $(projection) fields char* names.
+     *  Mapping EJQF fpath => $(projection) field name
+     *  http://docs.mongodb.org/manual/reference/projection/positional/#proj._S_
+     */
+    TCMAP *$ifields;
     uint32_t skip; /**> Number of records to skip. */
     uint32_t max; /**> Max number of results */
     uint32_t flags; /**> Control flags */

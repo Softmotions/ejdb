@@ -1,6 +1,7 @@
 /* bson.c */
 
 /*    Copyright 2009, 2010 10gen Inc.
+ *    Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
