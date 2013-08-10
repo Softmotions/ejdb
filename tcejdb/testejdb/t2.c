@@ -4434,7 +4434,7 @@ void testTicket81() {
     CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
     bson_destroy(&b);
 
-    bson_init(&b); //true
+    bson_init(&b); //false
     bson_append_int(&b, "z", 22);
     bson_append_int(&b, "a", 1);
     bson_append_int(&b, "b", 3);
@@ -4503,6 +4503,70 @@ void testTicket81() {
     ejdbquerydel(q1);
     bson_destroy(&b);
     tcxstrdel(log);
+}
+
+//
+// https://github.com/Softmotions/ejdb/issues/15
+// http://docs.mongodb.org/manual/reference/projection/positional/#proj._S_
+
+void test$projection() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "f_projection", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson b;
+    bson_oid_t oid;
+
+    bson_init(&b);
+    bson_append_int(&b, "z", 33);
+    bson_append_start_array(&b, "arr");
+    bson_append_int(&b, "0", 0);
+    bson_append_int(&b, "1", 1);
+    bson_append_int(&b, "2", 2);
+    bson_append_int(&b, "3", 3);
+    bson_append_finish_array(&b);
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+    bson_init(&b);
+    bson_append_int(&b, "z", 33);
+    bson_append_start_array(&b, "arr");
+    bson_append_int(&b, "0", 3);
+    bson_append_int(&b, "1", 2);
+    bson_append_int(&b, "2", 1);
+    bson_append_int(&b, "3", 0);
+    bson_append_finish_array(&b);
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+    bson bshints;
+    bson_init_as_query(&bshints);
+    bson_append_start_object(&bshints, "$fields");
+    bson_append_int(&bshints, "arr.$", 1);
+    bson_append_finish_object(&bshints);
+    bson_finish(&bshints);
+    CU_ASSERT_FALSE_FATAL(bshints.err);
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "z", 33);
+    bson_append_start_object(&bsq1, "arr");
+    bson_append_int(&bsq1, "$gte", 2);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+
+    TCXSTR *log = tcxstrnew();
+    uint32_t count;
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshints);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+
+    tclistdel(q1res);
+    ejdbquerydel(q1);
+    tcxstrdel(log);
+    bson_destroy(&bshints);
+    bson_destroy(&bsq1);
 }
 
 int main() {
@@ -4578,6 +4642,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket88", testTicket88)) ||
             (NULL == CU_add_test(pSuite, "testTicket89", testTicket89)) ||
             (NULL == CU_add_test(pSuite, "testTicket81", testTicket81)) ||
+            (NULL == CU_add_test(pSuite, "test$projection", test$projection)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
             ) {
         CU_cleanup_registry();

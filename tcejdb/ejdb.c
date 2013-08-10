@@ -32,7 +32,10 @@
 
 #define JBISOPEN(JB_jb) ((JB_jb) && (JB_jb)->metadb && (JB_jb)->metadb->open) ? true : false
 
-#define JBISVALCOLNAME(JB_cname) ((JB_cname) && strlen(JB_cname) < JBMAXCOLNAMELEN && !strchr((JB_cname), '.'))
+#define JBISVALCOLNAME(JB_cname) ((JB_cname) && \
+    strlen(JB_cname) < JBMAXCOLNAMELEN && \
+    !strchr((JB_cname), '.') && \
+    !strchr((JB_cname), '$'))
 
 #define JBENSUREOPENLOCK(JB_jb, JB_lock, JB_ret)  \
                             assert(JB_jb); \
@@ -2497,10 +2500,11 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
         bool imode, const void *bsbuf, int bsbufsz) {
     assert(bsbuf && bsbufsz);
     bool rv = true;
-    if (!dfields && !ifields) { //Trivial case: no $do operations or $fields
+    if (!dfields && !ifields && !q->$ifields) { //Trivial case: no $do operations or $fields
         tclistpush(res, bsbuf, bsbufsz);
         return rv;
     }
+    int sp;
     char bstack[JBSBUFFERSZ];
     bson bsout;
     bson_init_on_stack(&bsout, bstack, bsbufsz, JBSBUFFERSZ);
@@ -2509,16 +2513,33 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
         rv = _exec$do(jb, q, dfields, bsbuf, &bsout);
     }
 
-    if (rv && ifields) { //$fields hints
+    if (rv && (ifields || q->$ifields)) { //$fields hints
+        TCMAP *_ifields = ifields;
+        if (!_ifields) {
+            _ifields = tcmapnew2(TCMAPRNUM(q->$ifields));
+        }
         char* inbuf = (bsout.finished) ? bsout.data : (char*) bsbuf;
         if (bsout.finished) {
             bson_init_size(&bsout, bson_size(&bsout));
         }
-        if (bson_strip(ifields, imode, inbuf, &bsout) != BSON_OK) {
+        if (q->$ifields) { //we have positional $(projection)
+            for (int i = 0; i < TCLISTNUM(q->qobjlist); ++i) {
+                EJQF *qf = TCLISTVALPTR(q->qobjlist, i);
+                const char *fpath = tcmapget(q->$ifields, qf->fpath, qf->fpathsz, &sp);
+                if (fpath) {
+                    //todo!!!!!
+                    fprintf(stderr, "\n\nfpath=%s", fpath);
+                }
+            }
+        }
+        if (bson_strip(_ifields, imode, inbuf, &bsout) != BSON_OK) {
             _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
         }
         if (inbuf != bsbuf && inbuf != bstack) {
             TCFREE(inbuf);
+        }
+        if (_ifields != ifields) {
+            tcmapdel(_ifields);
         }
     }
 
