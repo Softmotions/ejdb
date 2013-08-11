@@ -2593,6 +2593,9 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
         if (_ifields != ifields) {
             tcmapdel(_ifields);
         }
+        if (_fkfields) {
+            tcmapdel(_fkfields);
+        }
     }
 
     if (rv) {
