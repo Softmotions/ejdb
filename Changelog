@@ -1,8 +1,10 @@
 libtcejdb (1.1.18) testing; urgency=low
 
- * Added support MongoDB $(projection) operator #15
- * Fixed incorrect behavior of field inclusion in $fields #15
- * Fixed wrong checking of $ in collection names #90
+  * Added support MongoDB $(projection) operator #15
+
+  * Fixed incorrect behavior of field inclusion in $fields #15
+ 
+  * Fixed wrong checking of $ in collection names #90
  
  -- Anton Adamansky <adamansky@gmail.com>  Sun, 11 Aug 2013 23:32:26 +0700
 
