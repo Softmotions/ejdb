@@ -138,6 +138,7 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  bson_malloc@Base 1.1.8
  bson_malloc_func@Base 1.1.8
  bson_merge2@Base 1.1.8
+ bson_merge3@Base 1.1.18
  bson_merge@Base 1.1.8
  bson_merge_array_sets@Base 1.1.8
  bson_numstr@Base 1.1.8
@@ -155,6 +156,8 @@ libtcejdb.so.9 libtcejdb9 #MINVER#
  bson_set_oid_inc@Base 1.1.8
  bson_size2@Base 1.1.8
  bson_size@Base 1.1.8
+ bson_strip2@Base 1.1.18
+ bson_strip@Base 1.1.18
  bson_swap_endian32@Base 1.1.8
  bson_swap_endian64@Base 1.1.8
  bson_visit_fields@Base 1.1.8
