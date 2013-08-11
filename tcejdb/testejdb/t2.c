@@ -4505,7 +4505,7 @@ void testTicket81() {
     tcxstrdel(log);
 }
 
-//
+// $(projection)
 // https://github.com/Softmotions/ejdb/issues/15
 // http://docs.mongodb.org/manual/reference/projection/positional/#proj._S_
 
@@ -4540,6 +4540,22 @@ void test$projection() {
     CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
     bson_destroy(&b);
 
+    bson_init(&b);
+    bson_append_int(&b, "z", 44);
+    bson_append_start_array(&b, "arr");
+    bson_append_start_object(&b, "0");
+    bson_append_int(&b, "h", 1);
+    bson_append_finish_object(&b);
+    bson_append_start_object(&b, "1");
+    bson_append_int(&b, "h", 2);
+    bson_append_finish_object(&b);
+    bson_append_finish_array(&b);
+    bson_finish(&b);
+    //bson_print_raw(bson_data(&b), 0);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+//////// Q1
     bson bshints;
     bson_init_as_query(&bshints);
     bson_append_start_object(&bshints, "$fields");
@@ -4561,7 +4577,71 @@ void test$projection() {
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshints);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 2);
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_TRUE(!bson_compare_long(2, TCLISTVALPTR(q1res, i), "arr.0") || !bson_compare_long(3, TCLISTVALPTR(q1res, i), "arr.0"));
+    }
 
+    tclistdel(q1res);
+    ejdbquerydel(q1);
+    tcxstrdel(log);
+    bson_destroy(&bshints);
+    bson_destroy(&bsq1);
+
+/////// Q2
+    bson_init_as_query(&bshints);
+    bson_append_start_object(&bshints, "$fields");
+    bson_append_int(&bshints, "arr.$.h", 1);
+    bson_append_finish_object(&bshints);
+    bson_finish(&bshints);
+    CU_ASSERT_FALSE_FATAL(bshints.err);
+
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "z", 44);
+    bson_append_int(&bsq1, "arr.h", 2);
+    bson_finish(&bsq1);
+
+    log = tcxstrnew();
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshints);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_long(2, TCLISTVALPTR(q1res, i), "arr.0.h"));
+    }
+    tclistdel(q1res);
+    ejdbquerydel(q1);
+    tcxstrdel(log);
+    bson_destroy(&bshints);
+    bson_destroy(&bsq1);
+
+
+    /////// Q3
+    bson_init_as_query(&bshints);
+    bson_append_start_object(&bshints, "$fields");
+    bson_append_int(&bshints, "arr.$.h", 1);
+    bson_append_finish_object(&bshints);
+    bson_finish(&bshints);
+    CU_ASSERT_FALSE_FATAL(bshints.err);
+
+    //{z: 44, arr: {$elemMatch: {h: 2}} }
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "z", 44);
+    bson_append_start_object(&bsq1, "arr");
+    bson_append_start_object(&bsq1, "$elemMatch");
+    bson_append_int(&bsq1, "h", 2);
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+
+    log = tcxstrnew();
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, &bshints);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_long(2, TCLISTVALPTR(q1res, i), "arr.0.h"));
+    }
     tclistdel(q1res);
     ejdbquerydel(q1);
     tcxstrdel(log);

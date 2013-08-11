@@ -243,7 +243,7 @@ void bson_print_raw(const char *data, int depth) {
     BSON_ITERATOR_FROM_BUFFER(&i, data);
 
     while (bson_iterator_next(&i)) {
-        bson_type t = bson_iterator_type(&i);
+        bson_type t = BSON_ITERATOR_TYPE(&i);
         if (t == 0)
             break;
         key = bson_iterator_key(&i);
@@ -339,12 +339,12 @@ void bson_iterator_from_buffer(bson_iterator *i, const char *buffer) {
 }
 
 bson_type bson_find(bson_iterator *it, const bson *obj, const char *name) {
-    bson_iterator_init(it, (bson *) obj);
+    BSON_ITERATOR_INIT(it, (bson *) obj);
     while (bson_iterator_next(it)) {
         if (strcmp(name, bson_iterator_key(it)) == 0)
             break;
     }
-    return bson_iterator_type(it);
+    return BSON_ITERATOR_TYPE(it);
 }
 
 bson_type bson_find_from_buffer(bson_iterator *it, const char *buffer, const char *name) {
@@ -353,7 +353,7 @@ bson_type bson_find_from_buffer(bson_iterator *it, const char *buffer, const cha
         if (strcmp(name, bson_iterator_key(it)) == 0)
             break;
     }
-    return bson_iterator_type(it);
+    return BSON_ITERATOR_TYPE(it);
 }
 
 static void bson_visit_fields_impl(bson_traverse_flags_t flags, char* pstack, int curr, bson_iterator *it, BSONVISITOR visitor, void *op) {
@@ -465,7 +465,8 @@ bson_type bson_find_fieldpath_value2(const char *fpath, int fplen, bson_iterator
         .input = it,
         .stopnestedarr = false,
         .stopos = 0,
-        .marrind = -1
+        .iamachidx = -1,
+        .iafpathidx = -1
     };
     return bson_find_fieldpath_value3(&ffctx);
 }
@@ -498,7 +499,7 @@ bson_type bson_iterator_next(bson_iterator *i) {
         i->first = 0;
         return (bson_type) (*i->cur);
     }
-    switch (bson_iterator_type(i)) {
+    switch (BSON_ITERATOR_TYPE(i)) {
         case BSON_EOO:
             return BSON_EOO; /* don't advance */
         case BSON_UNDEFINED:
@@ -576,7 +577,7 @@ const char *bson_iterator_key(const bson_iterator *i) {
 const char *bson_iterator_value(const bson_iterator *i) {
     int len = 0;
     const char *t = i->cur + 1;
-    for(; *(t + len) != '\0'; ++len);
+    for (; *(t + len) != '\0'; ++len);
     t += len + 1;
     return t;
 }
@@ -610,7 +611,7 @@ bson_oid_t *bson_iterator_oid(const bson_iterator *i) {
 }
 
 int bson_iterator_int(const bson_iterator *i) {
-    switch (bson_iterator_type(i)) {
+    switch (BSON_ITERATOR_TYPE(i)) {
         case BSON_INT:
             return bson_iterator_int_raw(i);
         case BSON_LONG:
@@ -625,7 +626,7 @@ int bson_iterator_int(const bson_iterator *i) {
 }
 
 double bson_iterator_double(const bson_iterator *i) {
-    switch (bson_iterator_type(i)) {
+    switch (BSON_ITERATOR_TYPE(i)) {
         case BSON_INT:
             return bson_iterator_int_raw(i);
         case BSON_LONG:
@@ -641,7 +642,7 @@ double bson_iterator_double(const bson_iterator *i) {
 }
 
 int64_t bson_iterator_long(const bson_iterator *i) {
-    switch (bson_iterator_type(i)) {
+    switch (BSON_ITERATOR_TYPE(i)) {
         case BSON_INT:
             return bson_iterator_int_raw(i);
         case BSON_LONG:
@@ -657,7 +658,7 @@ int64_t bson_iterator_long(const bson_iterator *i) {
 }
 
 static int64_t bson_iterator_long_ext(const bson_iterator *i) {
-    switch (bson_iterator_type(i)) {
+    switch (BSON_ITERATOR_TYPE(i)) {
         case BSON_INT:
             return bson_iterator_int_raw(i);
         case BSON_LONG:
@@ -693,7 +694,7 @@ int bson_iterator_timestamp_increment(const bson_iterator *i) {
 }
 
 bson_bool_t bson_iterator_bool(const bson_iterator *i) {
-    switch (bson_iterator_type(i)) {
+    switch (BSON_ITERATOR_TYPE(i)) {
         case BSON_BOOL:
             return bson_iterator_bool_raw(i);
         case BSON_INT:
@@ -713,7 +714,7 @@ bson_bool_t bson_iterator_bool(const bson_iterator *i) {
 }
 
 const char *bson_iterator_string(const bson_iterator *i) {
-    switch (bson_iterator_type(i)) {
+    switch (BSON_ITERATOR_TYPE(i)) {
         case BSON_STRING:
         case BSON_SYMBOL:
             return bson_iterator_value(i) + 4;
@@ -727,7 +728,7 @@ int bson_iterator_string_len(const bson_iterator *i) {
 }
 
 const char *bson_iterator_code(const bson_iterator *i) {
-    switch (bson_iterator_type(i)) {
+    switch (BSON_ITERATOR_TYPE(i)) {
         case BSON_STRING:
         case BSON_CODE:
             return bson_iterator_value(i) + 4;
@@ -739,7 +740,7 @@ const char *bson_iterator_code(const bson_iterator *i) {
 }
 
 void bson_iterator_code_scope(const bson_iterator *i, bson *scope) {
-    if (bson_iterator_type(i) == BSON_CODEWSCOPE) {
+    if (BSON_ITERATOR_TYPE(i) == BSON_CODEWSCOPE) {
         int code_len;
         bson_little_endian32(&code_len, bson_iterator_value(i) + 4);
         bson_init_data(scope, (void *) (bson_iterator_value(i) + 8 + code_len));
@@ -1413,7 +1414,7 @@ static void bson_append_fpath_from_iterator(const char *fpath, const bson_iterat
 
 int bson_append_field_from_iterator2(const char *key, const bson_iterator *from, bson *into) {
     assert(key && from && into);
-    bson_type t = bson_iterator_type(from);
+    bson_type t = BSON_ITERATOR_TYPE(from);
     if (t == BSON_EOO || into->finished) {
         return BSON_ERROR;
     }
@@ -1509,7 +1510,7 @@ static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, 
     const void *buf;
     const char *mpath;
     int bufsz;
-    bson_type bt = bson_iterator_type(it);
+    bson_type bt = BSON_ITERATOR_TYPE(it);
     buf = (TCMAPRNUM(ctx->mfields) == 0 || after) ? NULL : tcmapget(ctx->mfields, ipath, ipathlen, &bufsz);
     if (buf) {
         bson_iterator it2;
@@ -1651,14 +1652,13 @@ int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out)
     return bson_merge2(bson_data(b1), bson_data(b2), overwrite, out);
 }
 
-
 typedef struct {
     bson *sbson;
     TCMAP *ifields;
     int nstack; //nested object stack pos
     int matched; //number of matched include fields
+    BSONSTRIPCTX *sctx;
 } _BSONSTRIPVISITORCTX;
-
 
 /* Discard excluded fields from BSON */
 static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipathlen, const char *key, int keylen,
@@ -1669,7 +1669,7 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
     const void *buf;
     int bufsz;
     const char* ifpath;
-    bson_type bt = bson_iterator_type(it);
+    bson_type bt = BSON_ITERATOR_TYPE(it);
 
     buf = after ? NULL : tcmapget(ifields, ipath, ipathlen, &bufsz);
     if (!buf) {
@@ -1714,6 +1714,7 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
 static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipathlen, const char *key, int keylen,
         const bson_iterator *it, bool after, void *op) {
     _BSONSTRIPVISITORCTX *ictx = op;
+    BSONSTRIPCTX *sctx = ictx->sctx;
     assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
     bson_visitor_cmd_t rv = BSON_VCMD_OK;
     TCMAP *ifields = ictx->ifields;
@@ -1721,10 +1722,14 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
     const char* ifpath;
     int bufsz;
 
-    bson_type bt = bson_iterator_type(it);
-    if (ictx->matched == TCMAPRNUM(ifields)) {
-        return BSON_VCMD_TERMINATE;
+    const char *k = key;
+    if (sctx->fkfields) { //find keys to override
+        k = tcmapget(sctx->fkfields, ipath, ipathlen, &bufsz);
     }
+    if (!k) {
+        k = key;
+    }
+    bson_type bt = BSON_ITERATOR_TYPE(it);
     if (bt != BSON_OBJECT && bt != BSON_ARRAY) {
         if (after) { //simple primitive case
             return BSON_VCMD_OK;
@@ -1732,7 +1737,7 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
         buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
         if (buf) {
             ictx->matched++;
-            bson_append_field_from_iterator(it, ictx->sbson);
+            bson_append_field_from_iterator2(k, it, ictx->sbson);
         }
         return (BSON_VCMD_SKIP_AFTER);
     } else { //more complicated case
@@ -1744,6 +1749,7 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
                 ictx->matched++;
                 return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
             } else { //check prefix
+                int onstack = ictx->nstack;
                 tcmapiterinit(ifields);
                 while ((ifpath = tcmapiternext2(ifields)) != NULL) {
                     int i = 0;
@@ -1751,14 +1757,17 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
                     if (i == ipathlen) { //ipath prefixes some included field
                         ictx->nstack++;
                         if (bt == BSON_OBJECT) {
-                            bson_append_start_object2(ictx->sbson, key, keylen);
+                            bson_append_start_object2(ictx->sbson, k, keylen);
                         } else if (bt == BSON_ARRAY) {
-                            bson_append_start_array2(ictx->sbson, key, keylen);
+                            bson_append_start_array2(ictx->sbson, k, keylen);
                         } else {
                             assert(0);
                         }
                         break;
                     }
+                }
+                if (onstack == ictx->nstack) {
+                    return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
                 }
             }
         } else { //after
@@ -1774,31 +1783,47 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
             }
         }
     }
+
+//    if (ictx->matched == TCMAPRNUM(ifields)) {
+//        return BSON_VCMD_TERMINATE;
+//    }
     return rv;
 }
 
-/* Include or exclude fpaths in the specified BSON and put resulting data into `bsout`. */
 int bson_strip(TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout) {
-        if (!ifields || bsout->finished) {
+    BSONSTRIPCTX sctx = {
+        .ifields = ifields,
+        .imode = imode,
+        .bsbuf = bsbuf,
+        .bsout = bsout,
+        .fkfields = NULL
+    };
+    return bson_strip2(&sctx);
+}
+
+/* Include or exclude fpaths in the specified BSON and put resulting data into `bsout`. */
+int bson_strip2(BSONSTRIPCTX *sctx) {
+    assert(sctx && sctx->bsbuf && sctx->bsout);
+    if (!sctx->ifields || sctx->bsout->finished) {
         return false;
     }
     _BSONSTRIPVISITORCTX ictx = {
-        .sbson = bsout,
-        .ifields = ifields,
+        .sbson = sctx->bsout,
+        .ifields = sctx->ifields,
         .nstack = 0,
-        .matched = 0
+        .matched = 0,
+        .sctx = sctx
     };
     bson_iterator it;
-    BSON_ITERATOR_FROM_BUFFER(&it, bsbuf);
-    bson_visit_fields(&it, 0, (imode) ? _bsonstripvisitor_include : _bsonstripvisitor_exclude, &ictx);
+    BSON_ITERATOR_FROM_BUFFER(&it, sctx->bsbuf);
+    bson_visit_fields(&it, 0, (sctx->imode) ? _bsonstripvisitor_include : _bsonstripvisitor_exclude, &ictx);
     assert(ictx.nstack == 0);
-    return bson_finish(bsout);
+    return bson_finish(sctx->bsout);
 }
-
 
 int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val) {
     assert(pos);
-    bson_type bt = bson_iterator_type(pos);
+    bson_type bt = BSON_ITERATOR_TYPE(pos);
     if (bt != BSON_BOOL) {
         return BSON_ERROR;
     }
@@ -1810,7 +1835,7 @@ int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val) {
 
 int bson_inplace_set_long(bson_iterator *pos, int64_t val) {
     assert(pos);
-    bson_type bt = bson_iterator_type(pos);
+    bson_type bt = BSON_ITERATOR_TYPE(pos);
     if (!BSON_IS_NUM_TYPE(bt)) {
         return BSON_ERROR;
     }
@@ -1831,7 +1856,7 @@ int bson_inplace_set_long(bson_iterator *pos, int64_t val) {
 
 int bson_inplace_set_double(bson_iterator *pos, double val) {
     assert(pos);
-    bson_type bt = bson_iterator_type(pos);
+    bson_type bt = BSON_ITERATOR_TYPE(pos);
     if (!BSON_IS_NUM_TYPE(bt)) {
         return BSON_ERROR;
     }
@@ -1871,8 +1896,8 @@ int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, const char *fp
  * @return
  */
 int bson_compare_it_current(const bson_iterator *it1, const bson_iterator *it2) {
-    bson_type t1 = bson_iterator_type(it1);
-    bson_type t2 = bson_iterator_type(it2);
+    bson_type t1 = BSON_ITERATOR_TYPE(it1);
+    bson_type t2 = BSON_ITERATOR_TYPE(it2);
     if (t1 == BSON_BOOL || t1 == BSON_EOO || t1 == BSON_NULL || t1 == BSON_UNDEFINED) {
         int v1 = bson_iterator_bool(it1);
         int v2 = bson_iterator_bool(it2);
@@ -2096,7 +2121,7 @@ static bson_visitor_cmd_t bson_merge_array_sets_pull_tf(const char *fpath, int f
     BSON_MASETS_CTX *ctx = op;
     assert(ctx && ctx->mfields >= 0);
     bson_iterator mit;
-    bson_type bt = bson_iterator_type(it);
+    bson_type bt = BSON_ITERATOR_TYPE(it);
     if (bt != BSON_OBJECT && bt != BSON_ARRAY) { //trivial case
         if (after) {
             return (BSON_VCMD_OK);
@@ -2156,7 +2181,7 @@ static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathl
     BSON_MASETS_CTX *ctx = op;
     assert(ctx && ctx->mfields >= 0);
     bson_iterator mit;
-    bson_type bt = bson_iterator_type(it);
+    bson_type bt = BSON_ITERATOR_TYPE(it);
 
     if (bt != BSON_OBJECT && bt != BSON_ARRAY) { //trivial case
         if (after) {

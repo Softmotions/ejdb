@@ -119,7 +119,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
 static int _ejdbsoncmp(const TCLISTDATUM *d1, const TCLISTDATUM *d2, void *opaque);
 static bool _qrycondcheckstrand(const char *vbuf, const TCLIST *tokens);
 static bool _qrycondcheckstror(const char *vbuf, const TCLIST *tokens);
-static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays);
+static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays, int *arridx);
 static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz);
 static bool _qry_$and_$or_match(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz);
 static bool _qryormatch2(EJCOLL *jcoll, EJQ *ejq, const void *bsbuf, int bsbufsz);
@@ -863,7 +863,7 @@ bson* ejdbcommand(EJDB *jb, bson *cmd) {
     bson_init(ret);
     bson_type bt;
     bson_iterator it;
-    bson_iterator_init(&it, cmd);
+    BSON_ITERATOR_INIT(&it, cmd);
 
     while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
         const char *key = bson_iterator_key(&it);
@@ -1244,7 +1244,7 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
     }
     if (!coll) {
         //Build collection options
-        bson_iterator_init(&mbsonit, mbson);
+        BSON_ITERATOR_INIT(&mbsonit, mbson);
         EJCOLLOPTS cops = {0};
         if (bson_find_fieldpath_value("opts", &mbsonit) == BSON_OBJECT) {
             bson_iterator sit;
@@ -1273,7 +1273,7 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
     }
 
     //Register collection indexes
-    bson_iterator_init(&mbsonit, mbson);
+    BSON_ITERATOR_INIT(&mbsonit, mbson);
     while ((bt = bson_iterator_next(&mbsonit)) != BSON_EOO) {
         const char *key = bson_iterator_key(&mbsonit);
         if (bt != BSON_OBJECT || strlen(key) < 2 || key[0] != 'i') {
@@ -1670,12 +1670,12 @@ static void _qrydel(EJQ *q, bool freequery) {
     }
 }
 
-static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays) {
+static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays, int *arridx) {
     if (qf->tcop == TDBQTRUE) {
         return (true == !qf->negate);
     }
     bool rv = false;
-    bson_type bt = bson_iterator_type(it);
+    bson_type bt = BSON_ITERATOR_TYPE(it);
     const char *expr = qf->expr;
     int exprsz = qf->exprsz;
     char sbuf[JBSTRINOPBUFFERSZ]; //buffer for icase comparisons
@@ -1701,10 +1701,15 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
     if (bt == BSON_ARRAY && expandarrays) { //Iterate over array
         bson_iterator sit;
         BSON_ITERATOR_SUBITERATOR(it, &sit);
+        int c = 0;
         while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
-            if (_qrybsvalmatch(qf, &sit, false)) {
+            if (_qrybsvalmatch(qf, &sit, false, arridx)) {
+                if (arridx) {
+                    *arridx = c;
+                }
                 return true;
             }
+            ++c;
         }
         return (false == !qf->negate);
     }
@@ -1978,7 +1983,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays)
             TCLIST *tokens = qf->exprlist;
             assert(tokens);
             assert(TCLISTNUM(tokens) == 2);
-            if (bson_iterator_type(it) == BSON_DOUBLE) {
+            if (BSON_ITERATOR_TYPE(it) == BSON_DOUBLE) {
                 double v1 = tcatof(tclistval2(tokens, 0));
                 double v2 = tcatof(tclistval2(tokens, 1));
                 double val = bson_iterator_double(it);
@@ -2033,6 +2038,7 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
         currpos += ffpctx->stopos; //adjust cumulative field position
         bson_iterator sit;
         BSON_ITERATOR_SUBITERATOR(ffpctx->input, &sit);
+        int c = 0;
         while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
             if (bt == BSON_OBJECT || bt == BSON_ARRAY) {
                 bson_iterator sit2;
@@ -2064,8 +2070,12 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
                             }
                         }
                     }
+                    if (ret && currpos - 1 == ffpctx->iafpathidx) {
+                        ffpctx->iamachidx = c;
+                    }
                     return ret;
                 }
+                ++c;
             }
         }
         return false;
@@ -2075,7 +2085,12 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
         } else if (qf->tcop == TDBQCEXIST) {
             return !qf->negate;
         }
-        return _qrybsvalmatch(qf, ffpctx->input, true);
+        int iamachidx = -1;
+        bool ret = _qrybsvalmatch(qf, ffpctx->input, true, &iamachidx);
+        if (ret && currpos == 0 && bt == BSON_ARRAY && ffpctx->fplen == ffpctx->iafpathidx) { //save $(projection)
+            ffpctx->iamachidx = iamachidx;
+        }
+        return ret;
     }
 }
 
@@ -2091,15 +2106,15 @@ static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz) {
         .input = &it,
         .stopnestedarr = true,
         .stopos = 0,
-        .marrind = -1
-
+        .iamachidx = -1,
+        .iafpathidx = -1
     };
     return _qrybsrecurrmatch(qf, &ffpctx, 0);
 }
 
 static bool _qry_$and_$or_match(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int pkbufsz) {
     bool isor = (ejq->orqlist && TCLISTNUM(ejq->orqlist) > 0);
-    bool isand  = (ejq->andqlist && TCLISTNUM(ejq->andqlist) > 0);
+    bool isand = (ejq->andqlist && TCLISTNUM(ejq->andqlist) > 0);
     if (!isor && !isand) {
         return true;
     }
@@ -2397,7 +2412,6 @@ typedef struct { /**> $do action visitor context */
     bson *sbson;
 } _BSON$DOVISITORCTX;
 
-
 static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const char *key, int keylen,
         const bson_iterator *it, bool after, void *op) {
 
@@ -2405,7 +2419,7 @@ static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const
     _BSON$DOVISITORCTX *ictx = op;
     EJCOLL *jcoll;
     TCMAP *dfields = ictx->dfields;
-    bson_type lbt = bson_iterator_type(it), bt;
+    bson_type lbt = BSON_ITERATOR_TYPE(it), bt;
     bson_iterator doit, bufit, sit;
     int sp;
     const char *sval;
@@ -2434,7 +2448,7 @@ static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const
                 break;
             }
             assert(dofield->updateobj && (dofield->flags & EJCONDOIT));
-            bson_iterator_init(&doit, dofield->updateobj);
+            BSON_ITERATOR_INIT(&doit, dofield->updateobj);
             while ((bt = bson_iterator_next(&doit)) != BSON_EOO) {
                 if (bt != BSON_STRING || strcmp("$join", bson_iterator_key(&doit))) continue;
                 jcoll = _getcoll(ictx->jb, bson_iterator_string(&doit));
@@ -2517,26 +2531,60 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
 
     if (rv && (ifields || q->$ifields)) { //$fields hints
         TCMAP *_ifields = ifields;
-        if (!_ifields) {
-            _ifields = tcmapnew2(TCMAPRNUM(q->$ifields));
-        }
+        TCMAP *_fkfields = NULL; //Fields with overriden keys
         char* inbuf = (bsout.finished) ? bsout.data : (char*) bsbuf;
         if (bsout.finished) {
             bson_init_size(&bsout, bson_size(&bsout));
         }
         if (q->$ifields) { //we have positional $(projection)
+            assert(imode == true);  //ensure we are in include mode
+            if (!_ifields) {
+                _ifields = tcmapnew2(TCMAPRNUM(q->$ifields));
+            } else {
+                _ifields = tcmapdup(ifields);
+            }
+            _fkfields = tcmapnew2(TCMAPTINYBNUM);
             for (int i = 0; i < TCLISTNUM(q->qobjlist); ++i) {
                 EJQF *qf = TCLISTVALPTR(q->qobjlist, i);
-                const char *fpath = tcmapget(q->$ifields, qf->fpath, qf->fpathsz, &sp);
-                if (fpath) {
-
-                    //todo...
-                    //static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
-
+                const char *dfpath = tcmapget(q->$ifields, qf->fpath, qf->fpathsz, &sp);
+                if (dfpath) {
+                    TCXSTR *ifield = tcxstrnew3(sp + 10);
+                    bson_iterator it;
+                    BSON_ITERATOR_FROM_BUFFER(&it, inbuf);
+                    FFPCTX ctx = {
+                        .fpath = qf->fpath,
+                        .fplen = qf->fpathsz,
+                        .input = &it,
+                        .stopnestedarr = true,
+                        .stopos = 0,
+                        .iamachidx = -1
+                    };
+                    const char *dpos = strchr(dfpath, '$');
+                    assert(dpos);
+                    ctx.iafpathidx = (dpos - dfpath) - 1;
+                    if (!_qrybsrecurrmatch(qf, &ctx, 0)) {
+                        assert(false); //something wrong, it should never be happen
+                    } else if (ctx.iamachidx >= 0) {
+                        tcxstrcat(ifield, dfpath, (dpos - dfpath));
+                        tcxstrprintf(ifield, "%d", ctx.iamachidx);
+                        tcmapput(_fkfields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), "0", strlen("0"));
+                        tcxstrcat(ifield, dpos + 1, sp - (dpos - dfpath) - 1);
+                        tcmapput(_ifields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), &yes, sizeof(yes));
+                    } else {
+                        assert(false); //something wrong, it should never be happen
+                    }
+                    tcxstrdel(ifield);
                 }
             }
         }
-        if (bson_strip(_ifields, imode, inbuf, &bsout) != BSON_OK) {
+        BSONSTRIPCTX sctx = {
+            .ifields = _ifields,
+            .fkfields = _fkfields,
+            .imode = imode,
+            .bsbuf = inbuf,
+            .bsout = &bsout
+        };
+        if (bson_strip2(&sctx) != BSON_OK) {
             _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
         }
         if (inbuf != bsbuf && inbuf != bstack) {
@@ -2673,12 +2721,12 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
         if (!bsout.data) {
             bson_create_from_buffer2(&bsout, bsbuf, bsbufsz);
         }
-        bson_iterator_init(&it, incqf->updateobj);
+        BSON_ITERATOR_INIT(&it, incqf->updateobj);
         while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
             if (!BSON_IS_NUM_TYPE(bt)) {
                 continue;
             }
-            bson_iterator_init(&it2, &bsout);
+            BSON_ITERATOR_INIT(&it2, &bsout);
             bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
             if (!BSON_IS_NUM_TYPE(bt2)) {
                 continue;
@@ -4231,7 +4279,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             qf.ftype = ftype;
         } else {
             if (!strcmp("$or", fkey) || //Both levels operators.
-                !strcmp("$and", fkey)) {
+                    !strcmp("$and", fkey)) {
                 //nop
             } else if (!strcmp("$set", fkey) ||
                     !strcmp("$inc", fkey) ||
@@ -4655,7 +4703,7 @@ static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     int rv = 0;
     TCLIST *res = tclistnew2(TCLISTINYNUM);
     bson_iterator it;
-    bson_iterator_init(&it, qspec);
+    BSON_ITERATOR_INIT(&it, qspec);
     TCLIST *pathStack = tclistnew2(TCLISTINYNUM);
     rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL, 0);
     if (rv) {
@@ -4707,7 +4755,7 @@ static bson_type _bsonoidkey(bson *bs, bson_oid_t *oid) {
 static char* _bsonitstrval(EJDB *jb, bson_iterator *it, int *vsz, TCLIST *tokens, txtflags_t tflags) {
     int retlen = 0;
     char *ret = NULL;
-    bson_type btype = bson_iterator_type(it);
+    bson_type btype = BSON_ITERATOR_TYPE(it);
     if (btype == BSON_STRING) {
         if (tokens) { //split string into tokens and push it into 'tokens' list
             const unsigned char *sp = (unsigned char *) bson_iterator_string(it);
@@ -4903,7 +4951,7 @@ static bool _updatebsonidx(EJCOLL *jcoll, const bson_oid_t *oid, const bson *bs,
             }
         }
         if (bs) {
-            bson_iterator_init(&fit, bs);
+            BSON_ITERATOR_INIT(&fit, bs);
             ft = bson_find_fieldpath_value2(mkey + 1, mkeysz - 1, &fit);
             TCLIST *tokens = (ft == BSON_ARRAY || (ft == BSON_STRING && (iflags & JBIDXARR))) ? tclistnew() : NULL;
             fvalue = BSON_IS_IDXSUPPORTED_TYPE(ft) ? _bsonitstrval(jcoll->jb, &fit, &fvaluesz, tokens, textflags) : NULL;
