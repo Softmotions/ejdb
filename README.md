@@ -12,7 +12,8 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
-* `2013-08-08` **[Now supported $and & $or mongodb operators] (https://github.com/Softmotions/ejdb/issues/81)**
+* `2013-08-11` **[v1.1.18 Added support for mongodb $ projection] (https://github.com/Softmotions/ejdb/wiki/V1.1.18)**
+* `2013-08-08` **[v1.1.17 Now supported $and & $or mongodb operators] (https://github.com/Softmotions/ejdb/issues/81)**
 * `2013-07-15` **[Google Go binding] (https://github.com/mkilling/goejdb)**
 * `2013-06-23` **[C# .Net binding] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
 * `2013-06-02` **[Adobe Air Native Extension (ANE) for EJDB (Thanks to @thejustinwalsh)] (https://github.com/thejustinwalsh/airejdb)**
