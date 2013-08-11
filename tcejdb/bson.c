@@ -1653,8 +1653,6 @@ int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out)
 }
 
 typedef struct {
-    bson *sbson;
-    TCMAP *ifields;
     int nstack; //nested object stack pos
     int matched; //number of matched include fields
     BSONSTRIPCTX *sctx;
@@ -1664,8 +1662,10 @@ typedef struct {
 static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipathlen, const char *key, int keylen,
         const bson_iterator *it, bool after, void *op) {
     _BSONSTRIPVISITORCTX *ictx = op;
-    assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
-    TCMAP *ifields = ictx->ifields;
+    assert(ictx);
+    BSONSTRIPCTX *sctx = ictx->sctx;
+    assert(sctx && sctx->bsout && sctx->ifields && ipath && key && it && op);
+    TCMAP *ifields = sctx->ifields;
     const void *buf;
     int bufsz;
     const char* ifpath;
@@ -1682,28 +1682,28 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
                     if (i == ipathlen) { //ipath prefixes some exclude object field
                         ictx->nstack++;
                         if (bt == BSON_OBJECT) {
-                            bson_append_start_object2(ictx->sbson, key, keylen);
+                            bson_append_start_object2(sctx->bsout, key, keylen);
                         } else if (bt == BSON_ARRAY) {
-                            bson_append_start_array2(ictx->sbson, key, keylen);
+                            bson_append_start_array2(sctx->bsout, key, keylen);
                         }
                         return (BSON_VCMD_OK);
                     }
                 }
-                bson_append_field_from_iterator(it, ictx->sbson);
+                bson_append_field_from_iterator(it, sctx->bsout);
                 return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
             } else {
                 if (ictx->nstack > 0) {
                     --ictx->nstack;
                     if (bt == BSON_OBJECT) {
-                        bson_append_finish_object(ictx->sbson);
+                        bson_append_finish_object(sctx->bsout);
                     } else if (bt == BSON_ARRAY) {
-                        bson_append_finish_array(ictx->sbson);
+                        bson_append_finish_array(sctx->bsout);
                     }
                 }
                 return (BSON_VCMD_OK);
             }
         } else {
-            bson_append_field_from_iterator(it, ictx->sbson);
+            bson_append_field_from_iterator(it, sctx->bsout);
             return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
         }
     }
@@ -1714,10 +1714,11 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
 static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipathlen, const char *key, int keylen,
         const bson_iterator *it, bool after, void *op) {
     _BSONSTRIPVISITORCTX *ictx = op;
+    assert(ictx);
     BSONSTRIPCTX *sctx = ictx->sctx;
-    assert(ictx && ictx->sbson && ictx->ifields && ipath && key && it && op);
+    assert(sctx && sctx->bsout && sctx->ifields && ipath && key && it && op);
     bson_visitor_cmd_t rv = BSON_VCMD_OK;
-    TCMAP *ifields = ictx->ifields;
+    TCMAP *ifields = sctx->ifields;
     const void *buf;
     const char* ifpath;
     int bufsz;
@@ -1737,7 +1738,7 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
         buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
         if (buf) {
             ictx->matched++;
-            bson_append_field_from_iterator2(k, it, ictx->sbson);
+            bson_append_field_from_iterator2(k, it, sctx->bsout);
         }
         return (BSON_VCMD_SKIP_AFTER);
     } else { //more complicated case
@@ -1745,7 +1746,7 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
             buf = tcmapget(ifields, ipath, ipathlen, &bufsz);
             if (buf) { //field hitted
                 bson_iterator cit = *it; //copy iterator
-                bson_append_field_from_iterator(&cit, ictx->sbson);
+                bson_append_field_from_iterator(&cit, sctx->bsout);
                 ictx->matched++;
                 return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
             } else { //check prefix
@@ -1757,9 +1758,9 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
                     if (i == ipathlen) { //ipath prefixes some included field
                         ictx->nstack++;
                         if (bt == BSON_OBJECT) {
-                            bson_append_start_object2(ictx->sbson, k, keylen);
+                            bson_append_start_object2(sctx->bsout, k, keylen);
                         } else if (bt == BSON_ARRAY) {
-                            bson_append_start_array2(ictx->sbson, k, keylen);
+                            bson_append_start_array2(sctx->bsout, k, keylen);
                         } else {
                             assert(0);
                         }
@@ -1774,9 +1775,9 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
             if (ictx->nstack > 0) {
                 --ictx->nstack;
                 if (bt == BSON_OBJECT) {
-                    bson_append_finish_object(ictx->sbson);
+                    bson_append_finish_object(sctx->bsout);
                 } else if (bt == BSON_ARRAY) {
-                    bson_append_finish_array(ictx->sbson);
+                    bson_append_finish_array(sctx->bsout);
                 } else {
                     assert(0);
                 }
@@ -1808,8 +1809,6 @@ int bson_strip2(BSONSTRIPCTX *sctx) {
         return false;
     }
     _BSONSTRIPVISITORCTX ictx = {
-        .sbson = sctx->bsout,
-        .ifields = sctx->ifields,
         .nstack = 0,
         .matched = 0,
         .sctx = sctx
