@@ -299,6 +299,8 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *          -   {..., $or  : [subq1, subq2, ...] }
  *          Example: {z : 33, $and : [ {$or : [{a : 1}, {b : 2}]}, {$or : [{c : 5}, {d : 7}]} ] }
  *
+ *      - Mongodb $(projection) operator supported. (http://docs.mongodb.org/manual/reference/projection/positional/#proj._S_)
+ *
  *  - Queries can be used to update records:
  *
  *      $set Field set operation.
