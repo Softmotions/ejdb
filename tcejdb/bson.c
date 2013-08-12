@@ -415,8 +415,8 @@ static bson_type bson_find_fieldpath_value_impl(char* pstack, int curr, FFPCTX *
             continue;
         }
         //PUSH
-        if (curr > 0) { //add leading dot
-            memset(pstack + curr, '.', 1);
+        if (curr > 0) { //add leading dot            
+            *(pstack + curr) = '.';
             curr++;
         }
         memcpy(pstack + curr, key, klen);
