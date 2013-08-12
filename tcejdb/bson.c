@@ -1785,9 +1785,9 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
         }
     }
 
-//    if (ictx->matched == TCMAPRNUM(ifields)) {
-//        return BSON_VCMD_TERMINATE;
-//    }
+    if (ictx->matched == TCMAPRNUM(ifields)) {
+        return BSON_VCMD_TERMINATE;
+    }
     return rv;
 }
 
