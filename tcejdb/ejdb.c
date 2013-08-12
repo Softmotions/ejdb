@@ -866,7 +866,7 @@ bson* ejdbcommand(EJDB *jb, bson *cmd) {
     BSON_ITERATOR_INIT(&it, cmd);
 
     while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
-        const char *key = bson_iterator_key(&it);
+        const char *key = BSON_ITERATOR_KEY(&it);
         if (!strcmp("export", key) || !strcmp("import", key)) {
             xlog = tcxstrnew();
             char *path = NULL;
@@ -1250,7 +1250,7 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
             bson_iterator sit;
             BSON_ITERATOR_SUBITERATOR(&mbsonit, &sit);
             while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
-                const char *key = bson_iterator_key(&sit);
+                const char *key = BSON_ITERATOR_KEY(&sit);
                 if (strcmp("compressed", key) == 0 && bt == BSON_BOOL) {
                     cops.compressed = bson_iterator_bool(&sit);
                 } else if (strcmp("large", key) == 0 && bt == BSON_BOOL) {
@@ -1275,7 +1275,7 @@ static bool _importcoll(EJDB *jb, const char *bspath, TCLIST *cnames, int flags,
     //Register collection indexes
     BSON_ITERATOR_INIT(&mbsonit, mbson);
     while ((bt = bson_iterator_next(&mbsonit)) != BSON_EOO) {
-        const char *key = bson_iterator_key(&mbsonit);
+        const char *key = BSON_ITERATOR_KEY(&mbsonit);
         if (bt != BSON_OBJECT || strlen(key) < 2 || key[0] != 'i') {
             continue;
         }
@@ -2450,7 +2450,7 @@ static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const
             assert(dofield->updateobj && (dofield->flags & EJCONDOIT));
             BSON_ITERATOR_INIT(&doit, dofield->updateobj);
             while ((bt = bson_iterator_next(&doit)) != BSON_EOO) {
-                if (bt != BSON_STRING || strcmp("$join", bson_iterator_key(&doit))) continue;
+                if (bt != BSON_STRING || strcmp("$join", BSON_ITERATOR_KEY(&doit))) continue;
                 jcoll = _getcoll(ictx->jb, bson_iterator_string(&doit));
                 if (!jcoll) break;
                 bson_oid_t loid;
@@ -2470,12 +2470,12 @@ static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const
                         break;
                     }
                     BSON_ITERATOR_FROM_BUFFER(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
-                    bson_append_object_from_iterator(bson_iterator_key(it), &bufit, ictx->sbson);
+                    bson_append_object_from_iterator(BSON_ITERATOR_KEY(it), &bufit, ictx->sbson);
                     break;
                 }
                 if (lbt == BSON_ARRAY) {
                     BSON_ITERATOR_SUBITERATOR(it, &sit);
-                    bson_append_start_array(ictx->sbson, bson_iterator_key(it));
+                    bson_append_start_array(ictx->sbson, BSON_ITERATOR_KEY(it));
                     while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
                         if (bt != BSON_STRING && bt != BSON_OID) {
                             bson_append_field_from_iterator(&sit, ictx->sbson);
@@ -2497,7 +2497,7 @@ static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const
                             continue;
                         }
                         BSON_ITERATOR_FROM_BUFFER(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
-                        bson_append_object_from_iterator(bson_iterator_key(&sit), &bufit, ictx->sbson);
+                        bson_append_object_from_iterator(BSON_ITERATOR_KEY(&sit), &bufit, ictx->sbson);
                     }
                     bson_append_finish_array(ictx->sbson);
                     rv = (BSON_VCMD_SKIP_AFTER | BSON_VCMD_SKIP_NESTED);
@@ -2730,7 +2730,7 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
                 continue;
             }
             BSON_ITERATOR_INIT(&it2, &bsout);
-            bt2 = bson_find_fieldpath_value(bson_iterator_key(&it), &it2);
+            bt2 = bson_find_fieldpath_value(BSON_ITERATOR_KEY(&it), &it2);
             if (!BSON_IS_NUM_TYPE(bt2)) {
                 continue;
             }
@@ -3729,7 +3729,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
                 if (!BSON_IS_NUM_TYPE(bt)) {
                     continue;
                 }
-                const char *ofield = bson_iterator_key(&sit);
+                const char *ofield = BSON_ITERATOR_KEY(&sit);
                 int odir = bson_iterator_int(&sit);
                 odir = (odir > 0) ? 1 : (odir < 0 ? -1 : 0);
                 if (!odir) {
@@ -3790,10 +3790,8 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
                         _ejdbsetecode(jcoll->jb, JBEQINCEXCL, __FILE__, __LINE__, __func__);
                         return false;
                     }
-
                     *imode = inc;
-                    const char *key = bson_iterator_key(&sit);
-
+                    const char *key = BSON_ITERATOR_KEY(&sit);
                     char *pptr;
                     //Checking the $(projection) operator.
                     if (inc && (pptr = strstr(key, ".$")) && (*(pptr + 2) == '\0' || *(pptr + 2) == '.')) {// '.$' || '.$.'
@@ -4265,7 +4263,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
     bson_type ftype, bt;
 
     while ((ftype = bson_iterator_next(it)) != BSON_EOO) {
-        const char *fkey = bson_iterator_key(it);
+        const char *fkey = BSON_ITERATOR_KEY(it);
         bool isckey = (*fkey == '$'); //Key is a control key: $in, $nin, $not, $all, ...
         EJQF qf;
         memset(&qf, 0, sizeof (qf));
@@ -4493,7 +4491,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         BSON_ITERATOR_SUBITERATOR(it, &sit);
                         int ac = 0;
                         while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
-                            const char *akey = bson_iterator_key(&sit);
+                            const char *akey = BSON_ITERATOR_KEY(&sit);
                             if (!strcmp("$join", akey)) {
                                 bson_append_field_from_iterator(&sit, qf.updateobj);
                                 ++ac;

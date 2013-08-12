@@ -138,6 +138,9 @@ EJDB_EXPORT const char* bson_first_errormsg(bson *bson);
 #define BSON_ITERATOR_TYPE(_bs_I) \
     ((bson_type) (_bs_I)->cur[0])
 
+#define BSON_ITERATOR_KEY(_bs_I) \
+    ((_bs_I)->cur + 1)
+
 #define BSON_ITERATOR_INIT(_bs_I, _bs) \
     (_bs_I)->cur = (_bs)->data + 4; \
     (_bs_I)->first = 1;
