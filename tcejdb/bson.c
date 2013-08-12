@@ -1806,7 +1806,7 @@ int bson_strip(TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout) {
 int bson_strip2(BSONSTRIPCTX *sctx) {
     assert(sctx && sctx->bsbuf && sctx->bsout);
     if (!sctx->ifields || sctx->bsout->finished) {
-        return false;
+        return BSON_ERROR;
     }
     _BSONSTRIPVISITORCTX ictx = {
         .nstack = 0,
