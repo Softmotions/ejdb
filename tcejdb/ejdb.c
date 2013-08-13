@@ -2360,6 +2360,9 @@ static void _qryfieldup(const EJQF *src, EJQF *target, uint32_t qflags) {
     if (src->updateobj) {
         target->updateobj = bson_dup(src->updateobj);
     }
+    if (src->$ufields) {
+        target->$ufields = tcmapdup(src->$ufields);
+    }
 }
 
 /* Clone query object */
@@ -2537,7 +2540,7 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
             bson_init_size(&bsout, bson_size(&bsout));
         }
         if (q->$ifields) { //we have positional $(projection)
-            assert(imode == true);  //ensure we are in include mode
+            assert(imode == true); //ensure we are in include mode
             if (!_ifields) {
                 _ifields = tcmapnew2(TCMAPRNUM(q->$ifields));
             } else {
@@ -2569,7 +2572,7 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
                         tcxstrprintf(ifield, "%d", ctx.iamachidx);
                         tcmapput(_fkfields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), "0", strlen("0"));
                         tcxstrcat(ifield, dpos + 1, sp - (dpos - dfpath) - 1);
-                        tcmapput(_ifields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), &yes, sizeof(yes));
+                        tcmapput(_ifields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), &yes, sizeof (yes));
                     } else {
                         assert(false); //something wrong, it should never be happen
                     }
@@ -2684,6 +2687,9 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
         if (qf->updateobj == NULL) {
             continue;
         }
+
+        //todo #91
+
         if (qf->flags & EJCONDSET) { //$set
             setqf = qf;
             continue;
@@ -3825,7 +3831,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
                 *ifields = fmap;
             }
         }
-    }
+    } //eof hints
 
     const int scoreexact = 100;
     const int scoregtlt = 50;
@@ -4124,6 +4130,9 @@ static void _delqfdata(const EJQ *q, const EJQF *qf) {
     }
     if (qf->updateobj) {
         bson_del(qf->updateobj);
+    }
+    if (qf->$ufields) {
+        tcmapdel(qf->$ufields);
     }
     if (qf->regex && !(EJQINTERNAL & q->flags)) {
         //We do not clear regex_t data because it not deep copy in internal queries
@@ -4454,6 +4463,13 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                             if ((qf.flags & EJCONDALL) && sbt != BSON_ARRAY) {
                                 //$addToSetAll & $pullAll accepts arrays only as argument
                                 continue;
+                            }
+                            if (qf.flags & (EJCONDSET | EJCONDINC)) { //Checking the $(query) positional operator.
+                                const char* key = BSON_ITERATOR_KEY(&sit);
+                                char *pptr;
+                                if ((pptr = strstr(key, ".$")) && pptr && (*(pptr + 2) == '\0' || *(pptr + 2) == '.')) {// '.$' || '.$.'
+                                    //todo #91!!!
+                                }
                             }
                             bson_append_field_from_iterator(&sit, qf.updateobj);
                         }

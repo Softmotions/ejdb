@@ -96,6 +96,7 @@ struct EJQF { /**> Matching field and status */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
     bson *updateobj; /**> Update bson object for $set and $inc operations */
+    TCMAP *$ufields; /**> Update $(query) prositional fields */
     TCLIST *exprlist; /**> List representation of expression */
     TCMAP *exprmap; /**> Hash map for expression tokens used in $in matching operation. */
     void *regex; /**> Regular expression object */
