@@ -40,7 +40,7 @@ typedef struct { /**< EJDB collection tuning options. */
     bool large; /**< Large collection. It can be larger than 2GB. Default false */
     bool compressed; /**< Collection records will be compressed with DEFLATE compression. Default: false */
     int64_t records; /**< Expected records number in the collection. Default: 128K */
-    int cachedrecords; /**< Maximum number of cached records. Default: 0 */
+    int cachedrecords; /**< Maximum number of records cached in memory. Default: 0 */
 } EJCOLLOPTS;
 
 

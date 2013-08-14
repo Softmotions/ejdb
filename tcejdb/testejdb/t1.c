@@ -160,8 +160,8 @@ void testBuildQuery1() {
     bson_destroy(&q1family_child);
     bson_destroy(&q1family_child_age_IN);
 
-    CU_ASSERT_PTR_NOT_NULL_FATAL(ejq->qobjlist);
-    TCLIST *qmap = ejq->qobjlist;
+    CU_ASSERT_PTR_NOT_NULL_FATAL(ejq->qflist);
+    TCLIST *qmap = ejq->qflist;
     CU_ASSERT_EQUAL(qmap->num, 7);
 
     for (int i = 0; i < TCLISTNUM(qmap); ++i) {

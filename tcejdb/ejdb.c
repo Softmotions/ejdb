@@ -430,8 +430,8 @@ EJQ* ejdbcreatequery(EJDB *jb, bson *qobj, bson *orqobjs, int orqobjsnum, bson *
     EJQ *q;
     TCCALLOC(q, 1, sizeof (*q));
     if (qobj) {
-        q->qobjlist = _parseqobj(jb, q, qobj);
-        if (!q->qobjlist) {
+        q->qflist = _parseqobj(jb, q, qobj);
+        if (!q->qflist) {
             goto error;
         }
     }
@@ -468,8 +468,8 @@ EJQ* ejdbcreatequery2(EJDB *jb, const void *qbsdata) {
     }
     EJQ *q;
     TCCALLOC(q, 1, sizeof (*q));
-    q->qobjlist = _parseqobj2(jb, q, qbsdata);
-    if (!q->qobjlist) {
+    q->qflist = _parseqobj2(jb, q, qbsdata);
+    if (!q->qflist) {
         goto error;
     }
     return q;
@@ -544,7 +544,7 @@ uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bs
 }
 
 EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log) {
-    assert(jcoll && q && q->qobjlist);
+    assert(jcoll && q && q->qflist);
     if (!JBISOPEN(jcoll->jb)) {
         _ejdbsetecode(jcoll->jb, TCEINVALID, __FILE__, __LINE__, __func__);
         return NULL;
@@ -1617,14 +1617,14 @@ static void _qrydel(EJQ *q, bool freequery) {
         return;
     }
     const EJQF *qf = NULL;
-    if (q->qobjlist) {
-        for (int i = 0; i < TCLISTNUM(q->qobjlist); ++i) {
-            qf = TCLISTVALPTR(q->qobjlist, i);
+    if (q->qflist) {
+        for (int i = 0; i < TCLISTNUM(q->qflist); ++i) {
+            qf = TCLISTVALPTR(q->qflist, i);
             assert(qf);
             _delqfdata(q, qf);
         }
-        tclistdel(q->qobjlist);
-        q->qobjlist = NULL;
+        tclistdel(q->qflist);
+        q->qflist = NULL;
     }
 
     if (q->orqlist) {
@@ -2047,8 +2047,8 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
                 if (_qrybsrecurrmatch(qf, ffpctx, currpos)) {
                     bool ret = true;
                     if (qf->elmatchgrp > 0 && qf->elmatchpos == currpos) { //$elemMatch matching group exists at right place
-                        for (int i = TCLISTNUM(qf->q->qobjlist) - 1; i >= 0; --i) {
-                            EJQF *eqf = TCLISTVALPTR(qf->q->qobjlist, i);
+                        for (int i = TCLISTNUM(qf->q->qflist) - 1; i >= 0; --i) {
+                            EJQF *eqf = TCLISTVALPTR(qf->q->qflist, i);
                             if (eqf == qf || (eqf->mflags & EJFEXCLUDED) || eqf->elmatchgrp != qf->elmatchgrp) {
                                 continue;
                             }
@@ -2144,9 +2144,9 @@ static bool _qry_$and_$or_match(EJCOLL *jcoll, EJQ *ejq, const void *pkbuf, int 
 
 static bool _qryormatch3(EJCOLL *jcoll, EJQ *ejq, EJQ *oq, const void *bsbuf, int bsbufsz) {
     int j = 0;
-    int jm = TCLISTNUM(oq->qobjlist);
+    int jm = TCLISTNUM(oq->qflist);
     for (; j < jm; ++j) {
-        EJQF *qf = TCLISTVALPTR(oq->qobjlist, j);
+        EJQF *qf = TCLISTVALPTR(oq->qflist, j);
         assert(qf);
         qf->mflags = qf->flags;
         if (qf->mflags & EJFEXCLUDED) {
@@ -2179,7 +2179,7 @@ static bool _qryormatch2(EJCOLL *jcoll, EJQ *ejq, const void *bsbuf, int bsbufsz
     }
     for (int i = 0; i < TCLISTNUM(ejq->orqlist); ++i) {
         EJQ *oq = TCLISTVALPTR(ejq->orqlist, i);
-        assert(oq && oq->qobjlist);
+        assert(oq && oq->qflist);
         if (ejq->lastmatchedorq == oq) {
             continue;
         }
@@ -2197,9 +2197,9 @@ static bool _qryandmatch2(EJCOLL *jcoll, EJQ *ejq, const void *bsbuf, int bsbufs
     }
     for (int i = 0; i < TCLISTNUM(ejq->andqlist); ++i) {
         EJQ *aq = TCLISTVALPTR(ejq->andqlist, i);
-        assert(aq && aq->qobjlist);
-        for (int j = 0; j < TCLISTNUM(aq->qobjlist); ++j) {
-            EJQF *qf = TCLISTVALPTR(aq->qobjlist, j);
+        assert(aq && aq->qflist);
+        for (int j = 0; j < TCLISTNUM(aq->qflist); ++j) {
+            EJQF *qf = TCLISTVALPTR(aq->qflist, j);
             assert(qf);
             qf->mflags = qf->flags;
             if (qf->mflags & EJFEXCLUDED) {
@@ -2361,7 +2361,7 @@ static void _qryfieldup(const EJQF *src, EJQF *target, uint32_t qflags) {
         target->updateobj = bson_dup(src->updateobj);
     }
     if (src->$ufields) {
-        target->$ufields = tcmapdup(src->$ufields);
+        target->$ufields = tclistdup(src->$ufields);
     }
 }
 
@@ -2372,13 +2372,13 @@ static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
     target->flags = src->flags | qflags;
     target->max = src->max;
     target->skip = src->skip;
-    if (src->qobjlist) {
-        target->qobjlist = tclistnew2(TCLISTNUM(src->qobjlist));
-        for (int i = 0; i < TCLISTNUM(src->qobjlist); ++i) {
+    if (src->qflist) {
+        target->qflist = tclistnew2(TCLISTNUM(src->qflist));
+        for (int i = 0; i < TCLISTNUM(src->qflist); ++i) {
             EJQF qf;
-            _qryfieldup(TCLISTVALPTR(src->qobjlist, i), &qf, qflags);
+            _qryfieldup(TCLISTVALPTR(src->qflist, i), &qf, qflags);
             qf.q = target;
-            TCLISTPUSH(target->qobjlist, &qf, sizeof (qf));
+            TCLISTPUSH(target->qflist, &qf, sizeof (qf));
         }
     }
     if (src->hints) {
@@ -2547,8 +2547,8 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
                 _ifields = tcmapdup(ifields);
             }
             _fkfields = tcmapnew2(TCMAPTINYBNUM);
-            for (int i = 0; i < TCLISTNUM(q->qobjlist); ++i) {
-                EJQF *qf = TCLISTVALPTR(q->qobjlist, i);
+            for (int i = 0; i < TCLISTNUM(q->qflist); ++i) {
+                EJQF *qf = TCLISTVALPTR(q->qflist, i);
                 const char *dfpath = tcmapget(q->$ifields, qf->fpath, qf->fpathsz, &sp);
                 if (dfpath) {
                     TCXSTR *ifield = tcxstrnew3(sp + 10);
@@ -2682,14 +2682,11 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
     const EJQF * pullqf[2] = {NULL}; /*$pull, $pullAll*/
 
     //$set, $inc, $addToSet, $addToSetAll, $pull, $pullAll operations
-    for (int i = 0; i < TCLISTNUM(ejq->qobjlist); ++i) {
-        const EJQF *qf = TCLISTVALPTR(ejq->qobjlist, i);
+    for (int i = 0; i < TCLISTNUM(ejq->qflist); ++i) {
+        const EJQF *qf = TCLISTVALPTR(ejq->qflist, i);
         if (qf->updateobj == NULL) {
             continue;
         }
-
-        //todo #91
-
         if (qf->flags & EJCONDSET) { //$set
             setqf = qf;
             continue;
@@ -2764,12 +2761,10 @@ static bool _qryupdate(EJCOLL *jcoll, const EJQ *ejq, void *bsbuf, int bsbufsz, 
                 update = true;
             }
         }
-
         if (!rv) {
             goto finish;
         }
     }
-
 
     for (int i = 0; i < 2; ++i) { //$pull $pullAll
         const EJQF *qf = pullqf[i];
@@ -2889,7 +2884,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
     int anum = 0; //number of active conditions
     int ofsz = 0; //order fields count
     int aofsz = 0; //active order fields count
-    const int qfsz = TCLISTNUM(ejq->qobjlist); //number of all condition fields
+    const int qfsz = TCLISTNUM(ejq->qflist); //number of all condition fields
     EJQF **ofs = NULL; //order fields
     EJQF **qfs = NULL; //condition fields array
     if (qfsz > 0) {
@@ -2914,7 +2909,7 @@ static TCLIST* _qryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *outcount, int 
         }
     }
     for (int i = 0; i < qfsz; ++i) {
-        EJQF *qf = TCLISTVALPTR(ejq->qobjlist, i);
+        EJQF *qf = TCLISTVALPTR(ejq->qflist, i);
         assert(qf);
         if (log) {
             if (qf->exprmap) {
@@ -3707,7 +3702,7 @@ static TDBIDX* _qryfindidx(EJCOLL *jcoll, EJQF *qf, bson *idxmeta) {
 
 static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
         TCMAP **dfields, TCMAP **ifields, bool *imode) {
-    assert(jcoll && ejq && ejq->qobjlist && mqf);
+    assert(jcoll && ejq && ejq->qflist && mqf);
 
     if (qflags & JBQRYCOUNT) {
         ejq->flags |= EJQONLYCOUNT;
@@ -3719,7 +3714,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
     *mqf = NULL;
 
     EJQF *oqf = NULL; //Order condition
-    TCLIST *qlist = ejq->qobjlist;
+    TCLIST *qflist = ejq->qflist;
     bson_iterator it;
     bson_type bt;
 
@@ -3743,9 +3738,9 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
                 }
                 EJQF nqf;
                 EJQF *qf = NULL;
-                for (int i = 0; i < TCLISTNUM(qlist); ++i) {
-                    if (!strcmp(ofield, ((EJQF*) TCLISTVALPTR(qlist, i))->fpath)) {
-                        qf = TCLISTVALPTR(qlist, i);
+                for (int i = 0; i < TCLISTNUM(qflist); ++i) {
+                    if (!strcmp(ofield, ((EJQF*) TCLISTVALPTR(qflist, i))->fpath)) {
+                        qf = TCLISTVALPTR(qflist, i);
                         assert(qf);
                         break;
                     }
@@ -3762,7 +3757,7 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
                     nqf.order = odir;
                     nqf.flags |= EJFEXCLUDED; //field excluded  from matching
                     qf = &nqf;
-                    TCLISTPUSH(qlist, qf, sizeof (*qf));
+                    TCLISTPUSH(qflist, qf, sizeof (*qf));
                 } else {
                     qf->orderseq = orderseq++;
                     qf->order = odir;
@@ -3805,11 +3800,11 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
                         for (int i = 0; *(key + i) != '\0'; ++i) {
                             if (*(key + i) == '$' && (dc++ > 0)) break;
                         }
-                        if (dc != 1) { //More than one '$' chars in projection it is invalid
+                        if (dc != 1) { //More than one '$' chars in projection, it is invalid
                             continue;
                         }
-                        for (int i = 0; i < TCLISTNUM(qlist); ++i) {
-                            EJQF *qf = TCLISTVALPTR(qlist, i);
+                        for (int i = 0; i < TCLISTNUM(qflist); ++i) {
+                            EJQF *qf = TCLISTVALPTR(qflist, i);
                             int j;
                             for (j = 0; *(key + j) != '\0' && *(key + j) == *(qf->fpath + j); ++j);
                             if (key + j == pptr || key + j == pptr + 1) { //existing QF matched the $(projection) prefix
@@ -3847,9 +3842,9 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
             EJCONDUPSERT |
             EJCONDOIT);
 
-    for (int i = 0; i < TCLISTNUM(qlist); ++i) {
+    for (int i = 0; i < TCLISTNUM(qflist); ++i) {
         int iscore = 0;
-        EJQF *qf = (EJQF*) TCLISTVALPTR(qlist, i);
+        EJQF *qf = (EJQF*) TCLISTVALPTR(qflist, i);
         assert(qf && qf->fpath);
 
         if (qf->flags & EJCONDOIT) { //$do field
@@ -3940,6 +3935,34 @@ static bool _qrypreprocess(EJCOLL *jcoll, EJQ *ejq, int qflags, EJQF **mqf,
     if (*mqf == NULL && (oqf && oqf->idx && !oqf->negate)) {
         *mqf = oqf;
     }
+
+//    //Now reorg qf->$ufields #91
+//    if (res && (q->flags & EJQHAS$UQUERY)) {
+//        for (int i = 0; i < TCLISTNUM(q->qflist); ++i) {
+//            EJQF *qf = TCLISTVALPTR(q->qflist, i);
+//            if (!qf->$ufields) continue;
+//            TCLIST *uflist = tcmapkeys(qf->$ufields); //got list of update $(query) fields.
+//            tcmapclear(qf->$ufields);
+//            for (int j = 0; j < TCLISTNUM(uflist); ++j) {
+//                const char *ukey = TCLISTVALPTR(uflist, j);
+//                char *pptr = strstr(ukey, ".$");
+//                assert(pptr);
+//                for (int k = 0; k < TCLISTNUM(q->qflist); ++k) {
+//                    int l;
+//                    EJQF *kqf = TCLISTVALPTR(q->qflist, k);
+//                    if (kqf == qf) { //do not process self QF
+//                        continue;
+//                    }
+//                    for (l = 0; *(ukey + l) != '\0' && *(ukey + l) == *(kqf->fpath + l); ++l);
+//                    if (ukey + l == pptr || ukey + l == pptr + 1) { //existing QF matched the $(query) prefix
+//                        // map [QF fpath -> $(query) path]
+//                        tcmapput(qf->$ufields, kqf->fpath, kqf->fpathsz, ukey, strlen(ukey));
+//                    }
+//                }
+//            }
+//            tclistdel(uflist);
+//        }
+//    }
 
     //Init query processing tctdb column & bson buffers
     assert(!ejq->colbuf && !ejq->bsbuf);
@@ -4132,7 +4155,7 @@ static void _delqfdata(const EJQ *q, const EJQF *qf) {
         bson_del(qf->updateobj);
     }
     if (qf->$ufields) {
-        tcmapdel(qf->$ufields);
+        tclistdel(qf->$ufields);
     }
     if (qf->regex && !(EJQINTERNAL & q->flags)) {
         //We do not clear regex_t data because it not deep copy in internal queries
@@ -4461,14 +4484,26 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         BSON_ITERATOR_SUBITERATOR(it, &sit);
                         while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
                             if ((qf.flags & EJCONDALL) && sbt != BSON_ARRAY) {
-                                //$addToSetAll & $pullAll accepts arrays only as argument
+                                //$addToSetAll & $pullAll accepts only arrays
                                 continue;
                             }
-                            if (qf.flags & (EJCONDSET | EJCONDINC)) { //Checking the $(query) positional operator.
-                                const char* key = BSON_ITERATOR_KEY(&sit);
+                            if (!(qf.flags & EJCONDALL) && (qf.flags & (EJCONDSET | EJCONDINC))) { //Checking the $(query) positional operator.
+                                const char* ukey = BSON_ITERATOR_KEY(&sit);
                                 char *pptr;
-                                if ((pptr = strstr(key, ".$")) && pptr && (*(pptr + 2) == '\0' || *(pptr + 2) == '.')) {// '.$' || '.$.'
-                                    //todo #91!!!
+                                if ((pptr = strstr(ukey, ".$")) && pptr && (*(pptr + 2) == '\0' || *(pptr + 2) == '.')) {// '.$' || '.$.'
+                                    int dc = 0;
+                                    for (int i = 0; *(ukey + i) != '\0'; ++i) {
+                                        if (*(ukey + i) == '$' && (dc++ > 0)) break;
+                                    }
+                                    if (dc != 1) { //More than one '$' chars in projection, it is invalid
+                                        continue;
+                                    }
+                                    // Now just store only [$(query) key] into the qf->$ufields
+                                    if (!qf.$ufields) {
+                                        qf.$ufields = tclistnew2(TCLISTINYNUM);
+                                    }
+                                    q->flags |= EJQHAS$UQUERY;
+                                    tclistpush(qf.$ufields, ukey, strlen(ukey));
                                 }
                             }
                             bson_append_field_from_iterator(&sit, qf.updateobj);

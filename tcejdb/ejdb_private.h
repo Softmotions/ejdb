@@ -76,7 +76,8 @@ enum { /**> Query flags */
     EJQINTERNAL = 1, /**> Internal query object used in _ejdbqryexecute */
     EJQUPDATING = 1 << 1, /**> Query in updating mode */
     EJQDROPALL = 1 << 2, /**> Drop bson object if matched */
-    EJQONLYCOUNT = 1 << 3 /**> Only count mode */
+    EJQONLYCOUNT = 1 << 3, /**> Only count mode */
+    EJQHAS$UQUERY = 1 << 4 /**> It means the query contains update $(query) fields #91 */
 };
 
 struct EJQF { /**> Matching field and status */
@@ -96,7 +97,7 @@ struct EJQF { /**> Matching field and status */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
     bson *updateobj; /**> Update bson object for $set and $inc operations */
-    TCMAP *$ufields; /**> Update $(query) prositional fields */
+    TCLIST *$ufields; /**> Update $(query) prositional fields */
     TCLIST *exprlist; /**> List representation of expression */
     TCMAP *exprmap; /**> Hash map for expression tokens used in $in matching operation. */
     void *regex; /**> Regular expression object */
@@ -108,7 +109,7 @@ struct EJQF { /**> Matching field and status */
 typedef struct EJQF EJQF;
 
 struct EJQ { /**> Query object. */
-    TCLIST *qobjlist; /**> List of query field objects *EJQF */
+    TCLIST *qflist; /**> List of query field objects *EJQF */
     TCLIST *orqlist; /**> List of $or joined query objects *EJQ */
     TCLIST *andqlist; /**> List of $and joined query objects *EJQ */
     bson *hints; /**> Hints bson object */
