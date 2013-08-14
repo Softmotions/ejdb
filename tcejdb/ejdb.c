@@ -2565,6 +2565,7 @@ static bool _pushprocessedbson(EJDB *jb, EJQ *q, TCLIST *res, TCMAP *dfields, TC
                     const char *dpos = strchr(dfpath, '$');
                     assert(dpos);
                     ctx.iafpathidx = (dpos - dfpath) - 1;
+                    qf->mflags = (qf->flags & ~EJFEXCLUDED);
                     if (!_qrybsrecurrmatch(qf, &ctx, 0)) {
                         assert(false); //something wrong, it should never be happen
                     } else if (ctx.iamachidx >= 0) {
