@@ -33,10 +33,10 @@ namespace Ejdb.DB {
 		//Pointer to the result set list
 		IntPtr _qresptr;
 		//EJDB_EXPORT void ejdbqresultdispose(EJQRESULT qr);
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="ejdbqresultdispose")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "ejdbqresultdispose", CallingConvention = CallingConvention.Cdecl)]
 		static extern void _ejdbqresultdispose([In] IntPtr qres);
 		//const void* ejdbqresultbsondata(EJQRESULT qr, int pos, int *size)
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="ejdbqresultbsondata")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "ejdbqresultbsondata", CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr _ejdbqresultbsondata([In] IntPtr qres, [In] int pos, out int size);
 
 		/// <summary>

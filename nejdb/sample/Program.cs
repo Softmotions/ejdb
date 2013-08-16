@@ -64,6 +64,7 @@ namespace sample {
 			}
 			q.Dispose();
 			jb.Dispose();
+            Console.ReadKey();
 		}
 	}
 }

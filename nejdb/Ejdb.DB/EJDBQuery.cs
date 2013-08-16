@@ -70,31 +70,31 @@ namespace Ejdb.DB {
 		//
 		#region NativeRefs
 		//EJDB_EXPORT void ejdbquerydel(EJQ *q);
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="ejdbquerydel")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "ejdbquerydel", CallingConvention = CallingConvention.Cdecl)]
 		static extern void _ejdbquerydel([In] IntPtr qptr);
 		//EJDB_EXPORT EJQ* ejdbcreatequery2(EJDB *jb, void *qbsdata);
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="ejdbcreatequery2")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "ejdbcreatequery2", CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr _ejdbcreatequery([In] IntPtr jb, [In] byte[] bsdata);
 		//EJDB_EXPORT EJQ* ejdbqueryhints(EJDB *jb, EJQ *q, void *hintsbsdata)
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="ejdbqueryhints")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "ejdbqueryhints", CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr _ejdbqueryhints([In] IntPtr jb, [In] IntPtr qptr, [In] byte[] bsdata);
 		//EJDB_EXPORT EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, void *orbsdata)
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="ejdbqueryaddor")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "ejdbqueryaddor", CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr _ejdbqueryaddor([In] IntPtr jb, [In] IntPtr qptr, [In] byte[] bsdata);
 		//EJDB_EXPORT EJQRESULT ejdbqryexecute(EJCOLL *jcoll, const EJQ *q, uint32_t *count, int qflags, TCXSTR *log)
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="ejdbqryexecute")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "ejdbqryexecute", CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr _ejdbqryexecute([In] IntPtr jcoll, [In] IntPtr q, out int count, [In] int qflags, [In] IntPtr logxstr);
 		//EJDB_EXPORT TCXSTR *tcxstrnew(void)
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="tcxstrnew")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "tcxstrnew", CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr _tcxstrnew();
 		//EJDB_EXPORT void tcxstrdel(TCXSTR *xstr);
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="tcxstrdel")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "tcxstrdel", CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr _tcxstrdel([In] IntPtr strptr);
 		//EJDB_EXPORT int tcxstrsize(const TCXSTR *xstr);
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="tcxstrsize")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "tcxstrsize", CallingConvention = CallingConvention.Cdecl)]
 		static extern int _tcxstrsize([In] IntPtr strptr);
 		//EJDB_EXPORT int tcxstrptr(const TCXSTR *xstr);
-		[DllImport(EJDB.EJDB_LIB_NAME, EntryPoint="tcxstrptr")]
+        [DllImport(EJDB.EJDB_LIB_NAME, EntryPoint = "tcxstrptr", CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr _tcxstrptr([In] IntPtr strptr);
 		#endregion
 		/// <summary>

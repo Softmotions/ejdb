@@ -29,7 +29,7 @@
 #include <stdbool.h>
 #endif
 #include <time.h>
-#include <tcutil.h>
+#include "tcutil.h"
 
 #define BSON_IS_NUM_TYPE(atype) (atype == BSON_INT || atype == BSON_LONG || atype == BSON_DOUBLE)
 
