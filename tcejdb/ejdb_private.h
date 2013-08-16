@@ -80,6 +80,12 @@ enum { /**> Query flags */
     EJQHAS$UQUERY = 1 << 4 /**> It means the query contains update $(query) fields #91 */
 };
 
+typedef struct { /**> $(query) matchin slot used in update $ placeholder processing. #91 */
+    int32_t mpos; /**> array position of matched element */
+    int32_t $pos; /**> $ position in the fieldpath */
+    void *op; /**> Opaque pointer associated with slot */
+} USLOT;
+
 struct EJQF { /**> Matching field and status */
     bool negate; /**> Negate expression */
     int fpathsz; /**>JSON field path size */
@@ -97,7 +103,6 @@ struct EJQF { /**> Matching field and status */
     const TDBIDX *idx; /**> Column index for this field if exists */
     bson *idxmeta; /**> Index metainfo */
     bson *updateobj; /**> Update bson object for $set and $inc operations */
-    TCLIST *$ufields; /**> Update $(query) prositional fields */
     TCLIST *exprlist; /**> List representation of expression */
     TCMAP *exprmap; /**> Hash map for expression tokens used in $in matching operation. */
     void *regex; /**> Regular expression object */
@@ -105,6 +110,8 @@ struct EJQF { /**> Matching field and status */
     EJQ *q; /**> Query object in which this field embedded */
     double exprdblval; /**> Double value representation */
     int64_t exprlongval; /**> Integer value represeintation */
+    TCLIST *$ufields; /**> Update $(query) prositional fields #91 */
+    TCLIST *$uslots; /**> $(query) matching slots USLOT #91 */
 };
 typedef struct EJQF EJQF;
 
@@ -122,6 +129,7 @@ struct EJQ { /**> Query object. */
     uint32_t max; /**> Max number of results */
     uint32_t flags; /**> Control flags */
     EJQ *lastmatchedorq; /**> Reference to the last matched $or query */
+    EJQF **allqfields; /**> NULL terminated list of all *EJQF fields including all $and $or QF*/
 
     //Temporal buffers used during query processing
     TCXSTR *colbuf; /**> TCTDB current column buffer */
