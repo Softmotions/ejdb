@@ -27,7 +27,7 @@ If you have problems please follow this checklist:
   2. For x64 CPU download [tcejdb-1.x.x-mingw32-x86_64](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)
   3. Ensure you have placed `tcejdbdll.dll` into the `%PATH%`
   4. Open the sample `nejdb.sln` solution.
-  5. Ensure that the project configutations are either: `DebugWindows` OR `ReleaseWindows`
+  5. Ensure that the project configutation is either: `DebugWindows` OR `ReleaseWindows`
   6. If a target platform CPU differs from current host CPU you have to use appropriated `tcejdbdll.dll` for target and
     change the project's CPU platform configuration.
 
