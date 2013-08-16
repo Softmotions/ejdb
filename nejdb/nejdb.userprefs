@@ -1,9 +1,19 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="DebugUnix" />
-  <MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workbench ActiveDocument="Ejdb.Utils/Native.cs">
+    <Files>
+      <File FileName="Ejdb.DB/EJDB.cs" Line="371" Column="7" />
+      <File FileName="Ejdb.DB/EJDBQuery.cs" Line="1" Column="1" />
+      <File FileName="Ejdb.Utils/Native.cs" Line="1" Column="1" />
+    </Files>
     <Pads>
       <Pad Id="ProjectPad">
-        <State expanded="True" />
+        <State expanded="True">
+          <Node name="nejdb" expanded="True" selected="True">
+            <Node name="Ejdb.Utils" expanded="True" />
+          </Node>
+          <Node name="sample" expanded="True" />
+        </State>
       </Pad>
       <Pad Id="ClassPad">
         <State expanded="True" selected="True" />
@@ -16,13 +26,16 @@
       </Pad>
       <Pad Id="MonoDevelop.NUnit.TestPad">
         <State expanded="True">
-          <Node name="nejdb" expanded="True" selected="True" />
+          <Node name="nejdb" selected="True" />
         </State>
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
+    <BreakpointStore>
+      <Breakpoint file="/home/adam/Projects/softmotions/ejdb/nejdb/Ejdb.DB/EJDB.cs" line="372" column="11" />
+      <Breakpoint file="/home/adam/Projects/softmotions/ejdb/nejdb/Ejdb.DB/EJDB.cs" line="394" column="52" />
+    </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
 </Properties>
