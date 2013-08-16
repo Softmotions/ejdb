@@ -15,9 +15,9 @@
 // ============================================================================================
 using System;
 using System.Runtime.InteropServices;
-using Mono.Unix;
 using System.Text;
 using Ejdb.BSON;
+using Ejdb.Utils;
 
 namespace Ejdb.DB {
 
@@ -163,11 +163,11 @@ namespace Ejdb.DB {
 		internal static extern bool _ejdbopen([In] IntPtr db, [In] IntPtr path, int mode);
 
 		internal static bool _ejdbopen(IntPtr db, string path, int mode) {
-			IntPtr pptr = UnixMarshal.StringToHeap(path, Encoding.UTF8);
+			IntPtr pptr = Native.NativeUtf8FromString(path); //UnixMarshal.StringToHeap(path, Encoding.UTF8);
 			try {
 				return _ejdbopen(db, pptr, mode);
 			} finally {
-				UnixMarshal.FreeHeap(pptr);
+				Marshal.FreeHGlobal(pptr); //UnixMarshal.FreeHeap(pptr);
 			}
 		}
 
@@ -187,11 +187,11 @@ namespace Ejdb.DB {
 		internal static extern IntPtr _ejdbgetcoll([In] IntPtr db, [In] IntPtr cname);
 
 		internal static IntPtr _ejdbgetcoll(IntPtr db, string cname) {
-			IntPtr cptr = UnixMarshal.StringToHeap(cname, Encoding.UTF8);
+			IntPtr cptr = Native.NativeUtf8FromString(cname); //UnixMarshal.StringToHeap(cname, Encoding.UTF8);
 			try {
 				return _ejdbgetcoll(db, cptr);
 			} finally {
-				UnixMarshal.FreeHeap(cptr);
+				Marshal.FreeHGlobal(cptr); //UnixMarshal.FreeHeap(cptr);
 			}
 		}
 
@@ -202,7 +202,7 @@ namespace Ejdb.DB {
 		internal static extern IntPtr _ejdbcreatecoll([In] IntPtr db, [In] IntPtr cname, ref EJDBCollectionOptionsN opts);
 
 		internal static IntPtr _ejdbcreatecoll(IntPtr db, String cname, EJDBCollectionOptionsN? opts) {
-			IntPtr cptr = UnixMarshal.StringToHeap(cname, Encoding.UTF8);
+			IntPtr cptr = Native.NativeUtf8FromString(cname);//UnixMarshal.StringToHeap(cname, Encoding.UTF8);
 			try {
 				if (opts == null) {
 					return _ejdbcreatecoll(db, cptr, IntPtr.Zero);
@@ -211,7 +211,7 @@ namespace Ejdb.DB {
 					return _ejdbcreatecoll(db, cptr, ref nopts);
 				}
 			} finally {
-				UnixMarshal.FreeHeap(cptr);
+				Marshal.FreeHGlobal(cptr); //UnixMarshal.FreeHeap(cptr);
 			}
 		}
 		//EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile);
@@ -219,11 +219,11 @@ namespace Ejdb.DB {
 		internal static extern bool _ejdbrmcoll([In] IntPtr db, [In] IntPtr cname, bool unlink);
 
 		internal static bool _ejdbrmcoll(IntPtr db, string cname, bool unlink) {
-			IntPtr cptr = UnixMarshal.StringToHeap(cname, Encoding.UTF8);
+			IntPtr cptr = Native.NativeUtf8FromString(cname);//UnixMarshal.StringToHeap(cname, Encoding.UTF8);
 			try {
 				return _ejdbrmcoll(db, cptr, unlink);
 			} finally {
-				UnixMarshal.FreeHeap(cptr);
+				Marshal.FreeHGlobal(cptr); //UnixMarshal.FreeHeap(cptr);
 			}
 		}
 		//EJDB_EXPORT bson* ejdbcommand(EJDB *jb, bson *cmd);
@@ -273,11 +273,11 @@ namespace Ejdb.DB {
 		internal static extern IntPtr _ejdbversion();
 
 		internal static bool _ejdbsetindex(IntPtr coll, string ipath, int flags) {
-			IntPtr ipathptr = UnixMarshal.StringToHeap(ipath, Encoding.UTF8);
+			IntPtr ipathptr = Native.NativeUtf8FromString(ipath); //UnixMarshal.StringToHeap(ipath, Encoding.UTF8);
 			try {
 				return _ejdbsetindex(coll, ipathptr, flags);
 			} finally {
-				UnixMarshal.FreeHeap(ipathptr);
+				Marshal.FreeHGlobal(ipathptr); //UnixMarshal.FreeHeap(ipathptr);
 			}
 		}
 		#endregion
@@ -314,7 +314,7 @@ namespace Ejdb.DB {
 				if (ecode == null) {
 					return null;
 				}
-				return UnixMarshal.PtrToString(_ejdberrmsg((int) ecode), Encoding.UTF8);
+				return Native.StringFromNativeUtf8(_ejdberrmsg((int) ecode)); //UnixMarshal.PtrToString(_ejdberrmsg((int) ecode), Encoding.UTF8);
 			}
 		}
 
@@ -369,7 +369,7 @@ namespace Ejdb.DB {
 					if (vres == IntPtr.Zero) {
 						throw new Exception("Unable to get ejdb library version");
 					}
-					_LIBVERSION = UnixMarshal.PtrToString(vres, Encoding.UTF8);
+					_LIBVERSION = Native.StringFromNativeUtf8(vres); //UnixMarshal.PtrToString(vres, Encoding.UTF8);
 				}
 				return _LIBVERSION;
 			}		
@@ -402,7 +402,7 @@ namespace Ejdb.DB {
 		/// </summary>
 		/// <param name="path">The main database file path.</param>
 		/// <param name="omode">Open mode.</param>
-		public EJDB(string path, int omode=DEFAULT_OPEN_MODE) {		
+		public EJDB(string path, int omode=DEFAULT_OPEN_MODE) {
 			if (EJDB.LibHexVersion < 0x1113) {
 				throw new EJDBException("EJDB library version must be at least '1.1.13' or greater");
 			}

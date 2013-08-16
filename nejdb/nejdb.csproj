@@ -52,7 +52,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="Mono.Posix" />
     <Reference Include="nunit.framework, Version=2.6.0.12051, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">
       <Private>False</Private>
     </Reference>
@@ -84,6 +83,7 @@
     <Compile Include="Ejdb.DB\EJDBQCursor.cs" />
     <Compile Include="Ejdb.BSON\BSONull.cs" />
     <Compile Include="Ejdb.BSON\BSONUndefined.cs" />
+    <Compile Include="Ejdb.Utils\Native.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

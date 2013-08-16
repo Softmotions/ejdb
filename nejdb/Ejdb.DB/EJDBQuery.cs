@@ -16,8 +16,8 @@
 using System;
 using Ejdb.BSON;
 using System.Runtime.InteropServices;
-using Mono.Unix;
 using System.Text;
+using Ejdb.Utils;
 
 namespace Ejdb.DB {
 
@@ -188,7 +188,7 @@ namespace Ejdb.DB {
 						if (cur != null) {
 							//static extern IntPtr _tcxstrptr([In] IntPtr strptr);
 							IntPtr sbptr = _tcxstrptr(logsptr);
-							cur.Log = UnixMarshal.PtrToString(sbptr, Encoding.UTF8);
+							cur.Log = Native.StringFromNativeUtf8(sbptr); //UnixMarshal.PtrToString(sbptr, Encoding.UTF8);
 						}
 					} finally {
 						//static extern IntPtr _tcxstrdel([In] IntPtr strptr);
