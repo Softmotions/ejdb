@@ -2,7 +2,7 @@
 ===========================================
 
 
-**Note: The .Net EJDB binding designed for .Net 4.0/4.5 and tested on Mono 3 for Unix and Windows.**
+**Note: The .Net EJDB binding designed for .Net 4.0/4.5 and tested on Mono3/MSVC for Unix and Windows.**
 
 
 Windows
