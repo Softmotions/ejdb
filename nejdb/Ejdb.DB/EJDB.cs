@@ -226,8 +226,8 @@ namespace Ejdb.DB {
 				Marshal.FreeHGlobal(cptr); //UnixMarshal.FreeHeap(cptr);
 			}
 		}
-		//EJDB_EXPORT bson* ejdbcommand(EJDB *jb, bson *cmd);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbcommand2", CallingConvention = CallingConvention.Cdecl)]
+		//EJDB_EXPORT bson* ejdbcommand2(EJDB *jb, void *cmdbsondata);
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbcommand2", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbcommand([In] IntPtr db, [In] byte[] cmd);
 		//EJDB_EXPORT bool ejdbsavebson3(EJCOLL *jcoll, void *bsdata, bson_oid_t *oid, bool merge);
         [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbsavebson3", CallingConvention = CallingConvention.Cdecl)]
