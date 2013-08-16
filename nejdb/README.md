@@ -19,6 +19,7 @@ Then add the directory containing the `tcejdbdll.dll` into search `PATH`.
 Use the following solution configs to debug and test: `DebugWindows`, `ReleaseWindows`
 
 If you have problems please follow this checklist:
+
 **Windows checklist**
 
   0. Ensure .Net framework >= 4.0 installed
