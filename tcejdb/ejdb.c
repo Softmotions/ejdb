@@ -2682,6 +2682,36 @@ static bool _exec$do(_QRYCTX *ctx, const void *bsbuf, bson *bsout) {
     return true;
 }
 
+static bson* _qfgetupdateobj(const EJQF *qf) {
+	assert(qf->updateobj);
+	if (!qf->$ufields || TCLISTNUM(qf->$ufields) < 1) { //we do not ref $(query) fields.
+		return qf->updateobj;
+	}
+	const EJQ *q = qf->q;
+	bson *ret =  bson_create();
+	bson_init(ret);
+	for (int i = 0; i < TCLISTNUM(qf->$ufields); ++i) {
+		const char *uf = TCLISTVALPTR(qf->$ufields, i);
+		for (int j = 0; *(q->allqfields + j) != '\0'; ++j) {
+			const EJQF *kqf = *(q->allqfields + j);
+			if (kqf == qf || kqf->$uslots == NULL || TCLISTNUM(kqf->$uslots) < 1) {
+				continue;
+			}
+			for (int k = 0; k < TCLISTNUM(kqf->$uslots); ++k) {
+				USLOT *uslot = TCLISTVALPTR(kqf->$uslots, k);
+				if (uslot->op == uf) {
+					
+					//todo
+					
+					break;
+				}
+			}
+		}
+	}
+	bson_finish(ret);
+	return ret;
+} 
+
 static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
     assert(ctx && ctx->q && (ctx->q->flags & EJQUPDATING) && bsbuf && ctx->didxctx);
 
@@ -2760,6 +2790,8 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
             }
         }
     }
+	
+	
     if (setqf) { //$set
         update = true;
         bson_init_size(&bsout, bsbufsz);
@@ -4038,9 +4070,9 @@ static bool _qrypreprocess(_QRYCTX *ctx) {
                             kqf->$uslots = tclistnew2(TCLISTINYNUM);
                         }
                         USLOT uslot = {
-                          .mpos = 0,
+                          .mpos = -1,
                           .dpos = (pptr - ukey),
-                          .op = &qf
+                          .op = ukey
                         };
                         tclistpush(kqf->$uslots, &uslot, sizeof(uslot));
                     }
