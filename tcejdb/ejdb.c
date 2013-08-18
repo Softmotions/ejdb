@@ -2045,6 +2045,23 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
 #undef _FETCHSTRFVAL
 }
 
+
+//Fills `ffpctx` and `qf->$uslots`
+static void _qrysetarrayidx(FFPCTX *ffpctx, EJQF *qf, int dpos, int mpos) {
+	if (ffpctx->dpos == dpos && ffpctx->mpos == -1) { //single ctx matching
+		ffpctx->mpos = mpos;
+	}
+	if (qf->$uslots) {
+		for (int i = 0; i < TCLISTNUM(qf->$uslots); ++i) {
+			USLOT *us = TCLISTVALPTR(qf->$uslots, i);
+			assert(us);
+			if (us->dpos == dpos && us->mpos == -1) {
+				us->mpos = mpos;
+			}
+		}
+	}
+}
+
 static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
     assert(qf && ffpctx && ffpctx->stopnestedarr);
     bson_type bt = bson_find_fieldpath_value3(ffpctx);
@@ -2090,9 +2107,10 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
                             }
                         }
                     }
-                    if (ret && currpos - 1 == ffpctx->iafpathidx) {
-                        ffpctx->iamachidx = c;
+                    if (ret) {
+						_qrysetarrayidx(ffpctx, qf, (currpos - 1), c);
                     }
+
                     return ret;
                 }
                 ++c;
@@ -2105,10 +2123,10 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
         } else if (qf->tcop == TDBQCEXIST) {
             return !qf->negate;
         }
-        int iamachidx = -1;
-        bool ret = _qrybsvalmatch(qf, ffpctx->input, true, &iamachidx);
-        if (ret && currpos == 0 && bt == BSON_ARRAY && ffpctx->fplen == ffpctx->iafpathidx) { //save $(projection)
-            ffpctx->iamachidx = iamachidx;
+        int mpos = -1;
+        bool ret = _qrybsvalmatch(qf, ffpctx->input, true, &mpos);
+        if (ret && currpos == 0 && bt == BSON_ARRAY) { //save $(projection)
+            _qrysetarrayidx(ffpctx, qf, ffpctx->fplen, mpos);
         }
         return ret;
     }
@@ -2126,12 +2144,12 @@ static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz) {
         .input = &it,
         .stopnestedarr = true,
         .stopos = 0,
-        .iamachidx = -1,
-        .iafpathidx = -1
+        .dpos = -1,
+        .mpos = -1
     };
     if (qf->$uslots) {
        for (int i = 0; i < TCLISTNUM(qf->$uslots); ++i) {
-           ((USLOT*) (TCLISTVALPTR(qf->$uslots, i)))->mpos = 0;
+           ((USLOT*) (TCLISTVALPTR(qf->$uslots, i)))->mpos = -1;
        }
     }
     return _qrybsrecurrmatch(qf, &ffpctx, 0);
@@ -2590,17 +2608,18 @@ static bool _pushprocessedbson(_QRYCTX *ctx, const void *bsbuf, int bsbufsz) {
                         .input = &it,
                         .stopnestedarr = true,
                         .stopos = 0,
-                        .iamachidx = -1
-                    };
+                        .mpos = -1,
+                        .dpos = -1
+                   };
                     const char *dpos = strchr(dfpath, '$');
                     assert(dpos);
-                    ctx.iafpathidx = (dpos - dfpath) - 1;
+                    ctx.dpos = (dpos - dfpath) - 1;
                     qf->mflags = (qf->flags & ~EJFEXCLUDED);
                     if (!_qrybsrecurrmatch(qf, &ctx, 0)) {
                         assert(false); //something wrong, it should never be happen
-                    } else if (ctx.iamachidx >= 0) {
+                    } else if (ctx.mpos >= 0) {
                         tcxstrcat(ifield, dfpath, (dpos - dfpath));
-                        tcxstrprintf(ifield, "%d", ctx.iamachidx);
+                        tcxstrprintf(ifield, "%d", ctx.mpos);
                         tcmapput(_fkfields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), "0", strlen("0"));
                         tcxstrcat(ifield, dpos + 1, sp - (dpos - dfpath) - 1);
                         tcmapput(_ifields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), &yes, sizeof (yes));
@@ -4020,7 +4039,7 @@ static bool _qrypreprocess(_QRYCTX *ctx) {
                         }
                         USLOT uslot = {
                           .mpos = 0,
-                          .$pos = (pptr - ukey),
+                          .dpos = (pptr - ukey),
                           .op = &qf
                         };
                         tclistpush(kqf->$uslots, &uslot, sizeof(uslot));

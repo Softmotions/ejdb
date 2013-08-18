@@ -15,6 +15,7 @@
         <in>t2.c</in>
         <in>t3.c</in>
         <in>t4.c</in>
+        <in>t5.c</in>
       </df>
       <in>basedefs.h</in>
       <in>bson.c</in>
@@ -41,6 +42,8 @@
       <in>tcbdb.h</in>
       <in>tcbmgr.c</in>
       <in>tcbmttest.c</in>
+      <in>tcbpool.c</in>
+      <in>tcbpool.h</in>
       <in>tcbtest.c</in>
       <in>tcfdb.c</in>
       <in>tcfdb.h</in>
@@ -95,7 +98,7 @@
           <buildCommandWorkingDir>.</buildCommandWorkingDir>
           <buildCommand>${MAKE} -f Makefile</buildCommand>
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
-          <executablePath>testejdb/t4</executablePath>
+          <executablePath>testejdb/t2</executablePath>
           <cTool>
             <preprocessorList>
               <Elem>_GNU_SOURCE=1</Elem>
@@ -318,6 +321,10 @@
           </incDir>
         </cTool>
       </item>
+      <item path="tcbpool.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="tcbpool.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="tcbtest.c" ex="false" tool="0" flavor2="2">
         <cTool>
           <incDir>
@@ -514,6 +521,8 @@
       <item path="testejdb/t4.c" ex="false" tool="0" flavor2="2">
         <cTool>
         </cTool>
+      </item>
+      <item path="testejdb/t5.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="utf8proc.c" ex="false" tool="0" flavor2="2">
         <cTool>
@@ -778,6 +787,10 @@
           </incDir>
         </cTool>
       </item>
+      <item path="tcbpool.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="tcbpool.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="tcbtest.c" ex="false" tool="0" flavor2="0">
         <cTool>
           <incDir>
@@ -962,6 +975,8 @@
       <item path="testejdb/t3.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="testejdb/t4.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="testejdb/t5.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="utf8proc.c" ex="false" tool="0" flavor2="0">
         <cTool>

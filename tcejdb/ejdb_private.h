@@ -82,7 +82,7 @@ enum { /**> Query flags */
 
 typedef struct { /**> $(query) matchin slot used in update $ placeholder processing. #91 */
     int32_t mpos; /**> array position of matched element */
-    int32_t $pos; /**> $ position in the fieldpath */
+    int32_t dpos; /**> $ position in the fieldpath */
     void *op; /**> Opaque pointer associated with slot */
 } USLOT;
 

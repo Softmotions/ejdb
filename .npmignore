@@ -25,6 +25,7 @@
 *.build
 *.changes
 *.pyc
+*.tags
 .dep.inc
 */nbproject/private/*
 /ejdbdll
@@ -99,3 +100,9 @@ addressbook*
 /node/tests/bench
 nbproject
 .idea
+
+compilation.db
+.clang/
+ejdb.workspace.session
+ejdb.workspace.anton_adamansky
+

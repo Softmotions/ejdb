@@ -198,8 +198,8 @@ typedef struct { /**< Find field path context */
     bson_iterator *input;
     int stopos;
     bool stopnestedarr;
-    int iamachidx; /**< Array index of the first matched array field */
-    int iafpathidx; /**< Position of `$` in array projection fieldpath. */
+    int mpos; /**< Array index of the first matched array field */
+    int dpos; /**< Position of `$` in array projection fieldpath. */
 } FFPCTX;
 
 

@@ -20,6 +20,7 @@
 *.tag.gz
 *.tgz
 *.pyc
+*.tags
 .dep.inc
 /ejdbdll
 /node_modules
@@ -150,5 +151,14 @@ __pycache__
 /nejdb/bin/
 /nejdb/sample/bin/
 /nejdb/test-results/
+
+compilation.db
+.clang/
+ejdb.workspace.session
+ejdb.workspace.anton_adamansky
+
+
+
+
 
 
