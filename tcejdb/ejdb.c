@@ -3126,7 +3126,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q, uint32_t *outcount, int 
     //EOF #define JBQREGREC
 
     bool trim = (midx && *midx->name != '\0');
-    if (anum > 0 && !(mqf->flags & EJFEXCLUDED)) {
+    if (anum > 0 && !(mqf->flags & EJFEXCLUDED) && !(mqf->$uslots && TCLISTNUM(mqf->$uslots) > 0)) {
         anum--;
         mqf->flags |= EJFEXCLUDED;
     }
