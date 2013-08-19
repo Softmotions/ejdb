@@ -1681,6 +1681,10 @@ static void _qrydel(EJQ *q, bool freequery) {
         tcxstrdel(q->tmpbuf);
         q->tmpbuf = NULL;
     }
+    if (q->allqfields) {
+        TCFREE(q->allqfields);
+        q->allqfields = NULL;
+    }
     if (freequery) {
         TCFREE(q);
     }
@@ -2041,6 +2045,23 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
 #undef _FETCHSTRFVAL
 }
 
+
+//Fills `ffpctx` and `qf->$uslots`
+static void _qrysetarrayidx(FFPCTX *ffpctx, EJQF *qf, int dpos, int mpos) {
+	if (ffpctx->dpos == dpos && ffpctx->mpos == -1) { //single ctx matching
+		ffpctx->mpos = mpos;
+	}
+	if (qf->$uslots) {
+		for (int i = 0; i < TCLISTNUM(qf->$uslots); ++i) {
+			USLOT *us = TCLISTVALPTR(qf->$uslots, i);
+			assert(us);
+			if (us->dpos == dpos && us->mpos == -1) {
+				us->mpos = mpos;
+			}
+		}
+	}
+}
+
 static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
     assert(qf && ffpctx && ffpctx->stopnestedarr);
     bson_type bt = bson_find_fieldpath_value3(ffpctx);
@@ -2086,9 +2107,10 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
                             }
                         }
                     }
-                    if (ret && currpos - 1 == ffpctx->iafpathidx) {
-                        ffpctx->iamachidx = c;
+                    if (ret) {
+						_qrysetarrayidx(ffpctx, qf, (currpos - 1), c);
                     }
+
                     return ret;
                 }
                 ++c;
@@ -2101,10 +2123,10 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
         } else if (qf->tcop == TDBQCEXIST) {
             return !qf->negate;
         }
-        int iamachidx = -1;
-        bool ret = _qrybsvalmatch(qf, ffpctx->input, true, &iamachidx);
-        if (ret && currpos == 0 && bt == BSON_ARRAY && ffpctx->fplen == ffpctx->iafpathidx) { //save $(projection)
-            ffpctx->iamachidx = iamachidx;
+        int mpos = -1;
+        bool ret = _qrybsvalmatch(qf, ffpctx->input, true, &mpos);
+        if (ret && currpos == 0 && bt == BSON_ARRAY) { //save $(projection)
+            _qrysetarrayidx(ffpctx, qf, ffpctx->fplen, mpos);
         }
         return ret;
     }
@@ -2122,9 +2144,14 @@ static bool _qrybsmatch(EJQF *qf, const void *bsbuf, int bsbufsz) {
         .input = &it,
         .stopnestedarr = true,
         .stopos = 0,
-        .iamachidx = -1,
-        .iafpathidx = -1
+        .dpos = -1,
+        .mpos = -1
     };
+    if (qf->$uslots) {
+       for (int i = 0; i < TCLISTNUM(qf->$uslots); ++i) {
+           ((USLOT*) (TCLISTVALPTR(qf->$uslots, i)))->mpos = -1;
+       }
+    }
     return _qrybsrecurrmatch(qf, &ffpctx, 0);
 }
 
@@ -2379,6 +2406,9 @@ static void _qryfieldup(const EJQF *src, EJQF *target, uint32_t qflags) {
     if (src->$ufields) {
         target->$ufields = tclistdup(src->$ufields);
     }
+    if (src->$uslots) {
+        target->$uslots = tclistdup(src->$uslots);
+    }
 }
 
 /* Clone query object */
@@ -2578,17 +2608,18 @@ static bool _pushprocessedbson(_QRYCTX *ctx, const void *bsbuf, int bsbufsz) {
                         .input = &it,
                         .stopnestedarr = true,
                         .stopos = 0,
-                        .iamachidx = -1
-                    };
+                        .mpos = -1,
+                        .dpos = -1
+                   };
                     const char *dpos = strchr(dfpath, '$');
                     assert(dpos);
-                    ctx.iafpathidx = (dpos - dfpath) - 1;
+                    ctx.dpos = (dpos - dfpath) - 1;
                     qf->mflags = (qf->flags & ~EJFEXCLUDED);
                     if (!_qrybsrecurrmatch(qf, &ctx, 0)) {
                         assert(false); //something wrong, it should never be happen
-                    } else if (ctx.iamachidx >= 0) {
+                    } else if (ctx.mpos >= 0) {
                         tcxstrcat(ifield, dfpath, (dpos - dfpath));
-                        tcxstrprintf(ifield, "%d", ctx.iamachidx);
+                        tcxstrprintf(ifield, "%d", ctx.mpos);
                         tcmapput(_fkfields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), "0", strlen("0"));
                         tcxstrcat(ifield, dpos + 1, sp - (dpos - dfpath) - 1);
                         tcmapput(_ifields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), &yes, sizeof (yes));
@@ -2650,6 +2681,71 @@ static bool _exec$do(_QRYCTX *ctx, const void *bsbuf, bson *bsout) {
     }
     return true;
 }
+
+//Create update BSON object for $set and $inc operations
+static bson* _qfgetupdateobj(const EJQF *qf) {
+	assert(qf->updateobj);
+	if (!qf->$ufields || TCLISTNUM(qf->$ufields) < 1) { //we do not ref $(query) fields.
+		return qf->updateobj;
+	}
+	const EJQ *q = qf->q;	
+	char pbuf[BSON_MAX_FPATH_LEN + 1];
+	int ppos = 0;
+	bson_iterator it;
+	bson_type bt;
+	bson *ret =  bson_create();
+	bson_init(ret);	
+	for (int i = 0; i < TCLISTNUM(qf->$ufields); ++i) {
+		const char *uf = TCLISTVALPTR(qf->$ufields, i);
+		for (int j = 0; *(q->allqfields + j) != '\0'; ++j) {
+			const EJQF *kqf = *(q->allqfields + j);
+			if (kqf == qf || kqf->$uslots == NULL || TCLISTNUM(kqf->$uslots) < 1) {
+				continue;
+			}
+			for (int k = 0; k < TCLISTNUM(kqf->$uslots); ++k) {
+				USLOT *uslot = TCLISTVALPTR(kqf->$uslots, k);
+				if (uslot->op == uf && uslot->mpos >= 0) {
+					char *dp = strchr(uf, '$');
+					assert(dp);
+					ppos = (dp - uf);
+					assert(ppos == uslot->dpos + 1);
+					if (ppos < 1 || ppos >= BSON_MAX_FPATH_LEN - 1) { 
+						break;
+					}
+					memcpy(pbuf, uf, ppos);					
+					int wl = bson_numstrn(pbuf + ppos, (BSON_MAX_FPATH_LEN - ppos), uslot->mpos);
+					if (wl >= BSON_MAX_FPATH_LEN - ppos) { //output is truncated
+						break;
+					}
+					ppos += wl;
+					//copy suffix					
+					for (int fpos = (dp - uf) + 1; ppos < BSON_MAX_FPATH_LEN && *(uf + fpos) != '\0';) {
+						pbuf[ppos++] = *(uf + fpos++);
+					}
+					assert(ppos <= BSON_MAX_FPATH_LEN);
+					pbuf[ppos] = '\0';
+					
+					bt = bson_find(&it, qf->updateobj, uf);
+					if (bt == BSON_EOO) {
+						assert(false);
+						break;
+					}
+					bson_append_field_from_iterator2(pbuf, &it, ret);					
+					break;
+				}
+			}
+		}
+	}
+	BSON_ITERATOR_INIT(&it, qf->updateobj);
+	while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+		const char *key = bson_iterator_key(&it);
+		if (strchr(key, '$') == NULL) {			
+			bson_append_field_from_iterator2(key, &it, ret);			
+		}
+	} 	
+	bson_finish(ret);
+	return ret;
+} 
 
 static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
     assert(ctx && ctx->q && (ctx->q->flags & EJQUPDATING) && bsbuf && ctx->didxctx);
@@ -2729,24 +2825,30 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
             }
         }
     }
+		
     if (setqf) { //$set
+		bson *updobj = _qfgetupdateobj(setqf);
         update = true;
         bson_init_size(&bsout, bsbufsz);
-        int err = bson_merge3(bsbuf, bson_data(setqf->updateobj), &bsout);
+        int err = bson_merge3(bsbuf, bson_data(updobj), &bsout);
         if (err) {
             rv = false;
             _ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
         }
         bson_finish(&bsout);
+		if (updobj != setqf->updateobj) {
+			bson_del(updobj);
+		}
     }
     if (!rv) {
         goto finish;
     }
     if (incqf) { //$inc
+		bson *updobj = _qfgetupdateobj(incqf);
         if (!bsout.data) {
             bson_create_from_buffer2(&bsout, bsbuf, bsbufsz);
         }
-        BSON_ITERATOR_INIT(&it, incqf->updateobj);
+        BSON_ITERATOR_INIT(&it, updobj);
         while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
             if (!BSON_IS_NUM_TYPE(bt)) {
                 continue;
@@ -2780,6 +2882,9 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
                 update = true;
             }
         }
+		if (updobj != incqf->updateobj) {
+			bson_del(updobj);
+		}
         if (!rv) {
             goto finish;
         }
@@ -3729,10 +3834,38 @@ static TDBIDX* _qryfindidx(EJCOLL *coll, EJQF *qf, bson *idxmeta) {
     return NULL;
 }
 
+static void _registerallqfields(TCLIST *reg, EJQ *q) {
+    for (int i = 0; i < TCLISTNUM(q->qflist); ++i) {
+        EJQF *qf = TCLISTVALPTR(q->qflist, i);
+        assert(qf);
+        tclistpush(reg, &qf, sizeof(qf));
+    }
+    for (int i = 0; q->andqlist && i < TCLISTNUM(q->andqlist); ++i) {
+        _registerallqfields(reg, TCLISTVALPTR(q->andqlist, i));
+    }
+    for (int i = 0; q->orqlist && i < TCLISTNUM(q->orqlist); ++i) {
+        _registerallqfields(reg, TCLISTVALPTR(q->orqlist, i));
+    }
+}
+
 static bool _qrypreprocess(_QRYCTX *ctx) {
     assert(ctx->coll && ctx->q && ctx->q->qflist);
     EJQ *q = ctx->q;
-    if (ctx->qflags & JBQRYCOUNT) {
+
+    //Fill the NULL terminated registry of all *EQF fields including all $and $or QF
+    assert(!q->allqfields);
+    TCLIST *alist = tclistnew2(TCLISTINYNUM);
+    _registerallqfields(alist, q);
+    TCMALLOC(q->allqfields, sizeof(EJQF*) * (TCLISTNUM(alist) + 1));
+    for (int i = 0; i < TCLISTNUM(alist); ++i) {
+        EJQF **qfp = TCLISTVALPTR(alist, i);
+        q->allqfields[i] = *qfp; //*EJQF
+    }
+    q->allqfields[TCLISTNUM(alist)] = '\0';
+    tclistdel(alist);
+    alist = NULL;
+
+    if (ctx->qflags & JBQRYCOUNT) { //sync the user JBQRYCOUNT flag with internal
         q->flags |= EJQONLYCOUNT;
     }
     EJQF *oqf = NULL; //Order condition
@@ -3958,35 +4091,39 @@ static bool _qrypreprocess(_QRYCTX *ctx) {
         ctx->mqf = oqf;
     }
 
-//    //Now reorg qf->$ufields #91
-//    if (res && (q->flags & EJQHAS$UQUERY)) {
-//        for (int i = 0; i < TCLISTNUM(q->qflist); ++i) {
-//            EJQF *qf = TCLISTVALPTR(q->qflist, i);
-//            if (!qf->$ufields) continue;
-//            TCLIST *uflist = tcmapkeys(qf->$ufields); //got list of update $(query) fields.
-//            tcmapclear(qf->$ufields);
-//            for (int j = 0; j < TCLISTNUM(uflist); ++j) {
-//                const char *ukey = TCLISTVALPTR(uflist, j);
-//                char *pptr = strstr(ukey, ".$");
-//                assert(pptr);
-//                for (int k = 0; k < TCLISTNUM(q->qflist); ++k) {
-//                    int l;
-//                    EJQF *kqf = TCLISTVALPTR(q->qflist, k);
-//                    if (kqf == qf) { //do not process self QF
-//                        continue;
-//                    }
-//                    for (l = 0; *(ukey + l) != '\0' && *(ukey + l) == *(kqf->fpath + l); ++l);
-//                    if (ukey + l == pptr || ukey + l == pptr + 1) { //existing QF matched the $(query) prefix
-//                        // map [QF fpath -> $(query) path]
-//                        tcmapput(qf->$ufields, kqf->fpath, kqf->fpathsz, ukey, strlen(ukey));
-//                    }
-//                }
-//            }
-//            tclistdel(uflist);
-//        }
-//    }
+    if (q->flags & EJQHAS$UQUERY) { //check update $(query) projection then sync inter-qf refs #91
+        for (int i = 0; *(q->allqfields + i) != '\0'; ++i) {
+            EJQF *qf = q->allqfields[i];
+            if (!qf->$ufields) continue;
+            TCLIST *uflist = qf->$ufields;
+            for (int j = 0; j < TCLISTNUM(uflist); ++j) {
+                const char *ukey = TCLISTVALPTR(uflist, j);
+                char *pptr = strstr(ukey, ".$");
+                assert(pptr);
+                for (int k = 0; *(q->allqfields + k) != '\0'; ++k) {
+                    int l;
+                    EJQF *kqf = q->allqfields[k];
+                    if (kqf == qf || !kqf->fpath) { //do not process itself
+                       continue;
+                    }
+                    for (l = 0; *(ukey + l) != '\0' && *(ukey + l) == *(kqf->fpath + l); ++l);
+                    if (ukey + l == pptr || ukey + l == pptr + 1) { //existing QF matched the $(query) prefix
+                        if (!kqf->$uslots) {
+                            kqf->$uslots = tclistnew2(TCLISTINYNUM);
+                        }
+                        USLOT uslot = {
+                          .mpos = -1,
+                          .dpos = (pptr - ukey),
+                          .op = ukey
+                        };
+                        tclistpush(kqf->$uslots, &uslot, sizeof(uslot));
+                    }
+                }
+            }
+        }
+    }
 
-    //Init query processing tctdb column & bson buffers
+    //Init query processing buffers
     assert(!q->colbuf && !q->bsbuf);
     q->colbuf = tcxstrnew3(1024);
     q->bsbuf = tcxstrnew3(1024);
@@ -4179,6 +4316,9 @@ static void _delqfdata(const EJQ *q, const EJQF *qf) {
     }
     if (qf->$ufields) {
         tclistdel(qf->$ufields);
+    }
+    if (qf->$uslots) {
+        tclistdel(qf->$uslots);
     }
     if (qf->regex && !(EJQINTERNAL & q->flags)) {
         //We do not clear regex_t data because it not deep copy in internal queries
@@ -4507,7 +4647,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         BSON_ITERATOR_SUBITERATOR(it, &sit);
                         while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
                             if ((qf.flags & EJCONDALL) && sbt != BSON_ARRAY) {
-                                //$addToSetAll & $pullAll accepts only arrays
+                                //$addToSetAll & $pullAll accepts only a"$set"rrays
                                 continue;
                             }
                             if (!(qf.flags & EJCONDALL) && (qf.flags & (EJCONDSET | EJCONDINC))) { //Checking the $(query) positional operator.
@@ -4775,28 +4915,16 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
  */
 static TCLIST* _parseqobj(EJDB *jb, EJQ *q, bson *qspec) {
     assert(qspec);
-    int rv = 0;
-    TCLIST *res = tclistnew2(TCLISTINYNUM);
-    bson_iterator it;
-    BSON_ITERATOR_INIT(&it, qspec);
-    TCLIST *pathStack = tclistnew2(TCLISTINYNUM);
-    rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL, 0);
-    if (rv) {
-        tclistdel(res);
-        res = NULL;
-    }
-    assert(!pathStack->num);
-    tclistdel(pathStack);
-    return res;
+    return _parseqobj2(jb, q, bson_data(qspec));
 }
 
 static TCLIST* _parseqobj2(EJDB *jb, EJQ *q, const void *qspecbsdata) {
     assert(qspecbsdata);
     int rv = 0;
     TCLIST *res = tclistnew2(TCLISTINYNUM);
+    TCLIST *pathStack = tclistnew2(TCLISTINYNUM);
     bson_iterator it;
     BSON_ITERATOR_FROM_BUFFER(&it, qspecbsdata);
-    TCLIST *pathStack = tclistnew2(TCLISTINYNUM);
     rv = _parse_qobj_impl(jb, q, &it, res, pathStack, NULL, 0);
     if (rv) {
         tclistdel(res);

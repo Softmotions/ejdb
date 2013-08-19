@@ -1,3 +1,9 @@
+libtcejdb (1.1.19-4) testing; urgency=low
+
+  * Added support for MongoDB $(query) update operator #91
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 19 Aug 2013 16:07:29 +0700
+
 libtcejdb (1.1.18) testing; urgency=low
 
   * Added support MongoDB $(projection) operator #15
