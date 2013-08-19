@@ -22,7 +22,8 @@ function tcejdb() {
         autoconf
         dch -Dtesting -v"${VERSION}" || exit $?
         make -C "${EJDB_HOME}" deb-source-packages-tcejdb
-        dput -c tools/dput-raring.cf "${PPA}" "./libtcejdb_${VERSION}_source.changes"
+        cd ${EJDB_HOME}
+	dput -c tools/dput-raring.cf "${PPA}" "./libtcejdb_${VERSION}_source.changes"
     else
         echo "The configure.ac version up-to-date"
         exit 0;
