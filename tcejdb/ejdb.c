@@ -2682,14 +2682,19 @@ static bool _exec$do(_QRYCTX *ctx, const void *bsbuf, bson *bsout) {
     return true;
 }
 
+//Create update BSON object for $set and $inc operations
 static bson* _qfgetupdateobj(const EJQF *qf) {
 	assert(qf->updateobj);
 	if (!qf->$ufields || TCLISTNUM(qf->$ufields) < 1) { //we do not ref $(query) fields.
 		return qf->updateobj;
 	}
-	const EJQ *q = qf->q;
+	const EJQ *q = qf->q;	
+	char pbuf[BSON_MAX_FPATH_LEN + 1];
+	int ppos = 0;
+	bson_iterator it;
+	bson_type bt;
 	bson *ret =  bson_create();
-	bson_init(ret);
+	bson_init(ret);	
 	for (int i = 0; i < TCLISTNUM(qf->$ufields); ++i) {
 		const char *uf = TCLISTVALPTR(qf->$ufields, i);
 		for (int j = 0; *(q->allqfields + j) != '\0'; ++j) {
@@ -2699,15 +2704,45 @@ static bson* _qfgetupdateobj(const EJQF *qf) {
 			}
 			for (int k = 0; k < TCLISTNUM(kqf->$uslots); ++k) {
 				USLOT *uslot = TCLISTVALPTR(kqf->$uslots, k);
-				if (uslot->op == uf) {
+				if (uslot->op == uf && uslot->mpos >= 0) {
+					char *dp = strchr(uf, '$');
+					assert(dp);
+					ppos = (dp - uf);
+					assert(ppos == uslot->dpos + 1);
+					if (ppos < 1 || ppos >= BSON_MAX_FPATH_LEN - 1) { 
+						break;
+					}
+					memcpy(pbuf, uf, ppos);					
+					int wl = bson_numstrn(pbuf + ppos, (BSON_MAX_FPATH_LEN - ppos), uslot->mpos);
+					if (wl >= BSON_MAX_FPATH_LEN - ppos) { //output is truncated
+						break;
+					}
+					ppos += wl;
+					//copy suffix					
+					for (int fpos = (dp - uf) + 1; ppos < BSON_MAX_FPATH_LEN && *(uf + fpos) != '\0';) {
+						pbuf[ppos++] = *(uf + fpos++);
+					}
+					assert(ppos <= BSON_MAX_FPATH_LEN);
+					pbuf[ppos] = '\0';
 					
-					//todo
-					
+					bt = bson_find(&it, qf->updateobj, uf);
+					if (bt == BSON_EOO) {
+						assert(false);
+						break;
+					}
+					bson_append_field_from_iterator2(pbuf, &it, ret);					
 					break;
 				}
 			}
 		}
 	}
+	BSON_ITERATOR_INIT(&it, qf->updateobj);
+	while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+		const char *key = bson_iterator_key(&it);
+		if (strchr(key, '$') == NULL) {			
+			bson_append_field_from_iterator2(key, &it, ret);			
+		}
+	} 	
 	bson_finish(ret);
 	return ret;
 } 
@@ -2790,26 +2825,30 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
             }
         }
     }
-	
-	
+		
     if (setqf) { //$set
+		bson *updobj = _qfgetupdateobj(setqf);
         update = true;
         bson_init_size(&bsout, bsbufsz);
-        int err = bson_merge3(bsbuf, bson_data(setqf->updateobj), &bsout);
+        int err = bson_merge3(bsbuf, bson_data(updobj), &bsout);
         if (err) {
             rv = false;
             _ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
         }
         bson_finish(&bsout);
+		if (updobj != setqf->updateobj) {
+			bson_del(updobj);
+		}
     }
     if (!rv) {
         goto finish;
     }
     if (incqf) { //$inc
+		bson *updobj = _qfgetupdateobj(incqf);
         if (!bsout.data) {
             bson_create_from_buffer2(&bsout, bsbuf, bsbufsz);
         }
-        BSON_ITERATOR_INIT(&it, incqf->updateobj);
+        BSON_ITERATOR_INIT(&it, updobj);
         while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
             if (!BSON_IS_NUM_TYPE(bt)) {
                 continue;
@@ -2843,6 +2882,9 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
                 update = true;
             }
         }
+		if (updobj != incqf->updateobj) {
+			bson_del(updobj);
+		}
         if (!rv) {
             goto finish;
         }
@@ -4605,7 +4647,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         BSON_ITERATOR_SUBITERATOR(it, &sit);
                         while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
                             if ((qf.flags & EJCONDALL) && sbt != BSON_ARRAY) {
-                                //$addToSetAll & $pullAll accepts only arrays
+                                //$addToSetAll & $pullAll accepts only a"$set"rrays
                                 continue;
                             }
                             if (!(qf.flags & EJCONDALL) && (qf.flags & (EJCONDSET | EJCONDINC))) { //Checking the $(query) positional operator.

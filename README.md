@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-08-19` **[v1.1.19 Added support the long awaited mongodb update positional operator] (https://github.com/Softmotions/ejdb/wiki/V1.1.19)**
 * `2013-08-11` **[v1.1.18 Added support for mongodb $ projection] (https://github.com/Softmotions/ejdb/wiki/V1.1.18)**
 * `2013-08-08` **[v1.1.17 Now supported $and & $or mongodb operators] (https://github.com/Softmotions/ejdb/issues/81)**
 * `2013-07-15` **[Google Go binding] (https://github.com/mkilling/goejdb)**
@@ -466,8 +467,8 @@ gcc -o csnippet csnippet.o -ltcejdb
 
 Building & Installation
 --------------------------------
-
-[Installing on Debian/Ubuntu](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)
+ * [Installation on windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)
+ * [Installation on Debian/Ubuntu](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)
 
 Manual installation
 -------------------------------
@@ -539,6 +540,7 @@ Queries
  *          Example: {z : 33, $and : [ {$or : [{a : 1}, {b : 2}]}, {$or : [{c : 5}, {d : 7}]} ] }
  *
  *      - Mongodb $(projection) operator supported. (http://docs.mongodb.org/manual/reference/projection/positional/#proj._S_)
+ *		- Mongodb positional $ update operator supported. (http://docs.mongodb.org/manual/reference/operator/positional/)
  *
  *
  *  - Queries can be used to update records:

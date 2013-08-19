@@ -40,5 +40,4 @@ init:
 	- cp ./tcejdb/debian/changelog ./Changelog 
 	- cp ./tcejdb/debian/changelog ./tcejdb/Changelog
 
-
 .PHONY: all clean deb-packages deb-source-packages init initdeb

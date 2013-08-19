@@ -4509,7 +4509,7 @@ void testTicket81() {
 // https://github.com/Softmotions/ejdb/issues/15
 // http://docs.mongodb.org/manual/reference/projection/positional/#proj._S_
 
-void test$projection() {
+void testDQprojection() {
     EJCOLL *coll = ejdbcreatecoll(jb, "f_projection", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
 
@@ -4649,6 +4649,129 @@ void test$projection() {
     bson_destroy(&bsq1);
 }
 
+
+// $(query)
+// https://github.com/Softmotions/ejdb/issues/15
+// http://docs.mongodb.org/manual/reference/projection/positional/#proj._S_
+
+void testDQupdate() {
+	EJCOLL *coll = ejdbcreatecoll(jb, "f_update", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);	
+	
+	bson b;
+    bson_oid_t oid;
+
+    bson_init(&b);
+    bson_append_int(&b, "z", 33);
+    bson_append_start_array(&b, "arr");
+    bson_append_int(&b, "0", 0);
+    bson_append_int(&b, "1", 1);
+    bson_append_int(&b, "2", 2);
+    bson_append_int(&b, "3", 3);
+    bson_append_finish_array(&b);
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+					
+	bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "z", 33);
+	bson_append_int(&bsq1, "arr", 1);
+    bson_append_start_object(&bsq1, "$set");
+	bson_append_int(&bsq1, "arr.$", 4);    
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+
+	TCXSTR *log = tcxstrnew();
+    uint32_t count;
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);	
+	CU_ASSERT_EQUAL(count, 1);
+	
+    ejdbquerydel(q1);
+    tcxstrdel(log);
+    bson_destroy(&bsq1);
+
+	//Now check It		
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "z", 33);
+	bson_append_int(&bsq1, "arr", 4);    
+    bson_finish(&bsq1);
+		
+	log = tcxstrnew();    
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+	CU_ASSERT_EQUAL(count, 1);
+	
+	ejdbquerydel(q1);
+    tcxstrdel(log);
+    bson_destroy(&bsq1);
+		
+}
+
+void testDQupdate2() {
+	EJCOLL *coll = ejdbcreatecoll(jb, "f_update", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);	
+	
+	bson b;
+    bson_oid_t oid;
+	
+    bson_init(&b);
+    bson_append_int(&b, "z", 44);
+    bson_append_start_array(&b, "arr");
+    bson_append_start_object(&b, "0");
+    bson_append_int(&b, "h", 1);
+    bson_append_finish_object(&b);
+    bson_append_start_object(&b, "1");
+    bson_append_int(&b, "h", 2);
+    bson_append_finish_object(&b);
+    bson_append_finish_array(&b);
+    bson_finish(&b);    
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+		
+	bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "z", 44);
+	bson_append_int(&bsq1, "arr.h", 2);
+    bson_append_start_object(&bsq1, "$set");
+	bson_append_int(&bsq1, "arr.$.h", 4);    
+	bson_append_int(&bsq1, "arr.$.z", 5);    
+	bson_append_int(&bsq1, "k", 55);    
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+
+	TCXSTR *log = tcxstrnew();
+    uint32_t count;
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);	
+	CU_ASSERT_EQUAL(count, 1);
+	
+    ejdbquerydel(q1);
+    tcxstrdel(log);
+    bson_destroy(&bsq1);
+
+	//Now check It		
+	bson_init_as_query(&bsq1);
+	bson_append_int(&bsq1, "k", 55);
+	bson_append_int(&bsq1, "arr.h", 4);    
+	bson_append_int(&bsq1, "arr.z", 5);    
+    bson_finish(&bsq1);
+		
+	log = tcxstrnew();    
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+	CU_ASSERT_EQUAL(count, 1);
+	
+	ejdbquerydel(q1);
+    tcxstrdel(log);
+    bson_destroy(&bsq1);		
+}
+
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
@@ -4722,7 +4845,9 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket88", testTicket88)) ||
             (NULL == CU_add_test(pSuite, "testTicket89", testTicket89)) ||
             (NULL == CU_add_test(pSuite, "testTicket81", testTicket81)) ||
-            (NULL == CU_add_test(pSuite, "test$projection", test$projection)) ||
+            (NULL == CU_add_test(pSuite, "test$projection", testDQprojection)) || 
+            (NULL == CU_add_test(pSuite, "test$update", testDQupdate)) ||
+            (NULL == CU_add_test(pSuite, "test$update2", testDQupdate2)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
             ) {
         CU_cleanup_registry();
