@@ -41,7 +41,7 @@ namespace Ejdb.DB {
 	/// </summary>
 	public class EJDB : IDisposable {
 		//.//////////////////////////////////////////////////////////////////
-		// 						Native open modes									  
+		// 						Native open modes
 		//.//////////////////////////////////////////////////////////////////
 		/// <summary>
 		/// Open as a reader.
@@ -83,7 +83,7 @@ namespace Ejdb.DB {
 		/// </summary>
 		public const int DEFAULT_OPEN_MODE = (JBOWRITER | JBOCREAT);
 		//.//////////////////////////////////////////////////////////////////
-		// 				 Native index operations & types (ejdb.h)									  
+		// 				 Native index operations & types (ejdb.h)
 		//.//////////////////////////////////////////////////////////////////
 		/// <summary>
 		/// Drop index.
@@ -150,16 +150,18 @@ namespace Ejdb.DB {
 
 		bool _throwonfail = true;
 		//.//////////////////////////////////////////////////////////////////
-		//   				Native functions refs									  
+		//   				Native functions refs
 		//.//////////////////////////////////////////////////////////////////
+
 		#region NativeRefs
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbnew", CallingConvention = CallingConvention.Cdecl)]
+
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbnew", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbnew();
 
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbdel", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbdel", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbdel([In] IntPtr db);
 
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbopen", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbopen", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbopen([In] IntPtr db, [In] IntPtr path, int mode);
 
 		internal static bool _ejdbopen(IntPtr db, string path, int mode) {
@@ -171,19 +173,19 @@ namespace Ejdb.DB {
 			}
 		}
 
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbclose", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbclose", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbclose([In] IntPtr db);
 
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbisopen", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbisopen", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbisopen([In] IntPtr db);
 
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbecode", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbecode", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern int _ejdbecode([In] IntPtr db);
 
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdberrmsg", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdberrmsg", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdberrmsg(int ecode);
 
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbgetcoll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbgetcoll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbgetcoll([In] IntPtr db, [In] IntPtr cname);
 
 		internal static IntPtr _ejdbgetcoll(IntPtr db, string cname) {
@@ -195,10 +197,10 @@ namespace Ejdb.DB {
 			}
 		}
 
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbcreatecoll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbcreatecoll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbcreatecoll([In] IntPtr db, [In] IntPtr cname, IntPtr opts);
 
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbcreatecoll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbcreatecoll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbcreatecoll([In] IntPtr db, [In] IntPtr cname, ref EJDBCollectionOptionsN opts);
 
 		internal static IntPtr _ejdbcreatecoll(IntPtr db, String cname, EJDBCollectionOptionsN? opts) {
@@ -215,7 +217,7 @@ namespace Ejdb.DB {
 			}
 		}
 		//EJDB_EXPORT bool ejdbrmcoll(EJDB *jb, const char *colname, bool unlinkfile);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbrmcoll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbrmcoll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbrmcoll([In] IntPtr db, [In] IntPtr cname, bool unlink);
 
 		internal static bool _ejdbrmcoll(IntPtr db, string cname, bool unlink) {
@@ -230,83 +232,59 @@ namespace Ejdb.DB {
 		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbcommand2", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbcommand([In] IntPtr db, [In] byte[] cmd);
 		//EJDB_EXPORT bool ejdbsavebson3(EJCOLL *jcoll, void *bsdata, bson_oid_t *oid, bool merge);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbsavebson3", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbsavebson3", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbsavebson([In] IntPtr coll, [In] byte[] bsdata, [Out] byte[] oid, [In] bool merge);
 		//EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbloadbson", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbloadbson", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbloadbson([In] IntPtr coll, [In] byte[] oid);
 		//EJDB_EXPORT const char* bson_data2(const bson *b, int *bsize);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "bson_data2", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "bson_data2", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _bson_data2([In] IntPtr bsptr, out int size);
 		//EJDB_EXPORT void bson_del(bson *b);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "bson_del", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "bson_del", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern void _bson_del([In] IntPtr bsptr);
 		//EJDB_EXPORT bool ejdbrmbson(EJCOLL *coll, bson_oid_t *oid);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbrmbson", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbrmbson", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbrmbson([In] IntPtr cptr, [In] byte[] oid);
 		//EJDB_EXPORT bool ejdbsyncdb(EJDB *jb)
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbsyncdb", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbsyncdb", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbsyncdb([In] IntPtr db);
 		//EJDB_EXPORT bool ejdbsyncoll(EJDB *jb)
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbsyncoll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbsyncoll", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbsyncoll([In] IntPtr coll);
 		//EJDB_EXPORT bool ejdbsetindex(EJCOLL *coll, const char *ipath, int flags);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbsetindex", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbsetindex", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbsetindex([In] IntPtr coll, [In] IntPtr ipathptr, int flags);
 		//EJDB_EXPORT bson* ejdbmeta(EJDB *jb)
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbmeta", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbmeta", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbmeta([In] IntPtr db);
 		//EJDB_EXPORT bool ejdbtranbegin(EJCOLL *coll);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbtranbegin", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbtranbegin", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbtranbegin([In] IntPtr coll);
 		//EJDB_EXPORT bool ejdbtrancommit(EJCOLL *coll);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbtrancommit", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbtrancommit", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbtrancommit([In] IntPtr coll);
 		//EJDB_EXPORT bool ejdbtranabort(EJCOLL *coll);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbtranabort", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbtranabort", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbtranabort([In] IntPtr coll);
 		//EJDB_EXPORT bool ejdbtranstatus(EJCOLL *jcoll, bool *txactive);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbtranstatus", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbtranstatus", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern bool _ejdbtranstatus([In] IntPtr coll, out bool txactive);
 		//EJDB_EXPORT const char *ejdbversion();
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbversion", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbversion", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbversion();
-        
-        //PUT HERE BY LA
-        //EJDB_EXPORT bson* json2bson(const char *jsonstr);
-        [DllImport(EJDB_LIB_NAME, EntryPoint = "json2bson", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr _json2bson([In] IntPtr jsonstr);
+		//EJDB_EXPORT bson* json2bson(const char *jsonstr);
+		[DllImport(EJDB_LIB_NAME, EntryPoint = "json2bson", CallingConvention = CallingConvention.Cdecl)]
+		internal static extern IntPtr _json2bson([In] IntPtr jsonstr);
 
-        internal static IntPtr _json2bson(string jsonstr)
-        {
-            IntPtr jsonptr = Native.NativeUtf8FromString(jsonstr); //UnixMarshal.StringToHeap(jsonstr, Encoding.UTF8);
-            try
-            {
-                return _json2bson(jsonptr);
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(jsonptr); //UnixMarshal.FreeHeap(jsonptr);
-            }
-        }
-
-        public BSONDocument Json2Bson(string json)
-        {
-            IntPtr bsonret = _json2bson(json);
-            if (bsonret == IntPtr.Zero)
-            {
-                return null;
-            }
-            byte[] bsdata = BsonPtrIntoByteArray(bsonret);
-            if (bsdata.Length == 0)
-            {
-                return null;
-            }
-            BSONIterator it = new BSONIterator(bsdata);
-            return it.ToBSONDocument();
-        }
-
-
+		internal static IntPtr _json2bson(string jsonstr) {
+			IntPtr jsonptr = Native.NativeUtf8FromString(jsonstr);
+			try {
+				return _json2bson(jsonptr);
+			} finally {
+				Marshal.FreeHGlobal(jsonptr); //UnixMarshal.FreeHeap(jsonptr);
+			}
+		}
 
 		internal static bool _ejdbsetindex(IntPtr coll, string ipath, int flags) {
 			IntPtr ipathptr = Native.NativeUtf8FromString(ipath); //UnixMarshal.StringToHeap(ipath, Encoding.UTF8);
@@ -316,7 +294,9 @@ namespace Ejdb.DB {
 				Marshal.FreeHGlobal(ipathptr); //UnixMarshal.FreeHeap(ipathptr);
 			}
 		}
+
 		#endregion
+
 		/// <summary>
 		/// If true <see cref="Ejdb.DB.EJDBException"/> will be thrown in the case of failed operation 
 		/// otherwise method will return boolean status flag. Default value: <c>true</c> 
@@ -438,7 +418,7 @@ namespace Ejdb.DB {
 		/// </summary>
 		/// <param name="path">The main database file path.</param>
 		/// <param name="omode">Open mode.</param>
-		public EJDB(string path, int omode=DEFAULT_OPEN_MODE) {
+		public EJDB(string path, int omode = DEFAULT_OPEN_MODE) {
 			if (EJDB.LibHexVersion < 0x1113) {
 				throw new EJDBException("EJDB library version must be at least '1.1.13' or greater");
 			}
@@ -875,7 +855,7 @@ namespace Ejdb.DB {
 		/// </remarks>
 		/// <param name="cmd">Command object</param>
 		/// <returns>Command response.</returns>
-		public BSONDocument Command(BSONDocument cmd)  {
+		public BSONDocument Command(BSONDocument cmd) {
 			CheckDisposed();
 			byte[] cmdata = cmd.ToByteArray();
 			//internal static extern IntPtr _ejdbcommand([In] IntPtr db, [In] byte[] cmd);
@@ -947,7 +927,6 @@ namespace Ejdb.DB {
 			}
 			return true;
 		}
-	
 
 		bool Save(IntPtr cptr, BSONDocument doc, bool merge) {
 			bool rv;
@@ -1026,8 +1005,28 @@ namespace Ejdb.DB {
 			CheckDisposed();
 			return new EJDBQuery(this, new BSONDocument(), defaultcollection);
 		}
+
+		/// <summary>
+		/// Convert JSON string into BSONDocument.
+		/// Returns `null` if conversion failed.
+		/// </summary>
+		/// <returns>The BSONDocument instance on success.</returns>
+		/// <param name="json">JSON string</param>
+		public BSONDocument Json2Bson(string json) {
+			IntPtr bsonret = _json2bson(json);
+			if (bsonret == IntPtr.Zero) {
+				return null;
+			}
+			byte[] bsdata = BsonPtrIntoByteArray(bsonret);
+			if (bsdata.Length == 0) {
+				return null;
+			}
+			BSONIterator it = new BSONIterator(bsdata);
+			return it.ToBSONDocument();
+		}
+
 		//.//////////////////////////////////////////////////////////////////
-		// 						 Private staff							   //	  
+		// 						 Private staff							   //
 		//.//////////////////////////////////////////////////////////////////
 		internal IntPtr DBPtr {
 			get {
