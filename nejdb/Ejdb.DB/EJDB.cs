@@ -271,6 +271,42 @@ namespace Ejdb.DB {
 		//EJDB_EXPORT const char *ejdbversion();
         [DllImport(EJDB_LIB_NAME, EntryPoint = "ejdbversion", CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr _ejdbversion();
+        
+        //PUT HERE BY LA
+        //EJDB_EXPORT bson* json2bson(const char *jsonstr);
+        [DllImport(EJDB_LIB_NAME, EntryPoint = "json2bson", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr _json2bson([In] IntPtr jsonstr);
+
+        internal static IntPtr _json2bson(string jsonstr)
+        {
+            IntPtr jsonptr = Native.NativeUtf8FromString(jsonstr); //UnixMarshal.StringToHeap(jsonstr, Encoding.UTF8);
+            try
+            {
+                return _json2bson(jsonptr);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(jsonptr); //UnixMarshal.FreeHeap(jsonptr);
+            }
+        }
+
+        public BSONDocument Json2Bson(string json)
+        {
+            IntPtr bsonret = _json2bson(json);
+            if (bsonret == IntPtr.Zero)
+            {
+                return null;
+            }
+            byte[] bsdata = BsonPtrIntoByteArray(bsonret);
+            if (bsdata.Length == 0)
+            {
+                return null;
+            }
+            BSONIterator it = new BSONIterator(bsdata);
+            return it.ToBSONDocument();
+        }
+
+
 
 		internal static bool _ejdbsetindex(IntPtr coll, string ipath, int flags) {
 			IntPtr ipathptr = Native.NativeUtf8FromString(ipath); //UnixMarshal.StringToHeap(ipath, Encoding.UTF8);
