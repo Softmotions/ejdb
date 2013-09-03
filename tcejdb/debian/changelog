@@ -1,3 +1,10 @@
+libtcejdb (1.1.23) testing; urgency=low
+
+  * Fixed crash with $elemMatch inside $and #96
+  * Memleak #97
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 03 Sep 2013 23:47:39 +0700
+
 libtcejdb (1.1.22) testing; urgency=low
 
   * Testing new package build script
