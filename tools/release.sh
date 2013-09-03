@@ -24,7 +24,7 @@ function _npm() {
     echo "Building npm package";
     cd ${EJDB_HOME}
     sed -i 's/\"version\" *\: *.*\,/"version" : \"'"$1"'\"\,/' ./package.json
-    sed -r -i 's/tcejdb-[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-/tcejdb-'"$1"'-/' ./package.json || exit $?
+    sed -r -i 's/tcejdb-[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-/tcejdb-'"$1"'-/g' ./package.json || exit $?
     make clean
     ##npm publish || exit $?
     exit 0;
@@ -51,8 +51,10 @@ function _win() {
   ${EJDB_HOME}/tcejdb/mxe/mxe-build.sh ../../mxe $1 || exit $?
   #tcejdb-1.1.22-mingw32-i686.zip
   if [ "${1}" == "w32" ]; then
+    sed -r -i 's/tcejdb-[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-mingw32-i686/tcejdb-'"$2"'-mingw32-i686/g' ${EJDB_HOME}/tcejdb/WIN32.md || exit $?
     cp ${EJDB_HOME}/tcejdb/tcejdb-${2}-mingw32-i686.zip ${HOME}/Dropbox/Public/ejdb
   elif [ "${1}" == "w64" ]; then
+    sed -r -i 's/tcejdb-[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-mingw32-x86/tcejdb-'"$2"'-mingw32-x86/g' ${EJDB_HOME}/tcejdb/WIN32.md || exit $?
     cp ${EJDB_HOME}/tcejdb/tcejdb-${2}-mingw32-x86_64.zip ${HOME}/Dropbox/Public/ejdb
   fi
   exit 0;
