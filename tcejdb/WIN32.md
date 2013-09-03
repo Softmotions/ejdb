@@ -1,8 +1,8 @@
 Precompiled windows binaries
 =========================================
 
-* [tcejdb-1.1.19-mingw32-i686](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.19-mingw32-i686.zip)
-* [tcejdb-1.1.19-mingw32-x86_64](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.19-mingw32-x86_64.zip)
+* [tcejdb-1.1.23-mingw32-i686](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.23-mingw32-i686.zip)
+* [tcejdb-1.1.23-mingw32-x86_64](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.23-mingw32-x86_64.zip)
 
 **[Installing EJDB NodeJS win32 module](#ejdb-nodejs-module-installation)**
 
