@@ -2238,8 +2238,8 @@ void testQuery25() { //$or
 
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
         CU_ASSERT_TRUE(
-                !bson_compare_string("Ivanov", TCLISTVALPTR(q1res, i), "name") ||
-                !bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
+            !bson_compare_string("Ivanov", TCLISTVALPTR(q1res, i), "name") ||
+            !bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
 
     }
     bson_destroy(&bsq1);
@@ -2297,8 +2297,8 @@ void testQuery25_2() { //$or alternative
 
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
         CU_ASSERT_TRUE(
-                !bson_compare_string("Ivanov", TCLISTVALPTR(q1res, i), "name") ||
-                !bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
+            !bson_compare_string("Ivanov", TCLISTVALPTR(q1res, i), "name") ||
+            !bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
 
     }
     bson_destroy(&bsq1);
@@ -2728,9 +2728,9 @@ void testICaseIndex() {
 
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
         CU_ASSERT_TRUE(
-                !bson_compare_string("HeLlo WorlD", TCLISTVALPTR(q1res, i), "name") ||
-                !bson_compare_string("THéÂtRE — театр", TCLISTVALPTR(q1res, i), "name")
-                );
+            !bson_compare_string("HeLlo WorlD", TCLISTVALPTR(q1res, i), "name") ||
+            !bson_compare_string("THéÂtRE — театр", TCLISTVALPTR(q1res, i), "name")
+        );
     }
 
     bson_destroy(&bsq1);
@@ -3421,7 +3421,7 @@ void testTokens$begin() {
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 2"));
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
         CU_ASSERT_TRUE(!bson_compare_string("Адаманский", TCLISTVALPTR(q1res, i), "name") ||
-                !bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
+                       !bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
     }
 
     bson_destroy(&bsq1);
@@ -3455,7 +3455,7 @@ void testTokens$begin() {
     CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 2"));
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
         CU_ASSERT_TRUE(!bson_compare_string("Адаманский", TCLISTVALPTR(q1res, i), "name") ||
-                !bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
+                       !bson_compare_string("John Travolta", TCLISTVALPTR(q1res, i), "name"));
     }
 
     bson_destroy(&bsq1);
@@ -3528,7 +3528,8 @@ void test$addToSet() {
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     log = tcxstrnew();
-    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);\
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    \
     CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
     //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
 
@@ -3576,7 +3577,8 @@ void test$addToSet() {
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     log = tcxstrnew();
-    q1res = ejdbqryexecute(coll, q1, &count, 0, log);\
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    \
     CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
     //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
 
@@ -3633,7 +3635,8 @@ void test$addToSet() {
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     log = tcxstrnew();
-    q1res = ejdbqryexecute(coll, q1, &count, 0, log);\
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    \
     CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
     //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
 
@@ -3688,7 +3691,8 @@ void test$pull() {
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     log = tcxstrnew();
-    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);\
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    \
     CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
     //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
 
@@ -4588,7 +4592,7 @@ void testDQprojection() {
     bson_destroy(&bshints);
     bson_destroy(&bsq1);
 
-/////// Q2
+    /////// Q2
     bson_init_as_query(&bshints);
     bson_append_start_object(&bshints, "$fields");
     bson_append_int(&bshints, "arr.$.h", 1);
@@ -4649,16 +4653,49 @@ void testDQprojection() {
     bson_destroy(&bsq1);
 }
 
+void testTicket96() {
+    EJCOLL *coll = ejdbgetcoll(jb, "f_projection");
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    //{ $and : [ {arr : {$elemMatch : {h : 2}}} ]
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_array(&bsq1, "$and");
+    bson_append_start_object(&bsq1, "0");
+    bson_append_start_object(&bsq1, "arr");
+    bson_append_start_object(&bsq1, "$elemMatch");
+    bson_append_int(&bsq1, "h", 2);
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_object(&bsq1);
+    bson_append_finish_array(&bsq1);
+    bson_finish(&bsq1);
+    
+    CU_ASSERT_EQUAL(bsq1.err, 0);
+
+    TCXSTR *log = tcxstrnew();
+    uint32_t count;
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    bson_destroy(&bsq1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);    
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+
+    tclistdel(q1res);
+    ejdbquerydel(q1);
+    tcxstrdel(log);
+}
+
 
 // $(query)
 // https://github.com/Softmotions/ejdb/issues/15
 // http://docs.mongodb.org/manual/reference/projection/positional/#proj._S_
 
 void testDQupdate() {
-	EJCOLL *coll = ejdbcreatecoll(jb, "f_update", NULL);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);	
-	
-	bson b;
+    EJCOLL *coll = ejdbcreatecoll(jb, "f_update", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson b;
     bson_oid_t oid;
 
     bson_init(&b);
@@ -4672,52 +4709,52 @@ void testDQupdate() {
     bson_finish(&b);
     CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
     bson_destroy(&b);
-					
-	bson bsq1;
+
+    bson bsq1;
     bson_init_as_query(&bsq1);
     bson_append_int(&bsq1, "z", 33);
-	bson_append_int(&bsq1, "arr", 1);
+    bson_append_int(&bsq1, "arr", 1);
     bson_append_start_object(&bsq1, "$set");
-	bson_append_int(&bsq1, "arr.$", 4);    
+    bson_append_int(&bsq1, "arr.$", 4);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
 
-	TCXSTR *log = tcxstrnew();
+    TCXSTR *log = tcxstrnew();
     uint32_t count;
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
-    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);	
-	CU_ASSERT_EQUAL(count, 1);
-	
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+    CU_ASSERT_EQUAL(count, 1);
+
     ejdbquerydel(q1);
     tcxstrdel(log);
     bson_destroy(&bsq1);
 
-	//Now check It		
+    //Now check It
     bson_init_as_query(&bsq1);
     bson_append_int(&bsq1, "z", 33);
-	bson_append_int(&bsq1, "arr", 4);    
+    bson_append_int(&bsq1, "arr", 4);
     bson_finish(&bsq1);
-		
-	log = tcxstrnew();    
+
+    log = tcxstrnew();
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
-	CU_ASSERT_EQUAL(count, 1);
-	
-	ejdbquerydel(q1);
+    CU_ASSERT_EQUAL(count, 1);
+
+    ejdbquerydel(q1);
     tcxstrdel(log);
     bson_destroy(&bsq1);
-		
+
 }
 
 void testDQupdate2() {
-	EJCOLL *coll = ejdbcreatecoll(jb, "f_update", NULL);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);	
-	
-	bson b;
+    EJCOLL *coll = ejdbcreatecoll(jb, "f_update", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson b;
     bson_oid_t oid;
-	
+
     bson_init(&b);
     bson_append_int(&b, "z", 44);
     bson_append_start_array(&b, "arr");
@@ -4728,48 +4765,48 @@ void testDQupdate2() {
     bson_append_int(&b, "h", 2);
     bson_append_finish_object(&b);
     bson_append_finish_array(&b);
-    bson_finish(&b);    
+    bson_finish(&b);
     CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
     bson_destroy(&b);
-		
-	bson bsq1;
+
+    bson bsq1;
     bson_init_as_query(&bsq1);
     bson_append_int(&bsq1, "z", 44);
-	bson_append_int(&bsq1, "arr.h", 2);
+    bson_append_int(&bsq1, "arr.h", 2);
     bson_append_start_object(&bsq1, "$set");
-	bson_append_int(&bsq1, "arr.$.h", 4);    
-	bson_append_int(&bsq1, "arr.$.z", 5);    
-	bson_append_int(&bsq1, "k", 55);    
+    bson_append_int(&bsq1, "arr.$.h", 4);
+    bson_append_int(&bsq1, "arr.$.z", 5);
+    bson_append_int(&bsq1, "k", 55);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
 
-	TCXSTR *log = tcxstrnew();
+    TCXSTR *log = tcxstrnew();
     uint32_t count;
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
-    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);	
-	CU_ASSERT_EQUAL(count, 1);
-	
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+    CU_ASSERT_EQUAL(count, 1);
+
     ejdbquerydel(q1);
     tcxstrdel(log);
     bson_destroy(&bsq1);
 
-	//Now check It		
-	bson_init_as_query(&bsq1);
-	bson_append_int(&bsq1, "k", 55);
-	bson_append_int(&bsq1, "arr.h", 4);    
-	bson_append_int(&bsq1, "arr.z", 5);    
+    //Now check It
+    bson_init_as_query(&bsq1);
+    bson_append_int(&bsq1, "k", 55);
+    bson_append_int(&bsq1, "arr.h", 4);
+    bson_append_int(&bsq1, "arr.z", 5);
     bson_finish(&bsq1);
-		
-	log = tcxstrnew();    
+
+    log = tcxstrnew();
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
-	CU_ASSERT_EQUAL(count, 1);
-	
-	ejdbquerydel(q1);
+    CU_ASSERT_EQUAL(count, 1);
+
+    ejdbquerydel(q1);
     tcxstrdel(log);
-    bson_destroy(&bsq1);		
+    bson_destroy(&bsq1);
 }
 
 int main() {
@@ -4845,11 +4882,12 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket88", testTicket88)) ||
             (NULL == CU_add_test(pSuite, "testTicket89", testTicket89)) ||
             (NULL == CU_add_test(pSuite, "testTicket81", testTicket81)) ||
-            (NULL == CU_add_test(pSuite, "test$projection", testDQprojection)) || 
+            (NULL == CU_add_test(pSuite, "test$projection", testDQprojection)) ||
             (NULL == CU_add_test(pSuite, "test$update", testDQupdate)) ||
             (NULL == CU_add_test(pSuite, "test$update2", testDQupdate2)) ||
+            (NULL == CU_add_test(pSuite, "testTicket96", testTicket96)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
-            ) {
+       ) {
         CU_cleanup_registry();
         return CU_get_error();
     }
