@@ -120,16 +120,16 @@ function tcejdb() {
     do
         case "$c" in
             "dput" )
-                _dput ${VERSION} || exit $?
+                (_dput ${VERSION}) || exit $?
             ;;
             "npm" )
-                _npm ${VERSION} || exit $?
+                (_npm ${VERSION}) || exit $?
             ;;
             "w32" )
-                _win "w32" ${VERSION} || exit $?
+                (_win "w32" ${VERSION}) || exit $?
              ;;
             "w64" )
-                _win "w64" ${VERSION} || exit $?
+                (_win "w64" ${VERSION}) || exit $?
             ;;
             * )
                 echo "Invalid command";
