@@ -4,10 +4,17 @@ Gem::Specification.new do |spec|
   spec.summary = 'Ruby binding for EJDB database engine.'
   spec.author = 'Softmotions'
   spec.homepage = 'http://ejdb.org'
+  spec.license = 'LGPL'
 
   spec.required_ruby_version = '>= 1.9.1'
-  spec.files = Dir['src/*'] + Dir['extconf.rb']
+  spec.files = Dir['ext/**/*']
   spec.platform = Gem::Platform::RUBY
-  spec.require_paths = ['.', 'src']
-  spec.extensions = Dir['extconf.rb']
+  spec.require_paths = ['ext']
+  spec.extensions = Dir['ext/rbejdb/extconf.rb']
+
+  spec.has_rdoc = true
+  spec.rdoc_options = %w[
+    --exclude .*\.o
+    --exclude .*\.so
+  ]
 end

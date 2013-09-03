@@ -3,7 +3,7 @@ all: build doc
 
 build:
 	mkdir -p build
-	cd ./build; ruby ../extconf.rb
+	cd ./build; ruby ../ext/rbejdb/extconf.rb ../ext/rbejdb/src
 	make -C ./build
 
 install:
@@ -13,7 +13,7 @@ check:
 	make -C ./test
 
 doc:
-	rdoc src
+	rdoc ext/rbejdb/src
 
 build-gem:
 	gem build rbejdb.gemspec
