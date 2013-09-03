@@ -4035,6 +4035,9 @@ static bool _qrypreprocess(_QRYCTX *ctx) {
             firstorderqf = true;
         }
         if (!qf->idx || !qf->idxmeta) {
+            if (qf->idxmeta) {
+                bson_del(qf->idxmeta);
+            }
             qf->idx = NULL;
             qf->idxmeta = NULL;
             continue;
