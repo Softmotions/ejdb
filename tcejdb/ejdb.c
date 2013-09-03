@@ -527,7 +527,7 @@ EJQ* ejdbqueryaddor(EJDB *jb, EJQ *q, const void *orbsdata) {
     if (q->orqlist == NULL) {
         q->orqlist = tclistnew2(TCLISTINYNUM);
     }
-    tclistpush(q->orqlist, &oq, sizeof(oq));
+    TCLISTPUSH(q->orqlist, &oq, sizeof(oq));
     return q;
 }
 
@@ -2441,7 +2441,7 @@ static bool _qrydup(const EJQ *src, EJQ *target, uint32_t qflags) {
             EJQ *q;
             TCMALLOC(q, sizeof(*q));
             if (_qrydup(*((EJQ**) TCLISTVALPTR(src->orqlist, i)), q, qflags)) {
-                tclistpush(target->orqlist, &q, sizeof (q));
+                TCLISTPUSH(target->orqlist, &q, sizeof (q));
             } else {
                 _qrydel(q, true);
             }
