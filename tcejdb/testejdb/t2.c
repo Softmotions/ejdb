@@ -4676,6 +4676,7 @@ void testTicket96() {
     TCXSTR *log = tcxstrnew();
     uint32_t count;
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    bson_destroy(&bsq1);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);    
     CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
@@ -4683,7 +4684,6 @@ void testTicket96() {
     tclistdel(q1res);
     ejdbquerydel(q1);
     tcxstrdel(log);
-    bson_destroy(&bsq1);
 }
 
 
