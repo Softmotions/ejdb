@@ -4817,7 +4817,6 @@ void testTicket99() {
     bson_oid_t oid;
     bson data;
     bson_init(&data);
-    bson_append_oid(&data, "_id", &oid);
     bson_append_start_array(&data, "arr");
     bson_append_start_object(&data, "0");
     bson_append_string(&data, "test0", "value");
@@ -4942,8 +4941,9 @@ int main() {
             (NULL == CU_add_test(pSuite, "test$update", testDQupdate)) ||
             (NULL == CU_add_test(pSuite, "test$update2", testDQupdate2)) ||
             (NULL == CU_add_test(pSuite, "testTicket96", testTicket96)) ||
-            (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo)) ||
-            (NULL == CU_add_test(pSuite, "testTicket99", testTicket99))
+            (NULL == CU_add_test(pSuite, "testTicket99", testTicket99)) ||
+            (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo)) 
+           
        ) {
         CU_cleanup_registry();
         return CU_get_error();
