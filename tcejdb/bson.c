@@ -1554,7 +1554,6 @@ static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, 
                             it2.first = (it2off == 0);
                             bson_append_fpath_from_iterator(mpath + i + 1, &it2, ctx->bsout);
                             tcmapout(ctx->mfields, mpath, mpathlen);
-                            break;
                         }
                     }
                     ctx->nstack--;
