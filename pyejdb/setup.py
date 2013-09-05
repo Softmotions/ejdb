@@ -15,6 +15,7 @@ from distutils.core import setup, Extension, Command
 from ctypes.util import find_library
 from ctypes import cdll, c_char_p
 from distutils.version import StrictVersion
+from distutils.util import get_platform
 
 import sys
 import os
@@ -70,7 +71,8 @@ class EJDBPythonExt(object):
         self.min_ver = min_ver
         self.ver_char_p = ver_char_p
         self.url = url
-        kwargs["libraries"].append("rt")
+        if not 'macosx' in get_platform():
+            kwargs["libraries"].append("rt")
         self.c_ext = Extension(*args, **kwargs)
 
 err_msg = """Aborted: pyejdb requires {0} >= {1} to be installed.
