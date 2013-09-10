@@ -70,8 +70,8 @@ function tcejdb() {
        VERSION="new";
     fi
 
-    if [[ -z ${CMDS} ]]; then
-       VERSION="new dput w32 w64 npm";
+    if [[ ${CMDS} =~ ^\ +$ ]]; then
+       CMDS="dput w32 w64";
     fi
 
     cd ${TCEJDB_HOME}

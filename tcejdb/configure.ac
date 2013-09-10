@@ -10,7 +10,7 @@ test -n "$CPPFLAGS" && MYCPPFLAGS="$CPPFLAGS $MYCPPFLAGS"
 test -n "$LDFLAGS" && MYLDFLAGS="$LDFLAGS $MYLDFLAGS"
 
 # Package name
-AC_INIT(tcejdb, 1.1.23)
+AC_INIT(tcejdb, 1.1.24)
 AC_CANONICAL_HOST
 
 # Package information

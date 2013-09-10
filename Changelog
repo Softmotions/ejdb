@@ -1,3 +1,9 @@
+libtcejdb (1.1.24) testing; urgency=low
+
+  * Fixed incorrect $set behaviour #99
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 10 Sep 2013 22:30:49 +0700
+
 libtcejdb (1.1.23) testing; urgency=low
 
   * Fixed crash with $elemMatch inside $and #96
