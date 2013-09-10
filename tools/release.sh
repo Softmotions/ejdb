@@ -13,8 +13,9 @@ cat << EOF
     Commands:
         dput - Perform PPA dput
         npm - Publish package to npmjs.org
-        w32 - Perform w32 build
-        w64 - Perform w64 build
+        w32 - w32 build
+        w64 - w64 build
+        git - Perform release commit into git repo
 
 EOF
     exit 1;
