@@ -77,7 +77,7 @@ function tcejdb() {
     TCEJDB_HOME="${EJDB_HOME}/tcejdb"
     VERSION="$1"
     shift;
-    CMDS="$1 $2 $3 $4"
+    CMDS="$1 $2 $3 $4 $5"
 
     if [[ -z ${VERSION} ]]; then
        VERSION="new";
