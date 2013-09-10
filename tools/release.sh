@@ -26,7 +26,7 @@ function _npm() {
     sed -i 's/\"version\" *\: *.*\,/"version" : \"'"$1"'\"\,/' ./package.json
     sed -r -i 's/tcejdb-[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+-/tcejdb-'"$1"'-/g' ./package.json || exit $?
     make clean
-    ##npm publish || exit $?
+    npm publish || exit $?
     exit 0;
 }
 
@@ -60,6 +60,18 @@ function _win() {
   exit 0;
 }
 
+
+function _git() {
+    echo "Publishing into GIT"
+    cd ${EJDB_HOME}
+    VERSION="$1"
+    git commit -a -m"v${VERSION}" || exit $?
+    git tag "v${VERSION}" || exit $?
+    git push --tags || exit $?
+    exit 0;
+}
+
+
 function tcejdb() {
     TCEJDB_HOME="${EJDB_HOME}/tcejdb"
     VERSION="$1"
@@ -71,7 +83,7 @@ function tcejdb() {
     fi
 
     if [[ ${CMDS} =~ ^\ +$ ]]; then
-       CMDS="dput w32 w64";
+       CMDS="dput w32 w64 npm git";
     fi
 
     cd ${TCEJDB_HOME}
@@ -132,6 +144,9 @@ function tcejdb() {
              ;;
             "w64" )
                 (_win "w64" ${VERSION}) || exit $?
+            ;;
+            "git" )
+                (_git ${VERSION}) || exit $?
             ;;
             * )
                 echo "Invalid command";
