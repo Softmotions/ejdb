@@ -18,13 +18,13 @@ News
 * `2013-07-15` **[Google Go binding] (https://github.com/mkilling/goejdb)**
 * `2013-06-23` **[C# .Net binding] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
 * `2013-06-02` **[Adobe Air Native Extension (ANE) for EJDB (Thanks to @thejustinwalsh)] (https://github.com/thejustinwalsh/airejdb)**
-* `2013-05-29` **[EJDB Python 2.7.x binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
+* `2013-05-29` **[EJDB Python 2.7.x binding available](https://github.com/Softmotions/ejdb-python)**
 * `2013-05-06` **[Ruby binding available](https://github.com/Softmotions/ejdb/blob/master/rbejdb/README.md)**
 * `2013-05-02` **[NodeJS win32 module available](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md#ejdb-nodejs-module-installation)**
 * `2013-04-25` **[EJDB and TokyoCabinet API ported to Windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)**
 * `2013-04-03` **[Java API binding available](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
 * `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
-* `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
+* `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb-python)**
 * `2013-02-07` **[Debian packages provided](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)**
 * `2013-01-22` **[Collection joins now supported](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
 
@@ -55,7 +55,7 @@ Documentation
 * **Bindings**
     * **[C# .Net] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
     * **[NodeJS] (https://github.com/Softmotions/ejdb/blob/master/node/)**
-    * **[Python 2.7/3.x](https://github.com/Softmotions/ejdb/blob/master/pyejdb/)**
+    * **[Python 2.7/3.x](https://github.com/Softmotions/ejdb-python)**
     * **[Lua](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
     * **[Java](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
     * **[Ruby](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
@@ -169,7 +169,7 @@ with ejdb.find("parrots2", {"likes" : "toys"},
 
 ejdb.close()
 ```
-**[EJDB Python 2.7/3.x binding page](https://github.com/Softmotions/ejdb/blob/master/pyejdb)**
+**[EJDB Python 2.7/3.x binding page](https://github.com/Softmotions/ejdb-python)**
 
 EJDB Lua
 ==================================
