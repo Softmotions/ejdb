@@ -12,11 +12,12 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-09-10` **[v1.1.24 Fixed incorrect $set behaviour] (https://github.com/Softmotions/ejdb/wiki/V1.1.24)**
 * `2013-08-19` **[v1.1.19 Added support the long awaited mongodb update positional operator] (https://github.com/Softmotions/ejdb/wiki/V1.1.19)**
 * `2013-08-11` **[v1.1.18 Added support for mongodb $ projection] (https://github.com/Softmotions/ejdb/wiki/V1.1.18)**
 * `2013-08-08` **[v1.1.17 Now supported $and & $or mongodb operators] (https://github.com/Softmotions/ejdb/issues/81)**
 * `2013-07-15` **[Google Go binding] (https://github.com/mkilling/goejdb)**
-* `2013-06-23` **[C# .Net binding] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
+* `2013-06-23` **[C# .Net binding] (https://github.com/Softmotions/ejdb-csharp)**
 * `2013-06-02` **[Adobe Air Native Extension (ANE) for EJDB (Thanks to @thejustinwalsh)] (https://github.com/thejustinwalsh/airejdb)**
 * `2013-05-29` **[EJDB Python 2.7.x binding available](https://github.com/Softmotions/ejdb-python)**
 * `2013-05-06` **[Ruby binding available](https://github.com/Softmotions/ejdb/blob/master/rbejdb/README.md)**
@@ -53,7 +54,7 @@ Documentation
 * **[Collection joins](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
 * **[Development FAQ](https://github.com/Softmotions/ejdb/wiki/Development-FAQ)**
 * **Bindings**
-    * **[C# .Net] (https://github.com/Softmotions/ejdb/tree/master/nejdb)**
+    * **[C# .Net] (https://github.com/Softmotions/ejdb-csharp)**
     * **[NodeJS] (https://github.com/Softmotions/ejdb/blob/master/node/)**
     * **[Python 2.7/3.x](https://github.com/Softmotions/ejdb-python)**
     * **[Lua](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**

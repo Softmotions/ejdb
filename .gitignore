@@ -125,10 +125,6 @@ tcejdb/debian/*.debhelper
 /jejdb/*.so.*
 /jejdb/Makefile
 
-/nejdb/bin/
-/nejdb/sample/bin/
-/nejdb/test-results/
-
 compilation.db
 .clang/
 ejdb.workspace.session

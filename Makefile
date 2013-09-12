@@ -12,13 +12,10 @@ clean:
 	- rm -f lua*.tar.gz lua*.deb lua*.changes lua*.build lua*.dsc
 	- rm -f *.tgz
 
-deb-packages: deb-packages-tcejdb deb-packages-pyejdb deb-packages-luaejdb;
+deb-packages: deb-packages-tcejdb deb-packages-luaejdb;
 
 deb-packages-tcejdb: init
 	$(MAKE) -C ./tcejdb deb-packages
-
-deb-packages-pyejdb: init
-	$(MAKE) -C ./pyejdb deb-packages
 
 deb-packages-luaejdb: init
 	$(MAKE) -C ./luaejdb deb-packages
@@ -28,9 +25,6 @@ deb-source-packages:
 
 deb-source-packages-tcejdb:
 	$(MAKE) -C ./ deb-packages-tcejdb DEBUILD_OPTS="-S"
-
-deb-source-packages-pyejdb:
-	$(MAKE) -C ./ deb-packages-pyejdb DEBUILD_OPTS="-S"
 
 deb-source-packages-luaejdb:
 	$(MAKE) -C ./ deb-packages-luaejdb DEBUILD_OPTS="-S"
