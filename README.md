@@ -24,7 +24,7 @@ News
 * `2013-05-02` **[NodeJS win32 module available](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md#ejdb-nodejs-module-installation)**
 * `2013-04-25` **[EJDB and TokyoCabinet API ported to Windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)**
 * `2013-04-03` **[Java API binding available](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
-* `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
+* `2013-03-20` **[Lua binding available](https://github.com/Softmotions/ejdb-lua/)**
 * `2013-02-15` **[EJDB Python3 binding available](https://github.com/Softmotions/ejdb-python)**
 * `2013-02-07` **[Debian packages provided](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)**
 * `2013-01-22` **[Collection joins now supported](https://github.com/Softmotions/ejdb/wiki/Collection-joins)**
@@ -57,7 +57,7 @@ Documentation
     * **[C# .Net] (https://github.com/Softmotions/ejdb-csharp)**
     * **[NodeJS] (https://github.com/Softmotions/ejdb/blob/master/node/)**
     * **[Python 2.7/3.x](https://github.com/Softmotions/ejdb-python)**
-    * **[Lua](https://github.com/Softmotions/ejdb/blob/master/luaejdb/)**
+    * **[Lua](https://github.com/Softmotions/ejdb-lua/)**
     * **[Java](https://github.com/Softmotions/ejdb/blob/master/jejdb/)**
     * **[Ruby](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
     * **[Objective-C](https://github.com/johnnyd/EJDBKit)**
@@ -239,7 +239,7 @@ end
 
 db:close()
 ```
-**[EJDB Lua binding page](https://github.com/Softmotions/ejdb/blob/master/luaejdb)**
+**[EJDB Lua binding page](https://github.com/Softmotions/ejdb-lua)**
 
 EJDB Go
 ==================================
