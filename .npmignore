@@ -89,7 +89,6 @@ addressbook*
 /var
 /node/samples/sample1/zoo*
 /tcejdb/debian
-/rbejdb
 /misc
 /node/nodejs
 /node/tests/bench
