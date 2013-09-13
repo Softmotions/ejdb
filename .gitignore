@@ -106,14 +106,7 @@ tcejdb/debian/libtcejdb9*/
 tcejdb/debian/tmp/*
 tcejdb/debian/*.debhelper
 
-/jejdb/build
-/jejdb/target
-/jejdb/*.so
-/jejdb/*.so.*
-/jejdb/Makefile
-
 compilation.db
 .clang/
 ejdb.workspace.session
-ejdb.workspace.anton_adamansky
 .codelite/

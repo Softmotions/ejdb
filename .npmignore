@@ -89,10 +89,7 @@ addressbook*
 /var
 /node/samples/sample1/zoo*
 /tcejdb/debian
-/luaejdb
-/jejdb
 /rbejdb
-/goejdb
 /misc
 /node/nodejs
 /node/tests/bench
@@ -102,6 +99,4 @@ nbproject
 compilation.db
 .clang/
 ejdb.workspace.session
-ejdb.workspace.anton_adamansky
-
 .codelite/
