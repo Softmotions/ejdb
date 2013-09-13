@@ -20,7 +20,7 @@ News
 * `2013-06-23` **[C# .Net binding] (https://github.com/Softmotions/ejdb-csharp)**
 * `2013-06-02` **[Adobe Air Native Extension (ANE) for EJDB (Thanks to @thejustinwalsh)] (https://github.com/thejustinwalsh/airejdb)**
 * `2013-05-29` **[EJDB Python 2.7.x binding available](https://github.com/Softmotions/ejdb-python)**
-* `2013-05-06` **[Ruby binding available](https://github.com/Softmotions/ejdb/blob/master/rbejdb/README.md)**
+* `2013-05-06` **[Ruby binding available](https://github.com/Softmotions/ejdb-ruby)**
 * `2013-05-02` **[NodeJS win32 module available](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md#ejdb-nodejs-module-installation)**
 * `2013-04-25` **[EJDB and TokyoCabinet API ported to Windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)**
 * `2013-04-03` **[Java API binding available](https://github.com/Softmotions/ejdb-java)**
@@ -59,7 +59,7 @@ Documentation
     * **[Python 2.7/3.x](https://github.com/Softmotions/ejdb-python)**
     * **[Lua](https://github.com/Softmotions/ejdb-lua/)**
     * **[Java](https://github.com/Softmotions/ejdb-java)**
-    * **[Ruby](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
+    * **[Ruby](https://github.com/Softmotions/ejdb-ruby)**
     * **[Objective-C](https://github.com/johnnyd/EJDBKit)**
     * **[Go](https://github.com/mkilling/goejdb/)**
     * **[Pike language] (https://github.com/hww3/pike_modules-ejdb)**
@@ -338,7 +338,7 @@ results.close #It's not mandatory to close cursor explicitly
 jb.close #Close the database
 
 ```
-**[EJDB Ruby binding page](https://github.com/Softmotions/ejdb/blob/master/rbejdb/)**
+**[EJDB Ruby binding page](https://github.com/Softmotions/ejdb-ruby)**
 
 
 EJDB Adobe AIR
