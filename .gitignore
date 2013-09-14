@@ -89,8 +89,6 @@ config.status
 
 /build
 /var
-/node/samples/sample1/zoo*
-
 
 libtcejdb9*.deb
 libtcejdb_*.dsc

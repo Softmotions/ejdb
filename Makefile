@@ -4,13 +4,11 @@ all: init
 
 clean:
 	- $(MAKE) -C ./tcejdb clean
-	- rm -rf ./build
-	- rm -rf ./var/*
 	- rm -f *.upload
 	- rm -f libtcejdb*.tar.gz libtcejdb*.deb libtcejdb*.changes libtcejdb*.build libtcejdb*.dsc
 	- rm -f *.tgz
 
-deb-packages: deb-packages-tcejdb deb-packages-luaejdb;
+deb-packages: deb-packages-tcejdb;
 
 deb-packages-tcejdb: init
 	$(MAKE) -C ./tcejdb deb-packages
