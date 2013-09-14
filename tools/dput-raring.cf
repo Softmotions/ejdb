@@ -1,5 +1,0 @@
-[ppa]
-fqdn = ppa.launchpad.net
-method = sftp
-login = adamansky
-incoming = ~%(ppa)s/ubuntu/raring
