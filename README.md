@@ -55,7 +55,7 @@ Documentation
 * **[Development FAQ](https://github.com/Softmotions/ejdb/wiki/Development-FAQ)**
 * **Bindings**
     * **[C# .Net] (https://github.com/Softmotions/ejdb-csharp)**
-    * **[NodeJS] (https://github.com/Softmotions/ejdb/blob/master/node/)**
+    * **[NodeJS] (https://github.com/Softmotions/ejdb-node)**
     * **[Python 2.7/3.x](https://github.com/Softmotions/ejdb-python)**
     * **[Lua](https://github.com/Softmotions/ejdb-lua/)**
     * **[Java](https://github.com/Softmotions/ejdb-java)**
@@ -127,7 +127,7 @@ jb.save("parrots", [parrot1, parrot2], function(err, oids) {
             });
 });
 ```
-**[EJDB NodeJS binding page](https://github.com/Softmotions/ejdb/blob/master/node)**
+**[EJDB NodeJS binding page](https://github.com/Softmotions/ejdb-node)**
 
 EJDB Python
 ==================================

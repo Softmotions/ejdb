@@ -102,20 +102,6 @@ it automatically downloaded by `mxe-build.sh` from my dropbox account. So do not
 * HDB `tchdbsetxmsiz()` takes no effect because all file data is memory mapped on windows platform.
 
 
-EJDB NodeJS module installation
-==================================
-
-To install nodejs ejdb binding you need:
-
- * MSVC 2010 express edition
- * Installed node v0.8.x or v0.10.x
- * Manually installed `npm install adm-zip` package  (because it needed during installation process)
-
- Then start MSVC cmd window and run:
-
-    npm install ejdb
-
-
 
 
 
