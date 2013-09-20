@@ -65,7 +65,7 @@ Documentation
     * **[Go](https://github.com/mkilling/goejdb/)**
     * **[Pike language] (https://github.com/hww3/pike_modules-ejdb)**
     * **[Adobe Air] (https://github.com/thejustinwalsh/airejdb)**
-    * **[Matlab]** (https://github.com/kyamagu/matlab-ejdb)
+    * **[Matlab] (https://github.com/kyamagu/matlab-ejdb)**
 
 
 
