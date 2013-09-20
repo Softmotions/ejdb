@@ -12,6 +12,7 @@ JSON representation of queries and data implemented with API based on [C BSON](h
 
 News
 ===============================
+* `2013-09-20` **[EJDB Matlab binding from Kota Yamaguchi] (https://github.com/kyamagu/matlab-ejdb)**
 * `2013-09-10` **[v1.1.24 Fixed incorrect $set behaviour] (https://github.com/Softmotions/ejdb/wiki/V1.1.24)**
 * `2013-08-19` **[v1.1.19 Added support the long awaited mongodb update positional operator] (https://github.com/Softmotions/ejdb/wiki/V1.1.19)**
 * `2013-08-11` **[v1.1.18 Added support for mongodb $ projection] (https://github.com/Softmotions/ejdb/wiki/V1.1.18)**
@@ -64,6 +65,7 @@ Documentation
     * **[Go](https://github.com/mkilling/goejdb/)**
     * **[Pike language] (https://github.com/hww3/pike_modules-ejdb)**
     * **[Adobe Air] (https://github.com/thejustinwalsh/airejdb)**
+    * **[Matlab]** (https://github.com/kyamagu/matlab-ejdb)
 
 
 
