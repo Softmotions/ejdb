@@ -69,7 +69,8 @@ enum { /**> Query field flags */
     EJCONDPULL = 1 << 13, /**> $pull Removes all occurrences of value from field, if field is an array */
     EJCONDUPSERT = 1 << 14, /**> $upsert Upsert $set operation */
     EJCONDALL = 1 << 15, /**> 'All' modificator for $pull or $addToSet ($addToSetAll or $pullAll) */
-    EJCONDOIT = 1 << 16 /**> $do query field operation */
+    EJCONDOIT = 1 << 16, /**> $do query field operation */
+    EJCONDUNSET = 1 << 17 /**> $unset Field value */
 };
 
 enum { /**> Query flags */

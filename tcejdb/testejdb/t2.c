@@ -4670,7 +4670,7 @@ void testTicket96() {
     bson_append_finish_object(&bsq1);
     bson_append_finish_array(&bsq1);
     bson_finish(&bsq1);
-    
+
     CU_ASSERT_EQUAL(bsq1.err, 0);
 
     TCXSTR *log = tcxstrnew();
@@ -4678,7 +4678,7 @@ void testTicket96() {
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     bson_destroy(&bsq1);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
-    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);    
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
 
     tclistdel(q1res);
@@ -4811,8 +4811,8 @@ void testDQupdate2() {
 
 void testTicket99() {
     EJCOLL *coll = ejdbcreatecoll(jb, "ticket99", NULL);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(coll); 
-    
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
     //create
     bson_oid_t oid;
     bson data;
@@ -4826,8 +4826,8 @@ void testTicket99() {
     bson_finish(&data);
     CU_ASSERT_TRUE(ejdbsavebson(coll, &data, &oid));
     bson_destroy(&data);
-    
-     //set
+
+    //set
     bson bsquery;
     bson_init_as_query(&bsquery);
     bson_append_oid(&bsquery, "_id", &oid);
@@ -4839,25 +4839,91 @@ void testTicket99() {
     bson_append_string(&bsquery, "arr.0.test4", "value4");
     bson_append_finish_object(&bsquery);
     bson_finish(&bsquery);
-    
+
     uint32_t count = ejdbupdate(coll, &bsquery, 0, 0, 0, 0);
     CU_ASSERT_EQUAL(count, 1);
     bson_destroy(&bsquery);
-    
+
     bson_init_as_query(&bsquery);
     bson_finish(&bsquery);
     EJQ *q1 = ejdbcreatequery(jb, &bsquery, NULL, 0, NULL);
     bson_destroy(&bsquery);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
-    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, NULL);    
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, NULL);
     CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
-    
+
     for (int i = 0; i < TCLISTNUM(q1res); ++i) {
         CU_ASSERT_FALSE(bson_compare_string("value0", TCLISTVALPTR(q1res, i), "arr.0.test0"));
         CU_ASSERT_FALSE(bson_compare_string("value1", TCLISTVALPTR(q1res, i), "arr.0.test1"));
         CU_ASSERT_FALSE(bson_compare_string("value2", TCLISTVALPTR(q1res, i), "arr.0.test2"));
         CU_ASSERT_FALSE(bson_compare_string("value3", TCLISTVALPTR(q1res, i), "arr.0.test3"));
         CU_ASSERT_FALSE(bson_compare_string("value4", TCLISTVALPTR(q1res, i), "arr.0.test4"));
+    }
+
+    tclistdel(q1res);
+    ejdbquerydel(q1);
+}
+
+
+void testTicket101() {
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket101", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson b;
+    bson_oid_t oid;
+
+    bson_init(&b);
+    bson_append_int(&b, "z", 33);
+    bson_append_start_object(&b, "obj");
+    bson_append_string(&b, "name", "abc");
+    bson_append_int(&b, "score", 12);
+    bson_append_finish_object(&b); //eof obj
+    bson_append_start_array(&b, "arr");
+    bson_append_int(&b, "0", 0);
+    bson_append_start_object(&b, "1");
+    bson_append_string(&b, "name", "cde");
+    bson_append_int(&b, "score", 13);
+    bson_append_finish_object(&b);
+    bson_append_int(&b, "2", 2);
+    bson_append_int(&b, "3", 3);
+    bson_append_finish_array(&b); //eof arr
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+    bson bsq;
+    bson_init_as_query(&bsq);
+    bson_append_start_object(&bsq, "$unset");
+    bson_append_string(&bsq, "obj.name", "");
+    bson_append_bool(&bsq, "arr.1.score", true);
+    bson_append_bool(&bsq, "arr.2", true);
+    bson_append_finish_object(&bsq);
+    bson_finish(&bsq);
+
+    uint32_t count = ejdbupdate(coll, &bsq, 0, 0, 0, 0);
+    bson_destroy(&bsq);
+    CU_ASSERT_EQUAL(count, 1);
+
+
+    bson_init_as_query(&bsq);
+    bson_finish(&bsq);
+    EJQ *q1 = ejdbcreatequery(jb, &bsq, NULL, 0, NULL);
+    bson_destroy(&bsq);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, NULL);
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+
+    bson_type bt;
+    bson_iterator it;
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_long(33,  TCLISTVALPTR(q1res, i), "z"));
+        CU_ASSERT_FALSE(bson_compare_long(12,  TCLISTVALPTR(q1res, i), "obj.score"));
+        bson_iterator_from_buffer(&it, TCLISTVALPTR(q1res, i));
+        bt = bson_find_fieldpath_value("obj.name", &it);
+        CU_ASSERT_TRUE(bt == BSON_EOO);
+        bson_iterator_from_buffer(&it, TCLISTVALPTR(q1res, i));
+        bt = bson_find_fieldpath_value("arr.2", &it);
+        CU_ASSERT_TRUE(bt == BSON_UNDEFINED);
     }
 
     tclistdel(q1res);
@@ -4942,9 +5008,10 @@ int main() {
             (NULL == CU_add_test(pSuite, "test$update2", testDQupdate2)) ||
             (NULL == CU_add_test(pSuite, "testTicket96", testTicket96)) ||
             (NULL == CU_add_test(pSuite, "testTicket99", testTicket99)) ||
-            (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo)) 
-           
-       ) {
+            (NULL == CU_add_test(pSuite, "testTicket101", testTicket101)) ||
+            (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
+
+    ) {
         CU_cleanup_registry();
         return CU_get_error();
     }

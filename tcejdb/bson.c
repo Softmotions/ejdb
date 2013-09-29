@@ -1654,6 +1654,7 @@ int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out)
 typedef struct {
     int nstack; //nested object stack pos
     int matched; //number of matched include fields
+    int astack; //nested array stack pos
     BSONSTRIPCTX *sctx;
 } _BSONSTRIPVISITORCTX;
 
@@ -1683,6 +1684,7 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
                         if (bt == BSON_OBJECT) {
                             bson_append_start_object2(sctx->bsout, key, keylen);
                         } else if (bt == BSON_ARRAY) {
+                            ictx->astack++;
                             bson_append_start_array2(sctx->bsout, key, keylen);
                         }
                         return (BSON_VCMD_OK);
@@ -1696,6 +1698,7 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
                     if (bt == BSON_OBJECT) {
                         bson_append_finish_object(sctx->bsout);
                     } else if (bt == BSON_ARRAY) {
+                        --ictx->astack;
                         bson_append_finish_array(sctx->bsout);
                     }
                 }
@@ -1705,6 +1708,8 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
             bson_append_field_from_iterator(it, sctx->bsout);
             return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
         }
+    } else if (!after && ictx->astack > 0 && bson_isnumstr(key, keylen)) {
+        bson_append_undefined(sctx->bsout, key);
     }
     return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
 }
@@ -1809,6 +1814,7 @@ int bson_strip2(BSONSTRIPCTX *sctx) {
     }
     _BSONSTRIPVISITORCTX ictx = {
         .nstack = 0,
+        .astack = 0,
         .matched = 0,
         .sctx = sctx
     };
