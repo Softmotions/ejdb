@@ -31,6 +31,16 @@ int clean_suite(void) {
     return 0;
 }
 
+void testTicket102() {
+    const char *json = "[0, 1, 2]";
+    bson *ret = json2bson(json);
+    CU_ASSERT_PTR_NOT_NULL(ret);
+    bson_print_raw(bson_data(ret), 0);
+    CU_ASSERT_EQUAL(bson_compare_long(0, bson_data(ret), "0"), 0);
+    CU_ASSERT_EQUAL(bson_compare_long(1, bson_data(ret), "1"), 0);
+    CU_ASSERT_EQUAL(bson_compare_long(2, bson_data(ret), "2"), 0);
+}
+
 void testSaveLoad() {
     CU_ASSERT_PTR_NOT_NULL_FATAL(jb);
     bson_oid_t oid;
@@ -272,7 +282,8 @@ int main() {
     /* Add the tests to the suite */
     if ((NULL == CU_add_test(pSuite, "testSaveLoad", testSaveLoad)) ||
             (NULL == CU_add_test(pSuite, "testBuildQuery1", testBuildQuery1)) ||
-            (NULL == CU_add_test(pSuite, "testDBOptions", testDBOptions))
+            (NULL == CU_add_test(pSuite, "testDBOptions", testDBOptions)) ||
+            (NULL == CU_add_test(pSuite, "testTicket102", testTicket102)) 
 
             ) {
         CU_cleanup_registry();

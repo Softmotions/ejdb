@@ -2528,8 +2528,8 @@ int bson2json(const char *bsdata, char **buf, int *sp) {
 
 #include "nxjson.h"
 
-static void _json2bson(bson *out, const nx_json *json) {
-    const char *key = json->key;
+static void _json2bson(bson *out, const nx_json *json, const char *forcekey) {
+    const char *key =  forcekey ? forcekey : json->key;
     switch (json->type) {
         case NX_JSON_NULL:
             assert(key);
@@ -2541,7 +2541,7 @@ static void _json2bson(bson *out, const nx_json *json) {
                 bson_append_start_object(out, key);
             }
             for (nx_json* js = json->child; js; js = js->next) {
-                _json2bson(out, js);
+                _json2bson(out, js, NULL);
             }
             if (key) {
                 bson_append_finish_object(out);
@@ -2553,8 +2553,11 @@ static void _json2bson(bson *out, const nx_json *json) {
             if (key) {
                 bson_append_start_array(out, key);
             }
+            int c = 0;
+            char kbuf[TCNUMBUFSIZ];
             for (nx_json* js = json->child; js; js = js->next) {
-                _json2bson(out, js);
+                 bson_numstrn(kbuf, TCNUMBUFSIZ, c++);
+                _json2bson(out, js, kbuf);
             }
             if (key) {
                 bson_append_finish_array(out);
@@ -2600,7 +2603,7 @@ bson* json2bson(const char *jsonstr) {
         err = true;
         goto finish;
     }
-    _json2bson(out, nxjson);
+    _json2bson(out, nxjson, NULL);
     bson_finish(out);
     err = out->err;
 finish:
