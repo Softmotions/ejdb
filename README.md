@@ -472,6 +472,7 @@ Building & Installation
 --------------------------------
  * [Installation on windows](https://github.com/Softmotions/ejdb/blob/master/tcejdb/WIN32.md)
  * [Installation on Debian/Ubuntu](https://github.com/Softmotions/ejdb/wiki/Debian-Ubuntu-installation)
+ * Installation on OS X 10.7+ using [Homebrew](http://brew.sh/): `brew install ejdb`
 
 Manual installation
 -------------------------------
