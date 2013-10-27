@@ -1,3 +1,10 @@
+libtcejdb (1.1.25) testing; urgency=low
+
+  * Mongodb $unset operation implemented #101
+  * json2bson segfaults for arrays of simple types #102
+ 
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 27 Oct 2013 23:32:14 +0700
+
 libtcejdb (1.1.24) testing; urgency=low
 
   * Fixed incorrect $set behaviour #99

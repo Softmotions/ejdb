@@ -1,8 +1,8 @@
 Precompiled windows binaries
 =========================================
 
-* [tcejdb-1.1.24-mingw32-i686](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.24-mingw32-i686.zip)
-* [tcejdb-1.1.24-mingw32-x86_64](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.24-mingw32-x86_64.zip)
+* [tcejdb-1.1.25-mingw32-i686](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.25-mingw32-i686.zip)
+* [tcejdb-1.1.25-mingw32-x86_64](https://dl.dropboxusercontent.com/u/4709222/ejdb/tcejdb-1.1.25-mingw32-x86_64.zip)
 
 **[Installing EJDB NodeJS win32 module](#ejdb-nodejs-module-installation)**
 
@@ -73,7 +73,7 @@ Example: building win64 binaries:
     tcejdb/mxe/mxe-build.sh ${HOME}/mxe w64
 
 As result you will get zip archive in the folder `./tcejdb`:
-    `tcejdb-1.1.24-mingw32-i686.zip` or `tcejdb-1.1.24-mingw32-x86_64.zip`
+    `tcejdb-1.1.25-mingw32-i686.zip` or `tcejdb-1.1.25-mingw32-x86_64.zip`
 
 In those archives you will found:
 
