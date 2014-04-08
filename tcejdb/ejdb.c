@@ -2084,7 +2084,7 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
                 bson_iterator sit2;
                 BSON_ITERATOR_SUBITERATOR(&sit, &sit2);
                 ffpctx->input = &sit2;
-                if (_qrybsrecurrmatch(qf, ffpctx, currpos)) {
+                if (_qrybsrecurrmatch(qf, ffpctx, currpos) != qf->negate) {
                     bool ret = true;
                     if (qf->elmatchgrp > 0 && qf->elmatchpos == currpos) { //$elemMatch matching group exists at right place
                         for (int i = TCLISTNUM(qf->q->qflist) - 1; i >= 0; --i) {
@@ -4510,6 +4510,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             qf.elmatchgrp = pqf->elmatchgrp;
             qf.elmatchpos = pqf->elmatchpos;
             qf.flags = pqf->flags;
+            if(elmatchgrp > 0)
+                qf.negate = pqf->negate;
         }
 
         if (!isckey) {
