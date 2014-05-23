@@ -54,9 +54,12 @@ void testAddData() {
     bson_append_finish_object(&a1); //EOF address
     bson_append_start_array(&a1, "complexarr");
     bson_append_start_object(&a1, "0");
-    bson_append_string(&a1, "foo", "bar");
-    bson_append_string(&a1, "foo2", "bar2");
-    bson_append_string(&a1, "foo3", "bar3");
+    bson_append_string(&a1, "key", "title");
+    bson_append_string(&a1, "value", "some title");
+    bson_append_finish_object(&a1);
+    bson_append_start_object(&a1, "1");
+    bson_append_string(&a1, "key", "comment");
+    bson_append_string(&a1, "value", "some comment");
     bson_append_finish_object(&a1);
     bson_append_finish_array(&a1); //EOF complexarr
     CU_ASSERT_FALSE_FATAL(a1.err);
@@ -78,10 +81,14 @@ void testAddData() {
     bson_append_finish_object(&a1);
     bson_append_start_array(&a1, "complexarr");
     bson_append_start_object(&a1, "0");
-    bson_append_string(&a1, "foo", "bar");
-    bson_append_string(&a1, "foo2", "bar3");
+    bson_append_string(&a1, "key", "title");
+    bson_append_string(&a1, "value", "some title");
     bson_append_finish_object(&a1);
-    bson_append_int(&a1, "1", 333);
+    bson_append_start_object(&a1, "1");
+    bson_append_string(&a1, "key", "title");
+    bson_append_string(&a1, "value", "some other title");
+    bson_append_finish_object(&a1);
+    bson_append_int(&a1, "2", 333);
     bson_append_finish_array(&a1); //EOF complexarr
     bson_append_start_array(&a1, "labels");
     bson_append_string(&a1, "0", "red");
@@ -3716,7 +3723,8 @@ void testFindInComplexArray() {
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
     bson bsq1;
     bson_init_as_query(&bsq1);
-    bson_append_string(&bsq1, "complexarr.foo", "bar");
+    bson_append_string(&bsq1, "complexarr.key", "title");
+    bson_append_string(&bsq1, "complexarr.value", "some title");
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
@@ -3727,10 +3735,21 @@ void testFindInComplexArray() {
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
-    CU_ASSERT_EQUAL(count, 2);
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 2);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some other title", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
+    // 1
+    CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, 1), "name"));
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 1), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 1), "complexarr.0.value"));
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -3739,7 +3758,7 @@ void testFindInComplexArray() {
 
     //Check matching positional element
     bson_init_as_query(&bsq1);
-    bson_append_string(&bsq1, "complexarr.0.foo", "bar");
+    bson_append_string(&bsq1, "complexarr.0.key", "title");
     bson_finish(&bsq1);
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
@@ -3747,10 +3766,21 @@ void testFindInComplexArray() {
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     //fprintf(stderr, "\n%s", TCXSTRPTR(log));
-    CU_ASSERT_EQUAL(count, 2);
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 2);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    // 1
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some other title", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, 1), "name"));
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 1), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 1), "complexarr.0.value"));
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -3759,7 +3789,7 @@ void testFindInComplexArray() {
 
     //Check simple el
     bson_init_as_query(&bsq1);
-    bson_append_int(&bsq1, "complexarr.1", 333);
+    bson_append_int(&bsq1, "complexarr.2", 333);
     bson_finish(&bsq1);
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
@@ -3767,10 +3797,19 @@ void testFindInComplexArray() {
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     //fprintf(stderr, "\n%s", TCXSTRPTR(log));
-    CU_ASSERT_EQUAL(count, 1);
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_long(333, TCLISTVALPTR(q1res, i), "complexarr.1"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 1);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some other title", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
+    CU_ASSERT_FALSE(bson_compare_long(333, TCLISTVALPTR(q1res, 0), "complexarr.2"));
+
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
@@ -3786,10 +3825,19 @@ void testFindInComplexArray() {
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     //fprintf(stderr, "\n%s", TCXSTRPTR(log));
-    CU_ASSERT_EQUAL(count, 1);
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_long(333, TCLISTVALPTR(q1res, i), "complexarr.1"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 1);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some other title", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
+    CU_ASSERT_FALSE(bson_compare_long(333, TCLISTVALPTR(q1res, 0), "complexarr.2"));
+
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
@@ -3798,7 +3846,7 @@ void testFindInComplexArray() {
 
     //$exists
     bson_init_as_query(&bsq1);
-    bson_append_start_object(&bsq1, "complexarr.foo");
+    bson_append_start_object(&bsq1, "complexarr.key");
     bson_append_bool(&bsq1, "$exists", true);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
@@ -3816,7 +3864,7 @@ void testFindInComplexArray() {
 
     //$exists 2
     bson_init_as_query(&bsq1);
-    bson_append_start_object(&bsq1, "complexarr.1");
+    bson_append_start_object(&bsq1, "complexarr.2");
     bson_append_bool(&bsq1, "$exists", true);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
@@ -3851,16 +3899,15 @@ void testFindInComplexArray() {
 }
 
 void test$elemMatch() {
-    //{complexarr : {$elemMatch : {foo : 'bar', foo2 : 'bar2', foo3 : 'bar3'}}}
+    // { complexarr: { $elemMatch: { key: 'title', value: 'some title' } } }
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
     bson bsq1;
     bson_init_as_query(&bsq1);
     bson_append_start_object(&bsq1, "complexarr");
     bson_append_start_object(&bsq1, "$elemMatch");
-    bson_append_string(&bsq1, "foo", "bar");
-    bson_append_string(&bsq1, "foo2", "bar2");
-    bson_append_string(&bsq1, "foo3", "bar3");
+    bson_append_string(&bsq1, "key", "title");
+    bson_append_string(&bsq1, "value", "some title");
     bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
@@ -3872,14 +3919,27 @@ void test$elemMatch() {
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
-    CU_ASSERT_EQUAL(count, 1);
-    //fprintf(stderr, "%s", TCXSTRPTR(log));
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
-        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
-        CU_ASSERT_FALSE(bson_compare_string("bar2", TCLISTVALPTR(q1res, i), "complexarr.0.foo2"));
-        CU_ASSERT_FALSE(bson_compare_string("bar3", TCLISTVALPTR(q1res, i), "complexarr.0.foo3"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 2);
+//    fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some other title", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
+    // 1
+    CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, 1), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 1), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 1), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("comment", TCLISTVALPTR(q1res, 1), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some comment", TCLISTVALPTR(q1res, 1), "complexarr.1.value"));
+
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
@@ -3888,8 +3948,8 @@ void test$elemMatch() {
     bson_init_as_query(&bsq1);
     bson_append_start_object(&bsq1, "complexarr");
     bson_append_start_object(&bsq1, "$elemMatch");
-    bson_append_string(&bsq1, "foo", "bar");
-    bson_append_string(&bsq1, "foo2", "bar3");
+    bson_append_string(&bsq1, "key", "title");
+    bson_append_string(&bsq1, "value", "some other title");
     bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
@@ -3900,12 +3960,17 @@ void test$elemMatch() {
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
-    CU_ASSERT_EQUAL(count, 1);
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, i), "name"));
-        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
-        CU_ASSERT_FALSE(bson_compare_string("bar3", TCLISTVALPTR(q1res, i), "complexarr.0.foo2"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 1);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some other title", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
@@ -3914,9 +3979,9 @@ void test$elemMatch() {
     bson_init_as_query(&bsq1);
     bson_append_start_object(&bsq1, "complexarr");
     bson_append_start_object(&bsq1, "$elemMatch");
-    bson_append_string(&bsq1, "foo", "bar");
-    bson_append_start_object(&bsq1, "foo2");
-    bson_append_string(&bsq1, "$not", "bar3");
+    bson_append_string(&bsq1, "key", "title");
+    bson_append_start_object(&bsq1, "value");
+    bson_append_string(&bsq1, "$not", "some title");
     bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
@@ -3927,22 +3992,26 @@ void test$elemMatch() {
     log = tcxstrnew();
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
-    //fprintf(stderr, "%s", TCXSTRPTR(log));
-    CU_ASSERT_EQUAL(count, 1);
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
-        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
-        CU_ASSERT_FALSE(bson_compare_string("bar2", TCLISTVALPTR(q1res, i), "complexarr.0.foo2"));
-        CU_ASSERT_FALSE(bson_compare_string("bar3", TCLISTVALPTR(q1res, i), "complexarr.0.foo3"));
-    }
+//    fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL_FATAL(count, 1);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some other title", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
     ejdbquerydel(q1);
 
     bson_init_as_query(&bsq1);
-    bson_append_string(&bsq1, "complexarr.foo", "bar");
-    bson_append_string(&bsq1, "complexarr.foo2", "bar3");
+    bson_append_string(&bsq1, "complexarr.key", "title");
+    bson_append_string(&bsq1, "complexarr.value", "some other title");
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
     q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
@@ -3951,12 +4020,16 @@ void test$elemMatch() {
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
-    CU_ASSERT_EQUAL(count, 1);
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, i), "name"));
-        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
-        CU_ASSERT_FALSE(bson_compare_string("bar3", TCLISTVALPTR(q1res, i), "complexarr.0.foo2"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 1);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some other title", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -3965,7 +4038,7 @@ void test$elemMatch() {
 }
 
 void test$not$elemMatch() {
-    //{complexarr : {$elemMatch : {foo : 'bar', foo2 : 'bar2', foo3 : 'bar3'}}}
+    // { complexarr: { $not: { $elemMatch: { key: 'title', value: 'some title' } } } }
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
     bson bsq1;
@@ -3973,9 +4046,8 @@ void test$not$elemMatch() {
     bson_append_start_object(&bsq1, "complexarr");
     bson_append_start_object(&bsq1, "$not");
     bson_append_start_object(&bsq1, "$elemMatch");
-    bson_append_string(&bsq1, "foo", "bar");
-    bson_append_string(&bsq1, "foo2", "bar2");
-    bson_append_string(&bsq1, "foo3", "bar3");
+    bson_append_string(&bsq1, "key", "title");
+    bson_append_string(&bsq1, "value", "some title");
     bson_append_finish_object(&bsq1);//$elemMatch
     bson_append_finish_object(&bsq1);//$not
     //include $exists to exclude documents without complexarr
@@ -3990,14 +4062,9 @@ void test$not$elemMatch() {
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
-
-    CU_ASSERT_EQUAL(count, 1);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, i), "name"));
-        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
-        CU_ASSERT_FALSE(bson_compare_string("bar3", TCLISTVALPTR(q1res, i), "complexarr.0.foo2"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 0);
+
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
@@ -4007,8 +4074,8 @@ void test$not$elemMatch() {
     bson_append_start_object(&bsq1, "complexarr");
     bson_append_start_object(&bsq1, "$not");
     bson_append_start_object(&bsq1, "$elemMatch");
-    bson_append_string(&bsq1, "foo", "bar");
-    bson_append_string(&bsq1, "foo2", "bar3");
+    bson_append_string(&bsq1, "key", "title");
+    bson_append_string(&bsq1, "value", "some other title");
     bson_append_finish_object(&bsq1);//$elemMatch
     bson_append_finish_object(&bsq1);//$not
     bson_append_bool(&bsq1, "$exists", true);
@@ -4021,13 +4088,50 @@ void test$not$elemMatch() {
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
-    CU_ASSERT_EQUAL(count, 1);
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, i), "name"));
-        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
-        CU_ASSERT_FALSE(bson_compare_string("bar2", TCLISTVALPTR(q1res, i), "complexarr.0.foo2"));
-        CU_ASSERT_FALSE(bson_compare_string("bar3", TCLISTVALPTR(q1res, i), "complexarr.0.foo3"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 1);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("comment", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some comment", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "complexarr");
+    bson_append_start_object(&bsq1, "$not");
+    bson_append_start_object(&bsq1, "$elemMatch");
+    bson_append_string(&bsq1, "key", "comment");
+    bson_append_finish_object(&bsq1);//$elemMatch
+    bson_append_finish_object(&bsq1);//$not
+    bson_append_bool(&bsq1, "$exists", true);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    CU_ASSERT_EQUAL_FATAL(count, 1);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some other title", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
@@ -4038,9 +4142,9 @@ void test$not$elemMatch() {
     bson_append_start_object(&bsq1, "complexarr");
     bson_append_start_object(&bsq1, "$not");
     bson_append_start_object(&bsq1, "$elemMatch");
-    bson_append_string(&bsq1, "foo", "bar");
-    bson_append_start_object(&bsq1, "foo2");
-    bson_append_string(&bsq1, "$not", "bar3");
+    bson_append_string(&bsq1, "key", "title");
+    bson_append_start_object(&bsq1, "value");
+    bson_append_string(&bsq1, "$not", "some title");
     bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
@@ -4053,12 +4157,17 @@ void test$not$elemMatch() {
     q1res = ejdbqryexecute(coll, q1, &count, 0, log);
     CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
     //fprintf(stderr, "%s", TCXSTRPTR(log));
-    CU_ASSERT_EQUAL(count, 1);
-    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
-        CU_ASSERT_FALSE(bson_compare_string("Адаманский", TCLISTVALPTR(q1res, i), "name"));
-        CU_ASSERT_FALSE(bson_compare_string("bar", TCLISTVALPTR(q1res, i), "complexarr.0.foo"));
-        CU_ASSERT_FALSE(bson_compare_string("bar3", TCLISTVALPTR(q1res, i), "complexarr.0.foo2"));
-    }
+    CU_ASSERT_EQUAL_FATAL(count, 1);
+
+    // 0
+    CU_ASSERT_FALSE(bson_compare_string("Антонов", TCLISTVALPTR(q1res, 0), "name"));
+
+    CU_ASSERT_FALSE(bson_compare_string("title", TCLISTVALPTR(q1res, 0), "complexarr.0.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some title", TCLISTVALPTR(q1res, 0), "complexarr.0.value"));
+
+    CU_ASSERT_FALSE(bson_compare_string("comment", TCLISTVALPTR(q1res, 0), "complexarr.1.key"));
+    CU_ASSERT_FALSE(bson_compare_string("some comment", TCLISTVALPTR(q1res, 0), "complexarr.1.value"));
+
     bson_destroy(&bsq1);
     tclistdel(q1res);
     tcxstrdel(log);
