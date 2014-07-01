@@ -2414,14 +2414,18 @@ static int32_t tchdbpadsize(TCHDB *hdb, uint64_t off) {
    `flag' specifies the flag value.
    `sign' specifies the sign. */
 static bool tchdbsetflag(TCHDB *hdb, int flag, bool sign) {
+    bool rv = false;
     assert(hdb);
     if (!HDBLOCKSMEMPTR(hdb, false)) {
-        return false;
+        return rv;
     }
     if (!HDBLOCKDB(hdb)) {
         HDBUNLOCKSMEMPTR(hdb);
-        return false;
+        return rv;
     }
+    if (!hdb->map)
+        goto out;
+
     char *fp = (char*) hdb->map + HDBFLAGSOFF;
     if (sign) {
         *fp |= (uint8_t) flag;
@@ -2429,9 +2433,11 @@ static bool tchdbsetflag(TCHDB *hdb, int flag, bool sign) {
         *fp &= ~(uint8_t) flag;
     }
     hdb->flags = *fp;
+    rv = true;
+out:
     HDBUNLOCKDB(hdb);
     HDBUNLOCKSMEMPTR(hdb);
-    return true;
+    return rv;
 }
 
 /* Get the bucket index of a record.
