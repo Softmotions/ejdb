@@ -1891,10 +1891,9 @@ int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, const char *fp
 
 /**
  *
- * Return -1 if value pointing by it1 lesser than from it2.
+ * Return <0 if value pointing by it1 lesser than from it2.
  * Return  0 if values equal
- * Return  1 if value pointing by it1 greater than from it2.
- * Return -2 if values are not comparable.
+ * Return >0 if value pointing by it1 greater than from it2.
  * @param it1
  * @param i
  * @return
@@ -1902,6 +1901,12 @@ int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, const char *fp
 int bson_compare_it_current(const bson_iterator *it1, const bson_iterator *it2) {
     bson_type t1 = BSON_ITERATOR_TYPE(it1);
     bson_type t2 = BSON_ITERATOR_TYPE(it2);
+	
+	if ((BSON_IS_STRING_TYPE(t1) && !BSON_IS_STRING_TYPE(t2)) ||
+		(BSON_IS_STRING_TYPE(t2) && !BSON_IS_STRING_TYPE(t1))) {
+		return (t1 - t2);		
+	}
+	
     if (t1 == BSON_BOOL || t1 == BSON_EOO || t1 == BSON_NULL || t1 == BSON_UNDEFINED) {
         int v1 = bson_iterator_bool(it1);
         int v2 = bson_iterator_bool(it2);
@@ -1914,11 +1919,11 @@ int bson_compare_it_current(const bson_iterator *it1, const bson_iterator *it2) 
         double v1 = bson_iterator_double_raw(it1);
         double v2 = bson_iterator_double(it2);
         return (v1 > v2) ? 1 : ((v1 < v2) ? -1 : 0);
-    } else if (t1 == BSON_STRING || t1 == BSON_SYMBOL) {
+    } else if (BSON_IS_STRING_TYPE(t1)) {
         const char* v1 = bson_iterator_string(it1);
         int l1 = bson_iterator_string_len(it1);
         const char* v2 = bson_iterator_string(it2);
-        int l2 = (t2 == BSON_STRING || t2 == BSON_SYMBOL) ? bson_iterator_string_len(it2) : strlen(v2);
+        int l2 = bson_iterator_string_len(it2);
         int rv;
         TCCMPLEXICAL(rv, v1, l1, v2, l2);
         return rv;

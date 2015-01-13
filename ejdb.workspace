@@ -8,7 +8,7 @@
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Project Name="tcejdb" ConfigName="Debug"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="Release" Selected="no">
+    <WorkspaceConfiguration Name="Release" Selected="yes">
       <Project Name="tcejdb" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>

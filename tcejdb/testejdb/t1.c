@@ -39,6 +39,7 @@ void testTicket102() {
     CU_ASSERT_EQUAL(bson_compare_long(0, bson_data(ret), "0"), 0);
     CU_ASSERT_EQUAL(bson_compare_long(1, bson_data(ret), "1"), 0);
     CU_ASSERT_EQUAL(bson_compare_long(2, bson_data(ret), "2"), 0);
+	bson_del(ret);
 }
 
 void testSaveLoad() {

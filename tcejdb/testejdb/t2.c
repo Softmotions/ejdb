@@ -4930,6 +4930,75 @@ void testTicket101() {
     ejdbquerydel(q1);
 }
 
+void testTicket110() {
+	EJCOLL *coll = ejdbcreatecoll(jb, "ticket110", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+	
+	bson b;
+    bson_oid_t oid;
+
+    bson_init(&b);
+	bson_append_string(&b, "comment", "One");
+	bson_append_string(&b, "status", "New");
+	bson_append_int(&b, "xversion", 0);
+	bson_append_int(&b, "value",  9855);
+	bson_append_string(&b, "title", "Lead 0");
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+	
+	bson_init(&b);
+	bson_append_string(&b, "comment", "Two");
+	bson_append_string(&b, "status", "New");
+	bson_append_int(&b, "xversion", 0);
+	bson_append_string(&b, "value",  "18973");
+	bson_append_string(&b, "title", "Lead 1");
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+	bson_init(&b);
+	bson_append_string(&b, "comment", "Three");
+	bson_append_string(&b, "status", "New");
+	bson_append_int(&b, "xversion", 0);
+	bson_append_string(&b, "value",  "25504");
+	bson_append_string(&b, "title", "Lead 2");
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+	
+	//   
+	bson bsq;
+    bson_init_as_query(&bsq);
+	bson_finish(&bsq);
+	CU_ASSERT_FALSE_FATAL(bsq.err);
+
+	//
+	bson bshints;
+    bson_init_as_query(&bshints);
+    bson_append_start_object(&bshints, "$orderby");
+    bson_append_int(&bshints, "value", -1);
+    bson_append_finish_object(&bshints);
+    bson_finish(&bshints);
+    CU_ASSERT_FALSE_FATAL(bshints.err);
+	
+	EJQ *q1 = ejdbcreatequery(jb, &bsq, NULL, 0, &bshints);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+	
+	uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+	
+	bson_destroy(&bsq);
+	bson_destroy(&bshints);
+	
+	tclistdel(q1res);
+	tcxstrdel(log);
+	ejdbquerydel(q1);
+}
+
+
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
@@ -5008,7 +5077,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "test$update2", testDQupdate2)) ||
             (NULL == CU_add_test(pSuite, "testTicket96", testTicket96)) ||
             (NULL == CU_add_test(pSuite, "testTicket99", testTicket99)) ||
-            (NULL == CU_add_test(pSuite, "testTicket101", testTicket101)) ||
+            (NULL == CU_add_test(pSuite, "testTicket101", testTicket101)) || 
+            (NULL == CU_add_test(pSuite, "testTicket110", testTicket110)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
 
     ) {
