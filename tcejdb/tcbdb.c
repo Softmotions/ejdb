@@ -217,6 +217,7 @@ bool tcbdbsetmutex(TCBDB *bdb) {
     if (pthread_rwlock_init(bdb->mmtx, NULL) != 0) err = true;
     if (pthread_mutex_init(bdb->cmtx, NULL) != 0) err = true;
     if (err) {
+		tcbdbsetecode(bdb, TCETHREAD, __FILE__, __LINE__, __func__);
         TCFREE(bdb->cmtx);
         TCFREE(bdb->mmtx);
         bdb->cmtx = NULL;
