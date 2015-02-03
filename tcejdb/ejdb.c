@@ -2069,57 +2069,68 @@ static bool _qrybsrecurrmatch(EJQF *qf, FFPCTX *ffpctx, int currpos) {
     assert(qf && ffpctx && ffpctx->stopnestedarr);
     bson_type bt = bson_find_fieldpath_value3(ffpctx);
     if (bt == BSON_ARRAY && ffpctx->stopos < ffpctx->fplen) { //a bit of complicated code  in this case =)
-        //we just stepped in some array in middle of our fieldpath, so have to perform recusive nested iterations
+        //we just stepped in some array in middle of our fieldpath, so have to perform recursive nested iterations
         //$elemMatch active in this context
         while (ffpctx->fpath[ffpctx->stopos] == '.' && ffpctx->stopos < ffpctx->fplen) ffpctx->stopos++;
         ffpctx->fplen = ffpctx->fplen - ffpctx->stopos;
         assert(ffpctx->fplen > 0);
         ffpctx->fpath = ffpctx->fpath + ffpctx->stopos;
         currpos += ffpctx->stopos; //adjust cumulative field position
+
         bson_iterator sit;
         BSON_ITERATOR_SUBITERATOR(ffpctx->input, &sit);
-        int c = 0;
-        while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
-            if (bt == BSON_OBJECT || bt == BSON_ARRAY) {
-                bson_iterator sit2;
-                BSON_ITERATOR_SUBITERATOR(&sit, &sit2);
-                ffpctx->input = &sit2;
-                if (_qrybsrecurrmatch(qf, ffpctx, currpos)) {
-                    bool ret = true;
-                    if (qf->elmatchgrp > 0 && qf->elmatchpos == currpos) { //$elemMatch matching group exists at right place
-                        for (int i = TCLISTNUM(qf->q->qflist) - 1; i >= 0; --i) {
-                            EJQF *eqf = TCLISTVALPTR(qf->q->qflist, i);
-                            if (eqf == qf || (eqf->mflags & EJFEXCLUDED) || eqf->elmatchgrp != qf->elmatchgrp) {
-                                continue;
-                            }
-                            eqf->mflags |= EJFEXCLUDED;
-                            BSON_ITERATOR_SUBITERATOR(&sit, &sit2);
-                            FFPCTX nffpctx = *ffpctx;
-                            nffpctx.fplen = eqf->fpathsz - eqf->elmatchpos;
-                            if (nffpctx.fplen <= 0) { //should never happen if query construction is correct
-                                assert(false);
-                                ret = false;
-                                break;
-                            }
-                            nffpctx.fpath = eqf->fpath + eqf->elmatchpos;
-                            nffpctx.input = &sit2;
-                            nffpctx.stopos = 0;
-                            if (!_qrybsrecurrmatch(eqf, &nffpctx, eqf->elmatchpos)) {
-                                ret = false;
-                                break;
-                            }
-                        }
-                    }
-                    if (ret) {
-                        _qrysetarrayidx(ffpctx, qf, (currpos - 1), c);
-                    }
+        for (int arr_idx = 0;(bt = bson_iterator_next(&sit)) != BSON_EOO; ++arr_idx) {
+            if (bt != BSON_OBJECT && bt != BSON_ARRAY)
+                continue;
 
-                    return ret;
+            bson_iterator sit2;
+            BSON_ITERATOR_SUBITERATOR(&sit, &sit2);
+
+            ffpctx->input = &sit2;
+
+            // Match using context initialised above.
+            if (_qrybsrecurrmatch(qf, ffpctx, currpos) == qf->negate) {
+                continue;
+            }
+
+            bool ret = true;
+            if (qf->elmatchgrp > 0 && qf->elmatchpos == currpos) { //$elemMatch matching group exists at right place
+                // Match all sub-queries on current field pos. Early exit (break) on failure.
+                for (int i = TCLISTNUM(qf->q->qflist) - 1; i >= 0; --i) {
+                    EJQF *eqf = TCLISTVALPTR(qf->q->qflist, i);
+                    if (eqf == qf || (eqf->mflags & EJFEXCLUDED) || eqf->elmatchgrp != qf->elmatchgrp) {
+                        continue;
+                    }
+                    eqf->mflags |= EJFEXCLUDED;
+                    BSON_ITERATOR_SUBITERATOR(&sit, &sit2);
+                    FFPCTX nffpctx = *ffpctx;
+                    nffpctx.fplen = eqf->fpathsz - eqf->elmatchpos;
+                    if (nffpctx.fplen <= 0) { //should never happen if query construction is correct
+                        assert(false);
+                        ret = false;
+                        break;
+                    }
+                    nffpctx.fpath = eqf->fpath + eqf->elmatchpos;
+                    nffpctx.input = &sit2;
+                    nffpctx.stopos = 0;
+
+                    // Match sub-query at current field pos.
+                    // Ignores outer negate (qf) on inner query (eqf).
+                    if (_qrybsrecurrmatch(eqf, &nffpctx, eqf->elmatchpos) == qf->negate) {
+                        // Skip all remaining sub-queries on this field. Go to next element, if any.
+                        ret = false;
+                        break;
+                    }
                 }
-                ++c;
+            }
+            if (ret) {
+                _qrysetarrayidx(ffpctx, qf, (currpos - 1), arr_idx);
+                // Only return success at this point.
+                // An failure here may precede a later success so proceed to next element, if any.
+                return ret != qf->negate;
             }
         }
-        return false;
+        return qf->negate;
     } else {
         if (bt == BSON_EOO || bt == BSON_UNDEFINED || bt == BSON_NULL) {
             return qf->negate; //Field missing
@@ -4510,6 +4521,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
             qf.elmatchgrp = pqf->elmatchgrp;
             qf.elmatchpos = pqf->elmatchpos;
             qf.flags = pqf->flags;
+            if(elmatchgrp > 0)
+                qf.negate = pqf->negate;
         }
 
         if (!isckey) {
