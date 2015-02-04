@@ -4457,6 +4457,7 @@ fi
       ;;
 esac
 
+# Static libraries
 if test "$enable_static" != "no"
 then
 MYLIBRARYFILES="$MYLIBRARYFILES libtcejdb.a"
