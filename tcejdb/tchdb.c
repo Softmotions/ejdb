@@ -3800,23 +3800,26 @@ static bool tchdbopenimpl(TCHDB *hdb, const char *path, int omode) {
     }
     int type = hdb->type;
     tchdbloadmeta(hdb, hbuf);
-    if ((hdb->flags & HDBFOPEN) && tchdbwalrestore(hdb, path)) {
-        if (!tcfseek(fd, 0, TCFSTART)) {
-            tchdbsetecode(hdb, TCESEEK, __FILE__, __LINE__, __func__);
-            CLOSEFH2(hdb->fd);
-            return false;
-        }
-        if (!tcread(fd, hbuf, HDBHEADSIZ)) {
-            tchdbsetecode(hdb, TCEREAD, __FILE__, __LINE__, __func__);
-            CLOSEFH2(hdb->fd);
-            return false;
-        }
-        tchdbloadmeta(hdb, hbuf);
-        if (!tchdbwalremove(hdb, path)) {
-            CLOSEFH2(hdb->fd);
-            return false;
-        }
-    }
+	int oflags = hdb->flags;
+    if (oflags & HDBFOPEN) { /* DB was not closed properly */ 
+		if (tchdbwalrestore(hdb, path)) {
+			if (!tcfseek(fd, 0, TCFSTART)) {
+				tchdbsetecode(hdb, TCESEEK, __FILE__, __LINE__, __func__);
+				CLOSEFH2(hdb->fd);
+				return false;
+			}
+			if (!tcread(fd, hbuf, HDBHEADSIZ)) {
+				tchdbsetecode(hdb, TCEREAD, __FILE__, __LINE__, __func__);
+				CLOSEFH2(hdb->fd);
+				return false;
+			}
+			tchdbloadmeta(hdb, hbuf);
+			if (!tchdbwalremove(hdb, path)) {
+				CLOSEFH2(hdb->fd);
+				return false;
+			}
+		} 
+	}
     int besiz = (hdb->opts & HDBTLARGE) ? sizeof (int64_t) : sizeof (int32_t);
     size_t msiz = HDBHEADSIZ + hdb->bnum * besiz;
     if (!(omode & HDBONOLCK)) {
@@ -3842,17 +3845,18 @@ static bool tchdbopenimpl(TCHDB *hdb, const char *path, int omode) {
     if (map == MAP_FAILED) {
         tchdbsetecode(hdb, TCEMMAP, __FILE__, __LINE__, __func__);
         CLOSEFH2(hdb->fd);
-        hdb->fd = INVALID_HANDLE_VALUE;
         return false;
     }
     hdb->map = map;
     hdb->xfsiz = sbuf.st_size;
 #else
-    if (!tchdbftruncate(hdb, sbuf.st_size)) {
-        tchdbsetecode(hdb, TCETRUNC, __FILE__, __LINE__, __func__);
-        CLOSEFH2(hdb->fd);
-        return false;
-    }
+	if (!tchdbftruncate2(hdb,
+						(oflags & HDBFOPEN) /* db was not closed properly */ ? hdb->fsiz : sbuf.st_size,
+						(oflags & HDBFOPEN) ? HDBTRALLOWSHRINK : 0)) {
+		tchdbsetecode(hdb, TCETRUNC, __FILE__, __LINE__, __func__);
+		CLOSEFH2(hdb->fd);
+		return false;
+	}
 #endif
     hdb->fbpmax = 1 << hdb->fpow;
     if (omode & HDBOWRITER) {
@@ -3965,7 +3969,6 @@ static bool tchdbcloseimpl(TCHDB *hdb) {
         err = true;
     }
     hdb->map = NULL;
-
     if (!INVALIDHANDLE(hdb->walfd)) {
         if (!CLOSEFH(hdb->walfd)) {
             tchdbsetecode(hdb, TCECLOSE, __FILE__, __LINE__, __func__);
