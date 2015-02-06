@@ -1,11 +1,6 @@
 [![EJDB](https://raw.github.com/Softmotions/ejdb-pub/master/misc/ejdblogo3.png)](http://ejdb.org)
 
 
-NOTE
-===================================
-Despite a long pause in the project activity the team came back.  We are working on the next version of EJDB engine (EJDB2). We will make some maintenance tasks related to the current version of EJDB but no more big changes in the stable codebase.
-
-
 Embedded JSON Database engine
 ====================================
 
