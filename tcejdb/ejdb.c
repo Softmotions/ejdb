@@ -3034,8 +3034,8 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
 				_ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
 				break;
 			}
-			tcmapputkeep2(efields, ofpath, "");
-			tcmapputkeep2(efields, nfpath, "");
+			tcmapputkeep(efields, ofpath, strlen(ofpath), "", 0);
+			tcmapputkeep(efields, nfpath, strlen(nfpath), "", 0);
 		}
 		
         BSON_ITERATOR_FROM_BUFFER(&it, inbuf);
