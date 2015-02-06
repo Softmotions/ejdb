@@ -323,6 +323,8 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *          - {.., '$pull' : {'fpath' : val1, 'fpathN' : valN, ...}}
  *      $pullAll Batch version of $pull
  *          - {.., '$pullAll' : {'fpath' : [array of values to remove], ...}}
+ * 		$rename Rename field operation
+ * 			- {.., '$rename' : {'oldfname1' : 'newfname1', 'oldfnameN' : 'newfnameN'}}
  *
  * - Collection joins supported in the following form:
  *

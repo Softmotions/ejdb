@@ -70,7 +70,8 @@ enum { /**> Query field flags */
     EJCONDUPSERT = 1 << 14, /**> $upsert Upsert $set operation */
     EJCONDALL = 1 << 15, /**> 'All' modificator for $pull or $addToSet ($addToSetAll or $pullAll) */
     EJCONDOIT = 1 << 16, /**> $do query field operation */
-    EJCONDUNSET = 1 << 17 /**> $unset Field value */
+    EJCONDUNSET = 1 << 17, /**> $unset Field value */
+    EJCONDRENAME = 1 << 18 /**> $rename Field value */
 };
 
 enum { /**> Query flags */
