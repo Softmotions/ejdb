@@ -566,6 +566,13 @@ Queries
  *           - {.., '$pull' : {'fpath' : val1, 'fpathN' : valN, ...}}
  *       $pullAll Batch version of $pull
  *           - {.., '$pullAll' : {'fpath' : [array of values to remove], ...}}
+ * 		 $rename Rename field operation
+ * 			 - {.., '$rename' : {'oldfname1' : 'newfname1', 'oldfnameN' : 'newfnameN'}}
+ *       $unset Unset the specified fields
+ *           - { $unset: { 'fpath1' : "", ... } }
+ *       $splice Array field splice operator (like a mongodb $splice) implemented as $do operation.
+ * 			- ${..., $do : {'fpath1' : {$splice : <limit>}}
+ * 		    - ${..., $do : {'fpath1' : {$splice : [<offset>, <limit>]}}
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.

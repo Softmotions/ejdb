@@ -327,6 +327,11 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  * 			- {.., '$rename' : {'oldfname1' : 'newfname1', 'oldfnameN' : 'newfnameN'}}
  *      $unset Unset the specified fields
  *          - { $unset: { 'fpath1' : "", ... } }
+ *		$splice Array field splice operator (like a mongodb $splice) implemented 
+ * 			as $do operation.
+ * 			- ${..., $do : {'fpath1' : {$splice : <limit>}}
+ *  		- ${..., $do : {'fpath1' : {$splice : [<offset>, <limit>]}}
+ * 		
  *
  * - Collection joins supported in the following form:
  *      {..., $do : {fpath : {$join : 'collectionname'}} }
