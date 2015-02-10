@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *  EJDB database library http://ejdb.org
- *  Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
+ *  Copyright (C) 2012-2015 Softmotions Ltd <info@softmotions.com>
  *
  *  This file is part of EJDB.
  *  EJDB is free software; you can redistribute it and/or modify it under the terms of
@@ -201,7 +201,7 @@ const char* ejdberrmsg(int ecode) {
         case JBEQINCEXCL:
             return "$fields hint cannot mix include and exclude fields";
         case JBEQACTKEY:
-            return "action key in $do block can only be one of: $join";
+            return "action key in $do block can be one of: $join, $slice";
         case JBEMAXNUMCOLS:
             return "exceeded the maximum number of collections per database: 1024";
         case JBEEJSONPARSE:
@@ -2516,59 +2516,113 @@ static bson_visitor_cmd_t _bson$dovisitor(const char *ipath, int ipathlen, const
             assert(dofield->updateobj && (dofield->flags & EJCONDOIT));
             BSON_ITERATOR_INIT(&doit, dofield->updateobj);
             while ((bt = bson_iterator_next(&doit)) != BSON_EOO) {
-                if (bt != BSON_STRING || strcmp("$join", BSON_ITERATOR_KEY(&doit))) continue;
-                coll = _getcoll(ictx->jb, bson_iterator_string(&doit));
-                if (!coll) break;
-                bson_oid_t loid;
-                if (lbt == BSON_STRING) {
-                    sval = bson_iterator_string(it);
-                    if (!ejdbisvalidoidstr(sval)) break;
-                    bson_oid_from_string(&loid, sval);
-                } else if (lbt == BSON_OID) {
-                    loid = *(bson_iterator_oid(it));
-                }
-                if (lbt == BSON_STRING || lbt == BSON_OID) {
-                    tcxstrclear(ictx->q->colbuf);
-                    tcxstrclear(ictx->q->tmpbuf);
-                    if (!tchdbgetintoxstr(coll->tdb->hdb, &loid, sizeof (loid), ictx->q->colbuf) ||
-                            !tcmaploadoneintoxstr(TCXSTRPTR(ictx->q->colbuf), TCXSTRSIZE(ictx->q->colbuf),
-                                                  JDBCOLBSON, JDBCOLBSONL, ictx->q->tmpbuf)) {
-                        break;
-                    }
-                    BSON_ITERATOR_FROM_BUFFER(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
-                    bson_append_object_from_iterator(BSON_ITERATOR_KEY(it), &bufit, ictx->sbson);
-                    break;
-                }
-                if (lbt == BSON_ARRAY) {
-                    BSON_ITERATOR_SUBITERATOR(it, &sit);
-                    bson_append_start_array(ictx->sbson, BSON_ITERATOR_KEY(it));
-                    while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
-                        if (bt != BSON_STRING && bt != BSON_OID) {
-                            bson_append_field_from_iterator(&sit, ictx->sbson);
-                            continue;
-                        }
-                        if (bt == BSON_STRING) {
-                            sval = bson_iterator_string(&sit);
-                            if (!ejdbisvalidoidstr(sval)) break;
-                            bson_oid_from_string(&loid, sval);
-                        } else if (bt == BSON_OID) {
-                            loid = *(bson_iterator_oid(&sit));
-                        }
-                        tcxstrclear(ictx->q->colbuf);
-                        tcxstrclear(ictx->q->tmpbuf);
-                        if (!tchdbgetintoxstr(coll->tdb->hdb, &loid, sizeof (loid), ictx->q->colbuf) ||
-                                !tcmaploadoneintoxstr(TCXSTRPTR(ictx->q->colbuf), TCXSTRSIZE(ictx->q->colbuf),
-                                                      JDBCOLBSON, JDBCOLBSONL, ictx->q->tmpbuf)) {
-                            bson_append_field_from_iterator(&sit, ictx->sbson);
-                            continue;
-                        }
-                        BSON_ITERATOR_FROM_BUFFER(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
-                        bson_append_object_from_iterator(BSON_ITERATOR_KEY(&sit), &bufit, ictx->sbson);
-                    }
-                    bson_append_finish_array(ictx->sbson);
-                    rv = (BSON_VCMD_SKIP_AFTER | BSON_VCMD_SKIP_NESTED);
-                }
-            }
+				const char *dofname = BSON_ITERATOR_KEY(&doit);
+				
+				if (bt == BSON_STRING && !strcmp("$join", dofname)) {
+					coll = _getcoll(ictx->jb, bson_iterator_string(&doit));
+					if (!coll) break;
+					bson_oid_t loid;
+					if (lbt == BSON_STRING) {
+						sval = bson_iterator_string(it);
+						if (!ejdbisvalidoidstr(sval)) break;
+						bson_oid_from_string(&loid, sval);
+					} else if (lbt == BSON_OID) {
+						loid = *(bson_iterator_oid(it));
+					}
+					if (lbt == BSON_STRING || lbt == BSON_OID) {
+						tcxstrclear(ictx->q->colbuf);
+						tcxstrclear(ictx->q->tmpbuf);
+						if (!tchdbgetintoxstr(coll->tdb->hdb, &loid, sizeof (loid), ictx->q->colbuf) ||
+								!tcmaploadoneintoxstr(TCXSTRPTR(ictx->q->colbuf), TCXSTRSIZE(ictx->q->colbuf),
+													  JDBCOLBSON, JDBCOLBSONL, ictx->q->tmpbuf)) {
+							break;
+						}
+						BSON_ITERATOR_FROM_BUFFER(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
+						bson_append_object_from_iterator(BSON_ITERATOR_KEY(it), &bufit, ictx->sbson);
+						break;
+					}
+					if (lbt == BSON_ARRAY) {
+						BSON_ITERATOR_SUBITERATOR(it, &sit);
+						bson_append_start_array(ictx->sbson, BSON_ITERATOR_KEY(it));
+						while ((bt = bson_iterator_next(&sit)) != BSON_EOO) {
+							if (bt != BSON_STRING && bt != BSON_OID) {
+								bson_append_field_from_iterator(&sit, ictx->sbson);
+								continue;
+							}
+							if (bt == BSON_STRING) {
+								sval = bson_iterator_string(&sit);
+								if (!ejdbisvalidoidstr(sval)) break;
+								bson_oid_from_string(&loid, sval);
+							} else if (bt == BSON_OID) {
+								loid = *(bson_iterator_oid(&sit));
+							}
+							tcxstrclear(ictx->q->colbuf);
+							tcxstrclear(ictx->q->tmpbuf);
+							if (!tchdbgetintoxstr(coll->tdb->hdb, &loid, sizeof (loid), ictx->q->colbuf) ||
+									!tcmaploadoneintoxstr(TCXSTRPTR(ictx->q->colbuf), TCXSTRSIZE(ictx->q->colbuf),
+														  JDBCOLBSON, JDBCOLBSONL, ictx->q->tmpbuf)) {
+								bson_append_field_from_iterator(&sit, ictx->sbson);
+								continue;
+							}
+							BSON_ITERATOR_FROM_BUFFER(&bufit, TCXSTRPTR(ictx->q->tmpbuf));
+							bson_append_object_from_iterator(BSON_ITERATOR_KEY(&sit), &bufit, ictx->sbson);
+						}
+						bson_append_finish_array(ictx->sbson);
+						rv = (BSON_VCMD_SKIP_AFTER | BSON_VCMD_SKIP_NESTED);
+					}
+					
+				} else if (lbt == BSON_ARRAY && 
+							(bt == BSON_ARRAY || BSON_IS_NUM_TYPE(bt)) && 
+							!strcmp("$slice", dofname)) {
+								
+					bson_append_start_array(ictx->sbson, BSON_ITERATOR_KEY(it));
+					int skip = 0, limit, idx = 0, i;
+					char nbuff[TCNUMBUFSIZ];
+					
+					if (bt == BSON_ARRAY) { // $slice : [skip, limit]
+						bson_type bt2;
+						bson_iterator sit2;
+						BSON_ITERATOR_SUBITERATOR(&doit, &sit2);
+						
+						bt2 = bson_find_fieldpath_value2("0", 1, &sit2);
+						if (!BSON_IS_NUM_TYPE(bt2)) {
+							bson_append_field_from_iterator(it, ictx->sbson);
+							break;
+						}
+						skip = bson_iterator_int(&sit2);
+						
+						bt2 = bson_find_fieldpath_value2("1", 1, &sit2);
+						if (!BSON_IS_NUM_TYPE(bt2)) {
+							bson_append_field_from_iterator(it, ictx->sbson);
+							break;
+						}
+						limit = abs(bson_iterator_int(&sit2));
+					} else { // $slice : limit
+						limit = abs(bson_iterator_int(&doit));
+					}
+					
+					if (skip < 0) {
+						int cnt = 0;
+						BSON_ITERATOR_SUBITERATOR(it, &sit);
+						while (bson_iterator_next(&sit) != BSON_EOO) ++cnt;
+						skip = cnt + skip % cnt;
+						if (skip == cnt) {
+							skip = 0;
+						}
+					}
+					
+					limit = (limit <= INT_MAX - skip) ? limit + skip : INT_MAX;
+					BSON_ITERATOR_SUBITERATOR(it, &sit);
+					for (i = 0; idx < limit && (bt = bson_iterator_next(&sit)) != BSON_EOO; ++idx) {
+						if (idx >= skip) {
+							bson_numstrn(nbuff, TCNUMBUFSIZ, i++);
+							bson_append_field_from_iterator2(nbuff, &sit, ictx->sbson);
+						}
+					}
+					bson_append_finish_array(ictx->sbson);
+					rv = (BSON_VCMD_SKIP_AFTER | BSON_VCMD_SKIP_NESTED);
+				}
+			}
             break;
         }
         default:
@@ -4830,7 +4884,7 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                         int ac = 0;
                         while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
                             const char *akey = BSON_ITERATOR_KEY(&sit);
-                            if (!strcmp("$join", akey)) {
+                            if (!strcmp("$join", akey) || !strcmp("$slice", akey)) {
                                 bson_append_field_from_iterator(&sit, qf.updateobj);
                                 ++ac;
                             }

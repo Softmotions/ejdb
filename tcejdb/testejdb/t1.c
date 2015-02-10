@@ -1,6 +1,6 @@
 /*
  * File:   ejdbtest1.c
- * Author: Adamansky Anton <anton@adamansky.com>
+ * Author: Adamansky Anton <adamansky@gmail.com>
  *
  * Created on Sep 18, 2012, 10:42:19 PM
  */

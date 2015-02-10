@@ -1,6 +1,6 @@
 /*
  * File:   t3.c
- * Author: Adamansky Anton <anton@adamansky.com>
+ * Author: Adamansky Anton <adamansky@gmail.com>
  *
  * Created on Oct 26, 2012, 12:12:45 PM
  */

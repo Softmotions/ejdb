@@ -32,6 +32,7 @@ config.status
 
 /npm-debug.log
 /.idea/workspace.xml
+/.idea
 
 /tcejdb/*.dll
 /tcejdb/i686-w64*
@@ -83,6 +84,7 @@ config.status
 /tcejdb/testejdb/t2
 /tcejdb/testejdb/t3
 /tcejdb/testejdb/t4
+/tcejdb/testejdb/t5
 /tcejdb/testejdb/test*
 
 */nbproject/private/*

@@ -1,7 +1,7 @@
 /*************************************************************************************************
  * The hash database API of Tokyo Cabinet
  *                                                               Copyright (C) 2006-2012 FAL Labs
- *                                                               Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
+ *                                                               Copyright (C) 2012-2015 Softmotions Ltd <info@softmotions.com>
  * This file is part of Tokyo Cabinet.
  * Tokyo Cabinet is free software; you can redistribute it and/or modify it under the terms of
  * the GNU Lesser General Public License as published by the Free Software Foundation; either
@@ -3729,7 +3729,6 @@ static bool tchdbopenimpl(TCHDB *hdb, const char *path, int omode) {
     }
     hdb->omode = omode;
     hdb->fd = fd;
-
 
     if (!(omode & HDBONOLCK)) {
         if (!tclock(fd, omode & HDBOWRITER, omode & HDBOLCKNB)) {

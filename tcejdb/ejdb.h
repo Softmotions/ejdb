@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *  C/C++ API for EJDB database library http://ejdb.org
- *  Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
+ *  Copyright (C) 2012-2015 Softmotions Ltd <info@softmotions.com>
  *
  *  This file is part of EJDB.
  *  EJDB is free software; you can redistribute it and/or modify it under the terms of
@@ -62,7 +62,7 @@ enum { /** Error codes */
     JBEQUPDFAILED = 9010, /**< Updating failed. */
     JBEQONEEMATCH = 9011, /**< Only one $elemMatch allowed in the fieldpath. */
     JBEQINCEXCL = 9012, /**< $fields hint cannot mix include and exclude fields */
-    JBEQACTKEY = 9013, /**< action key in $do block can only be one of: $join */
+    JBEQACTKEY = 9013, /**< action key in $do block can only be one of: $join, $slice */
     JBEMAXNUMCOLS = 9014, /**< Exceeded the maximum number of collections per database */
     JBEEI = 9015, /**< EJDB export/import error */
     JBEEJSONPARSE = 9016, /**< JSON parsing failed */
@@ -329,7 +329,6 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *          - { $unset: { 'fpath1' : "", ... } }
  *
  * - Collection joins supported in the following form:
- *
  *      {..., $do : {fpath : {$join : 'collectionname'}} }
  *      Where 'fpath' value points to object's OIDs from 'collectionname'. Its value
  *      can be OID, string representation of OID or array of this pointers.

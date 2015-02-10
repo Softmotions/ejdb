@@ -1,6 +1,6 @@
 /**************************************************************************************************
  *  EJDB database library http://ejdb.org
- *  Copyright (C) 2012-2013 Softmotions Ltd <info@softmotions.com>
+ *  Copyright (C) 2012-2015 Softmotions Ltd <info@softmotions.com>
  *
  *  This file is part of EJDB.
  *  EJDB is free software; you can redistribute it and/or modify it under the terms of

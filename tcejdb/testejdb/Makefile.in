@@ -7,7 +7,7 @@ CMDLDFLAGS =
 LIBS = -lcunit -ltcejdb @LIBS@
 RUNENV = LD_LIBRARY_PATH=.:.. DYLD_LIBRARY_PATH=.:..
 
-TESTS = t1 t2 t3 t4
+TESTS = t1 t2 t3 t4 t5
 
 check : all check-t1 check-t2 check-t3 check-t4;
 
@@ -23,6 +23,10 @@ check-valgrind-t3 :
 check-valgrind-t4 :
 	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check-t4
 
+check-valgrind-t5 :
+	make RUNCMD="valgrind --tool=memcheck --leak-check=full --error-exitcode=1" check-t5
+
+
 check-t1 :
 	$(RUNENV) $(RUNCMD) ./t1
 
@@ -34,6 +38,9 @@ check-t3 :
 
 check-t4 :
 	$(RUNENV) $(RUNCMD) ./t4
+	
+check-t5 :
+	$(RUNENV) $(RUNCMD) ./t5
 
 
 all : $(TESTS)
@@ -51,6 +58,9 @@ t3 : t3.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) $(LIBS)
 
 t4 : t4.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) $(LIBS)
+		
+t5 : t5.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $< $(LDFLAGS) $(CMDLDFLAGS) $(LIBS)
 
 
