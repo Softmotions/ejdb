@@ -8,8 +8,11 @@
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Project Name="tcejdb" ConfigName="Debug"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="Release" Selected="yes">
+    <WorkspaceConfiguration Name="Release" Selected="no">
       <Project Name="tcejdb" ConfigName="Release"/>
+    </WorkspaceConfiguration>
+    <WorkspaceConfiguration Name="winedbg" Selected="no">
+      <Project Name="tcejdb" ConfigName="winedbg"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

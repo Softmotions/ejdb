@@ -328,7 +328,7 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  *      $unset Unset the specified fields
  *          - { $unset: { 'fpath1' : "", ... } }
  *		$slice Array field slice operator (like a mongodb $slice) implemented
- * 			as $do operation.
+ * 			within $do operation.
  * 			- ${..., $do : {'fpath1' : {$slice : <limit>}}
  *  		- ${..., $do : {'fpath1' : {$slice : [<offset>, <limit>]}}
  * 		

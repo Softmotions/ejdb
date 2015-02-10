@@ -570,7 +570,7 @@ Queries
  * 			 - {.., '$rename' : {'oldfname1' : 'newfname1', 'oldfnameN' : 'newfnameN'}}
  *       $unset Unset the specified fields
  *           - { $unset: { 'fpath1' : "", ... } }
- *       $slice Array field slice operator (like a mongodb $slice) implemented as $do operation.
+ *       $slice Array field slice operator (like a mongodb $slice) implemented within $do operation.
  * 			- ${..., $do : {'fpath1' : {$slice : <limit>}}
  * 		    - ${..., $do : {'fpath1' : {$slice : [<offset>, <limit>]}}
  *
