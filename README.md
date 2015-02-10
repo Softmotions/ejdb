@@ -570,9 +570,9 @@ Queries
  * 			 - {.., '$rename' : {'oldfname1' : 'newfname1', 'oldfnameN' : 'newfnameN'}}
  *       $unset Unset the specified fields
  *           - { $unset: { 'fpath1' : "", ... } }
- *       $splice Array field splice operator (like a mongodb $splice) implemented as $do operation.
- * 			- ${..., $do : {'fpath1' : {$splice : <limit>}}
- * 		    - ${..., $do : {'fpath1' : {$splice : [<offset>, <limit>]}}
+ *       $slice Array field slice operator (like a mongodb $slice) implemented as $do operation.
+ * 			- ${..., $do : {'fpath1' : {$slice : <limit>}}
+ * 		    - ${..., $do : {'fpath1' : {$slice : [<offset>, <limit>]}}
  *
  *  NOTE: Negate operations: $not and $nin not using indexes
  *  so they can be slow in comparison to other matching operations.
