@@ -492,9 +492,15 @@ EJDB_EXPORT void ejdbqresultdispose(EJQRESULT qr);
 EJDB_EXPORT uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log);
 
 /**
- * Provides 'distinct' operation over query (http://docs.mongodb.org/manual/reference/method/db.collection.distinct/)
+ * Provides 'distinct' operation over query (http://docs.mongodb.org/manual/reference/method/db.collection.distinct/).
  * 
- * NOTE: Query with update instraction not supported.
+ * @param jcoll EJDB database collection handle.
+ * @param fpath Field path to collect distinct values from.
+ * @param qobj Main BSON query object.
+ * @param orqobjs Array of additional OR query objects (joined with OR predicate).
+ * @param orqobjsnum Number of OR query objects.
+ * 
+ * NOTE: Queries with update instruction not supported.
  * 
  * @return Unique values by specified path and query (as BSON array)
  */
