@@ -492,6 +492,15 @@ EJDB_EXPORT void ejdbqresultdispose(EJQRESULT qr);
 EJDB_EXPORT uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log);
 
 /**
+ * Provides 'distinct' operation over query (http://docs.mongodb.org/manual/reference/method/db.collection.distinct/)
+ * 
+ * NOTE: Query with update instraction not supported.
+ * 
+ * @return Unique values by specified path and query (as BSON array)
+ */
+EJDB_EXPORT bson* ejdbqrydistinct(EJCOLL *jcoll, const char *fpath, bson *qobj, bson *orqobjs, int orqobjsnum, uint32_t *count, TCXSTR *log);
+
+/**
  * Synchronize content of a EJDB collection database with the file on device.
  * @param jcoll EJDB collection.
  * @return On success return true.

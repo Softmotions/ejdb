@@ -595,6 +595,79 @@ EJQRESULT ejdbqryexecute(EJCOLL *coll, const EJQ *q, uint32_t *count, int qflags
     return res;
 }
 
+bson* ejdbqrydistinct(EJCOLL *coll, const char *fpath, bson *qobj, bson *orqobjs, int orqobjsnum, uint32_t *count, TCXSTR *log) {
+    assert(coll);
+    uint32_t icount = 0;
+    
+    bson *rqobj = qobj;
+    bson *hints = bson_create();
+    bson_init_as_query(hints);
+    bson_append_start_object(hints, "$fields");
+    bson_append_int(hints, fpath, 1);
+    bson_append_finish_object(hints);
+    bson_append_start_object(hints, "$orderby");
+    bson_append_int(hints, fpath, 1);
+    bson_append_finish_object(hints);
+    bson_finish(hints);
+
+    EJQ *q = NULL;
+    bson *rres = NULL;
+    *count = 0;
+
+    if (!rqobj) {
+        rqobj = bson_create();
+        bson_init(rqobj);
+        bson_finish(rqobj);
+    }
+    q = ejdbcreatequery(coll->jb, rqobj, orqobjs, orqobjsnum, hints);
+    if (q == NULL) {
+        goto fail;
+    }
+    if (q->flags & EJQUPDATING) {
+        _ejdbsetecode(coll->jb, JBEQERROR, __FILE__, __LINE__, __func__);
+        goto fail;
+    }
+    TCLIST *res = ejdbqryexecute(coll, q, &icount, 0, log);
+    rres = bson_create();
+    bson_init(rres);
+
+    bson_iterator bsi[2];
+    bson_iterator *prev = NULL, *cur;
+    int biind = 0;
+    char biindstr[TCNUMBUFSIZ];
+    memset(biindstr, '\0', 32);
+    int fplen = strlen(fpath);
+    for(int i = 0; i < TCLISTNUM(res); ++i) {
+        cur = bsi + (biind & 1);
+        BSON_ITERATOR_FROM_BUFFER(cur, TCLISTVALPTR(res, i));
+        bson_type bt = bson_find_fieldpath_value2(fpath, fplen, cur);
+        if (bt == BSON_EOO) {
+            continue;
+        }
+        
+        if (prev == NULL || bson_compare_it_current(prev, cur)) {
+            bson_numstrn(biindstr, TCNUMBUFSIZ, biind);
+            bson_append_field_from_iterator2(biindstr, cur, rres);
+            prev = cur;
+            biind++;
+        }
+    }
+    bson_finish(rres);
+    tclistdel(res);
+    
+    *count = biind;
+    
+fail:
+    if (q) {
+        ejdbquerydel(q);
+    }
+    if (rqobj != qobj) {
+        bson_destroy(rqobj);
+    }
+    bson_destroy(hints);
+    return rres;
+}
+
 int ejdbqresultnum(EJQRESULT qr) {
     return qr ? tclistnum(qr) : 0;
 }
