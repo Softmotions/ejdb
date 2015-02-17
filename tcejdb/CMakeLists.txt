@@ -1,0 +1,125 @@
+cmake_minimum_required(VERSION 3.1)
+set(PROJECT_NAME "ejdb")
+project(${PROJECT_NAME}
+		VERSION 1.2.0
+		LANGUAGES C)
+		
+set(EJDB_LLIBRARIES)
+set(EJDB_INCLUDE_DIRS)
+set(ALL_SRC)
+set(ALL_HDRS)
+		
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+		
+if (NOT CMAKE_BUILD_TYPE)
+message(FATAL_ERROR "Please specify the build type -DCMAKE_BUILD_TYPE=Debug|Release|RelWithDebInfo")
+endif(NOT CMAKE_BUILD_TYPE)
+
+option(WITH_TESTS "Build EJDB test cases" OFF)
+set(MODULES tcutil tchdb tcbdb tctdb tcfdb bson ejdb)
+
+set(EJDB_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/generated)
+list(APPEND EJDB_INCLUDE_DIRS "${EJDB_GENERATED_DIR}")
+
+foreach(MODULE IN LISTS MODULES)
+	#include_directories(src/${MODULE})
+	list(APPEND EJDB_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/src/${MODULE}")
+	file(GLOB MODULE_SRC src/${MODULE}/*.c)
+	file(GLOB MODULE_HDRS src/${MODULE}/*.h)
+	list(APPEND ALL_SRC ${MODULE_SRC})
+	list(APPEND ALL_HDRS ${MODULE_HDRS})
+endforeach(MODULE)
+
+add_library(ejdb SHARED ${ALL_SRC} ${ALL_HDRS})
+
+find_package(Threads REQUIRED CMAKE_THREAD_PREFER_PTHREAD)
+if (CMAKE_USE_WIN32_THREADS_INIT)
+add_definitions(-D_TC_WIN32_THREADS)
+elseif (CMAKE_USE_PTHREADS_INIT)
+add_definitions(-D_TC_PTHREADS)
+else()
+mesage(FATAL_ERROR "Unable to find suitable threading library")
+endif(CMAKE_USE_WIN32_THREADS_INIT)
+list(APPEND EJDB_LLIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+
+find_library(M_LIB m)
+if (NOT M_LIB)
+message(FATAL_ERROR "Library 'libm' not FOUND")
+endif(NOT M_LIB)
+list(APPEND EJDB_LLIBRARIES "${M_LIB}")
+
+find_package(BZip2)
+if (BZIP2_FOUND)
+list(APPEND EJDB_LLIBRARIES ${BZIP2_LIBRARIES})
+list(APPEND EJDB_INCLUDE_DIRS ${BZIP2_INCLUDE_DIR})
+endif(BZIP2_FOUND)
+
+find_package(ZLIB)
+if (ZLIB_FOUND)
+list(APPEND EJDB_LLIBRARIES ${ZLIB_LIBRARIES})
+list(APPEND EJDB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR})
+endif(ZLIB_FOUND)
+
+find_package(LibLZMA)
+if (LIBLZMA_FOUND)
+list(APPEND EJDB_LLIBRARIES ${LIBLZMA_LIBRARIES})
+list(APPEND EJDB_INCLUDE_DIRS ${LIBLZMA_INCLUDE_DIR})
+endif(LIBLZMA_FOUND)
+
+find_package(Lzo)
+if (LZO_FOUND)
+list(APPEND EJDB_LLIBRARIES ${LZO_LIBRARIES})
+list(APPEND EJDB_INCLUDE_DIRS ${LZO_INCLUDE_DIR})
+endif(LZO_FOUND)
+
+include(CheckIncludeFile)
+foreach(HF IN ITEMS stdlib stdint unistd dirent stddef)
+string(TOUPPER "${HF}" UHF)
+check_include_file(${HF}.h "_TC_HAVE_${UHF}")
+if (NOT _TC_HAVE_${UHF})
+message(FATAL_ERROR "Include file '${HF}.h' not FOUND")
+endif()
+endforeach(HF)
+
+list(REMOVE_DUPLICATES EJDB_LLIBRARIES)
+list(REMOVE_DUPLICATES EJDB_INCLUDE_DIRS)
+include_directories(${EJDB_INCLUDE_DIRS})
+target_link_libraries(ejdb ${EJDB_LLIBRARIES})
+
+#todo check the host system!
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fsigned-char -Wall -pedantic")
+set(CMAKE_C_FLAGS_DEBUG "-g -O0 -Wfatal-errors -DDEBUG -D_DEBUG -UNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g -O2")
+
+configure_file(src/basedefs.h.in ${EJDB_GENERATED_DIR}/basedefs.h)
+configure_file(src/myconf.h.in ${EJDB_GENERATED_DIR}/myconf.h)
+file(GLOB GENERATED_HDRS ${EJDB_GENERATED_DIR}/*.h)
+list(APPEND ALL_HDRS ${GENERATED_HDRS})
+
+foreach(MODULE IN LISTS MODULES)
+	if (EXISTS src/${MODULE}/CMakeLists.txt)
+		add_subdirectory(src/${MODULE})
+	endif()
+	if (EXISTS src/${MODULE}/tools/CMakeLists.txt)
+		add_subdirectory(src/${MODULE}/tools)
+	endif()
+	if (WITH_TESTS AND EXISTS src/${MODULE}/tests/CMakeLists.txt)
+		add_subdirectory(src/${MODULE}/tests/CMakeLists.txt)
+	endif() 
+endforeach(MODULE)
+
+#add_definitions(-D_TC_PREFIX=${CMAKE_INSTALL_PREFIX})
+#link_directories
+#link_libraries
+#target_link_libraries
+#add_subdirectory(tcutil)
+
+message("")
+message("#############################################")
+message(" *LINK LIBS: ${EJDB_LLIBRARIES}")
+message(" *INCLUDE DIRS: ${EJDB_INCLUDE_DIRS}")
+message(" *SOURCES: ${ALL_SRC} ${ALL_HDRS}")
+message("#############################################")
+message("")

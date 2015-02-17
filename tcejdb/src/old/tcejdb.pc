@@ -1,0 +1,15 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+datarootdir = ${prefix}/share
+bindir=${exec_prefix}/bin
+libdir=${exec_prefix}/lib
+libexecdir=${exec_prefix}/libexec
+includedir=${prefix}/include
+datadir=${datarootdir}
+
+Name: EJDB
+Description: Embedded JSON database engine library
+Version: 1.1.26
+Libs: -L${libdir} -ltcejdb
+Libs.private: -lpthread -lz -lrt -lm -lc 
+Cflags: -I${includedir}

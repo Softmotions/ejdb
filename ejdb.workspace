@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="ejdb" Database="./ejdb.tags">
-  <Project Name="tcejdb" Path="tcejdb/tcejdb.project" Active="Yes"/>
   <Environment>
     <![CDATA[]]>
   </Environment>
+  <Project Name="tcejdb" Path="tcejdb/tcejdb.project" Active="Yes"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Project Name="tcejdb" ConfigName="Debug"/>
+      <Project Name="" ConfigName="Debug_Linux"/>
+      <Project Name="tcejdb" ConfigName="Debug_Linux"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="Release" Selected="no">
+    <WorkspaceConfiguration Name="Release" Selected="yes">
       <Project Name="tcejdb" ConfigName="Release"/>
+      <Project Name="" ConfigName="Debug_Linux"/>
+      <Project Name="tcejdb" ConfigName="Debug_Linux"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="winedbg" Selected="no">
+    <WorkspaceConfiguration Name="winedbg" Selected="yes">
       <Project Name="tcejdb" ConfigName="winedbg"/>
+      <Project Name="" ConfigName="Debug_Linux"/>
+      <Project Name="tcejdb" ConfigName="Debug_Linux"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>
