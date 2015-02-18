@@ -1,8 +1,11 @@
 Makefile
+tcejdb/src/*/tests/*test
 tcejdb/generated/
+tcejdb/Testing/
 
 CMakeCache.txt
 CMakeFiles
+CTestTestfile.cmake
 cmake_install.cmake
 compile_commands.json
 compilation.db
@@ -10,7 +13,6 @@ compilation.db
 .codelite
 .idea
 .dep.inc
-
 
 *.iml
 *.o

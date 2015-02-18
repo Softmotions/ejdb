@@ -51,7 +51,6 @@
       </VirtualDirectory>
       <File Name="src/tcbdb/tcbdb.c"/>
       <File Name="src/tcbdb/tcbdb.h"/>
-      <File Name="src/tcbdb/tcbmgr.c"/>
       <VirtualDirectory Name="tools">
         <File Name="src/tcbdb/tools/tcbmgr.c"/>
       </VirtualDirectory>
@@ -63,7 +62,6 @@
       </VirtualDirectory>
       <File Name="src/tcfdb/tcfdb.c"/>
       <File Name="src/tcfdb/tcfdb.h"/>
-      <File Name="src/tcfdb/tcfmgr.c"/>
       <VirtualDirectory Name="tools">
         <File Name="src/tcfdb/tools/tcfmgr.c"/>
       </VirtualDirectory>
@@ -75,7 +73,6 @@
       </VirtualDirectory>
       <File Name="src/tchdb/tchdb.c"/>
       <File Name="src/tchdb/tchdb.h"/>
-      <File Name="src/tchdb/tchmgr.c"/>
       <VirtualDirectory Name="tools">
         <File Name="src/tchdb/tools/tchmgr.c"/>
       </VirtualDirectory>
@@ -87,7 +84,6 @@
       </VirtualDirectory>
       <File Name="src/tctdb/tctdb.c"/>
       <File Name="src/tctdb/tctdb.h"/>
-      <File Name="src/tctdb/tctmgr.c"/>
       <VirtualDirectory Name="tools">
         <File Name="src/tctdb/tools/tctmgr.c"/>
       </VirtualDirectory>
@@ -96,6 +92,7 @@
       <VirtualDirectory Name="tests">
         <File Name="src/tcutil/tests/tcumttest.c"/>
         <File Name="src/tcutil/tests/tcutest.c"/>
+        <File Name="src/tcutil/tests/CMakeLists.txt"/>
       </VirtualDirectory>
       <File Name="src/tcutil/md5.c"/>
       <File Name="src/tcutil/md5.h"/>
@@ -132,9 +129,6 @@
       <File Name="src/bson/nxjson.c"/>
       <File Name="src/bson/nxjson.h"/>
     </VirtualDirectory>
-  </VirtualDirectory>
-  <VirtualDirectory Name="resources">
-    <File Name="CMakeLists.txt"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
@@ -303,4 +297,9 @@
       </Completion>
     </Configuration>
   </Settings>
+  <VirtualDirectory Name="cmake">
+    <File Name="cmake/Modules/FindLzo.cmake"/>
+    <File Name="cmake/Modules/FindCUnit.cmake"/>
+    <File Name="CMakeLists.txt"/>
+  </VirtualDirectory>
 </CodeLite_Project>

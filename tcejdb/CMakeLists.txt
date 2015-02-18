@@ -16,6 +16,9 @@ message(FATAL_ERROR "Please specify the build type -DCMAKE_BUILD_TYPE=Debug|Rele
 endif(NOT CMAKE_BUILD_TYPE)
 
 option(WITH_TESTS "Build EJDB test cases" OFF)
+option(ENABLE_STATIC_LIB "Build ejdb static library" OFF)
+option(WITH_VALGRIND_CHECK "Build EJDB test cases with valgrind check support" OFF)
+
 set(MODULES tcutil tchdb tcbdb tctdb tcfdb bson ejdb)
 
 set(EJDB_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/generated)
@@ -30,7 +33,11 @@ foreach(MODULE IN LISTS MODULES)
 	list(APPEND ALL_HDRS ${MODULE_HDRS})
 endforeach(MODULE)
 
-add_library(ejdb SHARED ${ALL_SRC} ${ALL_HDRS})
+if (ENABLE_STATIC_LIB)
+add_library(ejdb STATIC ${ALL_SRC})
+else()
+add_library(ejdb SHARED ${ALL_SRC})
+endif(ENABLE_STATIC_LIB)
 
 find_package(Threads REQUIRED CMAKE_THREAD_PREFER_PTHREAD)
 if (CMAKE_USE_WIN32_THREADS_INIT)
@@ -89,14 +96,27 @@ target_link_libraries(ejdb ${EJDB_LLIBRARIES})
 #todo check the host system!
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fsigned-char -Wall -pedantic")
-set(CMAKE_C_FLAGS_DEBUG "-g -O0 -Wfatal-errors -DDEBUG -D_DEBUG -UNDEBUG")
+set(CMAKE_C_FLAGS_DEBUG "-O0 -Wfatal-errors -DDEBUG -D_DEBUG -UNDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g -O2")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2")
 
 configure_file(src/basedefs.h.in ${EJDB_GENERATED_DIR}/basedefs.h)
 configure_file(src/myconf.h.in ${EJDB_GENERATED_DIR}/myconf.h)
 file(GLOB GENERATED_HDRS ${EJDB_GENERATED_DIR}/*.h)
 list(APPEND ALL_HDRS ${GENERATED_HDRS})
+
+if (WITH_TESTS) 
+	#Valgrind staff
+	if (WITH_VALGRIND_CHECK)
+	find_program(VALGRIND_FOUND valgrind)
+	if (NOT VALGRIND_FOUND)
+		message(FATAL_ERROR "'valgrind' executable not found")
+	endif(NOT VALGRIND_FOUND)
+	set(TEST_TOOL_CMD valgrind --tool=memcheck --leak-check=full --error-exitcode=1)
+	endif(WITH_VALGRIND_CHECK)
+	enable_testing()
+	find_package(CUnit REQUIRED)
+endif(WITH_TESTS)
 
 foreach(MODULE IN LISTS MODULES)
 	if (EXISTS src/${MODULE}/CMakeLists.txt)
@@ -106,20 +126,17 @@ foreach(MODULE IN LISTS MODULES)
 		add_subdirectory(src/${MODULE}/tools)
 	endif()
 	if (WITH_TESTS AND EXISTS src/${MODULE}/tests/CMakeLists.txt)
-		add_subdirectory(src/${MODULE}/tests/CMakeLists.txt)
+		add_subdirectory(src/${MODULE}/tests)
 	endif() 
 endforeach(MODULE)
 
-#add_definitions(-D_TC_PREFIX=${CMAKE_INSTALL_PREFIX})
-#link_directories
-#link_libraries
-#target_link_libraries
-#add_subdirectory(tcutil)
-
 message("")
 message("#############################################")
-message(" *LINK LIBS: ${EJDB_LLIBRARIES}")
-message(" *INCLUDE DIRS: ${EJDB_INCLUDE_DIRS}")
-message(" *SOURCES: ${ALL_SRC} ${ALL_HDRS}")
+message(" ENABLE_STATIC_LIB: ${ENABLE_STATIC_LIB}")
+message(" WITH_TESTS: ${WITH_TESTS}")
+message(" WITH_VALGRIND_CHECK: ${WITH_VALGRIND_CHECK}")
+message(" LINK LIBS: ${EJDB_LLIBRARIES}")
+message(" INCLUDE DIRS: ${EJDB_INCLUDE_DIRS}")
+message(" SOURCES: ${ALL_SRC}")
 message("#############################################")
 message("")
