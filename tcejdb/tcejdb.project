@@ -31,18 +31,18 @@
   <VirtualDirectory Name="src">
     <VirtualDirectory Name="ejdb">
       <VirtualDirectory Name="tests">
-        <File Name="src/ejdb/tests/t1.c"/>
-        <File Name="src/ejdb/tests/t2.c"/>
-        <File Name="src/ejdb/tests/t3.c"/>
-        <File Name="src/ejdb/tests/t4.c"/>
-        <File Name="src/ejdb/tests/t5.c"/>
+        <File Name="src/ejdb/tests/ejdbtest1.c"/>
+        <File Name="src/ejdb/tests/ejdbtest2.c"/>
+        <File Name="src/ejdb/tests/ejdbtest3.c"/>
+        <File Name="src/ejdb/tests/ejdbtest4.c"/>
+        <File Name="src/ejdb/tests/ejdbtest5.c"/>
+        <File Name="src/ejdb/tests/CMakeLists.txt"/>
       </VirtualDirectory>
       <File Name="src/ejdb/ejdb.c"/>
       <File Name="src/ejdb/ejdb.h"/>
       <File Name="src/ejdb/ejdb_private.h"/>
       <File Name="src/ejdb/ejdbutl.c"/>
       <File Name="src/ejdb/ejdbutl.h"/>
-      <VirtualDirectory Name="bson"/>
     </VirtualDirectory>
     <VirtualDirectory Name="tcbdb">
       <VirtualDirectory Name="tests">
