@@ -1,7 +1,3 @@
-Makefile
-tcejdb/src/*/tests/*test
-tcejdb/generated/
-tcejdb/Testing/
 
 CMakeCache.txt
 CMakeFiles
@@ -15,9 +11,6 @@ compilation.db
 .dep.inc
 
 *.iml
-*.o
-*.vlog
-*.log
 *.status
 *.dylib
 *.upload
@@ -37,5 +30,4 @@ compilation.db
 *.tgz
 *.pyc
 *.tags
-
 

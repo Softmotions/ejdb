@@ -2886,9 +2886,7 @@ static bool tcbdbopenimpl(TCBDB *bdb, const char *path, int omode) {
         tchdbclose(bdb->hdb);
         return false;
     }
-    if (bdb->lmemb < BDBMINLMEMB || bdb->nmemb < BDBMINNMEMB ||
-            bdb->root < 1 || bdb->first < 1 || bdb->last < 1 ||
-            bdb->lnum < 0 || bdb->nnum < 0 || bdb->rnum < 0) {
+    if (bdb->lmemb < BDBMINLMEMB || bdb->nmemb < BDBMINNMEMB || bdb->root < 1 || bdb->first < 1 || bdb->last < 1) {
         tcbdbsetecode(bdb, TCEMETA, __FILE__, __LINE__, __func__);
         tcmapdel(bdb->nodec);
         tcmapdel(bdb->leafc);

@@ -1,0 +1,7 @@
+Makefile
+build/*
+Testing/*
+src/old/*
+
+DartConfiguration.tcl
+

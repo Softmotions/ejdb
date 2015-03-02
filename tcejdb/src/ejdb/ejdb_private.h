@@ -79,7 +79,7 @@ enum { /**> Query flags */
     EJQUPDATING = 1 << 1, /**> Query in updating mode */
     EJQDROPALL = 1 << 2, /**> Drop bson object if matched */
     EJQONLYCOUNT = 1 << 3, /**> Only count mode */
-    EJQHAS$UQUERY = 1 << 4 /**> It means the query contains update $(query) fields #91 */
+    EJQHASUQUERY = 1 << 4 /**> It means the query contains update $(query) fields #91 */
 };
 
 typedef struct { /**> $(query) matchin slot used in update $ placeholder processing. #91 */
@@ -112,8 +112,8 @@ struct EJQF { /**> Matching field and status */
     EJQ *q; /**> Query object in which this field embedded */
     double exprdblval; /**> Double value representation */
     int64_t exprlongval; /**> Integer value represeintation */
-    TCLIST *$ufields; /**> Update $(query) prositional fields #91 */
-    TCLIST *$uslots; /**> $(query) matching slots USLOT #91 */
+    TCLIST *ufields; /**> Update $(query) prositional fields #91 */
+    TCLIST *uslots; /**> $(query) matching slots USLOT #91 */
 };
 typedef struct EJQF EJQF;
 
@@ -126,7 +126,7 @@ struct EJQ { /**> Query object. */
      *  Mapping EJQF fpath => $(projection) field name
      *  http://docs.mongodb.org/manual/reference/projection/positional/#proj._S_
      */
-    TCMAP *$ifields;
+    TCMAP *ifields;
     uint32_t skip; /**> Number of records to skip. */
     uint32_t max; /**> Max number of results */
     uint32_t flags; /**> Control flags */

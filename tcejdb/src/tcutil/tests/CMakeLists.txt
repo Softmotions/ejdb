@@ -1,6 +1,6 @@
 link_libraries(ejdb)
-set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/var)
-file(MAKE_DIRECTORY ${TEST_DATA_DIR})
+set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 
 add_executable(tcutest tcutest.c)
 

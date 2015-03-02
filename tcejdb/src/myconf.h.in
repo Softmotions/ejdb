@@ -18,6 +18,12 @@
 #ifndef _MYCONF_H                        // duplication check
 #define _MYCONF_H
 
+#if (   (defined(__clang__) && ((__clang_major__ - 0) * 100 + (__clang_minor__ - 0)) < 302)  || \
+		(!defined(__clang__) && defined(__GNUC__) && ((__GNUC__ - 0) * 100 + (__GNUC_MINOR__ - 0)) < 407) || \
+        (!defined(__GNUC__) && !defined(__clang__)) )
+#error You are using an unsupported compiler! EJDB has only been tested with Clang >= 3.2 and GCC >= 4.7
+#endif
+
 #include "basedefs.h"
 
 /*************************************************************************************************
@@ -514,15 +520,13 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
   } while(false)
 
 
-
-
 /*************************************************************************************************
  * atomics
  *************************************************************************************************/
+ 
+#define TCAS(ptr, expected, desired) __sync_bool_compare_and_swap(ptr, expected, desired)
 
-#if !defined(__GNUC__) || \
-    ((__GNUC__ - 0) * 100 + (__GNUC_MINOR__ - 0)) < 407 || \
-    defined(__INTEL_COMPILER) || defined(__clang__)
+/*
 #define __atomic_load_n(ptr,order) *(ptr)
 #define __atomic_store_n(ptr,val,order) (*(ptr) = (val), (void)0)
 #define __atomic_exchange_n(ptr,val,order) __sync_lock_test_and_set(ptr, val)
@@ -543,9 +547,8 @@ void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
 #define __atomic_fetch_and(ptr,val,order) __sync_fetch_and_and(ptr, val)
 #define __atomic_fetch_xor(ptr,val,order) __sync_fetch_and_xor(ptr, val)
 #define __atomic_fetch_nand(ptr,val,order) __sync_fetch_and_nand(ptr, val)
-#endif
+*/
 
-#define TCAS(ptr, expected, desired) __sync_bool_compare_and_swap(ptr, expected, desired)
 
 #endif                                   // duplication check
 

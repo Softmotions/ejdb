@@ -192,6 +192,7 @@ static char* skip_block_comment(char* p) {
 }
 
 static char* parse_key(const char** key, char* p, nx_json_unicode_encoder encoder) {
+  *key = NULL;
   // on '}' return with *p=='}'
   char c;
   while ((c=*p++)) {

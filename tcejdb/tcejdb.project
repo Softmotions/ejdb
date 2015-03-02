@@ -48,44 +48,52 @@
       <VirtualDirectory Name="tests">
         <File Name="src/tcbdb/tests/tcbmttest.c"/>
         <File Name="src/tcbdb/tests/tcbtest.c"/>
+        <File Name="src/tcbdb/tests/CMakeLists.txt"/>
       </VirtualDirectory>
       <File Name="src/tcbdb/tcbdb.c"/>
       <File Name="src/tcbdb/tcbdb.h"/>
       <VirtualDirectory Name="tools">
         <File Name="src/tcbdb/tools/tcbmgr.c"/>
+        <File Name="src/tcbdb/tools/CMakeLists.txt"/>
       </VirtualDirectory>
     </VirtualDirectory>
     <VirtualDirectory Name="tcfdb">
       <VirtualDirectory Name="tests">
         <File Name="src/tcfdb/tests/tcfmttest.c"/>
         <File Name="src/tcfdb/tests/tcftest.c"/>
+        <File Name="src/tcfdb/tests/CMakeLists.txt"/>
       </VirtualDirectory>
       <File Name="src/tcfdb/tcfdb.c"/>
       <File Name="src/tcfdb/tcfdb.h"/>
       <VirtualDirectory Name="tools">
         <File Name="src/tcfdb/tools/tcfmgr.c"/>
+        <File Name="src/tcfdb/tools/CMakeLists.txt"/>
       </VirtualDirectory>
     </VirtualDirectory>
     <VirtualDirectory Name="tchdb">
       <VirtualDirectory Name="tests">
         <File Name="src/tchdb/tests/tchmttest.c"/>
         <File Name="src/tchdb/tests/tchtest.c"/>
+        <File Name="src/tchdb/tests/CMakeLists.txt"/>
       </VirtualDirectory>
       <File Name="src/tchdb/tchdb.c"/>
       <File Name="src/tchdb/tchdb.h"/>
       <VirtualDirectory Name="tools">
         <File Name="src/tchdb/tools/tchmgr.c"/>
+        <File Name="src/tchdb/tools/CMakeLists.txt"/>
       </VirtualDirectory>
     </VirtualDirectory>
     <VirtualDirectory Name="tctdb">
       <VirtualDirectory Name="tests">
         <File Name="src/tctdb/tests/tctmttest.c"/>
         <File Name="src/tctdb/tests/tcttest.c"/>
+        <File Name="src/tctdb/tests/CMakeLists.txt"/>
       </VirtualDirectory>
       <File Name="src/tctdb/tctdb.c"/>
       <File Name="src/tctdb/tctdb.h"/>
       <VirtualDirectory Name="tools">
         <File Name="src/tctdb/tools/tctmgr.c"/>
+        <File Name="src/tctdb/tools/CMakeLists.txt"/>
       </VirtualDirectory>
     </VirtualDirectory>
     <VirtualDirectory Name="tcutil">
@@ -301,5 +309,8 @@
     <File Name="cmake/Modules/FindLzo.cmake"/>
     <File Name="cmake/Modules/FindCUnit.cmake"/>
     <File Name="CMakeLists.txt"/>
+    <File Name="CTestConfig.cmake"/>
+    <File Name="ctest.cmake"/>
+    <File Name="cmake/Modules/EjdbUtils.cmake"/>
   </VirtualDirectory>
 </CodeLite_Project>

@@ -219,8 +219,8 @@ EJDB_INLINE bool tchdbwritesmem(TCHDB *hdb, size_t off, const void *ptr, size_t 
 EJDB_INLINE bool tchdbreadsmem(TCHDB *hdb, void *dst, size_t off, size_t sz, int opts);
 EJDB_INLINE bool tchdblockmethod(TCHDB *hdb, bool wr);
 EJDB_INLINE bool tchdbunlockmethod(TCHDB *hdb);
-EJDB_INLINE bool tchdblocksmem(TCHDB *hdb, bool wr);
-EJDB_INLINE bool tchdblocksmem2(TCHDB *hdb, bool wr);
+EJDB_INLINE bool tchdblocksmem(TCHDB *hdb, bool wr) __attribute__((unused));
+EJDB_INLINE bool tchdblocksmem2(TCHDB *hdb, bool wr) __attribute__((unused));
 EJDB_INLINE bool tchdbunlocksmem(TCHDB *hdb);
 EJDB_INLINE bool tchdblockrecord(TCHDB *hdb, uint8_t bidx, bool wr);
 EJDB_INLINE bool tchdbunlockrecord(TCHDB *hdb, uint8_t bidx);
@@ -3154,6 +3154,11 @@ static bool tchdbreadrec(TCHDB *hdb, TCHREC *rec, char *rbuf) {
         uint32_t lnum;
         memcpy(&lnum, rp, sizeof (lnum));
         rec->rsiz = TCITOHL(lnum);
+		rec->ksiz = rec->vsiz = 0;
+		rec->left = rec->right = 0;
+		rec->vbuf = rec->kbuf = NULL;
+		rec->boff = 0;
+		rec->hash = 0;
         return true;
     } else if (rec->magic != HDBMAGICREC) {
         tchdbsetecode(hdb, TCERHEAD, __FILE__, __LINE__, __func__);
