@@ -37,16 +37,22 @@ EJDB_EXTERN_C_START
 #define EJDB_INLINE static
 #endif
 
-#ifdef _WIN32
-#ifdef EJDB_DLL
-#define EJDB_EXPORT __declspec(dllexport)
-#elif !defined(EJDB_STATIC)
-#define EJDB_EXPORT __declspec(dllimport)
+#if (defined(_WIN32) || defined(_WIN64))
+#	ifdef EJDB_NODLL
+#		define EJDB_EXPORT
+#	else
+#		ifdef EJDB_API_EXPORTS
+#			define EJDB_EXPORT __declspec(dllexport)
+#		else
+#			define EJDB_EXPORT __declspec(dllimport)
+#		endif
+#	endif
 #else
-#define EJDB_EXPORT
-#endif
-#else
-#define EJDB_EXPORT
+#   if __GNUC__ >= 4
+#       define EJDB_EXPORT __attribute__ ((visibility("default")))
+#   else
+#       define EJDB_EXPORT
+#   endif
 #endif
 
 #ifdef _WIN32

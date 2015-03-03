@@ -108,19 +108,19 @@ enum { /* enumeration for ID constants */
 /* Get the message string corresponding to an error code.
    `ecode' specifies the error code.
    The return value is the message string of the error code. */
-const char *tcfdberrmsg(int ecode);
+EJDB_EXPORT const char *tcfdberrmsg(int ecode);
 
 
 /* Create a fixed-length database object.
    The return value is the new fixed-length database object. */
-TCFDB *tcfdbnew(void);
+EJDB_EXPORT TCFDB *tcfdbnew(void);
 
 
 /* Delete a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    If the database is not closed, it is closed implicitly.  Note that the deleted object and its
    derivatives can not be used anymore. */
-void tcfdbdel(TCFDB *fdb);
+EJDB_EXPORT void tcfdbdel(TCFDB *fdb);
 
 
 /* Get the last happened error code of a fixed-length database object.
@@ -135,7 +135,7 @@ void tcfdbdel(TCFDB *fdb);
    for unlink error, `TCERENAME' for rename error, `TCEMKDIR' for mkdir error, `TCERMDIR' for
    rmdir error, `TCEKEEP' for existing record, `TCENOREC' for no record found, and `TCEMISC' for
    miscellaneous error. */
-int tcfdbecode(TCFDB *fdb);
+EJDB_EXPORT int tcfdbecode(TCFDB *fdb);
 
 
 /* Set mutual exclusion control of a fixed-length database object for threading.
@@ -143,7 +143,7 @@ int tcfdbecode(TCFDB *fdb);
    If successful, the return value is true, else, it is false.
    Note that the mutual exclusion control is needed if the object is shared by plural threads and
    this function should be called before the database is opened. */
-bool tcfdbsetmutex(TCFDB *fdb);
+EJDB_EXPORT bool tcfdbsetmutex(TCFDB *fdb);
 
 
 /* Set the tuning parameters of a fixed-length database object.
@@ -154,7 +154,7 @@ bool tcfdbsetmutex(TCFDB *fdb);
    value is specified.  The default value is 268435456.
    If successful, the return value is true, else, it is false.
    Note that the tuning parameters should be set before the database is opened. */
-bool tcfdbtune(TCFDB *fdb, int32_t width, int64_t limsiz);
+EJDB_EXPORT bool tcfdbtune(TCFDB *fdb, int32_t width, int64_t limsiz);
 
 
 /* Open a database file and connect a fixed-length database object.
@@ -168,7 +168,7 @@ bool tcfdbtune(TCFDB *fdb, int32_t width, int64_t limsiz);
    bitwise-or: `FDBONOLCK', which means it opens the database file without file locking, or
    `FDBOLCKNB', which means locking is performed without blocking.
    If successful, the return value is true, else, it is false. */
-bool tcfdbopen(TCFDB *fdb, const char *path, int omode);
+EJDB_EXPORT bool tcfdbopen(TCFDB *fdb, const char *path, int omode);
 
 
 /* Close a fixed-length database object.
@@ -176,7 +176,7 @@ bool tcfdbopen(TCFDB *fdb, const char *path, int omode);
    If successful, the return value is true, else, it is false.
    Update of a database is assured to be written when the database is closed.  If a writer opens
    a database but does not close it appropriately, the database will be broken. */
-bool tcfdbclose(TCFDB *fdb);
+EJDB_EXPORT bool tcfdbclose(TCFDB *fdb);
 
 
 /* Store a record into a fixed-length database object.
@@ -191,7 +191,7 @@ bool tcfdbclose(TCFDB *fdb);
    than the width tuning parameter of the database, the size is cut down to the width.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tcfdbput(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tcfdbput(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz);
 
 
 /* Store a record with a decimal key into a fixed-length database object.
@@ -207,7 +207,7 @@ bool tcfdbput(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz);
    than the width tuning parameter of the database, the size is cut down to the width.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tcfdbput2(TCFDB *fdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tcfdbput2(TCFDB *fdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Store a string record with a decimal key into a fixed-length database object.
@@ -220,7 +220,7 @@ bool tcfdbput2(TCFDB *fdb, const void *kbuf, int ksiz, const void *vbuf, int vsi
    `vstr' specifies the string of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, it is overwritten. */
-bool tcfdbput3(TCFDB *fdb, const char *kstr, const void *vstr);
+EJDB_EXPORT bool tcfdbput3(TCFDB *fdb, const char *kstr, const void *vstr);
 
 
 /* Store a new record into a fixed-length database object.
@@ -235,7 +235,7 @@ bool tcfdbput3(TCFDB *fdb, const char *kstr, const void *vstr);
    than the width tuning parameter of the database, the size is cut down to the width.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tcfdbputkeep(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tcfdbputkeep(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz);
 
 
 /* Store a new record with a decimal key into a fixed-length database object.
@@ -251,7 +251,7 @@ bool tcfdbputkeep(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz);
    than the width tuning parameter of the database, the size is cut down to the width.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tcfdbputkeep2(TCFDB *fdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tcfdbputkeep2(TCFDB *fdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Store a new string record with a decimal key into a fixed-length database object.
@@ -264,7 +264,7 @@ bool tcfdbputkeep2(TCFDB *fdb, const void *kbuf, int ksiz, const void *vbuf, int
    `vstr' specifies the string of the value.
    If successful, the return value is true, else, it is false.
    If a record with the same key exists in the database, this function has no effect. */
-bool tcfdbputkeep3(TCFDB *fdb, const char *kstr, const void *vstr);
+EJDB_EXPORT bool tcfdbputkeep3(TCFDB *fdb, const char *kstr, const void *vstr);
 
 
 /* Concatenate a value at the end of the existing record in a fixed-length database object.
@@ -279,7 +279,7 @@ bool tcfdbputkeep3(TCFDB *fdb, const char *kstr, const void *vstr);
    than the width tuning parameter of the database, the size is cut down to the width.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tcfdbputcat(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tcfdbputcat(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz);
 
 
 /* Concatenate a value with a decimal key in a fixed-length database object.
@@ -295,7 +295,7 @@ bool tcfdbputcat(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz);
    than the width tuning parameter of the database, the size is cut down to the width.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tcfdbputcat2(TCFDB *fdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
+EJDB_EXPORT bool tcfdbputcat2(TCFDB *fdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz);
 
 
 /* Concatenate a string value with a decimal key in a fixed-length database object.
@@ -308,7 +308,7 @@ bool tcfdbputcat2(TCFDB *fdb, const void *kbuf, int ksiz, const void *vbuf, int 
    `vstr' specifies the string of the value.
    If successful, the return value is true, else, it is false.
    If there is no corresponding record, a new record is created. */
-bool tcfdbputcat3(TCFDB *fdb, const char *kstr, const void *vstr);
+EJDB_EXPORT bool tcfdbputcat3(TCFDB *fdb, const char *kstr, const void *vstr);
 
 
 /* Remove a record of a fixed-length database object.
@@ -317,7 +317,7 @@ bool tcfdbputcat3(TCFDB *fdb, const char *kstr, const void *vstr);
    number of existing records is specified.  If it is `FDBIDMAX', the maximum ID number of
    existing records is specified.
    If successful, the return value is true, else, it is false. */
-bool tcfdbout(TCFDB *fdb, int64_t id);
+EJDB_EXPORT bool tcfdbout(TCFDB *fdb, int64_t id);
 
 
 /* Remove a record with a decimal key of a fixed-length database object.
@@ -327,7 +327,7 @@ bool tcfdbout(TCFDB *fdb, int64_t id);
    maximum ID number of existing records is specified.
    `ksiz' specifies the size of the region of the key.
    If successful, the return value is true, else, it is false. */
-bool tcfdbout2(TCFDB *fdb, const void *kbuf, int ksiz);
+EJDB_EXPORT bool tcfdbout2(TCFDB *fdb, const void *kbuf, int ksiz);
 
 
 /* Remove a string record with a decimal key of a fixed-length database object.
@@ -336,7 +336,7 @@ bool tcfdbout2(TCFDB *fdb, const void *kbuf, int ksiz);
    the minimum ID number of existing records is specified.  If it is "max", the maximum ID number
    of existing records is specified.
    If successful, the return value is true, else, it is false. */
-bool tcfdbout3(TCFDB *fdb, const char *kstr);
+EJDB_EXPORT bool tcfdbout3(TCFDB *fdb, const char *kstr);
 
 
 /* Retrieve a record in a fixed-length database object.
@@ -352,7 +352,7 @@ bool tcfdbout3(TCFDB *fdb, const char *kstr);
    the return value can be treated as a character string.  Because the region of the return
    value is allocated with the `malloc' call, it should be released with the `free' call when
    it is no longer in use. */
-void *tcfdbget(TCFDB *fdb, int64_t id, int *sp);
+EJDB_EXPORT void *tcfdbget(TCFDB *fdb, int64_t id, int *sp);
 
 
 /* Retrieve a record with a decimal key in a fixed-length database object.
@@ -369,7 +369,7 @@ void *tcfdbget(TCFDB *fdb, int64_t id, int *sp);
    the return value can be treated as a character string.  Because the region of the return
    value is allocated with the `malloc' call, it should be released with the `free' call when
    it is no longer in use. */
-void *tcfdbget2(TCFDB *fdb, const void *kbuf, int ksiz, int *sp);
+EJDB_EXPORT void *tcfdbget2(TCFDB *fdb, const void *kbuf, int ksiz, int *sp);
 
 
 /* Retrieve a string record with a decimal key in a fixed-length database object.
@@ -383,7 +383,7 @@ void *tcfdbget2(TCFDB *fdb, const void *kbuf, int ksiz, int *sp);
    the return value can be treated as a character string.  Because the region of the return
    value is allocated with the `malloc' call, it should be released with the `free' call when
    it is no longer in use. */
-char *tcfdbget3(TCFDB *fdb, const char *kstr);
+EJDB_EXPORT char *tcfdbget3(TCFDB *fdb, const char *kstr);
 
 
 /* Retrieve a record in a fixed-length database object and write the value into a buffer.
@@ -398,7 +398,7 @@ char *tcfdbget3(TCFDB *fdb, const char *kstr);
    returned if no record corresponds to the specified key.
    Note that an additional zero code is not appended at the end of the region of the writing
    buffer. */
-int tcfdbget4(TCFDB *fdb, int64_t id, void *vbuf, int max);
+EJDB_EXPORT int tcfdbget4(TCFDB *fdb, int64_t id, void *vbuf, int max);
 
 
 /* Get the size of the value of a record in a fixed-length database object.
@@ -408,7 +408,7 @@ int tcfdbget4(TCFDB *fdb, int64_t id, void *vbuf, int max);
    existing records is specified.
    If successful, the return value is the size of the value of the corresponding record, else,
    it is -1. */
-int tcfdbvsiz(TCFDB *fdb, int64_t id);
+EJDB_EXPORT int tcfdbvsiz(TCFDB *fdb, int64_t id);
 
 
 /* Get the size of the value with a decimal key in a fixed-length database object.
@@ -419,7 +419,7 @@ int tcfdbvsiz(TCFDB *fdb, int64_t id);
    `ksiz' specifies the size of the region of the key.
    If successful, the return value is the size of the value of the corresponding record, else,
    it is -1. */
-int tcfdbvsiz2(TCFDB *fdb, const void *kbuf, int ksiz);
+EJDB_EXPORT int tcfdbvsiz2(TCFDB *fdb, const void *kbuf, int ksiz);
 
 
 /* Get the size of the string value with a decimal key in a fixed-length database object.
@@ -429,14 +429,14 @@ int tcfdbvsiz2(TCFDB *fdb, const void *kbuf, int ksiz);
    of existing records is specified.
    If successful, the return value is the size of the value of the corresponding record, else,
    it is -1. */
-int tcfdbvsiz3(TCFDB *fdb, const char *kstr);
+EJDB_EXPORT int tcfdbvsiz3(TCFDB *fdb, const char *kstr);
 
 
 /* Initialize the iterator of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    If successful, the return value is true, else, it is false.
    The iterator is used in order to access the key of every record stored in a database. */
-bool tcfdbiterinit(TCFDB *fdb);
+EJDB_EXPORT bool tcfdbiterinit(TCFDB *fdb);
 
 
 /* Get the next ID number of the iterator of a fixed-length database object.
@@ -446,7 +446,7 @@ bool tcfdbiterinit(TCFDB *fdb);
    It is possible to access every record by iteration of calling this function.  It is allowed to
    update or remove records whose keys are fetched while the iteration.  The order of this
    traversal access method is ascending of the ID number. */
-uint64_t tcfdbiternext(TCFDB *fdb);
+EJDB_EXPORT uint64_t tcfdbiternext(TCFDB *fdb);
 
 
 /* Get the next decimay key of the iterator of a fixed-length database object.
@@ -461,7 +461,7 @@ uint64_t tcfdbiternext(TCFDB *fdb);
    longer in use.  It is possible to access every record by iteration of calling this function.
    It is allowed to update or remove records whose keys are fetched while the iteration.  The
    order of this traversal access method is ascending of the ID number. */
-void *tcfdbiternext2(TCFDB *fdb, int *sp);
+EJDB_EXPORT void *tcfdbiternext2(TCFDB *fdb, int *sp);
 
 
 /* Get the next decimay key string of the iterator of a fixed-length database object.
@@ -473,7 +473,7 @@ void *tcfdbiternext2(TCFDB *fdb, int *sp);
    record by iteration of calling this function.  It is allowed to update or remove records whose
    keys are fetched while the iteration.  The order of this traversal access method is ascending
    of the ID number. */
-char *tcfdbiternext3(TCFDB *fdb);
+EJDB_EXPORT char *tcfdbiternext3(TCFDB *fdb);
 
 
 /* Get range matching ID numbers in a fixed-length database object.
@@ -491,7 +491,7 @@ char *tcfdbiternext3(TCFDB *fdb);
    array even if no key corresponds.
    Because the region of the return value is allocated with the `malloc' call, it should be
    released with the `free' call when it is no longer in use. */
-uint64_t *tcfdbrange(TCFDB *fdb, int64_t lower, int64_t upper, int max, int *np);
+EJDB_EXPORT uint64_t *tcfdbrange(TCFDB *fdb, int64_t lower, int64_t upper, int max, int *np);
 
 
 /* Get range matching decimal keys in a fixed-length database object.
@@ -509,7 +509,7 @@ uint64_t *tcfdbrange(TCFDB *fdb, int64_t lower, int64_t upper, int max, int *np)
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tcfdbrange2(TCFDB *fdb, const void *lbuf, int lsiz, const void *ubuf, int usiz, int max);
+EJDB_EXPORT TCLIST *tcfdbrange2(TCFDB *fdb, const void *lbuf, int lsiz, const void *ubuf, int usiz, int max);
 
 
 /* Get range matching decimal keys with strings in a fixed-length database object.
@@ -525,7 +525,7 @@ TCLIST *tcfdbrange2(TCFDB *fdb, const void *lbuf, int lsiz, const void *ubuf, in
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tcfdbrange3(TCFDB *fdb, const char *lstr, const char *ustr, int max);
+EJDB_EXPORT TCLIST *tcfdbrange3(TCFDB *fdb, const char *lstr, const char *ustr, int max);
 
 
 /* Get keys with an interval notation in a fixed-length database object.
@@ -539,7 +539,7 @@ TCLIST *tcfdbrange3(TCFDB *fdb, const char *lstr, const char *ustr, int max);
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tcfdbrange4(TCFDB *fdb, const void *ibuf, int isiz, int max);
+EJDB_EXPORT TCLIST *tcfdbrange4(TCFDB *fdb, const void *ibuf, int isiz, int max);
 
 
 /* Get keys with an interval notation string in a fixed-length database object.
@@ -552,7 +552,7 @@ TCLIST *tcfdbrange4(TCFDB *fdb, const void *ibuf, int isiz, int max);
    Because the object of the return value is created with the function `tclistnew', it should be
    deleted with the function `tclistdel' when it is no longer in use.  Note that this function
    may be very slow because every key in the database is scanned. */
-TCLIST *tcfdbrange5(TCFDB *fdb, const void *istr, int max);
+EJDB_EXPORT TCLIST *tcfdbrange5(TCFDB *fdb, const void *istr, int max);
 
 
 /* Add an integer to a record in a fixed-length database object.
@@ -566,7 +566,7 @@ TCLIST *tcfdbrange5(TCFDB *fdb, const void *istr, int max);
    If successful, the return value is the summation value, else, it is `INT_MIN'.
    If the corresponding record exists, the value is treated as an integer and is added to.  If no
    record corresponds, a new record of the additional value is stored. */
-int tcfdbaddint(TCFDB *fdb, int64_t id, int num);
+EJDB_EXPORT int tcfdbaddint(TCFDB *fdb, int64_t id, int num);
 
 
 /* Add a real number to a record in a fixed-length database object.
@@ -580,14 +580,14 @@ int tcfdbaddint(TCFDB *fdb, int64_t id, int num);
    If successful, the return value is the summation value, else, it is Not-a-Number.
    If the corresponding record exists, the value is treated as a real number and is added to.  If
    no record corresponds, a new record of the additional value is stored. */
-double tcfdbadddouble(TCFDB *fdb, int64_t id, double num);
+EJDB_EXPORT double tcfdbadddouble(TCFDB *fdb, int64_t id, double num);
 
 
 /* Synchronize updated contents of a fixed-length database object with the file and the device.
    `fdb' specifies the fixed-length database object connected as a writer.
    If successful, the return value is true, else, it is false.
    This function is useful when another process connects to the same database file. */
-bool tcfdbsync(TCFDB *fdb);
+EJDB_EXPORT bool tcfdbsync(TCFDB *fdb);
 
 
 /* Optimize the file of a fixed-length database object.
@@ -597,13 +597,13 @@ bool tcfdbsync(TCFDB *fdb);
    `limsiz' specifies the limit size of the database file.  If it is not more than 0, the current
    setting is not changed.
    If successful, the return value is true, else, it is false. */
-bool tcfdboptimize(TCFDB *fdb, int32_t width, int64_t limsiz);
+EJDB_EXPORT bool tcfdboptimize(TCFDB *fdb, int32_t width, int64_t limsiz);
 
 
 /* Remove all records of a fixed-length database object.
    `fdb' specifies the fixed-length database object connected as a writer.
    If successful, the return value is true, else, it is false. */
-bool tcfdbvanish(TCFDB *fdb);
+EJDB_EXPORT bool tcfdbvanish(TCFDB *fdb);
 
 
 /* Copy the database file of a fixed-length database object.
@@ -615,7 +615,7 @@ bool tcfdbvanish(TCFDB *fdb);
    The database file is assured to be kept synchronized and not modified while the copying or
    executing operation is in progress.  So, this function is useful to create a backup file of
    the database file. */
-bool tcfdbcopy(TCFDB *fdb, const char *path);
+EJDB_EXPORT bool tcfdbcopy(TCFDB *fdb, const char *path);
 
 
 /* Begin the transaction of a fixed-length database object.
@@ -626,14 +626,14 @@ bool tcfdbcopy(TCFDB *fdb, const char *path);
    assumed if every database operation is performed in the transaction.  All updated regions are
    kept track of by write ahead logging while the transaction.  If the database is closed during
    transaction, the transaction is aborted implicitly. */
-bool tcfdbtranbegin(TCFDB *fdb);
+EJDB_EXPORT bool tcfdbtranbegin(TCFDB *fdb);
 
 
 /* Commit the transaction of a fixed-length database object.
    `fdb' specifies the fixed-length database object connected as a writer.
    If successful, the return value is true, else, it is false.
    Update in the transaction is fixed when it is committed successfully. */
-bool tcfdbtrancommit(TCFDB *fdb);
+EJDB_EXPORT bool tcfdbtrancommit(TCFDB *fdb);
 
 
 /* Abort the transaction of a fixed-length database object.
@@ -641,28 +641,28 @@ bool tcfdbtrancommit(TCFDB *fdb);
    If successful, the return value is true, else, it is false.
    Update in the transaction is discarded when it is aborted.  The state of the database is
    rollbacked to before transaction. */
-bool tcfdbtranabort(TCFDB *fdb);
+EJDB_EXPORT bool tcfdbtranabort(TCFDB *fdb);
 
 
 /* Get the file path of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the path of the database file or `NULL' if the object does not connect to
    any database file. */
-const char *tcfdbpath(TCFDB *fdb);
+EJDB_EXPORT const char *tcfdbpath(TCFDB *fdb);
 
 
 /* Get the number of records of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the number of records or 0 if the object does not connect to any database
    file. */
-uint64_t tcfdbrnum(TCFDB *fdb);
+EJDB_EXPORT uint64_t tcfdbrnum(TCFDB *fdb);
 
 
 /* Get the size of the database file of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the size of the database file or 0 if the object does not connect to any
    database file. */
-uint64_t tcfdbfsiz(TCFDB *fdb);
+EJDB_EXPORT uint64_t tcfdbfsiz(TCFDB *fdb);
 
 
 
@@ -677,106 +677,106 @@ uint64_t tcfdbfsiz(TCFDB *fdb);
    `file' specifies the file name of the code.
    `line' specifies the line number of the code.
    `func' specifies the function name of the code. */
-void tcfdbsetecode(TCFDB *fdb, int ecode, const char *filename, int line, const char *func);
+EJDB_EXPORT void tcfdbsetecode(TCFDB *fdb, int ecode, const char *filename, int line, const char *func);
 
 
 /* Set the file descriptor for debugging output.
    `fdb' specifies the fixed-length database object.
    `fd' specifies the file descriptor for debugging output. */
-void tcfdbsetdbgfd(TCFDB *fdb, HANDLE fd);
+EJDB_EXPORT void tcfdbsetdbgfd(TCFDB *fdb, HANDLE fd);
 
 
 /* Get the file descriptor for debugging output.
    `fdb' specifies the fixed-length database object.
    The return value is the file descriptor for debugging output. */
-HANDLE tcfdbdbgfd(TCFDB *fdb);
+EJDB_EXPORT HANDLE tcfdbdbgfd(TCFDB *fdb);
 
 
 /* Check whether mutual exclusion control is set to a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    If mutual exclusion control is set, it is true, else it is false. */
-bool tcfdbhasmutex(TCFDB *fdb);
+EJDB_EXPORT bool tcfdbhasmutex(TCFDB *fdb);
 
 
 /* Synchronize updating contents on memory of a fixed-length database object.
    `fdb' specifies the fixed-length database object connected as a writer.
    `phys' specifies whether to synchronize physically.
    If successful, the return value is true, else, it is false. */
-bool tcfdbmemsync(TCFDB *fdb, bool phys);
+EJDB_EXPORT bool tcfdbmemsync(TCFDB *fdb, bool phys);
 
 
 /* Get the minimum ID number of records of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the minimum ID number of records or 0 if the object does not connect to
    any database file. */
-uint64_t tcfdbmin(TCFDB *fdb);
+EJDB_EXPORT uint64_t tcfdbmin(TCFDB *fdb);
 
 
 /* Get the maximum ID number of records of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the maximum ID number of records or 0 if the object does not connect to
    any database file. */
-uint64_t tcfdbmax(TCFDB *fdb);
+EJDB_EXPORT uint64_t tcfdbmax(TCFDB *fdb);
 
 
 /* Get the width of the value of each record of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the width of the value of each record or 0 if the object does not connect
    to any database file. */
-uint32_t tcfdbwidth(TCFDB *fdb);
+EJDB_EXPORT uint32_t tcfdbwidth(TCFDB *fdb);
 
 
 /* Get the limit file size of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the limit file size or 0 if the object does not connect to any database
    file. */
-uint64_t tcfdblimsiz(TCFDB *fdb);
+EJDB_EXPORT uint64_t tcfdblimsiz(TCFDB *fdb);
 
 
 /* Get the limit ID number of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the limit ID number or 0 if the object does not connect to any database
    file. */
-uint64_t tcfdblimid(TCFDB *fdb);
+EJDB_EXPORT uint64_t tcfdblimid(TCFDB *fdb);
 
 
 /* Get the inode number of the database file of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the inode number of the database file or 0 if the object does not connect
    to any database file. */
-uint64_t tcfdbinode(TCFDB *fdb);
+EJDB_EXPORT uint64_t tcfdbinode(TCFDB *fdb);
 
 
 /* Get the modification time of the database file of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the inode number of the database file or 0 if the object does not connect
    to any database file. */
-time_t tcfdbmtime(TCFDB *fdb);
+EJDB_EXPORT time_t tcfdbmtime(TCFDB *fdb);
 
 
 /* Get the connection mode of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the connection mode. */
-int tcfdbomode(TCFDB *fdb);
+EJDB_EXPORT int tcfdbomode(TCFDB *fdb);
 
 
 /* Get the database type of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the database type. */
-uint8_t tcfdbtype(TCFDB *fdb);
+EJDB_EXPORT uint8_t tcfdbtype(TCFDB *fdb);
 
 
 /* Get the additional flags of a fixed-length database object.
    `fdb' specifies the fixed-length database object.
    The return value is the additional flags. */
-uint8_t tcfdbflags(TCFDB *fdb);
+EJDB_EXPORT uint8_t tcfdbflags(TCFDB *fdb);
 
 /**
  * Get opaque data into specified buffer `dst`
  * `bsiz` Max size to be read.
  *  Return -1 if error, otherwise number of bytes writen in dst.
  */
-int tcfdbreadopaque(TCFDB *fdb, void *dst, int off, int bsiz);
+EJDB_EXPORT int tcfdbreadopaque(TCFDB *fdb, void *dst, int off, int bsiz);
 
 /**
  * Write opaque data.
@@ -784,12 +784,12 @@ int tcfdbreadopaque(TCFDB *fdb, void *dst, int off, int bsiz);
  * can be truncated if it greater than max opaque data size.
  * Return -1 if error, otherwise number of bytes read from src.
  */
-int tcfdbwriteopaque(TCFDB *fdb, const void *src, int off, int nb);
+EJDB_EXPORT int tcfdbwriteopaque(TCFDB *fdb, const void *src, int off, int nb);
 
 /**
  * Copy opaque data between databases
  */
-bool tcfdbcopyopaque(TCFDB *dst, TCFDB *src, int off, int nb);
+EJDB_EXPORT bool tcfdbcopyopaque(TCFDB *dst, TCFDB *src, int off, int nb);
 
 /* Store a record into a fixed-length database object with a duplication handler.
    `fdb' specifies the fixed-length database object connected as a writer.
@@ -814,7 +814,7 @@ bool tcfdbcopyopaque(TCFDB *dst, TCFDB *src, int off, int nb);
    If successful, the return value is true, else, it is false.
    Note that the callback function can not perform any database operation because the function
    is called in the critical section guarded by the same locks of database operations. */
-bool tcfdbputproc(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, TCPDPROC proc, void *op);
+EJDB_EXPORT bool tcfdbputproc(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, TCPDPROC proc, void *op);
 
 
 /* Move the iterator to the record corresponding a key of a fixed-length database object.
@@ -824,7 +824,7 @@ bool tcfdbputproc(TCFDB *fdb, int64_t id, const void *vbuf, int vsiz, TCPDPROC p
    existing records is specified.
    If successful, the return value is true, else, it is false.  False is returned if there is
    no record corresponding the condition. */
-bool tcfdbiterinit2(TCFDB *fdb, int64_t id);
+EJDB_EXPORT bool tcfdbiterinit2(TCFDB *fdb, int64_t id);
 
 
 /* Move the iterator to the decimal record of a fixed-length database object.
@@ -835,7 +835,7 @@ bool tcfdbiterinit2(TCFDB *fdb, int64_t id);
    `ksiz' specifies the size of the region of the key.
    If successful, the return value is true, else, it is false.  False is returned if there is
    no record corresponding the condition. */
-bool tcfdbiterinit3(TCFDB *fdb, const void *kbuf, int ksiz);
+EJDB_EXPORT bool tcfdbiterinit3(TCFDB *fdb, const void *kbuf, int ksiz);
 
 
 /* Move the iterator to the decimal string record of a fixed-length database object.
@@ -845,7 +845,7 @@ bool tcfdbiterinit3(TCFDB *fdb, const void *kbuf, int ksiz);
    of existing records is specified.
    If successful, the return value is true, else, it is false.  False is returned if there is
    no record corresponding the condition. */
-bool tcfdbiterinit4(TCFDB *fdb, const char *kstr);
+EJDB_EXPORT bool tcfdbiterinit4(TCFDB *fdb, const char *kstr);
 
 
 /* Process each record atomically of a fixed-length database object.
@@ -861,14 +861,14 @@ bool tcfdbiterinit4(TCFDB *fdb, const char *kstr);
    If successful, the return value is true, else, it is false.
    Note that the callback function can not perform any database operation because the function
    is called in the critical section guarded by the same locks of database operations. */
-bool tcfdbforeach(TCFDB *fdb, TCITER iter, void *op);
+EJDB_EXPORT bool tcfdbforeach(TCFDB *fdb, TCITER iter, void *op);
 
 
 /* Generate the ID number from arbitrary binary data.
    `kbuf' specifies the pointer to the region of the key.
    `ksiz' specifies the size of the region of the key.
    The return value is the ID number. */
-int64_t tcfdbkeytoid(const char *kbuf, int ksiz);
+EJDB_EXPORT int64_t tcfdbkeytoid(const char *kbuf, int ksiz);
 
 
 

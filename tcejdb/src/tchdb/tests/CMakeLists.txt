@@ -1,4 +1,4 @@
-link_libraries(ejdb)
+link_libraries(ejdb_p)
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 

@@ -353,11 +353,11 @@ enum {
 };
 
 
-extern char *(*_tc_deflate)(const char *, int, int *, int);
+EJDB_EXPORT extern char *(*_tc_deflate)(const char *, int, int *, int);
 
-extern char *(*_tc_inflate)(const char *, int, int *, int);
+EJDB_EXPORT extern char *(*_tc_inflate)(const char *, int, int *, int);
 
-extern unsigned int (*_tc_getcrc)(const char *, int);
+EJDB_EXPORT extern unsigned int (*_tc_getcrc)(const char *, int);
 
 
 
@@ -366,9 +366,9 @@ extern unsigned int (*_tc_getcrc)(const char *, int);
  *************************************************************************************************/
 
 
-extern char *(*_tc_bzcompress)(const char *, int, int *);
+EJDB_EXPORT extern char *(*_tc_bzcompress)(const char *, int, int *);
 
-extern char *(*_tc_bzdecompress)(const char *, int, int *);
+EJDB_EXPORT extern char *(*_tc_bzdecompress)(const char *, int, int *);
 
 
 
@@ -377,9 +377,9 @@ extern char *(*_tc_bzdecompress)(const char *, int, int *);
  *************************************************************************************************/
 
 
-void *_tc_recencode(const void *ptr, int size, int *sp, void *op);
+EJDB_EXPORT void *_tc_recencode(const void *ptr, int size, int *sp, void *op);
 
-void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
+EJDB_EXPORT void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
 
 #if TCMICROYIELD
 #define TCTESTYIELD() \

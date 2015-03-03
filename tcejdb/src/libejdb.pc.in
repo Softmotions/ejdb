@@ -1,0 +1,11 @@
+prefix=${CMAKE_INSTALL_PREFIX}
+exec_prefix=${EXEC_INSTALL_PREFIX}
+libdir=${LIB_INSTALL_DIR}
+includedir=${INCLUDE_INSTALL_DIR}
+
+Name: ${PROJECT_NAME}
+Description: Embeddable JSON database library (EJDB)
+URL: http://ejdb.org
+Version: ${PROJECT_VERSION}
+Libs: -L${LIB_INSTALL_DIR} -lejdb
+Cflags: -I${INCLUDE_INSTALL_DIR}

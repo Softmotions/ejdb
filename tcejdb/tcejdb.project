@@ -137,6 +137,7 @@
       <File Name="src/bson/nxjson.c"/>
       <File Name="src/bson/nxjson.h"/>
     </VirtualDirectory>
+    <File Name="src/libejdb.pc.in"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
