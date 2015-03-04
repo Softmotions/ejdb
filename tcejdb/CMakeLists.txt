@@ -25,7 +25,7 @@ set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)")
 set(EXEC_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "Installation prefix for executables and object code libraries" FORCE)
 set(BIN_INSTALL_DIR ${EXEC_INSTALL_PREFIX}/bin CACHE PATH "Installation prefix for user executables" FORCE)
 set(LIB_INSTALL_DIR ${EXEC_INSTALL_PREFIX}/lib${LIB_SUFFIX} CACHE PATH  "Installation prefix for object code libraries" FORCE)
-set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/ejdb CACHE PATH "Installation prefix for C header files" FORCE)
+set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME} CACHE PATH "Installation prefix for C header files" FORCE)
 if(APPLE)
 	option(BUILD_FRAMEWORK "Build an OS X framework" OFF)
 	set(FRAMEWORK_INSTALL_DIR "/Library/Frameworks" CACHE STRING "Directory to install frameworks to.")
@@ -188,16 +188,23 @@ set_target_properties(ejdb_p PROPERTIES
 					  DEFINE_SYMBOL EJDB_NODLL)
 
 install(TARGETS ejdb
+	EXPORT ejdb-exports
 	FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
 	LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 	RUNTIME DESTINATION ${BIN_INSTALL_DIR}
 	ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
-	PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}
-)
+	PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR})
+
+install(EXPORT ejdb-exports
+		DESTINATION ${LIB_INSTALL_DIR}/${PROJECT_NAME})
+		
+export(EXPORT ejdb-exports)		
+
+include(InstallRequiredSystemLibraries)
 
 message("")
 message("#############################################")
-message(" BUILD_STATIC_LIB: ${BUILD_STATIC_LIB}")
+message(" BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 message(" BUILD_TESTS: ${BUILD_TESTS}")
 message(" LINK LIBS: ${EJDB_LLIBRARIES}")
 message(" INCLUDE DIRS: ${EJDB_INCLUDE_DIRS}")

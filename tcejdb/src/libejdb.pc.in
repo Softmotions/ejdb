@@ -7,5 +7,5 @@ Name: ${PROJECT_NAME}
 Description: Embeddable JSON database library (EJDB)
 URL: http://ejdb.org
 Version: ${PROJECT_VERSION}
-Libs: -L${LIB_INSTALL_DIR} -lejdb
+Libs: -L${LIB_INSTALL_DIR} -l${PROJECT_NAME}
 Cflags: -I${INCLUDE_INSTALL_DIR}
