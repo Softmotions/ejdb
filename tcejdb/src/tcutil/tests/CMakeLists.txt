@@ -1,8 +1,13 @@
-link_libraries(ejdb)
+link_libraries(ejdb_p)
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 
 add_executable(tcutest tcutest.c)
+add_executable(tcumttest tcumttest.c)
+
+set_target_properties(tcutest tcumttest 
+					  PROPERTIES
+					  COMPILE_FLAGS "-DEJDB_STATIC")
 
 add_test(NAME tcutest1 WORKING_DIRECTORY ${TEST_DATA_DIR} 
 		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcutest> 
@@ -59,8 +64,6 @@ add_test(NAME tcutest13 WORKING_DIRECTORY ${TEST_DATA_DIR}
 add_test(NAME tcutest14 WORKING_DIRECTORY ${TEST_DATA_DIR} 
 		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcutest> 
 		 wicked 50000)
-
-add_executable(tcumttest tcumttest.c)
 
 add_test(NAME tcumttest1 WORKING_DIRECTORY ${TEST_DATA_DIR} 
 		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcumttest> 

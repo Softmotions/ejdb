@@ -4,9 +4,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 
 add_executable(tcftest tcftest.c)
 add_executable(tcfmttest tcfmttest.c)
-
 add_dependencies(tcftest tcfmgr)
 add_dependencies(tcfmttest tcfmgr)
+
+set_target_properties(tcftest tcfmttest PROPERTIES
+					  COMPILE_FLAGS "-DEJDB_STATIC")
+
 
 add_test(NAME tcftest1 WORKING_DIRECTORY ${TEST_DATA_DIR} 
 		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcftest> 

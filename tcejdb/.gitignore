@@ -1,4 +1,9 @@
 Makefile
+
+/.cmake_dirty
+/tcejdb.mk
+
+
 build/*
 Testing/*
 src/old/*

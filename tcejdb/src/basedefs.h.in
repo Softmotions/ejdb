@@ -38,7 +38,7 @@ EJDB_EXTERN_C_START
 #endif
 
 #if (defined(_WIN32) || defined(_WIN64))
-#	ifdef EJDB_NODLL
+#	if (defined(EJDB_NODLL) || defined(EJDB_STATIC))  
 #		define EJDB_EXPORT
 #	else
 #		ifdef EJDB_API_EXPORTS

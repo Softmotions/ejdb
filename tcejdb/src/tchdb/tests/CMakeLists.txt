@@ -7,6 +7,9 @@ add_executable(tchmttest tchmttest.c)
 add_dependencies(tchtest tchmgr)
 add_dependencies(tchmttest tchmgr)
 
+set_target_properties(tchtest tchmttest PROPERTIES
+					  COMPILE_FLAGS "-DEJDB_STATIC")
+
 add_test(NAME tchtest1 WORKING_DIRECTORY ${TEST_DATA_DIR} 
 		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchtest> 
 		 write casket 50000 5000 5 5)

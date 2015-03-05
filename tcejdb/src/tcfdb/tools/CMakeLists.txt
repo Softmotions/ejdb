@@ -1,6 +1,9 @@
 link_libraries(ejdb_p)
 add_executable(tcfmgr tcfmgr.c)
 
+set_target_properties(tcfmgr PROPERTIES
+					  COMPILE_FLAGS "-DEJDB_STATIC")
+					  
 install(TARGETS tcfmgr
 	FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
 	LIBRARY DESTINATION ${LIB_INSTALL_DIR}

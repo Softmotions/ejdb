@@ -1,5 +1,7 @@
 link_libraries(ejdb_p)
 add_executable(tctmgr tctmgr.c)
+set_target_properties(tctmgr PROPERTIES
+					  COMPILE_FLAGS "-DEJDB_STATIC")
 
 install(TARGETS tctmgr
 	FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}

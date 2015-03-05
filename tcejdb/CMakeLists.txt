@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.0)
 set(PROJECT_NAME "ejdb")
 
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-option(BUILD_TESTS "Build EJDB test cases" OFF)
-
 project(${PROJECT_NAME}
 		VERSION 1.2.0
 		LANGUAGES C)
-	
+
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+option(BUILD_TESTS "Build EJDB test cases" OFF)
+#option(TEST_TOOL_CMD "Test tool command", "")
+
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     if (CMAKE_C_COMPILER_VERSION VERSION_LESS 4.7)
         message(FATAL_ERROR "GCC version must be at least 4.7!")
@@ -41,6 +42,10 @@ set(MODULES tcutil tchdb tcbdb tctdb tcfdb bson ejdb)
 set(EJDB_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/generated)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+include(CheckIncludeFile)
+include(CheckIncludeFiles)
+include(CheckLibraryExists)
+include(InstallRequiredSystemLibraries)
 include(EjdbUtils)
 
 macro_ensure_out_of_source_build(
@@ -63,11 +68,12 @@ foreach(MODULE IN LISTS MODULES)
 endforeach(MODULE)
 
 add_library(ejdb SHARED ${ALL_SRC})
-if (NOT ENABLE_SHARED)
+if (NOT BUILD_SHARED_LIBS)
 	add_definitions(-DEJDB_NODLL)
 endif()
 
 add_library(ejdb_p STATIC ${ALL_SRC})
+
 
 find_package(Threads REQUIRED CMAKE_THREAD_PREFER_PTHREAD)
 if (CMAKE_USE_WIN32_THREADS_INIT)
@@ -77,7 +83,10 @@ elseif (CMAKE_USE_PTHREADS_INIT)
 else()
 	mesage(FATAL_ERROR "Unable to find suitable threading library")
 endif(CMAKE_USE_WIN32_THREADS_INIT)
-list(APPEND EJDB_LLIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+
+if (NOT WIN32)
+	list(APPEND EJDB_LLIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 find_library(M_LIB m)
 if (NOT M_LIB)
@@ -109,7 +118,43 @@ if (LZO_FOUND)
 	list(APPEND EJDB_INCLUDE_DIRS ${LZO_INCLUDE_DIR})
 endif(LZO_FOUND)
 
-include(CheckIncludeFile)
+if (WIN32)
+	check_include_file(windows.h HAVE_WINDOWS_H)
+	if (NOT HAVE_WINDOWS_H)
+		message(FATAL_ERROR "Unable to find windows.h include file")
+	endif()
+	check_include_file(time.h HAVE_TIME_H)
+	if (NOT HAVE_TIME_H)
+		message(FATAL_ERROR "Unable to find time.h include file")
+	endif()
+	check_include_file(pcre.h HAVE_PCRE_H)
+	if (NOT HAVE_PCRE_H)
+		message(FATAL_ERROR "Unable to find pcre.h include file")
+	endif()
+	check_include_file(pcreposix.h HAVE_PCREPOSIX_H)
+	if (NOT HAVE_PCREPOSIX_H)
+		message(FATAL_ERROR "Unable to find pcreposix.h include file")
+	endif()
+	check_library_exists(pcre pcre_compile "" HAVE_PCRE_LIB)
+	#check_library_exists(pcreposix regexec "" HAVE_PCREPOSIX_LIB)
+	if (NOT HAVE_PCRE_LIB)
+		message(FATAL_ERROR "Unable to find pcre lib")
+	endif()
+	check_library_exists(winpthread pthread_exit "" HAVE_WINPTHREAD)
+	if (NOT HAVE_WINPTHREAD)
+		message(FATAL_ERROR "Unable to winpthread lib")
+	endif()
+	list(INSERT EJDB_LLIBRARIES 0 -lwinpthread -lpcreposix -lpcre)
+	add_definitions(-DPCRE_STATIC)
+	
+else()
+
+	check_include_file(glob.h HAVE_GLOB_H)
+	if (NOT HAVE_GLOB_H)
+		message(FATAL_ERROR "Unable to find glob.h include file")
+	endif()	
+endif(WIN32)
+
 foreach(HF IN ITEMS stdlib stdint unistd dirent stddef)
 	string(TOUPPER "${HF}" UHF)
 	check_include_file(${HF}.h "_TC_HAVE_${UHF}")
@@ -127,10 +172,15 @@ target_link_libraries(ejdb_p ${EJDB_LLIBRARIES})
 
 #todo check the host system!
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fsigned-char -pedantic")
-set(CMAKE_C_FLAGS_DEBUG "-O0 -Wfatal-errors -Werror -DDEBUG -D_DEBUG -UNDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O3 -Wfatal-errors -DNDEBUG")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fsigned-char -pedantic -Wfatal-errors")
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g -Werror -DDEBUG -D_DEBUG -UNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -D_DEBUG -UNDEBUG")
+
+if (WIN32)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pedantic-ms-format")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+endif(WIN32)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
@@ -185,7 +235,7 @@ set_target_properties(ejdb PROPERTIES
 
 set_target_properties(ejdb_p PROPERTIES
 					  VERSION ${ejdb_VERSION}
-					  DEFINE_SYMBOL EJDB_NODLL)
+					  COMPILE_FLAGS "-DEJDB_NODLL")
 
 install(TARGETS ejdb
 	EXPORT ejdb-exports
@@ -198,17 +248,20 @@ install(TARGETS ejdb
 install(EXPORT ejdb-exports
 		DESTINATION ${LIB_INSTALL_DIR}/${PROJECT_NAME})
 		
-export(EXPORT ejdb-exports)		
+export(EXPORT ejdb-exports)	
 
-include(InstallRequiredSystemLibraries)
+#todo if 
+include(EjdbDebCpack)
 
 message("")
 message("#############################################")
-message(" BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
-message(" BUILD_TESTS: ${BUILD_TESTS}")
-message(" LINK LIBS: ${EJDB_LLIBRARIES}")
-message(" INCLUDE DIRS: ${EJDB_INCLUDE_DIRS}")
-message(" SOURCES: ${ALL_SRC}")
-message(" PUB_HDRS: ${PUB_HDRS}")
+message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+message("\nBUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
+message("\nBUILD_TESTS: ${BUILD_TESTS}")
+message("\nLINK LIBS: ${EJDB_LLIBRARIES}")
+message("\nINCLUDE DIRS: ${EJDB_INCLUDE_DIRS}")
+message("\nSOURCES: ${ALL_SRC}")
+message("\nPUB_HDRS: ${PUB_HDRS}")
 message("#############################################")
 message("")
+

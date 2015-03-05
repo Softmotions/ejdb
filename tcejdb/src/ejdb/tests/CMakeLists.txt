@@ -4,6 +4,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 
 foreach(TC RANGE 1 5)
 	add_executable(ejdbtest${TC} ejdbtest${TC}.c)
+	set_target_properties(ejdbtest${TC} PROPERTIES 
+						  COMPILE_FLAGS "-DEJDB_STATIC")
 	add_test(NAME ejdbtest${TC} WORKING_DIRECTORY ${TEST_DATA_DIR} 
 		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:ejdbtest${TC}>)
 endforeach()
