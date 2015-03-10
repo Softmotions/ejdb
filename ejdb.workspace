@@ -5,10 +5,10 @@
     <![CDATA[]]>
   </Environment>
   <BuildMatrix>
-    <WorkspaceConfiguration Name="win64-dbg" Selected="yes">
+    <WorkspaceConfiguration Name="win64-dbg" Selected="no">
       <Project Name="tcejdb" ConfigName="win64-dbg"/>
     </WorkspaceConfiguration>
-    <WorkspaceConfiguration Name="nix-dbg" Selected="no">
+    <WorkspaceConfiguration Name="nix-dbg" Selected="yes">
       <Project Name="tcejdb" ConfigName="nix-dbg"/>
     </WorkspaceConfiguration>
   </BuildMatrix>

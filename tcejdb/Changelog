@@ -6,6 +6,8 @@ libtcejdb (1.1.27) testing; urgency=low
   * Added $rename query operators.
   * Fixed #104 #114
   * #14 Implemented $slice operator
+  * Project moved to CMake build system #115
+  * EJDB shared library changed its name from `tcejdb` to `ejdb`
 
 libtcejdb (1.1.25) testing; urgency=low
 

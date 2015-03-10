@@ -71,8 +71,8 @@
       <File Name="src/tcbdb/tcbdb.c"/>
       <File Name="src/tcbdb/tcbdb.h"/>
       <VirtualDirectory Name="tools">
-        <File Name="src/tcbdb/tools/tcbmgr.c"/>
         <File Name="src/tcbdb/tools/CMakeLists.txt"/>
+        <File Name="src/tcbdb/tools/jbbmgr.c"/>
       </VirtualDirectory>
     </VirtualDirectory>
     <VirtualDirectory Name="tcfdb">
@@ -84,8 +84,8 @@
       <File Name="src/tcfdb/tcfdb.c"/>
       <File Name="src/tcfdb/tcfdb.h"/>
       <VirtualDirectory Name="tools">
-        <File Name="src/tcfdb/tools/tcfmgr.c"/>
         <File Name="src/tcfdb/tools/CMakeLists.txt"/>
+        <File Name="src/tcfdb/tools/jbfmgr.c"/>
       </VirtualDirectory>
     </VirtualDirectory>
     <VirtualDirectory Name="tchdb">
@@ -97,8 +97,8 @@
       <File Name="src/tchdb/tchdb.c"/>
       <File Name="src/tchdb/tchdb.h"/>
       <VirtualDirectory Name="tools">
-        <File Name="src/tchdb/tools/tchmgr.c"/>
         <File Name="src/tchdb/tools/CMakeLists.txt"/>
+        <File Name="src/tchdb/tools/jbhmgr.c"/>
       </VirtualDirectory>
     </VirtualDirectory>
     <VirtualDirectory Name="tctdb">
@@ -110,8 +110,8 @@
       <File Name="src/tctdb/tctdb.c"/>
       <File Name="src/tctdb/tctdb.h"/>
       <VirtualDirectory Name="tools">
-        <File Name="src/tctdb/tools/tctmgr.c"/>
         <File Name="src/tctdb/tools/CMakeLists.txt"/>
+        <File Name="src/tctdb/tools/jbtmgr.c"/>
       </VirtualDirectory>
     </VirtualDirectory>
     <VirtualDirectory Name="tcutil">
@@ -166,6 +166,7 @@
     <File Name="cmake/Modules/EjdbUtils.cmake"/>
     <File Name="win64-tc.cmake"/>
     <File Name="cmake/Modules/EjdbDebCpack.cmake"/>
+    <File Name="EjdbDebCpackOptions.cmake.in"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
@@ -218,7 +219,7 @@
         <SearchPaths/>
       </Completion>
     </Configuration>
-    <Configuration Name="win64-dbg" CompilerType="Cross GCC ( x86_64-linux-gnu )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+    <Configuration Name="win64-dbg" CompilerType="Cross GCC(x86_64-w64)" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-g -Wall" C_Options="" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
       </Compiler>
@@ -231,7 +232,7 @@
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
-      <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
+      <Debugger IsRemote="yes" RemoteHostName="localhost" RemoteHostPort="6666" DebuggerPath="" IsExtended="no">
         <DebuggerSearchPaths/>
         <PostConnectCommands/>
         <StartupCommands/>
@@ -260,4 +261,9 @@
       </Completion>
     </Configuration>
   </Settings>
+  <VirtualDirectory Name="docs">
+    <File Name="../Changelog"/>
+    <File Name="../README.md"/>
+    <File Name="../LICENSE"/>
+  </VirtualDirectory>
 </CodeLite_Project>

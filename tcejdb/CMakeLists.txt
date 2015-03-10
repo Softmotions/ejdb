@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.0)
 set(PROJECT_NAME "ejdb")
-
-project(${PROJECT_NAME}
-		VERSION 1.2.0
-		LANGUAGES C)
+set(PROJECT_VENDOR "Softmotions")
+set(PROJECT_DESCRIPTION_SUMMARY "Embedded JSON database library (EJDB)")
+set(PROJECT_WEBSITE "http://ejdb.org")
+project(${PROJECT_NAME} VERSION 1.2.0 LANGUAGES C)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-option(BUILD_TESTS "Build EJDB test cases" OFF)
-#option(TEST_TOOL_CMD "Test tool command", "")
+option(BUILD_TESTS "Build test cases" OFF)
+option(PACKAGE_DEB "Build .deb instalation packages" OFF)
+option(PACKAGE_TGZ "Build .tgz package archive" ON)
 
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     if (CMAKE_C_COMPILER_VERSION VERSION_LESS 4.7)
@@ -22,11 +23,8 @@ else()
 	with Clang >= 3.4 and GCC >= 4.7")
 endif()
 
-set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)")
-set(EXEC_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "Installation prefix for executables and object code libraries" FORCE)
-set(BIN_INSTALL_DIR ${EXEC_INSTALL_PREFIX}/bin CACHE PATH "Installation prefix for user executables" FORCE)
-set(LIB_INSTALL_DIR ${EXEC_INSTALL_PREFIX}/lib${LIB_SUFFIX} CACHE PATH  "Installation prefix for object code libraries" FORCE)
-set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME} CACHE PATH "Installation prefix for C header files" FORCE)
+include(GNUInstallDirs)
+
 if(APPLE)
 	option(BUILD_FRAMEWORK "Build an OS X framework" OFF)
 	set(FRAMEWORK_INSTALL_DIR "/Library/Frameworks" CACHE STRING "Directory to install frameworks to.")
@@ -202,8 +200,8 @@ file(GLOB EJDB_GENERATED_HDRS ${EJDB_GENERATED_DIR}/*.h)
 list(APPEND ALL_HDRS ${EJDB_GENERATED_HDRS})
 
 if (NOT APPLE AND NOT BUILD_FRAMEWORK)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/libejdb.pc.in ${EJDB_GENERATED_DIR}/libejdb.pc)
-	install(FILES ${EJDB_GENERATED_DIR}/libejdb.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/libejdb.pc.in ${EJDB_GENERATED_DIR}/libejdb.pc @ONLY)
+	install(FILES ${EJDB_GENERATED_DIR}/libejdb.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif(NOT APPLE AND NOT BUILD_FRAMEWORK)
 
 if (BUILD_TESTS) 
@@ -240,28 +238,67 @@ set_target_properties(ejdb_p PROPERTIES
 install(TARGETS ejdb
 	EXPORT ejdb-exports
 	FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
-	LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-	RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-	ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
-	PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR})
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(EXPORT ejdb-exports
-		DESTINATION ${LIB_INSTALL_DIR}/${PROJECT_NAME})
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME})
 		
-export(EXPORT ejdb-exports)	
+install(FILES 
+		${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
+		${CMAKE_CURRENT_SOURCE_DIR}/README
+		${CMAKE_CURRENT_SOURCE_DIR}/Changelog
+	    DESTINATION ${CMAKE_INSTALL_DOCDIR})
 
-#todo if 
-include(EjdbDebCpack)
+
+export(EXPORT ejdb-exports)		
+
+#######################################################
+
+set(CPACK_GENERATORS)
+if (PACKAGE_TGZ)
+	list(APPEND CPACK_GENERATORS "TGZ")
+endif()
+if (PACKAGE_DEB)
+	list(APPEND CPACK_GENERATORS "DEB")
+endif()
+
+set(CPACK_SOURCE_GENERATOR "TGZ")
+
+if (CPACK_GENERATORS)
+	set(CPACK_GENERATOR "${CPACK_GENERATORS}")
+	set(CPACK_PACKAGE_VERSION ${ejdb_VERSION})
+	set(CPACK_PACKAGE_VERSION_MAJOR ${ejdb_VERSION_MAJOR})
+	set(CPACK_PACKAGE_VERSION_MINOR ${ejdb_VERSION_MINOR})
+	set(CPACK_PACKAGE_VERSION_PATCH ${ejdb_VERSION_PATCH})
+	set(CPACK_PACKAGE_VENDOR ${PROJECT_VENDOR})
+	set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION_SUMMARY})
+	set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+	set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README")
+	set(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_SOURCE_DIR}/README")	
+	set(CPACK_PACKAGE_FILE_NAME 
+	"${PROJECT_NAME}-${CPACK_PACKAGE_VERSION}-${CMAKE_BUILD_TYPE}-${CMAKE_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_PROCESSOR}")
+	if (PACKAGE_DEB)
+		include(EjdbDebCpack)
+	endif()
+	include(CPack)
+endif()
+
+#########################################################
 
 message("")
 message("#############################################")
-message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-message("\nBUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
-message("\nBUILD_TESTS: ${BUILD_TESTS}")
-message("\nLINK LIBS: ${EJDB_LLIBRARIES}")
+message("LINK LIBS: ${EJDB_LLIBRARIES}")
 message("\nINCLUDE DIRS: ${EJDB_INCLUDE_DIRS}")
 message("\nSOURCES: ${ALL_SRC}")
 message("\nPUB_HDRS: ${PUB_HDRS}")
+message("\nCMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+message("BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
+message("BUILD_TESTS: ${BUILD_TESTS}")
+message("CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+message("CPACK_GENERATORS: ${CPACK_GENERATORS}")
 message("#############################################")
 message("")
 

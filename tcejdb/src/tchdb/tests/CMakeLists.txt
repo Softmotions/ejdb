@@ -4,8 +4,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 
 add_executable(tchtest tchtest.c)
 add_executable(tchmttest tchmttest.c)
-add_dependencies(tchtest tchmgr)
-add_dependencies(tchmttest tchmgr)
+add_dependencies(tchtest jbhmgr)
+add_dependencies(tchmttest jbhmgr)
 
 set_target_properties(tchtest tchmttest PROPERTIES
 					  COMPILE_FLAGS "-DEJDB_STATIC")
@@ -71,11 +71,11 @@ add_test(NAME tchtest15 WORKING_DIRECTORY ${TEST_DATA_DIR}
 		 rcat -tl -td -ru -pn 500 casket 5000 500 1 1)
 		 		 
 add_test(NAME tchtest16 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 list -pv casket)
 
 add_test(NAME tchtest17 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 list -pv -fm 1 -px casket)
 
 add_test(NAME tchtest18 WORKING_DIRECTORY ${TEST_DATA_DIR} 
@@ -155,94 +155,94 @@ add_test(NAME tchtest36 WORKING_DIRECTORY ${TEST_DATA_DIR}
 		 race -df 5 casket 5 10000)
 		 
 add_test(NAME tchtest37 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 create casket 3 1 1)
 		 
 add_test(NAME tchtest38 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 inform casket)
 		 
 add_test(NAME tchtest39 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 put casket one first)
 		 
 add_test(NAME tchtest40 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 put casket two second)
 		 
 add_test(NAME tchtest41 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 put -dk casket three third)
 
 add_test(NAME tchtest42 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 put -dc casket three third)
 
 add_test(NAME tchtest43 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 put -dc casket three third)
 
 add_test(NAME tchtest44 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 put -dc casket three third)
 
 add_test(NAME tchtest45 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 put casket four fourth)
 
 add_test(NAME tchtest46 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 put -dk casket five fifth)
 
 add_test(NAME tchtest47 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 out casket one)
 
 add_test(NAME tchtest48 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 out casket two)
 
 add_test(NAME tchtest49 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 get casket three) #check.out
 		 
 add_test(NAME tchtest50 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 get casket four) #check.out
 		 
 add_test(NAME tchtest51 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 get casket five) #check.out
 		 
 add_test(NAME tchtest52 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 list -pv casket) #check.out
 		 
 add_test(NAME tchtest53 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 optimize casket)
 		 
 add_test(NAME tchtest54 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 put -dc casket three third)
 
 add_test(NAME tchtest55 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 get casket three) #check.out
 		 
 add_test(NAME tchtest56 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 get casket three) #check.out
 
 add_test(NAME tchtest57 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 get casket four) #check.out
 		 
 add_test(NAME tchtest58 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 get casket five) #check.out
 		 
 add_test(NAME tchtest59 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tchmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbhmgr>
 		 list -pv casket) #check.out
 

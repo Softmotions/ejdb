@@ -4,8 +4,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 
 add_executable(tcftest tcftest.c)
 add_executable(tcfmttest tcfmttest.c)
-add_dependencies(tcftest tcfmgr)
-add_dependencies(tcfmttest tcfmgr)
+add_dependencies(tcftest jbfmgr)
+add_dependencies(tcfmttest jbfmgr)
 
 set_target_properties(tcftest tcfmttest PROPERTIES
 					  COMPILE_FLAGS "-DEJDB_STATIC")
@@ -48,11 +48,11 @@ add_test(NAME tcftest9 WORKING_DIRECTORY ${TEST_DATA_DIR}
 		 rcat -pn 500 -ru casket 5000 500)
 
 add_test(NAME tcftest10 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 list -pv casket) #check.out
 
 add_test(NAME tcftest11 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 list -pv -ri "[100,200)" -px casket) #check.out
 
 add_test(NAME tcftest12 WORKING_DIRECTORY ${TEST_DATA_DIR} 
@@ -108,90 +108,90 @@ add_test(NAME tcftest24 WORKING_DIRECTORY ${TEST_DATA_DIR}
 		 typical -nc casket 5 50000 50) 
 
 add_test(NAME tcftest25 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 create casket 50) 
 
 add_test(NAME tcftest26 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 inform casket) 
 
 add_test(NAME tcftest27 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 put casket 1 first) 
 
 add_test(NAME tcftest28 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 put casket 2 second) 
 
 add_test(NAME tcftest29 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 put -dk casket 3 third) 
 
 add_test(NAME tcftest30 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 put -dc casket 3 third) 
 
 add_test(NAME tcftest31 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 put -dc casket 3 third) 
 
 add_test(NAME tcftest32 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		 put -dc casket 3 third) 
 
 add_test(NAME tcftest33 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  put casket 4 fourth) 
 
 add_test(NAME tcftest34 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  put -dk casket 5 fifth) 
 
 add_test(NAME tcftest35 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  out casket 1) 
 
 add_test(NAME tcftest36 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  out casket 2) 
 
 add_test(NAME tcftest37 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  get casket 3) #check.out
 
 add_test(NAME tcftest38 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  get casket 4) #check.out
 
 add_test(NAME tcftest39 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  get casket 5) #check.out
 
 add_test(NAME tcftest40 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  list -pv casket) #check.out
 
 add_test(NAME tcftest41 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  optimize casket 5)
 
 add_test(NAME tcftest42 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  put -dc casket 3 third)
 
 add_test(NAME tcftest43 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  get casket 3) #check.out
 
 add_test(NAME tcftest44 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  get casket 4) #check.out
 
 add_test(NAME tcftest45 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  get casket 5) #check.out
 
 add_test(NAME tcftest46 WORKING_DIRECTORY ${TEST_DATA_DIR} 
-		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:tcfmgr> 
+		 COMMAND ${TEST_TOOL_CMD} $<TARGET_FILE:jbfmgr>
 		  list -pv casket) #check.out
 
