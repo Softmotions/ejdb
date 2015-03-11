@@ -35,6 +35,9 @@
  }]]]>
     </Plugin>
   </Plugins>
+  <VirtualDirectory Name="installer">
+    <File Name="installer/CMakeLists.txt"/>
+  </VirtualDirectory>
   <Reconciliation>
     <Regexes/>
     <Excludepaths/>
@@ -156,6 +159,7 @@
       <File Name="src/bson/nxjson.h"/>
     </VirtualDirectory>
     <File Name="src/libejdb.pc.in"/>
+    <File Name="src/CMakeLists.txt"/>
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <File Name="cmake/Modules/FindLzo.cmake"/>
@@ -165,8 +169,7 @@
     <File Name="ctest.cmake"/>
     <File Name="cmake/Modules/EjdbUtils.cmake"/>
     <File Name="win64-tc.cmake"/>
-    <File Name="cmake/Modules/EjdbDebCpack.cmake"/>
-    <File Name="EjdbDebCpackOptions.cmake.in"/>
+    <File Name="cmake/Modules/UploadPPA.cmake"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

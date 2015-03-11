@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="ejdb" Database="./ejdb.tags">
-  <Project Name="tcejdb" Path="tcejdb/tcejdb.project" Active="Yes"/>
   <Environment>
     <![CDATA[]]>
   </Environment>
+  <Project Name="tcejdb" Path="tcejdb/tcejdb.project" Active="Yes"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="win64-dbg" Selected="no">
       <Project Name="tcejdb" ConfigName="win64-dbg"/>
