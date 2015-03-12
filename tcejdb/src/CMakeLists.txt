@@ -232,8 +232,11 @@ install(FILES
 		${CMAKE_SOURCE_DIR}/Changelog
 	    DESTINATION ${CMAKE_INSTALL_DOCDIR})
 
-
-export(EXPORT ejdb-exports)		
+if (CMAKE_VERSION VERSION_GREATER 3.0)
+	export(EXPORT ejdb-exports)	
+else()
+	export(TARGETS ejdb FILE ejdb-exports.cmake)	
+endif()
 
 
 message("")

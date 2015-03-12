@@ -126,7 +126,7 @@ set(DEBIAN_SOURCE_DIR ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${CPACK_DEBIAN_PACKAG
 ##############################################################################
 # debian/control
 set(debian_control ${DEBIAN_SOURCE_DIR}/debian/control)
-list(APPEND CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS cmake)
+list(APPEND CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS cmake debhelper)
 list(REMOVE_DUPLICATES CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS)
 list(SORT CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS)
 string(REPLACE ";" ", " build_depends "${CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS}")
@@ -137,33 +137,33 @@ file(WRITE ${debian_control}
   "Priority: ${CPACK_DEBIAN_PACKAGE_PRIORITY}\n"
   "Maintainer: ${CPACK_DEBIAN_PACKAGE_MAINTAINER}\n"
   "Build-Depends: ${build_depends}\n"
-  "Standards-Version: 3.9.3\n"
+  "Standards-Version: 3.9.5\n"
   "Homepage: ${CPACK_DEBIAN_PACKAGE_HOMEPAGE}\n"
   "\n"
   "Package: ${CPACK_DEBIAN_PACKAGE_NAME}\n"
   "Architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}\n"
-  "Depends: ${bin_depends}, \${shlibs:Depends}\n"
-  "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}\n"
+  "Depends: ${bin_depends}, \${shlibs:Depends}, \${misc:Depends}\n"
+  "Description: ${CPACK_PACKAGE_DESCRIPTION}\n"
   "${deb_long_description}"
   )
 
-#foreach(COMPONENT ${CPACK_COMPONENTS_ALL})
-#  string(TOUPPER ${COMPONENT} UPPER_COMPONENT)
-#  set(DEPENDS "${CPACK_DEBIAN_PACKAGE_NAME}")
-#  foreach(DEP ${CPACK_COMPONENT_${UPPER_COMPONENT}_DEPENDS})
-#    set(DEPENDS "${DEPENDS}, ${CPACK_DEBIAN_PACKAGE_NAME}-${DEP}")
-#  endforeach(DEP ${CPACK_COMPONENT_${UPPER_COMPONENT}_DEPENDS})
-#  file(APPEND ${debian_control} "\n"
-#    "Package: ${CPACK_DEBIAN_PACKAGE_NAME}-${COMPONENT}\n"
-#    "Architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}\n"
-#    "Depends: ${DEPENDS}\n"
-#    "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}"
-#    ": ${CPACK_COMPONENT_${UPPER_COMPONENT}_DISPLAY_NAME}\n"
-#    "${deb_long_description}"
-#    " .\n"
-#    " ${CPACK_COMPONENT_${UPPER_COMPONENT}_DESCRIPTION}\n"
-#    )
-#endforeach(COMPONENT ${CPACK_COMPONENTS_ALL})
+foreach(COMPONENT ${CPACK_COMPONENTS_ALL})
+  string(TOUPPER ${COMPONENT} UPPER_COMPONENT)
+  set(DEPENDS "${CPACK_DEBIAN_PACKAGE_NAME}")
+  foreach(DEP ${CPACK_COMPONENT_${UPPER_COMPONENT}_DEPENDS})
+    set(DEPENDS "${DEPENDS}, ${CPACK_DEBIAN_PACKAGE_NAME}-${DEP}")
+  endforeach(DEP ${CPACK_COMPONENT_${UPPER_COMPONENT}_DEPENDS})
+  file(APPEND ${debian_control} "\n"
+    "Package: ${CPACK_DEBIAN_PACKAGE_NAME}-${COMPONENT}\n"
+    "Architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}\n"
+    "Depends: ${DEPENDS}\n"
+    "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}"
+    ": ${CPACK_COMPONENT_${UPPER_COMPONENT}_DISPLAY_NAME}\n"
+    "${deb_long_description}"
+    " .\n"
+    " ${CPACK_COMPONENT_${UPPER_COMPONENT}_DESCRIPTION}\n"
+	)
+endforeach(COMPONENT ${CPACK_COMPONENTS_ALL})
 
 ##############################################################################
 # debian/copyright
@@ -173,7 +173,6 @@ configure_file(${CPACK_RESOURCE_FILE_LICENSE} ${debian_copyright} COPYONLY)
 ##############################################################################
 # debian/rules
 set(debian_rules ${DEBIAN_SOURCE_DIR}/debian/rules)
-
 
 if(OLD_RULES)
 file(WRITE ${debian_rules}
@@ -235,7 +234,6 @@ foreach(component ${CPACK_COMPONENTS_ALL})
   endif(NOT CPACK_COMPONENT_${COMPONENT}_BINARY_INDEP)
 endforeach(component)
 
-
 file(APPEND ${debian_rules}
   "\n"
   "binary-indep: build-indep\n"
@@ -265,13 +263,17 @@ file(APPEND ${debian_rules}
   ".PHONY: binary binary-arch binary-indep clean\n"
   )
 
-
 else()
+
 file(WRITE ${debian_rules}
-"#!/usr/bin/make -f\n"
-"%:\n"
-"\tdh  $@ --buildsystem=cmake\n"
+	"#!/usr/bin/make -f\n"
+	"\nexport DH_VERBOSE=1"
+	"\n%:\n"
+	"\tdh  $@ --buildsystem=cmake\n"
+	"\noverride_dh_auto_configure:\n"
+	"\tdh_auto_configure -- -DBUILD_SHARED_LIBS=ON -DPACKAGE_DEB=OFF -DPACKAGE_TGZ=OFF"
 )
+
 endif(OLD_RULES)
 execute_process(COMMAND chmod +x ${debian_rules})
 
@@ -335,6 +337,7 @@ endif()
 #  )
 
 set(CPACK_SOURCE_IGNORE_FILES
+   ${CPACK_SOURCE_IGNORE_FILES}
   "/build/"
   "/build-*/"
   "/debian/"
@@ -345,7 +348,8 @@ set(CPACK_SOURCE_IGNORE_FILES
   "/packaging/"
   "*~")
 
-set(package_file_name "${CPACK_DEBIAN_PACKAGE_NAME}_${DEBIAN_PACKAGE_VERSION}")
+#set(package_file_name "${CPACK_DEBIAN_PACKAGE_NAME}_${DEBIAN_PACKAGE_VERSION}")
+set(package_file_name "${CPACK_DEBIAN_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION}")
 
 file(WRITE "${CMAKE_BINARY_DIR}/Debian/${DISTRI}/cpack.cmake"
   "set(CPACK_GENERATOR TGZ)\n"
@@ -355,9 +359,10 @@ file(WRITE "${CMAKE_BINARY_DIR}/Debian/${DISTRI}/cpack.cmake"
   "set(CPACK_PACKAGE_DESCRIPTION \"${CPACK_PACKAGE_NAME} Source\")\n"
   "set(CPACK_IGNORE_FILES \"${CPACK_SOURCE_IGNORE_FILES}\")\n"
   "set(CPACK_INSTALLED_DIRECTORIES \"${CPACK_SOURCE_INSTALLED_DIRECTORIES}\")\n"
+  "set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)\n"
   )
 
-set(orig_file "${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${DEBIAN_PACKAGE_VERSION}.orig.tar.gz")
+set(orig_file "${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${package_file_name}.orig.tar.gz")
 
 add_custom_command(OUTPUT ${orig_file}
   COMMAND cpack --config ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/cpack.cmake
