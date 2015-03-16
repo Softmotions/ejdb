@@ -469,7 +469,10 @@ int tclistnum(const TCLIST *list) {
 /* Get the pointer to the region of an element of a list object. */
 const void *tclistval(const TCLIST *list, int index, int *sp) {
     assert(list && index >= 0 && sp);
-    if (index >= list->num) return NULL;
+    if (index >= list->num) {
+		*sp = 0;
+		return NULL;
+	}
     index += list->start;
     *sp = list->array[index].size;
     return list->array[index].ptr;

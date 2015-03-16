@@ -41,13 +41,15 @@ endif()
 
 if (NOT ENABLE_PPA)
 	add_subdirectory(src)
+else()
+	set(PACKAGE_DEB ON)
 endif()
 
 set(CPACK_GENERATORS)
 if (PACKAGE_TGZ)
 	list(APPEND CPACK_GENERATORS "TGZ")
 endif()
-if (PACKAGE_DEB OR ENABLE_PPA)
+if (PACKAGE_DEB)
 	list(APPEND CPACK_GENERATORS "DEB")
 endif()
 

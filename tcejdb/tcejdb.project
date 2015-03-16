@@ -37,6 +37,7 @@
   </Plugins>
   <VirtualDirectory Name="installer">
     <File Name="installer/CMakeLists.txt"/>
+    <VirtualDirectory Name="debian"/>
   </VirtualDirectory>
   <Reconciliation>
     <Regexes/>
@@ -265,8 +266,9 @@
     </Configuration>
   </Settings>
   <VirtualDirectory Name="docs">
-    <File Name="../Changelog"/>
     <File Name="../README.md"/>
-    <File Name="../LICENSE"/>
+    <File Name="Changelog"/>
+    <File Name="README"/>
+    <File Name="LICENSE"/>
   </VirtualDirectory>
 </CodeLite_Project>

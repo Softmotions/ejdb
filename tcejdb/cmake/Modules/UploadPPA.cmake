@@ -125,8 +125,9 @@ set(DEBIAN_SOURCE_DIR ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${CPACK_DEBIAN_PACKAG
 
 ##############################################################################
 # debian/control
+
 set(debian_control ${DEBIAN_SOURCE_DIR}/debian/control)
-list(APPEND CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS cmake debhelper)
+list(APPEND CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS "cmake" "debhelper (>= 7.0.50)")
 list(REMOVE_DUPLICATES CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS)
 list(SORT CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS)
 string(REPLACE ";" ", " build_depends "${CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS}")
@@ -143,9 +144,22 @@ file(WRITE ${debian_control}
   "Package: ${CPACK_DEBIAN_PACKAGE_NAME}\n"
   "Architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}\n"
   "Depends: ${bin_depends}, \${shlibs:Depends}, \${misc:Depends}\n"
-  "Description: ${CPACK_PACKAGE_DESCRIPTION}\n"
+  "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}\n"
   "${deb_long_description}"
   )
+  
+file(APPEND ${debian_control}
+  "\n\n"
+  "Package: ${CPACK_DEBIAN_PACKAGE_NAME}-dbg\n"
+  "Priority: extra\n"
+  "Section: debug\n"
+  "Architecture: any\n"
+  "Depends: ${CPACK_DEBIAN_PACKAGE_NAME} (= \${binary:Version}), \${shlibs:Depends}, \${misc:Depends}\n"
+  "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}\n"
+  "${deb_long_description}"
+  "\n .\n"
+  " This is the debugging symbols for the ${CPACK_DEBIAN_PACKAGE_NAME} library"
+ )
 
 foreach(COMPONENT ${CPACK_COMPONENTS_ALL})
   string(TOUPPER ${COMPONENT} UPPER_COMPONENT)
@@ -160,10 +174,12 @@ foreach(COMPONENT ${CPACK_COMPONENTS_ALL})
     "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}"
     ": ${CPACK_COMPONENT_${UPPER_COMPONENT}_DISPLAY_NAME}\n"
     "${deb_long_description}"
-    " .\n"
+    "\n .\n"
     " ${CPACK_COMPONENT_${UPPER_COMPONENT}_DESCRIPTION}\n"
 	)
 endforeach(COMPONENT ${CPACK_COMPONENTS_ALL})
+
+
 
 ##############################################################################
 # debian/copyright
@@ -174,107 +190,19 @@ configure_file(${CPACK_RESOURCE_FILE_LICENSE} ${debian_copyright} COPYONLY)
 # debian/rules
 set(debian_rules ${DEBIAN_SOURCE_DIR}/debian/rules)
 
-if(OLD_RULES)
-file(WRITE ${debian_rules}
-  "#!/usr/bin/make -f\n"
-  "\n"
-  "DEBUG = debug_build\n"
-  "RELEASE = release_build\n"
-  "GZIP = gzip\n"
-  "CFLAGS =\n"
-  "CPPFLAGS =\n"
-  "CXXFLAGS =\n"
-  "FFLAGS =\n"
-  "LDFLAGS =\n"
-  "\n"
-  "configure-debug:\n"
-  "\tcmake -E make_directory $(DEBUG)\n"
-  "\tcd $(DEBUG); cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../debian/tmp/usr ..\n"
-  "\ttouch configure-debug\n"
-  "\n"
-  "configure-release:\n"
-  "\tcmake -E make_directory $(RELEASE)\n"
-  "\tcd $(RELEASE); cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../debian/tmp/usr ..\n"
-  "\ttouch configure-release\n"
-  "\n"
-  "build: build-arch build-indep\n" # build-indep
-  "\n"
-  "build-arch: configure-release\n" # configure-debug
-#  "\t$(MAKE) --no-print-directory -C $(DEBUG) preinstall\n"
-  "\t$(MAKE) --no-print-directory -C $(RELEASE) preinstall\n"
-  "\ttouch build-arch\n"
-  "\n"
-  "build-indep: configure-release\n"
-  "\t$(MAKE) --no-print-directory -C $(RELEASE) documentation\n"
-  "\ttouch build-indep\n"
-  "\n"
-  "binary: binary-arch binary-indep\n"
-  "\n"
-  "binary-arch: build-arch\n"
-#  "\tcd $(DEBUG); cmake -DCOMPONENT=Unspecified -DCMAKE_INSTALL_PREFIX=../debian/tmp/usr -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake\n"
-  "\tcd $(RELEASE); cmake -DCOMPONENT=Unspecified -DCMAKE_INSTALL_PREFIX=../debian/tmp/usr -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake\n"
-  "\t$(GZIP) -9 -c debian/changelog > debian/tmp/usr/share/doc/${CMAKE_PROJECT_NAME}/changelog.Debian.gz\n"
-  "\tcmake -E make_directory debian/tmp/DEBIAN\n"
-  "\tdpkg-shlibdeps debian/tmp/usr/bin/*\n"
-  "\tdpkg-gencontrol -p${CPACK_DEBIAN_PACKAGE_NAME} -Pdebian/tmp\n"
-  "\tdpkg --build debian/tmp ..\n"
-  )
-
-foreach(component ${CPACK_COMPONENTS_ALL})
-  string(TOUPPER "${component}" COMPONENT)
-  if(NOT CPACK_COMPONENT_${COMPONENT}_BINARY_INDEP)
-    set(path debian/${component})
-    file(APPEND ${debian_rules}
-#      "\tcd $(DEBUG); cmake -DCOMPONENT=${component} -DCMAKE_INSTALL_PREFIX=../${path}/usr -P cmake_install.cmake\n"
-      "\tcd $(RELEASE); cmake -DCOMPONENT=${component} -DCMAKE_INSTALL_PREFIX=../${path}/usr -P cmake_install.cmake\n"
-      "\tcmake -E make_directory ${path}/DEBIAN\n"
-      "\tdpkg-gencontrol -p${CPACK_COMPONENT_${COMPONENT}_DEB_PACKAGE} -P${path}\n"
-      "\tdpkg --build ${path} ..\n"
-      )
-  endif(NOT CPACK_COMPONENT_${COMPONENT}_BINARY_INDEP)
-endforeach(component)
-
-file(APPEND ${debian_rules}
-  "\n"
-  "binary-indep: build-indep\n"
-  )
-
-foreach(component ${CPACK_COMPONENTS_ALL})
-  string(TOUPPER "${component}" COMPONENT)
-  if(CPACK_COMPONENT_${COMPONENT}_BINARY_INDEP)
-    set(path debian/${component})
-    file(APPEND ${debian_rules}
-#      "\tcd $(DEBUG); cmake -DCOMPONENT=${component} -DCMAKE_INSTALL_PREFIX=../${path}/usr -P cmake_install.cmake\n"
-      "\tcd $(RELEASE); cmake -DCOMPONENT=${component} -DCMAKE_INSTALL_PREFIX=../${path}/usr -P cmake_install.cmake\n"
-      "\tcmake -E make_directory ${path}/DEBIAN\n"
-      "\tdpkg-gencontrol -p${CPACK_COMPONENT_${COMPONENT}_DEB_PACKAGE} -P${path}\n"
-      "\tdpkg --build ${path} ..\n"
-      )
-  endif(CPACK_COMPONENT_${COMPONENT}_BINARY_INDEP)
-endforeach(component)
-
-file(APPEND ${debian_rules}
-  "\n"
-  "clean:\n"
-  "\tcmake -E remove_directory $(DEBUG)\n"
-  "\tcmake -E remove_directory $(RELEASE)\n"
-  "\tcmake -E remove configure-debug configure-release build-arch build-indep\n"
-  "\n"
-  ".PHONY: binary binary-arch binary-indep clean\n"
-  )
-
-else()
-
 file(WRITE ${debian_rules}
 	"#!/usr/bin/make -f\n"
 	"\nexport DH_VERBOSE=1"
-	"\n%:\n"
+	"\n\n%:\n"
 	"\tdh  $@ --buildsystem=cmake\n"
 	"\noverride_dh_auto_configure:\n"
-	"\tdh_auto_configure -- -DBUILD_SHARED_LIBS=ON -DPACKAGE_DEB=OFF -DPACKAGE_TGZ=OFF"
+	"\tDESTDIR=\"$(CURDIR)/debian/${CPACK_DEBIAN_PACKAGE_NAME}\" dh_auto_configure -- -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_SHARED_LIBS=ON -DPACKAGE_TGZ=OFF"
+	"\n\noverride_dh_auto_install:\n"
+	"\tdh_auto_install --destdir=\"$(CURDIR)/debian/${CPACK_DEBIAN_PACKAGE_NAME}\" --buildsystem=cmake"
+	"\n\noverride_dh_strip:\n"
+	"\tdh_strip --dbg-package=${CPACK_DEBIAN_PACKAGE_NAME}-dbg"
 )
 
-endif(OLD_RULES)
 execute_process(COMMAND chmod +x ${debian_rules})
 
 ##############################################################################
@@ -283,9 +211,10 @@ file(WRITE ${DEBIAN_SOURCE_DIR}/debian/compat "7")
 
 ##############################################################################
 # debian/source/format
-file(WRITE ${DEBIAN_SOURCE_DIR}/debian/source/format "3.0 (quilt)")
+file(WRITE ${DEBIAN_SOURCE_DIR}/debian/source/format "3.0 (native)")
 
 ##############################################################################
+
 # debian/changelog
 set(debian_changelog ${DEBIAN_SOURCE_DIR}/debian/changelog)
 if(NOT CPACK_DEBIAN_RESOURCE_FILE_CHANGELOG)
@@ -329,6 +258,19 @@ else()
    #configure_file(${debian_changelog} ${CPACK_DEBIAN_RESOURCE_FILE_CHANGELOG}  COPYONLY)
 endif()
 
+
+##########################################################################
+# Templates
+
+if (CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA)
+	foreach(CF ${CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA})
+	get_filename_component(CF_NAME ${CF} NAME)
+	message("Writing debian/${CF_NAME}")
+	configure_file(${CF} ${DEBIAN_SOURCE_DIR}/debian/${CF_NAME} @ONLY)
+	endforeach()
+endif(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA)
+
+
 ##########################################################################
 # .orig.tar.gz
 #execute_process(COMMAND date +%y%m%d
@@ -368,7 +310,13 @@ add_custom_command(OUTPUT ${orig_file}
   COMMAND cpack --config ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/cpack.cmake
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Debian/${DISTRI}
   )
-add_custom_target(tarfile_${DISTRI} ALL DEPENDS ${orig_file})
+  
+add_custom_command(OUTPUT ${DEBIAN_SOURCE_DIR}/CMakeLists.txt
+	COMMAND tar zxf ${orig_file}
+	WORKING_DIRECTORY ${DEBIAN_SOURCE_DIR}
+	DEPENDS ${orig_file}
+	)
+	
 ##############################################################################
 # debuild -S
 set(DEB_SOURCE_CHANGES
@@ -376,10 +324,13 @@ set(DEB_SOURCE_CHANGES
   )
 
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${DEB_SOURCE_CHANGES}
-  COMMAND ${DEBUILD_EXECUTABLE} -S -sa
+  COMMAND ${DEBUILD_EXECUTABLE} --no-tgz-check -S 
   WORKING_DIRECTORY ${DEBIAN_SOURCE_DIR}
   )
-add_custom_target(debuild_${DISTRI} ALL DEPENDS tarfile_${DISTRI} ${orig_file} ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${DEB_SOURCE_CHANGES} )
+add_custom_target(debuild_${DISTRI} ALL 
+				DEPENDS ${DEBIAN_SOURCE_DIR}/CMakeLists.txt
+						${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${DEB_SOURCE_CHANGES} 
+		)
 ##############################################################################
 # dput ppa:your-lp-id/ppa <source.changes>
 message(STATUS "Upload PPA is ${UPLOAD_PPA}")
