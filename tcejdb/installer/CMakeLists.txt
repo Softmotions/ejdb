@@ -45,8 +45,5 @@ endif(PACKAGE_DEB)
 include(CPack)
 
 if (ENABLE_PPA)
-	set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA 
-	    ${CMAKE_CURRENT_SOURCE_DIR}/debian/ejdb.install
-		)
     include(UploadPPA)
 endif()
