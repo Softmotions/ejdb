@@ -5525,7 +5525,7 @@ void testDistinct() {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
 
-    int count;
+    uint32_t count;
     TCXSTR *log;
     bson *q1res; 
 
