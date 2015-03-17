@@ -69,8 +69,8 @@ endif()
 if (CPACK_GENERATORS)
     set(CPACK_GENERATOR "${CPACK_GENERATORS}")
 	set(CPACK_SOURCE_IGNORE_FILES 
-		"tcejdb.mk"
-		"tcejdb.project"
+		"ejdb.mk"
+		"ejdb.project"
 		".cmake_dirty"
 		"ctest.cmake"
 	)
