@@ -28,7 +28,10 @@ set(EJDB_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
-include(InstallRequiredSystemLibraries)
+if (WIN32)
+	include(Win32LIBTools)
+endif()
+
 
 if (NOT CMAKE_BUILD_TYPE)
 	message(FATAL_ERROR "Please specify the build type -DCMAKE_BUILD_TYPE=Debug|Release|RelWithDebInfo")
@@ -207,6 +210,16 @@ set_target_properties(ejdb PROPERTIES
 					  SOVERSION ${PROJECT_VERSION_MAJOR}
 					  PUBLIC_HEADER "${PUB_HDRS}"
 					  DEFINE_SYMBOL EJDB_API_EXPORTS)
+if (WIN32)
+	add_dependencies(ejdb wintools_init)
+	set_target_properties(ejdb PROPERTIES LINK_FLAGS "-Wl,--output-def,libejdb.def")
+	add_w32_importlib(ejdb libejdb ${CMAKE_CURRENT_BINARY_DIR})
+	install(FILES 
+			${CMAKE_CURRENT_BINARY_DIR}/libejdb.def
+			${CMAKE_CURRENT_BINARY_DIR}/libejdb.lib
+			${CMAKE_CURRENT_BINARY_DIR}/libejdb.exp
+            DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 set_target_properties(ejdb_p PROPERTIES
 					  VERSION ${PROJECT_VERSION}
@@ -247,6 +260,13 @@ else()
 endif()
 
 
+if (BUILD_SAMPLES)
+	add_subdirectory(samples)
+endif()
+
+#todo?
+include(InstallRequiredSystemLibraries)
+
 message("")
 message("LINK LIBS: ${EJDB_LLIBRARIES}")
 message("\nINCLUDE DIRS: ${EJDB_INCLUDE_DIRS}")
@@ -255,4 +275,5 @@ message("\nPUB_HDRS: ${PUB_HDRS}")
 message("\nCMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message("BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 message("BUILD_TESTS: ${BUILD_TESTS}")
+message("BUILD_SAMPLES: ${BUILD_SAMPLES}")
 message("")

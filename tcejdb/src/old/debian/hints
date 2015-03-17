@@ -1,4 +1,0 @@
-http://blogs.operationaldynamics.com/pmiller/sw/new-lintian1-changes-distribution-check
-debuild --changes-option=-DDistribution=`awk -F= '/CODENAME/{print $2}' /etc/lsb-release` -us -uc
-
-dpkg-gensymbols -v1.1.1  -elibtcejdb.so.9.11.0 -plibtcejdb9 -Odebian/libtcejdb9.symbols

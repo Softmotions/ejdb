@@ -21,10 +21,18 @@ set(${PROJECT_NAME}_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(BUILD_TESTS "Build test cases" OFF)
+option(BUILD_SAMPLES "Build ejdb sample projects" OFF)
 option(PACKAGE_DEB "Build .deb instalation packages" OFF)
 option(PACKAGE_TGZ "Build .tgz package archive" ON)
 option(ENABLE_PPA "Enable PPA package build" OFF)
 option(UPLOAD_PPA "Upload debian packages to the launchpad ppa repository" OFF)
+option(MXE_HOME "Home of MXE (mxe.cc) windows cross build environment")
+
+if (CMAKE_SIZEOF_VOID_P MATCHES 8)
+	set(PROJECT_ARCH "x86_64")
+else(CMAKE_SIZEOF_VOID_P MATCHES 8)
+	set(PROJECT_ARCH "x86")
+endif(CMAKE_SIZEOF_VOID_P MATCHES 8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
@@ -66,3 +74,6 @@ endif()
 
 message("CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 message("CPACK_GENERATORS: ${CPACK_GENERATORS}")
+if (MXE_HOME)
+	message("MXE_HOME: ${MXE_HOME}")
+endif()

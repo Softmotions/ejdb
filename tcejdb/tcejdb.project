@@ -21,7 +21,7 @@
   "sourceDirectory": "$(ProjectPath)",
   "generator": "Unix Makefiles",
   "buildType": "Debug",
-  "arguments": ["-DBUILD_TESTS=ON ", "-DCMAKE_BUILD_TYPE=Debug", ""],
+  "arguments": ["-DBUILD_TESTS=ON ", ""],
   "parentProject": ""
  }, {
   "name": "win64-dbg",
@@ -161,16 +161,28 @@
     </VirtualDirectory>
     <File Name="src/libejdb.pc.in"/>
     <File Name="src/CMakeLists.txt"/>
+    <VirtualDirectory Name="samples">
+      <VirtualDirectory Name="sample1">
+        <File Name="src/samples/sample1/sample1.c"/>
+        <File Name="src/samples/sample1/CMakeLists.txt"/>
+      </VirtualDirectory>
+      <File Name="src/samples/CMakeLists.txt"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <File Name="cmake/Modules/FindLzo.cmake"/>
     <File Name="cmake/Modules/FindCUnit.cmake"/>
     <File Name="CMakeLists.txt"/>
-    <File Name="CTestConfig.cmake"/>
-    <File Name="ctest.cmake"/>
     <File Name="cmake/Modules/EjdbUtils.cmake"/>
     <File Name="win64-tc.cmake"/>
     <File Name="cmake/Modules/UploadPPA.cmake"/>
+    <File Name="cmake/Modules/Win32LIBTools.cmake"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="docs">
+    <File Name="../README.md"/>
+    <File Name="Changelog"/>
+    <File Name="README"/>
+    <File Name="LICENSE"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
@@ -265,10 +277,4 @@
       </Completion>
     </Configuration>
   </Settings>
-  <VirtualDirectory Name="docs">
-    <File Name="../README.md"/>
-    <File Name="Changelog"/>
-    <File Name="README"/>
-    <File Name="LICENSE"/>
-  </VirtualDirectory>
 </CodeLite_Project>

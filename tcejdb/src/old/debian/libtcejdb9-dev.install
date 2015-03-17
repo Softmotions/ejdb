@@ -1,6 +1,0 @@
-debian/tmp/usr/include/tcejdb/*.h
-debian/tmp/usr/include/tcejdb/*/*.h
-debian/tmp/usr/lib/*/libtcejdb.a
-debian/tmp/usr/lib/*/libtcejdb.so
-debian/tmp/usr/lib/*/pkgconfig/tcejdb.pc
-debian/tmp/usr/share/man/man3/libtcejdb.3

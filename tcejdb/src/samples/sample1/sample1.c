@@ -1,4 +1,4 @@
-#include <ejdb.h>
+#include "ejdb.h"
 #include <locale.h>
 
 static EJDB *jb;
