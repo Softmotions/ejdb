@@ -43,6 +43,11 @@ macro_ensure_out_of_source_build(
     "${CMAKE_PROJECT_NAME} requires an out of source build."
 )
 
+if (BUILD_TESTS) 
+	include(CTest)
+	find_package(CUnit REQUIRED)
+endif(BUILD_TESTS)
+
 if (UPLOAD_PPA)
 	set(ENABLE_PPA ON)
 endif()
