@@ -3,13 +3,13 @@
   <Environment>
     <![CDATA[]]>
   </Environment>
-  <Project Name="tcejdb" Path="tcejdb/tcejdb.project" Active="Yes"/>
+  <Project Name="ejdb" Path="ejdb.project" Active="Yes"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="win64-dbg" Selected="no">
-      <Project Name="tcejdb" ConfigName="win64-dbg"/>
+      <Project Name="ejdb" ConfigName="win64-dbg"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="nix-dbg" Selected="yes">
-      <Project Name="tcejdb" ConfigName="nix-dbg"/>
+      <Project Name="ejdb" ConfigName="nix-dbg"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

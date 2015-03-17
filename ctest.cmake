@@ -1,4 +1,4 @@
-set(CTEST_SOURCE_DIRECTORY /home/adam/Projects/softmotions/ejdb/tcejdb)
+set(CTEST_SOURCE_DIRECTORY /home/adam/Projects/softmotions/ejdb)
 set(CTEST_BINARY_DIRECTORY /home/adam/Projects/softmotions/ejdb/build)
 
 set(CTEST_START_WITH_EMPTY_BINARY_DIRECTORY TRUE)

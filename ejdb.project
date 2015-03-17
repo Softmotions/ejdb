@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="tcejdb" InternalType="Console">
+<CodeLite_Project Name="ejdb" InternalType="Console">
   <Plugins>
     <Plugin Name="qmake">
       <![CDATA[00030001N0011Debug_Linux0000000000000001N0007nix-dbg0000000000000001N0009win64-dbg000000000000]]>
@@ -30,7 +30,7 @@
   "sourceDirectory": "$(ProjectPath)",
   "generator": "Unix Makefiles",
   "buildType": "Debug",
-  "arguments": ["-DCMAKE_TOOLCHAIN_FILE=\"../tcejdb/win64-tc.cmake\"", "-DBUILD_TESTS=ON ", "-DCMAKE_BUILD_TYPE=Debug", "", ""],
+  "arguments": ["-DCMAKE_TOOLCHAIN_FILE=\"../win64-tc.cmake\"", "-DBUILD_TESTS=ON ", "-DCMAKE_BUILD_TYPE=Debug", "", ""],
   "parentProject": ""
  }]]]>
     </Plugin>
@@ -46,7 +46,7 @@
     <Extensions>
       <![CDATA[cpp;c;h;hpp;xrc;wxcp;fbp]]>
     </Extensions>
-    <Topleveldir>../tcejdb</Topleveldir>
+    <Topleveldir>../</Topleveldir>
   </Reconciliation>
   <Description/>
   <Dependencies/>
@@ -182,6 +182,7 @@
     <File Name="Changelog"/>
     <File Name="README"/>
     <File Name="LICENSE"/>
+    <File Name="INSTALL"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

@@ -1,7 +1,10 @@
 /build-*/
 /Makefile
 
+/.cmake_dirty
+/ejdb.mk
 
+DartConfiguration.tcl
 CMakeCache.txt
 CMakeFiles
 CTestTestfile.cmake
