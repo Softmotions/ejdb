@@ -180,9 +180,9 @@
   </VirtualDirectory>
   <VirtualDirectory Name="docs">
     <File Name="Changelog"/>
-    <File Name="README"/>
     <File Name="LICENSE"/>
     <File Name="INSTALL"/>
+    <File Name="README.md"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
