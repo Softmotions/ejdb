@@ -26,7 +26,7 @@ option(PACKAGE_DEB "Build .deb instalation packages" OFF)
 option(PACKAGE_TGZ "Build .tgz package archive" ON)
 option(ENABLE_PPA "Enable PPA package build" OFF)
 option(UPLOAD_PPA "Upload debian packages to the launchpad ppa repository" OFF)
-option(MXE_HOME "Home of MXE (mxe.cc) windows cross build environment")
+#option(MXE_HOME "Home of MXE (mxe.cc) windows cross build environment")
 
 if (CMAKE_SIZEOF_VOID_P MATCHES 8)
 	set(PROJECT_ARCH "x86_64")

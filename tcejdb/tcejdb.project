@@ -179,7 +179,6 @@
     <File Name="cmake/Modules/Win32LIBTools.cmake"/>
   </VirtualDirectory>
   <VirtualDirectory Name="docs">
-    <File Name="../README.md"/>
     <File Name="Changelog"/>
     <File Name="README"/>
     <File Name="LICENSE"/>

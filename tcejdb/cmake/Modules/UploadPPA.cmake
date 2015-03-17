@@ -335,10 +335,11 @@ add_custom_target(debuild_${DISTRI} ALL
 # dput ppa:your-lp-id/ppa <source.changes>
 message(STATUS "Upload PPA is ${UPLOAD_PPA}")
 if(UPLOAD_PPA)
- add_custom_target(dput_${DISTRI} ALL
-   COMMAND ${DPUT_EXECUTABLE} ${DPUT_HOST} ${DEB_SOURCE_CHANGES}
-   DEPENDS debuild_${DISTRI}
-   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Debian/${DISTRI}
-   )
+	#todo use PPA config
+	add_custom_target(dput_${DISTRI} ALL
+		COMMAND ${DPUT_EXECUTABLE} ${DPUT_HOST} ${DEB_SOURCE_CHANGES}
+		DEPENDS debuild_${DISTRI}
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Debian/${DISTRI}
+	)
 endif()
 endforeach(DISTRI)
