@@ -5521,6 +5521,46 @@ void testSlice(void) {
 }
 
 
+void testDistinct() {
+    EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
+
+    int count;
+    TCXSTR *log;
+    bson *q1res; 
+
+    log = tcxstrnew();
+    q1res = ejdbqrydistinct(contacts, "address", NULL, NULL, 0, &count, log);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(count, 4);
+    
+    bson_del(q1res);
+    
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "address.street", "Pirogova");
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1res = ejdbqrydistinct(contacts, "address.room", &bsq1, NULL, 0, &count, log);
+    
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(count, 1);
+    
+    bson_del(q1res);
+
+    q1res = ejdbqrydistinct(contacts, "nonexisted", NULL, NULL, 0, &count, log);
+    
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL(count, 0);
+    
+    bson_del(q1res);
+
+    bson_destroy(&bsq1);
+    tcxstrdel(log);
+}
+
 
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -5604,6 +5644,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket99", testTicket99)) ||
             (NULL == CU_add_test(pSuite, "testTicket101", testTicket101)) || 
             (NULL == CU_add_test(pSuite, "testTicket110", testTicket110)) ||
+            (NULL == CU_add_test(pSuite, "testDistinct", testDistinct)) ||
 			(NULL == CU_add_test(pSuite, "testSlice", testSlice)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
 
