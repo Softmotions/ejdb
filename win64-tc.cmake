@@ -1,8 +1,16 @@
 if (NOT MXE_HOME)
-	set(MXE_HOME /home/adam/Projects/mxe)
+	set(MXE_HOME $ENV{MXE_HOME})
 endif()
+if (NOT MXE_HOME)
+	message(FATAL_ERROR "Please setup MXE_HOME environment variable")
+endif()
+
 if (NOT MXE_CFG)
-	set(MXE_CFG "x86_64-w64-mingw32.static")
+	if ($ENV{MXE_CFG})
+		set(MXE_CFG $ENV{MXE_CFG})
+	else()
+		set(MXE_CFG "x86_64-w64-mingw32.static")
+	endif()
 endif()
 
 set(CMAKE_SYSTEM_NAME Windows)

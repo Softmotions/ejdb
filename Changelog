@@ -1,6 +1,6 @@
 ejdb (1.2.3) testing; urgency=low
 
-  * Moved to the CMake build system
+  * Project moved to CMake build system #115
   * Added negation support for the $elemMatch #109
   * Set `TCETHREAD` when pthread mutex or lock allocation fails.
     - This change been cherry picked from  #4 https://github.com/Incubaid/tokyocabinet/pull/4
@@ -8,7 +8,6 @@ ejdb (1.2.3) testing; urgency=low
   * Fixed #104 #114
   * Implemented $slice operator #14
   * Added ability to do mongo like queries with the distinct operation #93
-  * Project moved to CMake build system #115
   * EJDB shared library changed its name from `tcejdb` to `ejdb`
 
  -- Anton Adamansky <adamansky@gmail.com>  Tue, 10 Mar 2015 23:15:01 +0700
