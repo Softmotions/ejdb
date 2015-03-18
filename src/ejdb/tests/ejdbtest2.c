@@ -5611,7 +5611,7 @@ void testTicket117(void) {
 		void *bsdata = TCLISTVALPTR(q1res, i);
         bson_print_raw(bsdata, 0);
     }
-    fprintf(stderr, "%s", TCXSTRPTR(log));
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
 	CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'scolor'"));
 	
 	ejdbquerydel(q1);

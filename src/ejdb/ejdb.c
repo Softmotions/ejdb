@@ -597,15 +597,15 @@ bson* ejdbqrydistinct(EJCOLL *coll, const char *fpath, bson *qobj, bson *orqobjs
     uint32_t icount = 0;
     
     bson *rqobj = qobj;
-    bson *hints = bson_create();
-    bson_init_as_query(hints);
-    bson_append_start_object(hints, "$fields");
-    bson_append_int(hints, fpath, 1);
-    bson_append_finish_object(hints);
-    bson_append_start_object(hints, "$orderby");
-    bson_append_int(hints, fpath, 1);
-    bson_append_finish_object(hints);
-    bson_finish(hints);
+    bson hints;
+    bson_init_as_query(&hints);
+    bson_append_start_object(&hints, "$fields");
+    bson_append_int(&hints, fpath, 1);
+    bson_append_finish_object(&hints);
+    bson_append_start_object(&hints, "$orderby");
+    bson_append_int(&hints, fpath, 1);
+    bson_append_finish_object(&hints);
+    bson_finish(&hints);
 
     EJQ *q = NULL;
     bson *rres = NULL;
@@ -616,7 +616,7 @@ bson* ejdbqrydistinct(EJCOLL *coll, const char *fpath, bson *qobj, bson *orqobjs
         bson_init(rqobj);
         bson_finish(rqobj);
     }
-    q = ejdbcreatequery(coll->jb, rqobj, orqobjs, orqobjsnum, hints);
+    q = ejdbcreatequery(coll->jb, rqobj, orqobjs, orqobjsnum, &hints);
     if (q == NULL) {
         goto fail;
     }
@@ -659,9 +659,9 @@ fail:
         ejdbquerydel(q);
     }
     if (rqobj != qobj) {
-        bson_destroy(rqobj);
+        bson_del(rqobj);
     }
-    bson_destroy(hints);
+    bson_destroy(&hints);
     return rres;
 }
 
