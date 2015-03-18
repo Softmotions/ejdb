@@ -141,7 +141,7 @@ make install
 make package
 ```
 
-### CMake basic build(-D) options and default values
+### CMake basic build(-D) options
 
 ```
 // Build ejdb sample projects
