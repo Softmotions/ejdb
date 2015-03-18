@@ -5521,7 +5521,7 @@ void testSlice(void) {
 }
 
 
-void testDistinct() {
+void testDistinct(void) {
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
 
@@ -5559,6 +5559,64 @@ void testDistinct() {
 
     bson_destroy(&bsq1);
     tcxstrdel(log);
+}
+
+
+void testTicket117(void) {
+	EJCOLL *coll = ejdbcreatecoll(jb, "ticket117", NULL);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+	
+	bson_oid_t oid;
+	bson brec;
+	
+	bson_init(&brec);
+    bson_append_string(&brec, "color", "Red");
+    bson_finish(&brec);
+    CU_ASSERT_FALSE_FATAL(brec.err);
+    CU_ASSERT_TRUE_FATAL(ejdbsavebson(coll, &brec, &oid));
+    bson_destroy(&brec);
+	
+	bson_init(&brec);
+    bson_append_string(&brec, "color", "Green");
+    bson_finish(&brec);
+    CU_ASSERT_FALSE_FATAL(brec.err);
+    CU_ASSERT_TRUE_FATAL(ejdbsavebson(coll, &brec, &oid));
+    bson_destroy(&brec);
+	
+	CU_ASSERT_TRUE_FATAL(ejdbsetindex(coll, "color", JBIDXSTR));
+	
+	bson_init(&brec);
+    bson_append_string(&brec, "color", "Blue");
+    bson_finish(&brec);
+    CU_ASSERT_FALSE_FATAL(brec.err);
+    CU_ASSERT_TRUE_FATAL(ejdbsavebson(coll, &brec, &oid));
+    bson_destroy(&brec);
+	
+	bson bsq;
+    bson_init_as_query(&bsq);
+	bson_append_string(&bsq, "color", "Blue");
+	bson_finish(&bsq);
+	CU_ASSERT_FALSE_FATAL(bsq.err);
+	
+	TCXSTR *log = tcxstrnew();
+	uint32_t count = 0;
+	EJQ *q1 = ejdbcreatequery(jb, &bsq, NULL, 0, NULL);
+    bson_destroy(&bsq);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+	CU_ASSERT_PTR_NOT_NULL(q1res);
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+	
+	for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+		void *bsdata = TCLISTVALPTR(q1res, i);
+        bson_print_raw(bsdata, 0);
+    }
+    fprintf(stderr, "%s", TCXSTRPTR(log));
+	CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "MAIN IDX: 'scolor'"));
+	
+	ejdbquerydel(q1);
+	tclistdel(q1res);
+	tcxstrdel(log);
 }
 
 
@@ -5646,6 +5704,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket110", testTicket110)) ||
             (NULL == CU_add_test(pSuite, "testDistinct", testDistinct)) ||
 			(NULL == CU_add_test(pSuite, "testSlice", testSlice)) ||
+			(NULL == CU_add_test(pSuite, "testTicket117", testTicket117)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
 
     ) {
