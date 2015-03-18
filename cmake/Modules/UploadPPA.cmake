@@ -280,15 +280,15 @@ endif(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA)
 
 set(CPACK_SOURCE_IGNORE_FILES
    ${CPACK_SOURCE_IGNORE_FILES}
-  "/build/"
-  "/build-*/"
-  "/debian/"
-  "/.git/"
-  ".gitignore"
-  ".dput.cf"
+  "/build.*/"
+  "/Testing/"
   "/test/"
   "/packaging/"
-  "*~")
+  "/debian/"
+  "/\\.git.*"
+  "/\\.idea/"
+  "/\\.codelite/"
+  "*~$")
 
 #set(package_file_name "${CPACK_DEBIAN_PACKAGE_NAME}_${DEBIAN_PACKAGE_VERSION}")
 set(package_file_name "${CPACK_DEBIAN_PACKAGE_NAME}_${CPACK_PACKAGE_VERSION}")

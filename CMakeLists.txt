@@ -69,10 +69,14 @@ endif()
 if (CPACK_GENERATORS)
     set(CPACK_GENERATOR "${CPACK_GENERATORS}")
 	set(CPACK_SOURCE_IGNORE_FILES 
-		"ejdb.mk"
-		"ejdb.project"
-		".cmake_dirty"
-		"ctest.cmake"
+		"ejdb\\.mk$"
+		"\\.project$"
+		"\\.workspace$"
+		"\\.iml$"
+		"\\.cmake_dirty$"
+		"ctest\\.cmake"
+		"compile_commands\\.json$"
+		"/Makefile$"
 	)
 	add_subdirectory(installer)
 endif()
