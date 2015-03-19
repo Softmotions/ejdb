@@ -285,9 +285,9 @@ set(CPACK_SOURCE_IGNORE_FILES
   "/test/"
   "/packaging/"
   "/debian/"
-  "/\\.git.*"
-  "/\\.idea/"
-  "/\\.codelite/"
+  "/\\\\.git.*"
+  "/\\\\.idea/"
+  "/\\\\.codelite/"
   "*~$")
 
 #set(package_file_name "${CPACK_DEBIAN_PACKAGE_NAME}_${DEBIAN_PACKAGE_VERSION}")

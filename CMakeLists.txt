@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8)
 set(PROJECT_NAME "ejdb")
 set(PROJECT_VENDOR "Softmotions")
 set(PROJECT_WEBSITE "http://ejdb.org")
@@ -26,7 +26,6 @@ option(PACKAGE_DEB "Build .deb instalation packages" OFF)
 option(PACKAGE_TGZ "Build .tgz package archive" ON)
 option(ENABLE_PPA "Enable PPA package build" OFF)
 option(UPLOAD_PPA "Upload debian packages to the launchpad ppa repository" OFF)
-#option(MXE_HOME "Home of MXE (mxe.cc) windows cross build environment")
 
 if (CMAKE_SIZEOF_VOID_P MATCHES 8)
 	set(PROJECT_ARCH "x86_64")
@@ -69,13 +68,13 @@ endif()
 if (CPACK_GENERATORS)
     set(CPACK_GENERATOR "${CPACK_GENERATORS}")
 	set(CPACK_SOURCE_IGNORE_FILES 
-		"ejdb\\.mk$"
-		"\\.project$"
-		"\\.workspace$"
-		"\\.iml$"
-		"\\.cmake_dirty$"
-		"ctest\\.cmake"
-		"compile_commands\\.json$"
+		"ejdb\\\\.mk$"
+		"\\\\.project$"
+		"\\\\.workspace$"
+		"\\\\.iml$"
+		"\\\\.cmake_dirty$"
+		"ctest\\\\.cmake"
+		"compile_commands\\\\.json$"
 		"/Makefile$"
 	)
 	add_subdirectory(installer)
