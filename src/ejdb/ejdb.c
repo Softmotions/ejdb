@@ -163,7 +163,7 @@ extern const char *utf8proc_errmsg(ssize_t errcode);
 static const bool yes = true;
 
 const char *ejdbversion() {
-    return _TC_VERSION;
+    return tcversion;
 }
 
 const char* ejdberrmsg(int ecode) {
@@ -286,8 +286,7 @@ bool ejdbisopen(EJDB *jb) {
 }
 
 bool ejdbopen(EJDB *jb, const char *path, int mode) {
-    assert(jb && path);
-    assert(jb->metadb);
+    assert(jb && path && jb->metadb);
     if (!JBLOCKMETHOD(jb, true)) return false;
     if (JBISOPEN(jb)) {
         _ejdbsetecode(jb, TCEINVALID, __FILE__, __LINE__, __func__);
