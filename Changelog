@@ -1,3 +1,6 @@
+ejdb (1.2.4) UNRELEASED; urgency=low
+  * rt lib depenedency on MacOS  
+
 ejdb (1.2.3) testing; urgency=low
 
   * Project moved to CMake build system #115
