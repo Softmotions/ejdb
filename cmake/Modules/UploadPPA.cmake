@@ -62,16 +62,16 @@ if(NOT DEBUILD_EXECUTABLE OR NOT DPUT_EXECUTABLE)
 endif(NOT DEBUILD_EXECUTABLE OR NOT DPUT_EXECUTABLE)
 
 
-if(NOT CPACK_DISTRIB_TARGET)
+if(NOT PROJECT_PPA_DISTRIB_TARGET)
 execute_process(
     COMMAND lsb_release -cs
     OUTPUT_VARIABLE DISTRI
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-    set(CPACK_DISTRIB_TARGET ${DISTRI})
-    message(STATUS "CPACK_DISTRIB_TARGET NOT provided, so using system settings : ${DISTRI}")
+    set(PROJECT_PPA_DISTRIB_TARGET ${DISTRI})
+    message(STATUS "PROJECT_PPA_DISTRIB_TARGET NOT provided, so using system settings : ${DISTRI}")
 endif()
 
-foreach(DISTRI ${CPACK_DISTRIB_TARGET})
+foreach(DISTRI ${PROJECT_PPA_DISTRIB_TARGET})
 message(STATUS "Building for ${DISTRI}")
 
 # Strip "-dirty" flag from package version.
@@ -111,8 +111,8 @@ else()
 endif()
 
 if(PPA_DEBIAN_VERSION)
-  set(DEBIAN_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}-${PPA_DEBIAN_VERSION}")
-elseif(NOT PPA_DEBIAN_VERSION AND NOT CPACK_DISTRIB_TARGET)
+  set(DEBIAN_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}-${PPA_DEBIAN_VERSION}~${DISTRI}1")
+elseif(NOT PPA_DEBIAN_VERSION AND NOT PROJECT_PPA_DISTRIB_TARGET)
   message(WARNING "Variable PPA_DEBIAN_VERSION not set! Building 'native' package!")
   set(DEBIAN_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}")
 else()
@@ -335,11 +335,24 @@ add_custom_target(debuild_${DISTRI} ALL
 # dput ppa:your-lp-id/ppa <source.changes>
 message(STATUS "Upload PPA is ${UPLOAD_PPA}")
 if(UPLOAD_PPA)
-	#todo use PPA config
-	add_custom_target(dput_${DISTRI} ALL
-		COMMAND ${DPUT_EXECUTABLE} ${DPUT_HOST} ${DEB_SOURCE_CHANGES}
-		DEPENDS debuild_${DISTRI}
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Debian/${DISTRI}
-	)
+    if (EXISTS ${DPUT_CONFIG_IN})
+        set(DPUT_DIST ${DISTRI})
+        configure_file(
+            ${DPUT_CONFIG_IN}
+            ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/dput.cf
+            @ONLY
+        )
+        add_custom_target(dput_${DISTRI} ALL
+            COMMAND ${DPUT_EXECUTABLE} -c ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/dput.cf ${DPUT_HOST} ${DEB_SOURCE_CHANGES}
+            DEPENDS debuild_${DISTRI}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Debian/${DISTRI}
+        )
+    else()
+        add_custom_target(dput_${DISTRI} ALL
+            COMMAND ${DPUT_EXECUTABLE} ${DPUT_HOST} ${DEB_SOURCE_CHANGES}
+            DEPENDS debuild_${DISTRI}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Debian/${DISTRI}
+        )
+    endif()
 endif()
 endforeach(DISTRI)

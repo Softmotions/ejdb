@@ -7,12 +7,14 @@ set(PROJECT_DESCRIPTION_SUMMARY "Embedded JSON database library (EJDB)")
 set(PROJECT_DESCRIPTION 
 "EJDB aims to be a fast MongoDB-like library which can be embedded into C/C++ applications under terms of LGPL license.")
 set(PROJECT_PPA "ppa:adamansky/ejdb")
+set(PROJECT_PPA_USER "adamansky")
+set(PROJECT_PPA_DISTRIB_TARGET vivid utopic trusty precise)
 
 project(${PROJECT_NAME} C)
 
 set(PROJECT_VERSION_MAJOR 1)
 set(PROJECT_VERSION_MINOR 2)
-set(PROJECT_VERSION_PATCH 3)
+set(PROJECT_VERSION_PATCH 4)
 set(PROJECT_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
 set(${PROJECT_NAME}_VERSION ${PROJECT_VERSION})
 set(${PROJECT_NAME}_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})

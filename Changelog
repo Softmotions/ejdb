@@ -1,5 +1,10 @@
-ejdb (1.2.4) UNRELEASED; urgency=low
-  * rt lib depenedency on MacOS  
+ejdb (1.2.4) testing; urgency=low
+
+  * rt lib depenedency on MacOS
+  * fixed incorrect static libejdb linkage options
+  * minor fixes in project build scripts
+ 
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 22 Mar 2015 22:45:31 +0600
 
 ejdb (1.2.3) testing; urgency=low
 
