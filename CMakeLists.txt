@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6)
+#cmake_policy(VERSION 2.6)
+
 set(PROJECT_NAME "ejdb")
 set(PROJECT_VENDOR "Softmotions")
 set(PROJECT_WEBSITE "http://ejdb.org")
