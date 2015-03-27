@@ -693,8 +693,8 @@ static int procwrite(const char *path, int rnum, int bnum, int apow, int fpow,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tctdbrnum(tdb));
-  iprintf("size: %" PRIuMAX "\n", (uint64_t)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIu64 "\n", (uint64_t)tctdbrnum(tdb));
+  iprintf("size: %" PRIu64 "\n", (uint64_t)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -758,8 +758,8 @@ static int procread(const char *path, bool mt, int rcnum, int lcnum, int ncnum,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tctdbrnum(tdb));
-  iprintf("size: %" PRIuMAX "\n", (uint64_t)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIu64 "\n", (uint64_t)tctdbrnum(tdb));
+  iprintf("size: %" PRIu64 "\n", (uint64_t)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -820,8 +820,8 @@ static int procremove(const char *path, bool mt, int rcnum, int lcnum, int ncnum
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tctdbrnum(tdb));
-  iprintf("size: %" PRIuMAX "\n", (uint64_t)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIu64 "\n", (uint64_t)tctdbrnum(tdb));
+  iprintf("size: %" PRIu64 "\n", (uint64_t)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -1028,8 +1028,8 @@ static int procrcat(const char *path, int rnum, int bnum, int apow, int fpow,
       if(i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
     }
   }
-  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tctdbrnum(tdb));
-  iprintf("size: %" PRIuMAX "\n", (uint64_t)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIu64 "\n", (uint64_t)tctdbrnum(tdb));
+  iprintf("size: %" PRIu64 "\n", (uint64_t)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -1637,8 +1637,8 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(tdb, __LINE__, "tctdbforeach");
     err = true;
   }
-  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tctdbrnum(tdb));
-  iprintf("size: %" PRIuMAX "\n", (uint64_t)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIu64 "\n", (uint64_t)tctdbrnum(tdb));
+  iprintf("size: %" PRIu64 "\n", (uint64_t)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");
@@ -2051,8 +2051,8 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode){
     eprint(tdb, __LINE__, "tctdbsync");
     err = true;
   }
-  iprintf("record number: %" PRIuMAX "\n", (uint64_t)tctdbrnum(tdb));
-  iprintf("size: %" PRIuMAX "\n", (uint64_t)tctdbfsiz(tdb));
+  iprintf("record number: %" PRIu64 "\n", (uint64_t)tctdbrnum(tdb));
+  iprintf("size: %" PRIu64 "\n", (uint64_t)tctdbfsiz(tdb));
   sysprint();
   if(!tctdbclose(tdb)){
     eprint(tdb, __LINE__, "tctdbclose");

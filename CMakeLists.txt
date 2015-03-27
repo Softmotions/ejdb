@@ -29,6 +29,10 @@ option(PACKAGE_TGZ "Build .tgz package archive" ON)
 option(ENABLE_PPA "Enable PPA package build" OFF)
 option(UPLOAD_PPA "Upload debian packages to the launchpad ppa repository" OFF)
 
+if (POLICY CMP0042)
+    cmake_policy(SET CMP0042 NEW)
+endif(POLICY CMP0042)
+
 if (CMAKE_SIZEOF_VOID_P MATCHES 8)
 	set(PROJECT_ARCH "x86_64")
 else(CMAKE_SIZEOF_VOID_P MATCHES 8)

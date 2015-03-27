@@ -549,14 +549,14 @@ static int procinform(const char *path, int omode) {
     if (flags & HDBFOPEN) printf(" open");
     if (flags & HDBFFATAL) printf(" fatal");
     printf("\n");
-    printf("bucket number: %" PRIuMAX "\n", (uint64_t) tchdbbnum(hdb));
+    printf("bucket number: %" PRIu64 "\n", (uint64_t) tchdbbnum(hdb));
 #ifndef NDEBUG
     if (hdb->cnt_writerec >= 0)
-        printf("used bucket number: %" PRIdMAX "\n", (int64_t) tchdbbnumused(hdb));
+        printf("used bucket number: %" PRId64 "\n", (int64_t) tchdbbnumused(hdb));
 #endif
     printf("alignment: %u\n", tchdbalign(hdb));
     printf("free block pool: %u\n", tchdbfbpmax(hdb));
-    printf("inode number: %" PRIdMAX "\n", (int64_t) tchdbinode(hdb));
+    printf("inode number: %" PRId64 "\n", (int64_t) tchdbinode(hdb));
     char date[48];
     tcdatestrwww(tchdbmtime(hdb), INT_MAX, date);
     printf("modified time: %s\n", date);
@@ -568,8 +568,8 @@ static int procinform(const char *path, int omode) {
     if (opts & HDBTTCBS) printf(" tcbs");
     if (opts & HDBTEXCODEC) printf(" excodec");
     printf("\n");
-    printf("record number: %" PRIuMAX "\n", (uint64_t) tchdbrnum(hdb));
-    printf("file size: %" PRIuMAX "\n", (uint64_t) tchdbfsiz(hdb));
+    printf("record number: %" PRIu64 "\n", (uint64_t) tchdbrnum(hdb));
+    printf("file size: %" PRIu64 "\n", (uint64_t) tchdbfsiz(hdb));
     if (!tchdbclose(hdb)) {
         if (!err) printerr(hdb);
         err = true;

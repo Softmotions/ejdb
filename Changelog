@@ -1,3 +1,9 @@
+ejdb (1.2.5) UNRELEASED; urgency=medium
+
+  * Fixed build for OSX 10.10 
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 27 Mar 2015 10:21:41 +0600
+
 ejdb (1.2.4) testing; urgency=low
 
   * rt lib depenedency on MacOS

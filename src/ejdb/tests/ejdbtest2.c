@@ -3505,7 +3505,7 @@ void testDropAll(void) {
     ejdbquerydel(q1);
 }
 
-void testTokens$begin(void) {
+void testTokensBegin(void) {
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
     CU_ASSERT_TRUE(ejdbsetindex(coll, "name", JBIDXSTR));
@@ -3607,7 +3607,7 @@ void testOneFieldManyConditions(void) {
     ejdbquerydel(q1);
 }
 
-void test$addToSet(void) {
+void testAddToSet(void) {
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
     bson bsq1;
@@ -3771,7 +3771,7 @@ void test$addToSet(void) {
     ejdbquerydel(q1);
 }
 
-void test$pull(void) {
+void testPull(void) {
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
     bson bsq1;
@@ -4003,7 +4003,7 @@ void testFindInComplexArray(void) {
     ejdbquerydel(q1);
 }
 
-void test$elemMatch(void) {
+void testElemMatch(void) {
     // { complexarr: { $elemMatch: { key: 'title', value: 'some title' } } }
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
@@ -4142,7 +4142,7 @@ void test$elemMatch(void) {
     ejdbquerydel(q1);
 }
 
-void test$not$elemMatch(void) {
+void testNotElemMatch(void) {
     // { complexarr: { $not: { $elemMatch: { key: 'title', value: 'some title' } } } }
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
@@ -4290,7 +4290,7 @@ void testTicket16(void) {
     CU_ASSERT_EQUAL(coll->tdb->inum, 0);
 }
 
-void test$upsert(void) {
+void testUpsert(void) {
     EJCOLL *coll = ejdbcreatecoll(jb, "abcd", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
     bson bsq1;
@@ -5677,15 +5677,15 @@ int main() {
             (NULL == CU_add_test(pSuite, "testUpdate3", testUpdate3)) ||
             (NULL == CU_add_test(pSuite, "testQueryBool", testQueryBool)) ||
             (NULL == CU_add_test(pSuite, "testDropAll", testDropAll)) ||
-            (NULL == CU_add_test(pSuite, "testTokens$begin", testTokens$begin)) ||
+            (NULL == CU_add_test(pSuite, "testTokensBegin", testTokensBegin)) ||
             (NULL == CU_add_test(pSuite, "testOneFieldManyConditions", testOneFieldManyConditions)) ||
-            (NULL == CU_add_test(pSuite, "test$addToSet", test$addToSet)) ||
-            (NULL == CU_add_test(pSuite, "test$pull", test$pull)) ||
+            (NULL == CU_add_test(pSuite, "testAddToSet", testAddToSet)) ||
+            (NULL == CU_add_test(pSuite, "testPull", testPull)) ||
             (NULL == CU_add_test(pSuite, "testFindInComplexArray", testFindInComplexArray)) ||
-            (NULL == CU_add_test(pSuite, "test$elemMatch", test$elemMatch)) ||
-            (NULL == CU_add_test(pSuite, "test$not$elemMatch", test$not$elemMatch)) ||
+            (NULL == CU_add_test(pSuite, "testElemMatch", testElemMatch)) ||
+            (NULL == CU_add_test(pSuite, "testNotElemMatch", testNotElemMatch)) ||
             (NULL == CU_add_test(pSuite, "testTicket16", testTicket16)) ||
-            (NULL == CU_add_test(pSuite, "test$upsert", test$upsert)) ||
+            (NULL == CU_add_test(pSuite, "testUpsert", testUpsert)) ||
             (NULL == CU_add_test(pSuite, "testPrimitiveCases1", testPrimitiveCases1)) ||
             (NULL == CU_add_test(pSuite, "testTicket29", testTicket29)) ||
             (NULL == CU_add_test(pSuite, "testTicket28", testTicket28)) ||

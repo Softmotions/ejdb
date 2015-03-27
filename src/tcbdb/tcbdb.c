@@ -1847,7 +1847,7 @@ static bool tcbdbleafsave(TCBDB *bdb, BDBLEAF *leaf) {
         }
     }
     bool err = false;
-    step = sprintf(hbuf, "%" PRIxMAX "", (uint64_t) leaf->id);
+    step = sprintf(hbuf, "%" PRIx64 "", (uint64_t) leaf->id);
     if (ln < 1 && !tchdbout(bdb->hdb, hbuf, step) && tchdbecode(bdb->hdb) != TCENOREC)
         err = true;
     if (!leaf->dead && !tchdbput(bdb->hdb, hbuf, step, TCXSTRPTR(rbuf), TCXSTRSIZE(rbuf)))
@@ -1875,7 +1875,7 @@ static BDBLEAF *tcbdbleafload(TCBDB *bdb, uint64_t id) {
     TCDODEBUG(bdb->cnt_loadleaf++);
     char hbuf[(sizeof (uint64_t) + 1)*3];
     int step;
-    step = sprintf(hbuf, "%" PRIxMAX "", (uint64_t) id);
+    step = sprintf(hbuf, "%" PRIx64 "", (uint64_t) id);
     char *rbuf = NULL;
     char wbuf[BDBPAGEBUFSIZ];
     const char *rp = NULL;
@@ -1993,7 +1993,7 @@ static bool tcbdbleafcheck(TCBDB *bdb, uint64_t id) {
     if (clk) BDBUNLOCKCACHE(bdb);
     if (leaf) return true;
     char hbuf[(sizeof (uint64_t) + 1)*3];
-    int step = sprintf(hbuf, "%" PRIxMAX "", (uint64_t) id);
+    int step = sprintf(hbuf, "%" PRIx64 "", (uint64_t) id);
     return tchdbvsiz(bdb->hdb, hbuf, step) > 0;
 }
 
@@ -2385,7 +2385,7 @@ static bool tcbdbnodesave(TCBDB *bdb, BDBNODE *node) {
         TCXSTRCAT(rbuf, ebuf, idx->ksiz);
     }
     bool err = false;
-    step = sprintf(hbuf, "#%" PRIxMAX "", (uint64_t) (node->id - BDBNODEIDBASE));
+    step = sprintf(hbuf, "#%" PRIx64 "", (uint64_t) (node->id - BDBNODEIDBASE));
     if (ln < 1 && !tchdbout(bdb->hdb, hbuf, step) && tchdbecode(bdb->hdb) != TCENOREC)
         err = true;
     if (!node->dead && !tchdbput(bdb->hdb, hbuf, step, TCXSTRPTR(rbuf), TCXSTRSIZE(rbuf)))
@@ -2413,7 +2413,7 @@ static BDBNODE *tcbdbnodeload(TCBDB *bdb, uint64_t id) {
     TCDODEBUG(bdb->cnt_loadnode++);
     char hbuf[(sizeof (uint64_t) + 1)*2];
     int step;
-    step = sprintf(hbuf, "#%" PRIxMAX "", (uint64_t) (id - BDBNODEIDBASE));
+    step = sprintf(hbuf, "#%" PRIx64 "", (uint64_t) (id - BDBNODEIDBASE));
     char *rbuf = NULL;
     char wbuf[BDBPAGEBUFSIZ];
     const char *rp = NULL;
@@ -3312,7 +3312,7 @@ static bool tcbdboptimizeimpl(TCBDB *bdb, int32_t lmemb, int32_t nmemb,
         int64_t bnum, int8_t apow, int8_t fpow, uint8_t opts) {
     assert(bdb);
     char *opath = tcstrdup(tchdbpath(bdb->hdb));
-    char *tpath = tcsprintf("%s%ctmp%c%" PRIuMAX "", opath, MYEXTCHR, MYEXTCHR, tchdbinode(bdb->hdb));
+    char *tpath = tcsprintf("%s%ctmp%c%" PRIu64 "", opath, MYEXTCHR, MYEXTCHR, tchdbinode(bdb->hdb));
     int omode = (tchdbomode(bdb->hdb) & ~BDBOCREAT) & ~BDBOTRUNC;
     TCBDB *tbdb = tcbdbnew();
     HANDLE dbgfd = tchdbdbgfd(bdb->hdb);
@@ -3949,12 +3949,12 @@ void tcbdbprintmeta(TCBDB *bdb) {
     wp += sprintf(wp, " lmemb=%u", bdb->lmemb);
     wp += sprintf(wp, " nmemb=%u", bdb->nmemb);
     wp += sprintf(wp, " opts=%u", bdb->opts);
-    wp += sprintf(wp, " root=%" PRIxMAX "", (uint64_t) bdb->root);
-    wp += sprintf(wp, " first=%" PRIxMAX "", (uint64_t) bdb->first);
-    wp += sprintf(wp, " last=%" PRIxMAX "", (uint64_t) bdb->last);
-    wp += sprintf(wp, " lnum=%" PRIuMAX "", (uint64_t) bdb->lnum);
-    wp += sprintf(wp, " nnum=%" PRIuMAX "", (uint64_t) bdb->nnum);
-    wp += sprintf(wp, " rnum=%" PRIuMAX "", (uint64_t) bdb->rnum);
+    wp += sprintf(wp, " root=%" PRIx64 "", (uint64_t) bdb->root);
+    wp += sprintf(wp, " first=%" PRIx64 "", (uint64_t) bdb->first);
+    wp += sprintf(wp, " last=%" PRIx64 "", (uint64_t) bdb->last);
+    wp += sprintf(wp, " lnum=%" PRIu64 "", (uint64_t) bdb->lnum);
+    wp += sprintf(wp, " nnum=%" PRIu64 "", (uint64_t) bdb->nnum);
+    wp += sprintf(wp, " rnum=%" PRIu64 "", (uint64_t) bdb->rnum);
     wp += sprintf(wp, " leafc=%p", (void *) bdb->leafc);
     wp += sprintf(wp, " nodec=%p", (void *) bdb->nodec);
     wp += sprintf(wp, " cmp=%p", (void *) (intptr_t) bdb->cmp);
@@ -3963,21 +3963,21 @@ void tcbdbprintmeta(TCBDB *bdb) {
     wp += sprintf(wp, " ncnum=%u", bdb->ncnum);
     wp += sprintf(wp, " lsmax=%u", bdb->lsmax);
     wp += sprintf(wp, " lschk=%u", bdb->lschk);
-    wp += sprintf(wp, " capnum=%" PRIuMAX "", (uint64_t) bdb->capnum);
+    wp += sprintf(wp, " capnum=%" PRIu64 "", (uint64_t) bdb->capnum);
     wp += sprintf(wp, " hist=%p", (void *) bdb->hist);
     wp += sprintf(wp, " hnum=%d", bdb->hnum);
-    wp += sprintf(wp, " hleaf=%" PRIuMAX "", (uint64_t) bdb->hleaf);
-    wp += sprintf(wp, " lleaf=%" PRIuMAX "", (uint64_t) bdb->lleaf);
+    wp += sprintf(wp, " hleaf=%" PRIu64 "", (uint64_t) bdb->hleaf);
+    wp += sprintf(wp, " lleaf=%" PRIu64 "", (uint64_t) bdb->lleaf);
     wp += sprintf(wp, " tran=%d", bdb->tran);
     //wp += sprintf(wp, " rbopaque=%p", (void *)bdb->rbopaque);
-    wp += sprintf(wp, " clock=%" PRIuMAX "", (uint64_t) bdb->clock);
-    wp += sprintf(wp, " cnt_saveleaf=%" PRIdMAX "", (int64_t) bdb->cnt_saveleaf);
-    wp += sprintf(wp, " cnt_loadleaf=%" PRIdMAX "", (int64_t) bdb->cnt_loadleaf);
-    wp += sprintf(wp, " cnt_killleaf=%" PRIdMAX "", (int64_t) bdb->cnt_killleaf);
-    wp += sprintf(wp, " cnt_adjleafc=%" PRIdMAX "", (int64_t) bdb->cnt_adjleafc);
-    wp += sprintf(wp, " cnt_savenode=%" PRIdMAX "", (int64_t) bdb->cnt_savenode);
-    wp += sprintf(wp, " cnt_loadnode=%" PRIdMAX "", (int64_t) bdb->cnt_loadnode);
-    wp += sprintf(wp, " cnt_adjnodec=%" PRIdMAX "", (int64_t) bdb->cnt_adjnodec);
+    wp += sprintf(wp, " clock=%" PRIu64 "", (uint64_t) bdb->clock);
+    wp += sprintf(wp, " cnt_saveleaf=%" PRId64 "", (int64_t) bdb->cnt_saveleaf);
+    wp += sprintf(wp, " cnt_loadleaf=%" PRId64 "", (int64_t) bdb->cnt_loadleaf);
+    wp += sprintf(wp, " cnt_killleaf=%" PRId64 "", (int64_t) bdb->cnt_killleaf);
+    wp += sprintf(wp, " cnt_adjleafc=%" PRId64 "", (int64_t) bdb->cnt_adjleafc);
+    wp += sprintf(wp, " cnt_savenode=%" PRId64 "", (int64_t) bdb->cnt_savenode);
+    wp += sprintf(wp, " cnt_loadnode=%" PRId64 "", (int64_t) bdb->cnt_loadnode);
+    wp += sprintf(wp, " cnt_adjnodec=%" PRId64 "", (int64_t) bdb->cnt_adjnodec);
     *(wp++) = '\n';
     tcwrite(dbgfd, buf, wp - buf);
 }
@@ -3995,10 +3995,10 @@ void tcbdbprintleaf(TCBDB *bdb, BDBLEAF *leaf) {
     char buf[BDBPAGEBUFSIZ];
     char *wp = buf;
     wp += sprintf(wp, "LEAF:");
-    wp += sprintf(wp, " id:%" PRIxMAX "", (uint64_t) leaf->id);
+    wp += sprintf(wp, " id:%" PRIx64 "", (uint64_t) leaf->id);
     wp += sprintf(wp, " size:%u", leaf->size);
-    wp += sprintf(wp, " prev:%" PRIxMAX "", (uint64_t) leaf->prev);
-    wp += sprintf(wp, " next:%" PRIxMAX "", (uint64_t) leaf->next);
+    wp += sprintf(wp, " prev:%" PRIx64 "", (uint64_t) leaf->prev);
+    wp += sprintf(wp, " next:%" PRIx64 "", (uint64_t) leaf->next);
     wp += sprintf(wp, " dirty:%d", leaf->dirty);
     wp += sprintf(wp, " dead:%d", leaf->dead);
     wp += sprintf(wp, " rnum:%d", TCPTRLISTNUM(recs));
@@ -4033,8 +4033,8 @@ void tcbdbprintnode(TCBDB *bdb, BDBNODE *node) {
     char buf[BDBPAGEBUFSIZ];
     char *wp = buf;
     wp += sprintf(wp, "NODE:");
-    wp += sprintf(wp, " id:%" PRIxMAX "", (uint64_t) node->id);
-    wp += sprintf(wp, " heir:%" PRIxMAX "", (uint64_t) node->heir);
+    wp += sprintf(wp, " id:%" PRIx64 "", (uint64_t) node->id);
+    wp += sprintf(wp, " heir:%" PRIx64 "", (uint64_t) node->heir);
     wp += sprintf(wp, " dirty:%d", node->dirty);
     wp += sprintf(wp, " dead:%d", node->dead);
     wp += sprintf(wp, " rnum:%d", TCPTRLISTNUM(idxs));
@@ -4044,7 +4044,7 @@ void tcbdbprintnode(TCBDB *bdb, BDBNODE *node) {
         wp = buf;
         BDBIDX *idx = TCPTRLISTVAL(idxs, i);
         char *ebuf = (char *) idx + sizeof (*idx);
-        wp += sprintf(wp, " [%" PRIxMAX ":%s]", (uint64_t) idx->pid, ebuf);
+        wp += sprintf(wp, " [%" PRIx64 ":%s]", (uint64_t) idx->pid, ebuf);
     }
     *(wp++) = '\n';
     tcwrite(dbgfd, buf, wp - buf);

@@ -645,18 +645,18 @@ static int procinform(const char *path, int omode) {
     printf("\n");
     printf("max leaf member: %d\n", tcbdblmemb(bdb));
     printf("max node member: %d\n", tcbdbnmemb(bdb));
-    printf("leaf number: %" PRIuMAX "\n", (uint64_t) tcbdblnum(bdb));
-    printf("node number: %" PRIuMAX "\n", (uint64_t) tcbdbnnum(bdb));
-    printf("bucket number: %" PRIuMAX "\n", (uint64_t) tcbdbbnum(bdb));
+    printf("leaf number: %" PRIu64 "\n", (uint64_t) tcbdblnum(bdb));
+    printf("node number: %" PRIu64 "\n", (uint64_t) tcbdbnnum(bdb));
+    printf("bucket number: %" PRIu64 "\n", (uint64_t) tcbdbbnum(bdb));
 
 #ifndef NDEBUG
     if (bdb->hdb->cnt_writerec >= 0)
-        printf("used bucket number: %" PRIdMAX "\n", (int64_t) tcbdbbnumused(bdb));
+        printf("used bucket number: %" PRId64 "\n", (int64_t) tcbdbbnumused(bdb));
 #endif
 
     printf("alignment: %u\n", tcbdbalign(bdb));
     printf("free block pool: %u\n", tcbdbfbpmax(bdb));
-    printf("inode number: %" PRIdMAX "\n", (int64_t) tcbdbinode(bdb));
+    printf("inode number: %" PRId64 "\n", (int64_t) tcbdbinode(bdb));
     char date[48];
     tcdatestrwww(tcbdbmtime(bdb), INT_MAX, date);
     printf("modified time: %s\n", date);
@@ -668,8 +668,8 @@ static int procinform(const char *path, int omode) {
     if (opts & BDBTTCBS) printf(" tcbs");
     if (opts & BDBTEXCODEC) printf(" excodec");
     printf("\n");
-    printf("record number: %" PRIuMAX "\n", (uint64_t) tcbdbrnum(bdb));
-    printf("file size: %" PRIuMAX "\n", (uint64_t) tcbdbfsiz(bdb));
+    printf("record number: %" PRIu64 "\n", (uint64_t) tcbdbrnum(bdb));
+    printf("file size: %" PRIu64 "\n", (uint64_t) tcbdbfsiz(bdb));
     if (!tcbdbclose(bdb)) {
         if (!err) printerr(bdb);
         err = true;

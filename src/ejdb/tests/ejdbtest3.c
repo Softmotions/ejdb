@@ -274,9 +274,10 @@ ffinish:
     return err ? "error" : NULL;
 }
 
+#define tnum 50
+ 
 void testRace1() {
     CU_ASSERT_PTR_NOT_NULL_FATAL(jb);
-    const int tnum = 50;
     bool err = false;
     TARGRACE targs[tnum];
     pthread_t threads[tnum];
@@ -318,7 +319,6 @@ finish:
 
 void testRace2() {
     CU_ASSERT_PTR_NOT_NULL_FATAL(jb);
-    const int tnum = 50;
     bool err = false;
     TARGRACE targs[tnum];
     pthread_t threads[tnum];

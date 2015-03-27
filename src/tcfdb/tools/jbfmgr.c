@@ -512,17 +512,17 @@ static int procinform(const char *path, int omode) {
     if (flags & FDBFOPEN) printf(" open");
     if (flags & FDBFFATAL) printf(" fatal");
     printf("\n");
-    printf("minimum ID number: %" PRIuMAX "\n", (uint64_t) tcfdbmin(fdb));
-    printf("maximum ID number: %" PRIuMAX "\n", (uint64_t) tcfdbmax(fdb));
+    printf("minimum ID number: %" PRIu64 "\n", (uint64_t) tcfdbmin(fdb));
+    printf("maximum ID number: %" PRIu64 "\n", (uint64_t) tcfdbmax(fdb));
     printf("width of the value: %u\n", (unsigned int) tcfdbwidth(fdb));
-    printf("limit file size: %" PRIuMAX "\n", (uint64_t) tcfdblimsiz(fdb));
-    printf("limit ID number: %" PRIuMAX "\n", (uint64_t) tcfdblimid(fdb));
-    printf("inode number: %" PRIdMAX "\n", (int64_t) tcfdbinode(fdb));
+    printf("limit file size: %" PRIu64 "\n", (uint64_t) tcfdblimsiz(fdb));
+    printf("limit ID number: %" PRIu64 "\n", (uint64_t) tcfdblimid(fdb));
+    printf("inode number: %" PRId64 "\n", (int64_t) tcfdbinode(fdb));
     char date[48];
     tcdatestrwww(tcfdbmtime(fdb), INT_MAX, date);
     printf("modified time: %s\n", date);
-    printf("record number: %" PRIuMAX "\n", (uint64_t) tcfdbrnum(fdb));
-    printf("file size: %" PRIuMAX "\n", (uint64_t) tcfdbfsiz(fdb));
+    printf("record number: %" PRIu64 "\n", (uint64_t) tcfdbrnum(fdb));
+    printf("file size: %" PRIu64 "\n", (uint64_t) tcfdbfsiz(fdb));
     if (!tcfdbclose(fdb)) {
         if (!err) printerr(fdb);
         err = true;
@@ -677,7 +677,7 @@ static int proclist(const char *path, int omode, int max, bool pv, bool px,
         int cnt = 0;
         uint64_t id;
         while ((id = tcfdbiternext(fdb)) > 0) {
-            printf("%" PRIuMAX "", (uint64_t) id);
+            printf("%" PRIu64 "", (uint64_t) id);
             if (pv) {
                 int vsiz;
                 char *vbuf = tcfdbget(fdb, id, &vsiz);

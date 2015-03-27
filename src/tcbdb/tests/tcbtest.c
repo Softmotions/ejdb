@@ -159,36 +159,36 @@ static void eprint(TCBDB *bdb, int line, const char *func) {
 static void mprint(TCBDB *bdb) {
     iprintf("max leaf member: %d\n", tcbdblmemb(bdb));
     iprintf("max node member: %d\n", tcbdbnmemb(bdb));
-    iprintf("leaf number: %" PRIdMAX "\n", (int64_t) tcbdblnum(bdb));
-    iprintf("node number: %" PRIdMAX "\n", (int64_t) tcbdbnnum(bdb));
-    iprintf("bucket number: %" PRIdMAX "\n", (int64_t) tcbdbbnum(bdb));
-    iprintf("used bucket number: %" PRIdMAX "\n", (int64_t) tcbdbbnumused(bdb));
+    iprintf("leaf number: %" PRId64 "\n", (int64_t) tcbdblnum(bdb));
+    iprintf("node number: %" PRId64 "\n", (int64_t) tcbdbnnum(bdb));
+    iprintf("bucket number: %" PRId64 "\n", (int64_t) tcbdbbnum(bdb));
+    iprintf("used bucket number: %" PRId64 "\n", (int64_t) tcbdbbnumused(bdb));
 #ifndef NDEBUG
     if (bdb->hdb->cnt_writerec < 0) return;
-    iprintf("cnt_saveleaf: %" PRIdMAX "\n", (int64_t) bdb->cnt_saveleaf);
-    iprintf("cnt_loadleaf: %" PRIdMAX "\n", (int64_t) bdb->cnt_loadleaf);
-    iprintf("cnt_killleaf: %" PRIdMAX "\n", (int64_t) bdb->cnt_killleaf);
-    iprintf("cnt_adjleafc: %" PRIdMAX "\n", (int64_t) bdb->cnt_adjleafc);
-    iprintf("cnt_savenode: %" PRIdMAX "\n", (int64_t) bdb->cnt_savenode);
-    iprintf("cnt_loadnode: %" PRIdMAX "\n", (int64_t) bdb->cnt_loadnode);
-    iprintf("cnt_adjnodec: %" PRIdMAX "\n", (int64_t) bdb->cnt_adjnodec);
-    iprintf("cnt_writerec: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_writerec);
-    iprintf("cnt_reuserec: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_reuserec);
-    iprintf("cnt_moverec: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_moverec);
-    iprintf("cnt_readrec: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_readrec);
-    iprintf("cnt_searchfbp: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_searchfbp);
-    iprintf("cnt_insertfbp: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_insertfbp);
-    iprintf("cnt_splicefbp: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_splicefbp);
-    iprintf("cnt_dividefbp: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_dividefbp);
-    iprintf("cnt_mergefbp: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_mergefbp);
-    iprintf("cnt_reducefbp: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_reducefbp);
-    iprintf("cnt_appenddrp: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_appenddrp);
-    iprintf("cnt_deferdrp: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_deferdrp);
-    iprintf("cnt_flushdrp: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_flushdrp);
-    iprintf("cnt_adjrecc: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_adjrecc);
-    iprintf("cnt_defrag: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_defrag);
-    iprintf("cnt_shiftrec: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_shiftrec);
-    iprintf("cnt_trunc: %" PRIdMAX "\n", (int64_t) bdb->hdb->cnt_trunc);
+    iprintf("cnt_saveleaf: %" PRId64 "\n", (int64_t) bdb->cnt_saveleaf);
+    iprintf("cnt_loadleaf: %" PRId64 "\n", (int64_t) bdb->cnt_loadleaf);
+    iprintf("cnt_killleaf: %" PRId64 "\n", (int64_t) bdb->cnt_killleaf);
+    iprintf("cnt_adjleafc: %" PRId64 "\n", (int64_t) bdb->cnt_adjleafc);
+    iprintf("cnt_savenode: %" PRId64 "\n", (int64_t) bdb->cnt_savenode);
+    iprintf("cnt_loadnode: %" PRId64 "\n", (int64_t) bdb->cnt_loadnode);
+    iprintf("cnt_adjnodec: %" PRId64 "\n", (int64_t) bdb->cnt_adjnodec);
+    iprintf("cnt_writerec: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_writerec);
+    iprintf("cnt_reuserec: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_reuserec);
+    iprintf("cnt_moverec: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_moverec);
+    iprintf("cnt_readrec: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_readrec);
+    iprintf("cnt_searchfbp: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_searchfbp);
+    iprintf("cnt_insertfbp: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_insertfbp);
+    iprintf("cnt_splicefbp: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_splicefbp);
+    iprintf("cnt_dividefbp: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_dividefbp);
+    iprintf("cnt_mergefbp: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_mergefbp);
+    iprintf("cnt_reducefbp: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_reducefbp);
+    iprintf("cnt_appenddrp: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_appenddrp);
+    iprintf("cnt_deferdrp: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_deferdrp);
+    iprintf("cnt_flushdrp: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_flushdrp);
+    iprintf("cnt_adjrecc: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_adjrecc);
+    iprintf("cnt_defrag: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_defrag);
+    iprintf("cnt_shiftrec: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_shiftrec);
+    iprintf("cnt_trunc: %" PRId64 "\n", (int64_t) bdb->hdb->cnt_trunc);
 #endif
 }
 
@@ -832,8 +832,8 @@ static int procwrite(const char *path, int rnum, int lmemb, int nmemb, int bnum,
             if (i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcbdbrnum(bdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcbdbfsiz(bdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcbdbrnum(bdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcbdbfsiz(bdb));
     mprint(bdb);
     sysprint();
     if (!tcbdbclose(bdb)) {
@@ -925,8 +925,8 @@ static int procread(const char *path, bool mt, TCCMP cmp, int lcnum, int ncnum,
             if (i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcbdbrnum(bdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcbdbfsiz(bdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcbdbrnum(bdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcbdbfsiz(bdb));
     mprint(bdb);
     sysprint();
     if (!tcbdbclose(bdb)) {
@@ -1004,8 +1004,8 @@ static int procremove(const char *path, bool mt, TCCMP cmp, int lcnum, int ncnum
             if (i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcbdbrnum(bdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcbdbfsiz(bdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcbdbrnum(bdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcbdbfsiz(bdb));
     mprint(bdb);
     sysprint();
     if (!tcbdbclose(bdb)) {
@@ -1199,8 +1199,8 @@ static int procrcat(const char *path, int rnum,
             if (i == rnum || i % (rnum / 10) == 0) iprintf(" (%08d)\n", i);
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcbdbrnum(bdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcbdbfsiz(bdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcbdbrnum(bdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcbdbfsiz(bdb));
     mprint(bdb);
     sysprint();
     if (!tcbdbclose(bdb)) {
@@ -1328,8 +1328,8 @@ static int procqueue(const char *path, int rnum, int lmemb, int nmemb, int bnum,
         break;
     }
     tcbdbcurdel(cur);
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcbdbrnum(bdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcbdbfsiz(bdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcbdbrnum(bdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcbdbfsiz(bdb));
     mprint(bdb);
     sysprint();
     if (!tcbdbclose(bdb)) {
@@ -2162,8 +2162,8 @@ static int procmisc(const char *path, int rnum, bool mt, int opts, int omode) {
         err = true;
     }
     tcbdbcurdel(cur);
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcbdbrnum(bdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcbdbfsiz(bdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcbdbrnum(bdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcbdbfsiz(bdb));
     mprint(bdb);
     sysprint();
     if (!tcbdbclose(bdb)) {
@@ -2551,8 +2551,8 @@ static int procwicked(const char *path, int rnum, bool mt, int opts, int omode) 
         err = true;
     }
     tcbdbcurdel(cur);
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcbdbrnum(bdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcbdbfsiz(bdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcbdbrnum(bdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcbdbfsiz(bdb));
     mprint(bdb);
     sysprint();
     tcmapdel(map);

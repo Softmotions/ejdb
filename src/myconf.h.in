@@ -19,9 +19,9 @@
 #define _MYCONF_H
 
 #if (   (defined(__clang__) && ((__clang_major__ - 0) * 100 + (__clang_minor__ - 0)) < 302)  || \
-		(!defined(__clang__) && defined(__GNUC__) && ((__GNUC__ - 0) * 100 + (__GNUC_MINOR__ - 0)) < 407) || \
+		(!defined(__clang__) && defined(__GNUC__) && ((__GNUC__ - 0) * 100 + (__GNUC_MINOR__ - 0)) < 402) || \
         (!defined(__GNUC__) && !defined(__clang__)) )
-#error You are using an unsupported compiler! EJDB has only been tested with Clang >= 3.2 and GCC >= 4.7
+#error You are using an unsupported compiler! EJDB has only been tested with Clang >= 3.2 and GCC >= 4.2
 #endif
 
 #include "basedefs.h"
@@ -523,31 +523,84 @@ EJDB_EXPORT void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
 /*************************************************************************************************
  * atomics
  *************************************************************************************************/
+
+#ifndef __has_builtin         
+#define __has_builtin(x) 0  
+#endif
  
 #define TCAS(ptr, expected, desired) __sync_bool_compare_and_swap(ptr, expected, desired)
 
-/*
+#if !defined(__GNUC__) || \
+    ((__GNUC__ - 0) * 100 + (__GNUC_MINOR__ - 0)) < 407 || \
+    defined(__INTEL_COMPILER) || defined(__clang__)
+    
+#if !__has_builtin(__atomic_load_n)   
 #define __atomic_load_n(ptr,order) *(ptr)
+#endif
+
+#if !__has_builtin(__atomic_store_n)   
 #define __atomic_store_n(ptr,val,order) (*(ptr) = (val), (void)0)
+#endif
+
+#if !__has_builtin(__atomic_exchange_n)   
 #define __atomic_exchange_n(ptr,val,order) __sync_lock_test_and_set(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_compare_exchange_n)
 #define __atomic_compare_exchange_n(ptr,expected,desired,weak,order1,order2) \
     __sync_bool_compare_and_swap(ptr, *(expected), desired) ? 1 : \
     (*(expected) = *(ptr), 0)
+#endif
 
+#if !__has_builtin(__atomic_add_fetch)
 #define __atomic_add_fetch(ptr,val,order) __sync_add_and_fetch(ptr, val)
-#define __atomic_sub_fetch(ptr,val,order) __sync_sub_and_fetch(ptr, val)
-#define __atomic_or_fetch(ptr,val,order) __sync_or_and_fetch(ptr, val)
-#define __atomic_and_fetch(ptr,val,order) __sync_and_and_fetch(ptr, val)
-#define __atomic_xor_fetch(ptr,val,order) __sync_xor_and_fetch(ptr, val)
-#define __atomic_nand_fetch(ptr,val,order) __sync_nand_and_fetch(ptr, val)
+#endif
 
+#if !__has_builtin(__atomic_sub_fetch)
+#define __atomic_sub_fetch(ptr,val,order) __sync_sub_and_fetch(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_or_fetch)
+#define __atomic_or_fetch(ptr,val,order) __sync_or_and_fetch(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_and_fetch)
+#define __atomic_and_fetch(ptr,val,order) __sync_and_and_fetch(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_xor_fetch)
+#define __atomic_xor_fetch(ptr,val,order) __sync_xor_and_fetch(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_nand_fetch)
+#define __atomic_nand_fetch(ptr,val,order) __sync_nand_and_fetch(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_fetch_add)
 #define __atomic_fetch_add(ptr,val,order) __sync_fetch_and_add(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_fetch_sub)
 #define __atomic_fetch_sub(ptr,val,order) __sync_fetch_and_sub(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_fetch_or)
 #define __atomic_fetch_or(ptr,val,order) __sync_fetch_and_or(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_fetch_and)
 #define __atomic_fetch_and(ptr,val,order) __sync_fetch_and_and(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_fetch_xor)
 #define __atomic_fetch_xor(ptr,val,order) __sync_fetch_and_xor(ptr, val)
+#endif
+
+#if !__has_builtin(__atomic_fetch_nand)
 #define __atomic_fetch_nand(ptr,val,order) __sync_fetch_and_nand(ptr, val)
-*/
+#endif
+
+#endif
 
 
 #endif                                   // duplication check

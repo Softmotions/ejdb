@@ -1,4 +1,6 @@
-link_libraries(ejdb_p cunit)
+link_libraries(ejdb_p ${CUNIT_LIBRARIES})
+include_directories(${CUNIT_INCLUDE_DIRS})
+
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 

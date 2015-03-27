@@ -1,16 +1,3 @@
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
-    if (CMAKE_C_COMPILER_VERSION VERSION_LESS 4.7)
-        message(FATAL_ERROR "GCC version must be at least 4.7!")
-    endif()
-elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-    if (CMAKE_C_COMPILER_VERSION VERSION_LESS 3.4)
-        message(FATAL_ERROR "Clang version must be at least 3.4!")
-    endif()
-else()
-    message(FATAL_ERROR "You are using an unsupported compiler! EJDB has only been tested \
-	with Clang >= 3.4 and GCC >= 4.7")
-endif()
-
 if(APPLE)
 	option(BUILD_FRAMEWORK "Build an OS X framework" OFF)
 	set(FRAMEWORK_INSTALL_DIR "/Library/Frameworks" CACHE STRING "Directory to install frameworks to.")
@@ -31,7 +18,6 @@ include(CheckLibraryExists)
 if (WIN32)
 	include(Win32LIBTools)
 endif()
-
 
 if (NOT CMAKE_BUILD_TYPE)
 	message(FATAL_ERROR "Please specify the build type -DCMAKE_BUILD_TYPE=Debug|Release|RelWithDebInfo")
@@ -157,7 +143,11 @@ include_directories(${EJDB_INCLUDE_DIRS})
 target_link_libraries(ejdb ${EJDB_LLIBRARIES})
 target_link_libraries(ejdb_p ${EJDB_LLIBRARIES})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fsigned-char -pedantic -Wfatal-errors -fPIC")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fsigned-char -pedantic -Wfatal-errors")
+if (NOT WIN32) ## todo review
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+endif(NOT WIN32)
+
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g -Werror -DDEBUG -D_DEBUG -UNDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} -g")

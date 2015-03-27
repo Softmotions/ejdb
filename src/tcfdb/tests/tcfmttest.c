@@ -176,17 +176,17 @@ static void eprint(TCFDB *fdb, int line, const char *func) {
 
 /* print members of fixed-length database */
 static void mprint(TCFDB *fdb) {
-    iprintf("minimum ID number: %" PRIuMAX "\n", (uint64_t) tcfdbmin(fdb));
-    iprintf("maximum ID number: %" PRIuMAX "\n", (uint64_t) tcfdbmax(fdb));
+    iprintf("minimum ID number: %" PRIu64 "\n", (uint64_t) tcfdbmin(fdb));
+    iprintf("maximum ID number: %" PRIu64 "\n", (uint64_t) tcfdbmax(fdb));
     iprintf("width of the value: %u\n", (unsigned int) tcfdbwidth(fdb));
-    iprintf("limit file size: %" PRIuMAX "\n", (uint64_t) tcfdblimsiz(fdb));
-    iprintf("limit ID number: %" PRIuMAX "\n", (uint64_t) tcfdblimid(fdb));
+    iprintf("limit file size: %" PRIu64 "\n", (uint64_t) tcfdblimsiz(fdb));
+    iprintf("limit ID number: %" PRIu64 "\n", (uint64_t) tcfdblimid(fdb));
 
 #ifndef NDEBUG
     if (fdb->cnt_writerec < 0) return;
-    iprintf("cnt_writerec: %" PRIdMAX "\n", (int64_t) fdb->cnt_writerec);
-    iprintf("cnt_readrec: %" PRIdMAX "\n", (int64_t) fdb->cnt_readrec);
-    iprintf("cnt_truncfile: %" PRIdMAX "\n", (int64_t) fdb->cnt_truncfile);
+    iprintf("cnt_writerec: %" PRId64 "\n", (int64_t) fdb->cnt_writerec);
+    iprintf("cnt_readrec: %" PRId64 "\n", (int64_t) fdb->cnt_readrec);
+    iprintf("cnt_truncfile: %" PRId64 "\n", (int64_t) fdb->cnt_truncfile);
 #endif
 }
 
@@ -428,7 +428,7 @@ static int runtypical(int argc, char **argv) {
 /* perform write command */
 static int procwrite(const char *path, int tnum, int rnum, int width, int64_t limsiz,
         int omode, bool rnd) {
-    iprintf("<Writing Test>\n  seed=%u  path=%s  tnum=%d  rnum=%d  width=%d  limsiz=%" PRIdMAX "  omode=%d  rnd=%d\n\n",
+    iprintf("<Writing Test>\n  seed=%u  path=%s  tnum=%d  rnum=%d  width=%d  limsiz=%" PRId64 "  omode=%d  rnd=%d\n\n",
             g_randseed, path, tnum, rnum, width, (int64_t) limsiz, omode, rnd);
     bool err = false;
     double stime = tctime();
@@ -477,8 +477,8 @@ static int procwrite(const char *path, int tnum, int rnum, int width, int64_t li
             }
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcfdbrnum(fdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcfdbfsiz(fdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcfdbrnum(fdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcfdbfsiz(fdb));
     mprint(fdb);
     sysprint();
     if (!tcfdbclose(fdb)) {
@@ -541,8 +541,8 @@ static int procread(const char *path, int tnum, int omode, bool wb, bool rnd) {
             }
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcfdbrnum(fdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcfdbfsiz(fdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcfdbrnum(fdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcfdbfsiz(fdb));
     mprint(fdb);
     sysprint();
     if (!tcfdbclose(fdb)) {
@@ -603,8 +603,8 @@ static int procremove(const char *path, int tnum, int omode, bool rnd) {
             }
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcfdbrnum(fdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcfdbfsiz(fdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcfdbrnum(fdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcfdbfsiz(fdb));
     mprint(fdb);
     sysprint();
     if (!tcfdbclose(fdb)) {
@@ -715,8 +715,8 @@ static int procwicked(const char *path, int tnum, int rnum, int omode, bool nc) 
         if (rnum % 50 > 0) iprintf(" (%08d)\n", rnum);
     }
     tcmapdel(map);
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcfdbrnum(fdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcfdbfsiz(fdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcfdbrnum(fdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcfdbfsiz(fdb));
     mprint(fdb);
     sysprint();
     if (!tcfdbclose(fdb)) {
@@ -732,7 +732,7 @@ static int procwicked(const char *path, int tnum, int rnum, int omode, bool nc) 
 /* perform typical command */
 static int proctypical(const char *path, int tnum, int rnum, int width, int64_t limsiz,
         int omode, bool nc, int rratio) {
-    iprintf("<Typical Access Test>\n  seed=%u  path=%s  tnum=%d  rnum=%d  width=%d  limsiz=%" PRIdMAX "  omode=%d  nc=%d  rratio=%d\n\n",
+    iprintf("<Typical Access Test>\n  seed=%u  path=%s  tnum=%d  rnum=%d  width=%d  limsiz=%" PRId64 "  omode=%d  nc=%d  rratio=%d\n\n",
             g_randseed, path, tnum, rnum, width, (int64_t) limsiz, omode, nc, rratio);
     bool err = false;
     double stime = tctime();
@@ -783,8 +783,8 @@ static int proctypical(const char *path, int tnum, int rnum, int width, int64_t 
             }
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tcfdbrnum(fdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tcfdbfsiz(fdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tcfdbrnum(fdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tcfdbfsiz(fdb));
     mprint(fdb);
     sysprint();
     if (!tcfdbclose(fdb)) {
@@ -894,7 +894,7 @@ static void *threadwicked(void *targ) {
     for (int i = 1; i <= rnum && !err; i++) {
         uint64_t kid = myrand(rnum * (id + 1)) + 1;
         char kbuf[RECBUFSIZ];
-        int ksiz = sprintf(kbuf, "%" PRIuMAX "", (uint64_t) kid);
+        int ksiz = sprintf(kbuf, "%" PRIu64 "", (uint64_t) kid);
         char vbuf[RECBUFSIZ];
         int vsiz = myrand(RECBUFSIZ);
         memset(vbuf, '*', vsiz);

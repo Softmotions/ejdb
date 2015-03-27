@@ -298,7 +298,7 @@ void bson_print_raw(const char *data, int depth) {
                 fprintf(f, "%d", bson_iterator_int(&i));
                 break;
             case BSON_LONG:
-                fprintf(f, "%" PRIdMAX "", (uint64_t) bson_iterator_long(&i));
+                fprintf(f, "%" PRId64 "", (uint64_t) bson_iterator_long(&i));
                 break;
             case BSON_TIMESTAMP:
                 ts = bson_iterator_timestamp(&i);
@@ -1286,7 +1286,7 @@ void bson_numstr(char *str, int64_t i) {
     if (i >= 0 && i < 1000)
         memcpy(str, bson_numstrs[i], 4);
     else
-        sprintf(str, "%" PRIdMAX "", (int64_t) i);
+        sprintf(str, "%" PRId64 "", (int64_t) i);
 }
 
 #pragma GCC diagnostic push
@@ -1297,7 +1297,7 @@ int bson_numstrn(char *str, int maxbuf, int64_t i) {
         memcpy(str, bson_numstrs[i], 4);
         return strlen(bson_numstrs[i]);
     } else {
-        return snprintf(str, maxbuf, "%" PRIdMAX "", (int64_t) i);
+        return snprintf(str, maxbuf, "%" PRId64 "", (int64_t) i);
     }
 }
 #pragma GCC diagnostic pop

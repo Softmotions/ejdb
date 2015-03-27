@@ -621,8 +621,8 @@ static int procwrite(const char *path, int tnum, int rnum, int bnum, int apow, i
             }
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tctdbrnum(tdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tctdbfsiz(tdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tctdbrnum(tdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tctdbfsiz(tdb));
     sysprint();
     if (!tctdbclose(tdb)) {
         eprint(tdb, __LINE__, "tctdbclose");
@@ -700,8 +700,8 @@ static int procread(const char *path, int tnum, int rcnum, int lcnum, int ncnum,
             }
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tctdbrnum(tdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tctdbfsiz(tdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tctdbrnum(tdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tctdbfsiz(tdb));
     sysprint();
     if (!tctdbclose(tdb)) {
         eprint(tdb, __LINE__, "tctdbclose");
@@ -779,8 +779,8 @@ static int procremove(const char *path, int tnum, int rcnum, int lcnum, int ncnu
             }
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tctdbrnum(tdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tctdbfsiz(tdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tctdbrnum(tdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tctdbfsiz(tdb));
     sysprint();
     if (!tctdbclose(tdb)) {
         eprint(tdb, __LINE__, "tctdbclose");
@@ -889,8 +889,8 @@ static int procwicked(const char *path, int tnum, int rnum, int opts, int omode)
             }
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tctdbrnum(tdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tctdbfsiz(tdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tctdbrnum(tdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tctdbfsiz(tdb));
     sysprint();
     if (!tctdbclose(tdb)) {
         eprint(tdb, __LINE__, "tctdbclose");
@@ -998,8 +998,8 @@ static int proctypical(const char *path, int tnum, int rnum, int bnum, int apow,
             }
         }
     }
-    iprintf("record number: %" PRIuMAX "\n", (uint64_t) tctdbrnum(tdb));
-    iprintf("size: %" PRIuMAX "\n", (uint64_t) tctdbfsiz(tdb));
+    iprintf("record number: %" PRIu64 "\n", (uint64_t) tctdbrnum(tdb));
+    iprintf("size: %" PRIu64 "\n", (uint64_t) tctdbfsiz(tdb));
     sysprint();
     if (!tctdbclose(tdb)) {
         eprint(tdb, __LINE__, "tctdbclose");

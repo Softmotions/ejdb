@@ -6701,10 +6701,10 @@ TCMAP *tcsysinfo(void) {
             }
             if (tcstrifwm(line, "VmSize:")) {
                 int64_t size = tcatoix(rp);
-                if (size > 0) tcmapprintf(info, "size", "%" PRIdMAX "", (int64_t) size);
+                if (size > 0) tcmapprintf(info, "size", "%" PRId64 "", (int64_t) size);
             } else if (tcstrifwm(line, "VmRSS:")) {
                 int64_t size = tcatoix(rp);
-                if (size > 0) tcmapprintf(info, "rss", "%" PRIdMAX "", (int64_t) size);
+                if (size > 0) tcmapprintf(info, "rss", "%" PRId64 "", (int64_t) size);
             }
         }
         tclistdel(lines);
@@ -6722,13 +6722,13 @@ TCMAP *tcsysinfo(void) {
             }
             if (tcstrifwm(line, "MemTotal:")) {
                 int64_t size = tcatoix(rp);
-                if (size > 0) tcmapprintf(info, "total", "%" PRIdMAX "", (int64_t) size);
+                if (size > 0) tcmapprintf(info, "total", "%" PRId64 "", (int64_t) size);
             } else if (tcstrifwm(line, "MemFree:")) {
                 int64_t size = tcatoix(rp);
-                if (size > 0) tcmapprintf(info, "free", "%" PRIdMAX "", (int64_t) size);
+                if (size > 0) tcmapprintf(info, "free", "%" PRId64 "", (int64_t) size);
             } else if (tcstrifwm(line, "Cached:")) {
                 int64_t size = tcatoix(rp);
-                if (size > 0) tcmapprintf(info, "cached", "%" PRIdMAX "", (int64_t) size);
+                if (size > 0) tcmapprintf(info, "cached", "%" PRId64 "", (int64_t) size);
             }
         }
         tclistdel(lines);
@@ -6741,7 +6741,7 @@ TCMAP *tcsysinfo(void) {
             const char *line = TCLISTVALPTR(lines, i);
             if (tcstrifwm(line, "processor")) cnum++;
         }
-        if (cnum > 0) tcmapprintf(info, "corenum", "%" PRIdMAX "", (int64_t) cnum);
+        if (cnum > 0) tcmapprintf(info, "corenum", "%" PRId64 "", (int64_t) cnum);
         tclistdel(lines);
     }
     return info;
@@ -6756,7 +6756,7 @@ TCMAP *tcsysinfo(void) {
                 rbuf.ru_stime.tv_sec + rbuf.ru_stime.tv_usec / 1000000.0);
         long tck = sysconf_SC_CLK_TCK;
         int64_t size = (((double) rbuf.ru_ixrss + rbuf.ru_idrss + rbuf.ru_isrss) / tck) * 1024.0;
-        if (size > 0) tcmapprintf(info, "rss", "%" PRIdMAX "", (int64_t) size);
+        if (size > 0) tcmapprintf(info, "rss", "%" PRId64 "", (int64_t) size);
     }
     return info;
 #elif defined(_WIN32)
