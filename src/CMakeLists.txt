@@ -143,7 +143,7 @@ include_directories(${EJDB_INCLUDE_DIRS})
 target_link_libraries(ejdb ${EJDB_LLIBRARIES})
 target_link_libraries(ejdb_p ${EJDB_LLIBRARIES})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fsigned-char -pedantic -Wfatal-errors")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fsigned-char -pedantic -Wfatal-errors -Wno-unknown-pragmas")
 if (NOT WIN32) ## todo review
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif(NOT WIN32)
