@@ -1,6 +1,6 @@
-ejdb (1.2.5) UNRELEASED; urgency=medium
+ejdb (1.2.5) testing; urgency=medium
 
-  * Fixed build for OSX 10.10 
+  * Build fixes for OSX #121 #122
 
  -- Anton Adamansky <adamansky@gmail.com>  Fri, 27 Mar 2015 10:21:41 +0600
 
