@@ -1124,6 +1124,23 @@ EJDB_EXPORT int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite
 EJDB_EXPORT int bson_merge2(const void *b1data, const void *b2data, bson_bool_t overwrite, bson *out);
 
 /**
+ * Recursive merge bson  `b2` into `b1` saving result the 'out' object.
+ * `b1` & `b2` bson must be finished BSONS.
+ * Resulting 'out' bson must be allocated and not finished.
+ *
+ * NOTE. Arrays with same paths joined.
+ *
+ * @param b1 BSON to to be merged in `out`
+ * @param b2 Second BSON to to be merged in `out`
+ * @param overwrite if `true` all `b1` fields will be overwriten by corresponding `b2` fields
+ * @param out
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+EJDB_EXPORT int bson_merge_recursive(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out);
+EJDB_EXPORT int bson_merge_recursive2(const void *b1data, const void *b2data, bson_bool_t overwrite, bson *out);
+
+/**
  * Merge bsons.
  * `bsdata2` may contain field path keys (eg: 'foo.bar').
  * @param bsdata1 BSON data to to be merged in `out`

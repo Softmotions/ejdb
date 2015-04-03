@@ -1651,6 +1651,70 @@ int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out)
     return bson_merge2(bson_data(b1), bson_data(b2), overwrite, out);
 }
 
+int bson_merge_recursive2(const void *b1data, const void *b2data, bson_bool_t overwrite, bson *out) {
+    bson_iterator it1, it2;
+    bson_type bt1, bt2;
+
+    BSON_ITERATOR_FROM_BUFFER(&it1, b1data);
+    BSON_ITERATOR_FROM_BUFFER(&it2, b2data);
+    //Append all fields in B1 merging with fields in B2 (for nested objects & arrays)
+    while ((bt1 = bson_iterator_next(&it1)) != BSON_EOO) {
+        const char* k1 = BSON_ITERATOR_KEY(&it1);
+        bt2 = bson_find_from_buffer(&it2, b2data, k1);
+        if (bt1 == BSON_OBJECT && bt2 == BSON_OBJECT) {
+            int res;
+            bson_append_start_object(out, k1);
+            if ((res = bson_merge_recursive2(bson_iterator_value(&it1), bson_iterator_value(&it2), overwrite, out)) != BSON_OK) {
+                return res;
+            }
+            bson_append_finish_object(out);
+        } else if (bt1 == BSON_ARRAY && bt2 == BSON_ARRAY) {
+            int c = 0;
+            bson_iterator sit;
+            bson_type sbt;
+
+            bson_append_start_array(out, k1);
+            BSON_ITERATOR_SUBITERATOR(&it1, &sit);
+            while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
+                bson_append_field_from_iterator(&sit, out);
+                ++c;
+            }
+
+            char kbuf[TCNUMBUFSIZ];
+            BSON_ITERATOR_SUBITERATOR(&it2, &sit);
+            while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
+                bson_numstrn(kbuf, TCNUMBUFSIZ, c++);
+                bson_append_field_from_iterator2(kbuf, &sit, out);
+            }
+
+            bson_append_finish_array(out);
+        } else if (overwrite && strcmp(JDBIDKEYNAME, k1) && bt2 != BSON_EOO) {
+            bson_append_field_from_iterator(&it2, out);
+        } else {
+            bson_append_field_from_iterator(&it1, out);
+        }
+    }
+
+    BSON_ITERATOR_FROM_BUFFER(&it1, b1data);
+    BSON_ITERATOR_FROM_BUFFER(&it2, b2data);
+    //Append all fields from B2 missing in B1
+    while ((bt2 = bson_iterator_next(&it2)) != BSON_EOO) {
+        const char* k2 = BSON_ITERATOR_KEY(&it2);
+        if ((bt1 = bson_find_from_buffer(&it1, b1data, k2)) == BSON_EOO) {
+            bson_append_field_from_iterator(&it2, out);
+        }
+    }
+    return BSON_OK;
+}
+
+int bson_merge_recursive(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out) {
+    assert(b1 && b2 && out);
+    if (!b1->finished || !b2->finished || out->finished) {
+        return BSON_ERROR;
+    }
+    return bson_merge_recursive2(bson_data(b1), bson_data(b2), overwrite, out);
+}
+
 typedef struct {
     int nstack; //nested object stack pos
     int matched; //number of matched include fields
@@ -2306,34 +2370,33 @@ int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool e
     if (ctx.mfields == 0 || pull) {
         return ctx.ecode;
     }
+
     //Append missing arrays fields
     BSON_ITERATOR_FROM_BUFFER(&it, mbuf);
     while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
         const char *fpath = BSON_ITERATOR_KEY(&it);
-        BSON_ITERATOR_FROM_BUFFER(&it2, inbuf);
+        // all data from inbuf already in bsout
+        bson_finish(bsout);
+        BSON_ITERATOR_INIT(&it2, bsout);
         bt2 = bson_find_fieldpath_value(fpath, &it2);
         if (bt2 != BSON_EOO) continue;
         int i = 0;
         int lvl = 0;
         const char *pdp = fpath;
+        bson bst;
+        bson_init(&bst);
         while (*(fpath + i) != '\0') {
             for (; *(fpath + i) != '\0' && *(fpath + i) != '.'; ++i);
-            BSON_ITERATOR_FROM_BUFFER(&it2, inbuf);
-            bt2 = bson_find_fieldpath_value2(fpath, i, &it2);
-            if (bt2 == BSON_EOO) {
-                if (*(fpath + i) == '\0') { //EOF
-                    assert((fpath + i) - pdp > 0);
-                    bson_append_start_array2(bsout, pdp, (fpath + i) - pdp);
-                    bson_append_field_from_iterator2("0", &it, bsout);
-                    bson_append_finish_array(bsout);
-                    break;
-                } else {
-                    ++lvl;
-                    assert((fpath + i) - pdp > 0);
-                    bson_append_start_object2(bsout, pdp, (fpath + i) - pdp);
-                }
-            } else if (bt2 != BSON_OBJECT) {
+            if (*(fpath + i) == '\0') { //EOF
+                assert((fpath + i) - pdp > 0);
+                bson_append_start_array2(&bst, pdp, (fpath + i) - pdp);
+                bson_append_field_from_iterator2("0", &it, &bst);
+                bson_append_finish_array(&bst);
                 break;
+            } else {
+                ++lvl;
+                assert((fpath + i) - pdp > 0);
+                bson_append_start_object2(&bst, pdp, (fpath + i) - pdp);
             }
             pdp = (fpath + i);
             while (*pdp == '.') {
@@ -2342,9 +2405,22 @@ int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool e
             }
         }
         for (; lvl > 0; --lvl) {
-            bson_append_finish_object(bsout);
+            bson_append_finish_object(&bst);
+        }
+        bson_finish(&bst);
+
+        bson bsc;
+        bson_init_finished_data(&bsc, bson_data(bsout));
+        bson_init_size(bsout, bson_size(bsout));
+        int res = bson_merge_recursive(&bsc, &bst, false, bsout);
+        bson_destroy(&bsc);
+        bson_destroy(&bst);
+
+        if (res != BSON_OK) {
+            return BSON_ERROR;
         }
     }
+
     return ctx.ecode;
 }
 

@@ -3771,6 +3771,71 @@ void testAddToSet(void) {
     ejdbquerydel(q1);
 }
 
+void testTicket123(void) {
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket123", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson bs1;
+    bson_oid_t oid1;
+    bson_init(&bs1);
+    bson_append_start_object(&bs1, "abc");
+    bson_append_start_array(&bs1, "de");
+    bson_append_string(&bs1, "0", "g");
+    bson_append_finish_array(&bs1);
+    bson_append_start_array(&bs1, "fg");
+    bson_append_finish_array(&bs1);
+    bson_append_finish_object(&bs1);
+    bson_finish(&bs1);
+
+    CU_ASSERT_TRUE_FATAL(ejdbsavebson(coll, &bs1, &oid1));
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "$addToSet");
+    bson_append_string(&bsq1, "abc.g", "f");
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "UPDATING MODE: YES"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 0"));
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    bson_destroy(&bsq1);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+
+    //check updated  data
+    bson_init_as_query(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+    //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_string("g", TCLISTVALPTR(q1res, i), "abc.de.0"));
+        CU_ASSERT_FALSE(bson_compare_string("f", TCLISTVALPTR(q1res, i), "abc.g.0"));
+    }
+
+    bson_destroy(&bs1);
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
+
 void testPull(void) {
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
@@ -5680,6 +5745,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTokensBegin", testTokensBegin)) ||
             (NULL == CU_add_test(pSuite, "testOneFieldManyConditions", testOneFieldManyConditions)) ||
             (NULL == CU_add_test(pSuite, "testAddToSet", testAddToSet)) ||
+            (NULL == CU_add_test(pSuite, "testTicket123", testTicket123)) ||
             (NULL == CU_add_test(pSuite, "testPull", testPull)) ||
             (NULL == CU_add_test(pSuite, "testFindInComplexArray", testFindInComplexArray)) ||
             (NULL == CU_add_test(pSuite, "testElemMatch", testElemMatch)) ||
@@ -5706,7 +5772,6 @@ int main() {
 			(NULL == CU_add_test(pSuite, "testSlice", testSlice)) ||
 			(NULL == CU_add_test(pSuite, "testTicket117", testTicket117)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
-
     ) {
         CU_cleanup_registry();
         return CU_get_error();
