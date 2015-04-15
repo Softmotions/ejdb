@@ -269,7 +269,7 @@ void bson_print_raw(const char *data, int depth) {
                 fprintf(f, "%s", bson_iterator_bool(&i) ? "true" : "false");
                 break;
             case BSON_DATE:
-                fprintf(f, "%ld", (long int) bson_iterator_date(&i));
+                fprintf(f, "%" PRId64, bson_iterator_date(&i));
                 break;
             case BSON_BINDATA:
                 fprintf(f, "BSON_BINDATA");
@@ -2509,7 +2509,7 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it, bool array) {
         switch (bt) {
             case BSON_LONG:
             case BSON_INT:
-                tcxstrprintf(out, "%lld", (int64_t) bson_iterator_long_ext(it));
+                tcxstrprintf(out, "%" PRId64, (int64_t) bson_iterator_long_ext(it));
                 break;
             case BSON_DOUBLE:
             {

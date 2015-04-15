@@ -281,7 +281,7 @@ static char* parse_value(nx_json* parent, const char* key, char* p, nx_json_unic
         {
           js=create_json(NX_JSON_INTEGER, key, parent);
           char* pe;
-          js->int_value=strtol(p, &pe, 0);
+          js->int_value=strtoll(p, &pe, 0);
           if (pe==p) {
             NX_JSON_REPORT_ERROR("invalid number", p);
             return 0; // error
@@ -295,7 +295,7 @@ static char* parse_value(nx_json* parent, const char* key, char* p, nx_json_unic
             }
           }
           else {
-            js->dbl_value=js->int_value;
+            js->dbl_value=(double)js->int_value;
           }
           return pe;
         }

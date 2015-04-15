@@ -4666,7 +4666,7 @@ static TCLIST* _fetch_bson_str_array(EJDB *jb, bson_iterator *it, bson_type *typ
             case BSON_BOOL:
             case BSON_DATE:
                 *type = ftype;
-                tclistprintf(res, "%ld", bson_iterator_long(it));
+                tclistprintf(res, "%" PRId64, bson_iterator_long(it));
                 break;
             case BSON_DOUBLE:
                 *type = ftype;
