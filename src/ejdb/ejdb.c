@@ -1794,10 +1794,11 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
     int sp;
     const char *fval;
 
+	// Feature #129: Handle BSON_SYMBOL like BSON_STRING
 #define _FETCHSTRFVAL() \
     do { \
-        fvalsz = (bt == BSON_STRING) ? bson_iterator_string_len(it) : 1; \
-        fval = (bt == BSON_STRING) ? bson_iterator_string(it) : ""; \
+        fvalsz = (BSON_IS_STRING_TYPE(bt)) ? bson_iterator_string_len(it) : 1; \
+        fval = (BSON_IS_STRING_TYPE(bt)) ? bson_iterator_string(it) : ""; \
         if (bt == BSON_OID) { \
             bson_oid_to_string(bson_iterator_oid(it), oidbuf); \
             fvalsz = 25; \
@@ -1824,7 +1825,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
     switch (qf->tcop) {
         case TDBQCSTREQ: {
             _FETCHSTRFVAL();
-            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+            if ((qf->flags & EJCONDICASE) && (BSON_IS_STRING_TYPE(bt))) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1842,7 +1843,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
         }
         case TDBQCSTRINC: {
             _FETCHSTRFVAL();
-            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+            if ((qf->flags & EJCONDICASE) && (BSON_IS_STRING_TYPE(bt))) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1860,7 +1861,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
         }
         case TDBQCSTRBW: {
             _FETCHSTRFVAL();
-            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+            if ((qf->flags & EJCONDICASE) && (BSON_IS_STRING_TYPE(bt))) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1878,7 +1879,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
         }
         case TDBQCSTREW: {
             _FETCHSTRFVAL();
-            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+            if ((qf->flags & EJCONDICASE) && (BSON_IS_STRING_TYPE(bt))) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1898,7 +1899,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
             TCLIST *tokens = qf->exprlist;
             assert(tokens);
             _FETCHSTRFVAL();
-            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+            if ((qf->flags & EJCONDICASE) && (BSON_IS_STRING_TYPE(bt))) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1918,7 +1919,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
             TCLIST *tokens = qf->exprlist;
             assert(tokens);
             _FETCHSTRFVAL();
-            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+            if ((qf->flags & EJCONDICASE) && (BSON_IS_STRING_TYPE(bt))) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1938,7 +1939,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
             TCLIST *tokens = qf->exprlist;
             assert(tokens);
             _FETCHSTRFVAL();
-            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+            if ((qf->flags & EJCONDICASE) && (BSON_IS_STRING_TYPE(bt))) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
@@ -1986,7 +1987,7 @@ static bool _qrybsvalmatch(const EJQF *qf, bson_iterator *it, bool expandarrays,
             TCLIST *tokens = qf->exprlist;
             assert(tokens);
             _FETCHSTRFVAL();
-            if ((qf->flags & EJCONDICASE) && (bt == BSON_STRING)) {
+            if ((qf->flags & EJCONDICASE) && (BSON_IS_STRING_TYPE(bt))) {
                 cbufstrlen = tcicaseformat(fval, fvalsz - 1, sbuf, JBSTRINOPBUFFERSZ, &cbuf);
                 if (cbufstrlen < 0) {
                     _ejdbsetecode(qf->jb, cbufstrlen, __FILE__, __LINE__, __func__);
