@@ -63,6 +63,7 @@ void testAddData(void) {
     bson_append_finish_object(&a1);
     bson_append_finish_array(&a1); //EOF complexarr
     CU_ASSERT_FALSE_FATAL(a1.err);
+	bson_append_symbol(&a1, "symbol_info", "apple");
     bson_finish(&a1);
     ejdbsavebson(ccoll, &a1, &oid);
     bson_destroy(&a1);
@@ -100,6 +101,7 @@ void testAddData(void) {
     bson_append_long(&a1, "1", 556667);
     bson_append_double(&a1, "2", 77676.22);
     bson_append_finish_array(&a1);
+	bson_append_symbol(&a1, "symbol_info", "application");
 
     bson_finish(&a1);
     CU_ASSERT_FALSE_FATAL(a1.err);
@@ -122,6 +124,7 @@ void testAddData(void) {
     bson_append_long(&a1, "1", 222334);
     bson_append_double(&a1, "2", 77676.22);
     bson_append_finish_array(&a1);
+ 	bson_append_symbol(&a1, "symbol_info", "bison");
     bson_finish(&a1);
     CU_ASSERT_FALSE_FATAL(a1.err);
 
@@ -2595,6 +2598,96 @@ void testQuery28(void) { // $gte: 64 bit number
             CU_ASSERT_TRUE(false);
         }
     }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
+void testQuery29(void) { 
+	// #129: Test $begin Query with Symbols
+    EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+	bson_append_start_object(&bsq1, "symbol_info");
+    bson_append_symbol(&bsq1, "$begin", "app");
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_EQUAL(count, 2);  // should match symbol_info: apple, application
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 2);
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
+void testQuery30(void) { 
+	// #129: Test equal with Symbols
+    EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_symbol(&bsq1, "symbol_info", "bison");
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_EQUAL(count, 1);  // should match symbol_info: bison
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 1);
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
+void testQuery31(void) { 
+	// #129: Test $in array Query with Symbols
+    EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "symbol_info");
+    bson_append_start_array(&bsq1, "$in");
+    bson_append_symbol(&bsq1, "0", "apple");
+    bson_append_symbol(&bsq1, "1", "bison");
+    bson_append_finish_array(&bsq1);
+    bson_append_finish_object(&bsq1);
+	bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_EQUAL(count, 2);  // should match symbol_info: apple, bison
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 2);
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -5772,6 +5865,9 @@ int main() {
             (NULL == CU_add_test(pSuite, "testQuery26", testQuery26)) ||
             (NULL == CU_add_test(pSuite, "testQuery27", testQuery27)) ||
 			(NULL == CU_add_test(pSuite, "testQuery28", testQuery28)) ||
+			(NULL == CU_add_test(pSuite, "testQuery29", testQuery29)) ||
+			(NULL == CU_add_test(pSuite, "testQuery30", testQuery30)) ||
+			(NULL == CU_add_test(pSuite, "testQuery31", testQuery31)) ||
             (NULL == CU_add_test(pSuite, "testOIDSMatching", testOIDSMatching)) ||
             (NULL == CU_add_test(pSuite, "testEmptyFieldIndex", testEmptyFieldIndex)) ||
             (NULL == CU_add_test(pSuite, "testICaseIndex", testICaseIndex)) ||
