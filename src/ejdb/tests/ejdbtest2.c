@@ -2576,6 +2576,7 @@ void testQuery28(void) { // $gte: 64 bit number
     bson_init_as_query(&bsq1);
 	bson_append_start_object(&bsq1, "longscore");
     bson_append_long(&bsq1, "$gte", int64value);
+    bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
@@ -2614,6 +2615,7 @@ void testQuery29(void) {
     bson_init_as_query(&bsq1);
 	bson_append_start_object(&bsq1, "symbol_info");
     bson_append_symbol(&bsq1, "$begin", "app");
+    bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
@@ -2623,7 +2625,8 @@ void testQuery29(void) {
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
-    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    fprintf(stderr, "%s", TCXSTRPTR(log));
+	fprintf(stderr, "RESULT count=%d\n", count);
 
     CU_ASSERT_EQUAL(count, 2);  // should match symbol_info: apple, application
     CU_ASSERT_TRUE(TCLISTNUM(q1res) == 2);
@@ -2651,7 +2654,8 @@ void testQuery30(void) {
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
-    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    fprintf(stderr, "%s", TCXSTRPTR(log));
+	fprintf(stderr, "RESULT count=%d\n", count);
 
     CU_ASSERT_EQUAL(count, 1);  // should match symbol_info: bison
     CU_ASSERT_TRUE(TCLISTNUM(q1res) == 1);
@@ -2684,7 +2688,8 @@ void testQuery31(void) {
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
-    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    fprintf(stderr, "%s", TCXSTRPTR(log));
+	fprintf(stderr, "RESULT count=%d\n", count);
 
     CU_ASSERT_EQUAL(count, 2);  // should match symbol_info: apple, bison
     CU_ASSERT_TRUE(TCLISTNUM(q1res) == 2);
