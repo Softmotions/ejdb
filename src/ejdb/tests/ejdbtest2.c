@@ -63,7 +63,7 @@ void testAddData(void) {
     bson_append_finish_object(&a1);
     bson_append_finish_array(&a1); //EOF complexarr
     CU_ASSERT_FALSE_FATAL(a1.err);
-	bson_append_symbol(&a1, "symbol_info", "apple");
+	bson_append_symbol(&a1, "symbol", "apple");
     bson_finish(&a1);
     ejdbsavebson(ccoll, &a1, &oid);
     bson_destroy(&a1);
@@ -101,7 +101,7 @@ void testAddData(void) {
     bson_append_long(&a1, "1", 556667);
     bson_append_double(&a1, "2", 77676.22);
     bson_append_finish_array(&a1);
-	bson_append_symbol(&a1, "symbol_info", "application");
+	bson_append_symbol(&a1, "symbol", "application");
 
     bson_finish(&a1);
     CU_ASSERT_FALSE_FATAL(a1.err);
@@ -124,7 +124,7 @@ void testAddData(void) {
     bson_append_long(&a1, "1", 222334);
     bson_append_double(&a1, "2", 77676.22);
     bson_append_finish_array(&a1);
- 	bson_append_symbol(&a1, "symbol_info", "bison");
+ 	bson_append_symbol(&a1, "symbol", "bison");
     bson_finish(&a1);
     CU_ASSERT_FALSE_FATAL(a1.err);
 
@@ -2613,8 +2613,8 @@ void testQuery29(void) {
 
     bson bsq1;
     bson_init_as_query(&bsq1);
-	bson_append_start_object(&bsq1, "symbol_info");
-    bson_append_symbol(&bsq1, "$begin", "app");
+    bson_append_start_object(&bsq1, "symbol");
+    bson_append_string(&bsq1, "$begin", "app");
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
@@ -2625,11 +2625,15 @@ void testQuery29(void) {
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
-    fprintf(stderr, "%s", TCXSTRPTR(log));
-	fprintf(stderr, "RESULT count=%d\n", count);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_EQUAL(count, 2);  // should match symbol_info: apple, application
     CU_ASSERT_TRUE(TCLISTNUM(q1res) == 2);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        if (i == 0) CU_ASSERT_FALSE(bson_compare_string("apple", TCLISTVALPTR(q1res, i), "symbol"));
+        if (i == 1) CU_ASSERT_FALSE(bson_compare_string("application", TCLISTVALPTR(q1res, i), "symbol"));
+    }
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -2644,7 +2648,7 @@ void testQuery30(void) {
 
     bson bsq1;
     bson_init_as_query(&bsq1);
-    bson_append_symbol(&bsq1, "symbol_info", "bison");
+    bson_append_string(&bsq1, "symbol", "bison");
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
@@ -2654,11 +2658,14 @@ void testQuery30(void) {
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
-    fprintf(stderr, "%s", TCXSTRPTR(log));
-	fprintf(stderr, "RESULT count=%d\n", count);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_EQUAL(count, 1);  // should match symbol_info: bison
     CU_ASSERT_TRUE(TCLISTNUM(q1res) == 1);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        if (i == 0) CU_ASSERT_FALSE(bson_compare_string("bison", TCLISTVALPTR(q1res, i), "symbol"));
+    }
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
@@ -2673,13 +2680,13 @@ void testQuery31(void) {
 
     bson bsq1;
     bson_init_as_query(&bsq1);
-    bson_append_start_object(&bsq1, "symbol_info");
+    bson_append_start_object(&bsq1, "symbol");
     bson_append_start_array(&bsq1, "$in");
-    bson_append_symbol(&bsq1, "0", "apple");
-    bson_append_symbol(&bsq1, "1", "bison");
+    bson_append_string(&bsq1, "0", "apple");
+    bson_append_string(&bsq1, "1", "bison");
     bson_append_finish_array(&bsq1);
     bson_append_finish_object(&bsq1);
-	bson_finish(&bsq1);
+    bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
     EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
@@ -2688,11 +2695,15 @@ void testQuery31(void) {
     uint32_t count = 0;
     TCXSTR *log = tcxstrnew();
     TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
-    fprintf(stderr, "%s", TCXSTRPTR(log));
-	fprintf(stderr, "RESULT count=%d\n", count);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
 
     CU_ASSERT_EQUAL(count, 2);  // should match symbol_info: apple, bison
     CU_ASSERT_TRUE(TCLISTNUM(q1res) == 2);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        if (i == 0) CU_ASSERT_FALSE(bson_compare_string("apple", TCLISTVALPTR(q1res, i), "symbol"));
+        if (i == 1) CU_ASSERT_FALSE(bson_compare_string("bison", TCLISTVALPTR(q1res, i), "symbol"));
+    }
 
     bson_destroy(&bsq1);
     tclistdel(q1res);
