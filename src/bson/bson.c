@@ -2037,7 +2037,7 @@ int bson_compare_string(const char *cv, const void *bsdata, const char *fpath) {
     return res;
 }
 
-int bson_compare_long(long cv, const void *bsdata, const char *fpath) {
+int bson_compare_long(const int64_t cv, const void *bsdata, const char *fpath) {
     bson *bs1 = bson_create();
     bson_init(bs1);
     bson_append_long(bs1, "$", cv);

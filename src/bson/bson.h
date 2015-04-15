@@ -1188,7 +1188,7 @@ EJDB_EXPORT int bson_compare(const void *bsdata1, const void *bsdata2, const cha
 EJDB_EXPORT int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, const char *fpath1, int fplen1, const char *fpath2, int fplen2);
 EJDB_EXPORT int bson_compare_it_current(const bson_iterator *it1, const bson_iterator *it2);
 EJDB_EXPORT int bson_compare_string(const char* cv, const void *bsdata, const char *fpath);
-EJDB_EXPORT int bson_compare_long(long cv, const void *bsdata, const char *fpath);
+EJDB_EXPORT int bson_compare_long(const int64_t cv, const void *bsdata, const char *fpath);
 EJDB_EXPORT int bson_compare_double(double cv, const void *bsdata, const char *fpath);
 EJDB_EXPORT int bson_compare_bool(bson_bool_t cv, const void *bsdata, const char *fpath);
 
