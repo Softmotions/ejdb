@@ -5035,7 +5035,8 @@ static int _parse_qobj_impl(EJDB *jb, EJQ *q, bson_iterator *it, TCLIST *qlist, 
                 if (ftype == BSON_LONG || ftype == BSON_INT || ftype == BSON_DATE) {
                     qf.exprlongval = bson_iterator_long(it);
                     qf.exprdblval = qf.exprlongval;
-                    qf.expr = tcsprintf("%ld", qf.exprlongval);
+                    // 2015-04-14: Change to use standard format string for int64_t
+                    qf.expr = tcsprintf("%" PRId64, qf.exprlongval);
                 } else {
                     qf.exprdblval = bson_iterator_double(it);
                     qf.exprlongval = (int64_t) qf.exprdblval;

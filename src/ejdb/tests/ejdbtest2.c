@@ -2563,6 +2563,45 @@ void testQuery27(void) { //$exists
     ejdbquerydel(q1);
 }
 
+void testQuery28(void) { // $gte: 64 bit number
+	// TEST for #127: int64_t large numbers
+	int64_t int64value = 0xFFFFFFFFFF02LL;
+    EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
+
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+	bson_append_start_object(&bsq1, "longscore");
+    bson_append_long(&bsq1, "$gte", int64value);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(contacts, q1, &count, 0, log);
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+
+    CU_ASSERT_EQUAL(count, 1);
+    CU_ASSERT_TRUE(TCLISTNUM(q1res) == 1);
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        if (i == 0) {
+            CU_ASSERT_FALSE(bson_compare_string("444-123-333", TCLISTVALPTR(q1res, i), "phone"));
+            CU_ASSERT_FALSE(bson_compare_long(int64value, TCLISTVALPTR(q1res, i), "longscore"));
+        } else {
+            CU_ASSERT_TRUE(false);
+        }
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 void testOIDSMatching(void) { //OID matching
     EJCOLL *contacts = ejdbcreatecoll(jb, "contacts", NULL);
     CU_ASSERT_PTR_NOT_NULL_FATAL(contacts);
@@ -5732,6 +5771,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testQuery25_2", testQuery25_2)) ||
             (NULL == CU_add_test(pSuite, "testQuery26", testQuery26)) ||
             (NULL == CU_add_test(pSuite, "testQuery27", testQuery27)) ||
+			(NULL == CU_add_test(pSuite, "testQuery28", testQuery28)) ||
             (NULL == CU_add_test(pSuite, "testOIDSMatching", testOIDSMatching)) ||
             (NULL == CU_add_test(pSuite, "testEmptyFieldIndex", testEmptyFieldIndex)) ||
             (NULL == CU_add_test(pSuite, "testICaseIndex", testICaseIndex)) ||
