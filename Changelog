@@ -1,4 +1,12 @@
-ejdb (1.2.5) testing; urgency=medium
+ejdb (1.2.6) testing; urgency=low
+
+  * Fix: $addToSet works improperly for non existent nested keys #123
+  * Fix: Queries of int64_t (longs) on Windows is returning invalid results #127
+  * Fix: Cross compile EJDB for MIPS fails #125
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 15 Apr 2015 10:24:43 +0600
+
+ejdb (1.2.5) testing; urgency=low
 
   * Build fixes for OSX #121 #122
 

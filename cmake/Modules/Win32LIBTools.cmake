@@ -4,13 +4,13 @@ endif()
 
 find_program(WINTOOLS_WINE_EXEC wine)
 if (NOT WINTOOLS_WINE_EXEC)
-	message("Wine executable not found! Failed to initiate wintoole staff.")
+	message("Wine executable not found! Failed to initiate wintools staff.")
 	return()
 endif()
 
 find_program(WINTOOLS_WGET_EXEC wget)
 if (NOT WINTOOLS_WGET_EXEC)
-	message("Wget executable not found! Failed to initiate wintoole staff.")
+	message("Wget executable not found! Failed to initiate wintools staff.")
 	return()
 endif()
 
