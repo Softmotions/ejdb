@@ -2106,13 +2106,13 @@ static bool tchdbseekwrite2(TCHDB *hdb, off_t off, const void *buf, size_t size,
     assert(hdb && off >= 0 && buf && size >= 0);
     if (hdb->tran && !(opts & HDBWRITENOWALL) && !tchdbwalwrite(hdb, off, size)) return false;
     off_t end = off + size;
-    uint64_t xfsiz = __atomic_load_n(&hdb->xfsiz, __ATOMIC_ACQUIRE);
+    uint64_t xfsiz = __atomic_load_n64(&hdb->xfsiz, __ATOMIC_ACQUIRE);
     if (end >= xfsiz) {
         if (!tchdbftruncate2(hdb, end, opts)) {
             tchdbsetecode(hdb, TCETRUNC, __FILE__, __LINE__, __func__);
             return false;
         }
-        xfsiz = __atomic_load_n(&hdb->xfsiz, __ATOMIC_ACQUIRE);
+        xfsiz = __atomic_load_n64(&hdb->xfsiz, __ATOMIC_ACQUIRE);
     }
     uint64_t xmsiz = hdb->xmsiz;
     if (end <= xmsiz && end <= xfsiz) {
@@ -2197,7 +2197,7 @@ static bool tchdbseekread2(TCHDB *hdb, off_t off, void *buf, size_t size, int op
             return false;
         }
     }
-    uint64_t xfsiz = __atomic_load_n(&hdb->xfsiz, __ATOMIC_ACQUIRE);
+    uint64_t xfsiz = __atomic_load_n64(&hdb->xfsiz, __ATOMIC_ACQUIRE);
     uint64_t xmsiz = hdb->xmsiz;
     if (opts & HDBSEEKTRY) {
         uint64_t fsiz = hdb->fsiz;
@@ -5616,7 +5616,7 @@ static bool tchdbftruncate(TCHDB *hdb, off_t length) {
 }
 
 static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
-    uint64_t xfsiz = __atomic_load_n(&hdb->xfsiz, __ATOMIC_ACQUIRE);
+    uint64_t xfsiz = __atomic_load_n64(&hdb->xfsiz, __ATOMIC_ACQUIRE);
 #ifndef _WIN32
     length = length ? tcpagealign(length) : 0;
     if (!(hdb->omode & HDBOWRITER) || (length <= xfsiz && !(opts & HDBTRALLOWSHRINK))) {
@@ -5628,7 +5628,7 @@ static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
         length = MAX(o1, o2);
     }
     if (!ftruncate(hdb->fd, length)) {
-        __atomic_store_n(&hdb->xfsiz, length, __ATOMIC_RELEASE);
+        __atomic_store_n64(&hdb->xfsiz, length, __ATOMIC_RELEASE);
         return true;
     } else {
         return false;
@@ -5684,7 +5684,7 @@ static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
         err = true;
         goto finish;
     }
-    __atomic_store_n(&hdb->xfsiz, size.QuadPart, __ATOMIC_RELEASE);
+    __atomic_store_n64(&hdb->xfsiz, size.QuadPart, __ATOMIC_RELEASE);
     if (length == 0) {
         size.QuadPart = 0;
         if (!SetFilePointerEx(hdb->fd, size, NULL, FILE_BEGIN)) {

@@ -534,8 +534,11 @@ EJDB_EXPORT void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
     ((__GNUC__ - 0) * 100 + (__GNUC_MINOR__ - 0)) < 407 || \
     defined(__INTEL_COMPILER) || defined(__clang__)
     
-#if !__has_builtin(__atomic_load_n)   
+#if !__has_builtin(__atomic_load_n)  //todo review!
+#define _TC_HAVE_ATOMICS 0 
 #define __atomic_load_n(ptr,order) *(ptr)
+#else
+#define _TC_HAVE_ATOMICS 1 
 #endif
 
 #if !__has_builtin(__atomic_store_n)   
@@ -600,8 +603,33 @@ EJDB_EXPORT void *_tc_recdecode(const void *ptr, int size, int *sp, void *op);
 #define __atomic_fetch_nand(ptr,val,order) __sync_fetch_and_nand(ptr, val)
 #endif
 
+#else // EOF  !defined(__GNUC__) || ((__GNUC__ - 0) * 100 + (__GNUC_MINOR__ - 0)) <  ...
+#define _TC_HAVE_ATOMICS 1
 #endif
 
+#if (_TC_HAVE_ATOMICS == 1) //checking for 64bit atomics support
+    #if defined(__mips__)
+        #if (_MIPS_SIM == _ABIO32 || _MIPS_SIM == _ABIN32)
+            #define _TC_HAVE_ATOMICS64 0
+        #else 
+            #define _TC_HAVE_ATOMICS64 1
+        #endif
+    #elif (defined(_LP64) || defined(__LP64__)) //todo review?
+        #define _TC_HAVE_ATOMICS64 1
+    #else
+        #define _TC_HAVE_ATOMICS64 0
+    #endif
+#else
+    #define _TC_HAVE_ATOMICS64 0 
+#endif
+
+#if (_TC_HAVE_ATOMICS64 == 0)
+    #define __atomic_load_n64(ptr,order) *(ptr)
+    #define __atomic_store_n64(ptr,val,order) (*(ptr) = (val), (void)0)
+#else
+    #define __atomic_load_n64(ptr,order) __atomic_load_n(ptr,order)
+    #define __atomic_store_n64(ptr,val,order) __atomic_store_n(ptr,val,order)
+#endif
 
 #endif                                   // duplication check
 
