@@ -1,3 +1,9 @@
+ejdb (1.2.7) UNRELEASED; urgency=low
+
+  * Project build improvements #131
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 16 Apr 2015 12:20:34 +0600
+
 ejdb (1.2.6) testing; urgency=low
 
   * Fix: $addToSet works improperly for non existent nested keys #123

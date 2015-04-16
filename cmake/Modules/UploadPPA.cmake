@@ -225,7 +225,7 @@ endif()
 if(CHANGELOG_MESSAGE)
 	set(output_changelog_msg ${CHANGELOG_MESSAGE})
 else()
-	set(output_changelog_msg "Package created with CMake")
+	set(output_changelog_msg "* Package created with CMake")
 endif(CHANGELOG_MESSAGE)
 message(STATUS "Changelog message : \"${output_changelog_msg}\"")
 if(EXISTS ${CPACK_DEBIAN_RESOURCE_FILE_CHANGELOG})
@@ -239,7 +239,7 @@ if(EXISTS ${CPACK_DEBIAN_RESOURCE_FILE_CHANGELOG})
       OUTPUT_STRIP_TRAILING_WHITESPACE)
     file(WRITE ${debian_changelog}
       "${CPACK_DEBIAN_PACKAGE_NAME} (${DEBIAN_PACKAGE_VERSION}) ${DISTRI}; urgency=low\n\n"
-      "  * ${output_changelog_msg}\n\n"
+      "  ${output_changelog_msg}\n\n"
       " -- ${CPACK_DEBIAN_PACKAGE_MAINTAINER}  ${DATE_TIME}\n\n"
       )
     file(APPEND ${debian_changelog} ${debian_changelog_content})
@@ -252,7 +252,7 @@ else()
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   file(WRITE ${debian_changelog}
     "${CPACK_DEBIAN_PACKAGE_NAME} (${DEBIAN_PACKAGE_VERSION}) ${DISTRI}; urgency=low\n\n"
-    "  * ${output_changelog_msg}\n\n"
+    "  ${output_changelog_msg}\n\n"
     " -- ${CPACK_DEBIAN_PACKAGE_MAINTAINER}  ${DATE_TIME}\n"
     )
    #configure_file(${debian_changelog} ${CPACK_DEBIAN_RESOURCE_FILE_CHANGELOG}  COPYONLY)

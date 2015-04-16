@@ -179,6 +179,7 @@
     <File Name="win64-tc.cmake"/>
     <File Name="cmake/Modules/UploadPPA.cmake"/>
     <File Name="cmake/Modules/Win32LIBTools.cmake"/>
+    <File Name="cmake/Modules/DebChangelog.cmake"/>
   </VirtualDirectory>
   <VirtualDirectory Name="docs">
     <File Name="Changelog"/>
