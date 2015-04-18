@@ -34,6 +34,7 @@ option(PACKAGE_DEB "Build .deb instalation packages" OFF)
 option(PACKAGE_TGZ "Build .tgz package archive" ON)
 option(ENABLE_PPA "Enable PPA package build" OFF)
 option(UPLOAD_PPA "Upload debian packages to the launchpad ppa repository" OFF)
+option(PPA_DEBIAN_VERSION "PPA version suffix for debian packages" "ppa1")
 
 if (POLICY CMP0042)
     cmake_policy(SET CMP0042 NEW)
