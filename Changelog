@@ -1,6 +1,8 @@
 ejdb (1.2.7) UNRELEASED; urgency=low
 
   * Project build improvements #131
+  * Fix of Nodejs module windows build fail #12
+  * Added support of querying BSON symbols #129
 
  -- Anton Adamansky <adamansky@gmail.com>  Thu, 16 Apr 2015 12:20:34 +0600
 
