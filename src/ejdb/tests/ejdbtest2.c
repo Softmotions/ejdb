@@ -1,6 +1,6 @@
 /*
  * File:   newcunittest.c
- * Author: Adamansky Anton <anton@adamansky.com>
+ * Author: Adamansky Anton <adamansky@gmail.com>
  *
  * Created on Oct 1, 2012, 3:13:44 PM
  */
