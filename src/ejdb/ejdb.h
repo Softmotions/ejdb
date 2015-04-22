@@ -542,9 +542,9 @@ EJDB_EXPORT bson* ejdbmeta(EJDB *jb);
 
 /** Export/Import settings used in `ejdbexport()` and `ejdbimport()` functions. */
 enum {
-    JBJSONEXPORT = 1, //If set json collection data will be exported as JSON files instead of BSON.
-    JBIMPORTUPDATE = 1 << 1, //Update existing collection entries with imported ones. Collections will not be recreated and its options are ignored.
-    JBIMPORTREPLACE = 1 << 2 //Recreate existing collections and replace all collection data with imported entries.
+    JBJSONEXPORT = 1, //Database collections will be exported as JSON files.
+    JBIMPORTUPDATE = 1 << 1, //Update existing collection entries with imported ones. Missing collections will be created.
+    JBIMPORTREPLACE = 1 << 2 //Recreate all collections and replace all collection data with imported entries.
 };
 
 /**
@@ -595,7 +595,7 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  *  1) Exports database collections data. See ejdbexport() method.
  *
  *    "export" : {
- *          "path" : string,                    //Exports database collections data
+ *          "path" : string,                    //Export files target directory
  *          "cnames" : [string array]|null,     //List of collection names to export
  *          "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdbexport() method
  *    }
@@ -610,8 +610,8 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  *  2) Imports previously exported collections data into ejdb.
  *
  *    "import" : {
- *          "path" : string                     //The directory path in which data resides
- *          "cnames" : [string array]|null,     //List of collection names to import
+ *          "path" : string                  //Import files source directory
+ *          "cnames" : [string array]|null,  //List of collection names to import
  *          "mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method
  *     }
  *
@@ -624,7 +624,7 @@ EJDB_EXPORT bool ejdbimport(EJDB *jb, const char *path, TCLIST *cnames, int flag
  *
  * @param jb    EJDB database handle.
  * @param cmd   BSON command spec.
- * @return Allocated BSON command response object. Caller should call `bson_del()` on it.
+ * @return Allocated command response BSON object. Caller should call `bson_del()` on it.
  */
 EJDB_EXPORT bson* ejdbcommand(EJDB *jb, bson *cmdbson);
 EJDB_EXPORT bson* ejdbcommand2(EJDB *jb, void *cmdbsondata);
