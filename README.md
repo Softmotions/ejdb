@@ -3,6 +3,8 @@
 Embedded JSON Database engine C library (libejdb)
 =================================================
 
+**See http://ejdb.org**
+
 It aims to be a fast [MongoDB](http://mongodb.org)-like library 
 **which can be embedded into C/C++, .Net, NodeJS, Python, Lua, Go, Java 
 and Ruby applications under terms of LGPL license.**
