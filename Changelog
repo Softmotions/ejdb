@@ -1,11 +1,11 @@
-ejdb (1.2.7) UNRELEASED; urgency=low
+ejdb (1.2.7) testing; urgency=low
 
   * EJDB nodejs modules now published as precompiled binaries for Windows
   * Project build improvements #131
   * Fix of Nodejs module windows build fail #12
   * Added support of querying BSON symbols #129
 
- -- Anton Adamansky <adamansky@gmail.com>  Thu, 16 Apr 2015 12:20:34 +0600
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 23 Apr 2015 12:20:34 +0600
 
 ejdb (1.2.6) testing; urgency=low
 
