@@ -1,8 +1,5 @@
 [![EJDB](http://ejdb.org/_images/ejdblogo3.png)](http://ejdb.org)
 
-[![Documentation Status](https://readthedocs.org/projects/ejdb/badge/?version=latest)](https://readthedocs.org/projects/ejdb/?badge=latest)
-
-
 Embedded JSON Database engine C library (libejdb)
 =================================================
 
