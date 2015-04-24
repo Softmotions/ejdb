@@ -263,7 +263,11 @@ EJDB_EXPORT bson* ejdbloadbson(EJCOLL *coll, const bson_oid_t *oid);
  * Create the query object.
  * 
  * Sucessfully created queries must be destroyed with ejdbquerydel().
- * See the complete query language specification: http://ejdb.org/doc/ql/ql.html
+ * 
+ * See the complete query language specification: 
+ * 
+ *      http://ejdb.org/doc/ql/ql.html
+ * 
  * Many query examples can be found in `src/ejdb/test/ejdbtest2.c` test case.
  *
  * @param jb EJDB database handle.
@@ -384,19 +388,19 @@ EJDB_EXPORT void ejdbqresultdispose(EJQRESULT qr);
 /**
  * Convenient method to execute update queries.
  *
- * `$set` and `$inc` operations are supported:
+ * See the complete query language specification: 
+ * 
+ *      http://ejdb.org/doc/ql/ql.html
  *
- * `$set` Field set operation:
- *      - {some fields for selection, '$set' : {'fpath1' : {obj}, ...,  'fpathN' : {obj}}}
- * `$inc` Increment operation. Only number types are supported.
- *      - {some fields for selection, '$inc' : {'fpath1' : number, ...,  'fpathN' : {number}}
  *
  * @return Number of updated records
  */
 EJDB_EXPORT uint32_t ejdbupdate(EJCOLL *jcoll, bson *qobj, bson *orqobjs, int orqobjsnum, bson *hints, TCXSTR *log);
 
 /**
- * Provides 'distinct' operation over query (http://docs.mongodb.org/manual/reference/method/db.collection.distinct/).
+ * Provides 'distinct' operation over query 
+ * 
+ * (http://docs.mongodb.org/manual/reference/method/db.collection.distinct/).
  * 
  * @param jcoll EJDB database collection handle.
  * @param fpath Field path to collect distinct values from.
