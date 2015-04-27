@@ -3748,6 +3748,8 @@ enum { /* enumeration for error codes */
     TCEKEEP, /* existing record */
     TCENOREC, /* no record found */
     TCETR, /* illegal transaction state */
+    TCEICOMPRESS, /* unsupported database compression format, check the release options. */
+    TCEDATACOMPRESS, /* error during record data compression */
     TCEMISC = 9999 /* miscellaneous error */
 };
 

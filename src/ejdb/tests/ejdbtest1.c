@@ -274,7 +274,7 @@ int main() {
         return CU_get_error();
 
     /* Add a suite to the registry */
-    pSuite = CU_add_suite("t1", init_suite, clean_suite);
+    pSuite = CU_add_suite("ejdbtest1", init_suite, clean_suite);
     if (NULL == pSuite) {
         CU_cleanup_registry();
         return CU_get_error();

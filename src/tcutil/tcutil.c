@@ -275,7 +275,8 @@ static void tcvxstrprintf(TCXSTR *xstr, const char *format, va_list ap) {
                 case 'e': case 'E': case 'f': case 'g': case 'G':
                     if (lnum >= 1) {
                         //tlen = snprintf(tbuf, sizeof(tbuf), cbuf, va_arg(ap, long double));
-                        tlen = tcftoa(va_arg(ap, long double), tbuf, sizeof (tbuf), 6);
+                        //tlen = tcftoa(va_arg(ap, long double), tbuf, sizeof (tbuf), 6);
+                        tlen = tcftoa(va_arg(ap, double), tbuf, sizeof (tbuf), 6);
                     } else {
                         //tlen = snprintf(tbuf, sizeof(tbuf), cbuf, va_arg(ap, double));
                         tlen = tcftoa(va_arg(ap, double), tbuf, sizeof (tbuf), 6);
@@ -9793,6 +9794,8 @@ const char *tcerrmsg(int ecode) {
         case TCENOREC: return "no record found";
         case TCETR: return "illegal transaction state";
         case TCEMISC: return "miscellaneous error";
+        case TCEICOMPRESS: return "unsupported database compression format";
+        case TCEDATACOMPRESS: return "data compression error";
     }
     return "unknown error";
 }

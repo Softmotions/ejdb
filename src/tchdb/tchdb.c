@@ -448,14 +448,16 @@ bool tchdbclose(TCHDB *hdb) {
 bool tchdbput(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz) {
     assert(hdb && kbuf && ksiz >= 0 && vbuf && vsiz >= 0);
     if (!HDBLOCKMETHOD(hdb, false)) return false;
-    uint8_t hash;
-    char *zbuf = NULL;
-    uint64_t bidx = tchdbbidx(hdb, kbuf, ksiz, &hash);
     if (INVALIDHANDLE(hdb->fd) || !(hdb->omode & HDBOWRITER)) {
         tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
         HDBUNLOCKMETHOD(hdb);
         return false;
     }
+
+    uint8_t hash;
+    char *zbuf = NULL;
+    uint64_t bidx = tchdbbidx(hdb, kbuf, ksiz, &hash);
+   
     if (hdb->async && !tchdbflushdrp(hdb)) {
         HDBUNLOCKMETHOD(hdb);
         return false;
@@ -475,7 +477,7 @@ bool tchdbput(TCHDB *hdb, const void *kbuf, int ksiz, const void *vbuf, int vsiz
             zbuf = hdb->enc(vbuf, vsiz, &vsiz, hdb->encop);
         }
         if (!zbuf) {
-            tchdbsetecode(hdb, TCEMISC, __FILE__, __LINE__, __func__);
+            tchdbsetecode(hdb, TCEDATACOMPRESS, __FILE__, __LINE__, __func__);
             HDBUNLOCKRECORD(hdb, bidx);
             HDBUNLOCKMETHOD(hdb);
             return false;
@@ -1435,6 +1437,7 @@ void tchdbsetecode2(TCHDB *hdb, int ecode, const char *filename, int line, const
         case TCERENAME:
         case TCEMKDIR:
         case TCERMDIR:
+        case TCEICOMPRESS:
         {
             if (!notfatal) {
                 hdb->fatal = true;
@@ -2197,8 +2200,6 @@ static bool tchdbseekread2(TCHDB *hdb, off_t off, void *buf, size_t size, int op
             return false;
         }
     }
-    uint64_t xfsiz = __atomic_load_n64(&hdb->xfsiz, __ATOMIC_ACQUIRE);
-    uint64_t xmsiz = hdb->xmsiz;
     if (opts & HDBSEEKTRY) {
         uint64_t fsiz = hdb->fsiz;
         if (end > fsiz) {
@@ -2206,6 +2207,8 @@ static bool tchdbseekread2(TCHDB *hdb, off_t off, void *buf, size_t size, int op
             goto finish;
         }
     }
+    uint64_t xfsiz = __atomic_load_n64(&hdb->xfsiz, __ATOMIC_ACQUIRE);
+    uint64_t xmsiz = hdb->xmsiz;
     if (end <= xmsiz && end <= xfsiz) {
         memcpy(buf, (void *) (hdb->map + off), size);
         goto finish;
@@ -2746,7 +2749,8 @@ static void tchdbfbpinsert(TCHDB *hdb, uint64_t off, uint32_t rsiz) {
 /* Search the free block pool for the minimum region.
    `hdb' specifies the hash database object.
    `rec' specifies the record object to be stored.
-   The return value is true if successful, else, it is false. */
+   The return value is true if successful, else, it is false. 
+   #DB LOCK */
 static bool tchdbfbpsearch(TCHDB *hdb, TCHREC *rec) {
     assert(hdb && rec);
     TCDODEBUG(hdb->cnt_searchfbp++);
@@ -3826,18 +3830,18 @@ static bool tchdbopenimpl(TCHDB *hdb, const char *path, int omode) {
 	}
     int besiz = (hdb->opts & HDBTLARGE) ? sizeof (int64_t) : sizeof (int32_t);
     size_t msiz = HDBHEADSIZ + hdb->bnum * besiz;
-    if (!(omode & HDBONOLCK)) {
-        if (memcmp(hbuf, HDBMAGICDATA, strlen(HDBMAGICDATA)) || hdb->type != type ||
-                hdb->frec < msiz + HDBFBPBSIZ || hdb->frec > hdb->fsiz || sbuf.st_size < hdb->fsiz) {
-            tchdbsetecode(hdb, TCEMETA, __FILE__, __LINE__, __func__);
-            CLOSEFH2(hdb->fd);
-            return false;
-        }
+
+    if (memcmp(hbuf, HDBMAGICDATA, strlen(HDBMAGICDATA)) || hdb->type != type ||
+            hdb->frec < msiz + HDBFBPBSIZ || hdb->frec > hdb->fsiz || sbuf.st_size < hdb->fsiz) {
+        tchdbsetecode(hdb, TCEMETA, __FILE__, __LINE__, __func__);
+        CLOSEFH2(hdb->fd);
+        return false;
     }
+    
     if (((hdb->opts & HDBTDEFLATE) && !_tc_deflate) ||
             ((hdb->opts & HDBTBZIP) && !_tc_bzcompress) ||
             ((hdb->opts & HDBTEXCODEC) && !hdb->enc)) {
-        tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
+        tchdbsetecode(hdb, TCEICOMPRESS, __FILE__, __LINE__, __func__);
         CLOSEFH2(hdb->fd);
         return false;
     }
@@ -4018,10 +4022,10 @@ static bool tchdbputimpl(TCHDB *hdb, const char *kbuf, int ksiz, uint64_t bidx, 
         if (!tchdbreadrec(hdb, &rec, rbuf)) return false;
         if (hash > rec.hash) {
             off = rec.left;
-            entoff = rec.off + (sizeof (uint8_t) + sizeof (uint8_t));
+            entoff = rec.off + (sizeof (uint8_t) + sizeof (uint8_t)); //magic + hash
         } else if (hash < rec.hash) {
             off = rec.right;
-            entoff = rec.off + (sizeof (uint8_t) + sizeof (uint8_t)) +
+            entoff = rec.off + (sizeof (uint8_t) + sizeof (uint8_t)) + //magic + hash + sizeof(left)
                     (hdb->ba64 ? sizeof (uint64_t) : sizeof (uint32_t));
         } else {
             if (!rec.kbuf && !tchdbreadrecbody(hdb, &rec)) return false;
@@ -4031,13 +4035,13 @@ static bool tchdbputimpl(TCHDB *hdb, const char *kbuf, int ksiz, uint64_t bidx, 
                 TCFREE(rec.bbuf);
                 rec.kbuf = NULL;
                 rec.bbuf = NULL;
-                entoff = rec.off + (sizeof (uint8_t) + sizeof (uint8_t));
+                entoff = rec.off + (sizeof (uint8_t) + sizeof (uint8_t)); //magic + hash
             } else if (kcmp < 0) {
                 off = rec.right;
                 TCFREE(rec.bbuf);
                 rec.kbuf = NULL;
                 rec.bbuf = NULL;
-                entoff = rec.off + (sizeof (uint8_t) + sizeof (uint8_t)) +
+                entoff = rec.off + (sizeof (uint8_t) + sizeof (uint8_t)) + //magic + hash + sizeof(left)
                         (hdb->ba64 ? sizeof (uint64_t) : sizeof (uint32_t));
             } else {
                 bool rv;
@@ -4158,7 +4162,8 @@ static bool tchdbputimpl(TCHDB *hdb, const char *kbuf, int ksiz, uint64_t bidx, 
         tchdbsetecode(hdb, TCENOREC, __FILE__, __LINE__, __func__);
         return false;
     }
-    rec.rsiz = hdb->ba64 ? sizeof (uint8_t) * 2 + sizeof (uint64_t) * 2 + sizeof (uint16_t) :
+    rec.rsiz = hdb->ba64 ? 
+            sizeof (uint8_t) * 2 + sizeof (uint64_t) * 2 + sizeof (uint16_t) :
             sizeof (uint8_t) * 2 + sizeof (uint32_t) * 2 + sizeof (uint16_t);
     if (ksiz < (1U << 7)) {
         rec.rsiz += 1;
@@ -4182,6 +4187,7 @@ static bool tchdbputimpl(TCHDB *hdb, const char *kbuf, int ksiz, uint64_t bidx, 
     } else {
         rec.rsiz += 5;
     }
+    
     if (!HDBLOCKDB(hdb)) {
         return false;
     }
