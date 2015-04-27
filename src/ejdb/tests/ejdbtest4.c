@@ -13,7 +13,7 @@ static void eprint(EJDB *jb, int line, const char *func) {
             line, func, ecode, ejdberrmsg(ecode));
 }
 
-void testTicket53() {
+void testTicket53(void) {
     EJDB *jb = ejdbnew();
     CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_53", JBOWRITER | JBOCREAT));
     ejdbclose(jb);
@@ -31,7 +31,7 @@ void testTicket53() {
     ejdbdel(jb);
 }
 
-void testBSONExportImport() {
+void testBSONExportImport(void) {
     EJDB *jb = ejdbnew();
     CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT | JBOTRUNC));
     EJCOLL *coll = ejdbcreatecoll(jb, "col1", NULL);
@@ -164,7 +164,7 @@ void testBSONExportImport() {
     tclistdel(cnames);
 }
 
-void testBSONExportImport2() {
+void testBSONExportImport2(void) {
     EJDB *jb = ejdbnew();
     CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt4_export", JBOWRITER | JBOCREAT | JBOTRUNC));
     EJCOLL *coll = ejdbcreatecoll(jb, "col1", NULL);
@@ -330,6 +330,25 @@ void testBSONExportImport2() {
     bson_del(nmeta);
 }
 
+
+void testTicket135(void) {
+    bson bo_test;
+    bson_init(&bo_test);
+    bson_append_int(&bo_test, "myInt", 10);
+    bson_append_double(&bo_test, "myDouble", -50.0);
+    bson_finish(&bo_test);
+
+    char* buf = NULL;
+    int lenght = 0;
+    bson2json(bson_data(&bo_test), &buf, &lenght);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(buf);
+    CU_ASSERT_PTR_NOT_NULL(strstr(buf, "\"myInt\" : 10"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(buf, "\"myDouble\" : -50.000000"));
+    bson_destroy(&bo_test);
+    TCFREE(buf);
+}
+
+
 int init_suite(void) {
     return 0;
 }
@@ -347,7 +366,7 @@ int main() {
         return CU_get_error();
 
     /* Add a suite to the registry */
-    pSuite = CU_add_suite("t4", init_suite, clean_suite);
+    pSuite = CU_add_suite("ejdbtest1", init_suite, clean_suite);
     if (NULL == pSuite) {
         CU_cleanup_registry();
         return CU_get_error();
@@ -357,7 +376,8 @@ int main() {
     if (
             (NULL == CU_add_test(pSuite, "testTicket53", testTicket53)) ||
             (NULL == CU_add_test(pSuite, "testBSONExportImport", testBSONExportImport)) ||
-            (NULL == CU_add_test(pSuite, "testBSONExportImport2", testBSONExportImport2))
+            (NULL == CU_add_test(pSuite, "testBSONExportImport2", testBSONExportImport2)) ||
+            (NULL == CU_add_test(pSuite, "testTicket135", testTicket135))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

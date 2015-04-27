@@ -2513,7 +2513,7 @@ static int _bson2json(_BSON2JSONCTX *ctx, bson_iterator *it, bool array) {
                 break;
             case BSON_DOUBLE:
             {
-                tcxstrprintf(out, "%llf", bson_iterator_double(it));
+                tcxstrprintf(out, "%lf", bson_iterator_double(it));
                 break;
             }
             case BSON_STRING:

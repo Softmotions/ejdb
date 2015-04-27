@@ -1213,6 +1213,10 @@ EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool 
 
 /**
  * Convert BSON into JSON buffer.
+ * 
+ * A caller should free an allocated `*buf` 
+ * if value of `*buf` is not `NULL` after function completion. 
+ * 
  * @param src BSON data
  * @param buf Allocated buffer with resulting JSON data
  * @param sp JSON data length will be stored into
