@@ -273,10 +273,9 @@ static void tcvxstrprintf(TCXSTR *xstr, const char *format, va_list ap) {
                     TCXSTRCAT(xstr, tbuf, tlen);
                     break;
                 case 'e': case 'E': case 'f': case 'g': case 'G':
-                    if (lnum >= 1) {
-                        //tlen = snprintf(tbuf, sizeof(tbuf), cbuf, va_arg(ap, long double));
-                        //tlen = tcftoa(va_arg(ap, long double), tbuf, sizeof (tbuf), 6);
-                        tlen = tcftoa(va_arg(ap, double), tbuf, sizeof (tbuf), 6);
+                    if (lnum > 1) {
+                        //tlen = snprintf(tbuf, sizeof(tbuf), cbuf, va_arg(ap, long double))
+                        tlen = tcftoa(va_arg(ap, long double), tbuf, sizeof (tbuf), 6);
                     } else {
                         //tlen = snprintf(tbuf, sizeof(tbuf), cbuf, va_arg(ap, double));
                         tlen = tcftoa(va_arg(ap, double), tbuf, sizeof (tbuf), 6);
