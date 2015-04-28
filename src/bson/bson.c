@@ -899,10 +899,8 @@ int bson_ensure_space(bson *b, const int bytesNeeded) {
 
 int bson_finish(bson *b) {
     int i;
-
     if (b->err & BSON_NOT_UTF8)
         return BSON_ERROR;
-
     if (!b->finished) {
         if (bson_ensure_space(b, 1) == BSON_ERROR) return BSON_ERROR;
         bson_append_byte(b, 0);
@@ -910,7 +908,6 @@ int bson_finish(bson *b) {
         bson_little_endian32(b->data, &i);
         b->finished = 1;
     }
-
     return BSON_OK;
 }
 
@@ -1501,11 +1498,11 @@ typedef struct {
     const void *bsdata2; //bsdata to merge with
     int nstack; //nested object stack pos
     int matched; //number of matched merge fields
-} _BSON_MERGE3_CTX;
+} _BSONMERGE3CTX;
 
 static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, const char *key, int keylen,
         const bson_iterator *it, bool after, void *op) {
-    _BSON_MERGE3_CTX *ctx = op;
+    _BSONMERGE3CTX *ctx = op;
     assert(ctx && ctx->bsout && ctx->mfields && ipath && key && it && op);
     const void *buf;
     const char *mpath;
@@ -1582,7 +1579,7 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
     BSON_ITERATOR_FROM_BUFFER(&it2, bsdata2);
     const char *it2start = it2.cur;
     TCMAP *mfields = tcmapnew2(TCMAPTINYBNUM);
-    _BSON_MERGE3_CTX ctx = {
+    _BSONMERGE3CTX ctx = {
         .bsout = out,
         .mfields = mfields,
         .bsdata2 = bsdata2,
@@ -1679,7 +1676,6 @@ int bson_merge_recursive2(const void *b1data, const void *b2data, bson_bool_t ov
                 bson_append_field_from_iterator(&sit, out);
                 ++c;
             }
-
             char kbuf[TCNUMBUFSIZ];
             BSON_ITERATOR_SUBITERATOR(&it2, &sit);
             while ((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
@@ -1772,8 +1768,11 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
             bson_append_field_from_iterator(it, sctx->bsout);
             return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
         }
-    } else if (!after && ictx->astack > 0 && bson_isnumstr(key, keylen)) {
-        bson_append_undefined(sctx->bsout, key);
+    } else {
+        if (!after && ictx->astack > 0 && bson_isnumstr(key, keylen)) {
+            bson_append_undefined(sctx->bsout, key);
+        }
+        ictx->matched++;
     }
     return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
 }
@@ -1859,15 +1858,18 @@ static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipath
     return rv;
 }
 
-int bson_strip(TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout) {
+int bson_strip(TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout, int *matched) {
     BSONSTRIPCTX sctx = {
         .ifields = ifields,
         .imode = imode,
         .bsbuf = bsbuf,
         .bsout = bsout,
-        .fkfields = NULL
+        .fkfields = NULL,
+        .matched = 0
     };
-    return bson_strip2(&sctx);
+    int rc = bson_strip2(&sctx);
+    *matched = sctx.matched;
+    return rc;
 }
 
 /* Include or exclude fpaths in the specified BSON and put resulting data into `bsout`. */
@@ -1886,6 +1888,7 @@ int bson_strip2(BSONSTRIPCTX *sctx) {
     BSON_ITERATOR_FROM_BUFFER(&it, sctx->bsbuf);
     bson_visit_fields(&it, 0, (sctx->imode) ? _bsonstripvisitor_include : _bsonstripvisitor_exclude, &ictx);
     assert(ictx.nstack == 0);
+    sctx->matched = ictx.matched;
     return bson_finish(sctx->bsout);
 }
 
@@ -2110,7 +2113,7 @@ void bson_init_with_data(bson *bs, const void *bsdata) {
     bs->finished = true;
 }
 
-bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf, bool expandall) {
+bool bson_find_merged_arrays(const void *mbuf, const void *inbuf, bool expandall) {
     assert(mbuf && inbuf);
     bool found = false;
     bson_iterator it, it2;
@@ -2149,7 +2152,7 @@ bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf, bool expan
     return found;
 }
 
-bool bson_find_unmerged_array_sets(const void *mbuf, const void *inbuf) {
+bool bson_find_unmerged_arrays(const void *mbuf, const void *inbuf) {
     assert(mbuf && inbuf);
     bool allfound = false;
     bson_iterator it, it2;
@@ -2188,10 +2191,16 @@ typedef struct {
     int ecode;
     bool duty;
     bool expandall;
-} BSON_MASETS_CTX;
+    bson_merge_array_mode mode;
+} _BSONMARRCTX;
 
-static bson_visitor_cmd_t bson_merge_array_sets_pull_tf(const char *fpath, int fpathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op) {
-    BSON_MASETS_CTX *ctx = op;
+
+static bson_visitor_cmd_t _bson_merge_arrays_pull_visitor(
+                        const char *fpath, int fpathlen, 
+                        const char *key, int keylen, 
+                        const bson_iterator *it, bool after, void *op) {
+                            
+    _BSONMARRCTX *ctx = op;
     assert(ctx && ctx->mfields >= 0);
     bson_iterator mit;
     bson_type bt = BSON_ITERATOR_TYPE(it);
@@ -2250,8 +2259,13 @@ static bson_visitor_cmd_t bson_merge_array_sets_pull_tf(const char *fpath, int f
     return (BSON_VCMD_OK);
 }
 
-static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op) {
-    BSON_MASETS_CTX *ctx = op;
+static bson_visitor_cmd_t _bson_merge_arrays_visitor(
+                        const char *fpath, int fpathlen, 
+                        const char *key, int keylen, 
+                        const bson_iterator *it, 
+                        bool after, void *op) {
+                            
+    _BSONMARRCTX *ctx = op;
     assert(ctx && ctx->mfields >= 0);
     bson_iterator mit;
     bson_type bt = BSON_ITERATOR_TYPE(it);
@@ -2297,11 +2311,13 @@ static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathl
             BSON_ITERATOR_SUBITERATOR(&mit, &mitsub); //mit has BSON_ARRAY type
             while ((bt = bson_iterator_next(&mitsub)) != BSON_EOO) {
                 found = false;
-                BSON_ITERATOR_SUBITERATOR(it, &ait); //Rewind main array iterator
-                while ((bt = bson_iterator_next(&ait)) != BSON_EOO) {
-                    if (!bson_compare_it_current(&ait, &mitsub)) {
-                        found = true;
-                        break;
+                if (ctx->mode == BSON_MERGE_ARRAY_ADDSET) {
+                    BSON_ITERATOR_SUBITERATOR(it, &ait); //Rewind main array iterator
+                    while ((bt = bson_iterator_next(&ait)) != BSON_EOO) {
+                        if (!bson_compare_it_current(&ait, &mitsub)) {
+                            found = true;
+                            break;
+                        }
                     }
                 }
                 if (!found) { //Append missing element
@@ -2313,7 +2329,9 @@ static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathl
             }
         } else { //Single element to add
             while ((bt = bson_iterator_next(&ait)) != BSON_EOO) {
-                if (!found && !bson_compare_it_current(&ait, &mit)) {
+                if ((ctx->mode == BSON_MERGE_ARRAY_ADDSET) && 
+                    !found && 
+                    !bson_compare_it_current(&ait, &mit)) {
                     found = true;
                 }
                 bson_append_field_from_iterator(&ait, ctx->bsout);
@@ -2336,21 +2354,30 @@ static bson_visitor_cmd_t bson_merge_array_sets_tf(const char *fpath, int fpathl
         bson_append_finish_object(ctx->bsout);
     }
     return (BSON_VCMD_OK);
-
 }
 
-int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool expandall, bson *bsout) {
+int bson_merge_arrays(const void *mbuf, 
+                      const void *inbuf, 
+                      bson_merge_array_mode mode, 
+                      bool expandall, 
+                      bson *bsout) {
+                          
     assert(mbuf && inbuf && bsout);
+    assert(mode == BSON_MERGE_ARRAY_ADDSET || 
+           mode == BSON_MERGE_ARRAY_PULL || 
+           mode == BSON_MERGE_ARRAY_PUSH);
+    
     if (bsout->finished) {
         return BSON_ERROR;
     }
-    BSON_MASETS_CTX ctx = {
+    _BSONMARRCTX ctx = {
         .bsout = bsout,
         .mbuf = mbuf,
         .mfields = 0,
         .duty = false,
         .expandall = expandall,
-        .ecode = BSON_OK
+        .ecode = BSON_OK,
+        .mode = mode
     };
     bson_type bt, bt2;
     bson_iterator it, it2;
@@ -2362,12 +2389,13 @@ int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool e
         ctx.mfields++;
     }
     BSON_ITERATOR_FROM_BUFFER(&it, inbuf);
-    if (pull) {
-        bson_visit_fields(&it, 0, bson_merge_array_sets_pull_tf, &ctx);
+    if (mode == BSON_MERGE_ARRAY_PULL) {
+        bson_visit_fields(&it, 0, _bson_merge_arrays_pull_visitor, &ctx);
     } else {
-        bson_visit_fields(&it, 0, bson_merge_array_sets_tf, &ctx);
+        bson_visit_fields(&it, 0, _bson_merge_arrays_visitor, &ctx);
     }
-    if (ctx.mfields == 0 || pull) {
+    if (ctx.mfields == 0 || //all fields are merged
+        mode == BSON_MERGE_ARRAY_PULL) {
         return ctx.ecode;
     }
 
@@ -2415,12 +2443,10 @@ int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool e
         int res = bson_merge_recursive(&bsc, &bst, false, bsout);
         bson_destroy(&bsc);
         bson_destroy(&bst);
-
         if (res != BSON_OK) {
             return BSON_ERROR;
         }
     }
-
     return ctx.ecode;
 }
 

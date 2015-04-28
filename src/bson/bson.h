@@ -1161,6 +1161,7 @@ typedef struct {
     const void *bsbuf; //Required BSON buffer to process.
     bson *bsout; //Required Allocated output not finished bson* object.
     TCMAP *fkfields; //Optional: Map (fpath => bson key) used to force specific bson keys for selected fpaths.
+    int matched;  //Output: number of matched fieldpaths
 } BSONSTRIPCTX;
 
 /**
@@ -1171,9 +1172,10 @@ typedef struct {
  * @param imode If true fpaths will be included. Otherwise fpaths will be excluded from bson.
  * @param bsbuf BSON buffer to process.
  * @param bsout Allocated output not finished bson* object
+ * @param matched[out] Number of matched include/exclude fieldpaths.
  * @return BSON error code
  */
-EJDB_EXPORT int bson_strip(TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout);
+EJDB_EXPORT int bson_strip(TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout, int *matched);
 EJDB_EXPORT int bson_strip2(BSONSTRIPCTX *sctx);
 
 
@@ -1185,7 +1187,9 @@ EJDB_EXPORT int bson_strip2(BSONSTRIPCTX *sctx);
  * @param fplen Length of fpath value
  */
 EJDB_EXPORT int bson_compare(const void *bsdata1, const void *bsdata2, const char* fpath, int fplen);
-EJDB_EXPORT int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, const char *fpath1, int fplen1, const char *fpath2, int fplen2);
+EJDB_EXPORT int bson_compare_fpaths(const void *bsdata1, const void *bsdata2, 
+                                    const char *fpath1, int fplen1, 
+                                    const char *fpath2, int fplen2);
 EJDB_EXPORT int bson_compare_it_current(const bson_iterator *it1, const bson_iterator *it2);
 EJDB_EXPORT int bson_compare_string(const char* cv, const void *bsdata, const char *fpath);
 EJDB_EXPORT int bson_compare_long(const int64_t cv, const void *bsdata, const char *fpath);
@@ -1206,10 +1210,18 @@ EJDB_EXPORT bson* bson_create_from_buffer(const void *buf, int bufsz);
 EJDB_EXPORT bson* bson_create_from_buffer2(bson *bs, const void *buf, int bufsz);
 EJDB_EXPORT void bson_init_with_data(bson *bs, const void *bsdata);
 
-EJDB_EXPORT bool bson_find_unmerged_array_sets(const void *mbuf, const void *inbuf);
-EJDB_EXPORT bool bson_find_merged_array_sets(const void *mbuf, const void *inbuf, bool expandall);
-EJDB_EXPORT int bson_merge_array_sets(const void *mbuf, const void *inbuf, bool pull, bool expandall, bson *bsout);
+typedef enum {
+    BSON_MERGE_ARRAY_ADDSET = 0,
+    BSON_MERGE_ARRAY_PULL = 1,
+    BSON_MERGE_ARRAY_PUSH = 2
+} bson_merge_array_mode;
 
+EJDB_EXPORT int bson_merge_arrays(const void *mbuf, const void *inbuf, 
+                                  bson_merge_array_mode mode, 
+                                  bool expandall, bson *bsout);
+                                  
+EJDB_EXPORT bool bson_find_unmerged_arrays(const void *mbuf, const void *inbuf);
+EJDB_EXPORT bool bson_find_merged_arrays(const void *mbuf, const void *inbuf, bool expandall);
 
 /**
  * Convert BSON into JSON buffer.

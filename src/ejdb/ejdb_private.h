@@ -50,36 +50,37 @@ struct EJDB {
 
 enum { /**> Query field flags */
     // Comparison flags
-    EJCOMPGT = 1, /**> Comparison GT */
-    EJCOMPGTE = 1 << 1, /**> Comparison GTE */
-    EJCOMPLT = 1 << 2, /**> Comparison LT */
-    EJCOMPLTE = 1 << 3, /**> Comparison LTE */
-    EJCONDSTARTWITH = 1 << 4, /**> Starts with */
+    EJCOMPGT = 1u, /**> Comparison GT */
+    EJCOMPGTE = 1u << 1, /**> Comparison GTE */
+    EJCOMPLT = 1u << 2, /**> Comparison LT */
+    EJCOMPLTE = 1u << 3, /**> Comparison LTE */
+    EJCONDSTARTWITH = 1u << 4, /**> Starts with */
 
-    EJFEXCLUDED = 1 << 5, /**> If query field excluded from matching */
-    EJFNOINDEX = 1 << 6, /**> Do not use index for field */
-    EJFORDERUSED = 1 << 7, /**> This ordering field was used */
-    EJFPKMATCHING = 1 << 8, /**> _id PK field matching */
+    EJFEXCLUDED = 1u << 5, /**> If query field excluded from matching */
+    EJFNOINDEX = 1u << 6, /**> Do not use index for field */
+    EJFORDERUSED = 1u << 7, /**> This ordering field was used */
+    EJFPKMATCHING = 1u << 8, /**> _id PK field matching */
 
-    EJCONDICASE = 1 << 9, /**> Ignore case in matching */
+    EJCONDICASE = 1u << 9, /**> Ignore case in matching */
 
-    EJCONDSET = 1 << 10, /**> $set Set field update operation */
-    EJCONDINC = 1 << 11, /**> $inc Inc field update operation */
-    EJCONDADDSET = 1 << 12, /**> $addToSet Adds value to the array only if its not in the array already.  */
-    EJCONDPULL = 1 << 13, /**> $pull Removes all occurrences of value from field, if field is an array */
-    EJCONDUPSERT = 1 << 14, /**> $upsert Upsert $set operation */
-    EJCONDALL = 1 << 15, /**> 'All' modificator for $pull or $addToSet ($addToSetAll or $pullAll) */
-    EJCONDOIT = 1 << 16, /**> $do query field operation */
-    EJCONDUNSET = 1 << 17, /**> $unset Field value */
-    EJCONDRENAME = 1 << 18 /**> $rename Field value */
+    EJCONDSET = 1u << 10, /**> $set Set field update operation */
+    EJCONDINC = 1u << 11, /**> $inc Inc field update operation */
+    EJCONDADDSET = 1u << 12, /**> $addToSet, $addToSetAll. Adds a value to the array only if its not in the array already.  */
+    EJCONDPULL = 1u << 13, /**> $pull Removes all occurrences of value from field, if field is an array */
+    EJCONDUPSERT = 1u << 14, /**> $upsert Upsert $set operation */
+    EJCONDALL = 1u << 15, /**> 'All' modificator for $pull(All), $addToSet(All), $push(All) */
+    EJCONDOIT = 1u << 16, /**> $do query field operation */
+    EJCONDUNSET = 1u << 17, /**> $unset Field value */
+    EJCONDRENAME = 1u << 18, /**> $rename Field value */
+    EJCONDPUSH  = 1u << 19 /**> $push, $pushAll. Adds a value to the array */
 };
 
 enum { /**> Query flags */
     EJQINTERNAL = 1, /**> Internal query object used in _ejdbqryexecute */
-    EJQUPDATING = 1 << 1, /**> Query in updating mode */
-    EJQDROPALL = 1 << 2, /**> Drop bson object if matched */
-    EJQONLYCOUNT = 1 << 3, /**> Only count mode */
-    EJQHASUQUERY = 1 << 4 /**> It means the query contains update $(query) fields #91 */
+    EJQUPDATING = 1u << 1, /**> Query in updating mode */
+    EJQDROPALL = 1u << 2, /**> Drop bson object if matched */
+    EJQONLYCOUNT = 1u << 3, /**> Only count mode */
+    EJQHASUQUERY = 1u << 4 /**> It means the query contains update $(query) fields #91 */
 };
 
 typedef struct { /**> $(query) matchin slot used in update $ placeholder processing. #91 */

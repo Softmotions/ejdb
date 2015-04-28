@@ -71,29 +71,29 @@ enum { /** Error codes */
 };
 
 enum { /** Database open modes */
-    JBOREADER = 1 << 0, /**< Open as a reader. */
-    JBOWRITER = 1 << 1, /**< Open as a writer. */
-    JBOCREAT = 1 << 2, /**< Create if db file not exists. */
-    JBOTRUNC = 1 << 3, /**< Truncate db on open. */
-    JBONOLCK = 1 << 4, /**< Open without locking. */
-    JBOLCKNB = 1 << 5, /**< Lock without blocking. */
-    JBOTSYNC = 1 << 6 /**< Synchronize every transaction. */
+    JBOREADER = 1u << 0, /**< Open as a reader. */
+    JBOWRITER = 1u << 1, /**< Open as a writer. */
+    JBOCREAT = 1u << 2, /**< Create if db file not exists. */
+    JBOTRUNC = 1u << 3, /**< Truncate db on open. */
+    JBONOLCK = 1u << 4, /**< Open without locking. */
+    JBOLCKNB = 1u << 5, /**< Lock without blocking. */
+    JBOTSYNC = 1u << 6 /**< Synchronize every transaction. */
 };
 
 enum { /** Index modes, index types. */
-    JBIDXDROP = 1 << 0, /**< Drop index. */
-    JBIDXDROPALL = 1 << 1, /**< Drop index for all types. */
-    JBIDXOP = 1 << 2, /**< Optimize indexes. */
-    JBIDXREBLD = 1 << 3, /**< Rebuild index. */
-    JBIDXNUM = 1 << 4, /**< Number index. */
-    JBIDXSTR = 1 << 5, /**< String index.*/
-    JBIDXARR = 1 << 6, /**< Array token index. */
-    JBIDXISTR = 1 << 7 /**< Case insensitive string index */
+    JBIDXDROP = 1u << 0, /**< Drop index. */
+    JBIDXDROPALL = 1u << 1, /**< Drop index for all types. */
+    JBIDXOP = 1u << 2, /**< Optimize indexes. */
+    JBIDXREBLD = 1u << 3, /**< Rebuild index. */
+    JBIDXNUM = 1u << 4, /**< Number index. */
+    JBIDXSTR = 1u << 5, /**< String index.*/
+    JBIDXARR = 1u << 6, /**< Array token index. */
+    JBIDXISTR = 1u << 7 /**< Case insensitive string index */
 };
 
 enum { /*< Query search mode flags in ejdbqryexecute() */
-    JBQRYCOUNT = 1, /*< Query only count(*) */
-    JBQRYFINDONE = 1 << 1 /*< Fetch first record only */
+    JBQRYCOUNT = 1u, /*< Query only count(*) */
+    JBQRYFINDONE = 1u << 1 /*< Fetch first record only */
 };
 
 /**
