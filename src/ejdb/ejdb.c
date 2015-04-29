@@ -3466,7 +3466,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
     if (!(q->flags & EJQONLYCOUNT) && (all || count > skip)) { \
         _pushprocessedbson(&ctx, (_bsbuf), (_bsbufsz)); \
     }
-    //EOF #define JBQREGREC
+    // eof #define JBQREGREC
 
     bool trim = (midx && *midx->name != '\0');
     if (anum > 0 && !(mqf->flags & EJFEXCLUDED) && !(mqf->uslots && TCLISTNUM(mqf->uslots) > 0)) {
@@ -3474,7 +3474,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
         mqf->flags |= EJFEXCLUDED;
     }
 
-    if (mqf->flags & EJFPKMATCHING) { //PK matching
+    if (mqf->flags & EJFPKMATCHING) { // PK matching
         if (log) {
             tcxstrprintf(log, "PRIMARY KEY MATCHING: TRUE\n");
         }
@@ -3578,7 +3578,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
             }
         }
         tcbdbcurdel(cur);
-    } else if (mqf->tcop == TDBQCSTREQ) { /* string is equal to */
+    } else if (mqf->tcop == TDBQCSTREQ) { /* String is equal to */
         assert(midx->type == TDBITLEXICAL);
         char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
@@ -3599,7 +3599,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
             tcbdbcurnext(cur);
         }
         tcbdbcurdel(cur);
-    } else if (mqf->tcop == TDBQCSTRBW) { /* string begins with */
+    } else if (mqf->tcop == TDBQCSTRBW) { /* String begins with */
         assert(midx->type == TDBITLEXICAL);
         char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
@@ -3620,7 +3620,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
             tcbdbcurnext(cur);
         }
         tcbdbcurdel(cur);
-    } else if (mqf->tcop == TDBQCSTRORBW) { /* string begins with one token in */
+    } else if (mqf->tcop == TDBQCSTRORBW) { /* String begins with one token in */
         assert(mqf->ftype == BSON_ARRAY);
         assert(midx->type == TDBITLEXICAL);
         BDBCUR *cur = tcbdbcurnew(midx->db);
@@ -3659,7 +3659,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
             }
         }
         tcbdbcurdel(cur);
-    } else if (mqf->tcop == TDBQCSTROREQ) { /* string is equal to at least one token in */
+    } else if (mqf->tcop == TDBQCSTROREQ) { /* String is equal to at least one token in */
         assert(mqf->ftype == BSON_ARRAY);
         assert(midx->type == TDBITLEXICAL);
         BDBCUR *cur = tcbdbcurnew(midx->db);
@@ -3698,7 +3698,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
             }
         }
         tcbdbcurdel(cur);
-    } else if (mqf->tcop == TDBQCNUMEQ) { /* number is equal to */
+    } else if (mqf->tcop == TDBQCNUMEQ) { /* Number is equal to */
         assert(midx->type == TDBITDECIMAL);
         char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
@@ -3721,7 +3721,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
         }
         tcbdbcurdel(cur);
     } else if (mqf->tcop == TDBQCNUMGT || mqf->tcop == TDBQCNUMGE) {
-        /* number is greater than | number is greater than or equal to */
+        /* Number is greater than | number is greater than or equal to */
         assert(midx->type == TDBITDECIMAL);
         char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
@@ -3745,7 +3745,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
                 }
                 tcbdbcurprev(cur);
             }
-        } else { //ASC
+        } else { // ASC
             tctdbqryidxcurjumpnum(cur, expr, exprsz, true);
             while ((all || count < max) && (kbuf = tcbdbcurkey3(cur, &kbufsz)) != NULL) {
                 _EJDBNUM knum;
@@ -3764,7 +3764,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
         }
         tcbdbcurdel(cur);
     } else if (mqf->tcop == TDBQCNUMLT || mqf->tcop == TDBQCNUMLE) {
-        /* number is less than | number is less than or equal to */
+        /* Number is less than | number is less than or equal to */
         assert(midx->type == TDBITDECIMAL);
         char *expr = mqf->expr;
         int exprsz = mqf->exprsz;
@@ -3806,7 +3806,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
             }
         }
         tcbdbcurdel(cur);
-    } else if (mqf->tcop == TDBQCNUMBT) { /* number is between two tokens of */
+    } else if (mqf->tcop == TDBQCNUMBT) { /* Number is between two tokens of */
         assert(mqf->ftype == BSON_ARRAY);
         assert(midx->type == TDBITDECIMAL);
         assert(mqf->exprlist);
@@ -3841,7 +3841,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
             
             tclistinvert(res);
         }
-    } else if (mqf->tcop == TDBQCNUMOREQ) { /* number is equal to at least one token in */
+    } else if (mqf->tcop == TDBQCNUMOREQ) { /* Number is equal to at least one token in */
         assert(mqf->ftype == BSON_ARRAY);
         assert(midx->type == TDBITDECIMAL);
         BDBCUR *cur = tcbdbcurnew(midx->db);
@@ -3881,7 +3881,7 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
         }
         tcbdbcurdel(cur);
     } else if (mqf->tcop == TDBQCSTRAND || mqf->tcop == TDBQCSTROR || mqf->tcop == TDBQCSTRNUMOR) {
-        /* string includes all tokens in | string includes at least one token in */
+        /* String includes all tokens in | string includes at least one token in */
         assert(midx->type == TDBITTOKEN);
         assert(mqf->ftype == BSON_ARRAY);
         TCLIST *tokens = mqf->exprlist;
@@ -3926,12 +3926,12 @@ fullscan: /* Full scan */
     assert(!res || TCLISTNUM(res) == 0);
 
     if ((q->flags & EJQDROPALL) && (q->flags & EJQONLYCOUNT)) {
-        // if we are in primitive $dropall case. Query: {$dropall:true}
+        // If we are in primitive $dropall case. Query: {$dropall:true}
         if (qfsz == 1 && qfs[0]->tcop == TDBQTRUE) { //single $dropall field
             if (log) {
                 tcxstrprintf(log, "VANISH WHOLE COLLECTION ON $dropall\n");
             }
-            // write lock already acquired so use impl
+            // Write lock already acquired so use impl
             count = coll->tdb->hdb->rnum;
             if (!tctdbvanish(coll->tdb)) {
                 count = 0;
@@ -3972,7 +3972,7 @@ fullscan: /* Full scan */
             }
         }
         if (matched && _qry_and_or_match(coll, q, TCXSTRPTR(skbuf), TCXSTRSIZE(skbuf))) {
-            if (updkeys) { // we are in updating mode
+            if (updkeys) { // We are in updating mode
                 if (tcmapputkeep(updkeys, TCXSTRPTR(skbuf), 
                                  TCXSTRSIZE(skbuf), &yes, sizeof (yes))) {
                                      
@@ -3999,14 +3999,14 @@ sorting: /* Sorting resultset */
     if (!res || aofsz <= 0) { // No sorting needed
         goto finish;
     }
-    _EJBSORTCTX sctx; // sorting context
+    _EJBSORTCTX sctx; // Sorting context
     sctx.ofs = ofs;
     sctx.ofsz = ofsz;
     ejdbqsortlist(res, _ejdbsoncmp, &sctx);
 
 finish:
-    //check $upsert operation
-    if (count == 0 && (q->flags & EJQUPDATING)) { // finding $upsert qf if no updates maden
+    // Check $upsert operation
+    if (count == 0 && (q->flags & EJQUPDATING)) { // Finding the $upsert qf if no updates maden
         for (int i = 0; i < qfsz; ++i) {
             if (qfs[i]->flags & EJCONDUPSERT) {
                 bson *updateobj = qfs[i]->updateobj;
@@ -4037,12 +4037,12 @@ finish:
         }
     } // EOF $upsert
 
-    // revert max
+    // Revert max
     if (max < UINT_MAX && max > skip) {
         max = max - skip;
     }
     if (res) {
-        if (all) { // skipping results after full sorting with skip > 0
+        if (all) { // Skipping results after full sorting with skip > 0
             for (int i = 0; i < skip && res->num > 0; ++i) {
                 TCFREE(res->array[res->start].ptr);
                 ++(res->start);
@@ -4096,7 +4096,7 @@ finish:
     if (ofs) {
         TCFREE(ofs);
     }
-    ctx.res = NULL; // save res from deleting in `_qryctxclear()`
+    ctx.res = NULL; // Save res from deleting in `_qryctxclear()`
     _qryctxclear(&ctx);
 #undef JBQREGREC
     return res;
