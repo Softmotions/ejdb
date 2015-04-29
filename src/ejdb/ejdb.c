@@ -1222,7 +1222,7 @@ finish:
  * In order to cleanup resources you need:
  *      _delcoldb(coll);
  *      TCFREE(coll);
- * after this method completion with any return status.
+ * after completion of this method with any return status.
  */
 static bool _rmcollimpl(EJDB *jb, EJCOLL *coll, bool unlinkfile) {
     assert(jb && coll);
@@ -2668,8 +2668,8 @@ static bson_visitor_cmd_t _bsondovisitor(const char *ipath, int ipathlen,
 					}
 					
 				} else if (lbt == BSON_ARRAY && 
-							(bt == BSON_ARRAY || BSON_IS_NUM_TYPE(bt)) && 
-							!strcmp("$slice", dofname)) {
+                           (bt == BSON_ARRAY || BSON_IS_NUM_TYPE(bt)) && 
+                           !strcmp("$slice", dofname)) {
 								
 					bson_append_start_array(ictx->sbson, BSON_ITERATOR_KEY(it));
 					int skip = 0, limit, idx = 0, i;
@@ -2744,19 +2744,20 @@ static bool _pushprocessedbson(_QRYCTX *ctx, const void *bsbuf, int bsbufsz) {
     bson bsout;
     bson_init_on_stack(&bsout, bstack, bsbufsz, JBSBUFFERSZ);
 
-    if (ctx->dfields) { //$do fields exists
+    if (ctx->dfields) { // $do fields exists
         rv = _exec_do(ctx, bsbuf, &bsout);
     }
 
-    if (rv && (ifields || q->ifields)) { //$fields hints
+    if (rv && (ifields || q->ifields)) { // $fields hints
+    
         TCMAP *_ifields = ifields;
-        TCMAP *_fkfields = NULL; //Fields with overriden keys
+        TCMAP *_fkfields = NULL; // Fields with overriden keys
         char* inbuf = (bsout.finished) ? bsout.data : (char*) bsbuf;
         if (bsout.finished) {
             bson_init_size(&bsout, bson_size(&bsout));
         }
-        if (q->ifields) { //we have positional $(projection)
-            assert(ctx->imode == true); //ensure we are in include mode
+        if (q->ifields) { // We have positional $(projection)
+            assert(ctx->imode == true); // Ensure we are in include mode
             if (!_ifields) {
                 _ifields = tcmapnew2(q->ifields->bnum);
             } else {
@@ -2784,7 +2785,7 @@ static bool _pushprocessedbson(_QRYCTX *ctx, const void *bsbuf, int bsbufsz) {
                     ctx.dpos = (dpos - dfpath) - 1;
                     qf->mflags = (qf->flags & ~EJFEXCLUDED);
                     if (!_qrybsrecurrmatch(qf, &ctx, 0)) {
-                        assert(false); //something wrong, it should never be happen
+                        assert(false); // Something went wrong, it should never be happen
                     } else if (ctx.mpos >= 0) {
                         tcxstrcat(ifield, dfpath, (dpos - dfpath));
                         tcxstrprintf(ifield, "%d", ctx.mpos);
@@ -2792,12 +2793,13 @@ static bool _pushprocessedbson(_QRYCTX *ctx, const void *bsbuf, int bsbufsz) {
                         tcxstrcat(ifield, dpos + 1, sp - (dpos - dfpath) - 1);
                         tcmapput(_ifields, TCXSTRPTR(ifield), TCXSTRSIZE(ifield), &yes, sizeof (yes));
                     } else {
-                        assert(false); //something wrong, it should never be happen
+                        assert(false); // Something went wrong, it should never be happen
                     }
                     tcxstrdel(ifield);
                 }
             }
         }
+        
         BSONSTRIPCTX sctx = {
             .ifields = _ifields,
             .fkfields = _fkfields,
@@ -2806,6 +2808,7 @@ static bool _pushprocessedbson(_QRYCTX *ctx, const void *bsbuf, int bsbufsz) {
             .bsout = &bsout,
             .matched = 0
         };
+        
         if (bson_strip2(&sctx) != BSON_OK) {
             _ejdbsetecode(jb, JBEINVALIDBSON, __FILE__, __LINE__, __func__);
         }
@@ -2835,12 +2838,14 @@ static bool _pushprocessedbson(_QRYCTX *ctx, const void *bsbuf, int bsbufsz) {
 
 static bool _exec_do(_QRYCTX *ctx, const void *bsbuf, bson *bsout) {
     assert(ctx && ctx->dfields);
+    
     _BSONDOVISITORCTX ictx = {
         .q = ctx->q,
         .jb = ctx->coll->jb,
         .dfields = ctx->dfields,
         .sbson = bsout
     };
+    
     bson_iterator it;
     BSON_ITERATOR_FROM_BUFFER(&it, bsbuf);
     bson_visit_fields(&it, 0, _bsondovisitor, &ictx);
@@ -2851,10 +2856,10 @@ static bool _exec_do(_QRYCTX *ctx, const void *bsbuf, bson *bsout) {
     return true;
 }
 
-//Create update BSON object for $set/$unset/$inc operations
+// Create update BSON object for $set/$unset/$inc operations
 static bson* _qfgetupdateobj(const EJQF *qf) {
     assert(qf->updateobj);
-    if (!qf->ufields || TCLISTNUM(qf->ufields) < 1) { //we do not ref $(query) fields.
+    if (!qf->ufields || TCLISTNUM(qf->ufields) < 1) { // We do not ref $(query) fields.
         return qf->updateobj;
     }
     const EJQ *q = qf->q;
@@ -2883,11 +2888,11 @@ static bson* _qfgetupdateobj(const EJQF *qf) {
                     }
                     memcpy(pbuf, uf, ppos);
                     int wl = bson_numstrn(pbuf + ppos, (BSON_MAX_FPATH_LEN - ppos), uslot->mpos);
-                    if (wl >= BSON_MAX_FPATH_LEN - ppos) { //output is truncated
+                    if (wl >= BSON_MAX_FPATH_LEN - ppos) { // Output is truncated
                         break;
                     }
                     ppos += wl;
-                    //copy suffix
+                    // Copy suffix
                     for (int fpos = (dp - uf) + 1; ppos < BSON_MAX_FPATH_LEN && *(uf + fpos) != '\0';) {
                         pbuf[ppos++] = *(uf + fpos++);
                     }
@@ -2928,7 +2933,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
     bson_iterator it, it2;
     TCMAP *rowm = NULL;
 
-    if (q->flags & EJQDROPALL) { //Records will be dropped
+    if (q->flags & EJQDROPALL) { // Records will be dropped
         bt = bson_find_from_buffer(&it, bsbuf, JDBIDKEYNAME);
         if (bt != BSON_OID) {
             _ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
@@ -3007,7 +3012,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
 	if (renameqf) {
         char *inbuf = (bsout.finished) ? bsout.data : bsbuf;
         if (bsout.finished) {
-            //reinit `bsout`, `inbuf` already points to `bsout.data` and will be freed later
+            // Reinit `bsout`, `inbuf` already points to `bsout.data` and will be freed later
             bson_init_size(&bsout, bson_size(&bsout));
         } else {
             assert(bsout.data == NULL);
