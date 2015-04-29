@@ -3198,7 +3198,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
         }
     }
 
-    for (int i = 0; i < 2; ++i) { //$pull $pullAll
+    for (int i = 0; i < 2; ++i) { // $pull $pullAll
         const EJQF *qf = pullqf[i];
         if (!qf) continue;
         char *inbuf = (bsout.finished) ? bsout.data : bsbuf;
@@ -3209,7 +3209,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
                 assert(bsout.data == NULL);
                 bson_init_size(&bsout, bsbufsz);
             }
-            //$pull $pullAll merge
+            // $pull $pullAll merge
             if (bson_merge_arrays(bson_data(qf->updateobj), inbuf, 
                                   BSON_MERGE_ARRAY_PULL, (qf->flags & EJCONDALL), &bsout)) {
                 rv = false;
@@ -3226,7 +3226,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
         }
     }
     
-    for (int i = 0; i < 2; ++i) { //$push $pushAll
+    for (int i = 0; i < 2; ++i) { // $push $pushAll
         const EJQF *qf = pushqf[i];
         if (!qf) continue;
         char *inbuf = (bsout.finished) ? bsout.data : bsbuf;
@@ -3236,7 +3236,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
             assert(bsout.data == NULL);
             bson_init_size(&bsout, bsbufsz);
         }
-        //$push $pushAll merge
+        // $push $pushAll merge
         if (bson_merge_arrays(bson_data(qf->updateobj), inbuf, 
                               BSON_MERGE_ARRAY_PUSH, (qf->flags & EJCONDALL), &bsout)) {
             rv = false;
@@ -3249,19 +3249,19 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
         update++;
     }
 
-    for (int i = 0; i < 2; ++i) { //$addToSet $addToSetAll
+    for (int i = 0; i < 2; ++i) { // $addToSet $addToSetAll
         const EJQF *qf = addsetqf[i];
         if (!qf) continue;
         char *inbuf = (bsout.finished) ? bsout.data : bsbuf;
         if ((qf->flags & EJCONDALL) || bson_find_unmerged_arrays(bson_data(qf->updateobj), inbuf)) {
-            //Missing $addToSet element in some array field found
+            // Missing $addToSet element in some array field found
             if (bsout.finished) {
                 bson_init_size(&bsout, bson_size(&bsout));
             } else {
                 assert(bsout.data == NULL);
                 bson_init_size(&bsout, bsbufsz);
             }
-            //$addToSet $addToSetAll merge
+            // $addToSet $addToSetAll merge
             if (bson_merge_arrays(bson_data(qf->updateobj), inbuf, 
                                   BSON_MERGE_ARRAY_ADDSET, (qf->flags & EJCONDALL), &bsout)) {
                 rv = false;
@@ -3278,19 +3278,19 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
         }
     }
     
-    //Finishing document update
+    // Finishing document update
     if (!update || !rv) {
         goto finish;
     }
-    if (bsout.err) { //Resulting BSON is OK?
+    if (bsout.err) { // Resulting BSON is OK?
         rv = false;
         _ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
         goto finish;
     }
-    if (bson_size(&bsout) == 0) { //Record was not updated
+    if (bson_size(&bsout) == 0) { // Record was not updated
         goto finish;
     }
-    //Perform updating
+    // Perform updating
     bt = bson_find_from_buffer(&it, bsbuf, JDBIDKEYNAME);
     if (bt != BSON_OID) {
         rv = false;
@@ -3336,18 +3336,18 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
         _qryctxclear(&ctx);
         return NULL;
     }
-    bool all = false; //if True we need all records to fetch (sorting)
+    bool all = false; // If True we need all records to fetch (sorting)
     TCHDB *hdb = coll->tdb->hdb;
     TCLIST *res = ctx.res;
     EJQF *mqf = ctx.mqf;
 
-    int sz = 0; //generic size var
-    int anum = 0; //number of active conditions
-    int ofsz = 0; //order fields count
-    int aofsz = 0; //active order fields count
-    const int qfsz = TCLISTNUM(q->qflist); //number of all condition fields
-    EJQF **ofs = NULL; //order fields
-    EJQF **qfs = NULL; //condition fields array
+    int sz = 0;         // Generic size var
+    int anum = 0;       // Number of active conditions
+    int ofsz = 0;       // Order fields count
+    int aofsz = 0;      // Active order fields count
+    const int qfsz = TCLISTNUM(q->qflist); // Number of all condition fields
+    EJQF **ofs = NULL;  // Order fields
+    EJQF **qfs = NULL;  // Condition fields array
     if (qfsz > 0) {
         TCMALLOC(qfs, qfsz * sizeof (EJQF*));
     }
@@ -3357,12 +3357,12 @@ static TCLIST* _qryexecute(EJCOLL *coll, const EJQ *_q,
     const void *vbuf;
     int vbufsz;
 
-    uint32_t count = 0; //current count
+    uint32_t count = 0; // Current count
     uint32_t max = (q->max > 0) ? q->max : UINT_MAX;
     uint32_t skip = q->skip;
     const TDBIDX *midx = mqf ? mqf->idx : NULL;
 
-    if (midx) { //Main index used for ordering
+    if (midx) { // Main index used for ordering
         if (mqf->orderseq == 1 &&
                 !(mqf->tcop == TDBQCSTRAND || 
                 mqf->tcop == TDBQCSTROR || mqf->tcop == TDBQCSTRNUMOR)) {
