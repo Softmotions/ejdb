@@ -4091,6 +4091,60 @@ void testPushAll(void) {
     ejdbquerydel(q1);
 }
 
+void testRename2(void) {
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket123", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+    bson bsq1;
+    bson_init_as_query(&bsq1);
+    bson_append_start_object(&bsq1, "$rename");
+    bson_append_string(&bsq1, "abc.g", "abc.f");
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+    
+    EJQ *q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count = 0;
+    TCXSTR *log = tcxstrnew();
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+    
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "UPDATING MODE: YES"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS COUNT: 1"));
+    CU_ASSERT_PTR_NOT_NULL(strstr(TCXSTRPTR(log), "RS SIZE: 0"));
+    
+    //fprintf(stderr, "%s", TCXSTRPTR(log));
+    bson_destroy(&bsq1);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+    
+    //check updated  data
+    bson_init_as_query(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    log = tcxstrnew();
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+    //fprintf(stderr, "\n\n%s", TCXSTRPTR(log));
+
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_string("g", TCLISTVALPTR(q1res, i), "abc.de.0"));
+        CU_ASSERT_FALSE(bson_compare_string("f", TCLISTVALPTR(q1res, i), "abc.f.0"));
+        CU_ASSERT_FALSE(bson_compare_string("f", TCLISTVALPTR(q1res, i), "abc.f.1"));
+        CU_ASSERT_FALSE(bson_compare_string("h", TCLISTVALPTR(q1res, i), "abc.f.2"));
+        CU_ASSERT_FALSE(bson_compare_string("h", TCLISTVALPTR(q1res, i), "abc.f.3"));
+        CU_ASSERT_FALSE(bson_compare_long(11, TCLISTVALPTR(q1res, i), "abc.f.4"));
+    }
+
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+}
+
 
 void testPull(void) {
     EJCOLL *coll = ejdbcreatecoll(jb, "contacts", NULL);
@@ -6008,6 +6062,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket123", testTicket123)) ||
             (NULL == CU_add_test(pSuite, "testPush", testPush)) ||
             (NULL == CU_add_test(pSuite, "testPushAll", testPushAll)) ||
+            (NULL == CU_add_test(pSuite, "testRename2", testRename2)) ||
             (NULL == CU_add_test(pSuite, "testPull", testPull)) ||
             (NULL == CU_add_test(pSuite, "testFindInComplexArray", testFindInComplexArray)) ||
             (NULL == CU_add_test(pSuite, "testElemMatch", testElemMatch)) ||

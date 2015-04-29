@@ -36,11 +36,11 @@ typedef struct EJCOLL EJCOLL;
 struct EJQ; /**< EJDB query. */
 typedef struct EJQ EJQ;
 
-typedef struct { /**< EJDB collection tuning options. */
-    bool large; /**< Large collection. It can be larger than 2GB. Default false */
-    bool compressed; /**< Collection records will be compressed with DEFLATE compression. Default: false */
-    int64_t records; /**< Expected records number in the collection. Default: 128K */
-    int cachedrecords; /**< Maximum number of records cached in memory. Default: 0 */
+typedef struct {        /**< EJDB collection tuning options. */
+    bool large;         /**< Large collection. It can be larger than 2GB. Default false */
+    bool compressed;    /**< Collection records will be compressed with DEFLATE compression. Default: false */
+    int64_t records;    /**< Expected records number in the collection. Default: 128K */
+    int cachedrecords;  /**< Maximum number of records cached in memory. Default: 0 */
 } EJCOLLOPTS;
 
 
@@ -49,51 +49,51 @@ typedef TCLIST* EJQRESULT; /**< EJDB query result */
 #define JBMAXCOLNAMELEN 128
 
 enum { /** Error codes */
-    JBEINVALIDCOLNAME = 9000, /**< Invalid collection name. */
-    JBEINVALIDBSON = 9001, /**< Invalid bson object. */
-    JBEINVALIDBSONPK = 9002, /**< Invalid bson object id. */
+    JBEINVALIDCOLNAME = 9000,   /**< Invalid collection name. */
+    JBEINVALIDBSON = 9001,      /**< Invalid bson object. */
+    JBEINVALIDBSONPK = 9002,    /**< Invalid bson object id. */
     JBEQINVALIDQCONTROL = 9003, /**< Invalid query control field starting with '$'. */
-    JBEQINOPNOTARRAY = 9004, /**< $strand, $stror, $in, $nin, $bt keys requires not empty array value. */
-    JBEMETANVALID = 9005, /**< Inconsistent database metadata. */
-    JBEFPATHINVALID = 9006, /**< Invalid field path value. */
-    JBEQINVALIDQRX = 9007, /**< Invalid query regexp value. */
-    JBEQRSSORTING = 9008, /**< Result set sorting error. */
-    JBEQERROR = 9009, /**< Query generic error. */
-    JBEQUPDFAILED = 9010, /**< Updating failed. */
-    JBEQONEEMATCH = 9011, /**< Only one $elemMatch allowed in the fieldpath. */
-    JBEQINCEXCL = 9012, /**< $fields hint cannot mix include and exclude fields */
-    JBEQACTKEY = 9013, /**< action key in $do block can only be one of: $join, $slice */
-    JBEMAXNUMCOLS = 9014, /**< Exceeded the maximum number of collections per database */
-    JBEEI = 9015, /**< EJDB export/import error */
-    JBEEJSONPARSE = 9016, /**< JSON parsing failed */
-    JBETOOBIGBSON = 9017, /**< BSON size is too big */
-    JBEINVALIDCMD = 9018 /**< Invalid ejdb command specified */
+    JBEQINOPNOTARRAY = 9004,    /**< $strand, $stror, $in, $nin, $bt keys requires not empty array value. */
+    JBEMETANVALID = 9005,       /**< Inconsistent database metadata. */
+    JBEFPATHINVALID = 9006,     /**< Invalid field path value. */
+    JBEQINVALIDQRX = 9007,      /**< Invalid query regexp value. */
+    JBEQRSSORTING = 9008,       /**< Result set sorting error. */
+    JBEQERROR = 9009,           /**< Query generic error. */
+    JBEQUPDFAILED = 9010,       /**< Updating failed. */
+    JBEQONEEMATCH = 9011,       /**< Only one $elemMatch allowed in the fieldpath. */
+    JBEQINCEXCL = 9012,         /**< $fields hint cannot mix include and exclude fields */
+    JBEQACTKEY = 9013,          /**< action key in $do block can only be one of: $join, $slice */
+    JBEMAXNUMCOLS = 9014,       /**< Exceeded the maximum number of collections per database */
+    JBEEI = 9015,               /**< EJDB export/import error */
+    JBEEJSONPARSE = 9016,       /**< JSON parsing failed */
+    JBETOOBIGBSON = 9017,       /**< BSON size is too big */
+    JBEINVALIDCMD = 9018        /**< Invalid ejdb command specified */
 };
 
 enum { /** Database open modes */
-    JBOREADER = 1u << 0, /**< Open as a reader. */
-    JBOWRITER = 1u << 1, /**< Open as a writer. */
-    JBOCREAT = 1u << 2, /**< Create if db file not exists. */
-    JBOTRUNC = 1u << 3, /**< Truncate db on open. */
-    JBONOLCK = 1u << 4, /**< Open without locking. */
-    JBOLCKNB = 1u << 5, /**< Lock without blocking. */
-    JBOTSYNC = 1u << 6 /**< Synchronize every transaction. */
+    JBOREADER = 1u << 0,    /**< Open as a reader. */
+    JBOWRITER = 1u << 1,    /**< Open as a writer. */
+    JBOCREAT = 1u << 2,     /**< Create if db file not exists. */
+    JBOTRUNC = 1u << 3,     /**< Truncate db on open. */
+    JBONOLCK = 1u << 4,     /**< Open without locking. */
+    JBOLCKNB = 1u << 5,     /**< Lock without blocking. */
+    JBOTSYNC = 1u << 6      /**< Synchronize every transaction. */
 };
 
 enum { /** Index modes, index types. */
-    JBIDXDROP = 1u << 0, /**< Drop index. */
+    JBIDXDROP = 1u << 0,    /**< Drop index. */
     JBIDXDROPALL = 1u << 1, /**< Drop index for all types. */
-    JBIDXOP = 1u << 2, /**< Optimize indexes. */
-    JBIDXREBLD = 1u << 3, /**< Rebuild index. */
-    JBIDXNUM = 1u << 4, /**< Number index. */
-    JBIDXSTR = 1u << 5, /**< String index.*/
-    JBIDXARR = 1u << 6, /**< Array token index. */
-    JBIDXISTR = 1u << 7 /**< Case insensitive string index */
+    JBIDXOP = 1u << 2,      /**< Optimize indexes. */
+    JBIDXREBLD = 1u << 3,   /**< Rebuild index. */
+    JBIDXNUM = 1u << 4,     /**< Number index. */
+    JBIDXSTR = 1u << 5,     /**< String index.*/
+    JBIDXARR = 1u << 6,     /**< Array token index. */
+    JBIDXISTR = 1u << 7     /**< Case insensitive string index */
 };
 
 enum { /*< Query search mode flags in ejdbqryexecute() */
-    JBQRYCOUNT = 1u, /*< Query only count(*) */
-    JBQRYFINDONE = 1u << 1 /*< Fetch first record only */
+    JBQRYCOUNT = 1u,        /*< Query only count(*) */
+    JBQRYFINDONE = 1u << 1  /*< Fetch first record only */
 };
 
 /**

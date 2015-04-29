@@ -2979,7 +2979,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
         }
     }
     
-	if (renameqf) { //todo rename nested fields!
+	if (renameqf) {
         char *inbuf = (bsout.finished) ? bsout.data : bsbuf;
         if (bsout.finished) {
             //reinit `bsout`, `inbuf` already points to `bsout.data` and will be freed later
@@ -2988,47 +2988,31 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
             assert(bsout.data == NULL);
             bson_init_size(&bsout, bsbufsz);
         }
-        TCMAP *efields = NULL;
 		bson *updobj = _qfgetupdateobj(renameqf);
-		BSON_ITERATOR_INIT(&it, updobj);
-		while (rv && (bt = bson_iterator_next(&it)) != BSON_EOO) {
-			if (bt != BSON_STRING) {
-				continue;
-			}
-            const char *ofpath = BSON_ITERATOR_KEY(&it);
-			const char *nfpath = bson_iterator_string(&it);
-            bt2 = bson_find_from_buffer(&it2, inbuf, ofpath);
-			if (bt2 == BSON_EOO) { 
-				continue;
-			}
-			if (bson_append_field_from_iterator2(nfpath, &it2, &bsout) != BSON_OK) {
-				rv = false;
-				_ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
-				break;
-			}
-            update++;
-            if (!efields) {
-                efields = tcmapnew2(TCMAPTINYBNUM);
+        TCMAP *rfields = tcmapnew2(TCMAPTINYBNUM);
+        BSON_ITERATOR_INIT(&it, updobj);
+        while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+            if (bt != BSON_STRING) {
+                continue;
             }
-			tcmapputkeep(efields, ofpath, strlen(ofpath), "", 0);
-			tcmapputkeep(efields, nfpath, strlen(nfpath), "", 0);
-		}
-
-        BSON_ITERATOR_FROM_BUFFER(&it, inbuf);
-        while (rv && (bt = bson_iterator_next(&it)) != BSON_EOO) {
-            const char *fpath = BSON_ITERATOR_KEY(&it);
-			if (efields && tcmapget2(efields, fpath)) { 
-				continue;
-			}
-			if (bson_append_field_from_iterator(&it, &bsout) != BSON_OK) {
-				rv = false;
-				_ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
-				break;
-			}
-		}
-        if (efields) {
-            tcmapdel(efields);
+            const char *nfpath = bson_iterator_string(&it);
+            int nlen = bson_iterator_string_len(&it);
+            if (nlen == 0) {
+                continue;
+            }
+            tcmapputkeep(rfields, 
+                         BSON_ITERATOR_KEY(&it), strlen(BSON_ITERATOR_KEY(&it)), 
+                         nfpath, nlen);
         }
+        int rencnt;
+        if (bson_rename(rfields, inbuf, &bsout, &rencnt) != BSON_OK) {
+            rv = false;
+            _ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);    
+        }
+        if (rencnt > 0) {
+            update++;
+        }
+        tcmapdel(rfields);
         bson_finish(&bsout);
         if (inbuf != bsbuf) {
             TCFREE(inbuf);
@@ -3049,7 +3033,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
             assert(bsout.data == NULL);
             bson_init_size(&bsout, bsbufsz);
         }
-        int matched = 0;
+        int matched;
         bson *updobj = _qfgetupdateobj(unsetqf);
         TCMAP *ifields = tcmapnew2(TCMAPTINYBNUM);
         BSON_ITERATOR_INIT(&it, updobj);
@@ -3087,7 +3071,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
             assert(bsout.data == NULL);
             bson_init_size(&bsout, bsbufsz);
         }
-        int err = bson_merge3(bsbuf, bson_data(updobj), &bsout);
+        int err = bson_merge_fieldpaths(bsbuf, bson_data(updobj), &bsout);
         if (err) {
             rv = false;
             _ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);

@@ -234,8 +234,15 @@ typedef enum {
     BSON_VCMD_SKIP_NESTED = 1 << 1,
     BSON_VCMD_SKIP_AFTER = 1 << 2
 } bson_visitor_cmd_t;
-typedef bson_visitor_cmd_t(*BSONVISITOR)(const char *ipath, int ipathlen, const char *key, int keylen, const bson_iterator *it, bool after, void *op);
-EJDB_EXPORT void bson_visit_fields(bson_iterator *it, bson_traverse_flags_t flags, BSONVISITOR visitor, void *op);
+
+typedef bson_visitor_cmd_t(*BSONVISITOR)(const char *ipath, int ipathlen, 
+                                         const char *key, int keylen, 
+                                         const bson_iterator *it, 
+                                         bool after, void *op);
+
+EJDB_EXPORT void bson_visit_fields(bson_iterator *it, 
+                                   bson_traverse_flags_t flags, 
+                                   BSONVISITOR visitor, void *op);
 
 
 EJDB_EXPORT bson_iterator* bson_iterator_create(void);
@@ -1149,19 +1156,20 @@ EJDB_EXPORT int bson_merge_recursive2(const void *b1data, const void *b2data, bs
  *
  * @return BSON_OK or BSON_ERROR.
  */
-EJDB_EXPORT int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out);
+EJDB_EXPORT int bson_merge_fieldpaths(const void *bsdata1, const void *bsdata2, bson *out);
 
 EJDB_EXPORT int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val);
 EJDB_EXPORT int bson_inplace_set_long(bson_iterator *pos, int64_t val);
 EJDB_EXPORT int bson_inplace_set_double(bson_iterator *pos, double val);
 
 typedef struct {
-    TCMAP *ifields; //Required Map of fieldpaths. Map values are a simple boolean bufs.
-    bool imode; //Required If true fpaths will be included. Otherwise fpaths will be excluded from bson.
-    const void *bsbuf; //Required BSON buffer to process.
-    bson *bsout; //Required Allocated output not finished bson* object.
-    TCMAP *fkfields; //Optional: Map (fpath => bson key) used to force specific bson keys for selected fpaths.
-    int matched;  //Output: number of matched fieldpaths
+    TCMAP *ifields;     //Required Map of fieldpaths. Map values are a simple boolean bufs.
+    bool imode;         //Required If true fpaths will be included. Otherwise fpaths will be excluded from bson.
+    const void *bsbuf;  //Required BSON buffer to process.
+    bson *bsout;        //Required Allocated output not finished bson* object.
+    TCMAP *fkfields;    //Optional: Map (fpath => bson key) used to force specific bson keys for selected fpaths.
+    int matched;        //Output: number of matched fieldpaths
+    bson *collector;    //Optional: Collector for excluded data (fieldpath -> excluded value)
 } BSONSTRIPCTX;
 
 /**
@@ -1171,12 +1179,25 @@ typedef struct {
  * @param ifields Map of fieldpaths. Map values are a simple boolean bufs.
  * @param imode If true fpaths will be included. Otherwise fpaths will be excluded from bson.
  * @param bsbuf BSON buffer to process.
- * @param bsout Allocated output not finished bson* object
+ * @param bsout Allocated and not finished output bson* object
  * @param matched[out] Number of matched include/exclude fieldpaths.
  * @return BSON error code
  */
 EJDB_EXPORT int bson_strip(TCMAP *ifields, bool imode, const void *bsbuf, bson *bsout, int *matched);
 EJDB_EXPORT int bson_strip2(BSONSTRIPCTX *sctx);
+
+/**
+ * @brief Rename a fields specified by `fields` rename mapping.
+ * 
+ * This operation unsets both all and new fieldpaths and then sets 
+ * new fieldpath values. 
+ * 
+ * @param fields Rename mapping old `fieldpath` to new `fieldpath`.
+ * @param bsbuf BSON buffer to process.
+ * @param bsout Allocated and not finished output bson* object
+ * @param rencnt A number of fieldpaths actually renamed.
+ */
+EJDB_EXPORT int bson_rename(TCMAP *fields, const void *bsbuf, bson *bsout, int *rencnt);
 
 
 /**

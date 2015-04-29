@@ -1500,8 +1500,12 @@ typedef struct {
     int matched; //number of matched merge fields
 } _BSONMERGE3CTX;
 
-static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, const char *key, int keylen,
-        const bson_iterator *it, bool after, void *op) {
+static bson_visitor_cmd_t _bson_merge_fieldpaths_visitor(
+        const char *ipath, int ipathlen, 
+        const char *key, int keylen,
+        const bson_iterator *it, 
+        bool after, void *op) {
+            
     _BSONMERGE3CTX *ctx = op;
     assert(ctx && ctx->bsout && ctx->mfields && ipath && key && it && op);
     const void *buf;
@@ -1571,7 +1575,7 @@ static bson_visitor_cmd_t _bson_merge3_visitor(const char *ipath, int ipathlen, 
 
 //merge with fpath support
 
-int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
+int bson_merge_fieldpaths(const void *bsdata1, const void *bsdata2, bson *out) {
     assert(bsdata1 && bsdata2 && out);
     bson_iterator it1, it2;
     bson_type bt;
@@ -1592,7 +1596,7 @@ int bson_merge3(const void *bsdata1, const void *bsdata2, bson *out) {
         off_t it2off = (it2.cur - it2start);
         tcmapput(mfields, key, strlen(key), &it2off, sizeof (it2off));
     }
-    bson_visit_fields(&it1, 0, _bson_merge3_visitor, &ctx);
+    bson_visit_fields(&it1, 0, _bson_merge_fieldpaths_visitor, &ctx);
     assert(ctx.nstack == 0);
     if (TCMAPRNUM(mfields) == 0) { //all merge fields applied
         tcmapdel(mfields);
@@ -1651,7 +1655,9 @@ int bson_merge(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out)
 int bson_merge_recursive2(const void *b1data, const void *b2data, bson_bool_t overwrite, bson *out) {
     bson_iterator it1, it2;
     bson_type bt1, bt2;
-
+    if (out->finished) {
+        return BSON_ERROR;
+    }
     BSON_ITERATOR_FROM_BUFFER(&it1, b1data);
     BSON_ITERATOR_FROM_BUFFER(&it2, b2data);
     //Append all fields in B1 merging with fields in B2 (for nested objects & arrays)
@@ -1719,8 +1725,12 @@ typedef struct {
 } _BSONSTRIPVISITORCTX;
 
 /* Discard excluded fields from BSON */
-static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipathlen, const char *key, int keylen,
-        const bson_iterator *it, bool after, void *op) {
+static bson_visitor_cmd_t _bsonstripvisitor_exclude(
+        const char *ipath, int ipathlen, 
+        const char *key, int keylen,
+        const bson_iterator *it, 
+        bool after, void *op) {
+    
     _BSONSTRIPVISITORCTX *ictx = op;
     assert(ictx);
     BSONSTRIPCTX *sctx = ictx->sctx;
@@ -1769,6 +1779,21 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
             return (BSON_VCMD_SKIP_NESTED | BSON_VCMD_SKIP_AFTER);
         }
     } else {
+        if (sctx->collector) {
+            const char *k = NULL;
+            char cpath[BSON_MAX_FPATH_LEN + 1];
+            assert(ipathlen <= BSON_MAX_FPATH_LEN && !sctx->collector->finished);
+            if (sctx->fkfields) {
+                k = tcmapget(sctx->fkfields, ipath, ipathlen, &bufsz);
+            }
+            if (!k) {
+                memcpy(cpath, ipath, ipathlen);
+                cpath[ipathlen] = '\0'; 
+                k = cpath;
+            }
+            bson_iterator cit = *it;
+            bson_append_field_from_iterator2(k, &cit, sctx->collector);
+        }
         if (!after && ictx->astack > 0 && bson_isnumstr(key, keylen)) {
             bson_append_undefined(sctx->bsout, key);
         }
@@ -1778,8 +1803,11 @@ static bson_visitor_cmd_t _bsonstripvisitor_exclude(const char *ipath, int ipath
 }
 
 /* Accept only included fields into BSON */
-static bson_visitor_cmd_t _bsonstripvisitor_include(const char *ipath, int ipathlen, const char *key, int keylen,
+static bson_visitor_cmd_t _bsonstripvisitor_include(
+        const char *ipath, int ipathlen, 
+        const char *key, int keylen,
         const bson_iterator *it, bool after, void *op) {
+    
     _BSONSTRIPVISITORCTX *ictx = op;
     assert(ictx);
     BSONSTRIPCTX *sctx = ictx->sctx;
@@ -1890,6 +1918,46 @@ int bson_strip2(BSONSTRIPCTX *sctx) {
     assert(ictx.nstack == 0);
     sctx->matched = ictx.matched;
     return bson_finish(sctx->bsout);
+}
+
+int bson_rename(TCMAP *fields, const void *bsbuf, bson *bsout, int *rencnt) {
+    *rencnt = 0;
+    if (TCMAPRNUM(fields) == 0) {
+        return BSON_OK; //nothing to rename
+    }
+    
+    int rv;
+    bson res, collector;
+    bson_init(&res);
+    bson_init(&collector);
+    
+    BSONSTRIPCTX sctx = {
+        .ifields = fields,
+        .imode = false,
+        .bsbuf = bsbuf,
+        .bsout = &res,
+        .collector = &collector,
+        .fkfields = fields
+    };
+    if ((rv = bson_strip2(&sctx)) != BSON_OK) {
+        goto finish;
+    }
+    if ((rv = bson_finish(&res)) != BSON_OK) {
+        goto finish;
+    }
+    if ((rv = bson_finish(&collector)) != BSON_OK) {
+        goto finish;
+    }
+    if ((rv = bson_merge_fieldpaths(bson_data(&res), 
+                                    bson_data(&collector), 
+                                    bsout)) != BSON_OK) {
+        goto finish;
+    }
+    *rencnt = sctx.matched;
+finish:
+    bson_destroy(&res);
+    bson_destroy(&collector);
+    return rv;
 }
 
 int bson_inplace_set_bool(bson_iterator *pos, bson_bool_t val) {

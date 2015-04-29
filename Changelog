@@ -1,6 +1,8 @@
 ejdb (1.2.8) UNRELEASED; urgency=low
 
   * Fix: Problem with the bson2json conversion dealing with doubles #135
+  *	$push and $pushAll operations are implemented. #130
+  * Fix: $rename can operate on nested json objects #107
 
  -- Anton Adamansky <adamansky@gmail.com>  Mon, 27 Apr 2015 21:30:11 +0600
 
