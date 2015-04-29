@@ -3308,7 +3308,6 @@ void testUpdate2(void) { //https://github.com/Softmotions/ejdb/issues/9
     bson_append_start_object(&bsq1, "$set");
     bson_append_bool(&bsq1, "visited", true);
     bson_append_finish_object(&bsq1);
-    bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
@@ -3347,7 +3346,47 @@ void testUpdate2(void) { //https://github.com/Softmotions/ejdb/issues/9
     tclistdel(q1res);
     tcxstrdel(log);
     ejdbquerydel(q1);
+    
+    //test nested $inc #120
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "John Travolta");
+    bson_append_start_object(&bsq1, "$inc");
+    bson_append_int(&bsq1, "number.of.coins", 22);
+    bson_append_finish_object(&bsq1);
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
 
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    count = 0;
+    log = tcxstrnew();
+    ejdbqryexecute(coll, q1, &count, JBQRYCOUNT, log);
+    bson_destroy(&bsq1);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
+    
+    //check test nested $inc #120
+    bson_init_as_query(&bsq1);
+    bson_append_string(&bsq1, "name", "John Travolta");
+    bson_finish(&bsq1);
+    CU_ASSERT_FALSE_FATAL(bsq1.err);
+    
+    q1 = ejdbcreatequery(jb, &bsq1, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    count = 0;
+    log = tcxstrnew();
+    q1res = ejdbqryexecute(coll, q1, &count, 0, log);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1res);
+    CU_ASSERT_EQUAL_FATAL(count, 1);
+    
+    for (int i = 0; i < TCLISTNUM(q1res); ++i) {
+        CU_ASSERT_FALSE(bson_compare_long(22, TCLISTVALPTR(q1res, i), "number.of.coins"));
+    }
+    
+    bson_destroy(&bsq1);
+    tclistdel(q1res);
+    tcxstrdel(log);
+    ejdbquerydel(q1);
 }
 
 void testUpdate3(void) {
@@ -3362,7 +3401,6 @@ void testUpdate3(void) {
     bson_append_string(&bsq1, "name", "John Travolta");
     bson_append_start_object(&bsq1, "$rename");
     bson_append_string(&bsq1, "name", "fullName");
-    //bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
@@ -3385,7 +3423,6 @@ void testUpdate3(void) {
 
     bson_init_as_query(&bsq1);
     bson_append_string(&bsq1, "fullName", "John Travolta");
-    bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);
 
@@ -3411,7 +3448,6 @@ void testUpdate3(void) {
     bson_append_string(&bsq1, "fullName", "John Travolta");
     bson_append_start_object(&bsq1, "$rename");
     bson_append_string(&bsq1, "fullName", "name");
-    //bson_append_finish_object(&bsq1);
     bson_append_finish_object(&bsq1);
     bson_finish(&bsq1);
     CU_ASSERT_FALSE_FATAL(bsq1.err);

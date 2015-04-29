@@ -2930,17 +2930,15 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
     
     //Apply update operation
     bson bsout;
-    bsout.data = NULL;
-    bsout.dataSize = 0;
-    bson_reset(&bsout);
+    bson_init_size(&bsout, 0);
 
-    const EJQF *setqf = NULL; /*$set*/
-    const EJQF *unsetqf = NULL; /*$unset*/
-    const EJQF *incqf = NULL; /*$inc*/
-	const EJQF *renameqf = NULL; /*$rename*/
-    const EJQF *addsetqf[2] = {NULL}; /*$addToSet, $addToSetAll*/
-    const EJQF *pushqf[2] = {NULL}; /*$push, $pushAll */
-    const EJQF *pullqf[2] = {NULL}; /*$pull, $pullAll*/
+    const EJQF *setqf = NULL;                   // $set 
+    const EJQF *unsetqf = NULL;                 // $unset
+    const EJQF *incqf = NULL;                   // $inc
+	const EJQF *renameqf = NULL;                // $rename
+    const EJQF *addsetqf[2] = {NULL};           // $addToSet, $addToSetAll
+    const EJQF *pushqf[2] = {NULL};             // $push, $pushAll
+    const EJQF *pullqf[2] = {NULL};             // $pull, $pullAll
 
     for (int i = 0; i < TCLISTNUM(q->qflist); ++i) {
         
@@ -2950,27 +2948,27 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
         if (qf->updateobj == NULL) {
             continue;
         } 
-        if (flags & EJCONDSET) { //$set
+        if (flags & EJCONDSET) {                // $set
             setqf = qf;
-        } else if (flags & EJCONDUNSET) { //$unset
+        } else if (flags & EJCONDUNSET) {       // $unset
             unsetqf = qf;
-        } else if (flags & EJCONDINC) { //$inc
+        } else if (flags & EJCONDINC) {         // $inc
             incqf = qf;
-        } else if (flags & EJCONDRENAME) { //$rename
+        } else if (flags & EJCONDRENAME) {      // $rename
 			renameqf = qf;
-		} else if (flags & EJCONDADDSET) { //$addToSet, $addToSetAll
+		} else if (flags & EJCONDADDSET) {      // $addToSet, $addToSetAll
             if (flags & EJCONDALL) {
                 addsetqf[1] = qf;
             } else {
                 addsetqf[0] = qf;
             }
-        } else if (flags & EJCONDPUSH) { //$push, $pushAll
+        } else if (flags & EJCONDPUSH) {        // $push, $pushAll
             if (flags & EJCONDALL) {
                 pushqf[1] = qf;
             } else {
                 pushqf[0] = qf;
             }
-        } else if (flags & EJCONDPULL) { //$pull, $pullAll
+        } else if (flags & EJCONDPULL) {        // $pull, $pullAll
             if (flags & EJCONDALL) {
                 pullqf[1] = qf;
             } else {
@@ -3071,7 +3069,7 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
             assert(bsout.data == NULL);
             bson_init_size(&bsout, bsbufsz);
         }
-        int err = bson_merge_fieldpaths(bsbuf, bson_data(updobj), &bsout);
+        int err = bson_merge_fieldpaths(inbuf, bson_data(updobj), &bsout);
         if (err) {
             rv = false;
             _ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
@@ -3088,7 +3086,9 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
         }
     }
 
-    if (incqf) { //$inc
+    if (incqf) { // $inc
+        bson bsmerge; // holds missing $inc fieldpaths in object
+        bson_init_size(&bsmerge, 0);
         bson *updobj = _qfgetupdateobj(incqf);
         if (!bsout.data) {
             bson_create_from_buffer2(&bsout, bsbuf, bsbufsz);
@@ -3100,6 +3100,16 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
             }
             BSON_ITERATOR_INIT(&it2, &bsout);
             bt2 = bson_find_fieldpath_value(BSON_ITERATOR_KEY(&it), &it2);
+            if (bt2 == BSON_EOO) { // found a missing field
+                if (!bsmerge.data) {
+                    bson_init_size(&bsmerge, bson_size(updobj));
+                }
+                if (bt == BSON_DOUBLE) {
+                    bson_append_double(&bsmerge, BSON_ITERATOR_KEY(&it), bson_iterator_double(&it));
+                } else {
+                    bson_append_long(&bsmerge, BSON_ITERATOR_KEY(&it), bson_iterator_long(&it));
+                }
+            }
             if (!BSON_IS_NUM_TYPE(bt2)) {
                 continue;
             }
@@ -3127,6 +3137,27 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
                 update++;
             }
         }
+        
+        if (rv && 
+            bsmerge.data && 
+            bson_finish(&bsmerge) == BSON_OK) {
+            
+            bson_finish(&bsout);
+            char *inbuf = bsout.data;
+            bson_init_size(&bsout, bson_size(&bsout));
+            if (bson_merge_fieldpaths(inbuf, bsmerge.data, &bsout) != BSON_OK) {
+                rv = false;
+                 _ejdbsetecode(coll->jb, JBEQUPDFAILED, __FILE__, __LINE__, __func__);
+            } else {
+                update++;
+            }
+            if (inbuf != bsbuf) {
+                TCFREE(inbuf);
+            }
+        }
+        
+        bson_finish(&bsout);
+        bson_destroy(&bsmerge);
         if (updobj != incqf->updateobj) {
             bson_del(updobj);
         }

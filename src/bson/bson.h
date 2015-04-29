@@ -32,6 +32,7 @@
 #include "tcutil.h"
 
 #define BSON_IS_NUM_TYPE(atype) (atype == BSON_INT || atype == BSON_LONG || atype == BSON_DOUBLE)
+#define BSON_IS_NULL_TYPE(atype) (atype == BSON_UNDEFINED || atype == BSON_NULL)
 #define BSON_IS_STRING_TYPE(atype) ((atype) == BSON_STRING || (atype) == BSON_SYMBOL) 
 
 EJDB_EXTERN_C_START
@@ -1150,6 +1151,7 @@ EJDB_EXPORT int bson_merge_recursive2(const void *b1data, const void *b2data, bs
 /**
  * Merge bsons.
  * `bsdata2` may contain field path keys (eg: 'foo.bar').
+ * 
  * @param bsdata1 BSON data to to be merged in `out`
  * @param bsdata2 Second BSON data to to be merged in `out`
  * @param out Resulting `out` bson must be allocated and not finished.
