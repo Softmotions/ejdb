@@ -1094,6 +1094,33 @@ EJDB_EXPORT int tctdbqrystrtoordertype(const char *str);
    The return value is the set operation type or -1 on failure. */
 EJDB_EXPORT int tctdbmetastrtosettype(const char *str);
 
+/**
+ * @brief 
+ * Return a maximum size of opaque data can be stored.
+ */
+EJDB_EXPORT size_t tctdbmaxopaquesz();
+
+/**
+ * Get opaque data into specified buffer `dst`
+ * `bsiz` Max size to be read.
+ *  Return -1 if error, otherwise number of bytes writen in dst.
+ */
+EJDB_EXPORT int tctdbreadopaque(TCTDB *tdb, void *dst, int off, int bsiz);
+
+/**
+ * Write opaque data.
+ * Number of bytes specified bt `nb`
+ * can be truncated if it greater than max opaque data size.
+ * Return -1 if error, otherwise number of bytes read from src.
+ */
+EJDB_EXPORT int tctdbwriteopaque(TCTDB *tdb, const void *src, int off, int nb);
+
+/**
+ * Copy opaque data between databases.
+ * Return -1 if error, otherwise number of bytes copied.
+ */
+EJDB_EXPORT int tctdbcopyopaque(TCTDB *dst, TCTDB *src, int off, int nb);
+
 
 /* Add a record into indices of a table database object.
    `tdb' specifies the table database object.

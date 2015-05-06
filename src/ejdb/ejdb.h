@@ -97,12 +97,52 @@ enum { /*< Query search mode flags in ejdbqryexecute() */
 };
 
 /**
- * Returns EJDB library version string. Eg: "1.1.13"
+ * Return EJDB library version string. Eg: "1.1.13"
  */
 EJDB_EXPORT const char *ejdbversion();
 
 /**
- * Return true if passed `oid` string cat be converted to valid
+ * Return EJDB database format version.
+ * 
+ * Format version number uses the following convention:
+ *  100000 * major + 1000 * minor + patch.
+ * 
+ * Return `0` 
+ *  - Database is not opened
+ *  - Database was created by libejdb < v1.2.8 and opened in read-only mode.
+ */
+EJDB_EXPORT uint32_t ejdbformatversion(EJDB *jb);
+
+/**
+ * Return EJDB database `major` format version.
+ * 
+ * Return `0` 
+ *  - Database is not opened
+ *  - Database was created by libejdb < v1.2.8 and opened in read-only mode.
+ */
+EJDB_EXPORT uint8_t ejdbformatversionmajor(EJDB *jb);
+
+/**
+ * Return EJDB database `minor` format version.
+ * 
+ * Return `0` 
+ *  - Database is not opened
+ *  - Database was created by libejdb < v1.2.8 and opened in read-only mode.
+ */
+EJDB_EXPORT uint16_t ejdbformatversionminor(EJDB *jb);
+
+/**
+ * Return EJDB database `patch` format version.
+ * 
+ * Return `0` 
+ *  - Database is not opened
+ *  - Database was created by libejdb < v1.2.8 and opened in read-only mode.
+ */
+EJDB_EXPORT uint16_t ejdbformatversionpatch(EJDB *jb);
+
+
+/**
+ * Return true if a passed `oid` string cat be converted to valid
  * 12 bit BSON object identifier (OID).
  * @param oid String
  */

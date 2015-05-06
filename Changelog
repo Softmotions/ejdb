@@ -5,6 +5,7 @@ ejdb (1.2.8) UNRELEASED; urgency=low
   * Fix: $rename can operate on nested json objects #107
   * Fix: $inc doesn't create key if it doesn't exist #120
   * Source code style fixes
+  * A data format version info now stored in the database meta header #139
 
  -- Anton Adamansky <adamansky@gmail.com>  Mon, 27 Apr 2015 21:30:11 +0600
 

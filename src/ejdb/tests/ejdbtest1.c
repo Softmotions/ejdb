@@ -31,6 +31,38 @@ int clean_suite(void) {
     return 0;
 }
 
+void testVersionMeta() {
+    EJDB *vjb = ejdbnew();
+    bool rv = ejdbopen(vjb, "dbt1meta", JBOWRITER | JBOCREAT | JBOTRUNC);
+    CU_ASSERT_TRUE_FATAL(rv);
+    rv = ejdbclose(vjb);
+    CU_ASSERT_TRUE_FATAL(rv);
+    ejdbdel(vjb);
+    
+    vjb = ejdbnew();
+    rv = ejdbopen(vjb, "dbt1meta", JBOREADER);
+    CU_ASSERT_TRUE_FATAL(rv);
+    uint32_t fversion = ejdbformatversion(vjb);
+    CU_ASSERT_NOT_EQUAL(fversion, 0);
+    
+    //jb->fversion = 100000 * EJDB_VERSION_MAJOR + 1000 * EJDB_VERSION_MINOR + EJDB_VERSION_PATCH;
+    int major = fversion / 100000;
+    CU_ASSERT_EQUAL(major, EJDB_VERSION_MAJOR);
+    CU_ASSERT_EQUAL(major, ejdbformatversionmajor(vjb));
+    
+    int minor = (fversion - major * 100000) / 1000;
+    CU_ASSERT_EQUAL(minor, EJDB_VERSION_MINOR);
+    CU_ASSERT_EQUAL(minor, ejdbformatversionminor(vjb));
+    
+    int patch = (fversion - major * 100000 - minor * 1000);
+    CU_ASSERT_EQUAL(patch, EJDB_VERSION_PATCH);
+    CU_ASSERT_EQUAL(patch, ejdbformatversionpatch(vjb));
+    
+    rv = ejdbclose(vjb);
+    CU_ASSERT_TRUE_FATAL(rv);
+    ejdbdel(vjb);
+}
+
 void testTicket102() {
     const char *json = "[0, 1, 2]";
     bson *ret = json2bson(json);
@@ -281,7 +313,8 @@ int main() {
     }
 
     /* Add the tests to the suite */
-    if ((NULL == CU_add_test(pSuite, "testSaveLoad", testSaveLoad)) ||
+    if (   (NULL == CU_add_test(pSuite, "testVersionMeta", testVersionMeta)) ||
+            (NULL == CU_add_test(pSuite, "testSaveLoad", testSaveLoad)) ||
             (NULL == CU_add_test(pSuite, "testBuildQuery1", testBuildQuery1)) ||
             (NULL == CU_add_test(pSuite, "testDBOptions", testDBOptions)) ||
             (NULL == CU_add_test(pSuite, "testTicket102", testTicket102)) 

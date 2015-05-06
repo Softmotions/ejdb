@@ -53,7 +53,8 @@ enum bson_validity_t {
     BSON_FIELD_HAS_DOT = (1 << 2), /**< Warning: key contains '.' character. */
     BSON_FIELD_INIT_DOLLAR = (1 << 3), /**< Warning: key starts with '$' character. */
     BSON_ALREADY_FINISHED = (1 << 4), /**< Trying to modify a finished BSON object. */
-    BSON_ERROR_ANY = (1 << 5) /**< Unspecified error */
+    BSON_ERROR_ANY = (1 << 5), /**< Unspecified error */
+    BSON_NOT_FINISHED = (1 << 6) /**< BSON object not finished */
 };
 
 enum bson_binary_subtype_t {
@@ -147,7 +148,8 @@ EJDB_EXPORT const char* bson_first_errormsg(bson *bson);
     (_bs_I)->cur = (_bs)->data + 4; \
     (_bs_I)->first = 1;
 
-/* ----------------------------
+
+/* --------------------------------
    READING
    ------------------------------ */
 
@@ -1018,12 +1020,6 @@ EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, int64_t i);
 typedef void( *bson_err_handler)(const char *errmsg);
 typedef int (*bson_printf_func)(const char *, ...);
 
-extern void *(*bson_malloc_func)(size_t);
-extern void *(*bson_realloc_func)(void *, size_t);
-extern void ( *bson_free_func)(void *);
-
-extern bson_printf_func bson_errprintf;
-
 void bson_free(void *ptr);
 
 /**
@@ -1265,6 +1261,18 @@ EJDB_EXPORT int bson2json(const char *bsdata, char **buf, int *sp);
  * @return Allocated BSON object filled with given JSON data or NULL on error
  */
 EJDB_EXPORT bson* json2bson(const char *jsonstr);
+
+
+/**
+ * @brief Validate bson object.
+ * Set the bs->err bitmask as validation result.
+ * 
+ * @param bs Bson object to be validated.
+ * @param checkdots Check what keys contain dot(.) characters
+ * @param checkdollar Check what keys contain dollar($) characters
+ * @return BSON_OK if all checks passed otherwise return BSON_ERROR
+ */
+EJDB_EXPORT int bson_validate(bson *bs, bool checkdots, bool checkdollar);
 
 
 EJDB_EXTERN_C_END

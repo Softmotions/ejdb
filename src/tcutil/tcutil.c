@@ -4825,6 +4825,83 @@ char *tcstrsqzspc(char *str) {
     return str;
 }
 
+/*
+ * Index into the table below with the first byte of a UTF-8 sequence to
+ * get the number of trailing bytes that are supposed to follow it.
+ */
+static const char trailingBytesForUTF8[256] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5
+};
+
+static bool isvalidutf8seq(const unsigned char *seq, int length) {
+    unsigned char a;
+    const unsigned char *srcptr = seq + length;
+    switch (length) {
+        default:
+            return false;
+            /* Everything else falls through when "true"... */
+        case 4:
+            if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+        case 3:
+            if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+        case 2:
+            if ((a = (*--srcptr)) > 0xBF) return false;
+            switch (*seq) {
+                /* no fall-through in this inner switch */
+                case 0xE0:
+                    if (a < 0xA0) return false;
+                    break;
+                case 0xF0:
+                    if (a < 0x90) return false;
+                    break;
+                case 0xF4:
+                    if (a > 0x8F) return false;
+                    break;
+                default:
+                    if (a < 0x80) return false;
+            }
+        case 1:
+            if (*seq >= 0x80 && *seq < 0xC2) return false;
+            if (*seq > 0xF4) return false;
+    }
+    return true;
+}
+
+/* UTF8 string validation. */
+bool tcisvalidutf8str(const char *str, int len) {
+    if (!str || len < 1) {
+        return false;
+    }
+    int pos = 0;
+    int slen = 1;
+    for (; pos < len; ++pos) {
+        if (str[pos] == '\0' && pos < len - 1) {
+            return false;
+        }
+    }
+    pos = 0;
+    const unsigned char *ustr = (const unsigned char *) str;
+    while (pos < len) {
+        slen = trailingBytesForUTF8[*(ustr + pos)] + 1;
+        if ((pos + slen) > len) {
+            return false;
+        }
+        if (!isvalidutf8seq(ustr + pos, slen)) {
+            return false;
+        }
+        pos += slen;
+    }
+    return true;
+}
+
+
 /* Substitute characters in a string. */
 char *tcstrsubchr(char *str, const char *rstr, const char *sstr) {
     assert(str && rstr && sstr);

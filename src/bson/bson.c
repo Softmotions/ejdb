@@ -52,6 +52,11 @@ const int initialBufferSize = 128;
 /* only need one of these */
 static const int zero = 0;
 
+extern void *(*bson_malloc_func)(size_t);
+extern void *(*bson_realloc_func)(void *, size_t);
+extern void ( *bson_free_func)(void *);
+extern bson_printf_func bson_errprintf;
+
 /* Custom standard function pointers. */
 void *(*bson_malloc_func)(size_t) = MYMALLOC;
 void *(*bson_realloc_func)(void *, size_t) = MYREALLOC;
@@ -64,18 +69,20 @@ bson_printf_func bson_errprintf = _bson_errprintf;
 static int ( *oid_fuzz_func)(void) = NULL;
 static int ( *oid_inc_func)(void) = NULL;
 
-const char* bson_first_errormsg(bson *bson) {
-    if (bson->errstr) {
-        return bson->errstr;
+const char* bson_first_errormsg(bson *b) {
+    if (b->errstr) {
+        return b->errstr;
     }
-    if (bson->err & BSON_FIELD_HAS_DOT) {
+    if (b->err & BSON_FIELD_HAS_DOT) {
         return "BSON key contains '.' character";
-    } else if (bson->err & BSON_FIELD_INIT_DOLLAR) {
+    } else if (b->err & BSON_FIELD_INIT_DOLLAR) {
         return "BSON key starts with '$' character";
-    } else if (bson->err & BSON_ALREADY_FINISHED) {
+    } else if (b->err & BSON_ALREADY_FINISHED) {
         return "Trying to modify a finished BSON object";
-    } else if (bson->err & BSON_NOT_UTF8) {
+    } else if (b->err & BSON_NOT_UTF8) {
         return "A key or a string is not valid UTF-8";
+    } else if (b->err & BSON_NOT_FINISHED) {
+        return "BSON not finished";
     }
     return "Unspecified BSON error";
 }
@@ -2791,5 +2798,46 @@ finish:
         out = NULL;
     }
     return out;
+}
+
+
+typedef struct {
+    bson *bs;
+    bool checkdots; 
+    bool checkdollar;
+} _BSONVALIDATECTX;
+
+static bson_visitor_cmd_t _bson_validate_visitor(
+        const char *ipath, int ipathlen, 
+        const char *key, int keylen,
+        const bson_iterator *it, 
+        bool after, void *op) {
+    _BSONVALIDATECTX *ctx = op;
+    assert(ctx);
+    if (bson_check_field_name(ctx->bs, key, keylen, 
+                              ctx->checkdots, ctx->checkdollar) == BSON_ERROR) {
+        return BSON_VCMD_TERMINATE;
+    }
+    return (BSON_VCMD_OK | BSON_VCMD_SKIP_AFTER);
+}
+
+
+int bson_validate(bson *bs, bool checkdots, bool checkdollar) {
+    if (!bs) {
+        return BSON_ERROR;
+    }
+    if (!bs->finished) {
+        bs->err |= BSON_NOT_FINISHED;
+        return BSON_ERROR;
+    }
+    bson_iterator it;
+    bson_iterator_init(&it, bs);
+    _BSONVALIDATECTX ctx = {
+        .bs = bs,
+        .checkdots = checkdots,
+        .checkdollar = checkdollar
+    };
+    bson_visit_fields(&it, BSON_TRAVERSE_ARRAYS_EXCLUDED, _bson_validate_visitor, &ctx);
+    return bs->err ? BSON_ERROR : BSON_OK;
 }
 

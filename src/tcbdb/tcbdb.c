@@ -3338,7 +3338,7 @@ static bool tcbdboptimizeimpl(TCBDB *bdb, int32_t lmemb, int32_t nmemb,
     tbdb->lcnum = BDBLEVELMAX;
     tbdb->ncnum = BDBCACHEOUT * 2;
     if (!tcbdbopen(tbdb, tpath, BDBOWRITER | BDBOCREAT | BDBOTRUNC) ||
-            !tchdbcopyopaque(tbdb->hdb, bdb->hdb, 0, -1)) {
+         tchdbcopyopaque(tbdb->hdb, bdb->hdb, 0, -1) < 0) {
         tcbdbdel(tbdb);
         TCFREE(tpath);
         TCFREE(opath);

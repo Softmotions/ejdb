@@ -21,8 +21,9 @@
 #include "tctdb.h"
 #include "myconf.h"
 
-#define TDBOPAQUESIZ   64                // size of using opaque field
-#define TDBLEFTOPQSIZ  64                // size of left opaque field
+#define TDBOPAQUESIZ   16                // size of using opaque field
+#define TDBLEFTOPQSIZ  112               // size of left opaque field
+
 #define TDBPAGEBUFSIZ  32768             // size of a buffer to read each page
 
 #define TDBDEFAPOW     4                 // default alignment power
@@ -1804,6 +1805,42 @@ int tctdbmetastrtosettype(const char *str) {
     return type;
 }
 
+size_t tctdbmaxopaquesz() {
+    return TDBLEFTOPQSIZ;
+}
+
+int tctdbreadopaque(TCTDB *tdb, void *dst, int off, int bsiz) {
+    assert(tdb && dst); 
+    if (bsiz == -1) {
+        bsiz = TDBLEFTOPQSIZ;
+    }
+    return tchdbreadopaque(tdb->hdb, dst, TDBOPAQUESIZ + off, bsiz);    
+}
+
+int tctdbwriteopaque(TCTDB *tdb, const void *src, int off, int nb) {
+    assert(tdb && src); 
+    if (off < 0) {
+        return -1;
+    }
+    if (nb == -1) {
+        nb = TDBLEFTOPQSIZ;
+    }
+    return tchdbwriteopaque(tdb->hdb, src, TDBOPAQUESIZ + off, nb);
+}
+
+
+int tctdbcopyopaque(TCTDB *dst, TCTDB *src, int off, int nb) {
+    assert(dst && dst->hdb);
+    assert(src && src->hdb);
+    if (off < 0) {
+        return -1;
+    }
+    if (nb == -1) {
+        nb = TDBLEFTOPQSIZ;
+    }
+    return tchdbcopyopaque(dst->hdb, src->hdb, TDBOPAQUESIZ + off, nb);
+}
+
 
 
 /*************************************************************************************************
@@ -2209,7 +2246,10 @@ static bool tctdboptimizeimpl(TCTDB *tdb, int64_t bnum, int8_t apow, int8_t fpow
     if (opts & TDBTTCBS) hopts |= HDBTTCBS;
     if (opts & TDBTEXCODEC) hopts |= HDBTEXCODEC;
     tchdbtune(thdb, bnum, apow, fpow, hopts);
-    if (tchdbopen(thdb, tpath, HDBOWRITER | HDBOCREAT | HDBOTRUNC) && tchdbcopyopaque(thdb, hdb, 0, -1)) {
+    
+    if (tchdbopen(thdb, tpath, HDBOWRITER | HDBOCREAT | HDBOTRUNC) && 
+        tchdbcopyopaque(thdb, hdb, 0, -1) >= 0) {
+            
         if (!tchdbiterinit(hdb)) err = true;
         TCXSTR *kxstr = tcxstrnew();
         TCXSTR *vxstr = tcxstrnew();

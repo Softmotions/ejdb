@@ -31,6 +31,9 @@ EJDB_EXTERN_C_START
                                           atype == BSON_ARRAY || atype == BSON_DATE)
 
 #define EJDB_MAX_COLLECTIONS 1024
+#define EJDB_MAGIC 0xEBB1
+#define EJDB_MAGIC_SZ 2;    //number of bytes to encode magic in TCTDB opaque data
+#define EJDB_VERSION_SZ 4;  //number of bytes to encode version in TCTDB opaque data 
 
 
 struct EJCOLL { /**> EJDB Collection. */
@@ -44,6 +47,7 @@ struct EJCOLL { /**> EJDB Collection. */
 struct EJDB {
     EJCOLL * cdbs[EJDB_MAX_COLLECTIONS]; /*> Collection DBs for JSON collections. */
     int cdbsnum; /*> Count of collection DB. */
+    uint32_t fversion; /*> Database format version */
     TCTDB *metadb; /*> Metadata DB. */
     void *mmtx; /*> Mutex for method */
 };

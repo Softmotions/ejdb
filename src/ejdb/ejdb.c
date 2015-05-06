@@ -30,7 +30,7 @@
 #define JBCUNLOCKMETHOD(JB_col)                         \
     ((JB_col)->mmtx ? _ejcollunlockmethod(JB_col) : true)
 
-#define JBISOPEN(JB_jb) ((JB_jb) && (JB_jb)->metadb && (JB_jb)->metadb->open) ? true : false
+#define JBISOPEN(JB_jb) (((JB_jb) && (JB_jb)->metadb && (JB_jb)->metadb->open) ? true : false)
 
 #define JBISVALCOLNAME(JB_cname) ((JB_cname) && \
                                   strlen(JB_cname) < JBMAXCOLNAMELEN && \
@@ -170,6 +170,31 @@ const char *ejdbversion() {
     return tcversion;
 }
 
+uint32_t ejdbformatversion(EJDB *jb) {
+    return JBISOPEN(jb) ? jb->fversion : 0;
+}
+
+uint8_t ejdbformatversionmajor(EJDB *jb) {
+   return (JBISOPEN(jb) && jb->fversion) ? jb->fversion / 100000 : 0; 
+}
+
+uint16_t ejdbformatversionminor(EJDB *jb) {
+    if (!JBISOPEN(jb) || !jb->fversion) {
+        return 0;
+    }
+    int major = jb->fversion / 100000;
+    return (jb->fversion - major * 100000) / 1000;
+}
+
+uint16_t ejdbformatversionpatch(EJDB *jb) {
+   if (!JBISOPEN(jb) || !jb->fversion) {
+        return 0;
+    }
+    int major = jb->fversion / 100000;
+    int minor = (jb->fversion - major * 100000) / 1000;
+    return (jb->fversion - major * 100000 - minor * 1000);
+}
+
 const char* ejdberrmsg(int ecode) {
     if (ecode > -6 && ecode < 0) { //Hook for negative error codes of utf8proc library
         return utf8proc_errmsg(ecode);
@@ -239,6 +264,7 @@ EJDB* ejdbnew(void) {
     EJDB *jb;
     TCCALLOC(jb, 1, sizeof (*jb));
     jb->metadb = tctdbnew();
+    jb->fversion = 0;
     tctdbsetmutex(jb->metadb);
     tctdbsetcache(jb->metadb, 1024, 0, 0);
     if (!_ejdbsetmutex(jb)) {
@@ -259,6 +285,7 @@ void ejdbdel(EJDB *jb) {
         jb->cdbs[i] = NULL;
     }
     jb->cdbsnum = 0;
+    jb->fversion = 0;
     if (jb->mmtx) {
         pthread_rwlock_destroy(jb->mmtx);
         TCFREE(jb->mmtx);
@@ -281,6 +308,7 @@ bool ejdbclose(EJDB *jb) {
     if (!tctdbclose(jb->metadb)) {
         rv = false;
     }
+    jb->fversion = 0;
     JBUNLOCKMETHOD(jb);
     return rv;
 }
@@ -301,21 +329,57 @@ bool ejdbopen(EJDB *jb, const char *path, int mode) {
     if (!rv) {
         goto finish;
     }
-    jb->cdbsnum = 0;
+    
     TCTDB *mdb = jb->metadb;
-    rv = tctdbiterinit(mdb);
-    if (!rv) {
+    char *colname = NULL;
+    uint64_t mbuf;
+    jb->cdbsnum = 0;
+    
+    if (!(rv = tctdbiterinit(mdb))) {
         goto finish;
     }
-    char *colname = NULL;
-    for (int i = 0; i < mdb->hdb->rnum && (colname = tctdbiternext2(mdb)) != NULL; ++i) {
-        EJCOLL *cdb;
-        EJCOLLOPTS opts;
-        _metagetopts(jb, colname, &opts);
-        _addcoldb0(colname, jb, &opts, &cdb);
+    //check ejdb format version
+    if (tctdbreadopaque(mdb, &mbuf, 0, sizeof(mbuf)) != sizeof(mbuf)) {
+        rv = false;
+        _ejdbsetecode(jb, JBEMETANVALID, __FILE__, __LINE__, __func__);
+        goto finish;
+    }
+    for (int i = 0; rv && i < mdb->hdb->rnum && (colname = tctdbiternext2(mdb)) != NULL; ++i) {
+        if ((rv = tcisvalidutf8str(colname, strlen(colname)))) {
+            EJCOLL *cdb;
+            EJCOLLOPTS opts;
+            if ((rv = _metagetopts(jb, colname, &opts))) {
+                rv = _addcoldb0(colname, jb, &opts, &cdb);
+            }
+        } else {
+            _ejdbsetecode(jb, JBEMETANVALID, __FILE__, __LINE__, __func__);
+        }
         TCFREE(colname);
     }
+    
 finish:
+    if (rv) {
+        mbuf = TCITOHLL(mbuf);
+        uint16_t magic = (uint16_t) mbuf;
+        jb->fversion = (uint32_t) (mbuf >> 16);
+        
+        if (!mbuf && (mode & (JBOWRITER | JBOTRUNC))) { //write ejdb format info opaque data
+            magic = EJDB_MAGIC;
+            jb->fversion = 100000 * EJDB_VERSION_MAJOR + 1000 * EJDB_VERSION_MINOR + EJDB_VERSION_PATCH;
+            mbuf |= jb->fversion;
+            mbuf = (mbuf << 16) | ((uint64_t) magic & 0xffff);
+            mbuf = TCHTOILL(mbuf);
+            if (tctdbwriteopaque(mdb, &mbuf, 0, sizeof(mbuf)) != sizeof(mbuf)) {
+                rv = false;
+                _ejdbsetecode(jb, TCEWRITE, __FILE__, __LINE__, __func__);
+            } else {
+                tctdbsync(jb->metadb);
+            }
+        } else if (magic && (magic != EJDB_MAGIC)) {
+            rv = false;
+           _ejdbsetecode(jb, JBEMETANVALID, __FILE__, __LINE__, __func__); 
+        }
+    }
     JBUNLOCKMETHOD(jb);
     return rv;
 }
@@ -710,7 +774,10 @@ bool ejdbsyncoll(EJCOLL *coll) {
 bool ejdbsyncdb(EJDB *jb) {
     assert(jb);
     JBENSUREOPENLOCK(jb, true, false);
-    bool rv = true;
+    bool rv = tctdbsync(jb->metadb);
+    if (!rv) {
+        return rv;
+    }
     for (int i = 0; i < jb->cdbsnum; ++i) {
         assert(jb->cdbs[i]);
         rv = JBCLOCKMETHOD(jb->cdbs[i], true);
@@ -4549,11 +4616,15 @@ static bool _metasetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
 
 static bool _metagetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
     assert(opts);
-    bool rv = true;
     memset(opts, 0, sizeof (*opts));
     bson *bsopts = _metagetbson(jb, colname, strlen(colname), "opts");
     if (!bsopts) {
         return true;
+    }
+    if (bson_validate(bsopts, true, true) != BSON_OK) {
+        _ejdbsetecode(jb, JBEMETANVALID, __FILE__, __LINE__, __func__);
+        bson_del(bsopts);
+        return false;
     }
     bson_iterator it;
     bson_type bt = bson_find(&it, bsopts, "compressed");
@@ -4573,7 +4644,7 @@ static bool _metagetopts(EJDB *jb, const char *colname, EJCOLLOPTS *opts) {
         opts->records = bson_iterator_long(&it);
     }
     bson_del(bsopts);
-    return rv;
+    return true;
 }
 
 static bool _metasetbson(EJDB *jb, const char *colname, int colnamesz,
@@ -5702,18 +5773,16 @@ static void _delcoldb(EJCOLL *coll) {
 
 static bool _addcoldb0(const char *cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **res) {
     int i;
-    bool rv = true;
     TCTDB *cdb;
-
+    
     for (i = 0; i < EJDB_MAX_COLLECTIONS && jb->cdbs[i]; ++i);
     if (i == EJDB_MAX_COLLECTIONS) {
         _ejdbsetecode(jb, JBEMAXNUMCOLS, __FILE__, __LINE__, __func__);
         return false;
     }
-    rv = _createcoldb(cname, jb, opts, &cdb);
-    if (!rv) {
+    if (!_createcoldb(cname, jb, opts, &cdb)) {
         *res = NULL;
-        return rv;
+        return false;
     }
     EJCOLL *coll;
     TCCALLOC(coll, 1, sizeof (*coll));
@@ -5724,9 +5793,11 @@ static bool _addcoldb0(const char *cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **r
     coll->tdb = cdb;
     coll->jb = jb;
     coll->mmtx = NULL;
-    _ejdbcolsetmutex(coll);
+    if (!_ejdbcolsetmutex(coll)) {
+        return false;
+    }
     *res = coll;
-    return rv;
+    return true;
 }
 
 static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB **res) {

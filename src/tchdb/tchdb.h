@@ -748,13 +748,18 @@ EJDB_EXPORT uint8_t tchdbflags(TCHDB *hdb);
    The return value is the options. */
 EJDB_EXPORT uint8_t tchdbopts(TCHDB *hdb);
 
+/**
+ * @brief 
+ * Return a maximum size of opaque data can be stored.
+ */
+EJDB_EXPORT size_t tchdbmaxopaquesz();
 
 /**
  * Get opaque data into specified buffer `dst`
  * `bsiz` Max size to be read.
  *  Return -1 if error, otherwise number of bytes writen in dst.
  */
-int tchdbreadopaque(TCHDB *hdb, void *dst, int off, int bsiz);
+EJDB_EXPORT int tchdbreadopaque(TCHDB *hdb, void *dst, int off, int bsiz);
 
 /**
  * Write opaque data.
@@ -762,12 +767,13 @@ int tchdbreadopaque(TCHDB *hdb, void *dst, int off, int bsiz);
  * can be truncated if it greater than max opaque data size.
  * Return -1 if error, otherwise number of bytes read from src.
  */
-int tchdbwriteopaque(TCHDB *hdb, const void *src, int off, int nb);
+EJDB_EXPORT int tchdbwriteopaque(TCHDB *hdb, const void *src, int off, int nb);
 
 /**
- * Copy opaque data between databases
+ * Copy opaque data between databases.
+ * Return -1 if error, otherwise number of bytes copied.
  */
-bool tchdbcopyopaque(TCHDB *dst, TCHDB *src, int off, int nb);
+EJDB_EXPORT int tchdbcopyopaque(TCHDB *dst, TCHDB *src, int off, int nb);
 
 /* Get the number of used elements of the bucket array of a hash database object.
    `hdb' specifies the hash database object.

@@ -349,6 +349,17 @@ void testTicket135(void) {
 }
 
 
+// We are trying to open TCHDB which is not actuall ejdb database
+void testOpenOtherTCHDB(void) {
+    EJDB *jb = ejdbnew();
+    bool ret = ejdbopen(jb, "dbt4_export_col1", JBOREADER);
+    CU_ASSERT_FALSE(ret);
+    int ecode = ejdbecode(jb);
+    CU_ASSERT_EQUAL(ecode, JBEMETANVALID);
+    ejdbclose(jb);
+    ejdbdel(jb);
+}
+
 int init_suite(void) {
     return 0;
 }
@@ -377,7 +388,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket53", testTicket53)) ||
             (NULL == CU_add_test(pSuite, "testBSONExportImport", testBSONExportImport)) ||
             (NULL == CU_add_test(pSuite, "testBSONExportImport2", testBSONExportImport2)) ||
-            (NULL == CU_add_test(pSuite, "testTicket135", testTicket135))
+            (NULL == CU_add_test(pSuite, "testTicket135", testTicket135)) ||
+            (NULL == CU_add_test(pSuite, "testOpenOtherTCHDB", testOpenOtherTCHDB))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

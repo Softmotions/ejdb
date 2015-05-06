@@ -1653,7 +1653,11 @@ uint8_t tchdbopts(TCHDB *hdb) {
     return hdb->opts;
 }
 
-bool tchdbcopyopaque(TCHDB *dst, TCHDB *src, int off, int rsz) {
+size_t tchdbmaxopaquesz() {
+    return HDBOPAQUESZ;
+}
+
+int tchdbcopyopaque(TCHDB *dst, TCHDB *src, int off, int rsz) {
     assert(dst && src);
     if (rsz == -1) {
         rsz = HDBOPAQUESZ;
@@ -1662,7 +1666,7 @@ bool tchdbcopyopaque(TCHDB *dst, TCHDB *src, int off, int rsz) {
     rsz = tchdbreadopaque(src, odata, off, rsz);
     if (rsz == -1) {
         tchdbsetecode(dst, tchdbecode(src), __FILE__, __LINE__, __func__);
-        return false;
+        return -1;
     }
     return (tchdbwriteopaque(dst, odata, off, rsz) == rsz);
 }
@@ -5066,7 +5070,7 @@ static bool tchdboptimizeimpl(TCHDB *hdb, int64_t bnum, int8_t apow, int8_t fpow
     if (opts == UINT8_MAX) opts = hdb->opts;
     tchdbtune(thdb, bnum, apow, fpow, opts);
     if (!tchdbopen(thdb, tpath, HDBOWRITER | HDBOCREAT | HDBOTRUNC) ||
-            !tchdbcopyopaque(thdb, hdb, 0, HDBOPAQUESZ)) {
+         tchdbcopyopaque(thdb, hdb, 0, HDBOPAQUESZ) < 0) {
         tchdbdel(thdb);
         TCFREE(tpath);
         return false;

@@ -2390,6 +2390,14 @@ EJDB_EXPORT char *tcstrtrim(char *str);
    The return value is the string itself. */
 EJDB_EXPORT char *tcstrsqzspc(char *str);
 
+/*
+ * UTF8 string validation. 
+ * 
+ * Return `true` if a given character buffer 
+ * represents a valid UTF8 string.
+ */
+EJDB_EXPORT bool tcisvalidutf8str(const char *str, int len);
+
 
 /* Substitute characters in a string.
    `str' specifies the string to be converted.
