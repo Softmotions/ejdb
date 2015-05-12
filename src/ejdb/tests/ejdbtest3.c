@@ -15,7 +15,7 @@
  */
 
 static EJDB *jb;
-const int RS = 100000;
+const int RS = 10000;
 const int QRS = 100;
 static bson* recs;
 
