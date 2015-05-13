@@ -21,7 +21,6 @@ int init_suite(void) {
     if (!ejdbopen(jb, "dbt1", JBOWRITER | JBOCREAT | JBOTRUNC)) {
         return 1;
     }
-    malloc(10); //todo remove 
     return 0;
 }
 
