@@ -5781,7 +5781,6 @@ static bool _addcoldb0(const char *cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **r
         return false;
     }
     if (!_createcoldb(cname, jb, opts, &cdb)) {
-        *res = NULL;
         return false;
     }
     EJCOLL *coll;
@@ -5837,7 +5836,12 @@ static bool _createcoldb(const char *colname, EJDB *jb, EJCOLLOPTS *opts, TCTDB 
         mode |= JBOCREAT;
     }
     rv = tctdbopen(cdb, tcxstrptr(cxpath), mode);
-    *res = rv ? cdb : NULL;
+    if (!rv) {
+        tctdbdel(cdb);
+        *res = NULL;
+    } else {
+        *res = cdb;
+    }
     tcxstrdel(cxpath);
     return rv;
 }
