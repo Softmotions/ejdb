@@ -1424,9 +1424,11 @@ int bson_append_field_from_iterator2(const char *key, const bson_iterator *from,
     }
     switch (t) {
         case BSON_STRING:
-        case BSON_SYMBOL:
             bson_append_string(into, key, bson_iterator_string(from));
             break;
+        case BSON_SYMBOL:
+			bson_append_symbol(into, key, bson_iterator_string(from));
+			break;
         case BSON_CODE:
             bson_append_code(into, key, bson_iterator_code(from));
             break;
