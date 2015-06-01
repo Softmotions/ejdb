@@ -15,7 +15,7 @@ if (NOT WINTOOLS_WGET_EXEC)
 endif()
 
 set(WINTOOLS_DIR ${CMAKE_BINARY_DIR}/WINTOOLS)
-set(WINTOOLS_DL_ROOT "https://dl.dropboxusercontent.com/u/4709222/windev")
+set(WINTOOLS_DL_ROOT "http://softmotions.com/windev")
 
 if (NOT EXISTS ${WINTOOLS_DIR}) 
 	file(MAKE_DIRECTORY ${WINTOOLS_DIR})
