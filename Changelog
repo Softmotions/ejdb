@@ -7,7 +7,7 @@ ejdb (1.2.8) testing; urgency=low
   * Source code style fixes
   * A data format version info now stored in the database meta header #139
 
- -- Anton Adamansky <adamansky@gmail.com>  Mon, 01 Jun 2015 13:04:20 +0600
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 01 Jun 2015 13:06:28 +0600
 
 ejdb (1.2.7) testing; urgency=low
 
