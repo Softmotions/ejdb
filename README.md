@@ -3,6 +3,8 @@
 Embedded JSON Database engine C library (libejdb)
 =================================================
 
+[![Join the chat at https://gitter.im/Softmotions/ejdb](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Softmotions/ejdb?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 **See http://ejdb.org**
 
 It aims to be a fast [MongoDB](http://mongodb.org)-like library 
