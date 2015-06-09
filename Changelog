@@ -1,3 +1,9 @@
+ejdb (1.2.9) UNRELEASED; urgency=low
+
+  * Fix: Builds shared lib when -DBUILD_SHARED_LIBS:BOOL=OFF #143
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 09 Jun 2015 12:04:51 +0600
+
 ejdb (1.2.8) testing; urgency=low
 
   * Fix: Problem with the bson2json conversion dealing with doubles #135
