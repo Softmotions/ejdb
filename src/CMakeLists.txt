@@ -34,12 +34,15 @@ foreach(MODULE IN LISTS MODULES)
 	list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}/${MODULE}.h)
 endforeach(MODULE)
 
-add_library(ejdb SHARED ${ALL_SRC})
 if (NOT BUILD_SHARED_LIBS)
 	add_definitions(-DEJDB_NODLL)
+    add_library(ejdb STATIC ${ALL_SRC})
+    add_library(ejdb_p ALIAS ejdb)
+else() 
+    add_library(ejdb SHARED ${ALL_SRC})    
+    add_library(ejdb_p STATIC ${ALL_SRC})
 endif()
 
-add_library(ejdb_p STATIC ${ALL_SRC})
 
 find_package(Threads REQUIRED CMAKE_THREAD_PREFER_PTHREAD)
 if (CMAKE_USE_WIN32_THREADS_INIT)
@@ -142,7 +145,9 @@ list(REMOVE_DUPLICATES EJDB_INCLUDE_DIRS)
 include_directories(${EJDB_INCLUDE_DIRS})
 
 target_link_libraries(ejdb ${EJDB_LLIBRARIES})
-target_link_libraries(ejdb_p ${EJDB_LLIBRARIES})
+if (BUILD_SHARED_LIBS)
+    target_link_libraries(ejdb_p ${EJDB_LLIBRARIES})
+endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fsigned-char -pedantic -Wfatal-errors -Wno-unknown-pragmas")
 if (NOT WIN32) ## todo review
@@ -197,13 +202,7 @@ endforeach(MODULE)
 list(APPEND PUB_HDRS 
 			${EJDB_GENERATED_DIR}/basedefs.h
 			${CMAKE_CURRENT_SOURCE_DIR}/ejdb/ejdb_private.h)
-
-set_target_properties(ejdb PROPERTIES
-					  VERSION ${PROJECT_VERSION}
-					  SOVERSION ${PROJECT_VERSION_MAJOR}
-					  PUBLIC_HEADER "${PUB_HDRS}"
-					  DEFINE_SYMBOL EJDB_API_EXPORTS)
-if (WIN32)
+if (WIN32 AND BUILD_SHARED_LIBS)
 	add_dependencies(ejdb wintools_init)
 	set_target_properties(ejdb PROPERTIES LINK_FLAGS "-Wl,--output-def,libejdb.def")
 	add_w32_importlib(ejdb libejdb ${CMAKE_CURRENT_BINARY_DIR})
@@ -214,10 +213,26 @@ if (WIN32)
             DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
+if (BUILD_SHARED_LIBS)
+
+set_target_properties(ejdb PROPERTIES
+					  VERSION ${PROJECT_VERSION}
+					  SOVERSION ${PROJECT_VERSION_MAJOR}
+					  PUBLIC_HEADER "${PUB_HDRS}"
+					  DEFINE_SYMBOL EJDB_API_EXPORTS)
+                      
 set_target_properties(ejdb_p PROPERTIES
 					  VERSION ${PROJECT_VERSION}
 					  COMPILE_FLAGS "-DEJDB_NODLL"
 					  OUTPUT_NAME ejdb-${PROJECT_VERSION_MAJOR})
+else()
+
+set_target_properties(ejdb PROPERTIES
+					  VERSION ${PROJECT_VERSION}
+                      PUBLIC_HEADER "${PUB_HDRS}"
+					  COMPILE_FLAGS "-DEJDB_NODLL"
+					  OUTPUT_NAME ejdb-${PROJECT_VERSION_MAJOR})
+endif()
 					  
 install(TARGETS ejdb
 	EXPORT ejdb-exports
@@ -230,13 +245,15 @@ install(TARGETS ejdb
 install(EXPORT ejdb-exports
 		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME})
 
-install(TARGETS ejdb_p
-	EXPORT ejdb-static-exports
-	FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+if (BUILD_SHARED_LIBS)
+    install(TARGETS ejdb_p
+        EXPORT ejdb-static-exports
+        FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+endif()
 
 install(FILES 
 		${CMAKE_SOURCE_DIR}/LICENSE
@@ -251,10 +268,14 @@ install(FILES
 
 if (CMAKE_VERSION VERSION_GREATER 3.0)
 	export(EXPORT ejdb-exports)	
-	export(EXPORT ejdb-static-exports)	
+    if (BUILD_SHARED_LIBS)
+        export(EXPORT ejdb-static-exports)
+	endif()
 else()
-	export(TARGETS ejdb FILE ejdb-exports.cmake)	
-	export(TARGETS ejdb_p FILE ejdb-static-exports.cmake)	
+	export(TARGETS ejdb FILE ejdb-exports.cmake)
+	if (BUILD_SHARED_LIBS)
+        export(TARGETS ejdb_p FILE ejdb-static-exports.cmake)	
+    endif()
 endif()
 
 
