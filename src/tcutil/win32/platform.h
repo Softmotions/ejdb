@@ -46,6 +46,7 @@ ssize_t win_pwrite(HANDLE fd, const void *buf, size_t count, off_t offset);
 ssize_t win_pread(HANDLE fd, void *buf, size_t size, off_t off);
 
 #define mkdir(a, b) _mkdir(a)
+#undef fstat
 #define fstat win_fstat
 #define lstat stat
 #define sysconf_SC_CLK_TCK 64
