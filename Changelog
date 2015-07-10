@@ -1,6 +1,7 @@
 ejdb (1.2.9) UNRELEASED; urgency=low
 
   * Fix: Builds shared lib when -DBUILD_SHARED_LIBS:BOOL=OFF #143
+  * Fix: Not able to store data above 2GB on windows #149
 
  -- Anton Adamansky <adamansky@gmail.com>  Tue, 09 Jun 2015 12:04:51 +0600
 

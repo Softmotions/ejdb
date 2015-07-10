@@ -45,11 +45,11 @@
 #define HDBDEFFPOW     10                // default free block pool power
 #define HDBMAXFPOW     20                // maximum free block pool power
 
-#ifdef _WIN32
-#define HDBDEFXMSIZ    _maxof(off_t)     // default size of the extra mapped memory
-#else
+//#ifdef _WIN32
+//#define HDBDEFXMSIZ    _maxof(off_t)     // default size of the extra mapped memory
+//#else
 #define HDBDEFXMSIZ    (64LL<<20)        // default size of the extra mapped memory
-#endif
+//#endif
 #define HDBXFSIZINC    1048576           // 1MB increment of extra file size
 #define HDBMINRUNIT    48                // minimum record reading unit
 #define HDBMAXHSIZ     32                // maximum record header size
@@ -359,10 +359,6 @@ bool tchdbsetcache(TCHDB *hdb, int32_t rcnum) {
 
 /* Set the size of the extra mapped memory of a hash database object. */
 bool tchdbsetxmsiz(TCHDB *hdb, int64_t xmsiz) {
-#if defined (_WIN32)
-    //fprintf(stderr, "\ntchdbsetxmsiz does not takes effect on windows platform\n");
-    return true;
-#else
     assert(hdb);
     if (!INVALIDHANDLE(hdb->fd)) {
         tchdbsetecode(hdb, TCEINVALID, __FILE__, __LINE__, __func__);
@@ -370,7 +366,6 @@ bool tchdbsetxmsiz(TCHDB *hdb, int64_t xmsiz) {
     }
     hdb->xmsiz = (xmsiz > 0) ? tcpagealign(xmsiz) : 0;
     return true;
-#endif
 }
 
 /* Set the unit step number of auto defragmentation of a hash database object. */
@@ -5645,7 +5640,7 @@ static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
     }
 #else
     bool err = false;
-    LARGE_INTEGER size;
+    LARGE_INTEGER size, msize;
     //MSDN: Applications should test for files with a length of 0 (zero) and reject those files.
     size.QuadPart = (hdb->omode & HDBOWRITER) ? tcpagealign((length == 0) ? 1 : length) : length;
     if (hdb->map &&
@@ -5656,11 +5651,13 @@ static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
     if (!(opts & HDBOPTNOSMLOCK) && !HDBLOCKSMEMPTR2(hdb, true)) {
         return false;
     }
+        
     if ((hdb->omode & HDBOWRITER) && size.QuadPart > xfsiz && !(opts & HDBTRALLOWSHRINK)) {
         off_t o1 = tcpagealign((_maxof(off_t) - (off_t) size.QuadPart < HDBXFSIZINC) ? size.QuadPart : size.QuadPart + HDBXFSIZINC);
         off_t o2 = tcpagealign((((uint64_t) size.QuadPart) * 3) >> 1);
         size.QuadPart = MAX(o1, o2);
     }
+    msize = size;
     if (hdb->map) {
         FlushViewOfFile((LPCVOID) hdb->map, 0);
         if (!UnmapViewOfFile((LPCVOID) hdb->map) || !CloseHandle(hdb->w32hmap)) {
@@ -5678,9 +5675,12 @@ static bool tchdbftruncate2(TCHDB *hdb, off_t length, int opts) {
             goto finish;
         }
     }
+    if (msize.QuadPart > hdb->xmsiz) {
+        msize.QuadPart = hdb->xmsiz;
+    }
     hdb->w32hmap = CreateFileMapping(hdb->fd, NULL,
             ((hdb->omode & HDBOWRITER) ? PAGE_READWRITE : PAGE_READONLY),
-            size.HighPart, size.LowPart, NULL);
+            msize.HighPart, msize.LowPart, NULL);
     if (INVALIDHANDLE(hdb->w32hmap)) {
         tchdbsetecode(hdb, TCEMMAP, __FILE__, __LINE__, __func__);
         err = true;
