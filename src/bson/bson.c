@@ -1621,6 +1621,19 @@ int bson_merge_fieldpaths(const void *bsdata1, const void *bsdata2, bson *out) {
         }
     }
     tcmapdel(mfields);
+
+    if (!out->err) {
+        // check duplicate paths
+        bson_finish(out);
+        if (bson_check_duplicate_keys(out)) {
+            bson bstmp;
+            bson_copy(&bstmp, out);
+            bson_destroy(out);
+            bson_init(out);
+            bson_fix_duplicate_keys(&bstmp, out);
+            bson_destroy(&bstmp);
+        }
+    }
     return out->err;
 }
 
@@ -1723,6 +1736,142 @@ int bson_merge_recursive(const bson *b1, const bson *b2, bson_bool_t overwrite, 
     }
     return bson_merge_recursive2(bson_data(b1), bson_data(b2), overwrite, out);
 }
+
+static bson_bool_t _bson_check_duplicate_keys(bson_iterator *it) {
+    bson_iterator it2;
+    bson_type bt, bt2;
+    while ((bt = bson_iterator_next(it)) != BSON_EOO) {
+        BSON_ITERATOR_CLONE(it, &it2);
+        while((bt2 = bson_iterator_next(&it2)) != BSON_EOO) {
+            if (!strcmp(BSON_ITERATOR_KEY(it), BSON_ITERATOR_KEY(&it2))) {
+                return true;
+            }
+        }
+        if (bt == BSON_OBJECT || bt == BSON_ARRAY) {
+            BSON_ITERATOR_SUBITERATOR(it, &it2);
+            if (_bson_check_duplicate_keys(&it2)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bson_bool_t bson_check_duplicate_keys(const bson *bs) {
+    bson_iterator it;
+    BSON_ITERATOR_INIT(&it, bs);
+    return _bson_check_duplicate_keys(&it);
+}
+
+static void _bson_fix_duplicate_keys(bson_iterator *it, bson *bso) {
+    bson_iterator it2;
+    bson_type bt, bt2;
+
+    TCMAP *keys = tcmapnew();
+    while((bt = bson_iterator_next(it)) != BSON_EOO) {
+        if (NULL != tcmapget2(keys, BSON_ITERATOR_KEY(it))) {
+            continue;
+        }
+        tcmapput2(keys, BSON_ITERATOR_KEY(it), BSON_ITERATOR_KEY(it));
+
+        TCLIST *dups = tclistnew();
+        off_t itoff  = 0;
+        tclistpush(dups, &itoff, sizeof(itoff));
+
+        BSON_ITERATOR_CLONE(it, &it2);
+        while((bt2 = bson_iterator_next(&it2)) != BSON_EOO) {
+            if (!strcmp(BSON_ITERATOR_KEY(it), BSON_ITERATOR_KEY(&it2))) {
+                bt2 = BSON_ITERATOR_TYPE(&it2);
+                if (bt != bt2 || (bt != BSON_OBJECT && bt != BSON_ARRAY)) {
+                    tclistclear(dups);
+                    bt = bt2;
+                }
+                itoff = it2.cur - it->cur;
+                tclistpush(dups, &itoff, sizeof(itoff));
+            }
+        }
+
+        const char *buf;
+        int bufsz;
+
+        buf = tclistval(dups, TCLISTNUM(dups) - 1, &bufsz);
+        memcpy(&itoff, buf, sizeof(itoff));
+        it2.cur = it->cur + itoff;
+        it2.first = itoff == 0 ? it->first : 0;
+
+        bt2 = BSON_ITERATOR_TYPE(&it2);
+        if (bt2 == BSON_OBJECT) {
+            bson bst;
+            bson_init(&bst);
+            int j = -1;
+            while(++j < TCLISTNUM(dups)) {
+                buf = tclistval(dups, j, &bufsz);
+                memcpy(&itoff, buf, sizeof(itoff));
+                it2.cur = it->cur + itoff;
+                it2.first = itoff == 0 ? it->first : 0;
+
+                bson_iterator sit;
+                BSON_ITERATOR_SUBITERATOR(&it2, &sit);
+                while(bson_iterator_next(&sit) != BSON_EOO){
+                    bson_append_field_from_iterator(&sit, &bst);
+                }
+            }
+            bson_finish(&bst);
+
+            bson_append_start_object(bso, BSON_ITERATOR_KEY(it));
+            BSON_ITERATOR_INIT(&it2, &bst);
+            _bson_fix_duplicate_keys(&it2, bso);
+            bson_append_finish_object(bso);
+        } else if (bt2 == BSON_ARRAY) {
+            char ibuf[TCNUMBUFSIZ];
+            memset(ibuf, '\0', TCNUMBUFSIZ);
+
+            bson_append_start_array(bso, BSON_ITERATOR_KEY(it));
+            int ind = 0;
+            int j = -1;
+            while(++j < TCLISTNUM(dups)) {
+                buf = tclistval(dups, TCLISTNUM(dups) - 1, &bufsz);
+                memcpy(&itoff, buf, sizeof(itoff));
+                it2.cur = it->cur + itoff;
+                it2.first = itoff == 0 ? it->first : 0;
+
+                bson_iterator sit, sit2;
+                bson_type sbt;
+                BSON_ITERATOR_SUBITERATOR(&it2, &sit);
+                while((sbt = bson_iterator_next(&sit)) != BSON_EOO) {
+                    bson_numstrn(ibuf, TCNUMBUFSIZ, ind++);
+                    if (sbt == BSON_OBJECT) {
+                        bson_append_start_object(bso, ibuf);
+                        BSON_ITERATOR_SUBITERATOR(&sit, &sit2);
+                        _bson_fix_duplicate_keys(&sit2, bso);
+                        bson_append_finish_object(bso);
+                    } else if(sbt == BSON_ARRAY) {
+                        bson_append_start_array(bso, ibuf);
+                        BSON_ITERATOR_SUBITERATOR(&sit, &sit2);
+                        _bson_fix_duplicate_keys(&sit2, bso);
+                        bson_append_finish_array(bso);
+                    } else {
+                        bson_append_field_from_iterator2(ibuf, &sit, bso);
+                    }
+                }
+            }
+            bson_append_finish_array(bso);
+        } else {
+            bson_append_field_from_iterator(&it2, bso);
+        }
+        tclistdel(dups);
+    }
+    tcmapdel(keys);
+}
+
+void bson_fix_duplicate_keys(const bson *bsi, bson *bso) {
+    bson_iterator it;
+
+    BSON_ITERATOR_INIT(&it, bsi);
+    _bson_fix_duplicate_keys(&it, bso);
+}
+
 
 typedef struct {
     int nstack; //nested object stack pos

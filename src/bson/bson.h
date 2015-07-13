@@ -148,6 +148,9 @@ EJDB_EXPORT const char* bson_first_errormsg(bson *bson);
     (_bs_I)->cur = (_bs)->data + 4; \
     (_bs_I)->first = 1;
 
+#define BSON_ITERATOR_CLONE(_bs_I_S, _bs_I_T) \
+    (_bs_I_T)->cur = (_bs_I_S)->cur; \
+    (_bs_I_T)->first = (_bs_I_S)->first;
 
 /* --------------------------------
    READING
@@ -1007,6 +1010,70 @@ EJDB_EXPORT int bson_append_finish_object(bson *b);
  * @return BSON_OK or BSON_ERROR.
  */
 EJDB_EXPORT int bson_append_finish_array(bson *b);
+
+EJDB_EXPORT int bson_merge_recursive(const bson *b1, const bson *b2, bson_bool_t overwrite, bson *out);
+
+/**
+ * Check duplicate keys
+ * @return true if bson contains duplicate keys
+ */
+EJDB_EXPORT bson_bool_t bson_check_duplicate_keys(const bson *bs);
+
+/**
+ * Remove duplicate keys from bson:
+ *  - merge objects and arrays with same key:
+ *   { a : { b : "value 1" }, a : { c : "value 2" } } -> { a : { b : "value 1", c : "value 2" } }
+ *  - keep last value for non object and non array values
+ *   { a : "value 1", a : "value 2" } -> { a : "value 2" }
+ *
+ * Example:
+ * {
+ *   a : {
+ *     b : 1,
+ *     c : "c"
+ *   },
+ *   b : NULL,
+ *   c : [
+ *     {
+ *       a : 1,
+ *       b : 2,
+ *       a : 0
+ *     },
+ *     {
+ *       a : 0,
+ *       b : 1,
+ *       c : 3
+ *     }
+ *   ],
+ *   a : {
+ *     d : 0,
+ *     c : 1
+ *   }
+ * }
+ *
+ * =>
+ *
+ * {
+ *   a : {
+ *     b : 1,
+ *     c : 1,
+ *     d : 0
+ *   },
+ *   b : NULL,
+ *   c : [
+ *     {
+ *       a : 0,
+ *       b : 2
+ *     },
+ *     {
+ *       a : 0,
+         b : 1,
+         c : 3
+ *     }
+ *   ]
+ * }
+ */
+EJDB_EXPORT void bson_fix_duplicate_keys(const bson *bsi, bson *bso);
 
 EJDB_EXPORT void bson_numstr(char *str, int64_t i);
 EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, int64_t i);

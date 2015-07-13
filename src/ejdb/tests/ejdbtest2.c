@@ -6030,6 +6030,79 @@ void testTicket117(void) {
 	tcxstrdel(log);
 }
 
+void testTicket148(void) {
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket148", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson bs;
+    bson_oid_t oid;
+
+    bson_init(&bs);
+    bson_finish(&bs);
+    CU_ASSERT_FALSE_FATAL(bs.err);
+    CU_ASSERT_TRUE_FATAL(ejdbsavebson(coll, &bs, &oid));
+    bson_destroy(&bs);
+
+    bson bsq;
+    bson_init_as_query(&bsq);
+    bson_append_start_object(&bsq, "$set");
+    bson_append_int(&bsq, "info.name.par.age", 40);
+    bson_append_int(&bsq, "info.name.mot.age", 35);
+    bson_append_finish_object(&bsq);
+    bson_finish(&bsq);
+    CU_ASSERT_FALSE_FATAL(bsq.err);
+
+    uint32_t count = ejdbupdate(coll, &bsq, 0, 0, 0, 0);
+    bson_destroy(&bsq);
+    CU_ASSERT_EQUAL(count, 1);
+
+    bson_init_as_query(&bsq);
+    bson_finish(&bsq);
+    EJQ *q1 = ejdbcreatequery(jb, &bsq, NULL, 0, NULL);
+    bson_destroy(&bsq);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, NULL);
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+
+    void *bsdata = TCLISTVALPTR(q1res, 0);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(bsdata);
+
+    bson_iterator it, sit;
+    bson_type bt;
+    BSON_ITERATOR_FROM_BUFFER(&it, bsdata);
+    while((bt = bson_iterator_next(&it)) != BSON_EOO) {
+        if (bt == BSON_OID) {
+            continue;
+        }
+        break;
+    }
+    CU_ASSERT_EQUAL(bt, BSON_OBJECT);
+    CU_ASSERT_FALSE(strcmp(BSON_ITERATOR_KEY(&it), "info"));
+
+    BSON_ITERATOR_SUBITERATOR(&it, &sit);
+    bt = bson_iterator_next(&sit);
+    CU_ASSERT_EQUAL(bt, BSON_OBJECT);
+    CU_ASSERT_FALSE(strcmp(BSON_ITERATOR_KEY(&sit), "name"));
+
+    BSON_ITERATOR_SUBITERATOR(&sit, &sit);
+    bt = bson_iterator_next(&sit);
+    CU_ASSERT_EQUAL(bt, BSON_OBJECT);
+    CU_ASSERT_FALSE(strcmp(BSON_ITERATOR_KEY(&sit) , "par") && strcmp(BSON_ITERATOR_KEY(&sit) , "mot"));
+    bt = bson_iterator_next(&sit);
+    CU_ASSERT_EQUAL(bt, BSON_OBJECT);
+    CU_ASSERT_FALSE(strcmp(BSON_ITERATOR_KEY(&sit) , "par") && strcmp(BSON_ITERATOR_KEY(&sit) , "mot"));
+
+    BSON_ITERATOR_FROM_BUFFER(&it, bsdata);
+    bt = bson_find_fieldpath_value("info.name.par.age", &it);
+    CU_ASSERT_TRUE(BSON_IS_NUM_TYPE(bt));
+    CU_ASSERT_EQUAL(bson_iterator_int(&it), 40);
+
+    BSON_ITERATOR_FROM_BUFFER(&it, bsdata);
+    bt = bson_find_fieldpath_value("info.name.mot.age", &it);
+    CU_ASSERT_TRUE(BSON_IS_NUM_TYPE(bt));
+    CU_ASSERT_EQUAL(bson_iterator_int(&it), 35);
+}
+
 
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -6124,7 +6197,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testDistinct", testDistinct)) ||
 			(NULL == CU_add_test(pSuite, "testSlice", testSlice)) ||
 			(NULL == CU_add_test(pSuite, "testTicket117", testTicket117)) ||
-            (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
+            (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo)) ||
+            (NULL == CU_add_test(pSuite, "testTicket148", testTicket148))
     ) {
         CU_cleanup_registry();
         return CU_get_error();
