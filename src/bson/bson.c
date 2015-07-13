@@ -1823,6 +1823,7 @@ static void _bson_fix_duplicate_keys(bson_iterator *it, bson *bso) {
             BSON_ITERATOR_INIT(&it2, &bst);
             _bson_fix_duplicate_keys(&it2, bso);
             bson_append_finish_object(bso);
+            bson_destroy(&bst);
         } else if (bt2 == BSON_ARRAY) {
             char ibuf[TCNUMBUFSIZ];
             memset(ibuf, '\0', TCNUMBUFSIZ);
@@ -1860,7 +1861,6 @@ static void _bson_fix_duplicate_keys(bson_iterator *it, bson *bso) {
         } else {
             bson_append_field_from_iterator(&it2, bso);
         }
-        tclistclear(dups);
         tclistdel(dups);
     }
     tcmapdel(keys);

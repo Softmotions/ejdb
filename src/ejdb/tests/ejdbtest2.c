@@ -6101,6 +6101,9 @@ void testTicket148(void) {
     bt = bson_find_fieldpath_value("info.name.mot.age", &it);
     CU_ASSERT_TRUE(BSON_IS_NUM_TYPE(bt));
     CU_ASSERT_EQUAL(bson_iterator_int(&it), 35);
+
+    ejdbquerydel(q1);
+    tclistdel(q1res);
 }
 
 
