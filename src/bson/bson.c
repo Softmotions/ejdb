@@ -1860,6 +1860,7 @@ static void _bson_fix_duplicate_keys(bson_iterator *it, bson *bso) {
         } else {
             bson_append_field_from_iterator(&it2, bso);
         }
+        tclistclear(dups);
         tclistdel(dups);
     }
     tcmapdel(keys);
