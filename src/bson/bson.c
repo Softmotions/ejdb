@@ -1397,7 +1397,7 @@ static void bson_append_fpath_from_iterator(const char *fpath, const bson_iterat
         memcpy(key, fp, keylen);
         key[keylen] = '\0';
         rp++;
-        fplen -= keylen;
+        fplen -= keylen + 1;
         if (fplen <= 0) { //last part of fp
             bson_append_field_from_iterator2(key, from, into);
             while (nl-- > 0) {
