@@ -1,3 +1,10 @@
+ejdb (1.2.10) testing; urgency=medium
+
+  * Fix: Uninitialized Memory Conditional fixe #155
+  * Fix: $set fails to create nested keys if supplied with a non existent topmost key #148  
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 24 Jul 2015 17:21:38 +0600
+
 ejdb (1.2.9) testing; urgency=low
 
   * Fix: Builds shared lib when -DBUILD_SHARED_LIBS:BOOL=OFF #143
