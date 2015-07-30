@@ -6030,6 +6030,30 @@ void testTicket117(void) {
 	tcxstrdel(log);
 }
 
+void testTicket142()
+{
+	EJCOLL *coll = ejdbcreatecoll(jb, "ticket142", NULL);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+	bson b;
+	bson_oid_t oid;
+
+	bson_init(&b);
+	bson_append_int(&b, "id", 18);
+	bson_append_symbol(&b, "sym", "eighteen");
+	bson_finish(&b);
+	CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid);
+	bson_destroy(&b);
+
+	/* Verify that id=18 contain record with symbol */
+	bson bsq;
+    bson_init_as_query(&bsq);
+	bson_append_int(&bsq, "id", 18);
+	bson_finish(&bsq);
+	CU_ASSERT_FALSE_FATAL(bsq.err);
+
+
+}
 
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -6124,6 +6148,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testDistinct", testDistinct)) ||
 			(NULL == CU_add_test(pSuite, "testSlice", testSlice)) ||
 			(NULL == CU_add_test(pSuite, "testTicket117", testTicket117)) ||
+			(NULL == CU_add_test(pSuite, "testTicket142", testTicket142)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo))
     ) {
         CU_cleanup_registry();
