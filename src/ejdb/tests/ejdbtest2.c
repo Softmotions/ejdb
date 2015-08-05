@@ -6106,6 +6106,47 @@ void testTicket148(void) {
     tclistdel(q1res);
 }
 
+void testTicket156(void) {
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket156", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson b;
+    bson_oid_t oid;
+
+    bson_init(&b);
+    bson_append_int(&b, "id", 18);
+    bson_append_symbol(&b, "sym", "eighteen");
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+    /* Verify that id=18 contain record with symbol */
+    bson bsq;
+    bson_init_as_query(&bsq);
+    bson_append_int(&bsq, "id", 18);
+    bson_finish(&bsq);
+    CU_ASSERT_FALSE_FATAL(bsq.err);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    uint32_t count;
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, NULL);
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+
+    void *bsdata = TCLISTVALPTR(q1res, 0);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(bsdata);
+
+    bson_iterator it;
+    bson_type bt;
+    BSON_ITERATOR_FROM_BUFFER(&it, bsdata);
+    bt = bson_find_fieldpath_value("sym", &it);
+    CU_ASSERT_EQUAL_FATAL(bt, BSON_SYMBOL);
+    CU_ASSERT_FALSE(strcmp(bson_iterator_string(&it), "eighteen"));
+
+    bson_destroy(&bsq);
+    ejdbquerydel(q1);
+    tclistdel(q1res);
+}
 
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
@@ -6198,10 +6239,11 @@ int main() {
             (NULL == CU_add_test(pSuite, "testTicket101", testTicket101)) || 
             (NULL == CU_add_test(pSuite, "testTicket110", testTicket110)) ||
             (NULL == CU_add_test(pSuite, "testDistinct", testDistinct)) ||
-			(NULL == CU_add_test(pSuite, "testSlice", testSlice)) ||
-			(NULL == CU_add_test(pSuite, "testTicket117", testTicket117)) ||
+            (NULL == CU_add_test(pSuite, "testSlice", testSlice)) ||
+            (NULL == CU_add_test(pSuite, "testTicket117", testTicket117)) ||
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo)) ||
-            (NULL == CU_add_test(pSuite, "testTicket148", testTicket148))
+            (NULL == CU_add_test(pSuite, "testTicket148", testTicket148)) ||
+            (NULL == CU_add_test(pSuite, "testTicket156", testTicket156))
     ) {
         CU_cleanup_registry();
         return CU_get_error();
