@@ -14,7 +14,7 @@ set(PROJECT_DESCRIPTION "EJDB aims to be a fast MongoDB-like library which can b
 set(CHANGELOG_MESSAGE ${CHANGELOG_LAST_MESSAGE})
 set(PROJECT_PPA "ppa:adamansky/ejdb")
 set(PROJECT_PPA_USER "adamansky")
-set(PROJECT_PPA_DISTRIB_TARGET vivid utopic trusty precise)
+set(PROJECT_PPA_DISTRIB_TARGET vivid trusty precise)
 
 project(${PROJECT_NAME} C)
 
@@ -36,7 +36,7 @@ option(PACKAGE_ZIP "Build .zip package archive" ON)
 option(ENABLE_PPA "Enable PPA package build" OFF)
 option(UPLOAD_PPA "Upload debian packages to the launchpad ppa repository" OFF)
 option(PPA_DEBIAN_VERSION "PPA version suffix for debian packages" "ppa1")
-option("PROJECT_PPA_DISTRIB_TARGET" "Ubuntu PPA distrubutive names" "vivid;utopic;trusty;precise")
+option("PROJECT_PPA_DISTRIB_TARGET" "Ubuntu PPA distrubutive names" "vivid;trusty;precise")
 
 if (POLICY CMP0042)
     cmake_policy(SET CMP0042 NEW)
