@@ -6188,14 +6188,14 @@ void testTicket161(void) {
     bson_iterator it, sit1, sit2;
     bson_type bt;
     BSON_ITERATOR_FROM_BUFFER(&it, bsdata);
-    
+
     while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
         if (bt == BSON_OBJECT) {
             break;
         }
     }
     CU_ASSERT_EQUAL_FATAL(bt, BSON_OBJECT);
-    
+
     BSON_ITERATOR_SUBITERATOR(&it, &sit1);
     bt = bson_iterator_next(&sit1);
     CU_ASSERT_EQUAL(bt, BSON_OBJECT);
@@ -6305,7 +6305,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo)) ||
             (NULL == CU_add_test(pSuite, "testTicket148", testTicket148)) ||
             (NULL == CU_add_test(pSuite, "testTicket156", testTicket156)) ||
-            (NULL == CU_add_test(pSuite, "testTicket161", testTicket161)) 
+            (NULL == CU_add_test(pSuite, "testTicket161", testTicket161))
     ) {
         CU_cleanup_registry();
         return CU_get_error();
