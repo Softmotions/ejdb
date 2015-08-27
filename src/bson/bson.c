@@ -1404,13 +1404,8 @@ static void bson_append_fpath_from_iterator(const char *fpath, const bson_iterat
                 bson_append_finish_object(into); //arrays are covered also
             }
         } else { //intermediate part
-            if (bson_isnumstr(key, keylen)) {
-                nl++;
-                bson_append_start_array2(into, key, keylen);
-            } else {
-                nl++;
-                bson_append_start_object2(into, key, keylen);
-            }
+            nl++;
+            bson_append_start_object2(into, key, keylen);
         }
         fp = rp;
     }
