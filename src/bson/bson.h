@@ -1087,7 +1087,7 @@ EJDB_EXPORT int bson_numstrn(char *str, int maxbuf, int64_t i);
 typedef void( *bson_err_handler)(const char *errmsg);
 typedef int (*bson_printf_func)(const char *, ...);
 
-void bson_free(void *ptr);
+EJDB_EXPORT void bson_free(void *ptr);
 
 /**
  * Allocates memory and checks return value, exiting fatally if malloc() fails.
