@@ -3180,6 +3180,15 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
         if (updobj != setqf->updateobj) {
             bson_del(updobj);
         }
+        if (bson_check_duplicate_keys(&bsout)) {
+            bson bstmp;
+            bson_copy(&bstmp, &bsout);
+            bson_destroy(&bsout);
+            bson_init(&bsout);
+            bson_fix_duplicate_keys(&bstmp, &bsout);
+            bson_finish(&bsout);
+            bson_destroy(&bstmp);
+        }
         if (!rv) {
             goto finish;
         }
@@ -3259,6 +3268,15 @@ static bool _qryupdate(_QRYCTX *ctx, void *bsbuf, int bsbufsz) {
         bson_destroy(&bsmerge);
         if (updobj != incqf->updateobj) {
             bson_del(updobj);
+        }
+        if (bson_check_duplicate_keys(&bsout)) {
+            bson bstmp;
+            bson_copy(&bstmp, &bsout);
+            bson_destroy(&bsout);
+            bson_init(&bsout);
+            bson_fix_duplicate_keys(&bstmp, &bsout);
+            bson_finish(&bsout);
+            bson_destroy(&bstmp);
         }
         if (!rv) {
             goto finish;

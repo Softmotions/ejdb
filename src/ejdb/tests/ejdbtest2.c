@@ -6209,6 +6209,87 @@ void testTicket161(void) {
     tclistdel(q1res);
 }
 
+void subTestTicket163(const char *op);
+
+void testTicket163(void) {
+    subTestTicket163("$inc");
+    subTestTicket163("$set");
+}
+
+void subTestTicket163(const char* op) {
+    EJCOLL *coll = ejdbcreatecoll(jb, "ticket163", NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll);
+
+    bson b;
+    bson_oid_t oid;
+
+    bson_init(&b);
+    bson_append_string(&b, "op", op);
+    bson_append_start_object(&b, "stocks");
+    bson_append_finish_object(&b);
+    bson_finish(&b);
+    CU_ASSERT_TRUE(ejdbsavebson(coll, &b, &oid));
+    bson_destroy(&b);
+
+    bson bsq;
+    bson_init_as_query(&bsq);
+    bson_append_string(&bsq, "op", op);
+    bson_append_start_object(&bsq, op);
+    bson_append_int(&bsq, "stocks.master.abc.qty", 4);
+    bson_append_int(&bsq, "stocks.master.def.qty", 5);
+    bson_append_finish_object(&bsq);
+    bson_finish(&bsq);
+    CU_ASSERT_FALSE_FATAL(bsq.err);
+
+    uint32_t count = ejdbupdate(coll, &bsq, 0, 0, 0, 0);
+    bson_destroy(&bsq);
+    CU_ASSERT_EQUAL(count, 1);
+
+    bson_init_as_query(&bsq);
+    bson_append_string(&bsq, "op", op);
+    bson_finish(&bsq);
+
+    EJQ *q1 = ejdbcreatequery(jb, &bsq, NULL, 0, NULL);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(q1);
+    TCLIST *q1res = ejdbqryexecute(coll, q1, &count, 0, NULL);
+    CU_ASSERT_EQUAL(TCLISTNUM(q1res), 1);
+
+    void *bsdata = TCLISTVALPTR(q1res, 0);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(bsdata);
+
+    bson_iterator it, sit1;
+    bson_type bt;
+    BSON_ITERATOR_FROM_BUFFER(&it, bsdata);
+
+    while ((bt = bson_iterator_next(&it)) != BSON_EOO) {
+        if (bt == BSON_OBJECT) {
+            break;
+        }
+    }
+    CU_ASSERT_EQUAL_FATAL(bt, BSON_OBJECT);
+
+    BSON_ITERATOR_SUBITERATOR(&it, &sit1);
+    bt = bson_iterator_next(&sit1);
+    CU_ASSERT_EQUAL(bt, BSON_OBJECT);
+
+    bt = bson_iterator_next(&sit1);
+    CU_ASSERT_EQUAL_FATAL(bt, BSON_EOO);
+
+    BSON_ITERATOR_FROM_BUFFER(&it, bsdata);
+    bt = bson_find_fieldpath_value("stocks.master.abc.qty", &it);
+    CU_ASSERT_TRUE_FATAL(BSON_IS_NUM_TYPE(bt));
+    CU_ASSERT_EQUAL(bson_iterator_long(&it), 4);
+
+    BSON_ITERATOR_FROM_BUFFER(&it, bsdata);
+    bt = bson_find_fieldpath_value("stocks.master.def.qty", &it);
+    CU_ASSERT_TRUE_FATAL(BSON_IS_NUM_TYPE(bt));
+    CU_ASSERT_EQUAL(bson_iterator_long(&it), 5);
+
+    bson_destroy(&bsq);
+    ejdbquerydel(q1);
+    tclistdel(q1res);
+}
+
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
@@ -6305,7 +6386,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "testMetaInfo", testMetaInfo)) ||
             (NULL == CU_add_test(pSuite, "testTicket148", testTicket148)) ||
             (NULL == CU_add_test(pSuite, "testTicket156", testTicket156)) ||
-            (NULL == CU_add_test(pSuite, "testTicket161", testTicket161))
+            (NULL == CU_add_test(pSuite, "testTicket161", testTicket161)) ||
+            (NULL == CU_add_test(pSuite, "testTicket163", testTicket163))
     ) {
         CU_cleanup_registry();
         return CU_get_error();
