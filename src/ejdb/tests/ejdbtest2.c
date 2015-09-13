@@ -6165,7 +6165,7 @@ void testTicket161(void) {
     bson bsq;
     bson_init_as_query(&bsq);
     bson_append_start_object(&bsq, "$inc");
-    bson_append_int(&bsq, "stocks.s72851.qty", 4);
+    bson_append_int(&bsq, "stocks.72851.qty", 4);
     bson_append_finish_object(&bsq);
     bson_finish(&bsq);
     CU_ASSERT_FALSE_FATAL(bsq.err);
