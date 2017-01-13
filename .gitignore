@@ -1,5 +1,6 @@
 /tmp
 /build*/
+/cmake-build*/
 /Makefile
 /Testing/
 
