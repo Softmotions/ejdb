@@ -4,7 +4,7 @@ include_directories(${CUNIT_INCLUDE_DIRS})
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 
-foreach(TC RANGE 1 5)
+foreach(TC RANGE 1 6)
 	add_executable(ejdbtest${TC} ejdbtest${TC}.c)
 	set_target_properties(ejdbtest${TC} PROPERTIES 
 						  COMPILE_FLAGS "-DEJDB_STATIC")
