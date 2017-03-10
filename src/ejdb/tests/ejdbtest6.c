@@ -3,7 +3,7 @@
 #include "ejdb_private.h"
 #include "CUnit/Basic.h"
 
-int testIssue182() {
+void testIssue182() {
     EJDB *jb = ejdbnew();
     CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt6", JBOWRITER | JBOCREAT | JBOTRUNC));
     EJCOLL *coll = ejdbcreatecoll(jb, "issue182", NULL);
@@ -38,8 +38,6 @@ int testIssue182() {
 
 
     // this query now crashes the db (using -1 sort order does not)
-    //  db.find("testcoll", {}, { "$orderby": { "test": 1 } }, function(err, cursor, count) {
-
     bson bsq1;
     bson_init_as_query(&bsq1);
     bson_finish(&bsq1);
@@ -72,7 +70,33 @@ int testIssue182() {
 
     ejdbclose(jb);
     ejdbdel(jb);
-    return 0;
+}
+
+void subTestIssue182() {
+    bson b1, b2, b3;
+
+    bson_init(&b1);
+    bson_append_int(&b1, "test", 1);
+    bson_finish(&b1);
+    
+    bson_init(&b2);
+    bson_append_int(&b2, "test", -1);
+    bson_finish(&b2);
+    
+    bson_init(&b3);
+    bson_append_string(&b3, "other", "");
+    bson_finish(&b3);
+    
+    CU_ASSERT_TRUE(bson_compare(bson_data(&b1), bson_data(&b2), "test", 4) > 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(&b1), bson_data(&b3), "test", 4) > 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(&b2), bson_data(&b1), "test", 4) < 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(&b2), bson_data(&b3), "test", 4) > 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(&b3), bson_data(&b1), "test", 4) < 0);
+    CU_ASSERT_TRUE(bson_compare(bson_data(&b3), bson_data(&b2), "test", 4) < 0);
+
+    bson_destroy(&b1);
+    bson_destroy(&b2);
+    bson_destroy(&b3);
 }
 
 int init_suite(void) {
@@ -100,6 +124,7 @@ int main() {
 
     /* Add the tests to the suite */
     if (
+            (NULL == CU_add_test(pSuite, "subTestIssue182", subTestIssue182)) ||
             (NULL == CU_add_test(pSuite, "testIssue182", testIssue182))
             ) {
         CU_cleanup_registry();
