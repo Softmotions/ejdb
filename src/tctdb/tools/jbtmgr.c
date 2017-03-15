@@ -247,7 +247,7 @@ static int runput(int argc, char **argv) {
     char *path = NULL;
     char *pkey = NULL;
     TCLIST *vals = tcmpoollistnew(tcmpoolglobal());
-    int omode = 0;
+    int omode = TDBOCREAT | TDBOWRITER;
     int dmode = 0;
     bool sx = false;
     for (int i = 2; i < argc; i++) {

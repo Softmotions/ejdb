@@ -257,7 +257,7 @@ static int runput(int argc, char **argv) {
     char *key = NULL;
     char *value = NULL;
     TCCMP cmp = NULL;
-    int omode = 0;
+    int omode =  BDBOCREAT | BDBOWRITER;;
     int dmode = 0;
     bool sx = false;
     for (int i = 2; i < argc; i++) {

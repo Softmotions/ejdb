@@ -1,3 +1,9 @@
+ejdb (1.2.11) UNRELEASED; urgency=medium
+
+  *  EJDB_EXPORT for bson_free fixed #160  
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 13 Sep 2015 10:18:18 +0600
+
 ejdb (1.2.10) testing; urgency=medium
 
   * Fix: Uninitialized Memory Conditional fixe #155
