@@ -1,5 +1,7 @@
 [![EJDB](http://ejdb.org/_images/ejdblogo3.png)](http://ejdb.org)
 
+[EJDB v1.2.11 released (2017-16-03)](https://github.com/Softmotions/ejdb/releases/tag/v1.2.11)
+
 Embedded JSON Database engine C library (libejdb)
 =================================================
 
