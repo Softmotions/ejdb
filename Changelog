@@ -1,13 +1,14 @@
-ejdb (1.2.11) UNRELEASED; urgency=medium
+ejdb (1.2.11) testing; urgency=medium
 
-  *  EJDB_EXPORT for bson_free fixed #160  
+  * EJDB_EXPORT for bson_free fixed #160
+  * Segmentation fault using $orderby #182
 
- -- Anton Adamansky <adamansky@gmail.com>  Sun, 13 Sep 2015 10:18:18 +0600
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 16 Mar 2017 12:25:59 +0700
 
 ejdb (1.2.10) testing; urgency=medium
 
   * Fix: Uninitialized Memory Conditional fixe #155
-  * Fix: $set fails to create nested keys if supplied with a non existent topmost key #148  
+  * Fix: $set fails to create nested keys if supplied with a non existent topmost key #148
 
  -- Anton Adamansky <adamansky@gmail.com>  Fri, 24 Jul 2015 17:21:38 +0600
 
@@ -57,7 +58,7 @@ ejdb (1.2.4) testing; urgency=low
   * rt lib depenedency on MacOS
   * fixed incorrect static libejdb linkage options
   * minor fixes in project build scripts
- 
+
  -- Anton Adamansky <adamansky@gmail.com>  Sun, 22 Mar 2015 22:45:31 +0600
 
 ejdb (1.2.3) testing; urgency=low
@@ -78,7 +79,7 @@ ejdb (1.1.25) testing; urgency=low
 
   * Mongodb $unset operation implemented #101
   * json2bson segfaults for arrays of simple types #102
- 
+
  -- Anton Adamansky <adamansky@gmail.com>  Sun, 27 Oct 2013 23:32:14 +0700
 
 ejdb (1.1.24) testing; urgency=low
@@ -123,9 +124,9 @@ ejdb (1.1.18) testing; urgency=low
   * Added support MongoDB $(projection) operator #15
 
   * Fixed incorrect behavior of field inclusion in $fields #15
- 
+
   * Fixed wrong checking of $ in collection names #90
- 
+
  -- Anton Adamansky <adamansky@gmail.com>  Sun, 11 Aug 2013 23:32:26 +0700
 
 ejdb (1.1.17) testing; urgency=low
@@ -162,7 +163,7 @@ ejdb (1.1.14) testing; urgency=low
 ejdb (1.1.13) testing; urgency=low
 
   * .Net binding
-  * BSON processing fixes 
+  * BSON processing fixes
 
  -- Anton Adamansky <adamansky@gmail.com>  Fri, 21 Jun 2013 12:40:28 +0700
 
@@ -174,7 +175,7 @@ ejdb (1.1.12) testing; urgency=low
 
 ejdb (1.1.10) testing; urgency=low
 
-  * Threading consistency improvements 
+  * Threading consistency improvements
 
  -- Anton Adamansky <adamansky@gmail.com>  Thu, 30 May 2013 20:43:15 +0700
 
@@ -192,13 +193,13 @@ ejdb (1.1.7) testing; urgency=low
 
 ejdb (1.1.6) testing; urgency=low
 
-  * Better error reporting in the case of lack pthread resources. 
+  * Better error reporting in the case of lack pthread resources.
 
  -- Anton Adamansky <adamansky@gmail.com>  Sat, 25 May 2013 18:22:07 +0700
 
 ejdb (1.1.5-0) testing; urgency=low
 
-  * TCHDB locking optimization 
+  * TCHDB locking optimization
   * Out of memory crash fixed (#64)
 
  -- Anton Adamansky <adamansky@gmail.com>  Fri, 24 May 2013 01:12:16 +0700
