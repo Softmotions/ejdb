@@ -2090,6 +2090,8 @@ static bool tctdbputimpl(TCTDB *tdb, const void *pkbuf, int pksiz, TCMAP *cols, 
         tcmapdel(ocols);
         TCFREE(obuf);
     } else {
+        // clear TCENOREC status
+        if (tctdbecode(tdb) == TCENOREC) tctdbsetecode(tdb, TCESUCCESS, __FILE__, __LINE__, __func__);
         if (!tctdbidxput(tdb, pkbuf, pksiz, cols)) err = true;
         int csiz;
         char *cbuf = tcmapdump(cols, &csiz);

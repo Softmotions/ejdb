@@ -99,6 +99,25 @@ void subTestIssue182() {
     bson_destroy(&b3);
 }
 
+void testIssue174(void) {
+    EJDB *jb = ejdbnew();
+    CU_ASSERT_TRUE_FATAL(ejdbopen(jb, "dbt6", JBOWRITER | JBOCREAT | JBOTRUNC));
+    EJCOLL *coll1 = ejdbcreatecoll(jb, "issue174_1", NULL);
+    CU_ASSERT_EQUAL_FATAL(ejdbecode(jb), TCESUCCESS);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll1);
+
+    EJCOLL *coll2 = ejdbcreatecoll(jb, "issue174_2", NULL);
+    CU_ASSERT_EQUAL_FATAL(ejdbecode(jb), TCESUCCESS);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll2);
+
+    EJCOLL *coll3 = ejdbcreatecoll(jb, "issue174_3", NULL);
+    CU_ASSERT_EQUAL_FATAL(ejdbecode(jb), TCESUCCESS);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll3);
+
+    ejdbclose(jb);
+    ejdbdel(jb);
+}
+
 int init_suite(void) {
     return 0;
 }
@@ -125,7 +144,8 @@ int main() {
     /* Add the tests to the suite */
     if (
             (NULL == CU_add_test(pSuite, "subTestIssue182", subTestIssue182)) ||
-            (NULL == CU_add_test(pSuite, "testIssue182", testIssue182))
+            (NULL == CU_add_test(pSuite, "testIssue182", testIssue182)) ||
+            (NULL == CU_add_test(pSuite, "testIssue174", testIssue174))
             ) {
         CU_cleanup_registry();
         return CU_get_error();
