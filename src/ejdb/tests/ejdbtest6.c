@@ -118,6 +118,44 @@ void testIssue174(void) {
     ejdbdel(jb);
 }
 
+void testIssue169(void) {
+    bson_oid_t id;
+
+    EJDB *db = ejdbnew();
+    CU_ASSERT_TRUE_FATAL(ejdbopen(db, "dbt6", JBOWRITER|JBOCREAT|JBOTRUNC));
+    EJCOLLOPTS opts;
+    opts.large = false;
+    opts.compressed = false;
+    opts.records = 1;
+    opts.cachedrecords = 0;
+
+    EJCOLL *coll1 = ejdbcreatecoll(db, "issue169", &opts);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll1);
+
+    bson *b = bson_create();;
+    bson_init(b);
+    bson_append_string(b, "key", "value");
+    bson_finish(b);
+    CU_ASSERT_FALSE_FATAL(b->err);
+
+    ejdbsavebson(coll1, b, &id);
+    bson_del(b);
+    ejdbsyncdb(db);
+    ejdbclose(db);
+
+    CU_ASSERT_TRUE_FATAL(ejdbopen(db, "dbt6", JBOREADER));
+    EJCOLL *coll2 = ejdbgetcoll(db, "issue169");
+    CU_ASSERT_PTR_NOT_NULL_FATAL(coll2);
+    CU_ASSERT_PTR_NOT_EQUAL_FATAL(coll2, coll1);
+
+    b = ejdbloadbson(coll2, &id);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(b);
+    CU_ASSERT_TRUE_FATAL(bson_compare_string("value", bson_data(b), "key") == 0);
+    bson_del(b);
+    ejdbclose(db);
+    ejdbdel(db);
+}
+
 int init_suite(void) {
     return 0;
 }
@@ -145,7 +183,8 @@ int main() {
     if (
             (NULL == CU_add_test(pSuite, "subTestIssue182", subTestIssue182)) ||
             (NULL == CU_add_test(pSuite, "testIssue182", testIssue182)) ||
-            (NULL == CU_add_test(pSuite, "testIssue174", testIssue174))
+            (NULL == CU_add_test(pSuite, "testIssue174", testIssue174)) ||
+            (NULL == CU_add_test(pSuite, "testIssue169", testIssue169))
             ) {
         CU_cleanup_registry();
         return CU_get_error();

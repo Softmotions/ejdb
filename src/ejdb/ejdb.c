@@ -278,13 +278,6 @@ EJDB* ejdbnew(void) {
 void ejdbdel(EJDB *jb) {
     assert(jb && jb->metadb);
     if (JBISOPEN(jb)) ejdbclose(jb);
-    for (int i = 0; i < jb->cdbsnum; ++i) {
-        assert(jb->cdbs[i]);
-        _delcoldb(jb->cdbs[i]);
-        TCFREE(jb->cdbs[i]);
-        jb->cdbs[i] = NULL;
-    }
-    jb->cdbsnum = 0;
     jb->fversion = 0;
     if (jb->mmtx) {
         pthread_rwlock_destroy(jb->mmtx);
@@ -304,7 +297,11 @@ bool ejdbclose(EJDB *jb) {
             rv = false;
         }
         JBCUNLOCKMETHOD(jb->cdbs[i]);
+        _delcoldb(jb->cdbs[i]);
+        TCFREE(jb->cdbs[i]);
+        jb->cdbs[i] = NULL;
     }
+    jb->cdbsnum = 0;
     if (!tctdbclose(jb->metadb)) {
         rv = false;
     }
