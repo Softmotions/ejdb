@@ -1,3 +1,10 @@
+ejdb (1.2.12) testing; urgency=medium
+
+  *  Fix: "no record found" after creating two collections in a row #174
+  *  Fix: SEGFAULT on sequential open/close with the same handle #169
+
+ -- Adamansky Anton <adam@home>  Tue, 21 Mar 2017 15:57:29 +0700
+
 ejdb (1.2.11) testing; urgency=medium
 
   * EJDB_EXPORT for bson_free fixed #160
