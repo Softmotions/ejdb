@@ -19,13 +19,8 @@ version of [Tokyo Cabinet](http://fallabs.com/tokyocabinet/).
 JSON representation of queries and data implemented with API based on 
 [C BSON](https://github.com/mongodb/mongo-c-driver/tree/master/src/) 
      
+**[Roadmap and thoughts for the next major EJDB 2.0 release](https://github.com/Softmotions/ejdb/issues/183)**     
      
-### NOTE: libejdb 1.2.x introduces some changes that break compatibility with 1.1.x versions:
-* Library name was changed from `tcejdb9` to `ejdb`
-* Library build system was switched to CMake 
-* [See the full 1.2.3 changelog](https://github.com/Softmotions/ejdb/blob/master/Changelog)
-
-
 Features
 ========
 * LGPL license allows you to embed this library into proprietary software
