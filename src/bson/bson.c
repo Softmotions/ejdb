@@ -1829,7 +1829,7 @@ static void _bson_fix_duplicate_keys(bson_iterator *it, bson *bso) {
             int ind = 0;
             int j = -1;
             while(++j < TCLISTNUM(dups)) {
-                buf = tclistval(dups, TCLISTNUM(dups) - 1, &bufsz);
+                buf = tclistval(dups, j, &bufsz);
                 memcpy(&itoff, buf, sizeof(itoff));
                 it2.cur = it->cur + itoff;
                 it2.first = itoff == 0 ? it->first : 0;

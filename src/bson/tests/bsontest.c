@@ -152,6 +152,57 @@ void testCheckDuplicates(void) {
     CU_ASSERT_EQUAL(bson_iterator_int(&it), 1);
 }
 
+void testCheckDuplicates2(void) {
+    bson b, b2;
+    bson_iterator it, sit;
+    bson_type bt;
+
+    bson_init(&b);
+    bson_append_start_array(&b, "array");
+    bson_append_int(&b, "0", 1);
+    bson_append_finish_array(&b);
+    bson_append_start_array(&b, "array");
+    bson_append_int(&b, "0", 3);
+    bson_append_int(&b, "1", 4);
+    bson_append_finish_array(&b);
+    bson_finish(&b);
+    CU_ASSERT_FALSE_FATAL(b.err);
+
+    CU_ASSERT_TRUE_FATAL(bson_check_duplicate_keys(&b));
+
+    bson_init(&b2);
+    bson_fix_duplicate_keys(&b, &b2);
+    bson_finish(&b2);
+    CU_ASSERT_FALSE_FATAL(b2.err);
+
+    CU_ASSERT_FALSE_FATAL(bson_check_duplicate_keys(&b2));
+
+    BSON_ITERATOR_INIT(&it, &b2);
+    bt = bson_iterator_next(&it);
+    CU_ASSERT_EQUAL_FATAL(bt, BSON_ARRAY);
+    CU_ASSERT_STRING_EQUAL_FATAL(BSON_ITERATOR_KEY(&it), "array");
+    BSON_ITERATOR_SUBITERATOR(&it, &sit);
+    
+    bt = bson_iterator_next(&sit);
+    CU_ASSERT_STRING_EQUAL_FATAL(BSON_ITERATOR_KEY(&sit), "0");
+    CU_ASSERT_TRUE_FATAL(BSON_IS_NUM_TYPE(bt));
+    CU_ASSERT_EQUAL_FATAL(bson_iterator_int(&sit), 1);
+    bt = bson_iterator_next(&sit);
+    CU_ASSERT_STRING_EQUAL_FATAL(BSON_ITERATOR_KEY(&sit), "1");
+    CU_ASSERT_TRUE_FATAL(BSON_IS_NUM_TYPE(bt));
+    CU_ASSERT_EQUAL_FATAL(bson_iterator_int(&sit), 3);
+    bt = bson_iterator_next(&sit);
+    CU_ASSERT_STRING_EQUAL_FATAL(BSON_ITERATOR_KEY(&sit), "2");
+    CU_ASSERT_TRUE_FATAL(BSON_IS_NUM_TYPE(bt));
+    CU_ASSERT_EQUAL_FATAL(bson_iterator_int(&sit), 4);
+    
+    bt = bson_iterator_next(&sit);
+    CU_ASSERT_EQUAL_FATAL(bt, BSON_EOO);
+
+    bson_destroy(&b2);
+    bson_destroy(&b);
+}
+
 int main() {
     setlocale(LC_ALL, "en_US.UTF-8");
     CU_pSuite pSuite = NULL;
@@ -168,7 +219,8 @@ int main() {
     }
 
     /* Add the tests to the suite */
-    if ((NULL == CU_add_test(pSuite, "testCheckDuplicates", testCheckDuplicates))
+    if ((NULL == CU_add_test(pSuite, "testCheckDuplicates", testCheckDuplicates)) ||
+        (NULL == CU_add_test(pSuite, "testCheckDuplicates2", testCheckDuplicates2))
     ) {
         CU_cleanup_registry();
         return CU_get_error();
