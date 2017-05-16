@@ -1179,7 +1179,7 @@ bool tctdbtrancommitimpl(TCTDB *tdb);
 
 bool tctdbtranabortimpl(TCTDB *tdb);
 
-#define TDBDEFBNUM     131071            // default bucket number
+#define TDBDEFBNUM     131071            // default number of buckets
 
 
 __TCTDB_CLINKAGEEND

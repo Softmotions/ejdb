@@ -31,7 +31,7 @@
 #define BDBMINLMEMB    4                 // minimum number of members in each leaf
 #define BDBDEFNMEMB    256               // default number of members in each node
 #define BDBMINNMEMB    4                 // minimum number of members in each node
-#define BDBDEFBNUM     32749             // default bucket number
+#define BDBDEFBNUM     32749             // default number of buckets
 #define BDBDEFAPOW     8                 // default alignment power
 #define BDBDEFFPOW     10                // default free block pool power
 #define BDBDEFLCNUM    1024              // default number of leaf cache

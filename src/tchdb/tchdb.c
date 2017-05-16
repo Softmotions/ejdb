@@ -39,7 +39,7 @@
 #define HDBB64(TC_hdb)  ((uint64_t *) ((TC_hdb)->map + HDBHEADSIZ))
 #define HDBB32(TC_hdb)  ((uint32_t *) ((TC_hdb)->map + HDBHEADSIZ))
 
-#define HDBDEFBNUM     131071            // default bucket number
+#define HDBDEFBNUM     131071            // default number of buckets
 #define HDBDEFAPOW     4                 // default alignment power
 #define HDBMAXAPOW     16                // maximum alignment power
 #define HDBDEFFPOW     10                // default free block pool power
