@@ -639,17 +639,47 @@ EJDB_EXPORT int bson_init_data(bson *b, char *data);
 EJDB_EXPORT int bson_init_finished_data(bson *b, const char *data);
 
 /**
- * Initialize a BSON object, and set its
- * buffer to the given size.
+ * Initialize a BSON object and set its buffer to the given size.
  *
  * @param b the BSON object to initialize.
  * @param size the initial size of the buffer.
- *
- * @return BSON_OK or BSON_ERROR.
  */
 EJDB_EXPORT void bson_init_size(bson *b, int size);
 
 EJDB_EXPORT void bson_init_on_stack(bson *b, char *bstack, int mincapacity, int maxonstack);
+
+/**
+ * Initialize a BSON object. If not created with bson_new, you must
+ * initialize each new bson object using this function. Report
+ * problems with memory allocation.
+ *
+ * @param b the BSON object to initialize.
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+EJDB_EXPORT int bson_safe_init(bson *b);
+
+/**
+ * Initialize a BSON object and set its buffer to the given size.
+ * Report problems with memory allocation.
+ *
+ * @param b the BSON object to initialize.
+ * @param size the inintial size of the buffer.
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+EJDB_EXPORT int bson_safe_init_size(bson *b, int size);
+
+/**
+ * Intialize a BSON object. In query contruction mode allowing dot and
+ * dollar chars in field names. Report problems with memory
+ * allocation.
+ *
+ * @param b
+ *
+ * @return BSON_OK or BSON_ERROR
+ */
+EJDB_EXPORT int bson_safe_init_as_query(bson *b);
 
 /**
  * Grow a bson object.

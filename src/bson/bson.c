@@ -806,28 +806,48 @@ void bson_iterator_subiterator(const bson_iterator *i, bson_iterator *sub) {
    BUILDING
    ------------------------------ */
 
-static void _bson_init_size(bson *b, int size) {
+static int _bson_init_size(bson *b, int size) {
     if (size == 0) {
         b->data = NULL;
     } else {
         b->data = (char *) bson_malloc(size);
+	if (!b->data) {
+            bson_fatal_msg(!!b->data, "malloc() failed");
+	    return BSON_ERROR;
+	}
     }
     b->dataSize = size;
     b->cur = b->data + 4;
     bson_reset(b);
+
+    return BSON_OK;
 }
 
 void bson_init(bson *b) {
-    _bson_init_size(b, initialBufferSize);
+    (void)_bson_init_size(b, initialBufferSize);
 }
 
 void bson_init_as_query(bson *b) {
-    bson_init(b);
-    b->flags |= BSON_FLAG_QUERY_MODE;
+    (void)bson_safe_init_as_query(b);
 }
 
 void bson_init_size(bson *b, int size) {
-    _bson_init_size(b, size);
+    (void)_bson_init_size(b, size);
+}
+
+int bson_safe_init(bson *b) {
+    return _bson_init_size(b,  initialBufferSize);
+}
+
+int bson_safe_init_as_query(bson *b) {
+    if (_bson_init_size(b, initialBufferSize) == BSON_ERROR)
+        return BSON_ERROR;
+    b->flags |= BSON_FLAG_QUERY_MODE;
+    return BSON_OK;
+}
+
+int bson_safe_init_size(bson *b, int size) {
+    return _bson_init_size(b, size);
 }
 
 void bson_init_on_stack(bson *b, char *bstack, int mincapacity, int maxonstack) {
