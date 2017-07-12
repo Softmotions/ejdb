@@ -143,7 +143,7 @@ EJDB_EXPORT uint16_t ejdbformatversionpatch(EJDB *jb);
 
 /**
  * Return true if a passed `oid` string cat be converted to valid
- * 12 bit BSON object identifier (OID).
+ * 12 byte BSON object identifier (OID).
  * @param oid String
  */
 EJDB_EXPORT bool ejdbisvalidoidstr(const char *oid);

@@ -910,7 +910,7 @@ void tclistprintf(TCLIST *list, const char *format, ...) {
 
 
 #define TCMAPKMAXSIZ   0xfffff           // maximum size of each key
-#define TCMAPDEFBNUM   4093              // default bucket number
+#define TCMAPDEFBNUM   4093              // default number of buckets
 #define TCMAPZMMINSIZ  131072            // minimum memory size to use nullified region
 #define TCMAPCSUNIT    52                // small allocation unit size of map concatenation
 #define TCMAPCBUNIT    252               // big allocation unit size of map concatenation
@@ -3550,7 +3550,7 @@ void tctreeprintf(TCTREE *tree, const char *kstr, const char *format, ...) {
 
 
 #define TCMDBMNUM      8                 // number of internal maps
-#define TCMDBDEFBNUM   65536             // default bucket number
+#define TCMDBDEFBNUM   65536             // default number of buckets
 
 /* get the first hash value */
 #define TCMDBHASH(TC_res, TC_kbuf, TC_ksiz)                             \
