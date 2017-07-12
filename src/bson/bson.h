@@ -60,8 +60,9 @@ enum bson_validity_t {
 enum bson_binary_subtype_t {
     BSON_BIN_BINARY = 0,
     BSON_BIN_FUNC = 1,
-    BSON_BIN_BINARY_OLD = 2,
-    BSON_BIN_UUID = 3,
+    BSON_BIN_BINARY_OLD = 2, /**< Deprecated */
+    BSON_BIN_UUID_OLD = 3, /**< Deprecated */
+    BSON_BIN_UUID = 4,
     BSON_BIN_MD5 = 5,
     BSON_BIN_USER = 128
 };
@@ -78,7 +79,7 @@ typedef enum {
     BSON_OBJECT = 3,
     BSON_ARRAY = 4,
     BSON_BINDATA = 5,
-    BSON_UNDEFINED = 6,
+    BSON_UNDEFINED = 6, /**< Deprecated */
     BSON_OID = 7,
     BSON_BOOL = 8,
     BSON_DATE = 9,
@@ -86,7 +87,7 @@ typedef enum {
     BSON_REGEX = 11,
     BSON_DBREF = 12, /**< Deprecated. */
     BSON_CODE = 13,
-    BSON_SYMBOL = 14,
+    BSON_SYMBOL = 14, /**< Deprecated. */
     BSON_CODEWSCOPE = 15,
     BSON_INT = 16,
     BSON_TIMESTAMP = 17,
@@ -639,17 +640,47 @@ EJDB_EXPORT int bson_init_data(bson *b, char *data);
 EJDB_EXPORT int bson_init_finished_data(bson *b, const char *data);
 
 /**
- * Initialize a BSON object, and set its
- * buffer to the given size.
+ * Initialize a BSON object and set its buffer to the given size.
  *
  * @param b the BSON object to initialize.
  * @param size the initial size of the buffer.
- *
- * @return BSON_OK or BSON_ERROR.
  */
 EJDB_EXPORT void bson_init_size(bson *b, int size);
 
 EJDB_EXPORT void bson_init_on_stack(bson *b, char *bstack, int mincapacity, int maxonstack);
+
+/**
+ * Initialize a BSON object. If not created with bson_new, you must
+ * initialize each new bson object using this function. Report
+ * problems with memory allocation.
+ *
+ * @param b the BSON object to initialize.
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+EJDB_EXPORT int bson_safe_init(bson *b);
+
+/**
+ * Initialize a BSON object and set its buffer to the given size.
+ * Report problems with memory allocation.
+ *
+ * @param b the BSON object to initialize.
+ * @param size the inintial size of the buffer.
+ *
+ * @return BSON_OK or BSON_ERROR.
+ */
+EJDB_EXPORT int bson_safe_init_size(bson *b, int size);
+
+/**
+ * Intialize a BSON object. In query contruction mode allowing dot and
+ * dollar chars in field names. Report problems with memory
+ * allocation.
+ *
+ * @param b
+ *
+ * @return BSON_OK or BSON_ERROR
+ */
+EJDB_EXPORT int bson_safe_init_as_query(bson *b);
 
 /**
  * Grow a bson object.
