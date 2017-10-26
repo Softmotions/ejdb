@@ -5800,16 +5800,18 @@ static bool _addcoldb0(const char *cname, EJDB *jb, EJCOLLOPTS *opts, EJCOLL **r
     }
     EJCOLL *coll;
     TCCALLOC(coll, 1, sizeof (*coll));
-    jb->cdbs[i] = coll;
-    ++jb->cdbsnum;
     coll->cname = tcstrdup(cname);
     coll->cnamesz = strlen(cname);
     coll->tdb = cdb;
     coll->jb = jb;
     coll->mmtx = NULL;
     if (!_ejdbcolsetmutex(coll)) {
+        _delcoldb(coll);
+        TCFREE(coll);
         return false;
     }
+    jb->cdbs[i] = coll;
+    ++jb->cdbsnum;
     *res = coll;
     return true;
 }
