@@ -55,7 +55,7 @@ typedef struct { /* type of structure for a hash database */
     uint8_t opts; /* options */
     void *mmtx; /* mutex for method */
     void *rmtxs; /* mutexes for records */
-    void *dmtx; /* mutex for the while database */
+    void *dmtx; /* mutex for the whole database */
     void *smtx; /* rw mutex for shared memory */
     void *wmtx; /* mutex for write ahead logging */
     void *eckey; /* key for thread specific error code */
