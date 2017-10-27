@@ -1933,7 +1933,10 @@ static bool tctdbopenimpl(TCTDB *tdb, const char *path, int omode) {
         rp++;
         char *stem = tcstrdup(rp);
         char *ep = strrchr(stem, MYEXTCHR);
-        if (!ep) continue;
+        if (!ep) {
+            TCFREE(stem);
+            continue;
+        }
         *(ep++) = '\0';
         int nsiz;
         char *name = tcurldecode(stem, &nsiz);
