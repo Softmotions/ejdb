@@ -811,10 +811,10 @@ static int _bson_init_size(bson *b, int size) {
         b->data = NULL;
     } else {
         b->data = (char *) bson_malloc(size);
-	if (!b->data) {
+        if (!b->data) {
             bson_fatal_msg(!!b->data, "malloc() failed");
-	    return BSON_ERROR;
-	}
+            return BSON_ERROR;
+        }
     }
     b->dataSize = size;
     b->cur = b->data + 4;
