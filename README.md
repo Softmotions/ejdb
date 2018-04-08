@@ -2,6 +2,11 @@
 
 [EJDB v1.2.12 released (2017-21-03)](https://github.com/Softmotions/ejdb/releases/tag/v1.2.12)
 
+Toward to EJDB2
+===============
+Currently we are in development of second generation of EJDB database (see current limitations of EJDB http://ejdb.org/doc/limitations.html). As the first step we have developed modern key/value storage **http://iowow.io** which will be underlying storage engine for EJDB2. 
+
+
 Embedded JSON Database engine C library (libejdb)
 =================================================
 
