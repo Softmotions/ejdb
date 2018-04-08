@@ -4,7 +4,7 @@
 
 Toward to EJDB2
 ===============
-Currently we are in development of second generation of EJDB database (see current limitations of EJDB http://ejdb.org/doc/limitations.html). As the first step we have developed modern key/value storage **http://iowow.io** which will be underlying storage engine for EJDB2. 
+Currently we are in development of second generation of EJDB database (see the current limitations http://ejdb.org/doc/limitations.html). As the first step we have developed modern key/value storage **http://iowow.io** which will be underlying storage engine for EJDB2. 
 
 
 Embedded JSON Database engine C library (libejdb)
