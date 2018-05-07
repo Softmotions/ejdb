@@ -1,0 +1,14 @@
+.codelite/
+.cmaketools.json
+*.tags
+*.dll
+build/
+cmake-build*
+.cmake_dirty
+Makefile
+Testing/
+compile_commands.json
+.idea/
+*.iml
+*.dat
+*.db
