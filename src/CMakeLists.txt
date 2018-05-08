@@ -38,9 +38,9 @@ if (IS_BIG_ENDIAN EQUAL 1)
 endif()
 
 if(CMAKE_SIZEOF_VOID_P MATCHES 8)
-  add_definitions(-DJB_64=1)
+  add_definitions(-DIW_64=1)
 else()
-  add_definitions(-DJB_32=1)
+  add_definitions(-DIW_32=1)
 endif()
 
 if (BUILD_TESTS)

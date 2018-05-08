@@ -2,7 +2,7 @@
 #ifndef JBCFG_H
 #define JBCFG_H
 
-#if !defined(JB_32) && !defined(JB_64)
+#if !defined(IW_32) && !defined(IW_64)
 #error Unknown CPU bits
 #endif
 
