@@ -1,0 +1,101 @@
+{
+  "files.insertFinalNewline": false,
+  "cmake.configureArgs": [
+    "-DBUILD_TESTS=ON",
+    "-DCMAKE_VERBOSE_MAKEFILE=OFF",
+    "-DBUILD_SHARED_LIBS=ON",
+    "-DBUILD_EXAMPLES=ON",
+    "-DBUILD_BENCHMARKS=OFF"
+  ],
+  "cmake.ctestArgs": [],
+  "cmake.debugConfig": {
+    "cwd": "${workspaceRoot}/build/src/tests"
+  },
+  "C_Cpp.formatting": "Disabled",
+  "C_Cpp.autocomplete": "Disabled",
+  "C_Cpp.errorSquiggles": "Disabled",
+  "astyle.astylerc": "${workspaceRoot}/.astylerc",
+  "astyle.c.enable": true,
+  "astyle.cpp.enable": true,
+  "clang.completion.enable": true,
+  "clang.diagnostic.enable": true,
+  "clang.cflags": [
+    "-D_GNU_SOURCE",
+    "-D_LARGEFILE_SOURCE",
+    "-D_FILE_OFFSET_BITS=64",
+    "-DIW_64",
+    "-DJB_64",
+    "-std=gnu11",
+    "-Wc99-compat",
+    "-Wall",
+    "-Wcast-qual",
+    "-Wunused",
+    "-Wnonportable-system-include-path",
+    "-Wno-sign-compare",
+    "-Wno-unused-parameter",
+    "-Wno-unknown-pragmas",
+    "-Wno-unused-function",
+    "-Wno-missing-field-initializers",
+    "-Wno-missing-braces",
+    "-Wno-pragma-once-outside-header",
+    "-I${workspaceRoot}/build/src/generated",
+    "-I${workspaceRoot}/src",
+    "-I${workspaceRoot}/src/jbj"
+  ],
+  "clang.cxxflags": [
+    "-D_GNU_SOURCE",
+    "-D_LARGEFILE_SOURCE",
+    "-D_FILE_OFFSET_BITS=64",
+    "-DIW_64",
+    "-DJB_64",
+    "-std=c++11",
+    "-Wall",
+    "-Wcast-qual",
+    "-Wunused",
+    "-Wnonportable-system-include-path",
+    "-Wno-sign-compare",
+    "-Wno-unused-parameter",
+    "-Wno-unknown-pragmas",
+    "-Wno-unused-function",
+    "-Wno-missing-field-initializers",
+    "-Wno-pragma-once-outside-header",
+    "-I${workspaceRoot}/build/src/generated",
+    "-I${workspaceRoot}/src",
+    "-I${workspaceRoot}/src/jbj"
+  ],
+  "files.associations": {
+    "*.h": "c"
+  },
+  "python.pythonPath": "/usr/bin/python3",
+  "python.linting.pylintEnabled": false,
+  "python.linting.enabled": true,
+  "python.linting.pep8Enabled": false,
+  "python.linting.flake8Enabled": true,
+  "search.exclude": {
+    "**/build": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/build": true,
+    "**/mxe": true
+  },
+  "cSpell.enabledLanguageIds": [
+    "asciidoc",
+    "html",
+    "markdown",
+    "plaintext",
+    "restructuredtext",
+    "text"
+  ],
+  "cSpell.words": [
+    "IWKV"
+  ],
+  "cSpell.enabled": false,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/mxe/**": true
+  }
+}
+

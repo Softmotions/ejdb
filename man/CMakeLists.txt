@@ -1,0 +1,2 @@
+install(FILES ejdb.3 DESTINATION ${CMAKE_INSTALL_MANDIR}/man3
+        COMPONENT doc)

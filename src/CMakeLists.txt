@@ -83,7 +83,7 @@ add_definitions(-D_GNU_SOURCE)
 add_definitions(-D_LARGEFILE_SOURCE)
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
-list(APPEND ALL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/jb.c)
+list(APPEND ALL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.c)
 
 foreach(MODULE IN LISTS MODULES)
     file(GLOB MODULE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}/*.c)
@@ -93,8 +93,8 @@ foreach(MODULE IN LISTS MODULES)
     list(APPEND PROJECT_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE})
 endforeach(MODULE)
 
-list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/jb.h
-                     ${CMAKE_CURRENT_SOURCE_DIR}/jbdefs.h
+list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
+                     ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2defs.h
                      ${CMAKE_CURRENT_SOURCE_DIR}/jbi/jbi.h
                      )
                                  
@@ -132,7 +132,7 @@ if (CMAKE_COMPILER_IS_GNUCC)
   endif()
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tmpl/jbcfg.h ${PROJECT_GENERATED_DIR}/jbcfg.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tmpl/ejdb2cfg.h ${PROJECT_GENERATED_DIR}/ejdb2cfg.h)
 file(GLOB PROJECT_GENERATED_HDRS ${PROJECT_GENERATED_DIR}/*.h)
 list(APPEND ALL_HDRS ${PROJECT_GENERATED_HDRS})
 

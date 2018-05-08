@@ -1,0 +1,5 @@
+[ppa]
+fqdn                    = ppa.launchpad.net
+method                  = sftp
+login                   = @PROJECT_PPA_USER@
+incoming                = ~%(ppa)s/ubuntu/@DPUT_DIST@
