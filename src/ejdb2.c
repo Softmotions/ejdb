@@ -1,7 +1,7 @@
 #include "ejdb2.h"
 
-void ejdb2_init() {
-
+iwrc ejdb2_init() {
+  return 0;
 }
 
 

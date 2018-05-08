@@ -1,6 +1,6 @@
 #include "jbj.h"
 
 
-void jbc_init() {
-
+iwrc jbi_init() {
+  return 0;
 }

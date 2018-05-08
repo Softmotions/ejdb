@@ -21,6 +21,13 @@ include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(TestBigEndian)
 
+# IOWOW
+set(IOWOW_FIND_REQUIRED ON)
+include(FindIOWOW)
+list(APPEND PROJECT_LLIBRARIES iowow_s)
+list(APPEND PROJECT_INCLUDE_DIRS ${IOWOW_INCLUDE_DIRS})
+# !IOWOW
+
 if ((CMAKE_BUILD_TYPE EQUAL Release) OR (CMAKE_BUILD_TYPE EQUAL RelWithDebInfo))
   add_definition(-DJB_RELEASE=1)
 endif()
@@ -53,16 +60,11 @@ if (NOT WIN32)
   list(APPEND PROJECT_LLIBRARIES ${CMAKE_THREAD_LIBS_INIT})
 else()
   include(Win32LIBTools)
-  
   check_include_file(windows.h HAVE_WINDOWS_H)
 	if (NOT HAVE_WINDOWS_H)
 		message(FATAL_ERROR "Unable to find windows.h include file")
 	endif()
-  
-  set(IBERTY_FIND_REQUIRED, ON)
-  include(FindLibIberty)
-  list(APPEND PROJECT_LLIBRARIES ${IBERTY_LIBRARIES})
-  
+
   check_library_exists(winpthread pthread_exit "" HAVE_WINPTHREAD)
 	if (NOT HAVE_WINPTHREAD)
 		message(FATAL_ERROR "Unable to winpthread lib")
@@ -97,13 +99,13 @@ list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
                      ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2defs.h
                      ${CMAKE_CURRENT_SOURCE_DIR}/jbi/jbi.h
                      )
-                                 
+
 list(REMOVE_DUPLICATES PROJECT_LLIBRARIES)
 list(REMOVE_DUPLICATES PROJECT_INCLUDE_DIRS)
 include_directories(${PROJECT_INCLUDE_DIRS})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -pedantic -Wfatal-errors -Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wno-unknown-pragmas -Wno-unused-function -Wno-missing-field-initializers -Wno-missing-braces")
-if (NOT WIN32) 
+if (NOT WIN32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 else()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pedantic-ms-format")
@@ -176,7 +178,7 @@ if (BUILD_SHARED_LIBS)
       add_dependencies(ejdb2 wintools_init)
       set_target_properties(ejdb2 PROPERTIES LINK_FLAGS "-Wl,--output-def,libejdb2.def")
       add_w32_importlib(ejdb2 libejdb2 ${CMAKE_CURRENT_BINARY_DIR})
-      install(FILES 
+      install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/libejdb2.def
         ${CMAKE_CURRENT_BINARY_DIR}/libejdb2.lib
         ${CMAKE_CURRENT_BINARY_DIR}/libejdb2.exp DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -189,7 +191,7 @@ if (BUILD_SHARED_LIBS)
     set_target_properties(ejdb2_s PROPERTIES
                           VERSION ${PROJECT_VERSION}
                           COMPILE_FLAGS "-DJB_NODLL"
-                          OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})                          
+                          OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 else()
     set_target_properties(ejdb2 PROPERTIES
                           VERSION ${PROJECT_VERSION}
