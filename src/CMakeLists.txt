@@ -160,7 +160,7 @@ foreach(MODULE IN LISTS MODULES)
 endforeach(MODULE)
 
 if (NOT BUILD_SHARED_LIBS)
-  add_definitions(-DJB_NODLL)
+  add_definitions(-DIW_NODLL)
   add_library(ejdb2 STATIC ${ALL_SRC})
   add_library(ejdb2_s ALIAS ejdb2)
 else()
@@ -190,13 +190,13 @@ if (BUILD_SHARED_LIBS)
                           DEFINE_SYMBOL JB_API_EXPORTS)
     set_target_properties(ejdb2_s PROPERTIES
                           VERSION ${PROJECT_VERSION}
-                          COMPILE_FLAGS "-DJB_NODLL"
+                          COMPILE_FLAGS "-DIW_NODLL"
                           OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 else()
     set_target_properties(ejdb2 PROPERTIES
                           VERSION ${PROJECT_VERSION}
                           PUBLIC_HEADER "${PUB_HDRS}"
-                          COMPILE_FLAGS "-DJB_NODLL"
+                          COMPILE_FLAGS "-DIW_NODLL"
                           OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 endif()
 
