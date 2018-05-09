@@ -34,7 +34,7 @@ endif()
 
 TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
 if (IS_BIG_ENDIAN EQUAL 1)
-  add_definitions(-DJB_BIGENDIAN=1)
+  add_definitions(-DIW_BIGENDIAN=1)
 endif()
 
 if(CMAKE_SIZEOF_VOID_P MATCHES 8)

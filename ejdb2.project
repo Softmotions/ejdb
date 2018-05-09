@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
+  <VirtualDirectory Name="man">
+    <File Name="man/CMakeLists.txt"/>
+  </VirtualDirectory>
+  <VirtualDirectory Name="installer">
+    <File Name="installer/CMakeLists.txt"/>
+  </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <VirtualDirectory Name="Modules">
+      <File Name="cmake/Modules/FindIOWOW.cmake"/>
       <File Name="cmake/Modules/Win32LIBTools.cmake"/>
       <File Name="cmake/Modules/UploadPPA.cmake"/>
       <File Name="cmake/Modules/ProjectUtils.cmake"/>
@@ -13,8 +20,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
       <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
+      <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -39,6 +46,8 @@
     </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="resources">
+    <File Name="win64-tc.cmake"/>
+    <File Name="README.md"/>
     <File Name="hints.txt"/>
     <File Name=".editorconfig"/>
     <File Name=".astylerc"/>

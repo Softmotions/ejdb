@@ -78,6 +78,7 @@
                     "/usr/include/c++/6/backward",
                     "/usr/include/c++/5/backward",
                     "${workspaceRoot}",
+                    "${workspaceRoot}/build/src/generated",
                     "${workspaceRoot}/src"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
