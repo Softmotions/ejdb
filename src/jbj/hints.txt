@@ -1,4 +1,6 @@
 
 * https://tools.ietf.org/html/rfc6901
+* https://tools.ietf.org/html/rfc6902
 * http://jsonpatch.com/
+* https://github.com/DaveGamble/cJSON
 
