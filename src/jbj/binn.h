@@ -8,6 +8,8 @@
 #ifndef BINN_H
 #define BINN_H
 
+#include <stddef.h> // size_t used  below
+
 #ifdef __cplusplus
 extern "C" {
 #endif
