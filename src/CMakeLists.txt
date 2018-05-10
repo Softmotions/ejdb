@@ -2,7 +2,7 @@ if (NOT CMAKE_BUILD_TYPE)
   message(FATAL_ERROR "Please specify the build type -DCMAKE_BUILD_TYPE=Debug|Release|RelWithDebInfo")
 endif()
 
-set(MODULES jbj)
+set(MODULES jblob)
 set(PROJECT_LLIBRARIES)
 set(PROJECT_INCLUDE_DIRS)
 set(ALL_SRC)
@@ -104,7 +104,9 @@ list(REMOVE_DUPLICATES PROJECT_LLIBRARIES)
 list(REMOVE_DUPLICATES PROJECT_INCLUDE_DIRS)
 include_directories(${PROJECT_INCLUDE_DIRS})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -pedantic -Wfatal-errors -Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wno-unknown-pragmas -Wno-unused-function -Wno-missing-field-initializers -Wno-missing-braces")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -pedantic -Wfatal-errors -Wall -Wextra \
+                  -Wno-sign-compare -Wno-unused-parameter -Wno-unknown-pragmas -Wno-unused-function \
+                  -Wno-missing-field-initializers -Wno-missing-braces -Wno-implicit-fallthrough")
 if (NOT WIN32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 else()

@@ -20,8 +20,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
       <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
+      <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -32,6 +32,13 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <VirtualDirectory Name="jblob">
+      <File Name="src/jblob/jbl.c"/>
+      <File Name="src/jblob/jbl.h"/>
+      <File Name="src/jblob/hints.txt"/>
+      <File Name="src/jblob/binn.h"/>
+      <File Name="src/jblob/binn.c"/>
+    </VirtualDirectory>
     <File Name="src/ejdb2defs.h"/>
     <File Name="src/ejdb2.c"/>
     <File Name="src/ejdb2.h"/>
@@ -40,10 +47,6 @@
       <File Name="src/tmpl/libejdb2.pc.in"/>
     </VirtualDirectory>
     <File Name="src/CMakeLists.txt"/>
-    <VirtualDirectory Name="jbj">
-      <File Name="src/jbj/jbj.h"/>
-      <File Name="src/jbj/jbj.c"/>
-    </VirtualDirectory>
   </VirtualDirectory>
   <VirtualDirectory Name="resources">
     <File Name="win64-tc.cmake"/>
