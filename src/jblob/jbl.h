@@ -2,7 +2,7 @@
 #ifndef JBLOB_H
 #define JBLOB_H
 
-#include <iowow/iwpool.h>
+#include <iowow/iwlog.h>
 #include <iowow/iwxstr.h>
 #include <stdbool.h>
 
@@ -10,6 +10,11 @@ IW_EXTERN_C_START
 
 struct _JBL;
 typedef struct _JBL *JBL;
+
+typedef enum {
+  _JBL_ERROR_START = (IW_ERROR_START + 10000UL),
+  _JBL_ERROR_END
+} jbl_ecode;
 
 typedef enum {
   JBV_NONE = 0,
@@ -43,13 +48,13 @@ typedef struct JBL_PATCH {
   };
 } JBL_PATCH;
 
-iwrc jbl_create_object(JBL *jbl, IWPOOL *pool);
+IW_EXPORT iwrc jbl_create_object(JBL *jbl);
 
-iwrc jbl_create_array(JBL *jbl, IWPOOL *pool);
+iwrc jbl_create_array(JBL *jbl);
 
-iwrc jbl_from_buf(JBL *jbl, const void *buf, size_t bufsz, IWPOOL *pool);
+iwrc jbl_from_buf(JBL *jbl, const void *buf, size_t bufsz);
 
-iwrc jbl_from_json(JBL *jbl, const char *json, IWPOOL *pool);
+iwrc jbl_from_json(JBL *jbl, const char *json);
 
 void jbl_destroy(JBL *jbl);
 
