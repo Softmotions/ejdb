@@ -50,21 +50,21 @@ typedef struct JBL_PATCH {
 
 IW_EXPORT iwrc jbl_create_object(JBL *jbl);
 
-iwrc jbl_create_array(JBL *jbl);
+IW_EXPORT iwrc jbl_create_array(JBL *jbl);
 
-iwrc jbl_from_buf(JBL *jbl, const void *buf, size_t bufsz);
+IW_EXPORT iwrc jbl_from_buf(JBL *jbl, const void *buf, size_t bufsz);
 
-iwrc jbl_from_json(JBL *jbl, const char *json);
+IW_EXPORT iwrc jbl_from_json(JBL *jbl, const char *json);
 
-void jbl_destroy(JBL *jbl);
+IW_EXPORT void jbl_destroy(JBL *jbl);
 
-iwrc jbl_apply(JBL jbl, const JBL_PATCH patch[], size_t num);
+IW_EXPORT iwrc jbl_apply(JBL jbl, const JBL_PATCH patch[], size_t num);
 
-jbl_type_t jbl_type(JBL jbl);
+IW_EXPORT jbl_type_t jbl_type(JBL jbl);
 
-size_t jbl_count(JBL jbl);
+IW_EXPORT size_t jbl_count(JBL jbl);
 
-size_t jbl_length(JBL jbl);
+IW_EXPORT size_t jbl_length(JBL jbl);
 
 iwrc jbl_get(JBL jbl, const char *path, JBL *res);
 
