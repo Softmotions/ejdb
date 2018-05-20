@@ -1,5 +1,6 @@
 #include "jbl.h"
 #include "binn.h"
+#include "nxjson.h"
 #include "ejdb2cfg.h"
 
 struct _JBL {
@@ -68,8 +69,91 @@ void jbl_destroy(JBL *jblp) {
   }
 }
 
-iwrc jbl_from_json(JBL *jblp, const char *json) {
+size_t jbl_count(JBL jbl) {
+  return jbl->bn.count;
+}
+
+size_t jbl_size(JBL jbl) {
+  return jbl->bn.size;
+}
+
+jbl_type_t jbl_type(JBL jbl) {
+  switch (jbl->bn.type) {
+    case BINN_NULL:
+      return JBV_NULL;
+    case BINN_STRING:
+      return JBV_STR;
+    case BINN_OBJECT:
+      return JBV_OBJECT;
+    case BINN_LIST:
+      return JBV_ARRAY;
+    case BINN_TRUE:
+    case BINN_FALSE:
+      return JBV_BOOL;
+    case BINN_INT32:
+    case BINN_UINT16:
+    case BINN_INT16:
+    case BINN_UINT8:
+    case BINN_INT8:
+      return JBV_I32;
+    case BINN_INT64:
+    case BINN_UINT64: // overflow?
+    case BINN_UINT32:
+      return JBV_I64;
+    case BINN_FLOAT32:
+    case BINN_FLOAT64:
+      return JBV_F64;
+  }
+  return JBV_NONE;
+}
+
+
+static binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
+  size_t  i, count;
+  const char  *key = nxjson->key;
+  binn  *obj, *list;
+  // switch (nxjson->type) {
+  //     // TODO:
+  // }
+  return 0;
+}
+
+iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
   iwrc rc = 0;
+  *jblp = 0;
+  char *json = strdup(jsonstr); //nxjson uses inplace data modification
+  if (!json) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  JBL jbl = 0;
+  binn *bn = 0;
+  nx_json *nxjson = nx_json_parse_utf8(json);
+  if (!nxjson) {
+    rc = JBL_ERROR_PARSE_JSON;
+    goto finish;
+  }
+  bn = _jbl_from_json(nxjson, &rc);
+  RCGO(rc, finish);
+  assert(bn);
+
+  jbl = malloc(sizeof(*jbl));
+  if (!jbl) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    goto finish;
+  }
+  memcpy(&jbl->bn, bn, sizeof(*bn));
+  free(bn);
+
+finish:
+  if (nxjson) {
+    nx_json_free(nxjson);
+  }
+  free(json);
+  if (!rc) {
+    *jblp = jbl;
+  } else if (jbl) {
+    jbl_destroy(&jbl);
+  }
   return rc;
 }
 
@@ -81,7 +165,11 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
     case JBL_ERROR_INVALID_BUFFER:
       return "Invalid JBL buffer (JBL_ERROR_INVALID_BUFFER)";
     case JBL_ERROR_CREATION:
-      return " Cannot create JBL object (JBL_ERROR_CREATION)";
+      return "Cannot create JBL object (JBL_ERROR_CREATION)";
+    case JBL_ERROR_INVALID:
+      return "Invalid JBL object (JBL_ERROR_INVALID)";
+    case JBL_ERROR_PARSE_JSON:
+      return "Failed to parse JSON string (JBL_ERROR_PARSE_JSON)";
   }
   return 0;
 }

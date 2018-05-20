@@ -15,14 +15,17 @@ typedef enum {
   _JBL_ERROR_START = (IW_ERROR_START + 10000UL),
   JBL_ERROR_INVALID_BUFFER, /**< Invalid JBL buffer (JBL_ERROR_INVALID_BUFFER) */
   JBL_ERROR_CREATION,       /**< Cannot create JBL object (JBL_ERROR_CREATION) */
+  JBL_ERROR_INVALID,        /**< Invalid JBL object (JBL_ERROR_INVALID) */
+  JBL_ERROR_PARSE_JSON,     /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
   _JBL_ERROR_END
 } jbl_ecode;
 
 typedef enum {
   JBV_NONE = 0,
+  JBV_NULL,
   JBV_BOOL,
-  JBV_U32,
-  JBV_U64,
+  JBV_I32,
+  JBV_I64,
   JBV_F64,
   JBV_STR,
   JBV_OBJECT,
@@ -44,8 +47,8 @@ typedef struct JBL_PATCH {
   union {
     JBL vjbl;
     bool vbool;
-    uint32_t vu32;
-    uint64_t vu64;
+    int32_t vi32;
+    int64_t vi64;
     double vf64;
   };
 } JBL_PATCH;
@@ -56,7 +59,7 @@ IW_EXPORT iwrc jbl_create_array(JBL *jblp);
 
 IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz);
 
-IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *json);
+IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *jsonstr);
 
 IW_EXPORT void jbl_destroy(JBL *jblp);
 
@@ -66,15 +69,15 @@ IW_EXPORT jbl_type_t jbl_type(JBL jbl);
 
 IW_EXPORT size_t jbl_count(JBL jbl);
 
-IW_EXPORT size_t jbl_length(JBL jbl);
+IW_EXPORT size_t jbl_size(JBL jbl);
 
 iwrc jbl_get(JBL jbl, const char *path, JBL *res);
 
 iwrc jbl_get_at(JBL jbl, const char *path, int pos, JBL *res);
 
-iwrc jbl_get_u32(JBL jbl, uint32_t *res);
+iwrc jbl_get_i32(JBL jbl, int32_t *res);
 
-iwrc jbl_get_u64(JBL jbl, uint64_t *res);
+iwrc jbl_get_i64(JBL jbl, int64_t *res);
 
 iwrc jbl_get_f64(JBL jbl, double *res);
 
