@@ -35,14 +35,16 @@ extern "C" {
 typedef int BOOL;
 #endif
 
-#ifndef APIENTRY
-#ifdef _WIN32
-#define APIENTRY __stdcall
-#else
-//#define APIENTRY __attribute__((stdcall))
+// #ifndef APIENTRY
+// #ifdef _WIN32
+// #define APIENTRY __stdcall
+// #else
+// //#define APIENTRY __attribute__((stdcall))
+// #define APIENTRY
+// #endif
+// #endif
+
 #define APIENTRY
-#endif
-#endif
 
 #ifndef BINN_PRIVATE
 #ifdef DEBUG
@@ -83,6 +85,12 @@ typedef unsigned long long int uint64;
 
 
 // BINN CONSTANTS  ----------------------------------------
+
+// magic number:  0x1F 0xb1 0x22 0x1F  =>  0x1FB1221F or 0x1F22B11F
+// because the BINN_STORAGE_NOBYTES (binary 000) may not have so many sub-types (BINN_STORAGE_HAS_MORE = 0x10)
+#define BINN_MAGIC            0x1F22B11F
+#define MAX_BINN_HEADER       9  // [1:type][4:size][4:count]
+#define MIN_BINN_SIZE         3  // [1:type][1:size][1:count]
 
 #define INVALID_BINN         0
 
@@ -304,8 +312,9 @@ BOOL   APIENTRY binn_object_set(binn *obj, char *key, int type, void *pvalue, in
 // release memory
 
 void   APIENTRY binn_free(binn *item);
-void *APIENTRY binn_release(binn
-                            *item);  // free the binn structure but keeps the binn buffer allocated, returning a pointer to it. use the free function to release the buffer later
+// free the binn structure but keeps the binn buffer allocated, returning a pointer to it.
+// use the free function to release the buffer later
+void *APIENTRY binn_release(binn *item);
 
 
 // --- CREATING VALUES ---------------------------------------------------
@@ -359,10 +368,14 @@ ALWAYS_INLINE binn *binn_blob(void *ptr, int size, binn_mem_free freefn) {
 // --- READ FUNCTIONS  -------------------------------------------------------------
 
 // these functions accept pointer to the binn structure and pointer to the binn buffer
-void *APIENTRY binn_ptr(void *ptr);
+void  *APIENTRY binn_ptr(void *ptr);
 int    APIENTRY binn_size(void *ptr);
+int    APIENTRY binn_buf_size(const void *ptr);
 int    APIENTRY binn_type(void *ptr);
+int    APIENTRY binn_buf_type(const void *pbuf);
 int    APIENTRY binn_count(void *ptr);
+int    APIENTRY binn_buf_count(const void *pbuf);
+BOOL   APIENTRY binn_is_valid_header(const void *pbuf, int *ptype, int *pcount, int *psize, int *pheadersize);
 
 BOOL   APIENTRY binn_is_valid(void *ptr, int *ptype, int *pcount, int *psize);
 /* the function returns the values (type, count and size) and they don't need to be

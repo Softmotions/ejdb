@@ -11,5 +11,14 @@
 #define EJDB2_VERSION_MINOR @ejdb2_VERSION_MINOR@
 #define EJDB2_VERSION_PATCH @ejdb2_VERSION_PATCH@
 
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <inttypes.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <limits.h>
 
 #endif

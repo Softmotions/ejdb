@@ -13,6 +13,7 @@ typedef struct _JBL *JBL;
 
 typedef enum {
   _JBL_ERROR_START = (IW_ERROR_START + 10000UL),
+  JBL_ERROR_INVALID_BUFFER, /**< Invalid JBL buffer (JBL_ERROR_INVALID_BUFFER) */
   _JBL_ERROR_END
 } jbl_ecode;
 
@@ -48,15 +49,15 @@ typedef struct JBL_PATCH {
   };
 } JBL_PATCH;
 
-IW_EXPORT iwrc jbl_create_object(JBL *jbl);
+IW_EXPORT iwrc jbl_create_object(JBL *jblp);
 
-IW_EXPORT iwrc jbl_create_array(JBL *jbl);
+IW_EXPORT iwrc jbl_create_array(JBL *jblp);
 
-IW_EXPORT iwrc jbl_from_buf(JBL *jbl, const void *buf, size_t bufsz);
+IW_EXPORT iwrc jbl_from_buf(JBL *jblp, const void *buf, size_t bufsz);
 
-IW_EXPORT iwrc jbl_from_json(JBL *jbl, const char *json);
+IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *json);
 
-IW_EXPORT void jbl_destroy(JBL *jbl);
+IW_EXPORT void jbl_destroy(JBL *jblp);
 
 IW_EXPORT iwrc jbl_apply(JBL jbl, const JBL_PATCH patch[], size_t num);
 
