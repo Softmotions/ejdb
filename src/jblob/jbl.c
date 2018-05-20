@@ -3,7 +3,7 @@
 #include "ejdb2cfg.h"
 
 struct _JBL {
-  binn *bn;
+  binn bn;
 };
 
 iwrc jbl_create_object(JBL *jblp) {
@@ -13,13 +13,10 @@ iwrc jbl_create_object(JBL *jblp) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   JBL jbl = *jblp;
-  jbl->bn = binn_object();
-  if (!jbl->bn) {
-    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
-  if (rc) {
-    free(jblp);
+  if (!binn_create(&jbl->bn, BINN_OBJECT, 0, 0)) {
+    free(jbl);
     *jblp = 0;
+    return JBL_ERROR_CREATION;
   }
   return rc;
 }
@@ -31,18 +28,15 @@ iwrc jbl_create_array(JBL *jblp) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   JBL jbl = *jblp;
-  jbl->bn = binn_list();
-  if (!jbl->bn) {
-    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
-  if (rc) {
-    free(jblp);
+  if (!binn_create(&jbl->bn, BINN_LIST, 0, 0)) {
+    free(jbl);
     *jblp = 0;
+    return JBL_ERROR_CREATION;
   }
   return rc;
 }
 
-iwrc jbl_from_buf(JBL *jblp, const void *buf, size_t bufsz) {
+iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz) {
   iwrc rc = 0;
   if (bufsz < MIN_BINN_SIZE) {
     return JBL_ERROR_INVALID_BUFFER;
@@ -54,34 +48,29 @@ iwrc jbl_from_buf(JBL *jblp, const void *buf, size_t bufsz) {
   if (size > bufsz) {
     return JBL_ERROR_INVALID_BUFFER;
   }
-  *jblp = malloc(sizeof(**jblp));
+  *jblp = calloc(1, sizeof(**jblp));
   if (!*jblp) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   JBL jbl = *jblp;
-  jbl->bn = malloc(sizeof(*jbl->bn));
-  if (!jbl->bn) {
-    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    free(jbl);
-    *jblp = 0;
-    return rc;
-  }
-  // todo
-
-
+  jbl->bn.header = BINN_MAGIC;
+  jbl->bn.ptr = buf;
+  jbl->bn.freefn = free;
   return rc;
 }
 
 void jbl_destroy(JBL *jblp) {
-  JBL jbl = *jblp;
-  if (!jbl) {
-    return;
+  if (*jblp) {
+    JBL jbl = *jblp;
+    binn_free(&jbl->bn);
+    free(jbl);
+    *jblp = 0;
   }
-  if (jbl->bn) {
-    binn_free(jbl->bn);
-  }
-  free(jbl);
-  *jblp = 0;
+}
+
+iwrc jbl_from_json(JBL *jblp, const char *json) {
+  iwrc rc = 0;
+  return rc;
 }
 
 static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
@@ -91,6 +80,8 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
   switch (ecode) {
     case JBL_ERROR_INVALID_BUFFER:
       return "Invalid JBL buffer (JBL_ERROR_INVALID_BUFFER)";
+    case JBL_ERROR_CREATION:
+      return " Cannot create JBL object (JBL_ERROR_CREATION)";
   }
   return 0;
 }

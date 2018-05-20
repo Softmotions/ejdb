@@ -14,6 +14,7 @@ typedef struct _JBL *JBL;
 typedef enum {
   _JBL_ERROR_START = (IW_ERROR_START + 10000UL),
   JBL_ERROR_INVALID_BUFFER, /**< Invalid JBL buffer (JBL_ERROR_INVALID_BUFFER) */
+  JBL_ERROR_CREATION,       /**< Cannot create JBL object (JBL_ERROR_CREATION) */
   _JBL_ERROR_END
 } jbl_ecode;
 
@@ -53,7 +54,7 @@ IW_EXPORT iwrc jbl_create_object(JBL *jblp);
 
 IW_EXPORT iwrc jbl_create_array(JBL *jblp);
 
-IW_EXPORT iwrc jbl_from_buf(JBL *jblp, const void *buf, size_t bufsz);
+IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz);
 
 IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *json);
 
