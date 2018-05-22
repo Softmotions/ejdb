@@ -48,7 +48,7 @@
                 "${workspaceRoot}",
                 "${workspaceRoot}/build/src/generated",
                 "${workspaceRoot}/src",
-                "${workspaceRoot}/src/jbj"
+                "${workspaceRoot}/src/jblob"
             ],
             "defines": [
                 "_GNU_SOURCE",
@@ -79,7 +79,8 @@
                     "/usr/include/c++/5/backward",
                     "${workspaceRoot}",
                     "${workspaceRoot}/build/src/generated",
-                    "${workspaceRoot}/src"
+                    "${workspaceRoot}/src",
+                    "${workspaceRoot}/src/jblob"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
