@@ -107,10 +107,7 @@ jbl_type_t jbl_type(JBL jbl) {
   return JBV_NONE;
 }
 
-
 static binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
-  size_t  i, count;
-  const char  *key = nxjson->key;
   binn  *res = 0;
   switch (nxjson->type) {
     case NX_JSON_OBJECT:
