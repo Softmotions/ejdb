@@ -3,7 +3,6 @@
 #define JBLOB_H
 
 #include <iowow/iwlog.h>
-#include <iowow/iwxstr.h>
 #include <stdbool.h>
 
 IW_EXTERN_C_START
@@ -87,7 +86,9 @@ iwrc jbl_get_strn(JBL jbl, char *buf, size_t bufsz);
 
 iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
 
-iwrc jbl_as_json(JBL jbl, IWXSTR *xstr, bool pretty);
+typedef iwrc(*jbl_json_printer)(const char *data, size_t size, char ch, int count, void *op);
+
+iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty);
 
 iwrc jbl_init(void);
 

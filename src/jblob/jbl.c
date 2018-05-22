@@ -199,6 +199,109 @@ finish:
   return rc;
 }
 
+IW_INLINE int _jbl_utf8_ch_len(uint8_t ch) {
+  if (!(ch & 0x80)) return 1;
+  switch (ch & 0xf0) {
+    case 0xf0:
+      return 4;
+    case 0xe0:
+      return 3;
+    default:
+      return 2;
+  }
+}
+
+static void _jbl_escape_json_string(char *str, size_t len, jbl_json_printer pt, void *op) {
+  // TODO:
+}
+
+// case BINN_NULL:
+//     return JBV_NULL;
+//   case BINN_STRING:
+//     return JBV_STR;
+//   case BINN_OBJECT:
+//     return JBV_OBJECT;
+//   case BINN_LIST:
+//     return JBV_ARRAY;
+//   case BINN_TRUE:
+//   case BINN_FALSE:
+//     return JBV_BOOL;
+//   case BINN_INT32:
+//   case BINN_UINT16:
+//   case BINN_INT16:
+//   case BINN_UINT8:
+//   case BINN_INT8:
+//     return JBV_I32;
+//   case BINN_INT64:
+//   case BINN_UINT64: // overflow?
+//   case BINN_UINT32:
+//     return JBV_I64;
+//   case BINN_FLOAT32:
+//   case BINN_FLOAT64:
+//     return JBV_F64;
+
+static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool pretty) {
+  iwrc rc = 0;
+  binn bv;
+#define PT(data_, size_, ch_, count_, op_) do {\
+    rc = pt(data_, size_, ch_, count_, op_); \
+    RCGO(rc, finish); \
+  } while(0)
+
+  switch (bn->type) {
+
+    case BINN_LIST:
+      PT(0, 0, '[', 1, op);
+      if (bn->count && pretty) {
+        PT(0, 0, '\n', 1, op);
+      }
+      for (int i = 0; i < bn->count; ++i) {
+        if (pretty) {
+          PT(0, 0, ' ', lvl + 1, op);
+        }
+        if (!binn_list_get_value(bn, i, &bv)) {
+          rc = JBL_ERROR_INVALID;
+          goto finish;
+        }
+        rc = _jbl_as_json(&bv, pt, op, lvl + 1, pretty);
+        RCGO(rc, finish);
+        if (i < bn->count - 1) {
+          PT(0, 0, ',', 1, op);
+        }
+        if (pretty) {
+          PT(0, 0, '\n', 1, op);
+        }
+      }
+      if (bn->count && pretty) {
+        PT(0, 0, ' ', lvl, op);
+      }
+      PT(0, 0, ']', 1, op);
+      break;
+
+    case JBV_OBJECT:
+      PT(0, 0, '{', 1, op);
+      if (pretty) {
+        PT(0, 0, '\n', 1, op);
+      }
+      for (int i = 0; i < bn->count; ++i) {
+        //TODO:
+      }
+      PT(0, 0, '}', 1, op);
+      break;
+  }
+
+finish:
+  return rc;
+#undef PT
+}
+
+iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty) {
+  if (!jbl || !pt) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  return _jbl_as_json(&jbl->bn, pt, op, 0, pretty);
+}
+
 static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
   if (!(ecode > _JBL_ERROR_START && ecode < _JBL_ERROR_END)) {
     return 0;
