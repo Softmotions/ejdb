@@ -126,7 +126,7 @@ BINN_PRIVATE void *binn_malloc(int size) {
   return malloc_fn(size);
 }
 
-BINN_PRIVATE void *binn_memdup(void *src, int size) {
+BINN_PRIVATE void *binn_memdup(const void *src, int size) {
   void *dest;
   if (src == NULL || size <= 0) return NULL;
   dest = binn_malloc(size);
@@ -868,7 +868,7 @@ void *APIENTRY binn_release(binn *item) {
 }
 
 BINN_PRIVATE BOOL IsValidBinnHeader(const void *pbuf, int *ptype, int *pcount, int *psize, int *pheadersize) {
-  unsigned const char *p, *plimit = 0;
+  const unsigned char *p, *plimit = 0;
   char byte;
   int int32, type, size, count;
   if (pbuf == NULL) return FALSE;
@@ -894,10 +894,10 @@ BINN_PRIVATE BOOL IsValidBinnHeader(const void *pbuf, int *ptype, int *pcount, i
 
   // get the size
   if (plimit && p > plimit) return FALSE;
-  int32 = *((unsigned char *)p);
+  int32 = *((const unsigned char *)p);
   if (int32 & 0x80) {
     if (plimit && p + sizeof(int) - 1 > plimit) return FALSE;
-    int32 = *((int *)p);
+    int32 = *((const int *)p);
     p += 4;
     int32 = frombe32(int32);
     int32 &= 0x7FFFFFFF;
@@ -908,10 +908,10 @@ BINN_PRIVATE BOOL IsValidBinnHeader(const void *pbuf, int *ptype, int *pcount, i
 
   // get the count
   if (plimit && p > plimit) return FALSE;
-  int32 = *((unsigned char *)p);
+  int32 = *((const unsigned char *)p);
   if (int32 & 0x80) {
     if (plimit && p + sizeof(int) - 1 > plimit) return FALSE;
-    int32 = *((int *)p);
+    int32 = *((const int *)p);
     p += 4;
     int32 = frombe32(int32);
     int32 &= 0x7FFFFFFF;
@@ -939,7 +939,7 @@ BINN_PRIVATE BOOL IsValidBinnHeader(const void *pbuf, int *ptype, int *pcount, i
   if (ptype)  *ptype  = type;
   if (pcount) *pcount = count;
   if (psize && *psize == 0) *psize = size;
-  if (pheadersize) *pheadersize = (int)(p - (unsigned char *)pbuf);
+  if (pheadersize) *pheadersize = (int)(p - (const unsigned char *)pbuf);
   return TRUE;
 }
 
@@ -1765,26 +1765,26 @@ BINN_PRIVATE int int_type(int type)  {
   }
 }
 
-BINN_PRIVATE BOOL copy_raw_value(void *psource, void *pdest, int data_store) {
+BINN_PRIVATE BOOL copy_raw_value(const void *psource, void *pdest, int data_store) {
   switch (data_store) {
     case BINN_STORAGE_NOBYTES:
       break;
     case BINN_STORAGE_BYTE:
-      *((char *) pdest) = *(char *)psource;
+      *((char *) pdest) = *(const char *)psource;
       break;
     case BINN_STORAGE_WORD:
-      *((short *) pdest) = *(short *)psource;
+      *((short *) pdest) = *(const short *)psource;
       break;
     case BINN_STORAGE_DWORD:
-      *((int *) pdest) = *(int *)psource;
+      *((int *) pdest) = *(const int *)psource;
       break;
     case BINN_STORAGE_QWORD:
-      *((uint64 *) pdest) = *(uint64 *)psource;
+      *((uint64 *) pdest) = *(const uint64 *)psource;
       break;
     case BINN_STORAGE_BLOB:
     case BINN_STORAGE_STRING:
     case BINN_STORAGE_CONTAINER:
-      *((char **) pdest) = (char *)psource;
+      *((const char **) pdest) = (const char *)psource;
       break;
     default:
       return FALSE;
@@ -2404,7 +2404,7 @@ binn *APIENTRY binn_value(int type, void *pvalue, int size, binn_mem_free freefn
       case BINN_STORAGE_NOBYTES:
         break;
       case BINN_STORAGE_STRING:
-        if (size == 0) size = strlen((char *)pvalue) + 1;
+        if (size == 0) size = strlen((const char *)pvalue) + 1;
       case BINN_STORAGE_BLOB:
       case BINN_STORAGE_CONTAINER:
         if (freefn == BINN_TRANSIENT) {
@@ -2416,7 +2416,7 @@ binn *APIENTRY binn_value(int type, void *pvalue, int size, binn_mem_free freefn
           item->freefn = free_fn;
           if (storage_type == BINN_STORAGE_STRING) size--;
         } else {
-          item->ptr = pvalue;
+          item->ptr = (void *) pvalue;
           item->freefn = freefn;
         }
         item->size = size;

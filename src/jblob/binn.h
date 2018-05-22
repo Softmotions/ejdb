@@ -28,7 +28,6 @@
 extern "C" {
 #endif
 
-
 #ifndef NULL
 #ifdef __cplusplus
 #define NULL    0
@@ -96,7 +95,6 @@ typedef unsigned long long int uint64;
 #define UINT64_FORMAT "llu"
 #define INT64_HEX_FORMAT  "llx"
 #endif
-
 
 // BINN CONSTANTS  ----------------------------------------
 
@@ -186,11 +184,9 @@ typedef unsigned long long int uint64;
 //#define BINN_BINN      0x800E1  // (CONTAINER)
 //#define BINN_BINN_BUFFER  0x800C1  // (BLOB) user binn. it's not open by the parser
 
-
 // extended content types:
 
 // strings:
-
 #define BINN_HTML      0xB001
 #define BINN_XML       0xB002
 #define BINN_JSON      0xB003
@@ -198,15 +194,10 @@ typedef unsigned long long int uint64;
 #define BINN_CSS       0xB005
 
 // blobs:
-
 #define BINN_JPEG      0xD001
 #define BINN_GIF       0xD002
 #define BINN_PNG       0xD003
 #define BINN_BMP       0xD004
-
-
-
-//--
 
 // type families
 #define BINN_FAMILY_NONE   0x00
@@ -222,16 +213,11 @@ typedef unsigned long long int uint64;
 #define BINN_SIGNED_INT     11
 #define BINN_UNSIGNED_INT   22
 
-//++
-
-
 typedef void (*binn_mem_free)(void *);
 #define BINN_STATIC      ((binn_mem_free)0)
 #define BINN_TRANSIENT   ((binn_mem_free)-1)
 
-
 // --- BINN STRUCTURE --------------------------------------------------------------
-
 
 struct binn_struct {
   int    header;     // this struct header holds the magic number (BINN_MAGIC) that identifies this memory block as a binn structure
@@ -279,22 +265,15 @@ struct binn_struct {
 
 typedef struct binn_struct binn;
 
-
-
 // --- GENERAL FUNCTIONS  ----------------------------------------------------------
-
 
 void   APIENTRY binn_set_alloc_functions(void *(*new_malloc)(size_t), void *(*new_realloc)(void *, size_t),
                                          void (*new_free)(void *));
-
 int    APIENTRY binn_create_type(int storage_type, int data_type_index);
 BOOL   APIENTRY binn_get_type_info(int long_type, int *pstorage_type, int *pextra_type);
-
 int    APIENTRY binn_get_write_storage(int type);
 int    APIENTRY binn_get_read_storage(int type);
-
 BOOL   APIENTRY binn_is_container(binn *item);
-
 
 // --- WRITE FUNCTIONS  ------------------------------------------------------------
 
@@ -310,26 +289,20 @@ BOOL APIENTRY binn_create_list(binn *list);
 BOOL APIENTRY binn_create_map(binn *map);
 BOOL APIENTRY binn_create_object(binn *object);
 
-
 BOOL APIENTRY binn_list_add_new(binn *list, binn *value);
 BOOL APIENTRY binn_map_set_new(binn *map, int id, binn *value);
 BOOL APIENTRY binn_object_set_new(binn *obj, const char *key, binn *value);
 
-
 // extended interface
-
 BOOL   APIENTRY binn_list_add(binn *list, int type, void *pvalue, int size);
 BOOL   APIENTRY binn_map_set(binn *map, int id, int type, void *pvalue, int size);
 BOOL   APIENTRY binn_object_set(binn *obj, const char *key, int type, void *pvalue, int size);
 
-
 // release memory
-
 void   APIENTRY binn_free(binn *item);
 // free the binn structure but keeps the binn buffer allocated, returning a pointer to it.
 // use the free function to release the buffer later
 void *APIENTRY binn_release(binn *item);
-
 
 // --- CREATING VALUES ---------------------------------------------------
 
@@ -372,12 +345,11 @@ ALWAYS_INLINE binn *binn_null() {
   return binn_value(BINN_NULL, NULL, 0, NULL);
 }
 ALWAYS_INLINE binn *binn_string(const char *str, binn_mem_free freefn) {
-  return binn_value(BINN_STRING, (void*) str, 0, freefn);
+  return binn_value(BINN_STRING, (void *) str, 0, freefn);
 }
 ALWAYS_INLINE binn *binn_blob(void *ptr, int size, binn_mem_free freefn) {
   return binn_value(BINN_BLOB, ptr, size, freefn);
 }
-
 
 // --- READ FUNCTIONS  -------------------------------------------------------------
 
@@ -409,12 +381,10 @@ BOOL   APIENTRY binn_is_valid_ex(void *ptr, int *ptype, int *pcount, int *psize)
 
 BOOL   APIENTRY binn_is_struct(void *ptr);
 
-
 // Loading a binn buffer into a binn value - this is optional
 
 BOOL   APIENTRY binn_load(void *data, binn *item);  // on stack
 binn *APIENTRY binn_open(void *data);               // allocated
-
 
 // easiest interface to use, but don't check if the value is there
 
@@ -496,7 +466,6 @@ void *APIENTRY binn_list_read(void *list, int pos, int *ptype, int *psize);
 void *APIENTRY binn_map_read(void *map, int id, int *ptype, int *psize);
 void *APIENTRY binn_object_read(void *obj, const char *key, int *ptype, int *psize);
 
-
 // READ PAIR FUNCTIONS
 
 // these functions use base 1 in the 'pos' argument
@@ -516,7 +485,6 @@ binn *APIENTRY binn_object_pair(void *obj, int pos, char *pkey);   // must free 
 // the returned pointer to 16, 32 and 64 bits values must be used only by single-threaded applications
 void *APIENTRY binn_map_read_pair(void *ptr, int pos, int *pid, int *ptype, int *psize);
 void *APIENTRY binn_object_read_pair(void *ptr, int pos, char *pkey, int *ptype, int *psize);
-
 
 // SEQUENTIAL READ FUNCTIONS
 
@@ -550,12 +518,9 @@ void *APIENTRY binn_map_read_next(binn_iter *iter, int *pid, int *ptype, int *ps
 void *APIENTRY binn_object_read_next(binn_iter *iter, char *pkey, int *ptype,
                                      int *psize);   // the key must be declared as: char key[256];
 
-
 // --- MACROS ------------------------------------------------------------
 
-
 #define binn_is_writable(item) (item)->writable;
-
 
 // set values on stack allocated binn structures
 
@@ -577,10 +542,7 @@ void *APIENTRY binn_object_read_next(binn_iter *iter, char *pkey, int *ptype,
 BOOL APIENTRY binn_set_string(binn *item, char *str, binn_mem_free pfree);
 BOOL APIENTRY binn_set_blob(binn *item, void *ptr, int size, binn_mem_free pfree);
 
-
 //#define binn_double(value) {       (item)->type = BINN_DOUBLE; (item)->vdouble = value; (item)->ptr = &((item)->vdouble) }
-
-
 
 // FOREACH MACROS
 // must use these declarations in the function that will use them:
@@ -600,8 +562,6 @@ BOOL APIENTRY binn_set_blob(binn *item, void *ptr, int size, binn_mem_free pfree
 #define binn_list_foreach(list, value)      \
   binn_iter_init(&iter, list, BINN_LIST); \
   while (binn_list_next(&iter, &value))
-
-
 
 /*************************************************************************************/
 /*** SET FUNCTIONS *******************************************************************/
