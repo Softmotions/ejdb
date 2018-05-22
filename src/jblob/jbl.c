@@ -111,10 +111,55 @@ jbl_type_t jbl_type(JBL jbl) {
 static binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
   size_t  i, count;
   const char  *key = nxjson->key;
-  binn  *obj, *list;
-  // switch (nxjson->type) {
-  //     // TODO:
-  // }
+  binn  *res = 0;
+  switch (nxjson->type) {
+    case NX_JSON_OBJECT:
+      res = binn_object();
+      if (!res) {
+        *rcp = JBL_ERROR_CREATION;
+        return 0;
+      }
+      for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
+        if (!binn_object_set_new(res, nxjson->key, _jbl_from_json(nxj, rcp))) {
+          if (!*rcp) {
+            *rcp = JBL_ERROR_CREATION;
+          }
+          binn_free(res);
+          return 0;
+        }
+      }
+      return res;
+    case NX_JSON_ARRAY:
+      res = binn_list();
+      if (!res) {
+        *rcp = JBL_ERROR_CREATION;
+        return 0;
+      }
+      for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
+        if (!binn_list_add_new(res, _jbl_from_json(nxj, rcp))) {
+          if (!*rcp) {
+            *rcp = JBL_ERROR_CREATION;
+          }
+          binn_free(res);
+          return 0;
+        }
+      }
+      return res;
+    case NX_JSON_STRING:
+      return binn_string(nxjson->text_value, BINN_TRANSIENT);
+    case NX_JSON_INTEGER:
+      if (nxjson->int_value <= INT_MAX && nxjson->int_value >= INT_MIN) {
+        return binn_int32(nxjson->int_value);
+      } else {
+        return binn_int64(nxjson->int_value);
+      }
+    case NX_JSON_DOUBLE:
+      return binn_double(nxjson->dbl_value);
+    case NX_JSON_BOOL:
+      return binn_bool(nxjson->int_value);
+    case NX_JSON_NULL:
+      return binn_null();
+  }
   return 0;
 }
 
