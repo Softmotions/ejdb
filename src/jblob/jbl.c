@@ -348,6 +348,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       goto loc_int;
     case BINN_UINT32:
       llv = bn->vuint32;
+      goto loc_int;
     case BINN_INT32:
       llv = bn->vint32;
       goto loc_int;
@@ -365,7 +366,6 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       goto loc_int;
     case BINN_UINT64: // overflow?
       llv = bn->vuint64;
-      goto loc_int;
 loc_int:
       rc = _jbl_write_int(llv, pt, op);
       break;
