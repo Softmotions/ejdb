@@ -1,4 +1,5 @@
 #include "jbl.h"
+#include <iowow/iwutils.h>
 #include "binn.h"
 #include "nxjson.h"
 #include "ejdb2cfg.h"
@@ -84,6 +85,7 @@ jbl_type_t jbl_type(JBL jbl) {
     case BINN_STRING:
       return JBV_STR;
     case BINN_OBJECT:
+    case BINN_MAP:
       return JBV_OBJECT;
     case BINN_LIST:
       return JBV_ARRAY;
@@ -211,38 +213,36 @@ IW_INLINE int _jbl_utf8_ch_len(uint8_t ch) {
   }
 }
 
-static void _jbl_escape_json_string(char *str, size_t len, jbl_json_printer pt, void *op) {
-  // TODO:
+static iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  //TODO:
+  return rc;
 }
 
-// case BINN_NULL:
-//     return JBV_NULL;
-//   case BINN_STRING:
-//     return JBV_STR;
-//   case BINN_OBJECT:
-//     return JBV_OBJECT;
-//   case BINN_LIST:
-//     return JBV_ARRAY;
-//   case BINN_TRUE:
-//   case BINN_FALSE:
-//     return JBV_BOOL;
-//   case BINN_INT32:
-//   case BINN_UINT16:
-//   case BINN_INT16:
-//   case BINN_UINT8:
-//   case BINN_INT8:
-//     return JBV_I32;
-//   case BINN_INT64:
-//   case BINN_UINT64: // overflow?
-//   case BINN_UINT32:
-//     return JBV_I64;
-//   case BINN_FLOAT32:
-//   case BINN_FLOAT64:
-//     return JBV_F64;
+static iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  //TODO:
+  return rc;
+}
+
+static iwrc _jbl_write_string(char *str, size_t len, jbl_json_printer pt, void *op) {
+  iwrc rc = pt(0, 0, '"', 1, op);
+  RCRET(rc);
+
+
+  rc = pt(0, 0, '"', 1, op);
+  return rc;
+}
 
 static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool pretty) {
   iwrc rc = 0;
   binn bv;
+  binn_iter iter;
+  int lv;
+  int64_t llv;
+  double dv;
+  char key[MAX_BIN_KEY_LEN];
+
 #define PT(data_, size_, ch_, count_, op_) do {\
     rc = pt(data_, size_, ch_, count_, op_); \
     RCGO(rc, finish); \
@@ -251,17 +251,17 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
   switch (bn->type) {
 
     case BINN_LIST:
+      if (!binn_iter_init(&iter, bn, bn->type)) {
+        rc = JBL_ERROR_INVALID;
+        goto finish;
+      }
       PT(0, 0, '[', 1, op);
       if (bn->count && pretty) {
         PT(0, 0, '\n', 1, op);
       }
-      for (int i = 0; i < bn->count; ++i) {
+      for (int i = 0; binn_list_next(&iter, &bv); ++i) {
         if (pretty) {
           PT(0, 0, ' ', lvl + 1, op);
-        }
-        if (!binn_list_get_value(bn, i, &bv)) {
-          rc = JBL_ERROR_INVALID;
-          goto finish;
         }
         rc = _jbl_as_json(&bv, pt, op, lvl + 1, pretty);
         RCGO(rc, finish);
@@ -278,18 +278,119 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       PT(0, 0, ']', 1, op);
       break;
 
-    case JBV_OBJECT:
+    case BINN_OBJECT:
+    case BINN_MAP:
+      if (!binn_iter_init(&iter, bn, bn->type)) {
+        rc = JBL_ERROR_INVALID;
+        goto finish;
+      }
       PT(0, 0, '{', 1, op);
       if (pretty) {
         PT(0, 0, '\n', 1, op);
       }
-      for (int i = 0; i < bn->count; ++i) {
-        //TODO:
+      if (bn->type == BINN_OBJECT) {
+        for (int i = 0; binn_object_next(&iter, key, &bv); ++i) {
+          if (pretty) {
+            PT(0, 0, ' ', lvl + 1, op);
+          }
+          rc = _jbl_write_string(key, -1, pt, op);
+          RCGO(rc, finish);
+          if (pretty) {
+            PT(": ", -1, 0, 0, op);
+          } else {
+            PT(0, 0, ':', 1, op);
+          }
+          rc = _jbl_as_json(&bv, pt, op, lvl + 1, pretty);
+          RCGO(rc, finish);
+          if (i < bn->count - 1) {
+            PT(0, 0, ',', 1, op);
+          }
+          if (pretty) {
+            PT(0, 0, '\n', 1, op);
+          }
+        }
+      } else {
+        for (int i = 0; binn_map_next(&iter, &lv, &bv); ++i) {
+          if (pretty) {
+            PT(0, 0, ' ', lvl + 1, op);
+          }
+          PT(0, 0, '"', 1, op);
+          rc = _jbl_write_int(lv, pt, op);
+          RCGO(rc, finish);
+          PT(0, 0, '"', 1, op);
+          if (pretty) {
+            PT(": ", -1, 0, 0, op);
+          } else {
+            PT(0, 0, ':', 1, op);
+          }
+          rc = _jbl_as_json(&bv, pt, op, lvl + 1, pretty);
+          RCGO(rc, finish);
+          if (i < bn->count - 1) {
+            PT(0, 0, ',', 1, op);
+          }
+          if (pretty) {
+            PT(0, 0, '\n', 1, op);
+          }
+        }
+      }
+      if (bn->count && pretty) {
+        PT(0, 0, ' ', lvl, op);
       }
       PT(0, 0, '}', 1, op);
       break;
-  }
 
+    case BINN_STRING:
+      rc = _jbl_write_string(bn->ptr, -1, pt, op);
+      break;
+
+    case BINN_INT64:
+      llv = bn->vint64;
+      goto loc_int;
+    case BINN_UINT32:
+      llv = bn->vuint32;
+    case BINN_INT32:
+      llv = bn->vint32;
+      goto loc_int;
+    case BINN_UINT16:
+      llv = bn->vuint16;
+      goto loc_int;
+    case BINN_INT16:
+      llv = bn->vint16;
+      goto loc_int;
+    case BINN_UINT8:
+      llv = bn->vuint8;
+      goto loc_int;
+    case BINN_INT8:
+      llv = bn->vint8;
+      goto loc_int;
+    case BINN_UINT64: // overflow?
+      llv = bn->vuint64;
+      goto loc_int;
+loc_int:
+      rc = _jbl_write_int(llv, pt, op);
+      break;
+
+    case BINN_FLOAT32:
+      dv = bn->vfloat;
+      goto loc_float;
+    case BINN_FLOAT64:
+      dv = bn->vdouble;
+loc_float:
+      rc = _jbl_write_double(dv, pt, op);
+      break;
+
+    case BINN_TRUE:
+      PT("true", -1, 0, 1, op);
+      break;
+
+    case BINN_FALSE:
+      PT("false", -1, 0, 1, op);
+      break;
+
+    default:
+      rc = IW_ERROR_ASSERTION;
+      break;
+  }
 finish:
   return rc;
 #undef PT

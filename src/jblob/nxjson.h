@@ -21,6 +21,8 @@
 #ifndef NXJSON_H
 #define NXJSON_H
 
+#include <stdint.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -40,7 +42,7 @@ typedef struct nx_json {
   nx_json_type type;       // type of json node, see above
   const char *key;         // key of the property; for object's children only
   const char *text_value;  // text value of STRING node
-  long long int_value;     // the value of INTEGER or BOOL node
+  int64_t int_value;     // the value of INTEGER or BOOL node
   double dbl_value;        // the value of DOUBLE node
   int length;              // number of children of OBJECT or ARRAY
   struct nx_json *child;   // points to first child

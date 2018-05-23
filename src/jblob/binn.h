@@ -103,6 +103,7 @@ typedef unsigned long long int uint64;
 #define BINN_MAGIC            0x1F22B11F
 #define MAX_BINN_HEADER       9  // [1:type][4:size][4:count]
 #define MIN_BINN_SIZE         3  // [1:type][1:size][1:count]
+#define MAX_BIN_KEY_LEN       255
 
 #define INVALID_BINN         0
 
