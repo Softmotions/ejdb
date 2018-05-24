@@ -438,6 +438,13 @@ iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty) {
   return _jbl_as_json(&jbl->bn, pt, op, 0, pretty);
 }
 
+iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count, void *op) {
+    FILE *file = op;
+    iwrc rc = 0;
+    // TODO:  
+    return rc;
+}
+
 static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
   if (!(ecode > _JBL_ERROR_START && ecode < _JBL_ERROR_END)) {
     return 0;
