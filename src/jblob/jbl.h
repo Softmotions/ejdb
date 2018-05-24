@@ -70,27 +70,27 @@ IW_EXPORT size_t jbl_count(JBL jbl);
 
 IW_EXPORT size_t jbl_size(JBL jbl);
 
-iwrc jbl_get(JBL jbl, const char *path, JBL *res);
+IW_EXPORT iwrc jbl_get(JBL jbl, const char *path, JBL *res);
 
-iwrc jbl_get_at(JBL jbl, const char *path, int pos, JBL *res);
+IW_EXPORT iwrc jbl_get_at(JBL jbl, const char *path, int pos, JBL *res);
 
-iwrc jbl_get_i32(JBL jbl, int32_t *res);
+IW_EXPORT iwrc jbl_get_i32(JBL jbl, int32_t *res);
 
-iwrc jbl_get_i64(JBL jbl, int64_t *res);
+IW_EXPORT iwrc jbl_get_i64(JBL jbl, int64_t *res);
 
-iwrc jbl_get_f64(JBL jbl, double *res);
+IW_EXPORT iwrc jbl_get_f64(JBL jbl, double *res);
 
-iwrc jbl_get_str(JBL jbl, char **ptr);
+IW_EXPORT iwrc jbl_get_str(JBL jbl, char **ptr);
 
-iwrc jbl_get_strn(JBL jbl, char *buf, size_t bufsz);
+IW_EXPORT iwrc jbl_get_strn(JBL jbl, char *buf, size_t bufsz);
 
-iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
+IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
 
 typedef iwrc(*jbl_json_printer)(const char *data, size_t size, char ch, int count, void *op);
 
-iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty);
+IW_EXPORT iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty);
 
-iwrc jbl_init(void);
+IW_EXPORT iwrc jbl_init(void);
 
 IW_EXTERN_C_END
 #endif
