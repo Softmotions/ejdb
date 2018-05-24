@@ -1951,21 +1951,21 @@ BOOL APIENTRY binn_add_value(binn *item, int binn_type, int id, char *name, int 
 BOOL APIENTRY binn_list_add_new(binn *list, binn *value) {
   BOOL retval;
   retval = binn_list_add_value(list, value);
-  if (value) free_fn(value);
+  if (value) binn_free(value);
   return retval;
 }
 
 BOOL APIENTRY binn_map_set_new(binn *map, int id, binn *value) {
   BOOL retval;
   retval = binn_map_set_value(map, id, value);
-  if (value) free_fn(value);
+  if (value) binn_free(value);
   return retval;
 }
 
 BOOL APIENTRY binn_object_set_new(binn *obj, const char *key, binn *value) {
   BOOL retval;
   retval = binn_object_set_value(obj, key, value);
-  if (value) free_fn(value);
+  if (value) binn_free(value);  
   return retval;
 }
 

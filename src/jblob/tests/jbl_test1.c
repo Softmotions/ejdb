@@ -12,7 +12,11 @@ int clean_suite(void) {
 }
 
 void jbl_test1_1() {
-  // TODO:
+  const char *data = "{\"foo\": \"bar\", \"num1\":1223, \"num2\":10.123456}";  
+  JBL jbl;
+  iwrc rc = jbl_from_json(&jbl, data) ;
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  jbl_destroy(&jbl);  
 }
 
 

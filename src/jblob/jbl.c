@@ -123,7 +123,7 @@ static binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
         return 0;
       }
       for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
-        if (!binn_object_set_new(res, nxjson->key, _jbl_from_json(nxj, rcp))) {
+        if (!binn_object_set_new(res, nxj->key, _jbl_from_json(nxj, rcp))) {
           if (!*rcp) {
             *rcp = JBL_ERROR_CREATION;
           }
@@ -183,15 +183,16 @@ iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
   bn = _jbl_from_json(nxjson, &rc);
   RCGO(rc, finish);
   assert(bn);
-
+  
   jbl = malloc(sizeof(*jbl));
   if (!jbl) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
   memcpy(&jbl->bn, bn, sizeof(*bn));
+  jbl->bn.allocated = 0;
   free(bn);
-
+  
 finish:
   if (nxjson) {
     nx_json_free(nxjson);
@@ -235,12 +236,12 @@ static iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, 
   static const char *digits = "0123456789abcdef";
   static const char *specials = "btnvfr";
   const uint8_t *p = (const uint8_t *) str;
-
+  
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt((const char*) data_, size_, ch_, count_, op);\
     RCGO(rc, finish); \
   } while(0)
-
+  
   for (size_t i = 0; i < len; i++) {
     size_t clen;
     uint8_t ch = p[i];
@@ -276,14 +277,14 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
   int64_t llv;
   double dv;
   char key[MAX_BIN_KEY_LEN];
-
+  
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt(data_, size_, ch_, count_, op); \
     RCGO(rc, finish); \
   } while(0)
-
+  
   switch (bn->type) {
-
+  
     case BINN_LIST:
       if (!binn_iter_init(&iter, bn, bn->type)) {
         rc = JBL_ERROR_INVALID;
@@ -311,7 +312,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       }
       PT(0, 0, ']', 1);
       break;
-
+      
     case BINN_OBJECT:
     case BINN_MAP:
       if (!binn_iter_init(&iter, bn, bn->type)) {
@@ -372,11 +373,11 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       }
       PT(0, 0, '}', 1);
       break;
-
+      
     case BINN_STRING:
       rc = _jbl_write_string(bn->ptr, -1, pt, op);
       break;
-
+      
     case BINN_INT64:
       llv = bn->vint64;
       goto loc_int;
@@ -403,7 +404,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
 loc_int:
       rc = _jbl_write_int(llv, pt, op);
       break;
-
+      
     case BINN_FLOAT32:
       dv = bn->vfloat;
       goto loc_float;
@@ -412,15 +413,15 @@ loc_int:
 loc_float:
       rc = _jbl_write_double(dv, pt, op);
       break;
-
+      
     case BINN_TRUE:
       PT("true", -1, 0, 1);
       break;
-
+      
     case BINN_FALSE:
       PT("false", -1, 0, 1);
       break;
-
+      
     default:
       rc = IW_ERROR_ASSERTION;
       break;

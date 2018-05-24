@@ -20,8 +20,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
       <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
+      <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -33,6 +33,12 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <VirtualDirectory Name="jblob">
+      <VirtualDirectory Name="tests">
+        <File Name="src/jblob/tests/CMakeLists.txt"/>
+        <File Name="src/jblob/tests/jbl_test1.c"/>
+      </VirtualDirectory>
+      <File Name="src/jblob/nxjson.h"/>
+      <File Name="src/jblob/nxjson.c"/>
       <File Name="src/jblob/jbl.c"/>
       <File Name="src/jblob/jbl.h"/>
       <File Name="src/jblob/hints.txt"/>
@@ -74,7 +80,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="" IntermediateDirectory="./Debug" Command="$(ProjectPath)/build" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="$(IntermediateDirectory)/jbl_test1" IntermediateDirectory="$(ProjectPath)/build/src/jblob/tests" Command="$(OutputFile)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
