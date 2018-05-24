@@ -149,7 +149,7 @@ static binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
       }
       return res;
     case NX_JSON_STRING:
-      return binn_string(nxjson->text_value, BINN_TRANSIENT);
+      return binn_string(nxjson->text_value, 0);
     case NX_JSON_INTEGER:
       if (nxjson->int_value <= INT_MAX && nxjson->int_value >= INT_MIN) {
         return binn_int32(nxjson->int_value);
