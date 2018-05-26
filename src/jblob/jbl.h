@@ -90,6 +90,8 @@ typedef iwrc(*jbl_json_printer)(const char *data, size_t size, char ch, int coun
 
 IW_EXPORT iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count, void *op);
 
+IW_EXPORT iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, void *op);
+
 IW_EXPORT iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty);
 
 IW_EXPORT iwrc jbl_init(void);

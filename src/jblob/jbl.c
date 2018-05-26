@@ -1,5 +1,6 @@
 #include "jbl.h"
 #include <iowow/iwconv.h>
+#include <iowow/iwxstr.h>
 #include "binn.h"
 #include "nxjson.h"
 #include "ejdb2cfg.h"
@@ -439,10 +440,48 @@ iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty) {
 }
 
 iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count, void *op) {
-    FILE *file = op;
-    iwrc rc = 0;
-    // TODO:  
-    return rc;
+  FILE *file = op;
+  if (!file) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  if (!data) {
+    if (count) {
+      size_t wc = fwrite(&ch, sizeof(ch), count, file);
+      if (wc != count) {
+        return iwrc_set_errno(IW_ERROR_IO_ERRNO, errno);
+      }
+    }
+  } else {
+    if (!count) count = 1;
+    for (int i = 0; i < count; ++i) {
+      if (fprintf(file, "%.*s", (int) size, data) < 0) {
+        return iwrc_set_errno(IW_ERROR_IO_ERRNO, errno);
+      }
+    }
+  }
+  return 0;
+}
+
+iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, void *op) {
+  IWXSTR *xstr = op;
+  if (!xstr) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  if (!data) {
+    if (count) {
+      for (int i = 0; i < count; ++i) {
+        iwrc rc = iwxstr_cat(xstr, &ch, 1);
+        RCRET(rc);
+      }
+    }
+  } else {
+    if (!count) count = 1;
+    for (int i = 0; i < count; ++i) {
+      iwrc rc = iwxstr_cat(xstr, data, size);
+      RCRET(rc);
+    }
+  }
+  return 0;
 }
 
 static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {

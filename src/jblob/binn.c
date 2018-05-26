@@ -869,7 +869,7 @@ void *APIENTRY binn_release(binn *item) {
 
 BINN_PRIVATE BOOL IsValidBinnHeader(const void *pbuf, int *ptype, int *pcount, int *psize, int *pheadersize) {
   const unsigned char *p, *plimit = 0;
-  char byte;
+  unsigned char byte;
   int int32, type, size, count;
   if (pbuf == NULL) return FALSE;
   p = (const unsigned char *) pbuf;

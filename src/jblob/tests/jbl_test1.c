@@ -1,5 +1,6 @@
 #include "ejdb2.h"
 #include "jbl.h"
+#include <iowow/iwxstr.h>
 #include <CUnit/Basic.h>
 
 int init_suite(void) {
@@ -16,6 +17,15 @@ void jbl_test1_1() {
   JBL jbl;
   iwrc rc = jbl_from_json(&jbl, data) ;
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+  
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+  
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, false);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  
+  
+  iwxstr_destroy(xstr);
   jbl_destroy(&jbl);  
 }
 
