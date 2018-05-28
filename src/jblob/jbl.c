@@ -514,8 +514,9 @@ char *jbl_get_str(JBL jbl) {
 size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz) {
   assert(jbl && buf && jbl->bn.type == BINN_STRING);
   size_t slen = strlen(jbl->bn.ptr);
-  memcpy(buf, jbl->bn.ptr, MIN(slen, bufsz));
-  return MIN(slen, bufsz);
+  size_t ret = MIN(slen, bufsz);
+  memcpy(buf, jbl->bn.ptr, ret);
+  return ret;
 }
 
 iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size){
