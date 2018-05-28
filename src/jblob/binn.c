@@ -764,7 +764,7 @@ BINN_PRIVATE BOOL AddValue(binn *item, int type, void *pvalue, int size) {
 }
 
 
-BINN_PRIVATE BOOL binn_save_header(binn *item) {
+BOOL binn_save_header(binn *item) {
   unsigned char byte, *p;
   int int32, size;
   if (item == NULL) return FALSE;

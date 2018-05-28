@@ -74,15 +74,15 @@ IW_EXPORT iwrc jbl_get(JBL jbl, const char *path, JBL *res);
 
 IW_EXPORT iwrc jbl_get_at(JBL jbl, const char *path, int pos, JBL *res);
 
-IW_EXPORT iwrc jbl_get_i32(JBL jbl, int32_t *res);
+IW_EXPORT int32_t jbl_get_i32(JBL jbl);
 
-IW_EXPORT iwrc jbl_get_i64(JBL jbl, int64_t *res);
+IW_EXPORT int64_t jbl_get_i64(JBL jbl);
 
-IW_EXPORT iwrc jbl_get_f64(JBL jbl, double *res);
+IW_EXPORT double jbl_get_f64(JBL jbl);
 
-IW_EXPORT iwrc jbl_get_str(JBL jbl, char **ptr);
+IW_EXPORT char *jbl_get_str(JBL jbl);
 
-IW_EXPORT iwrc jbl_get_strn(JBL jbl, char *buf, size_t bufsz);
+IW_EXPORT size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz);
 
 IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
 

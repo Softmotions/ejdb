@@ -243,7 +243,7 @@ static iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, 
     rc = pt((const char*) (data_), size_, ch_, count_, op);\
     RCGO(rc, finish); \
   } while(0)
-    
+  
   if (len == -1) {
     len = strlen(str);
   }
@@ -423,7 +423,7 @@ loc_float:
       break;
     case BINN_FALSE:
       PT("false", -1, 0, 1);
-      break;  
+      break;
     case BINN_BOOL:
       PT(bn->vbool ? "true" : "false", -1, 0, 1);
       break;
@@ -488,6 +488,45 @@ iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, vo
       RCRET(rc);
     }
   }
+  return 0;
+}
+
+int32_t jbl_get_i32(JBL jbl) {
+  assert(jbl);
+  return jbl->bn.vint32;
+}
+
+int64_t jbl_get_i64(JBL jbl) {
+  assert(jbl);
+  return jbl->bn.vint64;
+}
+
+double jbl_get_f64(JBL jbl) {
+  assert(jbl);
+  return jbl->bn.vdouble;
+}
+
+char *jbl_get_str(JBL jbl) {
+  assert(jbl && jbl->bn.type == BINN_STRING);
+  return jbl->bn.ptr;
+}
+
+size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz) {
+  assert(jbl && buf && jbl->bn.type == BINN_STRING);
+  size_t slen = strlen(jbl->bn.ptr);
+  memcpy(buf, jbl->bn.ptr, MIN(slen, bufsz));
+  return MIN(slen, bufsz);
+}
+
+iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size){
+  assert(jbl && buf && size);
+  if (jbl->bn.writable && jbl->bn.dirty) {
+    if (!binn_save_header(&jbl->bn)) {
+      return JBL_ERROR_INVALID;
+    }
+  }
+  *buf = jbl->bn.ptr;
+  *size = jbl->bn.size;
   return 0;
 }
 

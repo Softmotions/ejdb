@@ -278,6 +278,8 @@ BOOL   APIENTRY binn_is_container(binn *item);
 
 // --- WRITE FUNCTIONS  ------------------------------------------------------------
 
+BOOL APIENTRY binn_save_header(binn *item);
+
 // create a new binn allocating memory for the structure
 binn *APIENTRY binn_new(int type, int size, void *buffer);
 binn *APIENTRY binn_list();
