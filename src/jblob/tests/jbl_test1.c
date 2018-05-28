@@ -13,7 +13,10 @@ int clean_suite(void) {
 }
 
 void jbl_test1_1() {
-  const char *data = "{\"foo\": \"bar\", \"num1\":1223, \"num2\":10.123456}";  
+  const char *data = "{\"foo\": \"b\\\"ar\", \"num1\":1223,"
+                     "\"n\\\"um2\":10.1226222, "
+                     "\"list\":[3,2.1,1,\"one\", \"two\", "
+                     "{}, {\"z\":false, \"t\":true}]}";
   JBL jbl;
   iwrc rc = jbl_from_json(&jbl, data) ;
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -24,9 +27,13 @@ void jbl_test1_1() {
   rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, false);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   
+  int res = strcmp(iwxstr_ptr(xstr), 
+  "{\"foo\":\"b\\\"ar\",\"num1\":1223,\"n\\\"um2\":10.1226222,"
+  "\"list\":[3,2.1,1,\"one\",\"two\",{},{\"z\":false,\"t\":true}]}");
+  CU_ASSERT_EQUAL(res, 0);
   
   iwxstr_destroy(xstr);
-  jbl_destroy(&jbl);  
+  jbl_destroy(&jbl);
 }
 
 

@@ -96,6 +96,7 @@ jbl_type_t jbl_type(JBL jbl) {
       return JBV_ARRAY;
     case BINN_TRUE:
     case BINN_FALSE:
+    case BINN_BOOL:
       return JBV_BOOL;
     case BINN_INT32:
     case BINN_UINT16:
@@ -220,9 +221,9 @@ IW_INLINE int _jbl_utf8_ch_len(uint8_t ch) {
 }
 
 static iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op) {
-  char buf[NUMBUF_SIZE];
-  int sz = iwftoa(num, buf, sizeof(buf), 10);
-  return pt(buf, sz, 0, 0, op);
+  char buf[IWFTOA_BUFSIZE];
+  iwftoa(num, buf);
+  return pt(buf, -1, 0, 0, op);
 }
 
 static iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op) {
@@ -239,16 +240,18 @@ static iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, 
   const uint8_t *p = (const uint8_t *) str;
   
 #define PT(data_, size_, ch_, count_) do {\
-    rc = pt((const char*) data_, size_, ch_, count_, op);\
+    rc = pt((const char*) (data_), size_, ch_, count_, op);\
     RCGO(rc, finish); \
   } while(0)
-  
+    
+  if (len == -1) {
+    len = strlen(str);
+  }
   for (size_t i = 0; i < len; i++) {
     size_t clen;
     uint8_t ch = p[i];
     if (ch == '"' || ch == '\\') {
       PT(0, 0, '\\', 1);
-      PT(p + i, 1, 0, 0);
       PT(0, 0, ch, 1);
     } else if (ch >= '\b' && ch <= '\r') {
       PT(0, 0, '\\', 1);
@@ -321,7 +324,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
         goto finish;
       }
       PT(0, 0, '{', 1);
-      if (pretty) {
+      if (bn->count && pretty) {
         PT(0, 0, '\n', 1);
       }
       if (bn->type == BINN_OBJECT) {
@@ -418,9 +421,11 @@ loc_float:
     case BINN_TRUE:
       PT("true", -1, 0, 1);
       break;
-      
     case BINN_FALSE:
       PT("false", -1, 0, 1);
+      break;  
+    case BINN_BOOL:
+      PT(bn->vbool ? "true" : "false", -1, 0, 1);
       break;
       
     default:
@@ -452,6 +457,7 @@ iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count,
       }
     }
   } else {
+    if (size == -1) size = strlen(data);
     if (!count) count = 1;
     for (int i = 0; i < count; ++i) {
       if (fprintf(file, "%.*s", (int) size, data) < 0) {
@@ -475,6 +481,7 @@ iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, vo
       }
     }
   } else {
+    if (size == -1) size = strlen(data);
     if (!count) count = 1;
     for (int i = 0; i < count; ++i) {
       iwrc rc = iwxstr_cat(xstr, data, size);
