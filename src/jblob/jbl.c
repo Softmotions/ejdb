@@ -567,6 +567,7 @@ iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
   assert(sz - doff >= len * sizeof(char));
   
   for (i = 0, j = 0, cnt = 0; path[i]; ++i, ++j) {
+    assert(cnt < jp->cnt);
     if (path[i] == '/') {
       jp->n[cnt] = jpr + doff + j;
       for (k = 0; ; ++i, ++k) {
