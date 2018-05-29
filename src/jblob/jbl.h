@@ -16,6 +16,7 @@ typedef enum {
   JBL_ERROR_CREATION,       /**< Cannot create JBL object (JBL_ERROR_CREATION) */
   JBL_ERROR_INVALID,        /**< Invalid JBL object (JBL_ERROR_INVALID) */
   JBL_ERROR_PARSE_JSON,     /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
+  JBL_ERROR_JSON_POINTER,   /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
   _JBL_ERROR_END
 } jbl_ecode;
 
@@ -71,8 +72,6 @@ IW_EXPORT size_t jbl_count(JBL jbl);
 IW_EXPORT size_t jbl_size(JBL jbl);
 
 IW_EXPORT iwrc jbl_get(JBL jbl, const char *path, JBL *res);
-
-IW_EXPORT iwrc jbl_get_at(JBL jbl, const char *path, int pos, JBL *res);
 
 IW_EXPORT int32_t jbl_get_i32(JBL jbl);
 

@@ -519,7 +519,7 @@ size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz) {
   return ret;
 }
 
-iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size){
+iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size) {
   assert(jbl && buf && size);
   if (jbl->bn.writable && jbl->bn.dirty) {
     if (!binn_save_header(&jbl->bn)) {
@@ -529,6 +529,77 @@ iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size){
   *buf = jbl->bn.ptr;
   *size = jbl->bn.size;
   return 0;
+}
+
+//----------------------------------------------------------------------------------------------------------
+
+typedef struct JBLPTR {
+  int cnt;          /**< Number of nodes */
+  int pos;          /**< Current node position (like a cursor) */
+  char *n[1];       /**< Path nodes */
+} *JBLPTR;
+
+iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
+  iwrc rc = 0;
+  int cnt = 0, len, i, j, k, sz, doff;
+  JBLPTR jp;
+  char *jpr; // raw pointer to jp
+  *jpp = 0;
+  if (path[0] != '/') {
+    return JBL_ERROR_JSON_POINTER;
+  }
+  for (i = 0; path[i]; ++i) {
+    if (path[i] == '/') ++cnt;
+  }
+  len = i;
+  if (path[len - 1] == '/') {
+    return JBL_ERROR_JSON_POINTER;
+  }
+  sz = sizeof(JBLPTR) + cnt * sizeof(char *) + len * sizeof(char);
+  jp = malloc(sz);
+  if (!jp) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  jpr = (char *) jp;
+  jp->pos = 0;
+  jp->cnt = cnt;
+  doff = offsetof(struct JBLPTR, n) + cnt * sizeof(char *);
+  assert(sz - doff >= len * sizeof(char));
+  
+  for (i = 0, j = 0, cnt = 0; path[i]; ++i, ++j) {
+    if (path[i] == '/') {
+      jp->n[cnt] = jpr + doff + j;
+      for (k = 0; ; ++i, ++k) {
+        if (!path[i] || path[i] == '/') {
+          --i;
+          *(jp->n[cnt] + k) = '\0';
+          break;
+        }
+        if (path[i] == '~') {
+          if (path[i + 1] == '1') {
+            *(jp->n[cnt] + k) = '/';
+            ++i;
+          } else if (path[i + 1] == '0') {
+            *(jp->n[cnt] + k) = '~';
+            ++i;
+          }
+        } else {
+          *(jp->n[cnt] + k) = path[i];
+        }
+      }
+      j += k;
+      ++cnt;
+    }
+  }
+  *jpp = jp;
+  return rc;
+}
+
+
+iwrc jbl_get(JBL jbl, const char *path, JBL *res) {
+  iwrc rc = 0;
+  
+  return rc;
 }
 
 static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
@@ -544,6 +615,9 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
       return "Invalid JBL object (JBL_ERROR_INVALID)";
     case JBL_ERROR_PARSE_JSON:
       return "Failed to parse JSON string (JBL_ERROR_PARSE_JSON)";
+    case JBL_ERROR_JSON_POINTER:
+      return "Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER)";
+      
   }
   return 0;
 }
