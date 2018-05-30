@@ -489,8 +489,7 @@ BINN_PRIVATE BOOL binn_object_set_raw(binn *item, const char *key, int type, voi
   unsigned char *p, len;
   int int32;
 
-  if ((item == NULL) || (item->type != BINN_OBJECT) || (item->writable == FALSE)) return FALSE;
-  if (key == NULL) return FALSE;
+  if ((key == NULL) || (item == NULL) || (item->type != BINN_OBJECT) || (item->writable == FALSE)) return FALSE;
   int32 = strlen(key);
   if (int32 > 255) return FALSE;
 

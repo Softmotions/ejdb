@@ -696,7 +696,7 @@ IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBLPTR jp, int lvl, char *key, in
       }
       if (!strcmp(keyptr, jp->n[lvl]) || (jp->n[lvl][0] == '*' && strlen(jp->n[lvl]) == 1)) {
         ++jp->pos;
-        return true;
+        return (jp->cnt == lvl + 1);
       }
     } else if (jp->pos > -1 && jp->pos == lvl - 1) {
       --jp->pos;
@@ -708,7 +708,7 @@ IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBLPTR jp, int lvl, char *key, in
 
 static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc) {
   JBLPTR jp = vctx->jp;
-  if (_jbl_visitor_update_jptr_cursor(jp, lvl, key, idx) && jp->cnt == lvl + 1) { // Pointer matched    
+  if (_jbl_visitor_update_jptr_cursor(jp, lvl, key, idx)) { // Pointer matched    
     JBL jbl = malloc(sizeof(struct _JBL));        
     memcpy(&jbl->bn, bv, sizeof(jbl->bn));
     return JBL_VCMD_TERMINATE;

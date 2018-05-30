@@ -68,10 +68,10 @@ void jbl_test1_2() {
   CU_ASSERT_FALSE(strcmp(jp->n[3], "baz"));
   jbl_ptr_destroy(&jp);
   
-  rc = jbl_ptr("/fo~2o/b~0ar/0/b~1az", &jp);
+  rc = jbl_ptr("/foo/b~0ar/0/b~1az", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);  
   CU_ASSERT_EQUAL(jp->cnt, 4); 
-  CU_ASSERT_FALSE(strcmp(jp->n[0], "fo*o"));
+  CU_ASSERT_FALSE(strcmp(jp->n[0], "foo"));
   CU_ASSERT_FALSE(strcmp(jp->n[1], "b~ar"));
   CU_ASSERT_FALSE(strcmp(jp->n[2], "0"));
   CU_ASSERT_FALSE(strcmp(jp->n[3], "b/az"));  
