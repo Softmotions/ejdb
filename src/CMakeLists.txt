@@ -38,13 +38,13 @@ if (IS_BIG_ENDIAN EQUAL 1)
 endif()
 
 if(CMAKE_SIZEOF_VOID_P MATCHES 8)
-  add_definitions(-DIW_64=1)
+  add_definitions(-DIW_64)
 else()
-  add_definitions(-DIW_32=1)
+  add_definitions(-DIW_32)
 endif()
 
 if (BUILD_TESTS)
- add_definitions(-DJB_TESTS=1)
+ add_definitions(-DIW_TESTS)
 endif()
 
 find_package(Threads REQUIRED CMAKE_THREAD_PREFER_PTHREAD)

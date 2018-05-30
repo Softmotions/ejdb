@@ -1,17 +1,10 @@
 #include "jbl.h"
+#include <ctype.h>
 #include <iowow/iwconv.h>
 #include <iowow/iwxstr.h>
-#include "binn.h"
 #include "nxjson.h"
 #include "ejdb2cfg.h"
-#include <ctype.h>
-
-#define NUMBUF_SIZE 64
-IW_EXPORT int iwitoa(int64_t v, char *buf, int max);
-
-struct _JBL {
-  binn bn;
-};
+#include "jbl_internal.h"
 
 iwrc jbl_create_object(JBL *jblp) {
   iwrc rc = 0;
@@ -227,7 +220,7 @@ static iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op) {
 }
 
 static iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op) {
-  char buf[NUMBUF_SIZE];
+  char buf[JBNUMBUF_SIZE];
   int sz = iwitoa(num, buf, sizeof(buf));
   return pt(buf, sz, 0, 0, op);
 }
@@ -533,15 +526,10 @@ iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size) {
 
 //----------------------------------------------------------------------------------------------------------
 
-typedef struct JBLPTR {
-  int cnt;          /**< Number of nodes */
-  int pos;          /**< Current node position (like a cursor) */
-  char *n[1];       /**< Path nodes */
-} *JBLPTR;
-
-iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
+static iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
   iwrc rc = 0;
-  int cnt = 0, len, i, j, k, sz, doff;
+  int cnt = 0, len, sz, doff;
+  int i, j, k;
   JBLPTR jp;
   char *jpr; // raw pointer to jp
   *jpp = 0;
@@ -552,10 +540,10 @@ iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
     if (path[i] == '/') ++cnt;
   }
   len = i;
-  if (path[len - 1] == '/') {
+  if (len > 1 && path[len - 1] == '/') {
     return JBL_ERROR_JSON_POINTER;
   }
-  sz = sizeof(JBLPTR) + cnt * sizeof(char *) + len * sizeof(char);
+  sz = sizeof(struct _JBLPTR) + cnt * sizeof(char *) + len;
   jp = malloc(sz);
   if (!jp) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -563,12 +551,11 @@ iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
   jpr = (char *) jp;
   jp->pos = 0;
   jp->cnt = cnt;
-  doff = offsetof(struct JBLPTR, n) + cnt * sizeof(char *);
-  assert(sz - doff >= len * sizeof(char));
+  doff = offsetof(struct _JBLPTR, n) + cnt * sizeof(char *);
+  assert(sz - doff >= len);
   
-  for (i = 0, j = 0, cnt = 0; path[i]; ++i, ++j) {
-    assert(cnt < jp->cnt);
-    if (path[i] == '/') {
+  for (i = 0, j = 0, cnt = 0; path[i] && cnt < jp->cnt; ++i, ++j) {
+    if (path[i++] == '/') {
       jp->n[cnt] = jpr + doff + j;
       for (k = 0; ; ++i, ++k) {
         if (!path[i] || path[i] == '/') {
@@ -577,13 +564,14 @@ iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
           break;
         }
         if (path[i] == '~') {
-          if (path[i + 1] == '1') {
-            *(jp->n[cnt] + k) = '/';
-            ++i;
-          } else if (path[i + 1] == '0') {
-            *(jp->n[cnt] + k) = '~';
-            ++i;
+          if (path[i + 1] == '0') {
+            *(jp->n[cnt] + k) = '~';            
+          } else if (path[i + 1] == '1') {
+            *(jp->n[cnt] + k) = '/';            
+          } else if (path[i + 1] == '2') {
+            *(jp->n[cnt] + k) = '*';            
           }
+          ++i;
         } else {
           *(jp->n[cnt] + k) = path[i];
         }
@@ -596,6 +584,24 @@ iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
   return rc;
 }
 
+#ifdef IW_TESTS
+iwrc jbl_ptr(const char *path, JBLPTR *jpp) {
+  return _jbl_ptr(path, jpp);
+}
+#endif
+
+static void _jbl_ptr_destroy(JBLPTR *jpp) {
+  if (jpp && *jpp) {
+    free(*jpp);
+    *jpp = 0;
+  }
+}
+
+#ifdef IW_TESTS
+void jbl_ptr_destroy(JBLPTR *jpp) {
+  _jbl_ptr_destroy(jpp);
+}
+#endif
 
 iwrc jbl_get(JBL jbl, const char *path, JBL *res) {
   iwrc rc = 0;

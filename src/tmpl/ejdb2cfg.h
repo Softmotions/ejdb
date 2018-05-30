@@ -21,4 +21,6 @@
 #include <errno.h>
 #include <limits.h>
 
+#define JBNUMBUF_SIZE 64
+
 #endif
