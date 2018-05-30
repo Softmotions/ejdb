@@ -695,11 +695,9 @@ IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBLPTR jp, int lvl, char *key, in
         keyptr = buf;
       }
       if (!strcmp(keyptr, jp->n[lvl]) || (jp->n[lvl][0] == '*' && strlen(jp->n[lvl]) == 1)) {
-        ++jp->pos;
+        jp->pos = lvl;
         return (jp->cnt == lvl + 1);
       }
-    } else if (jp->pos > -1 && jp->pos == lvl - 1) {
-      --jp->pos;
     }
   }
   return false;
@@ -708,12 +706,12 @@ IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBLPTR jp, int lvl, char *key, in
 
 static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc) {
   JBLPTR jp = vctx->jp;
-  if (_jbl_visitor_update_jptr_cursor(jp, lvl, key, idx)) { // Pointer matched    
-    JBL jbl = malloc(sizeof(struct _JBL));        
+  if (_jbl_visitor_update_jptr_cursor(jp, lvl, key, idx)) { // Pointer matched
+    JBL jbl = malloc(sizeof(struct _JBL));
     memcpy(&jbl->bn, bv, sizeof(jbl->bn));
     return JBL_VCMD_TERMINATE;
   } else if (jp->cnt < lvl + 1)  {
-    return JBL_VCMD_SKIP_NESTED;  
+    return JBL_VCMD_SKIP_NESTED;
   }
   return JBL_VCMD_OK;
 }
