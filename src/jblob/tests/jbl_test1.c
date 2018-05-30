@@ -42,7 +42,7 @@ void jbl_test1_2() {
   iwrc rc = jbl_ptr("/", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 1);
-  CU_ASSERT_EQUAL(jp->pos, 0);
+  CU_ASSERT_EQUAL(jp->pos, -1);
   CU_ASSERT_TRUE(*jp->n[0] == '\0')  
   jbl_ptr_destroy(&jp);
   

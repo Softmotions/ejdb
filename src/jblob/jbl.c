@@ -549,7 +549,7 @@ static iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   jpr = (char *) jp;
-  jp->pos = 0;
+  jp->pos = -1;
   jp->cnt = cnt;
   doff = offsetof(struct _JBLPTR, n) + cnt * sizeof(char *);
   assert(sz - doff >= len);
@@ -565,11 +565,9 @@ static iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
         }
         if (path[i] == '~') {
           if (path[i + 1] == '0') {
-            *(jp->n[cnt] + k) = '~';            
+            *(jp->n[cnt] + k) = '~';
           } else if (path[i + 1] == '1') {
-            *(jp->n[cnt] + k) = '/';            
-          } else if (path[i + 1] == '2') {
-            *(jp->n[cnt] + k) = '*';            
+            *(jp->n[cnt] + k) = '/';
           }
           ++i;
         } else {
@@ -603,9 +601,138 @@ void jbl_ptr_destroy(JBLPTR *jpp) {
 }
 #endif
 
-iwrc jbl_get(JBL jbl, const char *path, JBL *res) {
+static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visitor) {
   iwrc rc = 0;
+  JBL jbl = vctx->jbl;
+  jbl_visitor_cmd_t cmd;
+  int idx;
+  binn bv;
   
+  if (!iter) {
+    binn_iter it;
+    if (!BINN_IS_CONTAINER_TYPE(jbl->bn.type)) {
+      return JBL_ERROR_INVALID;
+    }
+    if (!binn_iter_init(&it, &jbl->bn, jbl->bn.type)) {
+      return JBL_ERROR_INVALID;
+    }
+    rc = jbl_visit(&it, 0, vctx, visitor);
+    return rc;
+  }
+  
+  switch (iter->type) {
+    case BINN_OBJECT: {
+      char key[MAX_BIN_KEY_LEN];
+      while (!vctx->terminate && binn_object_next(iter, key, &bv)) {
+        cmd = visitor(lvl, &bv, key, -1, vctx, &rc);
+        RCRET(rc);
+        if (cmd & JBL_VCMD_TERMINATE) {
+          vctx->terminate = true;
+          break;
+        }
+        if (!(cmd & JBL_VCMD_SKIP_NESTED) && BINN_IS_CONTAINER_TYPE(bv.type)) {
+          binn_iter it;
+          if (!binn_iter_init(&it, &bv, bv.type)) {
+            return JBL_ERROR_INVALID;
+          }
+          rc = jbl_visit(&it, lvl + 1, vctx, visitor);
+          RCRET(rc);
+        }
+      }
+      break;
+    }
+    case BINN_MAP: {
+      while (!vctx->terminate && binn_map_next(iter, &idx, &bv)) {
+        cmd = visitor(lvl, &bv, 0, idx, vctx, &rc);
+        RCRET(rc);
+        if (cmd & JBL_VCMD_TERMINATE) {
+          vctx->terminate = true;
+          break;
+        }
+        if (!(cmd & JBL_VCMD_SKIP_NESTED) && BINN_IS_CONTAINER_TYPE(bv.type)) {
+          binn_iter it;
+          if (!binn_iter_init(&it, &bv, bv.type)) {
+            return JBL_ERROR_INVALID;
+          }
+          rc = jbl_visit(&it, lvl + 1, vctx, visitor);
+          RCRET(rc);
+        }
+      }
+      break;
+    }
+    case BINN_LIST: {
+      for (idx = 0; !vctx->terminate && binn_list_next(iter, &bv); ++idx) {
+        cmd = visitor(lvl, &bv, 0, idx, vctx, &rc);
+        RCRET(rc);
+        if (cmd & JBL_VCMD_TERMINATE) {
+          vctx->terminate = true;
+          break;
+        }
+        if (!(cmd & JBL_VCMD_SKIP_NESTED) && BINN_IS_CONTAINER_TYPE(bv.type)) {
+          binn_iter it;
+          if (!binn_iter_init(&it, &bv, bv.type)) {
+            return JBL_ERROR_INVALID;
+          }
+          rc = jbl_visit(&it, lvl + 1, vctx, visitor);
+          RCRET(rc);
+        }
+      }
+      break;
+    }
+  }
+  return rc;
+}
+
+IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBLPTR jp, int lvl, char *key, int idx) {
+  if (lvl < jp->cnt) {
+    if (jp->pos + 1 == lvl) {
+      char *keyptr;
+      char buf[JBNUMBUF_SIZE];
+      if (key) {
+        keyptr = key;
+      } else {
+        iwitoa(idx, buf, JBNUMBUF_SIZE);
+        keyptr = buf;
+      }
+      if (!strcmp(keyptr, jp->n[lvl]) || (jp->n[lvl][0] == '*' && strlen(jp->n[lvl]) == 1)) {
+        ++jp->pos;
+        return true;
+      }
+    } else if (jp->pos > -1 && jp->pos == lvl - 1) {
+      --jp->pos;
+    }
+  }
+  return false;
+}
+
+
+static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc) {
+  JBLPTR jp = vctx->jp;
+  if (_jbl_visitor_update_jptr_cursor(jp, lvl, key, idx) && jp->cnt == lvl + 1) { // Pointer matched    
+    JBL jbl = malloc(sizeof(struct _JBL));        
+    memcpy(&jbl->bn, bv, sizeof(jbl->bn));
+    return JBL_VCMD_TERMINATE;
+  } else if (jp->cnt < lvl + 1)  {
+    return JBL_VCMD_SKIP_NESTED;  
+  }
+  return JBL_VCMD_OK;
+}
+
+iwrc jbl_get(JBL jbl, const char *path, JBL *res) {
+  JBLPTR jp;
+  iwrc rc = _jbl_ptr(path, &jp);
+  RCRET(rc);
+  JBLVCTX vctx = {
+    .jbl = jbl,
+    .jp = jp
+  };
+  rc = jbl_visit(0, 0, &vctx, _jbl_get_visitor);
+  if (rc) {
+    *res = 0;
+  } else {
+    *res = (JBL) vctx.result;
+  }
+  _jbl_ptr_destroy(&jp);
   return rc;
 }
 
@@ -624,7 +751,8 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
       return "Failed to parse JSON string (JBL_ERROR_PARSE_JSON)";
     case JBL_ERROR_JSON_POINTER:
       return "Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER)";
-      
+    case JBL_ERROR_PATH_NOTFOUND:
+      return "JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND)";
   }
   return 0;
 }

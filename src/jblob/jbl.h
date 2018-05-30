@@ -17,6 +17,7 @@ typedef enum {
   JBL_ERROR_INVALID,        /**< Invalid JBL object (JBL_ERROR_INVALID) */
   JBL_ERROR_PARSE_JSON,     /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
   JBL_ERROR_JSON_POINTER,   /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
+  JBL_ERROR_PATH_NOTFOUND,  /**< JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND) */
   _JBL_ERROR_END
 } jbl_ecode;
 
