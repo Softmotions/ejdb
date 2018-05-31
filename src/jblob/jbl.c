@@ -501,11 +501,18 @@ double jbl_get_f64(JBL jbl) {
 
 char *jbl_get_str(JBL jbl) {
   assert(jbl && jbl->bn.type == BINN_STRING);
-  return jbl->bn.ptr;
+  if (jbl->bn.type != BINN_STRING) {
+    return 0;
+  } else {
+    return jbl->bn.ptr;
+  }
 }
 
 size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz) {
   assert(jbl && buf && jbl->bn.type == BINN_STRING);
+  if (jbl->bn.type != BINN_STRING) {
+    return 0;
+  }
   size_t slen = strlen(jbl->bn.ptr);
   size_t ret = MIN(slen, bufsz);
   memcpy(buf, jbl->bn.ptr, ret);
@@ -708,7 +715,8 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, char *key, int idx,
   JBLPTR jp = vctx->jp;
   if (_jbl_visitor_update_jptr_cursor(jp, lvl, key, idx)) { // Pointer matched
     JBL jbl = malloc(sizeof(struct _JBL));
-    memcpy(&jbl->bn, bv, sizeof(jbl->bn));
+    memcpy(&jbl->bn, bv, sizeof(*bv));
+    vctx->result = jbl;
     return JBL_VCMD_TERMINATE;
   } else if (jp->cnt < lvl + 1)  {
     return JBL_VCMD_SKIP_NESTED;
@@ -716,7 +724,7 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, char *key, int idx,
   return JBL_VCMD_OK;
 }
 
-iwrc jbl_get(JBL jbl, const char *path, JBL *res) {
+iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
   JBLPTR jp;
   iwrc rc = _jbl_ptr(path, &jp);
   RCRET(rc);
@@ -728,7 +736,12 @@ iwrc jbl_get(JBL jbl, const char *path, JBL *res) {
   if (rc) {
     *res = 0;
   } else {
-    *res = (JBL) vctx.result;
+    if (!vctx.result) {
+      rc = JBL_ERROR_PATH_NOTFOUND;
+      *res = 0;
+    } else {
+      *res = (JBL) vctx.result;
+    }
   }
   _jbl_ptr_destroy(&jp);
   return rc;

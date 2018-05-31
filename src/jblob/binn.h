@@ -219,7 +219,7 @@ typedef void (*binn_mem_free)(void *);
 #define BINN_TRANSIENT   ((binn_mem_free)-1)
 
 
-#define BINN_IS_CONTAINER_TYPE(type_) ((type_) >= BINN_LIST || (type_) <= BINN_OBJECT)
+#define BINN_IS_CONTAINER_TYPE(type_) ((type_) >= BINN_LIST && (type_) <= BINN_OBJECT)
 
 // --- BINN STRUCTURE --------------------------------------------------------------
 

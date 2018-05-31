@@ -72,7 +72,7 @@ IW_EXPORT size_t jbl_count(JBL jbl);
 
 IW_EXPORT size_t jbl_size(JBL jbl);
 
-IW_EXPORT iwrc jbl_get(JBL jbl, const char *path, JBL *res);
+IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
 IW_EXPORT int32_t jbl_get_i32(JBL jbl);
 
