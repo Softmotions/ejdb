@@ -91,15 +91,15 @@ jbl_type_t jbl_type(JBL jbl) {
     case BINN_FALSE:
     case BINN_BOOL:
       return JBV_BOOL;
-    case BINN_INT32:
-    case BINN_UINT16:
-    case BINN_INT16:
     case BINN_UINT8:
+    case BINN_UINT16:
     case BINN_INT8:
+    case BINN_INT16:
+    case BINN_INT32:
       return JBV_I32;
-    case BINN_INT64:
-    case BINN_UINT64: // overflow?
     case BINN_UINT32:
+    case BINN_UINT64: // overflow?
+    case BINN_INT64:
       return JBV_I64;
     case BINN_FLOAT32:
     case BINN_FLOAT64:
@@ -375,26 +375,26 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       rc = _jbl_write_string(bn->ptr, -1, pt, op);
       break;
       
-    case BINN_INT64:
-      llv = bn->vint64;
-      goto loc_int;
-    case BINN_UINT32:
-      llv = bn->vuint32;
-      goto loc_int;
-    case BINN_INT32:
-      llv = bn->vint32;
+    case BINN_UINT8:
+      llv = bn->vuint8;
       goto loc_int;
     case BINN_UINT16:
       llv = bn->vuint16;
       goto loc_int;
-    case BINN_INT16:
-      llv = bn->vint16;
-      goto loc_int;
-    case BINN_UINT8:
-      llv = bn->vuint8;
+    case BINN_UINT32:
+      llv = bn->vuint32;
       goto loc_int;
     case BINN_INT8:
       llv = bn->vint8;
+      goto loc_int;
+    case BINN_INT16:
+      llv = bn->vint16;
+      goto loc_int;
+    case BINN_INT32:
+      llv = bn->vint32;
+      goto loc_int;
+    case BINN_INT64:
+      llv = bn->vint64;
       goto loc_int;
     case BINN_UINT64: // overflow?
       llv = bn->vuint64;
@@ -634,18 +634,18 @@ void jbl_ptr_destroy(JBLPTR *jpp) {
 #endif
 
 static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visitor) {
-  iwrc rc = 0;
-  JBL jbl = vctx->jbl;
+  iwrc rc = 0;  
+  binn *bn = vctx->bn;
   jbl_visitor_cmd_t cmd;
   int idx;
   binn bv;
   
   if (!iter) {
     binn_iter it;
-    if (!BINN_IS_CONTAINER_TYPE(jbl->bn.type)) {
+    if (!BINN_IS_CONTAINER_TYPE(bn->type)) {
       return JBL_ERROR_INVALID;
     }
-    if (!binn_iter_init(&it, &jbl->bn, jbl->bn.type)) {
+    if (!binn_iter_init(&it, bn, bn->type)) {
       return JBL_ERROR_INVALID;
     }
     rc = jbl_visit(&it, 0, vctx, visitor);
@@ -735,9 +735,9 @@ IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBLPTR jp, int lvl, char *key, in
   return false;
 }
 
-
 static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc) {
-  JBLPTR jp = vctx->jp;
+  JBLPTR jp = vctx->op;
+  assert(jp);
   if (_jbl_visitor_update_jptr_cursor(jp, lvl, key, idx)) { // Pointer matched
     JBL jbl = malloc(sizeof(struct _JBL));
     memcpy(&jbl->bn, bv, sizeof(*bv));
@@ -754,8 +754,8 @@ iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
   iwrc rc = _jbl_ptr(path, &jp);
   RCRET(rc);
   JBLVCTX vctx = {
-    .jbl = jbl,
-    .jp = jp
+    .bn = &jbl->bn,
+    .op = jp
   };
   rc = jbl_visit(0, 0, &vctx, _jbl_get_visitor);
   if (rc) {
@@ -769,6 +769,32 @@ iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
     }
   }
   _jbl_ptr_destroy(&jp);
+  return rc;
+}
+
+//typedef enum {
+//  JBP_ADD = 1,
+//  JBP_REMOVE,
+//  JBP_REPLACE,
+//  JBP_COPY,
+//  JBP_MOVE
+//} jbp_patch_t;
+
+//typedef struct _JBLPCTX {
+//    
+//} JBLPCTX;
+
+static jbl_visitor_cmd_t _jbl_patch_visitor(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc) {
+      
+  return JBL_VCMD_OK;
+}
+
+iwrc jbl_patch(JBL jbl, const JBL_PATCH patch[], size_t num) {
+  iwrc rc = 0;
+  JBLVCTX vctx = {
+    .bn = &jbl->bn
+  };
+  
   return rc;
 }
 

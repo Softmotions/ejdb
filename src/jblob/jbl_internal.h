@@ -14,12 +14,11 @@ struct _JBL {
   binn bn;
 };
 
-typedef struct _JBLVCTX {
-  JBL jbl;
-  JBLPTR jp;
-  bool terminate;
+typedef struct _JBLVCTX {  
+  binn *bn;
   void *op;
   void *result;
+  bool terminate;
 } JBLVCTX;
 
 typedef enum {
