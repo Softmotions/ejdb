@@ -484,19 +484,44 @@ iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, vo
   return 0;
 }
 
-int32_t jbl_get_i32(JBL jbl) {
-  assert(jbl);
-  return jbl->bn.vint32;
-}
-
 int64_t jbl_get_i64(JBL jbl) {
   assert(jbl);
-  return jbl->bn.vint64;
+  switch (jbl->bn.type) {
+    case BINN_UINT8:
+      return jbl->bn.vuint8;
+    case BINN_UINT16:
+      return jbl->bn.vuint16;
+    case BINN_UINT32:
+      return jbl->bn.vuint32;
+    case BINN_UINT64:
+      return jbl->bn.vuint64;
+    case BINN_INT8:
+      return jbl->bn.vint8;
+    case BINN_INT16:
+      return jbl->bn.vint16;
+    case BINN_INT32:
+      return jbl->bn.vint32;
+    case BINN_INT64:
+      return jbl->bn.vint64;
+    default:
+      return 0;
+  }
+}
+
+int32_t jbl_get_i32(JBL jbl) {
+  return jbl_get_i64(jbl);
 }
 
 double jbl_get_f64(JBL jbl) {
   assert(jbl);
-  return jbl->bn.vdouble;
+  switch (jbl->bn.type) {
+    case BINN_FLOAT64:
+      return jbl->bn.vdouble;
+    case BINN_FLOAT32:
+      return jbl->bn.vfloat;
+    default:
+      return 0.0;
+  }
 }
 
 char *jbl_get_str(JBL jbl) {
@@ -701,7 +726,7 @@ IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBLPTR jp, int lvl, char *key, in
         iwitoa(idx, buf, JBNUMBUF_SIZE);
         keyptr = buf;
       }
-      if (!strcmp(keyptr, jp->n[lvl]) || (jp->n[lvl][0] == '*' && strlen(jp->n[lvl]) == 1)) {
+      if (!strcmp(keyptr, jp->n[lvl]) || (jp->n[lvl][0] == '*' && jp->n[lvl][1] == '\0')) {
         jp->pos = lvl;
         return (jp->cnt == lvl + 1);
       }

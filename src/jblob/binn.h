@@ -221,6 +221,9 @@ typedef void (*binn_mem_free)(void *);
 
 #define BINN_IS_CONTAINER_TYPE(type_) ((type_) >= BINN_LIST && (type_) <= BINN_OBJECT)
 
+#define BINN_IS_INT_TYPE(type_) ((type_) >= BINN_UINT8 && (type_) <= BINN_INT64)
+
+
 // --- BINN STRUCTURE --------------------------------------------------------------
 
 struct binn_struct {

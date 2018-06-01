@@ -33,11 +33,13 @@ typedef enum {
   JBV_ARRAY,
 } jbl_type_t;
 
-typedef enum {
-  JBP_ADD       = 1,
-  JBP_REMOVE,
+typedef enum {  
+  JBP_REMOVE = 1,
   JBP_REPLACE,
-  JBP_COPY
+  JBP_COPY,
+  JBP_MOVE,
+  JBP_ADD,
+  JBP_SUB
 } jbp_patch_t;
 
 typedef struct JBL_PATCH {
