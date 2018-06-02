@@ -515,8 +515,8 @@ binn *APIENTRY binn_object_next_value(binn_iter *iter, char *pkey);   // the key
 // on stack
 BOOL   APIENTRY binn_list_next(binn_iter *iter, binn *value);
 BOOL   APIENTRY binn_map_next(binn_iter *iter, int *pid, binn *value);
-BOOL   APIENTRY binn_object_next(binn_iter *iter, char *pkey,
-                                 binn *value);  // the key must be declared as: char key[256];
+BOOL   APIENTRY binn_object_next(binn_iter *iter, char *pkey, binn *value);  // the key must be declared as: char key[256];
+BOOL   APIENTRY binn_object_next2(binn_iter *iter, char **pkey, binn *value);
 
 // these 3 functions return a pointer to the value and the data type
 // they are thread-safe on big-endian devices

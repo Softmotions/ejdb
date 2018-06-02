@@ -76,38 +76,6 @@ size_t jbl_size(JBL jbl) {
   return jbl->bn.size;
 }
 
-jbl_type_t jbl_type(JBL jbl) {
-  switch (jbl->bn.type) {
-    case BINN_NULL:
-      return JBV_NULL;
-    case BINN_STRING:
-      return JBV_STR;
-    case BINN_OBJECT:
-    case BINN_MAP:
-      return JBV_OBJECT;
-    case BINN_LIST:
-      return JBV_ARRAY;
-    case BINN_TRUE:
-    case BINN_FALSE:
-    case BINN_BOOL:
-      return JBV_BOOL;
-    case BINN_UINT8:
-    case BINN_UINT16:
-    case BINN_INT8:
-    case BINN_INT16:
-    case BINN_INT32:
-      return JBV_I32;
-    case BINN_UINT32:
-    case BINN_UINT64: // overflow?
-    case BINN_INT64:
-      return JBV_I64;
-    case BINN_FLOAT32:
-    case BINN_FLOAT64:
-      return JBV_F64;
-  }
-  return JBV_NONE;
-}
-
 static binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
   binn  *res = 0;
   switch (nxjson->type) {
@@ -634,7 +602,7 @@ void jbl_ptr_destroy(JBLPTR *jpp) {
 #endif
 
 static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visitor) {
-  iwrc rc = 0;  
+  iwrc rc = 0;
   binn *bn = vctx->bn;
   jbl_visitor_cmd_t cmd;
   int idx;

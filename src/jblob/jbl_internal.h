@@ -3,8 +3,8 @@
 #define JBL_INTERNAL_H
 
 #include "binn.h"
-#include <stdbool.h>
 #include <iowow/iwlog.h>
+#include "ejdb2cfg.h"
 
 typedef struct _JBLPTR {
   int cnt;          /**< Number of nodes */
@@ -28,6 +28,7 @@ typedef enum {
   JBL_VCMD_TERMINATE = 1,
   JBL_VCMD_SKIP_NESTED = 1 << 1  
 } jbl_visitor_cmd_t;
+
 
 typedef jbl_visitor_cmd_t (*JBLVISITOR)(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc);
 

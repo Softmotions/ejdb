@@ -25,7 +25,6 @@ typedef enum {
   JBV_NONE = 0,
   JBV_NULL,
   JBV_BOOL,
-  JBV_I32,
   JBV_I64,
   JBV_F64,
   JBV_STR,

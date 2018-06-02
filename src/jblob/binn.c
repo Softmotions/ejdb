@@ -1451,7 +1451,10 @@ BOOL APIENTRY binn_iter_init(binn_iter *iter, void *ptr, int expected_type) {
 BOOL APIENTRY binn_list_next(binn_iter *iter, binn *value) {
   unsigned char *pnow;
 
-  if ((iter == 0) || (iter->pnext == 0) || (iter->pnext > iter->plimit) || (iter->current > iter->count)
+  if ((iter == 0) 
+      || (iter->pnext == 0) 
+      || (iter->pnext > iter->plimit) 
+      || (iter->current > iter->count)
       || (iter->type != BINN_LIST)) return FALSE;
 
   iter->current++;
@@ -1469,7 +1472,10 @@ BINN_PRIVATE BOOL binn_read_next_pair(int expected_type, binn_iter *iter, int *p
   unsigned char *p, *key;
   unsigned short len;
 
-  if ((iter == 0) || (iter->pnext == 0) || (iter->pnext > iter->plimit) || (iter->current > iter->count)
+  if ((iter == 0) 
+      || (iter->pnext == 0) 
+      || (iter->pnext > iter->plimit) 
+      || (iter->current > iter->count)
       || (iter->type != expected_type)) return FALSE;
 
   iter->current++;
@@ -1503,12 +1509,56 @@ BINN_PRIVATE BOOL binn_read_next_pair(int expected_type, binn_iter *iter, int *p
   return GetValue(p, value);
 }
 
+BINN_PRIVATE BOOL binn_read_next_pair2(int expected_type, binn_iter *iter, int *klidx, char **pkey, binn *value) {
+  int  int32, id;
+  unsigned char *p, *key;
+  unsigned short len;
+
+  if ((iter == 0) 
+      || (iter->pnext == 0) 
+      || (iter->pnext > iter->plimit) 
+      || (iter->current > iter->count)
+      || (iter->type != expected_type)) return FALSE;
+
+  iter->current++;
+  if (iter->current > iter->count) return FALSE;
+
+  p = iter->pnext;
+
+  switch (expected_type) {
+    case BINN_MAP:
+      int32 = *((int *)p);
+      p += 4;
+      int32 = frombe32(int32);
+      if (p > iter->plimit) return FALSE;
+      id = int32;
+      if (klidx) *klidx = id;
+      break;
+    case BINN_OBJECT:
+      len = *((unsigned char *)p);
+      p++;
+      key = p;
+      p += len;
+      if (p > iter->plimit) return FALSE;
+      if (klidx) *klidx = len;
+      if (pkey) *pkey = (char*) key;
+      break;
+  }
+  iter->pnext = AdvanceDataPos(p, iter->plimit);
+  if (iter->pnext != 0 && iter->pnext < p) return FALSE;
+  return GetValue(p, value);
+}
+
 BOOL APIENTRY binn_map_next(binn_iter *iter, int *pid, binn *value) {
   return binn_read_next_pair(BINN_MAP, iter, pid, NULL, value);
 }
 
 BOOL APIENTRY binn_object_next(binn_iter *iter, char *pkey, binn *value) {
   return binn_read_next_pair(BINN_OBJECT, iter, NULL, pkey, value);
+}
+
+BOOL APIENTRY binn_object_next2(binn_iter *iter, char **pkey, binn *value) {
+  return binn_read_next_pair2(BINN_OBJECT, iter, NULL, pkey, value);
 }
 
 binn *APIENTRY binn_list_next_value(binn_iter *iter) {
