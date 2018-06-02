@@ -33,6 +33,8 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <VirtualDirectory Name="jblob">
+      <File Name="src/jblob/jbldom.c"/>
+      <File Name="src/jblob/jbldom.h"/>
       <File Name="src/jblob/jbl_internal.h"/>
       <VirtualDirectory Name="tests">
         <File Name="src/jblob/tests/CMakeLists.txt"/>

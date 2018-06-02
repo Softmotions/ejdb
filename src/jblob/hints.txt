@@ -1,6 +1,14 @@
 
 * https://tools.ietf.org/html/rfc6901
 * https://tools.ietf.org/html/rfc6902
+* https://tools.ietf.org/html/rfc7396
 * http://jsonpatch.com/
 * https://github.com/DaveGamble/cJSON
 
+
+
+/foo/bar  
+/baz/gaz
+/foo/bar/zaa
+/foo/bar/daz
+/

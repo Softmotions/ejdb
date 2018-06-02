@@ -33,27 +33,6 @@ typedef enum {
   JBV_ARRAY,
 } jbl_type_t;
 
-typedef enum {  
-  JBP_ADD = 1,
-  JBP_REMOVE,
-  JBP_REPLACE,
-  JBP_COPY,
-  JBP_MOVE  
-} jbp_patch_t;
-
-typedef struct JBL_PATCH {
-  jbp_patch_t op;
-  jbl_type_t type;
-  const char *path;
-  const char *from;
-  union {
-    JBL vjbl;
-    bool vbool;
-    int32_t vi32;
-    int64_t vi64;
-    double vf64;
-  };
-} JBL_PATCH;
 
 IW_EXPORT iwrc jbl_create_object(JBL *jblp);
 
@@ -84,8 +63,6 @@ IW_EXPORT size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz);
 IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
 
 IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
-
-IW_EXPORT iwrc jbl_patch(JBL jbl, const JBL_PATCH patch[], size_t num);
 
 typedef iwrc(*jbl_json_printer)(const char *data, size_t size, char ch, int count, void *op);
 

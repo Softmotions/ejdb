@@ -3,6 +3,8 @@
 #define JBL_INTERNAL_H
 
 #include "binn.h"
+#include <stdbool.h>
+#include <iowow/iwlog.h>
 
 typedef struct _JBLPTR {
   int cnt;          /**< Number of nodes */

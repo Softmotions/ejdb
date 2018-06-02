@@ -1,10 +1,10 @@
 #include "jbl.h"
 #include <ctype.h>
-#include <iowow/iwconv.h>
-#include <iowow/iwxstr.h>
 #include "nxjson.h"
 #include "ejdb2cfg.h"
 #include "jbl_internal.h"
+#include <iowow/iwconv.h>
+#include <iowow/iwxstr.h>
 
 iwrc jbl_create_object(JBL *jblp) {
   iwrc rc = 0;
@@ -769,32 +769,6 @@ iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
     }
   }
   _jbl_ptr_destroy(&jp);
-  return rc;
-}
-
-//typedef enum {
-//  JBP_ADD = 1,
-//  JBP_REMOVE,
-//  JBP_REPLACE,
-//  JBP_COPY,
-//  JBP_MOVE
-//} jbp_patch_t;
-
-//typedef struct _JBLPCTX {
-//    
-//} JBLPCTX;
-
-static jbl_visitor_cmd_t _jbl_patch_visitor(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc) {
-      
-  return JBL_VCMD_OK;
-}
-
-iwrc jbl_patch(JBL jbl, const JBL_PATCH patch[], size_t num) {
-  iwrc rc = 0;
-  JBLVCTX vctx = {
-    .bn = &jbl->bn
-  };
-  
   return rc;
 }
 
