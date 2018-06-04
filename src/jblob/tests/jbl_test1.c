@@ -40,60 +40,60 @@ void jbl_test1_1() {
 }
 
 void jbl_test1_2() {
-  JBLPTR jp;
-  iwrc rc = jbl_ptr("/", &jp);
+  JBLPTR jp;   
+  iwrc rc = _jbl_ptr_malloc("/", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 1);
   CU_ASSERT_EQUAL(jp->pos, -1);
   CU_ASSERT_TRUE(*jp->n[0] == '\0')
-  jbl_ptr_destroy(&jp);
-  
-  rc = jbl_ptr("/foo", &jp);
+  free(jp);
+    
+  rc = _jbl_ptr_malloc("/foo", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 1);
   CU_ASSERT_FALSE(strcmp(jp->n[0], "foo"));
-  jbl_ptr_destroy(&jp);
-  
-  rc = jbl_ptr("/foo/bar", &jp);
+  free(jp);
+    
+  rc = _jbl_ptr_malloc("/foo/bar", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 2);
   CU_ASSERT_FALSE(strcmp(jp->n[0], "foo"));
   CU_ASSERT_FALSE(strcmp(jp->n[1], "bar"));
-  jbl_ptr_destroy(&jp);
-  
-  rc = jbl_ptr("/foo/bar/0/baz", &jp);
+  free(jp);
+    
+  rc = _jbl_ptr_malloc("/foo/bar/0/baz", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 4);
   CU_ASSERT_FALSE(strcmp(jp->n[0], "foo"));
   CU_ASSERT_FALSE(strcmp(jp->n[1], "bar"));
   CU_ASSERT_FALSE(strcmp(jp->n[2], "0"));
   CU_ASSERT_FALSE(strcmp(jp->n[3], "baz"));
-  jbl_ptr_destroy(&jp);
-  
-  rc = jbl_ptr("/foo/b~0ar/0/b~1az", &jp);
+  free(jp);
+    
+  rc = _jbl_ptr_malloc("/foo/b~0ar/0/b~1az", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 4);
   CU_ASSERT_FALSE(strcmp(jp->n[0], "foo"));
   CU_ASSERT_FALSE(strcmp(jp->n[1], "b~ar"));
   CU_ASSERT_FALSE(strcmp(jp->n[2], "0"));
   CU_ASSERT_FALSE(strcmp(jp->n[3], "b/az"));
-  jbl_ptr_destroy(&jp);
-  
-  rc = jbl_ptr("/foo/", &jp);
+  free(jp);
+    
+  rc = _jbl_ptr_malloc("/foo/", &jp);
   CU_ASSERT_EQUAL(rc, JBL_ERROR_JSON_POINTER);
-  jbl_ptr_destroy(&jp);
-  
-  rc = jbl_ptr("//", &jp);
+  free(jp);
+    
+  rc = _jbl_ptr_malloc("//", &jp);
   CU_ASSERT_EQUAL(rc, JBL_ERROR_JSON_POINTER);
-  jbl_ptr_destroy(&jp);
-  
-  rc = jbl_ptr("", &jp);
+  free(jp);
+    
+  rc = _jbl_ptr_malloc("", &jp);
   CU_ASSERT_EQUAL(rc, JBL_ERROR_JSON_POINTER);
-  jbl_ptr_destroy(&jp);
+  free(jp);
   
-  rc = jbl_ptr("~", &jp);
+  rc = _jbl_ptr_malloc("~", &jp);
   CU_ASSERT_EQUAL(rc, JBL_ERROR_JSON_POINTER);
-  jbl_ptr_destroy(&jp);
+  free(jp);
 }
 
 void jbl_test1_3() {

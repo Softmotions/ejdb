@@ -526,7 +526,7 @@ iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size) {
 
 //----------------------------------------------------------------------------------------------------------
 
-static iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
+iwrc _jbl_ptr_malloc(const char *path, JBLPTR *jpp) {
   iwrc rc = 0;
   int cnt = 0, len, sz, doff;
   int i, j, k;
@@ -582,24 +582,62 @@ static iwrc _jbl_ptr(const char *path, JBLPTR *jpp) {
   return rc;
 }
 
-#ifdef IW_TESTS
-iwrc jbl_ptr(const char *path, JBLPTR *jpp) {
-  return _jbl_ptr(path, jpp);
-}
-#endif
-
-static void _jbl_ptr_destroy(JBLPTR *jpp) {
-  if (jpp && *jpp) {
-    free(*jpp);
-    *jpp = 0;
+// TODO: fix duplication
+iwrc _jbl_ptr_pool(const char *path, JBLPTR *jpp, IWPOOL *pool) {
+  iwrc rc = 0;
+  int cnt = 0, len, sz, doff;
+  int i, j, k;
+  JBLPTR jp;
+  char *jpr; // raw pointer to jp
+  *jpp = 0;
+  if (path[0] != '/') {
+    return JBL_ERROR_JSON_POINTER;
   }
+  for (i = 0; path[i]; ++i) {
+    if (path[i] == '/') ++cnt;
+  }
+  len = i;
+  if (len > 1 && path[len - 1] == '/') {
+    return JBL_ERROR_JSON_POINTER;
+  }
+  sz = sizeof(struct _JBLPTR) + cnt * sizeof(char *) + len;
+  jp = iwpool_alloc(sz, pool);
+  if (!jp) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  jpr = (char *) jp;
+  jp->pos = -1;
+  jp->cnt = cnt;
+  doff = offsetof(struct _JBLPTR, n) + cnt * sizeof(char *);
+  assert(sz - doff >= len);
+  
+  for (i = 0, j = 0, cnt = 0; path[i] && cnt < jp->cnt; ++i, ++j) {
+    if (path[i++] == '/') {
+      jp->n[cnt] = jpr + doff + j;
+      for (k = 0; ; ++i, ++k) {
+        if (!path[i] || path[i] == '/') {
+          --i;
+          *(jp->n[cnt] + k) = '\0';
+          break;
+        }
+        if (path[i] == '~') {
+          if (path[i + 1] == '0') {
+            *(jp->n[cnt] + k) = '~';
+          } else if (path[i + 1] == '1') {
+            *(jp->n[cnt] + k) = '/';
+          }
+          ++i;
+        } else {
+          *(jp->n[cnt] + k) = path[i];
+        }
+      }
+      j += k;
+      ++cnt;
+    }
+  }
+  *jpp = jp;
+  return rc;
 }
-
-#ifdef IW_TESTS
-void jbl_ptr_destroy(JBLPTR *jpp) {
-  _jbl_ptr_destroy(jpp);
-}
-#endif
 
 static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visitor) {
   iwrc rc = 0;
@@ -718,8 +756,8 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, char *key, int idx,
 }
 
 iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
-  JBLPTR jp;
-  iwrc rc = _jbl_ptr(path, &jp);
+  JBLPTR jp;  
+  iwrc rc = _jbl_ptr_malloc(path, &jp);
   RCRET(rc);
   JBLVCTX vctx = {
     .bn = &jbl->bn,
@@ -736,7 +774,7 @@ iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
       *res = (JBL) vctx.result;
     }
   }
-  _jbl_ptr_destroy(&jp);
+  free(jp);
   return rc;
 }
 

@@ -4,6 +4,8 @@
 
 #include "binn.h"
 #include <iowow/iwlog.h>
+#include <iowow/iwpool.h>
+#include <iowow/iwconv.h>
 #include "ejdb2cfg.h"
 
 typedef struct _JBLPTR {
@@ -32,9 +34,7 @@ typedef enum {
 
 typedef jbl_visitor_cmd_t (*JBLVISITOR)(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc);
 
-#ifdef IW_TESTS
-iwrc jbl_ptr(const char *path, JBLPTR *jpp);
-void jbl_ptr_destroy(JBLPTR *jpp);
-#endif
+iwrc _jbl_ptr_pool(const char *path, JBLPTR *jpp, IWPOOL *pool);
+iwrc _jbl_ptr_malloc(const char *path, JBLPTR *jpp);
 
 #endif
