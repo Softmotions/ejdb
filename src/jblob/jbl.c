@@ -526,7 +526,7 @@ iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size) {
 
 //----------------------------------------------------------------------------------------------------------
 
-iwrc _jbl_ptr_malloc(const char *path, JBLPTR *jpp) {
+iwrc _jbl_ptr_pool(const char *path, JBLPTR *jpp, IWPOOL *pool) {
   iwrc rc = 0;
   int cnt = 0, len, sz, doff;
   int i, j, k;
@@ -544,7 +544,11 @@ iwrc _jbl_ptr_malloc(const char *path, JBLPTR *jpp) {
     return JBL_ERROR_JSON_POINTER;
   }
   sz = sizeof(struct _JBLPTR) + cnt * sizeof(char *) + len;
-  jp = malloc(sz);
+  if (pool) {
+    jp = iwpool_alloc(sz, pool);  
+  } else {
+    jp = malloc(sz);
+  }
   if (!jp) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -582,61 +586,8 @@ iwrc _jbl_ptr_malloc(const char *path, JBLPTR *jpp) {
   return rc;
 }
 
-// TODO: fix duplication
-iwrc _jbl_ptr_pool(const char *path, JBLPTR *jpp, IWPOOL *pool) {
-  iwrc rc = 0;
-  int cnt = 0, len, sz, doff;
-  int i, j, k;
-  JBLPTR jp;
-  char *jpr; // raw pointer to jp
-  *jpp = 0;
-  if (path[0] != '/') {
-    return JBL_ERROR_JSON_POINTER;
-  }
-  for (i = 0; path[i]; ++i) {
-    if (path[i] == '/') ++cnt;
-  }
-  len = i;
-  if (len > 1 && path[len - 1] == '/') {
-    return JBL_ERROR_JSON_POINTER;
-  }
-  sz = sizeof(struct _JBLPTR) + cnt * sizeof(char *) + len;
-  jp = iwpool_alloc(sz, pool);
-  if (!jp) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
-  jpr = (char *) jp;
-  jp->pos = -1;
-  jp->cnt = cnt;
-  doff = offsetof(struct _JBLPTR, n) + cnt * sizeof(char *);
-  assert(sz - doff >= len);
-  
-  for (i = 0, j = 0, cnt = 0; path[i] && cnt < jp->cnt; ++i, ++j) {
-    if (path[i++] == '/') {
-      jp->n[cnt] = jpr + doff + j;
-      for (k = 0; ; ++i, ++k) {
-        if (!path[i] || path[i] == '/') {
-          --i;
-          *(jp->n[cnt] + k) = '\0';
-          break;
-        }
-        if (path[i] == '~') {
-          if (path[i + 1] == '0') {
-            *(jp->n[cnt] + k) = '~';
-          } else if (path[i + 1] == '1') {
-            *(jp->n[cnt] + k) = '/';
-          }
-          ++i;
-        } else {
-          *(jp->n[cnt] + k) = path[i];
-        }
-      }
-      j += k;
-      ++cnt;
-    }
-  }
-  *jpp = jp;
-  return rc;
+iwrc _jbl_ptr_malloc(const char *path, JBLPTR *jpp) {
+  return _jbl_ptr_pool(path, jpp, 0);
 }
 
 static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visitor) {

@@ -289,18 +289,17 @@ IW_INLINE void _jbl_target_overwrite(JBLNODE target, JBLNODE src) {
   memmove(target, src, sizeof(*target));
 }
 
-static JBLNODE _jbl_target_detach_ptr(JBLNODE target, JBLPATCHEXT *ex) {
-  JBLPTR ptr = ex->path;
-  JBLNODE parent =  (ptr->cnt > 1) ? _jbl_node_find(target, ptr, 0, ptr->cnt - 1) : target;
+static JBLNODE _jbl_target_detach_ptr(JBLNODE target, const JBLPTR path) {  
+  JBLNODE parent =  (path->cnt > 1) ? _jbl_node_find(target, path, 0, path->cnt - 1) : target;
   if (!parent) {
     return 0;
   }
-  JBLNODE child = _jbl_node_find(parent, ptr, ptr->cnt - 1, ptr->cnt);
+  JBLNODE child = _jbl_node_find(parent, path, path->cnt - 1, path->cnt);
   if (!child) {
     return 0;
   }
-  if (parent->next == child) {
-    parent->next = child->next;
+  if (parent->child == child) {
+    parent->child = child->next;
   }
   if (child->prev) {
     child->prev->next = child->next;
@@ -315,7 +314,7 @@ static JBLNODE _jbl_target_detach_ptr(JBLNODE target, JBLPATCHEXT *ex) {
   return child;
 }
 
-static iwrc _jbl_target_apply_patch(JBLNODE target, JBLPATCHEXT *ex) {
+static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
   iwrc rc = 0;
   const JBLPATCH *p = ex->p;
   jbp_patch_t op = ex->p->op;
@@ -327,7 +326,7 @@ static iwrc _jbl_target_apply_patch(JBLNODE target, JBLPATCHEXT *ex) {
     }
   } else { // Not root
     if (op == JBP_REMOVE || op == JBP_REPLACE) {
-      _jbl_target_detach_ptr(target, ex);
+      _jbl_target_detach_ptr(target, ex->path);
     }
   }
   
