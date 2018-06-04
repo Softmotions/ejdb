@@ -87,9 +87,7 @@ static binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
       }
       for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
         if (!binn_object_set_new(res, nxj->key, _jbl_from_json(nxj, rcp))) {
-          if (!*rcp) {
-            *rcp = JBL_ERROR_CREATION;
-          }
+          if (!*rcp) *rcp = JBL_ERROR_CREATION;
           binn_free(res);
           return 0;
         }
@@ -103,9 +101,7 @@ static binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
       }
       for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
         if (!binn_list_add_new(res, _jbl_from_json(nxj, rcp))) {
-          if (!*rcp) {
-            *rcp = JBL_ERROR_CREATION;
-          }
+          if (!*rcp) *rcp = JBL_ERROR_CREATION;
           binn_free(res);
           return 0;
         }
@@ -146,12 +142,12 @@ iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
   bn = _jbl_from_json(nxjson, &rc);
   RCGO(rc, finish);
   assert(bn);
-  
   jbl = malloc(sizeof(*jbl));
   if (!jbl) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
+  binn_save_header(bn);
   memcpy(&jbl->bn, bn, sizeof(*bn));
   jbl->bn.allocated = 0;
   free(bn);
@@ -241,7 +237,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
   int lv;
   int64_t llv;
   double dv;
-  char key[MAX_BIN_KEY_LEN];
+  char key[MAX_BIN_KEY_LEN + 1];
   
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt(data_, size_, ch_, count_, op); \
@@ -611,7 +607,7 @@ static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visito
   
   switch (iter->type) {
     case BINN_OBJECT: {
-      char key[MAX_BIN_KEY_LEN];
+      char key[MAX_BIN_KEY_LEN + 1];
       while (!vctx->terminate && binn_object_next(iter, key, &bv)) {
         cmd = visitor(lvl, &bv, key, -1, vctx, &rc);
         RCRET(rc);

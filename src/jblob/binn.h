@@ -301,11 +301,13 @@ BOOL APIENTRY binn_create_object(binn *object);
 BOOL APIENTRY binn_list_add_new(binn *list, binn *value);
 BOOL APIENTRY binn_map_set_new(binn *map, int id, binn *value);
 BOOL APIENTRY binn_object_set_new(binn *obj, const char *key, binn *value);
+BOOL APIENTRY binn_object_set_new2(binn *obj, const char *key, int keylen, binn *value);
 
 // extended interface
 BOOL   APIENTRY binn_list_add(binn *list, int type, void *pvalue, int size);
 BOOL   APIENTRY binn_map_set(binn *map, int id, int type, void *pvalue, int size);
 BOOL   APIENTRY binn_object_set(binn *obj, const char *key, int type, void *pvalue, int size);
+BOOL   APIENTRY binn_object_set2(binn *obj, const char *key, int keylen, int type, void *pvalue, int size);
 
 // release memory
 void   APIENTRY binn_free(binn *item);
@@ -516,7 +518,7 @@ binn *APIENTRY binn_object_next_value(binn_iter *iter, char *pkey);   // the key
 BOOL   APIENTRY binn_list_next(binn_iter *iter, binn *value);
 BOOL   APIENTRY binn_map_next(binn_iter *iter, int *pid, binn *value);
 BOOL   APIENTRY binn_object_next(binn_iter *iter, char *pkey, binn *value);  // the key must be declared as: char key[256];
-BOOL   APIENTRY binn_object_next2(binn_iter *iter, char **pkey, binn *value);
+BOOL   APIENTRY binn_object_next2(binn_iter *iter, char **pkey, int *klen, binn *value);
 
 // these 3 functions return a pointer to the value and the data type
 // they are thread-safe on big-endian devices
@@ -744,6 +746,10 @@ ALWAYS_INLINE BOOL binn_object_set_object(binn *obj, const char *key, void *obj2
 ALWAYS_INLINE BOOL binn_object_set_value(binn *obj, const char *key, binn *value) {
   return binn_object_set(obj, key, value->type, binn_ptr(value), binn_size(value));
 }
+ALWAYS_INLINE BOOL binn_object_set_value2(binn *obj, const char *key, int keylen, binn *value) {
+  return binn_object_set2(obj, key, keylen, value->type, binn_ptr(value), binn_size(value));
+}
+
 
 /*************************************************************************************/
 /*** GET FUNCTIONS *******************************************************************/
