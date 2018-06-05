@@ -5,7 +5,6 @@ struct _JBLNODE {
   int klidx;
   int vsize;
   jbl_type_t type;
-  IWPOOL *pool;
   struct _JBLNODE *next;
   struct _JBLNODE *prev;
   struct _JBLNODE *child;
@@ -200,22 +199,15 @@ static iwrc _jbl_node_from_binn(JBLDRCTX *ctx, const binn *bn, JBLNODE parent, c
   return rc;
 }
 
-static iwrc _jbl_node_from_binn2(const binn *bn, JBLNODE *node) {
-  IWPOOL *pool = iwpool_create(0);
-  if (!pool) {
-    *node = 0;
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
+static iwrc _jbl_node_from_binn2(const binn *bn, JBLNODE *node, IWPOOL *pool) {
   JBLDRCTX ctx = {
     .pool = pool
   };
   iwrc rc = _jbl_node_from_binn(&ctx, bn, 0, 0, -1);
   if (rc) {
     *node = 0;
-    iwpool_destroy(ctx.pool);
   } else {
     *node = ctx.root;
-    (*node)->pool = ctx.pool;
   }
   return rc;
 }
@@ -388,23 +380,26 @@ iwrc jbl_patch(JBL jbl, const JBLPATCH *p, size_t cnt) {
   JBLNODE root;
   iwrc rc = 0;
   size_t i = 0;
-  IWPOOL *pool = 0;
   JBLPATCHEXT parr[cnt];
   
+  IWPOOL *pool = iwpool_create(0);
+  if (!pool) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
   memset(parr, 0, cnt * sizeof(JBLPATCHEXT));
-  rc = _jbl_node_from_binn2(&jbl->bn, &root);
+  
+  rc = _jbl_node_from_binn2(&jbl->bn, &root, pool);
   RCGO(rc, finish);
-  pool = root->pool;
   
   for (i = 0; i < cnt; ++i) { 
     parr[i].p = &p[i];
-    rc = _jbl_ptr_pool(p[i].path, &parr[i].path, root->pool);
+    rc = _jbl_ptr_pool(p[i].path, &parr[i].path, pool);
     RCGO(rc, finish);
     if (p[i].from) {
-      rc = _jbl_ptr_pool(p[i].from, &parr[i].from, root->pool);
+      rc = _jbl_ptr_pool(p[i].from, &parr[i].from, pool);
       RCGO(rc, finish);      
     }
-    rc = _jbl_node_from_patch(parr[i].p, &parr[i].value, root->pool);
+    rc = _jbl_node_from_patch(parr[i].p, &parr[i].value, pool);
     RCGO(rc, finish);
   }
   
