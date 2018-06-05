@@ -32,13 +32,16 @@ typedef struct _JBLDRCTX {
 
 static void _jbl_add_item(JBLNODE parent, JBLNODE node) {
   assert(parent && node);
-  JBLNODE child = parent->child;
-  if (child) {
-    while (child->next) {
-      child = child->next;
+  if (parent->child) {
+    JBLNODE prev = parent->child->prev;
+    parent->child->prev = node;
+    if (prev) {
+      prev->next = node;
+      node->prev = prev;
+    } else {
+      parent->child->next = node;
+      node->prev = parent->child;
     }
-    child->next = node;
-    node->prev = child;
   } else {
     parent->child = node;
   }
@@ -51,9 +54,9 @@ static iwrc _jbl_create_node(JBLDRCTX *ctx,
                              int klidx,
                              JBLNODE *node) {
   iwrc rc = 0;
-  JBLNODE n = iwpool_alloc(sizeof(*node), ctx->pool);
+  JBLNODE n = iwpool_alloc(sizeof(*n), ctx->pool);
+  if (node) *node = 0;
   if (!n) {
-    *node = 0;
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   memset(n, 0, sizeof(*n));
@@ -139,9 +142,8 @@ static iwrc _jbl_create_node(JBLDRCTX *ctx,
 finish:
   if (rc) {
     free(n);
-    *node = 0;
   } else {
-    *node = n;
+    if (node) *node = n;
   }
   return rc;
 }
@@ -181,15 +183,19 @@ static iwrc _jbl_node_from_binn(JBLDRCTX *ctx, const binn *bn, JBLNODE parent, c
       if (!ctx->root) {
         ctx->root = parent;
       }
+      if (!binn_iter_init(&iter, (binn *) bn, bn->type)) {
+        return JBL_ERROR_INVALID;
+      }
       for (int i = 0; binn_list_next(&iter, &bv); ++i) {
         rc = _jbl_node_from_binn(ctx, &bv, parent, 0, i);
         RCRET(rc);
       }
       break;
-    default:
+    default: {
       rc = _jbl_create_node(ctx, bn, parent, key, klidx, 0);
       RCRET(rc);
       break;
+    }
   }
   return rc;
 }
@@ -226,7 +232,7 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
       *node = ctx.root;
     }
   } else {
-    JBLNODE n = iwpool_alloc(sizeof(*node), ctx.pool);
+    JBLNODE n = iwpool_alloc(sizeof(*n), ctx.pool);
     if (!n) {
       return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     }
@@ -245,6 +251,9 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
         break;
       case JBV_BOOL:
         n->vbool = p->vbool;
+        break;
+      case JBV_NONE:
+      case JBV_NULL:
         break;
       default:
         rc = JBL_ERROR_INVALID;
@@ -267,12 +276,6 @@ JBLNODE _jbl_node_find(const JBLNODE node, const JBLPTR ptr, int from, int to) {
     }
   }
   return 0;
-}
-
-IW_INLINE void _jbl_target_remove(JBLNODE target) {
-  target->next = 0;
-  target->prev = 0;
-  target->child = 0;
 }
 
 IW_INLINE void _jbl_target_overwrite(JBLNODE target, JBLNODE src) {
@@ -312,7 +315,7 @@ static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
   jbp_patch_t op = ex->p->op;
   if (ex->path->cnt == 1 && *ex->path->n[0] == '\0') { // Root operation
     if (op == JBP_REMOVE) {
-      _jbl_target_remove(target);
+      memset(target, 0, sizeof(*target));
     } else if (op == JBP_REPLACE || op == JBP_ADD) {
       _jbl_target_overwrite(target, ex->value);
     }
@@ -381,27 +384,35 @@ static binn *_jbl_from_node(JBLNODE node, iwrc *rcp) {
 }
 
 iwrc jbl_patch(JBL jbl, const JBLPATCH *p, size_t cnt) {
-  iwrc rc = 0;
-  size_t i = 0;
   binn *bn;
   JBLNODE root;
+  iwrc rc = 0;
+  size_t i = 0;
+  IWPOOL *pool = 0;
   JBLPATCHEXT parr[cnt];
+  
   memset(parr, 0, cnt * sizeof(JBLPATCHEXT));
   rc = _jbl_node_from_binn2(&jbl->bn, &root);
   RCGO(rc, finish);
-  for (i = 0; i < cnt; ++i) {
+  pool = root->pool;
+  
+  for (i = 0; i < cnt; ++i) { 
     parr[i].p = &p[i];
     rc = _jbl_ptr_pool(p[i].path, &parr[i].path, root->pool);
     RCGO(rc, finish);
-    rc = _jbl_ptr_pool(p[i].from, &parr[i].from, root->pool);
-    RCGO(rc, finish);
+    if (p[i].from) {
+      rc = _jbl_ptr_pool(p[i].from, &parr[i].from, root->pool);
+      RCGO(rc, finish);      
+    }
     rc = _jbl_node_from_patch(parr[i].p, &parr[i].value, root->pool);
     RCGO(rc, finish);
   }
+  
   for (i = 0; i < cnt; ++i) {
     rc = _jbl_target_apply_patch(root, &parr[i]);
     RCGO(rc, finish);
   }
+  
   bn = (root->type == JBV_NONE) ? 0 : _jbl_from_node(root, &rc);
   RCGO(rc, finish);
   binn_free(&jbl->bn);
@@ -413,9 +424,10 @@ iwrc jbl_patch(JBL jbl, const JBLPATCH *p, size_t cnt) {
     memset(&jbl->bn, 0, sizeof(jbl->bn));
     root->type = JBV_NONE;
   }
+  
 finish:
-  if (root->pool) {
-    iwpool_destroy(root->pool);
+  if (pool) {
+    iwpool_destroy(pool);
   }
   return rc;
 }

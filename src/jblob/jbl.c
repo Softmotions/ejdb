@@ -529,7 +529,7 @@ iwrc _jbl_ptr_pool(const char *path, JBLPTR *jpp, IWPOOL *pool) {
   JBLPTR jp;
   char *jpr; // raw pointer to jp
   *jpp = 0;
-  if (path[0] != '/') {
+  if (!path || path[0] != '/') {
     return JBL_ERROR_JSON_POINTER;
   }
   for (i = 0; path[i]; ++i) {
