@@ -32,11 +32,11 @@ typedef enum {
   JBV_ARRAY,
 } jbl_type_t;
 
+typedef iwrc(*jbl_json_printer)(const char *data, size_t size, char ch, int count, void *op);
+
 IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz);
 
 IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *jsonstr);
-
-IW_EXPORT void jbl_destroy(JBL *jblp);
 
 IW_EXPORT jbl_type_t jbl_type(JBL jbl);
 
@@ -54,17 +54,17 @@ IW_EXPORT char *jbl_get_str(JBL jbl);
 
 IW_EXPORT size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz);
 
-IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
-
 IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
-typedef iwrc(*jbl_json_printer)(const char *data, size_t size, char ch, int count, void *op);
+IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
+
+IW_EXPORT iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty);
 
 IW_EXPORT iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count, void *op);
 
 IW_EXPORT iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, void *op);
 
-IW_EXPORT iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty);
+IW_EXPORT void jbl_destroy(JBL *jblp);
 
 IW_EXPORT iwrc jbl_init(void);
 
