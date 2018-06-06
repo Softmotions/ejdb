@@ -6,36 +6,6 @@
 #include <iowow/iwconv.h>
 #include <iowow/iwxstr.h>
 
-iwrc jbl_create_object(JBL *jblp) {
-  iwrc rc = 0;
-  *jblp = malloc(sizeof(**jblp));
-  if (!*jblp) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
-  JBL jbl = *jblp;
-  if (!binn_create(&jbl->bn, BINN_OBJECT, 0, 0)) {
-    free(jbl);
-    *jblp = 0;
-    return JBL_ERROR_CREATION;
-  }
-  return rc;
-}
-
-iwrc jbl_create_array(JBL *jblp) {
-  iwrc rc = 0;
-  *jblp = malloc(sizeof(**jblp));
-  if (!*jblp) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
-  JBL jbl = *jblp;
-  if (!binn_create(&jbl->bn, BINN_LIST, 0, 0)) {
-    free(jbl);
-    *jblp = 0;
-    return JBL_ERROR_CREATION;
-  }
-  return rc;
-}
-
 iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz) {
   iwrc rc = 0;
   if (bufsz < MIN_BINN_SIZE) {

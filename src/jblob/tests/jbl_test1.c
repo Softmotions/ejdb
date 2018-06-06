@@ -188,6 +188,9 @@ void jbl_test1_3() {
 }
 
 void jbl_test1_4() {
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+  
   //  { "foo": "bar",
   //    "foo2": {
   //      "foo3": {
@@ -204,18 +207,49 @@ void jbl_test1_4() {
              "'num1':1,'list1':['one','two',{'three':3}]}"),
       '\'', '"');
   JBL jbl;
-  iwrc rc = jbl_from_json(&jbl, data) ;
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
-  
+  int res = 0;
   
   // Remove ROOT
-  JBLPATCH p1[] = {
-    {.op = JBP_REMOVE, .path = "/"}
-  };
+  JBLPATCH p1[] = {{.op = JBP_REMOVE, .path = "/"}};
+  iwrc rc = jbl_from_json(&jbl, data) ;
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jbl_patch(jbl, p1, sizeof(p1) / sizeof(p1[0]));
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  
   jbl_destroy(&jbl);
+  
+  
+  // Remove "/foo"
+  JBLPATCH p2[] = {{.op = JBP_REMOVE, .path = "/foo"}};
+  rc = jbl_from_json(&jbl, data) ;
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jbl_patch(jbl, p2, sizeof(p2) / sizeof(p2[0]));
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, false);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);    
+  res = strcmp(iwxstr_ptr(xstr), "{\"foo2\":{\"foo3\":{\"foo4\":\"bar4\"},\"foo5\":\"bar5\"},\"num1\":1,\"list1\":[\"one\",\"two\",{\"three\":3}]}");
+  CU_ASSERT_EQUAL(res, 0);
+  jbl_destroy(&jbl);
+  iwxstr_clear(xstr);
+  
+  // Remove /foo2/foo3/foo4
+  // Remove /list1/1
+  JBLPATCH p3[] = {        
+    {.op = JBP_REMOVE, .path = "/foo2/foo3/foo4"},
+    {.op = JBP_REMOVE, .path = "/list1/1"}
+  };
+  rc = jbl_from_json(&jbl, data) ;
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jbl_patch(jbl, p3, sizeof(p3) / sizeof(p3[0]));
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, false);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);     
+  res = strcmp(iwxstr_ptr(xstr), "{\"foo\":\"bar\",\"foo2\":{\"foo3\":{},\"foo5\":\"bar5\"},\"num1\":1,\"list1\":[\"one\",{\"three\":3}]}");
+  CU_ASSERT_EQUAL(res, 0);
+  jbl_destroy(&jbl);
+  iwxstr_clear(xstr);
+  
+  
+  iwxstr_destroy(xstr);
   free(data);
 }
 

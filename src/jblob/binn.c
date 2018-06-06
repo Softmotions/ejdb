@@ -495,7 +495,7 @@ BINN_PRIVATE BOOL binn_object_set_raw(binn *item, const char *key, int keylen, i
       || keylen > 255) return FALSE;
         
   // is the key already in it?
-  p = SearchForKey(item->pbuf, MAX_BINN_HEADER, item->used_size, item->count, key, strlen(key));
+  p = SearchForKey(item->pbuf, MAX_BINN_HEADER, item->used_size, item->count, key, keylen);
   if (p) return FALSE;
   
   // start adding it
