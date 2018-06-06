@@ -2,13 +2,14 @@
 #include "jblob/jbl_internal.h"
 
 struct _JBLNODE {
-  int klidx;
-  int vsize;
-  jbl_type_t type;
   struct _JBLNODE *next;
   struct _JBLNODE *prev;
   struct _JBLNODE *child;
   const char *key;
+  // Do not sort/add members after this point (offsetof usage below)
+  int klidx;
+  int vsize;
+  jbl_type_t type;
   union {
     const char *vptr;
     bool vbool;
@@ -44,6 +45,13 @@ static void _jbl_add_item(JBLNODE parent, JBLNODE node) {
     }
   } else {
     parent->child = node;
+  }
+  if (parent->type == JBV_ARRAY) {
+    if (node->prev) {
+      node->klidx = node->prev->klidx + 1;
+    } else {
+      node->klidx = 0;
+    }
   }
 }
 
@@ -264,7 +272,7 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
   return rc;
 }
 
-JBLNODE _jbl_node_find(const JBLNODE node, const JBLPTR ptr, int from, int to) {
+static JBLNODE _jbl_node_find(const JBLNODE node, const JBLPTR ptr, int from, int to) {
   if (!ptr || !node) return 0;
   JBLNODE n = node;
   for (int i = from; n && i < ptr->cnt && i < to; ++i) {
@@ -288,17 +296,9 @@ JBLNODE _jbl_node_find(const JBLNODE node, const JBLPTR ptr, int from, int to) {
   return n;
 }
 
-JBLNODE _jbl_node_find2(const JBLNODE node, const JBLPTR ptr) {
-  if (!ptr || !node || !ptr->cnt) return 0;
+IW_INLINE JBLNODE _jbl_node_find2(const JBLNODE node, const JBLPTR ptr) {
+  if (!node || !ptr || !ptr->cnt) return 0;
   return _jbl_node_find(node, ptr, 0, ptr->cnt - 1);
-}
-
-IW_INLINE void _jbl_target_overwrite(JBLNODE target, JBLNODE src) {
-  if (!target || !src) return;
-  memmove(target, src, sizeof(*target));
-  if (target->child && target->child->prev && target->child->prev->next) {
-    target->child->prev->next = 0;
-  }
 }
 
 static JBLNODE _jbl_node_detach(JBLNODE target, const JBLPTR path) {
@@ -319,11 +319,8 @@ static JBLNODE _jbl_node_detach(JBLNODE target, const JBLPTR path) {
   if (child->next) {
     child->next->prev = child->prev;
   }
-  if (child->prev) {
+  if (child->prev && child->prev->next) {
     child->prev->next = child->next;
-  }
-  if (parent->child && parent->child->prev && parent->child->prev->next) {
-    parent->child->prev->next = 0;
   }
   child->next = 0;
   child->prev = 0;
@@ -333,11 +330,12 @@ static JBLNODE _jbl_node_detach(JBLNODE target, const JBLPTR path) {
 
 static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
   iwrc rc = 0;
-  
   const JBLPATCH *p = ex->p;
   jbp_patch_t op = ex->p->op;
   JBLPTR path = ex->path;
   JBLNODE value = ex->value;
+  
+  // TODO: TEST
   
   if (ex->path->cnt == 1 && *ex->path->n[0] == '\0') { // Root operation
     if (op == JBP_REMOVE) {
@@ -347,7 +345,7 @@ static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
         rc = JBL_ERROR_PATCH_NOVALUE;
         goto finish;
       }
-      _jbl_target_overwrite(target, value);
+      memmove(target, value, sizeof(*value));
     }
   } else { // Not a root
     if (op == JBP_REMOVE || op == JBP_REPLACE) {
@@ -371,18 +369,54 @@ static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
         goto finish;
       }
     }
-    
-    JBLNODE parent = (path->cnt > 1) ? _jbl_node_find(target, path, 0, path->cnt - 1) : target;
+    int lastidx = path->cnt - 1;
+    JBLNODE parent = (path->cnt > 1) ? _jbl_node_find(target, path, 0, lastidx) : target;
     if (!parent) {
       rc = JBL_ERROR_PATCH_TARGET_INVALID;
       goto finish;
     }
-    if (parent->type == JBV_ARRAY) {      
-      // TODO:
-      
+    if (parent->type == JBV_ARRAY) {
+      if (path->n[lastidx][0] == '-' && path->n[lastidx][1] == '\0') {
+        _jbl_add_item(parent, value); // Add to end of array
+      } else { // Insert into the specified index
+        int idx = iwatoi(path->n[lastidx]);
+        int cnt = idx;
+        JBLNODE child = parent->child;
+        while (child && cnt > 0) {
+          cnt--;
+          child = child->next;
+        }
+        if (cnt > 0) {
+          rc = JBL_ERROR_PATCH_INVALID_ARRAY_INDEX;
+          goto finish;
+        }
+        value->klidx = idx;
+        if (child) {
+          value->next = child;
+          value->prev = child->prev;
+          child->prev = value;
+          if (child == parent->child) {
+            parent->child = value;
+          } else {
+            value->prev->next = value;
+          }
+          while (child) {
+            child->klidx++;
+            child = child->next;
+          }
+        } else {
+          _jbl_add_item(parent, value);
+        }
+      }
     } else if (parent->type == JBV_OBJECT) {
-      // TODO:
-      
+      JBLNODE child = _jbl_node_find(parent, path, path->cnt - 1, path->cnt);
+      if (child) {
+        memcpy(child,
+               ((uint8_t *) value) + offsetof(struct _JBLNODE, klidx),
+               sizeof(struct _JBLNODE) - offsetof(struct _JBLNODE, klidx));
+      } else {
+        _jbl_add_item(parent, value);
+      }
     } else {
       rc = JBL_ERROR_PATCH_TARGET_INVALID;
       goto finish;
@@ -393,17 +427,17 @@ finish:
   return rc;
 }
 
-static binn *_jbl_from_node(JBLNODE node, iwrc *rcp) {
+static binn *_jbl_from_node(JBLNODE node, int size, iwrc *rcp) {
   binn *res = 0;
   switch (node->type) {
     case JBV_OBJECT:
-      res = binn_object();
+      res = binn_new(BINN_OBJECT, size, 0);
       if (!res) {
         *rcp = JBL_ERROR_CREATION;
         return 0;
       }
       for (JBLNODE n = node->child; n; n = n->next) {
-        if (!binn_object_set_new2(res, n->key, n->klidx, _jbl_from_node(n, rcp))) {
+        if (!binn_object_set_new2(res, n->key, n->klidx, _jbl_from_node(n, 0, rcp))) {
           if (!*rcp) *rcp = JBL_ERROR_CREATION;
           binn_free(res);
           return 0;
@@ -411,13 +445,13 @@ static binn *_jbl_from_node(JBLNODE node, iwrc *rcp) {
       }
       break;
     case JBV_ARRAY:
-      res = binn_list();
+      res = binn_new(BINN_LIST, size, 0);
       if (!res) {
         *rcp = JBL_ERROR_CREATION;
         return 0;
       }
       for (JBLNODE n = node->child; n; n = n->next) {
-        if (!binn_list_add_new(res, _jbl_from_node(n, rcp))) {
+        if (!binn_list_add_new(res, _jbl_from_node(n, 0, rcp))) {
           if (!*rcp) *rcp = JBL_ERROR_CREATION;
           binn_free(res);
           return 0;
@@ -441,21 +475,17 @@ static binn *_jbl_from_node(JBLNODE node, iwrc *rcp) {
   return res;
 }
 
-iwrc jbl_patch(JBL jbl, const JBLPATCH *p, size_t cnt) {
-  binn *bn;
-  JBLNODE root;
+static iwrc _jbl_patch(JBLNODE root, const JBLPATCH *p, size_t cnt, IWPOOL *pool) {
+  if (cnt < 1) {
+    return 0;
+  }
+  if (!root || !p) {
+    return IW_ERROR_INVALID_ARGS;
+  }
   iwrc rc = 0;
   size_t i = 0;
   JBLPATCHEXT parr[cnt];
-  
-  IWPOOL *pool = iwpool_create(0);
-  if (!pool) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
   memset(parr, 0, cnt * sizeof(JBLPATCHEXT));
-  
-  rc = _jbl_node_from_binn2(&jbl->bn, &root, pool);
-  RCGO(rc, finish);
   
   for (i = 0; i < cnt; ++i) {
     JBLPATCHEXT *ext = &parr[i];
@@ -469,13 +499,50 @@ iwrc jbl_patch(JBL jbl, const JBLPATCH *p, size_t cnt) {
     rc = _jbl_node_from_patch(ext->p, &ext->value, pool);
     RCGO(rc, finish);
   }
-  
   for (i = 0; i < cnt; ++i) {
     rc = _jbl_target_apply_patch(root, &parr[i]);
     RCGO(rc, finish);
   }
   
-  bn = (root->type == JBV_NONE) ? 0 : _jbl_from_node(root, &rc);
+finish:
+  return rc;
+}
+
+// --------------------------- Public API
+
+iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool) {
+  return _jbl_node_from_binn2(&jbl->bn, node, pool);
+}
+
+iwrc jbl_patch(JBLNODE root, const JBLPATCH *p, size_t cnt) {
+  iwrc rc;
+  IWPOOL *pool = iwpool_create(0);
+  if (!pool) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  rc = _jbl_patch(root, p, cnt, pool);
+  iwpool_destroy(pool);
+  return rc;
+}
+
+iwrc jbl_patch2(JBL jbl, const JBLPATCH *p, size_t cnt) {
+  if (cnt < 1) {
+    return 0;
+  }
+  if (!jbl || !p) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  binn *bn;
+  JBLNODE root;
+  IWPOOL *pool = iwpool_create(0);
+  if (!pool) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  iwrc rc = _jbl_node_from_binn2(&jbl->bn, &root, pool);
+  RCGO(rc, finish);
+  rc = _jbl_patch(root, p, cnt, pool);
+  RCGO(rc, finish);
+  bn = (root->type == JBV_NONE) ? 0 : _jbl_from_node(root, MAX(jbl->bn.size, 256), &rc);
   RCGO(rc, finish);
   binn_free(&jbl->bn);
   if (bn) {
@@ -489,8 +556,85 @@ iwrc jbl_patch(JBL jbl, const JBLPATCH *p, size_t cnt) {
   }
   
 finish:
-  if (pool) {
-    iwpool_destroy(pool);
+  iwpool_destroy(pool);
+  return rc;
+}
+
+iwrc jbl_patch3(JBL jbl, const char *patchjson) {
+  JBL jbp;
+  int cnt = 0, i;
+  JBLPATCH *p = 0;
+  iwrc rc = 0;
+  char *json = strdup(patchjson);
+  if (!json) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+  nx_json *nxjson = nx_json_parse_utf8(json);
+  if (!nxjson) {
+    rc = JBL_ERROR_PARSE_JSON;
+    goto finish;
+  }
+  if (nxjson->type != NX_JSON_ARRAY) {
+    rc = JBL_ERROR_PATCH_INVALID;
+    goto finish;
+  }
+  for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
+    if (nxj->type != NX_JSON_OBJECT) {
+      rc = JBL_ERROR_PATCH_INVALID;
+      goto finish;
+    }
+    cnt++;
+  }
+  p = calloc(cnt, sizeof(*p));
+  if (!p) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    goto finish;
+  }
+  i = 0;
+  for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next, ++i) {
+    JBLPATCH *pp = p + i;
+    for (nx_json *nxj2 = nxj->child; nxj2; nxj2 = nxj2->next) {
+      if (!strcmp("op", nxj2->key)) {
+        if (nxj2->type != NX_JSON_STRING) {
+          rc = JBL_ERROR_PATCH_INVALID;
+          goto finish;
+        }
+        const char *v = nxj2->text_value;
+        if (!strcmp("add", v)) {
+          pp->op = JBP_ADD;
+        } else if (!strcmp("remove", v)) {
+          pp->op = JBP_REMOVE;
+        } else if (!strcmp("replace", v)) {
+          pp->op = JBP_REPLACE;
+        } else if (!strcmp("copy", v)) {
+          pp->op = JBP_COPY;
+        } else if (!strcmp("move", v)) {
+          pp->op = JBP_MOVE;
+        } else if (!strcmp("test", v)) {
+          pp->op = JBP_TEST;
+        } else {
+          rc = JBL_ERROR_PATCH_INVALID_OP;
+          goto finish;
+        }
+      } else if (!strcmp("value", nxj2->key)) {
+      
+        //        switch(nxj2->type) {
+        //
+        //        }
+      }
+    }
+  }
+  
+finish:
+  if (p) {
+    free(p);
+  }
+  if (nxjson) {
+    nx_json_free(nxjson);
+  }
+  if (json) {
+    free(json);
+  }
+  jbl_destroy(&jbp);
   return rc;
 }

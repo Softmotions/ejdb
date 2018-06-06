@@ -13,9 +13,9 @@
 #define BINN_STRUCT        1
 #define BINN_BUFFER        2
 
-void *(*malloc_fn)(size_t len) = 0;
-void *(*realloc_fn)(void *ptr, size_t len) = 0;
-void (*free_fn)(void *ptr) = 0;
+void *(*malloc_fn)(size_t len) = malloc;
+void *(*realloc_fn)(void *ptr, size_t len) = realloc;
+void (*free_fn)(void *ptr) = free;
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define __BIG_ENDIAN      0x1000
@@ -115,14 +115,7 @@ void APIENTRY binn_set_alloc_functions(void *(*new_malloc)(size_t), void *(*new_
   free_fn = new_free;
 }
 
-BINN_PRIVATE void check_alloc_functions() {
-  if (malloc_fn == 0) malloc_fn = &malloc;
-  if (realloc_fn == 0) realloc_fn = &realloc;
-  if (free_fn == 0) free_fn = &free;
-}
-
-BINN_PRIVATE void *binn_malloc(int size) {
-  check_alloc_functions();
+ALWAYS_INLINE void *binn_malloc(int size) {
   return malloc_fn(size);
 }
 

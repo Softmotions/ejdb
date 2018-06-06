@@ -1,10 +1,8 @@
 #include "jbl.h"
 #include <ctype.h>
-#include "nxjson.h"
-#include "ejdb2cfg.h"
-#include "jbl_internal.h"
 #include <iowow/iwconv.h>
 #include <iowow/iwxstr.h>
+#include "jbl_internal.h"
 
 iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz) {
   iwrc rc = 0;
@@ -77,7 +75,7 @@ size_t jbl_size(JBL jbl) {
   return jbl->bn.size;
 }
 
-static binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
+binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
   binn  *res = 0;
   switch (nxjson->type) {
     case NX_JSON_OBJECT:
@@ -742,11 +740,17 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
     case JBL_ERROR_JSON_POINTER:
       return "Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER)";
     case JBL_ERROR_PATH_NOTFOUND:
-      return "JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND)";    
+      return "JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND)";
+    case JBL_ERROR_PATCH_INVALID:
+      return "Invalid patch specified (JBL_ERROR_PATCH_INVALID)";
+    case JBL_ERROR_PATCH_INVALID_OP:
+      return "Invalid patch operation specified (JBL_ERROR_PATCH_INVALID_OP)";
     case JBL_ERROR_PATCH_NOVALUE:
-      return "No value specified in patch (JBL_ERROR_PATCH_NOVALUE)";      
+      return "No value specified in patch (JBL_ERROR_PATCH_NOVALUE)";
     case JBL_ERROR_PATCH_TARGET_INVALID:
       return "Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID)";
+    case JBL_ERROR_PATCH_INVALID_ARRAY_INDEX:
+      return "Invalid array index in patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX)";
   }
   return 0;
 }

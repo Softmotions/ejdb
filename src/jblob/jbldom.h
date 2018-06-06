@@ -2,6 +2,7 @@
 #define JBLDOM_H
 
 #include "jbl.h"
+#include <iowow/iwpool.h>
 
 struct _JBLNODE;
 typedef struct _JBLNODE *JBLNODE;
@@ -11,7 +12,8 @@ typedef enum {
   JBP_REMOVE,
   JBP_REPLACE,
   JBP_COPY,
-  JBP_MOVE
+  JBP_MOVE,
+  JBP_TEST
 } jbp_patch_t;
 
 typedef struct _JBLPATCH {
@@ -30,7 +32,12 @@ typedef struct _JBLPATCH {
   };
 } JBLPATCH;
 
+IW_EXPORT iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_patch(JBL jbl, const JBLPATCH *patch, size_t cnt);
+IW_EXPORT iwrc jbl_patch(JBLNODE root, const JBLPATCH *patch, size_t cnt);
+
+IW_EXPORT iwrc jbl_patch2(JBL jbl, const JBLPATCH *patch, size_t cnt);
+
+IW_EXPORT iwrc jbl_patch3(JBL jbl, const char* patchjson);
 
 #endif
