@@ -19,13 +19,14 @@ typedef struct _JBLPATCH {
   jbl_type_t type;
   const char *path;
   const char *from;
+  const char *vjson;
   int vsize;
   union {
     JBL vjbl;
     bool vbool;
     int64_t vi64;
     double vf64;
-    char *vptr;
+    const char *vptr;    
   };
 } JBLPATCH;
 

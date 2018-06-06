@@ -38,6 +38,37 @@ void jbl_destroy(JBL *jblp) {
   }
 }
 
+jbl_type_t jbl_type(JBL jbl) {
+  switch (jbl->bn.type) {
+    case BINN_NULL:
+      return JBV_NULL;
+    case BINN_STRING:
+      return JBV_STR;
+    case BINN_OBJECT:
+    case BINN_MAP:
+      return JBV_OBJECT;
+    case BINN_LIST:
+      return JBV_ARRAY;
+    case BINN_BOOL:
+    case BINN_TRUE:
+    case BINN_FALSE:
+      return JBV_BOOL;
+    case BINN_UINT8:
+    case BINN_UINT16:
+    case BINN_UINT32:
+    case BINN_UINT64:
+    case BINN_INT8:
+    case BINN_INT16:
+    case BINN_INT32:
+    case BINN_INT64:
+      return JBV_I64;
+    case BINN_FLOAT32:
+    case BINN_FLOAT64:
+      return JBV_F64;
+  }
+  return JBV_NONE;
+}
+
 size_t jbl_count(JBL jbl) {
   return jbl->bn.count;
 }
@@ -511,7 +542,7 @@ iwrc _jbl_ptr_pool(const char *path, JBLPTR *jpp, IWPOOL *pool) {
   }
   sz = sizeof(struct _JBLPTR) + cnt * sizeof(char *) + len;
   if (pool) {
-    jp = iwpool_alloc(sz, pool);  
+    jp = iwpool_alloc(sz, pool);
   } else {
     jp = malloc(sz);
   }
@@ -673,7 +704,7 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, char *key, int idx,
 }
 
 iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
-  JBLPTR jp;  
+  JBLPTR jp;
   iwrc rc = _jbl_ptr_malloc(path, &jp);
   RCRET(rc);
   JBLVCTX vctx = {
@@ -711,7 +742,11 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
     case JBL_ERROR_JSON_POINTER:
       return "Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER)";
     case JBL_ERROR_PATH_NOTFOUND:
-      return "JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND)";
+      return "JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND)";    
+    case JBL_ERROR_PATCH_NOVALUE:
+      return "No value specified in patch (JBL_ERROR_PATCH_NOVALUE)";      
+    case JBL_ERROR_PATCH_TARGET_INVALID:
+      return "Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID)";
   }
   return 0;
 }

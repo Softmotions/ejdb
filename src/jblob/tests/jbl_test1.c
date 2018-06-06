@@ -249,6 +249,31 @@ void jbl_test1_4() {
   iwxstr_clear(xstr);
   
   
+  //  { "foo": "bar",
+  //    "foo2": {
+  //      "foo3": {
+  //        "foo4": "bar4"
+  //      },
+  //      "foo5": "bar5"
+  //    },
+  //    "num1": 1,
+  //    "list1": ["one", "two", {"three": 3}]
+  //  }
+  JBLPATCH p4[] = {        
+    {.op = JBP_MOVE, .path = "/moved", .from = "/foo2/foo3"}
+  };
+  rc = jbl_from_json(&jbl, data) ;
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jbl_patch(jbl, p4, sizeof(p4) / sizeof(p4[0]));
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, false);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);     
+  //res = strcmp(iwxstr_ptr(xstr), "{\"foo\":\"bar\",\"foo2\":{\"foo3\":{},\"foo5\":\"bar5\"},\"num1\":1,\"list1\":[\"one\",{\"three\":3}]}");
+  //CU_ASSERT_EQUAL(res, 0);
+  jbl_destroy(&jbl);
+  iwxstr_clear(xstr);
+  
+  
   iwxstr_destroy(xstr);
   free(data);
 }

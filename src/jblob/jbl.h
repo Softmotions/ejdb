@@ -12,12 +12,14 @@ typedef struct _JBL *JBL;
 
 typedef enum {
   _JBL_ERROR_START = (IW_ERROR_START + 10000UL),
-  JBL_ERROR_INVALID_BUFFER, /**< Invalid JBL buffer (JBL_ERROR_INVALID_BUFFER) */
-  JBL_ERROR_CREATION,       /**< Cannot create JBL object (JBL_ERROR_CREATION) */
-  JBL_ERROR_INVALID,        /**< Invalid JBL object (JBL_ERROR_INVALID) */
-  JBL_ERROR_PARSE_JSON,     /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
-  JBL_ERROR_JSON_POINTER,   /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
-  JBL_ERROR_PATH_NOTFOUND,  /**< JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND) */
+  JBL_ERROR_INVALID_BUFFER,         /**< Invalid JBL buffer (JBL_ERROR_INVALID_BUFFER) */
+  JBL_ERROR_CREATION,               /**< Cannot create JBL object (JBL_ERROR_CREATION) */
+  JBL_ERROR_INVALID,                /**< Invalid JBL object (JBL_ERROR_INVALID) */
+  JBL_ERROR_PARSE_JSON,             /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
+  JBL_ERROR_JSON_POINTER,           /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
+  JBL_ERROR_PATH_NOTFOUND,          /**< JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND) */
+  JBL_ERROR_PATCH_NOVALUE,          /**< No value specified in patch (JBL_ERROR_PATCH_NOVALUE) */
+  JBL_ERROR_PATCH_TARGET_INVALID,   /**< Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID) */  
   _JBL_ERROR_END
 } jbl_ecode;
 
