@@ -355,8 +355,7 @@ static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
     }
     if (op == JBP_REMOVE) {
       goto finish;
-    }
-    if (op == JBP_MOVE || op == JBP_COPY) {
+    } else if (op == JBP_MOVE || op == JBP_COPY) {
       if (op == JBP_MOVE) {
         value = _jbl_node_detach(target, ex->from);
       } else {
