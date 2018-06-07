@@ -109,7 +109,6 @@ BINN_PRIVATE uint64 tobe64(uint64 input) {
 
 void APIENTRY binn_set_alloc_functions(void *(*new_malloc)(size_t), void *(*new_realloc)(void *, size_t),
                                        void (*new_free)(void *)) {
-                                       
   malloc_fn = new_malloc;
   realloc_fn = new_realloc;
   free_fn = new_free;
@@ -147,7 +146,6 @@ int APIENTRY binn_create_type(int storage_type, int data_type_index) {
     return -1;
 }
 
-
 BOOL APIENTRY binn_get_type_info(int long_type, int *pstorage_type, int *pextra_type) {
   int storage_type, extra_type;
   BOOL retval = TRUE;
@@ -181,7 +179,7 @@ loc_invalid:
 
 
 BOOL APIENTRY binn_create(binn *item, int type, int size, void *pointer) {
-  BOOL retval = FALSE;
+  BOOL retval = FALSE;  
   
   switch (type) {
     case BINN_LIST:
@@ -409,7 +407,6 @@ BINN_PRIVATE unsigned char *AdvanceDataPos(unsigned char *p, unsigned char *plim
   return p;
 }
 
-
 BINN_PRIVATE unsigned char *SearchForID(unsigned char *p, int header_size, int size, int numitems, int id) {
   unsigned char *plimit, *base;
   int  i, int32;
@@ -482,11 +479,11 @@ BINN_PRIVATE BOOL binn_object_set_raw(binn *item, const char *key, int keylen, i
   int int32 = keylen;
   
   if ((key == NULL)
-      || (item == NULL) 
-      || (item->type != BINN_OBJECT) 
-      || (item->writable == FALSE) 
+      || (item == NULL)
+      || (item->type != BINN_OBJECT)
+      || (item->writable == FALSE)
       || keylen > 255) return FALSE;
-        
+      
   // is the key already in it?
   p = SearchForKey(item->pbuf, MAX_BINN_HEADER, item->used_size, item->count, key, keylen);
   if (p) return FALSE;
@@ -530,7 +527,6 @@ BINN_PRIVATE BOOL binn_map_set_raw(binn *item, int id, int type, void *pvalue, i
   item->count++;
   return TRUE;
 }
-
 
 BINN_PRIVATE void *compress_int(int *pstorage_type, int *ptype, void *psource) {
   int storage_type, storage_type2, type, type2 = 0;
@@ -605,7 +601,6 @@ loc_exit:
   }
   return pvalue;
 }
-
 
 BINN_PRIVATE int type_family(int type);
 
@@ -755,7 +750,6 @@ BINN_PRIVATE BOOL AddValue(binn *item, int type, void *pvalue, int size) {
   item->dirty = TRUE;
   return TRUE;
 }
-
 
 BOOL binn_save_header(binn *item) {
   unsigned char byte, *p;
@@ -989,8 +983,6 @@ int APIENTRY binn_size(void *ptr) {
       return 0;
   }
 }
-
-
 
 int APIENTRY binn_type(void *ptr) {
   binn *item;
@@ -1253,7 +1245,6 @@ BOOL APIENTRY binn_object_get_value(void *ptr, const char *key, binn *value) {
   return GetValue(p, value);
 }
 
-
 BOOL APIENTRY binn_map_get_value(void *ptr, int id, binn *value) {
   int type, count, size = 0, header_size;
   unsigned char *p;
@@ -1272,7 +1263,6 @@ BOOL APIENTRY binn_map_get_value(void *ptr, int id, binn *value) {
   if (p == FALSE) return FALSE;
   return GetValue(p, value);
 }
-
 
 BOOL APIENTRY binn_list_get_value(void *ptr, int pos, binn *value) {
   int  i, type, count, size = 0, header_size;
@@ -1404,7 +1394,6 @@ void *APIENTRY binn_map_read_pair(void *ptr, int pos, int *pid, int *ptype, int 
 #endif
 }
 
-
 void *APIENTRY binn_object_read_pair(void *ptr, int pos, char *pkey, int *ptype, int *psize) {
   binn value;
   
@@ -1441,7 +1430,6 @@ BOOL APIENTRY binn_iter_init(binn_iter *iter, void *ptr, int expected_type) {
   return TRUE;
 }
 
-
 BOOL APIENTRY binn_list_next(binn_iter *iter, binn *value) {
   unsigned char *pnow;
   
@@ -1459,7 +1447,6 @@ BOOL APIENTRY binn_list_next(binn_iter *iter, binn *value) {
   if (iter->pnext != 0 && iter->pnext < pnow) return FALSE;
   return GetValue(pnow, value);
 }
-
 
 BINN_PRIVATE BOOL binn_read_next_pair(int expected_type, binn_iter *iter, int *pid, char *pkey, binn *value) {
   int  int32, id;
