@@ -160,7 +160,9 @@ iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
-  binn_save_header(&bv);
+  if (bv.writable && bv.dirty) {
+    binn_save_header(&bv);
+  }
   memcpy(&jbl->bn, &bv, sizeof(bv));
   jbl->bn.allocated = 0;  
   

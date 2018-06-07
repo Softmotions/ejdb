@@ -532,7 +532,9 @@ static iwrc _jbl_patch2(JBL jbl, const JBLPATCH *p, size_t cnt, IWPOOL *pool) {
   }
   binn_free(&jbl->bn);
   if (bn) {
-    binn_save_header(bn);
+    if (bn->writable && bn->dirty) {
+      binn_save_header(bn);
+    }
     memcpy(&jbl->bn, bn, sizeof(jbl->bn));
     jbl->bn.allocated = 0;
   } else {
@@ -670,7 +672,9 @@ iwrc jbl_patch3(JBL jbl, const char *patchjson) {
             }
             rc = _jbl_from_json(&bv, nxj2);
             RCGO(rc, finish);
-            binn_save_header(&bv);
+            if (bv.writable && bv.dirty) {
+              binn_save_header(&bv);
+            }
             memcpy(&pp->vjbl->bn, &bv, sizeof(bv));
             pp->vjbl->bn.allocated = 0;            
             break;
