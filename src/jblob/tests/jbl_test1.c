@@ -253,10 +253,153 @@ void jbl_test1_4() {
   free(data);
 }
 
+
+void apply_patch(const char *data, const char *patch, const char *result, IWXSTR *xstr, iwrc *rcp) {
+  CU_ASSERT_TRUE_FATAL(data && patch && xstr && rcp);
+  JBL jbl = 0;
+  char *data2 = iwu_replace_char(strdup(data), '\'', '"');
+  char *patch2 = iwu_replace_char(strdup(patch), '\'', '"');
+  char *result2 = result ? iwu_replace_char(strdup(result), '\'', '"') : 0;
+  CU_ASSERT_TRUE_FATAL(data2 && patch2);
+  
+  iwrc rc = jbl_from_json(&jbl, data2) ;
+  RCGO(rc, finish);
+  
+  rc = jbl_patch3(jbl, patch2);
+  RCGO(rc, finish);
+  
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, false);
+  RCGO(rc, finish);
+  
+  if (result2) {
+    CU_ASSERT_STRING_EQUAL(result2, iwxstr_ptr(xstr));
+  }
+  
+finish:
+  if (data2) {
+    free(data2);
+  }
+  if (patch2) {
+    free(patch2);
+  }
+  if (result2) {
+    free(result2);
+  }
+  if (jbl) {
+    jbl_destroy(&jbl);
+  }
+  *rcp = rc;
+}
+
 // Run tests: https://github.com/json-patch/json-patch-tests/blob/master/spec_tests.json
 void jbl_test1_5() {
+  iwrc rc;
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+  
+  apply_patch("{'foo':'bar','foo2':{'foo3':{'foo4':'bar4'},'foo5':'bar5'},'num1':1,'list1':['one','two',{'three':3}]}",
+              "[{'op':'remove', 'path':'/foo'}]",
+              "{'foo2':{'foo3':{'foo4':'bar4'},'foo5':'bar5'},'num1':1,'list1':['one','two',{'three':3}]}",
+              xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // 4.1. add with missing object
+  apply_patch("{ 'q': { 'bar': 2 } }",
+              "[ {'op': 'add', 'path': '/a/b', 'value': 1} ]",
+              0, xstr, &rc);
+  CU_ASSERT_EQUAL(rc, JBL_ERROR_PATCH_TARGET_INVALID);
+  iwxstr_clear(xstr);
+  
+  // A.1.  Adding an Object Member
+  apply_patch("{'foo': 'bar'}",
+              "[ { 'op': 'add', 'path': '/baz', 'value': 'qux' } ]",
+              "{'foo':'bar','baz':'qux'}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.2.  Adding an Array Element
+  apply_patch("{'foo': [ 'bar', 'baz' ]}",
+              "[{ 'op': 'add', 'path': '/foo/1', 'value': 'qux' }]",
+              "{'foo':['bar','qux','baz']}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.3.  Removing an Object Member
+  apply_patch("{'baz': 'qux','foo': 'bar'}",
+              "[{ 'op': 'remove', 'path': '/baz' }]",
+              "{'foo':'bar'}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.4.  Removing an Array Element
+  apply_patch("{'foo': [ 'bar', 'qux', 'baz' ]}",
+              "[{ 'op': 'remove', 'path': '/foo/1' }]",
+              "{'foo':['bar','baz']}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.5.  Replacing a Value
+  apply_patch("{'baz': 'qux','foo': 'bar'}",
+              "[{ 'op': 'replace', 'path': '/baz', 'value': 'boo' }]",
+              "{'foo':'bar','baz':'boo'}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.6.  Moving a Value
+  apply_patch("{'foo': {'bar': 'baz','waldo': 'fred'},'qux': {'corge': 'grault'}}",
+              "[{ 'op': 'move', 'from': '/foo/waldo', 'path': '/qux/thud' }]",
+              "{'foo':{'bar':'baz'},'qux':{'corge':'grault','thud':'fred'}}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.7.  Moving an Array Element
+  apply_patch("{'foo': [ 'all', 'grass', 'cows', 'eat' ]}",
+              "[{ 'op': 'move', 'from': '/foo/1', 'path': '/foo/3' }]",
+              "{'foo':['all','cows','eat','grass']}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.10.  Adding a nested Member Object
+  apply_patch("{'foo': 'bar'}",
+              "[{ 'op': 'add', 'path': '/child', 'value': { 'grandchild': { } } }]",
+              "{'foo':'bar','child':{'grandchild':{}}}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.11.  Ignoring Unrecognized Elements
+  apply_patch("{'foo': 'bar'}",
+              "[{ 'op': 'add', 'path': '/baz', 'value': 'qux', 'xyz': 123 }]",
+              "{'foo':'bar','baz':'qux'}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.12.  Adding to a Non-existent Target
+  apply_patch("{'foo': 'bar'}",
+              "[{ 'op': 'add', 'path': '/baz/bat', 'value': 'qux' }]",
+              0, xstr, &rc);
+  CU_ASSERT_EQUAL(rc, JBL_ERROR_PATCH_TARGET_INVALID);
+  iwxstr_clear(xstr);
+  
+  // A.14. ~ Escape Ordering
+  //  apply_patch("'/': 9,'~1': 10",
+  //              "[{'op': 'test', 'path': '/~01', 'value': 10}]",
+  //              0, xstr, &rc);
+  //  printf("\n%s\n", iwxstr_ptr(xstr));
+  //  iwxstr_clear(xstr);
   
   
+  // A.16. Adding an Array Value
+  apply_patch("{'foo': ['bar']}",
+              "[{ 'op': 'add', 'path': '/foo/-', 'value': ['abc', 'def'] }]",
+              "{'foo':['bar',['abc','def']]}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);  
+  iwxstr_clear(xstr);
+  
+  //  printf("\n%s\n", iwxstr_ptr(xstr));
+  //  iwxstr_clear(xstr);
+  
+  iwxstr_destroy(xstr);
 }
 
 int main() {

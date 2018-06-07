@@ -40,4 +40,7 @@ IW_EXPORT iwrc jbl_patch2(JBL jbl, const JBLPATCH *patch, size_t cnt);
 
 IW_EXPORT iwrc jbl_patch3(JBL jbl, const char* patchjson);
 
+IW_EXPORT void jbl_patch_destroy(JBLPATCH *patch, size_t cnt);
+
+
 #endif
