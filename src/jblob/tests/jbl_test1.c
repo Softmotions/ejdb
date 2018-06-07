@@ -259,8 +259,6 @@ void jbl_test1_5() {
   
 }
 
-
-
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -274,7 +272,7 @@ int main() {
     (NULL == CU_add_test(pSuite, "jbl_test1_2", jbl_test1_2)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_3", jbl_test1_3)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_4", jbl_test1_4)) ||
-    (NULL == CU_add_test(pSuite, "jbl_test1_5", jbl_test1_4))
+    (NULL == CU_add_test(pSuite, "jbl_test1_5", jbl_test1_5))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

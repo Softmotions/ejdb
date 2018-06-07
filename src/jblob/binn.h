@@ -23,6 +23,7 @@
 #define BINN_H
 
 #include <stddef.h> // size_t used  below
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -319,6 +320,11 @@ void *APIENTRY binn_release(binn *item);
 
 binn *APIENTRY binn_value(int type, void *pvalue, int size, binn_mem_free freefn);
 
+ALWAYS_INLINE void binn_init_item(binn *item) {
+  memset(item, 0, sizeof(binn));
+  item->header = BINN_MAGIC;
+}    
+
 ALWAYS_INLINE binn *binn_int8(signed char value) {
   return binn_value(BINN_INT8, &value, 0, NULL);
 }
@@ -573,7 +579,7 @@ BOOL APIENTRY binn_set_blob(binn *item, void *ptr, int size, binn_mem_free pfree
 #define binn_list_foreach(list, value)      \
   binn_iter_init(&iter, list, BINN_LIST); \
   while (binn_list_next(&iter, &value))
-
+    
 /*************************************************************************************/
 /*** SET FUNCTIONS *******************************************************************/
 /*************************************************************************************/

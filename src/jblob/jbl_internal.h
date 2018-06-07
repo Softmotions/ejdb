@@ -37,6 +37,6 @@ typedef jbl_visitor_cmd_t (*JBLVISITOR)(int lvl, binn *bv, char *key, int idx, J
 
 iwrc _jbl_ptr_pool(const char *path, JBLPTR *jpp, IWPOOL *pool);
 iwrc _jbl_ptr_malloc(const char *path, JBLPTR *jpp);
-binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp);
+iwrc _jbl_from_json(binn *res, nx_json *nxjson);
 
 #endif

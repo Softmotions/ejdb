@@ -18,11 +18,11 @@ typedef enum {
   JBL_ERROR_PARSE_JSON,             /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
   JBL_ERROR_JSON_POINTER,           /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
   JBL_ERROR_PATH_NOTFOUND,          /**< JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND) */
-  JBL_ERROR_PATCH_INVALID,          /**< Invalid patch specified (JBL_ERROR_PATCH_INVALID) */
-  JBL_ERROR_PATCH_INVALID_OP,       /**< Invalid patch operation specified (JBL_ERROR_PATCH_INVALID_OP) */
-  JBL_ERROR_PATCH_NOVALUE,          /**< No value specified in patch (JBL_ERROR_PATCH_NOVALUE) */
+  JBL_ERROR_PATCH_INVALID,          /**< Invalid JSON patch specified (JBL_ERROR_PATCH_INVALID) */
+  JBL_ERROR_PATCH_INVALID_OP,       /**< Invalid JSON patch operation specified (JBL_ERROR_PATCH_INVALID_OP) */
+  JBL_ERROR_PATCH_NOVALUE,          /**< No value specified in JSON patch (JBL_ERROR_PATCH_NOVALUE) */
   JBL_ERROR_PATCH_TARGET_INVALID,   /**< Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID) */  
-  JBL_ERROR_PATCH_INVALID_ARRAY_INDEX, /**< Invalid array index in patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX) */
+  JBL_ERROR_PATCH_INVALID_ARRAY_INDEX, /**< Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX) */
   _JBL_ERROR_END
 } jbl_ecode;
 

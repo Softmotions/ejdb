@@ -75,53 +75,68 @@ size_t jbl_size(JBL jbl) {
   return jbl->bn.size;
 }
 
-binn *_jbl_from_json(nx_json *nxjson, iwrc *rcp) {
-  binn  *res = 0;
+iwrc _jbl_from_json(binn *res, nx_json *nxjson) {
+  iwrc rc = 0;
   switch (nxjson->type) {
     case NX_JSON_OBJECT:
-      res = binn_object();
-      if (!res) {
-        *rcp = JBL_ERROR_CREATION;
-        return 0;
+      if (!binn_create(res, BINN_OBJECT, 0, NULL)) {
+        return JBL_ERROR_CREATION;
       }
       for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
-        if (!binn_object_set_new(res, nxj->key, _jbl_from_json(nxj, rcp))) {
-          if (!*rcp) *rcp = JBL_ERROR_CREATION;
-          binn_free(res);
-          return 0;
+        binn bv;
+        rc = _jbl_from_json(&bv, nxj);
+        RCRET(rc);
+        if (!binn_object_set_value(res, nxj->key, &bv)) {
+          rc = JBL_ERROR_CREATION;
         }
+        binn_free(&bv);
+        RCRET(rc);
       }
-      return res;
+      break;
     case NX_JSON_ARRAY:
-      res = binn_list();
-      if (!res) {
-        *rcp = JBL_ERROR_CREATION;
-        return 0;
+      if (!binn_create(res, BINN_LIST, 0, NULL)) {
+        return JBL_ERROR_CREATION;
       }
       for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
-        if (!binn_list_add_new(res, _jbl_from_json(nxj, rcp))) {
-          if (!*rcp) *rcp = JBL_ERROR_CREATION;
-          binn_free(res);
-          return 0;
+        binn bv;
+        rc = _jbl_from_json(&bv, nxj);
+        RCRET(rc);
+        if (!binn_list_add_value(res, &bv)) {
+          rc = JBL_ERROR_CREATION;
         }
+        binn_free(&bv);
+        RCRET(rc);
       }
-      return res;
+      break;
     case NX_JSON_STRING:
-      return binn_string(nxjson->text_value, 0);
+      binn_init_item(res);
+      binn_set_string(res, (void *) nxjson->text_value, 0);
+      break;
     case NX_JSON_INTEGER:
+      binn_init_item(res);
       if (nxjson->int_value <= INT_MAX && nxjson->int_value >= INT_MIN) {
-        return binn_int32(nxjson->int_value);
+        binn_set_int(res, nxjson->int_value);
       } else {
-        return binn_int64(nxjson->int_value);
+        binn_set_int64(res, nxjson->int_value);
       }
+      break;
     case NX_JSON_DOUBLE:
-      return binn_double(nxjson->dbl_value);
+      binn_init_item(res);
+      binn_set_double(res, nxjson->dbl_value);
+      break;
     case NX_JSON_BOOL:
-      return binn_bool(nxjson->int_value);
+      binn_init_item(res);
+      binn_set_bool(res, nxjson->int_value);
+      break;
     case NX_JSON_NULL:
-      return binn_null();
+      binn_init_item(res);
+      binn_set_null(res);
+      break;
+    default:
+      rc = JBL_ERROR_CREATION;
+      break;
   }
-  return 0;
+  return rc;
 }
 
 iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
@@ -131,25 +146,23 @@ iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
   if (!json) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+  binn bv;
   JBL jbl = 0;
-  binn *bn = 0;
   nx_json *nxjson = nx_json_parse_utf8(json);
   if (!nxjson) {
     rc = JBL_ERROR_PARSE_JSON;
     goto finish;
   }
-  bn = _jbl_from_json(nxjson, &rc);
+  rc = _jbl_from_json(&bv, nxjson);
   RCGO(rc, finish);
-  assert(bn);
   jbl = malloc(sizeof(*jbl));
   if (!jbl) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
-  binn_save_header(bn);
-  memcpy(&jbl->bn, bn, sizeof(*bn));
-  jbl->bn.allocated = 0;
-  free(bn);
+  binn_save_header(&bv);
+  memcpy(&jbl->bn, &bv, sizeof(bv));
+  jbl->bn.allocated = 0;  
   
 finish:
   if (nxjson) {
@@ -742,15 +755,15 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
     case JBL_ERROR_PATH_NOTFOUND:
       return "JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND)";
     case JBL_ERROR_PATCH_INVALID:
-      return "Invalid patch specified (JBL_ERROR_PATCH_INVALID)";
+      return "Invalid JSON patch specified (JBL_ERROR_PATCH_INVALID)";
     case JBL_ERROR_PATCH_INVALID_OP:
-      return "Invalid patch operation specified (JBL_ERROR_PATCH_INVALID_OP)";
+      return "Invalid JSON patch operation specified (JBL_ERROR_PATCH_INVALID_OP)";
     case JBL_ERROR_PATCH_NOVALUE:
-      return "No value specified in patch (JBL_ERROR_PATCH_NOVALUE)";
+      return "No value specified in JSON patch (JBL_ERROR_PATCH_NOVALUE)";
     case JBL_ERROR_PATCH_TARGET_INVALID:
       return "Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID)";
     case JBL_ERROR_PATCH_INVALID_ARRAY_INDEX:
-      return "Invalid array index in patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX)";
+      return "Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX)";
   }
   return 0;
 }
