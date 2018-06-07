@@ -270,8 +270,7 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
     }
     if (!rc) {
       *node = n;
-    }
-    
+    }    
   }
   return rc;
 }
