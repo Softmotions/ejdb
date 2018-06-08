@@ -34,7 +34,7 @@ typedef struct _JBLPATCH {
 
 IW_EXPORT iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_from_node(JBL *jblp, JBLNODE node);
+IW_EXPORT iwrc jbl_from_node(JBL jbl, JBLNODE node);
 
 IW_EXPORT iwrc jbl_patch(JBLNODE root, const JBLPATCH *patch, size_t cnt);
 

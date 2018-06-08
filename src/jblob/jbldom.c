@@ -851,28 +851,21 @@ finish:
   return rc;
 }
 
-iwrc jbl_from_node(JBL *jblp, JBLNODE node) {
-  if (!jblp || !node) {
+iwrc jbl_from_node(JBL jbl, JBLNODE node) {
+  if (!jbl || !node) {
     return IW_ERROR_INVALID_ARGS;
-  }
-  *jblp = calloc(1, sizeof(*jblp));
-  if (!*jblp) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
-  JBL jbl = *jblp;        
+  }  
   if (node->type == JBV_NONE) {    
+    memset(&jbl->bn, 0, sizeof(jbl->bn));
     return 0;
   }
   binn bv;
   iwrc rc = _jbl_from_node(&bv, node, 0);
-  if (rc) {
-    free(jbl);
-    *jblp = 0;
-    return rc;    
-  }  
+  RCRET(rc);
   if (bv.writable && bv.dirty) {
     binn_save_header(&bv);
   }
+  binn_free(&jbl->bn);
   memcpy(&jbl->bn, &bv, sizeof(jbl->bn));
   jbl->bn.allocated = 0;
   return rc;
