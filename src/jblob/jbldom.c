@@ -1,23 +1,6 @@
 #include "jbldom.h"
 #include "jblob/jbl_internal.h"
 
-struct _JBLNODE {
-  struct _JBLNODE *next;
-  struct _JBLNODE *prev;
-  struct _JBLNODE *child;
-  const char *key;
-  // Do not sort/add members after this point (offsetof usage below)
-  int klidx;
-  int vsize;
-  jbl_type_t type;
-  union {
-    const char *vptr;
-    bool vbool;
-    int64_t vi64;
-    double vf64;
-  };
-};
-
 typedef struct _JBLPATCHEXT {
   const JBLPATCH *p;
   JBLPTR path;
@@ -869,4 +852,19 @@ iwrc jbl_from_node(JBL jbl, JBLNODE node) {
   memcpy(&jbl->bn, &bv, sizeof(jbl->bn));
   jbl->bn.allocated = 0;
   return rc;
+}
+
+iwrc jbl_to_node2(const char *json, JBLNODE *node, IWPOOL *pool) {
+  // TODO:
+  return 0;
+}
+
+iwrc jbl_merge_patch(JBLNODE root, const char *patchjson) {
+  // TODO:
+  return 0;
+}
+
+iwrc jbl_merge_patch2(JBL jbl, const char *patchjson) {
+  // TODO:
+  return 0;
 }
