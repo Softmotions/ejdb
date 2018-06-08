@@ -256,7 +256,7 @@ static char *parse_value(nx_json *parent, const char *key, char *p, nx_json_unic
         js = create_json(NX_JSON_OBJECT, key, parent);
         p++;
         while (1) {
-          const char *new_key;
+          const char *new_key = 0;
           p = parse_key(&new_key, p, encoder);
           if (!p) return 0; // error
           if (*p == '}') return p + 1; // end of object

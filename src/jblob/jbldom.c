@@ -129,7 +129,7 @@ static iwrc _jbl_create_node(JBLDRCTX *ctx,
   if (parent) {
     _jbl_add_item(parent, n);
   }
-  
+
 finish:
   if (rc) {
     free(n);
@@ -142,9 +142,8 @@ finish:
 static iwrc _jbl_node_from_binn(JBLDRCTX *ctx, const binn *bn, JBLNODE parent, char *key, int klidx) {
   binn bv;
   binn_iter iter;
-  int64_t llv;
   iwrc rc = 0;
-  
+
   switch (bn->type) {
     case BINN_OBJECT:
     case BINN_MAP:
@@ -212,7 +211,7 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
   JBLDRCTX ctx = {
     .pool = pool
   };
-  
+
   if (p->vjson) { // JSON string specified as value
     rc = jbl_from_json(&vjbl, p->vjson);
     RCRET(rc);
@@ -261,7 +260,7 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
 static JBLNODE _jbl_node_find(const JBLNODE node, const JBLPTR ptr, int from, int to) {
   if (!ptr || !node) return 0;
   JBLNODE n = node;
-  
+
   for (int i = from; n && i < ptr->cnt && i < to; ++i) {
     if (n->type == JBV_OBJECT) {
       for (n = n->child; n; n = n->next) {
@@ -316,8 +315,8 @@ static JBLNODE _jbl_node_detach(JBLNODE target, const JBLPTR path) {
 }
 
 static int _jbl_cmp_node_keys(const void *o1, const void *o2) {
-  JBLNODE n1 = *((JBLNODE *) o1);
-  JBLNODE n2 = *((JBLNODE *) o2);
+  JBLNODE n1 = *((const JBLNODE *) o1);
+  JBLNODE n2 = *((const JBLNODE *) o2);
   if (!n1 && !n2) {
     return 0;
   }
@@ -352,14 +351,14 @@ static int _jbl_compare_objects(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
   } else if (cnt == 0) {
     return 0;
   }
-  
+
   JBLNODE *s1 = malloc(2 * sizeof(JBLNODE) * cnt);
   if (!s1) {
     *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     return 0;
   }
   JBLNODE *s2 = s1 + cnt;
-  
+
   i = 0;
   n1 = n1->child;
   n2 = n2->child;
@@ -382,7 +381,7 @@ static int _jbl_compare_objects(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
       goto finish;
     }
   }
-  
+
 finish:
   free(s1);
   return ret;
@@ -435,12 +434,11 @@ static int _jbl_compare_nodes(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
 
 static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
 
-  const JBLPATCH *p = ex->p;
   jbp_patch_t op = ex->p->op;
   JBLPTR path = ex->path;
   JBLNODE value = ex->value;
   bool oproot = ex->path->cnt == 1 && *ex->path->n[0] == '\0';
-  
+
   if (op == JBP_TEST) {
     iwrc rc = 0;
     if (!value) {
@@ -572,7 +570,7 @@ static iwrc _jbl_from_node(binn *res, JBLNODE node, int size) {
       break;
     case JBV_STR:
       binn_init_item(res);
-      binn_set_string(res, (void *)node->vptr, 0);
+      binn_set_string(res, (void *) node->vptr, 0);
       break;
     case JBV_I64:
       binn_init_item(res);
@@ -698,23 +696,24 @@ iwrc jbl_patch2(JBL jbl, const JBLPATCH *p, size_t cnt) {
 
 iwrc jbl_patch3(JBL jbl, const char *patchjson) {
   binn bv;
-  JBLPATCH *p;
-  int cnt = 0;
   iwrc rc = 0;
+  int cnt = 0;
+  JBLPATCH *p = 0;
   IWPOOL *pool = iwpool_create(0);
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  
+
   int i = strlen(patchjson);
+  nx_json *nxjson = 0;
   char *json = iwpool_alloc(i + 1, pool);
   if (!json) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
   memcpy(json, patchjson, i + 1);
-  
-  nx_json *nxjson = nx_json_parse_utf8(json);
+
+  nxjson = nx_json_parse_utf8(json);
   if (!nxjson) {
     rc = JBL_ERROR_PARSE_JSON;
     goto finish;
@@ -730,14 +729,14 @@ iwrc jbl_patch3(JBL jbl, const char *patchjson) {
     }
     cnt++;
   }
-  
+
   p = iwpool_alloc(cnt * sizeof(*p), pool);
   if (!p) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
   memset(p, 0, cnt * sizeof(*p));
-  
+
   i = 0;
   for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next, ++i) {
     JBLPATCH *pp = p + i;
@@ -822,11 +821,13 @@ iwrc jbl_patch3(JBL jbl, const char *patchjson) {
       }
     }
   }
-  
+
   rc = _jbl_patch2(jbl, p, cnt, pool);
-  
+
 finish:
-  jbl_patch_destroy(p, cnt);
+  if (p) {
+    jbl_patch_destroy(p, cnt);
+  }
   if (nxjson) {
     nx_json_free(nxjson);
   }
@@ -837,8 +838,8 @@ finish:
 iwrc jbl_from_node(JBL jbl, JBLNODE node) {
   if (!jbl || !node) {
     return IW_ERROR_INVALID_ARGS;
-  }  
-  if (node->type == JBV_NONE) {    
+  }
+  if (node->type == JBV_NONE) {
     memset(&jbl->bn, 0, sizeof(jbl->bn));
     return 0;
   }

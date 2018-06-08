@@ -164,8 +164,8 @@ iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
     binn_save_header(&bv);
   }
   memcpy(&jbl->bn, &bv, sizeof(bv));
-  jbl->bn.allocated = 0;  
-  
+  jbl->bn.allocated = 0;
+
 finish:
   if (nxjson) {
     nx_json_free(nxjson);
@@ -209,12 +209,12 @@ static iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, 
   static const char *digits = "0123456789abcdef";
   static const char *specials = "btnvfr";
   const uint8_t *p = (const uint8_t *) str;
-  
+
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt((const char*) (data_), size_, ch_, count_, op);\
     RCGO(rc, finish); \
   } while(0)
-  
+
   if (len == -1) {
     len = strlen(str);
   }
@@ -252,14 +252,14 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
   int64_t llv;
   double dv;
   char key[MAX_BIN_KEY_LEN + 1];
-  
+
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt(data_, size_, ch_, count_, op); \
     RCGO(rc, finish); \
   } while(0)
-  
+
   switch (bn->type) {
-  
+
     case BINN_LIST:
       if (!binn_iter_init(&iter, bn, bn->type)) {
         rc = JBL_ERROR_INVALID;
@@ -287,7 +287,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       }
       PT(0, 0, ']', 1);
       break;
-      
+
     case BINN_OBJECT:
     case BINN_MAP:
       if (!binn_iter_init(&iter, bn, bn->type)) {
@@ -348,11 +348,11 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       }
       PT(0, 0, '}', 1);
       break;
-      
+
     case BINN_STRING:
       rc = _jbl_write_string(bn->ptr, -1, pt, op);
       break;
-      
+
     case BINN_UINT8:
       llv = bn->vuint8;
       goto loc_int;
@@ -379,7 +379,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
 loc_int:
       rc = _jbl_write_int(llv, pt, op);
       break;
-      
+
     case BINN_FLOAT32:
       dv = bn->vfloat;
       goto loc_float;
@@ -388,7 +388,7 @@ loc_int:
 loc_float:
       rc = _jbl_write_double(dv, pt, op);
       break;
-      
+
     case BINN_TRUE:
       PT("true", -1, 0, 1);
       break;
@@ -398,7 +398,7 @@ loc_float:
     case BINN_BOOL:
       PT(bn->vbool ? "true" : "false", -1, 0, 1);
       break;
-      
+
     default:
       rc = IW_ERROR_ASSERTION;
       break;
@@ -567,7 +567,7 @@ iwrc _jbl_ptr_pool(const char *path, JBLPTR *jpp, IWPOOL *pool) {
   jp->cnt = cnt;
   doff = offsetof(struct _JBLPTR, n) + cnt * sizeof(char *);
   assert(sz - doff >= len);
-  
+
   for (i = 0, j = 0, cnt = 0; path[i] && cnt < jp->cnt; ++i, ++j) {
     if (path[i++] == '/') {
       jp->n[cnt] = jpr + doff + j;
@@ -606,7 +606,7 @@ static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visito
   jbl_visitor_cmd_t cmd;
   int idx;
   binn bv;
-  
+
   if (!iter) {
     binn_iter it;
     if (!BINN_IS_CONTAINER_TYPE(bn->type)) {
@@ -618,7 +618,7 @@ static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visito
     rc = jbl_visit(&it, 0, vctx, visitor);
     return rc;
   }
-  
+
   switch (iter->type) {
     case BINN_OBJECT: {
       char key[MAX_BIN_KEY_LEN + 1];
@@ -765,7 +765,7 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
     case JBL_ERROR_PATCH_TARGET_INVALID:
       return "Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID)";
     case JBL_ERROR_PATCH_INVALID_ARRAY_INDEX:
-      return "Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX)";    
+      return "Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX)";
     case JBL_ERROR_PATCH_TEST_FAILED:
       return "JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED)";
   }
