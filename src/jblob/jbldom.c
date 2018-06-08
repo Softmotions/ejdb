@@ -332,17 +332,18 @@ static JBLNODE _jbl_node_detach(JBLNODE target, const JBLPTR path) {
   return child;
 }
 
-static int _jbl_cmp_node_keys(const void* o1, const void *o2) {
-  JBLNODE n1 = *((JBLNODE*) o1);
-  JBLNODE n2 = *((JBLNODE*) o2);  
+static int _jbl_cmp_node_keys(const void *o1, const void *o2) {
+  JBLNODE n1 = *((JBLNODE *) o1);
+  JBLNODE n2 = *((JBLNODE *) o2);
   if (!n1 && !n2) {
     return 0;
-  } if (!n2 || n1->klidx > n2->klidx) {
+  }
+  if (!n2 || n1->klidx > n2->klidx) {
     return 1;
   } else if (!n1 || n1->klidx < n2->klidx) {
     return -1;
   }
-  return strncmp(n1->key, n2->key, n1->klidx);  
+  return strncmp(n1->key, n2->key, n1->klidx);
 }
 
 static int _jbl_node_count(JBLNODE n) {
@@ -381,25 +382,25 @@ static int _jbl_compare_objects(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
   n2 = n2->child;
   while (n1 && n2) {
     s1[i] = n1;
-    s2[i] = n2;    
+    s2[i] = n2;
     n1 = n1->next;
     n2 = n2->next;
     ++i;
-  }    
+  }
   qsort(s1, cnt, sizeof(JBLNODE), _jbl_cmp_node_keys);
-  qsort(s2, cnt, sizeof(JBLNODE), _jbl_cmp_node_keys);  
-  for (i = 0; i < cnt; ++i) {  
+  qsort(s2, cnt, sizeof(JBLNODE), _jbl_cmp_node_keys);
+  for (i = 0; i < cnt; ++i) {
     ret = _jbl_cmp_node_keys(s1 + i, s2 + i);
     if (ret) {
       goto finish;
-    }  
+    }
     ret = _jbl_compare_nodes(s1[i], s2[i], rcp);
     if (*rcp || ret) {
       goto finish;
-    }      
-  }    
+    }
+  }
   
-finish:  
+finish:
   free(s1);
   return ret;
 }
@@ -413,7 +414,7 @@ static int _jbl_compare_nodes(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
     return 1;
   } else if (n1->type - n2->type) {
     return n1->type - n2->type;
-  }  
+  }
   switch (n1->type) {
     case JBV_BOOL:
       return n1->vbool - n2->vbool;
@@ -450,7 +451,7 @@ static int _jbl_compare_nodes(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
 }
 
 static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
-    
+
   const JBLPATCH *p = ex->p;
   jbp_patch_t op = ex->p->op;
   JBLPTR path = ex->path;
@@ -847,5 +848,32 @@ finish:
     nx_json_free(nxjson);
   }
   iwpool_destroy(pool);
+  return rc;
+}
+
+iwrc jbl_from_node(JBL *jblp, JBLNODE node) {
+  if (!jblp || !node) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  *jblp = calloc(1, sizeof(*jblp));
+  if (!*jblp) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  JBL jbl = *jblp;        
+  if (node->type == JBV_NONE) {    
+    return 0;
+  }
+  binn bv;
+  iwrc rc = _jbl_from_node(&bv, node, 0);
+  if (rc) {
+    free(jbl);
+    *jblp = 0;
+    return rc;    
+  }  
+  if (bv.writable && bv.dirty) {
+    binn_save_header(&bv);
+  }
+  memcpy(&jbl->bn, &bv, sizeof(jbl->bn));
+  jbl->bn.allocated = 0;
   return rc;
 }

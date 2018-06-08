@@ -28,17 +28,19 @@ typedef struct _JBLPATCH {
     bool vbool;
     int64_t vi64;
     double vf64;
-    const char *vptr;    
+    const char *vptr;
   };
 } JBLPATCH;
 
 IW_EXPORT iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool);
 
+IW_EXPORT iwrc jbl_from_node(JBL *jblp, JBLNODE node);
+
 IW_EXPORT iwrc jbl_patch(JBLNODE root, const JBLPATCH *patch, size_t cnt);
 
 IW_EXPORT iwrc jbl_patch2(JBL jbl, const JBLPATCH *patch, size_t cnt);
 
-IW_EXPORT iwrc jbl_patch3(JBL jbl, const char* patchjson);
+IW_EXPORT iwrc jbl_patch3(JBL jbl, const char *patchjson);
 
 IW_EXPORT void jbl_patch_destroy(JBLPATCH *patch, size_t cnt);
 
