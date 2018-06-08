@@ -360,6 +360,54 @@ void jbl_test1_5() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_clear(xstr);
   
+  // A.8.  Testing a Value: Success
+  apply_patch("{'baz': 'qux','foo': [ 'a', 2, 'c' ]}",
+              "["
+              "{ 'op': 'test', 'path': '/baz', 'value': 'qux' },"
+              "{ 'op': 'test', 'path': '/foo/1', 'value': 2 }"
+              "]",
+              "{'baz':'qux','foo':['a',2,'c']}", xstr, &rc);  
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  // A.8.  Testing a Value Object
+  apply_patch("{'foo':'bar','foo2':{'zaz':25, 'foo3':{'foo4':'bar4'},'foo5':'bar5'},'num1':1,'list1':['one','two',{'three':3}]}",
+              "[{ 'op': 'test', 'path': '/foo2', 'value': {'foo5':'bar5', 'zaz':25, 'foo3':{'foo4':'bar4'}} }]",
+              0, xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  apply_patch("{'foo':'bar','foo2':{'zaz':25, 'foo3':{'foo4':'bar4'},'foo5':'bar5'},'num1':1,'list1':['one','two',{'three':3}]}",
+              "[{ 'op': 'test', 'path': '/foo2', 'value': {'foo5':'bar5', 'zaz':25, 'foo3':{'foo41':'bar4'}} }]",
+              0, xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATCH_TEST_FAILED);
+  iwxstr_clear(xstr);
+  
+  apply_patch("{'foo':'bar','foo2':{'zaz':25, 'foo3':{'foo4':'bar4'},'foo5':'bar5'},'num1':1,'list1':['one','two',{'three':3}]}",
+              "[{ 'op': 'test', 'path': '/', 'value': {'num1':1, 'foo2':{'foo3':{'foo4':'bar4'}, 'zaz':25, 'foo5':'bar5'},'list1':['one','two',{'three':3}],'foo':'bar'} }]",
+              0, xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  apply_patch("{'foo':'bar','foo2':{'zaz':25, 'foo3':{'foo4':'bar4'},'foo5':'bar5'},'num1':1,'list1':['one','two',{'three':3}]}",
+              "[{ 'op': 'test', 'path': '/list1', 'value':['one','two',{'three':3}] }]",
+              0, xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  
+  apply_patch("{'foo':'bar','foo2':{'zaz':25, 'foo3':{'foo4':'bar4'},'foo5':'bar5'},'num1':1,'list1':['one','two',{'three':3}]}",
+              "[{ 'op': 'test', 'path': '/list1', 'value':['two','one',{'three':3}] }]",
+              0, xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATCH_TEST_FAILED);
+  iwxstr_clear(xstr);
+
+  // A.9.  Testing a Value: Error
+  apply_patch("{ 'baz': 'qux'}",
+              "[{ 'op': 'test', 'path': '/baz', 'value': 'bar' }]",
+              0, xstr, &rc);
+  CU_ASSERT_EQUAL(rc, JBL_ERROR_PATCH_TEST_FAILED);  
+  iwxstr_clear(xstr);  
+  
   // A.10.  Adding a nested Member Object
   apply_patch("{'foo': 'bar'}",
               "[{ 'op': 'add', 'path': '/child', 'value': { 'grandchild': { } } }]",
@@ -393,7 +441,7 @@ void jbl_test1_5() {
   apply_patch("{'foo': ['bar']}",
               "[{ 'op': 'add', 'path': '/foo/-', 'value': ['abc', 'def'] }]",
               "{'foo':['bar',['abc','def']]}", xstr, &rc);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);  
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_clear(xstr);
   
   //  printf("\n%s\n", iwxstr_ptr(xstr));

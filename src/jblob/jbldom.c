@@ -77,7 +77,7 @@ static iwrc _jbl_create_node(JBLDRCTX *ctx,
     case BINN_STRING:
       n->type = JBV_STR;
       n->vptr = bv->ptr;
-      n->vsize = bv->size - 1 /*null*/;
+      n->vsize = bv->size;
       break;
     case BINN_OBJECT:
     case BINN_MAP:
@@ -270,7 +270,7 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
     }
     if (!rc) {
       *node = n;
-    }    
+    }
   }
   return rc;
 }
@@ -278,6 +278,7 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
 static JBLNODE _jbl_node_find(const JBLNODE node, const JBLPTR ptr, int from, int to) {
   if (!ptr || !node) return 0;
   JBLNODE n = node;
+  
   for (int i = from; n && i < ptr->cnt && i < to; ++i) {
     if (n->type == JBV_OBJECT) {
       for (n = n->child; n; n = n->next) {
@@ -331,16 +332,144 @@ static JBLNODE _jbl_node_detach(JBLNODE target, const JBLPTR path) {
   return child;
 }
 
-static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
+static int _jbl_cmp_node_keys(const void* o1, const void *o2) {
+  JBLNODE n1 = *((JBLNODE*) o1);
+  JBLNODE n2 = *((JBLNODE*) o2);  
+  if (!n1 && !n2) {
+    return 0;
+  } if (!n2 || n1->klidx > n2->klidx) {
+    return 1;
+  } else if (!n1 || n1->klidx < n2->klidx) {
+    return -1;
+  }
+  return strncmp(n1->key, n2->key, n1->klidx);  
+}
 
+static int _jbl_node_count(JBLNODE n) {
+  int ret = 0;
+  n = n->child;
+  while (n) {
+    ret++;
+    n = n->next;
+  }
+  return ret;
+}
+
+static int _jbl_compare_nodes(JBLNODE n1, JBLNODE n2, iwrc *rcp);
+
+static int _jbl_compare_objects(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
+  int ret = 0;
+  int cnt = _jbl_node_count(n1);
+  int i = _jbl_node_count(n2);
+  if (cnt > i) {
+    return 1;
+  } else if (cnt < i) {
+    return -1;
+  } else if (cnt == 0) {
+    return 0;
+  }
+  
+  JBLNODE *s1 = malloc(2 * sizeof(JBLNODE) * cnt);
+  if (!s1) {
+    *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    return 0;
+  }
+  JBLNODE *s2 = s1 + cnt;
+  
+  i = 0;
+  n1 = n1->child;
+  n2 = n2->child;
+  while (n1 && n2) {
+    s1[i] = n1;
+    s2[i] = n2;    
+    n1 = n1->next;
+    n2 = n2->next;
+    ++i;
+  }    
+  qsort(s1, cnt, sizeof(JBLNODE), _jbl_cmp_node_keys);
+  qsort(s2, cnt, sizeof(JBLNODE), _jbl_cmp_node_keys);  
+  for (i = 0; i < cnt; ++i) {  
+    ret = _jbl_cmp_node_keys(s1 + i, s2 + i);
+    if (ret) {
+      goto finish;
+    }  
+    ret = _jbl_compare_nodes(s1[i], s2[i], rcp);
+    if (*rcp || ret) {
+      goto finish;
+    }      
+  }    
+  
+finish:  
+  free(s1);
+  return ret;
+}
+
+static int _jbl_compare_nodes(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
+  if (!n1 && !n2) {
+    return 0;
+  } else if (!n1) {
+    return -1;
+  } else if (!n2) {
+    return 1;
+  } else if (n1->type - n2->type) {
+    return n1->type - n2->type;
+  }  
+  switch (n1->type) {
+    case JBV_BOOL:
+      return n1->vbool - n2->vbool;
+    case JBV_I64:
+      return n1->vi64 - n2->vi64;
+    case JBV_F64:
+      return n1->vf64 - n2->vf64;
+    case JBV_STR:
+      if (n1->vsize - n2->vsize) {
+        return n1->vsize - n2->vsize;
+      }
+      return strncmp(n1->vptr, n2->vptr, n1->vsize);
+    case JBV_ARRAY:
+      for (n1 = n1->child, n2 = n2->child; n1 && n2; n1 = n1->next, n2 = n2->next) {
+        int res = _jbl_compare_nodes(n1, n2, rcp);
+        if (res) {
+          return res;
+        }
+      }
+      if (n1) {
+        return 1;
+      } else if (n2) {
+        return -1;
+      } else {
+        return 0;
+      }
+    case JBV_OBJECT:
+      return _jbl_compare_objects(n1, n2, rcp);
+    case JBV_NULL:
+    case JBV_NONE:
+      break;
+  }
+  return 0;
+}
+
+static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
+    
   const JBLPATCH *p = ex->p;
   jbp_patch_t op = ex->p->op;
   JBLPTR path = ex->path;
   JBLNODE value = ex->value;
+  bool oproot = ex->path->cnt == 1 && *ex->path->n[0] == '\0';
   
-  // TODO: TEST
-  
-  if (ex->path->cnt == 1 && *ex->path->n[0] == '\0') { // Root operation
+  if (op == JBP_TEST) {
+    iwrc rc = 0;
+    if (!value) {
+      return JBL_ERROR_PATCH_NOVALUE;
+    }
+    if (_jbl_compare_nodes(oproot ? target : _jbl_node_find(target, path, 0, path->cnt), value, &rc)) {
+      RCRET(rc);
+      return JBL_ERROR_PATCH_TEST_FAILED;
+    } else {
+      return rc;
+    }
+  }
+  if (oproot) { // Root operation
     if (op == JBP_REMOVE) {
       memset(target, 0, sizeof(*target));
     } else if (op == JBP_REPLACE || op == JBP_ADD) {
@@ -411,7 +540,7 @@ static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
       if (child) {
         memcpy(child,
                ((uint8_t *) value) + offsetof(struct _JBLNODE, klidx),
-               sizeof(struct _JBLNODE) - offsetof(struct _JBLNODE, klidx));               
+               sizeof(struct _JBLNODE) - offsetof(struct _JBLNODE, klidx));
       } else {
         value->key = path->n[path->cnt - 1];
         value->klidx = strlen(value->key);
@@ -550,9 +679,9 @@ void jbl_patch_destroy(JBLPATCH *patch, size_t cnt) {
   for (size_t i = 0; i < cnt; ++i) {
     JBLPATCH *p = patch + i;
     if (p->type == JBV_ARRAY || p->type == JBV_OBJECT) {
-      binn_free(&p->vjbl->bn);      
+      binn_free(&p->vjbl->bn);
     }
-  }  
+  }
 }
 
 iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool) {
@@ -676,7 +805,7 @@ iwrc jbl_patch3(JBL jbl, const char *patchjson) {
               binn_save_header(&bv);
             }
             memcpy(&pp->vjbl->bn, &bv, sizeof(bv));
-            pp->vjbl->bn.allocated = 0;            
+            pp->vjbl->bn.allocated = 0;
             break;
           }
           case NX_JSON_BOOL:
@@ -712,7 +841,7 @@ iwrc jbl_patch3(JBL jbl, const char *patchjson) {
   
   rc = _jbl_patch2(jbl, p, cnt, pool);
   
-finish:  
+finish:
   jbl_patch_destroy(p, cnt);
   if (nxjson) {
     nx_json_free(nxjson);

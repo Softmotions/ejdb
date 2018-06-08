@@ -765,7 +765,9 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
     case JBL_ERROR_PATCH_TARGET_INVALID:
       return "Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID)";
     case JBL_ERROR_PATCH_INVALID_ARRAY_INDEX:
-      return "Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX)";
+      return "Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX)";    
+    case JBL_ERROR_PATCH_TEST_FAILED:
+      return "JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED)";
   }
   return 0;
 }
