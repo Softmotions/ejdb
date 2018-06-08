@@ -366,7 +366,7 @@ void jbl_test1_5() {
               "{ 'op': 'test', 'path': '/baz', 'value': 'qux' },"
               "{ 'op': 'test', 'path': '/foo/1', 'value': 2 }"
               "]",
-              "{'baz':'qux','foo':['a',2,'c']}", xstr, &rc);  
+              "{'baz':'qux','foo':['a',2,'c']}", xstr, &rc);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_clear(xstr);
   
@@ -400,13 +400,13 @@ void jbl_test1_5() {
               0, xstr, &rc);
   CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATCH_TEST_FAILED);
   iwxstr_clear(xstr);
-
+  
   // A.9.  Testing a Value: Error
   apply_patch("{ 'baz': 'qux'}",
               "[{ 'op': 'test', 'path': '/baz', 'value': 'bar' }]",
               0, xstr, &rc);
-  CU_ASSERT_EQUAL(rc, JBL_ERROR_PATCH_TEST_FAILED);  
-  iwxstr_clear(xstr);  
+  CU_ASSERT_EQUAL(rc, JBL_ERROR_PATCH_TEST_FAILED);
+  iwxstr_clear(xstr);
   
   // A.10.  Adding a nested Member Object
   apply_patch("{'foo': 'bar'}",
@@ -430,23 +430,26 @@ void jbl_test1_5() {
   iwxstr_clear(xstr);
   
   // A.14. ~ Escape Ordering
-  //  apply_patch("'/': 9,'~1': 10",
-  //              "[{'op': 'test', 'path': '/~01', 'value': 10}]",
-  //              0, xstr, &rc);
-  //  printf("\n%s\n", iwxstr_ptr(xstr));
-  //  iwxstr_clear(xstr);
+  apply_patch("{'/': 9,'~1': 10}",
+              "[{'op': 'test', 'path': '/~01', 'value': 10}]",
+              "{'/':9,'~1':10}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);                  
+  iwxstr_clear(xstr);
   
-  
+  // A.15. Comparing Strings and Numbers
+  apply_patch("{'/': 9,'~1': 10}",
+              "[{'op': 'test', 'path': '/~01', 'value': '10'}]",
+              "{'/':9,'~1':10}", xstr, &rc);                
+  CU_ASSERT_EQUAL(rc, JBL_ERROR_PATCH_TEST_FAILED);
+  iwxstr_clear(xstr);
+
   // A.16. Adding an Array Value
   apply_patch("{'foo': ['bar']}",
               "[{ 'op': 'add', 'path': '/foo/-', 'value': ['abc', 'def'] }]",
               "{'foo':['bar',['abc','def']]}", xstr, &rc);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_clear(xstr);
-  
-  //  printf("\n%s\n", iwxstr_ptr(xstr));
-  //  iwxstr_clear(xstr);
-  
+    
   iwxstr_destroy(xstr);
 }
 
