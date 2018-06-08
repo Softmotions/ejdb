@@ -214,12 +214,10 @@ BOOL APIENTRY binn_create(binn *item, int type, int size, void *pointer) {
   item->used_size = MAX_BINN_HEADER;  // save space for the header
   item->type = type;
   item->dirty = TRUE;          // the header is not written to the buffer
-
   retval = TRUE;
 
 loc_exit:
   return retval;
-
 }
 
 binn *APIENTRY binn_new(int type, int size, void *pointer) {
