@@ -351,7 +351,6 @@ static int _jbl_compare_objects(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
   } else if (cnt == 0) {
     return 0;
   }
-
   JBLNODE *s1 = malloc(2 * sizeof(JBLNODE) * cnt);
   if (!s1) {
     *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -855,9 +854,90 @@ iwrc jbl_from_node(JBL jbl, JBLNODE node) {
   return rc;
 }
 
-iwrc jbl_to_node2(const char *json, JBLNODE *node, IWPOOL *pool) {
-  // TODO:
-  return 0;
+static iwrc _jbl_to_node2(nx_json *nxjson, JBLNODE parent, const char *key, int idx, JBLNODE *node, IWPOOL *pool) {
+  iwrc rc = 0;
+  JBLNODE n = iwpool_alloc(sizeof(*n), pool);
+  if (!n) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  memset(n, 0, sizeof(*n));
+  n->key = key;
+  n->klidx = n->key ? strlen(n->key) : idx;
+
+  switch (nxjson->type) {
+    case NX_JSON_OBJECT:
+      n->type = JBV_OBJECT;
+      for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
+        rc = _jbl_to_node2(nxj, n, nxj->key, 0, 0, pool);
+        RCGO(rc, finish);
+      }
+      break;
+    case NX_JSON_ARRAY:
+      n->type = JBV_ARRAY;
+      int i = 0;
+      for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
+        rc = _jbl_to_node2(nxj, n, 0, i++, 0, pool);
+        RCGO(rc, finish);
+      }
+      break;
+    case NX_JSON_STRING:
+      n->type = JBV_STR;
+      n->vptr = nxjson->text_value;
+      n->vsize = strlen(n->vptr);
+      break;
+    case NX_JSON_INTEGER:
+      n->type = JBV_I64;
+      n->vi64 = nxjson->int_value;
+      break;
+    case NX_JSON_DOUBLE:
+      n->type = JBV_F64;
+      n->vf64 = nxjson->dbl_value;
+      break;
+    case NX_JSON_BOOL:
+      n->type = JBV_BOOL;
+      n->vbool = nxjson->int_value;
+      break;
+    case NX_JSON_NULL:
+      n->type = JBV_NULL;
+      break;
+    default:
+      break;
+  }
+
+finish:
+  if (!rc) {
+    if (parent) {
+      _jbl_add_item(parent, n);
+    }
+    if (node) {
+      *node = n;
+    }
+  } else if (node) {
+    *node = 0;
+  }
+  return rc;
+}
+
+iwrc jbl_to_node2(const char *_json, JBLNODE *node, IWPOOL *pool) {
+  if (!_json || !node || !pool) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  char *json = strdup(_json);
+  if (!json) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  nx_json *nxj = nx_json_parse_utf8(json);
+  if (!nxj) {
+    rc = JBL_ERROR_PARSE_JSON;
+    goto finish;
+  }
+  rc = _jbl_to_node2(nxj, 0, 0, 0, node, pool);
+finish:
+  if (json) {
+    free(json);
+  }
+  return rc;
 }
 
 iwrc jbl_merge_patch(JBLNODE root, const char *patchjson) {
