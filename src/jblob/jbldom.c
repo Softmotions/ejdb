@@ -953,13 +953,17 @@ finish:
   return rc;
 }
 
-static JBLNODE _jbl_merge_patch_node(JBLNODE target, JBLNODE parent, JBLNODE patch, IWPOOL *pool) {
-  if (!patch) {
+static JBLNODE _jbl_merge_patch_node(JBLNODE target, JBLNODE parent, JBLNODE patch, IWPOOL *pool, iwrc *rcp) {
+  *rcp = 0;
+  if (!patch) {    
     return 0;
   }
   if (patch->type == JBV_OBJECT) {
     if (!target) {
        target = iwpool_alloc(sizeof(*target), pool);
+       if (!target) {
+         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+       }
        memset(target, 0, sizeof(*target));
        target->type = JBV_OBJECT;
        target->key = parent->key;
@@ -983,13 +987,13 @@ static JBLNODE _jbl_merge_patch_node(JBLNODE target, JBLNODE parent, JBLNODE pat
         JBLNODE node = target->child;        
         while (node) {
           if (node->klidx == patch->klidx && !strncmp(node->key, patch->key, node->klidx)) {            
-            _jbl_copy_node_data(node, _jbl_merge_patch_node(node, patch, patch, pool));
+            _jbl_copy_node_data(node, _jbl_merge_patch_node(node, patch, patch, pool, rcp));
             break;
           }
           node = node->next;
         }
         if (!node) {            
-           _jbl_add_item(target, _jbl_merge_patch_node(0, patch, patch, pool));           
+           _jbl_add_item(target, _jbl_merge_patch_node(0, patch, patch, pool, rcp));           
         }        
       }
       patch = patch->next;
@@ -1017,7 +1021,8 @@ iwrc jbl_merge_patch_node(JBLNODE root, const char *patchjson, IWPOOL *pool) {
   }
   rc = _jbl_json_to_node(nxjson, 0, 0, 0, &patch, pool);
   RCGO(rc, finish);
-  res = _jbl_merge_patch_node(root, 0, patch, pool);
+  res = _jbl_merge_patch_node(root, 0, patch, pool, &rc);
+  RCGO(rc, finish);
   if (res != root) {
     memcpy(root, res, sizeof(*root));    
   }  
