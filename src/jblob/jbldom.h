@@ -6,11 +6,11 @@
 
 typedef struct _JBLNODE {
   struct _JBLNODE *next;
-  struct _JBLNODE *prev;
-  struct _JBLNODE *child;
+  struct _JBLNODE *prev;  
   const char *key;
   int klidx;
   // Do not sort/add members after this point (offsetof usage below)
+  struct _JBLNODE *child;
   int vsize;
   jbl_type_t type;
   union {
