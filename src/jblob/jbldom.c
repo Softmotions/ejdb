@@ -1010,7 +1010,7 @@ iwrc jbl_merge_patch_node(JBLNODE root, const char *patchjson, IWPOOL *pool) {
   }
   iwrc rc = 0;
   JBLNODE patch, res;
-  nx_json *nxjson = 0;
+  nx_json *nxjson;
   int i = strlen(patchjson);
   char *json = iwpool_strndup(pool, patchjson, i, &rc);
   RCRET(rc);
