@@ -64,7 +64,8 @@
     "-I${workspaceRoot}/src/jblob"
   ],
   "files.associations": {
-    "*.h": "c"
+    "*.h": "c",
+    "ratio": "c"
   },
   "python.pythonPath": "/usr/bin/python3",
   "python.linting.pylintEnabled": false,

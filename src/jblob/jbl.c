@@ -4,6 +4,24 @@
 #include <iowow/iwxstr.h>
 #include "jbl_internal.h"
 
+iwrc jbl_create_empty_object(JBL *jblp) {
+  *jblp = calloc(1, sizeof(**jblp));
+  if (!*jblp) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  binn_create(&(*jblp)->bn, BINN_OBJECT, 0, 0);
+  return 0;
+}
+
+iwrc jbl_create_empty_array(JBL *jblp) {
+  *jblp = calloc(1, sizeof(**jblp));
+  if (!*jblp) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  binn_create(&(*jblp)->bn, BINN_LIST, 0, 0);
+  return 0;
+}
+
 iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz) {
   iwrc rc = 0;
   if (bufsz < MIN_BINN_SIZE) {

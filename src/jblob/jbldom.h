@@ -9,8 +9,8 @@ typedef struct _JBLNODE {
   struct _JBLNODE *prev;
   struct _JBLNODE *child;
   const char *key;
-  // Do not sort/add members after this point (offsetof usage below)
   int klidx;
+  // Do not sort/add members after this point (offsetof usage below)
   int vsize;
   jbl_type_t type;
   union {
@@ -48,21 +48,20 @@ typedef struct _JBLPATCH {
 
 IW_EXPORT iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_to_node2(const char *json, JBLNODE *node, IWPOOL *pool);
+IW_EXPORT iwrc jbl_json_to_node(const char *json, JBLNODE *node, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_from_node(JBL jbl, JBLNODE node);
 
-IW_EXPORT iwrc jbl_patch(JBLNODE root, const JBLPATCH *patch, size_t cnt);
+IW_EXPORT iwrc jbl_patch_node(JBLNODE root, const JBLPATCH *patch, size_t cnt);
 
-IW_EXPORT iwrc jbl_patch2(JBL jbl, const JBLPATCH *patch, size_t cnt);
+IW_EXPORT iwrc jbl_patch(JBL jbl, const JBLPATCH *patch, size_t cnt);
 
-IW_EXPORT iwrc jbl_patch3(JBL jbl, const char *patchjson);
+IW_EXPORT iwrc jbl_patch_from_json(JBL jbl, const char *patchjson);
 
 IW_EXPORT void jbl_patch_destroy(JBLPATCH *patch, size_t cnt);
 
-IW_EXPORT iwrc jbl_merge_patch(JBLNODE root, const char *patchjson);
+IW_EXPORT iwrc jbl_merge_patch_node(JBLNODE root, const char *patchjson, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_merge_patch2(JBL jbl, const char *patchjson);
-
+IW_EXPORT iwrc jbl_merge_patch(JBL jbl, const char *patchjson);
 
 #endif
