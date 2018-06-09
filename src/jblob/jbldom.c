@@ -1003,8 +1003,7 @@ static JBLNODE _jbl_merge_patch_node(JBLNODE target, JBLNODE parent, JBLNODE pat
           node = node->next;
         }
         if (!node) {            
-           _jbl_add_item(target, _jbl_merge_patch_node(0, patch, patch, pool));
-           //_jbl_add_item(target, patch);
+           _jbl_add_item(target, _jbl_merge_patch_node(0, patch, patch, pool));           
         }        
       }
       patch = patch->next;
