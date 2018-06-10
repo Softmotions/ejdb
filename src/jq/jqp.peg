@@ -1,0 +1,20 @@
+# JQP grammar
+
+%prefix "jqp"
+
+%value "JQPCTX"
+
+%auxil "void *"
+
+%header {
+
+}
+
+%source {
+
+}
+
+%%
+int main() {
+  return 0;
+}

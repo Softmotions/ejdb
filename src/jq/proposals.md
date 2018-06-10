@@ -56,7 +56,7 @@ Filters:
 Projections:
 
 ```
-/**/[familyName = "Doe" ] | all
+/**/[familyName = "Doe" ]  | all
 
 /**/[familyName = "Doe"] | /**/tags + /author/{givenName,familyName}
 
