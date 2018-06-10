@@ -22,6 +22,8 @@
 
 ```
 
+Filters:
+
   /**/[familyName = 'Doe']
 
   /**/[[? = 'familyName'] = 'Doe']
@@ -45,5 +47,15 @@
   /tags/[* in ['sample', 'foo']]
 
   /tags/[* in ['sample', 'foo'] and [? like 'ta*']]
+
+Projections:
+
+  /**/[familyName = 'Doe'] | all
+
+  /**/[familyName = 'Doe'] | /**/tags + /author/{givenName,familyName}
+
+  /**/[familyName = 'Doe'] | all - /**/author/{givenName,familyName}
+
+  /**/[familyName = 'Doe'] and /**/tags/[* = 'sample'] | /**/tags + /author/{givenName,familyName}
 
 ```
