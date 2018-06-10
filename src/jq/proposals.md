@@ -50,7 +50,7 @@ Filters:
 
 /tags/[* in ["sample", "foo"]]
 
-/tags/[* in ["sample", "foo"] and [? like "ta*"]]
+/tags/[* in ["sample", "foo"] and [* like "ta*"]]
 
 /author/*/mother/[familyName > 10]
 ```
