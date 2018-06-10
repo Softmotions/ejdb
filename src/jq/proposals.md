@@ -28,9 +28,11 @@ Filters:
 
 /**/[familyName = :?] # Placeholders
 
-/**/[[? = "familyName"] = "Doe"]
+/**/[[* = "familyName"] = "Doe"]
 
 /**/familyName
+
+/**/"familyName"
 
 /**/[familyName like /^D.*/]
 
