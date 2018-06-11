@@ -3,6 +3,18 @@
 #ifndef PCC_INCLUDED____JQP_H
 #define PCC_INCLUDED____JQP_H
 
+#include "jql.h"
+#include <errno.h>
+#include <setjmp.h>
+
+typedef struct _JPQAUX {
+  int pos;
+  int line;
+  int col;
+  iwrc rc;
+  jmp_buf fatal_jmp;
+  const char *buf;
+} JPQAUX;
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,7 +23,7 @@ extern "C" {
 typedef struct jqp_context_tag jqp_context_t;
 
 jqp_context_t *jqp_create(void *auxil);
-int jqp_parse(jqp_context_t *ctx, void **ret);
+int jqp_parse(jqp_context_t *ctx, JPQAUX **ret);
 void jqp_destroy(jqp_context_t *ctx);
 
 #ifdef __cplusplus

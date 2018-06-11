@@ -10,9 +10,9 @@ struct _JQL;
 typedef struct _JQL *JQL;
 
 typedef enum {
-  _JQ_ERROR_START = (IW_ERROR_START + 10000UL + 1000),
-
-  _JQ_ERROR_END
+  _JQL_ERROR_START = (IW_ERROR_START + 10000UL + 1000),
+  JQL_ERROR_QUERY_PARSE,        /**< Query parsing error (JQL_ERROR_QUERY_PARSE) */
+  _JQL_ERROR_END
 } jq_ecode;
 
 

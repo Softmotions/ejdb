@@ -2,10 +2,12 @@
 #include "jbldom.h"
 
 static const char *_jql_ecodefn(locale_t locale, uint32_t ecode) {
-  if (!(ecode > _JQ_ERROR_START && ecode < _JQ_ERROR_END)) {
+  if (!(ecode > _JQL_ERROR_START && ecode < _JQL_ERROR_END)) {
     return 0;
   }
   switch (ecode) {
+    case JQL_ERROR_QUERY_PARSE:
+      return "Query parsing error (JQL_ERROR_QUERY_PARSE)";
     default:
       break;
   }

@@ -2,14 +2,82 @@
 
 %prefix "jqp"
 
-%value "void *"
+%value "JPQAUX *"
 
 %auxil "void *"
 
 %header {
+  #include "jql.h"
+  #include <errno.h>
+  #include <setjmp.h>
+  
+  typedef struct _JPQAUX {
+    int pos;
+    int line;
+    int col;
+    iwrc rc;
+    jmp_buf fatal_jmp;
+    const char *buf;
+  } JPQAUX;
 }
 
 %source {
+  
+  static int _jqp_get_char(JPQAUX *aux) {
+    if (aux->rc || *(aux->buf + aux->pos) == '\0') {
+      return -1;
+    } else {
+      char ch = *(aux->buf + aux->pos++);
+      if (ch == '\n') {
+        ++aux->line;
+        aux->col = 1; 
+      }
+      ++aux->col;
+      return ch;
+    }
+  }
+
+  static void _jqp_error(JPQAUX *aux) {
+    if (!aux->rc) {
+      aux->rc = JQL_ERROR_QUERY_PARSE;
+    }
+    if (aux->fatal_jmp) {
+      longjmp(aux->fatal_jmp, 1);
+    }
+  }
+  
+  static void *_jqp_malloc(JPQAUX *aux, size_t size) {
+    void *ret = malloc(size);
+    if (!ret) {
+      aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      if (aux->fatal_jmp) {
+        longjmp(aux->fatal_jmp, 1);
+      } else {
+        fprintf(stderr, "Out of memory\n");
+        exit(1);
+      }
+    }
+    return ret;
+  }
+  
+  static void *_jqp_realloc(JPQAUX *aux, void *ptr, size_t size) {
+    void *ret = realloc(ptr, size);
+    if (!ret) {
+      aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      if (aux->fatal_jmp) {
+        longjmp(aux->fatal_jmp, 1);
+      } else {
+        fprintf(stderr, "Out of memory\n");
+        exit(1);
+      }
+    }
+    return ret;
+  }
+  
+  #define PCC_GETCHAR(auxil) _jqp_get_char(auxil)
+  #define PCC_ERROR(auxil) _jqp_error(auxil)
+  #define PCC_MALLOC(auxil, size) _jqp_malloc(auxil, size)
+  #define PCC_REALLOC(auxil, ptr, size) _jqp_realloc(auxil, ptr, size)
 }
 
 QUERY <- FILTER (__ FILTERJOIN __ FILTER)* _ EOF

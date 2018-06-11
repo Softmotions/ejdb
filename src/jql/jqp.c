@@ -17,11 +17,67 @@ static size_t strnlen(const char *str, size_t maxlen) {
 }
 #else
 #include <unistd.h> /* for strnlen() */
-#endif /* defined __GNUC__ && defined _WIN32 */
+#endif /* defined __GNUC__ && defined _WIN32 */ 
 #endif /* _MSC_VER */
 
 #include "./jqp.h"
 
+
+static int _jqp_get_char(JPQAUX *aux) {
+  if (aux->rc || *(aux->buf + aux->pos) == '\0') {
+    return -1;
+  } else {
+    char ch = *(aux->buf + aux->pos++);
+    if (ch == '\n') {
+      ++aux->line;
+      aux->col = 1; 
+    }
+    ++aux->col;
+    return ch;
+  }
+}
+
+static void _jqp_error(JPQAUX *aux) {
+  if (!aux->rc) {
+    aux->rc = JQL_ERROR_QUERY_PARSE;
+  }
+  if (aux->fatal_jmp) {
+    longjmp(aux->fatal_jmp, 1);
+  }
+}
+
+static void *_jqp_malloc(JPQAUX *aux, size_t size) {
+  void *ret = malloc(size);
+  if (!ret) {
+    aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    if (aux->fatal_jmp) {
+      longjmp(aux->fatal_jmp, 1);
+    } else {
+      fprintf(stderr, "Out of memory\n");
+      exit(1);
+    }
+  }
+  return ret;
+}
+
+static void *_jqp_realloc(JPQAUX *aux, void *ptr, size_t size) {
+  void *ret = realloc(ptr, size);
+  if (!ret) {
+    aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    if (aux->fatal_jmp) {
+      longjmp(aux->fatal_jmp, 1);
+    } else {
+      fprintf(stderr, "Out of memory\n");
+      exit(1);
+    }
+  }
+  return ret;
+}
+
+#define PCC_GETCHAR(auxil) _jqp_get_char(auxil)
+#define PCC_ERROR(auxil) _jqp_error(auxil)
+#define PCC_MALLOC(auxil, size) _jqp_malloc(auxil, size)
+#define PCC_REALLOC(auxil, ptr, size) _jqp_realloc(auxil, ptr, size)
 
 #ifndef PCC_BUFFERSIZE
 #define PCC_BUFFERSIZE 256
@@ -42,7 +98,7 @@ typedef struct pcc_range_tag {
     int end;
 } pcc_range_t;
 
-typedef void *pcc_value_t;
+typedef JPQAUX *pcc_value_t;
 
 typedef void *pcc_auxil_t;
 
@@ -2097,7 +2153,7 @@ jqp_context_t *jqp_create(void *auxil) {
     return pcc_context__create(auxil);
 }
 
-int jqp_parse(jqp_context_t *ctx, void **ret) {
+int jqp_parse(jqp_context_t *ctx, JPQAUX **ret) {
     pcc_thunk_array_t thunks;
     pcc_thunk_array__init(ctx->auxil, &thunks, PCC_ARRAYSIZE);
     if (pcc_apply_rule(ctx, pcc_evaluate_rule_QUERY, &thunks, ret))
