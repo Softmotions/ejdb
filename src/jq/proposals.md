@@ -30,11 +30,15 @@ Filters:
 
 /**/[[* = "familyName"] = "Doe"]
 
+/author/familyName
+
+/"author"/"familyName"
+
 /**/familyName
 
 /**/"familyName"
 
-/**/[familyName like /^D.*/]
+/**/[familyName re "^D.*"]
 
 /**/[familyName like "D*"] and /**/family/mother/[age > 30]
 

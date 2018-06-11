@@ -4,7 +4,6 @@
 #define PCC_INCLUDED____JQP_H
 
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
