@@ -1,8 +1,0 @@
-https://github.com/enechaev/packcc
-https://github.com/pegjs/pegjs/blob/master/examples/json.pegjs
-https://github.com/azatoth/PanPG/blob/master/grammars/JSON.peg
-https://github.com/PhilippeSigaud/Pegged/blob/master/pegged/examples/json.d
-https://github.com/jcoglan/pathology/blob/master/source/pathology/xpath.peg
-https://github.com/pegjs/pegjs/blob/master/examples/javascript.pegjs
-
-

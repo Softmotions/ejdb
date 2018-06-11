@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
+  <VirtualDirectory Name="tools">
+    <File Name="tools/packcc.c"/>
+  </VirtualDirectory>
   <VirtualDirectory Name="man">
     <File Name="man/CMakeLists.txt"/>
   </VirtualDirectory>
@@ -20,33 +23,47 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
       <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
+      <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
-      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp;*.txt;*.md;*.txt;*.cmake]]>
+      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp;*.txt;*.md;*.txt;*.cmake;*.peg]]>
     </Extensions>
     <Topleveldir>/home/adam/Projects/softmotions/ejdb</Topleveldir>
   </Reconciliation>
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
-    <VirtualDirectory Name="jblob">
-      <File Name="src/jblob/jbldom.c"/>
-      <File Name="src/jblob/jbldom.h"/>
-      <File Name="src/jblob/jbl_internal.h"/>
+    <VirtualDirectory Name="jql">
       <VirtualDirectory Name="tests">
-        <File Name="src/jblob/tests/CMakeLists.txt"/>
-        <File Name="src/jblob/tests/jbl_test1.c"/>
+        <File Name="src/jql/tests/jql_test1.c"/>
+        <File Name="src/jql/tests/CMakeLists.txt"/>
       </VirtualDirectory>
-      <File Name="src/jblob/nxjson.h"/>
-      <File Name="src/jblob/nxjson.c"/>
-      <File Name="src/jblob/jbl.c"/>
-      <File Name="src/jblob/jbl.h"/>
-      <File Name="src/jblob/hints.txt"/>
-      <File Name="src/jblob/binn.h"/>
-      <File Name="src/jblob/binn.c"/>
+      <File Name="src/jql/proposals.md"/>
+      <File Name="src/jql/jqp.peg"/>
+      <File Name="src/jql/jqp.h"/>
+      <File Name="src/jql/jqp.c"/>
+      <File Name="src/jql/jql.h"/>
+      <File Name="src/jql/jql.c"/>
+      <File Name="src/jql/hints.txt"/>
+      <File Name="src/jql/calc.peg"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="jbl">
+      <File Name="src/jbl/jbldom.c"/>
+      <File Name="src/jbl/jbldom.h"/>
+      <File Name="src/jbl/jbl_internal.h"/>
+      <VirtualDirectory Name="tests">
+        <File Name="src/jbl/tests/CMakeLists.txt"/>
+        <File Name="src/jbl/tests/jbl_test1.c"/>
+      </VirtualDirectory>
+      <File Name="src/jbl/nxjson.h"/>
+      <File Name="src/jbl/nxjson.c"/>
+      <File Name="src/jbl/jbl.c"/>
+      <File Name="src/jbl/jbl.h"/>
+      <File Name="src/jbl/hints.txt"/>
+      <File Name="src/jbl/binn.h"/>
+      <File Name="src/jbl/binn.c"/>
     </VirtualDirectory>
     <File Name="src/ejdb2defs.h"/>
     <File Name="src/ejdb2.c"/>
@@ -84,7 +101,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="$(IntermediateDirectory)/jbl_test1" IntermediateDirectory="$(ProjectPath)/build/src/jblob/tests" Command="$(OutputFile)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="$(IntermediateDirectory)/jql_test1" IntermediateDirectory="$(ProjectPath)/build/src/jql/tests" Command="$(OutputFile)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>

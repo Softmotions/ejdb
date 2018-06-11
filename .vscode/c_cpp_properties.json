@@ -48,7 +48,8 @@
                 "${workspaceRoot}",
                 "${workspaceRoot}/build/src/generated",
                 "${workspaceRoot}/src",
-                "${workspaceRoot}/src/jblob"
+                "${workspaceRoot}/src/jbl",
+                "${workspaceRoot}/src/jql"
             ],
             "defines": [
                 "_GNU_SOURCE",
@@ -80,7 +81,8 @@
                     "${workspaceRoot}",
                     "${workspaceRoot}/build/src/generated",
                     "${workspaceRoot}/src",
-                    "${workspaceRoot}/src/jblob"
+                    "${workspaceRoot}/src/jbl",
+                    "${workspaceRoot}/src/jql"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""

@@ -40,7 +40,8 @@
     "-Wno-pragma-once-outside-header",
     "-I${workspaceRoot}/build/src/generated",
     "-I${workspaceRoot}/src",
-    "-I${workspaceRoot}/src/jblob"
+    "-I${workspaceRoot}/src/jbl",
+    "-I${workspaceRoot}/src/jql"
   ],
   "clang.cxxflags": [
     "-D_GNU_SOURCE",
@@ -61,11 +62,11 @@
     "-Wno-pragma-once-outside-header",
     "-I${workspaceRoot}/build/src/generated",
     "-I${workspaceRoot}/src",
-    "-I${workspaceRoot}/src/jblob"
+    "-I${workspaceRoot}/src/jbl",
+    "-I${workspaceRoot}/src/jql"
   ],
   "files.associations": {
-    "*.h": "c",
-    "ratio": "c"
+    "*.h": "c"
   },
   "python.pythonPath": "/usr/bin/python3",
   "python.linting.pylintEnabled": false,
