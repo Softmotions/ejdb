@@ -2168,8 +2168,3 @@ int jqp_parse(jqp_context_t *ctx, JPQAUX **ret) {
 void jqp_destroy(jqp_context_t *ctx) {
     pcc_context__destroy(ctx);
 }
-
-
-int main() {
-  return 0;
-}

@@ -166,7 +166,3 @@ __ <- [\t\n\r ]+
 EOF <- !.
 
 %%
-
-int main() {
-  return 0;
-}
