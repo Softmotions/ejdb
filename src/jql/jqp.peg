@@ -30,7 +30,7 @@
       char ch = *(aux->buf + aux->pos++);
       if (ch == '\n') {
         ++aux->line;
-        aux->col = 1; 
+        aux->col = 0; 
       }
       ++aux->col;
       return ch;
