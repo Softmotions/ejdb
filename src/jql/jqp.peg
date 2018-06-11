@@ -1,0 +1,104 @@
+# JQP grammar
+
+%prefix "jqp"
+
+%value "void *"
+
+%auxil "void *"
+
+%header {
+}
+
+%source {
+}
+
+QUERY <- FILTER (__ FILTERJOIN __ FILTER)* _ EOF
+
+FILTER <- '/' NODE ('/' NODE)*
+
+FILTERJOIN <- "and" / "or" / "not"
+
+# Node
+NODE <- STRN / OPNODE / CHP+
+
+OPNODE <- '[' _ OPLEFT _ OP _ OPRIGHT _ ']'
+
+OPLEFT <- STRN / NODELEFT / CHP+
+
+NODELEFT <- '[' _ (STRN / CHP+) _ OP _ OPRIGHT _ ']'
+
+OPRIGHT <- PLACEHOLDER / VALJ
+
+PLACEHOLDER <- ':' ('?'? / [A-Za-z] [A-Za-z0-9]*)
+
+# Node operation
+OP <-  "and"
+       "or"
+        / ("not" __)? ("like" / "in" / "re" )
+        / ">="
+        / "<="
+        / ('!' _)? '='
+        / '>'
+        / '<'
+        / "not"
+
+# Node string
+STRN <- '"' CHJ+ '"'
+
+# JSON object
+OBJJ <- '[' _ (PAIRJ (_ ',' _ PAIRJ)* )? _ ']'
+
+# JSON array
+ARRJ <- '[' _ (VALJ (_ ',' _ VALJ)* )? _ ']'
+
+# JSON object pair
+PAIRJ <- STRJ _ ':' _ STRJ
+
+# JSON value
+VALJ <-   STRJ
+        / NUMJ
+        / OBJJ
+        / ARRJ
+        / "true"
+        / "false"
+        / "null"
+
+# JSON string
+STRJ <- '"' CHJ* '"'
+
+# JSON char
+CHJ <- '\\' '"'
+      / '\\' '\\'
+      / '\\' [bfnrt]
+      / '\\' 'u' HEX HEX HEX HEX
+      / (!'"' .)
+
+# Property char
+CHP <- '\\' '\\'
+      / '\\' [bfnrt]
+      / '\\' 'u' HEX HEX HEX HEX
+      / ([^=><!"\t\n\r ] .)
+
+NUMJ <- '-'? NUMI NUMF? NUME?
+
+NUMI <- '0' / [1-9] [0-9]*
+
+NUMF <- '.' [0-9]+
+
+NUME <-  [eE] [+-]? DIGIT+
+
+HEX <- [0-9A-Fa-f]
+
+DIGIT <- [0-9]
+
+_ <- [\t\n\r ]*
+
+__ <- [\t\n\r ]+
+
+EOF <- !.
+
+%%
+
+int main() {
+  return 0;
+}
