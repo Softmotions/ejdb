@@ -90,7 +90,35 @@
   #define PCC_REALLOC(auxil, ptr, size) _jqp_realloc(auxil, ptr, size)
 }
 
-QUERY <- FILTER (__ FILTERJOIN __ FILTER)* _ EOF
+QUERY <- FILTER (__ FILTERJOIN __ FILTER)* (_ APPLY)? (_ PROJ)? _ EOF
+
+##### Apply 
+
+APPLY <- ('|' _ "apply" __ (OBJJ / ARRJ)) { fprintf(stderr, "A: '%s'\n", $0); }
+
+##### Projection
+
+PROJ <- '|' _ PROJCHAIN+
+
+PROJCHAIN <- PROJNODES (__ PROJOIN _ PROJNODES)*
+
+PROJNODES <- ("all" / PROJNODE PROJNODE*) { fprintf(stderr, "Z: '%s'\n", $0); }
+
+PROJNODE <- '/' (PROJFIELDS / PROJPROP)
+
+PROJFIELDS <- '{' _ PROJPROP (_ ',' _ PROJPROP)* _ '}'
+
+PROJPROP <- STRN / PCHP+
+
+PROJOIN <- ('+' / '-') { fprintf(stderr, "PJ: '%s'\n", $0); }
+
+# Projection property char
+PCHP <- '\\' '\\'
+      / '\\' [bfnrt]
+      / '\\' 'u' HEX HEX HEX HEX
+      / !["/{},\t\n\r ] .
+
+##### Query
 
 FILTER <- FILTERPREFIX? (NODE NODE*)
 
@@ -99,6 +127,7 @@ FILTERPREFIX <- '@' [a-zA-Z0-9]+ { fprintf(stderr, "P: '%s'\n", $0); }
 FILTERJOIN <- ("and" / "or" / "not") { fprintf(stderr, "J: '%s'\n", $0); }
 
 # Node
+
 NODE <- '/' (STRN / OPNODE / CHP+) { fprintf(stderr, "N: '%s'\n", $0); }
 
 OPNODE <- '[' _ OPPAIR (__ OPJOIN __ OPPAIR)* _ ']'
@@ -127,16 +156,15 @@ OPJOIN <- ("and" / "or")
 # Node string
 STRN <- '"' CHJ+ '"'
 
-# JSON object
+
+##### JSON 
+
 OBJJ <- '{' _ (PAIRJ (_ ',' _ PAIRJ)* )? _ '}'
 
-# JSON array
 ARRJ <- '[' _ (VALJ (_ ',' _ VALJ)* )? _ ']'
 
-# JSON object pair
 PAIRJ <- STRJ _ ':' _ STRJ
 
-# JSON value
 VALJ <-   STRJ
         / NUMJ
         / OBJJ
