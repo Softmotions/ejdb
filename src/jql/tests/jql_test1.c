@@ -33,7 +33,7 @@ void jql_test1() {
     //.buf = "/foo/[bar = {}]"
     //.buf = "/tags/[* in [\"sample\", \"foo\"] and * like \"ta*\"]"
     //.buf = "/**/[[* = \"familyName\"] = \"Doe\"]"
-    .buf = "@one/**/[familyName like \"D\\n*\"] and /**/family/motnher/[age > 30] and not /bar/\"ba z\\\"zz\" | apply {} | all - /**/author/{givenName,familyName}"
+    .buf = "@one/**/[familyName like \"D\\n*\"] \nand /**/family/motnher/[age > 30] \nand not /bar/\"ba z\\\"zz\" \n| apply {} \n| all - /**/author/{givenName,familyName}"
   };
   jqp_context_t *ctx = jqp_create(&aux);
   CU_ASSERT_PTR_NOT_NULL_FATAL(ctx);

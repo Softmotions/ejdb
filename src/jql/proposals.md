@@ -86,3 +86,11 @@ Find document then apply JSON merge patch and projection
 | apply {"@fname": "Hopkins"}
 | /**/tags + /author/{givenName,familyName}
 ```
+
+```
+@fname/**/[familyName like "D\\n*"] 
+  and /**/family/motnher/[age > 30] 
+  and not /bar/"ba z\"zz"
+| apply {"@fname": "Hopkins"}
+| all - /**/author/{givenName,familyName}
+```
