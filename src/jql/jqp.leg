@@ -4,7 +4,14 @@
 #define YY_CTX_LOCAL 1
 #define YY_CTX_MEMBERS \
   JQPAUX *aux; 
-      
+  
+struct _yycontext;
+static void *_jqp_malloc(struct _yycontext *yy, size_t size);
+static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size);
+        
+#define YY_MALLOC(yy_, sz_) _jqp_malloc(yy_, sz_)        
+#define YY_REALLOC(yy_, ptr_, sz_) _jqp_realloc(yy_, ptr_, sz_)	
+
 #define YY_INPUT(yy_, buf_, result_, max_size_)	        \
   {	                                                    \
     JQPAUX *aux = (yy_)->aux;                           \
@@ -120,6 +127,36 @@ __ = [\t\n\r ]+
 EOF = !.
 
 %%
+
+static void *_jqp_malloc(struct _yycontext *yy, size_t size) {
+  void *ret = malloc(size);
+  if (!ret) {
+    JQPAUX *aux = yy->aux; 
+    aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    if (aux->fatal_jmp_set) {
+      longjmp(aux->fatal_jmp, 1);
+    } else {
+      fprintf(stderr, "Memory allocation failed (IW_ERROR_ALLOC)\n");
+      exit(1);
+    }
+  }
+  return ret;
+}
+
+static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size) {    
+  void *ret = realloc(ptr, size);
+  if (!ret) {
+    JQPAUX *aux = yy->aux; 
+    aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    if (aux->fatal_jmp_set) {
+      longjmp(aux->fatal_jmp, 1);
+    } else {
+      fprintf(stderr, "Memory allocation failed (IW_ERROR_ALLOC)\n");
+      exit(1);
+    }
+  }
+  return ret;
+}
 
 iwrc jqp_parse(JQPAUX *aux) {
   yycontext yy = {0};
