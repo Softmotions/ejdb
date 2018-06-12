@@ -18,8 +18,7 @@ typedef struct _JQPAUX {
   int line;
   int col;
   iwrc rc;
-  bool fatal_jmp_set;
-  jmp_buf fatal_jmp;
+  jmp_buf *fatal_jmp;
   const char *buf;
   JQPDATA *data;
 } JQPAUX;

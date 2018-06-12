@@ -1014,8 +1014,8 @@ static void *_jqp_malloc(struct _yycontext *yy, size_t size) {
   if (!ret) {
     JQPAUX *aux = yy->aux; 
     aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    if (aux->fatal_jmp_set) {
-      longjmp(aux->fatal_jmp, 1);
+    if (aux->fatal_jmp) {
+      longjmp(*aux->fatal_jmp, 1);
     } else {
       fprintf(stderr, "Memory allocation failed (IW_ERROR_ALLOC)\n");
       exit(1);
@@ -1029,8 +1029,8 @@ static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size) {
   if (!ret) {
     JQPAUX *aux = yy->aux; 
     aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    if (aux->fatal_jmp_set) {
-      longjmp(aux->fatal_jmp, 1);
+    if (aux->fatal_jmp) {
+      longjmp(*aux->fatal_jmp, 1);
     } else {
       fprintf(stderr, "Memory allocation failed (IW_ERROR_ALLOC)\n");
       exit(1);
