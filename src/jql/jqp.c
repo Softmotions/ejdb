@@ -48,7 +48,7 @@ static void _jqp_error(JPQAUX *aux) {
   }
 }
 
-static void *_jqp_malloc(JPQAUX *aux, size_t size) {
+static void *_jqp_malloc(JPQAUX *aux, size_t size) {    
   void *ret = malloc(size);
   if (!ret) {
     aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -62,7 +62,7 @@ static void *_jqp_malloc(JPQAUX *aux, size_t size) {
   return ret;
 }
 
-static void *_jqp_realloc(JPQAUX *aux, void *ptr, size_t size) {
+static void *_jqp_realloc(JPQAUX *aux, void *ptr, size_t size) {    
   void *ret = realloc(ptr, size);
   if (!ret) {
     aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -76,10 +76,15 @@ static void *_jqp_realloc(JPQAUX *aux, void *ptr, size_t size) {
   return ret;
 }
 
+static void _jqp_free(void *ptr) {    
+  free(ptr);
+}
+
 #define PCC_GETCHAR(auxil) _jqp_get_char(auxil)
 #define PCC_ERROR(auxil) _jqp_error(auxil)
 #define PCC_MALLOC(auxil, size) _jqp_malloc(auxil, size)
 #define PCC_REALLOC(auxil, ptr, size) _jqp_realloc(auxil, ptr, size)
+#define PCC_FREE(auxil, ptr) _jqp_free(ptr)
 
 #ifndef PCC_BUFFERSIZE
 #define PCC_BUFFERSIZE 256
