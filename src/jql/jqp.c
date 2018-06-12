@@ -989,20 +989,6 @@ static void pcc_action_FILTERPREFIX_0(jqp_context_t *__pcc_ctx, pcc_thunk_t *__p
 #undef auxil
 }
 
-static void pcc_action_FILTERJOIN_0(jqp_context_t *__pcc_ctx, pcc_thunk_t *__pcc_in, pcc_value_t *__pcc_out) {
-#define auxil (__pcc_ctx->auxil)
-#define __ (*__pcc_out)
-#define _0 pcc_get_capture_string(__pcc_ctx, &__pcc_in->data.leaf.capt0)
-#define _0s ((const)__pcc_in->data.leaf.capt0.range.start)
-#define _0e ((const)__pcc_in->data.leaf.capt0.range.end)
-    fprintf(stderr, "J: '%s'\n", _0); 
-#undef _0e
-#undef _0s
-#undef _0
-#undef __
-#undef auxil
-}
-
 static void pcc_action_NODE_0(jqp_context_t *__pcc_ctx, pcc_thunk_t *__pcc_in, pcc_value_t *__pcc_out) {
 #define auxil (__pcc_ctx->auxil)
 #define __ (*__pcc_out)
@@ -1045,6 +1031,20 @@ static void pcc_action_OP_0(jqp_context_t *__pcc_ctx, pcc_thunk_t *__pcc_in, pcc
 #undef auxil
 }
 
+static void pcc_action_OPJOIN_0(jqp_context_t *__pcc_ctx, pcc_thunk_t *__pcc_in, pcc_value_t *__pcc_out) {
+#define auxil (__pcc_ctx->auxil)
+#define __ (*__pcc_out)
+#define _0 pcc_get_capture_string(__pcc_ctx, &__pcc_in->data.leaf.capt0)
+#define _0s ((const)__pcc_in->data.leaf.capt0.range.start)
+#define _0e ((const)__pcc_in->data.leaf.capt0.range.end)
+    fprintf(stderr, "J: '%s'\n", _0); 
+#undef _0e
+#undef _0s
+#undef _0
+#undef __
+#undef auxil
+}
+
 static pcc_thunk_chunk_t *pcc_evaluate_rule_QUERY(jqp_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_APPLY(jqp_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_PROJ(jqp_context_t *ctx);
@@ -1057,7 +1057,6 @@ static pcc_thunk_chunk_t *pcc_evaluate_rule_PROJOIN(jqp_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_PCHP(jqp_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_FILTER(jqp_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_FILTERPREFIX(jqp_context_t *ctx);
-static pcc_thunk_chunk_t *pcc_evaluate_rule_FILTERJOIN(jqp_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_NODE(jqp_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_OPNODE(jqp_context_t *ctx);
 static pcc_thunk_chunk_t *pcc_evaluate_rule_OPPAIR(jqp_context_t *ctx);
@@ -1095,7 +1094,7 @@ static pcc_thunk_chunk_t *pcc_evaluate_rule_QUERY(jqp_context_t *ctx) {
             p = ctx->pos;
             n = chunk->thunks.len;
             if (!pcc_apply_rule(ctx, pcc_evaluate_rule___, &chunk->thunks, NULL)) goto L0001;
-            if (!pcc_apply_rule(ctx, pcc_evaluate_rule_FILTERJOIN, &chunk->thunks, NULL)) goto L0001;
+            if (!pcc_apply_rule(ctx, pcc_evaluate_rule_OPJOIN, &chunk->thunks, NULL)) goto L0001;
             if (!pcc_apply_rule(ctx, pcc_evaluate_rule___, &chunk->thunks, NULL)) goto L0001;
             if (!pcc_apply_rule(ctx, pcc_evaluate_rule_FILTER, &chunk->thunks, NULL)) goto L0001;
         }
@@ -1587,65 +1586,6 @@ L0000:;
     return NULL;
 }
 
-static pcc_thunk_chunk_t *pcc_evaluate_rule_FILTERJOIN(jqp_context_t *ctx) {
-    pcc_thunk_chunk_t *chunk = pcc_thunk_chunk__create(ctx->auxil);
-    chunk->pos = ctx->pos;
-    {
-        int p = ctx->pos;
-        int n = chunk->thunks.len;
-        {
-            if (
-                pcc_refill_buffer(ctx, 3) < 3 ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[0] != 'a' ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[1] != 'n' ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[2] != 'd'
-            ) goto L0002;
-            ctx->pos += 3;
-        }
-        goto L0001;
-    L0002:;
-        ctx->pos = p;
-        pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
-        {
-            if (
-                pcc_refill_buffer(ctx, 2) < 2 ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[0] != 'o' ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[1] != 'r'
-            ) goto L0003;
-            ctx->pos += 2;
-        }
-        goto L0001;
-    L0003:;
-        ctx->pos = p;
-        pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
-        {
-            if (
-                pcc_refill_buffer(ctx, 3) < 3 ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[0] != 'n' ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[1] != 'o' ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[2] != 't'
-            ) goto L0004;
-            ctx->pos += 3;
-        }
-        goto L0001;
-    L0004:;
-        ctx->pos = p;
-        pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
-        goto L0000;
-    L0001:;
-    }
-    {
-        pcc_thunk_t *thunk = pcc_thunk__create_leaf(ctx->auxil, pcc_action_FILTERJOIN_0, 0, 0);
-        thunk->data.leaf.capt0.range.start = chunk->pos;
-        thunk->data.leaf.capt0.range.end = ctx->pos;
-        pcc_thunk_array__add(ctx->auxil, &chunk->thunks, thunk);
-    }
-    return chunk;
-L0000:;
-    pcc_thunk_chunk__destroy(ctx->auxil, chunk);
-    return NULL;
-}
-
 static pcc_thunk_chunk_t *pcc_evaluate_rule_NODE(jqp_context_t *ctx) {
     pcc_thunk_chunk_t *chunk = pcc_thunk_chunk__create(ctx->auxil);
     chunk->pos = ctx->pos;
@@ -2064,19 +2004,6 @@ static pcc_thunk_chunk_t *pcc_evaluate_rule_OP(jqp_context_t *ctx) {
     L0015:;
         ctx->pos = p;
         pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
-        {
-            if (
-                pcc_refill_buffer(ctx, 3) < 3 ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[0] != 'n' ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[1] != 'o' ||
-                ((const char *)(ctx->buffer.buf + ctx->pos))[2] != 't'
-            ) goto L0016;
-            ctx->pos += 3;
-        }
-        goto L0001;
-    L0016:;
-        ctx->pos = p;
-        pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
         goto L0000;
     L0001:;
     }
@@ -2125,6 +2052,31 @@ static pcc_thunk_chunk_t *pcc_evaluate_rule_OPJOIN(jqp_context_t *ctx) {
         pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
         goto L0000;
     L0001:;
+    }
+    {
+        int p = ctx->pos;
+        int n = chunk->thunks.len;
+        if (!pcc_apply_rule(ctx, pcc_evaluate_rule___, &chunk->thunks, NULL)) goto L0004;
+        {
+            if (
+                pcc_refill_buffer(ctx, 3) < 3 ||
+                ((const char *)(ctx->buffer.buf + ctx->pos))[0] != 'n' ||
+                ((const char *)(ctx->buffer.buf + ctx->pos))[1] != 'o' ||
+                ((const char *)(ctx->buffer.buf + ctx->pos))[2] != 't'
+            ) goto L0004;
+            ctx->pos += 3;
+        }
+        goto L0005;
+    L0004:;
+        ctx->pos = p;
+        pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
+    L0005:;
+    }
+    {
+        pcc_thunk_t *thunk = pcc_thunk__create_leaf(ctx->auxil, pcc_action_OPJOIN_0, 0, 0);
+        thunk->data.leaf.capt0.range.start = chunk->pos;
+        thunk->data.leaf.capt0.range.end = ctx->pos;
+        pcc_thunk_array__add(ctx->auxil, &chunk->thunks, thunk);
     }
     return chunk;
 L0000:;

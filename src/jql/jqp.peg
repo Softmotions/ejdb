@@ -90,7 +90,7 @@
   #define PCC_REALLOC(auxil, ptr, size) _jqp_realloc(auxil, ptr, size)
 }
 
-QUERY <- FILTER (__ FILTERJOIN __ FILTER)* (_ APPLY)? (_ PROJ)? _ EOF
+QUERY <- FILTER (__ OPJOIN __ FILTER)* (_ APPLY)? (_ PROJ)? _ EOF
 
 ##### Apply 
 
@@ -124,8 +124,6 @@ FILTER <- FILTERPREFIX? (NODE NODE*)
 
 FILTERPREFIX <- '@' [a-zA-Z0-9]+ { fprintf(stderr, "P: '%s'\n", $0); }
 
-FILTERJOIN <- ("and" / "or" / "not") { fprintf(stderr, "J: '%s'\n", $0); }
-
 # Node
 
 NODE <- '/' (STRN / OPNODE / CHP+) { fprintf(stderr, "N: '%s'\n", $0); }
@@ -149,9 +147,9 @@ OP <-  (  ("not" __)? ("like" / "in" / "re")
         / ('!' _)? '='
         / '>'
         / '<'
-        / "not") { fprintf(stderr, "O: '%s'\n", $0); }
+        ) { fprintf(stderr, "O: '%s'\n", $0); }
 
-OPJOIN <- ("and" / "or")
+OPJOIN <- ("and" / "or") (__ "not")? { fprintf(stderr, "J: '%s'\n", $0); }
 
 # Node string
 STRN <- '"' CHJ+ '"'
