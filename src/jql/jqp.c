@@ -361,19 +361,6 @@ YY_ACTION(void) yy_1_FILTERPREFIX(yycontext *yy, char *yytext, int yyleng)
 #undef yypos
 #undef yy
 }
-YY_ACTION(void) yy_1_FILTER(yycontext *yy, char *yytext, int yyleng)
-{
-#define __ yy->__
-#define yypos yy->__pos
-#define yythunkpos yy->__thunkpos
-  yyprintf((stderr, "do yy_1_FILTER\n"));
-  {
-   fprintf(stderr, "F='%s'\n", yytext); ;
-  }
-#undef yythunkpos
-#undef yypos
-#undef yy
-}
 
 YY_RULE(int) yy_NUME(yycontext *yy)
 {  int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
@@ -937,7 +924,7 @@ YY_RULE(int) yy_FILTER(yycontext *yy)
   l155:;	
   {  int yypos156= yy->__pos, yythunkpos156= yy->__thunkpos;  if (!yy_NODE(yy)) goto l156;  goto l155;
   l156:;	  yy->__pos= yypos156; yy->__thunkpos= yythunkpos156;
-  }  yyDo(yy, yy_1_FILTER, yy->__begin, yy->__end);
+  }
   yyprintf((stderr, "  ok   %s @ %s\n", "FILTER", yy->__buf+yy->__pos));
   return 1;
   l152:;	  yy->__pos= yypos0; yy->__thunkpos= yythunkpos0;
