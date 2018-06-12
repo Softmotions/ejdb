@@ -2,20 +2,28 @@
 
 %prefix "jqp"
 
-%value "JPQAUX *"
+%value "JPQDATA *"
 
-%auxil "void *"
+%auxil "JPQAUX *"
 
 %header {
   #include "jql.h"
   #include <errno.h>
+  #include <stdbool.h>
   #include <setjmp.h>
+  
+  typedef struct _JPQDATA {
+    int type;
+    struct _JPQDATA *child;
+    struct _JPQDATA *next;
+  } JPQDATA;
   
   typedef struct _JPQAUX {
     int pos;
     int line;
     int col;
     iwrc rc;
+    bool fatal_jmp_set;
     jmp_buf fatal_jmp;
     const char *buf;
   } JPQAUX;
@@ -41,8 +49,10 @@
     if (!aux->rc) {
       aux->rc = JQL_ERROR_QUERY_PARSE;
     }
-    if (aux->fatal_jmp) {
+    if (aux->fatal_jmp_set) {
       longjmp(aux->fatal_jmp, 1);
+    } else {
+      fprintf(stderr, "Query parsing error (JQL_ERROR_QUERY_PARSE)\n");
     }
   }
   
@@ -50,10 +60,10 @@
     void *ret = malloc(size);
     if (!ret) {
       aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      if (aux->fatal_jmp) {
+      if (aux->fatal_jmp_set) {
         longjmp(aux->fatal_jmp, 1);
       } else {
-        fprintf(stderr, "Out of memory\n");
+        fprintf(stderr, "Memory allocation failed (IW_ERROR_ALLOC)\n");
         exit(1);
       }
     }
@@ -64,10 +74,10 @@
     void *ret = realloc(ptr, size);
     if (!ret) {
       aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      if (aux->fatal_jmp) {
+      if (aux->fatal_jmp_set) {
         longjmp(aux->fatal_jmp, 1);
       } else {
-        fprintf(stderr, "Out of memory\n");
+        fprintf(stderr, "Memory allocation failed (IW_ERROR_ALLOC)\n");
         exit(1);
       }
     }
@@ -82,14 +92,18 @@
 
 QUERY <- FILTER (__ FILTERJOIN __ FILTER)* _ EOF
 
-FILTER <- '/' NODE ('/' NODE)*
+FILTER <- FILTERPREFIX? (NODE NODE*)
 
-FILTERJOIN <- "and" / "or" / "not"
+FILTERPREFIX <- '@' [a-zA-Z0-9]+ { fprintf(stderr, "P: '%s'\n", $0); }
+
+FILTERJOIN <- ("and" / "or" / "not") { fprintf(stderr, "J: '%s'\n", $0); }
 
 # Node
-NODE <- STRN / OPNODE / CHP+
+NODE <- '/' (STRN / OPNODE / CHP+) { fprintf(stderr, "N: '%s'\n", $0); }
 
-OPNODE <- '[' _ OPLEFT _ OP _ OPRIGHT _ ']'
+OPNODE <- '[' _ OPPAIR (__ OPJOIN __ OPPAIR)* _ ']'
+
+OPPAIR <- OPLEFT _ OP _ OPRIGHT
 
 OPLEFT <- STRN / NODELEFT / CHP+
 
@@ -97,24 +111,24 @@ NODELEFT <- '[' _ (STRN / CHP+) _ OP _ OPRIGHT _ ']'
 
 OPRIGHT <- PLACEHOLDER / VALJ
 
-PLACEHOLDER <- ':' ('?'? / [A-Za-z] [A-Za-z0-9]*)
+PLACEHOLDER <- ':' ([a-zA-Z0-9]+ / '?') { fprintf(stderr, "P: '%s'\n", $0); }
 
 # Node operation
-OP <-  "and"
-       "or"
-        / ("not" __)? ("like" / "in" / "re" )
+OP <-  (  ("not" __)? ("like" / "in" / "re")
         / ">="
         / "<="
         / ('!' _)? '='
         / '>'
         / '<'
-        / "not"
+        / "not") { fprintf(stderr, "O: '%s'\n", $0); }
+
+OPJOIN <- ("and" / "or")
 
 # Node string
 STRN <- '"' CHJ+ '"'
 
 # JSON object
-OBJJ <- '[' _ (PAIRJ (_ ',' _ PAIRJ)* )? _ ']'
+OBJJ <- '{' _ (PAIRJ (_ ',' _ PAIRJ)* )? _ '}'
 
 # JSON array
 ARRJ <- '[' _ (VALJ (_ ',' _ VALJ)* )? _ ']'
@@ -139,13 +153,13 @@ CHJ <- '\\' '"'
       / '\\' '\\'
       / '\\' [bfnrt]
       / '\\' 'u' HEX HEX HEX HEX
-      / (!'"' .)
+      / !'"' .
 
 # Property char
 CHP <- '\\' '\\'
       / '\\' [bfnrt]
       / '\\' 'u' HEX HEX HEX HEX
-      / ([^=><!"\t\n\r ] .)
+      / ![/"[\]=><!\t\n\r ] .
 
 NUMJ <- '-'? NUMI NUMF? NUME?
 

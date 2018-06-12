@@ -5,13 +5,21 @@
 
 #include "jql.h"
 #include <errno.h>
+#include <stdbool.h>
 #include <setjmp.h>
+
+typedef struct _JPQDATA {
+  int type;
+  struct _JPQDATA *child;
+  struct _JPQDATA *next;
+} JPQDATA;
 
 typedef struct _JPQAUX {
   int pos;
   int line;
   int col;
   iwrc rc;
+  bool fatal_jmp_set;
   jmp_buf fatal_jmp;
   const char *buf;
 } JPQAUX;
@@ -22,8 +30,8 @@ extern "C" {
 
 typedef struct jqp_context_tag jqp_context_t;
 
-jqp_context_t *jqp_create(void *auxil);
-int jqp_parse(jqp_context_t *ctx, JPQAUX **ret);
+jqp_context_t *jqp_create(JPQAUX *auxil);
+int jqp_parse(jqp_context_t *ctx, JPQDATA **ret);
 void jqp_destroy(jqp_context_t *ctx);
 
 #ifdef __cplusplus
