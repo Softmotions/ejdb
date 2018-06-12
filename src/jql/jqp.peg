@@ -94,7 +94,7 @@ QUERY <- FILTER (__ FILTERJOIN __ FILTER)* (_ APPLY)? (_ PROJ)? _ EOF
 
 ##### Apply 
 
-APPLY <- ('|' _ "apply" __ (OBJJ / ARRJ)) { fprintf(stderr, "A: '%s'\n", $0); }
+APPLY <- ('|' _ "apply" __ (PLACEHOLDER / OBJJ / ARRJ)) { fprintf(stderr, "A: '%s'\n", $0); }
 
 ##### Projection
 

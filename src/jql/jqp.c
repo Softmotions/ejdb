@@ -1157,14 +1157,19 @@ static pcc_thunk_chunk_t *pcc_evaluate_rule_APPLY(jqp_context_t *ctx) {
     {
         int p = ctx->pos;
         int n = chunk->thunks.len;
-        if (!pcc_apply_rule(ctx, pcc_evaluate_rule_OBJJ, &chunk->thunks, NULL)) goto L0002;
+        if (!pcc_apply_rule(ctx, pcc_evaluate_rule_PLACEHOLDER, &chunk->thunks, NULL)) goto L0002;
         goto L0001;
     L0002:;
         ctx->pos = p;
         pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
-        if (!pcc_apply_rule(ctx, pcc_evaluate_rule_ARRJ, &chunk->thunks, NULL)) goto L0003;
+        if (!pcc_apply_rule(ctx, pcc_evaluate_rule_OBJJ, &chunk->thunks, NULL)) goto L0003;
         goto L0001;
     L0003:;
+        ctx->pos = p;
+        pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
+        if (!pcc_apply_rule(ctx, pcc_evaluate_rule_ARRJ, &chunk->thunks, NULL)) goto L0004;
+        goto L0001;
+    L0004:;
         ctx->pos = p;
         pcc_thunk_array__revert(ctx->auxil, &chunk->thunks, n);
         goto L0000;
