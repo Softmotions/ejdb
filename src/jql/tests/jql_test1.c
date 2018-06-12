@@ -14,14 +14,13 @@ int clean_suite(void) {
 
 void jql_test1() {
   printf("\nJQ parser\n");
-  JPQDATA *res = 0;
-  JPQAUX aux = {
+  JQPAUX aux = {
     .line = 1,
     .col = 1,
     //.buf = "/foo/bar"
     //.buf = "/\"foo\"/\"b ar\""
     //.buf = "/foo and /bar"
-    //.buf = "/foo/[bar = \"val\"]"    
+    //.buf = "/foo/[bar = \"val\"]"
     //.buf = "/foo/[barlike22]" err
     //.buf = "/foo/[bar like 33]"
     //.buf = "/foo/[bar not like 33]"
@@ -33,12 +32,11 @@ void jql_test1() {
     //.buf = "/foo/[bar = {}]"
     //.buf = "/tags/[* in [\"sample\", \"foo\"] and * like \"ta*\"]"
     //.buf = "/**/[[* = \"familyName\"] = \"Doe\"]"
-    .buf = "@one/**/[familyName like \"D\\n*\"] \nand /**/family/motnher/[age > 30] \nand not /bar/\"ba z\\\"zz\" \n| apply {} \n| all - /**/author/{givenName,familyName}"
+    .buf = "@one/**/[familyName like \"D\\n*\"] \nand /**/family/mother/[age > 30] \nand not /bar/\"ba z\\\"zz\" \n| apply {} \n| all - /**/author/{givenName,familyName}"
   };
-  jqp_context_t *ctx = jqp_create(&aux);
-  CU_ASSERT_PTR_NOT_NULL_FATAL(ctx);
-  int rsz = jqp_parse(ctx, &res);  
-  jqp_destroy(ctx);  
+  fprintf(stderr, "\n%s\n\n", aux.buf);
+  iwrc rc = jqp_parse(&aux);
+  CU_ASSERT_EQUAL(rc, 0);
 }
 
 int main() {

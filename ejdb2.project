@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
-  <VirtualDirectory Name="tools">
-    <File Name="tools/packcc.c"/>
-  </VirtualDirectory>
+  <VirtualDirectory Name="tools"/>
   <VirtualDirectory Name="man">
     <File Name="man/CMakeLists.txt"/>
   </VirtualDirectory>
@@ -36,18 +34,17 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <VirtualDirectory Name="jql">
+      <File Name="src/jql/jqp.leg"/>
       <VirtualDirectory Name="tests">
         <File Name="src/jql/tests/jql_test1.c"/>
         <File Name="src/jql/tests/CMakeLists.txt"/>
       </VirtualDirectory>
       <File Name="src/jql/proposals.md"/>
-      <File Name="src/jql/jqp.peg"/>
       <File Name="src/jql/jqp.h"/>
       <File Name="src/jql/jqp.c"/>
       <File Name="src/jql/jql.h"/>
       <File Name="src/jql/jql.c"/>
       <File Name="src/jql/hints.txt"/>
-      <File Name="src/jql/calc.peg"/>
     </VirtualDirectory>
     <VirtualDirectory Name="jbl">
       <File Name="src/jbl/jbldom.c"/>

@@ -1,0 +1,134 @@
+%{
+#include "jqp.h"
+
+#define YY_CTX_LOCAL 1
+#define YY_CTX_MEMBERS \
+  JQPAUX *aux; 
+      
+#define YY_INPUT(yy_, buf_, result_, max_size_)	        \
+  {	                                                    \
+    JQPAUX *aux = (yy_)->aux;                           \
+    if (aux->rc || *(aux->buf + aux->pos) == '\0') {    \
+      result_ = 0;                                      \
+    } else {                                            \
+      char ch = *(aux->buf + aux->pos++);               \
+      if (ch == '\n') {                                 \
+        ++aux->line;                                    \
+        aux->col = 0;                                   \
+      }                                                 \
+      ++aux->col;                                       \
+      result_ = 1;                                      \
+      *(buf_)= ch;                                      \
+    }                                                   \
+  }
+%}
+
+QUERY = FILTER (__ OPJOIN __ FILTER)* (_ APPLY)? (_ PROJ)? _ EOF
+
+APPLY = ('|' _ "apply" __ (PLACEHOLDER | OBJJ | ARRJ))
+
+PROJ = '|' _ PROJCHAIN+
+
+PROJCHAIN = PROJNODES (__ PROJOIN _ PROJNODES)*
+
+PROJNODES = ("all" | PROJNODE PROJNODE*)
+
+PROJNODE = '/' (PROJFIELDS | PROJPROP)
+
+PROJFIELDS = '{' _ PROJPROP (_ ',' _ PROJPROP)* _ '}'
+
+PROJPROP = STRN | PCHP+
+
+PROJOIN = ('+' | '-')
+
+PCHP = '\\' '\\'
+      | '\\' [bfnrt]
+      | '\\' 'u' HEX HEX HEX HEX
+      | !["/{},\t\n\r ] .
+
+FILTER = FILTERPREFIX? (NODE NODE*)
+
+FILTERPREFIX = '@' <[a-zA-Z0-9]+> { fprintf(stderr, "FP='%s'\n", yytext); }
+
+NODE = '/' <(STRN | OPNODE | CHP+)> { fprintf(stderr, "N='%s'\n", yytext); }
+
+OPNODE = '[' _ OPPAIR (__ OPJOIN __ OPPAIR)* _ ']'
+
+OPPAIR = OPLEFT _ OP _ OPRIGHT
+
+OPLEFT = STRN | NODELEFT | CHP+
+
+NODELEFT = '[' _ (STRN | CHP+) _ OP _ OPRIGHT _ ']'
+
+OPRIGHT = PLACEHOLDER | VALJ
+
+PLACEHOLDER = ':' ([a-zA-Z0-9]+ | '?')
+
+OP =  ( ("not" __)? ("like" | "in" | "re")
+        | ">="
+        | "<="
+        | ('!' _)? '='
+        | '>'
+        | '<'
+      )
+      
+OPJOIN = ("and" | "or") (__ "not")?
+
+STRN = '"' CHJ+ '"'
+
+OBJJ = '{' _ (PAIRJ (_ ',' _ PAIRJ)* )? _ '}'
+
+ARRJ = '[' _ (VALJ (_ ',' _ VALJ)* )? _ ']'
+
+PAIRJ = STRJ _ ':' _ STRJ
+
+VALJ =   STRJ
+        | NUMJ
+        | OBJJ
+        | ARRJ
+        | "true"
+        | "false"
+        | "null"
+
+STRJ = '"' CHJ* '"'
+
+HEX = [0-9A-Fa-f]
+
+CHJ = '\\' '"'
+      | '\\' '\\'
+      | '\\' [bfnrt]
+      | '\\' 'u' HEX HEX HEX HEX
+      | !'"' .
+
+CHP = '\\' '\\'
+      | '\\' [bfnrt]
+      | '\\' 'u' HEX HEX HEX HEX
+      | ![/"[\]=><!\t\n\r ] .
+
+NUMJ = '-'? NUMI NUMF? NUME?
+
+NUMI = '0' | [1-9] [0-9]*
+
+NUMF = '.' [0-9]+
+
+NUME = [eE] [+-]? [0-9]+
+
+_ = [\t\n\r ]*
+
+__ = [\t\n\r ]+
+
+EOF = !.
+
+%%
+
+iwrc jqp_parse(JQPAUX *aux) {
+  yycontext yy = {0};
+  yy.aux = aux;
+  if (!yyparse(&yy)) {
+    if (!aux->rc) {
+      aux->rc = JQL_ERROR_QUERY_PARSE;
+    }
+  }
+  yyrelease(&yy);
+  return aux->rc;
+}
