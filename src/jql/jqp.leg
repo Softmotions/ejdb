@@ -3,14 +3,14 @@
 
 #define YY_CTX_LOCAL 1
 #define YY_CTX_MEMBERS \
-  JQPAUX *aux; 
-  
+  JQPAUX *aux;
+
 struct _yycontext;
 static void *_jqp_malloc(struct _yycontext *yy, size_t size);
 static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size);
-        
-#define YY_MALLOC(yy_, sz_) _jqp_malloc(yy_, sz_)        
-#define YY_REALLOC(yy_, ptr_, sz_) _jqp_realloc(yy_, ptr_, sz_)	
+
+#define YY_MALLOC(yy_, sz_) _jqp_malloc(yy_, sz_)
+#define YY_REALLOC(yy_, ptr_, sz_) _jqp_realloc(yy_, ptr_, sz_)
 
 #define YY_INPUT(yy_, buf_, result_, max_size_)	        \
   {	                                                    \
@@ -53,19 +53,19 @@ PCHP = '\\' '\\'
       | '\\' 'u' HEX HEX HEX HEX
       | !["/{},\t\n\r ] .
 
-FILTER = FILTERPREFIX? (NODE NODE*)
+FILTER = FILTERANCHOR? (NODE NODE*)
 
-FILTERPREFIX = '@' <[a-zA-Z0-9]+> { fprintf(stderr, "FP='%s'\n", yytext); }
+FILTERANCHOR = '@' <[a-zA-Z0-9]+> { fprintf(stderr, "FP='%s'\n", yytext); }
 
-NODE = '/' <(STRN | OPNODE | CHP+)> { fprintf(stderr, "N='%s'\n", yytext); }
+NODE = '/' <(STRN | NEXPR | CHP+)> { fprintf(stderr, "N='%s'\n", yytext); }
 
-OPNODE = '[' _ OPPAIR (__ OPJOIN __ OPPAIR)* _ ']'
+NEXPR = '[' _ OPPAIR (__ OPJOIN __ OPPAIR)* _ ']'
 
 OPPAIR = OPLEFT _ OP _ OPRIGHT
 
-OPLEFT = STRN | NODELEFT | CHP+
+OPLEFT = STRN | NEXPRLEFT | CHP+
 
-NODELEFT = '[' _ (STRN | CHP+) _ OP _ OPRIGHT _ ']'
+NEXPRLEFT = '[' _ (STRN | CHP+) _ OP _ OPRIGHT _ ']'
 
 OPRIGHT = PLACEHOLDER | VALJ
 
@@ -78,7 +78,7 @@ OP =  ( ("not" __)? ("like" | "in" | "re")
         | '>'
         | '<'
       )
-      
+
 OPJOIN = ("and" | "or") (__ "not")?
 
 STRN = '"' CHJ+ '"'
@@ -131,7 +131,7 @@ EOF = !.
 static void *_jqp_malloc(struct _yycontext *yy, size_t size) {
   void *ret = malloc(size);
   if (!ret) {
-    JQPAUX *aux = yy->aux; 
+    JQPAUX *aux = yy->aux;
     aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     if (aux->fatal_jmp) {
       longjmp(*aux->fatal_jmp, 1);
@@ -143,10 +143,10 @@ static void *_jqp_malloc(struct _yycontext *yy, size_t size) {
   return ret;
 }
 
-static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size) {    
+static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size) {
   void *ret = realloc(ptr, size);
   if (!ret) {
-    JQPAUX *aux = yy->aux; 
+    JQPAUX *aux = yy->aux;
     aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     if (aux->fatal_jmp) {
       longjmp(*aux->fatal_jmp, 1);

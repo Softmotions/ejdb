@@ -13,30 +13,31 @@ int clean_suite(void) {
 }
 
 void jql_test1() {
-  printf("\nJQ parser\n");
-  JQPAUX aux = {
-    .line = 1,
-    .col = 1,
-    //.buf = "/foo/bar"
-    //.buf = "/\"foo\"/\"b ar\""
-    //.buf = "/foo and /bar"
-    //.buf = "/foo/[bar = \"val\"]"
-    //.buf = "/foo/[barlike22]" err
-    //.buf = "/foo/[bar like 33]"
-    //.buf = "/foo/[bar not like 33]"
-    //.buf = "/foo/[bar=33 and zzz like \"te?s*t\"]"
-    //.buf = "/foo/[bar = :placeholder]"
-    //.buf = "/foo/[bar = :? and \"baz\" = :?] or /root/**/[fname not like \"John\"]"
-    //.buf = "/foo/[bar = []]"
-    //.buf = "/foo/[bar = [1, 2,3,{},{\"foo\": \"bar\"}]]"
-    //.buf = "/foo/[bar = {}]"
-    //.buf = "/tags/[* in [\"sample\", \"foo\"] and * like \"ta*\"]"
-    //.buf = "/**/[[* = \"familyName\"] = \"Doe\"]"
-    .buf = "@one/**/[familyName like \"D\\n*\"] \nand /**/family/mother/[age > 30] \nand not /bar/\"ba z\\\"zz\" \n| apply {} \n| all - /**/author/{givenName,familyName}"
-  };
-  fprintf(stderr, "\n%s\n\n", aux.buf);
-  iwrc rc = jqp_parse(&aux);
+  JQPAUX *aux;
+  iwrc rc =
+    jqp_aux_create(
+      &aux,
+      "@one/**/[familyName like \"D\\n*\"] \nand /**/family/mother/[age > 30] \nand not /bar/\"ba z\\\"zz\" \n| apply {} \n| all - /**/author/{givenName,familyName}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  //.buf = "/foo/bar"
+  //.buf = "/\"foo\"/\"b ar\""
+  //.buf = "/foo and /bar"
+  //.buf = "/foo/[bar = \"val\"]"
+  //.buf = "/foo/[barlike22]" err
+  //.buf = "/foo/[bar like 33]"
+  //.buf = "/foo/[bar not like 33]"
+  //.buf = "/foo/[bar=33 and zzz like \"te?s*t\"]"
+  //.buf = "/foo/[bar = :placeholder]"
+  //.buf = "/foo/[bar = :? and \"baz\" = :?] or /root/**/[fname not like \"John\"]"
+  //.buf = "/foo/[bar = []]"
+  //.buf = "/foo/[bar = [1, 2,3,{},{\"foo\": \"bar\"}]]"
+  //.buf = "/foo/[bar = {}]"
+  //.buf = "/tags/[* in [\"sample\", \"foo\"] and * like \"ta*\"]"
+  //.buf = "/**/[[* = \"familyName\"] = \"Doe\"]"
+  fprintf(stderr, "\n%s\n\n", aux->buf);
+  rc = jqp_parse(aux);
   CU_ASSERT_EQUAL(rc, 0);
+  jqp_aux_destroy(&aux);
 }
 
 int main() {

@@ -10,14 +10,14 @@
 
 #define YY_CTX_LOCAL 1
 #define YY_CTX_MEMBERS \
-  JQPAUX *aux; 
-  
+  JQPAUX *aux;
+
 struct _yycontext;
 static void *_jqp_malloc(struct _yycontext *yy, size_t size);
 static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size);
-        
-#define YY_MALLOC(yy_, sz_) _jqp_malloc(yy_, sz_)        
-#define YY_REALLOC(yy_, ptr_, sz_) _jqp_realloc(yy_, ptr_, sz_)	
+
+#define YY_MALLOC(yy_, sz_) _jqp_malloc(yy_, sz_)
+#define YY_REALLOC(yy_, ptr_, sz_) _jqp_realloc(yy_, ptr_, sz_)
 
 #define YY_INPUT(yy_, buf_, result_, max_size_)	        \
   {	                                                    \
@@ -312,15 +312,15 @@ YY_RULE(int) yy_STRJ(yycontext *yy); /* 33 */
 YY_RULE(int) yy_PAIRJ(yycontext *yy); /* 32 */
 YY_RULE(int) yy_CHJ(yycontext *yy); /* 31 */
 YY_RULE(int) yy_VALJ(yycontext *yy); /* 30 */
-YY_RULE(int) yy_NODELEFT(yycontext *yy); /* 29 */
+YY_RULE(int) yy_NEXPRLEFT(yycontext *yy); /* 29 */
 YY_RULE(int) yy_OPRIGHT(yycontext *yy); /* 28 */
 YY_RULE(int) yy_OP(yycontext *yy); /* 27 */
 YY_RULE(int) yy_OPLEFT(yycontext *yy); /* 26 */
 YY_RULE(int) yy_OPPAIR(yycontext *yy); /* 25 */
 YY_RULE(int) yy_CHP(yycontext *yy); /* 24 */
-YY_RULE(int) yy_OPNODE(yycontext *yy); /* 23 */
+YY_RULE(int) yy_NEXPR(yycontext *yy); /* 23 */
 YY_RULE(int) yy_NODE(yycontext *yy); /* 22 */
-YY_RULE(int) yy_FILTERPREFIX(yycontext *yy); /* 21 */
+YY_RULE(int) yy_FILTERANCHOR(yycontext *yy); /* 21 */
 YY_RULE(int) yy_HEX(yycontext *yy); /* 20 */
 YY_RULE(int) yy_PCHP(yycontext *yy); /* 19 */
 YY_RULE(int) yy_STRN(yycontext *yy); /* 18 */
@@ -349,19 +349,21 @@ YY_ACTION(void) yy_1_NODE(yycontext *yy, char *yytext, int yyleng)
 #define yythunkpos yy->__thunkpos
   yyprintf((stderr, "do yy_1_NODE\n"));
   {
+#line 60
    fprintf(stderr, "N='%s'\n", yytext); ;
   }
 #undef yythunkpos
 #undef yypos
 #undef yy
 }
-YY_ACTION(void) yy_1_FILTERPREFIX(yycontext *yy, char *yytext, int yyleng)
+YY_ACTION(void) yy_1_FILTERANCHOR(yycontext *yy, char *yytext, int yyleng)
 {
 #define __ yy->__
 #define yypos yy->__pos
 #define yythunkpos yy->__thunkpos
-  yyprintf((stderr, "do yy_1_FILTERPREFIX\n"));
+  yyprintf((stderr, "do yy_1_FILTERANCHOR\n"));
   {
+#line 58
    fprintf(stderr, "FP='%s'\n", yytext); ;
   }
 #undef yythunkpos
@@ -492,9 +494,9 @@ YY_RULE(int) yy_VALJ(yycontext *yy)
   yyprintf((stderr, "  fail %s @ %s\n", "VALJ", yy->__buf+yy->__pos));
   return 0;
 }
-YY_RULE(int) yy_NODELEFT(yycontext *yy)
+YY_RULE(int) yy_NEXPRLEFT(yycontext *yy)
 {  int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
-  yyprintf((stderr, "%s\n", "NODELEFT"));  if (!yymatchChar(yy, '[')) goto l38;  if (!yy__(yy)) goto l38;
+  yyprintf((stderr, "%s\n", "NEXPRLEFT"));  if (!yymatchChar(yy, '[')) goto l38;  if (!yy__(yy)) goto l38;
   {  int yypos39= yy->__pos, yythunkpos39= yy->__thunkpos;  if (!yy_STRN(yy)) goto l40;  goto l39;
   l40:;	  yy->__pos= yypos39; yy->__thunkpos= yythunkpos39;  if (!yy_CHP(yy)) goto l38;
   l41:;	
@@ -503,10 +505,10 @@ YY_RULE(int) yy_NODELEFT(yycontext *yy)
   }
   }
   l39:;	  if (!yy__(yy)) goto l38;  if (!yy_OP(yy)) goto l38;  if (!yy__(yy)) goto l38;  if (!yy_OPRIGHT(yy)) goto l38;  if (!yy__(yy)) goto l38;  if (!yymatchChar(yy, ']')) goto l38;
-  yyprintf((stderr, "  ok   %s @ %s\n", "NODELEFT", yy->__buf+yy->__pos));
+  yyprintf((stderr, "  ok   %s @ %s\n", "NEXPRLEFT", yy->__buf+yy->__pos));
   return 1;
   l38:;	  yy->__pos= yypos0; yy->__thunkpos= yythunkpos0;
-  yyprintf((stderr, "  fail %s @ %s\n", "NODELEFT", yy->__buf+yy->__pos));
+  yyprintf((stderr, "  fail %s @ %s\n", "NEXPRLEFT", yy->__buf+yy->__pos));
   return 0;
 }
 YY_RULE(int) yy_OPRIGHT(yycontext *yy)
@@ -556,7 +558,7 @@ YY_RULE(int) yy_OPLEFT(yycontext *yy)
 {  int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
   yyprintf((stderr, "%s\n", "OPLEFT"));
   {  int yypos61= yy->__pos, yythunkpos61= yy->__thunkpos;  if (!yy_STRN(yy)) goto l62;  goto l61;
-  l62:;	  yy->__pos= yypos61; yy->__thunkpos= yythunkpos61;  if (!yy_NODELEFT(yy)) goto l63;  goto l61;
+  l62:;	  yy->__pos= yypos61; yy->__thunkpos= yythunkpos61;  if (!yy_NEXPRLEFT(yy)) goto l63;  goto l61;
   l63:;	  yy->__pos= yypos61; yy->__thunkpos= yythunkpos61;  if (!yy_CHP(yy)) goto l60;
   l64:;	
   {  int yypos65= yy->__pos, yythunkpos65= yy->__thunkpos;  if (!yy_CHP(yy)) goto l65;  goto l64;
@@ -597,17 +599,17 @@ YY_RULE(int) yy_CHP(yycontext *yy)
   yyprintf((stderr, "  fail %s @ %s\n", "CHP", yy->__buf+yy->__pos));
   return 0;
 }
-YY_RULE(int) yy_OPNODE(yycontext *yy)
+YY_RULE(int) yy_NEXPR(yycontext *yy)
 {  int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
-  yyprintf((stderr, "%s\n", "OPNODE"));  if (!yymatchChar(yy, '[')) goto l73;  if (!yy__(yy)) goto l73;  if (!yy_OPPAIR(yy)) goto l73;
+  yyprintf((stderr, "%s\n", "NEXPR"));  if (!yymatchChar(yy, '[')) goto l73;  if (!yy__(yy)) goto l73;  if (!yy_OPPAIR(yy)) goto l73;
   l74:;	
   {  int yypos75= yy->__pos, yythunkpos75= yy->__thunkpos;  if (!yy___(yy)) goto l75;  if (!yy_OPJOIN(yy)) goto l75;  if (!yy___(yy)) goto l75;  if (!yy_OPPAIR(yy)) goto l75;  goto l74;
   l75:;	  yy->__pos= yypos75; yy->__thunkpos= yythunkpos75;
   }  if (!yy__(yy)) goto l73;  if (!yymatchChar(yy, ']')) goto l73;
-  yyprintf((stderr, "  ok   %s @ %s\n", "OPNODE", yy->__buf+yy->__pos));
+  yyprintf((stderr, "  ok   %s @ %s\n", "NEXPR", yy->__buf+yy->__pos));
   return 1;
   l73:;	  yy->__pos= yypos0; yy->__thunkpos= yythunkpos0;
-  yyprintf((stderr, "  fail %s @ %s\n", "OPNODE", yy->__buf+yy->__pos));
+  yyprintf((stderr, "  fail %s @ %s\n", "NEXPR", yy->__buf+yy->__pos));
   return 0;
 }
 YY_RULE(int) yy_NODE(yycontext *yy)
@@ -620,7 +622,7 @@ if (!(YY_BEGIN)) goto l76;
 #undef yyleng
   }
   {  int yypos77= yy->__pos, yythunkpos77= yy->__thunkpos;  if (!yy_STRN(yy)) goto l78;  goto l77;
-  l78:;	  yy->__pos= yypos77; yy->__thunkpos= yythunkpos77;  if (!yy_OPNODE(yy)) goto l79;  goto l77;
+  l78:;	  yy->__pos= yypos77; yy->__thunkpos= yythunkpos77;  if (!yy_NEXPR(yy)) goto l79;  goto l77;
   l79:;	  yy->__pos= yypos77; yy->__thunkpos= yythunkpos77;  if (!yy_CHP(yy)) goto l76;
   l80:;	
   {  int yypos81= yy->__pos, yythunkpos81= yy->__thunkpos;  if (!yy_CHP(yy)) goto l81;  goto l80;
@@ -640,9 +642,9 @@ if (!(YY_END)) goto l76;
   yyprintf((stderr, "  fail %s @ %s\n", "NODE", yy->__buf+yy->__pos));
   return 0;
 }
-YY_RULE(int) yy_FILTERPREFIX(yycontext *yy)
+YY_RULE(int) yy_FILTERANCHOR(yycontext *yy)
 {  int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
-  yyprintf((stderr, "%s\n", "FILTERPREFIX"));  if (!yymatchChar(yy, '@')) goto l82;  yyText(yy, yy->__begin, yy->__end);  {
+  yyprintf((stderr, "%s\n", "FILTERANCHOR"));  if (!yymatchChar(yy, '@')) goto l82;  yyText(yy, yy->__begin, yy->__end);  {
 #define yytext yy->__text
 #define yyleng yy->__textlen
 if (!(YY_BEGIN)) goto l82;
@@ -658,11 +660,11 @@ if (!(YY_BEGIN)) goto l82;
 if (!(YY_END)) goto l82;
 #undef yytext
 #undef yyleng
-  }  yyDo(yy, yy_1_FILTERPREFIX, yy->__begin, yy->__end);
-  yyprintf((stderr, "  ok   %s @ %s\n", "FILTERPREFIX", yy->__buf+yy->__pos));
+  }  yyDo(yy, yy_1_FILTERANCHOR, yy->__begin, yy->__end);
+  yyprintf((stderr, "  ok   %s @ %s\n", "FILTERANCHOR", yy->__buf+yy->__pos));
   return 1;
   l82:;	  yy->__pos= yypos0; yy->__thunkpos= yythunkpos0;
-  yyprintf((stderr, "  fail %s @ %s\n", "FILTERPREFIX", yy->__buf+yy->__pos));
+  yyprintf((stderr, "  fail %s @ %s\n", "FILTERANCHOR", yy->__buf+yy->__pos));
   return 0;
 }
 YY_RULE(int) yy_HEX(yycontext *yy)
@@ -924,7 +926,7 @@ YY_RULE(int) yy___(yycontext *yy)
 YY_RULE(int) yy_FILTER(yycontext *yy)
 {  int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
   yyprintf((stderr, "%s\n", "FILTER"));
-  {  int yypos153= yy->__pos, yythunkpos153= yy->__thunkpos;  if (!yy_FILTERPREFIX(yy)) goto l153;  goto l154;
+  {  int yypos153= yy->__pos, yythunkpos153= yy->__thunkpos;  if (!yy_FILTERANCHOR(yy)) goto l153;  goto l154;
   l153:;	  yy->__pos= yypos153; yy->__thunkpos= yythunkpos153;
   }
   l154:;	  if (!yy_NODE(yy)) goto l152;
@@ -1007,12 +1009,13 @@ YY_PARSE(yycontext *) YYRELEASE(yycontext *yyctx)
 }
 
 #endif
+#line 129 "./jqp.leg"
 
 
 static void *_jqp_malloc(struct _yycontext *yy, size_t size) {
   void *ret = malloc(size);
   if (!ret) {
-    JQPAUX *aux = yy->aux; 
+    JQPAUX *aux = yy->aux;
     aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     if (aux->fatal_jmp) {
       longjmp(*aux->fatal_jmp, 1);
@@ -1024,10 +1027,10 @@ static void *_jqp_malloc(struct _yycontext *yy, size_t size) {
   return ret;
 }
 
-static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size) {    
+static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size) {
   void *ret = realloc(ptr, size);
   if (!ret) {
-    JQPAUX *aux = yy->aux; 
+    JQPAUX *aux = yy->aux;
     aux->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     if (aux->fatal_jmp) {
       longjmp(*aux->fatal_jmp, 1);
