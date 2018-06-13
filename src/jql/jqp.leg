@@ -34,7 +34,7 @@ static JQPUNIT *_jqp_string(struct _yycontext *yy, jqp_strflags_t flags, const c
 
 QUERY = FILTER (__ FILTERJOIN __ FILTER)* (_ APPLY)? (_ PROJ)? _ EOF
 
-FILTERJOIN = ("and" | "or") (__ "not")?
+FILTERJOIN = (("and" | "or") (__ "not")?)
 
 APPLY = ('|' _ "apply" __ (PLACEHOLDER | OBJJ | ARRJ))
 
@@ -67,7 +67,7 @@ NODE = '/' (STRN | NEXPR | STRP)
 
 NEXPR = '[' _ NEXPAIR (__ NEXJOIN __ NEXPAIR)* _ ']'
 
-NEXJOIN = ("and" | "or") (__ "not")?
+NEXJOIN = (("and" | "or") (__ "not")?)
 
 NEXPAIR = NEXLEFT _ NEXOP _ NEXRIGHT
 
