@@ -17,6 +17,7 @@ void jql_test1() {
   iwrc rc =
     jqp_aux_create(
       &aux,
+      //"/foo/[bar={\"f\":12}]");
       "@one/**/[familyName like \"D\\n*\"] \nand /**/family/mother/[age > 30] \nand not /bar/\"ba z\\\"zz\" \n| apply {} \n| all - /**/author/{givenName,familyName}");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   //.buf = "/foo/bar"

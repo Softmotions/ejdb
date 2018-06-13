@@ -21,12 +21,12 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
       <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
+      <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
-      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp;*.txt;*.md;*.txt;*.cmake;*.peg]]>
+      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp;*.txt;*.md;*.txt;*.cmake;*.peg;*.leg]]>
     </Extensions>
     <Topleveldir>/home/adam/Projects/softmotions/ejdb</Topleveldir>
   </Reconciliation>
@@ -34,6 +34,9 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <VirtualDirectory Name="jql">
+      <VirtualDirectory Name="inc">
+        <File Name="src/jql/inc/jqpx.c"/>
+      </VirtualDirectory>
       <File Name="src/jql/jqp.leg"/>
       <VirtualDirectory Name="tests">
         <File Name="src/jql/tests/jql_test1.c"/>
