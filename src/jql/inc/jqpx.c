@@ -92,7 +92,20 @@ static JQPUNIT *_jqp_string(yycontext *yy, jqp_strflags_t flags, const char *tex
   return ret;
 }
 
+static void _jqp_unit_negate(yycontext *yy) {
+  yy->aux->negate = true;
+}
 
+static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
+  fprintf(stderr, "op=%s\n", text);
+  JQPAUX *aux = yy->aux;
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->op.type = JQP_OP_TYPE;
+  unit->op.negate = aux->negate;
+  aux->negate = false;
+  unit->op.value = _jqp_strdup(yy, text);
+  return unit;
+}
 
 //--------------- Public
 

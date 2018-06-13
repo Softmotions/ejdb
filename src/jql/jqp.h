@@ -21,6 +21,7 @@ typedef enum {
   JQP_NEXPR_LEFT_TYPE,
   JQP_NEXPR_RIGHT_TYPE,
   JQP_STRING_TYPE,
+  JQP_OP_TYPE
 } jqp_unit_t;
 
 typedef enum {
@@ -90,6 +91,7 @@ struct JQP_STRING {
 };
 
 struct JQP_OP {
+  jqp_unit_t type;
   bool negate;
   char *value;
 };
@@ -124,6 +126,7 @@ typedef struct _JQPAUX {
   IWPOOL *pool;
   JQPUNIT *unit;
   JQPSTACK *stack;
+  bool negate;
 } JQPAUX;
 
 iwrc jqp_aux_create(JQPAUX **auxp, const char *input);
