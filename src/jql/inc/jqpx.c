@@ -84,15 +84,106 @@ IW_INLINE JQPUNIT *_jqp_unit(yycontext *yy) {
   return ret;
 }
 
-static JQPUNIT *_jqp_string(yycontext *yy, jqp_strflags_t flags, const char *text) {
-  JQPUNIT *ret = _jqp_unit(yy);
-  ret->string.type = JQP_STRING_TYPE;
-  ret->string.flags = flags;
-  ret->string.value = _jqp_strdup(yy, text);
-  return ret;
+static JQPSTACK *_jqp_push(yycontext *yy) {
+  JQPAUX *aux = yy->aux;
+  JQPSTACK *stack = iwpool_alloc(sizeof(*aux->stack), aux->pool);
+  if (!stack) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  stack->next = 0;
+  if (!aux->stack) {
+    stack->prev = 0;
+  } else {
+    aux->stack->next = stack;
+    stack->prev = aux->stack;
+  }
+  aux->stack = stack;
+  return aux->stack;
 }
 
-static void _jqp_unit_negate(yycontext *yy) {
+static JQPSTACK *_jqp_pop(yycontext *yy) {
+  JQPAUX *aux = yy->aux;
+  JQPSTACK *stack = aux->stack;
+  if (!stack) {
+    iwlog_error2("Unbalanced JQPSTACK");
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  aux->stack = stack->prev;
+  if (aux->stack) {
+    aux->stack->next = 0;
+  }
+  stack->prev = 0;
+  stack->next = 0;
+  return stack;
+}
+
+static void _jpq_unit_push(yycontext *yy, JQPUNIT *unit) {
+  JQPSTACK *stack = _jqp_push(yy);
+  stack->type = STACK_UNIT;
+  stack->unit = unit;
+}
+
+static JQPUNIT *_jqp_unit_pop(yycontext *yy) {
+  JQPSTACK *stack = _jqp_pop(yy);
+  if (stack->type != STACK_UNIT) {
+    iwlog_error("Incorrect value type on stack: %d", stack->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  return stack->unit;
+}
+
+static void _jpq_string_push(yycontext *yy, char *str) {
+  JQPSTACK *stack = _jqp_push(yy);
+  stack->type = STACK_STRING;
+  stack->str = str;
+}
+
+static char *_jqp_string_pop(yycontext *yy) {
+  JQPSTACK *stack = _jqp_pop(yy);
+  if (stack->type != STACK_STRING) {
+    iwlog_error("Incorrect value type on stack: %d", stack->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  return stack->str;
+}
+
+static void _jpq_int_push(yycontext *yy, int64_t i64) {
+  JQPSTACK *stack = _jqp_push(yy);
+  stack->type = STACK_INT;
+  stack->i64 = i64;
+}
+
+static int64_t _jqp_int_pop(yycontext *yy) {
+  JQPSTACK *stack = _jqp_pop(yy);
+  if (stack->type != STACK_INT) {
+    iwlog_error("Incorrect value type on stack: %d", stack->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  return stack->i64;
+}
+
+static void _jpq_float_push(yycontext *yy, double f64) {
+  JQPSTACK *stack = _jqp_push(yy);
+  stack->type = STACK_FLOAT;
+  stack->f64 = f64;
+}
+
+static double _jqp_float_pop(yycontext *yy) {
+  JQPSTACK *stack = _jqp_pop(yy);
+  if (stack->type != STACK_FLOAT) {
+    iwlog_error("Incorrect value type on stack: %d", stack->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  return stack->f64;
+}
+
+static JQPUNIT *_jqp_string(yycontext *yy, jqp_strflags_t flags, const char *text) {
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_STRING_TYPE;
+  unit->string.flags = flags;
+  unit->string.value = _jqp_strdup(yy, text);
+  return unit;
+}
+
+static void _jqp_op_negate(yycontext *yy) {
   yy->aux->negate = true;
 }
 
@@ -100,10 +191,44 @@ static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
   fprintf(stderr, "op=%s\n", text);
   JQPAUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
-  unit->op.type = JQP_OP_TYPE;
+  unit->type = JQP_OP_TYPE;  
   unit->op.negate = aux->negate;
   aux->negate = false;
-  unit->op.value = _jqp_strdup(yy, text);
+  if (!strcmp(text, "=") || !strcmp(text, "eq")) {
+    unit->op.op = JQP_OP_EQ;
+  } else if (!strcmp(text, ">") || !strcmp(text, "gt")) {
+    unit->op.op = JQP_OP_GT;
+  } else if (!strcmp(text, ">=") || !strcmp(text, "gte")) {
+    unit->op.op = JQP_OP_GTE;
+  } else if (!strcmp(text, "<") || !strcmp(text, "lt")) {
+    unit->op.op = JQP_OP_LT;
+  } else if (!strcmp(text, "<=") || !strcmp(text, "lte")) {
+    unit->op.op = JQP_OP_LTE;
+  } else if (!strcmp(text, "in")) {
+    unit->op.op = JQP_OP_IN;
+  } else if (!strcmp(text, "re")) {
+    unit->op.op = JQP_OP_RE;
+  } else if (!strcmp(text, "like")) {
+    unit->op.op = JQP_OP_RE;
+  } else {
+    iwlog_error("Invalid JQP_OP_TYPE: %s", text);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  return unit;
+}
+
+static JQPUNIT *_jqp_unit_join(yycontext *yy, const char *text) {
+  fprintf(stderr, "join=%s\n", text);
+  JQPAUX *aux = yy->aux;
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_JOIN_TYPE;  
+  unit->join.negate = aux->negate;
+  aux->negate = false;
+  if (!strcmp(text, "and")) {
+    unit->join.join = JQP_JOIN_AND;
+  } else if (!strcmp(text, "or")) {
+    unit->join.join = JQP_JOIN_OR;
+  }
   return unit;
 }
 
