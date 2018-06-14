@@ -17,9 +17,7 @@ typedef enum {
   JQP_QUERY_TYPE = 1,
   JQP_FILTER_TYPE,
   JQP_NODE_TYPE,
-  JQP_NEXPR_TYPE,
-  JQP_NEXPR_LEFT_TYPE,
-  JQP_NEXPR_RIGHT_TYPE,
+  JQP_EXPR_TYPE,
   JQP_STRING_TYPE,
   JQP_OP_TYPE,
   JQP_JOIN_TYPE
@@ -33,18 +31,9 @@ typedef enum {
 } jqp_node_type_t;
 
 typedef enum {
-  JQP_NEXPR_FIELD = 1,
-  JQP_NEXPR_ANY,
-  JQP_NEXPR_LEFT
-} jqp_nexpr_type_t;
-
-typedef enum {
   JQP_JOIN_AND = 1,
-  JQP_JOIN_OR
-} jqp_join_t;
-
-typedef enum {
-  JQP_OP_EQ = 1,
+  JQP_JOIN_OR,
+  JQP_OP_EQ,
   JQP_OP_GT,
   JQP_OP_GTE,
   JQP_OP_LT,
@@ -64,7 +53,7 @@ struct JQP_QUERY {
 struct JQP_FILTER {
   jqp_unit_t type;
   bool negate;
-  jqp_join_t join;
+  jqp_op_t join;
   const char *anchor;
   JQPUNIT *nodes;
 };
@@ -76,10 +65,10 @@ struct JQP_NODE {
   JQPUNIT *nexpr;
 };
 
-struct JQP_NEXPR {
+struct JQP_EXPR {
   jqp_unit_t type;
   bool negate;
-  jqp_join_t join;
+  JQPUNIT *op;
   JQPUNIT *left;
   JQPUNIT *right;
   JQPUNIT *next;
@@ -100,7 +89,7 @@ struct JQP_OP {
 struct JQP_JOIN {
   jqp_unit_t type;
   bool negate;
-  jqp_join_t join;
+  jqp_op_t join;
 };
 
 //--
@@ -110,10 +99,10 @@ union _JQPUNIT {
   struct JQP_QUERY query;
   struct JQP_FILTER filter;
   struct JQP_NODE node;
-  struct JQP_NEXPR nexpr;
-  struct JQP_STRING string; 
-  struct JQP_OP op;
+  struct JQP_EXPR expr;
   struct JQP_JOIN join;
+  struct JQP_OP op;
+  struct JQP_STRING string; 
 };
 
 typedef enum {

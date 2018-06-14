@@ -13,15 +13,16 @@ static JQPUNIT *_jqp_string(struct _yycontext *yy, jqp_strflags_t flags, const c
 static void _jqp_op_negate(struct _yycontext *yy);
 static JQPUNIT *_jqp_unit_op(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_unit_join(struct _yycontext *yy, const char *text);
+static JQPUNIT *_jqp_expr(struct _yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *right);
 
 static JQPSTACK *_jqp_push(struct _yycontext *yy);
-static void _jpq_unit_push(struct _yycontext *yy, JQPUNIT *unit);
+static void _jqp_unit_push(struct _yycontext *yy, JQPUNIT *unit);
 static JQPUNIT *_jqp_unit_pop(struct _yycontext *yy);
-static void _jpq_string_push(struct _yycontext *yy, char *str);
+static void _jqp_string_push(struct _yycontext *yy, char *str);
 static char *_jqp_string_pop(struct _yycontext *yy);
-static void _jpq_int_push(struct _yycontext *yy, int64_t i64);
+static void _jqp_int_push(struct _yycontext *yy, int64_t i64);
 static int64_t _jqp_int_pop(struct _yycontext *yy);
-static void _jpq_float_push(struct _yycontext *yy, double f64);
+static void _jqp_float_push(struct _yycontext *yy, double f64);
 static double _jqp_double_pop(struct _yycontext *yy);
 static JQPSTACK *_jqp_pop(struct _yycontext *yy);
 
@@ -80,21 +81,23 @@ FILTERANCHOR = '@' <[a-zA-Z0-9]+> { }
 
 NODE = '/' (STRN | NEXPR | STRP)
 
-NEXPR = '[' _ NEXPAIR (__ NEXJOIN __ NEXPAIR)* _ ']'
+NEXPR = ('[' _ n:NEXPAIR { _jqp_unit_push(yy, n); } 
+          ( __ j:NEXJOIN { _jqp_unit_push(yy, j); } __ np:NEXPAIR { _jqp_unit_push(yy, np); })* _ ']')   
+          {  }
 
 NEXJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)        { $$ = _jqp_unit_join(yy, yytext); }  
 
-NEXPAIR = NEXLEFT _ NEXOP _ NEXRIGHT
+NEXPAIR = (l:NEXLEFT _ o:NEXOP _ r:NEXRIGHT)                            { $$ = _jqp_expr(yy, l, o, r); }
 
-NEXLEFT = STRN | NEXPRLEFT | STRP
+NEXLEFT = (l:STRN | l:NEXPRLEFT | l:STRP)                               { $$ = l; }
 
-NEXPRLEFT = ('[' _ (s:STRN | s:STRP) _ o:NEXOP _ r:NEXRIGHT _ ']') {  }
+NEXPRLEFT = ('[' _ (l:STRN | l:STRP) _ o:NEXOP _ r:NEXRIGHT _ ']')      { $$ = _jqp_expr(yy, l, o, r); }
 
-NEXRIGHT = p:PLACEHOLDER { $$ = p; } | j:VALJSON { $$ = j; }
+NEXRIGHT = (r:PLACEHOLDER | r:VALJSON)                                  { $$ = r; }
 
 VALJSON = <VALJ> { $$ = _jqp_string(yy, JPQ_STRFLAGS_JSON, yytext); } 
 
-PLACEHOLDER = ':' <([a-zA-Z0-9]+ | '?')> { $$ = _jqp_string(yy, JPQ_STRFLAGS_PLACEHOLDER, yytext); }
+PLACEHOLDER = ':' <([a-zA-Z0-9]+ | '?')>                                { $$ = _jqp_string(yy, JPQ_STRFLAGS_PLACEHOLDER, yytext); }
 
 NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("like" | "in" | "re")>    { $$ = _jqp_unit_op(yy, yytext); } 
         | <(">=" | "gte")>                                              { $$ = _jqp_unit_op(yy, yytext); } 

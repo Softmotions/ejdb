@@ -115,7 +115,7 @@ static JQPSTACK *_jqp_pop(yycontext *yy) {
   return stack;
 }
 
-static void _jpq_unit_push(yycontext *yy, JQPUNIT *unit) {
+static void _jqp_unit_push(yycontext *yy, JQPUNIT *unit) {
   JQPSTACK *stack = _jqp_push(yy);
   stack->type = STACK_UNIT;
   stack->unit = unit;
@@ -130,7 +130,7 @@ static JQPUNIT *_jqp_unit_pop(yycontext *yy) {
   return stack->unit;
 }
 
-static void _jpq_string_push(yycontext *yy, char *str) {
+static void _jqp_string_push(yycontext *yy, char *str) {
   JQPSTACK *stack = _jqp_push(yy);
   stack->type = STACK_STRING;
   stack->str = str;
@@ -145,7 +145,7 @@ static char *_jqp_string_pop(yycontext *yy) {
   return stack->str;
 }
 
-static void _jpq_int_push(yycontext *yy, int64_t i64) {
+static void _jqp_int_push(yycontext *yy, int64_t i64) {
   JQPSTACK *stack = _jqp_push(yy);
   stack->type = STACK_INT;
   stack->i64 = i64;
@@ -160,7 +160,7 @@ static int64_t _jqp_int_pop(yycontext *yy) {
   return stack->i64;
 }
 
-static void _jpq_float_push(yycontext *yy, double f64) {
+static void _jqp_float_push(yycontext *yy, double f64) {
   JQPSTACK *stack = _jqp_push(yy);
   stack->type = STACK_FLOAT;
   stack->f64 = f64;
@@ -229,6 +229,24 @@ static JQPUNIT *_jqp_unit_join(yycontext *yy, const char *text) {
   } else if (!strcmp(text, "or")) {
     unit->join.join = JQP_JOIN_OR;
   }
+  return unit;
+}
+
+static JQPUNIT *_jqp_expr(yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *right) {
+  if (!left || !op || !right) {
+    iwlog_error2("Invalid _jqp_expr args");
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  if (op->type != JQP_OP_TYPE && op->type != JQP_JOIN_TYPE) {
+    iwlog_error("Invalid _jqp_expr op type: %s", op->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  JQPAUX *aux = yy->aux;
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_EXPR_TYPE;
+  unit->expr.left = left;
+  unit->expr.op = op;
+  unit->expr.right = right;
   return unit;
 }
 
