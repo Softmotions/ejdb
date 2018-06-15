@@ -22,7 +22,6 @@ typedef enum {
   JQP_STRING_TYPE,
   JQP_OP_TYPE,
   JQP_JOIN_TYPE,
-  JQP_APPLY_TYPE,
   JQP_PROJECTION_TYPE
 } jqp_unit_t;
 
@@ -90,10 +89,6 @@ struct JQP_JOIN {
   jqp_op_t join;
 };
 
-struct JQP_APPLY {
-  jqp_unit_t type;
-};
-
 struct JQP_PROJECTION {
   jqp_unit_t type;
 };
@@ -101,6 +96,7 @@ struct JQP_PROJECTION {
 struct JQP_QUERY {
   jqp_unit_t type;
   struct JQP_FILTER *filter;
+  struct JQP_STRING *apply;
 };
 
 //--

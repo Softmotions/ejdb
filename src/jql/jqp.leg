@@ -30,6 +30,7 @@ static JQPSTACK *_jqp_pop(struct _yycontext *yy);
 static JQPUNIT *_jqp_pop_expr_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_node_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_filters_and_set_query(struct _yycontext *yy, JQPUNIT *until);
+static void _jqp_set_apply(struct _yycontext *yy, JQPUNIT *unit);
 
 #define YYSTYPE JQPUNIT*
 #define YY_MALLOC(yy_, sz_) _jqp_malloc(yy_, sz_)
@@ -56,13 +57,16 @@ static JQPUNIT *_jqp_pop_filters_and_set_query(struct _yycontext *yy, JQPUNIT *u
 QUERY = (ff:FILTER { _jqp_unit_push(yy, ff); } 
          (__ j:FILTERJOIN { _jqp_unit_push(yy, j); } __ f:FILTER { _jqp_unit_push(yy, f); })*)
         { _jqp_pop_filters_and_set_query(yy, ff); }
-        (_ APPLY)? (_ PROJ)? _ EOF
+        (_ a:APPLY { _jqp_set_apply(yy, a); } )? 
+        (_ p:PROJECTION)? _ EOF
 
 FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jqp_unit_join(yy, yytext); }
 
-APPLY = ('|' _ "apply" __ (PLACEHOLDER | OBJJ | ARRJ))
+APPLY = ('|' _ "apply" __ ( p:PLACEHOLDER { $$ = p; } 
+                           | <OBJJ> { $$ = _jqp_string(yy, JQP_STR_JSON, yytext); } 
+                           | <ARRJ> { $$ = _jqp_string(yy, JQP_STR_JSON, yytext); }) )
 
-PROJ = '|' _ PROJCHAIN+
+PROJECTION = '|' _ PROJCHAIN+
 
 PROJCHAIN = PROJNODES (__ PROJOIN _ PROJNODES)*
 

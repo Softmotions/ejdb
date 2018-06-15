@@ -372,6 +372,16 @@ static JQPUNIT *_jqp_pop_filters_and_set_query(yycontext *yy, JQPUNIT *until) {
   return query;
 }
 
+static void _jqp_set_apply(yycontext *yy, JQPUNIT *unit) {
+  JQPAUX *aux = yy->aux;
+  if (!unit || unit->type != JQP_STRING_TYPE || !aux->query) {
+    iwlog_error2("Invalid _jqp_set_apply state");
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  aux->query->apply = &unit->string;  
+}
+
+
 //--------------- Public API
 
 iwrc jqp_aux_create(JQPAUX **auxp, const char *input) {
