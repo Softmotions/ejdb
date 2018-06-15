@@ -1,3 +1,4 @@
+#pragma once
 #ifndef JBLDOM_H
 #define JBLDOM_H
 

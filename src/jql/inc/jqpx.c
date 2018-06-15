@@ -1,4 +1,5 @@
 #include "jqp.h"
+#include "jbldom.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -86,7 +87,7 @@ IW_INLINE JQPUNIT *_jqp_unit(yycontext *yy) {
 
 static JQPSTACK *_jqp_push(yycontext *yy) {
   JQPAUX *aux = yy->aux;
-  JQPSTACK *stack = iwpool_alloc(sizeof(*aux->stack), aux->pool);
+  JQPSTACK *stack = malloc(sizeof(*aux->stack));
   if (!stack) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
   stack->next = 0;
   if (!aux->stack) {
@@ -99,9 +100,9 @@ static JQPSTACK *_jqp_push(yycontext *yy) {
   return aux->stack;
 }
 
-static JQPSTACK *_jqp_pop(yycontext *yy) {
+static JQPSTACK _jqp_pop(yycontext *yy) {
   JQPAUX *aux = yy->aux;
-  JQPSTACK *stack = aux->stack;
+  JQPSTACK *stack = aux->stack, ret;
   if (!stack) {
     iwlog_error2("Unbalanced JQPSTACK");
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -112,7 +113,9 @@ static JQPSTACK *_jqp_pop(yycontext *yy) {
   }
   stack->prev = 0;
   stack->next = 0;
-  return stack;
+  ret = *stack;
+  free(stack);
+  return ret;
 }
 
 static void _jqp_unit_push(yycontext *yy, JQPUNIT *unit) {
@@ -122,12 +125,12 @@ static void _jqp_unit_push(yycontext *yy, JQPUNIT *unit) {
 }
 
 static JQPUNIT *_jqp_unit_pop(yycontext *yy) {
-  JQPSTACK *stack = _jqp_pop(yy);
-  if (stack->type != STACK_UNIT) {
-    iwlog_error("Incorrect value type on stack: %d", stack->type);
+  JQPSTACK stack = _jqp_pop(yy);
+  if (stack.type != STACK_UNIT) {
+    iwlog_error("Incorrect value type on stack: %d", stack.type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
-  return stack->unit;
+  return stack.unit;
 }
 
 static void _jqp_string_push(yycontext *yy, char *str) {
@@ -137,42 +140,12 @@ static void _jqp_string_push(yycontext *yy, char *str) {
 }
 
 static char *_jqp_string_pop(yycontext *yy) {
-  JQPSTACK *stack = _jqp_pop(yy);
-  if (stack->type != STACK_STRING) {
-    iwlog_error("Incorrect value type on stack: %d", stack->type);
+  JQPSTACK stack = _jqp_pop(yy);
+  if (stack.type != STACK_STRING) {
+    iwlog_error("Incorrect value type on stack: %d", stack.type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
-  return stack->str;
-}
-
-static void _jqp_int_push(yycontext *yy, int64_t i64) {
-  JQPSTACK *stack = _jqp_push(yy);
-  stack->type = STACK_INT;
-  stack->i64 = i64;
-}
-
-static int64_t _jqp_int_pop(yycontext *yy) {
-  JQPSTACK *stack = _jqp_pop(yy);
-  if (stack->type != STACK_INT) {
-    iwlog_error("Incorrect value type on stack: %d", stack->type);
-    JQRC(yy, JQL_ERROR_QUERY_PARSE);
-  }
-  return stack->i64;
-}
-
-static void _jqp_float_push(yycontext *yy, double f64) {
-  JQPSTACK *stack = _jqp_push(yy);
-  stack->type = STACK_FLOAT;
-  stack->f64 = f64;
-}
-
-static double _jqp_float_pop(yycontext *yy) {
-  JQPSTACK *stack = _jqp_pop(yy);
-  if (stack->type != STACK_FLOAT) {
-    iwlog_error("Incorrect value type on stack: %d", stack->type);
-    JQRC(yy, JQL_ERROR_QUERY_PARSE);
-  }
-  return stack->f64;
+  return stack.str;
 }
 
 static JQPUNIT *_jqp_string(yycontext *yy, jqp_strflags_t flags, const char *text) {
@@ -180,6 +153,89 @@ static JQPUNIT *_jqp_string(yycontext *yy, jqp_strflags_t flags, const char *tex
   unit->type = JQP_STRING_TYPE;
   unit->string.flags = flags;
   unit->string.value = _jqp_strdup(yy, text);
+  return unit;
+}
+
+static JQPUNIT *_jqp_number(yycontext *yy, const char *text) {
+  JQPUNIT *unit = _jqp_unit(yy);
+  char *eptr;
+  int64_t ival = strtoll(text, &eptr, 0);
+  if (eptr == text || errno == ERANGE) {
+    iwlog_error("Invalid number: %s", text);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  if (*eptr == '.' || *eptr == 'e' || *eptr == 'E') {
+    unit->type = JQP_DOUBLE_TYPE;
+    unit->dblval.value = strtod(text, &eptr);
+    if (eptr == text || errno == ERANGE) {
+      iwlog_error("Invalid double number: %s", text);
+      JQRC(yy, JQL_ERROR_QUERY_PARSE);
+    }
+  } else {
+    unit->type = JQP_INTEGER_TYPE;
+    unit->intval.value = ival;
+  }
+  return unit;
+}
+
+static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text) {
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_JSON_TYPE;
+  unit->json.jn.type = JBV_STR;
+  unit->json.jn.vptr = _jqp_strdup(yy, text);
+  unit->json.jn.vsize = strlen(unit->json.jn.vptr);
+  return unit;
+}
+
+static JQPUNIT *_jqp_json_number(yycontext *yy, const char *text) {
+  JQPUNIT *unit = _jqp_unit(yy);
+  char *eptr;
+  unit->type = JQP_JSON_TYPE;
+  int64_t ival = strtoll(text, &eptr, 0);
+  if (eptr == text || errno == ERANGE) {
+    iwlog_error("Invalid number: %s", text);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  if (*eptr == '.' || *eptr == 'e' || *eptr == 'E') {
+    unit->json.type = JBV_F64;
+    unit->json.jn.vf64 = strtod(text, &eptr);
+    if (eptr == text || errno == ERANGE) {
+      iwlog_error("Invalid double number: %s", text);
+      JQRC(yy, JQL_ERROR_QUERY_PARSE);
+    }
+  } else {
+    unit->json.type = JBV_I64;
+    unit->json.jn.vi64 = ival;
+  }
+  return unit;
+}
+
+static JQPUNIT *_jqp_json_pair(yycontext *yy, JQPUNIT *key, JQPUNIT *val) {
+  if (key->type != JQP_JSON_TYPE || val->type != JQP_JSON_TYPE || key->json.jn.type != JBV_STR) {
+    iwlog_error2("Invalid _jqp_json_pair arguments");
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  val->json.jn.key = key->json.jn.vptr;
+  return val;
+}
+
+static JQPUNIT *_jqp_json_true_false_null(yycontext *yy, const char *text) {
+  JQPAUX *aux = yy->aux;
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_JSON_TYPE;
+  int len = strlen(text);
+  if (!strncmp("null", text, len)) {
+    unit->json.jn.type = JBV_NULL;
+  } else if (!strncmp("true", text, len)) {
+    unit->json.jn.type = JBV_BOOL;
+    unit->json.jn.vbool = true;
+  } else if (!strncmp("false", text, len)) {
+    unit->json.jn.type = JBV_BOOL;
+    unit->json.jn.vbool = false;
+  } else {
+    iwlog_error("Invalid json value: %s must be one of true/false/null", text);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
   return unit;
 }
 
@@ -378,7 +434,7 @@ static void _jqp_set_apply(yycontext *yy, JQPUNIT *unit) {
     iwlog_error2("Invalid _jqp_set_apply state");
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
-  aux->query->apply = &unit->string;  
+  aux->query->apply = &unit->string;
 }
 
 

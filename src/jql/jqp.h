@@ -3,6 +3,7 @@
 #define JQP_H
 
 #include "jql.h"
+#include "jbldom.h"
 #include <errno.h>
 #include <stdbool.h>
 #include <setjmp.h>
@@ -20,9 +21,12 @@ typedef enum {
   JQP_NODE_TYPE,
   JQP_EXPR_TYPE,
   JQP_STRING_TYPE,
+  JQP_INTEGER_TYPE,
+  JQP_DOUBLE_TYPE,
   JQP_OP_TYPE,
   JQP_JOIN_TYPE,
-  JQP_PROJECTION_TYPE
+  JQP_PROJECTION_TYPE,
+  JQP_JSON_TYPE
 } jqp_unit_t;
 
 typedef enum {
@@ -47,6 +51,11 @@ typedef enum {
 
 typedef union _JQPUNIT JQPUNIT;
 
+struct JQP_JSON {
+  jqp_unit_t type;
+  struct _JBLNODE jn;
+};
+
 struct JQP_NODE {
   jqp_unit_t type;
   jqp_node_type_t ntype;  
@@ -65,6 +74,16 @@ struct JQP_STRING {
   jqp_unit_t type;
   jqp_strflags_t flags;
   char *value;
+};
+
+struct JQP_INTEGER {
+  jqp_unit_t type;
+  int64_t value;
+};
+
+struct JQP_DOUBLE {
+  jqp_unit_t type;
+  double value;
 };
 
 struct JQP_OP {
@@ -109,6 +128,9 @@ union _JQPUNIT {
   struct JQP_JOIN join;
   struct JQP_OP op;
   struct JQP_STRING string; 
+  struct JQP_INTEGER intval; 
+  struct JQP_DOUBLE dblval; 
+  struct JQP_JSON json;
 };
 
 typedef enum {
