@@ -749,7 +749,7 @@ iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool) {
 }
 
 iwrc jbl_patch_node(JBLNODE root, const JBLPATCH *p, size_t cnt) {
-  IWPOOL *pool = iwpool_create(0);
+  IWPOOL *pool = iwpool_create(1024);
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -763,7 +763,7 @@ iwrc jbl_patch(JBL jbl, const JBLPATCH *p, size_t cnt) {
   if (!jbl || !p) {
     return IW_ERROR_INVALID_ARGS;
   }
-  IWPOOL *pool = iwpool_create(0);
+  IWPOOL *pool = iwpool_create(1024);
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -777,7 +777,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
   iwrc rc = 0;
   int cnt = 0;
   JBLPATCH *p = 0;
-  IWPOOL *pool = iwpool_create(0);
+  IWPOOL *pool = iwpool_create(1024);
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -1040,7 +1040,7 @@ iwrc jbl_merge_patch(JBL jbl, const char *patchjson) {
   }
   binn bv;
   JBLNODE target;
-  IWPOOL *pool = iwpool_create(0);
+  IWPOOL *pool = iwpool_create(1024);
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }

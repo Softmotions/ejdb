@@ -9,8 +9,9 @@
 #include <iowow/iwpool.h>
 
 typedef enum {
-  JPQ_STRFLAGS_PLACEHOLDER = 1,
-  JPQ_STRFLAGS_JSON
+  JQP_STR_PLACEHOLDER = 1,
+  JQP_STR_JSON,
+  JQP_STR_ANCHOR,
 } jqp_strflags_t;
 
 typedef enum {
@@ -20,7 +21,9 @@ typedef enum {
   JQP_EXPR_TYPE,
   JQP_STRING_TYPE,
   JQP_OP_TYPE,
-  JQP_JOIN_TYPE
+  JQP_JOIN_TYPE,
+  JQP_APPLY_TYPE,
+  JQP_PROJECTION_TYPE
 } jqp_unit_t;
 
 typedef enum {
@@ -45,29 +48,24 @@ typedef enum {
 
 typedef union _JQPUNIT JQPUNIT;
 
-struct JQP_QUERY {
+struct JQP_NODE {
   jqp_unit_t type;
-  JQPUNIT *filters;
+  jqp_node_type_t ntype;  
+  JQPUNIT *value;
+  struct JQP_NODE *next;  
 };
 
 struct JQP_FILTER {
   jqp_unit_t type;
-  bool negate;
-  jqp_op_t join;
   const char *anchor;
-  JQPUNIT *nodes;
-};
-
-struct JQP_NODE {
-  jqp_unit_t type;
-  jqp_node_type_t node_type;
-  const char *value;
-  JQPUNIT *nexpr;
+  struct JQP_JOIN *join;
+  struct JQP_NODE *node;  
 };
 
 struct JQP_EXPR {
   jqp_unit_t type;
   bool negate;
+  struct JQP_JOIN *join;
   JQPUNIT *op;
   JQPUNIT *left;
   JQPUNIT *right;
@@ -92,6 +90,19 @@ struct JQP_JOIN {
   jqp_op_t join;
 };
 
+struct JQP_APPLY {
+  jqp_unit_t type;
+};
+
+struct JQP_PROJECTION {
+  jqp_unit_t type;
+};
+
+struct JQP_QUERY {
+  jqp_unit_t type;
+  struct JQP_FILTER *filter;
+};
+
 //--
 
 union _JQPUNIT {
@@ -113,9 +124,9 @@ typedef enum {
 } jqp_stack_t;
 
 typedef struct _JQPSTACK {  
+  jqp_stack_t type;
   struct _JQPSTACK *next;
   struct _JQPSTACK *prev;
-  jqp_stack_t type;
   union {
     JQPUNIT *unit;
     char *str;
@@ -134,8 +145,8 @@ typedef struct _JQPAUX {
   const char* error;
   const char *buf;
   IWPOOL *pool;
-  JQPUNIT *unit;
   JQPSTACK *stack;
+  struct JQP_QUERY *query;
   bool negate;
 } JQPAUX;
 
