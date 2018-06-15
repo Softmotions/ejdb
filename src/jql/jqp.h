@@ -61,16 +61,6 @@ struct JQP_FILTER {
   struct JQP_NODE *node;  
 };
 
-struct JQP_EXPR {
-  jqp_unit_t type;
-  bool negate;
-  struct JQP_JOIN *join;
-  JQPUNIT *op;
-  JQPUNIT *left;
-  JQPUNIT *right;
-  JQPUNIT *next;
-};
-
 struct JQP_STRING {
   jqp_unit_t type;
   jqp_strflags_t flags;
@@ -87,6 +77,15 @@ struct JQP_JOIN {
   jqp_unit_t type;
   bool negate;
   jqp_op_t join;
+};
+
+struct JQP_EXPR {
+  jqp_unit_t type;  
+  struct JQP_JOIN *join;
+  struct JQP_OP *op;
+  JQPUNIT *left;
+  JQPUNIT *right;
+  struct JQP_EXPR *next;
 };
 
 struct JQP_PROJECTION {

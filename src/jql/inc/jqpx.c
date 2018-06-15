@@ -245,7 +245,7 @@ static JQPUNIT *_jqp_expr(yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *ri
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_EXPR_TYPE;
   unit->expr.left = left;
-  unit->expr.op = op;
+  unit->expr.op = &op->op;
   unit->expr.right = right;
   return unit;
 }
@@ -257,7 +257,7 @@ static JQPUNIT *_jqp_pop_expr_chain(yycontext *yy, JQPUNIT *until) {
     JQPUNIT *unit = aux->stack->unit;
     if (unit->type == JQP_EXPR_TYPE) {
       if (expr) {
-        unit->expr.next = expr;
+        unit->expr.next = &expr->expr;
       }
       expr = unit;
       _jqp_pop(yy);
