@@ -108,6 +108,7 @@ struct JQP_EXPR {
 
 struct JQP_PROJECTION {
   jqp_unit_t type;
+  
 };
 
 struct JQP_QUERY {
