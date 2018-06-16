@@ -11,7 +11,6 @@
 
 typedef enum {
   JQP_STR_PLACEHOLDER = 1,
-  JQP_STR_JSON,
   JQP_STR_ANCHOR,
 } jqp_strflags_t;
 
@@ -114,7 +113,8 @@ struct JQP_PROJECTION {
 struct JQP_QUERY {
   jqp_unit_t type;
   struct JQP_FILTER *filter;
-  struct JQP_STRING *apply;
+  JBLNODE apply_node;
+  char * apply_placeholder;
 };
 
 //--

@@ -10,6 +10,7 @@
 struct _yycontext;
 static void *_jqp_malloc(struct _yycontext *yy, size_t size);
 static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size);
+static JQPUNIT *_jqp_unit(struct _yycontext *yy);
 
 static void _jqp_op_negate(struct _yycontext *yy);
 static JQPUNIT *_jqp_string(struct _yycontext *yy, jqp_strflags_t flags, const char *text);
@@ -23,6 +24,7 @@ static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_json_number(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_json_true_false_null(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_json_pair(struct _yycontext *yy, JQPUNIT *key, JQPUNIT *val);
+static JQPUNIT *_jqp_json_collect(struct _yycontext *yy, jbl_type_t type, JQPUNIT *until);
 
 static JQPSTACK *_jqp_push(struct _yycontext *yy);
 static void _jqp_unit_push(struct _yycontext *yy, JQPUNIT *unit);
@@ -65,9 +67,7 @@ QUERY = (ff:FILTER { _jqp_unit_push(yy, ff); }
 
 FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jqp_unit_join(yy, yytext); }
 
-APPLY = ('|' _ "apply" __ ( p:PLACEHOLDER { $$ = p; } 
-                           | <OBJJ> { $$ = _jqp_string(yy, JQP_STR_JSON, yytext); } 
-                           | <ARRJ> { $$ = _jqp_string(yy, JQP_STR_JSON, yytext); }) )
+APPLY = ('|' _ "apply" __ ( p:PLACEHOLDER { $$ = p; } | o:OBJJ { $$ = o; } | a:ARRJ { $$ = a; } ) )
 
 PROJECTION = '|' _ PROJCHAIN+
 
@@ -110,9 +110,7 @@ NEXLEFT = (l:STRN | l:NEXPRLEFT | l:STRP)                               { $$ = l
 
 NEXPRLEFT = ('[' _ (l:STRN | l:STRP) _ o:NEXOP _ r:NEXRIGHT _ ']')      { $$ = _jqp_expr(yy, l, o, r); }
 
-NEXRIGHT = (r:PLACEHOLDER | r:VALJSON)                                  { $$ = r; }
-
-VALJSON = <VALJ> { $$ = _jqp_string(yy, JQP_STR_JSON, yytext); } 
+NEXRIGHT = (r:PLACEHOLDER | r:VALJ)                                     { $$ = r; }
 
 PLACEHOLDER = ':' <([a-zA-Z0-9]+ | '?')>                                { $$ = _jqp_string(yy, JQP_STR_PLACEHOLDER, yytext); }
 
@@ -127,11 +125,17 @@ STRP = <CHP+> { $$ = _jqp_string(yy, 0, yytext); }
 
 STRN = '"' <CHJ+> '"' { $$ = _jqp_string(yy, 0, yytext); }
 
-OBJJ = '{' _ (fp:PAIRJ { _jqp_unit_push(yy, fp); }
-              (_ ',' _ p:PAIRJ { _jqp_unit_push(yy, p); })* )? _ '}'
+OBJJ =  (s:SOBJJ { _jqp_unit_push(yy, s); } 
+        _ (fp:PAIRJ { _jqp_unit_push(yy, fp); } (_ ',' _ p:PAIRJ { _jqp_unit_push(yy, p); })* )? _ '}')
+        { $$ = _jqp_json_collect(yy, JBV_OBJECT, s); }
 
-ARRJ = '[' _ (fv:VALJ { _jqp_unit_push(yy, fv); } 
-              (_ ',' _ v:VALJ { _jqp_unit_push(yy, v); })* )? _ ']'
+ARRJ =  (s:SARRJ { _jqp_unit_push(yy, s); } 
+        _ (fv:VALJ { _jqp_unit_push(yy, fv); } (_ ',' _ v:VALJ { _jqp_unit_push(yy, v); })* )? _ ']')
+        { $$ = _jqp_json_collect(yy, JBV_ARRAY, s); }
+        
+SOBJJ = '{' { $$ =  _jqp_unit(yy); }
+
+SARRJ = '[' { $$ =  _jqp_unit(yy); }
 
 PAIRJ = (s:STRJ _ ':' _ v:VALJ) { $$ = _jqp_json_pair(yy, s, v); }
 
