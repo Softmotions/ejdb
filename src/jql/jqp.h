@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <setjmp.h>
 #include <iowow/iwpool.h>
+#include <iowow/iwxstr.h>
 
 typedef enum {
   JQP_STR_PLACEHOLDER = 1,  /**< Query string parameter placeholder */
@@ -169,9 +170,9 @@ typedef struct _JQPAUX {
   int line;
   int col;
   iwrc rc;
-  jmp_buf *fatal_jmp;
-  const char *error;
+  jmp_buf fatal_jmp;
   const char *buf;
+  IWXSTR *xerr;
   IWPOOL *pool;
   struct JQP_QUERY *query;
   JQPSTACK *stack;

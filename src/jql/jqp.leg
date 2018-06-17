@@ -55,11 +55,6 @@ static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
       result_ = 0;                                      \
     } else {                                            \
       char ch = *(aux->buf + aux->pos++);               \
-      if (ch == '\n') {                                 \
-        ++aux->line;                                    \
-        aux->col = 0;                                   \
-      }                                                 \
-      ++aux->col;                                       \
       result_ = 1;                                      \
       *(buf_)= ch;                                      \
     }                                                   \
@@ -181,9 +176,13 @@ NUMF = '.' [0-9]+
 
 NUME = [eE] [+-]? [0-9]+
 
-_ = [\t\n\r ]*
+_ = SPACE*
 
-__ = [\t\n\r ]+
+__ = SPACE+
+
+SPACE = ' ' | '\t' | EOL
+
+EOL = ('\r\n' | '\n' | '\r') { yy->aux->line++; yy->aux->col = 1; }
 
 EOF = !.
 
