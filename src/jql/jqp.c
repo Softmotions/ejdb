@@ -7,7 +7,7 @@
 #line 1 "./jqp.leg"
 
 #include "jqp.h"
-#include "jbldom.h"
+#include "jbl.h"
 
 
 #define YY_CTX_LOCAL 1

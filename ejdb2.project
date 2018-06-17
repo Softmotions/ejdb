@@ -50,8 +50,6 @@
       <File Name="src/jql/hints.txt"/>
     </VirtualDirectory>
     <VirtualDirectory Name="jbl">
-      <File Name="src/jbl/jbldom.c"/>
-      <File Name="src/jbl/jbldom.h"/>
       <File Name="src/jbl/jbl_internal.h"/>
       <VirtualDirectory Name="tests">
         <File Name="src/jbl/tests/CMakeLists.txt"/>

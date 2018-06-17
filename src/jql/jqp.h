@@ -3,7 +3,7 @@
 #define JQP_H
 
 #include "jql.h"
-#include "jbldom.h"
+#include "jbl.h"
 #include <errno.h>
 #include <stdbool.h>
 #include <setjmp.h>

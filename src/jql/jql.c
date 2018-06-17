@@ -1,5 +1,5 @@
 #include "jql.h"
-#include "jbldom.h"
+#include "jbl.h"
 
 static const char *_jql_ecodefn(locale_t locale, uint32_t ecode) {
   if (!(ecode > _JQL_ERROR_START && ecode < _JQL_ERROR_END)) {

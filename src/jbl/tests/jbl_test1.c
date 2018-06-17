@@ -1,9 +1,8 @@
 #include "ejdb2.h"
-#include "jbl.h"
-#include "jbldom.h"
 #include <iowow/iwxstr.h>
 #include <iowow/iwutils.h>
 #include <CUnit/Basic.h>
+#include "jbl.h"
 #include "jbl_internal.h"
 
 int init_suite(void) {
