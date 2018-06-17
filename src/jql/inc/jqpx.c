@@ -581,7 +581,7 @@ iwrc jqp_aux_create(JQPAUX **auxp, const char *input) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
-  aux->pool = iwpool_create(8 * 1024);
+  aux->pool = iwpool_create(4 * 1024);
   if (!aux->pool) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
@@ -621,7 +621,7 @@ static void yyerror(yycontext *yy) {
     _iwxstr_cat2(xerr, yy->__text);
     _iwxstr_cat2(xerr, "'\n");
   }
-  if (yy->__pos < yy->__limit || *(aux->buf + aux->pos)) {
+  if (yy->__pos < yy->__limit) {
     char buf[2] = {0};
     yy->__buf[yy->__limit] = '\0';
     _iwxstr_cat2(xerr, "\n");
