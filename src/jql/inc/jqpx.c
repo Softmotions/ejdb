@@ -87,8 +87,15 @@ static JQPUNIT *_jqp_unit(yycontext *yy) {
 
 static JQPSTACK *_jqp_push(yycontext *yy) {
   JQPAUX *aux = yy->aux;
-  JQPSTACK *stack = malloc(sizeof(*aux->stack));
-  if (!stack) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  JQPSTACK *stack;
+  if (aux->stackn < (sizeof(aux->stackpool) / sizeof(aux->stackpool[0]))) {
+    stack = &aux->stackpool[aux->stackn++];
+  } else {
+    stack = malloc(sizeof(*aux->stack));
+    if (!stack) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+    aux->stackn++;
+  }
+  memset(stack, 0, sizeof(*stack));
   stack->next = 0;
   if (!aux->stack) {
     stack->prev = 0;
@@ -103,8 +110,8 @@ static JQPSTACK *_jqp_push(yycontext *yy) {
 static JQPSTACK _jqp_pop(yycontext *yy) {
   JQPAUX *aux = yy->aux;
   JQPSTACK *stack = aux->stack, ret;
-  if (!stack) {
-    iwlog_error2("Unbalanced JQPSTACK");
+  if (!stack || aux->stackn < 1) {
+    iwlog_error2("Unbalanced stack");
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   aux->stack = stack->prev;
@@ -114,7 +121,9 @@ static JQPSTACK _jqp_pop(yycontext *yy) {
   stack->prev = 0;
   stack->next = 0;
   ret = *stack;
-  free(stack);
+  if (aux->stackn-- > (sizeof(aux->stackpool) / sizeof(aux->stackpool[0]))) {
+    free(stack);
+  }
   return ret;
 }
 
@@ -133,10 +142,18 @@ static JQPUNIT *_jqp_unit_pop(yycontext *yy) {
   return stack.unit;
 }
 
-static void _jqp_string_push(yycontext *yy, char *str) {
+static void _jqp_string_push(yycontext *yy, char *str, bool dup) {
   JQPSTACK *stack = _jqp_push(yy);
   stack->type = STACK_STRING;
   stack->str = str;
+  if (dup) {
+    iwrc rc = 0;
+    JQPAUX *aux = yy->aux;
+    stack->str = iwpool_strdup(aux->pool, stack->str, &rc);
+    if (rc) {
+      JQRC(yy, JQL_ERROR_QUERY_PARSE);
+    }
+  }
 }
 
 static char *_jqp_string_pop(yycontext *yy) {
@@ -148,10 +165,10 @@ static char *_jqp_string_pop(yycontext *yy) {
   return stack.str;
 }
 
-static JQPUNIT *_jqp_string(yycontext *yy, jqp_strflags_t flags, const char *text) {
+static JQPUNIT *_jqp_string(yycontext *yy, jqp_string_flavours_t flavour, const char *text) {
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_STRING_TYPE;
-  unit->string.flags = flags;
+  unit->string.flavour = flavour;
   unit->string.value = _jqp_strdup(yy, text);
   return unit;
 }
@@ -243,10 +260,10 @@ static JQPUNIT *_jqp_json_collect(yycontext *yy, jbl_type_t type, JQPUNIT *until
       ju->prev = jn->child->prev;
       jn->child->prev = ju;
       jn->child = ju;
-    } 
+    }
     _jqp_pop(yy);
   }
-  return ret;  
+  return ret;
 }
 
 static JQPUNIT *_jqp_json_true_false_null(yycontext *yy, const char *text) {
@@ -346,14 +363,13 @@ static JQPUNIT *_jqp_pop_expr_chain(yycontext *yy, JQPUNIT *until) {
         unit->expr.next = &expr->expr;
       }
       expr = unit;
-      _jqp_pop(yy);
     } else if (unit->type == JQP_JOIN_TYPE && expr) {
       expr->expr.join = &unit->join;
-      _jqp_pop(yy);
     } else {
       iwlog_error("Unexpected type: %d", unit->type);
       JQRC(yy, JQL_ERROR_QUERY_PARSE);
     }
+    _jqp_pop(yy);
     if (unit == until) {
       break;
     }
@@ -363,6 +379,96 @@ static JQPUNIT *_jqp_pop_expr_chain(yycontext *yy, JQPUNIT *until) {
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   return expr;
+}
+
+static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value) {
+  if (value->type != JQP_STRING_TYPE) {
+    iwlog_error("Unexpected type: %d", value->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  JQPUNIT *projection = _jqp_unit(yy);
+  projection->type = JQP_PROJECTION_TYPE;
+  projection->projection.value = &value->string;
+  return projection;
+}
+
+static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p) {
+  JQPAUX *aux = yy->aux;
+  if (!aux->stack || aux->stack->type != STACK_STRING) {
+    iwlog_error2("Invalid stack state");
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  if (aux->stack->str[0] == '-') {
+    p->projection.exclude = true;
+  }
+  _jqp_pop(yy);
+  _jqp_unit_push(yy, p);
+  return p;
+}
+
+static JQPUNIT *_jqp_pop_joined_projections(yycontext *yy, JQPUNIT *until) {
+  JQPUNIT *first = 0;
+  JQPAUX *aux = yy->aux;
+  while (aux->stack && aux->stack->type == STACK_UNIT) {
+    JQPUNIT *unit = aux->stack->unit;
+    if (unit->type != JQP_PROJECTION_TYPE) {
+      iwlog_error("Unexpected type: %d", unit->type);
+      JQRC(yy, JQL_ERROR_QUERY_PARSE);
+    }
+    if (first) {
+      unit->projection.next = &first->projection;
+    }
+    first = unit;
+    _jqp_pop(yy);
+    if (unit == until) {
+      break;
+    }
+  }
+  return first;
+}
+
+static JQPUNIT *_jqp_pop_projections(yycontext *yy, JQPUNIT *until) {
+  JQPUNIT *first = 0;
+  JQPAUX *aux = yy->aux;
+  while (aux->stack && aux->stack->type == STACK_UNIT) {
+    JQPUNIT *unit = aux->stack->unit;
+    if (unit->type != JQP_STRING_TYPE) {
+      iwlog_error("Unexpected type: %d", unit->type);
+      JQRC(yy, JQL_ERROR_QUERY_PARSE);
+    }
+    if (first) {
+      unit->string.next = &first->string;
+    }
+    first = unit;
+    _jqp_pop(yy);
+    if (unit == until) {
+      break;
+    }
+  }
+  return _jqp_projection(yy, first);
+}
+
+
+static JQPUNIT *_jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
+  JQPUNIT *field = 0;
+  JQPAUX *aux = yy->aux;
+  while (aux->stack && aux->stack->type == STACK_UNIT) {
+    JQPUNIT *unit = aux->stack->unit;
+    if (unit->type != JQP_STRING_TYPE) {
+      iwlog_error("Unexpected type: %d", unit->type);
+      JQRC(yy, JQL_ERROR_QUERY_PARSE);
+    }
+    unit->string.flavour = JQP_STR_PROJFIELD;
+    if (field) {
+      unit->string.next = &field->string;
+    }
+    field = unit;
+    _jqp_pop(yy);
+    if (unit == until) {
+      break;
+    }
+  }
+  return field;
 }
 
 static JQPUNIT *_jqp_node(yycontext *yy, JQPUNIT *value) {
@@ -417,7 +523,7 @@ static JQPUNIT *_jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
   if (aux->stack
       && aux->stack->type == STACK_UNIT
       && aux->stack->unit->type == JQP_STRING_TYPE
-      && aux->stack->unit->string.flags == JQP_STR_ANCHOR) {
+      && aux->stack->unit->string.flavour == JQP_STR_ANCHOR) {
     filter->filter.anchor = _jqp_unit_pop(yy)->string.value;
   }
   return filter;
@@ -434,14 +540,15 @@ static JQPUNIT *_jqp_pop_filters_and_set_query(yycontext *yy, JQPUNIT *until) {
         JQRC(yy, JQL_ERROR_QUERY_PARSE);
       }
       filter->filter.join = &unit->join;
-    } else if (unit->type != JQP_FILTER_TYPE) {
+    } else if (unit->type == JQP_FILTER_TYPE) {
+      if (filter) {
+        filter->filter.next = &filter->filter;
+      }
+      filter = unit;
+    } else {
       iwlog_error("Unexpected type: %d", unit->type);
       JQRC(yy, JQL_ERROR_QUERY_PARSE);
     }
-    if (filter) {
-      unit->node.next = &filter->node;
-    }
-    filter = unit;
     _jqp_pop(yy);
     if (unit == until) {
       break;
@@ -465,13 +572,27 @@ static void _jqp_set_apply(yycontext *yy, JQPUNIT *unit) {
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   if (unit->type == JQP_JSON_TYPE) {
-    aux->query->apply_node = &unit->json.jn;
+    aux->query->apply = &unit->json.jn;
     aux->query->apply_placeholder = 0;
-  } else if (unit->type == JQP_STRING_TYPE && unit->string.flags == JQP_STR_PLACEHOLDER) {
+  } else if (unit->type == JQP_STRING_TYPE && unit->string.flavour == JQP_STR_PLACEHOLDER) {
     aux->query->apply_placeholder = unit->string.value;
-    aux->query->apply_node = 0;
+    aux->query->apply = 0;
   } else {
-    iwlog_error("Invalid apply unit type: %d", unit->type);
+    iwlog_error("Unexpected type: %d", unit->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+}
+
+static void _jqp_set_projection(yycontext *yy, JQPUNIT *unit) {
+  JQPAUX *aux = yy->aux;
+  if (!unit || !aux->query) {
+    iwlog_error2("Invalid arguments");
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  if (unit->type == JQP_PROJECTION_TYPE) {
+    aux->query->projection = &unit->projection;
+  } else {
+    iwlog_error("Unexpected type: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
 }

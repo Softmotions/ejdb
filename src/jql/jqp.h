@@ -10,9 +10,11 @@
 #include <iowow/iwpool.h>
 
 typedef enum {
-  JQP_STR_PLACEHOLDER = 1,
-  JQP_STR_ANCHOR,
-} jqp_strflags_t;
+  JQP_STR_PLACEHOLDER = 1,  /**< Query string parameter placeholder */
+  JQP_STR_ANCHOR,           /**< Query filter anchor */
+  JQP_STR_PROJFIELD,        /**< Projection field **/
+  JQP_STR_PROJALIAS,        /**< Projection alias (all) **/
+} jqp_string_flavours_t;
 
 typedef enum {
   JQP_QUERY_TYPE = 1,
@@ -57,22 +59,24 @@ struct JQP_JSON {
 
 struct JQP_NODE {
   jqp_unit_t type;
-  jqp_node_type_t ntype;  
+  jqp_node_type_t ntype;
   JQPUNIT *value;
-  struct JQP_NODE *next;  
+  struct JQP_NODE *next;
 };
 
 struct JQP_FILTER {
   jqp_unit_t type;
   const char *anchor;
   struct JQP_JOIN *join;
-  struct JQP_NODE *node;  
+  struct JQP_NODE *node;
+  struct JQP_FILTER *next;
 };
 
 struct JQP_STRING {
   jqp_unit_t type;
-  jqp_strflags_t flags;
-  char *value;
+  jqp_string_flavours_t flavour;
+  const char *value;
+  struct JQP_STRING *next;
 };
 
 struct JQP_INTEGER {
@@ -98,7 +102,7 @@ struct JQP_JOIN {
 };
 
 struct JQP_EXPR {
-  jqp_unit_t type;  
+  jqp_unit_t type;
   struct JQP_JOIN *join;
   struct JQP_OP *op;
   JQPUNIT *left;
@@ -108,14 +112,17 @@ struct JQP_EXPR {
 
 struct JQP_PROJECTION {
   jqp_unit_t type;
-  
+  bool exclude;
+  struct JQP_STRING *value;
+  struct JQP_PROJECTION *next;
 };
 
 struct JQP_QUERY {
   jqp_unit_t type;
   struct JQP_FILTER *filter;
-  JBLNODE apply_node;
-  char * apply_placeholder;
+  JBLNODE apply;
+  const char *apply_placeholder;
+  struct JQP_PROJECTION *projection;
 };
 
 //--
@@ -128,10 +135,11 @@ union _JQPUNIT {
   struct JQP_EXPR expr;
   struct JQP_JOIN join;
   struct JQP_OP op;
-  struct JQP_STRING string; 
-  struct JQP_INTEGER intval; 
-  struct JQP_DOUBLE dblval; 
+  struct JQP_STRING string;
+  struct JQP_INTEGER intval;
+  struct JQP_DOUBLE dblval;
   struct JQP_JSON json;
+  struct JQP_PROJECTION projection;
 };
 
 typedef enum {
@@ -141,7 +149,7 @@ typedef enum {
   STACK_FLOAT,
 } jqp_stack_t;
 
-typedef struct _JQPSTACK {  
+typedef struct _JQPSTACK {
   jqp_stack_t type;
   struct _JQPSTACK *next;
   struct _JQPSTACK *prev;
@@ -149,23 +157,26 @@ typedef struct _JQPSTACK {
     JQPUNIT *unit;
     char *str;
     int64_t i64;
-    double f64;    
+    double f64;
   };
 } JQPSTACK;
 
+#define JQPAUX_STACKPOOL_NUM 128
 
 typedef struct _JQPAUX {
+  bool negate;
   int pos;
   int line;
   int col;
   iwrc rc;
   jmp_buf *fatal_jmp;
-  const char* error;
+  const char *error;
   const char *buf;
   IWPOOL *pool;
-  JQPSTACK *stack;
   struct JQP_QUERY *query;
-  bool negate;
+  JQPSTACK *stack;
+  JQPSTACK stackpool[JQPAUX_STACKPOOL_NUM];
+  int stackn;
 } JQPAUX;
 
 iwrc jqp_aux_create(JQPAUX **auxp, const char *input);

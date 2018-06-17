@@ -13,12 +13,13 @@ static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size);
 static JQPUNIT *_jqp_unit(struct _yycontext *yy);
 
 static void _jqp_op_negate(struct _yycontext *yy);
-static JQPUNIT *_jqp_string(struct _yycontext *yy, jqp_strflags_t flags, const char *text);
+static JQPUNIT *_jqp_string(struct _yycontext *yy, jqp_string_flavours_t flags, const char *text);
 static JQPUNIT *_jqp_number(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_unit_op(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_unit_join(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_expr(struct _yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *right);
 static JQPUNIT *_jqp_node(struct _yycontext *yy, JQPUNIT *value);
+static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value);
 
 static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_json_number(struct _yycontext *yy, const char *text);
@@ -29,13 +30,19 @@ static JQPUNIT *_jqp_json_collect(struct _yycontext *yy, jbl_type_t type, JQPUNI
 static JQPSTACK *_jqp_push(struct _yycontext *yy);
 static void _jqp_unit_push(struct _yycontext *yy, JQPUNIT *unit);
 static JQPUNIT *_jqp_unit_pop(struct _yycontext *yy);
-static void _jqp_string_push(struct _yycontext *yy, char *str);
+static void _jqp_string_push(struct _yycontext *yy, char *str, bool dup);
 static char *_jqp_string_pop(struct _yycontext *yy);
 
 static JQPUNIT *_jqp_pop_expr_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_node_chain(struct _yycontext *yy, JQPUNIT *until);
+static JQPUNIT *_jqp_pop_projfields_chain(struct _yycontext *yy, JQPUNIT *until);
+static JQPUNIT *_jqp_pop_projections(struct _yycontext *yy, JQPUNIT *until);
+static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p);
+static JQPUNIT *_jqp_pop_joined_projections(struct _yycontext *yy, JQPUNIT *until);
+
 static JQPUNIT *_jqp_pop_filters_and_set_query(struct _yycontext *yy, JQPUNIT *until);
 static void _jqp_set_apply(struct _yycontext *yy, JQPUNIT *unit);
+static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
 
 #define YYSTYPE JQPUNIT*
 #define YY_MALLOC(yy_, sz_) _jqp_malloc(yy_, sz_)
@@ -63,21 +70,25 @@ QUERY = (ff:FILTER { _jqp_unit_push(yy, ff); }
           (__ j:FILTERJOIN { _jqp_unit_push(yy, j); } __ f:FILTER { _jqp_unit_push(yy, f); })*)
           { _jqp_pop_filters_and_set_query(yy, ff); }
         (_ a:APPLY { _jqp_set_apply(yy, a); } )? 
-        (_ p:PROJECTION)? _ EOF
+        (_ p:PROJECTION { _jqp_set_projection(yy, p); } )? _ EOF
 
 FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jqp_unit_join(yy, yytext); }
 
 APPLY = ('|' _ "apply" __ ( p:PLACEHOLDER { $$ = p; } | o:OBJJ { $$ = o; } | a:ARRJ { $$ = a; } ) )
 
-PROJECTION = '|' _ PROJCHAIN+
+PROJECTION = '|' _ (sn:PROJNODES { _jqp_unit_push(yy, sn); } 
+                   (__ <PROJOIN> { _jqp_string_push(yy, yytext, true); } _ n:PROJNODES { _jqp_push_joined_projection(yy, n); } )*)
+                   { $$ = _jqp_pop_joined_projections(yy, sn); }
 
-PROJCHAIN = PROJNODES (__ PROJOIN _ PROJNODES)*
+PROJNODES = (a:PROJALL { $$ = _jqp_projection(yy, a); } 
+            | (sn:PROJNODE { _jqp_unit_push(yy, sn); } (n:PROJNODE { _jqp_unit_push(yy, n);})*) { $$ = _jqp_pop_projections(yy, sn); })
 
-PROJNODES = ("all" | PROJNODE PROJNODE*)
+PROJALL = <"all"> { $$ = _jqp_string(yy, JQP_STR_PROJALIAS, yytext); }
 
-PROJNODE = '/' (PROJFIELDS | PROJPROP)
+PROJNODE = '/' (p:PROJFIELDS | p:PROJPROP) { $$ = p;  }
 
-PROJFIELDS = '{' _ PROJPROP (_ ',' _ PROJPROP)* _ '}'
+PROJFIELDS = ('{' _ sp:PROJPROP { _jqp_unit_push(yy, sp); } (_ ',' _ p:PROJPROP { _jqp_unit_push(yy, p); } )* _ '}')
+             { $$ = _jqp_pop_projfields_chain(yy, sp); }
 
 PROJPROP = STRN | PSTRP
 
