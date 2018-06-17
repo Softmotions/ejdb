@@ -73,7 +73,7 @@ typedef struct _JBLPATCH {
   const char *vjson;
   int vsize;
   union {
-    JBL vjbl;
+    JBLNODE vnode;
     bool vbool;
     int64_t vi64;
     double vf64;
@@ -132,8 +132,6 @@ IW_EXPORT iwrc jbl_patch_node(JBLNODE root, const JBLPATCH *patch, size_t cnt);
 IW_EXPORT iwrc jbl_patch(JBL jbl, const JBLPATCH *patch, size_t cnt);
 
 IW_EXPORT iwrc jbl_patch_from_json(JBL jbl, const char *patchjson);
-
-IW_EXPORT void jbl_patch_destroy(JBLPATCH *patch, size_t cnt);
 
 IW_EXPORT iwrc jbl_merge_patch_node(JBLNODE root, const char *patchjson, IWPOOL *pool);
 

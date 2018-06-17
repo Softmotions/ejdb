@@ -981,9 +981,6 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
   *node = 0;
   JBL vjbl = 0;
   jbl_type_t type = p->type;
-  JBLDRCTX ctx = {
-    .pool = pool
-  };
 
   if (p->vjson) { // JSON string specified as value
     rc = jbl_from_json(&vjbl, p->vjson);
@@ -991,12 +988,9 @@ static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool)
     type = jbl_type(vjbl);
   }
   if (type == JBV_OBJECT || type == JBV_ARRAY) {
-    rc = _jbl_node_from_binn(&ctx, vjbl ? &vjbl->bn : &p->vjbl->bn, 0, 0, -1);
-    if (!rc) {
-      *node = ctx.root;
-    }
+    *node = p->vnode;
   } else {
-    JBLNODE n = iwpool_alloc(sizeof(*n), ctx.pool);
+    JBLNODE n = iwpool_alloc(sizeof(*n), pool);
     if (!n) {
       return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     }
@@ -1481,15 +1475,6 @@ finish:
 
 // --------------------------- Public API
 
-void jbl_patch_destroy(JBLPATCH *patch, size_t cnt) {
-  for (size_t i = 0; i < cnt; ++i) {
-    JBLPATCH *p = patch + i;
-    if (p->type == JBV_ARRAY || p->type == JBV_OBJECT) {
-      binn_free(&p->vjbl->bn);
-    }
-  }
-}
-
 iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool) {
   return _jbl_node_from_binn2(&jbl->bn, node, pool);
 }
@@ -1601,18 +1586,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
           case NX_JSON_OBJECT:
           case NX_JSON_ARRAY: {
             pp->type = (nxj2->type == NX_JSON_ARRAY) ? JBV_ARRAY : JBV_OBJECT;
-            pp->vjbl = iwpool_alloc(sizeof(*pp->vjbl), pool);
-            if (!pp->vjbl) {
-              rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-              RCGO(rc, finish);
-            }
-            rc = _jbl_from_json(&bv, nxj2);
-            RCGO(rc, finish);
-            if (bv.writable && bv.dirty) {
-              binn_save_header(&bv);
-            }
-            memcpy(&pp->vjbl->bn, &bv, sizeof(bv));
-            pp->vjbl->bn.allocated = 0;
+            rc = _jbl_json_to_node(nxj2, 0, 0, 0, &pp->vnode, pool);              
             break;
           }
           case NX_JSON_BOOL:
@@ -1648,9 +1622,6 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
   rc = _jbl_patch(jbl, p, cnt, pool);
 
 finish:
-  if (p) {
-    jbl_patch_destroy(p, cnt);
-  }
   if (nxjson) {
     nx_json_free(nxjson);
   }
