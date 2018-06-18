@@ -1,93 +1,10 @@
 #include "jbl.h"
-#include "jbl_internal.h"
 #include "utf8proc.h"
+#include <assert.h>
+#include <errno.h>
+#include <string.h>
 
-// static iwrc _jbl_node_from_json(nx_json *nxjson, JBLNODE parent, const char *key, int idx, JBLNODE *node, IWPOOL *pool) {
-//   iwrc rc = 0;
-//   JBLNODE n = iwpool_alloc(sizeof(*n), pool);
-//   if (!n) {
-//     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-//   }
-//   memset(n, 0, sizeof(*n));
-//   n->key = key;
-//   n->klidx = n->key ? strlen(n->key) : idx;
-
-//   switch (nxjson->type) {
-//     case NX_JSON_OBJECT:
-//       n->type = JBV_OBJECT;
-//       for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
-//         rc = _jbl_node_from_json(nxj, n, nxj->key, 0, 0, pool);
-//         RCGO(rc, finish);
-//       }
-//       break;
-//     case NX_JSON_ARRAY:
-//       n->type = JBV_ARRAY;
-//       int i = 0;
-//       for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
-//         rc = _jbl_node_from_json(nxj, n, 0, i++, 0, pool);
-//         RCGO(rc, finish);
-//       }
-//       break;
-//     case NX_JSON_STRING:
-//       n->type = JBV_STR;
-//       n->vsize = strlen(nxjson->text_value) + 1;
-//       n->vptr = iwpool_strndup(pool, nxjson->text_value, n->vsize, &rc);
-//       RCGO(rc, finish);
-//       break;
-//     case NX_JSON_INTEGER:
-//       n->type = JBV_I64;
-//       n->vi64 = nxjson->int_value;
-//       break;
-//     case NX_JSON_DOUBLE:
-//       n->type = JBV_F64;
-//       n->vf64 = nxjson->dbl_value;
-//       break;
-//     case NX_JSON_BOOL:
-//       n->type = JBV_BOOL;
-//       n->vbool = nxjson->int_value;
-//       break;
-//     case NX_JSON_NULL:
-//       n->type = JBV_NULL;
-//       break;
-//     default:
-//       break;
-//   }
-
-// finish:
-//   if (!rc) {
-//     if (parent) {
-//       _jbl_add_item(parent, n);
-//     }
-//     if (node) {
-//       *node = n;
-//     }
-//   } else if (node) {
-//     *node = 0;
-//   }
-//   return rc;
-// }
-
-// iwrc jbl_node_from_json(const char *_json, JBLNODE *node, IWPOOL *pool) {
-//   if (!_json || !node || !pool) {
-//     return IW_ERROR_INVALID_ARGS;
-//   }
-//   iwrc rc;
-//   char *json = iwpool_strdup(pool, _json, &rc);
-//   RCRET(rc);
-//   nx_json *nxj = nx_json_parse_utf8(json);
-//   if (!nxj) {
-//     rc = JBL_ERROR_PARSE_JSON;
-//     goto finish;
-//   }
-//   rc = _jbl_node_from_json(nxj, 0, 0, 0, node, pool);
-// finish:
-//   if (nxj) {
-//     nx_json_free(nxj);
-//   }
-//   return rc;
-// }
-
-#define IS_WHITESPACE(c) ((unsigned char)(c)<=(unsigned char)' ')
+#define IS_WHITESPACE(c_) ((unsigned char)(c_) <= (unsigned char) ' ')
 
 /** JSON parsing context */
 typedef struct JCTX {
@@ -154,51 +71,53 @@ IW_INLINE int _jbl_hex(char c) {
   return -1;
 }
 
-int _jbl_unescape_raw_json_string(const char *p, char *d, int dlen, const char **end, iwrc *rcp) {
+static int _jbl_unescape_raw_json_string(const char *p, char *d, int dlen, const char **end, iwrc *rcp) {
   *rcp = 0;
   char c;
-  char *sd = d;
-  char *ed = d + dlen;
+  char *ds = d;
+  char *de = d + dlen;
 
   while ((c = *p++)) {
     if (c == '"') { // string closing quotes
       if (end) *end = p;
-      return d - sd;
+      return d - ds;
     } else if (c == '\\') {
       switch (*p) {
         case '\\':
         case '/':
         case '"':
-          if (d < ed) *d = *p;
+          if (d < de) *d = *p;
           ++p, ++d;
           break;
         case 'b':
-          if (d < ed) *d = '\b';
+          if (d < de) *d = '\b';
           ++p, ++d;
           break;
         case 'f':
-          if (d < ed) *d = '\f';
+          if (d < de) *d = '\f';
           ++p, ++d;
           break;
         case 'n':
-          if (d < ed) *d = '\n';
+          if (d < de) *d = '\n';
           ++p, ++d;
           break;
         case 'r':
-          if (d < ed) *d = '\n';
+          if (d < de) *d = '\n';
           ++p, ++d;
           break;
         case 't':
-          if (d < ed) *d = '\t';
+          if (d < de) *d = '\t';
           ++p, ++d;
           break;
         case 'u': {
+          uint32_t cp, cp2;
           int h1, h2, h3, h4;
-          if ((h1 = _jbl_hex(p[1])) < 0 || (h2 = _jbl_hex(p[2])) < 0 || (h3 = _jbl_hex(p[3])) < 0 || (h4 = _jbl_hex(p[4])) < 0) {
+          if ((h1 = _jbl_hex(p[1])) < 0 || (h2 = _jbl_hex(p[2])) < 0
+              || (h3 = _jbl_hex(p[3])) < 0 || (h4 = _jbl_hex(p[4])) < 0) {
             *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
             return 0;
           }
-          uint32_t cp = h1 << 12 | h2 << 8 | h3 << 4 | h4, cp2;
+          cp = h1 << 12 | h2 << 8 | h3 << 4 | h4;
           if ((cp & 0xfc00) == 0xd800) {
             p += 6;
             if (p[-1] != '\\' || *p != 'u'
@@ -222,20 +141,18 @@ int _jbl_unescape_raw_json_string(const char *p, char *d, int dlen, const char *
           utf8proc_ssize_t ulen = utf8proc_encode_char(cp, uchars);
           assert(ulen <= sizeof(uchars));
           for (int i = 0; i < ulen; ++i) {
-            if (d < ed) *d = uchars[i];
+            if (d < de) *d = uchars[i];
             ++d;
           }
           p += 5;
           break;
         }
-
         default:
-          if (d < ed) *d = c;
+          if (d < de) *d = c;
           ++d;
       }
-
     } else {
-      if (d < ed) *d = c;
+      if (d < de) *d = c;
       ++d;
     }
   }
@@ -243,8 +160,39 @@ int _jbl_unescape_raw_json_string(const char *p, char *d, int dlen, const char *
   return 0;
 }
 
-static char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
-  // todo
+static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
+  char c;
+  while ((c = *p++)) {
+    if (c == '"') {
+      int len = _jbl_unescape_raw_json_string(p, 0, 0, 0, &ctx->rc);
+      if (ctx->rc) return 0;
+      if (len) {
+        char *kptr = iwpool_alloc(len + 1, ctx->pool);
+        if (!kptr) {
+          ctx->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+          return 0;
+        }
+        if (len != _jbl_unescape_raw_json_string(p, kptr, len, &p, &ctx->rc) || ctx->rc)  {
+          if (!ctx->rc) ctx->rc = JBL_ERROR_PARSE_JSON;
+          return 0;
+        }
+        kptr[len] =  '\0';
+      } else {
+        *key = "";
+      }
+      while (*p && IS_WHITESPACE(*p)) p++;
+      if (*p == ':') return p + 1;
+      ctx->rc = JBL_ERROR_PARSE_JSON;
+      return 0;
+    } else if (c == '}') {
+      return p - 1;
+    } else if (IS_WHITESPACE(c) || c == ',') {
+      continue;
+    } else {
+      ctx->rc = JBL_ERROR_PARSE_JSON;
+      return 0;
+    }
+  }
   return p;
 }
 
@@ -297,10 +245,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
         if (ctx->rc) return 0;
         node = _jbl_create_node(JBV_STR, key, klidx, parent, ctx);
         if (ctx->rc) return 0;
-        if (!len) {
-          node->vptr = "";
-          node->vsize = 0;
-        } else {
+        if (len) {
           char *vptr = iwpool_alloc(len + 1, ctx->pool);
           if (!vptr) {
             ctx->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -312,6 +257,10 @@ static const char *_jbl_parse_value(JBLNODE parent,
           }
           vptr[len] = '\0';
           node->vptr = vptr;
+          node->vsize = len;
+        } else {
+          node->vptr = "";
+          node->vsize = 0;
         }
         return p;
       case '{':
@@ -328,8 +277,16 @@ static const char *_jbl_parse_value(JBLNODE parent,
         }
         break;
       case '[':
+        node = _jbl_create_node(JBV_ARRAY, key, klidx, parent, ctx);
+        if (ctx->rc) return 0;
+        for (int i = 0;; ++i) {
+          p = _jbl_parse_value(node, 0, i, p, ctx);
+          if (ctx->rc) return 0;
+          if (*p == ']') return p + 1;
+        }
         break;
       case ']':
+        return p;
         break;
       case '-':
       case '0':
@@ -365,14 +322,14 @@ static const char *_jbl_parse_value(JBLNODE parent,
   return p;
 }
 
+//------ Public
+
 iwrc jbl_node_from_json(const char *json, JBLNODE *node, IWPOOL *pool) {
   JCTX ctx = {
     .pool = pool,
-    .buf = json,
-    .sp = json
+    .buf = json
   };
   _jbl_skip_bom(&ctx);
   _jbl_parse_value(0, 0, 0, ctx.buf, &ctx);
-
   return ctx.rc;
 }

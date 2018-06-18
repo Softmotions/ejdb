@@ -2,8 +2,8 @@
 #ifndef JBL_INTERNAL_H
 #define JBL_INTERNAL_H
 
+#include "jbl.h"
 #include "binn.h"
-#include "nxjson.h"
 #include <iowow/iwlog.h>
 #include <iowow/iwpool.h>
 #include <iowow/iwconv.h>
@@ -19,7 +19,7 @@ typedef struct _JBLPTR {
   char *n[1];       /**< Path nodes */
 } *JBLPTR;
 
-typedef struct _JBLVCTX {  
+typedef struct _JBLVCTX {
   binn *bn;
   void *op;
   void *result;
@@ -29,7 +29,7 @@ typedef struct _JBLVCTX {
 typedef enum {
   JBL_VCMD_OK = 0,
   JBL_VCMD_TERMINATE = 1,
-  JBL_VCMD_SKIP_NESTED = 1 << 1  
+  JBL_VCMD_SKIP_NESTED = 1 << 1
 } jbl_visitor_cmd_t;
 
 typedef struct _JBLPATCHEXT {

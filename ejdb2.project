@@ -63,8 +63,6 @@
         <File Name="src/jbl/tests/CMakeLists.txt"/>
         <File Name="src/jbl/tests/jbl_test1.c"/>
       </VirtualDirectory>
-      <File Name="src/jbl/nxjson.h"/>
-      <File Name="src/jbl/nxjson.c"/>
       <File Name="src/jbl/jbl.c"/>
       <File Name="src/jbl/jbl.h"/>
       <File Name="src/jbl/binn.h"/>
