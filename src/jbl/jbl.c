@@ -900,54 +900,6 @@ static iwrc _jbl_node_from_binn2(const binn *bn, JBLNODE *node, IWPOOL *pool) {
   return rc;
 }
 
-static iwrc _jbl_node_from_patch(const JBLPATCH *p, JBLNODE *node, IWPOOL *pool) {
-  iwrc rc = 0;
-  *node = 0;
-  JBL vjbl = 0;
-  jbl_type_t type = p->type;
-
-  if (p->vjson) { // JSON string specified as value
-    rc = jbl_from_json(&vjbl, p->vjson);
-    RCRET(rc);
-    type = jbl_type(vjbl);
-  }
-  if (type == JBV_OBJECT || type == JBV_ARRAY) {
-    *node = p->vnode;
-  } else {
-    JBLNODE n = iwpool_alloc(sizeof(*n), pool);
-    if (!n) {
-      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    }
-    memset(n, 0, sizeof(*n));
-    n->type = type;
-    switch (n->type) {
-      case JBV_STR:
-        n->vptr = p->vptr;
-        n->vsize = p->vsize;
-        break;
-      case JBV_I64:
-        n->vi64 = p->vi64;
-        break;
-      case JBV_F64:
-        n->vf64 = p->vf64;
-        break;
-      case JBV_BOOL:
-        n->vbool = p->vbool;
-        break;
-      case JBV_NONE:
-      case JBV_NULL:
-        break;
-      default:
-        rc = JBL_ERROR_INVALID;
-        break;
-    }
-    if (!rc) {
-      *node = n;
-    }
-  }
-  return rc;
-}
-
 static JBLNODE _jbl_node_find(const JBLNODE node, const JBLPTR ptr, int from, int to) {
   if (!ptr || !node) return 0;
   JBLNODE n = node;
@@ -1115,7 +1067,7 @@ static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
 
   jbp_patch_t op = ex->p->op;
   JBLPTR path = ex->path;
-  JBLNODE value = ex->value;
+  JBLNODE value = ex->p->vnode;
   bool oproot = ex->path->cnt == 1 && *ex->path->n[0] == '\0';
 
   if (op == JBP_TEST) {
@@ -1289,8 +1241,6 @@ static iwrc _jbl_patch_node(JBLNODE root, const JBLPATCH *p, size_t cnt, IWPOOL 
       rc = _jbl_ptr_pool(p[i].from, &ext->from, pool);
       RCRET(rc);
     }
-    rc = _jbl_node_from_patch(ext->p, &ext->value, pool);
-    RCRET(rc);
   }
   for (i = 0; i < cnt; ++i) {
     rc = _jbl_target_apply_patch(root, &parr[i]);
@@ -1422,37 +1372,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
           goto finish;
         }
       } else if (!strcmp("value", n2->key)) {
-        switch (n2->type) {
-          case JBV_STR:
-            pp->type = JBV_STR;
-            pp->vptr = n2->vptr;
-            pp->vsize = strlen(n2->vptr) + 1;
-            break;
-          case JBV_I64:
-            pp->type = n2->type;
-            pp->vi64 = n2->vi64;
-            break;
-          case JBV_OBJECT:
-          case JBV_ARRAY: {
-            pp->type = n2->type;
-            pp->vnode = n2;
-            break;
-          }
-          case JBV_BOOL:
-            pp->type = n2->type;
-            pp->vbool = n2->vbool;
-            break;
-          case JBV_NULL:
-            pp->type = n2->type;
-            break;
-          case JBV_F64:
-            pp->type = n2->type;
-            pp->vf64 = n2->vf64;
-            break;
-          default:
-            rc = JBL_ERROR_PARSE_JSON;
-            break;
-        }
+        pp->vnode = n2;
       } else if (!strncmp("path", n2->key, n2->klidx)) {
         if (n2->type != JBV_STR) {
           rc = JBL_ERROR_PATCH_INVALID;

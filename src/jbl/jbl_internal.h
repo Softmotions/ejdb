@@ -36,7 +36,6 @@ typedef struct _JBLPATCHEXT {
   const JBLPATCH *p;
   JBLPTR path;
   JBLPTR from;
-  JBLNODE value;
 } JBLPATCHEXT;
 
 typedef struct _JBLDRCTX {

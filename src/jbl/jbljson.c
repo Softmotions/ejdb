@@ -57,7 +57,7 @@ static JBLNODE _jbl_create_node(jbl_type_t type,
   return node;
 }
 
-static void _jbl_skip_bom(JCTX *ctx) {
+IW_INLINE void _jbl_skip_bom(JCTX *ctx) {
   const char *p = ctx->buf;
   if (p[0] == '\xEF' && p[1] == '\xBB' && p[2] == '\xBF') {
     ctx->buf += 3;

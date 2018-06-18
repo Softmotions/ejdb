@@ -69,18 +69,10 @@ typedef enum {
 
 typedef struct _JBLPATCH {
   jbp_patch_t op;
-  jbl_type_t type;
   const char *path;
   const char *from;
   const char *vjson;
-  int vsize;
-  union {
-    JBLNODE vnode;
-    bool vbool;
-    int64_t vi64;
-    double vf64;
-    const char *vptr;
-  };
+  JBLNODE vnode;
 } JBLPATCH;
 
 typedef iwrc(*jbl_json_printer)(const char *data, size_t size, char ch, int count, void *op);

@@ -68,7 +68,8 @@
     "-I${workspaceRoot}/src/util"
   ],
   "files.associations": {
-    "*.h": "c"
+    "*.h": "c",
+    "type_traits": "c"
   },
   "python.pythonPath": "/usr/bin/python3",
   "python.linting.pylintEnabled": false,
