@@ -41,7 +41,8 @@
     "-I${workspaceRoot}/build/src/generated",
     "-I${workspaceRoot}/src",
     "-I${workspaceRoot}/src/jbl",
-    "-I${workspaceRoot}/src/jql"
+    "-I${workspaceRoot}/src/jql",
+    "-I${workspaceRoot}/src/util"
   ],
   "clang.cxxflags": [
     "-D_GNU_SOURCE",
@@ -63,7 +64,8 @@
     "-I${workspaceRoot}/build/src/generated",
     "-I${workspaceRoot}/src",
     "-I${workspaceRoot}/src/jbl",
-    "-I${workspaceRoot}/src/jql"
+    "-I${workspaceRoot}/src/jql",
+    "-I${workspaceRoot}/src/util"
   ],
   "files.associations": {
     "*.h": "c"

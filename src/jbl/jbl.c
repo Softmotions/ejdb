@@ -418,7 +418,7 @@ loc_float:
       break;
     case BINN_NULL:
       PT("null", -1, 0, 1);
-      break;      
+      break;
     default:
       rc = IW_ERROR_ASSERTION;
       break;
@@ -1408,7 +1408,7 @@ static iwrc _jbl_patch(JBL jbl, const JBLPATCH *p, size_t cnt, IWPOOL *pool) {
   return rc;
 }
 
-static iwrc _jbl_json_to_node(nx_json *nxjson, JBLNODE parent, const char *key, int idx, JBLNODE *node, IWPOOL *pool) {
+static iwrc _jbl_node_from_json(nx_json *nxjson, JBLNODE parent, const char *key, int idx, JBLNODE *node, IWPOOL *pool) {
   iwrc rc = 0;
   JBLNODE n = iwpool_alloc(sizeof(*n), pool);
   if (!n) {
@@ -1422,7 +1422,7 @@ static iwrc _jbl_json_to_node(nx_json *nxjson, JBLNODE parent, const char *key, 
     case NX_JSON_OBJECT:
       n->type = JBV_OBJECT;
       for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
-        rc = _jbl_json_to_node(nxj, n, nxj->key, 0, 0, pool);
+        rc = _jbl_node_from_json(nxj, n, nxj->key, 0, 0, pool);
         RCGO(rc, finish);
       }
       break;
@@ -1430,7 +1430,7 @@ static iwrc _jbl_json_to_node(nx_json *nxjson, JBLNODE parent, const char *key, 
       n->type = JBV_ARRAY;
       int i = 0;
       for (nx_json *nxj = nxjson->child; nxj; nxj = nxj->next) {
-        rc = _jbl_json_to_node(nxj, n, 0, i++, 0, pool);
+        rc = _jbl_node_from_json(nxj, n, 0, i++, 0, pool);
         RCGO(rc, finish);
       }
       break;
@@ -1586,7 +1586,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
           case NX_JSON_OBJECT:
           case NX_JSON_ARRAY: {
             pp->type = (nxj2->type == NX_JSON_ARRAY) ? JBV_ARRAY : JBV_OBJECT;
-            rc = _jbl_json_to_node(nxj2, 0, 0, 0, &pp->vnode, pool);              
+            rc = _jbl_node_from_json(nxj2, 0, 0, 0, &pp->vnode, pool);
             break;
           }
           case NX_JSON_BOOL:
@@ -1661,7 +1661,7 @@ iwrc jbl_json_to_node(const char *_json, JBLNODE *node, IWPOOL *pool) {
     rc = JBL_ERROR_PARSE_JSON;
     goto finish;
   }
-  rc = _jbl_json_to_node(nxj, 0, 0, 0, node, pool);
+  rc = _jbl_node_from_json(nxj, 0, 0, 0, node, pool);
 finish:
   if (nxj) {
     nx_json_free(nxj);
@@ -1735,7 +1735,7 @@ iwrc jbl_merge_patch_node(JBLNODE root, const char *patchjson, IWPOOL *pool) {
     rc = JBL_ERROR_PARSE_JSON;
     goto finish;
   }
-  rc = _jbl_json_to_node(nxjson, 0, 0, 0, &patch, pool);
+  rc = _jbl_node_from_json(nxjson, 0, 0, 0, &patch, pool);
   RCGO(rc, finish);
   res = _jbl_merge_patch_node(root, patch, pool, &rc);
   RCGO(rc, finish);
@@ -1792,6 +1792,10 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
       return "Invalid JBL object (JBL_ERROR_INVALID)";
     case JBL_ERROR_PARSE_JSON:
       return "Failed to parse JSON string (JBL_ERROR_PARSE_JSON)";
+    case JBL_ERROR_PARSE_UNQUOTED_STRING:
+      return "Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)";
+    case JBL_ERROR_PARSE_INVALID_CODEPOINT:
+      return "Invalid unicode codepoint/escape sequence (JBL_ERROR_PARSE_INVALID_CODEPOINT)";
     case JBL_ERROR_JSON_POINTER:
       return "Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER)";
     case JBL_ERROR_PATH_NOTFOUND:

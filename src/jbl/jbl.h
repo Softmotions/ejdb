@@ -17,6 +17,8 @@ typedef enum {
   JBL_ERROR_CREATION,                   /**< Cannot create JBL object (JBL_ERROR_CREATION) */
   JBL_ERROR_INVALID,                    /**< Invalid JBL object (JBL_ERROR_INVALID) */
   JBL_ERROR_PARSE_JSON,                 /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
+  JBL_ERROR_PARSE_UNQUOTED_STRING,      /**< Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING) */
+  JBL_ERROR_PARSE_INVALID_CODEPOINT,    /**< Invalid unicode codepoint/escape sequence (JBL_ERROR_PARSE_INVALID_CODEPOINT) */
   JBL_ERROR_JSON_POINTER,               /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
   JBL_ERROR_PATH_NOTFOUND,              /**< JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND) */
   JBL_ERROR_PATCH_INVALID,              /**< Invalid JSON patch specified (JBL_ERROR_PATCH_INVALID) */
@@ -41,7 +43,7 @@ typedef enum {
 
 typedef struct _JBLNODE {
   struct _JBLNODE *next;
-  struct _JBLNODE *prev;  
+  struct _JBLNODE *prev;
   const char *key;
   int klidx;
   // Do not sort/add members after this point (offsetof usage below)
@@ -123,7 +125,7 @@ IW_EXPORT void jbl_destroy(JBL *jblp);
 
 IW_EXPORT iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_json_to_node(const char *json, JBLNODE *node, IWPOOL *pool);
+IW_EXPORT iwrc jbl_node_from_json(const char *json, JBLNODE *node, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_from_node(JBL jbl, JBLNODE node);
 

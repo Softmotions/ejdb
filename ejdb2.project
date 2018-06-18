@@ -21,8 +21,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
       <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
+      <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -33,6 +33,13 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <VirtualDirectory Name="util">
+      <VirtualDirectory Name="inc">
+        <File Name="src/util/inc/utf8proc_data.c"/>
+      </VirtualDirectory>
+      <File Name="src/util/utf8proc.h"/>
+      <File Name="src/util/utf8proc.c"/>
+    </VirtualDirectory>
     <VirtualDirectory Name="jql">
       <VirtualDirectory Name="inc">
         <File Name="src/jql/inc/jqpx.c"/>
@@ -50,6 +57,7 @@
       <File Name="src/jql/hints.txt"/>
     </VirtualDirectory>
     <VirtualDirectory Name="jbl">
+      <File Name="src/jbl/jbljson.c"/>
       <File Name="src/jbl/jbl_internal.h"/>
       <VirtualDirectory Name="tests">
         <File Name="src/jbl/tests/CMakeLists.txt"/>
