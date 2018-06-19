@@ -21,7 +21,7 @@ int clean_suite(void) {
   return 0;
 }
 
-char *_load_file_data(const char *path) {
+char *_file_data(const char *path) {
   struct stat st;
   if (stat(path, &st) == -1) {
     return 0;
@@ -43,14 +43,40 @@ char *_load_file_data(const char *path) {
   return data;
 }
 
-void _jbl_test1_1(int num) {
-  
+void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
+    iwrc rc;
+    char path_json[64];
+    char path_expected[64];
+    JBLNODE node = 0;
+    IWPOOL *pool;
+    IWXSTR *res = iwxstr_new();
+    CU_ASSERT_PTR_NOT_NULL_FATAL(res);
+    
+    snprintf(path_json, sizeof(path_json), "data%c%03d.json", IW_PATH_CHR, num);
+    snprintf(path_expected, sizeof(path_json), "data%c%03d.expected.json", IW_PATH_CHR, num);
+    char *data = _file_data(path_json);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(data);
+    
+    pool = iwpool_create(0);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
+    rc = jbl_node_from_json(data, &node, pool);
+    CU_ASSERT_EQUAL_FATAL(rc, expected);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(node);
+    if (expected) goto finish;
+    
+    rc = jbl_node_as_json(node, jbl_xstr_json_printer, res, pf);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    
+    printf("\n%s\n", iwxstr_ptr(res));
+    
+  finish:
+    free(data);
+    iwpool_destroy(pool);
+    iwxstr_destroy(res);
 }
 
 void jbl_test1_1() {
-  for (int i = 0; i < 1; ++i) {
-    _jbl_test1_1(i);
-  }
+  _jbl_test1_1(1, 0, JBL_PRINT_PRETTY | JBL_PRINT_CODEPOINTS);
 }
 
 void jbl_test1_2() {

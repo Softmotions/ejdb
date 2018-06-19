@@ -3,6 +3,7 @@
 #include <iowow/iwconv.h>
 #include <iowow/iwxstr.h>
 #include "jbl_internal.h"
+#include "utf8proc.h"
 
 iwrc jbl_create_empty_object(JBL *jblp) {
   *jblp = calloc(1, sizeof(**jblp));
@@ -115,7 +116,7 @@ iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
     goto finish;
   }
   rc = jbl_from_node(jbl, node);
-
+  
 finish:
   iwpool_destroy(pool);
   return rc;
@@ -145,23 +146,28 @@ iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op) {
   return pt(buf, sz, 0, 0, op);
 }
 
-iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op) {
+IW_INLINE int _jbl_hex(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  return -1;
+}
+
+iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
   iwrc rc = pt(0, 0, '"', 1, op);
   RCRET(rc);
-  static const char *digits = "0123456789abcdef";
   static const char *specials = "btnvfr";
   const uint8_t *p = (const uint8_t *) str;
-
+  
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt((const char*) (data_), size_, ch_, count_, op);\
-    RCGO(rc, finish); \
+    RCRET(rc); \
   } while(0)
-
+  
   if (len == -1) {
     len = strlen(str);
   }
   for (size_t i = 0; i < len; i++) {
-    size_t clen;
     uint8_t ch = p[i];
     if (ch == '"' || ch == '\\') {
       PT(0, 0, '\\', 1);
@@ -171,22 +177,37 @@ iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *o
       PT(0, 0, specials[ch - '\b'], 1);
     } else if (isprint(ch)) {
       PT(0, 0, ch, 1);
-    } else if ((clen = _jbl_utf8_ch_len(ch)) == 1) {
-      PT("\\u00", -1, 0, 0);
-      PT(0, 0, digits[(ch >> 4) % 0xf], 1);
-      PT(0, 0, digits[ch % 0xf], 1);
+    } else if (pf & JBL_PRINT_CODEPOINTS) {
+      char sbuf[7]; // escaped unicode seq
+      utf8proc_int32_t cp;
+      utf8proc_ssize_t sz = utf8proc_iterate(p + i, len - i, &cp);
+      if (sz < 0) {
+        return JBL_ERROR_PARSE_INVALID_UTF8;
+      }
+      if (cp > 0x0010000UL) {
+        uint32_t hs = 0xD800, ls = 0xDC00; // surrogates
+        cp -= 0x0010000UL;
+        hs |= ((cp >> 10) & 0x3FF);
+        ls |= (cp & 0x3FF);
+        snprintf(sbuf, 7, "\\u%04X", hs);
+        PT(sbuf, 6, 0, 0);
+        snprintf(sbuf, 7, "\\u%04X", ls);
+        PT(sbuf, 6, 0, 0);
+      } else {
+        snprintf(sbuf, 7, "\\u%04X", cp);
+        PT(sbuf, 6, 0, 0);
+      }
+      i += sz - 1;
     } else {
-      PT(p + i, clen, 0, 0);
-      i += clen - 1;
+      PT(0, 0, ch, 1);
     }
   }
   rc = pt(0, 0, '"', 1, op);
-finish:
   return rc;
 #undef PT
 }
 
-static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool pretty) {
+static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_print_flags_t pf) {
   iwrc rc = 0;
   binn bv;
   binn_iter iter;
@@ -194,14 +215,15 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
   int64_t llv;
   double dv;
   char key[MAX_BIN_KEY_LEN + 1];
-
+  bool pretty = pf & JBL_PRINT_PRETTY;
+  
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt(data_, size_, ch_, count_, op); \
     RCGO(rc, finish); \
   } while(0)
-
+  
   switch (bn->type) {
-
+  
     case BINN_LIST:
       if (!binn_iter_init(&iter, bn, bn->type)) {
         rc = JBL_ERROR_INVALID;
@@ -229,7 +251,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       }
       PT(0, 0, ']', 1);
       break;
-
+      
     case BINN_OBJECT:
     case BINN_MAP:
       if (!binn_iter_init(&iter, bn, bn->type)) {
@@ -245,7 +267,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
           if (pretty) {
             PT(0, 0, ' ', lvl + 1);
           }
-          rc = _jbl_write_string(key, -1, pt, op);
+          rc = _jbl_write_string(key, -1, pt, op, pf);
           RCGO(rc, finish);
           if (pretty) {
             PT(": ", -1, 0, 0);
@@ -290,11 +312,10 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
       }
       PT(0, 0, '}', 1);
       break;
-
+      
     case BINN_STRING:
-      rc = _jbl_write_string(bn->ptr, -1, pt, op);
+      rc = _jbl_write_string(bn->ptr, -1, pt, op, pf);
       break;
-
     case BINN_UINT8:
       llv = bn->vuint8;
       goto loc_int;
@@ -321,7 +342,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, bool 
 loc_int:
       rc = _jbl_write_int(llv, pt, op);
       break;
-
+      
     case BINN_FLOAT32:
       dv = bn->vfloat;
       goto loc_float;
@@ -330,7 +351,7 @@ loc_int:
 loc_float:
       rc = _jbl_write_double(dv, pt, op);
       break;
-
+      
     case BINN_TRUE:
       PT("true", 4, 0, 1);
       break;
@@ -352,11 +373,11 @@ finish:
 #undef PT
 }
 
-iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty) {
+iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
   if (!jbl || !pt) {
     return IW_ERROR_INVALID_ARGS;
   }
-  return _jbl_as_json(&jbl->bn, pt, op, 0, pretty);
+  return _jbl_as_json(&jbl->bn, pt, op, 0, pf);
 }
 
 iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count, void *op) {
@@ -511,7 +532,7 @@ static iwrc _jbl_ptr_pool(const char *path, JBLPTR *jpp, IWPOOL *pool) {
   jp->cnt = cnt;
   doff = offsetof(struct _JBLPTR, n) + cnt * sizeof(char *);
   assert(sz - doff >= len);
-
+  
   for (i = 0, j = 0, cnt = 0; path[i] && cnt < jp->cnt; ++i, ++j) {
     if (path[i++] == '/') {
       jp->n[cnt] = jpr + doff + j;
@@ -550,7 +571,7 @@ static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visito
   jbl_visitor_cmd_t cmd;
   int idx;
   binn bv;
-
+  
   if (!iter) {
     binn_iter it;
     if (!BINN_IS_CONTAINER_TYPE(bn->type)) {
@@ -562,7 +583,7 @@ static iwrc jbl_visit(binn_iter *iter, int lvl, JBLVCTX *vctx, JBLVISITOR visito
     rc = jbl_visit(&it, 0, vctx, visitor);
     return rc;
   }
-
+  
   switch (iter->type) {
     case BINN_OBJECT: {
       char key[MAX_BIN_KEY_LEN + 1];
@@ -826,7 +847,7 @@ static iwrc _jbl_create_node(JBLDRCTX *ctx,
   if (parent) {
     _jbl_add_item(parent, n);
   }
-
+  
 finish:
   if (rc) {
     free(n);
@@ -840,7 +861,7 @@ static iwrc _jbl_node_from_binn(JBLDRCTX *ctx, const binn *bn, JBLNODE parent, c
   binn bv;
   binn_iter iter;
   iwrc rc = 0;
-
+  
   switch (bn->type) {
     case BINN_OBJECT:
     case BINN_MAP:
@@ -903,7 +924,7 @@ static iwrc _jbl_node_from_binn2(const binn *bn, JBLNODE *node, IWPOOL *pool) {
 static JBLNODE _jbl_node_find(const JBLNODE node, const JBLPTR ptr, int from, int to) {
   if (!ptr || !node) return 0;
   JBLNODE n = node;
-
+  
   for (int i = from; n && i < ptr->cnt && i < to; ++i) {
     if (n->type == JBV_OBJECT) {
       for (n = n->child; n; n = n->next) {
@@ -989,7 +1010,7 @@ static int _jbl_compare_objects(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
     return 0;
   }
   JBLNODE *s2 = s1 + cnt;
-
+  
   i = 0;
   n1 = n1->child;
   n2 = n2->child;
@@ -1012,7 +1033,7 @@ static int _jbl_compare_objects(JBLNODE n1, JBLNODE n2, iwrc *rcp) {
       goto finish;
     }
   }
-
+  
 finish:
   free(s1);
   return ret;
@@ -1069,7 +1090,7 @@ static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
   JBLPTR path = ex->path;
   JBLNODE value = ex->p->vnode;
   bool oproot = ex->path->cnt == 1 && *ex->path->n[0] == '\0';
-
+  
   if (op == JBP_TEST) {
     iwrc rc = 0;
     if (!value) {
@@ -1320,7 +1341,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
   JBLNODE node;
   JBLPATCH *p;
   int cnt = strlen(patchjson);
-
+  
   IWPOOL *pool = iwpool_create(MAX(cnt, 1024));
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -1345,7 +1366,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
     goto finish;
   }
   memset(p, 0, cnt * sizeof(*p));
-
+  
   int i = 0;
   for (JBLNODE n = node->child; n; n = n->next) {
     JBLPATCH *pp = p + i;
@@ -1389,7 +1410,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
     }
   }
   rc = _jbl_patch(jbl, p, cnt, pool);
-
+  
 finish:
   iwpool_destroy(pool);
   return rc;
@@ -1496,7 +1517,7 @@ iwrc jbl_merge_patch(JBL jbl, const char *patchjson) {
   RCGO(rc, finish);
   rc = jbl_merge_patch_node(target, patchjson, pool);
   RCGO(rc, finish);
-
+  
   rc = _jbl_from_node(&bv, target, 0);
   RCGO(rc, finish);
   if (bv.writable && bv.dirty) {
@@ -1505,7 +1526,7 @@ iwrc jbl_merge_patch(JBL jbl, const char *patchjson) {
   binn_free(&jbl->bn);
   memcpy(&jbl->bn, &bv, sizeof(jbl->bn));
   jbl->bn.allocated = 0;
-
+  
 finish:
   iwpool_destroy(pool);
   return 0;
@@ -1528,6 +1549,8 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
       return "Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)";
     case JBL_ERROR_PARSE_INVALID_CODEPOINT:
       return "Invalid unicode codepoint/escape sequence (JBL_ERROR_PARSE_INVALID_CODEPOINT)";
+    case JBL_ERROR_PARSE_INVALID_UTF8:
+      return "Invalid utf8 string (JBL_ERROR_PARSE_INVALID_UTF8)";
     case JBL_ERROR_JSON_POINTER:
       return "Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER)";
     case JBL_ERROR_PATH_NOTFOUND:

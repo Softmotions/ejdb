@@ -19,6 +19,7 @@ typedef enum {
   JBL_ERROR_PARSE_JSON,                 /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
   JBL_ERROR_PARSE_UNQUOTED_STRING,      /**< Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING) */
   JBL_ERROR_PARSE_INVALID_CODEPOINT,    /**< Invalid unicode codepoint/escape sequence (JBL_ERROR_PARSE_INVALID_CODEPOINT) */
+  JBL_ERROR_PARSE_INVALID_UTF8,         /**< Invalid utf8 string (JBL_ERROR_PARSE_INVALID_UTF8) */
   JBL_ERROR_JSON_POINTER,               /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
   JBL_ERROR_PATH_NOTFOUND,              /**< JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND) */
   JBL_ERROR_PATCH_INVALID,              /**< Invalid JSON patch specified (JBL_ERROR_PATCH_INVALID) */
@@ -29,6 +30,11 @@ typedef enum {
   JBL_ERROR_PATCH_TEST_FAILED,          /**< JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED) */
   _JBL_ERROR_END
 } jbl_ecode;
+
+typedef enum {
+  JBL_PRINT_PRETTY = 1,
+  JBL_PRINT_CODEPOINTS = 1 << 1
+} jbl_print_flags_t;
 
 typedef enum {
   JBV_NONE = 0,
@@ -105,7 +111,7 @@ IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
 IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
 
-IW_EXPORT iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, bool pretty);
+IW_EXPORT iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
 IW_EXPORT iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count, void *op);
 
@@ -119,7 +125,7 @@ IW_EXPORT iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_node_from_json(const char *json, JBLNODE *node, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, bool pretty);
+IW_EXPORT iwrc jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
 IW_EXPORT iwrc jbl_from_node(JBL jbl, JBLNODE node);
 

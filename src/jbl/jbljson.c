@@ -7,6 +7,7 @@
 /** JSON parsing context */
 typedef struct JCTX {
   IWPOOL *pool;
+  JBLNODE root;
   const char *buf;
   const char *sp;
   iwrc rc;
@@ -37,9 +38,7 @@ static void _jbl_add_item(JBLNODE parent, JBLNODE node) {
   }
 }
 
-static JBLNODE _jbl_create_node(jbl_type_t type,
-                                const char *key, int klidx,
-                                JBLNODE parent, JCTX *ctx) {
+static JBLNODE _jbl_json_create_node(jbl_type_t type, const char *key, int klidx, JBLNODE parent, JCTX *ctx) {
                                 
   JBLNODE node = iwpool_calloc(sizeof(*node), ctx->pool);
   if (!node) {
@@ -51,6 +50,9 @@ static JBLNODE _jbl_create_node(jbl_type_t type,
   node->klidx = klidx;
   if (parent) {
     _jbl_add_item(parent, node);
+  }
+  if (!ctx->root) {
+    ctx->root = node;
   }
   return node;
 }
@@ -135,7 +137,7 @@ static int _jbl_unescape_raw_json_string(const char *p, char *d, int dlen, const
             *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
             return 0;
           }
-          uint8_t uchars[8];
+          uint8_t uchars[4];
           utf8proc_ssize_t ulen = utf8proc_encode_char(cp, uchars);
           assert(ulen <= sizeof(uchars));
           for (int i = 0; i < ulen; ++i) {
@@ -175,6 +177,7 @@ static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
           return 0;
         }
         kptr[len] =  '\0';
+        *key = kptr;
       } else {
         *key = "";
       }
@@ -213,7 +216,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
         break;
       case 'n':
         if (!strncmp(p, "null", 4)) {
-          node = _jbl_create_node(JBV_NULL, key, klidx, parent, ctx);
+          node = _jbl_json_create_node(JBV_NULL, key, klidx, parent, ctx);
           if (ctx->rc) return 0;
           return p + 4;
         }
@@ -221,7 +224,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
         return 0;
       case 't':
         if (!strncmp(p, "true", 4)) {
-          node = _jbl_create_node(JBV_BOOL, key, klidx, parent, ctx);
+          node = _jbl_json_create_node(JBV_BOOL, key, klidx, parent, ctx);
           if (ctx->rc) return 0;
           node->vbool = true;
           return p + 4;
@@ -230,7 +233,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
         return 0;
       case 'f':
         if (!strncmp(p, "false", 5)) {
-          node = _jbl_create_node(JBV_BOOL, key, klidx, parent, ctx);
+          node = _jbl_json_create_node(JBV_BOOL, key, klidx, parent, ctx);
           if (ctx->rc) return 0;
           node->vbool = false;
           return p + 5;
@@ -241,7 +244,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
         ++p;
         int len = _jbl_unescape_raw_json_string(p, 0, 0, 0, &ctx->rc);
         if (ctx->rc) return 0;
-        node = _jbl_create_node(JBV_STR, key, klidx, parent, ctx);
+        node = _jbl_json_create_node(JBV_STR, key, klidx, parent, ctx);
         if (ctx->rc) return 0;
         if (len) {
           char *vptr = iwpool_alloc(len + 1, ctx->pool);
@@ -262,7 +265,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
         }
         return p;
       case '{':
-        node = _jbl_create_node(JBV_OBJECT, key, klidx, parent, ctx);
+        node = _jbl_json_create_node(JBV_OBJECT, key, klidx, parent, ctx);
         if (ctx->rc) return 0;
         ++p;
         while (1) {
@@ -275,8 +278,9 @@ static const char *_jbl_parse_value(JBLNODE parent,
         }
         break;
       case '[':
-        node = _jbl_create_node(JBV_ARRAY, key, klidx, parent, ctx);
+        node = _jbl_json_create_node(JBV_ARRAY, key, klidx, parent, ctx);
         if (ctx->rc) return 0;
+        ++p;
         for (int i = 0;; ++i) {
           p = _jbl_parse_value(node, 0, i, p, ctx);
           if (ctx->rc) return 0;
@@ -297,7 +301,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
       case '7':
       case '8':
       case '9': {
-        node = _jbl_create_node(JBV_I64, key, klidx, parent, ctx);
+        node = _jbl_json_create_node(JBV_I64, key, klidx, parent, ctx);
         if (ctx->rc) return 0;
         char *pe;
         node->vi64 = strtoll(p, &pe, 0);
@@ -317,11 +321,13 @@ static const char *_jbl_parse_value(JBLNODE parent,
       }
     }
   }
+  
   return p;
 }
 
-iwrc _jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, int lvl, bool pretty) {
+iwrc _jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, int lvl, jbl_print_flags_t pf) {
   iwrc rc = 0;
+  bool pretty = pf & JBL_PRINT_PRETTY;
   
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt(data_, size_, ch_, count_, op); \
@@ -331,10 +337,10 @@ iwrc _jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, int lvl, boo
   switch (node->type) {  
     case JBV_ARRAY:
       PT(0, 0, '[', 1);
-      if (node->child) PT(0, 0, '\n', 1);
+      if (node->child && pretty) PT(0, 0, '\n', 1);
       for (JBLNODE n = node->child; n; n = n->next) {
         if (pretty) PT(0, 0, ' ', lvl + 1);
-        rc = _jbl_node_as_json(n, pt, op, lvl + 1, pretty);
+        rc = _jbl_node_as_json(n, pt, op, lvl + 1, pf);
         RCRET(rc);
         if (n->next) PT(0, 0, ',', 1);
         if (pretty) PT(0, 0, '\n', 1);
@@ -344,17 +350,17 @@ iwrc _jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, int lvl, boo
       break;
     case  JBV_OBJECT:
       PT(0, 0, '{', 1);
-      if (node->child) PT(0, 0, '\n', 1);
+      if (node->child && pretty) PT(0, 0, '\n', 1);
       for (JBLNODE n = node->child; n; n = n->next) {
         if (pretty) PT(0, 0, ' ', lvl + 1);
-        rc = _jbl_write_string(n->key, n->klidx, pt, op);
+        rc = _jbl_write_string(n->key, n->klidx, pt, op, pf);
         RCRET(rc);
         if (pretty) {
           PT(": ", -1, 0, 0);
         } else {
           PT(0, 0, ':', 1);
         }
-        rc = _jbl_node_as_json(n, pt, op, lvl + 1, pretty);
+        rc = _jbl_node_as_json(n, pt, op, lvl + 1, pf);
         RCRET(rc);
         if (n->next) PT(0, 0, ',', 1);
         if (pretty) PT(0, 0, '\n', 1);
@@ -363,7 +369,7 @@ iwrc _jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, int lvl, boo
       PT(0, 0, '}', 1);
       break;      
     case JBV_STR:
-      rc  = _jbl_write_string(node->vptr, node->vsize, pt, op);
+      rc  = _jbl_write_string(node->vptr, node->vsize, pt, op, pf);
       break;
     case JBV_I64:
       rc = _jbl_write_int(node->vi64, pt, op);
@@ -390,16 +396,18 @@ iwrc _jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, int lvl, boo
 
 //------ Public
 
-iwrc jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, bool pretty) {
-  return _jbl_node_as_json(node, pt, op, 0, pretty);
+iwrc jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
+  return _jbl_node_as_json(node, pt, op, 0, pf);
 }
 
 iwrc jbl_node_from_json(const char *json, JBLNODE *node, IWPOOL *pool) {
+  *node = 0;
   JCTX ctx = {
     .pool = pool,
     .buf = json
   };
   _jbl_skip_bom(&ctx);
   _jbl_parse_value(0, 0, 0, ctx.buf, &ctx);
+  *node = ctx.root;
   return ctx.rc;
 }
