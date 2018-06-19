@@ -60,6 +60,10 @@
       <File Name="src/jbl/jbljson.c"/>
       <File Name="src/jbl/jbl_internal.h"/>
       <VirtualDirectory Name="tests">
+        <VirtualDirectory Name="data">
+          <File Name="src/jbl/tests/data/001.expected.json"/>
+          <File Name="src/jbl/tests/data/001.json"/>
+        </VirtualDirectory>
         <File Name="src/jbl/tests/CMakeLists.txt"/>
         <File Name="src/jbl/tests/jbl_test1.c"/>
       </VirtualDirectory>

@@ -1,8 +1,6 @@
 #include "jbl.h"
 #include "utf8proc.h"
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
+#include "jbl_internal.h"
 
 #define IS_WHITESPACE(c_) ((unsigned char)(c_) <= (unsigned char) ' ')
 
@@ -42,7 +40,7 @@ static void _jbl_add_item(JBLNODE parent, JBLNODE node) {
 static JBLNODE _jbl_create_node(jbl_type_t type,
                                 const char *key, int klidx,
                                 JBLNODE parent, JCTX *ctx) {
-
+                                
   JBLNODE node = iwpool_calloc(sizeof(*node), ctx->pool);
   if (!node) {
     ctx->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -76,7 +74,7 @@ static int _jbl_unescape_raw_json_string(const char *p, char *d, int dlen, const
   char c;
   char *ds = d;
   char *de = d + dlen;
-
+  
   while ((c = *p++)) {
     if (c == '"') { // string closing quotes
       if (end) *end = p;
@@ -322,7 +320,79 @@ static const char *_jbl_parse_value(JBLNODE parent,
   return p;
 }
 
+iwrc _jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, int lvl, bool pretty) {
+  iwrc rc = 0;
+  
+#define PT(data_, size_, ch_, count_) do {\
+    rc = pt(data_, size_, ch_, count_, op); \
+    RCRET(rc); \
+  } while(0)
+  
+  switch (node->type) {  
+    case JBV_ARRAY:
+      PT(0, 0, '[', 1);
+      if (node->child) PT(0, 0, '\n', 1);
+      for (JBLNODE n = node->child; n; n = n->next) {
+        if (pretty) PT(0, 0, ' ', lvl + 1);
+        rc = _jbl_node_as_json(n, pt, op, lvl + 1, pretty);
+        RCRET(rc);
+        if (n->next) PT(0, 0, ',', 1);
+        if (pretty) PT(0, 0, '\n', 1);
+      }
+      if (node->child && pretty) PT(0, 0, ' ', lvl);
+      PT(0, 0, ']', 1);
+      break;
+    case  JBV_OBJECT:
+      PT(0, 0, '{', 1);
+      if (node->child) PT(0, 0, '\n', 1);
+      for (JBLNODE n = node->child; n; n = n->next) {
+        if (pretty) PT(0, 0, ' ', lvl + 1);
+        rc = _jbl_write_string(n->key, n->klidx, pt, op);
+        RCRET(rc);
+        if (pretty) {
+          PT(": ", -1, 0, 0);
+        } else {
+          PT(0, 0, ':', 1);
+        }
+        rc = _jbl_node_as_json(n, pt, op, lvl + 1, pretty);
+        RCRET(rc);
+        if (n->next) PT(0, 0, ',', 1);
+        if (pretty) PT(0, 0, '\n', 1);
+      }
+      if (node->child && pretty) PT(0, 0, ' ', lvl);
+      PT(0, 0, '}', 1);
+      break;      
+    case JBV_STR:
+      rc  = _jbl_write_string(node->vptr, node->vsize, pt, op);
+      break;
+    case JBV_I64:
+      rc = _jbl_write_int(node->vi64, pt, op);
+      break;
+    case JBV_F64:
+      rc = _jbl_write_double(node->vf64, pt, op);
+      break;
+    case JBV_BOOL:
+      if (node->vbool) {
+        PT("true", 4, 0, 1);
+      } else {
+        PT("false", 5, 0, 1);
+      }
+      break;
+    case JBV_NULL:
+      PT("null", 4, 0, 1);
+      break;              
+    default:
+      return IW_ERROR_ASSERTION;        
+  }  
+#undef PT
+  return rc;
+}
+
 //------ Public
+
+iwrc jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, bool pretty) {
+  return _jbl_node_as_json(node, pt, op, 0, pretty);
+}
 
 iwrc jbl_node_from_json(const char *json, JBLNODE *node, IWPOOL *pool) {
   JCTX ctx = {

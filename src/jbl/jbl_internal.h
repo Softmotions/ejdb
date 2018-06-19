@@ -47,5 +47,8 @@ typedef struct _JBLDRCTX {
 typedef jbl_visitor_cmd_t (*JBLVISITOR)(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc);
 
 iwrc _jbl_ptr_malloc(const char *path, JBLPTR *jpp);
+iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op);
+iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op);
+iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op);
 
 #endif

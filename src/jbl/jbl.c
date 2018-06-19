@@ -133,19 +133,19 @@ IW_INLINE int _jbl_utf8_ch_len(uint8_t ch) {
   }
 }
 
-static iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op) {
+iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op) {
   char buf[IWFTOA_BUFSIZE];
   iwftoa(num, buf);
   return pt(buf, -1, 0, 0, op);
 }
 
-static iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op) {
+iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op) {
   char buf[JBNUMBUF_SIZE];
   int sz = iwitoa(num, buf, sizeof(buf));
   return pt(buf, sz, 0, 0, op);
 }
 
-static iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op) {
+iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op) {
   iwrc rc = pt(0, 0, '"', 1, op);
   RCRET(rc);
   static const char *digits = "0123456789abcdef";
@@ -332,16 +332,16 @@ loc_float:
       break;
 
     case BINN_TRUE:
-      PT("true", -1, 0, 1);
+      PT("true", 4, 0, 1);
       break;
     case BINN_FALSE:
-      PT("false", -1, 0, 1);
+      PT("false", 5, 0, 1);
       break;
     case BINN_BOOL:
       PT(bn->vbool ? "true" : "false", -1, 0, 1);
       break;
     case BINN_NULL:
-      PT("null", -1, 0, 1);
+      PT("null", 4, 0, 1);
       break;
     default:
       rc = IW_ERROR_ASSERTION;

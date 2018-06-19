@@ -119,6 +119,8 @@ IW_EXPORT iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_node_from_json(const char *json, JBLNODE *node, IWPOOL *pool);
 
+IW_EXPORT iwrc jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, bool pretty);
+
 IW_EXPORT iwrc jbl_from_node(JBL jbl, JBLNODE node);
 
 IW_EXPORT iwrc jbl_patch_node(JBLNODE root, const JBLPATCH *patch, size_t cnt);
