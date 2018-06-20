@@ -71,7 +71,7 @@ IW_INLINE int _jbl_hex(char c) {
   return -1;
 }
 
-static int _jbl_unescape_raw_json_string(const char *p, char *d, int dlen, const char **end, iwrc *rcp) {
+static int _jbl_unescape_json_string(const char *p, char *d, int dlen, const char **end, iwrc *rcp) {
   *rcp = 0;
   char c;
   char *ds = d;
@@ -164,7 +164,7 @@ static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
   char c;
   while ((c = *p++)) {
     if (c == '"') {
-      int len = _jbl_unescape_raw_json_string(p, 0, 0, 0, &ctx->rc);
+      int len = _jbl_unescape_json_string(p, 0, 0, 0, &ctx->rc);
       if (ctx->rc) return 0;
       if (len) {
         char *kptr = iwpool_alloc(len + 1, ctx->pool);
@@ -172,7 +172,7 @@ static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
           ctx->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
           return 0;
         }
-        if (len != _jbl_unescape_raw_json_string(p, kptr, len, &p, &ctx->rc) || ctx->rc)  {
+        if (len != _jbl_unescape_json_string(p, kptr, len, &p, &ctx->rc) || ctx->rc)  {
           if (!ctx->rc) ctx->rc = JBL_ERROR_PARSE_JSON;
           return 0;
         }
@@ -243,7 +243,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
       case '"':
         ++p;
         const char *end;
-        int len = _jbl_unescape_raw_json_string(p, 0, 0, &end, &ctx->rc);
+        int len = _jbl_unescape_json_string(p, 0, 0, &end, &ctx->rc);
         if (ctx->rc) return 0;
         node = _jbl_json_create_node(JBV_STR, key, klidx, parent, ctx);
         if (ctx->rc) return 0;
@@ -253,7 +253,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
             ctx->rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
             return 0;
           }
-          if (len != _jbl_unescape_raw_json_string(p, vptr, len, &p, &ctx->rc) || ctx->rc)  {
+          if (len != _jbl_unescape_json_string(p, vptr, len, &p, &ctx->rc) || ctx->rc)  {
             if (!ctx->rc) ctx->rc = JBL_ERROR_PARSE_JSON;
             return 0;
           }

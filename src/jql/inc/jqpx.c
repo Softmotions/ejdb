@@ -1,4 +1,6 @@
 #include "jqp.h"
+#include "utf8proc.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -192,12 +194,115 @@ static JQPUNIT *_jqp_json_number(yycontext *yy, const char *text) {
   return unit;
 }
 
+IW_INLINE int _jql_hex(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  return -1;
+}
+
+static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp) {
+  *rcp = 0;
+  char c;
+  char *ds = d;
+  char *de = d + dlen;
+  
+  while (1) {
+    c = *p++;
+    if (c == '\0') {
+      return d - ds;
+    } else if (c == '\\') {
+      switch (*p) {
+        case '\\':
+        case '/':
+        case '"':
+          if (d < de) *d = *p;
+          ++p, ++d;
+          break;
+        case 'b':
+          if (d < de) *d = '\b';
+          ++p, ++d;
+          break;
+        case 'f':
+          if (d < de) *d = '\f';
+          ++p, ++d;
+          break;
+        case 'n':
+          if (d < de) *d = '\n';
+          ++p, ++d;
+          break;
+        case 'r':
+          if (d < de) *d = '\n';
+          ++p, ++d;
+          break;
+        case 't':
+          if (d < de) *d = '\t';
+          ++p, ++d;
+          break;
+        case 'u': {
+          uint32_t cp, cp2;
+          int h1, h2, h3, h4;
+          if ((h1 = _jql_hex(p[1])) < 0 || (h2 = _jql_hex(p[2])) < 0
+              || (h3 = _jql_hex(p[3])) < 0 || (h4 = _jql_hex(p[4])) < 0) {
+            *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
+            return 0;
+          }
+          cp = h1 << 12 | h2 << 8 | h3 << 4 | h4;
+          if ((cp & 0xfc00) == 0xd800) {
+            p += 6;
+            if (p[-1] != '\\' || *p != 'u'
+                || (h1 = _jql_hex(p[1])) < 0 || (h2 = _jql_hex(p[2])) < 0
+                || (h3 = _jql_hex(p[3])) < 0 || (h4 = _jql_hex(p[4])) < 0) {
+              *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
+              return 0;
+            }
+            cp2 = h1 << 12 | h2 << 8 | h3 << 4 | h4;
+            if ((cp2 & 0xfc00) != 0xdc00) {
+              *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
+              return 0;
+            }
+            cp = 0x10000 + ((cp - 0xd800) << 10) + (cp2 - 0xdc00);
+          }
+          if (!utf8proc_codepoint_valid(cp)) {
+            *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
+            return 0;
+          }
+          uint8_t uchars[4];
+          utf8proc_ssize_t ulen = utf8proc_encode_char(cp, uchars);
+          for (int i = 0; i < ulen; ++i) {
+            if (d < de) *d = uchars[i];
+            ++d;
+          }
+          p += 5;
+          break;
+        }
+        default:
+          if (d < de) *d = c;
+          ++d;
+      }
+    } else {
+      if (d < de) *d = c;
+      ++d;
+    }
+  }
+  *rcp = JQL_ERROR_QUERY_PARSE;
+  return 0;
+}
+
 static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text) {
+  JQPAUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_JSON_TYPE;
   unit->json.jn.type = JBV_STR;
-  unit->json.jn.vptr = _jqp_strdup(yy, text);
-  unit->json.jn.vsize = strlen(unit->json.jn.vptr);
+  int len = _jqp_unescape_json_string(text, 0, 0, &aux->rc);  
+  if (aux->rc) JQRC(yy, aux->rc);  
+  char *dest = iwpool_alloc(len + 1, aux->pool);
+  if (!dest) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  _jqp_unescape_json_string(text, dest, len, &aux->rc);
+  if (aux->rc) JQRC(yy, aux->rc);
+  dest[len] = '\0';
+  unit->json.jn.vptr = dest;
+  unit->json.jn.vsize = len;  
   return unit;
 }
 
