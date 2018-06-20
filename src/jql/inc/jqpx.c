@@ -760,3 +760,12 @@ finish:
   yyrelease(&yy);
   return aux->rc;
 }
+
+
+
+iwrc jqp_print_ast(struct JQP_QUERY *q, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  // TODO:
+  
+  return rc;  
+}

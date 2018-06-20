@@ -186,4 +186,6 @@ void jqp_aux_destroy(JQPAUX **auxp);
 
 iwrc jqp_parse(JQPAUX *aux);
 
+iwrc jqp_print_ast(struct JQP_QUERY *q, jbl_json_printer pt, void *op);
+
 #endif
