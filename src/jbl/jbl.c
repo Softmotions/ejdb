@@ -95,6 +95,7 @@ size_t jbl_size(JBL jbl) {
 }
 
 iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
+  *jblp = 0;
   iwrc rc = 0;
   IWPOOL *pool = iwpool_create(2 * strlen(jsonstr));
   if (!pool) {
@@ -116,7 +117,9 @@ iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
     goto finish;
   }
   rc = jbl_from_node(jbl, node);
-  
+  if (!rc) {
+    *jblp = jbl;
+  }  
 finish:
   iwpool_destroy(pool);
   return rc;
@@ -778,7 +781,7 @@ static iwrc _jbl_create_node(JBLDRCTX *ctx,
     case BINN_STRING:
       n->type = JBV_STR;
       n->vptr = bv->ptr;
-      n->vsize = bv->size + 1;
+      n->vsize = bv->size;
       break;
     case BINN_OBJECT:
     case BINN_MAP:
@@ -1195,7 +1198,7 @@ static iwrc _jbl_from_node(binn *res, JBLNODE node, int size) {
       for (JBLNODE n = node->child; n; n = n->next) {
         binn bv;
         rc = _jbl_from_node(&bv, n, 0);
-        RCRET(rc);
+        RCRET(rc);        
         if (!binn_object_set_value2(res, n->key, n->klidx, &bv)) {
           rc = JBL_ERROR_CREATION;
         }
@@ -1231,6 +1234,7 @@ static iwrc _jbl_from_node(binn *res, JBLNODE node, int size) {
       binn_set_double(res, node->vf64);
       break;
     case JBV_BOOL:
+      binn_init_item(res);
       binn_set_bool(res, node->vbool);
       break;
     case JBV_NULL:
@@ -1368,7 +1372,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
   memset(p, 0, cnt * sizeof(*p));
   
   int i = 0;
-  for (JBLNODE n = node->child; n; n = n->next) {
+  for (JBLNODE n = node->child; n; n = n->next, ++i) {
     JBLPATCH *pp = p + i;
     for (JBLNODE n2 = n->child; n2; n2 = n2->next) {
       if (!strcmp("op", n2->key)) {

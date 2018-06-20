@@ -44,39 +44,60 @@ char *_file_data(const char *path) {
 }
 
 void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
-    iwrc rc;
-    char path_json[64];
-    char path_expected[64];
-    JBLNODE node = 0;
-    IWPOOL *pool;
-    IWXSTR *res = iwxstr_new();
-    CU_ASSERT_PTR_NOT_NULL_FATAL(res);
-    
-    snprintf(path_json, sizeof(path_json), "data%c%03d.json", IW_PATH_CHR, num);
-    snprintf(path_expected, sizeof(path_json), "data%c%03d.expected.json", IW_PATH_CHR, num);
-    char *data = _file_data(path_json);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(data);
-    
-    pool = iwpool_create(0);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
-    rc = jbl_node_from_json(data, &node, pool);
-    CU_ASSERT_EQUAL_FATAL(rc, expected);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(node);
-    if (expected) goto finish;
-    
-    rc = jbl_node_as_json(node, jbl_xstr_json_printer, res, pf);
-    CU_ASSERT_EQUAL_FATAL(rc, 0);
-    
-    printf("\n%s\n", iwxstr_ptr(res));
-    
-  finish:
-    free(data);
-    iwpool_destroy(pool);
-    iwxstr_destroy(res);
+  iwrc rc;
+  char path_json[64];
+  char path_expected[64];
+  JBLNODE node = 0;
+  IWPOOL *pool;
+  char *data;
+  char *edata = 0;
+  IWXSTR *res = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(res);
+  
+  snprintf(path_json, sizeof(path_json), "data%c%03d.json", IW_PATH_CHR, num);
+  snprintf(path_expected, sizeof(path_json), "data%c%03d.expected.json", IW_PATH_CHR, num);
+  data = _file_data(path_json);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(data);
+  
+  pool = iwpool_create(0);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
+  
+  rc = jbl_node_from_json(data, &node, pool);
+  if (rc) {
+    iwlog_ecode_error3(rc);
+  }
+  CU_ASSERT_EQUAL_FATAL(rc, expected);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(node);
+  if (expected) goto finish;
+  
+  rc = jbl_node_as_json(node, jbl_xstr_json_printer, res, pf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  
+  FILE *f = fopen("data.txt", "w+");
+  fprintf(f, "%s", iwxstr_ptr(res));
+  fclose(f);
+  //fprintf(stderr, "\nDDD %s\n\n", iwxstr_ptr(res));
+  
+  edata = _file_data(path_expected);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(edata);
+  
+  CU_ASSERT_EQUAL(strcmp(edata, iwxstr_ptr(res)), 0);
+  
+finish:
+  if (edata) {
+    free(edata);
+  }
+  free(data);
+  iwpool_destroy(pool);
+  iwxstr_destroy(res);
 }
 
 void jbl_test1_1() {
-  _jbl_test1_1(1, 0, JBL_PRINT_PRETTY | JBL_PRINT_CODEPOINTS);
+  _jbl_test1_1(1, 0, JBL_PRINT_PRETTY);
+  _jbl_test1_1(2, 0, JBL_PRINT_PRETTY | JBL_PRINT_CODEPOINTS);
+  _jbl_test1_1(3, 0, JBL_PRINT_PRETTY);
+  _jbl_test1_1(4, 0, JBL_PRINT_PRETTY);
+  _jbl_test1_1(5, 0, JBL_PRINT_PRETTY);
 }
 
 void jbl_test1_2() {
@@ -85,7 +106,7 @@ void jbl_test1_2() {
                      "\"list\":[3,2.1,1,\"one\", \"two\", "
                      "{}, {\"z\":false, \"t\":true}]}";
   JBL jbl;
-  iwrc rc = jbl_from_json(&jbl, data) ;
+  iwrc rc = jbl_from_json(&jbl, data);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   
   IWXSTR *xstr = iwxstr_new();
@@ -650,13 +671,13 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "jbl_test1_1", jbl_test1_1))
-    //    (NULL == CU_add_test(pSuite, "jbl_test1_2", jbl_test1_2)) ||
-    //    (NULL == CU_add_test(pSuite, "jbl_test1_3", jbl_test1_3)) ||
-    //    (NULL == CU_add_test(pSuite, "jbl_test1_4", jbl_test1_4)) ||
-    //    (NULL == CU_add_test(pSuite, "jbl_test1_5", jbl_test1_5)) ||
-    //    (NULL == CU_add_test(pSuite, "jbl_test1_6", jbl_test1_6)) ||
-    //    (NULL == CU_add_test(pSuite, "jbl_test1_7", jbl_test1_7))
+    (NULL == CU_add_test(pSuite, "jbl_test1_1", jbl_test1_1)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_2", jbl_test1_2)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_3", jbl_test1_3)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_4", jbl_test1_4)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_5", jbl_test1_5)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_6", jbl_test1_6)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_7", jbl_test1_7))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

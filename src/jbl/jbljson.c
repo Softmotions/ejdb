@@ -242,7 +242,8 @@ static const char *_jbl_parse_value(JBLNODE parent,
         return 0;
       case '"':
         ++p;
-        int len = _jbl_unescape_raw_json_string(p, 0, 0, 0, &ctx->rc);
+        const char *end;
+        int len = _jbl_unescape_raw_json_string(p, 0, 0, &end, &ctx->rc);
         if (ctx->rc) return 0;
         node = _jbl_json_create_node(JBV_STR, key, klidx, parent, ctx);
         if (ctx->rc) return 0;
@@ -260,6 +261,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
           node->vptr = vptr;
           node->vsize = len;
         } else {
+          p =  end;
           node->vptr = "";
           node->vsize = 0;
         }

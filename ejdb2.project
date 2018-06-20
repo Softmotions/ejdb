@@ -61,6 +61,14 @@
       <File Name="src/jbl/jbl_internal.h"/>
       <VirtualDirectory Name="tests">
         <VirtualDirectory Name="data">
+          <File Name="src/jbl/tests/data/005.expected.json"/>
+          <File Name="src/jbl/tests/data/005.json"/>
+          <File Name="src/jbl/tests/data/004.expected.json"/>
+          <File Name="src/jbl/tests/data/004.json"/>
+          <File Name="src/jbl/tests/data/003.expected.json"/>
+          <File Name="src/jbl/tests/data/003.json"/>
+          <File Name="src/jbl/tests/data/002.json"/>
+          <File Name="src/jbl/tests/data/002.expected.json"/>
           <File Name="src/jbl/tests/data/001.expected.json"/>
           <File Name="src/jbl/tests/data/001.json"/>
         </VirtualDirectory>
