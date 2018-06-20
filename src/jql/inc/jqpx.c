@@ -1,5 +1,6 @@
 #include "jqp.h"
 #include "utf8proc.h"
+#include "jbl_internal.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -144,7 +145,7 @@ static char *_jqp_string_pop(yycontext *yy) {
 static JQPUNIT *_jqp_string(yycontext *yy, jqp_string_flavours_t flavour, const char *text) {
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_STRING_TYPE;
-  unit->string.flavour = flavour;
+  unit->string.flavour |= flavour;
   unit->string.value = _jqp_strdup(yy, text);
   return unit;
 }
@@ -289,20 +290,36 @@ static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp
   return 0;
 }
 
+static JQPUNIT *_jqp_unescaped_string(struct _yycontext *yy, jqp_string_flavours_t flv, const char *text) {
+  JQPAUX *aux = yy->aux;
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_STRING_TYPE;
+  unit->string.flavour |= flv;
+  int len = _jqp_unescape_json_string(text, 0, 0, &aux->rc);
+  if (aux->rc) JQRC(yy, aux->rc);
+  char *dest = iwpool_alloc(len + 1, aux->pool);
+  if (!dest) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  _jqp_unescape_json_string(text, dest, len, &aux->rc);
+  if (aux->rc) JQRC(yy, aux->rc);
+  dest[len] = '\0';
+  unit->string.value = dest;
+  return unit;
+}
+
 static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text) {
   JQPAUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_JSON_TYPE;
   unit->json.jn.type = JBV_STR;
-  int len = _jqp_unescape_json_string(text, 0, 0, &aux->rc);  
-  if (aux->rc) JQRC(yy, aux->rc);  
+  int len = _jqp_unescape_json_string(text, 0, 0, &aux->rc);
+  if (aux->rc) JQRC(yy, aux->rc);
   char *dest = iwpool_alloc(len + 1, aux->pool);
   if (!dest) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
   _jqp_unescape_json_string(text, dest, len, &aux->rc);
   if (aux->rc) JQRC(yy, aux->rc);
   dest[len] = '\0';
   unit->json.jn.vptr = dest;
-  unit->json.jn.vsize = len;  
+  unit->json.jn.vsize = len;
   return unit;
 }
 
@@ -530,7 +547,7 @@ static JQPUNIT *_jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
       iwlog_error("Unexpected type: %d", unit->type);
       JQRC(yy, JQL_ERROR_QUERY_PARSE);
     }
-    unit->string.flavour = JQP_STR_PROJFIELD;
+    unit->string.flavour |= JQP_STR_PROJFIELD;
     if (field) {
       unit->string.next = &field->string;
     }
@@ -595,7 +612,7 @@ static JQPUNIT *_jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
   if (aux->stack
       && aux->stack->type == STACK_UNIT
       && aux->stack->unit->type == JQP_STRING_TYPE
-      && aux->stack->unit->string.flavour == JQP_STR_ANCHOR) {
+      && (aux->stack->unit->string.flavour & JQP_STR_ANCHOR)) {
     filter->filter.anchor = _jqp_unit_pop(yy)->string.value;
   }
   return filter;
@@ -646,7 +663,7 @@ static void _jqp_set_apply(yycontext *yy, JQPUNIT *unit) {
   if (unit->type == JQP_JSON_TYPE) {
     aux->query->apply = &unit->json.jn;
     aux->query->apply_placeholder = 0;
-  } else if (unit->type == JQP_STRING_TYPE && unit->string.flavour == JQP_STR_PLACEHOLDER) {
+  } else if (unit->type == JQP_STRING_TYPE && (unit->string.flavour & JQP_STR_PLACEHOLDER)) {
     aux->query->apply_placeholder = unit->string.value;
     aux->query->apply = 0;
   } else {
@@ -668,8 +685,6 @@ static void _jqp_set_projection(yycontext *yy, JQPUNIT *unit) {
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
 }
-
-//--------------- Public API
 
 iwrc jqp_aux_create(JQPAUX **auxp, const char *input) {
   iwrc rc = 0;
@@ -761,11 +776,160 @@ finish:
   return aux->rc;
 }
 
+#define PT(data_, size_, ch_, count_) do {\
+    rc = pt(data_, size_, ch_, count_, op); \
+    RCRET(rc); \
+  } while(0)
 
 
-iwrc jqp_print_ast(struct JQP_QUERY *q, jbl_json_printer pt, void *op) {
+static iwrc _jqp_print_projection(const JQP_PROJECTION *p, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
+  
+  return rc;
+}
+
+static iwrc _jqp_print_apply(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  
+  return rc;
+}
+
+static iwrc _jqp_print_join(const JQP_JOIN *jn, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  jqp_op_t join = jn->join;
+  PT(0, 0, ' ', 1);
+  if (join == JQP_OP_EQ) {
+    if (jn->negate) {
+      PT(0, 0, '!', 1);
+    }
+    PT("= ", 2, 0, 0);
+    return rc;
+  }
+  if (join == JQP_JOIN_AND) {
+    PT("and ", 4, 0, 0);
+    if (jn->negate) {
+      PT("not ", 4, 0, 0);
+    }
+    return rc;
+  } else if (join == JQP_JOIN_OR) {
+    PT("or ", 3, 0, 0);
+    if (jn->negate) {
+      PT("not ", 4, 0, 0);
+    }
+    return rc;
+  }
+  if (jn->negate) {
+    PT("not ", 4, 0, 0);
+  }
+  switch (join) {
+    case JQP_OP_GT:
+      PT(0, 0, '>', 1);
+      break;
+    case JQP_OP_LT:
+      PT(0, 0, '<', 1);
+      break;
+    case JQP_OP_GTE:
+      PT(">=", 2, 0, 0);
+      break;
+    case JQP_OP_LTE:
+      PT("<=", 2, 0, 0);
+      break;
+    case JQP_OP_IN:
+      PT("in", 2, 0, 0);
+      break;
+    case JQP_OP_RE:
+      PT("re", 2, 0, 0);
+      break;
+    case JQP_OP_LIKE:
+      PT("like", 4, 0, 0);
+      break;
+    default:
+      rc = IW_ERROR_ASSERTION;
+  }
+  PT(0, 0, ' ', 1);
+  return rc;
+}
+
+static iwrc _jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  PT(0, 0, '[', 1);
+  if (e->left->type == JQP_EXPR_TYPE) {
+    _jqp_print_filter_node_expr(&e->left->expr, pt, op);
+  } else if (e->left->type == JQP_STRING_TYPE) {
+    if (e->left->string.flavour & JQP_STR_QUOTED) {
+      PT(0, 0, '"', 1);
+    }
+    PT(e->left->string.value, -1, 0, 0);
+    if (e->left->string.flavour & JQP_STR_QUOTED) {
+      PT(0, 0, '"', 1);
+    }
+  } else {
+    return IW_ERROR_ASSERTION;
+  }
+  rc = _jqp_print_join(e->join, pt, op);
+  RCRET(rc);
+  
   // TODO:
   
-  return rc;  
+  PT(0, 0, ']', 1);
+  return rc;
 }
+
+static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  JQPUNIT *u = n->value;
+  PT(0, 0, '/', 1);
+  if (u->type == JQP_STRING_TYPE) {
+    PT(u->string.value, -1, 0, 0);
+    return rc;
+  } else if (u->type == JQP_EXPR_TYPE) {
+    rc = _jqp_print_filter_node_expr(&u->expr, pt, op);
+  } else {
+    return IW_ERROR_ASSERTION;
+  }
+  return rc;
+}
+
+static iwrc _jqp_print_filter(const JQP_FILTER *f, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  if (f->anchor) {
+    PT(0, 0, '@', 1);
+    PT(f->anchor, -1, 0, 0);
+  }
+  for (JQP_NODE *n = f->node; n; n = n->next) {
+    rc = _jqp_print_filter_node(n, pt, op);
+    RCRET(rc);
+  }
+  PT(0, 0, '\n', 1);
+  return rc;
+}
+
+//@one/**/[familyName like "D\n*"]
+//and /**/family/mother/[age > 30]
+//and not /bar/"ba z\"zz"
+//| apply {"foo":"bar", "nums": [1,2,3,4,5]}
+//| all - /**/author/{givenName,familyName}
+
+iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
+  if (!q || !pt) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  for (struct JQP_FILTER *f = q->filter; f; f = f->next) {
+    rc = _jqp_print_filter(f, pt, op);
+    RCRET(rc);
+    PT(0, 0, '\n', 1);
+  }
+  if (q->apply_placeholder || q->apply) {
+    rc = _jqp_print_apply(q, pt, op);
+    RCRET(rc);
+    PT(0, 0, '\n', 1);
+  }
+  if (q->projection) {
+    rc = _jqp_print_projection(q->projection, pt, op);
+    PT(0, 0, '\n', 1);
+  }
+  return rc;
+}
+
+#undef PT

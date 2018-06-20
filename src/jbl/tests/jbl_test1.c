@@ -73,11 +73,6 @@ void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
   rc = jbl_node_as_json(node, jbl_xstr_json_printer, res, pf);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   
-  FILE *f = fopen("data.txt", "w+");
-  fprintf(f, "%s", iwxstr_ptr(res));
-  fclose(f);
-  //fprintf(stderr, "\nDDD %s\n\n", iwxstr_ptr(res));
-  
   edata = _file_data(path_expected);
   CU_ASSERT_PTR_NOT_NULL_FATAL(edata);
   

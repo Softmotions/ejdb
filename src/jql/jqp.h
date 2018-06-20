@@ -11,10 +11,11 @@
 #include <iowow/iwxstr.h>
 
 typedef enum {
-  JQP_STR_PLACEHOLDER = 1,  /**< Query string parameter placeholder */
-  JQP_STR_ANCHOR,           /**< Query filter anchor */
-  JQP_STR_PROJFIELD,        /**< Projection field **/
-  JQP_STR_PROJALIAS,        /**< Projection alias (all) **/
+  JQP_STR_PLACEHOLDER = 1,      /**< Query string parameter placeholder */
+  JQP_STR_ANCHOR      = 1 << 1, /**< Query filter anchor */
+  JQP_STR_PROJFIELD   = 1 << 2, /**< Projection field **/
+  JQP_STR_PROJALIAS   = 1 << 3, /**< Projection alias (all) **/
+  JQP_STR_QUOTED      = 1 << 4  /**< String is quoted */
 } jqp_string_flavours_t;
 
 typedef enum {
@@ -53,78 +54,78 @@ typedef enum {
 
 typedef union _JQPUNIT JQPUNIT;
 
-struct JQP_JSON {
+typedef struct JQP_JSON {
   jqp_unit_t type;
   struct _JBLNODE jn;
-};
+} JQP_JSON;
 
-struct JQP_NODE {
+typedef struct JQP_NODE {
   jqp_unit_t type;
   jqp_node_type_t ntype;
   JQPUNIT *value;
   struct JQP_NODE *next;
-};
+} JQP_NODE;
 
-struct JQP_FILTER {
+typedef struct JQP_FILTER {
   jqp_unit_t type;
   const char *anchor;
   struct JQP_JOIN *join;
   struct JQP_NODE *node;
   struct JQP_FILTER *next;
-};
+} JQP_FILTER;
 
-struct JQP_STRING {
+typedef struct JQP_STRING {
   jqp_unit_t type;
   jqp_string_flavours_t flavour;
   const char *value;
   struct JQP_STRING *next;
-};
+} JQP_STRING;
 
-struct JQP_INTEGER {
+typedef struct JQP_INTEGER {
   jqp_unit_t type;
   int64_t value;
-};
+} JQP_INTEGER;
 
-struct JQP_DOUBLE {
+typedef struct JQP_DOUBLE {
   jqp_unit_t type;
   double value;
-};
+} JQP_DOUBLE;
 
-struct JQP_OP {
+typedef struct JQP_OP {
   jqp_unit_t type;
   bool negate;
   jqp_op_t op;
-};
+} JQP_OP;
 
-struct JQP_JOIN {
+typedef struct JQP_JOIN {
   jqp_unit_t type;
   bool negate;
   jqp_op_t join;
-};
+} JQP_JOIN;
 
-struct JQP_EXPR {
+typedef struct JQP_EXPR {
   jqp_unit_t type;
   struct JQP_JOIN *join;
   struct JQP_OP *op;
   JQPUNIT *left;
   JQPUNIT *right;
   struct JQP_EXPR *next;
-};
+} JQP_EXPR;
 
-struct JQP_PROJECTION {
+typedef struct JQP_PROJECTION {
   jqp_unit_t type;
   bool exclude;
   struct JQP_STRING *value;
   struct JQP_PROJECTION *next;
-};
+} JQP_PROJECTION;
 
-struct JQP_QUERY {
+typedef struct JQP_QUERY {
   jqp_unit_t type;
   struct JQP_FILTER *filter;
   JBLNODE apply;
   const char *apply_placeholder;
   struct JQP_PROJECTION *projection;
-};
+} JQP_QUERY;
 
 //--
 
@@ -150,10 +151,10 @@ typedef enum {
   STACK_FLOAT,
 } jqp_stack_t;
 
-typedef struct _JQPSTACK {
+typedef struct JQPSTACK {
   jqp_stack_t type;
-  struct _JQPSTACK *next;
-  struct _JQPSTACK *prev;
+  struct JQPSTACK *next;
+  struct JQPSTACK *prev;
   union {
     JQPUNIT *unit;
     char *str;
@@ -164,7 +165,7 @@ typedef struct _JQPSTACK {
 
 #define JQPAUX_STACKPOOL_NUM 128
 
-typedef struct _JQPAUX {
+typedef struct JQPAUX {
   bool negate;
   int pos;
   int line;
@@ -186,6 +187,6 @@ void jqp_aux_destroy(JQPAUX **auxp);
 
 iwrc jqp_parse(JQPAUX *aux);
 
-iwrc jqp_print_ast(struct JQP_QUERY *q, jbl_json_printer pt, void *op);
+iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op);
 
 #endif

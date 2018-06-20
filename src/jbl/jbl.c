@@ -356,16 +356,16 @@ loc_float:
       break;
       
     case BINN_TRUE:
-      PT("true", 4, 0, 1);
+      PT("true", 4, 0, 0);
       break;
     case BINN_FALSE:
-      PT("false", 5, 0, 1);
+      PT("false", 5, 0, 0);
       break;
     case BINN_BOOL:
       PT(bn->vbool ? "true" : "false", -1, 0, 1);
       break;
     case BINN_NULL:
-      PT("null", 4, 0, 1);
+      PT("null", 4, 0, 0);
       break;
     default:
       rc = IW_ERROR_ASSERTION;

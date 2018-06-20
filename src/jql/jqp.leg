@@ -13,7 +13,8 @@ static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size);
 static JQPUNIT *_jqp_unit(struct _yycontext *yy);
 
 static void _jqp_op_negate(struct _yycontext *yy);
-static JQPUNIT *_jqp_string(struct _yycontext *yy, jqp_string_flavours_t flags, const char *text);
+static JQPUNIT *_jqp_string(struct _yycontext *yy, jqp_string_flavours_t flv, const char *text);
+static JQPUNIT *_jqp_unescaped_string(struct _yycontext *yy, jqp_string_flavours_t flv, const char *text);
 static JQPUNIT *_jqp_number(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_unit_op(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_unit_join(struct _yycontext *yy, const char *text);
@@ -127,9 +128,9 @@ NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("like" | "in" | "re")>    { $$ = _
         | <('>' | "gt")>                                                { $$ = _jqp_unit_op(yy, yytext); } 
         | <('<' | "lt")>                                                { $$ = _jqp_unit_op(yy, yytext); } 
         
-STRP = <CHP+> { $$ = _jqp_string(yy, 0, yytext); }
+STRP = <CHP+> { $$ = _jqp_unescaped_string(yy, 0, yytext); }
 
-STRN = '"' <CHJ+> '"' { $$ = _jqp_string(yy, 0, yytext); }
+STRN = '"' <CHJ+> '"' { $$ = _jqp_unescaped_string(yy, JQP_STR_QUOTED, yytext); }
 
 OBJJ =  (s:SOBJJ { _jqp_unit_push(yy, s); } 
         _ (fp:PAIRJ { _jqp_unit_push(yy, fp); } (_ ',' _ p:PAIRJ { _jqp_unit_push(yy, p); })* )? _ '}')
