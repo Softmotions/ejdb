@@ -1,6 +1,11 @@
 link_libraries(ejdb2_s ${CUNIT_LIBRARIES})
 include_directories(${CUNIT_INCLUDE_DIRS})
 
+file(GLOB datafiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/data" "data/*")
+foreach(file ${datafiles})
+  configure_file("data/${file}" "data/${file}" COPYONLY)
+endforeach()
+
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 

@@ -55,7 +55,7 @@ void jbl_destroy(JBL *jblp) {
   }
 }
 
-jbl_type_t jbl_type(JBL jbl) {
+jbl_type_t jbl_type(const JBL jbl) {
   switch (jbl->bn.type) {
     case BINN_NULL:
       return JBV_NULL;
@@ -86,11 +86,11 @@ jbl_type_t jbl_type(JBL jbl) {
   return JBV_NONE;
 }
 
-size_t jbl_count(JBL jbl) {
+size_t jbl_count(const JBL jbl) {
   return jbl->bn.count;
 }
 
-size_t jbl_size(JBL jbl) {
+size_t jbl_size(const JBL jbl) {
   return jbl->bn.size;
 }
 
@@ -430,7 +430,7 @@ iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, vo
   return 0;
 }
 
-int64_t jbl_get_i64(JBL jbl) {
+int64_t jbl_get_i64(const JBL jbl) {
   assert(jbl);
   switch (jbl->bn.type) {
     case BINN_UINT8:
@@ -454,11 +454,11 @@ int64_t jbl_get_i64(JBL jbl) {
   }
 }
 
-int32_t jbl_get_i32(JBL jbl) {
+int32_t jbl_get_i32(const JBL jbl) {
   return jbl_get_i64(jbl);
 }
 
-double jbl_get_f64(JBL jbl) {
+double jbl_get_f64(const JBL jbl) {
   assert(jbl);
   switch (jbl->bn.type) {
     case BINN_FLOAT64:
@@ -470,7 +470,7 @@ double jbl_get_f64(JBL jbl) {
   }
 }
 
-char *jbl_get_str(JBL jbl) {
+char *jbl_get_str(const JBL jbl) {
   assert(jbl && jbl->bn.type == BINN_STRING);
   if (jbl->bn.type != BINN_STRING) {
     return 0;
@@ -479,7 +479,7 @@ char *jbl_get_str(JBL jbl) {
   }
 }
 
-size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz) {
+size_t jbl_copy_strn(const JBL jbl, char *buf, size_t bufsz) {
   assert(jbl && buf && jbl->bn.type == BINN_STRING);
   if (jbl->bn.type != BINN_STRING) {
     return 0;
@@ -1188,7 +1188,7 @@ static iwrc _jbl_target_apply_patch(JBLNODE target, const JBLPATCHEXT *ex) {
   return 0;
 }
 
-static iwrc _jbl_from_node(binn *res, JBLNODE node, int size) {
+static iwrc _jbl_from_node(binn *res, const JBLNODE node, int size) {
   iwrc rc = 0;
   switch (node->type) {
     case JBV_OBJECT:
@@ -1309,7 +1309,7 @@ static iwrc _jbl_patch(JBL jbl, const JBLPATCH *p, size_t cnt, IWPOOL *pool) {
 
 // --------------------------- Public API
 
-iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool) {
+iwrc jbl_to_node(const JBL jbl, JBLNODE *node, IWPOOL *pool) {
   return _jbl_node_from_binn2(&jbl->bn, node, pool);
 }
 
@@ -1420,7 +1420,7 @@ finish:
   return rc;
 }
 
-iwrc jbl_from_node(JBL jbl, JBLNODE node) {
+iwrc jbl_from_node(JBL jbl, const JBLNODE node) {
   if (!jbl || !node) {
     return IW_ERROR_INVALID_ARGS;
   }

@@ -46,6 +46,31 @@
       </VirtualDirectory>
       <File Name="src/jql/jqp.leg"/>
       <VirtualDirectory Name="tests">
+        <VirtualDirectory Name="data">
+          <File Name="src/jql/tests/data/013.jql"/>
+          <File Name="src/jql/tests/data/012.jql"/>
+          <File Name="src/jql/tests/data/011.jql"/>
+          <File Name="src/jql/tests/data/010.expected.jql"/>
+          <File Name="src/jql/tests/data/009.expected.jql"/>
+          <File Name="src/jql/tests/data/008.expected.jql"/>
+          <File Name="src/jql/tests/data/007.expected.jql"/>
+          <File Name="src/jql/tests/data/006.expected.jql"/>
+          <File Name="src/jql/tests/data/005.expected.jql"/>
+          <File Name="src/jql/tests/data/004.expected.jql"/>
+          <File Name="src/jql/tests/data/003.expected.jql"/>
+          <File Name="src/jql/tests/data/002.expected.jql"/>
+          <File Name="src/jql/tests/data/010.jql"/>
+          <File Name="src/jql/tests/data/009.jql"/>
+          <File Name="src/jql/tests/data/008.jql"/>
+          <File Name="src/jql/tests/data/007.jql"/>
+          <File Name="src/jql/tests/data/006.jql"/>
+          <File Name="src/jql/tests/data/005.jql"/>
+          <File Name="src/jql/tests/data/004.jql"/>
+          <File Name="src/jql/tests/data/003.jql"/>
+          <File Name="src/jql/tests/data/002.jql"/>
+          <File Name="src/jql/tests/data/001.expected.jql"/>
+          <File Name="src/jql/tests/data/001.jql"/>
+        </VirtualDirectory>
         <File Name="src/jql/tests/jql_test1.c"/>
         <File Name="src/jql/tests/CMakeLists.txt"/>
       </VirtualDirectory>
@@ -54,7 +79,6 @@
       <File Name="src/jql/jqp.c"/>
       <File Name="src/jql/jql.h"/>
       <File Name="src/jql/jql.c"/>
-      <File Name="src/jql/hints.txt"/>
     </VirtualDirectory>
     <VirtualDirectory Name="jbl">
       <File Name="src/jbl/jbljson.c"/>

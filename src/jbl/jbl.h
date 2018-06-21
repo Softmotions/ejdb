@@ -91,21 +91,21 @@ IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz);
 
 IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *jsonstr);
 
-IW_EXPORT jbl_type_t jbl_type(JBL jbl);
+IW_EXPORT jbl_type_t jbl_type(const JBL jbl);
 
-IW_EXPORT size_t jbl_count(JBL jbl);
+IW_EXPORT size_t jbl_count(const JBL jbl);
 
-IW_EXPORT size_t jbl_size(JBL jbl);
+IW_EXPORT size_t jbl_size(const JBL jbl);
 
-IW_EXPORT int32_t jbl_get_i32(JBL jbl);
+IW_EXPORT int32_t jbl_get_i32(const JBL jbl);
 
-IW_EXPORT int64_t jbl_get_i64(JBL jbl);
+IW_EXPORT int64_t jbl_get_i64(const JBL jbl);
 
-IW_EXPORT double jbl_get_f64(JBL jbl);
+IW_EXPORT double jbl_get_f64(const JBL jbl);
 
-IW_EXPORT char *jbl_get_str(JBL jbl);
+IW_EXPORT char *jbl_get_str(const JBL jbl);
 
-IW_EXPORT size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz);
+IW_EXPORT size_t jbl_copy_strn(const JBL jbl, char *buf, size_t bufsz);
 
 IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
@@ -121,13 +121,13 @@ IW_EXPORT void jbl_destroy(JBL *jblp);
 
 //--- JBLNODE
 
-IW_EXPORT iwrc jbl_to_node(JBL jbl, JBLNODE *node, IWPOOL *pool);
+IW_EXPORT iwrc jbl_to_node(const JBL jbl, JBLNODE *node, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_node_from_json(const char *json, JBLNODE *node, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
+IW_EXPORT iwrc jbl_node_as_json(const JBLNODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
-IW_EXPORT iwrc jbl_from_node(JBL jbl, JBLNODE node);
+IW_EXPORT iwrc jbl_from_node(JBL jbl, const JBLNODE node);
 
 IW_EXPORT iwrc jbl_patch_node(JBLNODE root, const JBLPATCH *patch, size_t cnt);
 
@@ -138,6 +138,8 @@ IW_EXPORT iwrc jbl_patch_from_json(JBL jbl, const char *patchjson);
 IW_EXPORT iwrc jbl_merge_patch_node(JBLNODE root, const char *patchjson, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_merge_patch(JBL jbl, const char *patchjson);
+
+
 
 IW_EXPORT iwrc jbl_init(void);
 

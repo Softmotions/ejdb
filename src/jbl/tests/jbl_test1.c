@@ -1,10 +1,6 @@
 #include "ejdb2.h"
 #include <iowow/iwxstr.h>
 #include <iowow/iwutils.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 #include "jbl.h"
 #include "jbl_internal.h"
@@ -21,31 +17,9 @@ int clean_suite(void) {
   return 0;
 }
 
-char *_file_data(const char *path) {
-  struct stat st;
-  if (stat(path, &st) == -1) {
-    return 0;
-  }
-  int fd = open(path, O_RDONLY);
-  if (fd == -1) return 0;
-  
-  char *data = malloc(st.st_size + 1);
-  if (!data) {
-    close(fd);
-    return 0;
-  }
-  if (st.st_size != read(fd, data, st.st_size)) {
-    close(fd);
-    return 0;
-  }
-  close(fd);
-  data[st.st_size] = '\0';
-  return data;
-}
-
 void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
   iwrc rc;
-  char path_json[64];
+  char path[64];
   char path_expected[64];
   JBLNODE node = 0;
   IWPOOL *pool;
@@ -54,9 +28,9 @@ void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
   IWXSTR *res = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(res);
   
-  snprintf(path_json, sizeof(path_json), "data%c%03d.json", IW_PATH_CHR, num);
-  snprintf(path_expected, sizeof(path_json), "data%c%03d.expected.json", IW_PATH_CHR, num);
-  data = _file_data(path_json);
+  snprintf(path, sizeof(path), "data%c%03d.json", IW_PATH_CHR, num);
+  snprintf(path_expected, sizeof(path_expected), "data%c%03d.expected.json", IW_PATH_CHR, num);
+  data = iwu_file_read_as_buf(path);
   CU_ASSERT_PTR_NOT_NULL_FATAL(data);
   
   pool = iwpool_create(0);
@@ -73,7 +47,7 @@ void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
   rc = jbl_node_as_json(node, jbl_xstr_json_printer, res, pf);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   
-  edata = _file_data(path_expected);
+  edata = iwu_file_read_as_buf(path_expected);
   CU_ASSERT_PTR_NOT_NULL_FATAL(edata);
   
   CU_ASSERT_EQUAL(strcmp(edata, iwxstr_ptr(res)), 0);

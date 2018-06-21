@@ -327,7 +327,7 @@ static const char *_jbl_parse_value(JBLNODE parent,
   return p;
 }
 
-iwrc _jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, int lvl, jbl_print_flags_t pf) {
+iwrc _jbl_node_as_json(const JBLNODE node, jbl_json_printer pt, void *op, int lvl, jbl_print_flags_t pf) {
   iwrc rc = 0;
   bool pretty = pf & JBL_PRINT_PRETTY;
   
@@ -398,7 +398,7 @@ iwrc _jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, int lvl, jbl
 
 //------ Public
 
-iwrc jbl_node_as_json(JBLNODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
+iwrc jbl_node_as_json(const JBLNODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
   return _jbl_node_as_json(node, pt, op, 0, pf);
 }
 

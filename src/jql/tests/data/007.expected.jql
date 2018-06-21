@@ -1,0 +1,2 @@
+/foo/[bar = :? and "baz" = :?]
+ or /root/**/[fname not like "John"]

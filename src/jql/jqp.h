@@ -79,6 +79,7 @@ typedef struct JQP_STRING {
   jqp_string_flavours_t flavour;
   const char *value;
   struct JQP_STRING *next;
+  struct JQP_STRING *subnext;
 } JQP_STRING;
 
 typedef struct JQP_INTEGER {

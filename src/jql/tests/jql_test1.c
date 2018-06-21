@@ -1,7 +1,9 @@
 #include "ejdb2.h"
 #include "jqp.h"
-#include "jbl_internal.h"
+#include <iowow/iwxstr.h>
+#include <iowow/iwutils.h>
 #include <CUnit/Basic.h>
+#include <stdlib.h>
 
 int init_suite(void) {
   int rc = ejdb2_init();
@@ -12,33 +14,51 @@ int clean_suite(void) {
   return 0;
 }
 
-void jql_test1() {
+void _jql_test1_1(int num, iwrc expected) {
+  iwrc rc;
+  char path[64];
+  char path_expected[64];
   JQPAUX *aux;
-  iwrc rc =
-    jqp_aux_create(
-      &aux,
-      //"/foo/[bar={\"f\":12}]");
-      "@one/**/[familyName like \"D\\n*\"] \nand /**/family/mother/[age > 30] \nand not /bar/\"ba z\\\"zz\" \n| apply {\"foo\":\"bar\", \"nums\": [1,2,3,4,5]} \n| all - /**/author/{givenName,familyName}");
+  char *data, *edata = 0;
+  IWXSTR *res = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(res);
+  
+  snprintf(path, sizeof(path), "data%c%03d.jql", IW_PATH_CHR, num);
+  snprintf(path_expected, sizeof(path_expected), "data%c%03d.expected.jql", IW_PATH_CHR, num);
+  data = iwu_file_read_as_buf(path);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(data);
+  
+  rc = jqp_aux_create(&aux, data);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  //.buf = "/foo/bar"
-  //.buf = "/\"foo\"/\"b ar\""
-  //.buf = "/foo and /bar"
-  //.buf = "/foo/[bar = \"val\"]"
-  //.buf = "/foo/[barlike22]" err
-  //.buf = "/foo/[bar like 33]"
-  //.buf = "/foo/[bar not like 33]"
-  //.buf = "/foo/[bar=33 and zzz like \"te?s*t\"]"
-  //.buf = "/foo/[bar = :placeholder]"
-  //.buf = "/foo/[bar = :? and \"baz\" = :?] or /root/**/[fname not like \"John\"]"
-  //.buf = "/foo/[bar = []]"
-  //.buf = "/foo/[bar = [1, 2,3,{},{\"foo\": \"bar\"}]]"
-  //.buf = "/foo/[bar = {}]"
-  //.buf = "/tags/[* in [\"sample\", \"foo\"] and * like \"ta*\"]"
-  //.buf = "/**/[[* = \"familyName\"] = \"Doe\"]"
-  fprintf(stderr, "\n%s\n\n", aux->buf);
+  
   rc = jqp_parse(aux);
-  CU_ASSERT_EQUAL(rc, 0);
+  CU_ASSERT_EQUAL_FATAL(rc, expected);
+  if (expected) goto finish;
+  
+  CU_ASSERT_PTR_NOT_NULL_FATAL(aux->query);
+  
+  //rc = jqp_print_query(aux->query, jbl_fstream_json_printer, stderr);
+  //CU_ASSERT_EQUAL_FATAL(rc, 0);
+  
+  rc = jqp_print_query(aux->query, jbl_xstr_json_printer, res);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  
+finish:
+  if (edata) {
+    free(edata);
+  }
+  free(data);
+  iwxstr_destroy(res);
   jqp_aux_destroy(&aux);
+}
+
+void jql_test1() {
+  for (int i = 1; i <= 10; ++i) {
+    _jql_test1_1(i, 0);
+  }
+  for (int i = 11; i <= 13; ++i) {
+    _jql_test1_1(i, JQL_ERROR_QUERY_PARSE);  
+  }
 }
 
 int main() {

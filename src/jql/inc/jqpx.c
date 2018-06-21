@@ -329,6 +329,7 @@ static JQPUNIT *_jqp_json_pair(yycontext *yy, JQPUNIT *key, JQPUNIT *val) {
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   val->json.jn.key = key->json.jn.vptr;
+  val->json.jn.klidx = key->json.jn.vsize;
   return val;
 }
 
@@ -407,7 +408,7 @@ static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
   } else if (!strcmp(text, "re")) {
     unit->op.op = JQP_OP_RE;
   } else if (!strcmp(text, "like")) {
-    unit->op.op = JQP_OP_RE;
+    unit->op.op = JQP_OP_LIKE;
   } else {
     iwlog_error("Invalid operation: %s", text);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -549,7 +550,7 @@ static JQPUNIT *_jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
     }
     unit->string.flavour |= JQP_STR_PROJFIELD;
     if (field) {
-      unit->string.next = &field->string;
+      unit->string.subnext = &field->string;
     }
     field = unit;
     _jqp_pop(yy);
@@ -631,7 +632,7 @@ static JQPUNIT *_jqp_pop_filters_and_set_query(yycontext *yy, JQPUNIT *until) {
       filter->filter.join = &unit->join;
     } else if (unit->type == JQP_FILTER_TYPE) {
       if (filter) {
-        filter->filter.next = &filter->filter;
+        unit->filter.next = &filter->filter;
       }
       filter = unit;
     } else {
@@ -735,7 +736,7 @@ IW_INLINE iwrc _iwxstr_cat2(IWXSTR *xstr, const char *buf) {
 static void yyerror(yycontext *yy) {
   JQPAUX *aux = yy->aux;
   IWXSTR *xerr = aux->xerr;
-  if (yy->__text[0]) {
+  if (yy->__pos && yy->__text[0]) {
     _iwxstr_cat2(xerr, "near token: '");
     _iwxstr_cat2(xerr, yy->__text);
     _iwxstr_cat2(xerr, "'\n");
@@ -781,47 +782,85 @@ finish:
     RCRET(rc); \
   } while(0)
 
+static iwrc _jqp_print_projection_nodes(const JQP_STRING *p, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  for (const JQP_STRING *s = p; s; s = s->next) {
+    if (!(s->flavour & JQP_STR_PROJALIAS)) {
+      PT(0, 0, '/', 1);    
+    }
+    if (s->flavour & JQP_STR_PROJFIELD) {
+      PT(0, 0, '{', 1);
+      for (const JQP_STRING *pf = s; pf; pf = pf->subnext) {
+        PT(pf->value, -1, 0, 0);
+        if (pf->subnext) {
+          PT(0, 0, ',', 1);
+        }
+      }
+      PT(0, 0, '}', 1);
+    } else {
+      PT(s->value, -1, 0, 0);
+    }
+  }
+  return rc;
+}
 
 static iwrc _jqp_print_projection(const JQP_PROJECTION *p, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
-  
+  PT(0, 0, '|', 1);
+  for (int i = 0; p; p = p->next, ++i) {
+    PT(0, 0, ' ', 1);
+    if (i > 0) {
+      if (p->exclude) {
+        PT("- ", 2, 0, 0);
+      } else {
+        PT("+ ", 2, 0, 0);
+      }
+    }    
+    rc = _jqp_print_projection_nodes(p->value, pt, op);
+    RCRET(rc);
+  }
   return rc;
 }
 
 static iwrc _jqp_print_apply(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
-  
+  PT("| apply ", 8, 0, 0);
+  if (q->apply_placeholder) {
+    PT(q->apply_placeholder, -1, 0, 0);
+  } else if (q->apply) {
+    rc = jbl_node_as_json(q->apply, pt, op, 0);
+    RCRET(rc);
+  }
   return rc;
 }
 
-static iwrc _jqp_print_join(const JQP_JOIN *jn, jbl_json_printer pt, void *op) {
-  iwrc rc = 0;
-  jqp_op_t join = jn->join;
+static iwrc _jqp_print_join(jqp_op_t jqop, bool negate, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;  
   PT(0, 0, ' ', 1);
-  if (join == JQP_OP_EQ) {
-    if (jn->negate) {
+  if (jqop == JQP_OP_EQ) {
+    if (negate) {
       PT(0, 0, '!', 1);
     }
     PT("= ", 2, 0, 0);
     return rc;
   }
-  if (join == JQP_JOIN_AND) {
+  if (jqop == JQP_JOIN_AND) {
     PT("and ", 4, 0, 0);
-    if (jn->negate) {
+    if (negate) {
       PT("not ", 4, 0, 0);
     }
     return rc;
-  } else if (join == JQP_JOIN_OR) {
+  } else if (jqop == JQP_JOIN_OR) {
     PT("or ", 3, 0, 0);
-    if (jn->negate) {
+    if (negate) {
       PT("not ", 4, 0, 0);
     }
     return rc;
   }
-  if (jn->negate) {
+  if (negate) {
     PT("not ", 4, 0, 0);
   }
-  switch (join) {
+  switch (jqop) {
     case JQP_OP_GT:
       PT(0, 0, '>', 1);
       break;
@@ -851,8 +890,7 @@ static iwrc _jqp_print_join(const JQP_JOIN *jn, jbl_json_printer pt, void *op) {
 }
 
 static iwrc _jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op) {
-  iwrc rc = 0;
-  PT(0, 0, '[', 1);
+  iwrc rc = 0;  
   if (e->left->type == JQP_EXPR_TYPE) {
     _jqp_print_filter_node_expr(&e->left->expr, pt, op);
   } else if (e->left->type == JQP_STRING_TYPE) {
@@ -866,24 +904,40 @@ static iwrc _jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, 
   } else {
     return IW_ERROR_ASSERTION;
   }
-  rc = _jqp_print_join(e->join, pt, op);
+  rc = _jqp_print_join(e->op->op, e->op->negate, pt, op);
   RCRET(rc);
-  
-  // TODO:
-  
-  PT(0, 0, ']', 1);
+  if (e->right->type == JQP_STRING_TYPE) {
+    if (e->right->string.flavour & JQP_STR_PLACEHOLDER) {
+      PT(0, 0, ':', 1);
+    }
+    PT(e->right->string.value, -1, 0, 0);
+  } else if (e->right->type == JQP_JSON_TYPE) {
+    rc = jbl_node_as_json(&e->right->json.jn, pt, op, 0);
+    RCRET(rc);
+  } else {
+    return IW_ERROR_ASSERTION;
+  }  
   return rc;
 }
 
 static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
-  JQPUNIT *u = n->value;
+  JQPUNIT *u = n->value;  
   PT(0, 0, '/', 1);
   if (u->type == JQP_STRING_TYPE) {
     PT(u->string.value, -1, 0, 0);
     return rc;
   } else if (u->type == JQP_EXPR_TYPE) {
-    rc = _jqp_print_filter_node_expr(&u->expr, pt, op);
+    PT(0, 0, '[', 1);
+    for (JQP_EXPR *e = &u->expr; e; e = e->next) {
+      if (e->join) {
+        rc = _jqp_print_join(e->join->join, e->join->negate, pt, op);
+        RCRET(rc);
+      }
+      rc = _jqp_print_filter_node_expr(e, pt, op);    
+      RCRET(rc);
+    }    
+    PT(0, 0, ']', 1);
   } else {
     return IW_ERROR_ASSERTION;
   }
@@ -892,6 +946,10 @@ static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void 
 
 static iwrc _jqp_print_filter(const JQP_FILTER *f, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
+  if (f->join) {
+    rc = _jqp_print_join(f->join->join, f->join->negate, pt, op);
+    RCRET(rc);
+  }  
   if (f->anchor) {
     PT(0, 0, '@', 1);
     PT(f->anchor, -1, 0, 0);
@@ -899,16 +957,9 @@ static iwrc _jqp_print_filter(const JQP_FILTER *f, jbl_json_printer pt, void *op
   for (JQP_NODE *n = f->node; n; n = n->next) {
     rc = _jqp_print_filter_node(n, pt, op);
     RCRET(rc);
-  }
-  PT(0, 0, '\n', 1);
+  }  
   return rc;
 }
-
-//@one/**/[familyName like "D\n*"]
-//and /**/family/mother/[age > 30]
-//and not /bar/"ba z\"zz"
-//| apply {"foo":"bar", "nums": [1,2,3,4,5]}
-//| all - /**/author/{givenName,familyName}
 
 iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   if (!q || !pt) {
