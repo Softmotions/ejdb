@@ -52,11 +52,11 @@ typedef enum {
   JQP_OP_LIKE,
 } jqp_op_t;
 
-typedef union _JQPUNIT JQPUNIT;
+typedef union _JQP_UNIT JQPUNIT;
 
 typedef struct JQP_JSON {
   jqp_unit_t type;
-  struct _JBLNODE jn;
+  struct _JBL_NODE jn;
 } JQP_JSON;
 
 typedef struct JQP_NODE {
@@ -123,14 +123,14 @@ typedef struct JQP_PROJECTION {
 typedef struct JQP_QUERY {
   jqp_unit_t type;
   struct JQP_FILTER *filter;
-  JBLNODE apply;
+  JBL_NODE apply;
   const char *apply_placeholder;
   struct JQP_PROJECTION *projection;
 } JQP_QUERY;
 
 //--
 
-union _JQPUNIT {
+union _JQP_UNIT {
   jqp_unit_t type;
   struct JQP_QUERY query;
   struct JQP_FILTER filter;
@@ -152,24 +152,24 @@ typedef enum {
   STACK_FLOAT,
 } jqp_stack_t;
 
-typedef struct JQPSTACK {
+typedef struct JQP_STACK {
   jqp_stack_t type;
-  struct JQPSTACK *next;
-  struct JQPSTACK *prev;
+  struct JQP_STACK *next;
+  struct JQP_STACK *prev;
   union {
     JQPUNIT *unit;
     char *str;
     int64_t i64;
     double f64;
   };
-} JQPSTACK;
+} JQP_STACK;
 
-#define JQPAUX_STACKPOOL_NUM 128
+#define JQP_AUX_STACKPOOL_NUM 128
 
-typedef struct JQPAUX {
+typedef struct JQP_AUX {
   bool negate;
   int pos;
-  int line;  
+  int line;
   int num_placeholders;
   iwrc rc;
   jmp_buf fatal_jmp;
@@ -177,16 +177,16 @@ typedef struct JQPAUX {
   IWXSTR *xerr;
   IWPOOL *pool;
   struct JQP_QUERY *query;
-  JQPSTACK *stack;
-  JQPSTACK stackpool[JQPAUX_STACKPOOL_NUM];
+  JQP_STACK *stack;
+  JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];
   int stackn;
-} JQPAUX;
+} JQP_AUX;
 
-iwrc jqp_aux_create(JQPAUX **auxp, const char *input);
+iwrc jqp_aux_create(JQP_AUX **auxp, const char *input);
 
-void jqp_aux_destroy(JQPAUX **auxp);
+void jqp_aux_destroy(JQP_AUX **auxp);
 
-iwrc jqp_parse(JQPAUX *aux);
+iwrc jqp_parse(JQP_AUX *aux);
 
 iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op);
 

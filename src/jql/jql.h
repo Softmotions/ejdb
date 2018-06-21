@@ -23,7 +23,7 @@ typedef enum {
  */
 IW_EXPORT iwrc jql_create(JQL *qptr, const char *query);
 
-IW_EXPORT iwrc jql_set_json(JQL q, const char *placeholder, int index, JBLNODE val);
+IW_EXPORT iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val);
 
 IW_EXPORT iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val);
 
@@ -35,11 +35,11 @@ IW_EXPORT iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val)
 
 IW_EXPORT iwrc jql_set_null(JQL q, const char *placeholder, int index);
 
-IW_EXPORT iwrc jql_is_matched(JQL q, const JBL jbl, bool *out);
+IW_EXPORT iwrc jql_matched(JQL q, const JBL jbl, bool *out);
 
-IW_EXPORT iwrc jql_apply(JQL q, const JBL jbl, JBLNODE *out);
+IW_EXPORT iwrc jql_apply(JQL q, const JBL jbl, JBL_NODE *out);
 
-IW_EXPORT iwrc jql_apply_projection(JQL q, const JBL jbl, JBLNODE *out);
+IW_EXPORT iwrc jql_apply_projection(JQL q, const JBL jbl, JBL_NODE *out);
 
 IW_EXPORT void jql_destroy(JQL *qptr);
 

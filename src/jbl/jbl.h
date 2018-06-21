@@ -19,7 +19,7 @@ typedef enum {
   JBL_ERROR_PARSE_JSON,                 /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
   JBL_ERROR_PARSE_UNQUOTED_STRING,      /**< Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING) */
   JBL_ERROR_PARSE_INVALID_CODEPOINT,    /**< Invalid unicode codepoint/escape sequence (JBL_ERROR_PARSE_INVALID_CODEPOINT) */
-  JBL_ERROR_PARSE_INVALID_UTF8,         /**< Invalid utf8 string (JBL_ERROR_PARSE_INVALID_UTF8) */  
+  JBL_ERROR_PARSE_INVALID_UTF8,         /**< Invalid utf8 string (JBL_ERROR_PARSE_INVALID_UTF8) */
   JBL_ERROR_JSON_POINTER,               /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
   JBL_ERROR_PATH_NOTFOUND,              /**< JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND) */
   JBL_ERROR_PATCH_INVALID,              /**< Invalid JSON patch specified (JBL_ERROR_PATCH_INVALID) */
@@ -47,13 +47,13 @@ typedef enum {
   JBV_ARRAY,
 } jbl_type_t;
 
-typedef struct _JBLNODE {
-  struct _JBLNODE *next;
-  struct _JBLNODE *prev;
+typedef struct _JBL_NODE {
+  struct _JBL_NODE *next;
+  struct _JBL_NODE *prev;
   const char *key;
   int klidx;
   // Do not sort/add members after this point (offsetof usage below)
-  struct _JBLNODE *child;
+  struct _JBL_NODE *child;
   int vsize;
   jbl_type_t type;
   union {
@@ -62,7 +62,7 @@ typedef struct _JBLNODE {
     int64_t vi64;
     double vf64;
   };
-} *JBLNODE;
+} *JBL_NODE;
 
 typedef enum {
   JBP_ADD = 1,
@@ -73,13 +73,13 @@ typedef enum {
   JBP_TEST
 } jbp_patch_t;
 
-typedef struct _JBLPATCH {
+typedef struct _JBL_PATCH {
   jbp_patch_t op;
   const char *path;
   const char *from;
   const char *vjson;
-  JBLNODE vnode;
-} JBLPATCH;
+  JBL_NODE vnode;
+} JBL_PATCH;
 
 typedef iwrc(*jbl_json_printer)(const char *data, size_t size, char ch, int count, void *op);
 
@@ -119,23 +119,23 @@ IW_EXPORT iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int
 
 IW_EXPORT void jbl_destroy(JBL *jblp);
 
-//--- JBLNODE
+//--- JBL_NODE
 
-IW_EXPORT iwrc jbl_to_node(const JBL jbl, JBLNODE *node, IWPOOL *pool);
+IW_EXPORT iwrc jbl_to_node(const JBL jbl, JBL_NODE *node, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_node_from_json(const char *json, JBLNODE *node, IWPOOL *pool);
+IW_EXPORT iwrc jbl_node_from_json(const char *json, JBL_NODE *node, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_node_as_json(const JBLNODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
+IW_EXPORT iwrc jbl_node_as_json(const JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
-IW_EXPORT iwrc jbl_from_node(JBL jbl, const JBLNODE node);
+IW_EXPORT iwrc jbl_from_node(JBL jbl, const JBL_NODE node);
 
-IW_EXPORT iwrc jbl_patch_node(JBLNODE root, const JBLPATCH *patch, size_t cnt);
+IW_EXPORT iwrc jbl_patch_node(JBL_NODE root, const JBL_PATCH *patch, size_t cnt);
 
-IW_EXPORT iwrc jbl_patch(JBL jbl, const JBLPATCH *patch, size_t cnt);
+IW_EXPORT iwrc jbl_patch(JBL jbl, const JBL_PATCH *patch, size_t cnt);
 
 IW_EXPORT iwrc jbl_patch_from_json(JBL jbl, const char *patchjson);
 
-IW_EXPORT iwrc jbl_merge_patch_node(JBLNODE root, const char *patchjson, IWPOOL *pool);
+IW_EXPORT iwrc jbl_merge_patch_node(JBL_NODE root, const char *patchjson, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_merge_patch(JBL jbl, const char *patchjson);
 

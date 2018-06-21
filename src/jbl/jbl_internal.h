@@ -13,18 +13,18 @@ struct _JBL {
   binn bn;
 };
 
-typedef struct _JBLPTR {
+typedef struct _JBL_PTR {
   int cnt;          /**< Number of nodes */
   int pos;          /**< Current node position (like a cursor) */
   char *n[1];       /**< Path nodes */
-} *JBLPTR;
+} *JBL_PTR;
 
-typedef struct _JBLVCTX {
+typedef struct _JBL_VCTX {
   binn *bn;
   void *op;
   void *result;
   bool terminate;
-} JBLVCTX;
+} JBL_VCTX;
 
 typedef enum {
   JBL_VCMD_OK = 0,
@@ -32,23 +32,23 @@ typedef enum {
   JBL_VCMD_SKIP_NESTED = 1 << 1
 } jbl_visitor_cmd_t;
 
-typedef struct _JBLPATCHEXT {
-  const JBLPATCH *p;
-  JBLPTR path;
-  JBLPTR from;
-} JBLPATCHEXT;
+typedef struct _JBL_PATCHEXT {
+  const JBL_PATCH *p;
+  JBL_PTR path;
+  JBL_PTR from;
+} JBL_PATCHEXT;
 
 typedef struct _JBLDRCTX {
   IWPOOL *pool;
-  JBLNODE root;
+  JBL_NODE root;
 } JBLDRCTX;
 
-
-typedef jbl_visitor_cmd_t (*JBLVISITOR)(int lvl, binn *bv, char *key, int idx, JBLVCTX *vctx, iwrc *rc);
-
-iwrc _jbl_ptr_malloc(const char *path, JBLPTR *jpp);
+iwrc _jbl_ptr_malloc(const char *path, JBL_PTR *jpp);
 iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
+
+typedef jbl_visitor_cmd_t (*JBL_VISITOR)(int lvl, binn *bv, char *key, int idx, JBL_VCTX *vctx, iwrc *rc);
+iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor);
 
 #endif

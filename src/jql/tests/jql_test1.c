@@ -18,7 +18,7 @@ void _jql_test1_1(int num, iwrc expected) {
   iwrc rc;
   char path[64];
   char path_expected[64];
-  JQPAUX *aux;
+  JQP_AUX *aux;
   char *data, *edata = 0;
   IWXSTR *res = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(res);

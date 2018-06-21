@@ -1,9 +1,20 @@
 #include "jqp.h"
+#include "jbl_internal.h"
+
+typedef struct JQ_FILTER {
+  bool expect_next;       /**< Expecting next node to be matched */
+  int pos;                /**< Current node position */
+  int nnum;               /**< Number of filter nodes */
+  JQP_NODE *narr;         /**< Array query nodes */
+  JQP_FILTER *qpf;        /**< Parsed query filter */
+  struct JQ_FILTER *next; /**< Next filter in chain */
+} JQ_FILTER;
 
 /** Query object */
 struct _JQL {
   JQP_QUERY *q;
-  JQPAUX *aux;
+  JQP_AUX *aux;
+  JQ_FILTER *qf;
 };
 
 iwrc jql_create(JQL *qptr, const char *query) {
@@ -13,7 +24,7 @@ iwrc jql_create(JQL *qptr, const char *query) {
   *qptr = 0;
 
   JQL q;
-  JQPAUX *aux;
+  JQP_AUX *aux;
   iwrc rc = jqp_aux_create(&aux, query);
   RCRET(rc);
 
@@ -43,6 +54,22 @@ void jql_destroy(JQL *qptr) {
     jqp_aux_destroy(&q->aux);
     *qptr = 0;
   }
+}
+// typedef jbl_visitor_cmd_t (*JBL_VISITOR)(int lvl, binn *bv, char *key, int idx, JBL_VCTX *vctx, iwrc *rc);
+// iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor);
+
+static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
+
+
+
+  return 0;
+}
+
+iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
+  iwrc rc = 0;
+
+
+  return rc;
 }
 
 static const char *_jql_ecodefn(locale_t locale, uint32_t ecode) {
