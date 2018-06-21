@@ -5,14 +5,14 @@ typedef struct JQ_FILTER {
   bool expect_next;       /**< Expecting next node to be matched */
   int pos;                /**< Current node position */
   int nnum;               /**< Number of filter nodes */
-  JQP_NODE *narr;         /**< Array query nodes */
+  JQP_NODE **nodes;       /**< Array query nodes */
   JQP_FILTER *qpf;        /**< Parsed query filter */
   struct JQ_FILTER *next; /**< Next filter in chain */
 } JQ_FILTER;
 
 /** Query object */
 struct _JQL {
-  JQP_QUERY *q;
+  JQP_QUERY *qp;
   JQP_AUX *aux;
   JQ_FILTER *qf;
 };
@@ -25,6 +25,7 @@ iwrc jql_create(JQL *qptr, const char *query) {
 
   JQL q;
   JQP_AUX *aux;
+  int i;
   iwrc rc = jqp_aux_create(&aux, query);
   RCRET(rc);
 
@@ -37,7 +38,34 @@ iwrc jql_create(JQL *qptr, const char *query) {
   RCGO(rc, finish);
 
   q->aux = aux;
-  q->q = aux->query;
+  q->qp = aux->query;
+  q->qf = 0;
+
+  JQ_FILTER *last = 0;
+  for (JQP_FILTER *qpf = q->qp->filter; qpf; qpf = qpf->next) {
+    JQ_FILTER *qf = iwpool_calloc(sizeof(*qf), aux->pool);
+    if (!qf) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      goto finish;
+    }
+    qf->qpf = qpf;
+    if (q->qf) {
+      last->next = qf;
+    } else {
+      q->qf = qf;
+    }
+    last = qf;
+    for (JQP_NODE *n = qpf->node; n; n = n->next) ++qf->nnum;
+    qf->nodes = iwpool_calloc(qf->nnum * sizeof(qf->nodes[0]), aux->pool);
+    if (!qf) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      goto finish;
+    }
+    i = 0;
+    for (JQP_NODE *n = qpf->node; n; n = n->next) {
+      qf->nodes[i++] = n;
+    }
+  }
 
 finish:
   if (rc) {
