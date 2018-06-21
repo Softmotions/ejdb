@@ -1,6 +1,6 @@
 /* Copyright (c) 2014 by Ian Piumarta
  * All rights reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the 'Software'),
  * to deal in the Software without restriction, including without limitation
@@ -10,9 +10,9 @@
  * permission notice appear in all copies of the Software.  Acknowledgement
  * of the use of this Software in supporting documentation would be
  * appreciated but is not required.
- * 
+ *
  * THE SOFTWARE IS PROVIDED 'AS IS'.  USE ENTIRELY AT YOUR OWN RISK.
- * 
+ *
  * Last edited: 2013-12-22 09:12:42 by piumarta on linux32
  */
 
@@ -689,7 +689,7 @@ void re_release(struct re *re)
 {
     if (re->matches)	RE_FREE(re, re->matches);
     if (re->code.first) re_program_free(re, &re->code);
-    memset(re, 0, sizeof(re));
+    memset(re, 0, sizeof(*re));
 }
 
 void re_reset(struct re *re, char *expression)
@@ -708,12 +708,15 @@ void re_free(struct re *re)
 
 static int re_digit(int c, int base)
 {
-    switch (c) {
-	case '0'...'9': c -=  '0';	  break;
-	case 'A'...'Z': c -= ('A' - 10);  break;
-	case 'a'...'z': c -= ('a' - 10);  break;
-	default:			  return -1;
-    }
+  if (c >= '0' && c <= '9') {
+     c -= '0';
+  } else if (c >= 'A' && c <= 'Z') {
+    c -= ('A' - 10);
+  } else if (c >= 'a' && c <= 'z') {
+     c -= ('a' - 10);
+  } else {
+    return -1;
+  }
     if (c >= base) return -1;
     return c;
 }
