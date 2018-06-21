@@ -2,6 +2,7 @@
 #ifndef JQL_H
 #define JQL_H
 
+#include "jbl.h"
 #include <iowow/iwlog.h>
 
 IW_EXTERN_C_START
@@ -15,6 +16,32 @@ typedef enum {
   _JQL_ERROR_END
 } jq_ecode;
 
+/**
+ * @brief Create query object from specified text query.
+ * @param pq Pointer to resulting query object
+ * @param query Query text
+ */
+IW_EXPORT iwrc jql_create(JQL *qptr, const char *query);
+
+IW_EXPORT iwrc jql_set_json(JQL q, const char *placeholder, int index, JBLNODE val);
+
+IW_EXPORT iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val);
+
+IW_EXPORT iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val);
+
+IW_EXPORT iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val);
+
+IW_EXPORT iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val);
+
+IW_EXPORT iwrc jql_set_null(JQL q, const char *placeholder, int index);
+
+IW_EXPORT iwrc jql_is_matched(JQL q, const JBL jbl, bool *out);
+
+IW_EXPORT iwrc jql_apply(JQL q, const JBL jbl, JBLNODE *out);
+
+IW_EXPORT iwrc jql_apply_projection(JQL q, const JBL jbl, JBLNODE *out);
+
+IW_EXPORT void jql_destroy(JQL *qptr);
 
 IW_EXPORT iwrc jql_init(void);
 

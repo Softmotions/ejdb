@@ -16,6 +16,7 @@ static void _jqp_op_negate(struct _yycontext *yy);
 static JQPUNIT *_jqp_string(struct _yycontext *yy, jqp_string_flavours_t flv, const char *text);
 static JQPUNIT *_jqp_unescaped_string(struct _yycontext *yy, jqp_string_flavours_t flv, const char *text);
 static JQPUNIT *_jqp_number(struct _yycontext *yy, const char *text);
+static JQPUNIT *_jqp_placeholder(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_unit_op(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_unit_join(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_expr(struct _yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *right);
@@ -119,7 +120,7 @@ NEXPRLEFT = ('[' _ (l:STRN | l:STRP) _ o:NEXOP _ r:NEXRIGHT _ ']')      { $$ = _
 
 NEXRIGHT = (r:PLACEHOLDER | r:VALJ)                                     { $$ = r; }
 
-PLACEHOLDER = ':' <([a-zA-Z0-9]+ | '?')>                                { $$ = _jqp_string(yy, JQP_STR_PLACEHOLDER, yytext); }
+PLACEHOLDER = ':' <([a-zA-Z0-9]+ | '?')>                                { $$ = _jqp_placeholder(yy, yytext); }
 
 NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("like" | "in" | "re")>    { $$ = _jqp_unit_op(yy, yytext); } 
         | <(">=" | "gte")>                                              { $$ = _jqp_unit_op(yy, yytext); } 
@@ -183,7 +184,7 @@ __ = SPACE+
 
 SPACE = ' ' | '\t' | EOL
 
-EOL = ('\r\n' | '\n' | '\r') { yy->aux->line++; yy->aux->col = 1; }
+EOL = ('\r\n' | '\n' | '\r') { yy->aux->line++; }
 
 EOF = !.
 

@@ -195,6 +195,12 @@ static JQPUNIT *_jqp_json_number(yycontext *yy, const char *text) {
   return unit;
 }
 
+static JQPUNIT *_jqp_placeholder(yycontext *yy, const char *text) {
+  JQPAUX *aux = yy->aux;
+  ++aux->num_placeholders;
+  return _jqp_string(yy, JQP_STR_PLACEHOLDER, text);
+}
+
 IW_INLINE int _jql_hex(char c) {
   if (c >= '0' && c <= '9') return c - '0';
   if (c >= 'a' && c <= 'f') return c - 'a' + 10;
@@ -364,7 +370,6 @@ static JQPUNIT *_jqp_json_collect(yycontext *yy, jbl_type_t type, JQPUNIT *until
 }
 
 static JQPUNIT *_jqp_json_true_false_null(yycontext *yy, const char *text) {
-  JQPAUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_JSON_TYPE;
   int len = strlen(text);
@@ -439,7 +444,6 @@ static JQPUNIT *_jqp_expr(yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *ri
     iwlog_error("Unexpected type: %d", op->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
-  JQPAUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_EXPR_TYPE;
   unit->expr.left = left;
@@ -562,7 +566,6 @@ static JQPUNIT *_jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
 }
 
 static JQPUNIT *_jqp_node(yycontext *yy, JQPUNIT *value) {
-  JQPAUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_NODE_TYPE;
   unit->node.value = value;
@@ -694,8 +697,7 @@ iwrc jqp_aux_create(JQPAUX **auxp, const char *input) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   JQPAUX *aux = *auxp;
-  aux->line = 1;
-  aux->col = 1;
+  aux->line = 1;  
   aux->xerr = iwxstr_new();
   if (!aux->xerr) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);

@@ -169,8 +169,8 @@ typedef struct JQPSTACK {
 typedef struct JQPAUX {
   bool negate;
   int pos;
-  int line;
-  int col;
+  int line;  
+  int num_placeholders;
   iwrc rc;
   jmp_buf fatal_jmp;
   const char *buf;

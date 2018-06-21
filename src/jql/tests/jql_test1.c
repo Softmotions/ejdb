@@ -37,9 +37,6 @@ void _jql_test1_1(int num, iwrc expected) {
   
   CU_ASSERT_PTR_NOT_NULL_FATAL(aux->query);
   
-  //rc = jqp_print_query(aux->query, jbl_fstream_json_printer, stderr);
-  //CU_ASSERT_EQUAL_FATAL(rc, 0);
-  
   rc = jqp_print_query(aux->query, jbl_xstr_json_printer, res);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   
