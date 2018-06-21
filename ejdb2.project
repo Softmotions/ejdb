@@ -21,8 +21,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
       <Path>/home/adam/Projects/softmotions/ejdb/cmake-build-Debug</Path>
+      <Path>/home/adam/Projects/softmotions/ejdb/build</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -34,6 +34,8 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <VirtualDirectory Name="util">
+      <File Name="src/util/lwre.c"/>
+      <File Name="src/util/lwre.h"/>
       <VirtualDirectory Name="inc">
         <File Name="src/util/inc/utf8proc_data.c"/>
       </VirtualDirectory>
