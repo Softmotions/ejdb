@@ -41,6 +41,8 @@ IW_EXPORT iwrc jql_apply(JQL q, const JBL jbl, JBL_NODE *out);
 
 IW_EXPORT iwrc jql_apply_projection(JQL q, const JBL jbl, JBL_NODE *out);
 
+IW_EXPORT void jql_reset(JQL *qptr);
+
 IW_EXPORT void jql_destroy(JQL *qptr);
 
 IW_EXPORT iwrc jql_init(void);
