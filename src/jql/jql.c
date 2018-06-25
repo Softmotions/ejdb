@@ -33,7 +33,7 @@ bool _jql_filters_matched(const JQL q) {
     const JQP_JOIN *j = qf->f->join;
     if (j && j->value == JQP_JOIN_AND) {
       last = last && qf->matched;
-    } else if (last || (!last && qf->matched)) { // OR
+    } else if (last || qf->matched) { // OR
       return true;
     }
   }
