@@ -33,10 +33,8 @@ bool _jql_filters_matched(const JQL q) {
     const JQP_JOIN *j = qf->f->join;
     if (j && j->value == JQP_JOIN_AND) {
       last = last && qf->matched;
-    } else if (!last) { // OR
-      last = qf->matched;
-    } else {
-      break;
+    } else if (last || (!last && qf->matched)) { // OR
+      return true;
     }
   }
   return last;
@@ -148,7 +146,7 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
     }
     if (!_jql_filters_need_go_deeper(q, lvl)) {
       return JBL_VCMD_SKIP_NESTED;
-    }    
+    }
   }
   return 0;
 }
