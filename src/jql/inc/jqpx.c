@@ -428,9 +428,9 @@ static JQPUNIT *_jqp_unit_join(yycontext *yy, const char *text) {
   unit->join.negate = aux->negate;
   aux->negate = false;
   if (!strcmp(text, "and")) {
-    unit->join.join = JQP_JOIN_AND;
+    unit->join.value = JQP_JOIN_AND;
   } else if (!strcmp(text, "or")) {
-    unit->join.join = JQP_JOIN_OR;
+    unit->join.value = JQP_JOIN_OR;
   }
   return unit;
 }
@@ -933,7 +933,7 @@ static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void 
     PT(0, 0, '[', 1);
     for (JQP_EXPR *e = &u->expr; e; e = e->next) {
       if (e->join) {
-        rc = _jqp_print_join(e->join->join, e->join->negate, pt, op);
+        rc = _jqp_print_join(e->join->value, e->join->negate, pt, op);
         RCRET(rc);
       }
       rc = _jqp_print_filter_node_expr(e, pt, op);
@@ -949,7 +949,7 @@ static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void 
 static iwrc _jqp_print_filter(const JQP_FILTER *f, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
   if (f->join) {
-    rc = _jqp_print_join(f->join->join, f->join->negate, pt, op);
+    rc = _jqp_print_join(f->join->value, f->join->negate, pt, op);
     RCRET(rc);
   }
   if (f->anchor) {

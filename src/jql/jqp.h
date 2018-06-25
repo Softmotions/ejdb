@@ -101,7 +101,7 @@ typedef struct JQP_OP {
 typedef struct JQP_JOIN {
   jqp_unit_t type;
   bool negate;
-  jqp_op_t join;
+  jqp_op_t value;
 } JQP_JOIN;
 
 typedef struct JQP_EXPR {
