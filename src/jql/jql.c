@@ -27,19 +27,6 @@ struct _JQL {
   JQ_FILTER *qf;
 };
 
-bool _jql_filters_matched(const JQL q) {
-  bool last = false;
-  for (const JQ_FILTER *qf = q->qf; qf; qf = qf->next) {
-    const JQP_JOIN *j = qf->f->join;
-    if (j && j->value == JQP_JOIN_AND) {
-      last = last && qf->matched;
-    } else if (last || qf->matched) { // OR
-      return true;
-    }
-  }
-  return last;
-}
-
 bool _jql_filters_need_go_deeper(const JQL q, int lvl) {
   for (const JQ_FILTER *qf = q->qf; qf; qf = qf->next) {
     if (!qf->matched && qf->last_lvl == lvl) {
@@ -123,9 +110,11 @@ void jql_destroy(JQL *qptr) {
   }
 }
 
-static void _match_filter(int lvl, binn *bv, char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
-  JQL *q = (JQL *) vctx->op;
-  // TODO:
+static iwrc _match_filter(int lvl, binn *bv, char *key, int idx, JQL q, JQ_FILTER *qf) {
+  iwrc rc = 0;
+    
+  
+  return rc;
 }
 
 static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
@@ -136,14 +125,27 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
     iwitoa(idx, nbuf, sizeof(nbuf));
     nkey = nbuf;
   }
-  
-  
+  bool last = false;
+  for (JQ_FILTER *qf = q->qf; qf; qf = qf->next) {
+    if (!qf->matched) {
+      *rcp = _match_filter(lvl, bv, key, idx, q, qf);
+      if (*rcp) return JBL_VCMD_TERMINATE;
+    }
+    const JQP_JOIN *j = qf->f->join;
+    if (!j) {
+      last = qf->matched;
+    } else if (j->value == JQP_JOIN_AND) { // AND
+      last = last && qf->matched;
+    } else if (last || qf->matched) {      // OR
+      last = true;
+      break;
+    }
+  }
+  if ((q->matched = last)) {
+    return JBL_VCMD_SKIP_NESTED;
+  }
   if (q->dirty) {
     q->dirty = false;
-    q->matched = _jql_filters_matched(q);
-    if (q->matched) {
-      return JBL_VCMD_TERMINATE;
-    }
     if (!_jql_filters_need_go_deeper(q, lvl)) {
       return JBL_VCMD_SKIP_NESTED;
     }
