@@ -9,7 +9,6 @@ typedef struct _NODE {
 
 typedef struct _FILTER {
   bool matched;
-  int last_idx;           /**< Last matched node index */
   int last_lvl;           /**< Last matched level */
   int nnum;               /**< Number of filter nodes */
   _NODE *nodes;           /**< Array query nodes */
@@ -78,7 +77,6 @@ iwrc jql_create(JQL *qptr, const char *query) {
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
-    qf->last_idx = -1;
     qf->last_lvl = -1;
     qf->f = f;
     if (q->qf) {
@@ -129,7 +127,8 @@ static bool _match_node(const struct _NCTX *ctx, iwrc *rcp) {
 static iwrc _match_filter(int lvl, binn *bv, char *key, int idx, JQL q, _FILTER *qf) {
   const int nnum = qf->nnum;
   _NODE *nodes = qf->nodes;
-  if (qf->last_lvl + 1 < lvl) {
+  
+  if (qf->last_lvl + 1 < lvl || qf->matched) {
     return 0;
   }
   if (lvl <= qf->last_lvl) {
@@ -147,6 +146,10 @@ static iwrc _match_filter(int lvl, binn *bv, char *key, int idx, JQL q, _FILTER 
   for (int i = 0; i < nnum; ++i) {
     _NODE *n = nodes + i, *nn = 0;
     if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
+      if (n->start < 0) {
+        n->start = lvl;
+        n->end = lvl;
+      }
       if (i < nnum - 1) {
         nn = nodes + i + 1;
       }
@@ -164,8 +167,11 @@ static iwrc _match_filter(int lvl, binn *bv, char *key, int idx, JQL q, _FILTER 
       bool matched = _match_node(&nctx, &rc);
       RCRET(rc);
       if (matched) {
-        qf->matched = true;
-        q->dirty = true;
+        if (i == nnum - 1) {
+          qf->matched = true;
+          q->dirty = true;
+        }
+        qf->last_lvl = lvl;
       }
       return 0;
     }
