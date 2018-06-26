@@ -1,22 +1,21 @@
 #include "jqp.h"
 #include "jbl_internal.h"
 
-typedef struct JQ_NODE {
+typedef struct _NODE {
   int start;              /**< Start matching index */
   int end;                /**< End matching index */
   JQP_NODE *n;
-} JQ_NODE;
+} _NODE;
 
-typedef struct JQ_FILTER {
+typedef struct _FILTER {
   bool matched;
   int last_idx;           /**< Last matched node index */
   int last_lvl;           /**< Last matched level */
   int nnum;               /**< Number of filter nodes */
-  JQ_NODE *nodes;         /**< Array query nodes */
+  _NODE *nodes;           /**< Array query nodes */
   JQP_FILTER *f;          /**< Parsed query filter */
-  struct JQ_FILTER *next; /**< Next filter in chain */
-} JQ_FILTER;
-
+  struct _FILTER *next;   /**< Next filter in chain */
+} _FILTER;
 
 /** Query object */
 struct _JQL {
@@ -24,11 +23,23 @@ struct _JQL {
   bool dirty;
   JQP_QUERY *qp;
   JQP_AUX *aux;
-  JQ_FILTER *qf;
+  _FILTER *qf;
+};
+
+/** Node matching context */
+struct _NCTX {
+  int lvl;
+  int idx;
+  binn *bv;
+  char *key;
+  _FILTER *qf;
+  _NODE *n;
+  _NODE *nn;
+  JQL q;
 };
 
 bool _jql_filters_need_go_deeper(const JQL q, int lvl) {
-  for (const JQ_FILTER *qf = q->qf; qf; qf = qf->next) {
+  for (const _FILTER *qf = q->qf; qf; qf = qf->next) {
     if (!qf->matched && qf->last_lvl == lvl) {
       return true;
     }
@@ -60,9 +71,9 @@ iwrc jql_create(JQL *qptr, const char *query) {
   q->qp = aux->query;
   q->qf = 0;
   
-  JQ_FILTER *last = 0;
+  _FILTER *last = 0;
   for (JQP_FILTER *f = q->qp->filter; f; f = f->next) {
-    JQ_FILTER *qf = iwpool_calloc(sizeof(*qf), aux->pool);
+    _FILTER *qf = iwpool_calloc(sizeof(*qf), aux->pool);
     if (!qf) {
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
@@ -84,7 +95,7 @@ iwrc jql_create(JQL *qptr, const char *query) {
     }
     i = 0;
     for (JQP_NODE *n = f->node; n; n = n->next) {
-      JQ_NODE qn = { .start = -1, .end = -1, .n = n };
+      _NODE qn = { .start = -1, .end = -1, .n = n };
       memcpy(&qf->nodes[i++], &qn, sizeof(qn));
     }
   }
@@ -110,11 +121,56 @@ void jql_destroy(JQL *qptr) {
   }
 }
 
-static iwrc _match_filter(int lvl, binn *bv, char *key, int idx, JQL q, JQ_FILTER *qf) {
-  iwrc rc = 0;
-    
-  
-  return rc;
+static bool _match_node(const struct _NCTX *ctx, iwrc *rcp) {
+  //
+  return false;
+}
+
+static iwrc _match_filter(int lvl, binn *bv, char *key, int idx, JQL q, _FILTER *qf) {
+  const int nnum = qf->nnum;
+  _NODE *nodes = qf->nodes;
+  if (qf->last_lvl + 1 < lvl) {
+    return 0;
+  }
+  if (lvl <= qf->last_lvl) {
+    qf->last_lvl = lvl - 1;
+    for (int i = 0; i < nnum; ++i) {
+      _NODE *n = nodes + i;
+      if (lvl > n->start && lvl < n->end) {
+        n->end = lvl;
+      } else if (n->start >= lvl) {
+        n->start = -1;
+        n->end = -1;
+      }
+    }
+  }
+  for (int i = 0; i < nnum; ++i) {
+    _NODE *n = nodes + i, *nn = 0;
+    if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
+      if (i < nnum - 1) {
+        nn = nodes + i + 1;
+      }
+      iwrc rc = 0;
+      struct _NCTX nctx = {
+        .lvl = lvl,
+        .bv = bv,
+        .key = key,
+        .idx = idx,
+        .q = q,
+        .qf = qf,
+        .n = n,
+        .nn = nn
+      };
+      bool matched = _match_node(&nctx, &rc);
+      RCRET(rc);
+      if (matched) {
+        qf->matched = true;
+        q->dirty = true;
+      }
+      return 0;
+    }
+  }
+  return 0;
 }
 
 static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
@@ -126,7 +182,7 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
     nkey = nbuf;
   }
   bool last = false;
-  for (JQ_FILTER *qf = q->qf; qf; qf = qf->next) {
+  for (_FILTER *qf = q->qf; qf; qf = qf->next) {
     if (!qf->matched) {
       *rcp = _match_filter(lvl, bv, key, idx, q, qf);
       if (*rcp) return JBL_VCMD_TERMINATE;
