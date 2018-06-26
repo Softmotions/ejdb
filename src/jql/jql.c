@@ -198,7 +198,7 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
     }
   }
   if ((q->matched = last)) {
-    return JBL_VCMD_SKIP_NESTED;
+    return JBL_VCMD_TERMINATE;
   }
   if (q->dirty) {
     q->dirty = false;
