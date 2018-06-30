@@ -54,8 +54,26 @@ void jql_test1() {
     _jql_test1_1(i, 0);
   }
   for (int i = 11; i <= 13; ++i) {
-    _jql_test1_1(i, JQL_ERROR_QUERY_PARSE);  
+    _jql_test1_1(i, JQL_ERROR_QUERY_PARSE);
   }
+}
+
+void jql_test1_2() {
+  JBL jbl;
+  JQL jql;  
+  char *json = iwu_replace_char(strdup("{'foo':{'bar':22}}"), '\'', '"');
+  CU_ASSERT_PTR_NOT_NULL_FATAL(json);
+  iwrc rc = jql_create(&jql, "/foo/bar");  
+  CU_ASSERT_EQUAL_FATAL(rc, 0);  
+  rc = jbl_from_json(&jbl, json);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);  
+  bool m = false;
+  //rc = jql_matched(jql, jbl, &m);
+  //CU_ASSERT_EQUAL_FATAL(rc, 0);  
+    
+  jql_destroy(&jql);
+  jbl_destroy(&jbl);
+  free(json);
 }
 
 int main() {
@@ -67,7 +85,8 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1))
+    //(NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1)) ||
+    (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

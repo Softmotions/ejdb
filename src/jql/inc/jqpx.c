@@ -719,15 +719,15 @@ finish:
 
 void jqp_aux_destroy(JQP_AUX **auxp) {
   JQP_AUX *aux = *auxp;
-  if (aux) {
+  if (aux) {    
+    *auxp = 0;
     if (aux->pool) {
       iwpool_destroy(aux->pool);
     }
     if (aux->xerr) {
       iwxstr_destroy(aux->xerr);
     }
-    free(aux);
-    *auxp = 0;
+    free(aux);        
   }
 }
 

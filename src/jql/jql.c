@@ -4,7 +4,7 @@
 typedef struct _NODE {
   int start;              /**< Start matching index */
   int end;                /**< End matching index */
-  JQP_NODE *n;
+  JQP_NODE *qpn;
 } _NODE;
 
 typedef struct _FILTER {
@@ -12,7 +12,7 @@ typedef struct _FILTER {
   int last_lvl;           /**< Last matched level */
   int nnum;               /**< Number of filter nodes */
   _NODE *nodes;           /**< Array query nodes */
-  JQP_FILTER *f;          /**< Parsed query filter */
+  JQP_FILTER *qpf;          /**< Parsed query filter */
   struct _FILTER *next;   /**< Next filter in chain */
 } _FILTER;
 
@@ -78,7 +78,7 @@ iwrc jql_create(JQL *qptr, const char *query) {
       goto finish;
     }
     qf->last_lvl = -1;
-    qf->f = f;
+    qf->qpf = f;
     if (q->qf) {
       last->next = qf;
     } else {
@@ -93,7 +93,7 @@ iwrc jql_create(JQL *qptr, const char *query) {
     }
     i = 0;
     for (JQP_NODE *n = f->node; n; n = n->next) {
-      _NODE qn = { .start = -1, .end = -1, .n = n };
+      _NODE qn = { .start = -1, .end = -1, .qpn = n };
       memcpy(&qf->nodes[i++], &qn, sizeof(qn));
     }
   }
@@ -119,8 +119,48 @@ void jql_destroy(JQL *qptr) {
   }
 }
 
+static bool _match_node_anys(const struct _NCTX *ctx, iwrc *rcp) {
+  _NODE *node = ctx->n;
+  *rcp = IW_ERROR_NOT_IMPLEMENTED;
+  return false;
+}
+
+static bool _match_node_expr(const struct _NCTX *ctx, iwrc *rcp) {
+  _NODE *node = ctx->n;
+  node->start = ctx->lvl;
+  node->end = node->start;
+  *rcp = IW_ERROR_NOT_IMPLEMENTED;
+  return false;
+}
+
+static bool _match_node_field(const struct _NCTX *ctx, iwrc *rcp) {
+  _NODE *node = ctx->n;
+  JQP_NODE *qpn = node->qpn;
+  node->start = ctx->lvl;
+  node->end = node->start;
+  if (qpn->value->type != JQP_STRING_TYPE) {
+    *rcp = IW_ERROR_ASSERTION;
+    return false;
+  }
+  const char *val = qpn->value->string.value;
+  bool ret = strcmp(val, ctx->key) == 0;      
+  return ret;
+}
+
 static bool _match_node(const struct _NCTX *ctx, iwrc *rcp) {
-  //
+  _NODE *node = ctx->n;
+  switch (node->qpn->ntype) {
+    case JQP_NODE_ANY:
+      node->start = ctx->lvl;
+      node->end = node->start;
+      return true;
+    case JQP_NODE_FIELD:
+      return _match_node_field(ctx, rcp);
+    case JQP_NODE_EXPR:      
+      return _match_node_expr(ctx, rcp);
+    case JQP_NODE_ANYS:
+      return _match_node_anys(ctx, rcp);
+  }
   return false;
 }
 
@@ -193,7 +233,7 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
       *rcp = _match_filter(lvl, bv, key, idx, q, qf);
       if (*rcp) return JBL_VCMD_TERMINATE;
     }
-    const JQP_JOIN *j = qf->f->join;
+    const JQP_JOIN *j = qf->qpf->join;
     if (!j) {
       last = qf->matched;
     } else if (j->value == JQP_JOIN_AND) { // AND
@@ -220,10 +260,10 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
     .bn = &jbl->bn,
     .op = &q
   };
+  *out = false;
   iwrc rc = _jbl_visit(0, 0, &vctx, _match_visitor);
   RCRET(rc);
-  
-  
+  *out = q->matched;  
   return rc;
 }
 
