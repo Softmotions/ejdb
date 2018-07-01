@@ -68,8 +68,9 @@ void jql_test1_2() {
   rc = jbl_from_json(&jbl, json);
   CU_ASSERT_EQUAL_FATAL(rc, 0);  
   bool m = false;
-  //rc = jql_matched(jql, jbl, &m);
-  //CU_ASSERT_EQUAL_FATAL(rc, 0);  
+  rc = jql_matched(jql, jbl, &m);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);  
+  CU_ASSERT_EQUAL(m, true);
     
   jql_destroy(&jql);
   jbl_destroy(&jbl);

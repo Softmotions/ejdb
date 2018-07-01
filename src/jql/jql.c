@@ -69,6 +69,7 @@ iwrc jql_create(JQL *qptr, const char *query) {
   q->aux = aux;
   q->qp = aux->query;
   q->qf = 0;
+  q->dirty = false;
   
   _FILTER *last = 0;
   for (JQP_FILTER *f = q->qp->filter; f; f = f->next) {
@@ -186,10 +187,6 @@ static iwrc _match_filter(int lvl, binn *bv, char *key, int idx, JQL q, _FILTER 
   for (int i = 0; i < nnum; ++i) {
     _NODE *n = nodes + i, *nn = 0;
     if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
-      if (n->start < 0) {
-        n->start = lvl;
-        n->end = lvl;
-      }
       if (i < nnum - 1) {
         nn = nodes + i + 1;
       }
@@ -258,7 +255,7 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
 iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
-    .op = &q
+    .op = q
   };
   *out = false;
   iwrc rc = _jbl_visit(0, 0, &vctx, _match_visitor);
