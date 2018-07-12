@@ -86,7 +86,7 @@ int main() {
     return CU_get_error();
   }
   if (
-    //(NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1)) ||
+    (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1)) ||
     (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
   ) {
     CU_cleanup_registry();

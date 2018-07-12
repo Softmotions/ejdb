@@ -126,12 +126,41 @@ static bool _match_node_anys(const struct _NCTX *ctx, iwrc *rcp) {
   return false;
 }
 
+static bool _match_node_expr_impl(const struct _NCTX *ctx, JQP_EXPR *expr, iwrc *rcp) {
+  JQPUNIT *left = expr->left;
+  JQP_OP *op = expr->op;
+  JQPUNIT *right = expr->right;
+  // TODO
+  *rcp = IW_ERROR_NOT_IMPLEMENTED;
+  return false;
+}
+
 static bool _match_node_expr(const struct _NCTX *ctx, iwrc *rcp) {
   _NODE *node = ctx->n;
   node->start = ctx->lvl;
   node->end = node->start;
-  *rcp = IW_ERROR_NOT_IMPLEMENTED;
-  return false;
+  JQP_NODE *qpn = node->qpn;
+  JQPUNIT *unit = qpn->value;  
+  if (unit->type != JQP_EXPR_TYPE) {
+    *rcp = IW_ERROR_ASSERTION;
+    return false;
+  }
+  bool prev = false;
+  bool matched = false;
+  for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
+      matched = _match_node_expr_impl(ctx, expr, rcp);
+      if (*rcp) return false;
+      const JQP_JOIN *j = expr->join;
+      if (!j) {
+        prev = matched;
+      } else if (j->value == JQP_JOIN_AND) { // AND
+        prev = prev && matched;
+      } else if (prev || matched) {     // OR
+        prev = true;
+        break;
+      }
+  }
+  return prev;
 }
 
 static bool _match_node_field(const struct _NCTX *ctx, iwrc *rcp) {
@@ -224,7 +253,7 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
     iwitoa(idx, nbuf, sizeof(nbuf));
     nkey = nbuf;
   }
-  bool last = false;
+  bool prev = false;
   for (_FILTER *qf = q->qf; qf; qf = qf->next) {
     if (!qf->matched) {
       *rcp = _match_filter(lvl, bv, key, idx, q, qf);
@@ -232,15 +261,15 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
     }
     const JQP_JOIN *j = qf->qpf->join;
     if (!j) {
-      last = qf->matched;
+      prev = qf->matched;
     } else if (j->value == JQP_JOIN_AND) { // AND
-      last = last && qf->matched;
-    } else if (last || qf->matched) {      // OR
-      last = true;
+      prev = prev && qf->matched;
+    } else if (prev || qf->matched) {      // OR
+      prev = true;
       break;
     }
   }
-  if ((q->matched = last)) {
+  if ((q->matched = prev)) {
     return JBL_VCMD_TERMINATE;
   }
   if (q->dirty) {
