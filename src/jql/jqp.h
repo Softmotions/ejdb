@@ -15,7 +15,8 @@ typedef enum {
   JQP_STR_ANCHOR      = 1 << 1, /**< Query filter anchor */
   JQP_STR_PROJFIELD   = 1 << 2, /**< Projection field **/
   JQP_STR_PROJALIAS   = 1 << 3, /**< Projection alias (all) **/
-  JQP_STR_QUOTED      = 1 << 4  /**< String is quoted */
+  JQP_STR_QUOTED      = 1 << 4, /**< String is quoted */
+  JQP_STR_STAR        = 1 << 5  /**< Star (*) string */
 } jqp_string_flavours_t;
 
 typedef enum {

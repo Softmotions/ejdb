@@ -14,8 +14,8 @@ struct RE_Compiled {
 #define RE_COMPILED_INITIALISER { 0, 0, 0 }
 
 struct re {
-  char     *expression;
-  char     *position;
+  const char     *expression;
+  const char     *position;
   jmp_buf  *error_env;
   int       error_code;
   char     *error_message;
@@ -39,10 +39,10 @@ enum {
   RE_ERROR_ENGINE = -6
 };
 
-struct re *re_new(char *expression);
+struct re *re_new(const char *expression);
 int    re_match(struct re *re, char *input);
 void   re_release(struct re *re);
-void   re_reset(struct re *re, char *expression);
+void   re_reset(struct re *re, const char *expression);
 void   re_free(struct re *re);
 
 char *re_escape(char *string, int liberal);

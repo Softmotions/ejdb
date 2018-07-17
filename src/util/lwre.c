@@ -127,7 +127,7 @@ static void re_bitset_add(RE_BitSet *c, int i) {
 /* character classes */
 
 static int re_make_char(struct re *re) {
-  char *p = re->position;
+  const char *p = re->position;
   if (!*p) return 0;
   int c = *p++;
   if (('\\' == c) && *p) c = *p++;
@@ -702,7 +702,7 @@ bailout:
 
 /* public interface */
 
-struct re *re_new(char *expr) {
+struct re *re_new(const char *expr) {
   struct re *re = RE_CALLOC(0, 1, sizeof(struct re));
   if (re) re->expression = expr;
   return re;
@@ -730,7 +730,7 @@ void re_release(struct re *re) {
   memset(re, 0, sizeof(*re));
 }
 
-void re_reset(struct re *re, char *expression) {
+void re_reset(struct re *re, const char *expression) {
   re_release(re);
   re->expression = expression;
 }

@@ -114,7 +114,7 @@ NEXJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)        { $$ = _
 
 NEXPAIR = (l:NEXLEFT _ o:NEXOP _ r:NEXRIGHT)                            { $$ = _jqp_expr(yy, l, o, r); }
 
-NEXLEFT = (l:STRN | l:NEXPRLEFT | l:STRP)                               { $$ = l; }
+NEXLEFT = (l:STRSTAR | l:STRN | l:NEXPRLEFT | l:STRP)                   { $$ = l; }
 
 NEXPRLEFT = ('[' _ l:STRSTAR _ o:NEXOP _ r:NEXRIGHT _ ']')              { $$ = _jqp_expr(yy, l, o, r); }
 
@@ -131,7 +131,7 @@ NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("like" | "in" | "re")>    { $$ = _
 
 STRP = <CHP+> { $$ = _jqp_unescaped_string(yy, 0, yytext); }
 
-STRSTAR = "*" { $$ = _jqp_unescaped_string(yy, 0, yytext); }
+STRSTAR = "*" { $$ = _jqp_unescaped_string(yy, JQP_STR_STAR, yytext); }
 
 STRN = '"' <CHJ+> '"' { $$ = _jqp_unescaped_string(yy, JQP_STR_QUOTED, yytext); }
 

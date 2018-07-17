@@ -35,6 +35,8 @@ IW_EXPORT iwrc jql_set_str(JQL q, const char *placeholder, int index, const char
 
 IW_EXPORT iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val);
 
+IW_EXPORT iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char* expr);
+
 IW_EXPORT iwrc jql_set_null(JQL q, const char *placeholder, int index);
 
 IW_EXPORT iwrc jql_matched(JQL q, const JBL jbl, bool *out);
