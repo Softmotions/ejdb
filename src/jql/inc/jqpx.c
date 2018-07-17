@@ -196,9 +196,27 @@ static JQPUNIT *_jqp_json_number(yycontext *yy, const char *text) {
 }
 
 static JQPUNIT *_jqp_placeholder(yycontext *yy, const char *text) {
-  JQP_AUX *aux = yy->aux;
-  ++aux->num_placeholders;
-  return _jqp_string(yy, JQP_STR_PLACEHOLDER, text);
+  JQP_AUX *aux = yy->aux;  
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_STRING_TYPE;
+  unit->string.flavour |= JQP_STR_PLACEHOLDER;
+  if (text[0] == '?') {
+    char nbuf[JBNUMBUF_SIZE + 1];
+    nbuf[0] = '?';
+    int len = iwitoa(aux->num_placeholders++, nbuf + 1, JBNUMBUF_SIZE);
+    nbuf[len + 1] = '\0';    
+    unit->string.value = _jqp_strdup(yy, nbuf);    
+  } else {
+    unit->string.value = _jqp_strdup(yy, text);
+  }
+  if (!aux->start_placeholder) {
+    aux->start_placeholder = &unit->string;
+    aux->end_placeholder = aux->start_placeholder;
+  } else {
+    aux->end_placeholder->next = &unit->string;
+    aux->end_placeholder = aux->end_placeholder->next;    
+  }
+  return unit;
 }
 
 IW_INLINE int _jql_hex(char c) {
@@ -719,7 +737,7 @@ finish:
 
 void jqp_aux_destroy(JQP_AUX **auxp) {
   JQP_AUX *aux = *auxp;
-  if (aux) {    
+  if (aux) {
     *auxp = 0;
     if (aux->pool) {
       iwpool_destroy(aux->pool);
@@ -727,7 +745,7 @@ void jqp_aux_destroy(JQP_AUX **auxp) {
     if (aux->xerr) {
       iwxstr_destroy(aux->xerr);
     }
-    free(aux);        
+    free(aux);
   }
 }
 

@@ -80,6 +80,7 @@ typedef struct JQP_STRING {
   const char *value;
   struct JQP_STRING *next;
   struct JQP_STRING *subnext;
+  void *opaque;
 } JQP_STRING;
 
 typedef struct JQP_INTEGER {
@@ -178,6 +179,8 @@ typedef struct JQP_AUX {
   IWPOOL *pool;
   struct JQP_QUERY *query;
   JQP_STACK *stack;
+  JQP_STRING *start_placeholder;
+  JQP_STRING *end_placeholder;
   JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];
   int stackn;
 } JQP_AUX;

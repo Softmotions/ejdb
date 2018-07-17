@@ -37,6 +37,76 @@ struct _NCTX {
   JQL q;
 };
 
+/** Placeholder value type */
+typedef enum {
+  JQVAL_NULL,
+  JQVAL_JBLNODE,
+  JQVAL_I64,
+  JQVAL_F64,
+  JQVAL_STR,
+  JQVAL_BOOL
+} jqval_type_t;
+
+/** Placeholder value */
+typedef union {
+  jqval_type_t type;
+  JBL_NODE vjblnode;
+  int64_t vint64;
+  double vf64;
+  const char *vstr;
+  bool vbool;
+} _JQVAL;
+
+
+static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, _JQVAL *val) {
+
+  // TODO:
+
+
+  return 0;
+}
+
+iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val) {
+  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  qv->type = JQVAL_JBLNODE;
+  qv->vjblnode = val;
+  return _jql_set_placeholder(q, placeholder, index, qv);
+}
+
+iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val) {
+  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  qv->type = JQVAL_I64;
+  qv->vint64 = val;
+  return _jql_set_placeholder(q, placeholder, index, qv);
+}
+
+iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val) {
+  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  qv->type = JQVAL_F64;
+  qv->vf64 = val;
+  return _jql_set_placeholder(q, placeholder, index, qv);
+}
+
+iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val) {
+  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  qv->type = JQVAL_STR;
+  qv->vstr = val;
+  return _jql_set_placeholder(q, placeholder, index, qv);
+}
+
+iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
+  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  qv->type = JQVAL_BOOL;
+  qv->vbool = val;
+  return _jql_set_placeholder(q, placeholder, index, qv);
+}
+
+iwrc jql_set_null(JQL q, const char *placeholder, int index) {
+  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  qv->type = JQVAL_NULL;
+  return _jql_set_placeholder(q, placeholder, index, qv);
+}
+
 bool _jql_filters_need_go_deeper(const JQL q, int lvl) {
   for (const _FILTER *qf = q->qf; qf; qf = qf->next) {
     if (!qf->matched && qf->last_lvl == lvl) {
@@ -140,7 +210,7 @@ static bool _match_node_expr(const struct _NCTX *ctx, iwrc *rcp) {
   node->start = ctx->lvl;
   node->end = node->start;
   JQP_NODE *qpn = node->qpn;
-  JQPUNIT *unit = qpn->value;  
+  JQPUNIT *unit = qpn->value;
   if (unit->type != JQP_EXPR_TYPE) {
     *rcp = IW_ERROR_ASSERTION;
     return false;
@@ -148,17 +218,17 @@ static bool _match_node_expr(const struct _NCTX *ctx, iwrc *rcp) {
   bool prev = false;
   bool matched = false;
   for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
-      matched = _match_node_expr_impl(ctx, expr, rcp);
-      if (*rcp) return false;
-      const JQP_JOIN *j = expr->join;
-      if (!j) {
-        prev = matched;
-      } else if (j->value == JQP_JOIN_AND) { // AND
-        prev = prev && matched;
-      } else if (prev || matched) {     // OR
-        prev = true;
-        break;
-      }
+    matched = _match_node_expr_impl(ctx, expr, rcp);
+    if (*rcp) return false;
+    const JQP_JOIN *j = expr->join;
+    if (!j) {
+      prev = matched;
+    } else if (j->value == JQP_JOIN_AND) { // AND
+      prev = prev && matched;
+    } else if (prev || matched) {     // OR
+      prev = true;
+      break;
+    }
   }
   return prev;
 }
@@ -173,7 +243,7 @@ static bool _match_node_field(const struct _NCTX *ctx, iwrc *rcp) {
     return false;
   }
   const char *val = qpn->value->string.value;
-  bool ret = strcmp(val, ctx->key) == 0;      
+  bool ret = strcmp(val, ctx->key) == 0;
   return ret;
 }
 
@@ -186,7 +256,7 @@ static bool _match_node(const struct _NCTX *ctx, iwrc *rcp) {
       return true;
     case JQP_NODE_FIELD:
       return _match_node_field(ctx, rcp);
-    case JQP_NODE_EXPR:      
+    case JQP_NODE_EXPR:
       return _match_node_expr(ctx, rcp);
     case JQP_NODE_ANYS:
       return _match_node_anys(ctx, rcp);
@@ -289,7 +359,7 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
   *out = false;
   iwrc rc = _jbl_visit(0, 0, &vctx, _match_visitor);
   RCRET(rc);
-  *out = q->matched;  
+  *out = q->matched;
   return rc;
 }
 
