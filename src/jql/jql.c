@@ -57,13 +57,26 @@ typedef union {
   bool vbool;
 } _JQVAL;
 
-
 static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, _JQVAL *val) {
-
-  // TODO:
-
-
-  return 0;
+  if (!placeholder) { // Index
+    char nbuf[JBNUMBUF_SIZE];
+    int len = iwitoa(index, nbuf, JBNUMBUF_SIZE);
+    nbuf[len] = '\0';
+    for (JQP_STRING *pv = q->aux->start_placeholder; pv; pv = pv->next) {
+      if (pv->value[0] == '?' && !strcmp(pv->value + 1, nbuf)) {
+        pv->opaque = val;
+        return 0;
+      }
+    }
+  } else {
+    for (JQP_STRING *pv = q->aux->start_placeholder; pv; pv = pv->next) {
+      if (pv->value[0] == ':' && !strcmp(pv->value + 1, placeholder)) {
+        pv->opaque = val;
+        return 0;
+      }
+    }
+  }
+  return JQL_ERROR_INVALID_PLACEHOLDER;
 }
 
 iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val) {
@@ -370,6 +383,10 @@ static const char *_ecodefn(locale_t locale, uint32_t ecode) {
   switch (ecode) {
     case JQL_ERROR_QUERY_PARSE:
       return "Query parsing error (JQL_ERROR_QUERY_PARSE)";
+    case JQL_ERROR_INVALID_PLACEHOLDER:
+      return "Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER)";    
+    case JQL_ERROR_UNSET_PLACEHOLDER:
+      return "Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER)";
     default:
       break;
   }
