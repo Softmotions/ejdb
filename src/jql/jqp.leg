@@ -101,7 +101,7 @@ PCHP = '\\' '\\'
 FILTER =   ('('_ { yy->aux->grouping_level++; })*
             ((a:FILTERANCHOR { _jqp_unit_push(yy, a); })?
               fn:NODE { _jqp_unit_push(yy, fn); } (n:NODE { _jqp_unit_push(yy, n); })*) { $$ = _jqp_pop_node_chain(yy, fn); }
-           (_')' { yy->aux->grouping_level--; })*
+           (_')' { yy->aux->grouping_level--; })* { $$->filter.grouping_level_after = yy->aux->grouping_level; }
 
 FILTERANCHOR = '@' <([a-zA-Z0-9]+)> { $$ = _jqp_string(yy, JQP_STR_ANCHOR, yytext); }
 

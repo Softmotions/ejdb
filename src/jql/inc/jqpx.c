@@ -984,7 +984,7 @@ static iwrc _jqp_print_filter(const JQP_QUERY *q,
     rc = _jqp_print_join(f->join->value, f->join->negate, pt, op);
     RCRET(rc);
   }
-  for (int i = pf ? pf->grouping_level : 0; i < f->grouping_level; ++i) {
+  for (int i = pf ? pf->grouping_level_after : 0; i < f->grouping_level; ++i) {
     PT(0, 0, '(', 1);
   }
   if (f->anchor) {
@@ -995,7 +995,7 @@ static iwrc _jqp_print_filter(const JQP_QUERY *q,
     rc = _jqp_print_filter_node(n, pt, op);
     RCRET(rc);
   }
-  for (int i = f->grouping_level, e = f->next ? f->next->grouping_level : 0; i > e; --i) {
+  for (int i = f->grouping_level, e = f->grouping_level_after; i > e; --i) {
     PT(0, 0, ')', 1);
   }
   return rc;

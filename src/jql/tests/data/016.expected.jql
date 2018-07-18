@@ -1,0 +1,6 @@
+/foo/bar
+ and (/foo/baz
+ or (/foo/gaz
+ and /foo/daz)
+ and (/foo/sss
+ or /foo/vvv))

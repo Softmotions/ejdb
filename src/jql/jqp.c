@@ -1121,6 +1121,26 @@ YY_ACTION(void) yy_1_FILTERANCHOR(yycontext *yy, char *yytext, int yyleng)
 #undef yypos
 #undef yy
 }
+YY_ACTION(void) yy_7_FILTER(yycontext *yy, char *yytext, int yyleng)
+{
+#define n yy->__val[-1]
+#define fn yy->__val[-2]
+#define a yy->__val[-3]
+#define __ yy->__
+#define yypos yy->__pos
+#define yythunkpos yy->__thunkpos
+  yyprintf((stderr, "do yy_7_FILTER\n"));
+  {
+#line 104
+   __->filter.grouping_level_after = yy->aux->grouping_level; ;
+  }
+#undef yythunkpos
+#undef yypos
+#undef yy
+#undef n
+#undef fn
+#undef a
+}
 YY_ACTION(void) yy_6_FILTER(yycontext *yy, char *yytext, int yyleng)
 {
 #define n yy->__val[-1]
@@ -2617,7 +2637,7 @@ YY_RULE(int) yy_FILTER(yycontext *yy)
   l180:;	
   {  int yypos181= yy->__pos, yythunkpos181= yy->__thunkpos;  if (!yy__(yy)) goto l181;  if (!yymatchChar(yy, ')')) goto l181;  yyDo(yy, yy_6_FILTER, yy->__begin, yy->__end);  goto l180;
   l181:;	  yy->__pos= yypos181; yy->__thunkpos= yythunkpos181;
-  }
+  }  yyDo(yy, yy_7_FILTER, yy->__begin, yy->__end);
   yyprintf((stderr, "  ok   %s @ %s\n", "FILTER", yy->__buf+yy->__pos));  yyDo(yy, yyPop, 3, 0);
   return 1;
   l173:;	  yy->__pos= yypos0; yy->__thunkpos= yythunkpos0;

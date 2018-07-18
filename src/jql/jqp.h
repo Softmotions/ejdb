@@ -72,6 +72,7 @@ typedef struct JQP_NODE {
 typedef struct JQP_FILTER {
   jqp_unit_t type;
   int grouping_level;
+  int grouping_level_after;
   const char *anchor;
   struct JQP_JOIN *join;
   struct JQP_NODE *node;
