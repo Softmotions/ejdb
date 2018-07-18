@@ -53,6 +53,8 @@ typedef enum {
   JQP_OP_LIKE,
 } jqp_op_t;
 
+struct JQP_AUX;
+
 typedef union _JQP_UNIT JQPUNIT;
 
 typedef struct JQP_JSON {
@@ -69,6 +71,7 @@ typedef struct JQP_NODE {
 
 typedef struct JQP_FILTER {
   jqp_unit_t type;
+  int grouping_level;
   const char *anchor;
   struct JQP_JOIN *join;
   struct JQP_NODE *node;
@@ -122,12 +125,14 @@ typedef struct JQP_PROJECTION {
   struct JQP_PROJECTION *next;
 } JQP_PROJECTION;
 
+
 typedef struct JQP_QUERY {
   jqp_unit_t type;
   struct JQP_FILTER *filter;
   JBL_NODE apply;
   const char *apply_placeholder;
   struct JQP_PROJECTION *projection;
+  struct JQP_AUX *aux;
 } JQP_QUERY;
 
 //--
@@ -173,6 +178,7 @@ typedef struct JQP_AUX {
   int pos;
   int line;
   int num_placeholders;
+  int grouping_level;
   iwrc rc;
   jmp_buf fatal_jmp;
   const char *buf;

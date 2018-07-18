@@ -196,7 +196,7 @@ static JQPUNIT *_jqp_json_number(yycontext *yy, const char *text) {
 }
 
 static JQPUNIT *_jqp_placeholder(yycontext *yy, const char *text) {
-  JQP_AUX *aux = yy->aux;  
+  JQP_AUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_STRING_TYPE;
   unit->string.flavour |= JQP_STR_PLACEHOLDER;
@@ -204,8 +204,8 @@ static JQPUNIT *_jqp_placeholder(yycontext *yy, const char *text) {
     char nbuf[JBNUMBUF_SIZE + 1];
     nbuf[0] = '?';
     int len = iwitoa(aux->num_placeholders++, nbuf + 2, JBNUMBUF_SIZE);
-    nbuf[len + 1] = '\0';    
-    unit->string.value = _jqp_strdup(yy, nbuf);    
+    nbuf[len + 1] = '\0';
+    unit->string.value = _jqp_strdup(yy, nbuf);
   } else {
     unit->string.value = _jqp_strdup(yy, text);
   }
@@ -214,7 +214,7 @@ static JQPUNIT *_jqp_placeholder(yycontext *yy, const char *text) {
     aux->end_placeholder = aux->start_placeholder;
   } else {
     aux->end_placeholder->next = &unit->string;
-    aux->end_placeholder = aux->end_placeholder->next;    
+    aux->end_placeholder = aux->end_placeholder->next;
   }
   return unit;
 }
@@ -631,6 +631,7 @@ static JQPUNIT *_jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
   filter = _jqp_unit(yy);
   filter->type = JQP_FILTER_TYPE;
   filter->filter.node = &first->node;
+  filter->filter.grouping_level = aux->grouping_level;
   if (aux->stack
       && aux->stack->type == STACK_UNIT
       && aux->stack->unit->type == JQP_STRING_TYPE
@@ -672,6 +673,7 @@ static JQPUNIT *_jqp_pop_filters_and_set_query(yycontext *yy, JQPUNIT *until) {
   query = _jqp_unit(yy);
   query->type = JQP_QUERY_TYPE;
   query->query.filter = &filter->filter;
+  query->query.aux = aux;
   aux->query = &query->query;
   return query;
 }
@@ -788,8 +790,14 @@ iwrc jqp_parse(JQP_AUX *aux) {
     }
     yyerror(&yy);
     if (iwxstr_size(aux->xerr)) {
-      iwlog_error("Syntax error: %s\n", iwxstr_ptr(aux->xerr));
+      const char *prefix = "Syntax error: ";
+      iwxstr_unshift(aux->xerr, prefix, strlen(prefix));
+      iwlog_error("%s\n", iwxstr_ptr(aux->xerr));
     }
+  } else if (aux->grouping_level) {
+    aux->rc = JQL_ERROR_QUERY_PARSE;
+    _iwxstr_cat2(aux->xerr, "Syntax error: unbalanced parenthesis");
+    iwlog_error("%s\n", iwxstr_ptr(aux->xerr));
   }
   
 finish:
@@ -912,7 +920,9 @@ static iwrc _jqp_print_join(jqp_op_t jqop, bool negate, jbl_json_printer pt, voi
 static iwrc _jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
   if (e->left->type == JQP_EXPR_TYPE) {
+    PT(0, 0, '[', 1);
     _jqp_print_filter_node_expr(&e->left->expr, pt, op);
+    PT(0, 0, ']', 1);
   } else if (e->left->type == JQP_STRING_TYPE) {
     if (e->left->string.flavour & JQP_STR_QUOTED) {
       PT(0, 0, '"', 1);
@@ -964,11 +974,18 @@ static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void 
   return rc;
 }
 
-static iwrc _jqp_print_filter(const JQP_FILTER *f, jbl_json_printer pt, void *op) {
+static iwrc _jqp_print_filter(const JQP_QUERY *q,
+                              const JQP_FILTER *f,
+                              struct JQP_FILTER *pf,
+                              jbl_json_printer pt,
+                              void *op) {
   iwrc rc = 0;
   if (f->join) {
     rc = _jqp_print_join(f->join->value, f->join->negate, pt, op);
     RCRET(rc);
+  }
+  for (int i = pf ? pf->grouping_level : 0; i < f->grouping_level; ++i) {
+    PT(0, 0, '(', 1);
   }
   if (f->anchor) {
     PT(0, 0, '@', 1);
@@ -978,6 +995,9 @@ static iwrc _jqp_print_filter(const JQP_FILTER *f, jbl_json_printer pt, void *op
     rc = _jqp_print_filter_node(n, pt, op);
     RCRET(rc);
   }
+  for (int i = f->grouping_level, e = f->next ? f->next->grouping_level : 0; i > e; --i) {
+    PT(0, 0, ')', 1);
+  }
   return rc;
 }
 
@@ -986,10 +1006,12 @@ iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
     return IW_ERROR_INVALID_ARGS;
   }
   iwrc rc = 0;
+  struct JQP_FILTER *pf = 0;
   for (struct JQP_FILTER *f = q->filter; f; f = f->next) {
-    rc = _jqp_print_filter(f, pt, op);
+    rc = _jqp_print_filter(q, f, pf, pt, op);
     RCRET(rc);
     PT(0, 0, '\n', 1);
+    pf = f;
   }
   if (q->apply_placeholder || q->apply) {
     rc = _jqp_print_apply(q, pt, op);

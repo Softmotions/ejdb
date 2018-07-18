@@ -98,9 +98,10 @@ PCHP = '\\' '\\'
       | '\\' 'u' HEX HEX HEX HEX
       | !["/{},\t\n\r ] .
 
-FILTER = ((a:FILTERANCHOR { _jqp_unit_push(yy, a); })?
-           fn:NODE { _jqp_unit_push(yy, fn); } (n:NODE { _jqp_unit_push(yy, n); })*)
-           { $$ = _jqp_pop_node_chain(yy, fn);  }
+FILTER =   ('('_ { yy->aux->grouping_level++; })*
+            ((a:FILTERANCHOR { _jqp_unit_push(yy, a); })?
+              fn:NODE { _jqp_unit_push(yy, fn); } (n:NODE { _jqp_unit_push(yy, n); })*) { $$ = _jqp_pop_node_chain(yy, fn); }
+           (_')' { yy->aux->grouping_level--; })*
 
 FILTERANCHOR = '@' <([a-zA-Z0-9]+)> { $$ = _jqp_string(yy, JQP_STR_ANCHOR, yytext); }
 
@@ -131,7 +132,7 @@ NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("like" | "in" | "re")>    { $$ = _
 
 STRP = <CHP+> { $$ = _jqp_unescaped_string(yy, 0, yytext); }
 
-STRSTAR = "*" { $$ = _jqp_unescaped_string(yy, JQP_STR_STAR, yytext); }
+STRSTAR = <"*"> { $$ = _jqp_unescaped_string(yy, JQP_STR_STAR, yytext); }
 
 STRN = '"' <CHJ+> '"' { $$ = _jqp_unescaped_string(yy, JQP_STR_QUOTED, yytext); }
 
@@ -153,9 +154,9 @@ VALJ =    v:STRJ    { $$ = v; }
         | v:NUMJ    { $$ = v; }
         | v:OBJJ    { $$ = v; }
         | v:ARRJ    { $$ = v; }
-        | "true"    { $$ = _jqp_json_true_false_null(yy, yytext); }
-        | "false"   { $$ = _jqp_json_true_false_null(yy, yytext); }
-        | "null"    { $$ = _jqp_json_true_false_null(yy, yytext); }
+        | <"true">  { $$ = _jqp_json_true_false_null(yy, yytext); }
+        | <"false"> { $$ = _jqp_json_true_false_null(yy, yytext); }
+        | <"null">  { $$ = _jqp_json_true_false_null(yy, yytext); }
 
 STRJ = '"' <(CHJ*)> '"' { $$ = _jqp_json_string(yy, yytext); }
 
@@ -170,7 +171,7 @@ CHJ = '\\' '"'
 CHP = '\\' '\\'
       | '\\' [bfnrt]
       | '\\' 'u' HEX HEX HEX HEX
-      | ![/"[\]=><!\t\n\r ] .
+      | ![/"[\]=><!\t\n\r() ] .
 
 NUMJ = <('-'? NUMI NUMF? NUME?)> { $$ = _jqp_json_number(yy, yytext); }
 
