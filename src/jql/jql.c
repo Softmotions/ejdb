@@ -65,6 +65,7 @@ static void _jql_jqval_destroy(_JQVAL *qv) {
   if (qv->type == JQVAL_RE) {
     re_free(qv->vre);
   }
+  free(qv);
 }
 
 static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, _JQVAL *val) {
@@ -74,6 +75,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, _JQV
     nbuf[len] = '\0';
     for (JQP_STRING *pv = q->aux->start_placeholder; pv; pv = pv->next) {
       if (pv->value[0] == '?' && !strcmp(pv->value + 1, nbuf)) {
+        if (pv->opaque) _jql_jqval_destroy(pv->opaque);
         pv->opaque = val;
         return 0;
       }
@@ -81,6 +83,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, _JQV
   } else {
     for (JQP_STRING *pv = q->aux->start_placeholder; pv; pv = pv->next) {
       if (pv->value[0] == ':' && !strcmp(pv->value + 1, placeholder)) {
+        if (pv->opaque) _jql_jqval_destroy(pv->opaque);
         pv->opaque = val;
         return 0;
       }
@@ -90,7 +93,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, _JQV
 }
 
 iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val) {
-  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  _JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   qv->type = JQVAL_JBLNODE;
   qv->vjblnode = val;
@@ -98,7 +101,7 @@ iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val) {
 }
 
 iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val) {
-  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  _JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   qv->type = JQVAL_I64;
   qv->vint64 = val;
@@ -106,7 +109,7 @@ iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val) {
 }
 
 iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val) {
-  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  _JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   qv->type = JQVAL_F64;
   qv->vf64 = val;
@@ -114,7 +117,7 @@ iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val) {
 }
 
 iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val) {
-  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  _JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   qv->type = JQVAL_STR;
   qv->vstr = val;
@@ -122,7 +125,7 @@ iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val) {
 }
 
 iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
-  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  _JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   qv->type = JQVAL_BOOL;
   qv->vbool = val;
@@ -132,7 +135,7 @@ iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
 iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char *expr) {
   struct re *rx = re_new(expr);
   if (!rx) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  _JQVAL *qv = iwpool_alloc(sizeof(_JQVAL), q->aux->pool);
+  _JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) {
     iwrc rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     re_free(rx);
