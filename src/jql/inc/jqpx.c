@@ -643,12 +643,13 @@ static JQPUNIT *_jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
 static JQPUNIT *_jqp_pop_filter_factor_chain(yycontext *yy, JQPUNIT *until) {
   JQP_EXPR_NODE *factor = 0;
   JQP_AUX *aux = yy->aux;
+  JQPUNIT *exprnode = _jqp_unit(yy);
   while (aux->stack && aux->stack->type == STACK_UNIT) {
     JQPUNIT *unit = aux->stack->unit;
     if (unit->type == JQP_JOIN_TYPE) {
       factor->join = &unit->join;
     } else if (unit->type == JQP_EXPR_NODE_TYPE || unit->type == JQP_FILTER_TYPE) {
-      JQP_EXPR_NODE *node = (JQP_EXPR_NODE *) unit;
+      JQP_EXPR_NODE *node = (JQP_EXPR_NODE *) unit;      
       if (factor) {
         node->next = factor;
       }
@@ -662,7 +663,6 @@ static JQPUNIT *_jqp_pop_filter_factor_chain(yycontext *yy, JQPUNIT *until) {
       break;
     }
   }
-  JQPUNIT *exprnode = _jqp_unit(yy);
   exprnode->type = JQP_EXPR_NODE_TYPE;
   exprnode->exprnode.next = factor;
   return exprnode;
@@ -993,6 +993,7 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
                                        jbl_json_printer pt,
                                        void *op) {
   iwrc rc = 0;
+  const JQP_EXPR_NODE *root = en;
   bool inbraces = (en != q->expr && en->type == JQP_EXPR_NODE_TYPE);
   if (inbraces) {
     PT(0, 0, '(', 1);
@@ -1004,12 +1005,12 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
     }
     if (en->type == JQP_EXPR_NODE_TYPE) {
       rc = _jqp_print_expression_node(q, en, pt, op);
-      RCRET(rc);
+      RCRET(rc);      
     } else if (en->type == JQP_FILTER_TYPE) {
       rc = _jqp_print_filter(q, (const JQP_FILTER *) en, pt, op);
     } else {
       return IW_ERROR_ASSERTION;
-    }
+    }     
   }
   if (inbraces) {
     PT(0, 0, ')', 1);

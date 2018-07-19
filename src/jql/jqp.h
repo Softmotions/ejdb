@@ -68,7 +68,7 @@ typedef struct JQP_EXPR_NODE { // Base for JQP_FILTER
 typedef struct JQP_FILTER {
   //- JQP_EXPR_NODE
   jqp_unit_t type;
-  JQPUNIT *next;
+  struct JQP_EXPR_NODE *next;    
   struct JQP_JOIN *join; 
   void *opaque;
   //- JQP_EXPR_NODE    
