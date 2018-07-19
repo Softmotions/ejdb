@@ -645,7 +645,7 @@ static JQPUNIT *_jqp_pop_filter_factor_chain(yycontext *yy, JQPUNIT *until) {
   JQP_AUX *aux = yy->aux;
   while (aux->stack && aux->stack->type == STACK_UNIT) {
     JQPUNIT *unit = aux->stack->unit;
-    if (unit->type == JQP_JOIN_TYPE) {      
+    if (unit->type == JQP_JOIN_TYPE) {
       factor->join = &unit->join;
     } else if (unit->type == JQP_EXPR_NODE_TYPE || unit->type == JQP_FILTER_TYPE) {
       JQP_EXPR_NODE *node = (JQP_EXPR_NODE *) unit;
@@ -719,7 +719,7 @@ iwrc jqp_aux_create(JQP_AUX **auxp, const char *input) {
   if (!*auxp) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  JQP_AUX *aux = *auxp;  
+  JQP_AUX *aux = *auxp;
   aux->xerr = iwxstr_new();
   if (!aux->xerr) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -974,17 +974,9 @@ static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void 
 
 static iwrc _jqp_print_filter(const JQP_QUERY *q,
                               const JQP_FILTER *f,
-                              struct JQP_FILTER *pf,
                               jbl_json_printer pt,
                               void *op) {
   iwrc rc = 0;
-  if (f->join) {
-    rc = _jqp_print_join(f->join->value, f->join->negate, pt, op);
-    RCRET(rc);
-  }
-  //  for (int i = pf ? pf->grouping_level_after : 0; i < f->grouping_level; ++i) {
-  //    PT(0, 0, '(', 1);
-  //  }
   if (f->anchor) {
     PT(0, 0, '@', 1);
     PT(f->anchor, -1, 0, 0);
@@ -993,9 +985,36 @@ static iwrc _jqp_print_filter(const JQP_QUERY *q,
     rc = _jqp_print_filter_node(n, pt, op);
     RCRET(rc);
   }
-  //  for (int i = f->grouping_level, e = f->grouping_level_after; i > e; --i) {
-  //    PT(0, 0, ')', 1);
-  //  }
+  return rc;
+}
+
+static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
+                                       const JQP_EXPR_NODE *en,
+                                       jbl_json_printer pt,
+                                       void *op) {
+  iwrc rc = 0;
+  bool inbraces = (en != q->expr && en->type == JQP_EXPR_NODE_TYPE);
+  if (inbraces) {
+    PT(0, 0, '(', 1);
+  }
+  for (en = en->next; en; en = en->next) {
+    if (en->join) {
+      rc = _jqp_print_join(en->join->value, en->join->negate, pt, op);
+      RCRET(rc);
+    }
+    if (en->type == JQP_EXPR_NODE_TYPE) {
+      rc = _jqp_print_expression_node(q, en, pt, op);
+      RCRET(rc);
+    } else if (en->type == JQP_FILTER_TYPE) {
+      rc = _jqp_print_filter(q, (const JQP_FILTER *) en, pt, op);
+    } else {
+      return IW_ERROR_ASSERTION;
+    }
+  }
+  if (inbraces) {
+    PT(0, 0, ')', 1);
+  }
+  PT(0, 0, '\n', 1);
   return rc;
 }
 
@@ -1003,14 +1022,8 @@ iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   if (!q || !pt) {
     return IW_ERROR_INVALID_ARGS;
   }
-  iwrc rc = 0;
-  struct JQP_FILTER *pf = 0;
-  //  for (struct JQP_FILTER *f = q->filter; f; f = f->next) {
-  //    rc = _jqp_print_filter(q, f, pf, pt, op);
-  //    RCRET(rc);
-  //    PT(0, 0, '\n', 1);
-  //    pf = f;
-  //  }
+  iwrc rc = _jqp_print_expression_node(q, q->expr, pt, op);
+  RCRET(rc);
   if (q->apply_placeholder || q->apply) {
     rc = _jqp_print_apply(q, pt, op);
     RCRET(rc);

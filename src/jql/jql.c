@@ -8,14 +8,14 @@ typedef struct _NODE {
   JQP_NODE *qpn;
 } _NODE;
 
-typedef struct _FILTER {
-  bool matched;
-  int last_lvl;           /**< Last matched level */
-  int nnum;               /**< Number of filter nodes */
-  _NODE *nodes;           /**< Array query nodes */
-  JQP_FILTER *qpf;        /**< Parsed query filter */
-  struct _FILTER *next;   /**< Next filter in chain */
-} _FILTER;
+//typedef struct _FILTER {
+//  bool matched;
+//  int last_lvl;           /**< Last matched level */
+//  int nnum;               /**< Number of filter nodes */
+//  _NODE *nodes;           /**< Array query nodes */
+//  JQP_FILTER *qpf;        /**< Parsed query filter */
+//  struct _FILTER *next;   /**< Next filter in chain */
+//} _FILTER;
 
 /** Query object */
 struct _JQL {
@@ -23,7 +23,7 @@ struct _JQL {
   bool dirty;
   JQP_QUERY *qp;
   JQP_AUX *aux;
-  _FILTER *qf;
+//  _FILTER *qf;
 };
 
 /** Node matching context */
@@ -31,7 +31,7 @@ struct _NCTX {
   int lvl;
   binn *bv;
   char *key;
-  _FILTER *qf;
+//  _FILTER *qf;
   _NODE *n;
   _NODE *nn;
   JQL q;
@@ -154,11 +154,11 @@ iwrc jql_set_null(JQL q, const char *placeholder, int index) {
 }
 
 bool _jql_filters_need_go_deeper(const JQL q, int lvl) {
-  for (const _FILTER *qf = q->qf; qf; qf = qf->next) {
-    if (!qf->matched && qf->last_lvl == lvl) {
-      return true;
-    }
-  }
+//  for (const _FILTER *qf = q->qf; qf; qf = qf->next) {
+//    if (!qf->matched && qf->last_lvl == lvl) {
+//      return true;
+//    }
+//  }
   return false;
 }
 
@@ -184,10 +184,23 @@ iwrc jql_create(JQL *qptr, const char *query) {
   
   q->aux = aux;
   q->qp = aux->query;
-  q->qf = 0;
+//  q->qf = 0;
   q->dirty = false;
   
-  _FILTER *last = 0;
+
+//typedef struct _FILTER {
+//  bool matched;
+//  int last_lvl;           /**< Last matched level */
+//  int nnum;               /**< Number of filter nodes */
+//  _NODE *nodes;           /**< Array query nodes */
+//  JQP_FILTER *qpf;        /**< Parsed query filter */
+//  struct _FILTER *next;   /**< Next filter in chain */
+//} _FILTER;  
+  
+
+      
+  
+//  _FILTER *last = 0;    
 //  for (JQP_FILTER *f = q->qp->filter; f; f = f->next) {
 //    _FILTER *qf = iwpool_calloc(sizeof(*qf), aux->pool);
 //    if (!qf) {
@@ -331,53 +344,53 @@ static bool _match_node(const struct _NCTX *ctx, iwrc *rcp) {
   return false;
 }
 
-static iwrc _match_filter(int lvl, binn *bv, char *key, JQL q, _FILTER *qf) {
-  const int nnum = qf->nnum;
-  _NODE *nodes = qf->nodes;
-  
-  if (qf->last_lvl + 1 < lvl || qf->matched) {
-    return 0;
-  }
-  if (lvl <= qf->last_lvl) {
-    qf->last_lvl = lvl - 1;
-    for (int i = 0; i < nnum; ++i) {
-      _NODE *n = nodes + i;
-      if (lvl > n->start && lvl < n->end) {
-        n->end = lvl;
-      } else if (n->start >= lvl) {
-        n->start = -1;
-        n->end = -1;
-      }
-    }
-  }
-  for (int i = 0; i < nnum; ++i) {
-    _NODE *n = nodes + i, *nn = 0;
-    if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
-      if (i < nnum - 1) {
-        nn = nodes + i + 1;
-      }
-      iwrc rc = 0;
-      struct _NCTX nctx = {
-        .lvl = lvl,
-        .bv = bv,
-        .key = key,
-        .q = q,
-        .qf = qf,
-        .n = n,
-        .nn = nn
-      };
-      bool matched = _match_node(&nctx, &rc);
-      RCRET(rc);
-      if (matched) {
-        if (i == nnum - 1) {
-          qf->matched = true;
-          q->dirty = true;
-        }
-        qf->last_lvl = lvl;
-      }
-      return 0;
-    }
-  }
+static iwrc _match_filter(int lvl, binn *bv, char *key, JQL q) {
+//  const int nnum = qf->nnum;
+//  _NODE *nodes = qf->nodes;
+//  
+//  if (qf->last_lvl + 1 < lvl || qf->matched) {
+//    return 0;
+//  }
+//  if (lvl <= qf->last_lvl) {
+//    qf->last_lvl = lvl - 1;
+//    for (int i = 0; i < nnum; ++i) {
+//      _NODE *n = nodes + i;
+//      if (lvl > n->start && lvl < n->end) {
+//        n->end = lvl;
+//      } else if (n->start >= lvl) {
+//        n->start = -1;
+//        n->end = -1;
+//      }
+//    }
+//  }
+//  for (int i = 0; i < nnum; ++i) {
+//    _NODE *n = nodes + i, *nn = 0;
+//    if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
+//      if (i < nnum - 1) {
+//        nn = nodes + i + 1;
+//      }
+//      iwrc rc = 0;
+//      struct _NCTX nctx = {
+//        .lvl = lvl,
+//        .bv = bv,
+//        .key = key,
+//        .q = q,
+//        .qf = qf,
+//        .n = n,
+//        .nn = nn
+//      };
+//      bool matched = _match_node(&nctx, &rc);
+//      RCRET(rc);
+//      if (matched) {
+//        if (i == nnum - 1) {
+//          qf->matched = true;
+//          q->dirty = true;
+//        }
+//        qf->last_lvl = lvl;
+//      }
+//      return 0;
+//    }
+//  }
   return 0;
 }
 
@@ -391,21 +404,21 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
     nkey = nbuf;
   }
   bool prev = false;
-  for (_FILTER *qf = q->qf; qf; qf = qf->next) {
-    if (!qf->matched) {
-      *rcp = _match_filter(lvl, bv, nkey, q, qf);
-      if (*rcp) return JBL_VCMD_TERMINATE;
-    }
-    const JQP_JOIN *j = qf->qpf->join;
-    if (!j) {
-      prev = qf->matched;
-    } else if (j->value == JQP_JOIN_AND) { // AND
-      prev = prev && qf->matched;
-    } else if (prev || qf->matched) {      // OR
-      prev = true;
-      break;
-    }
-  }
+//  for (_FILTER *qf = q->qf; qf; qf = qf->next) {
+//    if (!qf->matched) {
+//      *rcp = _match_filter(lvl, bv, nkey, q, qf);
+//      if (*rcp) return JBL_VCMD_TERMINATE;
+//    }
+//    const JQP_JOIN *j = qf->qpf->join;
+//    if (!j) {
+//      prev = qf->matched;
+//    } else if (j->value == JQP_JOIN_AND) { // AND
+//      prev = prev && qf->matched;
+//    } else if (prev || qf->matched) {      // OR
+//      prev = true;
+//      break;
+//    }
+//  }
   if ((q->matched = prev)) {
     return JBL_VCMD_TERMINATE;
   }

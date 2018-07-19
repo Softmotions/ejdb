@@ -49,6 +49,8 @@
       <File Name="src/jql/jqp.leg"/>
       <VirtualDirectory Name="tests">
         <VirtualDirectory Name="data">
+          <File Name="src/jql/tests/data/000.expected.jql"/>
+          <File Name="src/jql/tests/data/000.jql"/>
           <File Name="src/jql/tests/data/016.expected.jql"/>
           <File Name="src/jql/tests/data/016.jql"/>
           <File Name="src/jql/tests/data/015.expected.jql"/>
