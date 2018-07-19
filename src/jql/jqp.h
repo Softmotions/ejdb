@@ -21,6 +21,7 @@ typedef enum {
 
 typedef enum {
   JQP_QUERY_TYPE = 1,
+  JQP_EXPR_NODE_TYPE,
   JQP_FILTER_TYPE,
   JQP_NODE_TYPE,
   JQP_EXPR_TYPE,
@@ -57,6 +58,22 @@ struct JQP_AUX;
 
 typedef union _JQP_UNIT JQPUNIT;
 
+typedef struct JQP_EXPR_NODE { // Base for JQP_FILTER
+  jqp_unit_t type;
+  struct JQP_EXPR_NODE *next;  
+  struct JQP_JOIN *join;
+} JQP_EXPR_NODE;
+
+typedef struct JQP_FILTER {
+  //- JQP_EXPR_NODE
+  jqp_unit_t type;
+  JQPUNIT *next;
+  struct JQP_JOIN *join; 
+  //- JQP_EXPR_NODE    
+  const char *anchor;
+  struct JQP_NODE *node;  
+} JQP_FILTER;
+
 typedef struct JQP_JSON {
   jqp_unit_t type;
   struct _JBL_NODE jn;
@@ -65,19 +82,9 @@ typedef struct JQP_JSON {
 typedef struct JQP_NODE {
   jqp_unit_t type;
   jqp_node_type_t ntype;
-  JQPUNIT *value;
   struct JQP_NODE *next;
+  JQPUNIT *value;
 } JQP_NODE;
-
-typedef struct JQP_FILTER {
-  jqp_unit_t type;
-  int grouping_level;
-  int grouping_level_after;
-  const char *anchor;
-  struct JQP_JOIN *join;
-  struct JQP_NODE *node;
-  struct JQP_FILTER *next;
-} JQP_FILTER;
 
 typedef struct JQP_STRING {
   jqp_unit_t type;
@@ -129,7 +136,7 @@ typedef struct JQP_PROJECTION {
 
 typedef struct JQP_QUERY {
   jqp_unit_t type;
-  struct JQP_FILTER *filter;
+  struct JQP_EXPR_NODE *expr;
   JBL_NODE apply;
   const char *apply_placeholder;
   struct JQP_PROJECTION *projection;
@@ -141,6 +148,7 @@ typedef struct JQP_QUERY {
 union _JQP_UNIT {
   jqp_unit_t type;
   struct JQP_QUERY query;
+  struct JQP_EXPR_NODE exprnode;
   struct JQP_FILTER filter;
   struct JQP_NODE node;
   struct JQP_EXPR expr;
@@ -176,10 +184,7 @@ typedef struct JQP_STACK {
 
 typedef struct JQP_AUX {
   bool negate;
-  int pos;
-  int line;
-  int num_placeholders;
-  int grouping_level;
+  int pos;  
   iwrc rc;
   jmp_buf fatal_jmp;
   const char *buf;
@@ -187,6 +192,7 @@ typedef struct JQP_AUX {
   IWPOOL *pool;
   struct JQP_QUERY *query;
   JQP_STACK *stack;
+  int num_placeholders;
   JQP_STRING *start_placeholder;
   JQP_STRING *end_placeholder;
   JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];

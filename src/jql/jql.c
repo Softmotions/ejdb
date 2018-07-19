@@ -188,32 +188,32 @@ iwrc jql_create(JQL *qptr, const char *query) {
   q->dirty = false;
   
   _FILTER *last = 0;
-  for (JQP_FILTER *f = q->qp->filter; f; f = f->next) {
-    _FILTER *qf = iwpool_calloc(sizeof(*qf), aux->pool);
-    if (!qf) {
-      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      goto finish;
-    }
-    qf->last_lvl = -1;
-    qf->qpf = f;
-    if (q->qf) {
-      last->next = qf;
-    } else {
-      q->qf = qf;
-    }
-    last = qf;
-    for (JQP_NODE *n = f->node; n; n = n->next) ++qf->nnum;
-    qf->nodes = iwpool_calloc(qf->nnum * sizeof(qf->nodes[0]), aux->pool);
-    if (!qf) {
-      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      goto finish;
-    }
-    i = 0;
-    for (JQP_NODE *n = f->node; n; n = n->next) {
-      _NODE qn = { .start = -1, .end = -1, .qpn = n };
-      memcpy(&qf->nodes[i++], &qn, sizeof(qn));
-    }
-  }
+//  for (JQP_FILTER *f = q->qp->filter; f; f = f->next) {
+//    _FILTER *qf = iwpool_calloc(sizeof(*qf), aux->pool);
+//    if (!qf) {
+//      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+//      goto finish;
+//    }
+//    qf->last_lvl = -1;
+//    qf->qpf = f;
+//    if (q->qf) {
+//      last->next = qf;
+//    } else {
+//      q->qf = qf;
+//    }
+//    last = qf;
+//    for (JQP_NODE *n = f->node; n; n = n->next) ++qf->nnum;
+//    qf->nodes = iwpool_calloc(qf->nnum * sizeof(qf->nodes[0]), aux->pool);
+//    if (!qf) {
+//      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+//      goto finish;
+//    }
+//    i = 0;
+//    for (JQP_NODE *n = f->node; n; n = n->next) {
+//      _NODE qn = { .start = -1, .end = -1, .qpn = n };
+//      memcpy(&qf->nodes[i++], &qn, sizeof(qn));
+//    }
+//  }
   
 finish:
   if (rc) {

@@ -35,6 +35,7 @@ static JQPUNIT *_jqp_unit_pop(struct _yycontext *yy);
 static void _jqp_string_push(struct _yycontext *yy, char *str, bool dup);
 static char *_jqp_string_pop(struct _yycontext *yy);
 
+static JQPUNIT *_jqp_pop_filter_factor_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_expr_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_node_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_projfields_chain(struct _yycontext *yy, JQPUNIT *until);
@@ -42,7 +43,7 @@ static JQPUNIT *_jqp_pop_projections(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p);
 static JQPUNIT *_jqp_pop_joined_projections(struct _yycontext *yy, JQPUNIT *until);
 
-static JQPUNIT *_jqp_pop_filters_and_set_query(struct _yycontext *yy, JQPUNIT *until);
+static void _jqp_set_filters_expr(struct _yycontext *yy, JQPUNIT *expr);
 static void _jqp_set_apply(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
 
@@ -63,9 +64,7 @@ static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
   }
 %}
 
-QUERY = (ff:FILTER { _jqp_unit_push(yy, ff); }
-          (__ j:FILTERJOIN { _jqp_unit_push(yy, j); } __ f:FILTER { _jqp_unit_push(yy, f); })*)
-          { _jqp_pop_filters_and_set_query(yy, ff); }
+QUERY = (e:FILTEREXPR { _jqp_set_filters_expr(yy, e); })
         (_ a:APPLY { _jqp_set_apply(yy, a); } )?
         (_ p:PROJECTION { _jqp_set_projection(yy, p); } )? _ EOF
 
@@ -98,12 +97,16 @@ PCHP = '\\' '\\'
       | '\\' 'u' HEX HEX HEX HEX
       | !["/{},\t\n\r ] .
 
-FILTER =   ('('_ { yy->aux->grouping_level++; })*
-            ((a:FILTERANCHOR { _jqp_unit_push(yy, a); })?
-              fn:NODE { _jqp_unit_push(yy, fn); } (n:NODE { _jqp_unit_push(yy, n); })*) { $$ = _jqp_pop_node_chain(yy, fn); }
-           (_')' { yy->aux->grouping_level--; })* { $$->filter.grouping_level_after = yy->aux->grouping_level; }
+
+FILTERFACTOR = (f:FILTER | '(' f:FILTEREXPR ')') { $$ = f; }
+
+FILTEREXPR = ff:FILTERFACTOR { _jqp_unit_push(yy, ff); } 
+                (__ j:FILTERJOIN { _jqp_unit_push(yy, j); } __ f:FILTERFACTOR { _jqp_unit_push(yy, f); })* { $$ = _jqp_pop_filter_factor_chain(yy, ff); }
+
+FILTER = ((a:FILTERANCHOR { _jqp_unit_push(yy, a); })? fn:NODE { _jqp_unit_push(yy, fn); } (n:NODE { _jqp_unit_push(yy, n); })*) { $$ = _jqp_pop_node_chain(yy, fn); }
 
 FILTERANCHOR = '@' <([a-zA-Z0-9]+)> { $$ = _jqp_string(yy, JQP_STR_ANCHOR, yytext); }
+
 
 NODE = '/' (n:STRN | n:NEXPR | n:STRP) { $$ = _jqp_node(yy, n); }
 
@@ -187,7 +190,7 @@ __ = SPACE+
 
 SPACE = ' ' | '\t' | EOL
 
-EOL = ('\r\n' | '\n' | '\r') { yy->aux->line++; }
+EOL = ('\r\n' | '\n' | '\r')
 
 EOF = !.
 
