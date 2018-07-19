@@ -993,7 +993,6 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
                                        jbl_json_printer pt,
                                        void *op) {
   iwrc rc = 0;
-  const JQP_EXPR_NODE *root = en;
   bool inbraces = (en != q->expr && en->type == JQP_EXPR_NODE_TYPE);
   if (inbraces) {
     PT(0, 0, '(', 1);

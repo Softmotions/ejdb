@@ -40,7 +40,7 @@ Filters:
 
 /**/[familyName re "^D.*"]
 
-/**/[familyName like "D*"] and /**/family/mother/[age > 30]
+(/**/[familyName like "D*"] or /**/family/mother/[age > 30]) and /author/familyName
 
 /author/**/mother/[age > 50]
 
