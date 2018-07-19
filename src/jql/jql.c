@@ -434,8 +434,8 @@ static bool _match_expression_node(JQP_EXPR_NODE *en, _MCTX *mctx, iwrc *rcp) {
     return true;
   }
   bool prev = false;
-  bool matched = false;
   for (en = en->chain; en; en = en->next) {
+    bool matched = false;
     if (en->type == JQP_EXPR_NODE_TYPE) {
       matched = _match_expression_node(en, mctx, rcp);
     } else if (en->type == JQP_FILTER_TYPE) {
