@@ -60,27 +60,28 @@ typedef union _JQP_UNIT JQPUNIT;
 
 typedef struct JQP_EXPR_NODE { // Base for JQP_FILTER
   jqp_unit_t type;
-  struct JQP_EXPR_NODE *next;  
+  struct JQP_EXPR_NODE *next;
   struct JQP_JOIN *join;
   void *opaque;
-  // Expr only specific 
+  // Expr only specific
   struct JQP_EXPR_NODE *chain;
 } JQP_EXPR_NODE;
 
 typedef struct JQP_FILTER {
   //- JQP_EXPR_NODE
   jqp_unit_t type;
-  struct JQP_EXPR_NODE *next;   
-  struct JQP_JOIN *join; 
+  struct JQP_EXPR_NODE *next;
+  struct JQP_JOIN *join;
   void *opaque;
-  //- JQP_EXPR_NODE    
+  //- JQP_EXPR_NODE
   const char *anchor;
-  struct JQP_NODE *node;  
+  struct JQP_NODE *node;
 } JQP_FILTER;
 
 typedef struct JQP_JSON {
   jqp_unit_t type;
   struct _JBL_NODE jn;
+  void *opaque;
 } JQP_JSON;
 
 typedef struct JQP_NODE {
@@ -88,6 +89,7 @@ typedef struct JQP_NODE {
   jqp_node_type_t ntype;
   struct JQP_NODE *next;
   JQPUNIT *value;
+  void *opaque;
 } JQP_NODE;
 
 typedef struct JQP_STRING {
@@ -113,6 +115,7 @@ typedef struct JQP_OP {
   jqp_unit_t type;
   bool negate;
   jqp_op_t op;
+  void *opaque;
 } JQP_OP;
 
 typedef struct JQP_JOIN {
@@ -188,7 +191,7 @@ typedef struct JQP_STACK {
 
 typedef struct JQP_AUX {
   bool negate;
-  int pos;  
+  int pos;
   iwrc rc;
   jmp_buf fatal_jmp;
   const char *buf;

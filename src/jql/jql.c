@@ -71,6 +71,16 @@ static void _jql_jqval_destroy(_JQVAL *qv) {
   free(qv);
 }
 
+static _JQVAL *_jql_find_placeholder(JQL q, const char *name) {
+  JQP_AUX *aux = q->qp->aux;
+  for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->next) {
+    if (!strcmp(pv->value, name)) {
+      return pv->opaque;
+    }
+  }
+  return 0;
+}
+
 static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, _JQVAL *val) {
   JQP_AUX *aux = q->qp->aux;
   if (!placeholder) { // Index
@@ -277,11 +287,63 @@ void jql_destroy(JQL *qptr) {
   }
 }
 
+static bool _match_jqval_pair(_MCTX *mctx,
+                              _JQVAL *left, JQP_OP *op, _JQVAL *right,
+                              iwrc *rcp) {
+
+  // TODO: 
+                              
+  return false;
+}
+
+static _JQVAL *_unit_to_jqval(_MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
+  if (unit->type == JQP_STRING_TYPE) {
+    if (unit->string.opaque) {
+      return (_JQVAL *) unit->string.opaque;
+    }
+    if (unit->string.flavour & JQP_STR_PLACEHOLDER) {
+      unit->string.opaque = _jql_find_placeholder(mctx->q, unit->string.value);
+      if (!unit->string.opaque) {
+        *rcp = JQL_ERROR_INVALID_PLACEHOLDER;
+        return 0;
+      }
+    } else {
+      _JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->qp->aux->pool);
+      if (!qv) {
+        *rcp = IW_ERROR_ALLOC;
+        return 0;
+      }
+      unit->string.opaque = qv;
+      qv->type = JQVAL_STR;
+      qv->vstr = unit->string.value;
+    }
+    return unit->string.opaque;
+  } else if (unit->type == JQP_JSON_TYPE) {
+    if (unit->json.opaque) {
+      return (_JQVAL *) unit->string.opaque;
+    }
+    _JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->qp->aux->pool);
+    if (!qv) {
+      *rcp = IW_ERROR_ALLOC;
+      return 0;
+    }
+    unit->json.opaque = qv;
+    qv->type = JQVAL_JBLNODE;
+    qv->vjblnode = &unit->json.jn;    
+    return unit->json.opaque;  
+  } else {
+    *rcp = IW_ERROR_ASSERTION;
+    return 0;
+  }
+}
+
 static bool _match_expr_pair(_MCTX *mctx,
                              JQPUNIT *left, JQP_OP *op, JQPUNIT *right,
                              iwrc *rcp) {
-  // TODO:
-  return false;
+  _JQVAL *lv = _unit_to_jqval(mctx, left, rcp);
+  _JQVAL *rv = _unit_to_jqval(mctx, right, rcp);
+  if (*rcp) return false;
+  return _match_jqval_pair(mctx, lv, op, rv, rcp);
 }
 
 static bool _match_node_expr_impl(_MCTX *mctx, _MFNCTX *n, JQP_EXPR *expr, iwrc *rcp) {
@@ -300,9 +362,9 @@ static bool _match_node_expr_impl(_MCTX *mctx, _MFNCTX *n, JQP_EXPR *expr, iwrc 
     JQPUNIT keyleft = {.type = JQP_STRING_TYPE, .string.value = mctx->key};
     if (!_match_expr_pair(mctx, &keyleft, left->expr.op, left->expr.right, rcp)) {
       return false;
-    }    
-    if (*rcp) return false; 
-  }  
+    }
+    if (*rcp) return false;
+  }
   return _match_expr_pair(mctx, left, op, right, rcp);
 }
 

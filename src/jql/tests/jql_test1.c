@@ -73,23 +73,33 @@ void jql_test1() {
   }
 }
 
-void jql_test1_2() {
+static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
   JBL jbl;
   JQL jql;
-  char *json = iwu_replace_char(strdup("{'foo':{'bar':22}}"), '\'', '"');
+  char *json = iwu_replace_char(strdup(jsondata), '\'', '"');
   CU_ASSERT_PTR_NOT_NULL_FATAL(json);
-  iwrc rc = jql_create(&jql, "/foo/bar");
+  iwrc rc = jql_create(&jql, q);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jbl_from_json(&jbl, json);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   bool m = false;
   rc = jql_matched(jql, jbl, &m);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_EQUAL(m, true);
+  CU_ASSERT_EQUAL(m, match);
   
   jql_destroy(&jql);
   jbl_destroy(&jbl);
-  free(json);
+  free(json);  
+}
+
+void jql_test1_2() {
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/bar", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/baz", false);
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/bar and /foo/bar or /foo", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/baz or /foo", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/baz and (/foo/daz or /foo/bar)", false);
+  _jql_test1_2("{'foo':{'bar':22}}", "(/boo or /foo) and (/foo/daz or /foo/bar)", true);
+  _jql_test1_2("{'foo':{'bar':22, 'bar2':'vvv2'}}", "/foo/bar2", true);
 }
 
 int main() {
