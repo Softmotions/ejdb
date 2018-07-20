@@ -277,155 +277,143 @@ void jql_destroy(JQL *qptr) {
   }
 }
 
-//static bool _match_expr(JQPUNIT *left, JQP_OP *op, JQPUNIT *right, iwrc *rcp) {
-//  // TODO:
-//  return false;
-//}
-//
-//static bool _match_node_anys(_MFNCTX *fnctx, iwrc *rcp) {
-//  *rcp = IW_ERROR_NOT_IMPLEMENTED;
-//  return false;
-//}
-//
-//static bool _match_node_expr_impl(_MFNCTX *fnctx, JQP_EXPR *expr, iwrc *rcp) {
-//  JQPUNIT *left = expr->left;
-//  JQP_OP *op = expr->op;
-//  JQPUNIT *right = expr->right;
-//  if (left->type == JQP_STRING_TYPE) {
-//    if (!(left->string.flavour & JQP_STR_STAR) && strcmp(ctx->key, left->string.value)) {
-//      return false;
-//    }
-//  } else if (left->type == JQP_EXPR_TYPE) {
-//    if (left->expr.left->type != JQP_STRING_TYPE || !(left->expr.left->string.flavour & JQP_STR_STAR)) {
-//      return IW_ERROR_ASSERTION; // Not a star (*)
-//    }
-//    JQPUNIT keyleft = {0};
-//    keyleft.type = JQP_STRING_TYPE;
-//    keyleft.string.value = ctx->key;
-//    if (!_match_expr(&keyleft, left->expr.op, left->expr.right, rcp)) {
-//      return false;
-//    }
-//  }
-//  return _match_expr(left, op, right, rcp);
-//}
-//
-//static bool _match_node_expr(const struct _NCTX *ctx, iwrc *rcp) {
-//  _MFNCTX *node = ctx->n;
-//  node->start = ctx->lvl;
-//  node->end = node->start;
-//  JQP_NODE *qpn = node->qpn;
-//  JQPUNIT *unit = qpn->value;
-//  if (unit->type != JQP_EXPR_TYPE) {
-//    *rcp = IW_ERROR_ASSERTION;
-//    return false;
-//  }
-//  bool prev = false;
-//  bool matched = false;
-//  for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
-//    matched = _match_node_expr_impl(ctx, expr, rcp);
-//    if (*rcp) return false;
-//    const JQP_JOIN *j = expr->join;
-//    if (!j) {
-//      prev = matched;
-//    } else if (j->value == JQP_JOIN_AND) { // AND
-//      prev = prev && matched;
-//    } else if (prev || matched) {     // OR
-//      prev = true;
-//      break;
-//    }
-//  }
-//  return prev;
-//}
-//
-//static bool _match_node_field(const struct _NCTX *ctx, iwrc *rcp) {
-//  _MFNCTX *node = ctx->n;
-//  JQP_NODE *qpn = node->qpn;
-//  node->start = ctx->lvl;
-//  node->end = node->start;
-//  if (qpn->value->type != JQP_STRING_TYPE) {
-//    *rcp = IW_ERROR_ASSERTION;
-//    return false;
-//  }
-//  const char *val = qpn->value->string.value;
-//  bool ret = strcmp(val, ctx->key) == 0;
-//  return ret;
-//}
-//
-//static bool _match_node(const struct _NCTX *ctx, iwrc *rcp) {
-//  _MFNCTX *node = ctx->n;
-//  switch (node->qpn->ntype) {
-//    case JQP_NODE_ANY:
-//      node->start = ctx->lvl;
-//      node->end = node->start;
-//      return true;
-//    case JQP_NODE_FIELD:
-//      return _match_node_field(ctx, rcp);
-//    case JQP_NODE_EXPR:
-//      return _match_node_expr(ctx, rcp);
-//    case JQP_NODE_ANYS:
-//      return _match_node_anys(ctx, rcp);
-//  }
-//  return false;
-//}
+static bool _match_expr_pair(_MCTX *mctx,
+                             JQPUNIT *left, JQP_OP *op, JQPUNIT *right,
+                             iwrc *rcp) {
+  // TODO:
+  return false;
+}
 
-//static iwrc _match_filter(int lvl, binn *bv, char *key, JQL q) {
-//  const int nnum = qf->nnum;
-//  _NODE *nodes = qf->nodes;
-//
-//  if (qf->last_lvl + 1 < lvl || qf->matched) {
-//    return 0;
-//  }
-//  if (lvl <= qf->last_lvl) {
-//    qf->last_lvl = lvl - 1;
-//    for (int i = 0; i < nnum; ++i) {
-//      _NODE *n = nodes + i;
-//      if (lvl > n->start && lvl < n->end) {
-//        n->end = lvl;
-//      } else if (n->start >= lvl) {
-//        n->start = -1;
-//        n->end = -1;
-//      }
-//    }
-//  }
-//  for (int i = 0; i < nnum; ++i) {
-//    _NODE *n = nodes + i, *nn = 0;
-//    if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
-//      if (i < nnum - 1) {
-//        nn = nodes + i + 1;
-//      }
-//      iwrc rc = 0;
-//      struct _NCTX nctx = {
-//        .lvl = lvl,
-//        .bv = bv,
-//        .key = key,
-//        .q = q,
-//        .qf = qf,
-//        .n = n,
-//        .nn = nn
-//      };
-//      bool matched = _match_node(&nctx, &rc);
-//      RCRET(rc);
-//      if (matched) {
-//        if (i == nnum - 1) {
-//          qf->matched = true;
-//          q->dirty = true;
-//        }
-//        qf->last_lvl = lvl;
-//      }
-//      return 0;
-//    }
-//  }
-//  return 0;
-//}
+static bool _match_node_expr_impl(_MCTX *mctx, _MFNCTX *n, JQP_EXPR *expr, iwrc *rcp) {
+  JQPUNIT *left = expr->left;
+  JQP_OP *op = expr->op;
+  JQPUNIT *right = expr->right;
+  if (left->type == JQP_STRING_TYPE) {
+    if (!(left->string.flavour & JQP_STR_STAR) && strcmp(mctx->key, left->string.value)) {
+      return false;
+    }
+  } else if (left->type == JQP_EXPR_TYPE) {
+    if (left->expr.left->type != JQP_STRING_TYPE || !(left->expr.left->string.flavour & JQP_STR_STAR)) {
+      *rcp = IW_ERROR_ASSERTION;
+      return false;
+    }
+    JQPUNIT keyleft = {.type = JQP_STRING_TYPE, .string.value = mctx->key};
+    if (!_match_expr_pair(mctx, &keyleft, left->expr.op, left->expr.right, rcp)) {
+      return false;
+    }    
+    if (*rcp) return false; 
+  }  
+  return _match_expr_pair(mctx, left, op, right, rcp);
+}
 
+static bool _match_node_expr(_MCTX *mctx, _MFNCTX *n, _MFNCTX *nn, iwrc *rcp) {
+  n->start = mctx->lvl;
+  n->end = n->start;
+  JQP_NODE *qpn = n->qpn;
+  JQPUNIT *unit = qpn->value;
+  if (unit->type != JQP_EXPR_TYPE) {
+    *rcp = IW_ERROR_ASSERTION;
+    return false;
+  }
+  bool prev = false;
+  for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
+    bool matched = _match_node_expr_impl(mctx, n, expr, rcp);
+    if (*rcp) return false;
+    const JQP_JOIN *join = expr->join;
+    if (!join) {
+      prev = matched;
+    } else {
+      if (join->negate) {
+        matched = !matched;
+      }
+      if (join->value == JQP_JOIN_AND) { // AND
+        prev = prev && matched;
+      } else if (prev || matched) {      // OR
+        prev = true;
+        break;
+      }
+    }
+  }
+  return prev;
+}
+
+static bool _match_node_anys(_MCTX *mctx, _MFNCTX *n, _MFNCTX *nn, iwrc *rcp) {
+  // TODO:
+  return false;
+}
+
+static bool _match_node_field(_MCTX *mctx, _MFNCTX *n, _MFNCTX *nn, iwrc *rcp) {
+  JQP_NODE *qpn = n->qpn;
+  n->start = mctx->lvl;
+  n->end = n->start;
+  if (qpn->value->type != JQP_STRING_TYPE) {
+    *rcp = IW_ERROR_ASSERTION;
+    return false;
+  }
+  const char *val = qpn->value->string.value;
+  bool ret = strcmp(val, mctx->key) == 0;
+  return ret;
+}
+
+static bool _match_node(_MCTX *mctx, _MFNCTX *n, _MFNCTX *nn, iwrc *rcp) {
+  switch (n->qpn->ntype) {
+    case JQP_NODE_FIELD:
+      return _match_node_field(mctx, n, nn, rcp);
+    case JQP_NODE_EXPR:
+      return _match_node_expr(mctx, n, nn, rcp);
+    case JQP_NODE_ANY:
+      n->start = mctx->lvl;
+      n->end = n->start;
+      return true;
+    case JQP_NODE_ANYS:
+      return _match_node_anys(mctx, n, nn, rcp);
+  }
+  return false;
+}
 
 static bool _match_filter(JQP_FILTER *f, _MCTX *mctx, iwrc *rcp) {
   _MFCTX *fctx = f->opaque;
   if (fctx->matched) {
     return true;
   }
-  // TODO
-  return false;
+  const int nnum = fctx->nnum;
+  const int lvl = mctx->lvl;
+  _MFNCTX *nodes = fctx->nodes;
+  if (fctx->last_lvl + 1 < lvl) {
+    return false;
+  }
+  if (lvl <= fctx->last_lvl) {
+    fctx->last_lvl = lvl - 1;
+    for (int i = 0; i < nnum; ++i) {
+      _MFNCTX *n = nodes + i;
+      if (lvl > n->start && lvl < n->end) {
+        n->end = lvl;
+      } else if (n->start >= lvl) {
+        n->start = -1;
+        n->end = -1;
+      }
+    }
+  }
+  for (int i = 0; i < nnum; ++i) {
+    _MFNCTX *n = nodes + i;
+    _MFNCTX *nn = 0;
+    if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
+      if (i < nnum - 1) {
+        nn = nodes + i + 1;
+      }
+      bool matched = _match_node(mctx, n, nn, rcp);
+      if (*rcp) return false;
+      if (matched) {
+        if (i == nnum - 1) {
+          fctx->matched = true;
+          mctx->q->dirty = true;
+        }
+        fctx->last_lvl = lvl;
+      }
+      return fctx->matched;
+    }
+  }
+  return fctx->matched;
 }
 
 static bool _match_expression_node(JQP_EXPR_NODE *en, _MCTX *mctx, iwrc *rcp) {
@@ -445,11 +433,16 @@ static bool _match_expression_node(JQP_EXPR_NODE *en, _MCTX *mctx, iwrc *rcp) {
     const JQP_JOIN *join = en->join;
     if (!join) {
       prev = matched;
-    } else if (join->value == JQP_JOIN_AND) { // AND
-      prev = prev && matched;
-    } else if (prev || matched) {             // OR
-      prev = true;
-      break;
+    } else {
+      if (join->negate) {
+        matched = !matched;
+      }
+      if (join->value == JQP_JOIN_AND) { // AND
+        prev = prev && matched;
+      } else if (prev || matched) {      // OR
+        prev = true;
+        break;
+      }
     }
   }
   return prev;

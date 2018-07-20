@@ -42,13 +42,13 @@ void _jql_test1_1(int num, iwrc expected) {
   rc = jqp_print_query(aux->query, jbl_xstr_json_printer, res);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   
-//  fprintf(stderr, "%s\n", path_expected);
-//  fprintf(stderr, "%s\n", edata);
-//  fprintf(stderr, "%s\n", iwxstr_ptr(res));
-//  fprintf(stderr, "%d\n", strcmp(edata, iwxstr_ptr(res)));
-//  FILE *out = fopen("out.txt", "w+");
-//  fprintf(out, "%s", iwxstr_ptr(res));
-//  fclose(out);
+  //  fprintf(stderr, "%s\n", path_expected);
+  //  fprintf(stderr, "%s\n", edata);
+  //  fprintf(stderr, "%s\n", iwxstr_ptr(res));
+  //  fprintf(stderr, "%d\n", strcmp(edata, iwxstr_ptr(res)));
+  //  FILE *out = fopen("out.txt", "w+");
+  //  fprintf(out, "%s", iwxstr_ptr(res));
+  //  fclose(out);
   
   CU_ASSERT_EQUAL(strcmp(edata, iwxstr_ptr(res)), 0);
   
@@ -101,8 +101,8 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1)) //||
-    //(NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
+    (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1)) ||
+    (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
   ) {
     CU_cleanup_registry();
     return CU_get_error();
