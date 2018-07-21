@@ -41,7 +41,7 @@ typedef enum {
   JQP_NODE_EXPR
 } jqp_node_type_t;
 
-typedef enum {
+typedef enum { // Do not reorder members
   JQP_JOIN_AND = 1,
   JQP_JOIN_OR,
   JQP_OP_EQ,

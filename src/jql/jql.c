@@ -44,6 +44,7 @@ struct _JQL {
 typedef enum {
   JQVAL_NULL,
   JQVAL_JBLNODE,
+  JQVAL_BINN,
   JQVAL_I64,
   JQVAL_F64,
   JQVAL_STR,
@@ -55,7 +56,8 @@ typedef enum {
 typedef struct {
   jqval_type_t type;
   union {
-    JBL_NODE vjblnode;
+    JBL_NODE vnode;
+    binn *vbinn;
     int64_t vint64;
     double vf64;
     const char *vstr;
@@ -110,7 +112,7 @@ iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val) {
   _JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   qv->type = JQVAL_JBLNODE;
-  qv->vjblnode = val;
+  qv->vnode = val;
   return _jql_set_placeholder(q, placeholder, index, qv);
 }
 
@@ -287,13 +289,129 @@ void jql_destroy(JQL *qptr) {
   }
 }
 
-static bool _match_jqval_pair(_MCTX *mctx,
-                              _JQVAL *left, JQP_OP *op, _JQVAL *right,
-                              iwrc *rcp) {
+IW_INLINE jbl_type_t _binn_to_jbl_type(int bintype) {
+  switch (bintype) {
+    case BINN_NULL:
+      return JBV_NULL;
+    case BINN_STRING:
+      return JBV_STR;
+    case BINN_OBJECT:
+    case BINN_MAP:
+      return JBV_OBJECT;
+    case BINN_LIST:
+      return JBV_ARRAY;
+    case BINN_BOOL:
+    case BINN_TRUE:
+    case BINN_FALSE:
+      return JBV_BOOL;
+    case BINN_UINT8:
+    case BINN_UINT16:
+    case BINN_UINT32:
+    case BINN_UINT64:
+    case BINN_INT8:
+    case BINN_INT16:
+    case BINN_INT32:
+    case BINN_INT64:
+      return JBV_I64;
+    case BINN_FLOAT32:
+    case BINN_FLOAT64:
+      return JBV_F64;
+  }
+  return JBV_NONE;
+}
 
-  // TODO: 
-                              
-  return false;
+static int _cmp_jqval_pair(_MCTX *mctx, _JQVAL *left, _JQVAL *right, iwrc *rcp) {
+  _JQVAL  sleft, sright;   // Stack allocated left/right converted values
+  struct _JBL_NODE snode;
+  _JQVAL *lv = left, *rv = right;  
+start:  
+  if (lv->type == JQVAL_STR) {  // Object key value
+    if (rv->type == JQVAL_JBLNODE) {
+      JBL_NODE jn = rv->vnode;
+      if (jn->type == JBV_STR) {
+        return strcmp(lv->vstr, jn->vptr);
+      } else if (jn->type == JBV_BOOL)      {
+        return strcmp(lv->vstr, jn->vbool ? "true" : "false");
+      } else if (jn->type == JBV_I64) {
+        char nbuf[JBNUMBUF_SIZE];
+        int len = iwitoa(jn->vi64, nbuf, JBNUMBUF_SIZE);
+        return strcmp(lv->vstr, nbuf);
+      } else if (jn->type == JBV_F64) {
+        char nbuf[IWFTOA_BUFSIZE];
+        iwftoa(jn->vf64, nbuf);
+        return strcmp(lv->vstr, nbuf);
+      }
+    } else if (rv->type == JQVAL_STR) {
+      return strcmp(lv->vstr, rv->vstr);
+    } else if (rv->type == JQVAL_BOOL) {
+      return strcmp(lv->vstr, rv->vbool ? "true" : "false");
+    } else if (rv->type == JQVAL_I64) {
+      char nbuf[JBNUMBUF_SIZE];
+      int len = iwitoa(rv->vint64, nbuf, JBNUMBUF_SIZE);
+      return strcmp(lv->vstr, nbuf);
+    } else if (rv->type == JQVAL_F64) {
+      char nbuf[IWFTOA_BUFSIZE];
+      iwftoa(rv->vf64, nbuf);
+      return strcmp(lv->vstr, nbuf);
+    }
+  } else if (lv->type == JQVAL_BINN) { // Traversed object value
+    binn *vbin = lv->vbinn;
+    jbl_type_t ltype = _binn_to_jbl_type(vbin->type);      
+    if (ltype == JBV_STR) {
+      sleft.type = JQVAL_STR;
+      sleft.vstr = vbin->ptr;
+      lv = &sleft;
+      goto start;
+    }    
+    // TODO:  
+  }
+  *rcp = _JQL_ERROR_UNMATCHED;
+  return 0;
+}
+
+
+static bool _match_jqval_pair(_MCTX *mctx,
+                              _JQVAL *left, JQP_OP *jqop, _JQVAL *right,
+                              iwrc *rcp) {
+  bool match = false;
+  jqp_op_t op = jqop->op;
+  if (op >= JQP_OP_EQ && op <= JQP_OP_LTE) {
+    int cmp = _cmp_jqval_pair(mctx, left, right, rcp);
+    if (*rcp == _JQL_ERROR_UNMATCHED) {
+      *rcp = 0;
+      goto finish;
+    }
+    switch (op) {
+      case JQP_OP_EQ:
+        match = (cmp == 0);
+        break;
+      case JQP_OP_GT:
+        match = (cmp > 0);
+        break;
+      case JQP_OP_GTE:
+        match = (cmp >= 0);
+        break;
+      case JQP_OP_LT:
+        match = (cmp < 0);
+        break;
+      case JQP_OP_LTE:
+        match = (cmp <= 0);
+        break;
+      default:
+        break;
+    }
+  } else {
+    // JQP_OP_IN,
+    // JQP_OP_RE,
+    // JQP_OP_LIKE,
+    // TODO:
+  }
+  
+finish:
+  if (jqop->negate) {
+    match = !match;
+  }
+  return match;
 }
 
 static _JQVAL *_unit_to_jqval(_MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
@@ -302,11 +420,8 @@ static _JQVAL *_unit_to_jqval(_MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
       return (_JQVAL *) unit->string.opaque;
     }
     if (unit->string.flavour & JQP_STR_PLACEHOLDER) {
-      unit->string.opaque = _jql_find_placeholder(mctx->q, unit->string.value);
-      if (!unit->string.opaque) {
-        *rcp = JQL_ERROR_INVALID_PLACEHOLDER;
-        return 0;
-      }
+      *rcp = JQL_ERROR_INVALID_PLACEHOLDER;
+      return 0;
     } else {
       _JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->qp->aux->pool);
       if (!qv) {
@@ -329,21 +444,12 @@ static _JQVAL *_unit_to_jqval(_MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
     }
     unit->json.opaque = qv;
     qv->type = JQVAL_JBLNODE;
-    qv->vjblnode = &unit->json.jn;    
-    return unit->json.opaque;  
+    qv->vnode = &unit->json.jn;
+    return unit->json.opaque;
   } else {
     *rcp = IW_ERROR_ASSERTION;
     return 0;
   }
-}
-
-static bool _match_expr_pair(_MCTX *mctx,
-                             JQPUNIT *left, JQP_OP *op, JQPUNIT *right,
-                             iwrc *rcp) {
-  _JQVAL *lv = _unit_to_jqval(mctx, left, rcp);
-  _JQVAL *rv = _unit_to_jqval(mctx, right, rcp);
-  if (*rcp) return false;
-  return _match_jqval_pair(mctx, lv, op, rv, rcp);
 }
 
 static bool _match_node_expr_impl(_MCTX *mctx, _MFNCTX *n, JQP_EXPR *expr, iwrc *rcp) {
@@ -359,13 +465,17 @@ static bool _match_node_expr_impl(_MCTX *mctx, _MFNCTX *n, JQP_EXPR *expr, iwrc 
       *rcp = IW_ERROR_ASSERTION;
       return false;
     }
-    JQPUNIT keyleft = {.type = JQP_STRING_TYPE, .string.value = mctx->key};
-    if (!_match_expr_pair(mctx, &keyleft, left->expr.op, left->expr.right, rcp)) {
+    _JQVAL lv, *rv = _unit_to_jqval(mctx, left->expr.right, rcp);
+    lv.type = JQVAL_STR;
+    lv.vstr = mctx->key;
+    if (*rcp || !_match_jqval_pair(mctx, &lv, left->expr.op, rv, rcp)) {
       return false;
     }
-    if (*rcp) return false;
   }
-  return _match_expr_pair(mctx, left, op, right, rcp);
+  _JQVAL lv, *rv = _unit_to_jqval(mctx, right, rcp);
+  lv.type = JQVAL_BINN;
+  lv.vbinn = mctx->bv;
+  return !*rcp || _match_jqval_pair(mctx, &lv, left->expr.op, rv, rcp);
 }
 
 static bool _match_node_expr(_MCTX *mctx, _MFNCTX *n, _MFNCTX *nn, iwrc *rcp) {
