@@ -430,7 +430,7 @@ start:
           case JQVAL_I64:
             return lv->vi64 - rv->vi64;
           case JQVAL_F64:
-            return (double)(lv->vi64) > rv->vf64 ? 1 : (double)(lv->vi64) < rv->vf64 ? -1 : 0;
+            return (double) lv->vi64 > rv->vf64 ? 1 : (double) lv->vi64 < rv->vf64 ? -1 : 0;
           case JQVAL_STR:
             return lv->vi64 - iwatoi(rv->vstr);
           case JQVAL_NULL:
