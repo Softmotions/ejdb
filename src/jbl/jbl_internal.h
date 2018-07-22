@@ -21,10 +21,10 @@ typedef struct _JBL_PTR {
 
 typedef struct _JBL_VCTX {
   binn *bn;
-  void *op;
+  void *op;         /**< Arbitrary opaque data */ 
   void *result;
-  bool terminate;
-  IWPOOL *pool;
+  bool terminate;   
+  IWPOOL *pool;     /**< Not initialized pool placeholder */
 } JBL_VCTX;
 
 typedef enum {
