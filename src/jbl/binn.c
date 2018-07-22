@@ -1134,9 +1134,9 @@ BINN_PRIVATE BOOL GetValue(unsigned char *p, binn *value) {
       value->ptr = &value->vint32;
       break;
     case BINN_STORAGE_QWORD:
-      value->vint64 = *((uint64 *) p);
-      value->vint64 = frombe64(value->vint64);
-      value->ptr = &value->vint64;
+      value->vf64 = *((uint64 *) p);
+      value->vf64 = frombe64(value->vf64);
+      value->ptr = &value->vf64;
       break;
     case BINN_STORAGE_BLOB:
       value->size = *((int *)p);
@@ -1822,19 +1822,19 @@ BINN_PRIVATE BOOL copy_raw_value(const void *psource, void *pdest, int data_stor
 
 BINN_PRIVATE BOOL copy_int_value(void *psource, void *pdest, int source_type, int dest_type) {
   uint64 vuint64 = 0;
-  int64 vint64 = 0;
+  int64 vf64 = 0;
   switch (source_type) {
     case BINN_INT8:
-      vint64 = *(signed char *)psource;
+      vf64 = *(signed char *)psource;
       break;
     case BINN_INT16:
-      vint64 = *(short *)psource;
+      vf64 = *(short *)psource;
       break;
     case BINN_INT32:
-      vint64 = *(int *)psource;
+      vf64 = *(int *)psource;
       break;
     case BINN_INT64:
-      vint64 = *(int64 *)psource;
+      vf64 = *(int64 *)psource;
       break;
     case BINN_UINT8:
       vuint64 = *(unsigned char *)psource;
@@ -1854,26 +1854,26 @@ BINN_PRIVATE BOOL copy_int_value(void *psource, void *pdest, int source_type, in
   // copy from int64 to uint64, if possible
   if ((int_type(source_type) == BINN_UNSIGNED_INT) && (int_type(dest_type) == BINN_SIGNED_INT)) {
     if (vuint64 > INT64_MAX) return FALSE;
-    vint64 = vuint64;
+    vf64 = vuint64;
   } else if ((int_type(source_type) == BINN_SIGNED_INT) && (int_type(dest_type) == BINN_UNSIGNED_INT)) {
-    if (vint64 < 0) return FALSE;
-    vuint64 = vint64;
+    if (vf64 < 0) return FALSE;
+    vuint64 = vf64;
   }
   switch (dest_type) {
     case BINN_INT8:
-      if ((vint64 < INT8_MIN) || (vint64 > INT8_MAX)) return FALSE;
-      *(signed char *)pdest = (signed char) vint64;
+      if ((vf64 < INT8_MIN) || (vf64 > INT8_MAX)) return FALSE;
+      *(signed char *)pdest = (signed char) vf64;
       break;
     case BINN_INT16:
-      if ((vint64 < INT16_MIN) || (vint64 > INT16_MAX)) return FALSE;
-      *(short *)pdest = (short) vint64;
+      if ((vf64 < INT16_MIN) || (vf64 > INT16_MAX)) return FALSE;
+      *(short *)pdest = (short) vf64;
       break;
     case BINN_INT32:
-      if ((vint64 < INT32_MIN) || (vint64 > INT32_MAX)) return FALSE;
-      *(int *)pdest = (int) vint64;
+      if ((vf64 < INT32_MIN) || (vf64 > INT32_MAX)) return FALSE;
+      *(int *)pdest = (int) vf64;
       break;
     case BINN_INT64:
-      *(int64 *)pdest = vint64;
+      *(int64 *)pdest = vf64;
       break;
     case BINN_UINT8:
       if (vuint64 > UINT8_MAX) return FALSE;

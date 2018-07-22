@@ -43,6 +43,7 @@ typedef enum {
   JBV_I64,
   JBV_F64,
   JBV_STR,
+  // Do not reorder
   JBV_OBJECT,
   JBV_ARRAY,
 } jbl_type_t;
@@ -139,6 +140,7 @@ IW_EXPORT iwrc jbl_merge_patch_node(JBL_NODE root, const char *patchjson, IWPOOL
 
 IW_EXPORT iwrc jbl_merge_patch(JBL jbl, const char *patchjson);
 
+IW_EXPORT int jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
 
 
 IW_EXPORT iwrc jbl_init(void);
