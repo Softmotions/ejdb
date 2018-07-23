@@ -249,7 +249,7 @@ struct binn_struct {
     signed char    vint8;
     signed short   vint16;
     signed int     vint32;
-    int64          vf64;
+    int64          vint64;
     unsigned char  vuint8;
     unsigned short vuint16;
     unsigned int   vuint32;
@@ -546,7 +546,7 @@ void *APIENTRY binn_object_read_next(binn_iter *iter, char *pkey, int *ptype,
 #define binn_set_bool(item,value)   do { (item)->type = BINN_BOOL; (item)->vbool = value; (item)->ptr = &((item)->vbool); } while (0)
 
 #define binn_set_int(item,value)    do { (item)->type = BINN_INT32; (item)->vint32 = value; (item)->ptr = &((item)->vint32); } while (0)
-#define binn_set_int64(item,value)  do { (item)->type = BINN_INT64; (item)->vf64 = value; (item)->ptr = &((item)->vf64); } while (0)
+#define binn_set_int64(item,value)  do { (item)->type = BINN_INT64; (item)->vint64 = value; (item)->ptr = &((item)->vint64); } while (0)
 
 #define binn_set_uint(item,value)   do { (item)->type = BINN_UINT32; (item)->vuint32 = value; (item)->ptr = &((item)->vuint32); } while (0)
 #define binn_set_uint64(item,value) do { (item)->type = BINN_UINT64; (item)->vuint64 = value; (item)->ptr = &((item)->vuint64); } while (0)

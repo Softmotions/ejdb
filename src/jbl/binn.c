@@ -1134,9 +1134,9 @@ BINN_PRIVATE BOOL GetValue(unsigned char *p, binn *value) {
       value->ptr = &value->vint32;
       break;
     case BINN_STORAGE_QWORD:
-      value->vf64 = *((uint64 *) p);
-      value->vf64 = frombe64(value->vf64);
-      value->ptr = &value->vf64;
+      value->vint64 = *((uint64 *) p);
+      value->vint64 = frombe64(value->vint64);
+      value->ptr = &value->vint64;
       break;
     case BINN_STORAGE_BLOB:
       value->size = *((int *)p);

@@ -289,61 +289,97 @@ void jql_destroy(JQL *qptr) {
   }
 }
 
-IW_INLINE jbl_type_t _binn_to_jbl_type(int bintype) {
-  switch (bintype) {
-    case BINN_NULL:
-      return JBV_NULL;
-    case BINN_STRING:
-      return JBV_STR;
+IW_INLINE jbl_type_t _binn_to_jqval(binn *vbinn, JQVAL *qval) {
+  switch (vbinn->type) {
     case BINN_OBJECT:
     case BINN_MAP:
-      return JBV_OBJECT;
     case BINN_LIST:
-      return JBV_ARRAY;
+      qval->vbinn = vbinn;
+      return JQVAL_BINN;
+    case BINN_NULL:
+      qval->type = JQVAL_NULL;
+      return qval->type;
+    case BINN_STRING:
+      qval->type = JQVAL_STR;
+      qval->vstr = vbinn->ptr;
+      return qval->type;
     case BINN_BOOL:
     case BINN_TRUE:
     case BINN_FALSE:
-      return JBV_BOOL;
+      qval->type = JQVAL_BOOL;
+      qval->vbool = vbinn->vbool;
+      return qval->type;
     case BINN_UINT8:
+      qval->type = JQVAL_I64;
+      qval->vi64 = vbinn->vuint8;
+      return qval->type;
     case BINN_UINT16:
+      qval->type = JQVAL_I64;
+      qval->vi64 = vbinn->vuint16;
+      return qval->type;
     case BINN_UINT32:
+      qval->type = JQVAL_I64;
+      qval->vi64 = vbinn->vuint32;
+      return qval->type;
     case BINN_UINT64:
+      qval->type = JQVAL_I64;
+      qval->vi64 = vbinn->vuint64;
+      return qval->type;
     case BINN_INT8:
+      qval->type = JQVAL_I64;
+      qval->vi64 = vbinn->vint8;
+      return qval->type;
     case BINN_INT16:
+      qval->type = JQVAL_I64;
+      qval->vi64 = vbinn->vint16;
+      return qval->type;
     case BINN_INT32:
+      qval->type = JQVAL_I64;
+      qval->vi64 = vbinn->vint32;
+      return qval->type;
     case BINN_INT64:
-      return JBV_I64;
+      qval->type = JQVAL_I64;
+      qval->vi64 = vbinn->vint64;
+      return qval->type;
     case BINN_FLOAT32:
+      qval->type = JQVAL_F64;
+      qval->vf64 = vbinn->vdouble;
+      return qval->type;
     case BINN_FLOAT64:
-      return JBV_F64;
+      qval->type = JQVAL_F64;
+      qval->vf64 = vbinn->vfloat;
+      return qval->type;
   }
   return JBV_NONE;
 }
 
-IW_INLINE bool _jbl_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
+IW_INLINE void _jbl_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
   switch (jn->type) {
     case JBV_STR:
       qv->type = JQVAL_STR;
       qv->vstr = jn->vptr;
-      return true;
+      break;
     case JBV_I64:
       qv->type = JQVAL_I64;
       qv->vi64 = jn->vi64;
-      return true;
+      break;
     case JBV_BOOL:
       qv->type = JQVAL_BOOL;
       qv->vbool = jn->vbool;
-      return true;
+      break;
     case JBV_F64:
       qv->type = JQVAL_F64;
       qv->vf64 = jn->vf64;
-      return true;
+      break;
     case JBV_NULL:
     case JBV_NONE:
       qv->type = JQVAL_NULL;
-      return true;
-    default:
-      return false;
+      break;
+    case JBV_OBJECT:
+    case JBV_ARRAY:
+      qv->type = JQVAL_JBLNODE;
+      qv->vnode = jn;
+      break;
   }
 }
 
@@ -353,73 +389,121 @@ IW_INLINE bool _jbl_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
  */
 static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
   JQVAL  sleft, sright;   // Stack allocated left/right converted values
-  struct _JBL_NODE snode;
   JQVAL *lv = left, *rv = right;
-start:
-  if (lv->type == JQVAL_STR) {  // Object key value
-    if (rv->type == JQVAL_JBLNODE) {
-      if (!_jbl_node_to_jqval(rv->vnode, &sright)) {
-        *rcp = _JQL_ERROR_UNMATCHED;
-        return 0;
-      }
-      rv = &sright;
-    }
-    switch (rv->type) {
-      case JQVAL_STR: {
-        int l1 = strlen(lv->vstr);
-        int l2 = strlen(rv->vstr);
-        if (l1 - l2) {
-          return l1 - l2;
+  
+  if (lv->type == JQVAL_BINN) {
+    _binn_to_jqval(lv->vbinn, &sleft);
+    lv = &sleft;
+  }
+  if (rv->type == JQVAL_JBLNODE) {
+    _jbl_node_to_jqval(rv->vnode, &sright);
+    rv = &sright;
+  }
+  
+  switch (lv->type) {
+    case JQVAL_STR:
+      switch (rv->type) {
+        case JQVAL_STR: {
+          int l1 = strlen(lv->vstr);
+          int l2 = strlen(rv->vstr);
+          if (l1 - l2) {
+            return l1 - l2;
+          }
+          return strncmp(lv->vstr, rv->vstr, l1);
         }
-        return strncmp(lv->vstr, rv->vstr, l1);      
+        case JQVAL_BOOL:
+          return !strcmp(lv->vstr, "true") - rv->vbool;
+        case JQVAL_I64: {
+          char nbuf[JBNUMBUF_SIZE];
+          int len = iwitoa(rv->vi64, nbuf, JBNUMBUF_SIZE);
+          return strcmp(lv->vstr, nbuf);
+        }
+        case JQVAL_F64: {
+          char nbuf[IWFTOA_BUFSIZE];
+          iwftoa(rv->vf64, nbuf);
+          return strcmp(lv->vstr, nbuf);
+        }
+        case JQVAL_NULL:
+          return (!lv->vstr || lv->vstr[0] == '\0') ? 0 : 1;
+        default:
+          break;
       }
-      case JQVAL_BOOL:
-        return !strcmp(lv->vstr, "true") - rv->vbool;
-      case JQVAL_I64: {
-        char nbuf[JBNUMBUF_SIZE];
-        int len = iwitoa(rv->vi64, nbuf, JBNUMBUF_SIZE);
-        return strcmp(lv->vstr, nbuf);
+      break;
+    case JQVAL_I64:
+      switch (rv->type) {
+        case JQVAL_I64:
+          return lv->vi64 - rv->vi64;
+        case JQVAL_F64:
+          return (double) lv->vi64 > rv->vf64 ? 1 : (double) lv->vi64 < rv->vf64 ? -1 : 0;
+        case JQVAL_STR:
+          return lv->vi64 - iwatoi(rv->vstr);
+        case JQVAL_NULL:
+          return 1;
+        case JQVAL_BOOL:
+          return lv->vi64 - rv->vbool;
+        default:
+          break;
       }
-      case JQVAL_F64: {
-        char nbuf[IWFTOA_BUFSIZE];
-        iwftoa(rv->vf64, nbuf);
-        return strcmp(lv->vstr, nbuf);
+      break;
+    case JQVAL_F64:
+      switch (rv->type) {
+        case JQVAL_F64:
+          return lv->vf64 > rv->vf64 ? 1 : lv->vf64 < rv->vf64 ? -1 : 0;
+        case JQVAL_I64:
+          return lv->vf64 > (double) rv->vi64 ? 1 : lv->vf64 < (double) rv->vf64 ? -1 : 0;
+        case JQVAL_STR: {
+          double rval = iwatof(rv->vstr);
+          return lv->vf64 > rval ? 1 : lv->vf64 < rval ? -1 : 0;
+        }
+        case JQVAL_NULL:
+          return 1;
+        case JQVAL_BOOL:
+          return lv->vf64 > (double) rv->vbool ? 1 : lv->vf64 < (double) rv->vbool ? -1 : 0;
+        default:
+          break;
       }
-      case JQVAL_NULL:
-        return (!lv->vstr || lv->vstr[0] == '\0') ? 0 : 1;
-      default:
-        break;
-    }
-  } else if (lv->type == JQVAL_BINN) { // Traversed object value
-    binn *vbinn = lv->vbinn;
-    jbl_type_t ltype = _binn_to_jbl_type(vbinn->type);
-    jqval_type_t rtype = rv->type;
-    if (ltype == JBV_STR) {
-      sleft.type = JQVAL_STR;
-      sleft.vstr = vbinn->ptr;
-      lv = &sleft;
-      goto start;
-    }
-    if (rtype == JQVAL_JBLNODE && rv->vnode->type < JBV_OBJECT) {
-      if (!_jbl_node_to_jqval(rv->vnode, &sright)) {
-        *rcp = _JQL_ERROR_UNMATCHED;
-        return 0;
+      break;
+    case JQVAL_BOOL:
+      switch (rv->type) {
+        case JQVAL_BOOL:
+          return lv->vbool - rv->vbool;
+        case JQVAL_I64:
+          return lv->vbool - (rv->vi64 != 0L);
+        case JQVAL_F64:
+          return lv->vbool - (rv->vf64 != 0.0);
+        case JQVAL_STR:
+          return lv->vbool - !strcmp(rv->vstr, "true");
+        case JQVAL_NULL:
+          return lv->vbool;
+        default:
+          break;
       }
-      rv = &sright;
-      goto start;
-    }
-    if (ltype == JBV_OBJECT || ltype == JBV_ARRAY) { // object-to-object
-      if (rtype != JQVAL_JBLNODE || rv->vnode->type != ltype) {
+      break;
+    case JQVAL_NULL:
+      switch (rv->type) {
+        case JQVAL_NULL:
+          return 0;
+        case JQVAL_STR:
+          return (!rv->vstr || rv->vstr[0] == '\0') ? 0 : -1;
+        default:
+          return -1;
+      }
+      break;
+    case JQVAL_BINN: {
+      if (rv->type != JQVAL_JBLNODE
+          || (rv->vnode->type == JBV_ARRAY && (lv->vbinn->type != BINN_OBJECT && lv->vbinn->type != BINN_MAP))
+          || (rv->vnode->type == JBV_OBJECT && lv->vbinn->type != BINN_LIST)) {
+        // Incopatible types
         *rcp = _JQL_ERROR_UNMATCHED;
         return 0;
       }
       JBL_NODE lnode;
-      IWPOOL *pool = iwpool_create(vbinn->size * 2);
+      IWPOOL *pool = iwpool_create(rv->vbinn->size * 2);
       if (!pool) {
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
-      *rcp = _jbl_node_from_binn2(vbinn, &lnode, pool);
+      *rcp = _jbl_node_from_binn2(rv->vbinn, &lnode, pool);
       if (*rcp) {
         iwpool_destroy(pool);
         return 0;
@@ -428,73 +512,9 @@ start:
       iwpool_destroy(pool);
       return cmp;
     }
-    
-    switch (ltype) {
-      case JBV_I64:
-        switch (rtype) {
-          case JQVAL_I64:
-            return lv->vi64 - rv->vi64;
-          case JQVAL_F64:
-            return (double) lv->vi64 > rv->vf64 ? 1 : (double) lv->vi64 < rv->vf64 ? -1 : 0;
-          case JQVAL_STR:
-            return lv->vi64 - iwatoi(rv->vstr);
-          case JQVAL_NULL:
-            return 1;
-          case JQVAL_BOOL:
-            return lv->vi64 - rv->vbool;
-          default:
-            break;
-        }
-        break;
-      case JBV_F64:
-        switch (rtype) {
-          case JQVAL_F64:
-            return lv->vf64 > rv->vf64 ? 1 : lv->vf64 < rv->vf64 ? -1 : 0;
-          case JQVAL_I64:
-            return lv->vf64 > (double) rv->vi64 ? 1 : lv->vf64 < (double) rv->vf64 ? -1 : 0;
-          case JQVAL_STR: {
-            double rval = iwatof(rv->vstr);
-            return lv->vf64 > rval ? 1 : lv->vf64 < rval ? -1 : 0;
-          }
-          case JQVAL_NULL:
-            return 1;
-          case JQVAL_BOOL:
-            return lv->vf64 > (double) rv->vbool ? 1 : lv->vf64 < (double) rv->vbool ? -1 : 0;
-          default:
-            break;
-        }
-        break;
-      case JBV_BOOL:
-        switch (rtype) {
-          case JQVAL_BOOL:
-            return lv->vbool - rv->vbool;
-          case JQVAL_I64:
-            return lv->vbool - (rv->vi64 != 0L);
-          case JQVAL_F64:
-            return lv->vbool - (rv->vf64 != 0.0);
-          case JQVAL_STR:
-            return lv->vbool - !strcmp(rv->vstr, "true");
-          case JQVAL_NULL:
-            return lv->vbool;
-          default:
-            break;
-        }
-        break;
-      case JBV_NULL:
-        switch (rtype) {
-          case JQVAL_NULL:
-            return 0;
-          case JQVAL_STR:
-            return (!rv->vstr || rv->vstr[0] == '\0') ? 0 : -1;
-          default:
-            return -1;
-        }
-        break;
-      default:
-        break;
-    }
+    default:
+      break;
   }
-  
   *rcp = _JQL_ERROR_UNMATCHED;
   return 0;
 }
@@ -582,7 +602,7 @@ static JQVAL *_unit_to_jqval(MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
   }
 }
 
-static bool _match_node_expr_impl(MCTX *mctx, MFNCTX *n, JQP_EXPR *expr, iwrc *rcp) {  
+static bool _match_node_expr_impl(MCTX *mctx, MFNCTX *n, JQP_EXPR *expr, iwrc *rcp) {
   const bool negate = (expr->join && expr->join->negate);
   JQPUNIT *left = expr->left;
   JQP_OP *op = expr->op;
@@ -601,7 +621,7 @@ static bool _match_node_expr_impl(MCTX *mctx, MFNCTX *n, JQP_EXPR *expr, iwrc *r
     lv.vstr = mctx->key;
     if (*rcp) {
       return false;
-    }    
+    }
     if (!_match_jqval_pair(mctx, &lv, left->expr.op, rv, rcp)) {
       return negate;
     }
@@ -611,14 +631,14 @@ static bool _match_node_expr_impl(MCTX *mctx, MFNCTX *n, JQP_EXPR *expr, iwrc *r
   lv.vbinn = mctx->bv;
   if (*rcp) {
     return false;
-  }  
+  }
   bool ret = _match_jqval_pair(mctx, &lv, expr->op, rv, rcp);
   return negate ? !ret : ret;
 }
 
-static bool _match_node_expr(MCTX *mctx, MFNCTX *n, MFNCTX *nn, iwrc *rcp) {    
+static bool _match_node_expr(MCTX *mctx, MFNCTX *n, MFNCTX *nn, iwrc *rcp) {
   n->start = mctx->lvl;
-  n->end = n->start;    
+  n->end = n->start;
   JQP_NODE *qpn = n->qpn;
   JQPUNIT *unit = qpn->value;
   if (unit->type != JQP_EXPR_TYPE) {
@@ -632,7 +652,7 @@ static bool _match_node_expr(MCTX *mctx, MFNCTX *n, MFNCTX *nn, iwrc *rcp) {
     const JQP_JOIN *join = expr->join;
     if (!join) {
       prev = matched;
-    } else {      
+    } else {
       if (join->value == JQP_JOIN_AND) { // AND
         prev = prev && matched;
       } else if (prev || matched) {      // OR
