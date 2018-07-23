@@ -353,7 +353,7 @@ IW_INLINE jbl_type_t _binn_to_jqval(binn *vbinn, JQVAL *qval) {
   return JBV_NONE;
 }
 
-IW_INLINE void _jbl_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
+IW_INLINE void _node_to_jqval(JBL_NODE jn, JQVAL *qv) {
   switch (jn->type) {
     case JBV_STR:
       qv->type = JQVAL_STR;
@@ -396,7 +396,7 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
     lv = &sleft;
   }
   if (rv->type == JQVAL_JBLNODE) {
-    _jbl_node_to_jqval(rv->vnode, &sright);
+    _node_to_jqval(rv->vnode, &sright);
     rv = &sright;
   }
   
@@ -493,7 +493,7 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
       if (rv->type != JQVAL_JBLNODE
           || (rv->vnode->type == JBV_ARRAY && (lv->vbinn->type != BINN_OBJECT && lv->vbinn->type != BINN_MAP))
           || (rv->vnode->type == JBV_OBJECT && lv->vbinn->type != BINN_LIST)) {
-        // Incopatible types
+        // Incompatible types
         *rcp = _JQL_ERROR_UNMATCHED;
         return 0;
       }
