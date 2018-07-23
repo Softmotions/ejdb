@@ -100,6 +100,7 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/baz and (/foo/daz or /foo/bar)", false);
   _jql_test1_2("{'foo':{'bar':22}}", "(/boo or /foo) and (/foo/daz or /foo/bar)", true);
   _jql_test1_2("{'foo':{'bar':22, 'bar2':'vvv2'}}", "/foo/bar2", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar=22]", true);
 }
 
 int main() {

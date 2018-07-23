@@ -124,13 +124,13 @@ typedef struct JQP_JOIN {
   jqp_op_t value;
 } JQP_JOIN;
 
-typedef struct JQP_EXPR {
+typedef struct JQP_EXPR {  
   jqp_unit_t type;
   struct JQP_JOIN *join;
   struct JQP_OP *op;
   JQPUNIT *left;
   JQPUNIT *right;
-  struct JQP_EXPR *next;
+  struct JQP_EXPR *next;  
 } JQP_EXPR;
 
 typedef struct JQP_PROJECTION {
