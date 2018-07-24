@@ -113,9 +113,13 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar <= 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar < 22]", false);
   _jql_test1_2("{'foo':{'bar':22}}", "/*/[bar < 22]", false);
-  
+  _jql_test1_2("{'foo':{'bar':22}}", "/*/[bar > 20 and bar <= 23]", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/*/[bar > 22 and bar <= 23]", false);
+  _jql_test1_2("{'foo':{'bar':22}}", "/*/[bar > 23 or bar < 23]", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/*/[bar < 23 or bar > 23]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[[* = bar] = 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[[* = bar] != 23]", true);
+  //_jql_test1_2("{'foo':{'bar':22}}", "/[* = foo]/[[* = bar] != 23]", true);
 
 }
 
