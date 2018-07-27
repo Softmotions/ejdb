@@ -608,30 +608,33 @@ static bool _match_node_expr_impl(MCTX *mctx, MFNCTX *n, JQP_EXPR *expr, iwrc *r
   JQP_OP *op = expr->op;
   JQPUNIT *right = expr->right;
   if (left->type == JQP_STRING_TYPE) {
-    if (!(left->string.flavour & JQP_STR_STAR) && strcmp(mctx->key, left->string.value)) {
-      return negate;
-    }
+    if (left->string.flavour & JQP_STR_STAR) {
+        JQVAL lv, *rv = _unit_to_jqval(mctx, right, rcp);
+        if (*rcp) return false;
+        lv.type = JQVAL_STR;
+        lv.vstr = mctx->key;
+        bool ret = _match_jqval_pair(mctx, &lv, op, rv, rcp);
+        return negate ? !ret : ret;
+    } else if (strcmp(mctx->key, left->string.value)) {
+        return negate;
+    } 
   } else if (left->type == JQP_EXPR_TYPE) {
     if (left->expr.left->type != JQP_STRING_TYPE || !(left->expr.left->string.flavour & JQP_STR_STAR)) {
       *rcp = IW_ERROR_ASSERTION;
       return false;
     }
     JQVAL lv, *rv = _unit_to_jqval(mctx, left->expr.right, rcp);
+    if (*rcp) return false;
     lv.type = JQVAL_STR;
     lv.vstr = mctx->key;
-    if (*rcp) {
-      return false;
-    }
     if (!_match_jqval_pair(mctx, &lv, left->expr.op, rv, rcp)) {
       return negate;
     }
   }
   JQVAL lv, *rv = _unit_to_jqval(mctx, right, rcp);
+  if (*rcp) return false;
   lv.type = JQVAL_BINN;
   lv.vbinn = mctx->bv;
-  if (*rcp) {
-    return false;
-  }
   bool ret = _match_jqval_pair(mctx, &lv, expr->op, rv, rcp);
   return negate ? !ret : ret;
 }
