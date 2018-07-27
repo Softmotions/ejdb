@@ -115,6 +115,7 @@ typedef struct JQP_OP {
   jqp_unit_t type;
   bool negate;
   jqp_op_t op;
+  struct JQP_OP *next;
   void *opaque;
 } JQP_OP;
 
@@ -202,6 +203,8 @@ typedef struct JQP_AUX {
   int num_placeholders;
   JQP_STRING *start_placeholder;
   JQP_STRING *end_placeholder;
+  JQP_OP *start_op;
+  JQP_OP *end_op;
   JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];
   int stackn;
 } JQP_AUX;

@@ -436,6 +436,13 @@ static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
     iwlog_error("Invalid operation: %s", text);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
+  if (!aux->start_op) {
+    aux->start_op = &unit->op;
+    aux->end_op = aux->start_op;
+  } else {
+    aux->end_op->next = &unit->op;
+    aux->end_op = aux->end_op->next;
+  }
   return unit;
 }
 
@@ -649,7 +656,7 @@ static JQPUNIT *_jqp_pop_filter_factor_chain(yycontext *yy, JQPUNIT *until) {
     if (unit->type == JQP_JOIN_TYPE) {
       factor->join = &unit->join;
     } else if (unit->type == JQP_EXPR_NODE_TYPE || unit->type == JQP_FILTER_TYPE) {
-      JQP_EXPR_NODE *node = (JQP_EXPR_NODE *) unit;      
+      JQP_EXPR_NODE *node = (JQP_EXPR_NODE *) unit;
       if (factor) {
         node->next = factor;
       }
@@ -997,23 +1004,23 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
   if (inbraces) {
     PT(0, 0, '(', 1);
   }
-  for (en = en->chain; en; en = en->next) {        
+  for (en = en->chain; en; en = en->next) {
     if (en->join) {
       rc = _jqp_print_join(en->join->value, en->join->negate, pt, op);
       RCRET(rc);
-    }    
+    }
     if (en->type == JQP_EXPR_NODE_TYPE) {
       rc = _jqp_print_expression_node(q, en, pt, op);
-      RCRET(rc);      
+      RCRET(rc);
     } else if (en->type == JQP_FILTER_TYPE) {
       rc = _jqp_print_filter(q, (const JQP_FILTER *) en, pt, op);
     } else {
       return IW_ERROR_ASSERTION;
-    }         
+    }
   }
   if (inbraces) {
     PT(0, 0, ')', 1);
-  }  
+  }
   return rc;
 }
 
@@ -1022,15 +1029,15 @@ iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
     return IW_ERROR_INVALID_ARGS;
   }
   iwrc rc = _jqp_print_expression_node(q, q->expr, pt, op);
-  RCRET(rc);  
+  RCRET(rc);
   if (q->apply_placeholder || q->apply) {
     PT(0, 0, '\n', 1);
     rc = _jqp_print_apply(q, pt, op);
-    RCRET(rc);    
+    RCRET(rc);
   }
   if (q->projection) {
     PT(0, 0, '\n', 1);
-    rc = _jqp_print_projection(q->projection, pt, op);    
+    rc = _jqp_print_projection(q->projection, pt, op);
   }
   return rc;
 }

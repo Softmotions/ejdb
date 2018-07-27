@@ -33,6 +33,7 @@ typedef struct MFCTX {
   JQP_FILTER *qpf;        /**< Parsed query filter */
 } MFCTX;
 
+
 /** Query object */
 struct _JQL {
   bool dirty;
@@ -283,6 +284,13 @@ void jql_destroy(JQL *qptr) {
     JQP_AUX *aux = q->qp->aux;
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->next) { // Cleanup placeholders
       _jql_jqval_destroy(pv->opaque);
+    }
+    for (JQP_OP *op = aux->start_op; op; op = op->next) {
+      if (op->opaque) {
+        if (op->op == JQP_OP_RE) {
+          re_free(op->opaque);
+        }
+      }
     }
     jqp_aux_destroy(&aux);
     *qptr = 0;
@@ -551,8 +559,13 @@ static bool _match_jqval_pair(MCTX *mctx,
         break;
     }
   } else {
+    switch(op) {
+      case JQP_OP_RE:
+        break;
+      default:
+        break;
+    }
     // JQP_OP_IN,
-    // JQP_OP_RE,
     // JQP_OP_LIKE,
     // TODO:
   }
@@ -609,15 +622,15 @@ static bool _match_node_expr_impl(MCTX *mctx, MFNCTX *n, JQP_EXPR *expr, iwrc *r
   JQPUNIT *right = expr->right;
   if (left->type == JQP_STRING_TYPE) {
     if (left->string.flavour & JQP_STR_STAR) {
-        JQVAL lv, *rv = _unit_to_jqval(mctx, right, rcp);
-        if (*rcp) return false;
-        lv.type = JQVAL_STR;
-        lv.vstr = mctx->key;
-        bool ret = _match_jqval_pair(mctx, &lv, op, rv, rcp);
-        return negate ? !ret : ret;
+      JQVAL lv, *rv = _unit_to_jqval(mctx, right, rcp);
+      if (*rcp) return false;
+      lv.type = JQVAL_STR;
+      lv.vstr = mctx->key;
+      bool ret = _match_jqval_pair(mctx, &lv, op, rv, rcp);
+      return negate ? !ret : ret;
     } else if (strcmp(mctx->key, left->string.value)) {
-        return negate;
-    } 
+      return negate;
+    }
   } else if (left->type == JQP_EXPR_TYPE) {
     if (left->expr.left->type != JQP_STRING_TYPE || !(left->expr.left->string.flavour & JQP_STR_STAR)) {
       *rcp = IW_ERROR_ASSERTION;
