@@ -15,6 +15,7 @@ typedef enum {
   JQL_ERROR_QUERY_PARSE,          /**< Query parsing error (JQL_ERROR_QUERY_PARSE) */
   JQL_ERROR_INVALID_PLACEHOLDER,  /**< Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER) */  
   JQL_ERROR_UNSET_PLACEHOLDER,    /**< Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER) */
+  JQL_ERROR_INVALID_REGEXP,       /**< Invalid regular expression (JQL_ERROR_INVALID_REGEXP) */
   _JQL_ERROR_END,
   _JQL_ERROR_UNMATCHED
 } jq_ecode;

@@ -527,6 +527,87 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
   return 0;
 }
 
+static bool _match_regexp(MCTX *mctx,
+                          JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                          iwrc *rcp) {
+  JQVAL  sleft;
+  struct re *rx;
+  char nbuf[JBNUMBUF_SIZE];
+  JQVAL *lv = left;
+  bool match = false;
+  const char *input = 0;
+  JQP_AUX *aux = mctx->qp->aux;
+  if (lv->type == JQVAL_JBLNODE) {
+    _node_to_jqval(lv->vnode, &sleft);
+    lv = &sleft;
+  }
+  if (jqop->opaque) {
+    rx = jqop->opaque;
+  } else if (right->type == JQVAL_RE) {
+    rx = right->vre;
+  } else {
+    const char *expr = 0;
+    JQVAL  sright;   // Stack allocated left/right converted values
+    JQVAL *rv = right;
+    if (rv->type == JQVAL_JBLNODE) {
+      _node_to_jqval(rv->vnode, &sright);
+      rv = &sright;
+    }
+    switch (rv->type) {
+      case JQVAL_STR:
+        expr = rv->vstr;
+        break;
+      case JQVAL_I64: {
+        int len = iwitoa(rv->vi64, nbuf, JBNUMBUF_SIZE);
+        nbuf[len] = '\0';
+        expr = iwpool_strdup(aux->pool, nbuf, rcp);
+        if (*rcp) goto finish;
+        break;
+      }
+      case JQVAL_F64: {
+        char nbuf[IWFTOA_BUFSIZE];
+        iwftoa(rv->vf64, nbuf);
+        expr = iwpool_strdup(aux->pool, nbuf, rcp);
+        if (*rcp) goto finish;
+        break;
+      }
+      case JQVAL_BOOL:
+        expr = rv->vbool ? "true" : "false";
+        break;
+      case JQVAL_NULL:
+        expr = "null";
+        break;
+      default:
+        *rcp = _JQL_ERROR_UNMATCHED;
+        return false;
+    }
+    rx = re_new(expr);
+    if (!rx) {
+      *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      return false;
+    }
+    jqop->opaque = rx;
+  }
+  assert(rx);
+  
+  switch (lv->type) {
+    case JQVAL_STR:
+      input = lv->vstr;
+      break;
+    case JQVAL_I64: {
+      int len = iwitoa(lv->vi64, nbuf, JBNUMBUF_SIZE);
+      nbuf[len] = '\0';
+      input = nbuf;
+      break;
+    }
+    default:
+      break;
+  }
+  assert(input);
+  
+finish:
+  return match;
+}
 
 static bool _match_jqval_pair(MCTX *mctx,
                               JQVAL *left, JQP_OP *jqop, JQVAL *right,
@@ -535,8 +616,7 @@ static bool _match_jqval_pair(MCTX *mctx,
   jqp_op_t op = jqop->op;
   if (op >= JQP_OP_EQ && op <= JQP_OP_LTE) {
     int cmp = _cmp_jqval_pair(mctx, left, right, rcp);
-    if (*rcp == _JQL_ERROR_UNMATCHED) {
-      *rcp = 0;
+    if (*rcp) {
       goto finish;
     }
     switch (op) {
@@ -559,8 +639,9 @@ static bool _match_jqval_pair(MCTX *mctx,
         break;
     }
   } else {
-    switch(op) {
+    switch (op) {
       case JQP_OP_RE:
+        match = _match_regexp(mctx, left, jqop, right, rcp);
         break;
       default:
         break;
@@ -571,6 +652,10 @@ static bool _match_jqval_pair(MCTX *mctx,
   }
   
 finish:
+  if (*rcp == _JQL_ERROR_UNMATCHED) {
+    *rcp = 0;
+    match = false;
+  }
   if (jqop->negate) {
     match = !match;
   }
@@ -850,6 +935,8 @@ static const char *_ecodefn(locale_t locale, uint32_t ecode) {
       return "Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER)";
     case JQL_ERROR_UNSET_PLACEHOLDER:
       return "Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER)";
+    case JQL_ERROR_INVALID_REGEXP:
+      return "Invalid regular expression (JQL_ERROR_INVALID_REGEXP)";
     default:
       break;
   }
