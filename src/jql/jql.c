@@ -529,24 +529,26 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
 static bool _match_regexp(MCTX *mctx,
                           JQVAL *left, JQP_OP *jqop, JQVAL *right,
                           iwrc *rcp) {
-                          
-  JQVAL  sleft;
   struct re *rx;
   char nbuf[JBNUMBUF_SIZE];
   static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
-  JQVAL  sright;   // Stack allocated left/right converted values
+  JQVAL sleft, sright; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
-  char *input = 0;
-  const char *expr = 0;
-  int rci = 0;
-  bool match_start = false;
-  int match_end = 0;
-  
   JQP_AUX *aux = mctx->qp->aux;
+  char *input = 0;
+  int rci, match_end = 0;
+  const char *expr = 0;
+  bool matched = false,  
+       match_start = false;       
+    
   if (lv->type == JQVAL_JBLNODE) {
     _node_to_jqval(lv->vnode, &sleft);
     lv = &sleft;
+  } else if (lv->type == JQVAL_BINN) {
+    _binn_to_jqval(lv->vbinn, &sleft);
+    lv = &sleft;
   }
+  
   if (jqop->opaque) {
     rx = jqop->opaque;
   } else if (right->type == JQVAL_RE) {
@@ -580,6 +582,21 @@ static bool _match_regexp(MCTX *mctx,
         return false;
     }
     assert(expr);
+    if (expr[0] == '^') {
+      expr += 1;
+      match_start = true;
+    }
+    rci = strlen(expr);
+    if (rci && expr[rci - 1] == '$') {
+      char *aexpr = iwpool_alloc(rci, aux->pool);
+      if (!aexpr) {
+        *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+        return false;
+      }
+      memcpy(aexpr, expr, rci - 1);
+      aexpr[rci - 1] = '\0';
+      expr = aexpr;
+    }
     rx = re_new(expr);
     if (!rx) {
       *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -610,15 +627,6 @@ static bool _match_regexp(MCTX *mctx,
   }
   
   assert(input);
-  if (input[0] == '^') {
-    input += 1;
-    match_start = true;
-  }
-  rci = strlen(input);
-  if (rci && input[rci - 1] == '$') {
-    input[rci - 1] = '\0';
-    match_end = rci - 1;
-  }  
   rci = re_match(rx, input);
   switch (rci) {
     case RE_ERROR_NOMATCH:
@@ -689,8 +697,8 @@ static bool _match_jqval_pair(MCTX *mctx,
       default:
         break;
     }
-    // JQP_OP_IN,
     // JQP_OP_LIKE,
+    // JQP_OP_IN,
     // TODO:
   }
   

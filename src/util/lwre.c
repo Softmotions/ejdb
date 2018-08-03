@@ -12,8 +12,6 @@
  * appreciated but is not required.
  *
  * THE SOFTWARE IS PROVIDED 'AS IS'.  USE ENTIRELY AT YOUR OWN RISK.
- *
- * Last edited: 2013-12-22 09:12:42 by piumarta on linux32
  */
 
 #include <ctype.h>

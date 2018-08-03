@@ -124,6 +124,12 @@ void jql_test1_2() {
   
   // regexp 
   _jql_test1_2("{'foo':{'bar':22}}", "/[* re \"foo\"]", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/[* re fo]", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/[* re ^foo$]", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/[* re ^fo$]", false);
+  _jql_test1_2("{'foo':{'bar':22}}", "/[* not re ^fo$]", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar re 22]", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar re \"2+\"]", true);
   
 }
 
