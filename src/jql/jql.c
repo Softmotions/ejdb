@@ -88,8 +88,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
   JQP_AUX *aux = q->qp->aux;
   if (!placeholder) { // Index
     char nbuf[JBNUMBUF_SIZE];
-    int len = iwitoa(index, nbuf, JBNUMBUF_SIZE);
-    nbuf[len] = '\0';
+    iwitoa(index, nbuf, JBNUMBUF_SIZE);
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->next) {
       if (pv->value[0] == '?' && !strcmp(pv->value + 1, nbuf)) {
         if (pv->opaque) _jql_jqval_destroy(pv->opaque);
@@ -423,7 +422,7 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
           return !strcmp(lv->vstr, "true") - rv->vbool;
         case JQVAL_I64: {
           char nbuf[JBNUMBUF_SIZE];
-          int len = iwitoa(rv->vi64, nbuf, JBNUMBUF_SIZE);
+          iwitoa(rv->vi64, nbuf, JBNUMBUF_SIZE);
           return strcmp(lv->vstr, nbuf);
         }
         case JQVAL_F64: {
@@ -530,12 +529,19 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
 static bool _match_regexp(MCTX *mctx,
                           JQVAL *left, JQP_OP *jqop, JQVAL *right,
                           iwrc *rcp) {
+                          
   JQVAL  sleft;
   struct re *rx;
   char nbuf[JBNUMBUF_SIZE];
-  JQVAL *lv = left;
-  bool match = false;
-  const char *input = 0;
+  static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
+  JQVAL  sright;   // Stack allocated left/right converted values
+  JQVAL *lv = left, *rv = right;
+  char *input = 0;
+  const char *expr = 0;
+  int rci = 0;
+  bool match_start = false;
+  int match_end = 0;
+  
   JQP_AUX *aux = mctx->qp->aux;
   if (lv->type == JQVAL_JBLNODE) {
     _node_to_jqval(lv->vnode, &sleft);
@@ -546,9 +552,6 @@ static bool _match_regexp(MCTX *mctx,
   } else if (right->type == JQVAL_RE) {
     rx = right->vre;
   } else {
-    const char *expr = 0;
-    JQVAL  sright;   // Stack allocated left/right converted values
-    JQVAL *rv = right;
     if (rv->type == JQVAL_JBLNODE) {
       _node_to_jqval(rv->vnode, &sright);
       rv = &sright;
@@ -558,29 +561,25 @@ static bool _match_regexp(MCTX *mctx,
         expr = rv->vstr;
         break;
       case JQVAL_I64: {
-        int len = iwitoa(rv->vi64, nbuf, JBNUMBUF_SIZE);
-        nbuf[len] = '\0';
+        iwitoa(rv->vi64, nbuf, JBNUMBUF_SIZE);
         expr = iwpool_strdup(aux->pool, nbuf, rcp);
-        if (*rcp) goto finish;
+        if (*rcp) return false;
         break;
       }
       case JQVAL_F64: {
-        char nbuf[IWFTOA_BUFSIZE];
         iwftoa(rv->vf64, nbuf);
         expr = iwpool_strdup(aux->pool, nbuf, rcp);
-        if (*rcp) goto finish;
+        if (*rcp) return false;
         break;
       }
       case JQVAL_BOOL:
         expr = rv->vbool ? "true" : "false";
         break;
-      case JQVAL_NULL:
-        expr = "null";
-        break;
       default:
         *rcp = _JQL_ERROR_UNMATCHED;
         return false;
     }
+    assert(expr);
     rx = re_new(expr);
     if (!rx) {
       *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -592,21 +591,65 @@ static bool _match_regexp(MCTX *mctx,
   
   switch (lv->type) {
     case JQVAL_STR:
-      input = lv->vstr;
+      input = (char *) lv->vstr; // FIXME: const discarded
       break;
-    case JQVAL_I64: {
-      int len = iwitoa(lv->vi64, nbuf, JBNUMBUF_SIZE);
-      nbuf[len] = '\0';
+    case JQVAL_I64:
+      iwitoa(lv->vi64, nbuf, JBNUMBUF_SIZE);
       input = nbuf;
       break;
-    }
-    default:
+    case JQVAL_F64:
+      iwftoa(lv->vf64, nbuf);
+      input = nbuf;
       break;
+    case JQVAL_BOOL:
+      input = lv->vbool ? "true" : "false";
+      break;
+    default:
+      *rcp = _JQL_ERROR_UNMATCHED;
+      return false;
   }
-  assert(input);
   
-finish:
-  return match;
+  assert(input);
+  if (input[0] == '^') {
+    input += 1;
+    match_start = true;
+  }
+  rci = strlen(input);
+  if (rci && input[rci - 1] == '$') {
+    input[rci - 1] = '\0';
+    match_end = rci - 1;
+  }  
+  rci = re_match(rx, input);
+  switch (rci) {
+    case RE_ERROR_NOMATCH:
+      return false;
+    case RE_ERROR_NOMEM:
+      *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      return false;
+    case RE_ERROR_CHARSET:
+      *rcp = JQL_ERROR_REGEXP_CHARSET;
+      return false;
+    case RE_ERROR_SUBEXP:
+      *rcp = JQL_ERROR_REGEXP_SUBEXP;
+      return false;
+    case RE_ERROR_SUBMATCH:
+      *rcp = JQL_ERROR_REGEXP_SUBMATCH;
+      return false;
+    case RE_ERROR_ENGINE:
+      *rcp = JQL_ERROR_REGEXP_ENGINE;
+      iwlog_ecode_error3(JQL_ERROR_REGEXP_ENGINE);
+      return false;
+  }
+  if (rci > 0) {
+    if (match_start && rx->position - rci != input) {
+      return false;
+    }
+    if (match_end && rx->position != input + match_end) {
+      return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 static bool _match_jqval_pair(MCTX *mctx,
@@ -881,8 +924,7 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, J
   char *nkey = key;
   JQL q = vctx->op;
   if (!nkey) {
-    int len = iwitoa(idx, nbuf, sizeof(nbuf));
-    nbuf[len] = '\0';
+    iwitoa(idx, nbuf, sizeof(nbuf));
     nkey = nbuf;
   }
   MCTX mctx = {
@@ -935,8 +977,16 @@ static const char *_ecodefn(locale_t locale, uint32_t ecode) {
       return "Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER)";
     case JQL_ERROR_UNSET_PLACEHOLDER:
       return "Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER)";
-    case JQL_ERROR_INVALID_REGEXP:
-      return "Invalid regular expression (JQL_ERROR_INVALID_REGEXP)";
+    case JQL_ERROR_REGEXP_INVALID:
+      return "Invalid regular expression (JQL_ERROR_REGEXP_INVALID)";
+    case JQL_ERROR_REGEXP_CHARSET:
+      return "Invalid regular expression: expected ']' at end of character set (JQL_ERROR_REGEXP_CHARSET)";
+    case JQL_ERROR_REGEXP_SUBEXP:
+      return "Invalid regular expression: expected ')' at end of subexpression (JQL_ERROR_REGEXP_SUBEXP)";
+    case JQL_ERROR_REGEXP_SUBMATCH:
+      return "Invalid regular expression: expected '}' at end of submatch (JQL_ERROR_REGEXP_SUBMATCH)";
+    case JQL_ERROR_REGEXP_ENGINE:
+      return "Illegal instruction in compiled regular expression (please report this bug) (JQL_ERROR_REGEXP_ENGINE)";
     default:
       break;
   }

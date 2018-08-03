@@ -628,7 +628,7 @@ static int re_program_run(struct re *re, char *input, char ***saved, int *nsaved
       re->code.first[i].stamp = 0;
   }
 
-  for (sp = input;  *sp && here->size;  ++sp) {
+  for (sp = input; here->size;  ++sp) {
     int i;
     for (i = 0;  i < here->size;  ++i) {
       RE_Thread t = here->at[i];
@@ -663,12 +663,15 @@ static int re_program_run(struct re *re, char *input, char ***saved, int *nsaved
       }
       re_submatches_unlink(re, t.submatches);
     }
-nextchar:
+nextchar:    
     ;
     RE_ThreadList *tmp = here;
     here = next;
     next = tmp;
-    next->size = 0;
+    next->size = 0;  
+    if (!*sp) {
+      break;
+    }
   }
 
 bailout:

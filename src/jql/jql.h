@@ -15,7 +15,11 @@ typedef enum {
   JQL_ERROR_QUERY_PARSE,          /**< Query parsing error (JQL_ERROR_QUERY_PARSE) */
   JQL_ERROR_INVALID_PLACEHOLDER,  /**< Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER) */  
   JQL_ERROR_UNSET_PLACEHOLDER,    /**< Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER) */
-  JQL_ERROR_INVALID_REGEXP,       /**< Invalid regular expression (JQL_ERROR_INVALID_REGEXP) */
+  JQL_ERROR_REGEXP_INVALID,       /**< Invalid regular expression (JQL_ERROR_REGEXP_INVALID) */
+  JQL_ERROR_REGEXP_CHARSET,       /**< Invalid regular expression: expected ']' at end of character set (JQL_ERROR_REGEXP_CHARSET) */  
+  JQL_ERROR_REGEXP_SUBEXP,        /**< Invalid regular expression: expected ')' at end of subexpression (JQL_ERROR_REGEXP_SUBEXP) */  
+  JQL_ERROR_REGEXP_SUBMATCH,      /**< Invalid regular expression: expected '}' at end of submatch (JQL_ERROR_REGEXP_SUBMATCH) */  
+  JQL_ERROR_REGEXP_ENGINE,        /**< Illegal instruction in compiled regular expression (please report this bug) (JQL_ERROR_REGEXP_ENGINE) */  
   _JQL_ERROR_END,
   _JQL_ERROR_UNMATCHED
 } jq_ecode;
