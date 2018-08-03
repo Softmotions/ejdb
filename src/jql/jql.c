@@ -672,7 +672,6 @@ static bool _match_regexp(MCTX *mctx,
   return false;
 }
 
-
 static bool _match_in(MCTX *mctx,
                       JQVAL *left, JQP_OP *jqop, JQVAL *right,
                       iwrc *rcp) {
