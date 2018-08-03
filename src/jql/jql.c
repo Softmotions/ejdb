@@ -44,12 +44,12 @@ struct _JQL {
 /** Placeholder value type */
 typedef enum {
   JQVAL_NULL,
-  JQVAL_JBLNODE,
   JQVAL_I64,
   JQVAL_F64,
   JQVAL_STR,
   JQVAL_BOOL,
   JQVAL_RE,
+  JQVAL_JBLNODE, // Do not reorder JQVAL_JBLNODE,JQVAL_BINN must be last
   JQVAL_BINN
 } jqval_type_t;
 
@@ -549,6 +549,10 @@ static bool _match_regexp(MCTX *mctx,
     _binn_to_jqval(lv->vbinn, &sleft);
     lv = &sleft;
   }
+  if (lv->type >= JQVAL_JBLNODE) {
+    *rcp = _JQL_ERROR_UNMATCHED;
+    return false;
+  }
   
   if (jqop->opaque) {
     rx = jqop->opaque;
@@ -668,6 +672,41 @@ static bool _match_regexp(MCTX *mctx,
   return false;
 }
 
+
+static bool _match_in(MCTX *mctx,
+                      JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                      iwrc *rcp) {
+                      
+  JQVAL sleft; // Stack allocated left/right converted values
+  JQVAL *lv = left, *rv = right;  
+  if (rv->type != JQVAL_JBLNODE && rv->vnode->type != JBV_ARRAY) {
+    *rcp = _JQL_ERROR_UNMATCHED;
+    return false;
+  }
+  JBL_NODE arr = rv->vnode;
+  if (lv->type == JQVAL_JBLNODE) {
+    _node_to_jqval(lv->vnode, &sleft);
+    lv = &sleft;
+  } else if (lv->type == JQVAL_BINN) {
+    _binn_to_jqval(lv->vbinn, &sleft);
+    lv = &sleft;
+  }
+  if (lv->type >= JQVAL_JBLNODE) {
+    *rcp = _JQL_ERROR_UNMATCHED;
+    return false;
+  }  
+  for (JBL_NODE n = arr->child; n; n = n->next) {
+    JQVAL qv = {
+      .type = JQVAL_JBLNODE,
+      .vnode = n
+    };        
+    if (!_cmp_jqval_pair(mctx, lv, &qv, rcp)) {
+      return true;
+    }      
+  }    
+  return false;
+}
+
 static bool _match_jqval_pair(MCTX *mctx,
                               JQVAL *left, JQP_OP *jqop, JQVAL *right,
                               iwrc *rcp) {
@@ -701,17 +740,19 @@ static bool _match_jqval_pair(MCTX *mctx,
     switch (op) {
       case JQP_OP_RE:
         match = _match_regexp(mctx, left, jqop, right, 0, rcp);
-        break;      
+        break;
+      case JQP_OP_IN:
+        match = _match_in(mctx, left, jqop, right, rcp);;
       default:
         break;
     }
-    // TODO:
-    // JQP_OP_IN,
   }
   
 finish:
-  if (*rcp == _JQL_ERROR_UNMATCHED) {
-    *rcp = 0;
+  if (*rcp) {
+    if (*rcp == _JQL_ERROR_UNMATCHED) {
+      *rcp = 0;
+    }
     match = false;
   }
   if (jqop->negate) {
