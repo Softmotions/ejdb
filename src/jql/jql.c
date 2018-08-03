@@ -528,6 +528,7 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
 
 static bool _match_regexp(MCTX *mctx,
                           JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                          char *(*expr_transform)(MCTX *, const char *, iwrc *),
                           iwrc *rcp) {
   struct re *rx;
   char nbuf[JBNUMBUF_SIZE];
@@ -538,9 +539,9 @@ static bool _match_regexp(MCTX *mctx,
   char *input = 0;
   int rci, match_end = 0;
   const char *expr = 0;
-  bool matched = false,  
-       match_start = false;       
-    
+  bool matched = false,
+       match_start = false;
+       
   if (lv->type == JQVAL_JBLNODE) {
     _node_to_jqval(lv->vnode, &sleft);
     lv = &sleft;
@@ -581,6 +582,12 @@ static bool _match_regexp(MCTX *mctx,
         *rcp = _JQL_ERROR_UNMATCHED;
         return false;
     }
+    
+    if (expr_transform) {
+      expr = expr_transform(mctx, expr, rcp);
+      if (*rcp) return false;
+    }
+    
     assert(expr);
     if (expr[0] == '^') {
       expr += 1;
@@ -593,7 +600,8 @@ static bool _match_regexp(MCTX *mctx,
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return false;
       }
-      memcpy(aexpr, expr, rci - 1);
+      match_end = rci - 1;
+      memcpy(aexpr, expr, match_end);
       aexpr[rci - 1] = '\0';
       expr = aexpr;
     }
@@ -692,14 +700,13 @@ static bool _match_jqval_pair(MCTX *mctx,
   } else {
     switch (op) {
       case JQP_OP_RE:
-        match = _match_regexp(mctx, left, jqop, right, rcp);
-        break;
+        match = _match_regexp(mctx, left, jqop, right, 0, rcp);
+        break;      
       default:
         break;
     }
-    // JQP_OP_LIKE,
-    // JQP_OP_IN,
     // TODO:
+    // JQP_OP_IN,
   }
   
 finish:

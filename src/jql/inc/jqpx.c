@@ -430,8 +430,6 @@ static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
     unit->op.op = JQP_OP_IN;
   } else if (!strcmp(text, "re")) {
     unit->op.op = JQP_OP_RE;
-  } else if (!strcmp(text, "like")) {
-    unit->op.op = JQP_OP_LIKE;
   } else {
     iwlog_error("Invalid operation: %s", text);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -911,10 +909,7 @@ static iwrc _jqp_print_join(jqp_op_t jqop, bool negate, jbl_json_printer pt, voi
       break;
     case JQP_OP_RE:
       PT("re", 2, 0, 0);
-      break;
-    case JQP_OP_LIKE:
-      PT("like", 4, 0, 0);
-      break;
+      break;    
     default:
       rc = IW_ERROR_ASSERTION;
   }

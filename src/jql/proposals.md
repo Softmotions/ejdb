@@ -40,7 +40,7 @@ Filters:
 
 /**/[familyName re "^D.*"]
 
-(/**/[familyName like "D*"] or /**/family/mother/[age > 30]) and /author/familyName
+(/**/[familyName re "D.*"] or /**/family/mother/[age > 30]) and /author/familyName
 
 /author/**/mother/[age > 50]
 
@@ -54,7 +54,7 @@ Filters:
 
 /tags/[* in ["sample", "foo"]]
 
-/tags/[* in ["sample", "foo"] and * like "ta*"]
+/tags/[* in ["sample", "foo"] and * re "ta.*"]
 
 /author/*/mother/[familyName > 10]
 ```
@@ -88,7 +88,7 @@ Find document then apply JSON merge patch and projection
 ```
 
 ```
-@fname/**/[familyName like "D\\n*"] 
+@fname/**/[familyName re "D\\n.*"] 
   and /**/family/motnher/[age > 30] 
   and not /bar/"ba z\"zz"
 | apply {"@fname": "Hopkins"}
