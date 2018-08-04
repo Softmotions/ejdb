@@ -131,6 +131,12 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar re 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar re \"2+\"]", true);
   
+  // in
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar in [21, \"22\"]]", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar in [21, 23]]", false);
+  _jql_test1_2("{'foo':{'bar':22}}", "/[* in [\"foo\"]]/[bar in [21, 22]]", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/[* not in [\"foo\"]]/[bar in [21, 22]]", false);
+    
 }
 
 int main() {

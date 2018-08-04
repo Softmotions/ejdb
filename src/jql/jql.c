@@ -29,7 +29,7 @@ typedef struct MFCTX {
   bool matched;
   int last_lvl;           /**< Last matched level */
   int nnum;               /**< Number of filter nodes */
-  MFNCTX *nodes;         /**< Filter nodes mctx */
+  MFNCTX *nodes;          /**< Filter nodes mctx */
   JQP_FILTER *qpf;        /**< Parsed query filter */
 } MFCTX;
 
