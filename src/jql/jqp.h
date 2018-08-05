@@ -85,10 +85,11 @@ typedef struct JQP_JSON {
 
 typedef struct JQP_NODE {
   jqp_unit_t type;
+  int start; // Used in query matching 
+  int end;   // Used in query matching 
   jqp_node_type_t ntype;
   struct JQP_NODE *next;
   JQPUNIT *value;
-  void *opaque;
 } JQP_NODE;
 
 typedef struct JQP_STRING {
