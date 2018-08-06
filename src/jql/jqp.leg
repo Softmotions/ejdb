@@ -126,7 +126,7 @@ NEXRIGHT = (r:PLACEHOLDER | r:VALJ | r:STRP)                            { $$ = r
 
 PLACEHOLDER = ':' <([a-zA-Z0-9]+ | '?')>                                { $$ = _jqp_placeholder(yy, yytext); }
 
-NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("in" | "re")>             { $$ = _jqp_unit_op(yy, yytext); }
+NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("in" | "ni" | "re")>      { $$ = _jqp_unit_op(yy, yytext); }
         | <(">=" | "gte")>                                              { $$ = _jqp_unit_op(yy, yytext); }
         | <("<=" | "lte")>                                              { $$ = _jqp_unit_op(yy, yytext); }
         | ('!' _  { _jqp_op_negate(yy); })? <('=' | "eq")>              { $$ = _jqp_unit_op(yy, yytext); }

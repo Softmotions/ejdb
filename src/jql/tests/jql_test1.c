@@ -167,6 +167,7 @@ void jql_test1_2() {
   _jql_test1_2(doc, "/**/[zaz = 44]", true);
   _jql_test1_2(doc, "/foo/**/[zaz = 44]", true);
   _jql_test1_2(doc, "/foo/*/*/[zaz = 44]", true);
+  _jql_test1_2(doc, "/foo/[arr ni 3]", true);
 }
 
 int main() {

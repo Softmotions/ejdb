@@ -677,7 +677,6 @@ static bool _match_in(MCTX *mctx,
     *rcp = _JQL_ERROR_UNMATCHED;
     return false;
   }
-  JBL_NODE arr = rv->vnode;
   if (lv->type == JQVAL_JBLNODE) {
     _node_to_jqval(lv->vnode, &sleft);
     lv = &sleft;
@@ -689,17 +688,62 @@ static bool _match_in(MCTX *mctx,
     *rcp = _JQL_ERROR_UNMATCHED;
     return false;
   }
-  for (JBL_NODE n = arr->child; n; n = n->next) {
+  for (JBL_NODE n = rv->vnode->child; n; n = n->next) {
     JQVAL qv = {
       .type = JQVAL_JBLNODE,
       .vnode = n
     };
     if (!_cmp_jqval_pair(mctx, lv, &qv, rcp)) {
+      if (*rcp) return false;
       return true;
+    }
+    if (*rcp) return false;
+  }
+  return false;
+}
+
+static bool _match_ni(MCTX *mctx,
+                      JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                      iwrc *rcp) {
+                      
+  JQVAL sleft; // Stack allocated left/right converted values
+  JQVAL *lv = left, *rv = right;
+  binn *bn, bv;
+  binn_iter iter;
+  if (rv->type != JQVAL_BINN || rv->vbinn->type != BINN_LIST) {
+    *rcp = _JQL_ERROR_UNMATCHED;
+    return false;
+  }
+  if (lv->type == JQVAL_JBLNODE) {
+    _node_to_jqval(lv->vnode, &sleft);
+    lv = &sleft;
+  } else if (lv->type == JQVAL_BINN) {
+    _binn_to_jqval(lv->vbinn, &sleft);
+    lv = &sleft;
+  }
+  if (lv->type >= JQVAL_JBLNODE) {
+    *rcp = _JQL_ERROR_UNMATCHED;
+    return false;
+  }
+  if (!binn_iter_init(&iter, rv->vbinn, rv->vbinn->type)) {
+    *rcp = JBL_ERROR_INVALID;
+    return false;
+  }
+  while (binn_list_next(&iter, &bv)) {
+    JQVAL qv = {
+      .type = JQVAL_BINN,
+      .vbinn = &bv
+    };
+    if (!_cmp_jqval_pair(mctx, &qv, lv, rcp)) {
+      if (*rcp) return false;
+      return true;
+    } else if (*rcp) {
+      return false;
     }
   }
   return false;
 }
+
 
 static bool _match_jqval_pair(MCTX *mctx,
                               JQVAL *left, JQP_OP *jqop, JQVAL *right,
@@ -736,7 +780,11 @@ static bool _match_jqval_pair(MCTX *mctx,
         match = _match_regexp(mctx, left, jqop, right, 0, rcp);
         break;
       case JQP_OP_IN:
-        match = _match_in(mctx, left, jqop, right, rcp);;
+        match = _match_in(mctx, left, jqop, right, rcp);
+        break;
+      case JQP_OP_NI:
+        match = _match_ni(mctx, right, jqop, left, rcp);
+        break;
       default:
         break;
     }
@@ -924,7 +972,7 @@ static bool _match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
         n->end = -1;
       }
     }
-  }  
+  }
   for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
     if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
       n = _match_node(mctx, n, &matched, rcp);
@@ -938,7 +986,7 @@ static bool _match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
       }
       break;
     }
-  }  
+  }
   return fctx->matched;
 }
 

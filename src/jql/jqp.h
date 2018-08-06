@@ -50,6 +50,7 @@ typedef enum { // Do not reorder members
   JQP_OP_LT,
   JQP_OP_LTE,
   JQP_OP_IN,
+  JQP_OP_NI,
   JQP_OP_RE,  
 } jqp_op_t;
 

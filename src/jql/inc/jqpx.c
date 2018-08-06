@@ -428,6 +428,8 @@ static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
     unit->op.op = JQP_OP_LTE;
   } else if (!strcmp(text, "in")) {
     unit->op.op = JQP_OP_IN;
+  } else if (!strcmp(text, "ni")) {
+    unit->op.op = JQP_OP_NI;
   } else if (!strcmp(text, "re")) {
     unit->op.op = JQP_OP_RE;
   } else {
