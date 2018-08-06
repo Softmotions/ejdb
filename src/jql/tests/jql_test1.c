@@ -175,7 +175,7 @@ void jql_test1_2() {
   _jql_test1_2(doc, "/foo/*/*/[zaz = 44]", true);
   _jql_test1_2(doc, "/foo/[arr ni 3]", true);
   _jql_test1_2(doc, "/**/[zarr ni 42]", true);
-  _jql_test1_2(doc, "/**/[zarr in [[42]]]", true);
+  _jql_test1_2(doc, "/**/[[* in [\"zarr\"]] in [[42]]]", true);
 }
 
 static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
