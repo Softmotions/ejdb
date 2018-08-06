@@ -905,7 +905,7 @@ static bool _match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   return prev;
 }
 
-static bool _match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
+IW_INLINE bool _match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   n->start = mctx->lvl;
   n->end = n->start;
   if (n->value->type != JQP_STRING_TYPE) {
@@ -915,7 +915,7 @@ static bool _match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   return (strcmp(n->value->string.value, mctx->key) == 0);
 }
 
-static JQP_NODE *_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
+IW_INLINE JQP_NODE *_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
   if (n->start < 0) {
     n->start = mctx->lvl;
   }
