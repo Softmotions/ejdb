@@ -684,10 +684,6 @@ static bool _match_in(MCTX *mctx,
     _binn_to_jqval(lv->vbinn, &sleft);
     lv = &sleft;
   }
-  if (lv->type >= JQVAL_JBLNODE) {
-    *rcp = _JQL_ERROR_UNMATCHED;
-    return false;
-  }
   for (JBL_NODE n = rv->vnode->child; n; n = n->next) {
     JQVAL qv = {
       .type = JQVAL_JBLNODE,

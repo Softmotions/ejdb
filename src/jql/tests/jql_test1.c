@@ -150,7 +150,7 @@ void jql_test1_2() {
   // arr/obj
   _jql_test1_2("{'foo':[1,2]}", "/[foo = [1,2]]", true);
   _jql_test1_2("{'foo':[1,2]}", "/[foo ni 2]", true);
-  //_jql_test1_2("{'foo':[1,2]}", "/[foo in [[1,2]]]", true);
+  _jql_test1_2("{'foo':[1,2]}", "/[foo in [[1,2]]]", true);
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/[arr = [1,2,3,4]]", true);
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/**/[arr = [1,2,3,4]]", true);
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/*/[arr = [1,2,3,4]]", false);
