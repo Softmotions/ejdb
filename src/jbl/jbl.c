@@ -125,18 +125,6 @@ finish:
   return rc;
 }
 
-IW_INLINE int _jbl_utf8_ch_len(uint8_t ch) {
-  if (!(ch & 0x80)) return 1;
-  switch (ch & 0xf0) {
-    case 0xf0:
-      return 4;
-    case 0xe0:
-      return 3;
-    default:
-      return 2;
-  }
-}
-
 iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op) {
   char buf[IWFTOA_BUFSIZE];
   iwftoa(num, buf);
@@ -147,13 +135,6 @@ iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op) {
   char buf[JBNUMBUF_SIZE];
   int sz = iwitoa(num, buf, sizeof(buf));
   return pt(buf, sz, 0, 0, op);
-}
-
-IW_INLINE int _jbl_hex(char c) {
-  if (c >= '0' && c <= '9') return c - '0';
-  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-  return -1;
 }
 
 iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
