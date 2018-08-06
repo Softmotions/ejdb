@@ -148,6 +148,9 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/[zaz < 30]", false);
   
   // arr/obj
+  _jql_test1_2("{'foo':[1,2]}", "/[foo = [1,2]]", true);
+  _jql_test1_2("{'foo':[1,2]}", "/[foo ni 2]", true);
+  //_jql_test1_2("{'foo':[1,2]}", "/[foo in [[1,2]]]", true);
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/[arr = [1,2,3,4]]", true);
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/**/[arr = [1,2,3,4]]", true);
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/*/[arr = [1,2,3,4]]", false);
@@ -172,8 +175,6 @@ void jql_test1_2() {
   _jql_test1_2(doc, "/foo/*/*/[zaz = 44]", true);
   _jql_test1_2(doc, "/foo/[arr ni 3]", true);
   _jql_test1_2(doc, "/**/[zarr ni 42]", true);
-  // TODO:
-  //_jql_test1_2(doc, "/**/[zarr in [[42]]]", true);
 }
 
 static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
