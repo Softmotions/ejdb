@@ -89,7 +89,7 @@ static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
   
   jql_destroy(&jql);
   jbl_destroy(&jbl);
-  free(json);  
+  free(json);
 }
 
 void jql_test1_2() {
@@ -122,7 +122,7 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22}}", "/[* = foo]/[[* = bar] != 23]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/[* != foo]/[[* = bar] != 23]", false);
   
-  // regexp 
+  // regexp
   _jql_test1_2("{'foo':{'bar':22}}", "/[* re \"foo\"]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/[* re fo]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/[* re ^foo$]", true);
@@ -140,8 +140,11 @@ void jql_test1_2() {
   // /**
   _jql_test1_2("{'foo':{'bar':22}}", "/**", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/**/bar", true);
-  //_jql_test1_2("{'foo':{'bar':22}}", "/**/baz", false);
-    
+  _jql_test1_2("{'foo':{'bar':22}}", "/**/baz", false);
+  _jql_test1_2("{'foo':{'bar':22}}", "/**/**/bar", true);
+  _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/zaz", true);
+  _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/[zaz > 30]", true);
+  _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/[zaz < 30]", false);
 }
 
 int main() {

@@ -217,6 +217,8 @@ static iwrc _jql_init_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
       fctx->nodes = f->node;
       for (JQP_NODE *n = f->node; n; n = n->next) {
         fctx->last_node = n;
+        n->start = -1;
+        n->end = -1;
       }
     }
   }
@@ -854,18 +856,6 @@ static bool _match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   return prev;
 }
 
-static bool _match_node_anys(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
-  //  if (n->start < 0) {
-  //    n->start = mctx->lvl;
-  //  }
-  //  if (nn && _match_node(mctx, nn, rcp)) {
-  //    n->end = n->start - 1; // Exclude node from matching
-  //  } else {
-  //    n->end = INT_MAX; // Need to examine next level
-  //  }
-  return true;
-}
-
 static bool _match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   n->start = mctx->lvl;
   n->end = n->start;
@@ -876,23 +866,40 @@ static bool _match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   return (strcmp(n->value->string.value, mctx->key) == 0);
 }
 
+static JQP_NODE *_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
+  if (n->start < 0) {
+    n->start = mctx->lvl;
+  }
+  if (n->next) {
+    JQP_NODE *nn = _match_node(mctx, n->next, res, rcp);
+    if (*res) {
+      n->end = n->start - 1; // Exclude node from matching
+      n = nn;
+    } else {
+      n->end = INT_MAX; // Gather next level
+    }
+  } else {
+    n->end = INT_MAX;
+  }
+  *res = true;
+  return n;
+}
+
 static JQP_NODE *_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
-  switch(n->ntype) {
-      case JQP_NODE_FIELD:
-        *res = _match_node_field(mctx, n, rcp);
-        return n;
-      case JQP_NODE_EXPR:
-        *res = _match_node_expr(mctx, n, rcp);
-        return n;
-      case JQP_NODE_ANY:
-        n->start = mctx->lvl;
-        n->end = n->start;
-        *res = true;
-        return n;
-      case JQP_NODE_ANYS:
-        ;
-        // TODO:
-        //      return _match_node_anys(mctx, n, rcp);
+  switch (n->ntype) {
+    case JQP_NODE_FIELD:
+      *res = _match_node_field(mctx, n, rcp);
+      return n;
+    case JQP_NODE_EXPR:
+      *res = _match_node_expr(mctx, n, rcp);
+      return n;
+    case JQP_NODE_ANY:
+      n->start = mctx->lvl;
+      n->end = n->start;
+      *res = true;
+      return n;
+    case JQP_NODE_ANYS:
+      return _match_node_anys(mctx, n, res, rcp);
   }
   return n;
 }
