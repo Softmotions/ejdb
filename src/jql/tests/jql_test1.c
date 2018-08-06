@@ -145,6 +145,28 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/zaz", true);
   _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/[zaz > 30]", true);
   _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/[zaz < 30]", false);
+  
+  // arr/obj
+  _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/[arr = [1,2,3,4]]", true);
+  _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/[arr = [1,2,3]]", false);
+  _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/[arr = [1,12,3,4]]", false);
+  _jql_test1_2("{'foo':{'obj':{'f':'d','e':'j'}}}", "/foo/[obj = {\"e\":\"j\",\"f\":\"d\"}]", true);
+  _jql_test1_2("{'foo':{'obj':{'f':'d','e':'j'}}}", "/foo/[obj = {\"e\":\"j\",\"f\":\"dd\"}]", false);
+  
+  //
+  const char *doc =
+    "{"
+    " 'foo':{"
+    "   'bar': {'baz':{'zaz':33}},"
+    "   'sas': {'gaz':{'zaz':44}},"
+    "   'arr': [1,2,3,4]"
+    " }"
+    "}";
+  _jql_test1_2(doc, "/foo/sas/gaz/zaz", true);
+  _jql_test1_2(doc, "/foo/sas/gaz/[zaz = 44]", true);
+  _jql_test1_2(doc, "/**/[zaz = 44]", true);
+  _jql_test1_2(doc, "/foo/**/[zaz = 44]", true);
+  _jql_test1_2(doc, "/foo/*/*/[zaz = 44]", true);
 }
 
 int main() {

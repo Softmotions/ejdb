@@ -295,8 +295,9 @@ IW_INLINE jbl_type_t _binn_to_jqval(binn *vbinn, JQVAL *qval) {
     case BINN_OBJECT:
     case BINN_MAP:
     case BINN_LIST:
+      qval->type = JQVAL_BINN;
       qval->vbinn = vbinn;
-      return JQVAL_BINN;
+      return qval->type;
     case BINN_NULL:
       qval->type = JQVAL_NULL;
       return qval->type;
@@ -492,8 +493,8 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
       break;
     case JQVAL_BINN: {
       if (rv->type != JQVAL_JBLNODE
-          || (rv->vnode->type == JBV_ARRAY && (lv->vbinn->type != BINN_OBJECT && lv->vbinn->type != BINN_MAP))
-          || (rv->vnode->type == JBV_OBJECT && lv->vbinn->type != BINN_LIST)) {
+          || (rv->vnode->type == JBV_ARRAY && lv->vbinn->type != BINN_LIST)
+          || (rv->vnode->type == JBV_OBJECT && (lv->vbinn->type != BINN_OBJECT && lv->vbinn->type != BINN_MAP))) {
         // Incompatible types
         *rcp = _JQL_ERROR_UNMATCHED;
         return 0;
@@ -504,7 +505,7 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
-      *rcp = _jbl_node_from_binn2(rv->vbinn, &lnode, pool);
+      *rcp = _jbl_node_from_binn2(lv->vbinn, &lnode, pool);
       if (*rcp) {
         iwpool_destroy(pool);
         return 0;
@@ -775,7 +776,7 @@ static JQVAL *_unit_to_jqval(MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
     return unit->string.opaque;
   } else if (unit->type == JQP_JSON_TYPE) {
     if (unit->json.opaque) {
-      return (JQVAL *) unit->string.opaque;
+      return (JQVAL *) unit->json.opaque;
     }
     JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->qp->aux->pool);
     if (!qv) {
@@ -873,7 +874,7 @@ static JQP_NODE *_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp)
   if (n->next) {
     JQP_NODE *nn = _match_node(mctx, n->next, res, rcp);
     if (*res) {
-      n->end = n->start - 1; // Exclude node from matching
+      n->end = -mctx->lvl; // Exclude node from matching
       n = nn;
     } else {
       n->end = INT_MAX; // Gather next level
@@ -918,15 +919,12 @@ static bool _match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
   if (lvl <= fctx->last_lvl) {
     fctx->last_lvl = lvl - 1;
     for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
-      if (lvl > n->start && lvl < n->end) {
-        n->end = lvl;
-      } else if (n->start >= lvl) {
+      if (n->start >= lvl || -n->end >= lvl) {
         n->start = -1;
         n->end = -1;
       }
     }
-  }
-  
+  }  
   for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
     if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
       n = _match_node(mctx, n, &matched, rcp);
@@ -940,8 +938,7 @@ static bool _match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
       }
       break;
     }
-  }
-  
+  }  
   return fctx->matched;
 }
 
