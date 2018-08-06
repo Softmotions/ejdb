@@ -217,8 +217,13 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
 }
 
 void jql_test1_3() {
+  
   _jql_test1_3("{'foo':{'bar':22}}",
                "/foo/bar | apply [{'op':'add', 'path':'/baz', 'value':'qux'}]",
+               "{'foo':{'bar':22},'baz':'qux'}");
+               
+  _jql_test1_3("{'foo':{'bar':22}}",
+               "/foo/bar | apply {'baz':'qux'}",
                "{'foo':{'bar':22},'baz':'qux'}");
 }
 
