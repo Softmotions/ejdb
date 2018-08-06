@@ -338,7 +338,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
       llv = bn->vint32;
       goto loc_int;
     case BINN_INT64:
-      llv = bn->vint64;    
+      llv = bn->vint64;
       goto loc_int;
     case BINN_UINT64: // overflow?
       llv = bn->vuint64;
@@ -448,7 +448,7 @@ int64_t jbl_get_i64(const JBL jbl) {
     case BINN_INT32:
       return jbl->bn.vint32;
     case BINN_INT64:
-      return jbl->bn.vint64;    
+      return jbl->bn.vint64;
     default:
       return 0;
   }
@@ -1337,48 +1337,29 @@ iwrc jbl_patch(JBL jbl, const JBL_PATCH *p, size_t cnt) {
   return rc;
 }
 
-iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
-  if (!jbl || !patchjson) {
-    return IW_ERROR_INVALID_ARGS;
-  }
-  iwrc rc;
-  JBL_NODE node;
-  JBL_PATCH *p;
-  int cnt = strlen(patchjson);
-  
-  IWPOOL *pool = iwpool_create(MAX(cnt, 1024));
-  if (!pool) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
-  rc = jbl_node_from_json(patchjson, &node, pool);
-  RCGO(rc, finish);
-  if (node->type != JBV_ARRAY) {
-    rc = JBL_ERROR_PATCH_INVALID;
-    goto finish;
-  }
-  cnt = 0;
+
+static iwrc _jbl_create_patch(JBL_NODE node, JBL_PATCH **pptr, int *cntp, IWPOOL *pool) {
+  *pptr = 0;
+  *cntp = 0;
+  int i = 0;
   for (JBL_NODE n = node->child; n; n = n->next) {
     if (n->type != JBV_OBJECT) {
-      rc = JBL_ERROR_PATCH_INVALID;
-      goto finish;
+      return JBL_ERROR_PATCH_INVALID;
     }
-    ++cnt;
+    ++i;
   }
-  p = iwpool_alloc(cnt * sizeof(*p), pool);
+  JBL_PATCH *p = iwpool_alloc(i * sizeof(*p), pool);
   if (!p) {
-    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    goto finish;
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  memset(p, 0, cnt * sizeof(*p));
-  
-  int i = 0;
+  memset(p, 0, i * sizeof(*p));
+  i = 0;
   for (JBL_NODE n = node->child; n; n = n->next, ++i) {
     JBL_PATCH *pp = p + i;
     for (JBL_NODE n2 = n->child; n2; n2 = n2->next) {
       if (!strcmp("op", n2->key)) {
         if (n2->type != JBV_STR) {
-          rc = JBL_ERROR_PATCH_INVALID;
-          goto finish;
+          return JBL_ERROR_PATCH_INVALID;
         }
         if (!strncmp("add", n2->vptr, n2->vsize)) {
           pp->op = JBP_ADD;
@@ -1393,26 +1374,47 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
         } else if (!strncmp("test", n2->vptr, n2->vsize)) {
           pp->op = JBP_TEST;
         } else {
-          rc = JBL_ERROR_PATCH_INVALID_OP;
-          goto finish;
+          return JBL_ERROR_PATCH_INVALID_OP;
         }
       } else if (!strcmp("value", n2->key)) {
         pp->vnode = n2;
       } else if (!strncmp("path", n2->key, n2->klidx)) {
         if (n2->type != JBV_STR) {
-          rc = JBL_ERROR_PATCH_INVALID;
-          goto finish;
+          return JBL_ERROR_PATCH_INVALID;
         }
         pp->path = n2->vptr;
       } else if (!strncmp("from", n2->key, n2->klidx)) {
         if (n2->type != JBV_STR) {
-          rc = JBL_ERROR_PATCH_INVALID;
-          goto finish;
+          return JBL_ERROR_PATCH_INVALID;
         }
         pp->from = n2->vptr;
       }
     }
   }
+  *cntp = i;
+  *pptr = p;
+  return 0;
+}
+
+iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
+  if (!jbl || !patchjson) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  JBL_PATCH *p;
+  JBL_NODE node;
+  int cnt = strlen(patchjson);
+  IWPOOL *pool = iwpool_create(MAX(cnt, 1024));
+  if (!pool) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  iwrc rc = jbl_node_from_json(patchjson, &node, pool);
+  RCGO(rc, finish);
+  if (node->type != JBV_ARRAY) {
+    rc = JBL_ERROR_PATCH_INVALID;
+    goto finish;
+  }
+  rc = _jbl_create_patch(node, &p, &cnt, pool);
+  RCGO(rc, finish);
   rc = _jbl_patch(jbl, p, cnt, pool);
   
 finish:
@@ -1534,6 +1536,25 @@ iwrc jbl_merge_patch(JBL jbl, const char *patchjson) {
 finish:
   iwpool_destroy(pool);
   return 0;
+}
+
+iwrc jbl_patch_auto(JBL_NODE root, JBL_NODE patch, IWPOOL *pool) {
+  if (!root || !patch) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  if (patch->type == JBV_OBJECT) {
+    _jbl_merge_patch_node(root, patch, pool, &rc);
+  } else if (patch->type == JBV_ARRAY) {
+    int cnt;
+    JBL_PATCH *p;
+    rc = _jbl_create_patch(patch, &p, &cnt, pool);
+    RCRET(rc);
+    rc = _jbl_patch_node(root, p, cnt, pool);
+  } else {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  return rc;
 }
 
 int jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {

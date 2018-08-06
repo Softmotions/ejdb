@@ -744,7 +744,6 @@ static bool _match_ni(MCTX *mctx,
   return false;
 }
 
-
 static bool _match_jqval_pair(MCTX *mctx,
                               JQVAL *left, JQP_OP *jqop, JQVAL *right,
                               iwrc *rcp) {
@@ -1067,6 +1066,35 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
     *out = q->matched;
     return 0;
   }
+}
+
+bool jql_has_apply(JQL q) {
+  return (q->qp->apply || q->qp->projection);
+}
+
+static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool) {
+  // TODO:
+  return 0;
+}
+
+iwrc jql_apply(JQL q, const JBL jbl, JBL_NODE *out, IWPOOL *pool) {
+  *out = 0;
+  if (!q->qp->apply && !q->qp->projection) {
+    return 0;
+  }
+  JBL_NODE root;
+  iwrc rc = jbl_to_node(jbl, &root, pool);
+  RCRET(rc);
+  if (q->qp->apply) {
+    rc = jbl_patch_auto(root, q->qp->apply, pool);
+    RCRET(rc);
+  }
+  if (q->qp->projection) {
+    rc = _jql_project(root, q, pool);
+    RCRET(rc);
+  }
+  *out = root;
+  return rc;
 }
 
 static const char *_ecodefn(locale_t locale, uint32_t ecode) {

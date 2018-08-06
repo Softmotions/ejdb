@@ -138,6 +138,7 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22}}", "/[* not in [\"foo\"]]/[bar in [21, 22]]", false);
   
   // /**
+
   _jql_test1_2("{'foo':{'bar':22}}", "/**", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/**/bar", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/**/baz", false);
@@ -148,6 +149,8 @@ void jql_test1_2() {
   
   // arr/obj
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/[arr = [1,2,3,4]]", true);
+  _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/**/[arr = [1,2,3,4]]", true);
+  _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/*/[arr = [1,2,3,4]]", false);
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/[arr = [1,2,3]]", false);
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/[arr = [1,12,3,4]]", false);
   _jql_test1_2("{'foo':{'obj':{'f':'d','e':'j'}}}", "/foo/[obj = {\"e\":\"j\",\"f\":\"d\"}]", true);

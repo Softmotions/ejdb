@@ -130,6 +130,12 @@ IW_EXPORT iwrc jbl_node_as_json(const JBL_NODE node, jbl_json_printer pt, void *
 
 IW_EXPORT iwrc jbl_from_node(JBL jbl, const JBL_NODE node);
 
+IW_EXPORT int jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
+
+//--- PATCHING
+
+IW_EXPORT iwrc jbl_patch_auto(JBL_NODE root, JBL_NODE patch, IWPOOL *pool);
+
 IW_EXPORT iwrc jbl_patch_node(JBL_NODE root, const JBL_PATCH *patch, size_t cnt);
 
 IW_EXPORT iwrc jbl_patch(JBL jbl, const JBL_PATCH *patch, size_t cnt);
@@ -140,7 +146,6 @@ IW_EXPORT iwrc jbl_merge_patch_node(JBL_NODE root, const char *patchjson, IWPOOL
 
 IW_EXPORT iwrc jbl_merge_patch(JBL jbl, const char *patchjson);
 
-IW_EXPORT int jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
 
 
 IW_EXPORT iwrc jbl_init(void);
