@@ -61,7 +61,7 @@ finish:
   jqp_aux_destroy(&aux);
 }
 
-void jql_test1() {
+void jql_test1_1() {
   for (int i = 0; i <= 10; ++i) {
     _jql_test1_1(i, 0);
   }
@@ -85,7 +85,7 @@ static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
   bool m = false;
   rc = jql_matched(jql, jbl, &m);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_EQUAL(m, match);
+  CU_ASSERT_EQUAL_FATAL(m, match);
   
   jql_destroy(&jql);
   jbl_destroy(&jbl);
@@ -138,7 +138,7 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22}}", "/[* not in [\"foo\"]]/[bar in [21, 22]]", false);
   
   // /**
-
+  
   _jql_test1_2("{'foo':{'bar':22}}", "/**", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/**/bar", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/**/baz", false);
@@ -173,6 +173,55 @@ void jql_test1_2() {
   _jql_test1_2(doc, "/foo/[arr ni 3]", true);
 }
 
+static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
+  JBL jbl;
+  JQL jql;
+  
+  char *json = iwu_replace_char(strdup(jsondata), '\'', '"');
+  CU_ASSERT_PTR_NOT_NULL_FATAL(json);
+  char *eqjson = iwu_replace_char(strdup(eq), '\'', '"');
+  CU_ASSERT_PTR_NOT_NULL_FATAL(eqjson);
+  char *qstr = iwu_replace_char(strdup(q), '\'', '"');
+  CU_ASSERT_PTR_NOT_NULL_FATAL(qstr);
+  
+  iwrc rc = jql_create(&jql, qstr);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jbl_from_json(&jbl, json);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  bool m = false;
+  rc = jql_matched(jql, jbl, &m);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_EQUAL_FATAL(m, true);
+  
+  CU_ASSERT_TRUE_FATAL(jql_has_apply(jql));
+  JBL_NODE out = 0, eqn = 0;
+  IWPOOL *pool = iwpool_create(512);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
+  rc = jql_apply(jql, jbl, &out, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(out);
+  
+  rc = jbl_node_from_json(eqjson, &eqn, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  
+  int cmp = jbl_compare_nodes(out, eqn, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_EQUAL_FATAL(cmp, 0);
+  
+  jql_destroy(&jql);
+  jbl_destroy(&jbl);
+  free(json);
+  free(eqjson);
+  free(qstr);
+  iwpool_destroy(pool);
+}
+
+void jql_test1_3() {
+  _jql_test1_3("{'foo':{'bar':22}}",
+               "/foo/bar | apply [{'op':'add', 'path':'/baz', 'value':'qux'}]",
+               "{'foo':{'bar':22},'baz':'qux'}");
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -182,8 +231,9 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1)) ||
-    (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
+    (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1)) ||
+    (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2)) ||
+    (NULL == CU_add_test(pSuite, "jql_test1_3", jql_test1_3))
   ) {
     CU_cleanup_registry();
     return CU_get_error();
