@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.6)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 set(DEB_CHANGELOG_REQUIRED ON)
+set(DEB_CHANGELOG "${CMAKE_CURRENT_SOURCE_DIR}/Changelog")
 include(DebChangelog)
 
 set(PROJECT_NAME "ejdb")
