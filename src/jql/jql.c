@@ -6,7 +6,7 @@
 typedef struct MCTX {
   int lvl;
   binn *bv;
-  char *key;
+  const char *key;
   struct _JQL *q;
   JQP_QUERY *qp;
   JBL_VCTX *vctx;
@@ -1017,9 +1017,9 @@ static bool _match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp) {
   return prev;
 }
 
-static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
+static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
   char nbuf[JBNUMBUF_SIZE];
-  char *nkey = key;
+  const char *nkey = key;
   JQL q = vctx->op;
   if (!nkey) {
     iwitoa(idx, nbuf, sizeof(nbuf));
@@ -1067,6 +1067,8 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
 bool jql_has_apply(JQL q) {
   return (q->qp->apply || q->qp->projection);
 }
+
+
 
 static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool) {
   // TODO:

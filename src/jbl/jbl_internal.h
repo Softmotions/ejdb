@@ -13,25 +13,18 @@ struct _JBL {
   binn bn;
 };
 
-typedef struct _JBL_PTR {
-  int cnt;          /**< Number of nodes */
-  int pos;          /**< Current node position (like a cursor) */
-  char *n[1];       /**< Path nodes */
-} *JBL_PTR;
-
+/**
+ * @brief JBL visitor context
+ */
 typedef struct _JBL_VCTX {
-  binn *bn;
+  binn *bn;         /**< Root node from which started visitor */
   void *op;         /**< Arbitrary opaque data */ 
   void *result;
   bool terminate;   
-  IWPOOL *pool;     /**< Not initialized pool placeholder */
+  IWPOOL *pool;     /**< Pool placeholder, initialization is responsibility of `JBL_VCTX` creator */
 } JBL_VCTX;
 
-typedef enum {
-  JBL_VCMD_OK = 0,
-  JBL_VCMD_TERMINATE = 1,
-  JBL_VCMD_SKIP_NESTED = 1 << 1
-} jbl_visitor_cmd_t;
+typedef jbn_visitor_cmd_t jbl_visitor_cmd_t;
 
 typedef struct _JBL_PATCHEXT {
   const JBL_PATCH *p;
@@ -50,7 +43,7 @@ iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 iwrc _jbl_node_from_binn2(const binn *bn, JBL_NODE *node, IWPOOL *pool);
 
-typedef jbl_visitor_cmd_t (*JBL_VISITOR)(int lvl, binn *bv, char *key, int idx, JBL_VCTX *vctx, iwrc *rc);
+typedef jbl_visitor_cmd_t (*JBL_VISITOR)(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rc);
 iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor);
 
 #endif
