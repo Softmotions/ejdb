@@ -1078,25 +1078,45 @@ typedef struct _PROJ_CTX {
   JQP_PROJECTION *proj;
 } PROJ_CTX ;
 
-static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int idx, JBN_VCTX *vctx, iwrc *rc) {  
-  
+static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int idx, JBN_VCTX *vctx, iwrc *rc) {
+
   // TODO:
   
   return 0;
 }
 
 static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool) {
+  
+  JQP_PROJECTION *proj = q->qp->projection;
+  // Check trivial cases
+  for (JQP_PROJECTION *p = proj; p; p = p->next) {
+    bool all = !strncmp("all", p->value->value, 4);
+    if (all) {
+      if (p->exclude) { // Got -all in chain return empty object
+        jbl_node_reset_data(root);
+        return 0;
+      } else {
+        proj = p->next; // Dispose all before +all
+      }
+    }
+  }
+  if (!proj) { // keep whole root node
+    return 0;
+  }
+  
+  
+  
   PROJ_CTX pctx = {
     .q = q,
-    .proj = q->qp->projection
-  };  
+    .proj = proj
+  };
   JBN_VCTX vctx = {
     .root = root,
     .pool = pool,
     .op = &pctx
   };
   iwrc rc = jbn_visit(root, 0, &vctx, _proj_visitor);
-  //    
+  //
   return rc;
 }
 

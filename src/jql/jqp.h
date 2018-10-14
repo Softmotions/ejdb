@@ -138,6 +138,7 @@ typedef struct JQP_EXPR {
 typedef struct JQP_PROJECTION {
   jqp_unit_t type;
   bool exclude;
+  int16_t pos; // Used in `_jql_project`
   struct JQP_STRING *value;
   struct JQP_PROJECTION *next;
 } JQP_PROJECTION;

@@ -670,6 +670,9 @@ iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor) {
 
 IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBL_PTR jp, int lvl, const char *key, int idx) {
   if (lvl < jp->cnt) {
+    if (jp->pos > lvl) {
+      jp->pos = lvl - 1;
+    }
     if (jp->pos + 1 == lvl) {
       const char *keyptr;
       char buf[JBNUMBUF_SIZE];
@@ -726,9 +729,11 @@ iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
 }
 
 IW_INLINE void _jbl_node_reset_data(JBL_NODE target) {
+  jbl_type_t t = target->type;
   memset(((uint8_t *) target) + offsetof(struct _JBL_NODE, child),
          0,
          sizeof(struct _JBL_NODE) - offsetof(struct _JBL_NODE, child));
+  target->type = t;
 }
 
 IW_INLINE void _jbl_copy_node_data(JBL_NODE target, JBL_NODE value) {
