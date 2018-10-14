@@ -230,12 +230,12 @@ iwrc jql_create(JQL *qptr, const char *query) {
     return IW_ERROR_INVALID_ARGS;
   }
   *qptr = 0;
-
+  
   JQL q;
   JQP_AUX *aux;
   iwrc rc = jqp_aux_create(&aux, query);
   RCRET(rc);
-
+  
   q = iwpool_alloc(sizeof(*q), aux->pool);
   if (!q) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -243,13 +243,13 @@ iwrc jql_create(JQL *qptr, const char *query) {
   }
   rc = jqp_parse(aux);
   RCGO(rc, finish);
-
+  
   q->qp = aux->query;
   q->dirty = false;
   q->matched = false;
-
+  
   rc = _jql_init_expression_node(q->qp->expr, aux);
-
+  
 finish:
   if (rc) {
     jqp_aux_destroy(&aux);
@@ -392,7 +392,7 @@ IW_INLINE void _node_to_jqval(JBL_NODE jn, JQVAL *qv) {
 static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
   JQVAL  sleft, sright;   // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
-
+  
   if (lv->type == JQVAL_BINN) {
     _binn_to_jqval(lv->vbinn, &sleft);
     lv = &sleft;
@@ -401,7 +401,7 @@ static int _cmp_jqval_pair(MCTX *mctx, JQVAL *left, JQVAL *right, iwrc *rcp) {
     _node_to_jqval(rv->vnode, &sright);
     rv = &sright;
   }
-
+  
   switch (lv->type) {
     case JQVAL_STR:
       switch (rv->type) {
@@ -536,7 +536,7 @@ static bool _match_regexp(MCTX *mctx,
   const char *expr = 0;
   bool matched = false,
        match_start = false;
-
+       
   if (lv->type == JQVAL_JBLNODE) {
     _node_to_jqval(lv->vnode, &sleft);
     lv = &sleft;
@@ -548,7 +548,7 @@ static bool _match_regexp(MCTX *mctx,
     *rcp = _JQL_ERROR_UNMATCHED;
     return false;
   }
-
+  
   if (jqop->opaque) {
     rx = jqop->opaque;
   } else if (right->type == JQVAL_RE) {
@@ -581,12 +581,12 @@ static bool _match_regexp(MCTX *mctx,
         *rcp = _JQL_ERROR_UNMATCHED;
         return false;
     }
-
+    
     if (expr_transform) {
       expr = expr_transform(mctx, expr, rcp);
       if (*rcp) return false;
     }
-
+    
     assert(expr);
     if (expr[0] == '^') {
       expr += 1;
@@ -612,7 +612,7 @@ static bool _match_regexp(MCTX *mctx,
     jqop->opaque = rx;
   }
   assert(rx);
-
+  
   switch (lv->type) {
     case JQVAL_STR:
       input = (char *) lv->vstr; // FIXME: const discarded
@@ -632,7 +632,7 @@ static bool _match_regexp(MCTX *mctx,
       *rcp = _JQL_ERROR_UNMATCHED;
       return false;
   }
-
+  
   assert(input);
   rci = re_match(rx, input);
   switch (rci) {
@@ -670,7 +670,7 @@ static bool _match_regexp(MCTX *mctx,
 static bool _match_in(MCTX *mctx,
                       JQVAL *left, JQP_OP *jqop, JQVAL *right,
                       iwrc *rcp) {
-
+                      
   JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   if (rv->type != JQVAL_JBLNODE && rv->vnode->type != JBV_ARRAY) {
@@ -701,7 +701,7 @@ static bool _match_in(MCTX *mctx,
 static bool _match_ni(MCTX *mctx,
                       JQVAL *left, JQP_OP *jqop, JQVAL *right,
                       iwrc *rcp) {
-
+                      
   JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   binn *bn, bv;
@@ -784,7 +784,7 @@ static bool _match_jqval_pair(MCTX *mctx,
         break;
     }
   }
-
+  
 finish:
   if (*rcp) {
     if (*rcp == _JQL_ERROR_UNMATCHED) {
@@ -1068,12 +1068,41 @@ bool jql_has_apply(JQL q) {
   return (q->qp->apply || q->qp->projection);
 }
 
+// ----------- JQL Projection
 
+#define PROJ_MARK_ADD = 1
+#define PROJ_MARK_REMOVE = 2
 
-static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool) {
+typedef struct _PROJ_CTX {
+  JQL q;
+  JQP_PROJECTION *proj;
+} PROJ_CTX ;
+
+static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int idx, JBN_VCTX *vctx, iwrc *rc) {  
+  
   // TODO:
+  
   return 0;
 }
+
+static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool) {
+  PROJ_CTX pctx = {
+    .q = q,
+    .proj = q->qp->projection
+  };  
+  JBN_VCTX vctx = {
+    .root = root,
+    .pool = pool,
+    .op = &pctx
+  };
+  iwrc rc = jbn_visit(root, 0, &vctx, _proj_visitor);
+  //    
+  return rc;
+}
+
+#undef PROJ_MARK_ADD
+#undef PROJ_MARK_REMOVE
+
 
 iwrc jql_apply(JQL q, const JBL jbl, JBL_NODE *out, IWPOOL *pool) {
   *out = 0;

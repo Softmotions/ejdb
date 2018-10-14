@@ -149,6 +149,8 @@ IW_EXPORT void jbl_remove_item(JBL_NODE parent, JBL_NODE child);
 
 IW_EXPORT JBL_NODE jbl_node_detach(JBL_NODE target, const JBL_PTR path);
 
+IW_EXPORT void jbl_node_reset_data(JBL_NODE node);
+
 /**
  * @brief JBL_NODE visitor context  
  */

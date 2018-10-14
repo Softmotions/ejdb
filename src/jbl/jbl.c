@@ -648,20 +648,20 @@ iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor) {
         jbn_visitor_cmd_t cmd = visitor(lvl, n, n->key, n->klidx, vctx, &rc);
         RCRET(rc);
         if (cmd & JBL_VCMD_TERMINATE) {
-            vctx->terminate = true;
+          vctx->terminate = true;
         }
         if (!(cmd & JBL_VCMD_SKIP_NESTED) && n->type >= JBV_OBJECT) {
           rc = jbn_visit(n, lvl + 1, vctx, visitor);
           RCRET(rc);
         }
-      }            
+      }
       break;
     }
     default:
       break;
   }
   RCRET(rc);
-  if (lvl == 0) {    
+  if (lvl == 0) {
     visitor(-1, node, 0, 0, vctx, &rc);
   }
   return rc;
@@ -725,7 +725,7 @@ iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
   return rc;
 }
 
-IW_INLINE void _jbl_reset_node_data(JBL_NODE target) {
+IW_INLINE void _jbl_node_reset_data(JBL_NODE target) {
   memset(((uint8_t *) target) + offsetof(struct _JBL_NODE, child),
          0,
          sizeof(struct _JBL_NODE) - offsetof(struct _JBL_NODE, child));
@@ -735,6 +735,10 @@ IW_INLINE void _jbl_copy_node_data(JBL_NODE target, JBL_NODE value) {
   memcpy(((uint8_t *) target) + offsetof(struct _JBL_NODE, child),
          ((uint8_t *) value) + offsetof(struct _JBL_NODE, child),
          sizeof(struct _JBL_NODE) - offsetof(struct _JBL_NODE, child));
+}
+
+void jbl_node_reset_data(JBL_NODE node) {
+  _jbl_node_reset_data(node);
 }
 
 static void _jbl_add_item(JBL_NODE parent, JBL_NODE node) {
@@ -1492,7 +1496,7 @@ static JBL_NODE _jbl_merge_patch_node(JBL_NODE target, JBL_NODE patch, IWPOOL *p
       target->key = patch->key;
       target->klidx = patch->klidx;
     } else if (target->type != JBV_OBJECT) {
-      _jbl_reset_node_data(target);
+      _jbl_node_reset_data(target);
       target->type = JBV_OBJECT;
     }
     patch = patch->child;
