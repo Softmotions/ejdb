@@ -138,7 +138,8 @@ typedef struct JQP_EXPR {
 typedef struct JQP_PROJECTION {
   jqp_unit_t type;
   bool exclude;
-  int16_t pos; // Used in `_jql_project`
+  int16_t pos; // Current matching position, used in jql.c#_jql_project
+  int16_t cnt; // Number of projection sections, used in jql.c#_jql_project
   struct JQP_STRING *value;
   struct JQP_PROJECTION *next;
 } JQP_PROJECTION;

@@ -670,7 +670,7 @@ iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor) {
 
 IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBL_PTR jp, int lvl, const char *key, int idx) {
   if (lvl < jp->cnt) {
-    if (jp->pos > lvl) {
+    if (jp->pos >= lvl) {
       jp->pos = lvl - 1;
     }
     if (jp->pos + 1 == lvl) {

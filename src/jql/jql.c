@@ -959,7 +959,7 @@ static bool _match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
   if (fctx->last_lvl + 1 < lvl) {
     return false;
   }
-  if (lvl <= fctx->last_lvl) {
+  if (fctx->last_lvl >= lvl) {
     fctx->last_lvl = lvl - 1;
     for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
       if (n->start >= lvl || -n->end >= lvl) {
@@ -1070,23 +1070,67 @@ bool jql_has_apply(JQL q) {
 
 // ----------- JQL Projection
 
-#define PROJ_MARK_ADD = 1
-#define PROJ_MARK_REMOVE = 2
+#define PROJ_MARK_ADD     1
+#define PROJ_MARK_REMOVE  2
 
 typedef struct _PROJ_CTX {
   JQL q;
   JQP_PROJECTION *proj;
 } PROJ_CTX ;
 
-static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int idx, JBN_VCTX *vctx, iwrc *rc) {
 
-  // TODO:
+static void _proj_mark_node(JBL_NODE n, int amask) {
+  // todo
+}
+
+
+static void _proj_apply(int lvl, JBL_NODE n, const char *key, JBN_VCTX *vctx, JQP_PROJECTION *proj, iwrc *rc) {
+  if (proj->cnt <= lvl) {
+    return;
+  }
+  if (proj->pos >= lvl) {
+    proj->pos = lvl - 1;
+  }
+  if (proj->pos + 1 == lvl) {
+    JQP_PROJECTION *p = proj;
+    for (int i = 0; i < lvl; p = p->next);
+    assert(p);
+    if (p->value->flavour & JQP_STR_PROJFIELD) {
+      // todo
+    } else {
+      const char *pv = p->value->value;
+      if (!strcmp(key, pv) || (pv[0] == '*' && pv[1] == '\0')) {
+        p->pos = lvl;
+        if (p->cnt == lvl + 1) {
+          _proj_mark_node(n, proj->exclude ? PROJ_MARK_REMOVE : PROJ_MARK_ADD);
+        }
+      }
+    }
+  }
+}
+
+
+static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int idx, JBN_VCTX *vctx, iwrc *rc) {
+  PROJ_CTX *pctx = vctx->op;
+  const char *keyptr;
+  char buf[JBNUMBUF_SIZE];
+  if (key) {
+    keyptr = key;
+  } else {
+    iwitoa(idx, buf, JBNUMBUF_SIZE);
+    keyptr = buf;
+  }
+  for (JQP_PROJECTION *p = pctx->proj; p; p = p->next) {
+    _proj_apply(lvl, n, keyptr, vctx, p, rc);
+    RCRET(*rc);
+  }
   
+  // todo:
   return 0;
 }
 
 static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool) {
-  
+
   JQP_PROJECTION *proj = q->qp->projection;
   // Check trivial cases
   for (JQP_PROJECTION *p = proj; p; p = p->next) {
@@ -1103,13 +1147,17 @@ static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool) {
   if (!proj) { // keep whole root node
     return 0;
   }
-  
-  
-  
   PROJ_CTX pctx = {
     .q = q,
-    .proj = proj
+    .proj = proj,
   };
+  for (JQP_PROJECTION *p = proj; p; p = p->next) {
+    p->pos = -1;
+    p->cnt = 0;
+    for (JQP_STRING *s = p->value; s; s = s->next) {
+      p->cnt++;
+    }
+  }
   JBN_VCTX vctx = {
     .root = root,
     .pool = pool,
