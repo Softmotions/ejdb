@@ -809,6 +809,7 @@ static iwrc _jbl_create_node(JBLDRCTX *ctx,
   memset(n, 0, sizeof(*n));
   n->key = key;
   n->klidx = klidx;
+  n->parent = parent;
   switch (bv->type) {
     case BINN_NULL:
       n->type = JBV_NULL;

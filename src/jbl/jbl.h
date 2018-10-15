@@ -51,9 +51,10 @@ typedef enum {
 typedef struct _JBL_NODE {
   struct _JBL_NODE *next;
   struct _JBL_NODE *prev;
+  struct _JBL_NODE *parent; /**< Optional parent */
   const char *key;
   int klidx;
-  uint32_t flags;  /**< Utility node flags */
+  uint32_t flags;           /**< Utility node flags */
   
   // Do not sort/add members after this point (offsetof usage below)
   struct _JBL_NODE *child;
