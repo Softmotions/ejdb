@@ -1080,9 +1080,11 @@ typedef struct _PROJ_CTX {
 
 
 static void _proj_mark_node(JBL_NODE n, int amask) {
-  // todo
+  while (n) {
+    n->flags |= amask;
+    n = n->parent;
+  }
 }
-
 
 static void _proj_apply(int lvl, JBL_NODE n, const char *key, JBN_VCTX *vctx, JQP_PROJECTION *proj, iwrc *rc) {
   if (proj->cnt <= lvl) {
