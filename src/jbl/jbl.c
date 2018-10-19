@@ -749,6 +749,7 @@ void jbl_node_reset_data(JBL_NODE node) {
 static void _jbl_add_item(JBL_NODE parent, JBL_NODE node) {
   assert(parent && node);
   node->next = 0;
+  node->parent = parent;
   if (parent->child) {
     JBL_NODE prev = parent->child->prev;
     parent->child->prev = node;
@@ -788,6 +789,7 @@ IW_INLINE void _jbl_remove_item(JBL_NODE parent, JBL_NODE child) {
   child->next = 0;
   child->prev = 0;
   child->child = 0;
+  child->parent = 0;
 }
 
 void jbl_remove_item(JBL_NODE parent, JBL_NODE child) {
@@ -1200,6 +1202,7 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex) {
         }
         value->klidx = idx;
         if (child) {
+          value->parent = parent;
           value->next = child;
           value->prev = child->prev;
           child->prev = value;

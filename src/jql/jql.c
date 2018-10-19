@@ -1081,7 +1081,7 @@ typedef struct _PROJ_CTX {
 
 static void _proj_mark_node(JBL_NODE n, int amask) {
   while (n) {
-    n->flags |= amask;
+    n->flags = amask;
     n = n->parent;
   }
 }
@@ -1098,7 +1098,16 @@ static void _proj_apply(int lvl, JBL_NODE n, const char *key, JBN_VCTX *vctx, JQ
     for (int i = 0; i < lvl; p = p->next);
     assert(p);
     if (p->value->flavour & JQP_STR_PROJFIELD) {
-      // todo
+      for (JQP_STRING *sn = p->value->subnext; sn; sn = sn->subnext) {
+        const char *pv = sn->value;
+        if (!strcmp(key, pv) || (pv[0] == '*' && pv[1] == '\0')) {
+           p->pos = lvl;
+           if (p->cnt == lvl + 1) {
+             _proj_mark_node(n, proj->exclude ? PROJ_MARK_REMOVE : PROJ_MARK_ADD);
+           }
+           break;
+        }
+      }
     } else {
       const char *pv = p->value->value;
       if (!strcmp(key, pv) || (pv[0] == '*' && pv[1] == '\0')) {
@@ -1126,6 +1135,8 @@ static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int
     _proj_apply(lvl, n, keyptr, vctx, p, rc);
     RCRET(*rc);
   }
+  
+  
   
   // todo:
   return 0;
