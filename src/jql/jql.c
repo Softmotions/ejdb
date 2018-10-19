@@ -1076,6 +1076,7 @@ bool jql_has_apply(JQL q) {
 typedef struct _PROJ_CTX {
   JQL q;
   JQP_PROJECTION *proj;
+  bool has_add;
 } PROJ_CTX ;
 
 
@@ -1132,10 +1133,12 @@ static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int
     keyptr = buf;
   }
   for (JQP_PROJECTION *p = pctx->proj; p; p = p->next) {
+    if (!p->exclude && !pctx->has_add) {
+      pctx->has_add = true;
+    }
     _proj_apply(lvl, n, keyptr, vctx, p, rc);
     RCRET(*rc);
   }
-  
   
   
   // todo:
