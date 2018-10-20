@@ -647,7 +647,7 @@ iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor) {
   switch (node->type) {
     case JBV_OBJECT:
     case JBV_ARRAY: {
-      for (n = n->child; !vctx->terminate && n; n = n->next) {
+      for (n = n->child; !vctx->terminate && n; n = n->next) {        
         jbn_visitor_cmd_t cmd = visitor(lvl, n, n->key, n->klidx, vctx, &rc);
         RCRET(rc);
         if (cmd & JBL_VCMD_TERMINATE) {

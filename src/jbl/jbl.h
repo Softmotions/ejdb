@@ -173,7 +173,7 @@ typedef enum {
 /**
  * Call with lvl: `-1` means end of visiting whole object tree. 
  */
-typedef jbn_visitor_cmd_t (*JBN_VISITOR)(int lvl, JBL_NODE n, const char *key, int idx, JBN_VCTX *vctx, iwrc *rc);
+typedef jbn_visitor_cmd_t (*JBN_VISITOR)(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc);
 
 IW_EXPORT iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor);
 

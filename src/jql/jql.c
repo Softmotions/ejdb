@@ -1086,8 +1086,7 @@ static void _proj_mark_up(JBL_NODE n, int amask) {
   }
 }
 
-static bool _proj_matched(int lvl, JBL_NODE n, const char *key,
-                          JBN_VCTX *vctx, JQP_PROJECTION *proj,
+static bool _proj_matched(int lvl, JBL_NODE n, const char *key, int keylen, JBN_VCTX *vctx, JQP_PROJECTION *proj,
                           iwrc *rc) {
   if (proj->cnt <= lvl) {
     return false;
@@ -1100,16 +1099,16 @@ static bool _proj_matched(int lvl, JBL_NODE n, const char *key,
     for (int i = 0; i < lvl; ps = ps->next, ++i);
     assert(ps);
     if (ps->flavour & JQP_STR_PROJFIELD) {
-      for (JQP_STRING *sn = ps->subnext; sn; sn = sn->subnext) {
+      for (JQP_STRING *sn = ps; sn; sn = sn->subnext) {
         const char *pv = sn->value;
-        if (!strcmp(key, pv)) {
+        if (!strncmp(key, pv, keylen)) {
           proj->pos = lvl;
           return (proj->cnt == lvl + 1);
         }
       }
     } else {
       const char *pv = ps->value;
-      if (!strcmp(key, pv) || (pv[0] == '*' && pv[1] == '\0')) {
+      if (!strncmp(key, pv, keylen) || (pv[0] == '*' && pv[1] == '\0')) {
         proj->pos = lvl;
         return (proj->cnt == lvl + 1);
       }
@@ -1118,18 +1117,19 @@ static bool _proj_matched(int lvl, JBL_NODE n, const char *key,
   return false;
 }
 
-static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int idx, JBN_VCTX *vctx, iwrc *rc) {
+static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc) {
   PROJ_CTX *pctx = vctx->op;
   const char *keyptr;
   char buf[JBNUMBUF_SIZE];
   if (key) {
     keyptr = key;
   } else {
-    iwitoa(idx, buf, JBNUMBUF_SIZE);
+    iwitoa(klidx, buf, JBNUMBUF_SIZE);
     keyptr = buf;
+    klidx = strlen(keyptr);
   }
   for (JQP_PROJECTION *p = pctx->proj; p; p = p->next) {
-    bool matched = _proj_matched(lvl, n, keyptr, vctx, p, rc);
+    bool matched = _proj_matched(lvl, n, keyptr, klidx, vctx, p, rc);
     RCRET(*rc);
     if (matched) {
       if (p->exclude) {
@@ -1142,7 +1142,7 @@ static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int
   return 0;
 }
 
-static jbn_visitor_cmd_t _proj_keep_visitor(int lvl, JBL_NODE n, const char *key, int idx, JBN_VCTX *vctx, iwrc *rc) {
+static jbn_visitor_cmd_t _proj_keep_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc) {
   if (n->flags & PROJ_MARK_PATH) {
     return 0;
   }
@@ -1158,7 +1158,7 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
   JQP_PROJECTION *proj = q->qp->projection;
   // Check trivial cases
   for (JQP_PROJECTION *p = proj; p; p = p->next) {
-    bool all = !strcmp("all", p->value->value);
+    bool all = (p->value->flavour & JQP_STR_PROJALIAS);
     if (all) {
       if (p->exclude) { // Got -all in chain return empty object
         jbl_node_reset_data(root);

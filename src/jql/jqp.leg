@@ -73,7 +73,7 @@ FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jq
 APPLY = ('|' _ "apply" __ ( p:PLACEHOLDER { $$ = p; } | o:OBJJ { $$ = o; } | a:ARRJ { $$ = a; } ) )
 
 PROJECTION = '|' _ (sn:PROJNODES { _jqp_unit_push(yy, sn); }
-                   (__ <PROJOIN> { _jqp_string_push(yy, yytext, true); } _ n:PROJNODES { _jqp_push_joined_projection(yy, n); } )*)
+                   (_ <PROJOIN> { _jqp_string_push(yy, yytext, true); } _ n:PROJNODES { _jqp_push_joined_projection(yy, n); } )*)
                    { $$ = _jqp_pop_joined_projections(yy, sn); }
 
 PROJNODES = (a:PROJALL { $$ = _jqp_projection(yy, a); }

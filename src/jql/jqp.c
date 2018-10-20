@@ -2546,7 +2546,7 @@ YY_RULE(int) yy_PROJECTION(yycontext *yy)
 {  int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;  yyDo(yy, yyPush, 2, 0);
   yyprintf((stderr, "%s\n", "PROJECTION"));  if (!yymatchChar(yy, '|')) goto l172;  if (!yy__(yy)) goto l172;  if (!yy_PROJNODES(yy)) goto l172;  yyDo(yy, yySet, -2, 0);  yyDo(yy, yy_1_PROJECTION, yy->__begin, yy->__end);
   l173:;	
-  {  int yypos174= yy->__pos, yythunkpos174= yy->__thunkpos;  if (!yy___(yy)) goto l174;  yyText(yy, yy->__begin, yy->__end);  {
+  {  int yypos174= yy->__pos, yythunkpos174= yy->__thunkpos;  if (!yy__(yy)) goto l174;  yyText(yy, yy->__begin, yy->__end);  {
 #define yytext yy->__text
 #define yyleng yy->__textlen
 if (!(YY_BEGIN)) goto l174;

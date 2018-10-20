@@ -222,7 +222,7 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
 }
 
 void jql_test1_3() {
-  
+
   _jql_test1_3("{'foo':{'bar':22}}",
                "/foo/bar | apply [{'op':'add', 'path':'/baz', 'value':'qux'}]",
                "{'foo':{'bar':22},'baz':'qux'}");
@@ -231,6 +231,25 @@ void jql_test1_3() {
                "/foo/bar | apply {'baz':'qux'}",
                "{'foo':{'bar':22},'baz':'qux'}");
 }
+
+
+// Test projections
+void jql_test_1_4() {
+  _jql_test1_3("{'foo':{'bar':22}}", "/** | all", "{'foo':{'bar':22}}");
+  _jql_test1_3("{'foo':{'bar':22}}", "/** | all+all + all", "{'foo':{'bar':22}}");
+  _jql_test1_3("{'foo':{'bar':22}}", "/** | all - all", "{}");
+  _jql_test1_3("{'foo':{'bar':22}}", "/** | all-all +all", "{}");
+  _jql_test1_3("{'foo':{'bar':22}}", "/** | /foo/bar", "{'foo':{'bar':22}}");
+  _jql_test1_3("{'foo':{'bar':22, 'baz':'gaz'}}", "/** | /foo/bar", "{'foo':{'bar':22}}");
+  _jql_test1_3("{'foo':{'bar':22, 'baz':'gaz'}}", "/** | /foo/{daz,bar}", "{'foo':{'bar':22}}");
+  _jql_test1_3("{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | /foo/bar + /foo/baz/zaz",
+               "{'foo':{'bar':22, 'baz':{'zaz':555}}}");
+  _jql_test1_3("{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | /foo/bar + /foo/baz/zaz - /*/bar",
+               "{'foo':{'baz':{'zaz':555}}}");
+  _jql_test1_3("{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | all + /foo/bar + /foo/baz/zaz - /*/bar",
+               "{'foo':{'baz':{'zaz':555}}}");
+}
+
 
 int main() {
   CU_pSuite pSuite = NULL;
@@ -243,7 +262,8 @@ int main() {
   if (
     (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1)) ||
     (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2)) ||
-    (NULL == CU_add_test(pSuite, "jql_test1_3", jql_test1_3))
+    (NULL == CU_add_test(pSuite, "jql_test1_3", jql_test1_3)) ||
+    (NULL == CU_add_test(pSuite, "jql_test1_4", jql_test_1_4))
   ) {
     CU_cleanup_registry();
     return CU_get_error();
