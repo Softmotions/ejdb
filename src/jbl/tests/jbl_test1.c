@@ -9,7 +9,7 @@
 
 
 int init_suite(void) {
-  int rc = ejdb2_init();
+  int rc = ejdb_init();
   return rc;
 }
 

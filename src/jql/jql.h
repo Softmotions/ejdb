@@ -13,13 +13,13 @@ typedef struct _JQL *JQL;
 typedef enum {
   _JQL_ERROR_START = (IW_ERROR_START + 10000UL + 1000),
   JQL_ERROR_QUERY_PARSE,          /**< Query parsing error (JQL_ERROR_QUERY_PARSE) */
-  JQL_ERROR_INVALID_PLACEHOLDER,  /**< Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER) */  
+  JQL_ERROR_INVALID_PLACEHOLDER,  /**< Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER) */
   JQL_ERROR_UNSET_PLACEHOLDER,    /**< Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER) */
   JQL_ERROR_REGEXP_INVALID,       /**< Invalid regular expression (JQL_ERROR_REGEXP_INVALID) */
-  JQL_ERROR_REGEXP_CHARSET,       /**< Invalid regular expression: expected ']' at end of character set (JQL_ERROR_REGEXP_CHARSET) */  
-  JQL_ERROR_REGEXP_SUBEXP,        /**< Invalid regular expression: expected ')' at end of subexpression (JQL_ERROR_REGEXP_SUBEXP) */  
-  JQL_ERROR_REGEXP_SUBMATCH,      /**< Invalid regular expression: expected '}' at end of submatch (JQL_ERROR_REGEXP_SUBMATCH) */  
-  JQL_ERROR_REGEXP_ENGINE,        /**< Illegal instruction in compiled regular expression (please report this bug) (JQL_ERROR_REGEXP_ENGINE) */  
+  JQL_ERROR_REGEXP_CHARSET,       /**< Invalid regular expression: expected ']' at end of character set (JQL_ERROR_REGEXP_CHARSET) */
+  JQL_ERROR_REGEXP_SUBEXP,        /**< Invalid regular expression: expected ')' at end of subexpression (JQL_ERROR_REGEXP_SUBEXP) */
+  JQL_ERROR_REGEXP_SUBMATCH,      /**< Invalid regular expression: expected '}' at end of submatch (JQL_ERROR_REGEXP_SUBMATCH) */
+  JQL_ERROR_REGEXP_ENGINE,        /**< Illegal instruction in compiled regular expression (please report this bug) (JQL_ERROR_REGEXP_ENGINE) */
   _JQL_ERROR_END,
   _JQL_ERROR_UNMATCHED
 } jq_ecode;
@@ -29,7 +29,9 @@ typedef enum {
  * @param pq Pointer to resulting query object
  * @param query Query text
  */
-IW_EXPORT iwrc jql_create(JQL *qptr, const char *query);
+IW_EXPORT iwrc jql_create(JQL *qptr, const char *coll, const char *query);
+
+IW_EXPORT const char* jql_collection(JQL q);
 
 IW_EXPORT iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val);
 

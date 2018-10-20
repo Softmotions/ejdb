@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 int init_suite(void) {
-  int rc = ejdb2_init();
+  int rc = ejdb_init();
   return rc;
 }
 
@@ -22,26 +22,26 @@ void _jql_test1_1(int num, iwrc expected) {
   char *data, *edata = 0;
   IWXSTR *res = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(res);
-  
+
   snprintf(path, sizeof(path), "data%c%03d.jql", IW_PATH_CHR, num);
   snprintf(path_expected, sizeof(path_expected), "data%c%03d.expected.jql", IW_PATH_CHR, num);
   data = iwu_file_read_as_buf(path);
   CU_ASSERT_PTR_NOT_NULL_FATAL(data);
-  
+
   rc = jqp_aux_create(&aux, data);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  
+
   rc = jqp_parse(aux);
   CU_ASSERT_EQUAL_FATAL(rc, expected);
   if (expected) goto finish;
-  
+
   CU_ASSERT_PTR_NOT_NULL_FATAL(aux->query);
-  
+
   edata = iwu_file_read_as_buf(path_expected);
   CU_ASSERT_PTR_NOT_NULL_FATAL(data);
   rc = jqp_print_query(aux->query, jbl_xstr_json_printer, res);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  
+
   //  fprintf(stderr, "%s\n", path_expected);
   //  fprintf(stderr, "%s\n", edata);
   //  fprintf(stderr, "%s\n", iwxstr_ptr(res));
@@ -49,9 +49,9 @@ void _jql_test1_1(int num, iwrc expected) {
   //  FILE *out = fopen("out.txt", "w+");
   //  fprintf(out, "%s", iwxstr_ptr(res));
   //  fclose(out);
-  
+
   CU_ASSERT_EQUAL(strcmp(edata, iwxstr_ptr(res)), 0);
-  
+
 finish:
   if (edata) {
     free(edata);
@@ -78,7 +78,7 @@ static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
   JQL jql;
   char *json = iwu_replace_char(strdup(jsondata), '\'', '"');
   CU_ASSERT_PTR_NOT_NULL_FATAL(json);
-  iwrc rc = jql_create(&jql, q);
+  iwrc rc = jql_create(&jql, 0, q);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jbl_from_json(&jbl, json);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -86,7 +86,7 @@ static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
   rc = jql_matched(jql, jbl, &m);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL_FATAL(m, match);
-  
+
   jql_destroy(&jql);
   jbl_destroy(&jbl);
   free(json);
@@ -100,7 +100,7 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/baz and (/foo/daz or /foo/bar)", false);
   _jql_test1_2("{'foo':{'bar':22}}", "(/boo or /foo) and (/foo/daz or /foo/bar)", true);
   _jql_test1_2("{'foo':{'bar':22, 'bar2':'vvv2'}}", "/foo/bar2", true);
-  
+
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar = 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar eq 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar !eq 22]", false);
@@ -121,7 +121,7 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[[* = bar] != 23]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/[* = foo]/[[* = bar] != 23]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/[* != foo]/[[* = bar] != 23]", false);
-  
+
   // regexp
   _jql_test1_2("{'foo':{'bar':22}}", "/[* re \"foo\"]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/[* re fo]", true);
@@ -130,15 +130,15 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22}}", "/[* not re ^fo$]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar re 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar re \"2+\"]", true);
-  
+
   // in
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar in [21, \"22\"]]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar in [21, 23]]", false);
   _jql_test1_2("{'foo':{'bar':22}}", "/[* in [\"foo\"]]/[bar in [21, 22]]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/[* not in [\"foo\"]]/[bar in [21, 22]]", false);
-  
+
   // /**
-  
+
   _jql_test1_2("{'foo':{'bar':22}}", "/**", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/**/bar", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/**/baz", false);
@@ -146,7 +146,7 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/zaz", true);
   _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/[zaz > 30]", true);
   _jql_test1_2("{'foo':{'bar':22, 'baz':{'zaz':33}}}", "/foo/**/[zaz < 30]", false);
-  
+
   // arr/obj
   _jql_test1_2("{'foo':[1,2]}", "/[foo = [1,2]]", true);
   _jql_test1_2("{'foo':[1,2]}", "/[foo ni 2]", true);
@@ -158,7 +158,7 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'arr':[1,2,3,4]}}", "/foo/[arr = [1,12,3,4]]", false);
   _jql_test1_2("{'foo':{'obj':{'f':'d','e':'j'}}}", "/foo/[obj = {\"e\":\"j\",\"f\":\"d\"}]", true);
   _jql_test1_2("{'foo':{'obj':{'f':'d','e':'j'}}}", "/foo/[obj = {\"e\":\"j\",\"f\":\"dd\"}]", false);
-  
+
   //
   const char *doc =
     "{"
@@ -181,15 +181,15 @@ void jql_test1_2() {
 static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
   JBL jbl;
   JQL jql;
-  
+
   char *json = iwu_replace_char(strdup(jsondata), '\'', '"');
   CU_ASSERT_PTR_NOT_NULL_FATAL(json);
   char *eqjson = iwu_replace_char(strdup(eq), '\'', '"');
   CU_ASSERT_PTR_NOT_NULL_FATAL(eqjson);
   char *qstr = iwu_replace_char(strdup(q), '\'', '"');
   CU_ASSERT_PTR_NOT_NULL_FATAL(qstr);
-  
-  iwrc rc = jql_create(&jql, qstr);
+
+  iwrc rc = jql_create(&jql, 0, qstr);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jbl_from_json(&jbl, json);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -197,7 +197,7 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
   rc = jql_matched(jql, jbl, &m);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL_FATAL(m, true);
-  
+
   CU_ASSERT_TRUE_FATAL(jql_has_apply(jql));
   JBL_NODE out = 0, eqn = 0;
   IWPOOL *pool = iwpool_create(512);
@@ -205,14 +205,14 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
   rc = jql_apply(jql, jbl, &out, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL_FATAL(out);
-  
+
   rc = jbl_node_from_json(eqjson, &eqn, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  
+
   int cmp = jbl_compare_nodes(out, eqn, &rc);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL_FATAL(cmp, 0);
-  
+
   jql_destroy(&jql);
   jbl_destroy(&jbl);
   free(json);
@@ -226,7 +226,7 @@ void jql_test1_3() {
   _jql_test1_3("{'foo':{'bar':22}}",
                "/foo/bar | apply [{'op':'add', 'path':'/baz', 'value':'qux'}]",
                "{'foo':{'bar':22},'baz':'qux'}");
-               
+
   _jql_test1_3("{'foo':{'bar':22}}",
                "/foo/bar | apply {'baz':'qux'}",
                "{'foo':{'bar':22},'baz':'qux'}");

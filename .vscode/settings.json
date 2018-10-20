@@ -101,6 +101,7 @@
     "**/.git/subtree-cache/**": true,
     "**/node_modules/**": true,
     "**/mxe/**": true
-  }
+  },
+  "C_Cpp.configurationWarnings": "Disabled"
 }
 

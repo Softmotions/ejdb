@@ -3,7 +3,7 @@
 #include "jql.h"
 #include <iowow/iowow.h>
 
-iwrc ejdb2_init() {
+iwrc ejdb_init() {
   iwrc rc = iw_init();
   RCRET(rc);
   rc = jbl_init();

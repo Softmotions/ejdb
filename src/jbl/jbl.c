@@ -145,12 +145,12 @@ iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *o
   RCRET(rc);
   static const char *specials = "btnvfr";
   const uint8_t *p = (const uint8_t *) str;
-  
+
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt((const char*) (data_), size_, ch_, count_, op);\
     RCRET(rc); \
   } while(0)
-  
+
   if (len == -1) {
     len = strlen(str);
   }
@@ -203,14 +203,14 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
   double dv;
   char key[MAX_BIN_KEY_LEN + 1];
   bool pretty = pf & JBL_PRINT_PRETTY;
-  
+
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt(data_, size_, ch_, count_, op); \
     RCGO(rc, finish); \
   } while(0)
-  
+
   switch (bn->type) {
-  
+
     case BINN_LIST:
       if (!binn_iter_init(&iter, bn, bn->type)) {
         rc = JBL_ERROR_INVALID;
@@ -238,7 +238,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
       }
       PT(0, 0, ']', 1);
       break;
-      
+
     case BINN_OBJECT:
     case BINN_MAP:
       if (!binn_iter_init(&iter, bn, bn->type)) {
@@ -299,7 +299,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
       }
       PT(0, 0, '}', 1);
       break;
-      
+
     case BINN_STRING:
       rc = _jbl_write_string(bn->ptr, -1, pt, op, pf);
       break;
@@ -329,7 +329,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
 loc_int:
       rc = _jbl_write_int(llv, pt, op);
       break;
-      
+
     case BINN_FLOAT32:
       dv = bn->vfloat;
       goto loc_float;
@@ -338,7 +338,7 @@ loc_int:
 loc_float:
       rc = _jbl_write_double(dv, pt, op);
       break;
-      
+
     case BINN_TRUE:
       PT("true", 4, 0, 0);
       break;
@@ -519,7 +519,7 @@ static iwrc _jbl_ptr_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
   jp->cnt = cnt;
   doff = offsetof(struct _JBL_PTR, n) + cnt * sizeof(char *);
   assert(sz - doff >= len);
-  
+
   for (i = 0, j = 0, cnt = 0; path[i] && cnt < jp->cnt; ++i, ++j) {
     if (path[i++] == '/') {
       jp->n[cnt] = jpr + doff + j;
@@ -558,7 +558,7 @@ iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor) {
   jbl_visitor_cmd_t cmd;
   int idx;
   binn bv;
-  
+
   if (!iter) {
     binn_iter it;
     if (!BINN_IS_CONTAINER_TYPE(bn->type)) {
@@ -570,7 +570,7 @@ iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor) {
     rc = _jbl_visit(&it, 0, vctx, visitor);
     return rc;
   }
-  
+
   switch (iter->type) {
     case BINN_OBJECT: {
       char key[MAX_BIN_KEY_LEN + 1];
@@ -647,7 +647,7 @@ iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor) {
   switch (node->type) {
     case JBV_OBJECT:
     case JBV_ARRAY: {
-      for (n = n->child; !vctx->terminate && n; n = n->next) {        
+      for (n = n->child; !vctx->terminate && n; n = n->next) {
         jbn_visitor_cmd_t cmd = visitor(lvl, n, n->key, n->klidx, vctx, &rc);
         RCRET(rc);
         if (cmd & JBL_VCMD_TERMINATE) {
@@ -895,7 +895,7 @@ static iwrc _jbl_create_node(JBLDRCTX *ctx,
   if (parent) {
     _jbl_add_item(parent, n);
   }
-  
+
 finish:
   if (rc) {
     free(n);
@@ -909,7 +909,7 @@ static iwrc _jbl_node_from_binn(JBLDRCTX *ctx, const binn *bn, JBL_NODE parent, 
   binn bv;
   binn_iter iter;
   iwrc rc = 0;
-  
+
   switch (bn->type) {
     case BINN_OBJECT:
     case BINN_MAP:
@@ -972,7 +972,7 @@ iwrc _jbl_node_from_binn2(const binn *bn, JBL_NODE *node, IWPOOL *pool) {
 static JBL_NODE _jbl_node_find(const JBL_NODE node, const JBL_PTR ptr, int from, int to) {
   if (!ptr || !node) return 0;
   JBL_NODE n = node;
-  
+
   for (int i = from; n && i < ptr->cnt && i < to; ++i) {
     if (n->type == JBV_OBJECT) {
       for (n = n->child; n; n = n->next) {
@@ -1062,7 +1062,7 @@ static int _jbl_compare_objects(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
     return 0;
   }
   JBL_NODE *s2 = s1 + cnt;
-  
+
   i = 0;
   n1 = n1->child;
   n2 = n2->child;
@@ -1085,7 +1085,7 @@ static int _jbl_compare_objects(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
       goto finish;
     }
   }
-  
+
 finish:
   free(s1);
   return ret;
@@ -1146,7 +1146,7 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex) {
   JBL_PTR path = ex->path;
   JBL_NODE value = ex->p->vnode;
   bool oproot = ex->path->cnt == 1 && *ex->path->n[0] == '\0';
-  
+
   if (op == JBP_TEST) {
     iwrc rc = 0;
     if (!value) {
@@ -1364,6 +1364,10 @@ static iwrc _jbl_patch(JBL jbl, const JBL_PATCH *p, size_t cnt, IWPOOL *pool) {
 // --------------------------- Public API
 
 iwrc jbl_to_node(const JBL jbl, JBL_NODE *node, IWPOOL *pool) {
+  if (jbl->node) {
+    *node = jbl->node;
+    return 0;
+  }
   return _jbl_node_from_binn2(&jbl->bn, node, pool);
 }
 
@@ -1470,7 +1474,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
   rc = _jbl_create_patch(node, &p, &cnt, pool);
   RCGO(rc, finish);
   rc = _jbl_patch(jbl, p, cnt, pool);
-  
+
 finish:
   iwpool_destroy(pool);
   return rc;
@@ -1481,7 +1485,7 @@ iwrc jbl_from_node(JBL jbl, const JBL_NODE node) {
     return IW_ERROR_INVALID_ARGS;
   }
   if (node->type == JBV_NONE) {
-    memset(&jbl->bn, 0, sizeof(jbl->bn));
+    memset(jbl, 0, sizeof(*jbl));
     return 0;
   }
   binn bv;
@@ -1577,7 +1581,7 @@ iwrc jbl_merge_patch(JBL jbl, const char *patchjson) {
   RCGO(rc, finish);
   rc = jbl_merge_patch_node(target, patchjson, pool);
   RCGO(rc, finish);
-  
+
   rc = _jbl_from_node(&bv, target, 0);
   RCGO(rc, finish);
   if (bv.writable && bv.dirty) {
@@ -1586,7 +1590,7 @@ iwrc jbl_merge_patch(JBL jbl, const char *patchjson) {
   binn_free(&jbl->bn);
   memcpy(&jbl->bn, &bv, sizeof(jbl->bn));
   jbl->bn.allocated = 0;
-  
+
 finish:
   iwpool_destroy(pool);
   return 0;

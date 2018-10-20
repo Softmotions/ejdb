@@ -11,6 +11,7 @@
 
 struct _JBL {
   binn bn;
+  JBL_NODE node;
 };
 
 /**
@@ -18,9 +19,9 @@ struct _JBL {
  */
 typedef struct _JBL_VCTX {
   binn *bn;         /**< Root node from which started visitor */
-  void *op;         /**< Arbitrary opaque data */ 
+  void *op;         /**< Arbitrary opaque data */
   void *result;
-  bool terminate;   
+  bool terminate;
   IWPOOL *pool;     /**< Pool placeholder, initialization is responsibility of `JBL_VCTX` creator */
 } JBL_VCTX;
 
