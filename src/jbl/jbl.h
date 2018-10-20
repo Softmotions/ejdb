@@ -166,7 +166,8 @@ typedef struct _JBN_VCTX {
 typedef enum {
   JBL_VCMD_OK = 0,
   JBL_VCMD_TERMINATE = 1,
-  JBL_VCMD_SKIP_NESTED = 1 << 1
+  JBL_VCMD_SKIP_NESTED = 1 << 1,
+  JBN_VCMD_DELETE = 1 << 2
 } jbn_visitor_cmd_t;
 
 /**
@@ -189,7 +190,6 @@ IW_EXPORT iwrc jbl_patch_from_json(JBL jbl, const char *patchjson);
 IW_EXPORT iwrc jbl_merge_patch_node(JBL_NODE root, const char *patchjson, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_merge_patch(JBL jbl, const char *patchjson);
-
 
 
 IW_EXPORT iwrc jbl_init(void);

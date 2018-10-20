@@ -5,6 +5,9 @@
 #include "jbl_internal.h"
 #include "utf8proc.h"
 
+IW_INLINE void _jbl_remove_item(JBL_NODE parent, JBL_NODE child);
+static void _jbl_add_item(JBL_NODE parent, JBL_NODE node);
+
 iwrc jbl_create_empty_object(JBL *jblp) {
   *jblp = calloc(1, sizeof(**jblp));
   if (!*jblp) {
@@ -650,7 +653,11 @@ iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor) {
         if (cmd & JBL_VCMD_TERMINATE) {
           vctx->terminate = true;
         }
-        if (!(cmd & JBL_VCMD_SKIP_NESTED) && n->type >= JBV_OBJECT) {
+        if (cmd & JBN_VCMD_DELETE) {
+          JBL_NODE nn = n->next; // Keep pointer to next
+          _jbl_remove_item(node, n);
+          n->next = nn;
+        } else if (!(cmd & JBL_VCMD_SKIP_NESTED) && n->type >= JBV_OBJECT) {
           rc = jbn_visit(n, lvl + 1, vctx, visitor);
           RCRET(rc);
         }
