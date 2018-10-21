@@ -34,6 +34,7 @@
   <Dependencies/>
   <VirtualDirectory Name="src">
     <VirtualDirectory Name="util">
+      <File Name="src/util/khash.h"/>
       <File Name="src/util/lwre.c"/>
       <File Name="src/util/lwre.h"/>
       <VirtualDirectory Name="inc">
@@ -43,6 +44,7 @@
       <File Name="src/util/utf8proc.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="jql">
+      <File Name="src/jql/jql_internal.h"/>
       <VirtualDirectory Name="inc">
         <File Name="src/jql/inc/jqpx.c"/>
       </VirtualDirectory>

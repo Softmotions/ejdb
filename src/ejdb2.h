@@ -9,6 +9,16 @@
 IW_EXTERN_C_START
 
 /**
+ * @brief IWKV error codes.
+ */
+typedef enum {
+  _EJDB_ERROR_START = (IW_ERROR_START + 15000UL),
+  // 
+  _EJDB_ERROR_END
+} ejdb_ecode;
+
+
+/**
  * Database handler.
  */
 struct _EJDB;
@@ -38,28 +48,34 @@ typedef struct EJDB_OPTS {
   bool no_wal;
 } EJDB_OPTS;
 
-typedef struct _EJDB_DOC {
-  JBL jbl;
+typedef struct _EJDOC {
+  JBL raw;
   JBL_NODE node;
-} *EJDB_DOC;
+  struct _EJDB_DOC *next;
+  struct _EJDB_DOC *prev;
+} *EJDOC;
 
 typedef enum {
-  EJDB_VCONTROL_OK = 0,
-  EJDB_VCONTROL_STOP = 1,
-  EJDB_VCONTROL_SKIP = 2,
-} ejdb_vcontrol_cmd_t;
+  EJDB_VCTL_OK = 0,
+  EJDB_VCTL_STOP = 1,
+  EJDB_VCTL_SKIP = 2,
+} ejdb_vctl_cmd_t;
 
-typedef void (*EJDB_VCONTROL_FN)(JQL q, ejdb_vcontrol_cmd_t cmd, int skip);
+typedef void (*EJDB_VCTL_FN)(JQL q, ejdb_vctl_cmd_t cmd, int skip);
 
-typedef void (*EJDB_VISITOR_FN)(JQL q, const EJDB_DOC doc, EJDB_VCONTROL_FN ctl, void *op);
+typedef void (*EJDB_VISITOR_FN)(JQL q, const EJDOC doc, EJDB_VCTL_FN ctl, void *op);
 
 IW_EXPORT WUR iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp);
 
 IW_EXPORT iwrc ejdb_close(EJDB *ejdbp);
 
-IW_EXPORT iwrc ejdb_query(JQL q, EJDB_VISITOR_FN visitor, void *op);
+IW_EXPORT WUR iwrc ejdb_get(const char *coll, uint64_t id, JBL *jblp);
 
-IW_EXPORT WUR iwrc ejdb_put(const char *coll, const EJDB_DOC doc, uint64_t *id);
+IW_EXPORT WUR iwrc ejdb_exec(JQL q, EJDB_VISITOR_FN visitor, void *op);
+
+IW_EXPORT WUR iwrc ejdb_list(JQL q, EJDOC *first, int limit, IWPOOL *pool);
+
+IW_EXPORT WUR iwrc ejdb_put(const char *coll, const EJDOC doc, uint64_t *id);
 
 IW_EXPORT iwrc ejdb_remove(const char *coll, uint64_t id);
 

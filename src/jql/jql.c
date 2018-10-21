@@ -1,6 +1,7 @@
 #include "jqp.h"
 #include "lwre.h"
 #include "jbl_internal.h"
+#include "jql_internal.h"
 
 /** Query matching context */
 typedef struct MCTX {
@@ -27,14 +28,6 @@ typedef struct MFCTX {
   JQP_FILTER *qpf;
 } MFCTX;
 
-
-/** Query object */
-struct _JQL {
-  bool dirty;
-  bool matched;
-  JQP_QUERY *qp;
-  const char *coll;
-};
 
 /** Placeholder value type */
 typedef enum {
@@ -249,6 +242,7 @@ iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
   q->qp = aux->query;
   q->dirty = false;
   q->matched = false;
+  q->opaque = 0;
 
   rc = _jql_init_expression_node(q->qp->expr, aux);
 
