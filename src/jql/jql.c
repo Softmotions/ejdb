@@ -1143,6 +1143,9 @@ static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int
 }
 
 static jbn_visitor_cmd_t _proj_keep_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc) {
+  if (lvl == -1) {
+    return 0;
+  }
   if (n->flags & PROJ_MARK_PATH) {
     return 0;
   }
