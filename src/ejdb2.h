@@ -13,7 +13,8 @@ IW_EXTERN_C_START
  */
 typedef enum {
   _EJDB_ERROR_START = (IW_ERROR_START + 15000UL),
-  // 
+  EJDB_ERROR_INVALID_COLLECTION_META,
+  //
   _EJDB_ERROR_END
 } ejdb_ecode;
 
@@ -75,9 +76,11 @@ IW_EXPORT WUR iwrc ejdb_exec(JQL q, EJDB_VISITOR_FN visitor, void *op);
 
 IW_EXPORT WUR iwrc ejdb_list(JQL q, EJDOC *first, int limit, IWPOOL *pool);
 
-IW_EXPORT WUR iwrc ejdb_put(const char *coll, const EJDOC doc, uint64_t *id);
+IW_EXPORT WUR iwrc ejdb_put(const char *coll, const JBL doc, uint64_t *id);
 
 IW_EXPORT iwrc ejdb_remove(const char *coll, uint64_t id);
+
+IW_EXPORT iwrc ejdb_remove_collection(const char *coll);
 
 IW_EXPORT WUR iwrc ejdb_init(void);
 

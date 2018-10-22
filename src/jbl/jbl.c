@@ -714,7 +714,7 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, const char *key, in
 
 iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
   JBL_PTR jp;
-  iwrc rc = _jbl_ptr_malloc(path, &jp);
+  iwrc rc = _jbl_ptr_pool(path, &jp, 0);
   RCRET(rc);
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
