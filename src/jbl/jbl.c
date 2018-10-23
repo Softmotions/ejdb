@@ -44,6 +44,7 @@ iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz) {
   }
   JBL jbl = *jblp;
   jbl->bn.header = BINN_MAGIC;
+  jbl->bn.type = type;
   jbl->bn.ptr = buf;
   jbl->bn.freefn = free;
   return rc;

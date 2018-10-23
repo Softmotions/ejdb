@@ -80,7 +80,7 @@ static iwrc _jb_load_coll_meta(JBCOLL coll) {
   if (!coll->dbid) {
     return EJDB_ERROR_INVALID_COLLECTION_META;
   }
-  rc = iwkv_db(coll->db->iwkv, coll->dbid, 0, &cdb);
+  rc = iwkv_db(coll->db->iwkv, coll->dbid, IWDB_UINT64_KEYS, &cdb);
   RCRET(rc);
 
   rc = iwkv_cursor_open(cdb, &cur, IWKV_CURSOR_BEFORE_FIRST, 0);
@@ -102,30 +102,7 @@ finish:
   return rc;
 }
 
-static iwrc _jb_init_coll(JBCOLL coll, IWKV_val *meta) {
-  int rci = pthread_rwlock_init(&coll->rwl, 0);
-  if (rci) {
-    return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
-  }
-  iwrc rc = jbl_from_buf_keep(&coll->meta, meta->data, meta->size);
-  RCGO(rc, finish);
-  rc = _jb_load_coll_meta(coll);
-  RCGO(rc, finish);
-
-  khiter_t k = kh_put(JBCOLLM, coll->db->mcolls, coll->name, &rci);
-  if (rci != -1) {
-    kh_value(coll->db->mcolls, k) = coll;
-  } else {
-    RCGO(IW_ERROR_FAIL, finish);
-  }
-finish:
-  if (rc) {
-    pthread_rwlock_destroy(&coll->rwl);
-  }
-  return rc;
-}
-
-static void _jb_dispose_coll(JBCOLL coll) {
+static void _jb_coll_destroy(JBCOLL coll) {
   if (coll->meta) {
     jbl_destroy(&coll->meta);
   }
@@ -133,7 +110,30 @@ static void _jb_dispose_coll(JBCOLL coll) {
   free(coll);
 }
 
-static iwrc _jb_load_meta(EJDB db) {
+static iwrc _jb_coll_init(JBCOLL coll, IWKV_val *meta) {
+  iwrc rc = 0;
+  int rci = 0;
+  pthread_rwlock_init(&coll->rwl, 0);
+  if (meta) {
+    rc = jbl_from_buf_keep(&coll->meta, meta->data, meta->size);
+    RCRET(rc);
+  }
+  if (!coll->meta) {
+    return IW_ERROR_INVALID_STATE;
+  }
+  rc = _jb_load_coll_meta(coll);
+  RCRET(rc);
+
+  khiter_t k = kh_put(JBCOLLM, coll->db->mcolls, coll->name, &rci);
+  if (rci != -1) {
+    kh_value(coll->db->mcolls, k) = coll;
+  } else {
+    return IW_ERROR_FAIL;
+  }
+  return rc;
+}
+
+static iwrc _jb_meta_load(EJDB db) {
   iwrc rc = 0;
   if (!db->metadb) {
     rc = iwkv_db(db->iwkv, METADB_ID, 0, &db->metadb);
@@ -149,9 +149,9 @@ static iwrc _jb_load_meta(EJDB db) {
     if (!strncmp(key.data, KEY_PREFIX_COLLMETA, key.size)) {
       JBCOLL coll = calloc(1, sizeof(*coll));
       coll->db = db;
-      rc = _jb_init_coll(coll, &val);
+      rc = _jb_coll_init(coll, &val);
       if (rc) {
-        free(coll);
+        _jb_coll_destroy(coll);
         iwkv_val_dispose(&val);
       }
     } else {
@@ -166,16 +166,16 @@ static iwrc _jb_load_meta(EJDB db) {
   }
 finish:
   iwkv_cursor_close(&cur);
-
   return rc;
 }
 
-static void _jb_dispose_db(EJDB *dbp) {
+static void _jb_db_destroy(EJDB *dbp) {
   EJDB db = *dbp;
   if (db->mcolls) {
     for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
+      if (!kh_exist(db->mcolls, k)) continue;
       JBCOLL coll = kh_val(db->mcolls, k);
-      _jb_dispose_coll(coll);
+      _jb_coll_destroy(coll);
     }
     kh_destroy(JBCOLLM, db->mcolls);
     db->mcolls = 0;
@@ -188,7 +188,7 @@ static void _jb_dispose_db(EJDB *dbp) {
   *dbp = 0;
 }
 
-iwrc _jb_acquire_collection_keeplock(EJDB db, const char *collname, bool wl, JBCOLL *collp) {
+iwrc _jb_coll_acquire_keeplock(EJDB db, const char *collname, bool wl, JBCOLL *collp) {
   int rci;
   iwrc rc = 0;
   *collp = 0;
@@ -254,7 +254,8 @@ iwrc _jb_acquire_collection_keeplock(EJDB db, const char *collname, bool wl, JBC
       RCGO(rc, cfinish);
 
       coll->db = db;
-      rc = _jb_init_coll(coll, &metaval);
+      coll->meta = meta;
+      rc = _jb_coll_init(coll, 0);
       if (rc) {
         iwkv_del(db->metadb, &metakey, IWKV_SYNC);
         goto cfinish;
@@ -263,7 +264,10 @@ cfinish:
       if (rc) {
         if (meta) jbl_destroy(&meta);
         if (cdb) iwkv_db_destroy(&cdb);
-        if (coll) free(coll);
+        if (coll) {
+          coll->meta = 0;
+          _jb_coll_destroy(coll);
+        }
       }
     }
   }
@@ -276,9 +280,18 @@ finish:
 
 //----------------------- Public API
 
-iwrc ejdb_put(const char *coll, const JBL doc, uint64_t *id) {
+iwrc ejdb_put(EJDB db, const char *coll, const JBL doc, uint64_t *id) {
   // todo
   return 0;
+}
+
+iwrc ejdb_ensure_collection(EJDB db, const char *coll) {
+  int rci;
+  JBCOLL jbc;
+  iwrc rc = _jb_coll_acquire_keeplock(db, coll, false, &jbc);
+  RCRET(rc);
+  API_UNLOCK(db, rci, rc);
+  return rc;
 }
 
 iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp) {
@@ -299,6 +312,11 @@ iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp) {
     free(db);
     return rc;
   }
+  db->mcolls = kh_init(JBCOLLM);
+  if (!db->mcolls) {
+    rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+    goto finish;
+  }
 
   IWKV_OPTS kvopts;
   memcpy(&kvopts, &opts->kv, sizeof(opts->kv));
@@ -306,16 +324,14 @@ iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp) {
   rc = iwkv_open(&kvopts, &db->iwkv);
   RCGO(rc, finish);
 
-  rc = iwkv_db(db->iwkv, METADB_ID, 0, &db->metadb);
-  RCGO(rc, finish);
-
-  rc = _jb_load_meta(db);
+  rc = _jb_meta_load(db);
 
 finish:
   if (rc) {
-    _jb_dispose_db(&db);
+    _jb_db_destroy(&db);
   } else {
     db->open = true;
+    *ejdbp = db;
   }
   return rc;
 }
@@ -329,7 +345,7 @@ iwrc ejdb_close(EJDB *ejdbp) {
     return IW_ERROR_INVALID_STATE;
   }
   iwrc rc = _jb_sync_meta(db);
-  _jb_dispose_db(ejdbp);
+  _jb_db_destroy(ejdbp);
   return rc;
 }
 
