@@ -21,8 +21,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>build/</Path>
       <Path>cmake-build-Debug/</Path>
+      <Path>build/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -33,6 +33,10 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <VirtualDirectory Name="tests">
+      <File Name="src/tests/CMakeLists.txt"/>
+      <File Name="src/tests/ejdb_test1.c"/>
+    </VirtualDirectory>
     <VirtualDirectory Name="util">
       <File Name="src/util/khash.h"/>
       <File Name="src/util/lwre.c"/>

@@ -50,6 +50,7 @@ typedef struct EJDB_OPTS {
 } EJDB_OPTS;
 
 typedef struct _EJDOC {
+  uint64_t id;
   JBL raw;
   JBL_NODE node;
   struct _EJDB_DOC *next;

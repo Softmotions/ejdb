@@ -161,6 +161,11 @@ foreach(MODULE IN LISTS MODULES)
     endif()
 endforeach(MODULE)
 
+if (BUILD_TESTS)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests)
+endif()
+
+
 if (NOT BUILD_SHARED_LIBS)
   add_definitions(-DIW_NODLL)
   add_library(ejdb2 STATIC ${ALL_SRC})

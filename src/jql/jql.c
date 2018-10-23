@@ -1065,7 +1065,11 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
 }
 
 bool jql_has_apply(JQL q) {
-  return (q->qp->apply || q->qp->projection);
+  return q->qp->apply;
+}
+
+bool jql_has_projection(JQL q) {
+  return q->qp->projection;
 }
 
 // ----------- JQL Projection

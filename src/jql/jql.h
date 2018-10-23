@@ -51,6 +51,8 @@ IW_EXPORT iwrc jql_matched(JQL q, const JBL jbl, bool *out);
 
 IW_EXPORT bool jql_has_apply(JQL q);
 
+IW_EXPORT bool jql_has_projection(JQL q);
+
 IW_EXPORT iwrc jql_apply(JQL q, const JBL jbl, JBL_NODE *out, IWPOOL *pool);
 
 IW_EXPORT void jql_reset(JQL q, bool reset_placeholders);

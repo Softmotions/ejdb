@@ -198,7 +198,7 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL_FATAL(m, true);
 
-  CU_ASSERT_TRUE_FATAL(jql_has_apply(jql));
+  CU_ASSERT_TRUE_FATAL(jql_has_apply(jql) || jql_has_projection(jql));
   JBL_NODE out = 0, eqn = 0;
   IWPOOL *pool = iwpool_create(512);
   CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
