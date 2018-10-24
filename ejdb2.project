@@ -162,7 +162,7 @@
         <![CDATA[]]>
       </Environment>
       <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
-        <DebuggerSearchPaths/>
+        <DebuggerSearchPaths>/home/adam/Projects/softmotions/iowow/src</DebuggerSearchPaths>
         <PostConnectCommands/>
         <StartupCommands/>
       </Debugger>

@@ -21,10 +21,15 @@ void ejdb_test1_1() {
   EJDB db;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-
   rc = ejdb_ensure_collection(db, "foo");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
 
+  // Now reopen databse then load collection
+  opts.kv.oflags &= ~IWKV_TRUNC;
+  rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 }

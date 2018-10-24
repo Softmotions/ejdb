@@ -71,12 +71,14 @@ static iwrc _jb_load_coll_meta(JBCOLL coll) {
   iwrc rc = jbl_at(jbm, "/name", &jbv);
   RCRET(rc);
   coll->name = jbl_get_str(jbv);
+  jbl_destroy(&jbv);
   if (!coll->name) {
     return EJDB_ERROR_INVALID_COLLECTION_META;
   }
   rc = jbl_at(jbm, "/id", &jbv);
   RCRET(rc);
-  coll->dbid = jbl_get_i32(jbv);
+  coll->dbid = jbl_get_i64(jbv);
+  jbl_destroy(&jbv);
   if (!coll->dbid) {
     return EJDB_ERROR_INVALID_COLLECTION_META;
   }
@@ -111,8 +113,8 @@ static void _jb_coll_destroy(JBCOLL coll) {
 }
 
 static iwrc _jb_coll_init(JBCOLL coll, IWKV_val *meta) {
+  int rci;
   iwrc rc = 0;
-  int rci = 0;
   pthread_rwlock_init(&coll->rwl, 0);
   if (meta) {
     rc = jbl_from_buf_keep(&coll->meta, meta->data, meta->size);
@@ -133,7 +135,7 @@ static iwrc _jb_coll_init(JBCOLL coll, IWKV_val *meta) {
   return rc;
 }
 
-static iwrc _jb_meta_load(EJDB db) {
+static iwrc _jb_db_meta_load(EJDB db) {
   iwrc rc = 0;
   if (!db->metadb) {
     rc = iwkv_db(db->iwkv, METADB_ID, 0, &db->metadb);
@@ -146,13 +148,19 @@ static iwrc _jb_meta_load(EJDB db) {
     IWKV_val key, val;
     rc = iwkv_cursor_get(cur, &key, &val);
     RCGO(rc, finish);
-    if (!strncmp(key.data, KEY_PREFIX_COLLMETA, key.size)) {
+    if (!strncmp(key.data, KEY_PREFIX_COLLMETA, strlen(KEY_PREFIX_COLLMETA))) {
       JBCOLL coll = calloc(1, sizeof(*coll));
+      if (!coll) {
+        rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+        iwkv_val_dispose(&val);
+        goto finish;
+      }
       coll->db = db;
       rc = _jb_coll_init(coll, &val);
       if (rc) {
         _jb_coll_destroy(coll);
         iwkv_val_dispose(&val);
+        goto finish;
       }
     } else {
       iwkv_val_dispose(&val);
@@ -161,8 +169,6 @@ static iwrc _jb_meta_load(EJDB db) {
   }
   if (rc == IWKV_ERROR_NOTFOUND) {
     rc = 0;
-  } else {
-    goto finish;
   }
 finish:
   iwkv_cursor_close(&cur);
@@ -237,7 +243,7 @@ iwrc _jb_coll_acquire_keeplock(EJDB db, const char *collname, bool wl, JBCOLL *c
         rc = JBL_ERROR_CREATION;
         goto cfinish;
       }
-      if (!binn_object_set_int32(&meta->bn, "id", dbid)) {
+      if (!binn_object_set_uint32(&meta->bn, "id", dbid)) {
         rc = JBL_ERROR_CREATION;
         goto cfinish;
       }
@@ -324,7 +330,7 @@ iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp) {
   rc = iwkv_open(&kvopts, &db->iwkv);
   RCGO(rc, finish);
 
-  rc = _jb_meta_load(db);
+  rc = _jb_db_meta_load(db);
 
 finish:
   if (rc) {
