@@ -300,6 +300,27 @@ iwrc ejdb_ensure_collection(EJDB db, const char *coll) {
   return rc;
 }
 
+iwrc ejdb_remove_collection(EJDB db, const char *coll) {
+  int rci;
+  iwrc rc = 0;
+  API_WLOCK(db, rci);
+  JBCOLL jbc;
+  khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
+  if (k != kh_end(db->mcolls)) {
+    IWDB cdb;
+    jbc = kh_value(db->mcolls, k);
+    assert(jbc);
+    rc = iwkv_db(db->iwkv, jbc->dbid, IWDB_UINT64_KEYS, &cdb);
+    RCGO(rc, finish);
+    rc = iwkv_db_destroy(&cdb);
+    kh_del(JBCOLLM, db->mcolls, k);
+    _jb_coll_destroy(jbc);
+  }
+finish:
+  API_UNLOCK(db, rci, rc);
+  return rc;
+}
+
 iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp) {
   *ejdbp = 0;
   int rci;
