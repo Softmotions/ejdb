@@ -204,7 +204,7 @@ static void _jb_db_destroy(EJDB *dbp) {
   *dbp = 0;
 }
 
-iwrc _jb_coll_acquire_keeplock(EJDB db, const char *collname, bool wl, JBCOLL *collp) {
+static iwrc _jb_coll_acquire_keeplock(EJDB db, const char *collname, bool wl, JBCOLL *collp) {
   int rci;
   iwrc rc = 0;
   *collp = 0;
