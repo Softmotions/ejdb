@@ -59,8 +59,7 @@ typedef struct _EJDOC {
 
 typedef enum {
   EJDB_VCTL_OK = 0,
-  EJDB_VCTL_STOP = 1,
-  EJDB_VCTL_SKIP = 2,
+  EJDB_VCTL_STOP = 1
 } ejdb_vctl_cmd_t;
 
 typedef void (*EJDB_VCTL_FN)(JQL q, ejdb_vctl_cmd_t cmd, int skip);
@@ -84,6 +83,16 @@ IW_EXPORT iwrc ejdb_remove(EJDB db, const char *coll, uint64_t id);
 IW_EXPORT iwrc ejdb_remove_collection(EJDB db, const char *coll);
 
 IW_EXPORT iwrc ejdb_ensure_collection(EJDB db, const char *coll);
+
+IW_EXPORT iwrc ejdb_get_meta(EJDB db, JBL *jblp);
+
+IW_EXPORT const char* ejdb_version_full(void);
+
+IW_EXPORT unsigned int ejdb_version_major(void);
+
+IW_EXPORT unsigned int ejdb_version_minor(void);
+
+IW_EXPORT unsigned int ejdb_version_patch(void);
 
 IW_EXPORT WUR iwrc ejdb_init(void);
 

@@ -30,6 +30,8 @@ void ejdb_test1_1() {
   opts.kv.oflags &= ~IWKV_TRUNC;
   rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_remove_collection(db, "foo");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 }

@@ -323,7 +323,7 @@ binn *APIENTRY binn_value(int type, void *pvalue, int size, binn_mem_free freefn
 ALWAYS_INLINE void binn_init_item(binn *item) {
   memset(item, 0, sizeof(binn));
   item->header = BINN_MAGIC;
-}    
+}
 
 ALWAYS_INLINE binn *binn_int8(signed char value) {
   return binn_value(BINN_INT8, &value, 0, NULL);
@@ -579,7 +579,7 @@ BOOL APIENTRY binn_set_blob(binn *item, void *ptr, int size, binn_mem_free pfree
 #define binn_list_foreach(list, value)      \
   binn_iter_init(&iter, list, BINN_LIST); \
   while (binn_list_next(&iter, &value))
-    
+
 /*************************************************************************************/
 /*** SET FUNCTIONS *******************************************************************/
 /*************************************************************************************/
@@ -734,8 +734,8 @@ ALWAYS_INLINE BOOL binn_object_set_bool(binn *obj, const char *key, BOOL value) 
 ALWAYS_INLINE BOOL binn_object_set_null(binn *obj, const char *key) {
   return binn_object_set(obj, key, BINN_NULL, NULL, 0);
 }
-ALWAYS_INLINE BOOL binn_object_set_str(binn *obj, const char *key, char *str) {
-  return binn_object_set(obj, key, BINN_STRING, str, 0);
+ALWAYS_INLINE BOOL binn_object_set_str(binn *obj, const char *key, const char *str) {
+  return binn_object_set(obj, key, BINN_STRING, (char*) str, 0); // todo
 }
 ALWAYS_INLINE BOOL binn_object_set_blob(binn *obj, const char *key, void *ptr, int size) {
   return binn_object_set(obj, key, BINN_BLOB, ptr, size);

@@ -55,7 +55,7 @@ typedef struct _JBL_NODE {
   const char *key;
   int klidx;
   uint32_t flags;           /**< Utility node flags */
-  
+
   // Do not sort/add members after this point (offsetof usage below)
   struct _JBL_NODE *child;
   int vsize;
@@ -86,7 +86,7 @@ typedef struct _JBL_PATCH {
 } JBL_PATCH;
 
 /**
- * @brief JSON pointer 
+ * @brief JSON pointer
  */
 typedef struct _JBL_PTR {
   int cnt;          /**< Number of nodes */
@@ -153,13 +153,13 @@ IW_EXPORT JBL_NODE jbl_node_detach(JBL_NODE target, const JBL_PTR path);
 IW_EXPORT void jbl_node_reset_data(JBL_NODE node);
 
 /**
- * @brief JBL_NODE visitor context  
+ * @brief JBL_NODE visitor context
  */
 typedef struct _JBN_VCTX {
   JBL_NODE root;  /**< Root node from which started visitor */
-  void *op;       /**< Arbitrary opaque data */ 
-  void *result;   
-  bool terminate;  
+  void *op;       /**< Arbitrary opaque data */
+  void *result;
+  bool terminate;
   IWPOOL *pool;   /**< Pool placeholder, initialization is responsibility of `JBN_VCTX` creator */
 } JBN_VCTX;
 
@@ -171,7 +171,7 @@ typedef enum {
 } jbn_visitor_cmd_t;
 
 /**
- * Call with lvl: `-1` means end of visiting whole object tree. 
+ * Call with lvl: `-1` means end of visiting whole object tree.
  */
 typedef jbn_visitor_cmd_t (*JBN_VISITOR)(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc);
 
