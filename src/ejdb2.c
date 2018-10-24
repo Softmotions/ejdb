@@ -65,7 +65,7 @@ static iwrc _jb_sync_meta(EJDB db) {
   return 0;
 }
 
-static iwrc _jb_load_coll_meta(JBCOLL jbc) {
+static iwrc _jb_coll_load_meta(JBCOLL jbc) {
   JBL jbv;
   IWDB cdb;
   IWKV_cursor cur;
@@ -125,7 +125,7 @@ static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
   if (!jbc->meta) {
     return IW_ERROR_INVALID_STATE;
   }
-  rc = _jb_load_coll_meta(jbc);
+  rc = _jb_coll_load_meta(jbc);
   RCRET(rc);
 
   khiter_t k = kh_put(JBCOLLM, jbc->db->mcolls, jbc->name, &rci);
