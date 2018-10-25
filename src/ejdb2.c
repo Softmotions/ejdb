@@ -534,7 +534,7 @@ static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
   }
   switch (ecode) {
     case EJDB_ERROR_INVALID_COLLECTION_META:
-      return "Invalid collection metadata";
+      return "Invalid collection metadata (EJDB_ERROR_INVALID_COLLECTION_META)";
   }
   return 0;
 }
