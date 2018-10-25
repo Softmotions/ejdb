@@ -2,13 +2,55 @@
 #include <iowow/iwxstr.h>
 #include <CUnit/Basic.h>
 
-int init_suite(void) {
+int init_suite() {
   int rc = ejdb_init();
   return rc;
 }
 
-int clean_suite(void) {
+int clean_suite() {
   return 0;
+}
+
+void ejdb_test1_2() {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test1_2.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+  EJDB db;
+  JBL jbl, at;
+  uint64_t llv = 0, llv2;
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_from_json(&jbl, "{\"foo\":22}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_put(db, "foocoll", jbl, &llv);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  jbl_destroy(&jbl);
+  CU_ASSERT_TRUE(llv > 0);
+
+  rc = ejdb_get(db, "foocoll", llv, &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_at(jbl, "/foo", &at);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  llv2 = jbl_get_i64(at);
+  CU_ASSERT_EQUAL(llv2, 22);
+  jbl_destroy(&at);
+  jbl_destroy(&jbl);
+
+  rc = ejdb_remove(db, "foocoll", llv);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_get(db, "foocoll", llv, &jbl);
+  CU_ASSERT_EQUAL(rc, IWKV_ERROR_NOTFOUND);
+  CU_ASSERT_PTR_NULL(jbl);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
 }
 
 void ejdb_test1_1() {
@@ -26,17 +68,17 @@ void ejdb_test1_1() {
   rc = ejdb_ensure_collection(db, "foo");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-// Meta: {
-//  "version": "2.0.0",
-//  "file": "ejdb_test1_1.db",
-//  "size": 8192,
-//  "collections": [
-//    {
-//      "name": "foo",
-//      "dbid": 2
-//    }
-//  ]
-//}
+  // Meta: {
+  //  "version": "2.0.0",
+  //  "file": "ejdb_test1_1.db",
+  //  "size": 8192,
+  //  "collections": [
+  //    {
+  //      "name": "foo",
+  //      "dbid": 2
+  //    }
+  //  ]
+  //}
   rc = ejdb_get_meta(db, &meta);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -81,7 +123,8 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "ejdb_test1_1", ejdb_test1_1))
+    (NULL == CU_add_test(pSuite, "ejdb_test1_1", ejdb_test1_1)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test1_2", ejdb_test1_2))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

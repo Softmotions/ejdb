@@ -29,11 +29,11 @@
   rci_ = pthread_rwlock_unlock(&(db_)->rwl); \
   if (rci_) IWRC(iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_), rc_)
 
-#define API_COLL_UNLOCK(coll_, rci_, rc_)                                     \
+#define API_COLL_UNLOCK(jbc_, rci_, rc_)                                     \
   do {                                                                    \
-    rci_ = pthread_rwlock_unlock(&(coll_)->rwl);                            \
+    rci_ = pthread_rwlock_unlock(&(jbc_)->rwl);                            \
     if (rci_) IWRC(iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_), rc_);  \
-    API_UNLOCK((coll_)->db, rci_, rc_);                                   \
+    API_UNLOCK((jbc_)->db, rci_, rc_);                                   \
   } while(0)
 
 
@@ -299,6 +299,13 @@ create_finish:
           jbc->meta = 0; // meta was cleared
           _jb_coll_destroy(jbc);
         }
+      } else {
+        rci = wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl);
+        if (rci) {
+          rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+          goto finish;
+        }
+        *collp = jbc;
       }
     }
   }
@@ -312,8 +319,8 @@ finish:
 
 //----------------------- Public API
 
-iwrc ejdb_put(EJDB db, const char *coll, const JBL doc, uint64_t *id) {
-  if (!doc) {
+iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t *id) {
+  if (!jbl) {
     return IW_ERROR_INVALID_ARGS;
   }
   int rci;
@@ -327,7 +334,7 @@ iwrc ejdb_put(EJDB db, const char *coll, const JBL doc, uint64_t *id) {
   key.data = &oid;
   key.size = sizeof(oid);
 
-  rc = jbl_as_buf(doc, &val.data, &val.size);
+  rc = jbl_as_buf(jbl, &val.data, &val.size);
   RCGO(rc, finish);
 
   rc = iwkv_put(jbc->cdb, &key, &val, 0);
@@ -337,9 +344,8 @@ iwrc ejdb_put(EJDB db, const char *coll, const JBL doc, uint64_t *id) {
   if (id) {
     *id = oid;
   }
-
 finish:
-  API_UNLOCK(db, rci, rc);
+  API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
 
@@ -364,12 +370,23 @@ iwrc ejdb_get(EJDB db, const char *coll, uint64_t id, JBL *jblp) {
 finish:
   if (rc) {
     if (jbl) {
-      jbl_destroy(&jbl); // val buffer will be freed here
+      jbl_destroy(&jbl); // `IWKV_val val` will be freed here
     } else {
       iwkv_val_dispose(&val);
     }
   }
-  API_UNLOCK(db, rci, rc);
+  API_COLL_UNLOCK(jbc, rci, rc);
+  return rc;
+}
+
+iwrc ejdb_remove(EJDB db, const char *coll, uint64_t id) {
+  int rci;
+  JBCOLL jbc;
+  IWKV_val key = {.data = &id, .size = sizeof(id)};
+  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  RCRET(rc);
+  rc = iwkv_del(jbc->cdb, &key, 0);
+  API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
 
@@ -378,7 +395,7 @@ iwrc ejdb_ensure_collection(EJDB db, const char *coll) {
   JBCOLL jbc;
   iwrc rc = _jb_coll_acquire_keeplock(db, coll, false, &jbc);
   RCRET(rc);
-  API_UNLOCK(db, rci, rc);
+  API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
 
