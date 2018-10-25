@@ -139,9 +139,22 @@ static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
 
 static iwrc _jb_coll_add_meta_lr(JBCOLL jbc, binn *list) {
   iwrc rc = 0;
-
-  // TODO
-
+  binn *meta = binn_object();
+  if (!meta) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    return rc;
+  }
+  if (!binn_object_set_str(meta, "name", jbc->name)
+      || !binn_object_set_uint32(meta, "dbid", jbc->dbid)) {
+    rc = JBL_ERROR_CREATION;
+    goto finish;
+  }
+  if (!binn_list_add_value(list, meta)) {
+    rc = JBL_ERROR_CREATION;
+    goto finish;
+  }
+finish:
+  if (meta) binn_free(meta);
   return rc;
 }
 
@@ -349,8 +362,16 @@ iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }
+  IWFS_FSM_STATE sfsm;
+  rc = iwkv_state(db->iwkv, &sfsm);
+  RCRET(rc);
+  if (!binn_object_set_str(&jbl->bn, "file", sfsm.exfile.file.opts.path)
+      || !binn_object_set_int64(&jbl->bn, "size", sfsm.exfile.fsize)) {
+    rc = JBL_ERROR_CREATION;
+    goto finish;
+  }
   clist = binn_list();
-  if (clist) {
+  if (!clist) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }

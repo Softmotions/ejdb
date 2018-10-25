@@ -1,4 +1,5 @@
 #include "ejdb2.h"
+#include <iowow/iwxstr.h>
 #include <CUnit/Basic.h>
 
 int init_suite(void) {
@@ -19,10 +20,37 @@ void ejdb_test1_1() {
     .no_wal = true
   };
   EJDB db;
+  JBL meta, jbl;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = ejdb_ensure_collection(db, "foo");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+// Meta: {
+//  "version": "2.0.0",
+//  "file": "ejdb_test1_1.db",
+//  "size": 8192,
+//  "collections": [
+//    {
+//      "name": "foo",
+//      "dbid": 2
+//    }
+//  ]
+//}
+  rc = ejdb_get_meta(db, &meta);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_at(meta, "/file", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "ejdb_test1_1.db");
+  jbl_destroy(&jbl);
+
+  rc = jbl_at(meta, "/collections/0/name", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "foo");
+  jbl_destroy(&jbl);
+  jbl_destroy(&meta);
+
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -32,6 +60,14 @@ void ejdb_test1_1() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = ejdb_remove_collection(db, "foo");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_get_meta(db, &meta);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_at(meta, "/collections/0/name", &jbl); // No collections
+  CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATH_NOTFOUND);
+  jbl_destroy(&meta);
+
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 }
