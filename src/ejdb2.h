@@ -13,14 +13,12 @@ IW_EXTERN_C_START
  */
 typedef enum {
   _EJDB_ERROR_START = (IW_ERROR_START + 15000UL),
-  EJDB_ERROR_INVALID_COLLECTION_META,
-  //
+  EJDB_ERROR_INVALID_COLLECTION_META,     /**< Invalid collection metadata (EJDB_ERROR_INVALID_COLLECTION_META) */
   _EJDB_ERROR_END
 } ejdb_ecode;
 
-
 /**
- * Database handler.
+ * @brief Database handler.
  */
 struct _EJDB;
 typedef struct _EJDB *EJDB;
@@ -70,13 +68,13 @@ IW_EXPORT WUR iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp);
 
 IW_EXPORT iwrc ejdb_close(EJDB *ejdbp);
 
-IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t *id);
-
-IW_EXPORT WUR iwrc ejdb_get(EJDB db, const char *coll, uint64_t id, JBL *jblp);
-
 IW_EXPORT WUR iwrc ejdb_exec(EJDB db, JQL q, EJDB_VISITOR_FN visitor, void *op);
 
 IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool);
+
+IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t *id);
+
+IW_EXPORT WUR iwrc ejdb_get(EJDB db, const char *coll, uint64_t id, JBL *jblp);
 
 IW_EXPORT iwrc ejdb_remove(EJDB db, const char *coll, uint64_t id);
 

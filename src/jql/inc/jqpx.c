@@ -231,7 +231,7 @@ static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp
   char c;
   char *ds = d;
   char *de = d + dlen;
-  
+
   while (1) {
     c = *p++;
     if (c == '\0') {
@@ -738,7 +738,7 @@ iwrc jqp_aux_create(JQP_AUX **auxp, const char *input) {
     goto finish;
   }
   rc = _jqp_aux_set_input(aux, input);
-  
+
 finish:
   if (rc) {
     jqp_aux_destroy(auxp);
@@ -804,7 +804,7 @@ iwrc jqp_parse(JQP_AUX *aux) {
       iwlog_error("%s\n", iwxstr_ptr(aux->xerr));
     }
   }
-  
+
 finish:
   yyrelease(&yy);
   return aux->rc;
@@ -911,7 +911,7 @@ static iwrc _jqp_print_join(jqp_op_t jqop, bool negate, jbl_json_printer pt, voi
       break;
     case JQP_OP_RE:
       PT("re", 2, 0, 0);
-      break;    
+      break;
     default:
       rc = IW_ERROR_ASSERTION;
   }

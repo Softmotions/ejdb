@@ -51,7 +51,7 @@ typedef enum { // Do not reorder members
   JQP_OP_LTE,
   JQP_OP_IN,
   JQP_OP_NI,
-  JQP_OP_RE,  
+  JQP_OP_RE,
 } jqp_op_t;
 
 struct JQP_AUX;
@@ -65,6 +65,7 @@ typedef struct JQP_EXPR_NODE { // Base for JQP_FILTER
   void *opaque;
   // Expr only specific
   struct JQP_EXPR_NODE *chain;
+  uint32_t flags; // Expression node flags
 } JQP_EXPR_NODE;
 
 typedef struct JQP_FILTER {
@@ -85,12 +86,12 @@ typedef struct JQP_JSON {
 } JQP_JSON;
 
 typedef struct JQP_NODE {
-  jqp_unit_t type;  
+  jqp_unit_t type;
   jqp_node_type_t ntype;
   struct JQP_NODE *next;
   JQPUNIT *value;
-  int start; // Used in query matching 
-  int end;   // Used in query matching 
+  int start; // Used in query matching
+  int end;   // Used in query matching
 } JQP_NODE;
 
 typedef struct JQP_STRING {
@@ -126,13 +127,13 @@ typedef struct JQP_JOIN {
   jqp_op_t value;
 } JQP_JOIN;
 
-typedef struct JQP_EXPR {  
+typedef struct JQP_EXPR {
   jqp_unit_t type;
   struct JQP_JOIN *join;
   struct JQP_OP *op;
   JQPUNIT *left;
   JQPUNIT *right;
-  struct JQP_EXPR *next;  
+  struct JQP_EXPR *next;
 } JQP_EXPR;
 
 typedef struct JQP_PROJECTION {
@@ -143,7 +144,6 @@ typedef struct JQP_PROJECTION {
   struct JQP_STRING *value;
   struct JQP_PROJECTION *next;
 } JQP_PROJECTION;
-
 
 typedef struct JQP_QUERY {
   jqp_unit_t type;
