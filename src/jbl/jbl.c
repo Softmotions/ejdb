@@ -518,6 +518,8 @@ static iwrc _jbl_ptr_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
   jpr = (char *) jp;
   jp->pos = -1;
   jp->cnt = cnt;
+  jp->sz = sz;
+
   doff = offsetof(struct _JBL_PTR, n) + cnt * sizeof(char *);
   assert(sz - doff >= len);
 
@@ -549,8 +551,29 @@ static iwrc _jbl_ptr_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
   return rc;
 }
 
-iwrc _jbl_ptr_malloc(const char *path, JBL_PTR *jpp) {
+iwrc jbl_ptr_alloc(const char *path, JBL_PTR *jpp) {
   return _jbl_ptr_pool(path, jpp, 0);
+}
+
+JBL_PTR jbl_ptr_dup(JBL_PTR src) {
+  JBL_PTR res = malloc(src->sz);
+  if (!res) return 0;
+  memcpy(res, src, src->sz);
+  return res;
+}
+
+int jbl_ptr_cmp(JBL_PTR p1, JBL_PTR p2) {
+  if (p1->sz != p2->sz) {
+    return p1->sz - p2->sz;
+  }
+  if (p1->cnt != p2->cnt) {
+    return p1->cnt - p2->cnt;
+  }
+  for (int i = 0; i < p1->cnt; ++i) {
+    int r = strcmp(p1->n[i], p2->n[i]);
+    if (r) return r;
+  }
+  return 0;
 }
 
 iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor) {

@@ -13,7 +13,9 @@ IW_EXTERN_C_START
  */
 typedef enum {
   _EJDB_ERROR_START = (IW_ERROR_START + 15000UL),
-  EJDB_ERROR_INVALID_COLLECTION_META,     /**< Invalid collection metadata (EJDB_ERROR_INVALID_COLLECTION_META) */
+  EJDB_ERROR_INVALID_COLLECTION_META,     /**< Invalid collection metadata */
+  EJDB_ERROR_IDX_FOUND_BUT_NOT_UNIQUE,    /**< Index at the specified path found but it must be unique */
+  EJDB_ERROR_IDX_FOUND_BUT_UNIQUE,        /**< Index at the specified path found but it must be NOT unique */
   _EJDB_ERROR_END
 } ejdb_ecode;
 
@@ -81,6 +83,10 @@ IW_EXPORT iwrc ejdb_remove(EJDB db, const char *coll, uint64_t id);
 IW_EXPORT iwrc ejdb_remove_collection(EJDB db, const char *coll);
 
 IW_EXPORT iwrc ejdb_ensure_collection(EJDB db, const char *coll);
+
+IW_EXPORT iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, bool unique);
+
+IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path);
 
 IW_EXPORT iwrc ejdb_get_meta(EJDB db, JBL *jblp);
 

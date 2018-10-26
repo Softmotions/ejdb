@@ -9,6 +9,8 @@
 #include "khash.h"
 #include "ejdb2cfg.h"
 
+#define IWDB_DUP_FLAGS (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)
+
 #define METADB_ID 1
 #define KEY_PREFIX_COLLMETA "col."
 
@@ -36,16 +38,29 @@
     API_UNLOCK((jbc_)->db, rci_, rc_);                                   \
   } while(0)
 
+struct _JBIDX;
+typedef struct _JBIDX *JBIDX;
 
+/** Database collection */
 typedef struct _JBCOLL {
   uint32_t dbid;            /**< IWKV collection database ID */
   const char *name;         /**< Collection name */
   IWDB cdb;                 /**< IWKV collection database */
   EJDB db;                  /**< Main database reference */
   JBL meta;                 /**< Collection meta object */
+  JBIDX idx;                /**< First index in chain */
   pthread_rwlock_t rwl;
   uint64_t id_seq;
 } *JBCOLL;
+
+/** Database collection index */
+struct _JBIDX {
+  iwdb_flags_t idbf;
+  JBCOLL jbc;
+  JBL_PTR ptr;
+  IWDB idb;
+  struct _JBIDX *next;
+};
 
 KHASH_MAP_INIT_STR(JBCOLLM, JBCOLL)
 
@@ -109,6 +124,7 @@ static void _jb_coll_destroy(JBCOLL jbc) {
   if (jbc->meta) {
     jbl_destroy(&jbc->meta);
   }
+  // TODO: destroy indexes
   pthread_rwlock_destroy(&jbc->rwl);
   free(jbc);
 }
@@ -216,13 +232,13 @@ static void _jb_db_destroy(EJDB *dbp) {
   *dbp = 0;
 }
 
-static iwrc _jb_coll_acquire_keeplock(EJDB db, const char *collname, bool wl, JBCOLL *collp) {
+static iwrc _jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCOLL *jbcp) {
   int rci;
   iwrc rc = 0;
-  *collp = 0;
+  *jbcp = 0;
   API_RLOCK(db, rci);
   JBCOLL jbc;
-  khiter_t k = kh_get(JBCOLLM, db->mcolls, collname);
+  khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
   if (k != kh_end(db->mcolls)) {
     jbc = kh_value(db->mcolls, k);
     assert(jbc);
@@ -231,14 +247,14 @@ static iwrc _jb_coll_acquire_keeplock(EJDB db, const char *collname, bool wl, JB
       rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
       goto finish;
     }
-    *collp = jbc;
+    *jbcp = jbc;
   } else {
     pthread_rwlock_unlock(&db->rwl); // relock
     if (db->oflags & IWKV_RDONLY) {
       return IW_ERROR_NOT_EXISTS;
     }
     API_WLOCK(db, rci);
-    k = kh_get(JBCOLLM, db->mcolls, collname);
+    k = kh_get(JBCOLLM, db->mcolls, coll);
     if (k != kh_end(db->mcolls)) {
       jbc = kh_value(db->mcolls, k);
       assert(jbc);
@@ -247,7 +263,7 @@ static iwrc _jb_coll_acquire_keeplock(EJDB db, const char *collname, bool wl, JB
         rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
         goto finish;
       }
-      *collp = jbc;
+      *jbcp = jbc;
     } else {
       JBL meta = 0;
       IWDB cdb = 0;
@@ -264,7 +280,7 @@ static iwrc _jb_coll_acquire_keeplock(EJDB db, const char *collname, bool wl, JB
       }
       rc = jbl_create_empty_object(&meta);
       RCGO(rc, create_finish);
-      if (!binn_object_set_str(&meta->bn, "name", collname)) {
+      if (!binn_object_set_str(&meta->bn, "name", coll)) {
         rc = JBL_ERROR_CREATION;
         goto create_finish;
       }
@@ -305,7 +321,7 @@ create_finish:
           rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
           goto finish;
         }
-        *collp = jbc;
+        *jbcp = jbc;
       }
     }
   }
@@ -317,7 +333,54 @@ finish:
   return rc;
 }
 
+
+iwrc _jb_idx_fill_lw(JBCOLL jbc, bool unique) {
+
+  uint32_t idbid;
+  IWDB idb;
+  iwdb_flags_t idbf = unique ? 0 : IWDB_DUP_UINT64_VALS;
+  iwrc rc = iwkv_new_db(jbc->db->iwkv, idbf, &idbid, &idb);
+
+
+
+  return rc;
+}
+
+
 //----------------------- Public API
+
+iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, bool unique) {
+  int rci;
+  JBCOLL jbc;
+  JBIDX cidx = 0;
+  JBL_PTR ptr = 0;
+
+  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  RCRET(rc);
+  rc = jbl_ptr_alloc(path, &ptr);
+  RCGO(rc, finish);
+
+  for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
+    if (!jbl_ptr_cmp(idx->ptr, ptr)) {
+      if (!!unique == (idx->idbf & IWDB_DUP_FLAGS)) {
+        rc = unique ? EJDB_ERROR_IDX_FOUND_BUT_NOT_UNIQUE : EJDB_ERROR_IDX_FOUND_BUT_UNIQUE;
+        RCGO(rc, finish);
+      } else {
+        goto finish;
+      }
+    }
+  }
+
+  // Now prepare indexed collection then register index
+
+
+finish:
+  if (rc) {
+    if (ptr) free(ptr);
+  }
+  API_COLL_UNLOCK(jbc, rci, rc);
+  return rc;
+}
 
 iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t *id) {
   if (!jbl) {
@@ -339,6 +402,8 @@ iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t *id) {
 
   rc = iwkv_put(jbc->cdb, &key, &val, 0);
   RCGO(rc, finish);
+
+  // TODO: Update indexes
 
   jbc->id_seq = oid;
   if (id) {
@@ -386,6 +451,9 @@ iwrc ejdb_remove(EJDB db, const char *coll, uint64_t id) {
   iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
   rc = iwkv_del(jbc->cdb, &key, 0);
+  RCGO(rc, finish);
+  // TODO: Update indexes
+finish:
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
@@ -414,6 +482,9 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
     assert(jbc);
     rc = iwkv_db(db->iwkv, jbc->dbid, IWDB_UINT64_KEYS, &cdb);
     RCGO(rc, finish);
+
+    // TODO: remove indexes
+
     rc = iwkv_db_destroy(&cdb);
     kh_del(JBCOLLM, db->mcolls, k);
     _jb_coll_destroy(jbc);
@@ -552,6 +623,10 @@ static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
   switch (ecode) {
     case EJDB_ERROR_INVALID_COLLECTION_META:
       return "Invalid collection metadata (EJDB_ERROR_INVALID_COLLECTION_META)";
+    case EJDB_ERROR_IDX_FOUND_BUT_NOT_UNIQUE:
+      return "Index at the specified path found but it must be unique (EJDB_ERROR_IDX_FOUND_BUT_NOT_UNIQUE)";
+    case EJDB_ERROR_IDX_FOUND_BUT_UNIQUE:
+      return "Index at the specified path found but it must be NOT unique (EJDB_ERROR_IDX_FOUND_BUT_UNIQUE)";
   }
   return 0;
 }

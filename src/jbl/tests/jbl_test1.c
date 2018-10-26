@@ -95,27 +95,27 @@ void jbl_test1_2() {
 
 void jbl_test1_3() {
   JBL_PTR jp;
-  iwrc rc = _jbl_ptr_malloc("/", &jp);
+  iwrc rc = jbl_ptr_alloc("/", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 1);
   CU_ASSERT_EQUAL(jp->pos, -1);
   CU_ASSERT_TRUE(*jp->n[0] == '\0')
   free(jp);
 
-  rc = _jbl_ptr_malloc("/foo", &jp);
+  rc = jbl_ptr_alloc("/foo", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 1);
   CU_ASSERT_FALSE(strcmp(jp->n[0], "foo"));
   free(jp);
 
-  rc = _jbl_ptr_malloc("/foo/bar", &jp);
+  rc = jbl_ptr_alloc("/foo/bar", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 2);
   CU_ASSERT_FALSE(strcmp(jp->n[0], "foo"));
   CU_ASSERT_FALSE(strcmp(jp->n[1], "bar"));
   free(jp);
 
-  rc = _jbl_ptr_malloc("/foo/bar/0/baz", &jp);
+  rc = jbl_ptr_alloc("/foo/bar/0/baz", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 4);
   CU_ASSERT_FALSE(strcmp(jp->n[0], "foo"));
@@ -124,7 +124,7 @@ void jbl_test1_3() {
   CU_ASSERT_FALSE(strcmp(jp->n[3], "baz"));
   free(jp);
 
-  rc = _jbl_ptr_malloc("/foo/b~0ar/0/b~1az", &jp);
+  rc = jbl_ptr_alloc("/foo/b~0ar/0/b~1az", &jp);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL(jp->cnt, 4);
   CU_ASSERT_FALSE(strcmp(jp->n[0], "foo"));
@@ -133,19 +133,19 @@ void jbl_test1_3() {
   CU_ASSERT_FALSE(strcmp(jp->n[3], "b/az"));
   free(jp);
 
-  rc = _jbl_ptr_malloc("/foo/", &jp);
+  rc = jbl_ptr_alloc("/foo/", &jp);
   CU_ASSERT_EQUAL(rc, JBL_ERROR_JSON_POINTER);
   free(jp);
 
-  rc = _jbl_ptr_malloc("//", &jp);
+  rc = jbl_ptr_alloc("//", &jp);
   CU_ASSERT_EQUAL(rc, JBL_ERROR_JSON_POINTER);
   free(jp);
 
-  rc = _jbl_ptr_malloc("", &jp);
+  rc = jbl_ptr_alloc("", &jp);
   CU_ASSERT_EQUAL(rc, JBL_ERROR_JSON_POINTER);
   free(jp);
 
-  rc = _jbl_ptr_malloc("~", &jp);
+  rc = jbl_ptr_alloc("~", &jp);
   CU_ASSERT_EQUAL(rc, JBL_ERROR_JSON_POINTER);
   free(jp);
 }
