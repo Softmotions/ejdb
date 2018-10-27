@@ -71,12 +71,23 @@ Projections:
 /**/[familyName = "Doe"] and /**/tags/[* = "sample"] | /**/tags + /author/{givenName,familyName}
 ```
 
+Skip, limit, sorting:
+
+```
+  /**/[familyName = "Doe"]
+  | apply [{"op":"replace", path="@fname", value="Hopkins" }]
+  | all - /author/family
+  | asc /author/family/*/zzz
+    desc /author/age
+    skip 100 limit 1000
+```
+
 Labels and patching:
 
 Find document then apply JSON patch to it
 
 ```
-@fname/**/[familyName = "Doe"] | apply [{"op":"replace", path="@fname", value="Hopkins" }]
+/**/[familyName = "Doe"] | apply [{"op":"replace", path="@fname", value="Hopkins" }]
 ```
 
 Find document then apply JSON merge patch and projection
@@ -88,8 +99,8 @@ Find document then apply JSON merge patch and projection
 ```
 
 ```
-@fname/**/[familyName re "D\\n.*"] 
-  and /**/family/motnher/[age > 30] 
+@fname/**/[familyName re "D\\n.*"]
+  and /**/family/motnher/[age > 30]
   and not /bar/"ba z\"zz"
 | apply {"@fname": "Hopkins"}
 | all - /**/author/{givenName,familyName}

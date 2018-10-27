@@ -150,7 +150,7 @@ static JQPUNIT *_jqp_string(yycontext *yy, jqp_string_flavours_t flavour, const 
   return unit;
 }
 
-static JQPUNIT *_jqp_number(yycontext *yy, const char *text) {
+static JQPUNIT *_jqp_number(yycontext *yy, jqp_int_flavours_t flavour, const char *text) {
   JQPUNIT *unit = _jqp_unit(yy);
   char *eptr;
   int64_t ival = strtoll(text, &eptr, 0);
@@ -165,9 +165,11 @@ static JQPUNIT *_jqp_number(yycontext *yy, const char *text) {
       iwlog_error("Invalid double number: %s", text);
       JQRC(yy, JQL_ERROR_QUERY_PARSE);
     }
+    unit->dblval.flavour |= flavour;
   } else {
     unit->type = JQP_INTEGER_TYPE;
     unit->intval.value = ival;
+    unit->intval.flavour |= flavour;
   }
   return unit;
 }

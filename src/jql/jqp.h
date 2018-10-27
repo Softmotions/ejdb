@@ -20,6 +20,11 @@ typedef enum {
 } jqp_string_flavours_t;
 
 typedef enum {
+  JQP_INT_SKIP  = 1,
+  JQP_INT_LIMIT = 1 << 1
+} jqp_int_flavours_t;
+
+typedef enum {
   JQP_QUERY_TYPE = 1,
   JQP_EXPR_NODE_TYPE,
   JQP_FILTER_TYPE,
@@ -105,11 +110,13 @@ typedef struct JQP_STRING {
 
 typedef struct JQP_INTEGER {
   jqp_unit_t type;
+  jqp_int_flavours_t flavour;
   int64_t value;
 } JQP_INTEGER;
 
 typedef struct JQP_DOUBLE {
   jqp_unit_t type;
+  jqp_int_flavours_t flavour;
   double value;
 } JQP_DOUBLE;
 
