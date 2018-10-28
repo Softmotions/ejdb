@@ -412,6 +412,10 @@ static void _jqp_op_negate(yycontext *yy) {
   yy->aux->negate = true;
 }
 
+static void _jqp_op_negate_reset(yycontext *yy) {
+  yy->aux->negate = false;
+}
+
 static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
   JQP_AUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);

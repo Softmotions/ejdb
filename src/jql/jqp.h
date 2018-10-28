@@ -16,7 +16,8 @@ typedef enum {
   JQP_STR_PROJFIELD   = 1 << 2, /**< Projection field **/
   JQP_STR_PROJALIAS   = 1 << 3, /**< Projection alias (all) **/
   JQP_STR_QUOTED      = 1 << 4, /**< String is quoted */
-  JQP_STR_STAR        = 1 << 5  /**< Star (*) string */
+  JQP_STR_STAR        = 1 << 5, /**< Star (*) string */
+  JQP_STR_NEGATE      = 1 << 6  /** Boolean negation/mode applied to it */
 } jqp_string_flavours_t;
 
 typedef enum {

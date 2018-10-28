@@ -13,6 +13,7 @@ static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size);
 static JQPUNIT *_jqp_unit(struct _yycontext *yy);
 
 static void _jqp_op_negate(struct _yycontext *yy);
+static void _jqp_op_negate_reset(struct _yycontext *yy);
 static JQPUNIT *_jqp_string(struct _yycontext *yy, jqp_string_flavours_t flv, const char *text);
 static JQPUNIT *_jqp_unescaped_string(struct _yycontext *yy, jqp_string_flavours_t flv, const char *text);
 static JQPUNIT *_jqp_number(struct _yycontext *yy, jqp_int_flavours_t flv, const char *text);
@@ -80,15 +81,18 @@ PROJECTION  = '|' _ (sn:PROJNODES { _jqp_unit_push(yy, sn); }
 
 OPTS        = '|' _ OPT (__ OPT)*
 
-OPT = SKIP | LIMIT | ORDERBY
+OPT = p:SKIP | p:LIMIT | p:ORDERBY
 
 SKIP = "skip" __ (<NUMI> { $$ = _jqp_number(yy, JQP_INT_SKIP, yytext); } | p:PLACEHOLDER { $$ = p; })
 
 LIMIT = "limit" __ (<NUMI> { $$ = _jqp_number(yy, JQP_INT_LIMIT, yytext); } | p:PLACEHOLDER { $$ = p; })
 
-ORDERBY = ("asc" | "desc") __ (ORDERNODE+ | PLACEHOLDER)
+ORDERBY = ("asc" | "desc" { _jqp_op_negate(yy); })
+          __ (<ORDERNODE+> { $$ = _jqp_string(yy, yy->aux->negate ? JQP_STR_NEGATE : 0, yytext); }
+              | p:PLACEHOLDER { p->string.flavour |= (yy->aux->negate ? JQP_STR_NEGATE : 0); $$ = p; })
+          { _jqp_op_negate_reset(yy); }
 
-ORDERNODE = '/' p:PROJPROP { $$ = p;  }
+ORDERNODE = '/' PROJPROP
 
 PROJNODES = (a:PROJALL { $$ = _jqp_projection(yy, a); }
             | (sn:PROJNODE { _jqp_unit_push(yy, sn); } (n:PROJNODE { _jqp_unit_push(yy, n);})*) { $$ = _jqp_pop_projections(yy, sn); })
