@@ -9,7 +9,7 @@ typedef struct MCTX {
   binn *bv;
   const char *key;
   struct _JQL *q;
-  JQP_QUERY *qp;
+  JQP_AUX *aux;
   JBL_VCTX *vctx;
 } MCTX;
 
@@ -244,7 +244,7 @@ iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
   q->matched = false;
   q->opaque = 0;
 
-  rc = _jql_init_expression_node(q->qp->expr, aux);
+  rc = _jql_init_expression_node(aux->expr, aux);
 
 finish:
   if (rc) {
@@ -262,9 +262,9 @@ const char* jql_collection(JQL q) {
 void jql_reset(JQL q, bool reset_placeholders) {
   q->matched = false;
   q->dirty = false;
-  _jql_reset_expression_node(q->qp->expr, q->qp->aux);
+  JQP_AUX *aux = q->qp->aux;
+  _jql_reset_expression_node(aux->expr, aux);
   if (reset_placeholders) {
-    JQP_AUX *aux = q->qp->aux;
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->next) { // Cleanup placeholders
       _jql_jqval_destroy(pv->opaque);
     }
@@ -530,7 +530,7 @@ static bool _match_regexp(MCTX *mctx,
   static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
   JQVAL sleft, sright; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
-  JQP_AUX *aux = mctx->qp->aux;
+  JQP_AUX *aux = mctx->aux;
   char *input = 0;
   int rci, match_end = 0;
   const char *expr = 0;
@@ -807,7 +807,7 @@ static JQVAL *_unit_to_jqval(MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
       *rcp = JQL_ERROR_INVALID_PLACEHOLDER;
       return 0;
     } else {
-      JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->qp->aux->pool);
+      JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->aux->pool);
       if (!qv) {
         *rcp = IW_ERROR_ALLOC;
         return 0;
@@ -821,7 +821,7 @@ static JQVAL *_unit_to_jqval(MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
     if (unit->json.opaque) {
       return (JQVAL *) unit->json.opaque;
     }
-    JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->qp->aux->pool);
+    JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->aux->pool);
     if (!qv) {
       *rcp = IW_ERROR_ALLOC;
       return 0;
@@ -1031,15 +1031,15 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, const char *key, int 
     .key = nkey,
     .vctx = vctx,
     .q = q,
-    .qp = q->qp
+    .aux = q->qp->aux
   };
-  q->matched = _match_expression_node(mctx.qp->expr, &mctx, rcp);
+  q->matched = _match_expression_node(mctx.aux->expr, &mctx, rcp);
   if (*rcp || q->matched) {
     return JBL_VCMD_TERMINATE;
   }
   if (q->dirty) {
     q->dirty = false;
-    if (!_jql_need_deeper_match(mctx.qp->expr, lvl)) {
+    if (!_jql_need_deeper_match(mctx.aux->expr, lvl)) {
       return JBL_VCMD_SKIP_NESTED;
     }
   }
@@ -1065,11 +1065,11 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
 }
 
 bool jql_has_apply(JQL q) {
-  return q->qp->apply;
+  return q->qp->aux->apply;
 }
 
 bool jql_has_projection(JQL q) {
-  return q->qp->projection;
+  return q->qp->aux->projection;
 }
 
 // ----------- JQL Projection
@@ -1162,7 +1162,7 @@ static jbn_visitor_cmd_t _proj_keep_visitor(int lvl, JBL_NODE n, const char *key
 
 static iwrc _jql_project(JBL_NODE root, JQL q) {
 
-  JQP_PROJECTION *proj = q->qp->projection;
+  JQP_PROJECTION *proj = q->qp->aux->projection;
   // Check trivial cases
   for (JQP_PROJECTION *p = proj; p; p = p->next) {
     bool all = (p->value->flavour & JQP_STR_PROJALIAS);
@@ -1210,17 +1210,18 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
 
 iwrc jql_apply(JQL q, const JBL jbl, JBL_NODE *out, IWPOOL *pool) {
   *out = 0;
-  if (!q->qp->apply && !q->qp->projection) {
+  JQP_AUX *aux = q->qp->aux;
+  if (!aux->apply && !aux->projection) {
     return 0;
   }
   JBL_NODE root;
   iwrc rc = jbl_to_node(jbl, &root, pool);
   RCRET(rc);
-  if (q->qp->apply) {
-    rc = jbl_patch_auto(root, q->qp->apply, pool);
+  if (aux->apply) {
+    rc = jbl_patch_auto(root, aux->apply, pool);
     RCRET(rc);
   }
-  if (q->qp->projection) {
+  if (aux->projection) {
     rc = _jql_project(root, q);
     RCRET(rc);
   }
@@ -1249,6 +1250,10 @@ static const char *_ecodefn(locale_t locale, uint32_t ecode) {
       return "Invalid regular expression: expected '}' at end of submatch (JQL_ERROR_REGEXP_SUBMATCH)";
     case JQL_ERROR_REGEXP_ENGINE:
       return "Illegal instruction in compiled regular expression (please report this bug) (JQL_ERROR_REGEXP_ENGINE)";
+    case JQL_ERROR_SKIP_ALREADY_SET:
+      return "Skip clause already specified (JQL_ERROR_SKIP_ALREADY_SET)";
+    case JQL_ERROR_LIMIT_ALREADY_SET:
+      return "Limit clause already specified (JQL_ERROR_SKIP_ALREADY_SET)";
     default:
       break;
   }

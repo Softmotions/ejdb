@@ -20,6 +20,8 @@ typedef enum {
   JQL_ERROR_REGEXP_SUBEXP,        /**< Invalid regular expression: expected ')' at end of subexpression (JQL_ERROR_REGEXP_SUBEXP) */
   JQL_ERROR_REGEXP_SUBMATCH,      /**< Invalid regular expression: expected '}' at end of submatch (JQL_ERROR_REGEXP_SUBMATCH) */
   JQL_ERROR_REGEXP_ENGINE,        /**< Illegal instruction in compiled regular expression (please report this bug) (JQL_ERROR_REGEXP_ENGINE) */
+  JQL_ERROR_SKIP_ALREADY_SET,     /**< Skip clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
+  JQL_ERROR_LIMIT_ALREADY_SET,     /**< Limit clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
   _JQL_ERROR_END,
   _JQL_ERROR_UNMATCHED
 } jq_ecode;

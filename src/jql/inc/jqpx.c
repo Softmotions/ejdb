@@ -689,8 +689,8 @@ static void _jqp_set_filters_expr(yycontext *yy, JQPUNIT *expr) {
   }
   JQPUNIT *query = _jqp_unit(yy);
   query->type = JQP_QUERY_TYPE;
-  query->query.expr = &expr->exprnode;
   query->query.aux = aux;
+  aux->expr = &expr->exprnode;
   aux->query = &query->query;
 }
 
@@ -701,15 +701,56 @@ static void _jqp_set_apply(yycontext *yy, JQPUNIT *unit) {
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   if (unit->type == JQP_JSON_TYPE) {
-    aux->query->apply = &unit->json.jn;
-    aux->query->apply_placeholder = 0;
+    aux->apply = &unit->json.jn;
+    aux->apply_placeholder = 0;
   } else if (unit->type == JQP_STRING_TYPE && (unit->string.flavour & JQP_STR_PLACEHOLDER)) {
-    aux->query->apply_placeholder = unit->string.value;
-    aux->query->apply = 0;
+    aux->apply_placeholder = unit->string.value;
+    aux->apply = 0;
   } else {
     iwlog_error("Unexpected type: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
+}
+
+static void _jqp_add_orderby(yycontext *yy, JQPUNIT *unit) {
+  JQP_AUX *aux = yy->aux;
+  if (unit->type != JQP_STRING_TYPE) {
+    iwlog_error("Unexpected type for order by: %d", unit->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  if (!aux->orderby) {
+    aux->orderby = &unit->string;
+  } else {
+    JQP_STRING *orderby;
+    while (orderby->next) {
+      orderby = orderby->next;
+    }
+    orderby->next = &unit->string;
+  }
+}
+
+static void _jqp_set_skip(yycontext *yy, JQPUNIT *unit) {
+  JQP_AUX *aux = yy->aux;
+  if (unit->type != JQP_INTEGER_TYPE && !(unit->type == JQP_STRING_TYPE && !(unit->string.flavour & JQP_STR_PLACEHOLDER))) {
+    iwlog_error("Unexpected type for skip: %d", unit->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  if (aux->skip) {
+    JQRC(yy, JQL_ERROR_SKIP_ALREADY_SET);
+  }
+  aux->skip = unit;
+}
+
+static void _jqp_set_limit(yycontext *yy, JQPUNIT *unit) {
+  JQP_AUX *aux = yy->aux;
+  if (unit->type != JQP_INTEGER_TYPE && !(unit->type == JQP_STRING_TYPE && !(unit->string.flavour & JQP_STR_PLACEHOLDER))) {
+    iwlog_error("Unexpected type for limit: %d", unit->type);
+    JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+  if (aux->limit) {
+    JQRC(yy, JQL_ERROR_LIMIT_ALREADY_SET);
+  }
+  aux->limit = unit;
 }
 
 static void _jqp_set_projection(yycontext *yy, JQPUNIT *unit) {
@@ -719,7 +760,7 @@ static void _jqp_set_projection(yycontext *yy, JQPUNIT *unit) {
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   if (unit->type == JQP_PROJECTION_TYPE) {
-    aux->query->projection = &unit->projection;
+    aux->projection = &unit->projection;
   } else {
     iwlog_error("Unexpected type: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -864,10 +905,10 @@ static iwrc _jqp_print_projection(const JQP_PROJECTION *p, jbl_json_printer pt, 
 static iwrc _jqp_print_apply(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
   PT("| apply ", 8, 0, 0);
-  if (q->apply_placeholder) {
-    PT(q->apply_placeholder, -1, 0, 0);
-  } else if (q->apply) {
-    rc = jbl_node_as_json(q->apply, pt, op, 0);
+  if (q->aux->apply_placeholder) {
+    PT(q->aux->apply_placeholder, -1, 0, 0);
+  } else if (q->aux->apply) {
+    rc = jbl_node_as_json(q->aux->apply, pt, op, 0);
     RCRET(rc);
   }
   return rc;
@@ -1003,7 +1044,7 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
                                        jbl_json_printer pt,
                                        void *op) {
   iwrc rc = 0;
-  bool inbraces = (en != q->expr && en->type == JQP_EXPR_NODE_TYPE);
+  bool inbraces = (en != q->aux->expr && en->type == JQP_EXPR_NODE_TYPE);
   if (inbraces) {
     PT(0, 0, '(', 1);
   }
@@ -1031,16 +1072,17 @@ iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   if (!q || !pt) {
     return IW_ERROR_INVALID_ARGS;
   }
-  iwrc rc = _jqp_print_expression_node(q, q->expr, pt, op);
+  JQP_AUX *aux = q->aux;
+  iwrc rc = _jqp_print_expression_node(q, aux->expr, pt, op);
   RCRET(rc);
-  if (q->apply_placeholder || q->apply) {
+  if (aux->apply_placeholder || aux->apply) {
     PT(0, 0, '\n', 1);
     rc = _jqp_print_apply(q, pt, op);
     RCRET(rc);
   }
-  if (q->projection) {
+  if (aux->projection) {
     PT(0, 0, '\n', 1);
-    rc = _jqp_print_projection(q->projection, pt, op);
+    rc = _jqp_print_projection(aux->projection, pt, op);
   }
   return rc;
 }

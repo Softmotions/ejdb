@@ -155,10 +155,6 @@ typedef struct JQP_PROJECTION {
 
 typedef struct JQP_QUERY {
   jqp_unit_t type;
-  struct JQP_EXPR_NODE *expr;
-  JBL_NODE apply;
-  const char *apply_placeholder;
-  struct JQP_PROJECTION *projection;
   struct JQP_AUX *aux;
 } JQP_QUERY;
 
@@ -204,6 +200,8 @@ typedef struct JQP_STACK {
 typedef struct JQP_AUX {
   bool negate;
   int pos;
+  int stackn;
+  int num_placeholders;
   iwrc rc;
   jmp_buf fatal_jmp;
   const char *buf;
@@ -211,13 +209,20 @@ typedef struct JQP_AUX {
   IWPOOL *pool;
   struct JQP_QUERY *query;
   JQP_STACK *stack;
-  int num_placeholders;
+  //
+  struct JQP_EXPR_NODE *expr;
+  struct JQP_PROJECTION *projection;
   JQP_STRING *start_placeholder;
   JQP_STRING *end_placeholder;
   JQP_OP *start_op;
   JQP_OP *end_op;
+  JQPUNIT *skip;
+  JQPUNIT *limit;
+  JQP_STRING *orderby;
+  JBL_NODE apply;
+  const char *apply_placeholder;
+  //
   JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];
-  int stackn;
 } JQP_AUX;
 
 iwrc jqp_aux_create(JQP_AUX **auxp, const char *input);
