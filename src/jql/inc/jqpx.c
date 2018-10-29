@@ -721,7 +721,7 @@ static void _jqp_add_orderby(yycontext *yy, JQPUNIT *unit) {
   if (!aux->orderby) {
     aux->orderby = &unit->string;
   } else {
-    JQP_STRING *orderby;
+    JQP_STRING *orderby = aux->orderby;
     while (orderby->next) {
       orderby = orderby->next;
     }
