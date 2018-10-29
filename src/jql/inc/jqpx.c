@@ -5,10 +5,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_ORDER_BY_CLAUSES 64
+
 #define JQRC(yy_, rc_) do {           \
     iwrc __rc = (rc_);                  \
     if (__rc) _jqp_fatal(yy_, __rc); \
   } while(0)
+
+
+static void _jqp_debug(yycontext *yy, const char *text) {
+  fprintf(stderr, "TEXT=%s\n", text);
+}
 
 static void _jqp_fatal(yycontext *yy, iwrc rc) {
   JQP_AUX *aux = yy->aux;
@@ -722,8 +729,11 @@ static void _jqp_add_orderby(yycontext *yy, JQPUNIT *unit) {
     aux->orderby = &unit->string;
   } else {
     JQP_STRING *orderby = aux->orderby;
-    while (orderby->next) {
+    for (int i = 0; orderby->next; ++i) {
       orderby = orderby->next;
+      if (i >= MAX_ORDER_BY_CLAUSES) {
+        JQRC(yy, JQL_ERROR_ORDERBY_MAX_LIMIT);
+      }
     }
     orderby->next = &unit->string;
   }
@@ -731,7 +741,8 @@ static void _jqp_add_orderby(yycontext *yy, JQPUNIT *unit) {
 
 static void _jqp_set_skip(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
-  if (unit->type != JQP_INTEGER_TYPE && !(unit->type == JQP_STRING_TYPE && !(unit->string.flavour & JQP_STR_PLACEHOLDER))) {
+  if (unit->type != JQP_INTEGER_TYPE && !(unit->type == JQP_STRING_TYPE
+                                          && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
     iwlog_error("Unexpected type for skip: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
@@ -743,7 +754,8 @@ static void _jqp_set_skip(yycontext *yy, JQPUNIT *unit) {
 
 static void _jqp_set_limit(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
-  if (unit->type != JQP_INTEGER_TYPE && !(unit->type == JQP_STRING_TYPE && !(unit->string.flavour & JQP_STR_PLACEHOLDER))) {
+  if (unit->type != JQP_INTEGER_TYPE && !(unit->type == JQP_STRING_TYPE
+                                          && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
     iwlog_error("Unexpected type for limit: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
@@ -1068,6 +1080,62 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
   return rc;
 }
 
+static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
+  iwrc rc = 0;
+  int c = 0;
+  JQP_AUX *aux = q->aux;
+  PT(0, 0, '|', 1);
+  JQP_STRING *ob = aux->orderby;
+  while (ob) {
+    if (c++ > 0) {
+      PT("\n ", 2, 0, 0);
+    }
+    if (ob->flavour & JQP_STR_NEGATE) {
+      PT(" desc ", 6, 0, 0);
+    } else {
+      PT(" asc ", 5, 0, 0);
+    }
+    if (ob->flavour & JQP_STR_PLACEHOLDER) {
+      PT(0, 0, ':', 1);
+    }
+    PT(ob->value, -1, 0, 0);
+    ob = ob->next;
+  }
+  if (aux->skip || aux->limit) {
+    if (c > 0) {
+      PT("\n ", 2, 0, 0);
+    }
+  }
+  if (aux->skip) {
+    PT(" skip ", 6, 0, 0);
+    if (aux->skip->type == JQP_STRING_TYPE) {
+      if (aux->skip->string.flavour & JQP_STR_PLACEHOLDER) {
+        PT(0, 0, ':', 1);
+      }
+      PT(aux->skip->string.value, -1, 0, 0);
+    } else if (aux->skip->type == JQP_INTEGER_TYPE) {
+      char nbuf[JBNUMBUF_SIZE];
+      iwitoa(aux->skip->intval.value, nbuf, JBNUMBUF_SIZE);
+      PT(nbuf, -1, 0, 0);
+    }
+  }
+  if (aux->limit) {
+    PT(" limit ", 7, 0, 0);
+    if (aux->limit->type == JQP_STRING_TYPE) {
+      if (aux->limit->string.flavour & JQP_STR_PLACEHOLDER) {
+        PT(0, 0, ':', 1);
+      }
+      PT(aux->limit->string.value, -1, 0, 0);
+    } else if (aux->limit->type == JQP_INTEGER_TYPE) {
+      char nbuf[JBNUMBUF_SIZE];
+      iwitoa(aux->limit->intval.value, nbuf, JBNUMBUF_SIZE);
+      PT(nbuf, -1, 0, 0);
+    }
+  }
+  return rc;
+}
+
+
 iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   if (!q || !pt) {
     return IW_ERROR_INVALID_ARGS;
@@ -1083,7 +1151,13 @@ iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   if (aux->projection) {
     PT(0, 0, '\n', 1);
     rc = _jqp_print_projection(aux->projection, pt, op);
+    RCRET(rc);
   }
+  if (aux->skip || aux->limit || aux->orderby) {
+    PT(0, 0, '\n', 1);
+    rc = _jqp_print_opts(q, pt, op);
+  }
+
   return rc;
 }
 

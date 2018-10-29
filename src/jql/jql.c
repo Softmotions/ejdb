@@ -1254,6 +1254,8 @@ static const char *_ecodefn(locale_t locale, uint32_t ecode) {
       return "Skip clause already specified (JQL_ERROR_SKIP_ALREADY_SET)";
     case JQL_ERROR_LIMIT_ALREADY_SET:
       return "Limit clause already specified (JQL_ERROR_SKIP_ALREADY_SET)";
+    case JQL_ERROR_ORDERBY_MAX_LIMIT:
+      return "Reached max number of asc/desc order clauses: 64 (JQL_ERROR_ORDERBY_MAX_LIMIT)";
     default:
       break;
   }

@@ -8,6 +8,8 @@
   JQP_AUX *aux;
 
 struct _yycontext;
+
+static void _jqp_debug(struct _yycontext *yy, const char *text);
 static void *_jqp_malloc(struct _yycontext *yy, size_t size);
 static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size);
 static JQPUNIT *_jqp_unit(struct _yycontext *yy);
@@ -92,7 +94,7 @@ SKIP = "skip" __ (<NUMI> { $$ = _jqp_number(yy, JQP_INT_SKIP, yytext); } | p:PLA
 LIMIT = "limit" __ (<NUMI> { $$ = _jqp_number(yy, JQP_INT_LIMIT, yytext); } | p:PLACEHOLDER { $$ = p; }) { _jqp_set_limit(yy, $$); }
 
 ORDERBY = ("asc" | "desc" { _jqp_op_negate(yy); })
-          __ (<ORDERNODE+> { $$ = _jqp_string(yy, yy->aux->negate ? JQP_STR_NEGATE : 0, yytext); }
+          __ (<(ORDERNODE+)> { _jqp_debug(yy, yytext); $$ = _jqp_string(yy, yy->aux->negate ? JQP_STR_NEGATE : 0, yytext); }
               | p:PLACEHOLDER { p->string.flavour |= (yy->aux->negate ? JQP_STR_NEGATE : 0); $$ = p; })
           { _jqp_op_negate_reset(yy); _jqp_add_orderby(yy, $$); }
 
