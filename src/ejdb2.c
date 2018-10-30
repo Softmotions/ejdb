@@ -120,11 +120,27 @@ finish:
   return rc;
 }
 
+static void _jb_idx_destroy(JBIDX idx) {
+  if (idx->idb) {
+    iwkv_db_cache_release(idx->idb);
+  }
+  if (idx->ptr) {
+    free(idx->ptr);
+  }
+  free(idx);
+}
+
 static void _jb_coll_destroy(JBCOLL jbc) {
   if (jbc->meta) {
     jbl_destroy(&jbc->meta);
   }
-  // TODO: destroy indexes
+  if (jbc->cdb) {
+    iwkv_db_cache_release(jbc->cdb);
+  }
+  for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
+    _jb_idx_destroy(idx);
+  }
+  jbc->idx = 0;
   pthread_rwlock_destroy(&jbc->rwl);
   free(jbc);
 }
@@ -370,8 +386,9 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, bool unique)
       }
     }
   }
-
   // Now prepare indexed collection then register index
+
+
 
 
 finish:
