@@ -370,6 +370,10 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
     default:
       return EJDB_ERROR_INVALID_INDEX_MODE;
   }
+  if ((mode & EJDB_IDX_ARR) && (mode & EJDB_IDX_UNIQUE)) {
+    // Array indexes cannot be unique
+    return EJDB_ERROR_INVALID_INDEX_MODE;
+  }
 
   iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
