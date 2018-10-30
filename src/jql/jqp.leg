@@ -108,7 +108,7 @@ PROJNODES = (a:PROJALL { $$ = _jqp_projection(yy, a); }
 
 PROJALL = <"all"> { $$ = _jqp_string(yy, JQP_STR_PROJALIAS, yytext); }
 
-PROJNODE = '/' (p:PROJFIELDS | p:PROJPROP)
+PROJNODE = '/' (PROJFIELDS | PROJPROP)
 
 PROJFIELDS = ('{' _ sp:PROJPROP { _jqp_unit_push(yy, sp); } (_ ',' _ p:PROJPROP { _jqp_unit_push(yy, p); } )* _ '}')
              { $$ = _jqp_pop_projfields_chain(yy, sp); }
@@ -162,7 +162,7 @@ NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("in" | "ni" | "re")>      { $$ = _
 
 STRP = <CHP+> { $$ = _jqp_unescaped_string(yy, 0, yytext); }
 
-STRSTAR = <"*"> { $$ = _jqp_unescaped_string(yy, JQP_STR_STAR, yytext); }
+STRSTAR = "*" { $$ = _jqp_unescaped_string(yy, JQP_STR_STAR, "*"); }
 
 STRN = '"' <CHJ+> '"' { $$ = _jqp_unescaped_string(yy, JQP_STR_QUOTED, yytext); }
 
@@ -184,9 +184,9 @@ VALJ =    STRJ
         | NUMJ
         | OBJJ
         | ARRJ
-        | <"true">  { $$ = _jqp_json_true_false_null(yy, yytext); }
-        | <"false"> { $$ = _jqp_json_true_false_null(yy, yytext); }
-        | <"null">  { $$ = _jqp_json_true_false_null(yy, yytext); }
+        | "true"  { $$ = _jqp_json_true_false_null(yy, "true"); }
+        | "false" { $$ = _jqp_json_true_false_null(yy, "false"); }
+        | "null"  { $$ = _jqp_json_true_false_null(yy, "null"); }
 
 STRJ = '"' <(CHJ*)> '"' { $$ = _jqp_json_string(yy, yytext); }
 
