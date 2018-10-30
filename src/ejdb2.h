@@ -13,11 +13,19 @@ IW_EXTERN_C_START
  */
 typedef enum {
   _EJDB_ERROR_START = (IW_ERROR_START + 15000UL),
-  EJDB_ERROR_INVALID_COLLECTION_META,     /**< Invalid collection metadata */
-  EJDB_ERROR_IDX_FOUND_BUT_NOT_UNIQUE,    /**< Index at the specified path found but it must be unique */
-  EJDB_ERROR_IDX_FOUND_BUT_UNIQUE,        /**< Index at the specified path found but it must be NOT unique */
+  EJDB_ERROR_INVALID_COLLECTION_META,             /**< Invalid collection metadata */
+  EJDB_ERROR_INVALID_INDEX_MODE,                  /**< Invalid index mode */
+  EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE,    /**< Index exists but mismatched uniqueness constraint */
   _EJDB_ERROR_END
 } ejdb_ecode;
+
+
+typedef enum {
+  EJDB_IDX_UNIQUE = 1,
+  EJDB_IDX_ARR = 1 << 1,
+  EJDB_IDX_STR = 1 << 2,
+  EJDB_IDX_NUM = 1 << 3
+} ejdb_idx_mode_t;
 
 /**
  * @brief Database handler.
@@ -84,9 +92,9 @@ IW_EXPORT iwrc ejdb_remove_collection(EJDB db, const char *coll);
 
 IW_EXPORT iwrc ejdb_ensure_collection(EJDB db, const char *coll);
 
-IW_EXPORT iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, bool unique);
+IW_EXPORT iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mode_t mode);
 
-IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path);
+IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mode_t mode);
 
 IW_EXPORT iwrc ejdb_get_meta(EJDB db, JBL *jblp);
 

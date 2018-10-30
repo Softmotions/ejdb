@@ -55,11 +55,12 @@ typedef struct _JBCOLL {
 
 /** Database collection index */
 struct _JBIDX {
-  iwdb_flags_t idbf;
-  JBCOLL jbc;
-  JBL_PTR ptr;
-  IWDB idb;
-  struct _JBIDX *next;
+  ejdb_idx_mode_t mode;     /**< Index mode/type mask */
+  iwdb_flags_t idbf;        /**< Index database flags */
+  JBCOLL jbc;               /**< Owner document collection */
+  JBL_PTR ptr;              /**< Indexed JSON path poiner */
+  IWDB idb;                 /**< KV database for this index */
+  struct _JBIDX *next;      /**< Next index in chain */
 };
 
 KHASH_MAP_INIT_STR(JBCOLLM, JBCOLL)
@@ -349,27 +350,26 @@ finish:
   return rc;
 }
 
-
-iwrc _jb_idx_fill_lw(JBCOLL jbc, bool unique) {
-
-  uint32_t idbid;
-  IWDB idb;
-  iwdb_flags_t idbf = unique ? 0 : IWDB_DUP_UINT64_VALS;
-  iwrc rc = iwkv_new_db(jbc->db->iwkv, idbf, &idbid, &idb);
-
-
-
-  return rc;
-}
-
-
 //----------------------- Public API
 
-iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, bool unique) {
-  int rci;
+iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mode_t mode) {
+  if (!db || !coll || !path) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  int rci, sz;
   JBCOLL jbc;
   JBIDX cidx = 0;
   JBL_PTR ptr = 0;
+  bool unique = (mode & EJDB_IDX_UNIQUE);
+
+  switch (mode & (EJDB_IDX_STR | EJDB_IDX_NUM)) {
+    case EJDB_IDX_STR:
+      break;
+    case EJDB_IDX_NUM:
+      break;
+    default:
+      return EJDB_ERROR_INVALID_INDEX_MODE;
+  }
 
   iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
@@ -377,24 +377,41 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, bool unique)
   RCGO(rc, finish);
 
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
-    if (!jbl_ptr_cmp(idx->ptr, ptr)) {
-      if (!!unique == (idx->idbf & IWDB_DUP_FLAGS)) {
-        rc = unique ? EJDB_ERROR_IDX_FOUND_BUT_NOT_UNIQUE : EJDB_ERROR_IDX_FOUND_BUT_UNIQUE;
-        RCGO(rc, finish);
-      } else {
-        goto finish;
+    if ((idx->mode & ~EJDB_IDX_UNIQUE) == (mode & ~EJDB_IDX_UNIQUE) && !jbl_ptr_cmp(idx->ptr, ptr)) {
+      if ((idx->mode & EJDB_IDX_UNIQUE) != (mode & EJDB_IDX_UNIQUE)) {
+        rc = EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE;
       }
+      goto finish;
     }
   }
-  // Now prepare indexed collection then register index
+  cidx = calloc(1, sizeof(*cidx));
+  if (!cidx) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    goto finish;
+  }
+  cidx->ptr = ptr;
+  ptr = 0;
 
+  cidx->idbf = (mode & EJDB_IDX_NUM) ? IWDB_UINT64_KEYS : 0;
+  if (!(mode & EJDB_IDX_UNIQUE)) {
+    cidx->idbf |= IWDB_DUP_UINT64_VALS;
+  }
+  rc = iwkv_new_db(db->iwkv, cidx->idbf, 0, &cidx->idb);
+  RCGO(rc, finish);
 
-
+  // TODO: fill index with collection items data
 
 finish:
   if (rc) {
-    if (ptr) free(ptr);
+    if (cidx) {
+      if (cidx->idb) {
+        iwkv_db_destroy(&cidx->idb);
+        cidx->idb = 0;
+      }
+      _jb_idx_destroy(cidx);
+    }
   }
+  if (ptr) free(ptr);
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
@@ -640,10 +657,10 @@ static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
   switch (ecode) {
     case EJDB_ERROR_INVALID_COLLECTION_META:
       return "Invalid collection metadata (EJDB_ERROR_INVALID_COLLECTION_META)";
-    case EJDB_ERROR_IDX_FOUND_BUT_NOT_UNIQUE:
-      return "Index at the specified path found but it must be unique (EJDB_ERROR_IDX_FOUND_BUT_NOT_UNIQUE)";
-    case EJDB_ERROR_IDX_FOUND_BUT_UNIQUE:
-      return "Index at the specified path found but it must be NOT unique (EJDB_ERROR_IDX_FOUND_BUT_UNIQUE)";
+    case EJDB_ERROR_INVALID_INDEX_MODE:
+      return "Invalid index mode (EJDB_ERROR_INVALID_INDEX_MODE)";
+    case EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE:
+      return "Index exists but mismatched uniqueness constraint (EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE)";
   }
   return 0;
 }
