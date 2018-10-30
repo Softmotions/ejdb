@@ -1260,7 +1260,7 @@ YY_ACTION(void) yy_1_PROJALL(yycontext *yy, char *yytext, int yyleng)
   yyprintf((stderr, "do yy_1_PROJALL\n"));
   {
 #line 109
-   __ = _jqp_string(yy, JQP_STR_PROJALIAS, yytext); ;
+   __ = _jqp_string(yy, JQP_STR_PROJALIAS, "all"); ;
   }
 #undef yythunkpos
 #undef yypos
@@ -2322,19 +2322,7 @@ YY_RULE(int) yy_PROJNODE(yycontext *yy)
 }
 YY_RULE(int) yy_PROJALL(yycontext *yy)
 {  int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
-  yyprintf((stderr, "%s\n", "PROJALL"));  yyText(yy, yy->__begin, yy->__end);  {
-#define yytext yy->__text
-#define yyleng yy->__textlen
-if (!(YY_BEGIN)) goto l130;
-#undef yytext
-#undef yyleng
-  }  if (!yymatchString(yy, "all")) goto l130;  yyText(yy, yy->__begin, yy->__end);  {
-#define yytext yy->__text
-#define yyleng yy->__textlen
-if (!(YY_END)) goto l130;
-#undef yytext
-#undef yyleng
-  }  yyDo(yy, yy_1_PROJALL, yy->__begin, yy->__end);
+  yyprintf((stderr, "%s\n", "PROJALL"));  if (!yymatchString(yy, "all")) goto l130;  yyDo(yy, yy_1_PROJALL, yy->__begin, yy->__end);
   yyprintf((stderr, "  ok   %s @ %s\n", "PROJALL", yy->__buf+yy->__pos));
   return 1;
   l130:;	  yy->__pos= yypos0; yy->__thunkpos= yythunkpos0;

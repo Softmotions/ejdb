@@ -106,7 +106,7 @@ ORDERNODE = '/' PROJPROP
 PROJNODES = (a:PROJALL { $$ = _jqp_projection(yy, a); }
             | (sn:PROJNODE { _jqp_unit_push(yy, sn); } (n:PROJNODE { _jqp_unit_push(yy, n);})*) { $$ = _jqp_pop_projections(yy, sn); })
 
-PROJALL = <"all"> { $$ = _jqp_string(yy, JQP_STR_PROJALIAS, yytext); }
+PROJALL = "all" { $$ = _jqp_string(yy, JQP_STR_PROJALIAS, "all"); }
 
 PROJNODE = '/' (PROJFIELDS | PROJPROP)
 
