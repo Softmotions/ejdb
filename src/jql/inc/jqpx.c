@@ -222,8 +222,8 @@ static JQPUNIT *_jqp_placeholder(yycontext *yy, const char *text) {
     aux->start_placeholder = &unit->string;
     aux->end_placeholder = aux->start_placeholder;
   } else {
-    aux->end_placeholder->next = &unit->string;
-    aux->end_placeholder = aux->end_placeholder->next;
+    aux->end_placeholder->placeholder_next = &unit->string;
+    aux->end_placeholder = aux->end_placeholder->placeholder_next;
   }
   return unit;
 }
@@ -560,6 +560,27 @@ static JQPUNIT *_jqp_pop_joined_projections(yycontext *yy, JQPUNIT *until) {
   return first;
 }
 
+static JQPUNIT *_jqp_pop_ordernodes(yycontext *yy, JQPUNIT *until) {
+  JQPUNIT *first = 0;
+  JQP_AUX *aux = yy->aux;
+  while (aux->stack && aux->stack->type == STACK_UNIT) {
+    JQPUNIT *unit = aux->stack->unit;
+    if (unit->type != JQP_STRING_TYPE) {
+      iwlog_error("Unexpected type: %d", unit->type);
+      JQRC(yy, JQL_ERROR_QUERY_PARSE);
+    }
+    if (first) {
+      unit->string.subnext = &first->string;
+    }
+    first = unit;
+    _jqp_pop(yy);
+    if (unit == until) {
+      break;
+    }
+  }
+  return until;
+}
+
 static JQPUNIT *_jqp_pop_projections(yycontext *yy, JQPUNIT *until) {
   JQPUNIT *first = 0;
   JQP_AUX *aux = yy->aux;
@@ -728,14 +749,7 @@ static void _jqp_add_orderby(yycontext *yy, JQPUNIT *unit) {
   if (!aux->orderby) {
     aux->orderby = &unit->string;
   } else {
-    JQP_STRING *orderby = aux->orderby;
-    for (int i = 0; orderby->next; ++i) {
-      orderby = orderby->next;
-      if (i >= MAX_ORDER_BY_CLAUSES) {
-        JQRC(yy, JQL_ERROR_ORDERBY_MAX_LIMIT);
-      }
-    }
-    orderby->next = &unit->string;
+    aux->orderby->next = &unit->string;
   }
 }
 
@@ -776,6 +790,16 @@ static void _jqp_set_projection(yycontext *yy, JQPUNIT *unit) {
   } else {
     iwlog_error("Unexpected type: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
+  }
+}
+
+static void _jqp_finish(yycontext *yy) {
+  JQP_STRING *orderby = yy->aux->orderby;
+  for (int i = 0; orderby && orderby->next; ++i) {
+    orderby = orderby->next;
+    if (i >= MAX_ORDER_BY_CLAUSES) {
+      JQRC(yy, JQL_ERROR_ORDERBY_MAX_LIMIT);
+    }
   }
 }
 
@@ -1097,8 +1121,15 @@ static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
     }
     if (ob->flavour & JQP_STR_PLACEHOLDER) {
       PT(0, 0, ':', 1);
+      PT(ob->value, -1, 0, 0);
+    } else {
+      // print orderby subnext chain
+      JQP_STRING *n = ob;
+      do {
+        PT(0, 0, '/', 1);
+        PT(n->value, -1, 0, 0);
+      } while ((n = n->subnext));
     }
-    PT(ob->value, -1, 0, 0);
     ob = ob->next;
   }
   if (aux->skip || aux->limit) {

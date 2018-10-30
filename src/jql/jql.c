@@ -66,7 +66,7 @@ static void _jql_jqval_destroy(JQVAL *qv) {
 
 static JQVAL *_jql_find_placeholder(JQL q, const char *name) {
   JQP_AUX *aux = q->qp->aux;
-  for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->next) {
+  for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
     if (!strcmp(pv->value, name)) {
       return pv->opaque;
     }
@@ -79,7 +79,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
   if (!placeholder) { // Index
     char nbuf[JBNUMBUF_SIZE];
     iwitoa(index, nbuf, JBNUMBUF_SIZE);
-    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->next) {
+    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
       if (pv->value[0] == '?' && !strcmp(pv->value + 1, nbuf)) {
         if (pv->opaque) _jql_jqval_destroy(pv->opaque);
         pv->opaque = val;
@@ -87,7 +87,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
       }
     }
   } else {
-    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->next) {
+    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
       if (pv->value[0] == ':' && !strcmp(pv->value + 1, placeholder)) {
         if (pv->opaque) _jql_jqval_destroy(pv->opaque);
         pv->opaque = val;
@@ -265,7 +265,7 @@ void jql_reset(JQL q, bool reset_placeholders) {
   JQP_AUX *aux = q->qp->aux;
   _jql_reset_expression_node(aux->expr, aux);
   if (reset_placeholders) {
-    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->next) { // Cleanup placeholders
+    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
       _jql_jqval_destroy(pv->opaque);
     }
   }
@@ -275,7 +275,7 @@ void jql_destroy(JQL *qptr) {
   if (qptr) {
     JQL q = *qptr;
     JQP_AUX *aux = q->qp->aux;
-    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->next) { // Cleanup placeholders
+    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
       _jql_jqval_destroy(pv->opaque);
     }
     for (JQP_OP *op = aux->start_op; op; op = op->next) {

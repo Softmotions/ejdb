@@ -106,6 +106,7 @@ typedef struct JQP_STRING {
   const char *value;
   struct JQP_STRING *next;
   struct JQP_STRING *subnext;
+  struct JQP_STRING *placeholder_next;
   void *opaque;
 } JQP_STRING;
 

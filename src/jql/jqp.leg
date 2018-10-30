@@ -9,6 +9,7 @@
 
 struct _yycontext;
 
+static void _jqp_finish(struct _yycontext *yy);
 static void _jqp_debug(struct _yycontext *yy, const char *text);
 static void *_jqp_malloc(struct _yycontext *yy, size_t size);
 static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size);
@@ -47,6 +48,7 @@ static JQPUNIT *_jqp_pop_expr_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_node_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_projfields_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_projections(struct _yycontext *yy, JQPUNIT *until);
+static JQPUNIT *_jqp_pop_ordernodes(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p);
 static JQPUNIT *_jqp_pop_joined_projections(struct _yycontext *yy, JQPUNIT *until);
 
@@ -75,11 +77,11 @@ QUERY = (e:FILTEREXPR { _jqp_set_filters_expr(yy, e); })
         (_ a:APPLY { _jqp_set_apply(yy, a); } )?
         (_ p:PROJECTION { _jqp_set_projection(yy, p); } )?
         (_ OPTS )?
-        _ EOF
+        _ EOF { _jqp_finish(yy); }
 
 FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jqp_unit_join(yy, yytext); }
 
-APPLY      =  '|' _ "apply" __ ( p:PLACEHOLDER { $$ = p; } | o:OBJJ { $$ = o; } | a:ARRJ { $$ = a; } )
+APPLY      =  '|' _ "apply" __ ( PLACEHOLDER | OBJJ | ARRJ )
 
 PROJECTION  = '|' _ (sn:PROJNODES { _jqp_unit_push(yy, sn); }
                     (_ <PROJOIN> { _jqp_string_push(yy, yytext, true); } _ n:PROJNODES { _jqp_push_joined_projection(yy, n); } )*)
@@ -94,9 +96,10 @@ SKIP = "skip" __ (<NUMI> { $$ = _jqp_number(yy, JQP_INT_SKIP, yytext); } | p:PLA
 LIMIT = "limit" __ (<NUMI> { $$ = _jqp_number(yy, JQP_INT_LIMIT, yytext); } | p:PLACEHOLDER { $$ = p; }) { _jqp_set_limit(yy, $$); }
 
 ORDERBY = ("asc" | "desc" { _jqp_op_negate(yy); })
-          __ (<(ORDERNODE+)> { _jqp_debug(yy, yytext); $$ = _jqp_string(yy, yy->aux->negate ? JQP_STR_NEGATE : 0, yytext); }
-              | p:PLACEHOLDER { p->string.flavour |= (yy->aux->negate ? JQP_STR_NEGATE : 0); $$ = p; })
-          { _jqp_op_negate_reset(yy); _jqp_add_orderby(yy, $$); }
+          __ ( p:ORDERNODES | p:PLACEHOLDER )
+          { p->string.flavour |= (yy->aux->negate ? JQP_STR_NEGATE : 0); _jqp_op_negate_reset(yy); _jqp_add_orderby(yy, p); }
+
+ORDERNODES = sn:ORDERNODE { _jqp_unit_push(yy, sn); } (n:ORDERNODE { _jqp_unit_push(yy, n); })* { $$ = _jqp_pop_ordernodes(yy, sn) }
 
 ORDERNODE = '/' PROJPROP
 
@@ -105,7 +108,7 @@ PROJNODES = (a:PROJALL { $$ = _jqp_projection(yy, a); }
 
 PROJALL = <"all"> { $$ = _jqp_string(yy, JQP_STR_PROJALIAS, yytext); }
 
-PROJNODE = '/' (p:PROJFIELDS | p:PROJPROP) { $$ = p;  }
+PROJNODE = '/' (p:PROJFIELDS | p:PROJPROP)
 
 PROJFIELDS = ('{' _ sp:PROJPROP { _jqp_unit_push(yy, sp); } (_ ',' _ p:PROJPROP { _jqp_unit_push(yy, p); } )* _ '}')
              { $$ = _jqp_pop_projfields_chain(yy, sp); }
@@ -122,7 +125,7 @@ PCHP = '\\' '\\'
       | !["/{},\t\n\r ] .
 
 
-FILTERFACTOR = (f:FILTER | '(' f:FILTEREXPR ')') { $$ = f; }
+FILTERFACTOR = (FILTER | '(' FILTEREXPR ')')
 
 FILTEREXPR = ff:FILTERFACTOR { _jqp_unit_push(yy, ff); }
                 (__ j:FILTERJOIN { _jqp_unit_push(yy, j); } __ f:FILTERFACTOR { _jqp_unit_push(yy, f); })* { $$ = _jqp_pop_filter_factor_chain(yy, ff); }
@@ -142,11 +145,11 @@ NEXJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)        { $$ = _
 
 NEXPAIR = (l:NEXLEFT _ o:NEXOP _ r:NEXRIGHT)                            { $$ = _jqp_expr(yy, l, o, r); }
 
-NEXLEFT = (l:STRSTAR | l:STRN | l:NEXPRLEFT | l:STRP)                   { $$ = l; }
+NEXLEFT = (STRSTAR | STRN | NEXPRLEFT | STRP)
 
 NEXPRLEFT = ('[' _ l:STRSTAR _ o:NEXOP _ r:NEXRIGHT _ ']')              { $$ = _jqp_expr(yy, l, o, r); }
 
-NEXRIGHT = (r:PLACEHOLDER | r:VALJ | r:STRP)                            { $$ = r; }
+NEXRIGHT = (PLACEHOLDER | VALJ | STRP)
 
 PLACEHOLDER = ':' <([a-zA-Z0-9]+ | '?')>                                { $$ = _jqp_placeholder(yy, yytext); }
 
@@ -177,10 +180,10 @@ SARRJ = '[' { $$ =  _jqp_unit(yy); }
 
 PAIRJ = (s:STRJ _ ':' _ v:VALJ) { $$ = _jqp_json_pair(yy, s, v); }
 
-VALJ =    v:STRJ    { $$ = v; }
-        | v:NUMJ    { $$ = v; }
-        | v:OBJJ    { $$ = v; }
-        | v:ARRJ    { $$ = v; }
+VALJ =    STRJ
+        | NUMJ
+        | OBJJ
+        | ARRJ
         | <"true">  { $$ = _jqp_json_true_false_null(yy, yytext); }
         | <"false"> { $$ = _jqp_json_true_false_null(yy, yytext); }
         | <"null">  { $$ = _jqp_json_true_false_null(yy, yytext); }

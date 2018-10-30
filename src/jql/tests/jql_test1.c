@@ -37,8 +37,8 @@ void _jql_test1_1(int num, iwrc expected) {
 
   CU_ASSERT_PTR_NOT_NULL_FATAL(aux->query);
 
-  //edata = iwu_file_read_as_buf(path_expected);
-  //CU_ASSERT_PTR_NOT_NULL_FATAL(data);
+  edata = iwu_file_read_as_buf(path_expected);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(edata);
   rc = jqp_print_query(aux->query, jbl_xstr_json_printer, res);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -46,11 +46,11 @@ void _jql_test1_1(int num, iwrc expected) {
   //  fprintf(stderr, "%s\n", edata);
   //  fprintf(stderr, "%s\n", iwxstr_ptr(res));
   //  fprintf(stderr, "%d\n", strcmp(edata, iwxstr_ptr(res)));
-    FILE *out = fopen("out.txt", "w+");
-    fprintf(out, "%s", iwxstr_ptr(res));
-    fclose(out);
+  //  FILE *out = fopen("out.txt", "w+");
+  //  fprintf(out, "%s", iwxstr_ptr(res));
+  //  fclose(out);
 
-  //CU_ASSERT_EQUAL(strcmp(edata, iwxstr_ptr(res)), 0);
+  CU_ASSERT_EQUAL(strcmp(edata, iwxstr_ptr(res)), 0);
 
 finish:
   if (edata) {
@@ -62,19 +62,15 @@ finish:
 }
 
 void jql_test1_1() {
-//  for (int i = 0; i <= 10; ++i) {
-//    _jql_test1_1(i, 0);
-//  }
-//  for (int i = 11; i <= 13; ++i) {
-//    _jql_test1_1(i, JQL_ERROR_QUERY_PARSE);
-//  }
-//  for (int i = 14; i <= 16; ++i) {
-//    _jql_test1_1(i, 0);
-//  }
-
-    for (int i = 19; i <= 19; ++i) {
-      _jql_test1_1(i, 0);
-    }
+  for (int i = 0; i <= 10; ++i) {
+    _jql_test1_1(i, 0);
+  }
+  for (int i = 11; i <= 13; ++i) {
+    _jql_test1_1(i, JQL_ERROR_QUERY_PARSE);
+  }
+  for (int i = 14; i <= 19; ++i) {
+    _jql_test1_1(i, 0);
+  }
 }
 
 static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
