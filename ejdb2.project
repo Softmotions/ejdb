@@ -21,8 +21,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>cmake-build-Debug/</Path>
       <Path>build/</Path>
+      <Path>cmake-build-Debug/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -55,6 +55,7 @@
       <File Name="src/jql/jqp.leg"/>
       <VirtualDirectory Name="tests">
         <VirtualDirectory Name="data">
+          <File Name="src/jql/tests/data/019.expected.jql"/>
           <File Name="src/jql/tests/data/019.jql"/>
           <File Name="src/jql/tests/data/018.expected.jql"/>
           <File Name="src/jql/tests/data/018.jql"/>
