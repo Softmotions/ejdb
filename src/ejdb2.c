@@ -12,7 +12,8 @@
 #define IWDB_DUP_FLAGS (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)
 
 #define METADB_ID 1
-#define KEY_PREFIX_COLLMETA "col."
+#define KEY_PREFIX_COLLMETA   "col." // Full key format: c.<coldbid>
+#define KEY_PREFIX_IDXMETA    "i." // Full key format: i.<coldbid>.<idxdbid>
 
 #define ENSURE_OPEN(db_) \
   if (!(db_) || !((db_)->open)) return IW_ERROR_INVALID_STATE;
@@ -132,11 +133,11 @@ static void _jb_idx_destroy(JBIDX idx) {
 }
 
 static void _jb_coll_destroy(JBCOLL jbc) {
-  if (jbc->meta) {
-    jbl_destroy(&jbc->meta);
-  }
   if (jbc->cdb) {
     iwkv_db_cache_release(jbc->cdb);
+  }
+  if (jbc->meta) {
+    jbl_destroy(&jbc->meta);
   }
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
     _jb_idx_destroy(idx);
@@ -515,20 +516,17 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   JBCOLL jbc;
   khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
   if (k != kh_end(db->mcolls)) {
-    IWDB cdb;
     jbc = kh_value(db->mcolls, k);
     assert(jbc);
-    rc = iwkv_db(db->iwkv, jbc->dbid, IWDB_UINT64_KEYS, &cdb);
-    RCGO(rc, finish);
 
     // TODO: remove indexes
 
-    rc = iwkv_db_destroy(&cdb);
+    rc = iwkv_db_destroy(&jbc->cdb);
     kh_del(JBCOLLM, db->mcolls, k);
     _jb_coll_destroy(jbc);
   }
 
-finish:
+//finish:
   API_UNLOCK(db, rci, rc);
   return rc;
 }
