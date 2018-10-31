@@ -355,10 +355,8 @@ static iwrc _jb_idx_record_add(JBIDX idx, const IWKV_val *key, const IWKV_val *v
   if (!binn_load(val->data, &jb.bn)) {
     return JBL_ERROR_CREATION;
   }
-
   //
-
-
+  //
   return rc;
 }
 

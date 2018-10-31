@@ -736,15 +736,12 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, const char *key, in
   return JBL_VCMD_OK;
 }
 
-iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
-  JBL_PTR jp;
-  iwrc rc = _jbl_ptr_pool(path, &jp, 0);
-  RCRET(rc);
+iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res) {
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
     .op = jp
   };
-  rc = _jbl_visit(0, 0, &vctx, _jbl_get_visitor);
+  iwrc rc = _jbl_visit(0, 0, &vctx, _jbl_get_visitor);
   if (rc) {
     *res = 0;
   } else {
@@ -755,6 +752,14 @@ iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
       *res = (JBL) vctx.result;
     }
   }
+  return rc;
+}
+
+iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
+  JBL_PTR jp;
+  iwrc rc = _jbl_ptr_pool(path, &jp, 0);
+  RCRET(rc);
+  rc = jbl_at2(jbl, jp, res);
   free(jp);
   return rc;
 }

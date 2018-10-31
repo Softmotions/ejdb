@@ -123,6 +123,8 @@ IW_EXPORT size_t jbl_copy_strn(const JBL jbl, char *buf, size_t bufsz);
 
 IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
+IW_EXPORT iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res);
+
 IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
 
 IW_EXPORT iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
