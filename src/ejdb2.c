@@ -9,14 +9,13 @@
 #include "khash.h"
 #include "ejdb2cfg.h"
 
+static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
 
 #define METADB_ID 1
 #define KEY_PREFIX_COLLMETA   "c." // Full key format: c.<coldbid>
 #define KEY_PREFIX_IDXMETA    "i." // Full key format: i.<coldbid>.<idxdbid>
 
 #define IWDB_DUP_FLAGS (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)
-
-#define PRINTF_F64IDX_FORMAT "%0.6f" // Float number precision for index
 
 #define ENSURE_OPEN(db_) \
   if (!(db_) || !((db_)->open)) return IW_ERROR_INVALID_STATE;
@@ -82,6 +81,15 @@ struct _EJDB {
 };
 
 // ---------------------------------------------------------------------------
+
+iwrc _jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
+  int sz = snprintf(buf, JBNUMBUF_SIZE, "%.6f", val);
+  if (sz >= JBNUMBUF_SIZE) return IW_ERROR_OVERFLOW;
+  while (sz > 0 && buf[sz - 1] == '0') buf[sz--] = '\0';
+  if (buf[sz] == '.') buf[sz--] = '\0';
+  *osz = sz;
+  return 0;
+}
 
 static iwrc _jb_coll_load_meta_lr(JBCOLL jbc) {
   JBL jbv;
@@ -354,15 +362,17 @@ finish:
   return rc;
 }
 
-static iwrc _jb_idx_record_add(JBIDX idx, const IWKV_val *key, const IWKV_val *val) {
+static iwrc _jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL prevj) {
   struct _JBL jbs;
-  JBL jbl = &jbs, jbv;
-  IWKV_val ival;
+  JBL jbv;
+  IWKV_val ikey;
+  uint64_t llu;
   char numbuf[JBNUMBUF_SIZE];
+  IWKV_val idval = {
+    .data = &id,
+    .size = sizeof(id)
+  };
 
-  if (!binn_load(val->data, &jbs.bn)) {
-    return JBL_ERROR_CREATION;
-  }
   iwrc rc = jbl_at2(jbl, idx->ptr, &jbv);
   RCRET(rc);
   jbl_type_t jbvt = jbl_type(jbv);
@@ -374,39 +384,76 @@ static iwrc _jb_idx_record_add(JBIDX idx, const IWKV_val *key, const IWKV_val *v
     // JBV_STR
     // TODO:
   } else {
-    ejdb_idx_mode_t tmode = (idx->mode & ~(EJDB_IDX_UNIQUE));
-    switch (tmode) {
-      case EJDB_IDX_STR: {
+    ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
+    switch (itype) {
+      case EJDB_IDX_STR:
         switch (jbvt) {
           case JBV_STR:
-            ival.data = jbl_get_str(jbv);
-            ival.size = jbl_size(jbv);
+            ikey.data = jbl_get_str(jbv);
+            ikey.size = jbl_size(jbv);
             break;
           case JBV_I64:
-            ival.size = iwitoa(jbl_get_i64(jbv), numbuf, sizeof(JBNUMBUF_SIZE));
-            ival.data = numbuf;
+            ikey.size = iwitoa(jbl_get_i64(jbv), numbuf, sizeof(JBNUMBUF_SIZE));
+            ikey.data = numbuf;
             break;
           case JBV_BOOL:
             if (jbl_get_i32(jbv)) {
-              ival.size = sizeof("true");
-              ival.data = "true";
+              ikey.size = sizeof("true");
+              ikey.data = "true";
             } else {
-              ival.size = sizeof("false");
-              ival.data = "false";
+              ikey.size = sizeof("false");
+              ikey.data = "false";
             }
             break;
           case JBV_F64:
-            //PRINTF_F64IDX_FORMAT
-            //ikey.size = snprintf(n)
+            rc = _jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey.size);
+            RCGO(rc, finish);
+            ikey.data = numbuf;
             break;
           default:
-            break;
+            goto finish;
         }
         break;
-      }
-      default:
+      case EJDB_IDX_I64:
+        ikey.size = sizeof(llu);
+        ikey.data = &llu;
+        switch (jbvt) {
+          case JBV_I64:
+          case JBV_F64:
+          case JBV_BOOL:
+            llu = jbl_get_i64(jbv);
+            break;
+          case JBV_STR:
+            llu = iwatoi(jbl_get_str(jbv));
+            break;
+          default:
+            goto finish;
+        }
         break;
+      case EJDB_IDX_F64:
+        ikey.data = numbuf;
+        switch (jbvt) {
+          case JBV_F64:
+          case JBV_I64:
+          case JBV_BOOL:
+            rc = _jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey.size);
+            RCGO(rc, finish);
+            break;
+          case JBV_STR: {
+            rc = _jb_idx_ftoa(iwatof(jbl_get_str(jbv)), numbuf, &ikey.size);
+            RCGO(rc, finish);
+            break;
+          }
+          default:
+            goto finish;
+        }
+        break;
+      default:
+        goto finish;
     }
+
+    rc = iwkv_put(idx->idb, &ikey, &idval, IWKV_NO_OVERWRITE);
+    RCGO(rc, finish);
   }
 
 finish:
@@ -419,6 +466,10 @@ finish:
 static iwrc _jb_idx_fill(JBIDX idx) {
   IWKV_cursor cur;
   IWKV_val key, val;
+  struct _JBL jbs;
+  JBL jbl = &jbs;
+  uint64_t llu;
+
   iwrc rc = iwkv_cursor_open(idx->idb, &cur, IWKV_CURSOR_BEFORE_FIRST, 0);
   RCRET(rc);
 
@@ -430,7 +481,12 @@ static iwrc _jb_idx_fill(JBIDX idx) {
     }
     rc = iwkv_cursor_get(cur, &key, &val);
     if (rc) break;
-    rc = _jb_idx_record_add(idx, &key, &val);
+    if (!binn_load(val.data, &jbs.bn)) {
+      rc = JBL_ERROR_CREATION;
+      break;
+    }
+    memcpy(&llu, key.data, sizeof(llu));
+    rc = _jb_idx_record_add(idx, llu, jbl, 0);
     iwkv_kv_dispose(&key, &val);
   }
 

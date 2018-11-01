@@ -456,6 +456,24 @@ double jbl_get_f64(const JBL jbl) {
       return jbl->bn.vdouble;
     case BINN_FLOAT32:
       return jbl->bn.vfloat;
+    case BINN_UINT8:
+      return jbl->bn.vuint8;
+    case BINN_UINT16:
+      return jbl->bn.vuint16;
+    case BINN_UINT32:
+      return jbl->bn.vuint32;
+    case BINN_UINT64:
+      return jbl->bn.vuint64;
+    case BINN_INT8:
+      return jbl->bn.vint8;
+    case BINN_INT16:
+      return jbl->bn.vint16;
+    case BINN_INT32:
+      return jbl->bn.vint32;
+    case BINN_INT64:
+      return jbl->bn.vint64;
+    case BINN_BOOL:
+      return jbl->bn.vbool;
     default:
       return 0.0;
   }
