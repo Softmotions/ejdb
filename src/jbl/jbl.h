@@ -37,12 +37,15 @@ typedef enum {
 } jbl_print_flags_t;
 
 typedef enum {
+  // Do not reorder
   JBV_NONE = 0,
   JBV_NULL,
+
   JBV_BOOL,
   JBV_I64,
   JBV_F64,
   JBV_STR,
+
   // Do not reorder
   JBV_OBJECT,
   JBV_ARRAY,

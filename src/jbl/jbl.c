@@ -434,6 +434,12 @@ int64_t jbl_get_i64(const JBL jbl) {
       return jbl->bn.vint32;
     case BINN_INT64:
       return jbl->bn.vint64;
+    case BINN_BOOL:
+      return jbl->bn.vbool;
+    case BINN_FLOAT32:
+      return (int64_t) jbl->bn.vfloat;
+    case BINN_FLOAT64:
+      return (int64_t) jbl->bn.vdouble;
     default:
       return 0;
   }

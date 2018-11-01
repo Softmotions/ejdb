@@ -24,7 +24,8 @@ typedef enum {
   EJDB_IDX_UNIQUE = 1,
   EJDB_IDX_ARR = 1 << 1,
   EJDB_IDX_STR = 1 << 2,
-  EJDB_IDX_NUM = 1 << 3
+  EJDB_IDX_I64 = 1 << 3,
+  EJDB_IDX_F64 = 1 << 4,
 } ejdb_idx_mode_t;
 
 /**

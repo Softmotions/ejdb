@@ -9,11 +9,14 @@
 #include "khash.h"
 #include "ejdb2cfg.h"
 
-#define IWDB_DUP_FLAGS (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)
 
 #define METADB_ID 1
 #define KEY_PREFIX_COLLMETA   "c." // Full key format: c.<coldbid>
 #define KEY_PREFIX_IDXMETA    "i." // Full key format: i.<coldbid>.<idxdbid>
+
+#define IWDB_DUP_FLAGS (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)
+
+#define PRINTF_F64IDX_FORMAT "%0.6f" // Float number precision for index
 
 #define ENSURE_OPEN(db_) \
   if (!(db_) || !((db_)->open)) return IW_ERROR_INVALID_STATE;
@@ -59,8 +62,9 @@ struct _JBIDX {
   ejdb_idx_mode_t mode;     /**< Index mode/type mask */
   iwdb_flags_t idbf;        /**< Index database flags */
   JBCOLL jbc;               /**< Owner document collection */
-  JBL_PTR ptr;              /**< Indexed JSON path poiner */
+  JBL_PTR ptr;              /**< Indexed JSON path poiner 0*/
   IWDB idb;                 /**< KV database for this index */
+  IWDB auxdb;               /**< Auxiliary database, used by `EJDB_IDX_ARR` indexes */
   uint32_t dbid;            /**< IWKV collection database ID */
   uint32_t auxdbid;         /**< Auxiliary database ID, used by `EJDB_IDX_ARR` indexes */
   struct _JBIDX *next;      /**< Next index in chain */
@@ -351,13 +355,64 @@ finish:
 }
 
 static iwrc _jb_idx_record_add(JBIDX idx, const IWKV_val *key, const IWKV_val *val) {
-  iwrc rc = 0;
-  struct _JBL jb;
-  if (!binn_load(val->data, &jb.bn)) {
+  struct _JBL jbs;
+  JBL jbl = &jbs, jbv;
+  IWKV_val ikey;
+  char numbuf[JBNUMBUF_SIZE];
+
+  if (!binn_load(val->data, &jbs.bn)) {
     return JBL_ERROR_CREATION;
   }
-  //
-  //
+  iwrc rc = jbl_at2(jbl, idx->ptr, &jbv);
+  RCRET(rc);
+  jbl_type_t jbvt = jbl_type(jbv);
+  if (jbvt <= JBV_NULL) {
+    goto finish;
+  }
+
+  if (idx->mode & EJDB_IDX_ARR) {
+    // JBV_STR
+    // TODO:
+  } else {
+    ejdb_idx_mode_t tmode = (idx->mode & ~(EJDB_IDX_UNIQUE));
+    switch (tmode) {
+      case EJDB_IDX_STR: {
+        switch (jbvt) {
+          case JBV_STR:
+            ikey.data = jbl_get_str(jbv);
+            ikey.size = jbl_size(jbv);
+            break;
+          case JBV_I64:
+            ikey.size = iwitoa(jbl_get_i64(jbv), numbuf, sizeof(JBNUMBUF_SIZE));
+            ikey.data = numbuf;
+            break;
+          case JBV_BOOL:
+            if (jbl_get_i64(jbv)) {
+              ikey.size = sizeof("true");
+              ikey.data = "true";
+            } else {
+              ikey.size = sizeof("false");
+              ikey.data = "false";
+            }
+            break;
+          case JBV_F64:
+            //PRINTF_F64IDX_FORMAT
+            //ikey.size = snprintf(n)
+            break;
+          default:
+            break;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+finish:
+  if (jbv) {
+    jbl_destroy(&jbv);
+  }
   return rc;
 }
 
@@ -399,10 +454,10 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   binn *imeta = 0;
   bool unique = (mode & EJDB_IDX_UNIQUE);
 
-  switch (mode & (EJDB_IDX_STR | EJDB_IDX_NUM)) {
+  switch (mode & (EJDB_IDX_STR | EJDB_IDX_I64 | EJDB_IDX_F64)) {
     case EJDB_IDX_STR:
-      break;
-    case EJDB_IDX_NUM:
+    case EJDB_IDX_I64:
+    case EJDB_IDX_F64:
       break;
     default:
       return EJDB_ERROR_INVALID_INDEX_MODE;
@@ -433,11 +488,17 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   }
   cidx->ptr = ptr;
   ptr = 0;
-  cidx->idbf = (mode & EJDB_IDX_NUM) ? IWDB_UINT64_KEYS : 0;
+  cidx->idbf = (mode & EJDB_IDX_I64) ? IWDB_UINT64_KEYS : 0;
+  if (mode & EJDB_IDX_F64) {
+    cidx->idbf |= IWDB_REALNUM_KEYS;
+  }
   if (!(mode & EJDB_IDX_UNIQUE)) {
     cidx->idbf |= IWDB_DUP_UINT64_VALS;
   }
   rc = iwkv_new_db(db->iwkv, cidx->idbf, &cidx->dbid, &cidx->idb);
+  RCGO(rc, finish);
+
+  rc = iwkv_new_db(db->iwkv, IWDB_UINT64_KEYS, &cidx->auxdbid, &cidx->auxdb);
   RCGO(rc, finish);
 
   rc = _jb_idx_fill(cidx);
@@ -453,7 +514,8 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   if (!binn_object_set_str(imeta, "path", path) ||
       !binn_object_set_uint32(imeta, "mode", cidx->mode) ||
       !binn_object_set_uint32(imeta, "idbf", cidx->idbf) ||
-      !binn_object_set_uint32(imeta, "dbid", cidx->dbid)) {
+      !binn_object_set_uint32(imeta, "dbid", cidx->dbid) ||
+      !binn_object_set_uint32(imeta, "auxdbid", cidx->auxdbid)) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }
@@ -481,6 +543,10 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
 finish:
   if (rc) {
     if (cidx) {
+      if (cidx->auxdb) {
+        iwkv_db_destroy(&cidx->auxdb);
+        cidx->auxdb = 0;
+      }
       if (cidx->idb) {
         iwkv_db_destroy(&cidx->idb);
         cidx->idb = 0;
