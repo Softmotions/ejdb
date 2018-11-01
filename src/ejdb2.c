@@ -62,6 +62,7 @@ struct _JBIDX {
   JBL_PTR ptr;              /**< Indexed JSON path poiner */
   IWDB idb;                 /**< KV database for this index */
   uint32_t dbid;            /**< IWKV collection database ID */
+  uint32_t auxdbid;         /**< Auxiliary database ID, used by `EJDB_IDX_ARR` indexes */
   struct _JBIDX *next;      /**< Next index in chain */
 };
 
@@ -118,7 +119,7 @@ finish:
   return rc;
 }
 
-static void _jb_idx_destroy(JBIDX idx) {
+static void _jb_idx_release(JBIDX idx) {
   if (idx->idb) {
     iwkv_db_cache_release(idx->idb);
   }
@@ -128,7 +129,7 @@ static void _jb_idx_destroy(JBIDX idx) {
   free(idx);
 }
 
-static void _jb_coll_destroy(JBCOLL jbc) {
+static void _jb_coll_release(JBCOLL jbc) {
   if (jbc->cdb) {
     iwkv_db_cache_release(jbc->cdb);
   }
@@ -136,7 +137,7 @@ static void _jb_coll_destroy(JBCOLL jbc) {
     jbl_destroy(&jbc->meta);
   }
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
-    _jb_idx_destroy(idx);
+    _jb_idx_release(idx);
   }
   jbc->idx = 0;
   pthread_rwlock_destroy(&jbc->rwl);
@@ -210,7 +211,7 @@ static iwrc _jb_db_meta_load(EJDB db) {
       jbc->db = db;
       rc = _jb_coll_init(jbc, &val);
       if (rc) {
-        _jb_coll_destroy(jbc);
+        _jb_coll_release(jbc);
         iwkv_val_dispose(&val);
         goto finish;
       }
@@ -227,14 +228,14 @@ finish:
   return rc;
 }
 
-static iwrc _jb_db_destroy(EJDB *dbp) {
+static iwrc _jb_db_release(EJDB *dbp) {
   iwrc rc = 0;
   EJDB db = *dbp;
   if (db->mcolls) {
     for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
       if (!kh_exist(db->mcolls, k)) continue;
       JBCOLL jbc = kh_val(db->mcolls, k);
-      _jb_coll_destroy(jbc);
+      _jb_coll_release(jbc);
     }
     kh_destroy(JBCOLLM, db->mcolls);
     db->mcolls = 0;
@@ -329,7 +330,7 @@ create_finish:
         if (cdb) iwkv_db_destroy(&cdb);
         if (jbc) {
           jbc->meta = 0; // meta was cleared
-          _jb_coll_destroy(jbc);
+          _jb_coll_release(jbc);
         }
       } else {
         rci = wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl);
@@ -484,7 +485,7 @@ finish:
         iwkv_db_destroy(&cidx->idb);
         cidx->idb = 0;
       }
-      _jb_idx_destroy(cidx);
+      _jb_idx_release(cidx);
     }
   }
   if (ptr) free(ptr);
@@ -599,7 +600,7 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
 
     rc = iwkv_db_destroy(&jbc->cdb);
     kh_del(JBCOLLM, db->mcolls, k);
-    _jb_coll_destroy(jbc);
+    _jb_coll_release(jbc);
   }
 
   //finish:
@@ -691,7 +692,7 @@ iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp) {
 
 finish:
   if (rc) {
-    _jb_db_destroy(&db);
+    _jb_db_release(&db);
   } else {
     db->open = true;
     *ejdbp = db;
@@ -707,7 +708,7 @@ iwrc ejdb_close(EJDB *ejdbp) {
   if (!__sync_bool_compare_and_swap(&db->open, 1, 0)) {
     return IW_ERROR_INVALID_STATE;
   }
-  iwrc rc = _jb_db_destroy(ejdbp);
+  iwrc rc = _jb_db_release(ejdbp);
   return rc;
 }
 
