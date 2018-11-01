@@ -372,7 +372,6 @@ static iwrc _jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL prevj) {
     .data = &id,
     .size = sizeof(id)
   };
-
   iwrc rc = jbl_at2(jbl, idx->ptr, &jbv);
   RCRET(rc);
   jbl_type_t jbvt = jbl_type(jbv);

@@ -761,6 +761,7 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, const char *key, in
 }
 
 iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res) {
+  jp->pos = -1;
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
     .op = jp
