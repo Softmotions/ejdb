@@ -357,7 +357,7 @@ finish:
 static iwrc _jb_idx_record_add(JBIDX idx, const IWKV_val *key, const IWKV_val *val) {
   struct _JBL jbs;
   JBL jbl = &jbs, jbv;
-  IWKV_val ikey;
+  IWKV_val ival;
   char numbuf[JBNUMBUF_SIZE];
 
   if (!binn_load(val->data, &jbs.bn)) {
@@ -379,20 +379,20 @@ static iwrc _jb_idx_record_add(JBIDX idx, const IWKV_val *key, const IWKV_val *v
       case EJDB_IDX_STR: {
         switch (jbvt) {
           case JBV_STR:
-            ikey.data = jbl_get_str(jbv);
-            ikey.size = jbl_size(jbv);
+            ival.data = jbl_get_str(jbv);
+            ival.size = jbl_size(jbv);
             break;
           case JBV_I64:
-            ikey.size = iwitoa(jbl_get_i64(jbv), numbuf, sizeof(JBNUMBUF_SIZE));
-            ikey.data = numbuf;
+            ival.size = iwitoa(jbl_get_i64(jbv), numbuf, sizeof(JBNUMBUF_SIZE));
+            ival.data = numbuf;
             break;
           case JBV_BOOL:
-            if (jbl_get_i64(jbv)) {
-              ikey.size = sizeof("true");
-              ikey.data = "true";
+            if (jbl_get_i32(jbv)) {
+              ival.size = sizeof("true");
+              ival.data = "true";
             } else {
-              ikey.size = sizeof("false");
-              ikey.data = "false";
+              ival.size = sizeof("false");
+              ival.data = "false";
             }
             break;
           case JBV_F64:
