@@ -578,7 +578,7 @@ iwrc jbl_ptr_alloc(const char *path, JBL_PTR *jpp) {
   return _jbl_ptr_pool(path, jpp, 0);
 }
 
-int jbl_ptr_cmp(JBL_PTR p1, JBL_PTR p2) {
+int jbl_ptr_cmp(const JBL_PTR p1, const JBL_PTR p2) {
   if (p1->sz != p2->sz) {
     return p1->sz - p2->sz;
   }
@@ -753,7 +753,7 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, const char *key, in
   return JBL_VCMD_OK;
 }
 
-iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res) {
+iwrc jbl_at2(JBL jbl, const JBL_PTR jp, JBL *res) {
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
     .op = jp,

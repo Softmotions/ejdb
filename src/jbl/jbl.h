@@ -125,7 +125,7 @@ IW_EXPORT size_t jbl_copy_strn(const JBL jbl, char *buf, size_t bufsz);
 
 IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
-IW_EXPORT iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res);
+IW_EXPORT iwrc jbl_at2(JBL jbl, const JBL_PTR jp, JBL *res);
 
 IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
 
@@ -159,7 +159,7 @@ IW_EXPORT void jbl_node_reset_data(JBL_NODE node);
 
 IW_EXPORT iwrc jbl_ptr_alloc(const char *path, JBL_PTR *jpp);
 
-IW_EXPORT int jbl_ptr_cmp(JBL_PTR p1, JBL_PTR p2);
+IW_EXPORT int jbl_ptr_cmp(const JBL_PTR p1, const JBL_PTR p2);
 
 /**
  * @brief JBL_NODE visitor context
