@@ -362,102 +362,123 @@ finish:
   return rc;
 }
 
-static iwrc _jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL prevj) {
+//static iwrc _jb_idx_remove_value()
+
+static iwrc _jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
   struct _JBL jbs;
-  JBL jbv;
+  JBL jbv, jbvprev;
   IWKV_val ikey;
   uint64_t llu;
   char numbuf[JBNUMBUF_SIZE];
+  bool isarr = idx->mode & EJDB_IDX_ARR;
   IWKV_val idval = {
     .data = &id,
     .size = sizeof(id)
   };
   iwrc rc = jbl_at2(jbl, idx->ptr, &jbv);
   RCRET(rc);
+
+  if (jblprev) {
+    rc = jbl_at2(jblprev, idx->ptr, &jbvprev);
+    RCGO(rc, finish);
+  } else {
+    jbvprev = 0;
+  }
+
+  if (isarr) {
+    // TODO:
+    goto finish;
+  }
+
+  if (jbvprev) {
+    if (_jbl_is_eq_values(jbv, jbvprev)) {
+      goto finish;
+    }
+    // TODO: remove old index key
+  }
+
   jbl_type_t jbvt = jbl_type(jbv);
   if (jbvt <= JBV_NULL) {
     goto finish;
   }
 
-  if (idx->mode & EJDB_IDX_ARR) {
-    // JBV_STR
-    // TODO:
-  } else {
-    ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
-    switch (itype) {
-      case EJDB_IDX_STR:
-        switch (jbvt) {
-          case JBV_STR:
-            ikey.data = jbl_get_str(jbv);
-            ikey.size = jbl_size(jbv);
-            break;
-          case JBV_I64:
-            ikey.size = iwitoa(jbl_get_i64(jbv), numbuf, sizeof(JBNUMBUF_SIZE));
-            ikey.data = numbuf;
-            break;
-          case JBV_BOOL:
-            if (jbl_get_i32(jbv)) {
-              ikey.size = sizeof("true");
-              ikey.data = "true";
-            } else {
-              ikey.size = sizeof("false");
-              ikey.data = "false";
-            }
-            break;
-          case JBV_F64:
-            rc = _jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey.size);
-            RCGO(rc, finish);
-            ikey.data = numbuf;
-            break;
-          default:
-            goto finish;
-        }
-        break;
-      case EJDB_IDX_I64:
-        ikey.size = sizeof(llu);
-        ikey.data = &llu;
-        switch (jbvt) {
-          case JBV_I64:
-          case JBV_F64:
-          case JBV_BOOL:
-            llu = jbl_get_i64(jbv);
-            break;
-          case JBV_STR:
-            llu = iwatoi(jbl_get_str(jbv));
-            break;
-          default:
-            goto finish;
-        }
-        break;
-      case EJDB_IDX_F64:
-        ikey.data = numbuf;
-        switch (jbvt) {
-          case JBV_F64:
-          case JBV_I64:
-          case JBV_BOOL:
-            rc = _jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey.size);
-            RCGO(rc, finish);
-            break;
-          case JBV_STR: {
-            rc = _jb_idx_ftoa(iwatof(jbl_get_str(jbv)), numbuf, &ikey.size);
-            RCGO(rc, finish);
-            break;
+  ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
+  switch (itype) {
+    case EJDB_IDX_STR:
+      switch (jbvt) {
+        case JBV_STR:
+          ikey.data = jbl_get_str(jbv);
+          ikey.size = jbl_size(jbv);
+          break;
+        case JBV_I64:
+          ikey.size = iwitoa(jbl_get_i64(jbv), numbuf, sizeof(JBNUMBUF_SIZE));
+          ikey.data = numbuf;
+          break;
+        case JBV_BOOL:
+          if (jbl_get_i32(jbv)) {
+            ikey.size = sizeof("true");
+            ikey.data = "true";
+          } else {
+            ikey.size = sizeof("false");
+            ikey.data = "false";
           }
-          default:
-            goto finish;
+          break;
+        case JBV_F64:
+          rc = _jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey.size);
+          RCGO(rc, finish);
+          ikey.data = numbuf;
+          break;
+        default:
+          goto finish;
+      }
+      break;
+    case EJDB_IDX_I64:
+      ikey.size = sizeof(llu);
+      ikey.data = &llu;
+      switch (jbvt) {
+        case JBV_I64:
+        case JBV_F64:
+        case JBV_BOOL:
+          llu = jbl_get_i64(jbv);
+          break;
+        case JBV_STR:
+          llu = iwatoi(jbl_get_str(jbv));
+          break;
+        default:
+          goto finish;
+      }
+      break;
+    case EJDB_IDX_F64:
+      ikey.data = numbuf;
+      switch (jbvt) {
+        case JBV_F64:
+        case JBV_I64:
+        case JBV_BOOL:
+          rc = _jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey.size);
+          RCGO(rc, finish);
+          break;
+        case JBV_STR: {
+          rc = _jb_idx_ftoa(iwatof(jbl_get_str(jbv)), numbuf, &ikey.size);
+          RCGO(rc, finish);
+          break;
         }
-        break;
-      default:
-        goto finish;
-    }
-
-    rc = iwkv_put(idx->idb, &ikey, &idval, IWKV_NO_OVERWRITE);
-    RCGO(rc, finish);
+        default:
+          goto finish;
+      }
+      break;
+    default:
+      goto finish;
   }
+
+  rc = iwkv_put(idx->idb, &ikey, &idval, IWKV_NO_OVERWRITE);
+  RCGO(rc, finish);
 
 finish:
   if (jbv) {
     jbl_destroy(&jbv);
+  }
+  if (jbvprev) {
+    jbl_destroy(&jbvprev);
   }
   return rc;
 }

@@ -1408,6 +1408,28 @@ static iwrc _jbl_patch(JBL jbl, const JBL_PATCH *p, size_t cnt, IWPOOL *pool) {
   return rc;
 }
 
+bool _jbl_is_eq_values(JBL v1, JBL v2) {
+  jbl_type_t t1 = jbl_type(v1);
+  jbl_type_t t2 = jbl_type(v2);
+  if (t1 != t2) {
+    return false;
+  }
+  switch (t1) {
+    case JBV_BOOL:
+    case JBV_I64:
+      return jbl_get_i64(v1) != jbl_get_i64(v2);
+    case JBV_STR:
+      return !strcmp(jbl_get_str(v1), jbl_get_str(v2));
+    case JBV_F64:
+      return jbl_get_f64(v1) != jbl_get_f64(v2);
+    case JBV_OBJECT:
+    case JBV_ARRAY:
+      return false;
+    default:
+      return true;
+  }
+}
+
 // --------------------------- Public API
 
 iwrc jbl_to_node(const JBL jbl, JBL_NODE *node, IWPOOL *pool) {
