@@ -540,7 +540,6 @@ static iwrc _jbl_ptr_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   jpr = (char *) jp;
-  jp->pos = -1;
   jp->cnt = cnt;
   jp->sz = sz;
 
@@ -577,13 +576,6 @@ static iwrc _jbl_ptr_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
 
 iwrc jbl_ptr_alloc(const char *path, JBL_PTR *jpp) {
   return _jbl_ptr_pool(path, jpp, 0);
-}
-
-JBL_PTR jbl_ptr_dup(JBL_PTR src) {
-  JBL_PTR res = malloc(src->sz);
-  if (!res) return 0;
-  memcpy(res, src, src->sz);
-  return res;
 }
 
 int jbl_ptr_cmp(JBL_PTR p1, JBL_PTR p2) {
@@ -723,12 +715,13 @@ iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor) {
 }
 
 
-IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBL_PTR jp, int lvl, const char *key, int idx) {
+IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBL_VCTX *vctx, int lvl, const char *key, int idx) {
+  JBL_PTR jp = vctx->op;
   if (lvl < jp->cnt) {
-    if (jp->pos >= lvl) {
-      jp->pos = lvl - 1;
+    if (vctx->pos >= lvl) {
+      vctx->pos = lvl - 1;
     }
-    if (jp->pos + 1 == lvl) {
+    if (vctx->pos + 1 == lvl) {
       const char *keyptr;
       char buf[JBNUMBUF_SIZE];
       if (key) {
@@ -738,7 +731,7 @@ IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBL_PTR jp, int lvl, const char *
         keyptr = buf;
       }
       if (!strcmp(keyptr, jp->n[lvl]) || (jp->n[lvl][0] == '*' && jp->n[lvl][1] == '\0')) {
-        jp->pos = lvl;
+        vctx->pos = lvl;
         return (jp->cnt == lvl + 1);
       }
     }
@@ -749,7 +742,7 @@ IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBL_PTR jp, int lvl, const char *
 static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rc) {
   JBL_PTR jp = vctx->op;
   assert(jp);
-  if (_jbl_visitor_update_jptr_cursor(jp, lvl, key, idx)) { // Pointer matched
+  if (_jbl_visitor_update_jptr_cursor(vctx, lvl, key, idx)) { // Pointer matched
     JBL jbl = malloc(sizeof(struct _JBL));
     memcpy(&jbl->bn, bv, sizeof(*bv));
     vctx->result = jbl;
@@ -761,10 +754,10 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, const char *key, in
 }
 
 iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res) {
-  jp->pos = -1;
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
-    .op = jp
+    .op = jp,
+    .pos = -1
   };
   iwrc rc = _jbl_visit(0, 0, &vctx, _jbl_get_visitor);
   if (rc) {

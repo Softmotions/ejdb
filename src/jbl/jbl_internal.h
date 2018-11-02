@@ -18,6 +18,7 @@ struct _JBL {
  * @brief JBL visitor context
  */
 typedef struct _JBL_VCTX {
+  int pos;          /**< Aux position, not actually used by visitor core */
   binn *bn;         /**< Root node from which started visitor */
   void *op;         /**< Arbitrary opaque data */
   void *result;

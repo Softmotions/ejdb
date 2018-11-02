@@ -93,7 +93,6 @@ typedef struct _JBL_PATCH {
  */
 typedef struct _JBL_PTR {
   int cnt;          /**< Number of nodes */
-  int pos;          /**< Current node position (like a cursor) */
   int sz;           /**< Size of JBL_PTR allocated area */
   char *n[1];       /**< Path nodes */
 } *JBL_PTR;
@@ -159,8 +158,6 @@ IW_EXPORT JBL_NODE jbl_node_detach(JBL_NODE target, const JBL_PTR path);
 IW_EXPORT void jbl_node_reset_data(JBL_NODE node);
 
 IW_EXPORT iwrc jbl_ptr_alloc(const char *path, JBL_PTR *jpp);
-
-IW_EXPORT JBL_PTR jbl_ptr_dup(JBL_PTR src);
 
 IW_EXPORT int jbl_ptr_cmp(JBL_PTR p1, JBL_PTR p2);
 
