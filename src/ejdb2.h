@@ -16,6 +16,7 @@ typedef enum {
   EJDB_ERROR_INVALID_COLLECTION_META,             /**< Invalid collection metadata */
   EJDB_ERROR_INVALID_INDEX_MODE,                  /**< Invalid index mode */
   EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE,    /**< Index exists but mismatched uniqueness constraint */
+  EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED,    /**< Unique index constraint violated */
   _EJDB_ERROR_END
 } ejdb_ecode;
 
