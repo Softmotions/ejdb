@@ -446,8 +446,6 @@ finish:
   return rc;
 }
 
-//static iwrc _jb_idx_remove_value()
-
 static iwrc _jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
   struct _JBL jbs;
   JBL jbv, jbvprev;
@@ -493,7 +491,10 @@ static iwrc _jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
     RCGO(rc, finish);
     if (ikey.size) {
       if (idx->idbf & IWDB_DUP_FLAGS) {
-        rc = iwkv_put(idx->idb, &ikey, &idval, IWKV_DUP_REMOVE); // todo use IWKV_DUP_REMOVE_CLEAN flags
+        rc = iwkv_put(idx->idb, &ikey, &idval, IWKV_DUP_REMOVE | IWKV_DUP_REPORT_EMPTY);
+        if (rc == IWKV_RC_DUP_ARRAY_EMPTY) {
+          rc = iwkv_del(idx->idb, &ikey, 0);
+        }
       } else {
         rc = iwkv_del(idx->idb, &ikey, 0);
       }
@@ -568,7 +569,7 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
     default:
       return EJDB_ERROR_INVALID_INDEX_MODE;
   }
-  if ((mode & EJDB_IDX_ARR) && (mode & EJDB_IDX_UNIQUE)) {
+  if ((mode & EJDB_IDX_ARR) && unique) {
     return EJDB_ERROR_INVALID_INDEX_MODE; // Array indexes cannot be unique
   }
 
@@ -604,8 +605,10 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   rc = iwkv_new_db(db->iwkv, cidx->idbf, &cidx->dbid, &cidx->idb);
   RCGO(rc, finish);
 
-  rc = iwkv_new_db(db->iwkv, IWDB_UINT64_KEYS, &cidx->auxdbid, &cidx->auxdb);
-  RCGO(rc, finish);
+  if (mode & EJDB_IDX_ARR) { // auxiliary database for array index
+    rc = iwkv_new_db(db->iwkv, IWDB_UINT64_KEYS, &cidx->auxdbid, &cidx->auxdb);
+    RCGO(rc, finish);
+  }
 
   rc = _jb_idx_fill(cidx);
   RCGO(rc, finish);
