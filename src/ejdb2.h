@@ -14,6 +14,7 @@ IW_EXTERN_C_START
 typedef enum {
   _EJDB_ERROR_START = (IW_ERROR_START + 15000UL),
   EJDB_ERROR_INVALID_COLLECTION_META,             /**< Invalid collection metadata */
+  EJDB_ERROR_INVALID_COLLECTION_INDEX_META,       /**< Invalid collection index metadata */
   EJDB_ERROR_INVALID_INDEX_MODE,                  /**< Invalid index mode */
   EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE,    /**< Index exists but mismatched uniqueness constraint */
   EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED,    /**< Unique index constraint violated */
