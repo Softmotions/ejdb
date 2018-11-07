@@ -20,7 +20,7 @@ void ejdb_test1_2() {
     .no_wal = true
   };
   EJDB db;
-  JBL jbl, at;
+  JBL jbl, at, meta;
   uint64_t llv = 0, llv2;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -49,8 +49,77 @@ void ejdb_test1_2() {
   CU_ASSERT_EQUAL(rc, IWKV_ERROR_NOTFOUND);
   CU_ASSERT_PTR_NULL(jbl);
 
+  // Ensure indexes
+  rc = ejdb_ensure_index(db, "col1", "/foo/bar", EJDB_IDX_I64 | EJDB_IDX_UNIQUE);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_ensure_index(db, "col1", "/foo/baz", EJDB_IDX_STR);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_get_meta(db, &meta);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  //rc = jbl_as_json(meta, jbl_fstream_json_printer, stderr, JBL_PRINT_PRETTY);
+  //CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+//    "version": "2.0.0",
+//    "file": "ejdb_test1_2.db",
+//    "size": 8192,
+//    "collections": [
+//      {
+//        "name": "col1",
+//        "dbid": 3,
+//        "indexes": [
+//          {
+//            "ptr": "/foo/bar",
+//            "mode": 9,
+//            "idbf": 2,
+//            "dbid": 4,
+//            "auxdbid": 0
+//          },
+//          {
+//            "ptr": "/foo/baz",
+//            "mode": 4,
+//            "idbf": 8,
+//            "dbid": 5,
+//            "auxdbid": 0
+//          }
+//        ]
+//      },
+//      {
+//        "name": "foocoll",
+//        "dbid": 2,
+//        "indexes": []
+//      }
+//    ]
+
+  rc = jbl_at(meta, "/collections/0/name", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "col1");
+  jbl_destroy(&jbl);
+
+  rc = jbl_at(meta, "/collections/0/indexes/0/ptr", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "/foo/bar");
+  jbl_destroy(&jbl);
+
+  rc = jbl_at(meta, "/collections/1/name", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "foocoll");
+  jbl_destroy(&jbl);
+
+  rc = jbl_at(meta, "/collections/0/indexes/1/ptr", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "/foo/baz");
+  jbl_destroy(&jbl);
+
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+  jbl_destroy(&meta);
+
+
+  // Now reopen db and check indexes
+  // TODO:
 }
 
 void ejdb_test1_1() {

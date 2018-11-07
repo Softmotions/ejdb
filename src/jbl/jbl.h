@@ -4,6 +4,7 @@
 
 #include <iowow/iwlog.h>
 #include <iowow/iwpool.h>
+#include <iowow/iwxstr.h>
 #include <stdbool.h>
 
 IW_EXTERN_C_START
@@ -160,6 +161,8 @@ IW_EXPORT void jbl_node_reset_data(JBL_NODE node);
 IW_EXPORT iwrc jbl_ptr_alloc(const char *path, JBL_PTR *jpp);
 
 IW_EXPORT int jbl_ptr_cmp(const JBL_PTR p1, const JBL_PTR p2);
+
+IW_EXPORT iwrc jbl_ptr_serialize(const JBL_PTR ptr, IWXSTR *xstr);
 
 /**
  * @brief JBL_NODE visitor context

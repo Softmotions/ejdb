@@ -375,8 +375,10 @@ iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count,
   }
   if (!data) {
     if (count) {
-      size_t wc = fwrite(&ch, sizeof(ch), count, file);
-      if (wc != count) {
+      char cbuf[count]; // review
+      memset(cbuf, ch, sizeof(cbuf));
+      size_t wc = fwrite(cbuf, 1, count, file);
+      if (wc != sizeof(cbuf)) {
         return iwrc_set_errno(IW_ERROR_IO_ERRNO, errno);
       }
     }
@@ -588,6 +590,16 @@ int jbl_ptr_cmp(const JBL_PTR p1, const JBL_PTR p2) {
   for (int i = 0; i < p1->cnt; ++i) {
     int r = strcmp(p1->n[i], p2->n[i]);
     if (r) return r;
+  }
+  return 0;
+}
+
+iwrc jbl_ptr_serialize(const JBL_PTR ptr, IWXSTR *xstr) {
+  for (int i = 0; i < ptr->cnt; ++i) {
+    iwrc rc = iwxstr_cat(xstr, "/", 1);
+    RCRET(rc);
+    rc = iwxstr_cat(xstr, ptr->n[i], strlen(ptr->n[i]));
+    RCRET(rc);
   }
   return 0;
 }
