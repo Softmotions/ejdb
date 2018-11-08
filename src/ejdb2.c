@@ -701,8 +701,7 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   rc = jbl_ptr_alloc(path, &ptr);
   RCGO(rc, finish);
 
-  JBIDX prev = 0;
-  for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
+  for (JBIDX idx = jbc->idx, prev = 0; idx; idx = idx->next) {
     if ((idx->mode & ~EJDB_IDX_UNIQUE) == (mode & ~EJDB_IDX_UNIQUE) && !jbl_ptr_cmp(idx->ptr, ptr)) {
       key.data = keybuf;
       key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_IDXMETA "%u" "." "%u", jbc->dbid, idx->dbid);
