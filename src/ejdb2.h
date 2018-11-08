@@ -85,7 +85,9 @@ IW_EXPORT WUR iwrc ejdb_exec(EJDB db, JQL q, EJDB_VISITOR_FN visitor, void *op);
 
 IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool);
 
-IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t *id);
+IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t id);
+
+IW_EXPORT WUR iwrc ejdb_put_new(EJDB db, const char *coll, const JBL jbl, uint64_t *oid);
 
 IW_EXPORT WUR iwrc ejdb_get(EJDB db, const char *coll, uint64_t id, JBL *jblp);
 

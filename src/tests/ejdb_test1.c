@@ -27,7 +27,7 @@ void ejdb_test1_2() {
 
   rc = jbl_from_json(&jbl, "{\"foo\":22}");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  rc = ejdb_put(db, "foocoll", jbl, &llv);
+  rc = ejdb_put_new(db, "foocoll", jbl, &llv);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   jbl_destroy(&jbl);
   CU_ASSERT_TRUE(llv > 0);

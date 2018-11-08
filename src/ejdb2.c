@@ -80,6 +80,12 @@ struct _EJDB {
   pthread_rwlock_t rwl;       /**< Main RWL */
 };
 
+struct _JBPHCTX {
+  uint64_t id;
+  JBCOLL jbc;
+  const JBL jbl;
+};
+
 // ---------------------------------------------------------------------------
 
 iwrc _jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
@@ -684,6 +690,28 @@ static iwrc _jb_idx_fill(JBIDX idx) {
   return rc;
 }
 
+static iwrc _jb_put_handler(const IWKV_val *key, const IWKV_val *val, const IWKV_val *oldval, void *op) {
+  iwrc rc = 0;
+  JBL jblprev;
+  struct _JBPHCTX *ctx = op;
+  JBCOLL jbc = ctx->jbc;
+  if (oldval) {
+    rc = jbl_from_buf_keep(&jblprev, oldval->data, oldval->size);
+    RCRET(rc);
+  } else {
+    jblprev = 0;
+  }
+  for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
+    rc = _jb_idx_record_add(idx, ctx->id, ctx->jbl, jblprev);
+    RCGO(rc, finish);
+  }
+finish:
+  if (jblprev) {
+    jbl_destroy(&jblprev);
+  }
+  return rc;
+}
+
 //----------------------- Public API
 
 iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mode_t mode) {
@@ -735,7 +763,6 @@ finish:
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
-
 
 iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mode_t mode) {
   if (!db || !coll || !path) {
@@ -857,7 +884,38 @@ finish:
   return rc;
 }
 
-iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t *id) {
+iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t id) {
+  if (!jbl) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  int rci;
+  JBCOLL jbc;
+  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  RCRET(rc);
+
+  IWKV_val val;
+  IWKV_val key = {
+    .data = &id,
+    .size = sizeof(id)
+  };
+  struct _JBPHCTX pctx = {
+    .id = id,
+    .jbc = jbc,
+    .jbl = jbl
+  };
+
+  rc = jbl_as_buf(jbl, &val.data, &val.size);
+  RCGO(rc, finish);
+
+  rc = iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx);
+  RCGO(rc, finish);
+
+finish:
+  API_COLL_UNLOCK(jbc, rci, rc);
+  return rc;
+}
+
+iwrc ejdb_put_new(EJDB db, const char *coll, const JBL jbl, uint64_t *id) {
   if (!jbl) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -866,19 +924,24 @@ iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t *id) {
   if (id) *id = 0;
   iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
-
   uint64_t oid = jbc->id_seq + 1;
-  IWKV_val key, val;
-  key.data = &oid;
-  key.size = sizeof(oid);
+
+  IWKV_val val;
+  IWKV_val key = {
+    .data = &oid,
+    .size = sizeof(oid)
+  };
+  struct _JBPHCTX pctx = {
+    .id = oid,
+    .jbc = jbc,
+    .jbl = jbl
+  };
 
   rc = jbl_as_buf(jbl, &val.data, &val.size);
   RCGO(rc, finish);
 
-  rc = iwkv_put(jbc->cdb, &key, &val, 0);
+  rc = iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx);
   RCGO(rc, finish);
-
-  // TODO: Update indexes
 
   jbc->id_seq = oid;
   if (id) {
@@ -889,6 +952,7 @@ finish:
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
+
 
 iwrc ejdb_get(EJDB db, const char *coll, uint64_t id, JBL *jblp) {
   if (!id || !jblp) {
