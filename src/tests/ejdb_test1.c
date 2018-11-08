@@ -62,41 +62,41 @@ void ejdb_test1_2() {
   rc = ejdb_get_meta(db, &meta);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-//  fprintf(stderr, "\n");
-//  rc = jbl_as_json(meta, jbl_fstream_json_printer, stderr, JBL_PRINT_PRETTY);
-//  CU_ASSERT_EQUAL_FATAL(rc, 0);
-//  fprintf(stderr, "\n");
+  //  fprintf(stderr, "\n");
+  //  rc = jbl_as_json(meta, jbl_fstream_json_printer, stderr, JBL_PRINT_PRETTY);
+  //  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  //  fprintf(stderr, "\n");
 
-//    "version": "2.0.0",
-//    "file": "ejdb_test1_2.db",
-//    "size": 8192,
-//    "collections": [
-//      {
-//        "name": "col1",
-//        "dbid": 3,
-//        "indexes": [
-//          {
-//            "ptr": "/foo/bar",
-//            "mode": 9,
-//            "idbf": 2,
-//            "dbid": 4,
-//            "auxdbid": 0
-//          },
-//          {
-//            "ptr": "/foo/baz",
-//            "mode": 4,
-//            "idbf": 8,
-//            "dbid": 5,
-//            "auxdbid": 0
-//          }
-//        ]
-//      },
-//      {
-//        "name": "foocoll",
-//        "dbid": 2,
-//        "indexes": []
-//      }
-//    ]
+  //    "version": "2.0.0",
+  //    "file": "ejdb_test1_2.db",
+  //    "size": 8192,
+  //    "collections": [
+  //      {
+  //        "name": "col1",
+  //        "dbid": 3,
+  //        "indexes": [
+  //          {
+  //            "ptr": "/foo/bar",
+  //            "mode": 9,
+  //            "idbf": 2,
+  //            "dbid": 4,
+  //            "auxdbid": 0
+  //          },
+  //          {
+  //            "ptr": "/foo/baz",
+  //            "mode": 4,
+  //            "idbf": 8,
+  //            "dbid": 5,
+  //            "auxdbid": 0
+  //          }
+  //        ]
+  //      },
+  //      {
+  //        "name": "foocoll",
+  //        "dbid": 2,
+  //        "indexes": []
+  //      }
+  //    ]
 
   rc = jbl_at(meta, "/collections/0/name", &jbl);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -148,6 +148,27 @@ void ejdb_test1_2() {
   rc = jbl_at(meta, "/collections/0/indexes/1/ptr", &jbl);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "/foo/baz");
+  jbl_destroy(&jbl);
+  jbl_destroy(&meta);
+
+  rc = ejdb_remove_index(db, "col1", "/foo/baz", EJDB_IDX_STR);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_remove_index(db, "col1", "/foo/gaz", EJDB_IDX_STR);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_get_meta(db, &meta);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_at(meta, "/collections/1/indexes/0/ptr", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATH_NOTFOUND);
+
+  rc = jbl_at(meta, "/collections/2/indexes/0/ptr", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATH_NOTFOUND);
+
+   rc = jbl_at(meta, "/collections/0/indexes/0/ptr", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "/foo/bar");
   jbl_destroy(&jbl);
 
   rc = ejdb_close(&db);

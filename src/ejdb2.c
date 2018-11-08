@@ -724,6 +724,7 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
         iwkv_db_destroy(&idx->auxdb);
         idx->auxdb = 0;
       }
+      _jb_idx_release(idx);
       break;
     }
     prev = idx;
