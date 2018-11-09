@@ -3,6 +3,7 @@
 #include "jql_internal.h"
 #include "jbl_internal.h"
 #include <iowow/iwkv.h>
+#include <iowow/iwxstr.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
@@ -85,6 +86,11 @@ struct _JBPHCTX {
   JBCOLL jbc;
   const JBL jbl;
 };
+
+typedef struct {
+  EJDB_EXEC ux;
+  JBIDX idx;
+} JBEXEC;
 
 // ---------------------------------------------------------------------------
 
@@ -761,7 +767,28 @@ finish:
   return rc;
 }
 
+static iwrc _jb_exec_set_idx(JBEXEC *ctx) {
+  return 0;
+}
+
 //----------------------- Public API
+
+iwrc ejdb_exec(EJDB_EXEC ux) {
+  if (!ux || !ux->visitor || !ux->db || !ux->q) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  int rci;
+  JBCOLL jbc;
+  JBEXEC ctx = {
+    .ux = ux
+  };
+  iwrc rc = _jb_coll_acquire_keeplock(ux->db, ux->q->coll, jql_has_apply(ux->q), &jbc);
+
+
+
+  API_COLL_UNLOCK(jbc, rci, rc);
+  return rc;
+}
 
 iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mode_t mode) {
   if (!db || !coll || !path) {
@@ -1002,7 +1029,6 @@ finish:
   return rc;
 }
 
-
 iwrc ejdb_get(EJDB db, const char *coll, uint64_t id, JBL *jblp) {
   if (!id || !jblp) {
     return IW_ERROR_INVALID_ARGS;
@@ -1083,9 +1109,21 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   }
   API_WLOCK(db, rci);
   JBCOLL jbc;
+  IWKV_val key;
+  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
   khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
   if (k != kh_end(db->mcolls)) {
     jbc = kh_value(db->mcolls, k);
+    key.data = keybuf;
+    key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_COLLMETA "%u", jbc->dbid);
+    rc = iwkv_del(jbc->db->metadb, &key, IWKV_SYNC);
+    RCGO(rc, finish);
+    for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
+      key.data = keybuf;
+      key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_IDXMETA "%u" "." "%u", jbc->dbid, idx->dbid);
+      rc = iwkv_del(jbc->db->metadb, &key, 0);
+      RCGO(rc, finish);
+    }
     for (JBIDX idx = jbc->idx, nidx; idx; idx = nidx) {
       IWRC(iwkv_db_destroy(&idx->idb), rc);
       idx->idb = 0;
@@ -1101,6 +1139,8 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
     kh_del(JBCOLLM, db->mcolls, k);
     _jb_coll_release(jbc);
   }
+
+finish:
   API_UNLOCK(db, rci, rc);
   return rc;
 }

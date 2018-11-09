@@ -75,13 +75,19 @@ typedef enum {
 
 typedef void (*EJDB_VCTL_FN)(JQL q, ejdb_vctl_cmd_t cmd, int skip);
 
-typedef void (*EJDB_VISITOR_FN)(JQL q, const EJDOC doc, EJDB_VCTL_FN ctl, void *op);
+typedef struct _EJDB_EXEC {
+  EJDB db;
+  JQL q;
+  void (*visitor)(const EJDOC doc, EJDB_VCTL_FN ctl, struct _EJDB_EXEC *ctx);
+  void *opaque;
+  IWXSTR *xlog;
+} *EJDB_EXEC;
 
 IW_EXPORT WUR iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp);
 
 IW_EXPORT iwrc ejdb_close(EJDB *ejdbp);
 
-IW_EXPORT WUR iwrc ejdb_exec(EJDB db, JQL q, EJDB_VISITOR_FN visitor, void *op);
+IW_EXPORT WUR iwrc ejdb_exec(EJDB_EXEC ux);
 
 IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool);
 

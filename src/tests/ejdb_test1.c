@@ -11,6 +11,9 @@ int clean_suite() {
   return 0;
 }
 
+//void ejdb_tst
+
+
 void ejdb_test1_2() {
   EJDB_OPTS opts = {
     .kv = {
