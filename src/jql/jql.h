@@ -56,6 +56,10 @@ IW_EXPORT bool jql_has_apply(JQL q);
 
 IW_EXPORT bool jql_has_projection(JQL q);
 
+IW_EXPORT iwrc jql_get_skip(JQL q, int64_t *out);
+
+IW_EXPORT iwrc jql_get_limit(JQL q, int64_t *out);
+
 IW_EXPORT iwrc jql_apply(JQL q, const JBL jbl, JBL_NODE *out, IWPOOL *pool);
 
 IW_EXPORT void jql_reset(JQL q, bool reset_placeholders);

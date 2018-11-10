@@ -73,12 +73,11 @@ typedef enum {
   EJDB_VCTL_STOP = 1
 } ejdb_vctl_cmd_t;
 
-typedef void (*EJDB_VCTL_FN)(JQL q, ejdb_vctl_cmd_t cmd, int skip);
 
 typedef struct _EJDB_EXEC {
   EJDB db;
   JQL q;
-  void (*visitor)(const EJDOC doc, EJDB_VCTL_FN ctl, struct _EJDB_EXEC *ctx);
+  iwrc (*visitor)(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step);
   void *opaque;
   IWXSTR *xlog;
 } *EJDB_EXEC;

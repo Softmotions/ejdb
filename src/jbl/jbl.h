@@ -104,7 +104,9 @@ IW_EXPORT iwrc jbl_create_empty_object(JBL *jblp);
 
 IW_EXPORT iwrc jbl_create_empty_array(JBL *jblp);
 
-IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz);
+IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy);
+
+IW_EXPORT iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz);
 
 IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *jsonstr);
 

@@ -255,7 +255,7 @@ finish:
   return rc;
 }
 
-const char* jql_collection(JQL q) {
+const char *jql_collection(JQL q) {
   return q->coll;
 }
 
@@ -798,7 +798,7 @@ finish:
   return match;
 }
 
-static JQVAL *_unit_to_jqval(MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
+static JQVAL *_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
   if (unit->type == JQP_STRING_TYPE) {
     if (unit->string.opaque) {
       return (JQVAL *) unit->string.opaque;
@@ -807,7 +807,7 @@ static JQVAL *_unit_to_jqval(MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
       *rcp = JQL_ERROR_INVALID_PLACEHOLDER;
       return 0;
     } else {
-      JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->aux->pool);
+      JQVAL *qv = iwpool_alloc(sizeof(*qv), aux->pool);
       if (!qv) {
         *rcp = IW_ERROR_ALLOC;
         return 0;
@@ -821,7 +821,7 @@ static JQVAL *_unit_to_jqval(MCTX *mctx, JQPUNIT *unit, iwrc *rcp) {
     if (unit->json.opaque) {
       return (JQVAL *) unit->json.opaque;
     }
-    JQVAL *qv = iwpool_alloc(sizeof(*qv), mctx->aux->pool);
+    JQVAL *qv = iwpool_alloc(sizeof(*qv), aux->pool);
     if (!qv) {
       *rcp = IW_ERROR_ALLOC;
       return 0;
@@ -843,7 +843,7 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_NODE *n, JQP_EXPR *expr, iwrc 
   JQPUNIT *right = expr->right;
   if (left->type == JQP_STRING_TYPE) {
     if (left->string.flavour & JQP_STR_STAR) {
-      JQVAL lv, *rv = _unit_to_jqval(mctx, right, rcp);
+      JQVAL lv, *rv = _unit_to_jqval(mctx->aux, right, rcp);
       if (*rcp) return false;
       lv.type = JQVAL_STR;
       lv.vstr = mctx->key;
@@ -857,7 +857,7 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_NODE *n, JQP_EXPR *expr, iwrc 
       *rcp = IW_ERROR_ASSERTION;
       return false;
     }
-    JQVAL lv, *rv = _unit_to_jqval(mctx, left->expr.right, rcp);
+    JQVAL lv, *rv = _unit_to_jqval(mctx->aux, left->expr.right, rcp);
     if (*rcp) return false;
     lv.type = JQVAL_STR;
     lv.vstr = mctx->key;
@@ -865,7 +865,7 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_NODE *n, JQP_EXPR *expr, iwrc 
       return negate;
     }
   }
-  JQVAL lv, *rv = _unit_to_jqval(mctx, right, rcp);
+  JQVAL lv, *rv = _unit_to_jqval(mctx->aux, right, rcp);
   if (*rcp) return false;
   lv.type = JQVAL_BINN;
   lv.vbinn = mctx->bv;
@@ -1070,6 +1070,36 @@ bool jql_has_apply(JQL q) {
 
 bool jql_has_projection(JQL q) {
   return q->qp->aux->projection;
+}
+
+iwrc jql_get_skip(JQL q, int64_t *out) {
+  iwrc rc = 0;
+  *out = 0;
+  struct JQP_AUX *aux = q->qp->aux;
+  JQPUNIT *skip = aux->skip;
+  if (!skip) return 0;
+  JQVAL *val = _unit_to_jqval(aux, skip, &rc);
+  RCRET(rc);
+  if (val->type != JQVAL_I64 || val->vi64 < 0) {
+    return JQL_ERROR_INVALID_PLACEHOLDER;
+  }
+  *out = val->vi64;
+  return 0;
+}
+
+iwrc jql_get_limit(JQL q, int64_t *out) {
+  iwrc rc = 0;
+  *out = 0;
+  struct JQP_AUX *aux = q->qp->aux;
+  JQPUNIT *limit = aux->limit;
+  if (!limit) return 0;
+  JQVAL *val = _unit_to_jqval(aux, limit, &rc);
+  RCRET(rc);
+  if (val->type != JQVAL_I64 || val->vi64 < 0) {
+    return JQL_ERROR_INVALID_PLACEHOLDER;
+  }
+  *out = val->vi64;
+  return 0;
 }
 
 // ----------- JQL Projection

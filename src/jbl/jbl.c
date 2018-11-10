@@ -26,7 +26,7 @@ iwrc jbl_create_empty_array(JBL *jblp) {
   return 0;
 }
 
-iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz) {
+iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy) {
   iwrc rc = 0;
   if (bufsz < MIN_BINN_SIZE) {
     return JBL_ERROR_INVALID_BUFFER;
@@ -46,7 +46,26 @@ iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz) {
   jbl->bn.header = BINN_MAGIC;
   jbl->bn.type = type;
   jbl->bn.ptr = buf;
-  jbl->bn.freefn = free;
+  jbl->bn.freefn = keep_on_destroy ? 0 : free;
+  return rc;
+}
+
+iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz) {
+  iwrc rc = 0;
+  if (bufsz < MIN_BINN_SIZE) {
+    return JBL_ERROR_INVALID_BUFFER;
+  }
+  int type, size = 0;
+  if (!binn_is_valid_header(buf, &type, NULL, &size, NULL)) {
+    return JBL_ERROR_INVALID_BUFFER;
+  }
+  if (size > bufsz) {
+    return JBL_ERROR_INVALID_BUFFER;
+  }
+  memset(jbl, 0, sizeof(*jbl));
+  jbl->bn.header = BINN_MAGIC;
+  jbl->bn.type = type;
+  jbl->bn.ptr = buf;
   return rc;
 }
 
