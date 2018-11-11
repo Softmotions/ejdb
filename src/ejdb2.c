@@ -773,20 +773,10 @@ static iwrc _jb_exec_index_select(JBEXEC *ctx) {
 
 iwrc  _jb_full_scanner(struct _JBEXEC *ctx, iwrc(*consumer)(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step)) {
   IWKV_cursor cur;
-  int64_t step, limit;
-
+  int64_t step = 1;
   iwrc rc = iwkv_cursor_open(ctx->jbc->cdb, &cur, IWKV_CURSOR_BEFORE_FIRST, 0);
   RCRET(rc);
 
-  rc = jql_get_skip(ctx->ux->q, &step);
-  RCGO(rc, finish);
-  ++step;
-
-  rc = jql_get_limit(ctx->ux->q, &limit);
-  RCGO(rc, finish);
-  if (limit < 1) {
-    limit = INT64_MAX;
-  }
   while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? IWKV_CURSOR_NEXT : IWKV_CURSOR_PREV))) {
     if (step > 0) {
       --step;
@@ -796,16 +786,11 @@ iwrc  _jb_full_scanner(struct _JBEXEC *ctx, iwrc(*consumer)(struct _JBEXEC *ctx,
     if (!step) {
       rc = consumer(ctx, cur, &step);
       RCBREAK(rc);
-      if (!--limit) {
-        break;
-      }
     }
   }
   if (rc == IWKV_ERROR_NOTFOUND) {
     rc = 0;
   }
-
-finish:
   iwkv_cursor_close(&cur);
   return rc;
 }
