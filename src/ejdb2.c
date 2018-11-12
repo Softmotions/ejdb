@@ -93,6 +93,7 @@ typedef struct _JBEXEC {
   JBIDX idx;              /**< Selected index for query (optional) */
   JQP_EXPR *iexpr;        /**< Expression used to match selected index (oprional) */
   uint32_t cnt;           /**< Current result row count */
+  bool sorting;           /**< Result set sorting needed */
   iwrc(*scanner)(struct _JBEXEC *ctx,
                  iwrc(*consumer)(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step));
 } JBEXEC;
@@ -771,6 +772,11 @@ static iwrc _jb_exec_index_select(JBEXEC *ctx) {
   return 0;
 }
 
+iwrc  _jb_index_scanner(struct _JBEXEC *ctx, iwrc(*consumer)(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step)) {
+  // TODO:
+  return 0;
+}
+
 iwrc  _jb_full_scanner(struct _JBEXEC *ctx, iwrc(*consumer)(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step)) {
   IWKV_cursor cur;
   int64_t step = 1;
@@ -792,6 +798,7 @@ iwrc  _jb_full_scanner(struct _JBEXEC *ctx, iwrc(*consumer)(struct _JBEXEC *ctx,
     rc = 0;
   }
   iwkv_cursor_close(&cur);
+  consumer(ctx, 0, &step);
   return rc;
 }
 
@@ -799,7 +806,7 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
   iwrc rc = _jb_exec_index_select(ctx);
   RCRET(rc);
   if (ctx->idx) {
-    // TODO:
+    ctx->scanner = _jb_index_scanner;
   } else {
     ctx->scanner = _jb_full_scanner;
   }
@@ -817,6 +824,10 @@ static iwrc _jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *ste
   IWKV_val kval, val;
   uint64_t id = 0;
   size_t sz;
+
+  if (!cur) { // EOF scan
+    return 0;
+  }
 
   *step = 1;
   if (ctx->idx) {
@@ -842,7 +853,6 @@ static iwrc _jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *ste
         goto finish;
       }
     }
-    // TODO: sorting
     struct _EJDOC doc = {
       .id = id,
       .raw = &jbl
@@ -853,6 +863,15 @@ static iwrc _jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *ste
 finish:
   iwkv_val_dispose(&val);
   return rc;
+}
+
+static iwrc _jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step) {
+  if (!cur) {
+    // TODO: perform sort of collected data then call `_jb_scan_consumer`
+    return 0;
+  }
+  // TODO:
+  return 0;
 }
 
 //----------------------- Public API
@@ -870,7 +889,11 @@ iwrc ejdb_exec(EJDB_EXEC ux) {
   rc = _jb_exec_scan_init(&ctx);
   RCGO(rc, finish);
   assert(ctx.scanner);
-  rc = ctx.scanner(&ctx, _jb_scan_consumer);
+  if (ctx.sorting) {
+    rc = ctx.scanner(&ctx, _jb_scan_sorter_consumer);
+  } else {
+    rc = ctx.scanner(&ctx, _jb_scan_consumer);
+  }
 
 finish:
   _jb_exec_scan_release(&ctx);
