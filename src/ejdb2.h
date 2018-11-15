@@ -53,11 +53,15 @@ typedef struct EJDB_IPC {
 /**
  * @brief EJDB open options.
  */
-typedef struct EJDB_OPTS {
+typedef struct _EJDB_OPTS {
   IWKV_OPTS kv;
   EJDB_HTTP http;
   EJDB_IPC ipc;
-  bool no_wal;
+  bool no_wal;                  /**< Do not use write-ahead-log. Default: false */
+  uint32_t sort_buffer_sz;      /**< Max sort buffer size. If exeeded an overflow file for sorted data will created.
+                                     Default 16Mb, min: 1Mb */
+  uint32_t document_buffer_sz;  /**< Initial size of buffer to process/store document during select.
+                                     Default 255Kb, min: 64Kb */
 } EJDB_OPTS;
 
 typedef struct _EJDOC {
@@ -77,7 +81,7 @@ typedef enum {
 typedef struct _EJDB_EXEC {
   EJDB db;
   JQL q;
-  iwrc (*visitor)(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step);
+  iwrc(*visitor)(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step);
   void *opaque;
   IWXSTR *xlog;
 } *EJDB_EXEC;
@@ -108,7 +112,7 @@ IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ej
 
 IW_EXPORT iwrc ejdb_get_meta(EJDB db, JBL *jblp);
 
-IW_EXPORT const char* ejdb_version_full(void);
+IW_EXPORT const char *ejdb_version_full(void);
 
 IW_EXPORT unsigned int ejdb_version_major(void);
 

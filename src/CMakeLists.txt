@@ -85,7 +85,8 @@ add_definitions(-D_GNU_SOURCE)
 add_definitions(-D_LARGEFILE_SOURCE)
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
-list(APPEND ALL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.c)
+file(GLOB ROOT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
+list(APPEND ALL_SRC ${ROOT_SRC})
 
 foreach(MODULE IN LISTS MODULES)
     file(GLOB MODULE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}/*.c)
@@ -95,10 +96,8 @@ foreach(MODULE IN LISTS MODULES)
     list(APPEND PROJECT_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE})
 endforeach(MODULE)
 
-list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
-                     ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2defs.h
-                     ${CMAKE_CURRENT_SOURCE_DIR}/jbi/jbi.h
-                     )
+list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h                     
+                     ${CMAKE_CURRENT_SOURCE_DIR}/jbi/jbi.h)
 
 list(REMOVE_DUPLICATES PROJECT_LLIBRARIES)
 list(REMOVE_DUPLICATES PROJECT_INCLUDE_DIRS)
@@ -121,13 +120,6 @@ endif()
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g -ggdb -Werror -DDEBUG -D_DEBUG -UNDEBUG -Wno-unused-variable ${CMAKE_C_ASAN}")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG ${CMAKE_C_ASAN}")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} -g")
-
-if (CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-  if (BUILD_SHARED_LIBS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")
-  endif()
-endif()
 
 if (CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -164,7 +156,6 @@ endforeach(MODULE)
 if (BUILD_TESTS)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests)
 endif()
-
 
 if (NOT BUILD_SHARED_LIBS)
   add_definitions(-DIW_NODLL)

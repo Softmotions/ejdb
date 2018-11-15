@@ -33,6 +33,9 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="src/jb_scan_consumer.c"/>
+    <File Name="src/jb_scan_sorter_consumer.c"/>
+    <File Name="src/ejdb2_internal.h"/>
     <VirtualDirectory Name="tests">
       <File Name="src/tests/CMakeLists.txt"/>
       <File Name="src/tests/ejdb_test1.c"/>
@@ -126,7 +129,6 @@
       <File Name="src/jbl/binn.h"/>
       <File Name="src/jbl/binn.c"/>
     </VirtualDirectory>
-    <File Name="src/ejdb2defs.h"/>
     <File Name="src/ejdb2.c"/>
     <File Name="src/ejdb2.h"/>
     <VirtualDirectory Name="tmpl">

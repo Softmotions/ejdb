@@ -1,102 +1,4 @@
-#include "ejdb2.h"
-#include "jql.h"
-#include "jql_internal.h"
-#include "jbl_internal.h"
-#include <iowow/iwkv.h>
-#include <iowow/iwxstr.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <assert.h>
-#include "khash.h"
-#include "ejdb2cfg.h"
-
-static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
-
-#define METADB_ID 1
-#define KEY_PREFIX_COLLMETA   "c." // Full key format: c.<coldbid>
-#define KEY_PREFIX_IDXMETA    "i." // Full key format: i.<coldbid>.<idxdbid>
-
-#define IWDB_DUP_FLAGS (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)
-
-#define ENSURE_OPEN(db_) \
-  if (!(db_) || !((db_)->open)) return IW_ERROR_INVALID_STATE;
-
-#define API_RLOCK(db_, rci_) \
-  ENSURE_OPEN(db_);  \
-  rci_ = pthread_rwlock_rdlock(&(db_)->rwl); \
-  if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
-
-#define API_WLOCK(db_, rci_) \
-  ENSURE_OPEN(db_);  \
-  rci_ = pthread_rwlock_wrlock(&(db_)->rwl); \
-  if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
-
-#define API_UNLOCK(db_, rci_, rc_)  \
-  rci_ = pthread_rwlock_unlock(&(db_)->rwl); \
-  if (rci_) IWRC(iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_), rc_)
-
-#define API_COLL_UNLOCK(jbc_, rci_, rc_)                                     \
-  do {                                                                    \
-    rci_ = pthread_rwlock_unlock(&(jbc_)->rwl);                            \
-    if (rci_) IWRC(iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_), rc_);  \
-    API_UNLOCK((jbc_)->db, rci_, rc_);                                   \
-  } while(0)
-
-struct _JBIDX;
-typedef struct _JBIDX *JBIDX;
-
-/** Database collection */
-typedef struct _JBCOLL {
-  uint32_t dbid;            /**< IWKV collection database ID */
-  const char *name;         /**< Collection name */
-  IWDB cdb;                 /**< IWKV collection database */
-  EJDB db;                  /**< Main database reference */
-  JBL meta;                 /**< Collection meta object */
-  JBIDX idx;                /**< First index in chain */
-  pthread_rwlock_t rwl;
-  uint64_t id_seq;
-} *JBCOLL;
-
-/** Database collection index */
-struct _JBIDX {
-  ejdb_idx_mode_t mode;     /**< Index mode/type mask */
-  iwdb_flags_t idbf;        /**< Index database flags */
-  JBCOLL jbc;               /**< Owner document collection */
-  JBL_PTR ptr;              /**< Indexed JSON path poiner 0*/
-  IWDB idb;                 /**< KV database for this index */
-  IWDB auxdb;               /**< Auxiliary database, used by `EJDB_IDX_ARR` indexes */
-  uint32_t dbid;            /**< IWKV collection database ID */
-  uint32_t auxdbid;         /**< Auxiliary database ID, used by `EJDB_IDX_ARR` indexes */
-  struct _JBIDX *next;      /**< Next index in chain */
-};
-
-KHASH_MAP_INIT_STR(JBCOLLM, JBCOLL)
-
-struct _EJDB {
-  IWKV iwkv;
-  IWDB metadb;
-  khash_t(JBCOLLM) *mcolls;
-  volatile bool open;
-  iwkv_openflags oflags;
-  pthread_rwlock_t rwl;       /**< Main RWL */
-};
-
-struct _JBPHCTX {
-  uint64_t id;
-  JBCOLL jbc;
-  const JBL jbl;
-};
-
-typedef struct _JBEXEC {
-  EJDB_EXEC ux;           /**< User defined context */
-  JBCOLL jbc;             /**< Collection */
-  JBIDX idx;              /**< Selected index for query (optional) */
-  JQP_EXPR *iexpr;        /**< Expression used to match selected index (oprional) */
-  uint32_t cnt;           /**< Current result row count */
-  bool sorting;           /**< Result set sorting needed */
-  iwrc(*scanner)(struct _JBEXEC *ctx,
-                 iwrc(*consumer)(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step));
-} JBEXEC;
+#include "ejdb2_internal.h"
 
 // ---------------------------------------------------------------------------
 
@@ -772,12 +674,12 @@ static iwrc _jb_exec_index_select(JBEXEC *ctx) {
   return 0;
 }
 
-iwrc  _jb_index_scanner(struct _JBEXEC *ctx, iwrc(*consumer)(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step)) {
+iwrc  _jb_index_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   // TODO:
   return 0;
 }
 
-iwrc  _jb_full_scanner(struct _JBEXEC *ctx, iwrc(*consumer)(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step)) {
+iwrc  _jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   IWKV_cursor cur;
   int64_t step = 1;
   iwrc rc = iwkv_cursor_open(ctx->jbc->cdb, &cur, IWKV_CURSOR_BEFORE_FIRST, 0);
@@ -790,7 +692,16 @@ iwrc  _jb_full_scanner(struct _JBEXEC *ctx, iwrc(*consumer)(struct _JBEXEC *ctx,
       ++step;
     }
     if (!step) {
-      rc = consumer(ctx, cur, &step);
+      size_t sz;
+      uint64_t id;
+      rc = iwkv_cursor_copy_key(cur, &id, sizeof(id), &sz);
+      RCBREAK(rc);
+      if (sz != sizeof(id)) {
+        rc = IW_ERROR_ASSERTION;
+        iwlog_ecode_error3(rc);
+        break;
+      }
+      rc = consumer(ctx, cur, id, &step);
       RCBREAK(rc);
     }
   }
@@ -798,11 +709,17 @@ iwrc  _jb_full_scanner(struct _JBEXEC *ctx, iwrc(*consumer)(struct _JBEXEC *ctx,
     rc = 0;
   }
   iwkv_cursor_close(&cur);
-  consumer(ctx, 0, &step);
+  consumer(ctx, 0, 0, &step);
   return rc;
 }
 
 static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
+  // Allocate initial space for current document
+  ctx->jblbuf = malloc(ctx->jbc->db->opts.document_buffer_sz);
+  if (!ctx->jblbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+
+  ctx->ssc.fh = INVALID_HANDLE_VALUE;
+
   iwrc rc = _jb_exec_index_select(ctx);
   RCRET(rc);
   if (ctx->idx) {
@@ -815,63 +732,9 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
 
 static void _jb_exec_scan_release(JBEXEC *ctx) {
   // TODO:
-}
-
-static iwrc _jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step) {
-  iwrc rc = 0;
-  bool matched;
-  struct _JBL jbl;
-  IWKV_val kval, val;
-  uint64_t id = 0;
-  size_t sz;
-
-  if (!cur) { // EOF scan
-    return 0;
+  if (ctx->jblbuf) {
+    free(ctx->jblbuf);
   }
-
-  *step = 1;
-  if (ctx->idx) {
-    // TODO: Index used to scan
-  }
-  rc = iwkv_cursor_val(cur, &val);
-  RCRET(rc);
-
-  rc = jbl_from_buf_keep_onstack(&jbl, val.data, val.size);
-  RCGO(rc, finish);
-
-  rc = jql_matched(ctx->ux->q, &jbl, &matched);
-  RCGO(rc, finish);
-
-  if (matched) {
-    if (!id) {
-      // fullscan
-      rc = iwkv_cursor_copy_key(cur, &id, sizeof(id), &sz);
-      RCGO(rc, finish);
-      if (sz != sizeof(id)) {
-        rc = IW_ERROR_ASSERTION;
-        iwlog_ecode_error3(rc);
-        goto finish;
-      }
-    }
-    struct _EJDOC doc = {
-      .id = id,
-      .raw = &jbl
-    };
-    rc = ctx->ux->visitor(ctx->ux, &doc, step);
-  }
-
-finish:
-  iwkv_val_dispose(&val);
-  return rc;
-}
-
-static iwrc _jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t *step) {
-  if (!cur) {
-    // TODO: perform sort of collected data then call `_jb_scan_consumer`
-    return 0;
-  }
-  // TODO:
-  return 0;
 }
 
 //----------------------- Public API
@@ -890,9 +753,9 @@ iwrc ejdb_exec(EJDB_EXEC ux) {
   RCGO(rc, finish);
   assert(ctx.scanner);
   if (ctx.sorting) {
-    rc = ctx.scanner(&ctx, _jb_scan_sorter_consumer);
+    rc = ctx.scanner(&ctx, jb_scan_sorter_consumer);
   } else {
-    rc = ctx.scanner(&ctx, _jb_scan_consumer);
+    rc = ctx.scanner(&ctx, jb_scan_consumer);
   }
 
 finish:
@@ -1301,18 +1164,34 @@ finish:
   return rc;
 }
 
-iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp) {
+iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   *ejdbp = 0;
   int rci;
   iwrc rc = ejdb_init();
   RCRET(rc);
-  if (!opts || !opts->kv.path || !ejdbp) {
+  if (!_opts || !_opts->kv.path || !ejdbp) {
     return IW_ERROR_INVALID_ARGS;
   }
+
   EJDB db = calloc(1, sizeof(*db));
   if (!db) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+
+  memcpy(&db->opts, _opts, sizeof(db->opts));
+  if (!db->opts.sort_buffer_sz) {
+    db->opts.sort_buffer_sz = 16 * 1024 * 1024; // 16Mb, Min 1Mb
+  }
+  if (db->opts.sort_buffer_sz < 1024 * 1024) {
+    db->opts.sort_buffer_sz = 1024 * 1024;
+  }
+  if (!db->opts.document_buffer_sz) { // 255Kb, Min 64Kb
+    db->opts.document_buffer_sz = 255 * 1024;
+  }
+  if (db->opts.document_buffer_sz < 64 * 1024) {
+    db->opts.document_buffer_sz = 64 * 1024;
+  }
+
   rci = pthread_rwlock_init(&db->rwl, 0);
   if (rci) {
     rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
@@ -1326,8 +1205,8 @@ iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp) {
   }
 
   IWKV_OPTS kvopts;
-  memcpy(&kvopts, &opts->kv, sizeof(opts->kv));
-  kvopts.wal.enabled = !opts->no_wal;
+  memcpy(&kvopts, &db->opts.kv, sizeof(db->opts.kv));
+  kvopts.wal.enabled = !db->opts.no_wal;
   rc = iwkv_open(&kvopts, &db->iwkv);
   RCGO(rc, finish);
 
