@@ -718,8 +718,6 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
   ctx->jblbuf = malloc(ctx->jbc->db->opts.document_buffer_sz);
   if (!ctx->jblbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
 
-  ctx->ssc.fh = INVALID_HANDLE_VALUE;
-
   iwrc rc = _jb_exec_index_select(ctx);
   RCRET(rc);
   if (ctx->idx) {

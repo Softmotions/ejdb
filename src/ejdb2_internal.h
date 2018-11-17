@@ -8,6 +8,7 @@
 #include "jbl_internal.h"
 #include <iowow/iwkv.h>
 #include <iowow/iwxstr.h>
+#include <iowow/iwexfile.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
@@ -106,7 +107,8 @@ struct _JBSSC {
   struct _JBL *docs;      /**< Documents array */
   uint32_t docs_asz;      /**< Documents array allocated size */
   uint32_t docs_npos;     /**< Next document offset */
-  HANDLE fh;              /**< Documents array overflow file handle */
+  IWFS_EXT sof;           /**< Sort overflow file */
+  bool sof_active;       /**< Is sort overflow enabled */
 };
 
 typedef struct _JBEXEC {

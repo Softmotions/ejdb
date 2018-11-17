@@ -5,15 +5,40 @@ static void _jb_release_sorting(struct _JBEXEC *ctx) {
   if (ssc->refs) {
     free(ssc->refs);
   }
-  if (!INVALIDHANDLE(ssc->fh)) {
-    iwp_closefh(ssc->fh);
+  if (ssc->docs) {
+    free(ssc->docs);
+  }
+  if (ssc->sof_active) {
+    ssc->sof.close(&ssc->sof);
   }
   memset(ssc, 0, sizeof(*ssc));
 }
 
 static iwrc _jb_finish_sorting(struct _JBEXEC *ctx) {
+  // TODO: sort docs here
   _jb_release_sorting(ctx);
   return 0;
+}
+
+static iwrc _jb_init_soft(struct _JBSSC *ssc, off_t initial_size) {
+  IWFS_EXT_OPTS opts = {
+    .initial_size = initial_size,
+    .rspolicy = iw_exfile_szpolicy_fibo,
+    .file = {
+      .path = "jb-",
+      .omode = IWFS_OTMP | IWFS_OUNLINK
+    }
+  };
+  iwrc rc = iwfs_exfile_open(&ssc->sof, &opts);
+  RCRET(rc);
+  rc = ssc->sof.add_mmap(&ssc->sof, 0, UINT64_MAX, 0);
+  RCGO(rc, finish);
+
+finish:
+  if (rc) {
+    ssc->sof.close(&ssc->sof);
+  }
+  return rc;
 }
 
 iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step) {
@@ -85,25 +110,32 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
   }
 
   do {
-    if (INVALIDHANDLE(ssc->fh)) {
-      if (ssc->docs_npos + vsz < ssc->docs_asz) {
+    if (!ssc->sof_active) {
+      if (ssc->docs_npos + vsz > ssc->docs_asz)  {
         ssc->docs_asz = MIN(ssc->docs_asz * 2, db->opts.sort_buffer_sz);
-        if (ssc->docs_npos + vsz < ssc->docs_asz) { // Sort buffer oveflow
-          //
-          // TODO allocate sort buffer temp file and continue
-          //
+        if (ssc->docs_npos + vsz > ssc->docs_asz) {
+          size_t sz;
+          rc = _jb_init_soft(ssc, (ssc->docs_npos + vsz) * 2);
+          RCGO(rc, finish);
+          rc = ssc->sof.write(&ssc->sof, 0, ssc->docs, ssc->docs_npos, &sz);
+          RCGO(rc, finish);
+          free(ssc->docs);
+          ssc->docs = 0;
+          ssc->sof_active = true;
           continue;
+        } else {
+          void *nbuf = realloc(ssc->docs, ssc->docs_asz);
+          if (!nbuf) {
+            rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+            goto finish;
+          }
+          ssc->docs = nbuf;
         }
-        void *nbuf = realloc(ssc->docs, ssc->docs_asz);
-        if (!nbuf) {
-          rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-          goto finish;
-        }
-        ssc->docs = nbuf;
       }
       memcpy((char *) ssc->docs + ssc->docs_npos, ctx->jblbuf, vsz);
     } else {
-      rc = iwp_write(ssc->fh, ctx->jblbuf, vsz);
+      size_t sz;
+      rc = ssc->sof.write(&ssc->sof, ssc->docs_npos, ctx->jblbuf, vsz, &sz);
       RCGO(rc, finish);
     }
     ssc->refs[ssc->refs_num] = ssc->docs_npos;
