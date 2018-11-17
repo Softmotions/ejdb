@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
+#include <setjmp.h>
 #include "khash.h"
 #include "ejdb2cfg.h"
 
@@ -101,14 +102,16 @@ typedef iwrc(*JB_SCAN_CONSUMER)(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t i
  * @brief Index can sorter consumer context
  */
 struct _JBSSC {
-  uint32_t *refs;         /**< Document references array */
-  uint32_t refs_asz;      /**< Document references array allocated size */
-  uint32_t refs_num;      /**< Document references array elements count */
-  struct _JBL *docs;      /**< Documents array */
-  uint32_t docs_asz;      /**< Documents array allocated size */
-  uint32_t docs_npos;     /**< Next document offset */
-  IWFS_EXT sof;           /**< Sort overflow file */
-  bool sof_active;       /**< Is sort overflow enabled */
+  iwrc rc;                    /**< RC code used for in `_jb_do_sorting` */
+  uint32_t *refs;             /**< Document references array */
+  uint32_t refs_asz;          /**< Document references array allocated size */
+  uint32_t refs_num;          /**< Document references array elements count */
+  uint32_t docs_asz;          /**< Documents array allocated size */
+  uint8_t *docs;              /**< Documents byte array */
+  uint32_t docs_npos;         /**< Next document offset */
+  jmp_buf fatal_jmp;
+  IWFS_EXT sof;               /**< Sort overflow file */
+  bool sof_active;
 };
 
 typedef struct _JBEXEC {

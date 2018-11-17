@@ -93,6 +93,7 @@ typedef struct _JBL_PATCH {
  * @brief JSON pointer
  */
 typedef struct _JBL_PTR {
+  uint64_t op;      /**< Opaque data associated with pointer */
   int cnt;          /**< Number of nodes */
   int sz;           /**< Size of JBL_PTR allocated area */
   char *n[1];       /**< Path nodes */

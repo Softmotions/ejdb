@@ -1192,4 +1192,15 @@ iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   return rc;
 }
 
+iwrc jqp_alloc_orderby_pointers(const JQP_QUERY *q, JBL_PTR *optr, size_t *nptr) {
+  *optr = 0;
+  *nptr = 0;
+  if (!q->aux->orderby) {
+    return 0;
+  }
+  // TODO:
+
+  return 0;
+}
+
 #undef PT

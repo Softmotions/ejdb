@@ -5,19 +5,63 @@ static void _jb_release_sorting(struct _JBEXEC *ctx) {
   if (ssc->refs) {
     free(ssc->refs);
   }
-  if (ssc->docs) {
-    free(ssc->docs);
-  }
   if (ssc->sof_active) {
     ssc->sof.close(&ssc->sof);
+  } else if (ssc->docs) {
+    free(ssc->docs);
   }
   memset(ssc, 0, sizeof(*ssc));
 }
 
-static iwrc _jb_finish_sorting(struct _JBEXEC *ctx) {
-  // TODO: sort docs here
-  _jb_release_sorting(ctx);
+
+static int _jb_doc_cmp(const void *o1, const void *o2, void *op) {
+  iwrc rc = 0;
+  uint32_t r1, r2;
+  struct _JBEXEC *ctx = op;
+  struct _JBSSC *ssc = &ctx->ssc;
+  memcpy(&r1, o1, sizeof(r1));
+  memcpy(&r2, o1, sizeof(r2));
+  uint8_t *b1 = ssc->docs + r1;
+  int sz1 = binn_buf_size(b1);
+  uint8_t *b2 = ssc->docs + r2;
+  int sz2 = binn_buf_size(b2);
+  if (!sz1 || !sz2) {
+    rc = IW_ERROR_FAIL;
+    iwlog_ecode_error3(rc);
+    goto finish;
+  }
+
+  // TODO:
+
+
+finish:
+  if (rc) {
+    ssc->rc = rc;
+    longjmp(ssc->fatal_jmp, 1);
+  }
   return 0;
+}
+
+static iwrc _jb_do_sorting(struct _JBEXEC *ctx) {
+  iwrc rc = 0;
+  struct _JBSSC *ssc = &ctx->ssc;
+  if (ssc->refs_num) {
+    if (setjmp(ssc->fatal_jmp)) { // Init error jump
+      rc = ssc->rc;
+      goto finish;
+    }
+    if (!ssc->docs) {
+      size_t sp;
+      rc = ssc->sof.probe_mmap(&ssc->sof, 0, &ssc->docs, &sp);
+      RCGO(rc, finish);
+    }
+    qsort_r(ssc->refs, ssc->refs_num, sizeof(ssc->refs[0]), _jb_doc_cmp, ctx);
+    // TODO: notify ctx->ux->visitor
+  }
+
+finish:
+  _jb_release_sorting(ctx);
+  return rc;
 }
 
 static iwrc _jb_init_sof(struct _JBSSC *ssc, off_t initial_size) {
@@ -32,9 +76,6 @@ static iwrc _jb_init_sof(struct _JBSSC *ssc, off_t initial_size) {
   iwrc rc = iwfs_exfile_open(&ssc->sof, &opts);
   RCRET(rc);
   rc = ssc->sof.add_mmap(&ssc->sof, 0, UINT64_MAX, 0);
-  RCGO(rc, finish);
-
-finish:
   if (rc) {
     ssc->sof.close(&ssc->sof);
   }
@@ -43,7 +84,7 @@ finish:
 
 iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step) {
   if (!id) { // End of scan
-    return _jb_finish_sorting(ctx);
+    return _jb_do_sorting(ctx);
   }
   iwrc rc;
   size_t vsz = 0;
@@ -99,6 +140,10 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
+    //
+
+
+
   } else if (ssc->refs_asz <= (ssc->refs_num + 1) * sizeof(ssc->refs[0])) {
     ssc->refs_asz *= 2;
     uint32_t *nrefs = realloc(ssc->refs, ssc->refs_asz);
@@ -110,7 +155,7 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
   }
 
   do {
-    if (!ssc->sof_active) {
+    if (ssc->docs) {
       if (ssc->docs_npos + vsz > ssc->docs_asz)  {
         ssc->docs_asz = MIN(ssc->docs_asz * 2, db->opts.sort_buffer_sz);
         if (ssc->docs_npos + vsz > ssc->docs_asz) {
@@ -132,7 +177,7 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
           ssc->docs = nbuf;
         }
       }
-      memcpy((char *) ssc->docs + ssc->docs_npos, ctx->jblbuf, vsz);
+      memcpy(ssc->docs + ssc->docs_npos, ctx->jblbuf, vsz);
     } else {
       size_t sz;
       rc = ssc->sof.write(&ssc->sof, ssc->docs_npos, ctx->jblbuf, vsz, &sz);

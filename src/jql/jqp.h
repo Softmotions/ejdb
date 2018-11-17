@@ -234,4 +234,6 @@ iwrc jqp_parse(JQP_AUX *aux);
 
 iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op);
 
+iwrc jqp_alloc_orderby_pointers(const JQP_QUERY *q, JBL_PTR *optr, size_t *nptr);
+
 #endif
