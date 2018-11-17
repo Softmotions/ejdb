@@ -20,7 +20,7 @@ static iwrc _jb_finish_sorting(struct _JBEXEC *ctx) {
   return 0;
 }
 
-static iwrc _jb_init_soft(struct _JBSSC *ssc, off_t initial_size) {
+static iwrc _jb_init_sof(struct _JBSSC *ssc, off_t initial_size) {
   IWFS_EXT_OPTS opts = {
     .initial_size = initial_size,
     .rspolicy = iw_exfile_szpolicy_fibo,
@@ -115,7 +115,7 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
         ssc->docs_asz = MIN(ssc->docs_asz * 2, db->opts.sort_buffer_sz);
         if (ssc->docs_npos + vsz > ssc->docs_asz) {
           size_t sz;
-          rc = _jb_init_soft(ssc, (ssc->docs_npos + vsz) * 2);
+          rc = _jb_init_sof(ssc, (ssc->docs_npos + vsz) * 2);
           RCGO(rc, finish);
           rc = ssc->sof.write(&ssc->sof, 0, ssc->docs, ssc->docs_npos, &sz);
           RCGO(rc, finish);
