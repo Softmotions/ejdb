@@ -794,12 +794,52 @@ static void _jqp_set_projection(yycontext *yy, JQPUNIT *unit) {
 }
 
 static void _jqp_finish(yycontext *yy) {
-  JQP_STRING *orderby = yy->aux->orderby;
-  for (int i = 0; orderby && orderby->next; ++i) {
+  iwrc rc = 0;
+  int cnt = 0;
+  IWXSTR *xstr = 0;
+  JQP_AUX *aux = yy->aux;
+
+  JQP_STRING *orderby = aux->orderby;
+  for (; orderby && orderby->next; ++cnt) {
     orderby = orderby->next;
-    if (i >= MAX_ORDER_BY_CLAUSES) {
-      JQRC(yy, JQL_ERROR_ORDERBY_MAX_LIMIT);
+    if (cnt >= MAX_ORDER_BY_CLAUSES) {
+      rc = JQL_ERROR_ORDERBY_MAX_LIMIT;
+      RCGO(rc, finish);
     }
+  }
+  aux->orderby_num = cnt;
+  if (cnt) {
+    aux->orderby_ptrs = iwpool_alloc(cnt * sizeof(JBL_PTR), aux->pool);
+    if (!aux->orderby_ptrs) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      goto finish;
+    }
+    xstr = iwxstr_new();
+    if (!xstr) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      RCGO(rc, finish);
+    }
+    cnt = 0;
+    orderby = aux->orderby;
+    for (; orderby; orderby = orderby->next) {
+      iwxstr_clear(xstr);
+      for (JQP_STRING *on = orderby; on; on = on->subnext) {
+        rc = iwxstr_cat(xstr, "/", 1);
+        RCGO(rc, finish);
+        iwxstr_cat(xstr, on->value, strlen(on->value));
+      }
+      rc = jbl_ptr_alloc_pool(iwxstr_ptr(xstr), &aux->orderby_ptrs[cnt++], aux->pool);
+      RCGO(rc, finish);
+    }
+  }
+
+finish:
+  if (xstr) {
+    iwxstr_destroy(xstr);
+  }
+  if (rc) {
+    aux->orderby_num = 0;
+    JQRC(yy, rc);
   }
 }
 
@@ -1190,17 +1230,6 @@ iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   }
 
   return rc;
-}
-
-iwrc jqp_alloc_orderby_pointers(const JQP_QUERY *q, JBL_PTR *optr, size_t *nptr) {
-  *optr = 0;
-  *nptr = 0;
-  if (!q->aux->orderby) {
-    return 0;
-  }
-  // TODO:
-
-  return 0;
 }
 
 #undef PT

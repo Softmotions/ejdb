@@ -591,6 +591,10 @@ iwrc jbl_ptr_alloc(const char *path, JBL_PTR *jpp) {
   return _jbl_ptr_pool(path, jpp, 0);
 }
 
+iwrc jbl_ptr_alloc_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
+  return _jbl_ptr_pool(path, jpp, pool);
+}
+
 int jbl_ptr_cmp(const JBL_PTR p1, const JBL_PTR p2) {
   if (p1->sz != p2->sz) {
     return p1->sz - p2->sz;

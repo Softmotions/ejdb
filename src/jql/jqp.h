@@ -199,10 +199,10 @@ typedef struct JQP_STACK {
 #define JQP_AUX_STACKPOOL_NUM 128
 
 typedef struct JQP_AUX {
-  bool negate;
   int pos;
   int stackn;
   int num_placeholders;
+  int orderby_num;                      /**< Number of order-by blocks */
   iwrc rc;
   jmp_buf fatal_jmp;
   const char *buf;
@@ -215,14 +215,15 @@ typedef struct JQP_AUX {
   struct JQP_PROJECTION *projection;
   JQP_STRING *start_placeholder;
   JQP_STRING *end_placeholder;
+  JQP_STRING *orderby;
+  JBL_PTR *orderby_ptrs;              /**< Order-by pointers, orderby_num - number of pointers allocated */
   JQP_OP *start_op;
   JQP_OP *end_op;
   JQPUNIT *skip;
   JQPUNIT *limit;
-  JQP_STRING *orderby;
   JBL_NODE apply;
   const char *apply_placeholder;
-  //
+  bool negate;
   JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];
 } JQP_AUX;
 
