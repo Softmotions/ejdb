@@ -688,7 +688,7 @@ iwrc  _jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? IWKV_CURSOR_NEXT : IWKV_CURSOR_PREV))) {
     if (step > 0) {
       --step;
-    } else {
+    } else if (step < 0) {
       ++step;
     }
     if (!step) {

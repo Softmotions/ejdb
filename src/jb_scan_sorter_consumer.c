@@ -36,11 +36,12 @@ static int _jb_doc_cmp(const void *o1, const void *o2, void *op) {
 
   for (int i = 0; i < aux->orderby_num; ++i) {
     JBL_PTR ptr = aux->orderby_ptrs[i];
+    int desc = (ptr->op & 1) ? -1 : 1; // If `1` do desc sorting
     rc = jbl_at2(&d1, ptr, &v1);
     RCGO(rc, finish);
     rc = jbl_at2(&d2, ptr, &v2);
     RCGO(rc, finish);
-    rv = _jbl_is_cmp_values(v1, v2);
+    rv = _jbl_is_cmp_values(v1, v2) * desc;
     if (rv) break;
   }
 
@@ -54,8 +55,12 @@ finish:
 
 static iwrc _jb_do_sorting(struct _JBEXEC *ctx) {
   iwrc rc = 0;
+  int64_t step = 1, id;
+  struct _JBL jbl;
   struct _JBSSC *ssc = &ctx->ssc;
-  if (ssc->refs_num) {
+  uint32_t rnum = ssc->refs_num;
+
+  if (rnum) {
     if (setjmp(ssc->fatal_jmp)) { // Init error jump
       rc = ssc->rc;
       goto finish;
@@ -65,8 +70,21 @@ static iwrc _jb_do_sorting(struct _JBEXEC *ctx) {
       rc = ssc->sof.probe_mmap(&ssc->sof, 0, &ssc->docs, &sp);
       RCGO(rc, finish);
     }
-    qsort_r(ssc->refs, ssc->refs_num, sizeof(ssc->refs[0]), _jb_doc_cmp, ctx);
-    // TODO: notify ctx->ux->visitor
+    qsort_r(ssc->refs, rnum, sizeof(ssc->refs[0]), _jb_doc_cmp, ctx);
+  }
+  for (int64_t i = 0; step && i < rnum && i >= 0;) {
+    uint8_t *rp = ssc->docs + ssc->refs[i];
+    memcpy(&id, rp, sizeof(id));
+    rp += sizeof(id);
+    rc = jbl_from_buf_keep_onstack2(&jbl, rp);
+    RCGO(rc, finish);
+    struct _EJDOC doc = {
+      .id = id,
+      .raw = &jbl
+    };
+    rc = ctx->ux->visitor(ctx->ux, &doc, &step);
+    RCGO(rc, finish);
+    i += step;
   }
 
 finish:
@@ -116,7 +134,6 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
     }
     if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
     RCGO(rc, finish);
-
     if (vsz + sizeof(id) > ctx->jblbufsz) {
       size_t nsize = MAX(vsz + sizeof(id), ctx->jblbufsz * 2);
       void *nbuf = realloc(ctx->jblbuf, nsize);
@@ -151,7 +168,6 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
-    //
 
   } else if (ssc->refs_asz <= (ssc->refs_num + 1) * sizeof(ssc->refs[0])) {
     ssc->refs_asz *= 2;

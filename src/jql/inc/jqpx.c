@@ -828,8 +828,11 @@ static void _jqp_finish(yycontext *yy) {
         RCGO(rc, finish);
         iwxstr_cat(xstr, on->value, strlen(on->value));
       }
-      rc = jbl_ptr_alloc_pool(iwxstr_ptr(xstr), &aux->orderby_ptrs[cnt++], aux->pool);
+      rc = jbl_ptr_alloc_pool(iwxstr_ptr(xstr), &aux->orderby_ptrs[cnt], aux->pool);
       RCGO(rc, finish);
+      JBL_PTR ptr = aux->orderby_ptrs[cnt];
+      ptr->op = !!(orderby->flavour & JQP_STR_NEGATE); // asc/desc
+      cnt++;
     }
   }
 
