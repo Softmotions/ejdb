@@ -13,33 +13,51 @@ static void _jb_release_sorting(struct _JBEXEC *ctx) {
   memset(ssc, 0, sizeof(*ssc));
 }
 
-
 static int _jb_doc_cmp(const void *o1, const void *o2, void *op) {
   iwrc rc = 0;
+  JBL v1, v2;
   uint32_t r1, r2;
+  int rv = 0, sz1, sz2;
+  struct _JBL d1, d2;
   struct _JBEXEC *ctx = op;
   struct _JBSSC *ssc = &ctx->ssc;
+  struct JQP_AUX *aux = ctx->ux->q->qp->aux;
+  uint8_t *p1, *p2;
+  assert(aux->orderby_num > 0);
+
   memcpy(&r1, o1, sizeof(r1));
   memcpy(&r2, o1, sizeof(r2));
-  uint8_t *b1 = ssc->docs + r1 + sizeof(uint64_t) /*id*/;
-  int sz1 = binn_buf_size(b1);
-  uint8_t *b2 = ssc->docs + r2 + sizeof(uint64_t) /*id*/;
-  int sz2 = binn_buf_size(b2);
+
+  p1 = ssc->docs + r1 + sizeof(uint64_t) /*id*/;
+  sz1 = binn_buf_size(p1);
+
+  p2 = ssc->docs + r2 + sizeof(uint64_t) /*id*/;
+  sz2 = binn_buf_size(p2);
+
   if (!sz1 || !sz2) {
     rc = IW_ERROR_FAIL;
     iwlog_ecode_error3(rc);
     goto finish;
   }
+  jbl_from_buf_keep_onstack(&d1, p1, sz1);
+  jbl_from_buf_keep_onstack(&d2, p2, sz2);
 
-  // TODO:
-
+  for (int i = 0; i < aux->orderby_num; ++i) {
+    JBL_PTR ptr = aux->orderby_ptrs[i];
+    rc = jbl_at2(&d1, ptr, &v1);
+    RCGO(rc, finish);
+    rc = jbl_at2(&d2, ptr, &v2);
+    RCGO(rc, finish);
+    rv = _jbl_is_cmp_values(v1, v2);
+    if (rv) break;
+  }
 
 finish:
   if (rc) {
     ssc->rc = rc;
     longjmp(ssc->fatal_jmp, 1);
   }
-  return 0;
+  return rv;
 }
 
 static iwrc _jb_do_sorting(struct _JBEXEC *ctx) {

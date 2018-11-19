@@ -1435,6 +1435,31 @@ static iwrc _jbl_patch(JBL jbl, const JBL_PATCH *p, size_t cnt, IWPOOL *pool) {
   return rc;
 }
 
+int _jbl_is_cmp_values(JBL v1, JBL v2) {
+  jbl_type_t t1 = jbl_type(v1);
+  jbl_type_t t2 = jbl_type(v2);
+  if (t1 != t2) {
+    return t1 - t2;
+  }
+  switch (t1) {
+    case JBV_BOOL:
+    case JBV_I64: {
+      int64_t vv1 = jbl_get_i64(v1);
+      int64_t vv2 = jbl_get_i64(v2);
+      return vv1 > vv2 ? 1 : vv1 < vv2 ? -1 : 0;
+    }
+    case JBV_STR:
+      return strcmp(jbl_get_str(v1), jbl_get_str(v2));
+    case JBV_F64: {
+      double vv1 = jbl_get_f64(v1);
+      double vv2 = jbl_get_f64(v2);
+      return vv1 > vv2 ? 1 : vv1 < vv2 ? -1 : 0;
+    }
+    default:
+      return 0;
+  }
+}
+
 bool _jbl_is_eq_values(JBL v1, JBL v2) {
   jbl_type_t t1 = jbl_type(v1);
   jbl_type_t t2 = jbl_type(v2);
@@ -1456,6 +1481,7 @@ bool _jbl_is_eq_values(JBL v1, JBL v2) {
       return true;
   }
 }
+
 
 // --------------------------- Public API
 

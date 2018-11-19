@@ -49,4 +49,6 @@ iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor);
 
 bool _jbl_is_eq_values(JBL v1, JBL v2);
 
+int _jbl_is_cmp_values(JBL v1, JBL v2);
+
 #endif
