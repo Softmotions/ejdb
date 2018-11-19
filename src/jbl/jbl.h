@@ -109,6 +109,8 @@ IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_o
 
 IW_EXPORT iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz);
 
+IW_EXPORT iwrc jbl_from_buf_keep_onstack2(JBL jbl, void *buf);
+
 IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *jsonstr);
 
 IW_EXPORT jbl_type_t jbl_type(const JBL jbl);

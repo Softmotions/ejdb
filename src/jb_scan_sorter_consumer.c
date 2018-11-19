@@ -17,7 +17,7 @@ static int _jb_doc_cmp(const void *o1, const void *o2, void *op) {
   iwrc rc = 0;
   JBL v1, v2;
   uint32_t r1, r2;
-  int rv = 0, sz1, sz2;
+  int rv = 0;
   struct _JBL d1, d2;
   struct _JBEXEC *ctx = op;
   struct _JBSSC *ssc = &ctx->ssc;
@@ -29,18 +29,10 @@ static int _jb_doc_cmp(const void *o1, const void *o2, void *op) {
   memcpy(&r2, o1, sizeof(r2));
 
   p1 = ssc->docs + r1 + sizeof(uint64_t) /*id*/;
-  sz1 = binn_buf_size(p1);
-
   p2 = ssc->docs + r2 + sizeof(uint64_t) /*id*/;
-  sz2 = binn_buf_size(p2);
 
-  if (!sz1 || !sz2) {
-    rc = IW_ERROR_FAIL;
-    iwlog_ecode_error3(rc);
-    goto finish;
-  }
-  jbl_from_buf_keep_onstack(&d1, p1, sz1);
-  jbl_from_buf_keep_onstack(&d2, p2, sz2);
+  jbl_from_buf_keep_onstack2(&d1, p1);
+  jbl_from_buf_keep_onstack2(&d2, p2);
 
   for (int i = 0; i < aux->orderby_num; ++i) {
     JBL_PTR ptr = aux->orderby_ptrs[i];
