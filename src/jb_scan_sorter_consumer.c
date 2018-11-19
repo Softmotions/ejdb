@@ -21,9 +21,9 @@ static int _jb_doc_cmp(const void *o1, const void *o2, void *op) {
   struct _JBSSC *ssc = &ctx->ssc;
   memcpy(&r1, o1, sizeof(r1));
   memcpy(&r2, o1, sizeof(r2));
-  uint8_t *b1 = ssc->docs + r1;
+  uint8_t *b1 = ssc->docs + r1 + sizeof(uint64_t) /*id*/;
   int sz1 = binn_buf_size(b1);
-  uint8_t *b2 = ssc->docs + r2;
+  uint8_t *b2 = ssc->docs + r2 + sizeof(uint64_t) /*id*/;
   int sz2 = binn_buf_size(b2);
   if (!sz1 || !sz2) {
     rc = IW_ERROR_FAIL;
