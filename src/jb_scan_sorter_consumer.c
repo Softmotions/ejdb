@@ -92,22 +92,23 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
   struct _JBL jbl;
   struct _JBSSC *ssc = &ctx->ssc;
   EJDB db = ctx->jbc->db;
+  IWFS_EXT *sof = &ssc->sof;
 
   do {
     if (cur) {
-      rc = iwkv_cursor_copy_val(cur, ctx->jblbuf, ctx->jblbufsz, &vsz);
+      rc = iwkv_cursor_copy_val(cur, ctx->jblbuf + sizeof(id), ctx->jblbufsz - sizeof(id), &vsz);
     } else {
       IWKV_val key = {
         .data = &id,
         .size = sizeof(id)
       };
-      rc = iwkv_get_copy(ctx->jbc->cdb, &key, ctx->jblbuf, ctx->jblbufsz, &vsz);
+      rc = iwkv_get_copy(ctx->jbc->cdb, &key, ctx->jblbuf + sizeof(id), ctx->jblbufsz - sizeof(id), &vsz);
     }
     if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
     RCGO(rc, finish);
 
-    if (vsz > ctx->jblbufsz) {
-      size_t nsize = MAX(vsz, ctx->jblbufsz * 2);
+    if (vsz + sizeof(id) > ctx->jblbufsz) {
+      size_t nsize = MAX(vsz + sizeof(id), ctx->jblbufsz * 2);
       void *nbuf = realloc(ctx->jblbuf, nsize);
       if (!nbuf) {
         rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -119,7 +120,7 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
     }
   } while (0);
 
-  rc = jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf, vsz);
+  rc = jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf + sizeof(id), vsz);
   RCGO(rc, finish);
 
   rc = jql_matched(ctx->ux->q, &jbl, &matched);
@@ -142,8 +143,6 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
     }
     //
 
-
-
   } else if (ssc->refs_asz <= (ssc->refs_num + 1) * sizeof(ssc->refs[0])) {
     ssc->refs_asz *= 2;
     uint32_t *nrefs = realloc(ssc->refs, ssc->refs_asz);
@@ -154,6 +153,8 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
     ssc->refs = nrefs;
   }
 
+  vsz += sizeof(id);
+  memcpy(ctx->jblbuf, &id, sizeof(id));
   do {
     if (ssc->docs) {
       if (ssc->docs_npos + vsz > ssc->docs_asz)  {
@@ -162,7 +163,7 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
           size_t sz;
           rc = _jb_init_sof(ssc, (ssc->docs_npos + vsz) * 2);
           RCGO(rc, finish);
-          rc = ssc->sof.write(&ssc->sof, 0, ssc->docs, ssc->docs_npos, &sz);
+          rc = sof->write(sof, 0, ssc->docs, ssc->docs_npos, &sz);
           RCGO(rc, finish);
           free(ssc->docs);
           ssc->docs = 0;
@@ -180,7 +181,7 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
       memcpy(ssc->docs + ssc->docs_npos, ctx->jblbuf, vsz);
     } else {
       size_t sz;
-      rc = ssc->sof.write(&ssc->sof, ssc->docs_npos, ctx->jblbuf, vsz, &sz);
+      rc = sof->write(sof, ssc->docs_npos, ctx->jblbuf, vsz, &sz);
       RCGO(rc, finish);
     }
     ssc->refs[ssc->refs_num] = ssc->docs_npos;

@@ -122,7 +122,7 @@ typedef struct _JBEXEC {
   uint32_t cnt;           /**< Current result row count */
   bool sorting;           /**< Resultset sorting needed */
   iwrc(*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-  void *jblbuf;           /**< Buffer used to keep currently processed document */
+  uint8_t *jblbuf;           /**< Buffer used to keep currently processed document */
   size_t jblbufsz;        /**< Size of jblbuf allocated memory */
   struct _JBSSC ssc;
 } JBEXEC;
