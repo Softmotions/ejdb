@@ -670,13 +670,69 @@ finish:
   return rc;
 }
 
-static iwrc _jb_exec_index_select(JBEXEC *ctx) {
+static iwrc _jb_exec_idx_select(JBEXEC *ctx) {
+  struct JQP_AUX *aux = ctx->ux->q->qp->aux;
+
+
+  // TODO:
+  //
+
+  if (aux->orderby_num && ctx->iop_init != IWKV_CURSOR_EQ) {
+    ctx->sorting = true;
+  }
+
   return 0;
 }
 
-iwrc  _jb_index_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+
+
+iwrc _jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+  iwrc rc = 0;
+  int64_t step = 1;
+
   // TODO:
-  return 0;
+
+  IWRC(consumer(ctx, 0, 0, &step), rc);
+  return rc;
+}
+
+iwrc  _jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+  iwrc rc = 0;
+  size_t sz;
+  uint64_t id;
+  int64_t step = 1;
+  IWKV_cursor cur = 0;
+  JBIDX idx = ctx->idx;
+  if (idx->mode & EJDB_IDX_ARR) {
+    return _jb_idx_array_scanner(ctx, consumer);
+  }
+  if (ctx->iop_init == IWKV_CURSOR_EQ) {
+    rc = iwkv_get_copy(idx->idb, ctx->iop_key, &id, sizeof(id), &sz);
+    if (rc == IWKV_ERROR_NOTFOUND) return 0;
+    RCGO(rc, finish);
+    if (sz != sizeof(id)) {
+      rc = IW_ERROR_ASSERTION;
+      iwlog_ecode_error3(rc);
+      return rc;
+    }
+    rc = consumer(ctx, 0, id, &step);
+    IWRC(consumer(ctx, 0, 0, 0), rc);
+    return rc;
+  }
+
+  rc = iwkv_cursor_open(idx->idb, &cur, ctx->iop_init, ctx->iop_key);
+  if (rc == IWKV_ERROR_NOTFOUND) return 0;
+  RCRET(rc);
+
+
+  // TODO:
+
+finish:
+  if (cur) {
+    iwkv_cursor_close(&cur);
+  }
+  IWRC(consumer(ctx, 0, 0, &step), rc);
+  return rc;
 }
 
 iwrc  _jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
@@ -709,7 +765,7 @@ iwrc  _jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
     rc = 0;
   }
   iwkv_cursor_close(&cur);
-  consumer(ctx, 0, 0, &step);
+  IWRC(consumer(ctx, 0, 0, 0), rc);
   return rc;
 }
 
@@ -718,10 +774,10 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
   ctx->jblbuf = malloc(ctx->jbc->db->opts.document_buffer_sz);
   if (!ctx->jblbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
 
-  iwrc rc = _jb_exec_index_select(ctx);
+  iwrc rc = _jb_exec_idx_select(ctx);
   RCRET(rc);
   if (ctx->idx) {
-    ctx->scanner = _jb_index_scanner;
+    ctx->scanner = _jb_idx_scanner;
   } else {
     ctx->scanner = _jb_full_scanner;
   }
@@ -729,7 +785,10 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
 }
 
 static void _jb_exec_scan_release(JBEXEC *ctx) {
-  // TODO:
+
+  if (ctx->iop_key) {
+    iwkv_val_dispose(ctx->iop_key);
+  }
   if (ctx->jblbuf) {
     free(ctx->jblbuf);
   }

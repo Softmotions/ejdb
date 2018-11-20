@@ -115,16 +115,19 @@ struct _JBSSC {
 };
 
 typedef struct _JBEXEC {
-  EJDB_EXEC ux;           /**< User defined context */
-  JBCOLL jbc;             /**< Collection */
-  JBIDX idx;              /**< Selected index for query (optional) */
-  JQP_EXPR *iexpr;        /**< Expression used to match selected index (oprional) */
-  uint32_t cnt;           /**< Current result row count */
-  bool sorting;           /**< Resultset sorting needed */
+  EJDB_EXEC ux;            /**< User defined context */
+  JBCOLL jbc;              /**< Collection */
+  JBIDX idx;               /**< Selected index for query (optional) */
+  JQP_EXPR *iexpr;         /**< Expression used to match selected index (optional) */
+  IWKV_cursor_op iop_init; /**< Initial index cursor position (optional) */
+  IWKV_val       *iop_key; /**< Initial index cursor key (optional) */
+  IWKV_cursor_op iop_step; /**< Next index cursor step */
+  uint32_t cnt;            /**< Current result row count */
+  bool sorting;            /**< Resultset sorting needed */
   iwrc(*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-  uint8_t *jblbuf;           /**< Buffer used to keep currently processed document */
-  size_t jblbufsz;        /**< Size of jblbuf allocated memory */
-  struct _JBSSC ssc;
+  uint8_t *jblbuf;         /**< Buffer used to keep currently processed document */
+  size_t jblbufsz;         /**< Size of jblbuf allocated memory */
+  struct _JBSSC ssc;       /**< Result set sorting context */
 } JBEXEC;
 
 
