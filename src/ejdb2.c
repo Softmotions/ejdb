@@ -709,7 +709,7 @@ iwrc  _jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   if (ctx->iop_init == IWKV_CURSOR_EQ) {
     rc = iwkv_get_copy(idx->idb, ctx->iop_key, &id, sizeof(id), &sz);
     if (rc == IWKV_ERROR_NOTFOUND) return 0;
-    RCGO(rc, finish);
+    RCRET(rc);
     if (sz != sizeof(id)) {
       rc = IW_ERROR_ASSERTION;
       iwlog_ecode_error3(rc);
@@ -727,11 +727,11 @@ iwrc  _jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
 
   // TODO:
 
-finish:
+//finish:
   if (cur) {
     iwkv_cursor_close(&cur);
   }
-  IWRC(consumer(ctx, 0, 0, &step), rc);
+  IWRC(consumer(ctx, 0, 0, 0), rc);
   return rc;
 }
 
@@ -781,7 +781,7 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
   } else {
     ctx->scanner = _jb_full_scanner;
   }
-  return rc;
+  return 0;
 }
 
 static void _jb_exec_scan_release(JBEXEC *ctx) {
