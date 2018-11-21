@@ -122,6 +122,7 @@ typedef struct _JBEXEC {
   IWKV_cursor_op iop_init; /**< Initial index cursor position (optional) */
   IWKV_val       *iop_key; /**< Initial index cursor key (optional) */
   IWKV_cursor_op iop_step; /**< Next index cursor step */
+  IWKV_cursor_op iop_reverse_step; /**< Prev index cursor step */
   uint32_t cnt;            /**< Current result row count */
   bool sorting;            /**< Resultset sorting needed */
   iwrc(*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);

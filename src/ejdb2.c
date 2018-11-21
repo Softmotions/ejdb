@@ -670,8 +670,11 @@ finish:
   return rc;
 }
 
-static iwrc _jb_exec_idx_select(JBEXEC *ctx) {
+iwrc jb_exec_idx_select(JBEXEC *ctx) {
   struct JQP_AUX *aux = ctx->ux->q->qp->aux;
+  ctx->iop_init = IWKV_CURSOR_BEFORE_FIRST;
+  ctx->iop_step = IWKV_CURSOR_NEXT;
+  ctx->iop_reverse_step = IWKV_CURSOR_PREV;
 
 
   // TODO:
@@ -684,9 +687,7 @@ static iwrc _jb_exec_idx_select(JBEXEC *ctx) {
   return 0;
 }
 
-
-
-iwrc _jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+iwrc jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc = 0;
   int64_t step = 1;
 
@@ -696,7 +697,17 @@ iwrc _jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   return rc;
 }
 
-iwrc  _jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+iwrc jb_idx_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+   iwrc rc = 0;
+  int64_t step = 1;
+
+  // TODO:
+
+  IWRC(consumer(ctx, 0, 0, &step), rc);
+  return rc;
+}
+
+iwrc  jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc = 0;
   size_t sz;
   uint64_t id;
@@ -704,8 +715,12 @@ iwrc  _jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   IWKV_cursor cur = 0;
   JBIDX idx = ctx->idx;
   if (idx->mode & EJDB_IDX_ARR) {
-    return _jb_idx_array_scanner(ctx, consumer);
+    return jb_idx_array_scanner(ctx, consumer);
+  } else if (idx->idbf & (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)) {
+    return jb_idx_dup_scanner(ctx, consumer);
   }
+
+  // Unique index scan here
   if (ctx->iop_init == IWKV_CURSOR_EQ) {
     rc = iwkv_get_copy(idx->idb, ctx->iop_key, &id, sizeof(id), &sz);
     if (rc == IWKV_ERROR_NOTFOUND) return 0;
@@ -724,6 +739,9 @@ iwrc  _jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   if (rc == IWKV_ERROR_NOTFOUND) return 0;
   RCRET(rc);
 
+//  do {
+//
+//  } while()
 
   // TODO:
 
@@ -735,13 +753,13 @@ iwrc  _jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   return rc;
 }
 
-iwrc  _jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+static iwrc  _jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   IWKV_cursor cur;
   int64_t step = 1;
-  iwrc rc = iwkv_cursor_open(ctx->jbc->cdb, &cur, IWKV_CURSOR_BEFORE_FIRST, 0);
+  iwrc rc = iwkv_cursor_open(ctx->jbc->cdb, &cur, ctx->iop_init, 0);
   RCRET(rc);
 
-  while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? IWKV_CURSOR_NEXT : IWKV_CURSOR_PREV))) {
+  while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? ctx->iop_step : ctx->iop_reverse_step))) {
     if (step > 0) {
       --step;
     } else if (step < 0) {
@@ -774,10 +792,10 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
   ctx->jblbuf = malloc(ctx->jbc->db->opts.document_buffer_sz);
   if (!ctx->jblbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
 
-  iwrc rc = _jb_exec_idx_select(ctx);
+  iwrc rc = jb_exec_idx_select(ctx);
   RCRET(rc);
   if (ctx->idx) {
-    ctx->scanner = _jb_idx_scanner;
+    ctx->scanner = jb_idx_scanner;
   } else {
     ctx->scanner = _jb_full_scanner;
   }
