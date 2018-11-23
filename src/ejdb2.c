@@ -698,7 +698,7 @@ iwrc jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
 }
 
 iwrc jb_idx_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
-   iwrc rc = 0;
+  iwrc rc = 0;
   int64_t step = 1;
 
   // TODO:
@@ -714,6 +714,7 @@ iwrc  jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   int64_t step = 1;
   IWKV_cursor cur = 0;
   JBIDX idx = ctx->idx;
+
   if (idx->mode & EJDB_IDX_ARR) {
     return jb_idx_array_scanner(ctx, consumer);
   } else if (idx->idbf & (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)) {
@@ -739,13 +740,33 @@ iwrc  jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   if (rc == IWKV_ERROR_NOTFOUND) return 0;
   RCRET(rc);
 
-//  do {
-//
-//  } while()
+  if (ctx->iop_init < IWKV_CURSOR_NEXT) { // IWKV_CURSOR_BEFORE_FIRST || IWKV_CURSOR_AFTER_LAST
+    rc = iwkv_cursor_to(cur, ctx->iop_step);
+    RCGO(rc, finish);
+  }
+  do {
+    if (step > 0) {
+      --step;
+    } else if (step < 0) {
+      ++step;
+    }
+    if (!step) {
+      rc = iwkv_cursor_copy_val(cur, &id, sizeof(id), &sz);
+      RCBREAK(rc);
+      if (sz != sizeof(id)) {
+        rc = IW_ERROR_ASSERTION;
+        iwlog_ecode_error3(rc);
+        break;
+      }
+      rc = consumer(ctx, cur, id, &step);
+      RCBREAK(rc);
+    }
+  } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? ctx->iop_step : ctx->iop_reverse_step)));
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    rc = 0;
+  }
 
-  // TODO:
-
-//finish:
+finish:
   if (cur) {
     iwkv_cursor_close(&cur);
   }
