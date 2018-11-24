@@ -2,7 +2,7 @@
 
 // ---------------------------------------------------------------------------
 
-iwrc _jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
+iwrc jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
   // TODO:
   int sz = snprintf(buf, JBNUMBUF_SIZE, "%.6f", val);
   if (sz >= JBNUMBUF_SIZE) return IW_ERROR_OVERFLOW;
@@ -12,7 +12,7 @@ iwrc _jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
   return 0;
 }
 
-static void _jb_idx_release(JBIDX idx) {
+static void jb_idx_release(JBIDX idx) {
   if (idx->idb) {
     iwkv_db_cache_release(idx->idb);
   }
@@ -25,7 +25,7 @@ static void _jb_idx_release(JBIDX idx) {
   free(idx);
 }
 
-static void _jb_coll_release(JBCOLL jbc) {
+static void jb_coll_release(JBCOLL jbc) {
   if (jbc->cdb) {
     iwkv_db_cache_release(jbc->cdb);
   }
@@ -35,14 +35,14 @@ static void _jb_coll_release(JBCOLL jbc) {
   JBIDX nidx;
   for (JBIDX idx = jbc->idx; idx; idx = nidx) {
     nidx = idx->next;
-    _jb_idx_release(idx);
+    jb_idx_release(idx);
   }
   jbc->idx = 0;
   pthread_rwlock_destroy(&jbc->rwl);
   free(jbc);
 }
 
-static iwrc _jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
+static iwrc jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
   binn *bn;
   char *ptr;
   jbl_type_t type;
@@ -79,13 +79,13 @@ static iwrc _jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
 finish:
   if (rc) {
     if (idx) {
-      _jb_idx_release(idx);
+      jb_idx_release(idx);
     }
   }
   return rc;
 }
 
-static iwrc _jb_coll_load_indexes_lr(JBCOLL jbc) {
+static iwrc jb_coll_load_indexes_lr(JBCOLL jbc) {
   iwrc rc = 0;
   IWKV_cursor cur;
   IWKV_val kval;
@@ -112,7 +112,7 @@ static iwrc _jb_coll_load_indexes_lr(JBCOLL jbc) {
       iwkv_val_dispose(&key);
       rc = iwkv_cursor_val(cur, &val);
       RCGO(rc, finish);
-      rc = _jb_coll_load_index_lr(jbc, &val);
+      rc = jb_coll_load_index_lr(jbc, &val);
       iwkv_val_dispose(&val);
       RCBREAK(rc);
     } else {
@@ -126,7 +126,7 @@ finish:
   return rc;
 }
 
-static iwrc _jb_coll_load_meta_lr(JBCOLL jbc) {
+static iwrc jb_coll_load_meta_lr(JBCOLL jbc) {
   JBL jbv;
   IWKV_cursor cur;
   JBL jbm = jbc->meta;
@@ -147,7 +147,7 @@ static iwrc _jb_coll_load_meta_lr(JBCOLL jbc) {
   rc = iwkv_db(jbc->db->iwkv, jbc->dbid, IWDB_UINT64_KEYS, &jbc->cdb);
   RCRET(rc);
 
-  rc = _jb_coll_load_indexes_lr(jbc);
+  rc = jb_coll_load_indexes_lr(jbc);
   RCRET(rc);
 
   rc = iwkv_cursor_open(jbc->cdb, &cur, IWKV_CURSOR_BEFORE_FIRST, 0);
@@ -166,7 +166,7 @@ finish:
   return rc;
 }
 
-static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
+static iwrc jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
   int rci;
   iwrc rc = 0;
   pthread_rwlock_init(&jbc->rwl, 0);
@@ -177,7 +177,7 @@ static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
   if (!jbc->meta) {
     return IW_ERROR_INVALID_STATE;
   }
-  rc = _jb_coll_load_meta_lr(jbc);
+  rc = jb_coll_load_meta_lr(jbc);
   RCRET(rc);
 
   khiter_t k = kh_put(JBCOLLM, jbc->db->mcolls, jbc->name, &rci);
@@ -189,7 +189,7 @@ static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
   return rc;
 }
 
-static iwrc _jb_idx_add_meta_lr(JBIDX idx, binn *list) {
+static iwrc jb_idx_add_meta_lr(JBIDX idx, binn *list) {
   iwrc rc = 0;
   IWXSTR *xstr = iwxstr_new();
   if (!xstr) {
@@ -220,7 +220,7 @@ finish:
   return rc;
 }
 
-static iwrc _jb_coll_add_meta_lr(JBCOLL jbc, binn *list) {
+static iwrc jb_coll_add_meta_lr(JBCOLL jbc, binn *list) {
   iwrc rc = 0;
   binn *ilist = 0;
   binn *meta = binn_object();
@@ -239,7 +239,7 @@ static iwrc _jb_coll_add_meta_lr(JBCOLL jbc, binn *list) {
     goto finish;
   }
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
-    rc = _jb_idx_add_meta_lr(idx, ilist);
+    rc = jb_idx_add_meta_lr(idx, ilist);
     RCGO(rc, finish);
   }
   if (!binn_object_set_list(meta, "indexes", ilist)) {
@@ -257,7 +257,7 @@ finish:
   return rc;
 }
 
-static iwrc _jb_db_meta_load(EJDB db) {
+static iwrc jb_db_meta_load(EJDB db) {
   iwrc rc = 0;
   if (!db->metadb) {
     rc = iwkv_db(db->iwkv, METADB_ID, 0, &db->metadb);
@@ -278,9 +278,9 @@ static iwrc _jb_db_meta_load(EJDB db) {
         goto finish;
       }
       jbc->db = db;
-      rc = _jb_coll_init(jbc, &val);
+      rc = jb_coll_init(jbc, &val);
       if (rc) {
-        _jb_coll_release(jbc);
+        jb_coll_release(jbc);
         iwkv_val_dispose(&val);
         goto finish;
       }
@@ -298,14 +298,14 @@ finish:
   return rc;
 }
 
-static iwrc _jb_db_release(EJDB *dbp) {
+static iwrc jb_db_release(EJDB *dbp) {
   iwrc rc = 0;
   EJDB db = *dbp;
   if (db->mcolls) {
     for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
       if (!kh_exist(db->mcolls, k)) continue;
       JBCOLL jbc = kh_val(db->mcolls, k);
-      _jb_coll_release(jbc);
+      jb_coll_release(jbc);
     }
     kh_destroy(JBCOLLM, db->mcolls);
     db->mcolls = 0;
@@ -319,7 +319,7 @@ static iwrc _jb_db_release(EJDB *dbp) {
   return rc;
 }
 
-static iwrc _jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCOLL *jbcp) {
+static iwrc jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCOLL *jbcp) {
   int rci;
   iwrc rc = 0;
   *jbcp = 0;
@@ -389,7 +389,7 @@ static iwrc _jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCOLL
 
       jbc->db = db;
       jbc->meta = meta;
-      rc = _jb_coll_init(jbc, 0);
+      rc = jb_coll_init(jbc, 0);
       if (rc) {
         iwkv_del(db->metadb, &key, IWKV_SYNC);
         goto create_finish;
@@ -400,7 +400,7 @@ create_finish:
         if (cdb) iwkv_db_destroy(&cdb);
         if (jbc) {
           jbc->meta = 0; // meta was cleared
-          _jb_coll_release(jbc);
+          jb_coll_release(jbc);
         }
       } else {
         rci = wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl);
@@ -420,7 +420,7 @@ finish:
   return rc;
 }
 
-static iwrc _jb_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
+static iwrc jb_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
   iwrc rc = 0;
   uint64_t *llu = (void *) numbuf;
   jbl_type_t jbvt = jbl_type(jbv);
@@ -448,7 +448,7 @@ static iwrc _jb_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static
           }
           break;
         case JBV_F64:
-          rc = _jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey->size);
+          rc = jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey->size);
           RCGO(rc, finish);
           ikey->data = numbuf;
           break;
@@ -480,11 +480,11 @@ static iwrc _jb_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static
         case JBV_F64:
         case JBV_I64:
         case JBV_BOOL:
-          rc = _jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey->size);
+          rc = jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey->size);
           RCGO(rc, finish);
           break;
         case JBV_STR:
-          rc = _jb_idx_ftoa(iwatof(jbl_get_str(jbv)), numbuf, &ikey->size);
+          rc = jb_idx_ftoa(iwatof(jbl_get_str(jbv)), numbuf, &ikey->size);
           RCGO(rc, finish);
           break;
         default:
@@ -505,7 +505,7 @@ finish:
   return rc;
 }
 
-static iwrc _jb_idx_record_remove(JBIDX idx, uint64_t id, JBL jbl) {
+static iwrc jb_idx_record_remove(JBIDX idx, uint64_t id, JBL jbl) {
   JBL jbv;
   IWKV_val ikey;
   char numbuf[JBNUMBUF_SIZE];
@@ -525,7 +525,7 @@ static iwrc _jb_idx_record_remove(JBIDX idx, uint64_t id, JBL jbl) {
     goto finish;
   }
 
-  rc = _jb_fill_ikey(idx, jbv, &ikey, numbuf);
+  rc = jb_fill_ikey(idx, jbv, &ikey, numbuf);
   RCGO(rc, finish);
   if (ikey.size) {
     if (idx->idbf & IWDB_DUP_FLAGS) {
@@ -548,7 +548,7 @@ finish:
   return rc;
 }
 
-static iwrc _jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
+static iwrc jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
   struct _JBL jbs;
   JBL jbv, jbvprev;
   IWKV_val ikey;
@@ -581,7 +581,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
     // Indexed value has not been changed
     goto finish;
   }
-  rc = _jb_fill_ikey(idx, jbv, &ikey, numbuf);
+  rc = jb_fill_ikey(idx, jbv, &ikey, numbuf);
   RCGO(rc, finish);
   if (ikey.size) {
     rc = iwkv_put(idx->idb, &ikey, &idval, IWKV_NO_OVERWRITE);
@@ -592,7 +592,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
   }
   if (jbvprev) {
     // Remove old index val
-    rc = _jb_fill_ikey(idx, jbvprev, &ikey, numbuf);
+    rc = jb_fill_ikey(idx, jbvprev, &ikey, numbuf);
     RCGO(rc, finish);
     if (ikey.size) {
       if (idx->idbf & IWDB_DUP_FLAGS) {
@@ -619,7 +619,7 @@ finish:
   return rc;
 }
 
-static iwrc _jb_idx_fill(JBIDX idx) {
+static iwrc jb_idx_fill(JBIDX idx) {
   IWKV_cursor cur;
   IWKV_val key, val;
   struct _JBL jbs;
@@ -642,7 +642,7 @@ static iwrc _jb_idx_fill(JBIDX idx) {
       break;
     }
     memcpy(&llu, key.data, sizeof(llu));
-    rc = _jb_idx_record_add(idx, llu, jbl, 0);
+    rc = jb_idx_record_add(idx, llu, jbl, 0);
     iwkv_kv_dispose(&key, &val);
   }
 
@@ -650,7 +650,7 @@ static iwrc _jb_idx_fill(JBIDX idx) {
   return rc;
 }
 
-static iwrc _jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *oldval, void *op) {
+static iwrc jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *oldval, void *op) {
   iwrc rc = 0;
   struct _JBL jblprev;
   struct _JBPHCTX *ctx = op;
@@ -660,7 +660,7 @@ static iwrc _jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *
     RCRET(rc);
   }
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
-    rc = _jb_idx_record_add(idx, ctx->id, ctx->jbl, &jblprev);
+    rc = jb_idx_record_add(idx, ctx->id, ctx->jbl, &jblprev);
     RCGO(rc, finish);
   }
 finish:
@@ -670,7 +670,7 @@ finish:
   return rc;
 }
 
-iwrc jb_exec_idx_select(JBEXEC *ctx) {
+static iwrc jb_exec_idx_select(JBEXEC *ctx) {
   struct JQP_AUX *aux = ctx->ux->q->qp->aux;
   ctx->iop_init = IWKV_CURSOR_BEFORE_FIRST;
   ctx->iop_step = IWKV_CURSOR_NEXT;
@@ -687,7 +687,7 @@ iwrc jb_exec_idx_select(JBEXEC *ctx) {
   return 0;
 }
 
-iwrc jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+static iwrc jb_scanner_idx_array(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc = 0;
   int64_t step = 1;
 
@@ -697,7 +697,7 @@ iwrc jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   return rc;
 }
 
-iwrc jb_idx_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+static iwrc jb_scanner_idx_dup(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc = 0;
   int64_t step = 1;
 
@@ -707,7 +707,7 @@ iwrc jb_idx_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   return rc;
 }
 
-iwrc  jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc = 0;
   size_t sz;
   uint64_t id;
@@ -715,23 +715,25 @@ iwrc  jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   IWKV_cursor cur = 0;
   JBIDX idx = ctx->idx;
 
-  if (idx->mode & EJDB_IDX_ARR) {
-    return jb_idx_array_scanner(ctx, consumer);
-  } else if (idx->idbf & (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)) {
-    return jb_idx_dup_scanner(ctx, consumer);
-  }
-
-  // Unique index scan here
   if (ctx->iop_init == IWKV_CURSOR_EQ) {
-    rc = iwkv_get_copy(idx->idb, ctx->iop_key, &id, sizeof(id), &sz);
-    if (rc == IWKV_ERROR_NOTFOUND) return 0;
-    RCRET(rc);
-    if (sz != sizeof(id)) {
-      rc = IW_ERROR_ASSERTION;
-      iwlog_ecode_error3(rc);
-      return rc;
+    for (uint32_t i = 0; step && i < ctx->iop_key_cnt; ++i) {
+      rc = iwkv_get_copy(idx->idb, &ctx->iop_key[i], &id, sizeof(id), &sz);
+      if (rc == IWKV_ERROR_NOTFOUND) continue;
+      RCBREAK(rc);
+      if (sz != sizeof(id)) {
+        rc = IW_ERROR_ASSERTION;
+        iwlog_ecode_error3(rc);
+        break;
+      }
+      if (step > 0) {
+        --step;
+      } else if (step < 0) {
+        ++step;
+      }
+      if (!step) {
+        rc = consumer(ctx, 0, id, &step);
+      }
     }
-    rc = consumer(ctx, 0, id, &step);
     IWRC(consumer(ctx, 0, 0, 0), rc);
     return rc;
   }
@@ -762,9 +764,7 @@ iwrc  jb_idx_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
       RCBREAK(rc);
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? ctx->iop_step : ctx->iop_reverse_step)));
-  if (rc == IWKV_ERROR_NOTFOUND) {
-    rc = 0;
-  }
+  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
 
 finish:
   if (cur) {
@@ -774,7 +774,7 @@ finish:
   return rc;
 }
 
-static iwrc  _jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   IWKV_cursor cur;
   int64_t step = 1;
   iwrc rc = iwkv_cursor_open(ctx->jbc->cdb, &cur, ctx->iop_init, 0);
@@ -808,7 +808,7 @@ static iwrc  _jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   return rc;
 }
 
-static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
+static iwrc jb_exec_scan_init(JBEXEC *ctx) {
   // Allocate initial space for current document
   ctx->jblbuf = malloc(ctx->jbc->db->opts.document_buffer_sz);
   if (!ctx->jblbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -816,17 +816,23 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
   iwrc rc = jb_exec_idx_select(ctx);
   RCRET(rc);
   if (ctx->idx) {
-    ctx->scanner = jb_idx_scanner;
+    if (ctx->idx->mode & EJDB_IDX_ARR) {
+      ctx->scanner = jb_scanner_idx_array;
+    } else if (ctx->idx->idbf & (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)) {
+      ctx->scanner = jb_scanner_idx_dup;
+    } else {
+      ctx->scanner = jb_scanner_idx_uniq;
+    }
   } else {
-    ctx->scanner = _jb_full_scanner;
+    ctx->scanner = jb_scanner_full;
   }
   return 0;
 }
 
-static void _jb_exec_scan_release(JBEXEC *ctx) {
+static void jb_exec_scan_release(JBEXEC *ctx) {
 
   if (ctx->iop_key) {
-    iwkv_val_dispose(ctx->iop_key);
+    free(ctx->iop_key);
   }
   if (ctx->jblbuf) {
     free(ctx->jblbuf);
@@ -843,9 +849,9 @@ iwrc ejdb_exec(EJDB_EXEC ux) {
   JBEXEC ctx = {
     .ux = ux
   };
-  iwrc rc = _jb_coll_acquire_keeplock(ux->db, ux->q->coll, jql_has_apply(ux->q), &ctx.jbc);
+  iwrc rc = jb_coll_acquire_keeplock(ux->db, ux->q->coll, jql_has_apply(ux->q), &ctx.jbc);
   RCRET(rc);
-  rc = _jb_exec_scan_init(&ctx);
+  rc = jb_exec_scan_init(&ctx);
   RCGO(rc, finish);
   assert(ctx.scanner);
   if (ctx.sorting) {
@@ -855,7 +861,7 @@ iwrc ejdb_exec(EJDB_EXEC ux) {
   }
 
 finish:
-  _jb_exec_scan_release(&ctx);
+  jb_exec_scan_release(&ctx);
   API_COLL_UNLOCK(ctx.jbc, rci, rc);
   return rc;
 }
@@ -869,7 +875,7 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   IWKV_val key;
   JBL_PTR ptr = 0;
   char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  iwrc rc = jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
 
   rc = jbl_ptr_alloc(path, &ptr);
@@ -898,7 +904,7 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
         iwkv_db_destroy(&idx->auxdb);
         idx->auxdb = 0;
       }
-      _jb_idx_release(idx);
+      jb_idx_release(idx);
       break;
     }
     prev = idx;
@@ -936,7 +942,7 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
     return EJDB_ERROR_INVALID_INDEX_MODE; // Array indexes cannot be unique
   }
 
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  iwrc rc = jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
   rc = jbl_ptr_alloc(path, &ptr);
   RCGO(rc, finish);
@@ -974,7 +980,7 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
     RCGO(rc, finish);
   }
 
-  rc = _jb_idx_fill(idx);
+  rc = jb_idx_fill(idx);
   RCGO(rc, finish);
 
   // save index meta into metadb
@@ -1019,7 +1025,7 @@ finish:
         iwkv_db_destroy(&idx->idb);
         idx->idb = 0;
       }
-      _jb_idx_release(idx);
+      jb_idx_release(idx);
     }
   }
   if (ptr) free(ptr);
@@ -1036,7 +1042,7 @@ iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t id) {
   }
   int rci;
   JBCOLL jbc;
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  iwrc rc = jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
 
   IWKV_val val;
@@ -1053,7 +1059,7 @@ iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t id) {
   rc = jbl_as_buf(jbl, &val.data, &val.size);
   RCGO(rc, finish);
 
-  rc = iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx);
+  rc = iwkv_puth(jbc->cdb, &key, &val, 0, jb_put_handler, &pctx);
   RCGO(rc, finish);
 
 finish:
@@ -1068,7 +1074,7 @@ iwrc ejdb_put_new(EJDB db, const char *coll, const JBL jbl, uint64_t *id) {
   int rci;
   JBCOLL jbc;
   if (id) *id = 0;
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  iwrc rc = jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
   uint64_t oid = jbc->id_seq + 1;
 
@@ -1086,7 +1092,7 @@ iwrc ejdb_put_new(EJDB db, const char *coll, const JBL jbl, uint64_t *id) {
   rc = jbl_as_buf(jbl, &val.data, &val.size);
   RCGO(rc, finish);
 
-  rc = iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx);
+  rc = iwkv_puth(jbc->cdb, &key, &val, 0, jb_put_handler, &pctx);
   RCGO(rc, finish);
 
   jbc->id_seq = oid;
@@ -1109,7 +1115,7 @@ iwrc ejdb_get(EJDB db, const char *coll, uint64_t id, JBL *jblp) {
   JBL jbl = 0;
   IWKV_val val = {0};
   IWKV_val key = {.data = &id, .size = sizeof(id)};
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, false, &jbc);
+  iwrc rc = jb_coll_acquire_keeplock(db, coll, false, &jbc);
   RCRET(rc);
   rc = iwkv_get(jbc->cdb, &key, &val);
   RCGO(rc, finish);
@@ -1135,7 +1141,7 @@ iwrc ejdb_remove(EJDB db, const char *coll, uint64_t id) {
   struct _JBL jbl;
   IWKV_val val = {0};
   IWKV_val key = {.data = &id, .size = sizeof(id)};
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  iwrc rc = jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
 
   rc = iwkv_get(jbc->cdb, &key, &val);
@@ -1145,7 +1151,7 @@ iwrc ejdb_remove(EJDB db, const char *coll, uint64_t id) {
   RCGO(rc, finish);
 
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
-    IWRC(_jb_idx_record_remove(idx, id, &jbl), rc);
+    IWRC(jb_idx_record_remove(idx, id, &jbl), rc);
   }
   RCGO(rc, finish);
   rc = iwkv_del(jbc->cdb, &key, 0);
@@ -1161,7 +1167,7 @@ finish:
 iwrc ejdb_ensure_collection(EJDB db, const char *coll) {
   int rci;
   JBCOLL jbc;
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, false, &jbc);
+  iwrc rc = jb_coll_acquire_keeplock(db, coll, false, &jbc);
   RCRET(rc);
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
@@ -1198,12 +1204,12 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
         idx->auxdb = 0;
       }
       nidx = idx->next;
-      _jb_idx_release(idx);
+      jb_idx_release(idx);
     }
     jbc->idx = 0;
     IWRC(iwkv_db_destroy(&jbc->cdb), rc);
     kh_del(JBCOLLM, db->mcolls, k);
-    _jb_coll_release(jbc);
+    jb_coll_release(jbc);
   }
 
 finish:
@@ -1239,7 +1245,7 @@ iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
   for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
     if (!kh_exist(db->mcolls, k)) continue;
     JBCOLL jbc = kh_val(db->mcolls, k);
-    rc = _jb_coll_add_meta_lr(jbc, clist);
+    rc = jb_coll_add_meta_lr(jbc, clist);
     RCGO(rc, finish);
   }
   if (!binn_object_set_list(&jbl->bn, "collections", clist)) {
@@ -1307,11 +1313,11 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   RCGO(rc, finish);
 
   db->oflags = kvopts.oflags;
-  rc = _jb_db_meta_load(db);
+  rc = jb_db_meta_load(db);
 
 finish:
   if (rc) {
-    _jb_db_release(&db);
+    jb_db_release(&db);
   } else {
     db->open = true;
     *ejdbp = db;
@@ -1327,7 +1333,7 @@ iwrc ejdb_close(EJDB *ejdbp) {
   if (!__sync_bool_compare_and_swap(&db->open, 1, 0)) {
     return IW_ERROR_INVALID_STATE;
   }
-  iwrc rc = _jb_db_release(ejdbp);
+  iwrc rc = jb_db_release(ejdbp);
   return rc;
 }
 
@@ -1367,8 +1373,8 @@ static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
 }
 
 iwrc ejdb_init() {
-  static volatile int _jb_initialized = 0;
-  if (!__sync_bool_compare_and_swap(&_jb_initialized, 0, 1)) {
+  static volatile int jb_initialized = 0;
+  if (!__sync_bool_compare_and_swap(&jb_initialized, 0, 1)) {
     return 0;  // initialized already
   }
   iwrc rc = iw_init();

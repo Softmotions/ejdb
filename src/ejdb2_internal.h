@@ -120,7 +120,8 @@ typedef struct _JBEXEC {
   JBIDX idx;               /**< Selected index for query (optional) */
   JQP_EXPR *iexpr;         /**< Expression used to match selected index (optional) */
   IWKV_cursor_op iop_init; /**< Initial index cursor position (optional) */
-  IWKV_val       *iop_key; /**< Initial index cursor key (optional) */
+  IWKV_val *iop_key;       /**< Initial index cursor key (optional) */
+  uint32_t iop_key_cnt;    /**< Number of index cursor keys */
   IWKV_cursor_op iop_step; /**< Next index cursor step */
   IWKV_cursor_op iop_reverse_step; /**< Prev index cursor step */
   uint32_t cnt;            /**< Current result row count */
