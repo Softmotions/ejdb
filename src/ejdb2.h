@@ -68,8 +68,8 @@ typedef struct _EJDOC {
   uint64_t id;
   JBL raw;
   JBL_NODE node;
-  struct _EJDB_DOC *next;
-  struct _EJDB_DOC *prev;
+  struct _EJDOC *next;
+  struct _EJDOC *prev;
 } *EJDOC;
 
 typedef enum {

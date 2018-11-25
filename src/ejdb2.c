@@ -848,7 +848,8 @@ finish:
 }
 
 struct JB_LIST_VISITOR_CTX {
-  EJDOC *head;
+  EJDOC head;
+  EJDOC tail;
   IWPOOL *pool;
   int limit;
 };
@@ -858,17 +859,27 @@ static iwrc _jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDOC doc, int64
   iwrc rc = 0;
   struct JB_LIST_VISITOR_CTX *lvc = ctx->opaque;
   IWPOOL *pool = lvc->pool;
+  struct _EJDOC *ndoc = iwpool_alloc(sizeof(*ndoc) + sizeof(*doc->raw) + doc->raw->bn.size, pool);
+  if (!ndoc) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  ndoc->id = doc->id;
+  ndoc->raw = (void *)(((uint8_t *) ndoc) + sizeof(*ndoc));
+  ndoc->raw->node = 0;
+  ndoc->next = 0;
+  ndoc->prev = 0;
+  memcpy(&ndoc->raw->bn, &doc->raw->bn, sizeof(ndoc->raw->bn));
+  ndoc->raw->bn.ptr = ((uint8_t *) ndoc) + sizeof(*ndoc) + sizeof(*doc->raw);
+  memcpy(ndoc->raw->bn.ptr, doc->raw->bn.ptr, doc->raw->bn.size);
 
-
-//  typedef struct _EJDOC {
-//  uint64_t id;
-//  JBL raw;
-//  JBL_NODE node;
-//  struct _EJDB_DOC *next;
-//  struct _EJDB_DOC *prev;
-//  } *EJDOC;
-
-
+  if (!lvc->head) {
+    lvc->head = ndoc;
+    lvc->tail = ndoc;
+  } else {
+    lvc->tail->next = ndoc;
+    ndoc->prev = lvc->tail;
+    lvc->tail = ndoc;
+  }
   if (lvc->limit) {
     if (!--lvc->limit) {
       *step = 0;
