@@ -10,9 +10,24 @@ int clean_suite() {
   return 0;
 }
 
+static iwrc put_json(EJDB db, const char *coll, const char *json) {
+  const size_t len = strlen(json);
+  char buf[len + 1];
+  memcpy(buf, json, len);
+  buf[len] = '\0';
+  for (int i = 0; buf[i]; ++i) {
+    if (buf[i] == '\'') buf[i] = '"';
+  }
+  JBL jbl;
+  uint64_t llv;
+  iwrc rc = jbl_from_json(&jbl, buf);
+  RCRET(rc);
+  rc = ejdb_put_new(db, coll, jbl, &llv);
+  jbl_destroy(&jbl);
+  return rc;
+}
 
 void ejdb_test2_1() {
-
    EJDB_OPTS opts = {
     .kv = {
       .path = "ejdb_test2_1.db",
@@ -21,12 +36,33 @@ void ejdb_test2_1() {
     .no_wal = true
   };
 
+  JQL jql;
+  JBL jbl;
   EJDB db;
+  uint64_t llv = 0, llv2;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
+  rc = put_json(db, "a", "{'f':2}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = put_json(db, "a", "{'f':1}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = put_json(db, "a", "{'f':3}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = put_json(db, "a", "{'a':'foo'}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = put_json(db, "a", "{'a':'gaz'}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = put_json(db, "a", "{'a':'bar'}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_create(&jql, "a", "/*");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
 
 
+  // IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool);
+  // IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool);
+  jql_destroy(&jql);
 
 
   rc = ejdb_close(&db);

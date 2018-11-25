@@ -670,23 +670,6 @@ finish:
   return rc;
 }
 
-static iwrc jb_exec_idx_select(JBEXEC *ctx) {
-  struct JQP_AUX *aux = ctx->ux->q->qp->aux;
-  ctx->iop_init = IWKV_CURSOR_BEFORE_FIRST;
-  ctx->iop_step = IWKV_CURSOR_NEXT;
-  ctx->iop_reverse_step = IWKV_CURSOR_PREV;
-
-
-  // TODO:
-  //
-
-  if (aux->orderby_num && ctx->iop_init != IWKV_CURSOR_EQ) {
-    ctx->sorting = true;
-  }
-
-  return 0;
-}
-
 static iwrc jb_scanner_idx_array(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc = 0;
   int64_t step = 1;
@@ -800,9 +783,7 @@ static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
       RCBREAK(rc);
     }
   }
-  if (rc == IWKV_ERROR_NOTFOUND) {
-    rc = 0;
-  }
+  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
   iwkv_cursor_close(&cur);
   IWRC(consumer(ctx, 0, 0, 0), rc);
   return rc;
@@ -864,6 +845,53 @@ finish:
   jb_exec_scan_release(&ctx);
   API_COLL_UNLOCK(ctx.jbc, rci, rc);
   return rc;
+}
+
+struct JB_LIST_VISITOR_CTX {
+  EJDOC *head;
+  IWPOOL *pool;
+  int limit;
+};
+
+
+static iwrc _jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step) {
+  iwrc rc = 0;
+  struct JB_LIST_VISITOR_CTX *lvc = ctx->opaque;
+  IWPOOL *pool = lvc->pool;
+
+
+//  typedef struct _EJDOC {
+//  uint64_t id;
+//  JBL raw;
+//  JBL_NODE node;
+//  struct _EJDB_DOC *next;
+//  struct _EJDB_DOC *prev;
+//  } *EJDOC;
+
+
+  if (lvc->limit) {
+    if (!--lvc->limit) {
+      *step = 0;
+    }
+  }
+  return rc;
+}
+
+iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool) {
+  if (!db || !q || !first || !pool) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  struct _EJDB_EXEC ux = {
+    .db = db,
+    .q = q,
+    .visitor = _jb_exec_list_visitor,
+  };
+  struct JB_LIST_VISITOR_CTX lvc = {
+    .pool = pool,
+    .limit = limit
+  };
+  ux.opaque = &lvc;
+  return ejdb_exec(&ux);
 }
 
 iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mode_t mode) {

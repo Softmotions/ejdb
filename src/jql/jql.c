@@ -1052,6 +1052,21 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
     .op = q
   };
   *out = false;
+
+  JQP_EXPR_NODE *en = q->qp->aux->expr;
+  if (en->chain && !en->chain->next && !en->next) {
+    en = en->chain;
+    if (en->type == JQP_FILTER_TYPE) {
+      JQP_NODE *n = ((JQP_FILTER *) en)->node;
+      if (n && (n->ntype == JQP_NODE_ANYS || n->ntype == JQP_NODE_ANY) && !n->next)  {
+        // Single /* | /** matches anything
+        q->matched = true;
+        *out = true;
+        return 0;
+      }
+    }
+  }
+
   iwrc rc = _jbl_visit(0, 0, &vctx, _match_visitor);
   if (vctx.pool) {
     iwpool_destroy(vctx.pool);

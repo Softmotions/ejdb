@@ -135,6 +135,7 @@ typedef struct _JBEXEC {
 
 iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step);
 iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step);
+iwrc jb_exec_idx_select(JBEXEC *ctx);
 
 
 #endif

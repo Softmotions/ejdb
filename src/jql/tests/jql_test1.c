@@ -93,6 +93,10 @@ static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
 }
 
 void jql_test1_2() {
+  _jql_test1_2("{}", "/*", true);
+  _jql_test1_2("{}", "/**", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/*", true);
+  _jql_test1_2("{'foo':{'bar':22}}", "/**", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/bar", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/baz", false);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/bar and /foo/bar or /foo", true);

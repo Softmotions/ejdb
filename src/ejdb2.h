@@ -77,11 +77,19 @@ typedef enum {
   EJDB_VCTL_STOP = 1
 } ejdb_vctl_cmd_t;
 
+struct _EJDB_EXEC;
 
+/**
+ * @param ctx Visitor context
+ * @param doc Data in `doc` is valid only during execution of this method, to keep a data for farther
+ *        processing you need to copy it.
+ * @param step [out] Move forward cursor to given number of steps, `1` by default.
+ */
+typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step);
 typedef struct _EJDB_EXEC {
   EJDB db;
   JQL q;
-  iwrc(*visitor)(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step);
+  EJDB_EXEC_VISITOR visitor;
   void *opaque;
   IWXSTR *xlog;
 } *EJDB_EXEC;
