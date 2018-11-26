@@ -836,6 +836,7 @@ iwrc ejdb_exec(EJDB_EXEC ux) {
   }
   if (!ux->visitor) {
     ux->visitor = jb_noop_visitor;
+    ux->q->qp->aux->projection = 0; // Actually we don't need projection
   }
   int rci;
   JBEXEC ctx = {
