@@ -92,6 +92,7 @@ typedef struct _EJDB_EXEC {
   EJDB_EXEC_VISITOR visitor;
   void *opaque;
   IWXSTR *xlog;
+  IWPOOL *pool;               /**< Optional pool which can be used in query apply  */
 } *EJDB_EXEC;
 
 IW_EXPORT WUR iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp);

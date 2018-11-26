@@ -714,6 +714,7 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
         ++step;
       }
       if (!step) {
+        step = 1;
         rc = consumer(ctx, 0, id, &step);
       }
     }
@@ -743,6 +744,7 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
         iwlog_ecode_error3(rc);
         break;
       }
+      step = 1;
       rc = consumer(ctx, cur, id, &step);
       RCBREAK(rc);
     }
@@ -779,6 +781,7 @@ static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
         iwlog_ecode_error3(rc);
         break;
       }
+      step = 1;
       rc = consumer(ctx, cur, id, &step);
       RCBREAK(rc);
     }
@@ -793,7 +796,6 @@ static iwrc jb_exec_scan_init(JBEXEC *ctx) {
   // Allocate initial space for current document
   ctx->jblbuf = malloc(ctx->jbc->db->opts.document_buffer_sz);
   if (!ctx->jblbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-
   iwrc rc = jb_exec_idx_select(ctx);
   RCRET(rc);
   if (ctx->idx) {
@@ -811,7 +813,6 @@ static iwrc jb_exec_scan_init(JBEXEC *ctx) {
 }
 
 static void jb_exec_scan_release(JBEXEC *ctx) {
-
   if (ctx->iop_key) {
     free(ctx->iop_key);
   }
@@ -820,11 +821,18 @@ static void jb_exec_scan_release(JBEXEC *ctx) {
   }
 }
 
+static iwrc jb_noop_visitor(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step) {
+  return 0;
+}
+
 //----------------------- Public API
 
 iwrc ejdb_exec(EJDB_EXEC ux) {
-  if (!ux || !ux->visitor || !ux->db || !ux->q) {
+  if (!ux || !ux->db || !ux->q) {
     return IW_ERROR_INVALID_ARGS;
+  }
+  if (!ux->visitor) {
+    ux->visitor = jb_noop_visitor;
   }
   int rci;
   JBEXEC ctx = {
@@ -834,7 +842,6 @@ iwrc ejdb_exec(EJDB_EXEC ux) {
   RCRET(rc);
   rc = jb_exec_scan_init(&ctx);
   RCGO(rc, finish);
-  assert(ctx.scanner);
   if (ctx.sorting) {
     rc = ctx.scanner(&ctx, jb_scan_sorter_consumer);
   } else {
@@ -850,15 +857,13 @@ finish:
 struct JB_LIST_VISITOR_CTX {
   EJDOC head;
   EJDOC tail;
-  IWPOOL *pool;
   int limit;
 };
 
-
-static iwrc _jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step) {
+static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step) {
   iwrc rc = 0;
   struct JB_LIST_VISITOR_CTX *lvc = ctx->opaque;
-  IWPOOL *pool = lvc->pool;
+  IWPOOL *pool = ctx->pool;
   struct _EJDOC *ndoc = iwpool_alloc(sizeof(*ndoc) + sizeof(*doc->raw) + doc->raw->bn.size, pool);
   if (!ndoc) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -895,10 +900,10 @@ iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool) {
   struct _EJDB_EXEC ux = {
     .db = db,
     .q = q,
-    .visitor = _jb_exec_list_visitor,
+    .visitor = jb_exec_list_visitor,
+    .pool = pool
   };
   struct JB_LIST_VISITOR_CTX lvc = {
-    .pool = pool,
     .limit = limit
   };
   ux.opaque = &lvc;

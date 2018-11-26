@@ -1328,7 +1328,7 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex) {
   return 0;
 }
 
-static iwrc _jbl_from_node(binn *res, const JBL_NODE node, int size) {
+iwrc _jbl_from_node(binn *res, const JBL_NODE node) {
   iwrc rc = 0;
   switch (node->type) {
     case JBV_OBJECT:
@@ -1337,7 +1337,7 @@ static iwrc _jbl_from_node(binn *res, const JBL_NODE node, int size) {
       }
       for (JBL_NODE n = node->child; n; n = n->next) {
         binn bv;
-        rc = _jbl_from_node(&bv, n, 0);
+        rc = _jbl_from_node(&bv, n);
         RCRET(rc);
         if (!binn_object_set_value2(res, n->key, n->klidx, &bv)) {
           rc = JBL_ERROR_CREATION;
@@ -1352,7 +1352,7 @@ static iwrc _jbl_from_node(binn *res, const JBL_NODE node, int size) {
       }
       for (JBL_NODE n = node->child; n; n = n->next) {
         binn bv;
-        rc = _jbl_from_node(&bv, n, 0);
+        rc = _jbl_from_node(&bv, n);
         RCRET(rc);
         if (!binn_list_add_value(res, &bv)) {
           rc = JBL_ERROR_CREATION;
@@ -1427,7 +1427,7 @@ static iwrc _jbl_patch(JBL jbl, const JBL_PATCH *p, size_t cnt, IWPOOL *pool) {
   rc = _jbl_patch_node(root, p, cnt, pool);
   RCRET(rc);
   if (root->type != JBV_NONE) {
-    rc = _jbl_from_node(&bv, root, MAX(jbl->bn.size, 256));
+    rc = _jbl_from_node(&bv, root);
     RCRET(rc);
     bn = &bv;
   } else {
@@ -1623,7 +1623,7 @@ iwrc jbl_from_node(JBL jbl, const JBL_NODE node) {
     return 0;
   }
   binn bv;
-  iwrc rc = _jbl_from_node(&bv, node, 0);
+  iwrc rc = _jbl_from_node(&bv, node);
   RCRET(rc);
   if (bv.writable && bv.dirty) {
     binn_save_header(&bv);
@@ -1716,7 +1716,7 @@ iwrc jbl_merge_patch(JBL jbl, const char *patchjson) {
   rc = jbl_merge_patch_node(target, patchjson, pool);
   RCGO(rc, finish);
 
-  rc = _jbl_from_node(&bv, target, 0);
+  rc = _jbl_from_node(&bv, target);
   RCGO(rc, finish);
   if (bv.writable && bv.dirty) {
     binn_save_header(&bv);

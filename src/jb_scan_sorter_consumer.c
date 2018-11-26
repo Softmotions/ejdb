@@ -1,6 +1,6 @@
 #include "ejdb2_internal.h"
 
-static void _jb_release_sorting(struct _JBEXEC *ctx) {
+static void jb_scan_sorter_release(struct _JBEXEC *ctx) {
   struct _JBSSC *ssc = &ctx->ssc;
   if (ssc->refs) {
     free(ssc->refs);
@@ -13,7 +13,7 @@ static void _jb_release_sorting(struct _JBEXEC *ctx) {
   memset(ssc, 0, sizeof(*ssc));
 }
 
-static int _jb_doc_cmp(const void *o1, const void *o2, void *op) {
+static int jb_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   iwrc rc = 0;
   JBL v1, v2;
   uint32_t r1, r2;
@@ -53,7 +53,47 @@ finish:
   return rv;
 }
 
-static iwrc _jb_do_sorting(struct _JBEXEC *ctx) {
+static iwrc jb_scan_sorter_apply(struct _JBEXEC *ctx, JQL q, struct _EJDOC *doc) {
+  iwrc rc = 0;
+  IWPOOL *pool = ctx->ux->pool;
+  struct JQP_AUX *aux = q->qp->aux;
+  uint64_t id = doc->id;
+  IWKV_val key = {
+    .data = &id,
+    .size = sizeof(id)
+  };
+  if (!pool) {
+    pool = iwpool_create(1024);
+    if (!pool) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      goto finish;
+    }
+  }
+  rc = jql_apply(q, doc->raw, &doc->node, pool);
+  if (aux->apply && doc->node) {
+    binn bv;
+    rc = _jbl_from_node(&bv, doc->node);
+    RCGO(rc, finish);
+    if (bv.writable && bv.dirty) {
+      binn_save_header(&bv);
+    }
+    IWKV_val val = {
+      .data = bv.ptr,
+      .size = bv.size
+    };
+    rc = iwkv_put(ctx->jbc->cdb, &key, &val, 0);
+    binn_free(&bv);
+  }
+
+finish:
+  if (pool != ctx->ux->pool) {
+    doc->node = 0; // node will go away with pool
+    iwpool_destroy(pool);
+  }
+  return rc;
+}
+
+static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
   iwrc rc = 0;
   int64_t step = 1, id;
   struct _JBL jbl;
@@ -70,8 +110,12 @@ static iwrc _jb_do_sorting(struct _JBEXEC *ctx) {
       rc = ssc->sof.probe_mmap(&ssc->sof, 0, &ssc->docs, &sp);
       RCGO(rc, finish);
     }
-    qsort_r(ssc->refs, rnum, sizeof(ssc->refs[0]), _jb_doc_cmp, ctx);
+    qsort_r(ssc->refs, rnum, sizeof(ssc->refs[0]), jb_scan_sorter_cmp, ctx);
   }
+
+  JQL q = ctx->ux->q;
+  struct JQP_AUX *aux = q->qp->aux;
+
   for (int64_t i = 0; step && i < rnum && i >= 0;) {
     uint8_t *rp = ssc->docs + ssc->refs[i];
     memcpy(&id, rp, sizeof(id));
@@ -82,17 +126,21 @@ static iwrc _jb_do_sorting(struct _JBEXEC *ctx) {
       .id = id,
       .raw = &jbl
     };
+    if (aux->apply || aux->projection) {
+      rc = jb_scan_sorter_apply(ctx, q, &doc);
+      RCGO(rc, finish);
+    }
     rc = ctx->ux->visitor(ctx->ux, &doc, &step);
     RCGO(rc, finish);
     i += step;
   }
 
 finish:
-  _jb_release_sorting(ctx);
+  jb_scan_sorter_release(ctx);
   return rc;
 }
 
-static iwrc _jb_init_sof(struct _JBSSC *ssc, off_t initial_size) {
+static iwrc jb_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
   IWFS_EXT_OPTS opts = {
     .initial_size = initial_size,
     .rspolicy = iw_exfile_szpolicy_fibo,
@@ -112,7 +160,7 @@ static iwrc _jb_init_sof(struct _JBSSC *ssc, off_t initial_size) {
 
 iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step) {
   if (!id) { // End of scan
-    return _jb_do_sorting(ctx);
+    return jb_scan_sorter_do(ctx);
   }
   iwrc rc;
   size_t vsz = 0;
@@ -187,7 +235,7 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
         ssc->docs_asz = MIN(ssc->docs_asz * 2, db->opts.sort_buffer_sz);
         if (ssc->docs_npos + vsz > ssc->docs_asz) {
           size_t sz;
-          rc = _jb_init_sof(ssc, (ssc->docs_npos + vsz) * 2);
+          rc = jb_scan_sorter_init(ssc, (ssc->docs_npos + vsz) * 2);
           RCGO(rc, finish);
           rc = sof->write(sof, 0, ssc->docs, ssc->docs_npos, &sz);
           RCGO(rc, finish);
@@ -217,7 +265,7 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
 
 finish:
   if (rc) {
-    _jb_release_sorting(ctx);
+    jb_scan_sorter_release(ctx);
   }
   return rc;
 }
