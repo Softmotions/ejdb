@@ -799,10 +799,6 @@ static iwrc jb_exec_scan_init(JBEXEC *ctx) {
   if (!ctx->jblbuf) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  if (!ctx->ux->pool) {
-    // Reset possible projection if no `pool` for JSON tree provided
-    ux->q->qp->aux->projection = 0;
-  }
   iwrc rc = jb_exec_idx_select(ctx);
   RCRET(rc);
   if (ctx->idx) {

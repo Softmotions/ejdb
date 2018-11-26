@@ -53,11 +53,10 @@ finish:
   return rv;
 }
 
-static iwrc jb_scan_sorter_apply(struct _JBEXEC *ctx, JQL q, struct _EJDOC *doc) {
+static iwrc jb_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struct _EJDOC *doc) {
   iwrc rc = 0;
-  IWPOOL *pool = ctx->ux->pool;
-  struct JQP_AUX *aux = q->qp->aux;
   uint64_t id = doc->id;
+  struct JQP_AUX *aux = q->qp->aux;
   IWKV_val key = {
     .data = &id,
     .size = sizeof(id)
@@ -66,14 +65,14 @@ static iwrc jb_scan_sorter_apply(struct _JBEXEC *ctx, JQL q, struct _EJDOC *doc)
     pool = iwpool_create(1024);
     if (!pool) {
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      goto finish;
+      RCRET(rc);
     }
   }
   rc = jql_apply(q, doc->raw, &doc->node, pool);
   if (aux->apply && doc->node) {
     binn bv;
     rc = _jbl_from_node(&bv, doc->node);
-    RCGO(rc, finish);
+    RCRET(rc);
     if (bv.writable && bv.dirty) {
       binn_save_header(&bv);
     }
@@ -83,12 +82,6 @@ static iwrc jb_scan_sorter_apply(struct _JBEXEC *ctx, JQL q, struct _EJDOC *doc)
     };
     rc = iwkv_put(ctx->jbc->cdb, &key, &val, 0);
     binn_free(&bv);
-  }
-
-finish:
-  if (pool != ctx->ux->pool) {
-    doc->node = 0; // node will go away with pool
-    iwpool_destroy(pool);
   }
   return rc;
 }
@@ -127,7 +120,18 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
       .raw = &jbl
     };
     if (aux->apply || aux->projection) {
-      rc = jb_scan_sorter_apply(ctx, q, &doc);
+      IWPOOL *pool = ctx->ux->pool;
+      if (!pool) {
+        pool = iwpool_create(1024);
+        if (!pool) {
+          rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+          goto finish;
+        }
+      }
+      rc = jb_scan_sorter_apply(pool, ctx, q, &doc);
+      if (pool && pool != ctx->ux->pool) {
+        iwpool_destroy(pool);
+      }
       RCGO(rc, finish);
     }
     rc = ctx->ux->visitor(ctx->ux, &doc, &step);

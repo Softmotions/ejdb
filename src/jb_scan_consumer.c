@@ -87,10 +87,6 @@ iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t
         RCGO(rc, finish);
       }
     }
-    if (pool && pool != ctx->ux->pool) {
-      // node will go away with pool
-      doc.node = 0;
-    }
     istep = 1;
     rc = ctx->ux->visitor(ctx->ux, &doc, &istep);
     RCGO(rc, finish);
