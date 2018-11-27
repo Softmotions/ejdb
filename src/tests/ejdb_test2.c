@@ -36,10 +36,11 @@ void ejdb_test2_1() {
     .no_wal = true
   };
 
-  JQL jql;
-  JBL jbl;
   EJDB db;
   uint64_t llv = 0, llv2;
+  IWPOOL *pool = 0;
+  EJDB_LIST list = 0;
+
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -56,13 +57,9 @@ void ejdb_test2_1() {
   rc = put_json(db, "a", "{'a':'bar'}");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = jql_create(&jql, "a", "/*");
+  rc = ejdb_list2(db, "a", "/*", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-
-
-  // IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool);
-  // IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool);
-  jql_destroy(&jql);
+  ejdb_list_destroy(&list);
 
 
   rc = ejdb_close(&db);

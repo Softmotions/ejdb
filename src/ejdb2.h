@@ -64,13 +64,20 @@ typedef struct _EJDB_OPTS {
                                      Default 255Kb, min: 64Kb */
 } EJDB_OPTS;
 
-typedef struct _EJDOC {
+typedef struct _EJDB_DOC {
   uint64_t id;
   JBL raw;
   JBL_NODE node;
-  struct _EJDOC *next;
-  struct _EJDOC *prev;
-} *EJDOC;
+  struct _EJDB_DOC *next;
+  struct _EJDB_DOC *prev;
+} *EJDB_DOC;
+
+typedef struct _EJDB_LIST {
+  EJDB db;
+  JQL q;
+  EJDB_DOC first;
+  IWPOOL *pool;
+} *EJDB_LIST;
 
 typedef enum {
   EJDB_VCTL_OK = 0,
@@ -85,7 +92,7 @@ struct _EJDB_EXEC;
  *        processing you need to copy it.
  * @param step [out] Move forward cursor to given number of steps, `1` by default.
  */
-typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step);
+typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step);
 typedef struct _EJDB_EXEC {
   EJDB db;
   JQL q;
@@ -101,7 +108,11 @@ IW_EXPORT iwrc ejdb_close(EJDB *ejdbp);
 
 IW_EXPORT WUR iwrc ejdb_exec(EJDB_EXEC ux);
 
-IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool);
+IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int limit, IWPOOL *pool);
+
+IW_EXPORT WUR iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int limit, EJDB_LIST *listp);
+
+IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
 
 IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t id);
 

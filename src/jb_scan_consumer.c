@@ -51,7 +51,7 @@ iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t
     ++istep;
   }
   if (!istep) {
-    struct _EJDOC doc = {
+    struct _EJDB_DOC doc = {
       .id = id,
       .raw = &jbl
     };

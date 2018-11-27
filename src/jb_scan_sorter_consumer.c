@@ -53,7 +53,7 @@ finish:
   return rv;
 }
 
-static iwrc jb_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struct _EJDOC *doc) {
+static iwrc jb_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struct _EJDB_DOC *doc) {
   iwrc rc = 0;
   uint64_t id = doc->id;
   struct JQP_AUX *aux = q->qp->aux;
@@ -115,7 +115,7 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
     rp += sizeof(id);
     rc = jbl_from_buf_keep_onstack2(&jbl, rp);
     RCGO(rc, finish);
-    struct _EJDOC doc = {
+    struct _EJDB_DOC doc = {
       .id = id,
       .raw = &jbl
     };

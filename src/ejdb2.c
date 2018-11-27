@@ -704,7 +704,7 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
       if (rc == IWKV_ERROR_NOTFOUND) continue;
       RCBREAK(rc);
       if (sz != sizeof(id)) {
-        rc = IW_ERROR_ASSERTION;
+        rc = IWKV_ERROR_CORRUPTED;
         iwlog_ecode_error3(rc);
         break;
       }
@@ -740,7 +740,7 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
       rc = iwkv_cursor_copy_val(cur, &id, sizeof(id), &sz);
       RCBREAK(rc);
       if (sz != sizeof(id)) {
-        rc = IW_ERROR_ASSERTION;
+        rc = IWKV_ERROR_CORRUPTED;
         iwlog_ecode_error3(rc);
         break;
       }
@@ -777,7 +777,7 @@ static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
       rc = iwkv_cursor_copy_key(cur, &id, sizeof(id), &sz);
       RCBREAK(rc);
       if (sz != sizeof(id)) {
-        rc = IW_ERROR_ASSERTION;
+        rc = IWKV_ERROR_CORRUPTED;
         iwlog_ecode_error3(rc);
         break;
       }
@@ -824,7 +824,7 @@ static void jb_exec_scan_release(JBEXEC *ctx) {
   }
 }
 
-static iwrc jb_noop_visitor(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step) {
+static iwrc jb_noop_visitor(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
   return 0;
 }
 
@@ -859,16 +859,15 @@ finish:
 }
 
 struct JB_LIST_VISITOR_CTX {
-  EJDOC head;
-  EJDOC tail;
+  EJDB_DOC head;
+  EJDB_DOC tail;
   int limit;
 };
 
-static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_t *step) {
-  iwrc rc = 0;
+static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
   struct JB_LIST_VISITOR_CTX *lvc = ctx->opaque;
   IWPOOL *pool = ctx->pool;
-  struct _EJDOC *ndoc = iwpool_alloc(sizeof(*ndoc) + sizeof(*doc->raw) + doc->raw->bn.size, pool);
+  struct _EJDB_DOC *ndoc = iwpool_alloc(sizeof(*ndoc) + sizeof(*doc->raw) + doc->raw->bn.size, pool);
   if (!ndoc) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -894,10 +893,10 @@ static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDOC doc, int64_
       *step = 0;
     }
   }
-  return rc;
+  return 0;
 }
 
-iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool) {
+iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int limit, IWPOOL *pool) {
   if (!db || !q || !first || !pool) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -911,7 +910,54 @@ iwrc ejdb_list(EJDB db, JQL q, EJDOC *first, int limit, IWPOOL *pool) {
     .limit = limit
   };
   ux.opaque = &lvc;
-  return ejdb_exec(&ux);
+  iwrc rc = ejdb_exec(&ux);
+  if (rc) {
+    *first = 0;
+  } else {
+    *first = lvc.head;
+  }
+  return rc;
+}
+
+iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int limit, EJDB_LIST *listp) {
+  if (!listp) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  *listp = 0;
+  IWPOOL *pool = iwpool_create(0);
+  if (!pool) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  EJDB_LIST list = iwpool_alloc(sizeof(*list), pool);
+  if (!list) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    goto finish;
+  }
+  list->first = 0;
+  list->db = db;
+  list->pool  = pool;
+  rc = jql_create(&list->q, coll, query);
+  RCGO(rc, finish);
+  rc = ejdb_list(db, list->q, &list->first, limit, list->pool);
+
+finish:
+  if (rc) {
+    iwpool_destroy(pool);
+  } else {
+    *listp = list;
+  }
+  return rc;
+}
+
+void ejdb_list_destroy(EJDB_LIST *listp) {
+  if (listp) {
+    EJDB_LIST list = *listp;
+    if (list && list->pool) {
+      iwpool_destroy(list->pool);
+    }
+    *listp = 0;
+  }
 }
 
 iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mode_t mode) {
