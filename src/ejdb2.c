@@ -794,9 +794,10 @@ static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
 
 static iwrc jb_exec_scan_init(JBEXEC *ctx) {
   EJDB_EXEC ux = ctx->ux;
-  // Allocate initial space for current document
-  ctx->jblbuf = malloc(ctx->jbc->db->opts.document_buffer_sz);
+  ctx->jblbufsz = ctx->jbc->db->opts.document_buffer_sz;
+  ctx->jblbuf = malloc(ctx->jblbufsz);
   if (!ctx->jblbuf) {
+    ctx->jblbufsz = 0;
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   iwrc rc = jb_exec_idx_select(ctx);
@@ -953,8 +954,13 @@ finish:
 void ejdb_list_destroy(EJDB_LIST *listp) {
   if (listp) {
     EJDB_LIST list = *listp;
-    if (list && list->pool) {
-      iwpool_destroy(list->pool);
+    if (list) {
+      if (list->q) {
+        jql_destroy(&list->q);
+      }
+      if (list->pool) {
+        iwpool_destroy(list->pool);
+      }
     }
     *listp = 0;
   }
@@ -1381,11 +1387,11 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   if (db->opts.sort_buffer_sz < 1024 * 1024) {
     db->opts.sort_buffer_sz = 1024 * 1024;
   }
-  if (!db->opts.document_buffer_sz) { // 255Kb, Min 64Kb
-    db->opts.document_buffer_sz = 255 * 1024;
-  }
-  if (db->opts.document_buffer_sz < 64 * 1024) {
+  if (!db->opts.document_buffer_sz) { // 64Kb, Min 16Kb
     db->opts.document_buffer_sz = 64 * 1024;
+  }
+  if (db->opts.document_buffer_sz < 16 * 1024) {
+    db->opts.document_buffer_sz = 16 * 1024;
   }
 
   rci = pthread_rwlock_init(&db->rwl, 0);

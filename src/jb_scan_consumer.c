@@ -14,7 +14,8 @@ iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t
   if (!id) { // EOF scan
     return 0;
   }
-  do {
+
+start: {
     if (cur) {
       rc = iwkv_cursor_copy_val(cur, ctx->jblbuf, ctx->jblbufsz, &vsz);
     } else {
@@ -31,9 +32,9 @@ iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t
       }
       ctx->jblbuf = nbuf;
       ctx->jblbufsz = nsize;
-      continue;
+      goto start;
     }
-  } while (0);
+  }
 
   rc = jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf, vsz);
   RCGO(rc, finish);

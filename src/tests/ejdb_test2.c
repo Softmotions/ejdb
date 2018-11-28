@@ -28,7 +28,7 @@ static iwrc put_json(EJDB db, const char *coll, const char *json) {
 }
 
 void ejdb_test2_1() {
-   EJDB_OPTS opts = {
+  EJDB_OPTS opts = {
     .kv = {
       .path = "ejdb_test2_1.db",
       .oflags = IWKV_TRUNC
@@ -40,6 +40,7 @@ void ejdb_test2_1() {
   uint64_t llv = 0, llv2;
   IWPOOL *pool = 0;
   EJDB_LIST list = 0;
+  int i = 0;
 
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -59,8 +60,24 @@ void ejdb_test2_1() {
 
   rc = ejdb_list2(db, "a", "/*", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+  i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i);
+  CU_ASSERT_EQUAL(i, 6);
   ejdb_list_destroy(&list);
 
+  rc = ejdb_list2(db, "a", "/*", 1, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i);
+  CU_ASSERT_EQUAL(i, 1);
+  ejdb_list_destroy(&list);
+
+  rc = ejdb_list2(db, "a", "/f", 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i);
+  CU_ASSERT_EQUAL(i, 3);
+  ejdb_list_destroy(&list);
 
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -86,7 +103,3 @@ int main() {
   CU_cleanup_registry();
   return ret;
 }
-
-
-
-
