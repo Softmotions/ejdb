@@ -5,7 +5,7 @@ iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t
   bool matched;
   struct _JBL jbl;
   size_t vsz = 0;
-  int64_t istep = 1;
+  int64_t istep = ctx->ux->skip + 1;
   IWPOOL *pool = ctx->ux->pool;
   IWKV_val key = {
     .data = &id,
@@ -45,7 +45,6 @@ start: {
   if (!matched) {
     goto finish;
   }
-
   if (istep > 0) {
     --istep;
   } else if (istep < 0) {
@@ -92,6 +91,9 @@ start: {
     rc = ctx->ux->visitor(ctx->ux, &doc, &istep);
     RCGO(rc, finish);
     *step  = istep > 0 ? 1 : istep < 0 ? -1 : 0;
+    if (--ctx->ux->limit < 1) {
+      *step = 0;
+    }
   }
 
 finish:

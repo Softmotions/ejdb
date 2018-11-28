@@ -835,15 +835,28 @@ iwrc ejdb_exec(EJDB_EXEC ux) {
   if (!ux || !ux->db || !ux->q) {
     return IW_ERROR_INVALID_ARGS;
   }
+  int rci;
+  iwrc rc = 0;
   if (!ux->visitor) {
     ux->visitor = jb_noop_visitor;
     ux->q->qp->aux->projection = 0; // Actually we don't need projection
   }
-  int rci;
   JBEXEC ctx = {
     .ux = ux
   };
-  iwrc rc = jb_coll_acquire_keeplock(ux->db, ux->q->coll, jql_has_apply(ux->q), &ctx.jbc);
+  if (ux->limit < 1) {
+    rc = jql_get_limit(ux->q, &ux->limit);
+    RCRET(rc);
+    if (ux->limit < 1) {
+      ux->limit = INT64_MAX;
+    }
+  }
+  if (ux->skip < 1) {
+    rc = jql_get_skip(ux->q, &ux->skip);
+    RCRET(rc);
+  }
+
+  rc = jb_coll_acquire_keeplock(ux->db, ux->q->coll, jql_has_apply(ux->q), &ctx.jbc);
   RCRET(rc);
   rc = jb_exec_scan_init(&ctx);
   RCGO(rc, finish);
@@ -862,7 +875,6 @@ finish:
 struct JB_LIST_VISITOR_CTX {
   EJDB_DOC head;
   EJDB_DOC tail;
-  int limit;
 };
 
 static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
@@ -889,29 +901,24 @@ static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int
     ndoc->prev = lvc->tail;
     lvc->tail = ndoc;
   }
-  if (lvc->limit) {
-    if (!--lvc->limit) {
-      *step = 0;
-    }
-  }
   return 0;
 }
 
-iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int limit, IWPOOL *pool) {
+iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWPOOL *pool) {
   if (!db || !q || !first || !pool) {
     return IW_ERROR_INVALID_ARGS;
   }
+  iwrc rc = 0;
+  struct JB_LIST_VISITOR_CTX lvc = { 0 };
   struct _EJDB_EXEC ux = {
     .db = db,
     .q = q,
     .visitor = jb_exec_list_visitor,
-    .pool = pool
+    .pool = pool,
+    .limit = limit,
+    .opaque = &lvc
   };
-  struct JB_LIST_VISITOR_CTX lvc = {
-    .limit = limit
-  };
-  ux.opaque = &lvc;
-  iwrc rc = ejdb_exec(&ux);
+  rc = ejdb_exec(&ux);
   if (rc) {
     *first = 0;
   } else {
@@ -920,7 +927,7 @@ iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int limit, IWPOOL *pool) {
   return rc;
 }
 
-iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int limit, EJDB_LIST *listp) {
+iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int64_t limit, EJDB_LIST *listp) {
   if (!listp) {
     return IW_ERROR_INVALID_ARGS;
   }

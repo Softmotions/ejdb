@@ -109,7 +109,7 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
   JQL q = ctx->ux->q;
   struct JQP_AUX *aux = q->qp->aux;
 
-  for (int64_t i = 0; step && i < rnum && i >= 0;) {
+  for (int64_t i = ctx->ux->skip; step && i < rnum && i >= 0;) {
     uint8_t *rp = ssc->docs + ssc->refs[i];
     memcpy(&id, rp, sizeof(id));
     rp += sizeof(id);
@@ -137,6 +137,9 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
     rc = ctx->ux->visitor(ctx->ux, &doc, &step);
     RCGO(rc, finish);
     i += step;
+    if (--ctx->ux->limit < 1) {
+      break;
+    }
   }
 
 finish:

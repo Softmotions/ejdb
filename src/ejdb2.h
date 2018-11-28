@@ -98,6 +98,8 @@ typedef struct _EJDB_EXEC {
   JQL q;
   EJDB_EXEC_VISITOR visitor;
   void *opaque;
+  int64_t skip;
+  int64_t limit;
   IWXSTR *xlog;
   IWPOOL *pool;               /**< Optional pool which can be used in query apply  */
 } *EJDB_EXEC;
@@ -108,9 +110,9 @@ IW_EXPORT iwrc ejdb_close(EJDB *ejdbp);
 
 IW_EXPORT WUR iwrc ejdb_exec(EJDB_EXEC ux);
 
-IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int limit, IWPOOL *pool);
+IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWPOOL *pool);
 
-IW_EXPORT WUR iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int limit, EJDB_LIST *listp);
+IW_EXPORT WUR iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int64_t limit, EJDB_LIST *listp);
 
 IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
 
