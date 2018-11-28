@@ -799,40 +799,71 @@ finish:
 }
 
 static JQVAL *_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
-  if (unit->type == JQP_STRING_TYPE) {
-    if (unit->string.opaque) {
-      return (JQVAL *) unit->string.opaque;
+  switch (unit->type) {
+    case JQP_STRING_TYPE: {
+      if (unit->string.opaque) {
+        return (JQVAL *) unit->string.opaque;
+      }
+      if (unit->string.flavour & JQP_STR_PLACEHOLDER) {
+        *rcp = JQL_ERROR_INVALID_PLACEHOLDER;
+        return 0;
+      } else {
+        JQVAL *qv = iwpool_alloc(sizeof(*qv), aux->pool);
+        if (!qv) {
+          *rcp = IW_ERROR_ALLOC;
+          return 0;
+        }
+        unit->string.opaque = qv;
+        qv->type = JQVAL_STR;
+        qv->vstr = unit->string.value;
+      }
+      return unit->string.opaque;
     }
-    if (unit->string.flavour & JQP_STR_PLACEHOLDER) {
-      *rcp = JQL_ERROR_INVALID_PLACEHOLDER;
-      return 0;
-    } else {
+    case JQP_JSON_TYPE: {
+      if (unit->json.opaque) {
+        return (JQVAL *) unit->json.opaque;
+      }
       JQVAL *qv = iwpool_alloc(sizeof(*qv), aux->pool);
       if (!qv) {
         *rcp = IW_ERROR_ALLOC;
         return 0;
       }
-      unit->string.opaque = qv;
-      qv->type = JQVAL_STR;
-      qv->vstr = unit->string.value;
+      unit->json.opaque = qv;
+      qv->type = JQVAL_JBLNODE;
+      qv->vnode = &unit->json.jn;
+      return unit->json.opaque;
     }
-    return unit->string.opaque;
-  } else if (unit->type == JQP_JSON_TYPE) {
-    if (unit->json.opaque) {
-      return (JQVAL *) unit->json.opaque;
+    case JQP_INTEGER_TYPE: {
+      if (unit->intval.opaque) {
+        return (JQVAL *) unit->intval.opaque;
+      }
+      JQVAL *qv = iwpool_alloc(sizeof(*qv), aux->pool);
+      if (!qv) {
+        *rcp = IW_ERROR_ALLOC;
+        return 0;
+      }
+      unit->intval.opaque = qv;
+      qv->type = JQVAL_I64;
+      qv->vi64 = unit->intval.value;
+      return unit->intval.opaque;
     }
-    JQVAL *qv = iwpool_alloc(sizeof(*qv), aux->pool);
-    if (!qv) {
-      *rcp = IW_ERROR_ALLOC;
+    case JQP_DOUBLE_TYPE: {
+      if (unit->dblval.opaque) {
+        return (JQVAL *) unit->dblval.opaque;
+      }
+      JQVAL *qv = iwpool_alloc(sizeof(*qv), aux->pool);
+      if (!qv) {
+        *rcp = IW_ERROR_ALLOC;
+        return 0;
+      }
+      unit->dblval.opaque = qv;
+      qv->type = JQVAL_F64;
+      qv->vf64 = unit->dblval.value;
+      return unit->dblval.opaque;
+    }
+    default:
+      *rcp = IW_ERROR_ASSERTION;
       return 0;
-    }
-    unit->json.opaque = qv;
-    qv->type = JQVAL_JBLNODE;
-    qv->vnode = &unit->json.jn;
-    return unit->json.opaque;
-  } else {
-    *rcp = IW_ERROR_ASSERTION;
-    return 0;
   }
 }
 

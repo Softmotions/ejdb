@@ -5,8 +5,8 @@ iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t
   bool matched;
   struct _JBL jbl;
   size_t vsz = 0;
-  int64_t istep = ctx->ux->skip + 1;
-  IWPOOL *pool = ctx->ux->pool;
+  EJDB_EXEC ux = ctx->ux;
+  IWPOOL *pool = ux->pool;
   IWKV_val key = {
     .data = &id,
     .size = sizeof(id)
@@ -39,24 +39,29 @@ start: {
   rc = jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf, vsz);
   RCGO(rc, finish);
 
-  rc = jql_matched(ctx->ux->q, &jbl, &matched);
+  rc = jql_matched(ux->q, &jbl, &matched);
   RCGO(rc, finish);
 
   if (!matched) {
     goto finish;
   }
-  if (istep > 0) {
-    --istep;
-  } else if (istep < 0) {
-    ++istep;
+  if (ux->skip && ux->skip-- > 0) {
+    *step = 1;
+    goto finish;
   }
-  if (!istep) {
+  if (ctx->istep > 0) {
+    --ctx->istep;
+  } else if (ctx->istep < 0) {
+    ++ctx->istep;
+  }
+
+  if (!ctx->istep) {
+    JQL q = ux->q;
+    struct JQP_AUX *aux = q->qp->aux;
     struct _EJDB_DOC doc = {
       .id = id,
       .raw = &jbl
     };
-    JQL q = ctx->ux->q;
-    struct JQP_AUX *aux = q->qp->aux;
     if (aux->apply || aux->projection) {
       if (!pool) {
         pool = iwpool_create(1024);
@@ -87,11 +92,11 @@ start: {
         RCGO(rc, finish);
       }
     }
-    istep = 1;
-    rc = ctx->ux->visitor(ctx->ux, &doc, &istep);
+    ctx->istep = 1;
+    rc = ux->visitor(ux, &doc, &ctx->istep);
     RCGO(rc, finish);
-    *step  = istep > 0 ? 1 : istep < 0 ? -1 : 0;
-    if (--ctx->ux->limit < 1) {
+    *step  = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
+    if (--ux->limit < 1) {
       *step = 0;
     }
   }

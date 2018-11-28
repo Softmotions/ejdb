@@ -79,6 +79,17 @@ void ejdb_test2_1() {
   CU_ASSERT_EQUAL(i, 3);
   ejdb_list_destroy(&list);
 
+  rc = ejdb_list2(db, "a", "/* | skip 1", 0, &list);
+  if (rc) {
+    iwlog_ecode_error3(rc);
+  }
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i);
+  //CU_ASSERT_EQUAL(i, 6);
+  printf("\n!!! i=%d\n", i);
+  ejdb_list_destroy(&list);
+
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 }

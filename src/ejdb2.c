@@ -319,10 +319,11 @@ static iwrc jb_db_release(EJDB *dbp) {
   return rc;
 }
 
-static iwrc jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCOLL *jbcp) {
+static iwrc jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquire_t acm, JBCOLL *jbcp) {
   int rci;
   iwrc rc = 0;
   *jbcp = 0;
+  bool wl = acm & JB_COLL_ACQUIRE_WRITE;
   API_RLOCK(db, rci);
   JBCOLL jbc;
   khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
@@ -337,7 +338,7 @@ static iwrc jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCOLL 
     *jbcp = jbc;
   } else {
     pthread_rwlock_unlock(&db->rwl); // relock
-    if (db->oflags & IWKV_RDONLY) {
+    if ((db->oflags & IWKV_RDONLY) || (acm & JB_COLL_ACQUIRE_EXISTING)) {
       return IW_ERROR_NOT_EXISTS;
     }
     API_WLOCK(db, rci);
@@ -418,6 +419,10 @@ finish:
     pthread_rwlock_unlock(&db->rwl);
   }
   return rc;
+}
+
+IW_INLINE iwrc jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCOLL *jbcp) {
+  return jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE, jbcp);
 }
 
 static iwrc jb_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
@@ -794,6 +799,7 @@ static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
 
 static iwrc jb_exec_scan_init(JBEXEC *ctx) {
   EJDB_EXEC ux = ctx->ux;
+  ctx->istep = 1;
   ctx->jblbufsz = ctx->jbc->db->opts.document_buffer_sz;
   ctx->jblbuf = malloc(ctx->jblbufsz);
   if (!ctx->jblbuf) {
@@ -855,9 +861,12 @@ iwrc ejdb_exec(EJDB_EXEC ux) {
     rc = jql_get_skip(ux->q, &ux->skip);
     RCRET(rc);
   }
+  rc = jb_coll_acquire_keeplock2(ux->db, ux->q->coll,
+                                 jql_has_apply(ux->q) ? JB_COLL_ACQUIRE_WRITE : JB_COLL_ACQUIRE_EXISTING,
+                                 &ctx.jbc);
+  if (rc == IW_ERROR_NOT_EXISTS) rc = 0;
+  else RCRET(rc);
 
-  rc = jb_coll_acquire_keeplock(ux->db, ux->q->coll, jql_has_apply(ux->q), &ctx.jbc);
-  RCRET(rc);
   rc = jb_exec_scan_init(&ctx);
   RCGO(rc, finish);
   if (ctx.sorting) {

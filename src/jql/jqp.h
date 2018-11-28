@@ -114,12 +114,14 @@ typedef struct JQP_INTEGER {
   jqp_unit_t type;
   jqp_int_flavours_t flavour;
   int64_t value;
+  void *opaque;
 } JQP_INTEGER;
 
 typedef struct JQP_DOUBLE {
   jqp_unit_t type;
   jqp_int_flavours_t flavour;
   double value;
+  void *opaque;
 } JQP_DOUBLE;
 
 typedef struct JQP_OP {

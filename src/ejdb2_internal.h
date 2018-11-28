@@ -121,17 +121,23 @@ typedef struct _JBEXEC {
   JQP_EXPR *iexpr;         /**< Expression used to match selected index (optional) */
   IWKV_cursor_op iop_init; /**< Initial index cursor position (optional) */
   IWKV_val *iop_key;       /**< Initial index cursor key (optional) */
-  uint32_t iop_key_cnt;    /**< Number of index cursor keys */
   IWKV_cursor_op iop_step; /**< Next index cursor step */
   IWKV_cursor_op iop_reverse_step; /**< Prev index cursor step */
+  uint32_t iop_key_cnt;    /**< Number of index cursor keys */
   uint32_t cnt;            /**< Current result row count */
-  bool sorting;            /**< Resultset sorting needed */
+  int64_t istep;
   iwrc(*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
   uint8_t *jblbuf;         /**< Buffer used to keep currently processed document */
   size_t jblbufsz;         /**< Size of jblbuf allocated memory */
+  bool sorting;            /**< Resultset sorting needed */
   struct _JBSSC ssc;       /**< Result set sorting context */
 } JBEXEC;
 
+
+typedef enum {
+  JB_COLL_ACQUIRE_WRITE = 1,
+  JB_COLL_ACQUIRE_EXISTING = 1 << 1,
+} jb_coll_acquire_t;
 
 iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step);
 iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step);
