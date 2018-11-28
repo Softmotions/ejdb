@@ -800,8 +800,7 @@ static void _jqp_finish(yycontext *yy) {
   JQP_AUX *aux = yy->aux;
 
   JQP_STRING *orderby = aux->orderby;
-  for (; orderby && orderby->next; ++cnt) {
-    orderby = orderby->next;
+  for (; orderby; ++cnt, orderby = orderby->next) {
     if (cnt >= MAX_ORDER_BY_CLAUSES) {
       rc = JQL_ERROR_ORDERBY_MAX_LIMIT;
       RCGO(rc, finish);

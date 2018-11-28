@@ -96,7 +96,7 @@ struct _JBPHCTX {
 
 struct _JBEXEC;
 
-typedef iwrc(*JB_SCAN_CONSUMER)(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step);
+typedef iwrc(*JB_SCAN_CONSUMER)(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
 
 /**
  * @brief Index can sorter consumer context
@@ -139,8 +139,8 @@ typedef enum {
   JB_COLL_ACQUIRE_EXISTING = 1 << 1,
 } jb_coll_acquire_t;
 
-iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step);
-iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step);
+iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
+iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
 iwrc jb_exec_idx_select(JBEXEC *ctx);
 
 

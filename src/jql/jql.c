@@ -1083,7 +1083,7 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
     .op = q
   };
   *out = false;
-
+  jql_reset(q, false);
   JQP_EXPR_NODE *en = q->qp->aux->expr;
   if (en->chain && !en->chain->next && !en->next) {
     en = en->chain;
@@ -1116,6 +1116,10 @@ bool jql_has_apply(JQL q) {
 
 bool jql_has_projection(JQL q) {
   return q->qp->aux->projection;
+}
+
+bool jql_has_orderby(JQL q) {
+  return q->qp->aux->orderby_num > 0;
 }
 
 iwrc jql_get_skip(JQL q, int64_t *out) {

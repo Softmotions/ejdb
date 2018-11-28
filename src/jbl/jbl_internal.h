@@ -24,6 +24,7 @@ typedef struct _JBL_VCTX {
   void *result;
   bool terminate;
   IWPOOL *pool;     /**< Pool placeholder, initialization is responsibility of `JBL_VCTX` creator */
+  bool found;       /**< Used in _jbl_at() */
 } JBL_VCTX;
 
 typedef jbn_visitor_cmd_t jbl_visitor_cmd_t;
@@ -44,12 +45,12 @@ iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 iwrc _jbl_node_from_binn2(const binn *bn, JBL_NODE *node, IWPOOL *pool);
 iwrc _jbl_from_node(binn *res, const JBL_NODE node);
+bool _jbl_at(JBL jbl, const JBL_PTR jp, JBL res);
 
 typedef jbl_visitor_cmd_t (*JBL_VISITOR)(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rc);
 iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor);
 
 bool _jbl_is_eq_values(JBL v1, JBL v2);
-
 int _jbl_is_cmp_values(JBL v1, JBL v2);
 
 #endif

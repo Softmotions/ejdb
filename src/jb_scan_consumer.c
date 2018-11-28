@@ -1,6 +1,10 @@
 #include "ejdb2_internal.h"
 
-iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step) {
+iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err) {
+  if (!id) { // EOF scan
+    return err;
+  }
+
   iwrc rc;
   bool matched;
   struct _JBL jbl;
@@ -11,9 +15,6 @@ iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t
     .data = &id,
     .size = sizeof(id)
   };
-  if (!id) { // EOF scan
-    return 0;
-  }
 
 start: {
     if (cur) {

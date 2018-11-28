@@ -163,6 +163,9 @@ void jql_test1_2() {
   _jql_test1_2("{'foo':{'obj':{'f':'d','e':'j'}}}", "/foo/[obj = {\"e\":\"j\",\"f\":\"d\"}]", true);
   _jql_test1_2("{'foo':{'obj':{'f':'d','e':'j'}}}", "/foo/[obj = {\"e\":\"j\",\"f\":\"dd\"}]", false);
 
+  _jql_test1_2("{'f':22}", "/f", true);
+  _jql_test1_2("{'a':'bar'}", "/f | asc /f", false);
+
   //
   const char *doc =
     "{"

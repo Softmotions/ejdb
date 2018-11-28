@@ -14,10 +14,8 @@ static void jb_scan_sorter_release(struct _JBEXEC *ctx) {
 }
 
 static int jb_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
-  iwrc rc = 0;
-  JBL v1, v2;
-  uint32_t r1, r2;
   int rv = 0;
+  uint32_t r1, r2;
   struct _JBL d1, d2;
   struct _JBEXEC *ctx = op;
   struct _JBSSC *ssc = &ctx->ssc;
@@ -26,22 +24,24 @@ static int jb_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   assert(aux->orderby_num > 0);
 
   memcpy(&r1, o1, sizeof(r1));
-  memcpy(&r2, o1, sizeof(r2));
+  memcpy(&r2, o2, sizeof(r2));
 
   p1 = ssc->docs + r1 + sizeof(uint64_t) /*id*/;
   p2 = ssc->docs + r2 + sizeof(uint64_t) /*id*/;
 
-  jbl_from_buf_keep_onstack2(&d1, p1);
-  jbl_from_buf_keep_onstack2(&d2, p2);
+  iwrc rc = jbl_from_buf_keep_onstack2(&d1, p1);
+  RCGO(rc, finish);
+  rc = jbl_from_buf_keep_onstack2(&d2, p2);
+  RCGO(rc, finish);
 
   for (int i = 0; i < aux->orderby_num; ++i) {
+    struct _JBL v1 = {0};
+    struct _JBL v2 = {0};
     JBL_PTR ptr = aux->orderby_ptrs[i];
-    int desc = (ptr->op & 1) ? -1 : 1; // If `1` do desc sorting
-    rc = jbl_at2(&d1, ptr, &v1);
-    RCGO(rc, finish);
-    rc = jbl_at2(&d2, ptr, &v2);
-    RCGO(rc, finish);
-    rv = _jbl_is_cmp_values(v1, v2) * desc;
+    int desc = (ptr->op & 1) ? -1 : 1; // If `-1` do desc sorting
+    _jbl_at(&d1, ptr, &v1);
+    _jbl_at(&d2, ptr, &v2);
+    rv = _jbl_is_cmp_values(&v1, &v2) * desc;
     if (rv) break;
   }
 
@@ -90,8 +90,10 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
   iwrc rc = 0;
   int64_t step = 1, id;
   struct _JBL jbl;
+  EJDB_EXEC ux = ctx->ux;
   struct _JBSSC *ssc = &ctx->ssc;
   uint32_t rnum = ssc->refs_num;
+  struct JQP_AUX *aux = ux->q->qp->aux;
 
   if (rnum) {
     if (setjmp(ssc->fatal_jmp)) { // Init error jump
@@ -106,10 +108,7 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
     qsort_r(ssc->refs, rnum, sizeof(ssc->refs[0]), jb_scan_sorter_cmp, ctx);
   }
 
-  JQL q = ctx->ux->q;
-  struct JQP_AUX *aux = q->qp->aux;
-
-  for (int64_t i = ctx->ux->skip; step && i < rnum && i >= 0;) {
+  for (int64_t i = ux->skip; step && i < rnum && i >= 0;) {
     uint8_t *rp = ssc->docs + ssc->refs[i];
     memcpy(&id, rp, sizeof(id));
     rp += sizeof(id);
@@ -120,7 +119,7 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
       .raw = &jbl
     };
     if (aux->apply || aux->projection) {
-      IWPOOL *pool = ctx->ux->pool;
+      IWPOOL *pool = ux->pool;
       if (!pool) {
         pool = iwpool_create(1024);
         if (!pool) {
@@ -128,16 +127,16 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
           goto finish;
         }
       }
-      rc = jb_scan_sorter_apply(pool, ctx, q, &doc);
-      if (pool && pool != ctx->ux->pool) {
+      rc = jb_scan_sorter_apply(pool, ctx, ux->q, &doc);
+      if (pool && pool != ux->pool) {
         iwpool_destroy(pool);
       }
       RCGO(rc, finish);
     }
-    rc = ctx->ux->visitor(ctx->ux, &doc, &step);
+    rc = ux->visitor(ux, &doc, &step);
     RCGO(rc, finish);
     i += step;
-    if (--ctx->ux->limit < 1) {
+    if (--ux->limit < 1) {
       break;
     }
   }
@@ -165,10 +164,18 @@ static iwrc jb_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
   return rc;
 }
 
-iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step) {
-  if (!id) { // End of scan
-    return jb_scan_sorter_do(ctx);
+iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err) {
+  if (!id) {
+    // End of scan
+    if (err) {
+      // In the case of error do not perform sorting just release resources
+      jb_scan_sorter_release(ctx);
+      return err;
+    } else {
+      return jb_scan_sorter_do(ctx);
+    }
   }
+
   iwrc rc;
   size_t vsz = 0;
   bool matched;
@@ -188,13 +195,12 @@ start: {
       rc = iwkv_get_copy(ctx->jbc->cdb, &key, ctx->jblbuf + sizeof(id), ctx->jblbufsz - sizeof(id), &vsz);
     }
     if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
-    RCGO(rc, finish);
+    else RCRET(rc);
     if (vsz + sizeof(id) > ctx->jblbufsz) {
       size_t nsize = MAX(vsz + sizeof(id), ctx->jblbufsz * 2);
       void *nbuf = realloc(ctx->jblbuf, nsize);
       if (!nbuf) {
-        rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-        goto finish;
+        return iwrc_set_errno(IW_ERROR_ALLOC, errno);
       }
       ctx->jblbuf = nbuf;
       ctx->jblbufsz = nsize;
@@ -203,33 +209,29 @@ start: {
   }
 
   rc = jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf + sizeof(id), vsz);
-  RCGO(rc, finish);
+  RCRET(rc);
 
   rc = jql_matched(ctx->ux->q, &jbl, &matched);
   if (!matched) {
-    goto finish;
+    return 0;
   }
 
   if (!ssc->refs) {
     ssc->refs_asz = 64 * 1024; // 64K
     ssc->refs = malloc(db->opts.document_buffer_sz);
     if (!ssc->refs) {
-      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      goto finish;
+      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     }
-    ssc->docs_asz = 255 * 1024; // 255K
+    ssc->docs_asz = 128 * 1024; // 128K
     ssc->docs = malloc(ssc->docs_asz);
     if (!ssc->docs) {
-      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      goto finish;
+      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     }
-
   } else if (ssc->refs_asz <= (ssc->refs_num + 1) * sizeof(ssc->refs[0])) {
     ssc->refs_asz *= 2;
     uint32_t *nrefs = realloc(ssc->refs, ssc->refs_asz);
     if (!nrefs) {
-      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      goto finish;
+      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     }
     ssc->refs = nrefs;
   }
@@ -239,14 +241,15 @@ start: {
 
 start2: {
     if (ssc->docs) {
-      if (ssc->docs_npos + vsz > ssc->docs_asz)  {
-        ssc->docs_asz = MIN(ssc->docs_asz * 2, db->opts.sort_buffer_sz);
-        if (ssc->docs_npos + vsz > ssc->docs_asz) {
+      uint32_t rsize = ssc->docs_npos + vsz;
+      if (rsize > ssc->docs_asz)  {
+        ssc->docs_asz = MIN(rsize * 2, db->opts.sort_buffer_sz);
+        if (rsize > ssc->docs_asz) {
           size_t sz;
           rc = jb_scan_sorter_init(ssc, (ssc->docs_npos + vsz) * 2);
-          RCGO(rc, finish);
+          RCRET(rc);
           rc = sof->write(sof, 0, ssc->docs, ssc->docs_npos, &sz);
-          RCGO(rc, finish);
+          RCRET(rc);
           free(ssc->docs);
           ssc->docs = 0;
           ssc->sof_active = true;
@@ -254,8 +257,7 @@ start2: {
         } else {
           void *nbuf = realloc(ssc->docs, ssc->docs_asz);
           if (!nbuf) {
-            rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-            goto finish;
+            return iwrc_set_errno(IW_ERROR_ALLOC, errno);
           }
           ssc->docs = nbuf;
         }
@@ -264,16 +266,11 @@ start2: {
     } else {
       size_t sz;
       rc = sof->write(sof, ssc->docs_npos, ctx->jblbuf, vsz, &sz);
-      RCGO(rc, finish);
+      RCRET(rc);
     }
-    ssc->refs[ssc->refs_num] = ssc->docs_npos;
-    ssc->refs_num++;
+    ssc->refs[ssc->refs_num++] = ssc->docs_npos;
     ssc->docs_npos += vsz;
   }
 
-finish:
-  if (rc) {
-    jb_scan_sorter_release(ctx);
-  }
   return rc;
 }
