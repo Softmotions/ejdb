@@ -1476,7 +1476,7 @@ static iwrc _jbl_patch(JBL jbl, const JBL_PATCH *p, size_t cnt, IWPOOL *pool) {
   return rc;
 }
 
-int _jbl_is_cmp_values(JBL v1, JBL v2) {
+int _jbl_cmp_atomic_values(JBL v1, JBL v2) {
   jbl_type_t t1 = jbl_type(v1);
   jbl_type_t t2 = jbl_type(v2);
   if (t1 != t2) {
@@ -1501,7 +1501,7 @@ int _jbl_is_cmp_values(JBL v1, JBL v2) {
   }
 }
 
-bool _jbl_is_eq_values(JBL v1, JBL v2) {
+bool _jbl_is_eq_atomic_values(JBL v1, JBL v2) {
   jbl_type_t t1 = jbl_type(v1);
   jbl_type_t t2 = jbl_type(v2);
   if (t1 != t2) {

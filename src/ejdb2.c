@@ -575,7 +575,7 @@ static iwrc jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
     goto finish;
   }
 
-  if (found && _jbl_is_eq_values(&jbv, &jbvprev)) {
+  if (found && _jbl_is_eq_atomic_values(&jbv, &jbvprev)) {
     // Indexed value has not been changed
     goto finish;
   }

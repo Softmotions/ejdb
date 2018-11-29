@@ -41,7 +41,7 @@ static int jb_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
     int desc = (ptr->op & 1) ? -1 : 1; // If `-1` do desc sorting
     _jbl_at(&d1, ptr, &v1);
     _jbl_at(&d2, ptr, &v2);
-    rv = _jbl_is_cmp_values(&v1, &v2) * desc;
+    rv = _jbl_cmp_atomic_values(&v1, &v2) * desc;
     if (rv) break;
   }
 

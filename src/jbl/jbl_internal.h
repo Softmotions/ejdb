@@ -50,7 +50,7 @@ bool _jbl_at(JBL jbl, const JBL_PTR jp, JBL res);
 typedef jbl_visitor_cmd_t (*JBL_VISITOR)(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rc);
 iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor);
 
-bool _jbl_is_eq_values(JBL v1, JBL v2);
-int _jbl_is_cmp_values(JBL v1, JBL v2);
+bool _jbl_is_eq_atomic_values(JBL v1, JBL v2);
+int _jbl_cmp_atomic_values(JBL v1, JBL v2);
 
 #endif
