@@ -1384,15 +1384,15 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
 
   memcpy(&db->opts, _opts, sizeof(db->opts));
   if (!db->opts.sort_buffer_sz) {
-    db->opts.sort_buffer_sz = 16 * 1024 * 1024; // 16Mb, Min 1Mb
+    db->opts.sort_buffer_sz = 16 * 1024 * 1024; // 16Mb
   }
-  if (db->opts.sort_buffer_sz < 1024 * 1024) {
+  if (db->opts.sort_buffer_sz < 1024 * 1024) { // Min 1Mb
     db->opts.sort_buffer_sz = 1024 * 1024;
   }
-  if (!db->opts.document_buffer_sz) { // 64Kb, Min 16Kb
+  if (!db->opts.document_buffer_sz) { // 64Kb
     db->opts.document_buffer_sz = 64 * 1024;
   }
-  if (db->opts.document_buffer_sz < 16 * 1024) {
+  if (db->opts.document_buffer_sz < 16 * 1024) { // Min 16Kb
     db->opts.document_buffer_sz = 16 * 1024;
   }
 

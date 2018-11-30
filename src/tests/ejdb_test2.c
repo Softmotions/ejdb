@@ -1,4 +1,5 @@
 #include "ejdb2.h"
+#include <stdlib.h>
 #include <CUnit/Basic.h>
 
 int init_suite() {
@@ -25,6 +26,56 @@ static iwrc put_json(EJDB db, const char *coll, const char *json) {
   rc = ejdb_put_new(db, coll, jbl, &llv);
   jbl_destroy(&jbl);
   return rc;
+}
+
+// Test document sorting overflow on disk
+void ejdb_test2_2() {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test2_2.db",
+      .oflags = IWKV_TRUNC
+    },
+    .document_buffer_sz = 16 * 1024, // 16K
+    .sort_buffer_sz = 1024 * 1024,   // 1M
+    .no_wal = true
+  };
+  EJDB db;
+  EJDB_LIST list = 0;
+  const int vbufsz = 512 * 1024;
+  const int dbufsz = vbufsz + 128;
+  char *vbuf = malloc(vbufsz);
+  char *dbuf = malloc(dbufsz);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(vbuf);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(dbuf);
+  memset(vbuf, 'z', vbufsz);
+  vbuf[vbufsz - 1] = '\0';
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  for (int i = 0; i < 6; ++i) {
+    snprintf(dbuf, dbufsz, "{\"f\":%d, \"d\":\"%s\"}", i, vbuf);
+    rc = put_json(db, "c1", dbuf);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+  }
+  // Here is we will overflow sort buffer
+  rc = ejdb_list2(db, "c1", "/f | asc /f", 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  int i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    JBL jbl;
+    rc = jbl_at(doc->raw, "/f", &jbl);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    int64_t llv = jbl_get_i64(jbl);
+    jbl_destroy(&jbl);
+    CU_ASSERT_EQUAL(llv, i);
+  }
+  ejdb_list_destroy(&list);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  free(vbuf);
+  free(dbuf);
 }
 
 void ejdb_test2_1() {
@@ -215,7 +266,8 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "ejdb_test2_1", ejdb_test2_1))
+    //(NULL == CU_add_test(pSuite, "ejdb_test2_1", ejdb_test2_1)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test2_2", ejdb_test2_2))
   ) {
     CU_cleanup_registry();
     return CU_get_error();
