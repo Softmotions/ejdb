@@ -29,7 +29,7 @@ static iwrc put_json(EJDB db, const char *coll, const char *json) {
 }
 
 // Test document sorting overflow on disk
-void ejdb_test2_2() {
+static void ejdb_test2_2() {
   EJDB_OPTS opts = {
     .kv = {
       .path = "ejdb_test2_2.db",
@@ -78,7 +78,62 @@ void ejdb_test2_2() {
   free(dbuf);
 }
 
-void ejdb_test2_1() {
+struct TEST21_1 {
+  int stage;
+  int cnt;
+};
+
+// On sort:
+//on doc f=1
+//on doc f=2
+//on doc f=3
+//on doc f=5
+//on doc f=6
+
+//on doc f=1
+//on doc f=2
+//on doc f=5
+//on doc f=5
+//on doc f=6
+
+// On scan:
+//on doc f=6
+//on doc f=5
+//on doc f=3
+//on doc f=1
+//on doc f=2
+
+//on doc f=6
+//on doc f=5
+//on doc f=1
+//on doc f=1
+//on doc f=2
+
+
+static iwrc ejdb_test2_1_exec_visitor1(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
+  struct TEST21_1 *tc = ctx->opaque;
+  JBL jbl;
+  iwrc rc = jbl_at(doc->raw, "/f", &jbl);
+  RCRET(rc);
+  int64_t llv = jbl_get_i64(jbl);
+
+  if (tc->cnt && tc->stage == 0) {
+    tc->stage = 1;
+    *step = 2;
+  } else if (tc->stage == 1) {
+    tc->stage = 2;
+    *step = -1;
+  }
+  jbl_destroy(&jbl);
+  if (!tc->cnt) {
+    fprintf(stderr, "\n");
+  }
+  fprintf(stderr, "on doc f=%ld\n", llv);
+  tc->cnt++;
+  return rc;
+}
+
+static void ejdb_test2_1() {
   EJDB_OPTS opts = {
     .kv = {
       .path = "ejdb_test2_1.db",
@@ -252,6 +307,26 @@ void ejdb_test2_1() {
   CU_ASSERT_EQUAL(i, 5);
   ejdb_list_destroy(&list);
 
+  //
+  // Now test basic back/forward skips
+  //
+  JQL q;
+  struct TEST21_1 tc = {0};
+  //rc = jql_create(&q, "a", "/f | asc /f");
+  rc = jql_create(&q, "a", "/f");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  EJDB_EXEC ux = {
+    .db = db,
+    .q = q,
+    .opaque = &tc,
+    .visitor = ejdb_test2_1_exec_visitor1
+  };
+  rc = ejdb_exec(&ux);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  //CU_ASSERT_EQUAL(tc.cnt, 5);
+
+  jql_destroy(&q);
+
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_destroy(xstr);
@@ -266,7 +341,7 @@ int main() {
     return CU_get_error();
   }
   if (
-    //(NULL == CU_add_test(pSuite, "ejdb_test2_1", ejdb_test2_1)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test2_1", ejdb_test2_1)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test2_2", ejdb_test2_2))
   ) {
     CU_cleanup_registry();

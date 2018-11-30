@@ -115,7 +115,7 @@ struct _JBSSC {
 };
 
 typedef struct _JBEXEC {
-  EJDB_EXEC ux;            /**< User defined context */
+  EJDB_EXEC *ux;           /**< User defined context */
   JBCOLL jbc;              /**< Collection */
   JBIDX idx;               /**< Selected index for query (optional) */
   JQP_EXPR *iexpr;         /**< Expression used to match selected index (optional) */

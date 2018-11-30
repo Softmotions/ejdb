@@ -102,13 +102,13 @@ typedef struct _EJDB_EXEC {
   int64_t limit;
   IWXSTR *xlog;
   IWPOOL *pool;               /**< Optional pool which can be used in query apply  */
-} *EJDB_EXEC;
+} EJDB_EXEC;
 
 IW_EXPORT WUR iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp);
 
 IW_EXPORT iwrc ejdb_close(EJDB *ejdbp);
 
-IW_EXPORT WUR iwrc ejdb_exec(EJDB_EXEC ux);
+IW_EXPORT WUR iwrc ejdb_exec(EJDB_EXEC *ux);
 
 IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWPOOL *pool);
 

@@ -9,7 +9,7 @@ iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t
   bool matched;
   struct _JBL jbl;
   size_t vsz = 0;
-  EJDB_EXEC ux = ctx->ux;
+  EJDB_EXEC *ux = ctx->ux;
   IWPOOL *pool = ux->pool;
   IWKV_val key = {
     .data = &id,

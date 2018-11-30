@@ -90,7 +90,7 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
   iwrc rc = 0;
   int64_t step = 1, id;
   struct _JBL jbl;
-  EJDB_EXEC ux = ctx->ux;
+  EJDB_EXEC *ux = ctx->ux;
   struct _JBSSC *ssc = &ctx->ssc;
   uint32_t rnum = ssc->refs_num;
   struct JQP_AUX *aux = ux->q->qp->aux;
@@ -133,8 +133,10 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
       }
       RCGO(rc, finish);
     }
+    step = 1;
     rc = ux->visitor(ux, &doc, &step);
     RCGO(rc, finish);
+    if (step < 0) ++i;
     i += step;
     if (--ux->limit < 1) {
       break;

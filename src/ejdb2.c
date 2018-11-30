@@ -691,7 +691,7 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
   JBIDX idx = ctx->idx;
 
   if (ctx->iop_init == IWKV_CURSOR_EQ) {
-    for (uint32_t i = 0; step && i < ctx->iop_key_cnt; ++i) {
+    for (int64_t i = 0; step && i < ctx->iop_key_cnt;) {
       rc = iwkv_get_copy(idx->idb, &ctx->iop_key[i], &id, sizeof(id), &sz);
       if (rc == IWKV_ERROR_NOTFOUND) continue;
       RCBREAK(rc);
@@ -700,16 +700,11 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
         iwlog_ecode_error3(rc);
         break;
       }
-      if (step > 0) {
-        --step;
-      } else if (step < 0) {
-        ++step;
-      }
-      if (!step) {
-        step = 1;
-        rc = consumer(ctx, 0, id, &step, 0);
-        RCBREAK(rc);
-      }
+      step = 1;
+      rc = consumer(ctx, 0, id, &step, 0);
+      RCBREAK(rc);
+      if (step < 0) ++i;
+      i += step;
     }
     return consumer(ctx, 0, 0, 0, rc);
   }
@@ -723,11 +718,10 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
     RCGO(rc, finish);
   }
   do {
-    if (step > 0) {
-      --step;
-    } else if (step < 0) {
-      ++step;
-    }
+
+    if (step > 0) --step;
+    else if (step < 0) ++step;
+
     if (!step) {
       rc = iwkv_cursor_copy_val(cur, &id, sizeof(id), &sz);
       RCBREAK(rc);
@@ -736,9 +730,11 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
         iwlog_ecode_error3(rc);
         break;
       }
+again:
       step = 1;
       rc = consumer(ctx, cur, id, &step, 0);
       RCBREAK(rc);
+      if (step < 0 && !++step) goto again;
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? ctx->iop_step : ctx->iop_reverse_step)));
   if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
@@ -757,11 +753,10 @@ static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   RCRET(rc);
 
   while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? ctx->iop_step : ctx->iop_reverse_step))) {
-    if (step > 0) {
-      --step;
-    } else if (step < 0) {
-      ++step;
-    }
+
+    if (step > 0) --step;
+    else if (step < 0) ++step;
+
     if (!step) {
       size_t sz;
       uint64_t id;
@@ -772,9 +767,11 @@ static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
         iwlog_ecode_error3(rc);
         break;
       }
+again:
       step = 1;
       rc = consumer(ctx, cur, id, &step, 0);
       RCBREAK(rc);
+      if (step < 0 && !++step) goto again;
     }
   }
   if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
@@ -783,7 +780,7 @@ static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
 }
 
 static iwrc jb_exec_scan_init(JBEXEC *ctx) {
-  EJDB_EXEC ux = ctx->ux;
+  EJDB_EXEC *ux = ctx->ux;
   ctx->istep = 1;
   ctx->jblbufsz = ctx->jbc->db->opts.document_buffer_sz;
   ctx->jblbuf = malloc(ctx->jblbufsz);
@@ -822,7 +819,7 @@ static iwrc jb_noop_visitor(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t 
 
 //----------------------- Public API
 
-iwrc ejdb_exec(EJDB_EXEC ux) {
+iwrc ejdb_exec(EJDB_EXEC *ux) {
   if (!ux || !ux->db || !ux->q) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -830,7 +827,7 @@ iwrc ejdb_exec(EJDB_EXEC ux) {
   iwrc rc = 0;
   if (!ux->visitor) {
     ux->visitor = jb_noop_visitor;
-    ux->q->qp->aux->projection = 0; // Actually we don't need projection
+    ux->q->qp->aux->projection = 0; // Actually we don't need projection if exists
   }
   JBEXEC ctx = {
     .ux = ux
