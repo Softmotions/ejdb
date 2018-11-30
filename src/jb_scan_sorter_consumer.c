@@ -133,10 +133,11 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
       }
       RCGO(rc, finish);
     }
+again:
     step = 1;
     rc = ux->visitor(ux, &doc, &step);
     RCGO(rc, finish);
-    if (step < 0) ++i;
+    if (step < 0 && !++step) goto again;
     i += step;
     if (--ux->limit < 1) {
       break;

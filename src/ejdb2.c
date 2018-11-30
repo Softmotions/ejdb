@@ -700,10 +700,11 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
         iwlog_ecode_error3(rc);
         break;
       }
+again0:
       step = 1;
       rc = consumer(ctx, 0, id, &step, 0);
       RCBREAK(rc);
-      if (step < 0) ++i;
+      if (step < 0 && !++step) goto again0;
       i += step;
     }
     return consumer(ctx, 0, 0, 0, rc);
