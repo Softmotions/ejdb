@@ -81,34 +81,8 @@ static void ejdb_test2_2() {
 struct TEST21_1 {
   int stage;
   int cnt;
+  IWXSTR *xstr;
 };
-
-// On sort:
-//on doc f=1
-//on doc f=2
-//on doc f=3
-//on doc f=5
-//on doc f=6
-
-//on doc f=1
-//on doc f=2
-//on doc f=5
-//on doc f=5
-//on doc f=6
-
-// On scan:
-//on doc f=6
-//on doc f=5
-//on doc f=3
-//on doc f=1
-//on doc f=2
-
-//on doc f=6
-//on doc f=5
-//on doc f=1
-//on doc f=1
-//on doc f=2
-
 
 static iwrc ejdb_test2_1_exec_visitor1(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
   struct TEST21_1 *tc = ctx->opaque;
@@ -116,7 +90,6 @@ static iwrc ejdb_test2_1_exec_visitor1(struct _EJDB_EXEC *ctx, const EJDB_DOC do
   iwrc rc = jbl_at(doc->raw, "/f", &jbl);
   RCRET(rc);
   int64_t llv = jbl_get_i64(jbl);
-
   if (tc->cnt && tc->stage == 0) {
     tc->stage = 1;
     *step = 2;
@@ -125,10 +98,7 @@ static iwrc ejdb_test2_1_exec_visitor1(struct _EJDB_EXEC *ctx, const EJDB_DOC do
     *step = -1;
   }
   jbl_destroy(&jbl);
-  if (!tc->cnt) {
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "on doc f=%ld\n", llv);
+  iwxstr_printf(tc->xstr, "%lld", llv);
   tc->cnt++;
   return rc;
 }
@@ -312,7 +282,7 @@ static void ejdb_test2_1() {
   //
   JQL q;
   struct TEST21_1 tc = {0};
-  //rc = jql_create(&q, "a", "/f | asc /f");
+  tc.xstr = iwxstr_new();
   rc = jql_create(&q, "a", "/f");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   EJDB_EXEC ux = {
@@ -323,9 +293,21 @@ static void ejdb_test2_1() {
   };
   rc = ejdb_exec(&ux);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  //CU_ASSERT_EQUAL(tc.cnt, 5);
-
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(tc.xstr), "65112");
   jql_destroy(&q);
+  iwxstr_destroy(tc.xstr);
+
+  // back/forward skips for sorted output
+  memset(&tc, 0, sizeof(tc));
+  tc.xstr = iwxstr_new();
+  rc = jql_create(&q, "a", "/f | asc /f");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  ux.q = q;
+  rc = ejdb_exec(&ux);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(tc.xstr), "12556");
+  jql_destroy(&q);
+  iwxstr_destroy(tc.xstr);
 
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
