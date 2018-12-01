@@ -1102,12 +1102,10 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
   if (vctx.pool) {
     iwpool_destroy(vctx.pool);
   }
-  if (rc) {
-    return rc;
-  } else {
+  if (!rc) {
     *out = q->matched;
-    return 0;
   }
+  return rc;
 }
 
 bool jql_has_apply(JQL q) {
