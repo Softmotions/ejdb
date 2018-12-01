@@ -38,6 +38,7 @@
     <File Name="src/jb_scan_sorter_consumer.c"/>
     <File Name="src/ejdb2_internal.h"/>
     <VirtualDirectory Name="tests">
+      <File Name="src/tests/ejdb_test3.c"/>
       <File Name="src/tests/ejdb_test2.c"/>
       <File Name="src/tests/CMakeLists.txt"/>
       <File Name="src/tests/ejdb_test1.c"/>
