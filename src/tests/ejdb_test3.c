@@ -1,5 +1,4 @@
-#include "ejdb2.h"
-#include <stdlib.h>
+#include "ejdb_test.h"
 #include <CUnit/Basic.h>
 
 int init_suite() {
@@ -12,7 +11,40 @@ int clean_suite() {
 }
 
 void ejdb_test3_1() {
-  // TODO
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test3_1.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+
+  EJDB db;
+  char dbuf[1024];
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_ensure_index(db, "c1", "/f", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  for (int i = 1; i <= 10; ++i) {
+    snprintf(dbuf, sizeof(dbuf), "{\"f\":%d, \"n\":%d}", i, i);
+    rc = put_json(db, "c1", dbuf);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    if (i == 1) { // Check unique index constraint violation
+      rc = put_json(db, "c1", dbuf);
+      CU_ASSERT_EQUAL(rc, EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED);
+    }
+    rc = put_json(db, "c2", dbuf);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+  }
+  rc = ejdb_ensure_index(db, "c2", "/f", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  // TODO:
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
 }
 
 int main() {

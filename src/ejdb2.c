@@ -591,9 +591,7 @@ static iwrc jb_idx_fill(JBIDX idx) {
   uint64_t llu;
   JBL jbl = &jbs;
 
-  iwrc rc = iwkv_cursor_open(idx->idb, &cur, IWKV_CURSOR_BEFORE_FIRST, 0);
-  RCRET(rc);
-
+  iwrc rc = iwkv_cursor_open(idx->jbc->cdb, &cur, IWKV_CURSOR_BEFORE_FIRST, 0);
   while (!rc) {
     rc = iwkv_cursor_to(cur, IWKV_CURSOR_NEXT);
     if (rc == IWKV_ERROR_NOTFOUND) {
@@ -601,7 +599,7 @@ static iwrc jb_idx_fill(JBIDX idx) {
       break;
     }
     rc = iwkv_cursor_get(cur, &key, &val);
-    if (rc) break;
+    RCBREAK(rc);
     if (!binn_load(val.data, &jbs.bn)) {
       rc = JBL_ERROR_CREATION;
       break;
@@ -616,15 +614,19 @@ static iwrc jb_idx_fill(JBIDX idx) {
 
 static iwrc jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *oldval, void *op) {
   iwrc rc = 0;
+  JBL prev;
   struct _JBL jblprev;
   struct _JBPHCTX *ctx = op;
   JBCOLL jbc = ctx->jbc;
   if (oldval) {
     rc = jbl_from_buf_keep_onstack(&jblprev, oldval->data, oldval->size);
     RCRET(rc);
+    prev = &jblprev;
+  } else {
+    prev = 0;
   }
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
-    rc = jb_idx_record_add(idx, ctx->id, ctx->jbl, &jblprev);
+    rc = jb_idx_record_add(idx, ctx->id, ctx->jbl, prev);
     RCGO(rc, finish);
   }
 finish:
