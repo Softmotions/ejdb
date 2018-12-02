@@ -2,9 +2,19 @@
 
 #define JB_SOLID_EXPRNUM 127
 
-static void _find_solid_expressions(struct JQP_EXPR_NODE *en, struct JQP_EXPR_NODE *sle, size_t *snp) {
-  struct JQP_EXPR_NODE *cn = en->chain;
-  for (; cn; cn = cn->next) {
+//
+
+
+static void _collect_solid_filters(struct JQP_EXPR_NODE *en, struct JQP_EXPR_NODE *sle, size_t *snp) {
+  if (en->type == JQP_EXPR_NODE_TYPE) {
+    struct JQP_EXPR_NODE *cn = en->chain;
+    for (; cn; cn = cn->next) {
+      if (en->join && en->join->value == JQP_JOIN_OR) return;
+    }
+    for (cn = en->chain; cn; cn = cn->next) {
+      _collect_solid_filters(cn, sle, snp);
+    }
+  } else if (en->type == JQP_FILTER_TYPE) {
 
   }
 }
@@ -20,7 +30,7 @@ iwrc jb_exec_idx_select(JBEXEC *ctx) {
 
   if (ctx->jbc->idx) { // we have indexes associated with collection
     size_t snp = 0;
-    _find_solid_expressions(aux->expr, sle, &snp);
+    _collect_solid_filters(aux->expr, sle, &snp);
   }
 
   if (!ctx->idx) {
