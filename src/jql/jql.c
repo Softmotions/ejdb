@@ -867,7 +867,7 @@ static JQVAL *_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
   }
 }
 
-static bool _match_node_expr_impl(MCTX *mctx, JQP_NODE *n, JQP_EXPR *expr, iwrc *rcp) {
+static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
   const bool negate = (expr->join && expr->join->negate);
   JQPUNIT *left = expr->left;
   JQP_OP *op = expr->op;
@@ -914,7 +914,7 @@ static bool _match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   }
   bool prev = false;
   for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
-    bool matched = _match_node_expr_impl(mctx, n, expr, rcp);
+    bool matched = _match_node_expr_impl(mctx, expr, rcp);
     if (*rcp) return false;
     const JQP_JOIN *join = expr->join;
     if (!join) {
