@@ -21,14 +21,18 @@ void ejdb_test3_1() {
 
   EJDB db;
   char dbuf[1024];
+  EJDB_LIST list = 0;
+  IWXSTR *log = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(log);
+
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = ejdb_ensure_index(db, "c1", "/f", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
+  rc = ejdb_ensure_index(db, "c1", "/f/b", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   for (int i = 1; i <= 10; ++i) {
-    snprintf(dbuf, sizeof(dbuf), "{\"f\":%d, \"n\":%d}", i, i);
+    snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":%d},\"n\":%d}", i, i);
     rc = put_json(db, "c1", dbuf);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     if (i == 1) { // Check unique index constraint violation
@@ -38,13 +42,17 @@ void ejdb_test3_1() {
     rc = put_json(db, "c2", dbuf);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
   }
-  rc = ejdb_ensure_index(db, "c2", "/f", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
+  rc = ejdb_ensure_index(db, "c2", "/f/b", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  // TODO:
+  rc = ejdb_list3(db, "c1", "/f/b", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  fprintf(stderr, "%s\n", iwxstr_ptr(log));
+  ejdb_list_destroy(&list);
 
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_destroy(log);
 }
 
 int main() {

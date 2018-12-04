@@ -19,6 +19,7 @@
 static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
 
 #define METADB_ID 1
+#define NUMRECSDB_ID 2  // DB for number of records per index/collection
 #define KEY_PREFIX_COLLMETA   "c." // Full key format: c.<coldbid>
 #define KEY_PREFIX_IDXMETA    "i." // Full key format: i.<coldbid>.<idxdbid>
 
@@ -73,6 +74,7 @@ struct _JBIDX {
   IWDB auxdb;               /**< Auxiliary database, used by `EJDB_IDX_ARR` indexes */
   uint32_t dbid;            /**< IWKV collection database ID */
   uint32_t auxdbid;         /**< Auxiliary database ID, used by `EJDB_IDX_ARR` indexes */
+  int64_t  rnum;            /**< Number of records stored in index */
   struct _JBIDX *next;      /**< Next index in chain */
 };
 
@@ -81,6 +83,7 @@ KHASH_MAP_INIT_STR(JBCOLLM, JBCOLL)
 struct _EJDB {
   IWKV iwkv;
   IWDB metadb;
+  IWDB nrecdb;
   khash_t(JBCOLLM) *mcolls;
   volatile bool open;
   iwkv_openflags oflags;
@@ -114,15 +117,16 @@ struct _JBSSC {
   bool sof_active;
 };
 
+struct _JBMIDX {
+  JQP_FILTER *filter;   /**< Query filter */
+  JQP_EXPR *nexpr;      /**< Filter node expression */
+  JBIDX idx;            /**< Index matched this filter */
+};
+
 typedef struct _JBEXEC {
   EJDB_EXEC *ux;           /**< User defined context */
   JBCOLL jbc;              /**< Collection */
-  JBIDX idx;               /**< Selected index for query (optional) */
-  JQP_EXPR *iexpr;         /**< Expression used to match selected index (optional) */
-  IWKV_cursor_op iop_init; /**< Initial index cursor position (optional) */
-  IWKV_val *iop_key;       /**< Initial index cursor key (optional) */
-  IWKV_cursor_op iop_step; /**< Next index cursor step */
-  IWKV_cursor_op iop_reverse_step; /**< Prev index cursor step */
+
   uint32_t iop_key_cnt;    /**< Number of index cursor keys */
   uint32_t cnt;            /**< Current result row count */
   int64_t istep;
@@ -130,6 +134,13 @@ typedef struct _JBEXEC {
   uint8_t *jblbuf;         /**< Buffer used to keep currently processed document */
   size_t jblbufsz;         /**< Size of jblbuf allocated memory */
   bool sorting;            /**< Resultset sorting needed */
+
+  IWKV_val *cursor_key;       /**< Initial index cursor key (optional) */
+  IWKV_cursor_op cursor_init; /**< Initial index cursor position (optional) */
+  IWKV_cursor_op cursor_step; /**< Next index cursor step */
+  IWKV_cursor_op cursor_reverse_step; /**< Prev index cursor step */
+  struct _JBMIDX midx;     /**< Index matching context */
+
   struct _JBSSC ssc;       /**< Result set sorting context */
 } JBEXEC;
 
