@@ -119,16 +119,19 @@ struct _JBSSC {
 };
 
 struct _JBMIDX {
-  JQP_FILTER *filter;   /**< Query filter */
-  JQP_EXPR *nexpr;      /**< Filter node expression */
-  JBIDX idx;            /**< Index matched this filter */
+  JBIDX idx;                          /**< Index matched this filter */
+  JQP_FILTER *filter;                 /**< Query filter */
+  JQP_EXPR *nexpr;                    /**< Filter node expression */
+  JQVAL *cursor_key;                  /**< Initial index cursor key (optional) */
+  IWKV_cursor_op cursor_init;         /**< Initial index cursor position (optional) */
+  IWKV_cursor_op cursor_step;         /**< Next index cursor step */
+  IWKV_cursor_op cursor_reverse_step; /**< Prev index cursor step */
 };
 
 typedef struct _JBEXEC {
   EJDB_EXEC *ux;           /**< User defined context */
   JBCOLL jbc;              /**< Collection */
 
-  uint32_t iop_key_cnt;    /**< Number of index cursor keys */
   uint32_t cnt;            /**< Current result row count */
   int64_t istep;
   iwrc(*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
@@ -136,12 +139,12 @@ typedef struct _JBEXEC {
   size_t jblbufsz;         /**< Size of jblbuf allocated memory */
   bool sorting;            /**< Resultset sorting needed */
 
-  IWKV_val *cursor_key;       /**< Initial index cursor key (optional) */
-  IWKV_cursor_op cursor_init; /**< Initial index cursor position (optional) */
-  IWKV_cursor_op cursor_step; /**< Next index cursor step */
+  JQVAL *cursor_key;                  /**< Initial index cursor key (optional) */
+  IWKV_cursor_op cursor_init;         /**< Initial index cursor position (optional) */
+  IWKV_cursor_op cursor_step;         /**< Next index cursor step */
   IWKV_cursor_op cursor_reverse_step; /**< Prev index cursor step */
-  struct _JBMIDX midx;     /**< Index matching context */
 
+  struct _JBMIDX midx;     /**< Index matching context */
   struct _JBSSC ssc;       /**< Result set sorting context */
 } JBEXEC;
 

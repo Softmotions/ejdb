@@ -145,6 +145,7 @@ typedef struct JQP_EXPR {
   JQPUNIT *left;
   JQPUNIT *right;
   struct JQP_EXPR *next;
+  bool disabled;
 } JQP_EXPR;
 
 typedef struct JQP_PROJECTION {

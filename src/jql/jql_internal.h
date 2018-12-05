@@ -3,6 +3,7 @@
 #define JQL_INTERNAL_H
 
 #include "jqp.h"
+#include "binn.h"
 
 /** Query object */
 struct _JQL {
@@ -13,6 +14,35 @@ struct _JQL {
   void *opaque;
 };
 
+/** Placeholder value type */
+typedef enum {
+  JQVAL_NULL,
+  JQVAL_I64,
+  JQVAL_F64,
+  JQVAL_STR,
+  JQVAL_BOOL,
+  JQVAL_RE,
+  JQVAL_JBLNODE, // Do not reorder JQVAL_JBLNODE,JQVAL_BINN must be last
+  JQVAL_BINN
+} jqval_type_t;
+
+/** Placeholder value */
+typedef struct {
+  jqval_type_t type;
+  union {
+    JBL_NODE vnode;
+    binn *vbinn;
+    int64_t vi64;
+    double vf64;
+    const char *vstr;
+    bool vbool;
+    struct re *vre;
+  };
+} JQVAL;
+
+JQVAL *jql_unit_to_jqval(JQP_QUERY *qp, JQPUNIT *unit, iwrc *rcp);
+
+int jql_cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp);
 
 #endif
 

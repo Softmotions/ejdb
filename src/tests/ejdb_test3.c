@@ -45,7 +45,7 @@ void ejdb_test3_1() {
   rc = ejdb_ensure_index(db, "c2", "/f/b", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = ejdb_list3(db, "c1", "/f/b", 0, log, &list);
+  rc = ejdb_list3(db, "c1", "/f/[b = 1]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   fprintf(stderr, "%s\n", iwxstr_ptr(log));
   ejdb_list_destroy(&list);

@@ -739,7 +739,7 @@ static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer)
     return consumer(ctx, 0, 0, 0, rc);
   }
 
-  rc = iwkv_cursor_open(idx->idb, &cur, ctx->cursor_init, ctx->cursor_key);
+  rc = iwkv_cursor_open(idx->idb, &cur, ctx->cursor_init, 0);
   if (rc == IWKV_ERROR_NOTFOUND) return 0;
   RCRET(rc);
 
@@ -831,9 +831,6 @@ static iwrc jb_exec_scan_init(JBEXEC *ctx) {
 }
 
 static void jb_exec_scan_release(JBEXEC *ctx) {
-  if (ctx->cursor_key) {
-    free(ctx->cursor_key);
-  }
   if (ctx->jblbuf) {
     free(ctx->jblbuf);
   }
