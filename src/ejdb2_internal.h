@@ -60,6 +60,7 @@ typedef struct _JBCOLL {
   EJDB db;                  /**< Main database reference */
   JBL meta;                 /**< Collection meta object */
   JBIDX idx;                /**< First index in chain */
+  int64_t rnum;             /**< Number of records stored in collection */
   pthread_rwlock_t rwl;
   uint64_t id_seq;
 } *JBCOLL;
@@ -85,10 +86,10 @@ struct _EJDB {
   IWDB metadb;
   IWDB nrecdb;
   khash_t(JBCOLLM) *mcolls;
-  volatile bool open;
   iwkv_openflags oflags;
   pthread_rwlock_t rwl;       /**< Main RWL */
   struct _EJDB_OPTS opts;
+  volatile bool open;
 };
 
 struct _JBPHCTX {

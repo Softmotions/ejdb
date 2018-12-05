@@ -50,6 +50,13 @@ void ejdb_test1_2() {
   CU_ASSERT_EQUAL(rc, IWKV_ERROR_NOTFOUND);
   CU_ASSERT_PTR_NULL(jbl);
 
+  rc = jbl_from_json(&jbl, "{\"foo\":22}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_put_new(db, "foocoll", jbl, &llv);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  jbl_destroy(&jbl);
+  CU_ASSERT_TRUE(llv > 0);
+
   // Ensure indexes
   rc = ejdb_ensure_index(db, "col1", "/foo/bar", EJDB_IDX_I64 | EJDB_IDX_UNIQUE);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -146,6 +153,11 @@ void ejdb_test1_2() {
   CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "foocoll");
   jbl_destroy(&jbl);
 
+  rc = jbl_at(meta, "/collections/1/rnum", &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_EQUAL(jbl_get_i64(jbl), 1);
+  jbl_destroy(&jbl);
+
   rc = jbl_at(meta, "/collections/0/indexes/1/ptr", &jbl);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "/foo/baz");
@@ -167,7 +179,7 @@ void ejdb_test1_2() {
   rc = jbl_at(meta, "/collections/2/indexes/0/ptr", &jbl);
   CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATH_NOTFOUND);
 
-   rc = jbl_at(meta, "/collections/0/indexes/0/ptr", &jbl);
+  rc = jbl_at(meta, "/collections/0/indexes/0/ptr", &jbl);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_STRING_EQUAL(jbl_get_str(jbl), "/foo/bar");
   jbl_destroy(&jbl);

@@ -11,6 +11,35 @@ void jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
   *osz = sz;
 }
 
+IW_INLINE iwrc jb_meta_nrecs_update(EJDB db, uint32_t dbid, int64_t delta) {
+  delta = IW_HTOILL(delta);
+  dbid = IW_HTOIL(dbid);
+  IWKV_val val = {
+    .size = sizeof(delta),
+    .data = &delta
+  };
+  IWKV_val key = {
+    .size = sizeof(dbid),
+    .data = &dbid
+  };
+  return iwkv_put(db->nrecdb, &key, &val, IWKV_VAL_INCREMENT);
+}
+
+static int64_t jb_meta_nrecs_get(EJDB db, uint32_t dbid) {
+  size_t vsz = 0;
+  uint64_t ret = 0;
+  dbid = IW_HTOIL(dbid);
+  IWKV_val key = {
+    .size = sizeof(dbid),
+    .data = &dbid
+  };
+  iwkv_get_copy(db->nrecdb, &key, &ret, sizeof(ret), &vsz);
+  if (vsz == sizeof(ret)) {
+    ret = IW_ITOHLL(ret);
+  }
+  return (int64_t) ret;
+}
+
 static void jb_idx_release(JBIDX idx) {
   if (idx->idb) {
     iwkv_db_cache_release(idx->idb);
@@ -66,12 +95,11 @@ static iwrc jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
 
   rc = iwkv_db(jbc->db->iwkv, idx->dbid, idx->idbf, &idx->idb);
   RCGO(rc, finish);
-
   if (idx->auxdbid) {
     rc = iwkv_db(jbc->db->iwkv, idx->auxdbid, IWDB_UINT64_KEYS, &idx->auxdb);
     RCGO(rc, finish);
   }
-
+  idx->rnum = jb_meta_nrecs_get(jbc->db, idx->dbid);
   idx->next = jbc->idx;
   jbc->idx = idx;
 
@@ -146,6 +174,8 @@ static iwrc jb_coll_load_meta_lr(JBCOLL jbc) {
   rc = iwkv_db(jbc->db->iwkv, jbc->dbid, IWDB_UINT64_KEYS, &jbc->cdb);
   RCRET(rc);
 
+  jbc->rnum = jb_meta_nrecs_get(jbc->db, jbc->dbid);
+
   rc = jb_coll_load_indexes_lr(jbc);
   RCRET(rc);
 
@@ -207,9 +237,12 @@ static iwrc jb_idx_add_meta_lr(JBIDX idx, binn *list) {
       !binn_object_set_uint32(meta, "mode", idx->mode) ||
       !binn_object_set_uint32(meta, "idbf", idx->idbf) ||
       !binn_object_set_uint32(meta, "dbid", idx->dbid) ||
-      !binn_object_set_uint32(meta, "auxdbid", idx->auxdbid)) {
+      !binn_object_set_uint32(meta, "auxdbid", idx->auxdbid) ||
+      !binn_object_set_int64(meta, "rnum", idx->rnum)) {
     rc = JBL_ERROR_CREATION;
   }
+
+
   if (!binn_list_add_object(list, meta)) {
     rc = JBL_ERROR_CREATION;
   }
@@ -228,7 +261,8 @@ static iwrc jb_coll_add_meta_lr(JBCOLL jbc, binn *list) {
     return rc;
   }
   if (!binn_object_set_str(meta, "name", jbc->name)
-      || !binn_object_set_uint32(meta, "dbid", jbc->dbid)) {
+      || !binn_object_set_uint32(meta, "dbid", jbc->dbid)
+      || !binn_object_set_int64(meta, "rnum", jbc->rnum)) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }
@@ -534,24 +568,12 @@ static iwrc jb_idx_record_remove(JBIDX idx, uint64_t id, JBL jbl) {
     if (rc == IWKV_ERROR_NOTFOUND) {
       rc = 0;
     } else if (!rc) {
-      // Update record numbers
-      int64_t rd = -1;
-      IWKV_val val;
-      uint32_t lu;
-      rd = IW_HTOILL(rd);
-      val.size = sizeof(rd);
-      val.data = &rd;
-      lu = idx->dbid;
-      lu = IW_HTOIL(lu);
-      key.size = sizeof(lu);
-      key.data = &lu;
-      rc = iwkv_put(idx->jbc->db->nrecdb, &key, &val, IWKV_VAL_INCREMENT);
-      if (!rc) idx->rnum -= 1;
+      jb_meta_nrecs_update(idx->jbc->db, idx->dbid, -1);
+      idx->rnum -= 1;
     }
   }
   return rc;
 }
-
 
 static iwrc jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
   if (idx->mode & EJDB_IDX_ARR) {
@@ -604,17 +626,9 @@ static iwrc jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
   }
   int64_t rd = jbv_found ? 1 : jbvprev_found ? -1 : 0;
   if (rd) {
-    uint32_t lu;
-    IWKV_val val;
-    rd = IW_HTOILL(rd);
-    val.size = sizeof(rd);
-    val.data = &rd;
-    lu = idx->dbid;
-    lu = IW_HTOIL(lu);
-    key.size = sizeof(lu);
-    key.data = &lu;
-    rc = iwkv_put(idx->jbc->db->nrecdb, &key, &val, IWKV_VAL_INCREMENT);
-    if (!rc) idx->rnum += (jbv_found ? 1 : -1);
+    int64_t delta = jbv_found ? 1 : -1;
+    jb_meta_nrecs_update(idx->jbc->db, idx->dbid, delta);
+    idx->rnum += delta;
   }
   return rc;
 }
@@ -664,6 +678,9 @@ static iwrc jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *o
     rc = jb_idx_record_add(idx, ctx->id, ctx->jbl, prev);
     RCGO(rc, finish);
   }
+  jb_meta_nrecs_update(jbc->db, jbc->dbid, 1);
+  jbc->rnum += 1;
+
 finish:
   if (oldval) {
     iwkv_val_dispose(oldval);
@@ -1270,8 +1287,12 @@ iwrc ejdb_remove(EJDB db, const char *coll, uint64_t id) {
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
     IWRC(jb_idx_record_remove(idx, id, &jbl), rc);
   }
-  RCGO(rc, finish);
+
   rc = iwkv_del(jbc->cdb, &key, 0);
+  RCGO(rc, finish);
+
+  jb_meta_nrecs_update(jbc->db, jbc->dbid, -1);
+  jbc->rnum -= 1;
 
 finish:
   if (val.data) {
