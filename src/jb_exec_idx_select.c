@@ -106,11 +106,9 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
           goto finish;
         case JQP_OP_GT:
         case JQP_OP_GTE:
-          if (!mctx->cursor_key) {
-            mctx->cursor_key = rval;
-            mctx->cursor_init = IWKV_CURSOR_GE;
-            mctx->cursor_step = IWKV_CURSOR_NEXT;
-          }
+          mctx->cursor_key = rval;
+          mctx->cursor_init = IWKV_CURSOR_GE;
+          mctx->cursor_step = IWKV_CURSOR_NEXT;
           break;
         case JQP_OP_LT:
         case JQP_OP_LTE:
