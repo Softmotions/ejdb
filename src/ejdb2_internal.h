@@ -122,10 +122,10 @@ struct _JBMIDX {
   JBIDX idx;                          /**< Index matched this filter */
   JQP_FILTER *filter;                 /**< Query filter */
   JQP_EXPR *nexpr;                    /**< Filter node expression */
-  JQVAL *cursor_key;                  /**< Initial index cursor key (optional) */
+  JQP_EXPR *expr1;                    /**< Start index expression (optional) */
+  JQP_EXPR *expr2;                    /**< End index expression (optional) */
   IWKV_cursor_op cursor_init;         /**< Initial index cursor position (optional) */
   IWKV_cursor_op cursor_step;         /**< Next index cursor step */
-  IWKV_cursor_op cursor_reverse_step; /**< Prev index cursor step */
 };
 
 typedef struct _JBEXEC {
@@ -138,12 +138,8 @@ typedef struct _JBEXEC {
   uint8_t *jblbuf;         /**< Buffer used to keep currently processed document */
   size_t jblbufsz;         /**< Size of jblbuf allocated memory */
   bool sorting;            /**< Resultset sorting needed */
-
-  JQVAL *cursor_key;                  /**< Initial index cursor key (optional) */
   IWKV_cursor_op cursor_init;         /**< Initial index cursor position (optional) */
   IWKV_cursor_op cursor_step;         /**< Next index cursor step */
-  IWKV_cursor_op cursor_reverse_step; /**< Prev index cursor step */
-
   struct _JBMIDX midx;     /**< Index matching context */
   struct _JBSSC ssc;       /**< Result set sorting context */
 } JBEXEC;
@@ -156,7 +152,11 @@ typedef enum {
 
 iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
 iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
-iwrc jb_exec_idx_select(JBEXEC *ctx);
+iwrc jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
+iwrc jb_idx_selection(JBEXEC *ctx);
+iwrc jb_idx_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
+iwrc jb_idx_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
+iwrc jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
 
 
 #endif

@@ -63,6 +63,24 @@ static void jb_log_index_rules(IWXSTR *xstr, struct _JBMIDX *mctx) {
   }
 }
 
+IW_INLINE int jb_idx_expr_op_weight(jqp_op_t op) {
+  switch (op) {
+    case JQP_OP_EQ:
+      return 10;
+    case JQP_OP_IN:
+    case JQP_OP_NI:
+      return 9;
+    case JQP_OP_GT:
+    case JQP_OP_GTE:
+      return 8;
+    case JQP_OP_LT:
+    case JQP_OP_LTE:
+      return 7;
+    default:
+      return 0;
+  }
+}
+
 static bool jb_is_solid_node_expression(const JQP_NODE *n) {
   const JQPUNIT *unit = n->value;
   for (const JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
@@ -83,51 +101,66 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
   JQP_EXPR *expr = mctx->nexpr; // Node expressoon
   if (!expr) return 0;
   JQP_QUERY *qp = ctx->ux->q->qp;
-  iwrc rc = 0;
-  for (; expr && !rc; expr = expr->next) {
+
+  for (; expr; expr = expr->next) {
+    iwrc rc = 0;
     jqp_op_t op = expr->op->op;
     JQVAL *rval = jql_unit_to_jqval(qp, expr->right, &rc);
     RCRET(rc);
+    if (expr->left->type != JQP_STRING_TYPE) {
+      continue;
+    }
     switch (rval->type) {
       case JQVAL_NULL:
       case JQVAL_RE:
+        continue;
       case JQVAL_JBLNODE:
       case JQVAL_BINN:
-        continue;
+        if (op != JQP_OP_IN) {
+          continue;
+        }
+        break;
       default:
         break;
     }
-    if (expr->left->type == JQP_STRING_TYPE) {
-      switch (op) {
-        case JQP_OP_EQ:
-          mctx->cursor_init = IWKV_CURSOR_EQ;
-          mctx->cursor_key = rval;
-          expr->disabled = true;
-          goto finish;
-        case JQP_OP_GT:
-        case JQP_OP_GTE:
-          mctx->cursor_key = rval;
+    switch (op) {
+      case JQP_OP_EQ:
+        mctx->cursor_init = IWKV_CURSOR_EQ;
+        mctx->expr1 = expr;
+        mctx->expr2 = 0;
+        expr->disabled = true;
+        return 0;
+      case JQP_OP_GT:
+      case JQP_OP_GTE:
+        if (mctx->cursor_init != IWKV_CURSOR_EQ) {
           mctx->cursor_init = IWKV_CURSOR_GE;
+          mctx->expr1 = expr;
           mctx->cursor_step = IWKV_CURSOR_NEXT;
-          break;
-        case JQP_OP_LT:
-        case JQP_OP_LTE:
-          if (!mctx->cursor_key) {
-            mctx->cursor_key = rval;
-            mctx->cursor_init = IWKV_CURSOR_GE;
-            mctx->cursor_step = IWKV_CURSOR_PREV;
-          }
-          break;
-        case JQP_OP_IN:
-          // TODO:
-          break;
-        default:
-          break;
+        }
+        break;
+      case JQP_OP_LT:
+      case JQP_OP_LTE:
+        mctx->expr2 = expr;
+        break;
+      case JQP_OP_IN:
+        if (mctx->cursor_init != IWKV_CURSOR_EQ && rval->type >= JQVAL_JBLNODE) {
+          mctx->expr1 = expr;
+          mctx->expr2 = 0;
+          mctx->cursor_init = IWKV_CURSOR_EQ;
+        }
+        break;
+      default:
+        continue;
+    }
+    if (mctx->expr2) {
+      if (!mctx->expr1) {
+        mctx->expr1 = mctx->expr2;
+        mctx->expr2 = 0;
+        mctx->cursor_step = IWKV_CURSOR_PREV;
       }
     }
   }
-finish:
-  return rc;
+  return 0;
 }
 
 static iwrc jb_collect_indexes(JBEXEC *ctx,
@@ -208,23 +241,48 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
   return rc;
 }
 
-iwrc jb_exec_idx_select(JBEXEC *ctx) {
+static int jb_idx_cmp(const void *o1, const void *o2) {
+  struct _JBMIDX *d1 = (struct _JBMIDX *) o1;
+  struct _JBMIDX *d2 = (struct _JBMIDX *) o2;
+  assert(d1 && d2);
+  int w1 = jb_idx_expr_op_weight(d1->expr1->op->op);
+  int w2 = jb_idx_expr_op_weight(d2->expr1->op->op);
+  if (w2 - w1) {
+    return w2 - w1;
+  }
+  w1 = !!d1->expr2;
+  w2 = !!d2->expr2;
+  if (w2 - w1) {
+    return w2 - w1;
+  }
+  if (d1->idx->rnum - d2->idx->rnum) {
+    return (d1->idx->rnum - d2->idx->rnum) > 0 ? 1 : -1;
+  }
+  return (d1->idx->ptr->cnt - d2->idx->ptr->cnt);
+}
+
+iwrc jb_idx_selection(JBEXEC *ctx) {
   iwrc rc = 0;
   struct JQP_AUX *aux = ctx->ux->q->qp->aux;
   struct JQP_EXPR_NODE *expr = aux->expr;
   struct _JBMIDX fctx[JB_SOLID_EXPRNUM] = {0};
+  size_t snp = 0;
 
   ctx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
   ctx->cursor_step = IWKV_CURSOR_NEXT;
-  ctx->cursor_reverse_step = IWKV_CURSOR_PREV;
-
   if (ctx->jbc->idx) { // we have indexes associated with collection
-    size_t snp = 0;
     rc = jb_collect_indexes(ctx, aux->expr, fctx, &snp);
-  } else {
-    if (aux->orderby_num) {
-      ctx->sorting = true;
+    RCRET(rc);
+    if (snp) {
+      qsort(fctx, snp, sizeof(fctx[0]), jb_idx_cmp);
+      memcpy(&ctx->midx, &fctx[0], sizeof(ctx->midx));
     }
   }
+
+  // TODO:
+  if (aux->orderby_num) {
+    ctx->sorting = true;
+  }
+
   return rc;
 }

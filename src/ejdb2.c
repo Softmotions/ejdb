@@ -688,123 +688,6 @@ finish:
   return rc;
 }
 
-static iwrc jb_scanner_idx_array(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
-  iwrc rc = 0;
-  int64_t step = 1;
-
-  // TODO:
-
-  rc = consumer(ctx, 0, 0, 0, rc);
-  return rc;
-}
-
-static iwrc jb_scanner_idx_dup(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
-  iwrc rc = 0;
-  int64_t step = 1;
-
-  // TODO:
-
-  rc = consumer(ctx, 0, 0, 0, rc);
-  return rc;
-}
-
-static iwrc  jb_scanner_idx_uniq(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
-  iwrc rc = 0;
-  size_t sz;
-  uint64_t id;
-  int64_t step = 1;
-  IWKV_cursor cur = 0;
-  JBIDX idx = ctx->midx.idx;
-
-  if (ctx->cursor_init == IWKV_CURSOR_EQ) {
-    //    for (int64_t i = 0; step && i < ctx->iop_key_cnt;) {
-    //      rc = iwkv_get_copy(idx->idb, &ctx->iop_key[i], &id, sizeof(id), &sz);
-    //      if (rc == IWKV_ERROR_NOTFOUND) continue;
-    //      RCBREAK(rc);
-    //      if (sz != sizeof(id)) {
-    //        rc = IWKV_ERROR_CORRUPTED;
-    //        iwlog_ecode_error3(rc);
-    //        break;
-    //      }
-    //      if (step > 0) --step;
-    //      else if (step < 0) ++step;
-    //      if (!step) {
-    //        do {
-    //          step = 1;
-    //          rc = consumer(ctx, 0, id, &step, 0);
-    //          RCBREAK(rc);
-    //        } while (step < 0 && !++step);
-    //      }
-    //    }
-    return consumer(ctx, 0, 0, 0, rc);
-  }
-
-  rc = iwkv_cursor_open(idx->idb, &cur, ctx->cursor_init, 0);
-  if (rc == IWKV_ERROR_NOTFOUND) return 0;
-  RCRET(rc);
-
-  if (ctx->cursor_init < IWKV_CURSOR_NEXT) { // IWKV_CURSOR_BEFORE_FIRST || IWKV_CURSOR_AFTER_LAST
-    rc = iwkv_cursor_to(cur, ctx->cursor_step);
-    RCGO(rc, finish);
-  }
-  do {
-    if (step > 0) --step;
-    else if (step < 0) ++step;
-    if (!step) {
-      rc = iwkv_cursor_copy_val(cur, &id, sizeof(id), &sz);
-      RCBREAK(rc);
-      if (sz != sizeof(id)) {
-        rc = IWKV_ERROR_CORRUPTED;
-        iwlog_ecode_error3(rc);
-        break;
-      }
-      do {
-        step = 1;
-        rc = consumer(ctx, cur, id, &step, 0);
-        RCBREAK(rc);
-      } while (step < 0 && !++step);
-    }
-  } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? ctx->cursor_step : ctx->cursor_reverse_step)));
-  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
-
-finish:
-  if (cur) {
-    iwkv_cursor_close(&cur);
-  }
-  return consumer(ctx, 0, 0, 0, rc);
-}
-
-static iwrc  jb_scanner_full(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
-  IWKV_cursor cur;
-  int64_t step = 1;
-  iwrc rc = iwkv_cursor_open(ctx->jbc->cdb, &cur, ctx->cursor_init, 0);
-  RCRET(rc);
-
-  while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? ctx->cursor_step : ctx->cursor_reverse_step))) {
-    if (step > 0) --step;
-    else if (step < 0) ++step;
-    if (!step) {
-      size_t sz;
-      uint64_t id;
-      rc = iwkv_cursor_copy_key(cur, &id, sizeof(id), &sz);
-      RCBREAK(rc);
-      if (sz != sizeof(id)) {
-        rc = IWKV_ERROR_CORRUPTED;
-        iwlog_ecode_error3(rc);
-        break;
-      }
-      do {
-        step = 1;
-        rc = consumer(ctx, cur, id, &step, 0);
-        RCBREAK(rc);
-      } while (step < 0 && !++step);
-    }
-  }
-  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
-  iwkv_cursor_close(&cur);
-  return consumer(ctx, 0, 0, 0, rc);
-}
-
 static iwrc jb_exec_scan_init(JBEXEC *ctx) {
   EJDB_EXEC *ux = ctx->ux;
   ctx->istep = 1;
@@ -814,18 +697,18 @@ static iwrc jb_exec_scan_init(JBEXEC *ctx) {
     ctx->jblbufsz = 0;
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  iwrc rc = jb_exec_idx_select(ctx);
+  iwrc rc = jb_idx_selection(ctx);
   RCRET(rc);
   if (ctx->midx.idx) {
     if (ctx->midx.idx->mode & EJDB_IDX_ARR) {
-      ctx->scanner = jb_scanner_idx_array;
+      ctx->scanner = jb_idx_array_scanner;
     } else if (ctx->midx.idx->idbf & (IWDB_DUP_UINT32_VALS | IWDB_DUP_UINT64_VALS)) {
-      ctx->scanner = jb_scanner_idx_dup;
+      ctx->scanner = jb_idx_dup_scanner;
     } else {
-      ctx->scanner = jb_scanner_idx_uniq;
+      ctx->scanner = jb_idx_uniq_scanner;
     }
   } else {
-    ctx->scanner = jb_scanner_full;
+    ctx->scanner = jb_full_scanner;
   }
   return 0;
 }
