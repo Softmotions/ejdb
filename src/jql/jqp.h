@@ -127,7 +127,7 @@ typedef struct JQP_DOUBLE {
 typedef struct JQP_OP {
   jqp_unit_t type;
   bool negate;
-  jqp_op_t op;
+  jqp_op_t value;
   struct JQP_OP *next;
   void *opaque;
 } JQP_OP;

@@ -430,21 +430,21 @@ static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
   unit->op.negate = aux->negate;
   aux->negate = false;
   if (!strcmp(text, "=") || !strcmp(text, "eq")) {
-    unit->op.op = JQP_OP_EQ;
+    unit->op.value = JQP_OP_EQ;
   } else if (!strcmp(text, ">") || !strcmp(text, "gt")) {
-    unit->op.op = JQP_OP_GT;
+    unit->op.value = JQP_OP_GT;
   } else if (!strcmp(text, ">=") || !strcmp(text, "gte")) {
-    unit->op.op = JQP_OP_GTE;
+    unit->op.value = JQP_OP_GTE;
   } else if (!strcmp(text, "<") || !strcmp(text, "lt")) {
-    unit->op.op = JQP_OP_LT;
+    unit->op.value = JQP_OP_LT;
   } else if (!strcmp(text, "<=") || !strcmp(text, "lte")) {
-    unit->op.op = JQP_OP_LTE;
+    unit->op.value = JQP_OP_LTE;
   } else if (!strcmp(text, "in")) {
-    unit->op.op = JQP_OP_IN;
+    unit->op.value = JQP_OP_IN;
   } else if (!strcmp(text, "ni")) {
-    unit->op.op = JQP_OP_NI;
+    unit->op.value = JQP_OP_NI;
   } else if (!strcmp(text, "re")) {
-    unit->op.op = JQP_OP_RE;
+    unit->op.value = JQP_OP_RE;
   } else {
     iwlog_error("Invalid operation: %s", text);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -1061,7 +1061,7 @@ static iwrc _jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, 
   } else {
     return IW_ERROR_ASSERTION;
   }
-  rc = _jqp_print_join(e->op->op, e->op->negate, pt, op);
+  rc = _jqp_print_join(e->op->value, e->op->negate, pt, op);
   RCRET(rc);
   if (e->right->type == JQP_STRING_TYPE) {
     if (e->right->string.flavour & JQP_STR_PLACEHOLDER) {

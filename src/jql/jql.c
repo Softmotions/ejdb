@@ -252,7 +252,7 @@ void jql_destroy(JQL *qptr) {
     }
     for (JQP_OP *op = aux->start_op; op; op = op->next) {
       if (op->opaque) {
-        if (op->op == JQP_OP_RE) {
+        if (op->value == JQP_OP_RE) {
           re_free(op->opaque);
         }
       }
@@ -720,7 +720,7 @@ static bool _match_jqval_pair(MCTX *mctx,
                               JQVAL *left, JQP_OP *jqop, JQVAL *right,
                               iwrc *rcp) {
   bool match = false;
-  jqp_op_t op = jqop->op;
+  jqp_op_t op = jqop->value;
   if (op >= JQP_OP_EQ && op <= JQP_OP_LTE) {
     int cmp = _cmp_jqval_pair(left, right, rcp);
     if (*rcp) {

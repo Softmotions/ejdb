@@ -1,9 +1,5 @@
 #include "ejdb2_internal.h"
 
-
-
-
-
 static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, const JQVAL *rval, JB_SCAN_CONSUMER consumer) {
   uint64_t id;
   int64_t step;
@@ -19,7 +15,7 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, const JQVAL *rval, JB_SCAN_CO
   iwrc rc = iwkv_get_copy(midx->idx->idb, &key, &id, sizeof(id), &sz);
   if (rc) {
     if (rc == IWKV_ERROR_NOTFOUND) {
-      return consumer(ctx, 0, 0, 0, rc);
+      return consumer(ctx, 0, 0, 0, 0);
     } else {
       return rc;
     }
@@ -106,7 +102,7 @@ iwrc jb_idx_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   struct _JBMIDX *midx = &ctx->midx;
   JQVAL *rval = jql_unit_to_jqval(qp, midx->expr1->right, &rc);
   RCRET(rc);
-  switch (midx->expr1->op->op) {
+  switch (midx->expr1->op->value) {
     case JQP_OP_EQ:
       return jb_idx_consume_eq(ctx, rval, consumer);
     case JQP_OP_IN:
@@ -117,6 +113,7 @@ iwrc jb_idx_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
       } else {
         return IW_ERROR_ASSERTION;
       }
+      break;
     default:
       break;
   }

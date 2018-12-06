@@ -84,7 +84,7 @@ IW_INLINE int jb_idx_expr_op_weight(jqp_op_t op) {
 static bool jb_is_solid_node_expression(const JQP_NODE *n) {
   const JQPUNIT *unit = n->value;
   for (const JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
-    if ((expr->join && expr->join->negate) || expr->op->op == JQP_OP_RE) {
+    if ((expr->join && expr->join->negate) || expr->op->value == JQP_OP_RE) {
       // No negate conditions, No regexp
       return false;
     }
@@ -104,7 +104,7 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
 
   for (; expr; expr = expr->next) {
     iwrc rc = 0;
-    jqp_op_t op = expr->op->op;
+    jqp_op_t op = expr->op->value;
     JQVAL *rval = jql_unit_to_jqval(qp, expr->right, &rc);
     RCRET(rc);
     if (expr->left->type != JQP_STRING_TYPE) {
@@ -250,8 +250,8 @@ static int jb_idx_cmp(const void *o1, const void *o2) {
   struct _JBMIDX *d1 = (struct _JBMIDX *) o1;
   struct _JBMIDX *d2 = (struct _JBMIDX *) o2;
   assert(d1 && d2);
-  int w1 = jb_idx_expr_op_weight(d1->expr1->op->op);
-  int w2 = jb_idx_expr_op_weight(d2->expr1->op->op);
+  int w1 = jb_idx_expr_op_weight(d1->expr1->op->value);
+  int w2 = jb_idx_expr_op_weight(d2->expr1->op->value);
   if (w2 - w1) {
     return w2 - w1;
   }
