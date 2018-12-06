@@ -9,6 +9,7 @@
 #include <iowow/iwkv.h>
 #include <iowow/iwxstr.h>
 #include <iowow/iwexfile.h>
+#include <iowow/iwutils.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
@@ -150,6 +151,8 @@ typedef enum {
   JB_COLL_ACQUIRE_EXISTING = 1 << 1,
 } jb_coll_acquire_t;
 
+void jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz);
+void jb_idx_jqval_fill_key(const JQVAL *rval, IWKV_val *key);
 iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
 iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
 iwrc jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);

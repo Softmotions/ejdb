@@ -11,6 +11,32 @@ void jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
   *osz = sz;
 }
 
+void jb_idx_jqval_fill_key(const JQVAL *rval, IWKV_val *key) {
+  key->size = 0;
+  switch (rval->type) {
+    case JQVAL_STR:
+      key->data = (void *) rval->vstr;
+      key->size = strlen(rval->vstr);
+      break;
+    case JQVAL_I64: {
+      int64_t llv = rval->vi64;
+      llv = IW_HTOILL(llv);
+      memcpy(key->data, &llv, sizeof(llv));
+      key->size = sizeof(llv);
+      break;
+    }
+    case JQVAL_F64: {
+      size_t sz;
+      jb_idx_ftoa(rval->vf64, key->data, &sz);
+      key->size = sz;
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+
 IW_INLINE iwrc jb_meta_nrecs_update(EJDB db, uint32_t dbid, int64_t delta) {
   delta = IW_HTOILL(delta);
   dbid = IW_HTOIL(dbid);

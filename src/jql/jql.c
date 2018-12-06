@@ -775,6 +775,7 @@ finish:
 }
 
 static JQVAL *_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
+  *rcp = 0;
   switch (unit->type) {
     case JQP_STRING_TYPE: {
       if (unit->string.opaque) {

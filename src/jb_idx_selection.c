@@ -54,13 +54,13 @@ static void jb_log_cursor_op(IWXSTR *xstr, IWKV_cursor_op op) {
 }
 
 static void jb_log_index_rules(IWXSTR *xstr, struct _JBMIDX *mctx) {
-  iwxstr_printf(xstr, "[INDEX] ");
   jb_print_index(mctx->idx, xstr);
   iwxstr_printf(xstr, " expr=%s", (mctx->nexpr ? "yes" : "no"));
   if (mctx->cursor_init) {
     iwxstr_cat2(xstr, " init=");
     jb_log_cursor_op(xstr, mctx->cursor_init);
   }
+  iwxstr_cat2(xstr, "\n");
 }
 
 IW_INLINE int jb_idx_expr_op_weight(jqp_op_t op) {
@@ -115,8 +115,12 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
       case JQVAL_RE:
         continue;
       case JQVAL_JBLNODE:
+        if (op != JQP_OP_IN || rval->vnode->type != JBV_ARRAY) {
+          continue;
+        }
+        break;
       case JQVAL_BINN:
-        if (op != JQP_OP_IN) {
+        if (op != JQP_OP_IN || binn_type(rval->vbinn) != BINN_LIST) {
           continue;
         }
         break;
@@ -231,6 +235,7 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
         rc = jb_compute_index_rules(ctx, &mctx);
         RCRET(rc);
         if (ctx->ux->log) {
+          iwxstr_cat2(ctx->ux->log, "[INDEX] MATCHED ");
           jb_log_index_rules(ctx->ux->log, &mctx);
         }
         *snp = *snp + 1;
@@ -270,16 +275,21 @@ iwrc jb_idx_selection(JBEXEC *ctx) {
 
   ctx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
   ctx->cursor_step = IWKV_CURSOR_NEXT;
+
   if (ctx->jbc->idx) { // we have indexes associated with collection
     rc = jb_collect_indexes(ctx, aux->expr, fctx, &snp);
     RCRET(rc);
     if (snp) {
       qsort(fctx, snp, sizeof(fctx[0]), jb_idx_cmp);
       memcpy(&ctx->midx, &fctx[0], sizeof(ctx->midx));
+      if (ctx->ux->log) {
+        iwxstr_cat2(ctx->ux->log, "[INDEX] BEST ");
+        jb_log_index_rules(ctx->ux->log, &ctx->midx);
+      }
     }
   }
 
-  // TODO:
+  // TODO: process sorting
   if (aux->orderby_num) {
     ctx->sorting = true;
   }
