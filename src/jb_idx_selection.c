@@ -99,12 +99,12 @@ static bool jb_is_solid_node_expression(const JQP_NODE *n) {
 static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
   JQP_EXPR *expr = mctx->nexpr; // Node expressoon
   if (!expr) return 0;
-  JQP_QUERY *qp = ctx->ux->q->qp;
+  JQP_AUX *aux = ctx->ux->q->qp->aux;
 
   for (; expr; expr = expr->next) {
     iwrc rc = 0;
     jqp_op_t op = expr->op->value;
-    JQVAL *rval = jql_unit_to_jqval(qp->aux, expr->right, &rc);
+    JQVAL *rval = jql_unit_to_jqval(aux, expr->right, &rc);
     RCRET(rc);
     if (expr->left->type != JQP_STRING_TYPE) {
       continue;
