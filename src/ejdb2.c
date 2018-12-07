@@ -1,41 +1,15 @@
 #include "ejdb2_internal.h"
-#include <iowow/iwutils.h>
 
 // ---------------------------------------------------------------------------
 
-void jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
-  // TODO:
-  int sz = snprintf(buf, JBNUMBUF_SIZE, "%.6f", val);
-  while (sz > 0 && buf[sz - 1] == '0') buf[sz--] = '\0';
-  if (buf[sz] == '.') buf[sz--] = '\0';
-  *osz = sz;
+iwrc jb_meta_nrecs_removedb(EJDB db, uint32_t dbid) {
+  dbid = IW_HTOIL(dbid);
+  IWKV_val key = {
+    .size = sizeof(dbid),
+    .data = &dbid
+  };
+  return iwkv_del(db->nrecdb, &key, 0);
 }
-
-void jb_idx_jqval_fill_key(const JQVAL *rval, IWKV_val *key) {
-  key->size = 0;
-  switch (rval->type) {
-    case JQVAL_STR:
-      key->data = (void *) rval->vstr;
-      key->size = strlen(rval->vstr);
-      break;
-    case JQVAL_I64: {
-      int64_t llv = rval->vi64;
-      llv = IW_HTOILL(llv);
-      memcpy(key->data, &llv, sizeof(llv));
-      key->size = sizeof(llv);
-      break;
-    }
-    case JQVAL_F64: {
-      size_t sz;
-      jb_idx_ftoa(rval->vf64, key->data, &sz);
-      key->size = sz;
-      break;
-    }
-    default:
-      break;
-  }
-}
-
 
 IW_INLINE iwrc jb_meta_nrecs_update(EJDB db, uint32_t dbid, int64_t delta) {
   delta = IW_HTOILL(delta);
@@ -1226,19 +1200,26 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   API_WLOCK(db, rci);
   JBCOLL jbc;
   IWKV_val key;
+  uint32_t dbid;
   char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
   khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
+
   if (k != kh_end(db->mcolls)) {
+
     jbc = kh_value(db->mcolls, k);
     key.data = keybuf;
     key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_COLLMETA "%u", jbc->dbid);
     rc = iwkv_del(jbc->db->metadb, &key, IWKV_SYNC);
     RCGO(rc, finish);
+
+    jb_meta_nrecs_removedb(db, jbc->dbid);
+
     for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
       key.data = keybuf;
       key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_IDXMETA "%u" "." "%u", jbc->dbid, idx->dbid);
       rc = iwkv_del(jbc->db->metadb, &key, 0);
       RCGO(rc, finish);
+      jb_meta_nrecs_removedb(db, idx->dbid);
     }
     for (JBIDX idx = jbc->idx, nidx; idx; idx = nidx) {
       IWRC(iwkv_db_destroy(&idx->idb), rc);

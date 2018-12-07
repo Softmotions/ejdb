@@ -84,13 +84,12 @@ IW_INLINE int jb_idx_expr_op_weight(jqp_op_t op) {
 static bool jb_is_solid_node_expression(const JQP_NODE *n) {
   const JQPUNIT *unit = n->value;
   for (const JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
-    if ((expr->join && expr->join->negate) || expr->op->value == JQP_OP_RE) {
-      // No negate conditions, No regexp
+    if ((expr->join && (expr->join->negate || expr->join->value == JQP_JOIN_OR)) || expr->op->value == JQP_OP_RE) {
+      // No negate conditions, No OR, No regexp
       return false;
     }
     JQPUNIT *left = expr->left;
-    if ((left->type == JQP_STRING_TYPE && (left->string.flavour & JQP_STR_STAR))
-        || left->type == JQP_EXPR_TYPE) {
+    if ((left->type == JQP_STRING_TYPE && (left->string.flavour & JQP_STR_STAR)) || left->type == JQP_EXPR_TYPE) {
       return false;
     }
   }
@@ -161,6 +160,8 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         mctx->expr1 = mctx->expr2;
         mctx->expr2 = 0;
         mctx->cursor_step = IWKV_CURSOR_PREV;
+      } else {
+        mctx->expr2->disabled = true;
       }
     }
   }
