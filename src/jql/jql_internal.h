@@ -40,9 +40,11 @@ typedef struct {
   };
 } JQVAL;
 
-JQVAL *jql_unit_to_jqval(JQP_QUERY *qp, JQPUNIT *unit, iwrc *rcp);
+JQVAL *jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp);
 
 int jql_cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp);
+
+bool jql_match_jqval_pair(JQP_AUX *aux, JQVAL *left, JQP_OP *jqop, JQVAL *right, iwrc *rcp);
 
 #endif
 

@@ -104,7 +104,7 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
   for (; expr; expr = expr->next) {
     iwrc rc = 0;
     jqp_op_t op = expr->op->value;
-    JQVAL *rval = jql_unit_to_jqval(qp, expr->right, &rc);
+    JQVAL *rval = jql_unit_to_jqval(qp->aux, expr->right, &rc);
     RCRET(rc);
     if (expr->left->type != JQP_STRING_TYPE) {
       continue;

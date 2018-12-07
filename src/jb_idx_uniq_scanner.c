@@ -62,7 +62,7 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *rval, JB_SCAN_CONSUM
         iwlog_ecode_error3(rc);
         break;
       }
-      if (midx->expr2 && !jb_idx_node_expr_matched(cur, ctx->ux->q->qp, midx->expr2)) {
+      if (midx->expr2 && !jb_idx_node_expr_matched(ctx->ux->q->qp->aux, midx->idx, cur, midx->expr2, &rc)) {
         break;
       }
       do {
@@ -85,7 +85,7 @@ iwrc jb_idx_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc;
   JQP_QUERY *qp = ctx->ux->q->qp;
   struct _JBMIDX *midx = &ctx->midx;
-  JQVAL *rval = jql_unit_to_jqval(qp, midx->expr1->right, &rc);
+  JQVAL *rval = jql_unit_to_jqval(qp->aux, midx->expr1->right, &rc);
   RCRET(rc);
   switch (midx->expr1->op->value) {
     case JQP_OP_EQ:

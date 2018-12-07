@@ -497,16 +497,14 @@ int jql_cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp) {
   return _cmp_jqval_pair(left, right, rcp);
 }
 
-static bool _match_regexp(MCTX *mctx,
+static bool _match_regexp(JQP_AUX *aux,
                           JQVAL *left, JQP_OP *jqop, JQVAL *right,
-                          char *(*expr_transform)(MCTX *, const char *, iwrc *),
                           iwrc *rcp) {
   struct re *rx;
   char nbuf[JBNUMBUF_SIZE];
   static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
   JQVAL sleft, sright; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
-  JQP_AUX *aux = mctx->aux;
   char *input = 0;
   int rci, match_end = 0;
   const char *expr = 0;
@@ -556,11 +554,6 @@ static bool _match_regexp(MCTX *mctx,
       default:
         *rcp = _JQL_ERROR_UNMATCHED;
         return false;
-    }
-
-    if (expr_transform) {
-      expr = expr_transform(mctx, expr, rcp);
-      if (*rcp) return false;
     }
 
     assert(expr);
@@ -643,8 +636,7 @@ static bool _match_regexp(MCTX *mctx,
   return false;
 }
 
-static bool _match_in(MCTX *mctx,
-                      JQVAL *left, JQP_OP *jqop, JQVAL *right,
+static bool _match_in(JQVAL *left, JQP_OP *jqop, JQVAL *right,
                       iwrc *rcp) {
 
   JQVAL sleft; // Stack allocated left/right converted values
@@ -674,8 +666,7 @@ static bool _match_in(MCTX *mctx,
   return false;
 }
 
-static bool _match_ni(MCTX *mctx,
-                      JQVAL *left, JQP_OP *jqop, JQVAL *right,
+static bool _match_ni(JQVAL *left, JQP_OP *jqop, JQVAL *right,
                       iwrc *rcp) {
 
   JQVAL sleft; // Stack allocated left/right converted values
@@ -716,7 +707,7 @@ static bool _match_ni(MCTX *mctx,
   return false;
 }
 
-static bool _match_jqval_pair(MCTX *mctx,
+static bool _match_jqval_pair(JQP_AUX *aux,
                               JQVAL *left, JQP_OP *jqop, JQVAL *right,
                               iwrc *rcp) {
   bool match = false;
@@ -748,13 +739,13 @@ static bool _match_jqval_pair(MCTX *mctx,
   } else {
     switch (op) {
       case JQP_OP_RE:
-        match = _match_regexp(mctx, left, jqop, right, 0, rcp);
+        match = _match_regexp(aux, left, jqop, right, rcp);
         break;
       case JQP_OP_IN:
-        match = _match_in(mctx, left, jqop, right, rcp);
+        match = _match_in(left, jqop, right, rcp);
         break;
       case JQP_OP_NI:
-        match = _match_ni(mctx, right, jqop, left, rcp);
+        match = _match_ni(right, jqop, left, rcp);
         break;
       default:
         break;
@@ -772,6 +763,12 @@ finish:
     match = !match;
   }
   return match;
+}
+
+bool jql_match_jqval_pair(JQP_AUX *aux,
+                          JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                          iwrc *rcp) {
+  return _match_jqval_pair(aux, left, jqop, right, rcp);
 }
 
 static JQVAL *_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
@@ -868,8 +865,8 @@ static JQVAL *_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
   }
 }
 
-JQVAL *jql_unit_to_jqval(JQP_QUERY *qp, JQPUNIT *unit, iwrc *rcp) {
-  return _unit_to_jqval(qp->aux, unit, rcp);
+JQVAL *jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
+  return _unit_to_jqval(aux, unit, rcp);
 }
 
 static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
@@ -883,7 +880,7 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
       if (*rcp) return false;
       lv.type = JQVAL_STR;
       lv.vstr = mctx->key;
-      bool ret = _match_jqval_pair(mctx, &lv, op, rv, rcp);
+      bool ret = _match_jqval_pair(mctx->aux, &lv, op, rv, rcp);
       return negate ? !ret : ret;
     } else if (strcmp(mctx->key, left->string.value)) {
       return negate;
@@ -897,7 +894,7 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
     if (*rcp) return false;
     lv.type = JQVAL_STR;
     lv.vstr = mctx->key;
-    if (!_match_jqval_pair(mctx, &lv, left->expr.op, rv, rcp)) {
+    if (!_match_jqval_pair(mctx->aux, &lv, left->expr.op, rv, rcp)) {
       return negate;
     }
   }
@@ -905,7 +902,7 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
   if (*rcp) return false;
   lv.type = JQVAL_BINN;
   lv.vbinn = mctx->bv;
-  bool ret = _match_jqval_pair(mctx, &lv, expr->op, rv, rcp);
+  bool ret = _match_jqval_pair(mctx->aux, &lv, expr->op, rv, rcp);
   return negate ? !ret : ret;
 }
 

@@ -160,7 +160,7 @@ iwrc jb_idx_selection(JBEXEC *ctx);
 iwrc jb_idx_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
 iwrc jb_idx_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
 iwrc jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-iwrc jb_idx_node_expr_matched(IWKV_cursor cur, JQP_QUERY *qp, JQP_EXPR *nexpr);
+bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR *expr, iwrc *rcp);
 
 
 #endif

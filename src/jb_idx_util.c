@@ -39,27 +39,56 @@ void jb_idx_jqval_fill_key(const JQVAL *rval, IWKV_val *key) {
   }
 }
 
-iwrc jb_idx_node_expr_matched(IWKV_cursor cur, JQP_QUERY *qp, JQP_EXPR *nexpr) {
+bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR *expr, iwrc *rcp) {
   size_t sz;
-  uint8_t skey[1024];
-  uint8_t *kbuf = skey;
-  iwrc rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey), &sz);
-  RCRET(rc);
-  if (sz > sizeof(kbuf)) {
+  char skey[1024];
+  char *kbuf = skey;
+  bool ret = false;
+  iwrc rc = 0;
+
+  if (idx->mode & (EJDB_IDX_STR | EJDB_IDX_I64 | EJDB_IDX_F64)) {
+    return false;
+  }
+  JQVAL lv, *rv = jql_unit_to_jqval(aux, expr->right, &rc);
+  RCGO(rc, finish);
+
+  rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz);
+  RCGO(rc, finish);
+  if (sz > sizeof(skey) - 1) {
     kbuf = malloc(sz);
     if (!kbuf) {
       return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     }
   }
-  rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey), &sz);
+  rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz);
   RCGO(rc, finish);
 
-  // TODO:
+  if (idx->mode & EJDB_IDX_STR) {
+    kbuf[sz] = '\0';
+    lv.type = JQVAL_STR;
+    lv.vstr = kbuf;
+  } else if (idx->mode & EJDB_IDX_I64) {
+    if (sz == sizeof(lv.vi64)) {
+      memcpy(&lv.vi64, kbuf, sizeof(lv.vi64));
+      lv.vi64 = IW_ITOHLL(lv.vi64);
+      lv.type = JQVAL_I64;
+    } else {
+      rc = IWKV_ERROR_CORRUPTED;
+      iwlog_ecode_error3(rc);
+      goto finish;
+    }
+  } else if (idx->mode & EJDB_IDX_F64) {
+    kbuf[sz] = '\0';
+    lv.type = JQVAL_F64;
+    lv.vf64 = iwatof(kbuf);
+  }
 
+  ret = jql_match_jqval_pair(aux, &lv, expr->op, rv, &rc);
 
 finish:
   if (kbuf != skey) {
     free(kbuf);
   }
-  return rc;
+  *rcp = rc;
+  return ret;
 }
