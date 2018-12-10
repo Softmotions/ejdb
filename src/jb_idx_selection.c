@@ -239,8 +239,8 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
           iwxstr_cat2(ctx->ux->log, "[INDEX] MATCHED ");
           jb_log_index_rules(ctx->ux->log, &mctx);
         }
-        *snp = *snp + 1;
         marr[*snp] = mctx;
+        *snp = *snp + 1;
       }
     }
   }
@@ -284,7 +284,7 @@ iwrc jb_idx_selection(JBEXEC *ctx) {
       qsort(fctx, snp, sizeof(fctx[0]), jb_idx_cmp);
       memcpy(&ctx->midx, &fctx[0], sizeof(ctx->midx));
       if (ctx->ux->log) {
-        iwxstr_cat2(ctx->ux->log, "[INDEX] BEST ");
+        iwxstr_cat2(ctx->ux->log, "[INDEX] SELECTED ");
         jb_log_index_rules(ctx->ux->log, &ctx->midx);
       }
     }

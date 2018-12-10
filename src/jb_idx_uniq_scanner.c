@@ -1,5 +1,7 @@
 #include "ejdb2_internal.h"
 
+static_assert(IW_VNUMBUFSZ <= JBNUMBUF_SIZE, "IW_VNUMBUFSZ <= JBNUMBUF_SIZE");
+
 static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, const JQVAL *rval, JB_SCAN_CONSUMER consumer) {
   uint64_t id;
   int64_t step;
@@ -12,7 +14,7 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, const JQVAL *rval, JB_SCAN_CO
   if (!key.size) {
     return IW_ERROR_ASSERTION;
   }
-  iwrc rc = iwkv_get_copy(midx->idx->idb, &key, &id, sizeof(id), &sz);
+  iwrc rc = iwkv_get_copy(midx->idx->idb, &key, buf, sizeof(buf), &sz);
   if (rc) {
     if (rc == IWKV_ERROR_NOTFOUND) {
       return consumer(ctx, 0, 0, 0, 0);
@@ -20,7 +22,7 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, const JQVAL *rval, JB_SCAN_CO
       return rc;
     }
   }
-  id = IW_ITOHLL(id);
+  IW_READVNUMBUF64_2(buf, id);
   rc = consumer(ctx, 0, id, &step, 0);
   return consumer(ctx, 0, 0, 0, rc);
 }
@@ -35,7 +37,6 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *rval, JB_SCAN_CON
 
 static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *rval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
-  uint64_t id;
   IWKV_cursor cur;
   int64_t step = 1;
   char buf[JBNUMBUF_SIZE];
@@ -55,13 +56,15 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *rval, JB_SCAN_CONSUM
     if (step > 0) --step;
     else if (step < 0) ++step;
     if (!step) {
-      rc = iwkv_cursor_copy_val(cur, &id, sizeof(id), &sz);
+      uint64_t id;
+      rc = iwkv_cursor_copy_val(cur, &buf, IW_VNUMBUFSZ, &sz);
       RCGO(rc, finish);
-      if (sz != sizeof(id)) {
+      if (sz > IW_VNUMBUFSZ) {
         rc = IWKV_ERROR_CORRUPTED;
         iwlog_ecode_error3(rc);
         break;
       }
+      IW_READVNUMBUF64_2(buf, id);
       if (midx->expr2 && !jb_idx_node_expr_matched(ctx->ux->q->qp->aux, midx->idx, cur, midx->expr2, &rc)) {
         break;
       }

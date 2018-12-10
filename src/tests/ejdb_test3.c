@@ -24,6 +24,9 @@ void ejdb_test3_1() {
   EJDB_LIST list = 0;
   IWXSTR *log = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(log);
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+
 
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -47,12 +50,22 @@ void ejdb_test3_1() {
 
   rc = ejdb_list3(db, "c1", "/f/[b = 1]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  fprintf(stderr, "%s\n", iwxstr_ptr(log));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] MATCHED UNIQUE|I64|10 /f/b expr=yes init=IWKV_CURSOR_EQ"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED UNIQUE|I64|10 /f/b expr=yes init=IWKV_CURSOR_EQ"));
+  int i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":1},\"n\":1}");
+  }
+  //fprintf(stderr, "%s\n", iwxstr_ptr(log));
   ejdb_list_destroy(&list);
 
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_destroy(log);
+  iwxstr_destroy(xstr);
 }
 
 int main() {

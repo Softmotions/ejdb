@@ -23,7 +23,6 @@ void jb_idx_jqval_fill_key(const JQVAL *rval, IWKV_val *key) {
       break;
     case JQVAL_I64: {
       int64_t llv = rval->vi64;
-      llv = IW_HTOILL(llv);
       memcpy(key->data, &llv, sizeof(llv));
       key->size = sizeof(llv);
       break;
@@ -68,15 +67,8 @@ bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR
     lv.type = JQVAL_STR;
     lv.vstr = kbuf;
   } else if (idx->mode & EJDB_IDX_I64) {
-    if (sz == sizeof(lv.vi64)) {
-      memcpy(&lv.vi64, kbuf, sizeof(lv.vi64));
-      lv.vi64 = IW_ITOHLL(lv.vi64);
-      lv.type = JQVAL_I64;
-    } else {
-      rc = IWKV_ERROR_CORRUPTED;
-      iwlog_ecode_error3(rc);
-      goto finish;
-    }
+    memcpy(&lv.vi64, kbuf, sizeof(lv.vi64));
+    lv.type = JQVAL_I64;
   } else if (idx->mode & EJDB_IDX_F64) {
     kbuf[sz] = '\0';
     lv.type = JQVAL_F64;

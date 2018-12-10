@@ -596,14 +596,14 @@ static iwrc jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
   if (_jbl_is_eq_atomic_values(&jbv, &jbvprev)) {
     return 0;
   }
-  IWKV_val idval = {
-    .data = &id,
-    .size = sizeof(id)
-  };
   if (jbvprev_found) { // Remove old index
     jb_fill_ikey(idx, &jbvprev, &key, numbuf);
     if (key.size) {
       if (idx->idbf & IWDB_DUP_FLAGS) {
+        IWKV_val idval = {
+          .data = &id,
+          .size = sizeof(id)
+        };
         rc = iwkv_put(idx->idb, &key, &idval, IWKV_DUP_REMOVE | IWKV_DUP_REPORT_EMPTY);
         if (rc == IWKV_RC_DUP_ARRAY_EMPTY) {
           rc = iwkv_del(idx->idb, &key, 0);
@@ -618,6 +618,13 @@ static iwrc jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
     RCRET(rc);
     jb_fill_ikey(idx, &jbv, &key, numbuf);
     if (key.size) {
+      int len;
+      char vnbuf[IW_VNUMBUFSZ];
+      IW_SETVNUMBUF64(len, vnbuf, id);
+      IWKV_val idval = {
+        .data = vnbuf,
+        .size = len
+      };
       rc = iwkv_put(idx->idb, &key, &idval, IWKV_NO_OVERWRITE);
       if (rc == IWKV_ERROR_KEY_EXISTS) {
         return EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED;
@@ -979,8 +986,10 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   idx->jbc = jbc;
   idx->ptr = ptr;
   ptr = 0;
-  idx->idbf = (mode & EJDB_IDX_I64) ? IWDB_UINT64_KEYS : 0;
-  if (mode & EJDB_IDX_F64) {
+  idx->idbf = 0;
+  if (mode & EJDB_IDX_I64) {
+    idx->idbf |= IWDB_VNUM64_KEYS;
+  } else if (mode & EJDB_IDX_F64) {
     idx->idbf |= IWDB_REALNUM_KEYS;
   }
   if (!(mode & EJDB_IDX_UNIQUE)) {
@@ -990,8 +999,8 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   RCGO(rc, finish);
 
   if (mode & EJDB_IDX_ARR) { // auxiliary database for array index
-    rc = iwkv_new_db(db->iwkv, IWDB_UINT64_KEYS, &idx->auxdbid, &idx->auxdb);
-    RCGO(rc, finish);
+    //rc = iwkv_new_db(db->iwkv, IWDB_UINT64_KEYS, &idx->auxdbid, &idx->auxdb);
+    //RCGO(rc, finish);
   }
 
   rc = jb_idx_fill(idx);
