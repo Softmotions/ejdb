@@ -29,15 +29,13 @@ struct re {
 
 #define RE_INITIALISER(EXPR)  { (EXPR), 0, 0, 0, 0, RE_COMPILED_INITIALISER, 0, 0 }
 
-enum {
-  RE_ERROR_NONE =  0,
-  RE_ERROR_NOMATCH  = -1,
-  RE_ERROR_NOMEM  = -2,
-  RE_ERROR_CHARSET  = -3,
-  RE_ERROR_SUBEXP = -4,
-  RE_ERROR_SUBMATCH = -5,
-  RE_ERROR_ENGINE = -6
-};
+#define RE_ERROR_NONE       0
+#define RE_ERROR_NOMATCH    -1
+#define RE_ERROR_NOMEM      -2
+#define RE_ERROR_CHARSET    -3
+#define RE_ERROR_SUBEXP     -4
+#define RE_ERROR_SUBMATCH   -5
+#define RE_ERROR_ENGINE     -6
 
 struct re *re_new(const char *expression);
 int    re_match(struct re *re, char *input);

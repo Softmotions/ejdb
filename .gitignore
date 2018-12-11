@@ -1,4 +1,5 @@
 .codelite/
+.idea/
 .cmaketools.json
 *.tags
 *.dll
@@ -8,7 +9,6 @@ cmake-build*
 Makefile
 Testing/
 compile_commands.json
-.idea/
 *.iml
 *.dat
 *.db

@@ -96,7 +96,7 @@ struct _EJDB {
 struct _JBPHCTX {
   uint64_t id;
   JBCOLL jbc;
-  const JBL jbl;
+  JBL jbl;
 };
 
 struct _JBEXEC;

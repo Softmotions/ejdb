@@ -87,7 +87,7 @@ void jbl_destroy(JBL *jblp) {
   }
 }
 
-jbl_type_t jbl_type(const JBL jbl) {
+jbl_type_t jbl_type(JBL jbl) {
   if (jbl) {
     switch (jbl->bn.type) {
       case BINN_NULL:
@@ -120,12 +120,12 @@ jbl_type_t jbl_type(const JBL jbl) {
   return JBV_NONE;
 }
 
-size_t jbl_count(const JBL jbl) {
-  return jbl->bn.count;
+size_t jbl_count(JBL jbl) {
+  return (size_t) jbl->bn.count;
 }
 
-size_t jbl_size(const JBL jbl) {
-  return jbl->bn.size;
+size_t jbl_size(JBL jbl) {
+  return (size_t) jbl->bn.size;
 }
 
 iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
@@ -171,7 +171,7 @@ iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op) {
   return pt(buf, sz, 0, 0, op);
 }
 
-iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
+iwrc _jbl_write_string(const char *str, int len, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
   iwrc rc = pt(0, 0, '"', 1, op);
   RCRET(rc);
   static const char *specials = "btnvfr";
@@ -182,7 +182,7 @@ iwrc _jbl_write_string(const char *str, size_t len, jbl_json_printer pt, void *o
     RCRET(rc); \
   } while(0)
 
-  if (len == -1) {
+  if (len < 0) {
     len = strlen(str);
   }
   for (size_t i = 0; i < len; i++) {
@@ -255,7 +255,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
         if (pretty) {
           PT(0, 0, ' ', lvl + 1);
         }
-        rc = _jbl_as_json(&bv, pt, op, lvl + 1, pretty);
+        rc = _jbl_as_json(&bv, pt, op, lvl + 1, pf);
         RCGO(rc, finish);
         if (i < bn->count - 1) {
           PT(0, 0, ',', 1);
@@ -292,7 +292,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
           } else {
             PT(0, 0, ':', 1);
           }
-          rc = _jbl_as_json(&bv, pt, op, lvl + 1, pretty);
+          rc = _jbl_as_json(&bv, pt, op, lvl + 1, pf);
           RCGO(rc, finish);
           if (i < bn->count - 1) {
             PT(0, 0, ',', 1);
@@ -315,7 +315,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
           } else {
             PT(0, 0, ':', 1);
           }
-          rc = _jbl_as_json(&bv, pt, op, lvl + 1, pretty);
+          rc = _jbl_as_json(&bv, pt, op, lvl + 1, pf);
           RCGO(rc, finish);
           if (i < bn->count - 1) {
             PT(0, 0, ',', 1);
@@ -356,8 +356,8 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
       llv = bn->vint64;
       goto loc_int;
     case BINN_UINT64: // overflow?
-      llv = bn->vuint64;
-loc_int:
+      llv = (int64_t) bn->vuint64;
+    loc_int:
       rc = _jbl_write_int(llv, pt, op);
       break;
 
@@ -366,7 +366,7 @@ loc_int:
       goto loc_float;
     case BINN_FLOAT64:
       dv = bn->vdouble;
-loc_float:
+    loc_float:
       rc = _jbl_write_double(dv, pt, op);
       break;
 
@@ -398,14 +398,14 @@ iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
   return _jbl_as_json(&jbl->bn, pt, op, 0, pf);
 }
 
-iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count, void *op) {
+iwrc jbl_fstream_json_printer(const char *data, int size, char ch, int count, void *op) {
   FILE *file = op;
   if (!file) {
     return IW_ERROR_INVALID_ARGS;
   }
   if (!data) {
     if (count) {
-      char cbuf[count]; // review
+      char cbuf[count]; // TODO: review overflow
       memset(cbuf, ch, sizeof(cbuf));
       size_t wc = fwrite(cbuf, 1, count, file);
       if (wc != sizeof(cbuf)) {
@@ -413,10 +413,12 @@ iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count,
       }
     }
   } else {
-    if (size == -1) size = strlen(data);
+    if (size < 0) {
+      size = strlen(data);
+    }
     if (!count) count = 1;
     for (int i = 0; i < count; ++i) {
-      if (fprintf(file, "%.*s", (int) size, data) < 0) {
+      if (fprintf(file, "%.*s", size, data) < 0) {
         return iwrc_set_errno(IW_ERROR_IO_ERRNO, errno);
       }
     }
@@ -424,7 +426,7 @@ iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count,
   return 0;
 }
 
-iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, void *op) {
+iwrc jbl_xstr_json_printer(const char *data, int size, char ch, int count, void *op) {
   IWXSTR *xstr = op;
   if (!xstr) {
     return IW_ERROR_INVALID_ARGS;
@@ -437,7 +439,9 @@ iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, vo
       }
     }
   } else {
-    if (size == -1) size = strlen(data);
+    if (size < 0) {
+      size = strlen(data);
+    }
     if (!count) count = 1;
     for (int i = 0; i < count; ++i) {
       iwrc rc = iwxstr_cat(xstr, data, size);
@@ -447,7 +451,7 @@ iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, vo
   return 0;
 }
 
-int64_t jbl_get_i64(const JBL jbl) {
+int64_t jbl_get_i64(JBL jbl) {
   assert(jbl);
   switch (jbl->bn.type) {
     case BINN_UINT8:
@@ -477,11 +481,11 @@ int64_t jbl_get_i64(const JBL jbl) {
   }
 }
 
-int32_t jbl_get_i32(const JBL jbl) {
-  return jbl_get_i64(jbl);
+int32_t jbl_get_i32(JBL jbl) {
+  return (int32_t) jbl_get_i64(jbl);
 }
 
-double jbl_get_f64(const JBL jbl) {
+double jbl_get_f64(JBL jbl) {
   assert(jbl);
   switch (jbl->bn.type) {
     case BINN_FLOAT64:
@@ -511,7 +515,7 @@ double jbl_get_f64(const JBL jbl) {
   }
 }
 
-char *jbl_get_str(const JBL jbl) {
+char *jbl_get_str(JBL jbl) {
   assert(jbl && jbl->bn.type == BINN_STRING);
   if (jbl->bn.type != BINN_STRING) {
     return 0;
@@ -520,7 +524,7 @@ char *jbl_get_str(const JBL jbl) {
   }
 }
 
-size_t jbl_copy_strn(const JBL jbl, char *buf, size_t bufsz) {
+size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz) {
   assert(jbl && buf && jbl->bn.type == BINN_STRING);
   if (jbl->bn.type != BINN_STRING) {
     return 0;
@@ -539,7 +543,7 @@ iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size) {
     }
   }
   *buf = jbl->bn.ptr;
-  *size = jbl->bn.size;
+  *size = (size_t) jbl->bn.size;
   return 0;
 }
 
@@ -581,7 +585,7 @@ static iwrc _jbl_ptr_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
   for (i = 0, j = 0, cnt = 0; path[i] && cnt < jp->cnt; ++i, ++j) {
     if (path[i++] == '/') {
       jp->n[cnt] = jpr + doff + j;
-      for (k = 0; ; ++i, ++k) {
+      for (k = 0;; ++i, ++k) {
         if (!path[i] || path[i] == '/') {
           --i;
           *(jp->n[cnt] + k) = '\0';
@@ -614,7 +618,7 @@ iwrc jbl_ptr_alloc_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
   return _jbl_ptr_pool(path, jpp, pool);
 }
 
-int jbl_ptr_cmp(const JBL_PTR p1, const JBL_PTR p2) {
+int jbl_ptr_cmp(JBL_PTR p1, JBL_PTR p2) {
   if (p1->sz != p2->sz) {
     return p1->sz - p2->sz;
   }
@@ -628,7 +632,7 @@ int jbl_ptr_cmp(const JBL_PTR p1, const JBL_PTR p2) {
   return 0;
 }
 
-iwrc jbl_ptr_serialize(const JBL_PTR ptr, IWXSTR *xstr) {
+iwrc jbl_ptr_serialize(JBL_PTR ptr, IWXSTR *xstr) {
   for (int i = 0; i < ptr->cnt; ++i) {
     iwrc rc = iwxstr_cat(xstr, "/", 1);
     RCRET(rc);
@@ -793,7 +797,7 @@ static jbl_visitor_cmd_t _jbl_get_visitor2(int lvl, binn *bv, const char *key, i
     memcpy(&jbl->bn, bv, sizeof(*bv));
     vctx->found = true;
     return JBL_VCMD_TERMINATE;
-  } else if (jp->cnt < lvl + 1)  {
+  } else if (jp->cnt < lvl + 1) {
     return JBL_VCMD_SKIP_NESTED;
   }
   return JBL_VCMD_OK;
@@ -807,13 +811,13 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, const char *key, in
     memcpy(&jbl->bn, bv, sizeof(*bv));
     vctx->result = jbl;
     return JBL_VCMD_TERMINATE;
-  } else if (jp->cnt < lvl + 1)  {
+  } else if (jp->cnt < lvl + 1) {
     return JBL_VCMD_SKIP_NESTED;
   }
   return JBL_VCMD_OK;
 }
 
-bool _jbl_at(JBL jbl, const JBL_PTR jp, JBL res) {
+bool _jbl_at(JBL jbl, JBL_PTR jp, JBL res) {
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
     .op = jp,
@@ -824,7 +828,7 @@ bool _jbl_at(JBL jbl, const JBL_PTR jp, JBL res) {
   return vctx.found;
 }
 
-iwrc jbl_at2(JBL jbl, const JBL_PTR jp, JBL *res) {
+iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res) {
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
     .op = jp,
@@ -1087,7 +1091,7 @@ iwrc _jbl_node_from_binn2(const binn *bn, JBL_NODE *node, IWPOOL *pool) {
   return rc;
 }
 
-static JBL_NODE _jbl_node_find(const JBL_NODE node, const JBL_PTR ptr, int from, int to) {
+static JBL_NODE _jbl_node_find(JBL_NODE node, JBL_PTR ptr, int from, int to) {
   if (!ptr || !node) return 0;
   JBL_NODE n = node;
 
@@ -1112,12 +1116,12 @@ static JBL_NODE _jbl_node_find(const JBL_NODE node, const JBL_PTR ptr, int from,
   return n;
 }
 
-IW_INLINE JBL_NODE _jbl_node_find2(const JBL_NODE node, const JBL_PTR ptr) {
+IW_INLINE JBL_NODE _jbl_node_find2(JBL_NODE node, JBL_PTR ptr) {
   if (!node || !ptr || !ptr->cnt) return 0;
   return _jbl_node_find(node, ptr, 0, ptr->cnt - 1);
 }
 
-static JBL_NODE _jbl_node_detach(JBL_NODE target, const JBL_PTR path) {
+static JBL_NODE _jbl_node_detach(JBL_NODE target, JBL_PTR path) {
   if (!path) {
     return 0;
   }
@@ -1133,13 +1137,13 @@ static JBL_NODE _jbl_node_detach(JBL_NODE target, const JBL_PTR path) {
   return child;
 }
 
-JBL_NODE jbl_node_detach(JBL_NODE target, const JBL_PTR path) {
+JBL_NODE jbl_node_detach(JBL_NODE target, JBL_PTR path) {
   return _jbl_node_detach(target, path);
 }
 
 static int _jbl_cmp_node_keys(const void *o1, const void *o2) {
-  JBL_NODE n1 = *((const JBL_NODE *) o1);
-  JBL_NODE n2 = *((const JBL_NODE *) o2);
+  JBL_NODE n1 = *((JBL_NODE *) o1);
+  JBL_NODE n2 = *((JBL_NODE *) o2);
   if (!n1 && !n2) {
     return 0;
   }
@@ -1151,8 +1155,8 @@ static int _jbl_cmp_node_keys(const void *o1, const void *o2) {
   return strncmp(n1->key, n2->key, n1->klidx);
 }
 
-static int _jbl_node_count(JBL_NODE n) {
-  int ret = 0;
+static uint32_t _jbl_node_count(JBL_NODE n) {
+  uint32_t ret = 0;
   n = n->child;
   while (n) {
     ret++;
@@ -1165,8 +1169,8 @@ static int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
 
 static int _jbl_compare_objects(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
   int ret = 0;
-  int cnt = _jbl_node_count(n1);
-  int i = _jbl_node_count(n2);
+  uint32_t cnt = _jbl_node_count(n1);
+  uint32_t i = _jbl_node_count(n2);
   if (cnt > i) {
     return 1;
   } else if (cnt < i) {
@@ -1223,9 +1227,9 @@ static int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
     case JBV_BOOL:
       return n1->vbool - n2->vbool;
     case JBV_I64:
-      return n1->vi64 - n2->vi64;
+      return n1->vi64 > n2->vi64 ? 1 : n1->vi64 < n2->vi64 ? -1 : 0;
     case JBV_F64:
-      return (double)(n1->vi64) > n2->vf64 ? 1 : (double)(n1->vi64) < n2->vf64 ? -1 : 0;
+      return (double) (n1->vi64) > n2->vf64 ? 1 : (double) (n1->vi64) < n2->vf64 ? -1 : 0;
     case JBV_STR:
       if (n1->vsize - n2->vsize) {
         return n1->vsize - n2->vsize;
@@ -1360,7 +1364,7 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex) {
   return 0;
 }
 
-iwrc _jbl_from_node(binn *res, const JBL_NODE node) {
+iwrc _jbl_from_node(binn *res, JBL_NODE node) {
   iwrc rc = 0;
   switch (node->type) {
     case JBV_OBJECT:
@@ -1526,10 +1530,9 @@ bool _jbl_is_eq_atomic_values(JBL v1, JBL v2) {
   }
 }
 
-
 // --------------------------- Public API
 
-iwrc jbl_to_node(const JBL jbl, JBL_NODE *node, IWPOOL *pool) {
+iwrc jbl_to_node(JBL jbl, JBL_NODE *node, IWPOOL *pool) {
   if (jbl->node) {
     *node = jbl->node;
     return 0;
@@ -1627,7 +1630,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
   JBL_PATCH *p;
   JBL_NODE node;
   int cnt = strlen(patchjson);
-  IWPOOL *pool = iwpool_create(MAX(cnt, 1024));
+  IWPOOL *pool = iwpool_create(MAX(cnt, 1024U));
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -1646,7 +1649,7 @@ finish:
   return rc;
 }
 
-iwrc jbl_from_node(JBL jbl, const JBL_NODE node) {
+iwrc jbl_from_node(JBL jbl, JBL_NODE node) {
   if (!jbl || !node) {
     return IW_ERROR_INVALID_ARGS;
   }

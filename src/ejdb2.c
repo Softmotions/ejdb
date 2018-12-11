@@ -84,7 +84,7 @@ static iwrc jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
 
   if (!binn_object_get_str(bn, "ptr", &ptr) ||
       !binn_object_get_uint32(bn, "mode", &idx->mode) ||
-      !binn_object_get_uint32(bn, "idbf", &idx->idbf) ||
+      !binn_object_get_uint8(bn, "idbf", &idx->idbf) ||
       !binn_object_get_uint32(bn, "dbid", &idx->dbid) ||
       !binn_object_get_uint32(bn, "auxdbid", &idx->auxdbid)) {
     rc = EJDB_ERROR_INVALID_COLLECTION_INDEX_META;
@@ -1059,7 +1059,7 @@ finish:
   return rc;
 }
 
-iwrc ejdb_put(EJDB db, const char *coll, const JBL jbl, uint64_t id) {
+iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, uint64_t id) {
   if (!jbl) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1090,7 +1090,7 @@ finish:
   return rc;
 }
 
-iwrc ejdb_put_new(EJDB db, const char *coll, const JBL jbl, uint64_t *id) {
+iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, uint64_t *id) {
   if (!jbl) {
     return IW_ERROR_INVALID_ARGS;
   }

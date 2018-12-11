@@ -4,6 +4,8 @@
 
 #include "jqp.h"
 #include "binn.h"
+#include <math.h>
+
 
 /** Query object */
 struct _JQL {

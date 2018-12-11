@@ -1,3 +1,6 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ArgumentSelectionDefectsInspection"
+
 #include "jqp.h"
 #include "lwre.h"
 #include "jbl_internal.h"
@@ -281,7 +284,7 @@ IW_INLINE jqval_type_t _binn_to_jqval(binn *vbinn, JQVAL *qval) {
     case BINN_TRUE:
     case BINN_FALSE:
       qval->type = JQVAL_BOOL;
-      qval->vbool = vbinn->vbool;
+      qval->vbool = vbinn->vbool != 0;
       return qval->type;
     case BINN_UINT8:
       qval->type = JQVAL_I64;
@@ -297,7 +300,7 @@ IW_INLINE jqval_type_t _binn_to_jqval(binn *vbinn, JQVAL *qval) {
       return qval->type;
     case BINN_UINT64:
       qval->type = JQVAL_I64;
-      qval->vi64 = vbinn->vuint64;
+      qval->vi64 = (int64_t) vbinn->vuint64;
       return qval->type;
     case BINN_INT8:
       qval->type = JQVAL_I64;
@@ -362,7 +365,7 @@ IW_INLINE void _node_to_jqval(JBL_NODE jn, JQVAL *qv) {
  * Allowed on right:  JQVAL_STR|JQVAL_I64|JQVAL_F64|JQVAL_BOOL|JQVAL_NULL|JQVAL_JBLNODE
  */
 static int _cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp) {
-  JQVAL  sleft, sright;   // Stack allocated left/right converted values
+  JQVAL sleft, sright;   // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
 
   if (lv->type == JQVAL_BINN) {
@@ -406,15 +409,18 @@ static int _cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp) {
     case JQVAL_I64:
       switch (rv->type) {
         case JQVAL_I64:
-          return lv->vi64 - rv->vi64;
+          return lv->vi64 > rv->vi64 ? 1 : lv->vi64 < rv->vi64 ? -1 : 0;
         case JQVAL_F64:
           return (double) lv->vi64 > rv->vf64 ? 1 : (double) lv->vi64 < rv->vf64 ? -1 : 0;
-        case JQVAL_STR:
-          return lv->vi64 - iwatoi(rv->vstr);
+        case JQVAL_STR: {
+          int64_t rval = iwatoi(rv->vstr);
+          return lv->vi64 > rval ? 1 : lv->vi64 < rval ? -1 : 0;
+        }
         case JQVAL_NULL:
           return 1;
-        case JQVAL_BOOL:
-          return lv->vi64 - rv->vbool;
+        case JQVAL_BOOL: {
+          return (lv->vi64 != 0) - rv->vbool;
+        }
         default:
           break;
       }
@@ -424,9 +430,9 @@ static int _cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp) {
         case JQVAL_F64:
           return lv->vf64 > rv->vf64 ? 1 : lv->vf64 < rv->vf64 ? -1 : 0;
         case JQVAL_I64:
-          return lv->vf64 > (double) rv->vi64 ? 1 : lv->vf64 < (double) rv->vf64 ? -1 : 0;
+          return lv->vf64 > (double) rv->vi64 ? 1 : lv->vf64 < rv->vf64 ? -1 : 0;
         case JQVAL_STR: {
-          double rval = iwatof(rv->vstr);
+          double rval = (double) iwatof(rv->vstr);
           return lv->vf64 > rval ? 1 : lv->vf64 < rval ? -1 : 0;
         }
         case JQVAL_NULL:
@@ -506,10 +512,9 @@ static bool _match_regexp(JQP_AUX *aux,
   JQVAL sleft, sright; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   char *input = 0;
-  int rci, match_end = 0;
+  size_t rci, match_end = 0;
   const char *expr = 0;
-  bool matched = false,
-       match_start = false;
+  bool match_start = false;
 
   if (lv->type == JQVAL_JBLNODE) {
     _node_to_jqval(lv->vnode, &sleft);
@@ -603,8 +608,8 @@ static bool _match_regexp(JQP_AUX *aux,
   }
 
   assert(input);
-  rci = re_match(rx, input);
-  switch (rci) {
+  int mret = re_match(rx, input);
+  switch (mret) {
     case RE_ERROR_NOMATCH:
       return false;
     case RE_ERROR_NOMEM:
@@ -624,8 +629,8 @@ static bool _match_regexp(JQP_AUX *aux,
       iwlog_ecode_error3(JQL_ERROR_REGEXP_ENGINE);
       return false;
   }
-  if (rci > 0) {
-    if (match_start && rx->position - rci != input) {
+  if (mret > 0) {
+    if (match_start && rx->position - mret != input) {
       return false;
     }
     if (match_end && rx->position != input + match_end) {
@@ -671,7 +676,7 @@ static bool _match_ni(JQVAL *left, JQP_OP *jqop, JQVAL *right,
 
   JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
-  binn *bn, bv;
+  binn bv;
   binn_iter iter;
   if (rv->type != JQVAL_BINN || rv->vbinn->type != BINN_LIST) {
     *rcp = _JQL_ERROR_UNMATCHED;
@@ -881,8 +886,8 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
       lv.type = JQVAL_STR;
       lv.vstr = mctx->key;
       bool ret = _match_jqval_pair(mctx->aux, &lv, op, rv, rcp);
-      return negate ? !ret : ret;
-    } else if (strcmp(mctx->key, left->string.value)) {
+      return negate != (0 == !ret);
+    } else if (strcmp(mctx->key, left->string.value) != 0) {
       return negate;
     }
   } else if (left->type == JQP_EXPR_TYPE) {
@@ -903,7 +908,7 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
   lv.type = JQVAL_BINN;
   lv.vbinn = mctx->bv;
   bool ret = _match_jqval_pair(mctx->aux, &lv, expr->op, rv, rcp);
-  return negate ? !ret : ret;
+  return negate != (0 == !ret);
 }
 
 static bool _match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
@@ -988,7 +993,6 @@ static bool _match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
   }
   bool matched = false;
   const int lvl = mctx->lvl;
-  JQP_NODE *nodes = fctx->nodes;
   if (fctx->last_lvl + 1 < lvl) {
     return false;
   }
@@ -1079,7 +1083,7 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, const char *key, int 
   return 0;
 }
 
-iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
+iwrc jql_matched(JQL q, JBL jbl, bool *out) {
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
     .op = q
@@ -1091,7 +1095,7 @@ iwrc jql_matched(JQL q, const JBL jbl, bool *out) {
     en = en->chain;
     if (en->type == JQP_FILTER_TYPE) {
       JQP_NODE *n = ((JQP_FILTER *) en)->node;
-      if (n && (n->ntype == JQP_NODE_ANYS || n->ntype == JQP_NODE_ANY) && !n->next)  {
+      if (n && (n->ntype == JQP_NODE_ANYS || n->ntype == JQP_NODE_ANY) && !n->next) {
         // Single /* | /** matches anything
         q->matched = true;
         *out = true;
@@ -1160,7 +1164,7 @@ iwrc jql_get_limit(JQL q, int64_t *out) {
 typedef struct _PROJ_CTX {
   JQL q;
   JQP_PROJECTION *proj;
-} PROJ_CTX ;
+} PROJ_CTX;
 
 
 static void _proj_mark_up(JBL_NODE n, int amask) {
@@ -1170,7 +1174,9 @@ static void _proj_mark_up(JBL_NODE n, int amask) {
   }
 }
 
-static bool _proj_matched(int lvl, JBL_NODE n, const char *key, int keylen, JBN_VCTX *vctx, JQP_PROJECTION *proj,
+static bool _proj_matched(int16_t lvl, JBL_NODE n,
+                          const char *key, int keylen,
+                          JBN_VCTX *vctx, JQP_PROJECTION *proj,
                           iwrc *rc) {
   if (proj->cnt <= lvl) {
     return false;
@@ -1213,7 +1219,7 @@ static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int
     klidx = strlen(keyptr);
   }
   for (JQP_PROJECTION *p = pctx->proj; p; p = p->next) {
-    bool matched = _proj_matched(lvl, n, keyptr, klidx, vctx, p, rc);
+    bool matched = _proj_matched((int16_t) lvl, n, keyptr, klidx, vctx, p, rc);
     RCRET(*rc);
     if (matched) {
       if (p->exclude) {
@@ -1288,7 +1294,7 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
 
 //----------------------------------
 
-iwrc jql_apply(JQL q, const JBL jbl, JBL_NODE *out, IWPOOL *pool) {
+iwrc jql_apply(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool) {
   *out = 0;
   JQP_AUX *aux = q->qp->aux;
   if (!aux->apply && !aux->projection) {
@@ -1349,3 +1355,5 @@ iwrc jql_init() {
   }
   return iwlog_register_ecodefn(_ecodefn);
 }
+
+#pragma clang diagnostic pop

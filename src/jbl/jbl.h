@@ -32,14 +32,19 @@ typedef enum {
   _JBL_ERROR_END
 } jbl_ecode;
 
-typedef enum {
-  JBL_PRINT_PRETTY = 1,
-  JBL_PRINT_CODEPOINTS = 1 << 1
-} jbl_print_flags_t;
+
+typedef uint8_t jbl_print_flags_t;
+#define JBL_PRINT_PRETTY      ((jbl_print_flags_t) 0x01U)
+#define JBL_PRINT_CODEPOINTS  ((jbl_print_flags_t) 0x02U)
+
+typedef uint8_t jbn_visitor_cmd_t;
+#define JBL_VCMD_OK           ((jbn_visitor_cmd_t) 0x00U)
+#define JBL_VCMD_TERMINATE    ((jbn_visitor_cmd_t) 0x01U)
+#define JBL_VCMD_SKIP_NESTED  ((jbn_visitor_cmd_t) 0x02U)
+#define JBN_VCMD_DELETE       ((jbn_visitor_cmd_t) 0x04U)
 
 typedef enum {
-  // Do not reorder
-  JBV_NONE = 0,
+  JBV_NONE = 0, // Do not reorder
   JBV_NULL,
 
   JBV_BOOL,
@@ -47,8 +52,7 @@ typedef enum {
   JBV_F64,
   JBV_STR,
 
-  // Do not reorder
-  JBV_OBJECT,
+  JBV_OBJECT, // Do not reorder
   JBV_ARRAY,
 } jbl_type_t;
 
@@ -99,7 +103,7 @@ typedef struct _JBL_PTR {
   char *n[1];       /**< Path nodes */
 } *JBL_PTR;
 
-typedef iwrc(*jbl_json_printer)(const char *data, size_t size, char ch, int count, void *op);
+typedef iwrc(*jbl_json_printer)(const char *data, int size, char ch, int count, void *op);
 
 IW_EXPORT iwrc jbl_create_empty_object(JBL *jblp);
 
@@ -113,45 +117,45 @@ IW_EXPORT iwrc jbl_from_buf_keep_onstack2(JBL jbl, void *buf);
 
 IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *jsonstr);
 
-IW_EXPORT jbl_type_t jbl_type(const JBL jbl);
+IW_EXPORT jbl_type_t jbl_type(JBL jbl);
 
-IW_EXPORT size_t jbl_count(const JBL jbl);
+IW_EXPORT size_t jbl_count(JBL jbl);
 
-IW_EXPORT size_t jbl_size(const JBL jbl);
+IW_EXPORT size_t jbl_size(JBL jbl);
 
-IW_EXPORT int32_t jbl_get_i32(const JBL jbl);
+IW_EXPORT int32_t jbl_get_i32(JBL jbl);
 
-IW_EXPORT int64_t jbl_get_i64(const JBL jbl);
+IW_EXPORT int64_t jbl_get_i64(JBL jbl);
 
-IW_EXPORT double jbl_get_f64(const JBL jbl);
+IW_EXPORT double jbl_get_f64(JBL jbl);
 
-IW_EXPORT char *jbl_get_str(const JBL jbl);
+IW_EXPORT char *jbl_get_str(JBL jbl);
 
-IW_EXPORT size_t jbl_copy_strn(const JBL jbl, char *buf, size_t bufsz);
+IW_EXPORT size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz);
 
 IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
-IW_EXPORT iwrc jbl_at2(JBL jbl, const JBL_PTR jp, JBL *res);
+IW_EXPORT iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res);
 
 IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
 
 IW_EXPORT iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
-IW_EXPORT iwrc jbl_fstream_json_printer(const char *data, size_t size, char ch, int count, void *op);
+IW_EXPORT iwrc jbl_fstream_json_printer(const char *data, int size, char ch, int count, void *op);
 
-IW_EXPORT iwrc jbl_xstr_json_printer(const char *data, size_t size, char ch, int count, void *op);
+IW_EXPORT iwrc jbl_xstr_json_printer(const char *data, int size, char ch, int count, void *op);
 
 IW_EXPORT void jbl_destroy(JBL *jblp);
 
 //--- JBL_NODE
 
-IW_EXPORT iwrc jbl_to_node(const JBL jbl, JBL_NODE *node, IWPOOL *pool);
+IW_EXPORT iwrc jbl_to_node(JBL jbl, JBL_NODE *node, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_node_from_json(const char *json, JBL_NODE *node, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_node_as_json(const JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
+IW_EXPORT iwrc jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
-IW_EXPORT iwrc jbl_from_node(JBL jbl, const JBL_NODE node);
+IW_EXPORT iwrc jbl_from_node(JBL jbl, JBL_NODE node);
 
 IW_EXPORT int jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
 
@@ -159,7 +163,7 @@ IW_EXPORT void jbl_add_item(JBL_NODE parent, JBL_NODE node);
 
 IW_EXPORT void jbl_remove_item(JBL_NODE parent, JBL_NODE child);
 
-IW_EXPORT JBL_NODE jbl_node_detach(JBL_NODE target, const JBL_PTR path);
+IW_EXPORT JBL_NODE jbl_node_detach(JBL_NODE target, JBL_PTR path);
 
 IW_EXPORT void jbl_node_reset_data(JBL_NODE node);
 
@@ -167,9 +171,9 @@ IW_EXPORT iwrc jbl_ptr_alloc(const char *path, JBL_PTR *jpp);
 
 IW_EXPORT iwrc jbl_ptr_alloc_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool);
 
-IW_EXPORT int jbl_ptr_cmp(const JBL_PTR p1, const JBL_PTR p2);
+IW_EXPORT int jbl_ptr_cmp(JBL_PTR p1, JBL_PTR p2);
 
-IW_EXPORT iwrc jbl_ptr_serialize(const JBL_PTR ptr, IWXSTR *xstr);
+IW_EXPORT iwrc jbl_ptr_serialize(JBL_PTR ptr, IWXSTR *xstr);
 
 /**
  * @brief JBL_NODE visitor context
@@ -182,12 +186,6 @@ typedef struct _JBN_VCTX {
   IWPOOL *pool;   /**< Pool placeholder, initialization is responsibility of `JBN_VCTX` creator */
 } JBN_VCTX;
 
-typedef enum {
-  JBL_VCMD_OK = 0,
-  JBL_VCMD_TERMINATE = 1,
-  JBL_VCMD_SKIP_NESTED = 1 << 1,
-  JBN_VCMD_DELETE = 1 << 2
-} jbn_visitor_cmd_t;
 
 /**
  * Call with lvl: `-1` means end of visiting whole object tree.

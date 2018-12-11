@@ -10,20 +10,25 @@
 #include <iowow/iwpool.h>
 #include <iowow/iwxstr.h>
 
-typedef enum {
-  JQP_STR_PLACEHOLDER = 1,      /**< Query string parameter placeholder */
-  JQP_STR_ANCHOR      = 1 << 1, /**< Query filter anchor */
-  JQP_STR_PROJFIELD   = 1 << 2, /**< Projection field **/
-  JQP_STR_PROJALIAS   = 1 << 3, /**< Projection alias (all) **/
-  JQP_STR_QUOTED      = 1 << 4, /**< String is quoted */
-  JQP_STR_STAR        = 1 << 5, /**< Star (*) string */
-  JQP_STR_NEGATE      = 1 << 6  /** Boolean negation/mode applied to it */
-} jqp_string_flavours_t;
+typedef uint8_t jqp_string_flavours_t;
+/** Query string parameter placeholder */
+#define JQP_STR_PLACEHOLDER       ((jqp_string_flavours_t) 0x01U)
+/** Query filter anchor */
+#define JQP_STR_ANCHOR            ((jqp_string_flavours_t) 0x02U)
+/** Projection field **/
+#define JQP_STR_PROJFIELD         ((jqp_string_flavours_t) 0x04U)
+/** Projection alias (all) **/
+#define JQP_STR_PROJALIAS         ((jqp_string_flavours_t) 0x08U)
+/** String is quoted */
+#define JQP_STR_QUOTED            ((jqp_string_flavours_t) 0x10U)
+/** Star (*) string */
+#define JQP_STR_STAR              ((jqp_string_flavours_t) 0x20U)
+/** Boolean negation/mode applied to it */
+#define JQP_STR_NEGATE            ((jqp_string_flavours_t) 0x40U)
 
-typedef enum {
-  JQP_INT_SKIP  = 1,
-  JQP_INT_LIMIT = 1 << 1
-} jqp_int_flavours_t;
+typedef uint8_t jqp_int_flavours_t;
+#define JQP_INT_SKIP              ((jqp_int_flavours_t) 0x01U)
+#define JQP_INT_LIMIT             ((jqp_int_flavours_t) 0x02U)
 
 typedef enum {
   JQP_QUERY_TYPE = 1,
