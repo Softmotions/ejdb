@@ -1,7 +1,6 @@
 #include "jbl.h"
 #include <ctype.h>
 #include <iowow/iwconv.h>
-#include <iowow/iwxstr.h>
 #include "jbl_internal.h"
 #include "utf8proc.h"
 
