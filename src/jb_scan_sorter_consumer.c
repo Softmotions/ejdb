@@ -128,7 +128,7 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
         }
       }
       rc = jb_scan_sorter_apply(pool, ctx, ux->q, &doc);
-      if (pool && pool != ux->pool) {
+      if (pool != ux->pool) {
         iwpool_destroy(pool);
       }
       RCGO(rc, finish);
