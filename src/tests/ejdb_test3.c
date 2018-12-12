@@ -84,6 +84,7 @@ void ejdb_test3_1() {
   }
   CU_ASSERT_EQUAL(i, 9);
   ejdb_list_destroy(&list);
+  iwxstr_clear(log);
 
   // Q: /f/[b >= 2]
   rc = ejdb_list3(db, "c1", "/f/[b >= 3]", 0, log, &list);
@@ -101,6 +102,7 @@ void ejdb_test3_1() {
   }
   CU_ASSERT_EQUAL(i, 8);
   ejdb_list_destroy(&list);
+  iwxstr_clear(log);
 
   // Q: /f/[b < 9]
   rc = ejdb_list3(db, "c1", "/f/[b < 9]", 0, log, &list);
@@ -134,6 +136,18 @@ void ejdb_test3_1() {
     }
   }
   ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  // Q: /f/[b < 11 and b >= 4]
+  rc = ejdb_list3(db, "c1", "/f/[b < 11 and b >= 4]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  i = 0;
+
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+
+
 
 
   rc = ejdb_close(&db);

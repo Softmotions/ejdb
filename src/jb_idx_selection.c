@@ -170,17 +170,17 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
       default:
         continue;
     }
-    if (mctx->expr2) {
-      if (!mctx->expr1) {
-        mctx->expr1 = mctx->expr2;
-        mctx->expr2 = 0;
-        mctx->cursor_init = IWKV_CURSOR_GE;
-        mctx->cursor_step = IWKV_CURSOR_NEXT;
-      } else {
-        mctx->expr2->prematched = true;
-      }
+  }
+
+  if (mctx->expr2) {
+    if (!mctx->expr1) {
+      mctx->expr1 = mctx->expr2;
+      mctx->expr2 = 0;
+      mctx->cursor_init = IWKV_CURSOR_GE;
+      mctx->cursor_step = IWKV_CURSOR_NEXT;
     }
   }
+
   return 0;
 }
 
