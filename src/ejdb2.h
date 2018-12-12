@@ -21,14 +21,12 @@ typedef enum {
   _EJDB_ERROR_END
 } ejdb_ecode;
 
-
-typedef enum {
-  EJDB_IDX_UNIQUE = 1,
-  EJDB_IDX_ARR = 1 << 1,
-  EJDB_IDX_STR = 1 << 2,
-  EJDB_IDX_I64 = 1 << 3,
-  EJDB_IDX_F64 = 1 << 4,
-} ejdb_idx_mode_t;
+typedef uint8_t ejdb_idx_mode_t;
+#define EJDB_IDX_UNIQUE     ((ejdb_idx_mode_t) 0x01U)
+#define EJDB_IDX_ARR        ((ejdb_idx_mode_t) 0x02U)
+#define EJDB_IDX_STR        ((ejdb_idx_mode_t) 0x04U)
+#define EJDB_IDX_I64        ((ejdb_idx_mode_t) 0x08U)
+#define EJDB_IDX_F64        ((ejdb_idx_mode_t) 0x10U)
 
 /**
  * @brief Database handler.
@@ -92,7 +90,7 @@ struct _EJDB_EXEC;
  *        processing you need to copy it.
  * @param step [out] Move forward cursor to given number of steps, `1` by default.
  */
-typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step);
+typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step);
 typedef struct _EJDB_EXEC {
   EJDB db;
   JQL q;

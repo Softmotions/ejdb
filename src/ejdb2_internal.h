@@ -146,12 +146,12 @@ typedef struct _JBEXEC {
 } JBEXEC;
 
 
-typedef enum {
-  JB_COLL_ACQUIRE_WRITE = 1,
-  JB_COLL_ACQUIRE_EXISTING = 1 << 1,
-} jb_coll_acquire_t;
+typedef uint8_t jb_coll_acquire_t;
+#define JB_COLL_ACQUIRE_WRITE     ((jb_coll_acquire_t) 0x01U)
+#define JB_COLL_ACQUIRE_EXISTING  ((jb_coll_acquire_t) 0x02U)
 
-void jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz);
+
+void jb_idx_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz);
 void jb_idx_jqval_fill_key(const JQVAL *rval, IWKV_val *key);
 iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
 iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);

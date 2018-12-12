@@ -8,7 +8,7 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, const JQVAL *rval, JB_SCAN_CO
   size_t sz;
   struct _JBMIDX *midx = &ctx->midx;
   char buf[JBNUMBUF_SIZE];
-  IWKV_val key = { .data = buf };
+  IWKV_val key = {.data = buf};
 
   jb_idx_jqval_fill_key(rval, &key);
   if (!key.size) {

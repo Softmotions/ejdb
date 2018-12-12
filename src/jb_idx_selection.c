@@ -216,7 +216,7 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
       int i = 0;
       for (JQP_NODE *n = f->node; n; n = n->next, ++i) { // Examine matched index
         nexpr = 0;
-        const char *field;
+        const char *field = 0;
         if (n->ntype == JQP_NODE_FIELD) {
           field = n->value->string.value;
         } else if (n->ntype == JQP_NODE_EXPR) {
@@ -226,7 +226,7 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
             field = left->string.value;
           }
         }
-        if (!field && strcmp(field, ptr->n[i])) {
+        if (!field && strcmp(field, ptr->n[i]) != 0) {
           break;
         }
       }
@@ -256,8 +256,8 @@ static int jb_idx_cmp(const void *o1, const void *o2) {
   if (w2 - w1) {
     return w2 - w1;
   }
-  w1 = !!d1->expr2;
-  w2 = !!d2->expr2;
+  w1 = d1->expr2 != 0;
+  w2 = d2->expr2 != 0;
   if (w2 - w1) {
     return w2 - w1;
   }

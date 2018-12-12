@@ -73,7 +73,6 @@ static void jb_coll_release(JBCOLL jbc) {
 static iwrc jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
   binn *bn;
   char *ptr;
-  jbl_type_t type;
   struct _JBL imeta;
   JBIDX idx = calloc(1, sizeof(*idx));
   if (!idx) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -83,7 +82,7 @@ static iwrc jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
   bn = &imeta.bn;
 
   if (!binn_object_get_str(bn, "ptr", &ptr) ||
-      !binn_object_get_uint32(bn, "mode", &idx->mode) ||
+      !binn_object_get_uint8(bn, "mode", &idx->mode) ||
       !binn_object_get_uint8(bn, "idbf", &idx->idbf) ||
       !binn_object_get_uint32(bn, "dbid", &idx->dbid) ||
       !binn_object_get_uint32(bn, "auxdbid", &idx->auxdbid)) {
@@ -105,9 +104,7 @@ static iwrc jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
 
 finish:
   if (rc) {
-    if (idx) {
-      jb_idx_release(idx);
-    }
+    jb_idx_release(idx);
   }
   return rc;
 }
@@ -361,9 +358,9 @@ static iwrc jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquire
   int rci;
   iwrc rc = 0;
   *jbcp = 0;
+  JBCOLL jbc = 0;
   bool wl = acm & JB_COLL_ACQUIRE_WRITE;
   API_RLOCK(db, rci);
-  JBCOLL jbc;
   khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
   if (k != kh_end(db->mcolls)) {
     jbc = kh_value(db->mcolls, k);
@@ -399,7 +396,7 @@ static iwrc jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquire
 
       rc = iwkv_new_db(db->iwkv, IWDB_UINT64_KEYS, &dbid, &cdb);
       RCGO(rc, create_finish);
-      JBCOLL jbc = calloc(1, sizeof(*jbc));
+      jbc = calloc(1, sizeof(*jbc));
       if (!jbc) {
         rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         goto create_finish;
@@ -417,7 +414,7 @@ static iwrc jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquire
       rc = jbl_as_buf(meta, &val.data, &val.size);
       RCGO(rc, create_finish);
 
-      key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_COLLMETA "%u",  dbid);
+      key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_COLLMETA "%u", dbid);
       if (key.size >= sizeof(keybuf)) {
         rc = IW_ERROR_OVERFLOW;
         goto create_finish;
@@ -433,6 +430,7 @@ static iwrc jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquire
         iwkv_del(db->metadb, &key, IWKV_SYNC);
         goto create_finish;
       }
+
 create_finish:
       if (rc) {
         if (meta) jbl_destroy(&meta);
@@ -477,7 +475,7 @@ static void jb_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static 
           ikey->size = jbl_size(jbv);
           break;
         case JBV_I64:
-          ikey->size = iwitoa(jbl_get_i64(jbv), numbuf, sizeof(JBNUMBUF_SIZE));
+          ikey->size = iwitoa(jbl_get_i64(jbv), numbuf, JBNUMBUF_SIZE);
           ikey->data = numbuf;
           break;
         case JBV_BOOL:
@@ -504,10 +502,10 @@ static void jb_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static 
         case JBV_I64:
         case JBV_F64:
         case JBV_BOOL:
-          *llu = jbl_get_i64(jbv);
+          *llu = (uint64_t) jbl_get_i64(jbv);
           break;
         case JBV_STR:
-          *llu = iwatoi(jbl_get_str(jbv));
+          *llu = (uint64_t) iwatoi(jbl_get_str(jbv));
           break;
         default:
           ikey->size = 0;
@@ -581,9 +579,8 @@ static iwrc jb_idx_record_add(JBIDX idx, uint64_t id, JBL jbl, JBL jblprev) {
     return 0;
   }
   iwrc rc = 0;
-  struct _JBL jbs;
   IWKV_val key;
-  bool jbv_found = false;
+  bool jbv_found;
   bool jbvprev_found = false;
   struct _JBL jbv = {0};
   struct _JBL jbvprev = {0};
@@ -696,7 +693,6 @@ finish:
 }
 
 static iwrc jb_exec_scan_init(JBEXEC *ctx) {
-  EJDB_EXEC *ux = ctx->ux;
   ctx->istep = 1;
   ctx->jblbufsz = ctx->jbc->db->opts.document_buffer_sz;
   ctx->jblbuf = malloc(ctx->jblbufsz);
@@ -726,7 +722,7 @@ static void jb_exec_scan_release(JBEXEC *ctx) {
   }
 }
 
-static iwrc jb_noop_visitor(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
+static iwrc jb_noop_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
   return 0;
 }
 
@@ -782,7 +778,7 @@ struct JB_LIST_VISITOR_CTX {
   EJDB_DOC tail;
 };
 
-static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
+static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
   struct JB_LIST_VISITOR_CTX *lvc = ctx->opaque;
   IWPOOL *pool = ctx->pool;
   struct _EJDB_DOC *ndoc = iwpool_alloc(sizeof(*ndoc) + sizeof(*doc->raw) + doc->raw->bn.size, pool);
@@ -790,7 +786,7 @@ static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   ndoc->id = doc->id;
-  ndoc->raw = (void *)(((uint8_t *) ndoc) + sizeof(*ndoc));
+  ndoc->raw = (void *) (((uint8_t *) ndoc) + sizeof(*ndoc));
   ndoc->raw->node = 0;
   ndoc->next = 0;
   ndoc->prev = 0;
@@ -814,7 +810,7 @@ static iwrc _ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWXSTR *l
     return IW_ERROR_INVALID_ARGS;
   }
   iwrc rc = 0;
-  struct JB_LIST_VISITOR_CTX lvc = { 0 };
+  struct JB_LIST_VISITOR_CTX lvc = {0};
   struct _EJDB_EXEC ux = {
     .db = db,
     .q = q,
@@ -854,7 +850,7 @@ iwrc ejdb_list3(EJDB db, const char *coll, const char *query, int64_t limit, IWX
   }
   list->first = 0;
   list->db = db;
-  list->pool  = pool;
+  list->pool = pool;
   rc = jql_create(&list->q, coll, query);
   RCGO(rc, finish);
   rc = _ejdb_list(db, list->q, &list->first, limit, log, list->pool);
@@ -941,7 +937,7 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   if (!db || !coll || !path) {
     return IW_ERROR_INVALID_ARGS;
   }
-  int rci, sz;
+  int rci;
   JBCOLL jbc;
   IWKV_val key, val;
   char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
@@ -968,7 +964,7 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   rc = jbl_ptr_alloc(path, &ptr);
   RCGO(rc, finish);
 
-  for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
+  for (idx = jbc->idx; idx; idx = idx->next) {
     if ((idx->mode & ~EJDB_IDX_UNIQUE) == (mode & ~EJDB_IDX_UNIQUE) && !jbl_ptr_cmp(idx->ptr, ptr)) {
       if (idx->mode != mode) {
         rc = EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE;
@@ -1209,7 +1205,6 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   API_WLOCK(db, rci);
   JBCOLL jbc;
   IWKV_val key;
-  uint32_t dbid;
   char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
   khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
 
@@ -1247,7 +1242,7 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   }
 
 finish:
-  API_UNLOCK(db, rci, rc);
+API_UNLOCK(db, rci, rc);
   return rc;
 }
 
@@ -1290,7 +1285,7 @@ iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
   clist = 0;
 
 finish:
-  API_UNLOCK(db, rci, rc);
+API_UNLOCK(db, rci, rc);
   if (rc) {
     if (clist) binn_free(clist);
     jbl_destroy(&jbl);

@@ -3,9 +3,9 @@
 
 // ---------------------------------------------------------------------------
 
-void jb_idx_ftoa(double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
+void jb_idx_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
   // TODO:
-  int sz = snprintf(buf, JBNUMBUF_SIZE, "%.6f", val);
+  int sz = snprintf(buf, JBNUMBUF_SIZE, "%.6Lf", val);
   while (sz > 0 && buf[sz - 1] == '0') buf[sz--] = '\0';
   if (buf[sz] == '.') buf[sz--] = '\0';
   *osz = sz;

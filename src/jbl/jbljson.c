@@ -216,7 +216,7 @@ static const char *_jbl_parse_value(JBL_NODE parent,
         break;
       case 'n':
         if (!strncmp(p, "null", 4)) {
-          node = _jbl_json_create_node(JBV_NULL, key, klidx, parent, ctx);
+          _jbl_json_create_node(JBV_NULL, key, klidx, parent, ctx);
           if (ctx->rc) return 0;
           return p + 4;
         }
@@ -323,11 +323,10 @@ static const char *_jbl_parse_value(JBL_NODE parent,
       }
     }
   }
-  
   return p;
 }
 
-iwrc _jbl_node_as_json(const JBL_NODE node, jbl_json_printer pt, void *op, int lvl, jbl_print_flags_t pf) {
+static iwrc _jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, int lvl, jbl_print_flags_t pf) {
   iwrc rc = 0;
   bool pretty = pf & JBL_PRINT_PRETTY;
   
@@ -398,7 +397,7 @@ iwrc _jbl_node_as_json(const JBL_NODE node, jbl_json_printer pt, void *op, int l
 
 //------ Public
 
-iwrc jbl_node_as_json(const JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
+iwrc jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
   return _jbl_node_as_json(node, pt, op, 0, pf);
 }
 
