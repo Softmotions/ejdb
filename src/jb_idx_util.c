@@ -8,7 +8,7 @@ void jb_idx_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
   int sz = snprintf(buf, JBNUMBUF_SIZE, "%.6Lf", val);
   while (sz > 0 && buf[sz - 1] == '0') buf[sz--] = '\0';
   if (buf[sz] == '.') buf[sz--] = '\0';
-  *osz = sz;
+  *osz = (size_t) sz;
 }
 
 /**
@@ -56,7 +56,8 @@ bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR
   if (sz > sizeof(skey) - 1) {
     kbuf = malloc(sz);
     if (!kbuf) {
-      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      goto finish;
     }
   }
   rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz);
@@ -72,7 +73,7 @@ bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR
   } else if (idx->mode & EJDB_IDX_F64) {
     kbuf[sz] = '\0';
     lv.type = JQVAL_F64;
-    lv.vf64 = iwatof(kbuf);
+    lv.vf64 = (double) iwatof(kbuf);
   }
 
   ret = jql_match_jqval_pair(aux, &lv, expr->op, rv, &rc);
