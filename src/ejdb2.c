@@ -770,6 +770,7 @@ iwrc ejdb_exec(EJDB_EXEC *ux) {
 finish:
   jb_exec_scan_release(&ctx);
   API_COLL_UNLOCK(ctx.jbc, rci, rc);
+  jql_reset(ux->q, true, false);
   return rc;
 }
 

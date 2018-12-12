@@ -167,7 +167,8 @@ static iwrc jb_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
   return rc;
 }
 
-iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err) {
+iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id,
+                             int64_t *step, bool *matched, iwrc err) {
   if (!id) {
     // End of scan
     if (err) {
@@ -181,13 +182,13 @@ iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, 
 
   iwrc rc;
   size_t vsz = 0;
-  bool matched;
   struct _JBL jbl;
   struct _JBSSC *ssc = &ctx->ssc;
   EJDB db = ctx->jbc->db;
   IWFS_EXT *sof = &ssc->sof;
 
-start: {
+start:
+  {
     if (cur) {
       rc = iwkv_cursor_copy_val(cur, ctx->jblbuf + sizeof(id), ctx->jblbufsz - sizeof(id), &vsz);
     } else {
@@ -214,8 +215,8 @@ start: {
   rc = jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf + sizeof(id), vsz);
   RCRET(rc);
 
-  rc = jql_matched(ctx->ux->q, &jbl, &matched);
-  if (!matched) {
+  rc = jql_matched(ctx->ux->q, &jbl, matched);
+  if (!*matched) {
     return 0;
   }
 
@@ -242,7 +243,8 @@ start: {
   vsz += sizeof(id);
   memcpy(ctx->jblbuf, &id, sizeof(id));
 
-start2: {
+start2:
+  {
     if (ssc->docs) {
       uint32_t rsize = ssc->docs_npos + vsz;
       if (rsize > ssc->docs_asz)  {

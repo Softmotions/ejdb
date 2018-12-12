@@ -1044,11 +1044,11 @@ static iwrc _jqp_print_join(jqp_op_t jqop, bool negate, jbl_json_printer pt, voi
   return rc;
 }
 
-static iwrc _jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op) {
+iwrc jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
   if (e->left->type == JQP_EXPR_TYPE) {
     PT(0, 0, '[', 1);
-    _jqp_print_filter_node_expr(&e->left->expr, pt, op);
+    jqp_print_filter_node_expr(&e->left->expr, pt, op);
     PT(0, 0, ']', 1);
   } else if (e->left->type == JQP_STRING_TYPE) {
     if (e->left->string.flavour & JQP_STR_QUOTED) {
@@ -1091,7 +1091,7 @@ static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void 
         rc = _jqp_print_join(e->join->value, e->join->negate, pt, op);
         RCRET(rc);
       }
-      rc = _jqp_print_filter_node_expr(e, pt, op);
+      rc = jqp_print_filter_node_expr(e, pt, op);
       RCRET(rc);
     }
     PT(0, 0, ']', 1);

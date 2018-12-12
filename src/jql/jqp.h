@@ -150,7 +150,7 @@ typedef struct JQP_EXPR {
   JQPUNIT *left;
   JQPUNIT *right;
   struct JQP_EXPR *next;
-  bool disabled;
+  bool prematched;
 } JQP_EXPR;
 
 typedef struct JQP_PROJECTION {
@@ -244,5 +244,7 @@ iwrc jqp_parse(JQP_AUX *aux);
 iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op);
 
 iwrc jqp_alloc_orderby_pointers(const JQP_QUERY *q, JBL_PTR *optr, size_t *nptr);
+
+iwrc jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op);
 
 #endif

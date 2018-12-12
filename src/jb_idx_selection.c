@@ -55,9 +55,18 @@ static void jb_log_cursor_op(IWXSTR *xstr, IWKV_cursor_op op) {
 
 static void jb_log_index_rules(IWXSTR *xstr, struct _JBMIDX *mctx) {
   jb_print_index(mctx->idx, xstr);
-  iwxstr_printf(xstr, " expr=%s", (mctx->nexpr ? "yes" : "no"));
+  if (mctx->expr1) {
+    iwxstr_cat2(xstr, " EXPR1: \'");
+    jqp_print_filter_node_expr(mctx->expr1, jbl_xstr_json_printer, xstr);
+    iwxstr_cat2(xstr, "\'");
+  }
+  if (mctx->expr2) {
+    iwxstr_cat2(xstr, " EXPR2: \'");
+    jqp_print_filter_node_expr(mctx->expr2, jbl_xstr_json_printer, xstr);
+    iwxstr_cat2(xstr, "\'");
+  }
   if (mctx->cursor_init) {
-    iwxstr_cat2(xstr, " init=");
+    iwxstr_cat2(xstr, " INIT: ");
     jb_log_cursor_op(xstr, mctx->cursor_init);
   }
   iwxstr_cat2(xstr, "\n");
@@ -97,7 +106,7 @@ static bool jb_is_solid_node_expression(const JQP_NODE *n) {
 }
 
 static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
-  JQP_EXPR *expr = mctx->nexpr; // Node expressoon
+  JQP_EXPR *expr = mctx->nexpr; // Node expression
   if (!expr) return 0;
   JQP_AUX *aux = ctx->ux->q->qp->aux;
 
@@ -131,14 +140,17 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         mctx->cursor_init = IWKV_CURSOR_EQ;
         mctx->expr1 = expr;
         mctx->expr2 = 0;
-        expr->disabled = true;
+        expr->prematched = true;
         return 0;
       case JQP_OP_GT:
       case JQP_OP_GTE:
         if (mctx->cursor_init != IWKV_CURSOR_EQ) {
           mctx->cursor_init = IWKV_CURSOR_GE;
           mctx->expr1 = expr;
-          mctx->cursor_step = IWKV_CURSOR_NEXT;
+          mctx->cursor_step = IWKV_CURSOR_PREV;
+          if (op == JQP_OP_GTE) {
+            mctx->expr1->prematched = true;
+          }
         }
         break;
       case JQP_OP_LT:
@@ -147,6 +159,9 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         break;
       case JQP_OP_IN:
         if (mctx->cursor_init != IWKV_CURSOR_EQ && rval->type >= JQVAL_JBLNODE) {
+          if (mctx->expr1) {
+            mctx->expr1->prematched = false;
+          }
           mctx->expr1 = expr;
           mctx->expr2 = 0;
           mctx->cursor_init = IWKV_CURSOR_EQ;
@@ -159,9 +174,10 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
       if (!mctx->expr1) {
         mctx->expr1 = mctx->expr2;
         mctx->expr2 = 0;
-        mctx->cursor_step = IWKV_CURSOR_PREV;
+        mctx->cursor_init = IWKV_CURSOR_GE;
+        mctx->cursor_step = IWKV_CURSOR_NEXT;
       } else {
-        mctx->expr2->disabled = true;
+        mctx->expr2->prematched = true;
       }
     }
   }
@@ -189,7 +205,7 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
     }
   } else if (en->type == JQP_FILTER_TYPE) {
     int fnc = 0;
-    JQP_FILTER *f  = (JQP_FILTER *) en;
+    JQP_FILTER *f = (JQP_FILTER *) en;
     for (JQP_NODE *n = f->node; n; n = n->next) {
       switch (n->ntype) {
         case JQP_NODE_ANY:
@@ -209,7 +225,7 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
     }
     // Try to find matched index
     for (struct _JBIDX *idx = ctx->jbc->idx; idx; idx = idx->next) {
-      struct _JBMIDX mctx = { .filter = f };
+      struct _JBMIDX mctx = {.filter = f};
       struct _JBL_PTR *ptr = idx->ptr;
       if (ptr->cnt > fnc) continue;
       JQP_EXPR *nexpr = 0;

@@ -1,12 +1,11 @@
 #include "ejdb2_internal.h"
 
-iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err) {
+iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, bool *matched, iwrc err) {
   if (!id) { // EOF scan
     return err;
   }
 
   iwrc rc;
-  bool matched;
   struct _JBL jbl;
   size_t vsz = 0;
   EJDB_EXEC *ux = ctx->ux;
@@ -40,14 +39,13 @@ start: {
   rc = jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf, vsz);
   RCGO(rc, finish);
 
-  rc = jql_matched(ux->q, &jbl, &matched);
-  RCGO(rc, finish);
+  // todo remove
+  // fprintf(stderr, "\n");
+  // jbl_as_json(&jbl, jbl_fstream_json_printer, stderr, 0);
+  // fprintf(stderr, "\n");
 
-  if (!matched) {
-    goto finish;
-  }
-  if (ux->skip && ux->skip-- > 0) {
-    *step = 1;
+  rc = jql_matched(ux->q, &jbl, matched);
+  if (rc || !*matched || (ux->skip && ux->skip-- > 0)) {
     goto finish;
   }
   if (ctx->istep > 0) {

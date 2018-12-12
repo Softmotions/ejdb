@@ -151,12 +151,12 @@ static bool _jql_need_deeper_match(JQP_EXPR_NODE *en, int lvl) {
   return false;
 }
 
-static void _jql_reset_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
+static void _jql_reset_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux, bool reset_match_cache) {
   MENCTX *ectx = en->opaque;
   ectx->matched = false;
   for (en = en->chain; en; en = en->next) {
     if (en->type == JQP_EXPR_NODE_TYPE) {
-      _jql_reset_expression_node(en, aux);
+      _jql_reset_expression_node(en, aux, reset_match_cache);
     } else if (en->type == JQP_FILTER_TYPE) {
       MFCTX *fctx = ((JQP_FILTER *) en)->opaque;
       fctx->matched = false;
@@ -164,6 +164,10 @@ static void _jql_reset_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
       for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
         n->start = -1;
         n->end = -1;
+        JQPUNIT *unit = n->value;
+        if (reset_match_cache && unit->type == JQP_EXPR_TYPE) {
+          for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) expr->prematched = false;
+        }
       }
     }
   }
@@ -234,11 +238,11 @@ const char *jql_collection(JQL q) {
   return q->coll;
 }
 
-void jql_reset(JQL q, bool reset_placeholders) {
+void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders) {
   q->matched = false;
   q->dirty = false;
   JQP_AUX *aux = q->qp->aux;
-  _jql_reset_expression_node(aux->expr, aux);
+  _jql_reset_expression_node(aux->expr, aux, reset_match_cache);
   if (reset_placeholders) {
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
       _jql_jqval_destroy(pv->opaque);
@@ -875,6 +879,9 @@ JQVAL *jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
 }
 
 static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
+  if (expr->prematched) {
+    return true;
+  }
   const bool negate = (expr->join && expr->join->negate);
   JQPUNIT *left = expr->left;
   JQP_OP *op = expr->op;
@@ -1089,7 +1096,7 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
     .op = q
   };
   *out = false;
-  jql_reset(q, false);
+  jql_reset(q, false, false);
   JQP_EXPR_NODE *en = q->qp->aux->expr;
   if (en->chain && !en->chain->next && !en->next) {
     en = en->chain;

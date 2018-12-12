@@ -76,7 +76,7 @@ struct _JBIDX {
   IWDB auxdb;               /**< Auxiliary database, used by `EJDB_IDX_ARR` indexes */
   uint32_t dbid;            /**< IWKV collection database ID */
   uint32_t auxdbid;         /**< Auxiliary database ID, used by `EJDB_IDX_ARR` indexes */
-  int64_t  rnum;            /**< Number of records stored in index */
+  int64_t rnum;            /**< Number of records stored in index */
   struct _JBIDX *next;      /**< Next index in chain */
 };
 
@@ -101,7 +101,8 @@ struct _JBPHCTX {
 
 struct _JBEXEC;
 
-typedef iwrc(*JB_SCAN_CONSUMER)(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
+typedef iwrc(*JB_SCAN_CONSUMER)(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id,
+                                int64_t *step, bool *matched, iwrc err);
 
 /**
  * @brief Index can sorter consumer context
@@ -135,7 +136,7 @@ typedef struct _JBEXEC {
 
   uint32_t cnt;            /**< Current result row count */
   int64_t istep;
-  iwrc(*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
+  iwrc (*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
   uint8_t *jblbuf;         /**< Buffer used to keep currently processed document */
   size_t jblbufsz;         /**< Size of jblbuf allocated memory */
   bool sorting;            /**< Resultset sorting needed */
@@ -153,8 +154,8 @@ typedef uint8_t jb_coll_acquire_t;
 
 void jb_idx_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz);
 void jb_idx_jqval_fill_key(const JQVAL *rval, IWKV_val *key);
-iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
-iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, iwrc err);
+iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, bool *matched, iwrc err);
+iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id, int64_t *step, bool *matched, iwrc err);
 iwrc jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
 iwrc jb_idx_selection(JBEXEC *ctx);
 iwrc jb_idx_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);

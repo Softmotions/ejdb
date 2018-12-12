@@ -64,7 +64,7 @@ IW_EXPORT iwrc jql_get_limit(JQL q, int64_t *out);
 
 IW_EXPORT iwrc jql_apply(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool);
 
-IW_EXPORT void jql_reset(JQL q, bool reset_placeholders);
+IW_EXPORT void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders);
 
 IW_EXPORT void jql_destroy(JQL *qptr);
 
