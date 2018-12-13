@@ -128,6 +128,7 @@ struct _JBMIDX {
   JQP_EXPR *expr2;                    /**< End index expression (optional) */
   IWKV_cursor_op cursor_init;         /**< Initial index cursor position (optional) */
   IWKV_cursor_op cursor_step;         /**< Next index cursor step */
+  bool orderby_support;               /**< Index supported first order-by clause */
 };
 
 typedef struct _JBEXEC {

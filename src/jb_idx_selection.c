@@ -69,6 +69,9 @@ static void jb_log_index_rules(IWXSTR *xstr, struct _JBMIDX *mctx) {
     iwxstr_cat2(xstr, " INIT: ");
     jb_log_cursor_op(xstr, mctx->cursor_init);
   }
+  if (mctx->orderby_support) {
+    iwxstr_cat2(xstr, " ORDERBY");
+  }
   iwxstr_cat2(xstr, "\n");
 }
 
@@ -203,6 +206,10 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
       mctx->cursor_step = IWKV_CURSOR_NEXT;
     }
   }
+
+  // TODO: check orderby support
+
+
   return 0;
 }
 
@@ -243,16 +250,19 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
           break;
       }
     }
-    for (JQP_NODE *n = f->node; n; n = n->next) {
-      ++fnc;
-    }
+    for (JQP_NODE *n = f->node; n; n = n->next) ++fnc;
+
+    struct JQP_AUX *aux = ctx->ux->q->qp->aux;
+    struct _JBL_PTR *obp = aux->orderby_num ? aux->orderby_ptrs[0] : 0;
+
     // Try to find matched index
     for (struct _JBIDX *idx = ctx->jbc->idx; idx; idx = idx->next) {
       struct _JBMIDX mctx = {.filter = f};
       struct _JBL_PTR *ptr = idx->ptr;
       if (ptr->cnt > fnc) continue;
+
       JQP_EXPR *nexpr = 0;
-      int i = 0;
+      int i = 0, j = 0;
       for (JQP_NODE *n = f->node; n; n = n->next, ++i) { // Examine matched index
         nexpr = 0;
         const char *field = 0;
@@ -268,10 +278,14 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
         if (!field && strcmp(field, ptr->n[i]) != 0) {
           break;
         }
+        if (obp && i == j && i < obp->cnt && !strcmp(ptr->n[i], obp->n[i])) {
+          j++;
+        }
       }
       if (i == ptr->cnt) { // Found matched index
         mctx.nexpr = nexpr;
         mctx.idx = idx;
+        mctx.orderby_support = (i == j);
         rc = jb_compute_index_rules(ctx, &mctx);
         RCRET(rc);
         if (ctx->ux->log) {
@@ -332,12 +346,21 @@ iwrc jb_idx_selection(JBEXEC *ctx) {
         iwxstr_cat2(ctx->ux->log, "[INDEX] SELECTED ");
         jb_log_index_rules(ctx->ux->log, &ctx->midx);
       }
+      if (midx->orderby_support && aux->orderby_num == 1) {
+        // Turn off final sorting since it supported by natural index scan order
+        ctx->sorting = false;
+      } else if (aux->orderby_num) {
+        ctx->sorting = true;
+      }
+      goto finish;
     }
   }
 
-  // TODO: process sorting
+  // Index not found:
   if (aux->orderby_num) {
     ctx->sorting = true;
   }
+
+finish:
   return rc;
 }
