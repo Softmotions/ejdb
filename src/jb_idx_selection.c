@@ -118,25 +118,32 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
   for (; expr; expr = expr->next) {
     iwrc rc = 0;
     jqp_op_t op = expr->op->value;
-    JQVAL *rval = jql_unit_to_jqval(aux, expr->right, &rc);
+    JQVAL *rv = jql_unit_to_jqval(aux, expr->right, &rc);
     RCRET(rc);
     if (expr->left->type != JQP_STRING_TYPE) {
       continue;
     }
-    switch (rval->type) {
+    switch (rv->type) {
       case JQVAL_NULL:
       case JQVAL_RE:
-        continue;
-      case JQVAL_JBLNODE:
-        if (op != JQP_OP_IN || rval->vnode->type != JBV_ARRAY) {
-          continue;
-        }
-        break;
       case JQVAL_BINN:
-        if (op != JQP_OP_IN || binn_type(rval->vbinn) != BINN_LIST) {
+        continue;
+      case JQVAL_JBLNODE: {
+        if (op != JQP_OP_IN || rv->vnode->type != JBV_ARRAY) {
+          continue;
+        }
+        int vcnt = 0;
+        for (JBL_NODE n = rv->vnode->child; n; n = n->next, ++vcnt);
+        if (
+          vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE
+          && (vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE
+              || mctx->idx->rnum < rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO)
+          ) {
+          // No index for large IN array | small collection size
           continue;
         }
         break;
+      }
       default:
         break;
     }
@@ -152,7 +159,7 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
           if (mctx->expr1 && mctx->cursor_init == IWKV_CURSOR_GE) {
             JQVAL *pval = jql_unit_to_jqval(aux, mctx->expr1->right, &rc);
             RCRET(rc);
-            int cv = jql_cmp_jqval_pair(pval, rval, &rc);
+            int cv = jql_cmp_jqval_pair(pval, rv, &rc);
             RCRET(rc);
             if (cv > 0) {
               break;
@@ -168,7 +175,7 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         if (mctx->expr2) {
           JQVAL *pval = jql_unit_to_jqval(aux, mctx->expr2->right, &rc);
           RCRET(rc);
-          int cv = jql_cmp_jqval_pair(pval, rval, &rc);
+          int cv = jql_cmp_jqval_pair(pval, rv, &rc);
           RCRET(rc);
           if (cv < 0) {
             break;
@@ -177,7 +184,7 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         mctx->expr2 = expr;
         break;
       case JQP_OP_IN:
-        if (mctx->cursor_init != IWKV_CURSOR_EQ && rval->type >= JQVAL_JBLNODE) {
+        if (mctx->cursor_init != IWKV_CURSOR_EQ && rv->type >= JQVAL_JBLNODE) {
           mctx->expr1 = expr;
           mctx->expr2 = 0;
           mctx->cursor_init = IWKV_CURSOR_EQ;
@@ -301,10 +308,9 @@ static int jb_idx_cmp(const void *o1, const void *o2) {
 
 iwrc jb_idx_selection(JBEXEC *ctx) {
   iwrc rc = 0;
-  struct JQP_AUX *aux = ctx->ux->q->qp->aux;
-  struct JQP_EXPR_NODE *expr = aux->expr;
-  struct _JBMIDX fctx[JB_SOLID_EXPRNUM] = {0};
   size_t snp = 0;
+  struct JQP_AUX *aux = ctx->ux->q->qp->aux;
+  struct _JBMIDX fctx[JB_SOLID_EXPRNUM] = {0};
 
   ctx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
   ctx->cursor_step = IWKV_CURSOR_NEXT;

@@ -1,6 +1,5 @@
 #include "ejdb_test.h"
 #include <CUnit/Basic.h>
-#include <stdlib.h>
 
 int init_suite() {
   int rc = ejdb_init();
@@ -11,7 +10,7 @@ int clean_suite() {
   return 0;
 }
 
-void ejdb_test3_1() {
+static void ejdb_test3_1() {
   EJDB_OPTS opts = {
     .kv = {
       .path = "ejdb_test3_1.db",
@@ -27,7 +26,6 @@ void ejdb_test3_1() {
   CU_ASSERT_PTR_NOT_NULL_FATAL(log);
   IWXSTR *xstr = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
-
 
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -199,18 +197,40 @@ void ejdb_test3_1() {
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
 
-  // Q: /f/[b != 1] and /f/[b < 3]
-  rc = ejdb_list3(db, "c1", "/f/[b != 1] and /f/[b < 3]", 0, log, &list);
+  // Q: /f/[b > 1 or b != 1] and /f/[b < 3]
+  rc = ejdb_list3(db, "c1", "/f/[b > 1 or b != 1] and /f/[b < 3]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
                                 "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b < 3' INIT: IWKV_CURSOR_GE"));
-  //fprintf(stderr, "\n%s\n", iwxstr_ptr(log));
+  i = 0;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":2},\"n\":2}");
   }
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  // Q: /f/[b in [2,1112,4,6]]
+  rc = ejdb_list3(db, "c1", "/f/[b in [2,1112,4,6]]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b in [2,1112,4,6]' INIT: IWKV_CURSOR_EQ"));
+  i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    if (i == 0) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":2},\"n\":2}");
+    } else if (i == 1) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":4},\"n\":4}");
+    } else if (i == 2) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":6},\"n\":6}");
+    }
+  }
+  CU_ASSERT_EQUAL(i, 3);
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
 
@@ -221,6 +241,10 @@ void ejdb_test3_1() {
   iwxstr_destroy(xstr);
 }
 
+static void ejdb_test3_2() {
+}
+
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -230,7 +254,8 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1))
+    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2))
     ) {
     CU_cleanup_registry();
     return CU_get_error();

@@ -389,6 +389,7 @@ static iwrc _jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, int 
       PT("null", 4, 0, 1);
       break;
     default:
+      iwlog_ecode_error3(IW_ERROR_ASSERTION);
       return IW_ERROR_ASSERTION;
   }
 #undef PT

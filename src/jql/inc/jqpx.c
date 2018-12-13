@@ -1038,7 +1038,9 @@ static iwrc _jqp_print_join(jqp_op_t jqop, bool negate, jbl_json_printer pt, voi
       PT("re", 2, 0, 0);
       break;
     default:
+      iwlog_ecode_error3(IW_ERROR_ASSERTION);
       rc = IW_ERROR_ASSERTION;
+      break;
   }
   PT(0, 0, ' ', 1);
   return rc;
@@ -1059,6 +1061,7 @@ iwrc jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op
       PT(0, 0, '"', 1);
     }
   } else {
+    iwlog_ecode_error3(IW_ERROR_ASSERTION);
     return IW_ERROR_ASSERTION;
   }
   rc = _jqp_print_join(e->op->value, e->op->negate, pt, op);
@@ -1072,6 +1075,7 @@ iwrc jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op
     rc = jbl_node_as_json(&e->right->json.jn, pt, op, 0);
     RCRET(rc);
   } else {
+    iwlog_ecode_error3(IW_ERROR_ASSERTION);
     return IW_ERROR_ASSERTION;
   }
   return rc;
@@ -1096,6 +1100,7 @@ static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void 
     }
     PT(0, 0, ']', 1);
   } else {
+    iwlog_ecode_error3(IW_ERROR_ASSERTION);
     return IW_ERROR_ASSERTION;
   }
   return rc;
@@ -1137,6 +1142,7 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
     } else if (en->type == JQP_FILTER_TYPE) {
       rc = _jqp_print_filter(q, (const JQP_FILTER *) en, pt, op);
     } else {
+      iwlog_ecode_error3(IW_ERROR_ASSERTION);
       return IW_ERROR_ASSERTION;
     }
   }

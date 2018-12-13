@@ -382,6 +382,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
       PT("null", 4, 0, 0);
       break;
     default:
+      iwlog_ecode_error3(IW_ERROR_ASSERTION);
       rc = IW_ERROR_ASSERTION;
       break;
   }

@@ -39,11 +39,6 @@ start: {
   rc = jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf, vsz);
   RCGO(rc, finish);
 
-  // todo remove
-  // fprintf(stderr, "\n");
-  // jbl_as_json(&jbl, jbl_fstream_json_printer, stderr, 0);
-  // fprintf(stderr, "\n");
-
   rc = jql_matched(ux->q, &jbl, matched);
   if (rc || !*matched || (ux->skip && ux->skip-- > 0)) {
     goto finish;

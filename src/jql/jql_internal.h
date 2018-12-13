@@ -24,6 +24,7 @@ typedef enum {
   JQVAL_STR,
   JQVAL_BOOL,
   JQVAL_RE,
+
   JQVAL_JBLNODE, // Do not reorder JQVAL_JBLNODE,JQVAL_BINN must be last
   JQVAL_BINN
 } jqval_type_t;
@@ -43,6 +44,10 @@ typedef struct {
 } JQVAL;
 
 JQVAL *jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp);
+
+jqval_type_t jql_binn_to_jqval(binn *vbinn, JQVAL *qval);
+
+void jql_node_to_jqval(JBL_NODE jn, JQVAL *qv);
 
 int jql_cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp);
 

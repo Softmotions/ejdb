@@ -3,6 +3,7 @@
 #define EJDB_TEST_H
 
 #include "ejdb2.h"
+#include "ejdb2_internal.h"
 #include <string.h>
 
 static iwrc put_json(EJDB db, const char *coll, const char *json) {

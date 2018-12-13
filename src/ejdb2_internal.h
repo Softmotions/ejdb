@@ -151,6 +151,10 @@ typedef uint8_t jb_coll_acquire_t;
 #define JB_COLL_ACQUIRE_WRITE     ((jb_coll_acquire_t) 0x01U)
 #define JB_COLL_ACQUIRE_EXISTING  ((jb_coll_acquire_t) 0x02U)
 
+// Index selector empiric constants
+#define JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE 500
+#define JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE 10
+#define JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO 200
 
 void jb_idx_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz);
 void jb_idx_jqval_fill_key(const JQVAL *rval, IWKV_val *key);

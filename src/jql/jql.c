@@ -330,8 +330,15 @@ IW_INLINE jqval_type_t _binn_to_jqval(binn *vbinn, JQVAL *qval) {
       qval->type = JQVAL_F64;
       qval->vf64 = vbinn->vfloat;
       return qval->type;
+    default:
+      memset(qval, 0, sizeof(*qval));
+      break;
   }
   return JQVAL_NULL;
+}
+
+jqval_type_t jql_binn_to_jqval(binn *vbinn, JQVAL *qval) {
+  return _binn_to_jqval(vbinn, qval);
 }
 
 IW_INLINE void _node_to_jqval(JBL_NODE jn, JQVAL *qv) {
@@ -362,6 +369,10 @@ IW_INLINE void _node_to_jqval(JBL_NODE jn, JQVAL *qv) {
       qv->vnode = jn;
       break;
   }
+}
+
+void jql_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
+  _node_to_jqval(jn, qv);
 }
 
 /**
@@ -869,6 +880,7 @@ static JQVAL *_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
       return unit->dblval.opaque;
     }
     default:
+      iwlog_ecode_error3(IW_ERROR_ASSERTION);
       *rcp = IW_ERROR_ASSERTION;
       return 0;
   }
@@ -899,6 +911,7 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
     }
   } else if (left->type == JQP_EXPR_TYPE) {
     if (left->expr.left->type != JQP_STRING_TYPE || !(left->expr.left->string.flavour & JQP_STR_STAR)) {
+      iwlog_ecode_error3(IW_ERROR_ASSERTION);
       *rcp = IW_ERROR_ASSERTION;
       return false;
     }
@@ -923,6 +936,7 @@ static bool _match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   n->end = n->start;
   JQPUNIT *unit = n->value;
   if (unit->type != JQP_EXPR_TYPE) {
+    iwlog_ecode_error3(IW_ERROR_ASSERTION);
     *rcp = IW_ERROR_ASSERTION;
     return false;
   }
@@ -949,6 +963,7 @@ IW_INLINE bool _match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   n->start = mctx->lvl;
   n->end = n->start;
   if (n->value->type != JQP_STRING_TYPE) {
+    iwlog_ecode_error3(IW_ERROR_ASSERTION);
     *rcp = IW_ERROR_ASSERTION;
     return false;
   }
