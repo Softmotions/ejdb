@@ -91,14 +91,19 @@ IW_INLINE int jb_idx_expr_op_weight(jqp_op_t op) {
 }
 
 static bool jb_is_solid_node_expression(const JQP_NODE *n) {
-  const JQPUNIT *unit = n->value;
+  JQPUNIT *unit = n->value;
   for (const JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
-    if ((expr->join && (expr->join->negate || expr->join->value == JQP_JOIN_OR)) || expr->op->value == JQP_OP_RE) {
+    if (
+      expr->op->negate
+      || (expr->join && (expr->join->negate || expr->join->value == JQP_JOIN_OR))
+      || expr->op->value == JQP_OP_RE) {
       // No negate conditions, No OR, No regexp
       return false;
     }
     JQPUNIT *left = expr->left;
-    if ((left->type == JQP_STRING_TYPE && (left->string.flavour & JQP_STR_STAR)) || left->type == JQP_EXPR_TYPE) {
+    if (
+      left->type == JQP_EXPR_TYPE
+      || (left->type == JQP_STRING_TYPE && (left->string.flavour & JQP_STR_STAR))) {
       return false;
     }
   }
@@ -140,28 +145,39 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         mctx->cursor_init = IWKV_CURSOR_EQ;
         mctx->expr1 = expr;
         mctx->expr2 = 0;
-        expr->prematched = true;
         return 0;
       case JQP_OP_GT:
       case JQP_OP_GTE:
         if (mctx->cursor_init != IWKV_CURSOR_EQ) {
-          mctx->cursor_init = IWKV_CURSOR_GE;
-          mctx->expr1 = expr;
-          mctx->cursor_step = IWKV_CURSOR_PREV;
-          if (op == JQP_OP_GTE) {
-            mctx->expr1->prematched = true;
+          if (mctx->expr1 && mctx->cursor_init == IWKV_CURSOR_GE) {
+            JQVAL *pval = jql_unit_to_jqval(aux, mctx->expr1->right, &rc);
+            RCRET(rc);
+            int cv = jql_cmp_jqval_pair(pval, rval, &rc);
+            RCRET(rc);
+            if (cv > 0) {
+              break;
+            }
           }
+          mctx->expr1 = expr;
+          mctx->cursor_init = IWKV_CURSOR_GE;
+          mctx->cursor_step = IWKV_CURSOR_PREV;
         }
         break;
       case JQP_OP_LT:
       case JQP_OP_LTE:
+        if (mctx->expr2) {
+          JQVAL *pval = jql_unit_to_jqval(aux, mctx->expr2->right, &rc);
+          RCRET(rc);
+          int cv = jql_cmp_jqval_pair(pval, rval, &rc);
+          RCRET(rc);
+          if (cv < 0) {
+            break;
+          }
+        }
         mctx->expr2 = expr;
         break;
       case JQP_OP_IN:
         if (mctx->cursor_init != IWKV_CURSOR_EQ && rval->type >= JQVAL_JBLNODE) {
-          if (mctx->expr1) {
-            mctx->expr1->prematched = false;
-          }
           mctx->expr1 = expr;
           mctx->expr2 = 0;
           mctx->cursor_init = IWKV_CURSOR_EQ;
@@ -180,7 +196,6 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
       mctx->cursor_step = IWKV_CURSOR_NEXT;
     }
   }
-
   return 0;
 }
 
@@ -195,7 +210,8 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
   if (en->type == JQP_EXPR_NODE_TYPE) {
     struct JQP_EXPR_NODE *cn = en->chain;
     for (; cn; cn = cn->next) {
-      if (en->join && en->join->value == JQP_JOIN_OR) {
+      struct JQP_JOIN *join = en->join;
+      if (join && (join->value == JQP_JOIN_OR || join->negate)) {
         return 0;
       }
     }
@@ -252,7 +268,7 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
         rc = jb_compute_index_rules(ctx, &mctx);
         RCRET(rc);
         if (ctx->ux->log) {
-          iwxstr_cat2(ctx->ux->log, "[INDEX] MATCHED ");
+          iwxstr_cat2(ctx->ux->log, "[INDEX] MATCHED  ");
           jb_log_index_rules(ctx->ux->log, &mctx);
         }
         marr[*snp] = mctx;
@@ -299,6 +315,13 @@ iwrc jb_idx_selection(JBEXEC *ctx) {
     if (snp) {
       qsort(fctx, snp, sizeof(fctx[0]), jb_idx_cmp);
       memcpy(&ctx->midx, &fctx[0], sizeof(ctx->midx));
+      struct _JBMIDX *midx = &ctx->midx;
+      if (midx->expr1) {
+        jqp_op_t op = midx->expr1->op->value;
+        if (op == JQP_OP_EQ || (op == JQP_OP_GTE && ctx->cursor_init == IWKV_CURSOR_GE)) {
+          midx->expr1->prematched = true;
+        }
+      }
       if (ctx->ux->log) {
         iwxstr_cat2(ctx->ux->log, "[INDEX] SELECTED ");
         jb_log_index_rules(ctx->ux->log, &ctx->midx);
@@ -310,6 +333,5 @@ iwrc jb_idx_selection(JBEXEC *ctx) {
   if (aux->orderby_num) {
     ctx->sorting = true;
   }
-
   return rc;
 }

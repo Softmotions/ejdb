@@ -52,7 +52,7 @@ void ejdb_test3_1() {
   rc = ejdb_list3(db, "c1", "/f/[b = 1]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(
-    strstr(iwxstr_ptr(log), "[INDEX] MATCHED UNIQUE|I64|10 /f/b EXPR1: 'b = 1' INIT: IWKV_CURSOR_EQ"));
+    strstr(iwxstr_ptr(log), "[INDEX] MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b = 1' INIT: IWKV_CURSOR_EQ"));
   CU_ASSERT_PTR_NOT_NULL(
     strstr(iwxstr_ptr(log), "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b = 1' INIT: IWKV_CURSOR_EQ"));
   int i = 0;
@@ -68,7 +68,7 @@ void ejdb_test3_1() {
   // Q: /f/[b > 1]
   rc = ejdb_list3(db, "c1", "/f/[b > 1]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "MATCHED UNIQUE|I64|10 /f/b EXPR1: 'b > 1' INIT: IWKV_CURSOR_GE"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b > 1' INIT: IWKV_CURSOR_GE"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b > 1' INIT: IWKV_CURSOR_GE"));
 
   i = 0;
@@ -141,13 +141,78 @@ void ejdb_test3_1() {
   // Q: /f/[b < 11 and b >= 4]
   rc = ejdb_list3(db, "c1", "/f/[b < 11 and b >= 4]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b >= 4' EXPR2: 'b < 11' INIT: IWKV_CURSOR_GE"));
   i = 0;
-
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    if (i == 0) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":4},\"n\":4}");
+    } else if (i == 6) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":10},\"n\":10}");
+    }
+  }
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
 
+  // Q: /f/[b < 11 and b > 0 or b = 0]
+  rc = ejdb_list3(db, "c1", "/f/[b < 11 and b > 0 or b = 0]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
 
+  // Q: /f/[b > 1 and b < 2 and b = 2 and b < 3]
+  rc = ejdb_list3(db, "c1", "/f/[b > 1 and b < 2 and b = 2 and b < 3]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b = 2' INIT: IWKV_CURSOR_EQ"));
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
 
+  // Q: /f/[b > 1 and b < 3 and b <= 4]
+  rc = ejdb_list3(db, "c1", "/f/[b > 1 and b < 3 and b <= 4]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b > 1' EXPR2: 'b < 3' INIT: IWKV_CURSOR_GE"));
+  i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":2},\"n\":2}");
+  }
+  CU_ASSERT_EQUAL(i, 1);
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  // Q: /f/[b > 1] and /f/[b < 3]
+  rc = ejdb_list3(db, "c1", "/f/[b > 1] and /f/[b < 3]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b > 1' INIT: IWKV_CURSOR_GE"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b < 3' INIT: IWKV_CURSOR_GE"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b > 1' INIT: IWKV_CURSOR_GE"));
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  // Q: /f/[b != 1] and /f/[b < 3]
+  rc = ejdb_list3(db, "c1", "/f/[b != 1] and /f/[b < 3]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b < 3' INIT: IWKV_CURSOR_GE"));
+  //fprintf(stderr, "\n%s\n", iwxstr_ptr(log));
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":2},\"n\":2}");
+  }
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
 
 
   rc = ejdb_close(&db);

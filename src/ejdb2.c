@@ -712,6 +712,9 @@ static iwrc jb_exec_scan_init(JBEXEC *ctx) {
     }
   } else {
     ctx->scanner = jb_full_scanner;
+    if (ctx->ux->log) {
+      iwxstr_cat2(ctx->ux->log, "[INDEX] NO");
+    }
   }
   return 0;
 }
@@ -737,6 +740,10 @@ iwrc ejdb_exec(EJDB_EXEC *ux) {
   if (!ux->visitor) {
     ux->visitor = jb_noop_visitor;
     ux->q->qp->aux->projection = 0; // Actually we don't need projection if exists
+  }
+  if (ux->log) {
+    // set terminating NULL to current pos of log
+    iwxstr_cat(ux->log, 0, 0);
   }
   JBEXEC ctx = {
     .ux = ux

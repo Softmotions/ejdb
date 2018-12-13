@@ -45,7 +45,7 @@ bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR
   bool ret = false;
   iwrc rc = 0;
 
-  if (idx->mode & (EJDB_IDX_STR | EJDB_IDX_I64 | EJDB_IDX_F64)) {
+  if (!(idx->mode & (EJDB_IDX_STR | EJDB_IDX_I64 | EJDB_IDX_F64))) {
     return false;
   }
   JQVAL lv, *rv = jql_unit_to_jqval(aux, expr->right, &rc);
@@ -59,10 +59,9 @@ bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
+    rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz);
+    RCGO(rc, finish);
   }
-  rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz);
-  RCGO(rc, finish);
-
   if (idx->mode & EJDB_IDX_STR) {
     kbuf[sz] = '\0';
     lv.type = JQVAL_STR;
