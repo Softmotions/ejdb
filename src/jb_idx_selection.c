@@ -75,19 +75,24 @@ static void jb_log_index_rules(IWXSTR *xstr, struct _JBMIDX *mctx) {
   iwxstr_cat2(xstr, "\n");
 }
 
-IW_INLINE int jb_idx_expr_op_weight(jqp_op_t op) {
+IW_INLINE int jb_idx_expr_op_weight(struct _JBMIDX *midx) {
+  jqp_op_t op = midx->expr1->op->value;
+  if (op == JQP_OP_EQ) {
+    return 10;
+  }
+  if (midx->orderby_support) {
+    return 9;
+  }
   switch (op) {
-    case JQP_OP_EQ:
-      return 10;
     case JQP_OP_IN:
     case JQP_OP_NI:
-      return 9;
+      return 8;
     case JQP_OP_GT:
     case JQP_OP_GTE:
-      return 8;
+      return 7;
     case JQP_OP_LT:
     case JQP_OP_LTE:
-      return 7;
+      return 6;
     default:
       return 0;
   }
@@ -330,8 +335,8 @@ static int jb_idx_cmp(const void *o1, const void *o2) {
   struct _JBMIDX *d1 = (struct _JBMIDX *) o1;
   struct _JBMIDX *d2 = (struct _JBMIDX *) o2;
   assert(d1 && d2);
-  int w1 = jb_idx_expr_op_weight(d1->expr1->op->value);
-  int w2 = jb_idx_expr_op_weight(d2->expr1->op->value);
+  int w1 = jb_idx_expr_op_weight(d1);
+  int w2 = jb_idx_expr_op_weight(d2);
   if (w2 - w1) {
     return w2 - w1;
   }
