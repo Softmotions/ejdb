@@ -335,9 +335,6 @@ static void ejdb_test3_1() {
   iwxstr_destroy(xstr);
 }
 
-static void ejdb_test3_2() {
-}
-
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
