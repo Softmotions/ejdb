@@ -207,8 +207,34 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
     }
   }
 
-  // TODO: check orderby support
-
+  // Orderby compatibility
+  if (mctx->orderby_support) {
+    if (aux->orderby_num == 1 && mctx->cursor_init != IWKV_CURSOR_EQ) {
+      bool desc = (aux->orderby_ptrs[0]->op & 1) != 0; // Desc sort
+      if (desc) {
+        if (mctx->cursor_step != IWKV_CURSOR_NEXT) {
+          mctx->orderby_support = false;
+        }
+      } else {
+        if (mctx->cursor_step != IWKV_CURSOR_PREV) {
+          mctx->orderby_support = false;
+        }
+      }
+      if (!mctx->orderby_support && mctx->expr2) {
+        JQP_EXPR *tmp = mctx->expr1;
+        mctx->expr1 = mctx->expr2;
+        mctx->expr2 = tmp;
+        mctx->orderby_support = true;
+        if (desc) {
+          mctx->cursor_step = IWKV_CURSOR_NEXT;
+        } else {
+          mctx->cursor_step = IWKV_CURSOR_PREV;
+        }
+      }
+    } else {
+      mctx->orderby_support = false;
+    }
+  }
 
   return 0;
 }

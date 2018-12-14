@@ -830,7 +830,7 @@ static void _jqp_finish(yycontext *yy) {
       rc = jbl_ptr_alloc_pool(iwxstr_ptr(xstr), &aux->orderby_ptrs[cnt], aux->pool);
       RCGO(rc, finish);
       JBL_PTR ptr = aux->orderby_ptrs[cnt];
-      ptr->op = !!(orderby->flavour & JQP_STR_NEGATE); // asc/desc
+      ptr->op = (uint64_t) ((orderby->flavour & JQP_STR_NEGATE) != 0); // asc/desc
       cnt++;
     }
   }
