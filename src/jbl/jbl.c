@@ -65,8 +65,8 @@ iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz) {
 }
 
 iwrc jbl_from_buf_keep_onstack2(JBL jbl, void *buf) {
-  int type, size = 0;
-  if (!binn_is_valid_header(buf, &type, NULL, &size, NULL)) {
+  int type, size = 0, count = 0;
+  if (!binn_is_valid_header(buf, &type, &count, &size, NULL)) {
     return JBL_ERROR_INVALID_BUFFER;
   }
   memset(jbl, 0, sizeof(*jbl));
@@ -74,6 +74,7 @@ iwrc jbl_from_buf_keep_onstack2(JBL jbl, void *buf) {
   jbl->bn.type = type;
   jbl->bn.ptr = buf;
   jbl->bn.size = size;
+  jbl->bn.count = count;
   return 0;
 }
 

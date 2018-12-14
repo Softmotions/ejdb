@@ -69,6 +69,10 @@ static void jb_log_index_rules(IWXSTR *xstr, struct _JBMIDX *mctx) {
     iwxstr_cat2(xstr, " INIT: ");
     jb_log_cursor_op(xstr, mctx->cursor_init);
   }
+  if (mctx->cursor_step) {
+    iwxstr_cat2(xstr, " STEP: ");
+    jb_log_cursor_op(xstr, mctx->cursor_step);
+  }
   if (mctx->orderby_support) {
     iwxstr_cat2(xstr, " ORDERBY");
   }
@@ -77,16 +81,19 @@ static void jb_log_index_rules(IWXSTR *xstr, struct _JBMIDX *mctx) {
 
 IW_INLINE int jb_idx_expr_op_weight(struct _JBMIDX *midx) {
   jqp_op_t op = midx->expr1->op->value;
-  if (op == JQP_OP_EQ) {
-    return 10;
-  }
-  if (midx->orderby_support) {
-    return 9;
-  }
   switch (op) {
+    case JQP_OP_EQ:
+      return 10;
     case JQP_OP_IN:
     case JQP_OP_NI:
-      return 8;
+      return 9;
+    default:
+      break;
+  }
+  if (midx->orderby_support) {
+    return 8;
+  }
+  switch (op) {
     case JQP_OP_GT:
     case JQP_OP_GTE:
       return 7;
