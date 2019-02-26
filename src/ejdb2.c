@@ -95,7 +95,7 @@ static iwrc jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
   rc = iwkv_db(jbc->db->iwkv, idx->dbid, idx->idbf, &idx->idb);
   RCGO(rc, finish);
   if (idx->auxdbid) {
-    rc = iwkv_db(jbc->db->iwkv, idx->auxdbid, IWDB_UINT64_KEYS, &idx->auxdb);
+    rc = iwkv_db(jbc->db->iwkv, idx->auxdbid, IWDB_VNUM64_KEYS, &idx->auxdb);
     RCGO(rc, finish);
   }
   idx->rnum = jb_meta_nrecs_get(jbc->db, idx->dbid);
@@ -163,12 +163,12 @@ static iwrc jb_coll_load_meta_lr(JBCOLL jbc) {
   }
   rc = jbl_at(jbm, "/id", &jbv);
   RCRET(rc);
-  jbc->dbid = jbl_get_i64(jbv);
+  jbc->dbid = (uint32_t) jbl_get_i64(jbv);
   jbl_destroy(&jbv);
   if (!jbc->dbid) {
     return EJDB_ERROR_INVALID_COLLECTION_META;
   }
-  rc = iwkv_db(jbc->db->iwkv, jbc->dbid, IWDB_UINT64_KEYS, &jbc->cdb);
+  rc = iwkv_db(jbc->db->iwkv, jbc->dbid, IWDB_VNUM64_KEYS, &jbc->cdb);
   RCRET(rc);
 
   jbc->rnum = jb_meta_nrecs_get(jbc->db, jbc->dbid);
@@ -294,7 +294,7 @@ static iwrc jb_db_meta_load(EJDB db) {
     RCRET(rc);
   }
   if (!db->nrecdb) {
-    rc = iwkv_db(db->iwkv, NUMRECSDB_ID, IWDB_UINT32_KEYS, &db->nrecdb);
+    rc = iwkv_db(db->iwkv, NUMRECSDB_ID, IWDB_VNUM64_KEYS, &db->nrecdb);
     RCRET(rc);
   }
 
@@ -309,20 +309,18 @@ static iwrc jb_db_meta_load(EJDB db) {
       JBCOLL jbc = calloc(1, sizeof(*jbc));
       if (!jbc) {
         rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-        iwkv_val_dispose(&val);
+        iwkv_kv_dispose(&key, &val);
         goto finish;
       }
       jbc->db = db;
       rc = jb_coll_init(jbc, &val);
       if (rc) {
         jb_coll_release(jbc);
-        iwkv_val_dispose(&val);
+        iwkv_kv_dispose(&key, &val);
         goto finish;
       }
-    } else {
-      iwkv_val_dispose(&val);
     }
-    iwkv_val_dispose(&key);
+    iwkv_kv_dispose(&key, &val);
   }
   if (rc == IWKV_ERROR_NOTFOUND) {
     rc = 0;
@@ -394,7 +392,7 @@ static iwrc jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquire
       char keybuf[JBNUMBUF_SIZE + sizeof(KEY_PREFIX_COLLMETA)];
       IWKV_val key, val;
 
-      rc = iwkv_new_db(db->iwkv, IWDB_UINT64_KEYS, &dbid, &cdb);
+      rc = iwkv_new_db(db->iwkv, IWDB_VNUM64_KEYS, &dbid, &cdb);
       RCGO(rc, create_finish);
       jbc = calloc(1, sizeof(*jbc));
       if (!jbc) {
