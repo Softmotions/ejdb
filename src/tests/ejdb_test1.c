@@ -22,7 +22,7 @@ void ejdb_test1_2() {
   };
   EJDB db;
   JBL jbl, at, meta;
-  uint64_t llv = 0, llv2;
+  int64_t llv = 0, llv2;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 

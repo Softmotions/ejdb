@@ -15,7 +15,7 @@ static iwrc put_json(EJDB db, const char *coll, const char *json) {
     if (buf[i] == '\'') buf[i] = '"';
   }
   JBL jbl;
-  uint64_t llv;
+  int64_t llv;
   iwrc rc = jbl_from_json(&jbl, buf);
   RCRET(rc);
   rc = ejdb_put_new(db, coll, jbl, &llv);

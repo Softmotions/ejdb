@@ -167,7 +167,7 @@ static iwrc jb_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
   return rc;
 }
 
-iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, uint64_t id,
+iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id,
                              int64_t *step, bool *matched, iwrc err) {
   if (!id) {
     // End of scan

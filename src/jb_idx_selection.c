@@ -9,10 +9,6 @@ static void jb_print_index(struct _JBIDX *idx, IWXSTR *xstr) {
     cnt++;
     iwxstr_cat2(xstr, "UNIQUE");
   }
-  if (m & EJDB_IDX_ARR) {
-    if (cnt++) iwxstr_cat2(xstr, "|");
-    iwxstr_cat2(xstr, "ARR");
-  }
   if (m & EJDB_IDX_STR) {
     if (cnt++) iwxstr_cat2(xstr, "|");
     iwxstr_cat2(xstr, "STR");

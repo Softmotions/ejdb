@@ -23,7 +23,6 @@ typedef enum {
 
 typedef uint8_t ejdb_idx_mode_t;
 #define EJDB_IDX_UNIQUE     ((ejdb_idx_mode_t) 0x01U)
-#define EJDB_IDX_ARR        ((ejdb_idx_mode_t) 0x02U)
 #define EJDB_IDX_STR        ((ejdb_idx_mode_t) 0x04U)
 #define EJDB_IDX_I64        ((ejdb_idx_mode_t) 0x08U)
 #define EJDB_IDX_F64        ((ejdb_idx_mode_t) 0x10U)
@@ -117,13 +116,13 @@ IW_EXPORT WUR iwrc ejdb_list3(EJDB db, const char *coll, const char *query, int6
 
 IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
 
-IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, uint64_t id);
+IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id);
 
-IW_EXPORT WUR iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, uint64_t *oid);
+IW_EXPORT WUR iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *oid);
 
-IW_EXPORT WUR iwrc ejdb_get(EJDB db, const char *coll, uint64_t id, JBL *jblp);
+IW_EXPORT WUR iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp);
 
-IW_EXPORT iwrc ejdb_remove(EJDB db, const char *coll, uint64_t id);
+IW_EXPORT iwrc ejdb_remove(EJDB db, const char *coll, int64_t id);
 
 IW_EXPORT iwrc ejdb_remove_collection(EJDB db, const char *coll);
 

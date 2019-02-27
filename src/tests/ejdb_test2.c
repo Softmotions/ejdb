@@ -122,7 +122,7 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "not_exists", "/*", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i);
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {}
   CU_ASSERT_EQUAL(i, 0);
   ejdb_list_destroy(&list);
 
@@ -134,17 +134,13 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"bar\"}");
+      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"bar\"}");
         break;
-      case 1:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"gaz\"}");
+      case 1: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"gaz\"}");
         break;
-      case 2:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"foo\"}");
+      case 2: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"foo\"}");
         break;
-      case 5:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
+      case 5: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
         break;
     }
   }
@@ -154,14 +150,14 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "a", "/*", 1, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i);
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {}
   CU_ASSERT_EQUAL(i, 1);
   ejdb_list_destroy(&list);
 
   rc = ejdb_list2(db, "a", "/f", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i);
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {}
   CU_ASSERT_EQUAL(i, 3);
   ejdb_list_destroy(&list);
 
@@ -173,8 +169,7 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"gaz\"}");
+      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"gaz\"}");
         break;
     }
   }
@@ -189,8 +184,7 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"foo\"}");
+      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"foo\"}");
         break;
     }
   }
@@ -212,20 +206,15 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":1}");
+      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":1}");
         break;
-      case 1:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
+      case 1: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
         break;
-      case 2:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":3}");
+      case 2: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":3}");
         break;
-      case 3:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":5}");
+      case 3: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":5}");
         break;
-      case 4:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":6}");
+      case 4: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":6}");
         break;
     }
   }
@@ -240,20 +229,15 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":6}");
+      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":6}");
         break;
-      case 1:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":5}");
+      case 1: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":5}");
         break;
-      case 2:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":3}");
+      case 2: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":3}");
         break;
-      case 3:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
+      case 3: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
         break;
-      case 4:
-        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":1}");
+      case 4: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":1}");
         break;
     }
   }
@@ -308,7 +292,7 @@ int main() {
   if (
     (NULL == CU_add_test(pSuite, "ejdb_test2_1", ejdb_test2_1)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test2_2", ejdb_test2_2))
-  ) {
+    ) {
     CU_cleanup_registry();
     return CU_get_error();
   }
