@@ -15,7 +15,7 @@ iwrc jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
     else if (step < 0) ++step;
     if (!step) {
       size_t sz;
-      uint64_t id;
+      int64_t id;
       rc = iwkv_cursor_copy_key(cur, &id, sizeof(id), &sz);
       RCBREAK(rc);
       if (sz != sizeof(id)) {
