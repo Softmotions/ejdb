@@ -454,7 +454,7 @@ finish:
 }
 
 IW_INLINE iwrc jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCOLL *jbcp) {
-  return jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE, jbcp);
+  return jb_coll_acquire_keeplock2(db, coll, wl ? JB_COLL_ACQUIRE_WRITE : 0, jbcp);
 }
 
 static void jb_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
