@@ -133,11 +133,12 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
       }
       RCGO(rc, finish);
     }
-again:
-    step = 1;
-    rc = ux->visitor(ux, &doc, &step);
-    RCGO(rc, finish);
-    if (step < 0 && !++step) goto again;
+    do {
+      step = 1;
+      rc = ux->visitor(ux, &doc, &step);
+      RCGO(rc, finish);
+    } while (step == -1);
+
     i += step;
     if (--ux->limit < 1) {
       break;
@@ -247,7 +248,7 @@ start2:
   {
     if (ssc->docs) {
       uint32_t rsize = ssc->docs_npos + vsz;
-      if (rsize > ssc->docs_asz)  {
+      if (rsize > ssc->docs_asz) {
         ssc->docs_asz = MIN(rsize * 2, db->opts.sort_buffer_sz);
         if (rsize > ssc->docs_asz) {
           size_t sz;

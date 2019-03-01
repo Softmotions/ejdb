@@ -15,7 +15,8 @@ iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t 
     .size = sizeof(id)
   };
 
-start: {
+start:
+  {
     if (cur) {
       rc = iwkv_cursor_copy_val(cur, ctx->jblbuf, ctx->jblbufsz, &vsz);
     } else {
@@ -86,13 +87,15 @@ start: {
         RCGO(rc, finish);
       }
     }
-    ctx->istep = 1;
-    rc = ux->visitor(ux, &doc, &ctx->istep);
-    RCGO(rc, finish);
-    *step  = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
-    if (--ux->limit < 1) {
-      *step = 0;
-    }
+    do {
+      ctx->istep = 1;
+      rc = ux->visitor(ux, &doc, &ctx->istep);
+      RCGO(rc, finish);
+    } while (ctx->istep == -1);
+    *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
+    if (--ux->limit < 1) *step = 0;
+  } else {
+    *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
   }
 
 finish:

@@ -42,11 +42,9 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER c
       if (key.size != sz - vns || memcmp(dkey + vns, key.data, key.size) != 0) {
         break;
       }
-      do {
-        step = 1;
-        rc = consumer(ctx, 0, id, &step, &matched, 0);
-        RCGO(rc, finish);
-      } while (step < 0 && !++step);
+      step = 1;
+      rc = consumer(ctx, 0, id, &step, &matched, 0);
+      RCGO(rc, finish);
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
 

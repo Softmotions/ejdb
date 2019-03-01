@@ -23,12 +23,10 @@ iwrc jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
         iwlog_ecode_error3(rc);
         break;
       }
-      do {
-        step = 1;
-        matched = false;
-        rc = consumer(ctx, cur, id, &step, &matched, 0);
-        RCBREAK(rc);
-      } while (step < 0 && !++step);
+      step = 1;
+      matched = false;
+      rc = consumer(ctx, cur, id, &step, &matched, 0);
+      RCBREAK(rc);
     }
   }
   if (rc == IWKV_ERROR_NOTFOUND) rc = 0;

@@ -67,11 +67,9 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSU
       else if (step < 0) ++step;
       if (!step) {
         IW_READVNUMBUF64_2(buf, id);
-        do {
-          step = 1;
-          rc = consumer(ctx, 0, id, &step, &matched, 0);
-          RCGO(rc, finish);
-        } while (step < 0 && !++step);
+        step = 1;
+        rc = consumer(ctx, 0, id, &step, &matched, 0);
+        RCGO(rc, finish);
       }
     }
   } while (step && (step > 0 ? (nv = nv->next) : (nv = nv->prev)));
@@ -124,16 +122,14 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER
         break;
       }
       RCGO(rc, finish);
-      do {
-        step = 1;
-        matched = false;
-        rc = consumer(ctx, 0, id, &step, &matched, 0);
-        RCGO(rc, finish);
-        if (!midx->expr1->prematched && matched) {
-          // Further scan will always match main index expression
-          midx->expr1->prematched = true;
-        }
-      } while (step < 0 && !++step);
+      step = 1;
+      matched = false;
+      rc = consumer(ctx, 0, id, &step, &matched, 0);
+      RCGO(rc, finish);
+      if (!midx->expr1->prematched && matched) {
+        // Further scan will always match main index expression
+        midx->expr1->prematched = true;
+      }
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
 
