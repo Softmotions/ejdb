@@ -47,38 +47,32 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSU
   }
   do {
     jql_node_to_jqval(nv, &jqv);
-    switch (jqv.type) {
-      case JQVAL_STR:
-      case JQVAL_I64:
-      case JQVAL_F64: {
-        jb_idx_jqval_fill_key(&jqv, &key);
-        if (!key.size) {
-          rc = IW_ERROR_ASSERTION;
-          iwlog_ecode_error3(rc);
+    if (jqv.type >= JQVAL_I64 && jqv.type <= JQVAL_STR) {
+      jb_idx_jqval_fill_key(&jqv, &key);
+      if (!key.size) {
+        rc = IW_ERROR_ASSERTION;
+        iwlog_ecode_error3(rc);
+        goto finish;
+      }
+      rc = iwkv_get_copy(midx->idx->idb, &key, buf, sizeof(buf), &sz);
+      if (rc) {
+        if (rc == IWKV_ERROR_NOTFOUND) {
+          rc = 0;
+          continue;
+        } else {
           goto finish;
         }
-        rc = iwkv_get_copy(midx->idx->idb, &key, buf, sizeof(buf), &sz);
-        if (rc) {
-          if (rc == IWKV_ERROR_NOTFOUND) {
-            rc = 0;
-            continue;
-          } else {
-            goto finish;
-          }
-        }
-        if (step > 0) --step;
-        else if (step < 0) ++step;
-        if (!step) {
-          IW_READVNUMBUF64_2(buf, id);
-          do {
-            step = 1;
-            rc = consumer(ctx, 0, id, &step, &matched, 0);
-            RCGO(rc, finish);
-          } while (step < 0 && !++step);
-        }
       }
-      default:
-        break;
+      if (step > 0) --step;
+      else if (step < 0) ++step;
+      if (!step) {
+        IW_READVNUMBUF64_2(buf, id);
+        do {
+          step = 1;
+          rc = consumer(ctx, 0, id, &step, &matched, 0);
+          RCGO(rc, finish);
+        } while (step < 0 && !++step);
+      }
     }
   } while (step && (step > 0 ? (nv = nv->next) : (nv = nv->prev)));
 

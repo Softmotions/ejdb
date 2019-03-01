@@ -379,9 +379,9 @@ void jql_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
  * Allowed on left:   JQVAL_STR|JQVAL_I64|JQVAL_F64|JQVAL_BOOL|JQVAL_NULL|JQVAL_BINN
  * Allowed on right:  JQVAL_STR|JQVAL_I64|JQVAL_F64|JQVAL_BOOL|JQVAL_NULL|JQVAL_JBLNODE
  */
-static int _cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp) {
+static int _cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp) {
   JQVAL sleft, sright;   // Stack allocated left/right converted values
-  JQVAL *lv = left, *rv = right;
+  const JQVAL *lv = left, *rv = right;
 
   if (lv->type == JQVAL_BINN) {
     _binn_to_jqval(lv->vbinn, &sleft);
@@ -514,7 +514,7 @@ static int _cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp) {
   return 0;
 }
 
-int jql_cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp) {
+int jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp) {
   return _cmp_jqval_pair(left, right, rcp);
 }
 

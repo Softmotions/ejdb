@@ -18,7 +18,8 @@ struct _JQL {
 
 /** Placeholder value type */
 typedef enum {
-  JQVAL_NULL,
+
+  JQVAL_NULL,  // Do not reorder
   JQVAL_I64,
   JQVAL_F64,
   JQVAL_STR,
@@ -49,7 +50,7 @@ jqval_type_t jql_binn_to_jqval(binn *vbinn, JQVAL *qval);
 
 void jql_node_to_jqval(JBL_NODE jn, JQVAL *qv);
 
-int jql_cmp_jqval_pair(JQVAL *left, JQVAL *right, iwrc *rcp);
+int jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp);
 
 bool jql_match_jqval_pair(JQP_AUX *aux, JQVAL *left, JQP_OP *jqop, JQVAL *right, iwrc *rcp);
 
