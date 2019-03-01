@@ -13,8 +13,7 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER c
 
   jb_idx_jqval_fill_key(rv, &key);
   if (!key.size) {
-    iwlog_ecode_error3(IW_ERROR_ASSERTION);
-    return IW_ERROR_ASSERTION;
+    return consumer(ctx, 0, 0, 0, 0, 0);
   }
   iwrc rc = iwkv_get_copy(midx->idx->idb, &key, buf, sizeof(buf), &sz);
   if (rc) {
@@ -86,8 +85,6 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER
   char buf[JBNUMBUF_SIZE];
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
-  IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_NEXT)
-                                       ? IWKV_CURSOR_PREV : IWKV_CURSOR_NEXT;
   IWKV_val key = {.data = buf};
   jb_idx_jqval_fill_key(rv, &key);
 
@@ -96,9 +93,13 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER
       && (midx->expr1->op->value == JQP_OP_LT || midx->expr1->op->value == JQP_OP_LTE)) {
     iwkv_cursor_close(&cur);
     midx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
+    midx->cursor_step = IWKV_CURSOR_NEXT;
     rc = iwkv_cursor_open(idx->idb, &cur, midx->cursor_init, 0);
     RCGO(rc, finish);
   } else RCRET(rc);
+
+  IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_NEXT)
+                                       ? IWKV_CURSOR_PREV : IWKV_CURSOR_NEXT;
 
   if (midx->cursor_init < IWKV_CURSOR_NEXT) { // IWKV_CURSOR_BEFORE_FIRST || IWKV_CURSOR_AFTER_LAST
     rc = iwkv_cursor_to(cur, midx->cursor_step);
