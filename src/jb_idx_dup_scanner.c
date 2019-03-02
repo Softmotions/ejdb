@@ -2,11 +2,9 @@
 
 static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER consumer) {
   iwrc rc;
-  size_t sz;
   bool matched;
   IWKV_cursor cur;
   int64_t step = 1;
-  char dkeybuf[512];
   char buf[JBNUMBUF_SIZE];
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
@@ -24,18 +22,14 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER c
     return consumer(ctx, 0, 0, 0, 0, 0);
   } else RCRET(rc);
 
-  char *dkey = key.size <= sizeof(dkeybuf) ? dkeybuf : malloc(key.size);
-  if (!dkey) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
   do {
     if (step > 0) --step;
     else if (step < 0) ++step;
     if (!step) {
       int64_t id;
-      rc = iwkv_cursor_copy_key(cur, dkey, key.size, &sz, &id);
+      rc = iwkv_cursor_is_matched_key(cur, &key, &matched, &id);
       RCGO(rc, finish);
-      if (key.size != sz || memcmp(dkey, key.data, key.size) != 0) {
+      if (!matched) {
         break;
       }
       step = 1;
@@ -46,9 +40,6 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER c
 
 finish:
   if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
-  if (dkey != dkeybuf) {
-    free(dkey);
-  }
   if (cur) {
     iwkv_cursor_close(&cur);
   }
@@ -63,48 +54,78 @@ static int _cmp_jqval(const void *v1, const void *v2) {
 }
 
 static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER consumer) {
-  size_t sz;
-  uint64_t id;
+  int i;
+  int64_t id;
   bool matched;
+  IWKV_cursor cur = 0;
+  struct _JBMIDX *midx = &ctx->midx;
+  JBIDX idx = midx->idx;
+
+  char jqvarrbuf[512];
   char buf[JBNUMBUF_SIZE];
-  IWKV_val key = {.data = buf};
+  IWKV_val key = {.data = buf, .compound = INT64_MIN};
+
   int64_t step = 1;
   iwrc rc = 0;
 
-  struct _JBMIDX *midx = &ctx->midx;
-  int i = 0;
   JBL_NODE nv = rv->vnode->child;
-  if (nv) {
-    do {
-      if (nv->type >= JBV_I64 && nv->type <= JBV_STR) ++i;
-    } while ((nv = nv->next));
+  for (i = 0; nv; nv = nv->next) {
+    if (nv->type >= JBV_I64 && nv->type <= JBV_STR) ++i;
   }
   if (i == 0) {
     return consumer(ctx, 0, 0, 0, 0, 0);
   }
 
-  JQVAL *jqvarr = malloc(i * sizeof(*jqvarr));
+  JQVAL *jqvarr = (i * sizeof(*jqvarr)) <= sizeof(jqvarrbuf)
+                  ? jqvarrbuf : malloc(i * sizeof(*jqvarr));
   if (!jqvarr) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  i = 0;
-  nv = rv->vnode->child;
-  do {
+  for (i = 0, nv = rv->vnode->child; nv; nv = nv->next) {
     if (nv->type >= JBV_I64 && nv->type <= JBV_STR) {
       JQVAL jqv;
       jql_node_to_jqval(nv, &jqv);
       memcpy(&jqvarr[i++], &jqv, sizeof(jqv));
     }
-  } while ((nv = nv->next));
-
+  }
   // Sort jqvarr according to index order, lowest first (asc)
   qsort(jqvarr, i, sizeof(jqvarr[0]), _cmp_jqval);
 
-  // todo
+  for (int c = 0; c < i; ++c) {
+    JQVAL *jqv = &jqvarr[i];
+    jb_idx_jqval_fill_key(jqv, &key);
+    if (cur) {
+      iwkv_cursor_close(&cur);
+    }
+    rc = iwkv_cursor_open(idx->idb, &cur, IWKV_CURSOR_GE, &key);
+    if (rc == IWKV_ERROR_NOTFOUND) {
+      rc = 0;
+      goto finish;
+    } else RCGO(rc, finish);
+    do {
+      if (step > 0) --step;
+      else if (step < 0) ++step;
+      if (!step) {
+        rc = iwkv_cursor_is_matched_key(cur, &key, &matched, &id);
+        RCGO(rc, finish);
+        if (!matched) {
+          break;
+        }
+        step = 1;
+        rc = consumer(ctx, 0, id, &step, &matched, 0);
+        RCGO(rc, finish);
+      }
+    } while (step && !(rc = iwkv_cursor_to(cur, IWKV_CURSOR_PREV))); // !!! only one direction
+  }
 
-
-//finish:
-//  free(jqvarr);
+finish:
+  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+  if (cur) {
+    iwkv_cursor_close(&cur);
+  }
+  if ((char *) jqvarr != jqvarrbuf) {
+    free(jqvarr);
+  }
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
@@ -113,7 +134,6 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER
   bool matched;
   IWKV_cursor cur;
   int64_t step = 1;
-  char dkeybuf[512];
   char buf[JBNUMBUF_SIZE];
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
@@ -143,26 +163,31 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *rv, JB_SCAN_CONSUMER
 
   IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_PREV)
                                        ? IWKV_CURSOR_NEXT : IWKV_CURSOR_PREV;
-
-  char *dkey = (key.size + IW_VNUMBUFSZ) <= sizeof(dkeybuf) ? dkeybuf : malloc(key.size + IW_VNUMBUFSZ);
-  if (!dkey) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
   do {
     if (step > 0) --step;
     else if (step < 0) ++step;
     if (!step) {
-      //iwkv_cursor_copy_key()
-
+      int64_t id;
+      rc = iwkv_cursor_copy_key(cur, 0, 0, &sz, &id);
+      RCGO(rc, finish);
+      if (midx->expr2
+          && !jb_idx_node_expr_matched(ctx->ux->q->qp->aux, midx->idx, cur, midx->expr2, &rc)) {
+        break;
+      }
+      RCGO(rc, finish);
+      step = 1;
+      matched = false;
+      rc = consumer(ctx, 0, id, &step, &matched, 0);
+      RCGO(rc, finish);
+      if (!midx->expr1->prematched && matched) {
+        // Further scan will always match main index expression
+        midx->expr1->prematched = true;
+      }
     }
-
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
 
 finish:
   if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
-  if (dkey != dkeybuf) {
-    free(dkey);
-  }
   if (cur) {
     iwkv_cursor_close(&cur);
   }
