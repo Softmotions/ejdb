@@ -51,7 +51,7 @@ bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR
   JQVAL lv, *rv = jql_unit_to_jqval(aux, expr->right, &rc);
   RCGO(rc, finish);
 
-  rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz);
+  rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz, 0);
   RCGO(rc, finish);
   if (sz > sizeof(skey) - 1) {
     kbuf = malloc(sz);
@@ -59,7 +59,7 @@ bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
-    rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz);
+    rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz, 0);
     RCGO(rc, finish);
   }
   if (idx->mode & EJDB_IDX_STR) {

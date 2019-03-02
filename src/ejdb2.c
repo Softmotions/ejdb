@@ -180,7 +180,7 @@ static iwrc jb_coll_load_meta_lr(JBCOLL jbc) {
     if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
   } else {
     size_t sz;
-    rc = iwkv_cursor_copy_key(cur, &jbc->id_seq, sizeof(jbc->id_seq), &sz);
+    rc = iwkv_cursor_copy_key(cur, &jbc->id_seq, sizeof(jbc->id_seq), &sz, 0);
     RCGO(rc, finish);
   }
 
