@@ -335,6 +335,66 @@ static void ejdb_test3_1() {
   iwxstr_destroy(xstr);
 }
 
+static void ejdb_test3_2() {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test3_2.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+
+  EJDB db;
+  char dbuf[1024];
+  EJDB_LIST list = 0;
+  int i = 0;
+  IWXSTR *log = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(log);
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_ensure_index(db, "a1", "/f/b", EJDB_IDX_I64);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  for (i = 1; i <= 10; ++i) {
+    int v = (i % 2) ? 0xffffff : 127;
+    //fprintf(stderr, "\n{\"f\":{\"b\":%d},\"n\":%d}", v, i);
+    snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":%d},\"n\":%d}", v, i);
+    rc = put_json(db, "a1", dbuf);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+  }
+
+  rc = ejdb_list3(db, "a1", "/f/[b > 127]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED I64|10 /f/b EXPR1: 'b > 127' "
+                                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
+
+  i = 1;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    if (i == 1) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":16777215},\"n\":1}");
+    } else if (i == 9) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":16777215},\"n\":9}");
+    }
+  }
+  CU_ASSERT_EQUAL(i, 6);
+
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_destroy(log);
+  iwxstr_destroy(xstr);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -344,7 +404,9 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1))) {
+    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2))
+    ) {
     CU_cleanup_registry();
     return CU_get_error();
   }

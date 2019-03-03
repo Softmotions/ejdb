@@ -96,8 +96,6 @@ static void ejdb_test2_1() {
   };
 
   EJDB db;
-  uint64_t llv = 0, llv2;
-  IWPOOL *pool = 0;
   EJDB_LIST list = 0;
   IWXSTR *xstr = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
