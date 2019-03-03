@@ -376,11 +376,13 @@ static void ejdb_test3_2() {
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
-    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
-    CU_ASSERT_EQUAL_FATAL(rc, 0);
     if (i == 1) {
+      rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+      CU_ASSERT_EQUAL_FATAL(rc, 0);
       CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":16777215},\"n\":1}");
     } else if (i == 9) {
+      rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+      CU_ASSERT_EQUAL_FATAL(rc, 0);
       CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":16777215},\"n\":9}");
     }
   }
