@@ -81,7 +81,7 @@ IW_INLINE int jb_idx_expr_op_weight(struct _JBMIDX *midx) {
     case JQP_OP_EQ:
       return 10;
     case JQP_OP_IN:
-    case JQP_OP_NI:
+    //case JQP_OP_NI: todo
       return 9;
     default:
       break;
