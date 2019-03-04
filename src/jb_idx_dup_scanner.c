@@ -91,17 +91,14 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CO
   // Sort jqvarr according to index order, lowest first (asc)
   qsort(jqvarr, i, sizeof(jqvarr[0]), _cmp_jqval);
 
-  for (int c = 0; c < i; ++c) {
-    JQVAL *jqv = &jqvarr[i];
+  for (int c = 0; c < i && !rc; ++c) {
+    JQVAL *jqv = &jqvarr[c];
     jb_idx_jqval_fill_key(jqv, &key);
     if (cur) {
       iwkv_cursor_close(&cur);
     }
     rc = iwkv_cursor_open(idx->idb, &cur, IWKV_CURSOR_GE, &key);
-    if (rc == IWKV_ERROR_NOTFOUND) {
-      rc = 0;
-      goto finish;
-    } else RCGO(rc, finish);
+    RCGO(rc, finish);
     do {
       if (step > 0) --step;
       else if (step < 0) ++step;
