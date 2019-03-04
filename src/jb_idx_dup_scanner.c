@@ -154,10 +154,6 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSU
     midx->cursor_step = IWKV_CURSOR_NEXT;
     rc = iwkv_cursor_open(idx->idb, &cur, midx->cursor_init, 0);
     RCGO(rc, finish);
-    if (!midx->expr2) {
-      midx->expr2 = midx->expr1;
-    }
-    midx->expr1 = 0;
   } else RCRET(rc);
 
   if (midx->cursor_init < IWKV_CURSOR_NEXT) { // IWKV_CURSOR_BEFORE_FIRST || IWKV_CURSOR_AFTER_LAST
@@ -182,7 +178,7 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSU
       matched = false;
       rc = consumer(ctx, 0, id, &step, &matched, 0);
       RCGO(rc, finish);
-      if (midx->expr1 && !midx->expr1->prematched && matched) {
+      if (!midx->expr1->prematched && matched) {
         // Further scan will always match main index expression
         midx->expr1->prematched = true;
       }

@@ -391,6 +391,9 @@ static void ejdb_test3_2() {
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
 
+
+
+
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_destroy(log);
