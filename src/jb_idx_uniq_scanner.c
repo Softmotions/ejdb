@@ -120,7 +120,8 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSU
         break;
       }
       IW_READVNUMBUF64_2(buf, id);
-      if (midx->expr2 && !midx->expr2->prematched
+      if (midx->expr2
+          && !midx->expr2->prematched
           && !jb_idx_node_expr_matched(ctx->ux->q->qp->aux, midx->idx, cur, midx->expr2, &rc)) {
         break;
       }

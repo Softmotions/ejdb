@@ -359,6 +359,22 @@ static void ejdb_test3_2() {
   rc = ejdb_ensure_index(db, "a1", "/f/b", EJDB_IDX_I64);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
+// Data:
+//
+//  {"f":{"b":16777215},"n":9}
+//  {"f":{"b":16777215},"n":7}
+//  {"f":{"b":16777215},"n":5}
+//  {"f":{"b":16777215},"n":3}
+//  {"f":{"b":16777215},"n":1}
+//  {"f":{"b":127},"n":10}
+//  {"f":{"b":127},"n":8}
+//  {"f":{"b":127},"n":6}
+//  {"f":{"b":127},"n":4}
+//  {"f":{"b":127},"n":2}
+//  {"f":{"b":126},"n":12}
+//  {"f":{"b":126},"n":11}
+//
+
   for (i = 1; i <= 10; ++i) {
     int v = (i % 2) ? 0xffffff : 127;
     //fprintf(stderr, "\n{\"f\":{\"b\":%d},\"n\":%d}", v, i);
@@ -394,16 +410,49 @@ static void ejdb_test3_2() {
     }
   }
   CU_ASSERT_EQUAL(i, 6);
-
-  //rc = ejdb_list3(db, "")
-
-
-
-
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
 
+  //
+  rc = ejdb_list3(db, "a1", "/f/[b < 127]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "SELECTED I64|12 /f/b EXPR1: 'b < 127' "
+                                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_NEXT"));
 
+  i = 1;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    if (i == 1) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":126},\"n\":12}");
+    } else if (i == 2) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":126},\"n\":11}");
+    }
+  }
+  CU_ASSERT_EQUAL(i, 3);
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  //
+  rc = ejdb_list3(db, "a1", "/f/[b < 16777216]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  i = 1;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    if (i == 1) {
+      rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+      CU_ASSERT_EQUAL_FATAL(rc, 0);
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":16777215},\"n\":9}");
+    } else if (i == 12) {
+      rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+      CU_ASSERT_EQUAL_FATAL(rc, 0);
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":126},\"n\":11}");
+    }
+  }
+  CU_ASSERT_EQUAL(i, 13);
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
 
 
   rc = ejdb_close(&db);
