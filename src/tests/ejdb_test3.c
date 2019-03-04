@@ -366,11 +366,18 @@ static void ejdb_test3_2() {
     rc = put_json(db, "a1", dbuf);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
   }
+  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":%d},\"n\":%d}", 126, 11);
+  rc = put_json(db, "a1", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":%d},\"n\":%d}", 126, 12);
+  rc = put_json(db, "a1", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
 
   rc = ejdb_list3(db, "a1", "/f/[b > 127]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED I64|10 /f/b EXPR1: 'b > 127' "
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED I64|12 /f/b EXPR1: 'b > 127' "
                                                  "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
 
   i = 1;
@@ -387,6 +394,11 @@ static void ejdb_test3_2() {
     }
   }
   CU_ASSERT_EQUAL(i, 6);
+
+  //rc = ejdb_list3(db, "")
+
+
+
 
   ejdb_list_destroy(&list);
   iwxstr_clear(log);

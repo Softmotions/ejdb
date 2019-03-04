@@ -146,14 +146,16 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSU
   key.compound = (midx->cursor_step == IWKV_CURSOR_PREV) ? INT64_MIN : INT64_MAX;
 
   iwrc rc = iwkv_cursor_open(idx->idb, &cur, midx->cursor_init, &key);
-  if (rc == IWKV_ERROR_NOTFOUND
-      && (midx->expr1->op->value == JQP_OP_LT || midx->expr1->op->value == JQP_OP_LTE)) {
+  if (rc == IWKV_ERROR_NOTFOUND && (midx->expr1->op->value == JQP_OP_LT || midx->expr1->op->value == JQP_OP_LTE)) {
     iwkv_cursor_close(&cur);
     key.compound = INT64_MAX;
     midx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
     midx->cursor_step = IWKV_CURSOR_NEXT;
     rc = iwkv_cursor_open(idx->idb, &cur, midx->cursor_init, 0);
     RCGO(rc, finish);
+    if (!midx->expr2) { // Fail fast
+      midx->expr2 = midx->expr1;
+    }
   } else RCRET(rc);
 
   if (midx->cursor_init < IWKV_CURSOR_NEXT) { // IWKV_CURSOR_BEFORE_FIRST || IWKV_CURSOR_AFTER_LAST
@@ -170,7 +172,7 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSU
       int64_t id;
       rc = iwkv_cursor_copy_key(cur, 0, 0, &sz, &id);
       RCGO(rc, finish);
-      if (midx->expr2 && !jb_idx_node_expr_matched(ctx->ux->q->qp->aux, midx->idx, cur, midx->expr2, &rc)) {
+      if (midx->expr2 && !midx->expr2->prematched && !jb_idx_node_expr_matched(ctx->ux->q->qp->aux, midx->idx, cur, midx->expr2, &rc)) {
         break;
       }
       RCGO(rc, finish);
