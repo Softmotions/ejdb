@@ -389,7 +389,7 @@ static void ejdb_test3_2() {
   rc = put_json(db, "a1", dbuf);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-
+  // GT
   rc = ejdb_list3(db, "a1", "/f/[b > 127]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -413,7 +413,7 @@ static void ejdb_test3_2() {
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
 
-  //
+  // LT
   rc = ejdb_list3(db, "a1", "/f/[b < 127]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "SELECTED I64|12 /f/b EXPR1: 'b < 127' "
@@ -434,7 +434,7 @@ static void ejdb_test3_2() {
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
 
-  //
+  // LT2
   rc = ejdb_list3(db, "a1", "/f/[b < 16777216]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 1;
@@ -454,6 +454,33 @@ static void ejdb_test3_2() {
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
 
+  // EQ
+  rc = ejdb_list3(db, "a1", "/f/[b = 127]", 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "SELECTED I64|12 /f/b EXPR1: 'b = 127' "
+                                                 "INIT: IWKV_CURSOR_EQ"));
+
+  i = 1;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    if (i == 1) {
+      rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+      CU_ASSERT_EQUAL_FATAL(rc, 0);
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":127},\"n\":2}");
+    } else if (i == 5) {
+      rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+      CU_ASSERT_EQUAL_FATAL(rc, 0);
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":127},\"n\":10}");
+    }
+  }
+  CU_ASSERT_EQUAL(i, 6);
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  // IN
+  // todo
+  // Q: /f/[b in [2,1112,4,6]]
+  //rc = ejdb_list3(db, "c1", "/f/[b in [2,1112,4,6]]", 0, log, &list);
 
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
