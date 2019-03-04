@@ -49,9 +49,7 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CO
     if (jqv.type >= JQVAL_I64 && jqv.type <= JQVAL_STR) {
       jb_idx_jqval_fill_key(&jqv, &key);
       if (!key.size) {
-        rc = IW_ERROR_ASSERTION;
-        iwlog_ecode_error3(rc);
-        goto finish;
+        continue;
       }
       rc = iwkv_get_copy(midx->idx->idb, &key, buf, sizeof(buf), &sz);
       if (rc) {
