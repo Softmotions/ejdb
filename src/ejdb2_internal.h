@@ -155,7 +155,10 @@ typedef uint8_t jb_coll_acquire_t;
 #define JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO 200
 
 void jb_idx_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz);
-void jb_idx_jqval_fill_key(const JQVAL *rval, IWKV_val *key);
+
+void jb_idx_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
+void jb_idx_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
+
 iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
 iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
 iwrc jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);

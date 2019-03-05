@@ -47,12 +47,12 @@ typedef enum {
   JBV_NONE = 0, // Do not reorder
   JBV_NULL,
 
-  JBV_BOOL,
+  JBV_BOOL,     // Do not reorder
   JBV_I64,
   JBV_F64,
   JBV_STR,
 
-  JBV_OBJECT, // Do not reorder
+  JBV_OBJECT,   // Do not reorder
   JBV_ARRAY,
 } jbl_type_t;
 

@@ -4,15 +4,16 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
   iwrc rc;
   bool matched;
   IWKV_cursor cur;
+  char numbuf[JBNUMBUF_SIZE];
+
   int64_t step = 1;
-  char buf[JBNUMBUF_SIZE];
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
   IWKV_cursor_op cursor_reverse_step = IWKV_CURSOR_NEXT;
   midx->cursor_step = IWKV_CURSOR_PREV;
 
-  IWKV_val key = {.data = buf};
-  jb_idx_jqval_fill_key(jqval, &key);
+  IWKV_val key;
+  jb_idx_jqval_fill_ikey(idx, jqval, &key, numbuf);
   key.compound = INT64_MIN;
   if (!key.size) {
     return consumer(ctx, 0, 0, 0, 0, 0);
@@ -62,15 +63,15 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CO
   JBIDX idx = midx->idx;
 
   char jqvarrbuf[512];
-  char buf[JBNUMBUF_SIZE];
-  IWKV_val key = {.data = buf, .compound = INT64_MIN};
+  char numbuf[JBNUMBUF_SIZE];
+  IWKV_val key = {.compound = INT64_MIN};
 
   int64_t step = 1;
   iwrc rc = 0;
 
   JBL_NODE nv = jqval->vnode->child;
   for (i = 0; nv; nv = nv->next) {
-    if (nv->type >= JBV_I64 && nv->type <= JBV_STR) ++i;
+    if (nv->type >= JBV_BOOL && nv->type <= JBV_STR) ++i;
   }
   if (i == 0) {
     return consumer(ctx, 0, 0, 0, 0, 0);
@@ -82,7 +83,7 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CO
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   for (i = 0, nv = jqval->vnode->child; nv; nv = nv->next) {
-    if (nv->type >= JBV_I64 && nv->type <= JBV_STR) {
+    if (nv->type >= JBV_BOOL && nv->type <= JBV_STR) {
       JQVAL jqv;
       jql_node_to_jqval(nv, &jqv);
       memcpy(&jqvarr[i++], &jqv, sizeof(jqv));
@@ -93,7 +94,7 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CO
 
   for (int c = 0; c < i && !rc; ++c) {
     JQVAL *jqv = &jqvarr[c];
-    jb_idx_jqval_fill_key(jqv, &key);
+    jb_idx_jqval_fill_ikey(idx, jqv, &key, numbuf);
     if (cur) {
       iwkv_cursor_close(&cur);
     }
@@ -130,13 +131,14 @@ static iwrc jb_idx_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSU
   size_t sz;
   bool matched;
   IWKV_cursor cur;
+  char numbuf[JBNUMBUF_SIZE];
+
   int64_t step = 1;
-  char buf[JBNUMBUF_SIZE];
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
 
-  IWKV_val key = {.data = buf};
-  jb_idx_jqval_fill_key(jqval, &key);
+  IWKV_val key;
+  jb_idx_jqval_fill_ikey(idx, jqval, &key, numbuf);
   if (!key.size) {
     return consumer(ctx, 0, 0, 0, 0, 0);
   }

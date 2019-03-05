@@ -457,80 +457,6 @@ IW_INLINE iwrc jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCO
   return jb_coll_acquire_keeplock2(db, coll, wl ? JB_COLL_ACQUIRE_WRITE : 0, jbcp);
 }
 
-static void jb_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
-  int64_t *llv = (void *) numbuf;
-  jbl_type_t jbvt = jbl_type(jbv);
-  ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
-  ikey->size = 0;
-  ikey->data = 0;
-  switch (itype) {
-    case EJDB_IDX_STR:
-      switch (jbvt) {
-        case JBV_STR:
-          ikey->data = jbl_get_str(jbv);
-          ikey->size = jbl_size(jbv);
-          break;
-        case JBV_I64:
-          ikey->size = (size_t) iwitoa(jbl_get_i64(jbv), numbuf, JBNUMBUF_SIZE);
-          ikey->data = numbuf;
-          break;
-        case JBV_BOOL:
-          if (jbl_get_i32(jbv)) {
-            ikey->size = sizeof("true");
-            ikey->data = "true";
-          } else {
-            ikey->size = sizeof("false");
-            ikey->data = "false";
-          }
-          break;
-        case JBV_F64:
-          jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey->size);
-          ikey->data = numbuf;
-          break;
-        default:
-          break;
-      }
-      break;
-    case EJDB_IDX_I64:
-      ikey->size = sizeof(*llv);
-      ikey->data = llv;
-      switch (jbvt) {
-        case JBV_I64:
-        case JBV_F64:
-        case JBV_BOOL:
-          *llv = jbl_get_i64(jbv);
-          break;
-        case JBV_STR:
-          *llv = iwatoi(jbl_get_str(jbv));
-          break;
-        default:
-          ikey->size = 0;
-          ikey->data = 0;
-          break;
-      }
-      break;
-    case EJDB_IDX_F64:
-      ikey->data = numbuf;
-      switch (jbvt) {
-        case JBV_F64:
-        case JBV_I64:
-        case JBV_BOOL:
-          jb_idx_ftoa(jbl_get_f64(jbv), numbuf, &ikey->size);
-          break;
-        case JBV_STR:
-          jb_idx_ftoa(iwatof(jbl_get_str(jbv)), numbuf, &ikey->size);
-          break;
-        default:
-          ikey->size = 0;
-          ikey->data = 0;
-          break;
-      }
-      break;
-    default:
-      break;
-  }
-}
-
 static iwrc jb_idx_record_remove(JBIDX idx, int64_t id, JBL jbl) {
   iwrc rc = 0;
   IWKV_val key;
@@ -540,7 +466,7 @@ static iwrc jb_idx_record_remove(JBIDX idx, int64_t id, JBL jbl) {
   if (!_jbl_at(jbl, idx->ptr, &jbv)) {
     return 0;
   }
-  jb_fill_ikey(idx, &jbv, &key, numbuf);
+  jb_idx_jbl_fill_ikey(idx, &jbv, &key, numbuf);
   key.compound = id;
   if (key.size) {
     rc = iwkv_del(idx->idb, &key, 0);
@@ -571,7 +497,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
     return 0;
   }
   if (jbvprev_found) { // Remove old index
-    jb_fill_ikey(idx, &jbvprev, &key, numbuf);
+    jb_idx_jbl_fill_ikey(idx, &jbvprev, &key, numbuf);
     if (key.size) {
       key.compound = id;
       rc = iwkv_del(idx->idb, &key, 0);
@@ -580,7 +506,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   }
   if (jbv_found) { // Add index record
     RCRET(rc);
-    jb_fill_ikey(idx, &jbv, &key, numbuf);
+    jb_idx_jbl_fill_ikey(idx, &jbv, &key, numbuf);
     if (key.size) {
       if (idx->idbf & IWDB_COMPOUND_KEYS) {
         key.compound = id;
