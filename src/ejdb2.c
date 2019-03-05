@@ -507,7 +507,9 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
     jbv_found = false;
   }
 
-  if (jbv_type == jbvprev_type && jbvprev_type == JBV_ARRAY) { // compare next/prev obj arrays
+  if (compound
+      && jbv_type == jbvprev_type
+      && jbvprev_type == JBV_ARRAY) { // compare next/prev obj arrays
     pool = iwpool_create(0);
     if (!pool) iwrc_set_errno(IW_ERROR_ALLOC, errno);
     JBL_NODE jbvprev_node, jbv_node;
