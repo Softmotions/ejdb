@@ -22,8 +22,8 @@ void jb_idx_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static
     case EJDB_IDX_STR:
       switch (jbvt) {
         case JBV_STR:
-          ikey->data = jbl_get_str(jbv);
           ikey->size = jbl_size(jbv);
+          ikey->data = jbl_get_str(jbv);
           break;
         case JBV_I64:
           ikey->size = (size_t) iwitoa(jbl_get_i64(jbv), numbuf, JBNUMBUF_SIZE);
@@ -97,8 +97,8 @@ void jb_idx_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char 
     case EJDB_IDX_STR:
       switch (jqvt) {
         case JQVAL_STR:
-          ikey->data = (void *) jqval->vstr;
           ikey->size = strlen(jqval->vstr);
+          ikey->data = (void *) jqval->vstr;
           break;
         case JQVAL_I64:
           ikey->size = (size_t) iwitoa(jqval->vi64, numbuf, JBNUMBUF_SIZE);
