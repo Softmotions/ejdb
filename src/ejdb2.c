@@ -454,53 +454,28 @@ IW_INLINE iwrc jb_coll_acquire_keeplock(EJDB db, const char *coll, bool wl, JBCO
   return jb_coll_acquire_keeplock2(db, coll, wl ? JB_COLL_ACQUIRE_WRITE : 0, jbcp);
 }
 
-static iwrc jb_idx_record_remove(JBIDX idx, int64_t id, JBL jbl) {
-  iwrc rc = 0;
-  IWKV_val key;
-  struct _JBL jbv;
-  char numbuf[JBNUMBUF_SIZE];
-
-  if (!_jbl_at(jbl, idx->ptr, &jbv)) {
-    return 0;
-  }
-  jb_idx_jbl_fill_ikey(idx, &jbv, &key, numbuf);
-  key.compound = id;
-  if (key.size) {
-    rc = iwkv_del(idx->idb, &key, 0);
-    if (rc == IWKV_ERROR_NOTFOUND) {
-      rc = 0;
-    } else if (!rc) {
-      jb_meta_nrecs_update(idx->jbc->db, idx->dbid, -1);
-      idx->rnum -= 1;
-    }
-  }
-  return rc;
-}
-
 static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   IWKV_val key;
   uint8_t step;
   char vnbuf[IW_VNUMBUFSZ];
   char numbuf[JBNUMBUF_SIZE];
 
+  bool jbv_found, jbvprev_found;
   struct _JBL jbv = {0}, jbvprev = {0};
-  bool jbv_found, jbvprev_found = false;
   jbl_type_t jbv_type, jbvprev_type;
 
   iwrc rc = 0;
   IWPOOL *pool = 0;
-  int64_t delta = 0; // index records delta
+  int64_t delta = 0; // delta of added/removed index records
   bool compound = idx->idbf & IWDB_COMPOUND_KEYS;
 
-  if (jblprev) {
-    jbvprev_found = _jbl_at(jblprev, idx->ptr, &jbvprev);
-  }
-  jbv_found = _jbl_at(jbl, idx->ptr, &jbv);
+  jbvprev_found = jblprev ? _jbl_at(jblprev, idx->ptr, &jbvprev) : false;
+  jbv_found = jbl ? _jbl_at(jbl, idx->ptr, &jbv) : false;
 
   jbv_type = jbl_type(&jbv);
   jbvprev_type = jbl_type(&jbvprev);
 
-  // Do not index NULLs, OBJECTs, ARRAYs (if `EJDB_IDX_UNIQUE`)
+  // Do not index NULLs, OBJECTs, ARRAYs (in `EJDB_IDX_UNIQUE` mode)
   if ((jbvprev_type == JBV_OBJECT || jbvprev_type <= JBV_NULL)
       || (jbvprev_type == JBV_ARRAY && !compound)) {
     jbvprev_found = false;
@@ -514,7 +489,10 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
       && jbv_type == jbvprev_type
       && jbvprev_type == JBV_ARRAY) { // compare next/prev obj arrays
     pool = iwpool_create(0);
-    if (!pool) iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    if (!pool) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      goto finish;
+    }
     JBL_NODE jbvprev_node, jbv_node;
     rc = jbl_to_node(&jbv, &jbv_node, pool);
     RCGO(rc, finish);
@@ -528,48 +506,93 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   }
 
   if (jbvprev_found) { // Remove old index elements
-
-    // todo: Array type
-
-    jb_idx_jbl_fill_ikey(idx, &jbvprev, &key, numbuf);
-    if (key.size) {
-      key.compound = id;
-      rc = iwkv_del(idx->idb, &key, 0);
-      if (!rc) {
-        --delta;
-      } else if (rc == IWKV_ERROR_NOTFOUND) {
-        rc = 0;
+    if (jbvprev_type == JBV_ARRAY) {
+      JBL_NODE n;
+      if (!pool) {
+        pool = iwpool_create(0);
+        if (!pool) {
+          rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+        }
+      }
+      rc = jbl_to_node(&jbv, &n, pool);
+      RCGO(rc, finish);
+      for (n = n->child; n; n = n->next) {
+        jb_idx_node_fill_ikey(idx, n, &key, numbuf);
+        if (key.size) {
+          key.compound = id;
+          rc = iwkv_del(idx->idb, &key, 0);
+          if (!rc) {
+            --delta;
+          } else if (rc == IWKV_ERROR_NOTFOUND) {
+            rc = 0;
+          }
+          RCGO(rc, finish);
+        }
+      }
+    } else {
+      jb_idx_jbl_fill_ikey(idx, &jbvprev, &key, numbuf);
+      if (key.size) {
+        key.compound = id;
+        rc = iwkv_del(idx->idb, &key, 0);
+        if (!rc) {
+          --delta;
+        } else if (rc == IWKV_ERROR_NOTFOUND) {
+          rc = 0;
+        }
+        RCGO(rc, finish);
       }
     }
-    RCGO(rc, finish);
   }
 
   if (jbv_found) { // Add index record
-
-    // todo: Array type
-
-    jb_idx_jbl_fill_ikey(idx, &jbv, &key, numbuf);
-    if (key.size) {
-      if (compound) {
-        key.compound = id;
-        rc = iwkv_put(idx->idb, &key, &EMPTY_VAL, IWKV_NO_OVERWRITE);
-        if (!rc) {
-          ++delta;
-        } else if (rc == IWKV_ERROR_KEY_EXISTS) {
-          rc = 0;
+    if (jbv_type == JBV_ARRAY) {
+      JBL_NODE n;
+      if (!pool) {
+        pool = iwpool_create(0);
+        if (!pool) {
+          rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         }
-      } else {
-        IW_SETVNUMBUF64(step, vnbuf, id);
-        IWKV_val idval = {
-          .data = vnbuf,
-          .size = step
-        };
-        rc = iwkv_put(idx->idb, &key, &idval, IWKV_NO_OVERWRITE);
-        if (!rc) {
-          ++delta;
-        } else if (rc == IWKV_ERROR_KEY_EXISTS) {
-          rc = EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED;
-          goto finish;
+      }
+      rc = jbl_to_node(&jbv, &n, pool);
+      RCGO(rc, finish);
+      for (n = n->child; n; n = n->next) {
+        jb_idx_node_fill_ikey(idx, n, &key, numbuf);
+        if (key.size) {
+          key.compound = id;
+          rc = iwkv_put(idx->idb, &key, &EMPTY_VAL, IWKV_NO_OVERWRITE);
+          if (!rc) {
+            ++delta;
+          } else if (rc == IWKV_ERROR_KEY_EXISTS) {
+            rc = 0;
+          } else {
+            goto finish;
+          }
+        }
+      }
+    } else {
+      jb_idx_jbl_fill_ikey(idx, &jbv, &key, numbuf);
+      if (key.size) {
+        if (compound) {
+          key.compound = id;
+          rc = iwkv_put(idx->idb, &key, &EMPTY_VAL, IWKV_NO_OVERWRITE);
+          if (!rc) {
+            ++delta;
+          } else if (rc == IWKV_ERROR_KEY_EXISTS) {
+            rc = 0;
+          }
+        } else {
+          IW_SETVNUMBUF64(step, vnbuf, id);
+          IWKV_val idval = {
+            .data = vnbuf,
+            .size = step
+          };
+          rc = iwkv_put(idx->idb, &key, &idval, IWKV_NO_OVERWRITE);
+          if (!rc) {
+            ++delta;
+          } else if (rc == IWKV_ERROR_KEY_EXISTS) {
+            rc = EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED;
+            goto finish;
+          }
         }
       }
     }
@@ -583,6 +606,10 @@ finish:
     idx->rnum += delta;
   }
   return rc;
+}
+
+IW_INLINE iwrc jb_idx_record_remove(JBIDX idx, int64_t id, JBL jbl) {
+  return jb_idx_record_add(idx, id, 0, jbl);
 }
 
 static iwrc jb_idx_fill(JBIDX idx) {
