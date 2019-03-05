@@ -487,6 +487,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   IWKV_val key;
   IWPOOL *pool = 0;
   int64_t delta = 0; // index records delta
+  bool compound = idx->idbf & IWDB_COMPOUND_KEYS;
 
   if (jblprev) {
     jbvprev_found = _jbl_at(jblprev, idx->ptr, &jbvprev);
@@ -496,11 +497,13 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   jbv_type = jbl_type(&jbv);
   jbvprev_type = jbl_type(&jbvprev);
 
-  // Do not index NULLs and OBJECTs
-  if (jbvprev_type == JBV_OBJECT || jbvprev_type <= JBV_NULL) {
+  // Do not index NULLs, OBJECTs, ARRAYs (if `EJDB_IDX_UNIQUE`)
+  if ((jbvprev_type == JBV_OBJECT || jbvprev_type <= JBV_NULL)
+      || (jbvprev_type == JBV_ARRAY && !compound)) {
     jbvprev_found = false;
   }
-  if (jbv_type == JBV_OBJECT || jbv_type <= JBV_NULL) {
+  if ((jbv_type == JBV_OBJECT || jbv_type <= JBV_NULL)
+      || (jbv_type == JBV_ARRAY && !compound)) {
     jbv_found = false;
   }
 
@@ -538,7 +541,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   if (jbv_found) { // Add index record
     jb_idx_jbl_fill_ikey(idx, &jbv, &key, numbuf);
     if (key.size) {
-      if (idx->idbf & IWDB_COMPOUND_KEYS) {
+      if (compound) {
         key.compound = id;
         rc = iwkv_put(idx->idb, &key, &EMPTY_VAL, IWKV_NO_OVERWRITE);
         if (!rc) ++delta;
