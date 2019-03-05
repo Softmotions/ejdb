@@ -1166,7 +1166,6 @@ static uint32_t _jbl_node_count(JBL_NODE n) {
   return ret;
 }
 
-static int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
 
 static int _jbl_compare_objects(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
   int ret = 0;
@@ -1214,7 +1213,7 @@ finish:
   return ret;
 }
 
-static int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
+int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
   if (!n1 && !n2) {
     return 0;
   } else if (!n1) {

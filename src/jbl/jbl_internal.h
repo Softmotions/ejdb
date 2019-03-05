@@ -46,6 +46,7 @@ iwrc _jbl_write_string(const char *str, int len, jbl_json_printer pt, void *op, 
 iwrc _jbl_node_from_binn2(const binn *bn, JBL_NODE *node, IWPOOL *pool);
 iwrc _jbl_from_node(binn *res, JBL_NODE node);
 bool _jbl_at(JBL jbl, JBL_PTR jp, JBL res);
+int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
 
 typedef jbl_visitor_cmd_t (*JBL_VISITOR)(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rc);
 iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor);

@@ -46,9 +46,6 @@ static void jb_idx_release(JBIDX idx) {
   if (idx->idb) {
     iwkv_db_cache_release(idx->idb);
   }
-  if (idx->auxdb) {
-    iwkv_db_cache_release(idx->auxdb);
-  }
   if (idx->ptr) {
     free(idx->ptr);
   }
@@ -482,35 +479,69 @@ static iwrc jb_idx_record_remove(JBIDX idx, int64_t id, JBL jbl) {
 
 static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   iwrc rc = 0;
-  IWKV_val key;
-  bool jbv_found;
-  bool jbvprev_found = false;
-  struct _JBL jbv = {0};
-  struct _JBL jbvprev = {0};
   char numbuf[JBNUMBUF_SIZE];
+  struct _JBL jbv = {0}, jbvprev = {0};
+  bool jbv_found, jbvprev_found = false;
+  jbl_type_t jbv_type, jbvprev_type;
+
+  IWKV_val key;
+  IWPOOL *pool = 0;
+  int64_t delta = 0; // index records delta
 
   if (jblprev) {
     jbvprev_found = _jbl_at(jblprev, idx->ptr, &jbvprev);
   }
   jbv_found = _jbl_at(jbl, idx->ptr, &jbv);
-  if (_jbl_is_eq_atomic_values(&jbv, &jbvprev)) {
+
+  jbv_type = jbl_type(&jbv);
+  jbvprev_type = jbl_type(&jbvprev);
+
+  // Do not index NULLs and OBJECTs
+  if (jbvprev_type == JBV_OBJECT || jbvprev_type <= JBV_NULL) {
+    jbvprev_found = false;
+  }
+  if (jbv_type == JBV_OBJECT || jbv_type <= JBV_NULL) {
+    jbv_found = false;
+  }
+
+  if (jbv_type == jbvprev_type && jbvprev_type == JBV_ARRAY) { // compare next/prev obj arrays
+    pool = iwpool_create(0);
+    if (!pool) iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    JBL_NODE jbvprev_node, jbv_node;
+    rc = jbl_to_node(&jbv, &jbv_node, pool);
+    RCGO(rc, finish);
+    rc = jbl_to_node(&jbvprev, &jbvprev_node, pool);
+    RCGO(rc, finish);
+    if (_jbl_compare_nodes(jbv_node, jbvprev_node, &rc) == 0) {
+      goto finish; // Arrays are equal or error
+    }
+  } else if (_jbl_is_eq_atomic_values(&jbv, &jbvprev)) {
     return 0;
   }
-  if (jbvprev_found) { // Remove old index
+
+  // todo: Array indexes support
+
+  if (jbvprev_found) { // Remove old index elements
     jb_idx_jbl_fill_ikey(idx, &jbvprev, &key, numbuf);
     if (key.size) {
       key.compound = id;
       rc = iwkv_del(idx->idb, &key, 0);
-      if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+      if (!rc) {
+        --delta;
+      } else if (rc == IWKV_ERROR_NOTFOUND) {
+        rc = 0;
+      }
     }
+    RCGO(rc, finish);
   }
+
   if (jbv_found) { // Add index record
-    RCRET(rc);
     jb_idx_jbl_fill_ikey(idx, &jbv, &key, numbuf);
     if (key.size) {
       if (idx->idbf & IWDB_COMPOUND_KEYS) {
         key.compound = id;
         rc = iwkv_put(idx->idb, &key, &EMPTY_VAL, IWKV_NO_OVERWRITE);
+        if (!rc) ++delta;
       } else {
         uint8_t len;
         char vnbuf[IW_VNUMBUFSZ];
@@ -520,15 +551,20 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
           .size = len
         };
         rc = iwkv_put(idx->idb, &key, &idval, IWKV_NO_OVERWRITE);
-      }
-      if (rc == IWKV_ERROR_KEY_EXISTS) {
-        return EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED;
+        if (!rc) ++delta;
+        if (rc == IWKV_ERROR_KEY_EXISTS) {
+          rc = EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED;
+          goto finish;
+        }
       }
     }
   }
-  int64_t rd = jbv_found ? 1 : jbvprev_found ? -1 : 0;
-  if (rd) {
-    int64_t delta = jbv_found ? 1 : -1;
+
+finish:
+  if (pool) {
+    iwpool_destroy(pool);
+  }
+  if (delta) {
     jb_meta_nrecs_update(idx->jbc->db, idx->dbid, delta);
     idx->rnum += delta;
   }
@@ -827,10 +863,6 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
         iwkv_db_destroy(&idx->idb);
         idx->idb = 0;
       }
-      if (idx->auxdb) {
-        iwkv_db_destroy(&idx->auxdb);
-        idx->auxdb = 0;
-      }
       jb_idx_release(idx);
       break;
     }
@@ -936,10 +968,6 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
 finish:
   if (rc) {
     if (idx) {
-      if (idx->auxdb) {
-        iwkv_db_destroy(&idx->auxdb);
-        idx->auxdb = 0;
-      }
       if (idx->idb) {
         iwkv_db_destroy(&idx->idb);
         idx->idb = 0;
@@ -1128,10 +1156,6 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
     for (JBIDX idx = jbc->idx, nidx; idx; idx = nidx) {
       IWRC(iwkv_db_destroy(&idx->idb), rc);
       idx->idb = 0;
-      if (idx->auxdb) {
-        IWRC(iwkv_db_destroy(&idx->auxdb), rc);
-        idx->auxdb = 0;
-      }
       nidx = idx->next;
       jb_idx_release(idx);
     }

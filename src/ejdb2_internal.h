@@ -71,7 +71,6 @@ struct _JBIDX {
   JBCOLL jbc;               /**< Owner document collection */
   JBL_PTR ptr;              /**< Indexed JSON path poiner 0*/
   IWDB idb;                 /**< KV database for this index */
-  IWDB auxdb;               /**< Auxiliary database, used by `EJDB_IDX_ARR` indexes */
   uint32_t dbid;            /**< IWKV collection database ID */
   int64_t rnum;             /**< Number of records stored in index */
   struct _JBIDX *next;      /**< Next index in chain */
