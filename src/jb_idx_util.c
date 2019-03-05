@@ -17,6 +17,7 @@ void jb_idx_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
   ikey->size = 0;
   ikey->data = 0;
+
   switch (itype) {
     case EJDB_IDX_STR:
       switch (jbvt) {
@@ -89,29 +90,80 @@ void jb_idx_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char 
   int64_t *llv = (void *) numbuf;
   ikey->size = 0;
   ikey->data = numbuf;
-
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
+  jqval_type_t jqvt = jqval->type;
 
-  // todo
-
-  switch (jqval->type) {
-    case JQVAL_STR:
-      ikey->data = (void *) jqval->vstr;
-      ikey->size = strlen(jqval->vstr);
+  switch (itype) {
+    case EJDB_IDX_STR:
+      switch (jqvt) {
+        case JQVAL_STR:
+          ikey->data = (void *) jqval->vstr;
+          ikey->size = strlen(jqval->vstr);
+          break;
+        case JQVAL_I64:
+          ikey->size = (size_t) iwitoa(jqval->vi64, numbuf, JBNUMBUF_SIZE);
+          ikey->data = numbuf;
+          break;
+        case JQVAL_BOOL:
+          if (jqval->vbool) {
+            ikey->size = sizeof("true");
+            ikey->data = "true";
+          } else {
+            ikey->size = sizeof("false");
+            ikey->data = "false";
+          }
+          break;
+        case JQVAL_F64:
+          jb_idx_ftoa(jqval->vf64, numbuf, &ikey->size);
+          ikey->data = numbuf;
+          break;
+        default:
+          break;
+      }
       break;
-    case JQVAL_I64:
-    case JQVAL_BOOL: {
-      int64_t llv = jqval->vi64;
-      memcpy(ikey->data, &llv, sizeof(llv));
-      ikey->size = sizeof(llv);
+    case EJDB_IDX_I64:
+      ikey->size = sizeof(*llv);
+      ikey->data = llv;
+      switch (jqvt) {
+        case JQVAL_I64:
+          *llv = jqval->vi64;
+          break;
+        case JQVAL_F64:
+          *llv = (int64_t) jqval->vf64;
+          break;
+        case JQVAL_BOOL:
+          *llv = jqval->vbool;
+          break;
+        case JQVAL_STR:
+          *llv = iwatoi(jqval->vstr);
+          break;
+        default:
+          ikey->size = 0;
+          ikey->data = 0;
+          break;
+      }
       break;
-    }
-    case JQVAL_F64: {
-      size_t sz;
-      jb_idx_ftoa(jqval->vf64, ikey->data, &sz);
-      ikey->size = sz;
+    case EJDB_IDX_F64:
+      ikey->data = numbuf;
+      switch (jqvt) {
+        case JQVAL_F64:
+          jb_idx_ftoa(jqval->vf64, numbuf, &ikey->size);
+          break;
+        case JQVAL_I64:
+          jb_idx_ftoa(jqval->vi64, numbuf, &ikey->size);
+          break;
+        case JQVAL_BOOL:
+          jb_idx_ftoa(jqval->vbool, numbuf, &ikey->size);
+          break;
+        case JQVAL_STR:
+          jb_idx_ftoa(iwatof(jqval->vstr), numbuf, &ikey->size);
+          break;
+        default:
+          ikey->size = 0;
+          ikey->data = 0;
+          break;
+      }
       break;
-    }
     default:
       break;
   }
