@@ -478,13 +478,16 @@ static iwrc jb_idx_record_remove(JBIDX idx, int64_t id, JBL jbl) {
 }
 
 static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
-  iwrc rc = 0;
+  IWKV_val key;
+  uint8_t step;
+  char vnbuf[IW_VNUMBUFSZ];
   char numbuf[JBNUMBUF_SIZE];
+
   struct _JBL jbv = {0}, jbvprev = {0};
   bool jbv_found, jbvprev_found = false;
   jbl_type_t jbv_type, jbvprev_type;
 
-  IWKV_val key;
+  iwrc rc = 0;
   IWPOOL *pool = 0;
   int64_t delta = 0; // index records delta
   bool compound = idx->idbf & IWDB_COMPOUND_KEYS;
@@ -524,9 +527,10 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
     return 0;
   }
 
-  // todo: Array indexes support
-
   if (jbvprev_found) { // Remove old index elements
+
+    // todo: Array type
+
     jb_idx_jbl_fill_ikey(idx, &jbvprev, &key, numbuf);
     if (key.size) {
       key.compound = id;
@@ -541,23 +545,29 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   }
 
   if (jbv_found) { // Add index record
+
+    // todo: Array type
+
     jb_idx_jbl_fill_ikey(idx, &jbv, &key, numbuf);
     if (key.size) {
       if (compound) {
         key.compound = id;
         rc = iwkv_put(idx->idb, &key, &EMPTY_VAL, IWKV_NO_OVERWRITE);
-        if (!rc) ++delta;
+        if (!rc) {
+          ++delta;
+        } else if (rc == IWKV_ERROR_KEY_EXISTS) {
+          rc = 0;
+        }
       } else {
-        uint8_t len;
-        char vnbuf[IW_VNUMBUFSZ];
-        IW_SETVNUMBUF64(len, vnbuf, id);
+        IW_SETVNUMBUF64(step, vnbuf, id);
         IWKV_val idval = {
           .data = vnbuf,
-          .size = len
+          .size = step
         };
         rc = iwkv_put(idx->idb, &key, &idval, IWKV_NO_OVERWRITE);
-        if (!rc) ++delta;
-        if (rc == IWKV_ERROR_KEY_EXISTS) {
+        if (!rc) {
+          ++delta;
+        } else if (rc == IWKV_ERROR_KEY_EXISTS) {
           rc = EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED;
           goto finish;
         }
@@ -569,8 +579,7 @@ finish:
   if (pool) {
     iwpool_destroy(pool);
   }
-  if (delta) {
-    jb_meta_nrecs_update(idx->jbc->db, idx->dbid, delta);
+  if (delta && !jb_meta_nrecs_update(idx->jbc->db, idx->dbid, delta)) {
     idx->rnum += delta;
   }
   return rc;
