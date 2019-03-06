@@ -686,8 +686,8 @@ int main() {
     return CU_get_error();
   }
   if (
-    //(NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
-    //(NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3))
     ) {
     CU_cleanup_registry();
