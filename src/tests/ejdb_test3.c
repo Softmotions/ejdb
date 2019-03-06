@@ -666,6 +666,9 @@ static void ejdb_test3_3() {
   }
   CU_ASSERT_EQUAL(i, 2);
 
+  // todo: record update
+  // todo: record removal
+
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
   jql_destroy(&q);
@@ -676,6 +679,72 @@ static void ejdb_test3_3() {
   iwxstr_destroy(xstr);
 }
 
+// Test array index
+static void ejdb_test3_4() {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test3_4.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+  EJDB db;
+  char dbuf[1024];
+
+  int i = 0;
+  EJDB_LIST list = 0;
+  IWPOOL *pool = iwpool_create(0);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
+  IWXSTR *log = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(log);
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_ensure_index(db, "a3", "/tags", EJDB_IDX_STR);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  snprintf(dbuf, sizeof(dbuf), "{\"tags\": [\"foo\", \"bar\", \"gaz\"],\"n\":%d}", 1);
+  rc = put_json(db, "a3", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  snprintf(dbuf, sizeof(dbuf), "{\"tags\": [\"gaz\", \"zaz\"],\"n\":%d}", 2);
+  rc = put_json(db, "a3", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  JQL q;
+  //rc = jql_create(&q, "a3", "/tags/[* in :tags]");
+  rc = jql_create(&q, "a3", "/[tags in :tags]");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  // Build ["bar", "gaz"]
+  JBL_NODE node;
+  rc = jbl_node_from_json("[\"gaz\"]", &node, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_set_json(q, "tags", 0, node);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  i = 1;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+
+  }
+
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+  jql_destroy(&q);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_destroy(log);
+  iwxstr_destroy(xstr);
+  iwpool_destroy(pool);
+}
 
 int main() {
   CU_pSuite pSuite = NULL;
@@ -686,9 +755,10 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3))
+//    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
+//    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
+//    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
     ) {
     CU_cleanup_registry();
     return CU_get_error();

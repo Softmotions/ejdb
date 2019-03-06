@@ -63,7 +63,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
     }
   } else {
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
-      if (pv->value[0] == ':' && !strcmp(pv->value + 1, placeholder)) {
+      if (!strcmp(pv->value, placeholder)) {
         if (pv->opaque) _jql_jqval_destroy(pv->opaque);
         pv->opaque = val;
         return 0;
