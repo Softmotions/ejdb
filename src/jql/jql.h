@@ -32,25 +32,25 @@ typedef enum {
  * @param pq Pointer to resulting query object
  * @param query Query text
  */
-IW_EXPORT iwrc jql_create(JQL *qptr, const char *coll, const char *query);
+IW_EXPORT WUR iwrc jql_create(JQL *qptr, const char *coll, const char *query);
 
 IW_EXPORT const char* jql_collection(JQL q);
 
-IW_EXPORT iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val);
+IW_EXPORT WUR iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val);
 
-IW_EXPORT iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val);
+IW_EXPORT WUR iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val);
 
-IW_EXPORT iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val);
+IW_EXPORT WUR iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val);
 
-IW_EXPORT iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val);
+IW_EXPORT WUR iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val);
 
-IW_EXPORT iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val);
+IW_EXPORT WUR iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val);
 
-IW_EXPORT iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char* expr);
+IW_EXPORT WUR iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char* expr);
 
-IW_EXPORT iwrc jql_set_null(JQL q, const char *placeholder, int index);
+IW_EXPORT WUR iwrc jql_set_null(JQL q, const char *placeholder, int index);
 
-IW_EXPORT iwrc jql_matched(JQL q, JBL jbl, bool *out);
+IW_EXPORT WUR iwrc jql_matched(JQL q, JBL jbl, bool *out);
 
 IW_EXPORT bool jql_has_apply(JQL q);
 
@@ -62,13 +62,13 @@ IW_EXPORT iwrc jql_get_skip(JQL q, int64_t *out);
 
 IW_EXPORT iwrc jql_get_limit(JQL q, int64_t *out);
 
-IW_EXPORT iwrc jql_apply(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool);
+IW_EXPORT WUR iwrc jql_apply(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool);
 
 IW_EXPORT void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders);
 
 IW_EXPORT void jql_destroy(JQL *qptr);
 
-IW_EXPORT iwrc jql_init(void);
+IW_EXPORT WUR iwrc jql_init(void);
 
 IW_EXTERN_C_END
 #endif

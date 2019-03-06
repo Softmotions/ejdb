@@ -321,6 +321,9 @@ static const char *_jbl_parse_value(JBL_NODE parent,
         }
         return pe;
       }
+      default:
+        ctx->rc = JBL_ERROR_PARSE_JSON;
+        return 0;
     }
   }
   return p;

@@ -245,7 +245,7 @@ void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders) {
   _jql_reset_expression_node(aux->expr, aux, reset_match_cache);
   if (reset_placeholders) {
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
-      _jql_jqval_destroy(pv->opaque);
+      if (pv->opaque) _jql_jqval_destroy(pv->opaque);
     }
   }
 }
@@ -255,7 +255,7 @@ void jql_destroy(JQL *qptr) {
     JQL q = *qptr;
     JQP_AUX *aux = q->qp->aux;
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
-      _jql_jqval_destroy(pv->opaque);
+      if (pv->opaque) _jql_jqval_destroy(pv->opaque);
     }
     for (JQP_OP *op = aux->start_op; op; op = op->next) {
       if (op->opaque) {

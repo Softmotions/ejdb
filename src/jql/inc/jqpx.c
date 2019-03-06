@@ -209,10 +209,10 @@ static JQPUNIT *_jqp_placeholder(yycontext *yy, const char *text) {
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_STRING_TYPE;
   unit->string.flavour |= JQP_STR_PLACEHOLDER;
-  if (text[0] == ':' && text[1] == '?') {
+  if (text[0] == '?') {
     char nbuf[JBNUMBUF_SIZE + 1];
     nbuf[0] = '?';
-    int len = iwitoa(aux->num_placeholders++, nbuf + 2, JBNUMBUF_SIZE);
+    int len = iwitoa(aux->num_placeholders++, nbuf + 1, JBNUMBUF_SIZE);
     nbuf[len + 1] = '\0';
     unit->string.value = _jqp_strdup(yy, nbuf);
   } else {

@@ -111,8 +111,10 @@ IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWP
 
 IW_EXPORT WUR iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int64_t limit, EJDB_LIST *listp);
 
-IW_EXPORT WUR iwrc ejdb_list3(EJDB db, const char *coll, const char *query, int64_t limit, IWXSTR *log,
-                              EJDB_LIST *listp);
+IW_EXPORT WUR iwrc ejdb_list3(EJDB db, const char *coll, const char *query, int64_t limit,
+                              IWXSTR *log, EJDB_LIST *listp);
+
+IW_EXPORT WUR iwrc ejdb_list4(EJDB db, JQL q, int64_t limit, IWXSTR *log, EJDB_LIST *listp);
 
 IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
 

@@ -851,6 +851,36 @@ finish:
   return rc;
 }
 
+iwrc ejdb_list4(EJDB db, JQL q, int64_t limit, IWXSTR *log, EJDB_LIST *listp) {
+  if (!listp) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  *listp = 0;
+  IWPOOL *pool = iwpool_create(0);
+  if (!pool) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  EJDB_LIST list = iwpool_alloc(sizeof(*list), pool);
+  if (!list) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    goto finish;
+  }
+  list->q = 0;
+  list->first = 0;
+  list->db = db;
+  list->pool = pool;
+  rc = _ejdb_list(db, q, &list->first, limit, log, list->pool);
+
+finish:
+  if (rc) {
+    iwpool_destroy(pool);
+  } else {
+    *listp = list;
+  }
+  return rc;
+}
+
 iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int64_t limit, EJDB_LIST *listp) {
   return ejdb_list3(db, coll, query, limit, 0, listp);
 }

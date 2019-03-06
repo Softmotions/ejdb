@@ -515,6 +515,168 @@ static void ejdb_test3_2() {
   iwxstr_destroy(xstr);
 }
 
+static void ejdb_test3_3() {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test3_3.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+  EJDB db;
+  char dbuf[1024];
+
+  int i = 0;
+  EJDB_LIST list = 0;
+  IWXSTR *log = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(log);
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_ensure_index(db, "a2", "/f/b", EJDB_IDX_STR);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  char *data[] = {
+
+    // len: 200
+    "Ar4prlJssa2ckf0IpmDuRBZ2b0Q6PtPdTacjWFFuO23CiCjdyfHaliz9JaqK1HFEeaneiMO"
+    "7sNh87oDLVkvz7TnOV22v0njqmmd6b8DSfzaCwxFxcqrF7MinjUvJvct1Fr07MJWeG7C6SP"
+    "MlUjFQ4jNlds3kUQDP9yxQImH7BkmCqBCisIoh5zar8zSax1Pk7nZSpm1b",
+
+    // len: 115
+    "BkMSITU2qJ56xeX3nftUd3g4PuZwo9LY2mTGFtYKrrqhilPiR0UTHrDobstoShELlMHvPx61"
+    "KF8qQRPAn4OOUttNtkPE95XsjZQ8PPZW9ruWo1R9UMx",
+
+    // len: 64
+    "C1257xkZuJqXhQ5v5eWG8TlwKdCY77DQ0ScLyC3nGDTtC3A8DPDAiVC09EBFTUxp",
+
+    // len: 800
+    "D9z1bYv2oEp8n8B0BtY1VI4ezy8adAnPvqno9rdxM7RsMZDcLQyCEJ3vDMFqoJaRNbCtdbHh09"
+    "L0UijAR6wmQ87P90eAGKaEvuhoRzhoDZYpa37o7HZrBctcCxGHSrQMR0o1NKOz2vmEvhX6k02M"
+    "QopatRrL6jIkr9XXKgekOh6xcVyvUcnr6ttD3tqF0v0QN3ZPnXRCcVYyx0Ot9T6EfZik7HO3QW"
+    "jyblg4f4qqohprmGWKO8UfIIsF1gRPPacPc8oJXEFrbJu5NR4LidKpn6ygmTpstGVCanpCq2Yi"
+    "pkWrQpC1LkdSh3h2hNMUZbgZDgsvGzocuBuGgnyDd6I91PJjBmbFTXmILkT9t0ApvCGJTrc9aB"
+    "Sw5I9CAZRFRqVnRFUr7fA0OfQhN2zCu4d5m1XQg3yh9We4GI1ffhWsbnH4g59HbuAkm9jmz4mp"
+    "B6IJUSewlgq6YDgfsPNQXHboBVWAuR9NONIpfpmnU4wjuwI3j3QJAbi81u23QXAWJETvVBRqqU"
+    "ZqtqUjwnOCoPvkRV3WhfEHezmN9HTuxxl75WowRXyz8nwUe3xOXadmQwkhyYbWSSrO835XziTj"
+    "58e00zGi6eLwXD7xrKC7YeEb7HE4L8eKeEFiM1xC00ySIDkBNoclMxmExPg6kBUpiUT7HAEfaN"
+    "AN2VbdWFZsumDQHu3Q5XwrGdiQ6ubLTMuQEIv1IPTZIRTV5TQ59aUdiM6POdLFv9xuDjEgnBYd"
+    "MxcP60sNDIakuW2IeabKScwF5yx9PAg7D9K5WVWhpSQuzDFiTSSJPwkQfoWo"
+  };
+
+  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":\"%s\"},\"n\":%d}", data[0], 1);
+  rc = put_json(db, "a2", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":\"%s\"},\"n\":%d}", data[1], 2);
+  rc = put_json(db, "a2", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":\"%s\"},\"n\":%"PRId64"}", data[1], INT64_MAX - 1);
+  rc = put_json(db, "a2", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":\"%s\"},\"n\":%d}", data[2], 3);
+  rc = put_json(db, "a2", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":\"%s\"},\"n\":%d}", data[2], 4);
+  rc = put_json(db, "a2", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+
+  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":\"%s\"},\"n\":%d}", data[3], 5);
+  rc = put_json(db, "a2", dbuf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  // Q: /f/[b >= data[0]]
+  JQL q;
+  rc = jql_create(&q, "a2", "/f/[b >= :?]");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_set_str(q, 0, 0, data[0]);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|6 /f/b EXPR1: 'b >= :?0' "
+                                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
+  i = 1;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    JBL jbl1, jbl2;
+    rc = jbl_at(doc->raw, "/f/b", &jbl1);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    rc = jbl_at(doc->raw, "/n", &jbl2);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    int64_t llv = jbl_get_i64(jbl2);
+    char *str = jbl_get_str(jbl1);
+    switch (i) {
+      case 1: CU_ASSERT_EQUAL(llv, 1);
+        CU_ASSERT_STRING_EQUAL(str, data[0]);
+        break;
+      case 2: CU_ASSERT_EQUAL(llv, 2);
+        CU_ASSERT_STRING_EQUAL(str, data[1]);
+        break;
+      case 3: CU_ASSERT_EQUAL(llv, INT64_MAX - 1);
+        CU_ASSERT_STRING_EQUAL(str, data[1]);
+        break;
+      case 4: CU_ASSERT_EQUAL(llv, 3);
+        CU_ASSERT_STRING_EQUAL(str, data[2]);
+        break;
+      case 5: CU_ASSERT_EQUAL(llv, 4);
+        CU_ASSERT_STRING_EQUAL(str, data[2]);
+        break;
+      case 6: CU_ASSERT_EQUAL(llv, 5);
+        CU_ASSERT_STRING_EQUAL(str, data[3]);
+        break;
+    }
+    jbl_destroy(&jbl1);
+    jbl_destroy(&jbl2);
+  }
+  CU_ASSERT_EQUAL(i, 7);
+
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  // Q: /f/[b >= data[3]]
+  rc = jql_set_str(q, 0, 0, data[3]);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|6 /f/b EXPR1: 'b >= :?0' "
+                                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
+
+  i = 1;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    JBL jbl1, jbl2;
+    rc = jbl_at(doc->raw, "/f/b", &jbl1);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    rc = jbl_at(doc->raw, "/n", &jbl2);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    int64_t llv = jbl_get_i64(jbl2);
+    char *str = jbl_get_str(jbl1);
+    CU_ASSERT_EQUAL(llv, 5);
+    CU_ASSERT_STRING_EQUAL(str, data[3]);
+    jbl_destroy(&jbl1);
+    jbl_destroy(&jbl2);
+  }
+  CU_ASSERT_EQUAL(i, 2);
+
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+  jql_destroy(&q);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_destroy(log);
+  iwxstr_destroy(xstr);
+}
+
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -524,8 +686,9 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2))
+    //(NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
+    //(NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3))
     ) {
     CU_cleanup_registry();
     return CU_get_error();
