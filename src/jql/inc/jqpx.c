@@ -1046,6 +1046,17 @@ static iwrc _jqp_print_join(jqp_op_t jqop, bool negate, jbl_json_printer pt, voi
   return rc;
 }
 
+IW_INLINE iwrc _print_placeholder(const char *value, jbl_json_printer pt, void *op) {
+  iwrc rc;
+  PT(0, 0, ':', 1);
+  if (value[0] == '?') {
+    PT(0, 0, '?', 1);
+  } else {
+    PT(value, -1, 0, 0);
+  }
+  return rc;
+}
+
 iwrc jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
   if (e->left->type == JQP_EXPR_TYPE) {
@@ -1068,9 +1079,11 @@ iwrc jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op
   RCRET(rc);
   if (e->right->type == JQP_STRING_TYPE) {
     if (e->right->string.flavour & JQP_STR_PLACEHOLDER) {
-      PT(0, 0, ':', 1);
+      rc = _print_placeholder(e->right->string.value, pt, op);
+      RCRET(rc);
+    } else {
+      PT(e->right->string.value, -1, 0, 0);
     }
-    PT(e->right->string.value, -1, 0, 0);
   } else if (e->right->type == JQP_JSON_TYPE) {
     rc = jbl_node_as_json(&e->right->json.jn, pt, op, 0);
     RCRET(rc);
@@ -1168,8 +1181,8 @@ static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
       PT(" asc ", 5, 0, 0);
     }
     if (ob->flavour & JQP_STR_PLACEHOLDER) {
-      PT(0, 0, ':', 1);
-      PT(ob->value, -1, 0, 0);
+      rc = _print_placeholder(ob->value, pt, op);
+      RCRET(rc);
     } else {
       // print orderby subnext chain
       JQP_STRING *n = ob;
@@ -1189,9 +1202,11 @@ static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
     PT(" skip ", 6, 0, 0);
     if (aux->skip->type == JQP_STRING_TYPE) {
       if (aux->skip->string.flavour & JQP_STR_PLACEHOLDER) {
-        PT(0, 0, ':', 1);
+        rc = _print_placeholder(aux->skip->string.value, pt, op);
+        RCRET(rc);
+      } else {
+        PT(aux->skip->string.value, -1, 0, 0);
       }
-      PT(aux->skip->string.value, -1, 0, 0);
     } else if (aux->skip->type == JQP_INTEGER_TYPE) {
       char nbuf[JBNUMBUF_SIZE];
       iwitoa(aux->skip->intval.value, nbuf, JBNUMBUF_SIZE);
@@ -1202,9 +1217,11 @@ static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
     PT(" limit ", 7, 0, 0);
     if (aux->limit->type == JQP_STRING_TYPE) {
       if (aux->limit->string.flavour & JQP_STR_PLACEHOLDER) {
-        PT(0, 0, ':', 1);
+        rc = _print_placeholder(aux->limit->string.value, pt, op);
+        RCRET(rc);
+      } else {
+        PT(aux->limit->string.value, -1, 0, 0);
       }
-      PT(aux->limit->string.value, -1, 0, 0);
     } else if (aux->limit->type == JQP_INTEGER_TYPE) {
       char nbuf[JBNUMBUF_SIZE];
       iwitoa(aux->limit->intval.value, nbuf, JBNUMBUF_SIZE);

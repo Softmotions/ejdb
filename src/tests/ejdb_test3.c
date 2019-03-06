@@ -602,7 +602,7 @@ static void ejdb_test3_3() {
 
   rc = ejdb_list4(db, q, 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|6 /f/b EXPR1: 'b >= :?0' "
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|6 /f/b EXPR1: 'b >= :?' "
                                                  "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
@@ -647,7 +647,7 @@ static void ejdb_test3_3() {
 
   rc = ejdb_list4(db, q, 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|6 /f/b EXPR1: 'b >= :?0' "
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|6 /f/b EXPR1: 'b >= :?' "
                                                  "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
 
   i = 1;
@@ -755,10 +755,10 @@ int main() {
     return CU_get_error();
   }
   if (
-//    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
-//    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
-//    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
+    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3))
+    // (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
     ) {
     CU_cleanup_registry();
     return CU_get_error();
