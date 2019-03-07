@@ -23,7 +23,6 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
     return consumer(ctx, 0, 0, 0, 0, 0);
   } else RCRET(rc);
 
-  midx->expr1->prematched = true;
   do {
     if (step > 0) --step;
     else if (step < 0) ++step;
@@ -76,7 +75,6 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CO
   if (i == 0) {
     return consumer(ctx, 0, 0, 0, 0, 0);
   }
-  midx->expr1->prematched = true;
 
   JQVAL *jqvarr = (i * sizeof(*jqvarr)) <= sizeof(jqvarrbuf)
                   ? jqvarrbuf : malloc(i * sizeof(*jqvarr));

@@ -379,11 +379,9 @@ iwrc jb_idx_selection(JBEXEC *ctx) {
       qsort(fctx, snp, sizeof(fctx[0]), jb_idx_cmp);
       memcpy(&ctx->midx, &fctx[0], sizeof(ctx->midx));
       struct _JBMIDX *midx = &ctx->midx;
-      if (midx->expr1) {
-        jqp_op_t op = midx->expr1->op->value;
-        if (op == JQP_OP_EQ || (op == JQP_OP_GTE && ctx->cursor_init == IWKV_CURSOR_GE)) {
-          midx->expr1->prematched = true;
-        }
+      jqp_op_t op = midx->expr1->op->value;
+      if (op == JQP_OP_EQ || op == JQP_OP_IN || (op == JQP_OP_GTE && ctx->cursor_init == IWKV_CURSOR_GE)) {
+        midx->expr1->prematched = true;
       }
       if (ctx->ux->log) {
         iwxstr_cat2(ctx->ux->log, "[INDEX] SELECTED ");

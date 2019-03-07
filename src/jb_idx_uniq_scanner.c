@@ -15,7 +15,6 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
   if (!key.size) {
     return consumer(ctx, 0, 0, 0, 0, 0);
   }
-  midx->expr1->prematched = true;
   iwrc rc = iwkv_get_copy(midx->idx->idb, &key, numbuf, sizeof(numbuf), &sz);
   if (rc) {
     if (rc == IWKV_ERROR_NOTFOUND) {
@@ -45,7 +44,6 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CO
   if (!nv) {
     return consumer(ctx, 0, 0, 0, 0, 0);
   }
-  midx->expr1->prematched = true;
   do {
     jql_node_to_jqval(nv, &jqv);
     jb_idx_jqval_fill_ikey(midx->idx, &jqv, &key, numbuf);
