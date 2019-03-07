@@ -81,7 +81,7 @@ IW_INLINE int jb_idx_expr_op_weight(struct _JBMIDX *midx) {
     case JQP_OP_EQ:
       return 10;
     case JQP_OP_IN:
-    //case JQP_OP_NI: todo
+      //case JQP_OP_NI: todo
       return 9;
     default:
       break;
@@ -149,7 +149,7 @@ static iwrc jb_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
           vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE
           && (vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE
               || mctx->idx->rnum < rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO)
-          ) {
+        ) {
           // No index for large IN array | small collection size
           continue;
         }
@@ -251,15 +251,15 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
                                const struct JQP_EXPR_NODE *en,
                                struct _JBMIDX marr[static JB_SOLID_EXPRNUM],
                                size_t *snp) {
+
   iwrc rc = 0;
-  if (*snp >= JB_SOLID_EXPRNUM - 1) {
+  if (*snp >=  JB_SOLID_EXPRNUM - 1) {
     return 0;
   }
   if (en->type == JQP_EXPR_NODE_TYPE) {
     struct JQP_EXPR_NODE *cn = en->chain;
     for (; cn; cn = cn->next) {
-      struct JQP_JOIN *join = en->join;
-      if (join && (join->value == JQP_JOIN_OR || join->negate)) {
+      if (en->join && (en->join->value == JQP_JOIN_OR || en->join->negate)) {
         return 0;
       }
     }
@@ -270,7 +270,7 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
   } else if (en->type == JQP_FILTER_TYPE) {
     int fnc = 0;
     JQP_FILTER *f = (JQP_FILTER *) en;
-    for (JQP_NODE *n = f->node; n; n = n->next) {
+    for (JQP_NODE *n = f->node; n; n = n->next, ++fnc) {
       switch (n->ntype) {
         case JQP_NODE_ANY:
         case JQP_NODE_ANYS:
@@ -284,43 +284,50 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
           break;
       }
     }
-    for (JQP_NODE *n = f->node; n; n = n->next) {
-      ++fnc;
-    }
-
     struct JQP_AUX *aux = ctx->ux->q->qp->aux;
     struct _JBL_PTR *obp = aux->orderby_num ? aux->orderby_ptrs[0] : 0;
 
-    // Try to find matched index
-    for (struct _JBIDX *idx = ctx->jbc->idx; idx; idx = idx->next) {
+    for (struct _JBIDX *idx = ctx->jbc->idx; idx && *snp < JB_SOLID_EXPRNUM; idx = idx->next) {
       struct _JBMIDX mctx = {.filter = f};
       struct _JBL_PTR *ptr = idx->ptr;
       if (ptr->cnt > fnc) continue;
 
       JQP_EXPR *nexpr = 0;
       int i = 0, j = 0;
-      for (JQP_NODE *n = f->node; n; n = n->next, ++i) { // Examine matched index
+      for (JQP_NODE *n = f->node; n && i < ptr->cnt; n = n->next, ++i) {
         nexpr = 0;
         const char *field = 0;
         if (n->ntype == JQP_NODE_FIELD) {
           field = n->value->string.value;
         } else if (n->ntype == JQP_NODE_EXPR) {
           nexpr = &n->value->expr;
-          JQPUNIT *left = nexpr->left; // Left side of first node expression
+          JQPUNIT *left = nexpr->left;
           if (left->type == JQP_STRING_TYPE) {
             field = left->string.value;
           }
         }
-        if (!field || i > ptr->cnt - 1 || strcmp(field, ptr->n[i]) != 0) {
+        if (!field || strcmp(field, ptr->n[i]) != 0) {
           break;
         }
         if (obp && i == j && i < obp->cnt && !strcmp(ptr->n[i], obp->n[i])) {
           j++;
         }
+        // Check for last iteration and the special `**` case
+        if (i == ptr->cnt - 1
+            && (idx->idbf & IWDB_COMPOUND_KEYS)
+            && n->next && !n->next->next && n->next->ntype == JQP_NODE_EXPR) {
+          JQPUNIT *left = n->next->value->expr.left;
+          if (left->type == JQP_STRING_TYPE && (left->string.flavour & JQP_STR_DBL_STAR)) {
+            i++;
+            j++;
+            nexpr = &n->next->value->expr;
+            break;
+          }
+        }
       }
-      if (i == ptr->cnt) { // Found matched index
-        mctx.nexpr = nexpr;
+      if (i == ptr->cnt && nexpr) {
         mctx.idx = idx;
+        mctx.nexpr = nexpr;
         mctx.orderby_support = (i == j);
         rc = jb_compute_index_rules(ctx, &mctx);
         RCRET(rc);

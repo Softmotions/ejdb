@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Workspace Name="ejdb2" Database="" Version="10.0.0">
+<CodeLite_Workspace Name="ejdb2" Database="" Version="10.0.0" SWTLW="Yes">
+  <WorkspaceParserMacros/>
+  <WorkspaceParserPaths/>
   <Project Name="ejdb2" Path="ejdb2.project" Active="Yes"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
