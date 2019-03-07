@@ -23,6 +23,7 @@ static iwrc jb_idx_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
     return consumer(ctx, 0, 0, 0, 0, 0);
   } else RCRET(rc);
 
+  midx->expr1->prematched = true;
   do {
     if (step > 0) --step;
     else if (step < 0) ++step;
@@ -58,24 +59,24 @@ static iwrc jb_idx_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CO
   int i;
   int64_t id;
   bool matched;
+  char jqvarrbuf[512];
+  char numbuf[JBNUMBUF_SIZE];
+
+  iwrc rc = 0;
+  int64_t step = 1;
   IWKV_cursor cur = 0;
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
-
-  char jqvarrbuf[512];
-  char numbuf[JBNUMBUF_SIZE];
   IWKV_val key = {.compound = INT64_MIN};
-
-  int64_t step = 1;
-  iwrc rc = 0;
-
   JBL_NODE nv = jqval->vnode->child;
+
   for (i = 0; nv; nv = nv->next) {
     if (nv->type >= JBV_BOOL && nv->type <= JBV_STR) ++i;
   }
   if (i == 0) {
     return consumer(ctx, 0, 0, 0, 0, 0);
   }
+  midx->expr1->prematched = true;
 
   JQVAL *jqvarr = (i * sizeof(*jqvarr)) <= sizeof(jqvarrbuf)
                   ? jqvarrbuf : malloc(i * sizeof(*jqvarr));
