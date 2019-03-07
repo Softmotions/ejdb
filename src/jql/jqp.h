@@ -25,6 +25,9 @@ typedef uint8_t jqp_string_flavours_t;
 #define JQP_STR_STAR              ((jqp_string_flavours_t) 0x20U)
 /** Boolean negation/mode applied to it */
 #define JQP_STR_NEGATE            ((jqp_string_flavours_t) 0x40U)
+/** Double star (**) string */
+#define JQP_STR_DBL_STAR          ((jqp_string_flavours_t) 0x80U)
+
 
 typedef uint8_t jqp_int_flavours_t;
 #define JQP_INT_SKIP              ((jqp_int_flavours_t) 0x01U)

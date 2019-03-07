@@ -906,7 +906,8 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
       lv.vstr = mctx->key;
       bool ret = _match_jqval_pair(mctx->aux, &lv, op, rv, rcp);
       return negate != (0 == !ret);
-    } else if (strcmp(mctx->key, left->string.value) != 0) {
+    } else if (!(left->string.flavour & JQP_STR_DBL_STAR)
+               && strcmp(mctx->key, left->string.value) != 0) {
       return negate;
     }
   } else if (left->type == JQP_EXPR_TYPE) {

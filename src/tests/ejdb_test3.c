@@ -715,8 +715,7 @@ static void ejdb_test3_4() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   JQL q;
-  //rc = jql_create(&q, "a3", "/tags/[* in :tags]");
-  rc = jql_create(&q, "a3", "/[tags in :tags]");
+  rc = jql_create(&q, "a3", "/tags/[** in :tags]");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   // Build ["bar", "gaz"]
@@ -729,6 +728,8 @@ static void ejdb_test3_4() {
 
   rc = ejdb_list4(db, q, 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  fprintf(stderr, "\nL=%s", iwxstr_ptr(log));
 
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
@@ -755,10 +756,10 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3))
-    // (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
+//    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
+//    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
+//    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
     ) {
     CU_cleanup_registry();
     return CU_get_error();

@@ -284,7 +284,9 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
           break;
       }
     }
-    for (JQP_NODE *n = f->node; n; n = n->next) ++fnc;
+    for (JQP_NODE *n = f->node; n; n = n->next) {
+      ++fnc;
+    }
 
     struct JQP_AUX *aux = ctx->ux->q->qp->aux;
     struct _JBL_PTR *obp = aux->orderby_num ? aux->orderby_ptrs[0] : 0;
@@ -309,7 +311,7 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
             field = left->string.value;
           }
         }
-        if (!field && strcmp(field, ptr->n[i]) != 0) {
+        if (!field || i > ptr->cnt - 1 || strcmp(field, ptr->n[i]) != 0) {
           break;
         }
         if (obp && i == j && i < obp->cnt && !strcmp(ptr->n[i], obp->n[i])) {
