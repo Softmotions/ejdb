@@ -312,7 +312,7 @@ static iwrc jb_collect_indexes(JBEXEC *ctx,
         if (obp && i == j && i < obp->cnt && !strcmp(ptr->n[i], obp->n[i])) {
           j++;
         }
-        // Check for last iteration and the special `**` case
+        // Check for the last iteration and the special `**` case
         if (i == ptr->cnt - 1
             && (idx->idbf & IWDB_COMPOUND_KEYS)
             && n->next && !n->next->next && n->next->ntype == JQP_NODE_EXPR) {

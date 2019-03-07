@@ -50,9 +50,9 @@ static void ejdb_test3_1() {
   rc = ejdb_list3(db, "c1", "/f/[b = 1]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b = 1' "
-                                                 "INIT: IWKV_CURSOR_EQ"));
+                                "INIT: IWKV_CURSOR_EQ"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b = 1' "
-                                                 "INIT: IWKV_CURSOR_EQ"));
+                                "INIT: IWKV_CURSOR_EQ"));
   int i = 0;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
@@ -67,9 +67,9 @@ static void ejdb_test3_1() {
   rc = ejdb_list3(db, "c1", "/f/[b > 1]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b > 1' "
-                                                 "INIT: IWKV_CURSOR_GE"));
+                                "INIT: IWKV_CURSOR_GE"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b > 1' "
-                                                 "INIT: IWKV_CURSOR_GE"));
+                                "INIT: IWKV_CURSOR_GE"));
 
   i = 0;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
@@ -142,7 +142,7 @@ static void ejdb_test3_1() {
   rc = ejdb_list3(db, "c1", "/f/[b < 11 and b >= 4]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b >= 4' EXPR2: 'b < 11' "
-                                                 "INIT: IWKV_CURSOR_GE"));
+                                "INIT: IWKV_CURSOR_GE"));
   i = 0;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
@@ -312,7 +312,7 @@ static void ejdb_test3_1() {
   rc = ejdb_list3(db, "c1", "/f/[b > 2 and b < 10] | desc /f/b", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b < 10' EXPR2: 'b > 2' "
-                                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_NEXT ORDERBY"));
+                                "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_NEXT ORDERBY"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[COLLECTOR] PLAIN"));
   i = 0;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
@@ -359,21 +359,21 @@ static void ejdb_test3_2() {
   rc = ejdb_ensure_index(db, "a1", "/f/b", EJDB_IDX_I64);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-// Data:
-//
-//  {"f":{"b":16777215},"n":9}
-//  {"f":{"b":16777215},"n":7}
-//  {"f":{"b":16777215},"n":5}
-//  {"f":{"b":16777215},"n":3}
-//  {"f":{"b":16777215},"n":1}
-//  {"f":{"b":127},"n":10}
-//  {"f":{"b":127},"n":8}
-//  {"f":{"b":127},"n":6}
-//  {"f":{"b":127},"n":4}
-//  {"f":{"b":127},"n":2}
-//  {"f":{"b":126},"n":12}
-//  {"f":{"b":126},"n":11}
-//
+  // Data:
+  //
+  //  {"f":{"b":16777215},"n":9}
+  //  {"f":{"b":16777215},"n":7}
+  //  {"f":{"b":16777215},"n":5}
+  //  {"f":{"b":16777215},"n":3}
+  //  {"f":{"b":16777215},"n":1}
+  //  {"f":{"b":127},"n":10}
+  //  {"f":{"b":127},"n":8}
+  //  {"f":{"b":127},"n":6}
+  //  {"f":{"b":127},"n":4}
+  //  {"f":{"b":127},"n":2}
+  //  {"f":{"b":126},"n":12}
+  //  {"f":{"b":126},"n":11}
+  //
 
   for (i = 1; i <= 10; ++i) {
     int v = (i % 2) ? 0xffffff : 127;
@@ -394,7 +394,7 @@ static void ejdb_test3_2() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED I64|12 /f/b EXPR1: 'b > 127' "
-                                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
+                                "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
 
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
@@ -417,7 +417,7 @@ static void ejdb_test3_2() {
   rc = ejdb_list3(db, "a1", "/f/[b < 127]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "SELECTED I64|12 /f/b EXPR1: 'b < 127' "
-                                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_NEXT"));
+                                "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_NEXT"));
 
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
@@ -458,7 +458,7 @@ static void ejdb_test3_2() {
   rc = ejdb_list3(db, "a1", "/f/[b = 127]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "SELECTED I64|12 /f/b EXPR1: 'b = 127' "
-                                                 "INIT: IWKV_CURSOR_EQ"));
+                                "INIT: IWKV_CURSOR_EQ"));
 
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
@@ -481,8 +481,8 @@ static void ejdb_test3_2() {
   rc = ejdb_list3(db, "a1", "/f/[b in [333, 16777215, 127, 16777216]]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED I64|12 /f/b "
-                                                 "EXPR1: 'b in [333,16777215,127,16777216]' "
-                                                 "INIT: IWKV_CURSOR_EQ"));
+                                "EXPR1: 'b in [333,16777215,127,16777216]' "
+                                "INIT: IWKV_CURSOR_EQ"));
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
@@ -603,7 +603,7 @@ static void ejdb_test3_3() {
   rc = ejdb_list4(db, q, 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|6 /f/b EXPR1: 'b >= :?' "
-                                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
+                                "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
     JBL jbl1, jbl2;
@@ -614,22 +614,28 @@ static void ejdb_test3_3() {
     int64_t llv = jbl_get_i64(jbl2);
     char *str = jbl_get_str(jbl1);
     switch (i) {
-      case 1: CU_ASSERT_EQUAL(llv, 1);
+      case 1:
+        CU_ASSERT_EQUAL(llv, 1);
         CU_ASSERT_STRING_EQUAL(str, data[0]);
         break;
-      case 2: CU_ASSERT_EQUAL(llv, 2);
+      case 2:
+        CU_ASSERT_EQUAL(llv, 2);
         CU_ASSERT_STRING_EQUAL(str, data[1]);
         break;
-      case 3: CU_ASSERT_EQUAL(llv, INT64_MAX - 1);
+      case 3:
+        CU_ASSERT_EQUAL(llv, INT64_MAX - 1);
         CU_ASSERT_STRING_EQUAL(str, data[1]);
         break;
-      case 4: CU_ASSERT_EQUAL(llv, 3);
+      case 4:
+        CU_ASSERT_EQUAL(llv, 3);
         CU_ASSERT_STRING_EQUAL(str, data[2]);
         break;
-      case 5: CU_ASSERT_EQUAL(llv, 4);
+      case 5:
+        CU_ASSERT_EQUAL(llv, 4);
         CU_ASSERT_STRING_EQUAL(str, data[2]);
         break;
-      case 6: CU_ASSERT_EQUAL(llv, 5);
+      case 6:
+        CU_ASSERT_EQUAL(llv, 5);
         CU_ASSERT_STRING_EQUAL(str, data[3]);
         break;
     }
@@ -648,7 +654,7 @@ static void ejdb_test3_3() {
   rc = ejdb_list4(db, q, 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|6 /f/b EXPR1: 'b >= :?' "
-                                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
+                                "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
 
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
@@ -718,24 +724,31 @@ static void ejdb_test3_4() {
   rc = jql_create(&q, "a3", "/tags/[** in :tags]");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  // Build ["bar", "gaz"]
-  JBL_NODE node;
-  rc = jbl_node_from_json("[\"gaz\"]", &node, pool);
+  // Build quiery
+  JBL_NODE qtags;
+  rc = jbl_node_from_json("[\"zaz\",\"gaz\"]", &qtags, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = jql_set_json(q, "tags", 0, node);
+  rc = jql_set_json(q, "tags", 0, qtags);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = ejdb_list4(db, q, 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  fprintf(stderr, "\nL=%s", iwxstr_ptr(log));
-  // [INDEX] SELECTED STR|5 /tags EXPR1: '** in :tags' INIT: IWKV_CURSOR_EQ
-
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|5 /tags EXPR1: '** in :tags' "
+                                "INIT: IWKV_CURSOR_EQ"));
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
-
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    if (i == 1) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"tags\":[\"foo\",\"bar\",\"gaz\"],\"n\":1}");
+    } else if (i == 2 || i == 3) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"tags\":[\"gaz\",\"zaz\"],\"n\":2}");
+    }
   }
+  CU_ASSERT_EQUAL(i, 4);
 
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
@@ -757,11 +770,11 @@ int main() {
     return CU_get_error();
   }
   if (
-//    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
-//    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
-//    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3))
-      (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
-    ) {
+    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
+  ) {
     CU_cleanup_registry();
     return CU_get_error();
   }
