@@ -496,8 +496,12 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
     JBL_NODE jbvprev_node, jbv_node;
     rc = jbl_to_node(&jbv, &jbv_node, pool);
     RCGO(rc, finish);
+    jbv.node = jbv_node;
+
     rc = jbl_to_node(&jbvprev, &jbvprev_node, pool);
     RCGO(rc, finish);
+    jbvprev.node = jbvprev_node;
+
     if (_jbl_compare_nodes(jbv_node, jbvprev_node, &rc) == 0) {
       goto finish; // Arrays are equal or error
     }
@@ -506,7 +510,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   }
 
   if (jbvprev_found) { // Remove old index elements
-    if (jbvprev_type == JBV_ARRAY) {
+    if (jbvprev_type == JBV_ARRAY) { // TODO: array modification delta?
       JBL_NODE n;
       if (!pool) {
         pool = iwpool_create(0);
@@ -514,7 +518,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         }
       }
-      rc = jbl_to_node(&jbv, &n, pool);
+      rc = jbl_to_node(&jbvprev, &n, pool);
       RCGO(rc, finish);
       for (n = n->child; n; n = n->next) {
         jb_idx_node_fill_ikey(idx, n, &key, numbuf);
@@ -545,7 +549,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   }
 
   if (jbv_found) { // Add index record
-    if (jbv_type == JBV_ARRAY) {
+    if (jbv_type == JBV_ARRAY) { // TODO: array modification delta?
       JBL_NODE n;
       if (!pool) {
         pool = iwpool_create(0);
@@ -657,8 +661,10 @@ static iwrc jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *o
     rc = jb_idx_record_add(idx, ctx->id, ctx->jbl, prev);
     RCGO(rc, finish);
   }
-  jb_meta_nrecs_update(jbc->db, jbc->dbid, 1);
-  jbc->rnum += 1;
+  if (prev) {
+    jb_meta_nrecs_update(jbc->db, jbc->dbid, 1);
+    jbc->rnum += 1;
+  }
 
 finish:
   if (oldval) {

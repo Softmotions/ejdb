@@ -23,4 +23,25 @@ static iwrc put_json(EJDB db, const char *coll, const char *json) {
   return rc;
 }
 
+static iwrc put_json2(EJDB db, const char *coll, const char *json, int64_t *id) {
+  const size_t len = strlen(json);
+  char buf[len + 1];
+  memcpy(buf, json, len);
+  buf[len] = '\0';
+  for (int i = 0; buf[i]; ++i) {
+    if (buf[i] == '\'') buf[i] = '"';
+  }
+  JBL jbl;
+  iwrc rc = jbl_from_json(&jbl, buf);
+  RCRET(rc);
+
+  if (*id == 0) {
+    rc = ejdb_put_new(db, coll, jbl, id);
+  } else {
+    rc = ejdb_put(db, coll, jbl, *id);
+  }
+  jbl_destroy(&jbl);
+  return rc;
+}
+
 #endif

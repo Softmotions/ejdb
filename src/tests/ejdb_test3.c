@@ -699,6 +699,8 @@ static void ejdb_test3_4() {
 
   int i = 0;
   EJDB_LIST list = 0;
+  int64_t docId = 0;
+
   IWPOOL *pool = iwpool_create(0);
   CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
   IWXSTR *log = iwxstr_new();
@@ -717,14 +719,14 @@ static void ejdb_test3_4() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   snprintf(dbuf, sizeof(dbuf), "{\"tags\": [\"gaz\", \"zaz\"],\"n\":%d}", 2);
-  rc = put_json(db, "a3", dbuf);
+  rc = put_json2(db, "a3", dbuf, &docId);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   JQL q;
   rc = jql_create(&q, "a3", "/tags/[** in :tags]");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  // Build quiery
+  // Q:
   JBL_NODE qtags;
   rc = jbl_node_from_json("[\"zaz\",\"gaz\"]", &qtags, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -735,7 +737,8 @@ static void ejdb_test3_4() {
   rc = ejdb_list4(db, q, 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|5 /tags EXPR1: '** in :tags' "
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] SELECTED STR|5 /tags EXPR1: '** in :tags' "
                                 "INIT: IWKV_CURSOR_EQ"));
   i = 1;
   for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
@@ -749,9 +752,77 @@ static void ejdb_test3_4() {
     }
   }
   CU_ASSERT_EQUAL(i, 4);
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+
+  // Get
+  CU_ASSERT_TRUE(docId > 0);
+  JBL jbl;
+  rc = ejdb_get(db, "a3", docId, &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  jbl_destroy(&jbl);
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"tags\":[\"gaz\",\"zaz\"],\"n\":2}");
+  rc = put_json2(db, "a3", "{\"tags\": [\"gaz\",\"zaz\"],\"n\":2}", &docId);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  // Update {"tags":["gaz","zaz", "boo"], "n":2}
+  rc = put_json2(db, "a3", "{\"tags\": [\"gaz\",\"zaz\",\"boo\"],\"n\":2}", &docId);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  // Q:
+  rc = jbl_node_from_json("[\"zaz\",\"boo\"]", &qtags, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_set_json(q, "tags", 0, qtags);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] SELECTED STR|6 /tags EXPR1: '** in :tags' "
+                                "INIT: IWKV_CURSOR_EQ"));
+  i = 1;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"tags\":[\"gaz\",\"zaz\",\"boo\"],\"n\":2}");
+  }
+  CU_ASSERT_EQUAL(i, 3);
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  // Remove last
+  rc =  ejdb_remove(db, "a3", docId);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  // G2
+  rc = jbl_node_from_json("[\"gaz\"]", &qtags, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_set_json(q, "tags", 0, qtags);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log),
+                                "[INDEX] SELECTED STR|3 /tags EXPR1: '** in :tags' "
+                                "INIT: IWKV_CURSOR_EQ"));
+  i = 1;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"tags\":[\"foo\",\"bar\",\"gaz\"],\"n\":1}");
+  }
+  CU_ASSERT_EQUAL(i, 2);
 
   ejdb_list_destroy(&list);
   iwxstr_clear(log);
+
+
   jql_destroy(&q);
 
   rc = ejdb_close(&db);
