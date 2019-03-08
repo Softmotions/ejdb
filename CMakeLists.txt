@@ -8,6 +8,8 @@ unset(CHANGELOG_LAST_VERSION)
 unset(CHANGELOG_LAST_MESSAGE)
 include(DebChangelog)
 
+project(${PROJECT_NAME} C)
+
 set(PROJECT_NAME "ejdb2")
 set(PROJECT_VENDOR "Softmotions (https://softmotions.com)")
 set(PROJECT_WEBSITE "https://github.com/Softmotions/ejdb")
@@ -17,8 +19,6 @@ set(PROJECT_DESCRIPTION "Embeddable JSON database engine with network support (E
 set(CHANGELOG_MESSAGE ${CHANGELOG_LAST_MESSAGE})
 set(PROJECT_PPA "ppa:adamansky/ejdb2")
 set(PROJECT_PPA_USER "adamansky")
-
-project(${PROJECT_NAME} C)
 
 set(PROJECT_VERSION_MAJOR ${CHANGELOG_LAST_VERSION_MAJOR})
 set(PROJECT_VERSION_MINOR ${CHANGELOG_LAST_VERSION_MINOR})
