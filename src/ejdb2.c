@@ -661,7 +661,7 @@ static iwrc jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *o
     rc = jb_idx_record_add(idx, ctx->id, ctx->jbl, prev);
     RCGO(rc, finish);
   }
-  if (prev) {
+  if (!prev) {
     jb_meta_nrecs_update(jbc->db, jbc->dbid, 1);
     jbc->rnum += 1;
   }
