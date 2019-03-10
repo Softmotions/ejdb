@@ -2,7 +2,7 @@ if (NOT CMAKE_BUILD_TYPE)
   message(FATAL_ERROR "Please specify the build type -DCMAKE_BUILD_TYPE=Debug|Release|RelWithDebInfo")
 endif()
 
-set(MODULES util jbl jql)
+set(MODULES util jbl jql jbrest)
 set(PROJECT_LLIBRARIES)
 set(PROJECT_INCLUDE_DIRS)
 set(ALL_SRC)
@@ -96,7 +96,7 @@ foreach(MODULE IN LISTS MODULES)
     list(APPEND PROJECT_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE})
 endforeach(MODULE)
 
-list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h                     
+list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
                      ${CMAKE_CURRENT_SOURCE_DIR}/jbi/jbi.h)
 
 list(REMOVE_DUPLICATES PROJECT_LLIBRARIES)

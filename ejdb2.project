@@ -33,6 +33,12 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <VirtualDirectory Name="jbr">
+      <File Name="src/jbr/jbr.h"/>
+      <File Name="src/jbr/jbr.c"/>
+      <File Name="src/jbr/README.md"/>
+      <File Name="src/jbr/CMakeLists.txt"/>
+    </VirtualDirectory>
     <File Name="src/jb_idx_util.c"/>
     <File Name="src/jb_full_scanner.c"/>
     <File Name="src/jb_idx_dup_scanner.c"/>
@@ -173,7 +179,7 @@
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
       <General OutputFile="$(IntermediateDirectory)/ejdb_test3" IntermediateDirectory="$(ProjectPath)/build/src/tests" Command="$(OutputFile)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
-      <BuildSystem Name="CMake"/>
+      <BuildSystem Name="CMake">-G Ninja -DCMAKE_BUILD_TYPE=Debug</BuildSystem>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
@@ -185,10 +191,10 @@
       <PreBuild/>
       <PostBuild/>
       <CustomBuild Enabled="yes">
-        <Target Name="cmake">cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1</Target>
-        <RebuildCommand>make clean &amp;&amp; make -j4</RebuildCommand>
-        <CleanCommand>make clean</CleanCommand>
-        <BuildCommand>make -j4</BuildCommand>
+        <Target Name="cmake">cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DBUILD_TESTS=ON</Target>
+        <RebuildCommand>ninja clean &amp;&amp; ninja</RebuildCommand>
+        <CleanCommand>ninja clean</CleanCommand>
+        <BuildCommand>ninja</BuildCommand>
         <PreprocessFileCommand/>
         <SingleFileCommand/>
         <MakefileGenerationCommand/>
