@@ -1,4 +1,5 @@
 #include "jbr.h"
+#include "libwebsockets.h"
 
 
 iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, JBR *jbr) {

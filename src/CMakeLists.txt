@@ -20,6 +20,7 @@ include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(TestBigEndian)
+include(AddWebsockets)
 
 # IOWOW
 set(IOWOW_FIND_REQUIRED ON)
@@ -101,10 +102,6 @@ list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
                      ${CMAKE_CURRENT_SOURCE_DIR}/jbr/jbr.h
                      ${CMAKE_CURRENT_SOURCE_DIR}/jql/jql.h)
 
-list(REMOVE_DUPLICATES PROJECT_LLIBRARIES)
-list(REMOVE_DUPLICATES PROJECT_INCLUDE_DIRS)
-include_directories(${PROJECT_INCLUDE_DIRS})
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -pedantic -Wfatal-errors -Wall -Wextra \
                   -Wno-sign-compare -Wno-unused-parameter -Wno-unknown-pragmas -Wno-unused-function \
                   -Wno-missing-field-initializers -Wno-missing-braces -Wno-implicit-fallthrough")
@@ -136,6 +133,10 @@ list(APPEND ALL_HDRS ${PROJECT_GENERATED_HDRS})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tmpl/libejdb2.pc.in ${PROJECT_GENERATED_DIR}/libejdb2.pc @ONLY)
 install(FILES ${PROJECT_GENERATED_DIR}/libejdb2.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
+list(REMOVE_DUPLICATES PROJECT_LLIBRARIES)
+list(REMOVE_DUPLICATES PROJECT_INCLUDE_DIRS)
+include_directories(${PROJECT_INCLUDE_DIRS})
 
 foreach(MODULE IN LISTS MODULES)
     if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}/CMakeLists.txt)

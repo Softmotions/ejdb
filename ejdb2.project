@@ -9,6 +9,7 @@
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <VirtualDirectory Name="Modules">
+      <File Name="cmake/Modules/AddWebsockets.cmake"/>
       <File Name="cmake/Modules/FindIOWOW.cmake"/>
       <File Name="cmake/Modules/Win32LIBTools.cmake"/>
       <File Name="cmake/Modules/UploadPPA.cmake"/>
@@ -37,7 +38,6 @@
       <File Name="src/jbr/jbr.h"/>
       <File Name="src/jbr/jbr.c"/>
       <File Name="src/jbr/README.md"/>
-      <File Name="src/jbr/CMakeLists.txt"/>
     </VirtualDirectory>
     <File Name="src/jb_idx_util.c"/>
     <File Name="src/jb_full_scanner.c"/>
