@@ -9,6 +9,7 @@
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <VirtualDirectory Name="Modules">
+      <File Name="cmake/Modules/AddFacil.cmake"/>
       <File Name="cmake/Modules/AddWebsockets.cmake"/>
       <File Name="cmake/Modules/FindIOWOW.cmake"/>
       <File Name="cmake/Modules/Win32LIBTools.cmake"/>

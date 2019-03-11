@@ -20,7 +20,7 @@ include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(TestBigEndian)
-include(AddWebsockets)
+include(AddFacil)
 
 # IOWOW
 set(IOWOW_FIND_REQUIRED ON)
