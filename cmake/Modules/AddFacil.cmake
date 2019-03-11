@@ -8,7 +8,7 @@ set(FACIL_LIBRARY_DIR "${FACIL_BINARY_DIR}")
 ExternalProject_Add(
   extern_facil
   GIT_REPOSITORY https://github.com/Softmotions/facil.io.git
-  GIT_TAG 0.7.0.beta8
+  # GIT_TAG 0.7.0.beta8
   # Remove in-source makefile to avoid clashing
   PATCH_COMMAND rm -f ./makefile
   PREFIX ${CMAKE_BINARY_DIR}
