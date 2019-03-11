@@ -13,7 +13,7 @@ struct _JBL;
 typedef struct _JBL *JBL;
 
 typedef enum {
-  _JBL_ERROR_START = (IW_ERROR_START + 10000UL),
+  _JBL_ERROR_START = (IW_ERROR_START + 15000UL + 1000),
   JBL_ERROR_INVALID_BUFFER,             /**< Invalid JBL buffer (JBL_ERROR_INVALID_BUFFER) */
   JBL_ERROR_CREATION,                   /**< Cannot create JBL object (JBL_ERROR_CREATION) */
   JBL_ERROR_INVALID,                    /**< Invalid JBL object (JBL_ERROR_INVALID) */

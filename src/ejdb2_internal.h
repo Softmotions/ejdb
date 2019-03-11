@@ -4,6 +4,7 @@
 
 #include "ejdb2.h"
 #include "jql.h"
+#include "jbr.h"
 #include "jql_internal.h"
 #include "jbl_internal.h"
 #include <iowow/iwkv.h>
@@ -82,6 +83,7 @@ struct _EJDB {
   IWKV iwkv;
   IWDB metadb;
   IWDB nrecdb;
+  JBR  jbr;
   khash_t(JBCOLLM) *mcolls;
   iwkv_openflags oflags;
   pthread_rwlock_t rwl;       /**< Main RWL */

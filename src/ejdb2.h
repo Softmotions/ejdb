@@ -53,7 +53,6 @@ typedef struct EJDB_IPC {
 typedef struct _EJDB_OPTS {
   IWKV_OPTS kv;
   EJDB_HTTP http;
-  EJDB_IPC ipc;
   bool no_wal;                  /**< Do not use write-ahead-log. Default: false */
   uint32_t sort_buffer_sz;      /**< Max sort buffer size. If exeeded an overflow file for sorted data will created.
                                      Default 16Mb, min: 1Mb */

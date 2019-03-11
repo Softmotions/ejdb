@@ -11,7 +11,7 @@ struct _JQL;
 typedef struct _JQL *JQL;
 
 typedef enum {
-  _JQL_ERROR_START = (IW_ERROR_START + 10000UL + 1000),
+  _JQL_ERROR_START = (IW_ERROR_START + 15000UL + 2000),
   JQL_ERROR_QUERY_PARSE,          /**< Query parsing error (JQL_ERROR_QUERY_PARSE) */
   JQL_ERROR_INVALID_PLACEHOLDER,  /**< Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER) */
   JQL_ERROR_UNSET_PLACEHOLDER,    /**< Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER) */
