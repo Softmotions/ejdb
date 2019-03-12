@@ -1,29 +1,41 @@
 #include "jbr.h"
 #include <fio.h>
+#include <fiobj.h>
 #include <http/http.h>
 #include <iowow/iwconv.h>
 #include "ejdb2_internal.h"
 
 struct _JBR {
-  volatile iwrc rc;
   volatile bool terminated;
+  volatile iwrc rc;
   pthread_t worker_thread;
   pthread_barrier_t start_barrier;
   const EJDB_HTTP *http;
+  EJDB db;
 };
 
-static void on_finish(struct http_settings_s *settings) {
-  iwlog_info2("HTTP server shutdown");
+static iwrc jbr_query_visitor(EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
+  return 0;
 }
 
 static void on_http_request(http_s *h) {
+  //fiobj_obj2cstr(h->method)
+  //h->method
+
+  //fio_url_parse()
   // TODO:
   http_send_body(h, "Hello World!", 12);
 }
 
+static void on_finish(struct http_settings_s *settings) {
+  iwlog_info2("HTTP endpoint closed");
+}
+
 static void on_pre_start(void *op) {
   JBR jbr = op;
-  pthread_barrier_wait(&jbr->start_barrier);
+  if (!jbr->http->blocking) {
+    pthread_barrier_wait(&jbr->start_barrier);
+  }
 }
 
 static void *_jbr_start_thread(void *op) {
@@ -35,6 +47,7 @@ static void *_jbr_start_thread(void *op) {
 
   iwlog_info("HTTP endpoint at %s:%s", bind, nbuf);
   if (http_listen(nbuf, bind,
+                  .udata = jbr,
                   .on_request = on_http_request,
                   .on_finish = on_finish,
                   .max_body_size = 1024 * 1024 * 64, // 64Mb
@@ -44,7 +57,9 @@ static void *_jbr_start_thread(void *op) {
     iwlog_ecode_error2(jbr->rc, "Failed to start HTTP server");
   }
   if (jbr->rc) {
-    pthread_barrier_wait(&jbr->start_barrier);
+    if (!jbr->http->blocking) {
+      pthread_barrier_wait(&jbr->start_barrier);
+    }
     return 0;
   }
   fio_state_callback_add(FIO_CALL_PRE_START, on_pre_start, jbr);
@@ -54,7 +69,6 @@ static void *_jbr_start_thread(void *op) {
 
 static void _jbr_release(JBR *pjbr) {
   JBR jbr = *pjbr;
-  pthread_barrier_destroy(&jbr->start_barrier);
   free(jbr);
   *pjbr = 0;
 }
@@ -67,28 +81,39 @@ iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, JBR *pjbr) {
   }
   JBR jbr = calloc(1, sizeof(*jbr));
   if (!jbr) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  jbr->db = db;
   jbr->terminated = true;
   jbr->http = &opts->http;
 
-  int rci = pthread_barrier_init(&jbr->start_barrier, 0, 2);
-  if (rci) {
-    free(jbr);
-    return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
-  }
-  rci = pthread_create(&jbr->worker_thread, 0, _jbr_start_thread, jbr);
-  if (rci) {
+  if (!jbr->http->blocking) {
+    int rci = pthread_barrier_init(&jbr->start_barrier, 0, 2);
+    if (rci) {
+      free(jbr);
+      return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+    }
+    rci = pthread_create(&jbr->worker_thread, 0, _jbr_start_thread, jbr);
+    if (rci) {
+      pthread_barrier_destroy(&jbr->start_barrier);
+      free(jbr);
+      return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+    }
+    pthread_barrier_wait(&jbr->start_barrier);
     pthread_barrier_destroy(&jbr->start_barrier);
-    free(jbr);
-    return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+    jbr->terminated = false;
+    rc = jbr->rc;
+    if (rc) {
+      jbr_shutdown(pjbr);
+      return rc;
+    }
+    *pjbr = jbr;
+  } else {
+    *pjbr = jbr;
+    jbr->terminated = false;
+    _jbr_start_thread(jbr); // Will block here
+    rc = jbr->rc;
+    jbr->terminated = true;
+    IWRC(jbr_shutdown(pjbr), rc);
   }
-  jbr->terminated = false;
-  pthread_barrier_wait(&jbr->start_barrier);
-  rc = jbr->rc;
-  if (rc) {
-    jbr_shutdown(pjbr);
-    return rc;
-  }
-  *pjbr = jbr;
   return rc;
 }
 
@@ -100,7 +125,9 @@ iwrc jbr_shutdown(JBR *pjbr) {
   if (__sync_bool_compare_and_swap(&jbr->terminated, 0, 1)) {
     fio_state_callback_remove(FIO_CALL_PRE_START, on_pre_start, jbr);
     fio_stop();
-    pthread_join(jbr->worker_thread, 0);
+    if (!jbr->http->blocking) {
+      pthread_join(jbr->worker_thread, 0);
+    }
   }
   _jbr_release(pjbr);
   *pjbr = 0;

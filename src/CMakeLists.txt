@@ -201,6 +201,10 @@ else()
                           OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 endif()
 
+# Executables
+add_executable(jbserver jbserver.c)
+target_link_libraries(jbserver ejdb2_s)
+
 install(TARGETS ejdb2
         EXPORT ejdb2-exports
         FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}

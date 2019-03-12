@@ -41,6 +41,7 @@ typedef struct EJDB_HTTP {
   int port;
   const char *bind;
   const char *access_token;
+  bool blocking;        /**< Block ejdb_open() thread until http service finished. */
 } EJDB_HTTP;
 
 typedef struct EJDB_IPC {

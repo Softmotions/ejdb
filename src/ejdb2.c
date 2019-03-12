@@ -1356,7 +1356,7 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   rc = jb_db_meta_load(db);
   RCGO(rc, finish);
 
-  if (db->opts.http.enabled) {
+  if (db->opts.http.enabled && !db->opts.http.blocking) {
     rc = jbr_start(db, &db->opts, &db->jbr);
     RCGO(rc, finish);
   }
@@ -1367,6 +1367,9 @@ finish:
   } else {
     db->open = true;
     *ejdbp = db;
+    if (db->opts.http.enabled && db->opts.http.blocking) {
+      rc = jbr_start(db, &db->opts, &db->jbr);
+    }
   }
   return rc;
 }

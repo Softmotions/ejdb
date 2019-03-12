@@ -2,4 +2,5 @@
 
 #Prerequisites
 
-apt-get install libuv1-dev libcunit1-dev
+## GDB
+handle SIGINT nostop print pass
