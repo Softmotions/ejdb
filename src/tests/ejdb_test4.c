@@ -19,8 +19,7 @@ static void ejdb_test4_1() {
     .no_wal = true,
     .http = {
       .enabled = true,
-      .port = 9292,
-      .bind = "0.0.0.0"
+      .port = 9292
     }
   };
   EJDB db;
