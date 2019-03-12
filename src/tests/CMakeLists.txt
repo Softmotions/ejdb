@@ -6,7 +6,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 
 foreach(TN IN ITEMS ejdb_test1
                     ejdb_test2
-                    ejdb_test3)
+                    ejdb_test3
+                    ejdb_test4)
     add_executable(${TN} ${TN}.c)
     set_target_properties(${TN} PROPERTIES
                           COMPILE_FLAGS "-DIW_STATIC")

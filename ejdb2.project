@@ -1,5 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
+  <VirtualDirectory Name="facil">
+    <VirtualDirectory Name="examples">
+      <File Name="build/src/extern_facil/examples/raw-http.c"/>
+      <File Name="build/src/extern_facil/examples/raw-echo.c"/>
+      <File Name="build/src/extern_facil/examples/raw-client.c"/>
+      <File Name="build/src/extern_facil/examples/raw-chat.c"/>
+      <File Name="build/src/extern_facil/examples/http-hello.c"/>
+      <File Name="build/src/extern_facil/examples/http_client.c"/>
+      <File Name="build/src/extern_facil/examples/http-chat.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="tls">
+      <File Name="build/src/extern_facil/lib/facil/tls/fio_tls_openssl.c"/>
+      <File Name="build/src/extern_facil/lib/facil/tls/fio_tls_missing.c"/>
+      <File Name="build/src/extern_facil/lib/facil/tls/fio_tls.h"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="cli">
+      <File Name="build/src/extern_facil/lib/facil/cli/fio_cli.h"/>
+      <File Name="build/src/extern_facil/lib/facil/cli/fio_cli.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="http">
+      <VirtualDirectory Name="parsers">
+        <File Name="build/src/extern_facil/lib/facil/http/parsers/websocket_parser.h"/>
+        <File Name="build/src/extern_facil/lib/facil/http/parsers/http_mime_parser.h"/>
+        <File Name="build/src/extern_facil/lib/facil/http/parsers/http1_parser.h"/>
+        <File Name="build/src/extern_facil/lib/facil/http/parsers/http1_parser.c"/>
+        <File Name="build/src/extern_facil/lib/facil/http/parsers/hpack.h"/>
+      </VirtualDirectory>
+      <File Name="build/src/extern_facil/lib/facil/http/websockets.h"/>
+      <File Name="build/src/extern_facil/lib/facil/http/websockets.c"/>
+      <File Name="build/src/extern_facil/lib/facil/http/README.md"/>
+      <File Name="build/src/extern_facil/lib/facil/http/http_internal.h"/>
+      <File Name="build/src/extern_facil/lib/facil/http/http_internal.c"/>
+      <File Name="build/src/extern_facil/lib/facil/http/http1.h"/>
+      <File Name="build/src/extern_facil/lib/facil/http/http1.c"/>
+      <File Name="build/src/extern_facil/lib/facil/http/http.h"/>
+      <File Name="build/src/extern_facil/lib/facil/http/http.c"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="fiobj">
+      <File Name="build/src/extern_facil/lib/facil/fiobj/README.md"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/mustache_parser.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fio_tmpfile.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fio_siphash.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fio_siphash.c"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fio_json_parser.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_str.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_str.c"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_numbers.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_numbers.c"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_mustache.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_mustache.c"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_json.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_json.c"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_hash.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_hash.c"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobject.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobject.c"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_data.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_data.c"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_ary.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj_ary.c"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj4fio.h"/>
+      <File Name="build/src/extern_facil/lib/facil/fiobj/fiobj.h"/>
+    </VirtualDirectory>
+    <File Name="build/src/extern_facil/lib/facil/fio.h"/>
+    <File Name="build/src/extern_facil/lib/facil/fio.c"/>
+  </VirtualDirectory>
   <VirtualDirectory Name="tools"/>
   <VirtualDirectory Name="man">
     <File Name="man/CMakeLists.txt"/>
@@ -23,8 +89,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>build/</Path>
       <Path>cmake-build-Debug/</Path>
+      <Path>build/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -49,6 +115,7 @@
     <File Name="src/jb_scan_sorter_consumer.c"/>
     <File Name="src/ejdb2_internal.h"/>
     <VirtualDirectory Name="tests">
+      <File Name="src/tests/ejdb_test4.c"/>
       <File Name="src/tests/ejdb_test.h"/>
       <File Name="src/tests/ejdb_test3.c"/>
       <File Name="src/tests/ejdb_test2.c"/>
@@ -179,7 +246,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="$(IntermediateDirectory)/ejdb_test3" IntermediateDirectory="$(ProjectPath)/build/src/tests" Command="$(OutputFile)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="$(IntermediateDirectory)/ejdb_test4" IntermediateDirectory="$(ProjectPath)/build/src/tests" Command="$(OutputFile)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake">-G Ninja -DCMAKE_BUILD_TYPE=Debug</BuildSystem>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>

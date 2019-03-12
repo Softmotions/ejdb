@@ -329,6 +329,7 @@ finish:
 static iwrc jb_db_release(EJDB *dbp) {
   iwrc rc = 0;
   EJDB db = *dbp;
+  *dbp = 0;
   if (db->jbr) {
     IWRC(jbr_shutdown(&db->jbr), rc);
   }
@@ -345,8 +346,11 @@ static iwrc jb_db_release(EJDB *dbp) {
     IWRC(iwkv_close(&db->iwkv), rc);
   }
   pthread_rwlock_destroy(&db->rwl);
+
+  EJDB_HTTP *http = &db->opts.http;
+  if (http->bind) free((void *) http->bind);
+  if (http->access_token) free((void *) http->access_token);
   free(db);
-  *dbp = 0;
   return rc;
 }
 
@@ -782,7 +786,7 @@ static iwrc jb_exec_list_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   ndoc->id = doc->id;
-  ndoc->raw = (void *) (((uint8_t *) ndoc) + sizeof(*ndoc));
+  ndoc->raw = (void *)(((uint8_t *) ndoc) + sizeof(*ndoc));
   ndoc->raw->node = 0;
   ndoc->next = 0;
   ndoc->prev = 0;
@@ -1246,7 +1250,7 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   }
 
 finish:
-API_UNLOCK(db, rci, rc);
+  API_UNLOCK(db, rci, rc);
   return rc;
 }
 
@@ -1289,7 +1293,7 @@ iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
   clist = 0;
 
 finish:
-API_UNLOCK(db, rci, rc);
+  API_UNLOCK(db, rci, rc);
   if (rc) {
     if (clist) binn_free(clist);
     jbl_destroy(&jbl);
@@ -1326,6 +1330,9 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   if (db->opts.document_buffer_sz < 16 * 1024) { // Min 16Kb
     db->opts.document_buffer_sz = 16 * 1024;
   }
+  EJDB_HTTP *http = &db->opts.http;
+  if (http->bind) http->bind = strdup(http->bind);
+  if (http->access_token) http->access_token = strdup(http->access_token);
 
   rci = pthread_rwlock_init(&db->rwl, 0);
   if (rci) {

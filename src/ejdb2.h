@@ -40,6 +40,7 @@ typedef struct EJDB_HTTP {
   bool enabled;
   int port;
   const char *bind;
+  const char *access_token;
 } EJDB_HTTP;
 
 typedef struct EJDB_IPC {
