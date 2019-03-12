@@ -368,6 +368,9 @@ IW_INLINE void _node_to_jqval(JBL_NODE jn, JQVAL *qv) {
       qv->type = JQVAL_JBLNODE;
       qv->vnode = jn;
       break;
+    default:
+      qv->type = JQVAL_NULL;
+      break;
   }
 }
 

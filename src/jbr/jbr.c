@@ -21,15 +21,20 @@ static void on_http_request(http_s *h) {
   http_send_body(h, "Hello World!", 12);
 }
 
+static void on_pre_start(void *op) {
+  JBR jbr = op;
+  pthread_barrier_wait(&jbr->start_barrier);
+}
+
 static void *_jbr_start_thread(void *op) {
   JBR jbr = op;
-  jbr->terminated = false;
   char nbuf[JBNUMBUF_SIZE];
   const EJDB_HTTP *http = jbr->http;
+  const char *bind = http->bind ? http->bind : "0.0.0.0";
   iwitoa(http->port, nbuf, sizeof(nbuf));
 
-  iwlog_info("Starting HTTP server %s:%s", (http->bind ? http->bind : "0.0.0.0"), nbuf);
-  if (http_listen(nbuf, http->bind,
+  iwlog_info("HTTP endpoint at %s:%s", bind, nbuf);
+  if (http_listen(nbuf, bind,
                   .on_request = on_http_request,
                   .on_finish = on_finish,
                   .max_body_size = 1024 * 1024 * 64, // 64Mb
@@ -38,10 +43,11 @@ static void *_jbr_start_thread(void *op) {
     jbr->rc = iwrc_set_errno(JBR_ERROR_HTTP_LISTEN_ERROR, errno);
     iwlog_ecode_error2(jbr->rc, "Failed to start HTTP server");
   }
-  pthread_barrier_wait(&jbr->start_barrier);
   if (jbr->rc) {
+    pthread_barrier_wait(&jbr->start_barrier);
     return 0;
   }
+  fio_state_callback_add(FIO_CALL_PRE_START, on_pre_start, jbr);
   fio_start(.threads = -1, .workers = 1); // Will block current thread here
   return 0;
 }
@@ -92,6 +98,7 @@ iwrc jbr_shutdown(JBR *pjbr) {
   }
   JBR jbr = *pjbr;
   if (__sync_bool_compare_and_swap(&jbr->terminated, 0, 1)) {
+    fio_state_callback_remove(FIO_CALL_PRE_START, on_pre_start, jbr);
     fio_stop();
     pthread_join(jbr->worker_thread, 0);
   }

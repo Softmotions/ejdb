@@ -76,7 +76,7 @@ static int _jbl_unescape_json_string(const char *p, char *d, int dlen, const cha
   char c;
   char *ds = d;
   char *de = d + dlen;
-  
+
   while ((c = *p++)) {
     if (c == '"') { // string closing quotes
       if (end) *end = p;
@@ -162,6 +162,7 @@ static int _jbl_unescape_json_string(const char *p, char *d, int dlen, const cha
 
 static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
   char c;
+  *key = "";
   while ((c = *p++)) {
     if (c == '"') {
       int len = _jbl_unescape_json_string(p, 0, 0, 0, &ctx->rc);
@@ -178,8 +179,6 @@ static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
         }
         kptr[len] =  '\0';
         *key = kptr;
-      } else {
-        *key = "";
       }
       while (*p && IS_WHITESPACE(*p)) p++;
       if (*p == ':') return p + 1;
@@ -332,12 +331,12 @@ static const char *_jbl_parse_value(JBL_NODE parent,
 static iwrc _jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, int lvl, jbl_print_flags_t pf) {
   iwrc rc = 0;
   bool pretty = pf & JBL_PRINT_PRETTY;
-  
+
 #define PT(data_, size_, ch_, count_) do {\
     rc = pt(data_, size_, ch_, count_, op); \
     RCRET(rc); \
   } while(0)
-  
+
   switch (node->type) {
     case JBV_ARRAY:
       PT(0, 0, '[', 1);

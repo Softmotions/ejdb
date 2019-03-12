@@ -19,14 +19,14 @@ static void ejdb_test4_1() {
     .no_wal = true,
     .http = {
       .enabled = true,
-      .port = 9292
+      .port = 9292,
+      .bind = "0.0.0.0"
     }
   };
   EJDB db;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  //sleep(1);
 
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
