@@ -1,8 +1,6 @@
 #include "ejdb2.h"
 #include "ejdb2cfg.h"
-#include <fio.h>
 #include <fio_cli.h>
-#include <signal.h>
 
 EJDB db;
 EJDB_OPTS opts;
