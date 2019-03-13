@@ -355,6 +355,9 @@ static iwrc jb_db_release(EJDB *dbp) {
 }
 
 static iwrc jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquire_t acm, JBCOLL *jbcp) {
+  if (strlen(coll) > EJDB_COLLECTION_NAME_MAX_LEN) {
+    return EJDB_ERROR_INVALID_COLLECTION_NAME;
+  }
   int rci;
   iwrc rc = 0;
   *jbcp = 0;
@@ -1420,6 +1423,8 @@ static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
       return "Index exists but mismatched uniqueness constraint (EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE)";
     case EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED:
       return "Unique index constraint violated (EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED)";
+    case EJDB_ERROR_INVALID_COLLECTION_NAME:
+      return "Invalid collection name (EJDB_ERROR_INVALID_COLLECTION_NAME)";
   }
   return 0;
 }

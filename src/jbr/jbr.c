@@ -45,7 +45,7 @@
 //      Response:
 //                200 on success
 //
-//    GET     `/{collection}/{id}`
+//    GET|HEAD `/{collection}/{id}`
 //      Retrieve document identified by `id` from a `collection`
 //      Response:
 //                200 on success, document JSON
@@ -62,9 +62,10 @@ static uint64_t x_access_token_hash;
 typedef enum {
   JBR_GET = 1,
   JBR_PUT,
-  JBR_POST,
   JBR_PATCH,
-  JBR_DELETE
+  JBR_DELETE,
+  JBR_POST,
+  JBR_HEAD
 } jbr_method_t;
 
 struct _JBR {
@@ -77,39 +78,154 @@ struct _JBR {
 };
 
 typedef struct _JBRCTX {
+  JBR jbr;
+  http_s *req;
   jbr_method_t method;
   const char *collection;
   size_t collection_len;
   int64_t id;
+  bool read_anon;
 } JBRCTX;
+
+#define JBR_RCREPORT(r_, rc_)                                                      \
+  do {                                                                             \
+    iwlog_ecode_error3(rc_);                                                       \
+    const char *strerr = iwlog_ecode_explained(rc_);                               \
+    jbr_http_send(r_, 500, "text/plain", strerr, strerr ? strlen(strerr) : 0);     \
+  } while(0)
+
+IW_INLINE void jbr_http_set_content_length(http_s *r, uintptr_t length) {
+  static uint64_t cl_hash = 0;
+  if (!cl_hash)
+    cl_hash = fiobj_hash_string("content-length", 14);
+  if (!fiobj_hash_get2(r->private_data.out_headers, cl_hash)) {
+    fiobj_hash_set(r->private_data.out_headers, HTTP_HEADER_CONTENT_LENGTH,
+                   fiobj_num_new(length));
+  }
+}
+IW_INLINE void jbr_http_set_content_type(http_s *r, const char *ctype) {
+  static uint64_t ct_hash = 0;
+  if (!ct_hash)
+    ct_hash = fiobj_hash_string("content-type", 12);
+  if (!fiobj_hash_get2(r->private_data.out_headers, ct_hash)) {
+    fiobj_hash_set(r->private_data.out_headers, HTTP_HEADER_CONTENT_TYPE,
+                   fiobj_str_new(ctype, strlen(ctype)));
+  }
+}
+
+static iwrc jbr_http_send(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
+  if (!r || !r->private_data.out_headers) {
+    iwlog_ecode_error3(IW_ERROR_INVALID_ARGS);
+    return IW_ERROR_INVALID_ARGS;
+  }
+  r->status = status;
+  if (ctype) {
+    jbr_http_set_content_type(r, ctype);
+  }
+  if (http_send_body(r, (char *)body, bodylen)) {
+    iwlog_ecode_error3(JBR_ERROR_RESPONSE_SENDING);
+    return JBR_ERROR_RESPONSE_SENDING;
+  }
+  return 0;
+}
+
+IW_INLINE iwrc jbr_http_error_send(http_s *r, int status)  {
+  return jbr_http_send(r, status, "text/plain", 0, 0);
+}
+
+IW_INLINE iwrc jbr_http_error_send2(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
+  return jbr_http_send(r, status, ctype, body, bodylen);
+}
 
 static iwrc jbr_query_visitor(EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
   return 0;
 }
 
+static void jbr_on_query(JBRCTX *rctx) {
+  // todo
+}
+
+static void jbr_on_delete(JBRCTX *rctx) {
+  if (rctx->read_anon) {
+    jbr_http_error_send(rctx->req, 403);
+    return;
+  }
+}
+
+static void jbr_on_patch(JBRCTX *rctx) {
+  if (rctx->read_anon) {
+    jbr_http_error_send(rctx->req, 403);
+    return;
+  }
+}
+
+static void jbr_on_put(JBRCTX *rctx) {
+  if (rctx->read_anon) {
+    jbr_http_error_send(rctx->req, 403);
+    return;
+  }
+}
+
+static void jbr_on_get(JBRCTX *rctx) {
+  JBL jbl;
+  IWXSTR *xstr;
+  EJDB db = rctx->jbr->db;
+  http_s *req = rctx->req;
+
+  iwrc rc = ejdb_get(db, rctx->collection, rctx->id, &jbl);
+  if (rc == IW_ERROR_NOT_EXISTS) {
+    jbr_http_error_send(req, 404);
+    return;
+  } else if (rc) {
+    JBR_RCREPORT(req, rc);
+    return;
+  }
+  xstr = iwxstr_new2(jbl->bn.size * 2);
+  if (!xstr) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    JBR_RCREPORT(req, rc);
+    return;
+  }
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
+  if (rc) {
+    JBR_RCREPORT(req, rc);
+    goto finish;
+  }
+  jbl_destroy(&jbl);
+  jbr_http_send(req, 200, "application/json", iwxstr_ptr(xstr), iwxstr_size(xstr));
+
+finish:
+  iwxstr_destroy(xstr);
+}
+
 static bool jbr_fill_ctx(http_s *req, JBRCTX *r) {
+  JBR jbr = req->udata;
   memset(r, 0, sizeof(*r));
+  r->req = req;
+  r->jbr = jbr;
   fio_str_info_s method = fiobj_obj2cstr(req->method);
   switch (method.len) {
     case 3:
-      if (!strncmp("GET", method.data, 3)) {
+      if (!strncmp("GET", method.data, method.len)) {
         r->method = JBR_GET;
-      } else if (!strncmp("PUT", method.data, 3)) {
+      } else if (!strncmp("PUT", method.data, method.len)) {
         r->method = JBR_PUT;
       }
       break;
     case 4:
-      if (!strncmp("POST", method.data, 3)) {
+      if (!strncmp("POST", method.data, method.len)) {
         r->method = JBR_POST;
+      } else if (!strncmp("HEAD", method.data, method.len)) {
+        r->method = JBR_HEAD;
       }
       break;
     case 5:
-      if (!strncmp("PATCH", method.data, 3)) {
+      if (!strncmp("PATCH", method.data, method.len)) {
         r->method = JBR_PATCH;
       }
       break;
     case 6:
-      if (!strncmp("DELETE", method.data, 3)) {
+      if (!strncmp("DELETE", method.data, method.len)) {
         r->method = JBR_DELETE;
       }
   }
@@ -125,15 +241,44 @@ static bool jbr_fill_ctx(http_s *req, JBRCTX *r) {
 
   char *c = strchr(path.data + 1, '/');
   if (!c) {
-     if (path.len > 1) {
-       r->collection = path.data + 1;
-       r->collection_len = path.len - 1;
-     }
+    if (path.len > 1) {
+      switch (r->method) {
+        case JBR_GET:
+        case JBR_HEAD:
+        case JBR_PUT:
+        case JBR_DELETE:
+        case JBR_PATCH:
+          return false;
+        default:
+          break;
+      }
+      r->collection = path.data + 1;
+      r->collection_len = path.len - 1;
+    } else if (r->method != JBR_POST) {
+      return false;
+    }
   } else {
-
+    char *eptr;
+    char nbuf[JBNUMBUF_SIZE];
+    r->collection = path.data + 1;
+    r->collection_len = c - r->collection;
+    int nlen = path.len - (c - path.data) - 1;
+    if (nlen < 1) {
+      goto finish;
+    }
+    if (nlen > JBNUMBUF_SIZE - 1) {
+      return false;
+    }
+    memcpy(nbuf, r->collection + r->collection_len + 1, nlen);
+    nbuf[nlen] =  '\0';
+    r->id = strtoll(nbuf, &eptr, 10);
+    if (*eptr != '\0' || r->id < 1 || r->method == JBR_POST) {
+      return false;
+    }
   }
 
-  return true;
+finish:
+  return (r->collection_len > EJDB_COLLECTION_NAME_MAX_LEN);
 }
 
 static void on_http_request(http_s *req) {
@@ -142,9 +287,19 @@ static void on_http_request(http_s *req) {
   assert(jbr);
   const EJDB_HTTP *http = jbr->http;
 
+  if (!jbr_fill_ctx(req, &rctx)) {
+    http_send_error(req, 400); // Bad request
+    return;
+  }
   if (http->access_token) {
     FIOBJ h = fiobj_hash_get2(req->headers, x_access_token_hash);
     if (!h) {
+      if (http->read_anon) {
+        if (rctx.method == JBR_GET || rctx.method == JBR_HEAD || (rctx.method == JBR_POST && !rctx.collection)) {
+          rctx.read_anon = true;
+          goto process;
+        }
+      }
       http_send_error(req, 401);
       return;
     }
@@ -158,14 +313,38 @@ static void on_http_request(http_s *req) {
       return;
     }
   }
-  if (!jbr_fill_ctx(req, &rctx)) {
-    http_send_error(req, 400); // Bad request
-    return;
-  }
 
-  //fio_url_parse()
-  // TODO:
-  http_send_body(req, "Hello World!", 12);
+process:
+  if (rctx.collection) {
+    char cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
+    // convert to `\0` terminated c-string
+    memcpy(cname, rctx.collection, rctx.collection_len);
+    cname[rctx.collection_len] = '\0';
+    rctx.collection = cname;
+    switch (rctx.method) {
+      case JBR_GET:
+      case JBR_HEAD:
+        jbr_on_get(&rctx);
+        break;
+      case JBR_POST:
+      case JBR_PUT:
+        jbr_on_put(&rctx);
+        break;
+      case JBR_PATCH:
+        jbr_on_patch(&rctx);
+        break;
+      case JBR_DELETE:
+        jbr_on_delete(&rctx);
+        break;
+      default:
+        http_send_error(req, 400);
+        break;
+    }
+  } else if (rctx.method == JBR_POST) {
+    jbr_on_query(&rctx);
+  } else {
+    http_send_error(req, 400);
+  }
 }
 
 static void on_finish(struct http_settings_s *settings) {
@@ -282,6 +461,8 @@ static const char *_jbr_ecodefn(locale_t locale, uint32_t ecode) {
   switch (ecode) {
     case JBR_ERROR_HTTP_LISTEN_ERROR:
       return "Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN_ERROR)";
+    case JBR_ERROR_RESPONSE_SENDING:
+      return "Error sending response (JBR_ERROR_RESPONSE_SENDING)";
   }
   return 0;
 }

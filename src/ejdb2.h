@@ -8,11 +8,15 @@
 
 IW_EXTERN_C_START
 
+/** Maximum length of EJDB collection name */
+#define EJDB_COLLECTION_NAME_MAX_LEN 255
+
 /**
  * @brief IWKV error codes.
  */
 typedef enum {
   _EJDB_ERROR_START = (IW_ERROR_START + 15000UL),
+  EJDB_ERROR_INVALID_COLLECTION_NAME,             /**< Invalid collection name */
   EJDB_ERROR_INVALID_COLLECTION_META,             /**< Invalid collection metadata */
   EJDB_ERROR_INVALID_COLLECTION_INDEX_META,       /**< Invalid collection index metadata */
   EJDB_ERROR_INVALID_INDEX_MODE,                  /**< Invalid index mode */
@@ -43,6 +47,7 @@ typedef struct _EJDB_HTTP {
   const char *access_token;
   size_t access_token_len;
   bool blocking;        /**< Block ejdb_open() thread until http service finished. */
+  bool read_anon;       /**< Allow anonymous read-only database access */
 } EJDB_HTTP;
 
 typedef struct EJDB_IPC {
