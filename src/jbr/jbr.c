@@ -2,9 +2,70 @@
 #include <iowow/iwconv.h>
 #include "ejdb2_internal.h"
 
+#define FIO_INCLUDE_STR
+
 #include <fio.h>
 #include <fiobj.h>
 #include <http/http.h>
+
+// HTTP REST API:
+//
+// Access to HTTP endpoint can be optionally protected by a token specified in `EJDB_HTTP` options.
+// In this case `X-Access-Token` header value must be provided in client request.
+// If token is not provided `401` HTTP code will be in response.
+// If access token doesn't matched a token provided by client `403` HTTP code will be in response.
+//
+// In any error case `500` error will be returned.
+//
+// `X-Hints` request header used to provide comma separated extra hints to ejdb2 database engine
+//    Hints:
+//      `explain` Show the query execution plan (indexes used).
+//                Used in query execution POST `/` requests.
+//                In this case instead of query resultset client will get query explanation text.
+//
+// Endpoints:
+//
+//    POST    `/{collection}`
+//      Add a new document to the `collection`
+//      Response:
+//                200 with a new document identifier as int64 decimal number
+//
+//    PUT     `/{collection>/{id}`  Replaces/store document under specific numeric `id`
+//      Response:
+//                200 with empty body
+//
+//    DELETE  `/{collection}/{id}`
+//      Removes document identified by `id` from a `collection`
+//      Response:
+//                200 on success
+//                404 if document not found
+//
+//    PATCH   `/{collection}/{id}`
+//      Patch a document identified by `id` by rfc7396,rfc6902 data.
+//      Response:
+//                200 on success
+//
+//    GET     `/{collection}/{id}`
+//      Retrieve document identified by `id` from a `collection`
+//      Response:
+//                200 on success, document JSON
+//                404 if document not found
+//
+//    POST `/`  - Query a collection by provided query spec as body
+//      Response:
+//               200 on success, HTTP chunked transfer, JSON documents separated by `\n`
+//
+//
+
+static uint64_t x_access_token_hash;
+
+typedef enum {
+  JBR_GET = 1,
+  JBR_PUT,
+  JBR_POST,
+  JBR_PATCH,
+  JBR_DELETE
+} jbr_method_t;
 
 struct _JBR {
   volatile bool terminated;
@@ -15,17 +76,96 @@ struct _JBR {
   EJDB db;
 };
 
+typedef struct _JBRCTX {
+  jbr_method_t method;
+  const char *collection;
+  size_t collection_len;
+  int64_t id;
+} JBRCTX;
+
 static iwrc jbr_query_visitor(EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
   return 0;
 }
 
-static void on_http_request(http_s *h) {
-  //fiobj_obj2cstr(h->method)
-  //h->method
+static bool jbr_fill_ctx(http_s *req, JBRCTX *r) {
+  memset(r, 0, sizeof(*r));
+  fio_str_info_s method = fiobj_obj2cstr(req->method);
+  switch (method.len) {
+    case 3:
+      if (!strncmp("GET", method.data, 3)) {
+        r->method = JBR_GET;
+      } else if (!strncmp("PUT", method.data, 3)) {
+        r->method = JBR_PUT;
+      }
+      break;
+    case 4:
+      if (!strncmp("POST", method.data, 3)) {
+        r->method = JBR_POST;
+      }
+      break;
+    case 5:
+      if (!strncmp("PATCH", method.data, 3)) {
+        r->method = JBR_PATCH;
+      }
+      break;
+    case 6:
+      if (!strncmp("DELETE", method.data, 3)) {
+        r->method = JBR_DELETE;
+      }
+  }
+  if (!r->method) {
+    return false;
+  }
+  fio_str_info_s path = fiobj_obj2cstr(req->path);
+  if (!req->path || (path.len == 1 && path.data[0] == '/')) {
+    return true;
+  } else if (path.len < 2) {
+    return false;
+  }
+
+  char *c = strchr(path.data + 1, '/');
+  if (!c) {
+     if (path.len > 1) {
+       r->collection = path.data + 1;
+       r->collection_len = path.len - 1;
+     }
+  } else {
+
+  }
+
+  return true;
+}
+
+static void on_http_request(http_s *req) {
+  JBRCTX rctx;
+  JBR jbr = req->udata;
+  assert(jbr);
+  const EJDB_HTTP *http = jbr->http;
+
+  if (http->access_token) {
+    FIOBJ h = fiobj_hash_get2(req->headers, x_access_token_hash);
+    if (!h) {
+      http_send_error(req, 401);
+      return;
+    }
+    if (!fiobj_type_is(h, FIOBJ_T_STRING)) { // header specified more than once
+      http_send_error(req, 400);
+      return;
+    }
+    fio_str_info_s hv = fiobj_obj2cstr(h);
+    if (hv.len != http->access_token_len || !memcmp(hv.data, http->access_token, http->access_token_len)) {
+      http_send_error(req, 403);
+      return;
+    }
+  }
+  if (!jbr_fill_ctx(req, &rctx)) {
+    http_send_error(req, 400); // Bad request
+    return;
+  }
 
   //fio_url_parse()
   // TODO:
-  http_send_body(h, "Hello World!", 12);
+  http_send_body(req, "Hello World!", 12);
 }
 
 static void on_finish(struct http_settings_s *settings) {
@@ -151,5 +291,6 @@ iwrc jbr_init() {
   if (!__sync_bool_compare_and_swap(&_jbr_initialized, 0, 1)) {
     return 0;
   }
+  x_access_token_hash = fiobj_hash_string("x-access-token", 14);
   return iwlog_register_ecodefn(_jbr_ecodefn);
 }

@@ -1,1 +1,1 @@
-# HTTP REST/Websocket API
+# HTTP REST/Websocket API endpoint

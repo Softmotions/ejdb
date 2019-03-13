@@ -36,11 +36,12 @@ typedef struct _EJDB *EJDB;
 /**
  * @brief EJDB HTTP Server options
  */
-typedef struct EJDB_HTTP {
+typedef struct _EJDB_HTTP {
   bool enabled;
   int port;
   const char *bind;
   const char *access_token;
+  size_t access_token_len;
   bool blocking;        /**< Block ejdb_open() thread until http service finished. */
 } EJDB_HTTP;
 

@@ -2,7 +2,7 @@ if (NOT CMAKE_BUILD_TYPE)
   message(FATAL_ERROR "Please specify the build type -DCMAKE_BUILD_TYPE=Debug|Release|RelWithDebInfo")
 endif()
 
-set(MODULES util jbl jql jbr)
+set(MODULES util jbl jql jbr jbs)
 set(PROJECT_LLIBRARIES)
 set(PROJECT_INCLUDE_DIRS)
 set(ALL_SRC)
@@ -200,10 +200,6 @@ else()
                           COMPILE_FLAGS "-DIW_NODLL"
                           OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 endif()
-
-# Executables
-add_executable(jbserver jbserver.c)
-target_link_libraries(jbserver ejdb2_s)
 
 install(TARGETS ejdb2
         EXPORT ejdb2-exports

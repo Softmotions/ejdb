@@ -1332,7 +1332,10 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   }
   EJDB_HTTP *http = &db->opts.http;
   if (http->bind) http->bind = strdup(http->bind);
-  if (http->access_token) http->access_token = strdup(http->access_token);
+  if (http->access_token) {
+    http->access_token = strdup(http->access_token);
+    http->access_token_len = strlen(http->access_token);
+  }
 
   rci = pthread_rwlock_init(&db->rwl, 0);
   if (rci) {
