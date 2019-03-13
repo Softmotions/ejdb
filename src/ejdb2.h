@@ -125,7 +125,7 @@ IW_EXPORT WUR iwrc ejdb_list4(EJDB db, JQL q, int64_t limit, IWXSTR *log, EJDB_L
 
 IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
 
-IW_EXPORT WUR iwrc ejdb_patch(EJDB db, const char *coll, JBL patch, int64_t id);
+IW_EXPORT WUR iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id);
 
 IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id);
 

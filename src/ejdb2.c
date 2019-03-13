@@ -1070,8 +1070,8 @@ finish:
   return rc;
 }
 
-iwrc ejdb_patch(EJDB db, const char *coll, JBL patch, int64_t id) {
-  if (!patch) {
+iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
+  if (!patchjson) {
     return IW_ERROR_INVALID_ARGS;
   }
   int rci;
