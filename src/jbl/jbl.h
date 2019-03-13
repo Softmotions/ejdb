@@ -145,6 +145,8 @@ IW_EXPORT iwrc jbl_fstream_json_printer(const char *data, int size, char ch, int
 
 IW_EXPORT iwrc jbl_xstr_json_printer(const char *data, int size, char ch, int count, void *op);
 
+IW_EXPORT iwrc jbl_count_json_printer(const char *data, int size, char ch, int count, void *op);
+
 IW_EXPORT void jbl_destroy(JBL *jblp);
 
 //--- JBL_NODE

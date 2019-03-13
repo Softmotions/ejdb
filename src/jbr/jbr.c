@@ -6,6 +6,7 @@
 
 #include <fio.h>
 #include <fiobj.h>
+#include <fiobj_data.h>
 #include <http/http.h>
 
 // HTTP REST API:
@@ -57,7 +58,9 @@
 //
 //
 
-static uint64_t x_access_token_hash;
+static uint64_t k_header_x_access_token_hash;
+static uint64_t k_header_content_length_hash;
+static uint64_t k_header_content_type_hash;
 
 typedef enum {
   JBR_GET = 1,
@@ -87,27 +90,21 @@ typedef struct _JBRCTX {
   bool read_anon;
 } JBRCTX;
 
-#define JBR_RCREPORT(r_, rc_)                                                      \
+#define JBR_RC_REPORT(code_, r_, rc_)                                                      \
   do {                                                                             \
     iwlog_ecode_error3(rc_);                                                       \
     const char *strerr = iwlog_ecode_explained(rc_);                               \
-    jbr_http_send(r_, 500, "text/plain", strerr, strerr ? strlen(strerr) : 0);     \
+    jbr_http_send(r_, code_, "text/plain", strerr, strerr ? strlen(strerr) : 0);     \
   } while(0)
 
 IW_INLINE void jbr_http_set_content_length(http_s *r, uintptr_t length) {
-  static uint64_t cl_hash = 0;
-  if (!cl_hash)
-    cl_hash = fiobj_hash_string("content-length", 14);
-  if (!fiobj_hash_get2(r->private_data.out_headers, cl_hash)) {
+  if (!fiobj_hash_get2(r->private_data.out_headers, k_header_content_length_hash)) {
     fiobj_hash_set(r->private_data.out_headers, HTTP_HEADER_CONTENT_LENGTH,
                    fiobj_num_new(length));
   }
 }
 IW_INLINE void jbr_http_set_content_type(http_s *r, const char *ctype) {
-  static uint64_t ct_hash = 0;
-  if (!ct_hash)
-    ct_hash = fiobj_hash_string("content-type", 12);
-  if (!fiobj_hash_get2(r->private_data.out_headers, ct_hash)) {
+  if (!fiobj_hash_get2(r->private_data.out_headers, k_header_content_type_hash)) {
     fiobj_hash_set(r->private_data.out_headers, HTTP_HEADER_CONTENT_TYPE,
                    fiobj_str_new(ctype, strlen(ctype)));
   }
@@ -166,37 +163,77 @@ static void jbr_on_put(JBRCTX *rctx) {
   }
 }
 
+static void jbr_on_post(JBRCTX *rctx) {
+  if (rctx->read_anon) {
+    jbr_http_error_send(rctx->req, 403);
+    return;
+  }
+  JBL jbl;
+  int64_t id;
+  EJDB db = rctx->jbr->db;
+  http_s *req = rctx->req;
+  fio_str_info_s data = fiobj_data_read(req->body, 0);
+  if (data.len < 1) {
+    jbr_http_error_send(rctx->req, 400);
+    return;
+  }
+  iwrc rc = jbl_from_json(&jbl, data.data);
+  if (rc) {
+    JBR_RC_REPORT(400, req, rc);
+    return;
+  }
+  rc = ejdb_put_new(db, rctx->collection, jbl, &id);
+  if (rc) {
+    JBR_RC_REPORT(500, req, rc);
+    goto finish;
+  }
+
+  char nbuf[JBNUMBUF_SIZE];
+  int len = iwitoa(id, nbuf, sizeof(nbuf));
+  jbr_http_send(req, 200, "text/plain", nbuf, len);
+
+finish:
+  jbl_destroy(&jbl);
+}
+
 static void jbr_on_get(JBRCTX *rctx) {
   JBL jbl;
-  IWXSTR *xstr;
+  IWXSTR *xstr = 0;
+  int nbytes = 0;
   EJDB db = rctx->jbr->db;
   http_s *req = rctx->req;
 
   iwrc rc = ejdb_get(db, rctx->collection, rctx->id, &jbl);
-  if (rc == IW_ERROR_NOT_EXISTS) {
+  if (rc == IWKV_ERROR_NOTFOUND) {
     jbr_http_error_send(req, 404);
     return;
   } else if (rc) {
-    JBR_RCREPORT(req, rc);
+    JBR_RC_REPORT(500, req, rc);
     return;
   }
-  xstr = iwxstr_new2(jbl->bn.size * 2);
-  if (!xstr) {
-    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    JBR_RCREPORT(req, rc);
-    return;
+  if (req->method == JBR_HEAD) {
+    rc = jbl_as_json(jbl, jbl_count_json_printer, &nbytes, JBL_PRINT_PRETTY);
+  } else {
+    xstr = iwxstr_new2(jbl->bn.size * 2);
+    if (!xstr) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      JBR_RC_REPORT(500, req, rc);
+      return;
+    }
+    rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY);
   }
-  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
   if (rc) {
-    JBR_RCREPORT(req, rc);
+    JBR_RC_REPORT(500, req, rc);
     goto finish;
   }
   jbl_destroy(&jbl);
   jbr_http_send(req, 200, "application/json",
-                req->method == JBR_HEAD ? 0 : iwxstr_ptr(xstr),
-                iwxstr_size(xstr));
+                xstr ? iwxstr_ptr(xstr) : 0,
+                xstr ? iwxstr_size(xstr) : nbytes);
 finish:
-  iwxstr_destroy(xstr);
+  if (xstr) {
+    iwxstr_destroy(xstr);
+  }
 }
 
 static bool jbr_fill_ctx(http_s *req, JBRCTX *r) {
@@ -279,7 +316,7 @@ static bool jbr_fill_ctx(http_s *req, JBRCTX *r) {
   }
 
 finish:
-  return (r->collection_len > EJDB_COLLECTION_NAME_MAX_LEN);
+  return (r->collection_len <= EJDB_COLLECTION_NAME_MAX_LEN);
 }
 
 static void on_http_request(http_s *req) {
@@ -293,7 +330,7 @@ static void on_http_request(http_s *req) {
     return;
   }
   if (http->access_token) {
-    FIOBJ h = fiobj_hash_get2(req->headers, x_access_token_hash);
+    FIOBJ h = fiobj_hash_get2(req->headers, k_header_x_access_token_hash);
     if (!h) {
       if (http->read_anon) {
         if (rctx.method == JBR_GET || rctx.method == JBR_HEAD || (rctx.method == JBR_POST && !rctx.collection)) {
@@ -328,6 +365,8 @@ process:
         jbr_on_get(&rctx);
         break;
       case JBR_POST:
+        jbr_on_post(&rctx);
+        break;
       case JBR_PUT:
         jbr_on_put(&rctx);
         break;
@@ -473,6 +512,8 @@ iwrc jbr_init() {
   if (!__sync_bool_compare_and_swap(&_jbr_initialized, 0, 1)) {
     return 0;
   }
-  x_access_token_hash = fiobj_hash_string("x-access-token", 14);
+  k_header_x_access_token_hash = fiobj_hash_string("x-access-token", 14);
+  k_header_content_length_hash = fiobj_hash_string("content-length", 14);
+  k_header_content_type_hash = fiobj_hash_string("content-type", 12);
   return iwlog_register_ecodefn(_jbr_ecodefn);
 }

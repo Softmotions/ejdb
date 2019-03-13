@@ -440,14 +440,24 @@ iwrc jbl_xstr_json_printer(const char *data, int size, char ch, int count, void 
       }
     }
   } else {
-    if (size < 0) {
-      size = strlen(data);
-    }
+    if (size < 0) size = strlen(data);
     if (!count) count = 1;
     for (int i = 0; i < count; ++i) {
       iwrc rc = iwxstr_cat(xstr, data, size);
       RCRET(rc);
     }
+  }
+  return 0;
+}
+
+iwrc jbl_count_json_printer(const char *data, int size, char ch, int count, void *op) {
+  int *cnt = op;
+  if (!data) {
+    *cnt = *cnt + count;
+  } else {
+    if (size < 0) size = strlen(data);
+    if (!count) count = 1;
+    *cnt = *cnt + count * size;
   }
   return 0;
 }
