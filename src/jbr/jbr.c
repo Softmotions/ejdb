@@ -192,8 +192,9 @@ static void jbr_on_get(JBRCTX *rctx) {
     goto finish;
   }
   jbl_destroy(&jbl);
-  jbr_http_send(req, 200, "application/json", iwxstr_ptr(xstr), iwxstr_size(xstr));
-
+  jbr_http_send(req, 200, "application/json",
+                req->method == JBR_HEAD ? 0 : iwxstr_ptr(xstr),
+                iwxstr_size(xstr));
 finish:
   iwxstr_destroy(xstr);
 }
