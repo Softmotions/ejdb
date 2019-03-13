@@ -120,8 +120,8 @@ static iwrc jbr_http_send(http_s *r, int status, const char *ctype, const char *
     jbr_http_set_content_type(r, ctype);
   }
   if (http_send_body(r, (char *)body, bodylen)) {
-    iwlog_ecode_error3(JBR_ERROR_RESPONSE_SENDING);
-    return JBR_ERROR_RESPONSE_SENDING;
+    iwlog_ecode_error3(JBR_ERROR_SEND_RESPONSE);
+    return JBR_ERROR_SEND_RESPONSE;
   }
   return 0;
 }
@@ -536,8 +536,8 @@ static const char *_jbr_ecodefn(locale_t locale, uint32_t ecode) {
   switch (ecode) {
     case JBR_ERROR_HTTP_LISTEN:
       return "Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN)";
-    case JBR_ERROR_RESPONSE_SENDING:
-      return "Error sending response (JBR_ERROR_RESPONSE_SENDING)";
+    case JBR_ERROR_SEND_RESPONSE:
+      return "Error sending response (JBR_ERROR_SEND_RESPONSE)";
   }
   return 0;
 }

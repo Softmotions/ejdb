@@ -1070,6 +1070,36 @@ finish:
   return rc;
 }
 
+iwrc ejdb_patch(EJDB db, const char *coll, JBL patch, int64_t id) {
+  if (!patch) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  int rci;
+  JBL jbl;
+  JBCOLL jbc;
+  iwrc rc = jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  RCRET(rc);
+
+  IWKV_val val;
+  IWKV_val key = {
+    .data = &id,
+    .size = sizeof(id)
+  };
+
+  rc = iwkv_get(jbc->cdb, &key, &val);
+  RCGO(rc, finish);
+  rc = jbl_from_buf_keep(&jbl, val.data, val.size, false);
+  RCGO(rc, finish);
+
+  // TODO:
+
+
+
+finish:
+  API_COLL_UNLOCK(jbc, rci, rc);
+  return rc;
+}
+
 iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id) {
   if (!jbl) {
     return IW_ERROR_INVALID_ARGS;

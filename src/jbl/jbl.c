@@ -357,7 +357,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
       goto loc_int;
     case BINN_UINT64: // overflow?
       llv = (int64_t) bn->vuint64;
-    loc_int:
+loc_int:
       rc = _jbl_write_int(llv, pt, op);
       break;
 
@@ -366,7 +366,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
       goto loc_float;
     case BINN_FLOAT64:
       dv = bn->vdouble;
-    loc_float:
+loc_float:
       rc = _jbl_write_double(dv, pt, op);
       break;
 
@@ -1239,7 +1239,7 @@ int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
     case JBV_I64:
       return n1->vi64 > n2->vi64 ? 1 : n1->vi64 < n2->vi64 ? -1 : 0;
     case JBV_F64:
-      return (double) (n1->vi64) > n2->vf64 ? 1 : (double) (n1->vi64) < n2->vf64 ? -1 : 0;
+      return (double)(n1->vi64) > n2->vf64 ? 1 : (double)(n1->vi64) < n2->vf64 ? -1 : 0;
     case JBV_STR:
       if (n1->vsize - n2->vsize) {
         return n1->vsize - n2->vsize;
@@ -1638,21 +1638,24 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
     return IW_ERROR_INVALID_ARGS;
   }
   JBL_PATCH *p;
-  JBL_NODE node;
+  JBL_NODE patch;
   int cnt = strlen(patchjson);
   IWPOOL *pool = iwpool_create(MAX(cnt, 1024U));
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  iwrc rc = jbl_node_from_json(patchjson, &node, pool);
+  iwrc rc = jbl_node_from_json(patchjson, &patch, pool);
   RCGO(rc, finish);
-  if (node->type != JBV_ARRAY) {
+  if (patch->type == JBV_ARRAY) {
+    rc = _jbl_create_patch(patch, &p, &cnt, pool);
+    RCGO(rc, finish);
+    rc = _jbl_patch(jbl, p, cnt, pool);
+  } else if (patch->type == JBV_OBJECT) {
+    // FIXME: Merge patch
+    //_jbl_merge_patch_node()
+  } else {
     rc = JBL_ERROR_PATCH_INVALID;
-    goto finish;
   }
-  rc = _jbl_create_patch(node, &p, &cnt, pool);
-  RCGO(rc, finish);
-  rc = _jbl_patch(jbl, p, cnt, pool);
 
 finish:
   iwpool_destroy(pool);
