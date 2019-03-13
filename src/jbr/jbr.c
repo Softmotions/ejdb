@@ -90,11 +90,11 @@ typedef struct _JBRCTX {
   bool read_anon;
 } JBRCTX;
 
-#define JBR_RC_REPORT(code_, r_, rc_)                                                      \
+#define JBR_RC_REPORT(code_, r_, rc_)                                              \
   do {                                                                             \
-    iwlog_ecode_error3(rc_);                                                       \
+    if ((code_) >= 500) iwlog_ecode_error3(rc_);                                   \
     const char *strerr = iwlog_ecode_explained(rc_);                               \
-    jbr_http_send(r_, code_, "text/plain", strerr, strerr ? strlen(strerr) : 0);     \
+    jbr_http_send(r_, code_, "text/plain", strerr, strerr ? strlen(strerr) : 0);   \
   } while(0)
 
 IW_INLINE void jbr_http_set_content_length(http_s *r, uintptr_t length) {
@@ -127,7 +127,7 @@ static iwrc jbr_http_send(http_s *r, int status, const char *ctype, const char *
 }
 
 IW_INLINE iwrc jbr_http_error_send(http_s *r, int status)  {
-  return jbr_http_send(r, status, "text/plain", 0, 0);
+  return jbr_http_send(r, status, 0, 0, 0);
 }
 
 IW_INLINE iwrc jbr_http_error_send2(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
@@ -142,18 +142,31 @@ static void jbr_on_query(JBRCTX *rctx) {
   // todo
 }
 
-static void jbr_on_delete(JBRCTX *rctx) {
-  if (rctx->read_anon) {
-    jbr_http_error_send(rctx->req, 403);
-    return;
-  }
-}
-
 static void jbr_on_patch(JBRCTX *rctx) {
   if (rctx->read_anon) {
     jbr_http_error_send(rctx->req, 403);
     return;
   }
+  // todo
+}
+
+static void jbr_on_delete(JBRCTX *rctx) {
+  if (rctx->read_anon) {
+    jbr_http_error_send(rctx->req, 403);
+    return;
+  }
+  JBL jbl;
+  EJDB db = rctx->jbr->db;
+  http_s *req = rctx->req;
+  iwrc rc = ejdb_remove(db, rctx->collection, rctx->id);
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    jbr_http_error_send(req, 404);
+    return;
+  } else if (rc) {
+    JBR_RC_REPORT(500, req, rc);
+    return;
+  }
+  jbr_http_send(req, 200, 0, 0, 0);
 }
 
 static void jbr_on_put(JBRCTX *rctx) {
@@ -161,6 +174,28 @@ static void jbr_on_put(JBRCTX *rctx) {
     jbr_http_error_send(rctx->req, 403);
     return;
   }
+  JBL jbl;
+  EJDB db = rctx->jbr->db;
+  http_s *req = rctx->req;
+  fio_str_info_s data = fiobj_data_read(req->body, 0);
+  if (data.len < 1) {
+    jbr_http_error_send(rctx->req, 400);
+    return;
+  }
+  iwrc rc = jbl_from_json(&jbl, data.data);
+  if (rc) {
+    JBR_RC_REPORT(400, req, rc);
+    return;
+  }
+  rc = ejdb_put(db, rctx->collection, jbl, rctx->id);
+  if (rc) {
+    JBR_RC_REPORT(500, req, rc);
+    goto finish;
+  }
+  jbr_http_send(req, 200, 0, 0, 0);
+
+finish:
+  jbl_destroy(&jbl);
 }
 
 static void jbr_on_post(JBRCTX *rctx) {
@@ -413,7 +448,7 @@ static void *_jbr_start_thread(void *op) {
                   .max_body_size = 1024 * 1024 * 64, // 64Mb
                   .ws_max_msg_size = 1024 * 1024 * 64 // 64Mb
                  ) == -1) {
-    jbr->rc = iwrc_set_errno(JBR_ERROR_HTTP_LISTEN_ERROR, errno);
+    jbr->rc = iwrc_set_errno(JBR_ERROR_HTTP_LISTEN, errno);
     iwlog_ecode_error2(jbr->rc, "Failed to start HTTP server");
   }
   if (jbr->rc) {
@@ -495,12 +530,12 @@ iwrc jbr_shutdown(JBR *pjbr) {
 }
 
 static const char *_jbr_ecodefn(locale_t locale, uint32_t ecode) {
-  if (!(ecode > _JBR_ERROR_START && ecode < _JBR_ERROR_START)) {
+  if (!(ecode > _JBR_ERROR_START && ecode < _JBR_ERROR_END)) {
     return 0;
   }
   switch (ecode) {
-    case JBR_ERROR_HTTP_LISTEN_ERROR:
-      return "Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN_ERROR)";
+    case JBR_ERROR_HTTP_LISTEN:
+      return "Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN)";
     case JBR_ERROR_RESPONSE_SENDING:
       return "Error sending response (JBR_ERROR_RESPONSE_SENDING)";
   }

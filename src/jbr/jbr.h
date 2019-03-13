@@ -8,7 +8,7 @@ IW_EXTERN_C_START
 
 typedef enum {
   _JBR_ERROR_START = (IW_ERROR_START + 15000UL + 3000),
-  JBR_ERROR_HTTP_LISTEN_ERROR,  /**< Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN_ERROR) */
+  JBR_ERROR_HTTP_LISTEN,        /**< Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN) */
   JBR_ERROR_RESPONSE_SENDING,   /**< Error sending response (JBR_ERROR_RESPONSE_SENDING) */
   _JBR_ERROR_END,
 } jbr_ecode;
