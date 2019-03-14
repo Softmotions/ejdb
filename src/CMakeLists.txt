@@ -2,7 +2,7 @@ if (NOT CMAKE_BUILD_TYPE)
   message(FATAL_ERROR "Please specify the build type -DCMAKE_BUILD_TYPE=Debug|Release|RelWithDebInfo")
 endif()
 
-set(MODULES util jbl jql jbr jbs)
+set(MODULES util jbl jql jbi jbr jbs)
 set(PROJECT_LLIBRARIES)
 set(PROJECT_INCLUDE_DIRS)
 set(ALL_SRC)

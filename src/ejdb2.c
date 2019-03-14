@@ -531,7 +531,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
       rc = jbl_to_node(&jbvprev, &n, pool);
       RCGO(rc, finish);
       for (n = n->child; n; n = n->next) {
-        jb_idx_node_fill_ikey(idx, n, &key, numbuf);
+        jbi_node_fill_ikey(idx, n, &key, numbuf);
         if (key.size) {
           key.compound = id;
           rc = iwkv_del(idx->idb, &key, 0);
@@ -544,7 +544,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
         }
       }
     } else {
-      jb_idx_jbl_fill_ikey(idx, &jbvprev, &key, numbuf);
+      jbi_jbl_fill_ikey(idx, &jbvprev, &key, numbuf);
       if (key.size) {
         key.compound = id;
         rc = iwkv_del(idx->idb, &key, 0);
@@ -570,7 +570,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
       rc = jbl_to_node(&jbv, &n, pool);
       RCGO(rc, finish);
       for (n = n->child; n; n = n->next) {
-        jb_idx_node_fill_ikey(idx, n, &key, numbuf);
+        jbi_node_fill_ikey(idx, n, &key, numbuf);
         if (key.size) {
           key.compound = id;
           rc = iwkv_put(idx->idb, &key, &EMPTY_VAL, IWKV_NO_OVERWRITE);
@@ -584,7 +584,7 @@ static iwrc jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
         }
       }
     } else {
-      jb_idx_jbl_fill_ikey(idx, &jbv, &key, numbuf);
+      jbi_jbl_fill_ikey(idx, &jbv, &key, numbuf);
       if (key.size) {
         if (compound) {
           key.compound = id;
@@ -691,16 +691,16 @@ static iwrc jb_exec_scan_init(JBEXEC *ctx) {
     ctx->jblbufsz = 0;
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  iwrc rc = jb_idx_selection(ctx);
+  iwrc rc = jbi_selection(ctx);
   RCRET(rc);
   if (ctx->midx.idx) {
     if (ctx->midx.idx->idbf & IWDB_COMPOUND_KEYS) {
-      ctx->scanner = jb_idx_dup_scanner;
+      ctx->scanner = jbi_dup_scanner;
     } else {
-      ctx->scanner = jb_idx_uniq_scanner;
+      ctx->scanner = jbi_uniq_scanner;
     }
   } else {
-    ctx->scanner = jb_full_scanner;
+    ctx->scanner = jbi_full_scanner;
     if (ctx->ux->log) {
       iwxstr_cat2(ctx->ux->log, "[INDEX] NO");
     }
@@ -776,12 +776,12 @@ iwrc ejdb_exec(EJDB_EXEC *ux) {
     if (ux->log) {
       iwxstr_cat2(ux->log, "[COLLECTOR] SORTER\n");
     }
-    rc = ctx.scanner(&ctx, jb_scan_sorter_consumer);
+    rc = ctx.scanner(&ctx, jbi_sorter_consumer);
   } else {
     if (ux->log) {
       iwxstr_cat2(ux->log, "[COLLECTOR] PLAIN\n");
     }
-    rc = ctx.scanner(&ctx, jb_scan_consumer);
+    rc = ctx.scanner(&ctx, jbi_consumer);
   }
 
 finish:

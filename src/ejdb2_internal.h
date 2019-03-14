@@ -155,20 +155,19 @@ typedef uint8_t jb_coll_acquire_t;
 #define JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE 10
 #define JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO 200
 
-void jb_idx_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz);
+void jbi_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz);
 
-void jb_idx_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
-void jb_idx_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
-void jb_idx_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
+void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
+void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
+void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
 
-iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
-iwrc jb_scan_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
-iwrc jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-iwrc jb_idx_selection(JBEXEC *ctx);
-iwrc jb_idx_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-iwrc jb_idx_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-iwrc jb_idx_array_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-bool jb_idx_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR *expr, iwrc *rcp);
+iwrc jbi_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
+iwrc jbi_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
+iwrc jbi_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
+iwrc jbi_selection(JBEXEC *ctx);
+iwrc jbi_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
+iwrc jbi_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
+bool jbi_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR *expr, iwrc *rcp);
 
 
 #endif

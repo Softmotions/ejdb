@@ -363,7 +363,7 @@ static int jb_idx_cmp(const void *o1, const void *o2) {
   return (d1->idx->ptr->cnt - d2->idx->ptr->cnt);
 }
 
-iwrc jb_idx_selection(JBEXEC *ctx) {
+iwrc jbi_selection(JBEXEC *ctx) {
   iwrc rc = 0;
   size_t snp = 0;
   struct JQP_AUX *aux = ctx->ux->q->qp->aux;

@@ -1,6 +1,6 @@
 #include "ejdb2_internal.h"
 
-iwrc jb_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+iwrc jbi_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   bool matched;
   IWKV_cursor cur;
   int64_t step = 1;

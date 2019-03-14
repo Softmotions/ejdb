@@ -1,6 +1,6 @@
 #include "ejdb2_internal.h"
 
-iwrc jb_scan_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err) {
+iwrc jbi_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err) {
   if (!id) { // EOF scan
     return err;
   }

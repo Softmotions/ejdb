@@ -89,8 +89,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>build/</Path>
       <Path>cmake-build-Debug/</Path>
+      <Path>build/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -101,6 +101,15 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <VirtualDirectory Name="jbi">
+      <File Name="src/jbi/jbi_selection.c"/>
+      <File Name="src/jbi/jbi_util.c"/>
+      <File Name="src/jbi/jbi_uniq_scanner.c"/>
+      <File Name="src/jbi/jbi_sorter_consumer.c"/>
+      <File Name="src/jbi/jbi_full_scanner.c"/>
+      <File Name="src/jbi/jbi_dup_scanner.c"/>
+      <File Name="src/jbi/jbi_consumer.c"/>
+    </VirtualDirectory>
     <VirtualDirectory Name="jbs">
       <File Name="src/jbs/CMakeLists.txt"/>
       <File Name="src/jbs/README.md"/>
@@ -111,13 +120,6 @@
       <File Name="src/jbr/jbr.c"/>
       <File Name="src/jbr/README.md"/>
     </VirtualDirectory>
-    <File Name="src/jb_idx_util.c"/>
-    <File Name="src/jb_full_scanner.c"/>
-    <File Name="src/jb_idx_dup_scanner.c"/>
-    <File Name="src/jb_idx_uniq_scanner.c"/>
-    <File Name="src/jb_idx_selection.c"/>
-    <File Name="src/jb_scan_consumer.c"/>
-    <File Name="src/jb_scan_sorter_consumer.c"/>
     <File Name="src/ejdb2_internal.h"/>
     <VirtualDirectory Name="tests">
       <File Name="src/tests/ejdb_test4.c"/>
