@@ -147,7 +147,37 @@ static void jbr_on_patch(JBRCTX *rctx) {
     jbr_http_error_send(rctx->req, 403);
     return;
   }
-  // todo
+  JBL jbl;
+  EJDB db = rctx->jbr->db;
+  http_s *req = rctx->req;
+  fio_str_info_s data = fiobj_data_read(req->body, 0);
+  if (data.len < 1) {
+    jbr_http_error_send(rctx->req, 400);
+    return;
+  }
+  iwrc rc = ejdb_patch(db, rctx->collection, data.data, rctx->id);
+  iwrc_strip_code(&rc);
+  switch (rc) {
+    case JBL_ERROR_PARSE_JSON:
+    case JBL_ERROR_PARSE_INVALID_CODEPOINT:
+    case JBL_ERROR_PARSE_INVALID_UTF8:
+    case JBL_ERROR_PARSE_UNQUOTED_STRING:
+    case JBL_ERROR_PATCH_TARGET_INVALID:
+    case JBL_ERROR_PATCH_NOVALUE:
+    case JBL_ERROR_PATCH_INVALID_OP:
+    case JBL_ERROR_PATCH_TEST_FAILED:
+    case JBL_ERROR_PATCH_INVALID_ARRAY_INDEX:
+    case JBL_ERROR_JSON_POINTER:
+      JBR_RC_REPORT(400, req, rc);
+      break;
+    default:
+      break;
+  }
+  if (rc) {
+    JBR_RC_REPORT(500, req, rc);
+  } else {
+    jbr_http_send(req, 200, 0, 0, 0);
+  }
 }
 
 static void jbr_on_delete(JBRCTX *rctx) {
@@ -155,7 +185,6 @@ static void jbr_on_delete(JBRCTX *rctx) {
     jbr_http_error_send(rctx->req, 403);
     return;
   }
-  JBL jbl;
   EJDB db = rctx->jbr->db;
   http_s *req = rctx->req;
   iwrc rc = ejdb_remove(db, rctx->collection, rctx->id);
