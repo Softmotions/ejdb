@@ -95,30 +95,30 @@ typedef struct _JBRCTX {
   do {                                                                             \
     if ((code_) >= 500) iwlog_ecode_error3(rc_);                                   \
     const char *strerr = iwlog_ecode_explained(rc_);                               \
-    jbr_http_send(r_, code_, "text/plain", strerr, strerr ? strlen(strerr) : 0);   \
+    _jbr_http_send(r_, code_, "text/plain", strerr, strerr ? strlen(strerr) : 0);   \
   } while(0)
 
-IW_INLINE void jbr_http_set_content_length(http_s *r, uintptr_t length) {
+IW_INLINE void _jbr_http_set_content_length(http_s *r, uintptr_t length) {
   if (!fiobj_hash_get2(r->private_data.out_headers, k_header_content_length_hash)) {
     fiobj_hash_set(r->private_data.out_headers, HTTP_HEADER_CONTENT_LENGTH,
                    fiobj_num_new(length));
   }
 }
-IW_INLINE void jbr_http_set_content_type(http_s *r, const char *ctype) {
+IW_INLINE void _jbr_http_set_content_type(http_s *r, const char *ctype) {
   if (!fiobj_hash_get2(r->private_data.out_headers, k_header_content_type_hash)) {
     fiobj_hash_set(r->private_data.out_headers, HTTP_HEADER_CONTENT_TYPE,
                    fiobj_str_new(ctype, strlen(ctype)));
   }
 }
 
-static iwrc jbr_http_send(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
+static iwrc _jbr_http_send(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
   if (!r || !r->private_data.out_headers) {
     iwlog_ecode_error3(IW_ERROR_INVALID_ARGS);
     return IW_ERROR_INVALID_ARGS;
   }
   r->status = status;
   if (ctype) {
-    jbr_http_set_content_type(r, ctype);
+    _jbr_http_set_content_type(r, ctype);
   }
   if (http_send_body(r, (char *)body, bodylen)) {
     iwlog_ecode_error3(JBR_ERROR_SEND_RESPONSE);
@@ -127,25 +127,25 @@ static iwrc jbr_http_send(http_s *r, int status, const char *ctype, const char *
   return 0;
 }
 
-IW_INLINE iwrc jbr_http_error_send(http_s *r, int status)  {
-  return jbr_http_send(r, status, 0, 0, 0);
+IW_INLINE iwrc _jbr_http_error_send(http_s *r, int status)  {
+  return _jbr_http_send(r, status, 0, 0, 0);
 }
 
-IW_INLINE iwrc jbr_http_error_send2(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
-  return jbr_http_send(r, status, ctype, body, bodylen);
+IW_INLINE iwrc _jbr_http_error_send2(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
+  return _jbr_http_send(r, status, ctype, body, bodylen);
 }
 
-static iwrc jbr_query_visitor(EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
+static iwrc _jbr_query_visitor(EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
   return 0;
 }
 
-static void jbr_on_query(JBRCTX *rctx) {
+static void _jbr_on_query(JBRCTX *rctx) {
   JQL q;
   EJDB db = rctx->jbr->db;
   http_s *req = rctx->req;
   fio_str_info_s data = fiobj_data_read(req->body, 0);
   if (data.len < 1) {
-    jbr_http_error_send(rctx->req, 400);
+    _jbr_http_error_send(rctx->req, 400);
     return;
   }
   // Collection name must be encoded in query
@@ -154,14 +154,14 @@ static void jbr_on_query(JBRCTX *rctx) {
   if (rctx->read_anon && jql_has_apply(q)) {
     // We have not permitted data modification request
     jql_destroy(&q);
-    jbr_http_error_send(rctx->req, 403);
+    _jbr_http_error_send(rctx->req, 403);
     return;
   }
   EJDB_EXEC ux = {
     .db = db,
     .q = q,
     .opaque = rctx,
-    .visitor = jbr_query_visitor
+    .visitor = _jbr_query_visitor
   };
 
   rc = ejdb_exec(&ux);
@@ -172,7 +172,7 @@ finish:
     switch (rc) {
       case JQL_ERROR_QUERY_PARSE: {
         const char *err = jql_error(q);
-        jbr_http_error_send2(rctx->req, 400, "text/plain", err, err ? strlen(err) : 0);
+        _jbr_http_error_send2(rctx->req, 400, "text/plain", err, err ? strlen(err) : 0);
         break;
       }
       case JQL_ERROR_NO_COLLECTION:
@@ -195,9 +195,9 @@ finish:
   }
 }
 
-static void jbr_on_patch(JBRCTX *rctx) {
+static void _jbr_on_patch(JBRCTX *rctx) {
   if (rctx->read_anon) {
-    jbr_http_error_send(rctx->req, 403);
+    _jbr_http_error_send(rctx->req, 403);
     return;
   }
   JBL jbl;
@@ -205,7 +205,7 @@ static void jbr_on_patch(JBRCTX *rctx) {
   http_s *req = rctx->req;
   fio_str_info_s data = fiobj_data_read(req->body, 0);
   if (data.len < 1) {
-    jbr_http_error_send(rctx->req, 400);
+    _jbr_http_error_send(rctx->req, 400);
     return;
   }
   iwrc rc = ejdb_patch(db, rctx->collection, data.data, rctx->id);
@@ -229,31 +229,31 @@ static void jbr_on_patch(JBRCTX *rctx) {
   if (rc) {
     JBR_RC_REPORT(500, req, rc);
   } else {
-    jbr_http_send(req, 200, 0, 0, 0);
+    _jbr_http_send(req, 200, 0, 0, 0);
   }
 }
 
-static void jbr_on_delete(JBRCTX *rctx) {
+static void _jbr_on_delete(JBRCTX *rctx) {
   if (rctx->read_anon) {
-    jbr_http_error_send(rctx->req, 403);
+    _jbr_http_error_send(rctx->req, 403);
     return;
   }
   EJDB db = rctx->jbr->db;
   http_s *req = rctx->req;
   iwrc rc = ejdb_remove(db, rctx->collection, rctx->id);
   if (rc == IWKV_ERROR_NOTFOUND) {
-    jbr_http_error_send(req, 404);
+    _jbr_http_error_send(req, 404);
     return;
   } else if (rc) {
     JBR_RC_REPORT(500, req, rc);
     return;
   }
-  jbr_http_send(req, 200, 0, 0, 0);
+  _jbr_http_send(req, 200, 0, 0, 0);
 }
 
-static void jbr_on_put(JBRCTX *rctx) {
+static void _jbr_on_put(JBRCTX *rctx) {
   if (rctx->read_anon) {
-    jbr_http_error_send(rctx->req, 403);
+    _jbr_http_error_send(rctx->req, 403);
     return;
   }
   JBL jbl;
@@ -261,7 +261,7 @@ static void jbr_on_put(JBRCTX *rctx) {
   http_s *req = rctx->req;
   fio_str_info_s data = fiobj_data_read(req->body, 0);
   if (data.len < 1) {
-    jbr_http_error_send(rctx->req, 400);
+    _jbr_http_error_send(rctx->req, 400);
     return;
   }
   iwrc rc = jbl_from_json(&jbl, data.data);
@@ -274,15 +274,15 @@ static void jbr_on_put(JBRCTX *rctx) {
     JBR_RC_REPORT(500, req, rc);
     goto finish;
   }
-  jbr_http_send(req, 200, 0, 0, 0);
+  _jbr_http_send(req, 200, 0, 0, 0);
 
 finish:
   jbl_destroy(&jbl);
 }
 
-static void jbr_on_post(JBRCTX *rctx) {
+static void _jbr_on_post(JBRCTX *rctx) {
   if (rctx->read_anon) {
-    jbr_http_error_send(rctx->req, 403);
+    _jbr_http_error_send(rctx->req, 403);
     return;
   }
   JBL jbl;
@@ -291,7 +291,7 @@ static void jbr_on_post(JBRCTX *rctx) {
   http_s *req = rctx->req;
   fio_str_info_s data = fiobj_data_read(req->body, 0);
   if (data.len < 1) {
-    jbr_http_error_send(rctx->req, 400);
+    _jbr_http_error_send(rctx->req, 400);
     return;
   }
   iwrc rc = jbl_from_json(&jbl, data.data);
@@ -307,13 +307,13 @@ static void jbr_on_post(JBRCTX *rctx) {
 
   char nbuf[JBNUMBUF_SIZE];
   int len = iwitoa(id, nbuf, sizeof(nbuf));
-  jbr_http_send(req, 200, "text/plain", nbuf, len);
+  _jbr_http_send(req, 200, "text/plain", nbuf, len);
 
 finish:
   jbl_destroy(&jbl);
 }
 
-static void jbr_on_get(JBRCTX *rctx) {
+static void _jbr_on_get(JBRCTX *rctx) {
   JBL jbl;
   IWXSTR *xstr = 0;
   int nbytes = 0;
@@ -322,7 +322,7 @@ static void jbr_on_get(JBRCTX *rctx) {
 
   iwrc rc = ejdb_get(db, rctx->collection, rctx->id, &jbl);
   if (rc == IWKV_ERROR_NOTFOUND) {
-    jbr_http_error_send(req, 404);
+    _jbr_http_error_send(req, 404);
     return;
   } else if (rc) {
     JBR_RC_REPORT(500, req, rc);
@@ -344,16 +344,16 @@ static void jbr_on_get(JBRCTX *rctx) {
     goto finish;
   }
   jbl_destroy(&jbl);
-  jbr_http_send(req, 200, "application/json",
-                xstr ? iwxstr_ptr(xstr) : 0,
-                xstr ? iwxstr_size(xstr) : nbytes);
+  _jbr_http_send(req, 200, "application/json",
+                 xstr ? iwxstr_ptr(xstr) : 0,
+                 xstr ? iwxstr_size(xstr) : nbytes);
 finish:
   if (xstr) {
     iwxstr_destroy(xstr);
   }
 }
 
-static bool jbr_fill_ctx(http_s *req, JBRCTX *r) {
+static bool _jbr_fill_ctx(http_s *req, JBRCTX *r) {
   JBR jbr = req->udata;
   memset(r, 0, sizeof(*r));
   r->req = req;
@@ -436,13 +436,13 @@ finish:
   return (r->collection_len <= EJDB_COLLECTION_NAME_MAX_LEN);
 }
 
-static void on_http_request(http_s *req) {
+static void _on_http_request(http_s *req) {
   JBRCTX rctx;
   JBR jbr = req->udata;
   assert(jbr);
   const EJDB_HTTP *http = jbr->http;
 
-  if (!jbr_fill_ctx(req, &rctx)) {
+  if (!_jbr_fill_ctx(req, &rctx)) {
     http_send_error(req, 400); // Bad request
     return;
   }
@@ -479,36 +479,36 @@ process:
     switch (rctx.method) {
       case JBR_GET:
       case JBR_HEAD:
-        jbr_on_get(&rctx);
+        _jbr_on_get(&rctx);
         break;
       case JBR_POST:
-        jbr_on_post(&rctx);
+        _jbr_on_post(&rctx);
         break;
       case JBR_PUT:
-        jbr_on_put(&rctx);
+        _jbr_on_put(&rctx);
         break;
       case JBR_PATCH:
-        jbr_on_patch(&rctx);
+        _jbr_on_patch(&rctx);
         break;
       case JBR_DELETE:
-        jbr_on_delete(&rctx);
+        _jbr_on_delete(&rctx);
         break;
       default:
         http_send_error(req, 400);
         break;
     }
   } else if (rctx.method == JBR_POST) {
-    jbr_on_query(&rctx);
+    _jbr_on_query(&rctx);
   } else {
     http_send_error(req, 400);
   }
 }
 
-static void on_finish(struct http_settings_s *settings) {
+static void _jbr_on_finish(struct http_settings_s *settings) {
   iwlog_info2("HTTP endpoint closed");
 }
 
-static void on_pre_start(void *op) {
+static void _jbr_on_pre_start(void *op) {
   JBR jbr = op;
   if (!jbr->http->blocking) {
     pthread_barrier_wait(&jbr->start_barrier);
@@ -525,8 +525,8 @@ static void *_jbr_start_thread(void *op) {
   iwlog_info("HTTP endpoint at %s:%s", bind, nbuf);
   if (http_listen(nbuf, bind,
                   .udata = jbr,
-                  .on_request = on_http_request,
-                  .on_finish = on_finish,
+                  .on_request = _on_http_request,
+                  .on_finish = _jbr_on_finish,
                   .max_body_size = 1024 * 1024 * 64, // 64Mb
                   .ws_max_msg_size = 1024 * 1024 * 64 // 64Mb
                  ) == -1) {
@@ -539,7 +539,7 @@ static void *_jbr_start_thread(void *op) {
     }
     return 0;
   }
-  fio_state_callback_add(FIO_CALL_PRE_START, on_pre_start, jbr);
+  fio_state_callback_add(FIO_CALL_PRE_START, _jbr_on_pre_start, jbr);
   fio_start(.threads = -1, .workers = 1); // Will block current thread here
   return 0;
 }
@@ -600,7 +600,7 @@ iwrc jbr_shutdown(JBR *pjbr) {
   }
   JBR jbr = *pjbr;
   if (__sync_bool_compare_and_swap(&jbr->terminated, 0, 1)) {
-    fio_state_callback_remove(FIO_CALL_PRE_START, on_pre_start, jbr);
+    fio_state_callback_remove(FIO_CALL_PRE_START, _jbr_on_pre_start, jbr);
     fio_stop();
     if (!jbr->http->blocking) {
       pthread_join(jbr->worker_thread, 0);

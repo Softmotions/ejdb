@@ -30,7 +30,7 @@ typedef struct MFCTX {
   JQP_FILTER *qpf;
 } MFCTX;
 
-static JQP_NODE *_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp);
+static JQP_NODE *_jql_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp);
 
 static void _jql_jqval_destroy(JQVAL *qv) {
   if (qv->type == JQVAL_RE) {
@@ -277,7 +277,7 @@ void jql_destroy(JQL *qptr) {
   }
 }
 
-IW_INLINE jqval_type_t _binn_to_jqval(binn *vbinn, JQVAL *qval) {
+IW_INLINE jqval_type_t _jql_binn_to_jqval(binn *vbinn, JQVAL *qval) {
   switch (vbinn->type) {
     case BINN_OBJECT:
     case BINN_MAP:
@@ -346,10 +346,10 @@ IW_INLINE jqval_type_t _binn_to_jqval(binn *vbinn, JQVAL *qval) {
 }
 
 jqval_type_t jql_binn_to_jqval(binn *vbinn, JQVAL *qval) {
-  return _binn_to_jqval(vbinn, qval);
+  return _jql_binn_to_jqval(vbinn, qval);
 }
 
-IW_INLINE void _node_to_jqval(JBL_NODE jn, JQVAL *qv) {
+IW_INLINE void _jql_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
   switch (jn->type) {
     case JBV_STR:
       qv->type = JQVAL_STR;
@@ -383,23 +383,23 @@ IW_INLINE void _node_to_jqval(JBL_NODE jn, JQVAL *qv) {
 }
 
 void jql_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
-  _node_to_jqval(jn, qv);
+  _jql_node_to_jqval(jn, qv);
 }
 
 /**
  * Allowed on left:   JQVAL_STR|JQVAL_I64|JQVAL_F64|JQVAL_BOOL|JQVAL_NULL|JQVAL_BINN
  * Allowed on right:  JQVAL_STR|JQVAL_I64|JQVAL_F64|JQVAL_BOOL|JQVAL_NULL|JQVAL_JBLNODE
  */
-static int _cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp) {
+static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp) {
   JQVAL sleft, sright;   // Stack allocated left/right converted values
   const JQVAL *lv = left, *rv = right;
 
   if (lv->type == JQVAL_BINN) {
-    _binn_to_jqval(lv->vbinn, &sleft);
+    _jql_binn_to_jqval(lv->vbinn, &sleft);
     lv = &sleft;
   }
   if (rv->type == JQVAL_JBLNODE) {
-    _node_to_jqval(rv->vnode, &sright);
+    _jql_node_to_jqval(rv->vnode, &sright);
     rv = &sright;
   }
 
@@ -526,12 +526,12 @@ static int _cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp) {
 }
 
 int jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp) {
-  return _cmp_jqval_pair(left, right, rcp);
+  return _jql_cmp_jqval_pair(left, right, rcp);
 }
 
-static bool _match_regexp(JQP_AUX *aux,
-                          JQVAL *left, JQP_OP *jqop, JQVAL *right,
-                          iwrc *rcp) {
+static bool _jql_match_regexp(JQP_AUX *aux,
+                              JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                              iwrc *rcp) {
   struct re *rx;
   char nbuf[JBNUMBUF_SIZE];
   static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
@@ -543,10 +543,10 @@ static bool _match_regexp(JQP_AUX *aux,
   bool match_start = false;
 
   if (lv->type == JQVAL_JBLNODE) {
-    _node_to_jqval(lv->vnode, &sleft);
+    _jql_node_to_jqval(lv->vnode, &sleft);
     lv = &sleft;
   } else if (lv->type == JQVAL_BINN) {
-    _binn_to_jqval(lv->vbinn, &sleft);
+    _jql_binn_to_jqval(lv->vbinn, &sleft);
     lv = &sleft;
   }
   if (lv->type >= JQVAL_JBLNODE) {
@@ -560,7 +560,7 @@ static bool _match_regexp(JQP_AUX *aux,
     rx = right->vre;
   } else {
     if (rv->type == JQVAL_JBLNODE) {
-      _node_to_jqval(rv->vnode, &sright);
+      _jql_node_to_jqval(rv->vnode, &sright);
       rv = &sright;
     }
     switch (rv->type) {
@@ -667,8 +667,8 @@ static bool _match_regexp(JQP_AUX *aux,
   return false;
 }
 
-static bool _match_in(JQVAL *left, JQP_OP *jqop, JQVAL *right,
-                      iwrc *rcp) {
+static bool _jql_match_in(JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                          iwrc *rcp) {
 
   JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
@@ -677,10 +677,10 @@ static bool _match_in(JQVAL *left, JQP_OP *jqop, JQVAL *right,
     return false;
   }
   if (lv->type == JQVAL_JBLNODE) {
-    _node_to_jqval(lv->vnode, &sleft);
+    _jql_node_to_jqval(lv->vnode, &sleft);
     lv = &sleft;
   } else if (lv->type == JQVAL_BINN) {
-    _binn_to_jqval(lv->vbinn, &sleft);
+    _jql_binn_to_jqval(lv->vbinn, &sleft);
     lv = &sleft;
   }
   for (JBL_NODE n = rv->vnode->child; n; n = n->next) {
@@ -688,7 +688,7 @@ static bool _match_in(JQVAL *left, JQP_OP *jqop, JQVAL *right,
       .type = JQVAL_JBLNODE,
       .vnode = n
     };
-    if (!_cmp_jqval_pair(lv, &qv, rcp)) {
+    if (!_jql_cmp_jqval_pair(lv, &qv, rcp)) {
       if (*rcp) return false;
       return true;
     }
@@ -697,8 +697,8 @@ static bool _match_in(JQVAL *left, JQP_OP *jqop, JQVAL *right,
   return false;
 }
 
-static bool _match_ni(JQVAL *left, JQP_OP *jqop, JQVAL *right,
-                      iwrc *rcp) {
+static bool _jql_match_ni(JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                          iwrc *rcp) {
 
   JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
@@ -709,10 +709,10 @@ static bool _match_ni(JQVAL *left, JQP_OP *jqop, JQVAL *right,
     return false;
   }
   if (lv->type == JQVAL_JBLNODE) {
-    _node_to_jqval(lv->vnode, &sleft);
+    _jql_node_to_jqval(lv->vnode, &sleft);
     lv = &sleft;
   } else if (lv->type == JQVAL_BINN) {
-    _binn_to_jqval(lv->vbinn, &sleft);
+    _jql_binn_to_jqval(lv->vbinn, &sleft);
     lv = &sleft;
   }
   if (lv->type >= JQVAL_JBLNODE) {
@@ -728,7 +728,7 @@ static bool _match_ni(JQVAL *left, JQP_OP *jqop, JQVAL *right,
       .type = JQVAL_BINN,
       .vbinn = &bv
     };
-    if (!_cmp_jqval_pair(&qv, lv, rcp)) {
+    if (!_jql_cmp_jqval_pair(&qv, lv, rcp)) {
       if (*rcp) return false;
       return true;
     } else if (*rcp) {
@@ -738,13 +738,13 @@ static bool _match_ni(JQVAL *left, JQP_OP *jqop, JQVAL *right,
   return false;
 }
 
-static bool _match_jqval_pair(JQP_AUX *aux,
-                              JQVAL *left, JQP_OP *jqop, JQVAL *right,
-                              iwrc *rcp) {
+static bool _jql_match_jqval_pair(JQP_AUX *aux,
+                                  JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                                  iwrc *rcp) {
   bool match = false;
   jqp_op_t op = jqop->value;
   if (op >= JQP_OP_EQ && op <= JQP_OP_LTE) {
-    int cmp = _cmp_jqval_pair(left, right, rcp);
+    int cmp = _jql_cmp_jqval_pair(left, right, rcp);
     if (*rcp) {
       goto finish;
     }
@@ -770,13 +770,13 @@ static bool _match_jqval_pair(JQP_AUX *aux,
   } else {
     switch (op) {
       case JQP_OP_RE:
-        match = _match_regexp(aux, left, jqop, right, rcp);
+        match = _jql_match_regexp(aux, left, jqop, right, rcp);
         break;
       case JQP_OP_IN:
-        match = _match_in(left, jqop, right, rcp);
+        match = _jql_match_in(left, jqop, right, rcp);
         break;
       case JQP_OP_NI:
-        match = _match_ni(right, jqop, left, rcp);
+        match = _jql_match_ni(right, jqop, left, rcp);
         break;
       default:
         break;
@@ -799,10 +799,10 @@ finish:
 bool jql_match_jqval_pair(JQP_AUX *aux,
                           JQVAL *left, JQP_OP *jqop, JQVAL *right,
                           iwrc *rcp) {
-  return _match_jqval_pair(aux, left, jqop, right, rcp);
+  return _jql_match_jqval_pair(aux, left, jqop, right, rcp);
 }
 
-static JQVAL *_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
+static JQVAL *_jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
   *rcp = 0;
   switch (unit->type) {
     case JQP_STRING_TYPE: {
@@ -898,10 +898,10 @@ static JQVAL *_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
 }
 
 JQVAL *jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
-  return _unit_to_jqval(aux, unit, rcp);
+  return _jql_unit_to_jqval(aux, unit, rcp);
 }
 
-static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
+static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
   if (expr->prematched) {
     return true;
   }
@@ -911,11 +911,11 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
   JQPUNIT *right = expr->right;
   if (left->type == JQP_STRING_TYPE) {
     if (left->string.flavour & JQP_STR_STAR) {
-      JQVAL lv, *rv = _unit_to_jqval(mctx->aux, right, rcp);
+      JQVAL lv, *rv = _jql_unit_to_jqval(mctx->aux, right, rcp);
       if (*rcp) return false;
       lv.type = JQVAL_STR;
       lv.vstr = mctx->key;
-      bool ret = _match_jqval_pair(mctx->aux, &lv, op, rv, rcp);
+      bool ret = _jql_match_jqval_pair(mctx->aux, &lv, op, rv, rcp);
       return negate != (0 == !ret);
     } else if (!(left->string.flavour & JQP_STR_DBL_STAR)
                && strcmp(mctx->key, left->string.value) != 0) {
@@ -927,23 +927,23 @@ static bool _match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
       *rcp = IW_ERROR_ASSERTION;
       return false;
     }
-    JQVAL lv, *rv = _unit_to_jqval(mctx->aux, left->expr.right, rcp);
+    JQVAL lv, *rv = _jql_unit_to_jqval(mctx->aux, left->expr.right, rcp);
     if (*rcp) return false;
     lv.type = JQVAL_STR;
     lv.vstr = mctx->key;
-    if (!_match_jqval_pair(mctx->aux, &lv, left->expr.op, rv, rcp)) {
+    if (!_jql_match_jqval_pair(mctx->aux, &lv, left->expr.op, rv, rcp)) {
       return negate;
     }
   }
-  JQVAL lv, *rv = _unit_to_jqval(mctx->aux, right, rcp);
+  JQVAL lv, *rv = _jql_unit_to_jqval(mctx->aux, right, rcp);
   if (*rcp) return false;
   lv.type = JQVAL_BINN;
   lv.vbinn = mctx->bv;
-  bool ret = _match_jqval_pair(mctx->aux, &lv, expr->op, rv, rcp);
+  bool ret = _jql_match_jqval_pair(mctx->aux, &lv, expr->op, rv, rcp);
   return negate != (0 == !ret);
 }
 
-static bool _match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
+static bool _jql_match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   n->start = mctx->lvl;
   n->end = n->start;
   JQPUNIT *unit = n->value;
@@ -954,7 +954,7 @@ static bool _match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   }
   bool prev = false;
   for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
-    bool matched = _match_node_expr_impl(mctx, expr, rcp);
+    bool matched = _jql_match_node_expr_impl(mctx, expr, rcp);
     if (*rcp) return false;
     const JQP_JOIN *join = expr->join;
     if (!join) {
@@ -971,7 +971,7 @@ static bool _match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   return prev;
 }
 
-IW_INLINE bool _match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
+IW_INLINE bool _jql_match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   n->start = mctx->lvl;
   n->end = n->start;
   if (n->value->type != JQP_STRING_TYPE) {
@@ -982,12 +982,12 @@ IW_INLINE bool _match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   return (strcmp(n->value->string.value, mctx->key) == 0);
 }
 
-IW_INLINE JQP_NODE *_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
+IW_INLINE JQP_NODE *_jql_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
   if (n->start < 0) {
     n->start = mctx->lvl;
   }
   if (n->next) {
-    JQP_NODE *nn = _match_node(mctx, n->next, res, rcp);
+    JQP_NODE *nn = _jql_match_node(mctx, n->next, res, rcp);
     if (*res) {
       n->end = -mctx->lvl; // Exclude node from matching
       n = nn;
@@ -1001,13 +1001,13 @@ IW_INLINE JQP_NODE *_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *r
   return n;
 }
 
-static JQP_NODE *_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
+static JQP_NODE *_jql_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
   switch (n->ntype) {
     case JQP_NODE_FIELD:
-      *res = _match_node_field(mctx, n, rcp);
+      *res = _jql_match_node_field(mctx, n, rcp);
       return n;
     case JQP_NODE_EXPR:
-      *res = _match_node_expr(mctx, n, rcp);
+      *res = _jql_match_node_expr(mctx, n, rcp);
       return n;
     case JQP_NODE_ANY:
       n->start = mctx->lvl;
@@ -1015,12 +1015,12 @@ static JQP_NODE *_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
       *res = true;
       return n;
     case JQP_NODE_ANYS:
-      return _match_node_anys(mctx, n, res, rcp);
+      return _jql_match_node_anys(mctx, n, res, rcp);
   }
   return n;
 }
 
-static bool _match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
+static bool _jql_match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
   MFCTX *fctx = f->opaque;
   if (fctx->matched) {
     return true;
@@ -1041,7 +1041,7 @@ static bool _match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
   }
   for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
     if (n->start < 0 || (lvl >= n->start && lvl <= n->end)) {
-      n = _match_node(mctx, n, &matched, rcp);
+      n = _jql_match_node(mctx, n, &matched, rcp);
       if (*rcp) return false;
       if (matched) {
         if (n == fctx->last_node) {
@@ -1056,7 +1056,7 @@ static bool _match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
   return fctx->matched;
 }
 
-static bool _match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp) {
+static bool _jql_match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp) {
   MENCTX *enctx = en->opaque;
   if (enctx->matched) {
     return true;
@@ -1065,9 +1065,9 @@ static bool _match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp) {
   for (en = en->chain; en; en = en->next) {
     bool matched = false;
     if (en->type == JQP_EXPR_NODE_TYPE) {
-      matched = _match_expression_node(en, mctx, rcp);
+      matched = _jql_match_expression_node(en, mctx, rcp);
     } else if (en->type == JQP_FILTER_TYPE) {
-      matched = _match_filter((JQP_FILTER *) en, mctx, rcp);
+      matched = _jql_match_filter((JQP_FILTER *) en, mctx, rcp);
     }
     if (*rcp) return JBL_VCMD_TERMINATE;
     const JQP_JOIN *join = en->join;
@@ -1088,7 +1088,7 @@ static bool _match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp) {
   return prev;
 }
 
-static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
+static jbl_visitor_cmd_t _jql_match_visitor(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
   char nbuf[JBNUMBUF_SIZE];
   const char *nkey = key;
   JQL q = vctx->op;
@@ -1104,7 +1104,7 @@ static jbl_visitor_cmd_t _match_visitor(int lvl, binn *bv, const char *key, int 
     .q = q,
     .aux = q->qp->aux
   };
-  q->matched = _match_expression_node(mctx.aux->expr, &mctx, rcp);
+  q->matched = _jql_match_expression_node(mctx.aux->expr, &mctx, rcp);
   if (*rcp || q->matched) {
     return JBL_VCMD_TERMINATE;
   }
@@ -1138,7 +1138,7 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
     }
   }
 
-  iwrc rc = _jbl_visit(0, 0, &vctx, _match_visitor);
+  iwrc rc = _jbl_visit(0, 0, &vctx, _jql_match_visitor);
   if (vctx.pool) {
     iwpool_destroy(vctx.pool);
   }
@@ -1148,11 +1148,11 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
   return rc;
 }
 
-const char* jql_error(JQL q) {
+const char *jql_error(JQL q) {
   return iwxstr_ptr(q->qp->aux->xerr);
 }
 
-const char* jql_first_anchor(JQL q) {
+const char *jql_first_anchor(JQL q) {
   return q->qp->aux->first_anchor;
 }
 
@@ -1174,7 +1174,7 @@ iwrc jql_get_skip(JQL q, int64_t *out) {
   struct JQP_AUX *aux = q->qp->aux;
   JQPUNIT *skip = aux->skip;
   if (!skip) return 0;
-  JQVAL *val = _unit_to_jqval(aux, skip, &rc);
+  JQVAL *val = _jql_unit_to_jqval(aux, skip, &rc);
   RCRET(rc);
   if (val->type != JQVAL_I64 || val->vi64 < 0) {
     return JQL_ERROR_INVALID_PLACEHOLDER;
@@ -1189,7 +1189,7 @@ iwrc jql_get_limit(JQL q, int64_t *out) {
   struct JQP_AUX *aux = q->qp->aux;
   JQPUNIT *limit = aux->limit;
   if (!limit) return 0;
-  JQVAL *val = _unit_to_jqval(aux, limit, &rc);
+  JQVAL *val = _jql_unit_to_jqval(aux, limit, &rc);
   RCRET(rc);
   if (val->type != JQVAL_I64 || val->vi64 < 0) {
     return JQL_ERROR_INVALID_PLACEHOLDER;
@@ -1209,17 +1209,17 @@ typedef struct _PROJ_CTX {
 } PROJ_CTX;
 
 
-static void _proj_mark_up(JBL_NODE n, int amask) {
+static void _jql_proj_mark_up(JBL_NODE n, int amask) {
   n->flags |= amask;
   while ((n = n->parent)) {
     n->flags |= PROJ_MARK_PATH;
   }
 }
 
-static bool _proj_matched(int16_t lvl, JBL_NODE n,
-                          const char *key, int keylen,
-                          JBN_VCTX *vctx, JQP_PROJECTION *proj,
-                          iwrc *rc) {
+static bool _jql_proj_matched(int16_t lvl, JBL_NODE n,
+                              const char *key, int keylen,
+                              JBN_VCTX *vctx, JQP_PROJECTION *proj,
+                              iwrc *rc) {
   if (proj->cnt <= lvl) {
     return false;
   }
@@ -1249,7 +1249,7 @@ static bool _proj_matched(int16_t lvl, JBL_NODE n,
   return false;
 }
 
-static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc) {
+static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc) {
   PROJ_CTX *pctx = vctx->op;
   const char *keyptr;
   char buf[JBNUMBUF_SIZE];
@@ -1261,20 +1261,21 @@ static jbn_visitor_cmd_t _proj_visitor(int lvl, JBL_NODE n, const char *key, int
     klidx = strlen(keyptr);
   }
   for (JQP_PROJECTION *p = pctx->proj; p; p = p->next) {
-    bool matched = _proj_matched((int16_t) lvl, n, keyptr, klidx, vctx, p, rc);
+    bool matched = _jql_proj_matched((int16_t) lvl, n, keyptr, klidx, vctx, p, rc);
     RCRET(*rc);
     if (matched) {
       if (p->exclude) {
         return JBN_VCMD_DELETE;
       } else {
-        _proj_mark_up(n, PROJ_MARK_KEEP);
+        _jql_proj_mark_up(n, PROJ_MARK_KEEP);
       }
     }
   }
   return 0;
 }
 
-static jbn_visitor_cmd_t _proj_keep_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc) {
+static jbn_visitor_cmd_t _jql_proj_keep_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx,
+                                                iwrc *rc) {
   if (lvl == -1) {
     return 0;
   }
@@ -1320,11 +1321,11 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
     .root = root,
     .op = &pctx
   };
-  iwrc rc = jbn_visit(root, 0, &vctx, _proj_visitor);
+  iwrc rc = jbn_visit(root, 0, &vctx, _jql_proj_visitor);
   RCRET(rc);
 
   if (root->flags & PROJ_MARK_PATH) { // We have keep projections
-    rc = jbn_visit(root, 0, &vctx, _proj_keep_visitor);
+    rc = jbn_visit(root, 0, &vctx, _jql_proj_keep_visitor);
     RCRET(rc);
   }
 

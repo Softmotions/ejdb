@@ -1,6 +1,6 @@
 #include "ejdb2_internal.h"
 
-static iwrc jb_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   iwrc rc;
   bool matched;
   IWKV_cursor cur;
@@ -47,14 +47,14 @@ finish:
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
-static int jb_cmp_jqval(const void *v1, const void *v2) {
+static int _jbi_cmp_jqval(const void *v1, const void *v2) {
   iwrc rc;
   const JQVAL *jqv1 = v1;
   const JQVAL *jqv2 = v2;
   return jql_cmp_jqval_pair(jqv1, jqv2, &rc);
 }
 
-static iwrc jb_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   int i;
   int64_t id;
   bool matched;
@@ -89,7 +89,7 @@ static iwrc jb_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUM
     }
   }
   // Sort jqvarr according to index order, lowest first (asc)
-  qsort(jqvarr, i, sizeof(jqvarr[0]), jb_cmp_jqval);
+  qsort(jqvarr, i, sizeof(jqvarr[0]), _jbi_cmp_jqval);
 
   for (int c = 0; c < i && !rc; ++c) {
     JQVAL *jqv = &jqvarr[c];
@@ -126,7 +126,7 @@ finish:
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
-static iwrc jb_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
   bool matched;
   IWKV_cursor cur;
@@ -203,10 +203,10 @@ iwrc jbi_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   RCRET(rc);
   switch (midx->expr1->op->value) {
     case JQP_OP_EQ:
-      return jb_consume_eq(ctx, jqval, consumer);
+      return _jbi_consume_eq(ctx, jqval, consumer);
     case JQP_OP_IN:
       if (jqval->type == JQVAL_JBLNODE) {
-        return jb_consume_in_node(ctx, jqval, consumer);
+        return _jbi_consume_in_node(ctx, jqval, consumer);
       } else {
         iwlog_ecode_error3(IW_ERROR_ASSERTION);
         return IW_ERROR_ASSERTION;
@@ -220,8 +220,8 @@ iwrc jbi_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
     JQVAL mjqv;
     memcpy(&mjqv, jqval, sizeof(*jqval));
     mjqv.vi64 = mjqv.vi64 + 1; // Because for index scan we use `IWKV_CURSOR_GE`
-    return jb_consume_scan(ctx, &mjqv, consumer);
+    return _jbi_consume_scan(ctx, &mjqv, consumer);
   } else {
-    return jb_consume_scan(ctx, jqval, consumer);
+    return _jbi_consume_scan(ctx, jqval, consumer);
   }
 }

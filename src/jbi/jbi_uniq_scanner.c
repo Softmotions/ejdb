@@ -2,7 +2,7 @@
 
 static_assert(IW_VNUMBUFSZ <= JBNUMBUF_SIZE, "IW_VNUMBUFSZ <= JBNUMBUF_SIZE");
 
-static iwrc jb_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
   uint64_t id;
   int64_t step;
@@ -28,7 +28,7 @@ static iwrc jb_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER co
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
-static iwrc jb_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   JQVAL jqv;
   size_t sz;
   uint64_t id;
@@ -73,7 +73,7 @@ finish:
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
-static iwrc jb_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
   bool matched;
   IWKV_cursor cur;
@@ -151,10 +151,10 @@ iwrc jbi_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   RCRET(rc);
   switch (midx->expr1->op->value) {
     case JQP_OP_EQ:
-      return jb_consume_eq(ctx, jqval, consumer);
+      return _jbi_consume_eq(ctx, jqval, consumer);
     case JQP_OP_IN:
       if (jqval->type == JQVAL_JBLNODE) {
-        return jb_consume_in_node(ctx, jqval, consumer);
+        return _jbi_consume_in_node(ctx, jqval, consumer);
       } else {
         iwlog_ecode_error3(IW_ERROR_ASSERTION);
         return IW_ERROR_ASSERTION;
@@ -167,8 +167,8 @@ iwrc jbi_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
     JQVAL mjqv;
     memcpy(&mjqv, jqval, sizeof(*jqval));
     mjqv.vi64 = mjqv.vi64 + 1; // Because for index scan we use `IWKV_CURSOR_GE`
-    return jb_consume_scan(ctx, &mjqv, consumer);
+    return _jbi_consume_scan(ctx, &mjqv, consumer);
   } else {
-    return jb_consume_scan(ctx, jqval, consumer);
+    return _jbi_consume_scan(ctx, jqval, consumer);
   }
 }

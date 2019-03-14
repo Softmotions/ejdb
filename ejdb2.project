@@ -89,8 +89,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>cmake-build-Debug/</Path>
       <Path>build/</Path>
+      <Path>cmake-build-Debug/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -195,7 +195,7 @@
       <File Name="src/jql/jql.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="jbl">
-      <File Name="src/jbl/jbljson.c"/>
+      <File Name="src/jbl/jbl_json.c"/>
       <File Name="src/jbl/jbl_internal.h"/>
       <VirtualDirectory Name="tests">
         <VirtualDirectory Name="data">

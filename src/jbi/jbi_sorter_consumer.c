@@ -1,6 +1,6 @@
 #include "ejdb2_internal.h"
 
-static void jb_scan_sorter_release(struct _JBEXEC *ctx) {
+static void _jbi_scan_sorter_release(struct _JBEXEC *ctx) {
   struct _JBSSC *ssc = &ctx->ssc;
   if (ssc->refs) {
     free(ssc->refs);
@@ -13,7 +13,7 @@ static void jb_scan_sorter_release(struct _JBEXEC *ctx) {
   memset(ssc, 0, sizeof(*ssc));
 }
 
-static int jb_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
+static int _jbi_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   int rv = 0;
   uint32_t r1, r2;
   struct _JBL d1, d2;
@@ -53,7 +53,7 @@ finish:
   return rv;
 }
 
-static iwrc jb_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struct _EJDB_DOC *doc) {
+static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struct _EJDB_DOC *doc) {
   iwrc rc = 0;
   uint64_t id = doc->id;
   struct JQP_AUX *aux = q->qp->aux;
@@ -86,7 +86,7 @@ static iwrc jb_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struc
   return rc;
 }
 
-static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
+static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
   iwrc rc = 0;
   int64_t step = 1, id;
   struct _JBL jbl;
@@ -105,7 +105,7 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
       rc = ssc->sof.probe_mmap(&ssc->sof, 0, &ssc->docs, &sp);
       RCGO(rc, finish);
     }
-    qsort_r(ssc->refs, rnum, sizeof(ssc->refs[0]), jb_scan_sorter_cmp, ctx);
+    qsort_r(ssc->refs, rnum, sizeof(ssc->refs[0]), _jbi_scan_sorter_cmp, ctx);
   }
 
   for (int64_t i = ux->skip; step && i < rnum && i >= 0;) {
@@ -127,7 +127,7 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
           goto finish;
         }
       }
-      rc = jb_scan_sorter_apply(pool, ctx, ux->q, &doc);
+      rc = _jbi_scan_sorter_apply(pool, ctx, ux->q, &doc);
       if (pool != ux->pool) {
         iwpool_destroy(pool);
       }
@@ -146,11 +146,11 @@ static iwrc jb_scan_sorter_do(struct _JBEXEC *ctx) {
   }
 
 finish:
-  jb_scan_sorter_release(ctx);
+  _jbi_scan_sorter_release(ctx);
   return rc;
 }
 
-static iwrc jb_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
+static iwrc _jbi_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
   IWFS_EXT_OPTS opts = {
     .initial_size = initial_size,
     .rspolicy = iw_exfile_szpolicy_fibo,
@@ -174,10 +174,10 @@ iwrc jbi_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id,
     // End of scan
     if (err) {
       // In the case of error do not perform sorting just release resources
-      jb_scan_sorter_release(ctx);
+      _jbi_scan_sorter_release(ctx);
       return err;
     } else {
-      return jb_scan_sorter_do(ctx);
+      return _jbi_scan_sorter_do(ctx);
     }
   }
 
@@ -252,7 +252,7 @@ start2:
         ssc->docs_asz = MIN(rsize * 2, db->opts.sort_buffer_sz);
         if (rsize > ssc->docs_asz) {
           size_t sz;
-          rc = jb_scan_sorter_init(ssc, (ssc->docs_npos + vsz) * 2);
+          rc = _jbi_scan_sorter_init(ssc, (ssc->docs_npos + vsz) * 2);
           RCRET(rc);
           rc = sof->write(sof, 0, ssc->docs, ssc->docs_npos, &sz);
           RCRET(rc);
