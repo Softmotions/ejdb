@@ -44,4 +44,16 @@ static iwrc put_json2(EJDB db, const char *coll, const char *json, int64_t *id) 
   return rc;
 }
 
+static iwrc patch_json(EJDB db, const char *coll, const char *patchjson, int64_t id) {
+  const size_t len = strlen(patchjson);
+  char buf[len + 1];
+  memcpy(buf, patchjson, len);
+  buf[len] = '\0';
+  for (int i = 0; buf[i]; ++i) {
+    if (buf[i] == '\'') buf[i] = '"';
+  }
+  return ejdb_patch(db, coll, buf, id);
+}
+
+
 #endif

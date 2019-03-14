@@ -150,7 +150,7 @@ iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }
-  rc = jbl_from_node(jbl, node);
+  rc = jbl_fill_from_node(jbl, node);
   if (!rc) {
     *jblp = jbl;
   }
@@ -1662,7 +1662,7 @@ finish:
   return rc;
 }
 
-iwrc jbl_from_node(JBL jbl, JBL_NODE node) {
+iwrc jbl_fill_from_node(JBL jbl, JBL_NODE node) {
   if (!jbl || !node) {
     return IW_ERROR_INVALID_ARGS;
   }

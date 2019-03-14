@@ -718,6 +718,21 @@ static iwrc jb_noop_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step)
   return 0;
 }
 
+IW_INLINE iwrc jb_put_impl(EJDB db, JBCOLL jbc, JBL jbl, int64_t id) {
+  IWKV_val val, key = {
+    .data = &id,
+    .size = sizeof(id)
+  };
+  struct _JBPHCTX pctx = {
+    .id = id,
+    .jbc = jbc,
+    .jbl = jbl
+  };
+  iwrc rc = jbl_as_buf(jbl, &val.data, &val.size);
+  RCRET(rc);
+  return iwkv_puth(jbc->cdb, &key, &val, 0, jb_put_handler, &pctx);
+}
+
 //----------------------- Public API
 
 iwrc ejdb_exec(EJDB_EXEC *ux) {
@@ -1074,29 +1089,59 @@ iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
   if (!patchjson) {
     return IW_ERROR_INVALID_ARGS;
   }
+  IWPOOL *pool = iwpool_create(1024);
+  if (!pool) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
   int rci;
-  JBL jbl;
   JBCOLL jbc;
-  iwrc rc = jb_coll_acquire_keeplock(db, coll, true, &jbc);
-  RCRET(rc);
-
-  IWKV_val val;
+  struct _JBL sjbl;
+  JBL_NODE root, patch;
+  JBL ujbl = 0;
+  IWKV_val val = {0};
   IWKV_val key = {
     .data = &id,
     .size = sizeof(id)
   };
 
+  iwrc rc = jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  RCGO(rc, finish);
+
   rc = iwkv_get(jbc->cdb, &key, &val);
   RCGO(rc, finish);
-  rc = jbl_from_buf_keep(&jbl, val.data, val.size, false);
+
+  rc = jbl_from_buf_keep_onstack(&sjbl, val.data, val.size);
   RCGO(rc, finish);
 
-  // TODO:
+  rc = jbl_to_node(&sjbl, &root, pool);
+  RCGO(rc, finish);
 
+  rc = jbl_node_from_json(patchjson, &patch, pool);
+  RCGO(rc, finish);
 
+  rc = jbl_patch_auto(root, patch, pool);
+  RCGO(rc, finish);
+
+  if (root->type == JBV_OBJECT) {
+    rc = jbl_create_empty_object(&ujbl);
+    RCGO(rc, finish);
+  } else if (root->type == JBV_ARRAY) {
+    rc = jbl_create_empty_array(&ujbl);
+    RCGO(rc, finish);
+  } else {
+    rc = JBL_ERROR_CREATION;
+    goto finish;
+  }
+  rc = jbl_fill_from_node(ujbl, root);
+  RCGO(rc, finish);
+
+  rc = jb_put_impl(db, jbc, ujbl, id);
 
 finish:
   API_COLL_UNLOCK(jbc, rci, rc);
+  iwpool_destroy(pool);
+  if (ujbl) jbl_destroy(&ujbl);
+  if (val.data) iwkv_val_dispose(&val);
   return rc;
 }
 
@@ -1108,25 +1153,7 @@ iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id) {
   JBCOLL jbc;
   iwrc rc = jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
-
-  IWKV_val val;
-  IWKV_val key = {
-    .data = &id,
-    .size = sizeof(id)
-  };
-  struct _JBPHCTX pctx = {
-    .id = id,
-    .jbc = jbc,
-    .jbl = jbl
-  };
-
-  rc = jbl_as_buf(jbl, &val.data, &val.size);
-  RCGO(rc, finish);
-
-  rc = iwkv_puth(jbc->cdb, &key, &val, 0, jb_put_handler, &pctx);
-  RCGO(rc, finish);
-
-finish:
+  rc = jb_put_impl(db, jbc, jbl, id);
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
@@ -1142,8 +1169,7 @@ iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *id) {
   RCRET(rc);
   int64_t oid = jbc->id_seq + 1;
 
-  IWKV_val val;
-  IWKV_val key = {
+  IWKV_val val, key = {
     .data = &oid,
     .size = sizeof(oid)
   };

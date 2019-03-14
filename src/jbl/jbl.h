@@ -157,7 +157,7 @@ IW_EXPORT iwrc jbl_node_from_json(const char *json, JBL_NODE *node, IWPOOL *pool
 
 IW_EXPORT iwrc jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
-IW_EXPORT iwrc jbl_from_node(JBL jbl, JBL_NODE node);
+IW_EXPORT iwrc jbl_fill_from_node(JBL jbl, JBL_NODE node);
 
 IW_EXPORT int jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
 

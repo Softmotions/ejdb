@@ -1,4 +1,5 @@
 #include "ejdb2.h"
+#include "ejdb_test.h"
 #include <iowow/iwxstr.h>
 #include <CUnit/Basic.h>
 
@@ -11,6 +12,44 @@ int clean_suite() {
   return 0;
 }
 
+void ejdb_test1_3() {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test1_3.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+  EJDB db;
+  JBL jbl;
+  int64_t id = 0;
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = put_json2(db, "c1", "{'foo':'bar'}", &id);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_TRUE_FATAL(id > 0);
+
+  rc = patch_json(db, "c1", "[ { 'op': 'add', 'path': '/baz', 'value': 'qux' } ]", id);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  // Now check the result
+  rc = ejdb_get(db, "c1", id, &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"foo\":\"bar\",\"baz\":\"qux\"}");
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_destroy(xstr);
+  jbl_destroy(&jbl);
+}
 
 void ejdb_test1_2() {
   EJDB_OPTS opts = {
@@ -260,7 +299,8 @@ int main() {
   }
   if (
     (NULL == CU_add_test(pSuite, "ejdb_test1_1", ejdb_test1_1)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test1_2", ejdb_test1_2))
+    (NULL == CU_add_test(pSuite, "ejdb_test1_2", ejdb_test1_2)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test1_3", ejdb_test1_3))
   ) {
     CU_cleanup_registry();
     return CU_get_error();
