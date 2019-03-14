@@ -330,9 +330,11 @@ static iwrc jb_db_release(EJDB *dbp) {
   iwrc rc = 0;
   EJDB db = *dbp;
   *dbp = 0;
+#ifdef JB_HTTP
   if (db->jbr) {
     IWRC(jbr_shutdown(&db->jbr), rc);
   }
+#endif
   if (db->mcolls) {
     for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
       if (!kh_exist(db->mcolls, k)) continue;
@@ -1418,10 +1420,12 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   rc = jb_db_meta_load(db);
   RCGO(rc, finish);
 
+#ifdef JB_HTTP
   if (db->opts.http.enabled && !db->opts.http.blocking) {
     rc = jbr_start(db, &db->opts, &db->jbr);
     RCGO(rc, finish);
   }
+#endif
 
 finish:
   if (rc) {
@@ -1429,9 +1433,11 @@ finish:
   } else {
     db->open = true;
     *ejdbp = db;
+#ifdef JB_HTTP
     if (db->opts.http.enabled && db->opts.http.blocking) {
       rc = jbr_start(db, &db->opts, &db->jbr);
     }
+#endif
   }
   return rc;
 }
@@ -1496,7 +1502,9 @@ iwrc ejdb_init() {
   RCRET(rc);
   rc = jql_init();
   RCRET(rc);
+#ifdef JB_HTTP
   rc = jbr_init();
   RCRET(rc);
+#endif
   return iwlog_register_ecodefn(_ejdb_ecodefn);;
 }

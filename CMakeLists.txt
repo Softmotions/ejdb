@@ -30,6 +30,7 @@ set(${PROJECT_NAME}_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(${PROJECT_NAME}_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+option(ENABLE_HTTP "Enable HTTP endpoint" ON)
 option(BUILD_TESTS "Build test cases" OFF)
 option(ASAN "Turn on address sanitizer" OFF)
 option(BUILD_EXAMPLES "Build example projects" ON)
