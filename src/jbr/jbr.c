@@ -58,6 +58,8 @@
 //
 //
 
+#define JBR_HTTP_CHUNK_SIZE 4096
+
 static uint64_t k_header_x_access_token_hash;
 static uint64_t k_header_content_length_hash;
 static uint64_t k_header_content_type_hash;
@@ -88,7 +90,8 @@ typedef struct _JBRCTX {
   size_t collection_len;
   int64_t id;
   bool read_anon;
-  bool data_sending;
+  bool data_sent;
+  IWXSTR *wbuf;
 } JBRCTX;
 
 #define JBR_RC_REPORT(code_, r_, rc_)                                              \
@@ -135,7 +138,34 @@ IW_INLINE iwrc _jbr_http_error_send2(http_s *r, int status, const char *ctype, c
   return _jbr_http_send(r, status, ctype, body, bodylen);
 }
 
+
+static iwrc _jbr_flush_chunk(JBRCTX *rctx, bool force) {
+  http_s *req = rctx->req;
+  //http_send_body()
+  return 0;
+}
+
 static iwrc _jbr_query_visitor(EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
+  JBRCTX *rctx = ctx->opaque;
+  assert(rctx);
+  if (!rctx->data_sent) {
+    rctx->data_sent = true; //!!!! FIXME
+    rctx->wbuf = iwxstr_new2(1024U);
+    if (!rctx->wbuf) {
+      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    }
+    http_s *req = rctx->req;
+    req->status = 200;
+    _jbr_http_set_content_type(req, "application/json");
+    http_set_header2(req, (fio_str_info_s) {
+      .data = "transfer-encoding", .len = 17
+    }, (fio_str_info_s) {
+      .data = "chunked", .len = 7
+    });
+  }
+
+
+
   return 0;
 }
 
@@ -157,6 +187,9 @@ static void _jbr_on_query(JBRCTX *rctx) {
     _jbr_http_error_send(rctx->req, 403);
     return;
   }
+
+  //todo: IWXSTR *log = 0;
+
   EJDB_EXEC ux = {
     .db = db,
     .q = q,
@@ -179,19 +212,26 @@ finish:
         JBR_RC_REPORT(400, req, rc);
         break;
       default:
-        if (rctx->data_sending) {
+        if (rctx->data_sent) {
           // We cannot report error to user over HTTP
           // because already sent some data to client
           iwlog_ecode_error3(rc);
-          http_finish(req);
+          http_finish(req); //!!!! FIXME
         } else {
           JBR_RC_REPORT(500, req, rc);
         }
         break;
     }
+  } else if (rctx->data_sent) {
+    http_finish(req); //!!!! FIXME
+  } else {
+    _jbr_http_send(req, 200, "application/json", "[]", 2);
   }
   if (q) {
     jql_destroy(&q);
+  }
+  if (rctx->wbuf) {
+    iwxstr_destroy(rctx->wbuf);
   }
 }
 
