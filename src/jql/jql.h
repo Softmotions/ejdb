@@ -23,6 +23,7 @@ typedef enum {
   JQL_ERROR_SKIP_ALREADY_SET,     /**< Skip clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
   JQL_ERROR_LIMIT_ALREADY_SET,    /**< Limit clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
   JQL_ERROR_ORDERBY_MAX_LIMIT,    /**< Reached max number of asc/desc order clauses: 64 (JQL_ERROR_ORDERBY_MAX_LIMIT) */
+  JQL_ERROR_NO_COLLECTION,        /**< No collection specified in query (JQL_ERROR_NO_COLLECTION) */
   _JQL_ERROR_END,
   _JQL_ERROR_UNMATCHED
 } jq_ecode;
@@ -51,6 +52,10 @@ IW_EXPORT WUR iwrc jql_set_regexp(JQL q, const char *placeholder, int index, con
 IW_EXPORT WUR iwrc jql_set_null(JQL q, const char *placeholder, int index);
 
 IW_EXPORT WUR iwrc jql_matched(JQL q, JBL jbl, bool *out);
+
+IW_EXPORT const char* jql_first_anchor(JQL q);
+
+IW_EXPORT const char* jql_error(JQL q);
 
 IW_EXPORT bool jql_has_apply(JQL q);
 

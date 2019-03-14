@@ -88,6 +88,7 @@ typedef struct _JBRCTX {
   size_t collection_len;
   int64_t id;
   bool read_anon;
+  bool data_sending;
 } JBRCTX;
 
 #define JBR_RC_REPORT(code_, r_, rc_)                                              \
@@ -139,7 +140,59 @@ static iwrc jbr_query_visitor(EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
 }
 
 static void jbr_on_query(JBRCTX *rctx) {
-  // todo
+  JQL q;
+  EJDB db = rctx->jbr->db;
+  http_s *req = rctx->req;
+  fio_str_info_s data = fiobj_data_read(req->body, 0);
+  if (data.len < 1) {
+    jbr_http_error_send(rctx->req, 400);
+    return;
+  }
+  // Collection name must be encoded in query
+  iwrc rc = jql_create(&q, 0, data.data);
+  RCGO(rc, finish);
+  if (rctx->read_anon && jql_has_apply(q)) {
+    // We have not permitted data modification request
+    jql_destroy(&q);
+    jbr_http_error_send(rctx->req, 403);
+    return;
+  }
+  EJDB_EXEC ux = {
+    .db = db,
+    .q = q,
+    .opaque = rctx,
+    .visitor = jbr_query_visitor
+  };
+
+  rc = ejdb_exec(&ux);
+
+finish:
+  if (rc) {
+    iwrc_strip_code(&rc);
+    switch (rc) {
+      case JQL_ERROR_QUERY_PARSE: {
+        const char *err = jql_error(q);
+        jbr_http_error_send2(rctx->req, 400, "text/plain", err, err ? strlen(err) : 0);
+        break;
+      }
+      case JQL_ERROR_NO_COLLECTION:
+        JBR_RC_REPORT(400, req, rc);
+        break;
+      default:
+        if (rctx->data_sending) {
+          // We cannot report error to user over HTTP
+          // because already sent some data to client
+          iwlog_ecode_error3(rc);
+          http_finish(req);
+        } else {
+          JBR_RC_REPORT(500, req, rc);
+        }
+        break;
+    }
+  }
+  if (q) {
+    jql_destroy(&q);
+  }
 }
 
 static void jbr_on_patch(JBRCTX *rctx) {

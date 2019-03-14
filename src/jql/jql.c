@@ -222,6 +222,14 @@ iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
   q->dirty = false;
   q->matched = false;
   q->opaque = 0;
+  if (!q->coll) {
+    // Try to set collection from first query anchor
+    q->coll = aux->first_anchor;
+    if (!q->coll) {
+      rc = JQL_ERROR_NO_COLLECTION;
+      goto finish;
+    }
+  }
 
   rc = _jql_init_expression_node(aux->expr, aux);
 
@@ -1140,6 +1148,14 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
   return rc;
 }
 
+const char* jql_error(JQL q) {
+  return iwxstr_ptr(q->qp->aux->xerr);
+}
+
+const char* jql_first_anchor(JQL q) {
+  return q->qp->aux->first_anchor;
+}
+
 bool jql_has_apply(JQL q) {
   return q->qp->aux->apply;
 }
@@ -1368,6 +1384,8 @@ static const char *_ecodefn(locale_t locale, uint32_t ecode) {
       return "Limit clause already specified (JQL_ERROR_SKIP_ALREADY_SET)";
     case JQL_ERROR_ORDERBY_MAX_LIMIT:
       return "Reached max number of asc/desc order clauses: 64 (JQL_ERROR_ORDERBY_MAX_LIMIT)";
+    case JQL_ERROR_NO_COLLECTION:
+      return "No collection specified in query (JQL_ERROR_NO_COLLECTION)";
     default:
       break;
   }

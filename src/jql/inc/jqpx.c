@@ -677,6 +677,9 @@ static JQPUNIT *_jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
       && aux->stack->unit->type == JQP_STRING_TYPE
       && (aux->stack->unit->string.flavour & JQP_STR_ANCHOR)) {
     filter->filter.anchor = _jqp_unit_pop(yy)->string.value;
+    if (!aux->first_anchor) {
+      aux->first_anchor = filter->filter.anchor;
+    }
   }
   return filter;
 }

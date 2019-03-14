@@ -234,6 +234,7 @@ typedef struct JQP_AUX {
   JQPUNIT *limit;
   JBL_NODE apply;
   const char *apply_placeholder;
+  const char *first_anchor;
   bool negate;
   JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];
 } JQP_AUX;

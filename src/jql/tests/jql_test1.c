@@ -78,7 +78,7 @@ static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
   JQL jql;
   char *json = iwu_replace_char(strdup(jsondata), '\'', '"');
   CU_ASSERT_PTR_NOT_NULL_FATAL(json);
-  iwrc rc = jql_create(&jql, 0, q);
+  iwrc rc = jql_create(&jql, "c1", q);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jbl_from_json(&jbl, json);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -199,7 +199,7 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
   char *qstr = iwu_replace_char(strdup(q), '\'', '"');
   CU_ASSERT_PTR_NOT_NULL_FATAL(qstr);
 
-  iwrc rc = jql_create(&jql, 0, qstr);
+  iwrc rc = jql_create(&jql, "c1", qstr);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jbl_from_json(&jbl, json);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
