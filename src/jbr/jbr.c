@@ -84,6 +84,7 @@ struct _JBR {
 
 typedef struct _JBRCTX {
   JBR jbr;
+  int64_t cnt;
   http_s *req;
   jbr_method_t method;
   const char *collection;
@@ -114,6 +115,16 @@ IW_INLINE void _jbr_http_set_content_type(http_s *r, const char *ctype) {
   }
 }
 
+IW_INLINE void _jbr_http_set_header(http_s *r,
+                                    char *name, size_t nlen,
+                                    char *val, size_t vlen) {
+  http_set_header2(r, (fio_str_info_s) {
+    .data = name, .len = nlen
+  }, (fio_str_info_s) {
+    .data = val, .len = vlen
+  });
+}
+
 static iwrc _jbr_http_send(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
   if (!r || !r->private_data.out_headers) {
     iwlog_ecode_error3(IW_ERROR_INVALID_ARGS);
@@ -138,35 +149,72 @@ IW_INLINE iwrc _jbr_http_error_send2(http_s *r, int status, const char *ctype, c
   return _jbr_http_send(r, status, ctype, body, bodylen);
 }
 
-
-static iwrc _jbr_flush_chunk(JBRCTX *rctx, bool force) {
+static iwrc _jbr_flush_chunk(JBRCTX *rctx, bool finish) {
   http_s *req = rctx->req;
-  //http_send_body()
+  IWXSTR *wbuf = rctx->wbuf;
+  char nbuf[JBNUMBUF_SIZE + 2]; // + \r\n
+  assert(wbuf);
+  if (!rctx->data_sent) {
+    req->status = 200;
+    _jbr_http_set_content_type(req, "application/json");
+    _jbr_http_set_header(req, "transfer-encoding", 17, "chunked", 7);
+    if (http_write_headers(req) < 0) {
+      iwlog_ecode_error3(JBR_ERROR_SEND_RESPONSE);
+      return JBR_ERROR_SEND_RESPONSE;
+    }
+    rctx->data_sent = true;
+  }
+  if (!finish && iwxstr_size(wbuf) < JBR_HTTP_CHUNK_SIZE) {
+    return 0;
+  }
+  intptr_t uuid = http_uuid(req);
+  if (iwxstr_size(wbuf) > 0) {
+    int sz = snprintf(nbuf, JBNUMBUF_SIZE, "%zX\r\n", iwxstr_size(wbuf));
+    if (fio_write(uuid, nbuf, sz) < 0) {
+      iwlog_ecode_error3(JBR_ERROR_SEND_RESPONSE);
+      return JBR_ERROR_SEND_RESPONSE;
+    }
+    if (fio_write(uuid, iwxstr_ptr(wbuf), iwxstr_size(wbuf)) < 0) {
+      iwlog_ecode_error3(JBR_ERROR_SEND_RESPONSE);
+      return JBR_ERROR_SEND_RESPONSE;
+    }
+    if (fio_write(uuid, "\r\n", 2) < 0) {
+      iwlog_ecode_error3(JBR_ERROR_SEND_RESPONSE);
+      return JBR_ERROR_SEND_RESPONSE;
+    }
+    iwxstr_clear(wbuf);
+  }
+  if (finish) {
+    if (fio_write(uuid, "0\r\n\r\n", 5) < 0) {
+      iwlog_ecode_error3(JBR_ERROR_SEND_RESPONSE);
+      return JBR_ERROR_SEND_RESPONSE;
+    }
+  }
   return 0;
 }
 
 static iwrc _jbr_query_visitor(EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
   JBRCTX *rctx = ctx->opaque;
   assert(rctx);
-  if (!rctx->data_sent) {
-    rctx->data_sent = true; //!!!! FIXME
-    rctx->wbuf = iwxstr_new2(1024U);
-    if (!rctx->wbuf) {
-      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    }
-    http_s *req = rctx->req;
-    req->status = 200;
-    _jbr_http_set_content_type(req, "application/json");
-    http_set_header2(req, (fio_str_info_s) {
-      .data = "transfer-encoding", .len = 17
-    }, (fio_str_info_s) {
-      .data = "chunked", .len = 7
-    });
+  iwrc rc = 0;
+  IWXSTR *wbuf = rctx->wbuf;
+  if (!wbuf) {
+    wbuf = iwxstr_new2(1024U);
+    if (!wbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    rctx->wbuf = wbuf;
+    rc = iwxstr_cat(wbuf, "[\n  ", 4);
+    RCRET(rc);
   }
-
-
-
-  return 0;
+  if (rctx->cnt++) {
+    iwxstr_cat(wbuf, "\r\n, ", 4);
+  }
+  if (doc->node) {
+    rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, wbuf, 0);
+  } else {
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, wbuf, 0);
+  }
+  RCRET(rc);
+  return _jbr_flush_chunk(rctx, false);
 }
 
 static void _jbr_on_query(JBRCTX *rctx) {
@@ -188,7 +236,7 @@ static void _jbr_on_query(JBRCTX *rctx) {
     return;
   }
 
-  //todo: IWXSTR *log = 0;
+  //todo: explain execution IWXSTR *log = 0;
 
   EJDB_EXEC ux = {
     .db = db,
@@ -198,6 +246,12 @@ static void _jbr_on_query(JBRCTX *rctx) {
   };
 
   rc = ejdb_exec(&ux);
+
+  if (!rc && rctx->wbuf) {
+    rc = iwxstr_cat(rctx->wbuf, "\r\n]", 3);
+    RCGO(rc, finish);
+    rc = _jbr_flush_chunk(rctx, true);
+  }
 
 finish:
   if (rc) {
@@ -213,18 +267,19 @@ finish:
         break;
       default:
         if (rctx->data_sent) {
-          // We cannot report error to user over HTTP
+          // We cannot report error over HTTP
           // because already sent some data to client
           iwlog_ecode_error3(rc);
-          http_finish(req); //!!!! FIXME
+          http_complete(req);
         } else {
           JBR_RC_REPORT(500, req, rc);
         }
         break;
     }
   } else if (rctx->data_sent) {
-    http_finish(req); //!!!! FIXME
+    http_complete(req);
   } else {
+    // Empty response
     _jbr_http_send(req, 200, "application/json", "[]", 2);
   }
   if (q) {
@@ -232,6 +287,7 @@ finish:
   }
   if (rctx->wbuf) {
     iwxstr_destroy(rctx->wbuf);
+    rctx->wbuf = 0;
   }
 }
 
