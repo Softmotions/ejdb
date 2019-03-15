@@ -1,12 +1,20 @@
 #include "ejdb_test.h"
 #include <CUnit/Basic.h>
+#include <curl/curl.h>
+
+CURL *curl;
 
 int init_suite() {
+  curl_global_init(0);
+  curl = curl_easy_init();
+  if (!curl) return 1;
   int rc = ejdb_init();
   return rc;
 }
 
 int clean_suite() {
+  curl_easy_cleanup(curl);
+  curl_global_cleanup();
   return 0;
 }
 
