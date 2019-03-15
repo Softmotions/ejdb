@@ -9,6 +9,12 @@ set(TESTS ejdb_test1
           ejdb_test3)
 
 if(ENABLE_HTTP)
+  include(FindCURL)
+  if(NOT CURL_FOUND)
+    message(FATAL_ERROR "Cannot find required libcurl library")
+  endif()
+  include_directories(${CURL_INCLUDE_DIRS})
+  link_libraries(${CURL_LIBRARIES})
   list(APPEND TESTS ejdb_test4)
 endif()
 
