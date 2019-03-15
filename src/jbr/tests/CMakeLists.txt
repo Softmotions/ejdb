@@ -1,12 +1,14 @@
-link_libraries(ejdb2_s ${CUNIT_LIBRARIES})
-include_directories(${CUNIT_INCLUDE_DIRS})
+include(FindCURL)
+if(NOT CURL_FOUND)
+  message(FATAL_ERROR "Cannot find libcurl library")
+endif()
+
+link_libraries(ejdb2_s ${CUNIT_LIBRARIES} ${CURL_LIBRARIES})
+include_directories(${CUNIT_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src/tests)
 
 set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
-
-set(TESTS ejdb_test1
-          ejdb_test2
-          ejdb_test3)
+set(TESTS jbr_test1)
 
 foreach(TN IN ITEMS ${TESTS})
     add_executable(${TN} ${TN}.c)

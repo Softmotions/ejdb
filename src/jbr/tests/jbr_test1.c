@@ -10,10 +10,10 @@ int clean_suite() {
   return 0;
 }
 
-static void ejdb_test4_1() {
+static void jbr_test1_1() {
   EJDB_OPTS opts = {
     .kv = {
-      .path = "ejdb_test4_1.db",
+      .path = "jbr_test1_1.db",
       .oflags = IWKV_TRUNC
     },
     .no_wal = true,
@@ -34,13 +34,13 @@ static void ejdb_test4_1() {
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
-  pSuite = CU_add_suite("ejdb_test1", init_suite, clean_suite);
+  pSuite = CU_add_suite("jbr_test1", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "ejdb_test4_1", ejdb_test4_1))
+    (NULL == CU_add_test(pSuite, "jbr_test1_1", jbr_test1_1))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

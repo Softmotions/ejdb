@@ -116,13 +116,16 @@
       <File Name="src/jbs/jbs.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="jbr">
+      <VirtualDirectory Name="tests">
+        <File Name="src/jbr/tests/jbr_test1.c"/>
+        <File Name="src/jbr/tests/CMakeLists.txt"/>
+      </VirtualDirectory>
       <File Name="src/jbr/jbr.h"/>
       <File Name="src/jbr/jbr.c"/>
       <File Name="src/jbr/README.md"/>
     </VirtualDirectory>
     <File Name="src/ejdb2_internal.h"/>
     <VirtualDirectory Name="tests">
-      <File Name="src/tests/ejdb_test4.c"/>
       <File Name="src/tests/ejdb_test.h"/>
       <File Name="src/tests/ejdb_test3.c"/>
       <File Name="src/tests/ejdb_test2.c"/>
