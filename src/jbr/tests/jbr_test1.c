@@ -5,7 +5,7 @@
 CURL *curl;
 
 int init_suite() {
-  curl_global_init(0);
+  curl_global_init(CURL_GLOBAL_ALL);
   curl = curl_easy_init();
   if (!curl) return 1;
   int rc = ejdb_init();
