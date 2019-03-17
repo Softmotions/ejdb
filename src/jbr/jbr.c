@@ -19,7 +19,7 @@
 // In any error case `500` error will be returned.
 //
 //
-// Endpoints:
+// HTTP endpoints:
 //
 //    POST    `/{collection}`
 //      Add a new document to the `collection`
@@ -52,13 +52,15 @@
 //        `X-Hints` comma separated extra hints to ejdb2 database engine
 //        Hints:
 //          `explain` Show the query execution plan (indexes used).
-//                    Used in query execution POST `/` requests.
 //                    In this case query resultset will be prepended by query explanation text
-//                    terminated with `\r\n--------------------` line
+//                    separated by `--------------------` 20 character line with document list.
 //        Response:
-//               200 on success, HTTP chunked transfer, JSON documents separated by `\n`
-//
-//
+//               200 on success, HTTP chunked transfer
+//               JSON documents separated by `\n` in the following format:
+//         ```
+//            \r\n<document id>\t<document JSON body>
+//            ...
+//         ```
 
 #define JBR_HTTP_CHUNK_SIZE 4096
 
