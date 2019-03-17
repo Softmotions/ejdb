@@ -15,6 +15,8 @@ int clean_suite(void) {
 }
 
 void _jql_test1_1(int num, iwrc expected) {
+  fprintf(stderr, "%03d.jql\n", num);
+
   iwrc rc;
   char path[64];
   char path_expected[64];

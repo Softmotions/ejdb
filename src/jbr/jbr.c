@@ -18,11 +18,6 @@
 //
 // In any error case `500` error will be returned.
 //
-// `X-Hints` request header used to provide comma separated extra hints to ejdb2 database engine
-//    Hints:
-//      `explain` Show the query execution plan (indexes used).
-//                Used in query execution POST `/` requests.
-//                In this case instead of query resultset client will get query explanation text.
 //
 // Endpoints:
 //
@@ -53,7 +48,14 @@
 //                404 if document not found
 //
 //    POST `/`  - Query a collection by provided query spec as body
-//      Response:
+//      Request headers:
+//        `X-Hints` comma separated extra hints to ejdb2 database engine
+//        Hints:
+//          `explain` Show the query execution plan (indexes used).
+//                    Used in query execution POST `/` requests.
+//                    In this case query resultset will be prepended by query explanation text
+//                    terminated with `\r\n--------------------` line
+//        Response:
 //               200 on success, HTTP chunked transfer, JSON documents separated by `\n`
 //
 //
@@ -61,6 +63,7 @@
 #define JBR_HTTP_CHUNK_SIZE 4096
 
 static uint64_t k_header_x_access_token_hash;
+static uint64_t k_header_x_hints_hash;
 static uint64_t k_header_content_length_hash;
 static uint64_t k_header_content_type_hash;
 
@@ -84,7 +87,6 @@ struct _JBR {
 
 typedef struct _JBRCTX {
   JBR jbr;
-  int64_t cnt;
   http_s *req;
   jbr_method_t method;
   const char *collection;
@@ -93,6 +95,7 @@ typedef struct _JBRCTX {
   bool read_anon;
   bool data_sent;
   IWXSTR *wbuf;
+  IWXSTR *explain;
 } JBRCTX;
 
 #define JBR_RC_REPORT(code_, r_, rc_)                                              \
@@ -202,12 +205,19 @@ static iwrc _jbr_query_visitor(EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
     wbuf = iwxstr_new2(1024U);
     if (!wbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     rctx->wbuf = wbuf;
-    rc = iwxstr_cat(wbuf, "[\n  ", 4);
     RCRET(rc);
   }
-  if (rctx->cnt++) {
-    iwxstr_cat(wbuf, "\r\n, ", 4);
+  if (rctx->explain) {
+    iwrc rc = iwxstr_cat(wbuf, iwxstr_ptr(rctx->explain), iwxstr_size(rctx->explain));
+    RCRET(rc);
+    rc = iwxstr_cat(wbuf, "--------------------", 20);
+    RCRET(rc);
+    iwxstr_destroy(rctx->explain);
+    rctx->explain = 0;
   }
+
+  rc = iwxstr_printf(wbuf, "\r\n%lld\t", doc->id);
+  RCRET(rc);
   if (doc->node) {
     rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, wbuf, 0);
   } else {
@@ -236,8 +246,6 @@ static void _jbr_on_query(JBRCTX *rctx) {
     return;
   }
 
-  //todo: explain execution IWXSTR *log = 0;
-
   EJDB_EXEC ux = {
     .db = db,
     .q = q,
@@ -245,10 +253,28 @@ static void _jbr_on_query(JBRCTX *rctx) {
     .visitor = _jbr_query_visitor
   };
 
+  FIOBJ h = fiobj_hash_get2(req->headers, k_header_x_hints_hash);
+  if (h) {
+    if (!fiobj_type_is(h, FIOBJ_T_STRING)) {
+      jql_destroy(&q);
+      _jbr_http_error_send(req, 400);
+      return;
+    }
+    fio_str_info_s hv = fiobj_obj2cstr(h);
+    if (strstr(hv.data, "explain")) {
+      rctx->explain = iwxstr_new();
+      if (!rctx->explain) {
+        rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+        goto finish;
+      }
+      ux.log = rctx->explain;
+    }
+  }
+
   rc = ejdb_exec(&ux);
 
   if (!rc && rctx->wbuf) {
-    rc = iwxstr_cat(rctx->wbuf, "\r\n]", 3);
+    rc = iwxstr_cat(rctx->wbuf, "\r\n", 2);
     RCGO(rc, finish);
     rc = _jbr_flush_chunk(rctx, true);
   }
@@ -284,6 +310,10 @@ finish:
   }
   if (q) {
     jql_destroy(&q);
+  }
+  if (rctx->explain) {
+    iwxstr_destroy(rctx->explain);
+    rctx->explain = 0;
   }
   if (rctx->wbuf) {
     iwxstr_destroy(rctx->wbuf);
@@ -726,6 +756,7 @@ iwrc jbr_init() {
     return 0;
   }
   k_header_x_access_token_hash = fiobj_hash_string("x-access-token", 14);
+  k_header_x_hints_hash = fiobj_hash_string("x-hints", 7);
   k_header_content_length_hash = fiobj_hash_string("content-length", 14);
   k_header_content_type_hash = fiobj_hash_string("content-type", 12);
   return iwlog_register_ecodefn(_jbr_ecodefn);

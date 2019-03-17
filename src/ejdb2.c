@@ -776,12 +776,12 @@ iwrc ejdb_exec(EJDB_EXEC *ux) {
   RCGO(rc, finish);
   if (ctx.sorting) {
     if (ux->log) {
-      iwxstr_cat2(ux->log, "[COLLECTOR] SORTER\n");
+      iwxstr_cat2(ux->log, " [COLLECTOR] SORTER\n");
     }
     rc = ctx.scanner(&ctx, jbi_sorter_consumer);
   } else {
     if (ux->log) {
-      iwxstr_cat2(ux->log, "[COLLECTOR] PLAIN\n");
+      iwxstr_cat2(ux->log, " [COLLECTOR] PLAIN\n");
     }
     rc = ctx.scanner(&ctx, jbi_consumer);
   }

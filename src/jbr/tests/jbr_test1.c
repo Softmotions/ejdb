@@ -18,6 +18,13 @@ int clean_suite() {
   return 0;
 }
 
+static size_t curl_write_xstr(void *contents, size_t size, size_t nmemb, void *op) {
+  IWXSTR *xstr = op;
+  assert(xstr);
+  iwxstr_cat(xstr, contents, size * nmemb);
+  return size * nmemb;
+}
+
 static void jbr_test1_1() {
   EJDB_OPTS opts = {
     .kv = {
@@ -30,11 +37,146 @@ static void jbr_test1_1() {
       .port = 9292
     }
   };
+
+  long code;
   EJDB db;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
+  IWXSTR *xstr = iwxstr_new();
+  IWXSTR *hstr = iwxstr_new();
+  struct curl_slist *headers = curl_slist_append(0, "Content-Type: application/json");
 
+
+  // Check no element in collection
+  CURLcode cc = curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/1");
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 404);
+
+  // Save a document using POST
+  curl_easy_reset(curl);
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1");
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{\"foo\":\"bar\"}");
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 200);
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "1");
+
+  // Now get document JSON using GET
+  curl_easy_reset(curl);
+  iwxstr_clear(xstr);
+  iwxstr_clear(hstr);
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/1");
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERDATA, hstr);
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 200);
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr),
+                         "{\n"
+                         " \"foo\": \"bar\"\n"
+                         "}"
+                        );
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-type:application/json"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-length:17"));
+  CU_ASSERT_EQUAL(iwxstr_size(xstr), 17);
+
+  // PUT document under specific ID
+  curl_easy_reset(curl);
+  iwxstr_clear(xstr);
+  iwxstr_clear(hstr);
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/33");
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{\"foo\":\"b\nar\"}");
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 200);
+
+  // Check last doc
+
+  curl_easy_reset(curl);
+  iwxstr_clear(xstr);
+  iwxstr_clear(hstr);
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/33");
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERDATA, hstr);
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 200);
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr),
+                         "{\n"
+                         " \"foo\": \"b\\nar\"\n"
+                         "}"
+                        );
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-type:application/json"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-length:19"));
+  CU_ASSERT_EQUAL(iwxstr_size(xstr), 19);
+
+  // Perform a query
+  curl_easy_reset(curl);
+  iwxstr_clear(xstr);
+  iwxstr_clear(hstr);
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/");
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "@c1/foo");
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERDATA, hstr);
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 200);
+
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "33\t{\"foo\":\"b\\nar\"}"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "1\t{\"foo\":\"bar\"}"));
+
+
+  // Query with explain
+  curl_slist_free_all(headers);
+  curl_easy_reset(curl);
+  iwxstr_clear(xstr);
+  iwxstr_clear(hstr);
+  headers = curl_slist_append(0, "X-Hints: explain");
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/");
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "@c1/foo");
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERDATA, hstr);
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 200);
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "[INDEX] NO [COLLECTOR] PLAIN"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "--------------------"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "33\t{\"foo\":\"b\\nar\"}"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "1\t{\"foo\":\"bar\"}"));
+
+
+  iwxstr_destroy(xstr);
+  iwxstr_destroy(hstr);
+  curl_slist_free_all(headers);
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 }
@@ -59,4 +201,3 @@ int main() {
   CU_cleanup_registry();
   return ret;
 }
-
