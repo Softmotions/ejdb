@@ -53,7 +53,7 @@
 //        Hints:
 //          `explain` Show the query execution plan (indexes used).
 //                    In this case query resultset will be prepended by query explanation text
-//                    separated by `--------------------` 20 character line with document list.
+//                    separated by `--------------------` line with document list.
 //        Response:
 //               200 on success, HTTP chunked transfer
 //               JSON documents separated by `\n` in the following format:

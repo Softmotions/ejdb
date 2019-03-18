@@ -109,8 +109,7 @@ static void jbr_test1_1() {
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
   CU_ASSERT_EQUAL_FATAL(code, 200);
 
-  // Check last doc
-
+  // Check the last doc
   curl_easy_reset(curl);
   iwxstr_clear(xstr);
   iwxstr_clear(hstr);
@@ -150,12 +149,11 @@ static void jbr_test1_1() {
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "33\t{\"foo\":\"b\\nar\"}"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "1\t{\"foo\":\"bar\"}"));
 
-
   // Query with explain
-  curl_slist_free_all(headers);
   curl_easy_reset(curl);
   iwxstr_clear(xstr);
   iwxstr_clear(hstr);
+  curl_slist_free_all(headers);
   headers = curl_slist_append(0, "X-Hints: explain");
   curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/");
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -172,6 +170,61 @@ static void jbr_test1_1() {
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "--------------------"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "33\t{\"foo\":\"b\\nar\"}"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), "1\t{\"foo\":\"bar\"}"));
+
+  // Delete resource
+  curl_easy_reset(curl);
+  iwxstr_clear(xstr);
+  iwxstr_clear(hstr);
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/33");
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 200);
+
+  // Check the resource has been deleted
+  curl_easy_reset(curl);
+  iwxstr_clear(xstr);
+  iwxstr_clear(hstr);
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/33");
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 404);
+
+  // Apply patch
+  curl_easy_reset(curl);
+  iwxstr_clear(xstr);
+  iwxstr_clear(hstr);
+  curl_slist_free_all(headers);
+  headers = curl_slist_append(0, "Content-Type: application/json");
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/1");
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "[{\"op\":\"replace\", \"path\":\"/foo\", \"value\":\"zzz\"}]");
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 200);
+
+  // Check patch applied
+  curl_easy_reset(curl);
+  iwxstr_clear(xstr);
+  iwxstr_clear(hstr);
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/1");
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_write_xstr);
+  curl_easy_setopt(curl, CURLOPT_HEADERDATA, hstr);
+  cc = curl_easy_perform(curl);
+  CU_ASSERT_EQUAL_FATAL(cc, 0);
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+  CU_ASSERT_EQUAL_FATAL(code, 200);
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr),
+                         "{\n"
+                         " \"foo\": \"zzz\"\n"
+                         "}"
+                        );
 
 
   iwxstr_destroy(xstr);
