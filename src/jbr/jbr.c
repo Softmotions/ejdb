@@ -308,7 +308,7 @@ finish:
     http_complete(req);
   } else {
     // Empty response
-    _jbr_http_send(req, 200, "application/json", "[]", 2);
+    _jbr_http_send(req, 200, 0, 0, 0);
   }
   if (q) {
     jql_destroy(&q);
@@ -591,7 +591,7 @@ static void _on_http_request(http_s *req) {
       return;
     }
     fio_str_info_s hv = fiobj_obj2cstr(h);
-    if (hv.len != http->access_token_len || !memcmp(hv.data, http->access_token, http->access_token_len)) {
+    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len)) {
       http_send_error(req, 403);
       return;
     }
@@ -643,6 +643,78 @@ static void _jbr_on_pre_start(void *op) {
   }
 }
 
+//------------------ WS ---------------------
+
+typedef struct _JBWCTX {
+  JBR jbr;
+  ws_s *ws;
+  jbr_method_t method;
+  const char *collection;
+  size_t collection_len;
+  int64_t id;
+  bool read_anon;
+  IWXSTR *explain;
+} JBWCTX;
+
+
+static void ws_on_open(ws_s *ws) {
+}
+
+static void ws_on_close(intptr_t uuid, void *udata) {
+}
+
+static void ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
+  if (!is_text) { // Do not serve binary requests
+    websocket_close(ws);
+    return;
+  }
+  // TODO:
+}
+
+static void _jbr_on_http_upgrade(http_s *req, char *requested_protocol, size_t len) {
+  JBWCTX wctx = {0};
+  JBR jbr = req->udata;
+  assert(jbr);
+  const EJDB_HTTP *http = jbr->http;
+  fio_str_info_s path = fiobj_obj2cstr(req->path);
+
+  if ((path.len != 1 || path.data[0] != '/')
+      || (len != 9 || requested_protocol[1] != 'e')) {
+    http_send_error(req, 400);
+    return;
+  }
+  if (http->access_token) {
+    FIOBJ h = fiobj_hash_get2(req->headers, k_header_x_access_token_hash);
+    if (!h) {
+      if (http->read_anon) {
+        wctx.read_anon = true;
+      }
+      http_send_error(req, 401);
+      return;
+    }
+    if (!fiobj_type_is(h, FIOBJ_T_STRING)) { // header specified more than once
+      http_send_error(req, 400);
+      return;
+    }
+    fio_str_info_s hv = fiobj_obj2cstr(h);
+    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len)) {
+      http_send_error(req, 403);
+      return;
+    }
+  }
+  if (http_upgrade2ws(req,
+                      .on_message = ws_on_message,
+                      .on_open = ws_on_open,
+                      .on_close = ws_on_close,
+                      .udata = (void *) &wctx
+                     ) < 0) {
+    JBR_RC_REPORT(500, req, JBR_ERROR_WS_UPGRADE);
+  }
+}
+
+
+//---------------- Main ---------------------
+
 static void *_jbr_start_thread(void *op) {
   JBR jbr = op;
   char nbuf[JBNUMBUF_SIZE];
@@ -651,9 +723,11 @@ static void *_jbr_start_thread(void *op) {
   iwitoa(http->port, nbuf, sizeof(nbuf));
 
   iwlog_info("HTTP endpoint at %s:%s", bind, nbuf);
+  websocket_optimize4broadcasts(WEBSOCKET_OPTIMIZE_PUBSUB_TEXT, 1);
   if (http_listen(nbuf, bind,
                   .udata = jbr,
                   .on_request = _on_http_request,
+                  .on_upgrade = _jbr_on_http_upgrade,
                   .on_finish = _jbr_on_finish,
                   .max_body_size = 1024 * 1024 * 64, // 64Mb
                   .ws_max_msg_size = 1024 * 1024 * 64 // 64Mb
@@ -748,6 +822,8 @@ static const char *_jbr_ecodefn(locale_t locale, uint32_t ecode) {
       return "Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN)";
     case JBR_ERROR_SEND_RESPONSE:
       return "Error sending response (JBR_ERROR_SEND_RESPONSE)";
+    case JBR_ERROR_WS_UPGRADE:
+      return "Failed upgrading to websocket connection (JBR_ERROR_WS_UPGRADE)";
   }
   return 0;
 }
