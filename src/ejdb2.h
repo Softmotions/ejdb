@@ -48,6 +48,7 @@ typedef struct _EJDB_HTTP {
   size_t access_token_len;
   bool blocking;        /**< Block ejdb_open() thread until http service finished. */
   bool read_anon;       /**< Allow anonymous read-only database access */
+  size_t max_body_size; /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
 } EJDB_HTTP;
 
 typedef struct EJDB_IPC {

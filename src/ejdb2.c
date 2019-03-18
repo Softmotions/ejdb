@@ -1420,6 +1420,15 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   rc = _jb_db_meta_load(db);
   RCGO(rc, finish);
 
+  if (db->opts.http.enabled) {
+    // Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K
+    if (!db->opts.http.max_body_size) {
+      db->opts.http.max_body_size = 64 * 1024 * 1024;
+    } else if (db->opts.http.max_body_size < 512 * 1024) {
+      db->opts.http.max_body_size = 512 * 1024;
+    }
+  }
+
 #ifdef JB_HTTP
   if (db->opts.http.enabled && !db->opts.http.blocking) {
     rc = jbr_start(db, &db->opts, &db->jbr);

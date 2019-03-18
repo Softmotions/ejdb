@@ -8,6 +8,9 @@
 #include <fiobj.h>
 #include <fiobj_data.h>
 #include <http/http.h>
+#include <ctype.h>
+
+#define JBR_MAX_KEY_LEN 36
 
 // HTTP REST API:
 //
@@ -61,6 +64,11 @@
 //            \r\n<document id>\t<document JSON body>
 //            ...
 //         ```
+//
+//  WEBSOCKET API:
+//
+//
+//
 
 #define JBR_HTTP_CHUNK_SIZE 4096
 
@@ -564,7 +572,7 @@ finish:
   return (r->collection_len <= EJDB_COLLECTION_NAME_MAX_LEN);
 }
 
-static void _on_http_request(http_s *req) {
+static void _jbr_on_http_request(http_s *req) {
   JBRCTX rctx;
   JBR jbr = req->udata;
   assert(jbr);
@@ -632,7 +640,7 @@ process:
   }
 }
 
-static void _jbr_on_finish(struct http_settings_s *settings) {
+static void _jbr_on_http_finish(struct http_settings_s *settings) {
   iwlog_info2("HTTP endpoint closed");
 }
 
@@ -645,34 +653,179 @@ static void _jbr_on_pre_start(void *op) {
 
 //------------------ WS ---------------------
 
+typedef enum {
+  JBWS_SET = 1,
+  JBWS_ADD,
+  JBWS_DEL,
+  JBWS_PATCH,
+} jbwsop_t;
+
 typedef struct _JBWCTX {
-  JBR jbr;
   ws_s *ws;
-  jbr_method_t method;
-  const char *collection;
-  size_t collection_len;
-  int64_t id;
+  EJDB db;
   bool read_anon;
-  IWXSTR *explain;
 } JBWCTX;
 
-
-static void ws_on_open(ws_s *ws) {
+static void _jbr_ws_on_open(ws_s *ws) {
+  JBWCTX *wctx = websocket_udata_get(ws);
+  if (wctx) {
+    wctx->ws = ws;
+  }
 }
 
-static void ws_on_close(intptr_t uuid, void *udata) {
+static void _jbr_ws_on_close(intptr_t uuid, void *udata) {
+  JBWCTX *wctx = udata;
+  if (wctx) {
+    free(wctx);
+  }
 }
 
-static void ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
+static void _jbr_ws_add_document(JBWCTX *wctx, const char *key, const char *coll, const char *json) {
+  // todo:
+  fprintf(stderr, "\n_jbr_ws_add_document key='%s' coll='%s' json='%s'", key, coll, json);
+}
+
+static void _jbr_ws_set_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id, const char *json) {
+  // todo:
+  fprintf(stderr, "\n_jbr_ws_set_document key='%s' coll='%s' id=%ld json='%s'", key, coll, id, json);
+}
+
+static void _jbr_ws_patch_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id, const char *json) {
+  // todo:
+  fprintf(stderr, "\n_jbr_ws_patch_document key='%s' coll='%s' id=%ld json='%s'", key, coll, id, json);
+}
+
+static void _jbr_ws_del_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id) {
+  // todo:
+  fprintf(stderr, "\n_jbr_ws_del_document key='%s' coll='%s' id=%ld", key, coll, id);
+}
+
+static void _jbr_ws_query(JBWCTX *wctx, const char *key, const char *query) {
+  // todo:
+  fprintf(stderr, "\n_jbr_ws_query key='%s' query='%s'", key, query);
+}
+
+//
+//  key set c1 1 {"foo":"bar"}
+//  key add c1 {"foo":"bar"}
+//  key del c1 22
+//  key patch c1 33 {}
+//  key (@c1/foo/bar) | apply
+//
+static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   if (!is_text) { // Do not serve binary requests
     websocket_close(ws);
     return;
   }
-  // TODO:
+  if (!msg.data || msg.len < 1) {
+    return;
+  }
+  JBWCTX *wctx = websocket_udata_get(ws);
+  assert(wctx);
+  wctx->ws = ws;
+  jbwsop_t wsop = 0;
+
+  char keybuf[JBR_MAX_KEY_LEN + 1];
+  char cnamebuf[EJDB_COLLECTION_NAME_MAX_LEN + 1];
+
+  char *data = msg.data, *coll = 0, *key = 0;
+  int len = msg.len, pos;
+
+  for (pos = 0; pos < len && isspace(data[pos]); ++pos);
+  len -= pos;
+  data += pos;
+  if (len < 1) return;
+
+  // Fetch key
+  for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
+  if (pos >= len || pos > JBR_MAX_KEY_LEN) return;
+  memcpy(keybuf, data, pos);
+  keybuf[pos] = '\0';
+  key = keybuf;
+
+  // Space
+  for (; pos < len && isspace(data[pos]); ++pos);
+  len -= pos;
+  data += pos;
+  if (len < 1) return;
+
+  // Fetch command
+  for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
+  if (pos < len) {
+    if (!strncmp("set", data, pos)) {
+      wsop = JBWS_SET;
+    } else if (!strncmp("add", data, pos)) {
+      wsop = JBWS_ADD;
+    } else if (!strncmp("del", data, pos)) {
+      wsop = JBWS_DEL;
+    } else if (!strncmp("patch", data, pos)) {
+      wsop = JBWS_PATCH;
+    }
+  }
+
+  if (wsop) {
+    for (; pos < len && isspace(data[pos]); ++pos);
+    len -= pos;
+    data += pos;
+    if (len < 1) return;
+
+    coll = data;
+    for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
+    len -= pos;
+    data += pos;
+    if (pos < 1 || len < 1 || pos > EJDB_COLLECTION_NAME_MAX_LEN) {
+      return;
+    }
+    memcpy(cnamebuf, coll, pos);
+    cnamebuf[pos] = '\0';
+    coll = cnamebuf;
+
+    for (pos = 0; pos < len && isspace(data[pos]); ++pos);
+    len -= pos;
+    data += pos;
+    if (len < 1) return;
+
+    if (wsop == JBWS_ADD) {
+      _jbr_ws_add_document(wctx, key, coll, data);
+    } else {
+      // JBWS_SET, JBWS_DEL, JBWS_PATCH
+      char nbuf[JBNUMBUF_SIZE];
+      for (pos = 0; pos < len && pos < JBNUMBUF_SIZE - 1 && isdigit(data[pos]); ++pos) {
+        nbuf[pos] = data[pos];
+      }
+      nbuf[pos] = '\0';
+      for (; pos < len && isspace(data[pos]); ++pos);
+      len -= pos;
+      data += pos;
+
+      int64_t id = iwatoi(nbuf);
+      if (id < 1) return;
+
+      // Process
+      switch (wsop) {
+        case JBWS_SET:
+          data[len] = '\0';
+          _jbr_ws_set_document(wctx, key, coll, id, data);
+          break;
+        case JBWS_DEL:
+          _jbr_ws_del_document(wctx, key, coll, id);
+          break;
+        case JBWS_PATCH:
+          data[len] = '\0';
+          _jbr_ws_patch_document(wctx, key, coll, id, data);
+          break;
+        default:
+          break;
+      }
+    }
+  } else if (len) {
+    // Process data buffer as a query
+    data[len] = '\0';
+    _jbr_ws_query(wctx, key, data);
+  }
 }
 
 static void _jbr_on_http_upgrade(http_s *req, char *requested_protocol, size_t len) {
-  JBWCTX wctx = {0};
   JBR jbr = req->udata;
   assert(jbr);
   const EJDB_HTTP *http = jbr->http;
@@ -683,35 +836,45 @@ static void _jbr_on_http_upgrade(http_s *req, char *requested_protocol, size_t l
     http_send_error(req, 400);
     return;
   }
+  JBWCTX *wctx = calloc(1, sizeof(*wctx));
+  if (!wctx) {
+    http_send_error(req, 500);
+    return;
+  }
+  wctx->db = jbr->db;
+
   if (http->access_token) {
     FIOBJ h = fiobj_hash_get2(req->headers, k_header_x_access_token_hash);
     if (!h) {
       if (http->read_anon) {
-        wctx.read_anon = true;
+        wctx->read_anon = true;
+      } else {
+        free(wctx);
+        http_send_error(req, 401);
+        return;
       }
-      http_send_error(req, 401);
-      return;
     }
     if (!fiobj_type_is(h, FIOBJ_T_STRING)) { // header specified more than once
+      free(wctx);
       http_send_error(req, 400);
       return;
     }
     fio_str_info_s hv = fiobj_obj2cstr(h);
     if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len)) {
+      free(wctx);
       http_send_error(req, 403);
       return;
     }
   }
   if (http_upgrade2ws(req,
-                      .on_message = ws_on_message,
-                      .on_open = ws_on_open,
-                      .on_close = ws_on_close,
-                      .udata = (void *) &wctx
-                     ) < 0) {
+                      .on_message = _jbr_ws_on_message,
+                      .on_open = _jbr_ws_on_open,
+                      .on_close = _jbr_ws_on_close,
+                      .udata = wctx) < 0) {
+    free(wctx);
     JBR_RC_REPORT(500, req, JBR_ERROR_WS_UPGRADE);
   }
 }
-
 
 //---------------- Main ---------------------
 
@@ -726,11 +889,11 @@ static void *_jbr_start_thread(void *op) {
   websocket_optimize4broadcasts(WEBSOCKET_OPTIMIZE_PUBSUB_TEXT, 1);
   if (http_listen(nbuf, bind,
                   .udata = jbr,
-                  .on_request = _on_http_request,
+                  .on_request = _jbr_on_http_request,
                   .on_upgrade = _jbr_on_http_upgrade,
-                  .on_finish = _jbr_on_finish,
-                  .max_body_size = 1024 * 1024 * 64, // 64Mb
-                  .ws_max_msg_size = 1024 * 1024 * 64 // 64Mb
+                  .on_finish = _jbr_on_http_finish,
+                  .max_body_size = http->max_body_size,
+                  .ws_max_msg_size = http->max_body_size
                  ) == -1) {
     jbr->rc = iwrc_set_errno(JBR_ERROR_HTTP_LISTEN, errno);
     iwlog_ecode_error2(jbr->rc, "Failed to start HTTP server");
