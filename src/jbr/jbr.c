@@ -347,6 +347,9 @@ static void _jbr_on_patch(JBRCTX *rctx) {
   iwrc rc = ejdb_patch(db, rctx->collection, data.data, rctx->id);
   iwrc_strip_code(&rc);
   switch (rc) {
+    case IWKV_ERROR_NOTFOUND:
+      _jbr_http_error_send(req, 404);
+      return;
     case JBL_ERROR_PARSE_JSON:
     case JBL_ERROR_PARSE_INVALID_CODEPOINT:
     case JBL_ERROR_PARSE_INVALID_UTF8:
@@ -653,8 +656,18 @@ static void _jbr_on_pre_start(void *op) {
 
 //------------------ WS ---------------------
 
+//
+//  <key> get <collection> <id>
+//  <key> set <collection> <id> <document json>
+//  <key> add <collection> <document json>
+//  <key> del <collection> <id>
+//  <key> patch <collection> <id> <patch json>
+//  <key> <coll> <query>
+//
+
 typedef enum {
   JBWS_SET = 1,
+  JBWS_GET,
   JBWS_ADD,
   JBWS_DEL,
   JBWS_PATCH,
@@ -680,38 +693,211 @@ static void _jbr_ws_on_close(intptr_t uuid, void *udata) {
   }
 }
 
+static void _jbr_ws_send_error(JBWCTX *wctx, const char *key, const char *error, const char *extra) {
+  assert(wctx && key && error);
+  IWXSTR *xstr = iwxstr_new();
+  if (!xstr) {
+    iwlog_ecode_error3(iwrc_set_errno(IW_ERROR_ALLOC, errno));
+    return;
+  }
+  iwrc rc;
+  if (extra) {
+    rc = iwxstr_printf(xstr, "%s ERROR: %s. %s", key, error, extra);
+  } else {
+    rc = iwxstr_printf(xstr, "%s ERROR: %s", key, error);
+  }
+  if (rc) {
+    iwlog_ecode_error3(rc);
+  } else {
+    websocket_write(wctx->ws, (fio_str_info_s) {
+      .data = iwxstr_ptr(xstr), .len = iwxstr_size(xstr)
+    }, 1);
+  }
+}
+
+static void _jbr_ws_send_rc(JBWCTX *wctx, const char *key, iwrc rc, const char *extra) {
+  const char *error = iwlog_ecode_explained(rc);
+  if (error) {
+    _jbr_ws_send_error(wctx, key, error, extra);
+  }
+}
+
 static void _jbr_ws_add_document(JBWCTX *wctx, const char *key, const char *coll, const char *json) {
-  // todo:
-  fprintf(stderr, "\n_jbr_ws_add_document key='%s' coll='%s' json='%s'", key, coll, json);
+  if (wctx->read_anon) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
+    return;
+  }
+  JBL jbl;
+  int64_t id;
+  iwrc rc = jbl_from_json(&jbl, json);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    return;
+  }
+  rc = ejdb_put_new(wctx->db, coll, jbl, &id);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    goto finish;
+  }
+  char nbuf[JBNUMBUF_SIZE + JBR_MAX_KEY_LEN + 1];
+  int len = strlen(key);
+  assert(len <= JBR_MAX_KEY_LEN);
+  char *wp = nbuf;
+  memcpy(wp, key, len);
+  wp += len;
+  *wp = ' ';
+  ++wp;
+  iwitoa(id, wp, sizeof(nbuf) - (wp - nbuf));
+  websocket_write(wctx->ws, (fio_str_info_s) {
+    .data = nbuf, .len = strlen(nbuf)
+  }, 1);
+
+finish:
+  jbl_destroy(&jbl);
 }
 
 static void _jbr_ws_set_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id, const char *json) {
-  // todo:
-  fprintf(stderr, "\n_jbr_ws_set_document key='%s' coll='%s' id=%ld json='%s'", key, coll, id, json);
+  if (wctx->read_anon) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
+    return;
+  }
+  JBL jbl;
+  iwrc rc = jbl_from_json(&jbl, json);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    return;
+  }
+  rc = ejdb_put(wctx->db, coll, jbl, id);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    goto finish;
+  }
+  char nbuf[JBNUMBUF_SIZE + JBR_MAX_KEY_LEN + 1];
+  int len = strlen(key);
+  char *wp = nbuf;
+  memcpy(wp, key, len);
+  wp += len;
+  *wp = ' ';
+  ++wp;
+  iwitoa(id, wp, sizeof(nbuf) - (wp - nbuf));
+  websocket_write(wctx->ws, (fio_str_info_s) {
+    .data = nbuf, .len = strlen(nbuf)
+  }, 1);
+
+finish:
+  jbl_destroy(&jbl);
 }
 
-static void _jbr_ws_patch_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id, const char *json) {
-  // todo:
-  fprintf(stderr, "\n_jbr_ws_patch_document key='%s' coll='%s' id=%ld json='%s'", key, coll, id, json);
+static void _jbr_ws_get_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id) {
+  iwrc rc;
+  JBL jbl;
+
+  char nbuf[JBNUMBUF_SIZE + JBR_MAX_KEY_LEN + 1];
+  int len = strlen(key);
+  assert(len <= JBR_MAX_KEY_LEN);
+  char *wp = nbuf;
+  memcpy(wp, key, len);
+  wp += len;
+  *wp = ' ';
+  ++wp;
+  iwitoa(id, wp, sizeof(nbuf) - (wp - nbuf));
+
+  rc = ejdb_get(wctx->db, coll, id, &jbl);
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    websocket_write(wctx->ws, (fio_str_info_s) {
+      .data = nbuf, .len = strlen(nbuf)
+    }, 1);
+    return;
+  } else if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    return;
+  }
+
+  IWXSTR *xstr = iwxstr_new2(jbl->bn.size * 2);
+  if (!xstr) {
+    rc = iwrc_set_errno(rc, IW_ERROR_ALLOC);
+    iwlog_ecode_error3(rc);
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    return;
+  }
+  rc = iwxstr_printf(xstr, "%s ", nbuf);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    goto finish;
+  }
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    goto finish;
+  }
+
+  websocket_write(wctx->ws, (fio_str_info_s) {
+    .data = iwxstr_ptr(xstr), .len = iwxstr_size(xstr)
+  }, 1);
+
+finish:
+  iwxstr_destroy(xstr);
+  jbl_destroy(&jbl);
 }
 
 static void _jbr_ws_del_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id) {
-  // todo:
-  fprintf(stderr, "\n_jbr_ws_del_document key='%s' coll='%s' id=%ld", key, coll, id);
+  char nbuf[JBR_MAX_KEY_LEN + 2 + 1];
+  int len = strlen(key);
+  assert(len <= JBR_MAX_KEY_LEN);
+  char *wp = nbuf;
+  memcpy(wp, key, len);
+  wp += len;
+  *wp = ' ';
+  ++wp;
+
+  iwrc rc = ejdb_remove(wctx->db, coll, id);
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    *wp = 'n';
+  } else if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    return;
+  } else {
+    *wp = 'y';
+  }
+  websocket_write(wctx->ws, (fio_str_info_s) {
+    .data = nbuf, .len = wp - nbuf + 1
+  }, 1);
 }
 
-static void _jbr_ws_query(JBWCTX *wctx, const char *key, const char *query) {
-  // todo:
-  fprintf(stderr, "\n_jbr_ws_query key='%s' query='%s'", key, query);
+static void _jbr_ws_patch_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id, const char *json) {
+  if (wctx->read_anon) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
+    return;
+  }
+  JBL jbl;
+  char nbuf[JBR_MAX_KEY_LEN + 2 + 1];
+  int len = strlen(key);
+  assert(len <= JBR_MAX_KEY_LEN);
+  char *wp = nbuf;
+  memcpy(wp, key, len);
+  wp += len;
+  *wp = ' ';
+  ++wp;
+
+  iwrc rc = ejdb_patch(wctx->db, coll, json, id);
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    *wp = 'n';
+  } else if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    return;
+  } else {
+    *wp = 'y';
+  }
+  websocket_write(wctx->ws, (fio_str_info_s) {
+    .data = nbuf, .len = wp - nbuf + 1
+  }, 1);
 }
 
-//
-//  key set c1 1 {"foo":"bar"}
-//  key add c1 {"foo":"bar"}
-//  key del c1 22
-//  key patch c1 33 {}
-//  key (@c1/foo/bar) | apply
-//
+static void _jbr_ws_query(JBWCTX *wctx, const char *key, const char *coll, const char *query) {
+  // todo:
+  fprintf(stderr, "\n_jbr_ws_query key='%s' coll='%s' query='%s'", key, coll, query);
+}
+
 static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   if (!is_text) { // Do not serve binary requests
     websocket_close(ws);
@@ -731,31 +917,49 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   char *data = msg.data, *coll = 0, *key = 0;
   int len = msg.len, pos;
 
+  // Trim right
+  for (pos = len; pos > 0 && isspace(data[pos - 1]); --pos);
+  len = pos;
+  // Trim left
   for (pos = 0; pos < len && isspace(data[pos]); ++pos);
   len -= pos;
   data += pos;
-  if (len < 1) return;
+  if (len < 1) {
+    return;
+  }
 
-  // Fetch key
+  // Fetch key, after we can do good errors reporting
   for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
-  if (pos >= len || pos > JBR_MAX_KEY_LEN) return;
+  if (pos > JBR_MAX_KEY_LEN) {
+    iwlog_warn("The key length: %d exceeded limit: %d", pos, JBR_MAX_KEY_LEN);
+    return;
+  }
   memcpy(keybuf, data, pos);
   keybuf[pos] = '\0';
   key = keybuf;
+  if (pos >= len) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, "Premature end of message");
+    return;
+  }
 
   // Space
   for (; pos < len && isspace(data[pos]); ++pos);
   len -= pos;
   data += pos;
-  if (len < 1) return;
+  if (len < 1) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, "Premature end of message");
+    return;
+  }
 
   // Fetch command
   for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
   if (pos < len) {
-    if (!strncmp("set", data, pos)) {
-      wsop = JBWS_SET;
+    if (!strncmp("get", data, pos)) {
+      wsop = JBWS_GET;
     } else if (!strncmp("add", data, pos)) {
       wsop = JBWS_ADD;
+    } else if (!strncmp("set", data, pos)) {
+      wsop = JBWS_SET;
     } else if (!strncmp("del", data, pos)) {
       wsop = JBWS_DEL;
     } else if (!strncmp("patch", data, pos)) {
@@ -767,15 +971,25 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
     for (; pos < len && isspace(data[pos]); ++pos);
     len -= pos;
     data += pos;
-    if (len < 1) return;
+    if (len < 1) {
+      _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, "Premature end of message");
+      return;
+    }
 
     coll = data;
     for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
     len -= pos;
     data += pos;
-    if (pos < 1 || len < 1 || pos > EJDB_COLLECTION_NAME_MAX_LEN) {
+    if (pos < 1 || len < 1) {
+      _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, "Premature end of message");
+      return;
+    } else if (pos > EJDB_COLLECTION_NAME_MAX_LEN) {
+      _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE,
+                      "Collection name exceeds maximum length allowed: "
+                      "EJDB_COLLECTION_NAME_MAX_LEN");
       return;
     }
+
     memcpy(cnamebuf, coll, pos);
     cnamebuf[pos] = '\0';
     coll = cnamebuf;
@@ -783,9 +997,13 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
     for (pos = 0; pos < len && isspace(data[pos]); ++pos);
     len -= pos;
     data += pos;
-    if (len < 1) return;
+    if (len < 1) {
+      _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, "Premature end of message");
+      return;
+    }
 
     if (wsop == JBWS_ADD) {
+      data[len] = '\0';
       _jbr_ws_add_document(wctx, key, coll, data);
     } else {
       // JBWS_SET, JBWS_DEL, JBWS_PATCH
@@ -799,10 +1017,15 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       data += pos;
 
       int64_t id = iwatoi(nbuf);
-      if (id < 1) return;
-
+      if (id < 1) {
+        _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, "Invalid document id specified");
+        return;
+      }
       // Process
       switch (wsop) {
+        case JBWS_GET:
+          _jbr_ws_get_document(wctx, key, coll, id);
+          break;
         case JBWS_SET:
           data[len] = '\0';
           _jbr_ws_set_document(wctx, key, coll, id, data);
@@ -815,13 +1038,31 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
           _jbr_ws_patch_document(wctx, key, coll, id, data);
           break;
         default:
-          break;
+          _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, 0);
+          return;
       }
     }
-  } else if (len) {
+  } else {
     // Process data buffer as a query
+    coll = data;
+    for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
+    if (pos >= len) {
+      _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, "Premature end of message");
+      return;
+    } else if (pos > EJDB_COLLECTION_NAME_MAX_LEN) {
+      _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE,
+                      "Collection name exceeds maximum length allowed: "
+                      "EJDB_COLLECTION_NAME_MAX_LEN");
+      return;
+    }
+    memcpy(cnamebuf, coll, pos);
+    cnamebuf[pos] = '\0';
+    coll = cnamebuf;
+    for (; pos < len && isspace(data[pos]); ++pos);
+    len -= pos;
+    data += pos;
     data[len] = '\0';
-    _jbr_ws_query(wctx, key, data);
+    _jbr_ws_query(wctx, key, coll, data);
   }
 }
 
@@ -987,6 +1228,10 @@ static const char *_jbr_ecodefn(locale_t locale, uint32_t ecode) {
       return "Error sending response (JBR_ERROR_SEND_RESPONSE)";
     case JBR_ERROR_WS_UPGRADE:
       return "Failed upgrading to websocket connection (JBR_ERROR_WS_UPGRADE)";
+    case JBR_ERROR_WS_INVALID_MESSAGE:
+      return "Invalid message recieved (JBR_ERROR_WS_INVALID_MESSAGE)";
+    case JBR_ERROR_WS_ACCESS_DENIED:
+      return "Access denied (JBR_ERROR_WS_ACCESS_DENIED)";
   }
   return 0;
 }

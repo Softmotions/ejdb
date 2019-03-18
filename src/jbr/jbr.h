@@ -11,6 +11,8 @@ typedef enum {
   JBR_ERROR_HTTP_LISTEN,        /**< Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN) */
   JBR_ERROR_SEND_RESPONSE,      /**< Error sending response (JBR_ERROR_SEND_RESPONSE) */
   JBR_ERROR_WS_UPGRADE,         /**< Failed upgrading to websocket connection (JBR_ERROR_WS_UPGRADE) */
+  JBR_ERROR_WS_INVALID_MESSAGE, /**< Invalid message recieved (JBR_ERROR_WS_INVALID_MESSAGE) */
+  JBR_ERROR_WS_ACCESS_DENIED,   /**< Access denied (JBR_ERROR_WS_ACCESS_DENIED) */
   _JBR_ERROR_END,
 } jbr_ecode;
 
