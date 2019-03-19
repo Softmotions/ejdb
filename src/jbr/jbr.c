@@ -338,7 +338,6 @@ static void _jbr_on_patch(JBRCTX *rctx) {
     _jbr_http_error_send(rctx->req, 403);
     return;
   }
-  JBL jbl;
   EJDB db = rctx->jbr->db;
   http_s *req = rctx->req;
   fio_str_info_s data = fiobj_data_read(req->body, 0);
@@ -793,7 +792,7 @@ finish:
 static void _jbr_ws_get_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id) {
   JBL jbl;
   char pbuf[_WS_KEYPREFIX_BUFSZ];
-  int len = _jbr_fill_prefix_buf(key, id, pbuf);
+  _jbr_fill_prefix_buf(key, id, pbuf);
   iwrc rc = ejdb_get(wctx->db, coll, id, &jbl);
   if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
@@ -843,7 +842,6 @@ static void _jbr_ws_patch_document(JBWCTX *wctx, const char *key, const char *co
     _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
     return;
   }
-  JBL jbl;
   char pbuf[_WS_KEYPREFIX_BUFSZ];
   int len = _jbr_fill_prefix_buf(key, id, pbuf);
   iwrc rc = ejdb_patch(wctx->db, coll, json, id);
