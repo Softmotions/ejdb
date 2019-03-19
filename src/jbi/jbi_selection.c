@@ -124,7 +124,7 @@ static bool _jbi_is_solid_node_expression(const JQP_NODE *n) {
 static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
   JQP_EXPR *expr = mctx->nexpr; // Node expression
   if (!expr) return 0;
-  JQP_AUX *aux = ctx->ux->q->qp->aux;
+  JQP_AUX *aux = ctx->ux->q->aux;
 
   for (; expr; expr = expr->next) {
     iwrc rc = 0;
@@ -284,7 +284,7 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
           break;
       }
     }
-    struct JQP_AUX *aux = ctx->ux->q->qp->aux;
+    struct JQP_AUX *aux = ctx->ux->q->aux;
     struct _JBL_PTR *obp = aux->orderby_num ? aux->orderby_ptrs[0] : 0;
 
     for (struct _JBIDX *idx = ctx->jbc->idx; idx && *snp < JB_SOLID_EXPRNUM; idx = idx->next) {
@@ -366,7 +366,7 @@ static int _jbi_idx_cmp(const void *o1, const void *o2) {
 iwrc jbi_selection(JBEXEC *ctx) {
   iwrc rc = 0;
   size_t snp = 0;
-  struct JQP_AUX *aux = ctx->ux->q->qp->aux;
+  struct JQP_AUX *aux = ctx->ux->q->aux;
   struct _JBMIDX fctx[JB_SOLID_EXPRNUM] = {0};
 
   ctx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;

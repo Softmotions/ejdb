@@ -926,7 +926,7 @@ iwrc jqp_parse(JQP_AUX *aux) {
       aux->rc = JQL_ERROR_QUERY_PARSE;
     }
     yyerror(&yy);
-    if (iwxstr_size(aux->xerr)) {
+    if (iwxstr_size(aux->xerr) && !(aux->mode & JQL_SILENT_ON_PARSE_ERROR)) {
       const char *prefix = "Syntax error: ";
       iwxstr_unshift(aux->xerr, prefix, strlen(prefix));
       iwlog_error("%s\n", iwxstr_ptr(aux->xerr));

@@ -26,7 +26,16 @@ typedef enum {
   JQL_ERROR_NO_COLLECTION,        /**< No collection specified in query (JQL_ERROR_NO_COLLECTION) */
   _JQL_ERROR_END,
   _JQL_ERROR_UNMATCHED
-} jq_ecode;
+} jql_ecode_t;
+
+typedef uint8_t jql_create_mode_t;
+
+/// Do not destroy query object in `jql_create()` on query parsing error,
+/// convenient for parsing error reportin by `jql_error()`
+#define JQL_KEEP_QUERY_ON_PARSE_ERROR     ((jql_create_mode_t) 0x01U)
+
+/// Do not print query parsing errors to `stderr`
+#define JQL_SILENT_ON_PARSE_ERROR         ((jql_create_mode_t) 0x02U)
 
 /**
  * @brief Create query object from specified text query.
@@ -34,6 +43,8 @@ typedef enum {
  * @param query Query text
  */
 IW_EXPORT WUR iwrc jql_create(JQL *qptr, const char *coll, const char *query);
+
+IW_EXPORT WUR iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode_t mode);
 
 IW_EXPORT const char* jql_collection(JQL q);
 

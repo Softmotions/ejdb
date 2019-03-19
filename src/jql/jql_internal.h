@@ -12,6 +12,7 @@ struct _JQL {
   bool dirty;
   bool matched;
   JQP_QUERY *qp;
+  JQP_AUX *aux;
   const char *coll;
   void *opaque;
 };

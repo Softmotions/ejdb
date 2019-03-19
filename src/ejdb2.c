@@ -745,7 +745,7 @@ iwrc ejdb_exec(EJDB_EXEC *ux) {
   iwrc rc = 0;
   if (!ux->visitor) {
     ux->visitor = _jb_noop_visitor;
-    ux->q->qp->aux->projection = 0; // Actually we don't need projection if exists
+    ux->q->aux->projection = 0; // Actually we don't need projection if exists
   }
   if (ux->log) {
     // set terminating NULL to current pos of log

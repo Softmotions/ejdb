@@ -23,7 +23,7 @@ typedef enum {
   EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE,    /**< Index exists but mismatched uniqueness constraint */
   EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED,    /**< Unique index constraint violated */
   _EJDB_ERROR_END
-} ejdb_ecode;
+} ejdb_ecode_t;
 
 typedef uint8_t ejdb_idx_mode_t;
 #define EJDB_IDX_UNIQUE     ((ejdb_idx_mode_t) 0x01U)

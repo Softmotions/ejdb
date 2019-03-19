@@ -14,7 +14,7 @@ typedef enum {
   JBR_ERROR_WS_INVALID_MESSAGE, /**< Invalid message recieved (JBR_ERROR_WS_INVALID_MESSAGE) */
   JBR_ERROR_WS_ACCESS_DENIED,   /**< Access denied (JBR_ERROR_WS_ACCESS_DENIED) */
   _JBR_ERROR_END,
-} jbr_ecode;
+} jbr_ecode_t;
 
 struct _JBR;
 typedef struct _JBR *JBR;

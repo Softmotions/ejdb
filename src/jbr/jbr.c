@@ -254,7 +254,7 @@ static void _jbr_on_query(JBRCTX *rctx) {
   };
 
   // Collection name must be encoded in query
-  iwrc rc = jql_create(&ux.q, 0, data.data);
+  iwrc rc = jql_create2(&ux.q, 0, data.data, JQL_SILENT_ON_PARSE_ERROR | JQL_KEEP_QUERY_ON_PARSE_ERROR);
   RCGO(rc, finish);
   if (rctx->read_anon && jql_has_apply(ux.q)) {
     // We have not permitted data modification request
@@ -860,6 +860,7 @@ typedef struct JBWQCTX {
   JBWCTX *wctx;
   IWXSTR *wbuf;
   const char *key;
+  int64_t cnt;
 } JBWQCTX;
 
 static iwrc _jbr_ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
@@ -874,6 +875,7 @@ static iwrc _jbr_ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   } else {
     iwxstr_clear(wbuf);
   }
+  ++qctx->cnt;
   intptr_t uuid = websocket_uuid(qctx->wctx->ws);
   if (ux->log) {
     rc = iwxstr_printf(wbuf, "%s\texplain\t%s", qctx->key, iwxstr_ptr(ux->log));
@@ -883,7 +885,7 @@ static iwrc _jbr_ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
     if (fio_is_closed(uuid) || websocket_write(qctx->wctx->ws, (fio_str_info_s) {
     .data = iwxstr_ptr(wbuf), .len = iwxstr_size(wbuf)
     }, 1) < 0) {
-      iwlog_warn2("Client websocket channel closed");
+      iwlog_warn2("Websocket channel closed");
       *step = 0;
       return 0;
     }
@@ -903,7 +905,7 @@ static iwrc _jbr_ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   if (fio_is_closed(uuid) || websocket_write(qctx->wctx->ws, (fio_str_info_s) {
   .data = iwxstr_ptr(wbuf), .len = iwxstr_size(wbuf)
   }, 1) < 0) {
-    iwlog_warn2("Client websocket channel closed");
+    iwlog_warn2("Websocket channel closed");
     *step = 0;
   }
   return 0;
@@ -919,7 +921,8 @@ static void _jbr_ws_query(JBWCTX *wctx, const char *key, const char *coll, const
     .opaque = &qctx,
     .visitor = _jbr_ws_query_visitor,
   };
-  iwrc rc = jql_create(&ux.q, coll, query);
+
+  iwrc rc = jql_create2(&ux.q, coll, query, JQL_SILENT_ON_PARSE_ERROR | JQL_KEEP_QUERY_ON_PARSE_ERROR);
   RCGO(rc, finish);
 
   if (explain) {
@@ -932,13 +935,23 @@ static void _jbr_ws_query(JBWCTX *wctx, const char *key, const char *coll, const
 
   rc = ejdb_exec(&ux);
 
+  if (!rc && qctx.cnt == 0) {
+    intptr_t uuid = websocket_uuid(wctx->ws);
+    // Empty response should be reported
+    if (fio_is_closed(uuid) || websocket_write(wctx->ws, (fio_str_info_s) {
+    .data = (char *) key, .len = strlen(key)
+    }, 1) < 0) {
+      iwlog_warn2("Websocket channel closed");
+    }
+  }
+
 finish:
   if (rc) {
     iwrc rcs = rc;
     iwrc_strip_code(&rcs);
     switch (rcs) {
       case JQL_ERROR_QUERY_PARSE:
-        _jbr_ws_send_error(wctx, key, jql_error(ux.q), "(JQL_ERROR_QUERY_PARSE)");
+        _jbr_ws_send_error(wctx, key, jql_error(ux.q), 0);
         break;
       default:
         _jbr_ws_send_rc(wctx, key, rc, 0);

@@ -221,6 +221,7 @@ typedef struct JQP_AUX {
   IWPOOL *pool;
   struct JQP_QUERY *query;
   JQP_STACK *stack;
+  jql_create_mode_t mode;
   //
   struct JQP_EXPR_NODE *expr;
   struct JQP_PROJECTION *projection;

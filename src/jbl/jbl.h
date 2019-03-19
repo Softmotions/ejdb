@@ -30,7 +30,7 @@ typedef enum {
   JBL_ERROR_PATCH_INVALID_ARRAY_INDEX,  /**< Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX) */
   JBL_ERROR_PATCH_TEST_FAILED,          /**< JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED) */
   _JBL_ERROR_END
-} jbl_ecode;
+} jbl_ecode_t;
 
 
 typedef uint8_t jbl_print_flags_t;

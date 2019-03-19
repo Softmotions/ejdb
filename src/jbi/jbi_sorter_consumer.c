@@ -19,7 +19,7 @@ static int _jbi_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   struct _JBL d1, d2;
   struct _JBEXEC *ctx = op;
   struct _JBSSC *ssc = &ctx->ssc;
-  struct JQP_AUX *aux = ctx->ux->q->qp->aux;
+  struct JQP_AUX *aux = ctx->ux->q->aux;
   uint8_t *p1, *p2;
   assert(aux->orderby_num > 0);
 
@@ -56,7 +56,7 @@ finish:
 static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struct _EJDB_DOC *doc) {
   iwrc rc = 0;
   uint64_t id = doc->id;
-  struct JQP_AUX *aux = q->qp->aux;
+  struct JQP_AUX *aux = q->aux;
   IWKV_val key = {
     .data = &id,
     .size = sizeof(id)
@@ -93,7 +93,7 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
   EJDB_EXEC *ux = ctx->ux;
   struct _JBSSC *ssc = &ctx->ssc;
   uint32_t rnum = ssc->refs_num;
-  struct JQP_AUX *aux = ux->q->qp->aux;
+  struct JQP_AUX *aux = ux->q->aux;
 
   if (rnum) {
     if (setjmp(ssc->fatal_jmp)) { // Init error jump

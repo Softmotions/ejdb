@@ -172,7 +172,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
       RCGO(rc, finish);
       if (midx->expr2
           && !midx->expr2->prematched
-          && !jbi_node_expr_matched(ctx->ux->q->qp->aux, midx->idx, cur, midx->expr2, &rc)) {
+          && !jbi_node_expr_matched(ctx->ux->q->aux, midx->idx, cur, midx->expr2, &rc)) {
         break;
       }
       RCGO(rc, finish);

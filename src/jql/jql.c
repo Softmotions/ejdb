@@ -40,7 +40,7 @@ static void _jql_jqval_destroy(JQVAL *qv) {
 }
 
 static JQVAL *_jql_find_placeholder(JQL q, const char *name) {
-  JQP_AUX *aux = q->qp->aux;
+  JQP_AUX *aux = q->aux;
   for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
     if (!strcmp(pv->value, name)) {
       return pv->opaque;
@@ -50,7 +50,7 @@ static JQVAL *_jql_find_placeholder(JQL q, const char *name) {
 }
 
 static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVAL *val) {
-  JQP_AUX *aux = q->qp->aux;
+  JQP_AUX *aux = q->aux;
   if (!placeholder) { // Index
     char nbuf[JBNUMBUF_SIZE];
     iwitoa(index, nbuf, JBNUMBUF_SIZE);
@@ -128,7 +128,7 @@ iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char *expr)
 }
 
 iwrc jql_set_null(JQL q, const char *placeholder, int index) {
-  JQP_AUX *aux = q->qp->aux;
+  JQP_AUX *aux = q->aux;
   JQVAL *qv = iwpool_alloc(sizeof(JQVAL), aux->pool);
   if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   qv->type = JQVAL_NULL;
@@ -198,7 +198,7 @@ static iwrc _jql_init_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
   return 0;
 }
 
-iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
+iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode_t mode) {
   if (!qptr || !query) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -209,19 +209,20 @@ iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
   iwrc rc = jqp_aux_create(&aux, query);
   RCRET(rc);
 
-  q = iwpool_alloc(sizeof(*q), aux->pool);
+  q = iwpool_calloc(sizeof(*q), aux->pool);
   if (!q) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
+  aux->mode = mode;
+  q->aux = aux;
+
   rc = jqp_parse(aux);
   RCGO(rc, finish);
 
   q->coll = coll;
   q->qp = aux->query;
-  q->dirty = false;
-  q->matched = false;
-  q->opaque = 0;
+
   if (!q->coll) {
     // Try to set collection from first query anchor
     q->coll = aux->first_anchor;
@@ -235,11 +236,20 @@ iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
 
 finish:
   if (rc) {
-    jqp_aux_destroy(&aux);
+    if ((rc == JQL_ERROR_QUERY_PARSE)
+        && (mode & JQL_KEEP_QUERY_ON_PARSE_ERROR)) {
+      *qptr = q;
+    } else {
+      jqp_aux_destroy(&aux);
+    }
   } else {
     *qptr = q;
   }
   return rc;
+}
+
+iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
+  return jql_create2(qptr, coll, query, 0);
 }
 
 const char *jql_collection(JQL q) {
@@ -249,7 +259,7 @@ const char *jql_collection(JQL q) {
 void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders) {
   q->matched = false;
   q->dirty = false;
-  JQP_AUX *aux = q->qp->aux;
+  JQP_AUX *aux = q->aux;
   _jql_reset_expression_node(aux->expr, aux, reset_match_cache);
   if (reset_placeholders) {
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
@@ -261,7 +271,7 @@ void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders) {
 void jql_destroy(JQL *qptr) {
   if (qptr) {
     JQL q = *qptr;
-    JQP_AUX *aux = q->qp->aux;
+    JQP_AUX *aux = q->aux;
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
       if (pv->opaque) _jql_jqval_destroy(pv->opaque);
     }
@@ -1102,7 +1112,7 @@ static jbl_visitor_cmd_t _jql_match_visitor(int lvl, binn *bv, const char *key, 
     .key = nkey,
     .vctx = vctx,
     .q = q,
-    .aux = q->qp->aux
+    .aux = q->aux
   };
   q->matched = _jql_match_expression_node(mctx.aux->expr, &mctx, rcp);
   if (*rcp || q->matched) {
@@ -1124,7 +1134,7 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
   };
   *out = false;
   jql_reset(q, false, false);
-  JQP_EXPR_NODE *en = q->qp->aux->expr;
+  JQP_EXPR_NODE *en = q->aux->expr;
   if (en->chain && !en->chain->next && !en->next) {
     en = en->chain;
     if (en->type == JQP_FILTER_TYPE) {
@@ -1149,33 +1159,33 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
 }
 
 const char *jql_error(JQL q) {
-  if (q) {
-    return iwxstr_ptr(q->qp->aux->xerr);
+  if (q && q->aux) {
+    return iwxstr_ptr(q->aux->xerr);
   } else {
     return "";
   }
 }
 
 const char *jql_first_anchor(JQL q) {
-  return q->qp->aux->first_anchor;
+  return q->aux->first_anchor;
 }
 
 bool jql_has_apply(JQL q) {
-  return q->qp->aux->apply;
+  return q->aux->apply;
 }
 
 bool jql_has_projection(JQL q) {
-  return q->qp->aux->projection;
+  return q->aux->projection;
 }
 
 bool jql_has_orderby(JQL q) {
-  return q->qp->aux->orderby_num > 0;
+  return q->aux->orderby_num > 0;
 }
 
 iwrc jql_get_skip(JQL q, int64_t *out) {
   iwrc rc = 0;
   *out = 0;
-  struct JQP_AUX *aux = q->qp->aux;
+  struct JQP_AUX *aux = q->aux;
   JQPUNIT *skip = aux->skip;
   if (!skip) return 0;
   JQVAL *val = _jql_unit_to_jqval(aux, skip, &rc);
@@ -1190,7 +1200,7 @@ iwrc jql_get_skip(JQL q, int64_t *out) {
 iwrc jql_get_limit(JQL q, int64_t *out) {
   iwrc rc = 0;
   *out = 0;
-  struct JQP_AUX *aux = q->qp->aux;
+  struct JQP_AUX *aux = q->aux;
   JQPUNIT *limit = aux->limit;
   if (!limit) return 0;
   JQVAL *val = _jql_unit_to_jqval(aux, limit, &rc);
@@ -1295,7 +1305,7 @@ static jbn_visitor_cmd_t _jql_proj_keep_visitor(int lvl, JBL_NODE n, const char 
 
 static iwrc _jql_project(JBL_NODE root, JQL q) {
 
-  JQP_PROJECTION *proj = q->qp->aux->projection;
+  JQP_PROJECTION *proj = q->aux->projection;
   // Check trivial cases
   for (JQP_PROJECTION *p = proj; p; p = p->next) {
     bool all = (p->value->flavour & JQP_STR_PROJALIAS);
@@ -1343,7 +1353,7 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
 
 iwrc jql_apply(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool) {
   *out = 0;
-  JQP_AUX *aux = q->qp->aux;
+  JQP_AUX *aux = q->aux;
   if (!aux->apply && !aux->projection) {
     return 0;
   }
