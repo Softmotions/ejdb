@@ -65,12 +65,15 @@
 //
 //  WEBSOCKET API:
 //
-//  <key> get   <collection> <id>
-//  <key> set   <collection> <id> <document json>
-//  <key> add   <collection> <document json>
-//  <key> del   <collection> <id>
-//  <key> patch <collection> <id> <patch json>
-//  <key> query <collection> <query>
+//  <key> get     <collection> <id>
+//  <key> set     <collection> <id> <document json>
+//  <key> add     <collection> <document json>
+//  <key> del     <collection> <id>
+//  <key> patch   <collection> <id> <patch json>
+//  <key> meta    [collection]
+//  <key> index   <collection> <mode> <path>
+//  <key> noindex <collection> <mode> <path>
+//  <key> query   <collection> <query>
 //  <key> explain <collection> <query>
 //  <key> <query>
 //
