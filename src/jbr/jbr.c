@@ -10,8 +10,6 @@
 #include <http/http.h>
 #include <ctype.h>
 
-#define JBR_MAX_KEY_LEN 36
-
 // HTTP REST API:
 //
 // Access to HTTP endpoint can be optionally protected by a token specified in `EJDB_HTTP` options.
@@ -70,7 +68,11 @@
 //
 //
 
+#define JBR_MAX_KEY_LEN 36
 #define JBR_HTTP_CHUNK_SIZE 4096
+
+#define _WS_KEYPREFIX_BUFSZ (JBNUMBUF_SIZE + JBR_MAX_KEY_LEN + 2)
+
 
 static uint64_t k_header_x_access_token_hash;
 static uint64_t k_header_x_hints_hash;
@@ -657,12 +659,13 @@ static void _jbr_on_pre_start(void *op) {
 //------------------ WS ---------------------
 
 //
-//  <key> get <collection> <id>
-//  <key> set <collection> <id> <document json>
-//  <key> add <collection> <document json>
-//  <key> del <collection> <id>
+//  <key> get   <collection> <id>
+//  <key> set   <collection> <id> <document json>
+//  <key> add   <collection> <document json>
+//  <key> del   <collection> <id>
 //  <key> patch <collection> <id> <patch json>
-//  <key> <coll> <query>
+//  <key> query <collection> <query>
+//  <key> <query>
 //
 
 typedef enum {
@@ -671,6 +674,7 @@ typedef enum {
   JBWS_ADD,
   JBWS_DEL,
   JBWS_PATCH,
+  JBWS_QUERY,
 } jbwsop_t;
 
 typedef struct _JBWCTX {
@@ -756,6 +760,16 @@ finish:
   jbl_destroy(&jbl);
 }
 
+IW_INLINE int _jbr_fill_prefix_buf(const char *key, int64_t id, char buf[static _WS_KEYPREFIX_BUFSZ]) {
+  int len = strlen(key);
+  char *wp = buf;
+  memcpy(wp, key, len);
+  wp += len;
+  *wp++ = ' ';
+  wp += iwitoa(id, wp, _WS_KEYPREFIX_BUFSZ - (wp - buf));
+  return wp - buf;
+}
+
 static void _jbr_ws_set_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id, const char *json) {
   if (wctx->read_anon) {
     _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
@@ -772,16 +786,10 @@ static void _jbr_ws_set_document(JBWCTX *wctx, const char *key, const char *coll
     _jbr_ws_send_rc(wctx, key, rc, 0);
     goto finish;
   }
-  char nbuf[JBNUMBUF_SIZE + JBR_MAX_KEY_LEN + 1];
-  int len = strlen(key);
-  char *wp = nbuf;
-  memcpy(wp, key, len);
-  wp += len;
-  *wp = ' ';
-  ++wp;
-  iwitoa(id, wp, sizeof(nbuf) - (wp - nbuf));
+  char pbuf[_WS_KEYPREFIX_BUFSZ];
+  int len = _jbr_fill_prefix_buf(key, id, pbuf);
   websocket_write(wctx->ws, (fio_str_info_s) {
-    .data = nbuf, .len = strlen(nbuf)
+    .data = pbuf, .len = len
   }, 1);
 
 finish:
@@ -789,30 +797,14 @@ finish:
 }
 
 static void _jbr_ws_get_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id) {
-  iwrc rc;
   JBL jbl;
-
-  char nbuf[JBNUMBUF_SIZE + JBR_MAX_KEY_LEN + 1];
-  int len = strlen(key);
-  assert(len <= JBR_MAX_KEY_LEN);
-  char *wp = nbuf;
-  memcpy(wp, key, len);
-  wp += len;
-  *wp = ' ';
-  ++wp;
-  iwitoa(id, wp, sizeof(nbuf) - (wp - nbuf));
-
-  rc = ejdb_get(wctx->db, coll, id, &jbl);
-  if (rc == IWKV_ERROR_NOTFOUND) {
-    websocket_write(wctx->ws, (fio_str_info_s) {
-      .data = nbuf, .len = strlen(nbuf)
-    }, 1);
-    return;
-  } else if (rc) {
+  char pbuf[_WS_KEYPREFIX_BUFSZ];
+  int len = _jbr_fill_prefix_buf(key, id, pbuf);
+  iwrc rc = ejdb_get(wctx->db, coll, id, &jbl);
+  if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
     return;
   }
-
   IWXSTR *xstr = iwxstr_new2(jbl->bn.size * 2);
   if (!xstr) {
     rc = iwrc_set_errno(rc, IW_ERROR_ALLOC);
@@ -820,7 +812,7 @@ static void _jbr_ws_get_document(JBWCTX *wctx, const char *key, const char *coll
     _jbr_ws_send_rc(wctx, key, rc, 0);
     return;
   }
-  rc = iwxstr_printf(xstr, "%s ", nbuf);
+  rc = iwxstr_printf(xstr, "%s ", pbuf);
   if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
     goto finish;
@@ -830,7 +822,6 @@ static void _jbr_ws_get_document(JBWCTX *wctx, const char *key, const char *coll
     _jbr_ws_send_rc(wctx, key, rc, 0);
     goto finish;
   }
-
   websocket_write(wctx->ws, (fio_str_info_s) {
     .data = iwxstr_ptr(xstr), .len = iwxstr_size(xstr)
   }, 1);
@@ -841,26 +832,15 @@ finish:
 }
 
 static void _jbr_ws_del_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id) {
-  char nbuf[JBR_MAX_KEY_LEN + 2 + 1];
-  int len = strlen(key);
-  assert(len <= JBR_MAX_KEY_LEN);
-  char *wp = nbuf;
-  memcpy(wp, key, len);
-  wp += len;
-  *wp = ' ';
-  ++wp;
-
+  char pbuf[_WS_KEYPREFIX_BUFSZ];
+  int len = _jbr_fill_prefix_buf(key, id, pbuf);
   iwrc rc = ejdb_remove(wctx->db, coll, id);
-  if (rc == IWKV_ERROR_NOTFOUND) {
-    *wp = 'n';
-  } else if (rc) {
+  if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
     return;
-  } else {
-    *wp = 'y';
   }
   websocket_write(wctx->ws, (fio_str_info_s) {
-    .data = nbuf, .len = wp - nbuf + 1
+    .data = pbuf, .len = len
   }, 1);
 }
 
@@ -870,26 +850,15 @@ static void _jbr_ws_patch_document(JBWCTX *wctx, const char *key, const char *co
     return;
   }
   JBL jbl;
-  char nbuf[JBR_MAX_KEY_LEN + 2 + 1];
-  int len = strlen(key);
-  assert(len <= JBR_MAX_KEY_LEN);
-  char *wp = nbuf;
-  memcpy(wp, key, len);
-  wp += len;
-  *wp = ' ';
-  ++wp;
-
+  char pbuf[_WS_KEYPREFIX_BUFSZ];
+  int len = _jbr_fill_prefix_buf(key, id, pbuf);
   iwrc rc = ejdb_patch(wctx->db, coll, json, id);
-  if (rc == IWKV_ERROR_NOTFOUND) {
-    *wp = 'n';
-  } else if (rc) {
+  if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
     return;
-  } else {
-    *wp = 'y';
   }
   websocket_write(wctx->ws, (fio_str_info_s) {
-    .data = nbuf, .len = wp - nbuf + 1
+    .data = pbuf, .len = len
   }, 1);
 }
 
@@ -960,6 +929,8 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       wsop = JBWS_ADD;
     } else if (!strncmp("set", data, pos)) {
       wsop = JBWS_SET;
+    } else if (!strncmp("query", data, pos)) {
+      wsop = JBWS_QUERY;
     } else if (!strncmp("del", data, pos)) {
       wsop = JBWS_DEL;
     } else if (!strncmp("patch", data, pos)) {
@@ -1001,10 +972,12 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, "Premature end of message");
       return;
     }
-
     if (wsop == JBWS_ADD) {
       data[len] = '\0';
       _jbr_ws_add_document(wctx, key, coll, data);
+    } else if (wsop == JBWS_QUERY) {
+      data[len] = '\0';
+      _jbr_ws_query(wctx, key, coll, data);
     } else {
       // JBWS_SET, JBWS_DEL, JBWS_PATCH
       char nbuf[JBNUMBUF_SIZE];
