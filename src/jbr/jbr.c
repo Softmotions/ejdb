@@ -706,10 +706,14 @@ static void _jbr_ws_send_error(JBWCTX *wctx, const char *key, const char *error,
   if (rc) {
     iwlog_ecode_error3(rc);
   } else {
-    websocket_write(wctx->ws, (fio_str_info_s) {
-      .data = iwxstr_ptr(xstr), .len = iwxstr_size(xstr)
-    }, 1);
+    intptr_t uuid = websocket_uuid(wctx->ws);
+    if (fio_is_closed(uuid) || websocket_write(wctx->ws, (fio_str_info_s) {
+    .data = iwxstr_ptr(xstr), .len = iwxstr_size(xstr)
+    }, 1) < 0) {
+      iwlog_warn2("Websocket channel closed");
+    }
   }
+  iwxstr_destroy(xstr);
 }
 
 static void _jbr_ws_send_rc(JBWCTX *wctx, const char *key, iwrc rc, const char *extra) {

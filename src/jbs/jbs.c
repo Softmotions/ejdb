@@ -14,7 +14,6 @@ int main(int argc, char const *argv[]) {
                 FIO_CLI_STRING("--bind -b Address server listen. Default: 0.0.0.0"),
                 FIO_CLI_STRING("--access -a Server access token matched to X-Access-Token HTTP header value"),
                 FIO_CLI_BOOL("--trunc -t Truncate existing database file on open"),
-                FIO_CLI_BOOL("--daemon -d Run as daemon"),
                 FIO_CLI_BOOL("--wal -w Use write ahead logging (WAL)")
                );
   fio_cli_set_default("--file", "db.jb");
