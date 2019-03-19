@@ -927,6 +927,11 @@ static void _jbr_ws_query(JBWCTX *wctx, const char *key, const char *coll, const
   iwrc rc = jql_create2(&ux.q, coll, query, JQL_SILENT_ON_PARSE_ERROR | JQL_KEEP_QUERY_ON_PARSE_ERROR);
   RCGO(rc, finish);
 
+  if (wctx->read_anon && jql_has_apply(ux.q)) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
+    goto finish;
+  }
+
   if (explain) {
     ux.log = iwxstr_new();
     if (!ux.log) {
