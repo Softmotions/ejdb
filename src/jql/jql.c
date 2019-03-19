@@ -1149,7 +1149,11 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
 }
 
 const char *jql_error(JQL q) {
-  return iwxstr_ptr(q->qp->aux->xerr);
+  if (q) {
+    return iwxstr_ptr(q->qp->aux->xerr);
+  } else {
+    return "";
+  }
 }
 
 const char *jql_first_anchor(JQL q) {
