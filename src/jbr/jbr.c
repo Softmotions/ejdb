@@ -811,7 +811,7 @@ static void _jbr_ws_add_document(JBWCTX *wctx, const char *key, const char *coll
     goto finish;
   }
   char pbuf[_WS_KEYPREFIX_BUFSZ];
-  int len = _jbr_fill_prefix_buf(key, id, pbuf);
+  _jbr_fill_prefix_buf(key, id, pbuf);
   _jbr_ws_write_text(wctx->ws, pbuf, strlen(pbuf));
 
 finish:
