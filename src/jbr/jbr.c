@@ -1205,7 +1205,6 @@ static void *_jbr_start_thread(void *op) {
                   .ws_max_msg_size = http->max_body_size
                  ) == -1) {
     jbr->rc = iwrc_set_errno(JBR_ERROR_HTTP_LISTEN, errno);
-    iwlog_ecode_error2(jbr->rc, "Failed to start HTTP server");
   }
   if (jbr->rc) {
     if (!jbr->http->blocking) {
