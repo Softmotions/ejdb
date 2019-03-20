@@ -10,9 +10,9 @@ int main(int argc, char const *argv[]) {
   fio_cli_start(argc, argv, 0, 0,
                 "EJDB " EJDB2_VERSION " standalone REST/Websockets server. http://ejdb.org\n",
                 FIO_CLI_STRING("--file -f Database file path. Default: db.jb"),
-                FIO_CLI_INT("--port -p HTTP port number to listen to. Default: 9191"),
-                FIO_CLI_STRING("--bind -b Address server listen. Default: 0.0.0.0"),
-                FIO_CLI_STRING("--access -a Server access token matched to X-Access-Token HTTP header value"),
+                FIO_CLI_INT("--port -p HTTP port number listen to. Default: 9191"),
+                FIO_CLI_STRING("--bind -b Address server listen. Default: localhost"),
+                FIO_CLI_STRING("--access -a Server access token matched to 'X-Access-Token' HTTP header value"),
                 FIO_CLI_BOOL("--trunc -t Truncate existing database file on open"),
                 FIO_CLI_BOOL("--wal -w Use write ahead logging (WAL)")
                );

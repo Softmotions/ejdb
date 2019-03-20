@@ -70,10 +70,10 @@
 //  <key> add     <collection> <document json>
 //  <key> del     <collection> <id>
 //  <key> patch   <collection> <id> <patch json>
-//  <key> meta    [collection]
-//  <key> index   <collection> <mode> <path>
-//  <key> noindex <collection> <mode> <path>
-//  <key> query   <collection> <query>
+//  <key> info    [collection]
+//  <key> idx     <collection> <mode> <path>
+//  <key> nidx    <collection> <mode> <path>
+//  <key> qry     <collection> <query>
 //  <key> explain <collection> <query>
 //  <key> <query>
 //
@@ -1041,13 +1041,13 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       wsop = JBWS_ADD;
     } else if (!strncmp("set", data, pos)) {
       wsop = JBWS_SET;
-    } else if (!strncmp("query", data, pos)) {
+    } else if (!strncmp("qry", data, pos)) {
       wsop = JBWS_QUERY;
     } else if (!strncmp("del", data, pos)) {
       wsop = JBWS_DEL;
     } else if (!strncmp("patch", data, pos)) {
       wsop = JBWS_PATCH;
-    } else if (!strncmp("explain", data, pos)) {
+    } else if (!strncmp("expl", data, pos)) {
       wsop = JBWS_EXPLAIN;
     }
   }
@@ -1192,10 +1192,10 @@ static void *_jbr_start_thread(void *op) {
   JBR jbr = op;
   char nbuf[JBNUMBUF_SIZE];
   const EJDB_HTTP *http = jbr->http;
-  const char *bind = http->bind ? http->bind : "0.0.0.0";
+  const char *bind = http->bind ? http->bind : "localhost";
   iwitoa(http->port, nbuf, sizeof(nbuf));
 
-  iwlog_info("HTTP endpoint at %s:%s", bind, nbuf);
+  iwlog_info("HTTP/WS endpoint at %s:%s", bind, nbuf);
   websocket_optimize4broadcasts(WEBSOCKET_OPTIMIZE_PUBSUB_TEXT, 1);
   if (http_listen(nbuf, bind,
                   .udata = jbr,
