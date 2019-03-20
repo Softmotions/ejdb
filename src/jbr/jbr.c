@@ -1192,8 +1192,14 @@ static void *_jbr_start_thread(void *op) {
   char nbuf[JBNUMBUF_SIZE];
   const EJDB_HTTP *http = jbr->http;
   const char *bind = http->bind ? http->bind : "localhost";
+  if (http->port < 1) {
+    jbr->rc = JBR_ERROR_PORT_INVALID;
+    if (!jbr->http->blocking) {
+      pthread_barrier_wait(&jbr->start_barrier);
+    }
+    return 0;
+  }
   iwitoa(http->port, nbuf, sizeof(nbuf));
-
   iwlog_info("HTTP/WS endpoint at %s:%s", bind, nbuf);
   websocket_optimize4broadcasts(WEBSOCKET_OPTIMIZE_PUBSUB_TEXT, 1);
   if (http_listen(nbuf, bind,
@@ -1202,8 +1208,7 @@ static void *_jbr_start_thread(void *op) {
                   .on_upgrade = _jbr_on_http_upgrade,
                   .on_finish = _jbr_on_http_finish,
                   .max_body_size = http->max_body_size,
-                  .ws_max_msg_size = http->max_body_size
-                 ) == -1) {
+                  .ws_max_msg_size = http->max_body_size) == -1) {
     jbr->rc = iwrc_set_errno(JBR_ERROR_HTTP_LISTEN, errno);
   }
   if (jbr->rc) {
@@ -1291,6 +1296,8 @@ static const char *_jbr_ecodefn(locale_t locale, uint32_t ecode) {
   switch (ecode) {
     case JBR_ERROR_HTTP_LISTEN:
       return "Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN)";
+    case JBR_ERROR_PORT_INVALID:
+      return "Invalid port specified (JBR_ERROR_PORT_INVALID)";
     case JBR_ERROR_SEND_RESPONSE:
       return "Error sending response (JBR_ERROR_SEND_RESPONSE)";
     case JBR_ERROR_WS_UPGRADE:
