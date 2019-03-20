@@ -1062,12 +1062,12 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   }
   if (len == 1 && data[0] == '?') {
     const char *help =
+      "\n<key> info"
       "\n<key> get     <collection> <id>"
       "\n<key> set     <collection> <id> <document json>"
       "\n<key> add     <collection> <document json>"
       "\n<key> del     <collection> <id>"
       "\n<key> patch   <collection> <id> <patch json>"
-      "\n<key> info"
       "\n<key> idx     <collection> <mode> <path>"
       "\n<key> nidx    <collection> <mode> <path>"
       "\n<key> rm      <collection>"
