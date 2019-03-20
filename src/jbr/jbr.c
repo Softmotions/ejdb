@@ -70,9 +70,10 @@
 //  <key> add     <collection> <document json>
 //  <key> del     <collection> <id>
 //  <key> patch   <collection> <id> <patch json>
-//  <key> info    [collection]
+//  <key> info
 //  <key> idx     <collection> <mode> <path>
 //  <key> nidx    <collection> <mode> <path>
+//  <key> rm      <collection>
 //  <key> query   <collection> <query>
 //  <key> explain <collection> <query>
 //  <key> <query>
@@ -673,7 +674,8 @@ typedef enum {
   JBWS_EXPLAIN,
   JBWS_INFO,
   JBWS_IDX,
-  JBWS_NIDX
+  JBWS_NIDX,
+  JBWS_REMOVE,
 } jbwsop_t;
 
 typedef struct _JBWCTX {
@@ -852,6 +854,32 @@ static void _jbr_ws_patch_document(JBWCTX *wctx, const char *key, const char *co
   _jbr_ws_write_text(wctx->ws, pbuf, len);
 }
 
+static void _jbr_ws_set_index(JBWCTX *wctx, const char *key, const char *coll, int64_t mode, const char *path) {
+  if (wctx->read_anon) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
+    return;
+  }
+  iwrc rc = ejdb_ensure_index(wctx->db, coll, path, mode);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+  } else {
+    _jbr_ws_write_text(wctx->ws, key, strlen(key));
+  }
+}
+
+static void _jbr_ws_del_index(JBWCTX *wctx, const char *key, const char *coll, int64_t mode, const char *path) {
+  if (wctx->read_anon) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
+    return;
+  }
+  iwrc rc = ejdb_remove_index(wctx->db, coll, path, mode);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+  } else {
+    _jbr_ws_write_text(wctx->ws, key, strlen(key));
+  }
+}
+
 typedef struct JBWQCTX {
   JBWCTX *wctx;
   IWXSTR *wbuf;
@@ -957,8 +985,50 @@ finish:
   }
 }
 
-static void _jbr_ws_info(JBWCTX *wctx, const char *key, const char *coll) {
-  fprintf(stderr, "\n key=%s coll=%s", key, coll);
+static void _jbr_ws_info(JBWCTX *wctx, const char *key) {
+  if (wctx->read_anon) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
+    return;
+  }
+  JBL jbl;
+  iwrc rc = ejdb_get_meta(wctx->db, &jbl);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+    return;
+  }
+  IWXSTR *xstr = iwxstr_new2(jbl->bn.size * 2);
+  if (!xstr) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    RCGO(rc, finish);
+  }
+  rc = iwxstr_printf(xstr, "%s\t", key);
+  RCGO(rc, finish);
+
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY);
+  RCGO(rc, finish);
+  _jbr_ws_write_text(wctx->ws, iwxstr_ptr(xstr), iwxstr_size(xstr));
+
+finish:
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+  }
+  jbl_destroy(&jbl);
+  if (xstr) {
+    iwxstr_destroy(xstr);
+  }
+}
+
+static void _jbr_ws_remove_coll(JBWCTX *wctx, const char *key, const char *coll) {
+  if (wctx->read_anon) {
+    _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_ACCESS_DENIED, 0);
+    return;
+  }
+  iwrc rc = ejdb_remove_collection(wctx->db, coll);
+  if (rc) {
+    _jbr_ws_send_rc(wctx, key, rc, 0);
+  } else {
+    _jbr_ws_write_text(wctx->ws, key, strlen(key));
+  }
 }
 
 static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
@@ -990,6 +1060,24 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   if (len < 1) {
     return;
   }
+  if (len == 1 && data[0] == '?') {
+    const char *help =
+      "\n<key> get     <collection> <id>"
+      "\n<key> set     <collection> <id> <document json>"
+      "\n<key> add     <collection> <document json>"
+      "\n<key> del     <collection> <id>"
+      "\n<key> patch   <collection> <id> <patch json>"
+      "\n<key> info"
+      "\n<key> idx     <collection> <mode> <path>"
+      "\n<key> nidx    <collection> <mode> <path>"
+      "\n<key> rm      <collection>"
+      "\n<key> query   <collection> <query>"
+      "\n<key> explain <collection> <query>"
+      "\n<key> <query>"
+      "\n";
+    _jbr_ws_write_text(ws, help, strlen(help));
+    return;
+  }
 
   // Fetch key, after we can do good errors reporting
   for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
@@ -1016,6 +1104,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
 
   // Fetch command
   for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
+
   if (pos <= len) {
     if (!strncmp("get", data, pos)) {
       wsop = JBWS_GET;
@@ -1033,10 +1122,22 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       wsop = JBWS_EXPLAIN;
     } else if (!strncmp("info", data, pos)) {
       wsop = JBWS_INFO;
+    } else if (!strncmp("idx", data, pos)) {
+      wsop = JBWS_IDX;
+    } else if (!strncmp("nidx", data, pos)) {
+      wsop = JBWS_NIDX;
+    } else if (!strncmp("rm", data, pos)) {
+      wsop = JBWS_REMOVE;
     }
   }
 
   if (wsop) {
+
+    if (wsop == JBWS_INFO) {
+      _jbr_ws_info(wctx, key);
+      return;
+    }
+
     for (; pos < len && isspace(data[pos]); ++pos);
     len -= pos;
     data += pos;
@@ -1047,7 +1148,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
     data += pos;
 
     if (pos < 1 || len < 1) {
-      if (wsop != JBWS_INFO) {
+      if (wsop != JBWS_REMOVE) {
         _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, JBR_WS_STR_PREMATURE_END);
         return;
       }
@@ -1061,8 +1162,8 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
     cnamebuf[pos] = '\0';
     coll = cnamebuf;
 
-    if (wsop == JBWS_INFO) {
-      _jbr_ws_info(wctx, key, coll);
+    if (wsop == JBWS_REMOVE) {
+      _jbr_ws_remove_coll(wctx, key, coll);
       return;
     }
 
@@ -1113,6 +1214,14 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
           case JBWS_PATCH:
             data[len] = '\0';
             _jbr_ws_patch_document(wctx, key, coll, id, data);
+            break;
+          case JBWS_IDX:
+            data[len] = '\0';
+            _jbr_ws_set_index(wctx, key, coll, id, data);
+            break;
+          case JBWS_NIDX:
+            data[len] = '\0';
+            _jbr_ws_del_index(wctx, key, coll, id, data);
             break;
           default:
             _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, 0);

@@ -958,6 +958,7 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
       }
       rc = iwkv_del(db->metadb, &key, 0);
       RCGO(rc, finish);
+      _jb_meta_nrecs_removedb(db, idx->dbid);
       if (prev) {
         prev->next = idx->next;
       } else {
@@ -965,7 +966,6 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
       }
       if (idx->idb) {
         iwkv_db_destroy(&idx->idb);
-        idx->idb = 0;
       }
       _jb_idx_release(idx);
       break;
