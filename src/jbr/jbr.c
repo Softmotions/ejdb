@@ -648,7 +648,6 @@ process:
 }
 
 static void _jbr_on_http_finish(struct http_settings_s *settings) {
-  iwlog_info2("HTTP endpoint closed");
 }
 
 static void _jbr_on_pre_start(void *op) {
