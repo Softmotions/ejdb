@@ -48,7 +48,8 @@
 //                200 on success, document JSON
 //                404 if document not found
 //
-//    POST `/`  - Query a collection by provided query spec as body
+//    POST `/`
+//      Query a collection by provided query spec as body
 //      Request headers:
 //        `X-Hints` comma separated extra hints to ejdb2 database engine
 //        Hints:
@@ -63,14 +64,18 @@
 //            ...
 //         ```
 //
+//    OPTIONS `/`
+//      Fetch storage JSON metadata and available HTTP methods in `Allow` response header
+//
+//
 //  WEBSOCKET API:
 //
+//  <key> info
 //  <key> get     <collection> <id>
 //  <key> set     <collection> <id> <document json>
 //  <key> add     <collection> <document json>
 //  <key> del     <collection> <id>
 //  <key> patch   <collection> <id> <patch json>
-//  <key> info
 //  <key> idx     <collection> <mode> <path>
 //  <key> nidx    <collection> <mode> <path>
 //  <key> rm      <collection>
@@ -94,7 +99,8 @@ typedef enum {
   JBR_PATCH,
   JBR_DELETE,
   JBR_POST,
-  JBR_HEAD
+  JBR_HEAD,
+  JBR_OPTIONS
 } jbr_method_t;
 
 struct _JBR {
@@ -479,20 +485,58 @@ static void _jbr_on_get(JBRCTX *rctx) {
     xstr = iwxstr_new2(jbl->bn.size * 2);
     if (!xstr) {
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      JBR_RC_REPORT(500, req, rc);
-      return;
+      goto finish;
     }
     rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY);
   }
-  if (rc) {
-    JBR_RC_REPORT(500, req, rc);
-    goto finish;
-  }
-  jbl_destroy(&jbl);
+  RCGO(rc, finish);
+
   _jbr_http_send(req, 200, "application/json",
                  xstr ? iwxstr_ptr(xstr) : 0,
                  xstr ? iwxstr_size(xstr) : nbytes);
 finish:
+  if (rc) {
+    JBR_RC_REPORT(500, req, rc);
+  }
+  jbl_destroy(&jbl);
+  if (xstr) {
+    iwxstr_destroy(xstr);
+  }
+}
+
+static void _jbr_on_options(JBRCTX *rctx) {
+  JBL jbl;
+  EJDB db = rctx->jbr->db;
+  http_s *req = rctx->req;
+  const EJDB_HTTP *http = rctx->jbr->http;
+
+  iwrc rc = ejdb_get_meta(db, &jbl);
+  if (rc) {
+    JBR_RC_REPORT(500, req, rc);
+    return;
+  }
+  IWXSTR *xstr = iwxstr_new2(jbl->bn.size * 2);
+  if (!xstr) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    goto finish;
+  }
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY);
+  RCGO(rc, finish);
+
+  if (http->read_anon) {
+    _jbr_http_set_header(req, "Allow", 5, "GET, HEAD, POST, OPTIONS", 24);
+  } else {
+    _jbr_http_set_header(req, "Allow", 5, "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS", 44);
+  }
+
+  _jbr_http_send(req, 200, "application/json",
+                 iwxstr_ptr(xstr),
+                 iwxstr_size(xstr));
+finish:
+  if (rc) {
+    JBR_RC_REPORT(500, req, rc);
+  }
+  jbl_destroy(&jbl);
   if (xstr) {
     iwxstr_destroy(xstr);
   }
@@ -528,35 +572,36 @@ static bool _jbr_fill_ctx(http_s *req, JBRCTX *r) {
       if (!strncmp("DELETE", method.data, method.len)) {
         r->method = JBR_DELETE;
       }
+    case 7:
+      if (!strncmp("OPTIONS", method.data, method.len)) {
+        r->method = JBR_OPTIONS;
+      }
   }
   if (!r->method) {
+    // Unknown method
     return false;
   }
   fio_str_info_s path = fiobj_obj2cstr(req->path);
-  if (!req->path || (path.len == 1 && path.data[0] == '/')) {
+  if (!req->path || path.len < 2) {
     return true;
-  } else if (path.len < 2) {
+  } else if (r->method == JBR_OPTIONS) {
     return false;
   }
 
   char *c = strchr(path.data + 1, '/');
   if (!c) {
-    if (path.len > 1) {
-      switch (r->method) {
-        case JBR_GET:
-        case JBR_HEAD:
-        case JBR_PUT:
-        case JBR_DELETE:
-        case JBR_PATCH:
-          return false;
-        default:
-          break;
-      }
-      r->collection = path.data + 1;
-      r->collection_len = path.len - 1;
-    } else if (r->method != JBR_POST) {
-      return false;
+    switch (r->method) {
+      case JBR_GET:
+      case JBR_HEAD:
+      case JBR_PUT:
+      case JBR_DELETE:
+      case JBR_PATCH:
+        return false;
+      default:
+        break;
     }
+    r->collection = path.data + 1;
+    r->collection_len = path.len - 1;
   } else {
     char *eptr;
     char nbuf[JBNUMBUF_SIZE];
@@ -644,6 +689,8 @@ process:
     }
   } else if (rctx.method == JBR_POST) {
     _jbr_on_query(&rctx);
+  } else if (rctx.method == JBR_OPTIONS) {
+    _jbr_on_options(&rctx);
   } else {
     http_send_error(req, 400);
   }
@@ -898,19 +945,12 @@ static iwrc _jbr_ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   } else {
     iwxstr_clear(wbuf);
   }
-  intptr_t uuid = websocket_uuid(qctx->wctx->ws);
   if (ux->log) {
     rc = iwxstr_printf(wbuf, "%s\texplain\t%s", qctx->key, iwxstr_ptr(ux->log));
     iwxstr_destroy(ux->log);
     ux->log = 0;
     RCRET(rc);
-    if (fio_is_closed(uuid) || websocket_write(qctx->wctx->ws, (fio_str_info_s) {
-    .data = iwxstr_ptr(wbuf), .len = iwxstr_size(wbuf)
-    }, 1) < 0) {
-      iwlog_warn2("Websocket channel closed");
-      *step = 0;
-      return 0;
-    }
+    _jbr_ws_write_text(qctx->wctx->ws, iwxstr_ptr(wbuf), iwxstr_size(wbuf));
     iwxstr_clear(wbuf);
   }
 
@@ -957,8 +997,19 @@ static void _jbr_ws_query(JBWCTX *wctx, const char *key, const char *coll, const
   }
 
   rc = ejdb_exec(&ux);
+
   if (!rc) {
-    _jbr_ws_write_text(wctx->ws, key, strlen(key));
+    if (ux.log) {
+      IWXSTR *wbuf = iwxstr_new();
+      if (!wbuf) {
+        rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+        goto finish;
+      }
+      if (!iwxstr_printf(wbuf, "%s\texplain\t%s", qctx.key, iwxstr_ptr(ux.log))) {
+        _jbr_ws_write_text(wctx->ws, iwxstr_ptr(wbuf), iwxstr_size(wbuf));
+      }
+      iwxstr_clear(wbuf);
+    }
   }
 
 finish:
@@ -973,6 +1024,8 @@ finish:
         _jbr_ws_send_rc(wctx, key, rc, 0);
         break;
     }
+  } else {
+    _jbr_ws_write_text(wctx->ws, key, strlen(key));
   }
   if (ux.q) {
     jql_destroy(&ux.q);
