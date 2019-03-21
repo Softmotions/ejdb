@@ -342,11 +342,11 @@ IW_INLINE jqval_type_t _jql_binn_to_jqval(binn *vbinn, JQVAL *qval) {
       return qval->type;
     case BINN_FLOAT32:
       qval->type = JQVAL_F64;
-      qval->vf64 = vbinn->vdouble;
+      qval->vf64 = vbinn->vfloat;
       return qval->type;
     case BINN_FLOAT64:
       qval->type = JQVAL_F64;
-      qval->vf64 = vbinn->vfloat;
+      qval->vf64 = vbinn->vdouble;
       return qval->type;
     default:
       memset(qval, 0, sizeof(*qval));
