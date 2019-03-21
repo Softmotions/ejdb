@@ -1010,6 +1010,7 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
     if ((idx->mode & ~EJDB_IDX_UNIQUE) == (mode & ~EJDB_IDX_UNIQUE) && !jbl_ptr_cmp(idx->ptr, ptr)) {
       if (idx->mode != mode) {
         rc = EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE;
+        idx = 0;
       }
       goto finish;
     }
