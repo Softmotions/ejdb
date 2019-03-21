@@ -232,10 +232,10 @@ static iwrc _jb_idx_add_meta_lr(JBIDX idx, binn *list) {
     rc = JBL_ERROR_CREATION;
   }
 
-
   if (!binn_list_add_object(list, meta)) {
     rc = JBL_ERROR_CREATION;
   }
+
 finish:
   iwxstr_destroy(xstr);
   binn_free(meta);
@@ -720,7 +720,7 @@ static iwrc _jb_noop_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step
   return 0;
 }
 
-IW_INLINE iwrc _jb_put_impl(EJDB db, JBCOLL jbc, JBL jbl, int64_t id) {
+IW_INLINE iwrc _jb_put_impl(JBCOLL jbc, JBL jbl, int64_t id) {
   IWKV_val val, key = {
     .data = &id,
     .size = sizeof(id)
@@ -733,6 +733,22 @@ IW_INLINE iwrc _jb_put_impl(EJDB db, JBCOLL jbc, JBL jbl, int64_t id) {
   iwrc rc = jbl_as_buf(jbl, &val.data, &val.size);
   RCRET(rc);
   return iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx);
+}
+
+iwrc jb_put(JBCOLL jbc, JBL jbl, int64_t id) {
+  return _jb_put_impl(jbc, jbl, id);
+}
+
+iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl) {
+  IWKV_val val;
+  struct _JBPHCTX pctx = {
+    .id = id,
+    .jbc = jbc,
+    .jbl = jbl
+  };
+  iwrc rc = jbl_as_buf(jbl, &val.data, &val.size);
+  RCRET(rc);
+  return iwkv_cursor_seth(cur, &val, 0, _jb_put_handler, &pctx);
 }
 
 //----------------------- Public API
@@ -1138,7 +1154,7 @@ iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
   rc = jbl_fill_from_node(ujbl, root);
   RCGO(rc, finish);
 
-  rc = _jb_put_impl(db, jbc, ujbl, id);
+  rc = _jb_put_impl(jbc, ujbl, id);
 
 finish:
   API_COLL_UNLOCK(jbc, rci, rc);
@@ -1156,7 +1172,7 @@ iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id) {
   JBCOLL jbc;
   iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
-  rc = _jb_put_impl(db, jbc, jbl, id);
+  rc = _jb_put_impl(jbc, jbl, id);
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }

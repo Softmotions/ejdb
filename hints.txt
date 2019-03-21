@@ -9,3 +9,29 @@ handle SIGINT nostop print pass
 
 wscat --slash -H 'X-Access-Token:access' -q -c http://localhost:9191
 
+
+1:
+
+k idx c1 4 /name
+k add c1 {"name":"foo"}
+k query c1 /[name=foo] | apply [{"op":"replace", "path":"/name", "value":"bar"}]
+k explain c1 /[name=bar]
+
+Returns empty result
+
+
+
+2:
+
+k idx c1 4 /name
+k add c1 {"name":["1","2","3"]}
+k query c1 /name/[** = "1"] | apply [{"op":"add", "path":"/name/-", "value":"4"}]
+
+
+
+
+
+
+
+
+

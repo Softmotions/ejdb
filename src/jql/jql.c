@@ -519,7 +519,7 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
-      *rcp = _jbl_node_from_binn2(lv->vbinn, &lnode, pool);
+      *rcp = _jbl_node_from_binn(lv->vbinn, &lnode, pool);
       if (*rcp) {
         iwpool_destroy(pool);
         return 0;

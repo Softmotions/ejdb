@@ -57,10 +57,6 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
   iwrc rc = 0;
   uint64_t id = doc->id;
   struct JQP_AUX *aux = q->aux;
-  IWKV_val key = {
-    .data = &id,
-    .size = sizeof(id)
-  };
   if (!pool) {
     pool = iwpool_create(1024);
     if (!pool) {
@@ -70,18 +66,11 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
   }
   rc = jql_apply(q, doc->raw, &doc->node, pool);
   if (aux->apply && doc->node) {
-    binn bv;
-    rc = _jbl_from_node(&bv, doc->node);
+    struct _JBL sn = {0};
+    rc = _jbl_from_node(&sn, doc->node);
     RCRET(rc);
-    if (bv.writable && bv.dirty) {
-      binn_save_header(&bv);
-    }
-    IWKV_val val = {
-      .data = bv.ptr,
-      .size = bv.size
-    };
-    rc = iwkv_put(ctx->jbc->cdb, &key, &val, 0);
-    binn_free(&bv);
+    rc = jb_put(ctx->jbc, &sn, id);
+    binn_free(&sn.bn);
   }
   return rc;
 }

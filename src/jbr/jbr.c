@@ -1008,7 +1008,7 @@ static void _jbr_ws_query(JBWCTX *wctx, const char *key, const char *coll, const
       if (!iwxstr_printf(wbuf, "%s\texplain\t%s", qctx.key, iwxstr_ptr(ux.log))) {
         _jbr_ws_write_text(wctx->ws, iwxstr_ptr(wbuf), iwxstr_size(wbuf));
       }
-      iwxstr_clear(wbuf);
+      iwxstr_destroy(wbuf);
     }
   }
 

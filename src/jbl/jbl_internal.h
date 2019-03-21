@@ -43,8 +43,9 @@ typedef struct _JBLDRCTX {
 iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_string(const char *str, int len, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
-iwrc _jbl_node_from_binn2(const binn *bn, JBL_NODE *node, IWPOOL *pool);
-iwrc _jbl_from_node(binn *res, JBL_NODE node);
+iwrc _jbl_node_from_binn(const binn *bn, JBL_NODE *node, IWPOOL *pool);
+iwrc _jbl_binn_from_node(binn *res, JBL_NODE node);
+iwrc _jbl_from_node(JBL jbl, JBL_NODE node);
 bool _jbl_at(JBL jbl, JBL_PTR jp, JBL res);
 int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
 

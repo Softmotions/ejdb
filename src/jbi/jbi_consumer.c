@@ -10,19 +10,20 @@ iwrc jbi_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *ste
   size_t vsz = 0;
   EJDB_EXEC *ux = ctx->ux;
   IWPOOL *pool = ux->pool;
-  IWKV_val key = {
-    .data = &id,
-    .size = sizeof(id)
-  };
 
-start:
-  {
+start: {
     if (cur) {
       rc = iwkv_cursor_copy_val(cur, ctx->jblbuf, ctx->jblbufsz, &vsz);
     } else {
+      IWKV_val key = {
+        .data = &id,
+        .size = sizeof(id)
+      };
       rc = iwkv_get_copy(ctx->jbc->cdb, &key, ctx->jblbuf, ctx->jblbufsz, &vsz);
     }
-    if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+    if (rc == IWKV_ERROR_NOTFOUND) {
+      rc = 0;
+    }
     RCGO(rc, finish);
     if (vsz > ctx->jblbufsz) {
       size_t nsize = MAX(vsz, ctx->jblbufsz * 2);
@@ -68,22 +69,15 @@ start:
       rc = jql_apply(q, &jbl, &doc.node, pool);
       RCGO(rc, finish);
       if (aux->apply && doc.node) {
-        binn bv;
-        rc = _jbl_from_node(&bv, doc.node);
+        struct _JBL sn = {0};
+        rc = _jbl_from_node(&sn, doc.node);
         RCGO(rc, finish);
-        if (bv.writable && bv.dirty) {
-          binn_save_header(&bv);
-        }
-        IWKV_val val = {
-          .data = bv.ptr,
-          .size = bv.size
-        };
         if (cur) {
-          rc = iwkv_cursor_set(cur, &val, 0);
+          rc = jb_cursor_set(ctx->jbc, cur, id, &sn);
         } else {
-          rc = iwkv_put(ctx->jbc->cdb, &key, &val, 0);
+          rc = jb_put(ctx->jbc, &sn, id);
         }
-        binn_free(&bv);
+        binn_free(&sn.bn);
         RCGO(rc, finish);
       }
     }
