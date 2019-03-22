@@ -21,18 +21,13 @@ include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(TestBigEndian)
 
+include(AddIOWOW)
+
 if(ENABLE_HTTP)
   include(AddFacil)
   add_definitions(-DJB_HTTP)
   list(APPEND MODULES jbr jbs)
 endif()
-
-# IOWOW
-set(IOWOW_FIND_REQUIRED ON)
-include(FindIOWOW)
-list(APPEND PROJECT_LLIBRARIES iowow_s)
-list(APPEND PROJECT_INCLUDE_DIRS ${IOWOW_INCLUDE_DIRS})
-# !IOWOW
 
 if ((CMAKE_BUILD_TYPE EQUAL Release) OR (CMAKE_BUILD_TYPE EQUAL RelWithDebInfo))
   add_definition(-DJB_RELEASE=1)

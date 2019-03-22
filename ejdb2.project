@@ -1,5 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
+  <VirtualDirectory Name="iowow">
+    <File Name="build/src/extern_iowow/src/utils/pthread_spin_lock_shim.h"/>
+    <File Name="build/src/extern_iowow/src/utils/mt19937ar.h"/>
+    <File Name="build/src/extern_iowow/src/utils/mt19937ar.c"/>
+    <File Name="build/src/extern_iowow/src/utils/ksort.h"/>
+    <File Name="build/src/extern_iowow/src/utils/khash.h"/>
+    <File Name="build/src/extern_iowow/src/utils/kbtree.h"/>
+    <File Name="build/src/extern_iowow/src/utils/iwxstr.h"/>
+    <File Name="build/src/extern_iowow/src/utils/iwxstr.c"/>
+    <File Name="build/src/extern_iowow/src/utils/iwuuid.h"/>
+    <File Name="build/src/extern_iowow/src/utils/iwuuid.c"/>
+    <File Name="build/src/extern_iowow/src/utils/iwutils.h"/>
+    <File Name="build/src/extern_iowow/src/utils/iwutils.c"/>
+    <File Name="build/src/extern_iowow/src/utils/iwpool.h"/>
+    <File Name="build/src/extern_iowow/src/utils/iwpool.c"/>
+    <File Name="build/src/extern_iowow/src/utils/iwconv.h"/>
+    <File Name="build/src/extern_iowow/src/utils/iwconv.c"/>
+    <File Name="build/src/extern_iowow/src/utils/iwbits.h"/>
+    <File Name="build/src/extern_iowow/src/utils/iwarr.h"/>
+    <File Name="build/src/extern_iowow/src/utils/iwarr.c"/>
+    <File Name="build/src/extern_iowow/src/rdb/iwrdb.h"/>
+    <File Name="build/src/extern_iowow/src/rdb/iwrdb.c"/>
+    <File Name="build/src/extern_iowow/src/platform/win32/mman/mman.h"/>
+    <File Name="build/src/extern_iowow/src/platform/win32/mman/mman.c"/>
+    <File Name="build/src/extern_iowow/src/platform/win32/win32.c"/>
+    <File Name="build/src/extern_iowow/src/platform/unix/unix.c"/>
+    <File Name="build/src/extern_iowow/src/platform/iwp.h"/>
+    <File Name="build/src/extern_iowow/src/platform/iwp.c"/>
+    <File Name="build/src/extern_iowow/src/log/iwlog.h"/>
+    <File Name="build/src/extern_iowow/src/log/iwlog.c"/>
+    <File Name="build/src/extern_iowow/src/kv/iwkv_internal.h"/>
+    <File Name="build/src/extern_iowow/src/kv/iwkv.h"/>
+    <File Name="build/src/extern_iowow/src/kv/iwkv.c"/>
+    <File Name="build/src/extern_iowow/src/kv/iwal.h"/>
+    <File Name="build/src/extern_iowow/src/kv/iwal.c"/>
+    <File Name="build/src/extern_iowow/src/fs/iwfsmfile.h"/>
+    <File Name="build/src/extern_iowow/src/fs/iwfsmfile.c"/>
+    <File Name="build/src/extern_iowow/src/fs/iwfs.c"/>
+    <File Name="build/src/extern_iowow/src/fs/iwfile.h"/>
+    <File Name="build/src/extern_iowow/src/fs/iwfile.c"/>
+    <File Name="build/src/extern_iowow/src/fs/iwexfile.h"/>
+    <File Name="build/src/extern_iowow/src/fs/iwexfile.c"/>
+    <File Name="build/src/extern_iowow/src/fs/iwdlsnr.h"/>
+  </VirtualDirectory>
   <VirtualDirectory Name="facil">
     <VirtualDirectory Name="examples">
       <File Name="build/src/extern_facil/examples/raw-http.c"/>
@@ -75,8 +119,8 @@
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <VirtualDirectory Name="Modules">
+      <File Name="cmake/Modules/AddIOWOW.cmake"/>
       <File Name="cmake/Modules/AddFacil.cmake"/>
-      <File Name="cmake/Modules/AddWebsockets.cmake"/>
       <File Name="cmake/Modules/FindIOWOW.cmake"/>
       <File Name="cmake/Modules/Win32LIBTools.cmake"/>
       <File Name="cmake/Modules/UploadPPA.cmake"/>
@@ -258,7 +302,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="$(IntermediateDirectory)/jql_test1" IntermediateDirectory="$(ProjectPath)/build/src/jql/tests" Command="$(OutputFile)" CommandArguments="-a qwqwqw -t" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="$(IntermediateDirectory)/ejdb_test1" IntermediateDirectory="$(ProjectPath)/build/src/tests" Command="$(OutputFile)" CommandArguments="-a qwqwqw -t" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake">-G Ninja -DCMAKE_BUILD_TYPE=Debug</BuildSystem>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
