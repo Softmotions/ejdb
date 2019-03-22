@@ -310,6 +310,7 @@ static iwrc _jb_db_meta_load(EJDB db) {
       rc = _jb_coll_init(jbc, &val);
       if (rc) {
         _jb_coll_release(jbc);
+        iwkv_val_dispose(&key);
         goto finish;
       }
     } else {
