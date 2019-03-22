@@ -1247,14 +1247,16 @@ static bool _jql_proj_matched(int16_t lvl, JBL_NODE n,
     if (ps->flavour & JQP_STR_PROJFIELD) {
       for (JQP_STRING *sn = ps; sn; sn = sn->subnext) {
         const char *pv = sn->value;
-        if (!strncmp(key, pv, keylen)) {
+        int pvlen = strlen(pv);
+        if (pvlen == keylen && !strncmp(key, pv, keylen)) {
           proj->pos = lvl;
           return (proj->cnt == lvl + 1);
         }
       }
     } else {
       const char *pv = ps->value;
-      if (!strncmp(key, pv, keylen) || (pv[0] == '*' && pv[1] == '\0')) {
+      int pvlen = strlen(pv);
+      if ((pvlen == keylen && !strncmp(key, pv, keylen)) || (pv[0] == '*' && pv[1] == '\0')) {
         proj->pos = lvl;
         return (proj->cnt == lvl + 1);
       }
@@ -1269,6 +1271,8 @@ static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key,
   char buf[JBNUMBUF_SIZE];
   if (key) {
     keyptr = key;
+  } else if (lvl < 0) {
+    return 0;
   } else {
     iwitoa(klidx, buf, JBNUMBUF_SIZE);
     keyptr = buf;
@@ -1290,10 +1294,7 @@ static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key,
 
 static jbn_visitor_cmd_t _jql_proj_keep_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx,
                                                 iwrc *rc) {
-  if (lvl == -1) {
-    return 0;
-  }
-  if (n->flags & PROJ_MARK_PATH) {
+  if (lvl < 0 || (n->flags & PROJ_MARK_PATH)) {
     return 0;
   }
   if (n->flags & PROJ_MARK_KEEP) {
@@ -1302,10 +1303,11 @@ static jbn_visitor_cmd_t _jql_proj_keep_visitor(int lvl, JBL_NODE n, const char 
   return JBN_VCMD_DELETE;
 }
 
-
 static iwrc _jql_project(JBL_NODE root, JQL q) {
 
+  bool has_includes = false;
   JQP_PROJECTION *proj = q->aux->projection;
+
   // Check trivial cases
   for (JQP_PROJECTION *p = proj; p; p = p->next) {
     bool all = (p->value->flavour & JQP_STR_PROJALIAS);
@@ -1316,6 +1318,8 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
       } else {
         proj = p->next; // Dispose all before +all
       }
+    } else if (!has_includes && !p->exclude) {
+      has_includes = true;
     }
   }
   if (!proj) {
@@ -1338,7 +1342,7 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
   iwrc rc = jbn_visit(root, 0, &vctx, _jql_proj_visitor);
   RCRET(rc);
 
-  if (root->flags & PROJ_MARK_PATH) { // We have keep projections
+  if (has_includes || (root->flags & PROJ_MARK_PATH)) { // We have keep projections
     rc = jbn_visit(root, 0, &vctx, _jql_proj_keep_visitor);
     RCRET(rc);
   }

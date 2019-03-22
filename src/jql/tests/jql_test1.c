@@ -247,6 +247,7 @@ void jql_test1_3() {
 
 // Test projections
 void jql_test_1_4() {
+
   _jql_test1_3("{'foo':{'bar':22}}", "/** | all", "{'foo':{'bar':22}}");
   _jql_test1_3("{'foo':{'bar':22}}", "/** | all+all + all", "{'foo':{'bar':22}}");
   _jql_test1_3("{'foo':{'bar':22}}", "/** | all - all", "{}");
@@ -260,6 +261,9 @@ void jql_test_1_4() {
                "{'foo':{'baz':{'zaz':555}}}");
   _jql_test1_3("{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | all + /foo/bar + /foo/baz/zaz - /*/bar",
                "{'foo':{'baz':{'zaz':555}}}");
+  _jql_test1_3("{'foo':{'bar':22}}", "/** | /zzz", "{}");
+  _jql_test1_3("{'foo':{'bar':22}}", "/** | /fooo", "{}");
+  _jql_test1_3("{'foo':{'bar':22},'name':'test'}", "/** | all - /name", "{'foo':{'bar':22}}");
 }
 
 
