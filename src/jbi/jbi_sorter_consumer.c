@@ -54,23 +54,26 @@ finish:
 }
 
 static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struct _EJDB_DOC *doc) {
-  iwrc rc = 0;
-  uint64_t id = doc->id;
+  JBL_NODE root;
+  JBL jbl = doc->raw;
   struct JQP_AUX *aux = q->aux;
-  if (!pool) {
-    pool = iwpool_create(1024);
-    if (!pool) {
-      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      RCRET(rc);
-    }
-  }
-  rc = jql_apply(q, doc->raw, &doc->node, pool);
-  if (aux->apply && doc->node) {
+  iwrc rc = jbl_to_node(jbl, &root, pool);
+  RCRET(rc);
+  doc->node = root;
+  if (aux->apply) {
     struct _JBL sn = {0};
-    rc = _jbl_from_node(&sn, doc->node);
+    rc = jql_apply(q, root, pool);
     RCRET(rc);
-    rc = jb_put(ctx->jbc, &sn, id);
+    rc = _jbl_from_node(&sn, root);
+    RCRET(rc);
+    rc = jb_put(ctx->jbc, &sn, doc->id);
     binn_free(&sn.bn);
+  } else {
+    rc = jb_put(ctx->jbc, jbl, doc->id);
+  }
+  RCRET(rc);
+  if (aux->projection) {
+    rc = jql_project(q, root);
   }
   return rc;
 }
@@ -110,7 +113,7 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
     if (aux->apply || aux->projection) {
       IWPOOL *pool = ux->pool;
       if (!pool) {
-        pool = iwpool_create(1024);
+        pool = iwpool_create(jbl.bn.size * 2);
         if (!pool) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
           goto finish;
@@ -158,7 +161,7 @@ static iwrc _jbi_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
 }
 
 iwrc jbi_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id,
-                             int64_t *step, bool *matched, iwrc err) {
+                         int64_t *step, bool *matched, iwrc err) {
   if (!id) {
     // End of scan
     if (err) {
@@ -177,8 +180,7 @@ iwrc jbi_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id,
   EJDB db = ctx->jbc->db;
   IWFS_EXT *sof = &ssc->sof;
 
-start:
-  {
+start: {
     if (cur) {
       rc = iwkv_cursor_copy_val(cur, ctx->jblbuf + sizeof(id), ctx->jblbufsz - sizeof(id), &vsz);
     } else {
@@ -233,8 +235,7 @@ start:
   vsz += sizeof(id);
   memcpy(ctx->jblbuf, &id, sizeof(id));
 
-start2:
-  {
+start2: {
     if (ssc->docs) {
       uint32_t rsize = ssc->docs_npos + vsz;
       if (rsize > ssc->docs_asz) {

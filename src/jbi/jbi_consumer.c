@@ -59,18 +59,23 @@ start: {
       .raw = &jbl
     };
     if (aux->apply || aux->projection) {
+      JBL_NODE root;
       if (!pool) {
-        pool = iwpool_create(1024);
+        pool = iwpool_create(jbl.bn.size * 2);
         if (!pool) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
           goto finish;
         }
       }
-      rc = jql_apply(q, &jbl, &doc.node, pool);
+      rc = jbl_to_node(&jbl, &root, pool);
       RCGO(rc, finish);
-      if (aux->apply && doc.node) {
+      doc.node = root;
+
+      if (aux->apply) {
         struct _JBL sn = {0};
-        rc = _jbl_from_node(&sn, doc.node);
+        rc = jql_apply(q, root, pool);
+        RCGO(rc, finish);
+        rc = _jbl_from_node(&sn, root);
         RCGO(rc, finish);
         if (cur) {
           rc = jb_cursor_set(ctx->jbc, cur, id, &sn);
@@ -78,9 +83,20 @@ start: {
           rc = jb_put(ctx->jbc, &sn, id);
         }
         binn_free(&sn.bn);
+      } else {
+        if (cur) {
+          rc = jb_cursor_set(ctx->jbc, cur, id, &jbl);
+        } else {
+          rc = jb_put(ctx->jbc, &jbl, id);
+        }
+      }
+      RCGO(rc, finish);
+      if (aux->projection) {
+        rc = jql_project(q, root);
         RCGO(rc, finish);
       }
     }
+
     do {
       ctx->istep = 1;
       rc = ux->visitor(ux, &doc, &ctx->istep);

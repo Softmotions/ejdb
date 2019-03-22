@@ -1109,7 +1109,7 @@ iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
   if (!patchjson) {
     return IW_ERROR_INVALID_ARGS;
   }
-  IWPOOL *pool = iwpool_create(1024);
+  IWPOOL *pool = iwpool_create(1024); // FIXME
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }

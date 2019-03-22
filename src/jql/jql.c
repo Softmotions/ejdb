@@ -1355,7 +1355,23 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
 
 //----------------------------------
 
-iwrc jql_apply(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool) {
+iwrc jql_apply(JQL q, JBL_NODE root, IWPOOL *pool) {
+  if (q->aux->apply) {
+    return jbl_patch_auto(root, q->aux->apply, pool);
+  } else {
+    return 0;
+  }
+}
+
+iwrc jql_project(JQL q, JBL_NODE root) {
+  if (q->aux->projection) {
+    return _jql_project(root, q);
+  } else {
+    return 0;
+  }
+}
+
+iwrc jql_apply_and_project(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool) {
   *out = 0;
   JQP_AUX *aux = q->aux;
   if (!aux->apply && !aux->projection) {
@@ -1365,14 +1381,15 @@ iwrc jql_apply(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool) {
   iwrc rc = jbl_to_node(jbl, &root, pool);
   RCRET(rc);
   if (aux->apply) {
-    rc = jbl_patch_auto(root, aux->apply, pool);
+    rc = jql_apply(q, root, pool);
     RCRET(rc);
   }
   if (aux->projection) {
-    rc = _jql_project(root, q);
-    RCRET(rc);
+    rc = jql_project(q, root);
   }
-  *out = root;
+  if (!rc) {
+    *out = root;
+  }
   return rc;
 }
 
