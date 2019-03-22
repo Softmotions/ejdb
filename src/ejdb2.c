@@ -92,6 +92,7 @@ static iwrc _jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
 
   rc = iwkv_db(jbc->db->iwkv, idx->dbid, idx->idbf, &idx->idb);
   RCGO(rc, finish);
+  idx->jbc = jbc;
   idx->rnum = _jb_meta_nrecs_get(jbc->db, idx->dbid);
   idx->next = jbc->idx;
   jbc->idx = idx;
