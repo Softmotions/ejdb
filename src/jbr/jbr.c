@@ -863,7 +863,7 @@ static void _jbr_ws_get_document(JBWCTX *wctx, const char *key, const char *coll
     _jbr_ws_send_rc(wctx, key, rc, 0);
     goto finish;
   }
-  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY);
   if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
     goto finish;
