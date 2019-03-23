@@ -88,9 +88,13 @@ void jbl_test1_2() {
                    "{\"foo\":\"b\\\"ar\",\"num1\":1223,\"n\\\"um2\":10.1226222,"
                    "\"list\":[3,2.1,1,\"one\",\"two\",{},{\"z\":false,\"t\":true}]}");
   CU_ASSERT_EQUAL(res, 0);
+  jbl_destroy(&jbl);
+
+  //
+  rc = jbl_from_json(&jbl, "{ ");
+  CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PARSE_JSON);
 
   iwxstr_destroy(xstr);
-  jbl_destroy(&jbl);
 }
 
 void jbl_test1_3() {
