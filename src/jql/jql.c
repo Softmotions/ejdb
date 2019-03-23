@@ -1182,6 +1182,10 @@ bool jql_has_orderby(JQL q) {
   return q->aux->orderby_num > 0;
 }
 
+bool jql_has_aggregate_count(JQL q) {
+  return (q->aux->qmode & JQP_QRY_AGGREGATE);
+}
+
 iwrc jql_get_skip(JQL q, int64_t *out) {
   iwrc rc = 0;
   *out = 0;

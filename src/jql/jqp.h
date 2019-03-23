@@ -209,6 +209,13 @@ typedef struct JQP_STACK {
 
 #define JQP_AUX_STACKPOOL_NUM 128
 
+typedef uint8_t jqp_query_mode_t;
+
+#define JQP_QRY_COUNT    ((jqp_query_mode_t) 0x01U)
+#define JQP_QRY_NOIDX    ((jqp_query_mode_t) 0x02U)
+
+#define JQP_QRY_AGGREGATE (JQP_QRY_COUNT)
+
 typedef struct JQP_AUX {
   int pos;
   int stackn;
@@ -237,6 +244,7 @@ typedef struct JQP_AUX {
   const char *apply_placeholder;
   const char *first_anchor;
   bool negate;
+  jqp_query_mode_t qmode;
   JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];
 } JQP_AUX;
 

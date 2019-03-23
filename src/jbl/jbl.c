@@ -1566,7 +1566,7 @@ iwrc jbl_to_node(JBL jbl, JBL_NODE *node, IWPOOL *pool) {
 }
 
 iwrc jbl_patch_node(JBL_NODE root, const JBL_PATCH *p, size_t cnt) {
-  IWPOOL *pool = iwpool_create(1024);
+  IWPOOL *pool = iwpool_create(512);
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }

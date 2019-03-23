@@ -105,6 +105,7 @@ typedef struct _EJDB_EXEC {
   void *opaque;
   int64_t skip;
   int64_t limit;
+  int64_t cnt;
   IWXSTR *log;
   IWPOOL *pool;               /**< Optional pool which can be used in query apply  */
 } EJDB_EXEC;

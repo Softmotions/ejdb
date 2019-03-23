@@ -78,7 +78,7 @@
 //  <key> patch   <collection> <id> <patch json>
 //  <key> idx     <collection> <mode> <path>
 //  <key> nidx    <collection> <mode> <path>
-//  <key> rm      <collection>
+//  <key> rmc     <collection>
 //  <key> query   <collection> <query>
 //  <key> explain <collection> <query>
 //  <key> <query>
@@ -228,7 +228,7 @@ static iwrc _jbr_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   iwrc rc = 0;
   IWXSTR *wbuf = rctx->wbuf;
   if (!wbuf) {
-    wbuf = iwxstr_new2(1024U);
+    wbuf = iwxstr_new2(512);
     if (!wbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     rctx->wbuf = wbuf;
   }
@@ -327,11 +327,19 @@ finish:
     http_complete(req);
   } else if (ux.log) {
     iwxstr_cat(ux.log, "--------------------", 20);
+    if (jql_has_aggregate_count(ux.q)) {
+      iwxstr_printf(ux.log, "\n%lld", ux.cnt);
+    }
     _jbr_http_send(req, 200, "text/plain", iwxstr_ptr(ux.log), iwxstr_size(ux.log));
   } else {
-    _jbr_http_send(req, 200, 0, 0, 0);
+    if (jql_has_aggregate_count(ux.q)) {
+      char nbuf[JBNUMBUF_SIZE];
+      snprintf(nbuf, sizeof(nbuf), "%" PRId64, ux.cnt);
+      _jbr_http_send(req, 200, "text/plain", nbuf, strlen(nbuf));
+    } else {
+      _jbr_http_send(req, 200, 0, 0, 0);
+    }
   }
-
   if (ux.q) {
     jql_destroy(&ux.q);
   }
@@ -722,7 +730,7 @@ typedef enum {
   JBWS_INFO,
   JBWS_IDX,
   JBWS_NIDX,
-  JBWS_REMOVE,
+  JBWS_REMOVE_COLL,
 } jbwsop_t;
 
 typedef struct _JBWCTX {
@@ -939,7 +947,7 @@ static iwrc _jbr_ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   assert(qctx);
   IWXSTR *wbuf = qctx->wbuf;
   if (!wbuf) {
-    wbuf = iwxstr_new2(1024U);
+    wbuf = iwxstr_new2(512);
     if (!wbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     qctx->wbuf = wbuf;
   } else {
@@ -1025,6 +1033,11 @@ finish:
         break;
     }
   } else {
+    if (jql_has_aggregate_count(ux.q)) {
+      char pbuf[_WS_KEYPREFIX_BUFSZ];
+      _jbr_fill_prefix_buf(key, ux.cnt, pbuf);
+      _jbr_ws_write_text(wctx->ws, pbuf, strlen(pbuf));
+    }
     _jbr_ws_write_text(wctx->ws, key, strlen(key));
   }
   if (ux.q) {
@@ -1123,7 +1136,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       "\n<key> patch   <collection> <id> <patch json>"
       "\n<key> idx     <collection> <mode> <path>"
       "\n<key> nidx    <collection> <mode> <path>"
-      "\n<key> rm      <collection>"
+      "\n<key> rmc     <collection>"
       "\n<key> query   <collection> <query>"
       "\n<key> explain <collection> <query>"
       "\n<key> <query>"
@@ -1179,8 +1192,8 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       wsop = JBWS_IDX;
     } else if (!strncmp("nidx", data, pos)) {
       wsop = JBWS_NIDX;
-    } else if (!strncmp("rm", data, pos)) {
-      wsop = JBWS_REMOVE;
+    } else if (!strncmp("rmc", data, pos)) {
+      wsop = JBWS_REMOVE_COLL;
     }
   }
 
@@ -1201,7 +1214,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
     data += pos;
 
     if (pos < 1 || len < 1) {
-      if (wsop != JBWS_REMOVE) {
+      if (wsop != JBWS_REMOVE_COLL) {
         _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, JBR_WS_STR_PREMATURE_END);
         return;
       }
@@ -1215,7 +1228,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
     cnamebuf[pos] = '\0';
     coll = cnamebuf;
 
-    if (wsop == JBWS_REMOVE) {
+    if (wsop == JBWS_REMOVE_COLL) {
       _jbr_ws_remove_coll(wctx, key, coll);
       return;
     }

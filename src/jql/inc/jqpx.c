@@ -782,6 +782,17 @@ static void _jqp_set_limit(yycontext *yy, JQPUNIT *unit) {
   aux->limit = unit;
 }
 
+static void _jqp_set_aggregate_count(yycontext *yy) {
+  JQP_AUX *aux = yy->aux;
+  aux->qmode |= JQP_QRY_COUNT;
+  aux->projection = 0; // No projections in aggregate mode
+}
+
+static void _jqp_set_noidx(yycontext *yy) {
+  JQP_AUX *aux = yy->aux;
+  aux->qmode |= JQP_QRY_NOIDX;
+}
+
 static void _jqp_set_projection(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
   if (!unit || !aux->query) {

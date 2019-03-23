@@ -74,6 +74,8 @@ IW_EXPORT bool jql_has_projection(JQL q);
 
 IW_EXPORT bool jql_has_orderby(JQL q);
 
+IW_EXPORT bool jql_has_aggregate_count(JQL q);
+
 IW_EXPORT iwrc jql_get_skip(JQL q, int64_t *out);
 
 IW_EXPORT iwrc jql_get_limit(JQL q, int64_t *out);

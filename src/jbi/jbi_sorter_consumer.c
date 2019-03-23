@@ -86,6 +86,7 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
   struct _JBSSC *ssc = &ctx->ssc;
   uint32_t rnum = ssc->refs_num;
   struct JQP_AUX *aux = ux->q->aux;
+  IWPOOL *pool = ux->pool;
 
   if (rnum) {
     if (setjmp(ssc->fatal_jmp)) { // Init error jump
@@ -110,8 +111,8 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
       .id = id,
       .raw = &jbl
     };
+
     if (aux->apply || aux->projection) {
-      IWPOOL *pool = ux->pool;
       if (!pool) {
         pool = iwpool_create(jbl.bn.size * 2);
         if (!pool) {
@@ -120,24 +121,31 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
         }
       }
       rc = _jbi_scan_sorter_apply(pool, ctx, ux->q, &doc);
-      if (pool != ux->pool) {
-        iwpool_destroy(pool);
-      }
       RCGO(rc, finish);
     }
-    do {
-      step = 1;
-      rc = ux->visitor(ux, &doc, &step);
-      RCGO(rc, finish);
-    } while (step == -1);
 
+    if (!(aux->qmode & JQP_QRY_AGGREGATE)) {
+      do {
+        step = 1;
+        rc = ux->visitor(ux, &doc, &step);
+        RCGO(rc, finish);
+      } while (step == -1);
+    }
+    ++ux->cnt;
     i += step;
+    if (pool != ux->pool) {
+      iwpool_destroy(pool);
+      pool = 0;
+    }
     if (--ux->limit < 1) {
       break;
     }
   }
 
 finish:
+  if (pool != ux->pool) {
+    iwpool_destroy(pool);
+  }
   _jbi_scan_sorter_release(ctx);
   return rc;
 }

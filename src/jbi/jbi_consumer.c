@@ -50,9 +50,9 @@ start: {
   } else if (ctx->istep < 0) {
     ++ctx->istep;
   }
-
   if (!ctx->istep) {
     JQL q = ux->q;
+    ctx->istep = 1;
     struct JQP_AUX *aux = q->aux;
     struct _EJDB_DOC doc = {
       .id = id,
@@ -96,12 +96,14 @@ start: {
         RCGO(rc, finish);
       }
     }
-
-    do {
-      ctx->istep = 1;
-      rc = ux->visitor(ux, &doc, &ctx->istep);
-      RCGO(rc, finish);
-    } while (ctx->istep == -1);
+    if (!(aux->qmode & JQP_QRY_AGGREGATE)) {
+      do {
+        ctx->istep = 1;
+        rc = ux->visitor(ux, &doc, &ctx->istep);
+        RCGO(rc, finish);
+      } while (ctx->istep == -1);
+    }
+    ++ux->cnt;
     *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
     if (--ux->limit < 1) *step = 0;
   } else {

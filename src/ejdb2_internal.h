@@ -137,7 +137,6 @@ typedef struct _JBEXEC {
   EJDB_EXEC *ux;           /**< User defined context */
   JBCOLL jbc;              /**< Collection */
 
-  uint32_t cnt;            /**< Current result row count */
   int64_t istep;
   iwrc (*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
   uint8_t *jblbuf;         /**< Buffer used to keep currently processed document */

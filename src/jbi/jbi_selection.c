@@ -372,7 +372,7 @@ iwrc jbi_selection(JBEXEC *ctx) {
   ctx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
   ctx->cursor_step = IWKV_CURSOR_NEXT;
 
-  if (ctx->jbc->idx) { // we have indexes associated with collection
+  if (!(aux->qmode & JQP_QRY_NOIDX) && ctx->jbc->idx) { // we have indexes associated with collection
     rc = _jbi_collect_indexes(ctx, aux->expr, fctx, &snp);
     RCRET(rc);
     if (snp) {
