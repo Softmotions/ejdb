@@ -294,19 +294,36 @@ static RE_Compiled re_compile_primary(struct re *re) {
     }
     case '[': {
       RE_BitSet *cc = re_make_class(re);
-      if (']' != *re->position) RE_ERROR(re, CHARSET, "expected ']' at end of character set");
+      if (']' != *re->position) {
+        RE_FREE(re, cc);
+        RE_ERROR(re, CHARSET, "expected ']' at end of character set");
+      }
       re->position++;
       return re_new_Class(re, cc);
     };
     case '(': {
       RE_Compiled insns = re_compile_expression(re);
-      if (')' != *re->position) RE_ERROR(re, SUBEXP, "expected ')' at end of subexpression");
+      if (')' != *re->position) {
+        RE_Insn *insn, *next;
+        for (insn = insns.first;  insn;  insn = next) {
+          next = insn->next;
+          RE_FREE(re, insn);
+        }
+        RE_ERROR(re, SUBEXP, "expected ')' at end of subexpression");
+      }
       re->position++;
       return insns;
     }
     case '{': {
       RE_Compiled insns = re_compile_expression(re);
-      if ('}' != *re->position) RE_ERROR(re, SUBMATCH, "expected '}' at end of submatch");
+      if ('}' != *re->position) {
+        RE_Insn *insn, *next;
+        for (insn = insns.first;  insn;  insn = next) {
+          next = insn->next;
+          RE_FREE(re, insn);
+        }
+        RE_ERROR(re, SUBMATCH, "expected '}' at end of submatch");
+      }
       re_program_prepend(&insns, re_new_Begin(re));
       re_program_append(&insns, re_new_End(re));
       re->position++;
@@ -380,12 +397,6 @@ static RE_Compiled re_compile(struct re *re) {
   RE_Compiled insns = RE_COMPILED_INITIALISER;
   re->error_env = &env;
   if (setjmp(env)) {  /* syntax error */
-    RE_Insn *insn, *next;
-    for (insn = insns.first;  insn;  insn = next) {
-      next = insn->next;
-      RE_FREE(re, insn);
-    }
-    memset(&insns, 0, sizeof(insns));
     return insns;
   }
   insns = re_compile_expression(re);
@@ -598,7 +609,6 @@ static void re_thread_schedule(struct re *re, RE_ThreadList *threads, RE_Insn *p
 
 static int re_program_run(struct re *re, char *input, char ***saved, int *nsaved) {
   int matched = RE_ERROR_NOMATCH;
-
   if (!re) return matched;
 
   RE_Submatches *submatches = 0;
@@ -661,12 +671,12 @@ static int re_program_run(struct re *re, char *input, char ***saved, int *nsaved
       }
       re_submatches_unlink(re, t.submatches);
     }
-nextchar:    
+nextchar:
     ;
     RE_ThreadList *tmp = here;
     here = next;
     next = tmp;
-    next->size = 0;  
+    next->size = 0;
     if (!*sp) {
       break;
     }
@@ -719,7 +729,9 @@ int re_match(struct re *re, char *input) {
     re->error_code = 0;
     re->error_message = 0;
     re->code = re_compile(re);
-    if (re->error_code) return re->error_code;
+    if (re->error_code) {
+      return re->error_code;
+    }
     re->position = 0;
   }
   return re_program_run(re, input, &re->matches, &re->nmatches);
