@@ -52,30 +52,26 @@ struct _EJDB;
 typedef struct _EJDB *EJDB;
 
 /**
- * @brief EJDB HTTP Server options
+ * @brief EJDB HTTP/Websocket Server options.
  */
 typedef struct _EJDB_HTTP {
-  bool enabled;
-  int port;
-  const char *bind;
-  const char *access_token;
-  size_t access_token_len;
-  bool blocking;        /**< Block ejdb_open() thread until http service finished. */
-  bool read_anon;       /**< Allow anonymous read-only database access */
-  size_t max_body_size; /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
+  bool enabled;               /**< If HTTP/Websocket endpoint enabled. Default: false */
+  int port;                   /**< Listen port number, required */
+  const char *bind;           /**< Listen IP/host. Default: `localhost` */
+  const char *access_token;   /**< Server access token passed in `X-Access-Token` header. Default: zero */
+  size_t access_token_len;    /**< Length of access token string. Default: zero */
+  bool blocking;              /**< Block `ejdb_open()` thread until http service finished.
+                                   Otherwise HTTP server will be started in background. */
+  bool read_anon;             /**< Allow anonymous read-only database access */
+  size_t max_body_size;       /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
 } EJDB_HTTP;
-
-typedef struct EJDB_IPC {
-  bool enabled;
-  const char *file;
-} EJDB_IPC;
 
 /**
  * @brief EJDB open options.
  */
 typedef struct _EJDB_OPTS {
-  IWKV_OPTS kv;
-  EJDB_HTTP http;
+  IWKV_OPTS kv;                 /**< IWKV storage options. @see iwkv.h */
+  EJDB_HTTP http;               /**< HTTP/Websocket server options */
   bool no_wal;                  /**< Do not use write-ahead-log. Default: false */
   uint32_t sort_buffer_sz;      /**< Max sort buffer size. If exeeded an overflow file for sorted data will created.
                                      Default 16Mb, min: 1Mb */
