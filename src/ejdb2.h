@@ -12,23 +12,37 @@ IW_EXTERN_C_START
 #define EJDB_COLLECTION_NAME_MAX_LEN 255
 
 /**
- * @brief IWKV error codes.
+ * @brief EJDB error codes.
  */
 typedef enum {
   _EJDB_ERROR_START = (IW_ERROR_START + 15000UL),
   EJDB_ERROR_INVALID_COLLECTION_NAME,             /**< Invalid collection name */
   EJDB_ERROR_INVALID_COLLECTION_META,             /**< Invalid collection metadata */
   EJDB_ERROR_INVALID_COLLECTION_INDEX_META,       /**< Invalid collection index metadata */
-  EJDB_ERROR_INVALID_INDEX_MODE,                  /**< Invalid index mode */
+  EJDB_ERROR_INVALID_INDEX_MODE,                  /**< Invalid index mode specified */
   EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE,    /**< Index exists but mismatched uniqueness constraint */
   EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED,    /**< Unique index constraint violated */
   _EJDB_ERROR_END
 } ejdb_ecode_t;
 
+/** Index creation mode */
 typedef uint8_t ejdb_idx_mode_t;
+
+/** Marks index is unique, no duplicated values allowed. */
 #define EJDB_IDX_UNIQUE     ((ejdb_idx_mode_t) 0x01U)
+
+/** Index values have string type.
+ *  Type conversion will be performed on atempt to save value with other type */
 #define EJDB_IDX_STR        ((ejdb_idx_mode_t) 0x04U)
+
+/** Index values have signed integer 64 bit wide type.
+ *  Type conversion will be performed on atempt to save value with other type */
 #define EJDB_IDX_I64        ((ejdb_idx_mode_t) 0x08U)
+
+/** Index value have floating point type.
+ *  @note Internally floating point numbers are converted to string
+ *        with precision of 6 digits after decimal point.
+ */
 #define EJDB_IDX_F64        ((ejdb_idx_mode_t) 0x10U)
 
 /**

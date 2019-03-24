@@ -95,7 +95,9 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
     if (!midx->expr2) { // Fail fast
       midx->expr2 = midx->expr1;
     }
-  } else RCRET(rc);
+  } else if (rc) {
+    goto finish;
+  }
 
   IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_NEXT)
                                        ? IWKV_CURSOR_PREV : IWKV_CURSOR_NEXT;

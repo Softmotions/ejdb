@@ -1507,7 +1507,7 @@ static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
     case EJDB_ERROR_INVALID_COLLECTION_INDEX_META:
       return "Invalid collection index metadata (EJDB_ERROR_INVALID_COLLECTION_INDEX_META)";
     case EJDB_ERROR_INVALID_INDEX_MODE:
-      return "Invalid index mode (EJDB_ERROR_INVALID_INDEX_MODE)";
+      return "Invalid index mode specified (EJDB_ERROR_INVALID_INDEX_MODE)";
     case EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE:
       return "Index exists but mismatched uniqueness constraint (EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE)";
     case EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED:
