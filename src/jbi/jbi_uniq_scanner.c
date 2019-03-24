@@ -75,7 +75,6 @@ finish:
 
 static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
-  bool matched;
   IWKV_cursor cur;
   char numbuf[JBNUMBUF_SIZE];
 
@@ -110,6 +109,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
     else if (step < 0) ++step;
     if (!step) {
       int64_t id;
+      bool matched = false;
       rc = iwkv_cursor_copy_val(cur, &numbuf, IW_VNUMBUFSZ, &sz);
       RCGO(rc, finish);
       if (sz > IW_VNUMBUFSZ) {
@@ -125,7 +125,6 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
       }
       RCGO(rc, finish);
       step = 1;
-      matched = false;
       rc = consumer(ctx, 0, id, &step, &matched, 0);
       RCGO(rc, finish);
       if (!midx->expr1->prematched && matched) {
@@ -143,10 +142,57 @@ finish:
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
+iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+  size_t sz;
+  IWKV_cursor cur;
+  char numbuf[JBNUMBUF_SIZE];
+  int64_t step = 1;
+  struct _JBMIDX *midx = &ctx->midx;
+  IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_NEXT)
+                                       ? IWKV_CURSOR_PREV : IWKV_CURSOR_NEXT;
+
+  iwrc rc = iwkv_cursor_open(midx->idx->idb, &cur, midx->cursor_init, 0);
+  RCGO(rc, finish);
+  if (midx->cursor_init < IWKV_CURSOR_NEXT) { // IWKV_CURSOR_BEFORE_FIRST || IWKV_CURSOR_AFTER_LAST
+    rc = iwkv_cursor_to(cur, midx->cursor_step);
+    RCGO(rc, finish);
+  }
+  do {
+    if (step > 0) --step;
+    else if (step < 0) ++step;
+    if (!step) {
+      int64_t id;
+      bool matched;
+      rc = iwkv_cursor_copy_val(cur, &numbuf, IW_VNUMBUFSZ, &sz);
+      RCGO(rc, finish);
+      if (sz > IW_VNUMBUFSZ) {
+        rc = IWKV_ERROR_CORRUPTED;
+        iwlog_ecode_error3(rc);
+        break;
+      }
+      IW_READVNUMBUF64_2(numbuf, id);
+      RCGO(rc, finish);
+      step = 1;
+      rc = consumer(ctx, 0, id, &step, &matched, 0);
+      RCGO(rc, finish);
+    }
+  } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
+
+finish:
+  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+  if (cur) {
+    iwkv_cursor_close(&cur);
+  }
+  return consumer(ctx, 0, 0, 0, 0, rc);
+}
+
 iwrc jbi_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc;
-  JQP_QUERY *qp = ctx->ux->q->qp;
   struct _JBMIDX *midx = &ctx->midx;
+  if (!midx->expr1) {
+    return _jbi_consume_noxpr_scan(ctx, consumer);
+  }
+  JQP_QUERY *qp = ctx->ux->q->qp;
   JQVAL *jqval = jql_unit_to_jqval(qp->aux, midx->expr1->right, &rc);
   RCRET(rc);
   switch (midx->expr1->op->value) {

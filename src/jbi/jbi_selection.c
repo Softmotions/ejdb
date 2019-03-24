@@ -284,6 +284,7 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
           break;
       }
     }
+
     struct JQP_AUX *aux = ctx->ux->q->aux;
     struct _JBL_PTR *obp = aux->orderby_num ? aux->orderby_ptrs[0] : 0;
 
@@ -363,6 +364,34 @@ static int _jbi_idx_cmp(const void *o1, const void *o2) {
   return (d1->idx->ptr->cnt - d2->idx->ptr->cnt);
 }
 
+static struct _JBIDX *_jbi_select_index_for_orderby(JBEXEC *ctx) {
+  struct JQP_AUX *aux = ctx->ux->q->aux;
+  struct _JBL_PTR *obp = aux->orderby_ptrs[0];
+  assert(obp);
+  for (struct _JBIDX *idx = ctx->jbc->idx; idx; idx = idx->next) {
+    struct _JBL_PTR *ptr = idx->ptr;
+    if (obp->cnt != ptr->cnt) {
+      continue;
+    }
+    int i = 0;
+    for (; i < obp->cnt && !strcmp(ptr->n[i], obp->n[i]); ++i);
+    if (i == obp->cnt) {
+      memset(&ctx->midx, 0, sizeof(ctx->midx));
+      if (!(obp->op & 1)) { // Asc sort
+        ctx->cursor_init = IWKV_CURSOR_AFTER_LAST;
+        ctx->cursor_step = IWKV_CURSOR_PREV;
+      }
+      ctx->midx.idx = idx;
+      ctx->midx.orderby_support = true;
+      ctx->midx.cursor_init = ctx->cursor_init;
+      ctx->midx.cursor_step = ctx->cursor_step;
+      ctx->sorting = false;
+      return idx;
+    }
+  }
+  return 0;
+}
+
 iwrc jbi_selection(JBEXEC *ctx) {
   iwrc rc = 0;
   size_t snp = 0;
@@ -372,10 +401,14 @@ iwrc jbi_selection(JBEXEC *ctx) {
   ctx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
   ctx->cursor_step = IWKV_CURSOR_NEXT;
 
+  // Index not found:
+  if (aux->orderby_num) {
+    ctx->sorting = true;
+  }
   if (!(aux->qmode & JQP_QRY_NOIDX) && ctx->jbc->idx) { // we have indexes associated with collection
     rc = _jbi_collect_indexes(ctx, aux->expr, fctx, &snp);
     RCRET(rc);
-    if (snp) {
+    if (snp) { // Index selected
       qsort(fctx, snp, sizeof(fctx[0]), _jbi_idx_cmp);
       memcpy(&ctx->midx, &fctx[0], sizeof(ctx->midx));
       struct _JBMIDX *midx = &ctx->midx;
@@ -393,15 +426,12 @@ iwrc jbi_selection(JBEXEC *ctx) {
       } else if (aux->orderby_num) {
         ctx->sorting = true;
       }
-      goto finish;
+    } else if (ctx->sorting) { // Last chance to use index and avoid sorting
+      if (_jbi_select_index_for_orderby(ctx) && ctx->ux->log) {
+        iwxstr_cat2(ctx->ux->log, "[INDEX] SELECTED ");
+        _jbi_log_index_rules(ctx->ux->log, &ctx->midx);
+      }
     }
   }
-
-  // Index not found:
-  if (aux->orderby_num) {
-    ctx->sorting = true;
-  }
-
-finish:
   return rc;
 }

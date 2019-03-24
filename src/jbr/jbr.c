@@ -77,7 +77,7 @@
 //  <key> del     <collection> <id>
 //  <key> patch   <collection> <id> <patch json>
 //  <key> idx     <collection> <mode> <path>
-//  <key> nidx    <collection> <mode> <path>
+//  <key> rmi     <collection> <mode> <path>
 //  <key> rmc     <collection>
 //  <key> query   <collection> <query>
 //  <key> explain <collection> <query>
@@ -1135,7 +1135,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       "\n<key> del     <collection> <id>"
       "\n<key> patch   <collection> <id> <patch json>"
       "\n<key> idx     <collection> <mode> <path>"
-      "\n<key> nidx    <collection> <mode> <path>"
+      "\n<key> rmi     <collection> <mode> <path>"
       "\n<key> rmc     <collection>"
       "\n<key> query   <collection> <query>"
       "\n<key> explain <collection> <query>"
@@ -1190,7 +1190,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       wsop = JBWS_INFO;
     } else if (!strncmp("idx", data, pos)) {
       wsop = JBWS_IDX;
-    } else if (!strncmp("nidx", data, pos)) {
+    } else if (!strncmp("rmi", data, pos)) {
       wsop = JBWS_NIDX;
     } else if (!strncmp("rmc", data, pos)) {
       wsop = JBWS_REMOVE_COLL;
