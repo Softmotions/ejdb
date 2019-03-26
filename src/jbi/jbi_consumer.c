@@ -70,8 +70,13 @@ start: {
       rc = jbl_to_node(&jbl, &root, pool);
       RCGO(rc, finish);
       doc.node = root;
-
-      if (aux->apply) {
+      if (aux->qmode & JQP_QRY_APPLY_DEL) {
+        if (cur) {
+          rc = jb_cursor_del(ctx->jbc, cur, &jbl);
+        } else {
+          rc = jb_del(ctx->jbc, &jbl, id);
+        }
+      } else if (aux->apply) {
         struct _JBL sn = {0};
         rc = jql_apply(q, root, pool);
         RCGO(rc, finish);
@@ -83,17 +88,17 @@ start: {
           rc = jb_put(ctx->jbc, &sn, id);
         }
         binn_free(&sn.bn);
-      } else {
-        if (cur) {
-          rc = jb_cursor_set(ctx->jbc, cur, id, &jbl);
-        } else {
-          rc = jb_put(ctx->jbc, &jbl, id);
-        }
       }
       RCGO(rc, finish);
       if (aux->projection) {
         rc = jql_project(q, root);
         RCGO(rc, finish);
+      }
+    } else if (aux->qmode & JQP_QRY_APPLY_DEL) {
+      if (cur) {
+        rc = jb_cursor_del(ctx->jbc, cur, &jbl);
+      } else {
+        rc = jb_del(ctx->jbc, &jbl, id);
       }
     }
     if (!(aux->qmode & JQP_QRY_AGGREGATE)) {

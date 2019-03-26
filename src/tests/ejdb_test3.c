@@ -65,6 +65,7 @@ static void ejdb_test3_1() {
 
   // Q: /f/[b > 1]
   rc = ejdb_list3(db, "c1", "/f/[b > 1]", 0, log, &list);
+  //if (rc) iwlog_ecode_error3(rc);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b > 1' "
                                 "INIT: IWKV_CURSOR_GE"));

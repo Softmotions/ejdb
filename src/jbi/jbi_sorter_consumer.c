@@ -60,7 +60,10 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
   iwrc rc = jbl_to_node(jbl, &root, pool);
   RCRET(rc);
   doc->node = root;
-  if (aux->apply) {
+  if (aux->qmode & JQP_QRY_APPLY_DEL) {
+    rc = jb_del(ctx->jbc, jbl, doc->id);
+    RCRET(rc);
+  } else if (aux->apply) {
     struct _JBL sn = {0};
     rc = jql_apply(q, root, pool);
     RCRET(rc);
@@ -68,10 +71,8 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
     RCRET(rc);
     rc = jb_put(ctx->jbc, &sn, doc->id);
     binn_free(&sn.bn);
-  } else {
-    rc = jb_put(ctx->jbc, jbl, doc->id);
+    RCRET(rc);
   }
-  RCRET(rc);
   if (aux->projection) {
     rc = jql_project(q, root);
   }
@@ -111,7 +112,6 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
       .id = id,
       .raw = &jbl
     };
-
     if (aux->apply || aux->projection) {
       if (!pool) {
         pool = iwpool_create(jbl.bn.size * 2);
@@ -122,8 +122,10 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
       }
       rc = _jbi_scan_sorter_apply(pool, ctx, ux->q, &doc);
       RCGO(rc, finish);
+    } else if (aux->qmode & JQP_QRY_APPLY_DEL) {
+      rc = jb_del(ctx->jbc, &jbl, id);
+      RCGO(rc, finish);
     }
-
     if (!(aux->qmode & JQP_QRY_AGGREGATE)) {
       do {
         step = 1;

@@ -1263,10 +1263,8 @@ iwrc ejdb_remove(EJDB db, const char *coll, int64_t id) {
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
     IWRC(_jb_idx_record_remove(idx, id, &jbl), rc);
   }
-
   rc = iwkv_del(jbc->cdb, &key, 0);
   RCGO(rc, finish);
-
   _jb_meta_nrecs_update(jbc->db, jbc->dbid, -1);
   jbc->rnum -= 1;
 
@@ -1276,6 +1274,24 @@ finish:
   }
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
+}
+
+iwrc jb_del(JBCOLL jbc, JBL jbl, int64_t id) {
+  iwrc rc = 0;
+  IWKV_val key = {.data = &id, .size = sizeof(id)};
+  for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
+    IWRC(_jb_idx_record_remove(idx, id, jbl), rc);
+  }
+  rc = iwkv_del(jbc->cdb, &key, 0);
+  RCRET(rc);
+  _jb_meta_nrecs_update(jbc->db, jbc->dbid, -1);
+  jbc->rnum -= 1;
+  return rc;
+}
+
+iwrc jb_cursor_del(JBCOLL jbc, IWKV_cursor cur, JBL jbl) {
+  // TODO:
+  return IW_ERROR_NOT_IMPLEMENTED;
 }
 
 iwrc ejdb_ensure_collection(EJDB db, const char *coll) {
