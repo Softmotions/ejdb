@@ -127,7 +127,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
       }
       RCGO(rc, finish);
       step = 1;
-      rc = consumer(ctx, cur, id, &step, &matched, 0);
+      rc = consumer(ctx, 0, id, &step, &matched, 0);
       RCGO(rc, finish);
       if (!midx->expr1->prematched && matched) {
         // Further scan will always match main index expression
@@ -175,7 +175,7 @@ iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
       IW_READVNUMBUF64_2(numbuf, id);
       RCGO(rc, finish);
       step = 1;
-      rc = consumer(ctx, cur, id, &step, &matched, 0);
+      rc = consumer(ctx, 0, id, &step, &matched, 0);
       RCGO(rc, finish);
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));

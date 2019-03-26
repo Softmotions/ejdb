@@ -34,7 +34,7 @@ static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER 
         break;
       }
       step = 1;
-      rc = consumer(ctx, cur, id, &step, &matched, 0);
+      rc = consumer(ctx, 0, id, &step, &matched, 0);
       RCGO(rc, finish);
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
@@ -109,7 +109,7 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
           break;
         }
         step = 1;
-        rc = consumer(ctx, cur, id, &step, &matched, 0);
+        rc = consumer(ctx, 0, id, &step, &matched, 0);
         RCGO(rc, finish);
       }
     } while (step && !(rc = iwkv_cursor_to(cur, IWKV_CURSOR_PREV))); // !!! only one direction
@@ -179,7 +179,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
       }
       RCGO(rc, finish);
       step = 1;
-      rc = consumer(ctx, cur, id, &step, &matched, 0);
+      rc = consumer(ctx, 0, id, &step, &matched, 0);
       RCGO(rc, finish);
       if (!midx->expr1->prematched && matched) {
         // Further scan will always match main index expression
@@ -219,7 +219,7 @@ static iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consum
       rc = iwkv_cursor_copy_key(cur, 0, 0, &sz, &id);
       RCGO(rc, finish);
       step = 1;
-      rc = consumer(ctx, cur, id, &step, &matched, 0);
+      rc = consumer(ctx, 0, id, &step, &matched, 0);
       RCGO(rc, finish);
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
