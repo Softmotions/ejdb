@@ -1171,7 +1171,11 @@ const char *jql_first_anchor(JQL q) {
 }
 
 bool jql_has_apply(JQL q) {
-  return q->aux->apply;
+  return q->aux->apply || (q->aux->qmode & JQP_QRY_APPLY_DEL);
+}
+
+bool jql_has_apply_delete(JQL q) {
+  return (q->aux->qmode & JQP_QRY_APPLY_DEL);
 }
 
 bool jql_has_projection(JQL q) {

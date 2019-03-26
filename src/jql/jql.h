@@ -70,6 +70,8 @@ IW_EXPORT const char* jql_error(JQL q);
 
 IW_EXPORT bool jql_has_apply(JQL q);
 
+IW_EXPORT bool jql_has_apply_delete(JQL q);
+
 IW_EXPORT bool jql_has_projection(JQL q);
 
 IW_EXPORT bool jql_has_orderby(JQL q);
