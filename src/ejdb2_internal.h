@@ -175,6 +175,6 @@ bool jbi_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR *e
 iwrc jb_put(JBCOLL jbc, JBL jbl, int64_t id);
 iwrc jb_del(JBCOLL jbc, JBL jbl, int64_t id);
 iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
-iwrc jb_cursor_del(JBCOLL jbc, IWKV_cursor cur, JBL jbl);
+iwrc jb_cursor_del(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
 
 #endif

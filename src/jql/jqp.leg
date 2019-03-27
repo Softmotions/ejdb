@@ -77,16 +77,14 @@ static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
 %}
 
 QUERY = (e:FILTEREXPR { _jqp_set_filters_expr(yy, e); })
-        (_ a:APPLY { _jqp_set_apply(yy, a); } | APPLY_DEL { _jqp_set_apply_delete(yy); } )?
+        (_ '|' _ (a:APPLY { _jqp_set_apply(yy, a); } | "del" { _jqp_set_apply_delete(yy); }) )?
         (_ p:PROJECTION { _jqp_set_projection(yy, p); } )?
         (_ OPTS )?
         _ EOF { _jqp_finish(yy); }
 
 FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jqp_unit_join(yy, yytext); }
 
-APPLY      =  '|' _ "apply" __ ( PLACEHOLDER | OBJJ | ARRJ )
-
-APPLY_DEL = '|' _ 'del'
+APPLY      =  "apply" __ ( PLACEHOLDER | OBJJ | ARRJ )
 
 PROJECTION  = '|' _ (sn:PROJNODES { _jqp_unit_push(yy, sn); }
                     (_ <PROJOIN> { _jqp_string_push(yy, yytext, true); } _ n:PROJNODES { _jqp_push_joined_projection(yy, n); } )*)

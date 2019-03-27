@@ -72,7 +72,7 @@ start: {
       doc.node = root;
       if (aux->qmode & JQP_QRY_APPLY_DEL) {
         if (cur) {
-          rc = jb_cursor_del(ctx->jbc, cur, &jbl);
+          rc = jb_cursor_del(ctx->jbc, cur, id, &jbl);
         } else {
           rc = jb_del(ctx->jbc, &jbl, id);
         }
@@ -96,10 +96,11 @@ start: {
       }
     } else if (aux->qmode & JQP_QRY_APPLY_DEL) {
       if (cur) {
-        rc = jb_cursor_del(ctx->jbc, cur, &jbl);
+        rc = jb_cursor_del(ctx->jbc, cur, id, &jbl);
       } else {
         rc = jb_del(ctx->jbc, &jbl, id);
       }
+       RCGO(rc, finish);
     }
     if (!(aux->qmode & JQP_QRY_AGGREGATE)) {
       do {
