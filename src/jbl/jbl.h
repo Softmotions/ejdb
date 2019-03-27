@@ -28,6 +28,30 @@
  * SOFTWARE.
  *************************************************************************************************/
 
+/** @file
+ *
+ * @brief JSON serialization and patching routines.
+ *
+ * Supported standards:
+ *
+ *  - [JSON Patch](https://tools.ietf.org/html/rfc6902)
+ *  - [JSON Merge patch](https://tools.ietf.org/html/rfc7386)
+ *  - [JSON Path specification](https://tools.ietf.org/html/rfc6901)
+ *
+ * JSON document can be represented in three different formats:
+ *
+ *  - Plain JSON text.
+ *
+ *  - @ref JBL Memory compact binary format [BINN](https://github.com/liteserver/binn)
+ *    Used for JSON serialization but lacks of data modification flexibility.
+ *
+ *  - @ref JBL_NODE In memory JSON document representation as tree. Convenient for in-place
+ *    document modification and patching.
+ *
+ * Library function allows conversion of JSON document between above formats.
+ *
+ */
+
 #include <iowow/iwlog.h>
 #include <iowow/iwpool.h>
 #include <iowow/iwxstr.h>
@@ -35,6 +59,9 @@
 
 IW_EXTERN_C_START
 
+/**
+ * @brief JSON document in compact binary format [BINN](https://github.com/liteserver/binn)
+ */
 struct _JBL;
 typedef struct _JBL *JBL;
 
@@ -82,6 +109,9 @@ typedef enum {
   JBV_ARRAY,
 } jbl_type_t;
 
+/**
+ * @brief JSON document as in-memory tree (DOM tree).
+ */
 typedef struct _JBL_NODE {
   struct _JBL_NODE *next;
   struct _JBL_NODE *prev;
@@ -102,6 +132,9 @@ typedef struct _JBL_NODE {
   };
 } *JBL_NODE;
 
+/**
+ * @brief JSON Patch operation according to rfc6902
+ */
 typedef enum {
   JBP_ADD = 1,
   JBP_REMOVE,
@@ -111,6 +144,9 @@ typedef enum {
   JBP_TEST
 } jbp_patch_t;
 
+/**
+ * @brief JSON patch specification
+ */
 typedef struct _JBL_PATCH {
   jbp_patch_t op;
   const char *path;
@@ -120,7 +156,8 @@ typedef struct _JBL_PATCH {
 } JBL_PATCH;
 
 /**
- * @brief JSON pointer
+ * @brief JSON pointer rfc6901
+ * @see jbl_ptr_alloc()
  */
 typedef struct _JBL_PTR {
   uint64_t op;      /**< Opaque data associated with pointer */
@@ -129,42 +166,124 @@ typedef struct _JBL_PTR {
   char *n[1];       /**< Path nodes */
 } *JBL_PTR;
 
+/** Prints JSON to some oputput specified by `op` */
 typedef iwrc(*jbl_json_printer)(const char *data, int size, char ch, int count, void *op);
 
+/**
+ * @brief Create empty compact binary JSON object.
+ * @note `jblp` should be disposed by `jbl_destroy()`
+ * @param [out] jblp Pointer to be initialized by new object.
+ */
 IW_EXPORT iwrc jbl_create_empty_object(JBL *jblp);
 
+/**
+ * @brief Create empty compact binary JSON array.
+ * @note `jblp` should be disposed by `jbl_destroy()`
+ * @param [out] jblp Pointer to be initialized by new object.
+ */
 IW_EXPORT iwrc jbl_create_empty_array(JBL *jblp);
 
+/**
+ * @brief Initialize new `JBL` document by `binn` data from buffer.
+ * @note Created document will be allocated by `malloc()`
+ * and should be destroyed by `jbl_destroy()`.
+ *
+ * @param [out] jblp        Pointer initialized by created JBL document. Not zero.
+ * @param buf               Memory buffer with `binn` data. Not zero.
+ * @param bufsz             Size of `buf`
+ * @param keep_on_destroy   If true `buf` not will be freed by `jbl_destroy()`
+ */
 IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy);
 
-IW_EXPORT iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz);
-
-IW_EXPORT iwrc jbl_from_buf_keep_onstack2(JBL jbl, void *buf);
-
+/**
+ * @brief Constructs new `JBL` object from JSON string.
+ * @note `jblp` should be disposed by `jbl_destroy()`
+ * @param [out] jblp  Pointer initialized by created JBL document. Not zero.
+ * @param jsonstr     JSON string to be converted
+ */
 IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *jsonstr);
 
+/**
+ * @brief Get type of `jbl` value.
+ */
 IW_EXPORT jbl_type_t jbl_type(JBL jbl);
 
+/**
+ * @brief Get number of child elements in `jbl` container (object/array) or zero.
+ */
 IW_EXPORT size_t jbl_count(JBL jbl);
 
+/**
+ * @brief Get size of undelying data buffer of `jbl` value passed.
+ */
 IW_EXPORT size_t jbl_size(JBL jbl);
 
+/**
+ * @brief Interpret `jbl` value as `int32_t`.
+ */
 IW_EXPORT int32_t jbl_get_i32(JBL jbl);
 
+/**
+ * @brief Interpret `jbl` value as `int64_t`.
+ */
 IW_EXPORT int64_t jbl_get_i64(JBL jbl);
 
+/**
+ * @brief Interpret `jbl` value as `double` value.
+ */
 IW_EXPORT double jbl_get_f64(JBL jbl);
 
+/**
+ * @brief Interpret `jbl` value as `\0` terminated character array.
+ */
 IW_EXPORT char *jbl_get_str(JBL jbl);
 
+/**
+ * @brief Same as `jbl_get_str()` but copies at most `bufsz` into target `buf`.
+ */
 IW_EXPORT size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz);
 
+/**
+ * @brief Finds value in `jbl` document pointed by rfc6901 `path` and store it into `res`.
+ * @note `res` should be disposed by `jbl_destroy()`.
+ * @note If value is not fount `res` will be set to zero.
+ * @param jbl         JBL document. Not zero.
+ * @param path        rfc6901 JSON pointer. Not zero.
+ * @param [out] res   Output value holder
+ */
 IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
+/**
+ * @brief @brief Finds value in `jbl` document pointed by `jp` structure and store it into `res`.
+ * @note `res` should be disposed by `jbl_destroy()`.
+ * @note If value is not fount `res` will be set to zero.
+ * @see `jbl_ptr_alloc()`
+ * @param jbl         JBL document. Not zero.
+ * @param jp          JSON pointer.
+ * @param [out] res   Output value holder
+ */
 IW_EXPORT iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res);
 
+/**
+ * @brief Represent `jbl` document as raw data buffer.
+ * @note Caller do not require release `buf` explicitly.
+ *
+ * @param jbl         JBL document. Not zero.
+ * @param [out] buf   Pointer to data buffer. Not zero.
+ * @param [out] size  Pointer to data buffer size. Not zero.
+ */
 IW_EXPORT iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size);
 
+/**
+ * @brief Prints JBL document as JSON string.
+ * @see jbl_fstream_json_printer()
+ * @see jbl_xstr_json_printer()
+ * @see jbl_count_json_printer()
+ * @param jbl  JBL document.
+ * @param pt   JSON printer function pointer.
+ * @param op   User data for JSON printer function pointer.
+ * @param pf   JSON printing mode.
+ */
 IW_EXPORT iwrc jbl_as_json(JBL jbl, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
 IW_EXPORT iwrc jbl_fstream_json_printer(const char *data, int size, char ch, int count, void *op);
@@ -173,6 +292,11 @@ IW_EXPORT iwrc jbl_xstr_json_printer(const char *data, int size, char ch, int co
 
 IW_EXPORT iwrc jbl_count_json_printer(const char *data, int size, char ch, int count, void *op);
 
+/**
+ * @brief Destroys JBL document and releases its heap resources.
+ * @note Will set `jblp` to zero.
+ * @param jblp Pointer holder of JBL document. Not zero.
+ */
 IW_EXPORT void jbl_destroy(JBL *jblp);
 
 //--- JBL_NODE
@@ -210,7 +334,7 @@ typedef struct _JBN_VCTX {
   JBL_NODE root;  /**< Root node from which started visitor */
   void *op;       /**< Arbitrary opaque data */
   void *result;
-  bool terminate;
+  bool terminate; /**< It `true` document traversal will be terminated immediately. */
   IWPOOL *pool;   /**< Pool placeholder, initialization is responsibility of `JBN_VCTX` creator */
 } JBN_VCTX;
 

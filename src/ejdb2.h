@@ -120,7 +120,7 @@ typedef struct _EJDB_DOC {
                                    Based on [Binn](https://github.com/liteserver/binn) format.
                                    Not zero. */
   JBL_NODE node;              /**< JSON document as in-memory tree. Not zero only if query has `apply` or `projection` parts.
-   *
+
                                    @warning The lifespan of @ref EJDB_DOC.node will be valid only during the call of @ref EJDB_EXEC_VISITOR
                                             It is true in all cases EXCEPT:
                                             - @ref EJDB_EXEC.pool is not set by `ejdb_exec()` caller
@@ -466,8 +466,8 @@ IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ej
  *
  *   {
  *    "version": "2.0.0", // EJDB engine version
- *    "file": "db.jb",    // Path to database file
- *    "size": 16384,
+ *    "file": "db.jb",    // Path to storage file
+ *    "size": 16384,      // Storage file size in bytes
  *    "collections": [    // List of collections
  *     {
  *      "name": "c1",     // Collection name

@@ -66,6 +66,9 @@ typedef struct _JBLDRCTX {
   JBL_NODE root;
 } JBLDRCTX;
 
+iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz);
+iwrc jbl_from_buf_keep_onstack2(JBL jbl, void *buf);
+
 iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_string(const char *str, int len, jbl_json_printer pt, void *op, jbl_print_flags_t pf);

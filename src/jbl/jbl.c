@@ -154,6 +154,7 @@ iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
   if (!rc) {
     *jblp = jbl;
   }
+
 finish:
   iwpool_destroy(pool);
   return rc;
@@ -387,6 +388,7 @@ loc_float:
       rc = IW_ERROR_ASSERTION;
       break;
   }
+
 finish:
   return rc;
 #undef PT
@@ -774,7 +776,6 @@ iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor) {
   }
   return rc;
 }
-
 
 IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBL_VCTX *vctx, int lvl, const char *key, int idx) {
   JBL_PTR jp = vctx->op;
@@ -1175,7 +1176,6 @@ static uint32_t _jbl_node_count(JBL_NODE n) {
   }
   return ret;
 }
-
 
 static int _jbl_compare_objects(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
   int ret = 0;
@@ -1589,7 +1589,6 @@ iwrc jbl_patch(JBL jbl, const JBL_PATCH *p, size_t cnt) {
   return rc;
 }
 
-
 static iwrc _jbl_create_patch(JBL_NODE node, JBL_PATCH **pptr, int *cntp, IWPOOL *pool) {
   *pptr = 0;
   *cntp = 0;
@@ -1757,6 +1756,7 @@ iwrc jbl_merge_patch_node(JBL_NODE root, const char *patchjson, IWPOOL *pool) {
   if (res != root) {
     memcpy(root, res, sizeof(*root));
   }
+
 finish:
   return rc;
 }
