@@ -399,7 +399,7 @@ static void _jbr_on_delete(JBRCTX *rctx) {
   }
   EJDB db = rctx->jbr->db;
   http_s *req = rctx->req;
-  iwrc rc = ejdb_remove(db, rctx->collection, rctx->id);
+  iwrc rc = ejdb_del(db, rctx->collection, rctx->id);
   if (rc == IWKV_ERROR_NOTFOUND) {
     _jbr_http_error_send(req, 404);
     return;
@@ -884,7 +884,7 @@ finish:
 }
 
 static void _jbr_ws_del_document(JBWCTX *wctx, const char *key, const char *coll, int64_t id) {
-  iwrc rc = ejdb_remove(wctx->db, coll, id);
+  iwrc rc = ejdb_del(wctx->db, coll, id);
   if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
     return;

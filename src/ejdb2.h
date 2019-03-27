@@ -145,7 +145,7 @@ IW_EXPORT WUR iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *oid
 
 IW_EXPORT WUR iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp);
 
-IW_EXPORT iwrc ejdb_remove(EJDB db, const char *coll, int64_t id);
+IW_EXPORT iwrc ejdb_del(EJDB db, const char *coll, int64_t id);
 
 IW_EXPORT iwrc ejdb_remove_collection(EJDB db, const char *coll);
 

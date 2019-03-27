@@ -82,7 +82,7 @@ void ejdb_test1_2() {
   jbl_destroy(&at);
   jbl_destroy(&jbl);
 
-  rc = ejdb_remove(db, "foocoll", llv);
+  rc = ejdb_del(db, "foocoll", llv);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = ejdb_get(db, "foocoll", llv, &jbl);

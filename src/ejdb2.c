@@ -1245,7 +1245,7 @@ finish:
   return rc;
 }
 
-iwrc ejdb_remove(EJDB db, const char *coll, int64_t id) {
+iwrc ejdb_del(EJDB db, const char *coll, int64_t id) {
   int rci;
   JBCOLL jbc;
   struct _JBL jbl;

@@ -797,7 +797,7 @@ static void ejdb_test3_4() {
   iwxstr_clear(log);
 
   // Remove last
-  rc =  ejdb_remove(db, "a3", docId);
+  rc =  ejdb_del(db, "a3", docId);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   // G2
