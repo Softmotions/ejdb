@@ -3,7 +3,6 @@
 #define EJDB2_H
 
 #include <iowow/iwkv.h>
-#include "jbl.h"
 #include "jql.h"
 
 IW_EXTERN_C_START
@@ -79,44 +78,65 @@ typedef struct _EJDB_OPTS {
                                      Default 64Kb, min: 16Kb */
 } EJDB_OPTS;
 
+/**
+ * @brief Document representation as result of query execution.
+ * @see ejdb_exec()
+ */
 typedef struct _EJDB_DOC {
-  int64_t id;
-  JBL raw;
-  JBL_NODE node;
-  struct _EJDB_DOC *next;
-  struct _EJDB_DOC *prev;
+  int64_t id;                 /**< Document ID. Not zero. */
+  JBL raw;                    /**< JSON document in compact binary form.
+                                   Based on [Binn](https://github.com/liteserver/binn) format.
+                                   Not zero. */
+  JBL_NODE node;              /**< JSON document as in-memory tree. Not zero only if query has `apply` or `projection` parts.
+                                   @warning The lifespan of @ref EJDB_DOC.node will be valid only during the call of @ref EJDB_EXEC_VISITOR
+                                            It is true in all cases EXCEPT:
+                                            - @ref EJDB_EXEC.pool is not set by `ejdb_exec()` caller
+                                            - One of `ejdb_list()` methods used */
+  struct _EJDB_DOC *next;     /**< Reference to next document in result list or zero.
+                                   Makes sense only for `ejdb_list()` calls. */
+  struct _EJDB_DOC *prev;     /**< Reference to the previous document in result list or zero.
+                                   Makes sense only for `ejdb_list()` calls. */
 } *EJDB_DOC;
 
+/**
+ * @brief Query result as list.
+ * Used as result of `ejdb_list()` query functions.
+ *
+ * @warning Getting result of query as list can be very memory consuming for large collections.
+ *          Consider use of `ejdb_exec()` or set `limit` for query.
+ */
 typedef struct _EJDB_LIST {
-  EJDB db;
-  JQL q;
-  EJDB_DOC first;
-  IWPOOL *pool;
+  EJDB db;              /**< EJDB storage used for query execution. Not zero. */
+  JQL q;                /**< Query executed. Not zero. */
+  EJDB_DOC first;       /**< First document in result list. Zero if result set is empty. */
+  IWPOOL *pool;         /**< Memory pool used to store list of documents */
 } *EJDB_LIST;
-
-typedef enum {
-  EJDB_VCTL_OK = 0,
-  EJDB_VCTL_STOP = 1
-} ejdb_vctl_cmd_t;
 
 struct _EJDB_EXEC;
 
 /**
+ * @brief Visitor for matched documents during query execution.
+ *
  * @param ctx Visitor context
  * @param doc Data in `doc` is valid only during execution of this method, to keep a data for farther
  *        processing you need to copy it.
  * @param step [out] Move forward cursor to given number of steps, `1` by default.
  */
 typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step);
+
+/**
+ * @brief Query execution context.
+ * Passed to `ejdb_exec()` to execute database query.
+ */
 typedef struct _EJDB_EXEC {
-  EJDB db;
-  JQL q;
-  EJDB_EXEC_VISITOR visitor;
-  void *opaque;
-  int64_t skip;
-  int64_t limit;
-  int64_t cnt;
-  IWXSTR *log;
+  EJDB db;                    /**< EJDB database object. Required. */
+  JQL q;                      /**< Query object to be executed. Required. */
+  EJDB_EXEC_VISITOR visitor;  /**< Optional visitor to handle documents in result set. */
+  void *opaque;               /**< Optional user data passed to visitor functions. */
+  int64_t skip;               /**< Number of records to skip. Takes precedence over `skip` encoded in query. */
+  int64_t limit;              /**< Result set size limitation. Zero means no restrictions. Takes precedence over `skip` encoded in query. */
+  int64_t cnt;                /**< Number of result documents processed by `visitor` */
+  IWXSTR *log;                /**< Optional query execution log buffer. If set major query execution/index selection steps will be logged into */
   IWPOOL *pool;               /**< Optional pool which can be used in query apply  */
 } EJDB_EXEC;
 
