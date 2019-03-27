@@ -833,6 +833,95 @@ static void ejdb_test3_4() {
   iwpool_destroy(pool);
 }
 
+void ejdb_test3_5() {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test3_5.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+  EJDB db;
+  EJDB_LIST list = 0;
+  char dbuf[1024];
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  for (int i = 1; i <= 10; ++i) {
+    snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":%d},\"n\":%d}", i, i);
+    rc = put_json(db, "c1", dbuf);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+  }
+
+  rc = ejdb_list3(db, "c1", "/f/[b = 2] | del", 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  int i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":2},\"n\":2}");
+  }
+  CU_ASSERT_EQUAL_FATAL(i, 1);
+  ejdb_list_destroy(&list);
+
+  // Check if /f/[b = 2] has been deleted
+  rc = ejdb_list3(db, "c1", "/f/[b = 2]", 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NULL(list->first);
+  ejdb_list_destroy(&list);
+
+  // Ensure index on /f/b
+  rc = ejdb_ensure_index(db, "c2", "/f/b", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list3(db, "c1", "/f/[b = 3] | del", 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  ejdb_list_destroy(&list);
+
+  // Check if /f/[b = 3] has been deleted
+  rc = ejdb_list3(db, "c1", "/f/[b = 3]", 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NULL(list->first);
+  ejdb_list_destroy(&list);
+
+  rc = ejdb_list3(db, "c1", "/* | asc /f/b", 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  i = 0;
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    if (i == 0) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":1},\"n\":1}");
+    } else if (i == 1) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":4},\"n\":4}");
+    } else if (i == 7) {
+      CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":{\"b\":10},\"n\":10}");
+    }
+  }
+  ejdb_list_destroy(&list);
+  CU_ASSERT_EQUAL_FATAL(i, 8);
+
+  // Remove rest of elements
+  rc = ejdb_list3(db, "c1", "/* | del | desc /f/b", 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  ejdb_list_destroy(&list);
+
+  // Check coll is empty
+  rc = ejdb_list3(db, "c1", "/*", 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NULL(list->first);
+  ejdb_list_destroy(&list);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_destroy(xstr);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -845,7 +934,8 @@ int main() {
     (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
+    (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5))
   ) {
     CU_cleanup_registry();
     return CU_get_error();
