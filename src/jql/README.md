@@ -174,7 +174,7 @@ k @family/* | limit 10
 
 #### Get documents where specific json path exists
 
-Exist array element at index `1` in `likes` array within a pets object
+Exists element at index `1` in `likes` array within a `pets` sub-object
 ```
 > k query family /pets/*/likes/1
 < k     1       {"firstName":"John"...
