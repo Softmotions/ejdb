@@ -1665,8 +1665,9 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
     RCGO(rc, finish);
     rc = _jbl_patch(jbl, p, cnt, pool);
   } else if (patch->type == JBV_OBJECT) {
-    // FIXME: Merge patch
+    // FIXME: Merge patch not implemented
     //_jbl_merge_patch_node()
+    rc = IW_ERROR_NOT_IMPLEMENTED;
   } else {
     rc = JBL_ERROR_PATCH_INVALID;
   }
