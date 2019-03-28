@@ -187,6 +187,7 @@
       <File Name="src/util/utf8proc.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="jql">
+      <File Name="src/jql/README.md"/>
       <File Name="src/jql/jql_internal.h"/>
       <VirtualDirectory Name="inc">
         <File Name="src/jql/inc/jqpx.c"/>
