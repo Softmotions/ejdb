@@ -73,7 +73,7 @@ PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 ## JQL intro
 
 Lets play with some very basic data and queries.
-For simplicity we will use here ejdb websocket network API which provides us kind of interactive CLI.
+For simplicity we will use here ejdb websocket network API which provides a kind of interactive CLI.
 The same job can be done using pure `C` API (`ejdb2.h`, `jql.h`).
 
 NOTE: Look into [JQL test cases](./tests/jql_test1.c) for more examples.
