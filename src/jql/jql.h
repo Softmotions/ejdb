@@ -28,6 +28,15 @@
  * SOFTWARE.
  *************************************************************************************************/
 
+ /** @file
+ *
+ * @brief EJDB query construction API.
+ *
+ * EJDB query syntax inpired by ideas behind XPath and Unix shell pipes.
+ *
+ *
+ */
+
 #include "jbl.h"
 #include <iowow/iwlog.h>
 
@@ -57,7 +66,7 @@ typedef enum {
 typedef uint8_t jql_create_mode_t;
 
 /// Do not destroy query object in `jql_create()` on query parsing error,
-/// convenient for parsing error reportin by `jql_error()`
+/// convenient for parsing error reporting using `jql_error()`
 #define JQL_KEEP_QUERY_ON_PARSE_ERROR     ((jql_create_mode_t) 0x01U)
 
 /// Do not print query parsing errors to `stderr`

@@ -133,8 +133,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>cmake-build-Debug/</Path>
       <Path>build/</Path>
+      <Path>cmake-build-Debug/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -235,7 +235,6 @@
         <File Name="src/jql/tests/jql_test1.c"/>
         <File Name="src/jql/tests/CMakeLists.txt"/>
       </VirtualDirectory>
-      <File Name="src/jql/proposals.md"/>
       <File Name="src/jql/jqp.h"/>
       <File Name="src/jql/jqp.c"/>
       <File Name="src/jql/jql.h"/>
