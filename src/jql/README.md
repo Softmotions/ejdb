@@ -273,7 +273,7 @@ It may be useful in queries with dynamic placeholders (C API):
 /[[* = :keyName] = :keyValue]
 ```
 
-## JQL Updating and deleting documents
+## JQL data modification
 
 `APPLY` section responsible for modification of documents content.
 
@@ -297,6 +297,14 @@ Set the street name in `address`
 ```
 /[firstName=John] | apply [{"op":"replace", "path":"/address/street", "value":"Fifth Avenue"}]
 ```
+
+Add `Neo` fish to the set of John's `pets`
+```
+/[firstName=John]
+| apply [{"op":"add", "path":"/pets/-", "value": {"name":"Neo", "kind":"fish"}}]
+```
+
+### Removing documents
 
 Use `del` keyword to remove matched elements from collection:
 ```
