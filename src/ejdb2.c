@@ -1174,6 +1174,9 @@ iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id) {
   iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
   rc = _jb_put_impl(jbc, jbl, id);
+  if (!rc && jbc->id_seq < id) {
+    jbc->id_seq = id;
+  }
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
