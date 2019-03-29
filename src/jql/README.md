@@ -15,7 +15,7 @@ Notation used below is based on SQL syntax description:
 Rule | Description
 --- | ---
 `' '` | String in single quotes denotes unquoted string literal as part of query.
-<nobr>`{ a | b }`</nobr> | Curly brackets enclose two or more required alternative choices, separated by vertical bars.
+<code>`{ a | b }`</code> | Curly brackets enclose two or more required alternative choices, separated by vertical bars.
 <nobr>`[ ]`</nobr> | Square brackets indicate an optional element or clause. Multiple elements or clauses are separated by vertical bars.
 <nobr>`|`</nobr> | Vertical bars separate two or more alternative syntax elements.
 <nobr>`...`</nobr> |  Ellipses indicate that the preceding element can be repeated. The repetition is unlimited unless otherwise indicated.
