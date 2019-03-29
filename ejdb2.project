@@ -133,8 +133,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>build/</Path>
       <Path>cmake-build-Debug/</Path>
+      <Path>build/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -275,7 +275,6 @@
   </VirtualDirectory>
   <VirtualDirectory Name="resources">
     <File Name="win64-tc.cmake"/>
-    <File Name="README.md"/>
     <File Name="hints.txt"/>
     <File Name=".editorconfig"/>
     <File Name=".astylerc"/>
@@ -303,7 +302,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="$(IntermediateDirectory)/jbs" IntermediateDirectory="$(ProjectPath)/build/src/jbs" Command="$(OutputFile)" CommandArguments="-a qwqwqw -t" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="$(IntermediateDirectory)/jbl_test1" IntermediateDirectory="$(ProjectPath)/build/src/jbl/tests" Command="$(OutputFile)" CommandArguments="-a qwqwqw -t" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake">-G Ninja -DCMAKE_BUILD_TYPE=Debug</BuildSystem>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>

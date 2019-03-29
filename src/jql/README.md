@@ -285,7 +285,7 @@ JSON patch specs conformed to `rfc7386` or `rfc6902` specifications followed by 
 
 Add `address` object to matched document
 ```
-/[firstName=John] | apply {"address":{"city":"New York"}, "street":""}
+/[firstName=John] | apply {"address":{"city":"New York", "street":""}}
 ```
 
 If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise it should be array which denotes `rfc6902` JSON patch. Placegolders also supported by `apply` section.
