@@ -890,6 +890,7 @@ void jbl_node_reset_data(JBL_NODE node) {
 static void _jbl_add_item(JBL_NODE parent, JBL_NODE node) {
   assert(parent && node);
   node->next = 0;
+  node->prev = 0;
   node->parent = parent;
   if (parent->child) {
     JBL_NODE prev = parent->child->prev;
@@ -918,17 +919,29 @@ void jbl_add_item(JBL_NODE parent, JBL_NODE node) {
 }
 
 IW_INLINE void _jbl_remove_item(JBL_NODE parent, JBL_NODE child) {
-  if (child->next) {
-    child->next->prev = child->prev;
-  }
-  if (child->prev && child->prev->next) {
-    child->prev->next = child->next;
-  }
-  if (parent->child->prev == child) {
+  assert(parent->child);
+  if (parent->child == child) {                 // First element
+    if (child->next) {
+      parent->child = child->next;
+      parent->child->prev = child->prev;
+      if (child->prev) {
+        child->prev->next = 0;
+      }
+    } else {
+      parent->child = 0;
+    }
+  } else if (parent->child->prev == child) {    // Last element
     parent->child->prev = child->prev;
-  }
-  if (parent->child == child) {
-    parent->child = child->next;
+    if (child->prev) {
+      child->prev->next = 0;
+    }
+  } else { // Somewhere in middle
+     if (child->next) {
+       child->next->prev = child->prev;
+     }
+     if (child->prev) {
+       child->prev->next = child->next;
+     }
   }
   child->next = 0;
   child->prev = 0;
@@ -1718,6 +1731,7 @@ static JBL_NODE _jbl_merge_patch_node(JBL_NODE target, JBL_NODE patch, IWPOOL *p
     }
     patch = patch->child;
     while (patch) {
+      JBL_NODE patch_next = patch->next;
       if (patch->type == JBV_NULL) {
         JBL_NODE node = target->child;
         while (node) {
@@ -1740,7 +1754,7 @@ static JBL_NODE _jbl_merge_patch_node(JBL_NODE target, JBL_NODE patch, IWPOOL *p
           _jbl_add_item(target, _jbl_merge_patch_node(0, patch, pool, rcp));
         }
       }
-      patch = patch->next;
+      patch = patch_next;
     }
     return target;
   } else {

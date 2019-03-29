@@ -558,6 +558,13 @@ void jbl_test1_7() {
   IWXSTR *xstr = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
 
+  // #233
+  apply_merge_patch("{'n':'nv'}",
+                    "{'a':{'c':'v','d':'k'}}",
+                    "{'n':'nv','a':{'c':'v','d':'k'}}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+
   apply_merge_patch("{'a':'b'}",
                     "{'a':'c'}",
                     "{'a':'c'}", xstr, &rc);
