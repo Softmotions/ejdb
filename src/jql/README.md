@@ -1,28 +1,26 @@
 # JQL
 
 EJDB query (JQL) syntax inpired by ideas behind XPath and Unix shell pipes.
-It designed to easy filter collections of JSON documents.
+It designed to easy query collections of JSON documents.
 
 ## JQL grammar
 
-Formal JQL grammar is part of project with parser created by
-[peg/leg — recursive-descent parser generators for C](http://piumarta.com/software/peg/)
-
-https://github.com/Softmotions/ejdb/blob/ejdb2/src/jql/jqp.leg
+JQL parser created created by
+[peg/leg — recursive-descent parser generators for C](http://piumarta.com/software/peg/) Here is the formal parser grammar: https://github.com/Softmotions/ejdb/blob/ejdb2/src/jql/jqp.leg
 
 ## Non formal JQL grammar adapted for brief overview
 
-Notation is based on SQL syntax description:
+Notation used below is based on SQL syntax description:
 
 Rule | Description
 --- | ---
-`' '` | String in single quotes denotes unquoted string literal a part of query.
+`' '` | String in single quotes denotes unquoted string literal as part of query.
 <nobr>`{ a | b }`</nobr> | Curly brackets enclose two or more required alternative choices, separated by vertical bars.
 <nobr>`[ ]`</nobr> | Square brackets indicate an optional element or clause. Multiple elements or clauses are separated by vertical bars.
 <nobr>`|`</nobr> | Vertical bars separate two or more alternative syntax elements.
 <nobr>`...`</nobr> |  Ellipses indicate that the preceding element can be repeated. The repetition is unlimited unless otherwise indicated.
 <nobr>`( )`</nobr> | Parentheses are grouping symbols.
-Unquoted lower case word | Denotes semantic of some query part. Eg: `placeholder_name` - name of any placeholder.
+Unquoted word in lower case| Denotes semantic of some query part. For example: `placeholder_name` - name of any placeholder.
 ```
 QUERY = FILTERS [ '|' APPLY ] [ '|' PROJECTIONS ] [ '|' OPTS ];
 
@@ -70,13 +68,12 @@ PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 * `*` in context of `NODE_EXPR_LEFT`: Key name at specific level.
 * `**` in context of `NODE_EXPR_LEFT`: Nested array value of array element under specific key.
 
-## JQL intro
+## JQL quick introduction
 
 Lets play with some very basic data and queries.
-For simplicity we will use here ejdb websocket network API which provides a kind of interactive CLI.
-The same job can be done using pure `C` API (`ejdb2.h`, `jql.h`).
+For simplicity we will use ejdb websocket network API which provides us a kind of interactive CLI. The same job can be done using pure `C` API too (`ejdb2.h jql.h`).
 
-NOTE: Look into [JQL test cases](./tests/jql_test1.c) for more examples.
+NOTE: Take a look into [JQL test cases](./tests/jql_test1.c) for more examples.
 
 ```json
 {
@@ -84,7 +81,7 @@ NOTE: Look into [JQL test cases](./tests/jql_test1.c) for more examples.
   "lastName": "Doe",
   "age": 28,
   "pets": [
-    {"name": "Rex", "kind": "dog", "likes": ["bones", "jumping", "toys"]},
+    {"name": "Rexy rex", "kind": "dog", "likes": ["bones", "jumping", "toys"]},
     {"name": "Grenny", "kind": "parrot", "likes": ["green color", "night", "toys"]}
   ]
 }
@@ -92,7 +89,7 @@ NOTE: Look into [JQL test cases](./tests/jql_test1.c) for more examples.
 Save json as `sample.json` then upload it the `family` collection:
 
 ```sh
-# Start server with security access token
+# Start HTTP/WS server protected by some access token
 ./jbs -a 'myaccess01'
 8 Mar 16:15:58.601 INFO: HTTP/WS endpoint at localhost:9191
 ```
@@ -103,7 +100,7 @@ Server can be accessed using HTTP or Websocket endpoint. [More info](../jbr/READ
 curl -d '@sample.json' -H'X-Access-Token:myaccess01' -X POST http://localhost:9191/family
 ```
 
-We can play around using [wscat](https://www.npmjs.com/package/@softmotions/wscat) websocket client.
+We can play around using interactive [wscat](https://www.npmjs.com/package/@softmotions/wscat) websocket client.
 
 ```sh
 wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
@@ -151,9 +148,7 @@ connected (press CTRL+C to quit)
 }
 ```
 
-Note about the `k` prefix before every command; It is an arbitrary key designated to identify particular websocket request,
-this key will be returned with response to this request, as result we can distinct reponses
-for different requests over websocket protocol. [More info](../jbr/README.md)
+Note about the `k` prefix before every command; It is an arbitrary key designated to identify particular websocket request, this key will be returned with response to request and allows client to identify response for his request. [More info](../jbr/README.md)
 
 Query command over websocket has the following format:
 
@@ -161,7 +156,7 @@ Query command over websocket has the following format:
 <key> query <collection> <query>
 ```
 
-So we will consider only `<query>` part here.
+So we will consider only `<query>` part in this document.
 
 ### Get all elements in collection
 ```
@@ -217,7 +212,7 @@ Below is a set of self explaining queries:
 
 /pets/*/[name = "Rexy rex" or name = Grenny]
 ```
-Note about quotes around words with blanks.
+Note about quotes around words with spaces.
 
 Get all documents where owner `age` greater than `20` and have some pet who like `bones` or `toys`
 ```
@@ -225,7 +220,7 @@ Get all documents where owner `age` greater than `20` and have some pet who like
 ```
 Here `**` denotes some element in `likes` array.
 
-`ni` is an inverse operator to `in`.
+`ni` is the inverse operator to `in`.
 Get documents where `bones` somewhere in `likes` array.
 ```
 /pets/*/[likes ni "bones"]
@@ -277,6 +272,8 @@ It may be useful in queries with dynamic placeholders (C API):
 ```
 /[[* = :keyName] = :keyValue]
 ```
+
+
 
 
 
