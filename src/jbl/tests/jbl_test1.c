@@ -439,6 +439,13 @@ void jbl_test1_6() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_clear(xstr);
 
+  // A.5.1 #232
+  apply_patch("{'a':{'c':'N','s':'F'}}",
+              "[{'op':'replace', 'path':'/a/s', 'value':'A'}]",
+              "{'a':{'c':'N','s':'A'}}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+
   // A.6.  Moving a Value
   apply_patch("{'foo': {'bar': 'baz','waldo': 'fred'},'qux': {'corge': 'grault'}}",
               "[{ 'op': 'move', 'from': '/foo/waldo', 'path': '/qux/thud' }]",

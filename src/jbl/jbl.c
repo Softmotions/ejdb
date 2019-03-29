@@ -918,14 +918,17 @@ void jbl_add_item(JBL_NODE parent, JBL_NODE node) {
 }
 
 IW_INLINE void _jbl_remove_item(JBL_NODE parent, JBL_NODE child) {
-  if (parent->child == child) {
-    parent->child = child->next;
-  }
   if (child->next) {
     child->next->prev = child->prev;
   }
   if (child->prev && child->prev->next) {
     child->prev->next = child->next;
+  }
+  if (parent->child->prev == child) {
+    parent->child->prev = child->prev;
+  }
+  if (parent->child == child) {
+    parent->child = child->next;
   }
   child->next = 0;
   child->prev = 0;
