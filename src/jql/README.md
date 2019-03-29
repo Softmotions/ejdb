@@ -273,17 +273,17 @@ It may be useful in queries with dynamic placeholders (C API):
 /[[* = :keyName] = :keyValue]
 ```
 
-## JQL Apply part
+## JQL Updating and deleting documents
 
-`APPLY` section responsible for document data modification.
+`APPLY` section responsible for modification of documents content.
 
 ```
-APPLY = 'apply' { PLACEHOLDER | json_object | json_array  } | 'del'
+APPLY = ('apply' { PLACEHOLDER | json_object | json_array  }) | 'del'
 ```
 
-JSON patch specs conformed to `rfc7386` or `rfc6902` specifications followed by `apply` keyword.
+JSON patch specs conformed to `rfc7386` or `rfc6902` specifications followed after `apply` keyword.
 
-Add `address` object to matched document
+Let's add `address` object to all matched document
 ```
 /[firstName=John] | apply {"address":{"city":"New York", "street":""}}
 ```
@@ -298,10 +298,22 @@ Set the street name in `address`
 /[firstName=John] | apply [{"op":"replace", "path":"/address/street", "value":"Fifth Avenue"}]
 ```
 
+Use `del` keyword to remove matched elements from collection:
+```
+/FILTERS | del
+```
 
+Example:
+```
+> k add family {"firstName":"Jack"}
+< k     2
+> k query family /[firstName re "Ja.*"]
+< k     2       {"firstName":"Jack"}
 
-
-
+# Remove selected elements from collection
+> k query family /[firstName=Jack] | del
+< k     2       {"firstName":"Jack"}
+```
 
 
 
