@@ -148,7 +148,7 @@ connected (press CTRL+C to quit)
 }
 ```
 
-Note about the `k` prefix before every command; It is an arbitrary key designated to identify particular websocket request, this key will be returned with response to request and allows client to identify response for his request. [More info](../jbr/README.md)
+Note about the `k` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](../jbr/README.md)
 
 Query command over websocket has the following format:
 
@@ -272,6 +272,32 @@ It may be useful in queries with dynamic placeholders (C API):
 ```
 /[[* = :keyName] = :keyValue]
 ```
+
+## JQL Apply part
+
+`APPLY` section responsible for document data modification.
+
+```
+APPLY = 'apply' { PLACEHOLDER | json_object | json_array  } | 'del'
+```
+
+JSON patch specs conformed to `rfc7386` or `rfc6902` specifications followed by `apply` keyword.
+
+Add `address` object to matched document
+```
+/[firstName=John] | apply {"address":{"city":"New York"}, "street":""}
+```
+
+If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise it should be array which denotes `rfc6902` JSON patch. Placegolders also supported by `apply` section.
+```
+/* | apply :?
+```
+
+Set the street name in `address`
+```
+/[firstName=John] | apply [{"op":"replace", "path":"/address/street", "value":"Fifth Avenue"}]
+```
+
 
 
 
