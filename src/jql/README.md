@@ -1,7 +1,7 @@
 # JQL
 
 EJDB query (JQL) syntax inpired by ideas behind XPath and Unix shell pipes.
-It designed to easy query collections of JSON documents.
+It designed for easy querying and updating sets of JSON documents.
 
 ## JQL grammar
 
