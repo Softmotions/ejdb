@@ -15,11 +15,11 @@ Notation used below is based on SQL syntax description:
 Rule | Description
 --- | ---
 `' '` | String in single quotes denotes unquoted string literal as part of query.
-<code>`{ a | b }`</code> | Curly brackets enclose two or more required alternative choices, separated by vertical bars.
-<nobr>`[ ]`</nobr> | Square brackets indicate an optional element or clause. Multiple elements or clauses are separated by vertical bars.
-<nobr>`|`</nobr> | Vertical bars separate two or more alternative syntax elements.
-<nobr>`...`</nobr> |  Ellipses indicate that the preceding element can be repeated. The repetition is unlimited unless otherwise indicated.
-<nobr>`( )`</nobr> | Parentheses are grouping symbols.
+<code>{ a &#124; b }</code> | Curly brackets enclose two or more required alternative choices, separated by vertical bars.
+<code>[ ]</code> | Square brackets indicate an optional element or clause. Multiple elements or clauses are separated by vertical bars.
+<code>&#124;</code> | Vertical bars separate two or more alternative syntax elements.
+<code>...</code> |  Ellipses indicate that the preceding element can be repeated. The repetition is unlimited unless otherwise indicated.
+<code>( )</code> | Parentheses are grouping symbols.
 Unquoted word in lower case| Denotes semantic of some query part. For example: `placeholder_name` - name of any placeholder.
 ```
 QUERY = FILTERS [ '|' APPLY ] [ '|' PROJECTIONS ] [ '|' OPTS ];
