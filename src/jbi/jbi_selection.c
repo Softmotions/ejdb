@@ -259,7 +259,7 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
   if (en->type == JQP_EXPR_NODE_TYPE) {
     struct JQP_EXPR_NODE *cn = en->chain;
     for (; cn; cn = cn->next) {
-      if (en->join && (en->join->value == JQP_JOIN_OR || en->join->negate)) {
+      if (cn->join && (cn->join->value == JQP_JOIN_OR || cn->join->negate)) {
         return 0;
       }
     }
