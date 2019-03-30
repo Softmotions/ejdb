@@ -1,3 +1,37 @@
 # HTTP REST/Websocket API endpoint
 
-TODO
+EJDB engine provides the ability to start a separate HTTP/Websocket endpoint worker exposing
+network API for data quering and modifications.
+
+The easiest way to expose database over the network is using the standalone `jbs` server. (Of course if you plan to avoid `C API` integration).
+
+## jbs server
+```
+jbs -h
+
+EJDB 2.0.0 standalone REST/Websockets server. http://ejdb.org
+
+ --file <>	Database file path. Default: db.jb
+ -f <>    	(same as --file)
+ --port ##	HTTP port number listen to. Default: 9191
+ -p ##    	(same as --port)
+ --bind <>	Address server listen. Default: localhost
+ -b <>    	(same as --bind)
+ --access <>	Server access token matched to 'X-Access-Token' HTTP header value
+ -a <>      	(same as --access)
+ --trunc   	Cleanup existing database file on open
+ -t        	(same as --trunc)
+ --wal   	Use write ahead logging (WAL). Must be set for data durability.
+ -w      	(same as --wal)
+
+Advanced options
+ --sbz ##	Max sorting buffer size. If exeeded, an overflow temp file for data will created. Default: 16777216, min: 1048576
+ --dsz ##	Initial size of buffer to process/store document on queries. Preferable average size of document. Default: 65536, min: 16384
+
+Use any of the following input formats:
+	-arg <value>	-arg=<value>	-arg<value>
+
+Use the -h, -help or -? to get this information again.
+```
+
+

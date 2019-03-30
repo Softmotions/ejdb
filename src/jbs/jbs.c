@@ -5,6 +5,11 @@
 EJDB db;
 EJDB_OPTS opts;
 
+
+
+//uint32_t document_buffer_sz;  /**< Initial size of buffer to process/store document during select.
+//                                     Default 64Kb, min: 16Kb */
+
 int main(int argc, char const *argv[]) {
   iwrc rc = 0;
   fio_cli_start(argc, argv, 0, 0,
@@ -13,13 +18,22 @@ int main(int argc, char const *argv[]) {
                 FIO_CLI_INT("--port -p HTTP port number listen to. Default: 9191"),
                 FIO_CLI_STRING("--bind -b Address server listen. Default: localhost"),
                 FIO_CLI_STRING("--access -a Server access token matched to 'X-Access-Token' HTTP header value"),
-                FIO_CLI_BOOL("--trunc -t Truncate existing database file on open"),
-                FIO_CLI_BOOL("--wal -w Use write ahead logging (WAL)")
+                FIO_CLI_BOOL("--trunc -t Cleanup existing database file on open"),
+                FIO_CLI_BOOL("--wal -w Use write ahead logging (WAL). Must be set for data durability."),
+                FIO_CLI_PRINT_HEADER("Advanced options"),
+                FIO_CLI_INT("--sbz Max sorting buffer size. If exeeded, an overflow temp file for data will created. "
+                            "Default: 16777216, min: 1048576"),
+                FIO_CLI_INT("--dsz Initial size of buffer to process/store document on queries. "
+                            "Preferable average size of document. "
+                            "Default: 65536, min: 16384")
+
                );
   fio_cli_set_default("--file", "db.jb");
   fio_cli_set_default("-f", "db.jb");
   fio_cli_set_default("--port", "9191");
   fio_cli_set_default("-p", "9191");
+  fio_cli_set_default("--sbz", "16777216");
+  fio_cli_set_default("--dsz", "65536");
 
   EJDB_OPTS ov = {
     .kv = {
@@ -27,6 +41,8 @@ int main(int argc, char const *argv[]) {
       .oflags = fio_cli_get_i("-t") ? IWKV_TRUNC : 0
     },
     .no_wal = !fio_cli_get_i("-w"),
+    .sort_buffer_sz = fio_cli_get_i("--sbz"),
+    .document_buffer_sz = fio_cli_get_i("--dsz"),
     .http = {
       .enabled = true,
       .blocking = true,

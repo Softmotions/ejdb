@@ -507,4 +507,4 @@ The following statements are taken into account when using EJDB2 indexes:
 
 **NOTE:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes.
 
-However exact matching operations: `eq`, `in` and `sorting` by natural index order will benefit from index in any case.
+However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any case.

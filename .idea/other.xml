@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ClangdSettings">
-    <option name="clangWarnings" value="-Wshadow-ivar,-Wbitwise-op-parentheses,-Wdangling-else,-Wlogical-not-parentheses,-Wlogical-op-parentheses,-Woverloaded-shift-op-parentheses,-Wparentheses-equality,-Wshift-op-parentheses,-Werror=implicit-function-declaration,-Wno-switch,-Wno-shadow,-Wno-parentheses" />
-  </component>
-</project>
