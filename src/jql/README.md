@@ -343,6 +343,7 @@ $ cat << EOF | curl -d @- -H'X-Access-Token:myaccess01' -X POST http://localhost
 "age":35,
 "pets":[{"name":"Sonic", "kind":"mouse", "likes":[]}]
 }
+EOF
 ```
 Now query only pet owners firstName and lastName from collection.
 
@@ -402,6 +403,8 @@ Lets add one more document then sort documents in collection by `firstName` asce
 < k
 ```
 
+`asc, desc` instructions may use indexes defined for collection to avoid a separate documents sorting stage.
+
 ## JQL Options
 
 ```
@@ -421,4 +424,60 @@ OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
 
 ## JQL Indexing and perfomance tips
 
-todo
+Database index can be build for any JSON field path of number or string type.
+Index can be an `unique` &dash; not allowing indexed values duplication and `non unique`.
+The following index mode bit mask flags are used (defined in `ejdb2.h`):
+
+Index mode | Description
+--- | ---
+<code>0x01 EJDB_IDX_UNIQUE</code> | Index is unique
+<code>0x04 EJDB_IDX_STR</code> | Index for JSON `string` field value type
+<code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
+<code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
+
+For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation can define index only for one type.
+
+Lets define non unique string index for `/lastName` path:
+```
+> k idx family 4 /lastName
+< k
+```
+Index selection for queries based on set of heuristic rules.
+
+The following statements are taken into account when using indexes:
+* Only one index can be used for particular query
+* If query consist of `or` joined parts or contains `negated` at top level indexes will not be used.
+  No indexes below:
+  ```
+  /[lastName != Andy]
+
+  /[lastName = "John"] or /[lastName = Peter]
+  ```
+  Will use `/lastName` defined above
+  ```
+  /[lastName = Doe]
+
+  /[lastName = Doe] and /[age = 28]
+
+  /[lastName = Doe] and /[age != 28]
+  ```
+* The ony following operators are supported by indexes (ejdb 2.0.x):
+  * `eq, =`
+  * `gt, >`
+  * `gte, >=`
+  * `lt, <`
+  * `lte, <=`
+  * `in`
+* `ORDERBY` clauses may use indexes to avoid result set sorting
+
+You can check index usage by `explain` command in WS API:
+```
+> k explain family /[lastName=Doe] and /[age!=27]
+< k     explain [INDEX] MATCHED  STR|3 /lastName EXPR1: 'lastName = Doe' INIT: IWKV_CURSOR_EQ
+[INDEX] SELECTED STR|3 /lastName EXPR1: 'lastName = Doe' INIT: IWKV_CURSOR_EQ
+ [COLLECTOR] PLAIN
+```
+
+**NOTE:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes.
+
+However exact matching operations: `eq`, `in` and `sorting` by natural index order will benefit from index in any case.
