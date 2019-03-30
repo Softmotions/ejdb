@@ -5,6 +5,13 @@
 EJDB db;
 EJDB_OPTS opts;
 
+// Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K
+//    if (!db->opts.http.max_body_size) {
+//      db->opts.http.max_body_size = 64 * 1024 * 1024;
+//    } else if (db->opts.http.max_body_size < 512 * 1024) {
+//      db->opts.http.max_body_size = 512 * 1024;
+//    }
+
 int main(int argc, char const *argv[]) {
   iwrc rc = 0;
   fio_cli_start(argc, argv, 0, 0,
@@ -20,7 +27,9 @@ int main(int argc, char const *argv[]) {
                             "Default: 16777216, min: 1048576"),
                 FIO_CLI_INT("--dsz Initial size of buffer to process/store document on queries. "
                             "Preferable average size of document. "
-                            "Default: 65536, min: 16384")
+                            "Default: 65536, min: 16384"),
+                FIO_CLI_INT("--bsz Max HTTP/WS API document body size. "
+                            "Default: 67108864, min: 524288")
 
                );
   fio_cli_set_default("--file", "db.jb");
@@ -29,6 +38,7 @@ int main(int argc, char const *argv[]) {
   fio_cli_set_default("-p", "9191");
   fio_cli_set_default("--sbz", "16777216");
   fio_cli_set_default("--dsz", "65536");
+  fio_cli_set_default("--bsz", "67108864");
 
   EJDB_OPTS ov = {
     .kv = {
@@ -43,7 +53,8 @@ int main(int argc, char const *argv[]) {
       .blocking = true,
       .port = fio_cli_get_i("-p"),
       .bind = fio_cli_get("-b"),
-      .access_token = fio_cli_get("-a")
+      .access_token = fio_cli_get("-a"),
+      .max_body_size = fio_cli_get_i("--bsz")
     }
   };
   memcpy(&opts, &ov, sizeof(ov));
