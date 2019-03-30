@@ -401,3 +401,24 @@ Lets add one more document then sort documents in collection by `firstName` asce
 < k     1       {"firstName":"John","lastName":"Doe","age":28}
 < k
 ```
+
+## JQL Options
+
+```
+OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }
+```
+
+* `skip n` Skip first `n` records before first element in result set
+* `limit n` Set max number of documents in result set
+* `count` Returns only `count` of matched documents
+  ```
+  > k query family /* | count
+  < k     3
+  < k
+  ```
+* `noidx` Do not use any indexes for query execution.
+
+
+## JQL Indexing and perfomance tips
+
+todo
