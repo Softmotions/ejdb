@@ -5,13 +5,6 @@
 EJDB db;
 EJDB_OPTS opts;
 
-// Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K
-//    if (!db->opts.http.max_body_size) {
-//      db->opts.http.max_body_size = 64 * 1024 * 1024;
-//    } else if (db->opts.http.max_body_size < 512 * 1024) {
-//      db->opts.http.max_body_size = 512 * 1024;
-//    }
-
 int main(int argc, char const *argv[]) {
   iwrc rc = 0;
   fio_cli_start(argc, argv, 0, 0,
