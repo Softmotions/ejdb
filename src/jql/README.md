@@ -493,7 +493,7 @@ The following statements are taken into account when using EJDB2 indexes:
   > k idx books 4 /tags
   < k
   ```
-  Use index in query:
+  Filter books by `bestseller` and show index usage in query:
   ```
   > k explain books /tags/[** in ["bestseller"]]
   < k     explain [INDEX] MATCHED  STR|4 /tags EXPR1: '** in ["bestseller"]' INIT: IWKV_CURSOR_EQ
