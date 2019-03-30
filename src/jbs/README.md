@@ -1,10 +1,10 @@
-# Standalone REST/Websockets HTTP server
+# Standalone REST/Websocket HTTP server
 
 ## jbs server
 ```
 jbs -h
 
-EJDB 2.0.0 standalone REST/Websockets server. http://ejdb.org
+EJDB 2.0.0 standalone REST/Websocket server. http://ejdb.org
 
  --file <>	Database file path. Default: db.jb
  -f <>    	(same as --file)

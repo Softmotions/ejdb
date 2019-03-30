@@ -9,7 +9,7 @@ The easiest way to expose database over the network is using the standalone `jbs
 ```
 jbs -h
 
-EJDB 2.0.0 standalone REST/Websockets server. http://ejdb.org
+EJDB 2.0.0 standalone REST/Websocket server. http://ejdb.org
 
  --file <>	Database file path. Default: db.jb
  -f <>    	(same as --file)

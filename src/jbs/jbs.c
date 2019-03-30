@@ -5,15 +5,10 @@
 EJDB db;
 EJDB_OPTS opts;
 
-
-
-//uint32_t document_buffer_sz;  /**< Initial size of buffer to process/store document during select.
-//                                     Default 64Kb, min: 16Kb */
-
 int main(int argc, char const *argv[]) {
   iwrc rc = 0;
   fio_cli_start(argc, argv, 0, 0,
-                "EJDB " EJDB2_VERSION " standalone REST/Websockets server. http://ejdb.org\n",
+                "EJDB " EJDB2_VERSION " standalone REST/Websocket server. http://ejdb.org\n",
                 FIO_CLI_STRING("--file -f Database file path. Default: db.jb"),
                 FIO_CLI_INT("--port -p HTTP port number listen to. Default: 9191"),
                 FIO_CLI_STRING("--bind -b Address server listen. Default: localhost"),
