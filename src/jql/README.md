@@ -381,3 +381,23 @@ Get `age` and the first pet in `pets` array.
 < k
 ```
 
+## JQL sorting
+
+```
+  ORDERBY = ({ 'asc' | 'desc' } PLACEHOLDER | json_path)...
+```
+
+Lets add one more document then sort documents in collection by `firstName` ascending and `age` descending.
+
+```
+> k add family {"firstName":"John", "lastName":"Ryan", "age":39}
+< k     4
+```
+
+```
+> k query family /* | /{firstName,lastName,age} | asc /firstName desc /age
+< k     3       {"firstName":"Jack","lastName":"Parker","age":35}
+< k     4       {"firstName":"John","lastName":"Ryan","age":39}
+< k     1       {"firstName":"John","lastName":"Doe","age":28}
+< k
+```
