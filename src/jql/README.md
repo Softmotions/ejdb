@@ -323,13 +323,61 @@ Example:
 < k     2       {"firstName":"Jack"}
 ```
 
+## JQL projections
 
+```
+PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 
+  PROJECTION = 'all' | json_path
+```
 
+Projection allow to get only subset of JSON document excluding not needed data.
 
+Lets add one more document to our collection:
 
+```sh
+$ cat << EOF | curl -d @- -H'X-Access-Token:myaccess01' -X POST http://localhost:9191/family
+{
+"firstName":"Jack",
+"lastName":"Parker",
+"age":35,
+"pets":[{"name":"Sonic", "kind":"mouse", "likes":[]}]
+}
+```
+Now query only pet owners firstName and lastName from collection.
 
+```
+> k query family /* | /{firstName,lastName}
 
+< k     3       {"firstName":"Jack","lastName":"Parker"}
+< k     1       {"firstName":"John","lastName":"Doe"}
+< k
+```
 
+Add `pets` array for every document
+```
+> k query family /* | /{firstName,lastName} + /pets
 
+< k     3       {"firstName":"Jack","lastName":"Parker","pets":[...
+< k     1       {"firstName":"John","lastName":"Doe","pets":[...
+```
+
+Exclude only `pets` field from documents
+```
+> k query family /* | all - /pets
+
+< k     3       {"firstName":"Jack","lastName":"Parker","age":35}
+< k     1       {"firstName":"John","lastName":"Doe","age":28,"address":{"city":"New York","street":"Fifth Avenue"}}
+< k
+```
+Here `all` keyword used denoting whole document.
+
+Get `age` and the first pet in `pets` array.
+```
+> k query family /[age > 20] | /age + /pets/0
+
+< k     3       {"age":35,"pets":[{"name":"Sonic","kind":"mouse","likes":[]}]}
+< k     1       {"age":28,"pets":[{"name":"Rexy rex","kind":"dog","likes":["bones","jumping","toys"]}]}
+< k
+```
 
