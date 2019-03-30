@@ -422,7 +422,7 @@ OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
 * `noidx` Do not use any indexes for query execution.
 
 
-## JQL Indexing and perfomance tips
+## JQL Indexing and performance tips
 
 Database index can be build for any JSON field path of number or string type.
 Index can be an `unique` &dash; not allowing indexed values duplication and `non unique`.
@@ -444,7 +444,15 @@ Lets define non unique string index for `/lastName` path:
 ```
 Index selection for queries based on set of heuristic rules.
 
-The following statements are taken into account when using indexes:
+You can always check index usage by issuing `explain` command in WS API:
+```
+> k explain family /[lastName=Doe] and /[age!=27]
+< k     explain [INDEX] MATCHED  STR|3 /lastName EXPR1: 'lastName = Doe' INIT: IWKV_CURSOR_EQ
+[INDEX] SELECTED STR|3 /lastName EXPR1: 'lastName = Doe' INIT: IWKV_CURSOR_EQ
+ [COLLECTOR] PLAIN
+```
+
+The following statements are taken into account when using EJDB2 indexes:
 * Only one index can be used for particular query
 * If query consist of `or` joined parts or contains `negated` at top level indexes will not be used.
   No indexes below:
@@ -469,14 +477,33 @@ The following statements are taken into account when using indexes:
   * `lte, <=`
   * `in`
 * `ORDERBY` clauses may use indexes to avoid result set sorting
+* Array fields can also be indexed. Let's outline a typical use case: indexing of some  entity tags:
+  ```
+  > k add books {"name":"Mastering Ultra", "tags":["ultra", "language", "bestseller"]}
+  < k     1
+  > k add books {"name":"Learn something in 24 hours", "tags":["bestseller"]}
+  < k     2
+  > k query books /*
+  < k     2       {"name":"Learn something in 24 hours","tags":["bestseller"]}
+  < k     1       {"name":"Mastering Ultra","tags":["ultra","language","bestseller"]}
+  < k
+  ```
+  Create string index for `/tags`
+  ```
+  > k idx books 4 /tags
+  < k
+  ```
+  Use index in query:
+  ```
+  > k explain books /tags/[** in ["bestseller"]]
+  < k     explain [INDEX] MATCHED  STR|4 /tags EXPR1: '** in ["bestseller"]' INIT: IWKV_CURSOR_EQ
+  [INDEX] SELECTED STR|4 /tags EXPR1: '** in ["bestseller"]' INIT: IWKV_CURSOR_EQ
+  [COLLECTOR] PLAIN
 
-You can check index usage by `explain` command in WS API:
-```
-> k explain family /[lastName=Doe] and /[age!=27]
-< k     explain [INDEX] MATCHED  STR|3 /lastName EXPR1: 'lastName = Doe' INIT: IWKV_CURSOR_EQ
-[INDEX] SELECTED STR|3 /lastName EXPR1: 'lastName = Doe' INIT: IWKV_CURSOR_EQ
- [COLLECTOR] PLAIN
-```
+  < k     1       {"name":"Mastering Ultra","tags":["ultra","language","bestseller"]}
+  < k     2       {"name":"Learn something in 24 hours","tags":["bestseller"]}
+  < k
+  ```
 
 **NOTE:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes.
 
