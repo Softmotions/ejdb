@@ -10,38 +10,6 @@
 #include <http/http.h>
 #include <ctype.h>
 
-// HTTP REST API:
-//
-// Access to HTTP endpoint can be optionally protected by a token specified in `EJDB_HTTP` options.
-// In this case `X-Access-Token` header value must be provided in client request.
-// If token is not provided `401` HTTP code will be in response.
-// If access token doesn't matched a token provided by client `403` HTTP code will be in response.
-//
-// In any error case `500` error will be returned.
-//
-//
-// HTTP endpoints:
-//
-//    POST    `/{collection}`
-//      Add a new document to the `collection`
-//      Response:
-//                200 with a new document identifier as int64 decimal number
-//
-//    PUT     `/{collection>/{id}`  Replaces/store document under specific numeric `id`
-//      Response:
-//                200 with empty body
-//
-//    DELETE  `/{collection}/{id}`
-//      Removes document identified by `id` from a `collection`
-//      Response:
-//                200 on success
-//                404 if document not found
-//
-//    PATCH   `/{collection}/{id}`
-//      Patch a document identified by `id` by rfc7396,rfc6902 data.
-//      Response:
-//                200 on success
-//
 //    GET|HEAD `/{collection}/{id}`
 //      Retrieve document identified by `id` from a `collection`
 //      Response:
