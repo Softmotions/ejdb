@@ -135,8 +135,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>build/</Path>
       <Path>cmake-build-Debug/</Path>
+      <Path>build/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -147,6 +147,10 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <VirtualDirectory Name="examples">
+      <File Name="src/examples/CMakeLists.txt"/>
+      <File Name="src/examples/example1.c"/>
+    </VirtualDirectory>
     <VirtualDirectory Name="jbi">
       <File Name="src/jbi/jbi_selection.c"/>
       <File Name="src/jbi/jbi_util.c"/>

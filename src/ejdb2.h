@@ -30,6 +30,7 @@
 
 #include <iowow/iwkv.h>
 #include "jql.h"
+#include "jbl.h"
 
 IW_EXTERN_C_START
 
