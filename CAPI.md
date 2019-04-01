@@ -3,9 +3,9 @@
 EJDB can be empdedded into any `C/C++` application.
 `C API` documented in the following headers:
 
-* [ejdb.h]() Main API functions
-* [jbl.h]() JSON documents management API
-* [jql.h]() Query building API
+* [ejdb.h](https://github.com/Softmotions/ejdb/blob/master/src/ejdb2.h) Main API functions
+* [jbl.h](https://github.com/Softmotions/ejdb/blob/master/src/jbl/jbl.h) JSON documents management API
+* [jql.h](https://github.com/Softmotions/ejdb/blob/master/src/jql/jql.h) Query building API
 
 Example application:
 ```c

@@ -6,13 +6,20 @@
 EJDB2 is an embeddable JSON database engine published under MIT license.
 
 * C11 API
-* Simple but powerful query language (JQL)
+* Simple but powerful query language (JQL) as well as the following standards:
+  * [rfc6902](https://tools.ietf.org/html/rfc6902) JSON Patch
+  * [rfc7386](https://tools.ietf.org/html/rfc7386) JSON Merge patch
+  * [rfc6901](https://tools.ietf.org/html/rfc6901) JSON Path
 * Based on [iowow.io](http://iowow.io) persistent key/value storage engine
 * Provides HTTP REST/Websockets network endpoints implemented with [facil.io](http://facil.io)
+* JSON documents are stored in using fast and compact binary format [Binn](https://github.com/liteserver/binn)
 
 
 ## EJDB2 status
 
-* EJDB2 is currently in Beta state, stable enough but some gotchas may be arised.
+* EJDB 2.0 is currently in Beta state, stable enough but some gotchas may be arised.
 * Tested on `Linux` platform, still pending tests for `OSX`.
 * `Windows` platform not supported at now (#237)
+* Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
+  We are not maintaining old ejdb 1.x version.
+

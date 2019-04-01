@@ -6,16 +6,23 @@
 EJDB2 is an embeddable JSON database engine published under MIT license.
 
 * C11 API
-* Simple but powerful query language (JQL)
+* Simple but powerful query language (JQL) as well as the following standards:
+  * [rfc6902](https://tools.ietf.org/html/rfc6902) JSON Patch
+  * [rfc7386](https://tools.ietf.org/html/rfc7386) JSON Merge patch
+  * [rfc6901](https://tools.ietf.org/html/rfc6901) JSON Path
 * Based on [iowow.io](http://iowow.io) persistent key/value storage engine
 * Provides HTTP REST/Websockets network endpoints implemented with [facil.io](http://facil.io)
+* JSON documents are stored in using fast and compact binary format [Binn](https://github.com/liteserver/binn)
 
 
 ## EJDB2 status
 
-* EJDB2 is currently in Beta state, stable enough but some gotchas may be arised.
+* EJDB 2.0 is currently in Beta state, stable enough but some gotchas may be arised.
 * Tested on `Linux` platform, still pending tests for `OSX`.
 * `Windows` platform not supported at now (#237)
+* Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
+  We are not maintaining old ejdb 1.x version.
+
 
 
 
@@ -94,7 +101,7 @@ PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 Lets play with some very basic data and queries.
 For simplicity we will use ejdb websocket network API which provides us a kind of interactive CLI. The same job can be done using pure `C` API too (`ejdb2.h jql.h`).
 
-NOTE: Take a look into [JQL test cases](./tests/jql_test1.c) for more examples.
+NOTE: Take a look into [JQL test cases](https://github.com/Softmotions/ejdb/blob/master/src/jql/tests/jql_test1.c) for more examples.
 
 ```json
 {
@@ -115,7 +122,7 @@ Save json as `sample.json` then upload it the `family` collection:
 8 Mar 16:15:58.601 INFO: HTTP/WS endpoint at localhost:9191
 ```
 
-Server can be accessed using HTTP or Websocket endpoint. [More info](../jbr/README.md)
+Server can be accessed using HTTP or Websocket endpoint. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
 
 ```sh
 curl -d '@sample.json' -H'X-Access-Token:myaccess01' -X POST http://localhost:9191/family
@@ -169,7 +176,7 @@ connected (press CTRL+C to quit)
 }
 ```
 
-Note about the `k` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](../jbr/README.md)
+Note about the `k` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
 
 Query command over websocket has the following format:
 
@@ -836,9 +843,9 @@ Note: If `collection` is not found no errors will be reported.
 EJDB can be empdedded into any `C/C++` application.
 `C API` documented in the following headers:
 
-* [ejdb.h]() Main API functions
-* [jbl.h]() JSON documents management API
-* [jql.h]() Query building API
+* [ejdb.h](https://github.com/Softmotions/ejdb/blob/master/src/ejdb2.h) Main API functions
+* [jbl.h](https://github.com/Softmotions/ejdb/blob/master/src/jbl/jbl.h) JSON documents management API
+* [jql.h](https://github.com/Softmotions/ejdb/blob/master/src/jql/jql.h) Query building API
 
 Example application:
 ```c

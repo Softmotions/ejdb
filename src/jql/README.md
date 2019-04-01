@@ -73,7 +73,7 @@ PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 Lets play with some very basic data and queries.
 For simplicity we will use ejdb websocket network API which provides us a kind of interactive CLI. The same job can be done using pure `C` API too (`ejdb2.h jql.h`).
 
-NOTE: Take a look into [JQL test cases](./tests/jql_test1.c) for more examples.
+NOTE: Take a look into [JQL test cases](https://github.com/Softmotions/ejdb/blob/master/src/jql/tests/jql_test1.c) for more examples.
 
 ```json
 {
@@ -94,7 +94,7 @@ Save json as `sample.json` then upload it the `family` collection:
 8 Mar 16:15:58.601 INFO: HTTP/WS endpoint at localhost:9191
 ```
 
-Server can be accessed using HTTP or Websocket endpoint. [More info](../jbr/README.md)
+Server can be accessed using HTTP or Websocket endpoint. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
 
 ```sh
 curl -d '@sample.json' -H'X-Access-Token:myaccess01' -X POST http://localhost:9191/family
@@ -148,7 +148,7 @@ connected (press CTRL+C to quit)
 }
 ```
 
-Note about the `k` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](../jbr/README.md)
+Note about the `k` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
 
 Query command over websocket has the following format:
 

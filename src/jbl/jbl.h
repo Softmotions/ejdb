@@ -42,7 +42,7 @@
  *
  *  - Plain JSON text.
  *
- *  - @ref JBL Memory compact binary format [BINN](https://github.com/liteserver/binn)
+ *  - @ref JBL Memory compact binary format [Binn](https://github.com/liteserver/binn)
  *    Used for JSON serialization but lacks of data modification flexibility.
  *
  *  - @ref JBL_NODE In memory JSON document presented as tree. Convenient for in-place
@@ -59,7 +59,7 @@
 IW_EXTERN_C_START
 
 /**
- * @brief JSON document in compact binary format [BINN](https://github.com/liteserver/binn)
+ * @brief JSON document in compact binary format [Binn](https://github.com/liteserver/binn)
  */
 struct _JBL;
 typedef struct _JBL *JBL;
