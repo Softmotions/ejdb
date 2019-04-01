@@ -1,4 +1,4 @@
-# EJDB2 2.0
+# EJDB 2.0
 
 ![license](https://img.shields.io/github/license/Softmotions/ejdb.svg) ![maintained](https://img.shields.io/maintenance/yes/2019.svg)
 
