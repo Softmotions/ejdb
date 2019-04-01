@@ -52,7 +52,7 @@ include(CPack)
 
 if (ENABLE_PPA)
     if (NOT PROJECT_PPA_DISTRIB_TARGET)
-        set(PROJECT_PPA_DISTRIB_TARGET xenial artful)
+        set(PROJECT_PPA_DISTRIB_TARGET xenial bionic)
     endif()
     set(DPUT_CONFIG_IN ${CMAKE_CURRENT_SOURCE_DIR}/debian/dput.cf.in)
     include(UploadPPA)

@@ -8,7 +8,7 @@ EJDB_OPTS opts;
 int main(int argc, char const *argv[]) {
   iwrc rc = 0;
   fio_cli_start(argc, argv, 0, 0,
-                "EJDB " EJDB2_VERSION " standalone REST/Websocket server. http://ejdb.org\n",
+                "EJDB " EJDB2_VERSION " standalone HTTP REST/Websocket server. http://ejdb.org\n",
                 FIO_CLI_STRING("--file -f Database file path. Default: db.jb"),
                 FIO_CLI_INT("--port -p HTTP port number listen to. Default: 9191"),
                 FIO_CLI_STRING("--bind -b Address server listen. Default: localhost"),

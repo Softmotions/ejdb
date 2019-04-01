@@ -1,4 +1,14 @@
-/// Sample records put/query example
+# C API
+
+EJDB can be empdedded into any `C/C++` application.
+`C API` documented in the following headers:
+
+* [ejdb.h]() Main API functions
+* [jbl.h]() JSON documents management API
+* [jql.h]() Query building API
+
+Example application:
+```c
 #include <ejdb2.h>
 
 #define RCHECK(rc_)          \
@@ -70,5 +80,4 @@ finish:
   RCHECK(rc);
   return 0;
 }
-
-
+```

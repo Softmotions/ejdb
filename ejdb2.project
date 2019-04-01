@@ -280,6 +280,9 @@
     <File Name="src/CMakeLists.txt"/>
   </VirtualDirectory>
   <VirtualDirectory Name="resources">
+    <File Name="LICENSE"/>
+    <File Name="CAPI.md"/>
+    <File Name="BASE.md"/>
     <File Name="win64-tc.cmake"/>
     <File Name="hints.txt"/>
     <File Name=".editorconfig"/>
