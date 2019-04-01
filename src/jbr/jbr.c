@@ -10,31 +10,6 @@
 #include <http/http.h>
 #include <ctype.h>
 
-//    GET|HEAD `/{collection}/{id}`
-//      Retrieve document identified by `id` from a `collection`
-//      Response:
-//                200 on success, document JSON
-//                404 if document not found
-//
-//    POST `/`
-//      Query a collection by provided query spec as body
-//      Request headers:
-//        `X-Hints` comma separated extra hints to ejdb2 database engine
-//        Hints:
-//          `explain` Show the query execution plan (indexes used).
-//                    In this case query resultset will be prepended by query explanation text
-//                    separated by `--------------------` line with document list.
-//        Response:
-//               200 on success, HTTP chunked transfer
-//               JSON documents separated by `\n` in the following format:
-//         ```
-//            \r\n<document id>\t<document JSON body>
-//            ...
-//         ```
-//
-//    OPTIONS `/`
-//      Fetch storage JSON metadata and available HTTP methods in `Allow` response header
-//
 //
 //  WEBSOCKET API:
 //

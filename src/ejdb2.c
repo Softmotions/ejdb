@@ -959,7 +959,8 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   IWKV_val key;
   JBL_PTR ptr = 0;
   char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+
+  iwrc rc = _jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE | JB_COLL_ACQUIRE_EXISTING, &jbc);
   RCRET(rc);
 
   rc = jbl_ptr_alloc(path, &ptr);
