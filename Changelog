@@ -1,5 +1,5 @@
-ejdb2 (2.0.0) UNRELEASED; urgency=medium
+ejdb2 (2.0.0) testing; urgency=medium
 
   * Initial beta release
 
- -- Anton Adamansky <adamansky@gmail.com>  Mon, 07 May 2018 22:46:16 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 01 Apr 2019 20:21:27 +0700
