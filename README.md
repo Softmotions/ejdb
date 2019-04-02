@@ -24,6 +24,32 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
   We are not maintaining ejdb 1.x.
 
+# Supported platforms
+
+## Linux
+### Ubuntu/Debian
+#### PPA repository
+
+```sh
+sudo add-apt-repository ppa:adamansky/ejdb2
+sudo apt-get update
+sudo apt-get install ejdb2
+```
+
+#### Building debian packages
+
+```sh
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_DEB=ON
+make package
+```
+
+### RPM based Linux distributions
+```sh
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_RPM=ON
+make package
+```
 
 
 
