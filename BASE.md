@@ -1,9 +1,11 @@
 # EJDB 2.0
 
-![twitter](https://img.shields.io/twitter/follow/ejdblab.svg?style=social)
 ![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)
 ![maintained](https://img.shields.io/maintenance/yes/2019.svg)
 
+<a href="https://twitter.com/ejdblab">
+        <img src="https://img.shields.io/twitter/follow/ejdblab.svg?style=social"
+            alt="follow on Twitter"></a>
 
 EJDB2 is an embeddable JSON database engine published under MIT license.
 
