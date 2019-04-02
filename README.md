@@ -850,7 +850,7 @@ EJDB can be empdedded into any `C/C++` application.
 
 Example application:
 ```c
-#include <ejdb2.h>
+#include <ejdb2/ejdb2.h>
 
 #define RCHECK(rc_)          \
   if (rc_) {                 \
@@ -920,6 +920,21 @@ finish:
   ejdb_close(&db);
   RCHECK(rc);
   return 0;
+}
+```
+
+Compile and run:
+```
+gcc -std=gnu11 -Wall -pedantic -c -o example1.o example1.c
+gcc -o example1 example1.o -lejdb2
+
+./example1
+{
+ "name": "Darko",
+ "age": 8
+}{
+ "name": "Bianca",
+ "age": 4
 }
 ```
 
