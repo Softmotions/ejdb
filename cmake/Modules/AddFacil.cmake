@@ -5,9 +5,15 @@ set(FACIL_BINARY_DIR "${CMAKE_BINARY_DIR}/src/extern_facil")
 set(FACIL_INCLUDE_DIR "${FACIL_BINARY_DIR}/lib/facil")
 set(FACIL_LIBRARY_DIR "${FACIL_BINARY_DIR}")
 
+if(EXISTS ${CMAKE_SOURCE_DIR}/facil.zip)
+  set(FACIL_URL ${CMAKE_SOURCE_DIR}/facil.zip)
+else()
+  set(FACIL_URL https://github.com/Softmotions/facil.io/archive/master.zip)
+endif()
+
 ExternalProject_Add(
   extern_facil
-  URL https://github.com/Softmotions/facil.io/archive/master.zip
+  URL ${FACIL_URL}
   DOWNLOAD_NAME facil.zip
   TIMEOUT 360
   # Remove in-source makefile to avoid clashing

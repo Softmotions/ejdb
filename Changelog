@@ -1,3 +1,9 @@
+ejdb2 (2.0.2) UNRELEASED; urgency=medium
+
+  * Fixed #238 Disable network access for PPA Lunchpad builds
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 02 Apr 2019 16:50:05 +0700
+
 ejdb2 (2.0.1) testing; urgency=medium
 
   * Because we are static linked to iowow its header files included under `include/ejdb2/iowow`

@@ -2,9 +2,15 @@ include(ExternalProject)
 
 set(IOWOW_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
 
+if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
+  set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
+else()
+  set(IOWOW_URL https://github.com/Softmotions/iowow/archive/master.zip)
+endif()
+
 ExternalProject_Add(
   extern_iowow
-  URL https://github.com/Softmotions/iowow/archive/master.zip
+  URL ${IOWOW_URL}
   DOWNLOAD_NAME iowow.zip
   TIMEOUT 360
   PREFIX ${CMAKE_BINARY_DIR}
