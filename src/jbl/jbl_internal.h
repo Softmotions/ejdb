@@ -30,9 +30,9 @@
 
 #include "jbl.h"
 #include "binn.h"
-#include <iowow/iwlog.h>
-#include <iowow/iwpool.h>
-#include <iowow/iwconv.h>
+#include <ejdb2/iowow/iwlog.h>
+#include <ejdb2/iowow/iwpool.h>
+#include <ejdb2/iowow/iwconv.h>
 #include "ejdb2cfg.h"
 
 struct _JBL {

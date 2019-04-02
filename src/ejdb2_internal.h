@@ -35,10 +35,10 @@
 #endif
 #include "jql_internal.h"
 #include "jbl_internal.h"
-#include <iowow/iwkv.h>
-#include <iowow/iwxstr.h>
-#include <iowow/iwexfile.h>
-#include <iowow/iwutils.h>
+#include <ejdb2/iowow/iwkv.h>
+#include <ejdb2/iowow/iwxstr.h>
+#include <ejdb2/iowow/iwexfile.h>
+#include <ejdb2/iowow/iwutils.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>

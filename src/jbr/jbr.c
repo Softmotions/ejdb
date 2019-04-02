@@ -1,5 +1,5 @@
 #include "jbr.h"
-#include <iowow/iwconv.h>
+#include <ejdb2/iowow/iwconv.h>
 #include "ejdb2_internal.h"
 
 #define FIO_INCLUDE_STR

@@ -33,8 +33,8 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <setjmp.h>
-#include <iowow/iwpool.h>
-#include <iowow/iwxstr.h>
+#include <ejdb2/iowow/iwpool.h>
+#include <ejdb2/iowow/iwxstr.h>
 
 typedef uint8_t jqp_string_flavours_t;
 /** Query string parameter placeholder */

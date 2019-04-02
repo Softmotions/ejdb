@@ -114,6 +114,8 @@
   </VirtualDirectory>
   <VirtualDirectory Name="tools"/>
   <VirtualDirectory Name="man">
+    <File Name="man/jbs.1"/>
+    <File Name="man/ejdb2.3"/>
     <File Name="man/CMakeLists.txt"/>
   </VirtualDirectory>
   <VirtualDirectory Name="installer">

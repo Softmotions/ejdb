@@ -38,7 +38,7 @@
  */
 
 #include "jbl.h"
-#include <iowow/iwlog.h>
+#include <ejdb2/iowow/iwlog.h>
 
 IW_EXTERN_C_START
 

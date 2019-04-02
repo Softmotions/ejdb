@@ -1,3 +1,9 @@
+ejdb2 (2.0.1) UNRELEASED; urgency=medium
+
+  * Because we are static linked to iowow its header files included under `include/ejdb2/iowow`
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 02 Apr 2019 12:23:50 +0700
+
 ejdb2 (2.0.0) testing; urgency=medium
 
   * Initial beta release

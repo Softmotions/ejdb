@@ -194,7 +194,7 @@ if (BUILD_SHARED_LIBS)
                           VERSION ${PROJECT_VERSION}
                           SOVERSION ${PROJECT_VERSION_MAJOR}
                           PUBLIC_HEADER "${PUB_HDRS}"
-                          DEFINE_SYMBOL JB_API_EXPORTS)
+                          DEFINE_SYMBOL IW_API_EXPORTS)
     set_target_properties(ejdb2_s PROPERTIES
                           VERSION ${PROJECT_VERSION}
                           COMPILE_FLAGS "-DIW_NODLL"
@@ -231,6 +231,11 @@ if (BUILD_SHARED_LIBS)
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME})
 endif()
 
+# Install iowow headers included to ejdb2
+install(DIRECTORY ${IOWOW_INCLUDE_DIR}/${PROJECT_NAME}/iowow
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+        COMPONENT headers
+        FILES_MATCHING PATTERN "*.h")
 
 install(FILES
         ${CMAKE_SOURCE_DIR}/LICENSE

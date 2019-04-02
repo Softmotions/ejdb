@@ -1,7 +1,7 @@
 #include "ejdb2.h"
 #include "jqp.h"
-#include <iowow/iwxstr.h>
-#include <iowow/iwutils.h>
+#include <ejdb2/iowow/iwxstr.h>
+#include <ejdb2/iowow/iwutils.h>
 #include <CUnit/Basic.h>
 #include <stdlib.h>
 

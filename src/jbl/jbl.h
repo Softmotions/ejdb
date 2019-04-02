@@ -51,9 +51,9 @@
  * Library function allows conversion of JSON document between above formats.
  */
 
-#include <iowow/iwlog.h>
-#include <iowow/iwpool.h>
-#include <iowow/iwxstr.h>
+#include <ejdb2/iowow/iwlog.h>
+#include <ejdb2/iowow/iwpool.h>
+#include <ejdb2/iowow/iwxstr.h>
 #include <stdbool.h>
 
 IW_EXTERN_C_START

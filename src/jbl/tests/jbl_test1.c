@@ -1,6 +1,6 @@
 #include "ejdb2.h"
-#include <iowow/iwxstr.h>
-#include <iowow/iwutils.h>
+#include <ejdb2/iowow/iwxstr.h>
+#include <ejdb2/iowow/iwutils.h>
 
 #include "jbl.h"
 #include "jbl_internal.h"
