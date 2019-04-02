@@ -35,7 +35,7 @@ It designed for easy querying and updating sets of JSON documents.
 ## JQL grammar
 
 JQL parser created created by
-[peg/leg — recursive-descent parser generators for C](http://piumarta.com/software/peg/) Here is the formal parser grammar: https://github.com/Softmotions/ejdb/blob/ejdb2/src/jql/jqp.leg
+[peg/leg — recursive-descent parser generators for C](http://piumarta.com/software/peg/) Here is the formal parser grammar: https://github.com/Softmotions/ejdb/blob/master/src/jql/jqp.leg
 
 ## Non formal JQL grammar adapted for brief overview
 
