@@ -1560,5 +1560,5 @@ iwrc ejdb_init() {
   rc = jbr_init();
   RCRET(rc);
 #endif
-  return iwlog_register_ecodefn(_ejdb_ecodefn);;
+  return iwlog_register_ecodefn(_ejdb_ecodefn);
 }

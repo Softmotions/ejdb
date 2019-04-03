@@ -4,6 +4,18 @@
 #include "ejdb2.h"
 #include "ejdb2cfg.h"
 
+#if defined(__GNUC__)
+#define IW_NORETURN __attribute__((noreturn))
+#else
+#define IW_NORETURN
+#endif
+
+typedef enum {
+  _EJD_ERROR_START = (IW_ERROR_START + 15000UL + 4000),
+  EJD_ERROR_CREATE_PORT,   /**< Failed to create a Dart port  (EJD_ERROR_CREATE_PORT) */
+  _EJD_ERROR_END,
+} jbr_ecode_t;
+
 struct NativeFunctionLookup {
   const char *name;
   Dart_NativeFunction fn;
@@ -26,6 +38,12 @@ static struct NativeFunctionLookup k_scoped_functions[] = {
 
 #define EJLIB() EJC(Dart_LookupLibrary(Dart_NewStringFromCString("package:ejdb2/ejdb2.dart")))
 
+#define EJE(label_, args_, msg_)                        \
+  do {                                                  \
+    Dart_SetReturnValue(args_, Dart_NewApiError(msg_)); \
+    goto label_;                                        \
+  } while(0)
+
 IW_INLINE Dart_Handle ejd_error_check_propagate(Dart_Handle handle) {
   if (Dart_IsError(handle)) {
     Dart_PropagateError(handle);
@@ -37,16 +55,37 @@ static Dart_Handle ejd_error_api_create(const char *msg) {
   return Dart_NewUnhandledExceptionError(Dart_NewApiError(msg));
 }
 
-static void ejd_error_throw_scope(iwrc rc, const char *msg) {
-  Dart_Handle hmsg = EJC(Dart_NewStringFromCString(msg));
+IW_INLINE Dart_Handle ejd_error_throw_scope(iwrc rc, const char *msg) {
+  Dart_Handle hmsg;
+  if (msg) {
+    hmsg = EJC(Dart_NewStringFromCString(msg));
+  } else {
+    const char *explained = iwlog_ecode_explained(rc);
+    hmsg = EJC(Dart_NewStringFromCString(explained ? explained : ""));
+  }
   Dart_Handle hrc = EJC(Dart_NewIntegerFromUint64(rc));
   Dart_Handle args[] = {hrc, hmsg};
   Dart_Handle hclass = EJC(Dart_GetClass(EJLIB(), Dart_NewStringFromCString("EJDB2Error")));
-  Dart_ThrowException(Dart_New(hclass, Dart_NewStringFromCString("_internal"), 2, args));
+  return Dart_ThrowException(Dart_New(hclass, Dart_NewStringFromCString("_internal"), 2, args));
+}
+
+static const char *_ejd_ecodefn(locale_t locale, uint32_t ecode) {
+  if (!(ecode > _EJD_ERROR_START && ecode < _EJD_ERROR_END)) {
+    return 0;
+  }
+  switch (ecode) {
+    case EJD_ERROR_CREATE_PORT:
+      return "Failed to create a Dart port  (EJD_ERROR_CREATE_PORT)";
+  }
+  return 0;
 }
 
 DART_EXPORT Dart_Handle ejdb2_dart_Init(Dart_Handle parent_library) {
   fprintf(stderr, "\nejdb2_dart_Init");
+  static volatile int ejd_ecodefn_initialized = 0;
+  if (__sync_bool_compare_and_swap(&ejd_ecodefn_initialized, 0, 1)) {
+    iwlog_register_ecodefn(_ejd_ecodefn);
+  }
   if (Dart_IsError(parent_library)) {
     return parent_library;
   }
@@ -61,48 +100,55 @@ static void ejdb2_port_handler(Dart_Port receivePort, Dart_CObject *message) {
   // TODO:
 }
 
+static void ejdb2_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer) {
+  EJDB2Ctx *ctx = peer;
+  if (!ctx) return;
+  if (ctx->db) {
+    iwrc rc = ejdb_close(&ctx->db);
+    if (rc) iwlog_ecode_error3(rc);
+    ctx->db = 0;
+  }
+  if (ctx->port != ILLEGAL_PORT) {
+    Dart_CloseNativePort(ctx->port);
+  }
+  free(ctx);
+}
+
 void ejdb2_port_nfn(Dart_NativeArguments args) {
+  EJDB2Ctx *ctx;
+  intptr_t ptr = 0;
+
   Dart_EnterScope();
-  // Will return `NULL` on unexpected system error
-  // since we have no ways for good fatal errors reporting from native extensions
   Dart_SetReturnValue(args, Dart_Null());
 
-  EJDB2Ctx *ctx = 0;
-  intptr_t ptr = 0;
   Dart_Handle self = EJC(Dart_GetNativeArgument(args, 0));
   EJC(Dart_GetNativeInstanceField(self, 0, &ptr));
 
   if (!ptr) {
-    ctx = calloc(1, sizeof(*ctx));
-    if (!ctx) goto finish;
+    ctx = malloc(sizeof(*ctx));
+    if (!ctx) {
+      Dart_SetReturnValue(args, ejd_error_throw_scope(IW_ERROR_ALLOC, 0));
+      goto finish;
+    }
+    ctx->db = 0;
+    ctx->port = Dart_NewNativePort("ejdb2_port_nfn", ejdb2_port_handler, true);
+    if (ctx->port == ILLEGAL_PORT) {
+      Dart_SetReturnValue(args, ejd_error_throw_scope(EJD_ERROR_CREATE_PORT, 0));
+      goto finish;
+    }
+    EJC(Dart_SetNativeInstanceField(self, 0, (intptr_t) ctx));
+    if (!Dart_NewWeakPersistentHandle(self, ctx, sizeof(*ctx), ejdb2_ctx_finalizer)) {
+      EJE(finish, args, "ejdb2_port_nfn::Dart_NewWeakPersistentHandle");
+    }
+  } else {
+    ctx = (void *) ptr;
   }
 
-  // static Dart_Port k_receive_port = ILLEGAL_PORT;
-  // DART_EXPORT Dart_Isolate Dart_CurrentIsolate()
+	Dart_SetReturnValue(args, EJC(Dart_NewSendPort(ctx->port)));
 
 finish:
   Dart_ExitScope();
 }
-
-// void get_receive_port(Dart_NativeArguments arguments) {
-//  Dart_EnterScope();
-//  Dart_SetReturnValue(arguments, Dart_Null());
-
-//  if (_receivePort == ILLEGAL_PORT) {
-//    _receivePort = Dart_NewNativePort(RECEIVE_PORT_NAME, messageHandler, true);
-//  }
-
-//  if (_receivePort != ILLEGAL_PORT) {
-//    Dart_Handle sendPort = Dart_NewSendPort(_receivePort);
-//    Dart_SetReturnValue(arguments, sendPort);
-//  }
-
-//  Dart_ExitScope();
-
-// Dart_Handle arg0 = Dart_GetNativeArgument(arguments, 0);
-//     Dart_SetNativeInstanceField(arg0, 0, (intptr_t) native_db);
-//     Dart_NewWeakPersistentHandle(arg0, (void*) native_db, sizeof(NativeDB) /* external_allocation_size */, NativeDBFinalizer);
-// }
 
 Dart_NativeFunction ejd_resolve_name(Dart_Handle name,
                                      int argc,
