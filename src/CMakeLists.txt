@@ -124,9 +124,6 @@ set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} -g")
 
 if (CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-  if (BUILD_SHARED_LIBS)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-  endif()
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tmpl/ejdb2cfg.h ${PROJECT_GENERATED_DIR}/ejdb2cfg.h)

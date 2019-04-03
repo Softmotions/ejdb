@@ -1,8 +1,9 @@
-ejdb2 (2.0.2) UNRELEASED; urgency=medium
+ejdb2 (2.0.3) testing; urgency=medium
 
   * Fixed #238 Disable network access for PPA Lunchpad builds
+  * Removed gcc `-fvisibility=hidden` from shared lib flag
 
- -- Anton Adamansky <adamansky@gmail.com>  Tue, 02 Apr 2019 16:50:05 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 03 Apr 2019 17:39:52 +0700
 
 ejdb2 (2.0.1) testing; urgency=medium
 
