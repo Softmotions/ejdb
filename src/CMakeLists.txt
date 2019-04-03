@@ -166,6 +166,10 @@ if (BUILD_EXAMPLES)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/examples)
 endif()
 
+if(BUILD_DART_BINDING)
+  add_subdirectory(bindings/dart)
+endif()
+
 if (NOT BUILD_SHARED_LIBS)
   add_definitions(-DIW_NODLL)
   add_library(ejdb2 STATIC ${ALL_SRC})
@@ -246,17 +250,10 @@ install(FILES
         RENAME README
         DESTINATION ${CMAKE_INSTALL_DOCDIR})
 
-if (CMAKE_VERSION VERSION_GREATER 3.0)
-    export(EXPORT ejdb2-exports)
-  if (BUILD_SHARED_LIBS)
-    export(EXPORT ejdb2-static-exports)
-  endif(BUILD_SHARED_LIBS)
-else()
-  export(TARGETS ejdb2 FILE ejdb2-exports.cmake)
-  if (BUILD_SHARED_LIBS)
-    export(TARGETS ejdb2_s FILE ejdb2-static-exports.cmake)
-  endif(BUILD_SHARED_LIBS)
-endif()
+export(EXPORT ejdb2-exports)
+if (BUILD_SHARED_LIBS)
+  export(EXPORT ejdb2-static-exports)
+endif(BUILD_SHARED_LIBS)
 
 include(InstallRequiredSystemLibraries)
 
