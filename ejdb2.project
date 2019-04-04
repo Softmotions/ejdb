@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
+  <VirtualDirectory Name="bindings">
+    <VirtualDirectory Name="ejdb2_dart">
+      <File Name="src/bindings/ejdb2_dart/pubspec.yaml"/>
+      <File Name="src/bindings/ejdb2_dart/CMakeLists.txt"/>
+      <File Name="src/bindings/ejdb2_dart/Changelog"/>
+      <File Name="src/bindings/ejdb2_dart/analysis_options.yaml"/>
+      <File Name="src/bindings/ejdb2_dart/lib/khash.h"/>
+      <File Name="src/bindings/ejdb2_dart/lib/ejdb2_dart.dart"/>
+      <File Name="src/bindings/ejdb2_dart/lib/ejdb2_dart.c"/>
+      <File Name="src/bindings/ejdb2_dart/lib/dart_native_api.h"/>
+      <File Name="src/bindings/ejdb2_dart/lib/dart_api.h"/>
+    </VirtualDirectory>
+  </VirtualDirectory>
   <File Name="README.md"/>
   <VirtualDirectory Name="iowow">
     <File Name="build/src/extern_iowow/src/CMakeLists.txt"/>
@@ -119,6 +132,7 @@
     <File Name="man/CMakeLists.txt"/>
   </VirtualDirectory>
   <VirtualDirectory Name="installer">
+    <File Name="installer/fetch_libs.cmake"/>
     <File Name="installer/CMakeLists.txt"/>
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">

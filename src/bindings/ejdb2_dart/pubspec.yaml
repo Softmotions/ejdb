@@ -1,0 +1,13 @@
+name: "ejdb2_dart"
+version: 1.0.0
+homepage: https://github.com/Softmotions/ejdb
+author: Adamansky Anton <adamansky@gmail.com>
+license: MIT
+
+environment:
+  sdk: '>=2.2.0 <3.0.0'
+
+dependencies:
+  meta: ^1.1.7
+dev_dependencies:
+  test: ^1.6.1

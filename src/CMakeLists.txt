@@ -164,7 +164,7 @@ if (BUILD_EXAMPLES)
 endif()
 
 if(BUILD_DART_BINDING)
-  add_subdirectory(bindings/dart)
+  add_subdirectory(bindings/ejdb2_dart)
 endif()
 
 if (NOT BUILD_SHARED_LIBS)
