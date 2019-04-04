@@ -1,10 +1,12 @@
+library ejdb2_dart;
+
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
 
-import 'dart-ext:/home/adam/Projects/softmotions/ejdb/build/src/bindings/ejdb2_dart/libejdb2_dart.so';
+import 'dart-ext:/home/adam/Projects/softmotions/ejdb/build/src/bindings/ejdb2_dart/ejdb2_dart';
 
-String ejdb2ExplainRC(int rc) native "ejdb2_explain_rc";
+String ejdb2ExplainRC(int rc) native 'ejdb2_explain_rc';
 
 class EJDB2Error implements Exception {
   final int code;
@@ -21,11 +23,12 @@ class EJDB2Error implements Exception {
 
 class EJDB2 extends NativeFieldWrapperClass2 {
   static bool _checkCompleterPortError(Completer<dynamic> completer, dynamic reply) {
+    // print('!!!! Reply: $reply');
     if (reply is int) {
       completer.completeError(EJDB2Error(reply, ejdb2ExplainRC(reply)));
       return true;
     } else if (reply is! List) {
-      completer.completeError(EJDB2Error(0, "Invalid port response"));
+      completer.completeError(EJDB2Error(0, 'Invalid port response'));
       return true;
     }
     return false;
@@ -58,7 +61,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
         return;
       }
       try {
-        jb._set_handle((reply as List<int>).first);
+        jb._set_handle((reply as List).first as int);
       } catch (e) {
         completer.completeError(e);
         return;
@@ -75,7 +78,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     }
     final args = List<dynamic>()
       ..add(replyPort.sendPort)
-      ..add("ejdb2_open_wrapped")
+      ..add('ejdb2_open_wrapped')
 
       // opts.kv.path                         // non null
       // opts.kv.oflags                       // non null
@@ -93,7 +96,6 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       // opts.http.max_body_size
       // opts.http.port
       // opts.http.read_anon
-
       ..add(path)
       ..add(oflags)
       ..add(wal_enabled)
@@ -116,6 +118,10 @@ class EJDB2 extends NativeFieldWrapperClass2 {
   }
 
   Future<void> close() {
+    final dbh = _get_handle();
+    if (dbh == null) {
+      return Future.value();
+    }
     final completer = Completer<void>();
     final replyPort = new RawReceivePort();
 
@@ -132,13 +138,15 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send(List<dynamic>()..add(replyPort.sendPort)..add("ejdb2_open_wrapped"));
+    _port().send(List<dynamic>()..add(replyPort.sendPort)..add('ejdb2_close_wrapped')..add(dbh));
     return completer.future;
   }
 
-  SendPort _port() native "ejdb2_port";
+  SendPort _port() native 'ejdb2_port';
 
-  void _set_handle(int handle) native "ejdb2_set_handle";
+  void _set_handle(int handle) native 'ejdb2_set_handle';
+
+  int _get_handle() native 'ejdb2_get_handle';
 
   EJDB2._();
 }
