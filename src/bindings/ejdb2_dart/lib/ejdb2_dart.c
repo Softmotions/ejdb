@@ -15,6 +15,7 @@ typedef void(*WrapperFunction)(Dart_Port receive_port, Dart_CObject *msg, Dart_P
 typedef enum {
   _EJD_ERROR_START = (IW_ERROR_START + 15000UL + 4000),
   EJD_ERROR_CREATE_PORT,                 /**< Failed to create a Dart port (EJD_ERROR_CREATE_PORT) */
+  EJD_ERROR_POST_PORT,                   /**< Failed to post message to Dart port (EJD_ERROR_POST_PORT) */
   EJD_ERROR_INVALID_NATIVE_CALL_ARGS,    /**< Invalid native function call args (EJD_ERROR_INVALID_NATIVE_CALL_ARGS) */
   EJD_ERROR_INVALID_STATE,               /**< Invalid ejdb2_dart extension state (EJD_ERROR_INVALID_STATE) */
   _EJD_ERROR_END,
@@ -32,7 +33,7 @@ struct WrapperFunctionLookup {
 
 typedef struct EJDB2Context {
   Dart_Port port;
-  EJDB db;
+  volatile EJDB db;
 } EJDB2Context;
 
 Dart_NativeFunction ejd_resolve_name(Dart_Handle name, int argc, bool *auto_setup_scope);
@@ -85,7 +86,7 @@ static struct WrapperFunctionLookup k_wrapped_functions[] = {
     (co_)->value.as_int64 = (rc_);        \
   }
 
-static char *cobject_str(Dart_CObject *co, bool nulls, iwrc *rcp) {
+IW_INLINE char *cobject_str(Dart_CObject *co, bool nulls, iwrc *rcp) {
   *rcp = 0;
   if (co) {
     if (co->type == Dart_CObject_kString) {
@@ -98,7 +99,7 @@ static char *cobject_str(Dart_CObject *co, bool nulls, iwrc *rcp) {
   return 0;
 }
 
-static int64_t cobject_int(Dart_CObject *co, bool nulls, iwrc *rcp) {
+IW_INLINE int64_t cobject_int(Dart_CObject *co, bool nulls, iwrc *rcp) {
   *rcp = 0;
   if (co) {
     if (co->type == Dart_CObject_kInt32) {
@@ -113,7 +114,7 @@ static int64_t cobject_int(Dart_CObject *co, bool nulls, iwrc *rcp) {
   return 0;
 }
 
-static bool cobject_bool(Dart_CObject *co, bool nulls, iwrc *rcp) {
+IW_INLINE bool cobject_bool(Dart_CObject *co, bool nulls, iwrc *rcp) {
   *rcp = 0;
   if (co) {
     if (co->type == Dart_CObject_kBool) {
@@ -126,7 +127,7 @@ static bool cobject_bool(Dart_CObject *co, bool nulls, iwrc *rcp) {
   return false;
 }
 
-static double cobject_double(Dart_CObject *co, bool nulls, iwrc *rcp) {
+IW_INLINE double cobject_double(Dart_CObject *co, bool nulls, iwrc *rcp) {
   *rcp = 0;
   if (co) {
     if (co->type == Dart_CObject_kDouble) {
@@ -139,7 +140,7 @@ static double cobject_double(Dart_CObject *co, bool nulls, iwrc *rcp) {
   return 0;
 }
 
-static Dart_Handle ejd_error_check_propagate(Dart_Handle handle) {
+IW_INLINE Dart_Handle ejd_error_check_propagate(Dart_Handle handle) {
   if (Dart_IsError(handle)) {
     Dart_PropagateError(handle);
   }
@@ -250,7 +251,6 @@ finish:
   Dart_ExitScope();
 }
 
-
 static void ejdb2_jql_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer) {
   JQL q = (void *) peer;
   if (q) {
@@ -323,29 +323,135 @@ finish:
   Dart_ExitScope();
 }
 
+struct UXCTX {
+  bool dummy;
+};
+
+
+static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
+  bool aggregate = jql_has_aggregate_count(ux->q);
+  if (aggregate) {
+    return 0;
+  }
+  char *json;
+  Dart_CObject result;
+
+
+
+  // TODO:
+
+
+  return 0;
+}
+
+static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
+  iwrc rc = 0;
+  Dart_Port reply_port = ILLEGAL_PORT;
+  Dart_CObject result = {.type = Dart_CObject_kNull};
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 3)  {
+    iwlog_error2("Invalid message recieved");
+    return;
+  }
+  //  [reply_port, qptr, dbptr]
+  EJDB_EXEC ux = {0};
+  Dart_CObject **varr = msg->value.as_array.values;
+  reply_port = cobject_int(varr[0], false, &rc);
+  RCGO(rc, finish);
+  ux.q = (void *) cobject_int(varr[1], false, &rc);
+  if (!ux.q) {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+  EJDB2Context *dctx = (void *) cobject_int(varr[2], false, &rc);
+  if (!dctx || !dctx->db) {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+
+  struct UXCTX uctx = {0};
+  ux.db = dctx->db;
+  ux.visitor = jql_exec_visitor;
+  ux.opaque = &uctx;
+
+  rc = ejdb_exec(&ux);
+  RCGO(rc, finish);
+
+  // TODO: Aggregate
+
+finish:
+  if (rc) {
+    iwlog_ecode_error3(rc);
+    EJPORT_RC(&result, rc);
+  }
+  if (reply_port != ILLEGAL_PORT) {
+    Dart_PostCObject(reply_port, &result);
+  }
+}
+
 static void jql_exec(Dart_NativeArguments args) {
   // void _exec(SendPort sendPort) native 'exec';
   Dart_EnterScope();
 
   iwrc rc = 0;
-  intptr_t ptr = 0;
-  Dart_Port port;
+  intptr_t qptr = 0, ptr = 0;
+  Dart_Port reply_port = ILLEGAL_PORT;
+  Dart_Port exec_port = ILLEGAL_PORT;
   Dart_Handle ret = Dart_Null();
 
   Dart_Handle hself = EJTH(Dart_GetNativeArgument(args, 0));
+  Dart_Handle hdb = EJTH(Dart_GetField(hself, Dart_NewStringFromCString("db")));
   Dart_Handle hport = EJTH(Dart_GetNativeArgument(args, 1));
-  EJTH(Dart_SendPortGetId(hport, &port));
+  EJTH(Dart_SendPortGetId(hport, &reply_port));
 
-  //Dart_Port
-
-  EJTH(Dart_GetNativeInstanceField(hself, 0, &ptr));
-  if (!ptr) {
+  // EJDB2
+  EJTH(Dart_GetNativeInstanceField(hdb, 0, &ptr));
+  EJDB2Context *dctx = (void *) ptr;
+  if (!dctx || !dctx->db) {
     rc = EJD_ERROR_INVALID_STATE;
+    goto finish;
+  }
+
+  // JQL pointer
+  EJTH(Dart_GetNativeInstanceField(hself, 0, &qptr));
+  if (!qptr) {
+    rc = EJD_ERROR_INVALID_STATE;
+    goto finish;
+  }
+
+  // JQL exec port
+  exec_port = Dart_NewNativePort("jql_exec_port_handler", jql_exec_port_handler, false);
+  if (exec_port == ILLEGAL_PORT) {
+    rc = EJD_ERROR_CREATE_PORT;
+    goto finish;
+  }
+
+  // Now post a message to the query executor port: [reply_port, qptr, dctx]
+  Dart_CObject msg, marg1, marg2, marg3;
+  Dart_CObject *margs[] = {&marg1, &marg2, &marg3};
+
+  msg.type = Dart_CObject_kArray;
+  msg.value.as_array.length = 3;
+  msg.value.as_array.values = margs;
+
+  marg1.type = Dart_CObject_kInt64;
+  marg1.value.as_int64 = reply_port;
+
+  marg2.type = Dart_CObject_kInt64;
+  marg2.value.as_int64 = qptr;
+
+  marg3.type = Dart_CObject_kInt64;
+  marg3.value.as_int64 = (int64_t) dctx;
+
+  if (!Dart_PostCObject(exec_port, &msg)) {
+    rc = EJD_ERROR_POST_PORT;
     goto finish;
   }
 
 finish:
   if (rc || Dart_IsError(ret)) {
+    if (exec_port != ILLEGAL_PORT) {
+      Dart_CloseNativePort(exec_port);
+    }
     if (rc) {
       ret = ejd_error_rc_create(rc);
     }
@@ -415,7 +521,7 @@ static void ejdb2_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_P
   EJDB_OPTS opts = {0};
   EJDB db = 0;
 
-  if (msg->value.as_array.length != pnum + c)  {
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != pnum + c)  {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
   }
@@ -493,7 +599,6 @@ finish:
     }
   }
   Dart_PostCObject(reply_port, &result);
-  return;
 }
 
 static void ejdb2_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
@@ -530,14 +635,6 @@ finish:
   return;
 }
 
-// ctx->port = Dart_NewNativePort("ejdb2_port_handler", ejdb2_port_handler, true)
-// DART_EXPORT bool Dart_Post(Dart_Port port_id, Dart_Handle object);
-
-static void ejdb2_exec_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
-  iwrc rc = 0;
-
-}
-
 ///////////////////////////////////////////////////////////////////////////
 //
 ///////////////////////////////////////////////////////////////////////////
@@ -553,6 +650,8 @@ static const char *_ejd_ecodefn(locale_t locale, uint32_t ecode) {
       return "Invalid native function call args (EJD_ERROR_INVALID_NATIVE_CALL_ARGS)";
     case EJD_ERROR_INVALID_STATE:
       return "Invalid native extension state (EJD_ERROR_INVALID_STATE)";
+    case EJD_ERROR_POST_PORT:
+      return "Failed to post message to Dart port (EJD_ERROR_POST_PORT)";
   }
   return 0;
 }
@@ -580,7 +679,7 @@ static void ejdb2_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistent
   EJDB2Context *ctx = peer;
   if (!ctx) return;
   if (ctx->db) {
-    iwrc rc = ejdb_close(&ctx->db);
+    iwrc rc = ejdb_close((void *)&ctx->db);
     if (rc) iwlog_ecode_error3(rc);
     ctx->db = 0;
   }

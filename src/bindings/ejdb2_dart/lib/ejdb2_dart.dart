@@ -23,6 +23,7 @@ class EJDB2Error implements Exception {
   }
 }
 
+
 /// Query
 class JQL extends NativeFieldWrapperClass2 {
   final String query;
