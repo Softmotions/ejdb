@@ -324,13 +324,13 @@ finish:
 }
 
 struct UXCTX {
-  bool dummy;
+  bool aggregate;
 };
 
 
 static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
-  bool aggregate = jql_has_aggregate_count(ux->q);
-  if (aggregate) {
+  struct UXCTX *uctx = ux->opaque;
+  if (uctx->aggregate) {
     return 0;
   }
   char *json;
@@ -368,7 +368,9 @@ static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
     goto finish;
   }
 
-  struct UXCTX uctx = {0};
+  struct UXCTX uctx = {
+    .aggregate = jql_has_aggregate_count(ux.q)
+  };
   ux.db = dctx->db;
   ux.visitor = jql_exec_visitor;
   ux.opaque = &uctx;
