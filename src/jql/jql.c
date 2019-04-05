@@ -252,6 +252,14 @@ iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
   return jql_create2(qptr, coll, query, 0);
 }
 
+size_t jql_estimate_allocated_size(JQL q) {
+  size_t ret = sizeof(struct _JQL);
+  if (q->aux && q->aux->pool) {
+    ret += iwpool_allocated_size(q->aux->pool);
+  }
+  return ret;
+}
+
 const char *jql_collection(JQL q) {
   return q->coll;
 }

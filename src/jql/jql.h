@@ -127,6 +127,8 @@ IW_EXPORT void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders)
 
 IW_EXPORT void jql_destroy(JQL *qptr);
 
+IW_EXPORT size_t jql_estimate_allocated_size(JQL q);
+
 IW_EXPORT WUR iwrc jql_init(void);
 
 IW_EXTERN_C_END

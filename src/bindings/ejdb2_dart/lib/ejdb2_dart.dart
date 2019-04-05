@@ -21,6 +21,20 @@ class EJDB2Error implements Exception {
   }
 }
 
+/// Query
+class JQL extends NativeFieldWrapperClass2 {
+  final String query;
+  final String collection;
+  final EJDB2 db;
+  JQL._(this.db, this.query, this.collection);
+}
+
+/// Document
+class JBL extends NativeFieldWrapperClass2 {
+  //
+}
+
+/// Database wrapper
 class EJDB2 extends NativeFieldWrapperClass2 {
   static bool _checkCompleterPortError(Completer<dynamic> completer, dynamic reply) {
     // print('!!!! Reply: $reply');
@@ -141,6 +155,8 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     _port().send(List<dynamic>()..add(replyPort.sendPort)..add('close_wrapped')..add(dbh));
     return completer.future;
   }
+
+  JQL createQuery(String query, [String collection]) native 'create_query';
 
   SendPort _port() native 'port';
 
