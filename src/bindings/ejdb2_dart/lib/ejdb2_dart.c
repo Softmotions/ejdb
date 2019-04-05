@@ -46,7 +46,7 @@ static void ejdb2_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistent
 static void ejdb2_port(Dart_NativeArguments arguments);
 static void ejdb2_set_handle(Dart_NativeArguments args);
 static void ejdb2_get_handle(Dart_NativeArguments args);
-static void ejdb2_explain_rc(Dart_NativeArguments args);
+static void explain_rc(Dart_NativeArguments args);
 static void ejdb2_create_query(Dart_NativeArguments args);
 static void jql_exec(Dart_NativeArguments args);
 
@@ -60,7 +60,7 @@ static struct NativeFunctionLookup k_scoped_functions[] = {
   {"create_query", ejdb2_create_query},
   {"set_handle", ejdb2_set_handle},
   {"get_handle", ejdb2_get_handle},
-  {"explain_rc", ejdb2_explain_rc},
+  {"explain_rc", explain_rc},
   {0, 0}
 };
 
@@ -462,7 +462,7 @@ finish:
   Dart_ExitScope();
 }
 
-static void ejdb2_explain_rc(Dart_NativeArguments args) {
+static void explain_rc(Dart_NativeArguments args) {
   Dart_EnterScope();
   int64_t llv = 0;
   EJTH(Dart_GetNativeIntegerArgument(args, 0, &llv));
