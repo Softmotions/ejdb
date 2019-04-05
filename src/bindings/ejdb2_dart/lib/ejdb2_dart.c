@@ -50,16 +50,16 @@ static void ejdb2_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_P
 static void ejdb2_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 
 static struct NativeFunctionLookup k_scoped_functions[] = {
-  {"ejdb2_port", ejdb2_port},
-  {"ejdb2_set_handle", ejdb2_set_handle},
-  {"ejdb2_get_handle", ejdb2_get_handle},
-  {"ejdb2_explain_rc", ejdb2_explain_rc},
+  {"port", ejdb2_port},
+  {"set_handle", ejdb2_set_handle},
+  {"get_handle", ejdb2_get_handle},
+  {"explain_rc", ejdb2_explain_rc},
   {0, 0}
 };
 
 static struct WrapperFunctionLookup k_wrapped_functions[] = {
-  {"ejdb2_open_wrapped", ejdb2_open_wrapped},
-  {"ejdb2_close_wrapped", ejdb2_close_wrapped},
+  {"open_wrapped", ejdb2_open_wrapped},
+  {"close_wrapped", ejdb2_close_wrapped},
   {0, 0}
 };
 

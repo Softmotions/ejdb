@@ -6,7 +6,7 @@ import 'dart:nativewrappers' show NativeFieldWrapperClass2;
 
 import 'dart-ext:/home/adam/Projects/softmotions/ejdb/build/src/bindings/ejdb2_dart/ejdb2_dart';
 
-String ejdb2ExplainRC(int rc) native 'ejdb2_explain_rc';
+String ejdb2ExplainRC(int rc) native 'explain_rc';
 
 class EJDB2Error implements Exception {
   final int code;
@@ -78,7 +78,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     }
     final args = List<dynamic>()
       ..add(replyPort.sendPort)
-      ..add('ejdb2_open_wrapped')
+      ..add('open_wrapped')
 
       // opts.kv.path                         // non null
       // opts.kv.oflags                       // non null
@@ -138,15 +138,15 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send(List<dynamic>()..add(replyPort.sendPort)..add('ejdb2_close_wrapped')..add(dbh));
+    _port().send(List<dynamic>()..add(replyPort.sendPort)..add('close_wrapped')..add(dbh));
     return completer.future;
   }
 
-  SendPort _port() native 'ejdb2_port';
+  SendPort _port() native 'port';
 
-  void _set_handle(int handle) native 'ejdb2_set_handle';
+  void _set_handle(int handle) native 'set_handle';
 
-  int _get_handle() native 'ejdb2_get_handle';
+  int _get_handle() native 'get_handle';
 
   EJDB2._();
 }

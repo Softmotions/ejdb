@@ -12,6 +12,7 @@ compile_commands.json
 *.iml
 *.dat
 *.db
+*-wal
 
 .vscode/ipch/
 
