@@ -2,7 +2,9 @@ library ejdb2_dart;
 
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:convert';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
+import 'dart:typed_data';
 
 import 'dart-ext:/home/adam/Projects/softmotions/ejdb/build/src/bindings/ejdb2_dart/ejdb2_dart';
 
@@ -26,12 +28,43 @@ class JQL extends NativeFieldWrapperClass2 {
   final String query;
   final String collection;
   final EJDB2 db;
-  JQL._(this.db, this.query, this.collection);
-}
 
-/// Document
-class JBL extends NativeFieldWrapperClass2 {
-  //
+  StreamController<ByteBuffer> _controller;
+  RawReceivePort _replyPort;
+
+  JQL._(this.db, this.query, this.collection);
+
+  Stream<ByteBuffer> execute() {
+    abort();
+    _controller = StreamController<ByteBuffer>();
+    _replyPort = RawReceivePort();
+    _replyPort.handler = (dynamic reply) {
+      if (reply is int) {
+        _replyPort.close();
+        _controller.addError(EJDB2Error(reply, ejdb2ExplainRC(reply)));
+        return;
+      } else if (reply is ByteBuffer) {
+        _controller.add(reply);
+      } else if (reply == null) {
+        abort();
+      }
+    };
+    _exec(_replyPort.sendPort);
+    return _controller.stream;
+  }
+
+  void abort() {
+    if (_replyPort != null) {
+      _replyPort.close();
+      _replyPort = null;
+    }
+    if (_controller != null) {
+      _controller.close();
+      _controller = null;
+    }
+  }
+
+  void _exec(SendPort sendPort) native 'exec';
 }
 
 /// Database wrapper

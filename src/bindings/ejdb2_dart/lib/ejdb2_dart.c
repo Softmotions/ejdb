@@ -47,25 +47,25 @@ static void ejdb2_set_handle(Dart_NativeArguments args);
 static void ejdb2_get_handle(Dart_NativeArguments args);
 static void ejdb2_explain_rc(Dart_NativeArguments args);
 static void ejdb2_create_query(Dart_NativeArguments args);
+static void jql_exec(Dart_NativeArguments args);
 
 static void ejdb2_port_handler(Dart_Port receive_port, Dart_CObject *msg);
 static void ejdb2_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 static void ejdb2_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_exec_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 
 static struct NativeFunctionLookup k_scoped_functions[] = {
   {"port", ejdb2_port},
+  {"exec", jql_exec},
+  {"create_query", ejdb2_create_query},
   {"set_handle", ejdb2_set_handle},
   {"get_handle", ejdb2_get_handle},
   {"explain_rc", ejdb2_explain_rc},
-  {"create_query", ejdb2_create_query},
   {0, 0}
 };
 
 static struct WrapperFunctionLookup k_wrapped_functions[] = {
   {"open_wrapped", ejdb2_open_wrapped},
   {"close_wrapped", ejdb2_close_wrapped},
-  {"exec_wrapped", ejdb2_exec_wrapped},
   {0, 0}
 };
 
@@ -323,6 +323,37 @@ finish:
   Dart_ExitScope();
 }
 
+static void jql_exec(Dart_NativeArguments args) {
+  // void _exec(SendPort sendPort) native 'exec';
+  Dart_EnterScope();
+
+  iwrc rc = 0;
+  intptr_t ptr = 0;
+  Dart_Port port;
+  Dart_Handle ret = Dart_Null();
+
+  Dart_Handle hself = EJTH(Dart_GetNativeArgument(args, 0));
+  Dart_Handle hport = EJTH(Dart_GetNativeArgument(args, 1));
+  EJTH(Dart_SendPortGetId(hport, &port));
+
+  //Dart_Port
+
+  EJTH(Dart_GetNativeInstanceField(hself, 0, &ptr));
+  if (!ptr) {
+    rc = EJD_ERROR_INVALID_STATE;
+    goto finish;
+  }
+
+finish:
+  if (rc || Dart_IsError(ret)) {
+    if (rc) {
+      ret = ejd_error_rc_create(rc);
+    }
+  }
+  Dart_SetReturnValue(args, ret);
+  Dart_ExitScope();
+}
+
 static void ejdb2_explain_rc(Dart_NativeArguments args) {
   Dart_EnterScope();
   int64_t llv = 0;
@@ -499,10 +530,11 @@ finish:
   return;
 }
 
+// ctx->port = Dart_NewNativePort("ejdb2_port_handler", ejdb2_port_handler, true)
+// DART_EXPORT bool Dart_Post(Dart_Port port_id, Dart_Handle object);
+
 static void ejdb2_exec_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
-
-
 
 }
 

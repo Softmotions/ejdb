@@ -10,23 +10,6 @@
 #include <http/http.h>
 #include <ctype.h>
 
-//
-//  WEBSOCKET API:
-//
-//  <key> info
-//  <key> get     <collection> <id>
-//  <key> set     <collection> <id> <document json>
-//  <key> add     <collection> <document json>
-//  <key> del     <collection> <id>
-//  <key> patch   <collection> <id> <patch json>
-//  <key> idx     <collection> <mode> <path>
-//  <key> rmi     <collection> <mode> <path>
-//  <key> rmc     <collection>
-//  <key> query   <collection> <query>
-//  <key> explain <collection> <query>
-//  <key> <query>
-//
-
 #define JBR_MAX_KEY_LEN 36
 #define JBR_HTTP_CHUNK_SIZE 4096
 #define JBR_WS_STR_PREMATURE_END "Premature end of message"
