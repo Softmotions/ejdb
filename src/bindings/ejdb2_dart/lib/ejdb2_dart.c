@@ -404,7 +404,7 @@ static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
     .reply_port = reply_port
   };
   ux.db = dctx->db;
-  ux.visitor = jql_exec_visitor;
+  ux.visitor = uctx.aggregate_count ? 0 : jql_exec_visitor;
   ux.opaque = &uctx;
 
   rc = ejdb_exec(&ux);
