@@ -56,6 +56,8 @@ static void ejdb2_create_query(Dart_NativeArguments args);
 
 static void ejdb2_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 static void ejdb2_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejdb2_put_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejdb2_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 
 static struct NativeFunctionLookup k_scoped_functions[] = {
   {"port", ejdb2_port},
@@ -68,8 +70,15 @@ static struct NativeFunctionLookup k_scoped_functions[] = {
 };
 
 static struct WrapperFunctionLookup k_wrapped_functions[] = {
-  {"open_wrapped", ejdb2_open_wrapped},
-  {"close_wrapped", ejdb2_close_wrapped},
+  {"get", ejdb2_get_wrapped},
+  {"put", ejdb2_put_wrapped},
+  //{"del", ejdb2_del_wrapped},
+  //{"patch", ejdb2_patch_wrapped}
+  //{"idx", ejdb2_idx_wrapped},
+  //{"rmc", ejdb2_rmc_wrapped},
+  //{"rmi", ejdb2_rmi_wrapped},
+  {"open", ejdb2_open_wrapped},
+  {"close", ejdb2_close_wrapped},
   {0, 0}
 };
 
@@ -341,8 +350,6 @@ static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
   if (!xstr) {
     return IW_ERROR_ALLOC;
   }
-  rc = iwxstr_printf(xstr, "%lld\t", doc->id);
-  RCGO(rc, finish);
   if (doc->node) {
     rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
   } else {
@@ -350,9 +357,15 @@ static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
   }
   RCGO(rc, finish);
 
-  Dart_CObject result;
-  result.type = Dart_CObject_kString;
-  result.value.as_string = iwxstr_ptr(xstr);
+  Dart_CObject result, rv1, rv2;
+  Dart_CObject *rv[2] = {&rv1, &rv2};
+  result.type = Dart_CObject_kArray;
+  result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
+  result.value.as_array.values = rv;
+  rv1.type = Dart_CObject_kInt64;
+  rv1.value.as_int64 = doc->id;
+  rv2.type = Dart_CObject_kString;
+  rv2.value.as_string = iwxstr_ptr(xstr);
 
   if (!Dart_PostCObject(uctx->reply_port, &result)) {
     *step = 0; // End of cursor loop
@@ -398,11 +411,15 @@ static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
   RCGO(rc, finish);
 
   if (uctx.aggregate_count) {
-    Dart_CObject result_count;
-    char nbuf[JBNUMBUF_SIZE];
-    result_count.type = Dart_CObject_kString;
-    result_count.value.as_string = nbuf;
-    Dart_PostCObject(reply_port, &result_count);
+    Dart_CObject result, rv1, rv2;
+    Dart_CObject *rv[2] = {&rv1, &rv2};
+    result.type = Dart_CObject_kArray;
+    result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
+    result.value.as_array.values = rv;
+    rv1.type = Dart_CObject_kInt64;
+    rv1.value.as_int64 = ux.cnt;
+    rv2.type = Dart_CObject_kNull;
+    Dart_PostCObject(reply_port, &result);
   }
 
 finish:
@@ -543,11 +560,10 @@ static void ejdb2_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_P
   Dart_CObject *rv[1] = {&rv1};
 
   int c = 2;
-  const int pnum = 16;
   EJDB_OPTS opts = {0};
   EJDB db = 0;
 
-  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != pnum + c)  {
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 16 + c)  {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
   }
@@ -659,6 +675,117 @@ finish:
   }
   Dart_PostCObject(reply_port, &result);
   return;
+}
+
+static void ejdb2_put_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+  iwrc rc = 0;
+  Dart_CObject result, rv1;
+  Dart_CObject *rv[1] = {&rv1};
+
+  JBL jbl = 0;
+  int c = 2;
+
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 4 + c)  {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+  intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+  EJDB db = (EJDB) ptr;
+  if (!db) {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+  const char *coll = cobject_str(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+
+  const char *json = cobject_str(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+
+  int64_t id = cobject_int(msg->value.as_array.values[c++], true, &rc);
+  RCGO(rc, finish);
+
+  rc = jbl_from_json(&jbl, json);
+  RCGO(rc, finish);
+
+  if (id > 0) {
+    rc = ejdb_put(db, coll, jbl, id);
+  } else {
+    rc = ejdb_put_new(db, coll, jbl, &id);
+  }
+  RCGO(rc, finish);
+
+  rv1.type = Dart_CObject_kInt64;
+  rv1.value.as_int64 = id;
+  result.type = Dart_CObject_kArray;
+  result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
+  result.value.as_array.values = rv;
+
+finish:
+  if (jbl) {
+    jbl_destroy(&jbl);
+  }
+  if (rc) {
+    EJPORT_RC(&result, rc);
+  }
+  Dart_PostCObject(reply_port, &result);
+}
+
+static void ejdb2_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+  iwrc rc = 0;
+  Dart_CObject result, rv1;
+  Dart_CObject *rv[1] = {&rv1};
+
+  JBL jbl = 0;
+  IWXSTR *xstr = 0;
+  int c = 2;
+
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 3 + c)  {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+
+  intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+  EJDB db = (EJDB) ptr;
+  if (!db) {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+  const char *coll = cobject_str(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+
+  int64_t id = cobject_int(msg->value.as_array.values[c++], true, &rc);
+  RCGO(rc, finish);
+
+  rc = ejdb_get(db, coll, id, &jbl);
+  RCGO(rc, finish);
+
+  xstr = iwxstr_new2(jbl_size(jbl) * 2);
+  if (!xstr) {
+    rc = IW_ERROR_ALLOC;
+    goto finish;
+  }
+  rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
+  RCGO(rc, finish);
+
+  rv1.type = Dart_CObject_kString;
+  rv1.value.as_string = iwxstr_ptr(xstr);
+  result.type = Dart_CObject_kArray;
+  result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
+  result.value.as_array.values = rv;
+
+finish:
+  if (jbl) {
+    jbl_destroy(&jbl);
+  }
+  if (xstr) {
+    iwxstr_destroy(xstr);
+  }
+  if (rc) {
+    EJPORT_RC(&result, rc);
+  }
+  Dart_PostCObject(reply_port, &result);
 }
 
 ///////////////////////////////////////////////////////////////////////////

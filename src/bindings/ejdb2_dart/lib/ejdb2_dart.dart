@@ -4,8 +4,6 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
 
-import 'package:meta/meta.dart' show required;
-
 import 'dart-ext:/home/adam/Projects/softmotions/ejdb/build/src/bindings/ejdb2_dart/ejdb2_dart';
 
 String ejdb2ExplainRC(int rc) native 'explain_rc';
@@ -30,20 +28,28 @@ class EJDB2Error implements Exception {
   }
 }
 
+/// EJDB document item
+class JBDOC {
+  final int id;
+  final String json;
+  JBDOC(this.id, this.json);
+  JBDOC.fromList(List list) : this(list[0] as int, list[1] as String);
+}
+
 /// Query
 class JQL extends NativeFieldWrapperClass2 {
   final String query;
   final String collection;
   final EJDB2 db;
 
-  StreamController<String> _controller;
+  StreamController<JBDOC> _controller;
   RawReceivePort _replyPort;
 
   JQL._(this.db, this.query, this.collection);
 
-  Stream<String> execute() {
+  Stream<JBDOC> execute() {
     abort();
-    _controller = StreamController<String>();
+    _controller = StreamController<JBDOC>();
     _replyPort = RawReceivePort();
     _replyPort.handler = (dynamic reply) {
       print('reply=$reply');
@@ -54,8 +60,8 @@ class JQL extends NativeFieldWrapperClass2 {
         _replyPort.close();
         _controller.addError(EJDB2Error(reply, ejdb2ExplainRC(reply)));
         return;
-      } else if (reply is String) {
-        _controller.add(reply);
+      } else if (reply is List) {
+        _controller.add(JBDOC.fromList(reply));
       } else if (reply == null) {
         abort();
       }
@@ -136,7 +142,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     }
     final args = List<dynamic>()
       ..add(replyPort.sendPort)
-      ..add('open_wrapped')
+      ..add('open')
 
       // opts.kv.path                         // non null
       // opts.kv.oflags                       // non null
@@ -195,11 +201,11 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send(List<dynamic>()..add(replyPort.sendPort)..add('close_wrapped')..add(hdb));
+    _port().send([replyPort.sendPort, 'close', hdb]);
     return completer.future;
   }
 
-  Future<int> put(String json, [int id]) {
+  Future<int> put(String collection, String json, [int id]) {
     final hdb = _get_handle();
     if (hdb == null) {
       return Future.error(EJDB2Error.invalidState());
@@ -213,16 +219,26 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete((reply as List).first as int);
     };
-    _port().send(List<dynamic>()..add(replyPort.sendPort)..add('put_wrapped')..add(json)..add(id));
+    _port().send([replyPort.sendPort, 'put', hdb, collection, json, id]);
     return completer.future;
   }
 
-  Future<String> get(int id) {
+  Future<String> get(String collection, int id) {
     final hdb = _get_handle();
     if (hdb == null) {
       return Future.error(EJDB2Error.invalidState());
     }
-    // TODO:
+    final completer = Completer<String>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete((reply as List).first as String);
+    };
+    _port().send([replyPort.sendPort, 'get', hdb, collection, id]);
+    return completer.future;
   }
 
   JQL createQuery(String query, [String collection]) native 'create_query';
