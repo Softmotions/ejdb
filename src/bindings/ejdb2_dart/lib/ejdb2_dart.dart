@@ -2,27 +2,33 @@ library ejdb2_dart;
 
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:convert';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
-import 'dart:typed_data';
+
+import 'package:meta/meta.dart' show required;
 
 import 'dart-ext:/home/adam/Projects/softmotions/ejdb/build/src/bindings/ejdb2_dart/ejdb2_dart';
 
 String ejdb2ExplainRC(int rc) native 'explain_rc';
 
 class EJDB2Error implements Exception {
+  static int EJD_ERROR_INVALID_STATE = 89004;
+
   final int code;
 
   final String message;
 
   EJDB2Error(this.code, this.message);
 
+  factory EJDB2Error.invalidState() {
+    return EJDB2Error(
+        EJD_ERROR_INVALID_STATE, 'Invalid ejdb2_dart extension state (EJD_ERROR_INVALID_STATE)');
+  }
+
   @override
   String toString() {
     return '$runtimeType: $code $message';
   }
 }
-
 
 /// Query
 class JQL extends NativeFieldWrapperClass2 {
@@ -104,7 +110,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       int http_max_body_size,
       int http_port}) {
     final completer = Completer<EJDB2>();
-    final replyPort = new RawReceivePort();
+    final replyPort = RawReceivePort();
     final jb = EJDB2._();
 
     replyPort.handler = (dynamic reply) {
@@ -170,13 +176,12 @@ class EJDB2 extends NativeFieldWrapperClass2 {
   }
 
   Future<void> close() {
-    final dbh = _get_handle();
-    if (dbh == null) {
+    final hdb = _get_handle();
+    if (hdb == null) {
       return Future.value();
     }
     final completer = Completer<void>();
-    final replyPort = new RawReceivePort();
-
+    final replyPort = RawReceivePort();
     replyPort.handler = (dynamic reply) {
       replyPort.close();
       if (_checkCompleterPortError(completer, reply)) {
@@ -190,8 +195,34 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send(List<dynamic>()..add(replyPort.sendPort)..add('close_wrapped')..add(dbh));
+    _port().send(List<dynamic>()..add(replyPort.sendPort)..add('close_wrapped')..add(hdb));
     return completer.future;
+  }
+
+  Future<int> put(String json, [int id]) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<int>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete((reply as List).first as int);
+    };
+    _port().send(List<dynamic>()..add(replyPort.sendPort)..add('put_wrapped')..add(json)..add(id));
+    return completer.future;
+  }
+
+  Future<String> get(int id) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    // TODO:
   }
 
   JQL createQuery(String query, [String collection]) native 'create_query';

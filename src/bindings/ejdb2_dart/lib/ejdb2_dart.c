@@ -1,6 +1,7 @@
 #define DART_SHARED_LIB
 #include "dart_api.h"
 #include "dart_native_api.h"
+#include <ejdb2/iowow/iwconv.h>
 #include "ejdb2.h"
 #include "ejdb2cfg.h"
 
@@ -338,6 +339,8 @@ static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
   if (!xstr) {
     return IW_ERROR_ALLOC;
   }
+  rc = iwxstr_printf(xstr, "%lld\t", doc->id);
+  RCGO(rc, finish);
   if (doc->node) {
     rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
   } else {
@@ -394,8 +397,7 @@ static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
 
   if (uctx.aggregate_count) {
     Dart_CObject result_count;
-    char nbuf[JBNUMBUF_SIZE + 10];
-    snprintf(nbuf, sizeof(nbuf), "{\"count\":%"  PRId64 "}", ux.cnt);
+    char nbuf[JBNUMBUF_SIZE];
     result_count.type = Dart_CObject_kString;
     result_count.value.as_string = nbuf;
     Dart_PostCObject(reply_port, &result_count);
