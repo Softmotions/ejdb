@@ -18,7 +18,7 @@ typedef enum {
   EJD_ERROR_CREATE_PORT,                 /**< Failed to create a Dart port (EJD_ERROR_CREATE_PORT) */
   EJD_ERROR_POST_PORT,                   /**< Failed to post message to Dart port (EJD_ERROR_POST_PORT) */
   EJD_ERROR_INVALID_NATIVE_CALL_ARGS,    /**< Invalid native function call args (EJD_ERROR_INVALID_NATIVE_CALL_ARGS) */
-  EJD_ERROR_INVALID_STATE,               /**< Invalid ejdb2_dart extension state (EJD_ERROR_INVALID_STATE) */
+  EJD_ERROR_INVALID_STATE,               /**< Invalid native extension state (EJD_ERROR_INVALID_STATE) */
   _EJD_ERROR_END,
 } jbr_ecode_t;
 
@@ -43,15 +43,17 @@ IW_INLINE Dart_Handle ejd_error_check_propagate(Dart_Handle handle);
 IW_INLINE Dart_Handle ejd_error_rc_create(iwrc rc);
 IW_INLINE Dart_Handle ejd_error_rc_throw(iwrc rc);
 
-static void ejdb2_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer);
-static void ejdb2_port(Dart_NativeArguments arguments);
-static void ejdb2_set_handle(Dart_NativeArguments args);
-static void ejdb2_get_handle(Dart_NativeArguments args);
 static void explain_rc(Dart_NativeArguments args);
-static void ejdb2_create_query(Dart_NativeArguments args);
 static void jql_exec(Dart_NativeArguments args);
 
 static void ejdb2_port_handler(Dart_Port receive_port, Dart_CObject *msg);
+static void ejdb2_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer);
+
+static void ejdb2_port(Dart_NativeArguments arguments);
+static void ejdb2_set_handle(Dart_NativeArguments args);
+static void ejdb2_get_handle(Dart_NativeArguments args);
+static void ejdb2_create_query(Dart_NativeArguments args);
+
 static void ejdb2_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 static void ejdb2_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 

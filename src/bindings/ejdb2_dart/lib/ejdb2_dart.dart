@@ -21,7 +21,7 @@ class EJDB2Error implements Exception {
 
   factory EJDB2Error.invalidState() {
     return EJDB2Error(
-        EJD_ERROR_INVALID_STATE, 'Invalid ejdb2_dart extension state (EJD_ERROR_INVALID_STATE)');
+        EJD_ERROR_INVALID_STATE, 'Invalid native extension state (EJD_ERROR_INVALID_STATE)');
   }
 
   @override
