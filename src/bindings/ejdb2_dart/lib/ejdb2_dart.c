@@ -409,6 +409,8 @@ finish:
   if (reply_port != ILLEGAL_PORT) {
     Dart_PostCObject(reply_port, &result); // Last NULL or error(int)
   }
+  // Close own port, TODO: review
+  Dart_CloseNativePort(receive_port);
 }
 
 static void jql_exec(Dart_NativeArguments args) {
@@ -433,21 +435,18 @@ static void jql_exec(Dart_NativeArguments args) {
     rc = EJD_ERROR_INVALID_STATE;
     goto finish;
   }
-
   // JQL pointer
   EJTH(Dart_GetNativeInstanceField(hself, 0, &qptr));
   if (!qptr) {
     rc = EJD_ERROR_INVALID_STATE;
     goto finish;
   }
-
   // JQL exec port
   exec_port = Dart_NewNativePort("jql_exec_port_handler", jql_exec_port_handler, false);
   if (exec_port == ILLEGAL_PORT) {
     rc = EJD_ERROR_CREATE_PORT;
     goto finish;
   }
-
   // Now post a message to the query executor port: [reply_port, qptr, dctx]
   Dart_CObject msg, marg1, marg2, marg3;
   Dart_CObject *margs[] = {&marg1, &marg2, &marg3};
