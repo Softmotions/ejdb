@@ -324,24 +324,38 @@ finish:
 }
 
 struct UXCTX {
-  bool aggregate;
+  bool aggregate_count;
+  Dart_Port reply_port;
 };
-
 
 static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   struct UXCTX *uctx = ux->opaque;
-  if (uctx->aggregate) {
+  if (uctx->aggregate_count) {
     return 0;
   }
-  char *json;
+  iwrc rc = 0;
+  IWXSTR *xstr = iwxstr_new();
+  if (!xstr) {
+    return IW_ERROR_ALLOC;
+  }
+  if (doc->node) {
+    rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
+  } else {
+    rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
+  }
+  RCGO(rc, finish);
+
   Dart_CObject result;
+  result.type = Dart_CObject_kString;
+  result.value.as_string = iwxstr_ptr(xstr);
 
+  if (!Dart_PostCObject(uctx->reply_port, &result)) {
+    *step = 0; // End of cursor loop
+  }
 
-
-  // TODO:
-
-
-  return 0;
+finish:
+  iwxstr_destroy(xstr);
+  return rc;
 }
 
 static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
@@ -367,9 +381,9 @@ static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
   }
-
   struct UXCTX uctx = {
-    .aggregate = jql_has_aggregate_count(ux.q)
+    .aggregate_count = jql_has_aggregate_count(ux.q),
+    .reply_port = reply_port
   };
   ux.db = dctx->db;
   ux.visitor = jql_exec_visitor;
@@ -378,7 +392,14 @@ static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
   rc = ejdb_exec(&ux);
   RCGO(rc, finish);
 
-  // TODO: Aggregate
+  if (uctx.aggregate_count) {
+    Dart_CObject result_count;
+    char nbuf[JBNUMBUF_SIZE + 10];
+    snprintf(nbuf, sizeof(nbuf), "{\"count\":%"  PRId64 "}", ux.cnt);
+    result_count.type = Dart_CObject_kString;
+    result_count.value.as_string = nbuf;
+    Dart_PostCObject(reply_port, &result_count);
+  }
 
 finish:
   if (rc) {
@@ -386,7 +407,7 @@ finish:
     EJPORT_RC(&result, rc);
   }
   if (reply_port != ILLEGAL_PORT) {
-    Dart_PostCObject(reply_port, &result);
+    Dart_PostCObject(reply_port, &result); // Last NULL or error(int)
   }
 }
 

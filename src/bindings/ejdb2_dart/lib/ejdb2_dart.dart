@@ -30,21 +30,25 @@ class JQL extends NativeFieldWrapperClass2 {
   final String collection;
   final EJDB2 db;
 
-  StreamController<ByteBuffer> _controller;
+  StreamController<String> _controller;
   RawReceivePort _replyPort;
 
   JQL._(this.db, this.query, this.collection);
 
-  Stream<ByteBuffer> execute() {
+  Stream<String> execute() {
     abort();
-    _controller = StreamController<ByteBuffer>();
+    _controller = StreamController<String>();
     _replyPort = RawReceivePort();
     _replyPort.handler = (dynamic reply) {
+      print('reply=$reply');
+      if (reply != null) {
+        print('replay type=${reply.runtimeType}');
+      }
       if (reply is int) {
         _replyPort.close();
         _controller.addError(EJDB2Error(reply, ejdb2ExplainRC(reply)));
         return;
-      } else if (reply is ByteBuffer) {
+      } else if (reply is String) {
         _controller.add(reply);
       } else if (reply == null) {
         abort();
