@@ -9,6 +9,9 @@ import 'dart-ext:/home/adam/Projects/softmotions/ejdb/build/src/bindings/ejdb2_d
 String ejdb2ExplainRC(int rc) native 'explain_rc';
 
 class EJDB2Error implements Exception {
+  static int EJD_ERROR_CREATE_PORT = 89001;
+  static int EJD_ERROR_POST_PORT = 89002;
+  static int EJD_ERROR_INVALID_NATIVE_CALL_ARGS = 89003;
   static int EJD_ERROR_INVALID_STATE = 89004;
 
   final int code;
