@@ -4,7 +4,7 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
 
-import 'dart-ext:/home/adam/Projects/softmotions/ejdb/build/src/bindings/ejdb2_dart/ejdb2_dart';
+import 'dart-ext:ejdb2_dart';
 
 String ejdb2ExplainRC(int rc) native 'explain_rc';
 
@@ -35,6 +35,8 @@ class JBDOC {
   final String json;
   JBDOC(this.id, this.json);
   JBDOC.fromList(List list) : this(list[0] as int, list[1] as String);
+  @override
+  String toString() => '$runtimeType: $id $json';
 }
 
 /// Query
@@ -76,6 +78,10 @@ class JQL extends NativeFieldWrapperClass2 {
       _controller.close();
       _controller = null;
     }
+  }
+
+  Future<int> scalarInt() {
+    return execute().map((d) => d.id).first;
   }
 
   void _exec(SendPort sendPort) native 'exec';
@@ -202,6 +208,24 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  Future<void> patch(String collection, String patch, int id) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<void>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete();
+    };
+    _port().send([replyPort.sendPort, 'patch', hdb, collection, patch, id]);
+    return completer.future;
+  }
+
   Future<String> get(String collection, int id) {
     final hdb = _get_handle();
     if (hdb == null) {
@@ -217,6 +241,24 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       completer.complete((reply as List).first as String);
     };
     _port().send([replyPort.sendPort, 'get', hdb, collection, id]);
+    return completer.future;
+  }
+
+  Future<void> del(String collection, int id) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<void>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete();
+    };
+    _port().send([replyPort.sendPort, 'del', hdb, collection, id]);
     return completer.future;
   }
 

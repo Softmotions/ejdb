@@ -2,6 +2,7 @@
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
   <VirtualDirectory Name="bindings">
     <VirtualDirectory Name="ejdb2_dart">
+      <File Name="src/bindings/ejdb2_dart/README.md"/>
       <VirtualDirectory Name="test">
         <File Name="src/bindings/ejdb2_dart/test/ejdb2_dart_test.dart"/>
       </VirtualDirectory>
@@ -13,7 +14,6 @@
       <File Name="src/bindings/ejdb2_dart/analysis_options.yaml"/>
       <File Name="src/bindings/ejdb2_dart/.packages"/>
       <VirtualDirectory Name="lib">
-        <File Name="src/bindings/ejdb2_dart/lib/khash.h"/>
         <File Name="src/bindings/ejdb2_dart/lib/ejdb2_dart.dart"/>
         <File Name="src/bindings/ejdb2_dart/lib/ejdb2_dart.c"/>
         <File Name="src/bindings/ejdb2_dart/lib/dart_native_api.h"/>
@@ -159,8 +159,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>cmake-build-Debug/</Path>
       <Path>build/</Path>
+      <Path>cmake-build-Debug/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -335,7 +335,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="/usr/lib/dart/bin/dart" IntermediateDirectory="$(ProjectPath)/src/bindings/ejdb2_dart" Command="$(OutputFile)" CommandArguments="test/ejdb2_dart_test.dart" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="/usr/lib/dart/bin/dart" IntermediateDirectory="$(ProjectPath)/build/src/bindings/ejdb2_dart/ejdb2_dart" Command="$(OutputFile)" CommandArguments="test/ejdb2_dart_test.dart" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake">-G Ninja -DCMAKE_BUILD_TYPE=Debug</BuildSystem>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>

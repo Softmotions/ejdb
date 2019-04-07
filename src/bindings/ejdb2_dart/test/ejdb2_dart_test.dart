@@ -56,5 +56,28 @@ void main() async {
   }
   assert(error != null);
 
+  var count = await db.createQuery('@mycoll/* | count').scalarInt();
+  assert(count == 2);
+
+  // Del
+  await db.del('mycoll', 1);
+  error = null;
+  try {
+    await db.get('mycoll', 1);
+  } on EJDB2Error catch (e) {
+    error = e;
+    assert(e.code == 75001);
+    assert(e.message.contains('IWKV_ERROR_NOTFOUND'));
+  }
+  assert(error != null);
+
+  count = await db.createQuery('@mycoll/* | count').scalarInt();
+  assert(count == 1);
+
+  // Patch
+  await db.patch('mycoll', '[{"op":"add", "path":"/baz", "value":"qux"}]', 2);
+  json = await db.get('mycoll', 2);
+  assert(json  == '{"foo":"baz","baz":"qux"}');
+
   await db.close();
 }

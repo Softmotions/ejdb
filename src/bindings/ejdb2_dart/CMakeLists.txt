@@ -21,9 +21,25 @@ else()
   endif()
 endif()
 
+set(DART_PUB_DIR ${CMAKE_CURRENT_BINARY_DIR}/ejdb2_dart)
+
+configure_file(lib/ejdb2_dart.c ${DART_PUB_DIR}/lib/ejdb2_dart.c COPYONLY)
+configure_file(lib/ejdb2_dart.dart ${DART_PUB_DIR}/lib/ejdb2_dart.dart COPYONLY)
+configure_file(test/ejdb2_dart_test.dart ${DART_PUB_DIR}/test/ejdb2_dart_test.dart COPYONLY)
+
+configure_file(README.md ${DART_PUB_DIR}/README.md COPYONLY)
+configure_file(Changelog ${DART_PUB_DIR}/Changelog COPYONLY)
+configure_file(pubspec.yaml ${DART_PUB_DIR}/pubspec.yaml COPYONLY)
+configure_file(.packages ${DART_PUB_DIR}/.packages COPYONLY)
+
 set_target_properties(ejdb2_dart PROPERTIES
                       COMPILE_FLAGS ${dart_COMPILE_FLAGS}
-                      LINK_FLAGS ${dart_LINK_FLAGS})
+                      LINK_FLAGS ${dart_LINK_FLAGS}
+                      LIBRARY_OUTPUT_DIRECTORY ${DART_PUB_DIR}/lib)
 
-
+# add_custom_command(
+# TARGET foo POST_BUILD
+# COMMAND ${CMAKE_COMMAND} -E copy
+#         ${CMAKE_SOURCE_DIR}/test/input.txt
+#         ${CMAKE_CURRENT_BINARY_DIR}/input.txt)
 
