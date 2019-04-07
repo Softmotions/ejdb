@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define EJW_SUCCESS
+
 typedef void(*WrapperFunction)(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 
 typedef enum {
@@ -55,6 +57,7 @@ static void ejdb2_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
 static void ejdb2_put_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 static void ejdb2_del_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 static void ejdb2_patch_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejdb2_idx_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 
 static struct NativeFunctionLookup k_scoped_functions[] = {
   {"port", ejdb2_port},
@@ -71,7 +74,7 @@ static struct WrapperFunctionLookup k_wrapped_functions[] = {
   {"put", ejdb2_put_wrapped},
   {"del", ejdb2_del_wrapped},
   {"patch", ejdb2_patch_wrapped},
-  //{"idx", ejdb2_idx_wrapped},
+  {"idx", ejdb2_idx_wrapped},
   //{"rmc", ejdb2_rmc_wrapped},
   //{"rmi", ejdb2_rmi_wrapped},
   {"open", ejdb2_open_wrapped},
@@ -800,6 +803,10 @@ finish:
     EJPORT_RC(&result, rc);
   }
   Dart_PostCObject(reply_port, &result);
+}
+
+static void ejdb2_idx_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+  // TODO:
 }
 
 static void ejdb2_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
