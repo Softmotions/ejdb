@@ -8,19 +8,53 @@ void main() async {
   assert(q.collection == 'mycoll');
   assert(q.db != null);
 
-  var id = await db.put('mycoll', '{"foo":"bar"}');
+  final id = await db.put('mycoll', '{"foo":"bar"}');
   assert(id == 1);
 
   dynamic error;
   try {
-    await db.put('mycoll','{"');
-  } on EJDB2Error catch(e) {
+    await db.put('mycoll', '{"');
+  } on EJDB2Error catch (e) {
     error = e;
     assert(e.code == 86005);
     assert(e.message == 'Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)');
   }
   assert(error != null);
 
+  var json = await db.get('mycoll', id);
+  assert(json == '{"foo":"bar"}');
+
+  await db.put('mycoll', '{"foo":"baz"}');
+
+  // Query 1
+  final rbuf = <String>[];
+  await for (final doc in q.execute()) {
+    rbuf..add(doc.id.toString())..add(doc.json);
+  }
+  assert(rbuf.toString() == '[2, {"foo":"baz"}, 1, {"foo":"bar"}]');
+  rbuf.clear();
+
+  // Query 2
+  await for (final doc in db.createQuery('@mycoll/[foo=zaz]').execute()) {
+    rbuf..add(doc.id.toString())..add(doc.json);
+  }
+  assert(rbuf.isEmpty);
+
+  // Query 3
+  await for (final doc in db.createQuery('/[foo=bar]', 'mycoll').execute()) {
+    rbuf..add(doc.id.toString())..add(doc.json);
+  }
+  assert(rbuf.toString() == '[1, {"foo":"bar"}]');
+
+  error = null;
+  try {
+    await db.createQuery('@mycoll/[').execute();
+  } on EJDB2Error catch (e) {
+    error = e;
+    assert(e.code == 87001);
+    assert(e.message.contains('@mycoll/[ <---'));
+  }
+  assert(error != null);
 
   await db.close();
 }

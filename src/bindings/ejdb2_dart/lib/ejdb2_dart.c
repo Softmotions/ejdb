@@ -341,11 +341,8 @@ struct UXCTX {
 };
 
 static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
-  struct UXCTX *uctx = ux->opaque;
-  if (uctx->aggregate_count) {
-    return 0;
-  }
   iwrc rc = 0;
+  struct UXCTX *uctx = ux->opaque;
   IWXSTR *xstr = iwxstr_new();
   if (!xstr) {
     return IW_ERROR_ALLOC;
@@ -779,13 +776,13 @@ finish:
   if (jbl) {
     jbl_destroy(&jbl);
   }
-  if (xstr) {
-    iwxstr_destroy(xstr);
-  }
   if (rc) {
     EJPORT_RC(&result, rc);
   }
   Dart_PostCObject(reply_port, &result);
+  if (xstr) {
+    iwxstr_destroy(xstr);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////

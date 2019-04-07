@@ -8,6 +8,7 @@ import 'dart-ext:/home/adam/Projects/softmotions/ejdb/build/src/bindings/ejdb2_d
 
 String ejdb2ExplainRC(int rc) native 'explain_rc';
 
+/// EJDB specific exception
 class EJDB2Error implements Exception {
   static int EJD_ERROR_CREATE_PORT = 89001;
   static int EJD_ERROR_POST_PORT = 89002;
@@ -20,15 +21,12 @@ class EJDB2Error implements Exception {
 
   EJDB2Error(this.code, this.message);
 
-  factory EJDB2Error.invalidState() {
-    return EJDB2Error(
-        EJD_ERROR_INVALID_STATE, 'Invalid native extension state (EJD_ERROR_INVALID_STATE)');
-  }
+  EJDB2Error.fromCode(int code) : this(code, ejdb2ExplainRC(code));
+
+  EJDB2Error.invalidState() : this.fromCode(EJD_ERROR_INVALID_STATE);
 
   @override
-  String toString() {
-    return '$runtimeType: $code $message';
-  }
+  String toString() => '$runtimeType: $code $message';
 }
 
 /// EJDB document item
@@ -55,13 +53,9 @@ class JQL extends NativeFieldWrapperClass2 {
     _controller = StreamController<JBDOC>();
     _replyPort = RawReceivePort();
     _replyPort.handler = (dynamic reply) {
-      print('reply=$reply');
-      if (reply != null) {
-        print('replay type=${reply.runtimeType}');
-      }
       if (reply is int) {
         _replyPort.close();
-        _controller.addError(EJDB2Error(reply, ejdb2ExplainRC(reply)));
+        _controller.addError(EJDB2Error.fromCode(reply));
         return;
       } else if (reply is List) {
         _controller.add(JBDOC.fromList(reply));
@@ -90,7 +84,6 @@ class JQL extends NativeFieldWrapperClass2 {
 /// Database wrapper
 class EJDB2 extends NativeFieldWrapperClass2 {
   static bool _checkCompleterPortError(Completer<dynamic> completer, dynamic reply) {
-    // print('!!!! Reply: $reply');
     if (reply is int) {
       completer.completeError(EJDB2Error(reply, ejdb2ExplainRC(reply)));
       return true;
@@ -137,32 +130,15 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     };
 
     // Open
-    int oflags = 0;
+    var oflags = 0;
     if (readonly) {
       oflags |= 0x02;
     } else if (truncate) {
       oflags |= 0x04;
     }
-    final args = List<dynamic>()
+    final args = <dynamic>[]
       ..add(replyPort.sendPort)
       ..add('open')
-
-      // opts.kv.path                         // non null
-      // opts.kv.oflags                       // non null
-      // opts.kv.wal.enabled                  // non null
-      // opts.kv.wal.check_crc_on_checkpoint
-      // opts.kv.wal.checkpoint_buffer_sz
-      // opts.kv.wal.checkpoint_timeout_sec
-      // opts.kv.wal.savepoint_timeout_sec
-      // opts.kv.wal.wal_buffer_sz
-      // opts.document_buffer_sz
-      // opts.sort_buffer_sz
-      // opts.http.enabled
-      // opts.http.access_token
-      // opts.http.bind
-      // opts.http.max_body_size
-      // opts.http.port
-      // opts.http.read_anon
       ..add(path)
       ..add(oflags)
       ..add(wal_enabled)
