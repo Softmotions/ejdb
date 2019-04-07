@@ -427,7 +427,6 @@ finish:
   if (reply_port != ILLEGAL_PORT) {
     Dart_PostCObject(reply_port, &result); // Last NULL or error(int)
   }
-  // Close own port, TODO: review
   Dart_CloseNativePort(receive_port);
 }
 
