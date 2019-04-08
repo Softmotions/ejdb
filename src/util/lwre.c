@@ -713,13 +713,13 @@ bailout:
 
 /* public interface */
 
-struct re *re_new(const char *expr) {
+struct re *lwre_new(const char *expr) {
   struct re *re = RE_CALLOC(0, 1, sizeof(struct re));
   if (re) re->expression = expr;
   return re;
 }
 
-int re_match(struct re *re, char *input) {
+int lwre_match(struct re *re, char *input) {
   if (re->matches) RE_FREE(re, re->matches);
   re->matches = 0;
   re->nmatches = 0;
@@ -737,19 +737,19 @@ int re_match(struct re *re, char *input) {
   return re_program_run(re, input, &re->matches, &re->nmatches);
 }
 
-void re_release(struct re *re) {
+void lwre_release(struct re *re) {
   if (re->matches)  RE_FREE(re, re->matches);
   if (re->code.first) re_program_free(re, &re->code);
   memset(re, 0, sizeof(*re));
 }
 
-void re_reset(struct re *re, const char *expression) {
-  re_release(re);
+void lwre_reset(struct re *re, const char *expression) {
+  lwre_release(re);
   re->expression = expression;
 }
 
-void re_free(struct re *re) {
-  re_release(re);
+void lwre_free(struct re *re) {
+  lwre_release(re);
   RE_FREE(0, re);
 }
 
@@ -812,7 +812,7 @@ static void re_escape_utf8(char **sp, unsigned int c) {
   *sp = s;
 }
 
-char *re_escape(char *s, int liberal) {
+char *lwre_escape(char *s, int liberal) {
   char *in = s, *out = s;
   int c;
   while ((c = *in++)) {
@@ -891,7 +891,7 @@ int main(int argc, char **argv) {
   char buf[1024];
   while (fgets(buf, sizeof(buf), stdin)) {
     int n;
-    if (((n = re_match(&re, buf)) < 0) && (RE_ERROR_NOMATCH != n)) {
+    if (((n = lwre_match(&re, buf)) < 0) && (RE_ERROR_NOMATCH != n)) {
       fprintf(stderr, "%i %ss: %s\n", n, re.error_message, re.position);
       break;
     } else {
@@ -907,7 +907,7 @@ int main(int argc, char **argv) {
       }
     }
   }
-  re_release(&re);
+  lwre_release(&re);
   return 0;
 }
 

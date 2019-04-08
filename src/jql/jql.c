@@ -42,7 +42,7 @@ IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
         break;
       case JQVAL_RE:
         ptr = (void *) qv->vre->expression;
-        re_free(qv->vre);
+        lwre_free(qv->vre);
         break;
       case JQVAL_JBLNODE:
         ptr = qv->vnode;
@@ -156,12 +156,12 @@ iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
 
 iwrc jql_set_regexp2(JQL q, const char *placeholder, int index, const char *expr,
                      void (*freefn)(void *, void *), void *op) {
-  struct re *rx = re_new(expr);
+  struct re *rx = lwre_new(expr);
   if (!rx) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) {
     iwrc rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    re_free(rx);
+    lwre_free(rx);
     return rc;
   }
   qv->freefn = freefn;
@@ -335,7 +335,7 @@ void jql_destroy(JQL *qptr) {
     for (JQP_OP *op = aux->start_op; op; op = op->next) {
       if (op->opaque) {
         if (op->value == JQP_OP_RE) {
-          re_free(op->opaque);
+          lwre_free(op->opaque);
         }
       }
     }
@@ -671,7 +671,7 @@ static bool _jql_match_regexp(JQP_AUX *aux,
       aexpr[rci - 1] = '\0';
       expr = aexpr;
     }
-    rx = re_new(expr);
+    rx = lwre_new(expr);
     if (!rx) {
       *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       return false;
@@ -701,7 +701,7 @@ static bool _jql_match_regexp(JQP_AUX *aux,
   }
 
   assert(input);
-  int mret = re_match(rx, input);
+  int mret = lwre_match(rx, input);
   switch (mret) {
     case RE_ERROR_NOMATCH:
       return false;

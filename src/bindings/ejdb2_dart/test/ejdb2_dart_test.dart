@@ -8,7 +8,7 @@ void main() async {
   assert(q.collection == 'mycoll');
   assert(q.db != null);
 
-  final id = await db.put('mycoll', '{"foo":"bar"}');
+  final id = await db.put('mycoll', {'foo':'bar'});
   assert(id == 1);
 
   dynamic error;
@@ -24,7 +24,7 @@ void main() async {
   var json = await db.get('mycoll', id);
   assert(json == '{"foo":"bar"}');
 
-  await db.put('mycoll', '{"foo":"baz"}');
+  await db.put('mycoll', {'foo':'baz'});
 
   // Query 1
   final rbuf = <String>[];
@@ -107,9 +107,11 @@ void main() async {
       .execute()
       .first;
 
-  ///doc = await db.createQuery('@mycoll/[foo re :?]').setRegExp(0, RegExp('.*')).execute().first;
-  doc = await db.createQuery('@mycoll/[foo re .*]').execute().first;
-  print('doc2=$doc');
+  doc = await db.createQuery('@mycoll/[foo re :?]').setRegExp(0, RegExp('.*')).execute().first;
+  assert(doc.json == '{"foo":"baz","baz":"qux"}');
+
+  doc = await db.createQuery('@mycoll/* | /foo').execute().first;
+  assert(doc.json == '{"foo":"baz"}');
 
   await db.removeStringIndex('mycoll', '/foo', unique: true);
   json = await db.info();

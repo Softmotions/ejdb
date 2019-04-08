@@ -37,12 +37,12 @@ struct re {
 #define RE_ERROR_SUBMATCH   -5
 #define RE_ERROR_ENGINE     -6
 
-struct re *re_new(const char *expression);
-int    re_match(struct re *re, char *input);
-void   re_release(struct re *re);
-void   re_reset(struct re *re, const char *expression);
-void   re_free(struct re *re);
+struct re *lwre_new(const char *expression);
+int    lwre_match(struct re *re, char *input);
+void   lwre_release(struct re *re);
+void   lwre_reset(struct re *re, const char *expression);
+void   lwre_free(struct re *re);
 
-char *re_escape(char *string, int liberal);
+char *lwre_escape(char *string, int liberal);
 
 #endif /* __lwre_h_ */

@@ -26,9 +26,10 @@ set(DART_PUB_DIR ${CMAKE_CURRENT_BINARY_DIR}/ejdb2_dart)
 configure_file(lib/ejdb2_dart.c ${DART_PUB_DIR}/lib/ejdb2_dart.c COPYONLY)
 configure_file(lib/ejdb2_dart.dart ${DART_PUB_DIR}/lib/ejdb2_dart.dart COPYONLY)
 configure_file(test/ejdb2_dart_test.dart ${DART_PUB_DIR}/test/ejdb2_dart_test.dart COPYONLY)
+configure_file(example/example.dart ${DART_PUB_DIR}/example/example.dart COPYONLY)
 
 configure_file(README.md ${DART_PUB_DIR}/README.md COPYONLY)
-configure_file(Changelog ${DART_PUB_DIR}/Changelog COPYONLY)
+configure_file(Changelog ${DART_PUB_DIR}/Changelog.md COPYONLY)
 configure_file(pubspec.yaml ${DART_PUB_DIR}/pubspec.yaml COPYONLY)
 configure_file(.packages ${DART_PUB_DIR}/.packages COPYONLY)
 

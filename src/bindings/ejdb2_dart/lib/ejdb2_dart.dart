@@ -1,6 +1,15 @@
+///
+/// EJDB2 Dart VM native API binding.
+///
+/// See https://github.com/Softmotions/ejdb/blob/master/README.md
+///
+/// For API usage examples look into `/example` and `/test` folders.
+///
+
 library ejdb2_dart;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:isolate';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
 
@@ -31,15 +40,21 @@ class EJDB2Error implements Exception {
 
 /// EJDB document item
 class JBDOC {
+  /// Document identifier
   final int id;
+
+  /// Document JSON body as string
   final String json;
+
   JBDOC(this.id, this.json);
   JBDOC.fromList(List list) : this(list[0] as int, list[1] as String);
   @override
   String toString() => '$runtimeType: $id $json';
 }
 
-/// Query
+/// Represents query on ejdb collection.
+/// Instance can be reused for multiple queries reusing
+/// placeholder parameters.
 class JQL extends NativeFieldWrapperClass2 {
   final String query;
   final String collection;
@@ -50,6 +65,7 @@ class JQL extends NativeFieldWrapperClass2 {
 
   JQL._(this.db, this.query, this.collection);
 
+  /// Execute query and returns a stream of documents in result set.
   Stream<JBDOC> execute() {
     abort();
     _controller = StreamController<JBDOC>();
@@ -69,6 +85,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return _controller.stream;
   }
 
+  /// Abort query execution.
   void abort() {
     if (_replyPort != null) {
       _replyPort.close();
@@ -80,17 +97,23 @@ class JQL extends NativeFieldWrapperClass2 {
     }
   }
 
+  /// Return scalar integer value as result of query execution.
+  /// For example execution of count query: `/... | count`
   Future<int> scalarInt() {
     return execute().map((d) => d.id).first;
   }
 
-  JQL setJson(dynamic placeholder, String json) {
+  /// Set [json] at specified [placeholder].
+  /// [placeholder] can be either `string` or `int`
+  JQL setJson(dynamic placeholder, Object json) {
     _checkPlaceholder(placeholder);
     ArgumentError.checkNotNull(json);
-    _set(placeholder, json, 1);
+    _set(placeholder, _asJsonString(json), 1);
     return this;
   }
 
+  /// Set [regexp] at specified [placeholder].
+  /// [placeholder] can be either `string` or `int`
   JQL setRegExp(dynamic placeholder, RegExp regexp) {
     _checkPlaceholder(placeholder);
     ArgumentError.checkNotNull(regexp);
@@ -98,6 +121,8 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
+  /// Set integer [val] at specified [placeholder].
+  /// [placeholder] can be either `string` or `int`
   JQL setInt(dynamic placeholder, int val) {
     _checkPlaceholder(placeholder);
     ArgumentError.checkNotNull(val);
@@ -105,6 +130,8 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
+  /// Set double [val] at specified [placeholder].
+  /// [placeholder] can be either `string` or `int`
   JQL setDouble(dynamic placeholder, double val) {
     _checkPlaceholder(placeholder);
     ArgumentError.checkNotNull(val);
@@ -112,6 +139,8 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
+  /// Set boolean [val] at specified [placeholder].
+  /// [placeholder] can be either `string` or `int`
   JQL setBoolean(dynamic placeholder, bool val) {
     _checkPlaceholder(placeholder);
     ArgumentError.checkNotNull(val);
@@ -119,6 +148,8 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
+  /// Set string [val] at specified [placeholder].
+  /// [placeholder] can be either `string` or `int`
   JQL setString(dynamic placeholder, String val) {
     _checkPlaceholder(placeholder);
     ArgumentError.checkNotNull(val);
@@ -126,6 +157,8 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
+  /// Set `null` at specified [placeholder].
+  /// [placeholder] can be either `string` or `int`
   JQL setNull(dynamic placeholder) {
     _checkPlaceholder(placeholder);
     _set(placeholder, null);
@@ -156,6 +189,9 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return false;
   }
 
+  /// Open EJDB2 database
+  /// See https://github.com/Softmotions/ejdb/blob/master/src/ejdb2.h#L104
+  /// for options description.
   static Future<EJDB2> open(String path,
       {bool truncate = false,
       bool readonly = false,
@@ -222,6 +258,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  /// Closes database instance.
   Future<void> close() {
     final hdb = _get_handle();
     if (hdb == null) {
@@ -246,7 +283,9 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
-  Future<int> put(String collection, String json, [int id]) {
+  /// Save [json] document under specified [id] or create a document
+  /// with new generated `id`. Returns future holding actual document `id`.
+  Future<int> put(String collection, Object json, [int id]) {
     final hdb = _get_handle();
     if (hdb == null) {
       return Future.error(EJDB2Error.invalidState());
@@ -260,11 +299,12 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete((reply as List).first as int);
     };
-    _port().send([replyPort.sendPort, 'put', hdb, collection, json, id]);
+    _port().send([replyPort.sendPort, 'put', hdb, collection, _asJsonString(json), id]);
     return completer.future;
   }
 
-  Future<void> patch(String collection, String patch, int id) {
+  /// Apply rfc6902/rfc6901 JSON [patch] to the document identified by [id].
+  Future<void> patch(String collection, Object patch, int id) {
     final hdb = _get_handle();
     if (hdb == null) {
       return Future.error(EJDB2Error.invalidState());
@@ -278,10 +318,11 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send([replyPort.sendPort, 'patch', hdb, collection, patch, id]);
+    _port().send([replyPort.sendPort, 'patch', hdb, collection, _asJsonString(patch), id]);
     return completer.future;
   }
 
+  /// Get json body of document identified by [id] and stored in [collection].
   Future<String> get(String collection, int id) {
     final hdb = _get_handle();
     if (hdb == null) {
@@ -300,6 +341,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  /// Get json body with database metadata.
   Future<String> info() {
     final hdb = _get_handle();
     if (hdb == null) {
@@ -318,6 +360,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  /// Remove document idenfied by [id] from [collection].
   Future<void> del(String collection, int id) {
     final hdb = _get_handle();
     if (hdb == null) {
@@ -336,30 +379,37 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  /// Ensures json document database index specified by [path] json pointer to string data type.
   Future<void> ensureStringIndex(String collection, String path, {bool unique = false}) {
     return _idx(collection, path, 0x04 | (unique ? 0x01 : 0));
   }
 
+  /// Removes specified database index.
   Future<void> removeStringIndex(String collection, String path, {bool unique = false}) {
     return _rmi(collection, path, 0x04 | (unique ? 0x01 : 0));
   }
 
+  /// Ensures json document database index specified by [path] json pointer to integer data type.
   Future<void> ensureIntIndex(String collection, String path, {bool unique = false}) {
     return _idx(collection, path, 0x08 | (unique ? 0x01 : 0));
   }
 
+  /// Removes specified database index.
   Future<void> removeIntIndex(String collection, String path, {bool unique = false}) {
     return _rmi(collection, path, 0x08 | (unique ? 0x01 : 0));
   }
 
+  /// Ensures json document database index specified by [path] json pointer to floating point data type.
   Future<void> ensureFloatIndex(String collection, String path, {bool unique = false}) {
     return _idx(collection, path, 0x10 | (unique ? 0x01 : 0));
   }
 
+  /// Removes specified database index.
   Future<void> removeFloatIndex(String collection, String path, {bool unique = false}) {
     return _rmi(collection, path, 0x10 | (unique ? 0x01 : 0));
   }
 
+  /// Removes database [collection].
   Future<void> removeCollection(String collection) {
     final hdb = _get_handle();
     if (hdb == null) {
@@ -378,6 +428,9 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  /// Create instance of [query] specified for [collection].
+  /// If [collection] is not specified a [query] spec must contain collection name,
+  /// eg: `@mycollection/[foo=bar]`
   JQL createQuery(String query, [String collection]) native 'create_query';
 
   Future<void> _idx(String collection, String path, int mode) {
@@ -423,4 +476,12 @@ class EJDB2 extends NativeFieldWrapperClass2 {
   int _get_handle() native 'get_handle';
 
   EJDB2._();
+}
+
+String _asJsonString(Object val) {
+  if (val is String) {
+    return val;
+  } else {
+    return jsonEncode(val);
+  }
 }
