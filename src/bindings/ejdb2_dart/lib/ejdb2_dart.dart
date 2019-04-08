@@ -244,6 +244,24 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  Future<String> info() {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<String>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete((reply as List).first as String);
+    };
+    _port().send([replyPort.sendPort, 'info', hdb]);
+    return completer.future;
+  }
+
   Future<void> del(String collection, int id) {
     final hdb = _get_handle();
     if (hdb == null) {
@@ -262,7 +280,85 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  Future<void> ensureStringIndex(String collection, String path, {bool unique = false}) {
+    return _idx(collection, path, 0x04 | (unique ? 0x01 : 0));
+  }
+
+  Future<void> removeStringIndex(String collection, String path, {bool unique = false}) {
+    return _rmi(collection, path, 0x04 | (unique ? 0x01 : 0));
+  }
+
+  Future<void> ensureIntIndex(String collection, String path, {bool unique = false}) {
+    return _idx(collection, path, 0x08 | (unique ? 0x01 : 0));
+  }
+
+  Future<void> removeIntIndex(String collection, String path, {bool unique = false}) {
+    return _rmi(collection, path, 0x08 | (unique ? 0x01 : 0));
+  }
+
+  Future<void> ensureFloatIndex(String collection, String path, {bool unique = false}) {
+    return _idx(collection, path, 0x10 | (unique ? 0x01 : 0));
+  }
+
+  Future<void> removeFloatIndex(String collection, String path, {bool unique = false}) {
+    return _rmi(collection, path, 0x10 | (unique ? 0x01 : 0));
+  }
+
+  Future<void> removeCollection(String collection) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<void>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete();
+    };
+    _port().send([replyPort.sendPort, 'rmc', hdb, collection]);
+    return completer.future;
+  }
+
   JQL createQuery(String query, [String collection]) native 'create_query';
+
+  Future<void> _idx(String collection, String path, int mode) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<void>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete();
+    };
+    _port().send([replyPort.sendPort, 'idx', hdb, collection, path, mode]);
+    return completer.future;
+  }
+
+  Future<void> _rmi(String collection, String path, int mode) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<void>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete();
+    };
+    _port().send([replyPort.sendPort, 'rmi', hdb, collection, path, mode]);
+    return completer.future;
+  }
 
   SendPort _port() native 'port';
 

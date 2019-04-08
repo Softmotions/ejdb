@@ -79,5 +79,23 @@ void main() async {
   json = await db.get('mycoll', 2);
   assert(json  == '{"foo":"baz","baz":"qux"}');
 
+  // DB Info
+  json = await db.info();
+  assert(json.contains('"collections":[{"name":"mycoll","dbid":3,"rnum":1,"indexes":[]}]'));
+
+  // Indexes
+  await db.ensureStringIndex('mycoll', '/foo', unique: true);
+  json = await db.info();
+  assert(json.contains('"indexes":[{"ptr":"/foo","mode":5,"idbf":0,"dbid":4,"rnum":1}]'));
+
+  await db.removeStringIndex('mycoll', '/foo', unique: true);
+  json = await db.info();
+  assert(json.contains('"collections":[{"name":"mycoll","dbid":3,"rnum":1,"indexes":[]}]'));
+
+  // Remove collection
+  await db.removeCollection('mycoll');
+  json = await db.info();
+  assert(json.contains('"collections":[]'));
+
   await db.close();
 }
