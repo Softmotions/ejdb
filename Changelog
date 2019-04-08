@@ -1,3 +1,10 @@
+ejdb2 (2.0.4) testing; urgency=medium
+
+  * Landed DartVM binding  https://pub.dartlang.org/packages/ejdb2_dart
+  * Minors API enhancements 
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 09 Apr 2019 01:55:42 +0700
+
 ejdb2 (2.0.3) testing; urgency=medium
 
   * Fixed #238 Disable network access for PPA Lunchpad builds
