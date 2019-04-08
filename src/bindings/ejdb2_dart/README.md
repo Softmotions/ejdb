@@ -37,6 +37,7 @@ Contributors needed for OSX and Flutter.
 # How to build manually
 
 ``` sh
+git clone https://github.com/Softmotions/ejdb.git
 mkdir ./build && cd build
 cmake .. -DBUILD_DART_BINDING=ON -DCMAKE_BUILD_TYPE=Release
 cd src/bindings/ejdb2_dart/ejdb2_dart
