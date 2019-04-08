@@ -107,7 +107,8 @@ void main() async {
       .execute()
       .first;
 
-  doc = await db.createQuery('@mycoll/[foo = :?]').setRegExp(0, RegExp('.*')).execute().first;
+  ///doc = await db.createQuery('@mycoll/[foo re :?]').setRegExp(0, RegExp('.*')).execute().first;
+  doc = await db.createQuery('@mycoll/[foo re .*]').execute().first;
   print('doc2=$doc');
 
   await db.removeStringIndex('mycoll', '/foo', unique: true);

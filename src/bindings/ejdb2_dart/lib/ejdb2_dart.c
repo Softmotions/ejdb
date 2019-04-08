@@ -543,7 +543,7 @@ static void jql_set(Dart_NativeArguments args) {
   if (type == 1) { // JSON
     EJTH(Dart_StringToCString(hvalue, &svalue));
     JBL_NODE node;
-    IWPOOL *pool = iwpool_create(0);
+    IWPOOL *pool = iwpool_create(1024);
     if (!pool) {
       rc = IW_ERROR_ALLOC;
       goto finish;

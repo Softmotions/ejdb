@@ -332,6 +332,9 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
         mctx.orderby_support = (i == j);
         rc = _jbi_compute_index_rules(ctx, &mctx);
         RCRET(rc);
+        if (!mctx.expr1) { // Cannot find matching expressions
+          return 0;
+        }
         if (ctx->ux->log) {
           iwxstr_cat2(ctx->ux->log, "[INDEX] MATCHED  ");
           _jbi_log_index_rules(ctx->ux->log, &mctx);

@@ -702,7 +702,7 @@ static void ejdb_test3_4() {
   EJDB_LIST list = 0;
   int64_t docId = 0;
 
-  IWPOOL *pool = iwpool_create(0);
+  IWPOOL *pool = iwpool_create(1024);
   CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
   IWXSTR *log = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(log);
@@ -922,6 +922,67 @@ void ejdb_test3_5() {
   iwxstr_destroy(xstr);
 }
 
+static void jql_free_str(void *ptr, void *op) {
+  if (ptr) free(ptr);
+}
+
+void ejdb_test3_6() {
+   EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test3_6.db",
+      .oflags = IWKV_TRUNC
+    }
+  };
+
+  JQL q;
+  EJDB db;
+  EJDB_LIST list = 0;
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_ensure_index(db, "mycoll", "/foo", EJDB_IDX_UNIQUE | EJDB_IDX_STR);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+
+  rc = put_json(db, "mycoll", "{\"foo\":\"baz\",\"baz\":\"qux\"}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_create(&q, 0, "@mycoll/[foo re :?]");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_set_regexp(q, 0, 0, ".*");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(list->first);
+
+  iwxstr_clear(xstr);
+  rc = jbl_as_json(list->first->raw, jbl_xstr_json_printer, xstr, 0);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"foo\":\"baz\",\"baz\":\"qux\"}");
+  ejdb_list_destroy(&list);
+
+  // Now set regexp again
+  rc = jql_set_regexp2(q, 0, 0, strdup(".*"), jql_free_str, 0);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(list->first);
+
+  ejdb_list_destroy(&list);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_destroy(xstr);
+  jql_destroy(&q);
+
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -935,7 +996,8 @@ int main() {
     (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5))
+    (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_6", ejdb_test3_6))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

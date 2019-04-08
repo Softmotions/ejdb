@@ -33,7 +33,7 @@ void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
   data = iwu_file_read_as_buf(path);
   CU_ASSERT_PTR_NOT_NULL_FATAL(data);
 
-  pool = iwpool_create(0);
+  pool = iwpool_create(1024);
   CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
 
   rc = jbl_node_from_json(data, &node, pool);

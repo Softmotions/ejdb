@@ -501,7 +501,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   if (compound
       && jbv_type == jbvprev_type
       && jbvprev_type == JBV_ARRAY) { // compare next/prev obj arrays
-    pool = iwpool_create(0);
+    pool = iwpool_create(1024);
     if (!pool) {
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
@@ -526,7 +526,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
     if (jbvprev_type == JBV_ARRAY) { // TODO: array modification delta?
       JBL_NODE n;
       if (!pool) {
-        pool = iwpool_create(0);
+        pool = iwpool_create(1024);
         if (!pool) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         }
@@ -565,7 +565,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
     if (jbv_type == JBV_ARRAY) { // TODO: array modification delta?
       JBL_NODE n;
       if (!pool) {
-        pool = iwpool_create(0);
+        pool = iwpool_create(1024);
         if (!pool) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         }
@@ -876,7 +876,7 @@ iwrc ejdb_list3(EJDB db, const char *coll, const char *query, int64_t limit, IWX
   }
   iwrc rc = 0;
   *listp = 0;
-  IWPOOL *pool = iwpool_create(0);
+  IWPOOL *pool = iwpool_create(1024);
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -907,7 +907,7 @@ iwrc ejdb_list4(EJDB db, JQL q, int64_t limit, IWXSTR *log, EJDB_LIST *listp) {
   }
   iwrc rc = 0;
   *listp = 0;
-  IWPOOL *pool = iwpool_create(0);
+  IWPOOL *pool = iwpool_create(1024);
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }

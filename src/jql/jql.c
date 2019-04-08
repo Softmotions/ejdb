@@ -53,7 +53,9 @@ IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
     }
     if (ptr && qv->freefn) {
        qv->freefn(ptr, qv->freefn_op);
+
     }
+    pv->opaque = 0;
     free(qv);
   }
 }
