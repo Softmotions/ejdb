@@ -40,6 +40,7 @@ IW_INLINE Dart_Handle ejd_error_rc_throw(iwrc rc);
 
 static void explain_rc(Dart_NativeArguments args);
 static void jql_exec(Dart_NativeArguments args);
+static void jql_set(Dart_NativeArguments args);
 
 static void ejdb2_port_handler(Dart_Port receive_port, Dart_CObject *msg);
 static void ejdb2_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer);
@@ -63,6 +64,7 @@ static void ejdb2_info_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_P
 static struct NativeFunctionLookup k_scoped_functions[] = {
   {"port", ejdb2_port},
   {"exec", jql_exec},
+  {"jql_set", jql_set},
   {"create_query", ejdb2_create_query},
   {"set_handle", ejdb2_set_handle},
   {"get_handle", ejdb2_get_handle},
@@ -493,6 +495,113 @@ finish:
     if (exec_port != ILLEGAL_PORT) {
       Dart_CloseNativePort(exec_port);
     }
+    if (rc) {
+      ret = ejd_error_rc_create(rc);
+    }
+  }
+  Dart_SetReturnValue(args, ret);
+  Dart_ExitScope();
+}
+
+static void jql_free_str(void *ptr, void *op) {
+  if (ptr) free(ptr);
+}
+
+static void jql_free_json_node(void *ptr, void *op) {
+  IWPOOL *pool = op;
+  if (pool) iwpool_destroy(pool);
+}
+
+static void jql_set(Dart_NativeArguments args) {
+  // void set(dynamic place, dynamic value) native 'jql_set';
+  Dart_EnterScope();
+  Dart_Handle ret = Dart_Null();
+
+  iwrc rc = 0;
+  intptr_t ptr = 0;
+  Dart_Handle hself = EJTH(Dart_GetNativeArgument(args, 0));
+  EJTH(Dart_GetNativeInstanceField(hself, 0, &ptr));
+  JQL q = (void *) ptr;
+  if (!q) {
+    rc = EJD_ERROR_INVALID_STATE;
+    goto finish;
+  }
+  int64_t npl = 0, type = 0;
+  const char *svalue, *spl = 0;
+  Dart_Handle hpl = EJTH(Dart_GetNativeArgument(args, 1));
+  Dart_Handle hvalue = EJTH(Dart_GetNativeArgument(args, 2));
+  Dart_Handle htype = EJTH(Dart_GetNativeArgument(args, 3));
+
+  if (Dart_IsString(hpl)) {
+    EJTH(Dart_StringToCString(hpl, &spl));
+  } else {
+    EJTH(Dart_IntegerToInt64(hpl, &npl));
+  }
+  if (Dart_IsInteger(htype)) {
+    EJTH(Dart_IntegerToInt64(htype, &type));
+  }
+  if (type == 1) { // JSON
+    EJTH(Dart_StringToCString(hvalue, &svalue));
+    JBL_NODE node;
+    IWPOOL *pool = iwpool_create(0);
+    if (!pool) {
+      rc = IW_ERROR_ALLOC;
+      goto finish;
+    }
+    rc = jbl_node_from_json(svalue, &node, pool);
+    if (rc) {
+      iwpool_destroy(pool);
+      goto finish;
+    }
+    rc = jql_set_json2(q, spl, npl, node, jql_free_json_node, pool);
+    if (rc) {
+      iwpool_destroy(pool);
+      goto finish;
+    }
+  } else if (type == 2) { // Regexp
+    EJTH(Dart_StringToCString(hvalue, &svalue));
+    char *str = strdup(svalue);
+    if (!str) {
+      rc = IW_ERROR_ALLOC;
+      goto finish;
+    }
+    rc = jql_set_regexp2(q, spl, npl, str, jql_free_str, 0);
+    if (rc) {
+      free(str);
+      goto finish;
+    }
+  } else { // All other cases
+    if (Dart_IsString(hvalue)) {
+      EJTH(Dart_StringToCString(hvalue, &svalue));
+      char *str = strdup(svalue);
+      if (!str) {
+        rc = IW_ERROR_ALLOC;
+        goto finish;
+      }
+      rc = jql_set_str2(q, spl, npl, str, jql_free_str, 0);
+      if (rc) {
+        free(str);
+        goto finish;
+      }
+    } else if (Dart_IsInteger(hvalue)) {
+      int64_t val;
+      EJTH(Dart_IntegerToInt64(hvalue, &val));
+      rc = jql_set_i64(q, spl, npl, val);
+    } else if (Dart_IsDouble(hvalue)) {
+      double val;
+      EJTH(Dart_DoubleValue(hvalue, &val));
+      rc = jql_set_f64(q, spl, npl, val);
+    } else if (Dart_IsBoolean(hvalue)) {
+      bool val;
+      EJTH(Dart_BooleanValue(hvalue, &val));
+      rc = jql_set_bool(q, spl, npl, val);
+    } else if (Dart_IsNull(hvalue)) {
+      rc = jql_set_null(q, spl, npl);
+    }
+  }
+
+finish:
+  if (rc || Dart_IsError(ret)) {
     if (rc) {
       ret = ejd_error_rc_create(rc);
     }

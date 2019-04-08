@@ -34,6 +34,8 @@ typedef enum {
 /** Placeholder value */
 typedef struct {
   jqval_type_t type;
+  void (*freefn)(void *, void *);
+  void *freefn_op;
   union {
     JBL_NODE vnode;
     binn *vbinn;

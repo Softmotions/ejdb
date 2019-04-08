@@ -84,6 +84,62 @@ class JQL extends NativeFieldWrapperClass2 {
     return execute().map((d) => d.id).first;
   }
 
+  JQL setJson(dynamic placeholder, String json) {
+    _checkPlaceholder(placeholder);
+    ArgumentError.checkNotNull(json);
+    _set(placeholder, json, 1);
+    return this;
+  }
+
+  JQL setRegExp(dynamic placeholder, RegExp regexp) {
+    _checkPlaceholder(placeholder);
+    ArgumentError.checkNotNull(regexp);
+    _set(placeholder, regexp.pattern, 2);
+    return this;
+  }
+
+  JQL setInt(dynamic placeholder, int val) {
+    _checkPlaceholder(placeholder);
+    ArgumentError.checkNotNull(val);
+    _set(placeholder, val);
+    return this;
+  }
+
+  JQL setDouble(dynamic placeholder, double val) {
+    _checkPlaceholder(placeholder);
+    ArgumentError.checkNotNull(val);
+    _set(placeholder, val);
+    return this;
+  }
+
+  JQL setBoolean(dynamic placeholder, bool val) {
+    _checkPlaceholder(placeholder);
+    ArgumentError.checkNotNull(val);
+    _set(placeholder, val);
+    return this;
+  }
+
+  JQL setString(dynamic placeholder, String val) {
+    _checkPlaceholder(placeholder);
+    ArgumentError.checkNotNull(val);
+    _set(placeholder, val);
+    return this;
+  }
+
+  JQL setNull(dynamic placeholder) {
+    _checkPlaceholder(placeholder);
+    _set(placeholder, null);
+    return this;
+  }
+
+  void _checkPlaceholder(dynamic placeholder) {
+    if (!(placeholder is String) && !(placeholder is int)) {
+      ArgumentError.value(placeholder, 'placeholder');
+    }
+  }
+
+  void _set(dynamic placeholder, dynamic value, [int type]) native 'jql_set';
+
   void _exec(SendPort sendPort) native 'exec';
 }
 

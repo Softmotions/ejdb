@@ -3,7 +3,7 @@ import 'package:ejdb2_dart/ejdb2_dart.dart';
 void main() async {
   final db = await EJDB2.open('hello.db', truncate: true);
 
-  final q = db.createQuery('@mycoll/*');
+  var q = db.createQuery('@mycoll/*');
   assert(q != null);
   assert(q.collection == 'mycoll');
   assert(q.db != null);
@@ -77,7 +77,7 @@ void main() async {
   // Patch
   await db.patch('mycoll', '[{"op":"add", "path":"/baz", "value":"qux"}]', 2);
   json = await db.get('mycoll', 2);
-  assert(json  == '{"foo":"baz","baz":"qux"}');
+  assert(json == '{"foo":"baz","baz":"qux"}');
 
   // DB Info
   json = await db.info();
@@ -87,6 +87,28 @@ void main() async {
   await db.ensureStringIndex('mycoll', '/foo', unique: true);
   json = await db.info();
   assert(json.contains('"indexes":[{"ptr":"/foo","mode":5,"idbf":0,"dbid":4,"rnum":1}]'));
+
+  // Test JQL set
+  var doc = await db.createQuery('@mycoll/[foo=:?]').setString(0, 'baz').execute().first;
+  assert(doc.json == '{"foo":"baz","baz":"qux"}');
+
+  doc = await db
+      .createQuery('@mycoll/[foo=:?] and /[baz=:?]')
+      .setString(0, 'baz')
+      .setString(1, 'qux')
+      .execute()
+      .first;
+  assert(doc.json == '{"foo":"baz","baz":"qux"}');
+
+  doc = await db
+      .createQuery('@mycoll/[foo=:foo] and /[baz=:baz]')
+      .setString('foo', 'baz')
+      .setString('baz', 'qux')
+      .execute()
+      .first;
+
+  doc = await db.createQuery('@mycoll/[foo = :?]').setRegExp(0, RegExp('.*')).execute().first;
+  print('doc2=$doc');
 
   await db.removeStringIndex('mycoll', '/foo', unique: true);
   json = await db.info();

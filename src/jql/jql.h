@@ -28,14 +28,14 @@
  * SOFTWARE.
  *************************************************************************************************/
 
- /** @file
- *
- * @brief EJDB query construction API.
- *
- * EJDB query syntax inpired by ideas behind XPath and Unix shell pipes.
- *
- *
- */
+/** @file
+*
+* @brief EJDB query construction API.
+*
+* EJDB query syntax inpired by ideas behind XPath and Unix shell pipes.
+*
+*
+*/
 
 #include "jbl.h"
 #include <ejdb2/iowow/iwlog.h>
@@ -81,9 +81,12 @@ IW_EXPORT WUR iwrc jql_create(JQL *qptr, const char *coll, const char *query);
 
 IW_EXPORT WUR iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode_t mode);
 
-IW_EXPORT const char* jql_collection(JQL q);
+IW_EXPORT const char *jql_collection(JQL q);
 
 IW_EXPORT WUR iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val);
+
+IW_EXPORT WUR iwrc jql_set_json2(JQL q, const char *placeholder, int index, JBL_NODE val,
+                                 void (*freefn)(void *, void *), void *op);
 
 IW_EXPORT WUR iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val);
 
@@ -91,17 +94,23 @@ IW_EXPORT WUR iwrc jql_set_f64(JQL q, const char *placeholder, int index, double
 
 IW_EXPORT WUR iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val);
 
+IW_EXPORT WUR iwrc jql_set_str2(JQL q, const char *placeholder, int index, const char *val,
+                                void (*freefn)(void *, void *), void *op);
+
 IW_EXPORT WUR iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val);
 
-IW_EXPORT WUR iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char* expr);
+IW_EXPORT WUR iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char *expr);
+
+IW_EXPORT WUR iwrc jql_set_regexp2(JQL q, const char *placeholder, int index, const char *expr,
+                                   void (*freefn)(void *, void *), void *op);
 
 IW_EXPORT WUR iwrc jql_set_null(JQL q, const char *placeholder, int index);
 
 IW_EXPORT WUR iwrc jql_matched(JQL q, JBL jbl, bool *out);
 
-IW_EXPORT const char* jql_first_anchor(JQL q);
+IW_EXPORT const char *jql_first_anchor(JQL q);
 
-IW_EXPORT const char* jql_error(JQL q);
+IW_EXPORT const char *jql_error(JQL q);
 
 IW_EXPORT bool jql_has_apply(JQL q);
 
