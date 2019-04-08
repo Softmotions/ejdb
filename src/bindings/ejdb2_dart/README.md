@@ -1,5 +1,7 @@
 # EJDB2 Dart VM native binding
 
+Embeddable JSON Database engine http://ejdb.org Dart binding.
+
 See https://github.com/Softmotions/ejdb/blob/master/README.md
 
 For API usage examples look into `/example` and `/test` folders.
