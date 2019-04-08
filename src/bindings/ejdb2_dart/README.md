@@ -34,3 +34,12 @@ void main() async {
 
 Contributors needed for OSX and Flutter.
 
+# How to build manually
+
+``` sh
+mkdir ./build && cd build
+cmake .. -DBUILD_DART_BINDING=ON -DCMAKE_BUILD_TYPE=Release
+cd src/bindings/ejdb2_dart/ejdb2_dart
+pub get
+```
+
