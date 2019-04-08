@@ -117,8 +117,8 @@ if (ASAN)
   set(CMAKE_C_ASAN "-fsanitize=address -fno-omit-frame-pointer")
 endif()
 
-set(CMAKE_C_FLAGS_DEBUG "-O0 -g -ggdb -Werror -DDEBUG -D_DEBUG -UNDEBUG -Wno-unused-variable ${CMAKE_C_ASAN}")
-set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG ${CMAKE_C_ASAN}")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_ASAN} -O0 -g -ggdb -Werror -DDEBUG -D_DEBUG -UNDEBUG -Wno-unused-variable")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_ASAN} -O3 -DNDEBUG")
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Wl,-s")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} -g")
 

@@ -162,10 +162,6 @@ static int _jbl_unescape_json_string(const char *p, char *d, int dlen, const cha
 
 static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
   char c;
-  if (*p == '\0') {
-    ctx->rc = JBL_ERROR_PARSE_JSON;
-    return 0;
-  }
   *key = "";
   while ((c = *p++)) {
     if (c == '"') {
@@ -197,7 +193,8 @@ static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
       return 0;
     }
   }
-  return p;
+  ctx->rc = JBL_ERROR_PARSE_JSON;
+  return 0;
 }
 
 static const char *_jbl_parse_value(JBL_NODE parent,
