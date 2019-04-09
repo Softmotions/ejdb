@@ -1,11 +1,13 @@
-ejdb_dart (1.0.1) testing; urgency=medium
+ejdb_dart (1.0.2)
+
+  * Canonicalize database file path before opening database.
+
+ejdb_dart (1.0.1)
 
   * Added support of database access from multiple isolates #241
 
- -- Anton Adamansky <adamansky@gmail.com>  Tue, 09 Apr 2019 17:16:51 +0700
 
-ejdb_dart (1.0.0) testing; urgency=medium
+ejdb_dart (1.0.0)
 
   * Initial version.
 
- -- Anton Adamansky <adamansky@gmail.com>  Wed, 03 Apr 2019 12:56:22 +0700

@@ -10,8 +10,11 @@ library ejdb2_dart;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
+
+import 'package:path/path.dart' as path_lib;
 
 import 'dart-ext:ejdb2_dart';
 
@@ -212,6 +215,8 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     final completer = Completer<EJDB2>();
     final replyPort = RawReceivePort();
     final jb = EJDB2._();
+
+    path = path_lib.canonicalize(File(path).absolute.path);
 
     replyPort.handler = (dynamic reply) {
       replyPort.close();
