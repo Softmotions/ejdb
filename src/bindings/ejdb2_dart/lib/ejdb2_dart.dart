@@ -271,14 +271,9 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       if (_checkCompleterPortError(completer, reply)) {
         return;
       }
-      try {
-        _set_handle(null);
-      } catch (e) {
-        completer.completeError(e);
-        return;
-      }
       completer.complete();
     };
+    _set_handle(null);
     _port().send([replyPort.sendPort, 'close', hdb]);
     return completer.future;
   }

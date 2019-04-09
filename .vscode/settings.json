@@ -1,12 +1,11 @@
 {
   "files.insertFinalNewline": false,
   "cmake.configureArgs": [
-    "-DBUILD_TESTS=ON",
     "-DCMAKE_VERBOSE_MAKEFILE=OFF",
-    "-DBUILD_SHARED_LIBS=ON",
-    "-DBUILD_EXAMPLES=ON",
-    "-DBUILD_EXAMPLES=ON",
     "-DBUILD_BENCHMARKS=OFF",
+    "-DBUILD_SHARED_LIBS=ON",
+    "-DBUILD_TESTS=ON",
+    "-DBUILD_EXAMPLES=ON",
     "-DBUILD_DART_BINDING=ON"
   ],
   "cmake.ctestArgs": [],

@@ -1,4 +1,10 @@
-ejdb_dart (1.0.0) UNRELEASED; urgency=medium
+ejdb_dart (1.0.1) testing; urgency=medium
+
+  * Added support of database access from multiple isolates #241
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 09 Apr 2019 17:16:51 +0700
+
+ejdb_dart (1.0.0) testing; urgency=medium
 
   * Initial version.
 

@@ -27,6 +27,7 @@ configure_file(lib/ejdb2_dart.c ${DART_PUB_DIR}/lib/ejdb2_dart.c COPYONLY)
 configure_file(lib/ejdb2_dart.dart ${DART_PUB_DIR}/lib/ejdb2_dart.dart COPYONLY)
 configure_file(test/ejdb2_dart_test.dart ${DART_PUB_DIR}/test/ejdb2_dart_test.dart COPYONLY)
 configure_file(example/example.dart ${DART_PUB_DIR}/example/example.dart COPYONLY)
+configure_file(example/isolate.dart ${DART_PUB_DIR}/example/isolate.dart COPYONLY)
 
 configure_file(README.md ${DART_PUB_DIR}/README.md COPYONLY)
 configure_file(LICENSE ${DART_PUB_DIR}/LICENSE COPYONLY)
