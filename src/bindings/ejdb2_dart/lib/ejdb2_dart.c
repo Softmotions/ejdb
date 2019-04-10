@@ -837,7 +837,7 @@ static void ejdb2_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_
   }
   intptr_t ptr = cobject_int(msg->value.as_array.values[2], false, &rc);
   RCGO(rc, finish);
-  EJDB2Handle *dbh = (EJDB2Handle*) ptr;
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
   if (!dbh) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
@@ -869,7 +869,7 @@ static void ejdb2_patch_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_
 
   intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
   RCGO(rc, finish);
-  EJDB2Handle *dbh = (EJDB2Handle*) ptr;
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
   if (!dbh || !dbh->db) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
@@ -907,7 +907,7 @@ static void ejdb2_put_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
 
   intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
   RCGO(rc, finish);
-  EJDB2Handle *dbh = (EJDB2Handle*) ptr;
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
   if (!dbh || !dbh->db) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
@@ -960,7 +960,7 @@ static void ejdb2_del_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
 
   intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
   RCGO(rc, finish);
-  EJDB2Handle *dbh = (EJDB2Handle*) ptr;
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
   if (!dbh || !dbh->db) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
@@ -993,7 +993,7 @@ static void ejdb2_idx_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
 
   intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
   RCGO(rc, finish);
-  EJDB2Handle *dbh = (EJDB2Handle*) ptr;
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
   if (!dbh || !dbh->db) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
@@ -1029,7 +1029,7 @@ static void ejdb2_rmi_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
 
   intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
   RCGO(rc, finish);
-  EJDB2Handle *dbh = (EJDB2Handle*) ptr;
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
   if (!dbh || !dbh->db) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
@@ -1065,7 +1065,7 @@ static void ejdb2_rmc_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
 
   intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
   RCGO(rc, finish);
-  EJDB2Handle *dbh = (EJDB2Handle*) ptr;
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
   if (!dbh || !dbh->db) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
@@ -1099,7 +1099,7 @@ static void ejdb2_info_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_P
 
   intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
   RCGO(rc, finish);
-  EJDB2Handle *dbh = (EJDB2Handle*) ptr;
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
   if (!dbh || !dbh->db) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
@@ -1151,7 +1151,7 @@ static void ejdb2_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
 
   intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
   RCGO(rc, finish);
-  EJDB2Handle *dbh = (EJDB2Handle*) ptr;
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
   if (!dbh || !dbh->db) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
