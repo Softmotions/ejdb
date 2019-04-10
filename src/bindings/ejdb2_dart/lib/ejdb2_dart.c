@@ -725,7 +725,7 @@ static iwrc ejdb2_isolate_shared_release(EJDB2Handle **hp) {
   EJDB2Handle *h = *hp;
   *hp = 0;
   if (--h->refs <= 0) {
-    rc = ejdb_close(&h->db);
+    if (h->db) rc = ejdb_close(&h->db);
     if (h->prev) {
       h->prev->next = h->next;
     } else {
