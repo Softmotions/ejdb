@@ -22,7 +22,6 @@ foreach(extra CMAKE_TOOLCHAIN_FILE
     list(APPEND CMAKE_ARGS "-D${extra}=${${extra}}")
   endif()
 endforeach()
-
 message("IOWOW CMAKE_ARGS: ${CMAKE_ARGS}")
 
 ExternalProject_Add(

@@ -11,6 +11,19 @@ else()
   set(FACIL_URL https://github.com/Softmotions/facil.io/archive/master.zip)
 endif()
 
+set(CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+               -DCMAKE_C_FLAGS=-fPIC -fvisibility=hidden)
+
+foreach(extra CMAKE_TOOLCHAIN_FILE
+              ANDROID_PLATFORM
+              ANDROID_ABI
+              TEST_TOOL_CMD)
+  if(DEFINED ${extra})
+    list(APPEND CMAKE_ARGS "-D${extra}=${${extra}}")
+  endif()
+endforeach()
+message("FACIL CMAKE_ARGS: ${CMAKE_ARGS}")
+
 ExternalProject_Add(
   extern_facil
   URL ${FACIL_URL}
@@ -29,7 +42,7 @@ ExternalProject_Add(
   LOG_BUILD OFF
   LOG_CONFIGURE OFF
   LOG_INSTALL OFF
-  CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_C_FLAGS=-fPIC -fvisibility=hidden
+  CMAKE_ARGS ${CMAKE_ARGS}
   BUILD_BYPRODUCTS "${FACIL_LIBRARY_DIR}/libfacil.io.a"
 )
 
