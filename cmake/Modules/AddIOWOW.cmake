@@ -16,7 +16,8 @@ set(CMAKE_ARGS  -DOWNER_PROJECT_NAME=${PROJECT_NAME}
 
 foreach(extra CMAKE_TOOLCHAIN_FILE
               ANDROID_PLATFORM
-              ANDROID_ABI)
+              ANDROID_ABI
+              TEST_TOOL_CMD)
   if(DEFINED ${extra})
     list(APPEND CMAKE_ARGS "-D${extra}=${${extra}}")
   endif()
