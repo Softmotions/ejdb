@@ -8,16 +8,15 @@ else()
   set(IOWOW_URL https://github.com/Softmotions/iowow/archive/master.zip)
 endif()
 
-
 set(CMAKE_ARGS  -DOWNER_PROJECT_NAME=${PROJECT_NAME}
                 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                 -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
                 -DBUILD_SHARED_LIBS=OFF
                 -DBUILD_EXAMPLES=OFF)
 
-
-
-foreach(extra CMAKE_TOOLCHAIN_FILE ANDROID_PLATFORM ANDROID_ABI)
+foreach(extra CMAKE_TOOLCHAIN_FILE
+              ANDROID_PLATFORM
+              ANDROID_ABI)
   if(DEFINED ${extra})
     list(APPEND CMAKE_ARGS "-D${extra}=${${extra}}")
   endif()
