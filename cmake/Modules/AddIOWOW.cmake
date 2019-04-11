@@ -8,6 +8,23 @@ else()
   set(IOWOW_URL https://github.com/Softmotions/iowow/archive/master.zip)
 endif()
 
+
+set(CMAKE_ARGS  -DOWNER_PROJECT_NAME=${PROJECT_NAME}
+                -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+                -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
+                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_EXAMPLES=OFF)
+
+
+
+foreach(extra CMAKE_TOOLCHAIN_FILE ANDROID_PLATFORM ANDROID_ABI)
+  if(DEFINED ${extra})
+    list(APPEND CMAKE_ARGS "-D${extra}=${${extra}}")
+  endif()
+endforeach()
+
+message("IOWOW CMAKE_ARGS: ${CMAKE_ARGS}")
+
 ExternalProject_Add(
   extern_iowow
   URL ${IOWOW_URL}
@@ -22,7 +39,7 @@ ExternalProject_Add(
   LOG_BUILD OFF
   LOG_CONFIGURE OFF
   LOG_INSTALL OFF
-  CMAKE_ARGS -DOWNER_PROJECT_NAME=${PROJECT_NAME} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF
+  CMAKE_ARGS ${CMAKE_ARGS}
   BUILD_BYPRODUCTS "${CMAKE_BINARY_DIR}/lib/libiowow-1.a"
 )
 
