@@ -15,7 +15,7 @@ void main() async {
   final db = await EJDB2.open('example.db', truncate: true);
 
   var id = await db.put('parrots', {'name': 'Bianca', 'age': 4});
-  print('Biana record: ${id}');
+  print('Bianca record: ${id}');
 
   id = await db.put('parrots', {'name': 'Darko', 'age': 8});
   print('Darko record: ${id}');
@@ -32,15 +32,14 @@ void main() async {
 
 * Linux x64
 
-Contributors needed for OSX and Flutter.
-
-# How to build manually
+# How to build it manually
 
 ``` sh
 git clone https://github.com/Softmotions/ejdb.git
 cd ./ejdb
 mkdir ./build && cd build
 cmake .. -DBUILD_DART_BINDING=ON -DCMAKE_BUILD_TYPE=Release
+make
 cd src/bindings/ejdb2_dart/ejdb2_dart
 pub get
 ```
