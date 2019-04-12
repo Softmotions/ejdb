@@ -1,4 +1,5 @@
 #include "ejdb2_internal.h"
+#include "sort_r.h"
 
 static void _jbi_scan_sorter_release(struct _JBEXEC *ctx) {
   struct _JBSSC *ssc = &ctx->ssc;
@@ -99,7 +100,8 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
       rc = ssc->sof.probe_mmap(&ssc->sof, 0, &ssc->docs, &sp);
       RCGO(rc, finish);
     }
-    qsort_r(ssc->refs, rnum, sizeof(ssc->refs[0]), _jbi_scan_sorter_cmp, ctx);
+
+    sort_r(ssc->refs, rnum, sizeof(ssc->refs[0]), _jbi_scan_sorter_cmp, ctx);
   }
 
   for (int64_t i = ux->skip; step && i < rnum && i >= 0;) {
