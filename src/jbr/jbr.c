@@ -10,6 +10,10 @@
 #include <http/http.h>
 #include <ctype.h>
 
+#ifdef __APPLE__
+#include "pthread_barrier.h";
+#endif
+
 #define JBR_MAX_KEY_LEN 36
 #define JBR_HTTP_CHUNK_SIZE 4096
 #define JBR_WS_STR_PREMATURE_END "Premature end of message"
