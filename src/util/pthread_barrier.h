@@ -47,7 +47,7 @@ extern "C" {
 #endif
 
 typedef struct {
-  uint8_t noop;
+  char noop;
 } pthread_barrierattr_t;
 
 typedef struct {
