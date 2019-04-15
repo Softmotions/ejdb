@@ -78,12 +78,12 @@ public final class IWKVOptions implements Serializable {
         return this;
     }
 
-    IWKVOptions walSavepointTimeoutSec(long v) {
+    IWKVOptions walSavepointTimeoutSec(int v) {
         wal.savepoint_timeout_sec = v;
         return this;
     }
 
-    IWKVOptions walCheckpointTimeoutSec(long v) {
+    IWKVOptions walCheckpointTimeoutSec(int v) {
         wal.checkpoint_timeout_sec = v;
         return this;
     }
@@ -115,8 +115,8 @@ public final class IWKVOptions implements Serializable {
 
         private boolean enabled;
         private boolean check_crc_on_checkpoint;
-        private long savepoint_timeout_sec;
-        private long checkpoint_timeout_sec;
+        private int savepoint_timeout_sec;
+        private int checkpoint_timeout_sec;
         private long buffer_sz;
         private long checkpoint_buffer_sz;
 
@@ -128,11 +128,11 @@ public final class IWKVOptions implements Serializable {
             return this.check_crc_on_checkpoint;
         }
 
-        public long getSavePointTimeoutSec() {
+        public int getSavePointTimeoutSec() {
             return this.savepoint_timeout_sec;
         }
 
-        public long getCheckPointTimeoutSec() {
+        public int getCheckPointTimeoutSec() {
             return this.checkpoint_timeout_sec;
         }
 

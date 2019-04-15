@@ -90,12 +90,12 @@ public class EJDB2Options implements Serializable {
         return this;
     }
 
-    EJDB2Options walSavepointTimeoutSec(long v) {
+    EJDB2Options walSavepointTimeoutSec(int v) {
         iwkv.walSavepointTimeoutSec(v);
         return this;
     }
 
-    EJDB2Options walCheckpointTimeoutSec(long v) {
+    EJDB2Options walCheckpointTimeoutSec(int v) {
         iwkv.walCheckpointTimeoutSec(v);
         return this;
     }
@@ -143,7 +143,7 @@ public class EJDB2Options implements Serializable {
     void check() throws EJDB2Exception {
         // todo
     }
-    
+
     @Override
     public String toString() {
         return new StringJoiner(", ", EJDB2Options.class.getSimpleName() + "[", "]")

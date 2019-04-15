@@ -1,5 +1,6 @@
 #include <ejdb2.h>
 #include <jni.h>
+#include <string.h>
 #include "com_softmotions_ejdb2_EJDB2.h"
 
 typedef struct JbnStr {
@@ -9,22 +10,23 @@ typedef struct JbnStr {
 
 typedef enum {
   _JBN_ERROR_START = (IW_ERROR_START + 15000UL + 5000),
-  JBN_ERROR_INVALID_OPTIONS,        /**< Invalid com.softmotions.ejdb2.EJDB2Options instance provided  (JBN_ERROR_INVALID_OPTIONS) */
+  JBN_ERROR_INVALID_FIELD,          /**< Failed to get class field (JBN_ERROR_INVALID_FIELD) */
+  JBN_ERROR_INVALID_OPTIONS,        /**< Invalid com.softmotions.ejdb2.EJDB2Options configuration provided (JBN_ERROR_INVALID_OPTIONS) */
   _JBN_ERROR_END,
 } jbn_ecode_t;
 
 
-#define JBNFIELD(fid_, env_, clazz_, name_, type_, rc_)     \
+#define JBNFIELD(fid_, env_, clazz_, name_, type_)     \
   fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_); \
   if (!fid_) {                                              \
-    jbn_throw_rc_exception(env, rc_);                       \
+    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_FIELD);   \
     return;                                                 \
   }
 
-#define JBNFIELD2(fid_, env_, clazz_, name_, type_, rc_, label_)  \
+#define JBNFIELD2(fid_, env_, clazz_, name_, type_, label_)  \
   fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_);       \
   if (!fid_) {                                                    \
-    jbn_throw_rc_exception(env, rc_);                             \
+    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_FIELD);         \
     goto label_;                                                  \
   }
 
@@ -47,7 +49,6 @@ static jint jbn_throw_rc_exception(JNIEnv *env, iwrc rc) {
   return (*env)->ThrowNew(env, clazz, msg ? msg : "Unknown iwrc error");
 }
 
-
 /*
  * Class:     com_softmotions_ejdb2_EJDB2
  * Method:    open
@@ -57,16 +58,28 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
   iwrc rc = 0;
   EJDB_OPTS opts = {0};
   JNIEnv e = *env;
+  jfieldID fid;
   jobject iwkv, http, wal;
-  jclass iwkvClazz;
+  jclass iwkvClazz, httpClazz, walClazz;
   jclass optsClazz = e->GetObjectClass(env, optsObj);
+  jclass thisClazz = e->GetObjectClass(env, thisObj);
 
   int sc = 0;
+  EJDB db = 0;
   JbnStr strings[2] = {0};
 
-  jfieldID fid = e->GetFieldID(env, optsClazz, "iwkv", "Lcom/softmotions/ejdb2/IWKVOptions;");
-  JBNFIELD(fid, env, optsClazz, "iwkv", "Lcom/softmotions/ejdb2/IWKVOptions;", JBN_ERROR_INVALID_OPTIONS);
+  // opts
+  JBNFIELD(fid, env, optsClazz, "no_wal", "Z");
+  opts.no_wal = e->GetBooleanField(env, optsObj, fid);
 
+  JBNFIELD(fid, env, optsClazz, "sort_buffer_sz", "I");
+  opts.sort_buffer_sz = (uint32_t) e->GetIntField(env, optsObj, fid);
+
+  JBNFIELD(fid, env, optsClazz, "document_buffer_sz", "I");
+  opts.document_buffer_sz = (uint32_t) e->GetIntField(env, optsObj, fid);
+
+  // iwkv
+  JBNFIELD(fid, env, optsClazz, "iwkv", "Lcom/softmotions/ejdb2/IWKVOptions;");
   iwkv = e->GetObjectField(env, optsObj, fid);
   if (!iwkv) {
     jbn_throw_rc_exception(env, JBN_ERROR_INVALID_OPTIONS);
@@ -74,23 +87,16 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
   }
   iwkvClazz = e->GetObjectClass(env, iwkv);
 
-  JBNFIELD(fid, env, optsClazz, "http", "Lcom/softmotions/ejdb2/EJDB2Options$EJDB2HttpOptions;",
-           JBN_ERROR_INVALID_OPTIONS);
-  http = e->GetObjectField(env, optsObj, fid);
+  JBNFIELD(fid, env, iwkvClazz, "random_seed", "I");
+  opts.kv.random_seed = (uint32_t) e->GetIntField(env, iwkv, fid);
 
-  JBNFIELD(fid, env, optsClazz, "no_wal", "Z", JBN_ERROR_INVALID_OPTIONS);
-  opts.no_wal = e->GetBooleanField(env, optsObj, fid);
+  JBNFIELD(fid, env, iwkvClazz, "oflags", "J");
+  opts.kv.oflags = (iwkv_openflags) e->GetLongField(env, iwkv, fid);
 
-  JBNFIELD(fid, env, optsClazz, "sort_buffer_sz", "I", JBN_ERROR_INVALID_OPTIONS);
-  opts.sort_buffer_sz = (uint32_t) e->GetIntField(env, optsClazz, fid);
+  JBNFIELD(fid, env, iwkvClazz, "file_lock_fail_fast", "Z");
+  opts.kv.file_lock_fail_fast = e->GetBooleanField(env, iwkv, fid);
 
-  JBNFIELD(fid, env, optsClazz, "document_buffer_sz", "I", JBN_ERROR_INVALID_OPTIONS);
-  opts.document_buffer_sz = (uint32_t) e->GetIntField(env, optsClazz, fid);
-
-  JBNFIELD(fid, env, iwkvClazz, "wal", "Lcom/softmotions/ejdb2/IWKVOptions$WALOptions;", JBN_ERROR_INVALID_OPTIONS);
-  wal = e->GetObjectField(env, iwkv, fid);
-
-  JBNFIELD(fid, env, iwkvClazz, "path", "Ljava/lang/String;", JBN_ERROR_INVALID_OPTIONS);
+  JBNFIELD(fid, env, iwkvClazz, "path", "Ljava/lang/String;");
   strings[sc].str = e->GetObjectField(env, iwkv, fid);
   strings[sc].utf = e->GetStringUTFChars(env, strings[sc].str, 0);
   sc++;
@@ -100,10 +106,75 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
     goto finish;
   }
 
+  // wal
+  JBNFIELD2(fid, env, iwkvClazz, "wal", "Lcom/softmotions/ejdb2/IWKVOptions$WALOptions;", finish);
+  wal = e->GetObjectField(env, iwkv, fid);
+  if (!wal) {
+    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_OPTIONS);
+    goto finish;
+  }
+  walClazz = e->GetObjectClass(env, wal);
+
+  JBNFIELD2(fid, env, walClazz, "enabled", "Z", finish);
+  opts.kv.wal.enabled = e->GetBooleanField(env, wal, fid);
+
+  JBNFIELD2(fid, env, walClazz, "check_crc_on_checkpoint", "Z", finish);
+  opts.kv.wal.check_crc_on_checkpoint = e->GetBooleanField(env, wal, fid);
+
+  JBNFIELD2(fid, env, walClazz, "savepoint_timeout_sec", "I", finish);
+  opts.kv.wal.savepoint_timeout_sec = (uint32_t) e->GetIntField(env, wal, fid);
+
+  JBNFIELD2(fid, env, walClazz, "checkpoint_timeout_sec", "I", finish);
+  opts.kv.wal.checkpoint_timeout_sec = (uint32_t) e->GetIntField(env, wal, fid);
+
+  JBNFIELD2(fid, env, walClazz, "buffer_sz", "J", finish);
+  opts.kv.wal.wal_buffer_sz = (uint64_t) e->GetLongField(env, wal, fid);
+
+  JBNFIELD2(fid, env, walClazz, "checkpoint_buffer_sz", "J", finish);
+  opts.kv.wal.checkpoint_buffer_sz = (uint64_t) e->GetLongField(env, wal, fid);
+
+
+  // http
+  JBNFIELD2(fid, env, optsClazz, "http", "Lcom/softmotions/ejdb2/EJDB2Options$EJDB2HttpOptions;", finish);
+  http = e->GetObjectField(env, optsObj, fid);
+  httpClazz = e->GetObjectClass(env, iwkv);
+
+  JBNFIELD2(fid, env, httpClazz, "enabled", "Z", finish);
+  opts.http.enabled = e->GetBooleanField(env, wal, fid);
+
+  JBNFIELD2(fid, env, httpClazz, "port", "I", finish);
+  opts.http.port = e->GetIntField(env, http, fid);
+
+  JBNFIELD2(fid, env, httpClazz, "bind", "Ljava/lang/String;", finish);
+  strings[sc].str = e->GetObjectField(env, http, fid);
+  strings[sc].utf = e->GetStringUTFChars(env, strings[sc].str, 0);
+  sc++;
+  opts.http.bind = strings[sc].utf;
+
+  JBNFIELD2(fid, env, httpClazz, "access_token", "Ljava/lang/String;", finish);
+  strings[sc].str = e->GetObjectField(env, http, fid);
+  strings[sc].utf = e->GetStringUTFChars(env, strings[sc].str, 0);
+  sc++;
+  opts.http.access_token = strings[sc].utf;
+  opts.http.access_token_len = opts.http.access_token ? strlen(opts.http.access_token) : 0;
+
+  JBNFIELD2(fid, env, httpClazz, "read_anon", "Z", finish);
+  opts.http.read_anon = e->GetBooleanField(env, wal, fid);
+
+  JBNFIELD2(fid, env, httpClazz, "max_body_size", "I", finish);
+  opts.http.max_body_size = (size_t) e->GetIntField(env, http, fid);
+
+  JBNFIELD2(fid, env, thisClazz, "_handle", "J", finish);
+
+  rc = ejdb_open(&opts, &db);
+  RCGO(rc, finish);
+
+  e->SetLongField(env, thisObj, fid, (jlong) db);
+
 finish:
   for (int i = 0; i < (sizeof(strings) / sizeof(strings[0])); ++i)   {
     if (strings[i].str) {
-      (*env)->ReleaseStringUTFChars(env, strings[i].str, strings[i].utf);
+      e->ReleaseStringUTFChars(env, strings[i].str, strings[i].utf);
     }
   }
   if (rc) {
@@ -117,7 +188,17 @@ finish:
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_dispose(JNIEnv *env, jobject thisObj) {
-
+  jfieldID fid;
+  jclass thisClazz = (*env)->GetObjectClass(env, thisObj);
+  JBNFIELD(fid, env, thisClazz, "_handle", "J");
+  jlong ptr = (*env)->GetLongField(env, thisObj, fid);
+  if (ptr) {
+    EJDB db = (void *) ptr;
+    iwrc rc = ejdb_close(&db);
+    if (rc) {
+      jbn_throw_rc_exception(env, rc);
+    }
+  }
 }
 
 static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
@@ -125,8 +206,10 @@ static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
     return 0;
   }
   switch (ecode) {
+    case JBN_ERROR_INVALID_FIELD:
+      return "Failed to get class field (JBN_ERROR_INVALID_FIELD)";
     case JBN_ERROR_INVALID_OPTIONS:
-      return "Invalid com.softmotions.ejdb2.EJDB2Options instance provided  (JBN_ERROR_INVALID_OPTIONS)";
+      return "Invalid com.softmotions.ejdb2.EJDB2Options configuration provided (JBN_ERROR_INVALID_OPTIONS)";
   }
   return 0;
 }
