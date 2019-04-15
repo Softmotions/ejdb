@@ -11,7 +11,7 @@
 #include <ctype.h>
 
 #ifdef __APPLE__
-#include "pthread_barrier.h";
+#include "pthread_barrier.h"
 #endif
 
 #define JBR_MAX_KEY_LEN 36
