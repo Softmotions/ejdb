@@ -49,7 +49,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_DEB=ON
 make package
 ```
 
-### RPM based Linux distributions
+#### RPM based Linux distributions
 ```sh
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_RPM=ON
