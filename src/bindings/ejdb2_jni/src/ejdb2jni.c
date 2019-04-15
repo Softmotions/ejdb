@@ -143,3 +143,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   }
   return 0;
 }
+
+
+JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
+}
