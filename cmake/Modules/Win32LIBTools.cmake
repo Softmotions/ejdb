@@ -15,7 +15,7 @@ if (NOT WINTOOLS_WGET_EXEC)
 endif()
 
 set(WINTOOLS_DIR ${CMAKE_BINARY_DIR}/WINTOOLS)
-set(WINTOOLS_DL_ROOT "https://dl.dropboxusercontent.com/u/4709222/windev")
+set(WINTOOLS_DL_ROOT "http://softmotions.com/windev")
 
 if (NOT EXISTS ${WINTOOLS_DIR}) 
 	file(MAKE_DIRECTORY ${WINTOOLS_DIR})
@@ -34,11 +34,12 @@ endforeach(WINTOOLS_EXEC)
 add_custom_target(wintools_init 
 				  DEPENDS ${WINTOOLS_EXECS})
 			
-if (${PROJECT_ARCH} STREQUAL "x86_64")
+if (CMAKE_SIZEOF_VOID_P MATCHES 8)
 	set(WINTOOLS_LIB_MACHINE "X64")
 else()
 	set(WINTOOLS_LIB_MACHINE "X86")
 endif()	
+message("${PROJECT_NAME} WINTOOLS_LIB_MACHINE: ${WINTOOLS_LIB_MACHINE}")
 	
 macro(add_w32_importlib tgt libname wdir)
 	add_custom_command(

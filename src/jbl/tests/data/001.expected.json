@@ -1,0 +1,36 @@
+{
+ "str": "𝌆",
+ "str1": "15øC 3đ",
+ "str2": "Mа二𐌂",
+ "str3": "привет",
+ "na": [
+  0.00011999999999,
+  0.000006,
+  0.000001
+ ],
+ "glossary": {
+  "title": "example glossary",
+  "GlossDiv": {
+   "title": "S",
+   "GlossList": {
+    "GlossEntry": {
+     "ID": "SGML",
+     "SortAs": "SGML",
+     "GlossTerm": "Standard Generalized Markup Language",
+     "Acronym": "SGML",
+     "Abbrev": "ISO 8879:1986",
+     "GlossDef": {
+      "para": "A meta-markup language, used to create markup languages such as DocBook.",
+      "GlossSeeAlso": [
+       "GML",
+       "XML",
+       true,
+       false
+      ]
+     },
+     "GlossSee": "markup"
+    }
+   }
+  }
+ }
+}

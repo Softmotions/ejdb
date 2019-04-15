@@ -1,0 +1,4 @@
+/foo/bar | apply {"foo":"bar","nums":[1,2,3,4,5]}
+| all - /**/author/{givenName,familyName}
+| asc /foo/bar desc :myfield
+  skip :numskip limit 1000

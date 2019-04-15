@@ -1,0 +1,3 @@
+@one/**/[familyName re "D\n.*"] and /**/family/mother/[age > 30 and age <= 40 or name re "Grace.*"] and not /bar/ba z"zz
+| apply {"foo":"bar","nums":[1,2,3,4,5]}
+| all - /**/author/{givenName,familyName}

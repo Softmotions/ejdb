@@ -1,0 +1,17 @@
+
+
+## Dart SDK
+
+sudo apt-get install g++-multilib git python curl
+git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+export PATH=$PATH:`pwd`/depot_tools
+mkdir dart-sdk
+cd dart-sdk
+gclient config https://dart.googlesource.com/sdk.git
+gclient sync
+cd sdk
+./tools/build.py --mode release --arch x64 create_sdk
+
+
+./tools/build.py --mode all --arch x64 runtime
+

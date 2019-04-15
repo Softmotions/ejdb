@@ -1,0 +1,17 @@
+ejdb_dart (1.0.3)
+
+  * Safe database release in ejdb2_isolate_shared_release()
+
+ejdb_dart (1.0.2)
+
+  * Canonicalize database file path before opening database.
+
+ejdb_dart (1.0.1)
+
+  * Added support of database access from multiple isolates #241
+
+
+ejdb_dart (1.0.0)
+
+  * Initial version.
+

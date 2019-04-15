@@ -1,0 +1,1 @@
+/tags/[* in ["sample", "foo"] and * re "ta.*"]

@@ -46,7 +46,7 @@
 # debuild -i -us -uc -sa -b
 #
 # Check the lintian warnings!
-# 
+#
 ##
 # TODO
 # I plan to add support for git dch (from git-buildpackage) to auto generate
@@ -138,7 +138,7 @@ file(WRITE ${debian_control}
   "Priority: ${CPACK_DEBIAN_PACKAGE_PRIORITY}\n"
   "Maintainer: ${CPACK_DEBIAN_PACKAGE_MAINTAINER}\n"
   "Build-Depends: ${build_depends}\n"
-  "Standards-Version: 3.9.5\n"
+  "Standards-Version: 3.9.7\n"
   "Homepage: ${CPACK_DEBIAN_PACKAGE_HOMEPAGE}\n"
   "\n"
   "Package: ${CPACK_DEBIAN_PACKAGE_NAME}\n"
@@ -147,7 +147,7 @@ file(WRITE ${debian_control}
   "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}\n"
   "${deb_long_description}"
   )
-  
+
 file(APPEND ${debian_control}
   "\n\n"
   "Package: ${CPACK_DEBIAN_PACKAGE_NAME}-dbg\n"
@@ -302,6 +302,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/Debian/${DISTRI}/cpack.cmake"
   "set(CPACK_PACKAGE_DESCRIPTION \"${CPACK_PACKAGE_NAME} Source\")\n"
   "set(CPACK_IGNORE_FILES \"${CPACK_SOURCE_IGNORE_FILES}\")\n"
   "set(CPACK_INSTALLED_DIRECTORIES \"${CPACK_SOURCE_INSTALLED_DIRECTORIES}\")\n"
+  "set(CPACK_INSTALL_SCRIPT \"${CPACK_SOURCE_INSTALL_SCRIPT}\")\n"
   "set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)\n"
   )
 
@@ -311,13 +312,13 @@ add_custom_command(OUTPUT ${orig_file}
   COMMAND cpack --config ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/cpack.cmake
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Debian/${DISTRI}
   )
-  
+
 add_custom_command(OUTPUT ${DEBIAN_SOURCE_DIR}/CMakeLists.txt
 	COMMAND tar zxf ${orig_file}
 	WORKING_DIRECTORY ${DEBIAN_SOURCE_DIR}
 	DEPENDS ${orig_file}
 	)
-	
+
 ##############################################################################
 # debuild -S
 set(DEB_SOURCE_CHANGES
@@ -325,12 +326,12 @@ set(DEB_SOURCE_CHANGES
   )
 
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${DEB_SOURCE_CHANGES}
-  COMMAND ${DEBUILD_EXECUTABLE} --no-tgz-check -S 
+  COMMAND ${DEBUILD_EXECUTABLE} --no-tgz-check -S
   WORKING_DIRECTORY ${DEBIAN_SOURCE_DIR}
   )
-add_custom_target(debuild_${DISTRI} ALL 
+add_custom_target(debuild_${DISTRI} ALL
 				DEPENDS ${DEBIAN_SOURCE_DIR}/CMakeLists.txt
-						${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${DEB_SOURCE_CHANGES} 
+						${CMAKE_BINARY_DIR}/Debian/${DISTRI}/${DEB_SOURCE_CHANGES}
 		)
 ##############################################################################
 # dput ppa:your-lp-id/ppa <source.changes>
