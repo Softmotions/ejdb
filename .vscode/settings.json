@@ -6,7 +6,8 @@
     "-DBUILD_SHARED_LIBS=ON",
     "-DBUILD_TESTS=ON",
     "-DBUILD_EXAMPLES=ON",
-    "-DBUILD_DART_BINDING=ON"
+    "-DBUILD_DART_BINDING=ON",
+    "-DBUILD_JNI_BINDING=ON"
   ],
   "cmake.ctestArgs": [],
   "cmake.debugConfig": {
@@ -38,6 +39,7 @@
     "-Wno-missing-field-initializers",
     "-Wno-missing-braces",
     "-Wno-pragma-once-outside-header",
+    "-I/usr/lib/jvm/java-11-openjdk-amd64/include",
     "-I${workspaceRoot}/build/include",
     "-I${workspaceRoot}/build/src/extern_facil/lib/facil",
     "-I${workspaceRoot}/build/src/extern_facil/lib/facil/cli",
@@ -65,6 +67,7 @@
     "-Wno-unused-function",
     "-Wno-missing-field-initializers",
     "-Wno-pragma-once-outside-header",
+    "-I/usr/lib/jvm/java-11-openjdk-amd64/include",
     "-I${workspaceRoot}/build/include",
     "-I${workspaceRoot}/build/src/extern_facil/lib/facil",
     "-I${workspaceRoot}/build/src/extern_facil/lib/facil/cli",
