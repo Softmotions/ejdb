@@ -1,9 +1,9 @@
-ejdb2 (2.0.5) UNRELEASED; urgency=medium
+ejdb2 (2.0.5) testing; urgency=medium
 
   * Library ported to OSX
   * Library ported to Android NDK (#244)
 
- -- Anton Adamansky <adamansky@gmail.com>  Fri, 12 Apr 2019 22:33:54 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 15 Apr 2019 11:28:30 +0700
 
 ejdb2 (2.0.4) testing; urgency=medium
 
