@@ -116,8 +116,7 @@ finish:
  * Method:    dispose
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_dispose
-(JNIEnv *env, jobject thisObj) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_dispose(JNIEnv *env, jobject thisObj) {
 
 }
 
@@ -132,7 +131,7 @@ static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
   return 0;
 }
 
-jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   static volatile int jbn_ecodefn_initialized = 0;
   if (__sync_bool_compare_and_swap(&jbn_ecodefn_initialized, 0, 1)) {
     iwrc rc = ejdb_init();
