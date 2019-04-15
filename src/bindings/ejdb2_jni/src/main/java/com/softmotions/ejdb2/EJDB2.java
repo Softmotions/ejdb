@@ -13,6 +13,8 @@ public class EJDB2 implements AutoCloseable {
         System.loadLibrary("ejdb2jni");
     }
 
+    private long _handle;
+
     private final EJDB2Options opts;
 
     public EJDB2(EJDB2Options opts) throws EJDB2Exception {

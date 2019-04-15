@@ -60,6 +60,56 @@ public class EJDB2Options implements Serializable {
         return this;
     }
 
+    public EJDB2Options truncate() {
+        iwkv.truncate();
+        return this;
+    }
+
+    public EJDB2Options readonly() {
+        iwkv.readonly();
+        return this;
+    }
+
+    EJDB2Options fileLockFailFast(boolean v) {
+        iwkv.fileLockFailFast(v);
+        return this;
+    }
+
+    EJDB2Options randomSeed(long seed) {
+        iwkv.randomSeed(seed);
+        return this;
+    }
+
+    EJDB2Options walEnabled(boolean v) {
+        iwkv.walEnabled(v);
+        return this;
+    }
+
+    EJDB2Options walCRCOnCheckpoint(boolean v) {
+        iwkv.walCRCOnCheckpoint(v);
+        return this;
+    }
+
+    EJDB2Options walSavepointTimeoutSec(long v) {
+        iwkv.walSavepointTimeoutSec(v);
+        return this;
+    }
+
+    EJDB2Options walCheckpointTimeoutSec(long v) {
+        iwkv.walCheckpointTimeoutSec(v);
+        return this;
+    }
+
+    EJDB2Options walBufferSize(long v) {
+        iwkv.walBufferSize(v);
+        return this;
+    }
+
+    EJDB2Options walCheckpointBufferSize(long v) {
+        iwkv.walCheckpointBufferSize(v);
+        return this;
+    }
+
     public EJDB2Options httpEnabled(boolean v) {
         http.enabled = v;
         return this;
@@ -90,6 +140,10 @@ public class EJDB2Options implements Serializable {
         return this;
     }
 
+    void check() throws EJDB2Exception {
+        // todo
+    }
+    
     @Override
     public String toString() {
         return new StringJoiner(", ", EJDB2Options.class.getSimpleName() + "[", "]")

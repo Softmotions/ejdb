@@ -6,6 +6,8 @@ if (NOT JNI_FOUND)
   message(FATAL_ERROR "No JNI headers found")
 endif()
 
+message("Java VERSION: ${Java_VERSION}")
+
 add_jar(
   ejdb2jni_classes
   SOURCES
