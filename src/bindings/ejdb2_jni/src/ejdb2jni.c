@@ -193,6 +193,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_dispose(JNIEnv *env, job
   JBNFIELD(fid, env, thisClazz, "_handle", "J");
   jlong ptr = (*env)->GetLongField(env, thisObj, fid);
   if (ptr) {
+    (*env)->SetLongField(env, thisObj, fid, 0);
     EJDB db = (void *) ptr;
     iwrc rc = ejdb_close(&db);
     if (rc) {
