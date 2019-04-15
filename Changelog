@@ -1,5 +1,6 @@
 ejdb2 (2.0.5) UNRELEASED; urgency=medium
 
+  * Library ported to OSX
   * Library ported to Android NDK (#244)
 
  -- Anton Adamansky <adamansky@gmail.com>  Fri, 12 Apr 2019 22:33:54 +0700
@@ -7,7 +8,7 @@ ejdb2 (2.0.5) UNRELEASED; urgency=medium
 ejdb2 (2.0.4) testing; urgency=medium
 
   * Landed DartVM binding  https://pub.dartlang.org/packages/ejdb2_dart
-  * Minors API enhancements 
+  * Minors API enhancements
 
  -- Anton Adamansky <adamansky@gmail.com>  Tue, 09 Apr 2019 01:55:42 +0700
 
