@@ -55,3 +55,13 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_RPM=ON
 make package
 ```
+
+## OSX
+
+EJDB2 code ported and tested on OSX `High Sierra`
+
+```
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
+```
