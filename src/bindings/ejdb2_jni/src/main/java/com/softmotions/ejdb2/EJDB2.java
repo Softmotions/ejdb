@@ -20,7 +20,7 @@ public class EJDB2 implements AutoCloseable {
 
     public EJDB2(EJDB2Builder opts) throws EJDB2Exception {
         this.opts = opts;
-        //open(opts);
+        open(opts);
     }
 
     @Override

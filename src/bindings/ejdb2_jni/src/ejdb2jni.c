@@ -87,8 +87,8 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
   }
   iwkvClazz = e->GetObjectClass(env, iwkv);
 
-  JBNFIELD(fid, env, iwkvClazz, "random_seed", "I");
-  opts.kv.random_seed = (uint32_t) e->GetIntField(env, iwkv, fid);
+  JBNFIELD(fid, env, iwkvClazz, "random_seed", "J");
+  opts.kv.random_seed = (uint32_t) e->GetLongField(env, iwkv, fid);
 
   JBNFIELD(fid, env, iwkvClazz, "oflags", "J");
   opts.kv.oflags = (iwkv_openflags) e->GetLongField(env, iwkv, fid);
@@ -98,9 +98,8 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
 
   JBNFIELD(fid, env, iwkvClazz, "path", "Ljava/lang/String;");
   strings[sc].str = e->GetObjectField(env, iwkv, fid);
-  strings[sc].utf = e->GetStringUTFChars(env, strings[sc].str, 0);
-  sc++;
-  opts.kv.path = strings[sc].utf;
+  strings[sc].utf = strings[sc].str ? e->GetStringUTFChars(env, strings[sc].str, 0) : 0;
+  opts.kv.path = strings[sc++].utf;
   if (!opts.kv.path) {
     rc = JBN_ERROR_INVALID_OPTIONS;
     goto finish;
@@ -114,9 +113,6 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
     goto finish;
   }
   walClazz = e->GetObjectClass(env, wal);
-
-  JBNFIELD2(fid, env, walClazz, "enabled", "Z", finish);
-  opts.kv.wal.enabled = e->GetBooleanField(env, wal, fid);
 
   JBNFIELD2(fid, env, walClazz, "check_crc_on_checkpoint", "Z", finish);
   opts.kv.wal.check_crc_on_checkpoint = e->GetBooleanField(env, wal, fid);
@@ -137,7 +133,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
   // http
   JBNFIELD2(fid, env, optsClazz, "http", "Lcom/softmotions/ejdb2/EJDB2Builder$EJDB2HttpOptions;", finish);
   http = e->GetObjectField(env, optsObj, fid);
-  httpClazz = e->GetObjectClass(env, iwkv);
+  httpClazz = e->GetObjectClass(env, http);
 
   JBNFIELD2(fid, env, httpClazz, "enabled", "Z", finish);
   opts.http.enabled = e->GetBooleanField(env, wal, fid);
@@ -147,15 +143,13 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
 
   JBNFIELD2(fid, env, httpClazz, "bind", "Ljava/lang/String;", finish);
   strings[sc].str = e->GetObjectField(env, http, fid);
-  strings[sc].utf = e->GetStringUTFChars(env, strings[sc].str, 0);
-  sc++;
-  opts.http.bind = strings[sc].utf;
+  strings[sc].utf = strings[sc].str ? e->GetStringUTFChars(env, strings[sc].str, 0) : 0;
+  opts.http.bind = strings[sc++].utf;
 
   JBNFIELD2(fid, env, httpClazz, "access_token", "Ljava/lang/String;", finish);
   strings[sc].str = e->GetObjectField(env, http, fid);
-  strings[sc].utf = e->GetStringUTFChars(env, strings[sc].str, 0);
-  sc++;
-  opts.http.access_token = strings[sc].utf;
+  strings[sc].utf = strings[sc].str ? e->GetStringUTFChars(env, strings[sc].str, 0) : 0;
+  opts.http.access_token = strings[sc++].utf;
   opts.http.access_token_len = opts.http.access_token ? strlen(opts.http.access_token) : 0;
 
   JBNFIELD2(fid, env, httpClazz, "read_anon", "Z", finish);
@@ -183,7 +177,7 @@ finish:
 }
 
 /*
- * Class:     com_softmotions_iowow_IWKV
+ * Class:     com_softmotions_ejdb2_EJDB2
  * Method:    dispose
  * Signature: ()V
  */
@@ -216,6 +210,10 @@ static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+  JNIEnv* env;
+  if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_6) != JNI_OK) {
+    return -1;
+  }
   static volatile int jbn_ecodefn_initialized = 0;
   if (__sync_bool_compare_and_swap(&jbn_ecodefn_initialized, 0, 1)) {
     iwrc rc = ejdb_init();
@@ -225,7 +223,8 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
     iwlog_register_ecodefn(jbn_ecodefn);
   }
-  return JNI_VERSION_10;
+  // todo: register natives?
+  return JNI_VERSION_1_6;
 }
 
 

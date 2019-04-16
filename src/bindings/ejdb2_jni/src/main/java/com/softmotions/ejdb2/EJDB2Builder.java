@@ -84,12 +84,7 @@ public class EJDB2Builder implements Serializable {
         iwkv.randomSeed(seed);
         return this;
     }
-
-    EJDB2Builder walEnabled(boolean v) {
-        iwkv.walEnabled(v);
-        return this;
-    }
-
+    
     EJDB2Builder walCRCOnCheckpoint(boolean v) {
         iwkv.walCRCOnCheckpoint(v);
         return this;

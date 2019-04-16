@@ -8,8 +8,13 @@ public class TestEJDB2 {
     private TestEJDB2() {
     }
 
-    public static void main(String[] args) {
-        EJDB2 db = new EJDB2Builder("test.db").withWAL().open();
-        System.out.println("DB opened");
+    public static void main(String[] args) throws Exception {
+        try (EJDB2 db = new EJDB2Builder("test.db")
+                .truncate()
+                .withWAL()
+                .open()) {
+
+            System.out.println("DB opened");
+        }
     }
 }

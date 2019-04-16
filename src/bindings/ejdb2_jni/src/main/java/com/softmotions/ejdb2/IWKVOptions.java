@@ -68,11 +68,6 @@ public final class IWKVOptions implements Serializable {
         return this;
     }
 
-    IWKVOptions walEnabled(boolean v) {
-        wal.enabled = v;
-        return this;
-    }
-
     IWKVOptions walCRCOnCheckpoint(boolean v) {
         wal.check_crc_on_checkpoint = v;
         return this;
@@ -113,17 +108,12 @@ public final class IWKVOptions implements Serializable {
 
         private static final long serialVersionUID = 2406233154956721582L;
 
-        private boolean enabled;
         private boolean check_crc_on_checkpoint;
         private int savepoint_timeout_sec;
         private int checkpoint_timeout_sec;
         private long buffer_sz;
         private long checkpoint_buffer_sz;
-
-        public boolean isEnabled() {
-            return this.enabled;
-        }
-
+        
         public boolean getCheckCRCOnCheckpoint() {
             return this.check_crc_on_checkpoint;
         }
@@ -147,7 +137,6 @@ public final class IWKVOptions implements Serializable {
         @Override
         public String toString() {
             return new StringJoiner(", ", WALOptions.class.getSimpleName() + "[", "]")
-                    .add("enabled=" + enabled)
                     .add("check_crc_on_checkpoint=" + check_crc_on_checkpoint)
                     .add("savepoint_timeout_sec=" + savepoint_timeout_sec)
                     .add("checkpoint_timeout_sec=" + checkpoint_timeout_sec)
