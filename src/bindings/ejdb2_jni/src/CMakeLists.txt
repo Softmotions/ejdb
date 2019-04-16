@@ -7,9 +7,11 @@ if (NOT JNI_FOUND)
 endif()
 
 message("Java VERSION: ${Java_VERSION}")
+message("Java EXECUTABLE: ${Java_JAVA_EXECUTABLE}")
 
 set(CMAKE_JNI_TARGET TRUE)
-set(CMAKE_JAVA_COMPILE_FLAGS "-source" "11" "-target" "11")
+set(CMAKE_JAVA_COMPILE_FLAGS "-source" "${Java_VERSION_MAJOR}"
+                             "-target" "${Java_VERSION_MAJOR}")
 
 add_jar(
   ejdb2jni_jar

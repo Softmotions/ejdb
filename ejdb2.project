@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
+  <File Name="ANDROID.md"/>
   <VirtualDirectory Name="bindings">
+    <VirtualDirectory Name="ejdb2_jni">
+      <File Name="src/bindings/ejdb2_jni/src/ejdb2jni.c"/>
+      <File Name="src/bindings/ejdb2_jni/src/CMakeLists.txt"/>
+    </VirtualDirectory>
     <VirtualDirectory Name="ejdb2_dart">
       <File Name="src/bindings/ejdb2_dart/README.md"/>
       <VirtualDirectory Name="test">
@@ -145,6 +150,9 @@
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <VirtualDirectory Name="Modules">
+      <File Name="cmake/Modules/FindJava.cmake"/>
+      <File Name="cmake/Modules/FindJNI.cmake"/>
+      <File Name="cmake/Modules/CMakeFindJavaCommon.cmake"/>
       <File Name="cmake/Modules/AddIOWOW.cmake"/>
       <File Name="cmake/Modules/AddFacil.cmake"/>
       <File Name="cmake/Modules/FindIOWOW.cmake"/>
@@ -159,8 +167,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>cmake-build-Debug/</Path>
       <Path>build/</Path>
+      <Path>cmake-build-Debug/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -207,6 +215,9 @@
       <File Name="src/tests/ejdb_test1.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="util">
+      <File Name="src/util/sort_r.h"/>
+      <File Name="src/util/pthread_barrier.h"/>
+      <File Name="src/util/pthread_barrier.c"/>
       <File Name="src/util/khash.h"/>
       <File Name="src/util/lwre.c"/>
       <File Name="src/util/lwre.h"/>
