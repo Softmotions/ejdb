@@ -8,6 +8,9 @@ endif()
 
 message("Java VERSION: ${Java_VERSION}")
 
+set(CMAKE_JNI_TARGET TRUE)
+set(CMAKE_JAVA_COMPILE_FLAGS "-source" "11" "-target" "11")
+
 add_jar(
   ejdb2jni_classes
   SOURCES
@@ -17,6 +20,9 @@ add_jar(
   main/java/com/softmotions/ejdb2/IWKVOptions.java
   OUTPUT_NAME ejdb2jni-${PROJECT_VERSION}
   GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})
+
+install_jar(ejdb2jni_classes ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/java)
+#install_jni_symlink(ejdb2jni_classes ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/java)
 
 include_directories(${JNI_INCLUDE_DIRS})
 
@@ -42,4 +48,3 @@ install(TARGETS ejdb2jni
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
-
