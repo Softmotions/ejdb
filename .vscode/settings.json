@@ -110,6 +110,10 @@
     "**/node_modules/**": true,
     "**/mxe/**": true
   },
-  "C_Cpp.configurationWarnings": "Disabled"
+  "C_Cpp.configurationWarnings": "Disabled",
+  "files.associations": {
+    "*.arb": "json",
+    "jni.h": "c"
+  }
 }
 

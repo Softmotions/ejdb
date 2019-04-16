@@ -226,7 +226,3 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   // todo: register natives?
   return JNI_VERSION_1_6;
 }
-
-
-JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) {
-}
