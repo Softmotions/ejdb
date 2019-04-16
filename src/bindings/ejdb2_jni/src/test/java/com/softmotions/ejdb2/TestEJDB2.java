@@ -9,8 +9,7 @@ public class TestEJDB2 {
     }
 
     public static void main(String[] args) {
-        
-
-        System.out.println("Test EJDB!!!!");
+        EJDB2 db = new EJDB2Builder("test.db").withWAL().open();
+        System.out.println("DB opened");
     }
 }

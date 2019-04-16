@@ -15,11 +15,12 @@ public class EJDB2 implements AutoCloseable {
 
     private long _handle;
 
-    private final EJDB2Options opts;
+    private final EJDB2Builder opts;
 
-    public EJDB2(EJDB2Options opts) throws EJDB2Exception {
+
+    public EJDB2(EJDB2Builder opts) throws EJDB2Exception {
         this.opts = opts;
-        open(opts);
+        //open(opts);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class EJDB2 implements AutoCloseable {
         dispose();
     }
 
-    private native void open(EJDB2Options opts) throws EJDB2Exception;
+    private native void open(EJDB2Builder opts) throws EJDB2Exception;
 
     private native void dispose() throws EJDB2Exception;
 }

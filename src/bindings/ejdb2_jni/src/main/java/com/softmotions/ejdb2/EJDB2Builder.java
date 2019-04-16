@@ -6,7 +6,7 @@ import java.util.StringJoiner;
 /**
  * @author Adamansky Anton (adamansky@softmotions.com)
  */
-public class EJDB2Options implements Serializable {
+public class EJDB2Builder implements Serializable {
 
     private static final long serialVersionUID = 6475291112728462635L;
 
@@ -40,113 +40,120 @@ public class EJDB2Options implements Serializable {
         return document_buffer_sz;
     }
 
-    public EJDB2Options(String path) {
+    public EJDB2Builder(String path) {
         iwkv = new IWKVOptions(path);
         http = new EJDB2HttpOptions();
     }
 
-    public EJDB2Options noWal(boolean v) {
+    public EJDB2Builder noWAL(boolean v) {
         this.no_wal = v;
         return this;
     }
 
-    public EJDB2Options sortBufferSize(int v) {
+    public EJDB2Builder withWAL() {
+        this.no_wal = false;
+        return this;
+    }
+
+    public EJDB2Builder sortBufferSize(int v) {
         this.sort_buffer_sz = v;
         return this;
     }
 
-    public EJDB2Options documentBufferSize(int v) {
+    public EJDB2Builder documentBufferSize(int v) {
         this.document_buffer_sz = v;
         return this;
     }
 
-    public EJDB2Options truncate() {
+    public EJDB2Builder truncate() {
         iwkv.truncate();
         return this;
     }
 
-    public EJDB2Options readonly() {
+    public EJDB2Builder readonly() {
         iwkv.readonly();
         return this;
     }
 
-    EJDB2Options fileLockFailFast(boolean v) {
+    EJDB2Builder fileLockFailFast(boolean v) {
         iwkv.fileLockFailFast(v);
         return this;
     }
 
-    EJDB2Options randomSeed(long seed) {
+    EJDB2Builder randomSeed(long seed) {
         iwkv.randomSeed(seed);
         return this;
     }
 
-    EJDB2Options walEnabled(boolean v) {
+    EJDB2Builder walEnabled(boolean v) {
         iwkv.walEnabled(v);
         return this;
     }
 
-    EJDB2Options walCRCOnCheckpoint(boolean v) {
+    EJDB2Builder walCRCOnCheckpoint(boolean v) {
         iwkv.walCRCOnCheckpoint(v);
         return this;
     }
 
-    EJDB2Options walSavepointTimeoutSec(int v) {
+    EJDB2Builder walSavepointTimeoutSec(int v) {
         iwkv.walSavepointTimeoutSec(v);
         return this;
     }
 
-    EJDB2Options walCheckpointTimeoutSec(int v) {
+    EJDB2Builder walCheckpointTimeoutSec(int v) {
         iwkv.walCheckpointTimeoutSec(v);
         return this;
     }
 
-    EJDB2Options walBufferSize(long v) {
+    EJDB2Builder walBufferSize(long v) {
         iwkv.walBufferSize(v);
         return this;
     }
 
-    EJDB2Options walCheckpointBufferSize(long v) {
+    EJDB2Builder walCheckpointBufferSize(long v) {
         iwkv.walCheckpointBufferSize(v);
         return this;
     }
 
-    public EJDB2Options httpEnabled(boolean v) {
+    public EJDB2Builder httpEnabled(boolean v) {
         http.enabled = v;
         return this;
     }
 
-    public EJDB2Options httpPort(int v) {
+    public EJDB2Builder httpPort(int v) {
         http.port = v;
         return this;
     }
 
-    public EJDB2Options httpBind(String v) {
+    public EJDB2Builder httpBind(String v) {
         http.bind = v;
         return this;
     }
 
-    public EJDB2Options httpAccessToken(String v) {
+    public EJDB2Builder httpAccessToken(String v) {
         http.access_token = v;
         return this;
     }
 
-    public EJDB2Options httpReadAnon(boolean v) {
+    public EJDB2Builder httpReadAnon(boolean v) {
         http.read_anon = v;
         return this;
     }
 
-    public EJDB2Options httpMaxBodySize(int v) {
+    public EJDB2Builder httpMaxBodySize(int v) {
         http.max_body_size = v;
         return this;
     }
 
-    void check() throws EJDB2Exception {
-        // todo
+
+    public EJDB2 open() {
+        return new EJDB2(this);
     }
+
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", EJDB2Options.class.getSimpleName() + "[", "]")
+        return new StringJoiner(", ", EJDB2Builder.class.getSimpleName() + "[", "]")
                 .add("no_wal=" + no_wal)
                 .add("sort_buffer_sz=" + sort_buffer_sz)
                 .add("document_buffer_sz=" + document_buffer_sz)

@@ -18,7 +18,7 @@ add_jar(
   SOURCES
   main/java/com/softmotions/ejdb2/EJDB2.java
   main/java/com/softmotions/ejdb2/EJDB2Exception.java
-  main/java/com/softmotions/ejdb2/EJDB2Options.java
+  main/java/com/softmotions/ejdb2/EJDB2Builder.java
   main/java/com/softmotions/ejdb2/IWKVOptions.java
   OUTPUT_NAME ejdb2jni-${PROJECT_VERSION}
   GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})
@@ -58,11 +58,13 @@ if (BUILD_TESTS)
     SOURCES
     test/java/com/softmotions/ejdb2/TestEJDB2.java
     INCLUDE_JARS ejdb2jni_jar
-    ENTRY_POINT com.softmotions.ejdb2.TestEJDB2
     OUTPUT_NAME ejdb2jni_tests)
 
   add_test(NAME ejdb2jni
-           COMMAND ${Java_JAVA_EXECUTABLE} -cp ejdb2jni-${PROJECT_VERSION}.jar -jar ejdb2jni_tests.jar
+           COMMAND ${Java_JAVA_EXECUTABLE}
+                  -Djava.library.path=.
+                  -cp ejdb2jni-${PROJECT_VERSION}.jar:ejdb2jni_tests.jar
+                  com.softmotions.ejdb2.TestEJDB2
            )
 
 endif (BUILD_TESTS)

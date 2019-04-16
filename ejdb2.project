@@ -3,6 +3,8 @@
   <File Name="ANDROID.md"/>
   <VirtualDirectory Name="bindings">
     <VirtualDirectory Name="ejdb2_jni">
+      <File Name="src/bindings/ejdb2_jni/hints.txt"/>
+      <File Name="src/bindings/ejdb2_jni/CMakeLists.txt"/>
       <File Name="src/bindings/ejdb2_jni/src/ejdb2jni.c"/>
       <File Name="src/bindings/ejdb2_jni/src/CMakeLists.txt"/>
     </VirtualDirectory>
@@ -346,7 +348,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="/usr/lib/dart/bin/dart" IntermediateDirectory="$(ProjectPath)/build/src/bindings/ejdb2_dart/ejdb2_dart" Command="$(OutputFile)" CommandArguments="--enable-asserts test/ejdb2_dart_test.dart" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="/usr/lib/jvm/java-11-openjdk-amd64/bin/java" IntermediateDirectory="$(ProjectPath)/build/src/bindings/ejdb2_jni/src" Command="$(OutputFile)" CommandArguments="-Djava.library.path=. -cp ./ejdb2jni-2.0.5.jar:./ejdb2jni_tests.jar com.softmotions.ejdb2.TestEJDB2" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake">-G Ninja -DCMAKE_BUILD_TYPE=Debug</BuildSystem>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>

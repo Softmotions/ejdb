@@ -11,7 +11,7 @@ typedef struct JbnStr {
 typedef enum {
   _JBN_ERROR_START = (IW_ERROR_START + 15000UL + 5000),
   JBN_ERROR_INVALID_FIELD,          /**< Failed to get class field (JBN_ERROR_INVALID_FIELD) */
-  JBN_ERROR_INVALID_OPTIONS,        /**< Invalid com.softmotions.ejdb2.EJDB2Options configuration provided (JBN_ERROR_INVALID_OPTIONS) */
+  JBN_ERROR_INVALID_OPTIONS,        /**< Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided (JBN_ERROR_INVALID_OPTIONS) */
   _JBN_ERROR_END,
 } jbn_ecode_t;
 
@@ -52,7 +52,7 @@ static jint jbn_throw_rc_exception(JNIEnv *env, iwrc rc) {
 /*
  * Class:     com_softmotions_ejdb2_EJDB2
  * Method:    open
- * Signature: (Lcom/softmotions/ejdb2/EJDB2Options;)V
+ * Signature: (Lcom/softmotions/ejdb2/EJDB2Builder;)V
  */
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobject thisObj, jobject optsObj) {
   iwrc rc = 0;
@@ -135,7 +135,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
 
 
   // http
-  JBNFIELD2(fid, env, optsClazz, "http", "Lcom/softmotions/ejdb2/EJDB2Options$EJDB2HttpOptions;", finish);
+  JBNFIELD2(fid, env, optsClazz, "http", "Lcom/softmotions/ejdb2/EJDB2Builder$EJDB2HttpOptions;", finish);
   http = e->GetObjectField(env, optsObj, fid);
   httpClazz = e->GetObjectClass(env, iwkv);
 
@@ -210,7 +210,7 @@ static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
     case JBN_ERROR_INVALID_FIELD:
       return "Failed to get class field (JBN_ERROR_INVALID_FIELD)";
     case JBN_ERROR_INVALID_OPTIONS:
-      return "Invalid com.softmotions.ejdb2.EJDB2Options configuration provided (JBN_ERROR_INVALID_OPTIONS)";
+      return "Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided (JBN_ERROR_INVALID_OPTIONS)";
   }
   return 0;
 }
@@ -225,7 +225,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
     iwlog_register_ecodefn(jbn_ecodefn);
   }
-  return 0;
+  return JNI_VERSION_10;
 }
 
 
