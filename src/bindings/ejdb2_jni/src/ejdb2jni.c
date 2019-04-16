@@ -66,7 +66,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobjec
 
   int sc = 0;
   EJDB db = 0;
-  JbnStr strings[2] = {0};
+  JbnStr strings[3] = {0};
 
   // opts
   JBNFIELD(fid, env, optsClazz, "no_wal", "Z");
