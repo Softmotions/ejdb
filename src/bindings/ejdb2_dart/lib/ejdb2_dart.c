@@ -1214,7 +1214,7 @@ static const char *_ejd_ecodefn(locale_t locale, uint32_t ecode) {
   return 0;
 }
 
-DART_EXPORT Dart_Handle ejdb2_dart_Init(Dart_Handle parent_library) {
+DART_EXPORT Dart_Handle ejdb2dart_Init(Dart_Handle parent_library) {
   static volatile int ejd_ecodefn_initialized = 0;
   if (__sync_bool_compare_and_swap(&ejd_ecodefn_initialized, 0, 1)) {
     iwrc rc = ejdb_init();

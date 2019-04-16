@@ -52,6 +52,16 @@ install(FILES
         ${DART_PUB_DIR}/example/isolate.dart
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/dart/example)
 
+
+if (BUILD_TESTS)
+  find_program(DART_EXEC dart)
+  if (DART_EXEC MATCHES "DART_EXEC-NOTFOUND")
+    message(FATAL_ERROR "`dart` executable not found")
+  endif()
+  add_test(NAME ejdb2dart
+           COMMAND ${DART_EXEC} --enable-asserts ${DART_PUB_DIR}/test/ejdb2_dart_test.dart)
+endif (BUILD_TESTS)
+
 # add_custom_command(
 # TARGET foo POST_BUILD
 # COMMAND ${CMAKE_COMMAND} -E copy
