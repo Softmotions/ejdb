@@ -40,6 +40,29 @@ set_target_properties(ejdb2_dart PROPERTIES
                       LINK_FLAGS ${dart_LINK_FLAGS}
                       LIBRARY_OUTPUT_DIRECTORY ${DART_PUB_DIR}/lib)
 
+set_target_properties(ejdb2_dart PROPERTIES
+                      VERSION ${PROJECT_VERSION}
+                      OUTPUT_NAME ejdb2dart
+                      SOVERSION ${PROJECT_VERSION_MAJOR}
+                      DEFINE_SYMBOL IW_API_EXPORTS)
+
+install(TARGETS ejdb2_dart
+        FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+
+install(FILES
+        ${DART_PUB_DIR}/lib/ejdb2_dart.dart
+        ${DART_PUB_DIR}/README.md
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/dart)
+
+install(FILES
+        ${DART_PUB_DIR}/example/example.dart
+        ${DART_PUB_DIR}/example/isolate.dart
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/dart/example)
+
 # add_custom_command(
 # TARGET foo POST_BUILD
 # COMMAND ${CMAKE_COMMAND} -E copy

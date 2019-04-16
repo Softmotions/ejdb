@@ -16,7 +16,7 @@ import 'dart:nativewrappers' show NativeFieldWrapperClass2;
 
 import 'package:path/path.dart' as path_lib;
 
-import 'dart-ext:ejdb2_dart';
+import 'dart-ext:ejdb2dart';
 
 String ejdb2ExplainRC(int rc) native 'explain_rc';
 
