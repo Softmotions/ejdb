@@ -55,7 +55,6 @@ if (BUILD_TESTS)
     OUTPUT_NAME ejdb2jni_tests)
 
   get_target_property(_EJDB2JNI_JAR ejdb2jni_jar JAR_FILE)
-  get_target_property(_SL ejdb2jni_jar JNI_SYMLINK)
   get_target_property(_EJDB2JNI_TEST_JAR ejdb2jni_test_jar JAR_FILE)
 
   add_test(NAME ejdb2jni
