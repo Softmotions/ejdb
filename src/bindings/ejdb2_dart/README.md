@@ -31,6 +31,7 @@ void main() async {
 # Supported platforms
 
 * Linux x64
+* OSX
 
 # How to build it manually
 
