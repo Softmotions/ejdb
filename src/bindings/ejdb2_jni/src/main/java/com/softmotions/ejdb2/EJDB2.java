@@ -27,7 +27,7 @@ public class EJDB2 implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         _dispose();
     }
 
@@ -38,9 +38,9 @@ public class EJDB2 implements AutoCloseable {
     // todo pending
     private native void del(String collection, long id) throws EJDB2Exception;
 
-    private native long _put(String collection, ByteBuffer json) throws EJDB2Exception;
+    private native long _put(String collection, String json) throws EJDB2Exception;
 
-    private native void _patch(String collection, ByteBuffer patch, long id) throws EJDB2Exception;
+    private native void _patch(String collection, String patch, long id) throws EJDB2Exception;
 
     private native void _get(String collection, long id, Writer out) throws EJDB2Exception;
 
