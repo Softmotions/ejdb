@@ -3,6 +3,11 @@
   <File Name="ANDROID.md"/>
   <VirtualDirectory Name="bindings">
     <VirtualDirectory Name="ejdb2_jni">
+      <File Name="src/bindings/ejdb2_jni/src/test/java/com/softmotions/ejdb2/TestEJDB2.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/IWKVOptions.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/EJDB2Exception.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/EJDB2Builder.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/EJDB2.java"/>
       <File Name="src/bindings/ejdb2_jni/hints.txt"/>
       <File Name="src/bindings/ejdb2_jni/CMakeLists.txt"/>
       <File Name="src/bindings/ejdb2_jni/src/ejdb2jni.c"/>
@@ -169,8 +174,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>cmake-build-Debug/</Path>
       <Path>build/</Path>
+      <Path>cmake-build-Debug/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>

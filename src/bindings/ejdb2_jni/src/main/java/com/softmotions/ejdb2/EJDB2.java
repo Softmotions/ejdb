@@ -1,7 +1,6 @@
 package com.softmotions.ejdb2;
 
 import java.io.OutputStream;
-import java.io.Writer;
 
 /**
  * @author Adamansky Anton (adamansky@softmotions.com)
@@ -36,6 +35,26 @@ public class EJDB2 implements AutoCloseable {
 
   public long put(String collection, String json, long id) throws EJDB2Exception {
     return _put(collection, json, id);
+  }
+
+  public void del(String collection, long id) throws EJDB2Exception {
+    _del(collection, id);
+  }
+
+  public void patch(String collection, String patch, long id) throws EJDB2Exception {
+    _patch(collection, patch, id);
+  }
+
+  public void get(String collection, long id, OutputStream out) {
+    _get(collection, id, out, false);
+  }
+
+  public void getPretty(String collection, long id, OutputStream out) {
+    _get(collection, id, out, true);
+  }
+
+  public void info(OutputStream out) throws EJDB2Exception {
+    _info(out);
   }
 
   private native void _open(EJDB2Builder opts) throws EJDB2Exception;

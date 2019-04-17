@@ -95,7 +95,7 @@ static iwrc jbn_flush_to_stream(JBN_JSPRINT_CTX *pctx) {
   }
   (*env)->SetByteArrayRegion(env, arr, 0, xsz, (void *) iwxstr_ptr(xstr));
   iwxstr_clear(xstr);
-  (*env)->CallVoidMethod(env, pctx->os_obj, pctx->write_mid, &arr);
+  (*env)->CallVoidMethod(env, pctx->os_obj, pctx->write_mid, arr);
   return 0;
 }
 
@@ -147,11 +147,6 @@ static jint jbn_throw_rc_exception(JNIEnv *env, iwrc rc) {
   return (*env)->ThrowNew(env, clazz, msg ? msg : "Unknown iwrc error");
 }
 
-/*
- * Class:     com_softmotions_ejdb2_EJDB2
- * Method:    open
- * Signature: (Lcom/softmotions/ejdb2/EJDB2Builder;)V
- */
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env, jobject thisObj, jobject optsObj) {
   iwrc rc = 0;
   EJDB_OPTS opts = {0};

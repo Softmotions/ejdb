@@ -45,6 +45,9 @@ install(TARGETS ejdb2jni
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
+
+add_dependencies(ejdb2jni ejdb2jni_jar)
+
 # Test casess
 if (BUILD_TESTS)
   add_jar(
@@ -60,6 +63,7 @@ if (BUILD_TESTS)
   message("Test: ${Java_JAVA_EXECUTABLE} -Djava.library.path=. -cp ${_EJDB2JNI_JAR}:${_EJDB2JNI_TEST_JAR} com.softmotions.ejdb2.TestEJDB2")
   add_test(NAME ejdb2jni
            COMMAND ${Java_JAVA_EXECUTABLE}
+                  -ea
                   -Djava.library.path=.
                   -cp ${_EJDB2JNI_JAR}:${_EJDB2JNI_TEST_JAR}
                   com.softmotions.ejdb2.TestEJDB2
