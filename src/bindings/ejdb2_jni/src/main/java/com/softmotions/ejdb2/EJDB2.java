@@ -23,18 +23,17 @@ public class EJDB2 implements AutoCloseable {
 
     public EJDB2(EJDB2Builder opts) throws EJDB2Exception {
         this.opts = opts;
-        open(opts);
+        _open(opts);
     }
 
     @Override
     public void close() throws Exception {
-        dispose();
+        _dispose();
     }
 
-    private native void open(EJDB2Builder opts) throws EJDB2Exception;
+    private native void _open(EJDB2Builder opts) throws EJDB2Exception;
 
-    private native void dispose() throws EJDB2Exception;
-
+    private native void _dispose() throws EJDB2Exception;
 
     // todo pending
     private native void del(String collection, long id) throws EJDB2Exception;

@@ -54,7 +54,7 @@ static jint jbn_throw_rc_exception(JNIEnv *env, iwrc rc) {
  * Method:    open
  * Signature: (Lcom/softmotions/ejdb2/EJDB2Builder;)V
  */
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_open(JNIEnv *env, jobject thisObj, jobject optsObj) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env, jobject thisObj, jobject optsObj) {
   iwrc rc = 0;
   EJDB_OPTS opts = {0};
   JNIEnv e = *env;
@@ -181,7 +181,7 @@ finish:
  * Method:    dispose
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2_dispose(JNIEnv *env, jobject thisObj) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1dispose(JNIEnv *env, jobject thisObj) {
   jfieldID fid;
   jclass thisClazz = (*env)->GetObjectClass(env, thisObj);
   JBNFIELD(fid, env, thisClazz, "_handle", "J");
