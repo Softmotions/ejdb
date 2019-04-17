@@ -9,10 +9,8 @@ endif()
 message("Java VERSION: ${Java_VERSION}")
 message("Java EXECUTABLE: ${Java_JAVA_EXECUTABLE}")
 
-set(CMAKE_JNI_TARGET TRUE)
 set(CMAKE_JAVA_COMPILE_FLAGS "-source" "${Java_VERSION_MAJOR}"
                              "-target" "${Java_VERSION_MAJOR}")
-
 add_jar(
   ejdb2jni_jar
   SOURCES
@@ -20,24 +18,21 @@ add_jar(
   main/java/com/softmotions/ejdb2/EJDB2Exception.java
   main/java/com/softmotions/ejdb2/EJDB2Builder.java
   main/java/com/softmotions/ejdb2/IWKVOptions.java
-  OUTPUT_NAME ejdb2jni-${PROJECT_VERSION}
+  VERSION ${PROJECT_VERSION}
+  OUTPUT_NAME ejdb2jni
   GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})
 
 install_jar(ejdb2jni_jar ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/java)
 
 include_directories(${JNI_INCLUDE_DIRS})
-
 add_library(ejdb2jni SHARED ejdb2jni.c)
-
 add_dependencies(ejdb2jni ejdb2jni_jar)
-
 target_link_libraries(ejdb2jni PUBLIC ejdb2_s ${JNI_LIBRARIES}
                       PRIVATE ejdb2-jni-native-headers)
 
 if (APPLE)
   set_target_properties(ejdb2jni PROPERTIES SUFFIX ".jnilib")
 endif()
-
 set_target_properties(ejdb2jni PROPERTIES
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${PROJECT_VERSION_MAJOR}
@@ -52,7 +47,6 @@ install(TARGETS ejdb2jni
 
 # Test casess
 if (BUILD_TESTS)
-
   add_jar(
     ejdb2jni_test_jar
     SOURCES
@@ -60,10 +54,14 @@ if (BUILD_TESTS)
     INCLUDE_JARS ejdb2jni_jar
     OUTPUT_NAME ejdb2jni_tests)
 
+  get_target_property(_EJDB2JNI_JAR ejdb2jni_jar JAR_FILE)
+  get_target_property(_SL ejdb2jni_jar JNI_SYMLINK)
+  get_target_property(_EJDB2JNI_TEST_JAR ejdb2jni_test_jar JAR_FILE)
+
   add_test(NAME ejdb2jni
            COMMAND ${Java_JAVA_EXECUTABLE}
                   -Djava.library.path=.
-                  -cp ejdb2jni-${PROJECT_VERSION}.jar:ejdb2jni_tests.jar
+                  -cp ${_EJDB2JNI_JAR}:${_EJDB2JNI_TEST_JAR}
                   com.softmotions.ejdb2.TestEJDB2
            )
 
