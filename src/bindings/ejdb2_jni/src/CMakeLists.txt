@@ -14,6 +14,7 @@ set(CMAKE_JAVA_COMPILE_FLAGS "-source" "${Java_VERSION_MAJOR}"
 add_jar(
   ejdb2jni_jar
   SOURCES
+  main/java/com/softmotions/ejdb2/JQL.java
   main/java/com/softmotions/ejdb2/EJDB2.java
   main/java/com/softmotions/ejdb2/EJDB2Exception.java
   main/java/com/softmotions/ejdb2/EJDB2Builder.java
