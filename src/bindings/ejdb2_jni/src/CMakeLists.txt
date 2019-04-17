@@ -57,6 +57,7 @@ if (BUILD_TESTS)
   get_target_property(_EJDB2JNI_JAR ejdb2jni_jar JAR_FILE)
   get_target_property(_EJDB2JNI_TEST_JAR ejdb2jni_test_jar JAR_FILE)
 
+  message("Test: ${Java_JAVA_EXECUTABLE} -Djava.library.path=. -cp ${_EJDB2JNI_JAR}:${_EJDB2JNI_TEST_JAR} com.softmotions.ejdb2.TestEJDB2")
   add_test(NAME ejdb2jni
            COMMAND ${Java_JAVA_EXECUTABLE}
                   -Djava.library.path=.

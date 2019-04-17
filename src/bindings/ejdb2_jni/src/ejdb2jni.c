@@ -196,6 +196,11 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1dispose(JNIEnv *env, j
   }
 }
 
+// Basic EJDB operations
+
+
+
+
 static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
   if (!(ecode > _JBN_ERROR_START && ecode < _JBN_ERROR_END)) {
     return 0;
