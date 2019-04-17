@@ -3,18 +3,25 @@
 #include <string.h>
 #include "com_softmotions_ejdb2_EJDB2.h"
 
-typedef struct JbnStr {
+#define JBN_JSON_FLUSH_BUFFER_SZ 4096
+
+typedef struct JBN_STR {
   const char *utf;
   jstring str;
-} JbnStr;
+} JBN_STR;
 
 typedef enum {
   _JBN_ERROR_START = (IW_ERROR_START + 15000UL + 5000),
   JBN_ERROR_INVALID_FIELD,          /**< Failed to get class field (JBN_ERROR_INVALID_FIELD) */
+  JBN_ERROR_INVALID_METHOD,         /**< Failed to get class method (JBN_ERROR_INVALID_METHOD) */
   JBN_ERROR_INVALID_OPTIONS,        /**< Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided (JBN_ERROR_INVALID_OPTIONS) */
+  JBN_ERROR_INVALID_STATE,          /**< Invalid com.softmotions.ejdb2.EJDB2 JNI extension state (JBN_ERROR_INVALID_STATE) */
+  JBN_ERROR_CREATION_OBJ,           /**< Failed to create/allocate JNI object (JBN_ERROR_CREATION_OBJ) */
   _JBN_ERROR_END,
 } jbn_ecode_t;
 
+static jclass k_EJDB2_clazz;
+static jfieldID k_EJDB2_handle_fid;
 
 #define JBNFIELD(fid_, env_, clazz_, name_, type_)     \
   fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_); \
@@ -29,6 +36,97 @@ typedef enum {
     jbn_throw_rc_exception(env, JBN_ERROR_INVALID_FIELD);         \
     goto label_;                                                  \
   }
+
+typedef struct JBN_JSPRINT_CTX {
+  int flush_buffer_sz;
+  IWXSTR *xstr;
+  iwrc(*flush_fn)(struct JBN_JSPRINT_CTX *pctx);
+  JNIEnv *env;
+  jclass os_clazz;
+  jobject os_obj;
+  jmethodID write_mid;
+} JBN_JSPRINT_CTX;
+
+static iwrc jbn_json_printer(const char *data, int size, char ch, int count, void *op) {
+  JBN_JSPRINT_CTX *pctx = op;
+  IWXSTR *xstr = pctx->xstr;
+  if (!data) {
+    if (count) {
+      for (int i = 0; i < count; ++i) {
+        iwrc rc = iwxstr_cat(xstr, &ch, 1);
+        RCRET(rc);
+      }
+    }
+  } else {
+    if (size < 0) size = strlen(data);
+    if (!count) count = 1;
+    for (int i = 0; i < count; ++i) {
+      iwrc rc = iwxstr_cat(xstr, data, size);
+      RCRET(rc);
+    }
+  }
+  if (iwxstr_size(xstr) >= pctx->flush_buffer_sz) {
+    iwrc rc = pctx->flush_fn(pctx);
+    RCRET(rc);
+  }
+  return 0;
+}
+
+IW_INLINE iwrc jbn_db(JNIEnv *env, jobject thisObj, EJDB *db) {
+  *db = 0;
+  jlong ptr = (*env)->GetLongField(env, thisObj, k_EJDB2_handle_fid);
+  if (!ptr) {
+    return JBN_ERROR_INVALID_STATE;
+  }
+  *db = (void *) ptr;
+  return 0;
+}
+
+static iwrc jbn_flush_to_stream(JBN_JSPRINT_CTX *pctx) {
+  JNIEnv *env = pctx->env;
+  IWXSTR *xstr = pctx->xstr;
+  size_t xsz = iwxstr_size(xstr);
+  if (xsz == 0) {
+    return 0;
+  }
+  jbyteArray arr = (*env)->NewByteArray(env, xsz);
+  if (!arr) {
+    return JBN_ERROR_CREATION_OBJ;
+  }
+  (*env)->SetByteArrayRegion(env, arr, 0, xsz, (void *) iwxstr_ptr(xstr));
+  iwxstr_clear(xstr);
+  (*env)->CallVoidMethod(env, pctx->os_obj, pctx->write_mid, &arr);
+  return 0;
+}
+
+static iwrc jbn_init_pctx(JNIEnv *env, JBN_JSPRINT_CTX *pctx, jobject thisObj, jobject osObj) {
+  memset(pctx, 0, sizeof(*pctx));
+  iwrc rc = 0;
+  jclass osClazz = (*env)->GetObjectClass(env, osObj);
+  jmethodID write_mid = (*env)->GetMethodID(env, osClazz, "write", "([B)V");
+  if (!write_mid) {
+    return JBN_ERROR_INVALID_METHOD;
+  }
+  IWXSTR *xstr = iwxstr_new();
+  if (!xstr) {
+    return iwrc_set_errno(rc, IW_ERROR_ALLOC);
+  }
+  pctx->xstr = xstr;
+  pctx->flush_buffer_sz = JBN_JSON_FLUSH_BUFFER_SZ;
+  pctx->env = env;
+  pctx->os_clazz = osClazz;
+  pctx->os_obj = osObj;
+  pctx->write_mid = write_mid;
+  pctx->flush_fn = jbn_flush_to_stream;
+  return rc;
+}
+
+static void jbn_destroy_pctx(JBN_JSPRINT_CTX *pctx) {
+  if (pctx->xstr) {
+    iwxstr_destroy(pctx->xstr);
+    pctx->xstr = 0;
+  }
+}
 
 static jint jbn_throw_noclassdef(JNIEnv *env, const char *message) {
   char *className = "java/lang/NoClassDefFoundError";
@@ -66,7 +164,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env, jobj
 
   int sc = 0;
   EJDB db = 0;
-  JbnStr strings[3] = {0};
+  JBN_STR strings[3] = {0};
 
   // opts
   JBNFIELD(fid, env, optsClazz, "no_wal", "Z");
@@ -176,11 +274,7 @@ finish:
   }
 }
 
-/*
- * Class:     com_softmotions_ejdb2_EJDB2
- * Method:    dispose
- * Signature: ()V
- */
+// DISPOSE
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1dispose(JNIEnv *env, jobject thisObj) {
   jfieldID fid;
   jclass thisClazz = (*env)->GetObjectClass(env, thisObj);
@@ -196,10 +290,167 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1dispose(JNIEnv *env, j
   }
 }
 
-// Basic EJDB operations
+// PUT
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1put(JNIEnv *env, jobject thisObj, jstring coll_,
+                                                               jstring json_, jlong id) {
+  EJDB db;
+  iwrc rc = 0;
+  JBL jbl = 0;
+  jlong ret = id;
 
+  const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
+  const char *json = (*env)->GetStringUTFChars(env, json_, 0);
+  if (!coll || !json) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
 
+  rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
 
+  rc = jbl_from_json(&jbl, json);
+  RCGO(rc, finish);
+
+  if (id > 0) {
+    rc = ejdb_put(db, coll, jbl, id);
+  } else {
+    rc = ejdb_put_new(db, coll, jbl, &ret);
+  }
+
+finish:
+  if (jbl) {
+    jbl_destroy(&jbl);
+  }
+  if (coll)(*env)->ReleaseStringUTFChars(env, coll_, coll);
+  if (json)(*env)->ReleaseStringUTFChars(env, json_, json);
+  if (rc)  {
+    jbn_throw_rc_exception(env, rc);
+  }
+  return ret;
+}
+
+// GET
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1get(JNIEnv *env, jobject thisObj, jstring coll_, jlong id,
+                                                              jobject osObj, jboolean pretty) {
+  EJDB db;
+  iwrc rc = 0;
+  JBL jbl = 0;
+  JBN_JSPRINT_CTX pctx;
+
+  const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
+  if (!coll) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+
+  rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
+
+  rc = jbn_init_pctx(env, &pctx, thisObj, osObj);
+  RCGO(rc, finish);
+
+  rc = ejdb_get(db, coll, (int64_t)id, &jbl);
+  RCGO(rc, finish);
+
+  rc = jbl_as_json(jbl, jbn_json_printer, &pctx, 0);
+  RCGO(rc, finish);
+
+  rc = pctx.flush_fn(&pctx);
+
+finish:
+  if (coll) {
+    (*env)->ReleaseStringUTFChars(env, coll_, coll);
+  }
+  if (jbl) {
+    jbl_destroy(&jbl);
+  }
+  jbn_destroy_pctx(&pctx);
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+// INFO
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1info(JNIEnv *env, jobject thisObj, jobject osObj) {
+  EJDB db;
+  iwrc rc = 0;
+  JBL jbl = 0;
+  JBN_JSPRINT_CTX pctx;
+
+  rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
+
+  rc = jbn_init_pctx(env, &pctx, thisObj, osObj);
+  RCGO(rc, finish);
+
+  rc = ejdb_get_meta(db, &jbl);
+  RCGO(rc, finish);
+
+  rc = jbl_as_json(jbl, jbn_json_printer, &pctx, 0);
+  RCGO(rc, finish);
+
+  rc = pctx.flush_fn(&pctx);
+
+finish:
+  if (jbl) {
+    jbl_destroy(&jbl);
+  }
+  jbn_destroy_pctx(&pctx);
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+// DEL
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1del(JNIEnv *env, jobject thisObj, jstring coll_, jlong id) {
+  EJDB db;
+  iwrc rc = 0;
+  const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
+  if (!coll) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+  rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
+
+  rc = ejdb_del(db, coll, (int64_t) id);
+
+finish:
+  if (coll) {
+    (*env)->ReleaseStringUTFChars(env, coll_, coll);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+// PATCH
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1patch(JNIEnv *env, jobject thisObj, jstring coll_,
+                                                                jstring patch_, jlong id) {
+  EJDB db;
+  iwrc rc = 0;
+  const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
+  const char *patch = (*env)->GetStringUTFChars(env, patch_, 0);
+  if (!coll || !patch) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+  rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
+
+  rc = ejdb_patch(db, coll, patch, (int64_t) id);
+
+finish:
+  if (coll) {
+    (*env)->ReleaseStringUTFChars(env, coll_, coll);
+  }
+  if (patch_) {
+    (*env)->ReleaseStringUTFChars(env, patch_, patch);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
 
 static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
   if (!(ecode > _JBN_ERROR_START && ecode < _JBN_ERROR_END)) {
@@ -208,15 +459,21 @@ static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
   switch (ecode) {
     case JBN_ERROR_INVALID_FIELD:
       return "Failed to get class field (JBN_ERROR_INVALID_FIELD)";
+    case JBN_ERROR_INVALID_METHOD:
+      return "Failed to get class method (JBN_ERROR_INVALID_METHOD)";
     case JBN_ERROR_INVALID_OPTIONS:
       return "Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided (JBN_ERROR_INVALID_OPTIONS)";
+    case JBN_ERROR_INVALID_STATE:
+      return "Invalid com.softmotions.ejdb2.EJDB2 JNI extension state (JBN_ERROR_INVALID_STATE)";
+    case JBN_ERROR_CREATION_OBJ:
+      return "Failed to create/allocate JNI object (JBN_ERROR_CREATION_OBJ)";
   }
   return 0;
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
-  JNIEnv* env;
-  if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_6) != JNI_OK) {
+  JNIEnv *env;
+  if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) != JNI_OK) {
     return -1;
   }
   static volatile int jbn_ecodefn_initialized = 0;
@@ -228,6 +485,28 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
     iwlog_register_ecodefn(jbn_ecodefn);
   }
+
+  jclass clazz = (*env)->FindClass(env, "com/softmotions/ejdb2/EJDB2");
+  if (!clazz) {
+    iwlog_error2("Cannot find com/softmotions/ejdb2/EJDB2 class");
+    return -1;
+  }
+  k_EJDB2_clazz = (*env)->NewGlobalRef(env, clazz);
+  k_EJDB2_handle_fid = (*env)->GetFieldID(env, k_EJDB2_clazz, "_handle", "J");
+  if (!k_EJDB2_handle_fid) {
+    iwlog_error2("Cannot find com/softmotions/ejdb2/EJDB2#_handle field");
+    return -1;
+  }
   // todo: register natives?
   return JNI_VERSION_1_6;
+}
+
+JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) { // Not really useless
+  JNIEnv *env;
+  if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+    return;
+  }
+  if (k_EJDB2_clazz) {
+    (*env)->DeleteGlobalRef(env, k_EJDB2_clazz);
+  }
 }

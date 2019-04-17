@@ -1,5 +1,6 @@
 package com.softmotions.ejdb2;
 
+import java.io.OutputStream;
 import java.io.Writer;
 
 /**
@@ -29,19 +30,25 @@ public class EJDB2 implements AutoCloseable {
     _dispose();
   }
 
+  public long putNew(String collection, String json) throws EJDB2Exception {
+    return _put(collection, json, 0);
+  }
+
+  public long put(String collection, String json, long id) throws EJDB2Exception {
+    return _put(collection, json, id);
+  }
+
   private native void _open(EJDB2Builder opts) throws EJDB2Exception;
 
   private native void _dispose() throws EJDB2Exception;
 
-  // todo pending
-  private native long _put(String collection, String json) throws EJDB2Exception;
+  private native long _put(String collection, String json, long id) throws EJDB2Exception;
 
   private native void _del(String collection, long id) throws EJDB2Exception;
 
   private native void _patch(String collection, String patch, long id) throws EJDB2Exception;
 
-  private native void _get(String collection, long id, Writer out) throws EJDB2Exception;
+  private native void _get(String collection, long id, OutputStream out, boolean pretty) throws EJDB2Exception;
 
-  private native void _info(Writer out) throws EJDB2Exception;
-
+  private native void _info(OutputStream out) throws EJDB2Exception;
 }
