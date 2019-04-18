@@ -11,27 +11,25 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class JQL implements AutoCloseable {
 
-  static ReferenceQueue<JQL> jqlRefQueue = new ReferenceQueue<>();
+  private static ReferenceQueue<JQL> refQueue = new ReferenceQueue<>();
 
   private static Map<Long, Reference> refs = new ConcurrentHashMap<Long, Reference>();
 
-  private static Thread cleanupThread;
-
-  static {
-    // JQL References cleanup thread
-    cleanupThread = new Thread() {
-      public void run() {
-        while (true) {
-          try {
-            ((Reference) jqlRefQueue.remove()).cleanup();
-          } catch (InterruptedException e) {
-            break;
-          }
+  private static Thread refsCleanupThread = new Thread() {
+    public void run() {
+      while (true) {
+        try {
+          ((Reference) refQueue.remove()).cleanup();
+        } catch (InterruptedException e) {
+          break;
         }
       }
-    };
-    cleanupThread.setDaemon(true);
-    cleanupThread.start();
+    }
+  };
+
+  static {
+    refsCleanupThread.setDaemon(true);
+    refsCleanupThread.start();
   }
 
   private final EJDB2 db;
@@ -173,7 +171,7 @@ public final class JQL implements AutoCloseable {
     this.query = query;
     this.collection = collection;
     _init(db, query, collection);
-    refs.put(_handle, new Reference(this, jqlRefQueue));
+    refs.put(_handle, new Reference(this, refQueue));
   }
 
   void execute(JQLCallback cb) throws EJDB2Exception {
@@ -199,7 +197,12 @@ public final class JQL implements AutoCloseable {
 
   @Override
   public void close() throws Exception {
-    this._destroy();
+    Reference ref = refs.get(_handle);
+    if (ref != null) {
+      ref.enqueue();
+    } else {
+      _destroy();
+    }
   }
 
   @Override
@@ -209,16 +212,20 @@ public final class JQL implements AutoCloseable {
   }
 
   private static class Reference extends WeakReference<JQL> {
-    private final long _handle;
+    private Long handle;
 
     Reference(JQL jql, ReferenceQueue<JQL> rq) {
       super(jql, rq);
-      this._handle = jql._handle;
+      handle = jql._handle;
     }
 
     void cleanup() {
-      refs.remove(this._handle);
-      // todo:
+      Long h = handle;
+      handle = 0L;
+      if (h != 0) {
+        refs.remove(h);
+        // todo: call static JQL destroy
+      }
     }
   }
 
