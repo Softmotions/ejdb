@@ -65,6 +65,24 @@ public final class JQL implements AutoCloseable {
     return this;
   }
 
+  public JQL setString(int pos, String val) {
+    return this;
+  }
+
+  public JQL setString(String placeholder, String val) {
+    return this;
+  }
+
+  public JQL setLong(int pos, long val) {
+    return this;
+  }
+
+  public JQL setLong(String placeholder, long val) {
+    return this;
+  }
+
+
+
   JQL(EJDB2 db, String query, String collection) throws EJDB2Exception {
     this.db = db;
     this.query = query;
@@ -87,8 +105,10 @@ public final class JQL implements AutoCloseable {
   }
 
   public void reset() {
-    this.explain = null;
-    //todo:
+    if (explain != null) {
+      explain.reset();
+    }
+    _reset();
   }
 
   @Override
@@ -109,4 +129,6 @@ public final class JQL implements AutoCloseable {
   private native void _execute(EJDB2 db, JQLCallback cb, OutputStream explainLog);
 
   private native long _execute_scalar_long(EJDB2 db, OutputStream explainLog);
+
+  private native void _reset();
 }
