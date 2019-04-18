@@ -290,8 +290,8 @@ JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1put(JNIEnv *env,
                                                                jstring coll_,
                                                                jstring json_,
                                                                jlong id) {
-  EJDB db;
   iwrc rc;
+  EJDB db;
   JBL jbl = 0;
   jlong ret = id;
 
@@ -333,8 +333,8 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1get(JNIEnv *env,
                                                               jlong id,
                                                               jobject osObj,
                                                               jboolean pretty) {
-  EJDB db;
   iwrc rc;
+  EJDB db;
   JBL jbl = 0;
   JBN_JSPRINT_CTX pctx;
 
@@ -375,8 +375,8 @@ finish:
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1info(JNIEnv *env,
                                                                jobject thisObj,
                                                                jobject osObj) {
-  EJDB db;
   iwrc rc;
+  EJDB db;
   JBL jbl = 0;
   JBN_JSPRINT_CTX pctx;
 
@@ -409,8 +409,8 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1del(JNIEnv *env,
                                                               jobject thisObj,
                                                               jstring coll_,
                                                               jlong id) {
-  EJDB db;
   iwrc rc;
+  EJDB db;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
   if (!coll) {
     rc = IW_ERROR_INVALID_ARGS;
@@ -436,8 +436,8 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1patch(JNIEnv *env,
                                                                 jstring coll_,
                                                                 jstring patch_,
                                                                 jlong id) {
-  EJDB db;
   iwrc rc;
+  EJDB db;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
   const char *patch = (*env)->GetStringUTFChars(env, patch_, 0);
   if (!coll || !patch) {
@@ -455,6 +455,91 @@ finish:
   }
   if (patch_) {
     (*env)->ReleaseStringUTFChars(env, patch_, patch);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1remove_1collection(JNIEnv *env,
+                                                                             jobject thisObj,
+                                                                             jstring coll_) {
+  iwrc rc;
+  EJDB db;
+  const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
+  if (!coll) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+  rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
+
+  rc = ejdb_remove_collection(db, coll);
+
+finish:
+  if (coll) {
+    (*env)->ReleaseStringUTFChars(env, coll_, coll);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1ensure_1index(JNIEnv *env,
+                                                                        jobject thisObj,
+                                                                        jstring coll_,
+                                                                        jstring path_,
+                                                                        jint mode) {
+
+  iwrc rc;
+  EJDB db;
+  const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
+  const char *path = (*env)->GetStringUTFChars(env, path_, 0);
+  if (!coll || !path) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+  rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
+
+  rc = ejdb_ensure_index(db, coll, path, (ejdb_idx_mode_t) mode);
+
+finish:
+  if (coll) {
+    (*env)->ReleaseStringUTFChars(env, coll_, coll);
+  }
+  if (path) {
+    (*env)->ReleaseStringUTFChars(env, path_, path);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1remove_1index(JNIEnv *env,
+                                                                        jobject thisObj,
+                                                                        jstring coll_,
+                                                                        jstring path_,
+                                                                        jint mode) {
+  iwrc rc;
+  EJDB db;
+  const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
+  const char *path = (*env)->GetStringUTFChars(env, path_, 0);
+  if (!coll || !path) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+  rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
+
+  rc = ejdb_remove_index(db, coll, path, (ejdb_idx_mode_t) mode);
+
+finish:
+  if (coll) {
+    (*env)->ReleaseStringUTFChars(env, coll_, coll);
+  }
+  if (path) {
+    (*env)->ReleaseStringUTFChars(env, path_, path);
   }
   if (rc) {
     jbn_throw_rc_exception(env, rc);

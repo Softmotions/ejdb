@@ -2,10 +2,37 @@ package com.softmotions.ejdb2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.StringJoiner;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class JQL implements AutoCloseable {
+
+  static ReferenceQueue<JQL> jqlRefQueue = new ReferenceQueue<>();
+
+  private static Map<Long, Reference> refs = new ConcurrentHashMap<Long, Reference>();
+
+  private static Thread cleanupThread;
+
+  static {
+    // JQL References cleanup thread
+    cleanupThread = new Thread() {
+      public void run() {
+        while (true) {
+          try {
+            ((Reference) jqlRefQueue.remove()).cleanup();
+          } catch (InterruptedException e) {
+            break;
+          }
+        }
+      }
+    };
+    cleanupThread.setDaemon(true);
+    cleanupThread.start();
+  }
 
   private final EJDB2 db;
 
@@ -146,6 +173,7 @@ public final class JQL implements AutoCloseable {
     this.query = query;
     this.collection = collection;
     _init(db, query, collection);
+    refs.put(_handle, new Reference(this, jqlRefQueue));
   }
 
   void execute(JQLCallback cb) throws EJDB2Exception {
@@ -155,7 +183,7 @@ public final class JQL implements AutoCloseable {
     _execute(db, cb, explain);
   }
 
-  long executeScalarLong() {
+  long executeScalarInt() {
     if (explain != null) {
       explain.reset();
     }
@@ -178,6 +206,20 @@ public final class JQL implements AutoCloseable {
   public String toString() {
     return new StringJoiner(", ", JQL.class.getSimpleName() + "[", "]").add("query=" + query)
         .add("collection=" + collection).toString();
+  }
+
+  private static class Reference extends WeakReference<JQL> {
+    private final long _handle;
+
+    Reference(JQL jql, ReferenceQueue<JQL> rq) {
+      super(jql, rq);
+      this._handle = jql._handle;
+    }
+
+    void cleanup() {
+      refs.remove(this._handle);
+      // todo:
+    }
   }
 
   private native void _init(EJDB2 db, String query, String collection);
