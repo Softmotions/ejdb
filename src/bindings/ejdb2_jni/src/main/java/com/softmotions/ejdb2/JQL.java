@@ -65,24 +65,82 @@ public final class JQL implements AutoCloseable {
     return this;
   }
 
-  public JQL setString(int pos, String val) {
+  public JQL setString(int pos, String val) throws EJDB2Exception {
+    _set_string(pos, null, val, 0);
     return this;
   }
 
-  public JQL setString(String placeholder, String val) {
+  public JQL setString(String placeholder, String val) throws EJDB2Exception {
+    _set_string(0, placeholder, val, 0);
     return this;
   }
 
-  public JQL setLong(int pos, long val) {
+  public JQL setLong(int pos, long val) throws EJDB2Exception {
+    _set_long(pos, null, val);
     return this;
   }
 
-  public JQL setLong(String placeholder, long val) {
+  public JQL setLong(String placeholder, long val) throws EJDB2Exception {
+    _set_long(0, placeholder, val);
     return this;
   }
 
+  public JQL setJSON(int pos, String json) throws EJDB2Exception {
+    _set_string(pos, null, json, 1);
+    return this;
+  }
 
+  public JQL setJSON(String placeholder, String json) throws EJDB2Exception {
+    _set_string(0, placeholder, json, 1);
+    return this;
+  }
 
+  public JQL setRegexp(int pos, String regexp) throws EJDB2Exception {
+    _set_string(pos, null, regexp, 2);
+    return this;
+  }
+
+  public JQL setRegexp(String placeholder, String regexp) throws EJDB2Exception {
+    _set_string(0, placeholder, regexp, 2);
+    return this;
+  }
+
+  public JQL setDouble(int pos, double val) throws EJDB2Exception {
+    _set_double(pos, null, val);
+    return this;
+  }
+
+  public JQL setDouble(String placeholder, double val) throws EJDB2Exception {
+    _set_double(0, placeholder, val);
+    return this;
+  }
+
+  public JQL setBoolean(int pos, boolean val) throws EJDB2Exception {
+    _set_boolean(pos, null, val);
+    return this;
+  }
+
+  public JQL setBoolean(String placeholder, boolean val) throws EJDB2Exception {
+    _set_boolean(0, placeholder, val);
+    return this;
+  }
+
+  public JQL setNull(int pos) throws EJDB2Exception {
+    _set_null(pos, null);
+    return this;
+  }
+
+  public JQL setNull(String placeholder) throws EJDB2Exception {
+    _set_null(0, placeholder);
+    return this;
+  }
+
+  /**
+   * @param db         Database instance.
+   * @param query      Query specification.
+   * @param collection Optional collection name.
+   * @throws EJDB2Exception
+   */
   JQL(EJDB2 db, String query, String collection) throws EJDB2Exception {
     this.db = db;
     this.query = query;
@@ -131,4 +189,14 @@ public final class JQL implements AutoCloseable {
   private native long _execute_scalar_long(EJDB2 db, OutputStream explainLog);
 
   private native void _reset();
+
+  private native void _set_string(int pos, String placeholder, String val, int type);
+
+  private native void _set_long(int pos, String placeholder, long val);
+
+  private native void _set_double(int pos, String placeholder, double val);
+
+  private native void _set_boolean(int pos, String placeholder, boolean val);
+
+  private native void _set_null(int pos, String placeholder);
 }

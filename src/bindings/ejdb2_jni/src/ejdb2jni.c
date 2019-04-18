@@ -2,8 +2,11 @@
 #include <jni.h>
 #include <string.h>
 #include <errno.h>
+#include <stdlib.h>
+
 #include "com_softmotions_ejdb2_EJDB2.h"
 #include "com_softmotions_ejdb2_JQL.h"
+
 
 #define JBN_JSON_FLUSH_BUFFER_SZ 4096
 
@@ -165,7 +168,6 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env,
   jobject iwkv, http, wal;
   jclass iwkvClazz, httpClazz, walClazz;
   jclass optsClazz = e->GetObjectClass(env, optsObj);
-  jclass thisClazz = e->GetObjectClass(env, thisObj);
 
   int sc = 0;
   EJDB db = 0;
@@ -723,6 +725,198 @@ finish:
     jbn_throw_rc_exception(env, rc);
   }
   return ret;
+}
+
+static void jbn_free_json_node(void *ptr, void *op) {
+  IWPOOL *pool = op;
+  if (pool) iwpool_destroy(pool);
+}
+
+static void jbn_free_str(void *ptr, void *op) {
+  if (ptr) free(ptr);
+}
+
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(JNIEnv *env,
+                                                                    jobject thisObj,
+                                                                    jint pos,
+                                                                    jstring placeholder_,
+                                                                    jstring val_,
+                                                                    jint type) {
+  JQL q;
+  iwrc rc;
+  const char *placeholder = 0, *val;
+
+  if (!val_) {
+    jbn_throw_rc_exception(env, IW_ERROR_INVALID_ARGS);
+    return;
+  }
+  val = (*env)->GetStringUTFChars(env, val_, 0);
+
+  rc = jbn_jql_q(env, thisObj, &q);
+  RCGO(rc, finish);
+
+  if (placeholder_) {
+    placeholder = (*env)->GetStringUTFChars(env, placeholder_, 0);
+  }
+  if (type == 1) {  // JSON
+    JBL_NODE node;
+    IWPOOL *pool = iwpool_create(1024);
+    if (!pool) {
+      rc = IW_ERROR_ALLOC;
+      goto finish;
+    }
+    rc = jbl_node_from_json(val, &node, pool);
+    if (rc) {
+      iwpool_destroy(pool);
+      goto finish;
+    }
+    rc = jql_set_json2(q, placeholder, pos, node, jbn_free_json_node, pool);
+    if (rc) {
+      iwpool_destroy(pool);
+      goto finish;
+    }
+  } else if (type == 2) { // Regexp
+    char *str = strdup(val);
+    if (!str) {
+      rc = IW_ERROR_ALLOC;
+      goto finish;
+    }
+    rc = jql_set_regexp2(q, placeholder, pos, str, jbn_free_str, 0);
+    if (rc) {
+      free(str);
+      goto finish;
+    }
+  } else { // All other cases
+    char *str = strdup(val);
+    if (!str) {
+      rc = IW_ERROR_ALLOC;
+      goto finish;
+    }
+    rc = jql_set_str2(q, placeholder, pos, str, jbn_free_str, 0);
+    if (rc) {
+      free(str);
+      goto finish;
+    }
+  }
+
+finish:
+  if (val) {
+    (*env)->ReleaseStringUTFChars(env, val_, val);
+  }
+  if (placeholder) {
+    (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1long(JNIEnv *env,
+                                                                  jobject thisObj,
+                                                                  jint pos,
+                                                                  jstring placeholder_,
+                                                                  jlong val) {
+
+  JQL q;
+  iwrc rc;
+  const char *placeholder = 0;
+
+  rc = jbn_jql_q(env, thisObj, &q);
+  RCGO(rc, finish);
+
+  if (placeholder_) {
+    placeholder = (*env)->GetStringUTFChars(env, placeholder_, 0);
+  }
+
+  rc = jql_set_i64(q, placeholder, pos, val);
+
+finish:
+  if (placeholder) {
+    (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1double(JNIEnv *env,
+                                                                    jobject thisObj,
+                                                                    jint pos,
+                                                                    jstring placeholder_,
+                                                                    jdouble val) {
+  JQL q;
+  iwrc rc;
+  const char *placeholder = 0;
+
+  rc = jbn_jql_q(env, thisObj, &q);
+  RCGO(rc, finish);
+
+  if (placeholder_) {
+    placeholder = (*env)->GetStringUTFChars(env, placeholder_, 0);
+  }
+
+  rc = jql_set_f64(q, placeholder, pos, val);
+
+finish:
+  if (placeholder) {
+    (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1boolean(JNIEnv *env,
+                                                                     jobject thisObj,
+                                                                     jint pos,
+                                                                     jstring placeholder_,
+                                                                     jboolean val) {
+  JQL q;
+  iwrc rc;
+  const char *placeholder = 0;
+
+  rc = jbn_jql_q(env, thisObj, &q);
+  RCGO(rc, finish);
+
+  if (placeholder_) {
+    placeholder = (*env)->GetStringUTFChars(env, placeholder_, 0);
+  }
+
+  rc = jql_set_bool(q, placeholder, pos, val);
+
+finish:
+  if (placeholder) {
+    (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1null(JNIEnv *env,
+                                                                  jobject thisObj,
+                                                                  jint pos,
+                                                                  jstring placeholder_) {
+  JQL q;
+  iwrc rc;
+  const char *placeholder = 0;
+
+  rc = jbn_jql_q(env, thisObj, &q);
+  RCGO(rc, finish);
+
+  if (placeholder_) {
+    placeholder = (*env)->GetStringUTFChars(env, placeholder_, 0);
+  }
+
+  rc = jql_set_null(q, placeholder, pos);
+
+finish:
+  if (placeholder) {
+    (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
 }
 
 static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
