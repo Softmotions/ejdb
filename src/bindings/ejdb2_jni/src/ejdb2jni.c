@@ -299,7 +299,7 @@ JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1put(JNIEnv *env,
                                                                jstring json_,
                                                                jlong id) {
   EJDB db;
-  iwrc rc = 0;
+  iwrc rc;
   JBL jbl = 0;
   jlong ret = id;
 
@@ -342,7 +342,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1get(JNIEnv *env,
                                                               jobject osObj,
                                                               jboolean pretty) {
   EJDB db;
-  iwrc rc = 0;
+  iwrc rc;
   JBL jbl = 0;
   JBN_JSPRINT_CTX pctx;
 
@@ -384,7 +384,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1info(JNIEnv *env,
                                                                jobject thisObj,
                                                                jobject osObj) {
   EJDB db;
-  iwrc rc = 0;
+  iwrc rc;
   JBL jbl = 0;
   JBN_JSPRINT_CTX pctx;
 
@@ -418,7 +418,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1del(JNIEnv *env,
                                                               jstring coll_,
                                                               jlong id) {
   EJDB db;
-  iwrc rc = 0;
+  iwrc rc;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
   if (!coll) {
     rc = IW_ERROR_INVALID_ARGS;
@@ -445,7 +445,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1patch(JNIEnv *env,
                                                                 jstring patch_,
                                                                 jlong id) {
   EJDB db;
-  iwrc rc = 0;
+  iwrc rc;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
   const char *patch = (*env)->GetStringUTFChars(env, patch_, 0);
   if (!coll || !patch) {
@@ -475,11 +475,11 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1init(JNIEnv *env,
                                                              jobject dbObj,
                                                              jstring queryStr,
                                                              jstring collStr) {
-  iwrc rc = 0;
   EJDB db;
+  iwrc rc;
   JQL q = 0;
-
   const char *query = 0, *coll = 0;
+
   if (!dbObj || !queryStr) {
     rc = IW_ERROR_INVALID_ARGS;
     goto finish;
