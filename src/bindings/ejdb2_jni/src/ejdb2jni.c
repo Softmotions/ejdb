@@ -141,14 +141,6 @@ static void jbn_destroy_pctx(JBN_JSPRINT_CTX *pctx) {
   }
 }
 
-static void jbn_throw_noclassdef(JNIEnv *env, const char *message) {
-  char *className = "java/lang/NoClassDefFoundError";
-  jclass clazz = (*env)->FindClass(env, className);
-  if (clazz) {
-    (*env)->ThrowNew(env, clazz, message);
-  }
-}
-
 static void jbn_throw_rc_exception(JNIEnv *env, iwrc rc) {
   const char *className = "com/softmotions/ejdb2/EJDB2Exception";
   jclass clazz = (*env)->FindClass(env, className);
