@@ -25,7 +25,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 * EJDB 2.0 is currently in Beta state, stable enough but some gotchas may be arised.
 * Tested on `Linux` platform, still pending tests for `OSX`.
-* `Windows` platform not supported at now (#237)
+* `Windows` platform not supported at now [#237](https://github.com/Softmotions/ejdb/issues/237)
 * Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
   We are not maintaining ejdb 1.x.
 

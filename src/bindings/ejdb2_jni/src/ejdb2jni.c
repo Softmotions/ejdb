@@ -1,6 +1,7 @@
 #include <ejdb2.h>
 #include <jni.h>
 #include <string.h>
+#include <errno.h>
 #include "com_softmotions_ejdb2_EJDB2.h"
 #include "com_softmotions_ejdb2_JQL.h"
 
@@ -32,19 +33,12 @@ static jfieldID k_JQL_collection_fid;
 static jfieldID k_JQL_skip_fid;
 static jfieldID k_JQL_limit_fid;
 
-#define JBNFIELD(fid_, env_, clazz_, name_, type_)     \
-  fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_); \
-  if (!fid_) {                                              \
-    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_FIELD);   \
-    return;                                                 \
-  }
+#define JBNFIELD(fid_, env_, clazz_, name_, type_)           \
+  fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_);
 
 #define JBNFIELD2(fid_, env_, clazz_, name_, type_, label_)  \
-  fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_);       \
-  if (!fid_) {                                                    \
-    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_FIELD);         \
-    goto label_;                                                  \
-  }
+  fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_);  \
+  if (!fid_) goto label_;
 
 typedef struct JBN_JSPRINT_CTX {
   int flush_buffer_sz;
@@ -113,9 +107,6 @@ static iwrc jbn_init_pctx(JNIEnv *env, JBN_JSPRINT_CTX *pctx, jobject thisObj, j
   iwrc rc = 0;
   jclass osClazz = (*env)->GetObjectClass(env, osObj);
   jmethodID write_mid = (*env)->GetMethodID(env, osClazz, "write", "([B)V");
-  if (!write_mid) {
-    return JBN_ERROR_INVALID_METHOD;
-  }
   IWXSTR *xstr = iwxstr_new();
   if (!xstr) {
     return iwrc_set_errno(rc, IW_ERROR_ALLOC);
@@ -137,23 +128,21 @@ static void jbn_destroy_pctx(JBN_JSPRINT_CTX *pctx) {
   }
 }
 
-static jint jbn_throw_noclassdef(JNIEnv *env, const char *message) {
+static void jbn_throw_noclassdef(JNIEnv *env, const char *message) {
   char *className = "java/lang/NoClassDefFoundError";
   jclass clazz = (*env)->FindClass(env, className);
-  if (!clazz) {
-    return JNI_ERR;
+  if (clazz) {
+    (*env)->ThrowNew(env, clazz, message);
   }
-  return (*env)->ThrowNew(env, clazz, message);
 }
 
-static jint jbn_throw_rc_exception(JNIEnv *env, iwrc rc) {
+static void jbn_throw_rc_exception(JNIEnv *env, iwrc rc) {
   const char *className = "com/softmotions/ejdb2/EJDB2Exception";
   jclass clazz = (*env)->FindClass(env, className);
-  if (!clazz) {
-    return jbn_throw_noclassdef(env, className);
+  if (clazz) {
+    const char *msg = iwlog_ecode_explained(rc);
+    (*env)->ThrowNew(env, clazz, msg ? msg : "Unknown iwrc error");
   }
-  const char *msg = iwlog_ecode_explained(rc);
-  return (*env)->ThrowNew(env, clazz, msg ? msg : "Unknown iwrc error");
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env, jobject thisObj, jobject optsObj) {
@@ -452,30 +441,27 @@ finish:
 }
 
 // JQL INIT
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1init(JNIEnv *env, jobject thisObj) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1init(JNIEnv *env,
+                                                             jobject thisObj, jobject dbObj, jstring queryStr, jstring collStr) {
   iwrc rc = 0;
   EJDB db;
   JQL q = 0;
 
-  jstring queryStr, collStr;
   const char *query = 0, *coll = 0;
-
-  jobject dbObj = (*env)->GetObjectField(env, thisObj, k_JQL_db_fid);
-  rc = jbn_db(env, dbObj, &db);
-  RCGO(rc, finish);
-
-  queryStr = (*env)->GetObjectField(env, thisObj, k_JQL_query_fid);
-  if (!queryStr) {
+  if (!dbObj || !queryStr) {
     rc = IW_ERROR_INVALID_ARGS;
     goto finish;
   }
+
+  rc = jbn_db(env, dbObj, &db);
+  RCGO(rc, finish);
+
   query = (*env)->GetStringUTFChars(env, queryStr, 0);
   if (!query) {
     rc = IW_ERROR_INVALID_ARGS;
     goto finish;
   }
 
-  collStr = (*env)->GetObjectField(env, thisObj, k_JQL_collection_fid);
   if (collStr) {
     coll = (*env)->GetStringUTFChars(env, collStr, 0);
   }
@@ -513,12 +499,88 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1destroy(JNIEnv *env, job
   }
 }
 
+typedef struct JBN_EXEC_CTX {
+  jobject cbObj;
+  jclass cbClazz;
+  jmethodID cbMethodId;
+} JBN_EXEC_CTX;
+
+static iwrc jbn_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
+  iwrc rc = 0;
+
+  return rc;
+}
+
 // JQL EXECUTE
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env, jobject thisObj, jobject cbObj) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env,
+                                                                jobject thisObj,
+                                                                jobject dbObj,
+                                                                jobject cbObj,
+                                                                jobject logStreamObj) {
+  iwrc rc = 0;
+  EJDB db;
+  JQL q = 0;
+  IWXSTR *log = 0;
+
+  if (!cbObj || !dbObj) {
+    jbn_throw_rc_exception(env, IW_ERROR_INVALID_ARGS);
+    return;
+  }
+  jlong ptr = (*env)->GetLongField(env, thisObj, k_JQL_handle_fid);
+  if (!ptr) {
+    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_STATE);
+    return;
+  }
+  q = (void *) ptr;
+  rc = jbn_db(env, dbObj, &db);
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+    return;
+  }
+  jclass cbClazz = (*env)->GetObjectClass(env, cbObj);
+  jmethodID cbMethodId = (*env)->GetMethodID(env, cbClazz, "onRecord", "(JLjava/lang/String;)J");
+
+  jlong skip = (*env)->GetLongField(env, thisObj, k_JQL_skip_fid);
+  jlong limit = (*env)->GetLongField(env, thisObj, k_JQL_limit_fid);
+
+  if (logStreamObj) {
+    log = iwxstr_new();
+    if (!log) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      goto finish;
+    }
+  }
+
+  JBN_EXEC_CTX ectx = {
+    .cbObj = cbObj,
+    .cbClazz = cbClazz,
+    .cbMethodId = cbMethodId
+  };
+
+  EJDB_EXEC ux = {
+    .db = db,
+    .q = q,
+    .skip = skip > 0 ? skip : 0,
+    .limit = limit > 0 ? limit : 0,
+    .opaque = &ectx,
+    .visitor = jbn_exec_visitor
+  };
+
+finish:
+  if (log) {
+    iwxstr_destroy(log);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc);
+  }
 }
 
 // JQL EXECUTE SCALAR LONG
-JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(JNIEnv *env, jobject thisObj) {
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(JNIEnv *env,
+                                                                               jobject thisObj,
+                                                                               jobject dbObj,
+                                                                               jobject logStreamObj) {
+  // todo:
   return 0;
 }
 
@@ -563,10 +625,6 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   }
   k_EJDB2_clazz = (*env)->NewGlobalRef(env, clazz);
   k_EJDB2_handle_fid = (*env)->GetFieldID(env, k_EJDB2_clazz, "_handle", "J");
-  if (!k_EJDB2_handle_fid) {
-    iwlog_error2("Cannot find com.softmotions.ejdb2.EJDB2#_handle field");
-    return -1;
-  }
 
   clazz = (*env)->FindClass(env, "com/softmotions/ejdb2/JQL");
   if (!clazz) {
@@ -575,35 +633,12 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   }
   k_JQL_clazz = (*env)->NewGlobalRef(env, clazz);
   k_JQL_handle_fid = (*env)->GetFieldID(env, k_JQL_clazz, "_handle", "J");
-  if (!k_JQL_handle_fid) {
-    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#_handle field");
-    return -1;
-  }
   k_JQL_db_fid = (*env)->GetFieldID(env, k_JQL_clazz, "db", "Lcom/softmotions/ejdb2/EJDB2;");
-  if (!k_JQL_db_fid) {
-    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#db field");
-    return -1;
-  }
   k_JQL_query_fid = (*env)->GetFieldID(env, k_JQL_clazz, "query", "Ljava/lang/String;");
-  if (!k_JQL_query_fid) {
-    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#query field");
-    return -1;
-  }
   k_JQL_collection_fid = (*env)->GetFieldID(env, k_JQL_clazz, "collection", "Ljava/lang/String;");
-  if (!k_JQL_collection_fid) {
-    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#collection field");
-    return -1;
-  }
-  k_JQL_skip_fid = (*env)->GetFieldID(env, k_JQL_clazz, "skip", "Ljava/lang/Long;");
-  if (!k_JQL_skip_fid) {
-    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#skip field");
-    return -1;
-  }
-  k_JQL_limit_fid = (*env)->GetFieldID(env, k_JQL_clazz, "limit", "Ljava/lang/Long;");
-  if (!k_JQL_limit_fid) {
-    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#limit field");
-    return -1;
-  }
+  k_JQL_skip_fid = (*env)->GetFieldID(env, k_JQL_clazz, "skip", "J");
+  k_JQL_limit_fid = (*env)->GetFieldID(env, k_JQL_clazz, "limit", "J");
+
   return JNI_VERSION_1_6;
 }
 
