@@ -5,7 +5,7 @@ import java.io.OutputStream;
 /**
  * @author Adamansky Anton (adamansky@softmotions.com)
  */
-public class EJDB2 implements AutoCloseable {
+public final class EJDB2 implements AutoCloseable {
 
   static {
     loadLibrary();

@@ -2,6 +2,7 @@
 #include <jni.h>
 #include <string.h>
 #include "com_softmotions_ejdb2_EJDB2.h"
+#include "com_softmotions_ejdb2_JQL.h"
 
 #define JBN_JSON_FLUSH_BUFFER_SZ 4096
 
@@ -22,6 +23,14 @@ typedef enum {
 
 static jclass k_EJDB2_clazz;
 static jfieldID k_EJDB2_handle_fid;
+
+static jclass k_JQL_clazz;
+static jfieldID k_JQL_handle_fid;
+static jfieldID k_JQL_db_fid;
+static jfieldID k_JQL_query_fid;
+static jfieldID k_JQL_collection_fid;
+static jfieldID k_JQL_skip_fid;
+static jfieldID k_JQL_limit_fid;
 
 #define JBNFIELD(fid_, env_, clazz_, name_, type_)     \
   fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_); \
@@ -251,12 +260,10 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env, jobj
   JBNFIELD2(fid, env, httpClazz, "max_body_size", "I", finish);
   opts.http.max_body_size = (size_t) e->GetIntField(env, http, fid);
 
-  JBNFIELD2(fid, env, thisClazz, "_handle", "J", finish);
-
   rc = ejdb_open(&opts, &db);
   RCGO(rc, finish);
 
-  e->SetLongField(env, thisObj, fid, (jlong) db);
+  e->SetLongField(env, thisObj, k_EJDB2_handle_fid, (jlong) db);
 
 finish:
   for (int i = 0; i < (sizeof(strings) / sizeof(strings[0])); ++i)   {
@@ -271,12 +278,9 @@ finish:
 
 // DISPOSE
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1dispose(JNIEnv *env, jobject thisObj) {
-  jfieldID fid;
-  jclass thisClazz = (*env)->GetObjectClass(env, thisObj);
-  JBNFIELD(fid, env, thisClazz, "_handle", "J");
-  jlong ptr = (*env)->GetLongField(env, thisObj, fid);
+  jlong ptr = (*env)->GetLongField(env, thisObj, k_EJDB2_handle_fid);
   if (ptr) {
-    (*env)->SetLongField(env, thisObj, fid, 0);
+    (*env)->SetLongField(env, thisObj, k_EJDB2_handle_fid, 0);
     EJDB db = (void *) ptr;
     iwrc rc = ejdb_close(&db);
     if (rc) {
@@ -447,6 +451,77 @@ finish:
   }
 }
 
+// JQL INIT
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1init(JNIEnv *env, jobject thisObj) {
+  iwrc rc = 0;
+  EJDB db;
+  JQL q = 0;
+
+  jstring queryStr, collStr;
+  const char *query = 0, *coll = 0;
+
+  jobject dbObj = (*env)->GetObjectField(env, thisObj, k_JQL_db_fid);
+  rc = jbn_db(env, dbObj, &db);
+  RCGO(rc, finish);
+
+  queryStr = (*env)->GetObjectField(env, thisObj, k_JQL_query_fid);
+  if (!queryStr) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+  query = (*env)->GetStringUTFChars(env, queryStr, 0);
+  if (!query) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+
+  collStr = (*env)->GetObjectField(env, thisObj, k_JQL_collection_fid);
+  if (collStr) {
+    coll = (*env)->GetStringUTFChars(env, collStr, 0);
+  }
+  rc = jql_create2(&q, coll, query, JQL_KEEP_QUERY_ON_PARSE_ERROR | JQL_SILENT_ON_PARSE_ERROR);
+  RCGO(rc, finish);
+
+  (*env)->SetLongField(env, thisObj, k_JQL_handle_fid, (jlong) q);
+  if (!coll) {
+    collStr = (*env)->NewStringUTF(env, jql_collection(q));
+    (*env)->SetObjectField(env, thisObj, k_JQL_collection_fid, collStr);
+  }
+
+finish:
+  if (query) {
+    (*env)->ReleaseStringUTFChars(env, queryStr, query);
+  }
+  if (coll) {
+    (*env)->ReleaseStringUTFChars(env, collStr, coll);
+  }
+  if (rc) {
+    if (q) {
+      jql_destroy(&q);
+    }
+    jbn_throw_rc_exception(env, rc);
+  }
+}
+
+// JQL DESTROY
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1destroy(JNIEnv *env, jobject thisObj) {
+  jlong ptr = (*env)->GetLongField(env, thisObj, k_JQL_handle_fid);
+  if (ptr) {
+    (*env)->SetLongField(env, thisObj, k_JQL_handle_fid, 0);
+    JQL q = (void *) ptr;
+    jql_destroy(&q);
+  }
+}
+
+// JQL EXECUTE
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env, jobject thisObj, jobject cbObj) {
+}
+
+// JQL EXECUTE SCALAR LONG
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(JNIEnv *env, jobject thisObj) {
+  return 0;
+}
+
 static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
   if (!(ecode > _JBN_ERROR_START && ecode < _JBN_ERROR_END)) {
     return 0;
@@ -483,16 +558,52 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
   jclass clazz = (*env)->FindClass(env, "com/softmotions/ejdb2/EJDB2");
   if (!clazz) {
-    iwlog_error2("Cannot find com/softmotions/ejdb2/EJDB2 class");
+    iwlog_error2("Cannot find com.softmotions.ejdb2.EJDB2 class");
     return -1;
   }
   k_EJDB2_clazz = (*env)->NewGlobalRef(env, clazz);
   k_EJDB2_handle_fid = (*env)->GetFieldID(env, k_EJDB2_clazz, "_handle", "J");
   if (!k_EJDB2_handle_fid) {
-    iwlog_error2("Cannot find com/softmotions/ejdb2/EJDB2#_handle field");
+    iwlog_error2("Cannot find com.softmotions.ejdb2.EJDB2#_handle field");
     return -1;
   }
-  // todo: register natives?
+
+  clazz = (*env)->FindClass(env, "com/softmotions/ejdb2/JQL");
+  if (!clazz) {
+    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL class");
+    return -1;
+  }
+  k_JQL_clazz = (*env)->NewGlobalRef(env, clazz);
+  k_JQL_handle_fid = (*env)->GetFieldID(env, k_JQL_clazz, "_handle", "J");
+  if (!k_JQL_handle_fid) {
+    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#_handle field");
+    return -1;
+  }
+  k_JQL_db_fid = (*env)->GetFieldID(env, k_JQL_clazz, "db", "Lcom/softmotions/ejdb2/EJDB2;");
+  if (!k_JQL_db_fid) {
+    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#db field");
+    return -1;
+  }
+  k_JQL_query_fid = (*env)->GetFieldID(env, k_JQL_clazz, "query", "Ljava/lang/String;");
+  if (!k_JQL_query_fid) {
+    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#query field");
+    return -1;
+  }
+  k_JQL_collection_fid = (*env)->GetFieldID(env, k_JQL_clazz, "collection", "Ljava/lang/String;");
+  if (!k_JQL_collection_fid) {
+    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#collection field");
+    return -1;
+  }
+  k_JQL_skip_fid = (*env)->GetFieldID(env, k_JQL_clazz, "skip", "Ljava/lang/Long;");
+  if (!k_JQL_skip_fid) {
+    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#skip field");
+    return -1;
+  }
+  k_JQL_limit_fid = (*env)->GetFieldID(env, k_JQL_clazz, "limit", "Ljava/lang/Long;");
+  if (!k_JQL_limit_fid) {
+    iwlog_error2("Cannot find com.softmotions.ejdb2.JQL#limit field");
+    return -1;
+  }
   return JNI_VERSION_1_6;
 }
 
@@ -503,5 +614,8 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) { // Not really useless
   }
   if (k_EJDB2_clazz) {
     (*env)->DeleteGlobalRef(env, k_EJDB2_clazz);
+  }
+  if (k_JQL_clazz) {
+    (*env)->DeleteGlobalRef(env, k_JQL_clazz);
   }
 }
