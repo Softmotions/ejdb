@@ -22,6 +22,7 @@ configure_file(README.md ${DART_PUB_DIR}/README.md COPYONLY)
 configure_file(LICENSE ${DART_PUB_DIR}/LICENSE COPYONLY)
 configure_file(Changelog ${DART_PUB_DIR}/CHANGELOG.md COPYONLY)
 configure_file(pubspec.yaml ${DART_PUB_DIR}/pubspec.yaml COPYONLY)
+configure_file(analysis_options.yaml ${DART_PUB_DIR}/analysis_options.yaml COPYONLY)
 configure_file(.packages ${DART_PUB_DIR}/.packages COPYONLY)
 
 set_target_properties(ejdb2_dart PROPERTIES
