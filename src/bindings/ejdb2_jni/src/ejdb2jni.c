@@ -20,7 +20,7 @@ typedef enum {
   JBN_ERROR_INVALID_FIELD,          /**< Failed to get class field (JBN_ERROR_INVALID_FIELD) */
   JBN_ERROR_INVALID_METHOD,         /**< Failed to get class method (JBN_ERROR_INVALID_METHOD) */
   JBN_ERROR_INVALID_OPTIONS,        /**< Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided (JBN_ERROR_INVALID_OPTIONS) */
-  JBN_ERROR_INVALID_STATE,          /**< Invalid com.softmotions.ejdb2.EJDB2 JNI extension state (JBN_ERROR_INVALID_STATE) */
+  JBN_ERROR_INVALID_STATE,          /**< Invalid com.softmotions.ejdb2.EJDB2 JNI state (JBN_ERROR_INVALID_STATE) */
   JBN_ERROR_CREATION_OBJ,           /**< Failed to create/allocate JNI object (JBN_ERROR_CREATION_OBJ) */
   _JBN_ERROR_END,
 } jbn_ecode_t;
@@ -1026,7 +1026,7 @@ static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
     case JBN_ERROR_INVALID_OPTIONS:
       return "Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided (JBN_ERROR_INVALID_OPTIONS)";
     case JBN_ERROR_INVALID_STATE:
-      return "Invalid com.softmotions.ejdb2.EJDB2 JNI extension state (JBN_ERROR_INVALID_STATE)";
+      return "Invalid com.softmotions.ejdb2.EJDB2 JNI state. Database closed? (JBN_ERROR_INVALID_STATE)";
     case JBN_ERROR_CREATION_OBJ:
       return "Failed to create/allocate JNI object (JBN_ERROR_CREATION_OBJ)";
   }

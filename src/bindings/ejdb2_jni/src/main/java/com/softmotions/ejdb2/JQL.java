@@ -163,21 +163,21 @@ public final class JQL implements AutoCloseable {
     return this;
   }
 
-  void execute() throws EJDB2Exception {
+  public void execute() throws EJDB2Exception {
     if (explain != null) {
       explain.reset();
     }
     _execute(db, null, explain);
   }
 
-  void execute(JQLCallback cb) throws EJDB2Exception {
+  public void execute(JQLCallback cb) throws EJDB2Exception {
     if (explain != null) {
       explain.reset();
     }
     _execute(db, cb, explain);
   }
 
-  Map.Entry<Long, String> first() {
+  public Map.Entry<Long, String> first() {
     final Long[] idh = {null};
     final String[] jsonh = {null};
     if (explain != null) {
@@ -191,15 +191,15 @@ public final class JQL implements AutoCloseable {
     return Map.entry(idh[0], jsonh[0]);
   }
 
-  String firstJson() {
+  public String firstJson() {
     return first().getValue();
   }
 
-  Long firstId() {
+  public Long firstId() {
     return first().getKey();
   }
 
-  long executeScalarInt() {
+  public long executeScalarInt() {
     if (explain != null) {
       explain.reset();
     }

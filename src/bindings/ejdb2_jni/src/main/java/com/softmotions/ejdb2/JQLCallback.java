@@ -1,6 +1,6 @@
 package com.softmotions.ejdb2;
 
-interface JQLCallback {
+public interface JQLCallback {
 
   long onRecord(long id, String json);
 }

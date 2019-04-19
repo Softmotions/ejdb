@@ -17,9 +17,10 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Provides HTTP REST/Websockets network endpoints with help of [facil.io](http://facil.io)
 * JSON documents are stored in using fast and compact [binn](https://github.com/liteserver/binn) binary format
 
-## Native bindings
+## Native language bindings
 
-* DartVM https://pub.dartlang.org/packages/ejdb2_dart
+* Dart https://pub.dartlang.org/packages/ejdb2_dart
+* Java [ejdb2_jni/README.md](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/README.md)
 
 ## Status
 
@@ -30,6 +31,16 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
   We are not maintaining ejdb 1.x.
 
 # Supported platforms
+
+## OSX
+
+EJDB2 code ported and tested on OSX `High Sierra`
+
+```
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
+```
 
 ## Linux
 ### Ubuntu/Debian
@@ -54,14 +65,4 @@ make package
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_RPM=ON
 make package
-```
-
-## OSX
-
-EJDB2 code ported and tested on OSX `High Sierra`
-
-```
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make
 ```

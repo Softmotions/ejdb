@@ -5,6 +5,21 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
+ * EJDB2 JNI Wrapper.
+ *
+ * Database should be opene by {@link EJDB2Builder#open()} helper.
+ *
+ * Example:
+ * <pre>{@code
+ *  try (EJDB2 db = new EJDB2Builder("my.db").open() {
+ *    ...
+ *  }
+ * }
+ * </pre>
+ *
+ * In order to release memory resources and avoiding data lost
+ * every opened database instance should be closed with {@link EJDB2#close()}.
+ *
  * @author Adamansky Anton (adamansky@softmotions.com)
  */
 public final class EJDB2 implements AutoCloseable {

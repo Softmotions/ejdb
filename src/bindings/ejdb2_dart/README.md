@@ -28,12 +28,12 @@ void main() async {
 }
 ```
 
-# Supported platforms
+## Supported platforms
 
 * Linux x64
 * OSX
 
-# How to build it manually
+## How to build it manually
 
 ``` sh
 git clone https://github.com/Softmotions/ejdb.git
