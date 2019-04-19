@@ -9,6 +9,33 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * EJDB2 Query specification.
+ * <p>
+ * Query can be reused multiple times with various placeholder parameters. See
+ * JQL specification:
+ * https://github.com/Softmotions/ejdb/blob/master/README.md#jql
+ * <p>
+ * Memory resources used by JQL instance can be released explicitly by
+ * {@link JQL#close()}.
+ * <p>
+ * <strong>Note:</strong> If user did not close instance explicitly it will be
+ * freed anyway once jql object will be garbage collected.
+ * <p>
+ * Typical usage:
+ *
+ * <pre>
+ * {@code
+ *    try (JQL q = db.createQuery("/[foo=:val]", "mycoll")
+ *                   .setString("val", "bar")) {
+ *       q.execute((docId, doc) -> {
+ *         System.out.println(String.format("Found %d %s", docId, doc));
+ *         return 1;
+ *       });
+ *    }
+ * }
+ * </pre>
+ */
 public final class JQL implements AutoCloseable {
 
   private static final ReferenceQueue<JQL> refQueue = new ReferenceQueue<>();
@@ -44,14 +71,23 @@ public final class JQL implements AutoCloseable {
 
   private ByteArrayOutputStream explain;
 
+  /**
+   * Owner database instance
+   */
   public EJDB2 getDb() {
     return db;
   }
 
+  /**
+   * Query specification used to construct this query object.
+   */
   public String getQuery() {
     return query;
   }
 
+  /**
+   * Collection name used for this query
+   */
   public String getCollection() {
     return collection;
   }
@@ -61,11 +97,21 @@ public final class JQL implements AutoCloseable {
     return this;
   }
 
+  /**
+   * Turn on collecting of query execution log
+   *
+   * @see #getExplainLog()
+   */
   public JQL withExplain() {
     explain = new ByteArrayOutputStream();
     return this;
   }
 
+  /**
+   * Turn off collecting of query execution log
+   *
+   * @see #getExplainLog()
+   */
   public JQL withNoExplain() {
     explain = null;
     return this;
@@ -75,12 +121,27 @@ public final class JQL implements AutoCloseable {
     return explain != null ? explain.toString(StandardCharsets.UTF_8) : null;
   }
 
+  /**
+   * Number of records to skip. This parameter takes precedence over {@code skip}
+   * encoded in query spec.
+   *
+   * @return
+   */
+  public JQL setSkip(long skip) {
+    this.skip = skip;
+    return this;
+  }
+
   public long getSkip() {
     return skip;
   }
 
-  public JQL setSkip(long skip) {
-    this.skip = skip;
+  /**
+   * Maximum number of records to retrive. This parameter takes precedence over
+   * {@code limit} encoded in query spec.
+   */
+  public JQL setLimit(long limit) {
+    this.limit = limit;
     return this;
   }
 
@@ -88,16 +149,43 @@ public final class JQL implements AutoCloseable {
     return limit;
   }
 
-  public JQL setLimit(long limit) {
-    this.limit = limit;
-    return this;
-  }
-
+  /**
+   * Set positional string parameter starting for {@code 0} index.
+   * <p>
+   * Example:
+   *
+   * <pre>
+   * {@code
+   *  db.createQuery("/[foo=:?]", "mycoll").setString(0, "zaz")
+   * }
+   * </pre>
+   *
+   * @param pos Zero based positional index
+   * @param val Value to set
+   * @return
+   * @throws EJDB2Exception
+   */
   public JQL setString(int pos, String val) throws EJDB2Exception {
     _set_string(pos, null, val, 0);
     return this;
   }
 
+  /**
+   * Set string parameter placeholder in query spec.
+   * <p>
+   * Example:
+   *
+   * <pre>
+   * {@code
+   *  db.createQuery("/[foo=:val]", "mycoll").setString("val", "zaz");
+   * }
+   * </pre>
+   *
+   * @param placeholder Placeholder name
+   * @param val         Value to set
+   * @return
+   * @throws EJDB2Exception
+   */
   public JQL setString(String placeholder, String val) throws EJDB2Exception {
     _set_string(0, placeholder, val, 0);
     return this;
@@ -163,6 +251,11 @@ public final class JQL implements AutoCloseable {
     return this;
   }
 
+  /**
+   * Execute query without result set callback.
+   *
+   * @throws EJDB2Exception
+   */
   public void execute() throws EJDB2Exception {
     if (explain != null) {
       explain.reset();
@@ -170,6 +263,12 @@ public final class JQL implements AutoCloseable {
     _execute(db, null, explain);
   }
 
+  /**
+   * Execute query and handle records by provided {@code cb}
+   *
+   * @param cb Optional callback SAM
+   * @throws EJDB2Exception
+   */
   public void execute(JQLCallback cb) throws EJDB2Exception {
     if (explain != null) {
       explain.reset();
@@ -177,9 +276,13 @@ public final class JQL implements AutoCloseable {
     _execute(db, cb, explain);
   }
 
+  /**
+   * Get first record entry: {@code [documentId, json]} in results set. Entry will
+   * contain nulls if no records found.
+   */
   public Map.Entry<Long, String> first() {
-    final Long[] idh = {null};
-    final String[] jsonh = {null};
+    final Long[] idh = { null };
+    final String[] jsonh = { null };
     if (explain != null) {
       explain.reset();
     }
@@ -191,14 +294,29 @@ public final class JQL implements AutoCloseable {
     return Map.entry(idh[0], jsonh[0]);
   }
 
+  /**
+   * Get first document body as JSON string or null.
+   */
   public String firstJson() {
     return first().getValue();
   }
 
+  /**
+   * Get first document id ot null
+   */
   public Long firstId() {
     return first().getKey();
   }
 
+  /**
+   * Execute scalar query.
+   * <p>
+   * Example:
+   *
+   * <pre>
+   * long count = db.createQuery("@mycoll/* | count").executeScalarInt();
+   * </pre>
+   */
   public long executeScalarInt() {
     if (explain != null) {
       explain.reset();
@@ -206,6 +324,9 @@ public final class JQL implements AutoCloseable {
     return _execute_scalar_long(db, explain);
   }
 
+  /**
+   * Reset data stored in positional placeholderss
+   */
   public void reset() {
     if (explain != null) {
       explain.reset();
@@ -213,6 +334,9 @@ public final class JQL implements AutoCloseable {
     _reset();
   }
 
+  /**
+   * Close query instance releasing memory resources
+   */
   @Override
   public void close() throws Exception {
     Reference ref = refs.get(_handle);
@@ -226,25 +350,19 @@ public final class JQL implements AutoCloseable {
     }
   }
 
-  /**
-   * @param db         Database instance.
-   * @param query      Query specification.
-   * @param collection Optional collection name.
-   * @throws EJDB2Exception
-   */
   JQL(EJDB2 db, String query, String collection) throws EJDB2Exception {
     this.db = db;
     this.query = query;
     this.collection = collection;
     _init(db, query, collection);
-    //noinspection InstanceVariableUsedBeforeInitialized
+    // noinspection InstanceVariableUsedBeforeInitialized
     refs.put(_handle, new Reference(this, refQueue));
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", JQL.class.getSimpleName() + "[", "]").add("query=" + query)
-      .add("collection=" + collection).toString();
+        .add("collection=" + collection).toString();
   }
 
   private static class Reference extends WeakReference<JQL> {

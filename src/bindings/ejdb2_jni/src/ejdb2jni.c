@@ -662,7 +662,7 @@ static iwrc jbn_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
     goto finish;
   }
   int64_t llv = (*env)->CallLongMethod(env, ectx->cbObj, ectx->cbMid, (jlong) doc->id, json);
-  if (llv < -1) {
+  if (llv < -2) {
     *step = 0;
   } else {
     *step = llv;
