@@ -17,19 +17,30 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Provides HTTP REST/Websockets network endpoints with help of [facil.io](http://facil.io)
 * JSON documents are stored in using fast and compact [binn](https://github.com/liteserver/binn) binary format
 
-## Native bindings
+## Native language bindings
 
-* DartVM https://pub.dartlang.org/packages/ejdb2_dart
+* Dart https://pub.dartlang.org/packages/ejdb2_dart
+* Java [ejdb2_jni/README.md](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/README.md)
 
 ## Status
 
 * EJDB 2.0 is currently in Beta state, stable enough but some gotchas may be arised.
-* Tested on `Linux` and `OSX` platforms.
-* `Windows` platform not supported at now (#237)
+* Tested on `Linux` platform, still pending tests for `OSX`.
+* `Windows` platform not supported at now [#237](https://github.com/Softmotions/ejdb/issues/237)
 * Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
   We are not maintaining ejdb 1.x.
 
 # Supported platforms
+
+## OSX
+
+EJDB2 code ported and tested on OSX `High Sierra`
+
+```
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
+```
 
 ## Linux
 ### Ubuntu/Debian
@@ -54,16 +65,6 @@ make package
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_RPM=ON
 make package
-```
-
-## OSX
-
-EJDB2 code ported and tested on OSX `High Sierra`
-
-```
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make
 ```
 
 
