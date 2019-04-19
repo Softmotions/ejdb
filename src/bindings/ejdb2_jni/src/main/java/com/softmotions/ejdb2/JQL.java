@@ -15,7 +15,7 @@ public final class JQL implements AutoCloseable {
 
   private static Map<Long, Reference> refs = new ConcurrentHashMap<Long, Reference>();
 
-  private static Thread refsCleanupThread = new Thread() {
+  private static Thread cleanupThread = new Thread() {
     public void run() {
       while (true) {
         try {
@@ -28,8 +28,8 @@ public final class JQL implements AutoCloseable {
   };
 
   static {
-    refsCleanupThread.setDaemon(true);
-    refsCleanupThread.start();
+    cleanupThread.setDaemon(true);
+    cleanupThread.start();
   }
 
   private final EJDB2 db;
@@ -201,7 +201,10 @@ public final class JQL implements AutoCloseable {
     if (ref != null) {
       ref.enqueue();
     } else {
-      _destroy();
+      long h = _handle;
+      if (h != 0) {
+        _destroy(h);
+      }
     }
   }
 
@@ -212,7 +215,7 @@ public final class JQL implements AutoCloseable {
   }
 
   private static class Reference extends WeakReference<JQL> {
-    private Long handle;
+    private long handle;
 
     Reference(JQL jql, ReferenceQueue<JQL> rq) {
       super(jql, rq);
@@ -220,18 +223,18 @@ public final class JQL implements AutoCloseable {
     }
 
     void cleanup() {
-      Long h = handle;
+      long h = handle;
       handle = 0L;
       if (h != 0) {
         refs.remove(h);
-        // todo: call static JQL destroy
+        _destroy(h);
       }
     }
   }
 
-  private native void _init(EJDB2 db, String query, String collection);
+  private native static void _destroy(long handle);
 
-  private native void _destroy();
+  private native void _init(EJDB2 db, String query, String collection);
 
   private native void _execute(EJDB2 db, JQLCallback cb, OutputStream explainLog);
 

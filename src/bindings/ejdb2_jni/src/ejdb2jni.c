@@ -608,11 +608,9 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1reset(JNIEnv *env, jobje
 }
 
 // JQL DESTROY
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1destroy(JNIEnv *env, jobject thisObj) {
-  jlong ptr = (*env)->GetLongField(env, thisObj, k_JQL_handle_fid);
-  if (ptr) {
-    (*env)->SetLongField(env, thisObj, k_JQL_handle_fid, 0);
-    JQL q = (void *) ptr;
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1destroy(JNIEnv *env, jclass clazz, jlong handle) {
+  if (handle) {
+    JQL q = (void *) handle;
     jql_destroy(&q);
   }
 }
