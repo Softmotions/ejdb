@@ -263,8 +263,9 @@ static void ejdb2_set_handle(Dart_NativeArguments args) {
   }
   Dart_Handle dh = Dart_GetNativeArgument(args, 1);
   if (Dart_IsInteger(dh)) {
-    EJTH(Dart_GetNativeIntegerArgument(args, 1, &ptr));
-    ctx->dbh = (void *) ptr;
+    int64_t llv;
+    EJTH(Dart_GetNativeIntegerArgument(args, 1, &llv));
+    ctx->dbh = (void *) llv;
   } else if (Dart_IsNull(dh)) {
     ctx->dbh = 0;
   }

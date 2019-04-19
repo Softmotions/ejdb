@@ -1,3 +1,7 @@
+ejdb_dart (1.0.5)
+
+  * Fix compilation warning: incompatible pointer types passing 'intptr_t *'
+
 ejdb_dart (1.0.4)
 
   * Updated to ejdb v2.0.6
