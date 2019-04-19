@@ -1,3 +1,8 @@
+ejdb_dart (1.0.4)
+
+  * Updated to ejdb v2.0.6
+  * Documentation minors
+
 ejdb_dart (1.0.3)
 
   * Safe database release in ejdb2_isolate_shared_release()
