@@ -1,6 +1,8 @@
 package com.softmotions.ejdb2;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Adamansky Anton (adamansky@softmotions.com)
@@ -11,13 +13,18 @@ public final class EJDB2 implements AutoCloseable {
     System.loadLibrary("ejdb2jni");
   }
 
+  @SuppressWarnings("unused")
   private long _handle;
 
-  private final EJDB2Builder opts;
+  private final EJDB2Builder options;
 
-  public EJDB2(EJDB2Builder opts) throws EJDB2Exception {
-    this.opts = opts;
-    _open(opts);
+  public EJDB2Builder getOptions() {
+    return options;
+  }
+
+  EJDB2(EJDB2Builder options) throws EJDB2Exception {
+    this.options = options;
+    _open(options);
   }
 
   @Override
@@ -25,11 +32,15 @@ public final class EJDB2 implements AutoCloseable {
     _dispose();
   }
 
+  public JQL createQuery(String query) throws EJDB2Exception {
+    return new JQL(this, query, null);
+  }
+
   public JQL createQuery(String query, String collection) throws EJDB2Exception {
     return new JQL(this, query, collection);
   }
 
-  public long putNew(String collection, String json) throws EJDB2Exception {
+  public long put(String collection, String json) throws EJDB2Exception {
     return _put(collection, json, 0);
   }
 
@@ -55,6 +66,12 @@ public final class EJDB2 implements AutoCloseable {
 
   public void info(OutputStream out) throws EJDB2Exception {
     _info(out);
+  }
+
+  public String infoAsString() throws EJDB2Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    info(bos);
+    return bos.toString(StandardCharsets.UTF_8);
   }
 
   public EJDB2 removeCollection(String collection) throws EJDB2Exception {

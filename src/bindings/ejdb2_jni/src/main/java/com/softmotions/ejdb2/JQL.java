@@ -11,21 +11,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class JQL implements AutoCloseable {
 
-  private static ReferenceQueue<JQL> refQueue = new ReferenceQueue<>();
+  private static final ReferenceQueue<JQL> refQueue = new ReferenceQueue<>();
 
-  private static Map<Long, Reference> refs = new ConcurrentHashMap<Long, Reference>();
+  @SuppressWarnings("StaticCollection")
+  private static final Map<Long, Reference> refs = new ConcurrentHashMap<Long, Reference>();
 
-  private static Thread cleanupThread = new Thread() {
-    public void run() {
-      while (true) {
-        try {
-          ((Reference) refQueue.remove()).cleanup();
-        } catch (InterruptedException e) {
-          break;
-        }
+  private static final Thread cleanupThread = new Thread(() -> {
+    while (true) {
+      try {
+        ((Reference) refQueue.remove()).cleanup();
+      } catch (InterruptedException ignored) {
       }
     }
-  };
+  });
 
   static {
     cleanupThread.setDaemon(true);
@@ -65,6 +63,11 @@ public final class JQL implements AutoCloseable {
 
   public JQL withExplain() {
     explain = new ByteArrayOutputStream();
+    return this;
+  }
+
+  public JQL withNoExplain() {
+    explain = null;
     return this;
   }
 
@@ -160,18 +163,11 @@ public final class JQL implements AutoCloseable {
     return this;
   }
 
-  /**
-   * @param db         Database instance.
-   * @param query      Query specification.
-   * @param collection Optional collection name.
-   * @throws EJDB2Exception
-   */
-  JQL(EJDB2 db, String query, String collection) throws EJDB2Exception {
-    this.db = db;
-    this.query = query;
-    this.collection = collection;
-    _init(db, query, collection);
-    refs.put(_handle, new Reference(this, refQueue));
+  void execute() throws EJDB2Exception {
+    if (explain != null) {
+      explain.reset();
+    }
+    _execute(db, null, explain);
   }
 
   void execute(JQLCallback cb) throws EJDB2Exception {
@@ -179,6 +175,28 @@ public final class JQL implements AutoCloseable {
       explain.reset();
     }
     _execute(db, cb, explain);
+  }
+
+  Map.Entry<Long, String> first() {
+    final Long[] idh = {null};
+    final String[] jsonh = {null};
+    if (explain != null) {
+      explain.reset();
+    }
+    _execute(db, (id, json) -> {
+      idh[0] = id;
+      jsonh[0] = json;
+      return 0;
+    }, explain);
+    return Map.entry(idh[0], jsonh[0]);
+  }
+
+  String firstJson() {
+    return first().getValue();
+  }
+
+  Long firstId() {
+    return first().getKey();
   }
 
   long executeScalarInt() {
@@ -208,10 +226,25 @@ public final class JQL implements AutoCloseable {
     }
   }
 
+  /**
+   * @param db         Database instance.
+   * @param query      Query specification.
+   * @param collection Optional collection name.
+   * @throws EJDB2Exception
+   */
+  JQL(EJDB2 db, String query, String collection) throws EJDB2Exception {
+    this.db = db;
+    this.query = query;
+    this.collection = collection;
+    _init(db, query, collection);
+    //noinspection InstanceVariableUsedBeforeInitialized
+    refs.put(_handle, new Reference(this, refQueue));
+  }
+
   @Override
   public String toString() {
     return new StringJoiner(", ", JQL.class.getSimpleName() + "[", "]").add("query=" + query)
-        .add("collection=" + collection).toString();
+      .add("collection=" + collection).toString();
   }
 
   private static class Reference extends WeakReference<JQL> {
@@ -232,7 +265,7 @@ public final class JQL implements AutoCloseable {
     }
   }
 
-  private native static void _destroy(long handle);
+  private static native void _destroy(long handle);
 
   private native void _init(EJDB2 db, String query, String collection);
 

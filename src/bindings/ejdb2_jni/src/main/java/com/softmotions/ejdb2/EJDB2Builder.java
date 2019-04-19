@@ -147,8 +147,8 @@ public class EJDB2Builder implements Serializable {
   @Override
   public String toString() {
     return new StringJoiner(", ", EJDB2Builder.class.getSimpleName() + "[", "]").add("no_wal=" + no_wal)
-        .add("sort_buffer_sz=" + sort_buffer_sz).add("document_buffer_sz=" + document_buffer_sz).add("iwkv=" + iwkv)
-        .add("http=" + http).toString();
+      .add("sort_buffer_sz=" + sort_buffer_sz).add("document_buffer_sz=" + document_buffer_sz).add("iwkv=" + iwkv)
+      .add("http=" + http).toString();
   }
 
   public static class EJDB2HttpOptions implements Serializable {
@@ -189,8 +189,8 @@ public class EJDB2Builder implements Serializable {
     @Override
     public String toString() {
       return new StringJoiner(", ", EJDB2HttpOptions.class.getSimpleName() + "[", "]").add("enabled=" + enabled)
-          .add("port=" + port).add("bind='" + bind + "'").add("access_token='" + access_token + "'")
-          .add("read_anon=" + read_anon).add("max_body_size=" + max_body_size).toString();
+        .add("port=" + port).add("bind='" + bind + "'").add("access_token='" + access_token + "'")
+        .add("read_anon=" + read_anon).add("max_body_size=" + max_body_size).toString();
     }
   }
 }

@@ -25,6 +25,9 @@ typedef enum {
   _JBN_ERROR_END,
 } jbn_ecode_t;
 
+static jclass k_EJDB2Exception_clazz;
+static jmethodID k_EJDB2Exception_constructor; // EJDB2Exception(int code, String message)
+
 static jclass k_EJDB2_clazz;
 static jfieldID k_EJDB2_handle_fid;
 
@@ -94,7 +97,7 @@ IW_INLINE iwrc jbn_jql_q(JNIEnv *env, jobject thisObj, JQL *q) {
   if (!ptr) {
     return JBN_ERROR_INVALID_STATE;
   }
-  q = (void *) ptr;
+  *q = (void *) ptr;
   return 0;
 }
 
@@ -141,12 +144,21 @@ static void jbn_destroy_pctx(JBN_JSPRINT_CTX *pctx) {
   }
 }
 
-static void jbn_throw_rc_exception(JNIEnv *env, iwrc rc) {
-  const char *className = "com/softmotions/ejdb2/EJDB2Exception";
-  jclass clazz = (*env)->FindClass(env, className);
-  if (clazz) {
-    const char *msg = iwlog_ecode_explained(rc);
-    (*env)->ThrowNew(env, clazz, msg ? msg : "Unknown iwrc error");
+static void jbn_throw_rc_exception(JNIEnv *env, iwrc rc, const char *msg_) {
+  const char *msg;
+  if (msg_) {
+    msg = msg_;
+  } else {
+    msg = iwlog_ecode_explained(rc);
+    if (!msg) {
+      msg = "Unknown iwrc error";
+    }
+  }
+  jstring msgStr = (*env)->NewStringUTF(env, msg);
+  jobject exObj = (*env)->NewObject(env, k_EJDB2Exception_clazz,
+                                    k_EJDB2Exception_constructor, (jlong) rc, msgStr);
+  if ((*env)->Throw(env, exObj) < 0) {
+    iwlog_error("Failed to throw exception for EJDB2Exception: %s", msg);
   }
 }
 
@@ -179,7 +191,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env,
   JBNFIELD(fid, env, optsClazz, "iwkv", "Lcom/softmotions/ejdb2/IWKVOptions;");
   iwkv = e->GetObjectField(env, optsObj, fid);
   if (!iwkv) {
-    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_OPTIONS);
+    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_OPTIONS, 0);
     return;
   }
   iwkvClazz = e->GetObjectClass(env, iwkv);
@@ -206,7 +218,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env,
   JBNFIELD2(fid, env, iwkvClazz, "wal", "Lcom/softmotions/ejdb2/IWKVOptions$WALOptions;", finish);
   wal = e->GetObjectField(env, iwkv, fid);
   if (!wal) {
-    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_OPTIONS);
+    jbn_throw_rc_exception(env, JBN_ERROR_INVALID_OPTIONS, 0);
     goto finish;
   }
   walClazz = e->GetObjectClass(env, wal);
@@ -267,7 +279,7 @@ finish:
     }
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -279,7 +291,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1dispose(JNIEnv *env, j
     EJDB db = (void *) ptr;
     iwrc rc = ejdb_close(&db);
     if (rc) {
-      jbn_throw_rc_exception(env, rc);
+      jbn_throw_rc_exception(env, rc, 0);
     }
   }
 }
@@ -321,7 +333,7 @@ finish:
   if (coll)(*env)->ReleaseStringUTFChars(env, coll_, coll);
   if (json)(*env)->ReleaseStringUTFChars(env, json_, json);
   if (rc)  {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
   return ret;
 }
@@ -367,7 +379,7 @@ finish:
   }
   jbn_destroy_pctx(&pctx);
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -400,7 +412,7 @@ finish:
   }
   jbn_destroy_pctx(&pctx);
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -426,7 +438,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, coll_, coll);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -457,7 +469,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, patch_, patch);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -481,7 +493,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, coll_, coll);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -512,7 +524,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, path_, path);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -542,7 +554,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, path_, path);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -591,10 +603,14 @@ finish:
     (*env)->ReleaseStringUTFChars(env, collStr, coll);
   }
   if (rc) {
+    if (q && rc == JQL_ERROR_QUERY_PARSE) {
+      jbn_throw_rc_exception(env, rc, jql_error(q));
+    } else {
+      jbn_throw_rc_exception(env, rc, 0);
+    }
     if (q) {
       jql_destroy(&q);
     }
-    jbn_throw_rc_exception(env, rc);
   }
 }
 
@@ -645,7 +661,7 @@ static iwrc jbn_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
     }
     goto finish;
   }
-  int64_t llv = (*env)->CallLongMethod(env, ectx->cbObj, ectx->cbMid, json);
+  int64_t llv = (*env)->CallLongMethod(env, ectx->cbObj, ectx->cbMid, (jlong) doc->id, json);
   if (llv < -1) {
     *step = 0;
   } else {
@@ -673,8 +689,8 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env,
   JQL q;
   IWXSTR *log = 0;
 
-  if (!cbObj || !dbObj) {
-    jbn_throw_rc_exception(env, IW_ERROR_INVALID_ARGS);
+  if (!dbObj) {
+    jbn_throw_rc_exception(env, IW_ERROR_INVALID_ARGS, 0);
     return;
   }
 
@@ -684,8 +700,19 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env,
   rc = jbn_db(env, dbObj, &db);
   RCGO(rc, finish);
 
-  jclass cbClazz = (*env)->GetObjectClass(env, cbObj);
-  jmethodID cbMid = (*env)->GetMethodID(env, cbClazz, "onRecord", "(JLjava/lang/String;)J");
+  JBN_EXEC_CTX ectx = {
+    .env = env,
+    .cbObj = cbObj
+  };
+
+  if (cbObj) {
+    ectx.cbClazz = (*env)->GetObjectClass(env, cbObj);
+    ectx.cbMid = (*env)->GetMethodID(env, ectx.cbClazz, "onRecord", "(JLjava/lang/String;)J");
+    if (!ectx.cbMid) {
+      goto finish;
+    }
+  }
+
   jlong skip = (*env)->GetLongField(env, thisObj, k_JQL_skip_fid);
   jlong limit = (*env)->GetLongField(env, thisObj, k_JQL_limit_fid);
   if (logStreamObj) {
@@ -696,20 +723,13 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env,
     }
   }
 
-  JBN_EXEC_CTX ectx = {
-    .env = env,
-    .cbObj = cbObj,
-    .cbClazz = cbClazz,
-    .cbMid = cbMid
-  };
-
   EJDB_EXEC ux = {
     .db = db,
     .q = q,
     .skip = skip > 0 ? skip : 0,
     .limit = limit > 0 ? limit : 0,
     .opaque = &ectx,
-    .visitor = jbn_exec_visitor,
+    .visitor = cbObj ? jbn_exec_visitor : 0,
     .log = log
   };
 
@@ -732,7 +752,7 @@ finish:
     iwxstr_destroy(log);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -748,7 +768,7 @@ JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(J
   jlong ret = 0;
 
   if (!dbObj) {
-    jbn_throw_rc_exception(env, IW_ERROR_INVALID_ARGS);
+    jbn_throw_rc_exception(env, IW_ERROR_INVALID_ARGS, 0);
     return 0;
   }
 
@@ -797,7 +817,7 @@ finish:
     iwxstr_destroy(log);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
   return ret;
 }
@@ -822,7 +842,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(JNIEnv *env,
   const char *placeholder = 0, *val;
 
   if (!val_) {
-    jbn_throw_rc_exception(env, IW_ERROR_INVALID_ARGS);
+    jbn_throw_rc_exception(env, IW_ERROR_INVALID_ARGS, 0);
     return;
   }
   val = (*env)->GetStringUTFChars(env, val_, 0);
@@ -882,7 +902,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -910,7 +930,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -937,7 +957,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -964,7 +984,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -990,7 +1010,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, placeholder_, placeholder);
   }
   if (rc) {
-    jbn_throw_rc_exception(env, rc);
+    jbn_throw_rc_exception(env, rc, 0);
   }
 }
 
@@ -1036,6 +1056,20 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   k_EJDB2_clazz = (*env)->NewGlobalRef(env, clazz);
   k_EJDB2_handle_fid = (*env)->GetFieldID(env, k_EJDB2_clazz, "_handle", "J");
 
+
+  clazz = (*env)->FindClass(env, "com/softmotions/ejdb2/EJDB2Exception");
+  if (!clazz) {
+    iwlog_error2("Cannot find com.softmotions.ejdb2.EJDB2Exception class");
+    return -1;
+  }
+  k_EJDB2Exception_clazz = (*env)->NewGlobalRef(env, clazz);
+  k_EJDB2Exception_constructor = (*env)->GetMethodID(env, k_EJDB2Exception_clazz,
+                                                     "<init>", "(JLjava/lang/String;)V");
+  if (!k_EJDB2Exception_constructor) {
+    iwlog_error2("Cannot find com.softmotions.ejdb2.EJDB2Exception#<init>(long,String)");
+    return -1;
+  }
+
   clazz = (*env)->FindClass(env, "com/softmotions/ejdb2/JQL");
   if (!clazz) {
     iwlog_error2("Cannot find com.softmotions.ejdb2.JQL class");
@@ -1062,5 +1096,8 @@ JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) { // Not really useless
   }
   if (k_JQL_clazz) {
     (*env)->DeleteGlobalRef(env, k_JQL_clazz);
+  }
+  if (k_EJDB2Exception_clazz) {
+    (*env)->DeleteGlobalRef(env, k_EJDB2Exception_clazz);
   }
 }
