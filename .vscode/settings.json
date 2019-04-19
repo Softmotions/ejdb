@@ -6,20 +6,21 @@
     "-DBUILD_SHARED_LIBS=ON",
     "-DBUILD_TESTS=ON",
     "-DBUILD_EXAMPLES=ON",
-    "-DBUILD_DART_BINDING=ON"
+    "-DBUILD_DART_BINDING=ON",
+    "-DBUILD_JNI_BINDING=ON"
   ],
   "cmake.ctestArgs": [],
   "cmake.debugConfig": {
     "cwd": "${workspaceRoot}/build/src/tests"
   },
   "C_Cpp.formatting": "Disabled",
-  "C_Cpp.autocomplete": "Disabled",
-  "C_Cpp.errorSquiggles": "Disabled",
+  //"C_Cpp.autocomplete": "Disabled",
+  //"C_Cpp.errorSquiggles": "Disabled",
   "astyle.astylerc": "${workspaceRoot}/.astylerc",
   "astyle.c.enable": true,
   "astyle.cpp.enable": true,
-  "clang.completion.enable": true,
-  "clang.diagnostic.enable": true,
+  "clang.completion.enable": false,
+  "clang.diagnostic.enable": false,
   "clang.cflags": [
     "-D_GNU_SOURCE",
     "-D_LARGEFILE_SOURCE",
@@ -38,6 +39,7 @@
     "-Wno-missing-field-initializers",
     "-Wno-missing-braces",
     "-Wno-pragma-once-outside-header",
+    "-I/usr/lib/jvm/java-11-openjdk-amd64/include",
     "-I${workspaceRoot}/build/include",
     "-I${workspaceRoot}/build/src/extern_facil/lib/facil",
     "-I${workspaceRoot}/build/src/extern_facil/lib/facil/cli",
@@ -65,6 +67,7 @@
     "-Wno-unused-function",
     "-Wno-missing-field-initializers",
     "-Wno-pragma-once-outside-header",
+    "-I/usr/lib/jvm/java-11-openjdk-amd64/include",
     "-I${workspaceRoot}/build/include",
     "-I${workspaceRoot}/build/src/extern_facil/lib/facil",
     "-I${workspaceRoot}/build/src/extern_facil/lib/facil/cli",
@@ -76,10 +79,6 @@
     "-I${workspaceRoot}/src/jql",
     "-I${workspaceRoot}/src/util"
   ],
-  "files.associations": {
-    "*.h": "c",
-    "type_traits": "c"
-  },
   "python.pythonPath": "/usr/bin/python3",
   "python.linting.pylintEnabled": false,
   "python.linting.enabled": true,
@@ -111,6 +110,10 @@
     "**/node_modules/**": true,
     "**/mxe/**": true
   },
-  "C_Cpp.configurationWarnings": "Disabled"
+  "C_Cpp.configurationWarnings": "Disabled",
+  "files.associations": {
+    "*.arb": "json",
+    "jni.h": "c"
+  }
 }
 

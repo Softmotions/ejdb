@@ -299,7 +299,7 @@ static iwrc _jb_db_meta_load(EJDB db) {
     IWKV_val key, val;
     rc = iwkv_cursor_get(cur, &key, &val);
     RCGO(rc, finish);
-    if (!strncmp(key.data, KEY_PREFIX_COLLMETA, strlen(KEY_PREFIX_COLLMETA))) {
+    if (!strncmp(key.data, KEY_PREFIX_COLLMETA, sizeof(KEY_PREFIX_COLLMETA) - 1)) {
       JBCOLL jbc = calloc(1, sizeof(*jbc));
       if (!jbc) {
         rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);

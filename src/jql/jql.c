@@ -269,6 +269,12 @@ iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode
   rc = jqp_parse(aux);
   RCGO(rc, finish);
 
+  if (coll) {
+    // Get a copy of collection name
+    coll = iwpool_strdup(aux->pool, coll, &rc);
+    RCGO(rc, finish);
+  }
+
   q->coll = coll;
   q->qp = aux->query;
 

@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
+  <File Name="ANDROID.md"/>
   <VirtualDirectory Name="bindings">
+    <VirtualDirectory Name="ejdb2_jni">
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/JQLCallback.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/JQL.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/test/java/com/softmotions/ejdb2/TestEJDB2.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/IWKVOptions.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/EJDB2Exception.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/EJDB2Builder.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/EJDB2.java"/>
+      <File Name="src/bindings/ejdb2_jni/hints.txt"/>
+      <File Name="src/bindings/ejdb2_jni/CMakeLists.txt"/>
+      <File Name="src/bindings/ejdb2_jni/src/ejdb2jni.c"/>
+      <File Name="src/bindings/ejdb2_jni/src/CMakeLists.txt"/>
+    </VirtualDirectory>
     <VirtualDirectory Name="ejdb2_dart">
       <File Name="src/bindings/ejdb2_dart/README.md"/>
       <VirtualDirectory Name="test">
@@ -145,6 +159,9 @@
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <VirtualDirectory Name="Modules">
+      <File Name="cmake/Modules/FindJava.cmake"/>
+      <File Name="cmake/Modules/FindJNI.cmake"/>
+      <File Name="cmake/Modules/CMakeFindJavaCommon.cmake"/>
       <File Name="cmake/Modules/AddIOWOW.cmake"/>
       <File Name="cmake/Modules/AddFacil.cmake"/>
       <File Name="cmake/Modules/FindIOWOW.cmake"/>
@@ -159,8 +176,8 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>cmake-build-Debug/</Path>
       <Path>build/</Path>
+      <Path>cmake-build-Debug/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
@@ -207,6 +224,9 @@
       <File Name="src/tests/ejdb_test1.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="util">
+      <File Name="src/util/sort_r.h"/>
+      <File Name="src/util/pthread_barrier.h"/>
+      <File Name="src/util/pthread_barrier.c"/>
       <File Name="src/util/khash.h"/>
       <File Name="src/util/lwre.c"/>
       <File Name="src/util/lwre.h"/>
@@ -335,7 +355,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="/usr/lib/dart/bin/dart" IntermediateDirectory="$(ProjectPath)/build/src/bindings/ejdb2_dart/ejdb2_dart" Command="$(OutputFile)" CommandArguments="--enable-asserts test/ejdb2_dart_test.dart" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="/usr/lib/jvm/java-11-openjdk-amd64/bin/java" IntermediateDirectory="$(ProjectPath)/build/src/bindings/ejdb2_jni/src" Command="$(OutputFile)" CommandArguments="-Djava.library.path=. -cp ./ejdb2jni-2.0.5.jar:./ejdb2jni_tests.jar com.softmotions.ejdb2.TestEJDB2" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake">-G Ninja -DCMAKE_BUILD_TYPE=Debug</BuildSystem>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>

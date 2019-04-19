@@ -1,3 +1,11 @@
+ejdb2 (2.0.6) UNRELEASED; urgency=medium
+
+  * Java JNI binding implemented (#243)
+  * Stability: `jql_create` takes own copy of `coll` argument
+  * Documentation improvements
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 19 Apr 2019 11:43:55 +0700
+
 ejdb2 (2.0.5) testing; urgency=medium
 
   * Library ported to OSX

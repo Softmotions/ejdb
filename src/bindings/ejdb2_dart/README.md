@@ -4,7 +4,7 @@ Embeddable JSON Database engine http://ejdb.org Dart binding.
 
 See https://github.com/Softmotions/ejdb/blob/master/README.md
 
-For API usage examples look into [/example](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_dart/example) and [/test](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_dart/test) folders.
+For API usage examples take a look into [/example](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_dart/example) and [/test](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_dart/test) folders.
 
 ## Example
 
@@ -28,11 +28,12 @@ void main() async {
 }
 ```
 
-# Supported platforms
+## Supported platforms
 
 * Linux x64
+* OSX
 
-# How to build it manually
+## How to build it manually
 
 ``` sh
 git clone https://github.com/Softmotions/ejdb.git

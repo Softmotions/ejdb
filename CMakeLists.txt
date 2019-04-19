@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.4)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 include(CMakeToolsHelpers OPTIONAL)
@@ -35,6 +35,7 @@ option(BUILD_TESTS "Build test cases" OFF)
 option(ASAN "Turn on address sanitizer" OFF)
 option(BUILD_EXAMPLES "Build example projects" ON)
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(BUILD_JNI_BINDING "Build Java native binding" OFF)
 option(BUILD_DART_BINDING "Build Dart VM binding" OFF)
 option(PACKAGE_DEB "Build .deb instalation packages" OFF)
 option(PACKAGE_RPM "Build .rpm instalation packages" OFF)
