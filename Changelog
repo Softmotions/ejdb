@@ -1,8 +1,8 @@
-ejdb2 (2.0.8) UNRELEASED; urgency=medium
+ejdb2 (2.0.8) testing; urgency=medium
 
   * Remove redundant memory coping in ejdb_put()
 
- -- Anton Adamansky <adamansky@gmail.com>  Sun, 21 Apr 2019 14:33:42 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 21 Apr 2019 14:38:08 +0700
 
 ejdb2 (2.0.7) testing; urgency=medium
 
