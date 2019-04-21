@@ -193,7 +193,9 @@ static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
 
   pthread_rwlockattr_t attr;
   pthread_rwlockattr_init(&attr);
+  #ifdef __linux__
   pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+  #endif
   pthread_rwlock_init(&jbc->rwl, &attr);
   if (meta) {
     rc = jbl_from_buf_keep(&jbc->meta, meta->data, meta->size, false);
@@ -1484,7 +1486,9 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
 
   pthread_rwlockattr_t attr;
   pthread_rwlockattr_init(&attr);
+  #ifdef __linux__
   pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+  #endif
   rci = pthread_rwlock_init(&db->rwl, &attr);
   if (rci) {
     rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
