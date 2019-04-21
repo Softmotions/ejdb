@@ -705,6 +705,8 @@ finish:
     for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
       if (idx != fail_idx) {
         IWRC(_jb_idx_record_remove(idx, ctx->id, ctx->jbl), rc);
+      } else {
+        break;
       }
     }
     IWRC(iwkv_del(jbc->cdb, &key, 0), rc);
