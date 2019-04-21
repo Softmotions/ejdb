@@ -715,14 +715,7 @@ finish:
 static iwrc _jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *oldval, void *op) {
   struct _JBPHCTX *ctx = op;
   if (oldval && oldval->size) {
-    ctx->oldval.data = malloc(oldval->size);
-    if (!ctx->oldval.data) {
-      iwkv_val_dispose(oldval);
-      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    }
-    memcpy(ctx->oldval.data, oldval->data, oldval->size);
-    ctx->oldval.size = oldval->size;
-    iwkv_val_dispose(oldval);
+    memcpy(&ctx->oldval, oldval, sizeof(*oldval));
   }
   return 0;
 }
