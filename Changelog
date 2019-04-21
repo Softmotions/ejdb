@@ -1,3 +1,10 @@
+ejdb2 (2.0.7) UNRELEASED; urgency=medium
+
+  * Fixed deadlock condition with OSX pthread rwlocks.
+  * Phreads `PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP` is used by default
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 21 Apr 2019 11:58:56 +0700
+
 ejdb2 (2.0.6) testing; urgency=medium
 
   * Java JNI binding implemented (#243)

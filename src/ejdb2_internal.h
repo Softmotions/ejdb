@@ -125,6 +125,7 @@ struct _JBPHCTX {
   int64_t id;
   JBCOLL jbc;
   JBL jbl;
+  IWKV_val oldval;
 };
 
 struct _JBEXEC;

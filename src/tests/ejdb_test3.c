@@ -44,12 +44,14 @@ static void ejdb_test3_1() {
     rc = put_json(db, "c2", dbuf);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
   }
+
   rc = ejdb_ensure_index(db, "c2", "/f/b", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = ejdb_list3(db, "c1", "/f/[b = 1]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b = 1' "
+
+  CU_ASSERT_PTR_NOT_NULL_FATAL(strstr(iwxstr_ptr(log), "[INDEX] MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b = 1' "
                                 "INIT: IWKV_CURSOR_EQ"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b = 1' "
                                 "INIT: IWKV_CURSOR_EQ"));
@@ -986,7 +988,7 @@ void ejdb_test3_6() {
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
-  pSuite = CU_add_suite("ejdb_test1", init_suite, clean_suite);
+  pSuite = CU_add_suite("ejdb_test3", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();

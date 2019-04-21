@@ -1,3 +1,9 @@
+db_dart (1.0.6)
+
+  * Updated to ejdb v2.0.7
+    * Fixed deadlock condition with OSX pthread rwlocks.
+    * Phreads `PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP` is used by default
+
 ejdb_dart (1.0.5)
 
   * Fix compilation warning: incompatible pointer types passing 'intptr_t *'

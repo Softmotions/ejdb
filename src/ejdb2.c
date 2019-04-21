@@ -190,7 +190,11 @@ finish:
 static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
   int rci;
   iwrc rc = 0;
-  pthread_rwlock_init(&jbc->rwl, 0);
+
+  pthread_rwlockattr_t attr;
+  pthread_rwlockattr_init(&attr);
+  pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+  pthread_rwlock_init(&jbc->rwl, &attr);
   if (meta) {
     rc = jbl_from_buf_keep(&jbc->meta, meta->data, meta->size, false);
     RCRET(rc);
@@ -657,22 +661,32 @@ static iwrc _jb_idx_fill(JBIDX idx) {
   return rc;
 }
 
-static iwrc _jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *oldval, void *op) {
-  iwrc rc = 0;
+// Used to avoid deadlocks within a `iwkv_put` context
+static iwrc _jb_put_handler_after(iwrc rc, struct _JBPHCTX *ctx) {
+  IWKV_val *oldval = &ctx->oldval;
+  if (rc) {
+    if (oldval->size) {
+      iwkv_val_dispose(oldval);
+    }
+    return rc;
+  }
   JBL prev;
   struct _JBL jblprev;
-  struct _JBPHCTX *ctx = op;
   JBCOLL jbc = ctx->jbc;
-  if (oldval) {
+  if (oldval->size) {
     rc = jbl_from_buf_keep_onstack(&jblprev, oldval->data, oldval->size);
     RCRET(rc);
     prev = &jblprev;
   } else {
     prev = 0;
   }
+  JBIDX fail_idx = 0;
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
     rc = _jb_idx_record_add(idx, ctx->id, ctx->jbl, prev);
-    RCGO(rc, finish);
+    if (rc) {
+      fail_idx = idx;
+      goto finish;
+    }
   }
   if (!prev) {
     _jb_meta_nrecs_update(jbc->db, jbc->dbid, 1);
@@ -680,10 +694,35 @@ static iwrc _jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *
   }
 
 finish:
-  if (oldval) {
+  if (oldval->size) {
     iwkv_val_dispose(oldval);
   }
+  if (rc && !oldval->size) {
+    // Cleanup on error inserting new record
+    IWKV_val key = {.data = &ctx->id, .size = sizeof(ctx->id)};
+    for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
+      if (idx != fail_idx) {
+        IWRC(_jb_idx_record_remove(idx, ctx->id, ctx->jbl), rc);
+      }
+    }
+    IWRC(iwkv_del(jbc->cdb, &key, 0), rc);
+  }
   return rc;
+}
+
+static iwrc _jb_put_handler(const IWKV_val *key, const IWKV_val *val, IWKV_val *oldval, void *op) {
+  struct _JBPHCTX *ctx = op;
+  if (oldval && oldval->size) {
+    ctx->oldval.data = malloc(oldval->size);
+    if (!ctx->oldval.data) {
+      iwkv_val_dispose(oldval);
+      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    }
+    memcpy(ctx->oldval.data, oldval->data, oldval->size);
+    ctx->oldval.size = oldval->size;
+    iwkv_val_dispose(oldval);
+  }
+  return 0;
 }
 
 static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
@@ -733,7 +772,7 @@ IW_INLINE iwrc _jb_put_impl(JBCOLL jbc, JBL jbl, int64_t id) {
   };
   iwrc rc = jbl_as_buf(jbl, &val.data, &val.size);
   RCRET(rc);
-  return iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx);
+  return _jb_put_handler_after(iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx), &pctx);
 }
 
 iwrc jb_put(JBCOLL jbc, JBL jbl, int64_t id) {
@@ -749,7 +788,7 @@ iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl) {
   };
   iwrc rc = jbl_as_buf(jbl, &val.data, &val.size);
   RCRET(rc);
-  return iwkv_cursor_seth(cur, &val, 0, _jb_put_handler, &pctx);
+  return _jb_put_handler_after(iwkv_cursor_seth(cur, &val, 0, _jb_put_handler, &pctx), &pctx);
 }
 
 //----------------------- Public API
@@ -1206,7 +1245,7 @@ iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *id) {
   rc = jbl_as_buf(jbl, &val.data, &val.size);
   RCGO(rc, finish);
 
-  rc = iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx);
+  rc = _jb_put_handler_after(iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx), &pctx);
   RCGO(rc, finish);
 
   jbc->id_seq = oid;
@@ -1443,7 +1482,10 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
     http->access_token_len = strlen(http->access_token);
   }
 
-  rci = pthread_rwlock_init(&db->rwl, 0);
+  pthread_rwlockattr_t attr;
+  pthread_rwlockattr_init(&attr);
+  pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+  rci = pthread_rwlock_init(&db->rwl, &attr);
   if (rci) {
     rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
     free(db);
