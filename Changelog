@@ -1,6 +1,7 @@
 ejdb2 (2.0.9) UNRELEASED; urgency=medium
 
   * Building Native JNI binding on Android
+  * ejdb2_dart: Added notFound,invalidQuery to EJDB2Error
 
  -- Anton Adamansky <adamansky@gmail.com>  Mon, 22 Apr 2019 10:05:51 +0700
 

@@ -51,7 +51,7 @@ void main() async {
     await db.createQuery('@mycoll/[').execute();
   } on EJDB2Error catch (e) {
     error = e;
-    assert(e.code == 87001);
+    assert(e.invalidQuery);
     assert(e.message.contains('@mycoll/[ <---'));
   }
   assert(error != null);
@@ -66,7 +66,7 @@ void main() async {
     await db.get('mycoll', 1);
   } on EJDB2Error catch (e) {
     error = e;
-    assert(e.code == 75001);
+    assert(e.notFound);
     assert(e.message.contains('IWKV_ERROR_NOTFOUND'));
   }
   assert(error != null);

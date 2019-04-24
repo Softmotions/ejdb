@@ -37,6 +37,10 @@ class EJDB2Error implements Exception {
 
   EJDB2Error.invalidState() : this.fromCode(EJD_ERROR_INVALID_STATE);
 
+  bool get notFound => code == 75001;
+
+  bool get invalidQuery => code == 87001;
+
   @override
   String toString() => '$runtimeType: $code $message';
 }
