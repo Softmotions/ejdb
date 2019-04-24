@@ -1,3 +1,7 @@
+ejdb_dart (1.0.8)
+
+  * Added notFound,invalidQuery to EJDB2Error
+
 ejdb_dart (1.0.7)
 
   * Updated to ejdb v2.0.8
