@@ -262,7 +262,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env,
   opts.http.access_token_len = opts.http.access_token ? strlen(opts.http.access_token) : 0;
 
   JBNFIELD2(fid, env, httpClazz, "read_anon", "Z", finish);
-  opts.http.read_anon = e->GetBooleanField(env, wal, fid);
+  opts.http.read_anon = e->GetBooleanField(env, http, fid);
 
   JBNFIELD2(fid, env, httpClazz, "max_body_size", "I", finish);
   opts.http.max_body_size = (size_t) e->GetIntField(env, http, fid);
