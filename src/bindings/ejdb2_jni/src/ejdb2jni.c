@@ -245,7 +245,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env,
   httpClazz = e->GetObjectClass(env, http);
 
   JBNFIELD2(fid, env, httpClazz, "enabled", "Z", finish);
-  opts.http.enabled = e->GetBooleanField(env, wal, fid);
+  opts.http.enabled = e->GetBooleanField(env, http, fid);
 
   JBNFIELD2(fid, env, httpClazz, "port", "I", finish);
   opts.http.port = e->GetIntField(env, http, fid);
