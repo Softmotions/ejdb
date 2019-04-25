@@ -8,7 +8,7 @@ void main() async {
   assert(q.collection == 'mycoll');
   assert(q.db != null);
 
-  final id = await db.put('mycoll', {'foo':'bar'});
+  final id = await db.put('mycoll', {'foo': 'bar'});
   assert(id == 1);
 
   dynamic error;
@@ -24,7 +24,7 @@ void main() async {
   var json = await db.get('mycoll', id);
   assert(json == '{"foo":"bar"}');
 
-  await db.put('mycoll', {'foo':'baz'});
+  await db.put('mycoll', {'foo': 'baz'});
 
   // Query 1
   final rbuf = <String>[];
@@ -59,6 +59,11 @@ void main() async {
   var count = await db.createQuery('@mycoll/* | count').scalarInt();
   assert(count == 2);
 
+  count = await db.createQuery('@mycoll/* | count').scalarInt(explainCallback: (log) {
+    log.contains('[INDEX] NO [COLLECTOR] PLAIN');
+  });
+  assert(count == 2);
+
   // Del
   await db.del('mycoll', 1);
   error = null;
@@ -91,6 +96,12 @@ void main() async {
   // Test JQL set
   var doc = await db.createQuery('@mycoll/[foo=:?]').setString(0, 'baz').execute().first;
   assert(doc.json == '{"foo":"baz","baz":"qux"}');
+
+  // Test explain log
+  await db.createQuery('@mycoll/[foo=:?]').setString(0, 'baz').execute(explainCallback: (log) {
+    assert(
+        log.contains("[INDEX] SELECTED UNIQUE|STR|1 /foo EXPR1: 'foo = :?' INIT: IWKV_CURSOR_EQ"));
+  });
 
   doc = await db
       .createQuery('@mycoll/[foo=:?] and /[baz=:?]')

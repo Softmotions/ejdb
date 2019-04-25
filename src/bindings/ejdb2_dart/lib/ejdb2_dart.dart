@@ -73,7 +73,7 @@ class JQL extends NativeFieldWrapperClass2 {
   JQL._(this.db, this.query, this.collection);
 
   /// Execute query and returns a stream of documents in result set.
-  Stream<JBDOC> execute() {
+  Stream<JBDOC> execute({void explainCallback(String log)}) {
     abort();
     _controller = StreamController<JBDOC>();
     _replyPort = RawReceivePort();
@@ -83,12 +83,18 @@ class JQL extends NativeFieldWrapperClass2 {
         _controller.addError(EJDB2Error.fromCode(reply));
         return;
       } else if (reply is List) {
+        if (reply[2] != null && explainCallback != null) {
+          explainCallback(reply[2] as String);
+        }
         _controller.add(JBDOC.fromList(reply));
-      } else if (reply == null) {
+      } else {
+        if (reply != null && explainCallback != null) {
+          explainCallback(reply as String);
+        }
         abort();
       }
     };
-    _exec(_replyPort.sendPort);
+    _exec(_replyPort.sendPort, explainCallback != null);
     return _controller.stream;
   }
 
@@ -106,8 +112,8 @@ class JQL extends NativeFieldWrapperClass2 {
 
   /// Return scalar integer value as result of query execution.
   /// For example execution of count query: `/... | count`
-  Future<int> scalarInt() {
-    return execute().map((d) => d.id).first;
+  Future<int> scalarInt({void explainCallback(String log)}) {
+    return execute(explainCallback: explainCallback).map((d) => d.id).first;
   }
 
   /// Set [json] at specified [placeholder].
@@ -180,7 +186,7 @@ class JQL extends NativeFieldWrapperClass2 {
 
   void _set(dynamic placeholder, dynamic value, [int type]) native 'jql_set';
 
-  void _exec(SendPort sendPort) native 'exec';
+  void _exec(SendPort sendPort, bool explain) native 'exec';
 }
 
 /// Database wrapper

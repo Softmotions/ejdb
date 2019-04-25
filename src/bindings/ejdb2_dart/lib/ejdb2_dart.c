@@ -365,8 +365,8 @@ static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
   }
   RCGO(rc, finish);
 
-  Dart_CObject result, rv1, rv2;
-  Dart_CObject *rv[2] = {&rv1, &rv2};
+  Dart_CObject result, rv1, rv2, rv3;
+  Dart_CObject *rv[] = {&rv1, &rv2, &rv3};
   result.type = Dart_CObject_kArray;
   result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
   result.value.as_array.values = rv;
@@ -374,7 +374,13 @@ static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
   rv1.value.as_int64 = doc->id;
   rv2.type = Dart_CObject_kString;
   rv2.value.as_string = iwxstr_ptr(xstr);
-
+  if (ux->log) { // Add explain log to the first record
+    rv3.type = Dart_CObject_kString;
+    rv3.value.as_string = iwxstr_ptr(ux->log);
+    ux->log = 0;
+  } else {
+    rv3.type = Dart_CObject_kNull;
+  }
   if (!Dart_PostCObject(uctx->reply_port, &result)) {
     *step = 0; // End of cursor loop
   }
@@ -388,13 +394,16 @@ static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
   iwrc rc = 0;
   Dart_Port reply_port = ILLEGAL_PORT;
   Dart_CObject result = {.type = Dart_CObject_kNull};
-  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 3)  {
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 4)  {
     iwlog_error2("Invalid message recieved");
     return;
   }
-  //  [reply_port, qptr, dbptr]
+  //  [reply_port, qptr, dbptr, explain]
+  IWXSTR *exlog = 0;
   EJDB_EXEC ux = {0};
   Dart_CObject **varr = msg->value.as_array.values;
+  bool explain = cobject_bool(varr[3], false, &rc);
+  RCGO(rc, finish);
   reply_port = cobject_int(varr[0], false, &rc);
   RCGO(rc, finish);
   ux.q = (void *) cobject_int(varr[1], false, &rc);
@@ -407,6 +416,13 @@ static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
   }
+  if (explain) {
+    exlog = iwxstr_new();
+    if (!exlog) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      goto finish;
+    }
+  }
   struct UXCTX uctx = {
     .aggregate_count = jql_has_aggregate_count(ux.q),
     .reply_port = reply_port
@@ -414,20 +430,30 @@ static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
   ux.db = dctx->dbh->db;
   ux.visitor = uctx.aggregate_count ? 0 : jql_exec_visitor;
   ux.opaque = &uctx;
+  ux.log = exlog;
 
   rc = ejdb_exec(&ux);
   RCGO(rc, finish);
 
   if (uctx.aggregate_count) {
-    Dart_CObject result, rv1, rv2;
-    Dart_CObject *rv[2] = {&rv1, &rv2};
+    Dart_CObject result, rv1, rv2, rv3;
+    Dart_CObject *rv[] = {&rv1, &rv2, &rv3};
     result.type = Dart_CObject_kArray;
-    result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
+    result.value.as_array.length = (sizeof(rv) / sizeof(rv[0]));
     result.value.as_array.values = rv;
     rv1.type = Dart_CObject_kInt64;
     rv1.value.as_int64 = ux.cnt;
     rv2.type = Dart_CObject_kNull;
+    if (exlog) {
+      rv3.type = Dart_CObject_kString;
+      rv3.value.as_string = iwxstr_ptr(exlog);
+    } else {
+      rv3.type = Dart_CObject_kNull;
+    }
     Dart_PostCObject(reply_port, &result);
+  } else if (exlog && ux.cnt == 0) {
+    result.type = Dart_CObject_kString;
+    result.value.as_string = iwxstr_ptr(exlog);
   }
 
 finish:
@@ -438,6 +464,9 @@ finish:
   if (reply_port != ILLEGAL_PORT) {
     Dart_PostCObject(reply_port, &result); // Last NULL or error(int)
   }
+  if (exlog) {
+    iwxstr_destroy(exlog);
+  }
   Dart_CloseNativePort(receive_port);
 }
 
@@ -447,6 +476,8 @@ static void jql_exec(Dart_NativeArguments args) {
 
   iwrc rc = 0;
   intptr_t qptr = 0, ptr = 0;
+  bool explain = false;
+
   Dart_Port reply_port = ILLEGAL_PORT;
   Dart_Port exec_port = ILLEGAL_PORT;
   Dart_Handle ret = Dart_Null();
@@ -454,6 +485,8 @@ static void jql_exec(Dart_NativeArguments args) {
   Dart_Handle hself = EJTH(Dart_GetNativeArgument(args, 0));
   Dart_Handle hdb = EJTH(Dart_GetField(hself, Dart_NewStringFromCString("db")));
   Dart_Handle hport = EJTH(Dart_GetNativeArgument(args, 1));
+
+  EJTH(Dart_GetNativeBooleanArgument(args, 2, &explain));
   EJTH(Dart_SendPortGetId(hport, &reply_port));
 
   EJTH(Dart_GetNativeInstanceField(hdb, 0, &ptr));
@@ -475,11 +508,11 @@ static void jql_exec(Dart_NativeArguments args) {
     goto finish;
   }
   // Now post a message to the query executor port: [reply_port, qptr, dctx]
-  Dart_CObject msg, marg1, marg2, marg3;
-  Dart_CObject *margs[] = {&marg1, &marg2, &marg3};
+  Dart_CObject msg, marg1, marg2, marg3, marg4;
+  Dart_CObject *margs[] = {&marg1, &marg2, &marg3, &marg4};
 
   msg.type = Dart_CObject_kArray;
-  msg.value.as_array.length = 3;
+  msg.value.as_array.length = sizeof(margs) / sizeof(margs[0]);
   msg.value.as_array.values = margs;
 
   marg1.type = Dart_CObject_kInt64;
@@ -490,6 +523,9 @@ static void jql_exec(Dart_NativeArguments args) {
 
   marg3.type = Dart_CObject_kInt64;
   marg3.value.as_int64 = (int64_t) dctx;
+
+  marg4.type = Dart_CObject_kBool;
+  marg4.value.as_bool = explain;
 
   if (!Dart_PostCObject(exec_port, &msg)) {
     rc = EJD_ERROR_POST_PORT;
