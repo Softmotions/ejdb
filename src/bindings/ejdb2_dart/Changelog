@@ -1,3 +1,8 @@
+ejdb_dart (1.0.11)
+
+  * Added JQL#firstOrNull() and JQL#firstN() with relevant test cases
+  * Build fixes: HTTP/WS server was not included in `1.0.10`
+
 ejdb_dart (1.0.10)
 
   * Upgrade to ejdb 2.0.9 release

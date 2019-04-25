@@ -26,6 +26,26 @@ void main() async {
 
   await db.put('mycoll', {'foo': 'baz'});
 
+
+  var first = await db.createQuery('@mycoll/*').first();
+  assert(first != null);
+  assert(first.isPresent);
+  assert(first.value.json == '{"foo":"baz"}');
+
+  first = await db.createQuery('@mycoll/[zzz=bbb]').first();
+  assert(first != null);
+  assert(first. isEmpty);
+
+  var firstN = await db.createQuery('@mycoll/*').firstN(5);
+  assert(firstN != null);
+  assert(firstN.length == 2);
+  assert(firstN[0].json == '{"foo":"baz"}');
+  assert(firstN[1].json == '{"foo":"bar"}');
+
+  firstN = await db.createQuery('@mycoll/*').firstN(1);
+  assert(firstN != null);
+  assert(firstN.length == 1);
+
   // Query 1
   final rbuf = <String>[];
   await for (final doc in q.execute()) {

@@ -15,6 +15,7 @@ import 'dart:isolate';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
 
 import 'package:path/path.dart' as path_lib;
+import 'package:quiver/core.dart';
 
 import 'dart-ext:ejdb2dart';
 
@@ -96,6 +97,24 @@ class JQL extends NativeFieldWrapperClass2 {
     };
     _exec(_replyPort.sendPort, explainCallback != null);
     return _controller.stream;
+  }
+
+  /// Returns optional element for first record in result set.
+  Future<Optional<JBDOC>> first({void explainCallback(String log)}) async {
+    await for (final doc in execute(explainCallback: explainCallback)) {
+      return Optional.of(doc);
+    }
+    return const Optional.absent();
+  }
+
+  /// Collects up to [n] elements from result set into array.
+  Future<List<JBDOC>> firstN(int n, {void explainCallback(String log)}) async {
+    final ret = <JBDOC>[];
+    await for (final doc in execute(explainCallback: explainCallback)) {
+      if (n-- <= 0) break;
+      ret.add(doc);
+    }
+    return ret;
   }
 
   /// Abort query execution.
