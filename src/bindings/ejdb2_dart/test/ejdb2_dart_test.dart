@@ -27,7 +27,7 @@ void main() async {
   await db.put('mycoll', {'foo': 'baz'});
 
   final list = await db.createQuery('@mycoll/*').execute(limit: 1).toList();
-  print(list);
+  assert(list.length == 1);
 
   var first = await db.createQuery('@mycoll/*').first();
   assert(first != null);
