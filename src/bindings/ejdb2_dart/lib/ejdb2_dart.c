@@ -475,7 +475,6 @@ finish:
 }
 
 static void ejd_jql_exec(Dart_NativeArguments args) {
-  // void _exec(SendPort sendPort) native 'exec';
   Dart_EnterScope();
 
   iwrc rc = 0;
@@ -492,6 +491,7 @@ static void ejd_jql_exec(Dart_NativeArguments args) {
   Dart_Handle hport = EJTH(Dart_GetNativeArgument(args, 1));
 
   EJTH(Dart_GetNativeBooleanArgument(args, 2, &explain));
+  EJTH(Dart_GetNativeIntegerArgument(args, 3, &limit));
   EJTH(Dart_SendPortGetId(hport, &reply_port));
 
   EJTH(Dart_GetNativeInstanceField(hdb, 0, &ptr));

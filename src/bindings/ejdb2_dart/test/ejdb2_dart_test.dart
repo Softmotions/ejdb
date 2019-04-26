@@ -26,6 +26,8 @@ void main() async {
 
   await db.put('mycoll', {'foo': 'baz'});
 
+  final list = await db.createQuery('@mycoll/*').execute(limit: 1).toList();
+  print(list);
 
   var first = await db.createQuery('@mycoll/*').first();
   assert(first != null);
@@ -159,7 +161,6 @@ void main() async {
 
   q = db.createQuery('@c1/*');
   assert(q.limit == 0);
-
 
   await db.close();
 }
