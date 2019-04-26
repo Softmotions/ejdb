@@ -3,7 +3,7 @@ import 'package:ejdb2_dart/ejdb2_dart.dart';
 void main() async {
   final db = await EJDB2.open('hello.db', truncate: true);
 
-  final q = db.createQuery('@mycoll/*');
+  var q = db.createQuery('@mycoll/*');
   assert(q != null);
   assert(q.collection == 'mycoll');
   assert(q.db != null);
@@ -152,6 +152,14 @@ void main() async {
   await db.removeCollection('mycoll');
   json = await db.info();
   assert(json.contains('"collections":[]'));
+
+  /// Test get limit
+  q = db.createQuery('@c1/* | limit 1');
+  assert(q.limit == 1);
+
+  q = db.createQuery('@c1/*');
+  assert(q.limit == 0);
+
 
   await db.close();
 }

@@ -73,8 +73,12 @@ class JQL extends NativeFieldWrapperClass2 {
 
   JQL._(this.db, this.query, this.collection);
 
-  /// Execute query and returns a stream of documents in result set.
-  Stream<JBDOC> execute({void explainCallback(String log)}) {
+  /// Execute query and returns a stream of matched documents.
+  ///
+  /// [explainCallback] Used to get query execution log.
+  /// [limit] Overrides `limit` set by query text for this execution session.
+  ///
+  Stream<JBDOC> execute({void explainCallback(String log), int limit = 0}) {
     abort();
     _controller = StreamController<JBDOC>();
     _replyPort = RawReceivePort();
@@ -95,7 +99,7 @@ class JQL extends NativeFieldWrapperClass2 {
         abort();
       }
     };
-    _exec(_replyPort.sendPort, explainCallback != null);
+    _exec(_replyPort.sendPort, explainCallback != null, limit);
     return _controller.stream;
   }
 
@@ -197,6 +201,9 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
+  /// Get current `limit` encoded in query.
+  int get limit native 'jql_get_limit';
+
   void _checkPlaceholder(dynamic placeholder) {
     if (!(placeholder is String) && !(placeholder is int)) {
       ArgumentError.value(placeholder, 'placeholder');
@@ -205,7 +212,7 @@ class JQL extends NativeFieldWrapperClass2 {
 
   void _set(dynamic placeholder, dynamic value, [int type]) native 'jql_set';
 
-  void _exec(SendPort sendPort, bool explain) native 'exec';
+  void _exec(SendPort sendPort, bool explain, int limit) native 'exec';
 }
 
 /// Database wrapper

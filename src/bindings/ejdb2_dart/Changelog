@@ -1,3 +1,8 @@
+ejdb_dart (1.0.12)
+
+  * Added query limit override in JQL#execute
+  * Added native JQL#limit getter
+
 ejdb_dart (1.0.11)
 
   * Added JQL#firstOrNull() and JQL#firstN() with relevant test cases

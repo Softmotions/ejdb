@@ -113,8 +113,6 @@
   },
   "C_Cpp.configurationWarnings": "Disabled",
   "files.associations": {
-    "*.arb": "json",
-    "jni.h": "c"
   }
 }
 
