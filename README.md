@@ -71,7 +71,7 @@ make package
 
 # JQL
 
-EJDB query language (JQL) syntax inpired by ideas behind XPath and Unix shell pipes.
+EJDB query language (JQL) syntax inspired by ideas behind XPath and Unix shell pipes.
 It designed for easy querying and updating sets of JSON documents.
 
 ## JQL grammar
