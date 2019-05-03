@@ -1,3 +1,9 @@
+ejdb2 (2.0.12) testing; urgency=medium
+
+  * Upgraded to iowow_1.3.16 with critical fixes
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 03 May 2019 11:59:56 +0700
+
 ejdb2 (2.0.11) testing; urgency=medium
 
   * Upgraded to iowow_1.3.15 with critical fixes
