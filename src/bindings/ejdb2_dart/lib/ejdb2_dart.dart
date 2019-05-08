@@ -27,6 +27,7 @@ class EJDB2Error implements Exception {
   static int EJD_ERROR_POST_PORT = 89002;
   static int EJD_ERROR_INVALID_NATIVE_CALL_ARGS = 89003;
   static int EJD_ERROR_INVALID_STATE = 89004;
+  static int IWKV_ERROR_NOTFOUND = 75001;
 
   final int code;
 
@@ -38,7 +39,9 @@ class EJDB2Error implements Exception {
 
   EJDB2Error.invalidState() : this.fromCode(EJD_ERROR_INVALID_STATE);
 
-  bool get notFound => code == 75001;
+  EJDB2Error.notFound(): this.fromCode(IWKV_ERROR_NOTFOUND);
+
+  bool get notFound => code == IWKV_ERROR_NOTFOUND;
 
   bool get invalidQuery => code == 87001;
 
@@ -109,6 +112,14 @@ class JQL extends NativeFieldWrapperClass2 {
       return Optional.of(doc);
     }
     return const Optional.absent();
+  }
+
+  /// Return first record in result set or throw not found `EJDB2Error` error.
+  Future<JBDOC> firstRequired({void explainCallback(String log)}) async {
+    await for (final doc in execute(explainCallback: explainCallback)) {
+      return doc;
+    }
+    throw EJDB2Error.notFound();
   }
 
   /// Collects up to [n] elements from result set into array.
