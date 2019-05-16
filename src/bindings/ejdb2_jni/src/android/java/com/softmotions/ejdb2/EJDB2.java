@@ -2,29 +2,33 @@ package com.softmotions.ejdb2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.UnsupportedEncodingException;
 
 /**
  * EJDB2 JNI Wrapper.
- *
+ * <p>
  * Database opened by {@link EJDB2Builder#open()} helper.
- *
+ * <p>
  * Example:
  *
  * <pre>
  * {@code
- *  try (EJDB2 db = new EJDB2Builder("my.db").open() {
+ *  try {
+ *    EJDB2 db = new EJDB2Builder("my.db").open()
+ *    ...
+ *    db.close();
+ *  } catch (EJDB2Exception ex) {
  *    ...
  *  }
  * }
  * </pre>
- *
+ * <p>
  * In order to release memory resources and avoiding data lost every opened
  * database instance should be closed with {@link EJDB2#close()}.
  *
  * @author Adamansky Anton (adamansky@softmotions.com)
  */
-public final class EJDB2 implements AutoCloseable {
+public final class EJDB2 {
 
   static {
     System.loadLibrary("ejdb2jni");
@@ -52,7 +56,6 @@ public final class EJDB2 implements AutoCloseable {
   /**
    * Closes database instance and releases all resources.
    */
-  @Override
   public void close() {
     _dispose();
   }
@@ -73,9 +76,9 @@ public final class EJDB2 implements AutoCloseable {
    * Create a query instance. Query can be reused multiple times with various
    * placeholder parameters. See JQL specification:
    * https://github.com/Softmotions/ejdb/blob/master/README.md#jql
-   *
+   * <p>
    * If {@code collection} is not null it will be used for query. In this case
-s   * collection name encoded in query will not be taken into account.
+   * s   * collection name encoded in query will not be taken into account.
    *
    * @param collection Optional collection name
    */
@@ -178,10 +181,10 @@ s   * collection name encoded in query will not be taken into account.
    * @param collection
    * @param id
    */
-  public String getAsString(String collection, long id) {
+  public String getAsString(String collection, long id) throws UnsupportedEncodingException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     get(collection, id, bos);
-    return bos.toString(StandardCharsets.UTF_8);
+    return bos.toString("UTF-8");
   }
 
   /**
@@ -240,10 +243,10 @@ s   * collection name encoded in query will not be taken into account.
    *
    * @throws EJDB2Exception
    */
-  public String infoAsString() throws EJDB2Exception {
+  public String infoAsString() throws EJDB2Exception, UnsupportedEncodingException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     info(bos);
-    return bos.toString(StandardCharsets.UTF_8);
+    return bos.toString("UTF-8");
   }
 
   /**
@@ -272,7 +275,7 @@ s   * collection name encoded in query will not be taken into account.
    *    }
    * }
    * </pre>
-   *
+   * <p>
    * Call {@code ensureStringIndex("mycoll", "/address/street", true)} in order to
    * create unique index over all street names in nested address object.
    *

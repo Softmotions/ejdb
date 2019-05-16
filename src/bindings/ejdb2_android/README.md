@@ -1,0 +1,24 @@
+# Android platform tests
+
+## How-to build
+
+Set local android SDK/NDK path and target arch in `local.properties`
+
+```properties
+# Path to Android SDK dir
+sdk.dir=/Android-sdk
+
+# Path to Android NDK dir
+ndk.dir=/Android-sdk/ndk-bundle
+
+# Target abi name: armeabi-v7a, arm64-v8a, x86, x86_64
+abi.name=arm64-v8a
+```
+
+## Run tests
+
+Run Android emulator for the same abi version then:
+
+```bash
+./gradlew connectedAndroidTest
+```

@@ -165,7 +165,7 @@ static iwrc _jbi_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
   };
   iwrc rc = iwfs_exfile_open(&ssc->sof, &opts);
   RCRET(rc);
-  rc = ssc->sof.add_mmap(&ssc->sof, 0, UINT64_MAX, 0);
+  rc = ssc->sof.add_mmap(&ssc->sof, 0, SIZE_T_MAX, 0);
   if (rc) {
     ssc->sof.close(&ssc->sof);
   }
