@@ -1,9 +1,9 @@
-ejdb2 (2.0.14) UNRELEASED; urgency=medium
+ejdb2 (2.0.14) testing; urgency=medium
 
   * Android support
   * Test cases for Android JNI binding
 
- -- Anton Adamansky <adamansky@gmail.com>  Fri, 17 May 2019 00:22:37 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 17 May 2019 00:57:11 +0700
 
 ejdb2 (2.0.13) testing; urgency=medium
 
