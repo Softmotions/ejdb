@@ -21,6 +21,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 * Dart https://pub.dartlang.org/packages/ejdb2_dart
 * Java [ejdb2_jni/README.md](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/README.md)
+* Android support (see below)
 
 ## Status
 
@@ -67,6 +68,34 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_RPM=ON
 make package
 ```
 
+
+
+# Android
+
+## Android binding showcase and unit tests
+
+```bash
+cd ./src/bindings/ejdb2_android
+```
+
+Set local android SDK/NDK path and target `arch` in `local.properties`
+
+```properties
+# Path to Android SDK dir
+sdk.dir=/Android-sdk
+
+# Path to Android NDK dir
+ndk.dir=/Android-sdk/ndk-bundle
+
+# Target abi name: armeabi-v7a, arm64-v8a, x86, x86_64
+abi.name=arm64-v8a
+```
+
+Run Android emulator for the same abi version then:
+
+```bash
+./gradlew connectedAndroidTest
+```
 
 
 # JQL

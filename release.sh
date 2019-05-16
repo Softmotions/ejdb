@@ -9,6 +9,8 @@ readme() {
   echo "Generating README.md";
   cat "./BASE.md" > "./README.md"
   echo -e "\n\n" >> "./README.md"
+  cat "./src/bindings/ejdb2_android/README.md" >> "./README.md"
+  echo -e "\n\n" >> "./README.md"
   cat "./src/jql/README.md" >> "./README.md"
   echo -e "\n\n" >> "./README.md"
   cat "./src/jbr/README.md" >> "./README.md"

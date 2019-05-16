@@ -21,6 +21,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 * Dart https://pub.dartlang.org/packages/ejdb2_dart
 * Java [ejdb2_jni/README.md](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/README.md)
+* Android support (see below)
 
 ## Status
 
