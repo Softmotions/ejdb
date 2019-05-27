@@ -2,7 +2,7 @@ ejdb2 (2.0.15) testing; urgency=medium
 
   * Security: a heap-overflow vulnerability was fixed in the WebSocket parser of facil.io library
 
- -- Anton Adamansky <adamansky@gmail.com>  Mon, 27 May 2019 13:30:58 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 27 May 2019 13:33:03 +0700
 
 ejdb2 (2.0.14) testing; urgency=medium
 
