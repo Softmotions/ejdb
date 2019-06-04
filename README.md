@@ -31,6 +31,10 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
   We are not maintaining ejdb 1.x.
 
+# Use cases
+
+* Softmotions trading robots platform
+
 # Supported platforms
 
 ## OSX
