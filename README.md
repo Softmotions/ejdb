@@ -512,7 +512,7 @@ Lets add one more document then sort documents in collection by `firstName` asce
 ## JQL Options
 
 ```
-OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
+OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 ```
 
 * `skip n` Skip first `n` records before first element in result set
