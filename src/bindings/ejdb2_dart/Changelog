@@ -1,3 +1,7 @@
+ejdb_dart (1.0.19)
+
+  * Upgraded to ejdb 2.0.16
+
 ejdb_dart (1.0.18)
 
   * Security: a heap-overflow vulnerability was fixed in the WebSocket parser of facil.io library
