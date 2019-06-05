@@ -1,3 +1,9 @@
+ejdb2 (2.0.17) UNRELEASED; urgency=medium
+
+  * Added `inverse` JQL query option.
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 05 Jun 2019 23:08:38 +0700
+
 ejdb2 (2.0.16) testing; urgency=medium
 
   * Allowed dash and underscope chars in collection names specified in query: `[@collection_name]/query`.

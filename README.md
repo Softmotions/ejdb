@@ -155,7 +155,7 @@ FILTERS = FILTER [{ and | or } [ not ] FILTER];
 
 APPLY = 'apply' { PLACEHOLDER | json_object | json_array  } | 'del'
 
-OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
+OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 
   ORDERBY = { 'asc' | 'desc' } PLACEHOLDER | json_path
 
@@ -524,7 +524,9 @@ OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
   < k
   ```
 * `noidx` Do not use any indexes for query execution.
-
+* `inverse` By default query scans documents from most recently added to older ones.
+   This option inverts scan direction to opposite and activates `noidx` mode.
+   Has no effect if query has `asc/desc` sorting clauses.
 
 ## JQL Indexing and performance tips
 

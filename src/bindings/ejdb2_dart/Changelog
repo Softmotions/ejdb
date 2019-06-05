@@ -1,3 +1,7 @@
+ejdb_dart (1.0.20)
+
+  * Added `inverse` JQL query option. (ejdb 2.0.17)
+
 ejdb_dart (1.0.19)
 
   * Upgraded to ejdb 2.0.16

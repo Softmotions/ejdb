@@ -32,6 +32,7 @@ static void _jqp_set_limit(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_add_orderby(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_set_aggregate_count(struct _yycontext *yy);
 static void _jqp_set_noidx(struct _yycontext *yy);
+static void _jqp_set_inverse(struct _yycontext *yy);
 
 static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_json_number(struct _yycontext *yy, const char *text);
@@ -92,7 +93,7 @@ PROJECTION  = '|' _ (sn:PROJNODES { _jqp_unit_push(yy, sn); }
 
 OPTS        = '|' _ OPT (__ OPT)*
 
-OPT = SKIP | LIMIT | ORDERBY | COUNT | NOIDX
+OPT = SKIP | LIMIT | ORDERBY | COUNT | NOIDX | INVERSE
 
 SKIP = "skip" __ (<NUMI> { $$ = _jqp_number(yy, JQP_INT_SKIP, yytext); } | p:PLACEHOLDER { $$ = p; }) { _jqp_set_skip(yy, $$); }
 
@@ -101,6 +102,8 @@ LIMIT = "limit" __ (<NUMI> { $$ = _jqp_number(yy, JQP_INT_LIMIT, yytext); } | p:
 COUNT = "count" { _jqp_set_aggregate_count(yy); }
 
 NOIDX = "noidx" { _jqp_set_noidx(yy); }
+
+INVERSE = "inverse" { _jqp_set_inverse(yy); }
 
 ORDERBY = ("asc" | "desc" { _jqp_op_negate(yy); })
           __ ( p:ORDERNODES | p:PLACEHOLDER )
