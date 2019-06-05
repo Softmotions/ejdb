@@ -139,7 +139,7 @@ FILTEREXPR = ff:FILTERFACTOR { _jqp_unit_push(yy, ff); }
 
 FILTER = ((a:FILTERANCHOR { _jqp_unit_push(yy, a); })? fn:NODE { _jqp_unit_push(yy, fn); } (n:NODE { _jqp_unit_push(yy, n); })*) { $$ = _jqp_pop_node_chain(yy, fn); }
 
-FILTERANCHOR = '@' <([a-zA-Z0-9]+)> { $$ = _jqp_string(yy, JQP_STR_ANCHOR, yytext); }
+FILTERANCHOR = '@' <([a-zA-Z0-9_\-]+)> { $$ = _jqp_string(yy, JQP_STR_ANCHOR, yytext); }
 
 
 NODE = '/' (n:STRN | n:NEXPR | n:STRP) { $$ = _jqp_node(yy, n); }

@@ -112,7 +112,5 @@
     "**/mxe/**": true
   },
   "C_Cpp.configurationWarnings": "Disabled",
-  "files.associations": {
-  }
 }
 

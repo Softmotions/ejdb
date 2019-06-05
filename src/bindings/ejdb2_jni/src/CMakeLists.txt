@@ -61,7 +61,7 @@ add_dependencies(ejdb2jni ejdb2jni_jar)
 if (${CMAKE_VERSION} VERSION_LESS "3.11")
   create_javah(
     TARGET ejdb2-jni-native-headers-old
-    CLASSES com.softmotions.ejdb2.EJDB2 
+    CLASSES com.softmotions.ejdb2.EJDB2
             com.softmotions.ejdb2.JQL
     CLASSPATH ejdb2jni_jar
     DEPENDS ejdb2jni_jar
@@ -114,4 +114,4 @@ if (BUILD_TESTS AND NOT ANDROID_PLATFORM)
                   com.softmotions.ejdb2.TestEJDB2
            )
 
-endif (BUILD_TESTS)
+endif ()
