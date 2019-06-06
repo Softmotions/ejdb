@@ -1,5 +1,9 @@
 # Android
 
+## Sample Android application
+
+https://github.com/Softmotions/ejdb_android_todo_app
+
 ## Android binding showcase and unit tests
 
 ```bash
