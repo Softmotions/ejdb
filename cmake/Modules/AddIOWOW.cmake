@@ -39,14 +39,14 @@ ExternalProject_Add(
   LOG_CONFIGURE OFF
   LOG_INSTALL OFF
   CMAKE_ARGS ${CMAKE_ARGS}
-  BUILD_BYPRODUCTS "${CMAKE_BINARY_DIR}/lib/libiowow-1.a"
+  BUILD_BYPRODUCTS "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libiowow-1.a"
 )
 
 add_library(iowow_s STATIC IMPORTED GLOBAL)
 set_target_properties(
    iowow_s
    PROPERTIES
-   IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libiowow-1.a"
+   IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libiowow-1.a"
 )
 add_dependencies(iowow_s extern_iowow)
 
