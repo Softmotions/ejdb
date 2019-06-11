@@ -33,6 +33,11 @@ if ((CMAKE_BUILD_TYPE EQUAL Release) OR (CMAKE_BUILD_TYPE EQUAL RelWithDebInfo))
   add_definition(-DJB_RELEASE=1)
 endif()
 
+include(TestQsortR)
+if (HAVE_QSORT_R)
+  add_definitions(-DJB_HAVE_QSORT_R)
+endif()
+
 TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
 if (IS_BIG_ENDIAN EQUAL 1)
   add_definitions(-DIW_BIGENDIAN=1)
