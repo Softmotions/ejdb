@@ -1,5 +1,6 @@
 ejdb2 (2.0.18) UNRELEASED; urgency=medium
 
+  * Added Docker image (#249)
   * Better qsort_t detection, build ok with `musl`
 
  -- Anton Adamansky <adamansky@gmail.com>  Wed, 12 Jun 2019 00:49:49 +0700

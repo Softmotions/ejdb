@@ -15,6 +15,8 @@ readme() {
   echo -e "\n\n" >> "./README.md"
   cat "./src/jbr/README.md" >> "./README.md"
   echo -e "\n\n" >> "./README.md"
+  cat "./docker/README.md" >> "./README.md"
+  echo -e "\n\n" >> "./README.md"
   cat "./CAPI.md" >> "./README.md"
   echo -e '\n# License\n```\n' >> "./README.md"
   cat "./LICENSE" >> "./README.md"
