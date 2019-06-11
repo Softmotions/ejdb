@@ -654,6 +654,21 @@ Use any of the following input formats:
 Use the -h, -help or -? to get this information again.
 ```
 
+## Docker support jbs
+
+If you have [Docker]("https://www.docker.com/") installed, you can build a Docker image and run it in a container
+
+```
+sudo docker build -t jbs .                                             #build
+sudo docker run -d -p 9191:9191 --name myJBS jbs --access myAccessKey  #start container on PORT 9191
+```
+
+or get an image of `jbs` directly from the Docker Hub
+
+```
+docker run -d -p 9191:9191 --name myJBS softmotions/jbs --access myAccessKey //TOOD change Docker Hub address (softmotions/jbs) to actual
+```
+
 ## HTTP API
 
 Access to HTTP endpoint can be protected by a token specified with `--access`
