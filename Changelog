@@ -1,5 +1,6 @@
 ejdb2 (2.0.18) UNRELEASED; urgency=medium
 
+  * Limit one time file allocation step to 2G iowow v1.3.18
   * Added Docker image (#249)
   * Better qsort_t detection, build ok with `musl`
 
