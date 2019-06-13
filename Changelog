@@ -1,3 +1,9 @@
+ejdb2 (2.0.19) UNRELEASED; urgency=medium
+
+  * Upgraded to iowow v1.3.20 with critical fixes
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 13 Jun 2019 21:45:20 +0700
+
 ejdb2 (2.0.18) testing; urgency=medium
 
   * Limit one time file allocation step to 2G iowow v1.3.18
