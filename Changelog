@@ -1,8 +1,8 @@
-ejdb2 (2.0.19) UNRELEASED; urgency=medium
+ejdb2 (2.0.19) testing; urgency=medium
 
   * Upgraded to iowow v1.3.20 with critical fixes
 
- -- Anton Adamansky <adamansky@gmail.com>  Thu, 13 Jun 2019 21:45:20 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 13 Jun 2019 22:04:27 +0700
 
 ejdb2 (2.0.18) testing; urgency=medium
 
@@ -37,7 +37,6 @@ ejdb2 (2.0.14) testing; urgency=medium
   * Test cases for Android JNI binding
 
  -- Anton Adamansky <adamansky@gmail.com>  Fri, 17 May 2019 00:57:11 +0700
-
 ejdb2 (2.0.13) testing; urgency=medium
 
   * Upgraded to iowow_1.3.17 with critical fixes
