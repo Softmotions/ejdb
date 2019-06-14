@@ -16,7 +16,7 @@ int main(int argc, char const *argv[]) {
                 FIO_CLI_BOOL("--trunc -t Cleanup existing database file on open"),
                 FIO_CLI_BOOL("--wal -w Use write ahead logging (WAL). Must be set for data durability."),
                 FIO_CLI_PRINT_HEADER("Advanced options"),
-                FIO_CLI_INT("--sbz Max sorting buffer size. If exeeded, an overflow temp file for data will created. "
+                FIO_CLI_INT("--sbz Max sorting buffer size. If exceeded, an overflow temp file for data will created. "
                             "Default: 16777216, min: 1048576"),
                 FIO_CLI_INT("--dsz Initial size of buffer to process/store document on queries. "
                             "Preferable average size of document. "

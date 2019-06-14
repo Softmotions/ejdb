@@ -105,7 +105,7 @@ typedef struct _EJDB_OPTS {
   IWKV_OPTS kv;                 /**< IWKV storage options. @see iwkv.h */
   EJDB_HTTP http;               /**< HTTP/Websocket server options */
   bool no_wal;                  /**< Do not use write-ahead-log. Default: false */
-  uint32_t sort_buffer_sz;      /**< Max sorting buffer size. If exeeded an overflow temp file for sorted data will created.
+  uint32_t sort_buffer_sz;      /**< Max sorting buffer size. If exceeded an overflow temp file for sorted data will created.
                                      Default 16Mb, min: 1Mb */
   uint32_t document_buffer_sz;  /**< Initial size of buffer to process/store document during select.
                                      Default 64Kb, min: 16Kb */
