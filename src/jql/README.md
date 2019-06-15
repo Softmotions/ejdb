@@ -424,7 +424,7 @@ OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
    This option inverts scan direction to opposite and activates `noidx` mode.
    Has no effect if query has `asc/desc` sorting clauses.
 
-## JQL Indexing and performance tips
+## JQL Indexes and performance tips
 
 Database index can be build for any JSON field path of number or string type.
 Index can be an `unique` &dash; not allowing indexed values duplication and `non unique`.
