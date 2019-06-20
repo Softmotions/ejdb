@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg">
+<metadata>Copyright (C) 2015 by original authors @ fontello.com</metadata>
+<defs>
+<font id="mt-sphinx" horiz-adv-x="1000" >
+<font-face font-family="mt-sphinx" font-weight="400" font-stretch="normal" units-per-em="1000" ascent="850" descent="-150" />
+<missing-glyph horiz-adv-x="1000" />
+<glyph glyph-name="up" unicode="&#xe800;" d="m660 336l-192 0 0-350-276 0 0 350-192 0 330 380z" horiz-adv-x="660" />
+<glyph glyph-name="down" unicode="&#xe801;" d="m660 366l-330-380-330 380 192 0 0 350 276 0 0-350 192 0z" horiz-adv-x="660" />
+<glyph glyph-name="left" unicode="&#xe803;" d="m378 20l-378 330 378 330 0-190 352 0 0-278-352 0 0-192z" horiz-adv-x="730" />
+<glyph glyph-name="right" unicode="&#xe804;" d="m350 680l380-330-380-330 0 192-350 0 0 278 350 0 0 190z" horiz-adv-x="730" />
+<glyph glyph-name="list-1" unicode="&#xe805;" d="m100 200q20 0 35-15t15-35-15-35-35-15l-50 0q-20 0-35 15t-15 35 14 35 36 15l50 0z m0 200q20 0 35-15t15-35-15-35-35-15l-50 0q-20 0-35 15t-15 35 14 35 36 15l50 0z m0 200q20 0 35-15t15-35-15-35-35-15l-50 0q-20 0-35 15t-15 35 14 35 36 15l50 0z m200-100q-20 0-35 15t-15 35 15 35 35 15l350 0q22 0 36-15t14-35-15-35-35-15l-350 0z m350-100q22 0 36-15t14-35-15-35-35-15l-350 0q-20 0-35 15t-15 35 15 35 35 15l350 0z m0-200q22 0 36-15t14-35-15-35-35-15l-350 0q-20 0-35 15t-15 35 15 35 35 15l350 0z" horiz-adv-x="700" />
+</font>
+</defs>
+</svg>

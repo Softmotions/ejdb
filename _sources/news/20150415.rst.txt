@@ -1,0 +1,10 @@
+:orphan:
+
+.. _v1.2.6:
+
+EJDB 1.2.6
+==========
+
+* Fix: $addToSet works improperly for non existent nested keys #123
+* Fix: Queries of int64_t (longs) on Windows is returning invalid results #127
+* Fix: Cross compile EJDB for MIPS fails #125

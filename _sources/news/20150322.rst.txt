@@ -1,0 +1,10 @@
+:orphan:
+
+.. _v1.2.4:
+
+EJDB 1.2.4
+==========
+
+* `rt` lib depenedency on MacOS
+* fixed incorrect static libejdb linkage options
+* minor fixes in project build scripts

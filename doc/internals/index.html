@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>EJDB Internals &mdash; EJDB</title>
+    
+<link rel="stylesheet" href="../../_static/theme.css" type="text/css"/>
+<link rel="stylesheet" href="../../_static/pygments.css" type="text/css"/>
+    <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="EJDB" href="../../index.html"/>
+    <link rel="next" title="EJDB language bindings" href="../bindings/index.html"/>
+    <link rel="prev" title="Collection joins" href="../ql/joins.html"/> 
+</head>
+<body role="document">
+<div id="toc-modal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4>Table Of Contents</h4>
+
+        <div class="page-content">
+            <ul>
+<li><a class="reference internal" href="#">EJDB Internals</a><ul>
+<li><a class="reference internal" href="#tokyo-cabinet">Tokyo Cabinet</a></li>
+<li><a class="reference internal" href="#document-storage-model">Document storage model</a></li>
+<li><a class="reference internal" href="#indexing">Indexing</a></li>
+<li><a class="reference internal" href="#locking">Locking</a></li>
+<li><a class="reference internal" href="#transactions">Transactions</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect btn-flat ">Close</a>
+    </div>
+</div>
+<header style="margin-bottom: 20px">
+    <nav id="nav">
+        <div class="nav-wrapper">
+            <a href="../../index.html">
+                <img class="brand-logo" src="../../_static/ejdb.png" alt="Logo"/>
+            </a>
+            <a href="#" data-activates="nav-mobile-sidebar" class="button-collapse"><i
+                    class="mdi-navigation-menu"></i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+            <ul class="side-nav" id="nav-mobile-sidebar">
+                
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<div class="row">
+    <div id="sidebar" class="col s12 m4 l3 push-m8 push-l9">
+<div class="row" style="margin: 0" id="searchbox">
+    <form class="col s12 no-padding" role="search" action="../../search.html" method="get">
+        <div class="input-field">
+            <input id="search" type="search" name="q" required>
+            <label for="search" class="">Quick search</label>
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div id="sidetoc">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../news.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-11-released">EJDB v1.2.11 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-10-released">EJDB v1.2.10 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-9-released">EJDB v1.2.9 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-8-released">EJDB v1.2.8 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#archived">Archived</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../snippets.html">Intro snippets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#c-c">C/C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#nodejs">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#c">C#</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#go">Go</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#other-third-party-bindings">Other third-party bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../install/ubuntu.html">Ubuntu/Debian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/osx.html">OSX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/windows.html">Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/archives.html">EJDB binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/building.html">Building from sources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">Command line interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#program-options">Program options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#usage-demo">Usage demo</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ql/ql.html">Query language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#querying">Querying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#query-hints">Query hints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#data-manipulation">Data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#do-action-directive">$do action directive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#some-performance-considerations">Some performance considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ql/joins.html">Collection joins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ql/joins.html#simple-joins-showcase">Simple joins showcase</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">EJDB Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#tokyo-cabinet">Tokyo Cabinet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#document-storage-model">Document storage model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#indexing">Indexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#locking">Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transactions">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../bindings/index.html">Language bindings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../bindings/nodejs/index.html">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-python">Python</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-java">Java</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-csharp">.Net (C#)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bindings/thirdparty.html">Third-party language bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../iexp/index.html">Import/Export database data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#c-api">C API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#export-command-spec">Export command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#import-command-spec">Import command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#command-response">Command response</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../limitations.html">Known limitations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#tokyo-cabinet-issues">Tokyo Cabinet issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#multiprocess-database-access">Multiprocess database access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#indexes">Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#misc">Misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ejdb2/index.html">EJDB2 Roadmap</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ejdb2/index.html#progress">Progress</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mongodb.html">Mongodb compatibility</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#logical-operators">Logical operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#element-level-operators">Element level operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#geospartial-operators">Geospartial operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#array-operators">Array operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#update-operators">Update operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#various-operators">Various operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#ejdb-specific-query-operators">EJDB specific query operators</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+    </div>
+    <div class="page-content-wrapper col s12 m8 l9 pull-m4 pull-l3">
+        <div id="page-content-block">
+            
+            <div class="rel-nav">
+                <a href="../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+                <a href="../ql/joins.html"
+                   title="Collection joins"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="../bindings/index.html"
+                   title="EJDB language bindings"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            <div class="page-content">
+                
+  <div class="section" id="ejdb-internals">
+<span id="internals"></span><h1><a class="toc-backref" href="#id4">EJDB Internals</a><a class="headerlink" href="#ejdb-internals" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#ejdb-internals" id="id4">EJDB Internals</a><ul>
+<li><a class="reference internal" href="#tokyo-cabinet" id="id5">Tokyo Cabinet</a></li>
+<li><a class="reference internal" href="#document-storage-model" id="id6">Document storage model</a></li>
+<li><a class="reference internal" href="#indexing" id="id7">Indexing</a></li>
+<li><a class="reference internal" href="#locking" id="id8">Locking</a></li>
+<li><a class="reference internal" href="#transactions" id="id9">Transactions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="tokyo-cabinet">
+<h2><a class="toc-backref" href="#id5">Tokyo Cabinet</a><a class="headerlink" href="#tokyo-cabinet" title="Permalink to this headline">¶</a></h2>
+<p>Storage system of EJDB is built on the low-level structures
+provided by <a class="reference external" href="http://fallabs.com/tokyocabinet/">Tokyo Cabinet</a> library such as:</p>
+<ul class="simple">
+<li>B+ tree (<a class="reference external" href="https://github.com/Softmotions/ejdb/blob/master/src/tcbdb/tcbdb.h">tcbdb</a>);</li>
+<li>Key-value hash based storage (<a class="reference external" href="https://github.com/Softmotions/ejdb/blob/master/src/tchdb/tchdb.h">tchdb</a>);</li>
+<li>Table database (<a class="reference external" href="https://github.com/Softmotions/ejdb/blob/master/src/tctdb/tctdb.h">tctdb</a>).</li>
+</ul>
+</div>
+<div class="section" id="document-storage-model">
+<h2><a class="toc-backref" href="#id6">Document storage model</a><a class="headerlink" href="#document-storage-model" title="Permalink to this headline">¶</a></h2>
+<p>Every EJDB collection is a table database (<a class="reference external" href="https://github.com/Softmotions/ejdb/blob/master/src/tctdb/tctdb.h">tctdb</a>) stored in separate file which is schema-free table storage.
+Collection data records stored in rows are splitted into set of user defined columns. It&#8217;s shown in the following table:</p>
+<img alt="../../_images/tctdbdoc.png" src="../../_images/tctdbdoc.png" />
+<ul class="simple">
+<li>Every JSON document is encoded to the <a class="reference external" href="http://bsonspec.org/">BSON</a> data format and stored as a part of <cite>tctdb</cite> data record.</li>
+<li>Using <cite>tctdb</cite> gains the ability to easily associate metadata as and extra tctdb columns adjusted with document record.
+It gives us the following benefits:<ul>
+<li>Security attributes can be easily attached to documents, so the row level ACL may be implemented.</li>
+<li>Document access stats can be stored in metadata for further query/index optimizations.</li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Record-level security/document stats are not yet implemented
+in the current 1.2.12 release.</p>
+</div>
+</div>
+<div class="section" id="indexing">
+<h2><a class="toc-backref" href="#id7">Indexing</a><a class="headerlink" href="#indexing" title="Permalink to this headline">¶</a></h2>
+<p>In order to speed up execution of some queries,
+a values pointed by some document fields have to be indexed.
+In our implementation every defined indexed field
+is backed by B+ tree database. Field values are
+stored in the B+ tree <a class="reference external" href="https://github.com/Softmotions/ejdb/blob/master/src/tcbdb/tcbdb.h">tcbdb</a>
+and point to the primary keys (<a class="reference internal" href="../ql/ql.html#term-objectid"><span class="xref std std-term">ObjectId</span></a>) of
+BSON documents they refer to. There are four types of field indexes
+which are supported:</p>
+<ul class="simple">
+<li>String index for matching string values. This is B+
+tree, where a comparison function sorts indexed
+values in lexicographic order.</li>
+<li>String index for case insensitive string matching.
+This is implemented as the previous case with the
+following feature: all indexed values are normalized
+to lower case in order to provide efficient case
+insensitive string matching.</li>
+<li>Index for numeric types. A comparison function
+treats indexed values as numbers.</li>
+<li>Inverted index for matching values in JSON arrays
+or in string values treated as a set of space delimited
+tokens. Indexes of this type are used for effective matching in an array
+as well as for <a class="reference internal" href="../ql/ql.html#strand"><span class="std std-ref">$strand</span></a> and <a class="reference internal" href="../ql/ql.html#stror"><span class="std std-ref">$stror</span></a> operations.</li>
+</ul>
+<p>Let us consider the index structure of sample collection
+of documents named <cite>Books</cite>.
+In the collection publisher names and book&#8217;s tags are indexed fields.</p>
+<img alt="../../_images/indexing.png" src="../../_images/indexing.png" />
+<p><cite>id, name, publisher.name, tags.0, tags.1</cite> each of them is a <a class="reference internal" href="../ql/ql.html#term-fieldpath"><span class="xref std std-term">fieldpath</span></a></p>
+<p>Special JSON document&#8217;s <cite>_id</cite> key is a primary key of every record in the <cite>tctdb</cite>
+underlying hash database.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">EJDB cannot traverse _ids of documents in lexicographic order and restricts <cite>_id</cite>
+field data type to be only 12-byte <a class="reference internal" href="../ql/ql.html#term-objectid"><span class="xref std std-term">ObjectId</span></a></p>
+</div>
+<p>Index for every indexed fieldpath stored in separate B+ tree file managed by tcbdb.</p>
+<p>Only one index is used during query execution.
+Major index selection among possible candidates is based on the number of empirical rules.
+Collections access/selectivity stats are not taken into account in the current EJDB  1.2.12 release.
+EJDB supports token matching inverted indexes backed by B+ tree. Arrays, <a class="reference internal" href="../ql/ql.html#stror"><span class="std std-ref">$stror</span></a>, <a class="reference internal" href="../ql/ql.html#strand"><span class="std std-ref">$strand</span></a> matching.</p>
+<p>The following factors are taken into account
+when choosing an query index:</p>
+<ul class="simple">
+<li>The index for a query is selected among all indexes
+but only for fields presented in a query.</li>
+<li>If a query specifies sorting rules the index of the first sorted field will be most likely used.
+In this case, using of fast inorder traversal of B+ tree for
+sorted field will speed up query execution.</li>
+</ul>
+<p>EJDB supports a special type of case-insensitive string indexes used by <a class="reference internal" href="../ql/ql.html#icase"><span class="std std-ref">$icase</span></a> matching operation where all
+indexed values normalized by <a class="reference external" href="http://julialang.org/utf8proc/">utf8proc library</a>.</p>
+<p>Particular <cite>fieldpath</cite> values can contain data of arbitrary types (token array, numeric, string),
+so one <cite>fieldpath</cite> may be associated with number of different B+ indexes for each type.</p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">db</span><span class="p">.</span><span class="nx">ensureStringIndex</span><span class="p">(</span><span class="s1">&#39;persons&#39;</span><span class="p">,</span> <span class="s1">&#39;login&#39;</span><span class="p">);</span>
+
+<span class="c1">//case-insensitive index</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">ensureIStringIndex</span><span class="p">(</span><span class="s1">&#39;persons&#39;</span><span class="p">,</span> <span class="s1">&#39;login&#39;</span><span class="p">);</span>
+
+<span class="nx">db</span><span class="p">.</span><span class="nx">ensureNumberIndex</span><span class="p">(</span><span class="s1">&#39;persons&#39;</span><span class="p">,</span> <span class="s1">&#39;login&#39;</span><span class="p">);</span>
+
+<span class="c1">//B+ tree index for numbers is used</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;persons&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;login&#39;</span><span class="p">,</span> <span class="mi">1223</span><span class="p">});</span>
+
+<span class="c1">//B+ tree index for strings is used</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;persons&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;login&#39;</span><span class="p">,</span> <span class="s1">&#39;andy&#39;</span><span class="p">});</span>
+
+<span class="c1">//Case insesitive B+ tree index used</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;persons&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;login&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">$icase</span> <span class="o">:</span> <span class="s1">&#39;AnDy&#39;</span><span class="p">}});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="locking">
+<h2><a class="toc-backref" href="#id8">Locking</a><a class="headerlink" href="#locking" title="Permalink to this headline">¶</a></h2>
+<p>EJDB uses <cite>pthreads</cite> and <cite>winpthreads</cite> libs to accomplish read-write API access locking.
+EJDB can be used by threads within a single process only. EJDB 1.2.12 is not
+allowed for using by different OS processes.</p>
+<p>Data-locking routines in tchdb are quite optimal but intricate.
+We have done some work on the reorganization of tchdb locks and got rid
+of reentrant/recursive mutexes.</p>
+</div>
+<div class="section" id="transactions">
+<h2><a class="toc-backref" href="#id9">Transactions</a><a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h2>
+<p>EJDB provides atomic and durable non parallel and read-uncommited collection level transactions,
+i.e., There is only one transaction for collection is active for a single point in a time.
+The data written in a transaction is visible for other non transactional readers.
+EJDB transaction system utilizes write ahead logging to provide
+consistent transaction rollbacks.</p>
+<p>Implementation of parallel, read-commited ACID
+transactions requires a further development.</p>
+</div>
+</div>
+
+
+            </div>
+        </div>
+        <div id="page-content-footer">
+            <div id="bottom-rel-placeholder" style="display:none">
+                
+            <div class="rel-nav">
+                <a href="../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+                <a href="../ql/joins.html"
+                   title="Collection joins"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="../bindings/index.html"
+                   title="EJDB language bindings"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="page-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+<h5 class="white-text">EJDB on Github</h5>
+<a class="github-button" href="https://github.com/Softmotions/ejdb" data-style="mega"
+   data-count-href="/Softmotions/ejdb/stargazers" data-count-api="/repos/Softmotions/ejdb#stargazers_count"
+   data-count-aria-label="# stargazers on GitHub" aria-label="Star Softmotions/ejdb on GitHub">Star</a>
+<a class="github-button" href="https://github.com/Softmotions/ejdb/issues" data-style="mega"
+   data-count-api="/repos/Softmotions/ejdb#open_issues_count" data-count-aria-label="# issues on GitHub"
+   aria-label="Issue Softmotions/ejdb on GitHub">Issue</a>
+            </div>
+            <div class="col l6 s12">
+                <ul>
+                    <li><a href="http://ejdb.org/news.html">News</a></li>
+                    <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                    <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright" role="contentinfo">
+        <div class="container">&copy; Copyright 2012-2017 Softmotions Ltd.
+        </div>
+    </div>
+</footer>
+
+<script type="text/javascript" src="../../_static/jquery.js"></script>
+<script type="text/javascript" src="../../_static/underscore.js"></script>
+<script type="text/javascript" src="../../_static/doctools.js"></script>
+<script type="text/javascript" src="../../_static/materialize.min.js"></script>
+<script type="text/javascript" src="../../_static/theme.js"></script>
+ 
+<script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-36241306-1', 'auto');
+    ga('send', 'pageview');
+</script>
+<a id="btt"><i class="mdi-navigation-expand-less"></i></a>
+</body>
+</html>

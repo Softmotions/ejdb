@@ -1,0 +1,18 @@
+Installation
+============
+
+
+.. toctree::
+    :maxdepth: 1
+
+    ubuntu
+    OSX <osx>
+    windows
+    EJDB binaries <archives>
+    building
+
+
+
+EJDB source code hosted on https://github.com/Softmotions/ejdb
+
+

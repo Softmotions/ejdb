@@ -1,0 +1,11 @@
+:orphan:
+
+.. _v1.2.7:
+
+EJDB 1.2.7
+==========
+
+* EJDB nodejs modules now published as precompiled binaries for Windows
+* Project build improvements #131
+* Fix of Nodejs module windows build fail #12
+* Added support of querying BSON symbols #129

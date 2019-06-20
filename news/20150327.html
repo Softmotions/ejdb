@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>EJDB 1.2.5 &mdash; EJDB</title>
+    
+<link rel="stylesheet" href="../_static/theme.css" type="text/css"/>
+<link rel="stylesheet" href="../_static/pygments.css" type="text/css"/>
+    <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="EJDB" href="../index.html"/> 
+</head>
+<body role="document">
+<div id="toc-modal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4>Table Of Contents</h4>
+
+        <div class="page-content">
+            <ul>
+<li><a class="reference internal" href="#">EJDB 1.2.5</a></li>
+</ul>
+
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect btn-flat ">Close</a>
+    </div>
+</div>
+<header style="margin-bottom: 20px">
+    <nav id="nav">
+        <div class="nav-wrapper">
+            <a href="../index.html">
+                <img class="brand-logo" src="../_static/ejdb.png" alt="Logo"/>
+            </a>
+            <a href="#" data-activates="nav-mobile-sidebar" class="button-collapse"><i
+                    class="mdi-navigation-menu"></i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+            <ul class="side-nav" id="nav-mobile-sidebar">
+                
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<div class="row">
+    <div id="sidebar" class="col s12 m4 l3 push-m8 push-l9">
+<div class="row" style="margin: 0" id="searchbox">
+    <form class="col s12 no-padding" role="search" action="../search.html" method="get">
+        <div class="input-field">
+            <input id="search" type="search" name="q" required>
+            <label for="search" class="">Quick search</label>
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div id="sidetoc">
+    <ul>
+<li class="toctree-l1"><a class="reference internal" href="../news.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#ejdb-v1-2-11-released">EJDB v1.2.11 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#ejdb-v1-2-10-released">EJDB v1.2.10 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#ejdb-v1-2-9-released">EJDB v1.2.9 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#ejdb-v1-2-8-released">EJDB v1.2.8 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#archived">Archived</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/snippets.html">Intro snippets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/snippets.html#c-c">C/C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/snippets.html#nodejs">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/snippets.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/snippets.html#lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/snippets.html#ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/snippets.html#c">C#</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/snippets.html#go">Go</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/snippets.html#other-third-party-bindings">Other third-party bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/install/index.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/install/ubuntu.html">Ubuntu/Debian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/install/osx.html">OSX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/install/windows.html">Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/install/archives.html">EJDB binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/install/building.html">Building from sources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/cli.html">Command line interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/cli.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/cli.html#program-options">Program options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/cli.html#usage-demo">Usage demo</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/ql/ql.html">Query language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/ql/ql.html#querying">Querying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/ql/ql.html#query-hints">Query hints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/ql/ql.html#data-manipulation">Data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/ql/ql.html#do-action-directive">$do action directive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/ql/ql.html#some-performance-considerations">Some performance considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/ql/ql.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/ql/joins.html">Collection joins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/ql/joins.html#simple-joins-showcase">Simple joins showcase</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/internals/index.html">EJDB Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/internals/index.html#tokyo-cabinet">Tokyo Cabinet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/internals/index.html#document-storage-model">Document storage model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/internals/index.html#indexing">Indexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/internals/index.html#locking">Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/internals/index.html#transactions">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/bindings/index.html">Language bindings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/bindings/nodejs/index.html">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-python">Python</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-java">Java</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-csharp">.Net (C#)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/bindings/thirdparty.html">Third-party language bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/iexp/index.html">Import/Export database data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/iexp/index.html#c-api">C API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/iexp/index.html#export-command-spec">Export command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/iexp/index.html#import-command-spec">Import command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/iexp/index.html#command-response">Command response</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/limitations.html">Known limitations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/limitations.html#tokyo-cabinet-issues">Tokyo Cabinet issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/limitations.html#multiprocess-database-access">Multiprocess database access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/limitations.html#indexes">Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/limitations.html#misc">Misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/ejdb2/index.html">EJDB2 Roadmap</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/ejdb2/index.html#progress">Progress</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc/mongodb.html">Mongodb compatibility</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../doc/mongodb.html#logical-operators">Logical operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/mongodb.html#element-level-operators">Element level operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/mongodb.html#geospartial-operators">Geospartial operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/mongodb.html#array-operators">Array operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/mongodb.html#update-operators">Update operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/mongodb.html#various-operators">Various operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../doc/mongodb.html#ejdb-specific-query-operators">EJDB specific query operators</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+    </div>
+    <div class="page-content-wrapper col s12 m8 l9 pull-m4 pull-l3">
+        <div id="page-content-block">
+            
+            <div class="rel-nav">
+                <a href="../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a> 
+            </div>
+            <div class="page-content">
+                
+  <div class="section" id="ejdb-1-2-5">
+<span id="v1-2-5"></span><h1>EJDB 1.2.5<a class="headerlink" href="#ejdb-1-2-5" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li>Build fixes for OSX #121 #122</li>
+</ul>
+</div>
+
+
+            </div>
+        </div>
+        <div id="page-content-footer">
+            <div id="bottom-rel-placeholder" style="display:none">
+                
+            <div class="rel-nav">
+                <a href="../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a> 
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="page-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+<h5 class="white-text">EJDB on Github</h5>
+<a class="github-button" href="https://github.com/Softmotions/ejdb" data-style="mega"
+   data-count-href="/Softmotions/ejdb/stargazers" data-count-api="/repos/Softmotions/ejdb#stargazers_count"
+   data-count-aria-label="# stargazers on GitHub" aria-label="Star Softmotions/ejdb on GitHub">Star</a>
+<a class="github-button" href="https://github.com/Softmotions/ejdb/issues" data-style="mega"
+   data-count-api="/repos/Softmotions/ejdb#open_issues_count" data-count-aria-label="# issues on GitHub"
+   aria-label="Issue Softmotions/ejdb on GitHub">Issue</a>
+            </div>
+            <div class="col l6 s12">
+                <ul>
+                    <li><a href="http://ejdb.org/news.html">News</a></li>
+                    <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                    <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright" role="contentinfo">
+        <div class="container">&copy; Copyright 2012-2017 Softmotions Ltd.
+        </div>
+    </div>
+</footer>
+
+<script type="text/javascript" src="../_static/jquery.js"></script>
+<script type="text/javascript" src="../_static/underscore.js"></script>
+<script type="text/javascript" src="../_static/doctools.js"></script>
+<script type="text/javascript" src="../_static/materialize.min.js"></script>
+<script type="text/javascript" src="../_static/theme.js"></script>
+ 
+<script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-36241306-1', 'auto');
+    ga('send', 'pageview');
+</script>
+<a id="btt"><i class="mdi-navigation-expand-less"></i></a>
+</body>
+</html>

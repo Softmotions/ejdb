@@ -1,0 +1,8 @@
+:orphan:
+
+.. _v1.2.5:
+
+EJDB 1.2.5
+==========
+
+* Build fixes for OSX #121 #122

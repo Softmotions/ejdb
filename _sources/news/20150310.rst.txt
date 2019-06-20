@@ -1,0 +1,18 @@
+:orphan:
+
+.. _v1.2.3:
+
+EJDB 1.2.3
+==========
+
+
+* Project moved to CMake build system #115
+* Added negation support for the $elemMatch #109
+* Set `TCETHREAD` when pthread mutex or lock allocation fails.
+
+  * This change been cherry picked from  #4 https://github.com/Incubaid/tokyocabinet/pull/4
+* Added $rename query operators.
+* Fixed #104 #114
+* Implemented $slice operator #14
+* Added ability to do mongo like queries with the distinct operation #93
+* EJDB shared library changed its name from `tcejdb` to `ejdb`

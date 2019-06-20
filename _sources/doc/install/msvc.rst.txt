@@ -1,0 +1,23 @@
+:orphan:
+
+.. _msvc_sample:
+
+MSVC 2015 Sample project
+========================
+
+`Download the MSVC 2015 sample project <http://softmotions.com/ejdb/samples/msvc2015-x64-ejdb.zip>`_
+
+New MSVC project notes
+----------------------
+
+The simplest way to start with EJDB and MSVC:
+
+* :ref:`Download and extract the EJDB windows archive <windows>`
+* Add `<ejdb path>/bin` into the user's `%PATH%`
+* Start MSVC 2015 then create new `Win32 Console Application`
+* Configure the project's properties
+
+  * Open properties dialog Click `Configuration manager` and choose a proper type of the project platform (x64 or x32)
+  * Open C/C++ tab / General: Add `<ejdb path>/include` to the `Additional Include Directories`
+  * Open Linker tab / General: Add `<ejdb path>/lib` to the `Additional Library Directories`
+  * Open Linker tab / Input: Add `libejdb.lib` to the `Additional dependencies`

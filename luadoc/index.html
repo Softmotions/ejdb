@@ -1,0 +1,2803 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>EJDB</h1>
+
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Tables">Tables</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul>
+  <li><strong>ejdb</strong></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>ejdb</code></h1>
+
+<p>The Lua binding of EJDB database.<br/>
+ <a href="http://ejdb.org">http://ejdb.org</a></p>
+<p>
+
+</p>
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ -- File: samples/sample1.lua
+
+  local ejdb = require(&quot;ejdb&quot;)
+  local inspect = require(&quot;ejdb.inspect&quot;)
+  local Q = ejdb.Q
+
+  -- Used modes:
+  -- &apos;r&apos; - read
+  -- &apos;w&apos; - write
+  -- &apos;c&apos; - create db if not exists
+  -- &apos;t&apos; - truncate existing db
+  local db = ejdb.open(&quot;zoo&quot;, &quot;rwct&quot;)
+
+  -- Unordered lua table
+  local parrot1 = {
+    name = &quot;Grenny&quot;,
+    type = &quot;African Grey&quot;,
+    male = true,
+    age = 1,
+    birthhdate = ejdb.toDateNow(),
+    likes = { &quot;green color&quot;, &quot;night&quot;, &quot;toys&quot; },
+    extra1 = ejdb.toNull()
+  }
+
+  -- Preserve order of BSON keys
+  local parrot2 = Q();
+  parrot2:KV(&quot;name&quot;, &quot;Bounty&quot;):KV(&quot;type&quot;, &quot;Cockatoo&quot;):KV(&quot;male&quot;, false)
+  parrot2:KV(&quot;age&quot;, 15):KV(&quot;birthdate&quot;,
+                        ejdb.toDate({ year = 2013, month = 1, day = 1,
+                                      hour = 0, sec = 1 }))
+  parrot2:KV(&quot;likes&quot;, { &quot;sugar cane&quot; }):KV(&quot;extra1&quot;, ejdb.toNull())
+
+  --IF YOU WANT SOME DATA INSPECTIONS:
+  --print(ejdb.print_bson(parrot2:toBSON()))
+  --local obj = ejdb.from_bson(parrot2:toBSON())
+  --print(inspect(obj));
+
+  db:save(&quot;parrots2&quot;, parrot1)
+  db:save(&quot;parrots2&quot;, parrot2)
+
+  -- Below two equivalent queries:
+  -- Q1
+  local res, count, log =
+  db:find(&quot;parrots2&quot;, Q(&quot;likes&quot;, &quot;toys&quot;):OrderBy(&quot;name asc&quot;, &quot;age desc&quot;))
+  for i = 1, #res do -- iterate one
+    local ob = res:object(i)
+    print(&quot;&quot; .. ob[&quot;name&quot;] .. &quot; likes toys #1&quot;)
+  end
+
+  -- Q2
+  local res, count, log =
+  db:find(&quot;parrots2&quot;, Q():F(&quot;likes&quot;):Eq(&quot;toys&quot;):OrderBy({ name = 1 }, { age = -1 }))
+  for i = 1, #res do -- iterate one
+    print(&quot;&quot; .. res:field(i, &quot;name&quot;) .. &quot; likes toys #2&quot;)
+  end
+
+  -- Second way to iterate
+  for vobj, idx in res() do
+    print(&quot;&quot; .. vobj[&quot;name&quot;] .. &quot; likes toys #3&quot;)
+  end
+
+  db:close()</pre>
+    </ul>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#open">open&nbsp;(path, mode)</a></td>
+	<td class="summary">Opens EJDB database.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#close">close&nbsp;()</a></td>
+	<td class="summary">Closes opened database.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#toOID">toOID&nbsp;(val)</a></td>
+	<td class="summary">Converts string OID into BSON oid table.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#toDate">toDate&nbsp;(val)</a></td>
+	<td class="summary">Converts os.time table (or number of seconds since epoch) into BSON_DATE.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#toDateNow">toDateNow&nbsp;()</a></td>
+	<td class="summary">Converts current time into BSON_DATE.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#toRegexp">toRegexp&nbsp;(re, opts)</a></td>
+	<td class="summary">Builds BSON_REGEX value</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#toBinData">toBinData&nbsp;(val)</a></td>
+	<td class="summary">Converts lua string into BSON_BINDATA value</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#toNull">toNull&nbsp;()</a></td>
+	<td class="summary">Builds BSON_NULL value</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#toUndefined">toUndefined&nbsp;()</a></td>
+	<td class="summary">Builds BSON_UNDEFINED value</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB.toOID">DB.toOID&nbsp;(val)</a></td>
+	<td class="summary">Converts string OID into BSON oid table.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB.toDate">DB.toDate&nbsp;(val)</a></td>
+	<td class="summary">Converts os.time table or number of secods integer into BSON_DATE.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB.toDateNow">DB.toDateNow&nbsp;()</a></td>
+	<td class="summary">Converts current time into BSON_DATE.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB.toRegexp">DB.toRegexp&nbsp;(re, opts)</a></td>
+	<td class="summary">Builds BSON_REGEX value.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB.toBinData">DB.toBinData&nbsp;(val)</a></td>
+	<td class="summary">Converts lua string into BSON_BINDATA value.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB.toNull">DB.toNull&nbsp;()</a></td>
+	<td class="summary">Builds BSON_NULL value.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB.toUndefined">DB.toUndefined&nbsp;()</a></td>
+	<td class="summary">Builds BSON_UNDEFINED value .</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB.version">DB.version&nbsp;()</a></td>
+	<td class="summary">Returns EJDB version string eg: "1.1.14"</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:save">DB:save&nbsp;(cname, obj, ...)</a></td>
+	<td class="summary">Save/update specified JSON objects in the collection.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:load">DB:load&nbsp;(cname, oid)</a></td>
+	<td class="summary">Loads JSON object identified by OID from the collection.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:command">DB:command&nbsp;(cmd)</a></td>
+	<td class="summary">Executes ejdb command.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:find">DB:find&nbsp;(cname, q, flags)</a></td>
+	<td class="summary">Execute query on collection.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:findOne">DB:findOne&nbsp;(cname, q)</a></td>
+	<td class="summary">Same as <a href="index.html#DB:find">DB:find</a> but retrieves only first matching JSON object.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:update">DB:update&nbsp;(cname, q)</a></td>
+	<td class="summary">Convenient method to execute update queries.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:count">DB:count&nbsp;(cname, q)</a></td>
+	<td class="summary">Convenient <code>count(*)</code> operation.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:sync">DB:sync&nbsp;(cname)</a></td>
+	<td class="summary">Synchronize EJDB database with storage.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:getDBMeta">DB:getDBMeta&nbsp;()</a></td>
+	<td class="summary">Get table object describes a database structure and its collections.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:beginTransaction">DB:beginTransaction&nbsp;(cname)</a></td>
+	<td class="summary">Begin collection transaction.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:commitTransaction">DB:commitTransaction&nbsp;(cname)</a></td>
+	<td class="summary">Commit collection transaction.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rollbackTransaction">DB:rollbackTransaction&nbsp;(cname)</a></td>
+	<td class="summary">Rollback collection transaction.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:getTransactionStatus">DB:getTransactionStatus&nbsp;(cname)</a></td>
+	<td class="summary">Get collection transaction status.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:dropIndexes">DB:dropIndexes&nbsp;(cname, fpath)</a></td>
+	<td class="summary">DROP indexes of all types for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:optimizeIndexes">DB:optimizeIndexes&nbsp;(cname, fpath)</a></td>
+	<td class="summary">OPTIMIZE indexes of all types for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:ensureStringIndex">DB:ensureStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Ensure index presence of String type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildStringIndex">DB:rebuildStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Rebuild index of String type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:dropStringIndex">DB:dropStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Drop index of String type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:ensureIStringIndex">DB:ensureIStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Ensure case insensitive String index for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildIStringIndex">DB:rebuildIStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Rebuild case insensitive String index for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:dropIStringIndex">DB:dropIStringIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Drop case insensitive String index for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:ensureNumberIndex">DB:ensureNumberIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Ensure index presence of Number type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildNumberIndex">DB:rebuildNumberIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Rebuild index of Number type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:dropNumberIndex">DB:dropNumberIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Drop index of Number type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:ensureArrayIndex">DB:ensureArrayIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Ensure index presence of Array type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildArrayIndex">DB:rebuildArrayIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Rebuild index of Array type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB:rebuildArrayIndex">DB:rebuildArrayIndex&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Drop index of Array type for JSON field path.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#RS:object">RS:object&nbsp;(i)</a></td>
+	<td class="summary">Returns result set lua table object at specified position <code>i</code></td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#RS:field">RS:field&nbsp;(i, name)</a></td>
+	<td class="summary">Returns field value of lua object at specified position <code>i</code></td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#RS.__len">RS.__len&nbsp;()</a></td>
+	<td class="summary">Length of result set.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:KV">Q:KV&nbsp;(key, value)</a></td>
+	<td class="summary">Adds field into current JSON object.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:F">Q:F&nbsp;(fname)</a></td>
+	<td class="summary">Set current field for the next operation during query building.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Eq">Q:Eq&nbsp;(val)</a></td>
+	<td class="summary">Field equality restriction.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:ElemMatch">Q:ElemMatch&nbsp;(val)</a></td>
+	<td class="summary">Element match construction.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Not">Q:Not&nbsp;(val)</a></td>
+	<td class="summary">The $not negatiation for <code>val</code> block</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Gt">Q:Gt&nbsp;(val)</a></td>
+	<td class="summary">Greater than (val > arg)</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Gte">Q:Gte&nbsp;(val)</a></td>
+	<td class="summary">Greater than or equal (val >= arg)</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Lt">Q:Lt&nbsp;(val)</a></td>
+	<td class="summary">Lesser than (val &lt; arg)</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Lte">Q:Lte&nbsp;(val)</a></td>
+	<td class="summary">Lesser than or equal (val &lt;= arg)</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Icase">Q:Icase&nbsp;(val)</a></td>
+	<td class="summary">Case insensitive string matching</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Begin">Q:Begin&nbsp;(val)</a></td>
+	<td class="summary">String starts with prefix</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:In">Q:In&nbsp;(val)</a></td>
+	<td class="summary">Field value matched any value of specified in <code>val</code> table.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:NotIn">Q:NotIn&nbsp;(val)</a></td>
+	<td class="summary">Negation of <a href="index.html#Q:In">Q:In</a></td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Bt">Q:Bt&nbsp;(n1, n2)</a></td>
+	<td class="summary">Between for number types</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:StrAnd">Q:StrAnd&nbsp;(val)</a></td>
+	<td class="summary">String tokens(or string array vals) matches <strong>all</strong> tokens in specified <code>val</code> array.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:StrOr">Q:StrOr&nbsp;(val)</a></td>
+	<td class="summary">String tokens(or string array vals) matches <strong>any</strong> token in specified array.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Inc">Q:Inc&nbsp;(val)</a></td>
+	<td class="summary">Increment current field.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Set">Q:Set&nbsp;(val)</a></td>
+	<td class="summary">Set fields to values.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Upsert">Q:Upsert&nbsp;(val)</a></td>
+	<td class="summary">Atomic upsert.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:AddToSet">Q:AddToSet&nbsp;(val)</a></td>
+	<td class="summary">Atomically adds <code>val</code> to the <code>array field</code> only if <code>val</code> not in the array already.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:AddToSetAll">Q:AddToSetAll&nbsp;(val)</a></td>
+	<td class="summary">Atomically performs <code>set union</code> with values in <code>val</code> for specified array field.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Pull">Q:Pull&nbsp;(val)</a></td>
+	<td class="summary">Atomically removes all occurrences of <code>val</code> from field, if field is an array.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:PullAll">Q:PullAll&nbsp;(val)</a></td>
+	<td class="summary">Atomically performs <code>set substraction</code> of values in <code>val</code> for specified array field.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:DropAll">Q:DropAll&nbsp;()</a></td>
+	<td class="summary">In-place record removal operation.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Join">Q:Join&nbsp;(cname, fpath)</a></td>
+	<td class="summary">Make <a href="https://github.com/Softmotions/ejdb/wiki/Collection-joins">collection join</a>
+ for select queries.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Or">Q:Or&nbsp;(...)</a></td>
+	<td class="summary">Add <em>OR</em> joined query restrictions.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Skip">Q:Skip&nbsp;(val)</a></td>
+	<td class="summary">Sets number of skipped records in the result set.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Max">Q:Max&nbsp;(val)</a></td>
+	<td class="summary">Sets max number of records in the result set.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:OrderBy">Q:OrderBy&nbsp;(...)</a></td>
+	<td class="summary">Set sorting rules for query results.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:Fields">Q:Fields&nbsp;(...)</a></td>
+	<td class="summary">Sets fields to be included in resulting objects.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Q:NotFields">Q:NotFields&nbsp;(...)</a></td>
+	<td class="summary">Sets fields to be excluded from resulting objects.</td>
+	</tr>
+</table>
+<h2><a href="#Tables">Tables</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Q">Q</a></td>
+	<td class="summary">Query/JSON builder is used to create EJDB queries or JSON objects with
+ preserverd keys order (Unlike lua tables).</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#DB">DB</a></td>
+	<td class="summary">Database itself.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#RS">RS</a></td>
+	<td class="summary">Result set cursor object.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Functions"></a>Functions</h2>
+    <dl class="function">
+    <dt>
+    <a name = "open"></a>
+    <strong>open&nbsp;(path, mode)</strong>
+    </dt>
+    <dd>
+    Opens EJDB database.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">path</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Database main file</li>
+        <li><span class="parameter">mode</span>
+            <span class="types">optional <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Database open mode flags:<br/>
+ <code><code>w</code></code> Open as a writer <br/>
+ <code><code>r</code></code> Open as a reader <br/>
+ <code><code>c</code></code> Create db if it not exists <br/>
+ <code><code>t</code></code> Truncate existing db <br/>
+ <code><code>s</code></code> Sycn db after each transaction <br/>
+ Default open mode: <code><code>rwcs</code></code></li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Database table
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> db = ejdb.open(<span class="string">"foodb"</span>, <span class="string">"wrc"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "close"></a>
+    <strong>close&nbsp;()</strong>
+    </dt>
+    <dd>
+    Closes opened database.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "toOID"></a>
+    <strong>toOID&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Converts string OID into BSON oid table.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         24 hex chars BSON_OID</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "toDate"></a>
+    <strong>toDate&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Converts os.time table (or number of seconds since epoch) into BSON_DATE.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        BSON_DATE table.
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">ejdb.toDate({ year = <span class="number">2013</span>, month = <span class="number">1</span>, day = <span class="number">1</span>, hour = <span class="number">0</span>, sec = <span class="number">1</span> })</pre></li>
+        <li><pre class="example">ejdb.toDate(<span class="number">1363705285431</span>)</pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "toDateNow"></a>
+    <strong>toDateNow&nbsp;()</strong>
+    </dt>
+    <dd>
+    Converts current time into BSON_DATE.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "toRegexp"></a>
+    <strong>toRegexp&nbsp;(re, opts)</strong>
+    </dt>
+    <dd>
+    Builds BSON_REGEX value
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">re</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Regular expression</li>
+        <li><span class="parameter">opts</span>
+            <span class="types">optional <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Regular expression flags</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        BSON_REGEX table value
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "toBinData"></a>
+    <strong>toBinData&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Converts lua string into BSON_BINDATA value
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        BSON_BINDATA table value
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "toNull"></a>
+    <strong>toNull&nbsp;()</strong>
+    </dt>
+    <dd>
+    Builds BSON_NULL value
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        BSON_NULL table value
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "toUndefined"></a>
+    <strong>toUndefined&nbsp;()</strong>
+    </dt>
+    <dd>
+    Builds BSON_UNDEFINED value
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        BSON_UNDEFINED table value
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB.toOID"></a>
+    <strong>DB.toOID&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Converts string OID into BSON oid table.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+
+
+</li>
+    </ul>
+
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#toOID">ejdb.toOID</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "DB.toDate"></a>
+    <strong>DB.toDate&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Converts os.time table or number of secods integer into BSON_DATE.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+
+
+</li>
+    </ul>
+
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#toDate">ejdb.toDate</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "DB.toDateNow"></a>
+    <strong>DB.toDateNow&nbsp;()</strong>
+    </dt>
+    <dd>
+    Converts current time into BSON_DATE.
+
+
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#toDateNow">ejdb.toDateNow</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "DB.toRegexp"></a>
+    <strong>DB.toRegexp&nbsp;(re, opts)</strong>
+    </dt>
+    <dd>
+    Builds BSON_REGEX value.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">re</span>
+
+
+</li>
+        <li><span class="parameter">opts</span>
+
+
+</li>
+    </ul>
+
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#toRegexp">ejdb.toRegexp</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "DB.toBinData"></a>
+    <strong>DB.toBinData&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Converts lua string into BSON_BINDATA value.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+
+
+</li>
+    </ul>
+
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#toBinData">ejdb.toBinData</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "DB.toNull"></a>
+    <strong>DB.toNull&nbsp;()</strong>
+    </dt>
+    <dd>
+    Builds BSON_NULL value.
+
+
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#toNull">ejdb.toNull</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "DB.toUndefined"></a>
+    <strong>DB.toUndefined&nbsp;()</strong>
+    </dt>
+    <dd>
+    Builds BSON_UNDEFINED value .
+
+
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#toUndefined">ejdb.toUndefined</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "DB.version"></a>
+    <strong>DB.version&nbsp;()</strong>
+    </dt>
+    <dd>
+    Returns EJDB version string eg: "1.1.14"
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:save"></a>
+    <strong>DB:save&nbsp;(cname, obj, ...)</strong>
+    </dt>
+    <dd>
+    Save/update specified JSON objects in the collection.
+ If collection with <code>cname</code> does not exists it will be created.
+ Each persistent object has unique identifier (OID) placed in the <code>_id</code> property.
+ If a saved object does not have <code>_id</code> it will be autogenerated.
+ To identify and update object it should contains <code>_id</code> property.
+ already persisted in db.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name.</li>
+        <li><span class="parameter">obj</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a> or <a class="type" href="index.html#Q">Q</a></span>
+         represents JSON object.</li>
+        <li><span class="parameter">...</span>
+         If last argument is True a saved object will be merged with who's</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">dQ:save(<span class="string">"parrots2"</span>, {foo = <span class="string">"bar"</span>})</pre></li>
+        <li><pre class="example">dQ:save(<span class="string">"parrots2"</span>, Q(<span class="string">"foo"</span>, <span class="string">"bar"</span>), <span class="keyword">true</span>) -- merge option is on</pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "DB:load"></a>
+    <strong>DB:load&nbsp;(cname, oid)</strong>
+    </dt>
+    <dd>
+    Loads JSON object identified by OID from the collection.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">oid</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a> or <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         24 hex chars BSON_OID or BSON oid table</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:command"></a>
+    <strong>DB:command&nbsp;(cmd)</strong>
+    </dt>
+    <dd>
+
+<p>Executes ejdb command.
+ Supported commands:</p>
+<pre><code>1) Exports database collections data. See ejdbexport() method.
+
+  "export" : {
+        "path" : string,                    //Exports database collections data
+        "cnames" : [string array]|null,     //List of collection names to export
+        "mode" : int|null                   //Values: null|`JBJSONEXPORT` See ejdbexport() method
+  }
+
+  Command response:
+     {
+        "log" : string,        //Diagnostic log about executing this command
+        "error" : string|null, //ejdb error message
+        "errorCode" : int|0,   //ejdb error code
+     }
+
+2) Imports previously exported collections data into ejdb.
+
+  "import" : {
+        "path" : string                     //The directory path in which data resides
+        "cnames" : [string array]|null,     //List of collection names to import
+        "mode" : int|null                //Values: null|`JBIMPORTUPDATE`|`JBIMPORTREPLACE` See ejdbimport() method
+   }
+
+   Command response:
+     {
+        "log" : string,        //Diagnostic log about executing this command
+        "error" : string|null, //ejdb error message
+        "errorCode" : int|0,   //ejdb error code
+     }
+</code></pre>
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cmd</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a> or <a class="type" href="index.html#Q">Q</a></span>
+         Command object.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Command response table
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:find"></a>
+    <strong>DB:find&nbsp;(cname, q, flags)</strong>
+    </dt>
+    <dd>
+
+<p>Execute query on collection. </p>
+
+<p> EJDB queries inspired by MongoDB (mongodb.org) and follows same philosophy.</p>
+
+<p> Queries and query hints can be constructed by <a href="index.html#Q">Q</a> query/json builder.</p>
+<pre><code>- Supported queries:
+- Simple matching of String OR Number OR Array value:
+    -   {'fpath' : 'val', ...}
+- $not Negate operation.
+    -   {'fpath' : {'$not' : val}} //Field not equal to val
+    -   {'fpath' : {'$not' : {'$begin' : prefix}}} //Field not begins with val
+- $begin String starts with prefix
+    -   {'fpath' : {'$begin' : prefix}}
+- $gt, $gte (&gt;, &gt;=) and $lt, $lte for number types:
+    -   {'fpath' : {'$gt' : number}, ...}
+- $bt Between for number types:
+    -   {'fpath' : {'$bt' : [num1, num2]}}
+- $in String OR Number OR Array val matches to value in specified array:
+    -   {'fpath' : {'$in' : [val1, val2, val3]}}
+- $nin - Not IN
+- $strand String tokens OR String array val matches all tokens in specified array:
+    -   {'fpath' : {'$strand' : [val1, val2, val3]}}
+- $stror String tokens OR String array val matches any token in specified array:
+    -   {'fpath' : {'$stror' : [val1, val2, val3]}}
+- $exists Field existence matching:
+    -   {'fpath' : {'$exists' : true|false}}
+- $icase Case insensitive string matching:
+    -    {'fpath' : {'$icase' : 'val1'}} //icase matching
+          icase matching with '$in' operation:
+    -    {'name' : {'$icase' : {'$in' : ['HEllo', 'heLLo WorlD']}}}
+         For case insensitive matching you can create special type of string index.
+- $elemMatch The $elemMatch operator matches more than one component within an array element.
+    -    { array: { $elemMatch: { value1 : 1, value2 : { $gt: 1 } } } }
+          Restriction: only one $elemMatch allowed in context of one array field.
+</code></pre>
+
+<ul>
+    <li><p>Queries can be used to update records:</p>
+
+<p>$set Field set operation.</p>
+<pre><code>- {.., '$set' : {'field1' : val1, 'fieldN' : valN}}
+</code></pre>
+<p>$upsert Atomic upsert. If matching records are found it will be '$set' operation,</p>
+<pre><code>    otherwise new record will be inserted
+    with fields specified by argment object.
+- {.., '$upsert' : {'field1' : val1, 'fieldN' : valN}}
+</code></pre>
+<p>$inc Increment operation. Only number types are supported.</p>
+<pre><code>- {.., '$inc' : {'field1' : number, ...,  'field1' : number}
+</code></pre>
+<p>$dropall In-place record removal operation.</p>
+<pre><code>- {.., '$dropall' : true}
+</code></pre>
+<p>$addToSet Atomically adds value to the array only if its not in the array already.</p>
+<pre><code>        If containing array is missing it will be created.
+- {.., '$addToSet' : {'fpath' : val1, 'fpathN' : valN, ...}}
+</code></pre>
+<p>$addToSetAll Batch version if $addToSet</p>
+<pre><code>- {.., '$addToSetAll' : {'fpath' : [array of values to add], ...}}
+</code></pre>
+<p>$pull Atomically removes all occurrences of value from field, if field is an array.</p>
+<pre><code>- {.., '$pull' : {'fpath' : val1, 'fpathN' : valN, ...}}
+</code></pre>
+<p>$pullAll Batch version of $pull</p>
+<pre><code>- {.., '$pullAll' : {'fpath' : [array of values to remove], ...}}
+</code></pre></li>
+    <li><p>Collection joins supported in the following form:</p>
+
+<pre><code>{..., $do : {fpath : {$join : 'collectionname'}} }
+ Where 'fpath' value points to object's OIDs from 'collectionname'. Its value
+ can be OID, string representation of OID or array of this pointers.
+</code></pre></li>
+</ul>
+
+<p>  <strong>NOTE:</strong> It is better to execute update queries with <code>$onlycount=true</code> hint flag</p>
+<pre><code>    or use the special `update()` method to avoid unnecessarily data fetching.
+</code></pre>
+
+<p>  <strong>NOTE:</strong> Negate operations: $not and $nin not using indexes</p>
+<pre><code>    so they can be slow in comparison to other matching operations.
+</code></pre>
+
+<p>  <strong>NOTE:</strong> Only one index can be used in search query operation.</p>
+
+<p>  <strong>NOTE:</strong> If callback is not provided this function will be synchronous.</p>
+
+<p>  <strong>QUERY HINTS</strong> specified by calling <a href="index.html#Q:Skip">Q:Skip</a> <a href="index.html#Q:Max">Q:Max</a>, <a href="index.html#Q:OrderBy">Q:OrderBy</a>, <a href="index.html#Q:Fields">Q:Fields</a>:</p>
+<pre><code>- $max Maximum number in the result set
+- $skip Number of skipped results in the result set
+- $orderby Sorting order of query fields.
+- $fields Set subset of fetched fields.
+    If field presented in $orderby clause it will be forced to include in resulting records.
+    Example:
+    hints:    {
+                "$orderby" : { //ORDER BY field1 ASC, field2 DESC
+                    "field1" : 1,
+                    "field2" : -1
+                 },
+                "$fields" : { //SELECT ONLY {_id, field1, field2}
+                    "field1" : 1,
+                    "field2" : 1
+                }
+              }
+</code></pre>
+<p> To traverse selected records cursor object is returned.
+ Cursor (res):</p>
+<pre><code>#res - length of result set
+res[i] - BSON representations of object as lua string
+res:object(i) - Lua table constructed from BSON data
+res:field(i, &lt;field name&gt;) - Lua value of fetched BSON object
+res() - Creates iterator for pairs (obj, idx)
+      where obj - Lua table constructed from BSON data
+            idx - Index of fetched object in the result set
+</code></pre>
+
+<p> Examples:</p>
+<pre><code>for i = 1, #res do
+  local ob = res:object(i)
+  ...
+end
+</code></pre>
+
+<p> OR</p>
+
+<pre><code>for i = 1, #res do
+  res:field(i, "json field name")
+  ...
+end
+</code></pre>
+
+<p> OR</p>
+
+<pre><code>for vobj, idx in res() do
+  -- vobj is a lua table representation of fetched json object
+  vobj["json field name"]
+  ...
+end
+</code></pre>
+
+
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">q</span>
+            <span class="types"><a class="type" href="index.html#Q">Q</a></span>
+         JSON query object</li>
+        <li><span class="parameter">flags</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+
+<p> Query control flags:</p>
+<pre><code>`c`: only count of matching records will be returned without placing records in result set.
+`l`: return query execution log
+</code></pre>
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><a class="type" href="index.html#RS">RS</a></span>
+        result set, it will be <code>nil</code> if <code>c</code> flag presented in the control <code>flags</code></li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        Count of matched/updated records</li>
+        <li>
+          <span class="types">optional <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+        Query execution log if <code>l</code> flag presented in the control <code>flags</code></li>
+    </ol>
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#Q">Q</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">db:find(<span class="string">"mycoll"</span>, Q(<span class="string">"foo"</span>, <span class="string">"bar"</span>)) =&gt; {<span class="string">"foo"</span> : <span class="string">"bar"</span>}</pre></li>
+        <li><pre class="example">db:find(<span class="string">"mycoll"</span>, Q(<span class="string">"foo"</span>, <span class="string">"bar"</span>):Max(<span class="number">10</span>)) -- Limit results up to <span class="number">10</span> records</pre></li>
+        <li><pre class="example">db:find(<span class="string">"parrots2"</span>, Q(<span class="string">"likes"</span>, <span class="string">"toys"</span>):OrderBy(<span class="string">"name asc"</span>, <span class="string">"age desc"</span>))</pre></li>
+        <li><pre class="example">db:find(<span class="string">"parrots2"</span>, Q():F(<span class="string">"likes"</span>):Eq(<span class="string">"toys"</span>):OrderBy({ name = <span class="number">1</span> }, { age = -<span class="number">1</span> }))</pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "DB:findOne"></a>
+    <strong>DB:findOne&nbsp;(cname, q)</strong>
+    </dt>
+    <dd>
+    Same as <a href="index.html#DB:find">DB:find</a> but retrieves only first matching JSON object.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">q</span>
+            <span class="types"><a class="type" href="index.html#Q">Q</a></span>
+         JSON query object</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        Lua table constructed from matched BSON record or <code>nil</code> of record not found</li>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        Count of matched/updated records</li>
+        <li>
+          <span class="types">optional <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+        Query execution log if <code>l</code> flag presented in the control <code>flags</code></li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:update"></a>
+    <strong>DB:update&nbsp;(cname, q)</strong>
+    </dt>
+    <dd>
+    Convenient method to execute update queries.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">q</span>
+            <span class="types"><a class="type" href="index.html#Q">Q</a></span>
+         JSON query object</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        Count of matched/updated records</li>
+        <li>
+          <span class="types">optional <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+        Query execution log if <code>l</code> flag presented in the control <code>flags</code></li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:count"></a>
+    <strong>DB:count&nbsp;(cname, q)</strong>
+    </dt>
+    <dd>
+    Convenient <code>count(*)</code> operation.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">q</span>
+            <span class="types"><a class="type" href="index.html#Q">Q</a></span>
+         JSON query object</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+        <li>
+          <span class="types"><span class="type">number</span></span>
+        Count of matched/updated records</li>
+        <li>
+          <span class="types">optional <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+        Query execution log if <code>l</code> flag presented in the control <code>flags</code></li>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:sync"></a>
+    <strong>DB:sync&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Synchronize EJDB database with storage.
+ If <code>cname</code> is provided only this collection will be synced.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types">optional <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:getDBMeta"></a>
+    <strong>DB:getDBMeta&nbsp;()</strong>
+    </dt>
+    <dd>
+
+<p>Get table object describes a database structure and its collections. </p>
+
+<p> Sample meta:</p>
+
+<pre><code>collections = {
+  ecoll = {
+    file = "testdb_ecoll",
+    indexes = {},
+    name = "ecoll",
+    options = {
+      buckets = 425977,
+      cachedrecords = 0,
+      compressed = false,
+      large = true
+    },
+    records = 1
+  },
+  mycoll = {
+    file = "testdb_mycoll",
+    indexes = { {
+        field = "foo",
+        file = "testdb_mycoll.idx.sfoo.lex",
+        iname = "sfoo",
+        records = 3,
+        type = "lexical"
+      } },
+    name = "mycoll",
+    options = {
+      buckets = 131071,
+      cachedrecords = 0,
+      compressed = false,
+      large = false
+    },
+    records = 4
+  }
+},
+file = "testdb"
+</code></pre>
+
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        Database metadata
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:beginTransaction"></a>
+    <strong>DB:beginTransaction&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Begin collection transaction.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:commitTransaction"></a>
+    <strong>DB:commitTransaction&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Commit collection transaction.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rollbackTransaction"></a>
+    <strong>DB:rollbackTransaction&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Rollback collection transaction.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:getTransactionStatus"></a>
+    <strong>DB:getTransactionStatus&nbsp;(cname)</strong>
+    </dt>
+    <dd>
+    Get collection transaction status.
+ Returns <code>True</code> if transaction is active.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><span class="type">bool</span></span>
+
+
+
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:dropIndexes"></a>
+    <strong>DB:dropIndexes&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    DROP indexes of all types for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:optimizeIndexes"></a>
+    <strong>DB:optimizeIndexes&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    OPTIMIZE indexes of all types for JSON field path.
+ Performs B+ tree index file optimization.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:ensureStringIndex"></a>
+    <strong>DB:ensureStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Ensure index presence of String type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildStringIndex"></a>
+    <strong>DB:rebuildStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Rebuild index of String type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:dropStringIndex"></a>
+    <strong>DB:dropStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Drop index of String type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:ensureIStringIndex"></a>
+    <strong>DB:ensureIStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Ensure case insensitive String index for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildIStringIndex"></a>
+    <strong>DB:rebuildIStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Rebuild case insensitive String index for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:dropIStringIndex"></a>
+    <strong>DB:dropIStringIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Drop case insensitive String index for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:ensureNumberIndex"></a>
+    <strong>DB:ensureNumberIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Ensure index presence of Number type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildNumberIndex"></a>
+    <strong>DB:rebuildNumberIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Rebuild index of Number type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:dropNumberIndex"></a>
+    <strong>DB:dropNumberIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Drop index of Number type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:ensureArrayIndex"></a>
+    <strong>DB:ensureArrayIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Ensure index presence of Array type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildArrayIndex"></a>
+    <strong>DB:rebuildArrayIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Rebuild index of Array type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "DB:rebuildArrayIndex"></a>
+    <strong>DB:rebuildArrayIndex&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Drop index of Array type for JSON field path.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Collection name</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path for index</li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "RS:object"></a>
+    <strong>RS:object&nbsp;(i)</strong>
+    </dt>
+    <dd>
+    Returns result set lua table object at specified position <code>i</code>
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">i</span>
+            <span class="types"><span class="type">number</span></span>
+         Position of record in the result set</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+          <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+        Resulting lua object constructed from BSON record.
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "RS:field"></a>
+    <strong>RS:field&nbsp;(i, name)</strong>
+    </dt>
+    <dd>
+    Returns field value of lua object at specified position <code>i</code>
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">i</span>
+            <span class="types"><span class="type">number</span></span>
+         Position of record in the result set</li>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field name</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Value of field
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "RS.__len"></a>
+    <strong>RS.__len&nbsp;()</strong>
+    </dt>
+    <dd>
+    Length of result set.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Q:KV"></a>
+    <strong>Q:KV&nbsp;(key, value)</strong>
+    </dt>
+    <dd>
+    Adds field into current JSON object.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">key</span>
+
+
+</li>
+        <li><span class="parameter">value</span>
+
+
+</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():KV(<span class="string">"foo"</span>, <span class="string">"bar"</span>):KV(<span class="string">"age"</span>, <span class="number">30</span>) =&gt; {<span class="string">"foo"</span> : <span class="string">"bar"</span>, <span class="string">"age"</span> : <span class="number">30</span>}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:F"></a>
+    <strong>Q:F&nbsp;(fname)</strong>
+    </dt>
+    <dd>
+    Set current field for the next operation during query building.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">fname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         JSON field path</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q:F(<span class="string">"name"</span>):Eq(<span class="string">"andy"</span>):F(<span class="string">"age"</span>):Gt(<span class="number">30</span>) =&gt; {<span class="string">"name"</span> : <span class="string">"andy"</span>, <span class="string">"age"</span> : {<span class="string">"$gt"</span> : <span class="number">30</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Eq"></a>
+    <strong>Q:Eq&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Field equality restriction.
+ All usage samples represent same thing: <code>{"fname" : fval}</code>
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+         any BSON value as Lua object including <a href="index.html#Q">Q</a> instances.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">Q():F(<span class="string">"fname"</span>):Eq(fval)</pre></li>
+        <li><pre class="example">Q(<span class="string">"fname"</span>, fval)</pre></li>
+        <li><pre class="example">Q():F(<span class="string">"fname"</span>, fval)</pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:ElemMatch"></a>
+    <strong>Q:ElemMatch&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Element match construction.
+ - $elemMatch The $elemMatch operator matches more than one component within an array element.
+ -    { array: { $elemMatch: { value1 : 1, value2 : { $gt: 1 } } } }
+ Restriction: only one $elemMatch allowed in context of one array field.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Q:Not"></a>
+    <strong>Q:Not&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    The $not negatiation for <code>val</code> block
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():Not(Q(<span class="string">"foo"</span>, <span class="string">"bar"</span>)) =&gt; {<span class="string">"$not"</span> : {<span class="string">"foo"</span> : <span class="string">"bar"</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Gt"></a>
+    <strong>Q:Gt&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Greater than (val > arg)
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><span class="type">number</span></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"age"</span>):Gt(<span class="number">29</span>) =&gt; {<span class="string">"age"</span> : {<span class="string">"$gt"</span> : <span class="number">29</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Gte"></a>
+    <strong>Q:Gte&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Greater than or equal (val >= arg)
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><span class="type">number</span></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"age"</span>):Gt(<span class="number">29</span>) =&gt; {<span class="string">"age"</span> : {<span class="string">"$gte"</span> : <span class="number">29</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Lt"></a>
+    <strong>Q:Lt&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Lesser than (val &lt; arg)
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><span class="type">number</span></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"age"</span>):Lt(<span class="number">29</span>) =&gt; {<span class="string">"age"</span> : {<span class="string">"$lt"</span> : <span class="number">29</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Lte"></a>
+    <strong>Q:Lte&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Lesser than or equal (val &lt;= arg)
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><span class="type">number</span></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"age"</span>):Lt(<span class="number">29</span>) =&gt; {<span class="string">"age"</span> : {<span class="string">"$lte"</span> : <span class="number">29</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Icase"></a>
+    <strong>Q:Icase&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Case insensitive string matching
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a>, <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a> or <a class="type" href="index.html#Q">Q</a></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">Q():F(<span class="string">"name"</span>):Icase(<span class="string">"aNdY"</span>) =&gt; {<span class="string">"name"</span> : {<span class="string">"$icase"</span> : <span class="string">"aNdY"</span>}}</pre></li>
+        <li><pre class="example">Q():F(<span class="string">"name"</span>):Icase({[$<span class="keyword">in</span>] = {<span class="string">"aNdY"</span>, <span class="string">"AnTon"</span>}}) =&gt; {<span class="string">"name"</span> : {<span class="string">"$icase"</span> : {<span class="string">"$in"</span> : [<span class="string">"aNdY"</span>, <span class="string">"AnTon"</span>]}}}</pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Begin"></a>
+    <strong>Q:Begin&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    String starts with prefix
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"fpath"</span>):Begin(<span class="string">"prefix"</span>) =&gt; {<span class="string">"fpath"</span> : {<span class="string">"$begin"</span> : <span class="string">"prefix"</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:In"></a>
+    <strong>Q:In&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Field value matched any value of specified in <code>val</code> table.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+          Not empty lua array of values.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"fpath"</span>):In({<span class="string">"val1"</span>, <span class="string">"val2"</span>, <span class="string">"val3"</span>}) =&gt; {<span class="string">"fpath"</span> : {<span class="string">"$in"</span> : [<span class="string">"val1"</span>, <span class="string">"val2"</span>, <span class="string">"val3"</span>]}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:NotIn"></a>
+    <strong>Q:NotIn&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Negation of <a href="index.html#Q:In">Q:In</a>
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#Q:In">Q:In</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "Q:Bt"></a>
+    <strong>Q:Bt&nbsp;(n1, n2)</strong>
+    </dt>
+    <dd>
+    Between for number types
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">n1</span>
+            <span class="types"><span class="type">number</span></span>
+
+
+</li>
+        <li><span class="parameter">n2</span>
+            <span class="types"><span class="type">number</span></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"age"</span>):Bt(<span class="number">10</span>, <span class="number">20</span>) =&gt; {<span class="string">"age"</span> : {<span class="string">"$bt"</span> : [<span class="number">10</span>, <span class="number">20</span>]}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:StrAnd"></a>
+    <strong>Q:StrAnd&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    String tokens(or string array vals) matches <strong>all</strong> tokens in specified <code>val</code> array.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         Array of tokens to match.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"description"</span>):StrAnd({<span class="string">"foo"</span>, <span class="string">"bar"</span>}) -- descripton contains all tokens: <span class="string">'foo'</span> <span class="keyword">and</span> <span class="string">'bar'</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:StrOr"></a>
+    <strong>Q:StrOr&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    String tokens(or string array vals) matches <strong>any</strong> token in specified array.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         Array of tokens to match.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"description"</span>):StrOr({<span class="string">"foo"</span>, <span class="string">"bar"</span>}) -- descripton contains all tokens: <span class="string">'foo'</span> <span class="keyword">or</span> <span class="string">'bar'</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Inc"></a>
+    <strong>Q:Inc&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Increment current field.  Only number types are supported.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><span class="type">number</span></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#Q:F">Q:F</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"count"</span>):Inc(<span class="number">1</span>):F(<span class="string">"age"</span>):Inc(-<span class="number">20</span>) =&gt; {<span class="string">"$inc"</span> : {<span class="string">"count"</span> : <span class="number">1</span>, <span class="string">"age"</span> : -<span class="number">20</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Set"></a>
+    <strong>Q:Set&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Set fields to values.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a> or <a class="type" href="index.html#Q">Q</a></span>
+         Table of fields to set</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():Set({age = <span class="number">20</span>, count = <span class="number">1</span>}) =&gt; {<span class="string">"$set"</span> : {<span class="string">"age"</span> : <span class="number">20</span>, count : <span class="number">1</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Upsert"></a>
+    <strong>Q:Upsert&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Atomic upsert.
+ If matching records are found it will be <code>$set</code> operation,
+ otherwise new record will be inserted with fields specified by <code>val</code> table.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a> or <a class="type" href="index.html#Q">Q</a></span>
+         Table of fields to set/insert
+ Insert {"foo" : "bar"} if this object does not exists:</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">Q(<span class="string">"foo"</span>,<span class="string">"bar"</span>):Upsert(Q(<span class="string">"foo"</span>, <span class="string">"bar"</span>)) =&gt; {<span class="string">"foo"</span> : <span class="string">"bar"</span>, <span class="string">"$upsert"</span> : {<span class="string">"foo"</span> : <span class="string">"bar"</span>}}</pre></li>
+        <li><pre class="example">Q(<span class="string">"foo"</span>,<span class="string">"bar"</span>):Upsert({foo =<span class="string">"bar"</span>}) =&gt; {<span class="string">"foo"</span> : <span class="string">"bar"</span>, <span class="string">"$upsert"</span> : {<span class="string">"foo"</span> : <span class="string">"bar"</span>}}</pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:AddToSet"></a>
+    <strong>Q:AddToSet&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Atomically adds <code>val</code> to the <code>array field</code> only if <code>val</code> not in the array already.
+ If containing array is missing it will be created.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+         Value to add</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"tags"</span>):AddToSet(<span class="string">"red"</span>) =&gt; {<span class="string">"$addToSet"</span> : {<span class="string">"tags"</span> : <span class="string">"red"</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:AddToSetAll"></a>
+    <strong>Q:AddToSetAll&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Atomically performs <code>set union</code> with values in <code>val</code> for specified array field.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         Array of values to add</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#Q:F">Q:F</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"tags"</span>):AddToSetAll({<span class="string">"red"</span>, <span class="string">"green"</span>})</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Pull"></a>
+    <strong>Q:Pull&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Atomically removes all occurrences of <code>val</code> from field, if field is an array.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+         Value to remove</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#Q:F">Q:F</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"tags"</span>):Pull(<span class="string">"red"</span>) =&gt; {<span class="string">"$pull"</span> : {<span class="string">"tags"</span> : <span class="string">"red"</span>}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:PullAll"></a>
+    <strong>Q:PullAll&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Atomically performs <code>set substraction</code> of values in <code>val</code> for specified array field.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a></span>
+         Array of values to remove from array field</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+    <h3>see also:</h3>
+    <ul>
+         <a href="index.html#Q:F">Q:F</a>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():F(<span class="string">"tags"</span>):PullAll({<span class="string">"red"</span>, <span class="string">"green"</span>}) =&gt; {<span class="string">"$pullAll"</span> : {<span class="string">"tags"</span> : [<span class="string">"red"</span>, <span class="string">"green"</span>]}}</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:DropAll"></a>
+    <strong>Q:DropAll&nbsp;()</strong>
+    </dt>
+    <dd>
+    In-place record removal operation.
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">db:update(Q():F(<span class="string">"name"</span>, <span class="string">"andy"</span>):DropAll()) -- Removes all records with name eq <span class="string">'andy'</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Join"></a>
+    <strong>Q:Join&nbsp;(cname, fpath)</strong>
+    </dt>
+    <dd>
+    Make <a href="https://github.com/Softmotions/ejdb/wiki/Collection-joins">collection join</a>
+ for select queries.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">cname</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Name for joined collection</li>
+        <li><span class="parameter">fpath</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Name of field with BSON OIDs of joined objects</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Q:Or"></a>
+    <strong>Q:Or&nbsp;(...)</strong>
+    </dt>
+    <dd>
+    Add <em>OR</em> joined query restrictions.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table</a> or <a class="type" href="index.html#Q">Q</a></span>
+         List of OR joined restrictions</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q():Or(Q(<span class="string">"name"</span>, <span class="string">"anton"</span>), Q(<span class="string">"name"</span>, <span class="string">"andy"</span>))
+    Find records with <span class="string">"name"</span> field eq <span class="string">"anton"</span> <span class="keyword">or</span> <span class="string">"andy"</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Skip"></a>
+    <strong>Q:Skip&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Sets number of skipped records in the result set.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><span class="type">number</span></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Q:Max"></a>
+    <strong>Q:Max&nbsp;(val)</strong>
+    </dt>
+    <dd>
+    Sets max number of records in the result set.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+            <span class="types"><span class="type">number</span></span>
+
+
+</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Q:OrderBy"></a>
+    <strong>Q:OrderBy&nbsp;(...)</strong>
+    </dt>
+    <dd>
+    Set sorting rules for query results.
+ tparam table|string
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+
+
+</li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">Q:OrderBy(<span class="string">"name asc"</span>, <span class="string">"age desc"</span>) =&gt; ORDER BY name ASC, age dESC</pre></li>
+        <li><pre class="example">Q:OrderBy({name = <span class="number">1</span>}, {age = -<span class="number">1</span>}) =&gt; ORDER BY name ASC, age dESC</pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:Fields"></a>
+    <strong>Q:Fields&nbsp;(...)</strong>
+    </dt>
+    <dd>
+    Sets fields to be included in resulting objects.
+ If field presented in $orderby clause it will be forced to include in resulting records.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Fields to be included in fetched objects.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q:Fields(<span class="string">"name"</span>, <span class="string">"age"</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Q:NotFields"></a>
+    <strong>Q:NotFields&nbsp;(...)</strong>
+    </dt>
+    <dd>
+    Sets fields to be excluded from resulting objects.
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         Fields to be excluded from fetched objects.</li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        Self <a href="index.html#Q">Q</a>
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">Q:NotFields(<span class="string">"name"</span>, <span class="string">"description"</span>)</pre>
+    </ul>
+
+</dd>
+</dl>
+    <h2><a name="Tables"></a>Tables</h2>
+    <dl class="function">
+    <dt>
+    <a name = "Q"></a>
+    <strong>Q</strong>
+    </dt>
+    <dd>
+    Query/JSON builder is used to create EJDB queries or JSON objects with
+ preserverd keys order (Unlike lua tables).
+ <a href="index.html#Q">Q</a> <strong>can be used to construct BSON objects as well as queries.</strong></p>
+
+<p> Examples:
+
+
+
+
+    <h3>see also:</h3>
+    <ul>
+         <li><a href="index.html#Q:KV">Q:KV</a></li>
+         <li><a href="index.html#Q:F">Q:F</a></li>
+         <li><a href="index.html#Q:Eq">Q:Eq</a></li>
+         <li><a href="index.html#Q:ElemMatch">Q:ElemMatch</a></li>
+         <li><a href="index.html#Q:Not">Q:Not</a></li>
+         <li><a href="index.html#Q:Gt">Q:Gt</a></li>
+         <li><a href="index.html#Q:Gte">Q:Gte</a></li>
+         <li><a href="index.html#Q:Lt">Q:Lt</a></li>
+         <li><a href="index.html#Q:Lte">Q:Lte</a></li>
+         <li><a href="index.html#Q:Icase">Q:Icase</a></li>
+         <li><a href="index.html#Q:Begin">Q:Begin</a></li>
+         <li><a href="index.html#Q:In">Q:In</a></li>
+         <li><a href="index.html#Q:NotIn">Q:NotIn</a></li>
+         <li><a href="index.html#Q:Bt">Q:Bt</a></li>
+         <li><a href="index.html#Q:StrAnd">Q:StrAnd</a></li>
+         <li><a href="index.html#Q:StrOr">Q:StrOr</a></li>
+         <li><a href="index.html#Q:Inc">Q:Inc</a></li>
+         <li><a href="index.html#Q:Set">Q:Set</a></li>
+         <li><a href="index.html#Q:AddToSet">Q:AddToSet</a></li>
+         <li><a href="index.html#Q:AddToSetAll">Q:AddToSetAll</a></li>
+         <li><a href="index.html#Q:Pull">Q:Pull</a></li>
+         <li><a href="index.html#Q:PullAll">Q:PullAll</a></li>
+         <li><a href="index.html#Q:Upsert">Q:Upsert</a></li>
+         <li><a href="index.html#Q:Upsert">Q:Upsert</a></li>
+         <li><a href="index.html#Q:DropAll">Q:DropAll</a></li>
+         <li><a href="index.html#Q:Join">Q:Join</a></li>
+         <li><a href="index.html#Q:Or">Q:Or</a></li>
+         <li><a href="index.html#Q:Skip">Q:Skip</a></li>
+         <li><a href="index.html#Q:Skip">Q:Skip</a></li>
+         <li><a href="index.html#Q:Max">Q:Max</a></li>
+         <li><a href="index.html#Q:OrderBy">Q:OrderBy</a></li>
+         <li><a href="index.html#Q:Fields">Q:Fields</a></li>
+         <li><a href="index.html#Q:Fields">Q:Fields</a></li>
+         <li><a href="index.html#Q:NotFields">Q:NotFields</a></li>
+    </ul>
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">Q(<span class="string">"foo"</span>, <span class="string">"bar"</span>)</pre></li>
+        <li><pre class="example">Q(<span class="string">"likes"</span>, <span class="string">"toys"</span>):OrderBy(<span class="string">"name asc"</span>, <span class="string">"age desc"</span>)</pre></li>
+        <li><pre class="example">Q(<span class="string">"name"</span>, <span class="string">"Andy"</span>):F(<span class="string">"_id"</span>):Eq(<span class="string">"510f7fa91ad6270a00000000"</span>):F(<span class="string">"age"</span>):Gt(<span class="number">20</span>):Lt(<span class="number">40</span>):F(<span class="string">"score"</span>):In({ <span class="number">11</span>, <span class="number">22.12333</span>, <span class="number">1362835380447</span>, db.toNull() }):Max(<span class="number">232</span>)</pre></li>
+        <li><pre class="example">Q():Or(Q(<span class="string">"foo"</span>, <span class="string">"bar"</span>), Q(<span class="string">"foo"</span>, <span class="string">"bar6"</span>)):OrderBy({ foo = <span class="number">1</span> })</pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "DB"></a>
+    <strong>DB</strong>
+    </dt>
+    <dd>
+    Database itself.
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "RS"></a>
+    <strong>RS</strong>
+    </dt>
+    <dd>
+
+<p>Result set cursor object.
+ Usage:</p>
+<pre><code>#res - length of result set
+res[i] - BSON representations of object as lua string
+res:object(i) - Lua table constructed from BSON data
+res:field(i, &lt;field name&gt;) - Lua value of fetched BSON object
+res() - Creates iterator for pairs (obj, idx)
+      where obj - Lua table constructed from BSON data
+            idx - Index of fetched object in the result set
+</code></pre>
+
+<p> Examples:</p>
+<pre><code>for i = 1, #res do
+  local ob = res:object(i)
+  ...
+end
+</code></pre>
+
+<p> OR</p>
+
+<pre><code>for i = 1, #res do
+  res:field(i, "json field name")
+  ...
+end
+</code></pre>
+
+<p> OR</p>
+
+<pre><code>for vobj, idx in res() do
+  -- vobj is a lua table representation of fetched json object
+  vobj["json field name"]
+  ...
+end
+</code></pre>
+
+
+
+
+
+    <h3>see also:</h3>
+    <ul>
+         <li><a href="index.html#RS:object">RS:object</a></li>
+         <li><a href="index.html#RS:field">RS:field</a></li>
+    </ul>
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.3</a></i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

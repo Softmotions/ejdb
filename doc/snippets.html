@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Intro snippets &mdash; EJDB</title>
+    
+<link rel="stylesheet" href="../_static/theme.css" type="text/css"/>
+<link rel="stylesheet" href="../_static/pygments.css" type="text/css"/>
+    <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="EJDB" href="../index.html"/>
+    <link rel="next" title="Installation" href="install/index.html"/>
+    <link rel="prev" title="Changelog" href="../news.html"/> 
+</head>
+<body role="document">
+<div id="toc-modal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4>Table Of Contents</h4>
+
+        <div class="page-content">
+            <ul>
+<li><a class="reference internal" href="#">Intro snippets</a><ul>
+<li><a class="reference internal" href="#c-c">C/C++</a></li>
+<li><a class="reference internal" href="#nodejs">Nodejs</a></li>
+<li><a class="reference internal" href="#python">Python</a></li>
+<li><a class="reference internal" href="#lua">Lua</a></li>
+<li><a class="reference internal" href="#ruby">Ruby</a></li>
+<li><a class="reference internal" href="#c">C#</a></li>
+<li><a class="reference internal" href="#go">Go</a></li>
+<li><a class="reference internal" href="#other-third-party-bindings">Other third-party bindings</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect btn-flat ">Close</a>
+    </div>
+</div>
+<header style="margin-bottom: 20px">
+    <nav id="nav">
+        <div class="nav-wrapper">
+            <a href="../index.html">
+                <img class="brand-logo" src="../_static/ejdb.png" alt="Logo"/>
+            </a>
+            <a href="#" data-activates="nav-mobile-sidebar" class="button-collapse"><i
+                    class="mdi-navigation-menu"></i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+            <ul class="side-nav" id="nav-mobile-sidebar">
+                
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<div class="row">
+    <div id="sidebar" class="col s12 m4 l3 push-m8 push-l9">
+<div class="row" style="margin: 0" id="searchbox">
+    <form class="col s12 no-padding" role="search" action="../search.html" method="get">
+        <div class="input-field">
+            <input id="search" type="search" name="q" required>
+            <label for="search" class="">Quick search</label>
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div id="sidetoc">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../news.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#ejdb-v1-2-11-released">EJDB v1.2.11 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#ejdb-v1-2-10-released">EJDB v1.2.10 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#ejdb-v1-2-9-released">EJDB v1.2.9 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#ejdb-v1-2-8-released">EJDB v1.2.8 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../news.html#archived">Archived</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Intro snippets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#c-c">C/C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nodejs">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#c">C#</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#go">Go</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#other-third-party-bindings">Other third-party bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install/index.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install/ubuntu.html">Ubuntu/Debian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install/osx.html">OSX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install/windows.html">Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install/archives.html">EJDB binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install/building.html">Building from sources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command line interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#program-options">Program options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#usage-demo">Usage demo</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ql/ql.html">Query language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ql/ql.html#querying">Querying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql/ql.html#query-hints">Query hints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql/ql.html#data-manipulation">Data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql/ql.html#do-action-directive">$do action directive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql/ql.html#some-performance-considerations">Some performance considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql/ql.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ql/joins.html">Collection joins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ql/joins.html#simple-joins-showcase">Simple joins showcase</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="internals/index.html">EJDB Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="internals/index.html#tokyo-cabinet">Tokyo Cabinet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals/index.html#document-storage-model">Document storage model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals/index.html#indexing">Indexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals/index.html#locking">Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internals/index.html#transactions">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bindings/index.html">Language bindings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bindings/nodejs/index.html">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-python">Python</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-java">Java</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-csharp">.Net (C#)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bindings/thirdparty.html">Third-party language bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="iexp/index.html">Import/Export database data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="iexp/index.html#c-api">C API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iexp/index.html#export-command-spec">Export command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iexp/index.html#import-command-spec">Import command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iexp/index.html#command-response">Command response</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="limitations.html">Known limitations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="limitations.html#tokyo-cabinet-issues">Tokyo Cabinet issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="limitations.html#multiprocess-database-access">Multiprocess database access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="limitations.html#indexes">Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="limitations.html#misc">Misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ejdb2/index.html">EJDB2 Roadmap</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ejdb2/index.html#progress">Progress</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mongodb.html">Mongodb compatibility</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mongodb.html#logical-operators">Logical operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mongodb.html#element-level-operators">Element level operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mongodb.html#geospartial-operators">Geospartial operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mongodb.html#array-operators">Array operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mongodb.html#update-operators">Update operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mongodb.html#various-operators">Various operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mongodb.html#ejdb-specific-query-operators">EJDB specific query operators</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+    </div>
+    <div class="page-content-wrapper col s12 m8 l9 pull-m4 pull-l3">
+        <div id="page-content-block">
+            
+            <div class="rel-nav">
+                <a href="../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+                <a href="../news.html"
+                   title="Changelog"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="install/index.html"
+                   title="Installation"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            <div class="page-content">
+                
+  <div class="section" id="intro-snippets">
+<h1><a class="toc-backref" href="#id1">Intro snippets</a><a class="headerlink" href="#intro-snippets" title="Permalink to this headline">¶</a></h1>
+<p>There is a set of sample snippets demonstrating EJDB API which are used in various languages.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#intro-snippets" id="id1">Intro snippets</a><ul>
+<li><a class="reference internal" href="#c-c" id="id2">C/C++</a></li>
+<li><a class="reference internal" href="#nodejs" id="id3">Nodejs</a></li>
+<li><a class="reference internal" href="#python" id="id4">Python</a></li>
+<li><a class="reference internal" href="#lua" id="id5">Lua</a></li>
+<li><a class="reference internal" href="#ruby" id="id6">Ruby</a></li>
+<li><a class="reference internal" href="#c" id="id7">C#</a></li>
+<li><a class="reference internal" href="#go" id="id8">Go</a></li>
+<li><a class="reference internal" href="#other-third-party-bindings" id="id9">Other third-party bindings</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="c-c">
+<h2><a class="toc-backref" href="#id2">C/C++</a><a class="headerlink" href="#c-c" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;ejdb/ejdb.h&gt;</span><span class="cp"></span>
+
+<span class="k">static</span> <span class="n">EJDB</span> <span class="o">*</span><span class="n">jb</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">jb</span> <span class="o">=</span> <span class="n">ejdbnew</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">ejdbopen</span><span class="p">(</span><span class="n">jb</span><span class="p">,</span> <span class="s">&quot;addressbook&quot;</span><span class="p">,</span>
+                  <span class="n">JBOWRITER</span> <span class="o">|</span> <span class="n">JBOCREAT</span> <span class="o">|</span> <span class="n">JBOTRUNC</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">//Get or create collection &#39;contacts&#39;</span>
+    <span class="n">EJCOLL</span> <span class="o">*</span><span class="n">coll</span> <span class="o">=</span> <span class="n">ejdbcreatecoll</span><span class="p">(</span><span class="n">jb</span><span class="p">,</span> <span class="s">&quot;contacts&quot;</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+    <span class="n">bson</span> <span class="n">bsrec</span><span class="p">;</span>
+    <span class="n">bson_oid_t</span> <span class="n">oid</span><span class="p">;</span>
+
+    <span class="c1">//Insert one record:</span>
+    <span class="c1">//JSON: {&#39;name&#39; : &#39;Bruce&#39;, &#39;phone&#39; : &#39;333-222-333&#39;, &#39;age&#39; : 58}</span>
+    <span class="n">bson_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bsrec</span><span class="p">);</span>
+    <span class="n">bson_append_string</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bsrec</span><span class="p">,</span> <span class="s">&quot;name&quot;</span><span class="p">,</span> <span class="s">&quot;Bruce&quot;</span><span class="p">);</span>
+    <span class="n">bson_append_string</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bsrec</span><span class="p">,</span> <span class="s">&quot;phone&quot;</span><span class="p">,</span> <span class="s">&quot;333-222-333&quot;</span><span class="p">);</span>
+    <span class="n">bson_append_int</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bsrec</span><span class="p">,</span> <span class="s">&quot;age&quot;</span><span class="p">,</span> <span class="mi">58</span><span class="p">);</span>
+    <span class="n">bson_finish</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bsrec</span><span class="p">);</span>
+    <span class="c1">//Save BSON</span>
+    <span class="n">ejdbsavebson</span><span class="p">(</span><span class="n">coll</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">bsrec</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">oid</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Saved Bruce&quot;</span><span class="p">);</span>
+    <span class="n">bson_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bsrec</span><span class="p">);</span>
+
+    <span class="c1">//Now execute query</span>
+    <span class="c1">//QUERY: {&#39;name&#39; : {&#39;$begin&#39; : &#39;Bru&#39;}}</span>
+    <span class="c1">//Name starts with &#39;Bru&#39; string</span>
+
+    <span class="n">bson</span> <span class="n">bq1</span><span class="p">;</span>
+    <span class="n">bson_init_as_query</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bq1</span><span class="p">);</span>
+    <span class="n">bson_append_start_object</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bq1</span><span class="p">,</span> <span class="s">&quot;name&quot;</span><span class="p">);</span>
+    <span class="n">bson_append_string</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bq1</span><span class="p">,</span> <span class="s">&quot;$begin&quot;</span><span class="p">,</span> <span class="s">&quot;Bru&quot;</span><span class="p">);</span>
+    <span class="n">bson_append_finish_object</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bq1</span><span class="p">);</span>
+    <span class="n">bson_finish</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bq1</span><span class="p">);</span>
+
+    <span class="n">EJQ</span> <span class="o">*</span><span class="n">q1</span> <span class="o">=</span> <span class="n">ejdbcreatequery</span><span class="p">(</span><span class="n">jb</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">bq1</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+    <span class="kt">uint32_t</span> <span class="n">count</span><span class="p">;</span>
+    <span class="n">TCLIST</span> <span class="o">*</span><span class="n">res</span> <span class="o">=</span> <span class="n">ejdbqryexecute</span><span class="p">(</span><span class="n">coll</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">count</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">Records found: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">count</span><span class="p">);</span>
+
+    <span class="c1">//Now print the result set records</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">TCLISTNUM</span><span class="p">(</span><span class="n">res</span><span class="p">);</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">void</span> <span class="o">*</span><span class="n">bsdata</span> <span class="o">=</span> <span class="n">TCLISTVALPTR</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+        <span class="n">bson_print_raw</span><span class="p">(</span><span class="n">bsdata</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+
+    <span class="c1">//Dispose result set</span>
+    <span class="n">tclistdel</span><span class="p">(</span><span class="n">res</span><span class="p">);</span>
+
+    <span class="c1">//Dispose query</span>
+    <span class="n">ejdbquerydel</span><span class="p">(</span><span class="n">q1</span><span class="p">);</span>
+    <span class="n">bson_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">bq1</span><span class="p">);</span>
+
+    <span class="c1">//Close database</span>
+    <span class="n">ejdbclose</span><span class="p">(</span><span class="n">jb</span><span class="p">);</span>
+    <span class="n">ejdbdel</span><span class="p">(</span><span class="n">jb</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>You can save this code in csnippet.c then build:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>gcc -std<span class="o">=</span>c99 -Wall -pedantic  -c -o csnippet.o csnippet.c
+gcc -o csnippet csnippet.o -ltcejdb
+</pre></div>
+</div>
+</div>
+<div class="section" id="nodejs">
+<h2><a class="toc-backref" href="#id3">Nodejs</a><a class="headerlink" href="#nodejs" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">EJDB</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;ejdb&quot;</span><span class="p">);</span>
+<span class="c1">//Open zoo DB</span>
+<span class="kd">var</span> <span class="nx">jb</span> <span class="o">=</span> <span class="nx">EJDB</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s2">&quot;zoo&quot;</span><span class="p">,</span>
+                    <span class="nx">EJDB</span><span class="p">.</span><span class="nx">DEFAULT_OPEN_MODE</span> <span class="o">|</span> <span class="nx">EJDB</span><span class="p">.</span><span class="nx">JBOTRUNC</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">parrot1</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span> <span class="o">:</span> <span class="s2">&quot;Grenny&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span> <span class="o">:</span> <span class="s2">&quot;African Grey&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;male&quot;</span> <span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="s2">&quot;age&quot;</span> <span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;birthdate&quot;</span> <span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(),</span>
+    <span class="s2">&quot;likes&quot;</span> <span class="o">:</span> <span class="p">[</span><span class="s2">&quot;green color&quot;</span><span class="p">,</span> <span class="s2">&quot;night&quot;</span><span class="p">,</span> <span class="s2">&quot;toys&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;extra1&quot;</span> <span class="o">:</span> <span class="kc">null</span>
+<span class="p">};</span>
+<span class="kd">var</span> <span class="nx">parrot2</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span> <span class="o">:</span> <span class="s2">&quot;Bounty&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span> <span class="o">:</span> <span class="s2">&quot;Cockatoo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;male&quot;</span> <span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="s2">&quot;age&quot;</span> <span class="o">:</span> <span class="mi">15</span><span class="p">,</span>
+    <span class="s2">&quot;birthdate&quot;</span> <span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(),</span>
+    <span class="s2">&quot;likes&quot;</span> <span class="o">:</span> <span class="p">[</span><span class="s2">&quot;sugar cane&quot;</span><span class="p">]</span>
+<span class="p">};</span>
+
+<span class="nx">jb</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s2">&quot;parrots&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nx">parrot1</span><span class="p">,</span> <span class="nx">parrot2</span><span class="p">],</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">oids</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Grenny OID: &quot;</span> <span class="o">+</span> <span class="nx">parrot1</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">]);</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Bounty OID: &quot;</span> <span class="o">+</span> <span class="nx">parrot2</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">]);</span>
+
+    <span class="nx">jb</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s2">&quot;parrots&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;likes&quot;</span> <span class="o">:</span> <span class="s2">&quot;toys&quot;</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;$orderby&quot;</span> <span class="o">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span> <span class="o">:</span> <span class="mi">1</span><span class="p">}},</span>
+            <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">cursor</span><span class="p">,</span> <span class="nx">count</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+                    <span class="k">return</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Found &quot;</span> <span class="o">+</span> <span class="nx">count</span> <span class="o">+</span> <span class="s2">&quot; parrots&quot;</span><span class="p">);</span>
+                <span class="k">while</span> <span class="p">(</span><span class="nx">cursor</span><span class="p">.</span><span class="nx">next</span><span class="p">())</span> <span class="p">{</span>
+                    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">cursor</span><span class="p">.</span><span class="nx">field</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; likes toys!&quot;</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="c1">//It&#39;s not mandatory to close cursor explicitly</span>
+                <span class="nx">cursor</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
+                <span class="nx">jb</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span> <span class="c1">//Close the database</span>
+            <span class="p">});</span>
+<span class="p">});</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="bindings/nodejs/index.html#nodejs"><span class="std std-ref">Nodejs language binding</span></a></p>
+</div>
+</div>
+<div class="section" id="python">
+<h2><a class="toc-backref" href="#id4">Python</a><a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyejdb</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1">#Open database</span>
+<span class="n">ejdb</span> <span class="o">=</span> <span class="n">pyejdb</span><span class="o">.</span><span class="n">EJDB</span><span class="p">(</span><span class="s2">&quot;zoo&quot;</span><span class="p">,</span> <span class="n">pyejdb</span><span class="o">.</span><span class="n">DEFAULT_OPEN_MODE</span> <span class="o">|</span> <span class="n">pyejdb</span><span class="o">.</span><span class="n">JBOTRUNC</span><span class="p">)</span>
+
+<span class="n">parrot1</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Grenny&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;African Grey&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;male&quot;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+    <span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;birthdate&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">(),</span>
+    <span class="s2">&quot;likes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;green color&quot;</span><span class="p">,</span> <span class="s2">&quot;night&quot;</span><span class="p">,</span> <span class="s2">&quot;toys&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;extra1&quot;</span><span class="p">:</span> <span class="bp">None</span>
+<span class="p">}</span>
+<span class="n">parrot2</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Bounty&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;Cockatoo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;male&quot;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+    <span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span>
+    <span class="s2">&quot;birthdate&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">(),</span>
+    <span class="s2">&quot;likes&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sugar cane&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;extra1&quot;</span><span class="p">:</span> <span class="bp">None</span>
+<span class="p">}</span>
+<span class="n">ejdb</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;parrots2&quot;</span><span class="p">,</span> <span class="n">parrot1</span><span class="p">,</span> <span class="n">parrot2</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">ejdb</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;parrots2&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;likes&quot;</span> <span class="p">:</span> <span class="s2">&quot;toys&quot;</span><span class="p">},</span>
+          <span class="n">hints</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;$orderby&quot;</span> <span class="p">:</span> <span class="p">[(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]})</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;found </span><span class="si">%s</span><span class="s2"> parrots&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">cur</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> likes toys!&quot;</span> <span class="o">%</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+
+<span class="n">ejdb</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="https://github.com/Softmotions/ejdb-python">Python language binding</a></p>
+</div>
+</div>
+<div class="section" id="lua">
+<h2><a class="toc-backref" href="#id5">Lua</a><a class="headerlink" href="#lua" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-lua"><div class="highlight"><pre><span></span><span class="kd">local</span> <span class="n">ejdb</span> <span class="o">=</span> <span class="nb">require</span><span class="p">(</span><span class="s2">&quot;ejdb&quot;</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">inspect</span> <span class="o">=</span> <span class="nb">require</span><span class="p">(</span><span class="s2">&quot;ejdb.inspect&quot;</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">ejdb</span><span class="p">.</span><span class="n">Q</span>
+
+<span class="c1">-- Used modes:</span>
+<span class="c1">-- &#39;r&#39; - read</span>
+<span class="c1">-- &#39;w&#39; - write</span>
+<span class="c1">-- &#39;c&#39; - create db if not exists</span>
+<span class="c1">-- &#39;t&#39; - truncate existing db</span>
+<span class="kd">local</span> <span class="n">db</span> <span class="o">=</span> <span class="n">ejdb</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;zoo&quot;</span><span class="p">,</span> <span class="s2">&quot;rwct&quot;</span><span class="p">)</span>
+
+<span class="c1">-- Unordered lua table</span>
+<span class="kd">local</span> <span class="n">parrot1</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Grenny&quot;</span><span class="p">,</span>
+  <span class="nb">type</span> <span class="o">=</span> <span class="s2">&quot;African Grey&quot;</span><span class="p">,</span>
+  <span class="n">male</span> <span class="o">=</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="n">age</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="n">birthhdate</span> <span class="o">=</span> <span class="n">ejdb</span><span class="p">.</span><span class="n">toDateNow</span><span class="p">(),</span>
+  <span class="n">likes</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">&quot;green color&quot;</span><span class="p">,</span> <span class="s2">&quot;night&quot;</span><span class="p">,</span> <span class="s2">&quot;toys&quot;</span> <span class="p">},</span>
+  <span class="n">extra1</span> <span class="o">=</span> <span class="n">ejdb</span><span class="p">.</span><span class="n">toNull</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="c1">-- Preserve order of BSON keys</span>
+<span class="kd">local</span> <span class="n">parrot2</span> <span class="o">=</span> <span class="n">Q</span><span class="p">();</span>
+<span class="n">parrot2</span><span class="p">:</span><span class="n">KV</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;Bounty&quot;</span><span class="p">):</span><span class="n">KV</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;Cockatoo&quot;</span><span class="p">):</span><span class="n">KV</span><span class="p">(</span><span class="s2">&quot;male&quot;</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+<span class="n">parrot2</span><span class="p">:</span><span class="n">KV</span><span class="p">(</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="mi">15</span><span class="p">):</span><span class="n">KV</span><span class="p">(</span><span class="s2">&quot;birthdate&quot;</span><span class="p">,</span>
+  <span class="n">ejdb</span><span class="p">.</span><span class="n">toDate</span><span class="p">({</span> <span class="n">year</span> <span class="o">=</span> <span class="mi">2013</span><span class="p">,</span> <span class="n">month</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">day</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">hour</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sec</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">}))</span>
+<span class="n">parrot2</span><span class="p">:</span><span class="n">KV</span><span class="p">(</span><span class="s2">&quot;likes&quot;</span><span class="p">,</span> <span class="p">{</span> <span class="s2">&quot;sugar cane&quot;</span> <span class="p">}):</span><span class="n">KV</span><span class="p">(</span><span class="s2">&quot;extra1&quot;</span><span class="p">,</span> <span class="n">ejdb</span><span class="p">.</span><span class="n">toNull</span><span class="p">())</span>
+
+<span class="c1">--IF YOU WANT SOME DATA INSPECTIONS:</span>
+<span class="c1">--print(ejdb.print_bson(parrot2:toBSON()))</span>
+<span class="c1">--local obj = ejdb.from_bson(parrot2:toBSON())</span>
+<span class="c1">--print(inspect(obj));</span>
+
+<span class="n">db</span><span class="p">:</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;parrots2&quot;</span><span class="p">,</span> <span class="n">parrot1</span><span class="p">)</span>
+<span class="n">db</span><span class="p">:</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;parrots2&quot;</span><span class="p">,</span> <span class="n">parrot2</span><span class="p">)</span>
+
+<span class="c1">-- Below two equivalent queries:</span>
+<span class="c1">-- Q1</span>
+<span class="kd">local</span> <span class="n">res</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">log</span> <span class="o">=</span>
+<span class="n">db</span><span class="p">:</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;parrots2&quot;</span><span class="p">,</span> <span class="n">Q</span><span class="p">(</span><span class="s2">&quot;likes&quot;</span><span class="p">,</span> <span class="s2">&quot;toys&quot;</span><span class="p">):</span><span class="n">OrderBy</span><span class="p">(</span><span class="s2">&quot;name asc&quot;</span><span class="p">,</span> <span class="s2">&quot;age desc&quot;</span><span class="p">))</span>
+<span class="kr">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">#</span><span class="n">res</span> <span class="kr">do</span> <span class="c1">-- iterate one</span>
+  <span class="kd">local</span> <span class="n">ob</span> <span class="o">=</span> <span class="n">res</span><span class="p">:</span><span class="n">object</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span> <span class="o">..</span> <span class="n">ob</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">..</span> <span class="s2">&quot; likes toys #1&quot;</span><span class="p">)</span>
+<span class="kr">end</span>
+
+<span class="c1">-- Q2</span>
+<span class="kd">local</span> <span class="n">res</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">log</span> <span class="o">=</span>
+<span class="n">db</span><span class="p">:</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;parrots2&quot;</span><span class="p">,</span> <span class="n">Q</span><span class="p">():</span><span class="n">F</span><span class="p">(</span><span class="s2">&quot;likes&quot;</span><span class="p">):</span><span class="n">Eq</span><span class="p">(</span><span class="s2">&quot;toys&quot;</span><span class="p">):</span><span class="n">OrderBy</span><span class="p">({</span> <span class="n">name</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">},</span> <span class="p">{</span> <span class="n">age</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="p">}))</span>
+<span class="kr">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">#</span><span class="n">res</span> <span class="kr">do</span> <span class="c1">-- iterate one</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span> <span class="o">..</span> <span class="n">res</span><span class="p">:</span><span class="n">field</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="o">..</span> <span class="s2">&quot; likes toys #2&quot;</span><span class="p">)</span>
+<span class="kr">end</span>
+
+<span class="c1">-- Second way to iterate</span>
+<span class="kr">for</span> <span class="n">vobj</span><span class="p">,</span> <span class="n">idx</span> <span class="kr">in</span> <span class="n">res</span><span class="p">()</span> <span class="kr">do</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span> <span class="o">..</span> <span class="n">vobj</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">..</span> <span class="s2">&quot; likes toys #3&quot;</span><span class="p">)</span>
+<span class="kr">end</span>
+
+<span class="n">db</span><span class="p">:</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="https://github.com/Softmotions/ejdb-lua">Lua language binding</a></p>
+</div>
+</div>
+<div class="section" id="ruby">
+<h2><a class="toc-backref" href="#id6">Ruby</a><a class="headerlink" href="#ruby" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-ruby"><div class="highlight"><pre><span></span><span class="nb">require</span> <span class="s2">&quot;rbejdb&quot;</span>
+
+<span class="c1">#Open zoo DB</span>
+<span class="n">jb</span> <span class="o">=</span> <span class="no">EJDB</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;zoo&quot;</span><span class="p">,</span> <span class="no">EJDB</span><span class="o">::</span><span class="no">DEFAULT_OPEN_MODE</span> <span class="o">|</span> <span class="no">EJDB</span><span class="o">::</span><span class="no">JBOTRUNC</span><span class="p">)</span>
+
+<span class="n">parrot1</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;Grenny&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;African Grey&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;male&quot;</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span>
+    <span class="s2">&quot;age&quot;</span> <span class="o">=&gt;</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;birthdate&quot;</span> <span class="o">=&gt;</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="p">,</span>
+    <span class="s2">&quot;likes&quot;</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="s2">&quot;green color&quot;</span><span class="p">,</span> <span class="s2">&quot;night&quot;</span><span class="p">,</span> <span class="s2">&quot;toys&quot;</span><span class="o">]</span><span class="p">,</span>
+    <span class="s2">&quot;extra1&quot;</span> <span class="o">=&gt;</span> <span class="kp">nil</span>
+<span class="p">}</span>
+<span class="n">parrot2</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;Bounty&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;Cockatoo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;male&quot;</span> <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">,</span>
+    <span class="s2">&quot;age&quot;</span> <span class="o">=&gt;</span> <span class="mi">15</span><span class="p">,</span>
+    <span class="s2">&quot;birthdate&quot;</span> <span class="o">=&gt;</span> <span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="p">,</span>
+    <span class="s2">&quot;likes&quot;</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="s2">&quot;sugar cane&quot;</span><span class="o">]</span><span class="p">,</span>
+    <span class="s2">&quot;extra1&quot;</span> <span class="o">=&gt;</span> <span class="kp">nil</span>
+<span class="p">}</span>
+
+<span class="n">jb</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;parrots&quot;</span><span class="p">,</span> <span class="n">parrot1</span><span class="p">,</span> <span class="n">parrot2</span><span class="p">)</span>
+<span class="nb">puts</span> <span class="s2">&quot;Grenny OID: </span><span class="si">#{</span><span class="n">parrot1</span><span class="o">[</span><span class="s2">&quot;_id&quot;</span><span class="o">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="nb">puts</span> <span class="s2">&quot;Bounty OID: </span><span class="si">#{</span><span class="n">parrot2</span><span class="o">[</span><span class="s2">&quot;_id&quot;</span><span class="o">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">jb</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;parrots&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;likes&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;toys&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;$orderby&quot;</span> <span class="o">=&gt;</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span> <span class="o">=&gt;</span> <span class="mi">1</span><span class="p">}})</span>
+
+<span class="nb">puts</span> <span class="s2">&quot;Found </span><span class="si">#{</span><span class="n">results</span><span class="o">.</span><span class="n">count</span><span class="si">}</span><span class="s2"> parrots&quot;</span>
+
+<span class="n">results</span><span class="o">.</span><span class="n">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">res</span><span class="o">|</span>
+  <span class="nb">puts</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">res</span><span class="o">[</span><span class="s1">&#39;name&#39;</span><span class="o">]</span><span class="si">}</span><span class="s2"> likes toys!&quot;</span>
+<span class="p">}</span>
+
+<span class="n">results</span><span class="o">.</span><span class="n">close</span> <span class="c1">#It&#39;s not mandatory to close cursor explicitly</span>
+<span class="n">jb</span><span class="o">.</span><span class="n">close</span> <span class="c1">#Close the database</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="https://github.com/Softmotions/ejdb-ruby">Ruby language binding</a></p>
+</div>
+</div>
+<div class="section" id="c">
+<h2><a class="toc-backref" href="#id7">C#</a><a class="headerlink" href="#c" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c#"><div class="highlight"><pre><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Ejdb.DB</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Ejdb.BSON</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">sample</span> <span class="p">{</span>
+
+    <span class="k">class</span> <span class="nc">MainClass</span> <span class="p">{</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">jb</span> <span class="p">=</span> <span class="k">new</span> <span class="n">EJDB</span><span class="p">(</span><span class="s">&quot;zoo&quot;</span><span class="p">,</span>
+                               <span class="n">EJDB</span><span class="p">.</span><span class="n">DEFAULT_OPEN_MODE</span> <span class="p">|</span> <span class="n">EJDB</span><span class="p">.</span><span class="n">JBOTRUNC</span><span class="p">);</span>
+            <span class="n">jb</span><span class="p">.</span><span class="n">ThrowExceptionOnFail</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">parrot1</span> <span class="p">=</span> <span class="n">BSONDocument</span><span class="p">.</span><span class="n">ValueOf</span><span class="p">(</span><span class="k">new</span> <span class="p">{</span>
+                <span class="n">name</span> <span class="p">=</span> <span class="s">&quot;Grenny&quot;</span><span class="p">,</span>
+                <span class="n">type</span> <span class="p">=</span> <span class="s">&quot;African Grey&quot;</span><span class="p">,</span>
+                <span class="n">male</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span>
+                <span class="n">age</span> <span class="p">=</span> <span class="m">1</span><span class="p">,</span>
+                <span class="n">birthdate</span> <span class="p">=</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">,</span>
+                <span class="n">likes</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">string</span><span class="p">[]</span> <span class="p">{</span> <span class="s">&quot;green color&quot;</span><span class="p">,</span> <span class="s">&quot;night&quot;</span><span class="p">,</span> <span class="s">&quot;toys&quot;</span> <span class="p">},</span>
+                <span class="n">extra</span> <span class="p">=</span> <span class="n">BSONull</span><span class="p">.</span><span class="n">VALUE</span>
+            <span class="p">});</span>
+
+            <span class="kt">var</span> <span class="n">parrot2</span> <span class="p">=</span> <span class="n">BSONDocument</span><span class="p">.</span><span class="n">ValueOf</span><span class="p">(</span><span class="k">new</span> <span class="p">{</span>
+                <span class="n">name</span> <span class="p">=</span> <span class="s">&quot;Bounty&quot;</span><span class="p">,</span>
+                <span class="n">type</span> <span class="p">=</span> <span class="s">&quot;Cockatoo&quot;</span><span class="p">,</span>
+                <span class="n">male</span> <span class="p">=</span> <span class="k">false</span><span class="p">,</span>
+                <span class="n">age</span> <span class="p">=</span> <span class="m">15</span><span class="p">,</span>
+                <span class="n">birthdate</span> <span class="p">=</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">,</span>
+                <span class="n">likes</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">string</span><span class="p">[]</span> <span class="p">{</span> <span class="s">&quot;sugar cane&quot;</span> <span class="p">}</span>
+            <span class="p">});</span>
+
+            <span class="n">jb</span><span class="p">.</span><span class="n">Save</span><span class="p">(</span><span class="s">&quot;parrots&quot;</span><span class="p">,</span> <span class="n">parrot1</span><span class="p">,</span> <span class="n">parrot2</span><span class="p">);</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Grenny OID: &quot;</span> <span class="p">+</span> <span class="n">parrot1</span><span class="p">[</span><span class="s">&quot;_id&quot;</span><span class="p">]);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Bounty OID: &quot;</span> <span class="p">+</span> <span class="n">parrot2</span><span class="p">[</span><span class="s">&quot;_id&quot;</span><span class="p">]);</span>
+
+            <span class="kt">var</span> <span class="n">q</span> <span class="p">=</span> <span class="n">jb</span><span class="p">.</span><span class="n">CreateQuery</span><span class="p">(</span><span class="k">new</span> <span class="p">{</span>
+                <span class="n">likes</span> <span class="p">=</span> <span class="s">&quot;toys&quot;</span>
+            <span class="p">},</span> <span class="s">&quot;parrots&quot;</span><span class="p">).</span><span class="n">OrderBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">cur</span> <span class="p">=</span> <span class="n">q</span><span class="p">.</span><span class="n">Find</span><span class="p">())</span> <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">&quot;Found &quot;</span> <span class="p">+</span> <span class="n">cur</span><span class="p">.</span><span class="n">Length</span> <span class="p">+</span> <span class="s">&quot; parrots&quot;</span><span class="p">);</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">e</span> <span class="k">in</span> <span class="n">cur</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="c1">//fetch the `name` and the first element</span>
+                    <span class="c1">// of likes array from the current BSON iterator.</span>
+                    <span class="c1">//alternatively you can fetch whole</span>
+                    <span class="c1">// document from the iterator: `e.ToBSONDocument()`</span>
+                    <span class="n">BSONDocument</span> <span class="n">rdoc</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="n">ToBSONDocument</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">,</span> <span class="s">&quot;likes.0&quot;</span><span class="p">);</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="n">Format</span><span class="p">(</span><span class="s">&quot;{0} likes the &#39;{1}&#39;&quot;</span><span class="p">,</span>
+                                      <span class="n">rdoc</span><span class="p">[</span><span class="s">&quot;name&quot;</span><span class="p">],</span> <span class="n">rdoc</span><span class="p">[</span><span class="s">&quot;likes.0&quot;</span><span class="p">]));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">q</span><span class="p">.</span><span class="n">Dispose</span><span class="p">();</span>
+            <span class="n">jb</span><span class="p">.</span><span class="n">Dispose</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="https://github.com/Softmotions/ejdb-csharp">C# language binding</a></p>
+</div>
+<div class="highlight-java"><div class="highlight"><pre><span></span><span class="kn">package</span> <span class="nn">org.ejdb.sample1</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">org.ejdb.bson.BSONObject</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.ejdb.driver.EJDB</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.ejdb.driver.EJDBCollection</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.ejdb.driver.EJDBQueryBuilder</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.ejdb.driver.EJDBResultSet</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">java.util.Calendar</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.Date</span><span class="o">;</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * @author Tyutyunkov Vyacheslav (tve@softmotions.com)</span>
+<span class="cm"> * @version $Id$</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Main</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">EJDB</span> <span class="n">ejdb</span> <span class="o">=</span> <span class="k">new</span> <span class="n">EJDB</span><span class="o">();</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="c1">// Used modes:</span>
+            <span class="c1">//  - read</span>
+            <span class="c1">//  - write</span>
+            <span class="c1">//  - create db if not exists</span>
+            <span class="c1">//  - truncate existing db</span>
+            <span class="n">ejdb</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="s">&quot;zoo&quot;</span><span class="o">,</span> <span class="n">EJDB</span><span class="o">.</span><span class="na">JBOREADER</span> <span class="o">|</span> <span class="n">EJDB</span><span class="o">.</span><span class="na">JBOWRITER</span> <span class="o">|</span>
+                             <span class="n">EJDB</span><span class="o">.</span><span class="na">JBOCREAT</span> <span class="o">|</span> <span class="n">EJDB</span><span class="o">.</span><span class="na">JBOTRUNC</span><span class="o">);</span>
+
+            <span class="n">BSONObject</span> <span class="n">parrot1</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BSONObject</span><span class="o">(</span><span class="s">&quot;name&quot;</span><span class="o">,</span> <span class="s">&quot;Grenny&quot;</span><span class="o">)</span>
+                    <span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;type&quot;</span><span class="o">,</span> <span class="s">&quot;African Grey&quot;</span><span class="o">)</span>
+                    <span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;male&quot;</span><span class="o">,</span> <span class="kc">true</span><span class="o">)</span>
+                    <span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;age&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">)</span>
+                    <span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;birthhdate&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">Date</span><span class="o">())</span>
+                    <span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;likes&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">String</span><span class="o">[]{</span><span class="s">&quot;green color&quot;</span><span class="o">,</span> <span class="s">&quot;night&quot;</span><span class="o">,</span> <span class="s">&quot;toys&quot;</span><span class="o">})</span>
+                    <span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;extra1&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+
+            <span class="n">Calendar</span> <span class="n">calendar</span> <span class="o">=</span> <span class="n">Calendar</span><span class="o">.</span><span class="na">getInstance</span><span class="o">();</span>
+            <span class="n">calendar</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="mi">2013</span><span class="o">,</span> <span class="mi">1</span><span class="o">,</span> <span class="mi">1</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+
+            <span class="n">BSONObject</span> <span class="n">parrot2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BSONObject</span><span class="o">();</span>
+            <span class="n">parrot2</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;name&quot;</span><span class="o">,</span> <span class="s">&quot;Bounty&quot;</span><span class="o">);</span>
+            <span class="n">parrot2</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;type&quot;</span><span class="o">,</span> <span class="s">&quot;Cockatoo&quot;</span><span class="o">);</span>
+            <span class="n">parrot2</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;male&quot;</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+            <span class="n">parrot2</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;age&quot;</span><span class="o">,</span> <span class="mi">15</span><span class="o">);</span>
+            <span class="n">parrot2</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;birthdate&quot;</span><span class="o">,</span> <span class="n">calendar</span><span class="o">.</span><span class="na">getTime</span><span class="o">());</span>
+            <span class="n">parrot2</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;likes&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">String</span><span class="o">[]{</span><span class="s">&quot;sugar cane&quot;</span><span class="o">});</span>
+            <span class="n">parrot2</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;extra1&quot;</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;parrot1 =\n\t\t&quot;</span> <span class="o">+</span> <span class="n">parrot1</span><span class="o">);</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;parrot2 =\n\t\t&quot;</span> <span class="o">+</span> <span class="n">parrot2</span><span class="o">);</span>
+
+            <span class="n">EJDBCollection</span> <span class="n">parrots</span> <span class="o">=</span> <span class="n">ejdb</span><span class="o">.</span><span class="na">getCollection</span><span class="o">(</span><span class="s">&quot;parrots&quot;</span><span class="o">);</span>
+
+            <span class="c1">// saving</span>
+            <span class="n">parrots</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="n">parrot1</span><span class="o">);</span>
+            <span class="n">parrots</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="n">parrot2</span><span class="o">);</span>
+
+            <span class="n">EJDBQueryBuilder</span> <span class="n">qb</span><span class="o">;</span>
+            <span class="n">EJDBResultSet</span> <span class="n">rs</span><span class="o">;</span>
+
+            <span class="c1">// Below two equivalent queries:</span>
+            <span class="c1">// Q1</span>
+            <span class="n">qb</span> <span class="o">=</span> <span class="k">new</span> <span class="n">EJDBQueryBuilder</span><span class="o">();</span>
+            <span class="n">qb</span><span class="o">.</span><span class="na">field</span><span class="o">(</span><span class="s">&quot;likes&quot;</span><span class="o">,</span> <span class="s">&quot;toys&quot;</span><span class="o">)</span>
+                    <span class="o">.</span><span class="na">orderBy</span><span class="o">().</span><span class="na">asc</span><span class="o">(</span><span class="s">&quot;name&quot;</span><span class="o">).</span><span class="na">desc</span><span class="o">(</span><span class="s">&quot;age&quot;</span><span class="o">);</span>
+
+            <span class="n">rs</span> <span class="o">=</span> <span class="n">parrots</span><span class="o">.</span><span class="na">createQuery</span><span class="o">(</span><span class="n">qb</span><span class="o">).</span><span class="na">find</span><span class="o">();</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">();</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Results (Q1): &quot;</span> <span class="o">+</span> <span class="n">rs</span><span class="o">.</span><span class="na">length</span><span class="o">());</span>
+            <span class="k">for</span> <span class="o">(</span><span class="n">BSONObject</span> <span class="n">r</span> <span class="o">:</span> <span class="n">rs</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;\t&quot;</span> <span class="o">+</span> <span class="n">r</span><span class="o">);</span>
+            <span class="o">}</span>
+            <span class="n">rs</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+
+            <span class="c1">// Q2</span>
+            <span class="n">qb</span> <span class="o">=</span> <span class="k">new</span> <span class="n">EJDBQueryBuilder</span><span class="o">();</span>
+            <span class="n">qb</span><span class="o">.</span><span class="na">field</span><span class="o">(</span><span class="s">&quot;likes&quot;</span><span class="o">).</span><span class="na">eq</span><span class="o">(</span><span class="s">&quot;toys&quot;</span><span class="o">)</span>
+                    <span class="o">.</span><span class="na">orderBy</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;name&quot;</span><span class="o">,</span> <span class="kc">true</span><span class="o">).</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;age&quot;</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+
+            <span class="n">rs</span> <span class="o">=</span> <span class="n">parrots</span><span class="o">.</span><span class="na">createQuery</span><span class="o">(</span><span class="n">qb</span><span class="o">).</span><span class="na">find</span><span class="o">();</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">();</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Results (Q2): &quot;</span> <span class="o">+</span> <span class="n">rs</span><span class="o">.</span><span class="na">length</span><span class="o">());</span>
+            <span class="k">for</span> <span class="o">(</span><span class="n">BSONObject</span> <span class="n">r</span> <span class="o">:</span> <span class="n">rs</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;\t&quot;</span> <span class="o">+</span> <span class="n">r</span><span class="o">);</span>
+            <span class="o">}</span>
+
+            <span class="c1">// Second way to iterate</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">();</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Results (Q2): &quot;</span> <span class="o">+</span> <span class="n">rs</span><span class="o">.</span><span class="na">length</span><span class="o">());</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">rs</span><span class="o">.</span><span class="na">length</span><span class="o">();</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;\t&quot;</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s">&quot; =&gt; &quot;</span> <span class="o">+</span> <span class="n">rs</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+            <span class="o">}</span>
+
+            <span class="n">rs</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">ejdb</span><span class="o">.</span><span class="na">isOpen</span><span class="o">())</span> <span class="o">{</span>
+                <span class="n">ejdb</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="https://github.com/Softmotions/ejdb-java">Java language binding</a></p>
+</div>
+</div>
+<div class="section" id="go">
+<h2><a class="toc-backref" href="#id8">Go</a><a class="headerlink" href="#go" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-go"><div class="highlight"><pre><span></span><span class="kn">package</span> <span class="nx">ejdbtutorial</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&quot;fmt&quot;</span>
+    <span class="s">&quot;github.com/mkilling/goejdb&quot;</span>
+    <span class="s">&quot;labix.org/v2/mgo/bson&quot;</span>
+    <span class="s">&quot;os&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// Create a new database file and open it</span>
+    <span class="nx">jb</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">goejdb</span><span class="p">.</span><span class="nx">Open</span><span class="p">(</span><span class="s">&quot;addressbook&quot;</span><span class="p">,</span> <span class="nx">JBOWRITER</span> <span class="p">|</span> <span class="nx">JBOCREAT</span> <span class="p">|</span> <span class="nx">JBOTRUNC</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">os</span><span class="p">.</span><span class="nx">Exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="c1">// Get or create collection &#39;contacts&#39;</span>
+    <span class="nx">coll</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">jb</span><span class="p">.</span><span class="nx">CreateColl</span><span class="p">(</span><span class="s">&quot;contacts&quot;</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+
+    <span class="c1">// Insert one record:</span>
+    <span class="c1">// JSON: {&#39;name&#39; : &#39;Bruce&#39;, &#39;phone&#39; : &#39;333-222-333&#39;, &#39;age&#39; : 58}</span>
+    <span class="nx">rec</span> <span class="o">:=</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kd">interface</span><span class="p">{}</span> <span class="p">{</span><span class="s">&quot;name&quot;</span> <span class="p">:</span> <span class="s">&quot;Bruce&quot;</span><span class="p">,</span>
+                                   <span class="s">&quot;phone&quot;</span> <span class="p">:</span> <span class="s">&quot;333-222-333&quot;</span><span class="p">,</span> <span class="s">&quot;age&quot;</span> <span class="p">:</span> <span class="mi">58</span><span class="p">}</span>
+    <span class="nx">bsrec</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">bson</span><span class="p">.</span><span class="nx">Marshal</span><span class="p">(</span><span class="nx">rec</span><span class="p">)</span>
+    <span class="nx">coll</span><span class="p">.</span><span class="nx">SaveBson</span><span class="p">(</span><span class="nx">bsrec</span><span class="p">)</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot;\nSaved Bruce&quot;</span><span class="p">)</span>
+
+    <span class="c1">// Now execute query</span>
+    <span class="c1">// Name starts with &#39;Bru&#39; string</span>
+    <span class="nx">res</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">coll</span><span class="p">.</span><span class="nx">Find</span><span class="p">(</span><span class="s">`{&quot;name&quot; : {&quot;$begin&quot; : &quot;Bru&quot;}}`</span><span class="p">)</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot;\n\nRecords found: %d\n&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">res</span><span class="p">))</span>
+
+    <span class="c1">// Now print the result set records</span>
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">bs</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">res</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">m</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="kd">interface</span><span class="p">{}</span>
+        <span class="nx">bson</span><span class="p">.</span><span class="nx">Unmarshal</span><span class="p">(</span><span class="nx">bs</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">m</span><span class="p">)</span>
+        <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">m</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Close database</span>
+    <span class="nx">jb</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="https://github.com/mkilling/goejdb">https://github.com/mkilling/goejdb</a></p>
+</div>
+</div>
+<div class="section" id="other-third-party-bindings">
+<h2><a class="toc-backref" href="#id9">Other third-party bindings</a><a class="headerlink" href="#other-third-party-bindings" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><a class="reference internal" href="bindings/thirdparty.html#thirdparty-bindings"><span class="std std-ref">There are other language bindings provided by our community</span></a>.</p>
+</div>
+</div>
+</div>
+
+
+            </div>
+        </div>
+        <div id="page-content-footer">
+            <div id="bottom-rel-placeholder" style="display:none">
+                
+            <div class="rel-nav">
+                <a href="../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+                <a href="../news.html"
+                   title="Changelog"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="install/index.html"
+                   title="Installation"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="page-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+<h5 class="white-text">EJDB on Github</h5>
+<a class="github-button" href="https://github.com/Softmotions/ejdb" data-style="mega"
+   data-count-href="/Softmotions/ejdb/stargazers" data-count-api="/repos/Softmotions/ejdb#stargazers_count"
+   data-count-aria-label="# stargazers on GitHub" aria-label="Star Softmotions/ejdb on GitHub">Star</a>
+<a class="github-button" href="https://github.com/Softmotions/ejdb/issues" data-style="mega"
+   data-count-api="/repos/Softmotions/ejdb#open_issues_count" data-count-aria-label="# issues on GitHub"
+   aria-label="Issue Softmotions/ejdb on GitHub">Issue</a>
+            </div>
+            <div class="col l6 s12">
+                <ul>
+                    <li><a href="http://ejdb.org/news.html">News</a></li>
+                    <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                    <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright" role="contentinfo">
+        <div class="container">&copy; Copyright 2012-2017 Softmotions Ltd.
+        </div>
+    </div>
+</footer>
+
+<script type="text/javascript" src="../_static/jquery.js"></script>
+<script type="text/javascript" src="../_static/underscore.js"></script>
+<script type="text/javascript" src="../_static/doctools.js"></script>
+<script type="text/javascript" src="../_static/materialize.min.js"></script>
+<script type="text/javascript" src="../_static/theme.js"></script>
+ 
+<script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-36241306-1', 'auto');
+    ga('send', 'pageview');
+</script>
+<a id="btt"><i class="mdi-navigation-expand-less"></i></a>
+</body>
+</html>

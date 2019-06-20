@@ -1,0 +1,16 @@
+.. _ejdb2:
+
+EJDB2 Roadmap
+=============
+
+* Get rid of the Tokyocabinet. TC is an awesome software but nowadays it has many hard to fix :ref:`limitations <tc_limitations>`.
+* Use highly concurrent `B+Tree` index structure with support of `MVCC`. I have thoughts how to implement it with some
+  ideas from `LMDB <http://symas.com/mdb/>`_ copy-on-write btree and `B-link` trees.
+* Review usage of `BSON` data format as the internal representation of documents. Considering more compact formats: `MessagePack <http://msgpack.org/>`_,
+  `Smile <http://wiki.fasterxml.com/SmileFormatSpec>`_, `UBJSON <http://ubjson.org/>`_, `CBOR <http://cbor.io/>`_
+
+Progress
+--------
+
+`See #183 <https://github.com/Softmotions/ejdb/issues/183>`_
+

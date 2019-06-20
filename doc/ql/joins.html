@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Collection joins &mdash; EJDB</title>
+    
+<link rel="stylesheet" href="../../_static/theme.css" type="text/css"/>
+<link rel="stylesheet" href="../../_static/pygments.css" type="text/css"/>
+    <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="EJDB" href="../../index.html"/>
+    <link rel="next" title="EJDB Internals" href="../internals/index.html"/>
+    <link rel="prev" title="Query language" href="ql.html"/> 
+</head>
+<body role="document">
+<div id="toc-modal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4>Table Of Contents</h4>
+
+        <div class="page-content">
+            <ul>
+<li><a class="reference internal" href="#">Collection joins</a><ul>
+<li><a class="reference internal" href="#simple-joins-showcase">Simple joins showcase</a><ul>
+<li><a class="reference internal" href="#create-open-the-database">Create/open the database</a></li>
+<li><a class="reference internal" href="#save-our-cars-fleet">Save our cars fleet</a></li>
+<li><a class="reference internal" href="#then-register-a-rent-orders">Then register a rent orders</a></li>
+<li><a class="reference internal" href="#find-all-rent-orders-with-joined-cars">Find all rent orders with joined cars</a></li>
+<li><a class="reference internal" href="#we-have-top-cars-monthly-rating">We have top cars monthly rating</a></li>
+<li><a class="reference internal" href="#get-top-cars-june-rating-with-joined-array-field">Get top cars <strong>June</strong> rating with joined array field</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect btn-flat ">Close</a>
+    </div>
+</div>
+<header style="margin-bottom: 20px">
+    <nav id="nav">
+        <div class="nav-wrapper">
+            <a href="../../index.html">
+                <img class="brand-logo" src="../../_static/ejdb.png" alt="Logo"/>
+            </a>
+            <a href="#" data-activates="nav-mobile-sidebar" class="button-collapse"><i
+                    class="mdi-navigation-menu"></i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+            <ul class="side-nav" id="nav-mobile-sidebar">
+                
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<div class="row">
+    <div id="sidebar" class="col s12 m4 l3 push-m8 push-l9">
+<div class="row" style="margin: 0" id="searchbox">
+    <form class="col s12 no-padding" role="search" action="../../search.html" method="get">
+        <div class="input-field">
+            <input id="search" type="search" name="q" required>
+            <label for="search" class="">Quick search</label>
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div id="sidetoc">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../news.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-11-released">EJDB v1.2.11 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-10-released">EJDB v1.2.10 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-9-released">EJDB v1.2.9 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-8-released">EJDB v1.2.8 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#archived">Archived</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../snippets.html">Intro snippets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#c-c">C/C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#nodejs">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#c">C#</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#go">Go</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#other-third-party-bindings">Other third-party bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../install/ubuntu.html">Ubuntu/Debian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/osx.html">OSX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/windows.html">Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/archives.html">EJDB binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/building.html">Building from sources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">Command line interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#program-options">Program options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#usage-demo">Usage demo</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ql.html">Query language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ql.html#querying">Querying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql.html#query-hints">Query hints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql.html#data-manipulation">Data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql.html#do-action-directive">$do action directive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql.html#some-performance-considerations">Some performance considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ql.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Collection joins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#simple-joins-showcase">Simple joins showcase</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../internals/index.html">EJDB Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#tokyo-cabinet">Tokyo Cabinet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#document-storage-model">Document storage model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#indexing">Indexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#locking">Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#transactions">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../bindings/index.html">Language bindings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../bindings/nodejs/index.html">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-python">Python</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-java">Java</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-csharp">.Net (C#)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bindings/thirdparty.html">Third-party language bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../iexp/index.html">Import/Export database data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#c-api">C API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#export-command-spec">Export command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#import-command-spec">Import command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#command-response">Command response</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../limitations.html">Known limitations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#tokyo-cabinet-issues">Tokyo Cabinet issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#multiprocess-database-access">Multiprocess database access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#indexes">Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#misc">Misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ejdb2/index.html">EJDB2 Roadmap</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ejdb2/index.html#progress">Progress</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mongodb.html">Mongodb compatibility</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#logical-operators">Logical operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#element-level-operators">Element level operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#geospartial-operators">Geospartial operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#array-operators">Array operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#update-operators">Update operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#various-operators">Various operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#ejdb-specific-query-operators">EJDB specific query operators</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+    </div>
+    <div class="page-content-wrapper col s12 m8 l9 pull-m4 pull-l3">
+        <div id="page-content-block">
+            
+            <div class="rel-nav">
+                <a href="../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+                <a href="ql.html"
+                   title="Query language"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="../internals/index.html"
+                   title="EJDB Internals"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            <div class="page-content">
+                
+  <div class="section" id="collection-joins">
+<span id="joins"></span><h1>Collection joins<a class="headerlink" href="#collection-joins" title="Permalink to this headline">¶</a></h1>
+<p>Joins can be specified in query within the <a class="reference internal" href="ql.html#do"><span class="std std-ref">$do action directive</span></a>:</p>
+<p><code class="docutils literal"><span class="pre">{...,</span> <span class="pre">$do</span> <span class="pre">:</span> <span class="pre">{fieldpath1:</span> <span class="pre">{$join:</span> <span class="pre">collection1},</span> <span class="pre">fieldpath2</span> <span class="pre">:</span> <span class="pre">{$join:</span> <span class="pre">collection2}}</span> <span class="pre">}</span></code></p>
+<p>Here a value specified by <cite>fieldpath</cite> should point to <cite>OID`s</cite> of objects stored
+in the specific <cite>collection</cite>. Its value could be OID, string representation of OID, or an array of OIDs.
+Upon query execution OID value stored in <cite>fieldpath</cite> will be replaced by
+joined objects fetched from <cite>collection</cite>.</p>
+<div class="section" id="simple-joins-showcase">
+<h2>Simple joins showcase<a class="headerlink" href="#simple-joins-showcase" title="Permalink to this headline">¶</a></h2>
+<p>This showcase based on trivial <cite>rent a car</cite> data model.</p>
+<div class="section" id="create-open-the-database">
+<h3>Create/open the database<a class="headerlink" href="#create-open-the-database" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ ~/tmp$ ejdb rentacar
+Welcome to EJDB CLI v1.0.55
+ejdb&gt; db.open<span class="o">(</span><span class="s1">&#39;rentacar&#39;</span><span class="o">)</span>
+<span class="o">{</span> file: <span class="s1">&#39;/home/adam/tmp/rentacar&#39;</span>, collections: <span class="o">[]</span> <span class="o">}</span>
+ejdb&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="save-our-cars-fleet">
+<h3>Save our cars fleet<a class="headerlink" href="#save-our-cars-fleet" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="kd">var</span> <span class="nx">fleet</span> <span class="o">=</span> <span class="p">[</span>
+<span class="p">...</span> <span class="p">{</span><span class="nx">model</span><span class="o">:</span><span class="s1">&#39;Honda Accord&#39;</span><span class="p">,</span> <span class="nx">year</span><span class="o">:</span><span class="mi">2005</span><span class="p">},</span>
+<span class="p">...</span> <span class="p">{</span><span class="nx">model</span><span class="o">:</span><span class="s1">&#39;Toyota Corolla&#39;</span><span class="p">,</span> <span class="nx">year</span><span class="o">:</span><span class="mi">2011</span><span class="p">},</span>
+<span class="p">...</span> <span class="p">{</span><span class="nx">model</span><span class="o">:</span><span class="s1">&#39;Toyota Camry&#39;</span><span class="p">,</span> <span class="nx">year</span><span class="o">:</span><span class="mi">2008</span><span class="p">}</span>
+<span class="p">...</span> <span class="p">];</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;cars&#39;</span><span class="p">,</span> <span class="nx">fleet</span><span class="p">);</span>
+<span class="p">[</span> <span class="p">{</span> <span class="nx">model</span><span class="o">:</span> <span class="s1">&#39;Honda Accord&#39;</span><span class="p">,</span>
+    <span class="nx">year</span><span class="o">:</span> <span class="mi">2005</span><span class="p">,</span>
+    <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000000&#39;</span> <span class="p">},</span>
+  <span class="p">{</span> <span class="nx">model</span><span class="o">:</span> <span class="s1">&#39;Toyota Corolla&#39;</span><span class="p">,</span>
+    <span class="nx">year</span><span class="o">:</span> <span class="mi">2011</span><span class="p">,</span>
+    <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000001&#39;</span> <span class="p">},</span>
+  <span class="p">{</span> <span class="nx">model</span><span class="o">:</span> <span class="s1">&#39;Toyota Camry&#39;</span><span class="p">,</span>
+    <span class="nx">year</span><span class="o">:</span> <span class="mi">2008</span><span class="p">,</span>
+    <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span> <span class="p">}</span> <span class="p">]</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="then-register-a-rent-orders">
+<h3>Then register a rent orders<a class="headerlink" href="#then-register-a-rent-orders" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="kd">var</span> <span class="nx">orders</span> <span class="o">=</span> <span class="p">[</span>
+<span class="p">...</span>  <span class="p">{</span><span class="nx">car</span><span class="o">:</span><span class="s1">&#39;50fe0a9935cf1e0300000000&#39;</span><span class="p">,</span> <span class="nx">pickUpDate</span><span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span> <span class="mi">05</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">07</span><span class="p">),</span>
+<span class="p">...</span>   <span class="nx">returnDate</span><span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span> <span class="mi">05</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">18</span><span class="p">),</span> <span class="nx">customer</span><span class="o">:</span> <span class="s1">&#39;andy&#39;</span><span class="p">},</span>
+<span class="p">...</span>  <span class="p">{</span><span class="nx">car</span><span class="o">:</span><span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span><span class="p">,</span> <span class="nx">pickUpDate</span><span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span> <span class="mi">05</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+<span class="p">...</span>   <span class="nx">returnDate</span><span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span> <span class="mi">05</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span> <span class="nx">customer</span><span class="o">:</span> <span class="s1">&#39;john&#39;</span><span class="p">},</span>
+<span class="p">...</span>  <span class="p">{</span><span class="nx">car</span><span class="o">:</span><span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span><span class="p">,</span> <span class="nx">pickUpDate</span><span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span> <span class="mi">05</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">17</span><span class="p">),</span>
+<span class="p">...</span>   <span class="nx">returnDate</span><span class="o">:</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span> <span class="mi">05</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="nx">customer</span><span class="o">:</span> <span class="s1">&#39;antony&#39;</span><span class="p">}</span>
+<span class="p">...</span> <span class="p">];</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;orders&#39;</span><span class="p">,</span> <span class="nx">orders</span><span class="p">);</span>
+<span class="p">[</span> <span class="p">{</span> <span class="nx">car</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000000&#39;</span><span class="p">,</span>
+    <span class="nx">pickUpDate</span><span class="o">:</span> <span class="nx">Thu</span> <span class="nx">Jun</span> <span class="mi">20</span> <span class="mi">2013</span> <span class="mi">07</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+    <span class="nx">returnDate</span><span class="o">:</span> <span class="nx">Thu</span> <span class="nx">Jun</span> <span class="mi">27</span> <span class="mi">2013</span> <span class="mi">18</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+    <span class="nx">customer</span><span class="o">:</span> <span class="s1">&#39;andy&#39;</span><span class="p">,</span>
+    <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0f3735cf1e0300000003&#39;</span> <span class="p">},</span>
+  <span class="p">{</span> <span class="nx">car</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span><span class="p">,</span>
+    <span class="nx">pickUpDate</span><span class="o">:</span> <span class="nx">Tue</span> <span class="nx">Jun</span> <span class="mi">11</span> <span class="mi">2013</span> <span class="mi">16</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+    <span class="nx">returnDate</span><span class="o">:</span> <span class="nx">Sat</span> <span class="nx">Jun</span> <span class="mi">15</span> <span class="mi">2013</span> <span class="mi">13</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+    <span class="nx">customer</span><span class="o">:</span> <span class="s1">&#39;john&#39;</span><span class="p">,</span>
+    <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0f3735cf1e0300000004&#39;</span> <span class="p">},</span>
+  <span class="p">{</span> <span class="nx">car</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span><span class="p">,</span>
+    <span class="nx">pickUpDate</span><span class="o">:</span> <span class="nx">Sat</span> <span class="nx">Jun</span> <span class="mi">15</span> <span class="mi">2013</span> <span class="mi">17</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+    <span class="nx">returnDate</span><span class="o">:</span> <span class="nx">Fri</span> <span class="nx">Jun</span> <span class="mi">21</span> <span class="mi">2013</span> <span class="mi">12</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+    <span class="nx">customer</span><span class="o">:</span> <span class="s1">&#39;antony&#39;</span><span class="p">,</span>
+    <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0f3735cf1e0300000005&#39;</span> <span class="p">}</span> <span class="p">]</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="find-all-rent-orders-with-joined-cars">
+<h3>Find all rent orders with joined cars<a class="headerlink" href="#find-all-rent-orders-with-joined-cars" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;orders&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">$do</span><span class="o">:</span> <span class="p">{</span><span class="nx">car</span><span class="o">:</span> <span class="p">{</span><span class="nx">$join</span><span class="o">:</span><span class="s1">&#39;cars&#39;</span><span class="p">}}});</span>
+<span class="nx">Found</span> <span class="mi">3</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0f3735cf1e0300000003&#39;</span><span class="p">,</span>
+  <span class="nx">car</span><span class="o">:</span>
+   <span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000000&#39;</span><span class="p">,</span>
+     <span class="nx">model</span><span class="o">:</span> <span class="s1">&#39;Honda Accord&#39;</span><span class="p">,</span>
+     <span class="nx">year</span><span class="o">:</span> <span class="mi">2005</span> <span class="p">},</span>
+  <span class="nx">pickUpDate</span><span class="o">:</span> <span class="nx">Thu</span> <span class="nx">Jun</span> <span class="mi">20</span> <span class="mi">2013</span> <span class="mi">07</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+  <span class="nx">returnDate</span><span class="o">:</span> <span class="nx">Thu</span> <span class="nx">Jun</span> <span class="mi">27</span> <span class="mi">2013</span> <span class="mi">18</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+  <span class="nx">customer</span><span class="o">:</span> <span class="s1">&#39;andy&#39;</span> <span class="p">}</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0f3735cf1e0300000004&#39;</span><span class="p">,</span>
+  <span class="nx">car</span><span class="o">:</span>
+   <span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span><span class="p">,</span>
+     <span class="nx">model</span><span class="o">:</span> <span class="s1">&#39;Toyota Camry&#39;</span><span class="p">,</span>
+     <span class="nx">year</span><span class="o">:</span> <span class="mi">2008</span> <span class="p">},</span>
+  <span class="nx">pickUpDate</span><span class="o">:</span> <span class="nx">Tue</span> <span class="nx">Jun</span> <span class="mi">11</span> <span class="mi">2013</span> <span class="mi">16</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+  <span class="nx">returnDate</span><span class="o">:</span> <span class="nx">Sat</span> <span class="nx">Jun</span> <span class="mi">15</span> <span class="mi">2013</span> <span class="mi">13</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+  <span class="nx">customer</span><span class="o">:</span> <span class="s1">&#39;john&#39;</span> <span class="p">}</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0f3735cf1e0300000005&#39;</span><span class="p">,</span>
+  <span class="nx">car</span><span class="o">:</span>
+   <span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span><span class="p">,</span>
+     <span class="nx">model</span><span class="o">:</span> <span class="s1">&#39;Toyota Camry&#39;</span><span class="p">,</span>
+     <span class="nx">year</span><span class="o">:</span> <span class="mi">2008</span> <span class="p">},</span>
+  <span class="nx">pickUpDate</span><span class="o">:</span> <span class="nx">Sat</span> <span class="nx">Jun</span> <span class="mi">15</span> <span class="mi">2013</span> <span class="mi">17</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+  <span class="nx">returnDate</span><span class="o">:</span> <span class="nx">Fri</span> <span class="nx">Jun</span> <span class="mi">21</span> <span class="mi">2013</span> <span class="mi">12</span><span class="o">:</span><span class="mi">00</span><span class="o">:</span><span class="mi">00</span> <span class="nx">GMT</span><span class="o">+</span><span class="mi">0700</span> <span class="p">(</span><span class="nx">NOVT</span><span class="p">),</span>
+  <span class="nx">customer</span><span class="o">:</span> <span class="s1">&#39;antony&#39;</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="we-have-top-cars-monthly-rating">
+<h3>We have top cars monthly rating<a class="headerlink" href="#we-have-top-cars-monthly-rating" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="kd">var</span> <span class="nx">topcars</span> <span class="o">=</span>
+           <span class="p">{</span><span class="nx">month</span><span class="o">:</span> <span class="s1">&#39;June&#39;</span><span class="p">,</span>
+            <span class="nx">cars</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;50fe0a9935cf1e0300000000&#39;</span><span class="p">]};</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;topcars&#39;</span><span class="p">,</span> <span class="nx">topcars</span><span class="p">);</span>
+<span class="p">[</span> <span class="p">{</span> <span class="nx">month</span><span class="o">:</span> <span class="s1">&#39;June&#39;</span><span class="p">,</span>
+    <span class="nx">cars</span><span class="o">:</span>
+     <span class="p">[</span> <span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;50fe0a9935cf1e0300000000&#39;</span> <span class="p">],</span>
+    <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe106b35cf1e0300000006&#39;</span> <span class="p">}</span> <span class="p">]</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="get-top-cars-june-rating-with-joined-array-field">
+<h3>Get top cars <strong>June</strong> rating with joined array field<a class="headerlink" href="#get-top-cars-june-rating-with-joined-array-field" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;topcars&#39;</span><span class="p">,</span>
+              <span class="p">{</span><span class="nx">month</span><span class="o">:</span> <span class="s1">&#39;June&#39;</span><span class="p">,</span>
+               <span class="nx">$do</span><span class="o">:</span> <span class="p">{</span><span class="s1">&#39;cars&#39;</span><span class="o">:</span> <span class="p">{</span><span class="nx">$join</span><span class="o">:</span> <span class="s1">&#39;cars&#39;</span><span class="p">}}});</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe106b35cf1e0300000006&#39;</span><span class="p">,</span>
+  <span class="nx">month</span><span class="o">:</span> <span class="s1">&#39;June&#39;</span><span class="p">,</span>
+  <span class="nx">cars</span><span class="o">:</span>
+   <span class="p">[</span> <span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000002&#39;</span><span class="p">,</span>
+       <span class="nx">model</span><span class="o">:</span> <span class="s1">&#39;Toyota Camry&#39;</span><span class="p">,</span>
+       <span class="nx">year</span><span class="o">:</span> <span class="mi">2008</span> <span class="p">},</span>
+     <span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;50fe0a9935cf1e0300000000&#39;</span><span class="p">,</span>
+       <span class="nx">model</span><span class="o">:</span> <span class="s1">&#39;Honda Accord&#39;</span><span class="p">,</span>
+       <span class="nx">year</span><span class="o">:</span> <span class="mi">2005</span> <span class="p">}</span> <span class="p">]</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+            </div>
+        </div>
+        <div id="page-content-footer">
+            <div id="bottom-rel-placeholder" style="display:none">
+                
+            <div class="rel-nav">
+                <a href="../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+                <a href="ql.html"
+                   title="Query language"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="../internals/index.html"
+                   title="EJDB Internals"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="page-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+<h5 class="white-text">EJDB on Github</h5>
+<a class="github-button" href="https://github.com/Softmotions/ejdb" data-style="mega"
+   data-count-href="/Softmotions/ejdb/stargazers" data-count-api="/repos/Softmotions/ejdb#stargazers_count"
+   data-count-aria-label="# stargazers on GitHub" aria-label="Star Softmotions/ejdb on GitHub">Star</a>
+<a class="github-button" href="https://github.com/Softmotions/ejdb/issues" data-style="mega"
+   data-count-api="/repos/Softmotions/ejdb#open_issues_count" data-count-aria-label="# issues on GitHub"
+   aria-label="Issue Softmotions/ejdb on GitHub">Issue</a>
+            </div>
+            <div class="col l6 s12">
+                <ul>
+                    <li><a href="http://ejdb.org/news.html">News</a></li>
+                    <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                    <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright" role="contentinfo">
+        <div class="container">&copy; Copyright 2012-2017 Softmotions Ltd.
+        </div>
+    </div>
+</footer>
+
+<script type="text/javascript" src="../../_static/jquery.js"></script>
+<script type="text/javascript" src="../../_static/underscore.js"></script>
+<script type="text/javascript" src="../../_static/doctools.js"></script>
+<script type="text/javascript" src="../../_static/materialize.min.js"></script>
+<script type="text/javascript" src="../../_static/theme.js"></script>
+ 
+<script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-36241306-1', 'auto');
+    ga('send', 'pageview');
+</script>
+<a id="btt"><i class="mdi-navigation-expand-less"></i></a>
+</body>
+</html>

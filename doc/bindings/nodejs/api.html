@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>EJDB Nodejs API &mdash; EJDB</title>
+    
+<link rel="stylesheet" href="../../../_static/theme.css" type="text/css"/>
+<link rel="stylesheet" href="../../../_static/pygments.css" type="text/css"/>
+    <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="EJDB" href="../../../index.html"/>
+    <link rel="up" title="Nodejs" href="index.html"/>
+    <link rel="next" title="Nodejs demo applications" href="samples.html"/>
+    <link rel="prev" title="Nodejs" href="index.html"/> 
+</head>
+<body role="document">
+<div id="toc-modal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4>Table Of Contents</h4>
+
+        <div class="page-content">
+            <ul>
+<li><a class="reference internal" href="#">EJDB Nodejs API</a></li>
+</ul>
+
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect btn-flat ">Close</a>
+    </div>
+</div>
+<header style="margin-bottom: 20px">
+    <nav id="nav">
+        <div class="nav-wrapper">
+            <a href="../../../index.html">
+                <img class="brand-logo" src="../../../_static/ejdb.png" alt="Logo"/>
+            </a>
+            <a href="#" data-activates="nav-mobile-sidebar" class="button-collapse"><i
+                    class="mdi-navigation-menu"></i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+            <ul class="side-nav" id="nav-mobile-sidebar">
+                
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<div class="row">
+    <div id="sidebar" class="col s12 m4 l3 push-m8 push-l9">
+<div class="row" style="margin: 0" id="searchbox">
+    <form class="col s12 no-padding" role="search" action="../../../search.html" method="get">
+        <div class="input-field">
+            <input id="search" type="search" name="q" required>
+            <label for="search" class="">Quick search</label>
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div id="sidetoc">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../news.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../news.html#ejdb-v1-2-11-released">EJDB v1.2.11 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../news.html#ejdb-v1-2-10-released">EJDB v1.2.10 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../news.html#ejdb-v1-2-9-released">EJDB v1.2.9 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../news.html#ejdb-v1-2-8-released">EJDB v1.2.8 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../news.html#archived">Archived</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../snippets.html">Intro snippets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../snippets.html#c-c">C/C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../snippets.html#nodejs">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../snippets.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../snippets.html#lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../snippets.html#ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../snippets.html#c">C#</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../snippets.html#go">Go</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../snippets.html#other-third-party-bindings">Other third-party bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../install/index.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../install/ubuntu.html">Ubuntu/Debian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../install/osx.html">OSX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../install/windows.html">Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../install/archives.html">EJDB binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../install/building.html">Building from sources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli.html">Command line interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../cli.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cli.html#program-options">Program options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cli.html#usage-demo">Usage demo</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../ql/ql.html">Query language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../ql/ql.html#querying">Querying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ql/ql.html#query-hints">Query hints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ql/ql.html#data-manipulation">Data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ql/ql.html#do-action-directive">$do action directive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ql/ql.html#some-performance-considerations">Some performance considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ql/ql.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../ql/joins.html">Collection joins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../ql/joins.html#simple-joins-showcase">Simple joins showcase</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../internals/index.html">EJDB Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../internals/index.html#tokyo-cabinet">Tokyo Cabinet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../internals/index.html#document-storage-model">Document storage model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../internals/index.html#indexing">Indexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../internals/index.html#locking">Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../internals/index.html#transactions">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Language bindings</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-python">Python</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-java">Java</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-csharp">.Net (C#)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thirdparty.html">Third-party language bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../iexp/index.html">Import/Export database data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../iexp/index.html#c-api">C API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../iexp/index.html#export-command-spec">Export command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../iexp/index.html#import-command-spec">Import command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../iexp/index.html#command-response">Command response</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../limitations.html">Known limitations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../limitations.html#tokyo-cabinet-issues">Tokyo Cabinet issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../limitations.html#multiprocess-database-access">Multiprocess database access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../limitations.html#indexes">Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../limitations.html#misc">Misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../ejdb2/index.html">EJDB2 Roadmap</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../ejdb2/index.html#progress">Progress</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../mongodb.html">Mongodb compatibility</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../mongodb.html#logical-operators">Logical operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mongodb.html#element-level-operators">Element level operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mongodb.html#geospartial-operators">Geospartial operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mongodb.html#array-operators">Array operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mongodb.html#update-operators">Update operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mongodb.html#various-operators">Various operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../mongodb.html#ejdb-specific-query-operators">EJDB specific query operators</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+    </div>
+    <div class="page-content-wrapper col s12 m8 l9 pull-m4 pull-l3">
+        <div id="page-content-block">
+            
+            <div class="rel-nav">
+                <a href="../../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a class="dropdown-button btn" href="#"
+                   data-beloworigin="true"
+                   data-activates="relnav-parents-1"><i class="mts-up"></i></a>
+                <ul id="relnav-parents-1"
+                    class="dropdown-content">
+                    <li><a href="../index.html">EJDB language bindings</a></li>
+                    <li><a href="index.html">Nodejs</a></li>
+                </ul> 
+                <a href="index.html"
+                   title="Nodejs"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="samples.html"
+                   title="Nodejs demo applications"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            <div class="page-content">
+                
+  <div class="section" id="ejdb-nodejs-api">
+<span id="nodejs-api"></span><h1>EJDB Nodejs API<a class="headerlink" href="#ejdb-nodejs-api" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="EJDB.open">
+<code class="descclassname">EJDB.</code><code class="descname">open</code><span class="sig-paren">(</span><em>dbFile</em><span class="optional">[</span>, <em>openMode</em><span class="optional">]</span><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#EJDB.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a database specified by <cite>dbFile</cite> using the <cite>openMode</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will executed in <cite>synchronous</cite> mode.</p>
+<p>The <cite>openMode</cite> argument is a bitmask of the following flags:</p>
+<ul class="simple">
+<li><cite>JBOREADER</cite> Open database as a reader.</li>
+<li><cite>JBOWRITER</cite> Open database as a writer.</li>
+<li><cite>JBOCREAT</cite> Create new database if it not exists.</li>
+<li><cite>JBOTRUNC</cite> Trancated database on opening.</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first simple">
+<li><strong>dbFile</strong> (<em>string</em>) &#8211; The database file path.</li>
+<li><strong>[openMode]</strong> (<em>number</em>) &#8211; Open mode. Default to: <cite>JBOWRITER | JBOCREAT</cite></li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback called with an error and EJDB object arguments</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">EJDB database instance object <cite>db</cite>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="EJDB.isValidOID">
+<code class="descclassname">EJDB.</code><code class="descname">isValidOID</code><span class="sig-paren">(</span><em>oid</em><span class="sig-paren">)</span><a class="headerlink" href="#EJDB.isValidOID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <cite>true</cite> if argument is a valid <a class="reference internal" href="../../ql/ql.html#term-objectid"><span class="xref std std-term">ObjectId</span></a> string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first simple">
+<li><strong>oid</strong> (<em>string</em>) &#8211; Object id</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Boolean value</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.close">
+<code class="descclassname">db.</code><code class="descname">close</code><span class="sig-paren">(</span><span class="optional">[</span><em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close a database. If database is closed this function does nothing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cb</strong> (<em>function</em>) &#8211; Callback called with an error.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.isOpen">
+<code class="descclassname">db.</code><code class="descname">isOpen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#db.isOpen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if database is in opened state.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.ensureCollection">
+<code class="descclassname">db.</code><code class="descname">ensureCollection</code><span class="sig-paren">(</span><em>cname</em><span class="optional">[</span>, <em>copts</em><span class="optional">]</span><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.ensureCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return existing collection or create new collection if it was not created before.
+Collection options <cite>copts</cite> are applied only for newly created collection.
+For existing collections <cite>copts</cite> takes no effect.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will executed in <cite>synchronous</cite> mode.</p>
+<p><cite>copts</cite>:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="c1">//Max number of cached records in shared memory segment. Default: 0</span>
+  <span class="s1">&#39;cachedrecords&#39;</span><span class="o">:</span> <span class="nx">number</span><span class="p">,</span>
+
+  <span class="c1">//Estimated number of records in this collection. Default: 65535.</span>
+  <span class="s1">&#39;records&#39;</span><span class="o">:</span> <span class="nx">number</span><span class="p">,</span>
+
+   <span class="c1">//If `true` the size of a database can be larger than 2GB. Default: false</span>
+  <span class="s1">&#39;large&#39;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+
+  <span class="c1">//If `true` collection&#39;s records will be compressed</span>
+  <span class="c1">// with DEFLATE compression. Default: false</span>
+  <span class="s1">&#39;compressed&#39;</span><span class="o">:</span> <span class="kc">false</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>[copts]</strong> (<em>map</em>) &#8211; Options to be used when creating the collection</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback called with an error argument</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.dropCollection">
+<code class="descclassname">db.</code><code class="descname">dropCollection</code><span class="sig-paren">(</span><em>cname</em><span class="optional">[</span>, <em>prune=false</em><span class="optional">]</span><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.dropCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop the collection specified by <cite>cname</cite>. If <cite>prune</cite> set to <cite>true</cite> the collection data
+will be removed from disk.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>[prune=false]</strong> (<em>boolean</em>) &#8211; If <cite>prune</cite> set to <cite>true</cite> the collection data will be removed from disk</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback called with an error argument</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.save">
+<code class="descclassname">db.</code><code class="descname">save</code><span class="sig-paren">(</span><em>cname</em>, <em>jsarr</em><span class="optional">[</span>, <em>opts={}</em><span class="optional">]</span><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save/update specified in <cite>jsarr</cite> JSON objects in the collection are identified by <cite>cname</cite>.
+If a collection with <cite>cname</cite> does not exists it will be created.</p>
+<p>Every persistent object may have a unique <a class="reference internal" href="../../ql/ql.html#term-objectid"><span class="xref std std-term">ObjectId</span></a> placed in the <cite>_id</cite> property.
+If a saved object does not have <cite>_id</cite> it will be autogenerated.
+To identify and update object it should contains the <cite>_id</cite> property.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<p>A save options <cite>opts</cite>:</p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="c1">//A saved object will be merged with who&#39;s</span>
+    <span class="c1">// already persisted in db.</span>
+    <span class="nx">merge</span><span class="o">:</span> <span class="kc">false</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Calling variations:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">save</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="o">&lt;</span><span class="nx">json</span> <span class="nx">object</span><span class="o">&gt;|&lt;</span><span class="nb">Array</span> <span class="k">of</span> <span class="nx">json</span> <span class="nx">objects</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="nx">save</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="o">&lt;</span><span class="nx">json</span> <span class="nx">object</span><span class="o">&gt;|&lt;</span><span class="nb">Array</span> <span class="k">of</span> <span class="nx">json</span> <span class="nx">objects</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">options</span><span class="p">)</span>
+<span class="nx">save</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="o">&lt;</span><span class="nx">json</span> <span class="nx">object</span><span class="o">&gt;|&lt;</span><span class="nb">Array</span> <span class="k">of</span> <span class="nx">json</span> <span class="nx">objects</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">cb</span><span class="p">)</span>
+<span class="nx">save</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="o">&lt;</span><span class="nx">json</span> <span class="nx">object</span><span class="o">&gt;|&lt;</span><span class="nb">Array</span> <span class="k">of</span> <span class="nx">json</span> <span class="nx">objects</span><span class="o">&gt;</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">cb</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Field names of passed JSON objects may not contain <cite>$</cite> and <cite>.</cite> characters,
+error condition will be fired in this case.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name.</li>
+<li><strong>jsarr</strong> (<em>array|object</em>) &#8211; Signle JSON object or array of JSON objects to save.</li>
+<li><strong>[opts]</strong> (<em>object</em>) &#8211; Save options.</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function with arguments: <cite>(error, {Array} of OIDs of saved objects)</cite></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An <cite>OID</cite> array of saved object in <cite>synchronous</cite> mode otherwise return <cite>undefined</cite>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.load">
+<code class="descclassname">db.</code><code class="descname">load</code><span class="sig-paren">(</span><em>cname</em>, <em>oid</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve JSON object identified by OID.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<p>Return JSON object or <cite>null</cite> if it is not found.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>oid</strong> (<em>string</em>) &#8211; Object identifier (OID)</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">JSON <cite>Object</cite> or <cite>null</cite> if it is not found in <cite>synchronous</cite> mode otherwise return <cite>undefined</cite>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.remove">
+<code class="descclassname">db.</code><code class="descname">remove</code><span class="sig-paren">(</span><em>cname</em>, <em>oid</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove document object identified by <a class="reference internal" href="../../ql/ql.html#term-objectid"><span class="xref std std-term">ObjectId</span></a> from the collection <cite>cname</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>[oid]</strong> (<em>string</em>) &#8211; <a class="reference internal" href="../../ql/ql.html#term-objectid"><span class="xref std std-term">ObjectId</span></a></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><cite>undefined</cite></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.find">
+<code class="descclassname">db.</code><code class="descname">find</code><span class="sig-paren">(</span><em>cname</em>, <em>...</em><span class="sig-paren">)</span><a class="headerlink" href="#db.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a set of documents matched to the specified query.
+<a class="reference internal" href="../../ql/ql.html#ql"><span class="std std-ref">See the complete query language specification</span></a></p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<p>A callback function <cite>cb</cite> will be called with
+the following arguments: <cite>error, cursor, count</cite> where:</p>
+<ul class="simple">
+<li>error: Error object</li>
+<li>cursor: Cursor object to traverse documents found</li>
+<li>count: Total number of matched documents.</li>
+</ul>
+<p><strong>Calling variations:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">find</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">find</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">find</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">hints</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">find</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">qobjarr</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">find</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">qobjarr</span><span class="p">,</span> <span class="nx">hints</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>[qobj]</strong> (<em>object</em>) &#8211; Main JSON query object</li>
+<li><strong>[hints]</strong> (<em>object</em>) &#8211; JSON object specifies the query <a class="reference internal" href="../../ql/ql.html#qhints"><span class="std std-ref">hints</span></a></li>
+<li><strong>[qobjarr]</strong> (<em>array</em>) &#8211; Array of extra <cite>OR</cite> joined query objects</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback accepting arguments: <cite>error, cursor, count</cite></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><cite>undefined</cite> if <cite>cb</cite> is provided.
+If <cite>cb</cite> is not provided and <cite>$onlycount</cite> query hint is set returns count <cite>number</cite>.
+If <cite>cb</cite> is not provided and no <cite>$onlycount</cite> query hint returns <cite>cursor</cite> object.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.findOne">
+<code class="descclassname">db.</code><code class="descname">findOne</code><span class="sig-paren">(</span><em>cname</em>, <em>...</em><span class="sig-paren">)</span><a class="headerlink" href="#db.findOne" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a first found document matched to the specified query.
+<a class="reference internal" href="../../ql/ql.html#ql"><span class="std std-ref">See the complete query language specification</span></a></p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<p>A callback function <cite>cb</cite> will be called with
+the following arguments: <cite>error, object</cite> where:</p>
+<ul class="simple">
+<li>error: Error object</li>
+<li>document: Found document or <cite>null</cite> if no matched documents.</li>
+</ul>
+<p><strong>Calling variations:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">findOne</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">findOne</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">findOne</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">hints</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">findOne</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">qobjarr</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">findOne</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">qobjarr</span><span class="p">,</span> <span class="nx">hints</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>[qobj]</strong> (<em>object</em>) &#8211; Main JSON query object</li>
+<li><strong>[hints]</strong> (<em>object</em>) &#8211; JSON object specifies the query <a class="reference internal" href="../../ql/ql.html#qhints"><span class="std std-ref">hints</span></a></li>
+<li><strong>[qobjarr]</strong> (<em>array</em>) &#8211; Array of extra <cite>OR</cite> joined query objects</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback accepting arguments: <cite>error, document</cite></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><cite>undefined</cite> if <cite>cb</cite> is provided,
+otherwise return a found <cite>document</cite> or <cite>null</cite>
+if no documents found.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.command">
+<code class="descclassname">db.</code><code class="descname">command</code><span class="sig-paren">(</span><em>cmd</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute ejdb database command.
+<a class="reference internal" href="../../iexp/index.html#cmd"><span class="std std-ref">See the database commands documentation</span></a></p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<p>A callback function <cite>cb</cite> will be called with
+the following arguments: <cite>error, object</cite> where:</p>
+<ul class="simple">
+<li>error: Error object</li>
+<li>response: JSON object: <a class="reference internal" href="../../iexp/index.html#cmd-response"><span class="std std-ref">command execution response</span></a>.</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cmd</strong> (<em>json</em>) &#8211; Command specification</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function arguments: <cite>error, response</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.update">
+<code class="descclassname">db.</code><code class="descname">update</code><span class="sig-paren">(</span><em>cname</em>, <em>...</em><span class="sig-paren">)</span><a class="headerlink" href="#db.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenient method to execute update queries.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<p>A callback function <cite>cb</cite> will be called with
+the following arguments: <cite>error, count</cite> where:</p>
+<ul class="simple">
+<li>error: Error object</li>
+<li>count: Number of documents updated.</li>
+</ul>
+<p><strong>Calling variations:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">update</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">update</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">hints</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">update</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">qobjarr</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">update</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">qobjarr</span><span class="p">,</span> <span class="nx">hints</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>[qobj]</strong> (<em>object</em>) &#8211; Main JSON query object</li>
+<li><strong>[hints]</strong> (<em>object</em>) &#8211; JSON object specifies the query <a class="reference internal" href="../../ql/ql.html#qhints"><span class="std std-ref">hints</span></a></li>
+<li><strong>[qobjarr]</strong> (<em>array</em>) &#8211; Array of extra <cite>OR</cite> joined query objects</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting arguments: <cite>error, count</cite></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Number of updated documents if <cite>cb</cite> is not provided otherwise <cite>undefined</cite></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.count">
+<code class="descclassname">db.</code><code class="descname">count</code><span class="sig-paren">(</span><em>cname</em>, <em>...</em><span class="sig-paren">)</span><a class="headerlink" href="#db.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenient method to execute <cite>count(*)</cite> queries.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<p>A callback function <cite>cb</cite> will be called with
+the following arguments: <cite>error, count</cite> where:</p>
+<ul class="simple">
+<li>error: Error object</li>
+<li>count: Number of documents matched the query.</li>
+</ul>
+<p><strong>Calling variations:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">count</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">count</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">hints</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">count</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">qobjarr</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+<span class="nx">count</span><span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">qobj</span><span class="p">,</span> <span class="nx">qobjarr</span><span class="p">,</span> <span class="nx">hints</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>[qobj]</strong> (<em>object</em>) &#8211; Main JSON query object</li>
+<li><strong>[hints]</strong> (<em>object</em>) &#8211; JSON object specifies the query <a class="reference internal" href="../../ql/ql.html#qhints"><span class="std std-ref">hints</span></a></li>
+<li><strong>[qobjarr]</strong> (<em>array</em>) &#8211; Array of extra <cite>OR</cite> joined query objects</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting arguments: <cite>error, count</cite></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Number of documents matched the query if <cite>cb</cite> is not provided otherwise <cite>undefined</cite></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.sync">
+<code class="descclassname">db.</code><code class="descname">sync</code><span class="sig-paren">(</span><span class="optional">[</span><em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.sync" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronize entire database and all of its collections with disk.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.dropIndexes">
+<code class="descclassname">db.</code><code class="descname">dropIndexes</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.dropIndexes" title="Permalink to this definition">¶</a></dt>
+<dd><p>DROP indexes of all types for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descclassname">db.</code><code class="descname">dropIndexes</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span></dt>
+<dd><p>OPTIMIZE indexes of all types for JSON <cite>fieldpath</cite>.
+Performs B+ tree index file optimization.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.ensureStringIndex">
+<code class="descclassname">db.</code><code class="descname">ensureStringIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.ensureStringIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure index presence of <cite>string</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name
+:param string fieldpath: Documents fieldpath
+:param function [cb]: Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.rebuildStringIndex">
+<code class="descclassname">db.</code><code class="descname">rebuildStringIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.rebuildStringIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebuild index of <cite>string</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.dropStringIndex">
+<code class="descclassname">db.</code><code class="descname">dropStringIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.dropStringIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop index of <cite>string</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.ensureIStringIndex">
+<code class="descclassname">db.</code><code class="descname">ensureIStringIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.ensureIStringIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure case insensitive index presence of <cite>string</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.rebuildIStringIndex">
+<code class="descclassname">db.</code><code class="descname">rebuildIStringIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.rebuildIStringIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebuild case insensitive index of <cite>string</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.dropIStringIndex">
+<code class="descclassname">db.</code><code class="descname">dropIStringIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.dropIStringIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop case insensitive index of <cite>string</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.ensureNumberIndex">
+<code class="descclassname">db.</code><code class="descname">ensureNumberIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.ensureNumberIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure index presence of <cite>number</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.rebuildNumberIndex">
+<code class="descclassname">db.</code><code class="descname">rebuildNumberIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.rebuildNumberIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebuild index of <cite>number</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.dropNumberIndex">
+<code class="descclassname">db.</code><code class="descname">dropNumberIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.dropNumberIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop index of <cite>number</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.ensureArrayIndex">
+<code class="descclassname">db.</code><code class="descname">ensureArrayIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.ensureArrayIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ensure index presence of <cite>array</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.rebuildArrayIndex">
+<code class="descclassname">db.</code><code class="descname">rebuildArrayIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.rebuildArrayIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebuild index of <cite>array</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.dropArrayIndex">
+<code class="descclassname">db.</code><code class="descname">dropArrayIndex</code><span class="sig-paren">(</span><em>cname</em>, <em>fieldpath</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.dropArrayIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop index of <cite>array</cite> type for JSON <cite>fieldpath</cite>.</p>
+<p>Execution of this function will be <cite>asynchronous</cite> if <cite>cb</cite> is
+provided, otherwise it will be executed in <cite>synchronous</cite> mode.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Arguments:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cname</strong> (<em>string</em>) &#8211; Collection name</li>
+<li><strong>fieldpath</strong> (<em>string</em>) &#8211; Documents fieldpath</li>
+<li><strong>[cb]</strong> (<em>function</em>) &#8211; Callback function accepting <cite>error</cite></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.getDBMeta">
+<code class="descclassname">db.</code><code class="descname">getDBMeta</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#db.getDBMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get description of EJDB database and its collections.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.beginTransaction">
+<code class="descclassname">db.</code><code class="descname">beginTransaction</code><span class="sig-paren">(</span><em>cname</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.beginTransaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Begin collection transaction.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.commitTransaction">
+<code class="descclassname">db.</code><code class="descname">commitTransaction</code><span class="sig-paren">(</span><em>cname</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.commitTransaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Commit collection transaction.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.rollbackTransaction">
+<code class="descclassname">db.</code><code class="descname">rollbackTransaction</code><span class="sig-paren">(</span><em>cname</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.rollbackTransaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rollback collection transaction.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="db.getTransactionStatus">
+<code class="descclassname">db.</code><code class="descname">getTransactionStatus</code><span class="sig-paren">(</span><em>cname</em><span class="optional">[</span>, <em>cb</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#db.getTransactionStatus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get collection transaction status.</p>
+</dd></dl>
+
+</div>
+
+
+            </div>
+        </div>
+        <div id="page-content-footer">
+            <div id="bottom-rel-placeholder" style="display:none">
+                
+            <div class="rel-nav">
+                <a href="../../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a class="dropdown-button btn" href="#"
+                   data-beloworigin="true"
+                   data-activates="relnav-parents-2"><i class="mts-up"></i></a>
+                <ul id="relnav-parents-2"
+                    class="dropdown-content">
+                    <li><a href="../index.html">EJDB language bindings</a></li>
+                    <li><a href="index.html">Nodejs</a></li>
+                </ul> 
+                <a href="index.html"
+                   title="Nodejs"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="samples.html"
+                   title="Nodejs demo applications"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="page-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+<h5 class="white-text">EJDB on Github</h5>
+<a class="github-button" href="https://github.com/Softmotions/ejdb" data-style="mega"
+   data-count-href="/Softmotions/ejdb/stargazers" data-count-api="/repos/Softmotions/ejdb#stargazers_count"
+   data-count-aria-label="# stargazers on GitHub" aria-label="Star Softmotions/ejdb on GitHub">Star</a>
+<a class="github-button" href="https://github.com/Softmotions/ejdb/issues" data-style="mega"
+   data-count-api="/repos/Softmotions/ejdb#open_issues_count" data-count-aria-label="# issues on GitHub"
+   aria-label="Issue Softmotions/ejdb on GitHub">Issue</a>
+            </div>
+            <div class="col l6 s12">
+                <ul>
+                    <li><a href="http://ejdb.org/news.html">News</a></li>
+                    <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                    <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright" role="contentinfo">
+        <div class="container">&copy; Copyright 2012-2017 Softmotions Ltd.
+        </div>
+    </div>
+</footer>
+
+<script type="text/javascript" src="../../../_static/jquery.js"></script>
+<script type="text/javascript" src="../../../_static/underscore.js"></script>
+<script type="text/javascript" src="../../../_static/doctools.js"></script>
+<script type="text/javascript" src="../../../_static/materialize.min.js"></script>
+<script type="text/javascript" src="../../../_static/theme.js"></script>
+ 
+<script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-36241306-1', 'auto');
+    ga('send', 'pageview');
+</script>
+<a id="btt"><i class="mdi-navigation-expand-less"></i></a>
+</body>
+</html>

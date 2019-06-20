@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Welcome to EJDB! &mdash; EJDB</title>
+    
+<link rel="stylesheet" href="_static/theme.css" type="text/css"/>
+<link rel="stylesheet" href="_static/pygments.css" type="text/css"/>
+    <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="EJDB" href="index.html"/> 
+</head>
+<body role="document">
+<div id="toc-modal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4>Table Of Contents</h4>
+
+        <div class="page-content">
+            <ul>
+<li><a class="reference internal" href="#">Welcome to EJDB!</a><ul>
+<li><a class="reference internal" href="#tables">Tables</a></li>
+<li><a class="reference internal" href="#images">Images</a></li>
+<li><a class="reference internal" href="#misc">Misc</a></li>
+<li><a class="reference internal" href="#notes">Notes</a></li>
+<li><a class="reference internal" href="#program-options">Program options</a></li>
+<li><a class="reference internal" href="#styles">Styles</a><ul>
+<li><a class="reference internal" href="#subheading">Subheading</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#more-topics-to-be-covered">More topics to be covered</a></li>
+<li><a class="reference internal" href="#bullets-2">Bullets 2</a></li>
+<li><a class="reference internal" href="#install-sphinx">Install Sphinx</a></li>
+<li><a class="reference internal" href="#code">Code</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect btn-flat ">Close</a>
+    </div>
+</div>
+<header style="margin-bottom: 20px">
+    <nav id="nav">
+        <div class="nav-wrapper">
+            <a href="index.html">
+                <img class="brand-logo" src="_static/ejdb.png" alt="Logo"/>
+            </a>
+            <a href="#" data-activates="nav-mobile-sidebar" class="button-collapse"><i
+                    class="mdi-navigation-menu"></i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+            <ul class="side-nav" id="nav-mobile-sidebar">
+                
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<div class="row">
+    <div id="sidebar" class="col s12 m4 l3 push-m8 push-l9">
+<div class="row" style="margin: 0" id="searchbox">
+    <form class="col s12 no-padding" role="search" action="search.html" method="get">
+        <div class="input-field">
+            <input id="search" type="search" name="q" required>
+            <label for="search" class="">Quick search</label>
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div id="sidetoc">
+    <ul>
+<li class="toctree-l1"><a class="reference internal" href="news.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="news.html#ejdb-v1-2-11-released">EJDB v1.2.11 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="news.html#ejdb-v1-2-10-released">EJDB v1.2.10 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="news.html#ejdb-v1-2-9-released">EJDB v1.2.9 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="news.html#ejdb-v1-2-8-released">EJDB v1.2.8 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="news.html#archived">Archived</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/snippets.html">Intro snippets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/snippets.html#c-c">C/C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/snippets.html#nodejs">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/snippets.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/snippets.html#lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/snippets.html#ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/snippets.html#c">C#</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/snippets.html#go">Go</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/snippets.html#other-third-party-bindings">Other third-party bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/install/index.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/install/ubuntu.html">Ubuntu/Debian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/install/osx.html">OSX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/install/windows.html">Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/install/archives.html">EJDB binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/install/building.html">Building from sources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/cli.html">Command line interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/cli.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/cli.html#program-options">Program options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/cli.html#usage-demo">Usage demo</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/ql/ql.html">Query language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/ql/ql.html#querying">Querying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/ql/ql.html#query-hints">Query hints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/ql/ql.html#data-manipulation">Data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/ql/ql.html#do-action-directive">$do action directive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/ql/ql.html#some-performance-considerations">Some performance considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/ql/ql.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/ql/joins.html">Collection joins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/ql/joins.html#simple-joins-showcase">Simple joins showcase</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/internals/index.html">EJDB Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/internals/index.html#tokyo-cabinet">Tokyo Cabinet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/internals/index.html#document-storage-model">Document storage model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/internals/index.html#indexing">Indexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/internals/index.html#locking">Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/internals/index.html#transactions">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/bindings/index.html">Language bindings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/bindings/nodejs/index.html">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-python">Python</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-java">Java</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-csharp">.Net (C#)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/bindings/thirdparty.html">Third-party language bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/iexp/index.html">Import/Export database data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/iexp/index.html#c-api">C API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/iexp/index.html#export-command-spec">Export command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/iexp/index.html#import-command-spec">Import command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/iexp/index.html#command-response">Command response</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/limitations.html">Known limitations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/limitations.html#tokyo-cabinet-issues">Tokyo Cabinet issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/limitations.html#multiprocess-database-access">Multiprocess database access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/limitations.html#indexes">Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/limitations.html#misc">Misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/ejdb2/index.html">EJDB2 Roadmap</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/ejdb2/index.html#progress">Progress</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doc/mongodb.html">Mongodb compatibility</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="doc/mongodb.html#logical-operators">Logical operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/mongodb.html#element-level-operators">Element level operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/mongodb.html#geospartial-operators">Geospartial operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/mongodb.html#array-operators">Array operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/mongodb.html#update-operators">Update operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/mongodb.html#various-operators">Various operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="doc/mongodb.html#ejdb-specific-query-operators">EJDB specific query operators</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+    </div>
+    <div class="page-content-wrapper col s12 m8 l9 pull-m4 pull-l3">
+        <div id="page-content-block">
+            
+            <div class="rel-nav">
+                <a href="index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+            </div>
+            <div class="page-content">
+                
+  <div class="section" id="welcome-to-ejdb">
+<h1><a class="toc-backref" href="#id6">Welcome to EJDB!</a><a class="headerlink" href="#welcome-to-ejdb" title="Permalink to this headline">¶</a></h1>
+<blockquote class="epigraph">
+<div><p>No matter where you go, there you are.</p>
+<p class="attribution">&mdash;Buckaroo Banzai</p>
+</div></blockquote>
+<p>EJDB aims to be a fast MongoDB-like library which can be embedded into C/C++,
+.Net, NodeJS, Python, Lua, Java, Ruby, Go applications under terms of LGPL license.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#welcome-to-ejdb" id="id6">Welcome to EJDB!</a><ul>
+<li><a class="reference internal" href="#tables" id="id7">Tables</a></li>
+<li><a class="reference internal" href="#images" id="id8">Images</a></li>
+<li><a class="reference internal" href="#misc" id="id9">Misc</a></li>
+<li><a class="reference internal" href="#notes" id="id10">Notes</a></li>
+<li><a class="reference internal" href="#program-options" id="id11">Program options</a></li>
+<li><a class="reference internal" href="#styles" id="id12">Styles</a><ul>
+<li><a class="reference internal" href="#subheading" id="id13">Subheading</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#more-topics-to-be-covered" id="id14">More topics to be covered</a></li>
+<li><a class="reference internal" href="#bullets-2" id="id15">Bullets 2</a></li>
+<li><a class="reference internal" href="#install-sphinx" id="id16">Install Sphinx</a></li>
+<li><a class="reference internal" href="#code" id="id17">Code</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>This is a paragraph that contains <a class="reference external" href="http://example.com/">a link</a>.</p>
+<div class="section" id="tables">
+<h2><a class="toc-backref" href="#id7">Tables</a><a class="headerlink" href="#tables" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="21%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Header row, column 1
+(header rows optional)</th>
+<th class="head">Header 2</th>
+<th class="head">Header 3</th>
+<th class="head">Header 4</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>body row 1, column 1</td>
+<td>column 2</td>
+<td>column 3</td>
+<td>column 4</td>
+</tr>
+<tr class="row-odd"><td>body row 2</td>
+<td>...</td>
+<td>...</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<p>Second table:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="29%" />
+<col width="41%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">A</th>
+<th class="head">B</th>
+<th class="head">A and B</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>False</td>
+<td>False</td>
+<td>False</td>
+</tr>
+<tr class="row-odd"><td>True</td>
+<td>False</td>
+<td>False</td>
+</tr>
+<tr class="row-even"><td>False</td>
+<td>True</td>
+<td>False</td>
+</tr>
+<tr class="row-odd"><td>True</td>
+<td>True</td>
+<td>True</td>
+</tr>
+</tbody>
+</table>
+<p>The list table:</p>
+<table border="1" class="colwidths-given docutils" id="id5">
+<caption><span class="caption-text">Frozen Delights!</span><a class="headerlink" href="#id5" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="27%" />
+<col width="18%" />
+<col width="55%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Treat</th>
+<th class="head">Quantity</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Albatross</td>
+<td>2.99</td>
+<td>On a stick!</td>
+</tr>
+<tr class="row-odd"><td>Crunchy Frog</td>
+<td>1.49</td>
+<td><dl class="first last docutils">
+<dt>If we took the bones out, it wouldn&#8217;t be</dt>
+<dd>crunchy, now would it?</dd>
+</dl>
+</td>
+</tr>
+<tr class="row-even"><td>Gannet Ripple</td>
+<td>1.99</td>
+<td>On a stick!</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="images">
+<h2><a class="toc-backref" href="#id8">Images</a><a class="headerlink" href="#images" title="Permalink to this headline">¶</a></h2>
+<img alt="alternate text" class="align-right" src="_images/ejdblogo3.png" />
+</div>
+<div class="section" id="misc">
+<h2><a class="toc-backref" href="#id9">Misc</a><a class="headerlink" href="#misc" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="c.PyType_GenericAlloc">
+PyObject* <code class="descname">PyType_GenericAlloc</code><span class="sig-paren">(</span>PyTypeObject<em>&nbsp;*type</em>, Py_ssize_t<em>&nbsp;nitems</em><span class="sig-paren">)</span><a class="headerlink" href="#c.PyType_GenericAlloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simple <cite>C</cite> function.</p>
+</dd></dl>
+
+<dl class="envvar">
+<dt id="envvar-PATH">
+<code class="descname">PATH</code><a class="headerlink" href="#envvar-PATH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<pre>
+<strong id="grammar-token-try_stmt">try_stmt </strong> ::=  try1_stmt | try2_stmt
+<strong id="grammar-token-try1_stmt">try1_stmt</strong> ::=  &quot;try&quot; &quot;:&quot; <code class="xref docutils literal"><span class="pre">suite</span></code>
+               (&quot;except&quot; [<code class="xref docutils literal"><span class="pre">expression</span></code> [&quot;,&quot; <code class="xref docutils literal"><span class="pre">target</span></code>]] &quot;:&quot; <code class="xref docutils literal"><span class="pre">suite</span></code>)+
+               [&quot;else&quot; &quot;:&quot; <code class="xref docutils literal"><span class="pre">suite</span></code>]
+               [&quot;finally&quot; &quot;:&quot; <code class="xref docutils literal"><span class="pre">suite</span></code>]
+<strong id="grammar-token-try2_stmt">try2_stmt</strong> ::=  &quot;try&quot; &quot;:&quot; <code class="xref docutils literal"><span class="pre">suite</span></code>
+               &quot;finally&quot; &quot;:&quot; <code class="xref docutils literal"><span class="pre">suite</span></code>
+</pre>
+<table class="hlist"><tr><td><ul class="simple">
+<li>A list of</li>
+<li>short items</li>
+</ul>
+</td><td><ul class="simple">
+<li>that should be</li>
+<li>displayed</li>
+</ul>
+</td><td><ul class="simple">
+<li>horizontally</li>
+</ul>
+</td></tr></table>
+<div class="sidebar">
+<p class="first sidebar-title">Sidebar Title</p>
+<p class="sidebar-subtitle">Optional Sidebar Subtitle</p>
+<p class="last">Subsequent indented lines comprise
+the body of the sidebar, and are
+interpreted as body elements.</p>
+</div>
+<p>E = mc<sup>2</sup></p>
+<p>H<sub>2</sub>O</p>
+<div class="line-block">
+<div class="line">These lines are</div>
+<div class="line">broken exactly like in</div>
+<div class="line">the source file.</div>
+</div>
+<div class="topic">
+<p class="topic-title first">Topic Title</p>
+<p>Subsequent indented lines comprise
+the body of the topic, and are
+interpreted as body elements.</p>
+</div>
+<blockquote class="highlights">
+<div><p>highlights</p>
+<ul class="simple">
+<li>One</li>
+<li>Two</li>
+<li>Three</li>
+</ul>
+</div></blockquote>
+<div class="compound">
+<p class="compound-first">The &#8216;rm&#8217; command is very dangerous.  If you are logged
+in as root and enter</p>
+<div class="compound-middle highlight-text"><div class="highlight"><pre><span></span>cd /
+rm -rf *
+</pre></div>
+</div>
+<p class="compound-last">you will erase the entire contents of your file system.</p>
+</div>
+</div>
+<div class="section" id="notes">
+<h2><a class="toc-backref" href="#id10">Notes</a><a class="headerlink" href="#notes" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><code class="docutils literal"><span class="pre">sphinx-apidoc</span></code> generates reST files that use <cite>sphinx.ext.autodoc</cite> to
+document all found modules.  If any modules have side effects on import,
+these will be executed by <code class="docutils literal"><span class="pre">autodoc</span></code> when <code class="docutils literal"><span class="pre">sphinx-build</span></code> is run.</p>
+<p class="last">If you document scripts (as opposed to library modules), make sure their main
+routine is protected by a <code class="docutils literal"><span class="pre">if</span> <span class="pre">__name__</span> <span class="pre">==</span> <span class="pre">'__main__'</span></code> condition.</p>
+</div>
+<p>Some text</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last"><code class="docutils literal"><span class="pre">sphinx-apidoc</span></code> generates reST files that use <cite>sphinx.ext.autodoc</cite> to
+document all found modules.  If any modules have side effects on import,
+these will be executed by <code class="docutils literal"><span class="pre">autodoc</span></code> when <code class="docutils literal"><span class="pre">sphinx-build</span></code> is run.</p>
+</div>
+<div class="admonition error">
+<p class="first admonition-title">Error</p>
+<p class="last"><code class="docutils literal"><span class="pre">sphinx-apidoc</span></code> generates reST files that use <cite>sphinx.ext.autodoc</cite> to
+document all found modules.  If any modules have side effects on import,
+these will be executed by <code class="docutils literal"><span class="pre">autodoc</span></code> when <code class="docutils literal"><span class="pre">sphinx-build</span></code> is run.</p>
+</div>
+</div>
+<div class="section" id="program-options">
+<h2><a class="toc-backref" href="#id11">Program options</a><a class="headerlink" href="#program-options" title="Permalink to this headline">¶</a></h2>
+<p>The <strong class="program">sphinx-quickstart</strong> script has several options:</p>
+<dl class="option">
+<dt id="cmdoption-sphinx-quickstart-q">
+<code class="descname">-q</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--quiet</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-sphinx-quickstart-q" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quiet mode that will skips interactive wizard to specify options.
+This option requires <cite>-p</cite>, <cite>-a</cite> and <cite>-v</cite> options.</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-sphinx-quickstart-h">
+<code class="descname">-h</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--help</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--version</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-sphinx-quickstart-h" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display usage summary or Sphinx version.</p>
+</dd></dl>
+
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="http://link">GNU tar manual, Basic Tar Format</a>
+Documentation for tar archive files, including GNU tar extensions.</p>
+</div>
+<p><strong>Function signature</strong></p>
+<p>The <a class="reference internal" href="#enumerate" title="enumerate"><code class="xref py py-func docutils literal"><span class="pre">enumerate()</span></code></a> function can be used for ...</p>
+<dl class="function">
+<dt id="enumerate">
+<code class="descname">enumerate</code><span class="sig-paren">(</span><em>sequence</em><span class="optional">[</span>, <em>start=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#enumerate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator that yields tuples of an index and an item of the
+<em>sequence</em>. (And so on.)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="c.repeat">
+<code class="descname">repeat</code><span class="sig-paren">(</span>object[, times]<span class="sig-paren">)</span><a class="headerlink" href="#c.repeat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make an iterator that returns <em>object</em> over and over again. Runs indefinitely
+unless the <em>times</em> argument is specified. Used as argument to <code class="xref c c-func docutils literal"><span class="pre">map()</span></code> for
+invariant parameters to the called function.  Also used with <code class="xref c c-func docutils literal"><span class="pre">zip()</span></code> to
+create an invariant part of a tuple record.  Equivalent to:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>def repeat(object, times=None):
+    # repeat(10, 3) --&gt; 10 10 10
+    if times is None:
+        while True:
+            yield object
+    else:
+        for i in range(times):
+            yield object
+</pre></div>
+</div>
+<p>A common use for <em>repeat</em> is to supply a stream of constant values to <em>map</em>
+or <em>zip</em>:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>&gt;&gt;&gt; list(map(pow, range(10), repeat(2)))
+[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="styles">
+<h2><a class="toc-backref" href="#id12">Styles</a><a class="headerlink" href="#styles" title="Permalink to this headline">¶</a></h2>
+<p>one asterisk: <em>text</em> for emphasis (italics),</p>
+<p>two asterisks: <strong>text</strong> for strong emphasis (boldface), and</p>
+<p>backquotes: <code class="docutils literal"><span class="pre">text</span></code> for code samples.</p>
+<div class="section" id="subheading">
+<h3><a class="toc-backref" href="#id13">Subheading</a><a class="headerlink" href="#subheading" title="Permalink to this headline">¶</a></h3>
+<p>Hello</p>
+</div>
+</div>
+<div class="section" id="more-topics-to-be-covered">
+<h2><a class="toc-backref" href="#id14">More topics to be covered</a><a class="headerlink" href="#more-topics-to-be-covered" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Other extensions (math, viewcode, doctest)</li>
+<li>Static files</li>
+<li>Selecting a theme</li>
+<li>Templating</li>
+<li>Using extensions</li>
+<li>Subsection</li>
+<li>Writing extensions</li>
+</ul>
+</div>
+<div class="section" id="bullets-2">
+<h2><a class="toc-backref" href="#id15">Bullets 2</a><a class="headerlink" href="#bullets-2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>this is</li>
+<li>a list<ul>
+<li>with a nested list</li>
+<li>and some subitems</li>
+</ul>
+</li>
+<li>and here the parent list continues</li>
+</ul>
+</div>
+<div class="section" id="install-sphinx">
+<h2><a class="toc-backref" href="#id16">Install Sphinx</a><a class="headerlink" href="#install-sphinx" title="Permalink to this headline">¶</a></h2>
+<p>Install Sphinx, either from a distribution package or from
+<a class="reference external" href="https://pypi.python.org/pypi/Sphinx">PyPI</a> with</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>$ pip install Sphinx
+</pre></div>
+</div>
+</div>
+<div class="section" id="code">
+<h2><a class="toc-backref" href="#id17">Code</a><a class="headerlink" href="#code" title="Permalink to this headline">¶</a></h2>
+<p>The interpreter acts as a simple calculator: you can type an expression at it
+and it will write the value.  Expression syntax is straightforward: the
+operators <code class="docutils literal"><span class="pre">+</span></code>, <code class="docutils literal"><span class="pre">-</span></code>, <code class="docutils literal"><span class="pre">*</span></code> and <code class="docutils literal"><span class="pre">/</span></code> work just like in most other languages
+(for example, Pascal or C); parentheses (<code class="docutils literal"><span class="pre">()</span></code>) can be used for grouping. See <a class="footnote-reference" href="#id4" id="id1">[1]</a> and see <a class="footnote-reference" href="#f2" id="id2">[3]</a></p>
+<p>For example:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>&gt;&gt;&gt; 2 + 2
+4
+&gt;&gt;&gt; 50 - 5*6
+20
+&gt;&gt;&gt; (50 - 5*6) / 4
+5.0
+&gt;&gt;&gt; 8 / 5  # division always returns a floating point number
+1.6
+</pre></div>
+</div>
+<p>Some random Python code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">DistUtilsExtra.command</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="hll"><span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+</span>    <span class="k">print</span> <span class="o">&gt;&gt;</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span> <span class="s1">&#39;To build Sphinx-Theme-Brandenburg you need https://launchpad.net/python-distutils-extra&#39;</span>
+<span class="hll">    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span>
+
+<span class="k">def</span> <span class="nf">read_from_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="nb">input</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">input</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Here we have some shell code:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span><span class="c1">## Go to a bookmark</span>
+bcd<span class="o">(){</span>
+ <span class="k">if</span> <span class="o">[</span> <span class="m">2</span> -eq <span class="m">0</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+     _bcd_help
+ <span class="k">elif</span>  _bcd_check_cfg_file<span class="p">;</span> <span class="k">then</span>
+   <span class="nv">dir</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+   <span class="k">if</span> <span class="o">[</span> -z <span class="s2">&quot;&quot;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+     <span class="nb">echo</span> <span class="s2">&quot;No bookmark \&quot;borland\&quot;&quot;</span>
+   <span class="k">else</span>
+     <span class="nb">cd</span> <span class="s2">&quot;&quot;</span>
+   <span class="k">fi</span>
+ <span class="k">fi</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Example</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7
+8</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span>
+<span class="go">4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="mi">50</span> <span class="o">-</span> <span class="mi">5</span><span class="o">*</span><span class="mi">6</span>
+<span class="go">20</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="mi">50</span> <span class="o">-</span> <span class="mi">5</span><span class="o">*</span><span class="mi">6</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span>
+<span class="go">5.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="mi">8</span> <span class="o">/</span> <span class="mi">5</span>  <span class="c1"># division always returns a floating point number</span>
+<span class="go">1.6</span>
+</pre></div>
+</td></tr></table></div>
+<p>Lorem ipsum <a class="reference internal" href="#ref" id="id3">[Ref]</a> dolor sit amet.</p>
+<dl class="glossary docutils">
+<dt id="term-configuration-directory">configuration directory</dt>
+<dd>The definition of term</dd>
+</dl>
+<p class="rubric">Footnotes</p>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>This is the usual layout.  However, <code class="file docutils literal"><span class="pre">conf.py</span></code> can also live in
+another directory, the <a class="reference internal" href="#term-configuration-directory"><span class="xref std std-term">configuration directory</span></a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="f1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[2]</td><td>Text of the first footnote.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="f2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[3]</a></td><td>Text of the second footnote.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="ref" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[Ref]</a></td><td>Book or article reference, URL or whatever.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+            </div>
+        </div>
+        <div id="page-content-footer">
+            <div id="bottom-rel-placeholder" style="display:none">
+                
+            <div class="rel-nav">
+                <a href="index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="page-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+<h5 class="white-text">EJDB on Github</h5>
+<a class="github-button" href="https://github.com/Softmotions/ejdb" data-style="mega"
+   data-count-href="/Softmotions/ejdb/stargazers" data-count-api="/repos/Softmotions/ejdb#stargazers_count"
+   data-count-aria-label="# stargazers on GitHub" aria-label="Star Softmotions/ejdb on GitHub">Star</a>
+<a class="github-button" href="https://github.com/Softmotions/ejdb/issues" data-style="mega"
+   data-count-api="/repos/Softmotions/ejdb#open_issues_count" data-count-aria-label="# issues on GitHub"
+   aria-label="Issue Softmotions/ejdb on GitHub">Issue</a>
+            </div>
+            <div class="col l6 s12">
+                <ul>
+                    <li><a href="http://ejdb.org/news.html">News</a></li>
+                    <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                    <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright" role="contentinfo">
+        <div class="container">&copy; Copyright 2012-2017 Softmotions Ltd.
+        </div>
+    </div>
+</footer>
+
+<script type="text/javascript" src="_static/jquery.js"></script>
+<script type="text/javascript" src="_static/underscore.js"></script>
+<script type="text/javascript" src="_static/doctools.js"></script>
+<script type="text/javascript" src="_static/materialize.min.js"></script>
+<script type="text/javascript" src="_static/theme.js"></script>
+ 
+<script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-36241306-1', 'auto');
+    ga('send', 'pageview');
+</script>
+<a id="btt"><i class="mdi-navigation-expand-less"></i></a>
+</body>
+</html>

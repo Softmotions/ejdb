@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Query language &mdash; EJDB</title>
+    
+<link rel="stylesheet" href="../../_static/theme.css" type="text/css"/>
+<link rel="stylesheet" href="../../_static/pygments.css" type="text/css"/>
+    <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="EJDB" href="../../index.html"/>
+    <link rel="next" title="Collection joins" href="joins.html"/>
+    <link rel="prev" title="Command line interface" href="../cli.html"/> 
+</head>
+<body role="document">
+<div id="toc-modal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4>Table Of Contents</h4>
+
+        <div class="page-content">
+            <ul>
+<li><a class="reference internal" href="#">Query language</a><ul>
+<li><a class="reference internal" href="#querying">Querying</a><ul>
+<li><a class="reference internal" href="#simple-matching">Simple matching</a></li>
+<li><a class="reference internal" href="#not">$not</a></li>
+<li><a class="reference internal" href="#nin">$nin</a></li>
+<li><a class="reference internal" href="#in">$in</a></li>
+<li><a class="reference internal" href="#icase">$icase</a></li>
+<li><a class="reference internal" href="#begin">$begin</a></li>
+<li><a class="reference internal" href="#simple-projections">Simple projections</a></li>
+<li><a class="reference internal" href="#and-or-joining-of-query-expressions">AND/OR joining of query expressions</a><ul>
+<li><a class="reference internal" href="#or-joined-conditions">OR joined conditions</a></li>
+<li><a class="reference internal" href="#and-joined-conditions">AND joined conditions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#conditions-on-numeric-values">Conditions on numeric values</a></li>
+<li><a class="reference internal" href="#stror">$stror</a></li>
+<li><a class="reference internal" href="#strand">$strand</a></li>
+<li><a class="reference internal" href="#exists">$exists</a></li>
+<li><a class="reference internal" href="#elemmatch">$elemMatch</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#query-hints">Query hints</a><ul>
+<li><a class="reference internal" href="#max">$max</a></li>
+<li><a class="reference internal" href="#skip">$skip</a></li>
+<li><a class="reference internal" href="#orderby">$orderby</a></li>
+<li><a class="reference internal" href="#fields">$fields</a><ul>
+<li><a class="reference internal" href="#id14">$ (projection)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#data-manipulation">Data manipulation</a><ul>
+<li><a class="reference internal" href="#set">$set</a></li>
+<li><a class="reference internal" href="#upsert">$upsert</a></li>
+<li><a class="reference internal" href="#dropall">$dropall</a></li>
+<li><a class="reference internal" href="#inc">$inc</a></li>
+<li><a class="reference internal" href="#unset">$unset</a></li>
+<li><a class="reference internal" href="#update">$ (update)</a></li>
+<li><a class="reference internal" href="#addtoset-and-addtosetall">$addToSet and $addToSetAll</a></li>
+<li><a class="reference internal" href="#pull-and-pullall">$pull and $pullAll</a></li>
+<li><a class="reference internal" href="#push-and-pushall">$push and $pushAll</a></li>
+<li><a class="reference internal" href="#rename">$rename</a></li>
+<li><a class="reference internal" href="#slice-projection">$slice (projection)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#do-action-directive">$do action directive</a></li>
+<li><a class="reference internal" href="#some-performance-considerations">Some performance considerations</a></li>
+<li><a class="reference internal" href="#glossary">Glossary</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect btn-flat ">Close</a>
+    </div>
+</div>
+<header style="margin-bottom: 20px">
+    <nav id="nav">
+        <div class="nav-wrapper">
+            <a href="../../index.html">
+                <img class="brand-logo" src="../../_static/ejdb.png" alt="Logo"/>
+            </a>
+            <a href="#" data-activates="nav-mobile-sidebar" class="button-collapse"><i
+                    class="mdi-navigation-menu"></i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+            <ul class="side-nav" id="nav-mobile-sidebar">
+                
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<div class="row">
+    <div id="sidebar" class="col s12 m4 l3 push-m8 push-l9">
+<div class="row" style="margin: 0" id="searchbox">
+    <form class="col s12 no-padding" role="search" action="../../search.html" method="get">
+        <div class="input-field">
+            <input id="search" type="search" name="q" required>
+            <label for="search" class="">Quick search</label>
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div id="sidetoc">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../news.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-11-released">EJDB v1.2.11 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-10-released">EJDB v1.2.10 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-9-released">EJDB v1.2.9 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-8-released">EJDB v1.2.8 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#archived">Archived</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../snippets.html">Intro snippets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#c-c">C/C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#nodejs">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#c">C#</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#go">Go</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#other-third-party-bindings">Other third-party bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../install/ubuntu.html">Ubuntu/Debian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/osx.html">OSX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/windows.html">Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/archives.html">EJDB binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install/building.html">Building from sources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">Command line interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#program-options">Program options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#usage-demo">Usage demo</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Query language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#querying">Querying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#query-hints">Query hints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-manipulation">Data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#do-action-directive">$do action directive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#some-performance-considerations">Some performance considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="joins.html">Collection joins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="joins.html#simple-joins-showcase">Simple joins showcase</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../internals/index.html">EJDB Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#tokyo-cabinet">Tokyo Cabinet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#document-storage-model">Document storage model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#indexing">Indexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#locking">Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#transactions">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../bindings/index.html">Language bindings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../bindings/nodejs/index.html">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-python">Python</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-java">Java</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-csharp">.Net (C#)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bindings/thirdparty.html">Third-party language bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../iexp/index.html">Import/Export database data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#c-api">C API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#export-command-spec">Export command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#import-command-spec">Import command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#command-response">Command response</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../limitations.html">Known limitations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#tokyo-cabinet-issues">Tokyo Cabinet issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#multiprocess-database-access">Multiprocess database access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#indexes">Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#misc">Misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ejdb2/index.html">EJDB2 Roadmap</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ejdb2/index.html#progress">Progress</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mongodb.html">Mongodb compatibility</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#logical-operators">Logical operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#element-level-operators">Element level operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#geospartial-operators">Geospartial operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#array-operators">Array operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#update-operators">Update operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#various-operators">Various operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#ejdb-specific-query-operators">EJDB specific query operators</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+    </div>
+    <div class="page-content-wrapper col s12 m8 l9 pull-m4 pull-l3">
+        <div id="page-content-block">
+            
+            <div class="rel-nav">
+                <a href="../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+                <a href="../cli.html"
+                   title="Command line interface"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="joins.html"
+                   title="Collection joins"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            <div class="page-content">
+                
+  <div class="section" id="query-language">
+<span id="ql"></span><h1><a class="toc-backref" href="#id24">Query language</a><a class="headerlink" href="#query-language" title="Permalink to this headline">¶</a></h1>
+<p>The form of EJDB queries is inspired by <a class="reference external" href="http://mongodb.org">Mongodb</a> and follows the same philosophy. In many cases
+EJDB queries are fully comparable with mongodb counterparts. Every EJDB query object can be considered as
+JSON document which specifies the way of retrieving/updating a set of documents stored in particular database collection.
+The query objects can be joined together by <cite>AND</cite> or <cite>OR</cite> logical conjunctions. The way of how to actually specify
+queries depends on an API of particular EJDB <a class="reference internal" href="../bindings/index.html#bindings"><span class="std std-ref">language binding</span></a>. Anyway we will use an abstract
+queries represented as plain JSONs with some showcases where <a class="reference internal" href="../cli.html#cli"><span class="std std-ref">EJDB Nodejs CLI API</span></a> is used.</p>
+<p>First, we define the following terms: <a class="reference internal" href="#term-abstract-document"><span class="xref std std-term">abstract document</span></a> as a metadocument for all
+the documents from a particular collection without an actual field values and with all the
+possible document fields and their types belonging to any document in the collection.
+You can consider <cite>abstract document</cite> as a prototype for all possible documents in the collection.
+In the context of an <cite>abstract document</cite> a <a class="reference internal" href="#term-fieldpath"><span class="xref std std-term">fieldpath</span></a> is the path consisting of JSON field names traversed
+from the document&#8217;s root to the particular document field.</p>
+<p>EJDB aims to be query compatible with mongodb since it would provide an easy
+application migration from/to mongodb and adoption of many developers experienced with
+mongodb.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#query-language" id="id24">Query language</a><ul>
+<li><a class="reference internal" href="#querying" id="id25">Querying</a><ul>
+<li><a class="reference internal" href="#simple-matching" id="id26">Simple matching</a></li>
+<li><a class="reference internal" href="#not" id="id27">$not</a></li>
+<li><a class="reference internal" href="#nin" id="id28">$nin</a></li>
+<li><a class="reference internal" href="#in" id="id29">$in</a></li>
+<li><a class="reference internal" href="#icase" id="id30">$icase</a></li>
+<li><a class="reference internal" href="#begin" id="id31">$begin</a></li>
+<li><a class="reference internal" href="#simple-projections" id="id32">Simple projections</a></li>
+<li><a class="reference internal" href="#and-or-joining-of-query-expressions" id="id33">AND/OR joining of query expressions</a><ul>
+<li><a class="reference internal" href="#or-joined-conditions" id="id34">OR joined conditions</a></li>
+<li><a class="reference internal" href="#and-joined-conditions" id="id35">AND joined conditions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#conditions-on-numeric-values" id="id36">Conditions on numeric values</a></li>
+<li><a class="reference internal" href="#stror" id="id37">$stror</a></li>
+<li><a class="reference internal" href="#strand" id="id38">$strand</a></li>
+<li><a class="reference internal" href="#exists" id="id39">$exists</a></li>
+<li><a class="reference internal" href="#elemmatch" id="id40">$elemMatch</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#query-hints" id="id41">Query hints</a><ul>
+<li><a class="reference internal" href="#max" id="id42">$max</a></li>
+<li><a class="reference internal" href="#skip" id="id43">$skip</a></li>
+<li><a class="reference internal" href="#orderby" id="id44">$orderby</a></li>
+<li><a class="reference internal" href="#fields" id="id45">$fields</a><ul>
+<li><a class="reference internal" href="#id14" id="id46">$ (projection)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#data-manipulation" id="id47">Data manipulation</a><ul>
+<li><a class="reference internal" href="#set" id="id48">$set</a></li>
+<li><a class="reference internal" href="#upsert" id="id49">$upsert</a></li>
+<li><a class="reference internal" href="#dropall" id="id50">$dropall</a></li>
+<li><a class="reference internal" href="#inc" id="id51">$inc</a></li>
+<li><a class="reference internal" href="#unset" id="id52">$unset</a></li>
+<li><a class="reference internal" href="#update" id="id53">$ (update)</a></li>
+<li><a class="reference internal" href="#addtoset-and-addtosetall" id="id54">$addToSet and $addToSetAll</a></li>
+<li><a class="reference internal" href="#pull-and-pullall" id="id55">$pull and $pullAll</a></li>
+<li><a class="reference internal" href="#push-and-pushall" id="id56">$push and $pushAll</a></li>
+<li><a class="reference internal" href="#rename" id="id57">$rename</a></li>
+<li><a class="reference internal" href="#slice-projection" id="id58">$slice (projection)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#do-action-directive" id="id59">$do action directive</a></li>
+<li><a class="reference internal" href="#some-performance-considerations" id="id60">Some performance considerations</a></li>
+<li><a class="reference internal" href="#glossary" id="id61">Glossary</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="querying">
+<h2><a class="toc-backref" href="#id25">Querying</a><a class="headerlink" href="#querying" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="simple-matching">
+<span id="matching"></span><h3><a class="toc-backref" href="#id26">Simple matching</a><a class="headerlink" href="#simple-matching" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">{fieldpath1</span> <span class="pre">:</span> <span class="pre">value1,</span> <span class="pre">fieldpath2</span> <span class="pre">:</span> <span class="pre">value2,</span> <span class="pre">...}</span></code></p>
+<p>Select all documents which <cite>fieldpath</cite> values are exactly matched to the values provided in the query.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">addressbook</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="s1">&#39;firstName&#39;</span><span class="o">:</span> <span class="s1">&#39;Andy&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span> <span class="mi">39</span><span class="p">});</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55352c20a462ec6800000000&#39;</span><span class="p">,</span>
+  <span class="nx">firstName</span><span class="o">:</span> <span class="s1">&#39;Andy&#39;</span><span class="p">,</span>
+  <span class="nx">age</span><span class="o">:</span> <span class="mi">39</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>As an argument of simple matching query values you can use a regular expressions:</p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="c1">//Note the regular expression matching</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">addressbook</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="s1">&#39;firstName&#39;</span><span class="o">:</span> <span class="sr">/An.*/</span><span class="p">});</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55352c20a462ec6800000000&#39;</span><span class="p">,</span>
+  <span class="nx">firstName</span><span class="o">:</span> <span class="s1">&#39;Andy&#39;</span><span class="p">,</span>
+  <span class="nx">age</span><span class="o">:</span> <span class="mi">39</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="not">
+<span id="id1"></span><h3><a class="toc-backref" href="#id27">$not</a><a class="headerlink" href="#not" title="Permalink to this headline">¶</a></h3>
+<p>Negation logical operation:</p>
+<p><code class="docutils literal"><span class="pre">{fieldpath</span> <span class="pre">:</span> <span class="pre">{$not</span> <span class="pre">:</span> <span class="pre">query}}</span></code></p>
+<p>Any part of query can be wrapped by <cite>$not</cite> negation operator:</p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="c1">//The field is not equal to val</span>
+<span class="p">{</span><span class="s1">&#39;fieldpath&#39;</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$not&#39;</span> <span class="o">:</span> <span class="nx">val</span><span class="p">}}</span>
+
+<span class="c1">//The field is not equal to the provided subquery condition `{...}`</span>
+<span class="p">{</span><span class="s1">&#39;fieldpath&#39;</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$not&#39;</span> <span class="o">:</span> <span class="p">{...}}}</span>
+</pre></div>
+</div>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="c1">//Person&#39;s name not begins with &#39;Andy&#39;</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">persons</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="s1">&#39;name&#39;</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$not&#39;</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$begin&#39;</span> <span class="o">:</span> <span class="s1">&#39;Andy&#39;</span><span class="p">}}});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="nin">
+<span id="id2"></span><h3><a class="toc-backref" href="#id28">$nin</a><a class="headerlink" href="#nin" title="Permalink to this headline">¶</a></h3>
+<p>Not in:</p>
+<p><code class="docutils literal"><span class="pre">{fieldpath</span> <span class="pre">:</span> <span class="pre">{$nin</span> <span class="pre">:</span> <span class="pre">[value1,</span> <span class="pre">value2,</span> <span class="pre">...]}}</span></code></p>
+<p>Negation of <a class="reference internal" href="#in">$in</a> operator.
+The field value is not equal to any of provided alternatives.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">persons</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="s1">&#39;name&#39;</span> <span class="o">:</span> <span class="p">{</span><span class="s2">&quot;$nin&quot;</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;John Travolta&#39;</span><span class="p">,</span> <span class="s1">&#39;Ivanov&#39;</span><span class="p">]}});</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Negation operations: <cite>$not</cite> and <cite>$nin</cite> do not use collection indexes
+so they can be slower in comparison with other matching operations.</p>
+</div>
+</div>
+<div class="section" id="in">
+<span id="id3"></span><h3><a class="toc-backref" href="#id29">$in</a><a class="headerlink" href="#in" title="Permalink to this headline">¶</a></h3>
+<p>Field equals to any member in the provided set:</p>
+<p><code class="docutils literal"><span class="pre">{fieldpath</span> <span class="pre">:</span> <span class="pre">{$in</span> <span class="pre">:</span> <span class="pre">[value1,</span> <span class="pre">value2,</span> <span class="pre">...]}</span></code></p>
+<p>If the <cite>fieldpath</cite> holds an array, then the <cite>$in</cite> operator selects the documents whose <cite>fieldpath</cite>
+holds an array that contains at least one element that matches a value in the set
+specified within <cite>$in</cite> array.</p>
+</div>
+<div class="section" id="icase">
+<span id="id4"></span><h3><a class="toc-backref" href="#id30">$icase</a><a class="headerlink" href="#icase" title="Permalink to this headline">¶</a></h3>
+<p>Case insensitive string matching:</p>
+<p><code class="docutils literal"><span class="pre">{fieldpath</span> <span class="pre">:</span> <span class="pre">{$icase</span> <span class="pre">:</span> <span class="pre">query}}</span></code></p>
+<p><strong>Example:</strong>
+Case insensitive matching within <a class="reference internal" href="#in">$in</a> operator:</p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">building</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span>
+    <span class="p">{</span><span class="s1">&#39;name&#39;</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$icase&#39;</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$in&#39;</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;théâtre - театр&#39;</span><span class="p">,</span> <span class="s1">&#39;hello world&#39;</span><span class="p">]}}}</span>
+<span class="p">);</span>
+</pre></div>
+</div>
+<p>In order to perform effective case insensitive queries consider creating <cite>JBIDXISTR</cite> index on fields:</p>
+<p><strong>Nodejs API:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">ensureIStringIndex</span>
+<span class="p">[</span><span class="nb">Function</span><span class="p">]</span> <span class="p">(</span><span class="nx">cname</span><span class="p">,</span> <span class="nx">path</span><span class="p">,</span> <span class="p">[</span><span class="nx">cb</span><span class="p">])</span> <span class="nx">Ensure</span> <span class="k">case</span> <span class="nx">insensitive</span> <span class="nb">String</span> <span class="nx">index</span> <span class="k">for</span> <span class="nx">JSON</span> <span class="nx">field</span> <span class="nx">path</span>
+</pre></div>
+</div>
+<p><strong>C API:</strong></p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">flags</span> <span class="o">=</span> <span class="n">flags</span> <span class="o">|</span> <span class="n">JBIDXISTR</span><span class="p">;</span>
+<span class="n">EJDB_EXPORT</span> <span class="kt">bool</span> <span class="nf">ejdbsetindex</span><span class="p">(</span><span class="n">EJCOLL</span> <span class="o">*</span><span class="n">coll</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">ipath</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="begin">
+<span id="id5"></span><h3><a class="toc-backref" href="#id31">$begin</a><a class="headerlink" href="#begin" title="Permalink to this headline">¶</a></h3>
+<p>Fieldpath starts with the specified prefix:</p>
+<p><code class="docutils literal"><span class="pre">{fieldpath</span> <span class="pre">:</span> <span class="pre">{$begin</span> <span class="pre">:</span> <span class="pre">prefix}}</span> <span class="pre">}</span></code></p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="c1">//Person&#39;s name not begins with &#39;Andy&#39;</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">persons</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="s1">&#39;name&#39;</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$not&#39;</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;$begin&#39;</span> <span class="o">:</span> <span class="s1">&#39;Andy&#39;</span><span class="p">}}});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="simple-projections">
+<h3><a class="toc-backref" href="#id32">Simple projections</a><a class="headerlink" href="#simple-projections" title="Permalink to this headline">¶</a></h3>
+<p>You can select only specific document fields by providing <cite>$fields</cite> query <a class="reference internal" href="#qhints"><span class="std std-ref">hints</span></a>:</p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">addressbook</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="s1">&#39;firstName&#39;</span><span class="o">:</span> <span class="sr">/An.*/</span><span class="p">},</span> <span class="p">{</span><span class="nx">$fields</span><span class="o">:</span> <span class="p">{</span><span class="nx">age</span><span class="o">:</span><span class="mi">1</span><span class="p">}});</span>
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="#fields">$fields</a> projection operator.</p>
+</div>
+<div class="section" id="and-or-joining-of-query-expressions">
+<h3><a class="toc-backref" href="#id33">AND/OR joining of query expressions</a><a class="headerlink" href="#and-or-joining-of-query-expressions" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="or-joined-conditions">
+<span id="or"></span><h4><a class="toc-backref" href="#id34">OR joined conditions</a><a class="headerlink" href="#or-joined-conditions" title="Permalink to this headline">¶</a></h4>
+<p>In order to use the logical <cite>OR</cite> joining of query clauses you have two options:</p>
+<ol class="arabic simple">
+<li>Use the API of EJDB <cite>find()</cite> function, as shown in following nodejs example: (todo link nodejs function description)</li>
+</ol>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">addressbook</span><span class="p">.</span><span class="nx">find</span><span class="p">({},</span> <span class="p">[{</span><span class="nx">age</span><span class="o">:</span> <span class="mi">38</span><span class="p">},</span> <span class="p">{</span><span class="nx">age</span><span class="o">:</span> <span class="mi">39</span><span class="p">}]);</span>
+</pre></div>
+</div>
+<p>In this example the array of <cite>OR</cite> joined query clauses is passed as the second argument of the <cite>find</cite> function.</p>
+<ol class="arabic simple" start="2">
+<li>Use <cite>$or</cite> query operator in the following form:</li>
+</ol>
+<p><code class="docutils literal"><span class="pre">{$or:</span> <span class="pre">[</span> <span class="pre">query1,</span> <span class="pre">query2,</span> <span class="pre">...]</span> <span class="pre">}</span></code></p>
+<p><cite>$or</cite> performs a logical <cite>OR</cite> operation on an array of two or more subqueries.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">addressbook</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="s1">&#39;$or&#39;</span><span class="o">:</span> <span class="p">[{</span><span class="nx">age</span><span class="o">:</span> <span class="mi">38</span><span class="p">},</span> <span class="p">{</span><span class="nx">age</span><span class="o">:</span> <span class="mi">39</span><span class="p">}]});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="and-joined-conditions">
+<span id="and"></span><h4><a class="toc-backref" href="#id35">AND joined conditions</a><a class="headerlink" href="#and-joined-conditions" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal"><span class="pre">{$and:</span> <span class="pre">[</span> <span class="pre">query1,</span> <span class="pre">query2,</span> <span class="pre">...]</span> <span class="pre">}</span></code></p>
+<p><cite>$and</cite> performs a logical <cite>AND</cite> operation on an array of two or more subqueries.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<div class="last line-block">
+<div class="line">The <cite>$or</cite> and <cite>$and</cite> operators can be nested together,</div>
+<div class="line"><strong>Example:</strong> <code class="docutils literal"><span class="pre">{z:</span> <span class="pre">33,</span> <span class="pre">$and</span> <span class="pre">:</span> <span class="pre">[</span> <span class="pre">{$or:</span> <span class="pre">[{a:</span> <span class="pre">1},</span> <span class="pre">{b:</span> <span class="pre">2}]},</span> <span class="pre">{$or:</span> <span class="pre">[{c:</span> <span class="pre">5},</span> <span class="pre">{d:</span> <span class="pre">7}]}</span> <span class="pre">]</span> <span class="pre">}</span></code></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="conditions-on-numeric-values">
+<span id="bt"></span><span id="lte"></span><span id="lt"></span><span id="gte"></span><span id="gt"></span><h3><a class="toc-backref" href="#id36">Conditions on numeric values</a><a class="headerlink" href="#conditions-on-numeric-values" title="Permalink to this headline">¶</a></h3>
+<p>Comparison operators <cite>$gt</cite>, <cite>$gte</cite> and <cite>$lt</cite>, <cite>$lte</cite>
+are used for numeric datatypes.</p>
+<ul class="simple">
+<li><cite>$gt</cite> Value greater than <cite>&gt;</cite></li>
+<li><cite>$gte</cite> Value greater than or equal to <cite>&gt;=</cite></li>
+<li><cite>$lt</cite> Value lesser than <cite>&lt;</cite></li>
+<li><cite>$lte</cite> Value lesser than or equal to <cite>&lt;=</cite></li>
+<li><cite>$bt</cite> Value within the specified range inclusively. <code class="docutils literal"><span class="pre">{fieldpath</span> <span class="pre">:</span> <span class="pre">{$bt</span> <span class="pre">:</span> <span class="pre">[lower,</span> <span class="pre">upper]}}</span></code></li>
+</ul>
+<p><strong>Example:</strong> find all persons with <cite>age &gt;= 38</cite>:</p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">addressbook</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="nx">age</span><span class="o">:</span> <span class="p">{</span><span class="nx">$gte</span><span class="o">:</span> <span class="mi">38</span><span class="p">}});</span>
+</pre></div>
+</div>
+<p><strong>Example:</strong> find all persons with <cite>age &gt;= 38 and age &lt;= 40</cite>:</p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">addressbook</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="nx">age</span><span class="o">:</span> <span class="p">{</span><span class="nx">$bt</span><span class="o">:</span> <span class="p">[</span><span class="mi">38</span><span class="p">,</span> <span class="mi">40</span><span class="p">]}});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="stror">
+<span id="id6"></span><h3><a class="toc-backref" href="#id37">$stror</a><a class="headerlink" href="#stror" title="Permalink to this headline">¶</a></h3>
+<p>String tokens matching:</p>
+<p><code class="docutils literal"><span class="pre">{fieldpath:</span>&#160; <span class="pre">{$stror:</span> <span class="pre">[value1,</span> <span class="pre">value2,</span> <span class="pre">....]}</span></code></p>
+<ul class="simple">
+<li>If the <cite>fieldpath</cite> holds a <cite>string</cite> value, the <cite>$stror</cite> operator converts this value
+into an array of string tokens by splitting original value into a set of tokens separated by space <cite>&#8216; &#8216;</cite>
+or comma <cite>&#8216;,&#8217;</cite> characters. Then the operator selects documents whose set of tokens contains any token
+specified in <cite>$stror</cite> array <code class="docutils literal"><span class="pre">[value1,</span> <span class="pre">value2,</span> <span class="pre">...]</span></code>.</li>
+<li>If the <cite>fieldpath</cite> value is a string <cite>array</cite> the <cite>$stror</cite> operator selects
+documents whose <cite>fieldpath</cite> array contains any tokens specified in
+<cite>$stror</cite> array <code class="docutils literal"><span class="pre">[value1,</span> <span class="pre">value2,</span> <span class="pre">...]</span></code>.</li>
+</ul>
+<p id="stror-example"><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;books&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;title&#39;</span> <span class="o">:</span> <span class="s1">&#39;All the Light We Cannot See&#39;</span><span class="p">});</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;books&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;title&#39;</span> <span class="o">:</span> <span class="s1">&#39;Little Blue Truck Board Book&#39;</span><span class="p">});</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;books&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;title&#39;</span> <span class="o">:</span> <span class="s1">&#39;The Book with No Pictures&#39;</span><span class="p">});</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="nx">title</span> <span class="o">:</span> <span class="p">{</span><span class="nx">$icase</span> <span class="o">:</span> <span class="p">{</span><span class="nx">$stror</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;book&#39;</span><span class="p">,</span> <span class="s1">&#39;light&#39;</span><span class="p">]}}});</span>
+<span class="nx">Found</span> <span class="mi">3</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55365fa019808d3c00000000&#39;</span><span class="p">,</span>
+  <span class="nx">title</span><span class="o">:</span> <span class="s1">&#39;All the Light We Cannot See&#39;</span> <span class="p">}</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55365fcb19808d3c00000001&#39;</span><span class="p">,</span>
+  <span class="nx">title</span><span class="o">:</span> <span class="s1">&#39;Little Blue Truck Board Book&#39;</span> <span class="p">}</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55365ff819808d3c00000002&#39;</span><span class="p">,</span>
+  <span class="nx">title</span><span class="o">:</span> <span class="s1">&#39;The Book with No Pictures&#39;</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="strand">
+<span id="id7"></span><h3><a class="toc-backref" href="#id38">$strand</a><a class="headerlink" href="#strand" title="Permalink to this headline">¶</a></h3>
+<p>String tokens matching:</p>
+<p><code class="docutils literal"><span class="pre">{fieldpath:</span>&#160; <span class="pre">{$strand:</span> <span class="pre">[value1,</span> <span class="pre">value2,</span> <span class="pre">....]}</span></code></p>
+<ul>
+<li><p class="first">If the <cite>fieldpath</cite> holds a <cite>string</cite> value the <cite>$strand</cite> operator converts this value
+into an array of string tokens by splitting original value into a set of tokens separated by space <cite>&#8216; &#8216;</cite>
+or comma <cite>&#8216;,&#8217;</cite> characters. Then the operator selects documents whose set of tokens contains all
+tokens specified in <cite>$strand</cite> array <code class="docutils literal"><span class="pre">[value1,</span> <span class="pre">value2,</span> <span class="pre">...]</span></code>.</p>
+</li>
+<li><p class="first">If the <cite>fieldpath</cite> value is a string <cite>array</cite> the <cite>$strand</cite> operator selects
+documents whose <cite>fieldpath</cite> array contains all tokens specified in
+<cite>$strand</cite> array <code class="docutils literal"><span class="pre">[value1,</span> <span class="pre">value2,</span> <span class="pre">...]</span></code>.</p>
+<p>See <a class="reference internal" href="#stror-example"><span class="std std-ref">$stror example</span></a></p>
+</li>
+</ul>
+</div>
+<div class="section" id="exists">
+<span id="id8"></span><h3><a class="toc-backref" href="#id39">$exists</a><a class="headerlink" href="#exists" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference internal" href="#term-fieldpath"><span class="xref std std-term">Fieldpath</span></a> existence checking:</p>
+<p><code class="docutils literal"><span class="pre">{fieldpath:</span> <span class="pre">{$exists:</span> <span class="pre">true|false}}</span></code></p>
+<p>When <cite>$exists</cite> value set to <cite>true</cite>, the documents that contain the <cite>fieldpath</cite> will be matched,
+including documents where the value of <cite>fieldpath</cite> is null. Otherwise this operator returns the documents
+that do not contain the specified <cite>fieldpath</cite>.</p>
+</div>
+<div class="section" id="elemmatch">
+<span id="id9"></span><h3><a class="toc-backref" href="#id40">$elemMatch</a><a class="headerlink" href="#elemmatch" title="Permalink to this headline">¶</a></h3>
+<p>Array element matching:</p>
+<p><code class="docutils literal"><span class="pre">{fieldpath:</span> <span class="pre">{$elemMatch:</span> <span class="pre">query}}}</span></code></p>
+<p>The <cite>$elemMatch</cite> operator matches <cite>fieldpath</cite> array values against the specified <cite>query</cite></p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;persons&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Andy&#39;</span><span class="p">,</span>
+                          <span class="nx">childs</span><span class="o">:</span> <span class="p">[</span>
+                                    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Garry&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span> <span class="mi">2</span><span class="p">},</span>
+                                    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Sally&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span> <span class="mi">4</span><span class="p">}</span>
+                                  <span class="p">]</span>
+                          <span class="p">});</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">persons</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="nx">childs</span> <span class="o">:</span> <span class="p">{</span><span class="nx">$elemMatch</span> <span class="o">:</span> <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Garry&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span><span class="mi">2</span><span class="p">}}});</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5536764019808d3c00000004&#39;</span><span class="p">,</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Andy&#39;</span><span class="p">,</span>
+  <span class="nx">childs</span><span class="o">:</span>
+   <span class="p">[</span> <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Garry&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span> <span class="mi">2</span> <span class="p">},</span>
+     <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Sally&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span> <span class="mi">4</span> <span class="p">}</span> <span class="p">]</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>If you specify only a single query condition in the <cite>$elemMatch</cite> operator, you do not need to use <cite>$elemMatch</cite>:</p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">persons</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="s1">&#39;childs.name&#39;</span> <span class="o">:</span> <span class="s1">&#39;Garry&#39;</span><span class="p">});</span>
+<span class="c1">// This is equivalent to:</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">persons</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="nx">childs</span> <span class="o">:</span> <span class="p">{</span><span class="nx">$elemMatch</span> <span class="o">:</span> <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Garry&#39;</span><span class="p">}}});</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Only one <cite>$elemMatch</cite> operator is allowed in the context of one array <cite>fieldpath</cite>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="query-hints">
+<span id="qhints"></span><h2><a class="toc-backref" href="#id41">Query hints</a><a class="headerlink" href="#query-hints" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="max">
+<span id="id10"></span><h3><a class="toc-backref" href="#id42">$max</a><a class="headerlink" href="#max" title="Permalink to this headline">¶</a></h3>
+<p>The maximum number of documents retrieved.</p>
+</div>
+<div class="section" id="skip">
+<span id="id11"></span><h3><a class="toc-backref" href="#id43">$skip</a><a class="headerlink" href="#skip" title="Permalink to this headline">¶</a></h3>
+<p>The number of skipped results in the result set</p>
+</div>
+<div class="section" id="orderby">
+<span id="id12"></span><h3><a class="toc-backref" href="#id44">$orderby</a><a class="headerlink" href="#orderby" title="Permalink to this headline">¶</a></h3>
+<p>The sorting order of query fields specified as JSON mapping of document <cite>fieldpaths</cite>
+to its orderby modes:</p>
+<p><code class="docutils literal"><span class="pre">{$orderby:</span> <span class="pre">{'fieldpath':</span> <span class="pre">mode,</span> <span class="pre">...}</span></code></p>
+<p>Where <cite>mode</cite> is and integer specified sort order:</p>
+<ul class="simple">
+<li><cite>-1</cite> Descending sort</li>
+<li><cite>1</cite> Ascending sort</li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">db</span><span class="p">.</span><span class="nx">addressbook</span><span class="p">.</span><span class="nx">find</span><span class="p">({},</span> <span class="p">{</span><span class="nx">$orderby</span><span class="o">:</span> <span class="p">{</span><span class="nx">age</span><span class="o">:</span><span class="mi">1</span><span class="p">,</span> <span class="nx">name</span><span class="o">:-</span><span class="mi">1</span><span class="p">}});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fields">
+<span id="id13"></span><h3><a class="toc-backref" href="#id45">$fields</a><a class="headerlink" href="#fields" title="Permalink to this headline">¶</a></h3>
+<p>The document fields projection.</p>
+<p><code class="docutils literal"><span class="pre">{$fields:</span> <span class="pre">{'fieldpath':</span> <span class="pre">mode,</span> <span class="pre">...}</span></code></p>
+<p>Where <cite>mode</cite> is an integer specified the field inclusion mode:</p>
+<ul class="simple">
+<li><cite>-1</cite> Exclude field</li>
+<li><cite>1</cite> Include field</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><cite>$fields</cite> hint cannot mix include and exclude fields together</p>
+</div>
+<p>The mongodb <a class="reference external" href="http://docs.mongodb.org/manual/reference/operator/projection/positional/#proj._S_">$ (projection)</a> is also supported.
+Our implementation overcomes the mongodb restriction:
+<cite>Only one array field can appear in the query document</cite></p>
+<div class="section" id="id14">
+<span id="id15"></span><h4><a class="toc-backref" href="#id46">$ (projection)</a><a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal"><span class="pre">{$fields:</span> <span class="pre">{'prefix.$[.postfix]'</span> <span class="pre">:</span> <span class="pre">1}</span></code></p>
+<p>The key <cite>$</cite> within the <a class="reference internal" href="#fields">$fields</a> projection limits the contents of an <cite>array</cite> field
+returned as query results to contain only the first element matching the query. The <cite>$</cite> letter
+means here the array index of the mached record.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="c1">// Not using $ projection</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">persons</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span>
+                        <span class="nx">childs</span> <span class="o">:</span> <span class="p">{</span><span class="nx">$elemMatch</span> <span class="o">:</span>
+                                    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Garry&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span><span class="mi">2</span><span class="p">}}</span>
+                      <span class="p">},</span> <span class="p">{</span><span class="nx">$fields</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;childs&#39;</span> <span class="o">:</span> <span class="mi">1</span><span class="p">}});</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">childs</span><span class="o">:</span>
+   <span class="p">[</span> <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Garry&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span> <span class="mi">2</span> <span class="p">},</span>
+     <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Sally&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span> <span class="mi">4</span> <span class="p">}</span> <span class="p">]</span> <span class="p">}</span>
+
+
+<span class="c1">// Usign $ projection</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">persons</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span>
+                        <span class="nx">childs</span> <span class="o">:</span> <span class="p">{</span><span class="nx">$elemMatch</span> <span class="o">:</span>
+                                    <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Garry&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span><span class="mi">2</span><span class="p">}}</span>
+                      <span class="p">},</span> <span class="p">{</span><span class="nx">$fields</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;childs.$&#39;</span> <span class="o">:</span> <span class="mi">1</span><span class="p">}});</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5536764019808d3c00000004&#39;</span><span class="p">,</span>
+  <span class="nx">childs</span><span class="o">:</span> <span class="p">[</span> <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Garry&#39;</span><span class="p">,</span> <span class="nx">age</span><span class="o">:</span> <span class="mi">2</span> <span class="p">}</span> <span class="p">]</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p><cite>$</cite> array projection can be in middle of <cite>fieldpath</cite>:</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;records&#39;</span><span class="p">,</span>
+              <span class="p">{</span><span class="nx">z</span><span class="o">:</span> <span class="mi">44</span><span class="p">,</span>
+               <span class="nx">arr</span><span class="o">:</span> <span class="p">[</span> <span class="p">{</span> <span class="nx">h</span><span class="o">:</span> <span class="mi">1</span> <span class="p">},</span> <span class="p">{</span> <span class="nx">h</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span> <span class="nx">g</span><span class="o">:</span> <span class="mi">4</span> <span class="p">}</span> <span class="p">]</span>
+              <span class="p">});</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">records</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="nx">z</span><span class="o">:</span> <span class="mi">44</span><span class="p">,</span> <span class="nx">arr</span><span class="o">:</span> <span class="p">{</span><span class="nx">$elemMatch</span><span class="o">:</span> <span class="p">{</span><span class="nx">h</span><span class="o">:</span> <span class="mi">2</span><span class="p">}}</span> <span class="p">},</span> <span class="p">{</span><span class="nx">$fields</span><span class="o">:</span> <span class="p">{</span><span class="s1">&#39;arr.$.h&#39;</span><span class="o">:</span> <span class="mi">1</span><span class="p">}});</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55368bda19808d3c00000007&#39;</span><span class="p">,</span>
+  <span class="nx">arr</span><span class="o">:</span> <span class="p">[</span> <span class="p">{</span> <span class="nx">h</span><span class="o">:</span> <span class="mi">2</span> <span class="p">}</span> <span class="p">]</span> <span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Our implementation overcomes the following mongodb projection limitation:
+<a class="reference external" href="http://docs.mongodb.org/manual/reference/operator/projection/positional/#array-field-limitations">Only one array field can appear in the query document</a>
+You are allowed to use the <cite>$</cite> array projections for many fields simultaneously within one query.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="data-manipulation">
+<h2><a class="toc-backref" href="#id47">Data manipulation</a><a class="headerlink" href="#data-manipulation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="set">
+<span id="id16"></span><h3><a class="toc-backref" href="#id48">$set</a><a class="headerlink" href="#set" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">{$set:</span> <span class="pre">{fieldpath1:</span> <span class="pre">value1,</span> <span class="pre">...</span> <span class="pre">}</span> <span class="pre">}</span></code></p>
+<p>The <cite>$set</cite> directive sets the value of the specified fields.</p>
+<p>If the <cite>fieldpath</cite> does not exist in the document, <cite>$set</cite> will add a new fields with the specified value(s).
+The <cite>$set</cite> can create all required subdocuments within the updated documents in order to ensure what <cite>fieldpath</cite>
+exists in each of them. If you specify multiple field-value pairs, <cite>$set</cite> will update or create each field.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;coll&#39;</span><span class="p">,</span> <span class="p">{});</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;553697b1d131946100000001&#39;</span> <span class="p">}</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">update</span><span class="p">({</span><span class="s1">&#39;$set&#39;</span><span class="o">:</span><span class="p">{</span><span class="s1">&#39;foo.bar&#39;</span><span class="o">:</span><span class="s1">&#39;text&#39;</span><span class="p">}});</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">find</span><span class="p">()</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5536934bd131946100000000&#39;</span><span class="p">,</span>
+  <span class="nx">foo</span><span class="o">:</span> <span class="p">{</span> <span class="nx">bar</span><span class="o">:</span> <span class="s1">&#39;text&#39;</span> <span class="p">}</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="upsert">
+<span id="id17"></span><h3><a class="toc-backref" href="#id49">$upsert</a><a class="headerlink" href="#upsert" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">{query,</span> <span class="pre">$upsert</span> <span class="pre">:</span> <span class="pre">{fieldpath1:</span> <span class="pre">value1,</span> <span class="pre">fieldpath2:</span> <span class="pre">value2,</span> <span class="pre">...}}</span></code></p>
+<p>Atomic upsert. If documents matched to the specified <cite>query</cite> are found, then <cite>$upsert</cite> will perform a <a class="reference internal" href="#set">$set</a>
+operation, otherwise a new document will be inserted with its fields being initialised to
+the provided values.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">0</span> <span class="nx">records</span>
+
+<span class="c1">//Insert</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">update</span><span class="p">({</span><span class="nx">isbn</span><span class="o">:</span><span class="s1">&#39;0123456789&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;$upsert&#39;</span><span class="o">:</span> <span class="p">{</span><span class="nx">isbn</span><span class="o">:</span><span class="s1">&#39;0123456789&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="o">:</span><span class="s1">&#39;my book&#39;</span><span class="p">}});</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5536a054d131946100000002&#39;</span><span class="p">,</span>
+  <span class="nx">isbn</span><span class="o">:</span> <span class="s1">&#39;0123456789&#39;</span><span class="p">,</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;my book&#39;</span> <span class="p">}</span>
+
+<span class="c1">//Update</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">update</span><span class="p">({</span><span class="nx">isbn</span><span class="o">:</span><span class="s1">&#39;0123456789&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;$upsert&#39;</span><span class="o">:</span> <span class="p">{</span><span class="nx">isbn</span><span class="o">:</span><span class="s1">&#39;0123456789&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="o">:</span><span class="s1">&#39;my old book&#39;</span><span class="p">}});</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5536a054d131946100000002&#39;</span><span class="p">,</span>
+  <span class="nx">isbn</span><span class="o">:</span> <span class="s1">&#39;0123456789&#39;</span><span class="p">,</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;my old book&#39;</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dropall">
+<span id="id18"></span><h3><a class="toc-backref" href="#id50">$dropall</a><a class="headerlink" href="#dropall" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">{query,</span> <span class="pre">$dropall</span> <span class="pre">:</span> <span class="pre">true}</span></code></p>
+<p>In-place document removal operation. All documents matched the specified <cite>query</cite>
+will be removed from collection.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">3</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55365fa019808d3c00000000&#39;</span><span class="p">,</span>
+  <span class="nx">title</span><span class="o">:</span> <span class="s1">&#39;All the Light We Cannot See&#39;</span> <span class="p">}</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55365fcb19808d3c00000001&#39;</span><span class="p">,</span>
+  <span class="nx">title</span><span class="o">:</span> <span class="s1">&#39;Little Blue Truck Board Book&#39;</span> <span class="p">}</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55365ff819808d3c00000002&#39;</span><span class="p">,</span>
+  <span class="nx">title</span><span class="o">:</span> <span class="s1">&#39;The Book with No Pictures&#39;</span> <span class="p">}</span>
+
+<span class="c1">//Remove all books with `title` contains a `Book` token.</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">update</span><span class="p">({</span><span class="nx">title</span><span class="o">:</span> <span class="p">{</span><span class="nx">$strand</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;Book&#39;</span><span class="p">]},</span> <span class="nx">$dropall</span><span class="o">:</span><span class="kc">true</span><span class="p">});</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55365fa019808d3c00000000&#39;</span><span class="p">,</span>
+  <span class="nx">title</span><span class="o">:</span> <span class="s1">&#39;All the Light We Cannot See&#39;</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="inc">
+<span id="id19"></span><h3><a class="toc-backref" href="#id51">$inc</a><a class="headerlink" href="#inc" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">{$inc:</span> <span class="pre">{fieldpath1:</span> <span class="pre">delta1,</span> <span class="pre">fieldpath2:</span> <span class="pre">delta2,</span> <span class="pre">...</span> <span class="pre">}}</span></code></p>
+<p>Increment numeric field value by specified <cite>delta</cite>. The increment <cite>delta</cite>
+can be of positive or negative number. The <cite>$inc</cite> operator does not create the specified
+<cite>fieldpath</cite> if it is not exists in the document.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;inc&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">counter</span><span class="o">:</span><span class="mi">0</span><span class="p">});</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span><span class="s1">&#39;inc&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">$inc</span><span class="o">:</span> <span class="p">{</span><span class="nx">counter</span><span class="o">:-</span><span class="mi">2</span><span class="p">}});</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">inc</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;55373cb619808d3c00000009&#39;</span><span class="p">,</span>
+  <span class="nx">counter</span><span class="o">:</span> <span class="o">-</span><span class="mi">2</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="unset">
+<span id="id20"></span><h3><a class="toc-backref" href="#id52">$unset</a><a class="headerlink" href="#unset" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">{$unset:</span> <span class="pre">{fieldpath1:</span> <span class="pre">&quot;&quot;,</span> <span class="pre">fiedlpath2:</span> <span class="pre">&quot;&quot;,</span> <span class="pre">...}</span></code></p>
+<p>The <cite>$unset</cite> operator deletes the document fields specified by <cite>fieldpath</cite>.
+The unset <cite>fieldpath</cite> values <cite>&#8220;&#8221;</cite> used here in order to be comparable with
+<a class="reference external" href="http://docs.mongodb.org/manual/reference/operator/update/unset/">mongodb $unset operation</a></p>
+<p><cite>$unset</cite> can be used together with <a class="reference internal" href="#update">$ (update)</a> operator:</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">find</span><span class="p">()</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5537447f19808d3c0000000a&#39;</span><span class="p">,</span>
+  <span class="nx">a</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;cc&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="p">]</span> <span class="p">}</span>
+
+<span class="c1">//Then apply unset to the `a.cc` array element</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">update</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="o">:</span><span class="s1">&#39;cc&#39;</span><span class="p">,</span> <span class="nx">$unset</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;a.$&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">}});</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5537447f19808d3c0000000a&#39;</span><span class="p">,</span>
+  <span class="nx">a</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="kc">undefined</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="p">]</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="update">
+<span id="id21"></span><h3><a class="toc-backref" href="#id53">$ (update)</a><a class="headerlink" href="#update" title="Permalink to this headline">¶</a></h3>
+<p>The positional <cite>$</cite> operator identifies an element in an array
+to update the position of the element in the array without explicitly specifying it.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="s1">&#39;coll&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nx">a</span> <span class="o">:</span> <span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">,</span><span class="s1">&#39;c&#39;</span><span class="p">,</span><span class="s1">&#39;d&#39;</span><span class="p">]});</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5537447f19808d3c0000000a&#39;</span><span class="p">,</span>
+  <span class="nx">a</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="p">]</span> <span class="p">}</span>
+
+<span class="c1">//Then update with positional &#39;a.$&#39;</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">update</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="o">:</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="nx">$set</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;a.$&#39;</span><span class="o">:</span><span class="s1">&#39;cc&#39;</span><span class="p">}});</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">find</span><span class="p">()</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5537447f19808d3c0000000a&#39;</span><span class="p">,</span>
+  <span class="nx">a</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;cc&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="p">]</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>If the specified array <cite>fieldpath</cite> is not contained in the query, the <cite>$ (update)</cite>
+operator has no effect it that case.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5537447f19808d3c0000000a&#39;</span><span class="p">,</span>
+  <span class="nx">a</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="nx">c</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="p">],</span>
+  <span class="nx">c</span><span class="o">:</span> <span class="mi">11</span> <span class="p">}</span>
+
+<span class="c1">// Note: `a` field is not contained in the query:</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">update</span><span class="p">({</span><span class="s1">&#39;c&#39;</span><span class="o">:</span><span class="mi">11</span><span class="p">,</span> <span class="nx">$unset</span> <span class="o">:</span> <span class="p">{</span><span class="s1">&#39;a.$&#39;</span><span class="o">:</span><span class="s1">&#39;&#39;</span><span class="p">}});</span>
+
+<span class="c1">//Document remains unchanged</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">coll</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;5537447f19808d3c0000000a&#39;</span><span class="p">,</span>
+  <span class="nx">a</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="nx">c</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span> <span class="p">],</span>
+  <span class="nx">c</span><span class="o">:</span> <span class="mi">11</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="addtoset-and-addtosetall">
+<span id="addtosetall"></span><span id="addtoset"></span><h3><a class="toc-backref" href="#id54">$addToSet and $addToSetAll</a><a class="headerlink" href="#addtoset-and-addtosetall" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">{query,</span> <span class="pre">$addToSet:</span> <span class="pre">{fieldpath1:</span> <span class="pre">value1,</span> <span class="pre">fieldpath2:</span> <span class="pre">value2,</span> <span class="pre">...}}</span></code></p>
+<p>Add a specified value to the array only if it was not in the array.
+This is atomic operation.</p>
+<p><cite>$addToSetAll</cite> is the batch version of <cite>$addToSet</cite> operator:</p>
+<p><code class="docutils literal"><span class="pre">{query,</span> <span class="pre">$addToSetAll:</span> <span class="pre">{fieldpath1:</span> <span class="pre">[...],</span> <span class="pre">fieldpath2:</span> <span class="pre">[...],</span> <span class="pre">...}}</span></code></p>
+<p>Add a set of values to the array of every <cite>fieldpath</cite> specified in the query.
+In this case every value will be added only if it was not contained in the target array.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The <cite>$addToSet</cite> and <cite>$addToSetAll</cite> are the dual operations to
+<a class="reference internal" href="#pull">$pull</a> and  <a class="reference internal" href="#pullall">$pullAll</a></p>
+</div>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">songs</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;553761dd19808d3c0000000b&#39;</span><span class="p">,</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Let It Be&#39;</span><span class="p">,</span>
+  <span class="nx">tags</span><span class="o">:</span> <span class="p">[]</span> <span class="p">}</span>
+
+<span class="c1">//Add some tags:</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">songs</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span>
+    <span class="p">{</span><span class="nx">_id</span><span class="o">:</span><span class="s1">&#39;553761dd19808d3c0000000b&#39;</span><span class="p">,</span>
+        <span class="nx">$addToSetAll</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">tags</span><span class="o">:</span><span class="p">[</span><span class="s1">&#39;the beatles&#39;</span><span class="p">,</span> <span class="s1">&#39;rock&#39;</span><span class="p">,</span> <span class="s1">&#39;60s&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">songs</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;553761dd19808d3c0000000b&#39;</span><span class="p">,</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Let It Be&#39;</span><span class="p">,</span>
+  <span class="nx">tags</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;the beatles&#39;</span><span class="p">,</span> <span class="s1">&#39;rock&#39;</span><span class="p">,</span> <span class="s1">&#39;60s&#39;</span> <span class="p">]</span> <span class="p">}</span>
+
+
+<span class="c1">//One more tag:</span>
+<span class="nx">db</span><span class="p">.</span><span class="nx">songs</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span>
+    <span class="p">{</span><span class="nx">_id</span><span class="o">:</span><span class="s1">&#39;553761dd19808d3c0000000b&#39;</span><span class="p">,</span>
+        <span class="nx">$addToSetAll</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">tags</span><span class="o">:</span><span class="p">[</span><span class="s1">&#39;the beatles&#39;</span><span class="p">,</span> <span class="s1">&#39;rock&#39;</span><span class="p">,</span> <span class="s1">&#39;60s&#39;</span><span class="p">,</span> <span class="s1">&#39;classic rock&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="c1">//All elements in `tags` being merged</span>
+<span class="c1">// with the passed tags array:</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">songs</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;553761dd19808d3c0000000b&#39;</span><span class="p">,</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Let It Be&#39;</span><span class="p">,</span>
+  <span class="nx">tags</span><span class="o">:</span>
+   <span class="p">[</span> <span class="s1">&#39;the beatles&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;rock&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;60s&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;classic rock&#39;</span> <span class="p">]</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pull-and-pullall">
+<span id="pullall"></span><span id="pull"></span><h3><a class="toc-backref" href="#id55">$pull and $pullAll</a><a class="headerlink" href="#pull-and-pullall" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">{query,</span> <span class="pre">$pull:</span> <span class="pre">{fieldpath1:</span> <span class="pre">value1,</span> <span class="pre">fieldpath2:</span> <span class="pre">value2,</span> <span class="pre">...}}</span></code></p>
+<p>Remove a specified <cite>value</cite> from the array field pointed by <cite>fieldpath</cite>.
+This is atomic operation.</p>
+<p><cite>$pullAll</cite> is the batch version of <cite>$pull</cite> operator:</p>
+<p><code class="docutils literal"><span class="pre">{query,</span> <span class="pre">$pullAll:</span> <span class="pre">{fieldpath1:</span> <span class="pre">[...],</span> <span class="pre">fieldpath2:</span> <span class="pre">[...],</span> <span class="pre">...}}</span></code></p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The <cite>$pull</cite> and <cite>$pullAll</cite> are the dual operations to
+<a class="reference internal" href="#addtoset">$addToSet</a> and  <a class="reference internal" href="#addtosetall">$addToSetAll</a></p>
+</div>
+</div>
+<div class="section" id="push-and-pushall">
+<span id="pushall"></span><span id="push"></span><h3><a class="toc-backref" href="#id56">$push and $pushAll</a><a class="headerlink" href="#push-and-pushall" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 1.2.8.</span></p>
+</div>
+<p><code class="docutils literal"><span class="pre">{query,</span> <span class="pre">$push:</span> <span class="pre">{fieldpath1:</span> <span class="pre">value1,</span> <span class="pre">fieldpath2:</span> <span class="pre">value2,</span> <span class="pre">...}}</span></code></p>
+<p>Appends a specified <cite>value</cite> to the array field pointed by <cite>fieldpath</cite>.
+If the <cite>fieldpath</cite> is missing in the document, the <cite>$push</cite> adds new array field containing the specified <cite>value</cite>.
+This is atomic operation.</p>
+<p><cite>$pushAll</cite> is the batch version of <cite>$push</cite> operator:</p>
+<p><code class="docutils literal"><span class="pre">{query,</span> <span class="pre">$pushAll:</span> <span class="pre">{fieldpath1:</span> <span class="pre">[...],</span> <span class="pre">fieldpath2:</span> <span class="pre">[...],</span> <span class="pre">...}}</span></code></p>
+</div>
+<div class="section" id="rename">
+<span id="id22"></span><h3><a class="toc-backref" href="#id57">$rename</a><a class="headerlink" href="#rename" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">{query,</span> <span class="pre">$rename'</span> <span class="pre">:</span> <span class="pre">{fieldpath1</span> <span class="pre">:</span> <span class="pre">name1,</span> <span class="pre">fieldpath2</span> <span class="pre">:</span> <span class="pre">name2,</span> <span class="pre">...}}</span></code></p>
+<p>Sets a new <cite>name</cite> to the field pointed by <cite>fieldpath</cite>.
+If the document has already had a field with the specified <cite>name</cite>,
+the <cite>$rename</cite> operator removes that field and renames the field pointed by <cite>fieldpath</cite>
+to the new <cite>name</cite>.</p>
+</div>
+<div class="section" id="slice-projection">
+<span id="id23"></span><h3><a class="toc-backref" href="#id58">$slice (projection)</a><a class="headerlink" href="#slice-projection" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple">
+<li><code class="docutils literal"><span class="pre">${...,</span> <span class="pre">$do:</span> <span class="pre">{fieldpath</span> <span class="pre">:</span> <span class="pre">{$slice</span> <span class="pre">:</span> <span class="pre">limit}}</span></code></li>
+<li><code class="docutils literal"><span class="pre">${...,</span> <span class="pre">$do:</span> <span class="pre">{fieldpath</span> <span class="pre">:</span> <span class="pre">{$slice</span> <span class="pre">:</span> <span class="pre">[offset,</span> <span class="pre">limit]}}</span></code></li>
+</ol>
+<p>The <cite>$slice</cite> operator is used in the context of <a class="reference internal" href="#do">$do</a> directive and
+limits a number of array items returned for document fields pointed by <cite>fieldpath</cite>.</p>
+<p>Only non negative offsets are supported by the <cite>$slice</cite> projection. (EJDB 1.2.12)</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-js"><div class="highlight"><pre><span></span><span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">songs</span><span class="p">.</span><span class="nx">find</span><span class="p">();</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;553761dd19808d3c0000000b&#39;</span><span class="p">,</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Let It Be&#39;</span><span class="p">,</span>
+  <span class="nx">tags</span><span class="o">:</span>
+   <span class="p">[</span> <span class="s1">&#39;the beatles&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;rock&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;60s&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;classic rock&#39;</span> <span class="p">]</span> <span class="p">}</span>
+
+<span class="c1">//Apply a $slice limiting a `tags` array</span>
+<span class="c1">// to the first two elements</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">songs</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="nx">$do</span> <span class="o">:</span> <span class="p">{</span><span class="nx">tags</span> <span class="o">:</span> <span class="p">{</span><span class="nx">$slice</span> <span class="o">:</span> <span class="mi">2</span><span class="p">}}});</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;553761dd19808d3c0000000b&#39;</span><span class="p">,</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Let It Be&#39;</span><span class="p">,</span>
+  <span class="nx">tags</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;the beatles&#39;</span><span class="p">,</span> <span class="s1">&#39;rock&#39;</span> <span class="p">]</span> <span class="p">}</span>
+
+
+<span class="c1">//Lets skip a first two and load up-to ten items</span>
+<span class="nx">ejdb</span><span class="o">&gt;</span> <span class="nx">db</span><span class="p">.</span><span class="nx">songs</span><span class="p">.</span><span class="nx">find</span><span class="p">({</span><span class="nx">$do</span> <span class="o">:</span> <span class="p">{</span><span class="nx">tags</span> <span class="o">:</span> <span class="p">{</span><span class="nx">$slice</span> <span class="o">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">10</span><span class="p">]}}});</span>
+<span class="nx">Found</span> <span class="mi">1</span> <span class="nx">records</span>
+<span class="p">{</span> <span class="nx">_id</span><span class="o">:</span> <span class="s1">&#39;553761dd19808d3c0000000b&#39;</span><span class="p">,</span>
+  <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;Let It Be&#39;</span><span class="p">,</span>
+  <span class="nx">tags</span><span class="o">:</span> <span class="p">[</span> <span class="s1">&#39;60s&#39;</span><span class="p">,</span> <span class="s1">&#39;classic rock&#39;</span> <span class="p">]</span> <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="do-action-directive">
+<span id="do"></span><h2><a class="toc-backref" href="#id59">$do action directive</a><a class="headerlink" href="#do-action-directive" title="Permalink to this headline">¶</a></h2>
+<p>The <cite>$do</cite> action directive is used in the following cases:</p>
+<ul class="simple">
+<li><a class="reference internal" href="joins.html#joins"><span class="std std-ref">Collection joins</span></a></li>
+<li>Array <a class="reference internal" href="#slice-projection">$slice (projection)</a> operator</li>
+</ul>
+</div>
+<div class="section" id="some-performance-considerations">
+<h2><a class="toc-backref" href="#id60">Some performance considerations</a><a class="headerlink" href="#some-performance-considerations" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Only one index can be used in search query operation.</li>
+<li>Negate operations: <a class="reference internal" href="#not">$not</a> and <a class="reference internal" href="#nin">$nin</a> do not use indexes
+so they can be slow in comparison with other matching operations.</li>
+<li>It is better to execute update queries with <cite>JBQRYCOUNT</cite> control flag set
+to avoid unnecessarily data fetching. (C API)</li>
+</ul>
+</div>
+<div class="section" id="glossary">
+<h2><a class="toc-backref" href="#id61">Glossary</a><a class="headerlink" href="#glossary" title="Permalink to this headline">¶</a></h2>
+<dl class="glossary docutils">
+<dt id="term-oid">OID<dt id="term-objectid">ObjectId</dt>
+<dd>ObjectId (OID) is a unique identifier of every document stored in EJDB collection.
+You can consider OID as document&#8217;s primary key. OID is a 12-byte value integer the same
+format as <a class="reference external" href="http://docs.mongodb.org/manual/reference/object-id/">defined in Mongodb BSON specification</a>.</dd>
+<dt id="term-abstract-document">abstract document</dt>
+<dd>Abstract document is a  metadocument for all the documents included in a particular collection without an actual
+field values and with all the possible document fields and their types belonging to any document of the collection.
+You can consider <cite>abstract document</cite> as a prototype for all the possible documents of the collection.</dd>
+<dt id="term-fieldpath">fieldpath</dt>
+<dd>In the context of an <a class="reference internal" href="#term-abstract-document"><span class="xref std std-term">abstract document</span></a> a <cite>fieldpath</cite>
+is the path consisting of JSON field names traversed from the document
+root to the particular document field joined together by <cite>.</cite> symbol.</dd>
+</dl>
+</div>
+</div>
+
+
+            </div>
+        </div>
+        <div id="page-content-footer">
+            <div id="bottom-rel-placeholder" style="display:none">
+                
+            <div class="rel-nav">
+                <a href="../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a> 
+                <a href="../cli.html"
+                   title="Command line interface"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="joins.html"
+                   title="Collection joins"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="page-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+<h5 class="white-text">EJDB on Github</h5>
+<a class="github-button" href="https://github.com/Softmotions/ejdb" data-style="mega"
+   data-count-href="/Softmotions/ejdb/stargazers" data-count-api="/repos/Softmotions/ejdb#stargazers_count"
+   data-count-aria-label="# stargazers on GitHub" aria-label="Star Softmotions/ejdb on GitHub">Star</a>
+<a class="github-button" href="https://github.com/Softmotions/ejdb/issues" data-style="mega"
+   data-count-api="/repos/Softmotions/ejdb#open_issues_count" data-count-aria-label="# issues on GitHub"
+   aria-label="Issue Softmotions/ejdb on GitHub">Issue</a>
+            </div>
+            <div class="col l6 s12">
+                <ul>
+                    <li><a href="http://ejdb.org/news.html">News</a></li>
+                    <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                    <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright" role="contentinfo">
+        <div class="container">&copy; Copyright 2012-2017 Softmotions Ltd.
+        </div>
+    </div>
+</footer>
+
+<script type="text/javascript" src="../../_static/jquery.js"></script>
+<script type="text/javascript" src="../../_static/underscore.js"></script>
+<script type="text/javascript" src="../../_static/doctools.js"></script>
+<script type="text/javascript" src="../../_static/materialize.min.js"></script>
+<script type="text/javascript" src="../../_static/theme.js"></script>
+ 
+<script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-36241306-1', 'auto');
+    ga('send', 'pageview');
+</script>
+<a id="btt"><i class="mdi-navigation-expand-less"></i></a>
+</body>
+</html>

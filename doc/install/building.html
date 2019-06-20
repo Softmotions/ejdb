@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Building from sources &mdash; EJDB</title>
+    
+<link rel="stylesheet" href="../../_static/theme.css" type="text/css"/>
+<link rel="stylesheet" href="../../_static/pygments.css" type="text/css"/>
+    <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="EJDB" href="../../index.html"/>
+    <link rel="up" title="Installation" href="index.html"/>
+    <link rel="next" title="Command line interface" href="../cli.html"/>
+    <link rel="prev" title="EJDB Binaries" href="archives.html"/> 
+</head>
+<body role="document">
+<div id="toc-modal" class="modal modal-fixed-footer">
+    <div class="modal-content">
+        <h4>Table Of Contents</h4>
+
+        <div class="page-content">
+            <ul>
+<li><a class="reference internal" href="#">Building from sources</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#make">Make</a></li>
+<li><a class="reference internal" href="#cmake-basic-build-d-options">CMake basic build(-D) options</a></li>
+<li><a class="reference internal" href="#building-native-windows-libs">Building native Windows libs</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect btn-flat ">Close</a>
+    </div>
+</div>
+<header style="margin-bottom: 20px">
+    <nav id="nav">
+        <div class="nav-wrapper">
+            <a href="../../index.html">
+                <img class="brand-logo" src="../../_static/ejdb.png" alt="Logo"/>
+            </a>
+            <a href="#" data-activates="nav-mobile-sidebar" class="button-collapse"><i
+                    class="mdi-navigation-menu"></i></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+            <ul class="side-nav" id="nav-mobile-sidebar">
+                
+                <li><a href="http://ejdb.org/news.html">News</a></li>
+                <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<div class="row">
+    <div id="sidebar" class="col s12 m4 l3 push-m8 push-l9">
+<div class="row" style="margin: 0" id="searchbox">
+    <form class="col s12 no-padding" role="search" action="../../search.html" method="get">
+        <div class="input-field">
+            <input id="search" type="search" name="q" required>
+            <label for="search" class="">Quick search</label>
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+    </form>
+</div><div id="sidetoc">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../news.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-11-released">EJDB v1.2.11 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-10-released">EJDB v1.2.10 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-9-released">EJDB v1.2.9 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#ejdb-v1-2-8-released">EJDB v1.2.8 released</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../news.html#archived">Archived</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../snippets.html">Intro snippets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#c-c">C/C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#nodejs">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#c">C#</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#go">Go</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../snippets.html#other-third-party-bindings">Other third-party bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Installation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="ubuntu.html">Ubuntu/Debian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="osx.html">OSX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="windows.html">Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="archives.html">EJDB binaries</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Building from sources</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">Command line interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#program-options">Program options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cli.html#usage-demo">Usage demo</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ql/ql.html">Query language</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#querying">Querying</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#query-hints">Query hints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#data-manipulation">Data manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#do-action-directive">$do action directive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#some-performance-considerations">Some performance considerations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ql/ql.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ql/joins.html">Collection joins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ql/joins.html#simple-joins-showcase">Simple joins showcase</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../internals/index.html">EJDB Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#tokyo-cabinet">Tokyo Cabinet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#document-storage-model">Document storage model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#indexing">Indexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#locking">Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../internals/index.html#transactions">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../bindings/index.html">Language bindings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../bindings/nodejs/index.html">Nodejs</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-python">Python</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-java">Java</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-lua">Lua</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-ruby">Ruby</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/Softmotions/ejdb-csharp">.Net (C#)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bindings/thirdparty.html">Third-party language bindings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../iexp/index.html">Import/Export database data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#c-api">C API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#export-command-spec">Export command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#import-command-spec">Import command spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iexp/index.html#command-response">Command response</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../limitations.html">Known limitations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#tokyo-cabinet-issues">Tokyo Cabinet issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#multiprocess-database-access">Multiprocess database access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#indexes">Indexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../limitations.html#misc">Misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ejdb2/index.html">EJDB2 Roadmap</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ejdb2/index.html#progress">Progress</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mongodb.html">Mongodb compatibility</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#logical-operators">Logical operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#element-level-operators">Element level operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#geospartial-operators">Geospartial operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#array-operators">Array operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#update-operators">Update operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#various-operators">Various operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mongodb.html#ejdb-specific-query-operators">EJDB specific query operators</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+    </div>
+    <div class="page-content-wrapper col s12 m8 l9 pull-m4 pull-l3">
+        <div id="page-content-block">
+            
+            <div class="rel-nav">
+                <a href="../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a>
+                <a class="dropdown-button btn" href="#"
+                   data-beloworigin="true"
+                   data-activates="relnav-parents-1"><i class="mts-up"></i></a>
+                <ul id="relnav-parents-1"
+                    class="dropdown-content">
+                    <li><a href="index.html">Installation</a></li>
+                </ul> 
+                <a href="archives.html"
+                   title="EJDB Binaries"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="../cli.html"
+                   title="Command line interface"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            <div class="page-content">
+                
+  <div class="section" id="building-from-sources">
+<span id="building"></span><h1>Building from sources<a class="headerlink" href="#building-from-sources" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>git</li>
+<li>GNU make</li>
+<li>cmake &gt;= <cite>2.8.12</cite></li>
+<li>gcc &gt;= <cite>4.7</cite> or clang &gt;= <cite>3.4</cite> C compiler</li>
+<li>zlib-dev</li>
+</ul>
+</div>
+<div class="section" id="make">
+<h2>Make<a class="headerlink" href="#make" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>git clone https://github.com/Softmotions/ejdb.git
+<span class="nb">cd</span> ejdb
+mkdir build
+<span class="nb">cd</span> build
+cmake -DCMAKE_BUILD_TYPE<span class="o">=</span>Release ../
+make
+make install
+<span class="c1"># Or you can create tgz package:</span>
+make package
+</pre></div>
+</div>
+</div>
+<div class="section" id="cmake-basic-build-d-options">
+<h2>CMake basic build(-D) options<a class="headerlink" href="#cmake-basic-build-d-options" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>// Build ejdb sample projects
+BUILD_SAMPLES:BOOL<span class="o">=</span>ON
+
+// Build shared libraries
+BUILD_SHARED_LIBS:BOOL<span class="o">=</span>ON
+
+// Build <span class="nb">test</span> cases
+BUILD_TESTS:BOOL<span class="o">=</span>OFF
+
+// Choose the <span class="nb">type</span> of build, options are:
+// - None<span class="o">(</span>CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used<span class="o">)</span>
+// - Debug
+// - Release
+// - RelWithDebInfo.
+CMAKE_BUILD_TYPE:STRING<span class="o">=</span>Release
+
+// Install path prefix,
+// prepended onto install directories.
+CMAKE_INSTALL_PREFIX:PATH<span class="o">=</span>/usr/local
+
+// Enable PPA package build
+ENABLE_PPA:BOOL<span class="o">=</span>OFF
+
+// Build .deb instalation packages
+PACKAGE_DEB:BOOL<span class="o">=</span>OFF
+
+// Build .tgz package archive
+PACKAGE_TGZ:BOOL<span class="o">=</span>ON
+
+// Build .zip package archive
+PACKAGE_ZIP:BOOL<span class="o">=</span>OFF
+
+// Upload debian packages to the launchpad ppa repository
+UPLOAD_PPA:BOOL<span class="o">=</span>OFF
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-native-windows-libs">
+<span id="building-windows"></span><h2>Building native Windows libs<a class="headerlink" href="#building-native-windows-libs" title="Permalink to this headline">¶</a></h2>
+<p>EJDB binaries for <cite>Windows</cite> need to be build on <cite>Linux</cite>
+using cross-compilation within the MXE cross build environment.
+First of all you need to checkout the <a class="reference external" href="http://mxe.cc">MXE cross build environment</a></p>
+<p>Install the required packages:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>sudo apt-get install   <span class="se">\</span>
+autoconf automake autopoint bash bison bzip2 cmake flex  <span class="se">\</span>
+gettext git g++ gperf intltool libffi-dev libtool   <span class="se">\</span>
+libltdl-dev libssl-dev libxml-parser-perl make openssl   <span class="se">\</span>
+p7zip-full patch perl pkg-config python ruby scons sed   <span class="se">\</span>
+unzip wget xz-utils <span class="se">\</span>
+wine libtool-bin libgdk-pixbuf2.0-dev
+</pre></div>
+</div>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>git clone https://github.com/mxe/mxe.git
+</pre></div>
+</div>
+<p>Then create/edit MXE settings file:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span><span class="nb">cd</span> &lt;mxe checkout dir&gt;
+nano ./settings.mk
+</pre></div>
+</div>
+<p>Save the following content in  <cite>settings.mk</cite>:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>JOBS :<span class="o">=</span> <span class="m">1</span>
+MXE_TARGETS :<span class="o">=</span> x86_64-w64-mingw32.static i686-w64-mingw32.static
+LOCAL_PKG_LIST :<span class="o">=</span> pcre zlib lzo bzip2 cunit
+.DEFAULT local-pkg-list:
+local-pkg-list: <span class="k">$(</span>LOCAL_PKG_LIST<span class="k">)</span>
+</pre></div>
+</div>
+<p>Build MXE packages:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span>/usr/bin:/bin
+<span class="nb">cd</span> &lt;mxe checkout dir&gt;
+make
+</pre></div>
+</div>
+<p>Finally build <cite>libejdb</cite> windows binaries:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">MXE_HOME</span><span class="o">=</span>&lt;mxe checkout dir&gt;
+<span class="nb">export</span> <span class="nv">MXE_CFG</span><span class="o">=</span>&lt;x86_64-w64-mingw32.static<span class="p">|</span>i686-w64-mingw32.static&gt;
+
+<span class="nb">cd</span> &lt;ejdb checkout dir&gt;
+mkdir build-win32
+<span class="nb">cd</span> build-wind32
+cmake -DCMAKE_BUILD_TYPE<span class="o">=</span>Release -DCMAKE_TOOLCHAIN_FILE<span class="o">=</span>../win64-tc.cmake ..
+make package
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            </div>
+        </div>
+        <div id="page-content-footer">
+            <div id="bottom-rel-placeholder" style="display:none">
+                
+            <div class="rel-nav">
+                <a href="../../index.html"
+                   title="EJDB"
+                   class="waves-effect waves-light btn"><i class="mdi-action-home"></i></a>
+                <a href="#toc-modal"
+                   title="EJDB"
+                   class="modal-trigger waves-effect waves-light btn"><i class="mts-list-1"></i></a>
+                <a class="dropdown-button btn" href="#"
+                   data-beloworigin="true"
+                   data-activates="relnav-parents-2"><i class="mts-up"></i></a>
+                <ul id="relnav-parents-2"
+                    class="dropdown-content">
+                    <li><a href="index.html">Installation</a></li>
+                </ul> 
+                <a href="archives.html"
+                   title="EJDB Binaries"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-left"></i>
+                </a>
+                <a href="../cli.html"
+                   title="Command line interface"
+                   class="waves-effect waves-light btn">
+                    <i class="mts-right"></i>
+                </a>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="page-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col l6 s12">
+<h5 class="white-text">EJDB on Github</h5>
+<a class="github-button" href="https://github.com/Softmotions/ejdb" data-style="mega"
+   data-count-href="/Softmotions/ejdb/stargazers" data-count-api="/repos/Softmotions/ejdb#stargazers_count"
+   data-count-aria-label="# stargazers on GitHub" aria-label="Star Softmotions/ejdb on GitHub">Star</a>
+<a class="github-button" href="https://github.com/Softmotions/ejdb/issues" data-style="mega"
+   data-count-api="/repos/Softmotions/ejdb#open_issues_count" data-count-aria-label="# issues on GitHub"
+   aria-label="Issue Softmotions/ejdb on GitHub">Issue</a>
+            </div>
+            <div class="col l6 s12">
+                <ul>
+                    <li><a href="http://ejdb.org/news.html">News</a></li>
+                    <li><a href="http://ejdb.org/doc/install/index.html">Downloads</a></li>
+                    <li><a href="https://github.com/Softmotions/ejdb/issues">Issues</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright" role="contentinfo">
+        <div class="container">&copy; Copyright 2012-2017 Softmotions Ltd.
+        </div>
+    </div>
+</footer>
+
+<script type="text/javascript" src="../../_static/jquery.js"></script>
+<script type="text/javascript" src="../../_static/underscore.js"></script>
+<script type="text/javascript" src="../../_static/doctools.js"></script>
+<script type="text/javascript" src="../../_static/materialize.min.js"></script>
+<script type="text/javascript" src="../../_static/theme.js"></script>
+ 
+<script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-36241306-1', 'auto');
+    ga('send', 'pageview');
+</script>
+<a id="btt"><i class="mdi-navigation-expand-less"></i></a>
+</body>
+</html>
