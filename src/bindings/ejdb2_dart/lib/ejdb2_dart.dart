@@ -108,7 +108,7 @@ class JQL extends NativeFieldWrapperClass2 {
 
   /// Returns optional element for first record in result set.
   Future<Optional<JBDOC>> first({void explainCallback(String log)}) async {
-    await for (final doc in execute(explainCallback: explainCallback)) {
+    await for (final doc in execute(explainCallback: explainCallback, limit: 1)) {
       return Optional.of(doc);
     }
     return const Optional.absent();
@@ -116,7 +116,7 @@ class JQL extends NativeFieldWrapperClass2 {
 
   /// Return first record in result set or throw not found `EJDB2Error` error.
   Future<JBDOC> firstRequired({void explainCallback(String log)}) async {
-    await for (final doc in execute(explainCallback: explainCallback)) {
+    await for (final doc in execute(explainCallback: explainCallback, limit: 1)) {
       return doc;
     }
     throw EJDB2Error.notFound();
@@ -125,7 +125,7 @@ class JQL extends NativeFieldWrapperClass2 {
   /// Collects up to [n] elements from result set into array.
   Future<List<JBDOC>> firstN(int n, {void explainCallback(String log)}) async {
     final ret = <JBDOC>[];
-    await for (final doc in execute(explainCallback: explainCallback)) {
+    await for (final doc in execute(explainCallback: explainCallback, limit: n)) {
       if (n-- <= 0) break;
       ret.add(doc);
     }
@@ -150,7 +150,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return execute(explainCallback: explainCallback).map((d) => d.id).first;
   }
 
-  /// Set [json] at specified [placeholder].
+  /// Set [json] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setJson(dynamic placeholder, Object json) {
     _checkPlaceholder(placeholder);
@@ -159,7 +159,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set [regexp] at specified [placeholder].
+  /// Set [regexp] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setRegExp(dynamic placeholder, RegExp regexp) {
     _checkPlaceholder(placeholder);
@@ -168,7 +168,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set integer [val] at specified [placeholder].
+  /// Set integer [val] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setInt(dynamic placeholder, int val) {
     _checkPlaceholder(placeholder);
@@ -177,7 +177,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set double [val] at specified [placeholder].
+  /// Set double [val] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setDouble(dynamic placeholder, double val) {
     _checkPlaceholder(placeholder);
@@ -186,7 +186,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set boolean [val] at specified [placeholder].
+  /// Set boolean [val] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setBoolean(dynamic placeholder, bool val) {
     _checkPlaceholder(placeholder);
@@ -195,7 +195,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set string [val] at specified [placeholder].
+  /// Set string [val] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setString(dynamic placeholder, String val) {
     _checkPlaceholder(placeholder);
@@ -204,7 +204,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set `null` at specified [placeholder].
+  /// Set `null` at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setNull(dynamic placeholder) {
     _checkPlaceholder(placeholder);

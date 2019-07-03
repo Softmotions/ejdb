@@ -495,6 +495,11 @@ IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ej
 IW_EXPORT iwrc ejdb_get_meta(EJDB db, JBL *jblp);
 
 /**
+ * @brief  Return `\0` terminated ejdb2 source GIT revision hash.
+ */
+IW_EXPORT const char *ejdb_git_revision(void);
+
+/**
  * @brief Return `\0` terminated EJDB version string.
  */
 IW_EXPORT const char *ejdb_version_full(void);

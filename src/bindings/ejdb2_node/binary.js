@@ -1,9 +1,5 @@
-#pragma once
-#ifndef JBCFG_H
-#define JBCFG_H
-
 /**************************************************************************************************
- * EJDB2
+ * EJDB2 Node.js native API binding.
  *
  * MIT License
  *
@@ -28,26 +24,17 @@
  * SOFTWARE.
  *************************************************************************************************/
 
-#if !defined(IW_32) && !defined(IW_64)
-#error Unknown CPU bits
-#endif
+const path = require('path');
+const utils = require('./utils');
 
-#define EJDB2_GIT_REVISION "@GIT_REVISION@"
-#define EJDB2_VERSION "@ejdb2_VERSION@"
-#define EJDB2_VERSION_MAJOR @ejdb2_VERSION_MAJOR@
-#define EJDB2_VERSION_MINOR @ejdb2_VERSION_MINOR@
-#define EJDB2_VERSION_PATCH @ejdb2_VERSION_PATCH@
-
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <inttypes.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-
-#define JBNUMBUF_SIZE 64
-
-#endif
+/*
+ * Load native library with specified name.
+ */
+module.exports = function (name) {
+  let platform = process.platform.toLowerCase();
+  if (platform.indexOf('win') === 0) {
+    platform = 'windows';
+  }
+  const file = path.join(__dirname, utils.binariesDir, name);
+  return require(file);
+};

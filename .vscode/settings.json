@@ -8,7 +8,8 @@
     "-DBUILD_TESTS=ON",
     "-DBUILD_EXAMPLES=ON",
     "-DBUILD_DART_BINDING=ON",
-    "-DBUILD_JNI_BINDING=ON"
+    "-DBUILD_JNI_BINDING=ON",
+    "-DBUILD_NODEJS_BINDING=ON"
   ],
   "cmake.ctestArgs": [],
   "cmake.debugConfig": {
@@ -114,8 +115,6 @@
   "C_Cpp.configurationWarnings": "Disabled",
   "files.associations": {
     "*.arb": "json",
-    "*.gyp": "jsonc",
-    "ejdb2_internal.h": "c"
+    "*.gyp": "jsonc"
   },
 }
-

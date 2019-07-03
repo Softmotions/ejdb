@@ -33,7 +33,7 @@ void main() async {
 * Linux x64
 * OSX
 
-## How to build it manually
+## How build it manually
 
 ``` sh
 git clone https://github.com/Softmotions/ejdb.git

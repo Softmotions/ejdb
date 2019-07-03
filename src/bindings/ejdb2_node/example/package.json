@@ -1,0 +1,14 @@
+{
+  "name": "ejdb2_ts_example",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "EJDB2 TypeScript example project",
+  "private": true,
+  "scripts": {
+    "start": "tsc && node index.js"
+  },
+  "dependencies": {
+    "ejdb2_node": "^1.0.2",
+    "typescript": "^3.5.2"
+  }
+}

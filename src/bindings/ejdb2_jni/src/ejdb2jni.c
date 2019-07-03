@@ -857,7 +857,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(JNIEnv *env,
     JBL_NODE node;
     IWPOOL *pool = iwpool_create(1024);
     if (!pool) {
-      rc = IW_ERROR_ALLOC;
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
     rc = jbl_node_from_json(val, &node, pool);
@@ -873,7 +873,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(JNIEnv *env,
   } else if (type == 2) { // Regexp
     char *str = strdup(val);
     if (!str) {
-      rc = IW_ERROR_ALLOC;
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
     rc = jql_set_regexp2(q, placeholder, pos, str, jbn_free_str, 0);
@@ -884,7 +884,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(JNIEnv *env,
   } else { // All other cases
     char *str = strdup(val);
     if (!str) {
-      rc = IW_ERROR_ALLOC;
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
     rc = jql_set_str2(q, placeholder, pos, str, jbn_free_str, 0);

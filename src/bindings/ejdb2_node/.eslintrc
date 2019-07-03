@@ -1,0 +1,55 @@
+{
+  "env": {
+    "commonjs": true,
+    "es6": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "ecmaFeatures": {
+      "jsx": false
+    },
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-const-assign": "error",
+    "no-undef": "off",
+    "no-unreachable": "warn",
+    "no-unused-vars": "warn",
+    "no-redeclare": "error",
+    "no-octal": "error",
+    "no-self-assign": "error",
+    "no-unused-labels": "warn",
+    "no-useless-return": "warn",
+    "constructor-super": "warn",
+    "valid-typeof": "warn",
+    "no-mixed-spaces-and-tabs": "warn",
+    "no-delete-var": "error",
+    "no-class-assign": "error",
+    "no-this-before-super": "warn",
+    "require-yield": "warn",
+    "quotes": [
+      "warn",
+      "single"
+    ],
+    "semi": [
+      "warn",
+      "always"
+    ],
+    "semi-spacing": [
+      "warn",
+      {
+        "before": false,
+        "after": true
+      }
+    ],
+    "no-extra-semi": "error",
+    "brace-style": [
+      "error",
+      "1tbs",
+      {
+        "allowSingleLine": true
+      }
+    ]
+  }
+}

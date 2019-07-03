@@ -358,7 +358,7 @@ static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
   struct UXCTX *uctx = ux->opaque;
   IWXSTR *xstr = iwxstr_new();
   if (!xstr) {
-    return IW_ERROR_ALLOC;
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   if (doc->node) {
     rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
@@ -620,9 +620,9 @@ static void ejd_jql_set(Dart_NativeArguments args) {
   if (type == 1) { // JSON
     EJTH(Dart_StringToCString(hvalue, &svalue));
     JBL_NODE node;
-    IWPOOL *pool = iwpool_create(1024);
+    IWPOOL *pool = iwpool_create(64);
     if (!pool) {
-      rc = IW_ERROR_ALLOC;
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
     rc = jbl_node_from_json(svalue, &node, pool);
@@ -639,7 +639,7 @@ static void ejd_jql_set(Dart_NativeArguments args) {
     EJTH(Dart_StringToCString(hvalue, &svalue));
     char *str = strdup(svalue);
     if (!str) {
-      rc = IW_ERROR_ALLOC;
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
     rc = jql_set_regexp2(q, spl, npl, str, jql_free_str, 0);
@@ -652,7 +652,7 @@ static void ejd_jql_set(Dart_NativeArguments args) {
       EJTH(Dart_StringToCString(hvalue, &svalue));
       char *str = strdup(svalue);
       if (!str) {
-        rc = IW_ERROR_ALLOC;
+        rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         goto finish;
       }
       rc = jql_set_str2(q, spl, npl, str, jql_free_str, 0);
@@ -1182,7 +1182,7 @@ static void ejd_info_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Por
 
   xstr = iwxstr_new2(jbl_size(jbl) * 2);
   if (!xstr) {
-    rc = IW_ERROR_ALLOC;
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
   rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
@@ -1240,7 +1240,7 @@ static void ejd_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port
 
   xstr = iwxstr_new2(jbl_size(jbl) * 2);
   if (!xstr) {
-    rc = IW_ERROR_ALLOC;
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
   rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);

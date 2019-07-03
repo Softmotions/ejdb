@@ -63,9 +63,3 @@ if (BUILD_TESTS)
            COMMAND ${DART_EXEC} --enable-asserts ${DART_PUB_DIR}/test/ejdb2_dart_test.dart)
 endif (BUILD_TESTS)
 
-# add_custom_command(
-# TARGET foo POST_BUILD
-# COMMAND ${CMAKE_COMMAND} -E copy
-#         ${CMAKE_SOURCE_DIR}/test/input.txt
-#         ${CMAKE_CURRENT_BINARY_DIR}/input.txt)
-

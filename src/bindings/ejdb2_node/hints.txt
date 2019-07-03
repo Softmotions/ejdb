@@ -1,0 +1,2 @@
+gdb: set follow-fork-mode child
+valgrind --leak-check=full  --trace-children=yes  node --expose-gc ./node_modules/.bin/ava -s -c 0

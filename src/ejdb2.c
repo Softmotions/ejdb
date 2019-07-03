@@ -1545,6 +1545,10 @@ iwrc ejdb_close(EJDB *ejdbp) {
   return rc;
 }
 
+const char *ejdb_git_revision(void) {
+  return EJDB2_GIT_REVISION;
+}
+
 const char *ejdb_version_full(void) {
   return EJDB2_VERSION;
 }

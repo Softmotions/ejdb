@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "eslint": "^5.16.0"
+  },
+  "dependencies": {
+    "semver": "^6.1.2"
+  }
+}

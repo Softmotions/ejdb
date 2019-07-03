@@ -79,7 +79,7 @@ else()
   add_definitions(-D_POSIX_THREAD_SAFE_FUNCTIONS)
 endif()
 
-foreach(HF IN ITEMS stdlib stddef stdint stdbool stdatomic)
+foreach(HF IN ITEMS stdlib stddef stdint stdbool)
     string(TOUPPER "${HF}" UHF)
     check_include_file(${HF}.h "JB_HAVE_${UHF}")
     if (NOT JB_HAVE_${UHF})
@@ -176,6 +176,10 @@ if (BUILD_JNI_BINDING)
   add_subdirectory(bindings/ejdb2_jni)
 endif()
 
+if (BUILD_NODEJS_BINDING)
+  add_subdirectory(bindings/ejdb2_node)
+endif()
+
 if (NOT BUILD_SHARED_LIBS)
   add_definitions(-DIW_NODLL)
   add_library(ejdb2 STATIC ${ALL_SRC})
@@ -268,6 +272,7 @@ set(${PROJECT_NAME}_PUB_HDRS ${PUB_HDRS}
 set(${PROJECT_NAME}_INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS}
     CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE)
 
+
 message("")
 message("${PROJECT_NAME} LINK LIBS: ${PROJECT_LLIBRARIES}")
 message("\n${PROJECT_NAME} INCLUDE DIRS: ${PROJECT_INCLUDE_DIRS}")
@@ -281,3 +286,4 @@ message("${PROJECT_NAME} BUILD_EXAMPLES: ${BUILD_EXAMPLES}")
 message("${PROJECT_NAME} BUILD_BENCHMARKS: ${BUILD_BENCHMARKS}")
 message("${PROJECT_NAME} BUILD_DART_BINDING: ${BUILD_DART_BINDING}")
 message("${PROJECT_NAME} BUILD_JNI_BINDING: ${BUILD_JNI_BINDING}")
+message("${PROJECT_NAME} BUILD_NODEJS_BINDING: ${BUILD_NODEJS_BINDING}")

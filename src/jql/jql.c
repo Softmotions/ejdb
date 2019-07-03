@@ -5,6 +5,7 @@
 #include "lwre.h"
 #include "jbl_internal.h"
 #include "jql_internal.h"
+#include <errno.h>
 
 /** Query matching context */
 typedef struct MCTX {
@@ -888,7 +889,7 @@ static JQVAL *_jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
       } else {
         JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
         if (!qv) {
-          *rcp = IW_ERROR_ALLOC;
+          *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
           return 0;
         }
         unit->string.opaque = qv;
@@ -903,7 +904,7 @@ static JQVAL *_jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
       }
       JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
       if (!qv) {
-        *rcp = IW_ERROR_ALLOC;
+        *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
       unit->json.opaque = qv;
@@ -941,7 +942,7 @@ static JQVAL *_jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
       }
       JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
       if (!qv) {
-        *rcp = IW_ERROR_ALLOC;
+        *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
       unit->intval.opaque = qv;
@@ -955,7 +956,7 @@ static JQVAL *_jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
       }
       JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
       if (!qv) {
-        *rcp = IW_ERROR_ALLOC;
+        *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
       unit->dblval.opaque = qv;

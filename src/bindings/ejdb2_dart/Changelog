@@ -1,3 +1,9 @@
+ejdb_dart (1.0.23)
+
+  * Upgraded to ejdb v2.0.20
+  * Minor fixes in docs
+  * Set proper query limit in `JQL.first` and `JQL.firstN`
+
 ejdb_dart (1.0.22)
 
   * Upgraded to ejdb v2.0.19 / iowow v1.3.20 with critical fixes

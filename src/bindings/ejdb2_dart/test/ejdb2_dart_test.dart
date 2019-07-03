@@ -36,7 +36,7 @@ void main() async {
 
   first = await db.createQuery('@mycoll/[zzz=bbb]').first();
   assert(first != null);
-  assert(first. isEmpty);
+  assert(first.isEmpty);
 
   var firstN = await db.createQuery('@mycoll/*').firstN(5);
   assert(firstN != null);

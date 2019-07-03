@@ -1,8 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
-  <File Name="ANDROID.md"/>
+  <VirtualDirectory Name="docker">
+    <File Name="docker/Dockerfile"/>
+    <File Name="docker/README.md"/>
+  </VirtualDirectory>
   <VirtualDirectory Name="bindings">
+    <VirtualDirectory Name="ejdb2_node">
+      <File Name="src/bindings/ejdb2_node/run.js"/>
+      <File Name="src/bindings/ejdb2_node/package.json"/>
+      <File Name="src/bindings/ejdb2_node/binary.js"/>
+      <File Name="src/bindings/ejdb2_node/test.js"/>
+      <File Name="src/bindings/ejdb2_node/index.js"/>
+      <File Name="src/bindings/ejdb2_node/node_api_types.h"/>
+      <File Name="src/bindings/ejdb2_node/node_api.h"/>
+      <File Name="src/bindings/ejdb2_node/hints.txt"/>
+      <File Name="src/bindings/ejdb2_node/ejdb2_node.c"/>
+      <File Name="src/bindings/ejdb2_node/README.md"/>
+      <File Name="src/bindings/ejdb2_node/CMakeLists.txt"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ejdb2_android">
+      <VirtualDirectory Name="ejdb2">
+        <VirtualDirectory Name="src">
+          <VirtualDirectory Name="androidTest">
+            <VirtualDirectory Name="java">
+              <VirtualDirectory Name="com">
+                <VirtualDirectory Name="softmotions">
+                  <VirtualDirectory Name="ejdb2">
+                    <File Name="src/bindings/ejdb2_android/ejdb2/src/androidTest/java/com/softmotions/ejdb2/Ejdb2AndroidTest.java"/>
+                  </VirtualDirectory>
+                </VirtualDirectory>
+              </VirtualDirectory>
+            </VirtualDirectory>
+          </VirtualDirectory>
+        </VirtualDirectory>
+      </VirtualDirectory>
+      <File Name="src/bindings/ejdb2_android/README.md"/>
+    </VirtualDirectory>
     <VirtualDirectory Name="ejdb2_jni">
+      <VirtualDirectory Name="android">
+        <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/example/EJDB2Example.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/example/EJDB2Example.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/JQLCallback.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/JQL.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/IWKVOptions.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/EJDB2Exception.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/EJDB2Builder.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/EJDB2.java"/>
+      </VirtualDirectory>
+      <File Name="src/bindings/ejdb2_jni/README.md"/>
       <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/JQLCallback.java"/>
       <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/JQL.java"/>
       <File Name="src/bindings/ejdb2_jni/src/test/java/com/softmotions/ejdb2/TestEJDB2.java"/>
@@ -159,6 +204,8 @@
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <VirtualDirectory Name="Modules">
+      <File Name="cmake/Modules/TestQsortR.cmake"/>
+      <File Name="cmake/Modules/TestQSortR.c"/>
       <File Name="cmake/Modules/FindJava.cmake"/>
       <File Name="cmake/Modules/FindJNI.cmake"/>
       <File Name="cmake/Modules/CMakeFindJavaCommon.cmake"/>
@@ -176,12 +223,17 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
-      <Path>build/</Path>
+      <Path>src/bindings/ejdb2_node/node_modules/</Path>
+      <Path>src/bindings/ejdb2_android/ejdb2/.externalNativeBuild/</Path>
       <Path>cmake-build-Debug/</Path>
+      <Path>build/</Path>
+      <Path>src/bindings/ejdb2_android/.gradle/</Path>
+      <Path>src/bindings/ejdb2_android/ejdb2/build/</Path>
+      <Path>src/bindings/ejdb2_android/ejdb2/libs/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
-      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp;*.txt;*.md;*.txt;*.cmake;*.peg;*.leg]]>
+      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp;*.txt;*.md;*.txt;*.cmake;*.peg;*.leg;*.java;*.js;*.ts]]>
     </Extensions>
     <Topleveldir>/home/adam/Projects/softmotions/ejdb</Topleveldir>
   </Reconciliation>
@@ -355,7 +407,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="ejdb_test4" IntermediateDirectory="$(ProjectPath)/build/src/tests" Command="$(OutputFile)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="/usr/bin/node" IntermediateDirectory="$(ProjectPath)/src/bindings/ejdb2_node" Command="$(OutputFile)" CommandArguments="./node_modules/.bin/ava -s -c 0 ./test.js" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake">-G Ninja -DCMAKE_BUILD_TYPE=Debug</BuildSystem>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
@@ -363,7 +415,7 @@
       <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
         <DebuggerSearchPaths>/home/adam/Projects/softmotions/iowow/src</DebuggerSearchPaths>
         <PostConnectCommands/>
-        <StartupCommands/>
+        <StartupCommands>set follow-fork-mode child</StartupCommands>
       </Debugger>
       <PreBuild/>
       <PostBuild/>
