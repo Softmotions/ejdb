@@ -47,7 +47,7 @@ run();
 git clone https://github.com/Softmotions/ejdb.git
 cd ./ejdb
 mkdir ./build && cd build
-cmake .. -DBUILD_NODE_BINDING=ON -DCMAKE_BUILD_TYPE=Release
+cmake .. -DBUILD_NODEJS_BINDING=ON -DCMAKE_BUILD_TYPE=Release
 make
 cd src/bindings/ejdb2_node/ejdb2_node
 yarn pack
