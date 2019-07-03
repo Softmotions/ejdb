@@ -1,10 +1,10 @@
-ejdb2 (2.0.20) UNRELEASED; urgency=medium
+ejdb2 (2.0.20) testing; urgency=medium
 
   * Node.js binding (#248)
   * Added git revision hash getter `ejdb_git_revision()` (ejdb2.h)
   * Better error reporting on failed memory allocations
 
- -- Anton Adamansky <adamansky@gmail.com>  Mon, 01 Jul 2019 11:30:04 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 03 Jul 2019 19:36:46 +0700
 
 ejdb2 (2.0.19) testing; urgency=medium
 
