@@ -31,10 +31,6 @@ const utils = require('./utils');
  * Load native library with specified name.
  */
 module.exports = function (name) {
-  let platform = process.platform.toLowerCase();
-  if (platform.indexOf('win') === 0) {
-    platform = 'windows';
-  }
   const file = path.join(__dirname, utils.binariesDir, name);
   return require(file);
 };
