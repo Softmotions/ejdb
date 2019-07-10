@@ -1,3 +1,8 @@
+ejdb_dart (1.0.24)
+
+  * Added `JBDOC.at(pointer)` to get subset of document using RFC 6901 JSON pointer
+  * Added `JBDOC.object` to access parsed JSON document body
+
 ejdb_dart (1.0.23)
 
   * Upgraded to ejdb v2.0.20

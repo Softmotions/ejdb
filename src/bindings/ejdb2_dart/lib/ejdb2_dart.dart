@@ -10,12 +10,14 @@ library ejdb2_dart;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:convert' as convert_lib;
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
 
 import 'package:path/path.dart' as path_lib;
 import 'package:quiver/core.dart';
+import 'package:json_at/json_at.dart';
 
 import 'dart-ext:ejdb2dart';
 
@@ -39,7 +41,7 @@ class EJDB2Error implements Exception {
 
   EJDB2Error.invalidState() : this.fromCode(EJD_ERROR_INVALID_STATE);
 
-  EJDB2Error.notFound(): this.fromCode(IWKV_ERROR_NOTFOUND);
+  EJDB2Error.notFound() : this.fromCode(IWKV_ERROR_NOTFOUND);
 
   bool get notFound => code == IWKV_ERROR_NOTFOUND;
 
@@ -54,11 +56,29 @@ class JBDOC {
   /// Document identifier
   final int id;
 
-  /// Document JSON body as string
-  final String json;
+  /// Document body as JSON string
+  String get json => _json ?? convert_lib.jsonEncode(_object);
 
-  JBDOC(this.id, this.json);
+  /// Document body as parsed JSON object.
+  dynamic get object {
+    if (_json == null) {
+      return _object;
+    } else {
+      _object = convert_lib.jsonDecode(_json);
+      _json = null; // Release memory used to store JSON string data
+    }
+  }
+
+  /// Gets subset of document using RFC 6901 JSON [pointer].
+  Optional<dynamic> at(String pointer) => jsonAt(object, pointer);
+
+  String _json;
+
+  dynamic _object;
+
+  JBDOC(this.id, this._json);
   JBDOC.fromList(List list) : this(list[0] as int, list[1] as String);
+
   @override
   String toString() => '$runtimeType: $id $json';
 }
