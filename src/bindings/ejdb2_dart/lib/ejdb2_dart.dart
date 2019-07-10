@@ -73,6 +73,9 @@ class JBDOC {
   /// Gets subset of document using RFC 6901 JSON [pointer].
   Optional<dynamic> at(String pointer) => jsonAt(object, pointer);
 
+  /// Gets subset of document using RFC 6901 JSON [pointer].
+  Optional<dynamic> operator [](String pointer) => at(pointer);
+
   String _json;
 
   dynamic _object;
