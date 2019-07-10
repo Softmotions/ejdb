@@ -66,6 +66,7 @@ class JBDOC {
     } else {
       _object = convert_lib.jsonDecode(_json);
       _json = null; // Release memory used to store JSON string data
+      return _object;
     }
   }
 
