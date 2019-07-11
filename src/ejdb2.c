@@ -1393,7 +1393,84 @@ finish:
 }
 
 iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
-  // todo:
+  if (!coll || !new_coll) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  int rci;
+  iwrc rc = 0;
+  if (db->oflags & IWKV_RDONLY) {
+    return IW_ERROR_READONLY;
+  }
+  IWKV_val key, val;
+  JBL nmeta = 0, meta = 0, jbv = 0;
+  char keybuf[JBNUMBUF_SIZE + sizeof(KEY_PREFIX_COLLMETA)];
+
+  API_WLOCK(db, rci);
+
+  khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
+  if (k == kh_end(db->mcolls)) {
+    rc = EJDB_ERROR_COLLECTION_NOT_FOUND;
+    goto finish;
+  }
+  khiter_t k2 = kh_get(JBCOLLM, db->mcolls, new_coll);
+  if (k2 != kh_end(db->mcolls)) {
+    rc = EJDB_ERROR_TARGET_COLLECTION_EXISTS;
+    goto finish;
+  }
+
+  JBCOLL jbc = kh_value(db->mcolls, k);
+
+  rc = jbl_create_empty_object(&nmeta);
+  RCGO(rc, finish);
+
+  if (!binn_object_set_str(&nmeta->bn, "name", new_coll)) {
+    rc = JBL_ERROR_CREATION;
+    goto finish;
+  }
+  if (!binn_object_set_uint32(&nmeta->bn, "id", jbc->dbid)) {
+    rc = JBL_ERROR_CREATION;
+    goto finish;
+  }
+
+  rc = jbl_as_buf(nmeta, &val.data, &val.size);
+  RCGO(rc, finish);
+  key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_COLLMETA "%u", jbc->dbid);
+  if (key.size >= sizeof(keybuf)) {
+    rc = IW_ERROR_OVERFLOW;
+    goto finish;
+  }
+  key.data = keybuf;
+
+  rc = jbl_at(nmeta, "/name", &jbv);
+  RCGO(rc, finish);
+
+  rc = iwkv_put(db->metadb, &key, &val, IWKV_SYNC);
+  RCGO(rc, finish);
+
+  kh_del(JBCOLLM, db->mcolls, k);
+  k2 = kh_put(JBCOLLM, db->mcolls, new_coll, &rci);
+  if (rci != -1) {
+    kh_value(db->mcolls, k2) = jbc;
+  } else {
+    rc = IW_ERROR_FAIL;
+    goto finish;
+  }
+
+  jbc->name = jbl_get_str(jbv);
+  jbl_destroy(&jbc->meta);
+  jbc->meta = nmeta;
+
+finish:
+  if (jbv) {
+    jbl_destroy(&jbv);
+  }
+  if (rc) {
+    if (nmeta) {
+      jbl_destroy(&nmeta);
+    }
+  }
+  API_UNLOCK(db, rci, rc);
+  return rc;
 }
 
 iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
