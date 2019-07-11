@@ -78,6 +78,6 @@ add_custom_target(yarn ALL
 
 if (BUILD_TESTS)
   add_test(NAME ejdb2node
-           COMMAND ${YARN_EXEC} run tests
+           COMMAND ${YARN_EXEC} run test
            WORKING_DIRECTORY ${NODE_PUB_DIR})
 endif()
