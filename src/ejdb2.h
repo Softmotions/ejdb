@@ -54,6 +54,8 @@ typedef enum {
   EJDB_ERROR_INVALID_INDEX_MODE,                  /**< Invalid index mode specified */
   EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE,    /**< Index exists but mismatched uniqueness constraint */
   EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED,    /**< Unique index constraint violated */
+  EJDB_ERROR_COLLECTION_NOT_FOUND,                /**< Collection not found */
+  EJDB_ERROR_TARGET_COLLECTION_EXISTS,            /**< Target collection exists */
   _EJDB_ERROR_END
 } ejdb_ecode_t;
 
@@ -396,6 +398,19 @@ IW_EXPORT iwrc ejdb_del(EJDB db, const char *coll, int64_t id);
  *          Any non zero error codes.
  */
 IW_EXPORT iwrc ejdb_remove_collection(EJDB db, const char *coll);
+
+/**
+ * @brief Rename collection `coll` to `new_coll`.
+ *
+ * @param db    Database handle. Not zero.
+ * @param coll  Old collection name. Not zero.
+ * @param new_coll New collection name.
+ * @return `0` on success.
+ *          - `EJDB_ERROR_COLLECTION_NOT_FOUND` - if source `coll` is not found.
+ *          - `EJDB_ERROR_TARGET_COLLECTION_EXISTS` - if `new_coll` is exists already.
+ *          -  Any other non zero error codes.
+ */
+iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll);
 
 /**
  * @brief Create collection with given name if it has not existed before

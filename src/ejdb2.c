@@ -1392,6 +1392,10 @@ finish:
   return rc;
 }
 
+iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
+  // todo:
+}
+
 iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
   int rci;
   *jblp = 0;
@@ -1582,6 +1586,10 @@ static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
       return "Unique index constraint violated (EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED)";
     case EJDB_ERROR_INVALID_COLLECTION_NAME:
       return "Invalid collection name (EJDB_ERROR_INVALID_COLLECTION_NAME)";
+    case EJDB_ERROR_COLLECTION_NOT_FOUND:
+      return "Collection not found (EJDB_ERROR_COLLECTION_NOT_FOUND)";
+    case EJDB_ERROR_TARGET_COLLECTION_EXISTS:
+      return "Target collection exists (EJDB_ERROR_TARGET_COLLECTION_EXISTS)";
   }
   return 0;
 }
