@@ -1402,7 +1402,7 @@ iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
     return IW_ERROR_READONLY;
   }
   IWKV_val key, val;
-  JBL nmeta = 0, meta = 0, jbv = 0;
+  JBL nmeta = 0, jbv = 0;
   char keybuf[JBNUMBUF_SIZE + sizeof(KEY_PREFIX_COLLMETA)];
 
   API_WLOCK(db, rci);
