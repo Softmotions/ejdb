@@ -558,6 +558,17 @@ class EJDB2 {
   }
 
   /**
+   * Renames collection.
+   *
+   * @param {String} oldCollectionName Collection to be renamed
+   * @param {String} newCollectionName New name of collection
+   * @return {Promise<void>}
+   */
+  renameCollection(oldCollectionName, newCollectionName) {
+    return this._impl.rename_collection(oldCollectionName, newCollectionName);
+  }
+
+  /**
    * Ensures json document database index specified by [path] json pointer to string data type.
    *
    * @param {String} collection

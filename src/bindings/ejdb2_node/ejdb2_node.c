@@ -944,6 +944,9 @@ finish:
   return ret ? ret : jn_undefined(env);
 }
 
+
+// rename_collection
+
 //  ---------------- EJDB2.info()
 
 static void jn_info_execute(napi_env env, void *data) {

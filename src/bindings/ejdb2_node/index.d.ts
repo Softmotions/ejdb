@@ -239,6 +239,11 @@ declare namespace ejdb2_node {
     del(collection: string, id: number): Promise<void>;
 
     /**
+     * Renames collection
+     */
+    renameCollection(oldCollectionName: string, newCollectionName: string): Promise<void>;
+
+    /**
      * Ensures json document database index specified by [path] json pointer to string data type.
      */
     ensureStringIndex(collection: string, path: string, unique?: boolean): Promise<void>
