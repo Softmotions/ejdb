@@ -131,6 +131,10 @@ s   * collection name encoded in query will not be taken into account.
     _del(collection, id);
   }
 
+  public void renameCollection(String oldCollectionName, String newCollectionName) throws EJDB2Exception {
+    _rename_collection(oldCollectionName, newCollectionName);
+  }
+
   /**
    * Apply rfc6902/rfc6901 JSON patch to the document identified by {@code id}.
    *
@@ -356,6 +360,8 @@ s   * collection name encoded in query will not be taken into account.
   private native long _put(String collection, String json, long id) throws EJDB2Exception;
 
   private native void _del(String collection, long id) throws EJDB2Exception;
+
+  private native void _rename_collection(String oldCollectionName, String newCollectionName) throws EJDB2Exception;
 
   private native void _patch(String collection, String patch, long id) throws EJDB2Exception;
 

@@ -137,6 +137,13 @@ public class TestEJDB2 {
       db.removeCollection("c1");
       json = db.infoAsString();
       assert(json.contains("\"collections\":[]"));
+
+      // Test rename collection
+      bos.reset();
+      db.put("cc1", "{\"foo\": 1}");
+      db.renameCollection("cc1", "cc2");
+      db.get("cc2", 1, bos);
+      assert(bos.toString().equals("{\"foo\":1}"));
     }
   }
 }

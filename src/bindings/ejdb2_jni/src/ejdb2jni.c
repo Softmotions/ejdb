@@ -442,6 +442,39 @@ finish:
   }
 }
 
+// RENAME COLLECTION
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1rename_1collection(JNIEnv *env, jobject thisObj,
+                                                                             jstring oldColl_, jstring newColl_) {
+  iwrc rc;
+  EJDB db;
+  const char *newColl = 0;
+  const char *oldColl = (*env)->GetStringUTFChars(env, oldColl_, 0);
+  if (!oldColl) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+  newColl = (*env)->GetStringUTFChars(env, newColl_, 0);
+  if (!newColl) {
+    rc = IW_ERROR_INVALID_ARGS;
+    goto finish;
+  }
+  rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
+
+  rc = ejdb_rename_collection(db, oldColl, newColl);
+
+finish:
+  if (oldColl) {
+    (*env)->ReleaseStringUTFChars(env, oldColl_, oldColl);
+  }
+  if (newColl) {
+    (*env)->ReleaseStringUTFChars(env, newColl_, newColl);
+  }
+  if (rc) {
+    jbn_throw_rc_exception(env, rc, 0);
+  }
+}
+
 // PATCH
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1patch(JNIEnv *env,
                                                                 jobject thisObj,
