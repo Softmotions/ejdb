@@ -1,3 +1,9 @@
+ejdb2 (2.0.21) UNRELEASED; urgency=medium
+
+  * Added `ejdb_rename_collection` method  (#254)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 12 Jul 2019 00:56:38 +0700
+
 ejdb2 (2.0.20) testing; urgency=medium
 
   * Node.js binding (#248)

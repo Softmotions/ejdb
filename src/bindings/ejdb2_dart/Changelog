@@ -1,3 +1,7 @@
+ejdb_dart (1.0.27)
+
+  * Added `EJDB2.rename(oldCollectionName, newCollectionName)` method. (#254)
+
 ejdb_dart (1.0.26)
 
   * Added `JBDOC[]` operator which is equivalent of `JBDOC.at(pointer)`

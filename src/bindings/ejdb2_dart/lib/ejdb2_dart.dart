@@ -450,6 +450,24 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  Future<void> rename(String oldCollection, String newCollectionName) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<void>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete();
+    };
+    _port().send([replyPort.sendPort, 'rename', hdb, oldCollection, newCollectionName]);
+    return completer.future;
+  }
+
   /// Ensures json document database index specified by [path] json pointer to string data type.
   Future<void> ensureStringIndex(String collection, String path, {bool unique = false}) {
     return _idx(collection, path, 0x04 | (unique ? 0x01 : 0));
