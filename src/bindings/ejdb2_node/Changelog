@@ -1,3 +1,7 @@
+ejdb2_node (1.0.4)
+
+  * fixed CVE-2019-10744 https://github.com/lodash/lodash/pull/4336
+
 ejdb2_node (1.0.2)
 
   * Initial release (#248).

@@ -1,6 +1,6 @@
 {
   "name": "ejdb2_node",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "repository": "https://github.com/Softmotions/ejdb.git",
   "author": "Anton Adamansky <adamansky@gmail.com>",
   "description": "EJDB2 Node.js native binding",
@@ -44,6 +44,9 @@
     "@types/node": "^12.0.10",
     "ava": "^2.2.0",
     "chai": "^4.2.0"
+  },
+  "resolutions": {
+    "lodash.merge": "4.6.2"
   },
   "keywords": [
     "ejdb",
