@@ -241,7 +241,7 @@ declare namespace ejdb2_node {
     /**
      * Renames collection
      */
-    renameCollection(oldCollectionName: string, newCollectionName: string): Promise<void>;
+    renameCollection(oldCollectionName: string, newCollectionName: string): Promise<void>
 
     /**
      * Ensures json document database index specified by [path] json pointer to string data type.
@@ -251,7 +251,7 @@ declare namespace ejdb2_node {
     /**
      * Removes specified database index.
      */
-    removeStringIndex(collection: string, path: string, unique?: boolean): Promise<void>;
+    removeStringIndex(collection: string, path: string, unique?: boolean): Promise<void>
 
     /**
      * Ensures json document database index specified by [path] json pointer to integer data type.

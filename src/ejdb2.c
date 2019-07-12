@@ -1405,7 +1405,7 @@ iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
   JBL nmeta = 0, jbv = 0;
   char keybuf[JBNUMBUF_SIZE + sizeof(KEY_PREFIX_COLLMETA)];
 
-  API_WLOCK(db, rci);
+  API_WLOCK(db,  rci);
 
   khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
   if (k == kh_end(db->mcolls)) {
@@ -1444,11 +1444,13 @@ iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
   rc = jbl_at(nmeta, "/name", &jbv);
   RCGO(rc, finish);
 
+  const char *new_name = jbl_get_str(jbv);
+
   rc = iwkv_put(db->metadb, &key, &val, IWKV_SYNC);
   RCGO(rc, finish);
 
   kh_del(JBCOLLM, db->mcolls, k);
-  k2 = kh_put(JBCOLLM, db->mcolls, new_coll, &rci);
+  k2 = kh_put(JBCOLLM, db->mcolls, new_name, &rci);
   if (rci != -1) {
     kh_value(db->mcolls, k2) = jbc;
   } else {
@@ -1456,7 +1458,7 @@ iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
     goto finish;
   }
 
-  jbc->name = jbl_get_str(jbv);
+  jbc->name = new_name;
   jbl_destroy(&jbc->meta);
   jbc->meta = nmeta;
 

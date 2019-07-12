@@ -945,7 +945,74 @@ finish:
 }
 
 
-// rename_collection
+//  ---------------- EJDB2.renameCollection()
+
+struct JNRENAME_DATA {
+  const char *old_name;
+  const char *new_name;
+};
+
+static void jn_rename_collection_execute(napi_env env, void *data) {
+  JNWORK work = data;
+  JBN jbn = work->unwrapped;
+  if (!jbn->db) {
+    work->rc = JN_ERROR_INVALID_STATE;
+    return;
+  }
+  struct JNRENAME_DATA *wdata = work->data;
+  work->rc = ejdb_rename_collection(jbn->db, wdata->old_name, wdata->new_name);
+}
+
+static void jn_rename_collection_complete(napi_env env, napi_status ns, void *data) {
+  JNWORK work = data;
+  if (jn_resolve_pending_errors(env, ns, work)) {
+    goto finish;
+  }
+  JNGO(ns, env, napi_resolve_deferred(env, work->deferred, jn_undefined(env)), finish);
+  work->deferred = 0;
+
+finish:
+  jn_work_destroy(env, &work);
+}
+
+static napi_value jn_rename_collection(napi_env env, napi_callback_info info) {
+  iwrc rc = 0;
+  napi_status ns;
+  napi_value this, argv[2];
+  napi_value ret = 0;
+  size_t argc = sizeof(argv) / sizeof(argv[0]);
+  void *data;
+
+  JNWORK work = jn_work_create(&rc);
+  RCGO(rc, finish);
+
+  JNGO(ns, env, napi_get_cb_info(env, info, &argc, argv, &this, &data), finish);
+  if (argc != sizeof(argv) / sizeof(argv[0])) {
+    rc = JN_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+
+  struct JNRENAME_DATA *wdata = jn_work_alloc_data(sizeof(*wdata), work, &rc);
+  RCGO(rc, finish);
+
+  wdata->old_name = jn_string(env, argv[0], work->pool, false, false, &rc);
+  RCGO(rc, finish);
+
+  wdata->new_name = jn_string(env, argv[1], work->pool, false, false, &rc);
+  RCGO(rc, finish);
+
+  ret = jn_launch_promise(env, info, "rename",
+                          jn_rename_collection_execute, jn_rename_collection_complete,
+                          work);
+finish:
+  if (rc) {
+    JNRC(env, rc);
+    if (work) {
+      jn_work_destroy(env, &work);
+    }
+  }
+  return ret ? ret : jn_undefined(env);
+}
 
 //  ---------------- EJDB2.info()
 
@@ -1641,7 +1708,7 @@ static napi_value jn_jql_stream_attach(napi_env env, napi_callback_info info) {
 
   // Launch async work
   qs->refs = 2;     // +1 for jn_jql_stream_complete
-                    // +1 for jn_jql_stream_destroy
+  // +1 for jn_jql_stream_destroy
   qs->jbn = jbn;
   qs->work.data = qs;
   ret = jn_launch_promise(env, info, "query", jn_jql_stream_execute, jn_jql_stream_complete, &qs->work);
@@ -1855,6 +1922,7 @@ napi_value Init(napi_env env, napi_value exports) {
     JNFUNC(patch),
     JNFUNC(get),
     JNFUNC(del),
+    JNFUNC(rename_collection),
     JNFUNC(info),
     JNFUNC(index),
     JNFUNC(rmcoll),

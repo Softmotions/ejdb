@@ -8,7 +8,7 @@ void main() async {
   assert(q.collection == 'mycoll');
   assert(q.db != null);
 
-  final id = await db.put('mycoll', {'foo': 'bar'});
+  var id = await db.put('mycoll', {'foo': 'bar'});
   assert(id == 1);
 
   dynamic error;
@@ -162,9 +162,9 @@ void main() async {
   q = db.createQuery('@c1/*');
   assert(q.limit == 0);
 
-  await db.put('cc1', {'foo': 1});
-  await db.rename('cc1', 'cc2');
-  json = await db.get('cc2', 1);
+  id = await db.put('cc1', {'foo': 1});
+  await db.renameCollection('cc1', 'cc2');
+  json = await db.get('cc2', id);
   assert(json == '{"foo":1}');
 
   await db.close();

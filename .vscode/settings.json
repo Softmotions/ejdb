@@ -115,6 +115,7 @@
   "C_Cpp.configurationWarnings": "Disabled",
   "files.associations": {
     "*.arb": "json",
-    "*.gyp": "jsonc"
+    "*.gyp": "jsonc",
+    "ejdb2_internal.h": "c"
   },
 }

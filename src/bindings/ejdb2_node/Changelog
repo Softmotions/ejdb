@@ -1,3 +1,7 @@
+ejdb2_node (1.0.6)
+
+  * Added `EJDB2.rename(oldCollectionName, newCollectionName)` method. (#254)
+
 ejdb2_node (1.0.5)
 
   * fixed CVE-2019-10744 https://github.com/lodash/lodash/pull/4336

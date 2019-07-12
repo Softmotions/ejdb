@@ -36,7 +36,7 @@ test('Main', async (t) => {
   t.is(q.collection, 'mycoll');
   t.true(q.db != null);
 
-  const id = await db.put('mycoll', { 'foo': 'bar' });
+  let id = await db.put('mycoll', { 'foo': 'bar' });
   t.is(id, 1);
   t.throwsAsync(db.put('mycoll', '{"'), {
     code: '@ejdb IWRC:86005 put',
@@ -212,8 +212,19 @@ test('Main', async (t) => {
   q = db.createQuery('@c2/*');
   t.is(q.limit, 0);
 
+  // Rename collection
+  id = await db.put('cc1', { 'foo': 1 });
+  doc = await db.get('cc1', id);
+  t.deepEqual(doc, { 'foo': 1 });
+
+  await db.renameCollection('cc1', 'cc2');
+  doc = await db.get('cc2', id);
+  t.deepEqual(doc, { 'foo': 1 });
+
   await db.close();
-  // global.gc();
+
+
+  //global.gc();
 });
 
 // test('GC', async () => {

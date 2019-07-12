@@ -450,7 +450,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
-  Future<void> rename(String oldCollection, String newCollectionName) {
+  Future<void> renameCollection(String oldCollection, String newCollectionName) {
     final hdb = _get_handle();
     if (hdb == null) {
       return Future.error(EJDB2Error.invalidState());
