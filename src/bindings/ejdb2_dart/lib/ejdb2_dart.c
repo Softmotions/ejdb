@@ -592,7 +592,6 @@ static void ejd_exec_check(Dart_NativeArguments args) {
   iwrc rc = 0;
   Dart_EnterScope();
   Dart_Handle ret = Dart_Null();
-  int cnt = Dart_GetNativeArgumentCount(args);
 
   if (Dart_GetNativeArgumentCount(args) < 3) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
