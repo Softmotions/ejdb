@@ -81,7 +81,7 @@ class JBDOC {
   dynamic _object;
 
   JBDOC(this.id, this._json);
-  JBDOC.fromList(List list) : this(list[0] as int, list[1] as String);
+  JBDOC._fromList(List list) : this(list[0] as int, list[1] as String);
 
   @override
   String toString() => '$runtimeType: $id $json';
@@ -107,26 +107,30 @@ class JQL extends NativeFieldWrapperClass2 {
   ///
   Stream<JBDOC> execute({void explainCallback(String log), int limit = 0}) {
     abort();
+    var execHandle = 0;
     _controller = StreamController<JBDOC>();
     _replyPort = RawReceivePort();
     _replyPort.handler = (dynamic reply) {
       if (reply is int) {
+        _exec_check(execHandle, true);
         _replyPort.close();
         _controller.addError(EJDB2Error.fromCode(reply));
         return;
       } else if (reply is List) {
+        _exec_check(execHandle, false);
         if (reply[2] != null && explainCallback != null) {
           explainCallback(reply[2] as String);
         }
-        _controller.add(JBDOC.fromList(reply));
+        _controller.add(JBDOC._fromList(reply));
       } else {
+        _exec_check(execHandle, true);
         if (reply != null && explainCallback != null) {
           explainCallback(reply as String);
         }
         abort();
       }
     };
-    _exec(_replyPort.sendPort, explainCallback != null, limit);
+    execHandle = _exec(_replyPort.sendPort, explainCallback != null, limit);
     return _controller.stream;
   }
 
@@ -247,7 +251,9 @@ class JQL extends NativeFieldWrapperClass2 {
 
   void _set(dynamic placeholder, dynamic value, [int type]) native 'jql_set';
 
-  void _exec(SendPort sendPort, bool explain, int limit) native 'exec';
+  int _exec(SendPort sendPort, bool explain, int limit) native 'exec';
+
+  void _exec_check(int execHandle, bool terminate) native 'check_exec';
 }
 
 /// Database wrapper

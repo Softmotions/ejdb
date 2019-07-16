@@ -1310,7 +1310,7 @@ finish:
 
 typedef struct JNQS { // query stream associated data
   volatile bool aborted;
-  bool paused;
+  volatile bool paused;
   int refs;
   JBN jbn;
   JNQL jnql;
@@ -1598,7 +1598,7 @@ finish:
   return ret;
 }
 
-static napi_value jn_jql_stream_set_pause(napi_env env, napi_callback_info info, bool paused) {
+static napi_value jn_jql_stream_set_paused(napi_env env, napi_callback_info info, bool paused) {
   napi_status ns;
   napi_value ret = 0, argv, this;
   size_t argc = 1;
@@ -1631,11 +1631,11 @@ finish:
 }
 
 static napi_value jn_jql_stream_pause(napi_env env, napi_callback_info info) {
-  return jn_jql_stream_set_pause(env, info, true);
+  return jn_jql_stream_set_paused(env, info, true);
 }
 
 static napi_value jn_jql_stream_resume(napi_env env, napi_callback_info info) {
-  return jn_jql_stream_set_pause(env, info, false);
+  return jn_jql_stream_set_paused(env, info, false);
 }
 
 static napi_value jn_jql_stream_abort(napi_env env, napi_callback_info info) {

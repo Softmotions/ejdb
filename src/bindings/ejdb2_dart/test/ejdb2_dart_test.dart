@@ -167,5 +167,14 @@ void main() async {
   json = await db.get('cc2', id);
   assert(json == '{"foo":1}');
 
+  for (var i = 0; i < 10000; ++i) {
+    await db.put('cc1', {'name': 'v${i}'});
+  }
+  var cnt = 0;
+  await for (final _ in db.createQuery('@cc1/*').execute()) {
+    cnt++;
+  }
+  assert(cnt == 10000);
+
   await db.close();
 }
