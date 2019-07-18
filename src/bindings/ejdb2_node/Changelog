@@ -1,3 +1,7 @@
+ejdb_dart (1.0.7)
+
+  * Upgraded to ejdb v2.0.22
+
 ejdb2_node (1.0.6)
 
   * Added `EJDB2.rename(oldCollectionName, newCollectionName)` method. (#254)
