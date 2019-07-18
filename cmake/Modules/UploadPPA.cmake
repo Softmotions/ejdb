@@ -286,6 +286,7 @@ set(CPACK_SOURCE_IGNORE_FILES
   "/tmp/"
   "/packaging/"
   "/debian/"
+  "/node_modules/"
   "/\\\\.git.*"
   "/\\\\.idea/"
   "/\\\\.codelite/"
