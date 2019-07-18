@@ -3,6 +3,8 @@
 **Note:** HTTP/Websocket network API is disabled and not supported
 on Windows until win port of http://facil.io library
 
+Nodejs/Dart bindings not yet ported to Windows.
+
 ## Prerequisites
 
 ```sh
