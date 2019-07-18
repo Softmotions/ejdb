@@ -4,6 +4,7 @@
 #include "jqp.h"
 #include "lwre.h"
 #include "jbl_internal.h"
+#include "jql_internal.h"
 #include <errno.h>
 
 /** Query matching context */
