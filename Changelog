@@ -1,6 +1,8 @@
 ejdb2 (2.0.22) UNRELEASED; urgency=medium
 
+  * Limited windows support without HTTP/Websocket network API (#237)
   * `static_assert` is  set to `_Static_assert` if not defined
+  * All uses of `iwftoa` replaced by `jbi_ftoa`
 
  -- Anton Adamansky <adamansky@gmail.com>  Thu, 18 Jul 2019 13:15:52 +0700
 

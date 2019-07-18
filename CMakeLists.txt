@@ -51,6 +51,11 @@ if(POLICY CMP0042)
   cmake_policy(SET CMP0042 NEW)
 endif(POLICY CMP0042)
 
+if (DEFINED CMAKE_TOOLCHAIN_FILE)
+  get_filename_component(_CMAKE_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE} ABSOLUTE)
+  set(CMAKE_TOOLCHAIN_FILE, ${_CMAKE_TOOLCHAIN_FILE} FORCE)
+endif()
+
 include(GitRevision)
 include(GNUInstallDirs)
 include(ProjectUtils)

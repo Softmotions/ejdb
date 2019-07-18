@@ -1,9 +1,20 @@
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <memory.h>
 #include "binn.h"
+
+#ifdef _WIN32
+#define INT64_FORMAT  PRId64
+#define UINT64_FORMAT PRIu64
+#define INT64_HEX_FORMAT  PRIx64
+#else
+#define INT64_FORMAT  "lli"
+#define UINT64_FORMAT "llu"
+#define INT64_HEX_FORMAT  "llx"
+#endif
 
 #define UNUSED(x) (void)(x)
 #define round(dbl) dbl >= 0.0 ? (int)(dbl + 0.5) : ((dbl - (double)(int)dbl) <= -0.5 ? (int)dbl : (int)(dbl - 0.5))
@@ -1297,7 +1308,7 @@ BOOL APIENTRY binn_list_get_value(void *ptr, int pos, binn *value) {
 BINN_PRIVATE BOOL binn_read_pair(int expected_type, void *ptr, int pos, int *pid, char *pkey, binn *value) {
   int type, count, size = 0, header_size;
   int i, int32, id = 0, counter = 0;
-  unsigned char *p, *plimit, *base, *key, len = 0;
+  unsigned char *p, *plimit, *base, *key = 0, len = 0;
 
   ptr = binn_ptr(ptr);
 

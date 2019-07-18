@@ -61,7 +61,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 ## OSX
 
-EJDB2 code ported and tested on OSX `High Sierra`
+EJDB2 code ported and tested on `High Sierra`, `Mojave`
 
 ```
 mkdir build && cd build
@@ -93,6 +93,16 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_RPM=ON
 make package
 ```
+
+## Windows
+EJDB2 can be cross-compiled for windows
+
+**Note:** HTTP/Websocket network API is disabled and not supported
+on Windows until port of http://facil.io library (#257)
+
+Nodejs/Dart bindings not yet ported to Windows.
+
+**[Cross-compilation Guide for Windows](./WINDOWS.md)**
 
 
 

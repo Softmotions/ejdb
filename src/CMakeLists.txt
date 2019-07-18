@@ -24,6 +24,9 @@ include(TestBigEndian)
 include(AddIOWOW)
 
 if(ENABLE_HTTP)
+  if(WIN32)
+    message(FATAL_ERROR "ENABLE_HTTP option cannot be used in Windows build")
+  endif()
   include(AddFacil)
   add_definitions(-DJB_HTTP)
   list(APPEND MODULES jbr jbs)
@@ -71,6 +74,10 @@ else()
 		message(FATAL_ERROR "Unable to find windows.h include file")
 	endif()
 
+  set(IBERTY_FIND_REQUIRED ON)
+  include(FindLibIberty)
+  list(APPEND PROJECT_LLIBRARIES ${IBERTY_LIBRARIES})
+
   check_library_exists(winpthread pthread_exit "" HAVE_WINPTHREAD)
 	if (NOT HAVE_WINPTHREAD)
 		message(FATAL_ERROR "Unable to winpthread lib")
@@ -109,11 +116,13 @@ list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -pedantic -Wfatal-errors -Wall -Wextra \
                   -Wno-sign-compare -Wno-unused-parameter -Wno-unknown-pragmas -Wno-unused-function \
-                  -Wno-missing-field-initializers -Wno-missing-braces -Wno-implicit-fallthrough \
+                  -Wno-missing-field-initializers -Wno-missing-braces \
                   ")
+
 if (NOT WIN32)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-implicit-fallthrough -fPIC")
 else()
+  add_definitions(-D__USE_MINGW_ANSI_STDIO)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pedantic-ms-format")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
 endif()

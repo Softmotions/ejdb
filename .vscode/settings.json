@@ -116,6 +116,14 @@
   "files.associations": {
     "*.arb": "json",
     "*.gyp": "jsonc",
-    "ejdb2_internal.h": "c"
+    "ejdb2_internal.h": "c",
+    "jbl_internal.h": "c",
+    "lwre.h": "c",
+    "jqp.h": "c",
+    "jql_internal.h": "c",
+    "iwpool.h": "c",
+    "ejdb2cfg.h": "c",
+    "cstdint": "cpp",
+    "convert.h": "c"
   },
 }

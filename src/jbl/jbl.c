@@ -3,6 +3,7 @@
 #include <ejdb2/iowow/iwconv.h>
 #include "jbl_internal.h"
 #include "utf8proc.h"
+#include "convert.h"
 
 IW_INLINE void _jbl_remove_item(JBL_NODE parent, JBL_NODE child);
 static void _jbl_add_item(JBL_NODE parent, JBL_NODE node);
@@ -161,8 +162,9 @@ finish:
 }
 
 iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op) {
-  char buf[IWFTOA_BUFSIZE];
-  iwftoa(num, buf);
+  size_t sz;
+  char buf[JBNUMBUF_SIZE];
+  jbi_ftoa(num, buf, &sz);
   return pt(buf, -1, 0, 0, op);
 }
 
@@ -1701,7 +1703,7 @@ iwrc jbl_fill_from_node(JBL jbl, JBL_NODE node) {
     memset(jbl, 0, sizeof(*jbl));
     return 0;
   }
-  binn bv;
+  binn bv = {0};
   iwrc rc = _jbl_binn_from_node(&bv, node);
   RCRET(rc);
   binn_free(&jbl->bn);
