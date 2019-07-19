@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
+  <File Name="WINDOWS.md"/>
   <VirtualDirectory Name="docker">
     <File Name="docker/Dockerfile"/>
     <File Name="docker/README.md"/>
   </VirtualDirectory>
   <VirtualDirectory Name="bindings">
     <VirtualDirectory Name="ejdb2_node">
-      <File Name="src/bindings/ejdb2_node/run.js"/>
+      <File Name="src/bindings/ejdb2_node/utils.js"/>
+      <File Name="src/bindings/ejdb2_node/install.js"/>
+      <File Name="src/bindings/ejdb2_node/index.d.ts"/>
+      <File Name="src/bindings/ejdb2_node/example/index.ts"/>
+      <File Name="src/bindings/ejdb2_node/example/README.md"/>
       <File Name="src/bindings/ejdb2_node/package.json"/>
       <File Name="src/bindings/ejdb2_node/binary.js"/>
       <File Name="src/bindings/ejdb2_node/test.js"/>
@@ -204,6 +209,7 @@
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <VirtualDirectory Name="Modules">
+      <File Name="cmake/Modules/GitRevision.cmake"/>
       <File Name="cmake/Modules/TestQsortR.cmake"/>
       <File Name="cmake/Modules/TestQSortR.c"/>
       <File Name="cmake/Modules/FindJava.cmake"/>
@@ -276,6 +282,7 @@
       <File Name="src/tests/ejdb_test1.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="util">
+      <File Name="src/util/convert.h"/>
       <File Name="src/util/sort_r.h"/>
       <File Name="src/util/pthread_barrier.h"/>
       <File Name="src/util/pthread_barrier.c"/>

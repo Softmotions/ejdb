@@ -1,3 +1,9 @@
+ejdb2 (2.0.24) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 19 Jul 2019 12:37:37 +0700
+
 ejdb2 (2.0.23) testing; urgency=medium
 
   * BUG: Fixed incorrect behaviour of `jbi_ftoa`

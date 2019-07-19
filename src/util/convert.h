@@ -15,11 +15,11 @@ static void jbi_ftoa(long double val, char buf[static 64], size_t *osz) {
     *osz = 0;
     return;
   }
-  while (sz > 0 && (buf[sz - 1] == '0')) { // trim right zeroes
+  while (sz > 0 && buf[sz - 1] == '0') { // trim right zeroes
     buf[sz - 1] = '\0';
     sz--;
   }
-  if (buf[sz - 1] == '.') {
+  if (sz > 0 && buf[sz - 1] == '.') {
     buf[sz - 1] = '\0';
     sz--;
   }
