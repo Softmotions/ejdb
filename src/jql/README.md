@@ -508,7 +508,7 @@ The following statements are taken into account when using EJDB2 indexes:
   ```
 
 **Performance tip:** All documents in collection are sorted by their primary key in `descending` order. So if you use auto generated keys (`ejdb_put_new`) you may
-be sure what documents arreared as result of full scan query will be ordered
+be sure what documents fetched as result of full scan query will be ordered
 by time of insertion in descendant order, unless you don't use query sorting, indexes or `inverse` keyword.
 
 **Performance tip:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any case.
