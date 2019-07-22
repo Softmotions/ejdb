@@ -1,8 +1,12 @@
-ejdb_dart (1.0.8)
+ejdb2_node (1.0.9)
+
+  * Added missing `semver` dependency (#258)
+
+ejdb2_node (1.0.8)
 
   * Upgraded to ejdb v2.0.23
 
-ejdb_dart (1.0.7)
+ejdb2_node (1.0.7)
 
   * Upgraded to ejdb v2.0.22
 
