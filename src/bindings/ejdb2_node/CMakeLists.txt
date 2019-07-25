@@ -48,9 +48,11 @@ target_compile_options(ejdb2_node PRIVATE
 
 if (APPLE)
   set_target_properties(ejdb2_node PROPERTIES
+                        LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
                         LINK_FLAGS "-rdynamic -undefined dynamic_lookup")
 else ()
   set_target_properties(ejdb2_node PROPERTIES
+                        LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
                         LINK_FLAGS "-rdynamic -Wl,--unresolved-symbols=ignore-all")
 endif()
 

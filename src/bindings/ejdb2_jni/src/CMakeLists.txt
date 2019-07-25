@@ -80,6 +80,7 @@ endif()
 set_target_properties(ejdb2jni PROPERTIES
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${PROJECT_VERSION_MAJOR}
+                      LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
                       DEFINE_SYMBOL IW_API_EXPORTS)
 
 install(TARGETS ejdb2jni

@@ -1,6 +1,6 @@
 ejdb2 (2.0.24) UNRELEASED; urgency=medium
 
-  * 
+  * Strip shared libraries for release builds.
 
  -- Anton Adamansky <adamansky@gmail.com>  Fri, 19 Jul 2019 12:37:37 +0700
 

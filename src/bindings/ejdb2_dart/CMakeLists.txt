@@ -28,6 +28,7 @@ configure_file(.packages ${DART_PUB_DIR}/.packages COPYONLY)
 set_target_properties(ejdb2_dart PROPERTIES
                       COMPILE_FLAGS ${dart_COMPILE_FLAGS}
                       LINK_FLAGS ${dart_LINK_FLAGS}
+                      LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
                       LIBRARY_OUTPUT_DIRECTORY ${DART_PUB_DIR}/lib)
 
 set_target_properties(ejdb2_dart PROPERTIES

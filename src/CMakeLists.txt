@@ -217,6 +217,7 @@ if (BUILD_SHARED_LIBS)
                           VERSION ${PROJECT_VERSION}
                           SOVERSION ${PROJECT_VERSION_MAJOR}
                           PUBLIC_HEADER "${PUB_HDRS}"
+                          LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
                           DEFINE_SYMBOL IW_API_EXPORTS)
     set_target_properties(ejdb2_s PROPERTIES
                           VERSION ${PROJECT_VERSION}
@@ -227,6 +228,7 @@ else()
                           VERSION ${PROJECT_VERSION}
                           PUBLIC_HEADER "${PUB_HDRS}"
                           COMPILE_FLAGS "-DIW_NODLL"
+                          LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
                           OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 endif()
 
