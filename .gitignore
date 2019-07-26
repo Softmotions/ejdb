@@ -9,7 +9,6 @@ cmake-build*
 Makefile
 Testing/
 compile_commands.json
-*.iml
 *.dat
 *.db
 *-wal
