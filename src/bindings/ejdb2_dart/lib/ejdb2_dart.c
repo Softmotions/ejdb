@@ -1432,4 +1432,5 @@ static void ejd_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHa
       iwlog_ecode_error3(rc);
     }
   }
+  free(ctx);
 }

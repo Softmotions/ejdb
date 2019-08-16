@@ -1,3 +1,7 @@
+ejdb_dart (1.0.32)
+
+  * Fixed memory leak in dart binding
+
 ejdb_dart (1.0.31)
 
   * Fixed missing native `libejdb2dart.so`
