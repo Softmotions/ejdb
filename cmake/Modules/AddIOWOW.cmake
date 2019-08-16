@@ -2,10 +2,12 @@ include(ExternalProject)
 
 set(IOWOW_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
 
-if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
-  set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
-else()
-  set(IOWOW_URL https://github.com/Softmotions/iowow/archive/master.zip)
+if(NOT DEFINED IOWOW_URL)
+  if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
+    set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
+  else()
+    set(IOWOW_URL https://github.com/Softmotions/iowow/archive/master.zip)
+  endif()
 endif()
 
 set(CMAKE_ARGS  -DOWNER_PROJECT_NAME=${PROJECT_NAME}
