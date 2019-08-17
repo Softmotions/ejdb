@@ -1,9 +1,10 @@
-ejdb2 (2.0.25) UNRELEASED; urgency=medium
+ejdb2 (2.0.25) testing; urgency=medium
 
   * ejdb2_dart: Fixed memory leak in dart binding
   * Upgraded to iowow 1.3.23
 
- -- Anton Adamansky <adamansky@gmail.com>  Fri, 16 Aug 2019 17:57:07 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Sat, 17 Aug 2019 21:27:29 +0700
+
 ejdb2 (2.0.24) testing; urgency=medium
 
   * Strip shared libraries for release builds.
