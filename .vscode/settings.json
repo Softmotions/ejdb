@@ -126,4 +126,5 @@
     "cstdint": "cpp",
     "convert.h": "c"
   },
+  "dart.runPubGetOnPubspecChanges": false,
 }
