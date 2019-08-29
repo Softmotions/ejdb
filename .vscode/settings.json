@@ -9,7 +9,9 @@
     "-DBUILD_EXAMPLES=ON",
     "-DBUILD_DART_BINDING=ON",
     "-DBUILD_JNI_BINDING=ON",
-    "-DBUILD_NODEJS_BINDING=ON"
+    "-DBUILD_NODEJS_BINDING=ON",
+    // "-DASAN=ON",
+    // "-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow"
   ],
   "cmake.ctestArgs": [],
   "cmake.debugConfig": {
