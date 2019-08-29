@@ -1,3 +1,7 @@
+ejdb_dart (1.0.12)
+
+  * Upgraded to iowow v1.3.25 with critical fixes
+
 ejdb2_node (1.0.11)
 
   * Upgraded to ejdb v2.0.26
