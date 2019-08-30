@@ -579,7 +579,7 @@ Index mode | Description
 <code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
 <code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
 
-For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation may define index for only one type.
+For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation defines index of only one type.
 
 Lets define non unique string index for `/lastName` path:
 ```
@@ -605,7 +605,7 @@ The following statements are taken into account when using EJDB2 indexes:
 
   /[lastName = "John"] or /[lastName = Peter]
   ```
-  Will use `/lastName` defined above
+  Will use `/lastName` index defined above
   ```
   /[lastName = Doe]
 
