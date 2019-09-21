@@ -29,7 +29,7 @@ if(ENABLE_HTTP)
   endif()
   include(AddFacil)
   add_definitions(-DJB_HTTP)
-  list(APPEND MODULES jbr jbs)
+  list(APPEND MODULES jbr)
 endif()
 
 if ((CMAKE_BUILD_TYPE EQUAL Release) OR (CMAKE_BUILD_TYPE EQUAL RelWithDebInfo))
@@ -170,6 +170,11 @@ foreach(MODULE IN LISTS MODULES)
     endif()
 endforeach(MODULE)
 
+
+if (ENABLE_HTTP)
+  add_subdirectory(jbs)
+endif()
+
 if (BUILD_TESTS)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests)
 endif()
@@ -283,7 +288,6 @@ set(${PROJECT_NAME}_PUB_HDRS ${PUB_HDRS}
     CACHE INTERNAL "${PROJECT_NAME}: Public headers" FORCE)
 set(${PROJECT_NAME}_INCLUDE_DIRS ${PROJECT_INCLUDE_DIRS}
     CACHE INTERNAL "${PROJECT_NAME}: Include Directories" FORCE)
-
 
 message("")
 message("${PROJECT_NAME} LINK LIBS: ${PROJECT_LLIBRARIES}")
