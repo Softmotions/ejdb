@@ -1,6 +1,6 @@
 # C API
 
-EJDB can be empdedded into any `C/C++` application.
+EJDB can be embedded into any `C/C++` application.
 `C API` documented in the following headers:
 
 * [ejdb.h](https://github.com/Softmotions/ejdb/blob/master/src/ejdb2.h) Main API functions
