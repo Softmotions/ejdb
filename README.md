@@ -975,7 +975,7 @@ docker run -d -p 9191:9191 --name myEJDB softmotions/ejdb2 --access myAccessKey
 
 # C API
 
-EJDB can be empdedded into any `C/C++` application.
+EJDB can be embedded into any `C/C++` application.
 `C API` documented in the following headers:
 
 * [ejdb.h](https://github.com/Softmotions/ejdb/blob/master/src/ejdb2.h) Main API functions
