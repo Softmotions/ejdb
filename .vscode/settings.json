@@ -129,4 +129,5 @@
     "convert.h": "c"
   },
   "dart.runPubGetOnPubspecChanges": false,
+  "java.configuration.updateBuildConfiguration": "automatic",
 }
