@@ -1,9 +1,9 @@
-ejdb2 (2.0.28) UNRELEASED; urgency=medium
+ejdb2 (2.0.28) testing; urgency=medium
 
   * Upgraded to facil.io v0.7.3
   * JBS server functions removed from ejdb2 target libs
 
- -- Anton Adamansky <adamansky@gmail.com>  Sat, 21 Sep 2019 18:19:21 +0300
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 27 Sep 2019 18:26:57 +0700
 
 ejdb2 (2.0.27) testing; urgency=medium
 
