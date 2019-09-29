@@ -1,3 +1,8 @@
+ejdb_dart (1.0.15)
+
+  * EJDB2 node module Can be compiled using CMake < v3.8.x
+  * Updated nodejs binding doc
+
 ejdb_dart (1.0.14)
 
   * Upgraded to ejdb v2.0.28

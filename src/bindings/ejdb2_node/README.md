@@ -37,6 +37,8 @@ run();
 
 ## Prerequisites
 
+* node >= v10.0.0
+* yarn
 * CMake >= v3.10
 * Make
 * gcc or clang compiler
