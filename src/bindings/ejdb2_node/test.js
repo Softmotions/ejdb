@@ -221,8 +221,17 @@ test('Main', async (t) => {
   doc = await db.get('cc2', id);
   t.deepEqual(doc, { 'foo': 1 });
 
+  const ts0 = +new Date();
+  const ts = await db.onlineBackup('hello-bkp.db');
+  t.true(ts0 < ts);
+
   await db.close();
 
+  // Restore from backup
+  const db2 = await EJDB2.open('hello-bkp.db', { truncate: false });
+  doc = await db2.get('cc2', id);
+  t.deepEqual(doc, { 'foo': 1 });
+  await db2.close();
 
   //global.gc();
 });

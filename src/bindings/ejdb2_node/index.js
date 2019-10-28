@@ -662,6 +662,19 @@ class EJDB2 {
   createQuery(query, collection) {
     return new JQL(this, query, collection);
   }
+
+  /**
+   * Creates an online database backup image and copies it into the specified [fileName].
+   * During online backup phase read/write database operations are allowed and not
+   * blocked for significant amount of time. Returns promise with backup
+   * finish time as number of milliseconds since epoch.
+   *
+   * @param {String} fileName Backup image file path.
+   * @returns {Promise<number>}
+   */
+  onlineBackup(fileName) {
+    return this._impl.online_backup(fileName);
+  }
 }
 
 module.exports = {

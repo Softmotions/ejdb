@@ -1222,6 +1222,74 @@ finish:
   return ret ? ret : jn_undefined(env);
 }
 
+//  ---------------- EJDB2.onlineBackup
+
+struct JNBK_DATA {
+  uint64_t ts;
+  const char *file_name;
+};
+
+static void jn_online_backup_execute(napi_env env, void *data) {
+  JNWORK work = data;
+  JBN jbn = work->unwrapped;
+  if (!jbn->db) {
+    work->rc = JN_ERROR_INVALID_STATE;
+    return;
+  }
+  struct JNBK_DATA *wdata = work->data;
+  work->rc = ejdb_online_backup(jbn->db, &wdata->ts, wdata->file_name);
+}
+
+static void jn_online_backup_complete(napi_env env, napi_status ns, void *data) {
+  napi_value rv;
+  JNWORK work = data;
+  if (jn_resolve_pending_errors(env, ns, work)) {
+    goto finish;
+  }
+  struct JNBK_DATA *wdata = work->data;
+  ns = napi_create_int64(env, (int64_t) wdata->ts, &rv);
+  if (ns) {
+    jn_resolve_pending_errors(env, ns, work);
+    goto finish;
+  }
+  JNGO(ns, env, napi_resolve_deferred(env, work->deferred, rv), finish);
+  work->deferred = 0;
+
+finish:
+  jn_work_destroy(env, &work);
+}
+
+static napi_value jn_online_backup(napi_env env, napi_callback_info info) {
+  iwrc rc = 0;
+  napi_status ns = 0;
+  napi_value this, argv[1] = {0};
+  size_t argc = sizeof(argv) / sizeof(argv[0]);
+  void *data;
+  napi_value ret = 0;
+  JNWORK work = jn_work_create(&rc);
+  RCGO(rc, finish);
+
+  JNGO(ns, env, napi_get_cb_info(env, info, &argc, argv, &this, &data), finish);
+  if (argc != sizeof(argv) / sizeof(argv[0])) {
+    rc = JN_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+
+  struct JNBK_DATA *wdata = jn_work_alloc_data(sizeof(*wdata), work, &rc);
+  RCGO(rc, finish);
+  wdata->file_name = jn_string(env, argv[0], work->pool, false, true, &rc);
+  ret = jn_launch_promise(env, info, "online_backup", jn_online_backup_execute, jn_online_backup_complete, work);
+
+finish:
+  if (rc) {
+    JNRC(env, rc);
+    if (work) {
+      jn_work_destroy(env, &work);
+    }
+  }
+  return ret ? ret : jn_undefined(env);
+}
+
 // ---------------- jql_init
 
 typedef struct JNQL {
@@ -1926,6 +1994,7 @@ napi_value Init(napi_env env, napi_value exports) {
     JNFUNC(info),
     JNFUNC(index),
     JNFUNC(rmcoll),
+    JNFUNC(online_backup),
     JNFUNC(jql_init),
     JNFUNC(jql_set),
     JNFUNC(jql_limit),

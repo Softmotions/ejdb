@@ -284,6 +284,14 @@ declare namespace ejdb2_node {
      * eg: `@mycollection/[foo=bar]`
      */
     createQuery(query: string, collection?: string): JQL
+
+    /**
+     * Creates an online database backup image and copies it into the specified [fileName].
+     * During online backup phase read/write database operations are allowed and not
+     * blocked for significant amount of time. Returns promise with backup
+     * finish time as number of milliseconds since epoch.
+     */
+    onlineBackup(fileName: string): Promise<number>
   }
 }
 
