@@ -176,5 +176,14 @@ void main() async {
   }
   assert(cnt == 10000);
 
+  final ts0 = DateTime.now().millisecondsSinceEpoch;
+  final ts = await db.onlineBackup('hello-bkp.db');
+  assert(ts > ts0);
   await db.close();
+
+  // Reopen backup image
+  final db2 = await EJDB2.open('hello-bkp.db', truncate: false);
+  doc = (await db2.createQuery('@cc1/*').first()).orNull;
+  assert(doc != null);
+  await db2.close();
 }

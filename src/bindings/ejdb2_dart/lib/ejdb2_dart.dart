@@ -523,6 +523,24 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  Future<int> onlineBackup(String fileName) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<int>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete((reply as List).first as int);
+    };
+    _port().send([replyPort.sendPort, 'bkp', hdb, fileName]);
+    return completer.future;
+  }
+
   /// Create instance of [query] specified for [collection].
   /// If [collection] is not specified a [query] spec must contain collection name,
   /// eg: `@mycollection/[foo=bar]`

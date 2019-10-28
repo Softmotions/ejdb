@@ -76,6 +76,7 @@ static void ejd_rmi_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port
 static void ejd_rmc_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 static void ejd_info_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 static void ejd_rename_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_bkp_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 
 static struct NativeFunctionLookup k_scoped_functions[] = {
   {"port", ejd_port},
@@ -102,6 +103,7 @@ static struct WrapperFunctionLookup k_wrapped_functions[] = {
   {"info", ejd_info_wrapped},
   {"open", ejd_open_wrapped},
   {"close", ejd_close_wrapped},
+  {"bkp", ejd_bkp_wrapped},
   {0, 0}
 };
 
@@ -497,7 +499,6 @@ finish:
   }
   Dart_CloseNativePort(receive_port);
 }
-
 
 static void ejd_exec(Dart_NativeArguments args) {
   Dart_EnterScope();
@@ -1266,6 +1267,45 @@ static void ejd_rmc_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port
   RCGO(rc, finish);
 
   rc = ejdb_remove_collection(db, coll);
+
+finish:
+  if (rc) {
+    EJPORT_RC(&result, rc);
+  }
+  Dart_PostCObject(reply_port, &result);
+}
+
+static void ejd_bkp_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+  iwrc rc = 0;
+  Dart_CObject result, rv1;
+  Dart_CObject *rv[1] = {&rv1};
+  uint64_t ts = 0;
+
+  int c = 2;
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 2 + c)  {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+
+  intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
+  if (!dbh || !dbh->db) {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+
+  EJDB db = dbh->db;
+  const char *fileName = cobject_str(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+
+  rc = ejdb_online_backup(db, &ts, fileName);
+
+  rv1.type = Dart_CObject_kInt64;
+  rv1.value.as_int64 = ts;
+  result.type = Dart_CObject_kArray;
+  result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
+  result.value.as_array.values = rv;
 
 finish:
   if (rc) {
