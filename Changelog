@@ -1,3 +1,9 @@
+ejdb2 (2.0.29) UNRELEASED; urgency=medium
+
+  * Upgraded to iowow v1.3.27
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 28 Oct 2019 19:16:07 +0700
+
 ejdb2 (2.0.28) testing; urgency=medium
 
   * Upgraded to facil.io v0.7.3

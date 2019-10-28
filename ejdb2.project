@@ -284,7 +284,6 @@
     <VirtualDirectory Name="util">
       <File Name="src/util/convert.h"/>
       <File Name="src/util/sort_r.h"/>
-      <File Name="src/util/pthread_barrier.h"/>
       <File Name="src/util/pthread_barrier.c"/>
       <File Name="src/util/khash.h"/>
       <File Name="src/util/lwre.c"/>

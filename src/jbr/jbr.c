@@ -1,5 +1,6 @@
 #include "jbr.h"
 #include <ejdb2/iowow/iwconv.h>
+#include <ejdb2/iowow/iwth.h>
 #include "ejdb2_internal.h"
 
 #define FIO_INCLUDE_STR
@@ -9,10 +10,6 @@
 #include <fiobj_data.h>
 #include <http/http.h>
 #include <ctype.h>
-
-#ifdef __APPLE__
-#include "pthread_barrier.h"
-#endif
 
 #define JBR_MAX_KEY_LEN 36
 #define JBR_HTTP_CHUNK_SIZE 4096
