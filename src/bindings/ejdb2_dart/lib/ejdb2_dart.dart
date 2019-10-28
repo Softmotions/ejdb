@@ -523,6 +523,10 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  /// Creates an online database backup image and copies it into the specified [fileName].
+  /// During online backup phase read/write database operations are allowed and not
+  /// blocked for significant amount of time. Returns future with backup
+  /// finish time as number of milliseconds since epoch.
   Future<int> onlineBackup(String fileName) {
     final hdb = _get_handle();
     if (hdb == null) {
