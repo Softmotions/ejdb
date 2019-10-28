@@ -6,9 +6,9 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * EJDB2 JNI Wrapper.
- *
+ * <p>
  * Database opened by {@link EJDB2Builder#open()} helper.
- *
+ * <p>
  * Example:
  *
  * <pre>
@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
  *  }
  * }
  * </pre>
- *
+ * <p>
  * In order to release memory resources and avoiding data lost every opened
  * database instance should be closed with {@link EJDB2#close()}.
  *
@@ -73,9 +73,9 @@ public final class EJDB2 implements AutoCloseable {
    * Create a query instance. Query can be reused multiple times with various
    * placeholder parameters. See JQL specification:
    * https://github.com/Softmotions/ejdb/blob/master/README.md#jql
-   *
+   * <p>
    * If {@code collection} is not null it will be used for query. In this case
-s   * collection name encoded in query will not be taken into account.
+   * s   * collection name encoded in query will not be taken into account.
    *
    * @param collection Optional collection name
    */
@@ -276,7 +276,7 @@ s   * collection name encoded in query will not be taken into account.
    *    }
    * }
    * </pre>
-   *
+   * <p>
    * Call {@code ensureStringIndex("mycoll", "/address/street", true)} in order to
    * create unique index over all street names in nested address object.
    *
@@ -353,6 +353,24 @@ s   * collection name encoded in query will not be taken into account.
     return this;
   }
 
+  /**
+   * Creates an online database backup image and copies it into the specified `targetFile`.
+   * During online backup phase read/write database operations are allowed and not
+   * blocked for significant amount of time. Returns backup finish time as number
+   * of milliseconds since epoch.
+   *
+   * Online backup guaranties what all records before finish timestamp will
+   * be stored in backup image. Later, online backup image can be
+   * opened as ordinary database file.
+   *
+   * @param targetFile Backup file path
+   * @note In order to avoid deadlocks: close all opened database cursors
+   * before calling this method or do call in separate thread.
+   */
+  public long onlineBackup(String targetFile) throws EJDB2Exception {
+    return _online_backup(targetFile);
+  }
+
   private native void _open(EJDB2Builder opts) throws EJDB2Exception;
 
   private native void _dispose() throws EJDB2Exception;
@@ -374,4 +392,6 @@ s   * collection name encoded in query will not be taken into account.
   private native void _ensure_index(String collection, String path, int mode) throws EJDB2Exception;
 
   private native void _remove_index(String collection, String path, int mode) throws EJDB2Exception;
+
+  private native long _online_backup(String targetFile) throws EJDB2Exception;
 }

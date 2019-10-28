@@ -338,6 +338,24 @@ finish:
   return ret;
 }
 
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1online_1backup(JNIEnv *env, jobject thisObj, jstring target_) {
+  EJDB db;
+  uint64_t ts = 0;
+  const char *target = (*env)->GetStringUTFChars(env, target_, 0);
+
+  iwrc rc = jbn_db(env, thisObj, &db);
+  RCGO(rc, finish);
+
+  rc = ejdb_online_backup(db, &ts, target);
+
+finish:
+  if (target)(*env)->ReleaseStringUTFChars(env, target_, target);
+  if (rc) {
+    jbn_throw_rc_exception(env, rc, 0);
+  }
+  return ts;
+}
+
 // GET
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1get(JNIEnv *env,
                                                               jobject thisObj,

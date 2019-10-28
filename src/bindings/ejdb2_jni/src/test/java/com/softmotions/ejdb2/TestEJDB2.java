@@ -1,6 +1,7 @@
 package com.softmotions.ejdb2;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -144,6 +145,16 @@ public class TestEJDB2 {
       db.renameCollection("cc1", "cc2");
       db.get("cc2", 1, bos);
       assert(bos.toString().equals("{\"foo\":1}"));
+
+      long ts0 = System.currentTimeMillis();
+      long ts = db.onlineBackup("test-bkp.db");
+      assert(ts > ts0);
+      assert(new File("test-bkp.db").exists());
+    }
+
+    try (EJDB2 db = new EJDB2Builder("test-bkp.db").withWAL().open()) {
+      String val = db.getAsString("cc2", 1);
+      assert(val.equals("{\"foo\":1}"));
     }
   }
 }

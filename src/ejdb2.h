@@ -510,6 +510,25 @@ IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ej
 IW_EXPORT iwrc ejdb_get_meta(EJDB db, JBL *jblp);
 
 /**
+ * Creates an online database backup image and copies it into the specified `target_file`.
+ * During online backup phase read/write database operations are allowed and not
+ * blocked for significant amount of time. Backup finish time is placed into `ts`
+ * as number of milliseconds since epoch.
+ *
+ * Online backup guaranties what all records before `ts` timestamp will
+ * be stored in backup image. Later, online backup image can be
+ * opened as ordinary database file.
+ *
+ * @note In order to avoid deadlocks: close all opened database cursors
+ * before calling this method or do call in separate thread.
+ *
+ * @param Database handle. Not zero.
+ * @param [out] ts Backup completion timestamp
+ * @param target_file backup file path
+ */
+IW_EXPORT iwrc ejdb_online_backup(EJDB db, uint64_t *ts, const char *target_file);
+
+/**
  * @brief  Return `\0` terminated ejdb2 source GIT revision hash.
  */
 IW_EXPORT const char *ejdb_git_revision(void);

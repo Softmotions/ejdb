@@ -356,6 +356,22 @@ public final class EJDB2 {
     return this;
   }
 
+  /**
+   * Creates an online database backup image and copies it into the specified `targetFile`.
+   * During online backup phase read/write database operations are not
+   * blocked for significant amount of time. Returns backup finish time as number of milliseconds since epoch.
+   * Online backup guaranties what all records before finish timestamp will
+   * be stored in backup image. Later, online backup image can be
+   * opened as ordinary database file.
+   *
+   * @param targetFile Backup file path
+   * @note In order to avoid deadlocks: close all opened database cursors
+   * before calling this method or do call in separate thread.
+   */
+  public long onlineBackup(String targetFile) throws EJDB2Exception {
+    return _online_backup(targetFile);
+  }
+
   private native void _open(EJDB2Builder opts) throws EJDB2Exception;
 
   private native void _dispose() throws EJDB2Exception;
@@ -377,4 +393,7 @@ public final class EJDB2 {
   private native void _ensure_index(String collection, String path, int mode) throws EJDB2Exception;
 
   private native void _remove_index(String collection, String path, int mode) throws EJDB2Exception;
+
+  private native long _online_backup(String targetFile) throws EJDB2Exception;
+
 }

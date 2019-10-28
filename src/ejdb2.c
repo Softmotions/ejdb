@@ -1524,6 +1524,11 @@ finish:
   return rc;
 }
 
+iwrc ejdb_online_backup(EJDB db, uint64_t *ts, const char *target_file) {
+  ENSURE_OPEN(db);
+  return iwkv_online_backup(db->iwkv, ts, target_file);
+}
+
 iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   *ejdbp = 0;
   int rci;
