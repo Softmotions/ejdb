@@ -474,7 +474,7 @@ PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
   PROJECTION = 'all' | json_path
 ```
 
-Projection allow to get only subset of JSON document excluding not needed data.
+Projection allows to get only subset of JSON document excluding not needed data.
 
 Lets add one more document to our collection:
 
