@@ -18,7 +18,7 @@ class JBE {
 
   static isInvalidQuery(err) {
     const msg = (err.message || '').toString();
-    return msg.indexOf(' @ejdb IWRC:87001') != -1;
+    return msg.indexOf('@ejdb IWRC:87001') != -1;
   }
 }
 
