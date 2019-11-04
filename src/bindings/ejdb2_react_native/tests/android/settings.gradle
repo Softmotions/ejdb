@@ -1,0 +1,5 @@
+rootProject.name = 'test'
+include ':ejdb2_react_native'
+project(':ejdb2_react_native').projectDir = new File(rootProject.projectDir, '../node_modules/ejdb2_react_native/android')
+
+include ':app'

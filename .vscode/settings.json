@@ -1,5 +1,6 @@
 {
   "files.insertFinalNewline": false,
+  "cmake.generator": "Unix Makefiles",
   "cmake.configureArgs": [
     "-DCMAKE_VERBOSE_MAKEFILE=OFF",
     "-DENABLE_HTTP=ON",
@@ -10,6 +11,7 @@
     "-DBUILD_DART_BINDING=ON",
     "-DBUILD_JNI_BINDING=ON",
     "-DBUILD_NODEJS_BINDING=ON",
+    "-DBUILD_REACT_NATIVE_BINDING=OFF"
     // "-DASAN=ON",
     // "-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow"
   ],
@@ -118,15 +120,8 @@
   "files.associations": {
     "*.arb": "json",
     "*.gyp": "jsonc",
-    "ejdb2_internal.h": "c",
-    "jbl_internal.h": "c",
-    "lwre.h": "c",
-    "jqp.h": "c",
-    "jql_internal.h": "c",
-    "iwpool.h": "c",
-    "ejdb2cfg.h": "c",
-    "cstdint": "cpp",
-    "convert.h": "c"
+    "*.h": "c",
+    "*.c": "c",
   },
   "dart.runPubGetOnPubspecChanges": false,
   "java.configuration.updateBuildConfiguration": "automatic",

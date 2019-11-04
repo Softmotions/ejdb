@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * JQL specification:
  * https://github.com/Softmotions/ejdb/blob/master/README.md#jql
  * <p>
- * Memory resources used by JQL instance can be released explicitly by
+ * Memory resources used by JQL instance must be released explicitly by
  * {@link JQL#close()}.
  * <p>
  * <strong>Note:</strong> If user did not close instance explicitly it will be
@@ -133,7 +133,7 @@ public final class JQL implements AutoCloseable {
   }
 
   public long getSkip() {
-    return skip;
+    return skip > 0 ? skip : _get_skip();
   }
 
   /**
@@ -146,7 +146,7 @@ public final class JQL implements AutoCloseable {
   }
 
   public long getLimit() {
-    return limit;
+    return limit > 0 ? limit : _get_limit();
   }
 
   /**
@@ -392,6 +392,10 @@ public final class JQL implements AutoCloseable {
   private native long _execute_scalar_long(EJDB2 db, OutputStream explainLog);
 
   private native void _reset();
+
+  private native long _get_limit();
+
+  private native long _get_skip();
 
   private native void _set_string(int pos, String placeholder, String val, int type);
 

@@ -9,18 +9,18 @@ if (NOT JNI_FOUND)
     list(LENGTH JNI_INCLUDE_DIRS _JNI_INCLUDE_DIRS_LEN)
     if (_JNI_INCLUDE_DIRS_LEN LESS "1")
       message(FATAL_ERROR "No JNI headers found ${JNI_INCLUDE_DIRS}")
-    endif()
-  else()
+    endif ()
+  else ()
     message(FATAL_ERROR "No JNI headers found ${JNI_INCLUDE_DIRS}")
-  endif()
-endif()
+  endif ()
+endif ()
 
 message("Java VERSION: ${Java_VERSION}")
 message("Java EXECUTABLE: ${Java_JAVA_EXECUTABLE}")
 
 if (ANDROID_PLATFORM)
   set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.6"
-                               "-target" "1.6")
+    "-target" "1.6")
   add_jar(
     ejdb2jni_jar
     SOURCES
@@ -34,9 +34,9 @@ if (ANDROID_PLATFORM)
     VERSION ${PROJECT_VERSION}
     OUTPUT_NAME ejdb2jni
     GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})
-else()
+else ()
   set(CMAKE_JAVA_COMPILE_FLAGS "-source" "${Java_VERSION_MAJOR}"
-                               "-target" "${Java_VERSION_MAJOR}")
+    "-target" "${Java_VERSION_MAJOR}")
   add_jar(
     ejdb2jni_jar
     SOURCES
@@ -50,7 +50,7 @@ else()
     VERSION ${PROJECT_VERSION}
     OUTPUT_NAME ejdb2jni
     GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})
-endif()
+endif ()
 
 install_jar(ejdb2jni_jar ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/java)
 
@@ -62,33 +62,33 @@ if (${CMAKE_VERSION} VERSION_LESS "3.11")
   create_javah(
     TARGET ejdb2-jni-native-headers-old
     CLASSES com.softmotions.ejdb2.EJDB2
-            com.softmotions.ejdb2.JQL
+    com.softmotions.ejdb2.JQL
     CLASSPATH ejdb2jni_jar
     DEPENDS ejdb2jni_jar
     OUTPUT_DIR ${PROJECT_GENERATED_DIR})
   add_dependencies(ejdb2jni ejdb2-jni-native-headers-old)
   target_link_libraries(ejdb2jni PUBLIC ejdb2_s ${JNI_LIBRARIES})
-else()
+else ()
   target_link_libraries(ejdb2jni PUBLIC ejdb2_s ${JNI_LIBRARIES}
-                        PRIVATE ejdb2-jni-native-headers)
-endif()
+    PRIVATE ejdb2-jni-native-headers)
+endif ()
 
 if (APPLE)
   set_target_properties(ejdb2jni PROPERTIES SUFFIX ".jnilib")
-endif()
+endif ()
 
 set_target_properties(ejdb2jni PROPERTIES
-                      VERSION ${PROJECT_VERSION}
-                      SOVERSION ${PROJECT_VERSION_MAJOR}
-                      LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
-                      DEFINE_SYMBOL IW_API_EXPORTS)
+  VERSION ${PROJECT_VERSION}
+  SOVERSION ${PROJECT_VERSION_MAJOR}
+  LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
+  DEFINE_SYMBOL IW_API_EXPORTS)
 
 install(TARGETS ejdb2jni
-        FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
+  FRAMEWORK DESTINATION ${FRAMEWORK_INSTALL_DIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
 
 add_dependencies(ejdb2jni ejdb2jni_jar)
@@ -107,12 +107,12 @@ if (BUILD_TESTS AND NOT ANDROID_PLATFORM)
 
   message("Test: ${Java_JAVA_EXECUTABLE} -ea -Djava.library.path=. -cp ${_EJDB2JNI_JAR}:${_EJDB2JNI_TEST_JAR} com.softmotions.ejdb2.TestEJDB2")
   add_test(NAME ejdb2jni
-           COMMAND ${Java_JAVA_EXECUTABLE}
-                  -ea
-                  #-verbose:jni
-                  -Djava.library.path=.
-                  -cp ${_EJDB2JNI_JAR}:${_EJDB2JNI_TEST_JAR}
-                  com.softmotions.ejdb2.TestEJDB2
-           )
+    COMMAND ${Java_JAVA_EXECUTABLE}
+    -ea
+    #-verbose:jni
+    -Djava.library.path=.
+    -cp ${_EJDB2JNI_JAR}:${_EJDB2JNI_TEST_JAR}
+    com.softmotions.ejdb2.TestEJDB2
+    )
 
 endif ()

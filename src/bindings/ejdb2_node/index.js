@@ -25,7 +25,7 @@
  *************************************************************************************************/
 
 const semver = require('semver');
-const { engines } = require('./package');
+const {engines} = require('./package');
 
 if (!semver.satisfies(process.version, engines.node)) {
   console.log(`Required node version ${engines.node} not satisfied with current version ${process.version}.`);
@@ -33,8 +33,8 @@ if (!semver.satisfies(process.version, engines.node)) {
 }
 
 global.__ejdb_add_stream_result__ = addStreamResult; // Passing it to ejdb2_node init
-const { EJDB2Impl } = require('./binary')('ejdb2_node');
-const { Readable } = require('stream');
+const {EJDB2Impl} = require('./binary')('ejdb2_node');
+const {Readable} = require('stream');
 delete global.__ejdb_add_stream_result__;
 
 /**
@@ -124,7 +124,7 @@ class JBDOCStream extends Readable {
     this.jql = jql;
     this.opts = opts;
     this.promise = this._impl.jql_stream_attach(jql, this, [opts.limit, opts.explainCallback])
-      .catch((err) => this.destroy(err));
+                       .catch((err) => this.destroy(err));
   }
 
   abort() {
@@ -365,13 +365,16 @@ class JQL {
   /**
    * Set [regexp] string at the specified [placeholder].
    * @param {string|number} placeholder
-   * @param {string} val
+   * @param {string|RegExp} val
    * @return {JQL}
    */
   setRegexp(placeholder, val) {
     this._checkPlaceholder(placeholder);
-    if (typeof val !== 'string') {
-      throw new Error('Regexp expression must be a string');
+    if (val instanceof RegExp) {
+      const sval = val.toString();
+      val = sval.substring(1, sval.lastIndexOf('/'));
+    } else if (typeof val !== 'string') {
+      throw new Error('Regexp argument must be a string or RegExp object');
     }
     this._impl.jql_set(this, placeholder, val, 2);
     return this;
@@ -456,6 +459,7 @@ class EJDB2 {
    */
   static open(path, opts) {
     opts = opts || {};
+
     function toArgs() {
       let oflags = 0;
       const ret = [path];
@@ -482,6 +486,7 @@ class EJDB2 {
       ret.push(opts['http_read_anon']);
       return ret;
     }
+
     const inst = new EJDB2(toArgs());
     return inst._impl.open().then(() => inst);
   }

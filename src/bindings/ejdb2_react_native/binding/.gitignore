@@ -1,0 +1,7 @@
+*.iml
+/.idea
+*.tgz
+/yarn.lock
+node_modules/
+/local.properties
+/gradle*

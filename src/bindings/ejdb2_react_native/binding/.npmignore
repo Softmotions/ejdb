@@ -1,0 +1,10 @@
+*.tgz
+*.cmake
+yarn.lock
+/test
+/CMakeLists.txt
+/CMakeFiles
+/Makefile
+/android/build
+/android/.gradle
+!/android/libs

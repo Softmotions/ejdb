@@ -146,6 +146,11 @@ public class TestEJDB2 {
       db.get("cc2", 1, bos);
       assert(bos.toString().equals("{\"foo\":1}"));
 
+      // Check limit
+      q = db.createQuery("@mycoll/* | limit 2 skip 3");
+      assert(q.getLimit() == 2);
+      assert(q.getSkip() == 3);
+
       long ts0 = System.currentTimeMillis();
       long ts = db.onlineBackup("test-bkp.db");
       assert(ts > ts0);

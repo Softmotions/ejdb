@@ -493,7 +493,7 @@ IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ej
  *       {
  *        "ptr": "/n",    // rfc6901 JSON pointer to indexed field
  *        "mode": 8,      // Index mode. Here is EJDB_IDX_I64
- *        "idbf": 96,     // Index database flags. See iwdb_flags_t
+ *        "idbf": 96,     // Index flags. See iwdb_flags_t
  *        "dbid": 4,      // Index database ID
  *        "rnum": 2       // Number records stored in index database
  *       }

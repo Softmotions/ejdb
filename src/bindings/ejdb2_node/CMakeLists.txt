@@ -1,60 +1,60 @@
 
 if (NOT DEFINED NODE_PUB_DIR)
   set(NODE_PUB_DIR ${CMAKE_CURRENT_BINARY_DIR}/ejdb2_node)
-endif()
+endif ()
 if (NOT DEFINED NODE_BIN_ROOT)
   set(NODE_BIN_ROOT ${NODE_PUB_DIR})
-endif()
+endif ()
 
 # Nodejs process.arch: 'arm', 'arm64', 'ia32', 'ppc', 'ppc64', 's390', 's390x', 'x32', and 'x64
-if(MSVC64 OR MINGW64)
+if (MSVC64 OR MINGW64)
   set(PROCESSOR x64)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(amd64.*|x86_64.*|AMD64.*)")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(amd64.*|x86_64.*|AMD64.*)")
   set(PROCESSOR x64)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(i686.*|i386.*|x86.*)")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(i686.*|i386.*|x86.*)")
   set(PROCESSOR x32)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
   set(PROCESSOR arm64)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
   set(PROCESSOR arm)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)64.*")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)64.*")
   set(PROCESSOR ppc64)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)")
   set(PROCESSOR ppc)
-else()
+else ()
   set(PROCESSOR ${CMAKE_SYSTEM_PROCESSOR})
-endif()
+endif ()
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME}-${PROCESSOR} NODE_BIN_SUFFIX)
 set(NODE_BIN_DIR ${NODE_BIN_ROOT}/${NODE_BIN_SUFFIX})
 
 find_program(YARN_EXEC yarn)
-  if (YARN_EXEC MATCHES "YARN_EXEC-NOTFOUND")
-    message(FATAL_ERROR "`yarn` executable not found")
-endif()
+if (YARN_EXEC MATCHES "YARN_EXEC-NOTFOUND")
+  message(FATAL_ERROR "`yarn` executable not found")
+endif ()
 
 add_library(ejdb2_node MODULE ejdb2_node.c)
 target_link_libraries(ejdb2_node ejdb2_s ${PROJECT_LLIBRARIES})
 
 set_target_properties(ejdb2_node PROPERTIES
-                      OUTPUT_NAME ejdb2_node
-                      PREFIX ""
-                      SUFFIX ".node"
-                      LIBRARY_OUTPUT_DIRECTORY ${NODE_BIN_DIR})
+  OUTPUT_NAME ejdb2_node
+  PREFIX ""
+  SUFFIX ".node"
+  LIBRARY_OUTPUT_DIRECTORY ${NODE_BIN_DIR})
 
 target_compile_options(ejdb2_node PRIVATE
-    -DIW_API_EXPORTS
-    -DNODE_ADDON_API_DISABLE_DEPRECATED)
+  -DIW_API_EXPORTS
+  -DNODE_ADDON_API_DISABLE_DEPRECATED)
 
 if (APPLE)
   set_target_properties(ejdb2_node PROPERTIES
-                        LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
-                        LINK_FLAGS "-rdynamic -undefined dynamic_lookup")
+    LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
+    LINK_FLAGS "-rdynamic -undefined dynamic_lookup")
 else ()
   set_target_properties(ejdb2_node PROPERTIES
-                        LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
-                        LINK_FLAGS "-rdynamic -Wl,--unresolved-symbols=ignore-all")
-endif()
+    LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
+    LINK_FLAGS "-rdynamic -Wl,--unresolved-symbols=ignore-all")
+endif ()
 
 configure_file(package.json ${NODE_PUB_DIR}/package.json @ONLY)
 configure_file(README.md ${NODE_PUB_DIR}/README.md COPYONLY)
@@ -71,15 +71,15 @@ add_custom_command(
   COMMAND yarn install
   OUTPUT ${NODE_PUB_DIR}/node_modules
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/yarn.lock
-          ${CMAKE_CURRENT_SOURCE_DIR}/package.json
+  ${CMAKE_CURRENT_SOURCE_DIR}/package.json
   WORKING_DIRECTORY ${NODE_PUB_DIR}
   VERBATIM
 )
 add_custom_target(yarn ALL
-                  DEPENDS ${NODE_PUB_DIR}/node_modules)
+  DEPENDS ${NODE_PUB_DIR}/node_modules)
 
 if (BUILD_TESTS)
   add_test(NAME ejdb2node
-           COMMAND ${YARN_EXEC} run test
-           WORKING_DIRECTORY ${NODE_PUB_DIR})
-endif()
+    COMMAND ${YARN_EXEC} run test
+    WORKING_DIRECTORY ${NODE_PUB_DIR})
+endif ()

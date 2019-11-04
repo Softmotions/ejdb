@@ -137,7 +137,7 @@ public final class JQL {
   }
 
   public long getSkip() {
-    return skip;
+    return skip > 0 ? skip : _get_skip();
   }
 
   /**
@@ -150,7 +150,7 @@ public final class JQL {
   }
 
   public long getLimit() {
-    return limit;
+    return limit > 0 ? limit : _get_limit();
   }
 
   /**
@@ -436,6 +436,10 @@ public final class JQL {
   private native long _execute_scalar_long(EJDB2 db, OutputStream explainLog);
 
   private native void _reset();
+
+  private native long _get_limit();
+
+  private native long _get_skip();
 
   private native void _set_string(int pos, String placeholder, String val, int type);
 

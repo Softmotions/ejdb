@@ -154,9 +154,10 @@ static void jbn_throw_rc_exception(JNIEnv *env, iwrc rc, const char *msg_) {
       msg = "Unknown iwrc error";
     }
   }
+  uint32_t eno = iwrc_strip_errno(&rc);
   jstring msgStr = (*env)->NewStringUTF(env, msg);
   jobject exObj = (*env)->NewObject(env, k_EJDB2Exception_clazz,
-                                    k_EJDB2Exception_constructor, (jlong) rc, msgStr);
+                                    k_EJDB2Exception_constructor, (jlong) rc, (jlong) eno, msgStr);
   if ((*env)->Throw(env, exObj) < 0) {
     iwlog_error("Failed to throw exception for EJDB2Exception: %s", msg);
   }
@@ -338,7 +339,8 @@ finish:
   return ret;
 }
 
-JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1online_1backup(JNIEnv *env, jobject thisObj, jstring target_) {
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1online_1backup(JNIEnv *env, jobject thisObj,
+                                                                          jstring target_) {
   EJDB db;
   uint64_t ts = 0;
   const char *target = (*env)->GetStringUTFChars(env, target_, 0);
@@ -1065,6 +1067,34 @@ finish:
   }
 }
 
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1get_1limit(JNIEnv *env, jobject thisObj) {
+  JQL q;
+  int64_t limit = 0;
+  iwrc rc = jbn_jql_q(env, thisObj, &q);
+  RCGO(rc, finish);
+  rc = jql_get_limit(q, &limit);
+
+finish:
+  if (rc) {
+    jbn_throw_rc_exception(env, rc, 0);
+  }
+  return (jlong) limit;
+}
+
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1get_1skip(JNIEnv *env, jobject thisObj) {
+  JQL q;
+  int64_t skip = 0;
+  iwrc rc = jbn_jql_q(env, thisObj, &q);
+  RCGO(rc, finish);
+  rc = jql_get_skip(q, &skip);
+
+finish:
+  if (rc) {
+    jbn_throw_rc_exception(env, rc, 0);
+  }
+  return (jlong) skip;
+}
+
 static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
   if (!(ecode > _JBN_ERROR_START && ecode < _JBN_ERROR_END)) {
     return 0;
@@ -1115,7 +1145,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   }
   k_EJDB2Exception_clazz = (*env)->NewGlobalRef(env, clazz);
   k_EJDB2Exception_constructor = (*env)->GetMethodID(env, k_EJDB2Exception_clazz,
-                                                     "<init>", "(JLjava/lang/String;)V");
+                                                     "<init>", "(JJLjava/lang/String;)V");
   if (!k_EJDB2Exception_constructor) {
     iwlog_error2("Cannot find com.softmotions.ejdb2.EJDB2Exception#<init>(long,String)");
     return -1;

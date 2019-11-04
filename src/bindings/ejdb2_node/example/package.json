@@ -8,7 +8,10 @@
     "start": "tsc && node index.js"
   },
   "dependencies": {
-    "ejdb2_node": "^1.0.8",
+    "ejdb2_node": "^1.0.18",
     "typescript": "^3.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^12.12.5"
   }
 }
