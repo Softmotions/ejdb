@@ -36,7 +36,7 @@ await db.createQuery('@mycoll/*').useExecute(doc => {
 db.close();
 ```
 
-[See API docs](./index.d.ts) and [Tests](../tests/App.js);
+[See API docs](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_react_native/binding/index.d.ts) and [Tests](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_react_native/tests/App.js);
 
 ## How build it manually
 
@@ -44,7 +44,7 @@ db.close();
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release \
          -DBUILD_REACT_NATIVE_BINDING=ON \
-         -DANDROID_NDK_HOME=<path to Android NDK>
+         -DANDROID_NDK_HOME=<path to Android NDK> \
          -DANDROID_ABIS="x86;x86_64;arm64-v8a;armeabi-v7a"
 ```
 
