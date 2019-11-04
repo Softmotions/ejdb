@@ -45,6 +45,7 @@ endforeach ()
 add_custom_target(
   ejdb2_react_native ALL
   DEPENDS ${ANDROID_ABIS_LIBS}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../README.md ${CMAKE_CURRENT_BINARY_DIR}
   COMMAND ${YARN_EXEC} pack --filename ${REACT_NATIVE_PUB_DIR}/ejdb2_react_native.tgz
   WORKING_DIRECTORY ${REACT_NATIVE_PUB_DIR}
 )
