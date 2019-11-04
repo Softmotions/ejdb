@@ -1,9 +1,9 @@
-ejdb2 (2.0.29) UNRELEASED; urgency=medium
+ejdb2 (2.0.29) testing; urgency=medium
 
   * Upgraded to iowow v1.3.27
   * React Native binding implemented (Android)
 
- -- Anton Adamansky <adamansky@gmail.com>  Mon, 28 Oct 2019 19:16:07 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 04 Nov 2019 21:52:07 +0700
 
 ejdb2 (2.0.28) testing; urgency=medium
 
