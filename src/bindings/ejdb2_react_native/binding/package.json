@@ -9,7 +9,17 @@
   "types": "index.d.ts",
   "scripts": {},
   "keywords": [
-    "react-native"
+    "react-native",
+    "ejdb",
+    "ejdb2",
+    "nosql",
+    "json",
+    "database",
+    "storage",
+    "embedded",
+    "embeddable",
+    "native",
+    "binding"
   ],
   "files": [
     "android/gradle/**",
