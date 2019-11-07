@@ -407,7 +407,11 @@ iwrc jbi_selection(JBEXEC *ctx) {
   // Index not found:
   if (aux->orderby_num) {
     ctx->sorting = true;
+  } else if (aux->qmode & JQP_QRY_INVERSE) {
+    ctx->cursor_init = IWKV_CURSOR_AFTER_LAST;
+    ctx->cursor_step = IWKV_CURSOR_PREV;
   }
+
   if (!(aux->qmode & JQP_QRY_NOIDX) && ctx->jbc->idx) { // we have indexes associated with collection
     rc = _jbi_collect_indexes(ctx, aux->expr, fctx, &snp);
     RCRET(rc);

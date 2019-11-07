@@ -1,18 +1,10 @@
 #include "ejdb2_internal.h"
+#include "convert.h"
 #include <ejdb2/iowow/iwutils.h>
 
 // ---------------------------------------------------------------------------
 
-void jbi_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz) {
-  // todo: review
-  int sz = snprintf(buf, JBNUMBUF_SIZE, "%.6Lf", val);
-  while (sz > 0 && buf[sz - 1] == '0') buf[sz--] = '\0';
-  if (buf[sz] == '.') buf[sz--] = '\0';
-  *osz = (size_t) sz;
-}
-
 // fixme: code duplication below
-
 void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
   int64_t *llv = (void *) numbuf;
   jbl_type_t jbvt = jbl_type(jbv);

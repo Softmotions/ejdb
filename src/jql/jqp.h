@@ -240,6 +240,7 @@ typedef uint8_t jqp_query_mode_t;
 #define JQP_QRY_COUNT       ((jqp_query_mode_t) 0x01U)
 #define JQP_QRY_NOIDX       ((jqp_query_mode_t) 0x02U)
 #define JQP_QRY_APPLY_DEL   ((jqp_query_mode_t) 0x04U)
+#define JQP_QRY_INVERSE     ((jqp_query_mode_t) 0x08U)
 
 #define JQP_QRY_AGGREGATE (JQP_QRY_COUNT)
 

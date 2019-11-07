@@ -32,6 +32,7 @@
 #error Unknown CPU bits
 #endif
 
+#define EJDB2_GIT_REVISION "@GIT_REVISION@"
 #define EJDB2_VERSION "@ejdb2_VERSION@"
 #define EJDB2_VERSION_MAJOR @ejdb2_VERSION_MAJOR@
 #define EJDB2_VERSION_MINOR @ejdb2_VERSION_MINOR@
@@ -48,5 +49,9 @@
 #include <limits.h>
 
 #define JBNUMBUF_SIZE 64
+
+#ifndef static_assert
+#define static_assert _Static_assert
+#endif
 
 #endif

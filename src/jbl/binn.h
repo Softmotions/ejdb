@@ -22,7 +22,7 @@
 #ifndef BINN_H
 #define BINN_H
 
-#include <stddef.h> // size_t used  below
+#include <stdio.h>
 #include <string.h>
 
 #ifdef __cplusplus
@@ -58,7 +58,9 @@ typedef int BOOL;
 // #endif
 // #endif
 
+#ifndef APIENTRY
 #define APIENTRY
+#endif
 
 #ifndef BINN_PRIVATE
 #ifdef DEBUG
@@ -85,16 +87,6 @@ typedef unsigned __int64 uint64;
 typedef long long int int64;
 typedef unsigned long long int uint64;
 #endif
-#endif
-
-#ifdef _WIN32
-#define INT64_FORMAT  "I64i"
-#define UINT64_FORMAT "I64u"
-#define INT64_HEX_FORMAT  "I64x"
-#else
-#define INT64_FORMAT  "lli"
-#define UINT64_FORMAT "llu"
-#define INT64_HEX_FORMAT  "llx"
 #endif
 
 // BINN CONSTANTS  ----------------------------------------

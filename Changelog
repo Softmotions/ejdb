@@ -1,3 +1,163 @@
+ejdb2 (2.0.29) testing; urgency=medium
+
+  * Upgraded to iowow v1.3.27
+  * React Native binding implemented (Android)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 04 Nov 2019 21:52:07 +0700
+
+ejdb2 (2.0.28) testing; urgency=medium
+
+  * Upgraded to facil.io v0.7.3
+  * JBS server functions removed from ejdb2 target libs
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 27 Sep 2019 18:26:57 +0700
+
+ejdb2 (2.0.27) testing; urgency=medium
+
+  * Upgraded to iowow v1.3.25 with critical fixes
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 29 Aug 2019 12:46:41 +0700
+
+ejdb2 (2.0.26) testing; urgency=medium
+
+  * Upgraded to iowow v1.3.24
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 22 Aug 2019 02:16:50 +0700
+
+ejdb2 (2.0.25) testing; urgency=medium
+
+  * ejdb2_dart: Fixed memory leak in dart binding
+  * Upgraded to iowow 1.3.23
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sat, 17 Aug 2019 21:27:29 +0700
+
+ejdb2 (2.0.24) testing; urgency=medium
+
+  * Strip shared libraries for release builds.
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 25 Jul 2019 21:09:00 +0700
+
+ejdb2 (2.0.23) testing; urgency=medium
+
+  * BUG: Fixed incorrect behaviour of `jbi_ftoa`
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 19 Jul 2019 05:55:16 +0700
+
+ejdb2 (2.0.22) testing; urgency=medium
+
+  * Limited windows support without HTTP/Websocket network API (#237)
+  * `static_assert` is  set to `_Static_assert` if not defined
+  * All uses of `iwftoa` replaced by `jbi_ftoa`
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 18 Jul 2019 19:27:26 +0700
+
+ejdb2 (2.0.21) testing; urgency=medium
+
+  * Added `ejdb_rename_collection` method  (#254)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 12 Jul 2019 12:39:32 +0700
+
+ejdb2 (2.0.20) testing; urgency=medium
+
+  * Node.js binding (#248)
+  * Added git revision hash getter `ejdb_git_revision()` (ejdb2.h)
+  * Better error reporting on failed memory allocations
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 03 Jul 2019 19:36:46 +0700
+
+ejdb2 (2.0.19) testing; urgency=medium
+
+  * Upgraded to iowow v1.3.20 with critical fixes
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 13 Jun 2019 22:04:27 +0700
+
+ejdb2 (2.0.18) testing; urgency=medium
+
+  * Limit one time file allocation step to 2G iowow v1.3.18
+  * Added Docker image (#249)
+  * Better qsort_t detection, build ok with `musl`
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 12 Jun 2019 16:48:57 +0700
+
+ejdb2 (2.0.17) testing; urgency=medium
+
+  * Added `inverse` JQL query option.
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 05 Jun 2019 23:15:09 +0700
+
+ejdb2 (2.0.16) testing; urgency=medium
+
+  * Allowed dash and underscope chars in collection names specified in query: `[@collection_name]/query`.
+  * Fixed minor typo in ejdb2_jni/src/CMakeLists.txt
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 05 Jun 2019 19:14:38 +0700
+
+ejdb2 (2.0.15) testing; urgency=medium
+
+  * Security: a heap-overflow vulnerability was fixed in the WebSocket parser of facil.io library
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 27 May 2019 13:33:03 +0700
+
+ejdb2 (2.0.14) testing; urgency=medium
+
+  * Android support
+  * Test cases for Android JNI binding
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 17 May 2019 00:57:11 +0700
+ejdb2 (2.0.13) testing; urgency=medium
+
+  * Upgraded to iowow_1.3.17 with critical fixes
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 03 May 2019 18:27:10 +0700
+
+ejdb2 (2.0.12) testing; urgency=medium
+
+  * Upgraded to iowow_1.3.16 with critical fixes
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 03 May 2019 11:59:56 +0700
+
+ejdb2 (2.0.11) testing; urgency=medium
+
+  * Upgraded to iowow_1.3.15 with critical fixes
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 01 May 2019 23:34:20 +0700
+
+ejdb2 (2.0.10) testing; urgency=medium
+
+  * CRITICAL: Fixed unexpected database file truncation and data loss on close.
+  * Upgraded to iowow 1.3.14
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sat, 27 Apr 2019 01:12:15 +0700
+
+ejdb2 (2.0.9) testing; urgency=medium
+
+  * Upgraded to iowow 1.3.13
+  * Building Native JNI binding on Android
+  * ejdb2_dart: Added notFound,invalidQuery to EJDB2Error
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 25 Apr 2019 17:47:16 +0700
+
+ejdb2 (2.0.8) testing; urgency=medium
+
+  * Remove redundant memory coping in ejdb_put()
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 21 Apr 2019 14:38:08 +0700
+
+ejdb2 (2.0.7) testing; urgency=medium
+
+  * Fixed deadlock condition with OSX pthread rwlocks.
+  * Phreads `PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP` is used by default
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 21 Apr 2019 12:20:27 +0700
+
+ejdb2 (2.0.6) testing; urgency=medium
+
+  * Java JNI binding implemented (#243)
+  * Stability: `jql_create` takes own copy of `coll` argument
+  * Documentation improvements
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 19 Apr 2019 17:30:12 +0700
+
 ejdb2 (2.0.5) testing; urgency=medium
 
   * Library ported to OSX

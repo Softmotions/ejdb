@@ -32,6 +32,9 @@ void ejdb_test1_3() {
   CU_ASSERT_TRUE_FATAL(id > 0);
 
   rc = patch_json(db, "c1", "[ { 'op': 'add', 'path': '/baz', 'value': 'qux' } ]", id);
+  if (rc) {
+    iwlog_ecode_error3(rc);
+  }
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   // Now check the result

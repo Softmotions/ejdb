@@ -54,6 +54,8 @@ typedef enum {
   EJDB_ERROR_INVALID_INDEX_MODE,                  /**< Invalid index mode specified */
   EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE,    /**< Index exists but mismatched uniqueness constraint */
   EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED,    /**< Unique index constraint violated */
+  EJDB_ERROR_COLLECTION_NOT_FOUND,                /**< Collection not found */
+  EJDB_ERROR_TARGET_COLLECTION_EXISTS,            /**< Target collection exists */
   _EJDB_ERROR_END
 } ejdb_ecode_t;
 
@@ -105,7 +107,7 @@ typedef struct _EJDB_OPTS {
   IWKV_OPTS kv;                 /**< IWKV storage options. @see iwkv.h */
   EJDB_HTTP http;               /**< HTTP/Websocket server options */
   bool no_wal;                  /**< Do not use write-ahead-log. Default: false */
-  uint32_t sort_buffer_sz;      /**< Max sorting buffer size. If exeeded an overflow temp file for sorted data will created.
+  uint32_t sort_buffer_sz;      /**< Max sorting buffer size. If exceeded an overflow temp file for sorted data will created.
                                      Default 16Mb, min: 1Mb */
   uint32_t document_buffer_sz;  /**< Initial size of buffer to process/store document during select.
                                      Default 64Kb, min: 16Kb */
@@ -398,6 +400,19 @@ IW_EXPORT iwrc ejdb_del(EJDB db, const char *coll, int64_t id);
 IW_EXPORT iwrc ejdb_remove_collection(EJDB db, const char *coll);
 
 /**
+ * @brief Rename collection `coll` to `new_coll`.
+ *
+ * @param db    Database handle. Not zero.
+ * @param coll  Old collection name. Not zero.
+ * @param new_coll New collection name.
+ * @return `0` on success.
+ *          - `EJDB_ERROR_COLLECTION_NOT_FOUND` - if source `coll` is not found.
+ *          - `EJDB_ERROR_TARGET_COLLECTION_EXISTS` - if `new_coll` is exists already.
+ *          -  Any other non zero error codes.
+ */
+iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll);
+
+/**
  * @brief Create collection with given name if it has not existed before
  *
  * @param db    Database handle. Not zero.
@@ -478,7 +493,7 @@ IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ej
  *       {
  *        "ptr": "/n",    // rfc6901 JSON pointer to indexed field
  *        "mode": 8,      // Index mode. Here is EJDB_IDX_I64
- *        "idbf": 96,     // Index database flags. See iwdb_flags_t
+ *        "idbf": 96,     // Index flags. See iwdb_flags_t
  *        "dbid": 4,      // Index database ID
  *        "rnum": 2       // Number records stored in index database
  *       }
@@ -493,6 +508,30 @@ IW_EXPORT iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ej
  *                    Must be disposed by `jbl_destroy()`
  */
 IW_EXPORT iwrc ejdb_get_meta(EJDB db, JBL *jblp);
+
+/**
+ * Creates an online database backup image and copies it into the specified `target_file`.
+ * During online backup phase read/write database operations are allowed and not
+ * blocked for significant amount of time. Backup finish time is placed into `ts`
+ * as number of milliseconds since epoch.
+ *
+ * Online backup guaranties what all records before `ts` timestamp will
+ * be stored in backup image. Later, online backup image can be
+ * opened as ordinary database file.
+ *
+ * @note In order to avoid deadlocks: close all opened database cursors
+ * before calling this method or do call in separate thread.
+ *
+ * @param Database handle. Not zero.
+ * @param [out] ts Backup completion timestamp
+ * @param target_file backup file path
+ */
+IW_EXPORT iwrc ejdb_online_backup(EJDB db, uint64_t *ts, const char *target_file);
+
+/**
+ * @brief  Return `\0` terminated ejdb2 source GIT revision hash.
+ */
+IW_EXPORT const char *ejdb_git_revision(void);
 
 /**
  * @brief Return `\0` terminated EJDB version string.

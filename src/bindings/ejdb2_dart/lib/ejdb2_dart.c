@@ -51,51 +51,59 @@ IW_INLINE Dart_Handle ejd_error_check_propagate(Dart_Handle handle);
 IW_INLINE Dart_Handle ejd_error_rc_create(iwrc rc);
 IW_INLINE Dart_Handle ejd_error_rc_throw(iwrc rc);
 
-static void explain_rc(Dart_NativeArguments args);
-static void jql_exec(Dart_NativeArguments args);
-static void jql_set(Dart_NativeArguments args);
+static void ejd_explain_rc(Dart_NativeArguments args);
+static void ejd_exec(Dart_NativeArguments args);
+static void ejd_exec_check(Dart_NativeArguments args);
+static void ejd_jql_set(Dart_NativeArguments args);
+static void ejd_jql_get_limit(Dart_NativeArguments args);
 
-static void ejdb2_port_handler(Dart_Port receive_port, Dart_CObject *msg);
-static void ejdb2_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer);
+static void ejd_port_handler(Dart_Port receive_port, Dart_CObject *msg);
+static void ejd_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer);
 
-static void ejdb2_port(Dart_NativeArguments arguments);
-static void ejdb2_set_handle(Dart_NativeArguments args);
-static void ejdb2_get_handle(Dart_NativeArguments args);
-static void ejdb2_create_query(Dart_NativeArguments args);
+static void ejd_port(Dart_NativeArguments arguments);
+static void ejd_set_handle(Dart_NativeArguments args);
+static void ejd_get_handle(Dart_NativeArguments args);
+static void ejd_create_query(Dart_NativeArguments args);
 
-static void ejdb2_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_put_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_del_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_patch_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_idx_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_rmi_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_rmc_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
-static void ejdb2_info_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_put_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_del_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_patch_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_idx_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_rmi_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_rmc_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_info_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_rename_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
+static void ejd_bkp_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 
 static struct NativeFunctionLookup k_scoped_functions[] = {
-  {"port", ejdb2_port},
-  {"exec", jql_exec},
-  {"jql_set", jql_set},
-  {"create_query", ejdb2_create_query},
-  {"set_handle", ejdb2_set_handle},
-  {"get_handle", ejdb2_get_handle},
-  {"explain_rc", explain_rc},
+  {"port", ejd_port},
+  {"exec", ejd_exec},
+  {"check_exec", ejd_exec_check},
+  {"jql_set", ejd_jql_set},
+  {"jql_get_limit", ejd_jql_get_limit},
+  {"create_query", ejd_create_query},
+  {"set_handle", ejd_set_handle},
+  {"get_handle", ejd_get_handle},
+  {"explain_rc", ejd_explain_rc},
   {0, 0}
 };
 
 static struct WrapperFunctionLookup k_wrapped_functions[] = {
-  {"get", ejdb2_get_wrapped},
-  {"put", ejdb2_put_wrapped},
-  {"del", ejdb2_del_wrapped},
-  {"patch", ejdb2_patch_wrapped},
-  {"idx", ejdb2_idx_wrapped},
-  {"rmi", ejdb2_rmi_wrapped},
-  {"rmc", ejdb2_rmc_wrapped},
-  {"info", ejdb2_info_wrapped},
-  {"open", ejdb2_open_wrapped},
-  {"close", ejdb2_close_wrapped},
+  {"get", ejd_get_wrapped},
+  {"put", ejd_put_wrapped},
+  {"del", ejd_del_wrapped},
+  {"rename", ejd_rename_wrapped},
+  {"patch", ejd_patch_wrapped},
+  {"idx", ejd_idx_wrapped},
+  {"rmi", ejd_rmi_wrapped},
+  {"rmc", ejd_rmc_wrapped},
+  {"info", ejd_info_wrapped},
+  {"open", ejd_open_wrapped},
+  {"close", ejd_close_wrapped},
+  {"bkp", ejd_bkp_wrapped},
   {0, 0}
 };
 
@@ -205,7 +213,7 @@ IW_INLINE Dart_Handle ejd_error_rc_throw(iwrc rc) {
   return Dart_PropagateError(ejd_error_rc_create(rc));
 }
 
-static void ejdb2_port(Dart_NativeArguments args) {
+static void ejd_port(Dart_NativeArguments args) {
   EJDB2Context *ctx;
   intptr_t ptr = 0;
 
@@ -220,13 +228,13 @@ static void ejdb2_port(Dart_NativeArguments args) {
       goto finish;
     }
     ctx->dbh = 0;
-    ctx->port = Dart_NewNativePort("ejdb2_port_handler", ejdb2_port_handler, true);
+    ctx->port = Dart_NewNativePort("ejd_port_handler", ejd_port_handler, true);
     if (ctx->port == ILLEGAL_PORT) {
       Dart_SetReturnValue(args, ejd_error_rc_create(EJD_ERROR_CREATE_PORT));
       goto finish;
     }
     Dart_SetNativeInstanceField(self, 0, (intptr_t) ctx);
-    Dart_NewWeakPersistentHandle(self, ctx, sizeof(*ctx), ejdb2_ctx_finalizer);
+    Dart_NewWeakPersistentHandle(self, ctx, sizeof(*ctx), ejd_ctx_finalizer);
   } else {
     ctx = (void *) ptr;
   }
@@ -236,7 +244,7 @@ finish:
   Dart_ExitScope();
 }
 
-static void ejdb2_get_handle(Dart_NativeArguments args) {
+static void ejd_get_handle(Dart_NativeArguments args) {
   intptr_t ptr = 0;
   Dart_EnterScope();
   Dart_Handle self = EJTH(Dart_GetNativeArgument(args, 0));
@@ -250,7 +258,7 @@ static void ejdb2_get_handle(Dart_NativeArguments args) {
   Dart_ExitScope();
 }
 
-static void ejdb2_set_handle(Dart_NativeArguments args) {
+static void ejd_set_handle(Dart_NativeArguments args) {
   intptr_t ptr;
   Dart_EnterScope();
   Dart_SetReturnValue(args, Dart_Null());
@@ -263,8 +271,9 @@ static void ejdb2_set_handle(Dart_NativeArguments args) {
   }
   Dart_Handle dh = Dart_GetNativeArgument(args, 1);
   if (Dart_IsInteger(dh)) {
-    EJTH(Dart_GetNativeIntegerArgument(args, 1, &ptr));
-    ctx->dbh = (void *) ptr;
+    int64_t llv;
+    EJTH(Dart_GetNativeIntegerArgument(args, 1, &llv));
+    ctx->dbh = (void *) llv;
   } else if (Dart_IsNull(dh)) {
     ctx->dbh = 0;
   }
@@ -273,14 +282,14 @@ finish:
   Dart_ExitScope();
 }
 
-static void ejdb2_jql_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer) {
+static void ejd_jql_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer) {
   JQL q = (void *) peer;
   if (q) {
     jql_destroy(&q);
   }
 }
 
-static void ejdb2_create_query(Dart_NativeArguments args) {
+static void ejd_create_query(Dart_NativeArguments args) {
   Dart_EnterScope();
 
   iwrc rc = 0;
@@ -324,7 +333,7 @@ static void ejdb2_create_query(Dart_NativeArguments args) {
 
   ret = Dart_SetNativeInstanceField(jqinst, 0, (intptr_t) q);
   EJGO(ret, ret, finish);
-  Dart_NewWeakPersistentHandle(jqinst, q, jql_estimate_allocated_size(q), ejdb2_jql_finalizer);
+  Dart_NewWeakPersistentHandle(jqinst, q, jql_estimate_allocated_size(q), ejd_jql_finalizer);
 
   ret = jqinst;
 
@@ -345,17 +354,48 @@ finish:
   Dart_ExitScope();
 }
 
-struct UXCTX {
+// Query execution context
+// Contains a state to manage resultset backpressure
+typedef struct QCTX {
   bool aggregate_count;
+  bool explain;
+  bool paused;
+  int pending_count;
   Dart_Port reply_port;
-};
+  JQL q;
+  EJDB2Context *dctx;
+  int64_t limit;
+  pthread_mutex_t mtx;
+  pthread_cond_t cond;
+} *QCTX;
 
-static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
+
+static iwrc ejd_exec_pause_guard(QCTX qctx) {
   iwrc rc = 0;
-  struct UXCTX *uctx = ux->opaque;
+  int rci = pthread_mutex_lock(&qctx->mtx);
+  if (rci) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+  while (qctx->paused) {
+    rci = pthread_cond_wait(&qctx->cond, &qctx->mtx);
+    if (rci) {
+      rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+      break;
+    }
+  }
+  qctx->pending_count++;
+  pthread_mutex_unlock(&qctx->mtx);
+  return rc;
+}
+
+static iwrc ejd_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
+  iwrc rc = 0;
+  QCTX qctx = ux->opaque;
+
+  rc = ejd_exec_pause_guard(qctx);
+  RCRET(rc);
+
   IWXSTR *xstr = iwxstr_new();
   if (!xstr) {
-    return IW_ERROR_ALLOC;
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   if (doc->node) {
     rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
@@ -364,8 +404,8 @@ static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
   }
   RCGO(rc, finish);
 
-  Dart_CObject result, rv1, rv2;
-  Dart_CObject *rv[2] = {&rv1, &rv2};
+  Dart_CObject result, rv1, rv2, rv3;
+  Dart_CObject *rv[] = {&rv1, &rv2, &rv3};
   result.type = Dart_CObject_kArray;
   result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
   result.value.as_array.values = rv;
@@ -373,8 +413,14 @@ static iwrc jql_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
   rv1.value.as_int64 = doc->id;
   rv2.type = Dart_CObject_kString;
   rv2.value.as_string = iwxstr_ptr(xstr);
-
-  if (!Dart_PostCObject(uctx->reply_port, &result)) {
+  if (ux->log) { // Add explain log to the first record
+    rv3.type = Dart_CObject_kString;
+    rv3.value.as_string = iwxstr_ptr(ux->log);
+    ux->log = 0;
+  } else {
+    rv3.type = Dart_CObject_kNull;
+  }
+  if (!Dart_PostCObject(qctx->reply_port, &result)) {
     *step = 0; // End of cursor loop
   }
 
@@ -383,50 +429,61 @@ finish:
   return rc;
 }
 
-static void jql_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
+static void ejd_exec_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
   iwrc rc = 0;
-  Dart_Port reply_port = ILLEGAL_PORT;
   Dart_CObject result = {.type = Dart_CObject_kNull};
-  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 3)  {
+  if (msg->type != Dart_CObject_kInt64 || !msg->value.as_int64)  {
     iwlog_error2("Invalid message recieved");
     return;
   }
-  //  [reply_port, qptr, dbptr]
+  QCTX qctx = (void *) msg->value.as_int64;
+  IWXSTR *exlog = 0;
   EJDB_EXEC ux = {0};
-  Dart_CObject **varr = msg->value.as_array.values;
-  reply_port = cobject_int(varr[0], false, &rc);
-  RCGO(rc, finish);
-  ux.q = (void *) cobject_int(varr[1], false, &rc);
-  if (!ux.q) {
+  EJDB2Context *dctx = qctx->dctx;
+
+  if (!qctx->q || !dctx || !dctx->dbh || !dctx->dbh->db) {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
   }
-  EJDB2Context *dctx = (void *) cobject_int(varr[2], false, &rc);
-  if (!dctx || !dctx->dbh || !dctx->dbh->db) {
-    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
-    goto finish;
+  if (qctx->explain) {
+    exlog = iwxstr_new();
+    if (!exlog) {
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      goto finish;
+    }
   }
-  struct UXCTX uctx = {
-    .aggregate_count = jql_has_aggregate_count(ux.q),
-    .reply_port = reply_port
-  };
+
+  qctx->aggregate_count = jql_has_aggregate_count(qctx->q);
+
+  ux.q = qctx->q;
   ux.db = dctx->dbh->db;
-  ux.visitor = uctx.aggregate_count ? 0 : jql_exec_visitor;
-  ux.opaque = &uctx;
+  ux.visitor = qctx->aggregate_count ? 0 : ejd_exec_visitor;
+  ux.opaque = qctx;
+  ux.log = exlog;
+  ux.limit = qctx->limit;
 
   rc = ejdb_exec(&ux);
   RCGO(rc, finish);
 
-  if (uctx.aggregate_count) {
-    Dart_CObject result, rv1, rv2;
-    Dart_CObject *rv[2] = {&rv1, &rv2};
+  if (qctx->aggregate_count) {
+    Dart_CObject result, rv1, rv2, rv3;
+    Dart_CObject *rv[] = {&rv1, &rv2, &rv3};
     result.type = Dart_CObject_kArray;
-    result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
+    result.value.as_array.length = (sizeof(rv) / sizeof(rv[0]));
     result.value.as_array.values = rv;
     rv1.type = Dart_CObject_kInt64;
     rv1.value.as_int64 = ux.cnt;
     rv2.type = Dart_CObject_kNull;
-    Dart_PostCObject(reply_port, &result);
+    if (exlog) {
+      rv3.type = Dart_CObject_kString;
+      rv3.value.as_string = iwxstr_ptr(exlog);
+    } else {
+      rv3.type = Dart_CObject_kNull;
+    }
+    Dart_PostCObject(qctx->reply_port, &result);
+  } else if (exlog && ux.cnt == 0) {
+    result.type = Dart_CObject_kString;
+    result.value.as_string = iwxstr_ptr(exlog);
   }
 
 finish:
@@ -434,18 +491,24 @@ finish:
     iwlog_ecode_error3(rc);
     EJPORT_RC(&result, rc);
   }
-  if (reply_port != ILLEGAL_PORT) {
-    Dart_PostCObject(reply_port, &result); // Last NULL or error(int)
+  if (qctx->reply_port != ILLEGAL_PORT) {
+    Dart_PostCObject(qctx->reply_port, &result); // Last NULL or error(int)
+  }
+  if (exlog) {
+    iwxstr_destroy(exlog);
   }
   Dart_CloseNativePort(receive_port);
 }
 
-static void jql_exec(Dart_NativeArguments args) {
-  // void _exec(SendPort sendPort) native 'exec';
+static void ejd_exec(Dart_NativeArguments args) {
   Dart_EnterScope();
 
   iwrc rc = 0;
-  intptr_t qptr = 0, ptr = 0;
+  intptr_t qptr, ptr = 0;
+  bool explain = false;
+  int64_t limit = 0;
+  QCTX qctx = 0;
+
   Dart_Port reply_port = ILLEGAL_PORT;
   Dart_Port exec_port = ILLEGAL_PORT;
   Dart_Handle ret = Dart_Null();
@@ -453,6 +516,9 @@ static void jql_exec(Dart_NativeArguments args) {
   Dart_Handle hself = EJTH(Dart_GetNativeArgument(args, 0));
   Dart_Handle hdb = EJTH(Dart_GetField(hself, Dart_NewStringFromCString("db")));
   Dart_Handle hport = EJTH(Dart_GetNativeArgument(args, 1));
+
+  EJTH(Dart_GetNativeBooleanArgument(args, 2, &explain));
+  EJTH(Dart_GetNativeIntegerArgument(args, 3, &limit));
   EJTH(Dart_SendPortGetId(hport, &reply_port));
 
   EJTH(Dart_GetNativeInstanceField(hdb, 0, &ptr));
@@ -461,34 +527,42 @@ static void jql_exec(Dart_NativeArguments args) {
     rc = EJD_ERROR_INVALID_STATE;
     goto finish;
   }
+
   // JQL pointer
   EJTH(Dart_GetNativeInstanceField(hself, 0, &qptr));
   if (!qptr) {
     rc = EJD_ERROR_INVALID_STATE;
     goto finish;
   }
+
   // JQL exec port
-  exec_port = Dart_NewNativePort("jql_exec_port_handler", jql_exec_port_handler, false);
+  exec_port = Dart_NewNativePort("ejd_exec_port_handler", ejd_exec_port_handler, false);
   if (exec_port == ILLEGAL_PORT) {
     rc = EJD_ERROR_CREATE_PORT;
     goto finish;
   }
-  // Now post a message to the query executor port: [reply_port, qptr, dctx]
-  Dart_CObject msg, marg1, marg2, marg3;
-  Dart_CObject *margs[] = {&marg1, &marg2, &marg3};
 
-  msg.type = Dart_CObject_kArray;
-  msg.value.as_array.length = 3;
-  msg.value.as_array.values = margs;
+  qctx = calloc(1, sizeof(*qctx));
+  if (!qctx) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    goto finish;
+  }
 
-  marg1.type = Dart_CObject_kInt64;
-  marg1.value.as_int64 = reply_port;
+  pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+  memcpy(&qctx->mtx, &mtx, sizeof(mtx));
+  memcpy(&qctx->cond, &cond, sizeof(cond));
 
-  marg2.type = Dart_CObject_kInt64;
-  marg2.value.as_int64 = qptr;
+  qctx->reply_port = reply_port;
+  qctx->q = (void *) qptr;
+  qctx->dctx = dctx;
+  qctx->explain = explain;
+  qctx->limit = limit;
 
-  marg3.type = Dart_CObject_kInt64;
-  marg3.value.as_int64 = (int64_t) dctx;
+  // Now post a message to the query executor
+  Dart_CObject msg;
+  msg.type = Dart_CObject_kInt64;
+  msg.value.as_int64 = (int64_t) qctx;
 
   if (!Dart_PostCObject(exec_port, &msg)) {
     rc = EJD_ERROR_POST_PORT;
@@ -497,9 +571,103 @@ static void jql_exec(Dart_NativeArguments args) {
 
 finish:
   if (rc || Dart_IsError(ret)) {
+    if (qctx) {
+      free(qctx);
+      qctx = 0;
+    }
     if (exec_port != ILLEGAL_PORT) {
       Dart_CloseNativePort(exec_port);
     }
+    if (rc) {
+      ret = ejd_error_rc_create(rc);
+    }
+  }
+  if (qctx) {
+    ret = Dart_NewInteger((int64_t)(void *) qctx);
+  }
+  Dart_SetReturnValue(args, ret);
+  Dart_ExitScope();
+}
+
+static void ejd_exec_check(Dart_NativeArguments args) {
+  iwrc rc = 0;
+  Dart_EnterScope();
+  Dart_Handle ret = Dart_Null();
+
+  if (Dart_GetNativeArgumentCount(args) < 3) {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+  bool terminate = false;
+  int64_t hptr = 0;
+
+  EJTH(Dart_GetNativeIntegerArgument(args, 1, &hptr));
+  EJTH(Dart_GetNativeBooleanArgument(args, 2, &terminate));
+
+  if (hptr < 1) {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+  QCTX qctx = (void *) hptr;
+
+  if (terminate) {
+    free(qctx);
+    goto finish;
+  }
+
+  int rci = pthread_mutex_lock(&qctx->mtx);
+  if (rci) {
+    rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+    goto finish;
+  }
+  qctx->pending_count--;
+  if (qctx->paused) {
+    if (qctx->pending_count < 32) {
+      qctx->paused = false;
+      pthread_cond_broadcast(&qctx->cond);
+    }
+  } else if (qctx->pending_count > 64) {
+    qctx->paused = true;
+    pthread_cond_broadcast(&qctx->cond);
+  }
+  pthread_mutex_unlock(&qctx->mtx);
+
+finish:
+  if (rc) {
+    ret = ejd_error_rc_create(rc);
+  }
+  Dart_SetReturnValue(args, ret);
+  Dart_ExitScope();
+}
+
+static void ejd_free_str(void *ptr, void *op) {
+  if (ptr) free(ptr);
+}
+
+static void ejd_free_json_node(void *ptr, void *op) {
+  IWPOOL *pool = op;
+  if (pool) iwpool_destroy(pool);
+}
+
+static void ejd_jql_get_limit(Dart_NativeArguments args) {
+  Dart_EnterScope();
+  Dart_Handle ret = Dart_Null();
+  iwrc rc;
+  int64_t limit;
+  intptr_t ptr = 0;
+  Dart_Handle hself = EJTH(Dart_GetNativeArgument(args, 0));
+  EJTH(Dart_GetNativeInstanceField(hself, 0, &ptr));
+  JQL q = (void *) ptr;
+  if (!q) {
+    rc = EJD_ERROR_INVALID_STATE;
+    goto finish;
+  }
+  rc = jql_get_limit(q, &limit);
+  RCGO(rc, finish);
+  ret = Dart_NewInteger(limit);
+
+finish:
+  if (rc || Dart_IsError(ret)) {
     if (rc) {
       ret = ejd_error_rc_create(rc);
     }
@@ -508,17 +676,8 @@ finish:
   Dart_ExitScope();
 }
 
-static void jql_free_str(void *ptr, void *op) {
-  if (ptr) free(ptr);
-}
-
-static void jql_free_json_node(void *ptr, void *op) {
-  IWPOOL *pool = op;
-  if (pool) iwpool_destroy(pool);
-}
-
-static void jql_set(Dart_NativeArguments args) {
-  // void set(dynamic place, dynamic value) native 'jql_set';
+static void ejd_jql_set(Dart_NativeArguments args) {
+  // void set(dynamic place, dynamic value) native 'ejd_jql_set';
   Dart_EnterScope();
   Dart_Handle ret = Dart_Null();
 
@@ -548,9 +707,9 @@ static void jql_set(Dart_NativeArguments args) {
   if (type == 1) { // JSON
     EJTH(Dart_StringToCString(hvalue, &svalue));
     JBL_NODE node;
-    IWPOOL *pool = iwpool_create(1024);
+    IWPOOL *pool = iwpool_create(64);
     if (!pool) {
-      rc = IW_ERROR_ALLOC;
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
     rc = jbl_node_from_json(svalue, &node, pool);
@@ -558,7 +717,7 @@ static void jql_set(Dart_NativeArguments args) {
       iwpool_destroy(pool);
       goto finish;
     }
-    rc = jql_set_json2(q, spl, npl, node, jql_free_json_node, pool);
+    rc = jql_set_json2(q, spl, npl, node, ejd_free_json_node, pool);
     if (rc) {
       iwpool_destroy(pool);
       goto finish;
@@ -567,10 +726,10 @@ static void jql_set(Dart_NativeArguments args) {
     EJTH(Dart_StringToCString(hvalue, &svalue));
     char *str = strdup(svalue);
     if (!str) {
-      rc = IW_ERROR_ALLOC;
+      rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
-    rc = jql_set_regexp2(q, spl, npl, str, jql_free_str, 0);
+    rc = jql_set_regexp2(q, spl, npl, str, ejd_free_str, 0);
     if (rc) {
       free(str);
       goto finish;
@@ -580,10 +739,10 @@ static void jql_set(Dart_NativeArguments args) {
       EJTH(Dart_StringToCString(hvalue, &svalue));
       char *str = strdup(svalue);
       if (!str) {
-        rc = IW_ERROR_ALLOC;
+        rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         goto finish;
       }
-      rc = jql_set_str2(q, spl, npl, str, jql_free_str, 0);
+      rc = jql_set_str2(q, spl, npl, str, ejd_free_str, 0);
       if (rc) {
         free(str);
         goto finish;
@@ -615,7 +774,7 @@ finish:
   Dart_ExitScope();
 }
 
-static void explain_rc(Dart_NativeArguments args) {
+static void ejd_explain_rc(Dart_NativeArguments args) {
   Dart_EnterScope();
   int64_t llv = 0;
   EJTH(Dart_GetNativeIntegerArgument(args, 0, &llv));
@@ -648,7 +807,7 @@ static Dart_NativeFunction ejd_resolve_name(Dart_Handle name,
   return 0;
 }
 
-static void ejdb2_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
+static void ejd_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
   if (msg->type != Dart_CObject_kArray
       || msg->value.as_array.length < 2
       || msg->value.as_array.values[0]->type != Dart_CObject_kSendPort
@@ -741,7 +900,7 @@ static iwrc ejdb2_isolate_shared_release(EJDB2Handle **hp) {
   return rc;
 }
 
-static void ejdb2_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result, rv1;
   Dart_CObject *rv[1] = {&rv1};
@@ -827,7 +986,7 @@ finish:
   Dart_PostCObject(reply_port, &result);
 }
 
-static void ejdb2_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result = {.type = Dart_CObject_kArray};
 
@@ -857,7 +1016,7 @@ finish:
   return;
 }
 
-static void ejdb2_patch_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_patch_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result = {.type = Dart_CObject_kArray};
 
@@ -893,7 +1052,7 @@ finish:
   Dart_PostCObject(reply_port, &result);
 }
 
-static void ejdb2_put_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_put_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result, rv1;
   Dart_CObject *rv[1] = {&rv1};
@@ -948,7 +1107,7 @@ finish:
   Dart_PostCObject(reply_port, &result);
 }
 
-static void ejdb2_del_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_del_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result = {.type = Dart_CObject_kArray};
 
@@ -981,7 +1140,40 @@ finish:
   Dart_PostCObject(reply_port, &result);
 }
 
-static void ejdb2_idx_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_rename_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+  iwrc rc = 0;
+  Dart_CObject result = {.type = Dart_CObject_kArray};
+
+  int c = 2;
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 3 + c)  {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+  intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
+  if (!dbh || !dbh->db) {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+  EJDB db = dbh->db;
+
+  const char *oname = cobject_str(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+
+  const char *nname = cobject_str(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+
+  rc = ejdb_rename_collection(db, oname, nname);
+
+finish:
+  if (rc) {
+    EJPORT_RC(&result, rc);
+  }
+  Dart_PostCObject(reply_port, &result);
+}
+
+static void ejd_idx_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result = {.type = Dart_CObject_kArray};
 
@@ -1017,7 +1209,7 @@ finish:
   Dart_PostCObject(reply_port, &result);
 }
 
-static void ejdb2_rmi_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_rmi_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result = {.type = Dart_CObject_kArray};
 
@@ -1053,7 +1245,7 @@ finish:
   Dart_PostCObject(reply_port, &result);
 }
 
-static void ejdb2_rmc_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_rmc_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result = {.type = Dart_CObject_kArray};
 
@@ -1083,7 +1275,46 @@ finish:
   Dart_PostCObject(reply_port, &result);
 }
 
-static void ejdb2_info_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_bkp_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+  iwrc rc = 0;
+  Dart_CObject result, rv1;
+  Dart_CObject *rv[1] = {&rv1};
+  uint64_t ts = 0;
+
+  int c = 2;
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 2 + c)  {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+
+  intptr_t ptr = cobject_int(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+  EJDB2Handle *dbh = (EJDB2Handle *) ptr;
+  if (!dbh || !dbh->db) {
+    rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
+    goto finish;
+  }
+
+  EJDB db = dbh->db;
+  const char *fileName = cobject_str(msg->value.as_array.values[c++], false, &rc);
+  RCGO(rc, finish);
+
+  rc = ejdb_online_backup(db, &ts, fileName);
+
+  rv1.type = Dart_CObject_kInt64;
+  rv1.value.as_int64 = ts;
+  result.type = Dart_CObject_kArray;
+  result.value.as_array.length = sizeof(rv) / sizeof(rv[0]);
+  result.value.as_array.values = rv;
+
+finish:
+  if (rc) {
+    EJPORT_RC(&result, rc);
+  }
+  Dart_PostCObject(reply_port, &result);
+}
+
+static void ejd_info_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result, rv1;
   Dart_CObject *rv[1] = {&rv1};
@@ -1110,7 +1341,7 @@ static void ejdb2_info_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_P
 
   xstr = iwxstr_new2(jbl_size(jbl) * 2);
   if (!xstr) {
-    rc = IW_ERROR_ALLOC;
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
   rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
@@ -1135,7 +1366,7 @@ finish:
   }
 }
 
-static void ejdb2_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
+static void ejd_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port) {
   iwrc rc = 0;
   Dart_CObject result, rv1;
   Dart_CObject *rv[1] = {&rv1};
@@ -1168,7 +1399,7 @@ static void ejdb2_get_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
 
   xstr = iwxstr_new2(jbl_size(jbl) * 2);
   if (!xstr) {
-    rc = IW_ERROR_ALLOC;
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
   rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
@@ -1197,7 +1428,7 @@ finish:
 //
 ///////////////////////////////////////////////////////////////////////////
 
-static const char *_ejd_ecodefn(locale_t locale, uint32_t ecode) {
+static const char *ejd_ecodefn(locale_t locale, uint32_t ecode) {
   if (!(ecode > _EJD_ERROR_START && ecode < _EJD_ERROR_END)) {
     return 0;
   }
@@ -1214,14 +1445,14 @@ static const char *_ejd_ecodefn(locale_t locale, uint32_t ecode) {
   return 0;
 }
 
-DART_EXPORT Dart_Handle ejdb2_dart_Init(Dart_Handle parent_library) {
+DART_EXPORT Dart_Handle ejdb2dart_Init(Dart_Handle parent_library) {
   static volatile int ejd_ecodefn_initialized = 0;
   if (__sync_bool_compare_and_swap(&ejd_ecodefn_initialized, 0, 1)) {
     iwrc rc = ejdb_init();
     if (rc) {
       return ejd_error_rc_create(rc);
     }
-    iwlog_register_ecodefn(_ejd_ecodefn);
+    iwlog_register_ecodefn(ejd_ecodefn);
   }
   if (Dart_IsError(parent_library)) {
     return parent_library;
@@ -1233,7 +1464,7 @@ DART_EXPORT Dart_Handle ejdb2_dart_Init(Dart_Handle parent_library) {
   return Dart_Null();
 }
 
-static void ejdb2_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer) {
+static void ejd_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer) {
   EJDB2Context *ctx = peer;
   if (ctx && ctx->dbh) {
     iwrc rc = ejdb2_isolate_shared_release(&ctx->dbh);
@@ -1241,4 +1472,5 @@ static void ejdb2_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistent
       iwlog_ecode_error3(rc);
     }
   }
+  free(ctx);
 }

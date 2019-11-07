@@ -1,11 +1,19 @@
 include(ExternalProject)
 
+if (${CMAKE_VERSION} VERSION_LESS "3.8.0")
+  set(_UPDATE_DISCONNECTED 0)
+else()
+  set(_UPDATE_DISCONNECTED 1)
+endif()
+
 set(IOWOW_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
 
-if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
-  set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
-else()
-  set(IOWOW_URL https://github.com/Softmotions/iowow/archive/master.zip)
+if(NOT DEFINED IOWOW_URL)
+  if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
+    set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
+  else()
+    set(IOWOW_URL https://github.com/Softmotions/iowow/archive/master.zip)
+  endif()
 endif()
 
 set(CMAKE_ARGS  -DOWNER_PROJECT_NAME=${PROJECT_NAME}
@@ -32,21 +40,21 @@ ExternalProject_Add(
   PREFIX ${CMAKE_BINARY_DIR}
   BUILD_IN_SOURCE OFF
   UPDATE_COMMAND ""
-  UPDATE_DISCONNECTED ON
+  UPDATE_DISCONNECTED ${_UPDATE_DISCONNECTED}
   LOG_DOWNLOAD OFF
   LOG_UPDATE OFF
   LOG_BUILD OFF
   LOG_CONFIGURE OFF
   LOG_INSTALL OFF
   CMAKE_ARGS ${CMAKE_ARGS}
-  BUILD_BYPRODUCTS "${CMAKE_BINARY_DIR}/lib/libiowow-1.a"
+  BUILD_BYPRODUCTS "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a"
 )
 
 add_library(iowow_s STATIC IMPORTED GLOBAL)
 set_target_properties(
    iowow_s
    PROPERTIES
-   IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/libiowow-1.a"
+   IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a"
 )
 add_dependencies(iowow_s extern_iowow)
 

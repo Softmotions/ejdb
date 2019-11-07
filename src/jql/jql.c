@@ -5,6 +5,8 @@
 #include "lwre.h"
 #include "jbl_internal.h"
 #include "jql_internal.h"
+#include "convert.h"
+#include <errno.h>
 
 /** Query matching context */
 typedef struct MCTX {
@@ -52,7 +54,7 @@ IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
         break;
     }
     if (ptr && qv->freefn) {
-       qv->freefn(ptr, qv->freefn_op);
+      qv->freefn(ptr, qv->freefn_op);
 
     }
     pv->opaque = 0;
@@ -268,6 +270,12 @@ iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode
 
   rc = jqp_parse(aux);
   RCGO(rc, finish);
+
+  if (coll) {
+    // Get a copy of collection name
+    coll = iwpool_strdup(aux->pool, coll, &rc);
+    RCGO(rc, finish);
+  }
 
   q->coll = coll;
   q->qp = aux->query;
@@ -489,8 +497,9 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
           return strcmp(lv->vstr, nbuf);
         }
         case JQVAL_F64: {
-          char nbuf[IWFTOA_BUFSIZE];
-          iwftoa(rv->vf64, nbuf);
+          size_t osz;
+          char nbuf[JBNUMBUF_SIZE];
+          jbi_ftoa(rv->vf64, nbuf, &osz);
           return strcmp(lv->vstr, nbuf);
         }
         case JQVAL_NULL:
@@ -641,7 +650,9 @@ static bool _jql_match_regexp(JQP_AUX *aux,
         break;
       }
       case JQVAL_F64: {
-        iwftoa(rv->vf64, nbuf);
+        size_t osz;
+        char nbuf[JBNUMBUF_SIZE];
+        jbi_ftoa(rv->vf64, nbuf, &osz);
         expr = iwpool_strdup(aux->pool, nbuf, rcp);
         if (*rcp) return false;
         break;
@@ -688,10 +699,13 @@ static bool _jql_match_regexp(JQP_AUX *aux,
       iwitoa(lv->vi64, nbuf, JBNUMBUF_SIZE);
       input = nbuf;
       break;
-    case JQVAL_F64:
-      iwftoa(lv->vf64, nbuf);
+    case JQVAL_F64: {
+      size_t osz;
+      char nbuf[JBNUMBUF_SIZE];
+      jbi_ftoa(lv->vf64, nbuf, &osz);
       input = nbuf;
-      break;
+    }
+    break;
     case JQVAL_BOOL:
       input = lv->vbool ? "true" : "false";
       break;
@@ -882,7 +896,7 @@ static JQVAL *_jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
       } else {
         JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
         if (!qv) {
-          *rcp = IW_ERROR_ALLOC;
+          *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
           return 0;
         }
         unit->string.opaque = qv;
@@ -897,7 +911,7 @@ static JQVAL *_jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
       }
       JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
       if (!qv) {
-        *rcp = IW_ERROR_ALLOC;
+        *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
       unit->json.opaque = qv;
@@ -935,7 +949,7 @@ static JQVAL *_jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
       }
       JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
       if (!qv) {
-        *rcp = IW_ERROR_ALLOC;
+        *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
       unit->intval.opaque = qv;
@@ -949,7 +963,7 @@ static JQVAL *_jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
       }
       JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
       if (!qv) {
-        *rcp = IW_ERROR_ALLOC;
+        *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
       unit->dblval.opaque = qv;

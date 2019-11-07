@@ -798,6 +798,11 @@ static void _jqp_set_noidx(yycontext *yy) {
   aux->qmode |= JQP_QRY_NOIDX;
 }
 
+static void _jqp_set_inverse(yycontext *yy) {
+  JQP_AUX *aux = yy->aux;
+  aux->qmode |= (JQP_QRY_NOIDX | JQP_QRY_INVERSE);
+}
+
 static void _jqp_set_projection(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
   if (!unit || !aux->query) {

@@ -1,6 +1,6 @@
 # JQL
 
-EJDB query language (JQL) syntax inpired by ideas behind XPath and Unix shell pipes.
+EJDB query language (JQL) syntax inspired by ideas behind XPath and Unix shell pipes.
 It designed for easy querying and updating sets of JSON documents.
 
 ## JQL grammar
@@ -51,7 +51,7 @@ FILTERS = FILTER [{ and | or } [ not ] FILTER];
 
 APPLY = 'apply' { PLACEHOLDER | json_object | json_array  } | 'del'
 
-OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
+OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 
   ORDERBY = { 'asc' | 'desc' } PLACEHOLDER | json_path
 
@@ -331,7 +331,7 @@ PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
   PROJECTION = 'all' | json_path
 ```
 
-Projection allow to get only subset of JSON document excluding not needed data.
+Projection allows to get only subset of JSON document excluding not needed data.
 
 Lets add one more document to our collection:
 
@@ -408,7 +408,7 @@ Lets add one more document then sort documents in collection by `firstName` asce
 ## JQL Options
 
 ```
-OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
+OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 ```
 
 * `skip n` Skip first `n` records before first element in result set
@@ -420,9 +420,11 @@ OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
   < k
   ```
 * `noidx` Do not use any indexes for query execution.
+* `inverse` By default query scans documents from most recently added to older ones.
+   This option inverts scan direction to opposite and activates `noidx` mode.
+   Has no effect if query has `asc/desc` sorting clauses.
 
-
-## JQL Indexing and performance tips
+## JQL Indexes and performance tips
 
 Database index can be build for any JSON field path of number or string type.
 Index can be an `unique` &dash; not allowing indexed values duplication and `non unique`.
@@ -435,7 +437,7 @@ Index mode | Description
 <code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
 <code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
 
-For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation may define index for only one type.
+For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation defines index of only one type.
 
 Lets define non unique string index for `/lastName` path:
 ```
@@ -461,7 +463,7 @@ The following statements are taken into account when using EJDB2 indexes:
 
   /[lastName = "John"] or /[lastName = Peter]
   ```
-  Will use `/lastName` defined above
+  Will use `/lastName` index defined above
   ```
   /[lastName = Doe]
 
@@ -505,6 +507,8 @@ The following statements are taken into account when using EJDB2 indexes:
   < k
   ```
 
-**NOTE:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes.
+**Performance tip:** All documents in collection are sorted by their primary key in `descending` order. So if you use auto generated keys (`ejdb_put_new`) you may
+be sure what documents fetched as result of full scan query will be ordered
+by time of its insertion in descendant order, unless you don't use query sorting, indexes or `inverse` keyword.
 
-However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any case.
+**Performance tip:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any case.

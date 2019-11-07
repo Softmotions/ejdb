@@ -1,5 +1,5 @@
 install(FILES ejdb2.3 DESTINATION ${CMAKE_INSTALL_MANDIR}/man3
-        COMPONENT doc)
+  COMPONENT doc)
 
 install(FILES jbs.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
-        COMPONENT doc)
+  COMPONENT doc)

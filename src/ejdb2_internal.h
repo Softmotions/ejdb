@@ -125,6 +125,7 @@ struct _JBPHCTX {
   int64_t id;
   JBCOLL jbc;
   JBL jbl;
+  IWKV_val oldval;
 };
 
 struct _JBEXEC;
@@ -183,8 +184,6 @@ typedef uint8_t jb_coll_acquire_t;
 #define JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE 500
 #define JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE 10
 #define JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO 200
-
-void jbi_ftoa(long double val, char buf[static JBNUMBUF_SIZE], size_t *osz);
 
 void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
 void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);

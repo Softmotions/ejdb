@@ -10,13 +10,16 @@ library ejdb2_dart;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:convert' as convert_lib;
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:nativewrappers' show NativeFieldWrapperClass2;
 
 import 'package:path/path.dart' as path_lib;
+import 'package:quiver/core.dart';
+import 'package:json_at/json_at.dart';
 
-import 'dart-ext:ejdb2_dart';
+import 'dart-ext:ejdb2dart';
 
 String ejdb2ExplainRC(int rc) native 'explain_rc';
 
@@ -26,6 +29,7 @@ class EJDB2Error implements Exception {
   static int EJD_ERROR_POST_PORT = 89002;
   static int EJD_ERROR_INVALID_NATIVE_CALL_ARGS = 89003;
   static int EJD_ERROR_INVALID_STATE = 89004;
+  static int IWKV_ERROR_NOTFOUND = 75001;
 
   final int code;
 
@@ -37,6 +41,12 @@ class EJDB2Error implements Exception {
 
   EJDB2Error.invalidState() : this.fromCode(EJD_ERROR_INVALID_STATE);
 
+  EJDB2Error.notFound() : this.fromCode(IWKV_ERROR_NOTFOUND);
+
+  bool get notFound => code == IWKV_ERROR_NOTFOUND;
+
+  bool get invalidQuery => code == 87001;
+
   @override
   String toString() => '$runtimeType: $code $message';
 }
@@ -46,11 +56,33 @@ class JBDOC {
   /// Document identifier
   final int id;
 
-  /// Document JSON body as string
-  final String json;
+  /// Document body as JSON string
+  String get json => _json ?? convert_lib.jsonEncode(_object);
 
-  JBDOC(this.id, this.json);
-  JBDOC.fromList(List list) : this(list[0] as int, list[1] as String);
+  /// Document body as parsed JSON object.
+  dynamic get object {
+    if (_json == null) {
+      return _object;
+    } else {
+      _object = convert_lib.jsonDecode(_json);
+      _json = null; // Release memory used to store JSON string data
+      return _object;
+    }
+  }
+
+  /// Gets subset of document using RFC 6901 JSON [pointer].
+  Optional<dynamic> at(String pointer) => jsonAt(object, pointer);
+
+  /// Gets subset of document using RFC 6901 JSON [pointer].
+  Optional<dynamic> operator [](String pointer) => at(pointer);
+
+  String _json;
+
+  dynamic _object;
+
+  JBDOC(this.id, this._json);
+  JBDOC._fromList(List list) : this(list[0] as int, list[1] as String);
+
   @override
   String toString() => '$runtimeType: $id $json';
 }
@@ -68,24 +100,64 @@ class JQL extends NativeFieldWrapperClass2 {
 
   JQL._(this.db, this.query, this.collection);
 
-  /// Execute query and returns a stream of documents in result set.
-  Stream<JBDOC> execute() {
+  /// Execute query and returns a stream of matched documents.
+  ///
+  /// [explainCallback] Used to get query execution log.
+  /// [limit] Overrides `limit` set by query text for this execution session.
+  ///
+  Stream<JBDOC> execute({void explainCallback(String log), int limit = 0}) {
     abort();
+    var execHandle = 0;
     _controller = StreamController<JBDOC>();
     _replyPort = RawReceivePort();
     _replyPort.handler = (dynamic reply) {
       if (reply is int) {
+        _exec_check(execHandle, true);
         _replyPort.close();
         _controller.addError(EJDB2Error.fromCode(reply));
         return;
       } else if (reply is List) {
-        _controller.add(JBDOC.fromList(reply));
-      } else if (reply == null) {
+        _exec_check(execHandle, false);
+        if (reply[2] != null && explainCallback != null) {
+          explainCallback(reply[2] as String);
+        }
+        _controller.add(JBDOC._fromList(reply));
+      } else {
+        _exec_check(execHandle, true);
+        if (reply != null && explainCallback != null) {
+          explainCallback(reply as String);
+        }
         abort();
       }
     };
-    _exec(_replyPort.sendPort);
+    execHandle = _exec(_replyPort.sendPort, explainCallback != null, limit);
     return _controller.stream;
+  }
+
+  /// Returns optional element for first record in result set.
+  Future<Optional<JBDOC>> first({void explainCallback(String log)}) async {
+    await for (final doc in execute(explainCallback: explainCallback, limit: 1)) {
+      return Optional.of(doc);
+    }
+    return const Optional.absent();
+  }
+
+  /// Return first record in result set or throw not found `EJDB2Error` error.
+  Future<JBDOC> firstRequired({void explainCallback(String log)}) async {
+    await for (final doc in execute(explainCallback: explainCallback, limit: 1)) {
+      return doc;
+    }
+    throw EJDB2Error.notFound();
+  }
+
+  /// Collects up to [n] elements from result set into array.
+  Future<List<JBDOC>> firstN(int n, {void explainCallback(String log)}) async {
+    final ret = <JBDOC>[];
+    await for (final doc in execute(explainCallback: explainCallback, limit: n)) {
+      if (n-- <= 0) break;
+      ret.add(doc);
+    }
+    return ret;
   }
 
   /// Abort query execution.
@@ -102,11 +174,11 @@ class JQL extends NativeFieldWrapperClass2 {
 
   /// Return scalar integer value as result of query execution.
   /// For example execution of count query: `/... | count`
-  Future<int> scalarInt() {
-    return execute().map((d) => d.id).first;
+  Future<int> scalarInt({void explainCallback(String log)}) {
+    return execute(explainCallback: explainCallback).map((d) => d.id).first;
   }
 
-  /// Set [json] at specified [placeholder].
+  /// Set [json] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setJson(dynamic placeholder, Object json) {
     _checkPlaceholder(placeholder);
@@ -115,7 +187,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set [regexp] at specified [placeholder].
+  /// Set [regexp] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setRegExp(dynamic placeholder, RegExp regexp) {
     _checkPlaceholder(placeholder);
@@ -124,7 +196,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set integer [val] at specified [placeholder].
+  /// Set integer [val] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setInt(dynamic placeholder, int val) {
     _checkPlaceholder(placeholder);
@@ -133,7 +205,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set double [val] at specified [placeholder].
+  /// Set double [val] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setDouble(dynamic placeholder, double val) {
     _checkPlaceholder(placeholder);
@@ -142,7 +214,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set boolean [val] at specified [placeholder].
+  /// Set boolean [val] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setBoolean(dynamic placeholder, bool val) {
     _checkPlaceholder(placeholder);
@@ -151,7 +223,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set string [val] at specified [placeholder].
+  /// Set string [val] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setString(dynamic placeholder, String val) {
     _checkPlaceholder(placeholder);
@@ -160,13 +232,16 @@ class JQL extends NativeFieldWrapperClass2 {
     return this;
   }
 
-  /// Set `null` at specified [placeholder].
+  /// Set `null` at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
   JQL setNull(dynamic placeholder) {
     _checkPlaceholder(placeholder);
     _set(placeholder, null);
     return this;
   }
+
+  /// Get current `limit` encoded in query.
+  int get limit native 'jql_get_limit';
 
   void _checkPlaceholder(dynamic placeholder) {
     if (!(placeholder is String) && !(placeholder is int)) {
@@ -176,7 +251,9 @@ class JQL extends NativeFieldWrapperClass2 {
 
   void _set(dynamic placeholder, dynamic value, [int type]) native 'jql_set';
 
-  void _exec(SendPort sendPort) native 'exec';
+  int _exec(SendPort sendPort, bool explain, int limit) native 'exec';
+
+  void _exec_check(int execHandle, bool terminate) native 'check_exec';
 }
 
 /// Database wrapper
@@ -379,6 +456,24 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
+  Future<void> renameCollection(String oldCollection, String newCollectionName) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<void>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete();
+    };
+    _port().send([replyPort.sendPort, 'rename', hdb, oldCollection, newCollectionName]);
+    return completer.future;
+  }
+
   /// Ensures json document database index specified by [path] json pointer to string data type.
   Future<void> ensureStringIndex(String collection, String path, {bool unique = false}) {
     return _idx(collection, path, 0x04 | (unique ? 0x01 : 0));
@@ -425,6 +520,28 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       completer.complete();
     };
     _port().send([replyPort.sendPort, 'rmc', hdb, collection]);
+    return completer.future;
+  }
+
+  /// Creates an online database backup image and copies it into the specified [fileName].
+  /// During online backup phase read/write database operations are allowed and not
+  /// blocked for significant amount of time. Returns future with backup
+  /// finish time as number of milliseconds since epoch.
+  Future<int> onlineBackup(String fileName) {
+    final hdb = _get_handle();
+    if (hdb == null) {
+      return Future.error(EJDB2Error.invalidState());
+    }
+    final completer = Completer<int>();
+    final replyPort = RawReceivePort();
+    replyPort.handler = (dynamic reply) {
+      replyPort.close();
+      if (_checkCompleterPortError(completer, reply)) {
+        return;
+      }
+      completer.complete((reply as List).first as int);
+    };
+    _port().send([replyPort.sendPort, 'bkp', hdb, fileName]);
     return completer.future;
   }
 

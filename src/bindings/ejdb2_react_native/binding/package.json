@@ -1,0 +1,37 @@
+{
+  "name": "ejdb2_react_native",
+  "version": "1.0.2",
+  "repository": "https://github.com/Softmotions/ejdb.git",
+  "author": "Anton Adamansky <adamansky@gmail.com>",
+  "description": "EJDB2 React Native binding",
+  "license": "MIT",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {},
+  "keywords": [
+    "react-native",
+    "ejdb",
+    "ejdb2",
+    "nosql",
+    "json",
+    "database",
+    "storage",
+    "embedded",
+    "embeddable",
+    "native",
+    "binding"
+  ],
+  "files": [
+    "android/gradle/**",
+    "android/libs/**",
+    "android/src/**",
+    "android/build.gradle",
+    "android/gradlew*",
+    "index.d.ts",
+    "index.js",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "react-native": "^0.61.3"
+  }
+}

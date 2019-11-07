@@ -1,6 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Project Name="ejdb2" Version="10.0.0" InternalType="Console">
+  <File Name="WINDOWS.md"/>
+  <VirtualDirectory Name="docker">
+    <File Name="docker/Dockerfile"/>
+    <File Name="docker/README.md"/>
+  </VirtualDirectory>
   <VirtualDirectory Name="bindings">
+    <VirtualDirectory Name="ejdb2_node">
+      <File Name="src/bindings/ejdb2_node/utils.js"/>
+      <File Name="src/bindings/ejdb2_node/install.js"/>
+      <File Name="src/bindings/ejdb2_node/index.d.ts"/>
+      <File Name="src/bindings/ejdb2_node/example/index.ts"/>
+      <File Name="src/bindings/ejdb2_node/example/README.md"/>
+      <File Name="src/bindings/ejdb2_node/package.json"/>
+      <File Name="src/bindings/ejdb2_node/binary.js"/>
+      <File Name="src/bindings/ejdb2_node/test.js"/>
+      <File Name="src/bindings/ejdb2_node/index.js"/>
+      <File Name="src/bindings/ejdb2_node/node_api_types.h"/>
+      <File Name="src/bindings/ejdb2_node/node_api.h"/>
+      <File Name="src/bindings/ejdb2_node/hints.txt"/>
+      <File Name="src/bindings/ejdb2_node/ejdb2_node.c"/>
+      <File Name="src/bindings/ejdb2_node/README.md"/>
+      <File Name="src/bindings/ejdb2_node/CMakeLists.txt"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ejdb2_android">
+      <VirtualDirectory Name="ejdb2">
+        <VirtualDirectory Name="src">
+          <VirtualDirectory Name="androidTest">
+            <VirtualDirectory Name="java">
+              <VirtualDirectory Name="com">
+                <VirtualDirectory Name="softmotions">
+                  <VirtualDirectory Name="ejdb2">
+                    <File Name="src/bindings/ejdb2_android/ejdb2/src/androidTest/java/com/softmotions/ejdb2/Ejdb2AndroidTest.java"/>
+                  </VirtualDirectory>
+                </VirtualDirectory>
+              </VirtualDirectory>
+            </VirtualDirectory>
+          </VirtualDirectory>
+        </VirtualDirectory>
+      </VirtualDirectory>
+      <File Name="src/bindings/ejdb2_android/README.md"/>
+    </VirtualDirectory>
+    <VirtualDirectory Name="ejdb2_jni">
+      <VirtualDirectory Name="android">
+        <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/example/EJDB2Example.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/example/EJDB2Example.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/JQLCallback.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/JQL.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/IWKVOptions.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/EJDB2Exception.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/EJDB2Builder.java"/>
+        <File Name="src/bindings/ejdb2_jni/src/android/java/com/softmotions/ejdb2/EJDB2.java"/>
+      </VirtualDirectory>
+      <File Name="src/bindings/ejdb2_jni/README.md"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/JQLCallback.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/JQL.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/test/java/com/softmotions/ejdb2/TestEJDB2.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/IWKVOptions.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/EJDB2Exception.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/EJDB2Builder.java"/>
+      <File Name="src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/EJDB2.java"/>
+      <File Name="src/bindings/ejdb2_jni/hints.txt"/>
+      <File Name="src/bindings/ejdb2_jni/CMakeLists.txt"/>
+      <File Name="src/bindings/ejdb2_jni/src/ejdb2jni.c"/>
+      <File Name="src/bindings/ejdb2_jni/src/CMakeLists.txt"/>
+    </VirtualDirectory>
     <VirtualDirectory Name="ejdb2_dart">
       <File Name="src/bindings/ejdb2_dart/README.md"/>
       <VirtualDirectory Name="test">
@@ -145,6 +209,12 @@
   </VirtualDirectory>
   <VirtualDirectory Name="cmake">
     <VirtualDirectory Name="Modules">
+      <File Name="cmake/Modules/GitRevision.cmake"/>
+      <File Name="cmake/Modules/TestQsortR.cmake"/>
+      <File Name="cmake/Modules/TestQSortR.c"/>
+      <File Name="cmake/Modules/FindJava.cmake"/>
+      <File Name="cmake/Modules/FindJNI.cmake"/>
+      <File Name="cmake/Modules/CMakeFindJavaCommon.cmake"/>
       <File Name="cmake/Modules/AddIOWOW.cmake"/>
       <File Name="cmake/Modules/AddFacil.cmake"/>
       <File Name="cmake/Modules/FindIOWOW.cmake"/>
@@ -159,12 +229,17 @@
   <Reconciliation>
     <Regexes/>
     <Excludepaths>
+      <Path>src/bindings/ejdb2_node/node_modules/</Path>
+      <Path>src/bindings/ejdb2_android/ejdb2/.externalNativeBuild/</Path>
       <Path>cmake-build-Debug/</Path>
       <Path>build/</Path>
+      <Path>src/bindings/ejdb2_android/.gradle/</Path>
+      <Path>src/bindings/ejdb2_android/ejdb2/build/</Path>
+      <Path>src/bindings/ejdb2_android/ejdb2/libs/</Path>
     </Excludepaths>
     <Ignorefiles/>
     <Extensions>
-      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp;*.txt;*.md;*.txt;*.cmake;*.peg;*.leg]]>
+      <![CDATA[*.cpp;*.c;*.h;*.hpp;*.xrc;*.wxcp;*.fbp;*.txt;*.md;*.txt;*.cmake;*.peg;*.leg;*.java;*.js;*.ts]]>
     </Extensions>
     <Topleveldir>/home/adam/Projects/softmotions/ejdb</Topleveldir>
   </Reconciliation>
@@ -207,6 +282,9 @@
       <File Name="src/tests/ejdb_test1.c"/>
     </VirtualDirectory>
     <VirtualDirectory Name="util">
+      <File Name="src/util/convert.h"/>
+      <File Name="src/util/sort_r.h"/>
+      <File Name="src/util/pthread_barrier.c"/>
       <File Name="src/util/khash.h"/>
       <File Name="src/util/lwre.c"/>
       <File Name="src/util/lwre.h"/>
@@ -335,7 +413,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="/usr/lib/dart/bin/dart" IntermediateDirectory="$(ProjectPath)/build/src/bindings/ejdb2_dart/ejdb2_dart" Command="$(OutputFile)" CommandArguments="--enable-asserts test/ejdb2_dart_test.dart" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
+      <General OutputFile="/usr/bin/node" IntermediateDirectory="$(ProjectPath)/src/bindings/ejdb2_node" Command="$(OutputFile)" CommandArguments="./node_modules/.bin/ava -s -c 0 ./test.js" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <BuildSystem Name="CMake">-G Ninja -DCMAKE_BUILD_TYPE=Debug</BuildSystem>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
@@ -343,7 +421,7 @@
       <Debugger IsRemote="no" RemoteHostName="" RemoteHostPort="" DebuggerPath="" IsExtended="no">
         <DebuggerSearchPaths>/home/adam/Projects/softmotions/iowow/src</DebuggerSearchPaths>
         <PostConnectCommands/>
-        <StartupCommands/>
+        <StartupCommands>set follow-fork-mode child</StartupCommands>
       </Debugger>
       <PreBuild/>
       <PostBuild/>

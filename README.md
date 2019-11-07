@@ -1,5 +1,7 @@
 # EJDB 2.0
 
+[The Story of the IT-depression, birds and EJDB 2.0](https://medium.com/@adamansky/ejdb2-41670e80897c)
+
 [![Join ejdb2 telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://t.me/ejdb2)
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
 ![maintained](https://img.shields.io/maintenance/yes/2019.svg)
@@ -9,6 +11,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 * C11 API
 * Single file database
+* Online backups support
 * Simple but powerful query language (JQL) as well as support of the following standards:
   * [rfc6902](https://tools.ietf.org/html/rfc6902) JSON Patch
   * [rfc7386](https://tools.ietf.org/html/rfc7386) JSON Merge patch
@@ -17,19 +20,58 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Provides HTTP REST/Websockets network endpoints with help of [facil.io](http://facil.io)
 * JSON documents are stored in using fast and compact [binn](https://github.com/liteserver/binn) binary format
 
-## Native bindings
+---
+* [Native language bindings](#native-language-bindings)
+* Supported platforms
+  * [OSX](#osx)
+  * [Linux](#linux)
+  * [Android](#android)
+  * [Windows](#windows)
+* [JQL query language](#jql)
+  * [Grammar](#jql-grammar)
+  * [Quick into](#jql-quick-introduction)
+  * [Data modification](#jql-data-modification)
+  * [Projections](#jql-projections)
+  * [Sorting](#jql-sorting)
+  * [Query options](#jql-options)
+* [Indexes and performance](#jql-indexes-and-performance-tips)
+* [Network API](#http-restwebsocket-api-endpoint)
+  * [HTTP API](#http-api)
+  * [Websockets API](#websocket-api)
+* [C API](#c-api)
+* [License](#license)
+---
 
-* DartVM https://pub.dartlang.org/packages/ejdb2_dart
+## Native language bindings
+
+* Node.js https://www.npmjs.com/package/ejdb2_node
+* Dart https://pub.dartlang.org/packages/ejdb2_dart
+* Java [ejdb2_jni/README.md](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/README.md)
+* Android support (see below)
+* [React Native](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native)
 
 ## Status
 
-* EJDB 2.0 is currently in Beta state, stable enough but some gotchas may be arised.
-* Tested on `Linux` and `OSX` platforms.
-* `Windows` platform not supported at now (#237)
+* **Now EJDB 2.0 is well tested and used in various heavily loaded deployments**
+* Tested on `Linux` and `OSX` platforms. [Limited Windows support](./WINDOWS.md)
 * Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
   We are not maintaining ejdb 1.x.
 
+## Use cases
+
+* Softmotions trading robots platform
+
 # Supported platforms
+
+## OSX
+
+EJDB2 code ported and tested on `High Sierra`, `Mojave`
+
+```
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
+```
 
 ## Linux
 ### Ubuntu/Debian
@@ -56,21 +98,55 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_RPM=ON
 make package
 ```
 
-## OSX
+## Windows
+EJDB2 can be cross-compiled for windows
 
-EJDB2 code ported and tested on OSX `High Sierra`
+**Note:** HTTP/Websocket network API is disabled and not supported
+on Windows until port of http://facil.io library (#257)
 
+Nodejs/Dart bindings not yet ported to Windows.
+
+**[Cross-compilation Guide for Windows](./WINDOWS.md)**
+
+
+
+# Android
+
+* [React Native binding](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native)
+
+## Sample Android application
+
+https://github.com/Softmotions/ejdb_android_todo_app
+
+## Android binding showcase and unit tests
+
+```bash
+cd ./src/bindings/ejdb2_android
 ```
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make
+
+Set local android SDK/NDK path and target `arch` in `local.properties`
+
+```properties
+# Path to Android SDK dir
+sdk.dir=/Android-sdk
+
+# Path to Android NDK dir
+ndk.dir=/Android-sdk/ndk-bundle
+
+# Target abi name: armeabi-v7a, arm64-v8a, x86, x86_64
+abi.name=arm64-v8a
 ```
 
+Run Android emulator for the same abi version then:
+
+```bash
+./gradlew connectedAndroidTest
+```
 
 
 # JQL
 
-EJDB query language (JQL) syntax inpired by ideas behind XPath and Unix shell pipes.
+EJDB query language (JQL) syntax inspired by ideas behind XPath and Unix shell pipes.
 It designed for easy querying and updating sets of JSON documents.
 
 ## JQL grammar
@@ -121,7 +197,7 @@ FILTERS = FILTER [{ and | or } [ not ] FILTER];
 
 APPLY = 'apply' { PLACEHOLDER | json_object | json_array  } | 'del'
 
-OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
+OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 
   ORDERBY = { 'asc' | 'desc' } PLACEHOLDER | json_path
 
@@ -401,7 +477,7 @@ PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
   PROJECTION = 'all' | json_path
 ```
 
-Projection allow to get only subset of JSON document excluding not needed data.
+Projection allows to get only subset of JSON document excluding not needed data.
 
 Lets add one more document to our collection:
 
@@ -478,7 +554,7 @@ Lets add one more document then sort documents in collection by `firstName` asce
 ## JQL Options
 
 ```
-OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
+OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 ```
 
 * `skip n` Skip first `n` records before first element in result set
@@ -490,9 +566,11 @@ OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | ORDERBY }...
   < k
   ```
 * `noidx` Do not use any indexes for query execution.
+* `inverse` By default query scans documents from most recently added to older ones.
+   This option inverts scan direction to opposite and activates `noidx` mode.
+   Has no effect if query has `asc/desc` sorting clauses.
 
-
-## JQL Indexing and performance tips
+## JQL Indexes and performance tips
 
 Database index can be build for any JSON field path of number or string type.
 Index can be an `unique` &dash; not allowing indexed values duplication and `non unique`.
@@ -505,7 +583,7 @@ Index mode | Description
 <code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
 <code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
 
-For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation may define index for only one type.
+For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation defines index of only one type.
 
 Lets define non unique string index for `/lastName` path:
 ```
@@ -531,7 +609,7 @@ The following statements are taken into account when using EJDB2 indexes:
 
   /[lastName = "John"] or /[lastName = Peter]
   ```
-  Will use `/lastName` defined above
+  Will use `/lastName` index defined above
   ```
   /[lastName = Doe]
 
@@ -575,9 +653,11 @@ The following statements are taken into account when using EJDB2 indexes:
   < k
   ```
 
-**NOTE:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes.
+**Performance tip:** All documents in collection are sorted by their primary key in `descending` order. So if you use auto generated keys (`ejdb_put_new`) you may
+be sure what documents fetched as result of full scan query will be ordered
+by time of its insertion in descendant order, unless you don't use query sorting, indexes or `inverse` keyword.
 
-However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any case.
+**Performance tip:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any case.
 
 
 
@@ -608,7 +688,7 @@ EJDB 2.0.0 standalone REST/Websocket server. http://ejdb.org
  -w      	(same as --wal)
 
 Advanced options
- --sbz ##	Max sorting buffer size. If exeeded, an overflow temp file for data will created. Default: 16777216, min: 1048576
+ --sbz ##	Max sorting buffer size. If exceeded, an overflow temp file for data will be created. Default: 16777216, min: 1048576
  --dsz ##	Initial size of buffer to process/store document on queries. Preferable average size of document. Default: 65536, min: 16384
  --bsz ##	Max HTTP/WS API document body size. Default: 67108864, min: 524288
 
@@ -880,9 +960,26 @@ Note: If `collection` is not found no errors will be reported.
 
 
 
+# Docker support
+
+If you have [Docker]("https://www.docker.com/") installed, you can build a Docker image and run it in a container
+
+```
+cd docker
+docker build -t ejdb2 .
+docker run -d -p 9191:9191 --name myEJDB ejdb2 --access myAccessKey
+```
+
+or get an image of `ejdb2` directly from the Docker Hub
+
+```
+docker run -d -p 9191:9191 --name myEJDB softmotions/ejdb2 --access myAccessKey
+```
+
+
 # C API
 
-EJDB can be empdedded into any `C/C++` application.
+EJDB can be embedded into any `C/C++` application.
 `C API` documented in the following headers:
 
 * [ejdb.h](https://github.com/Softmotions/ejdb/blob/master/src/ejdb2.h) Main API functions

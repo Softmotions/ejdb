@@ -8,7 +8,7 @@ void main() async {
   assert(q.collection == 'mycoll');
   assert(q.db != null);
 
-  final id = await db.put('mycoll', {'foo':'bar'});
+  var id = await db.put('mycoll', {'foo': 'bar'});
   assert(id == 1);
 
   dynamic error;
@@ -24,7 +24,29 @@ void main() async {
   var json = await db.get('mycoll', id);
   assert(json == '{"foo":"bar"}');
 
-  await db.put('mycoll', {'foo':'baz'});
+  await db.put('mycoll', {'foo': 'baz'});
+
+  final list = await db.createQuery('@mycoll/*').execute(limit: 1).toList();
+  assert(list.length == 1);
+
+  var first = await db.createQuery('@mycoll/*').first();
+  assert(first != null);
+  assert(first.isPresent);
+  assert(first.value.json == '{"foo":"baz"}');
+
+  first = await db.createQuery('@mycoll/[zzz=bbb]').first();
+  assert(first != null);
+  assert(first.isEmpty);
+
+  var firstN = await db.createQuery('@mycoll/*').firstN(5);
+  assert(firstN != null);
+  assert(firstN.length == 2);
+  assert(firstN[0].json == '{"foo":"baz"}');
+  assert(firstN[1].json == '{"foo":"bar"}');
+
+  firstN = await db.createQuery('@mycoll/*').firstN(1);
+  assert(firstN != null);
+  assert(firstN.length == 1);
 
   // Query 1
   final rbuf = <String>[];
@@ -51,12 +73,17 @@ void main() async {
     await db.createQuery('@mycoll/[').execute();
   } on EJDB2Error catch (e) {
     error = e;
-    assert(e.code == 87001);
+    assert(e.invalidQuery);
     assert(e.message.contains('@mycoll/[ <---'));
   }
   assert(error != null);
 
   var count = await db.createQuery('@mycoll/* | count').scalarInt();
+  assert(count == 2);
+
+  count = await db.createQuery('@mycoll/* | count').scalarInt(explainCallback: (log) {
+    log.contains('[INDEX] NO [COLLECTOR] PLAIN');
+  });
   assert(count == 2);
 
   // Del
@@ -66,7 +93,7 @@ void main() async {
     await db.get('mycoll', 1);
   } on EJDB2Error catch (e) {
     error = e;
-    assert(e.code == 75001);
+    assert(e.notFound);
     assert(e.message.contains('IWKV_ERROR_NOTFOUND'));
   }
   assert(error != null);
@@ -91,6 +118,12 @@ void main() async {
   // Test JQL set
   var doc = await db.createQuery('@mycoll/[foo=:?]').setString(0, 'baz').execute().first;
   assert(doc.json == '{"foo":"baz","baz":"qux"}');
+
+  // Test explain log
+  await db.createQuery('@mycoll/[foo=:?]').setString(0, 'baz').execute(explainCallback: (log) {
+    assert(
+        log.contains("[INDEX] SELECTED UNIQUE|STR|1 /foo EXPR1: 'foo = :?' INIT: IWKV_CURSOR_EQ"));
+  });
 
   doc = await db
       .createQuery('@mycoll/[foo=:?] and /[baz=:?]')
@@ -122,5 +155,35 @@ void main() async {
   json = await db.info();
   assert(json.contains('"collections":[]'));
 
+  /// Test get limit
+  q = db.createQuery('@c1/* | limit 1');
+  assert(q.limit == 1);
+
+  q = db.createQuery('@c1/*');
+  assert(q.limit == 0);
+
+  id = await db.put('cc1', {'foo': 1});
+  await db.renameCollection('cc1', 'cc2');
+  json = await db.get('cc2', id);
+  assert(json == '{"foo":1}');
+
+  for (var i = 0; i < 10000; ++i) {
+    await db.put('cc1', {'name': 'v${i}'});
+  }
+  var cnt = 0;
+  await for (final _ in db.createQuery('@cc1/*').execute()) {
+    cnt++;
+  }
+  assert(cnt == 10000);
+
+  final ts0 = DateTime.now().millisecondsSinceEpoch;
+  final ts = await db.onlineBackup('hello-bkp.db');
+  assert(ts > ts0);
   await db.close();
+
+  // Reopen backup image
+  final db2 = await EJDB2.open('hello-bkp.db', truncate: false);
+  doc = (await db2.createQuery('@cc1/*').first()).orNull;
+  assert(doc != null);
+  await db2.close();
 }

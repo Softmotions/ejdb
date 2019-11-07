@@ -5,6 +5,7 @@
       "includePath": [
         "/usr/include",
         "/usr/local/include",
+        "/usr/lib/jvm/java-11-openjdk-amd64/include",
         "${workspaceRoot}",
         "${workspaceRoot}/build/include",
         "${workspaceRoot}/build/src/extern_facil/lib/facil",
@@ -23,6 +24,7 @@
         "path": [
           "/usr/include",
           "/usr/local/include",
+          "/usr/lib/jvm/java-11-openjdk-amd64/include",
           "${workspaceRoot}",
           "${workspaceRoot}/build/include",
           "${workspaceRoot}/build/src/extern_facil/lib/facil",
@@ -65,6 +67,7 @@
         "/usr/include/c++/7/backward",
         "/usr/include/c++/6/backward",
         "/usr/include/c++/5/backward",
+        "/usr/lib/jvm/java-11-openjdk-amd64/include",
         "${workspaceRoot}",
         "${workspaceRoot}/build/include",
         "${workspaceRoot}/build/src/extern_facil/lib/facil",
@@ -103,6 +106,7 @@
           "/usr/include/c++/7/backward",
           "/usr/include/c++/6/backward",
           "/usr/include/c++/5/backward",
+          "/usr/lib/jvm/java-11-openjdk-amd64/include",
           "${workspaceRoot}",
           "${workspaceRoot}/build/include",
           "${workspaceRoot}/build/src/extern_facil/lib/facil",
@@ -122,27 +126,6 @@
       "cStandard": "c11",
       "cppStandard": "c++17",
       "configurationProvider": "vector-of-bool.cmake-tools"
-    },
-    {
-      "name": "Win32",
-      "includePath": [
-        "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
-        "${workspaceRoot}"
-      ],
-      "defines": [
-        "_DEBUG",
-        "UNICODE",
-        "_UNICODE"
-      ],
-      "intelliSenseMode": "msvc-x64",
-      "browse": {
-        "path": [
-          "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include/*",
-          "${workspaceRoot}"
-        ],
-        "limitSymbolsToIncludedHeaders": true,
-        "databaseFilename": ""
-      }
     }
   ],
   "version": 4

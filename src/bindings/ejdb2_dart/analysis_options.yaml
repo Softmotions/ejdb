@@ -4,6 +4,8 @@ analyzer:
   strong-mode:
     implicit-casts: false
     implicit-dynamic: false
+  exclude:
+    - build/**
 linter:
   rules:
     - always_declare_return_types
@@ -11,7 +13,7 @@ linter:
     - avoid_empty_else
     - avoid_init_to_null
     - avoid_null_checks_in_equality_operators
-    - avoid_positional_boolean_parameters
+    #- avoid_positional_boolean_parameters
     - avoid_renaming_method_parameters
     - avoid_return_types_on_setters
     - avoid_returning_null

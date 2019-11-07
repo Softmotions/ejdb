@@ -44,13 +44,15 @@ static void ejdb_test3_1() {
     rc = put_json(db, "c2", dbuf);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
   }
+
   rc = ejdb_ensure_index(db, "c2", "/f/b", EJDB_IDX_UNIQUE | EJDB_IDX_I64);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = ejdb_list3(db, "c1", "/f/[b = 1]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b = 1' "
-                                "INIT: IWKV_CURSOR_EQ"));
+
+  CU_ASSERT_PTR_NOT_NULL_FATAL(strstr(iwxstr_ptr(log), "[INDEX] MATCHED  UNIQUE|I64|10 /f/b EXPR1: 'b = 1' "
+                                      "INIT: IWKV_CURSOR_EQ"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b = 1' "
                                 "INIT: IWKV_CURSOR_EQ"));
   int i = 0;
@@ -927,7 +929,7 @@ static void jql_free_str(void *ptr, void *op) {
 }
 
 void ejdb_test3_6() {
-   EJDB_OPTS opts = {
+  EJDB_OPTS opts = {
     .kv = {
       .path = "ejdb_test3_6.db",
       .oflags = IWKV_TRUNC
@@ -980,13 +982,56 @@ void ejdb_test3_6() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_destroy(xstr);
   jql_destroy(&q);
+}
 
+void ejdb_test3_7() {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test3_7.db",
+      .oflags = IWKV_TRUNC
+    }
+  };
+  EJDB db;
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = put_json(db, "cc1", "{'foo':1}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_rename_collection(db, "cc1", "cc2");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  JBL jbl;
+  rc = ejdb_get(db, "cc2", 1, &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  jbl_destroy(&jbl);
+
+  rc = ejdb_rename_collection(db, "cc1", "cc2");
+  CU_ASSERT_EQUAL_FATAL(rc, EJDB_ERROR_COLLECTION_NOT_FOUND);
+
+  rc = ejdb_rename_collection(db, "cc2", "cc2");
+  CU_ASSERT_EQUAL_FATAL(rc, EJDB_ERROR_TARGET_COLLECTION_EXISTS);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  opts.kv.oflags = 0;
+
+  rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_get(db, "cc2", 1, &jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  jbl_destroy(&jbl);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
 }
 
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
-  pSuite = CU_add_suite("ejdb_test1", init_suite, clean_suite);
+  pSuite = CU_add_suite("ejdb_test3", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -997,7 +1042,8 @@ int main() {
     (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_6", ejdb_test3_6))
+    (NULL == CU_add_test(pSuite, "ejdb_test3_6", ejdb_test3_6)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_7", ejdb_test3_7))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

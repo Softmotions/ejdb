@@ -20,7 +20,7 @@ EJDB 2.0.0 standalone REST/Websocket server. http://ejdb.org
  -w      	(same as --wal)
 
 Advanced options
- --sbz ##	Max sorting buffer size. If exeeded, an overflow temp file for data will created. Default: 16777216, min: 1048576
+ --sbz ##	Max sorting buffer size. If exceeded, an overflow temp file for data will be created. Default: 16777216, min: 1048576
  --dsz ##	Initial size of buffer to process/store document on queries. Preferable average size of document. Default: 65536, min: 16384
  --bsz ##	Max HTTP/WS API document body size. Default: 67108864, min: 524288
 

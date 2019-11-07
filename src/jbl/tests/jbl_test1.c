@@ -50,7 +50,13 @@ void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
   edata = iwu_file_read_as_buf(path_expected);
   CU_ASSERT_PTR_NOT_NULL_FATAL(edata);
 
-  CU_ASSERT_EQUAL(strcmp(edata, iwxstr_ptr(res)), 0);
+  FILE *f1 = fopen("f1.txt", "w");
+  FILE *f2 = fopen("f2.txt", "w");
+  fprintf(f1, "\n%s", edata);
+  fprintf(f2, "\n%s", iwxstr_ptr(res));
+  fclose(f1);
+  fclose(f2);
+  CU_ASSERT_EQUAL_FATAL(strcmp(edata, iwxstr_ptr(res)), 0);
 
 finish:
   if (edata) {
