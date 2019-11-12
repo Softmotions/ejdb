@@ -50,6 +50,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Java [ejdb2_jni/README.md](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/README.md)
 * Android support (see below)
 * [React Native](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native)
+* [Fluter](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter)
 
 ## Status
 
