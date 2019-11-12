@@ -1,4 +1,4 @@
-# EJDB2 Flutter intergation
+# EJDB2 Flutter integration
 
 Embeddable JSON Database engine http://ejdb.org Dart binding.
 
