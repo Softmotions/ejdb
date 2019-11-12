@@ -8,7 +8,7 @@ endif()
 
 set(IOWOW_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
 
-if(NOT DEFINED IOWOW_URL)
+if("${IOWOW_URL}" STREQUAL "")
   if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
     set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
   else()

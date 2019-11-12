@@ -58,6 +58,10 @@ include_directories(${JNI_INCLUDE_DIRS})
 add_library(ejdb2jni SHARED ejdb2jni.c)
 add_dependencies(ejdb2jni ejdb2jni_jar)
 
+if (ANDROID)
+  set(JNI_LIBRARIES "-ldl -llog")
+endif()
+
 if (${CMAKE_VERSION} VERSION_LESS "3.11")
   create_javah(
     TARGET ejdb2-jni-native-headers-old
@@ -67,9 +71,9 @@ if (${CMAKE_VERSION} VERSION_LESS "3.11")
     DEPENDS ejdb2jni_jar
     OUTPUT_DIR ${PROJECT_GENERATED_DIR})
   add_dependencies(ejdb2jni ejdb2-jni-native-headers-old)
-  target_link_libraries(ejdb2jni PUBLIC ejdb2_s ${JNI_LIBRARIES})
+  target_link_libraries(ejdb2jni PUBLIC ${JNI_LIBRARIES} ejdb2_s)
 else ()
-  target_link_libraries(ejdb2jni PUBLIC ejdb2_s ${JNI_LIBRARIES}
+  target_link_libraries(ejdb2jni PUBLIC ${JNI_LIBRARIES} ejdb2_s
     PRIVATE ejdb2-jni-native-headers)
 endif ()
 

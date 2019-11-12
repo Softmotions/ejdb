@@ -11,7 +11,8 @@
     "-DBUILD_DART_BINDING=ON",
     "-DBUILD_JNI_BINDING=ON",
     "-DBUILD_NODEJS_BINDING=ON",
-    "-DBUILD_REACT_NATIVE_BINDING=OFF"
+    "-DBUILD_REACT_NATIVE_BINDING=OFF",
+    "-DANDROID_ABIS=x86"
     // "-DASAN=ON",
     // "-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow"
   ],
@@ -106,9 +107,6 @@
     "restructuredtext",
     "text"
   ],
-  "cSpell.words": [
-    "IWKV"
-  ],
   "cSpell.enabled": false,
   "files.watcherExclude": {
     "**/.git/objects/**": true,
@@ -118,11 +116,13 @@
   },
   "C_Cpp.configurationWarnings": "Disabled",
   "files.associations": {
-    "*.arb": "json",
-    "*.gyp": "jsonc",
     "*.h": "c",
     "*.c": "c",
   },
   "dart.runPubGetOnPubspecChanges": false,
   "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.gradle.jvmArguments": "-Xmx1024m",
+  "java.import.gradle.version": "5.4.1",
+  "java.import.gradle.wrapper.enabled": true,
+  "java.import.gradle.arguments": "--no-daemon"
 }

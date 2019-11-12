@@ -26,7 +26,6 @@ class JBE {
  * EJDB document.
  */
 class JBDOC {
-
   /**
    * Get document JSON object
    */
@@ -58,7 +57,6 @@ class JBDOC {
  * EJDB Query.
  */
 class JQL {
-
   /**
    * @param db {EJDB2}
    * @param jql
@@ -153,7 +151,7 @@ class JQL {
    */
   withLimit(limit) {
     if (!this._isInteger(limit)) {
-      new Error('`limit` argument must an Integer')
+      new Error('`limit` argument must an Integer');
     }
     ejdb2jql.setLimit(this._jql, limit.toString());
     return this;
@@ -268,7 +266,7 @@ class JQL {
    */
   execute(dispose, callback) {
     const eid = this._nextEventId();
-    const reg = this._nee.addListener(eid, (data) => {
+    const reg = this._nee.addListener(eid, data => {
       data.forEach(row => {
         if (row != null) {
           callback && callback(new JBDOC(row.id, row.raw), this);
@@ -280,20 +278,24 @@ class JQL {
       }
     });
     this._explainLog = null;
-    return ejdb2jql.execute(this._jql, eid).catch((err) => {
-      reg.remove();
-      return err;
-    }).then((err) => {
-      if (this._withExplain) { // Save explain log before close
-        this._explainLog = ejdb2jql.getExplainLog(this._jql);
-      }
-      if (dispose) {
-        this.close();
-      }
-      if (err) {
-        return Promise.reject(err);
-      }
-    });
+    return ejdb2jql
+      .execute(this._jql, eid)
+      .catch(err => {
+        reg.remove();
+        return err;
+      })
+      .then(err => {
+        if (this._withExplain) {
+          // Save explain log before close
+          this._explainLog = ejdb2jql.getExplainLog(this._jql);
+        }
+        if (dispose) {
+          this.close();
+        }
+        if (err) {
+          return Promise.reject(err);
+        }
+      });
   }
 
   /**
@@ -317,7 +319,8 @@ class JQL {
       this._explainLog = null;
       ret = await callback(this);
     } finally {
-      if (this._withExplain) { // Save explain log before close
+      if (this._withExplain) {
+        // Save explain log before close
         this._explainLog = ejdb2jql.getExplainLog(this._jql);
       }
       this.close();
@@ -332,13 +335,20 @@ class JQL {
    *        - `skip` Override skip number of documents to skip
    * @return {Promise<JBDOC[]>}
    */
-  list(opts = {}) {
+  list(opts_ = {}) {
+    const opts = { ...opts_ };
+    if (opts.limit != null && typeof opts.limit !== 'string') {
+      opts.limit = `${opts.limit}`;
+    }
+    if (opts.skip != null && typeof opts.skip !== 'string') {
+      opts.skip = `${opts.skip}`;
+    }
     return ejdb2jql.list(this._jql, opts).then(l => l.map(data => new JBDOC(data.id, data.raw)));
   }
 
   /**
    * Collects up to [n] documents from result set into array.
-   * @param {number} n Upper limit of documents in result set
+   * @param {number|string} n Upper limit of documents in result set
    * @return {Promise<JBDOC[]>}
    */
   firstN(n = 1) {
@@ -351,7 +361,7 @@ class JQL {
    * @returns {Promise<JBDOC|null>}
    */
   first() {
-    return ejdb2jql.first(this._jql).then((data) => (data ? new JBDOC(data.id, data.raw) : null));
+    return ejdb2jql.first(this._jql).then(data => (data ? new JBDOC(data.id, data.raw) : null));
   }
 
   /**
@@ -475,7 +485,7 @@ class EJDB2 {
    * @returns {Promise<number>}
    */
   put(collection, json, id = 0) {
-    json = typeof (json) === 'string' ? json : JSON.stringify(json);
+    json = typeof json === 'string' ? json : JSON.stringify(json);
     return ejdb2.put(this._db, collection, json, id).then(v => parseInt(v));
   }
 
@@ -488,7 +498,7 @@ class EJDB2 {
    * @return {Promise<void>}
    */
   patch(collection, json, id) {
-    json = typeof (json) === 'string' ? json : JSON.stringify(json);
+    json = typeof json === 'string' ? json : JSON.stringify(json);
     return ejdb2.patch(this._db, collection, json, id);
   }
 

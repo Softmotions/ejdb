@@ -12,6 +12,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * C11 API
 * Single file database
 * Online backups support
+* [Android](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_android/test) / [React Native](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native) / [Flutter](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter) integration
 * Simple but powerful query language (JQL) as well as support of the following standards:
   * [rfc6902](https://tools.ietf.org/html/rfc6902) JSON Patch
   * [rfc7386](https://tools.ietf.org/html/rfc7386) JSON Merge patch
@@ -112,36 +113,12 @@ Nodejs/Dart bindings not yet ported to Windows.
 
 # Android
 
+* [Flutter binding](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter)
 * [React Native binding](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native)
 
 ## Sample Android application
 
 https://github.com/Softmotions/ejdb_android_todo_app
-
-## Android binding showcase and unit tests
-
-```bash
-cd ./src/bindings/ejdb2_android
-```
-
-Set local android SDK/NDK path and target `arch` in `local.properties`
-
-```properties
-# Path to Android SDK dir
-sdk.dir=/Android-sdk
-
-# Path to Android NDK dir
-ndk.dir=/Android-sdk/ndk-bundle
-
-# Target abi name: armeabi-v7a, arm64-v8a, x86, x86_64
-abi.name=arm64-v8a
-```
-
-Run Android emulator for the same abi version then:
-
-```bash
-./gradlew connectedAndroidTest
-```
 
 
 # JQL

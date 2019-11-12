@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.JavaScriptModule;
@@ -15,14 +17,12 @@ import com.facebook.react.uimanager.ViewManager;
 
 public class EJDB2Package implements ReactPackage {
 
-  private static final Executor executor = Executors.newCachedThreadPool(); // todo:
+  private static final Executor executor = new ThreadPoolExecutor(0, 5, 60L, TimeUnit.SECONDS,
+      new SynchronousQueue<Runnable>());
 
   @Override
   public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
-    return Arrays.asList(
-      new EJDB2DBModule(reactContext, executor),
-      new EJDB2JQLModule(reactContext, executor)
-    );
+    return Arrays.<NativeModule>asList(new EJDB2DBModule(reactContext, executor), new EJDB2JQLModule(reactContext, executor));
   }
 
   // Deprecated from RN 0.47

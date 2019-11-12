@@ -142,7 +142,7 @@ class JQL extends NativeFieldWrapperClass2 {
     return const Optional.absent();
   }
 
-  /// Return first record in result set or throw not found `EJDB2Error` error.
+  /// Return first record in result set or throw not found [EJDB2Error] error.
   Future<JBDOC> firstRequired({void explainCallback(String log)}) async {
     await for (final doc in execute(explainCallback: explainCallback, limit: 1)) {
       return doc;
@@ -271,7 +271,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
 
   /// Open EJDB2 database
   /// See https://github.com/Softmotions/ejdb/blob/master/src/ejdb2.h#L104
-  /// for options description.
+  /// for description of options.
   static Future<EJDB2> open(String path,
       {bool truncate = false,
       bool readonly = false,
@@ -400,6 +400,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
   }
 
   /// Get json body of document identified by [id] and stored in [collection].
+  /// Throws [EJDB2Error] not found exception if document is not found.
   Future<String> get(String collection, int id) {
     final hdb = _get_handle();
     if (hdb == null) {
@@ -418,7 +419,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
-  /// Get json body with database metadata.
+  /// Get json body of database metadata.
   Future<String> info() {
     final hdb = _get_handle();
     if (hdb == null) {

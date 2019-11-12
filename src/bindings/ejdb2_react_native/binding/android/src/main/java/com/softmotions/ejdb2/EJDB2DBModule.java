@@ -1,6 +1,7 @@
 package com.softmotions.ejdb2;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,7 +15,7 @@ import com.facebook.react.bridge.ReadableMap;
 public class EJDB2DBModule extends ReactContextBaseJavaModule {
 
   @SuppressWarnings("StaticCollection")
-  static ConcurrentHashMap<Integer, DbEntry> dbmap = new ConcurrentHashMap<>();
+  static Map<Integer, DbEntry> dbmap = new ConcurrentHashMap<>();
 
   static AtomicInteger dbkeys = new AtomicInteger();
 
@@ -47,7 +48,7 @@ public class EJDB2DBModule extends ReactContextBaseJavaModule {
       }
       if (dbe != null) {
         dbe.countOpen();
-        promise.resolve(path);
+        promise.resolve(dbe.handle);
         return;
       }
       // Now open new database
@@ -58,6 +59,8 @@ public class EJDB2DBModule extends ReactContextBaseJavaModule {
         b.truncate();
       if (opts.hasKey("wal_enabled") && !opts.isNull("wal_enabled"))
         b.noWAL(!opts.getBoolean("wal_enabled"));
+      else
+        b.withWAL();
       if (opts.hasKey("wal_check_crc_on_checkpoint") && !opts.isNull("wal_check_crc_on_checkpoint"))
         b.walCRCOnCheckpoint(opts.getBoolean("wal_check_crc_on_checkpoint"));
       if (opts.hasKey("wal_checkpoint_buffer_sz") && !opts.isNull("wal_checkpoint_buffer_sz"))
@@ -74,7 +77,7 @@ public class EJDB2DBModule extends ReactContextBaseJavaModule {
         b.sortBufferSize(opts.getInt("sort_buffer_sz"));
 
       final Integer handle = dbkeys.incrementAndGet();
-      dbmap.put(handle, new DbEntry(b.open(), path));
+      dbmap.put(handle, new DbEntry(b.open(), handle, path));
 
       promise.resolve(handle);
     } catch (EJDB2Exception e) {
@@ -230,11 +233,7 @@ public class EJDB2DBModule extends ReactContextBaseJavaModule {
   }
 
   private String normalizePath(String path) {
-    try {
-      return this.getReactApplicationContext().getDatabasePath(path).getCanonicalPath();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return this.getReactApplicationContext().getDatabasePath(path).getAbsolutePath();
   }
 
   private interface DbLogic {
@@ -242,15 +241,17 @@ public class EJDB2DBModule extends ReactContextBaseJavaModule {
   }
 
   private static class DbEntry {
-    DbEntry(EJDB2 db, String path) {
+    DbEntry(EJDB2 db, Integer handle, String path) {
       this.db = db;
       this.counter = new AtomicInteger(1);
       this.path = path;
+      this.handle = handle;
     }
 
-    EJDB2 db;
-    private final AtomicInteger counter;
+    final EJDB2 db;
     private final String path;
+    private final Integer handle;
+    private final AtomicInteger counter;
 
     void countOpen() {
       this.counter.incrementAndGet();

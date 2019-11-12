@@ -122,12 +122,12 @@ declare namespace ejdb2_react_native {
     /**
      * Overrides `limit` encoded in query
      */
-    limit?: number;
+    limit?: number | string;
 
     /**
      *  Overrides `skip` encoded in query
      */
-    skip?: number;
+    skip?: number | string;
   }
 
   /**

@@ -36,9 +36,11 @@ option(ASAN "Turn on address sanitizer" OFF)
 option(BUILD_EXAMPLES "Build example projects" ON)
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(BUILD_JNI_BINDING "Build Java native binding" OFF)
+option(BUILD_ANDROID_LIBS "Build Android libs" OFF)
 option(BUILD_DART_BINDING "Build Dart VM binding" OFF)
 option(BUILD_NODEJS_BINDING "Build Node.js binding" OFF)
 option(BUILD_REACT_NATIVE_BINDING "Build React Native binding" OFF)
+option(BUILD_FLUTTER_BINDING "Build Flutter binding" OFF)
 option(PACKAGE_DEB "Build .deb instalation packages" OFF)
 option(PACKAGE_RPM "Build .rpm instalation packages" OFF)
 option(PACKAGE_TGZ "Build .tgz package archive" ON)
@@ -52,13 +54,20 @@ set(PROJECT_PPA_DISTRIB_TARGET "bionic" CACHE STRING "Ubuntu PPA distributive na
 set(ANDROID_ABIS "x86;x86_64;arm64-v8a;armeabi-v7a" CACHE STRING "Android ABI list")
 set(ANDROID_AVD "TestingAVD" CACHE STRING "Android virtual device name for tests")
 
-if (BUILD_REACT_NATIVE_BINDING OR ANDROID_ABI)
-  set(ENABLE_HTTP OFF)
-endif()
-
 if (POLICY CMP0042)
   cmake_policy(SET CMP0042 NEW)
 endif (POLICY CMP0042)
+
+if (BUILD_REACT_NATIVE_BINDING OR
+    BUILD_FLUTTER_BINDING OR
+    BUILD_ANDROID_LIBS)
+  set(ENABLE_HTTP OFF)
+  set(BUILD_ANDROID_LIBS ON)
+endif()
+
+if (ANDROID_ABI)
+  set(ENABLE_HTTP OFF)
+endif()
 
 if (DEFINED CMAKE_TOOLCHAIN_FILE)
   get_filename_component(_CMAKE_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE} ABSOLUTE)
