@@ -50,7 +50,9 @@ git clone https://github.com/Softmotions/ejdb.git
 cd ./ejdb
 mkdir ./build && cd build
 
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_FLUTTER_BINDING=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release \
+         -DANDROID_NDK_HOME=<path to Android NDK> \
+         -DBUILD_FLUTTER_BINDING=ON
 make
 
 # Move generate to ejdb2 flutter pub package with example app
