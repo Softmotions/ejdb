@@ -118,7 +118,9 @@ Nodejs/Dart bindings not yet ported to Windows.
 
 ## Sample Android application
 
-https://github.com/Softmotions/ejdb_android_todo_app
+* https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_android/test
+
+* https://github.com/Softmotions/ejdb_android_todo_app
 
 
 # JQL
