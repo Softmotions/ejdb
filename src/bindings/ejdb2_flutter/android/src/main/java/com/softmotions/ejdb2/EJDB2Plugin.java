@@ -95,6 +95,7 @@ public final class EJDB2Plugin implements MethodCallHandler, StreamHandler {
       result.notImplemented();
       return;
     }
+    @SuppressWarnings("unchecked")
     Object[] args = ((List) call.arguments).toArray();
     DbEntry dbe = null;
     if (args[0] != null) {
@@ -432,6 +433,7 @@ public final class EJDB2Plugin implements MethodCallHandler, StreamHandler {
     mc.successOnMainThread(null);
   }
 
+  @SuppressWarnings("unchecked")
   private static <T> T cast(Object obj) {
     return (T) obj;
   }
