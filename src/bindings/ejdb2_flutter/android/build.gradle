@@ -4,8 +4,8 @@ group 'com.softmotions.ejdb2'
 version '1.0'
 
 apply plugin: 'com.android.library'
-apply plugin: "com.greensopinion.gradle-android-eclipse"
-apply plugin: 'eclipse'
+//apply plugin: "com.greensopinion.gradle-android-eclipse"
+//apply plugin: 'eclipse'
 
 sourceCompatibility = 1.8
 
@@ -47,7 +47,7 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.1'
-        classpath "gradle.plugin.com.greensopinion.gradle-android-eclipse:gradle-android-eclipse:1.1"
+        //classpath "gradle.plugin.com.greensopinion.gradle-android-eclipse:gradle-android-eclipse:1.1"
     }
 }
 
@@ -77,24 +77,21 @@ dependencies {
   compile fileTree(dir: 'src/main/jniLibs', include: ['*.jar'])
 }
 
-eclipse {
-  classpath {
-    plusConfigurations += [ configurations.compile, configurations.testCompile ]
-    downloadSources = true
-    file {
-      whenMerged {
-        def androidHome = project.ext.get('androidHome')
-
-        def libAndroid = new Library(fileReference(file("$System.env.ANDROID_HOME/platforms/$project.android.compileSdkVersion/android.jar")));
-        libAndroid.setSourcePath(fileReference(file("$System.env.ANDROID_HOME/sources/$project.android.compileSdkVersion")));
-
-        // def flutterRoot = project.ext.get('flutterRoot')
-        // def flutterLib = new Library(fileReference(file("$flutterRoot/bin/cache/artifacts/engine/android-x86/flutter.jar")))
-        // flutterLib.setSourcePath(fileReference(file('/home/adam/Projects/tmp/engine/shell/platform/android')))
-        // entries += [ libAndroid, flutterLib ]
-
-        entries += [ libAndroid ]
-      }
-    }
-  }
-}
+// eclipse {
+//   classpath {
+//     plusConfigurations += [ configurations.compile, configurations.testCompile ]
+//     downloadSources = true
+//     file {
+//       whenMerged {
+//         def androidHome = project.ext.get('androidHome')
+//         def libAndroid = new Library(fileReference(file("$System.env.ANDROID_HOME/platforms/$project.android.compileSdkVersion/android.jar")));
+//         libAndroid.setSourcePath(fileReference(file("$System.env.ANDROID_HOME/sources/$project.android.compileSdkVersion")));
+//         // def flutterRoot = project.ext.get('flutterRoot')
+//         // def flutterLib = new Library(fileReference(file("$flutterRoot/bin/cache/artifacts/engine/android-x86/flutter.jar")))
+//         // flutterLib.setSourcePath(fileReference(file('/home/adam/Projects/tmp/engine/shell/platform/android')))
+//         // entries += [ libAndroid, flutterLib ]
+//         entries += [ libAndroid ]
+//       }
+//     }
+//   }
+// }

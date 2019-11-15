@@ -1,3 +1,7 @@
+## 1.0.3+1
+
+* Removed depenedency for eclipse generator plugin
+
 ## 1.0.2+1
 
 * Upgraded to ejdb v2.0.30
