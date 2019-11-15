@@ -1,3 +1,7 @@
+ejdb_dart (1.0.37)
+
+  * Upgraded to ejdb v2.0.30
+
 ejdb_dart (1.0.36)
 
   * Now supports online backups
