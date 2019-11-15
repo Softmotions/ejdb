@@ -383,6 +383,16 @@ class EJDB2 {
       .catchError(_handleError)
       .then((v) => JBDOC(id, v as String));
 
+  /// Get json body of document identified by [id] and stored in [collection].
+  Future<Optional<JBDOC>> getOptional(String collection, int id) {
+    return get(collection, id).then((doc) => Optional.of(doc)).catchError((err) {
+      if (err is EJDB2Error && err.isNotFound()) {
+        return Future.value(const Optional<JBDOC>.absent());
+      }
+      return Future.error(err);
+    });
+  }
+
   /// Remove document idenfied by [id] from [collection].
   Future<void> del(String collection, int id) =>
       _mc.invokeMethod('del', [_handle, collection, id]).catchError(_handleError);

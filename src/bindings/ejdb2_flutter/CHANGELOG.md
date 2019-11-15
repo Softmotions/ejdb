@@ -1,3 +1,7 @@
+## 1.0.4+1
+
+* Added `EJDB2#getOptional` for convenience
+
 ## 1.0.3+1
 
 * Removed depenedency for eclipse generator plugin

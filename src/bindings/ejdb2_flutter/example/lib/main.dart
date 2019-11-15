@@ -149,6 +149,13 @@ class _MyAppState extends State<MyApp> {
       doc = await db.get('cc2', id);
       assertEqual('$doc', 'JBDOC: 1 {"foo":1}');
 
+      var opt = await db.getOptional('cc2', id);
+      assertTrue(opt.isPresent);
+
+      opt = await db.getOptional('cc2', 122);
+      assertTrue(opt.isNotPresent);
+
+
       var i = 0;
       for (i = 0; i < 1023; ++i) {
         await db.put('load', {'name': 'v${i}'});
@@ -167,6 +174,7 @@ class _MyAppState extends State<MyApp> {
       final ts0 = DateTime.now().millisecondsSinceEpoch;
       final ts = await db.onlineBackup('${dbpath}.bkp');
       assertTrue(ts0 < ts);
+
     } finally {
       await db.close();
     }
