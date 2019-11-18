@@ -392,7 +392,6 @@ public final class EJDB2Plugin implements MethodCallHandler, StreamHandler {
         b.readonly();
       }
       if (asBoolean(opts.get("truncate"), false)) {
-
         b.truncate();
       }
       if (asBoolean(opts.get("wal_enabled"), true)) {
