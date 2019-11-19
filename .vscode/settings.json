@@ -12,7 +12,7 @@
     "-DBUILD_JNI_BINDING=ON",
     "-DBUILD_NODEJS_BINDING=ON",
     "-DBUILD_REACT_NATIVE_BINDING=OFF",
-    "-DANDROID_ABIS=x86"
+    "-DANDROID_ABIS=x86",
     // "-DASAN=ON",
     // "-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow"
   ],

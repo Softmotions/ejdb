@@ -1,6 +1,6 @@
 name: ejdb2_flutter
 description: Embeddable JSON Database engine EJDB http://ejdb.org Flutter binding.
-version: 1.0.5+1
+version: 1.0.6+1
 homepage: https://ejdb.org
 
 environment:
