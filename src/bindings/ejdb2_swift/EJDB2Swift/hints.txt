@@ -1,0 +1,6 @@
+swift package generate-xcodeproj
+xcodebuild build -sdk iphoneos -scheme 'MyPackage-Package'
+xcodebuild test -destination 'name=iPhone 8' -scheme 'MyPackage-Package'
+
+
+https://stackoverflow.com/questions/27016612/compiling-external-c-library-for-use-with-ios-project
