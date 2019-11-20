@@ -1,5 +1,0 @@
-module Clibejdb2 [system] {
-  header "/usr/include/Clibejdb2.h"
-  link "Clibejdb2"
-  export *
-}

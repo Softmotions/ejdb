@@ -1,0 +1,5 @@
+module EJDB2 [system] {
+  umbrella header "swift_ejdb2.h"
+  link "ejdb2"
+  export *
+}

@@ -5,24 +5,14 @@ import PackageDescription
 
 let package = Package(
     name: "EJDB2Swift",
-    products: [
-        // Products define the executables and libraries produced by a package, and make them visible to other packages.
-        .library(
-            name: "EJDB2Swift",
-            targets: ["EJDB2Swift"]),
-    ],
-    dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
-    ],
+    // products: [
+    //     .library(
+    //         name: "EJDB2Swift",
+    //         targets: ["EJDB2Swift"]),
+    // ],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages which this package depends on.
-        .target(
-            name: "EJDB2Swift",
-            dependencies: []),
-        .testTarget(
-            name: "EJDB2SwiftTests",
-            dependencies: ["EJDB2Swift"]),
+        .systemLibrary(name: "EJDB2", pkgConfig: "libejdb2"),
+        .target(name: "EJDB2Swift", dependencies: ["EJDB2"]),
+        .testTarget(name: "EJDB2SwiftTests", dependencies: ["EJDB2Swift"]),
     ]
 )
