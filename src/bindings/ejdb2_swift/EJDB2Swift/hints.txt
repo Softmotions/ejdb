@@ -5,3 +5,4 @@ xcodebuild test -destination 'name=iPhone 8' -scheme 'MyPackage-Package'
 
 https://github.com/leetal/ios-cmake
 https://stackoverflow.com/questions/27016612/compiling-external-c-library-for-use-with-ios-project
+https://tech.bakkenbaeck.com/post/swift-c-interop
