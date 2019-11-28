@@ -139,7 +139,7 @@ public final class EJDB2 {
   }
 
   /**
-   * Apply rfc6902/rfc6901 JSON patch to the document identified by {@code id}.
+   * Apply rfc6902/rfc7386 JSON patch to the document identified by {@code id}.
    *
    * @param collection Collection name
    * @param patch      JSON patch

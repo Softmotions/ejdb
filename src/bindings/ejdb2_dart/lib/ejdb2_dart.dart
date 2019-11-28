@@ -380,7 +380,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     return completer.future;
   }
 
-  /// Apply rfc6902/rfc6901 JSON [patch] to the document identified by [id].
+  /// Apply rfc6902/rfc7386 JSON [patch] to the document identified by [id].
   Future<void> patch(String collection, Object patch, int id) {
     final hdb = _get_handle();
     if (hdb == null) {

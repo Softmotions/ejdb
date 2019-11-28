@@ -56,6 +56,7 @@ typedef enum {
   EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED,    /**< Unique index constraint violated */
   EJDB_ERROR_COLLECTION_NOT_FOUND,                /**< Collection not found */
   EJDB_ERROR_TARGET_COLLECTION_EXISTS,            /**< Target collection exists */
+  EJDB_ERROR_PATCH_JSON_NOT_OBJECT,               /**< Patch JSON must be an object (map) */
   _EJDB_ERROR_END
 } ejdb_ecode_t;
 
@@ -320,11 +321,11 @@ IW_EXPORT WUR iwrc ejdb_list4(EJDB db, JQL q, int64_t limit, IWXSTR *log, EJDB_L
 IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
 
 /**
- * @brief Apply rfc6902/rfc6901 JSON patch to the document identified by `id`.
+ * @brief Apply rfc6902/rfc7396 JSON patch to the document identified by `id`.
  *
  * @param db          Database handle. Not zero.
  * @param coll        Collection name. Not zero.
- * @param patchjson   JSON patch conformed to rfc6902 or rfc6901 specification.
+ * @param patchjson   JSON patch conformed to rfc6902 or rfc7396 specification.
  * @param id          Document id. Not zero.
  *
  * @return `0` on success.
@@ -332,6 +333,19 @@ IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
  *          Any non zero error codes.
  */
 IW_EXPORT WUR iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id);
+
+/**
+ * @brief Apply JSON merge patch (rfc7396) to the document identified by `id` or
+ *        insert new document under specified `id`.
+ * @note This is an atomic operation.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patchjson   JSON merge patch conformed to rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ */
+IW_EXPORT WUR iwrc ejdb_merge_or_put(EJDB db, const char *coll, const char *patchjson, int64_t id);
 
 /**
  * @brief Save a given `jbl` document under specified `id`.

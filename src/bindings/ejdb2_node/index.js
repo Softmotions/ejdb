@@ -520,7 +520,7 @@ class EJDB2 {
   }
 
   /**
-   * Apply rfc6902/rfc6901 JSON [patch] to the document identified by [id].
+   * Apply rfc6902/rfc7386 JSON [patch] to the document identified by [id].
    *
    * @param {String} collection
    * @param {Object|string} json
@@ -540,6 +540,24 @@ class EJDB2 {
    */
   get(collection, id) {
     return this._impl.get(collection, id).then((raw) => JSON.parse(raw));
+  }
+
+  /**
+   * Get json body of document identified by [id] and stored in [collection].
+   * If document with given `id` is not found then `null` will be resoved.
+   *
+   * @param {string} collection
+   * @param {number} id
+   * @return {Promise<object|null>} JSON object
+   */
+  getOrNull(collection, id) {
+    return this.get(collection, id).catch((err) => {
+      if (JBE.isNotFound(err)) {
+        return null;
+      } else {
+        return Promise.reject(err);
+      }
+    });
   }
 
   /**
