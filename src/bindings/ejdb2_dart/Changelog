@@ -1,6 +1,10 @@
+ejdb_dart (1.0.40)
+
+  * Added delIgnoreNotFound()
+
 ejdb_dart (1.0.39)
 
-  Upgraded to ejdb2 v1.3.32
+  * Upgraded to ejdb2 v1.3.32
 
 ejdb_dart (1.0.38)
 

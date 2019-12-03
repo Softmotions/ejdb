@@ -397,6 +397,17 @@ class EJDB2 {
   Future<void> del(String collection, int id) =>
       _mc.invokeMethod('del', [_handle, collection, id]).catchError(_handleError);
 
+  /// Remove document idenfied by [id] from [collection].
+  /// Doesn't raise error if document is not found.
+  Future<void> delIgnoreNotFound(String collection, int id) =>
+      del(collection, id).catchError((err) {
+        if (err is EJDB2Error && err.isNotFound()) {
+          return Future.value();
+        } else {
+          return Future.error(err);
+        }
+      });
+
   /// Get json body of database metadata.
   Future<dynamic> info() => _mc
       .invokeMethod('info', [_handle])

@@ -1,3 +1,7 @@
+## 1.0.7+1
+
+* Added `delIgnoreNotFound()`
+
 ## 1.0.6+1
 
 * Upgraded to ejdb v2.0.32

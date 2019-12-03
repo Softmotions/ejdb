@@ -25,6 +25,14 @@ String ejdb2ExplainRC(int rc) native 'explain_rc';
 
 /// EJDB specific exception
 class EJDB2Error implements Exception {
+  EJDB2Error(this.code, this.message);
+
+  EJDB2Error.fromCode(int code) : this(code, ejdb2ExplainRC(code));
+
+  EJDB2Error.invalidState() : this.fromCode(EJD_ERROR_INVALID_STATE);
+
+  EJDB2Error.notFound() : this.fromCode(IWKV_ERROR_NOTFOUND);
+
   static int EJD_ERROR_CREATE_PORT = 89001;
   static int EJD_ERROR_POST_PORT = 89002;
   static int EJD_ERROR_INVALID_NATIVE_CALL_ARGS = 89003;
@@ -34,14 +42,6 @@ class EJDB2Error implements Exception {
   final int code;
 
   final String message;
-
-  EJDB2Error(this.code, this.message);
-
-  EJDB2Error.fromCode(int code) : this(code, ejdb2ExplainRC(code));
-
-  EJDB2Error.invalidState() : this.fromCode(EJD_ERROR_INVALID_STATE);
-
-  EJDB2Error.notFound() : this.fromCode(IWKV_ERROR_NOTFOUND);
 
   bool get notFound => code == IWKV_ERROR_NOTFOUND;
 
@@ -53,6 +53,9 @@ class EJDB2Error implements Exception {
 
 /// EJDB document item
 class JBDOC {
+  JBDOC(this.id, this._json);
+  JBDOC._fromList(List list) : this(list[0] as int, list[1] as String);
+
   /// Document identifier
   final int id;
 
@@ -80,9 +83,6 @@ class JBDOC {
 
   dynamic _object;
 
-  JBDOC(this.id, this._json);
-  JBDOC._fromList(List list) : this(list[0] as int, list[1] as String);
-
   @override
   String toString() => '$runtimeType: $id $json';
 }
@@ -91,14 +91,14 @@ class JBDOC {
 /// Instance can be reused for multiple queries reusing
 /// placeholder parameters.
 class JQL extends NativeFieldWrapperClass2 {
+  JQL._(this.db, this.query, this.collection);
+
   final String query;
   final String collection;
   final EJDB2 db;
 
   StreamController<JBDOC> _controller;
   RawReceivePort _replyPort;
-
-  JQL._(this.db, this.query, this.collection);
 
   /// Execute query and returns a stream of matched documents.
   ///
@@ -258,6 +258,8 @@ class JQL extends NativeFieldWrapperClass2 {
 
 /// Database wrapper
 class EJDB2 extends NativeFieldWrapperClass2 {
+  EJDB2._();
+
   static bool _checkCompleterPortError(Completer<dynamic> completer, dynamic reply) {
     if (reply is int) {
       completer.completeError(EJDB2Error(reply, ejdb2ExplainRC(reply)));
@@ -316,26 +318,26 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     } else if (truncate) {
       oflags |= 0x04;
     }
-    final args = <dynamic>[]
-      ..add(replyPort.sendPort)
-      ..add('open')
-      ..add(path)
-      ..add(oflags)
-      ..add(wal_enabled)
-      ..add(wal_check_crc_on_checkpoint)
-      ..add(wal_checkpoint_buffer_sz)
-      ..add(wal_checkpoint_timeout_sec)
-      ..add(wal_savepoint_timeout_sec)
-      ..add(wal_wal_buffer_sz)
-      ..add(document_buffer_sz)
-      ..add(sort_buffer_sz)
-      ..add(http_enabled)
-      ..add(http_access_token)
-      ..add(http_bind)
-      ..add(http_max_body_size)
-      ..add(http_port)
-      ..add(http_read_anon);
-
+    final args = <dynamic>[
+      replyPort.sendPort,
+      'open',
+      path,
+      oflags,
+      wal_enabled,
+      wal_check_crc_on_checkpoint,
+      wal_checkpoint_buffer_sz,
+      wal_checkpoint_timeout_sec,
+      wal_savepoint_timeout_sec,
+      wal_wal_buffer_sz,
+      document_buffer_sz,
+      sort_buffer_sz,
+      http_enabled,
+      http_access_token,
+      http_bind,
+      http_max_body_size,
+      http_port,
+      http_read_anon
+    ];
     jb._port().send(args);
     return completer.future;
   }
@@ -456,6 +458,17 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     _port().send([replyPort.sendPort, 'del', hdb, collection, id]);
     return completer.future;
   }
+
+  /// Remove document idenfied by [id] from [collection].
+  /// Doesn't raise error if document is not found.
+  Future<void> delIgnoreNotFound(String collection, int id) =>
+      del(collection, id).catchError((err) {
+        if (err is EJDB2Error && err.notFound) {
+          return Future.value();
+        } else {
+          return Future.error(err);
+        }
+      });
 
   Future<void> renameCollection(String oldCollection, String newCollectionName) {
     final hdb = _get_handle();
@@ -592,8 +605,6 @@ class EJDB2 extends NativeFieldWrapperClass2 {
   void _set_handle(int handle) native 'set_handle';
 
   int _get_handle() native 'get_handle';
-
-  EJDB2._();
 }
 
 String _asJsonString(Object val) {
