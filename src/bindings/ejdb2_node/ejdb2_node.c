@@ -741,7 +741,7 @@ finish:
 }
 
 // collection, json, id
-static napi_value jn_put_patch(napi_env env, napi_callback_info info, bool patch) {
+static napi_value jn_put_patch(napi_env env, napi_callback_info info, bool patch, bool upsert) {
   iwrc rc = 0;
   napi_status ns = 0;
   napi_value this, argv[3] = {0};
@@ -784,11 +784,15 @@ finish:
 }
 
 static napi_value jn_put(napi_env env, napi_callback_info info) {
-  return jn_put_patch(env, info, false);
+  return jn_put_patch(env, info, false, false);
 }
 
 static napi_value jn_patch(napi_env env, napi_callback_info info) {
-  return jn_put_patch(env, info, true);
+  return jn_put_patch(env, info, true, false);
+}
+
+static napi_value jn_patch_or_put(napi_env env, napi_callback_info info) {
+  return jn_put_patch(env, info, true, true);
 }
 
 //  ---------------- EJDB2.get()
@@ -1988,6 +1992,7 @@ napi_value Init(napi_env env, napi_value exports) {
     JNFUNC(close),
     JNFUNC(put),
     JNFUNC(patch),
+    JNFUNC(patch_or_put),
     JNFUNC(get),
     JNFUNC(del),
     JNFUNC(rename_collection),

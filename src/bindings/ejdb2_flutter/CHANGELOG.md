@@ -1,3 +1,15 @@
+## 1.0.8+1
+
+* Added `patchOrPut()`
+
+## 1.0.7+1
+
+* Added `delIgnoreNotFound()`
+
+## 1.0.6+1
+
+* Upgraded to ejdb v2.0.32
+
 ## 1.0.5+1
 
 * Upgraded to ejdb v2.0.31

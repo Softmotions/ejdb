@@ -1,3 +1,16 @@
+ejdb2 (2.0.33) testing; urgency=medium
+
+  * Added ejdb_merge_or_put atomic method #268
+  * Added getOrNull to node/react bindings
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 04 Dec 2019 17:34:01 +0700
+
+ejdb2 (2.0.32) testing; urgency=medium
+
+  * Upgraded to iowow v1.3.31
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 04 Dec 2019 17:33:20 +0700
+
 ejdb2 (2.0.31) testing; urgency=medium
 
   * Upgraded to iowow v1.3.30

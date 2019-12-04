@@ -356,7 +356,12 @@ public final class EJDB2Plugin implements MethodCallHandler, StreamHandler {
     String coll = asString(mc.args[1], null);
     String json = asString(mc.args[2], null);
     long id = asLong(mc.args[3], 0);
-    mc.getDb().patch(coll, json, id);
+    boolean upsert = asBoolean(mc.args[4], false);
+    if (upsert) {
+      mc.getDb().patchOrPut(coll, json, id);
+    } else {
+      mc.getDb().patch(coll, json, id);
+    }
     mc.successOnMainThread(null);
   }
 

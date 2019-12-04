@@ -1138,19 +1138,16 @@ finish:
   return rc;
 }
 
-iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
+static iwrc _jb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id, bool upsert) {
   if (!patchjson) {
     return IW_ERROR_INVALID_ARGS;
-  }
-  IWPOOL *pool = iwpool_create(1024); // FIXME
-  if (!pool) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   int rci;
   JBCOLL jbc;
   struct _JBL sjbl;
   JBL_NODE root, patch;
   JBL ujbl = 0;
+  IWPOOL *pool = 0;
   IWKV_val val = {0};
   IWKV_val key = {
     .data = &id,
@@ -1161,10 +1158,28 @@ iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
   RCGO(rc, finish);
 
   rc = iwkv_get(jbc->cdb, &key, &val);
-  RCGO(rc, finish);
+  if (upsert && rc == IWKV_ERROR_NOTFOUND) {
+    rc = jbl_from_json(&ujbl, patchjson);
+    RCGO(rc, finish);
+    if (jbl_type(ujbl) != JBV_OBJECT) {
+      rc = EJDB_ERROR_PATCH_JSON_NOT_OBJECT;
+      goto finish;
+    }
+    rc = _jb_put_impl(jbc, ujbl, id);
+    if (!rc && jbc->id_seq < id) {
+      jbc->id_seq = id;
+    }
+    goto finish;
+  } else RCGO(rc, finish);
 
   rc = jbl_from_buf_keep_onstack(&sjbl, val.data, val.size);
   RCGO(rc, finish);
+
+  pool = iwpool_create(512);
+  if (!pool) {
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    goto finish;
+  }
 
   rc = jbl_to_node(&sjbl, &root, pool);
   RCGO(rc, finish);
@@ -1192,10 +1207,18 @@ iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
 
 finish:
   API_COLL_UNLOCK(jbc, rci, rc);
-  iwpool_destroy(pool);
   if (ujbl) jbl_destroy(&ujbl);
+  if (pool) iwpool_destroy(pool);
   if (val.data) iwkv_val_dispose(&val);
   return rc;
+}
+
+iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
+  return _jb_patch(db, coll, patchjson, id, false);
+}
+
+iwrc ejdb_merge_or_put(EJDB db, const char *coll, const char *patchjson, int64_t id) {
+  return _jb_patch(db, coll, patchjson, id, true);
 }
 
 iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id) {
@@ -1674,6 +1697,8 @@ static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
       return "Collection not found (EJDB_ERROR_COLLECTION_NOT_FOUND)";
     case EJDB_ERROR_TARGET_COLLECTION_EXISTS:
       return "Target collection exists (EJDB_ERROR_TARGET_COLLECTION_EXISTS)";
+    case EJDB_ERROR_PATCH_JSON_NOT_OBJECT:
+      return "Patch JSON must be an object (map) (EJDB_ERROR_PATCH_JSON_NOT_OBJECT)";
   }
   return 0;
 }

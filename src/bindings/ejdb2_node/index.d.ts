@@ -362,9 +362,15 @@ declare namespace ejdb2_node {
     put(collection: String, json: object | string, id?: number): Promise<number>;
 
     /**
-     * Apply rfc6902/rfc6901 JSON [patch] to the document identified by [id].
+     * Apply rfc6902/rfc7386 JSON [patch] to the document identified by [id].
      */
     patch(collection: string, json: object | string, id: number): Promise<void>;
+
+    /**
+     * Apply JSON merge patch (rfc7396) to the document identified by `id` or
+     * insert new document under specified `id`.
+     */
+    patchOrPut(collection: string, json: object | string, id: number): Promise<void>;
 
     /**
      * Get json body of document identified by [id] and stored in [collection].
@@ -373,6 +379,13 @@ declare namespace ejdb2_node {
      * Not found error can be detected by {@link JBE.isNotFound}
      */
     get(collection: string, id: number): Promise<object>;
+
+    /**
+     * Get json body of document identified by [id] and stored in [collection].
+     *
+     * If document with given `id` is not found then `null` will be resoved.
+     */
+    getOrNull(collection: string, id: number): Promise<object|null>;
 
     /**
      * Get json body with database metadata.
