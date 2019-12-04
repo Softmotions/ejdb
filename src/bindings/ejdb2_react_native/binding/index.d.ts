@@ -282,6 +282,12 @@ declare namespace ejdb2_react_native {
     patch(collection: string, json: object | string, id: number): Promise<void>;
 
     /**
+     * Apply JSON merge patch (rfc7396) to the document identified by `id` or
+     * insert new document under specified `id`.
+     */
+    patchOrPut(collection: string, json: object | string, id: number): Promise<void>;
+
+    /**
      * Get json body of document identified by [id] and stored in [collection].
      *
      * If document with given `id` is not found then `Error` will be thrown.

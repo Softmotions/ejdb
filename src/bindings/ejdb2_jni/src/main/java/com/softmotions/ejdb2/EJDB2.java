@@ -144,7 +144,15 @@ public final class EJDB2 implements AutoCloseable {
    * @throws EJDB2Exception
    */
   public void patch(String collection, String patch, long id) throws EJDB2Exception {
-    _patch(collection, patch, id);
+    _patch(collection, patch, id, false);
+  }
+
+  /**
+   * Apply JSON merge patch (rfc7396) to the document identified by `id` or
+   * insert new document under specified `id`.
+   */
+  public void patchOrPut(String collection, String patch, long id) {
+    _patch(collection, patch, id, true);
   }
 
   /**
@@ -381,7 +389,7 @@ public final class EJDB2 implements AutoCloseable {
 
   private native void _rename_collection(String oldCollectionName, String newCollectionName) throws EJDB2Exception;
 
-  private native void _patch(String collection, String patch, long id) throws EJDB2Exception;
+  private native void _patch(String collection, String patch, long id, boolean upsert) throws EJDB2Exception;
 
   private native void _get(String collection, long id, OutputStream out, boolean pretty) throws EJDB2Exception;
 

@@ -1021,7 +1021,7 @@ static void ejd_patch_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
   Dart_CObject result = {.type = Dart_CObject_kArray};
 
   int c = 2;
-  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 4 + c)  {
+  if (msg->type != Dart_CObject_kArray || msg->value.as_array.length != 5 + c)  {
     rc = EJD_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
   }
@@ -1043,7 +1043,14 @@ static void ejd_patch_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
   int64_t id = cobject_int(msg->value.as_array.values[c++], true, &rc);
   RCGO(rc, finish);
 
-  rc = ejdb_patch(db, coll, patch, id);
+  bool upsert = cobject_bool(msg->value.as_array.values[c++], true, &rc);
+  RCGO(rc, finish);
+
+  if (upsert) {
+    rc = ejdb_merge_or_put(db, coll, patch, id);
+  } else {
+    rc = ejdb_patch(db, coll, patch, id);
+  }
 
 finish:
   if (rc) {

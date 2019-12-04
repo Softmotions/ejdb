@@ -500,7 +500,8 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1patch(JNIEnv *env,
                                                                 jobject thisObj,
                                                                 jstring coll_,
                                                                 jstring patch_,
-                                                                jlong id) {
+                                                                jlong id,
+                                                                jboolean upsert) {
   iwrc rc;
   EJDB db;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
@@ -512,7 +513,11 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1patch(JNIEnv *env,
   rc = jbn_db(env, thisObj, &db);
   RCGO(rc, finish);
 
-  rc = ejdb_patch(db, coll, patch, (int64_t) id);
+  if (upsert) {
+    rc = ejdb_merge_or_put(db, coll, patch, (int64_t) id);
+  } else {
+    rc = ejdb_patch(db, coll, patch, (int64_t) id);
+  }
 
 finish:
   if (coll) {

@@ -368,13 +368,19 @@ class EJDB2 {
       .then((v) => v as int));
 
   /// Apply rfc6902/rfc6901 JSON [patch] to the document identified by [id].
-  Future<void> patch(String collection, dynamic json, int id) =>
+  Future<void> patch(String collection, dynamic json, int id, [bool upsert = false]) =>
       Future.sync(() => _mc.invokeMethod('patch', [
             _handle,
             collection,
             (json is! String) ? convert_lib.jsonEncode(json) : json as String,
-            id
+            id,
+            upsert
           ]).catchError(_handleError));
+
+  /// Apply JSON merge patch (rfc7396) to the document identified by `id` or
+  /// insert new document under specified `id`.
+  Future<void> patchOrPut(String collection, dynamic json, int id) =>
+      patch(collection, json, id, true);
 
   /// Get json body of document identified by [id] and stored in [collection].
   /// Throws [EJDB2Error] not found exception if document is not found.

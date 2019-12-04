@@ -180,7 +180,7 @@ class JQL extends NativeFieldWrapperClass2 {
 
   /// Set [json] at the specified [placeholder].
   /// [placeholder] can be either `string` or `int`
-  JQL setJson(dynamic placeholder, Object json) {
+  JQL setJson(dynamic placeholder, dynamic json) {
     _checkPlaceholder(placeholder);
     ArgumentError.checkNotNull(json);
     _set(placeholder, _asJsonString(json), 1);
@@ -364,7 +364,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
 
   /// Save [json] document under specified [id] or create a document
   /// with new generated `id`. Returns future holding actual document `id`.
-  Future<int> put(String collection, Object json, [int id]) {
+  Future<int> put(String collection, dynamic json, [int id]) {
     final hdb = _get_handle();
     if (hdb == null) {
       return Future.error(EJDB2Error.invalidState());
@@ -383,7 +383,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
   }
 
   /// Apply rfc6902/rfc7386 JSON [patch] to the document identified by [id].
-  Future<void> patch(String collection, Object patch, int id) {
+  Future<void> patch(String collection, dynamic patchObj, int id, [bool upsert = false]) {
     final hdb = _get_handle();
     if (hdb == null) {
       return Future.error(EJDB2Error.invalidState());
@@ -397,9 +397,15 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send([replyPort.sendPort, 'patch', hdb, collection, _asJsonString(patch), id]);
+    _port()
+        .send([replyPort.sendPort, 'patch', hdb, collection, _asJsonString(patchObj), id, upsert]);
     return completer.future;
   }
+
+  /// Apply JSON merge patch (rfc7396) to the document identified by `id` or
+  /// insert new document under specified `id`.
+  Future<void> patchOrPut(String collection, dynamic patchObj, int id) =>
+      patch(collection, patch, id, true);
 
   /// Get json body of document identified by [id] and stored in [collection].
   /// Throws [EJDB2Error] not found exception if document is not found.

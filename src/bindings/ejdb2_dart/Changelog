@@ -1,6 +1,10 @@
+ejdb_dart (1.0.41)
+
+  * Added `patchOrPut()`
+
 ejdb_dart (1.0.40)
 
-  * Added delIgnoreNotFound()
+  * Added `delIgnoreNotFound()`
 
 ejdb_dart (1.0.39)
 

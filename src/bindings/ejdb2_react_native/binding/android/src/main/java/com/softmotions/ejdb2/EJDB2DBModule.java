@@ -128,6 +128,14 @@ public class EJDB2DBModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void patchOrPut(Integer handle, String collection, String json, Integer id, Promise promise) {
+    thread(handle, promise, db -> {
+      db.patchOrPut(collection, json, id.longValue());
+      promise.resolve(null);
+    });
+  }
+
+  @ReactMethod
   public void get(Integer handle, String collection, Integer id, Promise promise) {
     thread(handle, promise, db -> promise.resolve(db.getAsString(collection, id.longValue())));
   }

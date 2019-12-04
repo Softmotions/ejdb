@@ -532,6 +532,19 @@ class EJDB2 {
   }
 
   /**
+   * Apply JSON merge patch (rfc7396) to the document identified by `id` or
+   * insert new document under specified `id`.
+   *
+   * @param {String} collection
+   * @param {Object|string} json
+   * @param {number} id
+   * @return {Promise<void>}
+   */
+  patchOrPut(collection, json, id) {
+    return this._impl.patch_or_put(collection, json, id);
+  }
+
+  /**
    * Get json body of document identified by [id] and stored in [collection].
    *
    * @param {String} collection
