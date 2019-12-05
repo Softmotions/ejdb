@@ -1,3 +1,7 @@
+## 1.0.9+1
+
+* Reduced library size by 400K: stripped off unused utf8proc data
+
 ## 1.0.8+1
 
 * Added `patchOrPut()`
