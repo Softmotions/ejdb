@@ -1,3 +1,9 @@
+ejdb2 (2.0.34) testing; urgency=medium
+
+  * Reduced library size by 400K: stripped off unused utf8proc data
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 05 Dec 2019 12:01:59 +0700
+
 ejdb2 (2.0.33) testing; urgency=medium
 
   * Added ejdb_merge_or_put atomic method #268
