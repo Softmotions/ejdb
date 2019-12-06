@@ -70,8 +70,24 @@ public struct EJDB2Builder {
     return self
   }
 
-  mutating func withCheckCRCOnCheckpoint(v: Bool = true) {
-    walCheckCRCOnCheckpoint = v;
+  mutating func withWalCheckCRCOnCheckpoint(v: Bool = true) -> EJDB2Builder {
+    walCheckCRCOnCheckpoint = v
+    return self;
+  }
+
+  mutating func withWalCheckpointBufferSize(v: Int) -> EJDB2Builder {
+    walCheckpointBufferSize = v
+    return self;
+  }
+
+  mutating func withWalCheckpointTimeout(v: Int) -> EJDB2Builder {
+    walCheckpointTimeout = v
+    return self;
+  }
+
+  mutating func withWalBufferSize(v: Int) -> EJDB2Builder {
+    walBufferSize = v
+    return self;
   }
 }
 
