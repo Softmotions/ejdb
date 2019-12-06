@@ -55,19 +55,23 @@ public struct EJDB2Builder {
     self.path = path
   }
 
-  mutating func withReadonly() -> EJDB2Builder {
-    readonly = true
+  mutating func withReadonly(v: Bool = true) -> EJDB2Builder {
+    readonly = v
     return self
   }
 
-  mutating func withTruncate() -> EJDB2Builder {
-    truncate = true
+  mutating func withTruncate(v: Bool = true) -> EJDB2Builder {
+    truncate = v
     return self
   }
 
-  mutating func withWalDisabled() -> EJDB2Builder {
-    walEnabled = false
+  mutating func withWalEnabled(v: Bool = true) -> EJDB2Builder {
+    walEnabled = v
     return self
+  }
+
+  mutating func withCheckCRCOnCheckpoint(v: Bool = true) {
+    walCheckCRCOnCheckpoint = v;
   }
 }
 
