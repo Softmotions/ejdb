@@ -155,6 +155,15 @@ void main() async {
   json = await db.info();
   assert(json.contains('"collections":[]'));
 
+  // Check apply
+  await db.put(
+      'apply1', {'tx_hash': 'ed36cfd14a4fe29b16c511d68a8be89e42dcc6e4ced69d04f318448a2b8fafa0'});
+  doc = await db
+      .createQuery('/[tx_hash = :?] | apply :?', 'apply1')
+      .setString(0, 'ed36cfd14a4fe29b16c511d68a8be89e42dcc6e4ced69d04f318448a2b8fafa0')
+      .setJson(1, {'status': 'completed'}).firstRequired();
+  assert(doc.object['status'] == 'completed');
+
   /// Test get limit
   q = db.createQuery('@c1/* | limit 1');
   assert(q.limit == 1);

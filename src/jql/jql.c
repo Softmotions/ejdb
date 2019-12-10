@@ -1242,7 +1242,7 @@ const char *jql_first_anchor(JQL q) {
 }
 
 bool jql_has_apply(JQL q) {
-  return q->aux->apply || (q->aux->qmode & JQP_QRY_APPLY_DEL);
+  return q->aux->apply || q->aux->apply_placeholder || (q->aux->qmode & JQP_QRY_APPLY_DEL);
 }
 
 bool jql_has_apply_delete(JQL q) {
@@ -1435,7 +1435,13 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
 //----------------------------------
 
 iwrc jql_apply(JQL q, JBL_NODE root, IWPOOL *pool) {
-  if (q->aux->apply) {
+  if (q->aux->apply_placeholder) {
+    JQVAL *pv = _jql_find_placeholder(q, q->aux->apply_placeholder);
+    if (!pv || pv->type != JQVAL_JBLNODE || !pv->vnode) {
+      return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
+    }
+    return jbl_patch_auto(root, pv->vnode, pool);
+  } else if (q->aux->apply) {
     return jbl_patch_auto(root, q->aux->apply, pool);
   } else {
     return 0;
@@ -1453,13 +1459,13 @@ iwrc jql_project(JQL q, JBL_NODE root) {
 iwrc jql_apply_and_project(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool) {
   *out = 0;
   JQP_AUX *aux = q->aux;
-  if (!aux->apply && !aux->projection) {
+  if (!(aux->apply || aux->apply_placeholder || aux->projection)) {
     return 0;
   }
   JBL_NODE root;
   iwrc rc = jbl_to_node(jbl, &root, pool);
   RCRET(rc);
-  if (aux->apply) {
+  if (aux->apply || aux->apply_placeholder) {
     rc = jql_apply(q, root, pool);
     RCRET(rc);
   }
@@ -1501,6 +1507,8 @@ static const char *_ecodefn(locale_t locale, uint32_t ecode) {
       return "Reached max number of asc/desc order clauses: 64 (JQL_ERROR_ORDERBY_MAX_LIMIT)";
     case JQL_ERROR_NO_COLLECTION:
       return "No collection specified in query (JQL_ERROR_NO_COLLECTION)";
+    case JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE:
+      return "Invalid type of placeholder value (JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE)";
     default:
       break;
   }

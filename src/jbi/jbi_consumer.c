@@ -58,7 +58,7 @@ start: {
       .id = id,
       .raw = &jbl
     };
-    if (aux->apply || aux->projection) {
+    if (aux->apply || aux->apply_placeholder || aux->projection) {
       JBL_NODE root;
       if (!pool) {
         pool = iwpool_create(jbl.bn.size * 2);
@@ -76,7 +76,7 @@ start: {
         } else {
           rc = jb_del(ctx->jbc, &jbl, id);
         }
-      } else if (aux->apply) {
+      } else if (aux->apply || aux->apply_placeholder) {
         struct _JBL sn = {0};
         rc = jql_apply(q, root, pool);
         RCGO(rc, finish);

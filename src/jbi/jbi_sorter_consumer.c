@@ -64,7 +64,7 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
   if (aux->qmode & JQP_QRY_APPLY_DEL) {
     rc = jb_del(ctx->jbc, jbl, doc->id);
     RCRET(rc);
-  } else if (aux->apply) {
+  } else if (aux->apply || aux->apply_placeholder) {
     struct _JBL sn = {0};
     rc = jql_apply(q, root, pool);
     RCRET(rc);

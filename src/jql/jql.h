@@ -59,6 +59,7 @@ typedef enum {
   JQL_ERROR_LIMIT_ALREADY_SET,    /**< Limit clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
   JQL_ERROR_ORDERBY_MAX_LIMIT,    /**< Reached max number of asc/desc order clauses: 64 (JQL_ERROR_ORDERBY_MAX_LIMIT) */
   JQL_ERROR_NO_COLLECTION,        /**< No collection specified in query (JQL_ERROR_NO_COLLECTION) */
+  JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE, /**< Invalid type of placeholder value (JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE) */
   _JQL_ERROR_END,
   _JQL_ERROR_UNMATCHED
 } jql_ecode_t;
