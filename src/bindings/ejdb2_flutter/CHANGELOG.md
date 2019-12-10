@@ -1,3 +1,7 @@
+## 1.0.10+1
+
+* Fixed JQL apply ignores value set by placeholder #269
+
 ## 1.0.9+1
 
 * Reduced library size by 400K: stripped off unused utf8proc data
