@@ -1,3 +1,7 @@
+ejdb_dart (1.0.42)
+
+  * Fixed JQL apply ignores value set by placeholder #269
+
 ejdb_dart (1.0.41)
 
   * Added `patchOrPut()`

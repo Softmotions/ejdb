@@ -1,3 +1,9 @@
+ejdb2 (2.0.35) testing; urgency=medium
+
+  * FIXED: JQL apply ignores value set by placeholder (#269)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 10 Dec 2019 21:12:43 +0700
+
 ejdb2 (2.0.34) testing; urgency=medium
 
   * Reduced library size by 400K: stripped off unused utf8proc data
