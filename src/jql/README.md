@@ -515,9 +515,9 @@ by time of its insertion in descendant order, unless you don't use query sorting
 
 ### 2. Performance Tip
 
-In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any case.
+In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any way.
 
 
 ### 3. Performance Tip
 
-If you'd like update some set of documents with `apply` or `del` operations but don't want fetching all of them as result of you query - just add `count` modifier to the query to get rid of unnecessary data transferring and json data conversion.
+If you'd like update some set of documents with `apply` or `del` operations but don't want fetching all of them as result of query - just add `count` modifier to the query to get rid of unnecessary data transferring and json data conversion.
