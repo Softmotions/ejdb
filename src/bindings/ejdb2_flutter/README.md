@@ -13,7 +13,7 @@ pubspec.yaml
 
 ```yaml
 dependencies:
-  ejdb2_flutter: ^1.0.3+1
+  ejdb2_flutter: ^1.0.10+1
 ```
 
 ```dart
