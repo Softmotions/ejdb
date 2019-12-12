@@ -1,4 +1,5 @@
 import EJDB2
+import Foundation
 
 public enum EJDB2Swift {
 
@@ -12,9 +13,28 @@ public enum EJDB2Swift {
 }
 
 /// EJDB2 document items
-public struct JBDOC {
-  let id: Int64
-  let json: String
+public struct JBDOC: CustomStringConvertible {
+  public let id: Int64
+  public let json: String
+  var _object: Any? = nil
+
+  public var description: String {
+    return "JBDOC: \(id) \(json)"
+  }
+
+  public var object: Any? {
+    mutating get {
+      if _object != nil {
+        return _object
+      }
+      let data = json.data(using: String.Encoding.utf8)!
+      do {
+        self._object = try JSONSerialization.jsonObject(with: data)
+      } catch {  // ignored
+      }
+      return _object
+    }
+  }
 
   public init(id: Int64, json: String) {
     self.id = id
@@ -72,22 +92,22 @@ public struct EJDB2Builder {
 
   mutating func withWalCheckCRCOnCheckpoint(v: Bool = true) -> EJDB2Builder {
     walCheckCRCOnCheckpoint = v
-    return self;
+    return self
   }
 
   mutating func withWalCheckpointBufferSize(v: Int) -> EJDB2Builder {
     walCheckpointBufferSize = v
-    return self;
+    return self
   }
 
   mutating func withWalCheckpointTimeout(v: Int) -> EJDB2Builder {
     walCheckpointTimeout = v
-    return self;
+    return self
   }
 
   mutating func withWalBufferSize(v: Int) -> EJDB2Builder {
     walBufferSize = v
-    return self;
+    return self
   }
 }
 
