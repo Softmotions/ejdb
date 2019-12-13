@@ -241,7 +241,7 @@ public struct EJDB2Builder {
         port: httpPort ?? 0,
         bind: httpBind,
         access_token: httpAccessToken,
-        access_token_len: 0,
+        access_token_len: httpAccessToken?.lengthOfBytes(using: String.Encoding.utf8) ?? 0,
         blocking: httpBlocking ?? false,
         read_anon: httpReadAnon ?? false,
         max_body_size: Int(httpMaxBodySize ?? 0)
