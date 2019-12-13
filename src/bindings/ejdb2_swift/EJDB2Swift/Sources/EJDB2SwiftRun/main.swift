@@ -1,5 +1,12 @@
-import Foundation
 import EJDB2Swift
+import Foundation
 
-let doc = JBDOC(id: 1, json: "{}")
 print("EJDB2 version: \(EJDB2Swift.version)")
+
+do {
+  let db = try EJDB2Builder("swift.db").open()
+
+  db.close()
+} catch {
+  print("Unexpected error: \(error).")
+}
