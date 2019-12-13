@@ -12,6 +12,10 @@ public enum EJDB2Swift {
   }
 }
 
+func SWRC(_ rc: UInt64) throws {
+  guard rc == 0 else { throw EJDB2Error(rc) }
+}
+
 /// EJDB2 error code
 public struct EJDB2Error: CustomStringConvertible, Error {
 
@@ -251,26 +255,50 @@ public class EJDB2Builder {
   }
 }
 
-/// EJDB2
-public class EJDB2 {
+class JBL {
 
-  private(set) var handle: OpaquePointer?
-
-  init(_ builder: EJDB2Builder) throws {
-    var opts = builder.opts
-    let rc = ejdb_open(&opts, &handle)
-    guard rc == 0 else { throw EJDB2Error(rc) }
-  }
-
-
-
-  public func close() {
-    if handle != nil {
-      ejdb_close(&handle)
-    }
+  init(_ data: String) throws {
+    try SWRC(jbl_from_json(&handle, data))
   }
 
   deinit {
-    close()
+    if handle != nil {
+      jbl_destroy(&handle)
+    }
+  }
+
+  var handle: OpaquePointer?
+}
+
+/// EJDB2
+public class EJDB2 {
+
+  init(_ builder: EJDB2Builder) throws {
+    var opts = builder.opts
+    try SWRC(ejdb_open(&opts, &handle))
+  }
+
+  deinit {
+    try? close()
+  }
+
+  private(set) var handle: OpaquePointer?
+
+  public func put(_ coll: String, _ json: String, _ id: Int64 = 0) throws -> Int64 {
+    let jbl = try JBL(json)
+    if id == 0 {
+      var oid: Int64 = 0
+      try SWRC(ejdb_put_new(handle, coll, jbl.handle, &oid))
+      return oid
+    } else {
+      try SWRC(ejdb_put(handle, coll, jbl.handle, id))
+      return id
+    }
+  }
+
+  public func close() throws {
+    if handle != nil {
+      try SWRC(ejdb_close(&handle))
+    }
   }
 }
