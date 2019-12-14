@@ -9,7 +9,7 @@ do {
     try? db.close()
   }
 
-  let id = try db.put("foo", "{\"foo\": \"bar\"}")
+  let id = try db.put("foo", #"{"foo": "bar"}"#)
   print("ID: \(id)")
 
   print("Good!")
