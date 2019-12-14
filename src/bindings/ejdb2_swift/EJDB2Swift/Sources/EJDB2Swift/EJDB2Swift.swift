@@ -57,7 +57,7 @@ public class JBDOC: CustomStringConvertible {
     if _object != nil {
       return _object
     }
-    let data = json.data(using: String.Encoding.utf8)!
+    let data = json.data(using: .utf8)!
     do {
       self._object = try JSONSerialization.jsonObject(with: data)
     } catch {  // ignored
@@ -257,8 +257,17 @@ public class EJDB2Builder {
 
 class JBL {
 
-  init(_ data: String) throws {
-    try SWRC(jbl_from_json(&handle, data))
+  init(_ data: Any) throws {
+    let _data: String
+    switch data {
+    case is String:
+      _data = data as! String
+    case is Data:
+      _data = String(data: data as! Data, encoding: .utf8)!
+    default:
+      _data = String(data: try JSONSerialization.data(withJSONObject: data), encoding: .utf8)!
+    }
+    try SWRC(jbl_from_json(&handle, _data))
   }
 
   deinit {
@@ -284,7 +293,7 @@ public class EJDB2 {
 
   private(set) var handle: OpaquePointer?
 
-  public func put(_ coll: String, _ json: String, _ id: Int64 = 0) throws -> Int64 {
+  public func put(_ coll: String, _ json: Any, _ id: Int64 = 0) throws -> Int64 {
     let jbl = try JBL(json)
     if id == 0 {
       var oid: Int64 = 0
