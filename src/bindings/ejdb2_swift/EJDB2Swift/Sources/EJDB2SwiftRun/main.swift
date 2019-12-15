@@ -15,6 +15,9 @@ do {
   id = try db.put("foo", ["foo": "bar"])
   print("ID: \(id)")
 
+  let res = try db.get("foo", 1)
+  print("\(res)")
+
   print("Good!")
 } catch {
   print("Unexpected error: \(error).")

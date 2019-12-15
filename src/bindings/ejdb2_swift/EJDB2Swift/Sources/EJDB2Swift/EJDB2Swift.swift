@@ -16,6 +16,17 @@ func SWRC(_ rc: UInt64) throws {
   guard rc == 0 else { throw EJDB2Error(rc) }
 }
 
+func toJsonString(_ data: Any) throws -> String {
+  switch data {
+  case is String:
+    return data as! String
+  case is Data:
+    return String(data: data as! Data, encoding: .utf8)!
+  default:
+    return String(data: try JSONSerialization.data(withJSONObject: data), encoding: .utf8)!
+  }
+}
+
 /// EJDB2 error code
 public struct EJDB2Error: CustomStringConvertible, Error {
 
@@ -40,9 +51,14 @@ public struct EJDB2Error: CustomStringConvertible, Error {
 /// EJDB2 document items
 public class JBDOC: CustomStringConvertible {
 
-  public init(id: Int64, json: String) {
+  public init(_ id: Int64, json: String) {
     self.id = id
     self.json = json
+  }
+
+  init(_ id: Int64, jbl: JBLW) throws {
+    self.id = id
+    self.json = try jbl.toString()
   }
 
   public let id: Int64
@@ -255,19 +271,17 @@ public class EJDB2Builder {
   }
 }
 
-class JBL {
+class JBLW {
+
+  init() {
+  }
 
   init(_ data: Any) throws {
-    let _data: String
-    switch data {
-    case is String:
-      _data = data as! String
-    case is Data:
-      _data = String(data: data as! Data, encoding: .utf8)!
-    default:
-      _data = String(data: try JSONSerialization.data(withJSONObject: data), encoding: .utf8)!
-    }
-    try SWRC(jbl_from_json(&handle, _data))
+    try SWRC(jbl_from_json(&handle, toJsonString(data)))
+  }
+
+  init(_ raw: OpaquePointer?) {
+    self.handle = raw
   }
 
   deinit {
@@ -277,6 +291,15 @@ class JBL {
   }
 
   var handle: OpaquePointer?
+
+  func toString() throws -> String {
+    let xstr = iwxstr_new()
+    defer {
+      iwxstr_destroy(xstr)
+    }
+    try SWRC(jbl_as_json(handle, jbl_xstr_json_printer, UnsafeMutableRawPointer(xstr), 0))
+    return String(cString: iwxstr_ptr(xstr))
+  }
 }
 
 /// EJDB2
@@ -293,16 +316,22 @@ public class EJDB2 {
 
   private(set) var handle: OpaquePointer?
 
-  public func put(_ coll: String, _ json: Any, _ id: Int64 = 0) throws -> Int64 {
-    let jbl = try JBL(json)
+  public func put(_ collection: String, _ json: Any, _ id: Int64 = 0) throws -> Int64 {
+    let jbl = try JBLW(json)
     if id == 0 {
       var oid: Int64 = 0
-      try SWRC(ejdb_put_new(handle, coll, jbl.handle, &oid))
+      try SWRC(ejdb_put_new(handle, collection, jbl.handle, &oid))
       return oid
     } else {
-      try SWRC(ejdb_put(handle, coll, jbl.handle, id))
+      try SWRC(ejdb_put(handle, collection, jbl.handle, id))
       return id
     }
+  }
+
+  public func get(_ collection: String, _ id: Int64) throws -> JBDOC {
+    let jbl = JBLW()
+    try SWRC(ejdb_get(handle, collection, id, &jbl.handle))
+    return try JBDOC(id, jbl: jbl)
   }
 
   public func close() throws {
