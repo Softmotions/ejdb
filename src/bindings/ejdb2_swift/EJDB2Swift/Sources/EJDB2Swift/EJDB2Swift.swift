@@ -345,12 +345,14 @@ class SWJQL {
   private(set) var handle: OpaquePointer?
 
   public func setJson(_ placeholder: String, json: String) throws -> SWJQL {
-    try SWRC(jql_set_json(handle, placeholder, 0, SWJBLNODE(json).handle))
+    let jbln = try SWJBLNODE(json)
+    try SWRC(jql_set_json(handle, placeholder, 0, jbln.handle))
     return self
   }
 
   public func setJson(_ index: Int32, json: String) throws -> SWJQL {
-    try SWRC(jql_set_json(handle, nil, index, SWJBLNODE(json).handle))
+    let jbln = try SWJBLNODE(json)
+    try SWRC(jql_set_json(handle, nil, index, jbln.handle))
     return self
   }
 }
