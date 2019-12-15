@@ -75,7 +75,8 @@ typedef uint8_t jql_create_mode_t;
 
 /**
  * @brief Create query object from specified text query.
- * @param pq Pointer to resulting query object
+ * @param qptr Pointer to resulting query object
+ * @param coll Optional collection name used to execute query
  * @param query Query text
  */
 IW_EXPORT WUR iwrc jql_create(JQL *qptr, const char *coll, const char *query);

@@ -56,7 +56,7 @@ public class JBDOC: CustomStringConvertible {
     self.json = json
   }
 
-  init(_ id: Int64, jbl: JBLW) throws {
+  init(_ id: Int64, jbl: SWJBL) throws {
     self.id = id
     self.json = try jbl.toString()
   }
@@ -271,7 +271,7 @@ public class EJDB2Builder {
   }
 }
 
-class JBLW {
+class SWJBL {
 
   init() {
   }
@@ -302,6 +302,59 @@ class JBLW {
   }
 }
 
+class SWJBLNODE {
+
+  init(_ data: Any) throws {
+    var done = false
+    pool = iwpool_create(255)
+    if pool == nil {
+      throw EJDB2Error(UInt64(IW_ERROR_ALLOC.rawValue))
+    }
+    defer {
+      if !done {
+        iwpool_destroy(pool)
+      }
+    }
+    let json = try toJsonString(data)
+    try SWRC(jbl_node_from_json(json, &handle, pool))
+    done = true
+  }
+
+  deinit {
+    if pool != nil {
+      iwpool_destroy(pool)
+    }
+  }
+
+  var handle: UnsafeMutablePointer<_JBL_NODE>?
+
+  var pool: OpaquePointer?
+
+}
+
+class SWJQL {
+
+  init(collection: String?, query: String) throws {
+    try SWRC(jql_create(&handle, collection, query))
+  }
+
+  deinit {
+    jql_destroy(&handle)
+  }
+
+  private(set) var handle: OpaquePointer?
+
+  public func setJson(_ placeholder: String, json: String) throws -> SWJQL {
+    try SWRC(jql_set_json(handle, placeholder, 0, SWJBLNODE(json).handle))
+    return self
+  }
+
+  public func setJson(_ index: Int32, json: String) throws -> SWJQL {
+    try SWRC(jql_set_json(handle, nil, index, SWJBLNODE(json).handle))
+    return self
+  }
+}
+
 /// EJDB2
 public class EJDB2 {
 
@@ -317,7 +370,7 @@ public class EJDB2 {
   private(set) var handle: OpaquePointer?
 
   public func put(_ collection: String, _ json: Any, _ id: Int64 = 0) throws -> Int64 {
-    let jbl = try JBLW(json)
+    let jbl = try SWJBL(json)
     if id == 0 {
       var oid: Int64 = 0
       try SWRC(ejdb_put_new(handle, collection, jbl.handle, &oid))
@@ -329,7 +382,7 @@ public class EJDB2 {
   }
 
   public func get(_ collection: String, _ id: Int64) throws -> JBDOC {
-    let jbl = JBLW()
+    let jbl = SWJBL()
     try SWRC(ejdb_get(handle, collection, id, &jbl.handle))
     return try JBDOC(id, jbl: jbl)
   }
