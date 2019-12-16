@@ -49,7 +49,7 @@ public struct EJDB2Error: CustomStringConvertible, Error {
 }
 
 /// EJDB2 document items
-public class JBDOC: CustomStringConvertible {
+public final class JBDOC: CustomStringConvertible {
 
   public init(_ id: Int64, json: String) {
     self.id = id
@@ -76,14 +76,15 @@ public class JBDOC: CustomStringConvertible {
     let data = json.data(using: .utf8)!
     do {
       self._object = try JSONSerialization.jsonObject(with: data)
-    } catch {  // ignored
+    } catch {
+      // ignored since we can't declare props as throwable
     }
     return _object
   }
 }
 
 /// EJDB2 instance builder
-public class EJDB2Builder {
+public final class EJDB2Builder {
 
   /// Database path
   public let path: String
@@ -271,7 +272,8 @@ public class EJDB2Builder {
   }
 }
 
-class SWJBL {
+/// EJDB2 JBL Swift wrapper
+final class SWJBL {
 
   init() {
   }
@@ -302,7 +304,8 @@ class SWJBL {
   }
 }
 
-class SWJBLN {
+/// EJDB2 JBL_NODE Swift wrapper
+final class SWJBLN {
 
   init(_ data: Any) throws {
     var done = false
@@ -328,11 +331,11 @@ class SWJBLN {
 
   var handle: UnsafeMutablePointer<_JBL_NODE>?
 
-  var pool: OpaquePointer?
+  private var pool: OpaquePointer?
 
 }
 
-class SWJQL {
+final class SWJQL {
 
   init(collection: String?, query: String) throws {
     try SWRC(jql_create(&handle, collection, query))
@@ -358,7 +361,7 @@ class SWJQL {
 }
 
 /// EJDB2
-public class EJDB2 {
+public final class EJDB2 {
 
   init(_ builder: EJDB2Builder) throws {
     var opts = builder.opts
