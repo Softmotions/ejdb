@@ -396,6 +396,7 @@ public final class EJDB2 {
 
   // https://forums.swift.org/t/call-swift-function-by-pointer/21083
   // https://github.com/belozierov/SwiftCoroutine
+  // http://blog.j7mbo.com/using-async-await-in-swift-with-awaitkit/
 
   public func close() throws {
     if handle != nil {
