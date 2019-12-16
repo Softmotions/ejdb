@@ -12,6 +12,21 @@ public enum EJDB2Swift {
   }
 }
 
+func SWRC(_ rc: UInt64) throws {
+  guard rc == 0 else { throw EJDB2Error(rc) }
+}
+
+func toJsonString(_ data: Any) throws -> String {
+  switch data {
+  case is String:
+    return data as! String
+  case is Data:
+    return String(data: data as! Data, encoding: .utf8)!
+  default:
+    return String(data: try JSONSerialization.data(withJSONObject: data), encoding: .utf8)!
+  }
+}
+
 /// EJDB2 error code
 public struct EJDB2Error: CustomStringConvertible, Error {
 
@@ -34,11 +49,16 @@ public struct EJDB2Error: CustomStringConvertible, Error {
 }
 
 /// EJDB2 document items
-public struct JBDOC: CustomStringConvertible {
+public class JBDOC: CustomStringConvertible {
 
-  public init(id: Int64, json: String) {
+  public init(_ id: Int64, json: String) {
     self.id = id
     self.json = json
+  }
+
+  init(_ id: Int64, jbl: SWJBL) throws {
+    self.id = id
+    self.json = try jbl.toString()
   }
 
   public let id: Int64
@@ -50,166 +70,164 @@ public struct JBDOC: CustomStringConvertible {
   }
 
   public var object: Any? {
-    mutating get {
-      if _object != nil {
-        return _object
-      }
-      let data = json.data(using: String.Encoding.utf8)!
-      do {
-        self._object = try JSONSerialization.jsonObject(with: data)
-      } catch {  // ignored
-      }
+    if _object != nil {
       return _object
     }
+    let data = json.data(using: .utf8)!
+    do {
+      self._object = try JSONSerialization.jsonObject(with: data)
+    } catch {  // ignored
+    }
+    return _object
   }
 }
 
 /// EJDB2 instance builder
-public struct EJDB2Builder {
+public class EJDB2Builder {
 
   /// Database path
-  let path: String
+  public let path: String
 
   /// Open database in readonly mode
-  var readonly: Bool?
+  public var readonly: Bool?
 
   /// Truncate database on open
-  var truncate: Bool?
+  public var truncate: Bool?
 
   /// WAL enabled
-  var walEnabled: Bool?
+  public var walEnabled: Bool?
 
-  var walCheckCRCOnCheckpoint: Bool?
+  public var walCheckCRCOnCheckpoint: Bool?
 
-  var walCheckpointBufferSize: UInt64?
+  public var walCheckpointBufferSize: UInt64?
 
-  var walCheckpointTimeout: UInt32?
+  public var walCheckpointTimeout: UInt32?
 
-  var walSavepointTimeout: UInt32?
+  public var walSavepointTimeout: UInt32?
 
-  var walBufferSize: Int?
+  public var walBufferSize: Int?
 
-  var httpEnabled: Bool?
+  public var httpEnabled: Bool?
 
-  var httpPort: Int32?
+  public var httpPort: Int32?
 
-  var httpBind: String?
+  public var httpBind: String?
 
-  var httpAccessToken: String?
+  public var httpAccessToken: String?
 
-  var httpBlocking: Bool?
+  public var httpBlocking: Bool?
 
-  var httpReadAnon: Bool?
+  public var httpReadAnon: Bool?
 
-  var httpMaxBodySize: UInt32?
+  public var httpMaxBodySize: UInt32?
 
-  var documentBufferSize: UInt32?
+  public var documentBufferSize: UInt32?
 
-  var sortBufferSize: UInt32?
+  public var sortBufferSize: UInt32?
 
-  var randomSeed: UInt32?
+  public var randomSeed: UInt32?
 
-  var fileLockFailFast: Bool?
+  public var fileLockFailFast: Bool?
 
-  init(path: String) {
+  public init(_ path: String) {
     self.path = path
   }
 
-  mutating func withReadonly(v: Bool = true) -> EJDB2Builder {
+  public func withReadonly(_ v: Bool = true) -> EJDB2Builder {
     readonly = v
     return self
   }
 
-  mutating func withTruncate(v: Bool = true) -> EJDB2Builder {
+  public func withTruncate(_ v: Bool = true) -> EJDB2Builder {
     truncate = v
     return self
   }
 
-  mutating func withWalEnabled(v: Bool = true) -> EJDB2Builder {
-    walEnabled = v
+  public func withWalDisabled(_ v: Bool = true) -> EJDB2Builder {
+    walEnabled = !v
     return self
   }
 
-  mutating func withWalCheckCRCOnCheckpoint(v: Bool = true) -> EJDB2Builder {
+  public func withWalCheckCRCOnCheckpoint(_ v: Bool = true) -> EJDB2Builder {
     walCheckCRCOnCheckpoint = v
     return self
   }
 
-  mutating func withWalCheckpointBufferSize(v: UInt64) -> EJDB2Builder {
+  public func withWalCheckpointBufferSize(_ v: UInt64) -> EJDB2Builder {
     walCheckpointBufferSize = v
     return self
   }
 
-  mutating func withWalCheckpointTimeout(v: UInt32) -> EJDB2Builder {
+  public func withWalCheckpointTimeout(_ v: UInt32) -> EJDB2Builder {
     walCheckpointTimeout = v
     return self
   }
 
-  mutating func withWalBufferSize(v: Int) -> EJDB2Builder {
+  public func withWalBufferSize(_ v: Int) -> EJDB2Builder {
     walBufferSize = v
     return self
   }
 
-  mutating func withHttpEnabled(v: Bool = true) -> EJDB2Builder {
+  public func withHttpEnabled(_ v: Bool = true) -> EJDB2Builder {
     httpEnabled = v
     return self
   }
 
-  mutating func withHttpPort(v: Int32) -> EJDB2Builder {
+  public func withHttpPort(_ v: Int32) -> EJDB2Builder {
     httpPort = v
     return self
   }
 
-  mutating func withHttpBind(v: String) -> EJDB2Builder {
+  public func withHttpBind(_ v: String) -> EJDB2Builder {
     httpBind = v
     return self
   }
 
-  mutating func withHttpAccessToken(v: String) -> EJDB2Builder {
+  public func withHttpAccessToken(_ v: String) -> EJDB2Builder {
     httpAccessToken = v
     return self
   }
 
-  mutating func withHttpBlocking(v: Bool = true) -> EJDB2Builder {
+  public func withHttpBlocking(_ v: Bool = true) -> EJDB2Builder {
     httpBlocking = v
     return self
   }
 
-  mutating func withHttpReadAnon(v: Bool = true) -> EJDB2Builder {
+  public func withHttpReadAnon(_ v: Bool = true) -> EJDB2Builder {
     httpReadAnon = v
     return self
   }
 
-  mutating func withHttpMaxBodySize(v: UInt32) -> EJDB2Builder {
+  public func withHttpMaxBodySize(_ v: UInt32) -> EJDB2Builder {
     httpMaxBodySize = v
     return self
   }
 
-  mutating func withSortBufferSize(v: UInt32) -> EJDB2Builder {
+  public func withSortBufferSize(_ v: UInt32) -> EJDB2Builder {
     sortBufferSize = v
     return self
   }
 
-  mutating func withDocumentBufferSize(v: UInt32) -> EJDB2Builder {
+  public func withDocumentBufferSize(_ v: UInt32) -> EJDB2Builder {
     documentBufferSize = v
     return self
   }
 
-  mutating func withRandomSeed(v: UInt32) -> EJDB2Builder {
+  public func withRandomSeed(_ v: UInt32) -> EJDB2Builder {
     randomSeed = v
     return self
   }
 
-  mutating func withFileLockFailFast(v: Bool = true) -> EJDB2Builder {
+  public func withFileLockFailFast(_ v: Bool = true) -> EJDB2Builder {
     fileLockFailFast = v
     return self
   }
 
-  func open() throws -> EJDB2 {
+  public func open() throws -> EJDB2 {
     return try EJDB2(self)
   }
 
-  private var iwkvOpenFlags: iwkv_openflags {
+  var iwkvOpenFlags: iwkv_openflags {
     var flags: iwkv_openflags = 0
     if self.readonly ?? false {
       flags |= IWKV_RDONLY
@@ -220,7 +238,7 @@ public struct EJDB2Builder {
     return flags
   }
 
-  internal var opts: EJDB_OPTS {
+  var opts: EJDB_OPTS {
     return EJDB_OPTS(
       kv: IWKV_OPTS(
         path: path,
@@ -253,21 +271,127 @@ public struct EJDB2Builder {
   }
 }
 
-/// EJDB2
-public class EJDB2 {
+class SWJBL {
 
-  internal private(set) var handle: OpaquePointer?
-
-  internal init(_ builder: EJDB2Builder) throws {
-    var opts = builder.opts
-    let rc = ejdb_open(&opts, &handle)
-    guard rc == 0 else { throw EJDB2Error(rc) }
+  init() {
   }
 
-  func close() {
+  init(_ data: Any) throws {
+    try SWRC(jbl_from_json(&handle, toJsonString(data)))
+  }
 
+  init(_ raw: OpaquePointer?) {
+    self.handle = raw
   }
 
   deinit {
+    if handle != nil {
+      jbl_destroy(&handle)
+    }
+  }
+
+  var handle: OpaquePointer?
+
+  func toString() throws -> String {
+    let xstr = iwxstr_new()
+    defer {
+      iwxstr_destroy(xstr)
+    }
+    try SWRC(jbl_as_json(handle, jbl_xstr_json_printer, UnsafeMutableRawPointer(xstr), 0))
+    return String(cString: iwxstr_ptr(xstr))
+  }
+}
+
+class SWJBLNODE {
+
+  init(_ data: Any) throws {
+    var done = false
+    pool = iwpool_create(255)
+    if pool == nil {
+      throw EJDB2Error(UInt64(IW_ERROR_ALLOC.rawValue))
+    }
+    defer {
+      if !done {
+        iwpool_destroy(pool)
+      }
+    }
+    let json = try toJsonString(data)
+    try SWRC(jbl_node_from_json(json, &handle, pool))
+    done = true
+  }
+
+  deinit {
+    if pool != nil {
+      iwpool_destroy(pool)
+    }
+  }
+
+  var handle: UnsafeMutablePointer<_JBL_NODE>?
+
+  var pool: OpaquePointer?
+
+}
+
+class SWJQL {
+
+  init(collection: String?, query: String) throws {
+    try SWRC(jql_create(&handle, collection, query))
+  }
+
+  deinit {
+    jql_destroy(&handle)
+  }
+
+  private(set) var handle: OpaquePointer?
+
+  public func setJson(_ placeholder: String, json: String) throws -> SWJQL {
+    let jbln = try SWJBLNODE(json)
+    try SWRC(jql_set_json(handle, placeholder, 0, jbln.handle))
+    return self
+  }
+
+  public func setJson(_ index: Int32, json: String) throws -> SWJQL {
+    let jbln = try SWJBLNODE(json)
+    try SWRC(jql_set_json(handle, nil, index, jbln.handle))
+    return self
+  }
+}
+
+/// EJDB2
+public class EJDB2 {
+
+  init(_ builder: EJDB2Builder) throws {
+    var opts = builder.opts
+    try SWRC(ejdb_open(&opts, &handle))
+  }
+
+  deinit {
+    try? close()
+  }
+
+  private(set) var handle: OpaquePointer?
+
+  public func put(_ collection: String, _ json: Any, _ id: Int64 = 0) throws -> Int64 {
+    let jbl = try SWJBL(json)
+    if id == 0 {
+      var oid: Int64 = 0
+      try SWRC(ejdb_put_new(handle, collection, jbl.handle, &oid))
+      return oid
+    } else {
+      try SWRC(ejdb_put(handle, collection, jbl.handle, id))
+      return id
+    }
+  }
+
+  public func get(_ collection: String, _ id: Int64) throws -> JBDOC {
+    let jbl = SWJBL()
+    try SWRC(ejdb_get(handle, collection, id, &jbl.handle))
+    return try JBDOC(id, jbl: jbl)
+  }
+
+  public func close() throws {
+    if handle != nil {
+      try SWRC(ejdb_close(&handle))
+    }
   }
 }
