@@ -358,6 +358,8 @@ final class SWJQL {
     try SWRC(jql_set_json(handle, nil, index, jbln.handle))
     return self
   }
+
+
 }
 
 /// EJDB2
@@ -391,6 +393,9 @@ public final class EJDB2 {
     try SWRC(ejdb_get(handle, collection, id, &jbl.handle))
     return try JBDOC(id, jbl: jbl)
   }
+
+  // https://forums.swift.org/t/call-swift-function-by-pointer/21083
+  // https://github.com/belozierov/SwiftCoroutine
 
   public func close() throws {
     if handle != nil {
