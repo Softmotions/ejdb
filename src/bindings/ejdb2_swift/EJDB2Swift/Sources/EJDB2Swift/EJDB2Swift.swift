@@ -335,10 +335,11 @@ final class SWJBLN {
 
 }
 
-final class SWJQL {
+public final class SWJQL {
 
-  init(collection: String?, query: String) throws {
+  init(_ db: EJDB2, _ query: String, _ collection: String?) throws {
     try SWRC(jql_create(&handle, collection, query))
+    self.db = db
   }
 
   deinit {
@@ -347,19 +348,84 @@ final class SWJQL {
 
   private(set) var handle: OpaquePointer?
 
-  public func setJson(_ placeholder: String, json: String) throws -> SWJQL {
-    let jbln = try SWJBLN(json)
+  private var db: EJDB2
+
+  public func setJson(_ placeholder: String, val: String) throws -> SWJQL {
+    let jbln = try SWJBLN(val)
     try SWRC(jql_set_json(handle, placeholder, 0, jbln.handle))
     return self
   }
 
-  public func setJson(_ index: Int32, json: String) throws -> SWJQL {
-    let jbln = try SWJBLN(json)
+  public func setJson(_ index: Int32, val: String) throws -> SWJQL {
+    let jbln = try SWJBLN(val)
     try SWRC(jql_set_json(handle, nil, index, jbln.handle))
     return self
   }
 
+  public func setString(_ placeholder: String, val: String) throws -> SWJQL {
+    try SWRC(jql_set_str(handle, placeholder, 0, val))
+    return self
+  }
 
+  public func setString(_ index: Int32, val: String) throws -> SWJQL {
+    try SWRC(jql_set_str(handle, nil, index, val))
+    return self
+  }
+
+  public func setInt64(_ placeholder: String, val: Int64) throws -> SWJQL {
+    try SWRC(jql_set_i64(handle, placeholder, 0, val))
+    return self
+  }
+
+  public func setInt64(_ index: Int32, val: Int64) throws -> SWJQL {
+    try SWRC(jql_set_i64(handle, nil, index, val))
+    return self
+  }
+
+  public func setDouble(_ placeholder: String, val: Double) throws -> SWJQL {
+    try SWRC(jql_set_f64(handle, placeholder, 0, val))
+    return self
+  }
+
+  public func setDouble(_ index: Int32, val: Double) throws -> SWJQL {
+    try SWRC(jql_set_f64(handle, nil, index, val))
+    return self
+  }
+
+  public func setBool(_ placeholder: String, val: Bool) throws -> SWJQL {
+    try SWRC(jql_set_bool(handle, placeholder, 0, val))
+    return self
+  }
+
+  public func setBool(_ index: Int32, val: Bool) throws -> SWJQL {
+    try SWRC(jql_set_bool(handle, nil, index, val))
+    return self
+  }
+
+  public func setRegexp(_ placeholder: String, val: String) throws -> SWJQL {
+    try SWRC(jql_set_regexp(handle, placeholder, 0, val))
+    return self
+  }
+
+  public func setRegexp(_ index: Int32, val: String) throws -> SWJQL {
+    try SWRC(jql_set_regexp(handle, nil, 0, val))
+    return self
+  }
+
+  public func setNull(_ placeholder: String) throws -> SWJQL {
+    try SWRC(jql_set_null(handle, placeholder, 0))
+    return self
+  }
+
+  public func setNull(_ index: Int32) throws -> SWJQL {
+    try SWRC(jql_set_null(handle, nil, index))
+    return self
+  }
+
+  public func reset() -> SWJQL {
+    jql_reset(handle, true, true)
+    return self
+  }
 }
 
 /// EJDB2
@@ -375,6 +441,10 @@ public final class EJDB2 {
   }
 
   private(set) var handle: OpaquePointer?
+
+  public func createQuery(_ query: String, _ collection: String? = nil) throws -> SWJQL {
+    return try SWJQL(self, query, collection)
+  }
 
   public func put(_ collection: String, _ json: Any, _ id: Int64 = 0) throws -> Int64 {
     let jbl = try SWJBL(json)
