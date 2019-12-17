@@ -348,11 +348,39 @@ public final class SWJQL {
 
   private(set) var handle: OpaquePointer?
 
-  private var db: EJDB2
-
   private var _skip: Int64?
 
   private var _limit: Int64?
+
+  public let db: EJDB2
+
+  public var skip: Int64 {
+    get {
+      if _skip != nil {
+        return _skip!
+      }
+      var v: Int64 = 0
+      jql_get_skip(handle, &v)
+      return v
+    }
+    set(val) {
+      _skip = val
+    }
+  }
+
+  public var limit: Int64 {
+    get {
+      if _limit != nil {
+        return _limit!
+      }
+      var v: Int64 = 0
+      jql_get_skip(handle, &v)
+      return v
+    }
+    set(val) {
+      _limit = val
+    }
+  }
 
   public func setJson(_ placeholder: String, val: String) throws -> SWJQL {
     let jbln = try SWJBLN(val)
@@ -431,33 +459,7 @@ public final class SWJQL {
     return self
   }
 
-  public var skip: Int64 {
-    get {
-      if _skip != nil {
-        return _skip!
-      }
-      var v: Int64 = 0
-      jql_get_skip(handle, &v)
-      return v
-    }
-    set(val) {
-      _skip = val
-    }
-  }
 
-  public var limit: Int64 {
-    get {
-      if _limit != nil {
-        return _limit!
-      }
-      var v: Int64 = 0
-      jql_get_skip(handle, &v)
-      return v
-    }
-    set(val) {
-      _limit = val
-    }
-  }
 }
 
 /// EJDB2
