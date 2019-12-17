@@ -350,6 +350,10 @@ public final class SWJQL {
 
   private var db: EJDB2
 
+  private var _skip: Int64?
+
+  private var _limit: Int64?
+
   public func setJson(_ placeholder: String, val: String) throws -> SWJQL {
     let jbln = try SWJBLN(val)
     try SWRC(jql_set_json(handle, placeholder, 0, jbln.handle))
@@ -425,6 +429,34 @@ public final class SWJQL {
   public func reset() -> SWJQL {
     jql_reset(handle, true, true)
     return self
+  }
+
+  public var skip: Int64 {
+    get {
+      if _skip != nil {
+        return _skip!
+      }
+      var v: Int64 = 0
+      jql_get_skip(handle, &v)
+      return v
+    }
+    set(val) {
+      _skip = val
+    }
+  }
+
+  public var limit: Int64 {
+    get {
+      if _limit != nil {
+        return _limit!
+      }
+      var v: Int64 = 0
+      jql_get_skip(handle, &v)
+      return v
+    }
+    set(val) {
+      _limit = val
+    }
   }
 }
 
