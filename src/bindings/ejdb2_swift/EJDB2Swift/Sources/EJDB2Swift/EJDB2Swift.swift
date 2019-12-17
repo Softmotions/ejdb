@@ -459,7 +459,36 @@ public final class SWJQL {
     return self
   }
 
+  public func execute(_ visitor: (_ doc: JBDOC) -> Bool) throws {
+    let _visitor:
+      @convention(c) (
+        _: UnsafeMutablePointer<_EJDB_EXEC>?,
+        _: UnsafeMutablePointer<_EJDB_DOC>?,
+        _: UnsafeMutablePointer<Int64>?
+      ) -> iwrc = {
+        let ux = $0!
+        let doc = $1!
+        let step = $2!
 
+
+
+        // todo:
+
+        return 0
+      }
+    var ux = _EJDB_EXEC(
+      db: self.db.handle,
+      q: self.handle,
+      visitor: _visitor,
+      opaque: nil,
+      skip: _skip ?? 0,
+      limit: _limit ?? 0,
+      cnt: 0,
+      log: nil,
+      pool: nil
+    )
+    try SWRC(ejdb_exec(&ux))
+  }
 }
 
 /// EJDB2
