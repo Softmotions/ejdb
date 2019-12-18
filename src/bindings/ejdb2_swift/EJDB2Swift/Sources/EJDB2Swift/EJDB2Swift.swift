@@ -56,9 +56,38 @@ public final class JBDOC: CustomStringConvertible {
     self.json = json
   }
 
-  init(_ id: Int64, jbl: SWJBL) throws {
+  init(_ id: Int64, swjbl: SWJBL) throws {
     self.id = id
-    self.json = try jbl.toString()
+    self.json = try swjbl.toString()
+  }
+
+  init(_ id: Int64, jbl: OpaquePointer) throws {
+    let xstr = iwxstr_new()
+    defer {
+      iwxstr_destroy(xstr)
+    }
+    try SWRC(jbl_as_json(jbl, jbl_xstr_json_printer, UnsafeMutableRawPointer(xstr), 0))
+    self.id = id
+    self.json = String(cString: iwxstr_ptr(xstr))
+  }
+
+  init(_ id: Int64, jbn: UnsafeMutablePointer<_JBL_NODE>) throws {
+    let xstr = iwxstr_new()
+    defer {
+      iwxstr_destroy(xstr)
+    }
+    try SWRC(jbl_node_as_json(jbn, jbl_xstr_json_printer, UnsafeMutableRawPointer(xstr), 0))
+    self.id = id
+    self.json = String(cString: iwxstr_ptr(xstr))
+  }
+
+  convenience init(_ doc: UnsafeMutablePointer<_EJDB_DOC>) throws {
+    let id = doc.pointee.id
+    if doc.pointee.node != nil {
+      try self.init(id, jbn: doc.pointee.node!)
+    } else {
+      try self.init(id, jbl: doc.pointee.raw!)
+    }
   }
 
   public let id: Int64
@@ -459,35 +488,54 @@ public final class SWJQL {
     return self
   }
 
-  public func execute(_ visitor: (_ doc: JBDOC) -> Bool) throws {
+  public func execute(_ visitor: @escaping (_ doc: JBDOC) -> Bool) throws {
+    // todo: logging
+    var ux = _EJDB_EXEC(
+      db: self.db.handle,
+      q: self.handle,
+      visitor: nil,
+      opaque: nil,
+      skip: _skip ?? 0,
+      limit: _limit ?? 0,
+      cnt: 0,
+      log: nil,
+      pool: nil)
+    try SWJQLExecutor(visitor).execute(&ux)
+  }
+}
+
+final class SWJQLExecutor {
+
+  init(_ visitor: @escaping (_ doc: JBDOC) -> Bool) {
+    self.visitor = visitor
+  }
+
+  let visitor: (_ doc: JBDOC) -> Bool
+
+  func execute(_ uxp: UnsafeMutablePointer<_EJDB_EXEC>) throws {
     let _visitor:
       @convention(c) (
         _: UnsafeMutablePointer<_EJDB_EXEC>?,
         _: UnsafeMutablePointer<_EJDB_DOC>?,
         _: UnsafeMutablePointer<Int64>?
       ) -> iwrc = {
-        let ux = $0!
+        let ux = $0!.pointee
         let doc = $1!
         let step = $2!
-
-
-
-        // todo:
-
+        let swe = Unmanaged<SWJQLExecutor>.fromOpaque(ux.opaque).takeUnretainedValue()
+        do {
+          step.pointee = swe.visitor(try JBDOC(doc)) ? 1 : 0
+        } catch {
+          if let jberr = error as? EJDB2Error {
+            return jberr.code
+          } else {
+            return UInt64(IW_ERROR_FAIL.rawValue)
+          }
+        }
         return 0
       }
-    var ux = _EJDB_EXEC(
-      db: self.db.handle,
-      q: self.handle,
-      visitor: _visitor,
-      opaque: nil,
-      skip: _skip ?? 0,
-      limit: _limit ?? 0,
-      cnt: 0,
-      log: nil,
-      pool: nil
-    )
-    try SWRC(ejdb_exec(&ux))
+    uxp.pointee.visitor = _visitor
+    uxp.pointee.opaque = Unmanaged.passUnretained(self).toOpaque()
   }
 }
 
@@ -524,12 +572,10 @@ public final class EJDB2 {
   public func get(_ collection: String, _ id: Int64) throws -> JBDOC {
     let jbl = SWJBL()
     try SWRC(ejdb_get(handle, collection, id, &jbl.handle))
-    return try JBDOC(id, jbl: jbl)
+    return try JBDOC(id, swjbl: jbl)
   }
 
-  // https://forums.swift.org/t/call-swift-function-by-pointer/21083
   // https://github.com/belozierov/SwiftCoroutine
-  // http://blog.j7mbo.com/using-async-await-in-swift-with-awaitkit/
 
   public func close() throws {
     if handle != nil {
