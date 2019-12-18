@@ -488,13 +488,13 @@ public final class SWJQL {
     return self
   }
 
-  public func execute(_ visitor: @escaping (_ doc: JBDOC) -> Bool) throws {
+  public func execute(_ visitor: @escaping (_: JBDOC) -> Bool) throws {
     // todo: logging
     var ux = _EJDB_EXEC(
       db: self.db.handle,
       q: self.handle,
-      visitor: nil,
-      opaque: nil,
+      visitor: nil,  // Will be filled on execute(&ux)
+      opaque: nil,  // Will be filled on execute(&ux)
       skip: _skip ?? 0,
       limit: _limit ?? 0,
       cnt: 0,
@@ -506,11 +506,11 @@ public final class SWJQL {
 
 final class SWJQLExecutor {
 
-  init(_ visitor: @escaping (_ doc: JBDOC) -> Bool) {
+  init(_ visitor: @escaping (_: JBDOC) -> Bool) {
     self.visitor = visitor
   }
 
-  let visitor: (_ doc: JBDOC) -> Bool
+  let visitor: (_: JBDOC) -> Bool
 
   func execute(_ uxp: UnsafeMutablePointer<_EJDB_EXEC>) throws {
     let _visitor:
