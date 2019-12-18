@@ -531,6 +531,7 @@ final class SWJQLExecutor {
       }
     uxp.pointee.visitor = _visitor
     uxp.pointee.opaque = Unmanaged.passUnretained(self).toOpaque()
+    try SWRC(ejdb_exec(uxp));
   }
 }
 
