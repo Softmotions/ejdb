@@ -56,11 +56,6 @@ public final class JBDOC: CustomStringConvertible {
     self.json = json
   }
 
-  init(_ id: Int64, swjbl: SWJBL) throws {
-    self.id = id
-    self.json = try swjbl.toString()
-  }
-
   init(_ id: Int64, jbl: OpaquePointer) throws {
     let xstr = iwxstr_new()
     defer {
@@ -570,9 +565,9 @@ public final class EJDB2 {
   }
 
   public func get(_ collection: String, _ id: Int64) throws -> JBDOC {
-    let jbl = SWJBL()
-    try SWRC(ejdb_get(handle, collection, id, &jbl.handle))
-    return try JBDOC(id, swjbl: jbl)
+    var jbl: OpaquePointer?
+    try SWRC(ejdb_get(handle, collection, id, &jbl))
+    return try JBDOC(id, jbl: jbl!)
   }
 
   // https://github.com/belozierov/SwiftCoroutine
