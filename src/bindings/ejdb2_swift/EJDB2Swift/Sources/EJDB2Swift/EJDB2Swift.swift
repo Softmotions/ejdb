@@ -521,8 +521,8 @@ final class SWJQLExecutor {
         do {
           step.pointee = swe.visitor(try JBDOC(doc)) ? 1 : 0
         } catch {
-          if let jberr = error as? EJDB2Error {
-            return jberr.code
+          if let jbe = error as? EJDB2Error {
+            return jbe.code
           } else {
             return UInt64(IW_ERROR_FAIL.rawValue)
           }
