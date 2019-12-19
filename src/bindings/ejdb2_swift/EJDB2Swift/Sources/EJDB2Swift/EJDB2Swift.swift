@@ -119,8 +119,8 @@ public final class EJDB2Builder {
   /// Truncate database on open
   public var truncate: Bool?
 
-  /// WAL enabled
-  public var walEnabled: Bool?
+  /// WAL disabled
+  public var walDisabled: Bool?
 
   public var walCheckCRCOnCheckpoint: Bool?
 
@@ -169,7 +169,7 @@ public final class EJDB2Builder {
   }
 
   public func withWalDisabled(_ v: Bool = true) -> EJDB2Builder {
-    walEnabled = !v
+    walDisabled = v
     return self
   }
 
@@ -271,7 +271,7 @@ public final class EJDB2Builder {
         oflags: iwkvOpenFlags,
         file_lock_fail_fast: fileLockFailFast ?? false,
         wal: IWKV_WAL_OPTS(
-          enabled: walEnabled ?? true,
+          enabled: !(walDisabled ?? false),
           check_crc_on_checkpoint: walCheckCRCOnCheckpoint ?? false,
           savepoint_timeout_sec: walSavepointTimeout ?? 0,
           checkpoint_timeout_sec: walCheckpointTimeout ?? 0,
@@ -289,7 +289,7 @@ public final class EJDB2Builder {
         read_anon: httpReadAnon ?? false,
         max_body_size: Int(httpMaxBodySize ?? 0)
       ),
-      no_wal: !(walEnabled ?? true),
+      no_wal: walDisabled ?? false,
       sort_buffer_sz: sortBufferSize ?? 0,
       document_buffer_sz: documentBufferSize ?? 0
     )
@@ -406,64 +406,64 @@ public final class SWJQL {
     }
   }
 
-  public func setJson(_ placeholder: String, val: String) throws -> SWJQL {
+  public func setJson(_ placeholder: String, _ val: String) throws -> SWJQL {
     let jbln = try SWJBLN(val)
     try SWRC(jql_set_json(handle, placeholder, 0, jbln.handle))
     return self
   }
 
-  public func setJson(_ index: Int32, val: String) throws -> SWJQL {
+  public func setJson(_ index: Int32, _ val: String) throws -> SWJQL {
     let jbln = try SWJBLN(val)
     try SWRC(jql_set_json(handle, nil, index, jbln.handle))
     return self
   }
 
-  public func setString(_ placeholder: String, val: String) throws -> SWJQL {
+  public func setString(_ placeholder: String, _ val: String) throws -> SWJQL {
     try SWRC(jql_set_str(handle, placeholder, 0, val))
     return self
   }
 
-  public func setString(_ index: Int32, val: String) throws -> SWJQL {
+  public func setString(_ index: Int32, _ val: String) throws -> SWJQL {
     try SWRC(jql_set_str(handle, nil, index, val))
     return self
   }
 
-  public func setInt64(_ placeholder: String, val: Int64) throws -> SWJQL {
+  public func setInt64(_ placeholder: String, _ val: Int64) throws -> SWJQL {
     try SWRC(jql_set_i64(handle, placeholder, 0, val))
     return self
   }
 
-  public func setInt64(_ index: Int32, val: Int64) throws -> SWJQL {
+  public func setInt64(_ index: Int32, _ val: Int64) throws -> SWJQL {
     try SWRC(jql_set_i64(handle, nil, index, val))
     return self
   }
 
-  public func setDouble(_ placeholder: String, val: Double) throws -> SWJQL {
+  public func setDouble(_ placeholder: String, _ val: Double) throws -> SWJQL {
     try SWRC(jql_set_f64(handle, placeholder, 0, val))
     return self
   }
 
-  public func setDouble(_ index: Int32, val: Double) throws -> SWJQL {
+  public func setDouble(_ index: Int32, _ val: Double) throws -> SWJQL {
     try SWRC(jql_set_f64(handle, nil, index, val))
     return self
   }
 
-  public func setBool(_ placeholder: String, val: Bool) throws -> SWJQL {
+  public func setBool(_ placeholder: String, _ val: Bool) throws -> SWJQL {
     try SWRC(jql_set_bool(handle, placeholder, 0, val))
     return self
   }
 
-  public func setBool(_ index: Int32, val: Bool) throws -> SWJQL {
+  public func setBool(_ index: Int32, _ val: Bool) throws -> SWJQL {
     try SWRC(jql_set_bool(handle, nil, index, val))
     return self
   }
 
-  public func setRegexp(_ placeholder: String, val: String) throws -> SWJQL {
+  public func setRegexp(_ placeholder: String, _ val: String) throws -> SWJQL {
     try SWRC(jql_set_regexp(handle, placeholder, 0, val))
     return self
   }
 
-  public func setRegexp(_ index: Int32, val: String) throws -> SWJQL {
+  public func setRegexp(_ index: Int32, _ val: String) throws -> SWJQL {
     try SWRC(jql_set_regexp(handle, nil, 0, val))
     return self
   }
@@ -483,19 +483,50 @@ public final class SWJQL {
     return self
   }
 
-  public func execute(_ visitor: @escaping (_: JBDOC) -> Bool) throws {
-    // todo: logging
+  @discardableResult
+  public func execute(
+    skip: Int64? = nil,
+    limit: Int64? = nil,
+    log: Bool = false,
+    _ visitor: @escaping (_: JBDOC) -> Bool
+  ) throws -> String? {
+    let logbuf = log ? iwxstr_new() : nil
+    defer {
+      if logbuf != nil {
+        iwxstr_destroy(logbuf)
+      }
+    }
     var ux = _EJDB_EXEC(
       db: self.db.handle,
       q: self.handle,
       visitor: nil,  // Will be filled on execute(&ux)
       opaque: nil,  // Will be filled on execute(&ux)
-      skip: _skip ?? 0,
-      limit: _limit ?? 0,
+      skip: skip ?? _skip ?? 0,
+      limit: limit ?? _limit ?? 0,
       cnt: 0,
-      log: nil,
+      log: logbuf,
       pool: nil)
     try SWJQLExecutor(visitor).execute(&ux)
+    return logbuf != nil ? String(cString: iwxstr_ptr(logbuf)) : nil
+  }
+
+  public func first() throws -> JBDOC? {
+    var doc: JBDOC?
+    try execute(limit: 1) { v in doc = v
+      return false
+    }
+    return doc
+  }
+
+  public func firstRequired() throws -> JBDOC {
+    guard let doc = try first() else {
+      throw EJDB2Error(UInt64(IWKV_ERROR_NOTFOUND.rawValue))
+    }
+    return doc
+  }
+
+  public func executeScalarInt() throws -> Int64 {
+    return try first()?.id ?? 0
   }
 }
 
@@ -507,7 +538,8 @@ final class SWJQLExecutor {
 
   let visitor: (_: JBDOC) -> Bool
 
-  func execute(_ uxp: UnsafeMutablePointer<_EJDB_EXEC>) throws {
+  func execute(_
+  uxp: UnsafeMutablePointer<_EJDB_EXEC>) throws {
     let _visitor:
       @convention(c) (
         _: UnsafeMutablePointer<_EJDB_EXEC>?,
@@ -531,7 +563,7 @@ final class SWJQLExecutor {
       }
     uxp.pointee.visitor = _visitor
     uxp.pointee.opaque = Unmanaged.passUnretained(self).toOpaque()
-    try SWRC(ejdb_exec(uxp));
+    try SWRC(ejdb_exec(uxp))
   }
 }
 
