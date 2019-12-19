@@ -485,8 +485,8 @@ public final class SWJQL {
 
   @discardableResult
   public func execute(
-    skip: Int64? = nil,
     limit: Int64? = nil,
+    skip: Int64? = nil,
     log: Bool = false,
     _ visitor: @escaping (_: JBDOC) -> Bool
   ) throws -> String? {
@@ -528,6 +528,15 @@ public final class SWJQL {
   public func executeScalarInt() throws -> Int64 {
     return try first()?.id ?? 0
   }
+
+  public func list(limit: Int64? = nil, skip: Int64?) throws -> [JBDOC] {
+    var ret = [JBDOC]()
+    try execute(limit: limit, skip: skip) { doc in
+      ret.append(doc)
+      return true
+    }
+    return ret
+  }
 }
 
 final class SWJQLExecutor {
@@ -538,8 +547,7 @@ final class SWJQLExecutor {
 
   let visitor: (_: JBDOC) -> Bool
 
-  func execute(_
-  uxp: UnsafeMutablePointer<_EJDB_EXEC>) throws {
+  func execute(_ uxp: UnsafeMutablePointer<_EJDB_EXEC>) throws {
     let _visitor:
       @convention(c) (
         _: UnsafeMutablePointer<_EJDB_EXEC>?,
@@ -585,7 +593,13 @@ public final class EJDB2 {
     return try SWJQL(self, query, collection)
   }
 
-  public func put(_ collection: String, _ json: Any, _ id: Int64 = 0) throws -> Int64 {
+  public func put(
+    _ collection: String, _ json: Any, _ id: Int64 = 0, merge: Bool = false
+  ) throws -> Int64 {
+    if merge {
+      try SWRC(ejdb_merge_or_put(handle, collection, toJsonString(patch), id))
+      return id
+    }
     let jbl = try SWJBL(json)
     if id == 0 {
       var oid: Int64 = 0
@@ -603,7 +617,71 @@ public final class EJDB2 {
     return try JBDOC(id, jbl: jbl!)
   }
 
-  // https://github.com/belozierov/SwiftCoroutine
+  public func patch(_ patch: Any, _ collection: String, _ id: Int64) throws {
+    try SWRC(ejdb_patch(handle, collection, toJsonString(patch), id))
+  }
+
+  public func del(_ collection: String, _ id: Int64, ignoreNotFound: Bool = false) throws {
+    let rc = ejdb_del(handle, collection, id)
+    if ignoreNotFound && rc == IWKV_ERROR_NOTFOUND.rawValue {
+      return
+    }
+    guard rc == 0 else { throw EJDB2Error(rc) }
+  }
+
+  public func ensureCollection(_ collection: String) throws {
+    try SWRC(ejdb_ensure_collection(handle, collection))
+  }
+
+  public func removeCollection(_ collection: String) throws {
+    try SWRC(ejdb_remove_collection(handle, collection))
+  }
+
+  public func renameCollection(_ collection: String, _ name: String) throws {
+    try SWRC(ejdb_rename_collection(handle, collection, name))
+  }
+
+  public func ensureStringIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    try SWRC(
+      ejdb_ensure_index(
+        handle, collection, path,
+        EJDB_IDX_STR | (unique ? EJDB_IDX_UNIQUE : 0)))
+  }
+
+  public func ensureIntIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    try SWRC(
+      ejdb_ensure_index(
+        handle, collection, path,
+        EJDB_IDX_I64 | (unique ? EJDB_IDX_UNIQUE : 0)))
+  }
+
+  public func ensureFloatIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    try SWRC(
+      ejdb_ensure_index(
+        handle, collection, path,
+        EJDB_IDX_F64 | (unique ? EJDB_IDX_UNIQUE : 0)))
+  }
+
+  public func removeStringIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    try SWRC(
+      ejdb_remove_index(
+        handle, collection, path,
+        EJDB_IDX_STR | (unique ? EJDB_IDX_UNIQUE : 0)))
+  }
+
+  public func removeIntIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    try SWRC(
+      ejdb_remove_index(
+        handle, collection, path,
+        EJDB_IDX_I64 | (unique ? EJDB_IDX_UNIQUE : 0)))
+  }
+
+  public func removeFloatIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    try SWRC(
+      ejdb_remove_index(
+        handle, collection, path,
+        EJDB_IDX_F64 | (unique ? EJDB_IDX_UNIQUE : 0)))
+  }
 
   public func close() throws {
     if handle != nil {

@@ -424,7 +424,7 @@ IW_EXPORT iwrc ejdb_remove_collection(EJDB db, const char *coll);
  *          - `EJDB_ERROR_TARGET_COLLECTION_EXISTS` - if `new_coll` is exists already.
  *          -  Any other non zero error codes.
  */
-iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll);
+IW_EXPORT iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll);
 
 /**
  * @brief Create collection with given name if it has not existed before
