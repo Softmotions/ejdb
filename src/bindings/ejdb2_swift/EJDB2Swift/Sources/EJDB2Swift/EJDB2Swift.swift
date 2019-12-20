@@ -612,8 +612,9 @@ public final class SWJQL {
   public func setJson(_ placeholder: String, _ val: String) throws -> SWJQL {
     try placeholder.withCString {
       let jbln = try SWJBLN(val, keep: true)
-      var pool = jbln.pool
-      try SWRC(jql_set_json2(handle, $0, 0, jbln.handle, swjb_free_json_node, &pool))
+      try SWRC(
+        jql_set_json2(
+          handle, $0, 0, jbln.handle, swjb_free_json_node, UnsafeMutableRawPointer(jbln.pool)))
     }
     return self
   }
@@ -621,8 +622,9 @@ public final class SWJQL {
   /// Set in-query `JSON` object at the specified `index`.
   public func setJson(_ index: Int32, _ val: String) throws -> SWJQL {
     let jbln = try SWJBLN(val, keep: true)
-    var pool = jbln.pool
-    try SWRC(jql_set_json2(handle, nil, index, jbln.handle, swjb_free_json_node, &pool))
+    try SWRC(
+      jql_set_json2(
+        handle, nil, index, jbln.handle, swjb_free_json_node, UnsafeMutableRawPointer(jbln.pool)))
     return self
   }
 
