@@ -355,7 +355,7 @@ class EJDB2 {
   /// Create instance of [query].
   JQL operator [](String query) => createQuery(query);
 
-  /// Save [json] document under specified [id] or create a document
+  /// Save [json] document under specified [id] or create a new document
   /// with new generated `id`. Returns future holding actual document `id`.
   Future<int> put(String collection, dynamic json, [int id]) => Future.sync(() => _mc
       .invokeMethod('put', [
@@ -399,11 +399,11 @@ class EJDB2 {
     });
   }
 
-  /// Remove document idenfied by [id] from [collection].
+  /// Remove document identified by [id] from specified [collection].
   Future<void> del(String collection, int id) =>
       _mc.invokeMethod('del', [_handle, collection, id]).catchError(_handleError);
 
-  /// Remove document idenfied by [id] from [collection].
+  /// Remove document identified by [id] from specified [collection].
   /// Doesn't raise error if document is not found.
   Future<void> delIgnoreNotFound(String collection, int id) =>
       del(collection, id).catchError((err) {

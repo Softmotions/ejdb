@@ -15,7 +15,6 @@ let package = Package(
     ),
   ],
   dependencies: [
-    //.package(url: "https://github.com/Softmotions/SwiftCoroutine", from: "1.0.1"),
   ],
   targets: [
     .systemLibrary(name: "EJDB2", pkgConfig: "libejdb2"),
@@ -23,7 +22,6 @@ let package = Package(
       name: "EJDB2Swift",
       dependencies: [
         "EJDB2",
-        //"SwiftCoroutine"
       ]),
     .target(name: "EJDB2SwiftRun", dependencies: ["EJDB2Swift"]),
     .testTarget(name: "EJDB2SwiftTests", dependencies: ["EJDB2Swift"]),
