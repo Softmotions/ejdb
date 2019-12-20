@@ -85,6 +85,12 @@ IW_EXPORT WUR iwrc jql_create2(JQL *qptr, const char *coll, const char *query, j
 
 IW_EXPORT const char *jql_collection(JQL q);
 
+/**
+ * @brief Bind JSON node data to query placeholder.
+ * @warning Value JSON data is not copied and used as is.
+ *          Caller is responsible to maintain `val` availability during execution of query.
+ * @see jql_set_json2()
+ */
 IW_EXPORT WUR iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val);
 
 IW_EXPORT WUR iwrc jql_set_json2(JQL q, const char *placeholder, int index, JBL_NODE val,
@@ -94,6 +100,12 @@ IW_EXPORT WUR iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_
 
 IW_EXPORT WUR iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val);
 
+/**
+ * @brief Bind string data to query placeholder.
+ * @warning Value string data is not copied and used as is.
+ *          Caller is responsible to maintain `val` availability during execution of query.
+ * @see jql_set_str2()
+ */
 IW_EXPORT WUR iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val);
 
 IW_EXPORT WUR iwrc jql_set_str2(JQL q, const char *placeholder, int index, const char *val,
@@ -101,6 +113,13 @@ IW_EXPORT WUR iwrc jql_set_str2(JQL q, const char *placeholder, int index, const
 
 IW_EXPORT WUR iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val);
 
+
+/**
+ * @brief Bind regexp data string to query placeholder.
+ * @warning Value string data is not copied and used as is.
+ *          Caller is responsible to maintain `val` availability during execution of query.
+ * @see jql_set_regexp2()
+ */
 IW_EXPORT WUR iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char *expr);
 
 IW_EXPORT WUR iwrc jql_set_regexp2(JQL q, const char *placeholder, int index, const char *expr,

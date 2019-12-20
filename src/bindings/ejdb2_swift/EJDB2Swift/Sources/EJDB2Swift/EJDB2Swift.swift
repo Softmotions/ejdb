@@ -14,6 +14,37 @@ public enum EJDB2Swift {
   }
 }
 
+class CString {
+  init(_ string: String?, keep: Bool = false) {
+    self.keep = keep
+    let s = string ?? ""
+    (_len, buffer) = s.withCString {
+      let len = Int(strlen($0) + 1)
+      let dst = strcpy(UnsafeMutablePointer<Int8>.allocate(capacity: len), $0)!
+      return (len, dst)
+    }
+  }
+
+  var count: Int {
+    return _len > 0 ? _len - 1 : 0
+  }
+
+  var bufferOrNil: UnsafeMutablePointer<Int8>? {
+    return _len == 0 ? nil : buffer
+  }
+
+  let buffer: UnsafeMutablePointer<Int8>
+
+  private let keep: Bool
+  private let _len: Int
+
+  deinit {
+    if !keep {
+      buffer.deallocate()
+    }
+  }
+}
+
 func SWRC(_ rc: UInt64) throws {
   guard rc == 0 else { throw EJDB2Error(rc) }
 }
@@ -27,6 +58,10 @@ func toJsonString(_ data: Any) throws -> String {
   default:
     return String(data: try JSONSerialization.data(withJSONObject: data), encoding: .utf8)!
   }
+}
+
+func toJsonCString(_ data: Any) throws -> CString {
+  return try CString(toJsonString(data))
 }
 
 /// EJDB2 error code
@@ -334,10 +369,6 @@ public final class EJDB2Builder {
 
   /// Opens database instance.
   public func open() throws -> EJDB2 {
-    return try EJDB2(self)
-  }
-
-  var iwkvOpenFlags: iwkv_openflags {
     var flags: iwkv_openflags = 0
     if self.readonly ?? false {
       flags |= IWKV_RDONLY
@@ -345,15 +376,16 @@ public final class EJDB2Builder {
     if self.truncate ?? false {
       flags |= IWKV_TRUNC
     }
-    return flags
-  }
 
-  var opts: EJDB_OPTS {
-    return EJDB_OPTS(
+    let cPath = CString(path)
+    let cHttpBind = CString(httpBind)
+    let cHttpAccessToken = CString(httpAccessToken)
+
+    var opts = EJDB_OPTS(
       kv: IWKV_OPTS(
-        path: path,
+        path: cPath.buffer,
         random_seed: randomSeed ?? 0,
-        oflags: iwkvOpenFlags,
+        oflags: flags,
         file_lock_fail_fast: fileLockFailFast ?? false,
         wal: IWKV_WAL_OPTS(
           enabled: !(walDisabled ?? false),
@@ -367,9 +399,9 @@ public final class EJDB2Builder {
       http: EJDB_HTTP(
         enabled: httpEnabled ?? false,
         port: httpPort ?? 9191,
-        bind: httpBind,
-        access_token: httpAccessToken,
-        access_token_len: httpAccessToken?.lengthOfBytes(using: String.Encoding.utf8) ?? 0,
+        bind: cHttpBind.bufferOrNil,
+        access_token: cHttpAccessToken.bufferOrNil,
+        access_token_len: cHttpAccessToken.count,
         blocking: false,
         read_anon: httpReadAnon ?? false,
         max_body_size: Int(httpMaxBodySize ?? 0)
@@ -378,6 +410,9 @@ public final class EJDB2Builder {
       sort_buffer_sz: sortBufferSize ?? 0,
       document_buffer_sz: documentBufferSize ?? 0
     )
+    let ejdb2 = EJDB2()
+    try SWRC(ejdb_open(&opts, &ejdb2.handle))
+    return ejdb2
   }
 }
 
@@ -435,7 +470,10 @@ final class SWJBL {
   }
 
   init(_ data: Any) throws {
-    try SWRC(jbl_from_json(&handle, toJsonString(data)))
+    let json = try toJsonString(data)
+    try json.withCString {
+      try SWRC(jbl_from_json(&handle, $0))
+    }
   }
 
   init(_ raw: OpaquePointer?) {
@@ -486,8 +524,9 @@ final class SWJBL {
 /// See ejdb2/jbl.h
 final class SWJBLN {
 
-  init(_ data: Any) throws {
+  init(_ data: Any, keep: Bool = false) throws {
     var done = false
+    self.keep = keep
     pool = iwpool_create(255)
     if pool == nil {
       throw EJDB2Error(UInt64(IW_ERROR_ALLOC.rawValue))
@@ -498,19 +537,21 @@ final class SWJBLN {
       }
     }
     let json = try toJsonString(data)
-    try SWRC(jbl_node_from_json(json, &handle, pool))
+    try json.withCString {
+      try SWRC(jbl_node_from_json($0, &handle, pool))
+    }
     done = true
   }
 
   deinit {
-    if pool != nil {
+    if pool != nil && !keep {
       iwpool_destroy(pool)
     }
   }
 
   var handle: UnsafeMutablePointer<_JBL_NODE>?
-
-  private var pool: OpaquePointer?
+  private(set) var pool: OpaquePointer?
+  private let keep: Bool
 
 }
 
@@ -518,8 +559,11 @@ final class SWJBLN {
 public final class SWJQL {
 
   init(_ db: EJDB2, _ query: String, _ collection: String?) throws {
-    try SWRC(jql_create(&handle, collection, query))
+    let cCollection = collection != nil ? CString(collection) : nil
     self.db = db
+    try query.withCString {
+      try SWRC(jql_create(&handle, cCollection?.buffer, $0))
+    }
   }
 
   deinit {
@@ -566,33 +610,42 @@ public final class SWJQL {
 
   /// Set in-query `JSON` object at the specified `placeholder`.
   public func setJson(_ placeholder: String, _ val: String) throws -> SWJQL {
-    let jbln = try SWJBLN(val)
-    try SWRC(jql_set_json(handle, placeholder, 0, jbln.handle))
+    try placeholder.withCString {
+      let jbln = try SWJBLN(val, keep: true)
+      var pool = jbln.pool
+      try SWRC(jql_set_json2(handle, $0, 0, jbln.handle, swjb_free_json_node, &pool))
+    }
     return self
   }
 
   /// Set in-query `JSON` object at the specified `index`.
   public func setJson(_ index: Int32, _ val: String) throws -> SWJQL {
-    let jbln = try SWJBLN(val)
-    try SWRC(jql_set_json(handle, nil, index, jbln.handle))
+    let jbln = try SWJBLN(val, keep: true)
+    var pool = jbln.pool
+    try SWRC(jql_set_json2(handle, nil, index, jbln.handle, swjb_free_json_node, &pool))
     return self
   }
 
   /// Set in-query `String` object at the specified `placeholder`.
   public func setString(_ placeholder: String, _ val: String) throws -> SWJQL {
-    try SWRC(jql_set_str(handle, placeholder, 0, val))
+    let cPlaceholder = CString(placeholder)
+    let cVal = CString(val, keep: true)
+    try SWRC(jql_set_str2(handle, cPlaceholder.buffer, 0, cVal.buffer, swjb_free_str, nil))
     return self
   }
 
   /// Set in-query `String` object at the specified `index`.
   public func setString(_ index: Int32, _ val: String) throws -> SWJQL {
-    try SWRC(jql_set_str(handle, nil, index, val))
+    let cVal = CString(val, keep: true)
+    try SWRC(jql_set_str2(handle, nil, index, cVal.buffer, swjb_free_str, nil))
     return self
   }
 
   /// Set in-query `Int64` object at the specified `placeholder`.
   public func setInt64(_ placeholder: String, _ val: Int64) throws -> SWJQL {
-    try SWRC(jql_set_i64(handle, placeholder, 0, val))
+    try placeholder.withCString {
+      try SWRC(jql_set_i64(handle, $0, 0, val))
+    }
     return self
   }
 
@@ -604,7 +657,9 @@ public final class SWJQL {
 
   /// Set in-query `Double` object at the specified `placeholder`.
   public func setDouble(_ placeholder: String, _ val: Double) throws -> SWJQL {
-    try SWRC(jql_set_f64(handle, placeholder, 0, val))
+    try placeholder.withCString {
+      try SWRC(jql_set_f64(handle, $0, 0, val))
+    }
     return self
   }
 
@@ -616,7 +671,9 @@ public final class SWJQL {
 
   /// Set in-query `Bool` object at the specified `placeholder`.
   public func setBool(_ placeholder: String, _ val: Bool) throws -> SWJQL {
-    try SWRC(jql_set_bool(handle, placeholder, 0, val))
+    try placeholder.withCString {
+      try SWRC(jql_set_bool(handle, $0, 0, val))
+    }
     return self
   }
 
@@ -628,19 +685,24 @@ public final class SWJQL {
 
   /// Set in-query regular expression string at the specified `placeholder`.
   public func setRegexp(_ placeholder: String, _ val: String) throws -> SWJQL {
-    try SWRC(jql_set_regexp(handle, placeholder, 0, val))
+    let cPlaceholder = CString(placeholder)
+    let cVal = CString(val, keep: true)
+    try SWRC(jql_set_regexp2(handle, cPlaceholder.buffer, 0, cVal.buffer, swjb_free_str, nil))
     return self
   }
 
   /// Set in-query regular expression string at the specified `index`.
   public func setRegexp(_ index: Int32, _ val: String) throws -> SWJQL {
-    try SWRC(jql_set_regexp(handle, nil, 0, val))
+    let cVal = CString(val, keep: true)
+    try SWRC(jql_set_regexp2(handle, nil, 0, cVal.buffer, swjb_free_str, nil))
     return self
   }
 
   /// Set in-query `null` at the specified `placeholder`.
   public func setNull(_ placeholder: String) throws -> SWJQL {
-    try SWRC(jql_set_null(handle, placeholder, 0))
+    try placeholder.withCString {
+      try SWRC(jql_set_null(handle, $0, 0))
+    }
     return self
   }
 
@@ -773,16 +835,14 @@ final class SWJQLExecutor {
 /// EJDB2 database instances.
 public final class EJDB2 {
 
-  init(_ builder: EJDB2Builder) throws {
-    var opts = builder.opts
-    try SWRC(ejdb_open(&opts, &handle))
+  init() {
   }
 
   deinit {
     try? close()
   }
 
-  private(set) var handle: OpaquePointer?
+  var handle: OpaquePointer?
 
   /// Create instance of `SWJQL` query specified for `collection`
   ///
@@ -800,17 +860,21 @@ public final class EJDB2 {
   public func put(
     _ collection: String, _ json: Any, _ id: Int64 = 0, merge: Bool = false
   ) throws -> Int64 {
+    let cCollection = CString(collection)
     if merge {
-      try SWRC(ejdb_merge_or_put(handle, collection, toJsonString(patch), id))
+      let jsonPatch = try toJsonString(patch)
+      try jsonPatch.withCString {
+        try SWRC(ejdb_merge_or_put(handle, cCollection.buffer, $0, id))
+      }
       return id
     }
     let jbl = try SWJBL(json)
     if id == 0 {
       var oid: Int64 = 0
-      try SWRC(ejdb_put_new(handle, collection, jbl.handle, &oid))
+      try SWRC(ejdb_put_new(handle, cCollection.buffer, jbl.handle, &oid))
       return oid
     } else {
-      try SWRC(ejdb_put(handle, collection, jbl.handle, id))
+      try SWRC(ejdb_put(handle, cCollection.buffer, jbl.handle, id))
       return id
     }
   }
@@ -818,7 +882,8 @@ public final class EJDB2 {
   /// Get document under specified `id` as optional value.
   public func getOptional(_ collection: String, _ id: Int64) throws -> JBDOC? {
     let jbl = SWJBL()
-    let rc = ejdb_get(handle, collection, id, &jbl.handle)
+    let cCollection = CString(collection)
+    let rc = ejdb_get(handle, cCollection.buffer, id, &jbl.handle)
     if rc == IWKV_ERROR_NOTFOUND.rawValue {
       return nil
     }
@@ -831,20 +896,27 @@ public final class EJDB2 {
   /// if document is not found.
   public func get(_ collection: String, _ id: Int64) throws -> JBDOC {
     let jbl = SWJBL()
-    try SWRC(ejdb_get(handle, collection, id, &jbl.handle))
+    try collection.withCString {
+      try SWRC(ejdb_get(handle, $0, id, &jbl.handle))
+    }
     return try JBDOC(id, swjbl: jbl)
   }
 
   /// Apply rfc6902/rfc6901 JSON patch to the document identified by `id`.
   public func patch(_ patch: Any, _ collection: String, _ id: Int64) throws {
-    try SWRC(ejdb_patch(handle, collection, toJsonString(patch), id))
+    let cCollection = CString(collection)
+    let jsonPatch = try toJsonString(patch)
+    try jsonPatch.withCString {
+      try SWRC(ejdb_patch(handle, cCollection.buffer, $0, id))
+    }
   }
 
   /// Removes document identified by `id` from specified `collection`.
   /// Throws `EJDB2Error` with `IWKV_ERROR_NOTFOUND` error code
   /// if document is not found and `ignoreNotFound` is false.
   public func del(_ collection: String, _ id: Int64, ignoreNotFound: Bool = false) throws {
-    let rc = ejdb_del(handle, collection, id)
+    let cCollection = CString(collection)
+    let rc = ejdb_del(handle, cCollection.buffer, id)
     if ignoreNotFound && rc == IWKV_ERROR_NOTFOUND.rawValue {
       return
     }
@@ -860,58 +932,76 @@ public final class EJDB2 {
 
   /// Ensures a `collection` is exists
   public func ensureCollection(_ collection: String) throws {
-    try SWRC(ejdb_ensure_collection(handle, collection))
+    try collection.withCString {
+      try SWRC(ejdb_ensure_collection(handle, $0))
+    }
   }
 
   /// Removes `collection`
   public func removeCollection(_ collection: String) throws {
-    try SWRC(ejdb_remove_collection(handle, collection))
+    try collection.withCString {
+      try SWRC(ejdb_remove_collection(handle, $0))
+    }
   }
 
   /// Renames collection specified by `collection` to new `name`
   public func renameCollection(_ collection: String, _ name: String) throws {
-    try SWRC(ejdb_rename_collection(handle, collection, name))
+    let cCollection = CString(collection)
+    let cName = CString(name)
+    try SWRC(ejdb_rename_collection(handle, cCollection.buffer, cName.buffer))
   }
 
   public func ensureStringIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    let cCollection = CString(collection)
+    let cPath = CString(path)
     try SWRC(
       ejdb_ensure_index(
-        handle, collection, path,
+        handle, cCollection.buffer, cPath.buffer,
         EJDB_IDX_STR | (unique ? EJDB_IDX_UNIQUE : 0)))
   }
 
   public func ensureIntIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    let cCollection = CString(collection)
+    let cPath = CString(path)
     try SWRC(
       ejdb_ensure_index(
-        handle, collection, path,
+        handle, cCollection.buffer, cPath.buffer,
         EJDB_IDX_I64 | (unique ? EJDB_IDX_UNIQUE : 0)))
   }
 
   public func ensureFloatIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    let cCollection = CString(collection)
+    let cPath = CString(path)
     try SWRC(
       ejdb_ensure_index(
-        handle, collection, path,
+        handle, cCollection.buffer, cPath.buffer,
         EJDB_IDX_F64 | (unique ? EJDB_IDX_UNIQUE : 0)))
   }
 
   public func removeStringIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    let cCollection = CString(collection)
+    let cPath = CString(path)
     try SWRC(
       ejdb_remove_index(
-        handle, collection, path,
+        handle, cCollection.buffer, cPath.buffer,
         EJDB_IDX_STR | (unique ? EJDB_IDX_UNIQUE : 0)))
   }
 
   public func removeIntIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    let cCollection = CString(collection)
+    let cPath = CString(path)
     try SWRC(
       ejdb_remove_index(
-        handle, collection, path,
+        handle, cCollection.buffer, cPath.buffer,
         EJDB_IDX_I64 | (unique ? EJDB_IDX_UNIQUE : 0)))
   }
 
   public func removeFloatIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
+    let cCollection = CString(collection)
+    let cPath = CString(path)
     try SWRC(
       ejdb_remove_index(
-        handle, collection, path,
+        handle, cCollection.buffer, cPath.buffer,
         EJDB_IDX_F64 | (unique ? EJDB_IDX_UNIQUE : 0)))
   }
 

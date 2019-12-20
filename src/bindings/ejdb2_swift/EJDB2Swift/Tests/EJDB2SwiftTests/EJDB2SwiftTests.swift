@@ -13,16 +13,21 @@ final class EJDB2SwiftTests: XCTestCase {
     super.tearDown()
   }
 
-  func testMain() {
+  func testMain() throws {
+    let db = try EJDB2Builder("test.db").withTruncate().open()
+    defer {
+      try? db.close()
+    }
+    var id = try db.put("mycoll", ["foo": "bar"])
+    XCTAssertEqual(id, 1)
 
+    var doc = try db.get("mycoll", id)
+    XCTAssertEqual(doc.id, 1)
+    XCTAssertEqual(doc.object as! Dictionary, ["foo": "bar"])
 
+    id = try db.put("mycoll", #"{"foo":"baz"}"#, id)
+    XCTAssertEqual(doc.id, 1)
 
-
-
-    // This is an example of a functional test case.
-    // Use XCTAssert and related functions to verify your tests produce the correct
-    // results.
-    //XCTAssertEqual(EJDB2Swift().text, "Hello, World!")
 
   }
 
