@@ -32,7 +32,7 @@ func toJsonString(_ data: Any) throws -> String {
 /// EJDB2 error code
 public struct EJDB2Error: CustomStringConvertible, Error {
 
-  internal init(_ code: UInt64) {
+  init(_ code: UInt64) {
     self.code = code
     if let ptr = iwlog_ecode_explained(code) {
       self.message = String(cString: ptr)
@@ -72,7 +72,9 @@ public final class JBDOC: CustomStringConvertible {
   }
 
   init(_ id: Int64, jbl: OpaquePointer) throws {
-    let xstr = iwxstr_new()
+    guard let xstr = iwxstr_new() else {
+      throw EJDB2Error(UInt64(IW_ERROR_ALLOC.rawValue))
+    }
     defer {
       iwxstr_destroy(xstr)
     }
@@ -82,7 +84,9 @@ public final class JBDOC: CustomStringConvertible {
   }
 
   init(_ id: Int64, jbn: UnsafeMutablePointer<_JBL_NODE>) throws {
-    let xstr = iwxstr_new()
+    guard let xstr = iwxstr_new() else {
+      throw EJDB2Error(UInt64(IW_ERROR_ALLOC.rawValue))
+    }
     defer {
       iwxstr_destroy(xstr)
     }
@@ -377,6 +381,52 @@ public final class EJDB2Builder {
   }
 }
 
+/// EJDB2 Database info
+public struct EJDB2Info: Codable {
+  /// EJDB engine version
+  var version: String
+
+  /// Path to database storage file
+  var file: String
+
+  /// Database storage file size in bytes
+  var size: Int64
+
+  /// List of collections stored in db
+  var collections: [CollectionInfo]
+
+  public struct CollectionInfo: Codable {
+    /// Collection name
+    var name: String
+
+    /// Collection database id
+    var dbid: Int
+
+    /// Number of documents in collection
+    var rnum: Int64
+
+    /// List of collections indexes
+    var indexes: [IndexInfo]
+  }
+
+  public struct IndexInfo: Codable {
+    /// rfc6901 JSON pointer to indexed field
+    var ptr: String
+
+    /// Index mode
+    var mode: Int
+
+    /// Index flags. See iwdb_flags_t
+    var idbf: Int
+
+    /// Index database ID
+    var dbid: Int
+
+    /// Number records stored in index database
+    var rnum: Int64
+  }
+}
+
 /// EJDB2 JBL Swift wrapper.
 /// See ejdb2/jbl.h
 final class SWJBL {
@@ -401,12 +451,34 @@ final class SWJBL {
   var handle: OpaquePointer?
 
   func toString() throws -> String {
-    let xstr = iwxstr_new()
+    guard let xstr = iwxstr_new() else {
+      throw EJDB2Error(UInt64(IW_ERROR_ALLOC.rawValue))
+    }
     defer {
       iwxstr_destroy(xstr)
     }
     try SWRC(jbl_as_json(handle, jbl_xstr_json_printer, UnsafeMutableRawPointer(xstr), 0))
     return String(cString: iwxstr_ptr(xstr))
+  }
+
+  func toData() throws -> Data {
+    guard let xstr = iwxstr_new() else {
+      throw EJDB2Error(UInt64(IW_ERROR_ALLOC.rawValue))
+    }
+    var done = false
+    defer {
+      if !done {
+        iwxstr_destroy(xstr)
+      }
+    }
+    try SWRC(jbl_as_json(handle, jbl_xstr_json_printer, UnsafeMutableRawPointer(xstr), 0))
+    let data = Data(
+      bytesNoCopy: UnsafeMutableRawPointer(xstr)!, count: iwxstr_size(xstr),
+      deallocator: .custom({ (ptr, size) in
+        iwxstr_destroy(OpaquePointer(ptr))
+      }))
+    done = true
+    return data
   }
 }
 
@@ -777,6 +849,13 @@ public final class EJDB2 {
       return
     }
     guard rc == 0 else { throw EJDB2Error(rc) }
+  }
+
+  /// Get database metadata
+  public func info() throws -> EJDB2Info {
+    let jbl = SWJBL()
+    try SWRC(ejdb_get_meta(handle, &jbl.handle))
+    return try JSONDecoder().decode(EJDB2Info.self, from: jbl.toData())
   }
 
   /// Ensures a `collection` is exists
