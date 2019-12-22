@@ -20,8 +20,14 @@ class CString {
     let s = string ?? ""
     (_len, buffer) = s.withCString {
       let len = Int(strlen($0) + 1)
-      let dst = strcpy(UnsafeMutablePointer<Int8>.allocate(capacity: len), $0)!
-      return (len, dst)
+      let buffer = strcpy(UnsafeMutablePointer<Int8>.allocate(capacity: len), $0)!
+      return (len, buffer)
+    }
+  }
+
+  deinit {
+    if !keep {
+      buffer.deallocate()
     }
   }
 
@@ -34,15 +40,8 @@ class CString {
   }
 
   let buffer: UnsafeMutablePointer<Int8>
-
   private let keep: Bool
   private let _len: Int
-
-  deinit {
-    if !keep {
-      buffer.deallocate()
-    }
-  }
 }
 
 func SWRC(_ rc: UInt64) throws {
@@ -511,9 +510,10 @@ final class SWJBL {
     }
     try SWRC(jbl_as_json(handle, jbl_xstr_json_printer, UnsafeMutableRawPointer(xstr), 0))
     let data = Data(
-      bytesNoCopy: UnsafeMutableRawPointer(xstr)!, count: iwxstr_size(xstr),
-      deallocator: .custom({ (ptr, size) in
-        iwxstr_destroy(OpaquePointer(ptr))
+      bytesNoCopy: UnsafeMutableRawPointer(iwxstr_ptr(xstr))!,
+      count: iwxstr_size(xstr),
+      deallocator: .custom({ (_, _) in
+        iwxstr_destroy(xstr)
       }))
     done = true
     return data
@@ -555,6 +555,8 @@ final class SWJBLN {
 
 }
 
+public typealias JBDOCVisitor = (_: JBDOC) -> Bool
+
 /// EJDB2 Query builder/executor.
 public final class SWJQL {
 
@@ -567,7 +569,9 @@ public final class SWJQL {
   }
 
   deinit {
-    jql_destroy(&handle)
+    if handle != nil {
+      jql_destroy(&handle)
+    }
   }
 
   private(set) var handle: OpaquePointer?
@@ -608,8 +612,18 @@ public final class SWJQL {
     }
   }
 
+  public func setSkip(_ val: Int64) -> SWJQL {
+    _skip = val
+    return self
+  }
+
+  public func setLimit(_ val: Int64) -> SWJQL {
+    _limit = val
+    return self
+  }
+
   /// Set in-query `JSON` object at the specified `placeholder`.
-  public func setJson(_ placeholder: String, _ val: String) throws -> SWJQL {
+  public func setJson(_ placeholder: String, _ val: Any) throws -> SWJQL {
     try placeholder.withCString {
       let jbln = try SWJBLN(val, keep: true)
       try SWRC(
@@ -620,7 +634,7 @@ public final class SWJQL {
   }
 
   /// Set in-query `JSON` object at the specified `index`.
-  public func setJson(_ index: Int32, _ val: String) throws -> SWJQL {
+  public func setJson(_ index: Int32, _ val: Any) throws -> SWJQL {
     let jbln = try SWJBLN(val, keep: true)
     try SWRC(
       jql_set_json2(
@@ -740,8 +754,8 @@ public final class SWJQL {
     limit: Int64? = nil,
     skip: Int64? = nil,
     log: Bool = false,
-    _ visitor: @escaping (_: JBDOC) -> Bool
-  ) throws -> String? {
+    _ visitor: JBDOCVisitor? = nil
+  ) throws -> (count: Int64, log: String?) {
     let logbuf = log ? iwxstr_new() : nil
     defer {
       if logbuf != nil {
@@ -758,14 +772,15 @@ public final class SWJQL {
       cnt: 0,
       log: logbuf,
       pool: nil)
-    try SWJQLExecutor(visitor).execute(&ux)
-    return logbuf != nil ? String(cString: iwxstr_ptr(logbuf)) : nil
+    let cnt = try SWJQLExecutor(visitor).execute(&ux)
+    return (cnt, logbuf != nil ? String(cString: iwxstr_ptr(logbuf)) : nil)
   }
 
   /// Returns first matched document.
   public func first() throws -> JBDOC? {
     var doc: JBDOC?
-    try execute(limit: 1) { v in doc = v
+    try execute(limit: 1) { v in
+      doc = v
       return false
     }
     return doc
@@ -783,7 +798,8 @@ public final class SWJQL {
   /// Return scalar integer value as result of query execution.
   /// For example execution of count query: `/... | count`
   public func executeScalarInt() throws -> Int64 {
-    return try first()?.id ?? 0
+    let (cnt, _) = try execute()
+    return cnt
   }
 
   /// Returns a list of matched documents.
@@ -800,37 +816,40 @@ public final class SWJQL {
 
 final class SWJQLExecutor {
 
-  init(_ visitor: @escaping (_: JBDOC) -> Bool) {
+  init(_ visitor: JBDOCVisitor?) {
     self.visitor = visitor
   }
 
-  let visitor: (_: JBDOC) -> Bool
+  let visitor: JBDOCVisitor?
 
-  func execute(_ uxp: UnsafeMutablePointer<_EJDB_EXEC>) throws {
-    let _visitor:
-      @convention(c) (
-        _: UnsafeMutablePointer<_EJDB_EXEC>?,
-        _: UnsafeMutablePointer<_EJDB_DOC>?,
-        _: UnsafeMutablePointer<Int64>?
-      ) -> iwrc = {
-        let ux = $0!.pointee
-        let doc = $1!
-        let step = $2!
-        let swe = Unmanaged<SWJQLExecutor>.fromOpaque(ux.opaque).takeUnretainedValue()
-        do {
-          step.pointee = swe.visitor(try JBDOC(doc)) ? 1 : 0
-        } catch {
-          if let jbe = error as? EJDB2Error {
-            return jbe.code
-          } else {
-            return UInt64(IW_ERROR_FAIL.rawValue)
+  func execute(_ uxp: UnsafeMutablePointer<_EJDB_EXEC>) throws -> Int64 {
+    if visitor != nil {
+      let _visitor:
+        @convention(c) (
+          _: UnsafeMutablePointer<_EJDB_EXEC>?,
+          _: UnsafeMutablePointer<_EJDB_DOC>?,
+          _: UnsafeMutablePointer<Int64>?
+        ) -> iwrc = {
+          let ux = $0!.pointee
+          let doc = $1!
+          let step = $2!
+          let swe = Unmanaged<SWJQLExecutor>.fromOpaque(ux.opaque).takeUnretainedValue()
+          do {
+            step.pointee = swe.visitor!(try JBDOC(doc)) ? 1 : 0
+          } catch {
+            if let jbe = error as? EJDB2Error {
+              return jbe.code
+            } else {
+              return UInt64(IW_ERROR_FAIL.rawValue)
+            }
           }
+          return 0
         }
-        return 0
-      }
-    uxp.pointee.visitor = _visitor
+      uxp.pointee.visitor = _visitor
+    }
     uxp.pointee.opaque = Unmanaged.passUnretained(self).toOpaque()
     try SWRC(ejdb_exec(uxp))
+    return uxp.pointee.cnt
   }
 }
 
@@ -906,7 +925,7 @@ public final class EJDB2 {
   }
 
   /// Apply rfc6902/rfc6901 JSON patch to the document identified by `id`.
-  public func patch(_ patch: Any, _ collection: String, _ id: Int64) throws {
+  public func patch(_ collection: String, _ patch: Any, _ id: Int64) throws {
     let cCollection = CString(collection)
     let jsonPatch = try toJsonString(patch)
     try jsonPatch.withCString {

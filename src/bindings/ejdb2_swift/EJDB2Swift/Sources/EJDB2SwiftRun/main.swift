@@ -24,7 +24,7 @@ do {
     return true
   }
 
-  let log = try q.execute(log: true) { doc in
+  let (_, log) = try q.execute(log: true) { doc in
     return true
   }
   print("Log: \(log!)")

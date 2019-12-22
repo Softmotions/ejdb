@@ -53,6 +53,43 @@ final class EJDB2SwiftTests: XCTestCase {
       let jbe = err as! EJDB2Error
       XCTAssertEqual(jbe.code, UInt64(IWKV_ERROR_NOTFOUND.rawValue))
     }
+
+    doc = try db.createQuery("@mycoll/[foo=:? and foo=:bar]")
+      .setString(0, "baz")
+      .setString("bar", "baz")
+      .firstRequired()
+    XCTAssertEqual(doc.object as! [String: String], ["foo": "baz"])
+
+    list = try db.createQuery("@mycoll/[foo != :?]")
+      .setString(0, "zaz")
+      .setSkip(1)
+      .list()
+    XCTAssertEqual(list.count, 1)
+    XCTAssertEqual(list.map() { $0.object } as! [[String: String]], [["foo": "baz"]])
+
+    var count = try db.createQuery("/[foo = :?] | apply :? | count", "mycoll")
+      .setString(0, "bar")
+      .setJson(1, ["foo": "zaz"])
+      .executeScalarInt()
+    XCTAssertEqual(count, 1)
+
+    count = try db.createQuery("@mycoll/[foo = :?]").setString(0, "zaz").executeScalarInt()
+    XCTAssertEqual(count, 1)
+
+    XCTAssertThrowsError(try db.createQuery("@mycoll/[")) { err in
+      let jbe = err as! EJDB2Error
+      XCTAssertTrue(jbe.isInvalidQuery)
+    }
+
+    try db.patch("mycoll", [["op": "add", "path": "/baz", "value": "qux"]], 1)
+    doc = try db.get("mycoll", 1)
+    XCTAssertEqual(doc.object as! [String: String], ["foo": "baz", "baz": "qux"])
+
+    var info = try db.info()
+    XCTAssertEqual(info.file, "test.db")
+    XCTAssertEqual(info.size, 8192)
+    XCTAssertEqual(info.collections.count, 1)
+
   }
 
   static var allTests = [
