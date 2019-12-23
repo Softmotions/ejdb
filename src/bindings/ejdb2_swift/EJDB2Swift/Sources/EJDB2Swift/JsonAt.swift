@@ -23,7 +23,7 @@ public func jsonAt<T>(_ obj: Any, _ ptr: String) throws -> T? {
 }
 
 fileprivate func pointer(_ pointer: String) throws -> [String] {
-  let ptr = pointer.starts(with: "#") ? pointer.substring(from: 1).decodeUrl()! : pointer
+  let ptr = pointer.starts(with: "#") ? pointer.substring(fromIndex: 1).decodeUrl()! : pointer
   if ptr.isEmpty || ptr[0] != "/" {
     throw JsonAtError.invalidArgument("pointer")
   }
@@ -31,7 +31,7 @@ fileprivate func pointer(_ pointer: String) throws -> [String] {
     return [""]
   }
 
-  return ptr.substring(from: 1)
+  return ptr.substring(fromIndex: 1)
     .split(separator: "/", omittingEmptySubsequences: false)
     .map {
       $0.replacingOccurrences(of: "~1", with: "/")
