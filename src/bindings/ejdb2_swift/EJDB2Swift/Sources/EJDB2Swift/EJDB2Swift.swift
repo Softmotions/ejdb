@@ -14,36 +14,6 @@ public enum EJDB2Swift {
   }
 }
 
-class CString {
-  init(_ string: String?, keep: Bool = false) {
-    self.keep = keep
-    let s = string ?? ""
-    (_len, buffer) = s.withCString {
-      let len = Int(strlen($0) + 1)
-      let buffer = strcpy(UnsafeMutablePointer<Int8>.allocate(capacity: len), $0)!
-      return (len, buffer)
-    }
-  }
-
-  deinit {
-    if !keep {
-      buffer.deallocate()
-    }
-  }
-
-  var count: Int {
-    return _len > 0 ? _len - 1 : 0
-  }
-
-  var bufferOrNil: UnsafeMutablePointer<Int8>? {
-    return _len == 0 ? nil : buffer
-  }
-
-  let buffer: UnsafeMutablePointer<Int8>
-  private let keep: Bool
-  private let _len: Int
-}
-
 func SWRC(_ rc: UInt64) throws {
   guard rc == 0 else { throw EJDB2Error(rc) }
 }
@@ -163,6 +133,11 @@ public final class JBDOC: CustomStringConvertible {
       // ignored since we can't declare props as throwable
     }
     return _object!
+  }
+
+  /// Gets subset of document using RFC 6901 JSON `pointer`.
+  public func at(pointer: String) throws -> Any? {
+    return try jsonAt(object, pointer)
   }
 
   /// Document body as JSON string.

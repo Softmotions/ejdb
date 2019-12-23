@@ -92,7 +92,41 @@ final class EJDB2SwiftTests: XCTestCase {
 
   }
 
+  func testJsonAt1() throws {
+    let doc = [
+      "foo": [
+        "bar": [
+          "baz": [
+            ["gaz": 33]
+          ]
+        ]
+      ],
+    ]
+    let v: Int? = try jsonAt(doc, "/foo/bar/baz/0/gaz")
+    XCTAssertNotNil(v)
+    XCTAssertEqual(v, 33)
+  }
+
+  func testJsonAt2() throws {
+    let doc = ["foo": "baz"]
+    let v: Any? = try jsonAt(doc, "/bar")
+    XCTAssertNil(v)
+  }
+
+  func testJsonAt3() throws {
+    let doc = ["c%d": 1]
+    let v: Int? = try jsonAt(doc, "#/c%25d")
+    XCTAssertEqual(v, 1)
+  }
+
+  func testJsonAt4() throws {
+  }
+
   static var allTests = [
+    ("testJsonAt1", testJsonAt1),
+    ("testJsonAt2", testJsonAt2),
+    ("testJsonAt3", testJsonAt3),
+    ("testJsonAt4", testJsonAt4),
     ("testMain", testMain),
   ]
 }
