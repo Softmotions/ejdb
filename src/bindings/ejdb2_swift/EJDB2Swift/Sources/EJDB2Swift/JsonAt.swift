@@ -6,7 +6,7 @@ public enum JsonAtError: Error {
 
 public func jsonAt<T>(_ obj: Any, _ ptr: String) throws -> T? {
   if ptr.isEmpty {
-    return nil
+    return obj as? T
   }
   let val: Any
   if obj is String {
@@ -16,18 +16,23 @@ public func jsonAt<T>(_ obj: Any, _ ptr: String) throws -> T? {
   }
   if val is [AnyHashable: Any?] || val is [Any?] {
     var pp = try pointer(ptr)
-    return traverse(val, &pp) as! T?
+    let tv = traverse(val, &pp)
+    return tv is T? ? tv as! T? : tv as? T
   }
   return nil
 }
 
 fileprivate func pointer(_ pointer: String) throws -> [String] {
-  let ptr = pointer.starts(with: "#") ? pointer.decodeUrl()!.substring(from: 1) : pointer
-  if pointer.isEmpty || pointer[0] != "/" {
+  let ptr = pointer.starts(with: "#") ? pointer.substring(from: 1).decodeUrl()! : pointer
+  if ptr.isEmpty || ptr[0] != "/" {
     throw JsonAtError.invalidArgument("pointer")
   }
+  if ptr.isEmpty {
+    return [""]
+  }
+
   return ptr.substring(from: 1)
-    .split(separator: "/")
+    .split(separator: "/", omittingEmptySubsequences: false)
     .map {
       $0.replacingOccurrences(of: "~1", with: "/")
         .replacingOccurrences(of: "~0", with: "~")

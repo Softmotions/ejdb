@@ -9,10 +9,6 @@ let package = Package(
     .library(
       name: "EJDB2Swift",
       targets: ["EJDB2Swift"]),
-    .executable(
-      name: "EJDB2SwiftRun",
-      targets: ["EJDB2SwiftRun"]
-    ),
   ],
   dependencies: [
   ],
@@ -23,7 +19,6 @@ let package = Package(
       dependencies: [
         "EJDB2",
       ]),
-    .target(name: "EJDB2SwiftRun", dependencies: ["EJDB2Swift"]),
     .testTarget(name: "EJDB2SwiftTests", dependencies: ["EJDB2Swift"]),
   ]
 )

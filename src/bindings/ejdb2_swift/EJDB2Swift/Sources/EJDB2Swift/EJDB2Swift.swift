@@ -948,6 +948,18 @@ public final class EJDB2 {
     try SWRC(ejdb_rename_collection(handle, cCollection.buffer, cName.buffer))
   }
 
+  /// Creates an online database backup image and copies it into the specified `filePath`.
+  /// During online backup phase read/write database operations are allowed and not
+  /// blocked for significant amount of time. Returns backup finish time
+  /// as number of milliseconds since epoch.
+  public func onlineBackup(_ filePath: String) throws -> UInt64 {
+    var ts: UInt64 = 0
+    try filePath.withCString {
+      try SWRC(ejdb_online_backup(handle, &ts, $0))
+    }
+    return ts
+  }
+
   public func ensureStringIndex(_ collection: String, _ path: String, unique: Bool = false) throws {
     let cCollection = CString(collection)
     let cPath = CString(path)
