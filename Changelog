@@ -1,3 +1,12 @@
+ejdb2 (2.0.36) UNRELEASED; urgency=medium
+
+  * Implemented Swift language binding #267
+  * Upgraded to facil.io 0.7.4
+  * Upgraded to iowow 1.3.33
+  * Improved ejdb2.h documentation
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 24 Dec 2019 11:49:32 +0700
+
 ejdb2 (2.0.35) testing; urgency=medium
 
   * FIXED: JQL apply ignores value set by placeholder (#269)
