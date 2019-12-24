@@ -1,3 +1,6 @@
 [submodule "mxe"]
 	path = mxe
 	url = https://github.com/mxe/mxe.git
+[submodule "src/bindings/ejdb2_swift/EJDB2Swift"]
+	path = src/bindings/ejdb2_swift/EJDB2Swift
+	url = git@github.com:Softmotions/EJDB2Swift.git
