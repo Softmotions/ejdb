@@ -17,9 +17,9 @@ if("${IOWOW_URL}" STREQUAL "")
 endif()
 
 if (IOS)
-  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a")
-else()
   set(BYPRODUCT "${CMAKE_BINARY_DIR}/lib/libiowow-1.a")
+else()
+  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a")
 endif()
 
 set(CMAKE_ARGS  -DOWNER_PROJECT_NAME=${PROJECT_NAME}
