@@ -32,6 +32,7 @@ foreach(extra CMAKE_TOOLCHAIN_FILE
               ANDROID_PLATFORM
               ANDROID_ABI
               TEST_TOOL_CMD
+              PLATFORM
               ENABLE_BITCODE
               ENABLE_ARC
               ENABLE_VISIBILITY
