@@ -1,8 +1,7 @@
+#include <stdlib.h>
 #if defined(__linux__)
 #include <sys/types.h>
 #include <bits/types/locale_t.h>
-#include <stdlib.h>
-#else if defined(__apple__)
 #include <stdlib.h>
 #endif
 #include <ejdb2/ejdb2.h>
