@@ -23,7 +23,12 @@ set(CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 foreach(extra CMAKE_TOOLCHAIN_FILE
               ANDROID_PLATFORM
               ANDROID_ABI
-              TEST_TOOL_CMD)
+              TEST_TOOL_CMD
+              ENABLE_BITCODE
+              ENABLE_ARC
+              ENABLE_VISIBILITY
+              ENABLE_STRICT_TRY_COMPILE
+              ARCHS)
   if(DEFINED ${extra})
     list(APPEND CMAKE_ARGS "-D${extra}=${${extra}}")
   endif()
