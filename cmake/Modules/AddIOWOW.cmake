@@ -16,6 +16,12 @@ if("${IOWOW_URL}" STREQUAL "")
   endif()
 endif()
 
+if (IOS)
+  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a")
+else()
+  set(BYPRODUCT "${CMAKE_BINARY_DIR}/lib/libiowow-1.a")
+endif()
+
 set(CMAKE_ARGS  -DOWNER_PROJECT_NAME=${PROJECT_NAME}
                 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                 -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
@@ -52,14 +58,14 @@ ExternalProject_Add(
   LOG_CONFIGURE OFF
   LOG_INSTALL OFF
   CMAKE_ARGS ${CMAKE_ARGS}
-  BUILD_BYPRODUCTS "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a"
+  BUILD_BYPRODUCTS ${BYPRODUCT}
 )
 
 add_library(iowow_s STATIC IMPORTED GLOBAL)
 set_target_properties(
    iowow_s
    PROPERTIES
-   IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a"
+   IMPORTED_LOCATION ${BYPRODUCT}
 )
 add_dependencies(iowow_s extern_iowow)
 
