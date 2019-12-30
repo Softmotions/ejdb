@@ -70,5 +70,8 @@ set_target_properties(
 )
 add_dependencies(iowow_s extern_iowow)
 
+install(FILES "${BYPRODUCT}"
+        TYPE LIB)
+
 list(APPEND PROJECT_LLIBRARIES iowow_s m)
 list(APPEND PROJECT_INCLUDE_DIRS "${IOWOW_INCLUDE_DIR}")

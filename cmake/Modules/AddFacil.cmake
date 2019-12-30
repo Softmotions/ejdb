@@ -66,6 +66,10 @@ set_target_properties(
 )
 add_dependencies(facil_s extern_facil)
 
+install(FILES "${FACIL_LIBRARY_DIR}/libfacil.io.a"
+        RENAME "libfacilio-1.a"
+        TYPE LIB)
+
 list(APPEND PROJECT_LLIBRARIES facil_s)
 list(APPEND PROJECT_INCLUDE_DIRS "${FACIL_INCLUDE_DIR}"
                                  "${FACIL_INCLUDE_DIR}/fiobj"

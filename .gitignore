@@ -1,5 +1,7 @@
 .codelite/
 node_modules/
+build-xcode/
+install-xcode/
 .cmaketools.json
 *.tags
 *.dll
