@@ -91,6 +91,8 @@ sudo apt-get install ejdb2
 
 #### Building debian packages
 
+cmake v3.15 or higher required
+
 ```sh
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_DEB=ON
@@ -131,6 +133,8 @@ Nodejs/Dart bindings not yet ported to Windows.
 # EJDB2Swift
 
 EJDB2 Swift language binding
+
+https://github.com/Softmotions/EJDB2Swift
 
 * OSX
 * iOS

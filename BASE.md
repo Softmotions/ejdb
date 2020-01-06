@@ -91,6 +91,8 @@ sudo apt-get install ejdb2
 
 #### Building debian packages
 
+cmake v3.15 or higher required
+
 ```sh
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DPACKAGE_DEB=ON
