@@ -1,6 +1,7 @@
 {
   "files.insertFinalNewline": false,
-  "cmake.generator": "Unix Makefiles",
+  //"cmake.generator": "Unix Makefiles",
+  "cmake.generator": "Ninja",
   "cmake.configureArgs": [
     "-DCMAKE_VERBOSE_MAKEFILE=OFF",
     "-DENABLE_HTTP=ON",
@@ -12,6 +13,7 @@
     "-DBUILD_JNI_BINDING=ON",
     "-DBUILD_NODEJS_BINDING=ON",
     "-DBUILD_REACT_NATIVE_BINDING=OFF",
+    "-DBUILD_SWIFT_BINDING=ON",
     "-DANDROID_ABIS=x86",
     // "-DASAN=ON",
     // "-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow"
