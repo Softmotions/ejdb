@@ -74,9 +74,15 @@ EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 See also [EJDB2 Swift binding](#ejdb2swift) for OSX, iOS and Linux
 
 ```
+brew install ejdb
+```
+
+or
+
+```
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make
+make install
 ```
 
 ## Linux

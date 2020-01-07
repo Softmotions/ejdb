@@ -74,9 +74,15 @@ EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 See also [EJDB2 Swift binding](#ejdb2swift) for OSX, iOS and Linux
 
 ```
+brew install ejdb
+```
+
+or
+
+```
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make
+make install
 ```
 
 ## Linux
@@ -180,6 +186,12 @@ On OSX/Linux EJDB2 available as package for [Swift package manager](https://gith
 In order to use swift binding you should install system wide `libejdb2` library with pkgconfig supplied.
 
 On linux it can be accomplished by installing Debian `ejdb2` package from [ppa:adamansky/ejdb2](https://launchpad.net/~adamansky/+archive/ubuntu/ejdb2)
+
+On OSX
+
+```
+brew install ejdb
+```
 
 In another case you can build it manually
 
