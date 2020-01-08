@@ -24,11 +24,11 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 /**
- * EJDB2Plugin
+ * Ejdb2FlutterPlugin
  */
-public final class EJDB2Plugin implements MethodCallHandler, StreamHandler {
+public final class Ejdb2FlutterPlugin implements MethodCallHandler, StreamHandler {
 
-  public static final String TAG = "EJDB2Plugin";
+  public static final String TAG = "Ejdb2FlutterPlugin";
 
   @SuppressWarnings("StaticCollection")
   static final Map<Integer, DbEntry> dbmap = new ConcurrentHashMap<>();
@@ -41,29 +41,29 @@ public final class EJDB2Plugin implements MethodCallHandler, StreamHandler {
       new SynchronousQueue<Runnable>());
 
   static {
-    methods.put("executeFirst", thread(EJDB2Plugin::executeFirst));
-    methods.put("executeList", thread(EJDB2Plugin::executeList));
-    methods.put("executeScalarInt", thread(EJDB2Plugin::executeScalarInt));
-    methods.put("executeQuery", thread(EJDB2Plugin::executeQuery));
-    methods.put("onlineBackup", thread(EJDB2Plugin::onlineBackup));
-    methods.put("removeFloatIndex", thread(EJDB2Plugin::removeFloatIndex));
-    methods.put("ensureFloatIndex", thread(EJDB2Plugin::ensureFloatIndex));
-    methods.put("removeIntIndex", thread(EJDB2Plugin::removeIntIndex));
-    methods.put("ensureIntIndex", thread(EJDB2Plugin::ensureIntIndex));
-    methods.put("removeStringIndex", thread(EJDB2Plugin::removeStringIndex));
-    methods.put("ensureStringIndex", thread(EJDB2Plugin::ensureStringIndex));
-    methods.put("removeCollection", thread(EJDB2Plugin::removeCollection));
-    methods.put("renameCollection", thread(EJDB2Plugin::renameCollection));
-    methods.put("del", thread(EJDB2Plugin::del));
-    methods.put("get", thread(EJDB2Plugin::get));
-    methods.put("patch", thread(EJDB2Plugin::patch));
-    methods.put("put", thread(EJDB2Plugin::put));
-    methods.put("info", thread(EJDB2Plugin::info));
-    methods.put("open", thread(EJDB2Plugin::open));
-    methods.put("close", thread(EJDB2Plugin::close));
+    methods.put("executeFirst", thread(Ejdb2FlutterPlugin::executeFirst));
+    methods.put("executeList", thread(Ejdb2FlutterPlugin::executeList));
+    methods.put("executeScalarInt", thread(Ejdb2FlutterPlugin::executeScalarInt));
+    methods.put("executeQuery", thread(Ejdb2FlutterPlugin::executeQuery));
+    methods.put("onlineBackup", thread(Ejdb2FlutterPlugin::onlineBackup));
+    methods.put("removeFloatIndex", thread(Ejdb2FlutterPlugin::removeFloatIndex));
+    methods.put("ensureFloatIndex", thread(Ejdb2FlutterPlugin::ensureFloatIndex));
+    methods.put("removeIntIndex", thread(Ejdb2FlutterPlugin::removeIntIndex));
+    methods.put("ensureIntIndex", thread(Ejdb2FlutterPlugin::ensureIntIndex));
+    methods.put("removeStringIndex", thread(Ejdb2FlutterPlugin::removeStringIndex));
+    methods.put("ensureStringIndex", thread(Ejdb2FlutterPlugin::ensureStringIndex));
+    methods.put("removeCollection", thread(Ejdb2FlutterPlugin::removeCollection));
+    methods.put("renameCollection", thread(Ejdb2FlutterPlugin::renameCollection));
+    methods.put("del", thread(Ejdb2FlutterPlugin::del));
+    methods.put("get", thread(Ejdb2FlutterPlugin::get));
+    methods.put("patch", thread(Ejdb2FlutterPlugin::patch));
+    methods.put("put", thread(Ejdb2FlutterPlugin::put));
+    methods.put("info", thread(Ejdb2FlutterPlugin::info));
+    methods.put("open", thread(Ejdb2FlutterPlugin::open));
+    methods.put("close", thread(Ejdb2FlutterPlugin::close));
   }
 
-  EJDB2Plugin(Registrar registrar) {
+  Ejdb2FlutterPlugin(Registrar registrar) {
     this.registrar = registrar;
     this.methodChannel = new MethodChannel(registrar.messenger(), "ejdb2");
     this.methodChannel.setMethodCallHandler(this);
@@ -79,13 +79,13 @@ public final class EJDB2Plugin implements MethodCallHandler, StreamHandler {
 
   EventSink events;
 
-  static EJDB2Plugin plugin;
+  static Ejdb2FlutterPlugin plugin;
 
   /**
    * Plugin registration.
    */
   public static void registerWith(Registrar registrar) {
-    plugin = new EJDB2Plugin(registrar);
+    plugin = new Ejdb2FlutterPlugin(registrar);
   }
 
   @Override
@@ -496,14 +496,14 @@ public final class EJDB2Plugin implements MethodCallHandler, StreamHandler {
   }
 
   private static final class DbMethodCall {
-    private DbMethodCall(EJDB2Plugin plugin, DbEntry dbe, Object[] args, Result result) {
+    private DbMethodCall(Ejdb2FlutterPlugin plugin, DbEntry dbe, Object[] args, Result result) {
       this.plugin = plugin;
       this.dbe = dbe;
       this.args = args;
       this.result = result;
     }
 
-    private final EJDB2Plugin plugin;
+    private final Ejdb2FlutterPlugin plugin;
     private final DbEntry dbe;
     private final Object[] args;
     private final Result result;
