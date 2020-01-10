@@ -97,12 +97,13 @@ class EJDB2Builder {
       };
 }
 
-dynamic _handleError(dynamic err, StackTrace s) {
-  if (err is PlatformException && err.code.startsWith('@ejdb')) {
-    return Future.error(EJDB2Error(err.code, err.message), s);
-  }
-  return Future.error(err, s);
-}
+FutureOr<T> Function(Object, StackTrace) _errorHandler<T>() =>
+  (Object err, StackTrace s) {
+    if (err is PlatformException && err.code.startsWith('@ejdb')) {
+    return Future<T>.error(EJDB2Error(err.code, err.message), s);
+    }
+    return Future<T>.error(err, s);
+  };
 
 class EJDB2Error implements Exception {
   EJDB2Error(this.code, this.message);
@@ -335,7 +336,7 @@ class EJDB2 {
 
   static Future<EJDB2> _open(EJDB2Builder b) async {
     final hdl =
-        await _mc.invokeMethod<int>('open', [null, b.path, b._asOpts()]).catchError(_handleError);
+        await _mc.invokeMethod<int>('open', [null, b.path, b._asOpts()]).catchError(_errorHandler<int>());
     return EJDB2._(hdl);
   }
 
@@ -344,7 +345,7 @@ class EJDB2 {
     if (_handle == null) {
       throw StateError('Closed');
     }
-    return _mc.invokeMethod('close', [_handle]).catchError(_handleError);
+    return _mc.invokeMethod('close', [_handle]).catchError(_errorHandler());
   }
 
   /// Create instance of [query] specified for [collection].
@@ -364,7 +365,7 @@ class EJDB2 {
         (json is! String) ? convert_lib.jsonEncode(json) : json as String,
         id
       ])
-      .catchError(_handleError)
+      .catchError(_errorHandler<int>())
       .then((v) => v as int));
 
   /// Apply rfc6902/rfc6901 JSON [patch] to the document identified by [id].
@@ -375,7 +376,7 @@ class EJDB2 {
             (json is! String) ? convert_lib.jsonEncode(json) : json as String,
             id,
             upsert
-          ]).catchError(_handleError));
+          ]).catchError(_errorHandler()));
 
   /// Apply JSON merge patch (rfc7396) to the document identified by `id` or
   /// insert new document under specified `id`.
@@ -386,7 +387,7 @@ class EJDB2 {
   /// Throws [EJDB2Error] not found exception if document is not found.
   Future<JBDOC> get(String collection, int id) => _mc
       .invokeMethod('get', [_handle, collection, id])
-      .catchError(_handleError)
+      .catchError(_errorHandler<JBDOC>())
       .then((v) => JBDOC(id, v as String));
 
   /// Get json body of document identified by [id] and stored in [collection].
@@ -401,7 +402,7 @@ class EJDB2 {
 
   /// Remove document identified by [id] from specified [collection].
   Future<void> del(String collection, int id) =>
-      _mc.invokeMethod('del', [_handle, collection, id]).catchError(_handleError);
+      _mc.invokeMethod('del', [_handle, collection, id]).catchError(_errorHandler());
 
   /// Remove document identified by [id] from specified [collection].
   /// Doesn't raise error if document is not found.
@@ -417,17 +418,17 @@ class EJDB2 {
   /// Get json body of database metadata.
   Future<dynamic> info() => _mc
       .invokeMethod('info', [_handle])
-      .catchError(_handleError)
+      .catchError(_errorHandler())
       .then((v) => convert_lib.jsonDecode(v as String));
 
   /// Removes database [collection].
   Future<void> removeCollection(String collection) =>
-      _mc.invokeMethod('removeCollection', [_handle, collection]).catchError(_handleError);
+      _mc.invokeMethod('removeCollection', [_handle, collection]).catchError(_errorHandler());
 
   /// Renames database collection.
   Future<void> renameCollection(String oldName, String newName) {
     return _mc
-        .invokeMethod('renameCollection', [_handle, oldName, newName]).catchError(_handleError);
+        .invokeMethod('renameCollection', [_handle, oldName, newName]).catchError(_errorHandler());
   }
 
   Future<void> ensureStringIndex(String coll, String path, [bool unique]) =>
