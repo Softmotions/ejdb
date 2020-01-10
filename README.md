@@ -175,10 +175,6 @@ Code examples:
 
 * [Swift SDK](https://swift.org/download/)
 
-### OSX Prerequisites
-
-* XCode installed
-
 ### Setup
 
 On OSX/Linux EJDB2 available as package for [Swift package manager](https://github.com/apple/swift-package-manager/blob/master/Documentation/Usage.md)
@@ -193,7 +189,7 @@ On OSX
 brew install ejdb
 ```
 
-In another case you can build it manually
+In another case you can build it manually with `cmake`
 
 ```sh
 git clone https://github.com/Softmotions/ejdb
@@ -219,25 +215,47 @@ Now you are able to use swift binding on OSX/Linux.
 
 ## iOS
 
+### iOS Prerequisites
+
+* cmake
+* XCode
+
 Checkout example todo-list app https://github.com/Softmotions/EJDB2IOSExample
 
-### Prerequisites
-
-* [Carthage](https://github.com/Carthage/Carthage)
-* XCode
+### iOS Carthage
 
 1. Create `Cartfile` with the following content
     ```
     github "Softmotions/EJDB2Swift"
     ```
 2. Open your project XCode settings, navigate to: `Build settings` of your target then set
-   `Header search paths` to  `$(PROJECT_DIR)/Carthage/Checkouts/EJDB2Swift/include`
-   `Framework search paths` to `$(PROJECT_DIR)/Carthage/Build/iOS`
+   * **Header search paths** to  `$(PROJECT_DIR)/Carthage/Checkouts/EJDB2Swift/include`
+   * **Framework search paths** to `$(PROJECT_DIR)/Carthage/Build/iOS`
 3. Run `carthage update --verbose`
 4. Then follow usual carthage [project setup instructions](https://github.com/Carthage/Carthage#if-youre-building-for-ios-tvos-or-watchos).
 
-[Sample EJDB2 native iOS app](https://github.com/Softmotions/EJDB2IOSExample)
+[Sample EJDB2 iOS app with Carthage](https://github.com/Softmotions/EJDB2IOSExample)
 
+### iOS Cocoapods
+
+Setup `Podfile` like this:
+
+```ruby
+platform :ios, '9.0'
+
+target 'EJDB2ExampleApp' do
+  use_frameworks!
+  pod "EJDB2"
+end
+```
+
+```sh
+pod install --verbose
+```
+
+Initial build takes some time - be patient
+
+[Sample EJDB2 iOS app with Cocoapods](https://github.com/Softmotions/EJDB2IOSExample/tree/cocoapods)
 
 
 # JQL
