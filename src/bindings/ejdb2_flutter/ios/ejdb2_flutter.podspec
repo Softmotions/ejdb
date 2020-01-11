@@ -14,11 +14,16 @@ Embeddable JSON Database engine EJDB http://ejdb.org Flutter binding
   s.author           = { 'Softmotions Ltd.' => 'info@softmotions.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
+  s.static_framework = true
   s.dependency 'Flutter'
+  s.dependency 'PathKit'
   s.dependency 'EJDB2'
   s.platform = :ios, '9.0'
 
   # Flutter.framework does not contain a i386 slice. Only x86_64 simulators are supported.
-  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'VALID_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
+  s.pod_target_xcconfig = {
+    'DEFINES_MODULE' => 'YES',
+    'VALID_ARCHS[sdk=iphonesimulator*]' => 'x86_64'
+  }
   s.swift_version = '5.1'
 end
