@@ -57,7 +57,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 | Swift        | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark: |                    |
 | Java         | :heavy_check_mark: | :heavy_check_mark:  | :x:                | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |
 
-.
+
 <br> `[1]` Without HTTP/Websocket support [#257](https://github.com/Softmotions/ejdb/issues/257)
 <br> `[2]` Binaries are not distributed with dart `pub.` You can build it [manually](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node#how-build-it-manually)
 <br> `[3]` Can be build potentially, just needed a linkage with node/dart `libraries`.
