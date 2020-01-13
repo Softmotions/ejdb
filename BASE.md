@@ -45,7 +45,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [License](#license)
 ---
 
-## Supported platforms and language bindings
+## EJDB2 platforms matrix
 
 |              | Linux              | macOS               | iOS                | Android            | Windows            |
 | ---          | ---                | ---                 | ---                | ---                | ---                |
@@ -86,8 +86,6 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Softmotions trading robots platform
 
 Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
-
-# Supported platforms
 
 ## OSX
 
