@@ -50,8 +50,8 @@ class _MyAppState extends State<MyApp> {
       assertNotNull(error);
       assertTrue(error is EJDB2Error);
       assertEqual(error.code, '@ejdb IWRC:86005');
-      assertEqual(error.message,
-          '@ejdb IWRC:86005 errno:0 Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)');
+
+      assertTrue('${error.message}'.contains('Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)'));
 
       id = await db.put('mycoll', {'foo': 'bar'});
       assertEqual(id, 2);
@@ -175,6 +175,9 @@ class _MyAppState extends State<MyApp> {
       final ts = await db.onlineBackup('${dbpath}.bkp');
       assertTrue(ts0 < ts);
 
+    } catch(e, st) {
+      print('$e\n$st');
+      rethrow;
     } finally {
       await db.close();
     }
