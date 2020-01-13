@@ -25,6 +25,8 @@ add_custom_target(
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/*.yaml ${PUB_PUBLISH_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/lib ${PUB_PUBLISH_DIR}/lib
 
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/ios ${PUB_PUBLISH_DIR}/ios
+
   COMMAND ${CMAKE_COMMAND} -E make_directory ${PUB_PUBLISH_DIR}/android
   COMMAND ${CMAKE_COMMAND} -E make_directory ${PUB_PUBLISH_DIR}/android/src
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/android/gradlew* ${PUB_PUBLISH_DIR}/android
@@ -34,6 +36,8 @@ add_custom_target(
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/android/gradle ${PUB_PUBLISH_DIR}/android/gradle
 
   COMMAND ${CMAKE_COMMAND} -E make_directory ${PUB_PUBLISH_DIR}/example
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/example/ios ${PUB_PUBLISH_DIR}/example/ios
+
   COMMAND ${CMAKE_COMMAND} -E make_directory ${PUB_PUBLISH_DIR}/example/android
   COMMAND ${CMAKE_COMMAND} -E make_directory ${PUB_PUBLISH_DIR}/example/android/app
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/example/*.md ${PUB_PUBLISH_DIR}/example

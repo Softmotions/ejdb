@@ -1,3 +1,7 @@
+ejdb_dart (1.0.43)
+
+  * Upgraded to ejdb2 v1.3.36
+
 ejdb_dart (1.0.42)
 
   * Fixed JQL apply ignores value set by placeholder #269
