@@ -45,6 +45,25 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [License](#license)
 ---
 
+## Supported platforms and language bindings
+
+|              | Linux              | macOS               | iOS                | Android            | Windows            |
+| ---          | ---                | ---                 | ---                | ---                | ---                |
+| C library    | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:<sup>1</sup> |
+| NodeJS       | :heavy_check_mark: | :heavy_check_mark:  |                    |                    | :x:<sup>3</sup>    |
+| DartVM       | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |         |                    | :x:<sup>3</sup>    |
+| Flutter      |                    |                     | :heavy_check_mark: | :heavy_check_mark: |                    |
+| React Native |                    |                     | :x:<sup>4</sup>    | :heavy_check_mark: |                    |
+| Swift        | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark: |                    |
+| Java         | :heavy_check_mark: | :heavy_check_mark:  | :x:                | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |
+
+.
+<br> `[1]` Without HTTP/Websocket support [#257](https://github.com/Softmotions/ejdb/issues/257)
+<br> `[2]` Binaries are not distributed with dart `pub.` You can build it [manually](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node#how-build-it-manually)
+<br> `[3]` Can be build potentially, just needed a linkage with node/dart `libraries`.
+<br> `[4]` Porting in progress [#273](https://github.com/Softmotions/ejdb/issues/273)
+
+
 ## Native language bindings
 
 * Node.js https://www.npmjs.com/package/ejdb2_node

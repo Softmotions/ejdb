@@ -13,7 +13,7 @@ pubspec.yaml
 
 ```yaml
 dependencies:
-  ejdb2_flutter: ^1.0.10+1
+  ejdb2_flutter:
 ```
 
 ```dart
@@ -37,11 +37,8 @@ await db.close();
 
 ## Supported platforms
 
-- iOS arm64
-- android-arm
-- android-arm64
-- android-x86
-- android-x64
+- iOS
+- Android
 
 ## iOS note
 

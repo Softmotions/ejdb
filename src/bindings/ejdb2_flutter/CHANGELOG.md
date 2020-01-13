@@ -1,3 +1,7 @@
+## 1.0.11+2
+
+* Readme updated
+
 ## 1.0.11+1
 
 * Added iOS support
