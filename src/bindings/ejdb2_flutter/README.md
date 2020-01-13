@@ -37,10 +37,23 @@ await db.close();
 
 ## Supported platforms
 
+- iOS arm64
 - android-arm
 - android-arm64
 - android-x86
 - android-x64
+
+## iOS note
+
+In order to build app with this binding you have
+to add the following code into application `Podfile`:
+
+```ruby
+pre_install do |installer|
+  # workaround for https://github.com/CocoaPods/CocoaPods/issues/3289
+  Pod::Installer::Xcode::TargetValidator.send(:define_method, :verify_no_static_framework_transitive_dependencies) {}
+end
+```
 
 ## How build it manually
 

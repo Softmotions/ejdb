@@ -1,3 +1,8 @@
+## 1.0.11+1
+
+* Added iOS support
+* Upgraded to ejdb v2.0.36
+
 ## 1.0.10+1
 
 * Fixed JQL apply ignores value set by placeholder #269
