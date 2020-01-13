@@ -87,7 +87,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
-## OSX
+## macOS / OSX
 
 EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 
