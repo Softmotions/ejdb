@@ -55,7 +55,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 | Flutter      |                    |                     | :heavy_check_mark: | :heavy_check_mark: |                    |
 | React Native |                    |                     | :x:<sup>4</sup>    | :heavy_check_mark: |                    |
 | Swift        | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :x:                |                    |
-| Java         | :heavy_check_mark: | :heavy_check_mark:  | :x:                | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |
+| Java         | :heavy_check_mark: | :heavy_check_mark:  |                    | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |
 
 
 <br> `[1]` Without HTTP/Websocket support [#257](https://github.com/Softmotions/ejdb/issues/257)
