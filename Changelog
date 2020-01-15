@@ -1,3 +1,10 @@
+ejdb2 (2.0.37) testing; urgency=medium
+
+  * Upgraded to iowow v1.3.35
+  * Fixed wal related durability issue
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 15 Jan 2020 13:19:06 +0700
+
 ejdb2 (2.0.36) testing; urgency=medium
 
   * Implemented Swift language binding #267

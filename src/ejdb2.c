@@ -1213,6 +1213,19 @@ finish:
   return rc;
 }
 
+static iwrc _jb_wal_lock_interceptor(bool before, void *op) {
+  int rci;
+  iwrc rc = 0;
+  EJDB db = op;
+  assert(db);
+  if (before) {
+    API_WLOCK(db, rci);
+  } else {
+    API_UNLOCK(db, rci, rc);
+  }
+  return rc;
+}
+
 iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
   return _jb_patch(db, coll, patchjson, id, false);
 }
@@ -1606,6 +1619,9 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   IWKV_OPTS kvopts;
   memcpy(&kvopts, &db->opts.kv, sizeof(db->opts.kv));
   kvopts.wal.enabled = !db->opts.no_wal;
+  kvopts.wal.wal_lock_interceptor = _jb_wal_lock_interceptor;
+  kvopts.wal.wal_lock_interceptor_opaque = db;
+
   rc = iwkv_open(&kvopts, &db->iwkv);
   RCGO(rc, finish);
 
