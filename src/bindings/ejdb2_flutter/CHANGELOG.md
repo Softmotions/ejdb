@@ -1,3 +1,8 @@
+## 1.0.12+1
+
+  * Upgraded to ejdb v2.0.37
+  * Fixed wal related durability issue
+
 ## 1.0.11+2
 
 * Readme updated
