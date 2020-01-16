@@ -1565,6 +1565,14 @@ iwrc ejdb_online_backup(EJDB db, uint64_t *ts, const char *target_file) {
   return iwkv_online_backup(db->iwkv, ts, target_file);
 }
 
+iwrc ejdb_get_iwkv(EJDB db, IWKV *kvp) {
+  if (!db || !kvp) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  *kvp = db->iwkv;
+  return 0;
+}
+
 iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   *ejdbp = 0;
   int rci;

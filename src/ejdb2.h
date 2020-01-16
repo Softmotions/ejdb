@@ -543,6 +543,15 @@ IW_EXPORT iwrc ejdb_get_meta(EJDB db, JBL *jblp);
 IW_EXPORT iwrc ejdb_online_backup(EJDB db, uint64_t *ts, const char *target_file);
 
 /**
+ * @brief Get access to underlying IWKV storage.
+ *        Use it with caution.
+ *
+ * @param db Database handle. Not zero.
+ * @param [out] kvp Placeholder for IWKV storage.
+ */
+IW_EXPORT iwrc ejdb_get_iwkv(EJDB db, IWKV *kvp);
+
+/**
  * @brief  Return `\0` terminated ejdb2 source GIT revision hash.
  */
 IW_EXPORT const char *ejdb_git_revision(void);
