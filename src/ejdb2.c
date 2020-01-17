@@ -857,6 +857,7 @@ static iwrc _jb_exec_list_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t 
   ndoc->id = doc->id;
   ndoc->raw = (void *)(((uint8_t *) ndoc) + sizeof(*ndoc));
   ndoc->raw->node = 0;
+  ndoc->node = doc->node;
   ndoc->next = 0;
   ndoc->prev = 0;
   memcpy(&ndoc->raw->bn, &doc->raw->bn, sizeof(ndoc->raw->bn));
