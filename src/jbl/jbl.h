@@ -188,6 +188,15 @@ IW_EXPORT iwrc jbl_create_empty_object(JBL *jblp);
  */
 IW_EXPORT iwrc jbl_create_empty_array(JBL *jblp);
 
+
+IW_EXPORT iwrc jbl_set_int64(JBL jbl, const char *name, int64_t v);
+
+IW_EXPORT iwrc jbl_set_f64(JBL jbl, const char *name, double v);
+
+IW_EXPORT iwrc jbl_set_string(JBL jbl, const char *name, const char *v);
+
+IW_EXPORT iwrc jbl_set_nested(JBL jbl, const char *name, JBL nested);
+
 /**
  * @brief Initialize new `JBL` document by `binn` data from buffer.
  * @note Created document will be allocated by `malloc()`

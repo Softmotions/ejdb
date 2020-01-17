@@ -26,6 +26,27 @@ iwrc jbl_create_empty_array(JBL *jblp) {
   return 0;
 }
 
+iwrc jbl_set_int64(JBL jbl, const char *name, int64_t v) {
+  // todo:
+  return 0;
+}
+
+iwrc jbl_set_f64(JBL jbl, const char *name, double v) {
+  // todo:
+  return 0;
+}
+
+iwrc jbl_set_string(JBL jbl, const char *name, const char *v) {
+  // todo:
+  return 0;
+}
+
+iwrc jbl_set_nested(JBL jbl, const char *name, JBL nested) {
+  // todo:
+  return 0;
+}
+
+
 iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy) {
   int type, size = 0, count = 0;
   if (bufsz < MIN_BINN_SIZE || !binn_is_valid_header(buf, &type, &count, &size, NULL)) {
