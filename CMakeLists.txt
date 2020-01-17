@@ -123,6 +123,7 @@ if (CPACK_GENERATORS)
   set(CPACK_GENERATOR "${CPACK_GENERATORS}")
   set(CPACK_SOURCE_IGNORE_FILES
     "/mxe/"
+    "/src/bindings"
     "/build/"
     "/node_modules/"
     "/\\\\.git/"
