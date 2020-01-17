@@ -551,9 +551,22 @@ void jbl_test1_6() {
 
   // A.16. Adding an Array Value
   apply_patch("{'foo': ['bar']}",
-              "[{ 'op': 'add', 'path': '/foo/-', 'value': ['abc', 'def'] }]",
+              "[{'op': 'add', 'path': '/foo/-', 'value': ['abc', 'def'] }]",
               "{'foo':['bar',['abc','def']]}", xstr, &rc);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+
+  // Apply non standard increment patch
+  apply_patch("{'foo': 1}",
+              "[{'op': 'increment', 'path': '/foo', 'value': 2}]",
+              "{'foo':3}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+
+  apply_patch("{'foo': 1}",
+              "[{'op': 'increment', 'path': '/foo', 'value': true}]",
+              "{'foo':3}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATCH_INVALID_VALUE);
   iwxstr_clear(xstr);
 
   iwxstr_destroy(xstr);

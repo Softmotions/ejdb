@@ -885,6 +885,29 @@ IW_INLINE void _jbl_copy_node_data(JBL_NODE target, JBL_NODE value) {
          sizeof(struct _JBL_NODE) - offsetof(struct _JBL_NODE, child));
 }
 
+iwrc _jbl_increment_node_data(JBL_NODE target, JBL_NODE value) {
+  if (value->type != JBV_I64 && value->type != JBV_F64) {
+    return JBL_ERROR_PATCH_INVALID_VALUE;
+  }
+  if (target->type == JBV_I64) {
+    if (value->type == JBV_I64) {
+      target->vi64 += value->vi64;
+    } else {
+      target->vi64 += (int64_t) value->vf64;
+    }
+    return 0;
+  } else if (target->type == JBV_F64) {
+    if (value->type == JBV_F64) {
+      target->vf64 += value->vf64;
+    } else {
+      target->vf64 += (double) value->vi64;
+    }
+    return 0;
+  } else {
+    return JBL_ERROR_PATCH_TARGET_INVALID;
+  }
+}
+
 void jbl_node_reset_data(JBL_NODE node) {
   _jbl_node_reset_data(node);
 }
@@ -938,12 +961,12 @@ IW_INLINE void _jbl_remove_item(JBL_NODE parent, JBL_NODE child) {
       child->prev->next = 0;
     }
   } else { // Somewhere in middle
-     if (child->next) {
-       child->next->prev = child->prev;
-     }
-     if (child->prev) {
-       child->prev->next = child->next;
-     }
+    if (child->next) {
+      child->next->prev = child->prev;
+    }
+    if (child->prev) {
+      child->prev->next = child->next;
+    }
   }
   child->next = 0;
   child->prev = 0;
@@ -1333,7 +1356,7 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex) {
       if (!value) {
         return JBL_ERROR_PATH_NOTFOUND;
       }
-    } else { // ADD/REPLACE
+    } else { // ADD/REPLACE/INCREMENT
       if (!value) {
         return JBL_ERROR_PATCH_NOVALUE;
       }
@@ -1379,11 +1402,17 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex) {
     } else if (parent->type == JBV_OBJECT) {
       JBL_NODE child = _jbl_node_find(parent, path, path->cnt - 1, path->cnt);
       if (child) {
-        _jbl_copy_node_data(child, value);
-      } else {
+        if (op == JBP_INCREMENT) {
+          return _jbl_increment_node_data(child, value);
+        } else {
+          _jbl_copy_node_data(child, value);
+        }
+      } else if (op != JBP_INCREMENT) {
         value->key = path->n[path->cnt - 1];
         value->klidx = strlen(value->key);
         _jbl_add_item(parent, value);
+      } else {
+        return JBL_ERROR_PATCH_TARGET_INVALID;
       }
     } else {
       return JBL_ERROR_PATCH_TARGET_INVALID;
@@ -1642,6 +1671,8 @@ static iwrc _jbl_create_patch(JBL_NODE node, JBL_PATCH **pptr, int *cntp, IWPOOL
           pp->op = JBP_MOVE;
         } else if (!strncmp("test", n2->vptr, n2->vsize)) {
           pp->op = JBP_TEST;
+        } else if (!strncmp("increment", n2->vptr, n2->vsize)) {
+          pp->op = JBP_INCREMENT;
         } else {
           return JBL_ERROR_PATCH_INVALID_OP;
         }
@@ -1858,6 +1889,8 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
       return "No value specified in JSON patch (JBL_ERROR_PATCH_NOVALUE)";
     case JBL_ERROR_PATCH_TARGET_INVALID:
       return "Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID)";
+    case JBL_ERROR_PATCH_INVALID_VALUE:
+      return "Invalid value specified by patch (JBL_ERROR_PATCH_INVALID_VALUE)";
     case JBL_ERROR_PATCH_INVALID_ARRAY_INDEX:
       return "Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX)";
     case JBL_ERROR_PATCH_TEST_FAILED:

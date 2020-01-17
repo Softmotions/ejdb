@@ -303,6 +303,17 @@ Add `Neo` fish to the set of John's `pets`
 /[firstName=John]
 | apply [{"op":"add", "path":"/pets/-", "value": {"name":"Neo", "kind":"fish"}}]
 ```
+### Non standard JSON patch extensions
+
+#### increment
+
+Increments numeric value identified by JSON path by specified value.
+Example:
+```
+ Document:  {"foo": 1}
+ Patch:     [{"op": "increment", "path": "/foo", "value": 2}]
+ Result:    {"foo": 3}
+```
 
 ### Removing documents
 

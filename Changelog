@@ -1,3 +1,10 @@
+ejdb2 (2.0.38) UNRELEASED; urgency=medium
+
+  * Added `iwrc ejdb_get_iwkv(EJDB db, IWKV *kvp)` (ejdb2.h)
+  * Added non standart JSON patch extension: `increment`
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 17 Jan 2020 16:26:21 +0700
+
 ejdb2 (2.0.37) testing; urgency=medium
 
   * Upgraded to iowow v1.3.35

@@ -118,8 +118,14 @@
   },
   "C_Cpp.configurationWarnings": "Disabled",
   "files.associations": {
+    "*.arb": "json",
+    "*.gyp": "jsonc",
     "*.h": "c",
     "*.c": "c",
+    "array": "c",
+    "initializer_list": "c",
+    "string_view": "c",
+    "utility": "c"
   },
   "dart.runPubGetOnPubspecChanges": false,
   "java.configuration.updateBuildConfiguration": "automatic",
