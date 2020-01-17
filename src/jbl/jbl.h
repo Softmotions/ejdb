@@ -264,6 +264,8 @@ IW_EXPORT size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz);
  */
 IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
+IW_EXPORT iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res);
+
 /**
  * @brief @brief Finds value in `jbl` document pointed by `jp` structure and store it into `res`.
  *
@@ -275,6 +277,8 @@ IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
  * @param [out] res   Output value holder
  */
 IW_EXPORT iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res);
+
+IW_EXPORT iwrc jbn_at2(JBL_NODE node, JBL_PTR jp, JBL_NODE *res);
 
 /**
  * @brief Represent `jbl` document as raw data buffer.
@@ -450,6 +454,7 @@ typedef struct _JBN_VCTX {
   void *result;
   bool terminate; /**< It `true` document traversal will be terminated immediately. */
   IWPOOL *pool;   /**< Pool placeholder, initialization is responsibility of `JBN_VCTX` creator */
+  int pos;        /**< Aux position, not actually used by visitor core */
 } JBN_VCTX;
 
 /**

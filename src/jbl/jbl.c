@@ -803,6 +803,32 @@ IW_INLINE bool _jbl_visitor_update_jptr_cursor(JBL_VCTX *vctx, int lvl, const ch
   return false;
 }
 
+IW_INLINE bool _jbn_visitor_update_jptr_cursor(JBN_VCTX *vctx, int lvl, const char *key, int idx) {
+  JBL_PTR jp = vctx->op;
+  if (lvl < jp->cnt) {
+    if (vctx->pos >= lvl) {
+      vctx->pos = lvl - 1;
+    }
+    if (vctx->pos + 1 == lvl) {
+      const char *keyptr;
+      char buf[JBNUMBUF_SIZE];
+      if (key) {
+        keyptr = key;
+      } else {
+        iwitoa(idx, buf, JBNUMBUF_SIZE);
+        keyptr = buf;
+        idx = strlen(keyptr);
+      }
+      int jplen = strlen(jp->n[lvl]);
+      if ((idx == jplen && !strncmp(keyptr, jp->n[lvl], idx)) || (jp->n[lvl][0] == '*' && jp->n[lvl][1] == '\0')) {
+        vctx->pos = lvl;
+        return (jp->cnt == lvl + 1);
+      }
+    }
+  }
+  return false;
+}
+
 static jbl_visitor_cmd_t _jbl_get_visitor2(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rc) {
   JBL_PTR jp = vctx->op;
   assert(jp);
@@ -867,6 +893,50 @@ iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
   iwrc rc = _jbl_ptr_pool(path, &jp, 0);
   RCRET(rc);
   rc = jbl_at2(jbl, jp, res);
+  free(jp);
+  return rc;
+}
+
+static jbn_visitor_cmd_t _jbn_get_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc) {
+  if (lvl < 0) { // EOF
+    return JBL_VCMD_OK;
+  }
+  JBL_PTR jp = vctx->op;
+  assert(jp);
+  if (_jbn_visitor_update_jptr_cursor(vctx, lvl, key, klidx)) { // Pointer matched
+    vctx->result = n;
+    return JBL_VCMD_TERMINATE;
+  } else if (jp->cnt < lvl + 1) {
+    return JBL_VCMD_SKIP_NESTED;
+  }
+  return JBL_VCMD_OK;
+}
+
+iwrc jbn_at2(JBL_NODE node, JBL_PTR jp, JBL_NODE *res) {
+  JBN_VCTX vctx = {
+    .root = node,
+    .op = jp,
+    .pos = -1
+  };
+  iwrc rc = jbn_visit(node, 0, &vctx, _jbn_get_visitor);
+  if (rc) {
+    *res = 0;
+  } else {
+    if (!vctx.result) {
+      rc = JBL_ERROR_PATH_NOTFOUND;
+      *res = 0;
+    } else {
+      *res = (JBL_NODE) vctx.result;
+    }
+  }
+  return rc;
+}
+
+iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res) {
+  JBL_PTR jp;
+  iwrc rc = _jbl_ptr_pool(path, &jp, 0);
+  RCRET(rc);
+  rc = jbn_at2(node, jp, res);
   free(jp);
   return rc;
 }
