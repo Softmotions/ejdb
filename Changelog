@@ -1,10 +1,10 @@
-ejdb2 (2.0.38) UNRELEASED; urgency=medium
+ejdb2 (2.0.38) testing; urgency=medium
 
   * FIXED: In the case of apply/projection `ejdb_list` returned old (not updated) documents
   * Added `iwrc ejdb_get_iwkv(EJDB db, IWKV *kvp)` (ejdb2.h)
   * Added non standart JSON patch extension: `increment`
 
- -- Anton Adamansky <adamansky@gmail.com>  Fri, 17 Jan 2020 16:26:21 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 17 Jan 2020 18:23:56 +0700
 
 ejdb2 (2.0.37) testing; urgency=medium
 
