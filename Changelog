@@ -1,3 +1,10 @@
+ejdb2 (2.0.39) UNRELEASED; urgency=medium
+
+  * Added iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res)
+  * Added iwrc jbn_at2(JBL_NODE node, JBL_PTR jp, JBL_NODE *res)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 17 Jan 2020 19:26:58 +0700
+
 ejdb2 (2.0.38) testing; urgency=medium
 
   * FIXED: In the case of apply/projection `ejdb_list` returned old (not updated) documents
