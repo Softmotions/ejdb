@@ -615,6 +615,9 @@ ALWAYS_INLINE BOOL binn_list_add_null(binn *list) {
 ALWAYS_INLINE BOOL binn_list_add_str(binn *list, char *str) {
   return binn_list_add(list, BINN_STRING, str, 0);
 }
+ALWAYS_INLINE BOOL binn_list_add_const_str(binn *list, const char *str) {
+  return binn_list_add(list, BINN_STRING, (char*) str, 0);
+}
 ALWAYS_INLINE BOOL binn_list_add_blob(binn *list, void *ptr, int size) {
   return binn_list_add(list, BINN_BLOB, ptr, size);
 }

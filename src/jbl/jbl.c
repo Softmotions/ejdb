@@ -26,26 +26,93 @@ iwrc jbl_create_empty_array(JBL *jblp) {
   return 0;
 }
 
-iwrc jbl_set_int64(JBL jbl, const char *name, int64_t v) {
-  // todo:
-  return 0;
+iwrc jbl_set_int64(JBL jbl, const char *key, int64_t v) {
+  jbl_type_t t = jbl_type(jbl);
+  if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {
+    return JBL_ERROR_CREATION;
+  }
+  binn *bv = &jbl->bn;
+  if (key) {
+    if (t == JBV_OBJECT) {
+      if (!binn_object_set_int64(bv, key, v)) {
+        return JBL_ERROR_CREATION;
+      }
+    } else {
+      return JBL_ERROR_CREATION;
+    }
+  } else if (t == JBV_ARRAY) {
+    if (!binn_list_add_int64(bv, v)) {
+      return JBL_ERROR_CREATION;
+    }
+  }
+  return JBL_ERROR_INVALID;
 }
 
-iwrc jbl_set_f64(JBL jbl, const char *name, double v) {
-  // todo:
-  return 0;
+iwrc jbl_set_f64(JBL jbl, const char *key, double v) {
+  jbl_type_t t = jbl_type(jbl);
+  if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {
+    return JBL_ERROR_CREATION;
+  }
+  binn *bv = &jbl->bn;
+  if (key) {
+    if (t == JBV_OBJECT) {
+      if (!binn_object_set_float(bv, key, v)) {
+        return JBL_ERROR_CREATION;
+      }
+    } else {
+      return JBL_ERROR_CREATION;
+    }
+  } else if (t == JBV_ARRAY) {
+    if (!binn_list_add_float(bv, v)) {
+      return JBL_ERROR_CREATION;
+    }
+  }
+  return JBL_ERROR_INVALID;
 }
 
-iwrc jbl_set_string(JBL jbl, const char *name, const char *v) {
-  // todo:
-  return 0;
+iwrc jbl_set_string(JBL jbl, const char *key, const char *v) {
+  jbl_type_t t = jbl_type(jbl);
+  if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {
+    return JBL_ERROR_CREATION;
+  }
+  binn *bv = &jbl->bn;
+  if (key) {
+    if (t == JBV_OBJECT) {
+      if (!binn_object_set_str(bv, key, v)) {
+        return JBL_ERROR_CREATION;
+      }
+    } else {
+      return JBL_ERROR_CREATION;
+    }
+  } else if (t == JBV_ARRAY) {
+    if (!binn_list_add_const_str(bv, v)) {
+      return JBL_ERROR_CREATION;
+    }
+  }
+  return JBL_ERROR_INVALID;
 }
 
-iwrc jbl_set_nested(JBL jbl, const char *name, JBL nested) {
-  // todo:
-  return 0;
+iwrc jbl_set_nested(JBL jbl, const char *key, JBL v) {
+  jbl_type_t t = jbl_type(jbl);
+  if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {
+    return JBL_ERROR_CREATION;
+  }
+  binn *bv = &jbl->bn;
+  if (key) {
+    if (t == JBV_OBJECT) {
+      if (!binn_object_set_value(bv, key, &v->bn)) {
+        return JBL_ERROR_CREATION;
+      }
+    } else {
+      return JBL_ERROR_CREATION;
+    }
+  } else if (t == JBV_ARRAY) {
+    if (!binn_list_add_value(bv, &v->bn)) {
+      return JBL_ERROR_CREATION;
+    }
+  }
+  return JBL_ERROR_INVALID;
 }
-
 
 iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy) {
   int type, size = 0, count = 0;

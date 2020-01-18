@@ -120,12 +120,9 @@
   "files.associations": {
     "*.arb": "json",
     "*.gyp": "jsonc",
+    "*.conf": "plaintext",
     "*.h": "c",
-    "*.c": "c",
-    "array": "c",
-    "initializer_list": "c",
-    "string_view": "c",
-    "utility": "c"
+    "*.c": "c"
   },
   "dart.runPubGetOnPubspecChanges": false,
   "java.configuration.updateBuildConfiguration": "automatic",
