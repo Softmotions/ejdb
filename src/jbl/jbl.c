@@ -40,10 +40,12 @@ iwrc jbl_set_int64(JBL jbl, const char *key, int64_t v) {
     } else {
       return JBL_ERROR_CREATION;
     }
+    return 0;
   } else if (t == JBV_ARRAY) {
     if (!binn_list_add_int64(bv, v)) {
       return JBL_ERROR_CREATION;
     }
+    return 0;
   }
   return JBL_ERROR_INVALID;
 }
@@ -62,10 +64,12 @@ iwrc jbl_set_f64(JBL jbl, const char *key, double v) {
     } else {
       return JBL_ERROR_CREATION;
     }
+    return 0;
   } else if (t == JBV_ARRAY) {
     if (!binn_list_add_float(bv, v)) {
       return JBL_ERROR_CREATION;
     }
+    return 0;
   }
   return JBL_ERROR_INVALID;
 }
@@ -84,10 +88,12 @@ iwrc jbl_set_string(JBL jbl, const char *key, const char *v) {
     } else {
       return JBL_ERROR_CREATION;
     }
+    return 0;
   } else if (t == JBV_ARRAY) {
     if (!binn_list_add_const_str(bv, v)) {
       return JBL_ERROR_CREATION;
     }
+    return 0;
   }
   return JBL_ERROR_INVALID;
 }
@@ -106,10 +112,12 @@ iwrc jbl_set_nested(JBL jbl, const char *key, JBL v) {
     } else {
       return JBL_ERROR_CREATION;
     }
+    return 0;
   } else if (t == JBV_ARRAY) {
     if (!binn_list_add_value(bv, &v->bn)) {
       return JBL_ERROR_CREATION;
     }
+    return 0;
   }
   return JBL_ERROR_INVALID;
 }

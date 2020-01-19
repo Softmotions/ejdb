@@ -667,6 +667,48 @@ void jbl_test1_7() {
   iwxstr_destroy(xstr);
 }
 
+void jbl_test1_8() {
+  JBL jbl, nested, at;
+  iwrc rc = jbl_create_empty_object(&jbl);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_create_empty_object(&nested);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+   rc = jbl_set_int64(nested, "nnum", 2233);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_set_int64(jbl, "mynum", 13223);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_set_string(jbl, "foo", "bar");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_set_nested(jbl, "nested", nested);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_at(jbl, "/mynum", &at);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(at);
+  CU_ASSERT_EQUAL(jbl_get_i64(at), 13223);
+  jbl_destroy(&at);
+
+  rc = jbl_at(jbl, "/foo", &at);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(at);
+  CU_ASSERT_STRING_EQUAL(jbl_get_str(at), "bar");
+  jbl_destroy(&at);
+
+  rc = jbl_at(jbl, "/nested/nnum", &at);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(at);
+  CU_ASSERT_EQUAL(jbl_get_i64(at), 2233);
+  jbl_destroy(&at);
+
+  jbl_destroy(&jbl);
+  jbl_destroy(&nested);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -682,7 +724,8 @@ int main() {
     (NULL == CU_add_test(pSuite, "jbl_test1_4", jbl_test1_4)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_5", jbl_test1_5)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_6", jbl_test1_6)) ||
-    (NULL == CU_add_test(pSuite, "jbl_test1_7", jbl_test1_7))
+    (NULL == CU_add_test(pSuite, "jbl_test1_7", jbl_test1_7)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_8", jbl_test1_8))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

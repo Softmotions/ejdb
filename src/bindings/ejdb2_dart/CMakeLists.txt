@@ -60,6 +60,21 @@ if (BUILD_TESTS)
   if (DART_EXEC MATCHES "DART_EXEC-NOTFOUND")
     message(FATAL_ERROR "`dart` executable not found")
   endif ()
+  find_program(PUB_EXEC pub)
+  if (PUB_EXEC MATCHES "PUB_EXEC-NOTFOUND")
+    message(FATAL_ERROR "`pub` executable not found")
+  endif ()
+
+  add_custom_command(
+    COMMAND pub get
+    OUTPUT ${DART_PUB_DIR}/pubspec.lock
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pubspec.yaml
+    WORKING_DIRECTORY ${DART_PUB_DIR}
+    VERBATIM
+  )
+  add_custom_target(pub_get ALL
+    DEPENDS ${DART_PUB_DIR}/pubspec.lock)
+
   add_test(NAME ejdb2dart
     COMMAND ${DART_EXEC} --enable-asserts ${DART_PUB_DIR}/test/ejdb2_dart_test.dart)
 endif (BUILD_TESTS)

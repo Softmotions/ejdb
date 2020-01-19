@@ -188,13 +188,64 @@ IW_EXPORT iwrc jbl_create_empty_object(JBL *jblp);
  */
 IW_EXPORT iwrc jbl_create_empty_array(JBL *jblp);
 
-
+/**
+ * @brief Set integer JBL object property value
+ *        or add a new entry to end of array JBL object.
+ *
+ * In the case when `jbl` object is array value will be added to end array.
+ *
+ * @warning `jbl` object must writable in other words created with
+ *          `jbl_create_empty_object()` or `jbl_create_empty_array()`
+ *
+ * @param jbl JBL container
+ * @param key Object key. Does't makes sense for array objects.
+ * @param v   Value to set
+ */
 IW_EXPORT iwrc jbl_set_int64(JBL jbl, const char *key, int64_t v);
 
+/**
+ * @brief Set double JBL object property value
+ *        or add a new entry to end of array JBL object.
+ *
+ * In the case when `jbl` object is array value will be added to end array.
+ *
+ * @warning `jbl` object must writable in other words created with
+ *          `jbl_create_empty_object()` or `jbl_create_empty_array()`
+ *
+ * @param jbl JBL container
+ * @param key Object key. Does't makes sense for array objects.
+ * @param v   Value to set
+ */
 IW_EXPORT iwrc jbl_set_f64(JBL jbl, const char *key, double v);
 
+/**
+ * @brief Set string JBL object property value
+ *        or add a new entry to end of array JBL object.
+ *
+ * In the case when `jbl` object is array value will be added to end array.
+ *
+ * @warning `jbl` object must writable in other words created with
+ *          `jbl_create_empty_object()` or `jbl_create_empty_array()`
+ *
+ * @param jbl JBL container
+ * @param key Object key. Does't makes sense for array objects.
+ * @param v   Value to set
+ */
 IW_EXPORT iwrc jbl_set_string(JBL jbl, const char *key, const char *v);
 
+/**
+ * @brief Set nested JBL object property value
+ *        or add a new entry to end of array JBL object.
+ *
+ * In the case when `jbl` object is array value will be added to end array.
+ *
+ * @warning `jbl` object must writable in other words created with
+ *          `jbl_create_empty_object()` or `jbl_create_empty_array()`
+ *
+ * @param jbl JBL container
+ * @param key Object key. Does't makes sense for array objects.
+ * @param v   Value to set
+ */
 IW_EXPORT iwrc jbl_set_nested(JBL jbl, const char *key, JBL nested);
 
 /**
