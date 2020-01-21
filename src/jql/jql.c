@@ -334,8 +334,11 @@ void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders) {
 }
 
 void jql_destroy(JQL *qptr) {
-  if (qptr) {
-    JQL q = *qptr;
+  if (!qptr) {
+    return;
+  }
+  JQL q = *qptr;
+  if (q) {
     JQP_AUX *aux = q->aux;
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
       _jql_jqval_destroy(pv);
@@ -348,8 +351,8 @@ void jql_destroy(JQL *qptr) {
       }
     }
     jqp_aux_destroy(&aux);
-    *qptr = 0;
   }
+  *qptr = 0;
 }
 
 IW_INLINE jqval_type_t _jql_binn_to_jqval(binn *vbinn, JQVAL *qval) {
