@@ -234,6 +234,37 @@ IW_EXPORT iwrc jbl_set_f64(JBL jbl, const char *key, double v);
 IW_EXPORT iwrc jbl_set_string(JBL jbl, const char *key, const char *v);
 
 /**
+ * @brief Set bool JBL object property value
+ *        or add a new entry to end of array JBL object.
+ *
+ * In the case when `jbl` object is array value will be added to end array.
+ *
+ * @warning `jbl` object must writable in other words created with
+ *          `jbl_create_empty_object()` or `jbl_create_empty_array()`
+ *
+ * @param jbl JBL container
+ * @param key Object key. Does't makes sense for array objects.
+ * @param v   Value to set
+ */
+IW_EXPORT iwrc jbl_set_bool(JBL jbl, const char *key, bool v);
+
+
+/**
+ * @brief Set null JBL object property value
+ *        or add a new entry to end of array JBL object.
+ *
+ * In the case when `jbl` object is array value will be added to end array.
+ *
+ * @warning `jbl` object must writable in other words created with
+ *          `jbl_create_empty_object()` or `jbl_create_empty_array()`
+ *
+ * @param jbl JBL container
+ * @param key Object key. Does't makes sense for array objects.
+ * @param v   Value to set
+ */
+IW_EXPORT iwrc jbl_set_null(JBL jbl, const char *key);
+
+/**
  * @brief Set nested JBL object property value
  *        or add a new entry to end of array JBL object.
  *

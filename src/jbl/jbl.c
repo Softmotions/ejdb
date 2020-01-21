@@ -98,6 +98,54 @@ iwrc jbl_set_string(JBL jbl, const char *key, const char *v) {
   return JBL_ERROR_INVALID;
 }
 
+iwrc jbl_set_bool(JBL jbl, const char *key, bool v) {
+  jbl_type_t t = jbl_type(jbl);
+  if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {
+    return JBL_ERROR_CREATION;
+  }
+  binn *bv = &jbl->bn;
+  if (key) {
+    if (t == JBV_OBJECT) {
+      if (!binn_object_set_bool(bv, key, v)) {
+        return JBL_ERROR_CREATION;
+      }
+    } else {
+      return JBL_ERROR_CREATION;
+    }
+    return 0;
+  } else if (t == JBV_ARRAY) {
+    if (!binn_list_add_bool(bv, v)) {
+      return JBL_ERROR_CREATION;
+    }
+    return 0;
+  }
+  return JBL_ERROR_INVALID;
+}
+
+iwrc jbl_set_null(JBL jbl, const char *key) {
+  jbl_type_t t = jbl_type(jbl);
+  if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {
+    return JBL_ERROR_CREATION;
+  }
+  binn *bv = &jbl->bn;
+  if (key) {
+    if (t == JBV_OBJECT) {
+      if (!binn_object_set_null(bv, key)) {
+        return JBL_ERROR_CREATION;
+      }
+    } else {
+      return JBL_ERROR_CREATION;
+    }
+    return 0;
+  } else if (t == JBV_ARRAY) {
+    if (!binn_list_add_null(bv)) {
+      return JBL_ERROR_CREATION;
+    }
+    return 0;
+  }
+  return JBL_ERROR_INVALID;
+}
+
 iwrc jbl_set_nested(JBL jbl, const char *key, JBL v) {
   jbl_type_t t = jbl_type(jbl);
   if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {
