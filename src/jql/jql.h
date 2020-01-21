@@ -96,6 +96,8 @@ IW_EXPORT WUR iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_N
 IW_EXPORT WUR iwrc jql_set_json2(JQL q, const char *placeholder, int index, JBL_NODE val,
                                  void (*freefn)(void *, void *), void *op);
 
+IW_EXPORT WUR iwrc jql_set_json_jbl(JQL q, const char *placeholder, int index, JBL jbl);
+
 IW_EXPORT WUR iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val);
 
 IW_EXPORT WUR iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val);

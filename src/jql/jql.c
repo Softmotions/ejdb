@@ -111,6 +111,16 @@ iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val) {
   return jql_set_json2(q, placeholder, index, val, 0, 0);
 }
 
+iwrc jql_set_json_jbl(JQL q, const char *placeholder, int index, JBL jbl) {
+  JQVAL *qv = malloc(sizeof(*qv));
+  if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  qv->freefn = 0;
+  qv->freefn_op = 0;
+  qv->type = JQVAL_BINN;
+  qv->vbinn = &jbl->bn;
+  return _jql_set_placeholder(q, placeholder, index, qv);
+}
+
 iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val) {
   JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
