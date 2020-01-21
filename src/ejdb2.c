@@ -903,13 +903,11 @@ static iwrc _jb_count(EJDB db, JQL q, int64_t *count, int64_t limit, IWXSTR *log
   if (!db || !q || !count) {
     return IW_ERROR_INVALID_ARGS;
   }
-  struct JB_LIST_VISITOR_CTX lvc = {0};
   struct _EJDB_EXEC ux = {
     .db = db,
     .q = q,
     .limit = limit,
-    .log = log,
-    .opaque = &lvc
+    .log = log
   };
   iwrc rc = ejdb_exec(&ux);
   *count = ux.cnt;
