@@ -146,6 +146,26 @@ iwrc jbl_set_null(JBL jbl, const char *key) {
   return JBL_ERROR_INVALID;
 }
 
+iwrc jbl_set_empty_array(JBL jbl, const char *key) {
+  JBL v = 0;
+  iwrc rc = jbl_create_empty_array(&v);
+  RCGO(rc, finish);
+  rc = jbl_set_nested(jbl, key, v);
+finish:
+  jbl_destroy(&v);
+  return rc;
+}
+
+iwrc jbl_set_empty_object(JBL jbl, const char *key) {
+  JBL v = 0;
+  iwrc rc = jbl_create_empty_object(&v);
+  RCGO(rc, finish);
+  rc = jbl_set_nested(jbl, key, v);
+finish:
+  jbl_destroy(&v);
+  return rc;
+}
+
 iwrc jbl_set_nested(JBL jbl, const char *key, JBL v) {
   jbl_type_t t = jbl_type(jbl);
   if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {

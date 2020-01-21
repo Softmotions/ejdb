@@ -264,6 +264,11 @@ IW_EXPORT iwrc jbl_set_bool(JBL jbl, const char *key, bool v);
  */
 IW_EXPORT iwrc jbl_set_null(JBL jbl, const char *key);
 
+
+IW_EXPORT iwrc jbl_set_empty_array(JBL jbl, const char *key);
+
+IW_EXPORT iwrc jbl_set_empty_object(JBL jbl, const char *key);
+
 /**
  * @brief Set nested JBL object property value
  *        or add a new entry to end of array JBL object.
