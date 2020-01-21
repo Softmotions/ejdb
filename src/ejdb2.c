@@ -899,6 +899,27 @@ static iwrc _jb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWXSTR *log
   return rc;
 }
 
+static iwrc _jb_count(EJDB db, JQL q, int64_t *count, int64_t limit, IWXSTR *log) {
+  if (!db || !q || !count) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  struct JB_LIST_VISITOR_CTX lvc = {0};
+  struct _EJDB_EXEC ux = {
+    .db = db,
+    .q = q,
+    .limit = limit,
+    .log = log,
+    .opaque = &lvc
+  };
+  iwrc rc = ejdb_exec(&ux);
+  *count = ux.cnt;
+  return rc;
+}
+
+iwrc ejdb_count(EJDB db, JQL q, int64_t *count, int64_t limit) {
+  return _jb_count(db, q, count, limit, 0);
+}
+
 iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWPOOL *pool) {
   return _jb_list(db, q, first, limit, 0, pool);
 }

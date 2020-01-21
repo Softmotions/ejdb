@@ -254,6 +254,8 @@ IW_EXPORT WUR iwrc ejdb_exec(EJDB_EXEC *ux);
  */
 IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWPOOL *pool);
 
+IW_EXPORT WUR iwrc ejdb_count(EJDB db, JQL q, int64_t *count, int64_t limit);
+
 /**
  * @brief Executes a given `query` and builds a result as linked list of documents.
  *
