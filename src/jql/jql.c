@@ -127,7 +127,6 @@ iwrc jql_set_json_jbl(JQL q, const char *placeholder, int index, JBL jbl) {
 finish:
   if (rc) {
     iwpool_destroy(pool);
-    return rc;
   }
   return rc;
 }
