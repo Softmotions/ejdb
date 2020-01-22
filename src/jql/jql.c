@@ -111,14 +111,25 @@ iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val) {
   return jql_set_json2(q, placeholder, index, val, 0, 0);
 }
 
+static void _jql_free_iwpool(void *ptr, void *op) {
+  iwpool_destroy((IWPOOL *) op);
+}
+
 iwrc jql_set_json_jbl(JQL q, const char *placeholder, int index, JBL jbl) {
-  JQVAL *qv = malloc(sizeof(*qv));
-  if (!qv) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  qv->freefn = 0;
-  qv->freefn_op = 0;
-  qv->type = JQVAL_BINN;
-  qv->vbinn = &jbl->bn;
-  return _jql_set_placeholder(q, placeholder, index, qv);
+  IWPOOL *pool = iwpool_create(jbl_size(jbl));
+  if (!pool) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  JBL_NODE n;
+  iwrc rc = jbl_to_node(jbl, &n, pool);
+  RCGO(rc, finish);
+  rc = jql_set_json2(q, placeholder, index, n, _jql_free_iwpool, pool);
+finish:
+  if (rc) {
+    iwpool_destroy(pool);
+    return rc;
+  }
+  return rc;
 }
 
 iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val) {
