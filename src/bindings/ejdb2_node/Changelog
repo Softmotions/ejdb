@@ -1,3 +1,7 @@
+ejdb_node (1.0.26)
+
+  * Upgraded to ejdb v2.0.39
+
 ejdb_node (1.0.25)
 
   * Upgraded to iowow v1.3.35
