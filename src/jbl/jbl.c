@@ -1889,7 +1889,7 @@ static iwrc _jbl_create_patch(JBL_NODE node, JBL_PATCH **pptr, int *cntp, IWPOOL
   for (JBL_NODE n = node->child; n; n = n->next, ++i) {
     JBL_PATCH *pp = p + i;
     for (JBL_NODE n2 = n->child; n2; n2 = n2->next) {
-      if (!strcmp("op", n2->key)) {
+      if (!strncmp("op", n2->key, n2->klidx)) {
         if (n2->type != JBV_STR) {
           return JBL_ERROR_PATCH_INVALID;
         }
@@ -1910,7 +1910,7 @@ static iwrc _jbl_create_patch(JBL_NODE node, JBL_PATCH **pptr, int *cntp, IWPOOL
         } else {
           return JBL_ERROR_PATCH_INVALID_OP;
         }
-      } else if (!strcmp("value", n2->key)) {
+      } else if (!strncmp("value", n2->key, n2->klidx)) {
         pp->vnode = n2;
       } else if (!strncmp("path", n2->key, n2->klidx)) {
         if (n2->type != JBV_STR) {
