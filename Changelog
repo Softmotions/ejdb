@@ -8,6 +8,7 @@ ejdb2 (2.0.39) UNRELEASED; urgency=medium
   * Safer `jql_destroy` (jql.h)
   * Added `jql_set_json_jbl` (jql.h)
   * Added `ejdb_count` (ejdb2.h)
+  * Fixed `_jbl_create_patch` issues
 
  -- Anton Adamansky <adamansky@gmail.com>  Wed, 22 Jan 2020 00:32:56 +0700
 
