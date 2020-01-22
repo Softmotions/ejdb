@@ -1,4 +1,4 @@
-ejdb2 (2.0.39) UNRELEASED; urgency=medium
+ejdb2 (2.0.39) testing; urgency=medium
 
   * Added iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res)
   * Added iwrc jbn_at2(JBL_NODE node, JBL_PTR jp, JBL_NODE *res)
@@ -10,7 +10,7 @@ ejdb2 (2.0.39) UNRELEASED; urgency=medium
   * Added `ejdb_count` (ejdb2.h)
   * Fixed `_jbl_create_patch` issues
 
- -- Anton Adamansky <adamansky@gmail.com>  Wed, 22 Jan 2020 00:32:56 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 22 Jan 2020 16:13:20 +0700
 
 ejdb2 (2.0.38) testing; urgency=medium
 
