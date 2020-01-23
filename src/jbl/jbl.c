@@ -252,6 +252,43 @@ void jbl_destroy(JBL *jblp) {
   }
 }
 
+iwrc jbl_create_iterator_holder(JBL *jblp) {
+  *jblp = calloc(1, sizeof(**jblp));
+  if (!*jblp) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  return 0;
+}
+
+iwrc jbl_iterator_init(JBL jbl, JBL_iterator *iter) {
+  int btype = jbl->bn.type;
+  if (btype != BINN_OBJECT && btype != BINN_LIST && btype != BINN_MAP) {
+    memset(iter, 0, sizeof(*iter));
+    return 0;
+  }
+  binn_iter *biter = (binn_iter *) iter;
+  if (!binn_iter_init(biter, &jbl->bn, btype)) {
+    return JBL_ERROR_CREATION;
+  }
+  return 0;
+}
+
+bool jbl_iterator_next(JBL_iterator *iter, JBL holder, char **pkey, int *klen) {
+  binn_iter *biter = (binn_iter *) iter;
+  if (pkey) *pkey = 0;
+  if (klen) *klen = 0;
+  if (!iter || iter->type == 0) {
+    return false;
+  }
+  if (iter->type == BINN_LIST) {
+    if (klen) *klen = iter->current;
+    return binn_list_next(biter, &holder->bn);
+  } else {
+    return binn_read_next_pair2(iter->type, biter, klen, pkey, &holder->bn);
+  }
+  return false;
+}
+
 jbl_type_t jbl_type(JBL jbl) {
   if (jbl) {
     switch (jbl->bn.type) {
@@ -712,6 +749,54 @@ size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz) {
   size_t ret = MIN(slen, bufsz);
   memcpy(buf, jbl->bn.ptr, ret);
   return ret;
+}
+
+iwrc jbl_object_get_i64(JBL jbl, const char *key, int64_t *out) {
+  *out = 0;
+  if (jbl->bn.type != BINN_OBJECT) {
+    return JBL_ERROR_NOT_AN_OBJECT;
+  }
+  int64 v;
+  if (!binn_object_get_int64(&jbl->bn, key, &v)) {
+    return JBL_ERROR_CREATION;
+  }
+  *out = v;
+  return 0;
+}
+
+iwrc jbl_object_get_f64(JBL jbl, const char *key, double *out) {
+  *out = 0.0;
+  if (jbl->bn.type != BINN_OBJECT) {
+    return JBL_ERROR_NOT_AN_OBJECT;
+  }
+  if (!binn_object_get_double(&jbl->bn, key, out)) {
+    return JBL_ERROR_CREATION;
+  }
+  return 0;
+}
+
+iwrc jbl_object_get_bool(JBL jbl, const char *key, bool *out) {
+  *out = false;
+  if (jbl->bn.type != BINN_OBJECT) {
+    return JBL_ERROR_NOT_AN_OBJECT;
+  }
+  BOOL v;
+  if (!binn_object_get_bool(&jbl->bn, key, &v)) {
+    return JBL_ERROR_CREATION;
+  }
+  *out = v;
+  return 0;
+}
+
+iwrc jbl_object_get_str(JBL jbl, const char *key, const char **out) {
+  *out = 0;
+  if (jbl->bn.type != BINN_OBJECT) {
+    return JBL_ERROR_NOT_AN_OBJECT;
+  }
+  if (!binn_object_get_str(&jbl->bn, key, (char **) out)) {
+    return JBL_ERROR_CREATION;
+  }
+  return 0;
 }
 
 iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size) {
@@ -2129,6 +2214,8 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
       return "Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX)";
     case JBL_ERROR_PATCH_TEST_FAILED:
       return "JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED)";
+    case JBL_ERROR_NOT_AN_OBJECT:
+      return "JBL is not an object (JBL_ERROR_NOT_AN_OBJECT)";
   }
   return 0;
 }

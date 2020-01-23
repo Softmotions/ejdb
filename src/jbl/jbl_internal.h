@@ -84,4 +84,6 @@ iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor);
 bool _jbl_is_eq_atomic_values(JBL v1, JBL v2);
 int _jbl_cmp_atomic_values(JBL v1, JBL v2);
 
+BOOL binn_read_next_pair2(int expected_type, binn_iter *iter, int *klidx, char **pkey, binn *value);
+
 #endif

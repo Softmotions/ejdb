@@ -1504,7 +1504,7 @@ BINN_PRIVATE BOOL binn_read_next_pair(int expected_type, binn_iter *iter, int *p
   return GetValue(p, value);
 }
 
-BINN_PRIVATE BOOL binn_read_next_pair2(int expected_type, binn_iter *iter, int *klidx, char **pkey, binn *value) {
+BOOL binn_read_next_pair2(int expected_type, binn_iter *iter, int *klidx, char **pkey, binn *value) {
   int int32, id;
   unsigned char *p, *key;
   unsigned short len;
@@ -1517,10 +1517,13 @@ BINN_PRIVATE BOOL binn_read_next_pair2(int expected_type, binn_iter *iter, int *
     return FALSE;
 
   iter->current++;
-  if (iter->current > iter->count) return FALSE;
-
+  if (iter->current > iter->count) {
+    return FALSE;
+  }
+  if (pkey) {
+    *pkey = 0;
+  }
   p = iter->pnext;
-
   switch (expected_type) {
     case BINN_MAP:
       int32 = *((int *) p);

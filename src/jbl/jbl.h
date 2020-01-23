@@ -81,10 +81,18 @@ typedef enum {
   JBL_ERROR_PATCH_TARGET_INVALID,       /**< Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID) */
   JBL_ERROR_PATCH_INVALID_VALUE,        /**< Invalid value specified by patch (JBL_ERROR_PATCH_INVALID_VALUE) */
   JBL_ERROR_PATCH_INVALID_ARRAY_INDEX,  /**< Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX) */
+  JBL_ERROR_NOT_AN_OBJECT,              /**< JBL is not an object (JBL_ERROR_NOT_AN_OBJECT) */
   JBL_ERROR_PATCH_TEST_FAILED,          /**< JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED) */
   _JBL_ERROR_END
 } jbl_ecode_t;
 
+typedef struct JBL_iterator {
+  unsigned char *pnext;
+  unsigned char *plimit;
+  int   type;
+  int   count;
+  int   current;
+} JBL_iterator;
 
 typedef uint8_t jbl_print_flags_t;
 #define JBL_PRINT_PRETTY      ((jbl_print_flags_t) 0x01U)
@@ -343,6 +351,14 @@ IW_EXPORT double jbl_get_f64(JBL jbl);
  */
 IW_EXPORT char *jbl_get_str(JBL jbl);
 
+IW_EXPORT iwrc jbl_object_get_i64(JBL jbl, const char *key, int64_t *out);
+
+IW_EXPORT iwrc jbl_object_get_f64(JBL jbl, const char *key, double *out);
+
+IW_EXPORT iwrc jbl_object_get_bool(JBL jbl, const char *key, bool *out);
+
+IW_EXPORT iwrc jbl_object_get_str(JBL jbl, const char *key, const char **out);
+
 /**
  * @brief Same as `jbl_get_str()` but copies at most `bufsz` into target `buf`.
  * Target buffer not touched if `jbl` value cannot be converted.
@@ -424,6 +440,32 @@ IW_EXPORT iwrc jbl_count_json_printer(const char *data, int size, char ch, int c
  * @param jblp Pointer holder of JBL document. Not zero.
  */
 IW_EXPORT void jbl_destroy(JBL *jblp);
+
+/**
+ * @brief Initializes placeholder for jbl iteration.
+ *        Must be freed by `jbl_destroy()` after iteration.
+ * @param [out] jblp Pointer to be initialized by new object.
+ */
+IW_EXPORT iwrc jbl_create_iterator_holder(JBL *jblp);
+
+/**
+ * @brief Initialize allocated iterator over given `jbl` object.
+ *
+ * @param jbl JBL object to iterate
+ * @param iter Iterator state placeholder allocated by `jbl_create_iter_placeholder()`
+ */
+IW_EXPORT iwrc jbl_iterator_init(JBL jbl, JBL_iterator *iter);
+
+/**
+ * @brief Get next value from JBL_iterator.
+ * Returns `false` if iteration is over.
+ *
+ * @param iter    Iterator object.
+ * @param holder  Holder to object pointed by current iteration.
+ * @param pkey    Key value holder. Zero in the case of iteration over array.
+ * @param klen    Key length or array index in the case of iteration over array.
+ */
+IW_EXPORT bool jbl_iterator_next(JBL_iterator *iter, JBL holder, char **pkey, int *klen);
 
 //--- JBL_NODE
 
