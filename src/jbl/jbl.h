@@ -86,7 +86,7 @@ typedef enum {
   _JBL_ERROR_END
 } jbl_ecode_t;
 
-typedef struct JBL_iterator {
+typedef struct _JBL_iterator {
   unsigned char *pnext;
   unsigned char *plimit;
   int   type;
