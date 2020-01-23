@@ -8,12 +8,12 @@
     "-DBUILD_BENCHMARKS=OFF",
     "-DBUILD_SHARED_LIBS=ON",
     "-DBUILD_TESTS=ON",
-    "-DBUILD_EXAMPLES=ON",
-    "-DBUILD_DART_BINDING=ON",
-    "-DBUILD_JNI_BINDING=ON",
-    "-DBUILD_NODEJS_BINDING=ON",
+    "-DBUILD_EXAMPLES=OFF",
+    "-DBUILD_DART_BINDING=OFF",
+    "-DBUILD_JNI_BINDING=OFF",
+    "-DBUILD_NODEJS_BINDING=OFF",
     "-DBUILD_REACT_NATIVE_BINDING=OFF",
-    "-DBUILD_SWIFT_BINDING=ON",
+    "-DBUILD_SWIFT_BINDING=OFF",
     "-DANDROID_ABIS=x86",
     // "-DASAN=ON",
     // "-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow"
@@ -129,5 +129,6 @@
   "java.import.gradle.jvmArguments": "-Xmx1024m",
   "java.import.gradle.version": "5.4.1",
   "java.import.gradle.wrapper.enabled": true,
-  "java.import.gradle.arguments": "--no-daemon"
+  "java.import.gradle.arguments": "--no-daemon",
+  "C_Cpp.intelliSenseEngineFallback": "Enabled"
 }
