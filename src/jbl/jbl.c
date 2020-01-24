@@ -799,6 +799,17 @@ iwrc jbl_object_get_str(JBL jbl, const char *key, const char **out) {
   return 0;
 }
 
+iwrc jbl_object_get_fill_jbl(JBL jbl, const char *key, JBL out) {
+  if (jbl->bn.type != BINN_OBJECT) {
+    return JBL_ERROR_NOT_AN_OBJECT;
+  }
+  binn_free(&out->bn);
+  if (!binn_object_get_value(&jbl->bn, key, &out->bn)) {
+    return JBL_ERROR_CREATION;
+  }
+  return 0;
+}
+
 iwrc jbl_as_buf(JBL jbl, void **buf, size_t *size) {
   assert(jbl && buf && size);
   if (jbl->bn.writable && jbl->bn.dirty) {
