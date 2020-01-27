@@ -473,12 +473,15 @@ The following statements are taken into account when using EJDB2 indexes:
   /[lastName != Andy]
 
   /[lastName = "John"] or /[lastName = Peter]
+
   ```
-  Will use `/lastName` index defined above
+  But will use `/lastName` index defined above
   ```
   /[lastName = Doe]
 
   /[lastName = Doe] and /[age = 28]
+
+  /[lastName = Doe] and not /[age = 28]
 
   /[lastName = Doe] and /[age != 28]
   ```
@@ -518,17 +521,17 @@ The following statements are taken into account when using EJDB2 indexes:
   < k
   ```
 
-### 1. Performance Tip
+### Performance tip: Physical ordering of documents
 
 All documents in collection are sorted by their primary key in `descending` order. So if you use auto generated keys (`ejdb_put_new`) you may
 be sure what documents fetched as result of full scan query will be ordered
 by time of its insertion in descendant order, unless you don't use query sorting, indexes or `inverse` keyword.
 
-### 2. Performance Tip
+### Performance tip: Brute force scan vs indexes
 
 In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any way.
 
 
-### 3. Performance Tip
+### Performance tip: Get rid of unnecessary document data
 
 If you'd like update some set of documents with `apply` or `del` operations but don't want fetching all of them as result of query - just add `count` modifier to the query to get rid of unnecessary data transferring and json data conversion.

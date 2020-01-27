@@ -2,6 +2,7 @@ ejdb2 (2.0.40) UNRELEASED; urgency=medium
 
   * Added `jbl_object_get_i64`, `jbl_object_get_f64`,
           `jbl_object_get_bool`, `jbl_object_get_str`
+  * Minor fixes in index selection rules
 
  -- Anton Adamansky <adamansky@gmail.com>  Thu, 23 Jan 2020 17:44:30 +0700
 

@@ -281,7 +281,8 @@ Index mode | Description
 <code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
 <code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
 
-Example:
+##### Example
+Set unique string index `(0x01 & 0x04) = 5` on `/name` JSON field:
 ```
 k idx mycollection 5 /name
 ```

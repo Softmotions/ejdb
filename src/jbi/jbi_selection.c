@@ -259,13 +259,15 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
   if (en->type == JQP_EXPR_NODE_TYPE) {
     struct JQP_EXPR_NODE *cn = en->chain;
     for (; cn; cn = cn->next) {
-      if (cn->join && (cn->join->value == JQP_JOIN_OR || cn->join->negate)) {
+      if (cn->join && cn->join->value == JQP_JOIN_OR) {
         return 0;
       }
     }
     for (cn = en->chain; cn; cn = cn->next) {
-      rc = _jbi_collect_indexes(ctx, cn, marr, snp);
-      RCRET(rc);
+      if (!cn->join || !cn->join->negate) {
+        rc = _jbi_collect_indexes(ctx, cn, marr, snp);
+        RCRET(rc);
+      }
     }
   } else if (en->type == JQP_FILTER_TYPE) {
     int fnc = 0;
@@ -333,7 +335,7 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
         rc = _jbi_compute_index_rules(ctx, &mctx);
         RCRET(rc);
         if (!mctx.expr1) { // Cannot find matching expressions
-          return 0;
+          continue;
         }
         if (ctx->ux->log) {
           iwxstr_cat2(ctx->ux->log, "[INDEX] MATCHED  ");
