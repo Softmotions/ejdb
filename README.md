@@ -806,7 +806,7 @@ All documents in collection are sorted by their primary key in `descending` orde
 be sure what documents fetched as result of full scan query will be ordered
 by time of its insertion in descendant order, unless you don't use query sorting, indexes or `inverse` keyword.
 
-### Performance tip: Brute force scan vs indexes
+### Performance tip: Brute force scan vs indexed access
 
 In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any way.
 
@@ -857,7 +857,8 @@ Use the -h, -help or -? to get this information again.
 ## HTTP API
 
 Access to HTTP endpoint can be protected by a token specified with `--access`
-command flag or by C API `EJDB_HTTP` options. If access token specified on server, a client should provide `X-Access-Token` HTTP header value. If token is required and not provided by client `401` HTTP code will be returned. If access token is required and not matched to the token provided by client `403` HTTP code will returned. In any error case `500` error will be returned.
+command flag or by C API `EJDB_HTTP` options. If access token specified on server, client must provide `X-Access-Token` HTTP header value. If token is required and not provided by client the `401` HTTP code will be reported. If access token is not matched to the token provided the `403` HTTP code will be returned.
+For any other errors server will respond with `500` error code.
 
 ## REST API
 

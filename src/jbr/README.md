@@ -38,7 +38,8 @@ Use the -h, -help or -? to get this information again.
 ## HTTP API
 
 Access to HTTP endpoint can be protected by a token specified with `--access`
-command flag or by C API `EJDB_HTTP` options. If access token specified on server, a client should provide `X-Access-Token` HTTP header value. If token is required and not provided by client `401` HTTP code will be returned. If access token is required and not matched to the token provided by client `403` HTTP code will returned. In any error case `500` error will be returned.
+command flag or by C API `EJDB_HTTP` options. If access token specified on server, client must provide `X-Access-Token` HTTP header value. If token is required and not provided by client the `401` HTTP code will be reported. If access token is not matched to the token provided the `403` HTTP code will be returned.
+For any other errors server will respond with `500` error code.
 
 ## REST API
 

@@ -527,7 +527,7 @@ All documents in collection are sorted by their primary key in `descending` orde
 be sure what documents fetched as result of full scan query will be ordered
 by time of its insertion in descendant order, unless you don't use query sorting, indexes or `inverse` keyword.
 
-### Performance tip: Brute force scan vs indexes
+### Performance tip: Brute force scan vs indexed access
 
 In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any way.
 
