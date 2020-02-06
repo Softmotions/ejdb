@@ -329,25 +329,25 @@ IW_EXPORT size_t jbl_size(JBL jbl);
 
 /**
  * @brief Interpret `jbl` value as `int32_t`.
- * Returns zero of value cannot be converted.
+ * Returns zero if value cannot be converted.
  */
 IW_EXPORT int32_t jbl_get_i32(JBL jbl);
 
 /**
  * @brief Interpret `jbl` value as `int64_t`.
- * Returns zero of value cannot be converted.
+ * Returns zero if value cannot be converted.
  */
 IW_EXPORT int64_t jbl_get_i64(JBL jbl);
 
 /**
  * @brief Interpret `jbl` value as `double` value.
- * Returns zero of value cannot be converted.
+ * Returns zero if value cannot be converted.
  */
 IW_EXPORT double jbl_get_f64(JBL jbl);
 
 /**
  * @brief Interpret `jbl` value as `\0` terminated character array.
- * Returns zero of value cannot be converted.
+ * Returns zero if value cannot be converted.
  */
 IW_EXPORT char *jbl_get_str(JBL jbl);
 
