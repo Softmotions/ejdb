@@ -289,35 +289,41 @@ bool jbl_iterator_next(JBL_iterator *iter, JBL holder, char **pkey, int *klen) {
   return false;
 }
 
+IW_INLINE jbl_type_t _jbl_binn_type(int btype) {
+  switch (btype) {
+    case BINN_NULL:
+      return JBV_NULL;
+    case BINN_STRING:
+      return JBV_STR;
+    case BINN_OBJECT:
+    case BINN_MAP:
+      return JBV_OBJECT;
+    case BINN_LIST:
+      return JBV_ARRAY;
+    case BINN_BOOL:
+    case BINN_TRUE:
+    case BINN_FALSE:
+      return JBV_BOOL;
+    case BINN_UINT8:
+    case BINN_UINT16:
+    case BINN_UINT32:
+    case BINN_UINT64:
+    case BINN_INT8:
+    case BINN_INT16:
+    case BINN_INT32:
+    case BINN_INT64:
+      return JBV_I64;
+    case BINN_FLOAT32:
+    case BINN_FLOAT64:
+      return JBV_F64;
+    default:
+      return JBV_NONE;
+  }
+}
+
 jbl_type_t jbl_type(JBL jbl) {
   if (jbl) {
-    switch (jbl->bn.type) {
-      case BINN_NULL:
-        return JBV_NULL;
-      case BINN_STRING:
-        return JBV_STR;
-      case BINN_OBJECT:
-      case BINN_MAP:
-        return JBV_OBJECT;
-      case BINN_LIST:
-        return JBV_ARRAY;
-      case BINN_BOOL:
-      case BINN_TRUE:
-      case BINN_FALSE:
-        return JBV_BOOL;
-      case BINN_UINT8:
-      case BINN_UINT16:
-      case BINN_UINT32:
-      case BINN_UINT64:
-      case BINN_INT8:
-      case BINN_INT16:
-      case BINN_INT32:
-      case BINN_INT64:
-        return JBV_I64;
-      case BINN_FLOAT32:
-      case BINN_FLOAT64:
-        return JBV_F64;
-    }
+    return _jbl_binn_type(jbl->bn.type);
   }
   return JBV_NONE;
 }
@@ -749,6 +755,17 @@ size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz) {
   size_t ret = MIN(slen, bufsz);
   memcpy(buf, jbl->bn.ptr, ret);
   return ret;
+}
+
+jbl_type_t jbl_object_get_type(JBL jbl, const char *key) {
+  if (jbl->bn.type != BINN_OBJECT) {
+    return JBV_NONE;
+  }
+  binn bv;
+  if (!binn_object_get_value(&jbl->bn, key, &bv)) {
+    return JBV_NONE;
+  }
+  return _jbl_binn_type(bv.type);
 }
 
 iwrc jbl_object_get_i64(JBL jbl, const char *key, int64_t *out) {

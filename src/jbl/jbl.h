@@ -361,6 +361,8 @@ IW_EXPORT iwrc jbl_object_get_str(JBL jbl, const char *key, const char **out);
 
 IW_EXPORT iwrc jbl_object_get_fill_jbl(JBL jbl, const char *key, JBL out);
 
+IW_EXPORT jbl_type_t jbl_object_get_type(JBL jbl, const char *key);
+
 /**
  * @brief Same as `jbl_get_str()` but copies at most `bufsz` into target `buf`.
  * Target buffer not touched if `jbl` value cannot be converted.
