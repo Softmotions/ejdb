@@ -53,8 +53,11 @@ static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE"
 #define KEY_PREFIX_COLLMETA   "c." // Full key format: c.<coldbid>
 #define KEY_PREFIX_IDXMETA    "i." // Full key format: i.<coldbid>.<idxdbid>
 
-#define ENSURE_OPEN(db_) \
-  if (!(db_) || !((db_)->open)) return IW_ERROR_INVALID_STATE;
+#define ENSURE_OPEN(db_)                  \
+  if (!(db_) || !((db_)->open)) {         \
+    iwlog_error("Database is not open");  \
+    return IW_ERROR_INVALID_STATE;        \
+  }
 
 #define API_RLOCK(db_, rci_) \
   ENSURE_OPEN(db_);  \

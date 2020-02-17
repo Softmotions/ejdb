@@ -202,6 +202,7 @@ static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
     RCRET(rc);
   }
   if (!jbc->meta) {
+    iwlog_error("Collection %s seems to be initialized", jbc->name);
     return IW_ERROR_INVALID_STATE;
   }
   rc = _jb_coll_load_meta_lr(jbc);
@@ -1694,6 +1695,7 @@ iwrc ejdb_close(EJDB *ejdbp) {
   }
   EJDB db = *ejdbp;
   if (!__sync_bool_compare_and_swap(&db->open, 1, 0)) {
+    iwlog_error2("Database is closed already");
     return IW_ERROR_INVALID_STATE;
   }
   iwrc rc = _jb_db_release(ejdbp);
