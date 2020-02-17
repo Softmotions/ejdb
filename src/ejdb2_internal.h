@@ -55,7 +55,7 @@ static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE"
 
 #define ENSURE_OPEN(db_)                  \
   if (!(db_) || !((db_)->open)) {         \
-    iwlog_error("Database is not open");  \
+    iwlog_error2("Database is not open");  \
     return IW_ERROR_INVALID_STATE;        \
   }
 
