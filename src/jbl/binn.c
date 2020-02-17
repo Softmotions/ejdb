@@ -5,16 +5,11 @@
 #include <string.h>
 #include <memory.h>
 #include "binn.h"
+#include <ejdb2/iowow/iwutils.h>
 
-#ifdef _WIN32
 #define INT64_FORMAT  PRId64
 #define UINT64_FORMAT PRIu64
 #define INT64_HEX_FORMAT  PRIx64
-#else
-#define INT64_FORMAT  "lli"
-#define UINT64_FORMAT "llu"
-#define INT64_HEX_FORMAT  "llx"
-#endif
 
 #define UNUSED(x) (void)(x)
 #define round(dbl) dbl >= 0.0 ? (int)(dbl + 0.5) : ((dbl - (double)(int)dbl) <= -0.5 ? (int)dbl : (int)(dbl - 0.5))
@@ -43,9 +38,7 @@ void (*free_fn)(void *ptr) = free;
 #define __LITTLE_ENDIAN   LITTLE_ENDIAN
 #define __BYTE_ORDER      BYTE_ORDER
 #else
-
 #include <endian.h>
-
 #endif
 
 #ifndef __BYTE_ORDER
@@ -61,59 +54,19 @@ void (*free_fn)(void *ptr) = free;
 #error "__BIG_ENDIAN == __LITTLE_ENDIAN"
 #endif
 
-BINN_PRIVATE unsigned short tobe16(unsigned short input) {
 #if __BYTE_ORDER == __BIG_ENDIAN
-  return input;
+#define tobe16(x) (x)
+#define tobe32(x) (x)
+#define tobe64(x) (x)
 #else
-  unsigned short result;
-  unsigned char *source = (unsigned char *) &input;
-  unsigned char *dest = (unsigned char *) &result;
-
-  dest[0] = source[1];
-  dest[1] = source[0];
-
-  return result;
+#define tobe16(x) IW_SWAB16(x)
+#define tobe32(x) IW_SWAB32(x)
+#define tobe64(x) IW_SWAB64(x)
 #endif
-}
-
-BINN_PRIVATE unsigned int tobe32(unsigned int input) {
-#if __BYTE_ORDER == __BIG_ENDIAN
-  return input;
-#else
-  unsigned int result;
-  unsigned char *source = (unsigned char *) &input;
-  unsigned char *dest = (unsigned char *) &result;
-
-  dest[0] = source[3];
-  dest[1] = source[2];
-  dest[2] = source[1];
-  dest[3] = source[0];
-
-  return result;
-#endif
-}
-
-BINN_PRIVATE uint64 tobe64(uint64 input) {
-#if __BYTE_ORDER == __BIG_ENDIAN
-  return input;
-#else
-  uint64 result;
-  unsigned char *source = (unsigned char *) &input;
-  unsigned char *dest = (unsigned char *) &result;
-  int i;
-
-  for (i = 0; i < 8; i++) {
-    dest[i] = source[7 - i];
-  }
-
-  return result;
-#endif
-}
 
 #define frombe16 tobe16
 #define frombe32 tobe32
 #define frombe64 tobe64
-
 
 #ifndef WIN32
 #define stricmp strcasecmp
@@ -617,9 +570,11 @@ loc_exit:
 BINN_PRIVATE int type_family(int type);
 
 BINN_PRIVATE BOOL AddValue(binn *item, int type, void *pvalue, int size) {
-  int int32, ArgSize, storage_type, extra_type;
-  short int16;
-  uint64 int64;
+  int32_t  argsz, storage_type, extra_type;
+  uint16_t su;
+  uint32_t lu;
+  uint64_t llu;
+
   unsigned char *p, *ptr;
 
   binn_get_type_info(type, &storage_type, &extra_type);
@@ -642,44 +597,44 @@ BINN_PRIVATE BOOL AddValue(binn *item, int type, void *pvalue, int size) {
   switch (storage_type) {
     case BINN_STORAGE_NOBYTES:
       size = 0;
-      ArgSize = size;
+      argsz = size;
       break;
     case BINN_STORAGE_BYTE:
       size = 1;
-      ArgSize = size;
+      argsz = size;
       break;
     case BINN_STORAGE_WORD:
       size = 2;
-      ArgSize = size;
+      argsz = size;
       break;
     case BINN_STORAGE_DWORD:
       size = 4;
-      ArgSize = size;
+      argsz = size;
       break;
     case BINN_STORAGE_QWORD:
       size = 8;
-      ArgSize = size;
+      argsz = size;
       break;
     case BINN_STORAGE_BLOB:
       if (size < 0) return FALSE;
       //if (size == 0) ...
-      ArgSize = size + 4;
+      argsz = size + 4;
       break;
     case BINN_STORAGE_STRING:
       if (size < 0) return FALSE;
       if (size == 0) size = strlen2((char *) pvalue);
-      ArgSize = size + 5; // at least this size
+      argsz = size + 5; // at least this size
       break;
     case BINN_STORAGE_CONTAINER:
       if (size <= 0) return FALSE;
-      ArgSize = size;
+      argsz = size;
       break;
     default:
       return FALSE;
   }
 
-  ArgSize += 2;  // at least 2 bytes used for data_type.
-  if (CheckAllocation(item, ArgSize) == FALSE) return FALSE;
+  argsz += 2;  // at least 2 bytes used for data_type.
+  if (CheckAllocation(item, argsz) == FALSE) return FALSE;
 
   // Gets the pointer to the next place in buffer
   p = ((unsigned char *) item->pbuf) + item->used_size;
@@ -704,45 +659,42 @@ BINN_PRIVATE BOOL AddValue(binn *item, int type, void *pvalue, int size) {
       // Nothing to do.
       break;
     case BINN_STORAGE_BYTE:
-      //*((char *) p) = (char) Value;
       *((char *) p) = *((char *) pvalue);
       item->used_size += 1;
       break;
     case BINN_STORAGE_WORD:
-      //int16 = tobe16( (short) Value);
-      int16 = *((short *) pvalue);
-      int16 = tobe16(int16);
-      *((short *) p) = int16;
-      item->used_size += 2;
+      su = *((uint16_t *) pvalue);
+      su = tobe16(su);
+      memcpy(p, &su, sizeof(su));
+      item->used_size += sizeof(su);
       break;
     case BINN_STORAGE_DWORD:
-      //int32 = tobe32( (int) Value);
-      int32 = *((int *) pvalue);
-      int32 = tobe32(int32);
-      *((int *) p) = int32;
-      item->used_size += 4;
+      lu = *((uint32_t *) pvalue);
+      lu = tobe32(lu);
+      memcpy(p, &lu, sizeof(lu));
+      item->used_size += sizeof(lu);
       break;
     case BINN_STORAGE_QWORD:
       // is there an htond or htonq to be used with qwords? (64 bits)
-      int64 = *((uint64 *) pvalue);
-      int64 = tobe64(int64);
-      *((uint64 *) p) = int64;
-      item->used_size += 8;
+      llu = *((uint64_t *) pvalue);
+      llu = tobe64(llu);
+      memcpy(p, &llu, sizeof(llu));
+      item->used_size += sizeof(llu);
       break;
     case BINN_STORAGE_BLOB:
-      int32 = tobe32(size);
-      *((int *) p) = int32;
-      p += 4;
+      lu = tobe32(size);
+      memcpy(p, &lu, sizeof(lu));
+      p += sizeof(lu);
       memcpy(p, pvalue, size);
-      item->used_size += 4 + size;
+      item->used_size += sizeof(lu) + size;
       break;
     case BINN_STORAGE_STRING:
       if (size > 127) {
-        int32 = size | 0x80000000;
-        int32 = tobe32(int32);
-        *((int *) p) = int32;
-        p += 4;
-        item->used_size += 4;
+        lu = size | 0x80000000;
+        lu = tobe32(lu);
+        memcpy(p, &lu, sizeof(lu));
+        p += sizeof(lu);
+        item->used_size += sizeof(lu);
       } else {
         *((unsigned char *) p) = size;
         p++;
@@ -938,7 +890,7 @@ BINN_PRIVATE BOOL IsValidBinnHeader(const void *pbuf, int *ptype, int *pcount, i
   if (ptype) *ptype = type;
   if (pcount) *pcount = count;
   if (psize && *psize == 0) *psize = size;
-  if (pheadersize) *pheadersize = (int) (p - (const unsigned char *) pbuf);
+  if (pheadersize) *pheadersize = (int)(p - (const unsigned char *) pbuf);
   return TRUE;
 }
 
@@ -1225,7 +1177,7 @@ BINN_PRIVATE void *store_value(binn *value) {
   memcpy(&local_value, value, sizeof(binn));
   switch (binn_get_read_storage(value->type)) {
     case BINN_STORAGE_NOBYTES:
-      // return a valid pointer
+    // return a valid pointer
     case BINN_STORAGE_WORD:
     case BINN_STORAGE_DWORD:
     case BINN_STORAGE_QWORD:
@@ -1756,9 +1708,9 @@ BINN_PRIVATE int type_family(int type) {
 
     case BINN_FLOAT32:
     case BINN_FLOAT64:
-      //case BINN_SINGLE:
+    //case BINN_SINGLE:
     case BINN_SINGLE_STR:
-      //case BINN_DOUBLE:
+    //case BINN_DOUBLE:
     case BINN_DOUBLE_STR:
       return BINN_FAMILY_FLOAT;
 
@@ -1922,7 +1874,7 @@ BINN_PRIVATE BOOL copy_float_value(void *psource, void *pdest, int source_type, 
       *(double *) pdest = *(float *) psource;
       break;
     case BINN_FLOAT64:
-      *(float *) pdest = (float) *(double *) psource;
+      *(float *) pdest = (float) * (double *) psource;
       break;
     default:
       return FALSE;
