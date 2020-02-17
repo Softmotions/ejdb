@@ -40,7 +40,7 @@ await db.close();
 - iOS
 - Android
 
-## iOS note
+## iOS notes
 
 In order to build app with this binding you have
 to add the following code into application `Podfile`:
@@ -50,6 +50,43 @@ pre_install do |installer|
   # workaround for https://github.com/CocoaPods/CocoaPods/issues/3289
   Pod::Installer::Xcode::TargetValidator.send(:define_method, :verify_no_static_framework_transitive_dependencies) {}
 end
+```
+
+## Android notes
+
+For release builds you have setup proguard rules as follows:
+
+`build.gradle`
+```
+    buildTypes {
+      ...
+        release {
+            ...
+            minifyEnabled true
+            useProguard true
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+```
+
+`proguard-rules.pro`
+```
+# Flutter Wrapper
+
+-keep class io.flutter.app.** { *; }
+-keep class io.flutter.plugin.**  { *; }
+-keep class io.flutter.util.**  { *; }
+-keep class io.flutter.view.**  { *; }
+-keep class io.flutter.**  { *; }
+-keep class io.flutter.plugins.**  { *; }
+-keep class io.flutter.embedding.**  { *; }
+-keep class io.flutter.embedding.android.**  { *; }
+
+-keep class androidx.core.app.** { *; }
+
+# Keep EJDB
+-keep class com.softmotions.ejdb2.** { *; }
+
 ```
 
 ## How build it manually

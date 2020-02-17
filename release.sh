@@ -43,7 +43,7 @@ release_tag() {
   git add ./README.md
 
   if ! git diff-index --quiet HEAD --; then
-    git commit -m"${TAG} landed"
+    git commit -a -m"${TAG} landed"
     git push origin master
   fi
 

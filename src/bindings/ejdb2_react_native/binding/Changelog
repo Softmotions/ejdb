@@ -1,8 +1,12 @@
-ejdb_dart (1.0.13)
+ejdb2_react_native (1.0.14)
+
+  * Upgraded to ejdb v2.0.40
+
+ejdb2_react_native (1.0.13)
 
   * Upgraded to ejdb v2.0.39
 
-ejdb_dart (1.0.12)
+ejdb2_react_native (1.0.12)
 
   * Upgraded to ejdb v2.0.37
   * Fixed wal related durability issue
