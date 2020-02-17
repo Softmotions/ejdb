@@ -54,7 +54,7 @@ end
 
 ## Android notes
 
-For release builds you have setup proguard rules as follows:
+For release builds you have to setup proguard rules as follows:
 
 `build.gradle`
 ```
