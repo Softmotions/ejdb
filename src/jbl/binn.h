@@ -291,6 +291,9 @@ BOOL APIENTRY binn_create_list(binn *list);
 BOOL APIENTRY binn_create_map(binn *map);
 BOOL APIENTRY binn_create_object(binn *object);
 
+// create a new binn as a copy from another
+binn * APIENTRY binn_copy(void *old);
+
 BOOL APIENTRY binn_list_add_new(binn *list, binn *value);
 BOOL APIENTRY binn_map_set_new(binn *map, int id, binn *value);
 BOOL APIENTRY binn_object_set_new(binn *obj, const char *key, binn *value);
@@ -515,7 +518,8 @@ binn *APIENTRY binn_object_next_value(binn_iter *iter, char *pkey);   // the key
 // on stack
 BOOL   APIENTRY binn_list_next(binn_iter *iter, binn *value);
 BOOL   APIENTRY binn_map_next(binn_iter *iter, int *pid, binn *value);
-BOOL   APIENTRY binn_object_next(binn_iter *iter, char *pkey, binn *value);  // the key must be declared as: char key[256];
+BOOL   APIENTRY binn_object_next(binn_iter *iter, char *pkey,
+                                 binn *value);  // the key must be declared as: char key[256];
 BOOL   APIENTRY binn_object_next2(binn_iter *iter, char **pkey, int *klen, binn *value);
 
 // these 3 functions return a pointer to the value and the data type
@@ -616,7 +620,7 @@ ALWAYS_INLINE BOOL binn_list_add_str(binn *list, char *str) {
   return binn_list_add(list, BINN_STRING, str, 0);
 }
 ALWAYS_INLINE BOOL binn_list_add_const_str(binn *list, const char *str) {
-  return binn_list_add(list, BINN_STRING, (char*) str, 0);
+  return binn_list_add(list, BINN_STRING, (char *) str, 0);
 }
 ALWAYS_INLINE BOOL binn_list_add_blob(binn *list, void *ptr, int size) {
   return binn_list_add(list, BINN_BLOB, ptr, size);
@@ -730,7 +734,7 @@ ALWAYS_INLINE BOOL binn_object_set_null(binn *obj, const char *key) {
   return binn_object_set(obj, key, BINN_NULL, NULL, 0);
 }
 ALWAYS_INLINE BOOL binn_object_set_str(binn *obj, const char *key, const char *str) {
-  return binn_object_set(obj, key, BINN_STRING, (char*) str, 0); // todo
+  return binn_object_set(obj, key, BINN_STRING, (char *) str, 0); // todo
 }
 ALWAYS_INLINE BOOL binn_object_set_blob(binn *obj, const char *key, void *ptr, int size) {
   return binn_object_set(obj, key, BINN_BLOB, ptr, size);

@@ -1,7 +1,6 @@
 #include "ejdb2.h"
 #include "jbl.h"
 #include "jbl_internal.h"
-
 #include <CUnit/Basic.h>
 
 #define INT64_FORMAT  PRId64
@@ -11,6 +10,15 @@
 typedef unsigned short int     u16;
 typedef unsigned int           u32;
 typedef unsigned long long int u64;
+
+int init_suite(void) {
+  int rc = ejdb_init();
+  return rc;
+}
+
+int clean_suite(void) {
+  return 0;
+}
 
 void copy_be16(u16 *pdest, u16 *psource) {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -109,17 +117,6 @@ static BOOL CheckAllocation(binn *item, int add_size) {
   }
   return TRUE;
 }
-
-int init_suite(void) {
-  int rc = ejdb_init();
-  return rc;
-}
-
-int clean_suite(void) {
-  return 0;
-}
-
-
 
 #define BINN_MAGIC            0x1F22B11F
 
@@ -453,8 +450,8 @@ void test_floating_point_numbers() {
 
 void test1() {
   static const int fix_size = 512;
-  int i, blobsize;
-  char *ptr, *p2;
+  int i = 8768787, blobsize;
+  char *ptr, *p2, *ptr2;
   binn *obj1, *list, *map, *obj;  //, *list2=INVALID_BINN, *map2=INVALID_BINN, *obj2=INVALID_BINN;
   binn value;
   // test values
@@ -620,30 +617,27 @@ void test1() {
 
   // read values - invalid 1 - empty binns -------------------------------------------
 
+  ptr2 = binn_ptr(list);
+  CU_ASSERT(ptr2 != NULL);
+  CU_ASSERT(binn_list_get_value(ptr2, 0, &value) == FALSE);
+  CU_ASSERT(binn_list_get_value(ptr2, 1, &value) == FALSE);
+  CU_ASSERT(binn_list_get_value(ptr2, 2, &value) == FALSE);
+  CU_ASSERT(binn_list_get_value(ptr2, -1, &value) == FALSE);
 
-  free(ptr);
+  ptr2 = binn_ptr(map);
+  CU_ASSERT(ptr2 != NULL);
+  CU_ASSERT(binn_list_get_value(ptr2, 0, &value) == FALSE);
+  CU_ASSERT(binn_list_get_value(ptr2, 1, &value) == FALSE);
+  CU_ASSERT(binn_list_get_value(ptr2, 2, &value) == FALSE);
+  CU_ASSERT(binn_list_get_value(ptr2, -1, &value) == FALSE);
 
-  ptr = binn_ptr(list);
-  CU_ASSERT(ptr != NULL);
-  CU_ASSERT(binn_list_get_value(ptr, 0, &value) == FALSE);
-  CU_ASSERT(binn_list_get_value(ptr, 1, &value) == FALSE);
-  CU_ASSERT(binn_list_get_value(ptr, 2, &value) == FALSE);
-  CU_ASSERT(binn_list_get_value(ptr, -1, &value) == FALSE);
 
-  ptr = binn_ptr(map);
-  CU_ASSERT(ptr != NULL);
-  CU_ASSERT(binn_list_get_value(ptr, 0, &value) == FALSE);
-  CU_ASSERT(binn_list_get_value(ptr, 1, &value) == FALSE);
-  CU_ASSERT(binn_list_get_value(ptr, 2, &value) == FALSE);
-  CU_ASSERT(binn_list_get_value(ptr, -1, &value) == FALSE);
-
-  ptr = binn_ptr(obj);
-  CU_ASSERT(ptr != NULL);
-  CU_ASSERT(binn_list_get_value(ptr, 0, &value) == FALSE);
-  CU_ASSERT(binn_list_get_value(ptr, 1, &value) == FALSE);
-  CU_ASSERT(binn_list_get_value(ptr, 2, &value) == FALSE);
-  CU_ASSERT(binn_list_get_value(ptr, -1, &value) == FALSE);
-
+  ptr2 = binn_ptr(obj);
+  CU_ASSERT(ptr2 != NULL);
+  CU_ASSERT(binn_list_get_value(ptr2, 0, &value) == FALSE);
+  CU_ASSERT(binn_list_get_value(ptr2, 1, &value) == FALSE);
+  CU_ASSERT(binn_list_get_value(ptr2, 2, &value) == FALSE);
+  CU_ASSERT(binn_list_get_value(ptr2, -1, &value) == FALSE);
 
   // add values - valid -----------------------------------------------------------------
 
@@ -717,26 +711,23 @@ void test1() {
 
   // create a long string buffer to make the test. the string is longer than the available space
   // in the binn.
-  ptr = malloc(fix_size);
-  CU_ASSERT(ptr != NULL);
-  p2 = ptr;
+  ptr2 = malloc(fix_size);
+  CU_ASSERT(ptr2 != NULL);
+  p2 = ptr2;
   for (i = 0; i < fix_size - 1; i++) {
     *p2 = 'A';
     p2++;
   }
   *p2 = '\0';
-  CU_ASSERT(strlen(ptr) == fix_size - 1);
+  CU_ASSERT(strlen(ptr2) == fix_size - 1);
 
-  CU_ASSERT(binn_object_set(obj1, "v2", BINN_STRING, ptr,
+  CU_ASSERT(binn_object_set(obj1, "v2", BINN_STRING, ptr2,
                          0) == FALSE); // it fails because it uses a pre-allocated memory block
 
-  CU_ASSERT(binn_object_set(obj, "v2", BINN_STRING, ptr,
+  CU_ASSERT(binn_object_set(obj, "v2", BINN_STRING, ptr2,
                          0) == TRUE); // but this uses a dynamically allocated memory block, so it works with it
   CU_ASSERT(binn_object_set(obj, "Key00", BINN_STRING, "after the big string",
                          0) == TRUE); // and test the 'Key00' against the 'Key0'
-
-  free(ptr);
-  ptr = 0;
 
   CU_ASSERT(binn_object_set(obj, "list", BINN_LIST, binn_ptr(list), binn_size(list)) == TRUE);
   CU_ASSERT(binn_object_set(obj, "Key10", BINN_STRING, "after the list",
@@ -771,6 +762,9 @@ void test1() {
   binn_free(obj);
   binn_free(obj1);
   free(pblob);
+  free(ptr);
+  free(ptr2);
+
 
   printf("OK\n");
 
@@ -2026,7 +2020,7 @@ void test_invalid_binn() {
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
-  pSuite = CU_add_suite("jbl_test1", init_suite, clean_suite);
+  pSuite = CU_add_suite("jbl_test_binn1", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
