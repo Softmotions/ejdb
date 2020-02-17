@@ -1055,7 +1055,7 @@ BOOL APIENTRY binn_is_valid(void *ptr, int *ptype, int *pcount, int *psize) {
 BINN_PRIVATE BOOL GetValue(unsigned char *p, binn *value) {
   unsigned char byte;
   int data_type, storage_type;  //, extra_type;
-  int DataSize;
+  int datasz;
   void *p2;
 
   if (value == NULL) return FALSE;
@@ -1090,23 +1090,23 @@ BINN_PRIVATE BOOL GetValue(unsigned char *p, binn *value) {
       value->ptr = p;   //value->ptr = &value->vuint8;
       break;
     case BINN_STORAGE_WORD:
-      value->vint16 = *((short *) p);
+      memcpy(&value->vint16, p, sizeof(uint16_t));
       value->vint16 = frombe16(value->vint16);
       value->ptr = &value->vint16;
       break;
     case BINN_STORAGE_DWORD:
-      value->vint32 = *((int *) p);
+      memcpy(&value->vint32, p, sizeof(uint32_t));
       value->vint32 = frombe32(value->vint32);
       value->ptr = &value->vint32;
       break;
     case BINN_STORAGE_QWORD:
-      value->vint64 = *((uint64 *) p);
+      memcpy(&value->vint64, p, sizeof(uint64_t));
       value->vint64 = frombe64(value->vint64);
       value->ptr = &value->vint64;
       break;
     case BINN_STORAGE_BLOB:
-      value->size = *((int *) p);
-      p += 4;
+      memcpy(&value->size, p, sizeof(uint32_t));
+      p += sizeof(uint32_t);
       value->size = frombe32(value->size);
       value->ptr = p;
       break;
@@ -1115,16 +1115,16 @@ BINN_PRIVATE BOOL GetValue(unsigned char *p, binn *value) {
       if (IsValidBinnHeader(p2, NULL, &value->count, &value->size, NULL) == FALSE) return FALSE;
       break;
     case BINN_STORAGE_STRING:
-      DataSize = *((unsigned char *) p);
-      if (DataSize & 0x80) {
-        DataSize = *((int *) p);
-        p += 4;
-        DataSize = frombe32(DataSize);
-        DataSize &= 0x7FFFFFFF;
+      datasz = *((unsigned char *) p);
+      if (datasz & 0x80) {
+        memcpy(&datasz, p, sizeof(uint32_t));
+        p += sizeof(uint32_t);
+        datasz = frombe32(datasz);
+        datasz &= 0x7FFFFFFF;
       } else {
         p++;
       }
-      value->size = DataSize;
+      value->size = datasz;
       value->ptr = p;
       break;
     default:
