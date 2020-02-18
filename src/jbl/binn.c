@@ -1871,6 +1871,12 @@ BINN_PRIVATE BOOL copy_int_value(void *psource, void *pdest, int source_type, in
   return TRUE;
 }
 
+#ifdef IW_TESTS
+BOOL copy_int_value_tests(void *psource, void *pdest, int source_type, int dest_type) {
+  return copy_int_value(psource, pdest, source_type, dest_type);
+}
+#endif
+
 BINN_PRIVATE BOOL copy_float_value(void *psource, void *pdest, int source_type, int dest_type) {
   switch (source_type) {
     case BINN_FLOAT32:

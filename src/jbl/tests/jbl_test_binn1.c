@@ -20,7 +20,7 @@ int clean_suite(void) {
   return 0;
 }
 
-void copy_be16(u16 *pdest, u16 *psource) {
+BINN_PRIVATE void copy_be16(u16 *pdest, u16 *psource) {
 #if BYTE_ORDER == LITTLE_ENDIAN
   unsigned char *source = (unsigned char *) psource;
   unsigned char *dest = (unsigned char *) pdest;
@@ -42,7 +42,7 @@ void copy_be16(u16 *pdest, u16 *psource) {
 #endif
 }
 
-void copy_be32(u32 *pdest, u32 *psource) {
+BINN_PRIVATE void copy_be32(u32 *pdest, u32 *psource) {
 #if BYTE_ORDER == LITTLE_ENDIAN
   unsigned char *source = (unsigned char *) psource;
   unsigned char *dest = (unsigned char *) pdest;
@@ -68,7 +68,7 @@ void copy_be32(u32 *pdest, u32 *psource) {
 #endif
 }
 
-void copy_be64(u64 *pdest, u64 *psource) {
+BINN_PRIVATE void copy_be64(u64 *pdest, u64 *psource) {
 #if BYTE_ORDER == LITTLE_ENDIAN
   unsigned char *source = (unsigned char *) psource;
   unsigned char *dest = (unsigned char *) pdest;

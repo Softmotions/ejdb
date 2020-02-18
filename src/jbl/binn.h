@@ -49,15 +49,6 @@ extern "C" {
 typedef int BOOL;
 #endif
 
-// #ifndef APIENTRY
-// #ifdef _WIN32
-// #define APIENTRY __stdcall
-// #else
-// //#define APIENTRY __attribute__((stdcall))
-// #define APIENTRY
-// #endif
-// #endif
-
 #ifndef APIENTRY
 #define APIENTRY
 #endif

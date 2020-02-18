@@ -818,7 +818,7 @@ void init_udts() {
 
 /*************************************************************************************/
 
-BOOL copy_int_value(void *psource, void *pdest, int source_type, int dest_type);
+BOOL copy_int_value_tests(void *psource, void *pdest, int source_type, int dest_type);
 
 void test_int_conversion() {
 
@@ -828,100 +828,100 @@ void test_int_conversion() {
 
   vint8 = -110;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vuint8, BINN_INT8, BINN_UINT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vuint8, BINN_INT8, BINN_UINT8) == FALSE);
   CU_ASSERT(vint8 == -110);
   CU_ASSERT(vuint8 == 0);
 
   vint8 = -110;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vuint16, BINN_INT8, BINN_UINT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vuint16, BINN_INT8, BINN_UINT16) == FALSE);
   CU_ASSERT(vint8 == -110);
   CU_ASSERT(vuint16 == 0);
 
   vint8 = -110;
   vuint32 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vuint32, BINN_INT8, BINN_UINT32) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vuint32, BINN_INT8, BINN_UINT32) == FALSE);
   CU_ASSERT(vint8 == -110);
   CU_ASSERT(vuint32 == 0);
 
   vint8 = -110;
   vuint64 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vuint64, BINN_INT8, BINN_UINT64) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vuint64, BINN_INT8, BINN_UINT64) == FALSE);
   CU_ASSERT(vint8 == -110);
   CU_ASSERT(vuint64 == 0);
 
 
   vint16 = -123;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vuint8, BINN_INT16, BINN_UINT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vuint8, BINN_INT16, BINN_UINT8) == FALSE);
   CU_ASSERT(vint16 == -123);
   CU_ASSERT(vuint8 == 0);
 
   vint16 = -123;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vuint16, BINN_INT16, BINN_UINT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vuint16, BINN_INT16, BINN_UINT16) == FALSE);
   CU_ASSERT(vint16 == -123);
   CU_ASSERT(vuint16 == 0);
 
   vint16 = -32000;
   vuint32 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vuint32, BINN_INT16, BINN_UINT32) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vuint32, BINN_INT16, BINN_UINT32) == FALSE);
   CU_ASSERT(vint16 == -32000);
   CU_ASSERT(vuint32 == 0);
 
   vint16 = -32000;
   vuint64 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vuint64, BINN_INT16, BINN_UINT64) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vuint64, BINN_INT16, BINN_UINT64) == FALSE);
   CU_ASSERT(vint16 == -32000);
   CU_ASSERT(vuint64 == 0);
 
 
   vint32 = -123;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vuint8, BINN_INT32, BINN_UINT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vuint8, BINN_INT32, BINN_UINT8) == FALSE);
   CU_ASSERT(vint32 == -123);
   CU_ASSERT(vuint8 == 0);
 
   vint32 = -123;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vuint16, BINN_INT32, BINN_UINT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vuint16, BINN_INT32, BINN_UINT16) == FALSE);
   CU_ASSERT(vint32 == -123);
   CU_ASSERT(vuint16 == 0);
 
   vint32 = -123;
   vuint32 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vuint32, BINN_INT32, BINN_UINT32) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vuint32, BINN_INT32, BINN_UINT32) == FALSE);
   CU_ASSERT(vint32 == -123);
   CU_ASSERT(vuint32 == 0);
 
   vint32 = -123;
   vuint64 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vuint64, BINN_INT32, BINN_UINT64) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vuint64, BINN_INT32, BINN_UINT64) == FALSE);
   CU_ASSERT(vint32 == -123);
   CU_ASSERT(vuint64 == 0);
 
 
   vint64 = -123;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint8, BINN_INT64, BINN_UINT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint8, BINN_INT64, BINN_UINT8) == FALSE);
   CU_ASSERT(vint64 == -123);
   CU_ASSERT(vuint8 == 0);
 
   vint64 = -123;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint16, BINN_INT64, BINN_UINT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint16, BINN_INT64, BINN_UINT16) == FALSE);
   CU_ASSERT(vint64 == -123);
   CU_ASSERT(vuint16 == 0);
 
   vint64 = -123;
   vuint32 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint32, BINN_INT64, BINN_UINT32) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint32, BINN_INT64, BINN_UINT32) == FALSE);
   CU_ASSERT(vint64 == -123);
   CU_ASSERT(vuint32 == 0);
 
   vint64 = -123;
   vuint64 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint64, BINN_INT64, BINN_UINT64) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint64, BINN_INT64, BINN_UINT64) == FALSE);
   CU_ASSERT(vint64 == -123);
   CU_ASSERT(vuint64 == 0);
 
@@ -930,39 +930,39 @@ void test_int_conversion() {
 
   vint16 = -32000;
   vint8 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vint8, BINN_INT16, BINN_INT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vint8, BINN_INT16, BINN_INT8) == FALSE);
   CU_ASSERT(vint16 == -32000);
   CU_ASSERT(vint8 == 0);
 
 
   vint32 = -250;
   vint8 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vint8, BINN_INT32, BINN_INT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vint8, BINN_INT32, BINN_INT8) == FALSE);
   CU_ASSERT(vint32 == -250);
   CU_ASSERT(vint8 == 0);
 
   vint32 = -35000;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vint16, BINN_INT32, BINN_INT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vint16, BINN_INT32, BINN_INT16) == FALSE);
   CU_ASSERT(vint32 == -35000);
   CU_ASSERT(vint16 == 0);
 
 
   vint64 = -250;
   vint8 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vint8, BINN_INT64, BINN_INT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vint8, BINN_INT64, BINN_INT8) == FALSE);
   CU_ASSERT(vint64 == -250);
   CU_ASSERT(vint8 == 0);
 
   vint64 = -35000;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vint16, BINN_INT64, BINN_INT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vint16, BINN_INT64, BINN_INT16) == FALSE);
   CU_ASSERT(vint64 == -35000);
   CU_ASSERT(vint16 == 0);
 
   vint64 = -25470000000;
   vint32 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vint32, BINN_INT64, BINN_INT32) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vint32, BINN_INT64, BINN_INT32) == FALSE);
   CU_ASSERT(vint64 == -25470000000);
   CU_ASSERT(vint32 == 0);
 
@@ -971,39 +971,39 @@ void test_int_conversion() {
 
   vint16 = 250;
   vint8 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vint8, BINN_INT16, BINN_INT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vint8, BINN_INT16, BINN_INT8) == FALSE);
   CU_ASSERT(vint16 == 250);
   CU_ASSERT(vint8 == 0);
 
 
   vint32 = 250;
   vint8 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vint8, BINN_INT32, BINN_INT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vint8, BINN_INT32, BINN_INT8) == FALSE);
   CU_ASSERT(vint32 == 250);
   CU_ASSERT(vint8 == 0);
 
   vint32 = 35000;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vint16, BINN_INT32, BINN_INT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vint16, BINN_INT32, BINN_INT16) == FALSE);
   CU_ASSERT(vint32 == 35000);
   CU_ASSERT(vint16 == 0);
 
 
   vint64 = 250;
   vint8 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vint8, BINN_INT64, BINN_INT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vint8, BINN_INT64, BINN_INT8) == FALSE);
   CU_ASSERT(vint64 == 250);
   CU_ASSERT(vint8 == 0);
 
   vint64 = 35000;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vint16, BINN_INT64, BINN_INT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vint16, BINN_INT64, BINN_INT16) == FALSE);
   CU_ASSERT(vint64 == 35000);
   CU_ASSERT(vint16 == 0);
 
   vint64 = 25470000000;
   vint32 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vint32, BINN_INT64, BINN_INT32) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vint32, BINN_INT64, BINN_INT32) == FALSE);
   CU_ASSERT(vint64 == 25470000000);
   CU_ASSERT(vint32 == 0);
 
@@ -1013,39 +1013,39 @@ void test_int_conversion() {
 
   vint16 = 300;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vuint8, BINN_INT16, BINN_UINT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vuint8, BINN_INT16, BINN_UINT8) == FALSE);
   CU_ASSERT(vint16 == 300);
   CU_ASSERT(vuint8 == 0);
 
 
   vint32 = 300;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vuint8, BINN_INT32, BINN_UINT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vuint8, BINN_INT32, BINN_UINT8) == FALSE);
   CU_ASSERT(vint32 == 300);
   CU_ASSERT(vuint8 == 0);
 
   vint32 = 70000;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vuint16, BINN_INT32, BINN_UINT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vuint16, BINN_INT32, BINN_UINT16) == FALSE);
   CU_ASSERT(vint32 == 70000);
   CU_ASSERT(vuint16 == 0);
 
 
   vint64 = 300;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint8, BINN_INT64, BINN_UINT8) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint8, BINN_INT64, BINN_UINT8) == FALSE);
   CU_ASSERT(vint64 == 300);
   CU_ASSERT(vuint8 == 0);
 
   vint64 = 70000;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint16, BINN_INT64, BINN_UINT16) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint16, BINN_INT64, BINN_UINT16) == FALSE);
   CU_ASSERT(vint64 == 70000);
   CU_ASSERT(vuint16 == 0);
 
   vint64 = 25470000000;
   vuint32 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint32, BINN_INT64, BINN_UINT32) == FALSE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint32, BINN_INT64, BINN_UINT32) == FALSE);
   CU_ASSERT(vint64 == 25470000000);
   CU_ASSERT(vuint32 == 0);
 
@@ -1058,37 +1058,37 @@ void test_int_conversion() {
 
   vint8 = 123;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vint16, BINN_INT8, BINN_INT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vint16, BINN_INT8, BINN_INT16) == TRUE);
   CU_ASSERT(vint8 == 123);
   CU_ASSERT(vint16 == 123);
 
   vint8 = -110;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vint16, BINN_INT8, BINN_INT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vint16, BINN_INT8, BINN_INT16) == TRUE);
   CU_ASSERT(vint8 == -110);
   CU_ASSERT(vint16 == -110);
 
   vint8 = 123;
   vint32 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vint32, BINN_INT8, BINN_INT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vint32, BINN_INT8, BINN_INT32) == TRUE);
   CU_ASSERT(vint8 == 123);
   CU_ASSERT(vint32 == 123);
 
   vint8 = -110;
   vint32 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vint32, BINN_INT8, BINN_INT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vint32, BINN_INT8, BINN_INT32) == TRUE);
   CU_ASSERT(vint8 == -110);
   CU_ASSERT(vint32 == -110);
 
   vint8 = 123;
   vint64 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vint64, BINN_INT8, BINN_INT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vint64, BINN_INT8, BINN_INT64) == TRUE);
   CU_ASSERT(vint8 == 123);
   CU_ASSERT(vint64 == 123);
 
   vint8 = -120;
   vint64 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vint64, BINN_INT8, BINN_INT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vint64, BINN_INT8, BINN_INT64) == TRUE);
   CU_ASSERT(vint8 == -120);
   CU_ASSERT(vint64 == -120);
 
@@ -1097,19 +1097,19 @@ void test_int_conversion() {
 
   vint8 = 123;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vuint16, BINN_INT8, BINN_UINT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vuint16, BINN_INT8, BINN_UINT16) == TRUE);
   CU_ASSERT(vint8 == 123);
   CU_ASSERT(vuint16 == 123);
 
   vint8 = 123;
   vuint32 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vuint32, BINN_INT8, BINN_UINT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vuint32, BINN_INT8, BINN_UINT32) == TRUE);
   CU_ASSERT(vint8 == 123);
   CU_ASSERT(vuint32 == 123);
 
   vint8 = 123;
   vuint64 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vuint64, BINN_INT8, BINN_UINT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vuint64, BINN_INT8, BINN_UINT64) == TRUE);
   CU_ASSERT(vint8 == 123);
   CU_ASSERT(vuint64 == 123);
 
@@ -1119,37 +1119,37 @@ void test_int_conversion() {
 
   vuint8 = 123;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vint16, BINN_UINT8, BINN_INT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vint16, BINN_UINT8, BINN_INT16) == TRUE);
   CU_ASSERT(vuint8 == 123);
   CU_ASSERT(vint16 == 123);
 
   vuint8 = 250;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vint16, BINN_UINT8, BINN_INT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vint16, BINN_UINT8, BINN_INT16) == TRUE);
   CU_ASSERT(vuint8 == 250);
   CU_ASSERT(vint16 == 250);
 
   vuint8 = 123;
   vint32 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vint32, BINN_UINT8, BINN_INT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vint32, BINN_UINT8, BINN_INT32) == TRUE);
   CU_ASSERT(vuint8 == 123);
   CU_ASSERT(vint32 == 123);
 
   vuint8 = 250;
   vint32 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vint32, BINN_UINT8, BINN_INT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vint32, BINN_UINT8, BINN_INT32) == TRUE);
   CU_ASSERT(vuint8 == 250);
   CU_ASSERT(vint32 == 250);
 
   vuint8 = 123;
   vint64 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vint64, BINN_UINT8, BINN_INT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vint64, BINN_UINT8, BINN_INT64) == TRUE);
   CU_ASSERT(vuint8 == 123);
   CU_ASSERT(vint64 == 123);
 
   vuint8 = 250;
   vint64 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vint64, BINN_UINT8, BINN_INT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vint64, BINN_UINT8, BINN_INT64) == TRUE);
   CU_ASSERT(vuint8 == 250);
   CU_ASSERT(vint64 == 250);
 
@@ -1158,37 +1158,37 @@ void test_int_conversion() {
 
   vuint8 = 123;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vuint16, BINN_UINT8, BINN_UINT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vuint16, BINN_UINT8, BINN_UINT16) == TRUE);
   CU_ASSERT(vuint8 == 123);
   CU_ASSERT(vuint16 == 123);
 
   vuint8 = 250;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vuint16, BINN_UINT8, BINN_UINT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vuint16, BINN_UINT8, BINN_UINT16) == TRUE);
   CU_ASSERT(vuint8 == 250);
   CU_ASSERT(vuint16 == 250);
 
   vuint8 = 123;
   vuint32 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vuint32, BINN_UINT8, BINN_UINT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vuint32, BINN_UINT8, BINN_UINT32) == TRUE);
   CU_ASSERT(vuint8 == 123);
   CU_ASSERT(vuint32 == 123);
 
   vuint8 = 250;
   vuint32 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vuint32, BINN_UINT8, BINN_UINT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vuint32, BINN_UINT8, BINN_UINT32) == TRUE);
   CU_ASSERT(vuint8 == 250);
   CU_ASSERT(vuint32 == 250);
 
   vuint8 = 123;
   vuint64 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vuint64, BINN_UINT8, BINN_UINT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vuint64, BINN_UINT8, BINN_UINT64) == TRUE);
   CU_ASSERT(vuint8 == 123);
   CU_ASSERT(vuint64 == 123);
 
   vuint8 = 250;
   vuint64 = 0;
-  CU_ASSERT(copy_int_value(&vuint8, &vuint64, BINN_UINT8, BINN_UINT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vuint8, &vuint64, BINN_UINT8, BINN_UINT64) == TRUE);
   CU_ASSERT(vuint8 == 250);
   CU_ASSERT(vuint64 == 250);
 
@@ -1197,39 +1197,39 @@ void test_int_conversion() {
 
   vint16 = 250;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vuint8, BINN_INT16, BINN_UINT8) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vuint8, BINN_INT16, BINN_UINT8) == TRUE);
   CU_ASSERT(vint16 == 250);
   CU_ASSERT(vuint8 == 250);
 
 
   vint32 = 250;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vuint8, BINN_INT32, BINN_UINT8) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vuint8, BINN_INT32, BINN_UINT8) == TRUE);
   CU_ASSERT(vint32 == 250);
   CU_ASSERT(vuint8 == 250);
 
   vint32 = 35000;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vuint16, BINN_INT32, BINN_UINT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vuint16, BINN_INT32, BINN_UINT16) == TRUE);
   CU_ASSERT(vint32 == 35000);
   CU_ASSERT(vuint16 == 35000);
 
 
   vint64 = 250;
   vuint8 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint8, BINN_INT64, BINN_UINT8) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint8, BINN_INT64, BINN_UINT8) == TRUE);
   CU_ASSERT(vint64 == 250);
   CU_ASSERT(vuint8 == 250);
 
   vint64 = 35000;
   vuint16 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint16, BINN_INT64, BINN_UINT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint16, BINN_INT64, BINN_UINT16) == TRUE);
   CU_ASSERT(vint64 == 35000);
   CU_ASSERT(vuint16 == 35000);
 
   vint64 = 2147000000;
   vuint32 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vuint32, BINN_INT64, BINN_UINT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vuint32, BINN_INT64, BINN_UINT32) == TRUE);
   CU_ASSERT(vint64 == 2147000000);
   CU_ASSERT(vuint32 == 2147000000);
 
@@ -1241,88 +1241,88 @@ void test_int_conversion() {
 
   vint8 = -110;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vint16, BINN_INT8, BINN_INT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vint16, BINN_INT8, BINN_INT16) == TRUE);
   CU_ASSERT(vint8 == -110);
   CU_ASSERT(vint16 == -110);
 
   vint8 = -110;
   vint32 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vint32, BINN_INT8, BINN_INT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vint32, BINN_INT8, BINN_INT32) == TRUE);
   CU_ASSERT(vint8 == -110);
   CU_ASSERT(vint32 == -110);
 
   vint8 = -110;
   vint64 = 0;
-  CU_ASSERT(copy_int_value(&vint8, &vint64, BINN_INT8, BINN_INT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint8, &vint64, BINN_INT8, BINN_INT64) == TRUE);
   CU_ASSERT(vint8 == -110);
   CU_ASSERT(vint64 == -110);
 
 
   vint16 = -123;
   vint8 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vint8, BINN_INT16, BINN_INT8) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vint8, BINN_INT16, BINN_INT8) == TRUE);
   CU_ASSERT(vint16 == -123);
   CU_ASSERT(vint8 == -123);
 
   vint16 = -32000;
   vint32 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vint32, BINN_INT16, BINN_INT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vint32, BINN_INT16, BINN_INT32) == TRUE);
   CU_ASSERT(vint16 == -32000);
   CU_ASSERT(vint32 == -32000);
 
   vint16 = -32000;
   vint64 = 0;
-  CU_ASSERT(copy_int_value(&vint16, &vint64, BINN_INT16, BINN_INT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint16, &vint64, BINN_INT16, BINN_INT64) == TRUE);
   CU_ASSERT(vint16 == -32000);
   CU_ASSERT(vint64 == -32000);
 
 
   vint32 = -123;
   vint8 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vint8, BINN_INT32, BINN_INT8) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vint8, BINN_INT32, BINN_INT8) == TRUE);
   CU_ASSERT(vint32 == -123);
   CU_ASSERT(vint8 == -123);
 
   vint32 = -123;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vint16, BINN_INT32, BINN_INT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vint16, BINN_INT32, BINN_INT16) == TRUE);
   CU_ASSERT(vint32 == -123);
   CU_ASSERT(vint16 == -123);
 
   vint32 = -32000;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vint16, BINN_INT32, BINN_INT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vint16, BINN_INT32, BINN_INT16) == TRUE);
   CU_ASSERT(vint32 == -32000);
   CU_ASSERT(vint16 == -32000);
 
   vint32 = -123;
   vint64 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vint64, BINN_INT32, BINN_INT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vint64, BINN_INT32, BINN_INT64) == TRUE);
   CU_ASSERT(vint32 == -123);
   CU_ASSERT(vint64 == -123);
 
   vint32 = -2147000000;
   vint64 = 0;
-  CU_ASSERT(copy_int_value(&vint32, &vint64, BINN_INT32, BINN_INT64) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint32, &vint64, BINN_INT32, BINN_INT64) == TRUE);
   CU_ASSERT(vint32 == -2147000000);
   CU_ASSERT(vint64 == -2147000000);
 
 
   vint64 = -123;
   vint8 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vint8, BINN_INT64, BINN_INT8) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vint8, BINN_INT64, BINN_INT8) == TRUE);
   CU_ASSERT(vint64 == -123);
   CU_ASSERT(vint8 == -123);
 
   vint64 = -250;
   vint16 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vint16, BINN_INT64, BINN_INT16) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vint16, BINN_INT64, BINN_INT16) == TRUE);
   CU_ASSERT(vint64 == -250);
   CU_ASSERT(vint16 == -250);
 
   vint64 = -35000;
   vint32 = 0;
-  CU_ASSERT(copy_int_value(&vint64, &vint32, BINN_INT64, BINN_INT32) == TRUE);
+  CU_ASSERT(copy_int_value_tests(&vint64, &vint32, BINN_INT64, BINN_INT32) == TRUE);
   CU_ASSERT(vint64 == -35000);
   CU_ASSERT(vint32 == -35000);
 
