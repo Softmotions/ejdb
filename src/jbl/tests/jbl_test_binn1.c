@@ -20,80 +20,6 @@ int clean_suite(void) {
   return 0;
 }
 
-BINN_PRIVATE void copy_be16(u16 *pdest, u16 *psource) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-  unsigned char *source = (unsigned char *) psource;
-  unsigned char *dest = (unsigned char *) pdest;
-  dest[0] = source[1];
-  dest[1] = source[0];
-#else // if BYTE_ORDER == BIG_ENDIAN
-#ifdef BINN_ONLY_ALIGNED_ACCESS
-  if ((uintptr_t)psource % 2 == 0) { // address aligned to 16 bit
-    *pdest = *psource;
-  } else {
-    unsigned char *source = (unsigned char *) psource;
-    unsigned char *dest = (unsigned char *) pdest;
-    dest[0] = source[0];  // indexes are the same
-    dest[1] = source[1];
-  }
-#else
-  *pdest = *psource;
-#endif
-#endif
-}
-
-BINN_PRIVATE void copy_be32(u32 *pdest, u32 *psource) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-  unsigned char *source = (unsigned char *) psource;
-  unsigned char *dest = (unsigned char *) pdest;
-  dest[0] = source[3];
-  dest[1] = source[2];
-  dest[2] = source[1];
-  dest[3] = source[0];
-#else // if BYTE_ORDER == BIG_ENDIAN
-#ifdef BINN_ONLY_ALIGNED_ACCESS
-  if ((uintptr_t)psource % 4 == 0) { // address aligned to 32 bit
-    *pdest = *psource;
-  } else {
-    unsigned char *source = (unsigned char *) psource;
-    unsigned char *dest = (unsigned char *) pdest;
-    dest[0] = source[0];  // indexes are the same
-    dest[1] = source[1];
-    dest[2] = source[2];
-    dest[3] = source[3];
-  }
-#else
-  *pdest = *psource;
-#endif
-#endif
-}
-
-BINN_PRIVATE void copy_be64(u64 *pdest, u64 *psource) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-  unsigned char *source = (unsigned char *) psource;
-  unsigned char *dest = (unsigned char *) pdest;
-  int i;
-  for (i = 0; i < 8; i++) {
-    dest[i] = source[7 - i];
-  }
-#else // if BYTE_ORDER == BIG_ENDIAN
-#ifdef BINN_ONLY_ALIGNED_ACCESS
-  if ((uintptr_t)psource % 8 == 0) { // address aligned to 64 bit
-    *pdest = *psource;
-  } else {
-    unsigned char *source = (unsigned char *) psource;
-    unsigned char *dest = (unsigned char *) pdest;
-    int i;
-    for (i = 0; i < 8; i++) {
-      dest[i] = source[i];  // indexes are the same
-    }
-  }
-#else
-  *pdest = *psource;
-#endif
-#endif
-}
-
 static int CalcAllocation(int needed_size, int alloc_size) {
   int calc_size;
   calc_size = alloc_size;
@@ -134,101 +60,10 @@ typedef unsigned short int     u16;
 typedef unsigned int           u32;
 typedef unsigned long long int u64;
 
-BINN_PRIVATE void copy_be16(u16 *pdest, u16 *psource);
-BINN_PRIVATE void copy_be32(u32 *pdest, u32 *psource);
-BINN_PRIVATE void copy_be64(u64 *pdest, u64 *psource);
-
-void test_endianess() {
-  u16 vshort1, vshort2, vshort3;
-  u32 vint1, vint2, vint3;
-  u64 value1, value2, value3;
-
-  printf("testing endianess... ");
-
-  /* tobe16 */
-  vshort1 = 0x1122;
-  copy_be16(&vshort2, &vshort1);
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  CU_ASSERT(vshort2 == 0x2211);
-#else
-  CU_CU_ASSERT(vshort2 == 0x1122);
-#endif
-  copy_be16(&vshort3, &vshort2);
-  CU_ASSERT(vshort3 == vshort1);
-
-  vshort1 = 0xF123;
-  copy_be16(&vshort2, &vshort1);
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  CU_ASSERT(vshort2 == 0x23F1);
-#else
-  CU_ASSERT(vshort2 == 0xF123);
-#endif
-  copy_be16(&vshort3, &vshort2);
-  CU_ASSERT(vshort3 == vshort1);
-
-  vshort1 = 0x0123;
-  copy_be16(&vshort2, &vshort1);
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  CU_ASSERT(vshort2 == 0x2301);
-#else
-  CU_ASSERT(vshort2 == 0x0123);
-#endif
-  copy_be16(&vshort3, &vshort2);
-  CU_ASSERT(vshort3 == vshort1);
-
-  /* tobe32 */
-  vint1 = 0x11223344;
-  copy_be32(&vint2, &vint1);
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  CU_ASSERT(vint2 == 0x44332211);
-#else
-  CU_ASSERT(vint2 == 0x11223344);
-#endif
-  copy_be32(&vint3, &vint2);
-  CU_ASSERT(vint3 == vint1);
-
-  vint1 = 0xF1234580;
-  copy_be32(&vint2, &vint1);
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  CU_ASSERT(vint2 == 0x804523F1);
-#else
-  CU_ASSERT(vint2 == 0xF1234580);
-#endif
-  copy_be32(&vint3, &vint2);
-  CU_ASSERT(vint3 == vint1);
-
-  vint1 = 0x00112233;
-  copy_be32(&vint2, &vint1);
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  CU_ASSERT(vint2 == 0x33221100);
-#else
-  CU_ASSERT(vint2 == 0x00112233);
-#endif
-  copy_be32(&vint3, &vint2);
-  CU_ASSERT(vint3 == vint1);
-
-  /* tobe64 */
-  value1 = 0x1122334455667788;
-  copy_be64(&value2, &value1);
-  //printf("v1: %llx\n", value1);
-  //printf("v2: %llx\n", value2);
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  CU_ASSERT(value2 == 0x8877665544332211);
-#else
-  CU_ASSERT(value2 == 0x1122334455667788);
-#endif
-  copy_be64(&value3, &value2);
-  CU_ASSERT(value3 == value1);
-
-  printf("OK\n");
-
-}
-
 /***************************************************************************/
 
 void *memdup(void *src, int size) {
   void *dest;
-
   if (src == NULL || size <= 0) return NULL;
   dest = malloc(size);
   if (dest == NULL) return NULL;
@@ -2026,7 +1861,6 @@ int main() {
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "test_endianess", test_endianess)) ||
     (NULL == CU_add_test(pSuite, "test_int64", test_int64)) ||
     (NULL == CU_add_test(pSuite, "test_floating_point_numbers", test_floating_point_numbers)) ||
     (NULL == CU_add_test(pSuite, "test1", test1)) ||
