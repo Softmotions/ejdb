@@ -1,8 +1,8 @@
-ejdb2 (2.0.41) UNRELEASED; urgency=medium
+ejdb2 (2.0.41) testing; urgency=medium
 
   * Fixed race condition on database open on slow devices
 
- -- Anton Adamansky <adamansky@gmail.com>  Tue, 18 Feb 2020 18:30:56 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 18 Feb 2020 18:55:57 +0700
 
 ejdb2 (2.0.40) testing; urgency=medium
 
