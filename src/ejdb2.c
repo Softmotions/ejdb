@@ -1240,7 +1240,7 @@ static iwrc _jb_wal_lock_interceptor(bool before, void *op) {
   EJDB db = op;
   assert(db);
   if (before) {
-    API_WLOCK(db, rci);
+    API_WLOCK2(db, rci);
   } else {
     API_UNLOCK(db, rci, rc);
   }

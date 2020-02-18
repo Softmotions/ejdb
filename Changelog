@@ -1,3 +1,9 @@
+ejdb2 (2.0.41) UNRELEASED; urgency=medium
+
+  * Fixed race condition on database open on slow devices
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 18 Feb 2020 18:30:56 +0700
+
 ejdb2 (2.0.40) testing; urgency=medium
 
   * Added `jbl_object_get_i64`, `jbl_object_get_f64`,

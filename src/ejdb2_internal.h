@@ -69,6 +69,10 @@ static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE"
   rci_ = pthread_rwlock_wrlock(&(db_)->rwl); \
   if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
 
+#define API_WLOCK2(db_, rci_) \
+  rci_ = pthread_rwlock_wrlock(&(db_)->rwl); \
+  if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
+
 #define API_UNLOCK(db_, rci_, rc_)  \
   rci_ = pthread_rwlock_unlock(&(db_)->rwl); \
   if (rci_) IWRC(iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_), rc_)
