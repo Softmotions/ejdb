@@ -1,3 +1,7 @@
+## 1.0.15+1
+
+  * Upgraded to ejdb v2.0.41
+
 ## 1.0.14+2
 
   * Readme updated
