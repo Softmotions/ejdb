@@ -1960,7 +1960,7 @@ void test4() {
 
 void test_invalid_binn() {
 
-  char buffers[][20] = {
+  unsigned char buffers[][20] = {
     { 0xE0 },
     { 0xE0, 0x7E },
     { 0xE0, 0x7E, 0x7F },
@@ -2000,7 +2000,7 @@ void test_invalid_binn() {
   };
 
   int count, size, i;
-  char *ptr;
+  unsigned char *ptr;
 
   puts("testing invalid binn buffers...");
 
@@ -2008,7 +2008,7 @@ void test_invalid_binn() {
 
   for (i = 0; i < count; i++) {
     ptr = buffers[i];
-    size = strlen(ptr);
+    size = strlen((char*) ptr);
     printf("checking invalid binn #%d   size: %d bytes\n", i, size);
     CU_ASSERT(binn_is_valid_ex(ptr, NULL, NULL, &size) == FALSE);
   }
