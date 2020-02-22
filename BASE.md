@@ -84,6 +84,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ## Use cases
 
 * Softmotions trading robots platform
+* [Gimme - a social toy tokens exchange mobile application.](https://play.google.com/store/apps/details?id=com.softmotions.gimme) EJDB2 is used both on mobile and server sides.
 
 Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
