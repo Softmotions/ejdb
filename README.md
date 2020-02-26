@@ -673,7 +673,7 @@ Get `age` and the first pet in `pets` array.
 < k
 ```
 
-## JQL sorting
+## JQL results ordering
 
 ```
   ORDERBY = ({ 'asc' | 'desc' } PLACEHOLDER | json_path)...
