@@ -84,8 +84,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ## Use cases
 
 * Softmotions trading robots platform
-* [Gimme - a social toy tokens exchange mobile application.](https://play.google.com/store/apps/details?id=com.softmotions.gimme) EJDB2 is used
-  both on mobile and server sides.
+* [Gimme - a social toy tokens exchange mobile application.](https://play.google.com/store/apps/details?id=com.softmotions.gimme) EJDB2 is used both on mobile and server sides.
 
 Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
@@ -748,7 +747,7 @@ You can always check index usage by issuing `explain` command in WS API:
 
 The following statements are taken into account when using EJDB2 indexes:
 * Only one index can be used for particular query
-* If query consist of `or` joined parts or contains `negated` at top level indexes will not be used.
+* If query consist of `or` joined part at top level or contains `negated` expressions at the top level of query expression - indexes will not be in use.
   No indexes below:
   ```
   /[lastName != Andy]

@@ -467,7 +467,7 @@ You can always check index usage by issuing `explain` command in WS API:
 
 The following statements are taken into account when using EJDB2 indexes:
 * Only one index can be used for particular query
-* If query consist of `or` joined parts or contains `negated` at top level indexes will not be used.
+* If query consist of `or` joined part at top level or contains `negated` expressions at the top level of query expression - indexes will not be in use.
   No indexes below:
   ```
   /[lastName != Andy]
