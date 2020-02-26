@@ -177,7 +177,7 @@ wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
 >
 ```
 
-Note about `<key>` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request.
+Note about `<key>` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request.
 
 Errors are returned in the following format:
 ```
@@ -269,7 +269,7 @@ Example:
 ```
 
 #### <key> <query>
-Execute query text. Body of query should contains collection name in use in the first filter element: `@collection_name/...`. Behaviour is the same as for: `<key> query   <collection> <query>`
+Execute query text. Body of query should contains collection name in use in the first filter element: `@collection_name/...`. Behavior is the same as for: `<key> query   <collection> <query>`
 
 #### `<key> idx     <collection> <mode> <path>`
 Ensure index with specified `mode` (bitmask flag) for given json `path` and `collection`.

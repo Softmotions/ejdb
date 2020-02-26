@@ -8,7 +8,7 @@ public interface JQLCallback {
   /**
    * Called on every JSON record in result set.
    *
-   * Implementor can control iteration behaviour by returning a step getting next
+   * Implementor can control iteration behavior by returning a step getting next
    * record:
    *
    * <ul>

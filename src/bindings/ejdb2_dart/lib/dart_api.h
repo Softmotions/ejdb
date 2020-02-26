@@ -1103,7 +1103,7 @@ DART_EXPORT Dart_MessageNotifyCallback Dart_GetMessageNotifyCallback();
  *   `--pause-isolates-on-exit`
  *
  * Additionally, Dart_SetShouldPauseOnStart and Dart_SetShouldPauseOnExit can be
- * used to control this behaviour on a per-isolate basis.
+ * used to control this behavior on a per-isolate basis.
  *
  * When an embedder is using a Dart_MessageNotifyCallback the embedder
  * needs to cooperate with the VM so that the service protocol can report

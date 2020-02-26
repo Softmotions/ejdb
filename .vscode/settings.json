@@ -109,7 +109,7 @@
     "restructuredtext",
     "text"
   ],
-  "cSpell.enabled": false,
+  "cSpell.enabled": true,
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,

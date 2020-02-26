@@ -428,7 +428,7 @@ connected (press CTRL+C to quit)
 }
 ```
 
-Note about the `k` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
+Note about the `k` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
 
 Query command over websocket has the following format:
 
@@ -568,7 +568,7 @@ Let's add `address` object to all matched document
 /[firstName=John] | apply {"address":{"city":"New York", "street":""}}
 ```
 
-If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise it should be array which denotes `rfc6902` JSON patch. Placegolders also supported by `apply` section.
+If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise it should be array which denotes `rfc6902` JSON patch. Placeholders also supported by `apply` section.
 ```
 /* | apply :?
 ```
@@ -679,7 +679,7 @@ Get `age` and the first pet in `pets` array.
   ORDERBY = ({ 'asc' | 'desc' } PLACEHOLDER | json_path)...
 ```
 
-Lets add one more document then sort documents in collection by `firstName` ascending and `age` descending.
+Lets add one more document then sort documents in collection according to `firstName` ascending and `age` descending order.
 
 ```
 > k add family {"firstName":"John", "lastName":"Ryan", "age":39}
@@ -997,7 +997,7 @@ wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
 >
 ```
 
-Note about `<key>` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request.
+Note about `<key>` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request.
 
 Errors are returned in the following format:
 ```
@@ -1089,7 +1089,7 @@ Example:
 ```
 
 #### <key> <query>
-Execute query text. Body of query should contains collection name in use in the first filter element: `@collection_name/...`. Behaviour is the same as for: `<key> query   <collection> <query>`
+Execute query text. Body of query should contains collection name in use in the first filter element: `@collection_name/...`. Behavior is the same as for: `<key> query   <collection> <query>`
 
 #### `<key> idx     <collection> <mode> <path>`
 Ensure index with specified `mode` (bitmask flag) for given json `path` and `collection`.
