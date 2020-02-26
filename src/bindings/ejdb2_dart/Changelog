@@ -1,3 +1,7 @@
+ejdb_dart (1.0.48)
+
+  * Updated to the latest `dart_api.h` dart `v2.8.x`
+
 ejdb_dart (1.0.47)
 
   * Upgraded to ejdb v2.0.41

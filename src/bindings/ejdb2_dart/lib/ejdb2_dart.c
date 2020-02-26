@@ -49,7 +49,7 @@ static Dart_NativeFunction ejd_resolve_name(Dart_Handle name, int argc, bool *au
 
 IW_INLINE Dart_Handle ejd_error_check_propagate(Dart_Handle handle);
 IW_INLINE Dart_Handle ejd_error_rc_create(iwrc rc);
-IW_INLINE Dart_Handle ejd_error_rc_throw(iwrc rc);
+IW_INLINE void ejd_error_rc_throw(iwrc rc);
 
 static void ejd_explain_rc(Dart_NativeArguments args);
 static void ejd_exec(Dart_NativeArguments args);
@@ -209,8 +209,8 @@ IW_INLINE Dart_Handle ejd_error_rc_create2(iwrc rc, const char *msg) {
   return Dart_NewUnhandledExceptionError(ejd_error_object_handle(rc, msg));
 }
 
-IW_INLINE Dart_Handle ejd_error_rc_throw(iwrc rc) {
-  return Dart_PropagateError(ejd_error_rc_create(rc));
+IW_INLINE void ejd_error_rc_throw(iwrc rc) {
+  Dart_PropagateError(ejd_error_rc_create(rc));
 }
 
 static void ejd_port(Dart_NativeArguments args) {
