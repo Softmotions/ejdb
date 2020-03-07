@@ -1,3 +1,9 @@
+ejdb2 (2.0.42) testing; urgency=medium
+
+  * Upgraded to iowow v1.3.27
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sat, 07 Mar 2020 11:16:10 +0700
+
 ejdb2 (2.0.41) testing; urgency=medium
 
   * Fixed race condition on database open on slow devices
