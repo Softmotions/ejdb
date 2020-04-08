@@ -305,6 +305,14 @@ IW_EXPORT iwrc jbl_set_nested(JBL jbl, const char *key, JBL nested);
 IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy);
 
 /**
+ * @brief Clones a given `src` JBL object into newly allocated `targetp` object.
+ *
+ * @param src Source object to clonse
+ * @param targetp Pointer on target object
+ */
+IW_EXPORT iwrc jbl_clone(JBL src, JBL *targetp);
+
+/**
  * @brief Constructs new `JBL` object from JSON string.
  * @note `jblp` should be disposed by `jbl_destroy()`
  * @param [out] jblp  Pointer initialized by created JBL document. Not zero.

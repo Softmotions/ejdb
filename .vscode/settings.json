@@ -14,7 +14,7 @@
     "-DBUILD_NODEJS_BINDING=ON",
     "-DBUILD_REACT_NATIVE_BINDING=OFF",
     "-DBUILD_SWIFT_BINDING=OFF",
-    "-DANDROID_ABIS=x86",
+    "-DANDROID_ABIS=x86"
     // "-DASAN=ON",
     // "-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow"
   ],
@@ -130,5 +130,7 @@
   "java.import.gradle.version": "5.4.1",
   "java.import.gradle.wrapper.enabled": true,
   "java.import.gradle.arguments": "--no-daemon",
-  "C_Cpp.intelliSenseEngineFallback": "Enabled"
+  "C_Cpp.intelliSenseEngineFallback": "Enabled",
+
+  "dart.analysisExcludedFolders": ["mxe", "build"]
 }

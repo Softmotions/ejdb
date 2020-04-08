@@ -212,6 +212,15 @@ iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy)
   return 0;
 }
 
+iwrc jbl_clone(JBL src, JBL *targetp) {
+  void *buf;
+  size_t sz;
+  *targetp = 0;
+  iwrc rc = jbl_as_buf(src, &buf, &sz);
+  RCRET(rc);
+  return jbl_from_buf_keep(targetp, buf, sz, false);
+}
+
 iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz) {
   int type, size = 0, count = 0;
   if (bufsz < MIN_BINN_SIZE || !binn_is_valid_header(buf, &type, &count, &size, NULL)) {
