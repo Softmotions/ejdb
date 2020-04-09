@@ -213,17 +213,19 @@ iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy)
 }
 
 iwrc jbl_clone(JBL src, JBL *targetp) {
-  void *buf, *nbuf;
-  size_t sz;
-  *targetp = 0;
-  iwrc rc = jbl_as_buf(src, &buf, &sz);
-  RCRET(rc);
-  nbuf = malloc(sz);
-  if (!nbuf) {
+  *targetp = malloc(sizeof(**targetp));
+  JBL t = *targetp;
+  if (!t) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  memcpy(nbuf, buf, sz);
-  return jbl_from_buf_keep(targetp, nbuf, sz, false);
+  binn *bn = binn_copy(&src->bn);
+  if (!bn) {
+    return JBL_ERROR_CREATION;
+  }
+  t->node = 0;
+  memcpy(&t->bn, bn, sizeof(*bn));
+  free(bn);
+  return 0;
 }
 
 iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz) {
