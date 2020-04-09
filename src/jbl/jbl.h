@@ -241,6 +241,8 @@ IW_EXPORT iwrc jbl_set_f64(JBL jbl, const char *key, double v);
  */
 IW_EXPORT iwrc jbl_set_string(JBL jbl, const char *key, const char *v);
 
+IW_EXPORT iwrc jbl_set_string_printf(JBL jbl, const char *key, const char *format, ...);
+
 /**
  * @brief Set bool JBL object property value
  *        or add a new entry to end of array JBL object.

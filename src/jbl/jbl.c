@@ -1,9 +1,15 @@
 #include "jbl.h"
 #include <ctype.h>
+#include <stdarg.h>
 #include <ejdb2/iowow/iwconv.h>
 #include "jbl_internal.h"
 #include "utf8proc.h"
 #include "convert.h"
+
+IW_INLINE int _jbl_printf_estimate_size(const char *format, va_list ap) {
+  char buf[1];
+  return vsnprintf(buf, sizeof(buf), format, ap) + 1;
+}
 
 IW_INLINE void _jbl_remove_item(JBL_NODE parent, JBL_NODE child);
 static void _jbl_add_item(JBL_NODE parent, JBL_NODE node);
@@ -96,6 +102,26 @@ iwrc jbl_set_string(JBL jbl, const char *key, const char *v) {
     return 0;
   }
   return JBL_ERROR_INVALID;
+}
+
+iwrc jbl_set_string_printf(JBL jbl, const char *key, const char *format, ...) {
+  iwrc rc = 0;
+  va_list ap;
+
+  va_start(ap, format);
+  int size = _jbl_printf_estimate_size(format, ap);
+  va_end(ap);
+
+  va_start(ap, format);
+  char *buf = malloc(size);
+  RCGA(buf, finish);
+  vsnprintf(buf, size, format, ap);
+  va_end(ap);
+
+  rc = jbl_set_string(jbl, key, buf);
+finish:
+  if (buf) free(buf);
+  return rc;
 }
 
 iwrc jbl_set_bool(JBL jbl, const char *key, bool v) {
