@@ -2200,6 +2200,19 @@ finish:
   return 0;
 }
 
+iwrc jbl_merge_patch_jbl(JBL jbl, JBL patch) {
+  IWXSTR *xstr = iwxstr_new();
+  if (!xstr) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  iwrc rc = jbl_as_json(patch, jbl_xstr_json_printer, xstr, 0);
+  RCGO(rc, finish);
+  rc = jbl_merge_patch(jbl, iwxstr_ptr(xstr));
+finish:
+  iwxstr_destroy(xstr);
+  return rc;
+}
+
 iwrc jbl_patch_auto(JBL_NODE root, JBL_NODE patch, IWPOOL *pool) {
   if (!root || !patch) {
     return IW_ERROR_INVALID_ARGS;

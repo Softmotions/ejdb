@@ -1,6 +1,7 @@
 ejdb2 (2.0.44) UNRELEASED; urgency=medium
 
   * Added `jbl_clone(JBL src, JBL *targetp)` (jbl.h)
+  * Added `iwrc jbl_merge_patch_jbl(JBL jbl, JBL patch)` (jbl.h)
 
  -- Anton Adamansky <adamansky@gmail.com>  Wed, 08 Apr 2020 20:24:26 +0700
 

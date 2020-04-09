@@ -628,6 +628,8 @@ IW_EXPORT iwrc jbl_merge_patch_node(JBL_NODE root, const char *patchjson, IWPOOL
 
 IW_EXPORT iwrc jbl_merge_patch(JBL jbl, const char *patchjson);
 
+IW_EXPORT iwrc jbl_merge_patch_jbl(JBL jbl, JBL patch);
+
 
 IW_EXPORT iwrc jbl_init(void);
 
