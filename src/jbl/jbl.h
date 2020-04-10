@@ -338,6 +338,11 @@ IW_EXPORT size_t jbl_count(JBL jbl);
 IW_EXPORT size_t jbl_size(JBL jbl);
 
 /**
+ * @brief Returns size of JBL underlying data structure
+ */
+IW_EXPORT size_t jbl_structure_size(void);
+
+/**
  * @brief Interpret `jbl` value as `int32_t`.
  * Returns zero if value cannot be converted.
  */

@@ -379,6 +379,10 @@ size_t jbl_size(JBL jbl) {
   return (size_t) jbl->bn.size;
 }
 
+size_t jbl_structure_size(void) {
+  return sizeof(struct _JBL);
+}
+
 iwrc jbl_from_json(JBL *jblp, const char *jsonstr) {
   *jblp = 0;
   iwrc rc = 0;
