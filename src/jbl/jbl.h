@@ -342,6 +342,8 @@ IW_EXPORT size_t jbl_size(JBL jbl);
  */
 IW_EXPORT size_t jbl_structure_size(void);
 
+IW_EXPORT iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz);
+
 /**
  * @brief Interpret `jbl` value as `int32_t`.
  * Returns zero if value cannot be converted.
