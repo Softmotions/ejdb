@@ -249,6 +249,7 @@ iwrc jbl_clone(JBL src, JBL *targetp) {
     return JBL_ERROR_CREATION;
   }
   t->node = 0;
+  bn->allocated = 0;
   memcpy(&t->bn, bn, sizeof(*bn));
   free(bn);
   return 0;
