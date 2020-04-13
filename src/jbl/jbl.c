@@ -256,6 +256,7 @@ iwrc jbl_clone(JBL src, JBL *targetp) {
 }
 
 iwrc jbl_clone_into_pool(JBL src, IWPOOL *pool, JBL *targetp) {
+  *targetp = 0;
   if (src->bn.writable && src->bn.dirty) {
     if (!binn_save_header(&src->bn)) {
       return JBL_ERROR_INVALID;
@@ -270,6 +271,7 @@ iwrc jbl_clone_into_pool(JBL src, IWPOOL *pool, JBL *targetp) {
   jbl->bn.ptr = (char *) jbl + sizeof(*jbl);
   memcpy(jbl->bn.ptr, src->bn.ptr, src->bn.size);
   jbl->bn.freefn = 0;
+  *targetp = jbl;
   return 0;
 }
 
