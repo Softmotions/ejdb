@@ -212,7 +212,7 @@ static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
   if (rci != -1) {
     kh_value(jbc->db->mcolls, k) = jbc;
   } else {
-    return IW_ERROR_FAIL;
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   return rc;
 }
@@ -1511,7 +1511,7 @@ iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
   if (rci != -1) {
     kh_value(db->mcolls, k2) = jbc;
   } else {
-    rc = IW_ERROR_FAIL;
+    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
 
