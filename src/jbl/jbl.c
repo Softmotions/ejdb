@@ -255,6 +255,26 @@ iwrc jbl_clone(JBL src, JBL *targetp) {
   return 0;
 }
 
+iwrc jbl_clone_into_pool(JBL src, IWPOOL *pool, JBL *targetp) {
+  *targetp = 0;
+  if (src->bn.writable && src->bn.dirty) {
+    if (!binn_save_header(&src->bn)) {
+      return JBL_ERROR_INVALID;
+    }
+  }
+  JBL jbl = iwpool_alloc(sizeof(*jbl) + src->bn.size, pool);
+  if (!jbl) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  jbl->node = 0;
+  memcpy(&jbl->bn, &src->bn, sizeof(jbl->bn));
+  jbl->bn.ptr = (char *) jbl + sizeof(*jbl);
+  memcpy(jbl->bn.ptr, src->bn.ptr, src->bn.size);
+  jbl->bn.freefn = 0;
+  *targetp = jbl;
+  return 0;
+}
+
 iwrc jbl_from_buf_keep_onstack(JBL jbl, void *buf, size_t bufsz) {
   int type, size = 0, count = 0;
   if (bufsz < MIN_BINN_SIZE || !binn_is_valid_header(buf, &type, &count, &size, NULL)) {

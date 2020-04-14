@@ -309,10 +309,21 @@ IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_o
 /**
  * @brief Clones a given `src` JBL object into newly allocated `targetp` object.
  *
- * @param src Source object to clonse
- * @param targetp Pointer on target object
+ * JBL object stored into `targetp` should be disposed by `jbl_destroy()`.
+ *
+ * @param src Source object to clone
+ * @param targetp Pointer on target object.
  */
 IW_EXPORT iwrc jbl_clone(JBL src, JBL *targetp);
+
+/**
+ * @brief Clones a given `src` JBL object and stores it in memory allocated from `pool`.
+ *
+ * @param src Source object to clone
+ * @param pool  Memory pool
+ * @param targetp Pointer on target object
+ */
+IW_EXPORT iwrc jbl_clone_into_pool(JBL src, IWPOOL *pool, JBL *targetp);
 
 /**
  * @brief Constructs new `JBL` object from JSON string.

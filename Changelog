@@ -5,6 +5,7 @@ ejdb2 (2.0.44) UNRELEASED; urgency=medium
   * Added `jbl_set_string_printf()` (jbl.h)
   * Added `jbl_structure_size()` (jbl.h)
   * Better error handling of `kh_put()`
+  * Added `jbl_clone_into_pool(JBL src, IWPOOL *pool, JBL *targetp)` (jbl.h)
 
  -- Anton Adamansky <adamansky@gmail.com>  Wed, 08 Apr 2020 20:24:26 +0700
 
