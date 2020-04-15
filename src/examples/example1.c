@@ -1,7 +1,7 @@
 /// Sample records put/query example
 #include <ejdb2.h>
 
-#define RCHECK(rc_)          \
+#define CHECK(rc_)          \
   if (rc_) {                 \
     iwlog_ecode_error3(rc_); \
     return 1;                \
@@ -26,10 +26,10 @@ int main() {
   JBL jbl = 0; // Json document
 
   iwrc rc = ejdb_init();
-  RCHECK(rc);
+  CHECK(rc);
 
   rc = ejdb_open(&opts, &db);
-  RCHECK(rc);
+  CHECK(rc);
 
   // First record
   rc = jbl_from_json(&jbl, "{\"name\":\"Bianca\", \"age\":4}");
@@ -67,7 +67,7 @@ finish:
   if (q) jql_destroy(&q);
   if (jbl) jbl_destroy(&jbl);
   ejdb_close(&db);
-  RCHECK(rc);
+  CHECK(rc);
   return 0;
 }
 
