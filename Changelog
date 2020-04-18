@@ -6,6 +6,8 @@ ejdb2 (2.0.44) UNRELEASED; urgency=medium
   * Added `jbl_structure_size()` (jbl.h)
   * Better error handling of `kh_put()`
   * Added `jbl_clone_into_pool(JBL src, IWPOOL *pool, JBL *targetp)` (jbl.h)
+  * Added  jbn_path_compare, jbn_path_compare_str, jbn_path_compare_bool,
+          jbn_path_compare_i64, jbn_path_compare_f64, (jbl.j)
 
  -- Anton Adamansky <adamansky@gmail.com>  Wed, 08 Apr 2020 20:24:26 +0700
 

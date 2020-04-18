@@ -82,6 +82,7 @@ typedef enum {
   JBL_ERROR_PATCH_INVALID_VALUE,        /**< Invalid value specified by patch (JBL_ERROR_PATCH_INVALID_VALUE) */
   JBL_ERROR_PATCH_INVALID_ARRAY_INDEX,  /**< Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX) */
   JBL_ERROR_NOT_AN_OBJECT,              /**< JBL is not an object (JBL_ERROR_NOT_AN_OBJECT) */
+  JBL_ERROR_TYPE_MISMATCHED,            /**< Type of JBL object mismatched user type constraints (JBL_ERROR_TYPE_MISMATCHED) */
   JBL_ERROR_PATCH_TEST_FAILED,          /**< JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED) */
   _JBL_ERROR_END
 } jbl_ecode_t;
@@ -409,6 +410,16 @@ IW_EXPORT size_t jbl_copy_strn(JBL jbl, char *buf, size_t bufsz);
 IW_EXPORT iwrc jbl_at(JBL jbl, const char *path, JBL *res);
 
 IW_EXPORT iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res);
+
+IW_EXPORT int jbn_path_compare(JBL_NODE n1, JBL_NODE n2, const char *path, jbl_type_t vtype, iwrc *rcp);
+
+IW_EXPORT int jbn_path_compare_str(JBL_NODE n, const char *path, const char *sv, iwrc *rcp);
+
+IW_EXPORT int jbn_path_compare_i64(JBL_NODE n, const char *path, int64_t iv, iwrc *rcp);
+
+IW_EXPORT int jbn_path_compare_f64(JBL_NODE n, const char *path, double fv, iwrc *rcp);
+
+IW_EXPORT int jbn_path_compare_bool(JBL_NODE n, const char *path, bool bv, iwrc *rcp);
 
 /**
  * @brief @brief Finds value in `jbl` document pointed by `jp` structure and store it into `res`.

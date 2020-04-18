@@ -1285,6 +1285,89 @@ iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res) {
   return rc;
 }
 
+int jbn_path_compare(JBL_NODE n1, JBL_NODE n2, const char *path, jbl_type_t vtype, iwrc *rcp) {
+  *rcp = 0;
+  JBL_NODE v1 = 0, v2 = 0;
+  iwrc rc = jbn_at(n1, path, &v1);
+  if (rc && rc != JBL_ERROR_PATH_NOTFOUND) {
+    *rcp = rc;
+    return -2;
+  }
+  rc = jbn_at(n2, path, &v2);
+  if (rc && rc != JBL_ERROR_PATH_NOTFOUND) {
+    *rcp = rc;
+    return -2;
+  }
+  if (vtype) {
+    if ((v1 == 0 || v1->type != vtype) || (v2 == 0 || v2->type != vtype)) {
+      *rcp = JBL_ERROR_TYPE_MISMATCHED;
+      return -2;
+    }
+  }
+  return _jbl_compare_nodes(v1, v2, rcp);
+}
+
+int jbn_path_compare_str(JBL_NODE n, const char *path, const char *sv, iwrc *rcp) {
+  *rcp = 0;
+  JBL_NODE v;
+  iwrc rc = jbn_at(n, path, &v);
+  if (rc) {
+    *rcp = rc;
+    return -2;
+  }
+  struct _JBL_NODE cn = {
+    .type = JBV_STR,
+    .vptr = sv,
+    .vsize = strlen(sv)
+  };
+  return _jbl_compare_nodes(n, &cn, rcp);
+}
+
+int jbn_path_compare_i64(JBL_NODE n, const char *path, int64_t iv, iwrc *rcp) {
+  *rcp = 0;
+  JBL_NODE v;
+  iwrc rc = jbn_at(n, path, &v);
+  if (rc) {
+    *rcp = rc;
+    return -2;
+  }
+  struct _JBL_NODE cn = {
+    .type = JBV_STR,
+    .vi64 = iv
+  };
+  return _jbl_compare_nodes(n, &cn, rcp);
+}
+
+int jbn_path_compare_f64(JBL_NODE n, const char *path, double fv, iwrc *rcp) {
+  *rcp = 0;
+  JBL_NODE v;
+  iwrc rc = jbn_at(n, path, &v);
+  if (rc) {
+    *rcp = rc;
+    return -2;
+  }
+  struct _JBL_NODE cn = {
+    .type = JBV_STR,
+    .vf64 = fv
+  };
+  return _jbl_compare_nodes(n, &cn, rcp);
+}
+
+int jbn_path_compare_bool(JBL_NODE n, const char *path, bool bv, iwrc *rcp) {
+  *rcp = 0;
+  JBL_NODE v;
+  iwrc rc = jbn_at(n, path, &v);
+  if (rc) {
+    *rcp = rc;
+    return -2;
+  }
+  struct _JBL_NODE cn = {
+    .type = JBV_STR,
+    .vbool = bv
+  };
+  return _jbl_compare_nodes(n, &cn, rcp);
+}
+
 IW_INLINE void _jbl_node_reset_data(JBL_NODE target) {
   jbl_type_t t = target->type;
   memset(((uint8_t *) target) + offsetof(struct _JBL_NODE, child),
@@ -2324,6 +2407,8 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
       return "JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED)";
     case JBL_ERROR_NOT_AN_OBJECT:
       return "JBL is not an object (JBL_ERROR_NOT_AN_OBJECT)";
+    case JBL_ERROR_TYPE_MISMATCHED:
+      return "Type of JBL object mismatched user type constraints (JBL_ERROR_TYPE_MISMATCHED)";
   }
   return 0;
 }
