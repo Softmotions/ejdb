@@ -148,7 +148,9 @@ connected (press CTRL+C to quit)
 }
 ```
 
-Note about the `k` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
+Note about the `k` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular
+websocket request, this key will be returned with response to request and allows client to
+identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
 
 Query command over websocket has the following format:
 
@@ -241,7 +243,7 @@ Filter documents with `likes` array exactly matched to `["bones","jumping","toys
 ```
 Matching algorithms for arrays and maps are different:
 
-* Array elements are fully matched from start to end. In equal arrays
+* Array elements are matched from start to end. In equal arrays
   all values at the same index should be equal.
 * Object maps matching consists of the following steps:
   * Lexicographically sort object keys in both maps.
@@ -288,7 +290,8 @@ Let's add `address` object to all matched document
 /[firstName=John] | apply {"address":{"city":"New York", "street":""}}
 ```
 
-If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise it should be array which denotes `rfc6902` JSON patch. Placeholders also supported by `apply` section.
+If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise
+it should be array which denotes `rfc6902` JSON patch. Placeholders also supported by `apply` section.
 ```
 /* | apply :?
 ```
@@ -437,8 +440,8 @@ OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 
 ## JQL Indexes and performance tips
 
-Database index can be build for any JSON field path of number or string type.
-Index can be an `unique` &dash; not allowing indexed values duplication and `non unique`.
+Database index can be build for any JSON field path containing values of number or string type.
+Index can be an `unique` &dash; not allowing value duplication and `non unique`.
 The following index mode bit mask flags are used (defined in `ejdb2.h`):
 
 Index mode | Description
@@ -448,7 +451,8 @@ Index mode | Description
 <code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
 <code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
 
-For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation defines index of only one type.
+For example unique index of string type will be specified by `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`.
+Index can be defined for only one value type located under specific path in json document.
 
 Lets define non unique string index for `/lastName` path:
 ```
@@ -466,16 +470,17 @@ You can always check index usage by issuing `explain` command in WS API:
 ```
 
 The following statements are taken into account when using EJDB2 indexes:
-* Only one index can be used for particular query
-* If query consist of `or` joined part at top level or contains `negated` expressions at the top level of query expression - indexes will not be in use.
-  No indexes below:
+* Only one index can be used for particular query execution
+* If query consist of `or` joined part at top level or contains `negated` expressions at the top level
+  of query expression - indexes will not be in use at all.
+  So no indexes below:
   ```
   /[lastName != Andy]
 
   /[lastName = "John"] or /[lastName = Peter]
 
   ```
-  But will use `/lastName` index defined above
+  But will be used `/lastName` index defined above
   ```
   /[lastName = Doe]
 
@@ -485,15 +490,15 @@ The following statements are taken into account when using EJDB2 indexes:
 
   /[lastName = Doe] and /[age != 28]
   ```
-* The ony following operators are supported by indexes (ejdb 2.0.x):
+* The following operators are supported by indexes (ejdb 2.0.x):
   * `eq, =`
   * `gt, >`
   * `gte, >=`
   * `lt, <`
   * `lte, <=`
   * `in`
-* `ORDERBY` clauses may use indexes to avoid result set sorting
-* Array fields can also be indexed. Let's outline a typical use case: indexing of some  entity tags:
+* `ORDERBY` clauses may use indexes to avoid result set sorting.
+* Array fields can also be indexed. Let's outline typical use case: indexing of some entity tags:
   ```
   > k add books {"name":"Mastering Ultra", "tags":["ultra", "language", "bestseller"]}
   < k     1
@@ -523,15 +528,23 @@ The following statements are taken into account when using EJDB2 indexes:
 
 ### Performance tip: Physical ordering of documents
 
-All documents in collection are sorted by their primary key in `descending` order. So if you use auto generated keys (`ejdb_put_new`) you may
-be sure what documents fetched as result of full scan query will be ordered
-by time of its insertion in descendant order, unless you don't use query sorting, indexes or `inverse` keyword.
+All documents in collection are sorted by their primary key in `descending` order.
+So if you use auto generated keys (`ejdb_put_new`) you may be sure what documents fetched as result of
+full scan query will be ordered according to the time of insertion in descendant order,
+unless you don't use query sorting, indexes or `inverse` keyword.
 
 ### Performance tip: Brute force scan vs indexed access
 
-In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any way.
+In many cases, using index may drop down the overall query performance.
+Because index collection contains only document references (`id`) and engine may perform
+an addition document fetching by its primary key to finish query matching.
+So for not so large collections a brute scan may perform better than scan using indexes.
+However, exact matching operations: `eq`, `in` and `sorting` by natural index order
+will benefit from index in most cases.
 
 
 ### Performance tip: Get rid of unnecessary document data
 
-If you'd like update some set of documents with `apply` or `del` operations but don't want fetching all of them as result of query - just add `count` modifier to the query to get rid of unnecessary data transferring and json data conversion.
+If you'd like update some set of documents with `apply` or `del` operations
+but don't want fetching all of them as result of query - just add `count`
+modifier to the query to get rid of unnecessary data transferring and json data conversion.
