@@ -1,6 +1,7 @@
 #include "jbl.h"
 #include "utf8proc.h"
 #include "jbl_internal.h"
+#include <errno.h>
 
 #define IS_WHITESPACE(c_) ((unsigned char)(c_) <= (unsigned char) ' ')
 
@@ -16,6 +17,7 @@ typedef struct JCTX {
 static void _jbl_add_item(JBL_NODE parent, JBL_NODE node) {
   assert(parent && node);
   node->next = 0;
+  node->parent = parent;
   if (parent->child) {
     JBL_NODE prev = parent->child->prev;
     parent->child->prev = node;
@@ -197,10 +199,17 @@ static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
   return 0;
 }
 
-static const char *_jbl_parse_value(JBL_NODE parent,
+static const char *_jbl_parse_value(int lvl,
+                                    JBL_NODE parent,
                                     const char *key, int klidx,
                                     const char *p,
                                     JCTX *ctx) {
+
+  if (lvl > JBL_MAX_NESTING_LEVEL) {
+    ctx->rc = JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED;
+    return 0;
+  }
+
   JBL_NODE node;
   while (1) {
     switch (*p) {
@@ -275,7 +284,7 @@ static const char *_jbl_parse_value(JBL_NODE parent,
           p = _jbl_parse_key(&nkey, p, ctx);
           if (ctx->rc) return 0;
           if (*p == '}') return p + 1; // end of object
-          p = _jbl_parse_value(node, nkey, strlen(nkey), p, ctx);
+          p = _jbl_parse_value(lvl + 1, node, nkey, strlen(nkey), p, ctx);
           if (ctx->rc) return 0;
         }
         break;
@@ -284,7 +293,7 @@ static const char *_jbl_parse_value(JBL_NODE parent,
         if (ctx->rc) return 0;
         ++p;
         for (int i = 0;; ++i) {
-          p = _jbl_parse_value(node, 0, i, p, ctx);
+          p = _jbl_parse_value(lvl + 1, node, 0, i, p, ctx);
           if (ctx->rc) return 0;
           if (*p == ']') return p + 1;
         }
@@ -399,7 +408,91 @@ static iwrc _jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, int 
   return rc;
 }
 
-//------ Public
+static JBL_NODE _jbl_clone_node_struct(JBL_NODE src, IWPOOL *pool) {
+  iwrc rc;
+  JBL_NODE n = iwpool_calloc(sizeof(*n), pool);
+  if (!n) return 0;
+  n->vsize = src->vsize;
+  n->type = src->type;
+  n->klidx = src->klidx;
+  n->flags = src->flags;
+
+  if (src->key) {
+    n->key = iwpool_strndup(pool, src->key, src->klidx, &rc);
+    if (!n->key) {
+      return 0;
+    }
+  }
+  switch (src->type) {
+    case JBV_STR: {
+
+      n->vptr = iwpool_strndup(pool, src->vptr, src->vsize, &rc);
+      if (!n->vptr) {
+        return 0;
+      }
+      n->vsize = src->vsize;
+      break;
+    }
+    case JBV_I64:
+      n->vi64 = src->vi64;
+      break;
+    case JBV_BOOL:
+      n->vbool = src->vbool;
+      break;
+    case JBV_F64:
+      n->vf64 = src->vf64;
+      break;
+    default:
+      break;
+  };
+  return n;
+}
+
+static jbn_visitor_cmd_t _jbl_clone_node_visit(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx,
+                                               iwrc *rc) {
+  if (lvl < 0) {
+    return JBL_VCMD_OK;
+  }
+  JBL_NODE parent = vctx->root;
+  if (lvl < vctx->pos) { // Pop
+    vctx->pos = lvl;
+    parent = parent->parent;
+    vctx->root = parent;
+    assert(vctx->root);
+  } else if (lvl > vctx->pos) { // Push
+    vctx->pos = lvl;
+    parent = vctx->op;
+    vctx->root = parent;
+    assert(parent);
+  }
+  JBL_NODE nn = _jbl_clone_node_struct(n, vctx->pool);
+  if (!nn) {
+    *rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    return JBL_VCMD_TERMINATE;
+  }
+  _jbl_add_item(parent, nn);
+  if (nn->type >= JBV_OBJECT) {
+    vctx->op = nn; // Remeber last container object
+  }
+  return JBL_VCMD_OK;
+}
+
+iwrc jbn_clone(JBL_NODE src, JBL_NODE *targetp, IWPOOL *pool) {
+  *targetp = 0;
+  JBL_NODE n = _jbl_clone_node_struct(src, pool);
+  if (!n) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  JBN_VCTX vctx = {
+    .pool = pool,
+    .root = n,
+    .op = n
+  };
+  iwrc rc = jbn_visit(src, 0, &vctx, _jbl_clone_node_visit);
+  RCRET(rc);
+  *targetp = n;
+  return 0;
+}
 
 iwrc jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
   return _jbl_node_as_json(node, pt, op, 0, pf);
@@ -412,7 +505,7 @@ iwrc jbl_node_from_json(const char *json, JBL_NODE *node, IWPOOL *pool) {
     .buf = json
   };
   _jbl_skip_bom(&ctx);
-  _jbl_parse_value(0, 0, 0, ctx.buf, &ctx);
+  _jbl_parse_value(0, 0, 0, 0, ctx.buf, &ctx);
   *node = ctx.root;
   return ctx.rc;
 }

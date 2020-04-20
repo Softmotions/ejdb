@@ -1,5 +1,8 @@
 ejdb2 (2.0.44) UNRELEASED; urgency=medium
 
+  * Fixed missing parent pointer link in `_jbl_add_item` (jbl_json.c).
+  * Added `jbn_clone()` (jbl.h)
+  * Added checks for max nesting level of JSON objects, 1000 by default.
   * Added `jbl_clone(JBL src, JBL *targetp)` (jbl.h)
   * Added `jbl_merge_patch_jbl(JBL jbl, JBL patch)` (jbl.h)
   * Added `jbl_set_string_printf()` (jbl.h)
@@ -7,7 +10,7 @@ ejdb2 (2.0.44) UNRELEASED; urgency=medium
   * Better error handling of `kh_put()`
   * Added `jbl_clone_into_pool(JBL src, IWPOOL *pool, JBL *targetp)` (jbl.h)
   * Added  jbn_path_compare, jbn_path_compare_str, jbn_path_compare_bool,
-          jbn_path_compare_i64, jbn_path_compare_f64, (jbl.j)
+          jbn_path_compare_i64, jbn_path_compare_f64 (jbl.h)
 
  -- Anton Adamansky <adamansky@gmail.com>  Wed, 08 Apr 2020 20:24:26 +0700
 

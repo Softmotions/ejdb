@@ -6,6 +6,9 @@
 #include "utf8proc.h"
 #include "convert.h"
 
+#define _STRX(x) #x
+#define _STR(x) _STRX(x)
+
 IW_INLINE int _jbl_printf_estimate_size(const char *format, va_list ap) {
   char buf[1];
   return vsnprintf(buf, sizeof(buf), format, ap) + 1;
@@ -1008,6 +1011,9 @@ iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor) {
   int idx;
   binn bv;
 
+  if (lvl > JBL_MAX_NESTING_LEVEL) {
+    return JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED;
+  }
   if (!iter) {
     binn_iter it;
     if (!BINN_IS_CONTAINER_TYPE(bn->type)) {
@@ -1085,6 +1091,9 @@ iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor) {
 
 iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR visitor) {
   iwrc rc = 0;
+  if (lvl > JBL_MAX_NESTING_LEVEL) {
+    return JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED;
+  }
   if (!node) {
     node = vctx->root;
     lvl = 0;
@@ -2409,6 +2418,8 @@ static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
       return "JBL is not an object (JBL_ERROR_NOT_AN_OBJECT)";
     case JBL_ERROR_TYPE_MISMATCHED:
       return "Type of JBL object mismatched user type constraints (JBL_ERROR_TYPE_MISMATCHED)";
+    case JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED:
+      return "Exceeded the maximal object nesting level: " _STR(JBL_MAX_NESTING_LEVEL) " (JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED)";
   }
   return 0;
 }

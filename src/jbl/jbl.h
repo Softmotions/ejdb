@@ -84,6 +84,7 @@ typedef enum {
   JBL_ERROR_NOT_AN_OBJECT,              /**< JBL is not an object (JBL_ERROR_NOT_AN_OBJECT) */
   JBL_ERROR_TYPE_MISMATCHED,            /**< Type of JBL object mismatched user type constraints (JBL_ERROR_TYPE_MISMATCHED) */
   JBL_ERROR_PATCH_TEST_FAILED,          /**< JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED) */
+  JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED,  /**< Reached the maximal object nesting level: 1000 (JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED) */
   _JBL_ERROR_END
 } jbl_ecode_t;
 
@@ -308,7 +309,7 @@ IW_EXPORT iwrc jbl_set_nested(JBL jbl, const char *key, JBL nested);
 IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy);
 
 /**
- * @brief Clones a given `src` JBL object into newly allocated `targetp` object.
+ * @brief Clones the given `src` JBL object into newly allocated `targetp` object.
  *
  * JBL object stored into `targetp` should be disposed by `jbl_destroy()`.
  *
@@ -316,6 +317,16 @@ IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_o
  * @param targetp Pointer on target object.
  */
 IW_EXPORT iwrc jbl_clone(JBL src, JBL *targetp);
+
+/**
+ * @brief Clones the given `src` JBL_NODE object into new `targetp` instance.
+ *        Memory allocateted by given memor `pool` instance.
+ *
+ * @param src Source object to clone
+ * @param target Pointer on new instance
+ * @param pool Memory pool used for allocations during clone object construction
+ */
+IW_EXPORT iwrc jbn_clone(JBL_NODE src, JBL_NODE *targetp, IWPOOL *pool);
 
 /**
  * @brief Clones a given `src` JBL object and stores it in memory allocated from `pool`.

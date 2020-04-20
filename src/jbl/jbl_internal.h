@@ -35,6 +35,8 @@
 #include <ejdb2/iowow/iwconv.h>
 #include "ejdb2cfg.h"
 
+#define JBL_MAX_NESTING_LEVEL 999
+
 struct _JBL {
   binn bn;
   JBL_NODE node;

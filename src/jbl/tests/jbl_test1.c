@@ -675,7 +675,7 @@ void jbl_test1_8() {
   rc = jbl_create_empty_object(&nested);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-   rc = jbl_set_int64(nested, "nnum", 2233);
+  rc = jbl_set_int64(nested, "nnum", 2233);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = jbl_set_int64(jbl, "mynum", 13223);
@@ -709,6 +709,39 @@ void jbl_test1_8() {
   jbl_destroy(&nested);
 }
 
+void jbl_test1_9(void) {
+  IWPOOL *pool = iwpool_create(512);
+  IWPOOL *cpool = iwpool_create(512);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
+  CU_ASSERT_PTR_NOT_NULL_FATAL(cpool);
+  const char *data = "{\"foo\": \"b\\\"ar\", \"num1\":1223,"
+                     "\"n\\\"um2\":10.1226222, "
+                     "\"list\":[3,2.1,1,\"one\" \"two\", "
+                     "{}, {\"z\":false, \"arr\":[9,8], \"t\":true}]}";
+
+  JBL_NODE n, cn;
+  iwrc rc = jbl_node_from_json(data, &n, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_clone(n, &cn, cpool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  IWXSTR *xstr = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+
+  iwpool_destroy(pool);
+
+  rc = jbl_node_as_json(cn, jbl_xstr_json_printer, xstr, 0);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr),
+                         "{\"foo\":\"b\\\"ar\",\"num1\":1223,\"n\\\"um2\":10.1226222,\"list\":[3,2.1,1,\"one\",\"two\",{},{\"z\":false,\"arr\":[9,8],\"t\":true}]}"
+                        );
+
+  iwpool_destroy(cpool);
+  iwxstr_destroy(xstr);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -725,7 +758,8 @@ int main() {
     (NULL == CU_add_test(pSuite, "jbl_test1_5", jbl_test1_5)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_6", jbl_test1_6)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_7", jbl_test1_7)) ||
-    (NULL == CU_add_test(pSuite, "jbl_test1_8", jbl_test1_8))
+    (NULL == CU_add_test(pSuite, "jbl_test1_8", jbl_test1_8)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_9", jbl_test1_9))
   ) {
     CU_cleanup_registry();
     return CU_get_error();
