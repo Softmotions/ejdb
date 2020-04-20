@@ -706,7 +706,7 @@ static iwrc jbn_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step)
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   if (doc->node) {
-    rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
+    rc = jbn_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
   } else {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
   }
@@ -918,7 +918,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(JNIEnv *env,
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       goto finish;
     }
-    rc = jbl_node_from_json(val, &node, pool);
+    rc = jbn_from_json(val, &node, pool);
     if (rc) {
       iwpool_destroy(pool);
       goto finish;

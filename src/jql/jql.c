@@ -613,7 +613,7 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
         iwpool_destroy(pool);
         return 0;
       }
-      int cmp = jbl_compare_nodes(lnode, rv->vnode, rcp);
+      int cmp = jbn_compare_nodes(lnode, rv->vnode, rcp);
       iwpool_destroy(pool);
       return cmp;
     }
@@ -1415,7 +1415,7 @@ static iwrc _jql_project(JBL_NODE root, JQL q) {
     bool all = (p->value->flavour & JQP_STR_PROJALIAS);
     if (all) {
       if (p->exclude) { // Got -all in chain return empty object
-        jbl_node_reset_data(root);
+        jbn_data(root);
         return 0;
       } else {
         proj = p->next; // Dispose all before +all
@@ -1463,9 +1463,9 @@ iwrc jql_apply(JQL q, JBL_NODE root, IWPOOL *pool) {
     if (!pv || pv->type != JQVAL_JBLNODE || !pv->vnode) {
       return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
     }
-    return jbl_patch_auto(root, pv->vnode, pool);
+    return jbn_patch_auto(root, pv->vnode, pool);
   } else if (q->aux->apply) {
-    return jbl_patch_auto(root, q->aux->apply, pool);
+    return jbn_patch_auto(root, q->aux->apply, pool);
   } else {
     return 0;
   }

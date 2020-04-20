@@ -1205,10 +1205,10 @@ static iwrc _jb_patch(EJDB db, const char *coll, const char *patchjson, int64_t 
   rc = jbl_to_node(&sjbl, &root, pool);
   RCGO(rc, finish);
 
-  rc = jbl_node_from_json(patchjson, &patch, pool);
+  rc = jbn_from_json(patchjson, &patch, pool);
   RCGO(rc, finish);
 
-  rc = jbl_patch_auto(root, patch, pool);
+  rc = jbn_patch_auto(root, patch, pool);
   RCGO(rc, finish);
 
   if (root->type == JBV_OBJECT) {

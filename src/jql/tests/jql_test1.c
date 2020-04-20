@@ -218,10 +218,10 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL_FATAL(out);
 
-  rc = jbl_node_from_json(eqjson, &eqn, pool);
+  rc = jbn_from_json(eqjson, &eqn, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  int cmp = jbl_compare_nodes(out, eqn, &rc);
+  int cmp = jbn_compare_nodes(out, eqn, &rc);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL_FATAL(cmp, 0);
 

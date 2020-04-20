@@ -1010,7 +1010,7 @@ static iwrc _jqp_print_apply(const JQP_QUERY *q, jbl_json_printer pt, void *op) 
   if (q->aux->apply_placeholder) {
     PT(q->aux->apply_placeholder, -1, 0, 0);
   } else if (q->aux->apply) {
-    rc = jbl_node_as_json(q->aux->apply, pt, op, 0);
+    rc = jbn_as_json(q->aux->apply, pt, op, 0);
     RCRET(rc);
   }
   return rc;
@@ -1109,7 +1109,7 @@ iwrc jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op
       PT(e->right->string.value, -1, 0, 0);
     }
   } else if (e->right->type == JQP_JSON_TYPE) {
-    rc = jbl_node_as_json(&e->right->json.jn, pt, op, 0);
+    rc = jbn_as_json(&e->right->json.jn, pt, op, 0);
     RCRET(rc);
   } else {
     iwlog_ecode_error3(IW_ERROR_ASSERTION);

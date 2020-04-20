@@ -731,7 +731,7 @@ static void ejdb_test3_4() {
 
   // Q:
   JBL_NODE qtags;
-  rc = jbl_node_from_json("[\"zaz\",\"gaz\"]", &qtags, pool);
+  rc = jbn_from_json("[\"zaz\",\"gaz\"]", &qtags, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = jql_set_json(q, "tags", 0, qtags);
@@ -777,7 +777,7 @@ static void ejdb_test3_4() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   // Q:
-  rc = jbl_node_from_json("[\"zaz\",\"boo\"]", &qtags, pool);
+  rc = jbn_from_json("[\"zaz\",\"boo\"]", &qtags, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jql_set_json(q, "tags", 0, qtags);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -803,7 +803,7 @@ static void ejdb_test3_4() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   // G2
-  rc = jbl_node_from_json("[\"gaz\"]", &qtags, pool);
+  rc = jbn_from_json("[\"gaz\"]", &qtags, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jql_set_json(q, "tags", 0, qtags);
   CU_ASSERT_EQUAL_FATAL(rc, 0);

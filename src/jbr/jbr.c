@@ -170,7 +170,7 @@ static iwrc _jbr_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   rc = iwxstr_printf(wbuf, "\r\n%lld\t", doc->id);
   RCRET(rc);
   if (doc->node) {
-    rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, wbuf, 0);
+    rc = jbn_as_json(doc->node, jbl_xstr_json_printer, wbuf, 0);
   } else {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, wbuf, 0);
   }
@@ -893,7 +893,7 @@ static iwrc _jbr_ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   RCRET(rc);
 
   if (doc->node) {
-    rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, wbuf, 0);
+    rc = jbn_as_json(doc->node, jbl_xstr_json_printer, wbuf, 0);
   } else {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, wbuf, 0);
   }

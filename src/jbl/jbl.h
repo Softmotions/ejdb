@@ -541,7 +541,7 @@ IW_EXPORT iwrc jbl_to_node(JBL jbl, JBL_NODE *node, IWPOOL *pool);
  * @param [out] node  Holder of new `JBL_NODE` value. Not zero.
  * @param pool        Memory used to allocate new `JBL_NODE` tree. Not zero.
  */
-IW_EXPORT iwrc jbl_node_from_json(const char *json, JBL_NODE *node, IWPOOL *pool);
+IW_EXPORT iwrc jbn_from_json(const char *json, JBL_NODE *node, IWPOOL *pool);
 
 /**
  * @brief Prints JBL_NODE document as JSON string.
@@ -555,7 +555,7 @@ IW_EXPORT iwrc jbl_node_from_json(const char *json, JBL_NODE *node, IWPOOL *pool
  * @param op    Pointer to user data for JSON printer function.
  * @param pf    JSON printing mode.
  */
-IW_EXPORT iwrc jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
+IW_EXPORT iwrc jbn_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
 /**
  * @brief Fill `jbl` document by data from `node`.
@@ -585,27 +585,70 @@ IW_EXPORT iwrc jbl_fill_from_node(JBL jbl, JBL_NODE node);
  *         - Greater than zero  if `n1` greater than `n2`
  *         - Lesser than zero if `n1` lesser than `n2`
  */
-IW_EXPORT int jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
+IW_EXPORT int jbn_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp);
 
 /**
  * @brief Add item to the `parent` container.
  */
-IW_EXPORT void jbl_add_item(JBL_NODE parent, JBL_NODE node);
+IW_EXPORT void jbn_add_item(JBL_NODE parent, JBL_NODE node);
+
+/**
+ * @brief Adds string JSON node to the given `parent` node.
+ *        Key and value are copied into allocated node.
+ *
+ * @param parent Parent holder.
+ * @param key Child node key cloned into node. Can be zero if parent is an array.
+ * @param val Child node value copied.
+ * @param vlen Langth of child node value.
+ * @param pool Allocation pool.
+ */
+IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, size_t vlen, IWPOOL *pool);
+
+/**
+ * @brief Adds integer JSON node to the given `parent` node.
+ *
+ * @param parent Parent holder.
+ * @param key Child node key cloned into node. Can be zero if parent is an array.
+ * @param val Integer value.
+ * @param pool Allocation pool.
+ */
+IW_EXPORT iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, IWPOOL *pool);
+
+/**
+ * @brief Adds fp number JSON node to the given `parent` node.
+ *
+ * @param parent Parent holder.
+ * @param key Child node key cloned into node. Can be zero if parent is an array.
+ * @param val Floating point value.
+ * @param pool Allocation pool.
+ */
+IW_EXPORT iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, IWPOOL *pool);
+
+
+/**
+ * @brief Adds boolean JSON node to the given `parent` node.
+ *
+ * @param parent Parent holder.
+ * @param key Child node key cloned into node. Can be zero if parent is an array.
+ * @param val Boolean node value.
+ * @param pool Allocation pool.
+ */
+IW_EXPORT iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, IWPOOL *pool);
 
 /**
  * @brief Add item from the `parent` container.
  */
-IW_EXPORT void jbl_remove_item(JBL_NODE parent, JBL_NODE child);
+IW_EXPORT void jbn_remove_item(JBL_NODE parent, JBL_NODE child);
 
 /**
  * @brief Remove subtree from `target` node pointed by `path`
  */
-IW_EXPORT JBL_NODE jbl_node_detach(JBL_NODE target, JBL_PTR path);
+IW_EXPORT JBL_NODE jbn_detach(JBL_NODE target, JBL_PTR path);
 
 /**
  * @brief Reset tree `node` data.
  */
-IW_EXPORT void jbl_node_reset_data(JBL_NODE node);
+IW_EXPORT void jbn_data(JBL_NODE node);
 
 /**
  * @brief Parses rfc6901 JSON path.
@@ -658,19 +701,20 @@ IW_EXPORT iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR vis
 
 //--- PATCHING
 
-IW_EXPORT iwrc jbl_patch_auto(JBL_NODE root, JBL_NODE patch, IWPOOL *pool);
+IW_EXPORT iwrc jbn_patch_auto(JBL_NODE root, JBL_NODE patch, IWPOOL *pool);
 
-IW_EXPORT iwrc jbl_patch_node(JBL_NODE root, const JBL_PATCH *patch, size_t cnt);
+IW_EXPORT iwrc jbn_patch(JBL_NODE root, const JBL_PATCH *patch, size_t cnt);
+
+IW_EXPORT iwrc jbn_merge_patch(JBL_NODE root, const char *patchjson, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_patch(JBL jbl, const JBL_PATCH *patch, size_t cnt);
 
 IW_EXPORT iwrc jbl_patch_from_json(JBL jbl, const char *patchjson);
 
-IW_EXPORT iwrc jbl_merge_patch_node(JBL_NODE root, const char *patchjson, IWPOOL *pool);
-
 IW_EXPORT iwrc jbl_merge_patch(JBL jbl, const char *patchjson);
 
 IW_EXPORT iwrc jbl_merge_patch_jbl(JBL jbl, JBL patch);
+
 
 
 IW_EXPORT iwrc jbl_init(void);

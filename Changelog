@@ -1,3 +1,10 @@
+ejdb2 (2.0.45) UNRELEASED; urgency=medium
+
+  * Minor refactoring of jbl module
+  * Added a set of jbn_add_x (jbl.h)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 20 Apr 2020 23:06:19 +0700
+
 ejdb2 (2.0.44) testing; urgency=medium
 
   * Fixed missing parent pointer link in `_jbl_add_item` (jbl_json.c).

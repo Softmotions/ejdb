@@ -36,7 +36,7 @@ void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
   pool = iwpool_create(1024);
   CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
 
-  rc = jbl_node_from_json(data, &node, pool);
+  rc = jbn_from_json(data, &node, pool);
   if (rc) {
     iwlog_ecode_error3(rc);
   }
@@ -44,7 +44,7 @@ void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
   CU_ASSERT_PTR_NOT_NULL_FATAL(node);
   if (expected) goto finish;
 
-  rc = jbl_node_as_json(node, jbl_xstr_json_printer, res, pf);
+  rc = jbn_as_json(node, jbl_xstr_json_printer, res, pf);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   edata = iwu_file_read_as_buf(path_expected);
@@ -720,7 +720,7 @@ void jbl_test1_9(void) {
                      "{}, {\"z\":false, \"arr\":[9,8], \"t\":true}]}";
 
   JBL_NODE n, cn;
-  iwrc rc = jbl_node_from_json(data, &n, pool);
+  iwrc rc = jbn_from_json(data, &n, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = jbn_clone(n, &cn, cpool);
@@ -731,7 +731,7 @@ void jbl_test1_9(void) {
 
   iwpool_destroy(pool);
 
-  rc = jbl_node_as_json(cn, jbl_xstr_json_printer, xstr, 0);
+  rc = jbn_as_json(cn, jbl_xstr_json_printer, xstr, 0);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr),

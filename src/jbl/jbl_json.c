@@ -14,7 +14,7 @@ typedef struct JCTX {
   iwrc rc;
 } JCTX;
 
-static void _jbl_add_item(JBL_NODE parent, JBL_NODE node) {
+static void _jbn_add_item(JBL_NODE parent, JBL_NODE node) {
   assert(parent && node);
   node->next = 0;
   node->parent = parent;
@@ -51,7 +51,7 @@ static JBL_NODE _jbl_json_create_node(jbl_type_t type, const char *key, int klid
   node->key = key;
   node->klidx = klidx;
   if (parent) {
-    _jbl_add_item(parent, node);
+    _jbn_add_item(parent, node);
   }
   if (!ctx->root) {
     ctx->root = node;
@@ -470,7 +470,7 @@ static jbn_visitor_cmd_t _jbl_clone_node_visit(int lvl, JBL_NODE n, const char *
     *rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     return JBL_VCMD_TERMINATE;
   }
-  _jbl_add_item(parent, nn);
+  _jbn_add_item(parent, nn);
   if (nn->type >= JBV_OBJECT) {
     vctx->op = nn; // Remeber last container object
   }
@@ -494,11 +494,11 @@ iwrc jbn_clone(JBL_NODE src, JBL_NODE *targetp, IWPOOL *pool) {
   return 0;
 }
 
-iwrc jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
+iwrc jbn_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
   return _jbl_node_as_json(node, pt, op, 0, pf);
 }
 
-iwrc jbl_node_from_json(const char *json, JBL_NODE *node, IWPOOL *pool) {
+iwrc jbn_from_json(const char *json, JBL_NODE *node, IWPOOL *pool) {
   *node = 0;
   JCTX ctx = {
     .pool = pool,

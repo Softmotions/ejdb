@@ -1536,7 +1536,7 @@ static iwrc jn_jql_stream_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
     return work->rc;
   }
   if (doc->node) {
-    work->rc = jbl_node_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
+    work->rc = jbn_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
   } else {
     work->rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
   }
@@ -1874,7 +1874,7 @@ static napi_value jn_jql_set(napi_env env, napi_callback_info info) {
         case 1:
           svalue = jn_string(env, argv[2], pool, false, false, &rc);
           RCGO(rc, finish);
-          rc = jbl_node_from_json(svalue, &node, vpool);
+          rc = jbn_from_json(svalue, &node, vpool);
           RCGO(rc, finish);
           rc = jql_set_json2(jnql->jql, splh, iplh, node, jn_jql_free_set_string_value, vpool);
           RCGO(rc, finish);
