@@ -603,7 +603,7 @@ IW_EXPORT void jbn_add_item(JBL_NODE parent, JBL_NODE node);
  *             If `vlen` is lesser then zero length of `val` will be determined my `strlen`.
  * @param pool Allocation pool.
  */
-IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, size_t vlen, IWPOOL *pool);
+IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, IWPOOL *pool);
 
 /**
  * @brief Adds integer JSON node to the given `parent` node.

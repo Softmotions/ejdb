@@ -1450,7 +1450,7 @@ void jbn_add_item(JBL_NODE parent, JBL_NODE node) {
   _jbn_add_item(parent, node);
 }
 
-iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, size_t vlen, IWPOOL *pool) {
+iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, IWPOOL *pool) {
   if (!parent || !pool || parent->type < JBV_OBJECT) {
     return IW_ERROR_INVALID_ARGS;
   }
