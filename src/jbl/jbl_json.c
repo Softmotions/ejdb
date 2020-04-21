@@ -455,8 +455,11 @@ static jbn_visitor_cmd_t _jbl_clone_node_visit(int lvl, JBL_NODE n, const char *
   }
   JBL_NODE parent = vctx->root;
   if (lvl < vctx->pos) { // Pop
+    for (int i = lvl; i < vctx->pos; ++i) {
+      parent = parent->parent;
+      assert(parent);
+    }
     vctx->pos = lvl;
-    parent = parent->parent;
     vctx->root = parent;
     assert(vctx->root);
   } else if (lvl > vctx->pos) { // Push
