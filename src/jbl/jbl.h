@@ -335,7 +335,7 @@ IW_EXPORT iwrc jbn_clone(JBL_NODE src, JBL_NODE *targetp, IWPOOL *pool);
  * Copied subtree will be allocated in using given memory `pool`.
  *
  * @param src Source JSON tree.
- * @param src_path Path under copied subtree located.
+ * @param src_path Path under copied subtree located. If zero of `/` `src` object itself will be cloned.
  * @param target Target JSON tree.
  * @param target_path Path to place copied subtree.
  * @param pool Memory pool used for allocations

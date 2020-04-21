@@ -1587,11 +1587,16 @@ iwrc jbn_copy_path(JBL_NODE src, const char *src_path, JBL_NODE target, const ch
   if (!src || !src_path || !target || !target_path || !pool) {
     return IW_ERROR_INVALID_ARGS;
   }
+  iwrc rc = 0;
   JBL_NODE n1, n2;
   jbp_patch_t op = JBP_REPLACE;
 
-  iwrc rc = jbn_at(src, src_path, &n1);
-  RCRET(rc);
+  if (src_path && strcmp("/", src_path)) {
+    rc = jbn_at(src, src_path, &n1);
+    RCRET(rc);
+  } else {
+    n1 = src;
+  }
 
   rc = jbn_clone(n1, &n2, pool);
   RCRET(rc);
