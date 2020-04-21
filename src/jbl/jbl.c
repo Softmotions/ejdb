@@ -1583,6 +1583,35 @@ finish:
   return rc;
 }
 
+iwrc jbn_copy_path(JBL_NODE src, const char *src_path, JBL_NODE target, const char *target_path, IWPOOL *pool) {
+  if (!src || !src_path || !target || !target_path || !pool) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  JBL_NODE n1, n2;
+  jbp_patch_t op = JBP_REPLACE;
+
+  iwrc rc = jbn_at(src, src_path, &n1);
+  RCRET(rc);
+
+  rc = jbn_clone(n1, &n2, pool);
+  RCRET(rc);
+
+  rc = jbn_at(target, target_path, &n1);
+  if (rc == JBL_ERROR_PATH_NOTFOUND) {
+    rc = 0;
+    op = JBP_ADD;
+  }
+  JBL_PATCH p[] = {
+    {
+      .op = op,
+      .path = target_path,
+      .vnode = n2
+    }
+  };
+  return jbn_patch(target, p, sizeof(p) / sizeof(p[0]), pool);
+}
+
+
 IW_INLINE void _jbn_remove_item(JBL_NODE parent, JBL_NODE child) {
   assert(parent->child);
   if (parent->child == child) {                 // First element
@@ -2252,14 +2281,8 @@ iwrc jbl_to_node(JBL jbl, JBL_NODE *node, IWPOOL *pool) {
   return _jbl_node_from_binn(&jbl->bn, node, pool);
 }
 
-iwrc jbn_patch(JBL_NODE root, const JBL_PATCH *p, size_t cnt) {
-  IWPOOL *pool = iwpool_create(512);
-  if (!pool) {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
-  iwrc rc = _jbl_patch_node(root, p, cnt, pool);
-  iwpool_destroy(pool);
-  return rc;
+iwrc jbn_patch(JBL_NODE root, const JBL_PATCH *p, size_t cnt, IWPOOL *pool) {
+  return _jbl_patch_node(root, p, cnt, pool);
 }
 
 iwrc jbl_patch(JBL jbl, const JBL_PATCH *p, size_t cnt) {

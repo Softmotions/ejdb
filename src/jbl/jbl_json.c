@@ -425,7 +425,6 @@ static JBL_NODE _jbl_clone_node_struct(JBL_NODE src, IWPOOL *pool) {
   }
   switch (src->type) {
     case JBV_STR: {
-
       n->vptr = iwpool_strndup(pool, src->vptr, src->vsize, &rc);
       if (!n->vptr) {
         return 0;
@@ -455,11 +454,10 @@ static jbn_visitor_cmd_t _jbl_clone_node_visit(int lvl, JBL_NODE n, const char *
   }
   JBL_NODE parent = vctx->root;
   if (lvl < vctx->pos) { // Pop
-    for (int i = lvl; i < vctx->pos; ++i) {
+    for (; lvl < vctx->pos; --vctx->pos) {
       parent = parent->parent;
       assert(parent);
     }
-    vctx->pos = lvl;
     vctx->root = parent;
     assert(vctx->root);
   } else if (lvl > vctx->pos) { // Push
@@ -475,7 +473,7 @@ static jbn_visitor_cmd_t _jbl_clone_node_visit(int lvl, JBL_NODE n, const char *
   }
   _jbn_add_item(parent, nn);
   if (nn->type >= JBV_OBJECT) {
-    vctx->op = nn; // Remeber last container object
+    vctx->op = nn; // Remeber the last container object
   }
   return JBL_VCMD_OK;
 }

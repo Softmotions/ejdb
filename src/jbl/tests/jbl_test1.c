@@ -742,6 +742,44 @@ void jbl_test1_9(void) {
   iwxstr_destroy(xstr);
 }
 
+void jbl_test1_10(void) {
+  IWPOOL *pool = iwpool_create(512);
+  IWPOOL *tpool = iwpool_create(512);
+  IWXSTR *xstr = iwxstr_new();
+
+  const char *src_data = "{\"foo\": \"b\\\"ar\", \"num1\":1223,"
+                         "\"n\\\"um2\":10.1226222, "
+                         "\"list\":[3,2.1,1,\"one\" \"two\", "
+                         "{}, {\"z\":false, \"arr\":[9,8], \"t\":true}]}";
+  const char *tgt_data = "{\"test\":{\"nested1\":22}}";
+  JBL_NODE n1, n2;
+  iwrc rc = jbn_from_json(src_data, &n1, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_from_json(tgt_data, &n2, tpool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_copy_path(n1, "/list/6/arr", n2, "/test/nested1", tpool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_copy_path(n1, "/list/6/t", n2, "/test/t2", tpool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_copy_path(n1, "/foo", n2, "/bar", tpool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  iwpool_destroy(pool);
+
+  rc = jbn_as_json(n2, jbl_xstr_json_printer, xstr, 0);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr),
+                         "{\"test\":{\"nested1\":[9,8],\"t2\":true},\"bar\":\"b\\\"ar\"}");
+
+  iwpool_destroy(tpool);
+  iwxstr_destroy(xstr);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -759,7 +797,8 @@ int main() {
     (NULL == CU_add_test(pSuite, "jbl_test1_6", jbl_test1_6)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_7", jbl_test1_7)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_8", jbl_test1_8)) ||
-    (NULL == CU_add_test(pSuite, "jbl_test1_9", jbl_test1_9))
+    (NULL == CU_add_test(pSuite, "jbl_test1_9", jbl_test1_9)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_10", jbl_test1_10))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

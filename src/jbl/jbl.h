@@ -329,6 +329,20 @@ IW_EXPORT iwrc jbl_clone(JBL src, JBL *targetp);
 IW_EXPORT iwrc jbn_clone(JBL_NODE src, JBL_NODE *targetp, IWPOOL *pool);
 
 /**
+ * @brief Copies JSON subtree under given `src_path` into `target` object under `target_path`.
+ *        If some tree exists under `target_path` it will be replaced by copied subtree.
+ *
+ * Copied subtree will be allocated in using given memory `pool`.
+ *
+ * @param src Source JSON tree.
+ * @param src_path Path under copied subtree located.
+ * @param target Target JSON tree.
+ * @param target_path Path to place copied subtree.
+ * @param pool Memory pool used for allocations
+ */
+IW_EXPORT iwrc jbn_copy_path(JBL_NODE src, const char *src_path, JBL_NODE target, const char *target_path, IWPOOL *pool);
+
+/**
  * @brief Clones a given `src` JBL object and stores it in memory allocated from `pool`.
  *
  * @param src Source object to clone
@@ -725,7 +739,7 @@ IW_EXPORT iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR vis
 
 IW_EXPORT iwrc jbn_patch_auto(JBL_NODE root, JBL_NODE patch, IWPOOL *pool);
 
-IW_EXPORT iwrc jbn_patch(JBL_NODE root, const JBL_PATCH *patch, size_t cnt);
+IW_EXPORT iwrc jbn_patch(JBL_NODE root, const JBL_PATCH *patch, size_t cnt, IWPOOL *pool);
 
 IW_EXPORT iwrc jbn_merge_patch(JBL_NODE root, const char *patchjson, IWPOOL *pool);
 
