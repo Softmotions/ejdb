@@ -1539,6 +1539,50 @@ finish:
   return rc;
 }
 
+iwrc jbn_add_item_obj(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *pool) {
+  if (!parent || !pool || parent->type < JBV_OBJECT) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  JBL_NODE n = iwpool_calloc(sizeof(*n), pool);
+  if (!n) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  if (parent->type == JBV_OBJECT) {
+    if (!key) {
+      return IW_ERROR_INVALID_ARGS;
+    }
+    n->key = iwpool_strdup(pool, key, &rc);
+    RCGO(rc, finish);
+  }
+  n->type = JBV_OBJECT;
+  if (out) {
+    *out = n;
+  }
+finish:
+  return rc;
+}
+
+iwrc jbn_add_item_arr(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *pool) {
+  if (!parent || !pool || parent->type < JBV_OBJECT) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  JBL_NODE n = iwpool_calloc(sizeof(*n), pool);
+  if (!n) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  if (parent->type == JBV_OBJECT) {
+    if (!key) {
+      return IW_ERROR_INVALID_ARGS;
+    }
+    n->key = iwpool_strdup(pool, key, &rc);
+    RCGO(rc, finish);
+  }
+  n->type = JBV_ARRAY;
+  if (out) {
+    *out = n;
+  }
+finish:
+  return rc;
+}
+
 IW_INLINE void _jbn_remove_item(JBL_NODE parent, JBL_NODE child) {
   assert(parent->child);
   if (parent->child == child) {                 // First element

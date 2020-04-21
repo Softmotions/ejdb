@@ -625,6 +625,27 @@ IW_EXPORT iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, I
  */
 IW_EXPORT iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, IWPOOL *pool);
 
+/**
+ * @brief Add nested object under the given `key`
+ *
+ * @param parent Parent holder
+ * @param key Child node key cloned into node. Can be zero if parent is an array.
+ * @param [out] out Pointer to new node, can be zero.
+ * @param pool Allocation pool
+ * @return IW_EXPORT jbn_add_item_obj
+ */
+IW_EXPORT iwrc jbn_add_item_obj(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *pool);
+
+/**
+ * @brief Add nested array under the given `key`
+ *
+ * @param parent Parent holder
+ * @param key Child node key cloned into node. Can be zero if parent is an array.
+ * @param [out] out Pointer to new node, can be zero.
+ * @param pool Allocation pool
+ * @return IW_EXPORT jbn_add_item_obj
+ */
+IW_EXPORT iwrc jbn_add_item_arr(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *pool);
 
 /**
  * @brief Adds boolean JSON node to the given `parent` node.

@@ -1,5 +1,7 @@
 ejdb2 (2.0.45) UNRELEASED; urgency=medium
 
+  * Added `jbn_add_item_obj` (jbl.h)
+  * Added `jbn_add_item_arr` (jbl.h)
   * Minor refactoring of jbl module
   * Added a set of jbn_add_x (jbl.h)
 
