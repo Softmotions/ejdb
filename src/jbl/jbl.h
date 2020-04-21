@@ -600,6 +600,7 @@ IW_EXPORT void jbn_add_item(JBL_NODE parent, JBL_NODE node);
  * @param key Child node key cloned into node. Can be zero if parent is an array.
  * @param val Child node value copied.
  * @param vlen Langth of child node value.
+ *             If `vlen` is lesser then zero length of `val` will be determined my `strlen`.
  * @param pool Allocation pool.
  */
 IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, size_t vlen, IWPOOL *pool);

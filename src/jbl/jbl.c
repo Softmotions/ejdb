@@ -1465,6 +1465,9 @@ iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, size_t 
     RCGO(rc, finish);
   }
   if (val) {
+    if (vlen < 0) {
+      vlen = strlen(val);
+    }
     n->type = JBV_STR;
     n->vptr = iwpool_strndup(pool, val, vlen, &rc);
     RCGO(rc, finish);
