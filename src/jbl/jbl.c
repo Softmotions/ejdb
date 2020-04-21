@@ -2406,6 +2406,22 @@ iwrc jbl_fill_from_node(JBL jbl, JBL_NODE node) {
   return rc;
 }
 
+iwrc jbl_from_node(JBL *jblp, JBL_NODE node) {
+  if (!jblp || !node) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  if (node->type == JBV_OBJECT) {
+    rc = jbl_create_empty_object(jblp);
+  } else if (node->type == JBV_ARRAY) {
+    rc = jbl_create_empty_array(jblp);
+  } else {
+    rc = IW_ERROR_INVALID_ARGS;
+  }
+  RCRET(rc);
+  return jbl_fill_from_node(*jblp, node);
+}
+
 static JBL_NODE _jbl_merge_patch_node(JBL_NODE target, JBL_NODE patch, IWPOOL *pool, iwrc *rcp) {
   *rcp = 0;
   if (!patch) {

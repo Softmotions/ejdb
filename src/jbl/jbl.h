@@ -583,6 +583,16 @@ IW_EXPORT iwrc jbn_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_pri
  */
 IW_EXPORT iwrc jbl_fill_from_node(JBL jbl, JBL_NODE node);
 
+
+/**
+ * @brief Converts `node` object into JBL form.
+ *
+ * @param jblp  JBL pointer holder. Not zero.
+ * @param node  Source tree node. Not zero.
+ * @return IW_EXPORT jbl_from_node
+ */
+IW_EXPORT iwrc jbl_from_node(JBL *jblp, JBL_NODE node);
+
 /**
  * @brief Compares JSON tree nodes.
  *
