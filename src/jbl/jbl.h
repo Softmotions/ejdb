@@ -692,7 +692,9 @@ IW_EXPORT void jbn_remove_item(JBL_NODE parent, JBL_NODE child);
 /**
  * @brief Remove subtree from `target` node pointed by `path`
  */
-IW_EXPORT JBL_NODE jbn_detach(JBL_NODE target, JBL_PTR path);
+IW_EXPORT JBL_NODE jbn_detach2(JBL_NODE target, JBL_PTR path);
+
+IW_EXPORT JBL_NODE jbn_detach(JBL_NODE target, const char *path);
 
 /**
  * @brief Reset tree `node` data.

@@ -1876,8 +1876,17 @@ static JBL_NODE _jbl_node_detach(JBL_NODE target, JBL_PTR path) {
   return child;
 }
 
-JBL_NODE jbn_detach(JBL_NODE target, JBL_PTR path) {
+JBL_NODE jbn_detach2(JBL_NODE target, JBL_PTR path) {
   return _jbl_node_detach(target, path);
+}
+
+JBL_NODE jbn_detach(JBL_NODE target, const char *path) {
+  JBL_PTR jp;
+  iwrc rc = _jbl_ptr_pool(path, &jp, 0);
+  if (rc) return 0;
+  JBL_NODE res = jbn_detach2(target, jp);
+  free(jp);
+  return res;
 }
 
 static int _jbl_cmp_node_keys(const void *o1, const void *o2) {

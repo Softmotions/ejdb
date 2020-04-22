@@ -1,5 +1,6 @@
 ejdb2 (2.0.45) UNRELEASED; urgency=medium
 
+  * Added two variants of `jbn_detach` (jbl.h)
   * Added non standard JSON patch operation: `add_create` (jbl.h)
   * Added `jbl_from_node`    (jbl.h)
   * Added `jbn_copy_path`    (jbl.h)
