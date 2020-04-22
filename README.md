@@ -604,6 +604,21 @@ Example:
  Patch:     [{"op": "increment", "path": "/foo", "value": 2}]
  Result:    {"foo": 3}
 ```
+#### add_create
+
+Same as JSON patch `add` but creates intermediate object nodes for missing JSON path segments.
+Example:
+```
+Document: {"foo": {"bar": 1}}
+Patch:    [{"op": "add_create", "path": "/foo/zaz/gaz", "value": 22}]
+Result:   {"foo":{"bar":1,"zaz":{"gaz":22}}}
+```
+Example:
+```
+Document: {"foo": {"bar": 1}}
+Patch:    [{"op": "add_create", "path": "/foo/bar/gaz", "value": 22}]
+Result:   Error since element pointed by /foo/bar is not object:
+```
 
 ### Removing documents
 

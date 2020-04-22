@@ -152,7 +152,10 @@ typedef enum {
   JBP_COPY,
   JBP_MOVE,
   JBP_TEST,
-  JBP_INCREMENT // Not standard increment operation
+
+  // Non standard operations
+  JBP_INCREMENT,  /**< Value increment */
+  JBP_ADD_CREATE, /**< Create intermediate object nodes for missing path segments */
 } jbp_patch_t;
 
 /**

@@ -569,6 +569,25 @@ void jbl_test1_6() {
   CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATCH_INVALID_VALUE);
   iwxstr_clear(xstr);
 
+  // Apply non standard add_create patch
+  apply_patch("{'foo': {'bar': 1}}",
+              "[{'op': 'add_create', 'path': '/foo/zaz/gaz', 'value': 22}]",
+              "{'foo':{'bar':1,'zaz':{'gaz':22}}}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+
+  apply_patch("{'foo': {'bar': 1}}",
+              "[{'op': 'add_create', 'path': '/foo/bar/gaz', 'value': 22}]",
+              "{}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, JBL_ERROR_PATCH_TARGET_INVALID);
+  iwxstr_clear(xstr);
+
+  apply_patch("{'foo': {'bar': 1}}",
+              "[{'op': 'add_create', 'path': '/zaz/gaz', 'value': [1,2,3]}]",
+              "{'foo':{'bar':1},'zaz':{'gaz':[1,2,3]}}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+
   iwxstr_destroy(xstr);
 }
 

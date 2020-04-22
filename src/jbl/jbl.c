@@ -1604,7 +1604,7 @@ iwrc jbn_copy_path(JBL_NODE src, const char *src_path, JBL_NODE target, const ch
   rc = jbn_at(target, target_path, &n1);
   if (rc == JBL_ERROR_PATH_NOTFOUND) {
     rc = 0;
-    op = JBP_ADD;
+    op = JBP_ADD_CREATE;
   }
   JBL_PATCH p[] = {
     {
@@ -1987,7 +1987,7 @@ int jbn_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
   return _jbl_compare_nodes(n1, n2, rcp);
 }
 
-static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex) {
+static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex, IWPOOL *pool) {
 
   jbp_patch_t op = ex->p->op;
   JBL_PTR path = ex->path;
@@ -2009,7 +2009,7 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex) {
   if (oproot) { // Root operation
     if (op == JBP_REMOVE) {
       memset(target, 0, sizeof(*target));
-    } else if (op == JBP_REPLACE || op == JBP_ADD) {
+    } else if (op == JBP_REPLACE || op == JBP_ADD || op == JBP_ADD_CREATE) {
       if (!value) {
         return JBL_ERROR_PATCH_NOVALUE;
       }
@@ -2038,7 +2038,25 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex) {
     int lastidx = path->cnt - 1;
     JBL_NODE parent = (path->cnt > 1) ? _jbl_node_find(target, path, 0, lastidx) : target;
     if (!parent) {
-      return JBL_ERROR_PATCH_TARGET_INVALID;
+      if (op == JBP_ADD_CREATE) {
+        parent = target;
+        for (int i = 0; i < lastidx; ++i) {
+          JBL_NODE pn = _jbl_node_find(parent, path, i, i + 1);
+          if (!pn) {
+            pn = iwpool_calloc(sizeof(*pn), pool);
+            if (!pn) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+            pn->type = JBV_OBJECT;
+            pn->key = path->n[i];
+            pn->klidx = strlen(pn->key);
+            _jbn_add_item(parent, pn);
+          } else if (pn->type != JBV_OBJECT) {
+            return JBL_ERROR_PATCH_TARGET_INVALID;
+          }
+          parent = pn;
+        }
+      } else {
+        return JBL_ERROR_PATCH_TARGET_INVALID;
+      }
     }
     if (parent->type == JBV_ARRAY) {
       if (path->n[lastidx][0] == '-' && path->n[lastidx][1] == '\0') {
@@ -2190,7 +2208,7 @@ static iwrc _jbl_patch_node(JBL_NODE root, const JBL_PATCH *p, size_t cnt, IWPOO
     }
   }
   for (i = 0; i < cnt; ++i) {
-    rc = _jbl_target_apply_patch(root, &parr[i]);
+    rc = _jbl_target_apply_patch(root, &parr[i], pool);
     RCRET(rc);
   }
   return rc;
@@ -2341,6 +2359,8 @@ static iwrc _jbl_create_patch(JBL_NODE node, JBL_PATCH **pptr, int *cntp, IWPOOL
           pp->op = JBP_TEST;
         } else if (!strncmp("increment", n2->vptr, n2->vsize)) {
           pp->op = JBP_INCREMENT;
+        } else if (!strncmp("add_create", n2->vptr, n2->vsize)) {
+          pp->op = JBP_ADD_CREATE;
         } else {
           return JBL_ERROR_PATCH_INVALID_OP;
         }
