@@ -1495,6 +1495,7 @@ iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, IWPOOL *poo
   }
   n->type = JBV_I64;
   n->vi64 = val;
+  jbn_add_item(parent, n);
 finish:
   return rc;
 }
@@ -1515,6 +1516,7 @@ iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, IWPOOL *pool
   }
   n->type = JBV_F64;
   n->vf64 = val;
+  jbn_add_item(parent, n);
 finish:
   return rc;
 }
@@ -1535,6 +1537,7 @@ iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, IWPOOL *pool)
   }
   n->type = JBV_BOOL;
   n->vbool = val;
+  jbn_add_item(parent, n);
 finish:
   return rc;
 }
@@ -1554,6 +1557,7 @@ iwrc jbn_add_item_obj(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *p
     RCGO(rc, finish);
   }
   n->type = JBV_OBJECT;
+  jbn_add_item(parent, n);
   if (out) {
     *out = n;
   }
@@ -1576,6 +1580,7 @@ iwrc jbn_add_item_arr(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *p
     RCGO(rc, finish);
   }
   n->type = JBV_ARRAY;
+  jbn_add_item(parent, n);
   if (out) {
     *out = n;
   }
