@@ -1463,6 +1463,7 @@ iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vle
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
+    n->klidx = strlen(n->key);
   }
   if (val) {
     if (vlen < 0) {
@@ -1471,7 +1472,6 @@ iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vle
     n->type = JBV_STR;
     n->vptr = iwpool_strndup(pool, val, vlen, &rc);
     RCGO(rc, finish);
-    n->klidx = strlen(n->key);
   } else {
     n->type = JBV_NULL;
   }
