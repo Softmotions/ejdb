@@ -1471,6 +1471,7 @@ iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vle
     n->type = JBV_STR;
     n->vptr = iwpool_strndup(pool, val, vlen, &rc);
     RCGO(rc, finish);
+    n->klidx = strlen(n->key);
   } else {
     n->type = JBV_NULL;
   }
@@ -1492,6 +1493,7 @@ iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, IWPOOL *poo
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
+    n->klidx = strlen(n->key);
   }
   n->type = JBV_I64;
   n->vi64 = val;
@@ -1513,6 +1515,7 @@ iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, IWPOOL *pool
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
+    n->klidx = strlen(n->key);
   }
   n->type = JBV_F64;
   n->vf64 = val;
@@ -1534,6 +1537,7 @@ iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, IWPOOL *pool)
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
+    n->klidx = strlen(n->key);
   }
   n->type = JBV_BOOL;
   n->vbool = val;
@@ -1555,6 +1559,7 @@ iwrc jbn_add_item_obj(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *p
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
+    n->klidx = strlen(n->key);
   }
   n->type = JBV_OBJECT;
   jbn_add_item(parent, n);
@@ -1578,6 +1583,7 @@ iwrc jbn_add_item_arr(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *p
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
+    n->klidx = strlen(n->key);
   }
   n->type = JBV_ARRAY;
   jbn_add_item(parent, n);
