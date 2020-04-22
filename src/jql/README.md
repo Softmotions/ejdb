@@ -333,7 +333,7 @@ Example:
 ```
 Document: {"foo": {"bar": 1}}
 Patch:    [{"op": "add_create", "path": "/foo/bar/gaz", "value": 22}]
-Result:   Error since element pointed by /foo/bar is not object
+Result:   Error since element pointed by /foo/bar is not an object
 ```
 
 ### Removing documents
