@@ -641,7 +641,7 @@ finish:
 }
 
 static void ejd_free_str(void *ptr, void *op) {
-  if (ptr) free(ptr);
+  free(ptr);
 }
 
 static void ejd_free_json_node(void *ptr, void *op) {

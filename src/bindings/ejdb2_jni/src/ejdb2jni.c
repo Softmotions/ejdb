@@ -884,7 +884,7 @@ static void jbn_free_json_node(void *ptr, void *op) {
 }
 
 static void jbn_free_str(void *ptr, void *op) {
-  if (ptr) free(ptr);
+  free(ptr);
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(JNIEnv *env,

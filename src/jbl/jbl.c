@@ -123,7 +123,7 @@ iwrc jbl_set_string_printf(JBL jbl, const char *key, const char *format, ...) {
 
   rc = jbl_set_string(jbl, key, buf);
 finish:
-  if (buf) free(buf);
+  free(buf);
   return rc;
 }
 
@@ -1607,7 +1607,7 @@ iwrc jbn_copy_path(JBL_NODE src, const char *src_path, JBL_NODE target, const ch
   JBL_NODE n1, n2;
   jbp_patch_t op = JBP_REPLACE;
 
-  if (strcmp("/", src_path)) {
+  if (strcmp("/", src_path)) { // -V526
     rc = jbn_at(src, src_path, &n1);
     RCRET(rc);
   } else {
@@ -1840,8 +1840,9 @@ static JBL_NODE _jbl_node_find(JBL_NODE node, JBL_PTR ptr, int from, int to) {
 
   for (int i = from; n && i < ptr->cnt && i < to; ++i) {
     if (n->type == JBV_OBJECT) {
+      int ptrnlen = strlen(ptr->n[i]);
       for (n = n->child; n; n = n->next) {
-        if (!strncmp(n->key, ptr->n[i], n->klidx) && strlen(ptr->n[i]) == n->klidx) {
+        if (!strncmp(n->key, ptr->n[i], n->klidx) && ptrnlen == n->klidx) {
           break;
         }
       }
@@ -1899,9 +1900,9 @@ static int _jbl_cmp_node_keys(const void *o1, const void *o2) {
   if (!n1 && !n2) {
     return 0;
   }
-  if (!n2 || n1->klidx > n2->klidx) {
+  if (!n2 || n1->klidx > n2->klidx) { // -V522
     return 1;
-  } else if (!n1 || n1->klidx < n2->klidx) {
+  } else if (!n1 || n1->klidx < n2->klidx) { // -V522
     return -1;
   }
   return strncmp(n1->key, n2->key, n1->klidx);
@@ -1970,7 +1971,7 @@ int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
     return -1;
   } else if (!n2) {
     return 1;
-  } else if (n1->type - n2->type) {
+  } else if (n1->type != n2->type) {
     return n1->type - n2->type;
   }
   switch (n1->type) {
@@ -1981,7 +1982,7 @@ int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
     case JBV_F64:
       return (double)(n1->vi64) > n2->vf64 ? 1 : (double)(n1->vi64) < n2->vf64 ? -1 : 0;
     case JBV_STR:
-      if (n1->vsize - n2->vsize) {
+      if (n1->vsize != n2->vsize) {
         return n1->vsize - n2->vsize;
       }
       return strncmp(n1->vptr, n2->vptr, n1->vsize);
@@ -2286,7 +2287,7 @@ int _jbl_cmp_atomic_values(JBL v1, JBL v2) {
       return vv1 > vv2 ? 1 : vv1 < vv2 ? -1 : 0;
     }
     case JBV_STR:
-      return strcmp(jbl_get_str(v1), jbl_get_str(v2));
+      return strcmp(jbl_get_str(v1), jbl_get_str(v2)); // -V575
     case JBV_F64: {
       double vv1 = jbl_get_f64(v1);
       double vv2 = jbl_get_f64(v2);
@@ -2308,9 +2309,9 @@ bool _jbl_is_eq_atomic_values(JBL v1, JBL v2) {
     case JBV_I64:
       return jbl_get_i64(v1) != jbl_get_i64(v2);
     case JBV_STR:
-      return !strcmp(jbl_get_str(v1), jbl_get_str(v2));
+      return !strcmp(jbl_get_str(v1), jbl_get_str(v2)); // -V575
     case JBV_F64:
-      return jbl_get_f64(v1) != jbl_get_f64(v2);
+      return jbl_get_f64(v1) != jbl_get_f64(v2); // -V550
     case JBV_OBJECT:
     case JBV_ARRAY:
       return false;
@@ -2535,7 +2536,7 @@ iwrc jbn_merge_patch(JBL_NODE root, const char *patchjson, IWPOOL *pool) {
   res = _jbl_merge_patch_node(root, patch, pool, &rc);
   RCGO(rc, finish);
   if (res != root) {
-    memcpy(root, res, sizeof(*root));
+    memcpy(root, res, sizeof(*root)); // -V575
   }
 
 finish:

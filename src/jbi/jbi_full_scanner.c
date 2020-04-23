@@ -12,7 +12,7 @@ iwrc jbi_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
 
   while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? ctx->cursor_step : cursor_reverse_step))) {
     if (step > 0) --step;
-    else if (step < 0) ++step;
+    else if (step < 0) ++step; // -V547
     if (!step) {
       size_t sz;
       int64_t id;

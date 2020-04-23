@@ -1802,13 +1802,13 @@ static void jn_jql_free_set_string_value(void *ptr, void *op) {
 // this._impl.jql_set(jql, placeholder, val, 1);
 static napi_value jn_jql_set(napi_env env, napi_callback_info info) {
   iwrc rc = 0;
-  napi_status ns;
+  int iplh = 0;
   napi_value argv[4], this;
   size_t argc = sizeof(argv) / sizeof(argv[0]);
+  const char *splh = 0, *svalue;
   JNQL jnql;
   void *data;
-  int iplh;
-  const char *splh, *svalue;
+  napi_status ns;
   napi_valuetype vtype;
 
   IWPOOL *vpool = 0; // jql_set_xxx value

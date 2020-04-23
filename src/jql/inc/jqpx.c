@@ -79,7 +79,7 @@ static JQP_STACK *_jqp_push(yycontext *yy) {
     if (!stack) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
     aux->stackn++;
   }
-  memset(stack, 0, sizeof(*stack));
+  memset(stack, 0, sizeof(*stack)); // -V575
   stack->next = 0;
   if (!aux->stack) {
     stack->prev = 0;
@@ -1174,7 +1174,7 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
       rc = _jqp_print_expression_node(q, en, pt, op);
       RCRET(rc);
     } else if (en->type == JQP_FILTER_TYPE) {
-      rc = _jqp_print_filter(q, (const JQP_FILTER *) en, pt, op);
+      rc = _jqp_print_filter(q, (const JQP_FILTER *) en, pt, op); // -V1027
     } else {
       iwlog_ecode_error3(IW_ERROR_ASSERTION);
       return IW_ERROR_ASSERTION;

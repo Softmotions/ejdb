@@ -17,6 +17,6 @@ cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release \
          -DBUILD_DART_BINDING=ON \
          -DBUILD_NODEJS_BINDING=ON \
          && make
-pvs-studio-analyzer analyze -l ${HOME}/.config/PVS-Studio/PVS-Studio.lic -o ./pvs.log
+pvs-studio-analyzer analyze -a 45 -l ${HOME}/.config/PVS-Studio/PVS-Studio.lic -j4 -o ./pvs.log
 rm -rf ./pvs_report
-plog-converter -a 'GA:1,2;64:1,2;OP:1,2;MISRA:1,2' -t fullhtml -o ./pvs_report ./pvs.log
+plog-converter -a 'GA:1,2,3;64:1;OP:1,2,3;MISRA:1' -t fullhtml -o ./pvs_report ./pvs.log

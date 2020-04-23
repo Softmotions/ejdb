@@ -1,3 +1,5 @@
+// -V::506
+
 /* Copyright (c) 2014 by Ian Piumarta
  * All rights reserved.
  *
@@ -714,7 +716,7 @@ struct re *lwre_new(const char *expr) {
 }
 
 int lwre_match(struct re *re, char *input) {
-  if (re->matches) RE_FREE(re, re->matches);
+  RE_FREE(re, re->matches);
   re->matches = 0;
   re->nmatches = 0;
   if (!re->expression) return 0;
@@ -732,7 +734,7 @@ int lwre_match(struct re *re, char *input) {
 }
 
 void lwre_release(struct re *re) {
-  if (re->matches)  RE_FREE(re, re->matches);
+  RE_FREE(re, re->matches);
   if (re->code.first) re_program_free(re, &re->code);
   memset(re, 0, sizeof(*re));
 }

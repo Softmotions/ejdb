@@ -271,7 +271,7 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
     }
   } else if (en->type == JQP_FILTER_TYPE) {
     int fnc = 0;
-    JQP_FILTER *f = (JQP_FILTER *) en;
+    JQP_FILTER *f = (JQP_FILTER *) en; // -V1027
     for (JQP_NODE *n = f->node; n; n = n->next, ++fnc) {
       switch (n->ntype) {
         case JQP_NODE_ANY:
@@ -355,15 +355,15 @@ static int _jbi_idx_cmp(const void *o1, const void *o2) {
   assert(d1 && d2);
   int w1 = _jbi_idx_expr_op_weight(d1);
   int w2 = _jbi_idx_expr_op_weight(d2);
-  if (w2 - w1) {
+  if (w2 != w1) {
     return w2 - w1;
   }
   w1 = d1->expr2 != 0;
   w2 = d2->expr2 != 0;
-  if (w2 - w1) {
+  if (w2 != w1) {
     return w2 - w1;
   }
-  if (d1->idx->rnum - d2->idx->rnum) {
+  if (d1->idx->rnum != d2->idx->rnum) {
     return (d1->idx->rnum - d2->idx->rnum) > 0 ? 1 : -1;
   }
   return (d1->idx->ptr->cnt - d2->idx->ptr->cnt);

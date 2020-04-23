@@ -232,7 +232,7 @@ static const char *_jbl_parse_value(int lvl,
         if (!strncmp(p, "true", 4)) {
           node = _jbl_json_create_node(JBV_BOOL, key, klidx, parent, ctx);
           if (ctx->rc) return 0;
-          node->vbool = true;
+          node->vbool = true; // -V522
           return p + 4;
         }
         ctx->rc = JBL_ERROR_PARSE_JSON;
@@ -280,7 +280,7 @@ static const char *_jbl_parse_value(int lvl,
           const char *nkey;
           p = _jbl_parse_key(&nkey, p, ctx);
           if (ctx->rc) return 0;
-          if (*p == '}') return p + 1; // end of object
+          if (*p == '}') return p + 1; // -V522
           p = _jbl_parse_value(lvl + 1, node, nkey, strlen(nkey), p, ctx);
           if (ctx->rc) return 0;
         }

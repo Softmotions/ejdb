@@ -507,7 +507,7 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
         case JQVAL_STR: {
           int l1 = strlen(lv->vstr);
           int l2 = strlen(rv->vstr);
-          if (l1 - l2) {
+          if (l1 != l2) {
             return l1 - l2;
           }
           return strncmp(lv->vstr, rv->vstr, l1);
@@ -575,7 +575,7 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
         case JQVAL_I64:
           return lv->vbool - (rv->vi64 != 0L);
         case JQVAL_F64:
-          return lv->vbool - (rv->vf64 != 0.0);
+          return lv->vbool - (rv->vf64 != 0.0); // -V550
         case JQVAL_STR:
           return lv->vbool - !strcmp(rv->vstr, "true");
         case JQVAL_NULL:
@@ -1291,7 +1291,7 @@ iwrc jql_get_skip(JQL q, int64_t *out) {
   if (!skip) return 0;
   JQVAL *val = _jql_unit_to_jqval(aux, skip, &rc);
   RCRET(rc);
-  if (val->type != JQVAL_I64 || val->vi64 < 0) {
+  if (val->type != JQVAL_I64 || val->vi64 < 0) { // -V522
     return JQL_ERROR_INVALID_PLACEHOLDER;
   }
   *out = val->vi64;
@@ -1306,7 +1306,7 @@ iwrc jql_get_limit(JQL q, int64_t *out) {
   if (!limit) return 0;
   JQVAL *val = _jql_unit_to_jqval(aux, limit, &rc);
   RCRET(rc);
-  if (val->type != JQVAL_I64 || val->vi64 < 0) {
+  if (val->type != JQVAL_I64 || val->vi64 < 0) { // -V522
     return JQL_ERROR_INVALID_PLACEHOLDER;
   }
   *out = val->vi64;

@@ -46,9 +46,7 @@ static void _jb_idx_release(JBIDX idx) {
   if (idx->idb) {
     iwkv_db_cache_release(idx->idb);
   }
-  if (idx->ptr) {
-    free(idx->ptr);
-  }
+  free(idx->ptr);
   free(idx);
 }
 
@@ -453,7 +451,7 @@ create_finish:
           _jb_coll_release(jbc);
         }
       } else {
-        rci = wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl);
+        rci = wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl); // -V522
         if (rci) {
           rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
           goto finish;
@@ -747,9 +745,7 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
 }
 
 static void _jb_exec_scan_release(JBEXEC *ctx) {
-  if (ctx->jblbuf) {
-    free(ctx->jblbuf);
-  }
+  free(ctx->jblbuf);
 }
 
 static iwrc _jb_noop_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
@@ -1153,10 +1149,8 @@ finish:
       _jb_idx_release(idx);
     }
   }
-  if (ptr) free(ptr);
-  if (imeta) {
-    binn_free(imeta);
-  }
+  free(ptr);
+  binn_free(imeta);
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }

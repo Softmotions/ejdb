@@ -3,12 +3,10 @@
 
 static void _jbi_scan_sorter_release(struct _JBEXEC *ctx) {
   struct _JBSSC *ssc = &ctx->ssc;
-  if (ssc->refs) {
-    free(ssc->refs);
-  }
+  free(ssc->refs);
   if (ssc->sof_active) {
     ssc->sof.close(&ssc->sof);
-  } else if (ssc->docs) {
+  } else {
     free(ssc->docs);
   }
   memset(ssc, 0, sizeof(*ssc));

@@ -102,16 +102,17 @@ typedef struct _JBCOLL {
 
 /** Database collection index */
 struct _JBIDX {
-  ejdb_idx_mode_t mode;     /**< Index mode/type mask */
-  iwdb_flags_t idbf;        /**< Index database flags */
+  struct _JBIDX *next;      /**< Next index in chain */
+  int64_t rnum;             /**< Number of records stored in index */
   JBCOLL jbc;               /**< Owner document collection */
   JBL_PTR ptr;              /**< Indexed JSON path poiner 0*/
   IWDB idb;                 /**< KV database for this index */
   uint32_t dbid;            /**< IWKV collection database ID */
-  int64_t rnum;             /**< Number of records stored in index */
-  struct _JBIDX *next;      /**< Next index in chain */
+  ejdb_idx_mode_t mode;     /**< Index mode/type mask */
+  iwdb_flags_t idbf;        /**< Index database flags */
 };
 
+// -V:KHASH_MAP_INIT_STR:522
 KHASH_MAP_INIT_STR(JBCOLLM, JBCOLL)
 
 struct _EJDB {

@@ -738,9 +738,9 @@ typedef struct _JBN_VCTX {
   JBL_NODE root;  /**< Root node from which started visitor */
   void *op;       /**< Arbitrary opaque data */
   void *result;
-  bool terminate; /**< It `true` document traversal will be terminated immediately. */
   IWPOOL *pool;   /**< Pool placeholder, initialization is responsibility of `JBN_VCTX` creator */
   int pos;        /**< Aux position, not actually used by visitor core */
+  bool terminate; /**< It `true` document traversal will be terminated immediately. */
 } JBN_VCTX;
 
 /**

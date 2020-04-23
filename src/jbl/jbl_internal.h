@@ -46,12 +46,12 @@ struct _JBL {
  * @brief JBL visitor context
  */
 typedef struct _JBL_VCTX {
-  int pos;          /**< Aux position, not actually used by visitor core */
   binn *bn;         /**< Root node from which started visitor */
   void *op;         /**< Arbitrary opaque data */
   void *result;
-  bool terminate;
   IWPOOL *pool;     /**< Pool placeholder, initialization is responsibility of `JBL_VCTX` creator */
+  int pos;          /**< Aux position, not actually used by visitor core */
+  bool terminate;
   bool found;       /**< Used in _jbl_at() */
 } JBL_VCTX;
 

@@ -42,13 +42,13 @@ struct _JBR {
 typedef struct _JBRCTX {
   JBR jbr;
   http_s *req;
-  jbr_method_t method;
   const char *collection;
-  size_t collection_len;
+  IWXSTR *wbuf;
   int64_t id;
+  size_t collection_len;
+  jbr_method_t method;
   bool read_anon;
   bool data_sent;
-  IWXSTR *wbuf;
 } JBRCTX;
 
 #define JBR_RC_REPORT(code_, r_, rc_)                                              \
@@ -591,7 +591,7 @@ static void _jbr_on_http_request(http_s *req) {
       return;
     }
     fio_str_info_s hv = fiobj_obj2cstr(h);
-    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len)) {
+    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len)) { // -V526
       http_send_error(req, 403);
       return;
     }
@@ -698,9 +698,7 @@ static void _jbr_ws_on_open(ws_s *ws) {
 
 static void _jbr_ws_on_close(intptr_t uuid, void *udata) {
   JBWCTX *wctx = udata;
-  if (wctx) {
-    free(wctx);
-  }
+  free(wctx);
 }
 
 static void _jbr_ws_send_error(JBWCTX *wctx, const char *key, const char *error, const char *extra) {
@@ -1265,7 +1263,7 @@ static void _jbr_on_http_upgrade(http_s *req, char *requested_protocol, size_t l
       return;
     }
     fio_str_info_s hv = fiobj_obj2cstr(h);
-    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len)) {
+    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len)) { // -V526
       free(wctx);
       http_send_error(req, 403);
       return;
