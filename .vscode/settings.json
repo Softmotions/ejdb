@@ -4,6 +4,7 @@
   "cmake.generator": "Ninja",
   "cmake.configureArgs": [
     "-DCMAKE_VERBOSE_MAKEFILE=OFF",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
     "-DENABLE_HTTP=ON",
     "-DBUILD_BENCHMARKS=OFF",
     "-DBUILD_SHARED_LIBS=ON",
@@ -91,7 +92,7 @@
   "python.pythonPath": "/usr/bin/python3",
   "python.linting.pylintEnabled": false,
   "python.linting.enabled": true,
-  "python.linting.pep8Enabled": false,
+  "python.linting.pycodestyleEnabled": false,
   "python.linting.flake8Enabled": true,
   "search.exclude": {
     "**/build": true

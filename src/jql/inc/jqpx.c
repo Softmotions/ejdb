@@ -262,9 +262,6 @@ static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp
           ++p, ++d;
           break;
         case 'n':
-          if (d < de) *d = '\n';
-          ++p, ++d;
-          break;
         case 'r':
           if (d < de) *d = '\n';
           ++p, ++d;
@@ -329,12 +326,12 @@ static JQPUNIT *_jqp_unescaped_string(struct _yycontext *yy, jqp_string_flavours
   unit->type = JQP_STRING_TYPE;
   unit->string.flavour |= flv;
   int len = _jqp_unescape_json_string(text, 0, 0, &aux->rc);
-  if (aux->rc) JQRC(yy, aux->rc);
+  if (aux->rc) JQRC(yy, aux->rc); // -V547
   char *dest = iwpool_alloc(len + 1, aux->pool);
   if (!dest) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
   _jqp_unescape_json_string(text, dest, len, &aux->rc);
-  if (aux->rc) JQRC(yy, aux->rc);
-  dest[len] = '\0';
+  if (aux->rc) JQRC(yy, aux->rc); // -V547
+  dest[len] = '\0'; // -V1004
   unit->string.value = dest;
   return unit;
 }
@@ -345,12 +342,12 @@ static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text) {
   unit->type = JQP_JSON_TYPE;
   unit->json.jn.type = JBV_STR;
   int len = _jqp_unescape_json_string(text, 0, 0, &aux->rc);
-  if (aux->rc) JQRC(yy, aux->rc);
+  if (aux->rc) JQRC(yy, aux->rc); // -V547
   char *dest = iwpool_alloc(len + 1, aux->pool);
   if (!dest) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
   _jqp_unescape_json_string(text, dest, len, &aux->rc);
-  if (aux->rc) JQRC(yy, aux->rc);
-  dest[len] = '\0';
+  if (aux->rc) JQRC(yy, aux->rc); // -V547
+  dest[len] = '\0'; // -V1004
   unit->json.jn.vptr = dest;
   unit->json.jn.vsize = len;
   return unit;
@@ -691,7 +688,7 @@ static JQPUNIT *_jqp_pop_filter_factor_chain(yycontext *yy, JQPUNIT *until) {
   while (aux->stack && aux->stack->type == STACK_UNIT) {
     JQPUNIT *unit = aux->stack->unit;
     if (unit->type == JQP_JOIN_TYPE) {
-      factor->join = &unit->join;
+      factor->join = &unit->join; // -V522
     } else if (unit->type == JQP_EXPR_NODE_TYPE || unit->type == JQP_FILTER_TYPE) {
       JQP_EXPR_NODE *node = (JQP_EXPR_NODE *) unit;
       if (factor) {

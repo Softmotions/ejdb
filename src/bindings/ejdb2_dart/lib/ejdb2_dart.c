@@ -980,9 +980,7 @@ static void ejd_open_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Por
   result.value.as_array.values = rv;
 
 finish:
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
 }
 
@@ -1009,9 +1007,7 @@ static void ejd_close_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
   }
 
 finish:
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
   return;
 }
@@ -1053,9 +1049,7 @@ static void ejd_patch_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Po
   }
 
 finish:
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
 }
 
@@ -1108,9 +1102,7 @@ finish:
   if (jbl) {
     jbl_destroy(&jbl);
   }
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
 }
 
@@ -1141,9 +1133,7 @@ static void ejd_del_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port
   rc = ejdb_del(db, coll, id);
 
 finish:
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
 }
 
@@ -1174,9 +1164,7 @@ static void ejd_rename_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_P
   rc = ejdb_rename_collection(db, oname, nname);
 
 finish:
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
 }
 
@@ -1210,9 +1198,7 @@ static void ejd_idx_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port
   rc = ejdb_ensure_index(db, coll, path, mode);
 
 finish:
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
 }
 
@@ -1246,9 +1232,7 @@ static void ejd_rmi_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port
   rc = ejdb_remove_index(db, coll, path, mode);
 
 finish:
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
 }
 
@@ -1276,9 +1260,7 @@ static void ejd_rmc_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port
   rc = ejdb_remove_collection(db, coll);
 
 finish:
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
 }
 
@@ -1315,9 +1297,7 @@ static void ejd_bkp_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port
   result.value.as_array.values = rv;
 
 finish:
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
 }
 
@@ -1364,9 +1344,7 @@ finish:
   if (jbl) {
     jbl_destroy(&jbl);
   }
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
   if (xstr) {
     iwxstr_destroy(xstr);
@@ -1422,9 +1400,7 @@ finish:
   if (jbl) {
     jbl_destroy(&jbl);
   }
-  if (rc) {
-    EJPORT_RC(&result, rc);
-  }
+  EJPORT_RC(&result, rc);
   Dart_PostCObject(reply_port, &result);
   if (xstr) {
     iwxstr_destroy(xstr);

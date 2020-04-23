@@ -449,18 +449,18 @@ static napi_value jn_ejdb2impl_ctor(napi_env env, napi_callback_info info) {
 
   JNGO(ns, env, napi_get_cb_info(env, info, &argc, &varr, &this, &data), finish);
   if (argc != 1) {
-    JNRC(env, JN_ERROR_INVALID_NATIVE_CALL_ARGS);
+    JNRC(env, JN_ERROR_INVALID_NATIVE_CALL_ARGS); // -V768
     goto finish;
   }
 
   napi_is_array(env, varr, &bv);
   if (!bv) {
-    JNRC(env, JN_ERROR_INVALID_NATIVE_CALL_ARGS);
+    JNRC(env, JN_ERROR_INVALID_NATIVE_CALL_ARGS); // -V768
     goto finish;
   }
   JNGO(ns, env, napi_get_array_length(env, varr, &ulv), finish);
   if (ulv != 16) {
-    JNRC(env, JN_ERROR_INVALID_NATIVE_CALL_ARGS);
+    JNRC(env, JN_ERROR_INVALID_NATIVE_CALL_ARGS); // -V768
     goto finish;
   }
 
@@ -1323,7 +1323,7 @@ static void jn_jql_finalize(napi_env env, void *data, void *hint) {
 static napi_value jn_jql_init(napi_env env, napi_callback_info info) {
   iwrc rc = 0;
   napi_status ns;
-  napi_value ret = 0, argv[3], this;
+  napi_value argv[3], this;
   size_t argc = sizeof(argv) / sizeof(argv[0]);
   void *data;
   JNQL jnql = 0;
@@ -1375,7 +1375,7 @@ finish:
   if (pool) {
     iwpool_destroy(pool);
   }
-  return ret ? ret : jn_undefined(env);
+  return jn_undefined(env);
 }
 
 // ---------------- jql_stream_attach
@@ -1672,7 +1672,7 @@ finish:
 
 static napi_value jn_jql_stream_set_paused(napi_env env, napi_callback_info info, bool paused) {
   napi_status ns;
-  napi_value ret = 0, argv, this;
+  napi_value argv, this;
   size_t argc = 1;
   void *data;
 
@@ -1699,7 +1699,7 @@ static napi_value jn_jql_stream_set_paused(napi_env env, napi_callback_info info
   pthread_mutex_unlock(&qs->mtx);
 
 finish:
-  return ret ? ret : jn_undefined(env);
+  return jn_undefined(env);
 }
 
 static napi_value jn_jql_stream_pause(napi_env env, napi_callback_info info) {
@@ -1712,7 +1712,7 @@ static napi_value jn_jql_stream_resume(napi_env env, napi_callback_info info) {
 
 static napi_value jn_jql_stream_abort(napi_env env, napi_callback_info info) {
   napi_status ns;
-  napi_value ret = 0, argv, this;
+  napi_value argv, this;
   size_t argc = 1;
   void *data;
   JNGO(ns, env, napi_get_cb_info(env, info, &argc, &argv, &this, &data), finish);
@@ -1725,7 +1725,7 @@ static napi_value jn_jql_stream_abort(napi_env env, napi_callback_info info) {
   JNQS qs = data;
   qs->aborted = true;
 finish:
-  return ret ? ret : jn_undefined(env);
+  return jn_undefined(env);
 }
 
 // JQL._impl.jql_stream_attach(this, stream, [opts.limit, opts.explainCallback]);
@@ -1745,7 +1745,7 @@ static napi_value jn_jql_stream_attach(napi_env env, napi_callback_info info) {
     rc = JN_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
   }
-  JNGO(ns, env, napi_unwrap(env, argv[0], (void **) &jnql), finish);
+  JNGO(ns, env, napi_unwrap(env, argv[0], (void **) &jnql), finish); // -V580
 
   qs = calloc(1, sizeof(*qs));
   if (!qs) {
@@ -1774,7 +1774,7 @@ static napi_value jn_jql_stream_attach(napi_env env, napi_callback_info info) {
     }
     JNGO(ns, env, napi_create_reference(env, vexplain, 1, &qs->explain_cb_ref), finish);
   }
-  JNGO(ns, env, napi_unwrap(env, this, (void **) &jbn), finish);
+  JNGO(ns, env, napi_unwrap(env, this, (void **) &jbn), finish); // -V580
   JNGO(ns, env, napi_create_reference(env, argv[1], 1, &qs->stream_ref), finish); // Reference to stream
   JNGO(ns, env, napi_wrap(env, argv[1], qs, 0, 0, 0), finish);
 
@@ -1803,7 +1803,7 @@ static void jn_jql_free_set_string_value(void *ptr, void *op) {
 static napi_value jn_jql_set(napi_env env, napi_callback_info info) {
   iwrc rc = 0;
   napi_status ns;
-  napi_value ret = 0, argv[4], this;
+  napi_value argv[4], this;
   size_t argc = sizeof(argv) / sizeof(argv[0]);
   JNQL jnql;
   void *data;
@@ -1865,7 +1865,7 @@ static napi_value jn_jql_set(napi_env env, napi_callback_info info) {
           svalue = jn_string(env, argv[2], vpool, false, false, &rc);
           RCGO(rc, finish);
           if (stype == 6) {
-            rc = jql_set_str2(jnql->jql, splh, iplh, svalue, jn_jql_free_set_string_value, vpool);
+            rc = jql_set_str2(jnql->jql, splh, iplh, svalue, jn_jql_free_set_string_value, vpool); // -V614
           } else {
             rc = jql_set_regexp2(jnql->jql, splh, iplh, svalue, jn_jql_free_set_string_value, vpool);
           }
@@ -1918,7 +1918,7 @@ finish:
     }
     JNRC(env, rc);
   }
-  return ret ? ret : jn_undefined(env);
+  return jn_undefined(env);
 }
 
 // jql_limit(jql);
@@ -2023,7 +2023,7 @@ napi_value Init(napi_env env, napi_value exports) {
 
   JNGO(ns, env, napi_get_named_property(env, vglobal, "__ejdb_add_stream_result__", &vadd_streamfn), finish);
   if (jn_is_null_or_undefined(env, vadd_streamfn)) {
-    JNRC(env, JN_ERROR_INVALID_STATE);
+    JNRC(env, JN_ERROR_INVALID_STATE); // -V768
     goto finish;
   }
   JNGO(ns, env, napi_create_reference(env, vadd_streamfn, 1, &k_vadd_streamfn_ref), finish);

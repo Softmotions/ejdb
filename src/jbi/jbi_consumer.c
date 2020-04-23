@@ -113,7 +113,7 @@ start: {
     *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
     if (--ux->limit < 1) *step = 0;
   } else {
-    *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
+    *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0; // -V547
   }
 
 finish:

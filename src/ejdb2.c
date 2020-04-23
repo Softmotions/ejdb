@@ -77,7 +77,7 @@ static iwrc _jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
   if (!idx) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
 
   iwrc rc = jbl_from_buf_keep_onstack(&imeta, mval->data, mval->size);
-  RCRET(rc);
+  RCGO(rc, finish);
   bn = &imeta.bn;
 
   if (!binn_object_get_str(bn, "ptr", &ptr) ||
@@ -283,7 +283,7 @@ static iwrc _jb_coll_add_meta_lr(JBCOLL jbc, binn *list) {
   }
 
 finish:
-  if (meta) binn_free(meta);
+  binn_free(meta);
   if (ilist) binn_free(ilist);
   return rc;
 }
@@ -536,6 +536,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
         pool = iwpool_create(1024);
         if (!pool) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+          RCGO(rc, finish);
         }
       }
       rc = jbl_to_node(&jbvprev, &n, pool);
@@ -575,6 +576,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
         pool = iwpool_create(1024);
         if (!pool) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+          RCGO(rc, finish);
         }
       }
       rc = jbl_to_node(&jbv, &n, pool);
@@ -1625,6 +1627,9 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   if (http->bind) http->bind = strdup(http->bind);
   if (http->access_token) {
     http->access_token = strdup(http->access_token);
+    if (!http->access_token) {
+      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    }
     http->access_token_len = strlen(http->access_token);
   }
 

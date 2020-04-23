@@ -724,7 +724,6 @@ static bool _jql_match_regexp(JQP_AUX *aux,
       break;
     case JQVAL_F64: {
       size_t osz;
-      char nbuf[JBNUMBUF_SIZE];
       jbi_ftoa(lv->vf64, nbuf, &osz);
       input = nbuf;
     }
@@ -1344,7 +1343,7 @@ static bool _jql_proj_matched(int16_t lvl, JBL_NODE n,
   }
   if (proj->pos + 1 == lvl) {
     JQP_STRING *ps = proj->value;
-    for (int i = 0; i < lvl; ps = ps->next, ++i);
+    for (int i = 0; i < lvl; ps = ps->next, ++i); // -V529
     assert(ps);
     if (ps->flavour & JQP_STR_PROJFIELD) {
       for (JQP_STRING *sn = ps; sn; sn = sn->subnext) {

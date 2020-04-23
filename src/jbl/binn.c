@@ -871,7 +871,7 @@ BINN_PRIVATE BOOL IsValidBinnHeader(const void *pbuf, int *ptype, int *pcount, i
   }
   count = int32;
 
-  if ((size < MIN_BINN_SIZE) || (count < 0)) return FALSE;
+  if (size < MIN_BINN_SIZE) return FALSE;
   // return the values
   if (ptype) *ptype = type;
   if (pcount) *pcount = count;
@@ -1666,18 +1666,10 @@ conv_double:
 #endif
     case BINN_DECIMAL:
     case BINN_CURRENCYSTR:
-      /*
-      if (binn_malloc_extptr(128) == NULL) return FALSE;
-      snprintf(sptr, 127, "%E", **ppvalue);
-      *ppvalue = sptr;
-      */
-      return TRUE;  //! temporary
-      break;
-
     case BINN_DATE:
     case BINN_DATETIME:
     case BINN_TIME:
-      return TRUE;  //! temporary
+      return TRUE;
       break;
 
     case BINN_BOOL:
@@ -1965,28 +1957,28 @@ BOOL APIENTRY binn_add_value(binn *item, int binn_type, int id, char *name, int 
 BOOL APIENTRY binn_list_add_new(binn *list, binn *value) {
   BOOL retval;
   retval = binn_list_add_value(list, value);
-  if (value) binn_free(value);
+  binn_free(value);
   return retval;
 }
 
 BOOL APIENTRY binn_map_set_new(binn *map, int id, binn *value) {
   BOOL retval;
   retval = binn_map_set_value(map, id, value);
-  if (value) binn_free(value);
+  binn_free(value);
   return retval;
 }
 
 BOOL APIENTRY binn_object_set_new(binn *obj, const char *key, binn *value) {
   BOOL retval;
   retval = binn_object_set_value(obj, key, value);
-  if (value) binn_free(value);
+  binn_free(value);
   return retval;
 }
 
 BOOL APIENTRY binn_object_set_new2(binn *obj, const char *key, int keylen, binn *value) {
   BOOL retval;
   retval = binn_object_set_value2(obj, key, keylen, value);
-  if (value) binn_free(value);
+  binn_free(value);
   return retval;
 }
 
@@ -2696,14 +2688,14 @@ char *APIENTRY binn_get_str(binn *value) {
   if (value == NULL) return NULL;
   if (type_family(value->type) == BINN_FAMILY_INT) {
     if (copy_int_value(value->ptr, &vint, value->type, BINN_INT64) == FALSE) return NULL;
-    sprintf(buf, "%" INT64_FORMAT, vint);
+    snprintf(buf, sizeof(buf), "%" INT64_FORMAT, vint); // -V576
     goto loc_convert_value;
   }
   switch (value->type) {
     case BINN_FLOAT:
       value->vdouble = value->vfloat;
     case BINN_DOUBLE:
-      sprintf(buf, "%g", value->vdouble);
+      snprintf(buf, sizeof(buf), "%g", value->vdouble);
       goto loc_convert_value;
     case BINN_STRING:
       return (char *) value->ptr;

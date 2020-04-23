@@ -1201,6 +1201,10 @@ static jbl_visitor_cmd_t _jbl_get_visitor(int lvl, binn *bv, const char *key, in
   assert(jp);
   if (_jbl_visitor_update_jptr_cursor(vctx, lvl, key, idx)) { // Pointer matched
     JBL jbl = malloc(sizeof(struct _JBL));
+    if (!jbl) {
+      *rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      return JBL_VCMD_TERMINATE;
+    }
     memcpy(&jbl->bn, bv, sizeof(*bv));
     vctx->result = jbl;
     return JBL_VCMD_TERMINATE;
@@ -1426,7 +1430,7 @@ static void _jbn_add_item(JBL_NODE parent, JBL_NODE node) {
   if (parent->child) {
     JBL_NODE prev = parent->child->prev;
     parent->child->prev = node;
-    if (prev) {
+    if (prev) { // -V1051
       prev->next = node;
       node->prev = prev;
     } else {
@@ -1603,7 +1607,7 @@ iwrc jbn_copy_path(JBL_NODE src, const char *src_path, JBL_NODE target, const ch
   JBL_NODE n1, n2;
   jbp_patch_t op = JBP_REPLACE;
 
-  if (src_path && strcmp("/", src_path)) {
+  if (strcmp("/", src_path)) {
     rc = jbn_at(src, src_path, &n1);
     RCRET(rc);
   } else {
@@ -2478,6 +2482,7 @@ static JBL_NODE _jbl_merge_patch_node(JBL_NODE target, JBL_NODE patch, IWPOOL *p
       target = iwpool_alloc(sizeof(*target), pool);
       if (!target) {
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+        return 0;
       }
       memset(target, 0, sizeof(*target));
       target->type = JBV_OBJECT;

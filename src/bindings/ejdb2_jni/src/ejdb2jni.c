@@ -730,9 +730,7 @@ finish:
   if (json) {
     (*env)->DeleteLocalRef(env, json);
   }
-  if (xstr) {
-    iwxstr_destroy(xstr);
-  }
+  iwxstr_destroy(xstr);
   return rc;
 }
 

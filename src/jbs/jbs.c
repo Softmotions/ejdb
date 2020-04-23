@@ -2,7 +2,7 @@
 #include "ejdb2cfg.h"
 #include <fio_cli.h>
 
-EJDB db;
+EJDB db;  // -V707
 EJDB_OPTS opts;
 
 int main(int argc, char const *argv[]) {

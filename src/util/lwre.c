@@ -136,7 +136,7 @@ static int re_make_char(struct re *re) {
 static RE_BitSet *re_make_class(struct re *re) {
   RE_BitSet *c = RE_CALLOC(re, 1, sizeof(RE_BitSet));
   int last = -1;
-  c->inverted = ('^' == *re->position);
+  c->inverted = ('^' == *re->position); // -V522
   if (c->inverted) re->position++;
   while (*re->position && (']' != *re->position)) {
     int this = re->position[0];
@@ -192,7 +192,7 @@ struct RE_Compiled
 
 static RE_Compiled re_insn_new(struct re *re, int opc) {
   RE_Insn *insn = RE_CALLOC(re, 1, sizeof(RE_Insn));
-  insn->opcode =  opc;
+  insn->opcode =  opc; // -V522
   RE_Compiled insns = { 1, insn, insn };
   return insns;
 }
@@ -520,7 +520,7 @@ struct RE_Submatches {
 static RE_Submatches *re_submatches_copy(struct re *re, RE_Submatches *orig) {
   RE_Submatches *subs = RE_CALLOC(re, 1, sizeof(RE_Submatches));
   if (orig) {
-    subs->beginnings = (re_array_of_charp)re_array_copy(re, orig->beginnings);
+    subs->beginnings = (re_array_of_charp)re_array_copy(re, orig->beginnings); // -V522
     subs->endings = (re_array_of_charp)re_array_copy(re, orig->endings);
   }
   return subs;
@@ -581,7 +581,7 @@ static void re_thread_schedule(struct re *re, RE_ThreadList *threads, RE_Insn *p
       return;
     case RE_Begin:
       subs = re_submatches_copy(re, subs);
-      re_array_append(re, subs->beginnings, sp);
+      re_array_append(re, subs->beginnings, sp); // -V522
       re_thread_schedule(re, threads, pc + 1, sp, subs);
       if (!subs->refs) re_submatches_free(re, subs);
       return;
@@ -660,14 +660,8 @@ static int re_program_run(struct re *re, char *input, char ***saved, int *nsaved
           while (i < here->size) re_submatches_unlink(re, here->at[i++].submatches);
           goto nextchar;
         }
-        default: {
+        default:
           RE_ERROR(re, ENGINE, "illegal instruction in compiled regular expression (please report this bug)");
-          if (submatches) {
-            re_submatches_unlink(re, submatches);
-            submatches = 0;
-          }
-          goto bailout;
-        }
       }
       re_submatches_unlink(re, t.submatches);
     }
@@ -825,7 +819,7 @@ char *lwre_escape(char *s, int liberal) {
           c = re_byte(&in, 1, 3,  8, liberal);
           break;
         case '\\':
-          c = '\\';
+          //c = '\\';
           break;
         case 'a':
           c = '\a';

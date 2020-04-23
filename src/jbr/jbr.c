@@ -507,10 +507,12 @@ static bool _jbr_fill_ctx(http_s *req, JBRCTX *r) {
       if (!strncmp("DELETE", method.data, method.len)) {
         r->method = JBR_DELETE;
       }
+      break;
     case 7:
       if (!strncmp("OPTIONS", method.data, method.len)) {
         r->method = JBR_OPTIONS;
       }
+      break;
   }
   if (!r->method) {
     // Unknown method
@@ -566,6 +568,7 @@ static void _jbr_on_http_request(http_s *req) {
   JBR jbr = req->udata;
   assert(jbr);
   const EJDB_HTTP *http = jbr->http;
+  char cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
 
   if (!_jbr_fill_ctx(req, &rctx)) {
     http_send_error(req, 400); // Bad request
@@ -596,7 +599,6 @@ static void _jbr_on_http_request(http_s *req) {
 
 process:
   if (rctx.collection) {
-    char cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
     // convert to `\0` terminated c-string
     memcpy(cname, rctx.collection, rctx.collection_len);
     cname[rctx.collection_len] = '\0';
@@ -647,7 +649,8 @@ static void _jbr_on_pre_start(void *op) {
 #define _WS_KEYPREFIX_BUFSZ (JBNUMBUF_SIZE + JBR_MAX_KEY_LEN + 2)
 
 typedef enum {
-  JBWS_SET = 1,
+  JBWS_NONE,
+  JBWS_SET,
   JBWS_GET,
   JBWS_ADD,
   JBWS_DEL,
@@ -1035,7 +1038,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   JBWCTX *wctx = websocket_udata_get(ws);
   assert(wctx);
   wctx->ws = ws;
-  jbwsop_t wsop = 0;
+  jbwsop_t wsop = JBWS_NONE;
 
   char keybuf[JBR_MAX_KEY_LEN + 1];
   char cnamebuf[EJDB_COLLECTION_NAME_MAX_LEN + 1];
@@ -1124,13 +1127,11 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
     }
   }
 
-  if (wsop) {
-
+  if (wsop > JBWS_NONE) {
     if (wsop == JBWS_INFO) {
       _jbr_ws_info(wctx, key);
       return;
     }
-
     for (; pos < len && isspace(data[pos]); ++pos);
     len -= pos;
     data += pos;

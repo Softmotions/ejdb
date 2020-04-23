@@ -21,7 +21,7 @@ static void _jbn_add_item(JBL_NODE parent, JBL_NODE node) {
   if (parent->child) {
     JBL_NODE prev = parent->child->prev;
     parent->child->prev = node;
-    if (prev) {
+    if (prev) { // -V1051
       prev->next = node;
       node->prev = prev;
     } else {
@@ -100,9 +100,6 @@ static int _jbl_unescape_json_string(const char *p, char *d, int dlen, const cha
           ++p, ++d;
           break;
         case 'n':
-          if (d < de) *d = '\n';
-          ++p, ++d;
-          break;
         case 'r':
           if (d < de) *d = '\n';
           ++p, ++d;
@@ -429,7 +426,6 @@ static JBL_NODE _jbl_clone_node_struct(JBL_NODE src, IWPOOL *pool) {
       if (!n->vptr) {
         return 0;
       }
-      n->vsize = src->vsize;
       break;
     }
     case JBV_I64:
