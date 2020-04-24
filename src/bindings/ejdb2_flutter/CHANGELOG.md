@@ -1,3 +1,7 @@
+## 1.0.19+1
+
+  * Upgraded to ejdb v2.0.45
+
 ## 1.0.18+1
 
   * Upgraded to ejdb v2.0.44
