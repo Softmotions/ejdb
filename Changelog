@@ -1,3 +1,9 @@
+ejdb2 (2.0.46) UNRELEASED; urgency=medium
+
+  * Added `no_src_clone` parameter `jbn_copy_path` (jbl.h)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 24 Apr 2020 22:17:33 +0700
+
 ejdb2 (2.0.45) testing; urgency=medium
 
   * Fixed errors found by PVS studio

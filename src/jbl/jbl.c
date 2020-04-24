@@ -1599,7 +1599,9 @@ finish:
   return rc;
 }
 
-iwrc jbn_copy_path(JBL_NODE src, const char *src_path, JBL_NODE target, const char *target_path, IWPOOL *pool) {
+iwrc jbn_copy_path(JBL_NODE src,
+                   const char *src_path, JBL_NODE target, const char *target_path,
+                   bool no_src_clone, IWPOOL *pool) {
   if (!src || !src_path || !target || !target_path || !pool) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1614,8 +1616,12 @@ iwrc jbn_copy_path(JBL_NODE src, const char *src_path, JBL_NODE target, const ch
     n1 = src;
   }
 
-  rc = jbn_clone(n1, &n2, pool);
-  RCRET(rc);
+  if (no_src_clone) {
+    n2 = n1;
+  } else {
+    rc = jbn_clone(n1, &n2, pool);
+    RCRET(rc);
+  }
 
   rc = jbn_at(target, target_path, &n1);
   if (rc == JBL_ERROR_PATH_NOTFOUND) {

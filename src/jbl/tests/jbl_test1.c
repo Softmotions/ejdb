@@ -778,13 +778,13 @@ void jbl_test1_10(void) {
   rc = jbn_from_json(tgt_data, &n2, tpool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = jbn_copy_path(n1, "/list/6/arr", n2, "/test/nested1", tpool);
+  rc = jbn_copy_path(n1, "/list/6/arr", n2, "/test/nested1", false, tpool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = jbn_copy_path(n1, "/list/6/t", n2, "/test/t2", tpool);
+  rc = jbn_copy_path(n1, "/list/6/t", n2, "/test/t2", false, tpool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = jbn_copy_path(n1, "/foo", n2, "/bar", tpool);
+  rc = jbn_copy_path(n1, "/foo", n2, "/bar", false, tpool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   iwpool_destroy(pool);

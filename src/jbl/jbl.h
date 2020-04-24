@@ -341,9 +341,12 @@ IW_EXPORT iwrc jbn_clone(JBL_NODE src, JBL_NODE *targetp, IWPOOL *pool);
  * @param src_path Path under copied subtree located. If src_path is `/` then `src` object itself will be cloned.
  * @param target Target JSON tree.
  * @param target_path Path to place copied subtree.
+ * @param no_src_clone If true object pointed by `src_path` object will not be cloned into `pool` before applying patch.
  * @param pool Memory pool used for allocations
  */
-IW_EXPORT iwrc jbn_copy_path(JBL_NODE src, const char *src_path, JBL_NODE target, const char *target_path, IWPOOL *pool);
+IW_EXPORT iwrc jbn_copy_path(JBL_NODE src,
+                             const char *src_path, JBL_NODE target, const char *target_path,
+                             bool no_src_clone, IWPOOL *pool);
 
 /**
  * @brief Clones a given `src` JBL object and stores it in memory allocated from `pool`.
