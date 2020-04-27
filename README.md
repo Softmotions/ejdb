@@ -1250,8 +1250,8 @@ int main() {
   rc = ejdb_exec(&ux);
 
 finish:
-  if (q) jql_destroy(&q);
-  if (jbl) jbl_destroy(&jbl);
+  jql_destroy(&q);
+  jbl_destroy(&jbl);
   ejdb_close(&db);
   CHECK(rc);
   return 0;
