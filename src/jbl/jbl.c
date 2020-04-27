@@ -1248,7 +1248,10 @@ iwrc jbl_at2(JBL jbl, JBL_PTR jp, JBL *res) {
 iwrc jbl_at(JBL jbl, const char *path, JBL *res) {
   JBL_PTR jp;
   iwrc rc = _jbl_ptr_pool(path, &jp, 0);
-  RCRET(rc);
+  if (rc) {
+    *res = 0;
+    return rc;
+  }
   rc = jbl_at2(jbl, jp, res);
   free(jp);
   return rc;
@@ -1292,7 +1295,10 @@ iwrc jbn_at2(JBL_NODE node, JBL_PTR jp, JBL_NODE *res) {
 iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res) {
   JBL_PTR jp;
   iwrc rc = _jbl_ptr_pool(path, &jp, 0);
-  RCRET(rc);
+  if (rc) {
+    res = 0;
+    return rc;
+  }
   rc = jbn_at2(node, jp, res);
   free(jp);
   return rc;
