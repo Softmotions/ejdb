@@ -444,6 +444,8 @@ IW_EXPORT iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res);
 
 IW_EXPORT int jbn_path_compare(JBL_NODE n1, JBL_NODE n2, const char *path, jbl_type_t vtype, iwrc *rcp);
 
+IW_EXPORT int jbn_paths_compare(JBL_NODE n1, const char *n1path, JBL_NODE n2, const char *n2path, jbl_type_t vtype, iwrc *rcp);
+
 IW_EXPORT int jbn_path_compare_str(JBL_NODE n, const char *path, const char *sv, iwrc *rcp);
 
 IW_EXPORT int jbn_path_compare_i64(JBL_NODE n, const char *path, int64_t iv, iwrc *rcp);

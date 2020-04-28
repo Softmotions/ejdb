@@ -1304,15 +1304,15 @@ iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res) {
   return rc;
 }
 
-int jbn_path_compare(JBL_NODE n1, JBL_NODE n2, const char *path, jbl_type_t vtype, iwrc *rcp) {
+int jbn_paths_compare(JBL_NODE n1, const char *n1path, JBL_NODE n2, const char *n2path, jbl_type_t vtype, iwrc *rcp) {
   *rcp = 0;
   JBL_NODE v1 = 0, v2 = 0;
-  iwrc rc = jbn_at(n1, path, &v1);
+  iwrc rc = jbn_at(n1, n1path, &v1);
   if (rc && rc != JBL_ERROR_PATH_NOTFOUND) {
     *rcp = rc;
     return -2;
   }
-  rc = jbn_at(n2, path, &v2);
+  rc = jbn_at(n2, n2path, &v2);
   if (rc && rc != JBL_ERROR_PATH_NOTFOUND) {
     *rcp = rc;
     return -2;
@@ -1324,6 +1324,10 @@ int jbn_path_compare(JBL_NODE n1, JBL_NODE n2, const char *path, jbl_type_t vtyp
     }
   }
   return _jbl_compare_nodes(v1, v2, rcp);
+}
+
+int jbn_path_compare(JBL_NODE n1, JBL_NODE n2, const char *path, jbl_type_t vtype, iwrc *rcp) {
+  return jbn_paths_compare(n1, path, n2, path, vtype, rcp);
 }
 
 int jbn_path_compare_str(JBL_NODE n, const char *path, const char *sv, iwrc *rcp) {
