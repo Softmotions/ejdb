@@ -33,6 +33,7 @@ static void jbr_test1_1() {
     },
     .no_wal = true,
     .http = {
+      .blocking = false,
       .enabled = true,
       .port = 9292
     }
