@@ -102,7 +102,7 @@
     "**/build": true,
     "**/mxe": true
   },
-  "cSpell.enabledLanguageIds": [
+  "cSpell.enableFiletypes": [
     "asciidoc",
     "html",
     "markdown",
