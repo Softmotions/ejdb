@@ -1,10 +1,10 @@
-ejdb2 (2.0.46) UNRELEASED; urgency=medium
+ejdb2 (2.0.46) testing; urgency=medium
 
   * Upgraded to iowow v1.4.4
   * Added `jbn_paths_compare()` (jbl.h)
   * Added `no_src_clone` parameter `jbn_copy_path` (jbl.h)
 
- -- Anton Adamansky <adamansky@gmail.com>  Fri, 24 Apr 2020 22:17:33 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Sat, 02 May 2020 19:43:36 +0700
 
 ejdb2 (2.0.45) testing; urgency=medium
 
