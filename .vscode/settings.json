@@ -102,14 +102,6 @@
     "**/build": true,
     "**/mxe": true
   },
-  "cSpell.enableFiletypes": [
-    "asciidoc",
-    "html",
-    "markdown",
-    "plaintext",
-    "restructuredtext",
-    "text"
-  ],
   "cSpell.enabled": true,
   "files.watcherExclude": {
     "**/.git/objects/**": true,

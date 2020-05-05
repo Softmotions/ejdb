@@ -279,7 +279,6 @@ IW_EXPORT iwrc jbl_set_bool(JBL jbl, const char *key, bool v);
  */
 IW_EXPORT iwrc jbl_set_null(JBL jbl, const char *key);
 
-
 IW_EXPORT iwrc jbl_set_empty_array(JBL jbl, const char *key);
 
 IW_EXPORT iwrc jbl_set_empty_object(JBL jbl, const char *key);
@@ -759,9 +758,11 @@ IW_EXPORT iwrc jbn_visit(JBL_NODE node, int lvl, JBN_VCTX *vctx, JBN_VISITOR vis
 
 IW_EXPORT iwrc jbn_patch_auto(JBL_NODE root, JBL_NODE patch, IWPOOL *pool);
 
+IW_EXPORT iwrc jbn_merge_patch(JBL_NODE root, JBL_NODE patch, IWPOOL *pool);
+
 IW_EXPORT iwrc jbn_patch(JBL_NODE root, const JBL_PATCH *patch, size_t cnt, IWPOOL *pool);
 
-IW_EXPORT iwrc jbn_merge_patch(JBL_NODE root, const char *patchjson, IWPOOL *pool);
+IW_EXPORT iwrc jbn_merge_patch_from_json(JBL_NODE root, const char *patchjson, IWPOOL *pool);
 
 IW_EXPORT iwrc jbl_patch(JBL jbl, const JBL_PATCH *patch, size_t cnt);
 
