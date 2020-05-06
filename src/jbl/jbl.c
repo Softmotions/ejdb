@@ -1610,8 +1610,12 @@ finish:
 }
 
 iwrc jbn_copy_path(JBL_NODE src,
-                   const char *src_path, JBL_NODE target, const char *target_path,
-                   bool no_src_clone, IWPOOL *pool) {
+                   const char *src_path,
+                   JBL_NODE target,
+                   const char *target_path,
+                   bool overwrite_on_nulls,
+                   bool no_src_clone,
+                   IWPOOL *pool) {
   if (!src || !src_path || !target || !target_path || !pool) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1625,7 +1629,9 @@ iwrc jbn_copy_path(JBL_NODE src,
   } else {
     n1 = src;
   }
-
+  if (!overwrite_on_nulls && n1->type <= JBV_NULL) {
+    return 0;
+  }
   if (no_src_clone) {
     n2 = n1;
   } else {
@@ -1648,6 +1654,23 @@ iwrc jbn_copy_path(JBL_NODE src,
   return jbn_patch(target, p, sizeof(p) / sizeof(p[0]), pool);
 }
 
+IW_EXPORT iwrc jbn_copy_paths(JBL_NODE src,
+                              JBL_NODE target,
+                              const char **paths,
+                              bool overwrite_on_nulls,
+                              bool no_src_clone,
+                              IWPOOL *pool) {
+  if (!target || !src || !paths || !pool) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  for (const char **p = paths; *p; ++p) {
+    const char *path = *p;
+    rc = jbn_copy_path(src, path, target, path, overwrite_on_nulls, no_src_clone, pool);
+    RCBREAK(rc);
+  }
+  return rc;
+}
 
 IW_INLINE void _jbn_remove_item(JBL_NODE parent, JBL_NODE child) {
   assert(parent->child);

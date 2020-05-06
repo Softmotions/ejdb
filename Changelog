@@ -1,3 +1,9 @@
+ejdb2 (2.0.47) UNRELEASED; urgency=medium
+
+  * Added `jbn_copy_paths` (jbl.h)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 07 May 2020 01:28:14 +0700
+
 ejdb2 (2.0.46) testing; urgency=medium
 
   * Upgraded to iowow v1.4.4

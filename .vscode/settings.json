@@ -24,13 +24,9 @@
     "cwd": "${workspaceRoot}/build/src/tests"
   },
   "C_Cpp.formatting": "Disabled",
-  //"C_Cpp.autocomplete": "Disabled",
-  //"C_Cpp.errorSquiggles": "Disabled",
   "astyle.astylerc": "${workspaceRoot}/.astylerc",
   "astyle.c.enable": true,
   "astyle.cpp.enable": true,
-  "clang.completion.enable": false,
-  "clang.diagnostic.enable": false,
   "clang.cflags": [
     "-D_GNU_SOURCE",
     "-D_LARGEFILE_SOURCE",

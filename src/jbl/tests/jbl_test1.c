@@ -778,13 +778,13 @@ void jbl_test1_10(void) {
   rc = jbn_from_json(tgt_data, &n2, tpool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = jbn_copy_path(n1, "/list/6/arr", n2, "/test/nested1", false, tpool);
+  rc = jbn_copy_path(n1, "/list/6/arr", n2, "/test/nested1", false, false, tpool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = jbn_copy_path(n1, "/list/6/t", n2, "/test/t2", false, tpool);
+  rc = jbn_copy_path(n1, "/list/6/t", n2, "/test/t2", false, false, tpool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = jbn_copy_path(n1, "/foo", n2, "/bar", false, tpool);
+  rc = jbn_copy_path(n1, "/foo", n2, "/bar", false, false, tpool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   iwpool_destroy(pool);
@@ -796,6 +796,37 @@ void jbl_test1_10(void) {
                          "{\"test\":{\"nested1\":[9,8],\"t2\":true},\"bar\":\"b\\\"ar\"}");
 
   iwpool_destroy(tpool);
+  iwxstr_destroy(xstr);
+}
+
+void jbl_test1_11(void) {
+  IWPOOL *pool = iwpool_create(512);
+  IWXSTR *xstr = iwxstr_new();
+
+  const char *src_data = "{\"foo\": \"b\\\"ar\", \"num1\":1223,"
+                         "\"n\\\"um2\":10.1226222, "
+                         "\"list\":[3,2.1,1,\"one\" \"two\", "
+                         "{}, {\"z\":false, \"arr\":[9,8], \"t\":true}]}";
+  const char *tgt_data = "{\"test\":{\"nested1\":22}, \"list\":[0,99]}";
+
+  JBL_NODE n1, n2;
+  iwrc rc = jbn_from_json(src_data, &n1, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_from_json(tgt_data, &n2, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  const char *paths[] = {"/foo", "/list/1", 0};
+  rc = jbn_copy_paths(n1, n2, paths, false, false, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_as_json(n2, jbl_xstr_json_printer, xstr, 0);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr),
+                         "{\"test\":{\"nested1\":22},\"list\":[0,2.1],\"foo\":\"b\\\"ar\"}");
+
+  iwpool_destroy(pool);
   iwxstr_destroy(xstr);
 }
 
@@ -817,7 +848,8 @@ int main() {
     (NULL == CU_add_test(pSuite, "jbl_test1_7", jbl_test1_7)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_8", jbl_test1_8)) ||
     (NULL == CU_add_test(pSuite, "jbl_test1_9", jbl_test1_9)) ||
-    (NULL == CU_add_test(pSuite, "jbl_test1_10", jbl_test1_10))
+    (NULL == CU_add_test(pSuite, "jbl_test1_10", jbl_test1_10)) ||
+    (NULL == CU_add_test(pSuite, "jbl_test1_11", jbl_test1_11))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

@@ -337,15 +337,42 @@ IW_EXPORT iwrc jbn_clone(JBL_NODE src, JBL_NODE *targetp, IWPOOL *pool);
  * Copied subtree will be allocated in using given memory `pool`.
  *
  * @param src Source JSON tree.
- * @param src_path Path under copied subtree located. If src_path is `/` then `src` object itself will be cloned.
+ * @param src_path Path where copied subtree located. If src_path is `/` then `src` object itself will be cloned.
  * @param target Target JSON tree.
  * @param target_path Path to place copied subtree.
+ * @param overwrite_on_nulls If true `null` values will be copied to `src` object as well.
  * @param no_src_clone If true object pointed by `src_path` object will not be cloned into `pool` before applying patch.
+ *                     It is a dangerous option if you use same memory pool for source and target objects.
+ *                     Do not set it to `true` until you clearly understand what are you doing.
  * @param pool Memory pool used for allocations
  */
 IW_EXPORT iwrc jbn_copy_path(JBL_NODE src,
-                             const char *src_path, JBL_NODE target, const char *target_path,
-                             bool no_src_clone, IWPOOL *pool);
+                             const char *src_path,
+                             JBL_NODE target,
+                             const char *target_path,
+                             bool overwrite_on_nulls,
+                             bool no_src_clone,
+                             IWPOOL *pool);
+
+/**
+ * @brief Copies a set of values pointed by `paths` zero terminated array
+ *        of `src` object into respective paths of `target` object.
+ *
+ * @param src Source object whose keys will be copied.
+ * @param target Target object to recieve key values of `src` obejct
+ * @param paths Zero terminated array of pointers to zero terminated key names.
+ * @param overwrite_on_nulls If true `null` values will be copied to `src` object as well.
+ * @param no_src_clone If true copied objects will not be cloned into given `pool` before copying.
+ *                     It is a dangerous option if you use same memory pool for source and target objects.
+ *                     Do not set it to `true` until you clearly understand what are you doing.
+ * @param pool Memory pool used for allocations
+ */
+IW_EXPORT iwrc jbn_copy_paths(JBL_NODE src,
+                              JBL_NODE target,
+                              const char **paths,
+                              bool overwrite_on_nulls,
+                              bool no_src_clone,
+                              IWPOOL *pool);
 
 /**
  * @brief Clones a given `src` JBL object and stores it in memory allocated from `pool`.
@@ -443,7 +470,8 @@ IW_EXPORT iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res);
 
 IW_EXPORT int jbn_path_compare(JBL_NODE n1, JBL_NODE n2, const char *path, jbl_type_t vtype, iwrc *rcp);
 
-IW_EXPORT int jbn_paths_compare(JBL_NODE n1, const char *n1path, JBL_NODE n2, const char *n2path, jbl_type_t vtype, iwrc *rcp);
+IW_EXPORT int jbn_paths_compare(JBL_NODE n1, const char *n1path, JBL_NODE n2, const char *n2path, jbl_type_t vtype,
+                                iwrc *rcp);
 
 IW_EXPORT int jbn_path_compare_str(JBL_NODE n, const char *path, const char *sv, iwrc *rcp);
 
