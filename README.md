@@ -81,8 +81,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Haskell
   * https://github.com/cescobaz/ejdb2haskell
   * https://hackage.haskell.org/package/ejdb2-binding
-* Pharo
-  * https://pharo.org
+* [Pharo](https://pharo.org)
   * https://github.com/pharo-nosql/pharo-ejdb
 
 ## Status
