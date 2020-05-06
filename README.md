@@ -76,7 +76,8 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 ### Unofficial Native language bindings
 
-* [.Net](https://github.com/kmvi/ejdb2-csharp)
+* .Net
+  * https://github.com/kmvi/ejdb2-csharp
 * Haskell
   * https://github.com/cescobaz/ejdb2haskell
   * https://hackage.haskell.org/package/ejdb2-binding
