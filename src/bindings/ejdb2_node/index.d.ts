@@ -348,7 +348,7 @@ declare namespace ejdb2_node {
      * @param path Database file path
      * @param opts Options
      */
-    static open(path: String, opts?: OpenOptions): EJDB2;
+    static open(path: String, opts?: OpenOptions): Promise<EJDB2>;
 
     /**
      * Closes this database instance.
