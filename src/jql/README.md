@@ -203,6 +203,16 @@ Element at index `1` exists in `likes` array at any `likes` nesting level
 **From this point and below I will omit websocket specific prefix `k query family` and
 consider only JQL queries.**
 
+
+### Get document by primary key
+
+Here is the special query construction used: `/=:?` or `@collection/=:?` for example:
+
+Document from `users` collection with primary key `112`
+```
+> k @users/=122
+```
+
 ### Matching JSON entry values
 
 Below is a set of self explaining queries:

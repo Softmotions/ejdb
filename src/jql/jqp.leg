@@ -56,6 +56,7 @@ static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p);
 static JQPUNIT *_jqp_pop_joined_projections(struct _yycontext *yy, JQPUNIT *until);
 
 static void _jqp_set_filters_expr(struct _yycontext *yy, JQPUNIT *expr);
+static JQPUNIT *_jqp_create_filterexpr_pk(struct _yycontext *yy, JQPUNIT *argument);
 static void _jqp_set_apply(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_set_apply_delete(struct _yycontext *yy);
 static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
@@ -77,11 +78,17 @@ static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
   }
 %}
 
-QUERY = (e:FILTEREXPR { _jqp_set_filters_expr(yy, e); })
+QUERY = s:QEXPR { _jqp_set_filters_expr(yy, s); }
         (_ '|' _ (a:APPLY { _jqp_set_apply(yy, a); } | "del" { _jqp_set_apply_delete(yy); }) )?
         (_ p:PROJECTION { _jqp_set_projection(yy, p); } )?
         (_ OPTS )?
         _ EOF { _jqp_finish(yy); }
+
+QEXPR = FILTEREXPR_PK | FILTEREXPR
+
+FILTEREXPR_PK = (a:FILTERANCHOR { _jqp_unit_push(yy, a); })?
+                '/' _ '=' _ ( p:PLACEHOLDER | p:NUMPK )
+                { $$ = _jqp_create_filterexpr_pk(yy, p) }
 
 FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jqp_unit_join(yy, yytext); }
 
@@ -216,6 +223,8 @@ CHP = '\\' '\\'
       | ![/"[\]=><!\t\n\r() ] .
 
 NUMJ = <('-'? NUMI NUMF? NUME?)> { $$ = _jqp_json_number(yy, yytext); }
+
+NUMPK = <(NUMI)> { $$ = _jqp_json_number(yy, yytext); }
 
 NUMI = '0' | [1-9] [0-9]*
 

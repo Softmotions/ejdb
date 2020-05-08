@@ -727,6 +727,14 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
     ctx->jblbufsz = 0;
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+  struct JQP_AUX *aux = ctx->ux->q->aux;
+  if (aux->expr->flags & JQP_EXPR_NODE_FLAG_PK) { // Select by primary key
+    ctx->scanner = jbi_pk_scanner;
+    if (ctx->ux->log) {
+      iwxstr_cat2(ctx->ux->log, "[INDEX] PK");
+    }
+    return 0;
+  }
   iwrc rc = jbi_selection(ctx);
   RCRET(rc);
   if (ctx->midx.idx) {

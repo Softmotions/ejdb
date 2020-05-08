@@ -10,7 +10,7 @@
       "request": "launch",
       "program": "${command:cmake.launchTargetPath}",
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/build/src/tests",
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",

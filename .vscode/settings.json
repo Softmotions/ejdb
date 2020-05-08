@@ -63,5 +63,11 @@
   "java.import.gradle.arguments": "--no-daemon",
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
 
-  "dart.analysisExcludedFolders": ["mxe", "build"]
+  "dart.analysisExcludedFolders": [
+    "mxe",
+    "build"
+  ],
+  "favorites.resources": [
+    "src/jql/tests/data/020.jql"
+  ]
 }

@@ -1028,6 +1028,60 @@ void ejdb_test3_7() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 }
 
+void ejdb_test3_8(void) {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test3_8.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+
+  EJDB db;
+  JQL q;
+  int64_t id = 0;
+  EJDB_LIST list = 0;
+  IWXSTR *log = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(log);
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = put_json2(db, "users", "{'name':'Andy'}", &id);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_create(&q, "users", "/=:?");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_set_i64(q, 0, 0, id);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] PK [COLLECTOR] PLAIN"));
+  CU_ASSERT_PTR_NOT_NULL(list->first);
+  CU_ASSERT_PTR_NULL(list->first->next);
+
+  ejdb_list_destroy(&list);
+  jql_destroy(&q);
+  iwxstr_clear(log);
+
+  rc = jql_create(&q, 0, "@users/=:id");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_set_str(q, "id", 0, "1");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(list->first);
+  CU_ASSERT_PTR_NULL(list->first->next);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_destroy(log);
+  ejdb_list_destroy(&list);
+  jql_destroy(&q);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -1043,7 +1097,8 @@ int main() {
     (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5)) ||
     (NULL == CU_add_test(pSuite, "ejdb_test3_6", ejdb_test3_6)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_7", ejdb_test3_7))
+    (NULL == CU_add_test(pSuite, "ejdb_test3_7", ejdb_test3_7)) ||
+    (NULL == CU_add_test(pSuite, "ejdb_test3_8", ejdb_test3_8))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

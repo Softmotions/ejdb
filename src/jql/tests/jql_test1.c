@@ -44,9 +44,9 @@ void _jql_test1_1(int num, iwrc expected) {
   rc = jqp_print_query(aux->query, jbl_xstr_json_printer, res);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
+  //  fprintf(stderr, "%s\n", iwxstr_ptr(res));
   //  fprintf(stderr, "%s\n", path_expected);
   //  fprintf(stderr, "%s\n", edata);
-  //  fprintf(stderr, "%s\n", iwxstr_ptr(res));
   //  fprintf(stderr, "%d\n", strcmp(edata, iwxstr_ptr(res)));
   //  FILE *out = fopen("out.txt", "w+");
   //  fprintf(out, "%s", iwxstr_ptr(res));
@@ -64,13 +64,16 @@ finish:
 }
 
 void jql_test1_1() {
+
+  _jql_test1_1(22, 0);
+
   for (int i = 0; i <= 10; ++i) {
     _jql_test1_1(i, 0);
   }
   for (int i = 11; i <= 13; ++i) {
     _jql_test1_1(i, JQL_ERROR_QUERY_PARSE);
   }
-  for (int i = 14; i <= 19; ++i) {
+  for (int i = 14; i <= 22; ++i) {
     _jql_test1_1(i, 0);
   }
 }
@@ -170,6 +173,10 @@ void jql_test1_2() {
 
   _jql_test1_2("{'f':22}", "/f", true);
   _jql_test1_2("{'a':'bar'}", "/f | asc /f", false);
+
+  // PK
+  _jql_test1_2("{'f':22}", "/=22", true);
+  _jql_test1_2("{'f':22}", "@mycoll/=22", true);
 
   //
   const char *doc =

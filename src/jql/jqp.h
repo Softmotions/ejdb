@@ -99,23 +99,29 @@ struct JQP_AUX;
 
 typedef union _JQP_UNIT JQPUNIT;
 
+#define JQP_EXPR_NODE_FLAG_PK 0x01U
+
+#define JQP_EXPR_NODE_HEAD    \
+  jqp_unit_t type;            \
+  struct JQP_EXPR_NODE *next; \
+  struct JQP_JOIN *join;      \
+  void *opaque;               \
+  uint8_t flags;
+
 typedef struct JQP_EXPR_NODE { // Base for JQP_FILTER
-  jqp_unit_t type;
-  struct JQP_EXPR_NODE *next;
-  struct JQP_JOIN *join;
-  void *opaque;
-  // Expr only specific
+  JQP_EXPR_NODE_HEAD
   struct JQP_EXPR_NODE *chain;
-  uint32_t flags; // Expression node flags
 } JQP_EXPR_NODE;
 
+typedef struct JQP_EXPR_NODE_PK {
+  JQP_EXPR_NODE_HEAD
+  struct JQP_EXPR_NODE *chain; // Not used, plased for JQP_EXPR_NODE compatibility
+  const char *anchor;
+  JQPUNIT *argument;
+} JQP_EXPR_NODE_PK;
+
 typedef struct JQP_FILTER {
-  //- JQP_EXPR_NODE
-  jqp_unit_t type;
-  struct JQP_EXPR_NODE *next;
-  struct JQP_JOIN *join;
-  void *opaque;
-  //- JQP_EXPR_NODE
+  JQP_EXPR_NODE_HEAD
   const char *anchor;
   struct JQP_NODE *node;
 } JQP_FILTER;
@@ -203,6 +209,7 @@ union _JQP_UNIT {
   jqp_unit_t type;
   struct JQP_QUERY query;
   struct JQP_EXPR_NODE exprnode;
+  struct JQP_EXPR_NODE_PK exprnode_pk;
   struct JQP_FILTER filter;
   struct JQP_NODE node;
   struct JQP_EXPR expr;

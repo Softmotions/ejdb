@@ -1225,9 +1225,14 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
     .bn = &jbl->bn,
     .op = q
   };
+  JQP_EXPR_NODE *en = q->aux->expr;
+  if (en->flags & JQP_EXPR_NODE_FLAG_PK) {
+    q->matched = true;
+    *out = true;
+    return 0;
+  }
   *out = false;
   jql_reset(q, false, false);
-  JQP_EXPR_NODE *en = q->aux->expr;
   if (en->chain && !en->chain->next && !en->next) {
     en = en->chain;
     if (en->type == JQP_FILTER_TYPE) {

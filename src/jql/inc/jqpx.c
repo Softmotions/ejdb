@@ -722,6 +722,28 @@ static void _jqp_set_filters_expr(yycontext *yy, JQPUNIT *expr) {
   aux->query = &query->query;
 }
 
+static JQPUNIT *_jqp_create_filterexpr_pk(yycontext *yy, JQPUNIT *argument) {
+  JQP_AUX *aux = yy->aux;
+  const char *anchor = 0;
+  // Looking for optional
+  if (aux->stack
+      && aux->stack->type == STACK_UNIT
+      && aux->stack->unit->type == JQP_STRING_TYPE
+      && (aux->stack->unit->string.flavour & JQP_STR_ANCHOR)) {
+    anchor = _jqp_unit_pop(yy)->string.value;
+    if (!aux->first_anchor) {
+      aux->first_anchor = anchor;
+    }
+  }
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_EXPR_NODE_TYPE;
+  JQP_EXPR_NODE_PK *exprnode_pk = &unit->exprnode_pk;
+  exprnode_pk->flags = JQP_EXPR_NODE_FLAG_PK;
+  exprnode_pk->anchor = anchor;
+  exprnode_pk->argument = argument;
+  return unit;
+}
+
 static void _jqp_set_apply(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
   if (!unit || !aux->query) {
@@ -851,7 +873,7 @@ static void _jqp_finish(yycontext *yy) {
       rc = jbl_ptr_alloc_pool(iwxstr_ptr(xstr), &aux->orderby_ptrs[cnt], aux->pool);
       RCGO(rc, finish);
       JBL_PTR ptr = aux->orderby_ptrs[cnt];
-      ptr->op = (uint64_t) ((orderby->flavour & JQP_STR_NEGATE) != 0); // asc/desc
+      ptr->op = (uint64_t)((orderby->flavour & JQP_STR_NEGATE) != 0);  // asc/desc
       cnt++;
     }
   }
@@ -1165,6 +1187,36 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
   if (inbraces) {
     PT(0, 0, '(', 1);
   }
+
+  // Primary key expression
+  if (en->flags & JQP_EXPR_NODE_FLAG_PK) {
+    JQP_EXPR_NODE_PK *pk = (void *) en;
+    if (pk->anchor) {
+      PT(0, 0, '@', 1);
+      PT(pk->anchor, -1, 0, 0);
+    }
+    PT("/=", 2, 0, 0);
+    if (!pk->argument) {
+      iwlog_ecode_error3(IW_ERROR_ASSERTION);
+      return IW_ERROR_ASSERTION;
+    }
+    if (pk->argument->type == JQP_STRING_TYPE) {
+      if (pk->argument->string.flavour & JQP_STR_PLACEHOLDER) {
+        rc = _print_placeholder(pk->argument->string.value, pt, op);
+        RCRET(rc);
+      } else {
+        PT(pk->argument->string.value, -1, 0, 0);
+      }
+    } else if (pk->argument->type == JQP_JSON_TYPE) {
+      rc = jbn_as_json(&pk->argument->json.jn, pt, op, 0);
+      RCRET(rc);
+    }  else {
+      iwlog_ecode_error3(IW_ERROR_ASSERTION);
+      return IW_ERROR_ASSERTION;
+    }
+    return rc;
+  }
+
   for (en = en->chain; en; en = en->next) {
     if (en->join) {
       rc = _jqp_print_join(en->join->value, en->join->negate, pt, op);

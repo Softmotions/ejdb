@@ -1,5 +1,6 @@
 ejdb2 (2.0.47) UNRELEASED; urgency=medium
 
+  * Added ability to specify constraints on internal primary key in query #281
   * Added `jbn_copy_paths` (jbl.h)
 
  -- Anton Adamansky <adamansky@gmail.com>  Thu, 07 May 2020 01:28:14 +0700
