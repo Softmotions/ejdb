@@ -67,7 +67,9 @@ declare namespace ejdb2_node {
     toString(): string;
   }
 
-  interface JBDOCStream extends NodeJS.ReadableStream {}
+  interface JBDOCStream  {
+    [Symbol.asyncIterator](): AsyncIterableIterator<JBDOC>;
+  }
 
   /**
    * Query execution options.
