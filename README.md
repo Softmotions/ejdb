@@ -500,7 +500,7 @@ Here is the special query construction used: `/=:?` or `@collection/=:?` for exa
 
 Get document from `users` collection with primary key `112`
 ```
-> k @users/=122
+> k @users/=112
 ```
 
 Update tags array for document in `jobs` collection (TypeScript):
