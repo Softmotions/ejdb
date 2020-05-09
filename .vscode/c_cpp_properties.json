@@ -40,10 +40,7 @@
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": ""
       },
-      "macFrameworkPath": [
-        "/System/Library/Frameworks",
-        "/Library/Frameworks"
-      ]
+      "macFrameworkPath": ["/System/Library/Frameworks", "/Library/Frameworks"]
     },
     {
       "name": "Linux",
@@ -78,12 +75,10 @@
         "${workspaceRoot}/src",
         "${workspaceRoot}/src/jbl",
         "${workspaceRoot}/src/jql",
-        "${workspaceRoot}/src/util"
+        "${workspaceRoot}/src/util",
+        "/usr/include/python3.7m"
       ],
-      "defines": [
-        "_GNU_SOURCE",
-        "IW_64"
-      ],
+      "defines": ["_GNU_SOURCE", "IW_64"],
       "intelliSenseMode": "clang-x64",
       "browse": {
         "path": [

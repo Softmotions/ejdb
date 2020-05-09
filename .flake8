@@ -1,0 +1,6 @@
+
+
+[flake8]
+# ignore = E226,E302,E41
+ignore = F401,E501
+max-line-length = 120

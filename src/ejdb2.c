@@ -1,5 +1,7 @@
 #include "ejdb2_internal.h"
 
+IW_EXPORT char *ejdb2_version = EJDB2_VERSION;
+
 // ---------------------------------------------------------------------------
 
 static const IWKV_val EMPTY_VAL = {0};

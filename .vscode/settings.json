@@ -69,5 +69,6 @@
   ],
   "favorites.resources": [
     "src/jql/tests/data/020.jql"
-  ]
+  ],
+  //"python.formatting.autopep8Args": ["--max-line-length", "120", "--experimental"]
 }
