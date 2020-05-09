@@ -498,10 +498,19 @@ consider only JQL queries.**
 
 Here is the special query construction used: `/=:?` or `@collection/=:?` for example:
 
-Document from `users` collection with primary key `112`
+Get document from `users` collection with primary key `112`
 ```
 > k @users/=122
 ```
+
+Update tags array for document in `jobs` collection (TypeScript):
+```ts
+ await db.createQuery('@jobs/ = :? | apply :? | count')
+    .setNumber(0, id)
+    .setJSON(1, { tags })
+    .completionPromise();
+```
+
 
 ### Matching JSON entry values
 
