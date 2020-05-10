@@ -506,3 +506,13 @@ iwrc jbn_from_json(const char *json, JBL_NODE *node, IWPOOL *pool) {
   *node = ctx.root;
   return ctx.rc;
 }
+
+// Depreacated
+iwrc jbl_node_from_json(const char *json, JBL_NODE *node, IWPOOL *pool) {
+  return jbn_from_json(json, node, pool);
+}
+
+// Depreacated
+iwrc jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf) {
+  return _jbl_node_as_json(node, pt, op, 0, pf);
+}

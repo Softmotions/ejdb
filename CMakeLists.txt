@@ -52,7 +52,7 @@ option(ENABLE_PPA "Enable PPA package build" OFF)
 option(UPLOAD_PPA "Upload debian packages to the launchpad ppa repository" OFF)
 
 set(PPA_DEBIAN_VERSION "ppa1" CACHE STRING "PPA version suffix for debian packages")
-set(PROJECT_PPA_DISTRIB_TARGET "bionic" CACHE STRING "Ubuntu PPA distributive names")
+set(PROJECT_PPA_DISTRIB_TARGET "focal;bionic;xenial" CACHE STRING "Ubuntu PPA distribution names")
 
 set(ANDROID_ABIS "x86;x86_64;arm64-v8a;armeabi-v7a" CACHE STRING "Android ABI list")
 set(ANDROID_AVD "TestingAVD" CACHE STRING "Android virtual device name for tests")

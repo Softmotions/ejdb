@@ -90,15 +90,15 @@ typedef struct _EJDB *EJDB;
  * @brief EJDB HTTP/Websocket Server options.
  */
 typedef struct _EJDB_HTTP {
+  bool enabled;               /**< If HTTP/Websocket endpoint enabled. Default: false */
+  int port;                   /**< Listen port number, required */
   const char *bind;           /**< Listen IP/host. Default: `localhost` */
   const char *access_token;   /**< Server access token passed in `X-Access-Token` header. Default: zero */
   size_t access_token_len;    /**< Length of access token string. Default: zero */
-  size_t max_body_size;       /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
-  int port;                   /**< Listen port number, required */
   bool blocking;              /**< Block `ejdb_open()` thread until http service finished.
                                    Otherwise HTTP server will be started in background. */
-  bool enabled;               /**< If HTTP/Websocket endpoint enabled. Default: false */
   bool read_anon;             /**< Allow anonymous read-only database access */
+  size_t max_body_size;       /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
 } EJDB_HTTP;
 
 /**
