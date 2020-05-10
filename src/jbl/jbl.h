@@ -606,6 +606,12 @@ IW_EXPORT iwrc jbn_from_json(const char *json, JBL_NODE *node, IWPOOL *pool);
  */
 IW_EXPORT iwrc jbn_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
 
+// Depreacted. Use: jbn_as_json
+IW_EXPORT IW_DEPRECATED iwrc jbl_node_as_json(JBL_NODE node, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
+
+// Depreacted. Use: jbn_as_json
+IW_EXPORT IW_DEPRECATED iwrc jbl_node_from_json(const char *json, JBL_NODE *node, IWPOOL *pool);
+
 /**
  * @brief Fill `jbl` document by data from `node`.
  *
