@@ -254,7 +254,49 @@ IW_EXPORT WUR iwrc ejdb_exec(EJDB_EXEC *ux);
  */
 IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWPOOL *pool);
 
+/**
+ * @brief Executes a given query `q` then returns `count` of matched documents.
+ *
+ * @param db           Database handle. Not zero.
+ * @param q            Query object. Not zero.
+ * @param [out] count  Placeholder for number of matched documents. Not zero.
+ * @param limit        Limit of matched rows. Makes sense for update queries.
+ *
+ */
 IW_EXPORT WUR iwrc ejdb_count(EJDB db, JQL q, int64_t *count, int64_t limit);
+
+/**
+ * @brief Executes a given query `q` then returns `count` of matched documents.
+ *
+ * @param db           Database handle. Not zero.
+ * @param coll         Name of document collection.
+ *                     Can be zero, in what collection name should be encoded in query.
+ * @param q            Query text. Not zero.
+ * @param [out] count  Placeholder for number of matched documents. Not zero.
+ * @param limit        Limit of matched rows. Makes sense for update queries.
+ *
+ */
+IW_EXPORT WUR iwrc ejdb_count2(EJDB db, const char *coll, const char *q, int64_t *count, int64_t limit);
+
+/**
+ * @brief Executes update query assuming that query object contains `apply` clause.
+ *        Similar to `ejdb_count`.
+ *
+ * @param db          Database handle. Not zero.
+ * @param q           Query object. Not zero.
+ */
+IW_EXPORT WUR iwrc ejdb_update(EJDB db, JQL q);
+
+/**
+ * @brief Executes update query assuming that query object contains `apply` clause.
+ *        Similar to `ejdb_count`.
+ *
+ * @param db        Database handle. Not zero.
+ * @param coll         Name of document collection.
+ *                     Can be zero, in what collection name should be encoded in query.
+ * @param q         Query text. Not zero.
+ */
+IW_EXPORT WUR iwrc ejdb_update2(EJDB db, const char *coll, const char *q);
 
 /**
  * @brief Executes a given `query` and builds a result as linked list of documents.

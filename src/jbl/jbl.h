@@ -331,6 +331,16 @@ IW_EXPORT iwrc jbl_clone(JBL src, JBL *targetp);
 IW_EXPORT iwrc jbn_clone(JBL_NODE src, JBL_NODE *targetp, IWPOOL *pool);
 
 /**
+ * @brief Assign a JSON node value from `from` node into `target` node.
+ *        Context elements of `target` node: `parent`, `next` are not touched.
+ *
+ * @param target Node
+ * @param from
+ * @return IW_EXPORT jbn_apply_from
+ */
+IW_EXPORT void jbn_apply_from(JBL_NODE target, JBL_NODE from);
+
+/**
  * @brief Copies JSON subtree under given `src_path` into `target` object under `target_path`.
  *        If some tree exists under `target_path` it will be replaced by copied subtree.
  *
@@ -576,11 +586,15 @@ IW_EXPORT bool jbl_iterator_next(JBL_iterator *iter, JBL holder, char **pkey, in
  * @brief Converts `jbl` value to `JBL_NODE` tree.
  * @note `node` resources will be released when `pool` destroyed.
  *
- * @param jbl         JSON document in compact `binn` format. Not zero.
- * @param [out] node  Holder of new `JBL_NODE` value. Not zero.
- * @param pool        Memory used to allocate new `JBL_NODE` tree. Not zero.
+ * @param jbl             JSON document in compact `binn` format. Not zero.
+ * @param [out] node      Holder of new `JBL_NODE` value. Not zero.
+ * @param clone_strings   If `true` JSON keys and string values will be cloned into given `pool`
+ *                        otherwise only pointers to strings will be assigned.
+ *                        Use `true` if you want to be completely safe when given `jbl`
+ *                        object will be destroyed.
+ * @param pool            Memory used to allocate new `JBL_NODE` tree. Not zero.
  */
-IW_EXPORT iwrc jbl_to_node(JBL jbl, JBL_NODE *node, IWPOOL *pool);
+IW_EXPORT iwrc jbl_to_node(JBL jbl, JBL_NODE *node, bool clone_strings, IWPOOL *pool);
 
 /**
  * @brief Converts `json` text to `JBL_NODE` tree.

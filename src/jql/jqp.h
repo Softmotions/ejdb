@@ -37,7 +37,7 @@
 #include <ejdb2/iowow/iwpool.h>
 #include <ejdb2/iowow/iwxstr.h>
 
-typedef uint8_t jqp_string_flavours_t;
+typedef uint16_t jqp_string_flavours_t;
 /** Query string parameter placeholder */
 #define JQP_STR_PLACEHOLDER       ((jqp_string_flavours_t) 0x01U)
 /** Query filter anchor */
@@ -54,6 +54,8 @@ typedef uint8_t jqp_string_flavours_t;
 #define JQP_STR_NEGATE            ((jqp_string_flavours_t) 0x40U)
 /** Double star (**) string */
 #define JQP_STR_DBL_STAR          ((jqp_string_flavours_t) 0x80U)
+/** Projection JOIN */
+#define JQP_STR_PROJOIN           ((jqp_string_flavours_t) 0x100U)
 
 
 typedef uint8_t jqp_int_flavours_t;
@@ -192,8 +194,9 @@ typedef struct JQP_EXPR {
 typedef struct JQP_PROJECTION {
   jqp_unit_t type;
   bool exclude;
-  int16_t pos; // Current matching position, used in jql.c#_jql_project
-  int16_t cnt; // Number of projection sections, used in jql.c#_jql_project
+  bool has_joins;       // True if projection has collection join nodes.
+  int16_t pos;          // Current matching position, used in jql.c#_jql_project
+  int16_t cnt;          // Number of projection sections, used in jql.c#_jql_project
   struct JQP_STRING *value;
   struct JQP_PROJECTION *next;
 } JQP_PROJECTION;

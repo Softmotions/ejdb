@@ -64,6 +64,8 @@ typedef enum {
   _JQL_ERROR_UNMATCHED
 } jql_ecode_t;
 
+typedef iwrc(*jql_collection_join_resolver)(int64_t id, const char *coll, JBL *out, void *op);
+
 typedef uint8_t jql_create_mode_t;
 
 /// Do not destroy query object in `jql_create()` on query parsing error,
@@ -151,9 +153,14 @@ IW_EXPORT iwrc jql_get_limit(JQL q, int64_t *out);
 
 IW_EXPORT WUR iwrc jql_apply(JQL q, JBL_NODE root, IWPOOL *pool);
 
-IW_EXPORT WUR iwrc jql_project(JQL q, JBL_NODE root);
+IW_EXPORT WUR iwrc jql_project(JQL q, JBL_NODE root, IWPOOL *pool,
+                               jql_collection_join_resolver resolver,
+                               void *resolver_opaque);
 
-IW_EXPORT WUR iwrc jql_apply_and_project(JQL q, JBL jbl, JBL_NODE *out, IWPOOL *pool);
+IW_EXPORT WUR iwrc jql_apply_and_project(JQL q, JBL jbl,
+                                         jql_collection_join_resolver resolver,
+                                         void *resolver_opaque,
+                                         JBL_NODE *out, IWPOOL *pool);
 
 IW_EXPORT void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders);
 

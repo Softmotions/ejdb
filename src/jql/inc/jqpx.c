@@ -516,10 +516,26 @@ static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value) {
     iwlog_error("Unexpected type: %d", value->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
-  JQPUNIT *projection = _jqp_unit(yy);
-  projection->type = JQP_PROJECTION_TYPE;
-  projection->projection.value = &value->string;
-  return projection;
+  bool has_joins = false;
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_PROJECTION_TYPE;
+  unit->projection.value = &value->string;
+  for (JQP_STRING *s = unit->projection.value; !has_joins && s; s = s->next) {
+    JQP_STRING *p = s;
+    do {
+      if (p->flavour & JQP_STR_PROJOIN) {
+        has_joins = true;
+        goto out;
+      }
+      p = p->subnext;
+    } while (p);
+  }
+out:
+  unit->projection.has_joins = has_joins;
+  if (has_joins) {
+    unit->projection.exclude = true;
+  }
+  return unit;
 }
 
 static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p) {
@@ -588,7 +604,12 @@ static JQPUNIT *_jqp_pop_projections(yycontext *yy, JQPUNIT *until) {
       JQRC(yy, JQL_ERROR_QUERY_PARSE);
     }
     if (first) {
+      for (JQP_STRING *s = &first->string; s; s = s->subnext) {
+        s->flavour &= ~JQP_STR_PROJOIN; // Reset JOIN mark for non rightmost nodes
+      }
       unit->string.next = &first->string;
+    } else if (strchr(unit->string.value, '<')) { // JOIN Projection?
+      unit->string.flavour |= JQP_STR_PROJOIN;
     }
     first = unit;
     _jqp_pop(yy);
@@ -611,6 +632,9 @@ static JQPUNIT *_jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
     unit->string.flavour |= JQP_STR_PROJFIELD;
     if (field) {
       unit->string.subnext = &field->string;
+    }
+    if (strchr(unit->string.value, '<')) { // JOIN Projection?
+      unit->string.flavour |= JQP_STR_PROJOIN;
     }
     field = unit;
     _jqp_pop(yy);

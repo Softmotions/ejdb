@@ -512,11 +512,11 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
       goto finish;
     }
     JBL_NODE jbvprev_node, jbv_node;
-    rc = jbl_to_node(&jbv, &jbv_node, pool);
+    rc = jbl_to_node(&jbv, &jbv_node, false, pool);
     RCGO(rc, finish);
     jbv.node = jbv_node;
 
-    rc = jbl_to_node(&jbvprev, &jbvprev_node, pool);
+    rc = jbl_to_node(&jbvprev, &jbvprev_node, false, pool);
     RCGO(rc, finish);
     jbvprev.node = jbvprev_node;
 
@@ -537,7 +537,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
           RCGO(rc, finish);
         }
       }
-      rc = jbl_to_node(&jbvprev, &n, pool);
+      rc = jbl_to_node(&jbvprev, &n, false, pool);
       RCGO(rc, finish);
       for (n = n->child; n; n = n->next) {
         jbi_node_fill_ikey(idx, n, &key, numbuf);
@@ -577,7 +577,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
           RCGO(rc, finish);
         }
       }
-      rc = jbl_to_node(&jbv, &n, pool);
+      rc = jbl_to_node(&jbv, &n, false, pool);
       RCGO(rc, finish);
       for (n = n->child; n; n = n->next) {
         jbi_node_fill_ikey(idx, n, &key, numbuf);
@@ -925,6 +925,25 @@ iwrc ejdb_count(EJDB db, JQL q, int64_t *count, int64_t limit) {
   return _jb_count(db, q, count, limit, 0);
 }
 
+iwrc ejdb_count2(EJDB db, const char *coll, const char *q, int64_t *count, int64_t limit) {
+  JQL jql;
+  iwrc rc = jql_create(&jql, coll, q);
+  RCRET(rc);
+  rc = _jb_count(db, jql, count, limit, 0);
+  jql_destroy(&jql);
+  return rc;
+}
+
+iwrc ejdb_update(EJDB db, JQL q) {
+  int64_t count;
+  return ejdb_count(db, q, &count, 0);
+}
+
+iwrc ejdb_update2(EJDB db, const char *coll, const char *q) {
+  int64_t count;
+  return ejdb_count2(db, coll, q, &count, 0);
+}
+
 iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWPOOL *pool) {
   return _jb_list(db, q, first, limit, 0, pool);
 }
@@ -1206,7 +1225,7 @@ static iwrc _jb_patch(EJDB db, const char *coll, const char *patchjson, int64_t 
     goto finish;
   }
 
-  rc = jbl_to_node(&sjbl, &root, pool);
+  rc = jbl_to_node(&sjbl, &root, false, pool);
   RCGO(rc, finish);
 
   rc = jbn_from_json(patchjson, &patch, pool);
@@ -1451,6 +1470,12 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
 finish:
   API_UNLOCK(db, rci, rc);
   return rc;
+}
+
+iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, void *op) {
+  assert(out && op && coll);
+  EJDB db = op;
+  return ejdb_get(db, coll, id, out);
 }
 
 iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {

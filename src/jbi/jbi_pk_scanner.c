@@ -11,25 +11,9 @@ iwrc jbi_pk_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   assert(pk->argument);
   JQVAL *jqval = jql_unit_to_jqval(aux, pk->argument, &rc);
   RCRET(rc);
-
-  switch (jqval->type) {
-    case JQVAL_I64:
-      id = jqval->vi64;
-      break;
-    case JQVAL_STR:
-      id = iwatoi(jqval->vstr);
-      break;
-    case JQVAL_F64:
-      id = jqval->vf64;
-      break;
-    case JQVAL_BOOL:
-      id = jqval->vbool ? 1 : 0;
-      break;
-    default:
-      goto finish;
+  if (jql_jqval_as_int(jqval, &id)) {
+    rc = consumer(ctx, 0, id, &step, &matched, 0);
   }
-  rc = consumer(ctx, 0, id, &step, &matched, 0);
-finish:
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 

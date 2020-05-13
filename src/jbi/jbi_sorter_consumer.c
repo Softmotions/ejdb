@@ -56,7 +56,7 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
   JBL_NODE root;
   JBL jbl = doc->raw;
   struct JQP_AUX *aux = q->aux;
-  iwrc rc = jbl_to_node(jbl, &root, pool);
+  iwrc rc = jbl_to_node(jbl, &root, true, pool);
   RCRET(rc);
   doc->node = root;
   if (aux->qmode & JQP_QRY_APPLY_DEL) {
@@ -73,7 +73,7 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
     RCRET(rc);
   }
   if (aux->projection) {
-    rc = jql_project(q, root);
+    rc = jql_project(q, root, ctx->ux->pool, jb_collection_join_resolver, ctx->ux->db);
   }
   return rc;
 }

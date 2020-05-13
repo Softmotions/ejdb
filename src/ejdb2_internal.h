@@ -173,7 +173,7 @@ typedef struct _JBEXEC {
   JBCOLL jbc;              /**< Collection */
 
   int64_t istep;
-  iwrc (*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
+  iwrc(*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
   uint8_t *jblbuf;         /**< Buffer used to keep currently processed document */
   size_t jblbufsz;         /**< Size of jblbuf allocated memory */
   bool sorting;            /**< Resultset sorting needed */
@@ -210,5 +210,7 @@ iwrc jb_put(JBCOLL jbc, JBL jbl, int64_t id);
 iwrc jb_del(JBCOLL jbc, JBL jbl, int64_t id);
 iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
 iwrc jb_cursor_del(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
+
+iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, void *op);
 
 #endif
