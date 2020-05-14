@@ -757,6 +757,9 @@ static void _jb_exec_scan_release(JBEXEC *ctx) {
     // Destroy projected nodes key
     iwstree_destroy(ctx->proj_nodes_cache);
   }
+  if (ctx->scan_session_pool) {
+    iwpool_destroy(ctx->scan_session_pool);
+  }
   free(ctx->jblbuf);
 }
 

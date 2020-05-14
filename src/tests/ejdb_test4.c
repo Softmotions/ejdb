@@ -97,7 +97,7 @@ void ejdb_test4_1(void) {
 
 
   // Next mode
-  rc = jql_create(&q, "paintings", "/[name = \"Mona Lisa\"] | /{name, artist_ref<artists} - /artist_ref/years/0");
+  rc = jql_create(&q, "paintings", "/* | /{name, artist_ref<artists} - /artist_ref/years/0");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = ejdb_list4(db, q, 0, 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);

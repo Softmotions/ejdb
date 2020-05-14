@@ -1402,7 +1402,6 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
                                    iwrc *rcp) {
 
   PROJ_CTX *pctx = vctx->op;
-  IWPOOL *pool = pctx->pool;
   if (proj->cnt != lvl + 1) {
     return _jql_proj_matched(lvl, n, key, keylen, vctx, proj, rcp);
   }
@@ -1440,6 +1439,7 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
     JBL_NODE nn;
     JQVAL jqval;
     int64_t id;
+    JBEXEC *exec_ctx = pctx->exec_ctx;
     const char *coll = spos + 1;
     if (*coll == '\0') {
       return false;
@@ -1448,6 +1448,15 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
     if (!jql_jqval_as_int(&jqval, &id)) {
       // Unable to convert current node value as int number
       return false;
+    }
+    IWPOOL *pool = exec_ctx->ux->pool;
+    if (!pool) {
+      pool = exec_ctx->scan_session_pool;
+      if (!pool) {
+        pool = iwpool_create(512);
+        RCGA(pool, finish);
+        exec_ctx->scan_session_pool = pool;
+      }
     }
     IWSTREE *cache = pctx->exec_ctx->proj_nodes_cache;
     if (!cache) {
@@ -1461,7 +1470,7 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
     };
     nn = iwstree_get(cache, &ref);
     if (!nn) {
-      RCHECK(rc, finish, jb_collection_join_resolver(id, coll, &jbl, pctx->exec_ctx));
+      RCHECK(rc, finish, jb_collection_join_resolver(id, coll, &jbl, exec_ctx));
       RCHECK(rc, finish, jbl_to_node(jbl, &nn, true, pool));
       struct _JBDOCREF *key = malloc(sizeof(*key));
       RCGA(key, finish);

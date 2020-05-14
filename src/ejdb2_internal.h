@@ -191,6 +191,7 @@ typedef struct _JBEXEC {
 
   // JQL Projection cache
   IWSTREE *proj_nodes_cache;
+  IWPOOL *scan_session_pool;
 } JBEXEC;
 
 
