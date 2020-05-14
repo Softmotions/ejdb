@@ -1,13 +1,15 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ArgumentSelectionDefectsInspection"
 
-#include "jqp.h"
-#include "lwre.h"
+#include "convert.h"
+#include "ejdb2_internal.h"
 #include "jbl_internal.h"
 #include "jql_internal.h"
-#include "convert.h"
+#include "jqp.h"
+#include "lwre.h"
 #include <errno.h>
-#include "ejdb2_internal.h"
+#include <ejdb2/iowow/iwstree.h>
+
 
 /** Query matching context */
 typedef struct MCTX {
@@ -717,7 +719,7 @@ static bool _jql_match_regexp(JQP_AUX *aux,
 
   switch (lv->type) {
     case JQVAL_STR:
-      input = (char *) lv->vstr; // FIXME: const discarded
+      input = (char *) lv->vstr;
       break;
     case JQVAL_I64:
       iwitoa(lv->vi64, nbuf, JBNUMBUF_SIZE);
@@ -1348,8 +1350,7 @@ typedef struct _PROJ_CTX {
   JQL q;
   JQP_PROJECTION *proj;
   IWPOOL *pool;
-  jql_collection_join_resolver resolver;
-  void *resolver_opaque;
+  JBEXEC *exec_ctx; // Optional!
 } PROJ_CTX;
 
 static void _jql_proj_mark_up(JBL_NODE n, int amask) {
@@ -1401,11 +1402,7 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
                                    iwrc *rcp) {
 
   PROJ_CTX *pctx = vctx->op;
-  jql_collection_join_resolver resolver = pctx->resolver;
   IWPOOL *pool = pctx->pool;
-  if (!resolver) {
-    return false;
-  }
   if (proj->cnt != lvl + 1) {
     return _jql_proj_matched(lvl, n, key, keylen, vctx, proj, rcp);
   }
@@ -1449,11 +1446,25 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
       // Unable to convert current node value as int number
       return false;
     }
-
-    // todo: Use cache
-
-    RCHECK(rc, finish, resolver(id, coll, &jbl, pctx->resolver_opaque));
-    RCHECK(rc, finish, jbl_to_node(jbl, &nn, true, pool));
+    IWSTREE *cache = pctx->exec_ctx->proj_nodes_cache;
+    if (!cache) {
+      cache = iwstree_create(jb_proj_node_cache_cmp, jb_proj_node_kvfree);
+      RCGA(cache, finish);
+      pctx->exec_ctx->proj_nodes_cache = cache;
+    }
+    struct _JBDOCREF ref = {
+      .id = id,
+      .coll = coll
+    };
+    nn = iwstree_get(cache, &ref);
+    if (!nn) {
+      RCHECK(rc, finish, jb_collection_join_resolver(id, coll, &jbl, pctx->exec_ctx));
+      RCHECK(rc, finish, jbl_to_node(jbl, &nn, true, pool));
+      struct _JBDOCREF *key = malloc(sizeof(*key));
+      RCGA(key, finish);
+      *key = ref;
+      RCHECK(rc, finish, iwstree_put(cache, key, nn));
+    }
     jbn_apply_from(n, nn);
   }
 
@@ -1507,11 +1518,9 @@ static jbn_visitor_cmd_t _jql_proj_keep_visitor(int lvl, JBL_NODE n, const char 
   return JBN_VCMD_DELETE;
 }
 
-static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool,
-                         jql_collection_join_resolver resolver, void *resolver_opaque) {
+static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool, JBEXEC *exec_ctx) {
 
   bool has_includes = false;
-  bool has_joins = false;
   JQP_PROJECTION *proj = q->aux->projection;
 
   // Check trivial cases
@@ -1536,12 +1545,11 @@ static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool,
     .q = q,
     .proj = proj,
     .pool = pool,
-    .resolver = resolver,
-    .resolver_opaque = resolver_opaque
+    .exec_ctx = exec_ctx,
   };
   if (!pool) {
-    // No pool no resolver
-    pctx.resolver = 0;
+    // No pool no exec_ctx
+    pctx.exec_ctx = 0;
   }
   for (JQP_PROJECTION *p = proj; p; p = p->next) {
     p->pos = -1;
@@ -1555,13 +1563,12 @@ static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool,
     .op = &pctx
   };
   iwrc rc = jbn_visit(root, 0, &vctx, _jql_proj_visitor);
-  RCRET(rc);
-
+  RCGO(rc, finish);
   if (has_includes || (root->flags & PROJ_MARK_PATH)) { // We have keep projections
-    rc = jbn_visit(root, 0, &vctx, _jql_proj_keep_visitor);
-    RCRET(rc);
+    RCHECK(rc, finish, jbn_visit(root, 0, &vctx, _jql_proj_keep_visitor));
   }
 
+finish:
   return rc;
 }
 
@@ -1584,19 +1591,15 @@ iwrc jql_apply(JQL q, JBL_NODE root, IWPOOL *pool) {
   }
 }
 
-iwrc jql_project(JQL q, JBL_NODE root, IWPOOL *pool, jql_collection_join_resolver resolver, void *resolver_opaque) {
+iwrc jql_project(JQL q, JBL_NODE root, IWPOOL *pool, void *exec_ctx) {
   if (q->aux->projection) {
-    return _jql_project(root, q, pool, resolver, resolver_opaque);
+    return _jql_project(root, q, pool, exec_ctx);
   } else {
     return 0;
   }
 }
 
-iwrc jql_apply_and_project(JQL q, JBL jbl,
-                           jql_collection_join_resolver resolver,
-                           void *resolver_opaque,
-                           JBL_NODE *out,
-                           IWPOOL *pool) {
+iwrc jql_apply_and_project(JQL q, JBL jbl, JBL_NODE *out, void *exec_ctx, IWPOOL *pool) {
   *out = 0;
   JQP_AUX *aux = q->aux;
   if (!(aux->apply || aux->apply_placeholder || aux->projection)) {
@@ -1610,7 +1613,7 @@ iwrc jql_apply_and_project(JQL q, JBL jbl,
     RCRET(rc);
   }
   if (aux->projection) {
-    rc = jql_project(q, root, pool, resolver, resolver_opaque);
+    rc = jql_project(q, root, pool, exec_ctx);
   }
   if (!rc) {
     *out = root;

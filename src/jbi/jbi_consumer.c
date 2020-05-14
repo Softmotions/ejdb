@@ -91,7 +91,7 @@ start: {
       }
       RCGO(rc, finish);
       if (aux->projection) {
-        rc = jql_project(q, root, pool, jb_collection_join_resolver, ux->db);
+        rc = jql_project(q, root, pool, ctx);
         RCGO(rc, finish);
       }
     } else if (aux->qmode & JQP_QRY_APPLY_DEL) {

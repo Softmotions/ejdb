@@ -753,6 +753,10 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
 }
 
 static void _jb_exec_scan_release(JBEXEC *ctx) {
+  if (ctx->proj_nodes_cache) {
+    // Destroy projected nodes key
+    iwstree_destroy(ctx->proj_nodes_cache);
+  }
   free(ctx->jblbuf);
 }
 
@@ -1472,10 +1476,24 @@ finish:
   return rc;
 }
 
-iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, void *op) {
-  assert(out && op && coll);
-  EJDB db = op;
+iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, JBEXEC *ctx) {
+  assert(out && ctx && coll);
+  EJDB db = ctx->jbc->db;
   return ejdb_get(db, coll, id, out);
+}
+
+int jb_proj_node_cache_cmp(const void *v1, const void *v2) {
+  const struct _JBDOCREF *r1 = v1;
+  const struct _JBDOCREF *r2 = v2;
+  int ret = r1->id > r2->id ? 1 : r1->id < r2->id ? -1 : 0;
+  if (!ret) {
+    return strcmp(r1->coll, r2->coll);;
+  }
+  return ret;
+}
+
+void jb_proj_node_kvfree(void *key, void *val) {
+  free(key);
 }
 
 iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {

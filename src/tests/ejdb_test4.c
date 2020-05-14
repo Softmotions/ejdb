@@ -44,13 +44,25 @@ void ejdb_test4_1(void) {
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = put_json2(db, "artists", "{'name':'Leonardo Da Vinci'}", &id);
+  rc = put_json2(db, "artists", "{'name':'Leonardo Da Vinci', 'years':[1452,1519]}", &id);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  rc = put_json(db, "paintings", "{'name':'Mona Lisa'}");
+
+  rc = put_json(db, "paintings", "{'name':'Mona Lisa', 'year':1490, 'origin':'Italy'}");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jql_create(&q, "paintings", "/[name=:?] | apply :?");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jql_set_str(q, 0, 0, "Mona Lisa");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  set_apply_int(q, 1, "artist_ref", id);
+  rc = ejdb_update(db, q);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  jql_destroy(&q);
+
+  rc = put_json(db, "paintings", "{'name':'Madonna Litta - Madonna And The Child'}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_create(&q, "paintings", "/[name=:?] | apply :?");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_set_str(q, 0, 0, "Madonna Litta - Madonna And The Child");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   set_apply_int(q, 1, "artist_ref", id);
   rc = ejdb_update(db, q);

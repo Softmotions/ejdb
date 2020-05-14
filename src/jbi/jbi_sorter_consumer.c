@@ -73,7 +73,7 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
     RCRET(rc);
   }
   if (aux->projection) {
-    rc = jql_project(q, root, ctx->ux->pool, jb_collection_join_resolver, ctx->ux->db);
+    rc = jql_project(q, root, ctx->ux->pool, ctx);
   }
   return rc;
 }

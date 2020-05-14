@@ -39,6 +39,7 @@
 #include <ejdb2/iowow/iwxstr.h>
 #include <ejdb2/iowow/iwexfile.h>
 #include <ejdb2/iowow/iwutils.h>
+#include <ejdb2/iowow/iwstree.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
@@ -112,6 +113,12 @@ struct _JBIDX {
   iwdb_flags_t idbf;        /**< Index database flags */
 };
 
+/** Pair: collection name, document id */
+struct _JBDOCREF {
+  int64_t id;
+  const char *coll;
+};
+
 // -V:KHASH_MAP_INIT_STR:522
 KHASH_MAP_INIT_STR(JBCOLLM, JBCOLL)
 
@@ -181,6 +188,9 @@ typedef struct _JBEXEC {
   IWKV_cursor_op cursor_step;         /**< Next index cursor step */
   struct _JBMIDX midx;     /**< Index matching context */
   struct _JBSSC ssc;       /**< Result set sorting context */
+
+  // JQL Projection cache
+  IWSTREE *proj_nodes_cache;
 } JBEXEC;
 
 
@@ -211,6 +221,8 @@ iwrc jb_del(JBCOLL jbc, JBL jbl, int64_t id);
 iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
 iwrc jb_cursor_del(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
 
-iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, void *op);
+iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, JBEXEC *ctx);
+int  jb_proj_node_cache_cmp(const void *v1, const void *v2);
+void jb_proj_node_kvfree(void *key, void *val);
 
 #endif
