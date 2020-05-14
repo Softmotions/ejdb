@@ -1420,7 +1420,10 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
       pv = sn->value;
       spos = strchr(pv, '<');
       if (!spos) {
-        continue;
+        if (strlen(pv) == keylen && !strncmp(key, pv, keylen)) {
+          proj->pos = lvl;
+          return true;
+        }
       }
       ret = !strncmp(key, pv, spos - pv);
       if (ret) {
@@ -1466,6 +1469,7 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
       RCHECK(rc, finish, iwstree_put(cache, key, nn));
     }
     jbn_apply_from(n, nn);
+    proj->pos = lvl;
   }
 
 finish:
@@ -1488,18 +1492,20 @@ static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key,
     klidx = strlen(keyptr);
   }
   for (JQP_PROJECTION *p = pctx->proj; p; p = p->next) {
+    uint8_t flags = p->flags;
     JBL jbl = 0;
     bool matched;
-    if (p->has_joins) {
+    if (flags & JQP_PROJECTION_FLAG_JOINS) {
       matched = _jql_proj_join_matched((int16_t) lvl, n, keyptr, klidx, vctx, p, &jbl, rc);
     } else {
       matched = _jql_proj_matched((int16_t) lvl, n, keyptr, klidx, vctx, p, rc);
     }
     RCRET(*rc);
-    if (matched && !p->has_joins) {
-      if (p->exclude) {
+    if (matched) {
+      if (flags & JQP_PROJECTION_FLAG_EXCLUDE) {
         return JBN_VCMD_DELETE;
-      } else {
+      } else if ((flags & JQP_PROJECTION_FLAG_INCLUDE) ||
+                 ((flags & JQP_PROJECTION_FLAG_JOINS) && pctx->q->aux->has_keep_projections))  {
         _jql_proj_mark_up(n, PROJ_MARK_KEEP);
       }
     }
@@ -1519,28 +1525,12 @@ static jbn_visitor_cmd_t _jql_proj_keep_visitor(int lvl, JBL_NODE n, const char 
 }
 
 static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool, JBEXEC *exec_ctx) {
-
-  bool has_includes = false;
-  JQP_PROJECTION *proj = q->aux->projection;
-
-  // Check trivial cases
-  for (JQP_PROJECTION *p = proj; p; p = p->next) {
-    bool all = (p->value->flavour & JQP_STR_PROJALIAS);
-    if (all) {
-      if (p->exclude) { // Got -all in chain return empty object
-        jbn_data(root);
-        return 0;
-      } else {
-        proj = p->next; // Dispose all previous projections before `+all`
-      }
-    } else if (!has_includes && !p->exclude) {
-      has_includes = true;
-    }
-  }
-  if (!proj) {
-    // keep whole node
+  JQP_AUX *aux = q->aux;
+  if (aux->has_exclude_all_projection) {
+    jbn_data(root);
     return 0;
   }
+  JQP_PROJECTION *proj = aux->projection;
   PROJ_CTX pctx = {
     .q = q,
     .proj = proj,
@@ -1564,7 +1554,7 @@ static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool, JBEXEC *exec_ctx) {
   };
   iwrc rc = jbn_visit(root, 0, &vctx, _jql_proj_visitor);
   RCGO(rc, finish);
-  if (has_includes || (root->flags & PROJ_MARK_PATH)) { // We have keep projections
+  if (aux->has_keep_projections) { // We have keep projections
     RCHECK(rc, finish, jbn_visit(root, 0, &vctx, _jql_proj_keep_visitor));
   }
 

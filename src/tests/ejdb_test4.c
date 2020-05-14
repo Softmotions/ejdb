@@ -39,8 +39,8 @@ void ejdb_test4_1(void) {
   JQL q;
   int64_t id = 0;
   EJDB_LIST list = 0;
-
   IWXSTR *xstr = iwxstr_new();
+
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -58,7 +58,7 @@ void ejdb_test4_1(void) {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   jql_destroy(&q);
 
-  rc = put_json(db, "paintings", "{'name':'Madonna Litta - Madonna And The Child'}");
+  rc = put_json(db, "paintings", "{'name':'Madonna Litta - Madonna And The Child', 'year':1490, 'origin':'Italy'}");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jql_create(&q, "paintings", "/[name=:?] | apply :?");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -76,23 +76,58 @@ void ejdb_test4_1(void) {
   rc = ejdb_list4(db, q, 0, 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next) {
+    JBL_NODE n;
+    iwxstr_clear(xstr);
+    rc = jbn_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    //fprintf(stderr, "%s\n", iwxstr_ptr(xstr));
+    rc = jbn_at(doc->node, "/artist_ref/name", &n);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_EQUAL(n->type, JBV_STR);
+    CU_ASSERT_NSTRING_EQUAL(n->vptr, "Leonardo Da Vinci", n->vsize);
+
+    rc = jbn_at(doc->node, "/year", &n);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_EQUAL(n->type, JBV_I64);
+    CU_ASSERT_EQUAL(n->vi64, 1490);
+  }
+  jql_destroy(&q);
+  ejdb_list_destroy(&list);
+
+
+  // Next mode
+  rc = jql_create(&q, "paintings", "/[name = \"Mona Lisa\"] | /{name, artist_ref<artists} - /artist_ref/years/0");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_list4(db, q, 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   for (EJDB_DOC doc = list->first; doc; doc = doc->next) {
+    JBL_NODE n;
     iwxstr_clear(xstr);
     rc = jbn_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     fprintf(stderr, "%s\n", iwxstr_ptr(xstr));
+
+    rc = jbn_at(doc->node, "/name", &n);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_EQUAL(n->type, JBV_STR);
+
+    rc = jbn_at(doc->node, "/artist_ref/name", &n);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_EQUAL(n->type, JBV_STR);
+    CU_ASSERT_NSTRING_EQUAL(n->vptr, "Leonardo Da Vinci", n->vsize);
+
+    rc = jbn_at(doc->node, "/artist_ref/years/1", &n); // todo: review
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_EQUAL(n->type, JBV_I64);
+    CU_ASSERT_EQUAL(n->vi64, 1519);
   }
   jql_destroy(&q);
-
-  // rc = put_json(db, "artists", "{'name':'Vincent Van Gogh'}");
-  // CU_ASSERT_EQUAL_FATAL(rc, 0);
-  // rc = put_json(db, "artists", "{'name':'Edvard Munch'}");
-  // CU_ASSERT_EQUAL_FATAL(rc, 0);
+  ejdb_list_destroy(&list);
 
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  ejdb_list_destroy(&list);
   iwxstr_destroy(xstr);
 }
 

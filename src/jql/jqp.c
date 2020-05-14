@@ -33,7 +33,7 @@ static JQPUNIT *_jqp_unit_op(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_unit_join(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_expr(struct _yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *right);
 static JQPUNIT *_jqp_node(struct _yycontext *yy, JQPUNIT *value);
-static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value);
+static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value, uint8_t flags);
 static void _jqp_set_skip(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_set_limit(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_add_orderby(struct _yycontext *yy, JQPUNIT *unit);
@@ -57,7 +57,7 @@ static JQPUNIT *_jqp_pop_filter_factor_chain(struct _yycontext *yy, JQPUNIT *unt
 static JQPUNIT *_jqp_pop_expr_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_node_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_projfields_chain(struct _yycontext *yy, JQPUNIT *until);
-static JQPUNIT *_jqp_pop_projections(struct _yycontext *yy, JQPUNIT *until);
+static JQPUNIT *_jqp_pop_projection_nodes(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_ordernodes(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p);
 static JQPUNIT *_jqp_pop_joined_projections(struct _yycontext *yy, JQPUNIT *until);
@@ -1317,7 +1317,7 @@ YY_ACTION(void) yy_4_PROJNODES(yycontext *yy, char *yytext, int yyleng)
   yyprintf((stderr, "do yy_4_PROJNODES\n"));
   {
 #line 124
-   __ = _jqp_pop_projections(yy, sn); ;
+   __ = _jqp_pop_projection_nodes(yy, sn); ;
   }
 #undef yythunkpos
 #undef yypos
@@ -1377,7 +1377,7 @@ YY_ACTION(void) yy_1_PROJNODES(yycontext *yy, char *yytext, int yyleng)
   yyprintf((stderr, "do yy_1_PROJNODES\n"));
   {
 #line 123
-   __ = _jqp_projection(yy, a); ;
+   __ = _jqp_projection(yy, a, 0); ;
   }
 #undef yythunkpos
 #undef yypos

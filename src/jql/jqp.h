@@ -193,12 +193,16 @@ typedef struct JQP_EXPR {
 
 typedef struct JQP_PROJECTION {
   jqp_unit_t type;
-  bool exclude;
-  bool has_joins;       // True if projection has collection join nodes.
-  int16_t pos;          // Current matching position, used in jql.c#_jql_project
-  int16_t cnt;          // Number of projection sections, used in jql.c#_jql_project
   struct JQP_STRING *value;
   struct JQP_PROJECTION *next;
+  int16_t pos;          // Current matching position, used in jql.c#_jql_project
+  int16_t cnt;          // Number of projection sections, used in jql.c#_jql_project
+
+#define JQP_PROJECTION_FLAG_EXCLUDE 0x01U
+#define JQP_PROJECTION_FLAG_INCLUDE 0x02U
+#define JQP_PROJECTION_FLAG_JOINS   0x04U
+  uint8_t flags;
+
 } JQP_PROJECTION;
 
 typedef struct JQP_QUERY {
@@ -282,8 +286,10 @@ typedef struct JQP_AUX {
   JBL_NODE apply;
   const char *apply_placeholder;
   const char *first_anchor;
-  bool negate;
   jqp_query_mode_t qmode;
+  bool negate;
+  bool has_keep_projections;
+  bool has_exclude_all_projection;
   JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];
 } JQP_AUX;
 
