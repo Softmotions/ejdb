@@ -740,8 +740,8 @@ in the following form:
 Where
 
 * `field` &dash; JSON field contains primary key of joined document.
-* `<` &dash; The special mark symbol which instructs EJDB engine to replace `document_id_field_name` key by body of joined document.
-* `collection` &dash; name of DB collection with joined documents.
+* `<` &dash; The special mark symbol which instructs EJDB engine to replace `field` key by body of joined document.
+* `collection` &dash; name of DB collection where joined documents located.
 
 A referrer document will be untouched if associated document is not found.
 
