@@ -501,7 +501,7 @@ Here is the simple demonstration of collection joins in our interactive websocke
 
 ```
 
-Not-existed document id in reference:
+Invalid references:
 
 ```
 >  k add paintings {"name":"Mona Lisa2", "year":1490, "origin":"Italy", "artist": 9999}
