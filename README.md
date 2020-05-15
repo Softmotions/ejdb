@@ -756,7 +756,6 @@ Here is the simple demonstration of collection joins in our interactive websocke
 < k     1
 > k add paintings {"name":"Madonna Litta - Madonna And The Child", "year":1490, "origin":"Italy", "artist": 1}
 < k     2
->
 
 # Lists paintings documents
 
@@ -779,7 +778,7 @@ Here is the simple demonstration of collection joins in our interactive websocke
 
 # Strip all document fields except `name` and `artist` join
 
-> k @paintings/* | /artist<artists + /name
+> k @paintings/* | /artist<artists + /name + /artist/*
 < k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
 < k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
 < k
@@ -787,23 +786,10 @@ Here is the simple demonstration of collection joins in our interactive websocke
 
 # Same results as above:
 
-> k @paintings/* | /{name, artist<artists}
+> k @paintings/* | /{name, artist<artists} + /artist/*
 < k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
 < k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
 < k
-
-# Exclude years field from joined artist documents
-
-> k @paintings/* | /artist<artists + /{year,name} - /artist/years
-< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"artist":{"name":"Leonardo Da Vinci"}}
-< k     1       {"name":"Mona Lisa","year":1490,"artist":{"name":"Leonardo Da Vinci"}}
-
-
-# Apply projection on joined document
-
-> k @paintings/* | /artist<artists + /name + /artist/name
-< k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci"}}
-< k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci"}}
 
 ```
 
