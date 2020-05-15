@@ -189,9 +189,9 @@ typedef struct _JBEXEC {
   struct _JBMIDX midx;     /**< Index matching context */
   struct _JBSSC ssc;       /**< Result set sorting context */
 
-  // JQL Projection cache
-  IWSTREE *proj_nodes_cache;
-  IWPOOL *scan_session_pool;
+  // JQL joned nodes cache
+  IWSTREE *proj_joined_nodes_cache;
+  IWPOOL *proj_joined_nodes_pool;
 } JBEXEC;
 
 

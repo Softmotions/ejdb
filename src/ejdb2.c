@@ -753,12 +753,12 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
 }
 
 static void _jb_exec_scan_release(JBEXEC *ctx) {
-  if (ctx->proj_nodes_cache) {
+  if (ctx->proj_joined_nodes_cache) {
     // Destroy projected nodes key
-    iwstree_destroy(ctx->proj_nodes_cache);
+    iwstree_destroy(ctx->proj_joined_nodes_cache);
   }
-  if (ctx->scan_session_pool) {
-    iwpool_destroy(ctx->scan_session_pool);
+  if (ctx->proj_joined_nodes_pool) {
+    iwpool_destroy(ctx->proj_joined_nodes_pool);
   }
   free(ctx->jblbuf);
 }

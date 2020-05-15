@@ -1449,20 +1449,27 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
       // Unable to convert current node value as int number
       return false;
     }
+    IWSTREE *cache = exec_ctx->proj_joined_nodes_cache;
     IWPOOL *pool = exec_ctx->ux->pool;
     if (!pool) {
-      pool = exec_ctx->scan_session_pool;
+      pool = exec_ctx->proj_joined_nodes_pool;
       if (!pool) {
         pool = iwpool_create(512);
         RCGA(pool, finish);
-        exec_ctx->scan_session_pool = pool;
+        exec_ctx->proj_joined_nodes_pool = pool;
+      } else if (cache && iwpool_used_size(pool) > 10 * 1024 * 1024) { // 10Mb
+        exec_ctx->proj_joined_nodes_cache = 0;
+        iwstree_destroy(cache);
+        cache = 0;
+        iwpool_destroy(pool);
+        pool = iwpool_create(1024 * 1024); // 1Mb
+        RCGA(pool, finish);
       }
     }
-    IWSTREE *cache = pctx->exec_ctx->proj_nodes_cache;
     if (!cache) {
       cache = iwstree_create(jb_proj_node_cache_cmp, jb_proj_node_kvfree);
       RCGA(cache, finish);
-      pctx->exec_ctx->proj_nodes_cache = cache;
+      exec_ctx->proj_joined_nodes_cache = cache;
     }
     struct _JBDOCREF ref = {
       .id = id,
