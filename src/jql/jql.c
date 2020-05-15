@@ -1343,8 +1343,9 @@ iwrc jql_get_limit(JQL q, int64_t *out) {
 
 // ----------- JQL Projection
 
-#define PROJ_MARK_PATH    1
-#define PROJ_MARK_KEEP    2
+#define PROJ_MARK_PATH          0x01
+#define PROJ_MARK_KEEP          0x02
+#define PROJ_MARK_FROM_JOIN     0x04
 
 typedef struct _PROJ_CTX {
   JQL q;
@@ -1477,7 +1478,16 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
     };
     nn = iwstree_get(cache, &ref);
     if (!nn) {
-      RCHECK(rc, finish, jb_collection_join_resolver(id, coll, &jbl, exec_ctx));
+      rc = jb_collection_join_resolver(id, coll, &jbl, exec_ctx);
+      if (rc) {
+        if (rc == IW_ERROR_NOT_EXISTS || rc == IWKV_ERROR_NOTFOUND) {
+          // If collection is not exists or record is not found just
+          // keep all untouched
+          rc = 0;
+          ret = false;
+        }
+        goto finish;
+      }
       RCHECK(rc, finish, jbl_to_node(jbl, &nn, true, pool));
       struct _JBDOCREF *key = malloc(sizeof(*key));
       RCGA(key, finish);
@@ -1520,9 +1530,10 @@ static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key,
     if (matched) {
       if (flags & JQP_PROJECTION_FLAG_EXCLUDE) {
         return JBN_VCMD_DELETE;
-      } else if ((flags & JQP_PROJECTION_FLAG_INCLUDE) ||
-                 ((flags & JQP_PROJECTION_FLAG_JOINS) && pctx->q->aux->has_keep_projections))  {
+      } else if (flags & JQP_PROJECTION_FLAG_INCLUDE)  {
         _jql_proj_mark_up(n, PROJ_MARK_KEEP);
+      } else if ((flags & JQP_PROJECTION_FLAG_JOINS) && pctx->q->aux->has_keep_projections) {
+        _jql_proj_mark_up(n, PROJ_MARK_KEEP | PROJ_MARK_FROM_JOIN);
       }
     }
   }
@@ -1535,7 +1546,7 @@ static jbn_visitor_cmd_t _jql_proj_keep_visitor(int lvl, JBL_NODE n, const char 
     return 0;
   }
   if (n->flags & PROJ_MARK_KEEP) {
-    return JBL_VCMD_SKIP_NESTED;
+    return (n->flags & PROJ_MARK_FROM_JOIN) ? JBL_VCMD_OK : JBL_VCMD_SKIP_NESTED;
   }
   return JBN_VCMD_DELETE;
 }

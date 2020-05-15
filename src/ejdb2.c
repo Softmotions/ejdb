@@ -1338,7 +1338,7 @@ finish:
   return rc;
 }
 
-iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp) {
+iwrc jb_get(EJDB db, const char *coll, int64_t id, jb_coll_acquire_t acm, JBL *jblp) {
   if (!id || !jblp) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1348,7 +1348,7 @@ iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp) {
   JBL jbl = 0;
   IWKV_val val = {0};
   IWKV_val key = {.data = &id, .size = sizeof(id)};
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, false, &jbc);
+  iwrc rc = _jb_coll_acquire_keeplock2(db, coll, acm, &jbc);
   RCRET(rc);
   rc = iwkv_get(jbc->cdb, &key, &val);
   RCGO(rc, finish);
@@ -1366,6 +1366,11 @@ finish:
   }
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
+}
+
+
+iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp) {
+  return jb_get(db, coll, id, 0, jblp);
 }
 
 iwrc ejdb_del(EJDB db, const char *coll, int64_t id) {
@@ -1482,7 +1487,7 @@ finish:
 iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, JBEXEC *ctx) {
   assert(out && ctx && coll);
   EJDB db = ctx->jbc->db;
-  return ejdb_get(db, coll, id, out);
+  return jb_get(db, coll, id, JB_COLL_ACQUIRE_EXISTING, out);
 }
 
 int jb_proj_node_cache_cmp(const void *v1, const void *v2) {

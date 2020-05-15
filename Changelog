@@ -1,6 +1,12 @@
+ejdb2 (2.0.48) UNRELEASED; urgency=medium
+
+  * Implemented collection JOINs (#280)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 15 May 2020 12:42:10 +0700
+
 ejdb2 (2.0.47) testing; urgency=medium
 
-  * Added ability to specify constraints on internal primary key in query #281
+  * Added ability to specify constraints on internal primary key in query (#281)
   * Added `jbn_copy_paths` (jbl.h)
 
  -- Anton Adamansky <adamansky@gmail.com>  Fri, 08 May 2020 23:23:53 +0700

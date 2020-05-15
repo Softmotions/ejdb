@@ -70,7 +70,6 @@ void ejdb_test4_1(void) {
   jql_destroy(&q);
   id = 0;
 
-
   rc = jql_create(&q, "paintings", "/* | /artist_ref<artists");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = ejdb_list4(db, q, 0, 0, &list);
@@ -107,7 +106,7 @@ void ejdb_test4_1(void) {
     iwxstr_clear(xstr);
     rc = jbn_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
-    fprintf(stderr, "%s\n", iwxstr_ptr(xstr));
+    //fprintf(stderr, "%s\n", iwxstr_ptr(xstr));
 
     rc = jbn_at(doc->node, "/name", &n);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
