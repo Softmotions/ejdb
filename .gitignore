@@ -1,3 +1,5 @@
+/t.*
+
 .DS_Store
 .codelite/
 node_modules/

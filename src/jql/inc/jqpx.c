@@ -511,15 +511,53 @@ static JQPUNIT *_jqp_pop_expr_chain(yycontext *yy, JQPUNIT *until) {
   return expr;
 }
 
-static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value) {
+static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value, uint8_t flags) {
   if (value->type != JQP_STRING_TYPE) {
     iwlog_error("Unexpected type: %d", value->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
-  JQPUNIT *projection = _jqp_unit(yy);
-  projection->type = JQP_PROJECTION_TYPE;
-  projection->projection.value = &value->string;
-  return projection;
+  JQPUNIT *unit = _jqp_unit(yy);
+  unit->type = JQP_PROJECTION_TYPE;
+  unit->projection.value = &value->string;
+  unit->projection.flags |= flags;
+  return unit;
+}
+
+static JQPUNIT *_jqp_pop_projection_nodes(yycontext *yy, JQPUNIT *until) {
+  JQPUNIT *first = 0;
+  JQP_AUX *aux = yy->aux;
+  uint8_t flags = 0;
+
+  while (aux->stack && aux->stack->type == STACK_UNIT) {
+    JQPUNIT *unit = aux->stack->unit;
+    if (unit->type != JQP_STRING_TYPE) {
+      iwlog_error("Unexpected type: %d", unit->type);
+      JQRC(yy, JQL_ERROR_QUERY_PARSE);
+    }
+    if (first) {
+      unit->string.next = &first->string;
+    } else if (unit->string.flavour & JQP_STR_PROJFIELD) {
+      for (JQP_STRING *s = &unit->string; s; s = s->subnext) {
+        if (s->flavour & JQP_STR_PROJOIN) {
+          flags |= JQP_PROJECTION_FLAG_JOINS;
+        } else {
+          flags |= JQP_PROJECTION_FLAG_INCLUDE;
+        }
+      }
+    } else if (strchr(unit->string.value, '<')) { // JOIN Projection?
+      unit->string.flavour |= JQP_STR_PROJOIN;
+      flags |= JQP_PROJECTION_FLAG_JOINS;
+    }
+    first = unit;
+    _jqp_pop(yy);
+    if (unit == until) {
+      break;
+    }
+  }
+  if (!flags) {
+    flags |= JQP_PROJECTION_FLAG_INCLUDE;
+  }
+  return _jqp_projection(yy, first, flags);
 }
 
 static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p) {
@@ -529,7 +567,8 @@ static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p) {
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   if (aux->stack->str[0] == '-') {
-    p->projection.exclude = true;
+    p->projection.flags &= ~JQP_PROJECTION_FLAG_INCLUDE;
+    p->projection.flags |= JQP_PROJECTION_FLAG_EXCLUDE;
   }
   _jqp_pop(yy);
   _jqp_unit_push(yy, p);
@@ -557,6 +596,31 @@ static JQPUNIT *_jqp_pop_joined_projections(yycontext *yy, JQPUNIT *until) {
   return first;
 }
 
+static JQPUNIT *_jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
+  JQPUNIT *field = 0;
+  JQP_AUX *aux = yy->aux;
+  while (aux->stack && aux->stack->type == STACK_UNIT) {
+    JQPUNIT *unit = aux->stack->unit;
+    if (unit->type != JQP_STRING_TYPE) {
+      iwlog_error("Unexpected type: %d", unit->type);
+      JQRC(yy, JQL_ERROR_QUERY_PARSE);
+    }
+    unit->string.flavour |= JQP_STR_PROJFIELD;
+    if (field) {
+      unit->string.subnext = &field->string;
+    }
+    if (strchr(unit->string.value, '<')) { // JOIN Projection?
+      unit->string.flavour |= JQP_STR_PROJOIN;
+    }
+    field = unit;
+    _jqp_pop(yy);
+    if (unit == until) {
+      break;
+    }
+  }
+  return field;
+}
+
 static JQPUNIT *_jqp_pop_ordernodes(yycontext *yy, JQPUNIT *until) {
   JQPUNIT *first = 0;
   JQP_AUX *aux = yy->aux;
@@ -576,49 +640,6 @@ static JQPUNIT *_jqp_pop_ordernodes(yycontext *yy, JQPUNIT *until) {
     }
   }
   return until;
-}
-
-static JQPUNIT *_jqp_pop_projections(yycontext *yy, JQPUNIT *until) {
-  JQPUNIT *first = 0;
-  JQP_AUX *aux = yy->aux;
-  while (aux->stack && aux->stack->type == STACK_UNIT) {
-    JQPUNIT *unit = aux->stack->unit;
-    if (unit->type != JQP_STRING_TYPE) {
-      iwlog_error("Unexpected type: %d", unit->type);
-      JQRC(yy, JQL_ERROR_QUERY_PARSE);
-    }
-    if (first) {
-      unit->string.next = &first->string;
-    }
-    first = unit;
-    _jqp_pop(yy);
-    if (unit == until) {
-      break;
-    }
-  }
-  return _jqp_projection(yy, first);
-}
-
-static JQPUNIT *_jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
-  JQPUNIT *field = 0;
-  JQP_AUX *aux = yy->aux;
-  while (aux->stack && aux->stack->type == STACK_UNIT) {
-    JQPUNIT *unit = aux->stack->unit;
-    if (unit->type != JQP_STRING_TYPE) {
-      iwlog_error("Unexpected type: %d", unit->type);
-      JQRC(yy, JQL_ERROR_QUERY_PARSE);
-    }
-    unit->string.flavour |= JQP_STR_PROJFIELD;
-    if (field) {
-      unit->string.subnext = &field->string;
-    }
-    field = unit;
-    _jqp_pop(yy);
-    if (unit == until) {
-      break;
-    }
-  }
-  return field;
 }
 
 static JQPUNIT *_jqp_node(yycontext *yy, JQPUNIT *value) {
@@ -829,7 +850,20 @@ static void _jqp_set_projection(yycontext *yy, JQPUNIT *unit) {
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   if (unit->type == JQP_PROJECTION_TYPE) {
-    aux->projection = &unit->projection;
+    JQP_PROJECTION *proj = &unit->projection;
+    for (JQP_PROJECTION *p = proj; p; p = p->next) {
+      if (p->value->flavour & JQP_STR_PROJALIAS) {
+        if (p->flags & JQP_PROJECTION_FLAG_EXCLUDE) {
+          aux->has_exclude_all_projection = true;
+          break;
+        } else {
+          proj = p->next;
+        }
+      } else if (!aux->has_keep_projections && (p->flags & JQP_PROJECTION_FLAG_INCLUDE)) {
+        aux->has_keep_projections = true;
+      }
+    }
+    aux->projection = proj;
   } else {
     iwlog_error("Unexpected type: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -1011,11 +1045,13 @@ static iwrc _jqp_print_projection(const JQP_PROJECTION *p, jbl_json_printer pt, 
   for (int i = 0; p; p = p->next, ++i) {
     PT(0, 0, ' ', 1);
     if (i > 0) {
-      if (p->exclude) {
+      if (p->flags & JQP_PROJECTION_FLAG_EXCLUDE) {
         PT("- ", 2, 0, 0);
       } else {
         PT("+ ", 2, 0, 0);
       }
+    } else if (p->flags & JQP_PROJECTION_FLAG_EXCLUDE) {
+      PT("all - ", 6, 0, 0);
     }
     rc = _jqp_print_projection_nodes(p->value, pt, op);
     RCRET(rc);

@@ -379,7 +379,7 @@ Example:
 ```
 PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 
-  PROJECTION = 'all' | json_path
+  PROJECTION = 'all' | json_path | join_clause
 ```
 
 Projection allows to get only subset of JSON document excluding not needed data.
@@ -431,6 +431,98 @@ Get `age` and the first pet in `pets` array.
 < k     3       {"age":35,"pets":[{"name":"Sonic","kind":"mouse","likes":[]}]}
 < k     1       {"age":28,"pets":[{"name":"Rexy rex","kind":"dog","likes":["bones","jumping","toys"]}]}
 < k
+```
+
+## JQL collection joins
+
+Collection joins transforms document references to real document objects embedded in
+resulting document during execution of query.
+
+Documents can be joined only by their primary keys. Reference keys should be stored
+in referrer document as number or string field. Joins can be specified as part of projection expression
+in the following form:
+
+```
+/.../field<collection
+```
+Where
+
+* `field` &dash; JSON field contains primary key of joined document.
+* `<` &dash; The special mark symbol which instructs EJDB engine to replace `field` key by body of joined document.
+* `collection` &dash; name of DB collection where joined documents located.
+
+A referrer document will be untouched if associated document is not found.
+
+Here is the simple demonstration of collection joins in our interactive websocket shell:
+
+```
+> k add artists {"name":"Leonardo Da Vinci", "years":[1452,1519]}
+< k     1
+> k add paintings {"name":"Mona Lisa", "year":1490, "origin":"Italy", "artist": 1}
+< k     1
+> k add paintings {"name":"Madonna Litta - Madonna And The Child", "year":1490, "origin":"Italy", "artist": 1}
+< k     2
+>
+
+# Lists paintings documents
+
+> k @paintings/*
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"origin":"Italy","artist":1}
+< k     1       {"name":"Mona Lisa","year":1490,"origin":"Italy","artist":1}
+< k
+>
+
+# Do simple join with artists collection
+
+> k @paintings/* | /artist<artists
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"origin":"Italy",
+                  "artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+
+< k     1       {"name":"Mona Lisa","year":1490,"origin":"Italy",
+                  "artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k
+
+
+# Strip all document fields except `name` and `artist` join
+
+> k @paintings/* | /artist<artists + /name
+< k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k
+>
+
+# Same results as above:
+
+> k @paintings/* | /{name, artist<artists}
+< k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k
+
+# Exclude years field from joined artist documents
+
+> k @paintings/* | /artist<artists + /{year,name} - /artist/years
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"artist":{"name":"Leonardo Da Vinci"}}
+< k     1       {"name":"Mona Lisa","year":1490,"artist":{"name":"Leonardo Da Vinci"}}
+
+
+# Apply projection on joined document
+
+> k @paintings/* | /artist<artists + /name + /artist/name
+< k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci"}}
+< k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci"}}
+
+```
+
+Not-existed document id in reference:
+
+```
+>  k add paintings {"name":"Mona Lisa2", "year":1490, "origin":"Italy", "artist": 9999}
+< k     3
+> k @paintings/* |  /artist<artists
+< k     3       {"name":"Mona Lisa2","year":1490,"origin":"Italy","artist":9999}
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"origin":"Italy","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k     1       {"name":"Mona Lisa","year":1490,"origin":"Italy","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+
 ```
 
 ## JQL results ordering

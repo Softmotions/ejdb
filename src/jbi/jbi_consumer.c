@@ -67,7 +67,7 @@ start: {
           goto finish;
         }
       }
-      rc = jbl_to_node(&jbl, &root, pool);
+      rc = jbl_to_node(&jbl, &root, true, pool);
       RCGO(rc, finish);
       doc.node = root;
       if (aux->qmode & JQP_QRY_APPLY_DEL) {
@@ -91,7 +91,7 @@ start: {
       }
       RCGO(rc, finish);
       if (aux->projection) {
-        rc = jql_project(q, root);
+        rc = jql_project(q, root, pool, ctx);
         RCGO(rc, finish);
       }
     } else if (aux->qmode & JQP_QRY_APPLY_DEL) {

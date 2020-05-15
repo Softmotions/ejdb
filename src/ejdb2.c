@@ -514,11 +514,11 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
       goto finish;
     }
     JBL_NODE jbvprev_node, jbv_node;
-    rc = jbl_to_node(&jbv, &jbv_node, pool);
+    rc = jbl_to_node(&jbv, &jbv_node, false, pool);
     RCGO(rc, finish);
     jbv.node = jbv_node;
 
-    rc = jbl_to_node(&jbvprev, &jbvprev_node, pool);
+    rc = jbl_to_node(&jbvprev, &jbvprev_node, false, pool);
     RCGO(rc, finish);
     jbvprev.node = jbvprev_node;
 
@@ -539,7 +539,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
           RCGO(rc, finish);
         }
       }
-      rc = jbl_to_node(&jbvprev, &n, pool);
+      rc = jbl_to_node(&jbvprev, &n, false, pool);
       RCGO(rc, finish);
       for (n = n->child; n; n = n->next) {
         jbi_node_fill_ikey(idx, n, &key, numbuf);
@@ -579,7 +579,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
           RCGO(rc, finish);
         }
       }
-      rc = jbl_to_node(&jbv, &n, pool);
+      rc = jbl_to_node(&jbv, &n, false, pool);
       RCGO(rc, finish);
       for (n = n->child; n; n = n->next) {
         jbi_node_fill_ikey(idx, n, &key, numbuf);
@@ -755,6 +755,13 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
 }
 
 static void _jb_exec_scan_release(JBEXEC *ctx) {
+  if (ctx->proj_joined_nodes_cache) {
+    // Destroy projected nodes key
+    iwstree_destroy(ctx->proj_joined_nodes_cache);
+  }
+  if (ctx->proj_joined_nodes_pool) {
+    iwpool_destroy(ctx->proj_joined_nodes_pool);
+  }
   free(ctx->jblbuf);
 }
 
@@ -925,6 +932,25 @@ static iwrc _jb_count(EJDB db, JQL q, int64_t *count, int64_t limit, IWXSTR *log
 
 iwrc ejdb_count(EJDB db, JQL q, int64_t *count, int64_t limit) {
   return _jb_count(db, q, count, limit, 0);
+}
+
+iwrc ejdb_count2(EJDB db, const char *coll, const char *q, int64_t *count, int64_t limit) {
+  JQL jql;
+  iwrc rc = jql_create(&jql, coll, q);
+  RCRET(rc);
+  rc = _jb_count(db, jql, count, limit, 0);
+  jql_destroy(&jql);
+  return rc;
+}
+
+iwrc ejdb_update(EJDB db, JQL q) {
+  int64_t count;
+  return ejdb_count(db, q, &count, 0);
+}
+
+iwrc ejdb_update2(EJDB db, const char *coll, const char *q) {
+  int64_t count;
+  return ejdb_count2(db, coll, q, &count, 0);
 }
 
 iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWPOOL *pool) {
@@ -1208,7 +1234,7 @@ static iwrc _jb_patch(EJDB db, const char *coll, const char *patchjson, int64_t 
     goto finish;
   }
 
-  rc = jbl_to_node(&sjbl, &root, pool);
+  rc = jbl_to_node(&sjbl, &root, false, pool);
   RCGO(rc, finish);
 
   rc = jbn_from_json(patchjson, &patch, pool);
@@ -1314,7 +1340,7 @@ finish:
   return rc;
 }
 
-iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp) {
+iwrc jb_get(EJDB db, const char *coll, int64_t id, jb_coll_acquire_t acm, JBL *jblp) {
   if (!id || !jblp) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1324,7 +1350,7 @@ iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp) {
   JBL jbl = 0;
   IWKV_val val = {0};
   IWKV_val key = {.data = &id, .size = sizeof(id)};
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, false, &jbc);
+  iwrc rc = _jb_coll_acquire_keeplock2(db, coll, acm, &jbc);
   RCRET(rc);
   rc = iwkv_get(jbc->cdb, &key, &val);
   RCGO(rc, finish);
@@ -1342,6 +1368,11 @@ finish:
   }
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
+}
+
+
+iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp) {
+  return jb_get(db, coll, id, 0, jblp);
 }
 
 iwrc ejdb_del(EJDB db, const char *coll, int64_t id) {
@@ -1453,6 +1484,26 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
 finish:
   API_UNLOCK(db, rci, rc);
   return rc;
+}
+
+iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, JBEXEC *ctx) {
+  assert(out && ctx && coll);
+  EJDB db = ctx->jbc->db;
+  return jb_get(db, coll, id, JB_COLL_ACQUIRE_EXISTING, out);
+}
+
+int jb_proj_node_cache_cmp(const void *v1, const void *v2) {
+  const struct _JBDOCREF *r1 = v1;
+  const struct _JBDOCREF *r2 = v2;
+  int ret = r1->id > r2->id ? 1 : r1->id < r2->id ? -1 : 0;
+  if (!ret) {
+    return strcmp(r1->coll, r2->coll);;
+  }
+  return ret;
+}
+
+void jb_proj_node_kvfree(void *key, void *val) {
+  free(key);
 }
 
 iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {

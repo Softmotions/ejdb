@@ -18,6 +18,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
   * [rfc6902](https://tools.ietf.org/html/rfc6902) JSON Patch
   * [rfc7386](https://tools.ietf.org/html/rfc7386) JSON Merge patch
   * [rfc6901](https://tools.ietf.org/html/rfc6901) JSON Path
+* [Support of collection joins](#jql-collection-joins)
 * Powered by [iowow.io](http://iowow.io) - The persistent key/value storage engine
 * Provides HTTP REST/Websockets network endpoints with help of [facil.io](http://facil.io)
 * JSON documents are stored in using fast and compact [binn](https://github.com/liteserver/binn) binary format
@@ -35,6 +36,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
   * [Quick into](#jql-quick-introduction)
   * [Data modification](#jql-data-modification)
   * [Projections](#jql-projections)
+  * [Collection joins](#jql-collection-joins)
   * [Sorting](#jql-sorting)
   * [Query options](#jql-options)
 * [Indexes and performance](#jql-indexes-and-performance-tips)

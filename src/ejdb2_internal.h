@@ -39,6 +39,7 @@
 #include <ejdb2/iowow/iwxstr.h>
 #include <ejdb2/iowow/iwexfile.h>
 #include <ejdb2/iowow/iwutils.h>
+#include <ejdb2/iowow/iwstree.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
@@ -112,6 +113,12 @@ struct _JBIDX {
   iwdb_flags_t idbf;        /**< Index database flags */
 };
 
+/** Pair: collection name, document id */
+struct _JBDOCREF {
+  int64_t id;
+  const char *coll;
+};
+
 // -V:KHASH_MAP_INIT_STR:522
 KHASH_MAP_INIT_STR(JBCOLLM, JBCOLL)
 
@@ -173,7 +180,7 @@ typedef struct _JBEXEC {
   JBCOLL jbc;              /**< Collection */
 
   int64_t istep;
-  iwrc (*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
+  iwrc(*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
   uint8_t *jblbuf;         /**< Buffer used to keep currently processed document */
   size_t jblbufsz;         /**< Size of jblbuf allocated memory */
   bool sorting;            /**< Resultset sorting needed */
@@ -181,6 +188,10 @@ typedef struct _JBEXEC {
   IWKV_cursor_op cursor_step;         /**< Next index cursor step */
   struct _JBMIDX midx;     /**< Index matching context */
   struct _JBSSC ssc;       /**< Result set sorting context */
+
+  // JQL joned nodes cache
+  IWSTREE *proj_joined_nodes_cache;
+  IWPOOL *proj_joined_nodes_pool;
 } JBEXEC;
 
 
@@ -206,9 +217,14 @@ iwrc jbi_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
 iwrc jbi_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
 bool jbi_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR *expr, iwrc *rcp);
 
+iwrc jb_get(EJDB db, const char *coll, int64_t id, jb_coll_acquire_t acm, JBL *jblp);
 iwrc jb_put(JBCOLL jbc, JBL jbl, int64_t id);
 iwrc jb_del(JBCOLL jbc, JBL jbl, int64_t id);
 iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
 iwrc jb_cursor_del(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
+
+iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, JBEXEC *ctx);
+int  jb_proj_node_cache_cmp(const void *v1, const void *v2);
+void jb_proj_node_kvfree(void *key, void *val);
 
 #endif

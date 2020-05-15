@@ -1,5 +1,5 @@
-#include "ejdb2.h"
 #include "jqp.h"
+#include "ejdb2_internal.h"
 #include <ejdb2/iowow/iwxstr.h>
 #include <ejdb2/iowow/iwutils.h>
 #include <CUnit/Basic.h>
@@ -44,15 +44,16 @@ void _jql_test1_1(int num, iwrc expected) {
   rc = jqp_print_query(aux->query, jbl_xstr_json_printer, res);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  //  fprintf(stderr, "%s\n", iwxstr_ptr(res));
-  //  fprintf(stderr, "%s\n", path_expected);
-  //  fprintf(stderr, "%s\n", edata);
+  // fprintf(stderr, "%s\n", iwxstr_ptr(res));
+  // fprintf(stderr, "%s\n", path_expected);
+  // fprintf(stderr, "%s\n", edata);
+
   //  fprintf(stderr, "%d\n", strcmp(edata, iwxstr_ptr(res)));
   //  FILE *out = fopen("out.txt", "w+");
   //  fprintf(out, "%s", iwxstr_ptr(res));
   //  fclose(out);
 
-  CU_ASSERT_EQUAL(strcmp(edata, iwxstr_ptr(res)), 0);
+  CU_ASSERT_EQUAL_FATAL(strcmp(edata, iwxstr_ptr(res)), 0);
 
 finish:
   if (edata) {
@@ -197,9 +198,11 @@ void jql_test1_2() {
   _jql_test1_2(doc, "/**/[[* in [\"zarr\"]] in [[42]]]", true);
 }
 
-static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
+static void _jql_test1_3(bool has_apply_or_project, const char *jsondata, const char *q, const char *eq) {
   JBL jbl;
   JQL jql;
+  JBL_NODE out = 0, eqn = 0;
+  IWPOOL *pool = iwpool_create(512);
 
   char *json = iwu_replace_char(strdup(jsondata), '\'', '"');
   CU_ASSERT_PTR_NOT_NULL_FATAL(json);
@@ -217,11 +220,14 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL_FATAL(m, true);
 
-  CU_ASSERT_TRUE_FATAL(jql_has_apply(jql) || jql_has_projection(jql));
-  JBL_NODE out = 0, eqn = 0;
-  IWPOOL *pool = iwpool_create(512);
+  bool hapl = jql_has_apply(jql) || jql_has_projection(jql);
+  CU_ASSERT_EQUAL_FATAL(hapl, has_apply_or_project);
+  if (!hapl) {
+    goto finish;
+  }
+
   CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
-  rc = jql_apply_and_project(jql, jbl, &out, pool);
+  rc = jql_apply_and_project(jql, jbl, &out, 0, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL_FATAL(out);
 
@@ -232,6 +238,7 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_EQUAL_FATAL(cmp, 0);
 
+finish:
   jql_destroy(&jql);
   jbl_destroy(&jbl);
   free(json);
@@ -242,11 +249,11 @@ static void _jql_test1_3(const char *jsondata, const char *q, const char *eq) {
 
 void jql_test1_3() {
 
-  _jql_test1_3("{'foo':{'bar':22}}",
+  _jql_test1_3(true, "{'foo':{'bar':22}}",
                "/foo/bar | apply [{'op':'add', 'path':'/baz', 'value':'qux'}]",
                "{'foo':{'bar':22},'baz':'qux'}");
 
-  _jql_test1_3("{'foo':{'bar':22}}",
+  _jql_test1_3(true, "{'foo':{'bar':22}}",
                "/foo/bar | apply {'baz':'qux'}",
                "{'foo':{'bar':22},'baz':'qux'}");
 }
@@ -255,22 +262,22 @@ void jql_test1_3() {
 // Test projections
 void jql_test_1_4() {
 
-  _jql_test1_3("{'foo':{'bar':22}}", "/** | all", "{'foo':{'bar':22}}");
-  _jql_test1_3("{'foo':{'bar':22}}", "/** | all+all + all", "{'foo':{'bar':22}}");
-  _jql_test1_3("{'foo':{'bar':22}}", "/** | all - all", "{}");
-  _jql_test1_3("{'foo':{'bar':22}}", "/** | all-all +all", "{}");
-  _jql_test1_3("{'foo':{'bar':22}}", "/** | /foo/bar", "{'foo':{'bar':22}}");
-  _jql_test1_3("{'foo':{'bar':22, 'baz':'gaz'}}", "/** | /foo/bar", "{'foo':{'bar':22}}");
-  _jql_test1_3("{'foo':{'bar':22, 'baz':'gaz'}}", "/** | /foo/{daz,bar}", "{'foo':{'bar':22}}");
-  _jql_test1_3("{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | /foo/bar + /foo/baz/zaz",
+  _jql_test1_3(false, "{'foo':{'bar':22}}", "/** | all", "{'foo':{'bar':22}}");
+  _jql_test1_3(false, "{'foo':{'bar':22}}", "/** | all+all + all", "{'foo':{'bar':22}}");
+  _jql_test1_3(true, "{'foo':{'bar':22}}", "/** | all - all", "{}");
+  _jql_test1_3(true, "{'foo':{'bar':22}}", "/** | all-all +all", "{}");
+  _jql_test1_3(true, "{'foo':{'bar':22}}", "/** | /foo/bar", "{'foo':{'bar':22}}");
+  _jql_test1_3(true, "{'foo':{'bar':22, 'baz':'gaz'}}", "/** | /foo/bar", "{'foo':{'bar':22}}");
+  _jql_test1_3(true, "{'foo':{'bar':22, 'baz':'gaz'}}", "/** | /foo/{daz,bar}", "{'foo':{'bar':22}}");
+  _jql_test1_3(true, "{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | /foo/bar + /foo/baz/zaz",
                "{'foo':{'bar':22, 'baz':{'zaz':555}}}");
-  _jql_test1_3("{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | /foo/bar + /foo/baz/zaz - /*/bar",
+  _jql_test1_3(true, "{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | /foo/bar + /foo/baz/zaz - /*/bar",
                "{'foo':{'baz':{'zaz':555}}}");
-  _jql_test1_3("{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | all + /foo/bar + /foo/baz/zaz - /*/bar",
+  _jql_test1_3(true, "{'foo':{'bar':22, 'baz':{'gaz':444, 'zaz':555}}}", "/** | all + /foo/bar + /foo/baz/zaz - /*/bar",
                "{'foo':{'baz':{'zaz':555}}}");
-  _jql_test1_3("{'foo':{'bar':22}}", "/** | /zzz", "{}");
-  _jql_test1_3("{'foo':{'bar':22}}", "/** | /fooo", "{}");
-  _jql_test1_3("{'foo':{'bar':22},'name':'test'}", "/** | all - /name", "{'foo':{'bar':22}}");
+  _jql_test1_3(true, "{'foo':{'bar':22}}", "/** | /zzz", "{}");
+  _jql_test1_3(true, "{'foo':{'bar':22}}", "/** | /fooo", "{}");
+  _jql_test1_3(true, "{'foo':{'bar':22},'name':'test'}", "/** | all - /name", "{'foo':{'bar':22}}");
 }
 
 

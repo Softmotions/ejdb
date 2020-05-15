@@ -830,6 +830,10 @@ void jbl_test1_11(void) {
   iwxstr_destroy(xstr);
 }
 
+void jbl_test1_12(void) {
+
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();

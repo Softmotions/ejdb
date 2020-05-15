@@ -74,7 +74,7 @@ iwrc jbl_from_buf_keep_onstack2(JBL jbl, void *buf);
 iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_string(const char *str, int len, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
-iwrc _jbl_node_from_binn(const binn *bn, JBL_NODE *node, IWPOOL *pool);
+iwrc _jbl_node_from_binn(const binn *bn, JBL_NODE *node, bool clone_strings, IWPOOL *pool);
 iwrc _jbl_binn_from_node(binn *res, JBL_NODE node);
 iwrc _jbl_from_node(JBL jbl, JBL_NODE node);
 bool _jbl_at(JBL jbl, JBL_PTR jp, JBL res);

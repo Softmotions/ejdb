@@ -49,6 +49,8 @@ typedef struct {
 
 JQVAL *jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp);
 
+bool jql_jqval_as_int(JQVAL *jqval, int64_t *out);
+
 jqval_type_t jql_binn_to_jqval(binn *vbinn, JQVAL *qval);
 
 void jql_node_to_jqval(JBL_NODE jn, JQVAL *qv);
