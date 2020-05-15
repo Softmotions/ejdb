@@ -435,7 +435,7 @@ Get `age` and the first pet in `pets` array.
 
 ## JQL collection joins
 
-Join materializes reference to document to a real document objects which will replace reference.
+Join materializes reference to document to a real document objects which will replace reference itself.
 
 Documents are joined by their primary keys only.
 
