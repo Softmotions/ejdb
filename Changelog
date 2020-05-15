@@ -1,8 +1,8 @@
-ejdb2 (2.0.48) UNRELEASED; urgency=medium
+ejdb2 (2.0.48) testing; urgency=medium
 
   * Implemented collection JOINs (#280)
 
- -- Anton Adamansky <adamansky@gmail.com>  Fri, 15 May 2020 12:42:10 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 15 May 2020 14:22:08 +0700
 
 ejdb2 (2.0.47) testing; urgency=medium
 
