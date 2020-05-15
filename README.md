@@ -727,11 +727,13 @@ Get `age` and the first pet in `pets` array.
 
 ## JQL collection joins
 
-Collection joins transforms document references to real document objects embedded in
-resulting document during execution of query.
+Join materializes reference to document to a real document objects which will replace reference itself.
 
-Documents can be joined only by their primary keys. Reference keys should be stored
-in referrer document as number or string field. Joins can be specified as part of projection expression
+Documents are joined by their primary keys only.
+
+Reference keys should be stored in referrer document as number or string field.
+
+Joins can be specified as part of projection expression
 in the following form:
 
 ```
