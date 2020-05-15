@@ -1,3 +1,7 @@
+ejdb_dart (1.0.55)
+
+  * Upgraded to ejdb v2.0.48 (Support of collection Joins)
+
 ejdb_dart (1.0.54)
 
   * Upgraded to ejdb v2.0.47
