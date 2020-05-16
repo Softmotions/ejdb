@@ -1,8 +1,8 @@
-ejdb2 (2.0.49) UNRELEASED; urgency=medium
+ejdb2 (2.0.49) testing; urgency=medium
 
   * Added ability to specify array of primary key values in `/=:?` query clause.
 
- -- Anton Adamansky <adamansky@gmail.com>  Sun, 17 May 2020 01:18:43 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 17 May 2020 01:21:02 +0700
 
 ejdb2 (2.0.48) testing; urgency=medium
 
