@@ -204,9 +204,16 @@ Element at index `1` exists in `likes` array at any `likes` nesting level
 consider only JQL queries.**
 
 
-### Get document by primary key
+### Get documents by primary key
 
-Here is the special query construction used: `/=:?` or `@collection/=:?` for example:
+In order to get documents by primary key the following options are available:
+
+1. Use API call `ejdb_get()`
+    ```ts
+     const doc = await db.get('users', 112);
+    ```
+
+1. Use the special query construction: `/=:?` or `@collection/=:?`
 
 Get document from `users` collection with primary key `112`
 ```
@@ -221,6 +228,14 @@ Update tags array for document in `jobs` collection (TypeScript):
     .completionPromise();
 ```
 
+Array of primary keys can also be used for matching:
+
+```ts
+ await db.createQuery('@jobs/ = :?| apply :? | count')
+    .setJSON(0, [23, 1, 2])
+    .setJSON(1, { tags })
+    .completionPromise();
+```
 
 ### Matching JSON entry values
 
