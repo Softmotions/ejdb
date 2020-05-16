@@ -1,3 +1,7 @@
+ejdb2_react_native (1.0.23)
+
+  * Upgraded to ejdb v2.0.49
+
 ejdb2_react_native (1.0.22)
 
   * Upgraded to ejdb v2.0.48 (Support of collection Joins)

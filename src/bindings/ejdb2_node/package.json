@@ -1,6 +1,6 @@
 {
   "name": "ejdb2_node",
-  "version": "1.0.37",
+  "version": "1.0.38",
   "repository": "https://github.com/Softmotions/ejdb.git",
   "author": "Anton Adamansky <adamansky@gmail.com>",
   "description": "EJDB2 Node.js native binding",
