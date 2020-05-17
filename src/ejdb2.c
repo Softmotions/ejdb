@@ -1352,6 +1352,7 @@ iwrc jb_get(EJDB db, const char *coll, int64_t id, jb_coll_acquire_t acm, JBL *j
   IWKV_val key = {.data = &id, .size = sizeof(id)};
   iwrc rc = _jb_coll_acquire_keeplock2(db, coll, acm, &jbc);
   RCRET(rc);
+
   rc = iwkv_get(jbc->cdb, &key, &val);
   RCGO(rc, finish);
   rc = jbl_from_buf_keep(&jbl, val.data, val.size, false);
@@ -1372,7 +1373,7 @@ finish:
 
 
 iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp) {
-  return jb_get(db, coll, id, 0, jblp);
+  return jb_get(db, coll, id, JB_COLL_ACQUIRE_EXISTING, jblp);
 }
 
 iwrc ejdb_del(EJDB db, const char *coll, int64_t id) {
@@ -1381,7 +1382,7 @@ iwrc ejdb_del(EJDB db, const char *coll, int64_t id) {
   struct _JBL jbl;
   IWKV_val val = {0};
   IWKV_val key = {.data = &id, .size = sizeof(id)};
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  iwrc rc = _jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE | JB_COLL_ACQUIRE_EXISTING, &jbc);
   RCRET(rc);
 
   rc = iwkv_get(jbc->cdb, &key, &val);

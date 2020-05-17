@@ -496,9 +496,16 @@ Element at index `1` exists in `likes` array at any `likes` nesting level
 consider only JQL queries.**
 
 
-### Get document by primary key
+### Get documents by primary key
 
-Here is the special query construction used: `/=:?` or `@collection/=:?` for example:
+In order to get documents by primary key the following options are available:
+
+1. Use API call `ejdb_get()`
+    ```ts
+     const doc = await db.get('users', 112);
+    ```
+
+1. Use the special query construction: `/=:?` or `@collection/=:?`
 
 Get document from `users` collection with primary key `112`
 ```
@@ -513,6 +520,14 @@ Update tags array for document in `jobs` collection (TypeScript):
     .completionPromise();
 ```
 
+Array of primary keys can also be used for matching:
+
+```ts
+ await db.createQuery('@jobs/ = :?| apply :? | count')
+    .setJSON(0, [23, 1, 2])
+    .setJSON(1, { tags })
+    .completionPromise();
+```
 
 ### Matching JSON entry values
 
@@ -727,7 +742,7 @@ Get `age` and the first pet in `pets` array.
 
 ## JQL collection joins
 
-Join materializes reference to document to a real document objects which will replace reference itself.
+Join materializes reference to document to a real document objects which will replace reference inplace.
 
 Documents are joined by their primary keys only.
 
@@ -756,7 +771,6 @@ Here is the simple demonstration of collection joins in our interactive websocke
 < k     1
 > k add paintings {"name":"Madonna Litta - Madonna And The Child", "year":1490, "origin":"Italy", "artist": 1}
 < k     2
->
 
 # Lists paintings documents
 
@@ -779,7 +793,7 @@ Here is the simple demonstration of collection joins in our interactive websocke
 
 # Strip all document fields except `name` and `artist` join
 
-> k @paintings/* | /artist<artists + /name
+> k @paintings/* | /artist<artists + /name + /artist/*
 < k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
 < k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
 < k
@@ -787,27 +801,14 @@ Here is the simple demonstration of collection joins in our interactive websocke
 
 # Same results as above:
 
-> k @paintings/* | /{name, artist<artists}
+> k @paintings/* | /{name, artist<artists} + /artist/*
 < k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
 < k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
 < k
 
-# Exclude years field from joined artist documents
-
-> k @paintings/* | /artist<artists + /{year,name} - /artist/years
-< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"artist":{"name":"Leonardo Da Vinci"}}
-< k     1       {"name":"Mona Lisa","year":1490,"artist":{"name":"Leonardo Da Vinci"}}
-
-
-# Apply projection on joined document
-
-> k @paintings/* | /artist<artists + /name + /artist/name
-< k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci"}}
-< k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci"}}
-
 ```
 
-Not-existed document id in reference:
+Invalid references:
 
 ```
 >  k add paintings {"name":"Mona Lisa2", "year":1490, "origin":"Italy", "artist": 9999}

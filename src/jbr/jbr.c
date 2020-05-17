@@ -295,6 +295,7 @@ static void _jbr_on_patch(JBRCTX *rctx) {
   iwrc_strip_code(&rc);
   switch (rc) {
     case IWKV_ERROR_NOTFOUND:
+    case IW_ERROR_NOT_EXISTS:
       _jbr_http_error_send(req, 404);
       return;
     case JBL_ERROR_PARSE_JSON:
@@ -327,7 +328,7 @@ static void _jbr_on_delete(JBRCTX *rctx) {
   EJDB db = rctx->jbr->db;
   http_s *req = rctx->req;
   iwrc rc = ejdb_del(db, rctx->collection, rctx->id);
-  if (rc == IWKV_ERROR_NOTFOUND) {
+  if (rc == IWKV_ERROR_NOTFOUND || rc == IW_ERROR_NOT_EXISTS) {
     _jbr_http_error_send(req, 404);
     return;
   } else if (rc) {
@@ -407,7 +408,7 @@ static void _jbr_on_get(JBRCTX *rctx) {
   http_s *req = rctx->req;
 
   iwrc rc = ejdb_get(db, rctx->collection, rctx->id, &jbl);
-  if (rc == IWKV_ERROR_NOTFOUND) {
+  if (rc == IWKV_ERROR_NOTFOUND || rc == IW_ERROR_NOT_EXISTS) {
     _jbr_http_error_send(req, 404);
     return;
   } else if (rc) {

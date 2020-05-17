@@ -1039,20 +1039,28 @@ void ejdb_test3_8(void) {
 
   EJDB db;
   JQL q;
-  int64_t id = 0;
+  char buf[64];
+  JBL_NODE n;
+
+  int64_t id1 = 0, id2 = 0;
   EJDB_LIST list = 0;
+
+  IWPOOL *pool = iwpool_create(255);
   IWXSTR *log = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(log);
 
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  rc = put_json2(db, "users", "{'name':'Andy'}", &id);
+  rc = put_json2(db, "users", "{'name':'Andy'}", &id1);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = put_json2(db, "users", "{'name':'John'}", &id2);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = jql_create(&q, "users", "/=:?");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  rc = jql_set_i64(q, 0, 0, id);
+  rc = jql_set_i64(q, 0, 0, id1);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = ejdb_list4(db, q, 0, log, &list);
@@ -1062,8 +1070,8 @@ void ejdb_test3_8(void) {
   CU_ASSERT_PTR_NOT_NULL(list->first);
   CU_ASSERT_PTR_NULL(list->first->next);
 
-  ejdb_list_destroy(&list);
   jql_destroy(&q);
+  ejdb_list_destroy(&list);
   iwxstr_clear(log);
 
   rc = jql_create(&q, 0, "@users/=:id");
@@ -1074,12 +1082,39 @@ void ejdb_test3_8(void) {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   CU_ASSERT_PTR_NOT_NULL(list->first);
   CU_ASSERT_PTR_NULL(list->first->next);
+  jql_destroy(&q);
+  ejdb_list_destroy(&list);
+
+  // matching against PK array
+  snprintf(buf, sizeof(buf), "@users/=[%" PRId64 ",%" PRId64 "]", id1, id2);
+  rc = jql_create(&q, 0, buf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(list->first);
+  CU_ASSERT_PTR_NOT_NULL(list->first->next);
+  jql_destroy(&q);
+  ejdb_list_destroy(&list);
+
+  // matching against PK array as JSON query paramater
+  snprintf(buf, sizeof(buf), "[%" PRId64 ",%" PRId64 "]", id1, id2);
+  rc = jbn_from_json(buf, &n, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_create(&q, 0, "@users/=:?");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_set_json(q, 0, 0, n);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(list->first);
+  CU_ASSERT_PTR_NOT_NULL(list->first->next);
+  jql_destroy(&q);
+  ejdb_list_destroy(&list);
 
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_destroy(log);
-  ejdb_list_destroy(&list);
-  jql_destroy(&q);
+  iwpool_destroy(pool);
 }
 
 int main() {

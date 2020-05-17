@@ -1,3 +1,7 @@
+## 1.0.23+1
+
+  * Upgraded to ejdb v2.0.49
+
 ## 1.0.22+1
 
   * Upgraded to ejdb v2.0.48 (Support of collection Joins)

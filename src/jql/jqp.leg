@@ -87,7 +87,7 @@ QUERY = s:QEXPR { _jqp_set_filters_expr(yy, s); }
 QEXPR = FILTEREXPR_PK | FILTEREXPR
 
 FILTEREXPR_PK = (a:FILTERANCHOR { _jqp_unit_push(yy, a); })?
-                '/' _ '=' _ ( p:PLACEHOLDER | p:NUMPK )
+                '/' _ '=' _ ( p:PLACEHOLDER | p:NUMPK | p:NUMPK_ARR )
                 { $$ = _jqp_create_filterexpr_pk(yy, p) }
 
 FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jqp_unit_join(yy, yytext); }
@@ -225,6 +225,10 @@ CHP = '\\' '\\'
 NUMJ = <('-'? NUMI NUMF? NUME?)> { $$ = _jqp_json_number(yy, yytext); }
 
 NUMPK = <(NUMI)> { $$ = _jqp_json_number(yy, yytext); }
+
+NUMPK_ARR =  (s:SARRJ { _jqp_unit_push(yy, s); }
+            _ (fv:NUMPK { _jqp_unit_push(yy, fv); } (_ ',' _ v:NUMPK { _jqp_unit_push(yy, v); })* )? _ ']')
+            { $$ = _jqp_json_collect(yy, JBV_ARRAY, s); }
 
 NUMI = '0' | [1-9] [0-9]*
 

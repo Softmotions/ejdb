@@ -1021,6 +1021,26 @@ bool jql_jqval_as_int(JQVAL *jqval, int64_t *out) {
     case JQVAL_BOOL:
       *out = jqval->vbool ? 1 : 0;
       return true;
+    case JQVAL_JBLNODE: {
+      JBL_NODE n = jqval->vnode;
+      switch (n->type) {
+        case JBV_I64:
+          *out = n->vi64;
+          return true;
+        case JBV_STR:
+          *out = iwatoi(jqval->vstr);
+          return true;
+        case JBV_F64:
+          *out = n->vf64;
+          return true;
+        case JBV_BOOL:
+          *out = n->vbool ? 1 : 0;
+          return true;
+        default:
+          *out = 0;
+          return false;
+      }
+    }
     default:
       *out = 0;
       return false;
