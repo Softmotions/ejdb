@@ -193,7 +193,7 @@ public final class EJDB2 implements AutoCloseable {
   public String getAsString(String collection, long id) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     get(collection, id, bos);
-    return bos.toString(StandardCharsets.UTF_8);
+    return bos.toString("UTF-8");
   }
 
   /**
@@ -255,7 +255,7 @@ public final class EJDB2 implements AutoCloseable {
   public String infoAsString() throws EJDB2Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     info(bos);
-    return bos.toString(StandardCharsets.UTF_8);
+    return bos.toString("UTF-8");
   }
 
   /**

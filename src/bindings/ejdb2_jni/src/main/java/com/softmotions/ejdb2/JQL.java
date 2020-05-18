@@ -118,7 +118,7 @@ public final class JQL implements AutoCloseable {
   }
 
   public String getExplainLog() {
-    return explain != null ? explain.toString(StandardCharsets.UTF_8) : null;
+    return explain != null ? explain.toString("UTF-8") : null;
   }
 
   /**
