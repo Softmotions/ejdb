@@ -259,7 +259,11 @@ public final class EJDB2 implements AutoCloseable {
   public String infoAsString() throws EJDB2Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     info(bos);
-    return bos.toString("UTF-8");
+    try {
+      return bos.toString("UTF-8");
+    } catch(UnsupportedEncodingException ignored) {
+      return null;
+    }
   }
 
   /**
