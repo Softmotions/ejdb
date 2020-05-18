@@ -41,8 +41,6 @@ The following cache variables are also available to set or use:
   the include path to jni.h
 ``JAVA_INCLUDE_PATH2``
   the include path to jni_md.h and jniport.h
-``JAVA_AWT_INCLUDE_PATH``
-  the include path to jawt.h
 #]=======================================================================]
 
 # Expand {libarch} occurrences to java_libarch subdirectory(-ies) and set ${_var}
@@ -376,10 +374,6 @@ find_path(JAVA_INCLUDE_PATH2 NAMES jni_md.h jniport.h
   ${JAVA_INCLUDE_PATH}/aix
 )
 
-find_path(JAVA_AWT_INCLUDE_PATH jawt.h
-  ${JAVA_INCLUDE_PATH}
-)
-
 # Restore CMAKE_FIND_FRAMEWORK
 if(DEFINED _JNI_CMAKE_FIND_FRAMEWORK)
   set(CMAKE_FIND_FRAMEWORK ${_JNI_CMAKE_FIND_FRAMEWORK})
@@ -398,7 +392,6 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(JNI  DEFAULT_MSG  JAVA_AWT_LIBRARY
 mark_as_advanced(
   JAVA_AWT_LIBRARY
   JAVA_JVM_LIBRARY
-  JAVA_AWT_INCLUDE_PATH
   JAVA_INCLUDE_PATH
   JAVA_INCLUDE_PATH2
 )
@@ -411,5 +404,4 @@ set(JNI_LIBRARIES
 set(JNI_INCLUDE_DIRS
   ${JAVA_INCLUDE_PATH}
   ${JAVA_INCLUDE_PATH2}
-  ${JAVA_AWT_INCLUDE_PATH}
 )
