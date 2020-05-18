@@ -2,9 +2,9 @@ package com.softmotions.ejdb2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,7 +118,11 @@ public final class JQL implements AutoCloseable {
   }
 
   public String getExplainLog() {
-    return explain != null ? explain.toString("UTF-8") : null;
+    try {
+      return explain != null ? explain.toString("UTF-8") : null;
+    } catch(UnsupportedEncodingException ignored) {
+      return null;
+    }
   }
 
   /**

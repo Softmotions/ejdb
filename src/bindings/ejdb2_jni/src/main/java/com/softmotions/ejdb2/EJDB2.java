@@ -2,7 +2,7 @@ package com.softmotions.ejdb2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.UnsupportedEncodingException;
 
 /**
  * EJDB2 JNI Wrapper.
@@ -193,7 +193,11 @@ public final class EJDB2 implements AutoCloseable {
   public String getAsString(String collection, long id) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     get(collection, id, bos);
-    return bos.toString("UTF-8");
+    try {
+      return bos.toString("UTF-8");
+    } catch(UnsupportedEncodingException ignored)  {
+      return null;
+    }
   }
 
   /**
