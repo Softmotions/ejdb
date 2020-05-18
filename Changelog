@@ -1,3 +1,10 @@
+ejdb2 (2.0.50) UNRELEASED; urgency=medium
+
+  * Fixed ejdb2_jni to be java-8 compatible
+  * Fixed ejdb2_jni to headless JDK compatible
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 18 May 2020 21:30:27 +0700
+
 ejdb2 (2.0.49) testing; urgency=medium
 
   * Added ability to specify array of primary key values in `/=:?` query clause.
