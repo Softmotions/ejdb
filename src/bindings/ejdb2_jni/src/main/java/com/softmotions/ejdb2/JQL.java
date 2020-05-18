@@ -281,17 +281,56 @@ public final class JQL implements AutoCloseable {
    * contain nulls if no records found.
    */
   public Map.Entry<Long, String> first() {
-    final Long[] idh = { null };
-    final String[] jsonh = { null };
+    final Long[] idh = {null};
+    final String[] jsonh = {null};
     if (explain != null) {
       explain.reset();
     }
-    _execute(db, (id, json) -> {
-      idh[0] = id;
-      jsonh[0] = json;
-      return 0;
+    _execute(db, new JQLCallback() {
+      @Override
+      public long onRecord(long id, String json) {
+        idh[0] = id;
+        jsonh[0] = json;
+        return 0;
+      }
     }, explain);
-    return Map.entry(idh[0], jsonh[0]);
+    return new Map.Entry<Long, String>() {
+      private Long _key = idh[0];
+      private String _value = jsonh[0];
+
+      @Override
+      public Long getKey() {
+        return _key;
+      }
+
+      @Override
+      public String getValue() {
+        return _value;
+      }
+
+      @Override
+      public String setValue(String value) {
+        _value = value;
+        return _value;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (o == null) {
+          return false;
+        }
+        if (o.getClass() != this.getClass()) {
+          return false;
+        }
+        Map.Entry<Long, String> entry = ((Map.Entry<Long, String>) o);
+        return entry.getKey().equals(this._key) && entry.getValue().equals(this._value);
+      }
+
+      @Override
+      public int hashCode() {
+        return 0;
+      }
+    };
   }
 
   /**
