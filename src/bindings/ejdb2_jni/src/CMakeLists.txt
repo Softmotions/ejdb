@@ -19,8 +19,8 @@ message("Java VERSION: ${Java_VERSION}")
 message("Java EXECUTABLE: ${Java_JAVA_EXECUTABLE}")
 
 if (ANDROID_PLATFORM)
-  set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.6"
-    "-target" "1.6")
+  set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.8"
+    "-target" "1.8")
   add_jar(
     ejdb2jni_jar
     SOURCES
@@ -35,8 +35,6 @@ if (ANDROID_PLATFORM)
     OUTPUT_NAME ejdb2jni
     GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})
 else ()
-  set(CMAKE_JAVA_COMPILE_FLAGS "-source" "${Java_VERSION_MAJOR}"
-    "-target" "${Java_VERSION_MAJOR}")
   add_jar(
     ejdb2jni_jar
     SOURCES
