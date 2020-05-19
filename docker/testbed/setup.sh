@@ -29,6 +29,7 @@ wget -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian/dart
 bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
 apt-get update
+echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
 apt-get install -y \
   binutils \
   build-essential \
