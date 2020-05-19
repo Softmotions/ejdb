@@ -142,9 +142,11 @@ flutter precache
 EOF
 
 sudo -iu worker /bin/bash -i <<"EOF"
+set -e
+set -x
+
 mkdir -p ~/tmp && cd ~/tmp
 wget https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2
-./configure --prefix=~/.local
 tar -xf ./valgrind-3.15.0.tar.bz2
 cd ./valgrind-3.15.0
 ./configure --prefix=~/.local
