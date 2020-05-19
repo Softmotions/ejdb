@@ -51,6 +51,7 @@ apt-get install -y \
   nodejs \
   openjdk-8-jdk-headless \
   valgrind \
+  wine \
   yarn
 
 echo 'JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> /etc/environment
