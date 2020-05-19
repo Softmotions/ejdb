@@ -14,9 +14,7 @@ cd $SCRIPTPATH
 JENKINS_AGENT_VERSION=4.3
 
 dpkg --add-architecture i386
-apt-get update
 apt-get install -y apt-utils software-properties-common apt-transport-https sudo curl wget zip unzip
-add-apt-repository ppa:carsten-uppenbrink-net/openssl
 apt-get update
 apt-get dist-upgrade -y
 
