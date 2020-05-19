@@ -149,7 +149,7 @@ mkdir -p ~/tmp && cd ~/tmp
 wget https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2
 tar -xf ./valgrind-3.15.0.tar.bz2
 cd ./valgrind-3.15.0
-./configure --prefix=~/.local
+./configure --prefix=/home/worker/.local
 make && make install
 cd ~/ && rm -rf ./tmp/*
 EOF
