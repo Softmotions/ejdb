@@ -28,8 +28,12 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.lis
 wget -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list >/etc/apt/sources.list.d/dart_stable.list
 bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
+# Backport of openssl
+add-apt-repository ppa:carsten-uppenbrink-net/openssl
 apt-get update
+
 echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
+
 apt-get install -y \
   binutils \
   build-essential \
@@ -52,7 +56,6 @@ apt-get install -y \
   ninja \
   nodejs \
   openjdk-8-jdk-headless \
-  valgrind \
   wine \
   yarn
 
@@ -72,8 +75,8 @@ sudo -iu worker /bin/bash -i <<"EOF"
 set -e
 set -x
 
-echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> ~/.profile
-echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.profile
+echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> ~/.bashrc
+echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
 curl -s "https://get.sdkman.io" | /bin/bash
 EOF
 
@@ -84,11 +87,11 @@ set -x
 sdk install gradle 5.4.1
 sdk install maven
 
-echo 'PATH=/usr/lib/dart/bin:$PATH' >> ~/.profile
-echo 'PATH=~/.sdkman/candidates/maven/current/bin:$PATH' >> ~/.profile
-echo 'PATH=~/.sdkman/candidates/gradle/current/bin:$PATH' >> ~/.profile
-echo 'PATH=$PATH:/opt/swift-5.2.3-RELEASE-ubuntu16.04/usr/bin' >> ~/.profile
-echo 'export PATH=$PATH:~/.yarn/bin' >> ~/.profile
+echo 'PATH=/usr/lib/dart/bin:$PATH' >> ~/.bashrc
+echo 'PATH=~/.sdkman/candidates/maven/current/bin:$PATH' >> ~/.bashrc
+echo 'PATH=~/.sdkman/candidates/gradle/current/bin:$PATH' >> ~/.bashrc
+echo 'PATH=$PATH:/opt/swift-5.2.3-RELEASE-ubuntu16.04/usr/bin' >> ~/.bashrc
+echo 'export PATH=$PATH:~/.yarn/bin' >> ~/.bashrc
 EOF
 
 sudo -iu worker /bin/bash -i <<"EOF"
@@ -99,15 +102,15 @@ wget -O commandlinetools.zip https://dl.google.com/android/repository/commandlin
 unzip commandlinetools.zip -d ./Android
 rm commandlinetools.zip
 
-echo 'export ANDROID_NDK_VERSION=21.1.6352462' >> ~/.profile
-echo 'export ANDROID_HOME=~/Android' >> ~/.profile
-echo 'export ANDROID_SDK_ROOT=${ANDROID_HOME}' >> ~/.profile
-echo 'PATH=$PATH:$ANDROID_HOME/tools' >> ~/.profile
-echo 'PATH=$PATH:$ANDROID_HOME/tools/bin' >> ~/.profile
-echo 'PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.profile
-echo 'PATH=~/flutter/bin:$PATH' >> ~/.profile
-echo 'export PATH' >> ~/.profile
-echo 'export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION' >> ~/.profile
+echo 'export ANDROID_NDK_VERSION=21.1.6352462' >> ~/.bashrc
+echo 'export ANDROID_HOME=~/Android' >> ~/.bashrc
+echo 'export ANDROID_SDK_ROOT=${ANDROID_HOME}' >> ~/.bashrc
+echo 'PATH=$PATH:$ANDROID_HOME/tools' >> ~/.bashrc
+echo 'PATH=$PATH:$ANDROID_HOME/tools/bin' >> ~/.bashrc
+echo 'PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.bashrc
+echo 'PATH=~/flutter/bin:$PATH' >> ~/.bashrc
+echo 'export PATH' >> ~/.bashrc
+echo 'export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION' >> ~/.bashrc
 EOF
 
 sudo -iu worker /bin/bash -i <<"EOF"
@@ -138,6 +141,16 @@ flutter doctor --android-licenses
 flutter precache
 EOF
 
+sudo -iu worker /bin/bash -i <<"EOF"
+mkdir -p ~/tmp && cd ~/tmp
+wget https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2
+./configure --prefix=~/.local
+tar -xf ./valgrind-3.15.0.tar.bz2
+cd ./valgrind-3.15.0
+./configure --prefix=~/.local
+make && make install
+cd ~/ && rm -rf ./tmp/*
+EOF
 
 curl --create-dirs -fsSLo /usr/share/jenkins/agent.jar \
   https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/${JENKINS_AGENT_VERSION}/remoting-${JENKINS_AGENT_VERSION}.jar
@@ -156,6 +169,6 @@ EOF
 sudo -iu worker /bin/bash -i <<"EOF"
 set -e
 set -x
-cat ~/.profile
+cat ~/.bashrc
 echo $PATH
 EOF
