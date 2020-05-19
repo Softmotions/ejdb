@@ -50,6 +50,7 @@ apt-get install -y \
   ninja \
   nodejs \
   openjdk-8-jdk-headless \
+  valgrind \
   yarn
 
 echo 'JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> /etc/environment
