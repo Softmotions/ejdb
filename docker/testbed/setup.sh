@@ -75,8 +75,8 @@ sudo -iu worker /bin/bash -i <<"EOF"
 set -e
 set -x
 
-echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> ~/.bashrc
-echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> ~/.profile
+echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.profile
 curl -s "https://get.sdkman.io" | /bin/bash
 EOF
 
@@ -87,11 +87,11 @@ set -x
 sdk install gradle 5.4.1
 sdk install maven
 
-echo 'PATH=/usr/lib/dart/bin:$PATH' >> ~/.bashrc
-echo 'PATH=~/.sdkman/candidates/maven/current/bin:$PATH' >> ~/.bashrc
-echo 'PATH=~/.sdkman/candidates/gradle/current/bin:$PATH' >> ~/.bashrc
-echo 'PATH=$PATH:/opt/swift-5.2.3-RELEASE-ubuntu16.04/usr/bin' >> ~/.bashrc
-echo 'export PATH=$PATH:~/.yarn/bin' >> ~/.bashrc
+echo 'PATH=/usr/lib/dart/bin:$PATH' >> ~/.profile
+echo 'PATH=~/.sdkman/candidates/maven/current/bin:$PATH' >> ~/.profile
+echo 'PATH=~/.sdkman/candidates/gradle/current/bin:$PATH' >> ~/.profile
+echo 'PATH=$PATH:/opt/swift-5.2.3-RELEASE-ubuntu16.04/usr/bin' >> ~/.profile
+echo 'export PATH=$PATH:~/.yarn/bin' >> ~/.profile
 EOF
 
 sudo -iu worker /bin/bash -i <<"EOF"
@@ -102,16 +102,16 @@ wget -O commandlinetools.zip https://dl.google.com/android/repository/commandlin
 unzip commandlinetools.zip -d ./Android
 rm commandlinetools.zip
 
-echo 'export ANDROID_NDK_VERSION=21.1.6352462' >> ~/.bashrc
-echo 'export ANDROID_HOME=~/Android' >> ~/.bashrc
-echo 'export ANDROID_SDK_ROOT=${ANDROID_HOME}' >> ~/.bashrc
-echo 'PATH=$PATH:$ANDROID_HOME/tools' >> ~/.bashrc
-echo 'PATH=$PATH:$ANDROID_HOME/tools/bin' >> ~/.bashrc
-echo 'PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.bashrc
-echo 'PATH=~/flutter/bin:$PATH' >> ~/.bashrc
-echo 'PATH=$HOME/bin:$HOME/.local/bin:$PATH' >> ~/.bashrc
-echo 'export PATH' >> ~/.bashrc
-echo 'export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION' >> ~/.bashrc
+echo 'export ANDROID_NDK_VERSION=21.1.6352462' >> ~/.profile
+echo 'export ANDROID_HOME=~/Android' >> ~/.profile
+echo 'export ANDROID_SDK_ROOT=${ANDROID_HOME}' >> ~/.profile
+echo 'PATH=$PATH:$ANDROID_HOME/tools' >> ~/.profile
+echo 'PATH=$PATH:$ANDROID_HOME/tools/bin' >> ~/.profile
+echo 'PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.profile
+echo 'PATH=~/flutter/bin:$PATH' >> ~/.profile
+echo 'PATH=$HOME/bin:$HOME/.local/bin:$PATH' >> ~/.profile
+echo 'export PATH' >> ~/.profile
+echo 'export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION' >> ~/.profile
 EOF
 
 sudo -iu worker /bin/bash -i <<"EOF"
@@ -172,6 +172,6 @@ EOF
 sudo -iu worker /bin/bash -i <<"EOF"
 set -e
 set -x
-cat ~/.bashrc
+cat ~/.profile
 echo $PATH
 EOF
