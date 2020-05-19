@@ -109,7 +109,6 @@ echo 'PATH=$PATH:$ANDROID_HOME/tools' >> ~/.profile
 echo 'PATH=$PATH:$ANDROID_HOME/tools/bin' >> ~/.profile
 echo 'PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.profile
 echo 'PATH=~/flutter/bin:$PATH' >> ~/.profile
-echo 'PATH=$HOME/bin:$HOME/.local/bin:$PATH' >> ~/.profile
 echo 'export PATH' >> ~/.profile
 echo 'export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION' >> ~/.profile
 EOF
