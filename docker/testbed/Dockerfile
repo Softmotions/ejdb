@@ -21,7 +21,7 @@ RUN chmod +x /usr/local/bin/jenkins-agent &&\
 USER worker
 WORKDIR   /home/worker
 
-ENTRYPOINT ["/bin/bash", "-i", "-c", "/usr/local/bin/jenkins-agent \"$@\"", "--"]
+ENTRYPOINT ["/bin/bash", "-l", "-i", "-c", "/usr/local/bin/jenkins-agent \"$@\"", "--"]
 
 
 
