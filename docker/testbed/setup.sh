@@ -14,8 +14,9 @@ cd $SCRIPTPATH
 JENKINS_AGENT_VERSION=4.3
 
 dpkg --add-architecture i386
-apt-get update
 apt-get install -y apt-utils software-properties-common apt-transport-https sudo curl wget zip unzip
+add-apt-repository ppa:carsten-uppenbrink-net/openssl
+apt-get update
 apt-get dist-upgrade -y
 
 wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
@@ -28,8 +29,6 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.lis
 wget -qO- https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list >/etc/apt/sources.list.d/dart_stable.list
 bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
-# Backport of openssl
-add-apt-repository ppa:carsten-uppenbrink-net/openssl
 apt-get update
 
 echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
