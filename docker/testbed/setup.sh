@@ -47,6 +47,7 @@ apt-get install -y \
   gcc \
   git \
   gnupg \
+  libc6-dbg \
   lib32z1 \
   libcunit1-dev \
   libcurl4-openssl-dev \
