@@ -35,6 +35,7 @@ echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select tr
 
 apt-get install -y \
   binutils \
+  bison \
   build-essential \
   ca-certificates \
   cmake \
@@ -42,20 +43,27 @@ apt-get install -y \
   debhelper \
   debianutils \
   devscripts \
+  flex \
   g++ \
   gcc \
   git \
   gnupg \
-  libc6-dbg \
+  intltool \
   lib32z1 \
+  libc6-dbg \
   libcunit1-dev \
   libcurl4-openssl-dev \
+  libtool \
+  libtool-bin \
   make \
   mc \
   nano \
   ninja \
   nodejs \
   openjdk-8-jdk-headless \
+  p7zip-full \
+  ruby \
+  scons \
   wine \
   yarn
 
