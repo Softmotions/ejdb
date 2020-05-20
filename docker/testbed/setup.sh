@@ -169,16 +169,25 @@ chmod 644 /usr/share/jenkins/agent.jar
 ln -sf /usr/share/jenkins/agent.jar /usr/share/jenkins/slave.jar
 
 sudo -iu worker /bin/bash -i <<"EOF"
-set -e
-set -x
-mkdir -p ~/.jenkins
-mkdir -p ~/agent
+git clone https://github.com/mxe/mxe.git
+cd ./mxe
+cat <<COF > ./settings.mk
+JOBS := 1
+MXE_TARGETS := x86_64-w64-mingw32.static
+LOCAL_PKG_LIST := cunit libiberty
+.DEFAULT local-pkg-list:
+local-pkg-list: $(LOCAL_PKG_LIST)
+COF
+make
+echo 'export MXE_HOME=~/mxe' >> ~/.profile
 EOF
-
 
 sudo -iu worker /bin/bash -i <<"EOF"
 set -e
 set -x
+mkdir -p ~/.jenkins
+mkdir -p ~/agent
 cat ~/.profile
 echo $PATH
 EOF
+
