@@ -449,18 +449,21 @@ static napi_value jn_ejdb2impl_ctor(napi_env env, napi_callback_info info) {
 
   JNGO(ns, env, napi_get_cb_info(env, info, &argc, &varr, &this, &data), finish);
   if (argc != 1) {
-    JNRC(env, JN_ERROR_INVALID_NATIVE_CALL_ARGS); // -V768
+    rc = JN_ERROR_INVALID_NATIVE_CALL_ARGS;
+    JNRC(env, rc);
     goto finish;
   }
 
   napi_is_array(env, varr, &bv);
   if (!bv) {
-    JNRC(env, JN_ERROR_INVALID_NATIVE_CALL_ARGS); // -V768
+    rc = JN_ERROR_INVALID_NATIVE_CALL_ARGS;
+    JNRC(env, rc);
     goto finish;
   }
   JNGO(ns, env, napi_get_array_length(env, varr, &ulv), finish);
   if (ulv != 16) {
-    JNRC(env, JN_ERROR_INVALID_NATIVE_CALL_ARGS); // -V768
+    rc = JN_ERROR_INVALID_NATIVE_CALL_ARGS;
+    JNRC(env, rc);
     goto finish;
   }
 
@@ -2023,7 +2026,8 @@ napi_value Init(napi_env env, napi_value exports) {
 
   JNGO(ns, env, napi_get_named_property(env, vglobal, "__ejdb_add_stream_result__", &vadd_streamfn), finish);
   if (jn_is_null_or_undefined(env, vadd_streamfn)) {
-    JNRC(env, JN_ERROR_INVALID_STATE); // -V768
+    iwrc rc = JN_ERROR_INVALID_STATE;
+    JNRC(env, rc);
     goto finish;
   }
   JNGO(ns, env, napi_create_reference(env, vadd_streamfn, 1, &k_vadd_streamfn_ref), finish);
