@@ -171,13 +171,12 @@ ln -sf /usr/share/jenkins/agent.jar /usr/share/jenkins/slave.jar
 sudo -iu worker /bin/bash -i <<"EOF"
 git clone https://github.com/mxe/mxe.git
 cd ./mxe
-cat <<COF > ./settings.mk
-JOBS := 1
-MXE_TARGETS := x86_64-w64-mingw32.static
-LOCAL_PKG_LIST := cunit libiberty
-.DEFAULT local-pkg-list:
-local-pkg-list: $(LOCAL_PKG_LIST)
-COF
+echo 'JOBS := 1' >  ./settings.mk
+echo 'MXE_TARGETS := x86_64-w64-mingw32.static' >> ./settings.mk
+echo 'LOCAL_PKG_LIST := cunit libiberty'        >> ./settings.mk
+echo '.DEFAULT local-pkg-list:'                 >> ./settings.mk
+echo 'local-pkg-list: $(LOCAL_PKG_LIST)'        >> ./settings.mk
+
 make
 echo 'export MXE_HOME=~/mxe' >> ~/.profile
 EOF
