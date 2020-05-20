@@ -169,6 +169,9 @@ chmod 644 /usr/share/jenkins/agent.jar
 ln -sf /usr/share/jenkins/agent.jar /usr/share/jenkins/slave.jar
 
 sudo -iu worker /bin/bash -i <<"EOF"
+set -e
+set -x
+
 git clone https://github.com/mxe/mxe.git
 cd ./mxe
 echo 'JOBS := 1' >  ./settings.mk
