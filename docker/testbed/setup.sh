@@ -34,6 +34,7 @@ apt-get update
 echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
 
 apt-get install -y \
+  autopoint \
   binutils \
   bison \
   build-essential \
@@ -48,13 +49,17 @@ apt-get install -y \
   gcc \
   git \
   gnupg \
+  gperf \
   intltool \
   lib32z1 \
   libc6-dbg \
   libcunit1-dev \
   libcurl4-openssl-dev \
+  libgdk-pixbuf2.0-0 \
+  libgdk-pixbuf2.0-dev \
   libtool \
   libtool-bin \
+  lzip \
   make \
   mc \
   nano \
@@ -174,7 +179,7 @@ set -x
 
 git clone https://github.com/mxe/mxe.git
 cd ./mxe
-echo 'JOBS := 1' >  ./settings.mk
+echo 'JOBS := 1'                                >  ./settings.mk
 echo 'MXE_TARGETS := x86_64-w64-mingw32.static' >> ./settings.mk
 echo 'LOCAL_PKG_LIST := cunit libiberty'        >> ./settings.mk
 echo '.DEFAULT local-pkg-list:'                 >> ./settings.mk
