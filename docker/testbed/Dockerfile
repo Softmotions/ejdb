@@ -7,7 +7,7 @@ LABEL maintainer="adamansky@gmail.com"
 RUN mkdir /setup
 
 WORKDIR   /setup
-COPY      ./setup.sh ./
+COPY      ./*.sh ./
 RUN       ./setup.sh
 
 VOLUME    /home/worker/.jenkins
