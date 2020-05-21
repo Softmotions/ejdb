@@ -1,13 +1,13 @@
 # EJDB 2.0
 
-[The Story of the IT-depression, birds and EJDB 2.0](https://medium.com/@adamansky/ejdb2-41670e80897c)
 ![Build Status](https://dev.softmotions.com/jenkins/buildStatus/icon?job=ejdb2_test)
 [![Join Telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://tlg.name/ejdb2)
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
 ![maintained](https://img.shields.io/maintenance/yes/2020.svg)
 
-
 EJDB2 is an embeddable JSON database engine published under MIT license.
+
+[The Story of the IT-depression, birds and EJDB 2.0](https://medium.com/@adamansky/ejdb2-41670e80897c)
 
 * C11 API
 * Single file database
