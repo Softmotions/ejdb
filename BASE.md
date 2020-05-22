@@ -13,7 +13,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Single file database
 * Online backups support
 * 500K library size for Android
-* [iOS](#ejdb2swift) / [Android](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_android/test) / [React Native](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native) / [Flutter](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter) integration
+* [iOS](https://github.com/Softmotions/EJDB2Swift) / [Android](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_android/test) / [React Native](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native) / [Flutter](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter) integration
 * Simple but powerful query language (JQL) as well as support of the following standards:
   * [rfc6902](https://tools.ietf.org/html/rfc6902) JSON Patch
   * [rfc7386](https://tools.ietf.org/html/rfc7386) JSON Merge patch
@@ -27,7 +27,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [Native language bindings](#native-language-bindings)
 * Supported platforms
   * [OSX](#osx)
-  * [iOS](#ejdb2swift)
+  * [iOS](https://github.com/Softmotions/EJDB2Swift)
   * [Linux](#linux)
   * [Android](#android)
   * [Windows](#windows)
@@ -72,7 +72,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [Dart](https://pub.dartlang.org/packages/ejdb2_dart)
 * [Java](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/README.md)
 * [Android support](#android)
-* [Swift | iOS](#ejdb2swift)
+* [Swift | iOS](https://github.com/Softmotions/EJDB2Swift)
 * [React Native](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native)
 * [Flutter](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter)
 
@@ -104,7 +104,7 @@ Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
 EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 
-See also [EJDB2 Swift binding](#ejdb2swift) for OSX, iOS and Linux
+See also [EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for OSX, iOS and Linux
 
 ```
 brew install ejdb
