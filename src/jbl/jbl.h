@@ -388,10 +388,10 @@ IW_EXPORT iwrc jbn_copy_paths(JBL_NODE src,
  * @brief Clones a given `src` JBL object and stores it in memory allocated from `pool`.
  *
  * @param src Source object to clone
- * @param pool  Memory pool
  * @param targetp Pointer on target object
+ * @param pool  Memory pool
  */
-IW_EXPORT iwrc jbl_clone_into_pool(JBL src, IWPOOL *pool, JBL *targetp);
+IW_EXPORT iwrc jbl_clone_into_pool(JBL src, JBL *targetp, IWPOOL *pool);
 
 /**
  * @brief Constructs new `JBL` object from JSON string.

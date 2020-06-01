@@ -258,7 +258,7 @@ iwrc jbl_clone(JBL src, JBL *targetp) {
   return 0;
 }
 
-iwrc jbl_clone_into_pool(JBL src, IWPOOL *pool, JBL *targetp) {
+iwrc jbl_clone_into_pool(JBL src, JBL *targetp, IWPOOL *pool) {
   *targetp = 0;
   if (src->bn.writable && src->bn.dirty) {
     if (!binn_save_header(&src->bn)) {
