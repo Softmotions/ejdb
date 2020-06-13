@@ -1,5 +1,6 @@
 ejdb2 (2.0.50) UNRELEASED; urgency=medium
 
+  * Added `lwre.h` to set of public headers
   * Added `node_out` for every `jbn_add_item_X()`  (jbl.h)
   * Fixed compilation error on clang-10
   * Fixed ejdb2_jni to be java-8 compatible

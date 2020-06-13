@@ -2,6 +2,7 @@
 #define __lwre_h_
 
 #include <setjmp.h>
+#include <ejdb2/iowow/basedefs.h>
 
 struct RE_Insn;
 
@@ -37,12 +38,11 @@ struct re {
 #define RE_ERROR_SUBMATCH   -5
 #define RE_ERROR_ENGINE     -6
 
-struct re *lwre_new(const char *expression);
-int    lwre_match(struct re *re, char *input);
-void   lwre_release(struct re *re);
-void   lwre_reset(struct re *re, const char *expression);
-void   lwre_free(struct re *re);
-
-char *lwre_escape(char *string, int liberal);
+IW_EXPORT struct re *lwre_new(const char *expression);
+IW_EXPORT int    lwre_match(struct re *re, char *input);
+IW_EXPORT void   lwre_release(struct re *re);
+IW_EXPORT void   lwre_reset(struct re *re, const char *expression);
+IW_EXPORT void   lwre_free(struct re *re);
+IW_EXPORT char *lwre_escape(char *string, int liberal);
 
 #endif /* __lwre_h_ */
