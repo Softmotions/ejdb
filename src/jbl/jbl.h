@@ -680,23 +680,10 @@ IW_EXPORT void jbn_add_item(JBL_NODE parent, JBL_NODE node);
  * @param val Child node value copied.
  * @param vlen Langth of child node value.
  *             If `vlen` is lesser then zero length of `val` will be determined my `strlen`.
- * @param pool Allocation pool.
- */
-IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, IWPOOL *pool);
-
-/**
- * @brief Adds string JSON node to the given `parent` node.
- *        Key and value are copied into allocated node.
- *
- * @param parent Parent holder.
- * @param key Child node key cloned into node. Can be zero if parent is an array.
- * @param val Child node value copied.
- * @param vlen Langth of child node value.
- *             If `vlen` is lesser then zero length of `val` will be determined my `strlen`.
  * @param node_out Optional placeholder for new node.
  * @param pool Allocation pool.
  */
-IW_EXPORT iwrc jbn_add_item_str2(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out, IWPOOL *pool);
+IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out, IWPOOL *pool);
 
 /**
  * @brief Adds integer JSON node to the given `parent` node.
@@ -704,9 +691,10 @@ IW_EXPORT iwrc jbn_add_item_str2(JBL_NODE parent, const char *key, const char *v
  * @param parent Parent holder.
  * @param key Child node key cloned into node. Can be zero if parent is an array.
  * @param val Integer value.
+ * @param node_out Optional placeholder for new node.
  * @param pool Allocation pool.
  */
-IW_EXPORT iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, IWPOOL *pool);
+IW_EXPORT iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, JBL_NODE *node_out, IWPOOL *pool);
 
 /**
  * @brief Adds fp number JSON node to the given `parent` node.
@@ -714,31 +702,32 @@ IW_EXPORT iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, I
  * @param parent Parent holder.
  * @param key Child node key cloned into node. Can be zero if parent is an array.
  * @param val Floating point value.
+ * @param node_out Optional placeholder for new node.
  * @param pool Allocation pool.
  */
-IW_EXPORT iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, IWPOOL *pool);
+IW_EXPORT iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, JBL_NODE *node_out, IWPOOL *pool);
 
 /**
  * @brief Add nested object under the given `key`
  *
  * @param parent Parent holder
  * @param key Child node key cloned into node. Can be zero if parent is an array.
- * @param [out] out Pointer to new node, can be zero.
+ * @param node_out [out] Pointer to new node, can be zero.
  * @param pool Allocation pool
  * @return IW_EXPORT jbn_add_item_obj
  */
-IW_EXPORT iwrc jbn_add_item_obj(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *pool);
+IW_EXPORT iwrc jbn_add_item_obj(JBL_NODE parent, const char *key, JBL_NODE *node_out, IWPOOL *pool);
 
 /**
  * @brief Add nested array under the given `key`
  *
  * @param parent Parent holder
  * @param key Child node key cloned into node. Can be zero if parent is an array.
- * @param [out] out Pointer to new node, can be zero.
+ * @param node_out [out] Pointer to new node, can be zero.
  * @param pool Allocation pool
  * @return IW_EXPORT jbn_add_item_obj
  */
-IW_EXPORT iwrc jbn_add_item_arr(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *pool);
+IW_EXPORT iwrc jbn_add_item_arr(JBL_NODE parent, const char *key, JBL_NODE *node_out, IWPOOL *pool);
 
 /**
  * @brief Adds boolean JSON node to the given `parent` node.
@@ -746,9 +735,10 @@ IW_EXPORT iwrc jbn_add_item_arr(JBL_NODE parent, const char *key, JBL_NODE *out,
  * @param parent Parent holder.
  * @param key Child node key cloned into node. Can be zero if parent is an array.
  * @param val Boolean node value.
+ * @param node_out [out] Pointer to new node, can be zero.
  * @param pool Allocation pool.
  */
-IW_EXPORT iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, IWPOOL *pool);
+IW_EXPORT iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, JBL_NODE *node_out, IWPOOL *pool);
 
 /**
  * @brief Add item from the `parent` container.

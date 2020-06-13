@@ -1464,7 +1464,7 @@ void jbn_add_item(JBL_NODE parent, JBL_NODE node) {
   _jbn_add_item(parent, node);
 }
 
-iwrc jbn_add_item_str2(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out, IWPOOL *pool) {
+iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out, IWPOOL *pool) {
   if (!parent || !pool || parent->type < JBV_OBJECT) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1496,11 +1496,7 @@ finish:
   return rc;
 }
 
-iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, IWPOOL *pool) {
-  return jbn_add_item_str2(parent, key, val, vlen, 0, pool);
-}
-
-iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, IWPOOL *pool) {
+iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, JBL_NODE *node_out, IWPOOL *pool) {
   if (!parent || !pool || parent->type < JBV_OBJECT) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1518,11 +1514,14 @@ iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, IWPOOL *poo
   n->type = JBV_I64;
   n->vi64 = val;
   jbn_add_item(parent, n);
+  if (node_out) {
+    *node_out = n;
+  }
 finish:
   return rc;
 }
 
-iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, IWPOOL *pool) {
+iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, JBL_NODE *node_out, IWPOOL *pool) {
   if (!parent || !pool || parent->type < JBV_OBJECT) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1540,11 +1539,14 @@ iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, IWPOOL *pool
   n->type = JBV_F64;
   n->vf64 = val;
   jbn_add_item(parent, n);
+  if (node_out) {
+    *node_out = n;
+  }
 finish:
   return rc;
 }
 
-iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, IWPOOL *pool) {
+iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, JBL_NODE *node_out, IWPOOL *pool) {
   if (!parent || !pool || parent->type < JBV_OBJECT) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1562,6 +1564,7 @@ iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, IWPOOL *pool)
   n->type = JBV_BOOL;
   n->vbool = val;
   jbn_add_item(parent, n);
+
 finish:
   return rc;
 }

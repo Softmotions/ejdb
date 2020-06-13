@@ -20,7 +20,7 @@ static void set_apply_int(JQL q, int idx, const char *key, int64_t id) {
   IWPOOL *pool = iwpool_create(64);
   iwrc rc = jbn_from_json("{}", &n, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  rc = jbn_add_item_i64(n, key, id, pool);
+  rc = jbn_add_item_i64(n, key, id, 0, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jql_set_json2(q, 0, idx, n, free_iwpool, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
