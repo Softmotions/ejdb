@@ -1464,7 +1464,7 @@ void jbn_add_item(JBL_NODE parent, JBL_NODE node) {
   _jbn_add_item(parent, node);
 }
 
-iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, IWPOOL *pool) {
+iwrc jbn_add_item_str2(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out, IWPOOL *pool) {
   if (!parent || !pool || parent->type < JBV_OBJECT) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1479,20 +1479,25 @@ iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vle
     RCGO(rc, finish);
     n->klidx = strlen(n->key);
   }
+  n->type = JBV_STR;
   if (val) {
     if (vlen < 0) {
       vlen = strlen(val);
     }
-    n->type = JBV_STR;
     n->vptr = iwpool_strndup(pool, val, vlen, &rc);
     RCGO(rc, finish);
     n->vsize = vlen;
-  } else {
-    n->type = JBV_NULL;
   }
   jbn_add_item(parent, n);
+  if (node_out) {
+    *node_out = n;
+  }
 finish:
   return rc;
+}
+
+iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, IWPOOL *pool) {
+  return jbn_add_item_str2(parent, key, val, vlen, 0, pool);
 }
 
 iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, IWPOOL *pool) {
