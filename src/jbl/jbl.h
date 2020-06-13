@@ -684,6 +684,18 @@ IW_EXPORT void jbn_add_item(JBL_NODE parent, JBL_NODE node);
  */
 IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, IWPOOL *pool);
 
+/**
+ * @brief Adds string JSON node to the given `parent` node.
+ *        Key and value are copied into allocated node.
+ *
+ * @param parent Parent holder.
+ * @param key Child node key cloned into node. Can be zero if parent is an array.
+ * @param val Child node value copied.
+ * @param vlen Langth of child node value.
+ *             If `vlen` is lesser then zero length of `val` will be determined my `strlen`.
+ * @param node_out Optional placeholder for new node.
+ * @param pool Allocation pool.
+ */
 IW_EXPORT iwrc jbn_add_item_str2(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out, IWPOOL *pool);
 
 /**
