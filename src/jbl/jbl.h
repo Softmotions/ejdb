@@ -684,6 +684,8 @@ IW_EXPORT void jbn_add_item(JBL_NODE parent, JBL_NODE node);
  */
 IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, IWPOOL *pool);
 
+IW_EXPORT iwrc jbn_add_item_str2(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out, IWPOOL *pool);
+
 /**
  * @brief Adds integer JSON node to the given `parent` node.
  *
