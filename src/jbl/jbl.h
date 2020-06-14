@@ -758,6 +758,13 @@ IW_EXPORT JBL_NODE jbn_detach(JBL_NODE target, const char *path);
 IW_EXPORT void jbn_data(JBL_NODE node);
 
 /**
+ * @brief Returns number of child elements of given node.
+ *
+ * @param node JBL node
+ */
+IW_EXPORT int jbn_length(JBL_NODE node);
+
+/**
  * @brief Parses rfc6901 JSON path.
  * @note `jpp` structure should be disposed by `free()`.
  *

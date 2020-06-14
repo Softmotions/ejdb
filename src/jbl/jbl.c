@@ -1432,6 +1432,14 @@ void jbn_data(JBL_NODE node) {
   _jbl_node_reset_data(node);
 }
 
+int jbn_length(JBL_NODE node) {
+  int ret = 0;
+  for(JBL_NODE n = node->child; n; n = n->next) {
+    ++ret;
+  }
+  return ret;
+}
+
 static void _jbn_add_item(JBL_NODE parent, JBL_NODE node) {
   assert(parent && node);
   node->next = 0;
