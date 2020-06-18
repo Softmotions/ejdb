@@ -1,5 +1,6 @@
 ejdb2 (2.0.50) UNRELEASED; urgency=medium
 
+  * Fixed error in `jbn_copy_path()` if some source property doesn't exist (jbl.h)
   * Added `jbn_length()` (jbl.h)
   * Added `lwre.h` to set of public headers
   * Added `node_out` for every `jbn_add_item_X()`  (jbl.h)

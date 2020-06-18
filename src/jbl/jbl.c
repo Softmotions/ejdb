@@ -1641,6 +1641,9 @@ iwrc jbn_copy_path(JBL_NODE src,
 
   if (strcmp("/", src_path)) { // -V526
     rc = jbn_at(src, src_path, &n1);
+    if (rc == JBL_ERROR_PATH_NOTFOUND) {
+      return 0;
+    }
     RCRET(rc);
   } else {
     n1 = src;
