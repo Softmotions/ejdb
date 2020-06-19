@@ -1343,7 +1343,7 @@ int jbn_path_compare_str(JBL_NODE n, const char *path, const char *sv, iwrc *rcp
     .vptr = sv,
     .vsize = strlen(sv)
   };
-  return _jbl_compare_nodes(n, &cn, rcp);
+  return _jbl_compare_nodes(v, &cn, rcp);
 }
 
 int jbn_path_compare_i64(JBL_NODE n, const char *path, int64_t iv, iwrc *rcp) {
@@ -1358,7 +1358,7 @@ int jbn_path_compare_i64(JBL_NODE n, const char *path, int64_t iv, iwrc *rcp) {
     .type = JBV_STR,
     .vi64 = iv
   };
-  return _jbl_compare_nodes(n, &cn, rcp);
+  return _jbl_compare_nodes(v, &cn, rcp);
 }
 
 int jbn_path_compare_f64(JBL_NODE n, const char *path, double fv, iwrc *rcp) {
@@ -1373,7 +1373,7 @@ int jbn_path_compare_f64(JBL_NODE n, const char *path, double fv, iwrc *rcp) {
     .type = JBV_STR,
     .vf64 = fv
   };
-  return _jbl_compare_nodes(n, &cn, rcp);
+  return _jbl_compare_nodes(v, &cn, rcp);
 }
 
 int jbn_path_compare_bool(JBL_NODE n, const char *path, bool bv, iwrc *rcp) {
@@ -1388,7 +1388,7 @@ int jbn_path_compare_bool(JBL_NODE n, const char *path, bool bv, iwrc *rcp) {
     .type = JBV_STR,
     .vbool = bv
   };
-  return _jbl_compare_nodes(n, &cn, rcp);
+  return _jbl_compare_nodes(v, &cn, rcp);
 }
 
 IW_INLINE void _jbl_node_reset_data(JBL_NODE target) {
