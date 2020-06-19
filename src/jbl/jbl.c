@@ -1355,7 +1355,7 @@ int jbn_path_compare_i64(JBL_NODE n, const char *path, int64_t iv, iwrc *rcp) {
     return -2;
   }
   struct _JBL_NODE cn = {
-    .type = JBV_STR,
+    .type = JBV_I64,
     .vi64 = iv
   };
   return _jbl_compare_nodes(v, &cn, rcp);
@@ -1370,7 +1370,7 @@ int jbn_path_compare_f64(JBL_NODE n, const char *path, double fv, iwrc *rcp) {
     return -2;
   }
   struct _JBL_NODE cn = {
-    .type = JBV_STR,
+    .type = JBV_F64,
     .vf64 = fv
   };
   return _jbl_compare_nodes(v, &cn, rcp);
@@ -1385,7 +1385,7 @@ int jbn_path_compare_bool(JBL_NODE n, const char *path, bool bv, iwrc *rcp) {
     return -2;
   }
   struct _JBL_NODE cn = {
-    .type = JBV_STR,
+    .type = JBV_BOOL,
     .vbool = bv
   };
   return _jbl_compare_nodes(v, &cn, rcp);
