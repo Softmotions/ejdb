@@ -1,4 +1,4 @@
-ejdb2 (2.0.50) UNRELEASED; urgency=medium
+ejdb2 (2.0.50) testing; urgency=medium
 
   * Better floating point numbers comparison in `jbn_compare_nodes()` (jbl.h)
   * Fixed error in `jbn_copy_path()` if some source property doesn't exist (jbl.h)
@@ -9,7 +9,7 @@ ejdb2 (2.0.50) UNRELEASED; urgency=medium
   * Fixed ejdb2_jni to be java-8 compatible
   * Fixed ejdb2_jni to be headless JDK compatible
 
- -- Anton Adamansky <adamansky@gmail.com>  Mon, 18 May 2020 21:30:27 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 24 Jun 2020 20:42:46 +0700
 
 ejdb2 (2.0.49) testing; urgency=medium
 
