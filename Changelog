@@ -1,5 +1,6 @@
 ejdb2 (2.0.50) UNRELEASED; urgency=medium
 
+  * Better floating point numbers comparison in `jbn_compare_nodes()` (jbl.h)
   * Fixed error in `jbn_copy_path()` if some source property doesn't exist (jbl.h)
   * Added `jbn_length()` (jbl.h)
   * Added `lwre.h` to set of public headers

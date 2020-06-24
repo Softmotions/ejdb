@@ -2050,8 +2050,14 @@ int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
       return n1->vbool - n2->vbool;
     case JBV_I64:
       return n1->vi64 > n2->vi64 ? 1 : n1->vi64 < n2->vi64 ? -1 : 0;
-    case JBV_F64:
-      return (double)(n1->vi64) > n2->vf64 ? 1 : (double)(n1->vi64) < n2->vf64 ? -1 : 0;
+    case JBV_F64: {
+      size_t sz1, sz2;
+      char b1[JBNUMBUF_SIZE];
+      char b2[JBNUMBUF_SIZE];
+      jbi_ftoa(n1->vf64, b1, &sz1);
+      jbi_ftoa(n2->vf64, b2, &sz2);
+      return iwafcmp(b1, sz1, b2, sz2);
+    }
     case JBV_STR:
       if (n1->vsize != n2->vsize) {
         return n1->vsize - n2->vsize;
