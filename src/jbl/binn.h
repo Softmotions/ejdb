@@ -199,6 +199,9 @@ typedef uint64_t uint64;
 #define BINN_UNSIGNED_INT   22
 
 typedef void (*binn_mem_free)(void *);
+
+typedef void (*binn_user_data_free)(void *);
+
 #define BINN_STATIC      ((binn_mem_free)0)
 #define BINN_TRANSIENT   ((binn_mem_free)-1)
 
@@ -226,7 +229,10 @@ struct binn_struct {
   int    size;
   int    count;
   //
-  binn_mem_free freefn;  // used only when type == BINN_STRING or BINN_BLOB
+  binn_mem_free freefn;  // used only when type == BINN_STRING or BINN_BLOB\
+  //
+  void *user_data;
+  binn_user_data_free userdata_freefn;
   //
   union {
     signed char    vint8;
@@ -250,8 +256,7 @@ struct binn_struct {
     //
     BOOL           vbool;
   };
-  //
-  BOOL   disable_int_compression;
+
 };
 
 typedef struct binn_struct binn;
@@ -265,6 +270,8 @@ BOOL   APIENTRY binn_get_type_info(int long_type, int *pstorage_type, int *pextr
 int    APIENTRY binn_get_write_storage(int type);
 int    APIENTRY binn_get_read_storage(int type);
 BOOL   APIENTRY binn_is_container(binn *item);
+
+void APIENTRY binn_set_user_data(binn *item, void *user_data, binn_user_data_free freefn);
 
 // --- WRITE FUNCTIONS  ------------------------------------------------------------
 

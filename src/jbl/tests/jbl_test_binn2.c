@@ -1898,7 +1898,7 @@ void test_virtual_types() {
 
 /*************************************************************************************/
 
-void test_binn_iter(BOOL use_int_compression) {
+void test_binn_iter() {
   binn *list, *map, *obj;
   binn *list2, *copy = NULL;
   binn_iter iter, iter2;
@@ -1910,7 +1910,7 @@ void test_binn_iter(BOOL use_int_compression) {
   blob_ptr = "key\0value\0\0";
   blob_size = 11;
 
-  printf("testing binn sequential read (use_int_compression = %d)... ", use_int_compression);
+  printf("testing binn sequential read");
 
   // create the
 
@@ -1923,12 +1923,6 @@ void test_binn_iter(BOOL use_int_compression) {
   CU_ASSERT(list2 != NULL);
   CU_ASSERT(map != NULL);
   CU_ASSERT(obj != NULL);
-
-  if (use_int_compression == FALSE) {
-    list->disable_int_compression = TRUE;
-    map->disable_int_compression = TRUE;
-    obj->disable_int_compression = TRUE;
-  }
 
   CU_ASSERT(binn_list_add_int32(list2, 250) == TRUE);
   CU_ASSERT(binn_list_add_null(list2) == TRUE);
@@ -2006,22 +2000,15 @@ void test_binn_iter(BOOL use_int_compression) {
 
   CU_ASSERT(binn_list_next(&iter, &value) == TRUE);
   CU_ASSERT(iter.current == 2);
-  if (use_int_compression) {
-    CU_ASSERT(value.type == BINN_UINT32);
-  } else {
-    CU_ASSERT(value.type == BINN_INT32);
-  }
+
+  CU_ASSERT(value.type == BINN_UINT32);
   CU_ASSERT(value.vint32 == 123456789);
 
   CU_ASSERT(binn_list_next(&iter, &value) == TRUE);
   CU_ASSERT(iter.current == 3);
-  if (use_int_compression) {
-    CU_ASSERT(value.type == BINN_INT8);
-    CU_ASSERT(value.vint8 == -123);
-  } else {
-    CU_ASSERT(value.type == BINN_INT16);
-    CU_ASSERT(value.vint16 == -123);
-  }
+
+  CU_ASSERT(value.type == BINN_INT8);
+  CU_ASSERT(value.vint8 == -123);
 
   CU_ASSERT(binn_list_next(&iter, &value) == TRUE);
   CU_ASSERT(iter.current == 4);
@@ -2107,24 +2094,17 @@ void test_binn_iter(BOOL use_int_compression) {
 
   CU_ASSERT(binn_object_next(&iter, key, &value) == TRUE);
   CU_ASSERT(iter.current == 2);
-  if (use_int_compression) {
-    CU_ASSERT(value.type == BINN_UINT32);
-  } else {
-    CU_ASSERT(value.type == BINN_INT32);
-  }
+  CU_ASSERT(value.type == BINN_UINT32);
   CU_ASSERT(value.vint32 == 123456789);
   //printf("%s ", key);
   CU_ASSERT(strcmp(key, "b") == 0);
 
   CU_ASSERT(binn_object_next(&iter, key, &value) == TRUE);
   CU_ASSERT(iter.current == 3);
-  if (use_int_compression) {
-    CU_ASSERT(value.type == BINN_INT8);
-    CU_ASSERT(value.vint8 == -123);
-  } else {
-    CU_ASSERT(value.type == BINN_INT16);
-    CU_ASSERT(value.vint16 == -123);
-  }
+
+  CU_ASSERT(value.type == BINN_INT8);
+  CU_ASSERT(value.vint8 == -123);
+
   //printf("%s ", key);
   CU_ASSERT(strcmp(key, "c") == 0);
 
@@ -2230,23 +2210,18 @@ void test_binn_iter(BOOL use_int_compression) {
 
   CU_ASSERT(binn_map_next(&iter, &id, &value) == TRUE);
   CU_ASSERT(iter.current == 2);
-  if (use_int_compression) {
-    CU_ASSERT(value.type == BINN_UINT32);
-  } else {
-    CU_ASSERT(value.type == BINN_INT32);
-  }
+
+  CU_ASSERT(value.type == BINN_UINT32);
+
   CU_ASSERT(value.vint32 == 123456789);
   CU_ASSERT(id == 55020);
 
   CU_ASSERT(binn_map_next(&iter, &id, &value) == TRUE);
   CU_ASSERT(iter.current == 3);
-  if (use_int_compression) {
-    CU_ASSERT(value.type == BINN_INT8);
-    CU_ASSERT(value.vint8 == -123);
-  } else {
-    CU_ASSERT(value.type == BINN_INT16);
-    CU_ASSERT(value.vint16 == -123);
-  }
+
+  CU_ASSERT(value.type == BINN_INT8);
+  CU_ASSERT(value.vint8 == -123);
+
   CU_ASSERT(id == 55030);
 
   CU_ASSERT(binn_map_next(&iter, &id, &value) == TRUE);
@@ -2478,8 +2453,7 @@ void test_binn2() {
   free(obj1ptr);
   free(obj2ptr);
 
-  test_binn_iter(FALSE);
-  test_binn_iter(TRUE);
+  test_binn_iter();
 }
 
 /*************************************************************************************/

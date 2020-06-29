@@ -35,6 +35,14 @@ iwrc jbl_create_empty_array(JBL *jblp) {
   return 0;
 }
 
+void jbl_set_user_data(JBL jbl, void *user_data, void (*user_data_free_fn)(void *)) {
+  binn_set_user_data(&jbl->bn, user_data, user_data_free_fn);
+}
+
+void *jbl_get_user_data(JBL jbl) {
+  return jbl->bn.user_data;
+}
+
 iwrc jbl_set_int64(JBL jbl, const char *key, int64_t v) {
   jbl_type_t t = jbl_type(jbl);
   if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {

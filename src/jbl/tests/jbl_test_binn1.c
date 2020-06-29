@@ -557,16 +557,16 @@ void test1() {
   CU_ASSERT(strlen(ptr2) == fix_size - 1);
 
   CU_ASSERT(binn_object_set(obj1, "v2", BINN_STRING, ptr2,
-                         0) == FALSE); // it fails because it uses a pre-allocated memory block
+                            0) == FALSE); // it fails because it uses a pre-allocated memory block
 
   CU_ASSERT(binn_object_set(obj, "v2", BINN_STRING, ptr2,
-                         0) == TRUE); // but this uses a dynamically allocated memory block, so it works with it
+                            0) == TRUE); // but this uses a dynamically allocated memory block, so it works with it
   CU_ASSERT(binn_object_set(obj, "Key00", BINN_STRING, "after the big string",
-                         0) == TRUE); // and test the 'Key00' against the 'Key0'
+                            0) == TRUE); // and test the 'Key00' against the 'Key0'
 
   CU_ASSERT(binn_object_set(obj, "list", BINN_LIST, binn_ptr(list), binn_size(list)) == TRUE);
   CU_ASSERT(binn_object_set(obj, "Key10", BINN_STRING, "after the list",
-                         0) == TRUE); // and test the 'Key10' against the 'Key1'
+                            0) == TRUE); // and test the 'Key10' against the 'Key1'
 
 
   // read values - invalid 2 ------------------------------------------------------------
@@ -607,7 +607,7 @@ void test1() {
 
 /*************************************************************************************/
 
-void _test2(BOOL use_int_compression) {
+void _test2() {
   binn *list = INVALID_BINN, *map = INVALID_BINN, *obj = INVALID_BINN;
   binn value;
   BOOL vbool;
@@ -620,7 +620,7 @@ void _test2(BOOL use_int_compression) {
   char *str_map = "test map";
   char *str_obj = "test object";
 
-  printf("testing binn 2 (use_int_compression = %d)... ", use_int_compression);
+  printf("testing binn 2");
 
   blobsize = 150;
   pblob = malloc(blobsize);
@@ -646,12 +646,6 @@ void _test2(BOOL use_int_compression) {
   CU_ASSERT(list != INVALID_BINN);
   CU_ASSERT(map != INVALID_BINN);
   CU_ASSERT(obj != INVALID_BINN);
-
-  if (use_int_compression == FALSE) {
-    list->disable_int_compression = TRUE;
-    map->disable_int_compression = TRUE;
-    obj->disable_int_compression = TRUE;
-  }
 
   // add values without creating before
 
@@ -742,13 +736,10 @@ void _test2(BOOL use_int_compression) {
   CU_ASSERT(value.header == BINN_MAGIC);
   CU_ASSERT(value.writable == FALSE);
   CU_ASSERT(value.allocated == FALSE);
-  if (use_int_compression) {
-    CU_ASSERT(value.type == BINN_UINT8);
-    CU_ASSERT(value.ptr != &value.vuint8);  // it must return a pointer to the byte in the buffer
-  } else {
-    CU_ASSERT(value.type == BINN_INT32);
-    CU_ASSERT(value.ptr == &value.vint);
-  }
+
+  CU_ASSERT(value.type == BINN_UINT8);
+  CU_ASSERT(value.ptr != &value.vuint8);  // it must return a pointer to the byte in the buffer
+
   CU_ASSERT(value.size == 0);
   CU_ASSERT(value.count == 0);
   CU_ASSERT(value.vint == 123);
@@ -759,13 +750,10 @@ void _test2(BOOL use_int_compression) {
 
   CU_ASSERT(value.header == BINN_MAGIC);
   CU_ASSERT(value.writable == FALSE);
-  if (use_int_compression) {
-    CU_ASSERT(value.type == BINN_UINT16);
-    CU_ASSERT(value.ptr == &value.vuint16);
-  } else {
-    CU_ASSERT(value.type == BINN_INT32);
-    CU_ASSERT(value.ptr == &value.vint);
-  }
+
+  CU_ASSERT(value.type == BINN_UINT16);
+  CU_ASSERT(value.ptr == &value.vuint16);
+
   CU_ASSERT(value.size == 0);
   CU_ASSERT(value.count == 0);
   CU_ASSERT(value.vint == 456);
@@ -776,13 +764,10 @@ void _test2(BOOL use_int_compression) {
 
   CU_ASSERT(value.header == BINN_MAGIC);
   CU_ASSERT(value.writable == FALSE);
-  if (use_int_compression) {
-    CU_ASSERT(value.type == BINN_UINT16);
-    CU_ASSERT(value.ptr == &value.vuint16);
-  } else {
-    CU_ASSERT(value.type == BINN_INT32);
-    CU_ASSERT(value.ptr == &value.vint);
-  }
+
+  CU_ASSERT(value.type == BINN_UINT16);
+  CU_ASSERT(value.ptr == &value.vuint16);
+
   CU_ASSERT(value.size == 0);
   CU_ASSERT(value.count == 0);
   CU_ASSERT(value.vint == 789);
@@ -1077,11 +1062,7 @@ void _test2(BOOL use_int_compression) {
 }
 
 void test2() {
-  _test2(FALSE);
-}
-
-void test3() {
-  _test2(TRUE);
+  _test2();
 }
 
 /*************************************************************************************/
@@ -1263,19 +1244,19 @@ void test4() {
   CU_ASSERT(strlen(ptr) == fix_size - 1);
 
   CU_ASSERT(binn_object_set(obj1, "v2", BINN_STRING, ptr,
-                         0) == FALSE); // it fails because it uses a pre-allocated memory block
+                            0) == FALSE); // it fails because it uses a pre-allocated memory block
 
   CU_ASSERT(binn_object_set(obj, "v2", BINN_STRING, ptr,
-                         0) == TRUE); // but this uses a dynamically allocated memory block, so it works with it
+                            0) == TRUE); // but this uses a dynamically allocated memory block, so it works with it
   CU_ASSERT(binn_object_set(obj, "Key00", BINN_STRING, "after the big string",
-                         0) == TRUE); // and test the 'Key00' against the 'Key0'
+                            0) == TRUE); // and test the 'Key00' against the 'Key0'
 
   free(ptr);
   ptr = 0;
 
   CU_ASSERT(binn_object_set(obj, "list", BINN_LIST, binn_ptr(list), binn_size(list)) == TRUE);
   CU_ASSERT(binn_object_set(obj, "Key10", BINN_STRING, "after the list",
-                         0) == TRUE); // and test the 'Key10' against the 'Key1'
+                            0) == TRUE); // and test the 'Key10' against the 'Key1'
 
 
   // read values - invalid 2 ------------------------------------------------------------
@@ -1843,7 +1824,7 @@ void test_invalid_binn() {
 
   for (i = 0; i < count; i++) {
     ptr = buffers[i];
-    size = strlen((char*) ptr);
+    size = strlen((char *) ptr);
     printf("checking invalid binn #%d   size: %d bytes\n", i, size);
     CU_ASSERT(binn_is_valid_ex(ptr, NULL, NULL, &size) == FALSE);
   }
@@ -1865,7 +1846,6 @@ int main() {
     (NULL == CU_add_test(pSuite, "test_floating_point_numbers", test_floating_point_numbers)) ||
     (NULL == CU_add_test(pSuite, "test1", test1)) ||
     (NULL == CU_add_test(pSuite, "test2", test2)) ||
-    (NULL == CU_add_test(pSuite, "test3", test3)) ||
     (NULL == CU_add_test(pSuite, "test_invalid_binn", test_invalid_binn))
   ) {
     CU_cleanup_registry();

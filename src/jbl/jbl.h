@@ -202,6 +202,22 @@ IW_EXPORT iwrc jbl_create_empty_object(JBL *jblp);
 IW_EXPORT iwrc jbl_create_empty_array(JBL *jblp);
 
 /**
+ * @brief Sets arbitrary user data associated with JBL object.
+ *
+ * @param jbl JBL container
+ * @param user_data User data pointer. Optional.
+ * @param user_data_free_fn User data dispose function. Optional.
+ */
+IW_EXPORT void jbl_set_user_data(JBL jbl, void *user_data, void (*user_data_free_fn)(void *));
+
+/**
+ * @brief Returns user data associated with given `jbl` container.
+ *
+ * @param jbl JBL container.
+ */
+IW_EXPORT void *jbl_get_user_data(JBL jbl);
+
+/**
  * @brief Set integer JBL object property value
  *        or add a new entry to end of array JBL object.
  *
@@ -683,7 +699,8 @@ IW_EXPORT void jbn_add_item(JBL_NODE parent, JBL_NODE node);
  * @param node_out Optional placeholder for new node.
  * @param pool Allocation pool.
  */
-IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out, IWPOOL *pool);
+IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out,
+                                IWPOOL *pool);
 
 /**
  * @brief Adds integer JSON node to the given `parent` node.

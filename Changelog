@@ -1,3 +1,10 @@
+ejdb2 (2.0.51) UNRELEASED; urgency=medium
+
+  * Added `jbl_set_user_data()` (jbl.h)
+  * Removed disable int compression feature from binn implementation (binn.c)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 29 Jun 2020 21:14:31 +0700
+
 ejdb2 (2.0.50) testing; urgency=medium
 
   * Better floating point numbers comparison in `jbn_compare_nodes()` (jbl.h)

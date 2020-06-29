@@ -591,7 +591,7 @@ BINN_PRIVATE BOOL AddValue(binn *item, int type, void *pvalue, int size) {
     }
   }
 
-  if ((type_family(type) == BINN_FAMILY_INT) && (item->disable_int_compression == FALSE))
+  if (type_family(type) == BINN_FAMILY_INT)
     pvalue = compress_int(&storage_type, &type, pvalue);
 
   switch (storage_type) {
@@ -788,6 +788,10 @@ BOOL binn_save_header(binn *item) {
 
 void APIENTRY binn_free(binn *item) {
   if (item == NULL) return;
+  if (item->userdata_freefn) {
+    item->userdata_freefn(item->user_data);
+    item->userdata_freefn = 0;
+  }
   if ((item->writable) && (item->pre_allocated == FALSE)) {
     free_fn(item->pbuf);
   }
@@ -2724,4 +2728,9 @@ BOOL APIENTRY binn_is_container(binn *item) {
     default:
       return FALSE;
   }
+}
+
+void binn_set_user_data(binn *item, void *user_data, binn_user_data_free freefn) {
+  item->user_data = user_data;
+  item->userdata_freefn = free_fn;
 }
