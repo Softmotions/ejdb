@@ -2731,6 +2731,9 @@ BOOL APIENTRY binn_is_container(binn *item) {
 }
 
 void binn_set_user_data(binn *item, void *user_data, binn_user_data_free freefn) {
+  if (item->userdata_freefn) {
+    item->userdata_freefn(item->user_data);
+  }
   item->user_data = user_data;
   item->userdata_freefn = free_fn;
 }
