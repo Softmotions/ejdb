@@ -229,7 +229,7 @@ struct binn_struct {
   int    size;
   int    count;
   //
-  binn_mem_free freefn;  // used only when type == BINN_STRING or BINN_BLOB\
+  binn_mem_free freefn;  // used only when type == BINN_STRING or BINN_BLOB
   //
   void *user_data;
   binn_user_data_free userdata_freefn;
