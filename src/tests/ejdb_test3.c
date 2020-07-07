@@ -615,7 +615,7 @@ static void ejdb_test3_3() {
     rc = jbl_at(doc->raw, "/n", &jbl2);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     int64_t llv = jbl_get_i64(jbl2);
-    char *str = jbl_get_str(jbl1);
+    const char *str = jbl_get_str(jbl1);
     switch (i) {
       case 1:
         CU_ASSERT_EQUAL(llv, 1);
@@ -667,7 +667,7 @@ static void ejdb_test3_3() {
     rc = jbl_at(doc->raw, "/n", &jbl2);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     int64_t llv = jbl_get_i64(jbl2);
-    char *str = jbl_get_str(jbl1);
+    const char *str = jbl_get_str(jbl1);
     CU_ASSERT_EQUAL(llv, 5);
     CU_ASSERT_STRING_EQUAL(str, data[3]);
     jbl_destroy(&jbl1);

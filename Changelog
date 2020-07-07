@@ -1,5 +1,6 @@
 ejdb2 (2.0.51) UNRELEASED; urgency=medium
 
+  * `jbl_get_str()` now returns `const char*` (jbl.h)
   * Added `jbl_set_user_data()` (jbl.h)
   * Removed disable int compression feature from binn implementation (binn.c)
 

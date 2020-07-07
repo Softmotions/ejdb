@@ -461,7 +461,7 @@ IW_EXPORT double jbl_get_f64(JBL jbl);
  * @brief Interpret `jbl` value as `\0` terminated character array.
  * Returns zero if value cannot be converted.
  */
-IW_EXPORT char *jbl_get_str(JBL jbl);
+IW_EXPORT const char *jbl_get_str(JBL jbl);
 
 IW_EXPORT iwrc jbl_object_get_i64(JBL jbl, const char *key, int64_t *out);
 

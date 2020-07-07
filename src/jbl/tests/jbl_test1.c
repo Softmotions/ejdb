@@ -176,7 +176,7 @@ void jbl_test1_4() {
              "'num1':1,'list1':['one','two',{'three':3}]}"),
       '\'', '"');
   JBL jbl, at, at2;
-  char *sval;
+  const char *sval;
   int ival;
   iwrc rc = jbl_from_json(&jbl, data) ;
   CU_ASSERT_EQUAL_FATAL(rc, 0);

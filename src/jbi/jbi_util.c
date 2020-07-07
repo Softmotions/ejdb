@@ -17,7 +17,7 @@ void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JB
       switch (jbvt) {
         case JBV_STR:
           ikey->size = jbl_size(jbv);
-          ikey->data = jbl_get_str(jbv);
+          ikey->data = (void *) jbl_get_str(jbv);
           break;
         case JBV_I64:
           ikey->size = (size_t) iwitoa(jbl_get_i64(jbv), numbuf, JBNUMBUF_SIZE);

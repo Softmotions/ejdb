@@ -815,7 +815,7 @@ double jbl_get_f64(JBL jbl) {
   }
 }
 
-char *jbl_get_str(JBL jbl) {
+const char *jbl_get_str(JBL jbl) {
   assert(jbl && jbl->bn.type == BINN_STRING);
   if (jbl->bn.type != BINN_STRING) {
     return 0;
