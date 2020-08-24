@@ -1304,7 +1304,7 @@ iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res) {
   JBL_PTR jp;
   iwrc rc = _jbl_ptr_pool(path, &jp, 0);
   if (rc) {
-    res = 0;
+    *res = 0;
     return rc;
   }
   rc = jbn_at2(node, jp, res);
