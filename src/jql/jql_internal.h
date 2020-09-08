@@ -47,6 +47,8 @@ typedef struct {
   };
 } JQVAL;
 
+JQVAL *jql_find_placeholder(JQL q, const char *name);
+
 JQVAL *jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp);
 
 bool jql_jqval_as_int(JQVAL *jqval, int64_t *out);

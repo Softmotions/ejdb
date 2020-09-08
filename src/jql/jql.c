@@ -75,6 +75,10 @@ static JQVAL *_jql_find_placeholder(JQL q, const char *name) {
   return 0;
 }
 
+JQVAL *jql_find_placeholder(JQL q, const char *name) {
+  return _jql_find_placeholder(q, name);
+}
+
 static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVAL *val) {
   JQP_AUX *aux = q->aux;
   if (!placeholder) { // Index
@@ -1312,7 +1316,11 @@ const char *jql_first_anchor(JQL q) {
 }
 
 bool jql_has_apply(JQL q) {
-  return q->aux->apply || q->aux->apply_placeholder || (q->aux->qmode & JQP_QRY_APPLY_DEL);
+  return q->aux->apply || q->aux->apply_placeholder || (q->aux->qmode & (JQP_QRY_APPLY_DEL | JQP_QRY_APPLY_UPSERT));
+}
+
+bool jql_has_apply_upsert(JQL q) {
+  return (q->aux->qmode & JQP_QRY_APPLY_UPSERT);
 }
 
 bool jql_has_apply_delete(JQL q) {

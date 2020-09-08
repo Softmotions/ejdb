@@ -59,6 +59,7 @@ static void _jqp_set_filters_expr(struct _yycontext *yy, JQPUNIT *expr);
 static JQPUNIT *_jqp_create_filterexpr_pk(struct _yycontext *yy, JQPUNIT *argument);
 static void _jqp_set_apply(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_set_apply_delete(struct _yycontext *yy);
+static void _jqp_set_apply_upsert(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
 
 #define YYSTYPE JQPUNIT*
@@ -79,7 +80,7 @@ static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
 %}
 
 QUERY = s:QEXPR { _jqp_set_filters_expr(yy, s); }
-        (_ '|' _ (a:APPLY { _jqp_set_apply(yy, a); } | "del" { _jqp_set_apply_delete(yy); }) )?
+        (_ '|' _ (a:APPLY { _jqp_set_apply(yy, a); } | "del" { _jqp_set_apply_delete(yy); } | u:UPSERT { _jqp_set_apply_upsert(yy, u); } ) )?
         (_ p:PROJECTION { _jqp_set_projection(yy, p); } )?
         (_ OPTS )?
         _ EOF { _jqp_finish(yy); }
@@ -93,6 +94,8 @@ FILTEREXPR_PK = (a:FILTERANCHOR { _jqp_unit_push(yy, a); })?
 FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jqp_unit_join(yy, yytext); }
 
 APPLY      =  "apply" __ ( PLACEHOLDER | OBJJ | ARRJ )
+
+UPSERT =  "upsert" __ ( PLACEHOLDER | OBJJ | ARRJ )
 
 PROJECTION  = '|' _ (sn:PROJNODES { _jqp_unit_push(yy, sn); }
                     (_ <PROJOIN> { _jqp_string_push(yy, yytext, true); } _ n:PROJNODES { _jqp_push_joined_projection(yy, n); } )*)

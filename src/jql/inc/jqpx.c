@@ -788,6 +788,12 @@ static void _jqp_set_apply_delete(yycontext *yy) {
   aux->qmode |= JQP_QRY_APPLY_DEL;
 }
 
+static void _jqp_set_apply_upsert(yycontext *yy, JQPUNIT *unit) {
+  JQP_AUX *aux = yy->aux;
+  aux->qmode |= JQP_QRY_APPLY_UPSERT;
+  _jqp_set_apply(yy, unit);
+}
+
 static void _jqp_add_orderby(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
   if (unit->type != JQP_STRING_TYPE) {

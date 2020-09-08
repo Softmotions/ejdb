@@ -2,6 +2,8 @@
 
 // ---------------------------------------------------------------------------
 
+static iwrc _jb_put_new_lw(JBCOLL jbc, JBL jbl, int64_t *id);
+
 static const IWKV_val EMPTY_VAL = {0};
 
 IW_INLINE iwrc _jb_meta_nrecs_removedb(EJDB db, uint32_t dbid) {
@@ -798,6 +800,48 @@ iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl) {
   return _jb_put_handler_after(iwkv_cursor_seth(cur, &val, 0, _jb_put_handler, &pctx), &pctx);
 }
 
+static iwrc _jb_exec_upsert_lw(JBEXEC *ctx) {
+  JBL_NODE n;
+  int64_t id;
+  iwrc rc = 0;
+  JBL jbl = 0;
+  EJDB_EXEC *ux = ctx->ux;
+  JQL q = ux->q;
+  if (q->aux->apply_placeholder) {
+    JQVAL *pv = jql_find_placeholder(q, q->aux->apply_placeholder);
+    if (!pv || pv->type != JQVAL_JBLNODE || !pv->vnode) {
+      rc = JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
+      goto finish;
+    }
+    n = pv->vnode;
+  } else {
+    n = q->aux->apply;
+  }
+  if (!n) {
+    // Skip silently, nothing to do.
+    goto finish;
+  }
+  RCC(rc, finish, jbl_from_node(&jbl, n));
+  RCC(rc, finish, _jb_put_new_lw(ctx->jbc, jbl, &id));
+
+  if (!(q->aux->qmode & JQP_QRY_AGGREGATE)) {
+    struct _EJDB_DOC doc = {
+      .id = id,
+      .raw = jbl,
+      .node = n
+    };
+    do {
+      ctx->istep = 1;
+      RCC(rc, finish, ux->visitor(ux, &doc, &ctx->istep));
+    } while (ctx->istep == -1);
+  }
+  ++ux->cnt;
+
+finish:
+  jbl_destroy(&jbl);
+  return rc;
+}
+
 //----------------------- Public API
 
 iwrc ejdb_exec(EJDB_EXEC *ux) {
@@ -847,6 +891,11 @@ iwrc ejdb_exec(EJDB_EXEC *ux) {
       iwxstr_cat2(ux->log, " [COLLECTOR] PLAIN\n");
     }
     rc = ctx.scanner(&ctx, jbi_consumer);
+  }
+  RCGO(rc, finish);
+  if (ux->cnt == 0 && jql_has_apply_upsert(ux->q)) {
+    // No records found trying to upsert new record
+    rc = _jb_exec_upsert_lw(&ctx);
   }
 
 finish:
@@ -1301,17 +1350,9 @@ iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id) {
   return rc;
 }
 
-iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *id) {
-  if (!jbl) {
-    return IW_ERROR_INVALID_ARGS;
-  }
-  int rci;
-  JBCOLL jbc;
-  if (id) *id = 0;
-  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
-  RCRET(rc);
+static iwrc _jb_put_new_lw(JBCOLL jbc, JBL jbl, int64_t *id) {
+  iwrc rc = 0;
   int64_t oid = jbc->id_seq + 1;
-
   IWKV_val val, key = {
     .data = &oid,
     .size = sizeof(oid)
@@ -1322,11 +1363,8 @@ iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *id) {
     .jbl = jbl
   };
 
-  rc = jbl_as_buf(jbl, &val.data, &val.size);
-  RCGO(rc, finish);
-
-  rc = _jb_put_handler_after(iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx), &pctx);
-  RCGO(rc, finish);
+  RCC(rc, finish, jbl_as_buf(jbl, &val.data, &val.size));
+  RCC(rc, finish, _jb_put_handler_after(iwkv_puth(jbc->cdb, &key, &val, 0, _jb_put_handler, &pctx), &pctx));
 
   jbc->id_seq = oid;
   if (id) {
@@ -1334,6 +1372,21 @@ iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *id) {
   }
 
 finish:
+  return rc;
+}
+
+iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *id) {
+  if (!jbl) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  int rci;
+  JBCOLL jbc;
+  if (id) *id = 0;
+  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  RCRET(rc);
+
+  rc = _jb_put_new_lw(jbc, jbl, id);
+
   API_COLL_UNLOCK(jbc, rci, rc);
   return rc;
 }
