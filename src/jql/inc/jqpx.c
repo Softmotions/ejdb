@@ -1067,12 +1067,20 @@ static iwrc _jqp_print_projection(const JQP_PROJECTION *p, jbl_json_printer pt, 
 
 static iwrc _jqp_print_apply(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
-  PT("| apply ", 8, 0, 0);
-  if (q->aux->apply_placeholder) {
-    PT(q->aux->apply_placeholder, -1, 0, 0);
-  } else if (q->aux->apply) {
-    rc = jbn_as_json(q->aux->apply, pt, op, 0);
-    RCRET(rc);
+  if (q->aux->qmode & JQP_QRY_APPLY_DEL) {
+    PT("| del ", 6, 0, 0);
+  } else {
+    if (q->aux->qmode & JQP_QRY_APPLY_UPSERT) {
+      PT("| upsert ", 9, 0, 0);
+    } else {
+      PT("| apply ", 8, 0, 0);
+    }
+    if (q->aux->apply_placeholder) {
+      PT(q->aux->apply_placeholder, -1, 0, 0);
+    } else if (q->aux->apply) {
+      rc = jbn_as_json(q->aux->apply, pt, op, 0);
+      RCRET(rc);
+    }
   }
   return rc;
 }
