@@ -1,6 +1,8 @@
 #include "ejdb_test.h"
 #include <CUnit/Basic.h>
 
+#include <ejdb2/iowow/iwuuid.h>
+
 int init_suite(void) {
   iwrc rc = ejdb_init();
   return rc;
@@ -26,7 +28,7 @@ static void set_apply_int(JQL q, int idx, const char *key, int64_t id) {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 }
 
-void ejdb_test4_1(void) {
+static void ejdb_test4_1(void) {
   EJDB_OPTS opts = {
     .kv = {
       .path = "ejdb_test4_1.db",
@@ -130,6 +132,85 @@ void ejdb_test4_1(void) {
   iwxstr_destroy(xstr);
 }
 
+static void ejdb_test4_2(void) {
+  EJDB_OPTS opts = {
+    .kv = {
+      .path = "ejdb_test4_2.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+
+  EJDB db;
+  JQL q;
+  JBL_NODE n, n2;
+  int i = 0;
+  int64_t id = 0;
+  EJDB_LIST list = 0;
+  IWPOOL *pool = iwpool_create_empty();
+
+  char uuid[IW_UUID_STR_LEN + 1] = {0};
+  iwu_uuid4_fill(uuid);
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_ensure_index(db, "users", "/uuid", EJDB_IDX_STR | EJDB_IDX_UNIQUE);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_create(&q, "users", "/[uuid = :?] | upsert :?");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_set_str(q, 0, 0, uuid);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_from_json("{}", &n, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_add_item_str(n, "uuid", uuid, -1, 0, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_add_item_str(n, "name", "a", -1, 0, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_set_json(q, 0, 1, n);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_update(db, q);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbn_at(n, "/name", &n2);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  n2->vptr = "b";
+  rc = jql_set_json(q, 0, 1, n);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_update(db, q);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  jql_destroy(&q);
+  rc = jql_create(&q, "users", "/* | /name");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+    CU_ASSERT_PTR_NOT_NULL_FATAL(doc->node);
+    rc = jbn_at(doc->node, "/name", &n2);
+    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    CU_ASSERT_STRING_EQUAL(n2->vptr, "b");
+  }
+  CU_ASSERT_EQUAL(i, 1);
+
+  jql_destroy(&q);
+  ejdb_list_destroy(&list);
+  iwpool_destroy(pool);
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
@@ -140,6 +221,7 @@ int main() {
   }
   if (
     (NULL == CU_add_test(pSuite, "ejdb_test4_1", ejdb_test4_1))
+    || (NULL == CU_add_test(pSuite, "ejdb_test4_2", ejdb_test4_2))
   ) {
     CU_cleanup_registry();
     return CU_get_error();

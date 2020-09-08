@@ -49,7 +49,7 @@ FILTERS = FILTER [{ and | or } [ not ] FILTER];
 
   NODE_EXPR_RIGHT =  JSONVAL | STR | PLACEHOLDER
 
-APPLY = 'apply' { PLACEHOLDER | json_object | json_array  } | 'del'
+APPLY = { 'apply' | 'upsert' } { PLACEHOLDER | json_object | json_array  } | 'del'
 
 OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 
@@ -314,7 +314,7 @@ It may be useful in queries with dynamic placeholders (C API):
 `APPLY` section responsible for modification of documents content.
 
 ```
-APPLY = ('apply' { PLACEHOLDER | json_object | json_array  }) | 'del'
+APPLY = ({'apply' | `upsert`} { PLACEHOLDER | json_object | json_array  }) | 'del'
 ```
 
 JSON patch specs conformed to `rfc7386` or `rfc6902` specifications followed after `apply` keyword.
@@ -340,6 +340,14 @@ Add `Neo` fish to the set of John's `pets`
 /[firstName=John]
 | apply [{"op":"add", "path":"/pets/-", "value": {"name":"Neo", "kind":"fish"}}]
 ```
+
+`upsert` updates existing document by given json argument used as merge patch
+         or inserts provided json argument as new document instance.
+
+```
+/[firstName = John] | upsert {"name": "John", "address":{"city":"New York"}}
+```
+
 ### Non standard JSON patch extensions
 
 #### increment
