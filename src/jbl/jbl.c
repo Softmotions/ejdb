@@ -135,6 +135,48 @@ finish:
   return rc;
 }
 
+iwrc jbl_from_json_printf(JBL *jblp, const char *format, ...) {
+  iwrc rc = 0;
+  va_list ap;
+
+  va_start(ap, format);
+  int size = _jbl_printf_estimate_size(format, ap);
+  va_end(ap);
+
+  va_start(ap, format);
+  char *buf = malloc(size);
+  RCGA(buf, finish);
+  vsnprintf(buf, size, format, ap);
+  va_end(ap);
+
+  rc = jbl_from_json(jblp, buf);
+
+finish:
+  free(buf);
+  return rc;
+}
+
+iwrc jbn_from_json_printf(JBL_NODE *node, IWPOOL *pool, const char *format, ...) {
+  iwrc rc = 0;
+  va_list ap;
+
+  va_start(ap, format);
+  int size = _jbl_printf_estimate_size(format, ap);
+  va_end(ap);
+
+  va_start(ap, format);
+  char *buf = malloc(size);
+  RCGA(buf, finish);
+  vsnprintf(buf, size, format, ap);
+  va_end(ap);
+
+  rc = jbn_from_json(buf, node, pool);
+
+finish:
+  free(buf);
+  return rc;
+}
+
 iwrc jbl_set_bool(JBL jbl, const char *key, bool v) {
   jbl_type_t t = jbl_type(jbl);
   if ((t != JBV_OBJECT && t != JBV_ARRAY) || !jbl->bn.writable) {
@@ -1442,7 +1484,7 @@ void jbn_data(JBL_NODE node) {
 
 int jbn_length(JBL_NODE node) {
   int ret = 0;
-  for(JBL_NODE n = node->child; n; n = n->next) {
+  for (JBL_NODE n = node->child; n; n = n->next) {
     ++ret;
   }
   return ret;

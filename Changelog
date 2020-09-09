@@ -1,5 +1,6 @@
 ejdb2 (2.0.51) UNRELEASED; urgency=medium
 
+  * Added `jbl_from_json_printf()` and `jbn_from_json_printf()` (jbl.h)
   * Added JQL `upsert` operation
   * Typo fixed (jbl.c)
   * `jbl_get_str()` now returns `const char*` (jbl.h)
