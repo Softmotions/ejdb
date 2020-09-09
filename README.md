@@ -346,7 +346,7 @@ k @family/*
 
 We can execute query by HTTP `POST` request
 ```
-curl --data-raw '@family/[firstName=John]' -H'X-Access-Token:myaccess01' -X POST http://localhost:9191
+curl --data-raw '@family/[firstName = John]' -H'X-Access-Token:myaccess01' -X POST http://localhost:9191
 
 1	{"firstName":"John","lastName":"Doe","age":28,"pets":[{"name":"Rexy rex","kind":"dog","likes":["bones","jumping","toys"]},{"name":"Grenny","kind":"parrot","likes":["green color","night","toys"]}]}
 ```
@@ -492,7 +492,7 @@ JSON patch specs conformed to `rfc7386` or `rfc6902` specifications followed aft
 
 Let's add `address` object to all matched document
 ```
-/[firstName=John] | apply {"address":{"city":"New York", "street":""}}
+/[firstName = John] | apply {"address":{"city":"New York", "street":""}}
 ```
 
 If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise
@@ -503,12 +503,12 @@ it should be array which denotes `rfc6902` JSON patch. Placeholders also support
 
 Set the street name in `address`
 ```
-/[firstName=John] | apply [{"op":"replace", "path":"/address/street", "value":"Fifth Avenue"}]
+/[firstName = John] | apply [{"op":"replace", "path":"/address/street", "value":"Fifth Avenue"}]
 ```
 
 Add `Neo` fish to the set of John's `pets`
 ```
-/[firstName=John]
+/[firstName = John]
 | apply [{"op":"add", "path":"/pets/-", "value": {"name":"Neo", "kind":"fish"}}]
 ```
 
@@ -516,7 +516,7 @@ Add `Neo` fish to the set of John's `pets`
          or inserts provided json argument as new document instance.
 
 ```
-/[firstName = John] | upsert {"name": "John", "address":{"city":"New York"}}
+/[firstName = John] | upsert {"firstName": "John", "address":{"city":"New York"}}
 ```
 
 ### Non standard JSON patch extensions
