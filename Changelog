@@ -1,5 +1,6 @@
-ejdb2 (2.0.51) UNRELEASED; urgency=medium
+ejdb2 (2.0.51) testing; urgency=medium
 
+  * Upgraded to iowow v1.4.7
   * Added `jbl_from_json_printf()` and `jbn_from_json_printf()` (jbl.h)
   * Added JQL `upsert` operation
   * Typo fixed (jbl.c)
@@ -7,7 +8,7 @@ ejdb2 (2.0.51) UNRELEASED; urgency=medium
   * Added `jbl_set_user_data()` (jbl.h)
   * Removed disable int compression feature from binn implementation (binn.c)
 
- -- Anton Adamansky <adamansky@gmail.com>  Mon, 29 Jun 2020 21:14:31 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 21 Sep 2020 12:45:01 +0700
 
 ejdb2 (2.0.50) testing; urgency=medium
 
