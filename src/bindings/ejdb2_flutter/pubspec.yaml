@@ -5,6 +5,7 @@ homepage: https://ejdb.org
 
 environment:
   sdk: '>=2.5.0 <3.0.0'
+  flutter: ">=1.10.0 <2.0.0"
 
 dependencies:
   flutter:
@@ -27,8 +28,13 @@ flutter:
   # be modified. They are used by the tooling to maintain consistency when
   # adding or updating assets for this project.
   plugin:
-    androidPackage: com.softmotions.ejdb2
-    pluginClass: Ejdb2FlutterPlugin
+    platforms:
+      android:
+        package: com.softmotions.ejdb2
+        pluginClass: Ejdb2FlutterPlugin
+      ios:
+        pluginClass: Ejdb2FlutterPlugin
+
   # To add assets to your plugin package, add an assets section, like this:
   # assets:
   #  - images/a_dot_burr.jpeg
