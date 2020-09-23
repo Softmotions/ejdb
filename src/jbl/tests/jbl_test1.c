@@ -56,6 +56,10 @@ void _jbl_test1_1(int num, iwrc expected, jbl_print_flags_t pf) {
   fprintf(f2, "\n%s", iwxstr_ptr(res));
   fclose(f1);
   fclose(f2);
+
+  fprintf(stderr, "ED %s\n", edata);
+  fprintf(stderr, "ED %s\n", iwxstr_ptr(res));
+
   CU_ASSERT_EQUAL_FATAL(strcmp(edata, iwxstr_ptr(res)), 0);
 
 finish:

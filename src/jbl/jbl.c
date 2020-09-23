@@ -523,6 +523,8 @@ iwrc _jbl_write_string(const char *str, int len, jbl_json_printer pt, void *op, 
     } else if (ch >= '\b' && ch <= '\r') {
       PT(0, 0, '\\', 1);
       PT(0, 0, specials[ch - '\b'], 1);
+    } else if (isprint(ch)) {
+      PT(0, 0, ch, 1);
     } else if (pf & JBL_PRINT_CODEPOINTS) {
       char sbuf[7]; // escaped unicode seq
       utf8proc_int32_t cp;
@@ -976,7 +978,7 @@ static iwrc _jbl_ptr_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
   if (len > 1 && path[len - 1] == '/') {
     return JBL_ERROR_JSON_POINTER;
   }
-  sz = (int) (sizeof(struct _JBL_PTR) + cnt * sizeof(char *) + len);
+  sz = (int)(sizeof(struct _JBL_PTR) + cnt * sizeof(char *) + len);
   if (pool) {
     jp = iwpool_alloc(sz, pool);
   } else {
@@ -1687,7 +1689,7 @@ iwrc jbn_copy_path(JBL_NODE src,
   JBL_NODE n1, n2;
   jbp_patch_t op = JBP_REPLACE;
 
-  if (strcmp("/", src_path) == 0) { // -V526
+  if (strcmp("/", src_path) != 0) { // -V526
     rc = jbn_at(src, src_path, &n1);
     if (rc == JBL_ERROR_PATH_NOTFOUND) {
       return 0;
