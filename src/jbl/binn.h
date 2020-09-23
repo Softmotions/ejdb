@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -235,14 +236,14 @@ struct binn_struct {
   binn_user_data_free userdata_freefn;
   //
   union {
-    signed char    vint8;
-    signed short   vint16;
-    signed int     vint32;
-    int64          vint64;
-    unsigned char  vuint8;
-    unsigned short vuint16;
-    unsigned int   vuint32;
-    uint64         vuint64;
+    int8_t   vint8;
+    int16_t  vint16;
+    int32_t  vint32;
+    int64_t  vint64;
+    uint8_t  vuint8;
+    uint16_t vuint16;
+    uint32_t vuint32;
+    uint64_t vuint64;
     //
     signed char    vchar;
     unsigned char  vuchar;

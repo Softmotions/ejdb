@@ -14,11 +14,11 @@ iwrc jbi_pk_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
 
   if (jqvp->type == JQVAL_JBLNODE && jqvp->vnode->type == JBV_ARRAY) {
     JQVAL jqv;
-    int64_t step = 1;
     JBL_NODE nv = jqvp->vnode->child;
     if (!nv) {
       goto finish;
     }
+    step = 1;
     do {
       jql_node_to_jqval(nv, &jqv);
       if (jql_jqval_as_int(&jqv, &id)) {

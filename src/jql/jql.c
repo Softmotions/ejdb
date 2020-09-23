@@ -1,6 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ArgumentSelectionDefectsInspection"
-
 #include "convert.h"
 #include "ejdb2_internal.h"
 #include "jbl_internal.h"
@@ -421,7 +418,7 @@ IW_INLINE jqval_type_t _jql_binn_to_jqval(binn *vbinn, JQVAL *qval) {
       return qval->type;
     case BINN_INT8:
       qval->type = JQVAL_I64;
-      qval->vi64 = vbinn->vint8;
+      qval->vi64 = vbinn->vint8; // NOLINT(bugprone-signed-char-misuse)
       return qval->type;
     case BINN_INT16:
       qval->type = JQVAL_I64;
@@ -512,8 +509,8 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
     case JQVAL_STR:
       switch (rv->type) {
         case JQVAL_STR: {
-          int l1 = strlen(lv->vstr);
-          int l2 = strlen(rv->vstr);
+          int l1 = (int) strlen(lv->vstr);
+          int l2 = (int) strlen(rv->vstr);
           if (l1 != l2) {
             return l1 - l2;
           }
@@ -681,7 +678,6 @@ static bool _jql_match_regexp(JQP_AUX *aux,
       }
       case JQVAL_F64: {
         size_t osz;
-        char nbuf[JBNUMBUF_SIZE];
         jbi_ftoa(rv->vf64, nbuf, &osz);
         expr = iwpool_strdup(aux->pool, nbuf, rcp);
         if (*rcp) return false;
@@ -1406,7 +1402,7 @@ static bool _jql_proj_matched(int16_t lvl, JBL_NODE n,
     if (ps->flavour & JQP_STR_PROJFIELD) {
       for (JQP_STRING *sn = ps; sn; sn = sn->subnext) {
         const char *pv = sn->value;
-        int pvlen = strlen(pv);
+        int pvlen = (int) strlen(pv);
         if (pvlen == keylen && !strncmp(key, pv, keylen)) {
           proj->pos = lvl;
           return (proj->cnt == lvl + 1);
@@ -1414,7 +1410,7 @@ static bool _jql_proj_matched(int16_t lvl, JBL_NODE n,
       }
     } else {
       const char *pv = ps->value;
-      int pvlen = strlen(pv);
+      int pvlen = (int) strlen(pv);
       if ((pvlen == keylen && !strncmp(key, pv, keylen)) || (pv[0] == '*' && pv[1] == '\0')) {
         proj->pos = lvl;
         return (proj->cnt == lvl + 1);
@@ -1517,10 +1513,10 @@ static bool _jql_proj_join_matched(int16_t lvl, JBL_NODE n,
         goto finish;
       }
       RCHECK(rc, finish, jbl_to_node(jbl, &nn, true, pool));
-      struct _JBDOCREF *key = malloc(sizeof(*key));
-      RCGA(key, finish);
-      *key = ref;
-      RCHECK(rc, finish, iwstree_put(cache, key, nn));
+      struct _JBDOCREF *refkey = malloc(sizeof(*refkey));
+      RCGA(refkey, finish);
+      *refkey = ref;
+      RCHECK(rc, finish, iwstree_put(cache, refkey, nn));
     }
     jbn_apply_from(n, nn);
     proj->pos = lvl;
@@ -1543,7 +1539,7 @@ static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key,
   } else {
     iwitoa(klidx, buf, JBNUMBUF_SIZE);
     keyptr = buf;
-    klidx = strlen(keyptr);
+    klidx = (int) strlen(keyptr);
   }
   for (JQP_PROJECTION *p = pctx->proj; p; p = p->next) {
     uint8_t flags = p->flags;
@@ -1711,4 +1707,3 @@ iwrc jql_init() {
   return iwlog_register_ecodefn(_ecodefn);
 }
 
-#pragma clang diagnostic pop

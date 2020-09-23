@@ -1,3 +1,9 @@
+ejdb2 (2.0.52) UNRELEASED; urgency=medium
+
+  * Code cleanup
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 23 Sep 2020 15:45:25 +0700
+
 ejdb2 (2.0.51) testing; urgency=medium
 
   * Upgraded to iowow v1.4.7

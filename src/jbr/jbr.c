@@ -160,7 +160,7 @@ static iwrc _jbr_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
     rctx->wbuf = wbuf;
   }
   if (ux->log) {
-    iwrc rc = iwxstr_cat(wbuf, iwxstr_ptr(ux->log), iwxstr_size(ux->log));
+    rc = iwxstr_cat(wbuf, iwxstr_ptr(ux->log), iwxstr_size(ux->log));
     RCRET(rc);
     rc = iwxstr_cat(wbuf, "--------------------", 20);
     RCRET(rc);
@@ -233,7 +233,7 @@ finish:
     switch (rcs) {
       case JQL_ERROR_QUERY_PARSE: {
         const char *err = jql_error(ux.q);
-        _jbr_http_error_send2(rctx->req, 400, "text/plain", err, err ? strlen(err) : 0);
+        _jbr_http_error_send2(rctx->req, 400, "text/plain", err, err ? (int) strlen(err) : 0);
         break;
       }
       case JQL_ERROR_NO_COLLECTION:
@@ -262,7 +262,7 @@ finish:
     if (jql_has_aggregate_count(ux.q)) {
       char nbuf[JBNUMBUF_SIZE];
       snprintf(nbuf, sizeof(nbuf), "%" PRId64, ux.cnt);
-      _jbr_http_send(req, 200, "text/plain", nbuf, strlen(nbuf));
+      _jbr_http_send(req, 200, "text/plain", nbuf, (int) strlen(nbuf));
     } else {
       _jbr_http_send(req, 200, 0, 0, 0);
     }
@@ -429,7 +429,7 @@ static void _jbr_on_get(JBRCTX *rctx) {
 
   _jbr_http_send(req, 200, "application/json",
                  xstr ? iwxstr_ptr(xstr) : 0,
-                 xstr ? iwxstr_size(xstr) : nbytes);
+                 xstr ? (int) iwxstr_size(xstr) : nbytes);
 finish:
   if (rc) {
     JBR_RC_REPORT(500, req, rc);
@@ -592,7 +592,7 @@ static void _jbr_on_http_request(http_s *req) {
       return;
     }
     fio_str_info_s hv = fiobj_obj2cstr(h);
-    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len)) { // -V526
+    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len) != 0) { // -V526
       http_send_error(req, 403);
       return;
     }
@@ -681,13 +681,13 @@ IW_INLINE bool _jbr_ws_write_text(ws_s *ws, const char *data, int len) {
 }
 
 IW_INLINE int _jbr_fill_prefix_buf(const char *key, int64_t id, char buf[static _WS_KEYPREFIX_BUFSZ]) {
-  int len = strlen(key);
+  int len = (int) strlen(key);
   char *wp = buf;
-  memcpy(wp, key, len);
+  memcpy(wp, key, len); // NOLINT(bugprone-not-null-terminated-result)
   wp += len;
   *wp++ = '\t';
   wp += iwitoa(id, wp, _WS_KEYPREFIX_BUFSZ - (wp - buf));
-  return wp - buf;
+  return (int) (wp - buf);
 }
 
 static void _jbr_ws_on_open(ws_s *ws) {
@@ -749,7 +749,7 @@ static void _jbr_ws_add_document(JBWCTX *wctx, const char *key, const char *coll
   }
   char pbuf[_WS_KEYPREFIX_BUFSZ];
   _jbr_fill_prefix_buf(key, id, pbuf);
-  _jbr_ws_write_text(wctx->ws, pbuf, strlen(pbuf));
+  _jbr_ws_write_text(wctx->ws, pbuf, (int) strlen(pbuf));
 
 finish:
   jbl_destroy(&jbl);
@@ -847,7 +847,7 @@ static void _jbr_ws_set_index(JBWCTX *wctx, const char *key, const char *coll, i
   if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
   } else {
-    _jbr_ws_write_text(wctx->ws, key, strlen(key));
+    _jbr_ws_write_text(wctx->ws, key, (int) strlen(key));
   }
 }
 
@@ -860,7 +860,7 @@ static void _jbr_ws_del_index(JBWCTX *wctx, const char *key, const char *coll, i
   if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
   } else {
-    _jbr_ws_write_text(wctx->ws, key, strlen(key));
+    _jbr_ws_write_text(wctx->ws, key, (int) strlen(key));
   }
 }
 
@@ -965,9 +965,9 @@ finish:
     if (jql_has_aggregate_count(ux.q)) {
       char pbuf[_WS_KEYPREFIX_BUFSZ];
       _jbr_fill_prefix_buf(key, ux.cnt, pbuf);
-      _jbr_ws_write_text(wctx->ws, pbuf, strlen(pbuf));
+      _jbr_ws_write_text(wctx->ws, pbuf, (int) strlen(pbuf));
     }
-    _jbr_ws_write_text(wctx->ws, key, strlen(key));
+    _jbr_ws_write_text(wctx->ws, key, (int) strlen(key));
   }
   if (ux.q) {
     jql_destroy(&ux.q);
@@ -1022,7 +1022,7 @@ static void _jbr_ws_remove_coll(JBWCTX *wctx, const char *key, const char *coll)
   if (rc) {
     _jbr_ws_send_rc(wctx, key, rc, 0);
   } else {
-    _jbr_ws_write_text(wctx->ws, key, strlen(key));
+    _jbr_ws_write_text(wctx->ws, key, (int) strlen(key));
   }
 }
 
@@ -1070,7 +1070,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       "\n<key> explain <collection> <query>"
       "\n<key> <query>"
       "\n";
-    _jbr_ws_write_text(ws, help, strlen(help));
+    _jbr_ws_write_text(ws, help, (int) strlen(help));
     return;
   }
 
@@ -1264,7 +1264,7 @@ static void _jbr_on_http_upgrade(http_s *req, char *requested_protocol, size_t l
       return;
     }
     fio_str_info_s hv = fiobj_obj2cstr(h);
-    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len)) { // -V526
+    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len) != 0) { // -V526
       free(wctx);
       http_send_error(req, 403);
       return;

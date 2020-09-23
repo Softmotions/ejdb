@@ -75,7 +75,7 @@ iwrc jbl_set_f64(JBL jbl, const char *key, double v) {
   binn *bv = &jbl->bn;
   if (key) {
     if (t == JBV_OBJECT) {
-      if (!binn_object_set_float(bv, key, v)) {
+      if (!binn_object_set_double(bv, key, v)) {
         return JBL_ERROR_CREATION;
       }
     } else {
@@ -83,7 +83,7 @@ iwrc jbl_set_f64(JBL jbl, const char *key, double v) {
     }
     return 0;
   } else if (t == JBV_ARRAY) {
-    if (!binn_list_add_float(bv, v)) {
+    if (!binn_list_add_double(bv, v)) {
       return JBL_ERROR_CREATION;
     }
     return 0;
@@ -513,7 +513,7 @@ iwrc _jbl_write_string(const char *str, int len, jbl_json_printer pt, void *op, 
   } while(0)
 
   if (len < 0) {
-    len = strlen(str);
+    len = (int) strlen(str);
   }
   for (size_t i = 0; i < len; i++) {
     uint8_t ch = p[i];
@@ -523,8 +523,6 @@ iwrc _jbl_write_string(const char *str, int len, jbl_json_printer pt, void *op, 
     } else if (ch >= '\b' && ch <= '\r') {
       PT(0, 0, '\\', 1);
       PT(0, 0, specials[ch - '\b'], 1);
-    } else if (isprint(ch)) {
-      PT(0, 0, ch, 1);
     } else if (pf & JBL_PRINT_CODEPOINTS) {
       char sbuf[7]; // escaped unicode seq
       utf8proc_int32_t cp;
@@ -674,7 +672,7 @@ static iwrc _jbl_as_json(binn *bn, jbl_json_printer pt, void *op, int lvl, jbl_p
       llv = bn->vuint32;
       goto loc_int;
     case BINN_INT8:
-      llv = bn->vint8;
+      llv = bn->vint8; // NOLINT(bugprone-signed-char-misuse)
       goto loc_int;
     case BINN_INT16:
       llv = bn->vint16;
@@ -746,7 +744,7 @@ iwrc jbl_fstream_json_printer(const char *data, int size, char ch, int count, vo
     }
   } else {
     if (size < 0) {
-      size = strlen(data);
+      size = (int) strlen(data);
     }
     if (!count) count = 1;
     for (int i = 0; i < count; ++i) {
@@ -771,7 +769,7 @@ iwrc jbl_xstr_json_printer(const char *data, int size, char ch, int count, void 
       }
     }
   } else {
-    if (size < 0) size = strlen(data);
+    if (size < 0) size = (int) strlen(data);
     if (!count) count = 1;
     for (int i = 0; i < count; ++i) {
       iwrc rc = iwxstr_cat(xstr, data, size);
@@ -786,7 +784,7 @@ iwrc jbl_count_json_printer(const char *data, int size, char ch, int count, void
   if (!data) {
     *cnt = *cnt + count;
   } else {
-    if (size < 0) size = strlen(data);
+    if (size < 0) size = (int) strlen(data);
     if (!count) count = 1;
     *cnt = *cnt + count * size;
   }
@@ -978,7 +976,7 @@ static iwrc _jbl_ptr_pool(const char *path, JBL_PTR *jpp, IWPOOL *pool) {
   if (len > 1 && path[len - 1] == '/') {
     return JBL_ERROR_JSON_POINTER;
   }
-  sz = sizeof(struct _JBL_PTR) + cnt * sizeof(char *) + len;
+  sz = (int) (sizeof(struct _JBL_PTR) + cnt * sizeof(char *) + len);
   if (pool) {
     jp = iwpool_alloc(sz, pool);
   } else {
@@ -1220,9 +1218,9 @@ IW_INLINE bool _jbn_visitor_update_jptr_cursor(JBN_VCTX *vctx, int lvl, const ch
       } else {
         iwitoa(idx, buf, JBNUMBUF_SIZE);
         keyptr = buf;
-        idx = strlen(keyptr);
+        idx = (int) strlen(keyptr);
       }
-      int jplen = strlen(jp->n[lvl]);
+      int jplen = (int) strlen(jp->n[lvl]);
       if ((idx == jplen && !strncmp(keyptr, jp->n[lvl], idx)) || (jp->n[lvl][0] == '*' && jp->n[lvl][1] == '\0')) {
         vctx->pos = lvl;
         return (jp->cnt == lvl + 1);
@@ -1391,7 +1389,7 @@ int jbn_path_compare_str(JBL_NODE n, const char *path, const char *sv, iwrc *rcp
   struct _JBL_NODE cn = {
     .type = JBV_STR,
     .vptr = sv,
-    .vsize = strlen(sv)
+    .vsize = (int) strlen(sv)
   };
   return _jbl_compare_nodes(v, &cn, rcp);
 }
@@ -1535,12 +1533,12 @@ iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vle
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
-    n->klidx = strlen(n->key);
+    n->klidx = (int) strlen(n->key);
   }
   n->type = JBV_STR;
   if (val) {
     if (vlen < 0) {
-      vlen = strlen(val);
+      vlen = (int) strlen(val);
     }
     n->vptr = iwpool_strndup(pool, val, vlen, &rc);
     RCGO(rc, finish);
@@ -1567,7 +1565,7 @@ iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, JBL_NODE *n
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
-    n->klidx = strlen(n->key);
+    n->klidx = (int) strlen(n->key);
   }
   n->type = JBV_I64;
   n->vi64 = val;
@@ -1592,7 +1590,7 @@ iwrc jbn_add_item_f64(JBL_NODE parent, const char *key, double val, JBL_NODE *no
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
-    n->klidx = strlen(n->key);
+    n->klidx = (int) strlen(n->key);
   }
   n->type = JBV_F64;
   n->vf64 = val;
@@ -1617,7 +1615,7 @@ iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, JBL_NODE *nod
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
-    n->klidx = strlen(n->key);
+    n->klidx = (int) strlen(n->key);
   }
   n->type = JBV_BOOL;
   n->vbool = val;
@@ -1640,7 +1638,7 @@ iwrc jbn_add_item_obj(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *p
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
-    n->klidx = strlen(n->key);
+    n->klidx = (int) strlen(n->key);
   }
   n->type = JBV_OBJECT;
   jbn_add_item(parent, n);
@@ -1664,7 +1662,7 @@ iwrc jbn_add_item_arr(JBL_NODE parent, const char *key, JBL_NODE *out, IWPOOL *p
     }
     n->key = iwpool_strdup(pool, key, &rc);
     RCGO(rc, finish);
-    n->klidx = strlen(n->key);
+    n->klidx = (int) strlen(n->key);
   }
   n->type = JBV_ARRAY;
   jbn_add_item(parent, n);
@@ -1689,7 +1687,7 @@ iwrc jbn_copy_path(JBL_NODE src,
   JBL_NODE n1, n2;
   jbp_patch_t op = JBP_REPLACE;
 
-  if (strcmp("/", src_path)) { // -V526
+  if (strcmp("/", src_path) == 0) { // -V526
     rc = jbn_at(src, src_path, &n1);
     if (rc == JBL_ERROR_PATH_NOTFOUND) {
       return 0;
@@ -1849,7 +1847,7 @@ static iwrc _jbl_create_node(JBLDRCTX *ctx,
       n->type = JBV_I64;
       break;
     case BINN_INT8:
-      n->vi64 = bv->vint8;
+      n->vi64 = bv->vint8; // NOLINT(bugprone-signed-char-misuse)
       n->type = JBV_I64;
       break;
     case BINN_INT16:
@@ -1961,7 +1959,7 @@ static JBL_NODE _jbl_node_find(JBL_NODE node, JBL_PTR ptr, int from, int to) {
 
   for (int i = from; n && i < ptr->cnt && i < to; ++i) {
     if (n->type == JBV_OBJECT) {
-      int ptrnlen = strlen(ptr->n[i]);
+      int ptrnlen = (int) strlen(ptr->n[i]);
       for (n = n->child; n; n = n->next) {
         if (!strncmp(n->key, ptr->n[i], n->klidx) && ptrnlen == n->klidx) {
           break;
@@ -2093,7 +2091,7 @@ int _jbl_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
   } else if (!n2) {
     return 1;
   } else if (n1->type != n2->type) {
-    return n1->type - n2->type;
+    return (int) n1->type - (int) n2->type;
   }
   switch (n1->type) {
     case JBV_BOOL:
@@ -2200,7 +2198,7 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex, IWP
             if (!pn) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
             pn->type = JBV_OBJECT;
             pn->key = path->n[i];
-            pn->klidx = strlen(pn->key);
+            pn->klidx = (int) strlen(pn->key);
             _jbn_add_item(parent, pn);
           } else if (pn->type != JBV_OBJECT) {
             return JBL_ERROR_PATCH_TARGET_INVALID;
@@ -2254,7 +2252,7 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex, IWP
         }
       } else if (op != JBP_INCREMENT) {
         value->key = path->n[path->cnt - 1];
-        value->klidx = strlen(value->key);
+        value->klidx = (int) strlen(value->key);
         _jbn_add_item(parent, value);
       } else {
         return JBL_ERROR_PATCH_TARGET_INVALID;
@@ -2404,7 +2402,7 @@ int _jbl_cmp_atomic_values(JBL v1, JBL v2) {
   jbl_type_t t1 = jbl_type(v1);
   jbl_type_t t2 = jbl_type(v2);
   if (t1 != t2) {
-    return t1 - t2;
+    return (int) t1 - (int) t2;
   }
   switch (t1) {
     case JBV_BOOL:
@@ -2550,7 +2548,7 @@ iwrc jbl_patch_from_json(JBL jbl, const char *patchjson) {
   }
   JBL_PATCH *p;
   JBL_NODE patch;
-  int cnt = strlen(patchjson);
+  int cnt = (int) strlen(patchjson);
   IWPOOL *pool = iwpool_create(MAX(cnt, 1024U));
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
