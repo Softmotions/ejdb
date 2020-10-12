@@ -11,10 +11,10 @@
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
-static void jn_add_stream_result_call_mt(napi_env env,
-                                         napi_value js_add_stream,
-                                         void *context,
-                                         void *data);
+static void jn_resultset_tsf(napi_env env,
+                             napi_value js_add_stream,
+                             void *context,
+                             void *data);
 static bool jn_throw_error(napi_env env, iwrc rc, const char *location, const char *msg);
 static napi_value jn_create_error(napi_env env, iwrc rc, const char *location, const char *msg);
 
@@ -539,7 +539,7 @@ static napi_value jn_ejdb2impl_ctor(napi_env env, napi_callback_info info) {
          0,   // void* thread_finalize_data,
          0,   // napi_finalize thread_finalize_cb,
          0,   // void* context,
-         jn_add_stream_result_call_mt,  // napi_threadsafe_function_call_js call_js_cb,
+         jn_resultset_tsf,  // napi_threadsafe_function_call_js call_js_cb,
          &jbn->resultset_tsf // napi_threadsafe_function* result
        ), finish);
 
@@ -1422,10 +1422,10 @@ static void jn_cs_destroy(JNCS *csp) {
 }
 
 // function addStreamResult(stream, id, jsondoc, log)
-static void jn_add_stream_result_call_mt(napi_env env,
-                                         napi_value js_add_stream,
-                                         void *context,
-                                         void *data) {
+static void jn_resultset_tsf(napi_env env,
+                             napi_value js_add_stream,
+                             void *context,
+                             void *data) {
 
   if (!env) { // shutdown pending
     JNCS cs = data;
@@ -1480,6 +1480,10 @@ static void jn_add_stream_result_call_mt(napi_env env,
        ), finish);
 
 finish:
+  if (cs->document_id < 0) {
+    uint32_t refs;
+    napi_reference_unref(env, cs->stream_ref, &refs);
+  }
   jn_cs_destroy(&cs);
 }
 
@@ -1487,8 +1491,8 @@ static void jn_jnqs_destroy_mt(napi_env env, JNQS *qsp) {
   if (!qsp || !*qsp) {
     return;
   }
-  uint32_t rcnt;
   JNQS qs = *qsp;
+  uint32_t rcnt = 0;
   if (--qs->refs > 0) {
     return;
   }
@@ -1497,11 +1501,19 @@ static void jn_jnqs_destroy_mt(napi_env env, JNQS *qsp) {
   }
   if (qs->stream_ref) {
     napi_reference_unref(env, qs->stream_ref, &rcnt);
-    napi_delete_reference(env, qs->stream_ref);
+    if (!rcnt) {
+      napi_ref ref = qs->stream_ref;
+      qs->stream_ref = 0;
+      napi_delete_reference(env, ref);
+    }
   }
   if (qs->explain_cb_ref) {
     napi_reference_unref(env, qs->explain_cb_ref, &rcnt);
-    napi_delete_reference(env, qs->explain_cb_ref);
+    if (!rcnt) {
+      napi_ref ref = qs->explain_cb_ref;
+      qs->explain_cb_ref = 0;
+      napi_delete_reference(env, ref);
+    }
   }
   free(qs);
 }
@@ -1577,6 +1589,8 @@ finish:
 }
 
 static void jn_jql_stream_execute(napi_env env, void *data) {
+  napi_status ns;
+  uint32_t refs = 0;
   JNWORK work = data;
   JNQS qs = work->data;
   JQL q = qs->jnql->jql;
@@ -1590,6 +1604,7 @@ static void jn_jql_stream_execute(napi_env env, void *data) {
   // before start reading stream.
   work->rc = jn_stream_pause_guard(qs);
   RCGO(work->rc, finish);
+  JNGO(ns, env, napi_reference_ref(env, qs->stream_ref, &refs), finish);
 
   if (qs->explain_cb_ref) {
     ux.log = iwxstr_new();
@@ -1624,13 +1639,17 @@ static void jn_jql_stream_execute(napi_env env, void *data) {
   cs->document = 0;
   ux.log = 0;
 
-  napi_status ns = napi_call_threadsafe_function(qs->jbn->resultset_tsf, cs, napi_tsfn_blocking);
+  ns = napi_call_threadsafe_function(qs->jbn->resultset_tsf, cs, napi_tsfn_blocking);
   if (ns) {
     work->rc = JN_ERROR_NAPI;
     work->ns = ns;
   }
+  refs = 0;
 
 finish:
+  if (refs) {
+    napi_reference_unref(env, qs->stream_ref, &refs);
+  }
   if (ux.log) {
     iwxstr_destroy(ux.log);
   }
@@ -1657,8 +1676,8 @@ finish:
 // this.jql._impl.jql_stream_destroy(this);
 static napi_value jn_jql_stream_destroy(napi_env env, napi_callback_info info) {
   void *data;
-  napi_value ret = jn_undefined(env), argv, this;
   size_t argc = 1;
+  napi_value ret = jn_undefined(env), argv, this;
 
   napi_status ns = napi_get_cb_info(env, info, &argc, &argv, &this, &data);
   if (ns || argc < 1) goto finish;
