@@ -16,6 +16,8 @@ if("${IOWOW_URL}" STREQUAL "")
   endif()
 endif()
 
+message("IOWOW_URL: ${IOWOW_URL}")
+
 if (IOS)
   set(BYPRODUCT "${CMAKE_BINARY_DIR}/lib/libiowow-1.a")
 else()
