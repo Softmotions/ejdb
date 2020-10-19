@@ -42,6 +42,9 @@ static void jbr_test1_1() {
   long code;
   EJDB db;
   iwrc rc = ejdb_open(&opts, &db);
+  if (rc) {
+    iwlog_ecode_error3(rc);
+  }
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   IWXSTR *xstr = iwxstr_new();

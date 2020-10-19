@@ -1581,7 +1581,7 @@ finish:
   if (work->rc) {
     iwxstr_destroy(xstr);
     if (cs) {
-      cs->document = 0; // keeped in xstr
+      cs->document = 0; // kept in xstr
       jn_cs_destroy(&cs);
     }
   }
@@ -1643,7 +1643,9 @@ static void jn_jql_stream_execute(napi_env env, void *data) {
   if (ns) {
     work->rc = JN_ERROR_NAPI;
     work->ns = ns;
+    goto finish;
   }
+
   refs = 0;
 
 finish:
