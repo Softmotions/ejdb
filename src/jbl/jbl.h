@@ -708,6 +708,15 @@ IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *va
                                 IWPOOL *pool);
 
 /**
+ * @brief Adds null JSON value to the given `parent` node.
+ *
+ * @param parent Parent holder.
+ * @param key Child node key cloned into node. Can be zero if parent is an array.
+ * @param pool Allocation pool.
+ */
+IW_EXPORT iwrc jbn_add_item_null(JBL_NODE parent, const char *key, IWPOOL *pool);
+
+/**
  * @brief Adds integer JSON node to the given `parent` node.
  *
  * @param parent Parent holder.

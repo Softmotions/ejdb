@@ -1554,6 +1554,27 @@ finish:
   return rc;
 }
 
+iwrc jbn_add_item_null(JBL_NODE parent, const char *key, IWPOOL *pool) {
+  if (!parent || !pool || parent->type < JBV_OBJECT) {
+    return IW_ERROR_INVALID_ARGS;
+  }
+  iwrc rc = 0;
+  JBL_NODE n = iwpool_calloc(sizeof(*n), pool);
+  if (!n) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  if (parent->type == JBV_OBJECT) {
+    if (!key) {
+      return IW_ERROR_INVALID_ARGS;
+    }
+    n->key = iwpool_strdup(pool, key, &rc);
+    RCGO(rc, finish);
+    n->klidx = (int) strlen(n->key);
+  }
+  n->type = JBV_NULL;
+  jbn_add_item(parent, n);
+finish:
+  return rc;
+}
+
 iwrc jbn_add_item_i64(JBL_NODE parent, const char *key, int64_t val, JBL_NODE *node_out, IWPOOL *pool) {
   if (!parent || !pool || parent->type < JBV_OBJECT) {
     return IW_ERROR_INVALID_ARGS;
