@@ -10,13 +10,15 @@
     "-DBUILD_SHARED_LIBS=ON",
     "-DBUILD_TESTS=ON",
     "-DBUILD_EXAMPLES=OFF",
-    "-DBUILD_JNI_BINDING=OFF",
-    "-DBUILD_DART_BINDING=OFF",
-    "-DBUILD_NODEJS_BINDING=OFF",
+    "-DBUILD_JNI_BINDING=ON",
+    "-DBUILD_DART_BINDING=ON",
+    "-DBUILD_NODEJS_BINDING=ON",
     "-DBUILD_REACT_NATIVE_BINDING=OFF",
-    "-DBUILD_SWIFT_BINDING=OFF",
+    "-DBUILD_FLUTTER_BINDING=OFF",
+    "-DBUILD_SWIFT_BINDING=ON",
     "-DANDROID_ABIS=x86",
     "-DASAN=OFF",
+    //"-DFACIL_URL=file:///home/adam/Projects/contrib/facil.io"
     //"-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow",
   ],
   "cmake.ctestArgs": [],
@@ -63,11 +65,24 @@
   "java.import.gradle.arguments": "--no-daemon",
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
 
-  "dart.analysisExcludedFolders": [
-    "mxe",
-    "build"
-  ],
-  "favorites.resources": [
-    "src/jql/tests/data/020.jql"
+  "dart.analysisExcludedFolders": ["mxe", "build"],
+  "favorites.resources": ["src/jql/tests/data/020.jql"],
+  "clang-tidy.compilerArgs": [
+    "-I",
+    "src",
+    "-I",
+    "src/jbi",
+    "-I",
+    "src/jbl",
+    "-I",
+    "src/jbr",
+    "-I",
+    "src/jql",
+    "-I",
+    "src/util",
+    "-I",
+    "build/include",
+    "-I",
+    "build/src/generated"
   ]
 }
