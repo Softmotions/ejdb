@@ -83,6 +83,8 @@
     "-I",
     "build/include",
     "-I",
-    "build/src/generated"
+    "build/src/generated",
+    "-I",
+    "build/extern_facil/lib/facil"
   ]
 }

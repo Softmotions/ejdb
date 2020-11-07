@@ -1,5 +1,6 @@
 ejdb2 (2.0.52) UNRELEASED; urgency=medium
 
+  * Dart binding: support of the latest Dart pub
   * Added `jbn_add_item_null()` (jbl.h)
   * SIGSEGV, Segmentation fault (#287)
   * Upgraded to facil.io 0.7.5

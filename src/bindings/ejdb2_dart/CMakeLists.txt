@@ -62,11 +62,11 @@ if (BUILD_TESTS)
   endif ()
   find_program(PUB_EXEC pub)
   if (PUB_EXEC MATCHES "PUB_EXEC-NOTFOUND")
-    message(FATAL_ERROR "`pub` executable not found")
+    set(PUB_EXEC ${DART_EXEC} pub)
   endif ()
 
   add_custom_command(
-    COMMAND pub get
+    COMMAND ${PUB_EXEC} get
     OUTPUT ${DART_PUB_DIR}/pubspec.lock
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pubspec.yaml
     WORKING_DIRECTORY ${DART_PUB_DIR}
