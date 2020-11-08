@@ -1,4 +1,4 @@
-ejdb2 (2.0.52) UNRELEASED; urgency=medium
+ejdb2 (2.0.52) testing; urgency=medium
 
   * Fixed serios bug concerning non-unique indexes, details: (#291)
   * Dart binding: support of the latest Dart pub
@@ -7,7 +7,7 @@ ejdb2 (2.0.52) UNRELEASED; urgency=medium
   * Upgraded to facil.io 0.7.5
   * Code cleanup
 
- -- Anton Adamansky <adamansky@gmail.com>  Wed, 23 Sep 2020 15:45:25 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Sun, 08 Nov 2020 22:04:58 +0700
 
 ejdb2 (2.0.51) testing; urgency=medium
 
