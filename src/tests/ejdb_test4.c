@@ -214,7 +214,7 @@ static void ejdb_test4_2(void) {
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
-  pSuite = CU_add_suite("ejdb_test3", init_suite, clean_suite);
+  pSuite = CU_add_suite("ejdb_test4", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
