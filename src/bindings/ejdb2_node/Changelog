@@ -1,3 +1,7 @@
+ejdb_node (1.0.42)
+
+  * Upgraded to ejdb v2.0.52
+
 ejdb_node (1.0.41)
 
   * Fixed SIGSERV for node v12.x

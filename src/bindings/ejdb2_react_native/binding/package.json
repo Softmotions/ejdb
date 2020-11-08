@@ -1,6 +1,6 @@
 {
   "name": "ejdb2_react_native",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "repository": "https://github.com/Softmotions/ejdb.git",
   "author": "Anton Adamansky <adamansky@gmail.com>",
   "description": "EJDB2 React Native binding",
