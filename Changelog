@@ -1,5 +1,6 @@
 ejdb2 (2.0.52) UNRELEASED; urgency=medium
 
+  * Fixed serios bug concerning non-unique indexes, details: (#291)
   * Dart binding: support of the latest Dart pub
   * Added `jbn_add_item_null()` (jbl.h)
   * SIGSEGV, Segmentation fault (#287)
