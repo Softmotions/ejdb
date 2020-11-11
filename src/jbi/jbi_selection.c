@@ -171,6 +171,9 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
           mctx->expr1 = 0;
           return 0;
         }
+        if (rv->type == JQVAL_STR && *rv->vstr == '\0') {
+          continue;
+        }
       case JQP_OP_GT:
       case JQP_OP_GTE:
         if (mctx->cursor_init != IWKV_CURSOR_EQ) {
