@@ -93,9 +93,11 @@ IW_INLINE int _jbi_idx_expr_op_weight(struct _JBMIDX *midx) {
     case JQP_OP_GT:
     case JQP_OP_GTE:
       return 7;
+    case JQP_OP_PREFIX:
+      return 6;
     case JQP_OP_LT:
     case JQP_OP_LTE:
-      return 6;
+      return 5;
     default:
       return 0;
   }
@@ -166,8 +168,9 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         return 0;
       case JQP_OP_GT:
       case JQP_OP_GTE:
+      case JQP_OP_PREFIX:
         if (mctx->cursor_init != IWKV_CURSOR_EQ) {
-          if (mctx->expr1 && mctx->cursor_init == IWKV_CURSOR_GE) {
+          if (mctx->expr1 && mctx->cursor_init == IWKV_CURSOR_GE && op != JQP_OP_PREFIX) {
             JQVAL *pval = jql_unit_to_jqval(aux, mctx->expr1->right, &rc);
             RCRET(rc);
             int cv = jql_cmp_jqval_pair(pval, rv, &rc);

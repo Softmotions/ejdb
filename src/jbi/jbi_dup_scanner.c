@@ -134,6 +134,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
   int64_t step = 1;
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
+  jqp_op_t expr1_op = midx->expr1->op->value;
 
   IWKV_val key;
   jbi_jqval_fill_ikey(idx, jqval, &key, numbuf);
@@ -143,7 +144,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
   key.compound = (midx->cursor_step == IWKV_CURSOR_PREV) ? INT64_MIN : INT64_MAX;
 
   iwrc rc = iwkv_cursor_open(idx->idb, &cur, midx->cursor_init, &key);
-  if (rc == IWKV_ERROR_NOTFOUND && (midx->expr1->op->value == JQP_OP_LT || midx->expr1->op->value == JQP_OP_LTE)) {
+  if (rc == IWKV_ERROR_NOTFOUND && (expr1_op == JQP_OP_LT || expr1_op == JQP_OP_LTE)) {
     iwkv_cursor_close(&cur);
     key.compound = INT64_MAX;
     midx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
@@ -177,11 +178,15 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
           && !jbi_node_expr_matched(ctx->ux->q->aux, midx->idx, cur, midx->expr2, &rc)) {
         break;
       }
+      if (expr1_op == JQP_OP_PREFIX
+          && !jbi_node_expr_matched(ctx->ux->q->aux, midx->idx, cur, midx->expr1, &rc)) {
+        break;
+      }
       RCGO(rc, finish);
       step = 1;
       rc = consumer(ctx, 0, id, &step, &matched, 0);
       RCGO(rc, finish);
-      if (!midx->expr1->prematched && matched) {
+      if (!midx->expr1->prematched && matched && expr1_op != JQP_OP_PREFIX) {
         // Further scan will always match main index expression
         midx->expr1->prematched = true;
       }

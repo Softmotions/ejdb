@@ -945,7 +945,7 @@ static bool _jql_match_jqval_pair(JQP_AUX *aux,
       case JQP_OP_NI:
         match = _jql_match_ni(right, jqop, left, rcp);
         break;
-      case JQP_OP_STARTS:
+      case JQP_OP_PREFIX:
         match = _jql_match_starts(left, jqop, right, rcp);
       default:
         break;

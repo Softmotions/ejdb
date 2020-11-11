@@ -39,7 +39,7 @@ FILTERS = FILTER [{ and | or } [ not ] FILTER];
   NODE_EXPRESSION = '[' NODE_EXPR_LEFT OP NODE_EXPR_RIGHT ']'
                         [{ and | or } [ not ] NODE_EXPRESSION]...;
 
-  OP =   [ '!' ] { '=' | '>=' | '<=' | '>' | '<' }
+  OP =   [ '!' ] { '=' | '>=' | '<=' | '>' | '<' | ~ }
       | [ '!' ] { 'eq' | 'gte' | 'lte' | 'gt' | 'lt' }
       | [ not ] { 'in' | 'ni' | 're' };
 
@@ -268,6 +268,14 @@ We can create more complicated filters
   and /pets/*/likes/[** in ["bones", "toys"]]
 ```
 Note about grouping parentheses and regular expression matching using `re` operator.
+
+`~` is a prefix matching operator (Since ejdb `v2.0.53`).
+Prefix matching can benefit from using indexes.
+
+Get documents where `/lastName` starts with `"Do"`.
+```
+/[lastName ~ Do]
+```
 
 ### Arrays and maps can be matched as is
 
@@ -637,6 +645,8 @@ The following statements are taken into account when using EJDB2 indexes:
   * `lt, <`
   * `lte, <=`
   * `in`
+  * `~` (Prefix matching since ejdb 2.0.53)
+
 * `ORDERBY` clauses may use indexes to avoid result set sorting.
 * Array fields can also be indexed. Let's outline typical use case: indexing of some entity tags:
   ```
