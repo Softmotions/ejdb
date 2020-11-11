@@ -442,6 +442,8 @@ static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
     unit->op.value = JQP_OP_NI;
   } else if (!strcmp(text, "re")) {
     unit->op.value = JQP_OP_RE;
+  } else if (!(strcmp(text, "~"))) {
+    unit->op.value = JQP_OP_STARTS;
   } else {
     iwlog_error("Invalid operation: %s", text);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -1129,6 +1131,9 @@ static iwrc _jqp_print_join(jqp_op_t jqop, bool negate, jbl_json_printer pt, voi
       break;
     case JQP_OP_RE:
       PT("re", 2, 0, 0);
+      break;
+    case JQP_OP_STARTS:
+      PT(0, 0, '~', 1);
       break;
     default:
       iwlog_ecode_error3(IW_ERROR_ASSERTION);

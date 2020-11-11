@@ -176,9 +176,10 @@ PLACEHOLDER = ':' <([a-zA-Z0-9]+ | '?')>                                { $$ = _
 NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("in" | "ni" | "re")>      { $$ = _jqp_unit_op(yy, yytext); }
         | <(">=" | "gte")>                                              { $$ = _jqp_unit_op(yy, yytext); }
         | <("<=" | "lte")>                                              { $$ = _jqp_unit_op(yy, yytext); }
-        | ('!' _  { _jqp_op_negate(yy); })? <('=' | "eq")>              { $$ = _jqp_unit_op(yy, yytext); }
+        | ('!' _  { _jqp_op_negate(yy); })? <('=' | "eq" | '~')>        { $$ = _jqp_unit_op(yy, yytext); }
         | <('>' | "gt")>                                                { $$ = _jqp_unit_op(yy, yytext); }
         | <('<' | "lt")>                                                { $$ = _jqp_unit_op(yy, yytext); }
+        | <('~')>                                                       { $$ = _jqp_unit_op(yy, yytext); }
 
 STRP = <CHP+> { $$ = _jqp_unescaped_string(yy, 0, yytext); }
 

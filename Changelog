@@ -1,3 +1,9 @@
+ejdb2 (2.0.53) UNRELEASED; urgency=medium
+
+  * Add prefix matching operator ~ (#292)
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 11 Nov 2020 16:42:00 +0700
+
 ejdb2 (2.0.52) testing; urgency=medium
 
   * Fixed serios bug concerning non-unique indexes, details: (#291)

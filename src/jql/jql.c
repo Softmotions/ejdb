@@ -844,6 +844,67 @@ static bool _jql_match_ni(JQVAL *left, JQP_OP *jqop, JQVAL *right,
   return false;
 }
 
+static bool _jql_match_starts(JQVAL *left, JQP_OP *jqop, JQVAL *right,
+                              iwrc *rcp) {
+
+  JQVAL sleft, sright; // Stack allocated left/right converted values
+  JQVAL *lv = left, *rv = right;
+  char nbuf[JBNUMBUF_SIZE];
+  char nbuf2[JBNUMBUF_SIZE];
+  char *input = 0, *prefix = 0;
+
+  if (lv->type == JQVAL_JBLNODE) {
+    _jql_node_to_jqval(lv->vnode, &sleft);
+    lv = &sleft;
+  } else if (lv->type == JQVAL_BINN) {
+    _jql_binn_to_jqval(lv->vbinn, &sleft);
+    lv = &sleft;
+  }
+  switch (lv->type) {
+    case JQVAL_STR:
+      input = (char *) lv->vstr;
+      break;
+    case JQVAL_I64:
+      iwitoa(lv->vi64, nbuf, JBNUMBUF_SIZE);
+      input = nbuf;
+      break;
+    case JQVAL_F64: {
+      size_t osz;
+      jbi_ftoa(lv->vf64, nbuf, &osz);
+      input = nbuf;
+      break;
+    }
+    case JQVAL_BOOL:
+      input = lv->vbool ? "true" : "false";
+      break;
+    default:
+      *rcp = _JQL_ERROR_UNMATCHED;
+      return false;
+  }
+  switch (rv->type) {
+    case JQVAL_STR:
+      prefix = (char *) rv->vstr;
+      break;
+    case JQVAL_I64:
+      iwitoa(rv->vi64, nbuf2, JBNUMBUF_SIZE);
+      prefix = nbuf2;
+      break;
+    case JQVAL_F64: {
+      size_t osz;
+      jbi_ftoa(rv->vf64, nbuf2, &osz);
+      prefix = nbuf2;
+      break;
+    }
+    case JQVAL_BOOL:
+      prefix = rv->vbool ? "true" : "false";
+      break;
+    default:
+      *rcp = _JQL_ERROR_UNMATCHED;
+      return false;
+  }
+  return strncmp(input, prefix, strlen(prefix)) == 0;
+}
+
 static bool _jql_match_jqval_pair(JQP_AUX *aux,
                                   JQVAL *left, JQP_OP *jqop, JQVAL *right,
                                   iwrc *rcp) {
@@ -884,6 +945,8 @@ static bool _jql_match_jqval_pair(JQP_AUX *aux,
       case JQP_OP_NI:
         match = _jql_match_ni(right, jqop, left, rcp);
         break;
+      case JQP_OP_STARTS:
+        match = _jql_match_starts(left, jqop, right, rcp);
       default:
         break;
     }

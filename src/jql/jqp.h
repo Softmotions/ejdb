@@ -95,6 +95,7 @@ typedef enum { // Do not reorder members
   JQP_OP_IN,
   JQP_OP_NI,
   JQP_OP_RE,
+  JQP_OP_STARTS,
 } jqp_op_t;
 
 struct JQP_AUX;
