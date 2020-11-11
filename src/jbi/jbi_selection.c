@@ -166,9 +166,13 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         mctx->expr1 = expr;
         mctx->expr2 = 0;
         return 0;
+      case JQP_OP_PREFIX:
+        if (!(mctx->idx->mode & EJDB_IDX_STR)) {
+          mctx->expr1 = 0;
+          return 0;
+        }
       case JQP_OP_GT:
       case JQP_OP_GTE:
-      case JQP_OP_PREFIX:
         if (mctx->cursor_init != IWKV_CURSOR_EQ) {
           if (mctx->expr1 && mctx->cursor_init == IWKV_CURSOR_GE && op != JQP_OP_PREFIX) {
             JQVAL *pval = jql_unit_to_jqval(aux, mctx->expr1->right, &rc);
