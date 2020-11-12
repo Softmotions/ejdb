@@ -847,7 +847,7 @@ static bool _jql_match_ni(JQVAL *left, JQP_OP *jqop, JQVAL *right,
 static bool _jql_match_starts(JQVAL *left, JQP_OP *jqop, JQVAL *right,
                               iwrc *rcp) {
 
-  JQVAL sleft, sright; // Stack allocated left/right converted values
+  JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   char nbuf[JBNUMBUF_SIZE];
   char nbuf2[JBNUMBUF_SIZE];
