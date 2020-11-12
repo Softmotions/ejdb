@@ -902,7 +902,12 @@ static bool _jql_match_starts(JQVAL *left, JQP_OP *jqop, JQVAL *right,
       *rcp = _JQL_ERROR_UNMATCHED;
       return false;
   }
-  return strncmp(input, prefix, strlen(prefix)) == 0;
+  size_t plen = strlen(prefix);
+  if (plen > 0) {
+    return strncmp(input, prefix, plen) == 0;
+  } else {
+    return true;
+  }
 }
 
 static bool _jql_match_jqval_pair(JQP_AUX *aux,
