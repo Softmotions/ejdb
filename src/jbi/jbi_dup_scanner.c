@@ -131,7 +131,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
   IWKV_cursor cur;
   char numbuf[JBNUMBUF_SIZE];
 
-  int64_t step = 1;
+  int64_t step = 1, prev_id = 0;
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
   jqp_op_t expr1_op = midx->expr1->op->value;
@@ -184,11 +184,14 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
       }
       RCGO(rc, finish);
       step = 1;
-      rc = consumer(ctx, 0, id, &step, &matched, 0);
-      RCGO(rc, finish);
-      if (!midx->expr1->prematched && matched && expr1_op != JQP_OP_PREFIX) {
-        // Further scan will always match main index expression
-        midx->expr1->prematched = true;
+      if (id != prev_id) {
+        rc = consumer(ctx, 0, id, &step, &matched, 0);
+        RCGO(rc, finish);
+        if (!midx->expr1->prematched && matched && expr1_op != JQP_OP_PREFIX) {
+          // Further scan will always match main index expression
+          midx->expr1->prematched = true;
+        }
+        prev_id = step != 1 ? 0 : id;
       }
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
