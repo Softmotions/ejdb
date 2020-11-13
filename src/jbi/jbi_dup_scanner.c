@@ -204,7 +204,7 @@ finish:
 static iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   size_t sz;
   IWKV_cursor cur;
-  int64_t step = 1;
+  int64_t step = 1, prev_id = 0;
   struct _JBMIDX *midx = &ctx->midx;
   IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_PREV)
                                        ? IWKV_CURSOR_NEXT : IWKV_CURSOR_PREV;
@@ -224,8 +224,11 @@ static iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consum
       rc = iwkv_cursor_copy_key(cur, 0, 0, &sz, &id);
       RCGO(rc, finish);
       step = 1;
-      rc = consumer(ctx, 0, id, &step, &matched, 0);
-      RCGO(rc, finish);
+      if (id != prev_id) {
+        rc = consumer(ctx, 0, id, &step, &matched, 0);
+        RCGO(rc, finish);
+        prev_id = step != 1 ? 0 : id;
+      }
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
 
