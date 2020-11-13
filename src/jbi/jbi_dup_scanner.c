@@ -191,7 +191,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
           // Further scan will always match main index expression
           midx->expr1->prematched = true;
         }
-        prev_id = step != 1 ? 0 : id;
+        prev_id = step < 1 ? 0 : id;
       }
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
@@ -230,7 +230,7 @@ static iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consum
       if (id != prev_id) {
         rc = consumer(ctx, 0, id, &step, &matched, 0);
         RCGO(rc, finish);
-        prev_id = step != 1 ? 0 : id;
+        prev_id = step < 1 ? 0 : id;
       }
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
