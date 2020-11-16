@@ -28,11 +28,6 @@ endif ()
 string(TOLOWER ${CMAKE_SYSTEM_NAME}-${PROCESSOR} NODE_BIN_SUFFIX)
 set(NODE_BIN_DIR ${NODE_BIN_ROOT}/${NODE_BIN_SUFFIX})
 
-find_program(YARN_EXEC yarn)
-if (YARN_EXEC MATCHES "YARN_EXEC-NOTFOUND")
-  message(FATAL_ERROR "`yarn` executable not found")
-endif ()
-
 add_library(ejdb2_node MODULE ejdb2_node.c)
 target_link_libraries(ejdb2_node ejdb2_s ${PROJECT_LLIBRARIES})
 
@@ -59,7 +54,7 @@ endif ()
 configure_file(package.json ${NODE_PUB_DIR}/package.json @ONLY)
 configure_file(README.md ${NODE_PUB_DIR}/README.md COPYONLY)
 configure_file(Changelog ${NODE_PUB_DIR}/Changelog COPYONLY)
-configure_file(yarn.lock ${NODE_PUB_DIR}/yarn.lock COPYONLY)
+configure_file(package-lock.json ${NODE_PUB_DIR}/package-lock.json COPYONLY)
 configure_file(index.js ${NODE_PUB_DIR}/index.js COPYONLY)
 configure_file(index.d.ts ${NODE_PUB_DIR}/index.d.ts COPYONLY)
 configure_file(binary.js ${NODE_PUB_DIR}/binary.js COPYONLY)
@@ -68,18 +63,18 @@ configure_file(install.js ${NODE_PUB_DIR}/install.js COPYONLY)
 configure_file(test.js ${NODE_PUB_DIR}/test.js COPYONLY)
 
 add_custom_command(
-  COMMAND yarn install
+  COMMAND npm install
   OUTPUT ${NODE_PUB_DIR}/node_modules
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/yarn.lock
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json
   ${CMAKE_CURRENT_SOURCE_DIR}/package.json
   WORKING_DIRECTORY ${NODE_PUB_DIR}
   VERBATIM
 )
-add_custom_target(yarn ALL
+add_custom_target(npm ALL
   DEPENDS ${NODE_PUB_DIR}/node_modules)
 
 if (BUILD_TESTS)
   add_test(NAME ejdb2node
-    COMMAND ${YARN_EXEC} run test
+    COMMAND npm run test
     WORKING_DIRECTORY ${NODE_PUB_DIR})
 endif ()

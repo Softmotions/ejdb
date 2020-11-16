@@ -28,6 +28,6 @@ run();
 
 ```sh
 cd ./example
-yarn install
-yarn run start
+npm install
+npm run start
 ```

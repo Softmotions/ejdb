@@ -38,7 +38,6 @@ run();
 ## Prerequisites
 
 * node >= v10.0.0
-* yarn
 * CMake >= v3.10
 * Make
 * gcc or clang compiler
@@ -52,5 +51,5 @@ mkdir ./build && cd build
 cmake .. -DBUILD_NODEJS_BINDING=ON -DCMAKE_BUILD_TYPE=Release
 make
 cd src/bindings/ejdb2_node/ejdb2_node
-yarn pack
+npm pack
 ```
