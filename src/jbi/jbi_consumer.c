@@ -23,6 +23,17 @@ start: {
     }
     if (rc == IWKV_ERROR_NOTFOUND) {
       rc = 0;
+      if (ctx->midx.idx) {
+        iwlog_error("Orphaned index entry."
+                    "\n\tCollection db: %" PRIu32
+                    "\n\tIndex db: %" PRIu32
+                    "\n\tEntry id: %" PRId64, ctx->jbc->dbid, ctx->midx.idx->dbid, id);
+      } else {
+        iwlog_error("Orphaned index entry."
+                    "\n\tCollection db: %" PRIu32
+                    "\n\tEntry id: %" PRId64, ctx->jbc->dbid, id);
+      }
+      goto finish;
     }
     RCGO(rc, finish);
     if (vsz > ctx->jblbufsz) {
@@ -100,7 +111,7 @@ start: {
       } else {
         rc = jb_del(ctx->jbc, &jbl, id);
       }
-       RCGO(rc, finish);
+      RCGO(rc, finish);
     }
     if (!(aux->qmode & JQP_QRY_AGGREGATE)) {
       do {
