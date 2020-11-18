@@ -1,5 +1,6 @@
 ejdb2 (2.0.53) UNRELEASED; urgency=medium
 
+  * Upgraded to iowow v1.4.9
   * Eliminate duplicated documents from non-inique index scanning
   * Add prefix matching operator ~ (#292)
 
