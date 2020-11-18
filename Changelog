@@ -1,10 +1,10 @@
-ejdb2 (2.0.53) UNRELEASED; urgency=medium
+ejdb2 (2.0.53) testing; urgency=medium
 
   * Upgraded to iowow v1.4.9
   * Eliminate duplicated documents from non-inique index scanning
   * Add prefix matching operator ~ (#292)
 
- -- Anton Adamansky <adamansky@gmail.com>  Wed, 11 Nov 2020 16:42:00 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 18 Nov 2020 16:00:16 +0700
 
 ejdb2 (2.0.52) testing; urgency=medium
 
