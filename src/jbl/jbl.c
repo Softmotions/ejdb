@@ -2455,11 +2455,11 @@ bool _jbl_is_eq_atomic_values(JBL v1, JBL v2) {
   switch (t1) {
     case JBV_BOOL:
     case JBV_I64:
-      return jbl_get_i64(v1) != jbl_get_i64(v2);
+      return jbl_get_i64(v1) == jbl_get_i64(v2);
     case JBV_STR:
       return !strcmp(jbl_get_str(v1), jbl_get_str(v2)); // -V575
     case JBV_F64:
-      return jbl_get_f64(v1) != jbl_get_f64(v2); // -V550
+      return jbl_get_f64(v1) == jbl_get_f64(v2); // -V550
     case JBV_OBJECT:
     case JBV_ARRAY:
       return false;

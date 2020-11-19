@@ -27,6 +27,7 @@ endif()
 set(CMAKE_ARGS  -DOWNER_PROJECT_NAME=${PROJECT_NAME}
                 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                 -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
+                -DASAN=${ASAN}
                 -DBUILD_SHARED_LIBS=OFF
                 -DBUILD_EXAMPLES=OFF)
 

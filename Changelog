@@ -1,3 +1,11 @@
+ejdb2 (2.0.54) UNRELEASED; urgency=medium
+
+  * CRITICAL: Fixed incorrect behaviour of `_jbl_cmp_atomic_values`
+    which leads to inconsitent number indexes processing.
+  * Transfered `-DASAN` to `AddIOWOW` CMake module.
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 19 Nov 2020 23:19:28 +0700
+
 ejdb2 (2.0.53) testing; urgency=medium
 
   * Upgraded to iowow v1.4.9
