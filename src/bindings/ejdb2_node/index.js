@@ -37,6 +37,22 @@ const {EJDB2Impl} = require('./binary')('ejdb2_node');
 const {Readable} = require('stream');
 delete global.__ejdb_add_stream_result__;
 
+function escapeUnicode(text) {
+  const pattern = /[\x00-\x1f\x7f-\xff]/g;
+  return text.replace(pattern, function(c){
+    return '\\u'+('0000'+c.charCodeAt(0).toString(16)).slice(-4);
+  });
+}
+
+function jsonParseAndEscapeIfNeeded(object) {
+  try {
+    return JSON.parse(object);
+  } catch (error) {
+    return JSON.parse(escapeUnicode(object));
+  }
+}
+
+
 /**
  * EJDB2 Error helpers.
  */
@@ -75,7 +91,9 @@ class JBDOC {
     if (this._json != null) {
       return this._json;
     }
-    this._json = JSON.parse(this._raw);
+
+    this._json = jsonParseAndEscapeIfNeeded(this._raw);
+
     this._raw = null;
     return this._json;
   }
@@ -552,7 +570,7 @@ class EJDB2 {
    * @return {Promise<object>} JSON object
    */
   get(collection, id) {
-    return this._impl.get(collection, id).then((raw) => JSON.parse(raw));
+    return this._impl.get(collection, id).then((raw) => jsonParseAndEscapeIfNeeded(raw));
   }
 
   /**
@@ -579,7 +597,7 @@ class EJDB2 {
    * @return {Promise<object>}
    */
   info() {
-    return this._impl.info().then((raw) => JSON.parse(raw));
+    return this._impl.info().then((raw) => jsonParseAndEscapeIfNeeded(raw));
   }
 
   /**

@@ -212,6 +212,11 @@ test('Main', async (t) => {
   q = db.createQuery('@c2/*');
   t.is(q.limit, 0);
 
+  // Unescaped characters
+  let colId = await db.put('mycollchars', { 'foo': String.fromCharCode(1) });
+  const result = await db.get('mycollchars', colId);
+  t.deepEqual(result, { foo: String.fromCharCode(1) });
+
   // Rename collection
   id = await db.put('cc1', { 'foo': 1 });
   doc = await db.get('cc1', id);
