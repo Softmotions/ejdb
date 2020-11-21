@@ -31,6 +31,6 @@ const utils = require('./utils');
  * Load native library with specified name.
  */
 module.exports = function (name) {
-  const file = path.join(__dirname, utils.binariesDir, name);
+  const file = path.resolve(__dirname, '../../../build/src/bindings/ejdb2_node/ejdb2_node', utils.binariesDir, name);
   return require(file);
 };

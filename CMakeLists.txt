@@ -97,8 +97,6 @@ if (UPLOAD_PPA)
   set(ENABLE_PPA ON)
 endif (UPLOAD_PPA)
 
-add_subdirectory(man)
-
 if (NOT ENABLE_PPA)
   add_subdirectory(src)
 else ()
@@ -142,7 +140,6 @@ if (CPACK_GENERATORS)
     "/Makefile$"
     )
   set(PROJECT_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
-  add_subdirectory(installer)
 endif (CPACK_GENERATORS)
 
 message("${PROJECT_NAME} GIT_REVISION: ${GIT_REVISION}")
