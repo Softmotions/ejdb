@@ -1,11 +1,9 @@
 version=$(cat ./package.json | grep version | head -1 | awk -F: '{ print $2 }' | sed 's/[",]//g' | tr -d '[[:space:]]')
 
 . /etc/os-release
-if [ "$(uname)" == "Darwin" ]; then
-  os=darwin   
-elif [ "${ID}" == "alpine" ]; then
+if [[ `which apk` ]]; then
   os=alpine
-elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+elif [ "$(uname)" == "Linux" ]; then
   os=linux
 else
   echo "Could not detect operating system"
