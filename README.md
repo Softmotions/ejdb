@@ -20,9 +20,16 @@ The official EJDB2 library for nodejs is fantastic, but this library has a few d
 - Fixes a [bug](https://github.com/Softmotions/ejdb/pull/296) with unicodes characters in JSON
 - Removed all other languages bindings
 
+## Other projects:
+- [Official EJDB2](https://github.com/Softmotions/ejdb)
+- [Official ejdb2_node](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node)
+- [iowow (kv engine that backs edjb2)](http://iowow.io/)
+- [Anton's blog](https://medium.com/@adamansky/ejdb2-41670e80897c)
+- [mql-to-jql (convert mongo query into ejdb2 style)](https://github.com/markwylde/mql-to-jql)
+
 ## Installation
 ```bash
-npm install node-ejdb-lite
+npm install --save node-ejdb-lite
 ```
 
 ## Example Usage
