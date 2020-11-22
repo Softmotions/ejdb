@@ -10,6 +10,15 @@ machine without having to install cmake, make or gcc.
 
 For full information on ejdb2, please visit the [offical project repository](https://github.com/Softmotions/ejdb).
 
+## Differences from offical library
+The official EJDB2 library for nodejs is fantastic, but this library has a few differences:
+- Reduced dependencies, resulting in faster installation
+- No build from source require (binaries precompiled and stored in github releases)
+- Fallback to build from source when no compatable prebuilt binary found 
+- Removed all typescript and yarn usages
+- Fixes a [bug](https://github.com/Softmotions/ejdb/pull/296) with unicodes characters in JSON
+- Removed all other languages bindings
+
 ## Installation
 ```bash
 npm install node-ejdb-lite

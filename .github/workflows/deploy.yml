@@ -39,6 +39,9 @@ jobs:
       - name: Build project
         run: ${{ matrix.run }}
 
+      - name: Run tests
+        run: npm run test
+
       - name: Get release
         id: get_release
         uses: bruceadams/get-release@v1.2.2
