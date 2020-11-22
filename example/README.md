@@ -1,4 +1,4 @@
-# EJDB2 Typescript example project
+# EJDB2 JavaScript example project
 
 ```ts
 import { EJDB2 } from 'ejdb2_node';
@@ -28,6 +28,6 @@ run();
 
 ```sh
 cd ./example
-yarn install
-yarn run start
+npm install
+npm run start
 ```

@@ -10,6 +10,7 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 else
   echo "Could not detect operating system"
   echo "Will attempt to build from source"
+  npm install
   npm run build:source
   exit 0
 fi
