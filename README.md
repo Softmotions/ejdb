@@ -40,20 +40,6 @@ async function run() {
 run();
 ```
 
-## Status
-
-* **EJDB 2.0 core engine is well tested and used in various heavily loaded deployments**
-* Tested on `Linux` and `OSX` platforms. [Limited Windows support](./WINDOWS.md)
-* Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
-  We are not maintaining ejdb 1.x.
-
-## Use cases
-
-* Softmotions trading robots platform
-* [Gimme - a social toy tokens exchange mobile application.](https://play.google.com/store/apps/details?id=com.softmotions.gimme) EJDB2 is used both on mobile and server sides.
-
-Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
-
 # JQL
 
 EJDB query language (JQL) syntax inspired by ideas behind XPath and Unix shell pipes.
