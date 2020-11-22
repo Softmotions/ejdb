@@ -1,0 +1,13 @@
+{
+  "name": "ejdb2-lite-example",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "EJDB2 javascript example project",
+  "private": true,
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "node-ejdb-lite": "file:../"
+  }
+}

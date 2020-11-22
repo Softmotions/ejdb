@@ -6,8 +6,8 @@ See https://github.com/Softmotions/ejdb/blob/master/README.md
 
 For API usage examples take a look into [/example](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node/example) and [test.js](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node/test.js)
 
-```ts
-import { EJDB2 } from 'ejdb2_node';
+```javascript
+const { EJDB2 } = require('node-ejdb-lite');
 
 async function run() {
   const db = await EJDB2.open('example.db', { truncate: true });
@@ -38,19 +38,11 @@ run();
 ## Prerequisites
 
 * node >= v10.0.0
-* yarn
-* CMake >= v3.10
-* Make
-* gcc or clang compiler
 
 ## How build it manually
 
 ``` sh
-git clone https://github.com/Softmotions/ejdb.git
-cd ./ejdb
-mkdir ./build && cd build
-cmake .. -DBUILD_NODEJS_BINDING=ON -DCMAKE_BUILD_TYPE=Release
-make
-cd src/bindings/ejdb2_node/ejdb2_node
-yarn pack
+git clone https://github.com/markwylde/node-ejdb-lite.git
+cd ./node-ejdb-lite
+npm install
 ```

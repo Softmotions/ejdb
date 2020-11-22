@@ -25,7 +25,7 @@
  *************************************************************************************************/
 
 const semver = require('semver');
-const {engines} = require('./package');
+const {engines} = require('../../../package');
 
 if (!semver.satisfies(process.version, engines.node)) {
   console.log(`Required node version ${engines.node} not satisfied with current version ${process.version}.`);

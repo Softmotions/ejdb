@@ -1,0 +1,57 @@
+on:
+  release:
+    types: [created]
+
+name: Upload Release Asset
+
+jobs:
+  build:
+    name: Upload Release Asset
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        type: [linux-node14]
+        include:
+          - type: linux-node14
+            image: node:14
+            node-version: 14.x
+            os: linux
+            run: |
+              apt-get update
+              apt-get install -y cmake make gcc
+              npm install --ignore-scripts
+              npm run install:source
+          - type: alpine-node14
+            image: node:14-alpine
+            node-version: 14.x
+            os: alpine
+            run: |
+              apk update
+              apk add cmake make g++
+              npm install --ignore-scripts
+              npm run install:source
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build project
+        run: ${{ matrix.run }}
+
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./build/src/bindings/ejdb2_node/ejdb2_node/linux-x64/ejdb2_node.node
+          asset_name: ejdb2_node_x64_${{ matrix.os }}_${{ matrix.node-version }}.node
+          asset_content_type: application/octet-stream

@@ -193,32 +193,8 @@ if (BUILD_EXAMPLES)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/examples)
 endif ()
 
-if (BUILD_DART_BINDING)
-  add_subdirectory(bindings/ejdb2_dart)
-endif ()
-
-if (BUILD_JNI_BINDING)
-  add_subdirectory(bindings/ejdb2_jni)
-endif ()
-
 if (BUILD_NODEJS_BINDING)
   add_subdirectory(bindings/ejdb2_node)
-endif ()
-
-if (BUILD_ANDROID_LIBS)
-  add_subdirectory(bindings/ejdb2_android)
-endif ()
-
-if (BUILD_REACT_NATIVE_BINDING)
-  add_subdirectory(bindings/ejdb2_react_native)
-endif ()
-
-if (BUILD_FLUTTER_BINDING)
-  add_subdirectory(bindings/ejdb2_flutter)
-endif ()
-
-if (BUILD_SWIFT_BINDING)
-  add_subdirectory(bindings/ejdb2_swift)
 endif ()
 
 if (NOT BUILD_SHARED_LIBS)
