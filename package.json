@@ -1,6 +1,6 @@
 {
   "name": "node-ejdb-lite",
-  "version": "3.0.5",
+  "version": "3.0.6",
   "repository": "https://github.com/markwylde/node-ejdb-lite.git",
   "author": "Anton Adamansky <adamansky@gmail.com>",
   "description": "EJDB2 Node.js native binding",
