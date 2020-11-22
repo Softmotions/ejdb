@@ -22,10 +22,10 @@ The official EJDB2 library for nodejs is fantastic, but this library has a few d
 
 ## Other projects:
 - [Official EJDB2](https://github.com/Softmotions/ejdb)
-- [Official ejdb2_node](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node)
-- [iowow (kv engine that backs edjb2)](http://iowow.io/)
+- [ejdb2_node](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node) - original and official repository for nodejs
+- [iowow](http://iowow.io/) - kv engine that backs edjb2
 - [Anton's blog](https://medium.com/@adamansky/ejdb2-41670e80897c)
-- [mql-to-jql (convert mongo query into ejdb2 style)](https://github.com/markwylde/mql-to-jql)
+- [mql-to-jql](https://github.com/markwylde/mql-to-jql) - convert mongo query into ejdb2 style
 
 ## Installation
 ```bash
