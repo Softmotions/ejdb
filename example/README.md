@@ -1,7 +1,7 @@
 # EJDB2 JavaScript example project
 
 ```ts
-import { EJDB2 } from 'ejdb2_node';
+const { EJDB2 } = require('ejdb2_node');
 
 async function run() {
   const db = await EJDB2.open('example.db', { truncate: true });
