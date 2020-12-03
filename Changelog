@@ -1,3 +1,9 @@
+ejdb2 (2.0.55) UNRELEASED; urgency=medium
+
+  * Reduced number of WS server threads to half of available CPU Cores.
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 03 Dec 2020 11:30:33 +0700
+
 ejdb2 (2.0.54) testing; urgency=medium
 
   * CRITICAL: Fixed incorrect behaviour of `_jbl_cmp_atomic_values`

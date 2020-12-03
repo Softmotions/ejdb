@@ -1313,7 +1313,7 @@ static void *_jbr_start_thread(void *op) {
     return 0;
   }
   fio_state_callback_add(FIO_CALL_PRE_START, _jbr_on_pre_start, jbr);
-  fio_start(.threads = -1, .workers = 1, .is_no_signal_handlers = !jbr->http->blocking); // Will block current thread here
+  fio_start(.threads = -2, .workers = 1, .is_no_signal_handlers = !jbr->http->blocking); // Will block current thread here
   return 0;
 }
 
