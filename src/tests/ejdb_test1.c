@@ -274,7 +274,7 @@ void ejdb_test1_1() {
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  // Now reopen databse then load collection
+  // Now reopen database then load collection
   opts.kv.oflags &= ~IWKV_TRUNC;
   rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
