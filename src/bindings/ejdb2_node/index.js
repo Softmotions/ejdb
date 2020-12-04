@@ -451,7 +451,7 @@ class JQL {
 class EJDB2 {
 
   /**
-   * Open databse instance.
+   * Open database instance.
    *
    * @param {String} path Path to database
    * @param {Object} [opts]
