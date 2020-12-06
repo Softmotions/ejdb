@@ -46,6 +46,6 @@ make
 cd build/src/bindings/ejdb2_jni/src
 
 java -Djava.library.path=. \
-     -cp ejdb2jni.jar \
+     -cp ejdb2.jar \
      com.softmotions.ejdb2.example.EJDB2Example
 ```

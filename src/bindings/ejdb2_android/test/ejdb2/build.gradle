@@ -38,7 +38,7 @@ project.afterEvaluate {
     externalNativeBuildDebug.doLast {
       copy {
         from(".externalNativeBuild/cmake/debug/$props.abiName/src/bindings/ejdb2_jni/src") {
-          include "ejdb2jni.jar"
+          include "ejdb2.jar"
         }
         into "libs"
       }
@@ -49,7 +49,7 @@ project.afterEvaluate {
     externalNativeBuildRelease.doLast {
       copy {
         from(".externalNativeBuild/cmake/release/$props.abiName/src/bindings/ejdb2_jni/src") {
-          include "ejdb2jni.jar"
+          include "ejdb2.jar"
         }
         into "libs"
       }

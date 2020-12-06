@@ -29,7 +29,7 @@ foreach (AABI IN ITEMS ${ANDROID_ABIS})
     COMMAND ${CMAKE_COMMAND} --build ${ANDROID_BUILD_DIR}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${ANDROID_LIBS_DIR}/${AABI}
     COMMAND ${CMAKE_COMMAND} -E copy ${ANDROID_BUILD_DIR}/src/bindings/ejdb2_jni/src/libejdb2jni.so ${ANDROID_LIBS_DIR}/${AABI}
-    COMMAND ${CMAKE_COMMAND} -E copy ${ANDROID_BUILD_DIR}/src/bindings/ejdb2_jni/src/ejdb2jni.jar ${ANDROID_LIBS_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${ANDROID_BUILD_DIR}/src/bindings/ejdb2_jni/src/ejdb2.jar ${ANDROID_LIBS_DIR}
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${ANDROID_BUILD_DIR}
     VERBATIM
   )

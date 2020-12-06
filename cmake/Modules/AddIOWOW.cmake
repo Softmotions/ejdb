@@ -73,8 +73,10 @@ set_target_properties(
 )
 add_dependencies(iowow_s extern_iowow)
 
-install(FILES "${BYPRODUCT}"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if (DO_INSTALL_CORE)
+  install(FILES "${BYPRODUCT}"
+          DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 list(APPEND PROJECT_LLIBRARIES iowow_s m)
 list(APPEND PROJECT_INCLUDE_DIRS "${IOWOW_INCLUDE_DIR}")

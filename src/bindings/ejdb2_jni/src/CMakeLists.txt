@@ -32,9 +32,9 @@ if (ANDROID_PLATFORM)
     android/java/com/softmotions/ejdb2/IWKVOptions.java
     android/java/com/softmotions/ejdb2/example/EJDB2Example.java
     VERSION ${PROJECT_VERSION}
-    OUTPUT_NAME ejdb2jni
+    OUTPUT_NAME ejdb2
     GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})
-else ()
+else()
   add_jar(
     ejdb2jni_jar
     SOURCES
@@ -46,11 +46,11 @@ else ()
     main/java/com/softmotions/ejdb2/IWKVOptions.java
     main/java/com/softmotions/ejdb2/example/EJDB2Example.java
     VERSION ${PROJECT_VERSION}
-    OUTPUT_NAME ejdb2jni
+    OUTPUT_NAME ejdb2
     GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})
-endif ()
+endif()
 
-install_jar(ejdb2jni_jar ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/java)
+install_jar(ejdb2jni_jar ${CMAKE_INSTALL_DATAROOTDIR}/java)
 
 include_directories(${JNI_INCLUDE_DIRS})
 add_library(ejdb2jni SHARED ejdb2jni.c)
@@ -73,11 +73,11 @@ if (${CMAKE_VERSION} VERSION_LESS "3.11")
 else ()
   target_link_libraries(ejdb2jni PUBLIC ${JNI_LIBRARIES} ejdb2_s
     PRIVATE ejdb2-jni-native-headers)
-endif ()
+endif()
 
 if (APPLE)
   set_target_properties(ejdb2jni PROPERTIES SUFFIX ".jnilib")
-endif ()
+endif()
 
 set_target_properties(ejdb2jni PROPERTIES
   VERSION ${PROJECT_VERSION}
@@ -117,4 +117,4 @@ if (BUILD_TESTS AND NOT ANDROID_PLATFORM)
     com.softmotions.ejdb2.TestEJDB2
     )
 
-endif ()
+endif()

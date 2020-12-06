@@ -21,6 +21,7 @@
     //"-DFACIL_URL=file:///home/adam/Projects/contrib/facil.io"
     //"-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow",
   ],
+  "cmake.configureOnEdit": false,
   "cmake.ctestArgs": [],
   "cmake.debugConfig": {
     "cwd": "${workspaceRoot}/build/src/tests"
@@ -85,7 +86,9 @@
     "-I",
     "build/src/generated",
     "-I",
-    "build/extern_facil/lib/facil",
+    "build/src/extern_facil/lib/facil",
+    "-I",
+    "build/src/extern_facil/lib/facil/fiobj",
     "-I",
     "/usr/lib/jvm/adoptopenjdk-15-hotspot-amd64/include"
   ]
