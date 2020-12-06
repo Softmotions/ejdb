@@ -30,6 +30,14 @@ public static void main(String[] args) {
 * Linux x64
 * OSX
 
+## Install from Ubuntu PPA
+
+```sh
+sudo add-apt-repository ppa:adamansky/ejdb2
+sudo apt-get update
+sudo apt-get install ejdb2-java
+```
+
 ## How to build it manually
 
 ``` sh
