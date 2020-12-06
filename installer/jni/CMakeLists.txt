@@ -16,6 +16,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
   set(CPACK_STRIP_FILES ON)
 endif()
 
+set(DEB_CMAKE_ARGS "-DBUILD_JNI_BINDING=ON")
+
 if (PACKAGE_DEB)
   execute_process(
     COMMAND /usr/bin/dpkg --print-architecture
