@@ -85,6 +85,8 @@
     "-I",
     "build/src/generated",
     "-I",
-    "build/extern_facil/lib/facil"
+    "build/extern_facil/lib/facil",
+    "-I",
+    "/usr/lib/jvm/adoptopenjdk-15-hotspot-amd64/include"
   ]
 }
