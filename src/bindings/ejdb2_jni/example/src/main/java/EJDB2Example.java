@@ -1,5 +1,3 @@
-package com.softmotions.ejdb2.example;
-
 import com.softmotions.ejdb2.EJDB2;
 import com.softmotions.ejdb2.EJDB2Builder;
 

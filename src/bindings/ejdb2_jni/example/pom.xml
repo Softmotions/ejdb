@@ -1,20 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
- WARNING: This pom.xml is used only by IDE not for the actual product building.
-          Actual build performed by CMake.
--->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>softmotions</groupId>
-  <artifactId>ejdb2</artifactId>
+  <artifactId>ejdb2-example</artifactId>
   <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.source.version>11</java.source.version>
     <java.target.version>11</java.target.version>
   </properties>
+
+  <repositories>
+    <repository>
+      <id>repsy</id>
+      <name>EJDB2 Maven Repositoty on Repsy</name>
+      <url>https://repo.repsy.io/mvn/adamansky/softmotions</url>
+    </repository>
+  </repositories>
+
+  <dependencies>
+    <dependency>
+      <groupId>softmotions</groupId>
+      <artifactId>ejdb2</artifactId>
+      <version>2.0.55</version>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>

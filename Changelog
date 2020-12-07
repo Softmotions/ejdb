@@ -1,3 +1,9 @@
+ejdb2 (2.0.56) UNRELEASED; urgency=medium
+
+  * Added EJDB2 Maven example project and maven repository deployment.
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 07 Dec 2020 18:26:45 +0700
+
 ejdb2 (2.0.55) testing; urgency=medium
 
   * EJDB2 Java binding now in Ubuntu ppa:adamansky/ejdb2

@@ -30,7 +30,6 @@ if (ANDROID_PLATFORM)
     android/java/com/softmotions/ejdb2/EJDB2Exception.java
     android/java/com/softmotions/ejdb2/EJDB2Builder.java
     android/java/com/softmotions/ejdb2/IWKVOptions.java
-    android/java/com/softmotions/ejdb2/example/EJDB2Example.java
     VERSION ${PROJECT_VERSION}
     OUTPUT_NAME ejdb2
     GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})
@@ -44,7 +43,6 @@ else()
     main/java/com/softmotions/ejdb2/EJDB2Exception.java
     main/java/com/softmotions/ejdb2/EJDB2Builder.java
     main/java/com/softmotions/ejdb2/IWKVOptions.java
-    main/java/com/softmotions/ejdb2/example/EJDB2Example.java
     VERSION ${PROJECT_VERSION}
     OUTPUT_NAME ejdb2
     GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers DESTINATION ${PROJECT_GENERATED_DIR})

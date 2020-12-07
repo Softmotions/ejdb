@@ -28,7 +28,7 @@ public static void main(String[] args) {
 ## Supported platforms
 
 * Linux x64
-* OSX
+* MacOS
 
 ## Install from Ubuntu PPA
 
@@ -48,12 +48,6 @@ cmake .. -DBUILD_JNI_BINDING=ON -DCMAKE_BUILD_TYPE=Release
 make
 ```
 
-## Run example
 
-``` sh
-cd build/src/bindings/ejdb2_jni/src
+[Sample EJDB2 java project](./example)
 
-java -Djava.library.path=. \
-     -cp ejdb2.jar \
-     com.softmotions.ejdb2.example.EJDB2Example
-```
