@@ -4,7 +4,7 @@ Embeddable JSON Database engine http://ejdb.org Java binding.
 
 See https://github.com/Softmotions/ejdb/blob/master/README.md
 
-For API usage examples take a look into [EJDB2Example.java](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_jni/src/main/java/com/softmotions/ejdb2/example/EJDB2Example.java) and [TestEJDB2.java](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/src/test/java/com/softmotions/ejdb2/TestEJDB2.java) classes.
+For API usage examples take a look into [EJDB2Example.java](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/example/src/main/java/EJDB2Example.java) and [TestEJDB2.java](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/src/test/java/com/softmotions/ejdb2/TestEJDB2.java) classes.
 
 ## Minimal example
 
