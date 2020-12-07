@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.14)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 include(CMakeToolsHelpers OPTIONAL)
@@ -57,9 +57,15 @@ set(PROJECT_PPA_DISTRIB_TARGET "focal;bionic;xenial" CACHE STRING "Ubuntu PPA di
 set(ANDROID_ABIS "x86;x86_64;arm64-v8a;armeabi-v7a" CACHE STRING "Android ABI list")
 set(ANDROID_AVD "TestingAVD" CACHE STRING "Android virtual device name for tests")
 
+set(CPACK_SET_DESTDIR ON)
+
 if (POLICY CMP0042)
   cmake_policy(SET CMP0042 NEW)
 endif (POLICY CMP0042)
+
+if (POLICY CMP0087)
+  cmake_policy(SET CMP0087 NEW)
+endif (POLICY CMP0087)
 
 if (BUILD_REACT_NATIVE_BINDING OR
     BUILD_FLUTTER_BINDING OR
@@ -120,10 +126,6 @@ if (NOT (CPACK_GENERATORS AND
   set(DO_INSTALL_CORE ON)
 endif()
 
-if (NOT ENABLE_PPA)
-  add_subdirectory(src)
-endif()
-
 add_subdirectory(man)
 
 if (CPACK_GENERATORS)
@@ -163,6 +165,12 @@ if (CPACK_GENERATORS)
   set(PROJECT_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
   add_subdirectory(installer)
 endif (CPACK_GENERATORS)
+
+
+if (NOT ENABLE_PPA)
+  add_subdirectory(src)
+endif()
+
 
 message("${PROJECT_NAME} GIT_REVISION: ${GIT_REVISION}")
 message("${PROJECT_NAME} CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
