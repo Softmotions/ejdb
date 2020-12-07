@@ -98,7 +98,7 @@ add_dependencies(ejdb2jni ejdb2jni_jar)
 if(UNIX)
   install(
     CODE "execute_process( \
-                COMMAND ln -fs $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/$<TARGET_FILE_NAME:ejdb2jni> \
+                COMMAND ln -fs ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/$<TARGET_FILE_NAME:ejdb2jni> \
                               $<TARGET_LINKER_FILE_PREFIX:ejdb2jni>$<TARGET_LINKER_FILE_BASE_NAME:ejdb2jni>$<TARGET_LINKER_FILE_SUFFIX:ejdb2jni>
               )")
   install(
