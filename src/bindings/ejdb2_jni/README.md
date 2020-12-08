@@ -27,8 +27,8 @@ public static void main(String[] args) {
 
 ## Supported platforms
 
-* Linux x64
-* MacOS
+- Linux x64
+- MacOS
 
 ## Install from Ubuntu PPA
 
@@ -38,9 +38,14 @@ sudo apt-get update
 sudo apt-get install ejdb2-java
 ```
 
+Note: Yoy may need to specify `LD_LIBRARY_PATH` env for `java` in order to help JVM find where
+the `libejdb2jni.so` library is located. For Linux systems `ejdb2-java` PPA debian package installs
+shared library symlink to `/usr/java/packages/lib` folder listed as default library search
+path for JVM so you can skip specifying `LD_LIBRARY_PATH` in that case.
+
 ## How to build it manually
 
-``` sh
+```sh
 git clone https://github.com/Softmotions/ejdb.git
 cd ./ejdb
 mkdir ./build && cd build
@@ -48,6 +53,4 @@ cmake .. -DBUILD_JNI_BINDING=ON -DCMAKE_BUILD_TYPE=Release
 make
 ```
 
-
 [Sample EJDB2 java project](./example)
-

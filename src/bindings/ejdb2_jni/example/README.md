@@ -26,14 +26,13 @@ Then compile and run app (Linux x86-64)
 cd ejdb2_jni/example
 
 mvn clean compile
-
-LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu mvn exec:java \
- -Dexec.cleanupDaemonThreads=false \
- -Dexec.mainClass="EJDB2Example"
+mvn exec:java -Dexec.cleanupDaemonThreads=false -Dexec.mainClass="EJDB2Example"
 ```
 
-Note: `LD_LIBRARY_PATH` should be specified to help JVM find where
-the dynamic `libejdb2jni` library is located.
+Note: Yoy may need to specify `LD_LIBRARY_PATH` env for `java` in order to help JVM find where
+the `libejdb2jni.so` library is located. For Linux systems `ejdb2-java` PPA debian package installs
+shared library symlink to `/usr/java/packages/lib` folder listed as default library search
+path for JVM so you can skip specifying `LD_LIBRARY_PATH` in that case.
 
 ### Maven project configuration
 
