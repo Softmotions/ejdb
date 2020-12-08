@@ -68,10 +68,17 @@ public final class JSON {
     tail = buf.length;
     type = whatIsNext();
     value = read(type);
+    reset();
   }
 
   public JSON(String data) {
     this(data.getBytes());
+  }
+
+  private void reset() {
+    buf = null;
+    head = 0;
+    tail = 0;
   }
 
   private Object read(ValueType valueType) {
