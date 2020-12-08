@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -120,7 +121,7 @@ public final class JQL implements AutoCloseable {
   public String getExplainLog() {
     try {
       return explain != null ? explain.toString("UTF-8") : null;
-    } catch(UnsupportedEncodingException ignored) {
+    } catch (UnsupportedEncodingException ignored) {
       return null;
     }
   }
@@ -164,8 +165,8 @@ public final class JQL implements AutoCloseable {
    * }
    * </pre>
    *
-   * @param pos Zero based positional index
-   * @param val Value to set
+   * @param  pos            Zero based positional index
+   * @param  val            Value to set
    * @return
    * @throws EJDB2Exception
    */
@@ -185,8 +186,8 @@ public final class JQL implements AutoCloseable {
    * }
    * </pre>
    *
-   * @param placeholder Placeholder name
-   * @param val         Value to set
+   * @param  placeholder    Placeholder name
+   * @param  val            Value to set
    * @return
    * @throws EJDB2Exception
    */
@@ -270,7 +271,7 @@ public final class JQL implements AutoCloseable {
   /**
    * Execute query and handle records by provided {@code cb}
    *
-   * @param cb Optional callback SAM
+   * @param  cb             Optional callback
    * @throws EJDB2Exception
    */
   public void execute(JQLCallback cb) throws EJDB2Exception {
@@ -281,41 +282,53 @@ public final class JQL implements AutoCloseable {
   }
 
   /**
+   * Execute query and handle record {@link JSON} values by provided {@code cb}
+   *
+   * @param  cb             Optional callback
+   * @throws EJDB2Exception
+   */
+  public void executeJson(JQLJsonCallback cb) throws EJDB2Exception {
+    if (cb != null) {
+      execute((id, sv) -> cb.onRecord(id, new JSON(sv)));
+    } else {
+      execute();
+    }
+  }
+
+  /**
    * Get first record entry: {@code [documentId, json]} in results set. Entry will
    * contain nulls if no records found.
    */
   public Map.Entry<Long, String> first() {
-    final Long[] idh = {null};
-    final String[] jsonh = {null};
+    final Long[] k = { null };
+    final String[] v = { null };
     if (explain != null) {
       explain.reset();
     }
     _execute(db, new JQLCallback() {
       @Override
       public long onRecord(long id, String json) {
-        idh[0] = id;
-        jsonh[0] = json;
+        k[0] = id;
+        v[0] = json;
         return 0;
       }
     }, explain);
     return new Map.Entry<Long, String>() {
-      private Long _key = idh[0];
-      private String _value = jsonh[0];
 
       @Override
       public Long getKey() {
-        return _key;
+        return k[0];
       }
 
       @Override
       public String getValue() {
-        return _value;
+        return v[0];
       }
 
       @Override
       public String setValue(String value) {
-        _value = value;
-        return _value;
+        v[0] = value;
+        return v[0];
       }
 
       @Override
@@ -327,12 +340,64 @@ public final class JQL implements AutoCloseable {
           return false;
         }
         Map.Entry<Long, String> entry = ((Map.Entry<Long, String>) o);
-        return entry.getKey().equals(this._key) && entry.getValue().equals(this._value);
+        return entry.getKey().equals(k[0]) && entry.getValue().equals(v[0]);
       }
 
       @Override
       public int hashCode() {
+        return Objects.hashCode(k[0]);
+      }
+    };
+  }
+
+  public Map.Entry<Long, JSON> firstAsJSON() {
+    final Long[] k = { null };
+    final JSON[] v = { null };
+    if (explain != null) {
+      explain.reset();
+    }
+    _execute(db, new JQLCallback() {
+      @Override
+      public long onRecord(long id, String json) {
+        k[0] = id;
+        v[0] = new JSON(json);
         return 0;
+      }
+    }, explain);
+
+    return new Map.Entry<Long, JSON>() {
+
+      @Override
+      public Long getKey() {
+        return k[0];
+      }
+
+      @Override
+      public JSON getValue() {
+        return v[0];
+      }
+
+      @Override
+      public JSON setValue(JSON value) {
+        v[0] = value;
+        return v[0];
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (o == null) {
+          return false;
+        }
+        if (o.getClass() != this.getClass()) {
+          return false;
+        }
+        Map.Entry<Long, JSON> entry = ((Map.Entry<Long, JSON>) o);
+        return entry.getKey().equals(k[0]) && entry.getValue().equals(v[0]);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hashCode(k[0]);
       }
     };
   }
@@ -340,8 +405,15 @@ public final class JQL implements AutoCloseable {
   /**
    * Get first document body as JSON string or null.
    */
-  public String firstJson() {
+  public String firstValueAsString() {
     return first().getValue();
+  }
+
+  /**
+   * Gets first document body as {@link JSON} or null.
+   */
+  public JSON firstValueAsJSON() {
+    return firstAsJSON().getValue();
   }
 
   /**
@@ -404,8 +476,10 @@ public final class JQL implements AutoCloseable {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", JQL.class.getSimpleName() + "[", "]").add("query=" + query)
-        .add("collection=" + collection).toString();
+    return new StringJoiner(", ", JQL.class.getSimpleName() + "[", "]")
+      .add("query=" + query)
+      .add("collection=" + collection)
+      .toString();
   }
 
   private static class Reference extends WeakReference<JQL> {

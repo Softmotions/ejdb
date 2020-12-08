@@ -17,7 +17,7 @@
     "-DBUILD_FLUTTER_BINDING=OFF",
     "-DBUILD_SWIFT_BINDING=ON",
     "-DANDROID_ABIS=x86",
-    "-DASAN=OFF",
+    "-DASAN=OFF"
     //"-DFACIL_URL=file:///home/adam/Projects/contrib/facil.io"
     //"-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow",
   ],
@@ -27,6 +27,9 @@
     "cwd": "${workspaceRoot}/build/src/tests"
   },
   "C_Cpp.formatting": "Disabled",
+  "C_Cpp.configurationWarnings": "Disabled",
+  "C_Cpp.intelliSenseEngineFallback": "Enabled",
+
   "astyle.astylerc": "${workspaceRoot}/.astylerc",
   "astyle.c.enable": true,
   "astyle.cpp.enable": true,
@@ -50,7 +53,7 @@
     "**/node_modules/**": true,
     "**/mxe/**": true
   },
-  "C_Cpp.configurationWarnings": "Disabled",
+
   "files.associations": {
     "*.arb": "json",
     "*.gyp": "jsonc",
@@ -58,16 +61,15 @@
     "*.h": "c",
     "*.c": "c"
   },
+
   "dart.runPubGetOnPubspecChanges": false,
+  "dart.analysisExcludedFolders": ["mxe", "build"],
+
   "java.configuration.updateBuildConfiguration": "automatic",
-  "java.import.gradle.jvmArguments": "-Xmx1024m",
   "java.import.gradle.version": "5.4.1",
   "java.import.gradle.wrapper.enabled": true,
-  "java.import.gradle.arguments": "--no-daemon",
-  "C_Cpp.intelliSenseEngineFallback": "Enabled",
+  "java.format.settings.url": ".vscode/eclipse-formatter.xml",
 
-  "dart.analysisExcludedFolders": ["mxe", "build"],
-  "favorites.resources": ["src/jql/tests/data/020.jql"],
   "clang-tidy.compilerArgs": [
     "-I",
     "src",

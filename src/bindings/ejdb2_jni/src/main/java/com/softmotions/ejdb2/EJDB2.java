@@ -74,8 +74,8 @@ public final class EJDB2 implements AutoCloseable {
    * placeholder parameters. See JQL specification:
    * https://github.com/Softmotions/ejdb/blob/master/README.md#jql
    * <p>
-   * If {@code collection} is not null it will be used for query. In this case
-   * s   * collection name encoded in query will not be taken into account.
+   * If {@code collection} is not null it will be used for query. In this case s *
+   * collection name encoded in query will not be taken into account.
    *
    * @param collection Optional collection name
    */
@@ -86,9 +86,9 @@ public final class EJDB2 implements AutoCloseable {
   /**
    * Persists {@code json} document into {@code collection}.
    *
-   * @param collection Collection name
-   * @param json       JSON document
-   * @return Generated identifier for document
+   * @param  collection     Collection name
+   * @param  json           JSON document
+   * @return                Generated identifier for document
    * @throws EJDB2Exception
    */
   public long put(String collection, String json) throws EJDB2Exception {
@@ -100,10 +100,11 @@ public final class EJDB2 implements AutoCloseable {
    * <p>
    * If {@code id} is zero a new document identifier will be generated.
    *
-   * @param collection Collection name
-   * @param json       JSON document
-   * @param id         Document id. If zero a new identifier will be genareted
-   * @return Document identifier
+   * @param  collection     Collection name
+   * @param  json           JSON document
+   * @param  id             Document id. If zero a new identifier will be
+   *                        genareted
+   * @return                Document identifier
    * @throws EJDB2Exception
    */
   public long put(String collection, String json, long id) throws EJDB2Exception {
@@ -123,8 +124,8 @@ public final class EJDB2 implements AutoCloseable {
    * }
    * </pre>
    *
-   * @param collection Collection name
-   * @param id         Document id
+   * @param  collection     Collection name
+   * @param  id             Document id
    * @throws EJDB2Exception
    */
   public void del(String collection, long id) throws EJDB2Exception {
@@ -138,9 +139,9 @@ public final class EJDB2 implements AutoCloseable {
   /**
    * Apply rfc6902/rfc7386 JSON patch to the document identified by {@code id}.
    *
-   * @param collection Collection name
-   * @param patch      JSON patch
-   * @param id         Document id
+   * @param  collection     Collection name
+   * @param  patch          JSON patch
+   * @param  id             Document id
    * @throws EJDB2Exception
    */
   public void patch(String collection, String patch, long id) throws EJDB2Exception {
@@ -148,8 +149,8 @@ public final class EJDB2 implements AutoCloseable {
   }
 
   /**
-   * Apply JSON merge patch (rfc7396) to the document identified by `id` or
-   * insert new document under specified `id`.
+   * Apply JSON merge patch (rfc7396) to the document identified by `id` or insert
+   * new document under specified `id`.
    */
   public void patchOrPut(String collection, String patch, long id) {
     _patch(collection, patch, id, true);
@@ -195,9 +196,30 @@ public final class EJDB2 implements AutoCloseable {
     get(collection, id, bos);
     try {
       return bos.toString("UTF-8");
-    } catch(UnsupportedEncodingException ignored)  {
+    } catch (UnsupportedEncodingException ignored) {
       return null;
     }
+  }
+
+  /**
+   * Returns document identified by {@code id} as {@link JSON} object.
+   * <p>
+   * If document is not found {@link EJDB2Exception} will be thrown:
+   *
+   * <pre>
+   * {@code
+   *  code: 75001
+   *  message: Key not found. (IWKV_ERROR_NOTFOUND)
+   * }
+   * </pre>
+   *
+   * @param collection
+   * @param id
+   */
+  public JSON getAsJSON(String collection, long id) {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    get(collection, id, bos);
+    return new JSON(bos.toByteArray());
   }
 
   /**
@@ -243,7 +265,7 @@ public final class EJDB2 implements AutoCloseable {
    * }
    * </pre>
    *
-   * @param out Output stream to write
+   * @param  out            Output stream to write
    * @throws EJDB2Exception
    */
   public void info(OutputStream out) throws EJDB2Exception {
@@ -261,16 +283,28 @@ public final class EJDB2 implements AutoCloseable {
     info(bos);
     try {
       return bos.toString("UTF-8");
-    } catch(UnsupportedEncodingException ignored) {
+    } catch (UnsupportedEncodingException ignored) {
       return null;
     }
   }
 
   /**
+   * Returns JSON document describind database structure. Same as
+   * {@link #info(OutputStream)} but returns JSON data as {@link JSON}.
+   *
+   * @throws EJDB2Exception
+   */
+  public JSON infoAsJSON() throws EJDB2Exception {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    info(bos);
+    return new JSON(bos.toByteArray());
+  }
+
+  /**
    * Removes {@code collection} from database and all its documents.
    *
-   * @param collection Collection name
-   * @return Current database instance
+   * @param  collection     Collection name
+   * @return                Current database instance
    * @throws EJDB2Exception
    */
   public EJDB2 removeCollection(String collection) throws EJDB2Exception {
@@ -296,10 +330,10 @@ public final class EJDB2 implements AutoCloseable {
    * Call {@code ensureStringIndex("mycoll", "/address/street", true)} in order to
    * create unique index over all street names in nested address object.
    *
-   * @param collection Collection name
-   * @param path       JSON pointer path to indexed field
-   * @param unique     If {@code true} an unique index will be created
-   * @return Current database instance
+   * @param  collection     Collection name
+   * @param  path           JSON pointer path to indexed field
+   * @param  unique         If {@code true} an unique index will be created
+   * @return                Current database instance
    * @throws EJDB2Exception
    */
   public EJDB2 ensureStringIndex(String collection, String path, boolean unique) throws EJDB2Exception {
@@ -310,9 +344,9 @@ public final class EJDB2 implements AutoCloseable {
   /**
    * Removes collection index for JSON document field pointed by {@code path}
    *
-   * @param collection Collection name
-   * @param path       JSON pointer path to indexed field
-   * @param unique     {@code true} for unique index
+   * @param  collection     Collection name
+   * @param  path           JSON pointer path to indexed field
+   * @param  unique         {@code true} for unique index
    * @return
    * @throws EJDB2Exception
    */
@@ -324,9 +358,9 @@ public final class EJDB2 implements AutoCloseable {
   /**
    * Create integer index with specified parameters if it has not existed before.
    *
-   * @param collection Collection name
-   * @param path       JSON pointer path to indexed field
-   * @param unique     {@code true} for unique index
+   * @param  collection     Collection name
+   * @param  path           JSON pointer path to indexed field
+   * @param  unique         {@code true} for unique index
    * @return
    * @throws EJDB2Exception
    */
@@ -338,9 +372,9 @@ public final class EJDB2 implements AutoCloseable {
   /**
    * Removes collection index for JSON document field pointed by {@code path}
    *
-   * @param collection Collection name
-   * @param path       JSON pointer path to indexed field
-   * @param unique     {@code true} for unique index
+   * @param  collection     Collection name
+   * @param  path           JSON pointer path to indexed field
+   * @param  unique         {@code true} for unique index
    * @return
    * @throws EJDB2Exception
    */
@@ -353,9 +387,9 @@ public final class EJDB2 implements AutoCloseable {
    * Create floating point number index with specified parameters if it has not
    * existed before.
    *
-   * @param collection Collection name
-   * @param path       JSON pointer path to indexed field
-   * @param unique     {@code true} for unique index
+   * @param  collection     Collection name
+   * @param  path           JSON pointer path to indexed field
+   * @param  unique         {@code true} for unique index
    * @return
    * @throws EJDB2Exception
    */
@@ -370,18 +404,19 @@ public final class EJDB2 implements AutoCloseable {
   }
 
   /**
-   * Creates an online database backup image and copies it into the specified `targetFile`.
-   * During online backup phase read/write database operations are allowed and not
-   * blocked for significant amount of time. Returns backup finish time as number
-   * of milliseconds since epoch.
+   * Creates an online database backup image and copies it into the specified
+   * `targetFile`. During online backup phase read/write database operations are
+   * allowed and not blocked for significant amount of time. Returns backup finish
+   * time as number of milliseconds since epoch.
    *
-   * Online backup guaranties what all records before finish timestamp will
-   * be stored in backup image. Later, online backup image can be
-   * opened as ordinary database file.
+   * Online backup guaranties what all records before finish timestamp will be
+   * stored in backup image. Later, online backup image can be opened as ordinary
+   * database file.
    *
    * @param targetFile Backup file path
-   * @note In order to avoid deadlocks: close all opened database cursors
-   * before calling this method or do call in separate thread.
+   * @note             In order to avoid deadlocks: close all opened database
+   *                   cursors before calling this method or do call in separate
+   *                   thread.
    */
   public long onlineBackup(String targetFile) throws EJDB2Exception {
     return _online_backup(targetFile);
