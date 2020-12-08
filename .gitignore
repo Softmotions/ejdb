@@ -161,7 +161,8 @@ hs_err_pid*
 
 .project
 .classpath
-.settings
+**/.settings/*
+!**/.settings/org.eclipse.jdt.core.prefs
 factoryConfiguration.json
 
 # End of https://www.gitignore.io/api/code-java
