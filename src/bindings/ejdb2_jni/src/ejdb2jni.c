@@ -67,7 +67,9 @@ static iwrc jbn_json_printer(const char *data, int size, char ch, int count, voi
       }
     }
   } else {
-    if (size < 0) size = strlen(data);
+    if (size < 0) {
+      size = (int) strlen(data);
+    }
     if (!count) count = 1;
     for (int i = 0; i < count; ++i) {
       iwrc rc = iwxstr_cat(xstr, data, size);

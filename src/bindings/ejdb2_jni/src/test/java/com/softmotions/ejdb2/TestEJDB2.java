@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import com.softmotions.ejdb2.JSON.ObjectBuilder;
 import com.softmotions.ejdb2.JSON.ValueType;
 
 /**
@@ -17,11 +18,17 @@ public class TestEJDB2 {
   }
 
   private static void jsonBasicTest() throws Exception {
-    JSON json = new JSON("{\"foo\":\"bar\"}");
+    JSON json = JSON.fromString("{\"foo\":\"bar\"}");
     assert json.type == ValueType.OBJECT;
     assert json.value != null;
     Map<String, Object> map = (Map<String, Object>) json.value;
     assert map.get("foo").equals("bar");
+
+    ObjectBuilder b = JSON.buildObject();
+    b.put("foo", "bar").putArray("baz").add(1).add("one").toJSON();
+
+    System.out.println("!!!!!!!!!!!! " + b.toJSON());
+
   }
 
   private static void dbTest() throws Exception {
@@ -75,7 +82,7 @@ public class TestEJDB2 {
       db.put("mycoll", "{'foo':'baz'}".replace('\'', '"'));
 
       Map<Long, String> results = new LinkedHashMap<>();
-      q.execute((docId, doc) -> {
+      q.executeRaw((docId, doc) -> {
         assert (docId > 0 && doc != null);
         results.put(docId, doc);
         return 1;
@@ -86,7 +93,7 @@ public class TestEJDB2 {
       results.clear();
 
       try (JQL q2 = db.createQuery("/[foo=:?]", "mycoll").setString(0, "zaz")) {
-        q2.execute((docId, doc) -> {
+        q2.executeRaw((docId, doc) -> {
           results.put(docId, doc);
           return 1;
         });
@@ -94,7 +101,7 @@ public class TestEJDB2 {
       assert (results.isEmpty());
 
       try (JQL q2 = db.createQuery("/[foo=:val]", "mycoll").setString("val", "bar")) {
-        q2.execute((docId, doc) -> {
+        q2.executeRaw((docId, doc) -> {
           results.put(docId, doc);
           return 1;
         });
@@ -129,14 +136,10 @@ public class TestEJDB2 {
 
       db.patch("mycoll", patch, 2);
 
-      json = db
-        .createQuery("@mycoll/[foo=:?] and /[baz=:?]")
-        .setString(0, "baz")
-        .setString(1, "qux")
-        .firstValueAsString();
+      json = db.createQuery("@mycoll/[foo=:?] and /[baz=:?]").setString(0, "baz").setString(1, "qux").firstValue();
       assert ("{\"foo\":\"baz\",\"baz\":\"qux\"}".equals(json));
 
-      json = db.createQuery("@mycoll/[foo re :?]").setRegexp(0, ".*").firstValueAsString();
+      json = db.createQuery("@mycoll/[foo re :?]").setRegexp(0, ".*").firstValue();
       assert ("{\"foo\":\"baz\",\"baz\":\"qux\"}".equals(json));
 
       db.removeStringIndex("mycoll", "/foo", true);

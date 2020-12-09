@@ -1,25 +1,54 @@
 package com.softmotions.ejdb2;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Map.Entry;
 
 /**
- * JSON parser/container. Heavily based on https://github.com/json-iterator (MIT
- * licensed)
+ * JSON parser/container.
+ *
+ * Based on:
+ *
+ * - https://github.com/json-iterator (MIT)
+ *
+ * - https://github.com/ralfstx/minimal-json (MIT)
  */
 public final class JSON {
 
-  // todo: JSON pointer spec
-  // todo: JSON encoder
+  public static ObjectBuilder buildObject() {
+    return new ObjectBuilder();
+  }
+
+  public static ArrayBuilder buildArray() {
+    return new ArrayBuilder();
+  }
+
+  public static JSON fromString(String val) {
+    return new JSON(val);
+  }
+
+  public static JSON fromBytes(byte[] bytes) {
+    return new JSON(bytes);
+  }
 
   private static final ValueType[] valueTypes = new ValueType[256];
   private static final int[] hexDigits = new int['f' + 1];
+  private static JSON UNKNOWN = new JSON(ValueType.UNKNOWN, null);
 
   static {
     for (int i = 0; i < valueTypes.length; ++i) {
-      valueTypes[i] = ValueType.INVALID;
+      valueTypes[i] = ValueType.UNKNOWN;
     }
     valueTypes['"'] = ValueType.STRING;
     valueTypes['-'] = ValueType.NUMBER;
@@ -41,7 +70,7 @@ public final class JSON {
   }
 
   static {
-    for (int i = 0; i < hexDigits.length; i++) {
+    for (int i = 0; i < hexDigits.length; ++i) {
       hexDigits[i] = -1;
     }
     for (int i = '0'; i <= '9'; ++i) {
@@ -59,11 +88,11 @@ public final class JSON {
   public final ValueType type;
 
   private char[] reusableChars = new char[32];
-  private byte[] buf;
+  private byte[] buf = new byte[0];
   private int head;
   private int tail;
 
-  public JSON(byte[] buf) {
+  JSON(byte[] buf) {
     this.buf = buf;
     tail = buf.length;
     type = whatIsNext();
@@ -71,8 +100,191 @@ public final class JSON {
     reset();
   }
 
-  public JSON(String data) {
+  JSON(String data) {
     this(data.getBytes());
+  }
+
+  private JSON(ValueType type, Object value) {
+    this.type = type;
+    this.value = value;
+  }
+
+  public void write(Writer w) {
+    if (type != ValueType.UNKNOWN) {
+      writeTo(w, value);
+    }
+  }
+
+  @Override
+  public String toString() {
+    StringWriter sw = new StringWriter();
+    write(sw);
+    return sw.toString();
+  }
+
+  public boolean isUnknown() {
+    return type == ValueType.UNKNOWN;
+  }
+
+  public boolean isNull() {
+    return type == ValueType.NULL;
+  }
+
+  public boolean isNumber() {
+    return type == ValueType.NUMBER;
+  }
+
+  public boolean isBoolean() {
+    return type == ValueType.BOOLEAN;
+  }
+
+  public boolean isString() {
+    return type == ValueType.STRING;
+  }
+
+  public boolean isObject() {
+    return type == ValueType.OBJECT;
+  }
+
+  public boolean isArray() {
+    return type == ValueType.ARRAY;
+  }
+
+  public JSON get(String key) {
+    if (type == ValueType.ARRAY) {
+      try {
+        return get(Integer.parseInt(key));
+      } catch (NumberFormatException ignored) {
+        return UNKNOWN;
+      }
+    }
+    if (type != ValueType.OBJECT) {
+      return UNKNOWN;
+    }
+    Object v = ((Map<String, Object>) value).get(key);
+    return new JSON(ValueType.getTypeOf(v), v);
+  }
+
+  public JSON get(int index) {
+    if (type == ValueType.OBJECT) {
+      return get(String.valueOf(index));
+    }
+    if (type != ValueType.ARRAY) {
+      return UNKNOWN;
+    }
+    List<Object> list = (List<Object>) value;
+    if (index < 0 || index >= list.size()) {
+      return UNKNOWN;
+    }
+    Object v = list.get(index);
+    return new JSON(ValueType.getTypeOf(v), v);
+  }
+
+  public Object orDefault(Object defaultValue) {
+    return type != ValueType.UNKNOWN ? value : defaultValue;
+  }
+
+  public JSON at(String pointer) {
+    if (type != ValueType.OBJECT) {
+      return UNKNOWN;
+    }
+    if (pointer == null || "/".equals(pointer) || pointer.isEmpty()) {
+      return this;
+    }
+    return traverse(this, createPointer(pointer));
+  }
+
+  private JSON traverse(JSON obj, List<String> pp) {
+    if (pp.isEmpty() || obj.isUnknown()) {
+      return obj;
+    }
+    String key = pp.remove(0);
+    if (obj.isObject() || obj.isArray()) {
+      return traverse(obj.get(key), pp);
+    } else {
+      return UNKNOWN;
+    }
+  }
+
+  private List<String> createPointer(String pointer) {
+    if (pointer.charAt(0) == '#') {
+      pointer = URLDecoder.decode(pointer, StandardCharsets.UTF_8);
+    }
+    if (pointer.isEmpty() || pointer.charAt(0) != '/') {
+      throw new JSONException("Invalid JSON pointer: " + pointer);
+    }
+    String[] parts = pointer.substring(1).split("/");
+    ArrayList<String> res = new ArrayList<>(parts.length);
+
+    for (int i = 0, l = parts.length; i < l; ++i) {
+      while (parts[i].contains("~1")) {
+        parts[i] = parts[i].replace("~1", "/");
+      }
+      while (parts[i].contains("~0")) {
+        parts[i] = parts[i].replace("~0", "~");
+      }
+      res.add(parts[i]);
+    }
+    return res;
+  }
+
+  private static void writeTo(Writer w, Object val) {
+    try {
+      write(new JsonWriter(w), val);
+    } catch (IOException e) {
+      throw new JSONException(e);
+    }
+  }
+
+  private static void write(JsonWriter w, Object val) throws IOException {
+    if (val == null) {
+      w.writeLiteral("null");
+      return;
+    }
+    final Class clazz = val.getClass();
+    if (clazz == String.class) {
+      w.writeString((String) val);
+      return;
+    } else if (clazz == Boolean.class) {
+      Boolean bv = (Boolean) val;
+      w.writeLiteral(bv ? "true" : "false");
+      return;
+    }
+    if (val instanceof Map) {
+      final Map<String, Object> map = (Map<String, Object>) val;
+      Iterator<Entry<String, Object>> iter = map.entrySet().iterator();
+      w.writeObjectOpen();
+      if (iter.hasNext()) {
+        Entry<String, Object> v = iter.next();
+        w.writeMemberName(v.getKey());
+        w.writeMemberSeparator();
+        write(w, v.getValue());
+        while (iter.hasNext()) {
+          v = iter.next();
+          w.writeObjectSeparator();
+          w.writeMemberName(v.getKey());
+          w.writeMemberSeparator();
+          write(w, v.getValue());
+        }
+      }
+      w.writeObjectClose();
+    } else if (val instanceof List) {
+      final List<Object> list = (List<Object>) val;
+      w.writeArrayOpen();
+      Iterator<Object> iter = list.iterator();
+      if (iter.hasNext()) {
+        write(w, iter.next());
+        while (iter.hasNext()) {
+          w.writeArraySeparator();
+          write(w, iter.next());
+        }
+      }
+      w.writeArrayClose();
+    } else if (val instanceof Number) {
+      w.writeNumber((Number) val);
+    } else {
+      w.writeString(val.toString());
+    }
   }
 
   private void reset() {
@@ -196,7 +408,7 @@ public final class JSON {
     int j = 0;
     boolean dotFound = false;
     for (;;) {
-      for (int i = head; i < tail; i++) {
+      for (int i = head; i < tail; ++i) {
         if (j == reusableChars.length) {
           char[] newBuf = new char[reusableChars.length * 2];
           System.arraycopy(reusableChars, 0, newBuf, 0, reusableChars.length);
@@ -259,7 +471,7 @@ public final class JSON {
     byte c;
     int i = head;
     int bound = reusableChars.length;
-    for (int j = 0; j < bound; j++) {
+    for (int j = 0; j < bound; ++j) {
       c = buf[i++];
       if (c == '"') {
         head = i;
@@ -437,16 +649,6 @@ public final class JSON {
     throw new JSONException(op + ": " + msg + ", head: " + head + ", peek: " + peek + ", buf: " + new String(buf));
   }
 
-  public static enum ValueType {
-    INVALID, STRING, NUMBER, NULL, BOOLEAN, ARRAY, OBJECT
-  }
-
-  private static final class NumberChars {
-    char[] chars;
-    int charsLength;
-    boolean dotFound;
-  }
-
   @Override
   public int hashCode() {
     return Objects.hash(type, value);
@@ -465,5 +667,284 @@ public final class JSON {
     }
     JSON other = (JSON) obj;
     return type == other.type && Objects.equals(value, other.value);
+  }
+
+  public static enum ValueType {
+    UNKNOWN, STRING, NUMBER, NULL, BOOLEAN, ARRAY, OBJECT;
+
+    static ValueType getTypeOf(Object v) {
+      if (v == null) {
+        return NULL;
+      }
+      Class clazz = v.getClass();
+      if (clazz == String.class) {
+        return STRING;
+      }
+      if (clazz == Boolean.class) {
+        return BOOLEAN;
+      }
+      if (v instanceof Number) {
+        return NUMBER;
+      }
+      if (v instanceof Map) {
+        return OBJECT;
+      }
+      if (v instanceof List) {
+        return ARRAY;
+      }
+      return UNKNOWN;
+    }
+  }
+
+  private static final class NumberChars {
+    char[] chars;
+    int charsLength;
+    boolean dotFound;
+  }
+
+  private static final class JsonWriter {
+    private static final char[] QUOT_CHARS = { '\\', '"' };
+    private static final char[] BS_CHARS = { '\\', '\\' };
+    private static final char[] LF_CHARS = { '\\', 'n' };
+    private static final char[] CR_CHARS = { '\\', 'r' };
+    private static final char[] TAB_CHARS = { '\\', 't' };
+
+    // In JavaScript, U+2028 and U+2029 characters count as line endings and must be
+    // encoded.
+    // http://stackoverflow.com/questions/2965293/javascript-parse-error-on-u2028-unicode-character
+    private static final char[] UNICODE_2028_CHARS = { '\\', 'u', '2', '0', '2', '8' };
+    private static final char[] UNICODE_2029_CHARS = { '\\', 'u', '2', '0', '2', '9' };
+    private static final char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+        'e', 'f' };
+
+    private final Writer writer;
+
+    JsonWriter(Writer writer) {
+      this.writer = writer;
+    }
+
+    void writeLiteral(String value) throws IOException {
+      writer.write(value);
+    }
+
+    void writeNumber(Number value) throws IOException {
+      // todo: review
+      writer.write(value.toString());
+    }
+
+    void writeString(String string) throws IOException {
+      writer.write('"');
+      writeJsonString(string);
+      writer.write('"');
+    }
+
+    void writeArrayOpen() throws IOException {
+      writer.write('[');
+    }
+
+    void writeArrayClose() throws IOException {
+      writer.write(']');
+    }
+
+    void writeArraySeparator() throws IOException {
+      writer.write(',');
+    }
+
+    void writeObjectOpen() throws IOException {
+      writer.write('{');
+    }
+
+    void writeObjectClose() throws IOException {
+      writer.write('}');
+    }
+
+    void writeMemberName(String name) throws IOException {
+      writer.write('"');
+      writeJsonString(name);
+      writer.write('"');
+    }
+
+    void writeMemberSeparator() throws IOException {
+      writer.write(':');
+    }
+
+    void writeObjectSeparator() throws IOException {
+      writer.write(',');
+    }
+
+    void writeJsonString(String string) throws IOException {
+      int length = string.length();
+      int start = 0;
+      for (int index = 0; index < length; ++index) {
+        char[] replacement = getReplacementChars(string.charAt(index));
+        if (replacement != null) {
+          writer.write(string, start, index - start);
+          writer.write(replacement);
+          start = index + 1;
+        }
+      }
+      writer.write(string, start, length - start);
+    }
+
+    static char[] getReplacementChars(char ch) {
+      if (ch > '\\') {
+        if (ch < '\u2028' || ch > '\u2029') {
+          // The lower range contains 'a' .. 'z'. Only 2 checks required.
+          return null;
+        }
+        return ch == '\u2028' ? UNICODE_2028_CHARS : UNICODE_2029_CHARS;
+      }
+      if (ch == '\\') {
+        return BS_CHARS;
+      }
+      if (ch > '"') {
+        // This range contains '0' .. '9' and 'A' .. 'Z'. Need 3 checks to get here.
+        return null;
+      }
+      if (ch == '"') {
+        return QUOT_CHARS;
+      }
+      if (ch > 0x001f) { // CONTROL_CHARACTERS_END
+        return null;
+      }
+      if (ch == '\n') {
+        return LF_CHARS;
+      }
+      if (ch == '\r') {
+        return CR_CHARS;
+      }
+      if (ch == '\t') {
+        return TAB_CHARS;
+      }
+      return new char[] { '\\', 'u', '0', '0', HEX_DIGITS[ch >> 4 & 0x000f], HEX_DIGITS[ch & 0x000f] };
+    }
+  }
+
+  public static final class ArrayBuilder {
+
+    final List<Object> value = new ArrayList<>();
+
+    private JSON json;
+
+    public ObjectBuilder addObject() {
+      ObjectBuilder b = new ObjectBuilder();
+      value.add(b.value);
+      return b;
+    }
+
+    public ArrayBuilder addArray() {
+      ArrayBuilder b = new ArrayBuilder();
+      value.add(b.value);
+      return b;
+    }
+
+    public ArrayBuilder add(String val) {
+      value.add(val);
+      return this;
+    }
+
+    public ArrayBuilder add(Number val) {
+      value.add(val);
+      return this;
+    }
+
+    public ArrayBuilder add(Boolean val) {
+      value.add(val);
+      return this;
+    }
+
+    public ArrayBuilder addNull() {
+      value.add(null);
+      return this;
+    }
+
+    public int length() {
+      return value.size();
+    }
+
+    public Object get(int index) {
+      return index >= 0 && value.size() > index ? value.get(index) : null;
+    }
+
+    public ArrayBuilder delete(int index) {
+      value.remove(index);
+      return this;
+    }
+
+    public JSON toJSON() {
+      if (json == null) {
+        json = new JSON(ValueType.ARRAY, value);
+      }
+      return json;
+    }
+
+    @Override
+    public String toString() {
+      StringWriter sw = new StringWriter();
+      writeTo(sw, value);
+      return sw.toString();
+    }
+  }
+
+  public static final class ObjectBuilder {
+
+    final Map<String, Object> value = new LinkedHashMap<>();
+
+    private JSON json;
+
+    public ObjectBuilder putObject(String key) {
+      ObjectBuilder b = new ObjectBuilder();
+      value.put(key, b.value);
+      return b;
+    }
+
+    public ArrayBuilder putArray(String key) {
+      ArrayBuilder b = new ArrayBuilder();
+      value.put(key, b.value);
+      return b;
+    }
+
+    public ObjectBuilder put(String key, String val) {
+      value.put(key, value);
+      return this;
+    }
+
+    public ObjectBuilder put(String key, Number val) {
+      value.put(key, val);
+      return this;
+    }
+
+    public ObjectBuilder put(String key, Boolean val) {
+      value.put(key, val);
+      return this;
+    }
+
+    public ObjectBuilder putNull(String key) {
+      value.put(key, null);
+      return this;
+    }
+
+    public ObjectBuilder delete(String key) {
+      value.remove(key);
+      return this;
+    }
+
+    public Iterable<String> keys() {
+      return value.keySet();
+    }
+
+    public JSON toJSON() {
+      if (json == null) {
+        json = new JSON(ValueType.OBJECT, value);
+      }
+      return json;
+    }
+
+    @Override
+    public String toString() {
+      StringWriter sw = new StringWriter();
+      writeTo(sw, value);
+      return sw.toString();
+    }
   }
 }

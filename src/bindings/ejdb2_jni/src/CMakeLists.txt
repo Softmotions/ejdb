@@ -22,12 +22,13 @@ if(ANDROID_PLATFORM)
   set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.8" "-target" "1.8")
   add_jar(
     ejdb2jni_jar
-    SOURCES android/java/com/softmotions/ejdb2/JQL.java
-            android/java/com/softmotions/ejdb2/JQLCallback.java
+    SOURCES
             android/java/com/softmotions/ejdb2/EJDB2.java
-            android/java/com/softmotions/ejdb2/EJDB2Exception.java
             android/java/com/softmotions/ejdb2/EJDB2Builder.java
+            android/java/com/softmotions/ejdb2/EJDB2Exception.java
             android/java/com/softmotions/ejdb2/IWKVOptions.java
+            android/java/com/softmotions/ejdb2/JQL.java
+            android/java/com/softmotions/ejdb2/JQLCallback.java
     VERSION ${PROJECT_VERSION}
     OUTPUT_NAME
       ejdb2
@@ -38,15 +39,17 @@ if(ANDROID_PLATFORM)
 else()
   add_jar(
     ejdb2jni_jar
-    SOURCES main/java/com/softmotions/ejdb2/JSON.java
-            main/java/com/softmotions/ejdb2/JSONException.java
+    SOURCES
+            main/java/com/softmotions/ejdb2/EJDB2.java
+            main/java/com/softmotions/ejdb2/EJDB2Builder.java
+            main/java/com/softmotions/ejdb2/EJDB2Document.java
+            main/java/com/softmotions/ejdb2/EJDB2DocumentCallback.java
+            main/java/com/softmotions/ejdb2/EJDB2Exception.java
+            main/java/com/softmotions/ejdb2/IWKVOptions.java
             main/java/com/softmotions/ejdb2/JQL.java
             main/java/com/softmotions/ejdb2/JQLCallback.java
-            main/java/com/softmotions/ejdb2/JQLJsonCallback.java
-            main/java/com/softmotions/ejdb2/EJDB2.java
-            main/java/com/softmotions/ejdb2/EJDB2Exception.java
-            main/java/com/softmotions/ejdb2/EJDB2Builder.java
-            main/java/com/softmotions/ejdb2/IWKVOptions.java
+            main/java/com/softmotions/ejdb2/JSON.java
+            main/java/com/softmotions/ejdb2/JSONException.java
     VERSION ${PROJECT_VERSION}
     OUTPUT_NAME ejdb2 GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers
                 DESTINATION ${PROJECT_GENERATED_DIR})

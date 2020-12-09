@@ -216,10 +216,10 @@ public final class EJDB2 implements AutoCloseable {
    * @param collection
    * @param id
    */
-  public JSON getAsJSON(String collection, long id) {
+  public EJDB2Document getAsDocument(String collection, long id) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     get(collection, id, bos);
-    return new JSON(bos.toByteArray());
+    return new EJDB2Document(id, bos.toByteArray());
   }
 
   /**
@@ -294,10 +294,10 @@ public final class EJDB2 implements AutoCloseable {
    *
    * @throws EJDB2Exception
    */
-  public JSON infoAsJSON() throws EJDB2Exception {
+  public EJDB2Document infoAsDocument() throws EJDB2Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     info(bos);
-    return new JSON(bos.toByteArray());
+    return new EJDB2Document(0, bos.toByteArray());
   }
 
   /**

@@ -5,6 +5,8 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -257,170 +259,92 @@ public final class JQL implements AutoCloseable {
   }
 
   /**
+   * Execute query and handle record {@link EJDB2Document} values by provided
+   * {@code cb}
+   *
+   * @param  cb             Optional callback
+   * @throws EJDB2Exception
+   */
+  public void execute(EJDB2DocumentCallback cb) throws EJDB2Exception {
+    if (explain != null) {
+      explain.reset();
+    }
+    if (cb != null) {
+      _execute(db, (id, sv) -> cb.onDocument(new EJDB2Document(id, sv)), explain);
+    } else {
+      _execute(db, null, explain);
+    }
+  }
+
+  /**
    * Execute query without result set callback.
    *
    * @throws EJDB2Exception
    */
   public void execute() throws EJDB2Exception {
+    execute(null);
+  }
+
+  public void executeRaw(JQLCallback cb) throws EJDB2Exception {
     if (explain != null) {
       explain.reset();
     }
-    _execute(db, null, explain);
-  }
-
-  /**
-   * Execute query and handle records by provided {@code cb}
-   *
-   * @param  cb             Optional callback
-   * @throws EJDB2Exception
-   */
-  public void execute(JQLCallback cb) throws EJDB2Exception {
-    if (explain != null) {
-      explain.reset();
-    }
-    _execute(db, cb, explain);
-  }
-
-  /**
-   * Execute query and handle record {@link JSON} values by provided {@code cb}
-   *
-   * @param  cb             Optional callback
-   * @throws EJDB2Exception
-   */
-  public void executeJson(JQLJsonCallback cb) throws EJDB2Exception {
     if (cb != null) {
-      execute((id, sv) -> cb.onRecord(id, new JSON(sv)));
+      _execute(db, (id, sv) -> cb.onRecord(id, sv), explain);
     } else {
-      execute();
+      _execute(db, null, explain);
     }
   }
 
-  /**
-   * Get first record entry: {@code [documentId, json]} in results set. Entry will
-   * contain nulls if no records found.
-   */
-  public Map.Entry<Long, String> first() {
-    final Long[] k = { null };
-    final String[] v = { null };
-    if (explain != null) {
-      explain.reset();
-    }
-    _execute(db, new JQLCallback() {
-      @Override
-      public long onRecord(long id, String json) {
-        k[0] = id;
-        v[0] = json;
-        return 0;
-      }
-    }, explain);
-    return new Map.Entry<Long, String>() {
-
-      @Override
-      public Long getKey() {
-        return k[0];
-      }
-
-      @Override
-      public String getValue() {
-        return v[0];
-      }
-
-      @Override
-      public String setValue(String value) {
-        v[0] = value;
-        return v[0];
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (o == null) {
-          return false;
-        }
-        if (o.getClass() != this.getClass()) {
-          return false;
-        }
-        Map.Entry<Long, String> entry = ((Map.Entry<Long, String>) o);
-        return entry.getKey().equals(k[0]) && entry.getValue().equals(v[0]);
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hashCode(k[0]);
-      }
-    };
+  public List<EJDB2Document> list() throws EJDB2Exception {
+    List<EJDB2Document> list = new ArrayList<>();
+    execute((doc) -> {
+      list.add(doc);
+      return 1;
+    });
+    return list;
   }
 
-  public Map.Entry<Long, JSON> firstAsJSON() {
-    final Long[] k = { null };
-    final JSON[] v = { null };
+  public EJDB2Document first() {
+    final EJDB2Document[] v = { null };
     if (explain != null) {
       explain.reset();
     }
-    _execute(db, new JQLCallback() {
-      @Override
-      public long onRecord(long id, String json) {
-        k[0] = id;
-        v[0] = new JSON(json);
-        return 0;
-      }
+    _execute(db, (id, json) -> {
+      v[0] = new EJDB2Document(id, json);
+      return 0;
     }, explain);
-
-    return new Map.Entry<Long, JSON>() {
-
-      @Override
-      public Long getKey() {
-        return k[0];
-      }
-
-      @Override
-      public JSON getValue() {
-        return v[0];
-      }
-
-      @Override
-      public JSON setValue(JSON value) {
-        v[0] = value;
-        return v[0];
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (o == null) {
-          return false;
-        }
-        if (o.getClass() != this.getClass()) {
-          return false;
-        }
-        Map.Entry<Long, JSON> entry = ((Map.Entry<Long, JSON>) o);
-        return entry.getKey().equals(k[0]) && entry.getValue().equals(v[0]);
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hashCode(k[0]);
-      }
-    };
+    return v[0];
   }
 
   /**
    * Get first document body as JSON string or null.
    */
-  public String firstValueAsString() {
-    return first().getValue();
-  }
-
-  /**
-   * Gets first document body as {@link JSON} or null.
-   */
-  public JSON firstValueAsJSON() {
-    return firstAsJSON().getValue();
+  public String firstValue() {
+    final String[] v = { null };
+    if (explain != null) {
+      explain.reset();
+    }
+    _execute(db, (id, json) -> {
+      v[0] = json;
+      return 0;
+    }, explain);
+    return v[0];
   }
 
   /**
    * Get first document id ot null
    */
   public Long firstId() {
-    return first().getKey();
+    final Long[] v = { null };
+    if (explain != null) {
+      explain.reset();
+    }
+    _execute(db, (id, json) -> {
+      v[0] = id;
+      return 0;
+    }, explain);
+    return v[0];
   }
 
   /**

@@ -3,7 +3,7 @@ package com.softmotions.ejdb2;
 /**
  * SAM callback used iterate over query result set.
  */
-public interface JQLJsonCallback {
+public interface EJDB2DocumentCallback {
 
   /**
    * Called on every JSON record in result set.
@@ -23,5 +23,5 @@ public interface JQLJsonCallback {
    * @param  json Document {@link JSON} body as string
    * @return      Number of records to skip
    */
-  long onRecord(long id, JSON json);
+  long onDocument(EJDB2Document doc);
 }
