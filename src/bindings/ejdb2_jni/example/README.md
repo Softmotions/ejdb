@@ -49,7 +49,7 @@ path for JVM so you can skip specifying `LD_LIBRARY_PATH` in that case.
   <dependency>
     <groupId>softmotions</groupId>
     <artifactId>ejdb2</artifactId>
-    <version>2.0.56</version>
+    <version>2.0.57</version>
   </dependency>
 </dependencies>
 ```
