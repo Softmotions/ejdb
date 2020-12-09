@@ -2,6 +2,9 @@ include(FindJava)
 include(UseJava)
 include(FindJNI)
 
+set(SOURCES_JAR_FILE
+    ${CMAKE_CURRENT_BINARY_DIR}/ejdb2-${PROJECT_VERSION}-sources.jar)
+
 if(NOT JNI_FOUND)
   if(ANDROID_PLATFORM)
     list(FILTER JNI_INCLUDE_DIRS EXCLUDE REGEX NOTFOUND)
@@ -21,10 +24,10 @@ message("Java EXECUTABLE: ${Java_JAVA_EXECUTABLE}")
 set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.8" "-target" "1.8")
 
 if(ANDROID_PLATFORM)
+
   add_jar(
     ejdb2jni_jar
-    SOURCES
-            android/java/com/softmotions/ejdb2/EJDB2.java
+    SOURCES android/java/com/softmotions/ejdb2/EJDB2.java
             android/java/com/softmotions/ejdb2/EJDB2Builder.java
             android/java/com/softmotions/ejdb2/EJDB2Exception.java
             android/java/com/softmotions/ejdb2/IWKVOptions.java
@@ -37,23 +40,40 @@ if(ANDROID_PLATFORM)
       ejdb2-jni-native-headers
       DESTINATION
       ${PROJECT_GENERATED_DIR})
+
 else()
+
+  set(EJDB2_JAVA_SOURCES
+      com/softmotions/ejdb2/EJDB2.java
+      com/softmotions/ejdb2/EJDB2Builder.java
+      com/softmotions/ejdb2/EJDB2Document.java
+      com/softmotions/ejdb2/EJDB2DocumentCallback.java
+      com/softmotions/ejdb2/EJDB2Exception.java
+      com/softmotions/ejdb2/IWKVOptions.java
+      com/softmotions/ejdb2/JQL.java
+      com/softmotions/ejdb2/JQLCallback.java
+      com/softmotions/ejdb2/JSON.java
+      com/softmotions/ejdb2/JSONException.java)
+
+  set(EJDB2_JAVA_SOURCES_JAR ${EJDB2_JAVA_SOURCES})
+  list(TRANSFORM EJDB2_JAVA_SOURCES_JAR PREPEND "main/java/")
+
   add_jar(
     ejdb2jni_jar
-    SOURCES
-            main/java/com/softmotions/ejdb2/EJDB2.java
-            main/java/com/softmotions/ejdb2/EJDB2Builder.java
-            main/java/com/softmotions/ejdb2/EJDB2Document.java
-            main/java/com/softmotions/ejdb2/EJDB2DocumentCallback.java
-            main/java/com/softmotions/ejdb2/EJDB2Exception.java
-            main/java/com/softmotions/ejdb2/IWKVOptions.java
-            main/java/com/softmotions/ejdb2/JQL.java
-            main/java/com/softmotions/ejdb2/JQLCallback.java
-            main/java/com/softmotions/ejdb2/JSON.java
-            main/java/com/softmotions/ejdb2/JSONException.java
+    SOURCES ${EJDB2_JAVA_SOURCES_JAR}
     VERSION ${PROJECT_VERSION}
     OUTPUT_NAME ejdb2 GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers
                 DESTINATION ${PROJECT_GENERATED_DIR})
+
+  add_custom_command(
+    TARGET ejdb2jni_jar
+    POST_BUILD
+    COMMAND jar -cf ${SOURCES_JAR_FILE} ${EJDB2_JAVA_SOURCES}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/main/java)
+
+  get_target_property(DEPLOY_JAR_FILE ejdb2jni_jar JAR_FILE)
+  configure_file(maven-deploy.sh ${CMAKE_CURRENT_BINARY_DIR}/.. @ONLY)
+
 endif()
 
 install_jar(ejdb2jni_jar ${CMAKE_INSTALL_DATAROOTDIR}/java)
