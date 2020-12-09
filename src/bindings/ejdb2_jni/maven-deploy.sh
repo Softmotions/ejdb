@@ -16,7 +16,7 @@ mvn org.apache.maven.plugins:maven-deploy-plugin:3.0.0-M1:deploy-file \
   -DartifactId=ejdb2 \
   -Dversion=${VERSION} \
   -Dpackaging=jar \
-  -Dfile=${JAR_FILE} \
+  -Dfile=${DEPLOY_JAR_FILE} \
   -DrepositoryId=repsy_repository \
   -DgeneratePom=true \
   -Durl=https://repo.repsy.io/mvn/adamansky/softmotions
