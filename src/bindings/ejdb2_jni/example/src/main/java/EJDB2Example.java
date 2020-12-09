@@ -16,8 +16,8 @@ public class EJDB2Example {
       id = db.put("parrots", "{\"name\":\"Darko\", \"age\": 8}");
       System.out.println("Darko record: " + id);
 
-      db.createQuery("@parrots/[age > :age]").setLong("age", 3).execute((docId, doc) -> {
-        System.out.println(String.format("Found %d %s", docId, doc));
+      db.createQuery("@parrots/[age > :age]").setLong("age", 3).execute((doc) -> {
+        System.out.println(String.format("Found %s", doc));
         return 1;
       });
     }

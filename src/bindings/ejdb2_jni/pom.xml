@@ -24,10 +24,7 @@
         <configuration>
           <source>${java.source.version}</source>
           <target>${java.target.version}</target>
-          <encoding>UTF-8</encoding>
-          <compilerArgs>
-            <arg>-Xlint</arg>
-          </compilerArgs>
+          <encoding>UTF-8</encoding>          
         </configuration>
       </plugin>
     </plugins>

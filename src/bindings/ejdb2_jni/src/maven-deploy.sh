@@ -15,7 +15,7 @@ DEPLOY_SOURCES_JAR_FILE="@SOURCES_JAR_FILE@"
 mvn org.apache.maven.plugins:maven-deploy-plugin:3.0.0-M1:deploy-file \
   -DgroupId=softmotions \
   -DartifactId=ejdb2 \
-  -Dversion=${VERSION} \
+  -Dversion=${VERSION}.3 \
   -Dpackaging=jar \
   -Dfile=${DEPLOY_JAR_FILE} \
   -Dsources=${DEPLOY_SOURCES_JAR_FILE} \

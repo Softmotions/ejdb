@@ -4,9 +4,9 @@ import com.softmotions.ejdb2.JSON.ValueType;
 
 public final class EJDB2Document {
 
-  final long id;
+  public final long id;
 
-  final JSON json;
+  public final JSON json;
 
   EJDB2Document(long id, byte[] data) {
     this(id, new JSON(data));
@@ -22,5 +22,15 @@ public final class EJDB2Document {
     }
     this.id = id;
     this.json = json;
+  }
+
+  @Override
+  public String toString() {
+    return "[" + id + ' ' + json.toString() + ']';
+  }
+
+  @Override
+  public int hashCode() {
+    return json.hashCode();
   }
 }
