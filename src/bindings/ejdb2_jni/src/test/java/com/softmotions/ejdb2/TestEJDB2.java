@@ -27,8 +27,9 @@ public class TestEJDB2 {
     ObjectBuilder b = JSON.buildObject();
     b.put("foo", "bar").putArray("baz").add(1).add("one").toJSON();
 
-    System.out.println("!!!!!!!!!!!! " + b.toJSON());
-
+    json = b.toJSON().at("/baz/1");
+    assert json.isString();
+    assert "one".equals(json.value);
   }
 
   private static void dbTest() throws Exception {

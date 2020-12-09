@@ -184,6 +184,10 @@ public final class JSON {
     return type != ValueType.UNKNOWN ? value : defaultValue;
   }
 
+  public Object orDefaultNotNull(Object defaultValue) {
+    return type != ValueType.UNKNOWN && type != ValueType.NULL ? value : defaultValue;
+  }
+
   public JSON at(String pointer) {
     if (type != ValueType.OBJECT) {
       return UNKNOWN;
@@ -905,7 +909,7 @@ public final class JSON {
     }
 
     public ObjectBuilder put(String key, String val) {
-      value.put(key, value);
+      value.put(key, val);
       return this;
     }
 
