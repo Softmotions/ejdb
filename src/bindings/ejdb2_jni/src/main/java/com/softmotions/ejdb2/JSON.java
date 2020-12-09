@@ -2,9 +2,9 @@ package com.softmotions.ejdb2;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -148,6 +148,10 @@ public final class JSON {
     return type == ValueType.ARRAY;
   }
 
+  public Builder modify() {
+    return new Builder(this);
+  }
+
   public JSON get(String key) {
     if (type == ValueType.ARRAY) {
       try {
@@ -210,7 +214,11 @@ public final class JSON {
 
   private List<String> createPointer(String pointer) {
     if (pointer.charAt(0) == '#') {
-      pointer = URLDecoder.decode(pointer, StandardCharsets.UTF_8);
+      try {
+        pointer = URLDecoder.decode(pointer, "UTF_8");
+      } catch (UnsupportedEncodingException e) {
+        throw new JSONException(e);
+      }
     }
     if (pointer.isEmpty() || pointer.charAt(0) != '/') {
       throw new JSONException("Invalid JSON pointer: " + pointer);
@@ -822,11 +830,129 @@ public final class JSON {
     }
   }
 
+  public static final class Builder {
+    final JSON json;
+    final ObjectBuilder o;
+    final ArrayBuilder a;
+
+    Builder(JSON json) {
+      this.json = json;
+      if (json.type == ValueType.OBJECT) {
+        o = new ObjectBuilder((Map<String, Object>) json.value);
+        a = null;
+      } else if (json.type == ValueType.ARRAY) {
+        a = new ArrayBuilder((List<Object>) json.value);
+        o = null;
+      } else {
+        throw new JSONException("JSON value must be either Object or Array");
+      }
+    }
+
+    public ObjectBuilder addObject() {
+      return getA().addObject();
+    }
+
+    public ArrayBuilder addArray() {
+      return getA().addArray();
+    }
+
+    public ArrayBuilder add(String val) {
+      return getA().add(val);
+    }
+
+    public ArrayBuilder add(Number val) {
+      return getA().add(val);
+    }
+
+    public ArrayBuilder add(Boolean val) {
+      return getA().add(val);
+    }
+
+    public ArrayBuilder addNull() {
+      return getA().addNull();
+    }
+
+    public int length() {
+      return getA().length();
+    }
+
+    public Object get(int index) {
+      return getA().get(index);
+    }
+
+    public ArrayBuilder delete(int index) {
+      return getA().delete(index);
+    }
+
+    public ObjectBuilder putObject(String key) {
+      return getO().putObject(key);
+    }
+
+    public ArrayBuilder putArray(String key) {
+      return getO().putArray(key);
+    }
+
+    public ObjectBuilder put(String key, String val) {
+      return getO().put(key, val);
+    }
+
+    public ObjectBuilder put(String key, Number val) {
+      return getO().put(key, val);
+    }
+
+    public ObjectBuilder put(String key, Boolean val) {
+      return getO().put(key, val);
+    }
+
+    public ObjectBuilder putNull(String key) {
+      return getO().putNull(key);
+    }
+
+    public ObjectBuilder delete(String key) {
+      return getO().delete(key);
+    }
+
+    public Iterable<String> keys() {
+      return getO().keys();
+    }
+
+    public JSON toJSON() {
+      return json;
+    }
+
+    @Override
+    public String toString() {
+      return json.toString();
+    }
+
+    private ArrayBuilder getA() {
+      if (a == null) {
+        throw new JSONException("JSON value is not an Array");
+      }
+      return a;
+    }
+
+    private ObjectBuilder getO() {
+      if (o == null) {
+        throw new JSONException("JSON value is not an Object");
+      }
+      return o;
+    }
+  }
+
   public static final class ArrayBuilder {
 
-    final List<Object> value = new ArrayList<>();
+    final List<Object> value;
 
     private JSON json;
+
+    ArrayBuilder(List<Object> value) {
+      this.value = value;
+    }
+
+    ArrayBuilder() {
+      this(new ArrayList<>());
+    }
 
     public ObjectBuilder addObject() {
       ObjectBuilder b = new ObjectBuilder();
@@ -890,9 +1016,17 @@ public final class JSON {
 
   public static final class ObjectBuilder {
 
-    final Map<String, Object> value = new LinkedHashMap<>();
+    final Map<String, Object> value;
 
     private JSON json;
+
+    ObjectBuilder(Map<String, Object> value) {
+      this.value = value;
+    }
+
+    ObjectBuilder() {
+      this(new LinkedHashMap<>());
+    }
 
     public ObjectBuilder putObject(String key) {
       ObjectBuilder b = new ObjectBuilder();
