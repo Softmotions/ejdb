@@ -1,16 +1,12 @@
 package com.softmotions.ejdb2;
 
-import java.util.Map;
-
 import com.softmotions.ejdb2.JSON.ValueType;
 
 public final class EJDB2Document {
 
-  // todo: JSON pointer spec
-
   final long id;
 
-  final Map<String, Object> value;
+  final JSON json;
 
   EJDB2Document(long id, byte[] data) {
     this(id, new JSON(data));
@@ -24,7 +20,7 @@ public final class EJDB2Document {
     if (json.type != ValueType.OBJECT && json.type != ValueType.NULL) {
       throw new IllegalArgumentException("json is not an object or null");
     }
-    value = (Map<String, Object>) json.value;
     this.id = id;
+    this.json = json;
   }
 }
