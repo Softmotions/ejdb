@@ -1,9 +1,9 @@
-ejdb2 (2.0.56) UNRELEASED; urgency=medium
+ejdb2 (2.0.56) testing; urgency=medium
 
   * EJDB2 Java binding improvements.
   * Added EJDB2 Maven example project and maven repository deployment.
 
- -- Anton Adamansky <adamansky@gmail.com>  Mon, 07 Dec 2020 18:26:45 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 10 Dec 2020 00:27:09 +0700
 
 ejdb2 (2.0.55) testing; urgency=medium
 
