@@ -40,6 +40,14 @@ public final class JSON {
     return new JSON(bytes);
   }
 
+  public static JSON fromMap(Map<String, Object> map) {
+    return new JSON(ValueType.OBJECT, map);
+  }
+
+  public static JSON fromList(List<Object> list) {
+    return new JSON(ValueType.ARRAY, list);
+  }
+
   private static final ValueType[] valueTypes = new ValueType[256];
   private static final int[] hexDigits = new int['f' + 1];
   private static JSON UNKNOWN = new JSON(ValueType.UNKNOWN, null);
