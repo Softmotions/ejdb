@@ -190,12 +190,28 @@ public final class JSON {
     return new JSON(ValueType.getTypeOf(v), v);
   }
 
-  public Object orDefault(Object defaultValue) {
-    return type != ValueType.UNKNOWN ? value : defaultValue;
+  public <T> T cast() {
+    return (T) value;
   }
 
-  public Object orDefaultNotNull(Object defaultValue) {
-    return type != ValueType.UNKNOWN && type != ValueType.NULL ? value : defaultValue;
+  public <T> T orDefault(T defaultValue) {
+    return type != ValueType.UNKNOWN ? (T) value : defaultValue;
+  }
+
+  public <T> T orDefaultNotNull(T defaultValue) {
+    return type != ValueType.UNKNOWN && type != ValueType.NULL ? (T) value : defaultValue;
+  }
+
+  public String asStringOr(String fallbackValue) {
+    return type == ValueType.STRING ? (String) value : fallbackValue;
+  }
+
+  public Boolean asBooleanOr(Boolean fallbackValue) {
+    return type == ValueType.BOOLEAN ? (Boolean) value : fallbackValue;
+  }
+
+  public Number asNumberOr(Number fallbackValue) {
+    return type == ValueType.NUMBER ? (Number) value : fallbackValue;
   }
 
   public JSON at(String pointer) {
