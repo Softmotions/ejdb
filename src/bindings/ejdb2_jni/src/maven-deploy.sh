@@ -2,20 +2,22 @@
 
 set -e
 
+TWEAK="3"
+
 SCRIPTPATH="$(
   cd "$(dirname "$0")"
   pwd -P
 )"
 cd $SCRIPTPATH
 
-VERSION="@PROJECT_VERSION@"
+VERSION="@PROJECT_VERSION@.${TWEAK}"
 DEPLOY_JAR_FILE="@DEPLOY_JAR_FILE@"
 DEPLOY_SOURCES_JAR_FILE="@SOURCES_JAR_FILE@"
 
 mvn org.apache.maven.plugins:maven-deploy-plugin:3.0.0-M1:deploy-file \
   -DgroupId=softmotions \
   -DartifactId=ejdb2 \
-  -Dversion=${VERSION}.3 \
+  -Dversion=${VERSION} \
   -Dpackaging=jar \
   -Dfile=${DEPLOY_JAR_FILE} \
   -Dsources=${DEPLOY_SOURCES_JAR_FILE} \
