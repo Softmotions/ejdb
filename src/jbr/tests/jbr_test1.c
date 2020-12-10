@@ -26,6 +26,9 @@ static size_t curl_write_xstr(void *contents, size_t size, size_t nmemb, void *o
 }
 
 static void jbr_test1_1() {
+  char url[64];
+  uint32_t port = iwu_rand_range(20000) + 20000;
+
   EJDB_OPTS opts = {
     .kv = {
       .path = "jbr_test1_1.db",
@@ -36,7 +39,7 @@ static void jbr_test1_1() {
       .bind = "127.0.0.1",
       .blocking = false,
       .enabled = true,
-      .port = 9292
+      .port = port
     }
   };
 
@@ -52,20 +55,24 @@ static void jbr_test1_1() {
   IWXSTR *hstr = iwxstr_new();
   struct curl_slist *headers = curl_slist_append(0, "Content-Type: application/json");
 
+  snprintf(url, sizeof(url), "http://localhost:%" PRIu32 "/c1/1", port);
 
   // Check no element in collection
-  CURLcode cc = curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/1");
+  CURLcode cc = curl_easy_setopt(curl, CURLOPT_URL, url);
   CU_ASSERT_EQUAL_FATAL(cc, 0);
   cc = curl_easy_perform(curl);
   CU_ASSERT_EQUAL_FATAL(cc, 0);
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
   CU_ASSERT_EQUAL_FATAL(code, 404);
 
+
+  snprintf(url, sizeof(url), "http://localhost:%" PRIu32 "/c1", port);
+
   // Save a document using POST
   curl_easy_reset(curl);
   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
   CU_ASSERT_EQUAL_FATAL(cc, 0);
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1");
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{\"foo\":\"bar\"}");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
@@ -80,7 +87,10 @@ static void jbr_test1_1() {
   curl_easy_reset(curl);
   iwxstr_clear(xstr);
   iwxstr_clear(hstr);
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/1");
+
+  snprintf(url, sizeof(url), "http://localhost:%" PRIu32 "/c1/1", port);
+
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_write_xstr);
@@ -104,7 +114,10 @@ static void jbr_test1_1() {
   iwxstr_clear(hstr);
   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
   CU_ASSERT_EQUAL_FATAL(cc, 0);
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/33");
+
+  snprintf(url, sizeof(url), "http://localhost:%" PRIu32 "/c1/33", port);
+
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{\"foo\":\"b\nar\"}");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
@@ -118,7 +131,7 @@ static void jbr_test1_1() {
   curl_easy_reset(curl);
   iwxstr_clear(xstr);
   iwxstr_clear(hstr);
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/33");
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_write_xstr);
@@ -140,7 +153,10 @@ static void jbr_test1_1() {
   curl_easy_reset(curl);
   iwxstr_clear(xstr);
   iwxstr_clear(hstr);
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/");
+
+  snprintf(url, sizeof(url), "http://localhost:%" PRIu32 "/", port);
+
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "@c1/foo");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
@@ -160,7 +176,7 @@ static void jbr_test1_1() {
   iwxstr_clear(hstr);
   curl_slist_free_all(headers);
   headers = curl_slist_append(0, "X-Hints: explain");
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/");
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "@c1/foo");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
@@ -180,7 +196,10 @@ static void jbr_test1_1() {
   curl_easy_reset(curl);
   iwxstr_clear(xstr);
   iwxstr_clear(hstr);
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/33");
+
+  snprintf(url, sizeof(url), "http://localhost:%" PRIu32 "/c1/33", port);
+
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
   cc = curl_easy_perform(curl);
   CU_ASSERT_EQUAL_FATAL(cc, 0);
@@ -191,7 +210,7 @@ static void jbr_test1_1() {
   curl_easy_reset(curl);
   iwxstr_clear(xstr);
   iwxstr_clear(hstr);
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/33");
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   cc = curl_easy_perform(curl);
   CU_ASSERT_EQUAL_FATAL(cc, 0);
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
@@ -203,7 +222,10 @@ static void jbr_test1_1() {
   iwxstr_clear(hstr);
   curl_slist_free_all(headers);
   headers = curl_slist_append(0, "Content-Type: application/json");
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/1");
+
+  snprintf(url, sizeof(url), "http://localhost:%" PRIu32 "/c1/1", port);
+
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "[{\"op\":\"replace\", \"path\":\"/foo\", \"value\":\"zzz\"}]");
@@ -216,7 +238,7 @@ static void jbr_test1_1() {
   curl_easy_reset(curl);
   iwxstr_clear(xstr);
   iwxstr_clear(hstr);
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9292/c1/1");
+  curl_easy_setopt(curl, CURLOPT_URL, url);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_xstr);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, xstr);
   curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_write_xstr);
