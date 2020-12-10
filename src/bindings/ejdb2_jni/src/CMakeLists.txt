@@ -55,8 +55,7 @@ else()
       com/softmotions/ejdb2/JSON.java
       com/softmotions/ejdb2/JSONException.java)
 
-  set(EJDB2_JAVA_SOURCES_JAR ${EJDB2_JAVA_SOURCES})
-  list(TRANSFORM EJDB2_JAVA_SOURCES_JAR PREPEND "main/java/")
+  utils_list_prepend(EJDB2_JAVA_SOURCES_JAR "main/java/" ${EJDB2_JAVA_SOURCES})
 
   add_jar(
     ejdb2jni_jar
