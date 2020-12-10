@@ -2,7 +2,7 @@
 
 set -e
 
-TWEAK="3"
+TWEAK="4"
 
 SCRIPTPATH="$(
   cd "$(dirname "$0")"

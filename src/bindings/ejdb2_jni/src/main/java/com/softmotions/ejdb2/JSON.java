@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -212,6 +213,22 @@ public final class JSON {
 
   public Number asNumberOr(Number fallbackValue) {
     return type == ValueType.NUMBER ? (Number) value : fallbackValue;
+  }
+
+  public Map<String, Object> asMapOr(Map<String, Object> fallbackValue) {
+    return type == ValueType.OBJECT ? (Map<String, Object>) value : fallbackValue;
+  }
+
+  public Map<String, Object> asMapOrEmpty() {
+    return asMapOr(Collections.emptyMap());
+  }
+
+  public List<Object> asListOr(List<Object> fallbackValue) {
+    return type == ValueType.ARRAY ? (List<Object>) value : fallbackValue;
+  }
+
+  public List<Object> asListOrEmpty() {
+    return asListOr(Collections.emptyList());
   }
 
   public JSON at(String pointer) {
