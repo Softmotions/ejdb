@@ -138,6 +138,10 @@ endif()
 
 add_subdirectory(man)
 
+if(NOT ENABLE_PPA)
+  add_subdirectory(src)
+endif()
+
 if(CPACK_GENERATORS)
   set(CPACK_GENERATOR "${CPACK_GENERATORS}")
   set(CPACK_SOURCE_IGNORE_FILES
@@ -173,10 +177,6 @@ if(CPACK_GENERATORS)
   set(PROJECT_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
   add_subdirectory(installer)
 endif(CPACK_GENERATORS)
-
-if(NOT ENABLE_PPA)
-  add_subdirectory(src)
-endif()
 
 message("${PROJECT_NAME} GIT_REVISION: ${GIT_REVISION}")
 message("${PROJECT_NAME} CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")

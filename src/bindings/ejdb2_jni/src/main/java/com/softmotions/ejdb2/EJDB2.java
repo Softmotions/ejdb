@@ -96,6 +96,18 @@ public final class EJDB2 implements AutoCloseable {
   }
 
   /**
+   * Persists {@code json} document into {@code collection}.
+   *
+   * @param  collection     Collection name
+   * @param  json           JSON document
+   * @return                Generated identifier for document
+   * @throws EJDB2Exception
+   */
+  public long put(String collection, JSON json) throws EJDB2Exception {
+    return _put(collection, json.toString(), 0);
+  }
+
+  /**
    * Persists {@code json} document under specified {@code id}.
    * <p>
    * If {@code id} is zero a new document identifier will be generated.
@@ -109,6 +121,22 @@ public final class EJDB2 implements AutoCloseable {
    */
   public long put(String collection, String json, long id) throws EJDB2Exception {
     return _put(collection, json, id);
+  }
+
+  /**
+   * Persists {@code json} document under specified {@code id}.
+   * <p>
+   * If {@code id} is zero a new document identifier will be generated.
+   *
+   * @param  collection     Collection name
+   * @param  json           JSON document
+   * @param  id             Document id. If zero a new identifier will be
+   *                        genareted
+   * @return                Document identifier
+   * @throws EJDB2Exception
+   */
+  public long put(String collection, JSON json, long id) throws EJDB2Exception {
+    return _put(collection, json.toString(), id);
   }
 
   /**
@@ -149,11 +177,31 @@ public final class EJDB2 implements AutoCloseable {
   }
 
   /**
+   * Apply rfc6902/rfc7386 JSON patch to the document identified by {@code id}.
+   *
+   * @param  collection     Collection name
+   * @param  patch          JSON patch
+   * @param  id             Document id
+   * @throws EJDB2Exception
+   */
+  public void patch(String collection, JSON patch, long id) throws EJDB2Exception {
+    _patch(collection, patch.toString(), id, false);
+  }
+
+  /**
    * Apply JSON merge patch (rfc7396) to the document identified by `id` or insert
    * new document under specified `id`.
    */
   public void patchOrPut(String collection, String patch, long id) {
     _patch(collection, patch, id, true);
+  }
+
+  /**
+   * Apply JSON merge patch (rfc7396) to the document identified by `id` or insert
+   * new document under specified `id`.
+   */
+  public void patchOrPut(String collection, JSON patch, long id) {
+    _patch(collection, patch.toString(), id, true);
   }
 
   /**
@@ -202,7 +250,7 @@ public final class EJDB2 implements AutoCloseable {
   }
 
   /**
-   * Returns document identified by {@code id} as {@link JSON} object.
+   * Returns document identified by {@code id} as {@link EJDB2Document} object.
    * <p>
    * If document is not found {@link EJDB2Exception} will be thrown:
    *
@@ -220,6 +268,27 @@ public final class EJDB2 implements AutoCloseable {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     get(collection, id, bos);
     return new EJDB2Document(id, bos.toByteArray());
+  }
+
+  /**
+   * Returns document identified by {@code id} as {@link JSON} object.
+   * <p>
+   * If document is not found {@link EJDB2Exception} will be thrown:
+   *
+   * <pre>
+   * {@code
+   *  code: 75001
+   *  message: Key not found. (IWKV_ERROR_NOTFOUND)
+   * }
+   * </pre>
+   *
+   * @param collection
+   * @param id
+   */
+  public JSON getAsJSON(String collection, long id) {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    get(collection, id, bos);
+    return JSON.fromBytes(bos.toByteArray());
   }
 
   /**
@@ -289,15 +358,15 @@ public final class EJDB2 implements AutoCloseable {
   }
 
   /**
-   * Returns JSON document describind database structure. Same as
+   * Returns {@link JSON} document describind database structure. Same as
    * {@link #info(OutputStream)} but returns JSON data as {@link JSON}.
    *
    * @throws EJDB2Exception
    */
-  public EJDB2Document infoAsDocument() throws EJDB2Exception {
+  public JSON infoAsJSON() throws EJDB2Exception {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     info(bos);
-    return new EJDB2Document(0, bos.toByteArray());
+    return JSON.fromBytes(bos.toByteArray());
   }
 
   /**

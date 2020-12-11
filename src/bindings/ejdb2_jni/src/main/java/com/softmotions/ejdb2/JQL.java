@@ -212,8 +212,18 @@ public final class JQL implements AutoCloseable {
     return this;
   }
 
+  public JQL setJSON(int pos, JSON json) throws EJDB2Exception {
+    _set_string(pos, null, json.toString(), 1);
+    return this;
+  }
+
   public JQL setJSON(String placeholder, String json) throws EJDB2Exception {
     _set_string(0, placeholder, json, 1);
+    return this;
+  }
+
+  public JQL setJSON(String placeholder, JSON json) throws EJDB2Exception {
+    _set_string(0, placeholder, json.toString(), 1);
     return this;
   }
 

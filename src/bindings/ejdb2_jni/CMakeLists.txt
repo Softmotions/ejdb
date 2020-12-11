@@ -1,2 +1,3 @@
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt _VERSION)
+set_property(GLOBAL PROPERTY EJDB2_JNI_VERSION_PROPERTY ${PROJECT_VERSION}.${_VERSION})
 add_subdirectory(src)
-
