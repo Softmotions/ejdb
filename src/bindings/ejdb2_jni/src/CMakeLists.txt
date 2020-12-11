@@ -2,7 +2,6 @@ include(FindJava)
 include(UseJava)
 include(FindJNI)
 
-get_property(EJDB2_JNI_VERSION GLOBAL PROPERTY EJDB2_JNI_VERSION_PROPERTY)
 if(NOT EJDB2_JNI_VERSION)
   message(FATAL_ERROR "EJDB2_JNI_VERSION_PROPERTY Is not defined")
 endif()
@@ -49,7 +48,11 @@ if(ANDROID_PLATFORM)
 
 else()
 
-  set(CMAKE_JAVA_COMPILE_FLAGS "-source" "11" "-target" "11")
+  if(${Java_VERSION} VERSION_LESS "11")
+    set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.8" "-target" "1.8")
+  else()
+    set(CMAKE_JAVA_COMPILE_FLAGS "-source" "11" "-target" "11")
+  endif()
 
   set(EJDB2_JAVA_SOURCES
       com/softmotions/ejdb2/EJDB2.java
