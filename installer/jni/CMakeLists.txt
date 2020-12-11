@@ -1,7 +1,11 @@
-get_property(EJDB2_JNI_VERSION GLOBAL PROPERTY EJDB2_JNI_VERSION_PROPERTY)
+file(READ ${CMAKE_SOURCE_DIR}/src/bindings/ejdb2_jni/version.txt
+     EJDB2_JNI_VERSION)
 if(NOT EJDB2_JNI_VERSION)
-  message(FATAL_ERROR "EJDB2_JNI_VERSION_PROPERTY Is not defined")
+  message(
+    FATAL_ERROR
+      "${CMAKE_SOURCE_DIR}/src/bindings/ejdb2_jni/version.txt is not exists")
 endif()
+set(EJDB2_JNI_VERSION "${PROJECT_VERSION}.${EJDB2_JNI_VERSION}")
 
 set(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}-java")
 set(CPACK_PACKAGE_CONTACT "${PROJECT_MAINTAINER}")
