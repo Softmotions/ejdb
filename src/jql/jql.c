@@ -5,8 +5,6 @@
 #include "jqp.h"
 #include "lwre.h"
 #include <errno.h>
-#include <ejdb2/iowow/iwstree.h>
-
 
 /** Query matching context */
 typedef struct MCTX {
