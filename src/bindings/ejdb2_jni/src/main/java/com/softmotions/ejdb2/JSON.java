@@ -909,8 +909,16 @@ public final class JSON {
       return getA().addObject();
     }
 
+    public ArrayBuilder addObject(JSON val) {
+      return getA().addObject(val);
+    }
+
     public ArrayBuilder addArray() {
       return getA().addArray();
+    }
+
+    public ArrayBuilder addArray(JSON val) {
+      return getA().addArray(val);
     }
 
     public ArrayBuilder add(String val) {
@@ -945,8 +953,16 @@ public final class JSON {
       return getO().putObject(key);
     }
 
+    public ObjectBuilder putObject(String key, JSON val) {
+      return getO().putObject(key, val);
+    }
+
     public ArrayBuilder putArray(String key) {
       return getO().putArray(key);
+    }
+
+    public ObjectBuilder putArray(String key, JSON val) {
+      return getO().putArray(key, val);
     }
 
     public ObjectBuilder put(String key, String val) {
@@ -1017,10 +1033,30 @@ public final class JSON {
       return b;
     }
 
+    public ArrayBuilder addObject(JSON val) {
+      if (val.type == ValueType.NULL) {
+        return addNull();
+      } else if (val.type != ValueType.OBJECT) {
+        throw new JSONException("Value must be an Object");
+      }
+      value.add(val.value);
+      return this;
+    }
+
     public ArrayBuilder addArray() {
       ArrayBuilder b = new ArrayBuilder();
       value.add(b.value);
       return b;
+    }
+
+    public ArrayBuilder addArray(JSON val) {
+      if (val.type == ValueType.NULL) {
+        return addNull();
+      } else if (val.type != ValueType.ARRAY) {
+        throw new JSONException("Value must be an Array");
+      }
+      value.add(val.value);
+      return this;
     }
 
     public ArrayBuilder add(String val) {
@@ -1091,10 +1127,32 @@ public final class JSON {
       return b;
     }
 
+    public ObjectBuilder putObject(String key, JSON val) {
+      if (val.type == ValueType.NULL) {
+        return putNull(key);
+      }
+      if (val.type != ValueType.OBJECT) {
+        throw new JSONException("Value must be an Object");
+      }
+      value.put(key, val.value);
+      return this;
+    }
+
     public ArrayBuilder putArray(String key) {
       ArrayBuilder b = new ArrayBuilder();
       value.put(key, b.value);
       return b;
+    }
+
+    public ObjectBuilder putArray(String key, JSON val) {
+      if (val.type == ValueType.NULL) {
+        return putNull(key);
+      }
+      if (val.type != ValueType.ARRAY) {
+        throw new JSONException("Value must be an Array");
+      }
+      value.put(key, val.value);
+      return this;
     }
 
     public ObjectBuilder put(String key, String val) {
