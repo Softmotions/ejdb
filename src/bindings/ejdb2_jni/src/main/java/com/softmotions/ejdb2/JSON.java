@@ -207,6 +207,14 @@ public final class JSON {
     return type == ValueType.STRING ? (String) value : fallbackValue;
   }
 
+  public String asTextOr(String fallbackValue) {
+    if (type == ValueType.UNKNOWN) {
+      return fallbackValue;
+    } else {
+      return String.valueOf(value);
+    }
+  }
+
   public Boolean asBooleanOr(Boolean fallbackValue) {
     return type == ValueType.BOOLEAN ? (Boolean) value : fallbackValue;
   }
