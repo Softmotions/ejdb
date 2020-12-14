@@ -66,7 +66,7 @@ int main(int argc, char const *argv[]) {
     access_token = access_token_buf;
   } else if (strlen(access_token) >= sizeof(access_token_buf)) {
     rc = IW_ERROR_INVALID_VALUE;
-    iwlog_error("Invalid access token");
+    iwlog_error2("Invalid access token");
     goto finish;
   }
 
