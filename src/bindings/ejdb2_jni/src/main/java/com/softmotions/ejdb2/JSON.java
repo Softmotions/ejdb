@@ -207,6 +207,10 @@ public final class JSON {
     return type == ValueType.STRING ? (String) value : fallbackValue;
   }
 
+  public String asString(String fallbackValue) {
+    return asStringOr(null);
+  }
+
   public String asTextOr(String fallbackValue) {
     if (type == ValueType.UNKNOWN) {
       return fallbackValue;
@@ -215,12 +219,33 @@ public final class JSON {
     }
   }
 
+  public String asText() {
+    return asTextOr(null);
+  }
+
   public Boolean asBooleanOr(Boolean fallbackValue) {
     return type == ValueType.BOOLEAN ? (Boolean) value : fallbackValue;
   }
 
+  public Boolean asBoolean() {
+    return asBooleanOr(null);
+  }
+
   public Number asNumberOr(Number fallbackValue) {
     return type == ValueType.NUMBER ? (Number) value : fallbackValue;
+  }
+
+  public Number asNumber() {
+    return asNumberOr(null);
+  }
+
+  public Integer asIntegerOr(Integer fallbackValue) {
+    Number n = asNumberOr(fallbackValue);
+    return n != null ? n.intValue() : null;
+  }
+
+  public Integer asInteger() {
+    return asIntegerOr(null);
   }
 
   public Map<String, Object> asMapOr(Map<String, Object> fallbackValue) {
@@ -237,6 +262,14 @@ public final class JSON {
 
   public List<Object> asListOrEmpty() {
     return asListOr(Collections.emptyList());
+  }
+
+  public JSON asKnownJsonOr(JSON fallbackValue) {
+    return type == ValueType.UNKNOWN ? fallbackValue : this;
+  }
+
+  public JSON asKnownJson() {
+    return asKnownJsonOr(null);
   }
 
   public JSON at(String pointer) {
