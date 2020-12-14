@@ -1,5 +1,6 @@
 ejdb2 (2.0.57) UNRELEASED; urgency=medium
 
+  * Added --trylock option to jbs
   * jbs server CLI should be able to load access token from file (#219)
   * Updated to iowow v1.4.10 with fix https://github.com/Softmotions/iowow/issues/35
   * EJDB2 Java binding improvements.

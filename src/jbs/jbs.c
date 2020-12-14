@@ -28,7 +28,7 @@ int main(int argc, char const *argv[]) {
                             "Default: 65536, min: 16384"),
                 FIO_CLI_INT("--bsz Max HTTP/WS API document body size. " "Default: 67108864, min: 524288"),
                 FIO_CLI_BOOL("--trylock Fail if database is locked by another process."
-                             " If not set process will wait for lock release")
+                             " If not set, current process will wait for lock release")
 
                );
   fio_cli_set_default("--file", "db.jb");
