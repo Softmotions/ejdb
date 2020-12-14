@@ -17,7 +17,7 @@
     "-DBUILD_FLUTTER_BINDING=OFF",
     "-DBUILD_SWIFT_BINDING=ON",
     "-DANDROID_ABIS=x86",
-    "-DASAN=OFF"
+    "-DASAN=OFF",
     //"-DFACIL_URL=file:///home/adam/Projects/contrib/facil.io"
     //"-DIOWOW_URL=file:///home/adam/Projects/softmotions/iowow",
   ],
