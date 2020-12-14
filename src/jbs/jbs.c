@@ -64,13 +64,11 @@ int main(int argc, char const *argv[]) {
     }
     fclose(f);
     access_token = access_token_buf;
-  } else if (strlen(access_token) >= sizeof(access_token_buf)) {
+  } else if (access_token && strlen(access_token) >= sizeof(access_token_buf)) {
     rc = IW_ERROR_INVALID_VALUE;
     iwlog_error2("Invalid access token");
     goto finish;
   }
-
-  fprintf(stderr, "Access token: %s\n", access_token);
 
   EJDB_OPTS ov = {
     .kv = {
