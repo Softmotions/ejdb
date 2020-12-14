@@ -207,7 +207,7 @@ public final class JSON {
     return type == ValueType.STRING ? (String) value : fallbackValue;
   }
 
-  public String asString(String fallbackValue) {
+  public String asString() {
     return asStringOr(null);
   }
 
