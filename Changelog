@@ -1,9 +1,11 @@
 ejdb2 (2.0.57) UNRELEASED; urgency=medium
 
+  * Added new non standard JSON `swap` operation.
+  * bugfix: Incorrect behavior of JSON patch `move` operation.
   * Added --trylock option to jbs
   * jbs server CLI should be able to load access token from file (#219)
-  * Updated to iowow v1.4.10 with fix https://github.com/Softmotions/iowow/issues/35
-  * EJDB2 Java binding improvements.
+  * bugfix: Updated to iowow v1.4.10 with fix https://github.com/Softmotions/iowow/issues/35
+  * enhancement: EJDB2 Java binding improvements.
 
  -- Anton Adamansky <adamansky@gmail.com>  Thu, 10 Dec 2020 01:28:56 +0700
 
@@ -24,7 +26,7 @@ ejdb2 (2.0.55) testing; urgency=medium
 
 ejdb2 (2.0.54) testing; urgency=medium
 
-  * CRITICAL: Fixed incorrect behaviour of `_jbl_cmp_atomic_values`
+  * CRITICAL: Fixed incorrect behavior of `_jbl_cmp_atomic_values`
     which leads to inconsitent number indexes processing.
   * Transfered `-DASAN` to `AddIOWOW` CMake module.
 

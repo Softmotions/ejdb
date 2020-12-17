@@ -560,10 +560,24 @@ void jbl_test1_6() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_clear(xstr);
 
-  // Apply non standard increment patch
+  // Apply non standard `increment` patch
   apply_patch("{'foo': 1}",
               "[{'op': 'increment', 'path': '/foo', 'value': 2}]",
               "{'foo':3}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+
+  // Apply non standard `swap` patch
+  apply_patch("{'foo': ['bar'], 'baz': {'gaz': 11}}",
+              "[{'op': 'swap', 'from': '/foo/0', 'path': '/baz/gaz'}]",
+              "{'foo':[11],'baz':{'gaz':'bar'}}", xstr, &rc);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_clear(xstr);
+
+  apply_patch("{'foo': ['bar'], 'baz': {'gaz': 11}}",
+              "[{'op': 'swap', 'from': '/foo/0', 'path': '/baz/zaz'}]",
+              "{'foo':[],'baz':{'gaz':11,'zaz':'bar'}}", xstr, &rc);
+
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   iwxstr_clear(xstr);
 

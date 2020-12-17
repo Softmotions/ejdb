@@ -2163,6 +2163,7 @@ int jbn_compare_nodes(JBL_NODE n1, JBL_NODE n2, iwrc *rcp) {
 
 static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex, IWPOOL *pool) {
 
+  struct _JBL_NODE *ntmp;
   jbp_patch_t op = ex->p->op;
   JBL_PTR path = ex->path;
   JBL_NODE value = ex->p->vnode;
@@ -2195,14 +2196,20 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex, IWP
     }
     if (op == JBP_REMOVE) {
       return 0;
-    } else if (op == JBP_MOVE || op == JBP_COPY) {
+    } else if (op == JBP_MOVE || op == JBP_COPY || op == JBP_SWAP) {
       if (op == JBP_MOVE) {
         value = _jbl_node_detach(target, ex->from);
       } else {
-        value = _jbl_node_find2(target, ex->from);
+        value = _jbl_node_find(target, ex->from, 0, ex->from->cnt);
       }
       if (!value) {
         return JBL_ERROR_PATH_NOTFOUND;
+      }
+      if (op == JBP_SWAP) {
+        ntmp = iwpool_calloc(sizeof(*ntmp), pool);
+        if (!ntmp) {
+          return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+        }
       }
     } else { // ADD/REPLACE/INCREMENT
       if (!value) {
@@ -2234,6 +2241,9 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex, IWP
     }
     if (parent->type == JBV_ARRAY) {
       if (path->n[lastidx][0] == '-' && path->n[lastidx][1] == '\0') {
+        if (op == JBP_SWAP) {
+          value = _jbl_node_detach(target, ex->from);
+        }
         _jbn_add_item(parent, value); // Add to end of array
       } else { // Insert into the specified index
         int idx = iwatoi(path->n[lastidx]);
@@ -2248,20 +2258,29 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex, IWP
         }
         value->klidx = idx;
         if (child) {
-          value->parent = parent;
-          value->next = child;
-          value->prev = child->prev;
-          child->prev = value;
-          if (child == parent->child) {
-            parent->child = value;
+          if (op == JBP_SWAP) {
+            _jbl_copy_node_data(ntmp, value);
+            _jbl_copy_node_data(value, child);
+            _jbl_copy_node_data(child, ntmp);
           } else {
-            value->prev->next = value;
-          }
-          while (child) {
-            child->klidx++;
-            child = child->next;
+            value->parent = parent;
+            value->next = child;
+            value->prev = child->prev;
+            child->prev = value;
+            if (child == parent->child) {
+              parent->child = value;
+            } else {
+              value->prev->next = value;
+            }
+            while (child) {
+              child->klidx++;
+              child = child->next;
+            }
           }
         } else {
+          if (op == JBP_SWAP) {
+            value = _jbl_node_detach(target, ex->from);
+          }
           _jbn_add_item(parent, value);
         }
       }
@@ -2271,9 +2290,18 @@ static iwrc _jbl_target_apply_patch(JBL_NODE target, const JBL_PATCHEXT *ex, IWP
         if (op == JBP_INCREMENT) {
           return _jbl_increment_node_data(child, value);
         } else {
-          _jbl_copy_node_data(child, value);
+          if (op == JBP_SWAP) {
+            _jbl_copy_node_data(ntmp, value);
+            _jbl_copy_node_data(value, child);
+            _jbl_copy_node_data(child, ntmp);
+          } else {
+            _jbl_copy_node_data(child, value);
+          }
         }
       } else if (op != JBP_INCREMENT) {
+        if (op == JBP_SWAP) {
+          value = _jbl_node_detach(target, ex->from);
+        }
         value->key = path->n[path->cnt - 1];
         value->klidx = (int) strlen(value->key);
         _jbn_add_item(parent, value);
@@ -2542,6 +2570,8 @@ static iwrc _jbl_create_patch(JBL_NODE node, JBL_PATCH **pptr, int *cntp, IWPOOL
           pp->op = JBP_INCREMENT;
         } else if (!strncmp("add_create", n2->vptr, n2->vsize)) {
           pp->op = JBP_ADD_CREATE;
+        } else if (!strncmp("swap", n2->vptr, n2->vsize)) {
+          pp->op = JBP_SWAP;
         } else {
           return JBL_ERROR_PATCH_INVALID_OP;
         }

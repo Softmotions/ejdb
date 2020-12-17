@@ -557,6 +557,22 @@ Patch:    [{"op": "add_create", "path": "/foo/bar/gaz", "value": 22}]
 Result:   Error since element pointed by /foo/bar is not an object
 ```
 
+### swap
+
+Swaps two value of JSON document starting from `from` path.
+
+Example:
+```
+Document: {"foo": ["bar"], "baz": {"gaz": 11}}
+Patch:    [{"op": "swap", "from": "/foo/0", "path": "/baz/gaz"}]
+Result:   {"foo": [11], "baz": {"gaz": "bar"}}
+```
+
+- If value pointed by `from` not exists error will be raised.
+- If value pointed by `path` not exists it will be set by value from `from` path,
+  then object pointed by `from` path will be removed.
+- If both values pointed by `from` and `path` are presented they will be swapped.
+
 ### Removing documents
 
 Use `del` keyword to remove matched elements from collection:

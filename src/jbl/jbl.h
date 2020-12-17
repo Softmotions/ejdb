@@ -156,6 +156,7 @@ typedef enum {
   // Non standard operations
   JBP_INCREMENT,  /**< Value increment */
   JBP_ADD_CREATE, /**< Create intermediate object nodes for missing path segments */
+  JBP_SWAP,       /**< Swap values of two nodes */
 } jbp_patch_t;
 
 /**
