@@ -388,7 +388,7 @@ Result:   Error since element pointed by /foo/bar is not an object
 
 #### swap
 
-Swaps two value of JSON document starting from `from` path.
+Swaps two values of JSON document starting from `from` path.
 
 Example:
 ```
