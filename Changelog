@@ -1,4 +1,4 @@
-ejdb2 (2.0.57) UNRELEASED; urgency=medium
+ejdb2 (2.0.57) testing; urgency=medium
 
   * Added new non standard JSON `swap` operation.
   * bugfix: Incorrect behavior of JSON patch `move` operation.
@@ -7,7 +7,7 @@ ejdb2 (2.0.57) UNRELEASED; urgency=medium
   * bugfix: Updated to iowow v1.4.10 with fix https://github.com/Softmotions/iowow/issues/35
   * enhancement: EJDB2 Java binding improvements.
 
- -- Anton Adamansky <adamansky@gmail.com>  Thu, 10 Dec 2020 01:28:56 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 17 Dec 2020 23:12:37 +0700
 
 ejdb2 (2.0.56) testing; urgency=medium
 
