@@ -559,19 +559,30 @@ Result:   Error since element pointed by /foo/bar is not an object
 
 #### swap
 
-Swaps two value of JSON document starting from `from` path.
+Swaps two values of JSON document starting from `from` path.
+
+Swapping rules
+
+1. If value pointed by `from` not exists error will be raised.
+1. If value pointed by `path` not exists it will be set by value from `from` path,
+  then object pointed by `from` path will be removed.
+1. If both values pointed by `from` and `path` are presented they will be swapped.
 
 Example:
+
 ```
 Document: {"foo": ["bar"], "baz": {"gaz": 11}}
 Patch:    [{"op": "swap", "from": "/foo/0", "path": "/baz/gaz"}]
 Result:   {"foo": [11], "baz": {"gaz": "bar"}}
 ```
 
-- If value pointed by `from` not exists error will be raised.
-- If value pointed by `path` not exists it will be set by value from `from` path,
-  then object pointed by `from` path will be removed.
-- If both values pointed by `from` and `path` are presented they will be swapped.
+Example (Demo of rule 2):
+
+```
+Document: {"foo": ["bar"], "baz": {"gaz": 11}}
+Patch:    [{"op": "swap", "from": "/foo/0", "path": "/baz/zaz"}]
+Result:   {"foo":[],"baz":{"gaz":11,"zaz":"bar"}}
+```
 
 ### Removing documents
 
