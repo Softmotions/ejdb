@@ -557,7 +557,7 @@ Patch:    [{"op": "add_create", "path": "/foo/bar/gaz", "value": 22}]
 Result:   Error since element pointed by /foo/bar is not an object
 ```
 
-### swap
+#### swap
 
 Swaps two value of JSON document starting from `from` path.
 
