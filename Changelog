@@ -1,3 +1,9 @@
+ejdb2 (2.0.58) UNRELEASED; urgency=medium
+
+  * Upgraded to iwkv v1.4.10
+
+ -- Anton Adamansky <adamansky@gmail.com>  Sat, 19 Dec 2020 22:46:42 +0700
+
 ejdb2 (2.0.57) testing; urgency=medium
 
   * Added new non standard JSON `swap` operation.
