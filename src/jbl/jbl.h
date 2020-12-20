@@ -473,7 +473,7 @@ IW_EXPORT iwrc jbl_object_get_f64(JBL jbl, const char *key, double *out);
 
 IW_EXPORT iwrc jbl_object_get_bool(JBL jbl, const char *key, bool *out);
 
-IW_EXPORT iwrc jbl_object_get_str(JBL jbl, const char *key, char **out);
+IW_EXPORT iwrc jbl_object_get_str(JBL jbl, const char *key, const char **out);
 
 IW_EXPORT iwrc jbl_object_get_fill_jbl(JBL jbl, const char *key, JBL out);
 

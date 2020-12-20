@@ -925,7 +925,7 @@ iwrc jbl_object_get_bool(JBL jbl, const char *key, bool *out) {
   return 0;
 }
 
-iwrc jbl_object_get_str(JBL jbl, const char *key, char **out) {
+iwrc jbl_object_get_str(JBL jbl, const char *key, const char **out) {
   *out = 0;
   if (jbl->bn.type != BINN_OBJECT) {
     return JBL_ERROR_NOT_AN_OBJECT;

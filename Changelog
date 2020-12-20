@@ -1,6 +1,5 @@
 ejdb2 (2.0.58) UNRELEASED; urgency=medium
 
-  * Removed wrong const qualifier from `out` argument of jbl_object_get_str()
   * Upgraded to iwkv v1.4.10
 
  -- Anton Adamansky <adamansky@gmail.com>  Sat, 19 Dec 2020 22:46:42 +0700
