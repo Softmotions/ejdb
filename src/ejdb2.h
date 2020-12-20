@@ -428,6 +428,7 @@ IW_EXPORT WUR iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *oid
  *
  * @return `0` on success.
  *         `IWKV_ERROR_NOTFOUND` if document not found.
+ *         `IW_ERROR_NOT_EXISTS` if collection `coll` is not exists in db.
  *          Any non zero error codes.
  */
 IW_EXPORT WUR iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp);
