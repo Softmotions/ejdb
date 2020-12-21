@@ -1,3 +1,11 @@
+ejdb_dart (2.0.58-1)
+
+  * Upgraded to Dart v2.12.x (null safety and native bindings API)
+
+ejdb_dart (1.0.63)
+
+  * Opted out null safety mode
+
 ejdb_dart (1.0.62)
 
   * Upgraded to ejdb v2.0.57

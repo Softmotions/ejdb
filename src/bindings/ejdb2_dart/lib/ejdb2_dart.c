@@ -58,7 +58,7 @@ static void ejd_jql_set(Dart_NativeArguments args);
 static void ejd_jql_get_limit(Dart_NativeArguments args);
 
 static void ejd_port_handler(Dart_Port receive_port, Dart_CObject *msg);
-static void ejd_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer);
+static void ejd_ctx_finalizer(void *isolate_callback_data, void *peer);
 
 static void ejd_port(Dart_NativeArguments arguments);
 static void ejd_set_handle(Dart_NativeArguments args);
@@ -282,8 +282,8 @@ finish:
   Dart_ExitScope();
 }
 
-static void ejd_jql_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer) {
-  JQL q = (void *) peer;
+static void ejd_jql_finalizer(void *isolate_callback_data, void *peer) {
+  JQL q = peer;
   if (q) {
     jql_destroy(&q);
   }
@@ -1447,7 +1447,7 @@ DART_EXPORT Dart_Handle ejdb2dart_Init(Dart_Handle parent_library) {
   return Dart_Null();
 }
 
-static void ejd_ctx_finalizer(void *isolate_callback_data, Dart_WeakPersistentHandle handle, void *peer) {
+static void ejd_ctx_finalizer(void *isolate_callback_data, void *peer) {
   EJDB2Context *ctx = peer;
   if (ctx && ctx->dbh) {
     iwrc rc = ejdb2_isolate_shared_release(&ctx->dbh);

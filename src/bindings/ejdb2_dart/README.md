@@ -35,6 +35,8 @@ void main() async {
 
 ## How build it manually
 
+Note: native binding requires Dart SDK version >= 2.12.x
+
 ``` sh
 git clone https://github.com/Softmotions/ejdb.git
 cd ./ejdb

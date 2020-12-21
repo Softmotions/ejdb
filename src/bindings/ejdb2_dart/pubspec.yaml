@@ -1,15 +1,13 @@
 name: ejdb2_dart
-description: Embeddable JSON Database engine EJDB http://ejdb.org Dart binding
-version: 1.0.62
+description: Embeddable JSON Database engine EJDB http://ejdb.org Dart binding.
+version: @EJDB2_DART_VERSION@
 homepage: https://github.com/Softmotions/ejdb
 issue_tracker: https://github.com/Softmotions/ejdb/issues?q=is%3Aissue+label%3ADart+
-author: Adamansky Anton <adamansky@softmotions.com>
 license: MIT
 
 environment:
-  sdk: '>=2.2.0 <3.0.0'
+  sdk: ">=2.12.0-0 <3.0.0"
 
 dependencies:
-  path: ^1.6.2
-  quiver: ^2.0.3
-  json_at: ^1.0.2
+  json_at: ^2.0.0-nullsafety.1
+  path: ^1.8.0-nullsafety.3

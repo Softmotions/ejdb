@@ -396,6 +396,7 @@ static JNWORK jn_work_create(iwrc *rcp) {
   if (!w) {
     *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     iwpool_destroy(pool);
+    return 0;
   }
   w->pool = pool;
   return w;
@@ -404,7 +405,9 @@ static JNWORK jn_work_create(iwrc *rcp) {
 static void *jn_work_alloc_data(size_t siz, JNWORK work, iwrc *rcp) {
   *rcp = 0;
   work->data = iwpool_calloc(siz, work->pool);
-  if (!work->data) *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  if (!work->data) {
+    *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
   return work->data;
 }
 
@@ -1075,7 +1078,7 @@ static napi_value jn_info(napi_env env, napi_callback_info info) {
   RCGO(rc, finish);
 
   JNGO(ns, env, napi_get_cb_info(env, info, &argc, 0, &this, &data), finish);
-  struct JNGET_DATA *wdata = jn_work_alloc_data(sizeof(*wdata), work, &rc);
+  jn_work_alloc_data(sizeof(struct JNGET_DATA), work, &rc);
   RCGO(rc, finish);
   work->release_data = jn_get_data_destroy;
   ret = jn_launch_promise(env, info, "info", jn_info_execute, jn_info_complete, work);
@@ -1339,6 +1342,7 @@ static napi_value jn_jql_init(napi_env env, napi_callback_info info) {
   jnql = calloc(1, sizeof(*jnql));
   if (!jnql) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    goto finish;
   }
 
   JNGO(ns, env, napi_get_cb_info(env, info, &argc, argv, &this, &data), finish);
@@ -1366,7 +1370,7 @@ static napi_value jn_jql_init(napi_env env, napi_callback_info info) {
 
 finish:
   if (rc) {
-    if (rc == JQL_ERROR_QUERY_PARSE && jnql->jql) {
+    if (rc == JQL_ERROR_QUERY_PARSE && jnql && jnql->jql) {
       JNTHROW(env, rc, jql_error(jnql->jql));
     } else {
       JNRC(env, rc);
@@ -1375,9 +1379,7 @@ finish:
       jn_jnql_destroy_mt(&jnql);
     }
   }
-  if (pool) {
-    iwpool_destroy(pool);
-  }
+  iwpool_destroy(pool);
   return jn_undefined(env);
 }
 
@@ -1812,7 +1814,9 @@ static napi_value jn_jql_stream_attach(napi_env env, napi_callback_info info) {
 finish:
   if (rc) {
     JNRC(env, rc);
-    qs->refs = 0; // needed to destroy it completely
+    if (qs) {
+      qs->refs = 0; // needed to destroy it completely
+    }
     jn_jnqs_destroy_mt(env, &qs);
   }
   return ret ? ret : jn_undefined(env);

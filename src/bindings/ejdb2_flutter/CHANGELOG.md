@@ -1,3 +1,7 @@
+## 1.0.30+1
+
+  * Opted out null safety mode
+
 ## 1.0.29+1
 
   * Upgraded to ejdb v2.0.57
