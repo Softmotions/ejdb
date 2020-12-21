@@ -239,12 +239,12 @@ static void ejd_port(Dart_NativeArguments args) {
       Dart_SetReturnValue(args, ejd_error_rc_create(EJD_ERROR_CREATE_PORT));
       goto finish;
     }
-    Dart_SetNativeInstanceField(self, 0, (intptr_t) ctx);
     ctx->wph = Dart_NewWeakPersistentHandle(self, ctx, sizeof(*ctx), ejd_ctx_finalizer);
     if (!ctx->wph) {
       Dart_SetReturnValue(args, ejd_error_rc_create(EJD_ERROR_INVALID_STATE));
       goto finish;
     }
+    Dart_SetNativeInstanceField(self, 0, (intptr_t) ctx);
   } else {
     ctx = (void *) ptr;
   }
@@ -298,9 +298,8 @@ static void ejd_jql_finalizer(void *isolate_callback_data, void *peer) {
     if (ctx->q) {
       jql_destroy(&ctx->q);
     }
-    if (ctx->wph) {
-      // todo:
-      // Dart_DeleteWeakPersistentHandle(ctx->wph);
+    if (ctx->wph && Dart_CurrentIsolateGroup()) {
+      Dart_DeleteWeakPersistentHandle(ctx->wph);
     }
     free(ctx);
   }
@@ -352,13 +351,15 @@ static void ejd_create_query(Dart_NativeArguments args) {
   ret = Dart_SetNativeInstanceField(jqinst, 0, (intptr_t) q);
   EJGO(ret, ret, finish);
 
-  qctx = malloc(sizeof(qctx));
+  qctx = malloc(sizeof(*qctx));
   if (!qctx) {
     Dart_SetReturnValue(args, ejd_error_rc_create(IW_ERROR_ALLOC));
     goto finish;
   }
+
   qctx->q = q;
-  qctx->wph = Dart_NewWeakPersistentHandle(jqinst, q, jql_estimate_allocated_size(q) + sizeof(*qctx), ejd_jql_finalizer);
+  qctx->wph = Dart_NewWeakPersistentHandle(jqinst, qctx, jql_estimate_allocated_size(q) + sizeof(*qctx),
+                                           ejd_jql_finalizer);
   if (!qctx->wph)   {
     rc = EJD_ERROR_INVALID_STATE;
     goto finish;
@@ -838,9 +839,6 @@ static Dart_NativeFunction ejd_resolve_name(Dart_Handle name,
 }
 
 static void ejd_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
-  // todo:
-  fprintf(stderr, "2222 msg->type %d\n", (int) msg->type);
-
   if (msg->type != Dart_CObject_kArray
       || msg->value.as_array.length < 2
       || msg->value.as_array.values[0]->type != Dart_CObject_kSendPort
@@ -1489,9 +1487,8 @@ static void ejd_ctx_finalizer(void *isolate_callback_data, void *peer) {
         iwlog_ecode_error3(rc);
       }
     }
-    if (ctx->wph) {
-      // todo:
-      // Dart_DeleteWeakPersistentHandle(ctx->wph);
+    if (ctx->wph && Dart_CurrentIsolateGroup()) {
+      Dart_DeleteWeakPersistentHandle(ctx->wph);
     }
   }
 

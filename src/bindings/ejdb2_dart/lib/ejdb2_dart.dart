@@ -54,7 +54,7 @@ class EJDB2Error implements Exception {
 /// EJDB document item
 class JBDOC {
   JBDOC(this.id, this._json);
-  JBDOC._fromList(List list) : this(list[0] as int, list[1] as String);
+  JBDOC._fromList(List list) : this(list[0] as int, list[1] as String?);
 
   /// Document identifier
   final int id;
