@@ -1,3 +1,8 @@
+ejdb_node (UNRELEASED)
+
+  * Binding code cleanup
+  * Upgraded to nodejs 12 NAPI
+
 ejdb_node (1.0.45)
 
   * Upgraded to ejdb v2.0.55

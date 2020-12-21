@@ -1,4 +1,4 @@
-ejdb_dart (2.0.58-1)
+ejdb_dart (UNRELEASED)
 
   * Upgraded to Dart v2.12.x (null safety and native bindings API)
 

@@ -67,7 +67,7 @@ class JBDOC {
     if (_json == null) {
       return _object;
     } else {
-      _object = convert_lib.jsonDecode(_json);
+      _object = convert_lib.jsonDecode(_json!);
       _json = null; // Release memory used to store JSON string data
       return _object;
     }
@@ -79,7 +79,7 @@ class JBDOC {
   /// Gets subset of document using RFC 6901 JSON [pointer].
   Optional<dynamic> operator [](String pointer) => at(pointer);
 
-  String _json;
+  String? _json;
 
   dynamic _object;
 
@@ -97,31 +97,31 @@ class JQL extends NativeFieldWrapperClass2 {
   final String collection;
   final EJDB2 db;
 
-  StreamController<JBDOC> _controller;
-  RawReceivePort _replyPort;
+  StreamController<JBDOC>? _controller;
+  RawReceivePort? _replyPort;
 
   /// Execute query and returns a stream of matched documents.
   ///
   /// [explainCallback] Used to get query execution log.
   /// [limit] Overrides `limit` set by query text for this execution session.
   ///
-  Stream<JBDOC> execute({void explainCallback(String log), int limit = 0}) {
+  Stream<JBDOC> execute({void explainCallback(String log)?, int limit = 0}) {
     abort();
     var execHandle = 0;
     _controller = StreamController<JBDOC>();
     _replyPort = RawReceivePort();
-    _replyPort.handler = (dynamic reply) {
+    _replyPort!.handler = (dynamic reply) {
       if (reply is int) {
         _exec_check(execHandle, true);
-        _replyPort.close();
-        _controller.addError(EJDB2Error.fromCode(reply));
+        _replyPort!.close();
+        _controller!.addError(EJDB2Error.fromCode(reply));
         return;
       } else if (reply is List) {
         _exec_check(execHandle, false);
         if (reply[2] != null && explainCallback != null) {
           explainCallback(reply[2] as String);
         }
-        _controller.add(JBDOC._fromList(reply));
+        _controller!.add(JBDOC._fromList(reply));
       } else {
         _exec_check(execHandle, true);
         if (reply != null && explainCallback != null) {
@@ -130,12 +130,12 @@ class JQL extends NativeFieldWrapperClass2 {
         abort();
       }
     };
-    execHandle = _exec(_replyPort.sendPort, explainCallback != null, limit);
-    return _controller.stream;
+    execHandle = _exec(_replyPort!.sendPort, explainCallback != null, limit);
+    return _controller!.stream;
   }
 
   /// Returns optional element for first record in result set.
-  Future<Optional<JBDOC>> first({void explainCallback(String log)}) async {
+  Future<Optional<JBDOC>> first({void explainCallback(String log)?}) async {
     await for (final doc in execute(explainCallback: explainCallback, limit: 1)) {
       return Optional.of(doc);
     }
@@ -143,7 +143,7 @@ class JQL extends NativeFieldWrapperClass2 {
   }
 
   /// Return first record in result set or throw not found [EJDB2Error] error.
-  Future<JBDOC> firstRequired({void explainCallback(String log)}) async {
+  Future<JBDOC> firstRequired({void explainCallback(String log)?}) async {
     await for (final doc in execute(explainCallback: explainCallback, limit: 1)) {
       return doc;
     }
@@ -151,7 +151,7 @@ class JQL extends NativeFieldWrapperClass2 {
   }
 
   /// Collects up to [n] elements from result set into array.
-  Future<List<JBDOC>> firstN(int n, {void explainCallback(String log)}) async {
+  Future<List<JBDOC>> firstN(int n, {void explainCallback(String log)?}) async {
     final ret = <JBDOC>[];
     await for (final doc in execute(explainCallback: explainCallback, limit: n)) {
       if (n-- <= 0) break;
@@ -162,19 +162,15 @@ class JQL extends NativeFieldWrapperClass2 {
 
   /// Abort query execution.
   void abort() {
-    if (_replyPort != null) {
-      _replyPort.close();
-      _replyPort = null;
-    }
-    if (_controller != null) {
-      _controller.close();
-      _controller = null;
-    }
+    _replyPort?.close();
+    _replyPort = null;
+    _controller?.close();
+    _controller = null;
   }
 
   /// Return scalar integer value as result of query execution.
   /// For example execution of count query: `/... | count`
-  Future<int> scalarInt({void explainCallback(String log)}) {
+  Future<int> scalarInt({void explainCallback(String log)?}) {
     return execute(explainCallback: explainCallback).map((d) => d.id).first;
   }
 
@@ -281,16 +277,16 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       bool http_read_anon = false,
       bool wal_enabled = true,
       bool wal_check_crc_on_checkpoint = false,
-      int wal_checkpoint_buffer_sz,
-      int wal_checkpoint_timeout_sec,
-      int wal_savepoint_timeout_sec,
-      int wal_wal_buffer_sz,
-      int document_buffer_sz,
-      int sort_buffer_sz,
-      String http_access_token,
-      String http_bind,
-      int http_max_body_size,
-      int http_port}) {
+      int? wal_checkpoint_buffer_sz,
+      int? wal_checkpoint_timeout_sec,
+      int? wal_savepoint_timeout_sec,
+      int? wal_wal_buffer_sz,
+      int? document_buffer_sz,
+      int? sort_buffer_sz,
+      String? http_access_token,
+      String? http_bind,
+      int? http_max_body_size,
+      int? http_port}) {
     final completer = Completer<EJDB2>();
     final replyPort = RawReceivePort();
     final jb = EJDB2._();
@@ -318,7 +314,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     } else if (truncate) {
       oflags |= 0x04;
     }
-    final args = <dynamic>[
+    jb._port().send([
       replyPort.sendPort,
       'open',
       path,
@@ -337,8 +333,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       http_max_body_size,
       http_port,
       http_read_anon
-    ];
-    jb._port().send(args);
+    ]);
     return completer.future;
   }
 
@@ -364,7 +359,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
 
   /// Save [json] document under specified [id] or create a document
   /// with new generated `id`. Returns future holding actual document `id`.
-  Future<int> put(String collection, dynamic json, [int id]) {
+  Future<int> put(String collection, dynamic json, [int? id]) {
     final hdb = _get_handle();
     if (hdb == null) {
       return Future.error(EJDB2Error.invalidState());
@@ -472,7 +467,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
         if (err is EJDB2Error && err.notFound) {
           return Future.value();
         } else {
-          return Future.error(err);
+          return Future.error(err as Object);
         }
       });
 
@@ -608,12 +603,12 @@ class EJDB2 extends NativeFieldWrapperClass2 {
 
   SendPort _port() native 'port';
 
-  void _set_handle(int handle) native 'set_handle';
+  void _set_handle(int? handle) native 'set_handle';
 
-  int _get_handle() native 'get_handle';
+  int? _get_handle() native 'get_handle';
 }
 
-String _asJsonString(Object val) {
+String _asJsonString(dynamic val) {
   if (val is String) {
     return val;
   } else {

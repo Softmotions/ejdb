@@ -40,7 +40,13 @@ typedef struct EJDB2Handle {
 typedef struct EJDB2Context {
   Dart_Port port;
   EJDB2Handle *dbh;
+  Dart_WeakPersistentHandle wph;
 } EJDB2Context;
+
+typedef struct EJDB2JQLContext {
+  JQL q;
+  Dart_WeakPersistentHandle wph;
+} EJDB2JQLContext;
 
 static pthread_mutex_t k_shared_scope_mtx = PTHREAD_MUTEX_INITIALIZER;
 static EJDB2Handle *k_head_handle;
@@ -234,7 +240,11 @@ static void ejd_port(Dart_NativeArguments args) {
       goto finish;
     }
     Dart_SetNativeInstanceField(self, 0, (intptr_t) ctx);
-    Dart_NewWeakPersistentHandle(self, ctx, sizeof(*ctx), ejd_ctx_finalizer);
+    ctx->wph = Dart_NewWeakPersistentHandle(self, ctx, sizeof(*ctx), ejd_ctx_finalizer);
+    if (!ctx->wph) {
+      Dart_SetReturnValue(args, ejd_error_rc_create(EJD_ERROR_INVALID_STATE));
+      goto finish;
+    }
   } else {
     ctx = (void *) ptr;
   }
@@ -283,9 +293,16 @@ finish:
 }
 
 static void ejd_jql_finalizer(void *isolate_callback_data, void *peer) {
-  JQL q = peer;
-  if (q) {
-    jql_destroy(&q);
+  EJDB2JQLContext *ctx = peer;
+  if (ctx) {
+    if (ctx->q) {
+      jql_destroy(&ctx->q);
+    }
+    if (ctx->wph) {
+      // todo:
+      // Dart_DeleteWeakPersistentHandle(ctx->wph);
+    }
+    free(ctx);
   }
 }
 
@@ -297,6 +314,7 @@ static void ejd_create_query(Dart_NativeArguments args) {
   intptr_t ptr = 0;
   const char *query = 0;
   const char *collection = 0;
+  EJDB2JQLContext *qctx = 0;
 
   Dart_Handle ret = Dart_Null();
   Dart_Handle hlib = EJLIB();
@@ -333,7 +351,18 @@ static void ejd_create_query(Dart_NativeArguments args) {
 
   ret = Dart_SetNativeInstanceField(jqinst, 0, (intptr_t) q);
   EJGO(ret, ret, finish);
-  Dart_NewWeakPersistentHandle(jqinst, q, jql_estimate_allocated_size(q), ejd_jql_finalizer);
+
+  qctx = malloc(sizeof(qctx));
+  if (!qctx) {
+    Dart_SetReturnValue(args, ejd_error_rc_create(IW_ERROR_ALLOC));
+    goto finish;
+  }
+  qctx->q = q;
+  qctx->wph = Dart_NewWeakPersistentHandle(jqinst, q, jql_estimate_allocated_size(q) + sizeof(*qctx), ejd_jql_finalizer);
+  if (!qctx->wph)   {
+    rc = EJD_ERROR_INVALID_STATE;
+    goto finish;
+  }
 
   ret = jqinst;
 
@@ -349,6 +378,7 @@ finish:
     if (q) {
       jql_destroy(&q);
     }
+    free(qctx);
   }
   Dart_SetReturnValue(args, ret);
   Dart_ExitScope();
@@ -812,6 +842,10 @@ static void ejd_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
       || msg->value.as_array.length < 2
       || msg->value.as_array.values[0]->type != Dart_CObject_kSendPort
       || msg->value.as_array.values[1]->type != Dart_CObject_kString) {
+
+    // todo:
+    fprintf(stderr, "!!!!! msg->type %d\n", (int) msg->type);
+
     iwlog_error2("Invalid message recieved");
     return;
   }
@@ -1449,11 +1483,18 @@ DART_EXPORT Dart_Handle ejdb2dart_Init(Dart_Handle parent_library) {
 
 static void ejd_ctx_finalizer(void *isolate_callback_data, void *peer) {
   EJDB2Context *ctx = peer;
-  if (ctx && ctx->dbh) {
-    iwrc rc = ejdb2_isolate_shared_release(&ctx->dbh);
-    if (rc) {
-      iwlog_ecode_error3(rc);
+  if (ctx) {
+    if (ctx->dbh) {
+      iwrc rc = ejdb2_isolate_shared_release(&ctx->dbh);
+      if (rc) {
+        iwlog_ecode_error3(rc);
+      }
+    }
+    if (ctx->wph) {
+      // todo:
+      // Dart_DeleteWeakPersistentHandle(ctx->wph);
     }
   }
+
   free(ctx);
 }
