@@ -838,14 +838,13 @@ static Dart_NativeFunction ejd_resolve_name(Dart_Handle name,
 }
 
 static void ejd_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
+  // todo:
+  fprintf(stderr, "2222 msg->type %d\n", (int) msg->type);
+
   if (msg->type != Dart_CObject_kArray
       || msg->value.as_array.length < 2
       || msg->value.as_array.values[0]->type != Dart_CObject_kSendPort
       || msg->value.as_array.values[1]->type != Dart_CObject_kString) {
-
-    // todo:
-    fprintf(stderr, "!!!!! msg->type %d\n", (int) msg->type);
-
     iwlog_error2("Invalid message recieved");
     return;
   }

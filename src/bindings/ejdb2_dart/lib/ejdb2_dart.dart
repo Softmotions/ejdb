@@ -314,6 +314,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
     } else if (truncate) {
       oflags |= 0x04;
     }
+
     jb._port().send([
       replyPort.sendPort,
       'open',
@@ -321,17 +322,17 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       oflags,
       wal_enabled,
       wal_check_crc_on_checkpoint,
-      wal_checkpoint_buffer_sz,
-      wal_checkpoint_timeout_sec,
-      wal_savepoint_timeout_sec,
-      wal_wal_buffer_sz,
-      document_buffer_sz,
-      sort_buffer_sz,
+      wal_checkpoint_buffer_sz as dynamic,
+      wal_checkpoint_timeout_sec as dynamic,
+      wal_savepoint_timeout_sec as dynamic,
+      wal_wal_buffer_sz as dynamic,
+      document_buffer_sz as dynamic,
+      sort_buffer_sz as dynamic,
       http_enabled,
-      http_access_token,
-      http_bind,
-      http_max_body_size,
-      http_port,
+      http_access_token as dynamic,
+      http_bind as dynamic,
+      http_max_body_size as dynamic,
+      http_port as dynamic,
       http_read_anon
     ]);
     return completer.future;
@@ -353,7 +354,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       completer.complete();
     };
     _set_handle(null);
-    _port().send([replyPort.sendPort, 'close', hdb]);
+    _port().send([replyPort.sendPort, 'close', hdb as dynamic]);
     return completer.future;
   }
 
@@ -373,7 +374,14 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete((reply as List).first as int);
     };
-    _port().send([replyPort.sendPort, 'put', hdb, collection, _asJsonString(json), id]);
+    _port().send([
+      replyPort.sendPort,
+      'put',
+      hdb as dynamic,
+      collection,
+      _asJsonString(json),
+      id as dynamic
+    ]);
     return completer.future;
   }
 
@@ -392,8 +400,15 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port()
-        .send([replyPort.sendPort, 'patch', hdb, collection, _asJsonString(patchObj), id, upsert]);
+    _port().send([
+      replyPort.sendPort,
+      'patch',
+      hdb as dynamic,
+      collection,
+      _asJsonString(patchObj),
+      id as dynamic,
+      upsert
+    ]);
     return completer.future;
   }
 
@@ -418,7 +433,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete((reply as List).first as String);
     };
-    _port().send([replyPort.sendPort, 'get', hdb, collection, id]);
+    _port().send([replyPort.sendPort, 'get', hdb as dynamic, collection, id]);
     return completer.future;
   }
 
@@ -437,7 +452,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete((reply as List).first as String);
     };
-    _port().send([replyPort.sendPort, 'info', hdb]);
+    _port().send([replyPort.sendPort, 'info', hdb as dynamic]);
     return completer.future;
   }
 
@@ -456,7 +471,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send([replyPort.sendPort, 'del', hdb, collection, id]);
+    _port().send([replyPort.sendPort, 'del', hdb as dynamic, collection, id]);
     return completer.future;
   }
 
@@ -485,7 +500,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send([replyPort.sendPort, 'rename', hdb, oldCollection, newCollectionName]);
+    _port().send([replyPort.sendPort, 'rename', hdb as dynamic, oldCollection, newCollectionName]);
     return completer.future;
   }
 
@@ -534,7 +549,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send([replyPort.sendPort, 'rmc', hdb, collection]);
+    _port().send([replyPort.sendPort, 'rmc', hdb as dynamic, collection]);
     return completer.future;
   }
 
@@ -556,7 +571,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete((reply as List).first as int);
     };
-    _port().send([replyPort.sendPort, 'bkp', hdb, fileName]);
+    _port().send([replyPort.sendPort, 'bkp', hdb as dynamic, fileName]);
     return completer.future;
   }
 
@@ -579,7 +594,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send([replyPort.sendPort, 'idx', hdb, collection, path, mode]);
+    _port().send([replyPort.sendPort, 'idx', hdb as dynamic, collection, path, mode]);
     return completer.future;
   }
 
@@ -597,7 +612,7 @@ class EJDB2 extends NativeFieldWrapperClass2 {
       }
       completer.complete();
     };
-    _port().send([replyPort.sendPort, 'rmi', hdb, collection, path, mode]);
+    _port().send([replyPort.sendPort, 'rmi', hdb as dynamic, collection, path, mode]);
     return completer.future;
   }
 
