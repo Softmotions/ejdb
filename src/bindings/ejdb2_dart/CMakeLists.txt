@@ -1,8 +1,8 @@
 # Build dart binding shared library
 
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt _VERSION)
-set_property(GLOBAL PROPERTY EJDB2_DART_VERSION_PROPERTY "${PROJECT_VERSION}-${_VERSION}")
-set(EJDB2_DART_VERSION "${PROJECT_VERSION}-${_VERSION}")
+set_property(GLOBAL PROPERTY EJDB2_DART_VERSION_PROPERTY "${PROJECT_VERSION}${_VERSION}")
+set(EJDB2_DART_VERSION "${PROJECT_VERSION}${_VERSION}")
 
 add_library(ejdb2_dart SHARED lib/ejdb2_dart.c)
 target_link_libraries(ejdb2_dart ejdb2_s ${PROJECT_LLIBRARIES})
@@ -25,7 +25,7 @@ configure_file(example/isolate.dart ${DART_PUB_DIR}/example/isolate.dart COPYONL
 configure_file(README.md ${DART_PUB_DIR}/README.md COPYONLY)
 configure_file(LICENSE ${DART_PUB_DIR}/LICENSE COPYONLY)
 configure_file(CHANGELOG.md ${DART_PUB_DIR}/CHANGELOG.md @ONLY)
-configure_file(pubspec.yaml ${DART_PUB_DIR}/pubspec.yaml @ONLY)
+configure_file(pubspec.yaml.in ${DART_PUB_DIR}/pubspec.yaml @ONLY)
 configure_file(analysis_options.yaml ${DART_PUB_DIR}/analysis_options.yaml COPYONLY)
 configure_file(.packages ${DART_PUB_DIR}/.packages COPYONLY)
 
