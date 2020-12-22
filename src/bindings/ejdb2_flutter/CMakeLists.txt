@@ -59,3 +59,4 @@ add_custom_target(
 )
 
 configure_file(pubspec.yaml.in ${PUB_PUBLISH_DIR}/pubspec.yaml @ONLY)
+configure_file(pubspec.yaml.in ${PUB_PUBLISH_DIR}/CHANGELOG.md @ONLY)
