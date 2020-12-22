@@ -1,6 +1,7 @@
 ejdb2 (2.0.58) UNRELEASED; urgency=medium
 
   * New versioning scheme is used for ejdb2 bindings.
+  * Fixed pub publish issues with dart and flutter bindings.
   * Upgraded to iwkv v1.4.10
 
  -- Anton Adamansky <adamansky@gmail.com>  Sat, 19 Dec 2020 22:46:42 +0700
