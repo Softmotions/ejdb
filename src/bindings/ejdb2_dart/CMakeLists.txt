@@ -80,6 +80,8 @@ if (BUILD_TESTS)
     DEPENDS ${DART_PUB_DIR}/pubspec.lock)
 
   add_test(NAME ejdb2dart
-    COMMAND ${DART_EXEC} --enable-asserts ${DART_PUB_DIR}/test/ejdb2_dart_test.dart)
+    COMMAND ${DART_EXEC} --enable-asserts ./test/ejdb2_dart_test.dart
+    WORKING_DIRECTORY ${DART_PUB_DIR}
+  )
 endif (BUILD_TESTS)
 
