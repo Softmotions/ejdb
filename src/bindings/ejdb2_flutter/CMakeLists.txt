@@ -1,3 +1,9 @@
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt _VERSION)
+set_property(GLOBAL PROPERTY EJDB2_FLUTTER_VERSION_PROPERTY
+                             "${PROJECT_VERSION}${_VERSION}")
+set(EJDB2_FLUTTER_VERSION "${PROJECT_VERSION}${_VERSION}")
+
+
 file(
   COPY .
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
@@ -9,7 +15,7 @@ set(PUB_PUBLISH_DIR "${CMAKE_CURRENT_BINARY_DIR}/pub_publish")
 
 foreach (AABI IN ITEMS ${ANDROID_ABIS})
   list(APPEND ANDROID_ABIS_LIBS "android_${AABI}")
-endforeach ()
+endforeach()
 
 add_custom_target(
   ejdb2_flutter ALL
@@ -22,7 +28,7 @@ add_custom_target(
   COMMAND ${CMAKE_COMMAND} -E make_directory ${PUB_PUBLISH_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/LICENSE ${PUB_PUBLISH_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/*.md ${PUB_PUBLISH_DIR}
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/*.yaml ${PUB_PUBLISH_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/analysis_options.yaml ${PUB_PUBLISH_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/lib ${PUB_PUBLISH_DIR}/lib
 
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/ios ${PUB_PUBLISH_DIR}/ios
@@ -51,3 +57,5 @@ add_custom_target(
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/example/android/app/src ${PUB_PUBLISH_DIR}/example/android/app/src
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/example/android/gradle ${PUB_PUBLISH_DIR}/example/android/gradle
 )
+
+configure_file(pubspec.yaml.in ${PUB_PUBLISH_DIR}/pubspec.yaml @ONLY)
