@@ -1238,7 +1238,8 @@ finish:
   return rc;
 }
 
-static iwrc _jb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id, bool upsert) {
+static iwrc _jb_patch(EJDB db, const char *coll, int64_t id, bool upsert,
+                      const char *patchjson, JBL_NODE patchjbn, JBL patchjbl) {
   if (!patchjson) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1259,7 +1260,13 @@ static iwrc _jb_patch(EJDB db, const char *coll, const char *patchjson, int64_t 
 
   rc = iwkv_get(jbc->cdb, &key, &val);
   if (upsert && rc == IWKV_ERROR_NOTFOUND) {
-    rc = jbl_from_json(&ujbl, patchjson);
+    if (patchjbn) {
+      rc = jbl_from_node(&ujbl, patchjbn);
+    } else if (patchjbl) {
+      ujbl = patchjbl;
+    } else {
+      rc = jbl_from_json(&ujbl, patchjson);
+    }
     RCGO(rc, finish);
     if (jbl_type(ujbl) != JBV_OBJECT) {
       rc = EJDB_ERROR_PATCH_JSON_NOT_OBJECT;
@@ -1275,7 +1282,7 @@ static iwrc _jb_patch(EJDB db, const char *coll, const char *patchjson, int64_t 
   rc = jbl_from_buf_keep_onstack(&sjbl, val.data, val.size);
   RCGO(rc, finish);
 
-  pool = iwpool_create(512);
+  pool = iwpool_create_empty();
   if (!pool) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
@@ -1284,7 +1291,13 @@ static iwrc _jb_patch(EJDB db, const char *coll, const char *patchjson, int64_t 
   rc = jbl_to_node(&sjbl, &root, false, pool);
   RCGO(rc, finish);
 
-  rc = jbn_from_json(patchjson, &patch, pool);
+  if (patchjbn) {
+    patch = patchjbn;
+  } else if (patchjbl) {
+    rc = jbl_to_node(patchjbl, &patch, false, pool);
+  } else {
+    rc = jbn_from_json(patchjson, &patch, pool);
+  }
   RCGO(rc, finish);
 
   rc = jbn_patch_auto(root, patch, pool);
@@ -1307,9 +1320,13 @@ static iwrc _jb_patch(EJDB db, const char *coll, const char *patchjson, int64_t 
 
 finish:
   API_COLL_UNLOCK(jbc, rci, rc);
-  if (ujbl) jbl_destroy(&ujbl);
-  if (pool) iwpool_destroy(pool);
-  if (val.data) iwkv_val_dispose(&val);
+  if (ujbl != patchjbl) {
+    jbl_destroy(&ujbl);
+  }
+  if (val.data) {
+    iwkv_val_dispose(&val);
+  }
+  iwpool_destroy(pool);
   return rc;
 }
 
@@ -1327,11 +1344,27 @@ static iwrc _jb_wal_lock_interceptor(bool before, void *op) {
 }
 
 iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id) {
-  return _jb_patch(db, coll, patchjson, id, false);
+  return _jb_patch(db, coll, id, false, patchjson, 0, 0);
+}
+
+iwrc ejdb_patch_jbn(EJDB db, const char *coll, JBL_NODE patch, int64_t id) {
+  return _jb_patch(db, coll, id, false, 0, patch, 0);
+}
+
+iwrc ejdb_patch_jbl(EJDB db, const char *coll, JBL patch, int64_t id) {
+  return _jb_patch(db, coll, id, false, 0, 0, patch);
 }
 
 iwrc ejdb_merge_or_put(EJDB db, const char *coll, const char *patchjson, int64_t id) {
-  return _jb_patch(db, coll, patchjson, id, true);
+  return _jb_patch(db, coll, id, true, patchjson, 0, 0);
+}
+
+iwrc ejdb_merge_or_put_jbn(EJDB db, const char *coll, JBL_NODE patch, int64_t id) {
+  return _jb_patch(db, coll, id, true, 0, patch, 0);
+}
+
+iwrc ejdb_merge_or_put_jbl(EJDB db, const char *coll, JBL patch, int64_t id) {
+  return _jb_patch(db, coll, id, true, 0, 0, patch);
 }
 
 iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id) {

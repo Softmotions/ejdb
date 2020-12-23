@@ -379,6 +379,35 @@ IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
 IW_EXPORT WUR iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id);
 
 /**
+ * @brief Apply rfc6902/rfc7396 JSON patch to the document identified by `id`.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patch       JSON patch conformed to rfc6902 or rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ * @return `0` on success.
+ *         `IWKV_ERROR_NOTFOUND` if document not found.
+ *          Any non zero error codes.
+ */
+IW_EXPORT WUR iwrc ejdb_patch_jbn(EJDB db, const char *coll, JBL_NODE patch, int64_t id);
+
+
+/**
+ * @brief Apply rfc6902/rfc7396 JSON patch to the document identified by `id`.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patch       JSON patch conformed to rfc6902 or rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ * @return `0` on success.
+ *         `IWKV_ERROR_NOTFOUND` if document not found.
+ *          Any non zero error codes.
+ */
+IW_EXPORT WUR iwrc ejdb_patch_jbl(EJDB db, const char *coll, JBL patch, int64_t id);
+
+/**
  * @brief Apply JSON merge patch (rfc7396) to the document identified by `id` or
  *        insert new document under specified `id`.
  * @note This is an atomic operation.
@@ -390,6 +419,32 @@ IW_EXPORT WUR iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, 
  *
  */
 IW_EXPORT WUR iwrc ejdb_merge_or_put(EJDB db, const char *coll, const char *patchjson, int64_t id);
+
+/**
+ * @brief Apply JSON merge patch (rfc7396) to the document identified by `id` or
+ *        insert new document under specified `id`.
+ * @note This is an atomic operation.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patch       JSON merge patch conformed to rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ */
+IW_EXPORT WUR iwrc ejdb_merge_or_put_jbn(EJDB db, const char *coll, JBL_NODE patch, int64_t id);
+
+/**
+ * @brief Apply JSON merge patch (rfc7396) to the document identified by `id` or
+ *        insert new document under specified `id`.
+ * @note This is an atomic operation.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patch       JSON merge patch conformed to rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ */
+IW_EXPORT WUR iwrc ejdb_merge_or_put_jbl(EJDB db, const char *coll, JBL patch, int64_t id);
 
 /**
  * @brief Save a given `jbl` document under specified `id`.

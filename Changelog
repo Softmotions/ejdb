@@ -1,3 +1,13 @@
+ejdb2 (2.0.59) UNRELEASED; urgency=medium
+
+  * Added new convenient methods (ejdb2.h)
+	- ejdb_patch_jbn()
+	- ejdb_patch_jbl()
+	- ejdb_merge_or_put_jbn()
+	- ejdb_merge_or_put_jbl()
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 23 Dec 2020 22:49:33 +0700
+
 ejdb2 (2.0.58) testing; urgency=medium
 
   * New versioning scheme is used for ejdb2 bindings.
