@@ -1240,9 +1240,7 @@ finish:
 
 static iwrc _jb_patch(EJDB db, const char *coll, int64_t id, bool upsert,
                       const char *patchjson, JBL_NODE patchjbn, JBL patchjbl) {
-  if (!patchjson) {
-    return IW_ERROR_INVALID_ARGS;
-  }
+
   int rci;
   JBCOLL jbc;
   struct _JBL sjbl;
@@ -1260,12 +1258,14 @@ static iwrc _jb_patch(EJDB db, const char *coll, int64_t id, bool upsert,
 
   rc = iwkv_get(jbc->cdb, &key, &val);
   if (upsert && rc == IWKV_ERROR_NOTFOUND) {
-    if (patchjbn) {
-      rc = jbl_from_node(&ujbl, patchjbn);
+    if (patchjson) {
+      rc = jbl_from_json(&ujbl, patchjson);
     } else if (patchjbl) {
       ujbl = patchjbl;
+    } else if (patchjbn) {
+      rc = jbl_from_node(&ujbl, patchjbn);
     } else {
-      rc = jbl_from_json(&ujbl, patchjson);
+      rc = IW_ERROR_INVALID_ARGS;
     }
     RCGO(rc, finish);
     if (jbl_type(ujbl) != JBV_OBJECT) {
@@ -1291,12 +1291,14 @@ static iwrc _jb_patch(EJDB db, const char *coll, int64_t id, bool upsert,
   rc = jbl_to_node(&sjbl, &root, false, pool);
   RCGO(rc, finish);
 
-  if (patchjbn) {
-    patch = patchjbn;
+  if (patchjson) {
+    rc = jbn_from_json(patchjson, &patch, pool);
   } else if (patchjbl) {
     rc = jbl_to_node(patchjbl, &patch, false, pool);
-  } else {
-    rc = jbn_from_json(patchjson, &patch, pool);
+  } else if (patchjbn) {
+    patch = patchjbn;
+  }  else {
+    rc = IW_ERROR_INVALID_ARGS;
   }
   RCGO(rc, finish);
 
