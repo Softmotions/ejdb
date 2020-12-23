@@ -7,11 +7,11 @@ See https://github.com/Softmotions/ejdb/blob/master/README.md
 
 ## Note on versioning
 
-Since `2020-12-22` a new version scheme is used. So the major version
-of package has been changed. Now package version is concatenation
+Since `2020-12-22` a new version scheme is used and the major version
+of package has been incremented. Now package version is the concatenation
 of ejdb2 core engine version and version serial number of this binding.
-For example: given ejdb2 version `2.0.52` and binding seq number `2`
-so actual package version will be `2.0.522`.
+For example: given ejdb2 version `2.0.52` and binding serial `2`
+the actual package version will be `2.0.522`.
 
 ## Prerequisites
 
