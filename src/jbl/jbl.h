@@ -338,6 +338,15 @@ IW_EXPORT iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_o
 IW_EXPORT iwrc jbl_clone(JBL src, JBL *targetp);
 
 /**
+ * @brief Copy all keys from `src` object into `target` object.
+ * @note Function does not care about keys duplication.
+ *
+ * @param src Source JBL object. Must be object.
+ * @param target Target JBL object. Must be object.
+ */
+IW_EXPORT iwrc jbl_object_copy_to(JBL src, JBL target);
+
+/**
  * @brief Clones the given `src` JBL_NODE object into new `targetp` instance.
  *        Memory allocateted by given memor `pool` instance.
  *

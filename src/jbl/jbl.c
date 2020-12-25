@@ -308,6 +308,31 @@ iwrc jbl_clone(JBL src, JBL *targetp) {
   return 0;
 }
 
+IW_EXPORT iwrc jbl_object_copy_to(JBL src, JBL target) {
+  iwrc rc = 0;
+  // According to binn spec keys are not null terminated
+  // and key length is not more than 255 bytes
+  char *key, kbuf[256];
+  int klen;
+  JBL holder = 0;
+  JBL_iterator it;
+
+  if (jbl_type(src) != JBV_OBJECT || jbl_type(target) != JBV_OBJECT) {
+    return JBL_ERROR_NOT_AN_OBJECT;
+  }
+  RCC(rc, finish, jbl_create_iterator_holder(&holder));
+  RCC(rc, finish, jbl_iterator_init(src, &it));
+  while (jbl_iterator_next(&it, holder, &key, &klen)) {
+    memcpy(kbuf, key, klen);
+    kbuf[klen] = '\0';
+    RCC(rc, finish, jbl_set_nested(target, kbuf, holder));
+  }
+
+finish:
+  jbl_destroy(&holder);
+  return rc;
+}
+
 iwrc jbl_clone_into_pool(JBL src, JBL *targetp, IWPOOL *pool) {
   *targetp = 0;
   if (src->bn.writable && src->bn.dirty) {
