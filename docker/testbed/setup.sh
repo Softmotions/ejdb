@@ -11,7 +11,7 @@ SCRIPTPATH="$(
 )"
 cd $SCRIPTPATH
 
-JENKINS_AGENT_VERSION=4.3
+JENKINS_AGENT_VERSION=4.6
 
 dpkg --add-architecture i386
 apt-get update
