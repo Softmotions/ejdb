@@ -1,5 +1,7 @@
 ejdb2 (2.0.59) UNRELEASED; urgency=medium
 
+  * Updated copyright headers
+  * Removed dependency on some glibc specific features
   * Added jbl_object_copy_to() (ejdb2.h)
   * Added new convenient methods (ejdb2.h)
 	- ejdb_patch_jbn()

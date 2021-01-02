@@ -30,21 +30,19 @@ if(ANDROID_PLATFORM)
 
   add_jar(
     ejdb2jni_jar
-    SOURCES
-    android/java/com/softmotions/ejdb2/EJDB2.java
-    android/java/com/softmotions/ejdb2/EJDB2Builder.java
-    android/java/com/softmotions/ejdb2/EJDB2Exception.java
-    android/java/com/softmotions/ejdb2/IWKVOptions.java
-    android/java/com/softmotions/ejdb2/JQL.java
-    android/java/com/softmotions/ejdb2/JQLCallback.java
-    VERSION
-    ${EJDB2_JNI_VERSION}
+    SOURCES android/java/com/softmotions/ejdb2/EJDB2.java
+            android/java/com/softmotions/ejdb2/EJDB2Builder.java
+            android/java/com/softmotions/ejdb2/EJDB2Exception.java
+            android/java/com/softmotions/ejdb2/IWKVOptions.java
+            android/java/com/softmotions/ejdb2/JQL.java
+            android/java/com/softmotions/ejdb2/JQLCallback.java
+    VERSION ${EJDB2_JNI_VERSION}
     OUTPUT_NAME
-    ejdb2
-    GENERATE_NATIVE_HEADERS
-    ejdb2-jni-native-headers
-    DESTINATION
-    ${PROJECT_GENERATED_DIR})
+      ejdb2
+      GENERATE_NATIVE_HEADERS
+      ejdb2-jni-native-headers
+      DESTINATION
+      ${PROJECT_GENERATED_DIR})
 
 else()
 
@@ -70,16 +68,10 @@ else()
 
   add_jar(
     ejdb2jni_jar
-    SOURCES
-    ${EJDB2_JAVA_SOURCES_JAR}
-    VERSION
-    ${EJDB2_JNI_VERSION}
-    OUTPUT_NAME
-    ejdb2
-    GENERATE_NATIVE_HEADERS
-    ejdb2-jni-native-headers
-    DESTINATION
-    ${PROJECT_GENERATED_DIR})
+    SOURCES ${EJDB2_JAVA_SOURCES_JAR}
+    VERSION ${EJDB2_JNI_VERSION}
+    OUTPUT_NAME ejdb2 GENERATE_NATIVE_HEADERS ejdb2-jni-native-headers
+                DESTINATION ${PROJECT_GENERATED_DIR})
 
   add_custom_command(
     TARGET ejdb2jni_jar
@@ -104,17 +96,11 @@ endif()
 
 if(${CMAKE_VERSION} VERSION_LESS "3.11")
   create_javah(
-    TARGET
-    ejdb2-jni-native-headers-old
-    CLASSES
-    com.softmotions.ejdb2.EJDB2
-    com.softmotions.ejdb2.JQL
-    CLASSPATH
-    ejdb2jni_jar
-    DEPENDS
-    ejdb2jni_jar
-    OUTPUT_DIR
-    ${PROJECT_GENERATED_DIR})
+    TARGET ejdb2-jni-native-headers-old
+    CLASSES com.softmotions.ejdb2.EJDB2 com.softmotions.ejdb2.JQL
+    CLASSPATH ejdb2jni_jar
+    DEPENDS ejdb2jni_jar
+    OUTPUT_DIR ${PROJECT_GENERATED_DIR})
   add_dependencies(ejdb2jni ejdb2-jni-native-headers-old)
   target_link_libraries(ejdb2jni PUBLIC ${JNI_LIBRARIES} ejdb2_s)
 else()
@@ -131,8 +117,14 @@ endif()
 set_target_properties(
   ejdb2jni
   PROPERTIES VERSION ${EJDB2_JNI_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR}
-             LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s" DEFINE_SYMBOL
-                                                           IW_API_EXPORTS)
+             DEFINE_SYMBOL IW_API_EXPORTS)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  add_custom_command(
+    TARGET ejdb2jni
+    POST_BUILD
+    COMMAND strip -s $<TARGET_FILE:ejdb2jni>)
+endif()
 
 install(
   TARGETS ejdb2jni
@@ -172,12 +164,9 @@ endif()
 if(BUILD_TESTS AND NOT ANDROID_PLATFORM)
   add_jar(
     ejdb2jni_test_jar
-    SOURCES
-    test/java/com/softmotions/ejdb2/TestEJDB2.java
-    INCLUDE_JARS
-    ejdb2jni_jar
-    OUTPUT_NAME
-    ejdb2jni_tests)
+    SOURCES test/java/com/softmotions/ejdb2/TestEJDB2.java
+    INCLUDE_JARS ejdb2jni_jar
+    OUTPUT_NAME ejdb2jni_tests)
 
   get_target_property(_EJDB2JNI_JAR ejdb2jni_jar JAR_FILE)
   get_target_property(_EJDB2JNI_TEST_JAR ejdb2jni_test_jar JAR_FILE)

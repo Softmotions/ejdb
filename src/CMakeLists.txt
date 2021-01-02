@@ -108,9 +108,13 @@ foreach(HF IN ITEMS stdlib stddef stdint stdbool)
   endif()
 endforeach()
 
-add_definitions(-D_GNU_SOURCE)
+add_definitions(-D_XOPEN_SOURCE=600)
+add_definitions(-D_DEFAULT_SOURCE)
 add_definitions(-D_LARGEFILE_SOURCE)
 add_definitions(-D_FILE_OFFSET_BITS=64)
+if(APPLE)
+  add_definitions(-D_DARWIN_C_SOURCE)
+endif(APPLE)
 
 file(GLOB ROOT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
 list(APPEND ALL_SRC ${ROOT_SRC})
@@ -155,7 +159,7 @@ set(CMAKE_C_FLAGS_DEBUG
     "${CMAKE_C_ASAN} -O0 -g -ggdb -Werror -DDEBUG -D_DEBUG -UNDEBUG -Wno-unused-variable"
 )
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_ASAN} -O3 -DNDEBUG")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Wl,-s")
+# set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Wl,-s")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} -g")
 set(CMAKE_C_FLAGS_RELEASEWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 
@@ -276,8 +280,15 @@ if(BUILD_SHARED_LIBS)
     PROPERTIES VERSION ${PROJECT_VERSION}
                SOVERSION ${PROJECT_VERSION_MAJOR}
                PUBLIC_HEADER "${PUB_HDRS}"
-               LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
                DEFINE_SYMBOL IW_API_EXPORTS)
+
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_custom_command(
+      TARGET ejdb2
+      POST_BUILD
+      COMMAND strip -s $<TARGET_FILE:ejdb2>)
+  endif()
+
   set_target_properties(
     ejdb2_s PROPERTIES VERSION ${PROJECT_VERSION} COMPILE_FLAGS "-DIW_NODLL"
                        OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})

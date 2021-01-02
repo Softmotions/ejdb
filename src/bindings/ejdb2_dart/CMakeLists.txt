@@ -37,8 +37,14 @@ configure_file(.packages ${DART_PUB_DIR}/.packages COPYONLY)
 set_target_properties(
   ejdb2_dart
   PROPERTIES COMPILE_FLAGS ${dart_COMPILE_FLAGS} LINK_FLAGS ${dart_LINK_FLAGS}
-             LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
              LIBRARY_OUTPUT_DIRECTORY ${DART_PUB_DIR}/lib)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  add_custom_command(
+    TARGET ejdb2_dart
+    POST_BUILD
+    COMMAND strip -s $<TARGET_FILE:ejdb2_dart>)
+endif()
 
 set_target_properties(
   ejdb2_dart
