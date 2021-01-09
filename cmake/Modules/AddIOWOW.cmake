@@ -31,7 +31,9 @@ set(CMAKE_ARGS  -DOWNER_PROJECT_NAME=${PROJECT_NAME}
                 -DBUILD_SHARED_LIBS=OFF
                 -DBUILD_EXAMPLES=OFF)
 
-foreach(extra CMAKE_TOOLCHAIN_FILE
+foreach(extra
+              CMAKE_C_COMPILER
+              CMAKE_TOOLCHAIN_FILE
               ANDROID_PLATFORM
               ANDROID_ABI
               TEST_TOOL_CMD

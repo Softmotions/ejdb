@@ -24,7 +24,9 @@ message("FACIL_URL: ${FACIL_URL}")
 set(CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                -DCMAKE_C_FLAGS=-fPIC -fvisibility=hidden)
 
-foreach(extra CMAKE_TOOLCHAIN_FILE
+foreach(extra
+              CMAKE_C_COMPILER
+              CMAKE_TOOLCHAIN_FILE
               ANDROID_PLATFORM
               ANDROID_ABI
               TEST_TOOL_CMD
