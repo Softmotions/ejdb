@@ -1828,11 +1828,11 @@ int main() {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if ((NULL == CU_add_test(pSuite, "test_int64", test_int64))
-      || (NULL == CU_add_test(pSuite, "test_floating_point_numbers", test_floating_point_numbers))
-      || (NULL == CU_add_test(pSuite, "test1", test1))
-      || (NULL == CU_add_test(pSuite, "test2", test2))
-      || (NULL == CU_add_test(pSuite, "test_invalid_binn", test_invalid_binn))) {
+  if (  (NULL == CU_add_test(pSuite, "test_int64", test_int64))
+     || (NULL == CU_add_test(pSuite, "test_floating_point_numbers", test_floating_point_numbers))
+     || (NULL == CU_add_test(pSuite, "test1", test1))
+     || (NULL == CU_add_test(pSuite, "test2", test2))
+     || (NULL == CU_add_test(pSuite, "test_invalid_binn", test_invalid_binn))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

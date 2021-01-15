@@ -51,21 +51,27 @@ typedef enum {
   JQL_ERROR_INVALID_PLACEHOLDER,            /**< Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER) */
   JQL_ERROR_UNSET_PLACEHOLDER,              /**< Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER) */
   JQL_ERROR_REGEXP_INVALID,                 /**< Invalid regular expression (JQL_ERROR_REGEXP_INVALID) */
-  JQL_ERROR_REGEXP_CHARSET,                 /**< Invalid regular expression: expected ']' at end of character set
-                                               (JQL_ERROR_REGEXP_CHARSET) */
-  JQL_ERROR_REGEXP_SUBEXP,                  /**< Invalid regular expression: expected ')' at end of subexpression
-                                               (JQL_ERROR_REGEXP_SUBEXP) */
-  JQL_ERROR_REGEXP_SUBMATCH,                /**< Invalid regular expression: expected '}' at end of submatch
-                                               (JQL_ERROR_REGEXP_SUBMATCH) */
-  JQL_ERROR_REGEXP_ENGINE,                  /**< Illegal instruction in compiled regular expression (please report this
-                                               bug) (JQL_ERROR_REGEXP_ENGINE) */
+  JQL_ERROR_REGEXP_CHARSET,
+  /**< Invalid regular expression: expected ']' at end of character set
+     (JQL_ERROR_REGEXP_CHARSET) */
+  JQL_ERROR_REGEXP_SUBEXP,
+  /**< Invalid regular expression: expected ')' at end of subexpression
+     (JQL_ERROR_REGEXP_SUBEXP) */
+  JQL_ERROR_REGEXP_SUBMATCH,
+  /**< Invalid regular expression: expected '}' at end of submatch
+     (JQL_ERROR_REGEXP_SUBMATCH) */
+  JQL_ERROR_REGEXP_ENGINE,
+  /**< Illegal instruction in compiled regular expression (please report this
+     bug) (JQL_ERROR_REGEXP_ENGINE) */
   JQL_ERROR_SKIP_ALREADY_SET,               /**< Skip clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
   JQL_ERROR_LIMIT_ALREADY_SET,              /**< Limit clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
-  JQL_ERROR_ORDERBY_MAX_LIMIT,              /**< Reached max number of asc/desc order clauses: 64
-                                               (JQL_ERROR_ORDERBY_MAX_LIMIT) */
+  JQL_ERROR_ORDERBY_MAX_LIMIT,
+  /**< Reached max number of asc/desc order clauses: 64
+     (JQL_ERROR_ORDERBY_MAX_LIMIT) */
   JQL_ERROR_NO_COLLECTION,                  /**< No collection specified in query (JQL_ERROR_NO_COLLECTION) */
-  JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE, /**< Invalid type of placeholder value
-                                               (JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE) */
+  JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE,
+  /**< Invalid type of placeholder value
+     (JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE) */
   _JQL_ERROR_END,
   _JQL_ERROR_UNMATCHED,
 } jql_ecode_t;

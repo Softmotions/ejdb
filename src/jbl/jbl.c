@@ -1268,8 +1268,8 @@ IW_INLINE bool _jbn_visitor_update_jptr_cursor(JBN_VCTX *vctx, int lvl, const ch
         idx = (int) strlen(keyptr);
       }
       int jplen = (int) strlen(jp->n[lvl]);
-      if (((idx == jplen)
-           && !strncmp(keyptr, jp->n[lvl], idx)) || ((jp->n[lvl][0] == '*') && (jp->n[lvl][1] == '\0') )) {
+      if ((  (idx == jplen)
+          && !strncmp(keyptr, jp->n[lvl], idx)) || ((jp->n[lvl][0] == '*') && (jp->n[lvl][1] == '\0') )) {
         vctx->pos = lvl;
         return (jp->cnt == lvl + 1);
       }

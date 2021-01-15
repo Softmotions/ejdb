@@ -510,11 +510,11 @@ BINN_PRIVATE BOOL binn_object_set_raw(binn *item, const char *key, int keylen, i
   unsigned char *p, len;
   int int32 = keylen;
 
-  if ((key == NULL)
-      || (item == NULL)
-      || (item->type != BINN_OBJECT)
-      || (item->writable == FALSE)
-      || (keylen > 255)) {
+  if (  (key == NULL)
+     || (item == NULL)
+     || (item->type != BINN_OBJECT)
+     || (item->writable == FALSE)
+     || (keylen > 255)) {
     return FALSE;
   }
 
@@ -1634,11 +1634,11 @@ BOOL binn_iter_init(binn_iter *iter, void *ptr, int expected_type) {
 BOOL binn_list_next(binn_iter *iter, binn *value) {
   unsigned char *pnow;
 
-  if ((iter == 0)
-      || (iter->pnext == 0)
-      || (iter->pnext > iter->plimit)
-      || (iter->current > iter->count)
-      || (iter->type != BINN_LIST)) {
+  if (  (iter == 0)
+     || (iter->pnext == 0)
+     || (iter->pnext > iter->plimit)
+     || (iter->current > iter->count)
+     || (iter->type != BINN_LIST)) {
     return FALSE;
   }
 
@@ -1660,11 +1660,11 @@ BINN_PRIVATE BOOL binn_read_next_pair(int expected_type, binn_iter *iter, int *p
   unsigned char *p, *key;
   unsigned short len;
 
-  if ((iter == 0)
-      || (iter->pnext == 0)
-      || (iter->pnext > iter->plimit)
-      || (iter->current > iter->count)
-      || (iter->type != expected_type)) {
+  if (  (iter == 0)
+     || (iter->pnext == 0)
+     || (iter->pnext > iter->plimit)
+     || (iter->current > iter->count)
+     || (iter->type != expected_type)) {
     return FALSE;
   }
 
@@ -1714,11 +1714,11 @@ BOOL binn_read_next_pair2(int expected_type, binn_iter *iter, int *klidx, char *
   unsigned char *p, *key;
   unsigned short len;
 
-  if ((iter == 0)
-      || (iter->pnext == 0)
-      || (iter->pnext > iter->plimit)
-      || (iter->current > iter->count)
-      || (iter->type != expected_type)) {
+  if (  (iter == 0)
+     || (iter->pnext == 0)
+     || (iter->pnext > iter->plimit)
+     || (iter->current > iter->count)
+     || (iter->type != expected_type)) {
     return FALSE;
   }
 

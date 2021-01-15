@@ -19,8 +19,9 @@ typedef enum {
   _JBN_ERROR_START = (IW_ERROR_START + 15000UL + 5000),
   JBN_ERROR_INVALID_FIELD,          /**< Failed to get class field (JBN_ERROR_INVALID_FIELD) */
   JBN_ERROR_INVALID_METHOD,         /**< Failed to get class method (JBN_ERROR_INVALID_METHOD) */
-  JBN_ERROR_INVALID_OPTIONS,        /**< Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided
-                                       (JBN_ERROR_INVALID_OPTIONS) */
+  JBN_ERROR_INVALID_OPTIONS,
+  /**< Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided
+     (JBN_ERROR_INVALID_OPTIONS) */
   JBN_ERROR_INVALID_STATE,          /**< Invalid com.softmotions.ejdb2.EJDB2 JNI state (JBN_ERROR_INVALID_STATE) */
   JBN_ERROR_CREATION_OBJ,           /**< Failed to create/allocate JNI object (JBN_ERROR_CREATION_OBJ) */
   _JBN_ERROR_END,

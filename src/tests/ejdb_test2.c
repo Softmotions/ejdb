@@ -308,8 +308,8 @@ int main() {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if ((NULL == CU_add_test(pSuite, "ejdb_test2_1", ejdb_test2_1))
-      || (NULL == CU_add_test(pSuite, "ejdb_test2_2", ejdb_test2_2))) {
+  if (  (NULL == CU_add_test(pSuite, "ejdb_test2_1", ejdb_test2_1))
+     || (NULL == CU_add_test(pSuite, "ejdb_test2_2", ejdb_test2_2))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

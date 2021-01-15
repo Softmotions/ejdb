@@ -82,10 +82,10 @@ static iwrc _jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
   RCGO(rc, finish);
   bn = &imeta.bn;
 
-  if (!binn_object_get_str(bn, "ptr", &ptr)
-      || !binn_object_get_uint8(bn, "mode", &idx->mode)
-      || !binn_object_get_uint8(bn, "idbf", &idx->idbf)
-      || !binn_object_get_uint32(bn, "dbid", &idx->dbid)) {
+  if (  !binn_object_get_str(bn, "ptr", &ptr)
+     || !binn_object_get_uint8(bn, "mode", &idx->mode)
+     || !binn_object_get_uint8(bn, "idbf", &idx->idbf)
+     || !binn_object_get_uint32(bn, "dbid", &idx->dbid)) {
     rc = EJDB_ERROR_INVALID_COLLECTION_INDEX_META;
     goto finish;
   }
@@ -238,11 +238,11 @@ static iwrc _jb_idx_add_meta_lr(JBIDX idx, binn *list) {
   rc = jbl_ptr_serialize(idx->ptr, xstr);
   RCGO(rc, finish);
 
-  if (!binn_object_set_str(meta, "ptr", iwxstr_ptr(xstr))
-      || !binn_object_set_uint32(meta, "mode", idx->mode)
-      || !binn_object_set_uint32(meta, "idbf", idx->idbf)
-      || !binn_object_set_uint32(meta, "dbid", idx->dbid)
-      || !binn_object_set_int64(meta, "rnum", idx->rnum)) {
+  if (  !binn_object_set_str(meta, "ptr", iwxstr_ptr(xstr))
+     || !binn_object_set_uint32(meta, "mode", idx->mode)
+     || !binn_object_set_uint32(meta, "idbf", idx->idbf)
+     || !binn_object_set_uint32(meta, "dbid", idx->dbid)
+     || !binn_object_set_int64(meta, "rnum", idx->rnum)) {
     rc = JBL_ERROR_CREATION;
   }
 
@@ -264,9 +264,9 @@ static iwrc _jb_coll_add_meta_lr(JBCOLL jbc, binn *list) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     return rc;
   }
-  if (!binn_object_set_str(meta, "name", jbc->name)
-      || !binn_object_set_uint32(meta, "dbid", jbc->dbid)
-      || !binn_object_set_int64(meta, "rnum", jbc->rnum)) {
+  if (  !binn_object_set_str(meta, "name", jbc->name)
+     || !binn_object_set_uint32(meta, "dbid", jbc->dbid)
+     || !binn_object_set_int64(meta, "rnum", jbc->rnum)) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }
@@ -514,18 +514,18 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   jbvprev_type = jbl_type(&jbvprev);
 
   // Do not index NULLs, OBJECTs, ARRAYs (in `EJDB_IDX_UNIQUE` mode)
-  if (((jbvprev_type == JBV_OBJECT) || (jbvprev_type <= JBV_NULL))
-      || ((jbvprev_type == JBV_ARRAY) && !compound)) {
+  if (  ((jbvprev_type == JBV_OBJECT) || (jbvprev_type <= JBV_NULL))
+     || ((jbvprev_type == JBV_ARRAY) && !compound)) {
     jbvprev_found = false;
   }
-  if (((jbv_type == JBV_OBJECT) || (jbv_type <= JBV_NULL))
-      || ((jbv_type == JBV_ARRAY) && !compound)) {
+  if (  ((jbv_type == JBV_OBJECT) || (jbv_type <= JBV_NULL))
+     || ((jbv_type == JBV_ARRAY) && !compound)) {
     jbv_found = false;
   }
 
-  if (compound
-      && (jbv_type == jbvprev_type)
-      && (jbvprev_type == JBV_ARRAY)) { // compare next/prev obj arrays
+  if (  compound
+     && (jbv_type == jbvprev_type)
+     && (jbvprev_type == JBV_ARRAY)) {  // compare next/prev obj arrays
     pool = iwpool_create(1024);
     if (!pool) {
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -1219,10 +1219,10 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
     goto finish;
   }
 
-  if (!binn_object_set_str(imeta, "ptr", path)
-      || !binn_object_set_uint32(imeta, "mode", idx->mode)
-      || !binn_object_set_uint32(imeta, "idbf", idx->idbf)
-      || !binn_object_set_uint32(imeta, "dbid", idx->dbid)) {
+  if (  !binn_object_set_str(imeta, "ptr", path)
+     || !binn_object_set_uint32(imeta, "mode", idx->mode)
+     || !binn_object_set_uint32(imeta, "idbf", idx->idbf)
+     || !binn_object_set_uint32(imeta, "dbid", idx->dbid)) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }
@@ -1716,8 +1716,8 @@ iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
   IWFS_FSM_STATE sfsm;
   rc = iwkv_state(db->iwkv, &sfsm);
   RCRET(rc);
-  if (!binn_object_set_str(&jbl->bn, "file", sfsm.exfile.file.opts.path)
-      || !binn_object_set_int64(&jbl->bn, "size", sfsm.exfile.fsize)) {
+  if (  !binn_object_set_str(&jbl->bn, "file", sfsm.exfile.file.opts.path)
+     || !binn_object_set_int64(&jbl->bn, "size", sfsm.exfile.fsize)) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }

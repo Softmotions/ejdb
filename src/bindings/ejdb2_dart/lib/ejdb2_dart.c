@@ -843,10 +843,10 @@ static Dart_NativeFunction ejd_resolve_name(
 }
 
 static void ejd_port_handler(Dart_Port receive_port, Dart_CObject *msg) {
-  if ((msg->type != Dart_CObject_kArray)
-      || (msg->value.as_array.length < 2)
-      || (msg->value.as_array.values[0]->type != Dart_CObject_kSendPort)
-      || (msg->value.as_array.values[1]->type != Dart_CObject_kString)) {
+  if (  (msg->type != Dart_CObject_kArray)
+     || (msg->value.as_array.length < 2)
+     || (msg->value.as_array.values[0]->type != Dart_CObject_kSendPort)
+     || (msg->value.as_array.values[1]->type != Dart_CObject_kString)) {
     iwlog_error2("Invalid message recieved");
     return;
   }

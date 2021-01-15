@@ -1,7 +1,7 @@
 /* -*- mode: c; c-basic-offset: 2; tab-width: 2; indent-tabs-mode: nil -*- */
 /*
  *  Copyright (c) 2015 Steven G. Johnson, Jiahao Chen, Peter Colberg, Tony Kelman, Scott P. Jones, and other
- *contributors.
+ * contributors.
  *  Copyright (c) 2009 Public Software Group e. V., Berlin, Germany
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
@@ -257,36 +257,36 @@ static utf8proc_ssize_t unsafe_encode_char(utf8proc_int32_t uc, utf8proc_uint8_t
  */
 static utf8proc_bool grapheme_break_simple(int lbc, int tbc) {
   return (lbc == UTF8PROC_BOUNDCLASS_START) ? true                                      // GB1
-         : (lbc == UTF8PROC_BOUNDCLASS_CR                                               // GB3
-            && tbc == UTF8PROC_BOUNDCLASS_LF) ? false                                   // ---
+         : (  lbc == UTF8PROC_BOUNDCLASS_CR                                             // GB3
+           && tbc == UTF8PROC_BOUNDCLASS_LF) ? false                                    // ---
          : (lbc >= UTF8PROC_BOUNDCLASS_CR && lbc <= UTF8PROC_BOUNDCLASS_CONTROL) ? true // GB4
          : (tbc >= UTF8PROC_BOUNDCLASS_CR && tbc <= UTF8PROC_BOUNDCLASS_CONTROL) ? true // GB5
-         : (lbc == UTF8PROC_BOUNDCLASS_L                                                // GB6
-            && (tbc == UTF8PROC_BOUNDCLASS_L                                            // ---
-                || tbc == UTF8PROC_BOUNDCLASS_V                                         // ---
-                || tbc == UTF8PROC_BOUNDCLASS_LV                                        // ---
-                || tbc == UTF8PROC_BOUNDCLASS_LVT)) ? false                             // ---
-         : ((lbc == UTF8PROC_BOUNDCLASS_LV                                              // GB7
-             || lbc == UTF8PROC_BOUNDCLASS_V)                                           // ---
-            && (tbc == UTF8PROC_BOUNDCLASS_V                                            // ---
-                || tbc == UTF8PROC_BOUNDCLASS_T)) ? false                               // ---
-         : ((lbc == UTF8PROC_BOUNDCLASS_LVT                                             // GB8
-             || lbc == UTF8PROC_BOUNDCLASS_T)                                           // ---
-            && tbc == UTF8PROC_BOUNDCLASS_T) ? false                                    // ---
-         : (tbc == UTF8PROC_BOUNDCLASS_EXTEND                                           // GB9
-            || tbc == UTF8PROC_BOUNDCLASS_ZWJ                                           // ---
-            || tbc == UTF8PROC_BOUNDCLASS_SPACINGMARK                                   // GB9a
-            || lbc == UTF8PROC_BOUNDCLASS_PREPEND) ? false                              // GB9b
-         : ((lbc == UTF8PROC_BOUNDCLASS_E_BASE                                          // GB10 (requires additional
+         : (  lbc == UTF8PROC_BOUNDCLASS_L                                              // GB6
+           && (  tbc == UTF8PROC_BOUNDCLASS_L                                           // ---
+              || tbc == UTF8PROC_BOUNDCLASS_V                                           // ---
+              || tbc == UTF8PROC_BOUNDCLASS_LV                                          // ---
+              || tbc == UTF8PROC_BOUNDCLASS_LVT)) ? false                               // ---
+         : (  (  lbc == UTF8PROC_BOUNDCLASS_LV                                          // GB7
+              || lbc == UTF8PROC_BOUNDCLASS_V)                                          // ---
+           && (  tbc == UTF8PROC_BOUNDCLASS_V                                           // ---
+              || tbc == UTF8PROC_BOUNDCLASS_T)) ? false                                 // ---
+         : (  (  lbc == UTF8PROC_BOUNDCLASS_LVT                                         // GB8
+              || lbc == UTF8PROC_BOUNDCLASS_T)                                          // ---
+           && tbc == UTF8PROC_BOUNDCLASS_T) ? false                                     // ---
+         : (  tbc == UTF8PROC_BOUNDCLASS_EXTEND                                         // GB9
+           || tbc == UTF8PROC_BOUNDCLASS_ZWJ                                            // ---
+           || tbc == UTF8PROC_BOUNDCLASS_SPACINGMARK                                    // GB9a
+           || lbc == UTF8PROC_BOUNDCLASS_PREPEND) ? false                               // GB9b
+         : (  (  lbc == UTF8PROC_BOUNDCLASS_E_BASE                                      // GB10 (requires additional
                                                                                         // handling below)
-             || lbc == UTF8PROC_BOUNDCLASS_E_BASE_GAZ)                                  // ----
-            && tbc == UTF8PROC_BOUNDCLASS_E_MODIFIER) ? false                           // ----
-         : (lbc == UTF8PROC_BOUNDCLASS_ZWJ                                              // GB11
-            && (tbc == UTF8PROC_BOUNDCLASS_GLUE_AFTER_ZWJ                               // ----
-                || tbc == UTF8PROC_BOUNDCLASS_E_BASE_GAZ)) ? false                      // ----
-         : (lbc == UTF8PROC_BOUNDCLASS_REGIONAL_INDICATOR                               // GB12/13 (requires additional
+              || lbc == UTF8PROC_BOUNDCLASS_E_BASE_GAZ)                                 // ----
+           && tbc == UTF8PROC_BOUNDCLASS_E_MODIFIER) ? false                            // ----
+         : (  lbc == UTF8PROC_BOUNDCLASS_ZWJ                                            // GB11
+           && (  tbc == UTF8PROC_BOUNDCLASS_GLUE_AFTER_ZWJ                              // ----
+              || tbc == UTF8PROC_BOUNDCLASS_E_BASE_GAZ)) ? false                        // ----
+         : (  lbc == UTF8PROC_BOUNDCLASS_REGIONAL_INDICATOR                             // GB12/13 (requires additional
                                                                                         // handling below)
-            && tbc == UTF8PROC_BOUNDCLASS_REGIONAL_INDICATOR) ? false                   // ----
+           && tbc == UTF8PROC_BOUNDCLASS_REGIONAL_INDICATOR) ? false                    // ----
          : true;                                                                        // GB999
 }
 
@@ -305,9 +305,9 @@ static utf8proc_bool grapheme_break_extended(int lbc, int tbc, utf8proc_int32_t 
     }
     // Special support for GB10. Fold any EXTEND codepoints into the previous
     // boundclass if we're dealing with an emoji base boundclass.
-    else if (((*state == UTF8PROC_BOUNDCLASS_E_BASE)
-              || (*state == UTF8PROC_BOUNDCLASS_E_BASE_GAZ) )
-             && (tbc == UTF8PROC_BOUNDCLASS_EXTEND) ) {
+    else if (  (  (*state == UTF8PROC_BOUNDCLASS_E_BASE)
+               || (*state == UTF8PROC_BOUNDCLASS_E_BASE_GAZ) )
+            && (tbc == UTF8PROC_BOUNDCLASS_EXTEND) ) {
       *state = UTF8PROC_BOUNDCLASS_E_BASE;
     } else {
       *state = tbc;

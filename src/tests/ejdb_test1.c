@@ -302,9 +302,9 @@ int main() {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if ((NULL == CU_add_test(pSuite, "ejdb_test1_1", ejdb_test1_1))
-      || (NULL == CU_add_test(pSuite, "ejdb_test1_2", ejdb_test1_2))
-      || (NULL == CU_add_test(pSuite, "ejdb_test1_3", ejdb_test1_3))) {
+  if (  (NULL == CU_add_test(pSuite, "ejdb_test1_1", ejdb_test1_1))
+     || (NULL == CU_add_test(pSuite, "ejdb_test1_2", ejdb_test1_2))
+     || (NULL == CU_add_test(pSuite, "ejdb_test1_3", ejdb_test1_3))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

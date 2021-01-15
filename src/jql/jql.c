@@ -335,8 +335,8 @@ iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode
 
 finish:
   if (rc) {
-    if ((rc == JQL_ERROR_QUERY_PARSE)
-        && (mode & JQL_KEEP_QUERY_ON_PARSE_ERROR)) {
+    if (  (rc == JQL_ERROR_QUERY_PARSE)
+       && (mode & JQL_KEEP_QUERY_ON_PARSE_ERROR)) {
       *qptr = q;
     } else {
       jqp_aux_destroy(&aux);
@@ -617,9 +617,9 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
       }
       break;
     case JQVAL_BINN: {
-      if ((rv->type != JQVAL_JBLNODE)
-          || ((rv->vnode->type == JBV_ARRAY) && (lv->vbinn->type != BINN_LIST))
-          || ((rv->vnode->type == JBV_OBJECT) && ((lv->vbinn->type != BINN_OBJECT) && (lv->vbinn->type != BINN_MAP)))) {
+      if (  (rv->type != JQVAL_JBLNODE)
+         || ((rv->vnode->type == JBV_ARRAY) && (lv->vbinn->type != BINN_LIST))
+         || ((rv->vnode->type == JBV_OBJECT) && ((lv->vbinn->type != BINN_OBJECT) && (lv->vbinn->type != BINN_MAP)))) {
         // Incompatible types
         *rcp = _JQL_ERROR_UNMATCHED;
         return 0;
@@ -1167,8 +1167,8 @@ static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
       lv.vstr = mctx->key;
       bool ret = _jql_match_jqval_pair(mctx->aux, &lv, op, rv, rcp);
       return negate != (0 == !ret);
-    } else if (!(left->string.flavour & JQP_STR_DBL_STAR)
-               && (strcmp(mctx->key, left->string.value) != 0)) {
+    } else if (  !(left->string.flavour & JQP_STR_DBL_STAR)
+              && (strcmp(mctx->key, left->string.value) != 0)) {
       return negate;
     }
   } else if (left->type == JQP_EXPR_TYPE) {

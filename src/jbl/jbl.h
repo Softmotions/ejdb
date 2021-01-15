@@ -71,25 +71,30 @@ typedef enum {
   JBL_ERROR_INVALID,                    /**< Invalid JBL object (JBL_ERROR_INVALID) */
   JBL_ERROR_PARSE_JSON,                 /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
   JBL_ERROR_PARSE_UNQUOTED_STRING,      /**< Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING) */
-  JBL_ERROR_PARSE_INVALID_CODEPOINT,    /**< Invalid unicode codepoint/escape sequence
-                                           (JBL_ERROR_PARSE_INVALID_CODEPOINT) */
+  JBL_ERROR_PARSE_INVALID_CODEPOINT,
+  /**< Invalid unicode codepoint/escape sequence
+     (JBL_ERROR_PARSE_INVALID_CODEPOINT) */
   JBL_ERROR_PARSE_INVALID_UTF8,         /**< Invalid utf8 string (JBL_ERROR_PARSE_INVALID_UTF8) */
   JBL_ERROR_JSON_POINTER,               /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
   JBL_ERROR_PATH_NOTFOUND,              /**< JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND) */
   JBL_ERROR_PATCH_INVALID,              /**< Invalid JSON patch specified (JBL_ERROR_PATCH_INVALID) */
   JBL_ERROR_PATCH_INVALID_OP,           /**< Invalid JSON patch operation specified (JBL_ERROR_PATCH_INVALID_OP) */
   JBL_ERROR_PATCH_NOVALUE,              /**< No value specified in JSON patch (JBL_ERROR_PATCH_NOVALUE) */
-  JBL_ERROR_PATCH_TARGET_INVALID,       /**< Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID)
-                                        */
+  JBL_ERROR_PATCH_TARGET_INVALID,
+  /**< Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID)
+   */
   JBL_ERROR_PATCH_INVALID_VALUE,        /**< Invalid value specified by patch (JBL_ERROR_PATCH_INVALID_VALUE) */
-  JBL_ERROR_PATCH_INVALID_ARRAY_INDEX,  /**< Invalid array index in JSON patch path
-                                           (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX) */
+  JBL_ERROR_PATCH_INVALID_ARRAY_INDEX,
+  /**< Invalid array index in JSON patch path
+     (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX) */
   JBL_ERROR_NOT_AN_OBJECT,              /**< JBL is not an object (JBL_ERROR_NOT_AN_OBJECT) */
-  JBL_ERROR_TYPE_MISMATCHED,            /**< Type of JBL object mismatched user type constraints
-                                           (JBL_ERROR_TYPE_MISMATCHED) */
+  JBL_ERROR_TYPE_MISMATCHED,
+  /**< Type of JBL object mismatched user type constraints
+     (JBL_ERROR_TYPE_MISMATCHED) */
   JBL_ERROR_PATCH_TEST_FAILED,          /**< JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED) */
-  JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED, /**< Reached the maximal object nesting level: 1000
-                                           (JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED) */
+  JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED,
+  /**< Reached the maximal object nesting level: 1000
+     (JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED) */
   _JBL_ERROR_END,
 } jbl_ecode_t;
 

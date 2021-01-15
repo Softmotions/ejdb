@@ -114,15 +114,15 @@ IW_INLINE int _jbi_idx_expr_op_weight(struct _JBMIDX *midx) {
 static bool _jbi_is_solid_node_expression(const JQP_NODE *n) {
   JQPUNIT *unit = n->value;
   for (const JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
-    if (expr->op->negate
-        || (expr->join && (expr->join->negate || (expr->join->value == JQP_JOIN_OR) ))
-        || (expr->op->value == JQP_OP_RE) ) {
+    if (  expr->op->negate
+       || (expr->join && (expr->join->negate || (expr->join->value == JQP_JOIN_OR) ))
+       || (expr->op->value == JQP_OP_RE) ) {
       // No negate conditions, No OR, No regexp
       return false;
     }
     JQPUNIT *left = expr->left;
-    if ((left->type == JQP_EXPR_TYPE)
-        || ((left->type == JQP_STRING_TYPE) && (left->string.flavour & JQP_STR_STAR))) {
+    if (  (left->type == JQP_EXPR_TYPE)
+       || ((left->type == JQP_STRING_TYPE) && (left->string.flavour & JQP_STR_STAR))) {
       return false;
     }
   }
@@ -155,9 +155,9 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         }
         int vcnt = 0;
         for (JBL_NODE n = rv->vnode->child; n; n = n->next, ++vcnt) ;
-        if ((vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE)
-            && ((vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE)
-                || (mctx->idx->rnum < rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO) )) {
+        if (  (vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE)
+           && (  (vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE)
+              || (mctx->idx->rnum < rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO) )) {
           // No index for large IN array | small collection size
           continue;
         }
@@ -335,9 +335,9 @@ static iwrc _jbi_collect_indexes(
           j++;
         }
         // Check for the last iteration and the special `**` case
-        if ((i == ptr->cnt - 1)
-            && (idx->idbf & IWDB_COMPOUND_KEYS)
-            && n->next && !n->next->next && (n->next->ntype == JQP_NODE_EXPR)) {
+        if (  (i == ptr->cnt - 1)
+           && (idx->idbf & IWDB_COMPOUND_KEYS)
+           && n->next && !n->next->next && (n->next->ntype == JQP_NODE_EXPR)) {
           JQPUNIT *left = n->next->value->expr.left;
           if ((left->type == JQP_STRING_TYPE) && (left->string.flavour & JQP_STR_DBL_STAR)) {
             i++;

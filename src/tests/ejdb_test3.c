@@ -1129,14 +1129,14 @@ int main() {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if ((NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1))
-      || (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2))
-      || (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3))
-      || (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
-      || (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5))
-      || (NULL == CU_add_test(pSuite, "ejdb_test3_6", ejdb_test3_6))
-      || (NULL == CU_add_test(pSuite, "ejdb_test3_7", ejdb_test3_7))
-      || (NULL == CU_add_test(pSuite, "ejdb_test3_8", ejdb_test3_8))) {
+  if (  (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_6", ejdb_test3_6))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_7", ejdb_test3_7))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_8", ejdb_test3_8))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

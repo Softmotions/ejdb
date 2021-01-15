@@ -181,7 +181,7 @@ typedef struct _EJDB_EXEC {
   int64_t cnt;                /**< Number of result documents processed by `visitor` */
   IWXSTR  *log;               /**< Optional query execution log buffer. If set major query execution/index selection
                                  steps will be logged into */
-  IWPOOL  *pool;              /**< Optional pool which can be used in query apply  */
+  IWPOOL *pool;               /**< Optional pool which can be used in query apply  */
 } EJDB_EXEC;
 
 /**
@@ -575,7 +575,7 @@ IW_EXPORT iwrc ejdb_ensure_collection(EJDB db, const char *coll);
  * @return `0` on success.
  *         `EJDB_ERROR_INVALID_INDEX_MODE` Invalid `mode` specified
  *         `EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE` trying to create non unique index over existing unique or vice
- *versa.
+ * versa.
  *          Any non zero error codes.
  *
  */

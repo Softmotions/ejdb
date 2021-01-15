@@ -1240,8 +1240,8 @@ static void _jbr_on_http_upgrade(http_s *req, char *requested_protocol, size_t l
   const EJDB_HTTP *http = jbr->http;
   fio_str_info_s path = fiobj_obj2cstr(req->path);
 
-  if (((path.len != 1) || (path.data[0] != '/'))
-      || ((len != 9) || (requested_protocol[1] != 'e'))) {
+  if (  ((path.len != 1) || (path.data[0] != '/'))
+     || ((len != 9) || (requested_protocol[1] != 'e'))) {
     http_send_error(req, 400);
     return;
   }

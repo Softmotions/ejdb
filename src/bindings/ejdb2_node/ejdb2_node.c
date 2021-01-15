@@ -107,8 +107,9 @@ typedef enum {
   _JN_ERROR_START = (IW_ERROR_START + 15000UL + 6000),
   JN_ERROR_INVALID_NATIVE_CALL_ARGS, /**< Invalid native function call args (JN_ERROR_INVALID_NATIVE_CALL_ARGS) */
   JN_ERROR_INVALID_STATE,            /**< Invalid native extension state (JN_ERROR_INVALID_STATE) */
-  JN_ERROR_QUERY_IN_USE,             /**< Query object is in use by active async iteration, and cannot be changed
-                                        (JN_ERROR_QUERY_IN_USE) */
+  JN_ERROR_QUERY_IN_USE,
+  /**< Query object is in use by active async iteration, and cannot be changed
+     (JN_ERROR_QUERY_IN_USE) */
   JN_ERROR_NAPI,                     /*< N-API Error (JN_ERROR_NAPI) */
   _JN_ERROR_END,
 } jn_ecode_t;

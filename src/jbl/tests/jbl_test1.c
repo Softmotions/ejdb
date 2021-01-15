@@ -878,17 +878,17 @@ int main() {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if ((NULL == CU_add_test(pSuite, "jbl_test1_1", jbl_test1_1))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_2", jbl_test1_2))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_3", jbl_test1_3))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_4", jbl_test1_4))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_5", jbl_test1_5))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_6", jbl_test1_6))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_7", jbl_test1_7))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_8", jbl_test1_8))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_9", jbl_test1_9))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_10", jbl_test1_10))
-      || (NULL == CU_add_test(pSuite, "jbl_test1_11", jbl_test1_11))) {
+  if (  (NULL == CU_add_test(pSuite, "jbl_test1_1", jbl_test1_1))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_2", jbl_test1_2))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_3", jbl_test1_3))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_4", jbl_test1_4))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_5", jbl_test1_5))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_6", jbl_test1_6))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_7", jbl_test1_7))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_8", jbl_test1_8))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_9", jbl_test1_9))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_10", jbl_test1_10))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_11", jbl_test1_11))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

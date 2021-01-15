@@ -129,17 +129,17 @@ static int _jbl_unescape_json_string(const char *p, char *d, int dlen, const cha
         case 'u': {
           uint32_t cp, cp2;
           int h1, h2, h3, h4;
-          if (((h1 = _jbl_hex(p[1])) < 0) || ((h2 = _jbl_hex(p[2])) < 0)
-              || ((h3 = _jbl_hex(p[3])) < 0) || ((h4 = _jbl_hex(p[4])) < 0)) {
+          if (  ((h1 = _jbl_hex(p[1])) < 0) || ((h2 = _jbl_hex(p[2])) < 0)
+             || ((h3 = _jbl_hex(p[3])) < 0) || ((h4 = _jbl_hex(p[4])) < 0)) {
             *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
             return 0;
           }
           cp = h1 << 12 | h2 << 8 | h3 << 4 | h4;
           if ((cp & 0xfc00) == 0xd800) {
             p += 6;
-            if ((p[-1] != '\\') || (*p != 'u')
-                || ((h1 = _jbl_hex(p[1])) < 0) || ((h2 = _jbl_hex(p[2])) < 0)
-                || ((h3 = _jbl_hex(p[3])) < 0) || ((h4 = _jbl_hex(p[4])) < 0)) {
+            if (  (p[-1] != '\\') || (*p != 'u')
+               || ((h1 = _jbl_hex(p[1])) < 0) || ((h2 = _jbl_hex(p[2])) < 0)
+               || ((h3 = _jbl_hex(p[3])) < 0) || ((h4 = _jbl_hex(p[4])) < 0)) {
               *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
               return 0;
             }

@@ -292,17 +292,17 @@ static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp
         case 'u': {
           uint32_t cp, cp2;
           int h1, h2, h3, h4;
-          if (((h1 = _jql_hex(p[1])) < 0) || ((h2 = _jql_hex(p[2])) < 0)
-              || ((h3 = _jql_hex(p[3])) < 0) || ((h4 = _jql_hex(p[4])) < 0)) {
+          if (  ((h1 = _jql_hex(p[1])) < 0) || ((h2 = _jql_hex(p[2])) < 0)
+             || ((h3 = _jql_hex(p[3])) < 0) || ((h4 = _jql_hex(p[4])) < 0)) {
             *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
             return 0;
           }
           cp = h1 << 12 | h2 << 8 | h3 << 4 | h4;
           if ((cp & 0xfc00) == 0xd800) {
             p += 6;
-            if ((p[-1] != '\\') || (*p != 'u')
-                || ((h1 = _jql_hex(p[1])) < 0) || ((h2 = _jql_hex(p[2])) < 0)
-                || ((h3 = _jql_hex(p[3])) < 0) || ((h4 = _jql_hex(p[4])) < 0)) {
+            if (  (p[-1] != '\\') || (*p != 'u')
+               || ((h1 = _jql_hex(p[1])) < 0) || ((h2 = _jql_hex(p[2])) < 0)
+               || ((h3 = _jql_hex(p[3])) < 0) || ((h4 = _jql_hex(p[4])) < 0)) {
               *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
               return 0;
             }
@@ -729,10 +729,10 @@ static JQPUNIT *_jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
   filter = _jqp_unit(yy);
   filter->type = JQP_FILTER_TYPE;
   filter->filter.node = &first->node;
-  if (aux->stack
-      && (aux->stack->type == STACK_UNIT)
-      && (aux->stack->unit->type == JQP_STRING_TYPE)
-      && (aux->stack->unit->string.flavour & JQP_STR_ANCHOR)) {
+  if (  aux->stack
+     && (aux->stack->type == STACK_UNIT)
+     && (aux->stack->unit->type == JQP_STRING_TYPE)
+     && (aux->stack->unit->string.flavour & JQP_STR_ANCHOR)) {
     filter->filter.anchor = _jqp_unit_pop(yy)->string.value;
     if (!aux->first_anchor) {
       aux->first_anchor = filter->filter.anchor;
@@ -786,10 +786,10 @@ static JQPUNIT *_jqp_create_filterexpr_pk(yycontext *yy, JQPUNIT *argument) {
   JQP_AUX *aux = yy->aux;
   const char *anchor = 0;
   // Looking for optional
-  if (aux->stack
-      && (aux->stack->type == STACK_UNIT)
-      && (aux->stack->unit->type == JQP_STRING_TYPE)
-      && (aux->stack->unit->string.flavour & JQP_STR_ANCHOR)) {
+  if (  aux->stack
+     && (aux->stack->type == STACK_UNIT)
+     && (aux->stack->unit->type == JQP_STRING_TYPE)
+     && (aux->stack->unit->string.flavour & JQP_STR_ANCHOR)) {
     anchor = _jqp_unit_pop(yy)->string.value;
     if (!aux->first_anchor) {
       aux->first_anchor = anchor;
@@ -848,8 +848,8 @@ static void _jqp_add_orderby(yycontext *yy, JQPUNIT *unit) {
 
 static void _jqp_set_skip(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
-  if ((unit->type != JQP_INTEGER_TYPE) && !((unit->type == JQP_STRING_TYPE)
-                                            && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
+  if ((unit->type != JQP_INTEGER_TYPE) && !(  (unit->type == JQP_STRING_TYPE)
+                                           && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
     iwlog_error("Unexpected type for skip: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
@@ -861,8 +861,8 @@ static void _jqp_set_skip(yycontext *yy, JQPUNIT *unit) {
 
 static void _jqp_set_limit(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
-  if ((unit->type != JQP_INTEGER_TYPE) && !((unit->type == JQP_STRING_TYPE)
-                                            && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
+  if ((unit->type != JQP_INTEGER_TYPE) && !(  (unit->type == JQP_STRING_TYPE)
+                                           && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
     iwlog_error("Unexpected type for limit: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
