@@ -21,8 +21,9 @@ int main(int argc, char const *argv[]) {
                 FIO_CLI_BOOL("--trunc -t Cleanup existing database file on open"),
                 FIO_CLI_BOOL("--wal -w Use write ahead logging (WAL). Must be set for data durability."),
                 FIO_CLI_PRINT_HEADER("Advanced options"),
-                FIO_CLI_INT("--sbz Max sorting buffer size. If exceeded, an overflow temp file for data will be created. "
-                            "Default: 16777216, min: 1048576"),
+                FIO_CLI_INT(
+                  "--sbz Max sorting buffer size. If exceeded, an overflow temp file for data will be created. "
+                  "Default: 16777216, min: 1048576"),
                 FIO_CLI_INT("--dsz Initial size of buffer to process/store document on queries. "
                             "Preferable average size of document. "
                             "Default: 65536, min: 16384"),
@@ -30,7 +31,7 @@ int main(int argc, char const *argv[]) {
                 FIO_CLI_BOOL("--trylock Fail if database is locked by another process."
                              " If not set, current process will wait for lock release")
 
-               );
+                );
   fio_cli_set_default("--file", "db.jb");
   fio_cli_set_default("-f", "db.jb");
   fio_cli_set_default("--port", "9191");
@@ -41,7 +42,7 @@ int main(int argc, char const *argv[]) {
 
   char access_token_buf[255];
   const char *access_token = fio_cli_get("-a");
-  if (access_token && *access_token == '@') {
+  if (access_token && (*access_token == '@')) {
     access_token = access_token + 1;
     FILE *f = fopen(access_token, "r");
     if (!f) {
@@ -49,7 +50,7 @@ int main(int argc, char const *argv[]) {
       goto finish;
     }
     size_t n = fread(access_token_buf, 1, sizeof(access_token_buf), f);
-    if (n == 0 || n == sizeof(access_token_buf)) {
+    if ((n == 0) || (n == sizeof(access_token_buf))) {
       fclose(f);
       rc = IW_ERROR_INVALID_VALUE;
       iwlog_error("Invalid access token from %s", access_token);
@@ -64,28 +65,28 @@ int main(int argc, char const *argv[]) {
     }
     fclose(f);
     access_token = access_token_buf;
-  } else if (access_token && strlen(access_token) >= sizeof(access_token_buf)) {
+  } else if (access_token && (strlen(access_token) >= sizeof(access_token_buf))) {
     rc = IW_ERROR_INVALID_VALUE;
     iwlog_error2("Invalid access token");
     goto finish;
   }
 
   EJDB_OPTS ov = {
-    .kv = {
-      .path = fio_cli_get("-f"),
-      .oflags = fio_cli_get_i("-t") ? IWKV_TRUNC : 0,
+    .kv                    = {
+      .path                = fio_cli_get("-f"),
+      .oflags              = fio_cli_get_i("-t") ? IWKV_TRUNC : 0,
       .file_lock_fail_fast = fio_cli_get_bool("--trylock")
     },
-    .no_wal = !fio_cli_get_i("-w"),
-    .sort_buffer_sz = fio_cli_get_i("--sbz"),
-    .document_buffer_sz = fio_cli_get_i("--dsz"),
-    .http = {
-      .enabled = true,
-      .blocking = true,
-      .port = fio_cli_get_i("-p"),
-      .bind = fio_cli_get("-b"),
-      .access_token = access_token,
-      .max_body_size = fio_cli_get_i("--bsz")
+    .no_wal                = !fio_cli_get_i("-w"),
+    .sort_buffer_sz        = fio_cli_get_i("--sbz"),
+    .document_buffer_sz    = fio_cli_get_i("--dsz"),
+    .http                  = {
+      .enabled             = true,
+      .blocking            = true,
+      .port                = fio_cli_get_i("-p"),
+      .bind                = fio_cli_get("-b"),
+      .access_token        = access_token,
+      .max_body_size       = fio_cli_get_i("--bsz")
     }
   };
   memcpy(&opts, &ov, sizeof(ov));

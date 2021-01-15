@@ -7,7 +7,9 @@ CURL *curl;
 int init_suite() {
   curl_global_init(CURL_GLOBAL_ALL);
   curl = curl_easy_init();
-  if (!curl) return 1;
+  if (!curl) {
+    return 1;
+  }
   int rc = ejdb_init();
   return rc;
 }
@@ -30,16 +32,16 @@ static void jbr_test1_1() {
   uint32_t port = iwu_rand_range(20000) + 20000;
 
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "jbr_test1_1.db",
-      .oflags = IWKV_TRUNC
+    .kv         = {
+      .path     = "jbr_test1_1.db",
+      .oflags   = IWKV_TRUNC
     },
-    .no_wal = true,
-    .http = {
-      .bind = "127.0.0.1",
+    .no_wal     = true,
+    .http       = {
+      .bind     = "127.0.0.1",
       .blocking = false,
-      .enabled = true,
-      .port = port
+      .enabled  = true,
+      .port     = port
     }
   };
 
@@ -103,7 +105,7 @@ static void jbr_test1_1() {
                          "{\n"
                          " \"foo\": \"bar\"\n"
                          "}"
-                        );
+                         );
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-type:application/json"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-length:17"));
   CU_ASSERT_EQUAL(iwxstr_size(xstr), 17);
@@ -144,7 +146,7 @@ static void jbr_test1_1() {
                          "{\n"
                          " \"foo\": \"b\\nar\"\n"
                          "}"
-                        );
+                         );
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-type:application/json"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-length:19"));
   CU_ASSERT_EQUAL(iwxstr_size(xstr), 19);
@@ -251,7 +253,7 @@ static void jbr_test1_1() {
                          "{\n"
                          " \"foo\": \"zzz\"\n"
                          "}"
-                        );
+                         );
 
 
   iwxstr_destroy(xstr);
@@ -263,15 +265,16 @@ static void jbr_test1_1() {
 
 int main() {
   CU_pSuite pSuite = NULL;
-  if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
+  if (CUE_SUCCESS != CU_initialize_registry()) {
+    return CU_get_error();
+  }
   pSuite = CU_add_suite("jbr_test1", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "jbr_test1_1", jbr_test1_1))
-  ) {
+    (NULL == CU_add_test(pSuite, "jbr_test1_1", jbr_test1_1))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

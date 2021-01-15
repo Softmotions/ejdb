@@ -12,9 +12,8 @@ int clean_suite() {
   return 0;
 }
 
-
 static void free_iwpool(void *ptr, void *op) {
-  iwpool_destroy((IWPOOL *) op);
+  iwpool_destroy((IWPOOL*) op);
 }
 
 static void set_apply_int(JQL q, int idx, const char *key, int64_t id) {
@@ -30,11 +29,11 @@ static void set_apply_int(JQL q, int idx, const char *key, int64_t id) {
 
 static void ejdb_test4_1(void) {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test4_1.db",
+    .kv       = {
+      .path   = "ejdb_test4_1.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
 
   EJDB db;
@@ -134,22 +133,21 @@ static void ejdb_test4_1(void) {
 
 static void ejdb_test4_2(void) {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test4_2.db",
+    .kv       = {
+      .path   = "ejdb_test4_2.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
 
   EJDB db;
   JQL q;
   JBL_NODE n, n2;
   int i = 0;
-  int64_t id = 0;
   EJDB_LIST list = 0;
   IWPOOL *pool = iwpool_create_empty();
 
-  char uuid[IW_UUID_STR_LEN + 1] = {0};
+  char uuid[IW_UUID_STR_LEN + 1] = { 0 };
   iwu_uuid4_fill(uuid);
 
   iwrc rc = ejdb_open(&opts, &db);
@@ -213,16 +211,16 @@ static void ejdb_test4_2(void) {
 
 int main() {
   CU_pSuite pSuite = NULL;
-  if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
+  if (CUE_SUCCESS != CU_initialize_registry()) {
+    return CU_get_error();
+  }
   pSuite = CU_add_suite("ejdb_test4", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (
-    (NULL == CU_add_test(pSuite, "ejdb_test4_1", ejdb_test4_1))
-    || (NULL == CU_add_test(pSuite, "ejdb_test4_2", ejdb_test4_2))
-  ) {
+  if ((NULL == CU_add_test(pSuite, "ejdb_test4_1", ejdb_test4_1))
+      || (NULL == CU_add_test(pSuite, "ejdb_test4_2", ejdb_test4_2))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

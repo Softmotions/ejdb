@@ -10,8 +10,7 @@
 #define JQRC(yy_, rc_) do {           \
     iwrc __rc = (rc_);                  \
     if (__rc) _jqp_fatal(yy_, __rc); \
-  } while(0)
-
+} while (0)
 
 static void _jqp_debug(yycontext *yy, const char *text) {
   fprintf(stderr, "TEXT=%s\n", text);
@@ -65,7 +64,9 @@ IW_INLINE char *_jqp_strdup(struct _yycontext *yy, const char *text) {
 
 static JQPUNIT *_jqp_unit(yycontext *yy) {
   JQPUNIT *ret = iwpool_calloc(sizeof(JQPUNIT), yy->aux->pool);
-  if (!ret) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  if (!ret) {
+    JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  }
   return ret;
 }
 
@@ -76,7 +77,9 @@ static JQP_STACK *_jqp_push(yycontext *yy) {
     stack = &aux->stackpool[aux->stackn++];
   } else {
     stack = malloc(sizeof(*aux->stack));
-    if (!stack) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+    if (!stack) {
+      JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+    }
     aux->stackn++;
   }
   memset(stack, 0, sizeof(*stack)); // -V575
@@ -94,7 +97,7 @@ static JQP_STACK *_jqp_push(yycontext *yy) {
 static JQP_STACK _jqp_pop(yycontext *yy) {
   JQP_AUX *aux = yy->aux;
   JQP_STACK *stack = aux->stack, ret;
-  if (!stack || aux->stackn < 1) {
+  if (!stack || (aux->stackn < 1)) {
     iwlog_error2("Unbalanced stack");
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
@@ -161,14 +164,14 @@ static JQPUNIT *_jqp_number(yycontext *yy, jqp_int_flavours_t flavour, const cha
   JQPUNIT *unit = _jqp_unit(yy);
   char *eptr;
   int64_t ival = strtoll(text, &eptr, 0);
-  if (eptr == text || errno == ERANGE) {
+  if ((eptr == text) || (errno == ERANGE)) {
     iwlog_error("Invalid number: %s", text);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
-  if (*eptr == '.' || *eptr == 'e' || *eptr == 'E') {
+  if ((*eptr == '.') || (*eptr == 'e') || (*eptr == 'E')) {
     unit->type = JQP_DOUBLE_TYPE;
     unit->dblval.value = strtod(text, &eptr);
-    if (eptr == text || errno == ERANGE) {
+    if ((eptr == text) || (errno == ERANGE)) {
       iwlog_error("Invalid double number: %s", text);
       JQRC(yy, JQL_ERROR_QUERY_PARSE);
     }
@@ -186,14 +189,14 @@ static JQPUNIT *_jqp_json_number(yycontext *yy, const char *text) {
   char *eptr;
   unit->type = JQP_JSON_TYPE;
   int64_t ival = strtoll(text, &eptr, 0);
-  if (eptr == text || errno == ERANGE) {
+  if ((eptr == text) || (errno == ERANGE)) {
     iwlog_error("Invalid number: %s", text);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
-  if (*eptr == '.' || *eptr == 'e' || *eptr == 'E') {
+  if ((*eptr == '.') || (*eptr == 'e') || (*eptr == 'E')) {
     unit->json.jn.type = JBV_F64;
     unit->json.jn.vf64 = strtod(text, &eptr);
-    if (eptr == text || errno == ERANGE) {
+    if ((eptr == text) || (errno == ERANGE)) {
       iwlog_error("Invalid double number: %s", text);
       JQRC(yy, JQL_ERROR_QUERY_PARSE);
     }
@@ -229,9 +232,15 @@ static JQPUNIT *_jqp_placeholder(yycontext *yy, const char *text) {
 }
 
 IW_INLINE int _jql_hex(char c) {
-  if (c >= '0' && c <= '9') return c - '0';
-  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  if ((c >= '0') && (c <= '9')) {
+    return c - '0';
+  }
+  if ((c >= 'a') && (c <= 'f')) {
+    return c - 'a' + 10;
+  }
+  if ((c >= 'A') && (c <= 'F')) {
+    return c - 'A' + 10;
+  }
   return -1;
 }
 
@@ -250,40 +259,50 @@ static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp
         case '\\':
         case '/':
         case '"':
-          if (d < de) *d = *p;
+          if (d < de) {
+            *d = *p;
+          }
           ++p, ++d;
           break;
         case 'b':
-          if (d < de) *d = '\b';
+          if (d < de) {
+            *d = '\b';
+          }
           ++p, ++d;
           break;
         case 'f':
-          if (d < de) *d = '\f';
+          if (d < de) {
+            *d = '\f';
+          }
           ++p, ++d;
           break;
         case 'n':
         case 'r':
-          if (d < de) *d = '\n';
+          if (d < de) {
+            *d = '\n';
+          }
           ++p, ++d;
           break;
         case 't':
-          if (d < de) *d = '\t';
+          if (d < de) {
+            *d = '\t';
+          }
           ++p, ++d;
           break;
         case 'u': {
           uint32_t cp, cp2;
           int h1, h2, h3, h4;
-          if ((h1 = _jql_hex(p[1])) < 0 || (h2 = _jql_hex(p[2])) < 0
-              || (h3 = _jql_hex(p[3])) < 0 || (h4 = _jql_hex(p[4])) < 0) {
+          if (((h1 = _jql_hex(p[1])) < 0) || ((h2 = _jql_hex(p[2])) < 0)
+              || ((h3 = _jql_hex(p[3])) < 0) || ((h4 = _jql_hex(p[4])) < 0)) {
             *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
             return 0;
           }
           cp = h1 << 12 | h2 << 8 | h3 << 4 | h4;
           if ((cp & 0xfc00) == 0xd800) {
             p += 6;
-            if (p[-1] != '\\' || *p != 'u'
-                || (h1 = _jql_hex(p[1])) < 0 || (h2 = _jql_hex(p[2])) < 0
-                || (h3 = _jql_hex(p[3])) < 0 || (h4 = _jql_hex(p[4])) < 0) {
+            if ((p[-1] != '\\') || (*p != 'u')
+                || ((h1 = _jql_hex(p[1])) < 0) || ((h2 = _jql_hex(p[2])) < 0)
+                || ((h3 = _jql_hex(p[3])) < 0) || ((h4 = _jql_hex(p[4])) < 0)) {
               *rcp = JBL_ERROR_PARSE_INVALID_CODEPOINT;
               return 0;
             }
@@ -301,18 +320,24 @@ static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp
           uint8_t uchars[4];
           utf8proc_ssize_t ulen = utf8proc_encode_char(cp, uchars);
           for (int i = 0; i < ulen; ++i) {
-            if (d < de) *d = uchars[i];
+            if (d < de) {
+              *d = uchars[i];
+            }
             ++d;
           }
           p += 5;
           break;
         }
         default:
-          if (d < de) *d = c;
+          if (d < de) {
+            *d = c;
+          }
           ++d;
       }
     } else {
-      if (d < de) *d = c;
+      if (d < de) {
+        *d = c;
+      }
       ++d;
     }
   }
@@ -326,11 +351,17 @@ static JQPUNIT *_jqp_unescaped_string(struct _yycontext *yy, jqp_string_flavours
   unit->type = JQP_STRING_TYPE;
   unit->string.flavour |= flv;
   int len = _jqp_unescape_json_string(text, 0, 0, &aux->rc);
-  if (aux->rc) JQRC(yy, aux->rc); // -V547
+  if (aux->rc) {
+    JQRC(yy, aux->rc);            // -V547
+  }
   char *dest = iwpool_alloc(len + 1, aux->pool);
-  if (!dest) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  if (!dest) {
+    JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  }
   _jqp_unescape_json_string(text, dest, len, &aux->rc);
-  if (aux->rc) JQRC(yy, aux->rc); // -V547
+  if (aux->rc) {
+    JQRC(yy, aux->rc);            // -V547
+  }
   dest[len] = '\0'; // -V1004
   unit->string.value = dest;
   return unit;
@@ -342,11 +373,17 @@ static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text) {
   unit->type = JQP_JSON_TYPE;
   unit->json.jn.type = JBV_STR;
   int len = _jqp_unescape_json_string(text, 0, 0, &aux->rc);
-  if (aux->rc) JQRC(yy, aux->rc); // -V547
+  if (aux->rc) {
+    JQRC(yy, aux->rc);            // -V547
+  }
   char *dest = iwpool_alloc(len + 1, aux->pool);
-  if (!dest) JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  if (!dest) {
+    JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
+  }
   _jqp_unescape_json_string(text, dest, len, &aux->rc);
-  if (aux->rc) JQRC(yy, aux->rc); // -V547
+  if (aux->rc) {
+    JQRC(yy, aux->rc);            // -V547
+  }
   dest[len] = '\0'; // -V1004
   unit->json.jn.vptr = dest;
   unit->json.jn.vsize = len;
@@ -354,7 +391,7 @@ static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text) {
 }
 
 static JQPUNIT *_jqp_json_pair(yycontext *yy, JQPUNIT *key, JQPUNIT *val) {
-  if (key->type != JQP_JSON_TYPE || val->type != JQP_JSON_TYPE || key->json.jn.type != JBV_STR) {
+  if ((key->type != JQP_JSON_TYPE) || (val->type != JQP_JSON_TYPE) || (key->json.jn.type != JBV_STR)) {
     iwlog_error2("Invalid arguments");
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
@@ -477,7 +514,7 @@ static JQPUNIT *_jqp_expr(yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *ri
     iwlog_error2("Invalid arguments");
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
-  if (op->type != JQP_OP_TYPE && op->type != JQP_JOIN_TYPE) {
+  if ((op->type != JQP_OP_TYPE) && (op->type != JQP_JOIN_TYPE)) {
     iwlog_error("Unexpected type: %d", op->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
@@ -499,7 +536,7 @@ static JQPUNIT *_jqp_pop_expr_chain(yycontext *yy, JQPUNIT *until) {
         unit->expr.next = &expr->expr;
       }
       expr = unit;
-    } else if (unit->type == JQP_JOIN_TYPE && expr) {
+    } else if ((unit->type == JQP_JOIN_TYPE) && expr) {
       expr->expr.join = &unit->join;
     } else {
       iwlog_error("Unexpected type: %d", unit->type);
@@ -564,7 +601,7 @@ static JQPUNIT *_jqp_pop_projection_nodes(yycontext *yy, JQPUNIT *until) {
 
 static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p) {
   JQP_AUX *aux = yy->aux;
-  if (!aux->stack || aux->stack->type != STACK_STRING) {
+  if (!aux->stack || (aux->stack->type != STACK_STRING)) {
     iwlog_error2("Invalid stack state");
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
@@ -693,8 +730,8 @@ static JQPUNIT *_jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
   filter->type = JQP_FILTER_TYPE;
   filter->filter.node = &first->node;
   if (aux->stack
-      && aux->stack->type == STACK_UNIT
-      && aux->stack->unit->type == JQP_STRING_TYPE
+      && (aux->stack->type == STACK_UNIT)
+      && (aux->stack->unit->type == JQP_STRING_TYPE)
       && (aux->stack->unit->string.flavour & JQP_STR_ANCHOR)) {
     filter->filter.anchor = _jqp_unit_pop(yy)->string.value;
     if (!aux->first_anchor) {
@@ -712,8 +749,8 @@ static JQPUNIT *_jqp_pop_filter_factor_chain(yycontext *yy, JQPUNIT *until) {
     JQPUNIT *unit = aux->stack->unit;
     if (unit->type == JQP_JOIN_TYPE) {
       factor->join = &unit->join; // -V522
-    } else if (unit->type == JQP_EXPR_NODE_TYPE || unit->type == JQP_FILTER_TYPE) {
-      JQP_EXPR_NODE *node = (JQP_EXPR_NODE *) unit;
+    } else if ((unit->type == JQP_EXPR_NODE_TYPE) || (unit->type == JQP_FILTER_TYPE)) {
+      JQP_EXPR_NODE *node = (JQP_EXPR_NODE*) unit;
       if (factor) {
         node->next = factor;
       }
@@ -750,8 +787,8 @@ static JQPUNIT *_jqp_create_filterexpr_pk(yycontext *yy, JQPUNIT *argument) {
   const char *anchor = 0;
   // Looking for optional
   if (aux->stack
-      && aux->stack->type == STACK_UNIT
-      && aux->stack->unit->type == JQP_STRING_TYPE
+      && (aux->stack->type == STACK_UNIT)
+      && (aux->stack->unit->type == JQP_STRING_TYPE)
       && (aux->stack->unit->string.flavour & JQP_STR_ANCHOR)) {
     anchor = _jqp_unit_pop(yy)->string.value;
     if (!aux->first_anchor) {
@@ -776,7 +813,7 @@ static void _jqp_set_apply(yycontext *yy, JQPUNIT *unit) {
   if (unit->type == JQP_JSON_TYPE) {
     aux->apply = &unit->json.jn;
     aux->apply_placeholder = 0;
-  } else if (unit->type == JQP_STRING_TYPE && (unit->string.flavour & JQP_STR_PLACEHOLDER)) {
+  } else if ((unit->type == JQP_STRING_TYPE) && (unit->string.flavour & JQP_STR_PLACEHOLDER)) {
     aux->apply_placeholder = unit->string.value;
     aux->apply = 0;
   } else {
@@ -811,8 +848,8 @@ static void _jqp_add_orderby(yycontext *yy, JQPUNIT *unit) {
 
 static void _jqp_set_skip(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
-  if (unit->type != JQP_INTEGER_TYPE && !(unit->type == JQP_STRING_TYPE
-                                          && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
+  if ((unit->type != JQP_INTEGER_TYPE) && !((unit->type == JQP_STRING_TYPE)
+                                            && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
     iwlog_error("Unexpected type for skip: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
@@ -824,8 +861,8 @@ static void _jqp_set_skip(yycontext *yy, JQPUNIT *unit) {
 
 static void _jqp_set_limit(yycontext *yy, JQPUNIT *unit) {
   JQP_AUX *aux = yy->aux;
-  if (unit->type != JQP_INTEGER_TYPE && !(unit->type == JQP_STRING_TYPE
-                                          && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
+  if ((unit->type != JQP_INTEGER_TYPE) && !((unit->type == JQP_STRING_TYPE)
+                                            && (unit->string.flavour & JQP_STR_PLACEHOLDER))) {
     iwlog_error("Unexpected type for limit: %d", unit->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
@@ -885,7 +922,7 @@ static void _jqp_finish(yycontext *yy) {
   JQP_AUX *aux = yy->aux;
 
   JQP_STRING *orderby = aux->orderby;
-  for (; orderby; ++cnt, orderby = orderby->next) {
+  for ( ; orderby; ++cnt, orderby = orderby->next) {
     if (cnt >= MAX_ORDER_BY_CLAUSES) {
       rc = JQL_ERROR_ORDERBY_MAX_LIMIT;
       RCGO(rc, finish);
@@ -905,7 +942,7 @@ static void _jqp_finish(yycontext *yy) {
     }
     cnt = 0;
     orderby = aux->orderby;
-    for (; orderby; orderby = orderby->next) {
+    for ( ; orderby; orderby = orderby->next) {
       iwxstr_clear(xstr);
       for (JQP_STRING *on = orderby; on; on = on->subnext) {
         rc = iwxstr_cat(xstr, "/", 1);
@@ -915,7 +952,7 @@ static void _jqp_finish(yycontext *yy) {
       rc = jbl_ptr_alloc_pool(iwxstr_ptr(xstr), &aux->orderby_ptrs[cnt], aux->pool);
       RCGO(rc, finish);
       JBL_PTR ptr = aux->orderby_ptrs[cnt];
-      ptr->op = (uint64_t)((orderby->flavour & JQP_STR_NEGATE) != 0);  // asc/desc
+      ptr->op = (uint64_t) ((orderby->flavour & JQP_STR_NEGATE) != 0);  // asc/desc
       cnt++;
     }
   }
@@ -983,7 +1020,7 @@ static void yyerror(yycontext *yy) {
     _iwxstr_cat2(xerr, "'\n");
   }
   if (yy->__pos < yy->__limit) {
-    char buf[2] = {0};
+    char buf[2] = { 0 };
     yy->__buf[yy->__limit] = '\0';
     _iwxstr_cat2(xerr, "\n");
     while (yy->__pos < yy->__limit) {
@@ -995,7 +1032,7 @@ static void yyerror(yycontext *yy) {
 }
 
 iwrc jqp_parse(JQP_AUX *aux) {
-  yycontext yy = {0};
+  yycontext yy = { 0 };
   yy.aux = aux;
   if (setjmp(aux->fatal_jmp)) {
     if (aux->rc) {
@@ -1020,10 +1057,10 @@ finish:
   return aux->rc;
 }
 
-#define PT(data_, size_, ch_, count_) do {\
+#define PT(data_, size_, ch_, count_) do { \
     rc = pt(data_, size_, ch_, count_, op); \
     RCRET(rc); \
-  } while(0)
+} while (0)
 
 static iwrc _jqp_print_projection_nodes(const JQP_STRING *p, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
@@ -1217,10 +1254,11 @@ static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void 
   return rc;
 }
 
-static iwrc _jqp_print_filter(const JQP_QUERY *q,
-                              const JQP_FILTER *f,
-                              jbl_json_printer pt,
-                              void *op) {
+static iwrc _jqp_print_filter(
+  const JQP_QUERY  *q,
+  const JQP_FILTER *f,
+  jbl_json_printer pt,
+  void             *op) {
   iwrc rc = 0;
   if (f->anchor) {
     PT(0, 0, '@', 1);
@@ -1233,10 +1271,11 @@ static iwrc _jqp_print_filter(const JQP_QUERY *q,
   return rc;
 }
 
-static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
-                                       const JQP_EXPR_NODE *en,
-                                       jbl_json_printer pt,
-                                       void *op) {
+static iwrc _jqp_print_expression_node(
+  const JQP_QUERY     *q,
+  const JQP_EXPR_NODE *en,
+  jbl_json_printer    pt,
+  void                *op) {
   iwrc rc = 0;
   bool inbraces = (en != q->aux->expr && en->type == JQP_EXPR_NODE_TYPE);
   if (inbraces) {
@@ -1245,7 +1284,7 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
 
   // Primary key expression
   if (en->flags & JQP_EXPR_NODE_FLAG_PK) {
-    JQP_EXPR_NODE_PK *pk = (void *) en;
+    JQP_EXPR_NODE_PK *pk = (void*) en;
     if (pk->anchor) {
       PT(0, 0, '@', 1);
       PT(pk->anchor, -1, 0, 0);
@@ -1265,7 +1304,7 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
     } else if (pk->argument->type == JQP_JSON_TYPE) {
       rc = jbn_as_json(&pk->argument->json.jn, pt, op, 0);
       RCRET(rc);
-    }  else {
+    } else {
       iwlog_ecode_error3(IW_ERROR_ASSERTION);
       return IW_ERROR_ASSERTION;
     }
@@ -1281,7 +1320,7 @@ static iwrc _jqp_print_expression_node(const JQP_QUERY *q,
       rc = _jqp_print_expression_node(q, en, pt, op);
       RCRET(rc);
     } else if (en->type == JQP_FILTER_TYPE) {
-      rc = _jqp_print_filter(q, (const JQP_FILTER *) en, pt, op); // -V1027
+      rc = _jqp_print_filter(q, (const JQP_FILTER*) en, pt, op);  // -V1027
     } else {
       iwlog_ecode_error3(IW_ERROR_ASSERTION);
       return IW_ERROR_ASSERTION;
@@ -1358,7 +1397,6 @@ static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   }
   return rc;
 }
-
 
 iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
   if (!q || !pt) {

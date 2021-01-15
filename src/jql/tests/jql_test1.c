@@ -35,7 +35,9 @@ void _jql_test1_1(int num, iwrc expected) {
 
   rc = jqp_parse(aux);
   CU_ASSERT_EQUAL_FATAL(rc, expected);
-  if (expected) goto finish;
+  if (expected) {
+    goto finish;
+  }
 
   CU_ASSERT_PTR_NOT_NULL_FATAL(aux->query);
 
@@ -180,14 +182,14 @@ void jql_test1_2() {
   _jql_test1_2("{'f':22}", "@mycoll/=22", true);
 
   //
-  const char *doc =
-    "{"
-    " 'foo':{"
-    "   'bar': {'baz':{'zaz':33}},"
-    "   'sas': {'gaz':{'zaz':44, 'zarr':[42]}},"
-    "   'arr': [1,2,3,4]"
-    " }"
-    "}";
+  const char *doc
+    = "{"
+      " 'foo':{"
+      "   'bar': {'baz':{'zaz':33}},"
+      "   'sas': {'gaz':{'zaz':44, 'zarr':[42]}},"
+      "   'arr': [1,2,3,4]"
+      " }"
+      "}";
   _jql_test1_2(doc, "/foo/sas/gaz/zaz", true);
   _jql_test1_2(doc, "/foo/sas/gaz/[zaz = 44]", true);
   _jql_test1_2(doc, "/**/[zaz = 44]", true);
@@ -258,7 +260,6 @@ void jql_test1_3() {
                "{'foo':{'bar':22},'baz':'qux'}");
 }
 
-
 // Test projections
 void jql_test_1_4() {
 
@@ -280,21 +281,20 @@ void jql_test_1_4() {
   _jql_test1_3(true, "{'foo':{'bar':22},'name':'test'}", "/** | all - /name", "{'foo':{'bar':22}}");
 }
 
-
 int main() {
   CU_pSuite pSuite = NULL;
-  if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
+  if (CUE_SUCCESS != CU_initialize_registry()) {
+    return CU_get_error();
+  }
   pSuite = CU_add_suite("jql_test1", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (
-    (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1)) ||
-    (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2)) ||
-    (NULL == CU_add_test(pSuite, "jql_test1_3", jql_test1_3)) ||
-    (NULL == CU_add_test(pSuite, "jql_test1_4", jql_test_1_4))
-  ) {
+  if ((NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1))
+      || (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
+      || (NULL == CU_add_test(pSuite, "jql_test1_3", jql_test1_3))
+      || (NULL == CU_add_test(pSuite, "jql_test1_4", jql_test_1_4))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

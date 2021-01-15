@@ -71,50 +71,53 @@ typedef enum {
   JBL_ERROR_INVALID,                    /**< Invalid JBL object (JBL_ERROR_INVALID) */
   JBL_ERROR_PARSE_JSON,                 /**< Failed to parse JSON string (JBL_ERROR_PARSE_JSON) */
   JBL_ERROR_PARSE_UNQUOTED_STRING,      /**< Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING) */
-  JBL_ERROR_PARSE_INVALID_CODEPOINT,    /**< Invalid unicode codepoint/escape sequence (JBL_ERROR_PARSE_INVALID_CODEPOINT) */
+  JBL_ERROR_PARSE_INVALID_CODEPOINT,    /**< Invalid unicode codepoint/escape sequence
+                                           (JBL_ERROR_PARSE_INVALID_CODEPOINT) */
   JBL_ERROR_PARSE_INVALID_UTF8,         /**< Invalid utf8 string (JBL_ERROR_PARSE_INVALID_UTF8) */
   JBL_ERROR_JSON_POINTER,               /**< Invalid JSON pointer (rfc6901) path (JBL_ERROR_JSON_POINTER) */
   JBL_ERROR_PATH_NOTFOUND,              /**< JSON object not matched the path specified (JBL_ERROR_PATH_NOTFOUND) */
   JBL_ERROR_PATCH_INVALID,              /**< Invalid JSON patch specified (JBL_ERROR_PATCH_INVALID) */
   JBL_ERROR_PATCH_INVALID_OP,           /**< Invalid JSON patch operation specified (JBL_ERROR_PATCH_INVALID_OP) */
   JBL_ERROR_PATCH_NOVALUE,              /**< No value specified in JSON patch (JBL_ERROR_PATCH_NOVALUE) */
-  JBL_ERROR_PATCH_TARGET_INVALID,       /**< Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID) */
+  JBL_ERROR_PATCH_TARGET_INVALID,       /**< Could not find target object to set value (JBL_ERROR_PATCH_TARGET_INVALID)
+                                        */
   JBL_ERROR_PATCH_INVALID_VALUE,        /**< Invalid value specified by patch (JBL_ERROR_PATCH_INVALID_VALUE) */
-  JBL_ERROR_PATCH_INVALID_ARRAY_INDEX,  /**< Invalid array index in JSON patch path (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX) */
+  JBL_ERROR_PATCH_INVALID_ARRAY_INDEX,  /**< Invalid array index in JSON patch path
+                                           (JBL_ERROR_PATCH_INVALID_ARRAY_INDEX) */
   JBL_ERROR_NOT_AN_OBJECT,              /**< JBL is not an object (JBL_ERROR_NOT_AN_OBJECT) */
-  JBL_ERROR_TYPE_MISMATCHED,            /**< Type of JBL object mismatched user type constraints (JBL_ERROR_TYPE_MISMATCHED) */
+  JBL_ERROR_TYPE_MISMATCHED,            /**< Type of JBL object mismatched user type constraints
+                                           (JBL_ERROR_TYPE_MISMATCHED) */
   JBL_ERROR_PATCH_TEST_FAILED,          /**< JSON patch test operation failed (JBL_ERROR_PATCH_TEST_FAILED) */
-  JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED,  /**< Reached the maximal object nesting level: 1000 (JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED) */
-  _JBL_ERROR_END
+  JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED, /**< Reached the maximal object nesting level: 1000
+                                           (JBL_ERROR_MAX_NESTING_LEVEL_EXCEEDED) */
+  _JBL_ERROR_END,
 } jbl_ecode_t;
 
 typedef struct _JBL_iterator {
   unsigned char *pnext;
   unsigned char *plimit;
-  int   type;
-  int   count;
-  int   current;
+  int type;
+  int count;
+  int current;
 } JBL_iterator;
 
 typedef uint8_t jbl_print_flags_t;
-#define JBL_PRINT_PRETTY      ((jbl_print_flags_t) 0x01U)
-#define JBL_PRINT_CODEPOINTS  ((jbl_print_flags_t) 0x02U)
+#define JBL_PRINT_PRETTY     ((jbl_print_flags_t) 0x01U)
+#define JBL_PRINT_CODEPOINTS ((jbl_print_flags_t) 0x02U)
 
 typedef uint8_t jbn_visitor_cmd_t;
-#define JBL_VCMD_OK           ((jbn_visitor_cmd_t) 0x00U)
-#define JBL_VCMD_TERMINATE    ((jbn_visitor_cmd_t) 0x01U)
-#define JBL_VCMD_SKIP_NESTED  ((jbn_visitor_cmd_t) 0x02U)
-#define JBN_VCMD_DELETE       ((jbn_visitor_cmd_t) 0x04U)
+#define JBL_VCMD_OK          ((jbn_visitor_cmd_t) 0x00U)
+#define JBL_VCMD_TERMINATE   ((jbn_visitor_cmd_t) 0x01U)
+#define JBL_VCMD_SKIP_NESTED ((jbn_visitor_cmd_t) 0x02U)
+#define JBN_VCMD_DELETE      ((jbn_visitor_cmd_t) 0x04U)
 
 typedef enum {
   JBV_NONE = 0, // Do not reorder
   JBV_NULL,
-
   JBV_BOOL,     // Do not reorder
   JBV_I64,
   JBV_F64,
   JBV_STR,
-
   JBV_OBJECT,   // Do not reorder
   JBV_ARRAY,
 } jbl_type_t;
@@ -126,8 +129,8 @@ typedef struct _JBL_NODE {
   struct _JBL_NODE *next;
   struct _JBL_NODE *prev;
   struct _JBL_NODE *parent; /**< Optional parent */
-  const char *key;
-  int klidx;
+  const char       *key;
+  int      klidx;
   uint32_t flags;           /**< Utility node flags */
 
   // Do not sort/add members after this point (offsetof usage below)
@@ -136,9 +139,9 @@ typedef struct _JBL_NODE {
   jbl_type_t type;
   union {
     const char *vptr;
-    bool vbool;
-    int64_t vi64;
-    double vf64;
+    bool       vbool;
+    int64_t    vi64;
+    double     vf64;
   };
 } *JBL_NODE;
 
@@ -152,7 +155,6 @@ typedef enum {
   JBP_COPY,
   JBP_MOVE,
   JBP_TEST,
-
   // Non standard operations
   JBP_INCREMENT,  /**< Value increment */
   JBP_ADD_CREATE, /**< Create intermediate object nodes for missing path segments */
@@ -164,10 +166,10 @@ typedef enum {
  */
 typedef struct _JBL_PATCH {
   jbp_patch_t op;
-  const char *path;
-  const char *from;
-  const char *vjson;
-  JBL_NODE vnode;
+  const char  *path;
+  const char  *from;
+  const char  *vjson;
+  JBL_NODE    vnode;
 } JBL_PATCH;
 
 /**
@@ -176,13 +178,13 @@ typedef struct _JBL_PATCH {
  */
 typedef struct _JBL_PTR {
   uint64_t op;      /**< Opaque data associated with pointer */
-  int cnt;          /**< Number of nodes */
-  int sz;           /**< Size of JBL_PTR allocated area */
-  char *n[1];       /**< Path nodes */
+  int      cnt;     /**< Number of nodes */
+  int      sz;      /**< Size of JBL_PTR allocated area */
+  char     *n[1];   /**< Path nodes */
 } *JBL_PTR;
 
 /** Prints JSON to some oputput specified by `op` */
-typedef iwrc(*jbl_json_printer)(const char *data, int size, char ch, int count, void *op);
+typedef iwrc (*jbl_json_printer)(const char *data, int size, char ch, int count, void *op);
 
 /**
  * @brief Create empty binary JSON object.
@@ -209,7 +211,7 @@ IW_EXPORT iwrc jbl_create_empty_array(JBL *jblp);
  * @param user_data User data pointer. Optional.
  * @param user_data_free_fn User data dispose function. Optional.
  */
-IW_EXPORT void jbl_set_user_data(JBL jbl, void *user_data, void (*user_data_free_fn)(void *));
+IW_EXPORT void jbl_set_user_data(JBL jbl, void *user_data, void (*user_data_free_fn)(void*));
 
 /**
  * @brief Returns user data associated with given `jbl` container.
@@ -382,13 +384,14 @@ IW_EXPORT void jbn_apply_from(JBL_NODE target, JBL_NODE from);
  *                     Do not set it to `true` until you clearly understand what are you doing.
  * @param pool Memory pool used for allocations
  */
-IW_EXPORT iwrc jbn_copy_path(JBL_NODE src,
-                             const char *src_path,
-                             JBL_NODE target,
-                             const char *target_path,
-                             bool overwrite_on_nulls,
-                             bool no_src_clone,
-                             IWPOOL *pool);
+IW_EXPORT iwrc jbn_copy_path(
+  JBL_NODE   src,
+  const char *src_path,
+  JBL_NODE   target,
+  const char *target_path,
+  bool       overwrite_on_nulls,
+  bool       no_src_clone,
+  IWPOOL     *pool);
 
 /**
  * @brief Copies a set of values pointed by `paths` zero terminated array
@@ -403,12 +406,13 @@ IW_EXPORT iwrc jbn_copy_path(JBL_NODE src,
  *                     Do not set it to `true` until you clearly understand what are you doing.
  * @param pool Memory pool used for allocations
  */
-IW_EXPORT iwrc jbn_copy_paths(JBL_NODE src,
-                              JBL_NODE target,
-                              const char **paths,
-                              bool overwrite_on_nulls,
-                              bool no_src_clone,
-                              IWPOOL *pool);
+IW_EXPORT iwrc jbn_copy_paths(
+  JBL_NODE   src,
+  JBL_NODE   target,
+  const char **paths,
+  bool       overwrite_on_nulls,
+  bool       no_src_clone,
+  IWPOOL     *pool);
 
 /**
  * @brief Clones a given `src` JBL object and stores it in memory allocated from `pool`.
@@ -509,8 +513,9 @@ IW_EXPORT iwrc jbn_at(JBL_NODE node, const char *path, JBL_NODE *res);
 
 IW_EXPORT int jbn_path_compare(JBL_NODE n1, JBL_NODE n2, const char *path, jbl_type_t vtype, iwrc *rcp);
 
-IW_EXPORT int jbn_paths_compare(JBL_NODE n1, const char *n1path, JBL_NODE n2, const char *n2path, jbl_type_t vtype,
-                                iwrc *rcp);
+IW_EXPORT int jbn_paths_compare(
+  JBL_NODE n1, const char *n1path, JBL_NODE n2, const char *n2path, jbl_type_t vtype,
+  iwrc *rcp);
 
 IW_EXPORT int jbn_path_compare_str(JBL_NODE n, const char *path, const char *sv, iwrc *rcp);
 
@@ -714,8 +719,9 @@ IW_EXPORT void jbn_add_item(JBL_NODE parent, JBL_NODE node);
  * @param node_out Optional placeholder for new node.
  * @param pool Allocation pool.
  */
-IW_EXPORT iwrc jbn_add_item_str(JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out,
-                                IWPOOL *pool);
+IW_EXPORT iwrc jbn_add_item_str(
+  JBL_NODE parent, const char *key, const char *val, int vlen, JBL_NODE *node_out,
+  IWPOOL *pool);
 
 /**
  * @brief Adds null JSON value to the given `parent` node.
@@ -840,11 +846,11 @@ IW_EXPORT iwrc jbl_ptr_serialize(JBL_PTR ptr, IWXSTR *xstr);
  */
 typedef struct _JBN_VCTX {
   JBL_NODE root;  /**< Root node from which started visitor */
-  void *op;       /**< Arbitrary opaque data */
-  void *result;
-  IWPOOL *pool;   /**< Pool placeholder, initialization is responsibility of `JBN_VCTX` creator */
-  int pos;        /**< Aux position, not actually used by visitor core */
-  bool terminate; /**< It `true` document traversal will be terminated immediately. */
+  void     *op;   /**< Arbitrary opaque data */
+  void     *result;
+  IWPOOL   *pool;     /**< Pool placeholder, initialization is responsibility of `JBN_VCTX` creator */
+  int      pos;       /**< Aux position, not actually used by visitor core */
+  bool     terminate; /**< It `true` document traversal will be terminated immediately. */
 } JBN_VCTX;
 
 /**
@@ -871,7 +877,6 @@ IW_EXPORT iwrc jbl_patch_from_json(JBL jbl, const char *patchjson);
 IW_EXPORT iwrc jbl_merge_patch(JBL jbl, const char *patchjson);
 
 IW_EXPORT iwrc jbl_merge_patch_jbl(JBL jbl, JBL patch);
-
 
 
 IW_EXPORT iwrc jbl_init(void);

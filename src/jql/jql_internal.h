@@ -9,41 +9,39 @@
 
 /** Query object */
 struct _JQL {
-  bool dirty;
-  bool matched;
-  JQP_QUERY *qp;
-  JQP_AUX *aux;
+  bool       dirty;
+  bool       matched;
+  JQP_QUERY  *qp;
+  JQP_AUX    *aux;
   const char *coll;
-  void *opaque;
+  void       *opaque;
 };
 
 /** Placeholder value type */
 typedef enum {
-
   JQVAL_NULL,  // Do not reorder
   JQVAL_I64,
   JQVAL_F64,
   JQVAL_STR,
   JQVAL_BOOL,
   JQVAL_RE,
-
   JQVAL_JBLNODE, // Do not reorder JQVAL_JBLNODE,JQVAL_BINN must be last
-  JQVAL_BINN
+  JQVAL_BINN,
 } jqval_type_t;
 
 /** Placeholder value */
 typedef struct {
   jqval_type_t type;
-  void (*freefn)(void *, void *);
+  void (*freefn)(void*, void*);
   void *freefn_op;
   union {
     JBL_NODE vnode;
-    binn *vbinn;
-    int64_t vi64;
-    double vf64;
+    binn     *vbinn;
+    int64_t  vi64;
+    double   vf64;
     const char *vstr;
-    bool vbool;
-    struct re *vre;
+    bool       vbool;
+    struct re  *vre;
   };
 } JQVAL;
 
@@ -62,4 +60,3 @@ int jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp);
 bool jql_match_jqval_pair(JQP_AUX *aux, JQVAL *left, JQP_OP *jqop, JQVAL *right, iwrc *rcp);
 
 #endif
-

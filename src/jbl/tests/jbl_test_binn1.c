@@ -3,9 +3,9 @@
 #include "jbl_internal.h"
 #include <CUnit/Basic.h>
 
-#define INT64_FORMAT  PRId64
-#define UINT64_FORMAT PRIu64
-#define INT64_HEX_FORMAT  PRIx64
+#define INT64_FORMAT     PRId64
+#define UINT64_FORMAT    PRIu64
+#define INT64_HEX_FORMAT PRIx64
 
 typedef unsigned short int     u16;
 typedef unsigned int           u32;
@@ -34,24 +34,28 @@ static BOOL CheckAllocation(binn *item, int add_size) {
   int alloc_size;
   void *ptr;
   if (item->used_size + add_size > item->alloc_size) {
-    if (item->pre_allocated) return FALSE;
+    if (item->pre_allocated) {
+      return FALSE;
+    }
     alloc_size = CalcAllocation(item->used_size + add_size, item->alloc_size);
     ptr = realloc(item->pbuf, alloc_size);
-    if (ptr == NULL) return FALSE;
+    if (ptr == NULL) {
+      return FALSE;
+    }
     item->pbuf = ptr;
     item->alloc_size = alloc_size;
   }
   return TRUE;
 }
 
-#define BINN_MAGIC            0x1F22B11F
+#define BINN_MAGIC 0x1F22B11F
 
-#define MAX_BINN_HEADER       9  // [1:type][4:size][4:count]
-#define MIN_BINN_SIZE         3  // [1:type][1:size][1:count]
-#define CHUNK_SIZE            256  // 1024
+#define MAX_BINN_HEADER 9        // [1:type][4:size][4:count]
+#define MIN_BINN_SIZE   3        // [1:type][1:size][1:count]
+#define CHUNK_SIZE      256      // 1024
 
-extern void *(*malloc_fn)(int len);
-extern void *(*realloc_fn)(void *ptr, int len);
+extern void*(*malloc_fn)(int len);
+extern void* (*realloc_fn)(void *ptr, int len);
 extern void (*free_fn)(void *ptr);
 
 /*************************************************************************************/
@@ -64,12 +68,15 @@ typedef unsigned long long int u64;
 
 void *memdup(void *src, int size) {
   void *dest;
-  if (src == NULL || size <= 0) return NULL;
+  if ((src == NULL) || (size <= 0)) {
+    return NULL;
+  }
   dest = malloc(size);
-  if (dest == NULL) return NULL;
+  if (dest == NULL) {
+    return NULL;
+  }
   memcpy(dest, src, size);
   return dest;
-
 }
 
 /***************************************************************************/
@@ -98,19 +105,16 @@ void pass_int64(int64 a) {
 
   CU_ASSERT(a == 9223372036854775807);
   CU_ASSERT(a > 9223372036854775806);
-
 }
 
 int64 return_int64() {
 
   return 9223372036854775807;
-
 }
 
 int64 return_passed_int64(int64 a) {
 
   return a;
-
 }
 
 /*************************************************************************************/
@@ -129,14 +133,14 @@ void test_int64() {
   CU_ASSERT(i64 == 9223372036854775807);
 
   /*  do not worked!
-  b = 9223372036854775807;
-  printf("value of b1=%" G_GINT64_FORMAT "\n", b);
-  snprintf(64, buf, "%" G_GINT64_FORMAT, b);
-  printf(" value of b2=%s\n", buf);
+     b = 9223372036854775807;
+     printf("value of b1=%" G_GINT64_FORMAT "\n", b);
+     snprintf(64, buf, "%" G_GINT64_FORMAT, b);
+     printf(" value of b2=%s\n", buf);
 
-  ltoa(i64, buf, 10);
-  printf(" value of i64=%s\n", buf);
-  */
+     ltoa(i64, buf, 10);
+     printf(" value of i64=%s\n", buf);
+   */
 
   i64toa(i64, buf, 10);
   //printf(" value of i64=%s\n", buf);
@@ -150,7 +154,6 @@ void test_int64() {
   CU_ASSERT(strcmp(buf, "-987654321987654321") == 0);
 
   printf("OK\n");
-
 }
 
 /*************************************************************************************/
@@ -162,40 +165,49 @@ BOOL AlmostEqualFloats(float A, float B, int maxUlps) {
   // Make sure maxUlps is non-negative and small enough that the
   // default NAN won't compare as equal to anything.
   CU_ASSERT(maxUlps > 0 && maxUlps < 4 * 1024 * 1024);
-  aInt = *(int *)&A;
-  bInt = *(int *)&B;
+  aInt = *(int*) &A;
+  bInt = *(int*) &B;
   // Make aInt lexicographically ordered as a twos-complement int
-  if (aInt < 0) aInt = 0x80000000 - aInt;
-  if (bInt < 0) bInt = 0x80000000 - bInt;
+  if (aInt < 0) {
+    aInt = 0x80000000 - aInt;
+  }
+  if (bInt < 0) {
+    bInt = 0x80000000 - bInt;
+  }
   intDiff = abs(aInt - bInt);
-  if (intDiff <= maxUlps) return TRUE;
+  if (intDiff <= maxUlps) {
+    return TRUE;
+  }
   return FALSE;
 }
 
 /*************************************************************************************/
 
-#define VERYSMALL  (1.0E-150)
-#define EPSILON    (1.0E-8)
+#define VERYSMALL (1.0E-150)
+#define EPSILON   (1.0E-8)
 
 #ifndef max
-#define max(a,b)   (((a) > (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
 #ifndef min
-#define min(a,b)   (((a) < (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
 BOOL AlmostEqualDoubles(double a, double b) {
   double absDiff, maxAbs, absA, absB;
 
   absDiff = fabs(a - b);
-  if (absDiff < VERYSMALL) return TRUE;
+  if (absDiff < VERYSMALL) {
+    return TRUE;
+  }
 
   absA = fabs(a);
   absB = fabs(b);
-  maxAbs  = max(absA, absB);
-  if ((absDiff / maxAbs) < EPSILON)
+  maxAbs = max(absA, absB);
+  if ((absDiff / maxAbs) < EPSILON) {
     return TRUE;
+  }
   printf("a=%g b=%g\n", a, b);
   return FALSE;
 }
@@ -203,7 +215,7 @@ BOOL AlmostEqualDoubles(double a, double b) {
 /*************************************************************************************/
 
 void test_floating_point_numbers() {
-  char  buf[256];
+  char buf[256];
   float f1;
   double d1;
 
@@ -240,10 +252,10 @@ void test_floating_point_numbers() {
   CU_ASSERT(AlmostEqualFloats(f1, 1.234, 2) == TRUE);
 
   /*
-  sprintf(buf, "%f", d1);  // from double to string
-  CU_ASSERT(buf[0] != 0);
-  CU_ASSERT(strcmp(buf, "1.234") == 0);
-  */
+     sprintf(buf, "%f", d1);  // from double to string
+     CU_ASSERT(buf[0] != 0);
+     CU_ASSERT(strcmp(buf, "1.234") == 0);
+   */
 
   sprintf(buf, "%g", d1);
   CU_ASSERT(buf[0] != 0);
@@ -256,10 +268,10 @@ void test_floating_point_numbers() {
   CU_ASSERT(AlmostEqualFloats(f1, 12.34, 2) == TRUE);
 
   /*
-  sprintf(buf, "%f", d1);  // from double to string
-  CU_ASSERT(buf[0] != 0);
-  CU_ASSERT(strcmp(buf, "12.34") == 0);
-  */
+     sprintf(buf, "%f", d1);  // from double to string
+     CU_ASSERT(buf[0] != 0);
+     CU_ASSERT(strcmp(buf, "12.34") == 0);
+   */
 
   sprintf(buf, "%g", d1);
   CU_ASSERT(buf[0] != 0);
@@ -278,7 +290,6 @@ void test_floating_point_numbers() {
 
 
   printf("OK\n");
-
 }
 
 /*************************************************************************************/
@@ -323,7 +334,7 @@ void test1() {
   CU_ASSERT(binn_new(0, 0, NULL) == INVALID_BINN);
   CU_ASSERT(binn_new(5, 0, NULL) == INVALID_BINN);
   CU_ASSERT(binn_new(BINN_MAP, -1, NULL) == INVALID_BINN);
-  ptr = (char *) &obj1;  // create a valid pointer
+  ptr = (char*) &obj1;   // create a valid pointer
   CU_ASSERT(binn_new(BINN_MAP, -1, ptr) == INVALID_BINN);
   CU_ASSERT(binn_new(BINN_MAP, MIN_BINN_SIZE - 1, ptr) == INVALID_BINN);
 
@@ -449,7 +460,6 @@ void test1() {
   CU_ASSERT(binn_object_set(obj, "test", BINN_BLOB, &i, -15) == FALSE);
 
 
-
   // read values - invalid 1 - empty binns -------------------------------------------
 
   ptr2 = binn_ptr(list);
@@ -494,36 +504,36 @@ void test1() {
   CU_ASSERT(pblob != NULL);
   memset(pblob, 55, blobsize);
 
-  CU_ASSERT(binn_list_add(list, BINN_NULL, 0, 0) == TRUE);           // second
-  CU_ASSERT(binn_list_add(list, BINN_UINT8, &vbyte, 0) == TRUE);     // third
-  CU_ASSERT(binn_list_add(list, BINN_INT16, &vint16, 0) == TRUE);    // fourth
-  CU_ASSERT(binn_list_add(list, BINN_UINT16, &vuint16, 0) == TRUE);  // fifth
-  CU_ASSERT(binn_list_add(list, BINN_INT32, &vint32, 0) == TRUE);    // 6th
-  CU_ASSERT(binn_list_add(list, BINN_UINT32, &vuint32, 0) == TRUE);  // 7th
-  CU_ASSERT(binn_list_add(list, BINN_INT64, &vint64, 0) == TRUE);    // 8th
-  CU_ASSERT(binn_list_add(list, BINN_UINT64, &vuint64, 0) == TRUE);  // 9th
+  CU_ASSERT(binn_list_add(list, BINN_NULL, 0, 0) == TRUE);                      // second
+  CU_ASSERT(binn_list_add(list, BINN_UINT8, &vbyte, 0) == TRUE);                // third
+  CU_ASSERT(binn_list_add(list, BINN_INT16, &vint16, 0) == TRUE);               // fourth
+  CU_ASSERT(binn_list_add(list, BINN_UINT16, &vuint16, 0) == TRUE);             // fifth
+  CU_ASSERT(binn_list_add(list, BINN_INT32, &vint32, 0) == TRUE);               // 6th
+  CU_ASSERT(binn_list_add(list, BINN_UINT32, &vuint32, 0) == TRUE);             // 7th
+  CU_ASSERT(binn_list_add(list, BINN_INT64, &vint64, 0) == TRUE);               // 8th
+  CU_ASSERT(binn_list_add(list, BINN_UINT64, &vuint64, 0) == TRUE);             // 9th
   CU_ASSERT(binn_list_add(list, BINN_STRING, "this is the string", 0) == TRUE); // 10th
   CU_ASSERT(binn_list_add(list, BINN_BLOB, pblob, blobsize) == TRUE);           // 11th
 
-  CU_ASSERT(binn_map_set(map, 99000, BINN_NULL, 0, 0) == TRUE);           // third
-  CU_ASSERT(binn_map_set(map, 99001, BINN_UINT8, &vbyte, 0) == TRUE);     // fourth
-  CU_ASSERT(binn_map_set(map, 99002, BINN_INT16, &vint16, 0) == TRUE);    // fifth
-  CU_ASSERT(binn_map_set(map, 99003, BINN_UINT16, &vuint16, 0) == TRUE);  // 6th
-  CU_ASSERT(binn_map_set(map, 99004, BINN_INT32, &vint32, 0) == TRUE);    // 7th
-  CU_ASSERT(binn_map_set(map, 99005, BINN_UINT32, &vuint32, 0) == TRUE);  // 8th
-  CU_ASSERT(binn_map_set(map, 99006, BINN_INT64, &vint64, 0) == TRUE);    // 9th
-  CU_ASSERT(binn_map_set(map, 99007, BINN_UINT64, &vuint64, 0) == TRUE);  // 10th
+  CU_ASSERT(binn_map_set(map, 99000, BINN_NULL, 0, 0) == TRUE);                      // third
+  CU_ASSERT(binn_map_set(map, 99001, BINN_UINT8, &vbyte, 0) == TRUE);                // fourth
+  CU_ASSERT(binn_map_set(map, 99002, BINN_INT16, &vint16, 0) == TRUE);               // fifth
+  CU_ASSERT(binn_map_set(map, 99003, BINN_UINT16, &vuint16, 0) == TRUE);             // 6th
+  CU_ASSERT(binn_map_set(map, 99004, BINN_INT32, &vint32, 0) == TRUE);               // 7th
+  CU_ASSERT(binn_map_set(map, 99005, BINN_UINT32, &vuint32, 0) == TRUE);             // 8th
+  CU_ASSERT(binn_map_set(map, 99006, BINN_INT64, &vint64, 0) == TRUE);               // 9th
+  CU_ASSERT(binn_map_set(map, 99007, BINN_UINT64, &vuint64, 0) == TRUE);             // 10th
   CU_ASSERT(binn_map_set(map, 99008, BINN_STRING, "this is the string", 0) == TRUE); // 11th
   CU_ASSERT(binn_map_set(map, 99009, BINN_BLOB, pblob, blobsize) == TRUE);           // 12th
 
-  CU_ASSERT(binn_object_set(obj, "key0", BINN_NULL, 0, 0) == TRUE);           // third
-  CU_ASSERT(binn_object_set(obj, "key1", BINN_UINT8, &vbyte, 0) == TRUE);     // fourth
-  CU_ASSERT(binn_object_set(obj, "key2", BINN_INT16, &vint16, 0) == TRUE);    // fifth
-  CU_ASSERT(binn_object_set(obj, "key3", BINN_UINT16, &vuint16, 0) == TRUE);  // 6th
-  CU_ASSERT(binn_object_set(obj, "key4", BINN_INT32, &vint32, 0) == TRUE);    // 7th
-  CU_ASSERT(binn_object_set(obj, "key5", BINN_UINT32, &vuint32, 0) == TRUE);  // 8th
-  CU_ASSERT(binn_object_set(obj, "key6", BINN_INT64, &vint64, 0) == TRUE);    // 9th
-  CU_ASSERT(binn_object_set(obj, "key7", BINN_UINT64, &vuint64, 0) == TRUE);  // 10th
+  CU_ASSERT(binn_object_set(obj, "key0", BINN_NULL, 0, 0) == TRUE);                      // third
+  CU_ASSERT(binn_object_set(obj, "key1", BINN_UINT8, &vbyte, 0) == TRUE);                // fourth
+  CU_ASSERT(binn_object_set(obj, "key2", BINN_INT16, &vint16, 0) == TRUE);               // fifth
+  CU_ASSERT(binn_object_set(obj, "key3", BINN_UINT16, &vuint16, 0) == TRUE);             // 6th
+  CU_ASSERT(binn_object_set(obj, "key4", BINN_INT32, &vint32, 0) == TRUE);               // 7th
+  CU_ASSERT(binn_object_set(obj, "key5", BINN_UINT32, &vuint32, 0) == TRUE);             // 8th
+  CU_ASSERT(binn_object_set(obj, "key6", BINN_INT64, &vint64, 0) == TRUE);               // 9th
+  CU_ASSERT(binn_object_set(obj, "key7", BINN_UINT64, &vuint64, 0) == TRUE);             // 10th
   CU_ASSERT(binn_object_set(obj, "key8", BINN_STRING, "this is the string", 0) == TRUE); // 11th
   CU_ASSERT(binn_object_set(obj, "key9", BINN_BLOB, pblob, blobsize) == TRUE);           // 12th
 
@@ -572,12 +582,7 @@ void test1() {
   // read values - invalid 2 ------------------------------------------------------------
 
 
-
-
-
-
   // read keys --------------------------------------------------------------------------
-
 
 
   // binn_size - invalid and valid args --------------------------------------------
@@ -602,7 +607,6 @@ void test1() {
 
 
   printf("OK\n");
-
 }
 
 /*************************************************************************************/
@@ -927,7 +931,6 @@ void _test2() {
   memset(&value, 0, sizeof(binn));
 
 
-
   // read with other interface
 
   CU_ASSERT(binn_list_get_int32(list, 1, &vint32) == TRUE);
@@ -999,7 +1002,6 @@ void _test2() {
   CU_ASSERT(memcmp(value.ptr, pblob, blobsize) == 0);
 
 
-
   // read with other interface
 
   CU_ASSERT(binn_list_int32(list, 1) == 123);
@@ -1058,7 +1060,6 @@ void _test2() {
   free(pblob);
 
   printf("OK\n");
-
 }
 
 void test2() {
@@ -1138,7 +1139,6 @@ void test4() {
   // add values - invalid ---------------------------------------------------------------
 
 
-
   // read values - invalid 1 - empty binns -------------------------------------------
 
   ptr = binn_ptr(list);
@@ -1150,14 +1150,14 @@ void test4() {
 
   ptr = binn_ptr(map);
   CU_ASSERT(ptr != NULL);
-  CU_ASSERT(binn_map_read(ptr,     0, &type, &size) == NULL);
+  CU_ASSERT(binn_map_read(ptr, 0, &type, &size) == NULL);
   CU_ASSERT(binn_map_read(ptr, 55001, &type, &size) == NULL);
-  CU_ASSERT(binn_map_read(ptr,    -1, &type, &size) == NULL);
+  CU_ASSERT(binn_map_read(ptr, -1, &type, &size) == NULL);
 
   ptr = binn_ptr(obj);
   CU_ASSERT(ptr != NULL);
-  CU_ASSERT(binn_object_read(ptr, NULL,   &type, &size) == NULL);
-  CU_ASSERT(binn_object_read(ptr, "",     &type, &size) == NULL);
+  CU_ASSERT(binn_object_read(ptr, NULL, &type, &size) == NULL);
+  CU_ASSERT(binn_object_read(ptr, "", &type, &size) == NULL);
   CU_ASSERT(binn_object_read(ptr, "test", &type, &size) == NULL);
 
 
@@ -1181,36 +1181,36 @@ void test4() {
   CU_ASSERT(pblob != NULL);
   memset(pblob, 55, blobsize);
 
-  CU_ASSERT(binn_list_add(list, BINN_NULL, 0, 0) == TRUE);           // second
-  CU_ASSERT(binn_list_add(list, BINN_UINT8, &vbyte, 0) == TRUE);     // third
-  CU_ASSERT(binn_list_add(list, BINN_INT16, &vint16, 0) == TRUE);    // fourth
-  CU_ASSERT(binn_list_add(list, BINN_UINT16, &vuint16, 0) == TRUE);  // fifth
-  CU_ASSERT(binn_list_add(list, BINN_INT32, &vint32, 0) == TRUE);    // 6th
-  CU_ASSERT(binn_list_add(list, BINN_UINT32, &vuint32, 0) == TRUE);  // 7th
-  CU_ASSERT(binn_list_add(list, BINN_INT64, &vint64, 0) == TRUE);    // 8th
-  CU_ASSERT(binn_list_add(list, BINN_UINT64, &vuint64, 0) == TRUE);  // 9th
+  CU_ASSERT(binn_list_add(list, BINN_NULL, 0, 0) == TRUE);                      // second
+  CU_ASSERT(binn_list_add(list, BINN_UINT8, &vbyte, 0) == TRUE);                // third
+  CU_ASSERT(binn_list_add(list, BINN_INT16, &vint16, 0) == TRUE);               // fourth
+  CU_ASSERT(binn_list_add(list, BINN_UINT16, &vuint16, 0) == TRUE);             // fifth
+  CU_ASSERT(binn_list_add(list, BINN_INT32, &vint32, 0) == TRUE);               // 6th
+  CU_ASSERT(binn_list_add(list, BINN_UINT32, &vuint32, 0) == TRUE);             // 7th
+  CU_ASSERT(binn_list_add(list, BINN_INT64, &vint64, 0) == TRUE);               // 8th
+  CU_ASSERT(binn_list_add(list, BINN_UINT64, &vuint64, 0) == TRUE);             // 9th
   CU_ASSERT(binn_list_add(list, BINN_STRING, "this is the string", 0) == TRUE); // 10th
   CU_ASSERT(binn_list_add(list, BINN_BLOB, pblob, blobsize) == TRUE);           // 11th
 
-  CU_ASSERT(binn_map_set(map, 99000, BINN_NULL, 0, 0) == TRUE);           // third
-  CU_ASSERT(binn_map_set(map, 99001, BINN_UINT8, &vbyte, 0) == TRUE);     // fourth
-  CU_ASSERT(binn_map_set(map, 99002, BINN_INT16, &vint16, 0) == TRUE);    // fifth
-  CU_ASSERT(binn_map_set(map, 99003, BINN_UINT16, &vuint16, 0) == TRUE);  // 6th
-  CU_ASSERT(binn_map_set(map, 99004, BINN_INT32, &vint32, 0) == TRUE);    // 7th
-  CU_ASSERT(binn_map_set(map, 99005, BINN_UINT32, &vuint32, 0) == TRUE);  // 8th
-  CU_ASSERT(binn_map_set(map, 99006, BINN_INT64, &vint64, 0) == TRUE);    // 9th
-  CU_ASSERT(binn_map_set(map, 99007, BINN_UINT64, &vuint64, 0) == TRUE);  // 10th
+  CU_ASSERT(binn_map_set(map, 99000, BINN_NULL, 0, 0) == TRUE);                      // third
+  CU_ASSERT(binn_map_set(map, 99001, BINN_UINT8, &vbyte, 0) == TRUE);                // fourth
+  CU_ASSERT(binn_map_set(map, 99002, BINN_INT16, &vint16, 0) == TRUE);               // fifth
+  CU_ASSERT(binn_map_set(map, 99003, BINN_UINT16, &vuint16, 0) == TRUE);             // 6th
+  CU_ASSERT(binn_map_set(map, 99004, BINN_INT32, &vint32, 0) == TRUE);               // 7th
+  CU_ASSERT(binn_map_set(map, 99005, BINN_UINT32, &vuint32, 0) == TRUE);             // 8th
+  CU_ASSERT(binn_map_set(map, 99006, BINN_INT64, &vint64, 0) == TRUE);               // 9th
+  CU_ASSERT(binn_map_set(map, 99007, BINN_UINT64, &vuint64, 0) == TRUE);             // 10th
   CU_ASSERT(binn_map_set(map, 99008, BINN_STRING, "this is the string", 0) == TRUE); // 11th
   CU_ASSERT(binn_map_set(map, 99009, BINN_BLOB, pblob, blobsize) == TRUE);           // 12th
 
-  CU_ASSERT(binn_object_set(obj, "key0", BINN_NULL, 0, 0) == TRUE);           // third
-  CU_ASSERT(binn_object_set(obj, "key1", BINN_UINT8, &vbyte, 0) == TRUE);     // fourth
-  CU_ASSERT(binn_object_set(obj, "key2", BINN_INT16, &vint16, 0) == TRUE);    // fifth
-  CU_ASSERT(binn_object_set(obj, "key3", BINN_UINT16, &vuint16, 0) == TRUE);  // 6th
-  CU_ASSERT(binn_object_set(obj, "key4", BINN_INT32, &vint32, 0) == TRUE);    // 7th
-  CU_ASSERT(binn_object_set(obj, "key5", BINN_UINT32, &vuint32, 0) == TRUE);  // 8th
-  CU_ASSERT(binn_object_set(obj, "key6", BINN_INT64, &vint64, 0) == TRUE);    // 9th
-  CU_ASSERT(binn_object_set(obj, "key7", BINN_UINT64, &vuint64, 0) == TRUE);  // 10th
+  CU_ASSERT(binn_object_set(obj, "key0", BINN_NULL, 0, 0) == TRUE);                      // third
+  CU_ASSERT(binn_object_set(obj, "key1", BINN_UINT8, &vbyte, 0) == TRUE);                // fourth
+  CU_ASSERT(binn_object_set(obj, "key2", BINN_INT16, &vint16, 0) == TRUE);               // fifth
+  CU_ASSERT(binn_object_set(obj, "key3", BINN_UINT16, &vuint16, 0) == TRUE);             // 6th
+  CU_ASSERT(binn_object_set(obj, "key4", BINN_INT32, &vint32, 0) == TRUE);               // 7th
+  CU_ASSERT(binn_object_set(obj, "key5", BINN_UINT32, &vuint32, 0) == TRUE);             // 8th
+  CU_ASSERT(binn_object_set(obj, "key6", BINN_INT64, &vint64, 0) == TRUE);               // 9th
+  CU_ASSERT(binn_object_set(obj, "key7", BINN_UINT64, &vuint64, 0) == TRUE);             // 10th
   CU_ASSERT(binn_object_set(obj, "key8", BINN_STRING, "this is the string", 0) == TRUE); // 11th
   CU_ASSERT(binn_object_set(obj, "key9", BINN_BLOB, pblob, blobsize) == TRUE);           // 12th
 
@@ -1262,10 +1262,6 @@ void test4() {
   // read values - invalid 2 ------------------------------------------------------------
 
 
-
-
-
-
   // read keys --------------------------------------------------------------------------
 
   ptr = binn_ptr(map);
@@ -1304,7 +1300,6 @@ void test4() {
   CU_ASSERT(strcmp(key, "key9") == 0);
 
 
-
   // read values - valid ----------------------------------------------------------------
 
   ptr = binn_ptr(obj1);
@@ -1333,7 +1328,6 @@ void test4() {
   CU_ASSERT(type == BINN_UINT32);
   //CU_ASSERT(size > 0);
   CU_ASSERT(*pint32 == vuint32);
-
 
 
   ptr = binn_ptr(list);
@@ -1427,8 +1421,6 @@ void test4() {
   CU_ASSERT(memcmp(p2, pblob, blobsize) == 0);
 
 
-
-
   ptr = binn_ptr(map);
   CU_ASSERT(ptr != NULL);
 
@@ -1518,8 +1510,6 @@ void test4() {
   CU_ASSERT(type == BINN_BLOB);
   CU_ASSERT(size == blobsize);
   CU_ASSERT(memcmp(p2, pblob, blobsize) == 0);
-
-
 
 
   ptr = binn_ptr(obj);
@@ -1686,8 +1676,6 @@ void test4() {
   CU_ASSERT(strcmp(pstr, "after the list") == 0);
 
 
-
-
   // binn_ptr, IsValidBinnHeader, binn_is_valid...
   // also with invalid/null pointers, with pointers containing invalid data...
 
@@ -1751,7 +1739,6 @@ void test4() {
   CU_ASSERT(size == list->size);
 
 
-
   // binn_size - invalid and valid args --------------------------------------------
 
   CU_ASSERT(binn_size(NULL) == 0);
@@ -1769,7 +1756,6 @@ void test4() {
   binn_free(obj);
 
   printf("OK\n");
-
 }
 
 /*************************************************************************************/
@@ -1778,41 +1764,41 @@ void test_invalid_binn() {
 
   unsigned char buffers[][20] = {
     { 0xE0 },
-    { 0xE0, 0x7E },
-    { 0xE0, 0x7E, 0x7F },
-    { 0xE0, 0x7E, 0x7F, 0x12 },
-    { 0xE0, 0x7E, 0x7F, 0x12, 0x34 },
-    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0x01 },
-    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0x7F },
-    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF },
-    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF },
-    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF, 0xFF },
-    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF },
-    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0x01 },
-    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
-    { 0xE0, 0x7E, 0xFF },
-    { 0xE0, 0x7E, 0xFF, 0x12 },
-    { 0xE0, 0x7E, 0xFF, 0x12, 0x34 },
-    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0x01 },
-    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0x7F },
-    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF },
-    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF },
-    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF },
-    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF },
-    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0x01 },
-    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },
-    { 0xE0, 0x8E },
-    { 0xE0, 0x8E, 0xFF },
-    { 0xE0, 0x8E, 0xFF, 0x12 },
-    { 0xE0, 0x8E, 0xFF, 0x12, 0x34 },
-    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0x01 },
-    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0x7F },
-    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF },
-    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF },
-    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF },
-    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF },
-    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0x01 },
-    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
+    { 0xE0, 0x7E},
+    { 0xE0, 0x7E, 0x7F},
+    { 0xE0, 0x7E, 0x7F, 0x12},
+    { 0xE0, 0x7E, 0x7F, 0x12, 0x34},
+    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0x01},
+    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0x7F},
+    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF},
+    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF},
+    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF, 0xFF},
+    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF},
+    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0x01},
+    { 0xE0, 0x7E, 0x7F, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
+    { 0xE0, 0x7E, 0xFF},
+    { 0xE0, 0x7E, 0xFF, 0x12},
+    { 0xE0, 0x7E, 0xFF, 0x12, 0x34},
+    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0x01},
+    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0x7F},
+    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF},
+    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF},
+    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF},
+    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF},
+    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0x01},
+    { 0xE0, 0x7E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
+    { 0xE0, 0x8E},
+    { 0xE0, 0x8E, 0xFF},
+    { 0xE0, 0x8E, 0xFF, 0x12},
+    { 0xE0, 0x8E, 0xFF, 0x12, 0x34},
+    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0x01},
+    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0x7F},
+    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF},
+    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF},
+    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF},
+    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF},
+    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0x01},
+    { 0xE0, 0x8E, 0xFF, 0x12, 0x34, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
   };
 
   int count, size, i;
@@ -1824,30 +1810,29 @@ void test_invalid_binn() {
 
   for (i = 0; i < count; i++) {
     ptr = buffers[i];
-    size = strlen((char *) ptr);
+    size = strlen((char*) ptr);
     printf("checking invalid binn #%d   size: %d bytes\n", i, size);
     CU_ASSERT(binn_is_valid_ex(ptr, NULL, NULL, &size) == FALSE);
   }
 
   puts("OK");
-
 }
 
 int main() {
   CU_pSuite pSuite = NULL;
-  if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
+  if (CUE_SUCCESS != CU_initialize_registry()) {
+    return CU_get_error();
+  }
   pSuite = CU_add_suite("jbl_test_binn1", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (
-    (NULL == CU_add_test(pSuite, "test_int64", test_int64)) ||
-    (NULL == CU_add_test(pSuite, "test_floating_point_numbers", test_floating_point_numbers)) ||
-    (NULL == CU_add_test(pSuite, "test1", test1)) ||
-    (NULL == CU_add_test(pSuite, "test2", test2)) ||
-    (NULL == CU_add_test(pSuite, "test_invalid_binn", test_invalid_binn))
-  ) {
+  if ((NULL == CU_add_test(pSuite, "test_int64", test_int64))
+      || (NULL == CU_add_test(pSuite, "test_floating_point_numbers", test_floating_point_numbers))
+      || (NULL == CU_add_test(pSuite, "test1", test1))
+      || (NULL == CU_add_test(pSuite, "test2", test2))
+      || (NULL == CU_add_test(pSuite, "test_invalid_binn", test_invalid_binn))) {
     CU_cleanup_registry();
     return CU_get_error();
   }
@@ -1857,4 +1842,3 @@ int main() {
   CU_cleanup_registry();
   return ret;
 }
-

@@ -9,12 +9,13 @@
 #include <inttypes.h>
 
 #define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
+#define STR(x)        STR_HELPER(x)
 
-static void jn_resultset_tsf(napi_env env,
-                             napi_value js_add_stream,
-                             void *context,
-                             void *data);
+static void jn_resultset_tsf(
+  napi_env   env,
+  napi_value js_add_stream,
+  void       *context,
+  void       *data);
 static bool jn_throw_error(napi_env env, iwrc rc, const char *location, const char *msg);
 static napi_value jn_create_error(napi_env env, iwrc rc, const char *location, const char *msg);
 
@@ -31,19 +32,19 @@ IW_INLINE bool jn_is_exception_pending(napi_env env) {
     const napi_extended_error_info *info = 0;          \
     napi_get_last_error_info((env), &info);            \
     if (info) JNTHROW((env), 0, info->error_message);  \
-  } while (0)
+} while (0)
 
 #define JNCHECK(ns, env) do {                   \
     if (ns && ns != napi_pending_exception) {   \
       JNTHROW_LAST(env);                        \
     }                                           \
-  } while(0)
+} while (0)
 
 #define JNRC(env, rc) do {                      \
     if (rc && !jn_is_exception_pending(env)) {  \
       JNTHROW(env, rc, 0);                      \
     }                                           \
-  } while(0)
+} while (0)
 
 #define JNRET(ns, env, call, res) do {          \
     ns = (call);                                \
@@ -53,7 +54,7 @@ IW_INLINE bool jn_is_exception_pending(napi_env env) {
       }                                         \
       return (res);                             \
     }                                           \
-  } while (0)
+} while (0)
 
 #define JNGO(ns, env, call, label) do {         \
     ns = (call);                                \
@@ -63,7 +64,7 @@ IW_INLINE bool jn_is_exception_pending(napi_env env) {
       }                                         \
       goto label;                               \
     }                                           \
-  } while (0)
+} while (0)
 
 static napi_value jn_create_error(napi_env env, iwrc rc, const char *location, const char *msg) {
   // Eg:
@@ -80,7 +81,7 @@ static napi_value jn_create_error(napi_env env, iwrc rc, const char *location, c
   if (rc) {
     iwrc_strip_code(&rc);
     if (location) {
-      snprintf(codebuf, sizeof(codebuf), "@ejdb IWRC:%" PRId64 " %s", rc,  location);
+      snprintf(codebuf, sizeof(codebuf), "@ejdb IWRC:%" PRId64 " %s", rc, location);
     } else {
       snprintf(codebuf, sizeof(codebuf), "@ejdb IWRC:%" PRId64, rc);
     }
@@ -106,24 +107,25 @@ typedef enum {
   _JN_ERROR_START = (IW_ERROR_START + 15000UL + 6000),
   JN_ERROR_INVALID_NATIVE_CALL_ARGS, /**< Invalid native function call args (JN_ERROR_INVALID_NATIVE_CALL_ARGS) */
   JN_ERROR_INVALID_STATE,            /**< Invalid native extension state (JN_ERROR_INVALID_STATE) */
-  JN_ERROR_QUERY_IN_USE,              /**< Query object is in use by active async iteration, and cannot be changed (JN_ERROR_QUERY_IN_USE) */
+  JN_ERROR_QUERY_IN_USE,             /**< Query object is in use by active async iteration, and cannot be changed
+                                        (JN_ERROR_QUERY_IN_USE) */
   JN_ERROR_NAPI,                     /*< N-API Error (JN_ERROR_NAPI) */
-  _JN_ERROR_END
+  _JN_ERROR_END,
 } jn_ecode_t;
 
 typedef struct JBN {
-  EJDB db;
-  IWPOOL *pool;
+  EJDB      db;
+  IWPOOL    *pool;
   EJDB_OPTS opts;
   napi_threadsafe_function resultset_tsf;
 } *JBN;
 
 typedef struct JNWORK {
   iwrc rc;        // RC error
-  napi_status ns;
-  napi_deferred deferred;
+  napi_status     ns;
+  napi_deferred   deferred;
   napi_async_work async_work;
-  const char *async_resource;
+  const char      *async_resource;
   void *unwrapped;
   void *data;
   void (*release_data)(napi_env env, struct JNWORK *w);
@@ -165,7 +167,9 @@ IW_INLINE napi_value jn_undefined(napi_env env) {
 IW_INLINE bool jn_is_null(napi_env env, napi_value val) {
   bool bv = false;
   napi_value rv = jn_null(env);
-  if (!rv) return false;
+  if (!rv) {
+    return false;
+  }
   napi_strict_equals(env, val, rv, &bv);
   return bv;
 }
@@ -173,7 +177,9 @@ IW_INLINE bool jn_is_null(napi_env env, napi_value val) {
 IW_INLINE bool jn_is_undefined(napi_env env, napi_value val) {
   bool bv = false;
   napi_value rv = jn_undefined(env);
-  if (!rv) return false;
+  if (!rv) {
+    return false;
+  }
   napi_strict_equals(env, val, rv, &bv);
   return bv;
 }
@@ -228,15 +234,16 @@ static char *jn_string(napi_env env, napi_value val_, IWPOOL *pool, bool nulls, 
   }
   ns = napi_get_value_string_utf8(env, val, buf, len + 1, &len);
   if (ns) {
-    *rcp =  JN_ERROR_NAPI;
+    *rcp = JN_ERROR_NAPI;
     JNCHECK(ns, env);
     return 0;
   }
   return buf;
 }
 
-static char *jn_string_at(napi_env env, IWPOOL *pool, napi_value arr,
-                          bool nulls, bool coerce, uint32_t idx, iwrc *rcp) {
+static char *jn_string_at(
+  napi_env env, IWPOOL *pool, napi_value arr,
+  bool nulls, bool coerce, uint32_t idx, iwrc *rcp) {
   *rcp = 0;
   napi_value el;
   napi_status ns = napi_get_element(env, arr, idx, &el);
@@ -348,7 +355,7 @@ static bool jn_bool_at(napi_env env, napi_value arr, bool nulls, bool coerce, ui
 }
 
 static iwrc jb_jbn_alloc(JBN *vp) {
-  *vp  = 0;
+  *vp = 0;
   IWPOOL *pool = iwpool_create(255);
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -533,24 +540,24 @@ static napi_value jn_ejdb2impl_ctor(napi_env env, napi_callback_info info) {
   napi_value vadd_streamfn;
   JNGO(ns, env, napi_get_reference_value(env, k_vadd_streamfn_ref, &vadd_streamfn), finish);
   JNGO(ns, env, napi_create_threadsafe_function(
-         env, // napi_env env,
-         vadd_streamfn, // napi_value func,
-         0,   // napi_value async_resource,
+         env,                                           // napi_env env,
+         vadd_streamfn,                                 // napi_value func,
+         0,                                             // napi_value async_resource,
          jn_create_string(env, "jn_add_stream_result"), // napi_value async_resource_name,
-         64,  // size_t max_queue_size,
-         1,   // size_t initial_thread_count,
-         0,   // void* thread_finalize_data,
-         0,   // napi_finalize thread_finalize_cb,
-         0,   // void* context,
-         jn_resultset_tsf,  // napi_threadsafe_function_call_js call_js_cb,
-         &jbn->resultset_tsf // napi_threadsafe_function* result
-       ), finish);
+         64,                                            // size_t max_queue_size,
+         1,                                             // size_t initial_thread_count,
+         0,                                             // void* thread_finalize_data,
+         0,                                             // napi_finalize thread_finalize_cb,
+         0,                                             // void* context,
+         jn_resultset_tsf,                              // napi_threadsafe_function_call_js call_js_cb,
+         &jbn->resultset_tsf                            // napi_threadsafe_function* result
+         ), finish);
 
   // Wrap class instance
   JNGO(ns, env, napi_wrap(env, this, jbn, jn_ejdb2impl_finalize, 0, 0), finish);
 
 finish:
-  if (jn_is_exception_pending(env) || rc)   {
+  if (jn_is_exception_pending(env) || rc) {
     JNRC(env, rc);
     if (jbn) {
       jn_jbn_destroy(env, &jbn);
@@ -560,8 +567,8 @@ finish:
   return this;
 }
 
-#define JNFUNC(func) {#func, 0, jn_##func, 0, 0, 0, napi_default, 0}
-#define JNVAL(name, value) {#name, 0, 0, 0, 0, value, napi_default, 0}
+#define JNFUNC(func)       {#func, 0, jn_ ## func, 0, 0, 0, napi_default, 0 }
+#define JNVAL(name, value) {#name, 0, 0, 0, 0, value, napi_default, 0 }
 
 bool jn_resolve_pending_errors(napi_env env, napi_status ns, JNWORK work) {
   assert(work);
@@ -573,7 +580,7 @@ bool jn_resolve_pending_errors(napi_env env, napi_status ns, JNWORK work) {
     return false;
   }
   napi_value ex;
-  if (pending && (!work->rc || work->rc == JN_ERROR_NAPI)) {
+  if (pending && (!work->rc || (work->rc == JN_ERROR_NAPI))) {
     ns = napi_get_and_clear_last_exception(env, &ex);
     if (ns == napi_ok) {
       napi_reject_deferred(env, work->deferred, ex);
@@ -581,8 +588,12 @@ bool jn_resolve_pending_errors(napi_env env, napi_status ns, JNWORK work) {
   } else {
     napi_value verr;
     const napi_extended_error_info *info = 0;
-    if (ns) napi_get_last_error_info(env, &info);
-    if (pending) napi_get_and_clear_last_exception(env, &ex);
+    if (ns) {
+      napi_get_last_error_info(env, &info);
+    }
+    if (pending) {
+      napi_get_and_clear_last_exception(env, &ex);
+    }
     verr = jn_create_error(env, work->rc, work->async_resource, info ? info->error_message : 0);
     if (verr) {
       napi_reject_deferred(env, work->deferred, verr);
@@ -592,12 +603,13 @@ bool jn_resolve_pending_errors(napi_env env, napi_status ns, JNWORK work) {
   return true;
 }
 
-static napi_value jn_launch_promise(napi_env env,
-                                    napi_callback_info info,
-                                    const char *async_resource_name,
-                                    napi_async_execute_callback execute,
-                                    napi_async_complete_callback complete,
-                                    JNWORK work) {
+static napi_value jn_launch_promise(
+  napi_env                     env,
+  napi_callback_info           info,
+  const char                   *async_resource_name,
+  napi_async_execute_callback  execute,
+  napi_async_complete_callback complete,
+  JNWORK                       work) {
   size_t argc = 0;
   napi_status ns = 0;
   napi_value promise = 0, this, awork;
@@ -626,7 +638,9 @@ finish:
 static void jn_open_execute(napi_env env, void *data) {
   JNWORK work = data;
   JBN jbn = work->unwrapped;
-  if (jbn->db) return; // Database is already opened
+  if (jbn->db) {
+    return;            // Database is already opened
+  }
   work->rc = ejdb_open(&jbn->opts, &jbn->db);
 }
 
@@ -658,7 +672,9 @@ static napi_value jn_open(napi_env env, napi_callback_info info) {
 static void jn_close_execute(napi_env env, void *data) {
   JNWORK work = data;
   JBN jbn = work->unwrapped;
-  if (!jbn->db) return;
+  if (!jbn->db) {
+    return;
+  }
   work->rc = ejdb_close(&jbn->db);
 }
 
@@ -693,10 +709,10 @@ static napi_value jn_close(napi_env env, napi_callback_info info) {
 //  ---------------- EJDB2.put/patch()
 
 struct JNPUT_DATA {
-  int64_t id;
+  int64_t    id;
   const char *coll;
   const char *json;
-  bool patch;
+  bool       patch;
 };
 
 static void jn_put_execute(napi_env env, void *data) {
@@ -750,7 +766,7 @@ finish:
 static napi_value jn_put_patch(napi_env env, napi_callback_info info, bool patch, bool upsert) {
   iwrc rc = 0;
   napi_status ns = 0;
-  napi_value this, argv[3] = {0};
+  napi_value this, argv[3] = { 0 };
   size_t argc = sizeof(argv) / sizeof(argv[0]);
   void *data;
   napi_value ret = 0;
@@ -773,7 +789,7 @@ static napi_value jn_put_patch(napi_env env, napi_callback_info info, bool patch
   wdata->id = jn_int(env, argv[2], true, true, &rc);
   RCGO(rc, finish);
 
-  if (wdata->id < 1 && wdata->patch)  {
+  if ((wdata->id < 1) && wdata->patch) {
     rc = JN_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
   }
@@ -804,7 +820,7 @@ static napi_value jn_patch_or_put(napi_env env, napi_callback_info info) {
 //  ---------------- EJDB2.get()
 
 struct JNGET_DATA {
-  int64_t id;
+  int64_t    id;
   const char *coll;
   JBL jbl;
 };
@@ -954,7 +970,6 @@ finish:
   return ret ? ret : jn_undefined(env);
 }
 
-
 //  ---------------- EJDB2.renameCollection()
 
 struct JNRENAME_DATA {
@@ -1096,8 +1111,8 @@ finish:
 //  ---------------- EJDB2.ensureIndex/removeIndex()
 
 struct JNIDX_DATA {
-  const char *coll;
-  const char *path;
+  const char      *coll;
+  const char      *path;
   ejdb_idx_mode_t mode;
   bool remove;
 };
@@ -1235,7 +1250,7 @@ finish:
 //  ---------------- EJDB2.onlineBackup
 
 struct JNBK_DATA {
-  uint64_t ts;
+  uint64_t   ts;
   const char *file_name;
 };
 
@@ -1272,7 +1287,7 @@ finish:
 static napi_value jn_online_backup(napi_env env, napi_callback_info info) {
   iwrc rc = 0;
   napi_status ns = 0;
-  napi_value this, argv[1] = {0};
+  napi_value this, argv[1] = { 0 };
   size_t argc = sizeof(argv) / sizeof(argv[0]);
   void *data;
   napi_value ret = 0;
@@ -1370,7 +1385,7 @@ static napi_value jn_jql_init(napi_env env, napi_callback_info info) {
 
 finish:
   if (rc) {
-    if (rc == JQL_ERROR_QUERY_PARSE && jnql && jnql->jql) {
+    if ((rc == JQL_ERROR_QUERY_PARSE) && jnql && jnql->jql) {
       JNTHROW(env, rc, jql_error(jnql->jql));
     } else {
       JNRC(env, rc);
@@ -1388,23 +1403,23 @@ finish:
 typedef struct JNQS { // query stream associated data
   volatile bool aborted;
   volatile bool paused;
-  int refs;
-  JBN jbn;
-  JNQL jnql;
+  int      refs;
+  JBN      jbn;
+  JNQL     jnql;
   napi_ref stream_ref;      // Reference to the stream object
   napi_ref explain_cb_ref;  // Reference to the optional explain callback
-  int64_t limit;
-  struct JNWORK work;
+  int64_t  limit;
+  struct JNWORK   work;
   pthread_mutex_t mtx;
-  pthread_cond_t cond;
+  pthread_cond_t  cond;
 } *JNQS;
 
 typedef struct JNCS { // call data to `k_add_stream_tsfn`
-  bool has_count;
-  IWXSTR *log;
-  IWXSTR *document;
-  int64_t count;
-  int64_t document_id;
+  bool     has_count;
+  IWXSTR   *log;
+  IWXSTR   *document;
+  int64_t  count;
+  int64_t  document_id;
   napi_ref stream_ref; // copied from `JNQS`
 } *JNCS;
 
@@ -1424,10 +1439,11 @@ static void jn_cs_destroy(JNCS *csp) {
 }
 
 // function addStreamResult(stream, id, jsondoc, log)
-static void jn_resultset_tsf(napi_env env,
-                             napi_value js_add_stream,
-                             void *context,
-                             void *data) {
+static void jn_resultset_tsf(
+  napi_env   env,
+  napi_value js_add_stream,
+  void       *context,
+  void       *data) {
 
   if (!env) { // shutdown pending
     JNCS cs = data;
@@ -1470,7 +1486,7 @@ static void jn_resultset_tsf(napi_env env,
     vlog = vnull;
   }
 
-  napi_value argv[] = {vstream, vid, vdoc, vlog};
+  napi_value argv[] = { vstream, vid, vdoc, vlog };
   const int argc = sizeof(argv) / sizeof(argv[0]);
   JNGO(ns, env, napi_call_function(
          env,
@@ -1479,7 +1495,7 @@ static void jn_resultset_tsf(napi_env env,
          argc,
          argv,
          &vresult
-       ), finish);
+         ), finish);
 
 finish:
   if (cs->document_id < 0) {
@@ -1523,7 +1539,9 @@ static void jn_jnqs_destroy_mt(napi_env env, JNQS *qsp) {
 static iwrc jn_stream_pause_guard(JNQS qs) {
   iwrc rc = 0;
   int rci = pthread_mutex_lock(&qs->mtx);
-  if (rci) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+  if (rci) {
+    return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+  }
   while (qs->paused) {
     rci = pthread_cond_wait(&qs->cond, &qs->mtx);
     if (rci) {
@@ -1597,7 +1615,7 @@ static void jn_jql_stream_execute(napi_env env, void *data) {
   JNQS qs = work->data;
   JQL q = qs->jnql->jql;
   JNCS cs = 0;
-  EJDB_EXEC ux = {0};
+  EJDB_EXEC ux = { 0 };
   bool has_count = jql_has_aggregate_count(q);
 
   // Trying to stop on paused stream
@@ -1665,7 +1683,9 @@ finish:
 static void jn_jql_stream_complete(napi_env env, napi_status ns, void *data) {
   JNWORK work = data;
   JNQS qs = work->data;
-  if (!ns) ns = work->ns;
+  if (!ns) {
+    ns = work->ns;
+  }
   if (jn_resolve_pending_errors(env, ns, work)) {
     goto finish;
   }
@@ -1684,10 +1704,14 @@ static napi_value jn_jql_stream_destroy(napi_env env, napi_callback_info info) {
   napi_value ret = jn_undefined(env), argv, this;
 
   napi_status ns = napi_get_cb_info(env, info, &argc, &argv, &this, &data);
-  if (ns || argc < 1) goto finish;
+  if (ns || (argc < 1)) {
+    goto finish;
+  }
 
   ns = napi_remove_wrap(env, argv, &data);
-  if (ns || !data) goto finish;
+  if (ns || !data) {
+    goto finish;
+  }
 
   JNQS qs = data;
   jn_jnqs_destroy_mt(env, &qs);
@@ -1771,7 +1795,7 @@ static napi_value jn_jql_stream_attach(napi_env env, napi_callback_info info) {
     rc = JN_ERROR_INVALID_NATIVE_CALL_ARGS;
     goto finish;
   }
-  JNGO(ns, env, napi_unwrap(env, argv[0], (void **) &jnql), finish); // -V580
+  JNGO(ns, env, napi_unwrap(env, argv[0], (void**) &jnql), finish);  // -V580
 
   qs = calloc(1, sizeof(*qs));
   if (!qs) {
@@ -1800,7 +1824,7 @@ static napi_value jn_jql_stream_attach(napi_env env, napi_callback_info info) {
     }
     JNGO(ns, env, napi_create_reference(env, vexplain, 1, &qs->explain_cb_ref), finish);
   }
-  JNGO(ns, env, napi_unwrap(env, this, (void **) &jbn), finish); // -V580
+  JNGO(ns, env, napi_unwrap(env, this, (void**) &jbn), finish);                   // -V580
   JNGO(ns, env, napi_create_reference(env, argv[1], 1, &qs->stream_ref), finish); // Reference to stream
   JNGO(ns, env, napi_wrap(env, argv[1], qs, 0, 0, 0), finish);
 
@@ -1824,7 +1848,9 @@ finish:
 
 static void jn_jql_free_set_string_value(void *ptr, void *op) {
   IWPOOL *pool = op;
-  if (pool) iwpool_destroy(pool);
+  if (pool) {
+    iwpool_destroy(pool);
+  }
 }
 
 // this._impl.jql_set(jql, placeholder, val, 1);
@@ -1982,7 +2008,7 @@ finish:
 // ----------------
 
 static const char *jn_ecodefn(locale_t locale, uint32_t ecode) {
-  if (!(ecode > _JN_ERROR_START && ecode < _JN_ERROR_END)) {
+  if (!((ecode > _JN_ERROR_START) && (ecode < _JN_ERROR_END))) {
     return 0;
   }
   switch (ecode) {
@@ -2042,7 +2068,7 @@ napi_value Init(napi_env env, napi_value exports) {
                                   properties, &ejdb2impl_clazz), finish);
 
   napi_property_descriptor descriptors[] = {
-    {"EJDB2Impl", 0, 0, 0, 0, ejdb2impl_clazz, napi_default, 0}
+    { "EJDB2Impl", 0, 0, 0, 0, ejdb2impl_clazz, napi_default, 0 }
   };
   JNGO(ns, env, napi_define_properties(env, exports,
                                        sizeof(descriptors) / sizeof(descriptors[0]),

@@ -1,5 +1,6 @@
 ejdb2 (2.0.59) UNRELEASED; urgency=medium
 
+  * Project code reformatted using uncrustify
   * Updated copyright headers
   * Removed dependency on some glibc specific features
   * Added jbl_object_copy_to() (ejdb2.h)

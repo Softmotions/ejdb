@@ -57,28 +57,28 @@ typedef enum {
   EJDB_ERROR_COLLECTION_NOT_FOUND,                /**< Collection not found */
   EJDB_ERROR_TARGET_COLLECTION_EXISTS,            /**< Target collection exists */
   EJDB_ERROR_PATCH_JSON_NOT_OBJECT,               /**< Patch JSON must be an object (map) */
-  _EJDB_ERROR_END
+  _EJDB_ERROR_END,
 } ejdb_ecode_t;
 
 /** Index creation mode */
 typedef uint8_t ejdb_idx_mode_t;
 
 /** Marks index is unique, no duplicated values allowed. */
-#define EJDB_IDX_UNIQUE     ((ejdb_idx_mode_t) 0x01U)
+#define EJDB_IDX_UNIQUE ((ejdb_idx_mode_t) 0x01U)
 
 /** Index values have string type.
  *  Type conversion will be performed on atempt to save value with other type */
-#define EJDB_IDX_STR        ((ejdb_idx_mode_t) 0x04U)
+#define EJDB_IDX_STR ((ejdb_idx_mode_t) 0x04U)
 
 /** Index values have signed integer 64 bit wide type.
  *  Type conversion will be performed on atempt to save value with other type */
-#define EJDB_IDX_I64        ((ejdb_idx_mode_t) 0x08U)
+#define EJDB_IDX_I64 ((ejdb_idx_mode_t) 0x08U)
 
 /** Index value have floating point type.
  *  @note Internally floating point numbers are converted to string
  *        with precision of 6 digits after decimal point.
  */
-#define EJDB_IDX_F64        ((ejdb_idx_mode_t) 0x10U)
+#define EJDB_IDX_F64 ((ejdb_idx_mode_t) 0x10U)
 
 /**
  * @brief Database handler.
@@ -90,15 +90,15 @@ typedef struct _EJDB *EJDB;
  * @brief EJDB HTTP/Websocket Server options.
  */
 typedef struct _EJDB_HTTP {
-  bool enabled;               /**< If HTTP/Websocket endpoint enabled. Default: false */
-  int port;                   /**< Listen port number, required */
-  const char *bind;           /**< Listen IP/host. Default: `localhost` */
-  const char *access_token;   /**< Server access token passed in `X-Access-Token` header. Default: zero */
-  size_t access_token_len;    /**< Length of access token string. Default: zero */
-  bool blocking;              /**< Block `ejdb_open()` thread until http service finished.
-                                   Otherwise HTTP server will be started in background. */
-  bool read_anon;             /**< Allow anonymous read-only database access */
-  size_t max_body_size;       /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
+  bool enabled;                /**< If HTTP/Websocket endpoint enabled. Default: false */
+  int  port;                   /**< Listen port number, required */
+  const char *bind;            /**< Listen IP/host. Default: `localhost` */
+  const char *access_token;    /**< Server access token passed in `X-Access-Token` header. Default: zero */
+  size_t     access_token_len; /**< Length of access token string. Default: zero */
+  bool       blocking;         /**< Block `ejdb_open()` thread until http service finished.
+                                    Otherwise HTTP server will be started in background. */
+  bool   read_anon;            /**< Allow anonymous read-only database access */
+  size_t max_body_size;        /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
 } EJDB_HTTP;
 
 /**
@@ -107,10 +107,12 @@ typedef struct _EJDB_HTTP {
 typedef struct _EJDB_OPTS {
   IWKV_OPTS kv;                 /**< IWKV storage options. @see iwkv.h */
   EJDB_HTTP http;               /**< HTTP/Websocket server options */
-  bool no_wal;                  /**< Do not use write-ahead-log. Default: false */
-  uint32_t sort_buffer_sz;      /**< Max sorting buffer size. If exceeded an overflow temp file for sorted data will created.
+  bool      no_wal;             /**< Do not use write-ahead-log. Default: false */
+  uint32_t  sort_buffer_sz;     /**< Max sorting buffer size. If exceeded an overflow temp file for sorted data will
+                                   created.
                                      Default 16Mb, min: 1Mb */
-  uint32_t document_buffer_sz;  /**< Initial size of buffer in bytes used to process/store document during query execution.
+  uint32_t document_buffer_sz;  /**< Initial size of buffer in bytes used to process/store document during query
+                                   execution.
                                      Default 64Kb, min: 16Kb */
 } EJDB_OPTS;
 
@@ -120,12 +122,14 @@ typedef struct _EJDB_OPTS {
  */
 typedef struct _EJDB_DOC {
   int64_t id;                 /**< Document ID. Not zero. */
-  JBL raw;                    /**< JSON document in compact binary form.
+  JBL     raw;                /**< JSON document in compact binary form.
                                    Based on [Binn](https://github.com/liteserver/binn) format.
                                    Not zero. */
-  JBL_NODE node;              /**< JSON document as in-memory tree. Not zero only if query has `apply` or `projection` parts.
+  JBL_NODE node;              /**< JSON document as in-memory tree. Not zero only if query has `apply` or `projection`
+                                 parts.
 
-                                   @warning The lifespan of @ref EJDB_DOC.node will be valid only during the call of @ref EJDB_EXEC_VISITOR
+                                   @warning The lifespan of @ref EJDB_DOC.node will be valid only during the call of
+                                      @ref EJDB_EXEC_VISITOR
                                             It is true in all cases EXCEPT:
                                             - @ref EJDB_EXEC.pool is not set by `ejdb_exec()` caller
                                             - One of `ejdb_list()` methods used */
@@ -144,10 +148,10 @@ typedef struct _EJDB_DOC {
  *          Consider use of `ejdb_exec()` with visitor or set `limit` for query.
  */
 typedef struct _EJDB_LIST {
-  EJDB db;              /**< EJDB storage used for query execution. Not zero. */
-  JQL q;                /**< Query executed. Not zero. */
+  EJDB     db;          /**< EJDB storage used for query execution. Not zero. */
+  JQL      q;           /**< Query executed. Not zero. */
   EJDB_DOC first;       /**< First document in result list. Zero if result set is empty. */
-  IWPOOL *pool;         /**< Memory pool used to store list of documents */
+  IWPOOL   *pool;       /**< Memory pool used to store list of documents */
 } *EJDB_LIST;
 
 struct _EJDB_EXEC;
@@ -160,7 +164,7 @@ struct _EJDB_EXEC;
  *        processing you need to copy it.
  * @param step [out] Move forward cursor to given number of steps, `1` by default.
  */
-typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step);
+typedef iwrc (*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step);
 
 /**
  * @brief Query execution context.
@@ -168,14 +172,16 @@ typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *
  */
 typedef struct _EJDB_EXEC {
   EJDB db;                    /**< EJDB database object. Required. */
-  JQL q;                      /**< Query object to be executed. Created by `jql_create()` Required. */
+  JQL  q;                     /**< Query object to be executed. Created by `jql_create()` Required. */
   EJDB_EXEC_VISITOR visitor;  /**< Optional visitor to handle documents in result set. */
-  void *opaque;               /**< Optional user data passed to visitor functions. */
+  void    *opaque;            /**< Optional user data passed to visitor functions. */
   int64_t skip;               /**< Number of records to skip. Takes precedence over `skip` encoded in query. */
-  int64_t limit;              /**< Result set size limitation. Zero means no limitations. Takes precedence over `limit` encoded in query. */
+  int64_t limit;              /**< Result set size limitation. Zero means no limitations. Takes precedence over `limit`
+                                 encoded in query. */
   int64_t cnt;                /**< Number of result documents processed by `visitor` */
-  IWXSTR *log;                /**< Optional query execution log buffer. If set major query execution/index selection steps will be logged into */
-  IWPOOL *pool;               /**< Optional pool which can be used in query apply  */
+  IWXSTR  *log;               /**< Optional query execution log buffer. If set major query execution/index selection
+                                 steps will be logged into */
+  IWPOOL  *pool;              /**< Optional pool which can be used in query apply  */
 } EJDB_EXEC;
 
 /**
@@ -336,8 +342,9 @@ IW_EXPORT WUR iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int6
  * @return `0` on success.
  *          Any non zero error codes.
  */
-IW_EXPORT WUR iwrc ejdb_list3(EJDB db, const char *coll, const char *query, int64_t limit,
-                              IWXSTR *log, EJDB_LIST *listp);
+IW_EXPORT WUR iwrc ejdb_list3(
+  EJDB db, const char *coll, const char *query, int64_t limit,
+  IWXSTR *log, EJDB_LIST *listp);
 
 /**
  * @brief Executes a given query `q` and builds a result as linked list of documents (`listp`).
@@ -567,7 +574,8 @@ IW_EXPORT iwrc ejdb_ensure_collection(EJDB db, const char *coll);
  *
  * @return `0` on success.
  *         `EJDB_ERROR_INVALID_INDEX_MODE` Invalid `mode` specified
- *         `EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE` trying to create non unique index over existing unique or vice versa.
+ *         `EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE` trying to create non unique index over existing unique or vice
+ *versa.
  *          Any non zero error codes.
  *
  */

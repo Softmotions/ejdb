@@ -25,17 +25,21 @@
 #include "lwre.h"
 
 #ifndef RE_ERROR
-# define RE_ERROR(RE, CODE, MESSAGE)  { (RE)->error_message= (MESSAGE);  longjmp(*(RE)->error_env, (re->error_code= RE_ERROR_##CODE)); }
+# define RE_ERROR(RE, CODE, MESSAGE) { (RE)->error_message = (MESSAGE);  \
+                                       longjmp(*(RE)->error_env, (re->error_code = RE_ERROR_ ## CODE)); }
 #endif
 
 #ifndef RE_MALLOC
-# define RE_MALLOC(RE, SIZE)    re__malloc((RE), (SIZE))
+# define RE_MALLOC(RE, SIZE) re__malloc((RE), (SIZE))
 
 static void *re__malloc(struct re *re, size_t size) {
   void *p = malloc(size);
-  if (!p) RE_ERROR(re, NOMEM, "out of memory");
+  if (!p) {
+    RE_ERROR(re, NOMEM, "out of memory");
+  }
   return p;
 }
+
 #endif
 
 #ifndef RE_CALLOC
@@ -43,24 +47,32 @@ static void *re__malloc(struct re *re, size_t size) {
 
 static void *re__calloc(struct re *re, size_t nmemb, size_t size) {
   void *p = calloc(nmemb, size);
-  if (p) return p;
-  if (re) RE_ERROR(re, NOMEM, "out of memory");
+  if (p) {
+    return p;
+  }
+  if (re) {
+    RE_ERROR(re, NOMEM, "out of memory");
+  }
   return p;
 }
+
 #endif
 
 #ifndef RE_REALLOC
-# define RE_REALLOC(RE, PTR, SIZE)  re__realloc((RE), (PTR), (SIZE))
+# define RE_REALLOC(RE, PTR, SIZE) re__realloc((RE), (PTR), (SIZE))
 
 static inline void *re__realloc(struct re *re, void *ptr, size_t size) {
   void *p = realloc(ptr, size);
-  if (!p) RE_ERROR(re, NOMEM, "out of memory");
+  if (!p) {
+    RE_ERROR(re, NOMEM, "out of memory");
+  }
   return p;
 }
+
 #endif
 
 #ifndef RE_FREE
-# define RE_FREE(RE, PTR)   free(PTR)
+# define RE_FREE(RE, PTR) free(PTR)
 #endif
 
 /* arrays */
@@ -69,7 +81,7 @@ static inline void *re__realloc(struct re *re, void *ptr, size_t size) {
   struct {      \
     int  size;    \
     int  capacity;  \
-    TYPE  *at;    \
+    TYPE *at;    \
   }
 
 #define RE_ARRAY_OF_INITIALISER { 0, 0, 0 }
@@ -77,12 +89,12 @@ static inline void *re__realloc(struct re *re, void *ptr, size_t size) {
 #define re_array_append(RE, ARRAY, ELEMENT)                 \
   ((ARRAY).size++,                        \
    (((ARRAY).size > (ARRAY).capacity)                   \
-    ? ((ARRAY).at= RE_REALLOC((RE), (ARRAY).at,               \
-                              sizeof(*(ARRAY).at) * ((ARRAY).capacity= ((ARRAY).capacity      \
-                                                                        ? ((ARRAY).capacity * 2)    \
-                                                                        : 8))))       \
+    ? ((ARRAY).at = RE_REALLOC((RE), (ARRAY).at,               \
+                               sizeof(*(ARRAY).at) * ((ARRAY).capacity = ((ARRAY).capacity      \
+                                                                          ? ((ARRAY).capacity * 2)    \
+                                                                          : 8))))       \
     : (ARRAY).at)                       \
-   [(ARRAY).size - 1]= (ELEMENT))
+   [(ARRAY).size - 1] = (ELEMENT))
 
 #define re_array_copy(RE, ARRAY)          \
   { (ARRAY).size,             \
@@ -94,9 +106,9 @@ static inline void *re__realloc(struct re *re, void *ptr, size_t size) {
 #define re_array_release(RE, ARRAY) {   \
     if ((ARRAY).at) {     \
       RE_FREE((RE), (ARRAY).at);    \
-      (ARRAY).at= 0;      \
+      (ARRAY).at = 0;      \
     }         \
-  }
+}
 
 /* bit sets */
 
@@ -104,23 +116,29 @@ struct RE_BitSet;
 typedef struct RE_BitSet RE_BitSet;
 
 struct RE_BitSet {
-  int     inverted;
+  int inverted;
   unsigned char bits[256 / sizeof(unsigned char)];
 };
 
 static int re_bitset__includes(RE_BitSet *c, int i) {
-  if (i < 0 || 255 < i) return 0;
+  if ((i < 0) || (255 < i)) {
+    return 0;
+  }
   return (c->bits[i / 8] >> (i % 8)) & 1;
 }
 
 static int re_bitset_includes(RE_BitSet *c, int i) {
   int inc = re_bitset__includes(c, i);
-  if (c->inverted) inc = !inc;
+  if (c->inverted) {
+    inc = !inc;
+  }
   return inc;
 }
 
 static void re_bitset_add(RE_BitSet *c, int i) {
-  if (i < 0 || 255 < i) return;
+  if ((i < 0) || (255 < i)) {
+    return;
+  }
   c->bits[i / 8] |= (1 << (i % 8));
 }
 
@@ -128,9 +146,13 @@ static void re_bitset_add(RE_BitSet *c, int i) {
 
 static int re_make_char(struct re *re) {
   const char *p = re->position;
-  if (!*p) return 0;
+  if (!*p) {
+    return 0;
+  }
   int c = *p++;
-  if (('\\' == c) && *p) c = *p++;
+  if (('\\' == c) && *p) {
+    c = *p++;
+  }
   re->position = p;
   return c;
 }
@@ -139,7 +161,9 @@ static RE_BitSet *re_make_class(struct re *re) {
   RE_BitSet *c = RE_CALLOC(re, 1, sizeof(RE_BitSet));
   int last = -1;
   c->inverted = ('^' == *re->position); // -V522
-  if (c->inverted) re->position++;
+  if (c->inverted) {
+    re->position++;
+  }
   while (*re->position && (']' != *re->position)) {
     int this = re->position[0];
     if (('-' == this) && (last >= 0) && re->position[1] && (']' != re->position[1])) {
@@ -160,20 +184,20 @@ static RE_BitSet *re_make_class(struct re *re) {
 
 /* instructions */
 
-enum { RE_Any, RE_Char, RE_Class, RE_Accept, RE_Jump, RE_Fork, RE_Begin, RE_End };
+enum { RE_Any, RE_Char, RE_Class, RE_Accept, RE_Jump, RE_Fork, RE_Begin, RE_End, };
 
 struct RE_Insn;
 typedef struct RE_Insn RE_Insn;
 
 struct RE_Insn {
-  int      opcode;
-  long     x;
+  int  opcode;
+  long x;
   union {
-    long     y;
+    long      y;
     RE_BitSet *c;
   };
   union {
-    RE_Insn   *next;
+    RE_Insn *next;
     char    *stamp;
   };
 };
@@ -182,57 +206,64 @@ struct RE_Compiled;
 typedef struct RE_Compiled RE_Compiled;
 
 /*
-struct RE_Compiled
-{
+   struct RE_Compiled
+   {
     int    size;
     RE_Insn *first;
     RE_Insn *last;
-};
+   };
 
-#define RE_COMPILED_INITIALISER { 0, 0, 0 }
-*/
+ #define RE_COMPILED_INITIALISER { 0, 0, 0 }
+ */
 
 static RE_Compiled re_insn_new(struct re *re, int opc) {
   RE_Insn *insn = RE_CALLOC(re, 1, sizeof(RE_Insn));
-  insn->opcode =  opc; // -V522
+  insn->opcode = opc;  // -V522
   RE_Compiled insns = { 1, insn, insn };
   return insns;
 }
 
-static RE_Compiled re_new_Any(struct re *re)     {
+static RE_Compiled re_new_Any(struct re *re) {
   RE_Compiled insns = re_insn_new(re, RE_Any);
   return insns;
 }
-static RE_Compiled re_new_Char(struct re *re, int c)    {
+
+static RE_Compiled re_new_Char(struct re *re, int c) {
   RE_Compiled insns = re_insn_new(re, RE_Char);
   insns.first->x = c;
   return insns;
 }
+
 static RE_Compiled re_new_Class(struct re *re, RE_BitSet *c) {
   RE_Compiled insns = re_insn_new(re, RE_Class);
   insns.first->c = c;
   return insns;
 }
-static RE_Compiled re_new_Accept(struct re *re)     {
+
+static RE_Compiled re_new_Accept(struct re *re) {
   RE_Compiled insns = re_insn_new(re, RE_Accept);
   return insns;
 }
-static RE_Compiled re_new_Jump(struct re *re, int x)    {
+
+static RE_Compiled re_new_Jump(struct re *re, int x) {
   RE_Compiled insns = re_insn_new(re, RE_Jump);
   insns.first->x = x;
   return insns;
 }
+
 static RE_Compiled re_new_Fork(struct re *re, int x, int y) {
   RE_Compiled insns = re_insn_new(re, RE_Fork);
   insns.first->x = x;
   insns.first->y = y;
   return insns;
 }
-static RE_Compiled re_new_Begin(struct re *re)     {
+
+static RE_Compiled re_new_Begin(struct re *re) {
   RE_Compiled insns = re_insn_new(re, RE_Begin);
   return insns;
 }
-static RE_Compiled re_new_End(struct re *re)     {
+
+static RE_Compiled re_new_End(struct re *re) {
   RE_Compiled insns = re_insn_new(re, RE_End);
   return insns;
 }
@@ -251,7 +282,7 @@ static void re_program_prepend(RE_Compiled *insns, RE_Compiled head) {
 
 static void re_program_free(struct re *re, RE_Compiled *insns) {
   int i;
-  for (i = 0;  i < insns->size;  ++i) {
+  for (i = 0; i < insns->size; ++i) {
     switch (insns->first[i].opcode) {
       case RE_Class: {
         RE_FREE(re, insns->first[i].c);
@@ -268,8 +299,8 @@ static void re_program_free(struct re *re, RE_Compiled *insns) {
 /* compilation */
 
 /*
-struct re
-{
+   struct re
+   {
     char     *expression;
     char     *position;
     jmp_buf    *error_env;
@@ -278,8 +309,8 @@ struct re
     struct RE_Compiled    code;
     char    **matches;
     int       nmatches;
-};
-*/
+   };
+ */
 
 static RE_Compiled re_compile_expression(struct re *re);
 
@@ -288,7 +319,9 @@ static RE_Compiled re_compile_primary(struct re *re) {
   assert(0 != c);
   switch (c) {
     case '\\': {
-      if (*re->position) c = *re->position++;
+      if (*re->position) {
+        c = *re->position++;
+      }
       break;
     }
     case '.': {
@@ -307,7 +340,7 @@ static RE_Compiled re_compile_primary(struct re *re) {
       RE_Compiled insns = re_compile_expression(re);
       if (')' != *re->position) {
         RE_Insn *insn, *next;
-        for (insn = insns.first;  insn;  insn = next) {
+        for (insn = insns.first; insn; insn = next) {
           next = insn->next;
           RE_FREE(re, insn);
         }
@@ -320,7 +353,7 @@ static RE_Compiled re_compile_primary(struct re *re) {
       RE_Compiled insns = re_compile_expression(re);
       if ('}' != *re->position) {
         RE_Insn *insn, *next;
-        for (insn = insns.first;  insn;  insn = next) {
+        for (insn = insns.first; insn; insn = next) {
           next = insn->next;
           RE_FREE(re, insn);
         }
@@ -374,11 +407,15 @@ static RE_Compiled re_compile_suffix(struct re *re) {
 }
 
 static RE_Compiled re_compile_sequence(struct re *re) {
-  if (!*re->position) return re_new_Accept(re);
+  if (!*re->position) {
+    return re_new_Accept(re);
+  }
   RE_Compiled head = re_compile_suffix(re);
   while (*re->position && !strchr("|)}>", *re->position))
     re_program_append(&head, re_compile_suffix(re));
-  if (!*re->position) re_program_append(&head, re_new_Accept(re));
+  if (!*re->position) {
+    re_program_append(&head, re_new_Accept(re));
+  }
   return head;
 }
 
@@ -404,7 +441,7 @@ static RE_Compiled re_compile(struct re *re) {
   insns = re_compile_expression(re);
   re_array_of(RE_Insn) program = RE_ARRAY_OF_INITIALISER;
   RE_Insn *insn, *next;
-  for (insn = insns.first;  insn;  insn = next) {
+  for (insn = insns.first; insn; insn = next) {
     re_array_append(re, program, *insn);
     next = insn->next;
     RE_FREE(re, insn);
@@ -412,7 +449,7 @@ static RE_Compiled re_compile(struct re *re) {
 
 #if 0
   int i;
-  for (i = 0;  i < program.size;  ++i) {
+  for (i = 0; i < program.size; ++i) {
     RE_Insn *insn = &program.at[i];
     printf("%03i ", i);
     switch (insn->opcode) {
@@ -420,7 +457,7 @@ static RE_Compiled re_compile(struct re *re) {
         printf("Any\n");
         break;
       case RE_Char:
-        printf("Char   %li\n",      insn->x);
+        printf("Char   %li\n", insn->x);
         break;
       case RE_Class: {
         printf("Class ");
@@ -428,9 +465,11 @@ static RE_Compiled re_compile(struct re *re) {
           RE_BitSet *c = insn->c;
           int i;
           putchar('[');
-          if (c->inverted) putchar('^');
-          for (i = 0;  i < 256;  ++i)
-            if (re_bitset__includes(c, i))
+          if (c->inverted) {
+            putchar('^');
+          }
+          for (i = 0; i < 256; ++i)
+            if (re_bitset__includes(c, i)) {
               switch (i) {
                 case '\a':
                   printf("\\a");
@@ -466,11 +505,13 @@ static RE_Compiled re_compile(struct re *re) {
                   printf("\\-");
                   break;
                 default:
-                  if (isprint(i))
+                  if (isprint(i)) {
                     putchar(i);
-                  else
+                  } else {
                     printf("\\x%02x", i);
+                  }
               }
+            }
           putchar(']');
         }
         putchar('\n');
@@ -480,7 +521,7 @@ static RE_Compiled re_compile(struct re *re) {
         printf("Accept\n");
         break;
       case RE_Jump:
-        printf("Jump   %li -> %03li\n",     insn->x,    i + 1 + insn->x);
+        printf("Jump   %li -> %03li\n", insn->x, i + 1 + insn->x);
         break;
       case RE_Fork:
         printf("Fork   %li %li -> %03li %03li\n", insn->x, insn->y, i + 1 + insn->x, i + 1 + insn->y);
@@ -492,7 +533,7 @@ static RE_Compiled re_compile(struct re *re) {
         printf("End\n");
         break;
       default:
-        printf("?%i\n",         insn->opcode);
+        printf("?%i\n", insn->opcode);
         break;
     }
   }
@@ -501,20 +542,20 @@ static RE_Compiled re_compile(struct re *re) {
   assert(program.size == insns.size);
 
   insns.first = program.at;
-  insns.last =  insns.first + insns.size;
+  insns.last = insns.first + insns.size;
 
   return insns;
 }
 
 /* submatch recording */
 
-typedef re_array_of(char *) re_array_of_charp;
+typedef re_array_of(char*) re_array_of_charp;
 
 struct RE_Submatches;
 typedef struct RE_Submatches RE_Submatches;
 
 struct RE_Submatches {
-  int     refs;
+  int refs;
   re_array_of_charp beginnings;
   re_array_of_charp endings;
 };
@@ -522,8 +563,8 @@ struct RE_Submatches {
 static RE_Submatches *re_submatches_copy(struct re *re, RE_Submatches *orig) {
   RE_Submatches *subs = RE_CALLOC(re, 1, sizeof(RE_Submatches));
   if (orig) {
-    subs->beginnings = (re_array_of_charp)re_array_copy(re, orig->beginnings); // -V522
-    subs->endings = (re_array_of_charp)re_array_copy(re, orig->endings);
+    subs->beginnings = (re_array_of_charp) re_array_copy(re, orig->beginnings); // -V522
+    subs->endings = (re_array_of_charp) re_array_copy(re, orig->endings);
   }
   return subs;
 }
@@ -537,12 +578,16 @@ static void re_submatches_free(struct re *re, RE_Submatches *subs) {
 }
 
 static inline RE_Submatches *re_submatches_link(RE_Submatches *subs) {
-  if (subs) subs->refs++;
+  if (subs) {
+    subs->refs++;
+  }
   return subs;
 }
 
 static inline void re_submatches_unlink(struct re *re, RE_Submatches *subs) {
-  if (subs && (0 == --(subs->refs))) re_submatches_free(re, subs);
+  if (subs && (0 == --(subs->refs))) {
+    re_submatches_free(re, subs);
+  }
 }
 
 /* matching */
@@ -551,7 +596,7 @@ struct RE_Thread;
 typedef struct RE_Thread RE_Thread;
 
 struct RE_Thread {
-  RE_Insn   *pc;
+  RE_Insn       *pc;
   RE_Submatches *submatches;
 };
 
@@ -559,18 +604,20 @@ struct RE_ThreadList;
 typedef struct RE_ThreadList RE_ThreadList;
 
 struct RE_ThreadList {
-  int    size;
+  int       size;
   RE_Thread *at;
 };
 
 static inline RE_Thread re_thread(RE_Insn *pc, RE_Submatches *subs) {
   return (RE_Thread) {
-    pc, subs
+           pc, subs
   };
 }
 
 static void re_thread_schedule(struct re *re, RE_ThreadList *threads, RE_Insn *pc, char *sp, RE_Submatches *subs) {
-  if (pc->stamp == sp) return;
+  if (pc->stamp == sp) {
+    return;
+  }
   pc->stamp = sp;
 
   switch (pc->opcode) {
@@ -585,7 +632,9 @@ static void re_thread_schedule(struct re *re, RE_ThreadList *threads, RE_Insn *p
       subs = re_submatches_copy(re, subs);
       re_array_append(re, subs->beginnings, sp); // -V522
       re_thread_schedule(re, threads, pc + 1, sp, subs);
-      if (!subs->refs) re_submatches_free(re, subs);
+      if (!subs->refs) {
+        re_submatches_free(re, subs);
+      }
       return;
     case RE_End: {
       subs = re_submatches_copy(re, subs);
@@ -594,7 +643,7 @@ static void re_thread_schedule(struct re *re, RE_ThreadList *threads, RE_Insn *p
 #   else    /* nesting groups: ab{cd{ef}gh}ij => {cdefgh} {ef}  */
       while (subs->endings.size < subs->beginnings.size) re_array_append(re, subs->endings, 0);
       int i;
-      for (i = subs->endings.size;  i--;) {
+      for (i = subs->endings.size; i--; ) {
         if (!subs->endings.at[i]) {
           subs->endings.at[i] = sp;
           break;
@@ -602,7 +651,9 @@ static void re_thread_schedule(struct re *re, RE_ThreadList *threads, RE_Insn *p
       }
 #   endif
       re_thread_schedule(re, threads, pc + 1, sp, subs);
-      if (!subs->refs) re_submatches_free(re, subs);
+      if (!subs->refs) {
+        re_submatches_free(re, subs);
+      }
       return;
     }
   }
@@ -611,7 +662,9 @@ static void re_thread_schedule(struct re *re, RE_ThreadList *threads, RE_Insn *p
 
 static int re_program_run(struct re *re, char *input, char ***saved, int *nsaved) {
   int matched = RE_ERROR_NOMATCH;
-  if (!re) return matched;
+  if (!re) {
+    return matched;
+  }
 
   RE_Submatches *submatches = 0;
   RE_ThreadList a = { 0, 0 }, b = { 0, 0 }, *here = &a, *next = &b;
@@ -634,25 +687,31 @@ static int re_program_run(struct re *re, char *input, char ***saved, int *nsaved
 
   {
     int i;
-    for (i = 0;  i < re->code.size;  ++i)
+    for (i = 0; i < re->code.size; ++i)
       re->code.first[i].stamp = 0;
   }
 
-  for (sp = input; here->size;  ++sp) {
+  for (sp = input; here->size; ++sp) {
     int i;
-    for (i = 0;  i < here->size;  ++i) {
+    for (i = 0; i < here->size; ++i) {
       RE_Thread t = here->at[i];
       switch (t.pc->opcode) {
         case RE_Any: {
-          if (*sp) re_thread_schedule(re, next, t.pc + 1, sp + 1, t.submatches);
+          if (*sp) {
+            re_thread_schedule(re, next, t.pc + 1, sp + 1, t.submatches);
+          }
           break;
         }
         case RE_Char: {
-          if (*sp == t.pc->x) re_thread_schedule(re, next, t.pc + 1, sp + 1, t.submatches);
+          if (*sp == t.pc->x) {
+            re_thread_schedule(re, next, t.pc + 1, sp + 1, t.submatches);
+          }
           break;
         }
         case RE_Class: {
-          if (re_bitset_includes(t.pc->c, *sp)) re_thread_schedule(re, next, t.pc + 1, sp + 1, t.submatches);
+          if (re_bitset_includes(t.pc->c, *sp)) {
+            re_thread_schedule(re, next, t.pc + 1, sp + 1, t.submatches);
+          }
           break;
         }
         case RE_Accept: {
@@ -683,7 +742,7 @@ bailout:
 
   {
     int i;
-    for (i = 0;  i < here->size;  ++i)
+    for (i = 0; i < here->size; ++i)
       re_submatches_unlink(re, here->at[i].submatches);
   }
 
@@ -694,11 +753,11 @@ bailout:
     if (saved && nsaved && (matched >= 0)) {
       assert(submatches->beginnings.size == submatches->endings.size);
       *nsaved = submatches->beginnings.size * 2;
-      *saved =  RE_CALLOC(re, *nsaved, sizeof(char *));
+      *saved = RE_CALLOC(re, *nsaved, sizeof(char*));
       int i;
-      for (i = 0;  i < *nsaved;  i += 2) {
+      for (i = 0; i < *nsaved; i += 2) {
         (*saved)[i + 0] = submatches->beginnings.at[i / 2];
-        (*saved)[i + 1] = submatches->endings   .at[i / 2];
+        (*saved)[i + 1] = submatches->endings.at[i / 2];
       }
     }
     re_submatches_unlink(re, submatches);
@@ -711,7 +770,9 @@ bailout:
 
 struct re *lwre_new(const char *expr) {
   struct re *re = RE_CALLOC(0, 1, sizeof(struct re));
-  if (re) re->expression = expr;
+  if (re) {
+    re->expression = expr;
+  }
   return re;
 }
 
@@ -719,7 +780,9 @@ int lwre_match(struct re *re, char *input) {
   RE_FREE(re, re->matches);
   re->matches = 0;
   re->nmatches = 0;
-  if (!re->expression) return 0;
+  if (!re->expression) {
+    return 0;
+  }
   if (!re->code.size) {
     re->position = re->expression;
     re->error_code = 0;
@@ -735,7 +798,9 @@ int lwre_match(struct re *re, char *input) {
 
 void lwre_release(struct re *re) {
   RE_FREE(re, re->matches);
-  if (re->code.first) re_program_free(re, &re->code);
+  if (re->code.first) {
+    re_program_free(re, &re->code);
+  }
   memset(re, 0, sizeof(*re));
 }
 
@@ -752,16 +817,18 @@ void lwre_free(struct re *re) {
 /* utility */
 
 static int re_digit(int c, int base) {
-  if (c >= '0' && c <= '9') {
+  if ((c >= '0') && (c <= '9')) {
     c -= '0';
-  } else if (c >= 'A' && c <= 'Z') {
+  } else if ((c >= 'A') && (c <= 'Z')) {
     c -= ('A' - 10);
-  } else if (c >= 'a' && c <= 'z') {
+  } else if ((c >= 'a') && (c <= 'z')) {
     c -= ('a' - 10);
   } else {
     return -1;
   }
-  if (c >= base) return -1;
+  if (c >= base) {
+    return -1;
+  }
   return c;
 }
 
@@ -770,12 +837,16 @@ static int re_byte(char **sp, int least, int most, int base, int liberal) {
   char *s = *sp;
   while (s - *sp < most) {
     int d = re_digit(*s, base);
-    if (d < 0) break;
+    if (d < 0) {
+      break;
+    }
     ++s;
     c = c * base + d;
   }
   if (s - *sp < least) {
-    if (liberal) return (*sp)[-1];
+    if (liberal) {
+      return (*sp)[-1];
+    }
     --*sp;
     return '\\';
   }
@@ -784,7 +855,9 @@ static int re_byte(char **sp, int least, int most, int base, int liberal) {
 }
 
 static int re_log2floor(unsigned int n) {
-  if (!n) return 0;
+  if (!n) {
+    return 0;
+  }
   int b = 1;
 # define _do(x) if (n >= (1U << x)) (b += x), (n >>= x)
   _do(16);
@@ -798,12 +871,13 @@ static int re_log2floor(unsigned int n) {
 
 static void re_escape_utf8(char **sp, unsigned int c) {
   char *s = *sp;
-  if (c < 128) *s++ = c;
-  else { /* this is good for up to 36 bits of c, which proves that Gordon Bell was right all along */
-    int n = re_log2floor((unsigned)c) / 6;
+  if (c < 128) {
+    *s++ = c;
+  } else { /* this is good for up to 36 bits of c, which proves that Gordon Bell was right all along */
+    int n = re_log2floor((unsigned) c) / 6;
     int m = 6 * n;
     *s++ = (0xff << (7 - n)) + (c >> m);
-    while ((m -= 6) >= 0) * s++ = 0x80 + ((c >> m) & 0x3F);
+    while ((m -= 6) >= 0) *s++ = 0x80 + ((c >> m) & 0x3F);
   }
   *sp = s;
 }
@@ -818,7 +892,7 @@ char *lwre_escape(char *s, int liberal) {
       switch (c) {
         case '0':
         case '1':
-          c = re_byte(&in, 1, 3,  8, liberal);
+          c = re_byte(&in, 1, 3, 8, liberal);
           break;
         case '\\':
           //c = '\\';
@@ -864,10 +938,11 @@ char *lwre_escape(char *s, int liberal) {
         }
       }
     }
-    if (u)
+    if (u) {
       re_escape_utf8(&out, c);
-    else
+    } else {
       *out++ = c;
+    }
   }
   assert(out <= in);
   *out = 0;
@@ -894,9 +969,12 @@ int main(int argc, char **argv) {
       char *p = buf;
       int n = 0;
       while (*p) {
-        if (n < re.nmatches && p == re.matches[n]) {
-          if (n & 1) printf("\033[0m");   /* end of match: clear all attributes */
-          else     printf("\033[1;31m");  /* start of match: bold and foreground red */
+        if ((n < re.nmatches) && (p == re.matches[n])) {
+          if (n & 1) {
+            printf("\033[0m");            /* end of match: clear all attributes */
+          } else {
+            printf("\033[1;31m");         /* start of match: bold and foreground red */
+          }
           ++n;
         }
         putchar(*p++);

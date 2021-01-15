@@ -5,9 +5,9 @@
 #include <memory.h>
 #include <ejdb2/iowow/iwconv.h>
 
-#define INT64_FORMAT  PRId64
-#define UINT64_FORMAT PRIu64
-#define INT64_HEX_FORMAT  PRIx64
+#define INT64_FORMAT     PRId64
+#define UINT64_FORMAT    PRIu64
+#define INT64_HEX_FORMAT PRIx64
 
 typedef unsigned short int     u16;
 typedef unsigned int           u32;
@@ -34,8 +34,9 @@ char tmp[128];
 void *memdup(const void *mem, size_t size) {
   void *out = malloc(size);
 
-  if (out != NULL)
+  if (out != NULL) {
     memcpy(out, mem, size);
+  }
 
   return out;
 }
@@ -45,11 +46,11 @@ char *i64toa(int64 val, char *buf) {
   return buf;
 }
 
-
 #ifdef _MSC_VER
 #define atoi64 _atoi64
 #else
-int64  atoi64(char *str);
+int64 atoi64(char *str);
+
 #endif
 
 BOOL AlmostEqualFloats(float A, float B, int maxUlps);
@@ -73,14 +74,17 @@ BOOL vbool;
 char *stripchr(char *mainstr, int separator) {
   char *ptr;
 
-  if (mainstr == NULL) return NULL;
+  if (mainstr == NULL) {
+    return NULL;
+  }
 
   ptr = strchr(mainstr, separator);
-  if (ptr == 0) return NULL;
+  if (ptr == 0) {
+    return NULL;
+  }
   ptr[0] = '\0';
   ptr++;
   return ptr;
-
 }
 
 /*************************************************************************************/
@@ -94,7 +98,9 @@ unsigned short str_to_date(char *datestr) {
   int day, month, year;
   char *next;
 
-  if (datestr == NULL) return 0;
+  if (datestr == NULL) {
+    return 0;
+  }
   strcpy(tmp, datestr);
   datestr = tmp;
 
@@ -109,7 +115,6 @@ unsigned short str_to_date(char *datestr) {
 
   date = (day << 11) | (month << 7) | year;
   return date;
-
 }
 
 /*************************************************************************************/
@@ -125,22 +130,23 @@ char *date_to_str(unsigned short date) {
   sprintf(tmp, "%.4d-%.2d-%.2d", year + 1900, month, day);
 
   return tmp;
-
 }
 
 /*************************************************************************************/
 // MY_CURRENCY
 // 00000000.0000  <- fixed point
 
-#define CURRENCY_DECIMAL_DIGITS   4
-#define CURRENCY_DECIMAL_DIGITS_STR  "0000"
-#define CURRENCY_FACTOR       10000
+#define CURRENCY_DECIMAL_DIGITS     4
+#define CURRENCY_DECIMAL_DIGITS_STR "0000"
+#define CURRENCY_FACTOR             10000
 
 int64 str_to_currency(char *str) {
   char *next;
   int size, i;
 
-  if (str == NULL) return 0;
+  if (str == NULL) {
+    return 0;
+  }
   strcpy(tmp, str);
   str = tmp;
 
@@ -159,7 +165,6 @@ int64 str_to_currency(char *str) {
   }
 
   return atoi64(str);
-
 }
 
 /*************************************************************************************/
@@ -175,12 +180,12 @@ char *currency_to_str(int64 value) {
   if (size > CURRENCY_DECIMAL_DIGITS) {
     ptr = str + size - CURRENCY_DECIMAL_DIGITS;
     memmove(ptr + 1, ptr, CURRENCY_DECIMAL_DIGITS + 1); // include the null terminator
-    ptr[0] = '.';            // include the point
+    ptr[0] = '.';                                       // include the point
   } else {
     move = 2 + CURRENCY_DECIMAL_DIGITS - size;
     memmove(str + move, str, size + 1); // include the null terminator
-    str[0] = '0';            // include the zero
-    str[1] = '.';            // include the point
+    str[0] = '0';                       // include the zero
+    str[1] = '.';                       // include the point
     for (i = 2; i < move; i++) str[i] = '0';
   }
 
@@ -195,7 +200,6 @@ int64 float_to_currency(double value) {
   snprintf(buf, 127, "%.4f", value);
 
   return str_to_currency(buf);
-
 }
 
 /*************************************************************************************/
@@ -205,7 +209,6 @@ double currency_to_float(int64 value) {
   currency_to_str(value);
 
   return atof(tmp);
-
 }
 
 /*************************************************************************************/
@@ -229,15 +232,22 @@ BOOL AlmostEqualFloats(float A, float B, int maxUlps) {
   // Make sure maxUlps is non-negative and small enough that the
   // default NAN won't compare as equal to anything.
   CU_ASSERT(maxUlps > 0 && maxUlps < 4 * 1024 * 1024);
-  aInt = *(int *)&A;
-  bInt = *(int *)&B;
+  aInt = *(int*) &A;
+  bInt = *(int*) &B;
   // Make aInt lexicographically ordered as a twos-complement int
-  if (aInt < 0) aInt = 0x80000000 - aInt;
-  if (bInt < 0) bInt = 0x80000000 - bInt;
+  if (aInt < 0) {
+    aInt = 0x80000000 - aInt;
+  }
+  if (bInt < 0) {
+    bInt = 0x80000000 - bInt;
+  }
   intDiff = abs(aInt - bInt);
-  if (intDiff <= maxUlps) return TRUE;
+  if (intDiff <= maxUlps) {
+    return TRUE;
+  }
   return FALSE;
 }
+
 /*************************************************************************************/
 
 char *test_create_object_1(int *psize) {
@@ -305,7 +315,6 @@ char *test_create_object_1(int *psize) {
 
   *psize = binn_size(obj);
   return binn_release(obj);
-
 }
 
 /*************************************************************************************/
@@ -362,7 +371,6 @@ char *test_create_object_2(int *psize) {
 
   *psize = binn_size(obj);
   return binn_release(obj);
-
 }
 
 /*************************************************************************************/
@@ -370,7 +378,7 @@ char *test_create_object_2(int *psize) {
 void test_binn_read(void *objptr) {
   void *listptr;
   char *ptr;
-  binn value = {0};
+  binn value = { 0 };
 
   printf("OK\nreading:\n");
 
@@ -439,7 +447,7 @@ void test_binn_read(void *objptr) {
 
   ptr = 0;
   CU_ASSERT(binn_object_get(objptr, "str", BINN_STRING, &ptr, NULL) == TRUE);
-  printf("ptr: (%p) '%s'\n", (void *) ptr, ptr);
+  printf("ptr: (%p) '%s'\n", (void*) ptr, ptr);
   CU_ASSERT(strcmp(ptr, "the value") == 0);
 
 
@@ -473,7 +481,7 @@ void test_binn_read(void *objptr) {
 
   ptr = 0;
   CU_ASSERT(binn_list_get(listptr, 3, BINN_STRING, &ptr, NULL) == TRUE);
-  printf("ptr: (%p) '%s'\n", (void *) ptr, ptr);
+  printf("ptr: (%p) '%s'\n", (void*) ptr, ptr);
   CU_ASSERT(strcmp(ptr, "this is a string") == 0);
 
 
@@ -534,7 +542,7 @@ void test_binn_read(void *objptr) {
 
   ptr = 0;
   CU_ASSERT(binn_object_get_str(objptr, "str", &ptr) == TRUE);
-  printf("ptr: (%p) '%s'\n", (void *) ptr, ptr);
+  printf("ptr: (%p) '%s'\n", (void*) ptr, ptr);
   CU_ASSERT(strcmp(ptr, "the value") == 0);
 
 
@@ -567,10 +575,8 @@ void test_binn_read(void *objptr) {
 
   ptr = 0;
   CU_ASSERT(binn_list_get_str(listptr, 3, &ptr) == TRUE);
-  printf("ptr: (%p) '%s'\n", (void *) ptr, ptr);
+  printf("ptr: (%p) '%s'\n", (void*) ptr, ptr);
   CU_ASSERT(strcmp(ptr, "this is a string") == 0);
-
-
 
 
   // short read functions 2
@@ -619,7 +625,7 @@ void test_binn_read(void *objptr) {
 
 
   ptr = binn_object_str(objptr, "str");
-  printf("ptr: (%p) '%s'\n", (void *) ptr, ptr);
+  printf("ptr: (%p) '%s'\n", (void*) ptr, ptr);
   CU_ASSERT(strcmp(ptr, "the value") == 0);
 
 
@@ -646,10 +652,8 @@ void test_binn_read(void *objptr) {
   CU_ASSERT(vint32 == 123);
 
   ptr = binn_list_str(listptr, 3);
-  printf("ptr: (%p) '%s'\n", (void *) ptr, ptr);
+  printf("ptr: (%p) '%s'\n", (void*) ptr, ptr);
   CU_ASSERT(strcmp(ptr, "this is a string") == 0);
-
-
 
 
   // read as value / binn
@@ -693,7 +697,6 @@ void test_binn_read(void *objptr) {
   CU_ASSERT(value.vuint64 == 1234567890123);
 
   puts("reading... OK");
-
 }
 
 /*************************************************************************************/
@@ -813,7 +816,6 @@ void init_udts() {
   binn_free(obj);
 
   puts("testing UDTs... OK");
-
 }
 
 /*************************************************************************************/
@@ -1008,7 +1010,6 @@ void test_int_conversion() {
   CU_ASSERT(vint32 == 0);
 
 
-
   // copy big positive value to small unsigned integer
 
   vint16 = 300;
@@ -1048,8 +1049,6 @@ void test_int_conversion() {
   CU_ASSERT(copy_int_value_tests(&vint64, &vuint32, BINN_INT64, BINN_UINT32) == FALSE);
   CU_ASSERT(vint64 == 25470000000);
   CU_ASSERT(vuint32 == 0);
-
-
 
 
   // valid numbers --------------------
@@ -1112,7 +1111,6 @@ void test_int_conversion() {
   CU_ASSERT(copy_int_value_tests(&vint8, &vuint64, BINN_INT8, BINN_UINT64) == TRUE);
   CU_ASSERT(vint8 == 123);
   CU_ASSERT(vuint64 == 123);
-
 
 
   // unsigned int8 - copy to signed variable
@@ -1193,8 +1191,6 @@ void test_int_conversion() {
   CU_ASSERT(vuint64 == 250);
 
 
-
-
   vint16 = 250;
   vuint8 = 0;
   CU_ASSERT(copy_int_value_tests(&vint16, &vuint8, BINN_INT16, BINN_UINT8) == TRUE);
@@ -1232,8 +1228,6 @@ void test_int_conversion() {
   CU_ASSERT(copy_int_value_tests(&vint64, &vuint32, BINN_INT64, BINN_UINT32) == TRUE);
   CU_ASSERT(vint64 == 2147000000);
   CU_ASSERT(vuint32 == 2147000000);
-
-
 
 
   // valid negative values
@@ -1328,7 +1322,6 @@ void test_int_conversion() {
 
 
   puts("OK");
-
 }
 
 /*************************************************************************************/
@@ -1399,7 +1392,6 @@ void test_binn_int_conversion() {
   binn_free(obj);
 
   puts("OK");
-
 }
 
 /*************************************************************************************/
@@ -1432,7 +1424,7 @@ void test_value_conversion() {
   CU_ASSERT(value->type == BINN_STRING);
   CU_ASSERT(value->ptr != NULL);
   CU_ASSERT(value->ptr != ptr);
-  CU_ASSERT(strcmp((char *)value->ptr, ptr) == 0);
+  CU_ASSERT(strcmp((char*) value->ptr, ptr) == 0);
   CU_ASSERT(value->freefn != NULL);
   binn_free(value);
 
@@ -1839,7 +1831,6 @@ void test_value_conversion() {
 
 
   puts("OK");
-
 }
 
 /*************************************************************************************/
@@ -1851,7 +1842,6 @@ void test_value_copy() {
   //TODO
 
   puts("TODO!!!");
-
 }
 
 /*************************************************************************************/
@@ -1903,7 +1893,7 @@ void test_binn_iter() {
   binn *list2, *copy = NULL;
   binn_iter iter, iter2;
   binn value, value2;
-  int  blob_size, id, id2, list2size;
+  int blob_size, id, id2, list2size;
   void *ptr, *blob_ptr;
   char key[256], key2[256];
 
@@ -1941,7 +1931,7 @@ void test_binn_iter() {
   CU_ASSERT(binn_list_add_bool(list, FALSE) == TRUE);
   CU_ASSERT(binn_list_add_null(list) == TRUE);
   CU_ASSERT(binn_list_add_str(list, "testing...") == TRUE);
-  CU_ASSERT(binn_list_add_blob(list, (char *)blob_ptr, blob_size) == TRUE);
+  CU_ASSERT(binn_list_add_blob(list, (char*) blob_ptr, blob_size) == TRUE);
   CU_ASSERT(binn_list_add_list(list, list2) == TRUE);
 
   CU_ASSERT(binn_object_set_int8(obj, "a", 111) == TRUE);
@@ -1954,7 +1944,7 @@ void test_binn_iter() {
   CU_ASSERT(binn_object_set_bool(obj, "h", FALSE) == TRUE);
   CU_ASSERT(binn_object_set_null(obj, "i") == TRUE);
   CU_ASSERT(binn_object_set_str(obj, "j", "testing...") == TRUE);
-  CU_ASSERT(binn_object_set_blob(obj, "k", (char *)blob_ptr, blob_size) == TRUE);
+  CU_ASSERT(binn_object_set_blob(obj, "k", (char*) blob_ptr, blob_size) == TRUE);
   CU_ASSERT(binn_object_set_list(obj, "l", list2) == TRUE);
 
   CU_ASSERT(binn_map_set_int8(map, 55010, 111) == TRUE);
@@ -1967,32 +1957,31 @@ void test_binn_iter() {
   CU_ASSERT(binn_map_set_bool(map, 55080, FALSE) == TRUE);
   CU_ASSERT(binn_map_set_null(map, 55090) == TRUE);
   CU_ASSERT(binn_map_set_str(map, 55100, "testing...") == TRUE);
-  CU_ASSERT(binn_map_set_blob(map, 55110, (char *)blob_ptr, blob_size) == TRUE);
+  CU_ASSERT(binn_map_set_blob(map, 55110, (char*) blob_ptr, blob_size) == TRUE);
   CU_ASSERT(binn_map_set_list(map, 55120, list2) == TRUE);
-
 
 
   // read list sequentially - using value
 
   /*
-  CU_ASSERT(binn_iter_init(&iter, binn_ptr(list), BINN_LIST));
+     CU_ASSERT(binn_iter_init(&iter, binn_ptr(list), BINN_LIST));
 
-  while (binn_list_next(&iter, &value)) {
-    ...
-  }
-  */
+     while (binn_list_next(&iter, &value)) {
+     ...
+     }
+   */
 
   ptr = binn_ptr(list);
   CU_ASSERT(ptr != 0);
   CU_ASSERT(binn_iter_init(&iter, ptr, BINN_LIST));
-  CU_ASSERT(iter.pnext > (unsigned char *) ptr);
-  CU_ASSERT(iter.plimit > (unsigned char *) ptr);
+  CU_ASSERT(iter.pnext > (unsigned char*) ptr);
+  CU_ASSERT(iter.plimit > (unsigned char*) ptr);
   CU_ASSERT(iter.count == 12);
   CU_ASSERT(iter.current == 0);
 
   CU_ASSERT(binn_list_next(&iter, &value) == TRUE);
-  CU_ASSERT(iter.pnext > (unsigned char *) ptr);
-  CU_ASSERT(iter.plimit > (unsigned char *) ptr);
+  CU_ASSERT(iter.pnext > (unsigned char*) ptr);
+  CU_ASSERT(iter.plimit > (unsigned char*) ptr);
   CU_ASSERT(iter.count == 12);
   CU_ASSERT(iter.current == 1);
   CU_ASSERT(value.type == BINN_INT8);
@@ -2042,7 +2031,7 @@ void test_binn_iter() {
   CU_ASSERT(binn_list_next(&iter, &value) == TRUE);
   CU_ASSERT(iter.current == 10);
   CU_ASSERT(value.type == BINN_STRING);
-  CU_ASSERT(strcmp((char *)value.ptr, "testing...") == 0);
+  CU_ASSERT(strcmp((char*) value.ptr, "testing...") == 0);
 
   CU_ASSERT(binn_list_next(&iter, &value) == TRUE);
   CU_ASSERT(iter.current == 11);
@@ -2059,7 +2048,7 @@ void test_binn_iter() {
   CU_ASSERT(binn_list_null(value.ptr, 2) == TRUE);
   ptr = binn_list_str(value.ptr, 3);
   CU_ASSERT(ptr != 0);
-  CU_ASSERT(strcmp((char *)ptr, "l1st2") == 0);
+  CU_ASSERT(strcmp((char*) ptr, "l1st2") == 0);
   CU_ASSERT(binn_list_bool(value.ptr, 4) == TRUE);
 
   CU_ASSERT(binn_list_next(&iter, &value) == FALSE);
@@ -2071,20 +2060,19 @@ void test_binn_iter() {
   //CU_ASSERT(iter.count == 12);
 
 
-
   // read object sequentially - using value
 
   ptr = binn_ptr(obj);
   CU_ASSERT(ptr != 0);
   CU_ASSERT(binn_iter_init(&iter, ptr, BINN_OBJECT));
-  CU_ASSERT(iter.pnext > (unsigned char *) ptr);
-  CU_ASSERT(iter.plimit > (unsigned char *) ptr);
+  CU_ASSERT(iter.pnext > (unsigned char*) ptr);
+  CU_ASSERT(iter.plimit > (unsigned char*) ptr);
   CU_ASSERT(iter.count == 12);
   CU_ASSERT(iter.current == 0);
 
   CU_ASSERT(binn_object_next(&iter, key, &value) == TRUE);
-  CU_ASSERT(iter.pnext > (unsigned char *) ptr);
-  CU_ASSERT(iter.plimit > (unsigned char *) ptr);
+  CU_ASSERT(iter.pnext > (unsigned char*) ptr);
+  CU_ASSERT(iter.plimit > (unsigned char*) ptr);
   CU_ASSERT(iter.count == 12);
   CU_ASSERT(iter.current == 1);
   CU_ASSERT(value.type == BINN_INT8);
@@ -2152,7 +2140,7 @@ void test_binn_iter() {
   CU_ASSERT(binn_object_next(&iter, key, &value) == TRUE);
   CU_ASSERT(iter.current == 10);
   CU_ASSERT(value.type == BINN_STRING);
-  CU_ASSERT(strcmp((char *)value.ptr, "testing...") == 0);
+  CU_ASSERT(strcmp((char*) value.ptr, "testing...") == 0);
   //printf("%s ", key);
   CU_ASSERT(strcmp(key, "j") == 0);
 
@@ -2173,7 +2161,7 @@ void test_binn_iter() {
   CU_ASSERT(binn_list_null(value.ptr, 2) == TRUE);
   ptr = binn_list_str(value.ptr, 3);
   CU_ASSERT(ptr != 0);
-  CU_ASSERT(strcmp((char *)ptr, "l1st2") == 0);
+  CU_ASSERT(strcmp((char*) ptr, "l1st2") == 0);
   CU_ASSERT(binn_list_bool(value.ptr, 4) == TRUE);
   //printf("%s ", key);
   CU_ASSERT(strcmp(key, "l") == 0);
@@ -2187,21 +2175,19 @@ void test_binn_iter() {
   //CU_ASSERT(iter.count == 12);
 
 
-
-
   // read map sequentially - using value
 
   ptr = binn_ptr(map);
   CU_ASSERT(ptr != 0);
   CU_ASSERT(binn_iter_init(&iter, ptr, BINN_MAP));
-  CU_ASSERT(iter.pnext > (unsigned char *) ptr);
-  CU_ASSERT(iter.plimit > (unsigned char *) ptr);
+  CU_ASSERT(iter.pnext > (unsigned char*) ptr);
+  CU_ASSERT(iter.plimit > (unsigned char*) ptr);
   CU_ASSERT(iter.count == 12);
   CU_ASSERT(iter.current == 0);
 
   CU_ASSERT(binn_map_next(&iter, &id, &value) == TRUE);
-  CU_ASSERT(iter.pnext > (unsigned char *) ptr);
-  CU_ASSERT(iter.plimit > (unsigned char *) ptr);
+  CU_ASSERT(iter.pnext > (unsigned char*) ptr);
+  CU_ASSERT(iter.plimit > (unsigned char*) ptr);
   CU_ASSERT(iter.count == 12);
   CU_ASSERT(iter.current == 1);
   CU_ASSERT(value.type == BINN_INT8);
@@ -2262,7 +2248,7 @@ void test_binn_iter() {
   CU_ASSERT(binn_map_next(&iter, &id, &value) == TRUE);
   CU_ASSERT(iter.current == 10);
   CU_ASSERT(value.type == BINN_STRING);
-  CU_ASSERT(strcmp((char *)value.ptr, "testing...") == 0);
+  CU_ASSERT(strcmp((char*) value.ptr, "testing...") == 0);
   CU_ASSERT(id == 55100);
 
   CU_ASSERT(binn_map_next(&iter, &id, &value) == TRUE);
@@ -2281,7 +2267,7 @@ void test_binn_iter() {
   CU_ASSERT(binn_list_null(value.ptr, 2) == TRUE);
   ptr = binn_list_str(value.ptr, 3);
   CU_ASSERT(ptr != 0);
-  CU_ASSERT(strcmp((char *)ptr, "l1st2") == 0);
+  CU_ASSERT(strcmp((char*) ptr, "l1st2") == 0);
   CU_ASSERT(binn_list_bool(value.ptr, 4) == TRUE);
   CU_ASSERT(id == 55120);
 
@@ -2421,14 +2407,13 @@ void test_binn_iter() {
   binn_free(obj);
 
   puts("OK");
-
 }
 
 /*************************************************************************************/
 
 void test_binn2() {
   char *obj1ptr, *obj2ptr;
-  int  obj1size, obj2size;
+  int obj1size, obj2size;
 
   test_virtual_types();
 
@@ -2458,18 +2443,18 @@ void test_binn2() {
 
 /*************************************************************************************/
 
-
 int main() {
   CU_pSuite pSuite = NULL;
-  if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
+  if (CUE_SUCCESS != CU_initialize_registry()) {
+    return CU_get_error();
+  }
   pSuite = CU_add_suite("jbl_test_binn2", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
   }
   if (
-    (NULL == CU_add_test(pSuite, "test_binn2", test_binn2))
-  ) {
+    (NULL == CU_add_test(pSuite, "test_binn2", test_binn2))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

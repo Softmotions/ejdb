@@ -11,7 +11,8 @@ iwrc jbi_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *ste
   EJDB_EXEC *ux = ctx->ux;
   IWPOOL *pool = ux->pool;
 
-start: {
+start:
+  {
     if (cur) {
       rc = iwkv_cursor_copy_val(cur, ctx->jblbuf, ctx->jblbufsz, &vsz);
     } else {
@@ -53,7 +54,7 @@ start: {
   RCGO(rc, finish);
 
   rc = jql_matched(ux->q, &jbl, matched);
-  if (rc || !*matched || (ux->skip && ux->skip-- > 0)) {
+  if (rc || !*matched || (ux->skip && (ux->skip-- > 0))) {
     goto finish;
   }
   if (ctx->istep > 0) {
@@ -66,7 +67,7 @@ start: {
     ctx->istep = 1;
     struct JQP_AUX *aux = q->aux;
     struct _EJDB_DOC doc = {
-      .id = id,
+      .id  = id,
       .raw = &jbl
     };
     if (aux->apply || aux->apply_placeholder || aux->projection) {
@@ -88,7 +89,7 @@ start: {
           rc = jb_del(ctx->jbc, &jbl, id);
         }
       } else if (aux->apply || aux->apply_placeholder) {
-        struct _JBL sn = {0};
+        struct _JBL sn = { 0 };
         rc = jql_apply(q, root, pool);
         RCGO(rc, finish);
         rc = _jbl_from_node(&sn, root);
@@ -122,13 +123,15 @@ start: {
     }
     ++ux->cnt;
     *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
-    if (--ux->limit < 1) *step = 0;
+    if (--ux->limit < 1) {
+      *step = 0;
+    }
   } else {
     *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0; // -V547
   }
 
 finish:
-  if (pool && pool != ctx->ux->pool) {
+  if (pool && (pool != ctx->ux->pool)) {
     iwpool_destroy(pool);
   }
   return rc;

@@ -10,18 +10,26 @@ static void _jbi_print_index(struct _JBIDX *idx, IWXSTR *xstr) {
     iwxstr_cat2(xstr, "UNIQUE");
   }
   if (m & EJDB_IDX_STR) {
-    if (cnt++) iwxstr_cat2(xstr, "|");
+    if (cnt++) {
+      iwxstr_cat2(xstr, "|");
+    }
     iwxstr_cat2(xstr, "STR");
   }
   if (m & EJDB_IDX_I64) {
-    if (cnt++) iwxstr_cat2(xstr, "|");
+    if (cnt++) {
+      iwxstr_cat2(xstr, "|");
+    }
     iwxstr_cat2(xstr, "I64");
   }
   if (m & EJDB_IDX_F64) {
-    if (cnt++) iwxstr_cat2(xstr, "|");
+    if (cnt++) {
+      iwxstr_cat2(xstr, "|");
+    }
     iwxstr_cat2(xstr, "F64");
   }
-  if (cnt++) iwxstr_cat2(xstr, "|");
+  if (cnt++) {
+    iwxstr_cat2(xstr, "|");
+  }
   iwxstr_printf(xstr, "%lld ", idx->rnum);
   jbl_ptr_serialize(idx->ptr, xstr);
 }
@@ -106,17 +114,15 @@ IW_INLINE int _jbi_idx_expr_op_weight(struct _JBMIDX *midx) {
 static bool _jbi_is_solid_node_expression(const JQP_NODE *n) {
   JQPUNIT *unit = n->value;
   for (const JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
-    if (
-      expr->op->negate
-      || (expr->join && (expr->join->negate || expr->join->value == JQP_JOIN_OR))
-      || expr->op->value == JQP_OP_RE) {
+    if (expr->op->negate
+        || (expr->join && (expr->join->negate || (expr->join->value == JQP_JOIN_OR) ))
+        || (expr->op->value == JQP_OP_RE) ) {
       // No negate conditions, No OR, No regexp
       return false;
     }
     JQPUNIT *left = expr->left;
-    if (
-      left->type == JQP_EXPR_TYPE
-      || (left->type == JQP_STRING_TYPE && (left->string.flavour & JQP_STR_STAR))) {
+    if ((left->type == JQP_EXPR_TYPE)
+        || ((left->type == JQP_STRING_TYPE) && (left->string.flavour & JQP_STR_STAR))) {
       return false;
     }
   }
@@ -125,10 +131,12 @@ static bool _jbi_is_solid_node_expression(const JQP_NODE *n) {
 
 static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
   JQP_EXPR *expr = mctx->nexpr; // Node expression
-  if (!expr) return 0;
+  if (!expr) {
+    return 0;
+  }
   JQP_AUX *aux = ctx->ux->q->aux;
 
-  for (; expr; expr = expr->next) {
+  for ( ; expr; expr = expr->next) {
     iwrc rc = 0;
     jqp_op_t op = expr->op->value;
     JQVAL *rv = jql_unit_to_jqval(aux, expr->right, &rc);
@@ -142,16 +150,14 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
       case JQVAL_BINN:
         continue;
       case JQVAL_JBLNODE: {
-        if (op != JQP_OP_IN || rv->vnode->type != JBV_ARRAY) {
+        if ((op != JQP_OP_IN) || (rv->vnode->type != JBV_ARRAY)) {
           continue;
         }
         int vcnt = 0;
-        for (JBL_NODE n = rv->vnode->child; n; n = n->next, ++vcnt);
-        if (
-          vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE
-          && (vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE
-              || mctx->idx->rnum < rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO)
-        ) {
+        for (JBL_NODE n = rv->vnode->child; n; n = n->next, ++vcnt) ;
+        if ((vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE)
+            && ((vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE)
+                || (mctx->idx->rnum < rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO) )) {
           // No index for large IN array | small collection size
           continue;
         }
@@ -171,13 +177,13 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
           mctx->expr1 = 0;
           return 0;
         }
-        if (rv->type == JQVAL_STR && *rv->vstr == '\0') {
+        if ((rv->type == JQVAL_STR) && (*rv->vstr == '\0')) {
           continue;
         }
       case JQP_OP_GT:
       case JQP_OP_GTE:
         if (mctx->cursor_init != IWKV_CURSOR_EQ) {
-          if (mctx->expr1 && mctx->cursor_init == IWKV_CURSOR_GE && op != JQP_OP_PREFIX) {
+          if (mctx->expr1 && (mctx->cursor_init == IWKV_CURSOR_GE) && (op != JQP_OP_PREFIX)) {
             JQVAL *pval = jql_unit_to_jqval(aux, mctx->expr1->right, &rc);
             RCRET(rc);
             int cv = jql_cmp_jqval_pair(pval, rv, &rc);
@@ -205,7 +211,7 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         mctx->expr2 = expr;
         break;
       case JQP_OP_IN:
-        if (mctx->cursor_init != IWKV_CURSOR_EQ && rv->type >= JQVAL_JBLNODE) {
+        if ((mctx->cursor_init != IWKV_CURSOR_EQ) && (rv->type >= JQVAL_JBLNODE)) {
           mctx->expr1 = expr;
           mctx->expr2 = 0;
           mctx->cursor_init = IWKV_CURSOR_EQ;
@@ -227,7 +233,7 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
 
   // Orderby compatibility
   if (mctx->orderby_support) {
-    if (aux->orderby_num == 1 && mctx->cursor_init != IWKV_CURSOR_EQ) {
+    if ((aux->orderby_num == 1) && (mctx->cursor_init != IWKV_CURSOR_EQ)) {
       bool desc = (aux->orderby_ptrs[0]->op & 1) != 0; // Desc sort
       if (desc) {
         if (mctx->cursor_step != IWKV_CURSOR_NEXT) {
@@ -257,19 +263,20 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
   return 0;
 }
 
-static iwrc _jbi_collect_indexes(JBEXEC *ctx,
-                                 const struct JQP_EXPR_NODE *en,
-                                 struct _JBMIDX marr[static JB_SOLID_EXPRNUM],
-                                 size_t *snp) {
+static iwrc _jbi_collect_indexes(
+  JBEXEC                     *ctx,
+  const struct JQP_EXPR_NODE *en,
+  struct _JBMIDX             marr[static JB_SOLID_EXPRNUM],
+  size_t                     *snp) {
 
   iwrc rc = 0;
-  if (*snp >=  JB_SOLID_EXPRNUM - 1) {
+  if (*snp >= JB_SOLID_EXPRNUM - 1) {
     return 0;
   }
   if (en->type == JQP_EXPR_NODE_TYPE) {
     struct JQP_EXPR_NODE *cn = en->chain;
-    for (; cn; cn = cn->next) {
-      if (cn->join && cn->join->value == JQP_JOIN_OR) {
+    for ( ; cn; cn = cn->next) {
+      if (cn->join && (cn->join->value == JQP_JOIN_OR)) {
         return 0;
       }
     }
@@ -281,7 +288,7 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
     }
   } else if (en->type == JQP_FILTER_TYPE) {
     int fnc = 0;
-    JQP_FILTER *f = (JQP_FILTER *) en; // -V1027
+    JQP_FILTER *f = (JQP_FILTER*) en;  // -V1027
     for (JQP_NODE *n = f->node; n; n = n->next, ++fnc) {
       switch (n->ntype) {
         case JQP_NODE_ANY:
@@ -301,9 +308,11 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
     struct _JBL_PTR *obp = aux->orderby_num ? aux->orderby_ptrs[0] : 0;
 
     for (struct _JBIDX *idx = ctx->jbc->idx; idx && *snp < JB_SOLID_EXPRNUM; idx = idx->next) {
-      struct _JBMIDX mctx = {.filter = f};
+      struct _JBMIDX mctx = { .filter = f };
       struct _JBL_PTR *ptr = idx->ptr;
-      if (ptr->cnt > fnc) continue;
+      if (ptr->cnt > fnc) {
+        continue;
+      }
 
       JQP_EXPR *nexpr = 0;
       int i = 0, j = 0;
@@ -319,18 +328,18 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
             field = left->string.value;
           }
         }
-        if (!field || strcmp(field, ptr->n[i]) != 0) {
+        if (!field || (strcmp(field, ptr->n[i]) != 0)) {
           break;
         }
-        if (obp && i == j && i < obp->cnt && !strcmp(ptr->n[i], obp->n[i])) {
+        if (obp && (i == j) && (i < obp->cnt) && !strcmp(ptr->n[i], obp->n[i])) {
           j++;
         }
         // Check for the last iteration and the special `**` case
-        if (i == ptr->cnt - 1
+        if ((i == ptr->cnt - 1)
             && (idx->idbf & IWDB_COMPOUND_KEYS)
-            && n->next && !n->next->next && n->next->ntype == JQP_NODE_EXPR) {
+            && n->next && !n->next->next && (n->next->ntype == JQP_NODE_EXPR)) {
           JQPUNIT *left = n->next->value->expr.left;
-          if (left->type == JQP_STRING_TYPE && (left->string.flavour & JQP_STR_DBL_STAR)) {
+          if ((left->type == JQP_STRING_TYPE) && (left->string.flavour & JQP_STR_DBL_STAR)) {
             i++;
             j++;
             nexpr = &n->next->value->expr;
@@ -338,7 +347,7 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
           }
         }
       }
-      if (i == ptr->cnt && nexpr) {
+      if ((i == ptr->cnt) && nexpr) {
         mctx.idx = idx;
         mctx.nexpr = nexpr;
         mctx.orderby_support = (i == j);
@@ -360,8 +369,8 @@ static iwrc _jbi_collect_indexes(JBEXEC *ctx,
 }
 
 static int _jbi_idx_cmp(const void *o1, const void *o2) {
-  struct _JBMIDX *d1 = (struct _JBMIDX *) o1;
-  struct _JBMIDX *d2 = (struct _JBMIDX *) o2;
+  struct _JBMIDX *d1 = (struct _JBMIDX*) o1;
+  struct _JBMIDX *d2 = (struct _JBMIDX*) o2;
   assert(d1 && d2);
   int w1 = _jbi_idx_expr_op_weight(d1);
   int w2 = _jbi_idx_expr_op_weight(d2);
@@ -389,7 +398,7 @@ static struct _JBIDX *_jbi_select_index_for_orderby(JBEXEC *ctx) {
       continue;
     }
     int i = 0;
-    for (; i < obp->cnt && !strcmp(ptr->n[i], obp->n[i]); ++i);
+    for ( ; i < obp->cnt && !strcmp(ptr->n[i], obp->n[i]); ++i) ;
     if (i == obp->cnt) {
       memset(&ctx->midx, 0, sizeof(ctx->midx));
       if (!(obp->op & 1)) { // Asc sort
@@ -411,7 +420,7 @@ iwrc jbi_selection(JBEXEC *ctx) {
   iwrc rc = 0;
   size_t snp = 0;
   struct JQP_AUX *aux = ctx->ux->q->aux;
-  struct _JBMIDX fctx[JB_SOLID_EXPRNUM] = {0};
+  struct _JBMIDX fctx[JB_SOLID_EXPRNUM] = { 0 };
 
   ctx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
   ctx->cursor_step = IWKV_CURSOR_NEXT;
@@ -432,14 +441,14 @@ iwrc jbi_selection(JBEXEC *ctx) {
       memcpy(&ctx->midx, &fctx[0], sizeof(ctx->midx));
       struct _JBMIDX *midx = &ctx->midx;
       jqp_op_t op = midx->expr1->op->value;
-      if (op == JQP_OP_EQ || op == JQP_OP_IN || (op == JQP_OP_GTE && ctx->cursor_init == IWKV_CURSOR_GE)) {
+      if ((op == JQP_OP_EQ) || (op == JQP_OP_IN) || ((op == JQP_OP_GTE) && (ctx->cursor_init == IWKV_CURSOR_GE))) {
         midx->expr1->prematched = true;
       }
       if (ctx->ux->log) {
         iwxstr_cat2(ctx->ux->log, "[INDEX] SELECTED ");
         _jbi_log_index_rules(ctx->ux->log, &ctx->midx);
       }
-      if (midx->orderby_support && aux->orderby_num == 1) {
+      if (midx->orderby_support && (aux->orderby_num == 1)) {
         // Turn off final sorting since it supported by natural index scan order
         ctx->sorting = false;
       } else if (aux->orderby_num) {

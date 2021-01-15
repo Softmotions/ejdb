@@ -4,7 +4,7 @@
 
 static iwrc _jb_put_new_lw(JBCOLL jbc, JBL jbl, int64_t *id);
 
-static const IWKV_val EMPTY_VAL = {0};
+static const IWKV_val EMPTY_VAL = { 0 };
 
 IW_INLINE iwrc _jb_meta_nrecs_removedb(EJDB db, uint32_t dbid) {
   dbid = IW_HTOIL(dbid);
@@ -74,16 +74,18 @@ static iwrc _jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
   char *ptr;
   struct _JBL imeta;
   JBIDX idx = calloc(1, sizeof(*idx));
-  if (!idx) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  if (!idx) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
 
   iwrc rc = jbl_from_buf_keep_onstack(&imeta, mval->data, mval->size);
   RCGO(rc, finish);
   bn = &imeta.bn;
 
-  if (!binn_object_get_str(bn, "ptr", &ptr) ||
-      !binn_object_get_uint8(bn, "mode", &idx->mode) ||
-      !binn_object_get_uint8(bn, "idbf", &idx->idbf) ||
-      !binn_object_get_uint32(bn, "dbid", &idx->dbid)) {
+  if (!binn_object_get_str(bn, "ptr", &ptr)
+      || !binn_object_get_uint8(bn, "mode", &idx->mode)
+      || !binn_object_get_uint8(bn, "idbf", &idx->idbf)
+      || !binn_object_get_uint32(bn, "dbid", &idx->dbid)) {
     rc = EJDB_ERROR_INVALID_COLLECTION_INDEX_META;
     goto finish;
   }
@@ -127,7 +129,7 @@ static iwrc _jb_coll_load_indexes_lr(JBCOLL jbc) {
     IWKV_val key, val;
     rc = iwkv_cursor_key(cur, &key);
     RCGO(rc, finish);
-    if (key.size > sz && !strncmp(buf, key.data, sz)) {
+    if ((key.size > sz) && !strncmp(buf, key.data, sz)) {
       iwkv_val_dispose(&key);
       rc = iwkv_cursor_val(cur, &val);
       RCGO(rc, finish);
@@ -138,7 +140,9 @@ static iwrc _jb_coll_load_indexes_lr(JBCOLL jbc) {
       iwkv_val_dispose(&key);
     }
   } while (!(rc = iwkv_cursor_to(cur, IWKV_CURSOR_PREV)));
-  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    rc = 0;
+  }
 
 finish:
   iwkv_cursor_close(&cur);
@@ -175,7 +179,9 @@ static iwrc _jb_coll_load_meta_lr(JBCOLL jbc) {
   RCRET(rc);
   rc = iwkv_cursor_to(cur, IWKV_CURSOR_NEXT);
   if (rc) {
-    if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+    if (rc == IWKV_ERROR_NOTFOUND) {
+      rc = 0;
+    }
   } else {
     size_t sz;
     rc = iwkv_cursor_copy_key(cur, &jbc->id_seq, sizeof(jbc->id_seq), &sz, 0);
@@ -232,11 +238,11 @@ static iwrc _jb_idx_add_meta_lr(JBIDX idx, binn *list) {
   rc = jbl_ptr_serialize(idx->ptr, xstr);
   RCGO(rc, finish);
 
-  if (!binn_object_set_str(meta, "ptr", iwxstr_ptr(xstr)) ||
-      !binn_object_set_uint32(meta, "mode", idx->mode) ||
-      !binn_object_set_uint32(meta, "idbf", idx->idbf) ||
-      !binn_object_set_uint32(meta, "dbid", idx->dbid) ||
-      !binn_object_set_int64(meta, "rnum", idx->rnum)) {
+  if (!binn_object_set_str(meta, "ptr", iwxstr_ptr(xstr))
+      || !binn_object_set_uint32(meta, "mode", idx->mode)
+      || !binn_object_set_uint32(meta, "idbf", idx->idbf)
+      || !binn_object_set_uint32(meta, "dbid", idx->dbid)
+      || !binn_object_set_int64(meta, "rnum", idx->rnum)) {
     rc = JBL_ERROR_CREATION;
   }
 
@@ -284,7 +290,9 @@ static iwrc _jb_coll_add_meta_lr(JBCOLL jbc, binn *list) {
 
 finish:
   binn_free(meta);
-  if (ilist) binn_free(ilist);
+  if (ilist) {
+    binn_free(ilist);
+  }
   return rc;
 }
 
@@ -345,7 +353,9 @@ static iwrc _jb_db_release(EJDB *dbp) {
 #endif
   if (db->mcolls) {
     for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
-      if (!kh_exist(db->mcolls, k)) continue;
+      if (!kh_exist(db->mcolls, k)) {
+        continue;
+      }
       JBCOLL jbc = kh_val(db->mcolls, k);
       _jb_coll_release(jbc);
     }
@@ -358,8 +368,12 @@ static iwrc _jb_db_release(EJDB *dbp) {
   pthread_rwlock_destroy(&db->rwl);
 
   EJDB_HTTP *http = &db->opts.http;
-  if (http->bind) free((void *) http->bind);
-  if (http->access_token) free((void *) http->access_token);
+  if (http->bind) {
+    free((void*) http->bind);
+  }
+  if (http->access_token) {
+    free((void*) http->access_token);
+  }
   free(db);
   return rc;
 }
@@ -446,8 +460,12 @@ static iwrc _jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquir
 
 create_finish:
       if (rc) {
-        if (meta) jbl_destroy(&meta);
-        if (cdb) iwkv_db_destroy(&cdb);
+        if (meta) {
+          jbl_destroy(&meta);
+        }
+        if (cdb) {
+          iwkv_db_destroy(&cdb);
+        }
         if (jbc) {
           jbc->meta = 0; // meta was cleared
           _jb_coll_release(jbc);
@@ -481,7 +499,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   char numbuf[JBNUMBUF_SIZE];
 
   bool jbv_found, jbvprev_found;
-  struct _JBL jbv = {0}, jbvprev = {0};
+  struct _JBL jbv = { 0 }, jbvprev = { 0 };
   jbl_type_t jbv_type, jbvprev_type;
 
   iwrc rc = 0;
@@ -496,18 +514,18 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   jbvprev_type = jbl_type(&jbvprev);
 
   // Do not index NULLs, OBJECTs, ARRAYs (in `EJDB_IDX_UNIQUE` mode)
-  if ((jbvprev_type == JBV_OBJECT || jbvprev_type <= JBV_NULL)
-      || (jbvprev_type == JBV_ARRAY && !compound)) {
+  if (((jbvprev_type == JBV_OBJECT) || (jbvprev_type <= JBV_NULL))
+      || ((jbvprev_type == JBV_ARRAY) && !compound)) {
     jbvprev_found = false;
   }
-  if ((jbv_type == JBV_OBJECT || jbv_type <= JBV_NULL)
-      || (jbv_type == JBV_ARRAY && !compound)) {
+  if (((jbv_type == JBV_OBJECT) || (jbv_type <= JBV_NULL))
+      || ((jbv_type == JBV_ARRAY) && !compound)) {
     jbv_found = false;
   }
 
   if (compound
-      && jbv_type == jbvprev_type
-      && jbvprev_type == JBV_ARRAY) { // compare next/prev obj arrays
+      && (jbv_type == jbvprev_type)
+      && (jbvprev_type == JBV_ARRAY)) { // compare next/prev obj arrays
     pool = iwpool_create(1024);
     if (!pool) {
       rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -529,7 +547,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
     return 0;
   }
 
-  if (jbvprev_found) { // Remove old index elements
+  if (jbvprev_found) {               // Remove old index elements
     if (jbvprev_type == JBV_ARRAY) { // TODO: array modification delta?
       JBL_NODE n;
       if (!pool) {
@@ -569,7 +587,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
     }
   }
 
-  if (jbv_found) { // Add index record
+  if (jbv_found) {               // Add index record
     if (jbv_type == JBV_ARRAY) { // TODO: array modification delta?
       JBL_NODE n;
       if (!pool) {
@@ -704,7 +722,7 @@ finish:
   }
   if (rc && !oldval->size) {
     // Cleanup on error inserting new record
-    IWKV_val key = {.data = &ctx->id, .size = sizeof(ctx->id)};
+    IWKV_val key = { .data = &ctx->id, .size = sizeof(ctx->id) };
     for (JBIDX idx = jbc->idx; idx && idx != fail_idx; idx = idx->next) {
       IWRC(_jb_idx_record_remove(idx, ctx->id, ctx->jbl), rc);
     }
@@ -775,7 +793,7 @@ IW_INLINE iwrc _jb_put_impl(JBCOLL jbc, JBL jbl, int64_t id) {
     .size = sizeof(id)
   };
   struct _JBPHCTX pctx = {
-    .id = id,
+    .id  = id,
     .jbc = jbc,
     .jbl = jbl
   };
@@ -791,7 +809,7 @@ iwrc jb_put(JBCOLL jbc, JBL jbl, int64_t id) {
 iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl) {
   IWKV_val val;
   struct _JBPHCTX pctx = {
-    .id = id,
+    .id  = id,
     .jbc = jbc,
     .jbl = jbl
   };
@@ -809,7 +827,7 @@ static iwrc _jb_exec_upsert_lw(JBEXEC *ctx) {
   JQL q = ux->q;
   if (q->aux->apply_placeholder) {
     JQVAL *pv = jql_find_placeholder(q, q->aux->apply_placeholder);
-    if (!pv || pv->type != JQVAL_JBLNODE || !pv->vnode) {
+    if (!pv || (pv->type != JQVAL_JBLNODE) || !pv->vnode) {
       rc = JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
       goto finish;
     }
@@ -826,8 +844,8 @@ static iwrc _jb_exec_upsert_lw(JBEXEC *ctx) {
 
   if (!(q->aux->qmode & JQP_QRY_AGGREGATE)) {
     struct _EJDB_DOC doc = {
-      .id = id,
-      .raw = jbl,
+      .id   = id,
+      .raw  = jbl,
       .node = n
     };
     do {
@@ -877,7 +895,9 @@ iwrc ejdb_exec(EJDB_EXEC *ux) {
                                   &ctx.jbc);
   if (rc == IW_ERROR_NOT_EXISTS) {
     return 0;
-  } else RCRET(rc);
+  } else {
+    RCRET(rc);
+  }
 
   rc = _jb_exec_scan_init(&ctx);
   RCGO(rc, finish);
@@ -893,7 +913,7 @@ iwrc ejdb_exec(EJDB_EXEC *ux) {
     rc = ctx.scanner(&ctx, jbi_consumer);
   }
   RCGO(rc, finish);
-  if (ux->cnt == 0 && jql_has_apply_upsert(ux->q)) {
+  if ((ux->cnt == 0) && jql_has_apply_upsert(ux->q)) {
     // No records found trying to upsert new record
     rc = _jb_exec_upsert_lw(&ctx);
   }
@@ -918,13 +938,13 @@ static iwrc _jb_exec_list_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t 
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   ndoc->id = doc->id;
-  ndoc->raw = (void *)(((uint8_t *) ndoc) + sizeof(*ndoc));
+  ndoc->raw = (void*) (((uint8_t*) ndoc) + sizeof(*ndoc));
   ndoc->raw->node = 0;
   ndoc->node = doc->node;
   ndoc->next = 0;
   ndoc->prev = 0;
   memcpy(&ndoc->raw->bn, &doc->raw->bn, sizeof(ndoc->raw->bn));
-  ndoc->raw->bn.ptr = ((uint8_t *) ndoc) + sizeof(*ndoc) + sizeof(*doc->raw);
+  ndoc->raw->bn.ptr = ((uint8_t*) ndoc) + sizeof(*ndoc) + sizeof(*doc->raw);
   memcpy(ndoc->raw->bn.ptr, doc->raw->bn.ptr, doc->raw->bn.size);
 
   if (!lvc->head) {
@@ -943,15 +963,15 @@ static iwrc _jb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWXSTR *log
     return IW_ERROR_INVALID_ARGS;
   }
   iwrc rc = 0;
-  struct JB_LIST_VISITOR_CTX lvc = {0};
+  struct JB_LIST_VISITOR_CTX lvc = { 0 };
   struct _EJDB_EXEC ux = {
-    .db = db,
-    .q = q,
+    .db      = db,
+    .q       = q,
     .visitor = _jb_exec_list_visitor,
-    .pool = pool,
-    .limit = limit,
-    .log = log,
-    .opaque = &lvc
+    .pool    = pool,
+    .limit   = limit,
+    .log     = log,
+    .opaque  = &lvc
   };
   rc = ejdb_exec(&ux);
   if (rc) {
@@ -967,10 +987,10 @@ static iwrc _jb_count(EJDB db, JQL q, int64_t *count, int64_t limit, IWXSTR *log
     return IW_ERROR_INVALID_ARGS;
   }
   struct _EJDB_EXEC ux = {
-    .db = db,
-    .q = q,
+    .db    = db,
+    .q     = q,
     .limit = limit,
-    .log = log
+    .log   = log
   };
   iwrc rc = ejdb_exec(&ux);
   *count = ux.cnt;
@@ -1101,7 +1121,7 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   RCGO(rc, finish);
 
   for (JBIDX idx = jbc->idx, prev = 0; idx; idx = idx->next) {
-    if ((idx->mode & ~EJDB_IDX_UNIQUE) == (mode & ~EJDB_IDX_UNIQUE) && !jbl_ptr_cmp(idx->ptr, ptr)) {
+    if (((idx->mode & ~EJDB_IDX_UNIQUE) == (mode & ~EJDB_IDX_UNIQUE)) && !jbl_ptr_cmp(idx->ptr, ptr)) {
       key.data = keybuf;
       key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_IDXMETA "%u" "." "%u", jbc->dbid, idx->dbid);
       if (key.size >= sizeof(keybuf)) {
@@ -1159,7 +1179,7 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   RCGO(rc, finish);
 
   for (idx = jbc->idx; idx; idx = idx->next) {
-    if ((idx->mode & ~EJDB_IDX_UNIQUE) == (mode & ~EJDB_IDX_UNIQUE) && !jbl_ptr_cmp(idx->ptr, ptr)) {
+    if (((idx->mode & ~EJDB_IDX_UNIQUE) == (mode & ~EJDB_IDX_UNIQUE)) && !jbl_ptr_cmp(idx->ptr, ptr)) {
       if (idx->mode != mode) {
         rc = EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE;
         idx = 0;
@@ -1199,10 +1219,10 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
     goto finish;
   }
 
-  if (!binn_object_set_str(imeta, "ptr", path) ||
-      !binn_object_set_uint32(imeta, "mode", idx->mode) ||
-      !binn_object_set_uint32(imeta, "idbf", idx->idbf) ||
-      !binn_object_set_uint32(imeta, "dbid", idx->dbid)) {
+  if (!binn_object_set_str(imeta, "ptr", path)
+      || !binn_object_set_uint32(imeta, "mode", idx->mode)
+      || !binn_object_set_uint32(imeta, "idbf", idx->idbf)
+      || !binn_object_set_uint32(imeta, "dbid", idx->dbid)) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }
@@ -1238,8 +1258,9 @@ finish:
   return rc;
 }
 
-static iwrc _jb_patch(EJDB db, const char *coll, int64_t id, bool upsert,
-                      const char *patchjson, JBL_NODE patchjbn, JBL patchjbl) {
+static iwrc _jb_patch(
+  EJDB db, const char *coll, int64_t id, bool upsert,
+  const char *patchjson, JBL_NODE patchjbn, JBL patchjbl) {
 
   int rci;
   JBCOLL jbc;
@@ -1247,7 +1268,7 @@ static iwrc _jb_patch(EJDB db, const char *coll, int64_t id, bool upsert,
   JBL_NODE root, patch;
   JBL ujbl = 0;
   IWPOOL *pool = 0;
-  IWKV_val val = {0};
+  IWKV_val val = { 0 };
   IWKV_val key = {
     .data = &id,
     .size = sizeof(id)
@@ -1257,7 +1278,7 @@ static iwrc _jb_patch(EJDB db, const char *coll, int64_t id, bool upsert,
   RCGO(rc, finish);
 
   rc = iwkv_get(jbc->cdb, &key, &val);
-  if (upsert && rc == IWKV_ERROR_NOTFOUND) {
+  if (upsert && (rc == IWKV_ERROR_NOTFOUND)) {
     if (patchjson) {
       rc = jbl_from_json(&ujbl, patchjson);
     } else if (patchjbl) {
@@ -1273,11 +1294,13 @@ static iwrc _jb_patch(EJDB db, const char *coll, int64_t id, bool upsert,
       goto finish;
     }
     rc = _jb_put_impl(jbc, ujbl, id);
-    if (!rc && jbc->id_seq < id) {
+    if (!rc && (jbc->id_seq < id)) {
       jbc->id_seq = id;
     }
     goto finish;
-  } else RCGO(rc, finish);
+  } else {
+    RCGO(rc, finish);
+  }
 
   rc = jbl_from_buf_keep_onstack(&sjbl, val.data, val.size);
   RCGO(rc, finish);
@@ -1297,7 +1320,7 @@ static iwrc _jb_patch(EJDB db, const char *coll, int64_t id, bool upsert,
     rc = jbl_to_node(patchjbl, &patch, false, pool);
   } else if (patchjbn) {
     patch = patchjbn;
-  }  else {
+  } else {
     rc = IW_ERROR_INVALID_ARGS;
   }
   RCGO(rc, finish);
@@ -1378,7 +1401,7 @@ iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id) {
   iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
   rc = _jb_put_impl(jbc, jbl, id);
-  if (!rc && jbc->id_seq < id) {
+  if (!rc && (jbc->id_seq < id)) {
     jbc->id_seq = id;
   }
   API_COLL_UNLOCK(jbc, rci, rc);
@@ -1393,7 +1416,7 @@ static iwrc _jb_put_new_lw(JBCOLL jbc, JBL jbl, int64_t *id) {
     .size = sizeof(oid)
   };
   struct _JBPHCTX pctx = {
-    .id = oid,
+    .id  = oid,
     .jbc = jbc,
     .jbl = jbl
   };
@@ -1416,7 +1439,9 @@ iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *id) {
   }
   int rci;
   JBCOLL jbc;
-  if (id) *id = 0;
+  if (id) {
+    *id = 0;
+  }
   iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
   RCRET(rc);
 
@@ -1434,8 +1459,8 @@ iwrc jb_get(EJDB db, const char *coll, int64_t id, jb_coll_acquire_t acm, JBL *j
   int rci;
   JBCOLL jbc;
   JBL jbl = 0;
-  IWKV_val val = {0};
-  IWKV_val key = {.data = &id, .size = sizeof(id)};
+  IWKV_val val = { 0 };
+  IWKV_val key = { .data = &id, .size = sizeof(id) };
   iwrc rc = _jb_coll_acquire_keeplock2(db, coll, acm, &jbc);
   RCRET(rc);
 
@@ -1457,7 +1482,6 @@ finish:
   return rc;
 }
 
-
 iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp) {
   return jb_get(db, coll, id, JB_COLL_ACQUIRE_EXISTING, jblp);
 }
@@ -1466,8 +1490,8 @@ iwrc ejdb_del(EJDB db, const char *coll, int64_t id) {
   int rci;
   JBCOLL jbc;
   struct _JBL jbl;
-  IWKV_val val = {0};
-  IWKV_val key = {.data = &id, .size = sizeof(id)};
+  IWKV_val val = { 0 };
+  IWKV_val key = { .data = &id, .size = sizeof(id) };
   iwrc rc = _jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE | JB_COLL_ACQUIRE_EXISTING, &jbc);
   RCRET(rc);
 
@@ -1495,7 +1519,7 @@ finish:
 
 iwrc jb_del(JBCOLL jbc, JBL jbl, int64_t id) {
   iwrc rc = 0;
-  IWKV_val key = {.data = &id, .size = sizeof(id)};
+  IWKV_val key = { .data = &id, .size = sizeof(id) };
   for (JBIDX idx = jbc->idx; idx; idx = idx->next) {
     IWRC(_jb_idx_record_remove(idx, id, jbl), rc);
   }
@@ -1584,7 +1608,8 @@ int jb_proj_node_cache_cmp(const void *v1, const void *v2) {
   const struct _JBDOCREF *r2 = v2;
   int ret = r1->id > r2->id ? 1 : r1->id < r2->id ? -1 : 0;
   if (!ret) {
-    return strcmp(r1->coll, r2->coll);;
+    return strcmp(r1->coll, r2->coll);
+    ;
   }
   return ret;
 }
@@ -1606,7 +1631,7 @@ iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
   JBL nmeta = 0, jbv = 0;
   char keybuf[JBNUMBUF_SIZE + sizeof(KEY_PREFIX_COLLMETA)];
 
-  API_WLOCK(db,  rci);
+  API_WLOCK(db, rci);
 
   khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
   if (k == kh_end(db->mcolls)) {
@@ -1702,7 +1727,9 @@ iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
     goto finish;
   }
   for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
-    if (!kh_exist(db->mcolls, k)) continue;
+    if (!kh_exist(db->mcolls, k)) {
+      continue;
+    }
     JBCOLL jbc = kh_val(db->mcolls, k);
     rc = _jb_coll_add_meta_lr(jbc, clist);
     RCGO(rc, finish);
@@ -1717,7 +1744,9 @@ iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
 finish:
   API_UNLOCK(db, rci, rc);
   if (rc) {
-    if (clist) binn_free(clist);
+    if (clist) {
+      binn_free(clist);
+    }
     jbl_destroy(&jbl);
   } else {
     *jblp = jbl;
@@ -1766,7 +1795,9 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
     db->opts.document_buffer_sz = 16 * 1024;
   }
   EJDB_HTTP *http = &db->opts.http;
-  if (http->bind) http->bind = strdup(http->bind);
+  if (http->bind) {
+    http->bind = strdup(http->bind);
+  }
   if (http->access_token) {
     http->access_token = strdup(http->access_token);
     if (!http->access_token) {
@@ -1870,7 +1901,7 @@ unsigned int ejdb_version_patch(void) {
 }
 
 static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
-  if (!(ecode > _EJDB_ERROR_START && ecode < _EJDB_ERROR_END)) {
+  if (!((ecode > _EJDB_ERROR_START) && (ecode < _EJDB_ERROR_END))) {
     return 0;
   }
   switch (ecode) {

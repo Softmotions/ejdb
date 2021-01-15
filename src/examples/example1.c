@@ -15,8 +15,8 @@ static iwrc documents_visitor(EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step)
 int main() {
 
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "example.db",
+    .kv       = {
+      .path   = "example.db",
       .oflags = IWKV_TRUNC
     }
   };
@@ -46,12 +46,12 @@ int main() {
   jbl_destroy(&jbl);
 
   // Now execute a query
-  rc =  jql_create(&q, "parrots", "/[age > :age]");
+  rc = jql_create(&q, "parrots", "/[age > :age]");
   RCGO(rc, finish);
 
   EJDB_EXEC ux = {
-    .db = db,
-    .q = q,
+    .db      = db,
+    .q       = q,
     .visitor = documents_visitor
   };
 
@@ -64,11 +64,13 @@ int main() {
   rc = ejdb_exec(&ux);
 
 finish:
-  if (q) jql_destroy(&q);
-  if (jbl) jbl_destroy(&jbl);
+  if (q) {
+    jql_destroy(&q);
+  }
+  if (jbl) {
+    jbl_destroy(&jbl);
+  }
   ejdb_close(&db);
   CHECK(rc);
   return 0;
 }
-
-

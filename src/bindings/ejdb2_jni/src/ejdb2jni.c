@@ -12,14 +12,15 @@
 
 typedef struct JBN_STR {
   const char *utf;
-  jstring str;
+  jstring    str;
 } JBN_STR;
 
 typedef enum {
   _JBN_ERROR_START = (IW_ERROR_START + 15000UL + 5000),
   JBN_ERROR_INVALID_FIELD,          /**< Failed to get class field (JBN_ERROR_INVALID_FIELD) */
   JBN_ERROR_INVALID_METHOD,         /**< Failed to get class method (JBN_ERROR_INVALID_METHOD) */
-  JBN_ERROR_INVALID_OPTIONS,        /**< Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided (JBN_ERROR_INVALID_OPTIONS) */
+  JBN_ERROR_INVALID_OPTIONS,        /**< Invalid com.softmotions.ejdb2.EJDB2Builder configuration provided
+                                       (JBN_ERROR_INVALID_OPTIONS) */
   JBN_ERROR_INVALID_STATE,          /**< Invalid com.softmotions.ejdb2.EJDB2 JNI state (JBN_ERROR_INVALID_STATE) */
   JBN_ERROR_CREATION_OBJ,           /**< Failed to create/allocate JNI object (JBN_ERROR_CREATION_OBJ) */
   _JBN_ERROR_END,
@@ -47,12 +48,12 @@ static jfieldID k_JQL_limit_fid;
   if (!fid_) goto label_;
 
 typedef struct JBN_JSPRINT_CTX {
-  int flush_buffer_sz;
+  int    flush_buffer_sz;
   IWXSTR *xstr;
-  iwrc(*flushFn)(struct JBN_JSPRINT_CTX *pctx);
-  JNIEnv *env;
-  jclass osClazz;
-  jobject osObj;
+  iwrc (*flushFn)(struct JBN_JSPRINT_CTX *pctx);
+  JNIEnv    *env;
+  jclass    osClazz;
+  jobject   osObj;
   jmethodID write_mid;
 } JBN_JSPRINT_CTX;
 
@@ -70,7 +71,9 @@ static iwrc jbn_json_printer(const char *data, int size, char ch, int count, voi
     if (size < 0) {
       size = (int) strlen(data);
     }
-    if (!count) count = 1;
+    if (!count) {
+      count = 1;
+    }
     for (int i = 0; i < count; ++i) {
       iwrc rc = iwxstr_cat(xstr, data, size);
       RCRET(rc);
@@ -89,7 +92,7 @@ IW_INLINE iwrc jbn_db(JNIEnv *env, jobject thisObj, EJDB *db) {
   if (!ptr) {
     return JBN_ERROR_INVALID_STATE;
   }
-  *db = (void *) ptr;
+  *db = (void*) ptr;
   return 0;
 }
 
@@ -99,7 +102,7 @@ IW_INLINE iwrc jbn_jql_q(JNIEnv *env, jobject thisObj, JQL *q) {
   if (!ptr) {
     return JBN_ERROR_INVALID_STATE;
   }
-  *q = (void *) ptr;
+  *q = (void*) ptr;
   return 0;
 }
 
@@ -114,7 +117,7 @@ static iwrc jbn_flush_to_stream(JBN_JSPRINT_CTX *pctx) {
   if (!arr) {
     return JBN_ERROR_CREATION_OBJ;
   }
-  (*env)->SetByteArrayRegion(env, arr, 0, xsz, (void *) iwxstr_ptr(xstr));
+  (*env)->SetByteArrayRegion(env, arr, 0, xsz, (void*) iwxstr_ptr(xstr));
   iwxstr_clear(xstr);
   (*env)->CallVoidMethod(env, pctx->osObj, pctx->write_mid, arr);
   return 0;
@@ -165,11 +168,12 @@ static void jbn_throw_rc_exception(JNIEnv *env, iwrc rc, const char *msg_) {
   }
 }
 
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env,
-                                                               jobject thisObj,
-                                                               jobject optsObj) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(
+  JNIEnv  *env,
+  jobject thisObj,
+  jobject optsObj) {
   iwrc rc = 0;
-  EJDB_OPTS opts = {0};
+  EJDB_OPTS opts = { 0 };
   JNIEnv e = *env;
   jfieldID fid;
   jobject iwkv, http, wal;
@@ -178,7 +182,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env,
 
   int sc = 0;
   EJDB db = 0;
-  JBN_STR strings[3] = {0};
+  JBN_STR strings[3] = { 0 };
 
   // opts
   JBNFIELD(fid, env, optsClazz, "no_wal", "Z");
@@ -276,7 +280,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(JNIEnv *env,
   e->SetLongField(env, thisObj, k_EJDB2_handle_fid, (jlong) db);
 
 finish:
-  for (int i = 0; i < (sizeof(strings) / sizeof(strings[0])); ++i)   {
+  for (int i = 0; i < (sizeof(strings) / sizeof(strings[0])); ++i) {
     if (strings[i].str) {
       e->ReleaseStringUTFChars(env, strings[i].str, strings[i].utf);
     }
@@ -291,7 +295,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1dispose(JNIEnv *env, j
   jlong ptr = (*env)->GetLongField(env, thisObj, k_EJDB2_handle_fid);
   if (ptr) {
     (*env)->SetLongField(env, thisObj, k_EJDB2_handle_fid, 0);
-    EJDB db = (void *) ptr;
+    EJDB db = (void*) ptr;
     iwrc rc = ejdb_close(&db);
     if (rc) {
       jbn_throw_rc_exception(env, rc, 0);
@@ -300,11 +304,12 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1dispose(JNIEnv *env, j
 }
 
 // PUT
-JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1put(JNIEnv *env,
-                                                               jobject thisObj,
-                                                               jstring coll_,
-                                                               jstring json_,
-                                                               jlong id) {
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1put(
+  JNIEnv  *env,
+  jobject thisObj,
+  jstring coll_,
+  jstring json_,
+  jlong   id) {
   iwrc rc;
   EJDB db;
   JBL jbl = 0;
@@ -333,16 +338,21 @@ finish:
   if (jbl) {
     jbl_destroy(&jbl);
   }
-  if (coll)(*env)->ReleaseStringUTFChars(env, coll_, coll);
-  if (json)(*env)->ReleaseStringUTFChars(env, json_, json);
-  if (rc)  {
+  if (coll) {
+    (*env)->ReleaseStringUTFChars(env, coll_, coll);
+  }
+  if (json) {
+    (*env)->ReleaseStringUTFChars(env, json_, json);
+  }
+  if (rc) {
     jbn_throw_rc_exception(env, rc, 0);
   }
   return ret;
 }
 
-JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1online_1backup(JNIEnv *env, jobject thisObj,
-                                                                          jstring target_) {
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1online_1backup(
+  JNIEnv *env, jobject thisObj,
+  jstring target_) {
   EJDB db;
   uint64_t ts = 0;
   const char *target = (*env)->GetStringUTFChars(env, target_, 0);
@@ -353,7 +363,9 @@ JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1online_1backup(JNIEnv
   rc = ejdb_online_backup(db, &ts, target);
 
 finish:
-  if (target)(*env)->ReleaseStringUTFChars(env, target_, target);
+  if (target) {
+    (*env)->ReleaseStringUTFChars(env, target_, target);
+  }
   if (rc) {
     jbn_throw_rc_exception(env, rc, 0);
   }
@@ -361,12 +373,13 @@ finish:
 }
 
 // GET
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1get(JNIEnv *env,
-                                                              jobject thisObj,
-                                                              jstring coll_,
-                                                              jlong id,
-                                                              jobject osObj,
-                                                              jboolean pretty) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1get(
+  JNIEnv   *env,
+  jobject  thisObj,
+  jstring  coll_,
+  jlong    id,
+  jobject  osObj,
+  jboolean pretty) {
   iwrc rc;
   EJDB db;
   JBL jbl = 0;
@@ -384,7 +397,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1get(JNIEnv *env,
   rc = jbn_init_pctx(env, &pctx, thisObj, osObj);
   RCGO(rc, finish);
 
-  rc = ejdb_get(db, coll, (int64_t)id, &jbl);
+  rc = ejdb_get(db, coll, (int64_t) id, &jbl);
   RCGO(rc, finish);
 
   rc = jbl_as_json(jbl, jbn_json_printer, &pctx, 0);
@@ -406,9 +419,10 @@ finish:
 }
 
 // INFO
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1info(JNIEnv *env,
-                                                               jobject thisObj,
-                                                               jobject osObj) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1info(
+  JNIEnv  *env,
+  jobject thisObj,
+  jobject osObj) {
   iwrc rc;
   EJDB db;
   JBL jbl = 0;
@@ -439,10 +453,11 @@ finish:
 }
 
 // DEL
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1del(JNIEnv *env,
-                                                              jobject thisObj,
-                                                              jstring coll_,
-                                                              jlong id) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1del(
+  JNIEnv  *env,
+  jobject thisObj,
+  jstring coll_,
+  jlong   id) {
   iwrc rc;
   EJDB db;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
@@ -465,8 +480,9 @@ finish:
 }
 
 // RENAME COLLECTION
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1rename_1collection(JNIEnv *env, jobject thisObj,
-                                                                             jstring oldColl_, jstring newColl_) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1rename_1collection(
+  JNIEnv *env, jobject thisObj,
+  jstring oldColl_, jstring newColl_) {
   iwrc rc;
   EJDB db;
   const char *newColl = 0;
@@ -498,12 +514,13 @@ finish:
 }
 
 // PATCH
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1patch(JNIEnv *env,
-                                                                jobject thisObj,
-                                                                jstring coll_,
-                                                                jstring patch_,
-                                                                jlong id,
-                                                                jboolean upsert) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1patch(
+  JNIEnv   *env,
+  jobject  thisObj,
+  jstring  coll_,
+  jstring  patch_,
+  jlong    id,
+  jboolean upsert) {
   iwrc rc;
   EJDB db;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
@@ -533,9 +550,10 @@ finish:
   }
 }
 
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1remove_1collection(JNIEnv *env,
-                                                                             jobject thisObj,
-                                                                             jstring coll_) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1remove_1collection(
+  JNIEnv  *env,
+  jobject thisObj,
+  jstring coll_) {
   iwrc rc;
   EJDB db;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
@@ -557,11 +575,12 @@ finish:
   }
 }
 
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1ensure_1index(JNIEnv *env,
-                                                                        jobject thisObj,
-                                                                        jstring coll_,
-                                                                        jstring path_,
-                                                                        jint mode) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1ensure_1index(
+  JNIEnv  *env,
+  jobject thisObj,
+  jstring coll_,
+  jstring path_,
+  jint    mode) {
 
   iwrc rc;
   EJDB db;
@@ -588,11 +607,12 @@ finish:
   }
 }
 
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1remove_1index(JNIEnv *env,
-                                                                        jobject thisObj,
-                                                                        jstring coll_,
-                                                                        jstring path_,
-                                                                        jint mode) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1remove_1index(
+  JNIEnv  *env,
+  jobject thisObj,
+  jstring coll_,
+  jstring path_,
+  jint    mode) {
   iwrc rc;
   EJDB db;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
@@ -619,11 +639,12 @@ finish:
 }
 
 // JQL INIT
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1init(JNIEnv *env,
-                                                             jobject thisObj,
-                                                             jobject dbObj,
-                                                             jstring queryStr,
-                                                             jstring collStr) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1init(
+  JNIEnv  *env,
+  jobject thisObj,
+  jobject dbObj,
+  jstring queryStr,
+  jstring collStr) {
   EJDB db;
   iwrc rc;
   JQL q = 0;
@@ -663,7 +684,7 @@ finish:
     (*env)->ReleaseStringUTFChars(env, collStr, coll);
   }
   if (rc) {
-    if (q && rc == JQL_ERROR_QUERY_PARSE) {
+    if (q && (rc == JQL_ERROR_QUERY_PARSE)) {
       jbn_throw_rc_exception(env, rc, jql_error(q));
     } else {
       jbn_throw_rc_exception(env, rc, 0);
@@ -678,7 +699,7 @@ finish:
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1reset(JNIEnv *env, jobject thisObj) {
   jlong ptr = (*env)->GetLongField(env, thisObj, k_JQL_handle_fid);
   if (ptr) {
-    JQL q = (void *) ptr;
+    JQL q = (void*) ptr;
     jql_reset(q, true, true);
   }
 }
@@ -686,15 +707,15 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1reset(JNIEnv *env, jobje
 // JQL DESTROY
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1destroy(JNIEnv *env, jclass clazz, jlong handle) {
   if (handle) {
-    JQL q = (void *) handle;
+    JQL q = (void*) handle;
     jql_destroy(&q);
   }
 }
 
 typedef struct JBN_EXEC_CTX {
-  JNIEnv *env;
-  jobject cbObj;
-  jclass cbClazz;
+  JNIEnv    *env;
+  jobject   cbObj;
+  jclass    cbClazz;
   jmethodID cbMid;
 } JBN_EXEC_CTX;
 
@@ -737,11 +758,12 @@ finish:
 }
 
 // JQL EXECUTE
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env,
-                                                                jobject thisObj,
-                                                                jobject dbObj,
-                                                                jobject cbObj,
-                                                                jobject logStreamObj) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(
+  JNIEnv  *env,
+  jobject thisObj,
+  jobject dbObj,
+  jobject cbObj,
+  jobject logStreamObj) {
   iwrc rc;
   EJDB db;
   JQL q;
@@ -759,7 +781,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env,
   RCGO(rc, finish);
 
   JBN_EXEC_CTX ectx = {
-    .env = env,
+    .env   = env,
     .cbObj = cbObj
   };
 
@@ -782,13 +804,13 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env,
   }
 
   EJDB_EXEC ux = {
-    .db = db,
-    .q = q,
-    .skip = skip > 0 ? skip : 0,
-    .limit = limit > 0 ? limit : 0,
-    .opaque = &ectx,
+    .db      = db,
+    .q       = q,
+    .skip    = skip > 0 ? skip : 0,
+    .limit   = limit > 0 ? limit : 0,
+    .opaque  = &ectx,
     .visitor = cbObj ? jbn_exec_visitor : 0,
-    .log = log
+    .log     = log
   };
 
   rc = ejdb_exec(&ux);
@@ -798,10 +820,14 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(JNIEnv *env,
     size_t xsz = iwxstr_size(log);
     jclass logStreamClazz = (*env)->GetObjectClass(env, logStreamObj);
     jmethodID writeMid = (*env)->GetMethodID(env, logStreamClazz, "write", "([B)V");
-    if (!writeMid) goto finish;
+    if (!writeMid) {
+      goto finish;
+    }
     jbyteArray arr = (*env)->NewByteArray(env, xsz);
-    if (!arr) goto finish;
-    (*env)->SetByteArrayRegion(env, arr, 0, xsz, (void *) iwxstr_ptr(log));
+    if (!arr) {
+      goto finish;
+    }
+    (*env)->SetByteArrayRegion(env, arr, 0, xsz, (void*) iwxstr_ptr(log));
     (*env)->CallVoidMethod(env, logStreamObj, writeMid, arr);
   }
 
@@ -815,10 +841,11 @@ finish:
 }
 
 // JQL EXECUTE SCALAR LONG
-JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(JNIEnv *env,
-                                                                               jobject thisObj,
-                                                                               jobject dbObj,
-                                                                               jobject logStreamObj) {
+JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(
+  JNIEnv  *env,
+  jobject thisObj,
+  jobject dbObj,
+  jobject logStreamObj) {
   iwrc rc;
   EJDB db;
   JQL q;
@@ -847,11 +874,11 @@ JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(J
   }
 
   EJDB_EXEC ux = {
-    .db = db,
-    .q = q,
-    .skip = skip > 0 ? skip : 0,
+    .db    = db,
+    .q     = q,
+    .skip  = skip > 0 ? skip : 0,
     .limit = limit > 0 ? limit : 0,
-    .log = log
+    .log   = log
   };
 
   rc = ejdb_exec(&ux);
@@ -861,10 +888,14 @@ JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(J
     size_t xsz = iwxstr_size(log);
     jclass logStreamClazz = (*env)->GetObjectClass(env, logStreamObj);
     jmethodID writeMid = (*env)->GetMethodID(env, logStreamClazz, "write", "([B)V");
-    if (!writeMid) goto finish;
+    if (!writeMid) {
+      goto finish;
+    }
     jbyteArray arr = (*env)->NewByteArray(env, xsz);
-    if (!arr) goto finish;
-    (*env)->SetByteArrayRegion(env, arr, 0, xsz, (void *) iwxstr_ptr(log));
+    if (!arr) {
+      goto finish;
+    }
+    (*env)->SetByteArrayRegion(env, arr, 0, xsz, (void*) iwxstr_ptr(log));
     (*env)->CallVoidMethod(env, logStreamObj, writeMid, arr);
   }
 
@@ -882,19 +913,22 @@ finish:
 
 static void jbn_free_json_node(void *ptr, void *op) {
   IWPOOL *pool = op;
-  if (pool) iwpool_destroy(pool);
+  if (pool) {
+    iwpool_destroy(pool);
+  }
 }
 
 static void jbn_free_str(void *ptr, void *op) {
   free(ptr);
 }
 
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(JNIEnv *env,
-                                                                    jobject thisObj,
-                                                                    jint pos,
-                                                                    jstring placeholder_,
-                                                                    jstring val_,
-                                                                    jint type) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(
+  JNIEnv  *env,
+  jobject thisObj,
+  jint    pos,
+  jstring placeholder_,
+  jstring val_,
+  jint    type) {
   JQL q;
   iwrc rc;
   const char *placeholder = 0, *val;
@@ -964,11 +998,12 @@ finish:
   }
 }
 
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1long(JNIEnv *env,
-                                                                  jobject thisObj,
-                                                                  jint pos,
-                                                                  jstring placeholder_,
-                                                                  jlong val) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1long(
+  JNIEnv  *env,
+  jobject thisObj,
+  jint    pos,
+  jstring placeholder_,
+  jlong   val) {
 
   JQL q;
   iwrc rc;
@@ -992,11 +1027,12 @@ finish:
   }
 }
 
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1double(JNIEnv *env,
-                                                                    jobject thisObj,
-                                                                    jint pos,
-                                                                    jstring placeholder_,
-                                                                    jdouble val) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1double(
+  JNIEnv  *env,
+  jobject thisObj,
+  jint    pos,
+  jstring placeholder_,
+  jdouble val) {
   JQL q;
   iwrc rc;
   const char *placeholder = 0;
@@ -1019,11 +1055,12 @@ finish:
   }
 }
 
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1boolean(JNIEnv *env,
-                                                                     jobject thisObj,
-                                                                     jint pos,
-                                                                     jstring placeholder_,
-                                                                     jboolean val) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1boolean(
+  JNIEnv   *env,
+  jobject  thisObj,
+  jint     pos,
+  jstring  placeholder_,
+  jboolean val) {
   JQL q;
   iwrc rc;
   const char *placeholder = 0;
@@ -1046,10 +1083,11 @@ finish:
   }
 }
 
-JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1null(JNIEnv *env,
-                                                                  jobject thisObj,
-                                                                  jint pos,
-                                                                  jstring placeholder_) {
+JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1null(
+  JNIEnv  *env,
+  jobject thisObj,
+  jint    pos,
+  jstring placeholder_) {
   JQL q;
   iwrc rc;
   const char *placeholder = 0;
@@ -1101,7 +1139,7 @@ finish:
 }
 
 static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
-  if (!(ecode > _JBN_ERROR_START && ecode < _JBN_ERROR_END)) {
+  if (!((ecode > _JBN_ERROR_START) && (ecode < _JBN_ERROR_END))) {
     return 0;
   }
   switch (ecode) {
@@ -1121,7 +1159,7 @@ static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   JNIEnv *env;
-  if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+  if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_6) != JNI_OK) {
     return -1;
   }
   static volatile int jbn_ecodefn_initialized = 0;
@@ -1174,7 +1212,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 JNIEXPORT void JNI_OnUnload(JavaVM *vm, void *reserved) { // Not really useless
   JNIEnv *env;
-  if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_6) != JNI_OK) {
+  if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_6) != JNI_OK) {
     return;
   }
   if (k_EJDB2_clazz) {

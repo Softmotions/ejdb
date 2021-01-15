@@ -6,7 +6,7 @@
 
 // fixme: code duplication below
 void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
-  int64_t *llv = (void *) numbuf;
+  int64_t *llv = (void*) numbuf;
   jbl_type_t jbvt = jbl_type(jbv);
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
   ikey->size = 0;
@@ -17,7 +17,7 @@ void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JB
       switch (jbvt) {
         case JBV_STR:
           ikey->size = jbl_size(jbv);
-          ikey->data = (void *) jbl_get_str(jbv);
+          ikey->data = (void*) jbl_get_str(jbv);
           break;
         case JBV_I64:
           ikey->size = (size_t) iwitoa(jbl_get_i64(jbv), numbuf, JBNUMBUF_SIZE);
@@ -81,7 +81,7 @@ void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JB
 }
 
 void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
-  int64_t *llv = (void *) numbuf;
+  int64_t *llv = (void*) numbuf;
   ikey->size = 0;
   ikey->data = numbuf;
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
@@ -92,7 +92,7 @@ void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char num
       switch (jqvt) {
         case JQVAL_STR:
           ikey->size = strlen(jqval->vstr);
-          ikey->data = (void *) jqval->vstr;
+          ikey->data = (void*) jqval->vstr;
           break;
         case JQVAL_I64:
           ikey->size = (size_t) iwitoa(jqval->vi64, numbuf, JBNUMBUF_SIZE);
@@ -158,7 +158,7 @@ void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char num
 }
 
 void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
-  int64_t *llv = (void *) numbuf;
+  int64_t *llv = (void*) numbuf;
   ikey->size = 0;
   ikey->data = numbuf;
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
@@ -169,7 +169,7 @@ void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[st
       switch (jbvt) {
         case JBV_STR:
           ikey->size = (size_t) node->vsize;
-          ikey->data = (void *) node->vptr;
+          ikey->data = (void*) node->vptr;
           break;
         case JBV_I64:
           ikey->size = (size_t) iwitoa(node->vi64, numbuf, JBNUMBUF_SIZE);

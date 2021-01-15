@@ -11,8 +11,8 @@
 #include <http/http.h>
 #include <ctype.h>
 
-#define JBR_MAX_KEY_LEN 36
-#define JBR_HTTP_CHUNK_SIZE 4096
+#define JBR_MAX_KEY_LEN          36
+#define JBR_HTTP_CHUNK_SIZE      4096
 #define JBR_WS_STR_PREMATURE_END "Premature end of message"
 
 static uint64_t k_header_x_access_token_hash;
@@ -27,25 +27,25 @@ typedef enum {
   JBR_DELETE,
   JBR_POST,
   JBR_HEAD,
-  JBR_OPTIONS
+  JBR_OPTIONS,
 } jbr_method_t;
 
 struct _JBR {
   volatile bool terminated;
   volatile iwrc rc;
-  pthread_t worker_thread;
+  pthread_t     worker_thread;
   pthread_barrier_t start_barrier;
-  const EJDB_HTTP *http;
+  const EJDB_HTTP   *http;
   EJDB db;
 };
 
 typedef struct _JBRCTX {
-  JBR jbr;
+  JBR    jbr;
   http_s *req;
-  const char *collection;
-  IWXSTR *wbuf;
-  int64_t id;
-  size_t collection_len;
+  const char   *collection;
+  IWXSTR       *wbuf;
+  int64_t      id;
+  size_t       collection_len;
   jbr_method_t method;
   bool read_anon;
   bool data_sent;
@@ -56,7 +56,7 @@ typedef struct _JBRCTX {
     if ((code_) >= 500) iwlog_ecode_error3(rc_);                                   \
     const char *strerr = iwlog_ecode_explained(rc_);                               \
     _jbr_http_send(r_, code_, "text/plain", strerr, strerr ? strlen(strerr) : 0);   \
-  } while(0)
+  } while (0)
 
 IW_INLINE void _jbr_http_set_content_length(http_s *r, uintptr_t length) {
   if (!fiobj_hash_get2(r->private_data.out_headers, k_header_content_length_hash)) {
@@ -64,6 +64,7 @@ IW_INLINE void _jbr_http_set_content_length(http_s *r, uintptr_t length) {
                    fiobj_num_new(length));
   }
 }
+
 IW_INLINE void _jbr_http_set_content_type(http_s *r, const char *ctype) {
   if (!fiobj_hash_get2(r->private_data.out_headers, k_header_content_type_hash)) {
     fiobj_hash_set(r->private_data.out_headers, HTTP_HEADER_CONTENT_TYPE,
@@ -71,9 +72,10 @@ IW_INLINE void _jbr_http_set_content_type(http_s *r, const char *ctype) {
   }
 }
 
-IW_INLINE void _jbr_http_set_header(http_s *r,
-                                    char *name, size_t nlen,
-                                    char *val, size_t vlen) {
+IW_INLINE void _jbr_http_set_header(
+  http_s *r,
+  char *name, size_t nlen,
+  char *val, size_t vlen) {
   http_set_header2(r, (fio_str_info_s) {
     .data = name, .len = nlen
   }, (fio_str_info_s) {
@@ -81,7 +83,7 @@ IW_INLINE void _jbr_http_set_header(http_s *r,
   });
 }
 
-static iwrc _jbr_http_send(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
+static iwrc _jbr_http_send(http_s *r, int status, const char *ctype, const char *body, int bodylen) {
   if (!r || !r->private_data.out_headers) {
     iwlog_ecode_error3(IW_ERROR_INVALID_ARGS);
     return IW_ERROR_INVALID_ARGS;
@@ -90,18 +92,18 @@ static iwrc _jbr_http_send(http_s *r, int status, const char *ctype, const char 
   if (ctype) {
     _jbr_http_set_content_type(r, ctype);
   }
-  if (http_send_body(r, (char *)body, bodylen)) {
+  if (http_send_body(r, (char*) body, bodylen)) {
     iwlog_ecode_error3(JBR_ERROR_SEND_RESPONSE);
     return JBR_ERROR_SEND_RESPONSE;
   }
   return 0;
 }
 
-IW_INLINE iwrc _jbr_http_error_send(http_s *r, int status)  {
+IW_INLINE iwrc _jbr_http_error_send(http_s *r, int status) {
   return _jbr_http_send(r, status, 0, 0, 0);
 }
 
-IW_INLINE iwrc _jbr_http_error_send2(http_s *r, int status, const char *ctype, const char *body, int bodylen)  {
+IW_INLINE iwrc _jbr_http_error_send2(http_s *r, int status, const char *ctype, const char *body, int bodylen) {
   return _jbr_http_send(r, status, ctype, body, bodylen);
 }
 
@@ -120,7 +122,7 @@ static iwrc _jbr_flush_chunk(JBRCTX *rctx, bool finish) {
     }
     rctx->data_sent = true;
   }
-  if (!finish && iwxstr_size(wbuf) < JBR_HTTP_CHUNK_SIZE) {
+  if (!finish && (iwxstr_size(wbuf) < JBR_HTTP_CHUNK_SIZE)) {
     return 0;
   }
   intptr_t uuid = http_uuid(req);
@@ -156,7 +158,9 @@ static iwrc _jbr_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   IWXSTR *wbuf = rctx->wbuf;
   if (!wbuf) {
     wbuf = iwxstr_new2(512);
-    if (!wbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    if (!wbuf) {
+      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    }
     rctx->wbuf = wbuf;
   }
   if (ux->log) {
@@ -186,8 +190,8 @@ static void _jbr_on_query(JBRCTX *rctx) {
     return;
   }
   EJDB_EXEC ux = {
-    .opaque = rctx,
-    .db = rctx->jbr->db,
+    .opaque  = rctx,
+    .db      = rctx->jbr->db,
     .visitor = _jbr_query_visitor
   };
 
@@ -328,7 +332,7 @@ static void _jbr_on_delete(JBRCTX *rctx) {
   EJDB db = rctx->jbr->db;
   http_s *req = rctx->req;
   iwrc rc = ejdb_del(db, rctx->collection, rctx->id);
-  if (rc == IWKV_ERROR_NOTFOUND || rc == IW_ERROR_NOT_EXISTS) {
+  if ((rc == IWKV_ERROR_NOTFOUND) || (rc == IW_ERROR_NOT_EXISTS)) {
     _jbr_http_error_send(req, 404);
     return;
   } else if (rc) {
@@ -408,7 +412,7 @@ static void _jbr_on_get(JBRCTX *rctx) {
   http_s *req = rctx->req;
 
   iwrc rc = ejdb_get(db, rctx->collection, rctx->id, &jbl);
-  if (rc == IWKV_ERROR_NOTFOUND || rc == IW_ERROR_NOT_EXISTS) {
+  if ((rc == IWKV_ERROR_NOTFOUND) || (rc == IW_ERROR_NOT_EXISTS)) {
     _jbr_http_error_send(req, 404);
     return;
   } else if (rc) {
@@ -520,7 +524,7 @@ static bool _jbr_fill_ctx(http_s *req, JBRCTX *r) {
     return false;
   }
   fio_str_info_s path = fiobj_obj2cstr(req->path);
-  if (!req->path || path.len < 2) {
+  if (!req->path || (path.len < 2)) {
     return true;
   } else if (r->method == JBR_OPTIONS) {
     return false;
@@ -553,9 +557,9 @@ static bool _jbr_fill_ctx(http_s *req, JBRCTX *r) {
       return false;
     }
     memcpy(nbuf, r->collection + r->collection_len + 1, nlen);
-    nbuf[nlen] =  '\0';
+    nbuf[nlen] = '\0';
     r->id = strtoll(nbuf, &eptr, 10);
-    if (*eptr != '\0' || r->id < 1 || r->method == JBR_POST) {
+    if ((*eptr != '\0') || (r->id < 1) || (r->method == JBR_POST)) {
       return false;
     }
   }
@@ -579,7 +583,7 @@ static void _jbr_on_http_request(http_s *req) {
     FIOBJ h = fiobj_hash_get2(req->headers, k_header_x_access_token_hash);
     if (!h) {
       if (http->read_anon) {
-        if (rctx.method == JBR_GET || rctx.method == JBR_HEAD || (rctx.method == JBR_POST && !rctx.collection)) {
+        if ((rctx.method == JBR_GET) || (rctx.method == JBR_HEAD) || ((rctx.method == JBR_POST) && !rctx.collection)) {
           rctx.read_anon = true;
           goto process;
         }
@@ -592,7 +596,7 @@ static void _jbr_on_http_request(http_s *req) {
       return;
     }
     fio_str_info_s hv = fiobj_obj2cstr(h);
-    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len) != 0) { // -V526
+    if ((hv.len != http->access_token_len) || (memcmp(hv.data, http->access_token, http->access_token_len) != 0)) { // -V526
       http_send_error(req, 403);
       return;
     }
@@ -671,9 +675,9 @@ typedef struct _JBWCTX {
 } JBWCTX;
 
 IW_INLINE bool _jbr_ws_write_text(ws_s *ws, const char *data, int len) {
-  if (fio_is_closed(websocket_uuid(ws)) || websocket_write(ws, (fio_str_info_s) {
-  .data = (char *) data, .len = len
-  }, 1) < 0) {
+  if (fio_is_closed(websocket_uuid(ws)) || (websocket_write(ws, (fio_str_info_s) {
+    .data = (char*) data, .len = len
+  }, 1) < 0)) {
     iwlog_warn2("Websocket channel closed");
     return false;
   }
@@ -687,7 +691,7 @@ IW_INLINE int _jbr_fill_prefix_buf(const char *key, int64_t id, char buf[static 
   wp += len;
   *wp++ = '\t';
   wp += iwitoa(id, wp, _WS_KEYPREFIX_BUFSZ - (wp - buf));
-  return (int)(wp - buf);
+  return (int) (wp - buf);
 }
 
 static void _jbr_ws_on_open(ws_s *ws) {
@@ -865,8 +869,8 @@ static void _jbr_ws_del_index(JBWCTX *wctx, const char *key, const char *coll, i
 }
 
 typedef struct JBWQCTX {
-  JBWCTX *wctx;
-  IWXSTR *wbuf;
+  JBWCTX     *wctx;
+  IWXSTR     *wbuf;
   const char *key;
 } JBWQCTX;
 
@@ -877,7 +881,9 @@ static iwrc _jbr_ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   IWXSTR *wbuf = qctx->wbuf;
   if (!wbuf) {
     wbuf = iwxstr_new2(512);
-    if (!wbuf) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    if (!wbuf) {
+      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    }
     qctx->wbuf = wbuf;
   } else {
     iwxstr_clear(wbuf);
@@ -909,11 +915,11 @@ static iwrc _jbr_ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
 static void _jbr_ws_query(JBWCTX *wctx, const char *key, const char *coll, const char *query, bool explain) {
   JBWQCTX qctx = {
     .wctx = wctx,
-    .key = key
+    .key  = key
   };
   EJDB_EXEC ux = {
-    .db = wctx->db,
-    .opaque = &qctx,
+    .db      = wctx->db,
+    .opaque  = &qctx,
     .visitor = _jbr_ws_query_visitor,
   };
 
@@ -1031,7 +1037,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
     websocket_close(ws);
     return;
   }
-  if (!msg.data || msg.len < 1) { // Ignore empty messages, but keep connection
+  if (!msg.data || (msg.len < 1)) { // Ignore empty messages, but keep connection
     return;
   }
   JBWCTX *wctx = websocket_udata_get(ws);
@@ -1046,36 +1052,36 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   int len = msg.len, pos;
 
   // Trim right
-  for (pos = len; pos > 0 && isspace(data[pos - 1]); --pos);
+  for (pos = len; pos > 0 && isspace(data[pos - 1]); --pos) ;
   len = pos;
   // Trim left
-  for (pos = 0; pos < len && isspace(data[pos]); ++pos);
+  for (pos = 0; pos < len && isspace(data[pos]); ++pos) ;
   len -= pos;
   data += pos;
   if (len < 1) {
     return;
   }
-  if (len == 1 && data[0] == '?') {
-    const char *help =
-      "\n<key> info"
-      "\n<key> get     <collection> <id>"
-      "\n<key> set     <collection> <id> <document json>"
-      "\n<key> add     <collection> <document json>"
-      "\n<key> del     <collection> <id>"
-      "\n<key> patch   <collection> <id> <patch json>"
-      "\n<key> idx     <collection> <mode> <path>"
-      "\n<key> rmi     <collection> <mode> <path>"
-      "\n<key> rmc     <collection>"
-      "\n<key> query   <collection> <query>"
-      "\n<key> explain <collection> <query>"
-      "\n<key> <query>"
-      "\n";
+  if ((len == 1) && (data[0] == '?')) {
+    const char *help
+      = "\n<key> info"
+        "\n<key> get     <collection> <id>"
+        "\n<key> set     <collection> <id> <document json>"
+        "\n<key> add     <collection> <document json>"
+        "\n<key> del     <collection> <id>"
+        "\n<key> patch   <collection> <id> <patch json>"
+        "\n<key> idx     <collection> <mode> <path>"
+        "\n<key> rmi     <collection> <mode> <path>"
+        "\n<key> rmc     <collection>"
+        "\n<key> query   <collection> <query>"
+        "\n<key> explain <collection> <query>"
+        "\n<key> <query>"
+        "\n";
     _jbr_ws_write_text(ws, help, (int) strlen(help));
     return;
   }
 
   // Fetch key, after we can do good errors reporting
-  for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
+  for (pos = 0; pos < len && !isspace(data[pos]); ++pos) ;
   if (pos > JBR_MAX_KEY_LEN) {
     iwlog_warn("The key length: %d exceeded limit: %d", pos, JBR_MAX_KEY_LEN);
     return;
@@ -1089,7 +1095,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   }
 
   // Space
-  for (; pos < len && isspace(data[pos]); ++pos);
+  for ( ; pos < len && isspace(data[pos]); ++pos) ;
   len -= pos;
   data += pos;
   if (len < 1) {
@@ -1098,7 +1104,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   }
 
   // Fetch command
-  for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
+  for (pos = 0; pos < len && !isspace(data[pos]); ++pos) ;
 
   if (pos <= len) {
     if (!strncmp("get", data, pos)) {
@@ -1131,16 +1137,16 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       _jbr_ws_info(wctx, key);
       return;
     }
-    for (; pos < len && isspace(data[pos]); ++pos);
+    for ( ; pos < len && isspace(data[pos]); ++pos) ;
     len -= pos;
     data += pos;
 
     char *coll = data;
-    for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
+    for (pos = 0; pos < len && !isspace(data[pos]); ++pos) ;
     len -= pos;
     data += pos;
 
-    if (pos < 1 || len < 1) {
+    if ((pos < 1) || (len < 1)) {
       if (wsop != JBWS_REMOVE_COLL) {
         _jbr_ws_send_rc(wctx, key, JBR_ERROR_WS_INVALID_MESSAGE, JBR_WS_STR_PREMATURE_END);
         return;
@@ -1160,7 +1166,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       return;
     }
 
-    for (pos = 0; pos < len && isspace(data[pos]); ++pos);
+    for (pos = 0; pos < len && isspace(data[pos]); ++pos) ;
     len -= pos;
     data += pos;
     if (len < 1) {
@@ -1184,7 +1190,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
           nbuf[pos] = data[pos];
         }
         nbuf[pos] = '\0';
-        for (; pos < len && isspace(data[pos]); ++pos);
+        for ( ; pos < len && isspace(data[pos]); ++pos) ;
         len -= pos;
         data += pos;
 
@@ -1222,7 +1228,6 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
         }
       }
     }
-
   } else {
     data[len] = '\0';
     _jbr_ws_query(wctx, key, 0, data, false);
@@ -1235,8 +1240,8 @@ static void _jbr_on_http_upgrade(http_s *req, char *requested_protocol, size_t l
   const EJDB_HTTP *http = jbr->http;
   fio_str_info_s path = fiobj_obj2cstr(req->path);
 
-  if ((path.len != 1 || path.data[0] != '/')
-      || (len != 9 || requested_protocol[1] != 'e')) {
+  if (((path.len != 1) || (path.data[0] != '/'))
+      || ((len != 9) || (requested_protocol[1] != 'e'))) {
     http_send_error(req, 400);
     return;
   }
@@ -1264,7 +1269,7 @@ static void _jbr_on_http_upgrade(http_s *req, char *requested_protocol, size_t l
       return;
     }
     fio_str_info_s hv = fiobj_obj2cstr(h);
-    if (hv.len != http->access_token_len || memcmp(hv.data, http->access_token, http->access_token_len) != 0) { // -V526
+    if ((hv.len != http->access_token_len) || (memcmp(hv.data, http->access_token, http->access_token_len) != 0)) { // -V526
       free(wctx);
       http_send_error(req, 403);
       return;
@@ -1313,7 +1318,8 @@ static void *_jbr_start_thread(void *op) {
     return 0;
   }
   fio_state_callback_add(FIO_CALL_PRE_START, _jbr_on_pre_start, jbr);
-  fio_start(.threads = -2, .workers = 1, .is_no_signal_handlers = !jbr->http->blocking); // Will block current thread here
+  fio_start(.threads = -2, .workers = 1, .is_no_signal_handlers = !jbr->http->blocking); // Will block current thread
+                                                                                         // here
   return 0;
 }
 
@@ -1330,7 +1336,9 @@ iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, JBR *pjbr) {
     return 0;
   }
   JBR jbr = calloc(1, sizeof(*jbr));
-  if (!jbr) return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  if (!jbr) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
   jbr->db = db;
   jbr->terminated = true;
   jbr->http = &opts->http;
@@ -1385,7 +1393,7 @@ iwrc jbr_shutdown(JBR *pjbr) {
 }
 
 static const char *_jbr_ecodefn(locale_t locale, uint32_t ecode) {
-  if (!(ecode > _JBR_ERROR_START && ecode < _JBR_ERROR_END)) {
+  if (!((ecode > _JBR_ERROR_START) && (ecode < _JBR_ERROR_END))) {
     return 0;
   }
   switch (ecode) {

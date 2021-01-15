@@ -31,8 +31,8 @@
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
 
   "astyle.astylerc": "${workspaceRoot}/.astylerc",
-  "astyle.c.enable": true,
-  "astyle.cpp.enable": true,
+  "astyle.c.enable": false,
+  "astyle.cpp.enable": false,
   "python.pythonPath": "/usr/bin/python3",
   "python.linting.pylintEnabled": false,
   "python.linting.enabled": true,
