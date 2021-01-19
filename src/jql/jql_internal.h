@@ -11,8 +11,8 @@
 struct _JQL {
   bool       dirty;
   bool       matched;
-  JQP_QUERY  *qp;
-  JQP_AUX    *aux;
+  JQP_QUERY *qp;
+  JQP_AUX   *aux;
   const char *coll;
   void       *opaque;
 };
@@ -35,13 +35,13 @@ typedef struct {
   void (*freefn)(void*, void*);
   void *freefn_op;
   union {
-    JBL_NODE vnode;
-    binn     *vbinn;
-    int64_t  vi64;
-    double   vf64;
+    JBL_NODE    vnode;
+    binn       *vbinn;
+    int64_t     vi64;
+    double      vf64;
     const char *vstr;
     bool       vbool;
-    struct re  *vre;
+    struct re *vre;
   };
 } JQVAL;
 

@@ -86,14 +86,14 @@ static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE"
   } while (0)
 
 struct _JBIDX;
-typedef struct _JBIDX *JBIDX;
+typedef struct _JBIDX*JBIDX;
 
 /** Database collection */
 typedef struct _JBCOLL {
-  uint32_t   dbid;          /**< IWKV collection database ID */
+  uint32_t    dbid;         /**< IWKV collection database ID */
   const char *name;         /**< Collection name */
-  IWDB       cdb;           /**< IWKV collection database */
-  EJDB       db;            /**< Main database reference */
+  IWDB    cdb;              /**< IWKV collection database */
+  EJDB    db;               /**< Main database reference */
   JBL     meta;             /**< Collection meta object */
   JBIDX   idx;              /**< First index in chain */
   int64_t rnum;             /**< Number of records stored in collection */
@@ -104,7 +104,7 @@ typedef struct _JBCOLL {
 /** Database collection index */
 struct _JBIDX {
   struct _JBIDX *next;      /**< Next index in chain */
-  int64_t       rnum;       /**< Number of records stored in index */
+  int64_t  rnum;            /**< Number of records stored in index */
   JBCOLL   jbc;             /**< Owner document collection */
   JBL_PTR  ptr;             /**< Indexed JSON path poiner 0*/
   IWDB     idb;             /**< KV database for this index */
@@ -115,7 +115,7 @@ struct _JBIDX {
 
 /** Pair: collection name, document id */
 struct _JBDOCREF {
-  int64_t    id;
+  int64_t     id;
   const char *coll;
 };
 
@@ -153,20 +153,20 @@ typedef iwrc (*JB_SCAN_CONSUMER)(
  * @brief Index can sorter consumer context
  */
 struct _JBSSC {
-  iwrc     rc;                /**< RC code used for in `_jb_do_sorting` */
+  iwrc      rc;               /**< RC code used for in `_jb_do_sorting` */
   uint32_t *refs;             /**< Document references array */
-  uint32_t refs_asz;          /**< Document references array allocated size */
-  uint32_t refs_num;          /**< Document references array elements count */
-  uint32_t docs_asz;          /**< Documents array allocated size */
+  uint32_t  refs_asz;         /**< Document references array allocated size */
+  uint32_t  refs_num;         /**< Document references array elements count */
+  uint32_t  docs_asz;         /**< Documents array allocated size */
   uint8_t  *docs;             /**< Documents byte array */
-  uint32_t docs_npos;         /**< Next document offset */
-  jmp_buf  fatal_jmp;
-  IWFS_EXT sof;               /**< Sort overflow file */
-  bool     sof_active;
+  uint32_t  docs_npos;        /**< Next document offset */
+  jmp_buf   fatal_jmp;
+  IWFS_EXT  sof;              /**< Sort overflow file */
+  bool      sof_active;
 };
 
 struct _JBMIDX {
-  JBIDX      idx;                     /**< Index matched this filter */
+  JBIDX       idx;                    /**< Index matched this filter */
   JQP_FILTER *filter;                 /**< Query filter */
   JQP_EXPR   *nexpr;                  /**< Filter node expression */
   JQP_EXPR   *expr1;                  /**< Start index expression (optional) */
@@ -178,13 +178,13 @@ struct _JBMIDX {
 
 typedef struct _JBEXEC {
   EJDB_EXEC *ux;           /**< User defined context */
-  JBCOLL    jbc;           /**< Collection */
+  JBCOLL     jbc;          /**< Collection */
 
   int64_t istep;
   iwrc (*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
   uint8_t *jblbuf;            /**< Buffer used to keep currently processed document */
-  size_t  jblbufsz;           /**< Size of jblbuf allocated memory */
-  bool    sorting;            /**< Resultset sorting needed */
+  size_t   jblbufsz;          /**< Size of jblbuf allocated memory */
+  bool     sorting;           /**< Resultset sorting needed */
   IWKV_cursor_op cursor_init; /**< Initial index cursor position (optional) */
   IWKV_cursor_op cursor_step; /**< Next index cursor step */
   struct _JBMIDX midx;        /**< Index matching context */

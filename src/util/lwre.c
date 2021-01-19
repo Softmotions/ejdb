@@ -79,8 +79,8 @@ static inline void *re__realloc(struct re *re, void *ptr, size_t size) {
 
 #define re_array_of(TYPE) \
   struct {      \
-    int  size;    \
-    int  capacity;  \
+    int   size;    \
+    int   capacity;  \
     TYPE *at;    \
   }
 
@@ -193,7 +193,7 @@ struct RE_Insn {
   int  opcode;
   long x;
   union {
-    long      y;
+    long       y;
     RE_BitSet *c;
   };
   union {
@@ -604,7 +604,7 @@ struct RE_ThreadList;
 typedef struct RE_ThreadList RE_ThreadList;
 
 struct RE_ThreadList {
-  int       size;
+  int size;
   RE_Thread *at;
 };
 

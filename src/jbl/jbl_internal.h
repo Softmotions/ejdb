@@ -50,9 +50,9 @@ typedef struct _JBL_VCTX {
   void   *op;       /**< Arbitrary opaque data */
   void   *result;
   IWPOOL *pool;     /**< Pool placeholder, initialization is responsibility of `JBL_VCTX` creator */
-  int    pos;       /**< Aux position, not actually used by visitor core */
-  bool   terminate;
-  bool   found;     /**< Used in _jbl_at() */
+  int     pos;      /**< Aux position, not actually used by visitor core */
+  bool    terminate;
+  bool    found;    /**< Used in _jbl_at() */
 } JBL_VCTX;
 
 typedef jbn_visitor_cmd_t jbl_visitor_cmd_t;
@@ -64,7 +64,7 @@ typedef struct _JBL_PATCHEXT {
 } JBL_PATCHEXT;
 
 typedef struct _JBLDRCTX {
-  IWPOOL   *pool;
+  IWPOOL  *pool;
   JBL_NODE root;
 } JBLDRCTX;
 

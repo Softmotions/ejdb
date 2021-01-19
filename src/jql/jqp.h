@@ -137,12 +137,12 @@ typedef struct JQP_JSON {
 } JQP_JSON;
 
 typedef struct JQP_NODE {
-  jqp_unit_t      type;
-  jqp_node_type_t ntype;
+  jqp_unit_t       type;
+  jqp_node_type_t  ntype;
   struct JQP_NODE *next;
   JQPUNIT *value;
-  int     start; // Used in query matching
-  int     end;   // Used in query matching
+  int      start; // Used in query matching
+  int      end;   // Used in query matching
 } JQP_NODE;
 
 typedef struct JQP_STRING {
@@ -159,14 +159,14 @@ typedef struct JQP_INTEGER {
   jqp_unit_t type;
   jqp_int_flavours_t flavour;
   int64_t value;
-  void    *opaque;
+  void   *opaque;
 } JQP_INTEGER;
 
 typedef struct JQP_DOUBLE {
   jqp_unit_t type;
   jqp_int_flavours_t flavour;
   double value;
-  void   *opaque;
+  void  *opaque;
 } JQP_DOUBLE;
 
 typedef struct JQP_OP {
@@ -184,7 +184,7 @@ typedef struct JQP_JOIN {
 } JQP_JOIN;
 
 typedef struct JQP_EXPR {
-  jqp_unit_t      type;
+  jqp_unit_t       type;
   struct JQP_JOIN *join;
   struct JQP_OP   *op;
   JQPUNIT *left;
@@ -207,7 +207,7 @@ typedef struct JQP_PROJECTION {
 } JQP_PROJECTION;
 
 typedef struct JQP_QUERY {
-  jqp_unit_t     type;
+  jqp_unit_t      type;
   struct JQP_AUX *aux;
 } JQP_QUERY;
 
@@ -238,14 +238,14 @@ typedef enum {
 } jqp_stack_t;
 
 typedef struct JQP_STACK {
-  jqp_stack_t      type;
+  jqp_stack_t       type;
   struct JQP_STACK *next;
   struct JQP_STACK *prev;
   union {
     JQPUNIT *unit;
     char    *str;
-    int64_t i64;
-    double  f64;
+    int64_t  i64;
+    double   f64;
   };
 } JQP_STACK;
 
@@ -285,7 +285,7 @@ typedef struct JQP_AUX {
   JQP_OP     *end_op;
   JQPUNIT    *skip;
   JQPUNIT    *limit;
-  JBL_NODE   apply;
+  JBL_NODE    apply;
   const char *apply_placeholder;
   const char *first_anchor;
   jqp_query_mode_t qmode;

@@ -84,21 +84,21 @@ typedef uint8_t ejdb_idx_mode_t;
  * @brief Database handler.
  */
 struct _EJDB;
-typedef struct _EJDB *EJDB;
+typedef struct _EJDB*EJDB;
 
 /**
  * @brief EJDB HTTP/Websocket Server options.
  */
 typedef struct _EJDB_HTTP {
-  bool enabled;                /**< If HTTP/Websocket endpoint enabled. Default: false */
-  int  port;                   /**< Listen port number, required */
-  const char *bind;            /**< Listen IP/host. Default: `localhost` */
-  const char *access_token;    /**< Server access token passed in `X-Access-Token` header. Default: zero */
-  size_t     access_token_len; /**< Length of access token string. Default: zero */
-  bool       blocking;         /**< Block `ejdb_open()` thread until http service finished.
-                                    Otherwise HTTP server will be started in background. */
-  bool   read_anon;            /**< Allow anonymous read-only database access */
-  size_t max_body_size;        /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
+  bool enabled;                 /**< If HTTP/Websocket endpoint enabled. Default: false */
+  int  port;                    /**< Listen port number, required */
+  const char *bind;             /**< Listen IP/host. Default: `localhost` */
+  const char *access_token;     /**< Server access token passed in `X-Access-Token` header. Default: zero */
+  size_t      access_token_len; /**< Length of access token string. Default: zero */
+  bool blocking;                /**< Block `ejdb_open()` thread until http service finished.
+                                     Otherwise HTTP server will be started in background. */
+  bool   read_anon;             /**< Allow anonymous read-only database access */
+  size_t max_body_size;         /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
 } EJDB_HTTP;
 
 /**
@@ -151,7 +151,7 @@ typedef struct _EJDB_LIST {
   EJDB     db;          /**< EJDB storage used for query execution. Not zero. */
   JQL      q;           /**< Query executed. Not zero. */
   EJDB_DOC first;       /**< First document in result list. Zero if result set is empty. */
-  IWPOOL   *pool;       /**< Memory pool used to store list of documents */
+  IWPOOL  *pool;        /**< Memory pool used to store list of documents */
 } *EJDB_LIST;
 
 struct _EJDB_EXEC;
@@ -174,12 +174,12 @@ typedef struct _EJDB_EXEC {
   EJDB db;                    /**< EJDB database object. Required. */
   JQL  q;                     /**< Query object to be executed. Created by `jql_create()` Required. */
   EJDB_EXEC_VISITOR visitor;  /**< Optional visitor to handle documents in result set. */
-  void    *opaque;            /**< Optional user data passed to visitor functions. */
+  void   *opaque;             /**< Optional user data passed to visitor functions. */
   int64_t skip;               /**< Number of records to skip. Takes precedence over `skip` encoded in query. */
   int64_t limit;              /**< Result set size limitation. Zero means no limitations. Takes precedence over `limit`
                                  encoded in query. */
   int64_t cnt;                /**< Number of result documents processed by `visitor` */
-  IWXSTR  *log;               /**< Optional query execution log buffer. If set major query execution/index selection
+  IWXSTR *log;                /**< Optional query execution log buffer. If set major query execution/index selection
                                  steps will be logged into */
   IWPOOL *pool;               /**< Optional pool which can be used in query apply  */
 } EJDB_EXEC;

@@ -266,7 +266,7 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
 static iwrc _jbi_collect_indexes(
   JBEXEC                     *ctx,
   const struct JQP_EXPR_NODE *en,
-  struct _JBMIDX             marr[static JB_SOLID_EXPRNUM],
+  struct _JBMIDX              marr[static JB_SOLID_EXPRNUM],
   size_t                     *snp) {
 
   iwrc rc = 0;

@@ -14,8 +14,8 @@
 static void jn_resultset_tsf(
   napi_env   env,
   napi_value js_add_stream,
-  void       *context,
-  void       *data);
+  void      *context,
+  void      *data);
 static bool jn_throw_error(napi_env env, iwrc rc, const char *location, const char *msg);
 static napi_value jn_create_error(napi_env env, iwrc rc, const char *location, const char *msg);
 
@@ -116,7 +116,7 @@ typedef enum {
 
 typedef struct JBN {
   EJDB      db;
-  IWPOOL    *pool;
+  IWPOOL   *pool;
   EJDB_OPTS opts;
   napi_threadsafe_function resultset_tsf;
 } *JBN;
@@ -126,7 +126,7 @@ typedef struct JNWORK {
   napi_status     ns;
   napi_deferred   deferred;
   napi_async_work async_work;
-  const char      *async_resource;
+  const char     *async_resource;
   void *unwrapped;
   void *data;
   void (*release_data)(napi_env env, struct JNWORK *w);
@@ -607,7 +607,7 @@ bool jn_resolve_pending_errors(napi_env env, napi_status ns, JNWORK work) {
 static napi_value jn_launch_promise(
   napi_env                     env,
   napi_callback_info           info,
-  const char                   *async_resource_name,
+  const char                  *async_resource_name,
   napi_async_execute_callback  execute,
   napi_async_complete_callback complete,
   JNWORK                       work) {
@@ -710,10 +710,10 @@ static napi_value jn_close(napi_env env, napi_callback_info info) {
 //  ---------------- EJDB2.put/patch()
 
 struct JNPUT_DATA {
-  int64_t    id;
+  int64_t     id;
   const char *coll;
   const char *json;
-  bool       patch;
+  bool patch;
 };
 
 static void jn_put_execute(napi_env env, void *data) {
@@ -821,7 +821,7 @@ static napi_value jn_patch_or_put(napi_env env, napi_callback_info info) {
 //  ---------------- EJDB2.get()
 
 struct JNGET_DATA {
-  int64_t    id;
+  int64_t     id;
   const char *coll;
   JBL jbl;
 };
@@ -1112,8 +1112,8 @@ finish:
 //  ---------------- EJDB2.ensureIndex/removeIndex()
 
 struct JNIDX_DATA {
-  const char      *coll;
-  const char      *path;
+  const char     *coll;
+  const char     *path;
   ejdb_idx_mode_t mode;
   bool remove;
 };
@@ -1251,7 +1251,7 @@ finish:
 //  ---------------- EJDB2.onlineBackup
 
 struct JNBK_DATA {
-  uint64_t   ts;
+  uint64_t    ts;
   const char *file_name;
 };
 
@@ -1417,8 +1417,8 @@ typedef struct JNQS { // query stream associated data
 
 typedef struct JNCS { // call data to `k_add_stream_tsfn`
   bool     has_count;
-  IWXSTR   *log;
-  IWXSTR   *document;
+  IWXSTR  *log;
+  IWXSTR  *document;
   int64_t  count;
   int64_t  document_id;
   napi_ref stream_ref; // copied from `JNQS`
@@ -1443,8 +1443,8 @@ static void jn_cs_destroy(JNCS *csp) {
 static void jn_resultset_tsf(
   napi_env   env,
   napi_value js_add_stream,
-  void       *context,
-  void       *data) {
+  void      *context,
+  void      *data) {
 
   if (!env) { // shutdown pending
     JNCS cs = data;

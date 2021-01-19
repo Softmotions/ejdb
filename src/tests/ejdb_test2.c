@@ -62,8 +62,8 @@ static void ejdb_test2_2() {
 }
 
 struct TEST21_1 {
-  int    stage;
-  int    cnt;
+  int     stage;
+  int     cnt;
   IWXSTR *xstr;
 };
 

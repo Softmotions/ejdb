@@ -43,7 +43,7 @@
 IW_EXTERN_C_START
 
 struct _JQL;
-typedef struct _JQL *JQL;
+typedef struct _JQL*JQL;
 
 typedef enum {
   _JQL_ERROR_START = (IW_ERROR_START + 15000UL + 2000),

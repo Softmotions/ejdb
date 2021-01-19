@@ -268,7 +268,7 @@ extern void qsort_r(
 
 struct sort_r_data {
   void *arg;
-  int  (*compar)(const void *_a, const void *_b, void *_arg);
+  int   (*compar)(const void *_a, const void *_b, void *_arg);
 };
 
 static _SORT_R_INLINE int sort_r_arg_swap(

@@ -220,14 +220,14 @@ struct binn_struct {
   BOOL dirty;        // the container header is not written to the buffer
   //
   void *pbuf;        // use *ptr below?
-  BOOL pre_allocated;
-  int  alloc_size;
-  int  used_size;
+  BOOL  pre_allocated;
+  int   alloc_size;
+  int   used_size;
   //
-  int  type;
+  int   type;
   void *ptr;
-  int  size;
-  int  count;
+  int   size;
+  int   count;
   //
   binn_mem_free freefn;  // used only when type == BINN_STRING or BINN_BLOB
   //

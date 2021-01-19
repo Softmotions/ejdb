@@ -44,7 +44,7 @@ typedef enum {
 } jbr_ecode_t;
 
 struct _JBR;
-typedef struct _JBR *JBR;
+typedef struct _JBR*JBR;
 
 iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, JBR *pjbr);
 
