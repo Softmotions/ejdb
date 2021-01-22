@@ -439,6 +439,8 @@ IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *jsonstr);
 
 IW_EXPORT iwrc jbl_from_json_printf(JBL *jblp, const char *format, ...);
 
+IW_EXPORT iwrc jbl_from_json_printf_va(JBL *jblp, const char *format, va_list va);
+
 /**
  * @brief Get type of `jbl` value.
  */
@@ -646,6 +648,8 @@ IW_EXPORT iwrc jbl_to_node(JBL jbl, JBL_NODE *node, bool clone_strings, IWPOOL *
 IW_EXPORT iwrc jbn_from_json(const char *json, JBL_NODE *node, IWPOOL *pool);
 
 IW_EXPORT iwrc jbn_from_json_printf(JBL_NODE *node, IWPOOL *pool, const char *format, ...);
+
+IW_EXPORT iwrc jbn_from_json_printf_va(JBL_NODE *node, IWPOOL *pool, const char *format, va_list va);
 
 /**
  * @brief Prints JBL_NODE document as JSON string.
