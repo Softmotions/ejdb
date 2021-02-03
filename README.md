@@ -76,7 +76,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [React Native](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native)
 * [Flutter](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter)
 
-### Unofficial Native language bindings
+### Unofficial EJDB2 language bindings
 
 * .Net
   * https://github.com/kmvi/ejdb2-csharp
@@ -85,6 +85,8 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
   * https://hackage.haskell.org/package/ejdb2-binding
 * [Pharo](https://pharo.org)
   * https://github.com/pharo-nosql/pharo-ejdb
+* Lua
+  * https://github.com/chriku/ejdb-lua
 
 ## Status
 
