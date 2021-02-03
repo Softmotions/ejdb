@@ -1257,7 +1257,7 @@ static iwrc _jqp_print_filter_node(const JQP_NODE *n, jbl_json_printer pt, void 
 static iwrc _jqp_print_filter(
   const JQP_QUERY  *q,
   const JQP_FILTER *f,
-  jbl_json_printer pt,
+  jbl_json_printer  pt,
   void             *op) {
   iwrc rc = 0;
   if (f->anchor) {
@@ -1274,7 +1274,7 @@ static iwrc _jqp_print_filter(
 static iwrc _jqp_print_expression_node(
   const JQP_QUERY     *q,
   const JQP_EXPR_NODE *en,
-  jbl_json_printer    pt,
+  jbl_json_printer     pt,
   void                *op) {
   iwrc rc = 0;
   bool inbraces = (en != q->aux->expr && en->type == JQP_EXPR_NODE_TYPE);

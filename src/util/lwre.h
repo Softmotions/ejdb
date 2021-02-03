@@ -18,11 +18,11 @@ struct re {
   const char *expression;
   const char *position;
   jmp_buf    *error_env;
-  int  error_code;
+  int   error_code;
   char *error_message;
   struct RE_Compiled code;
   char **matches;
-  int  nmatches;
+  int    nmatches;
 #ifdef RE_EXTRA_MEMBERS
   RE_MEMBERS
 #endif

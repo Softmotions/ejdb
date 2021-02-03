@@ -1,5 +1,6 @@
 ejdb2 (2.0.59) UNRELEASED; urgency=medium
 
+  * Added jbl_from_json_printf_va(), jbn_from_json_printf_va() (jbl.h)
   * Project code reformatted using uncrustify
   * Updated copyright headers
   * Removed dependency on some glibc specific features

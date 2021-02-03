@@ -8,7 +8,7 @@
 
 /** Query matching context */
 typedef struct MCTX {
-  int  lvl;
+  int   lvl;
   binn *bv;
   const char  *key;
   struct _JQL *q;
@@ -23,8 +23,8 @@ typedef struct MENCTX {
 
 /** Filter matching context */
 typedef struct MFCTX {
-  bool     matched;
-  int      last_lvl;      /**< Last matched level */
+  bool      matched;
+  int       last_lvl;     /**< Last matched level */
   JQP_NODE *nodes;
   JQP_NODE *last_node;
   JQP_FILTER *qpf;

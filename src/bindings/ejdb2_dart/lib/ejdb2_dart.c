@@ -25,20 +25,20 @@ struct NativeFunctionLookup {
 };
 
 struct WrapperFunctionLookup {
-  const char      *name;
+  const char     *name;
   WrapperFunction fn;
 };
 
 typedef struct EJDB2Handle {
   EJDB    db;
-  char    *path;
+  char   *path;
   int64_t refs;
   struct EJDB2Handle *next;
   struct EJDB2Handle *prev;
 } EJDB2Handle;
 
 typedef struct EJDB2Context {
-  Dart_Port   port;
+  Dart_Port    port;
   EJDB2Handle *dbh;
   Dart_WeakPersistentHandle wph;
 } EJDB2Context;
@@ -395,7 +395,7 @@ typedef struct QCTX {
   Dart_Port reply_port;
   JQL       q;
   EJDB2Context *dctx;
-  int64_t      limit;
+  int64_t       limit;
   pthread_mutex_t mtx;
   pthread_cond_t  cond;
 } *QCTX;
@@ -824,7 +824,7 @@ static void ejd_explain_rc(Dart_NativeArguments args) {
 static Dart_NativeFunction ejd_resolve_name(
   Dart_Handle name,
   int         argc,
-  bool        *auto_setup_scope) {
+  bool       *auto_setup_scope) {
   if (!Dart_IsString(name) || !auto_setup_scope) {
     return 0;
   }

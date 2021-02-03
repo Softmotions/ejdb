@@ -62,7 +62,7 @@ IW_EXTERN_C_START
  * @brief JSON document in compact binary format [Binn](https://github.com/liteserver/binn)
  */
 struct _JBL;
-typedef struct _JBL *JBL;
+typedef struct _JBL*JBL;
 
 typedef enum {
   _JBL_ERROR_START = (IW_ERROR_START + 15000UL + 1000),
@@ -144,9 +144,9 @@ typedef struct _JBL_NODE {
   jbl_type_t type;
   union {
     const char *vptr;
-    bool       vbool;
-    int64_t    vi64;
-    double     vf64;
+    bool    vbool;
+    int64_t vi64;
+    double  vf64;
   };
 } *JBL_NODE;
 
@@ -171,9 +171,9 @@ typedef enum {
  */
 typedef struct _JBL_PATCH {
   jbp_patch_t op;
-  const char  *path;
-  const char  *from;
-  const char  *vjson;
+  const char *path;
+  const char *from;
+  const char *vjson;
   JBL_NODE    vnode;
 } JBL_PATCH;
 
@@ -185,7 +185,7 @@ typedef struct _JBL_PTR {
   uint64_t op;      /**< Opaque data associated with pointer */
   int      cnt;     /**< Number of nodes */
   int      sz;      /**< Size of JBL_PTR allocated area */
-  char     *n[1];   /**< Path nodes */
+  char    *n[1];    /**< Path nodes */
 } *JBL_PTR;
 
 /** Prints JSON to some oputput specified by `op` */
@@ -390,12 +390,12 @@ IW_EXPORT void jbn_apply_from(JBL_NODE target, JBL_NODE from);
  * @param pool Memory pool used for allocations
  */
 IW_EXPORT iwrc jbn_copy_path(
-  JBL_NODE   src,
+  JBL_NODE    src,
   const char *src_path,
-  JBL_NODE   target,
+  JBL_NODE    target,
   const char *target_path,
-  bool       overwrite_on_nulls,
-  bool       no_src_clone,
+  bool        overwrite_on_nulls,
+  bool        no_src_clone,
   IWPOOL     *pool);
 
 /**
@@ -412,12 +412,12 @@ IW_EXPORT iwrc jbn_copy_path(
  * @param pool Memory pool used for allocations
  */
 IW_EXPORT iwrc jbn_copy_paths(
-  JBL_NODE   src,
-  JBL_NODE   target,
+  JBL_NODE     src,
+  JBL_NODE     target,
   const char **paths,
-  bool       overwrite_on_nulls,
-  bool       no_src_clone,
-  IWPOOL     *pool);
+  bool         overwrite_on_nulls,
+  bool         no_src_clone,
+  IWPOOL      *pool);
 
 /**
  * @brief Clones a given `src` JBL object and stores it in memory allocated from `pool`.
@@ -438,6 +438,8 @@ IW_EXPORT iwrc jbl_from_json(JBL *jblp, const char *jsonstr);
 
 
 IW_EXPORT iwrc jbl_from_json_printf(JBL *jblp, const char *format, ...);
+
+IW_EXPORT iwrc jbl_from_json_printf_va(JBL *jblp, const char *format, va_list va);
 
 /**
  * @brief Get type of `jbl` value.
@@ -647,6 +649,8 @@ IW_EXPORT iwrc jbn_from_json(const char *json, JBL_NODE *node, IWPOOL *pool);
 
 IW_EXPORT iwrc jbn_from_json_printf(JBL_NODE *node, IWPOOL *pool, const char *format, ...);
 
+IW_EXPORT iwrc jbn_from_json_printf_va(JBL_NODE *node, IWPOOL *pool, const char *format, va_list va);
+
 /**
  * @brief Prints JBL_NODE document as JSON string.
  *
@@ -851,9 +855,9 @@ IW_EXPORT iwrc jbl_ptr_serialize(JBL_PTR ptr, IWXSTR *xstr);
  */
 typedef struct _JBN_VCTX {
   JBL_NODE root;  /**< Root node from which started visitor */
-  void     *op;   /**< Arbitrary opaque data */
-  void     *result;
-  IWPOOL   *pool;     /**< Pool placeholder, initialization is responsibility of `JBN_VCTX` creator */
+  void    *op;    /**< Arbitrary opaque data */
+  void    *result;
+  IWPOOL  *pool;      /**< Pool placeholder, initialization is responsibility of `JBN_VCTX` creator */
   int      pos;       /**< Aux position, not actually used by visitor core */
   bool     terminate; /**< It `true` document traversal will be terminated immediately. */
 } JBN_VCTX;

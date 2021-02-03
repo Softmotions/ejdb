@@ -135,19 +135,16 @@ finish:
   return rc;
 }
 
-iwrc jbl_from_json_printf(JBL *jblp, const char *format, ...) {
+iwrc jbl_from_json_printf_va(JBL *jblp, const char *format, va_list va) {
   iwrc rc = 0;
-  va_list ap;
+  va_list cva;
 
-  va_start(ap, format);
-  int size = _jbl_printf_estimate_size(format, ap);
-  va_end(ap);
-
-  va_start(ap, format);
+  va_copy(cva, va);
+  int size = _jbl_printf_estimate_size(format, va);
   char *buf = malloc(size);
   RCGA(buf, finish);
-  vsnprintf(buf, size, format, ap);
-  va_end(ap);
+  vsnprintf(buf, size, format, cva);
+  va_end(cva);
 
   rc = jbl_from_json(jblp, buf);
 
@@ -156,24 +153,39 @@ finish:
   return rc;
 }
 
-iwrc jbn_from_json_printf(JBL_NODE *node, IWPOOL *pool, const char *format, ...) {
-  iwrc rc = 0;
+iwrc jbl_from_json_printf(JBL *jblp, const char *format, ...) {
   va_list ap;
 
   va_start(ap, format);
-  int size = _jbl_printf_estimate_size(format, ap);
+  iwrc rc = jbl_from_json_printf_va(jblp, format, ap);
   va_end(ap);
+  return rc;
+}
 
-  va_start(ap, format);
+iwrc jbn_from_json_printf_va(JBL_NODE *node, IWPOOL *pool, const char *format, va_list va) {
+  iwrc rc = 0;
+  va_list cva;
+
+  va_copy(cva, va);
+  int size = _jbl_printf_estimate_size(format, va);
   char *buf = malloc(size);
   RCGA(buf, finish);
-  vsnprintf(buf, size, format, ap);
-  va_end(ap);
+  vsnprintf(buf, size, format, cva);
+  va_end(cva);
 
   rc = jbn_from_json(buf, node, pool);
 
 finish:
   free(buf);
+  return rc;
+}
+
+iwrc jbn_from_json_printf(JBL_NODE *node, IWPOOL *pool, const char *format, ...) {
+  va_list ap;
+
+  va_start(ap, format);
+  iwrc rc = jbn_from_json_printf_va(node, pool, format, ap);
+  va_end(ap);
   return rc;
 }
 
@@ -1757,12 +1769,12 @@ finish:
 }
 
 iwrc jbn_copy_path(
-  JBL_NODE   src,
+  JBL_NODE    src,
   const char *src_path,
-  JBL_NODE   target,
+  JBL_NODE    target,
   const char *target_path,
-  bool       overwrite_on_nulls,
-  bool       no_src_clone,
+  bool        overwrite_on_nulls,
+  bool        no_src_clone,
   IWPOOL     *pool) {
   if (!src || !src_path || !target || !target_path || !pool) {
     return IW_ERROR_INVALID_ARGS;
@@ -1806,12 +1818,12 @@ iwrc jbn_copy_path(
 }
 
 IW_EXPORT iwrc jbn_copy_paths(
-  JBL_NODE   src,
-  JBL_NODE   target,
+  JBL_NODE     src,
+  JBL_NODE     target,
   const char **paths,
-  bool       overwrite_on_nulls,
-  bool       no_src_clone,
-  IWPOOL     *pool) {
+  bool         overwrite_on_nulls,
+  bool         no_src_clone,
+  IWPOOL      *pool) {
   if (!target || !src || !paths || !pool) {
     return IW_ERROR_INVALID_ARGS;
   }
@@ -1862,11 +1874,11 @@ void jbn_remove_item(JBL_NODE parent, JBL_NODE child) {
 static iwrc _jbl_create_node(
   JBLDRCTX   *ctx,
   const binn *bv,
-  JBL_NODE   parent,
+  JBL_NODE    parent,
   const char *key,
-  int        klidx,
+  int         klidx,
   JBL_NODE   *node,
-  bool       clone_strings) {
+  bool        clone_strings) {
   iwrc rc = 0;
   JBL_NODE n = iwpool_alloc(sizeof(*n), ctx->pool);
   if (node) {
@@ -1977,10 +1989,10 @@ finish:
 static iwrc _jbl_node_from_binn_impl(
   JBLDRCTX   *ctx,
   const binn *bn,
-  JBL_NODE   parent,
+  JBL_NODE    parent,
   char       *key,
-  int        klidx,
-  bool       clone_strings) {
+  int         klidx,
+  bool        clone_strings) {
   binn bv;
   binn_iter iter;
   iwrc rc = 0;

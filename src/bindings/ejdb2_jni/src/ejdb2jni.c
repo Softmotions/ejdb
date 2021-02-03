@@ -12,7 +12,7 @@
 
 typedef struct JBN_STR {
   const char *utf;
-  jstring    str;
+  jstring     str;
 } JBN_STR;
 
 typedef enum {
@@ -49,10 +49,10 @@ static jfieldID k_JQL_limit_fid;
   if (!fid_) goto label_;
 
 typedef struct JBN_JSPRINT_CTX {
-  int    flush_buffer_sz;
+  int     flush_buffer_sz;
   IWXSTR *xstr;
   iwrc (*flushFn)(struct JBN_JSPRINT_CTX *pctx);
-  JNIEnv    *env;
+  JNIEnv   *env;
   jclass    osClazz;
   jobject   osObj;
   jmethodID write_mid;
@@ -170,7 +170,7 @@ static void jbn_throw_rc_exception(JNIEnv *env, iwrc rc, const char *msg_) {
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jobject optsObj) {
   iwrc rc = 0;
@@ -306,7 +306,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1dispose(JNIEnv *env, j
 
 // PUT
 JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_EJDB2__1put(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jstring coll_,
   jstring json_,
@@ -375,7 +375,7 @@ finish:
 
 // GET
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1get(
-  JNIEnv   *env,
+  JNIEnv  *env,
   jobject  thisObj,
   jstring  coll_,
   jlong    id,
@@ -421,7 +421,7 @@ finish:
 
 // INFO
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1info(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jobject osObj) {
   iwrc rc;
@@ -455,7 +455,7 @@ finish:
 
 // DEL
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1del(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jstring coll_,
   jlong   id) {
@@ -516,7 +516,7 @@ finish:
 
 // PATCH
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1patch(
-  JNIEnv   *env,
+  JNIEnv  *env,
   jobject  thisObj,
   jstring  coll_,
   jstring  patch_,
@@ -552,7 +552,7 @@ finish:
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1remove_1collection(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jstring coll_) {
   iwrc rc;
@@ -577,7 +577,7 @@ finish:
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1ensure_1index(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jstring coll_,
   jstring path_,
@@ -609,7 +609,7 @@ finish:
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1remove_1index(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jstring coll_,
   jstring path_,
@@ -641,7 +641,7 @@ finish:
 
 // JQL INIT
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1init(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jobject dbObj,
   jstring queryStr,
@@ -714,7 +714,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1destroy(JNIEnv *env, jcl
 }
 
 typedef struct JBN_EXEC_CTX {
-  JNIEnv    *env;
+  JNIEnv   *env;
   jobject   cbObj;
   jclass    cbClazz;
   jmethodID cbMid;
@@ -760,7 +760,7 @@ finish:
 
 // JQL EXECUTE
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jobject dbObj,
   jobject cbObj,
@@ -843,7 +843,7 @@ finish:
 
 // JQL EXECUTE SCALAR LONG
 JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jobject dbObj,
   jobject logStreamObj) {
@@ -924,7 +924,7 @@ static void jbn_free_str(void *ptr, void *op) {
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1string(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jint    pos,
   jstring placeholder_,
@@ -1000,7 +1000,7 @@ finish:
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1long(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jint    pos,
   jstring placeholder_,
@@ -1029,7 +1029,7 @@ finish:
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1double(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jint    pos,
   jstring placeholder_,
@@ -1057,7 +1057,7 @@ finish:
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1boolean(
-  JNIEnv   *env,
+  JNIEnv  *env,
   jobject  thisObj,
   jint     pos,
   jstring  placeholder_,
@@ -1085,7 +1085,7 @@ finish:
 }
 
 JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1null(
-  JNIEnv  *env,
+  JNIEnv *env,
   jobject thisObj,
   jint    pos,
   jstring placeholder_) {

@@ -431,7 +431,7 @@ UTF8PROC_DLLEXPORT const char *utf8proc_errmsg(utf8proc_ssize_t errcode);
  */
 UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_iterate(
   const utf8proc_uint8_t *str,
-  utf8proc_ssize_t       strlen,
+  utf8proc_ssize_t        strlen,
   utf8proc_int32_t       *codepoint_ref);
 
 /**
@@ -558,7 +558,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_decompose_custom(
  *          range `0x0000` to `0x10FFFF`. Otherwise, the program might crash!
  */
 UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_normalize_utf32(
-  utf8proc_int32_t  *buffer,
+  utf8proc_int32_t *buffer,
   utf8proc_ssize_t  length,
   utf8proc_option_t options);
 
@@ -591,7 +591,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_normalize_utf32(
  *          range `0x0000` to `0x10FFFF`. Otherwise, the program might crash!
  */
 UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_reencode(
-  utf8proc_int32_t  *buffer,
+  utf8proc_int32_t *buffer,
   utf8proc_ssize_t  length,
   utf8proc_option_t options);
 
@@ -610,8 +610,8 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_reencode(
  *          be called IN ORDER on ALL potential breaks in a string.
  */
 UTF8PROC_DLLEXPORT utf8proc_bool utf8proc_grapheme_break_stateful(
-  utf8proc_int32_t codepoint1,
-  utf8proc_int32_t codepoint2,
+  utf8proc_int32_t  codepoint1,
+  utf8proc_int32_t  codepoint2,
   utf8proc_int32_t *state);
 
 /**

@@ -35,15 +35,15 @@ struct _JBR {
   volatile iwrc rc;
   pthread_t     worker_thread;
   pthread_barrier_t start_barrier;
-  const EJDB_HTTP   *http;
+  const EJDB_HTTP  *http;
   EJDB db;
 };
 
 typedef struct _JBRCTX {
-  JBR    jbr;
+  JBR     jbr;
   http_s *req;
-  const char   *collection;
-  IWXSTR       *wbuf;
+  const char  *collection;
+  IWXSTR      *wbuf;
   int64_t      id;
   size_t       collection_len;
   jbr_method_t method;
@@ -669,8 +669,8 @@ typedef enum {
 } jbwsop_t;
 
 typedef struct _JBWCTX {
-  bool read_anon;
-  EJDB db;
+  bool  read_anon;
+  EJDB  db;
   ws_s *ws;
 } JBWCTX;
 
