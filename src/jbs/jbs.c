@@ -13,7 +13,7 @@ int main(int argc, char const *argv[]) {
   iwrc rc = 0;
   fio_cli_start(argc, argv, 0, 0,
                 "EJDB " EJDB2_VERSION " standalone HTTP REST/Websocket server. http://ejdb.org\n",
-                FIO_CLI_STRING("--file -f Database file path. Default: db.jb"),
+                FIO_CLI_STRING("--file -f Database file path. Default: ejdb2.db"),
                 FIO_CLI_INT("--port -p HTTP port number listen to. Default: 9191"),
                 FIO_CLI_STRING("--bind -b Address server listen. Default: localhost"),
                 FIO_CLI_STRING("--access -a Server access token matched to 'X-Access-Token' HTTP header value.\n"
@@ -32,8 +32,8 @@ int main(int argc, char const *argv[]) {
                              " If not set, current process will wait for lock release")
 
                 );
-  fio_cli_set_default("--file", "db.jb");
-  fio_cli_set_default("-f", "db.jb");
+  fio_cli_set_default("--file", "ejdb2.db");
+  fio_cli_set_default("-f", "ejdb2.db");
   fio_cli_set_default("--port", "9191");
   fio_cli_set_default("-p", "9191");
   fio_cli_set_default("--sbz", "16777216");
