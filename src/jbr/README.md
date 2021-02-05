@@ -159,7 +159,7 @@ You can use interactive websocket CLI tool [wscat](https://www.npmjs.com/package
 #### ?
 Will respond with the following help text message:
 ```
-wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
+wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
 > ?
 <
 <key> info

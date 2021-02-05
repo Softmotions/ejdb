@@ -103,7 +103,7 @@ curl -d '@sample.json' -H'X-Access-Token:myaccess01' -X POST http://localhost:91
 We can play around using interactive [wscat](https://www.npmjs.com/package/@softmotions/wscat) websocket client.
 
 ```sh
-wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
+wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
 connected (press CTRL+C to quit)
 > k info
 < k     {

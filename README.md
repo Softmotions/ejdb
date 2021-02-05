@@ -1,6 +1,5 @@
 # EJDB 2.0
 
-![Build Status](https://dev.softmotions.com/jenkins/buildStatus/icon?job=ejdb2_test)
 [![Join Telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://tlg.name/ejdb2)
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
 ![maintained](https://img.shields.io/maintenance/yes/2021.svg)
@@ -276,7 +275,7 @@ curl -d '@sample.json' -H'X-Access-Token:myaccess01' -X POST http://localhost:91
 We can play around using interactive [wscat](https://www.npmjs.com/package/@softmotions/wscat) websocket client.
 
 ```sh
-wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
+wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
 connected (press CTRL+C to quit)
 > k info
 < k     {
@@ -1062,7 +1061,7 @@ You can use interactive websocket CLI tool [wscat](https://www.npmjs.com/package
 #### ?
 Will respond with the following help text message:
 ```
-wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
+wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
 > ?
 <
 <key> info
