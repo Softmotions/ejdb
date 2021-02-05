@@ -467,7 +467,7 @@ IW_EXPORT WUR iwrc ejdb_merge_or_put_jbl(EJDB db, const char *coll, JBL patch, i
 IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id);
 
 /**
- * @brief Save new document into `coll` under new generated identifier.
+ * @brief Save a document into `coll` under new identifier.
  *
  * @param db          Database handle. Not zero.
  * @param coll        Collection name. Not zero.
@@ -478,6 +478,19 @@ IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id);
  *          Any non zero error codes.
  */
 IW_EXPORT WUR iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *oid);
+
+/**
+ * @brief Save a document into `coll` under new identifier.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param jbn         JSON document. Not zero.
+ * @param [out] oid   Placeholder for new document id. Not zero.
+ *
+ * @return `0` on success.
+ *          Any non zero error codes.
+ */
+IW_EXPORT iwrc ejdb_put_new_jbn(EJDB db, const char *coll, JBL_NODE jbn, int64_t *id);
 
 /**
  * @brief Retrieve document identified by given `id` from collection `coll`.

@@ -1451,6 +1451,15 @@ iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *id) {
   return rc;
 }
 
+iwrc ejdb_put_new_jbn(EJDB db, const char *coll, JBL_NODE jbn, int64_t *id) {
+  JBL jbl = 0;
+  iwrc rc = jbl_from_node(&jbl, jbn);
+  RCRET(rc);
+  rc = ejdb_put_new(db, coll, jbl, id);
+  jbl_destroy(&jbl);
+  return rc;
+}
+
 iwrc jb_get(EJDB db, const char *coll, int64_t id, jb_coll_acquire_t acm, JBL *jblp) {
   if (!id || !jblp) {
     return IW_ERROR_INVALID_ARGS;
