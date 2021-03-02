@@ -99,6 +99,7 @@ typedef struct _EJDB_HTTP {
                                      Otherwise HTTP server will be started in background. */
   bool   read_anon;             /**< Allow anonymous read-only database access */
   size_t max_body_size;         /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
+  bool cors;                    /**< Allow CORS */
 } EJDB_HTTP;
 
 /**
