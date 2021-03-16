@@ -304,7 +304,7 @@ iwrc jbl_from_buf_keep(JBL *jblp, void *buf, size_t bufsz, bool keep_on_destroy)
 }
 
 iwrc jbl_clone(JBL src, JBL *targetp) {
-  *targetp = malloc(sizeof(**targetp));
+  *targetp = calloc(1, sizeof(**targetp));
   JBL t = *targetp;
   if (!t) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);

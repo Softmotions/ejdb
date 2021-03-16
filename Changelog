@@ -1,5 +1,6 @@
 ejdb2 (2.0.59) UNRELEASED; urgency=medium
 
+  * Fixed some uninitialized data issues with `jbl_clone()`
   * Added ejdb_put_new_jbn() (ejdb2.h)
   * jbs: Default database file name changed from db.jb to ejdb2.db
   * Added jbl_from_json_printf_va(), jbn_from_json_printf_va() (jbl.h)
