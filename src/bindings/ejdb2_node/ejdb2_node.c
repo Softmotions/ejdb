@@ -545,7 +545,7 @@ static napi_value jn_ejdb2impl_ctor(napi_env env, napi_callback_info info) {
          vadd_streamfn,                                 // napi_value func,
          0,                                             // napi_value async_resource,
          jn_create_string(env, "jn_add_stream_result"), // napi_value async_resource_name,
-         64,                                            // size_t max_queue_size,
+         1,                                             // size_t max_queue_size,
          1,                                             // size_t initial_thread_count,
          0,                                             // void* thread_finalize_data,
          0,                                             // napi_finalize thread_finalize_cb,
