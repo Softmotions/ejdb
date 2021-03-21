@@ -1,4 +1,4 @@
-FROM        alpine:3.9
+FROM        alpine:latest
 
 MAINTAINER  Anton Adamansky <adamansky@gmail.com>
 
