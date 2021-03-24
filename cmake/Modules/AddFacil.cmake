@@ -22,7 +22,7 @@ endif()
 message("FACIL_URL: ${FACIL_URL}")
 
 set(CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-               -DCMAKE_C_FLAGS=-fPIC -fvisibility=hidden)
+               -DCMAKE_C_FLAGS=-fPIC)
 
 foreach(extra
               CMAKE_C_COMPILER

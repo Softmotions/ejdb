@@ -1,6 +1,6 @@
 ejdb2 (2.0.60) UNRELEASED; urgency=medium
 
-  * 
+  * Removed -fvisibility=hidden compiler flag from facil.io lib
 
  -- Anton Adamansky <adamansky@gmail.com>  Sun, 21 Mar 2021 22:18:45 +0700
 
