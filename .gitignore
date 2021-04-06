@@ -3,6 +3,7 @@
 
 .DS_Store
 .codelite/
+.cache/
 node_modules/
 build-xcode/
 install-xcode/
