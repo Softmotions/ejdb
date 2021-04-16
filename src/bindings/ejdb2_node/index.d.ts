@@ -50,7 +50,7 @@ declare namespace ejdb2_node {
   /**
    * EJDB document.
    */
-  interface JBDOC {
+  interface JBDOC<T extends object = { [key: string]: any }> {
     /**
      * Document identifier
      */
@@ -59,7 +59,7 @@ declare namespace ejdb2_node {
     /**
      * Document JSON object
      */
-    json: any;
+    json: T;
 
     /**
      * String represen
@@ -67,8 +67,8 @@ declare namespace ejdb2_node {
     toString(): string;
   }
 
-  interface JBDOCStream  {
-    [Symbol.asyncIterator](): AsyncIterableIterator<JBDOC>;
+  interface JBDOCStream<T extends object = { [key: string]: any }>  {
+    [Symbol.asyncIterator](): AsyncIterableIterator<JBDOC<T>>;
   }
 
   /**
@@ -105,7 +105,7 @@ declare namespace ejdb2_node {
      * readable stream of matched documents.
      *
      */
-    stream(opts?: QueryOptions): JBDOCStream;
+    stream<T extends object = { [key: string]: any }>(opts?: QueryOptions): JBDOCStream<T>;
 
     /**
      * Executes this query and waits its completion.
@@ -122,18 +122,18 @@ declare namespace ejdb2_node {
      * Returns result set as a list.
      * Use it with caution on large data sets.
      */
-    list(opts?: QueryOptions): Promise<Array<JBDOC>>;
+    list<T extends object = { [key: string]: any }>(opts?: QueryOptions): Promise<Array<JBDOC<T>>>;
 
     /**
      * Collects up to [n] documents from result set into array.
      */
-    firstN(n: number, opts?: QueryOptions): Promise<Array<JBDOC>>;
+    firstN<T extends object = { [key: string]: any }>(n: number, opts?: QueryOptions): Promise<Array<JBDOC<T>>>;
 
     /**
      * Returns a first record in result set.
      * If record is not found promise with `undefined` will be returned.
      */
-    first(opts?: QueryOptions): Promise<JBDOC | undefined>;
+    first<T extends object = { [key: string]: any }>(opts?: QueryOptions): Promise<JBDOC<T> | undefined>;
 
     /**
      * Set [json] at the specified [placeholder].
@@ -380,14 +380,14 @@ declare namespace ejdb2_node {
      * If document with given `id` is not found then `Error` will be thrown.
      * Not found error can be detected by {@link JBE.isNotFound}
      */
-    get(collection: string, id: number): Promise<object>;
+    get<T extends object = { [key: string]: any }>(collection: string, id: number): Promise<T>;
 
     /**
      * Get json body of document identified by [id] and stored in [collection].
      *
      * If document with given `id` is not found then `null` will be resoved.
      */
-    getOrNull(collection: string, id: number): Promise<object|null>;
+    getOrNull<T extends object = { [key: string]: any }>(collection: string, id: number): Promise<T|null>;
 
     /**
      * Get json body with database metadata.
