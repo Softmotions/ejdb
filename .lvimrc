@@ -1,0 +1,19 @@
+" Local vim rc
+
+let g:build_type = 'Debug'
+let g:build_tests = 'ON'
+let g:cc = 'clang'
+let g:cxx = 'clang++'
+
+let g:root_dir = g:localvimrc_script_dir_unresolved
+let g:build_dir = g:root_dir.'/build'
+let &l:makeprg = 'cd '.g:build_dir.' && make -j4'
+
+packadd termdebug
+let g:termdebug_wide=1
+
+tnoremap <A-Esc> <C-\><C-n>
+nnoremap <leader>c :call asyncrun#run('',
+        \ {'mode':'bang','cwd':g:build_dir,'save':2},
+        \ 'cmake .. -DCMAKE_BUILD_TYPE='.g:build_type.' -DBUILD_TESTS='.g:build_tests.' -DCMAKE_CXX_COMPILER='.g:cxx.' -DCMAKE_C_COMPILER='.g:cc.' -DCMAKE_EXPORT_COMPILE_COMMANDS=ON')
+        \<CR>
