@@ -1,5 +1,12 @@
+/hints.txt
+/t.*
+
+.DS_Store
 .codelite/
+.cache/
 node_modules/
+build-xcode/
+install-xcode/
 .cmaketools.json
 *.tags
 *.dll
@@ -13,6 +20,8 @@ compile_commands.json
 *.dat
 *.db
 *-wal
+
+jniLibs/
 
 .vscode/ipch/
 
@@ -154,7 +163,8 @@ hs_err_pid*
 
 .project
 .classpath
-.settings
+**/.settings/*
+!**/.settings/org.eclipse.jdt.core.prefs
 factoryConfiguration.json
 
 # End of https://www.gitignore.io/api/code-java

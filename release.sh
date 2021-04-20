@@ -3,7 +3,12 @@
 set -e
 # set -x
 
-cd `readlink -f "$0" | xargs dirname`
+SCRIPTPATH="$(
+  cd "$(dirname "$0")"
+  pwd -P
+)"
+cd $SCRIPTPATH
+
 
 readme() {
   echo "Generating README.md";
@@ -11,6 +16,8 @@ readme() {
   echo -e "\n\n" >> "./README.md"
   cat "./src/bindings/ejdb2_android/README.md" >> "./README.md"
   echo -e "\n\n" >> "./README.md"
+  # cat "./src/bindings/ejdb2_swift/EJDB2Swift/README.md" >> "./README.md"
+  # echo -e "\n\n" >> "./README.md"
   cat "./src/jql/README.md" >> "./README.md"
   echo -e "\n\n" >> "./README.md"
   cat "./src/jbr/README.md" >> "./README.md"
@@ -36,7 +43,7 @@ release_tag() {
   git add ./README.md
 
   if ! git diff-index --quiet HEAD --; then
-    git commit -m"${TAG} landed"
+    git commit -a -m"${TAG} landed"
     git push origin master
   fi
 

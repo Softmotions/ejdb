@@ -11,19 +11,31 @@ set(FACIL_BINARY_DIR "${CMAKE_BINARY_DIR}/src/extern_facil")
 set(FACIL_INCLUDE_DIR "${FACIL_BINARY_DIR}/lib/facil")
 set(FACIL_LIBRARY_DIR "${FACIL_BINARY_DIR}")
 
-if(EXISTS ${CMAKE_SOURCE_DIR}/facil.zip)
-  set(FACIL_URL ${CMAKE_SOURCE_DIR}/facil.zip)
-else()
-  set(FACIL_URL https://github.com/Softmotions/facil.io/archive/master.zip)
+if("${FACIL_URL}" STREQUAL "")
+  if(EXISTS ${CMAKE_SOURCE_DIR}/facil.zip)
+    set(FACIL_URL ${CMAKE_SOURCE_DIR}/facil.zip)
+  else()
+    set(FACIL_URL https://github.com/Softmotions/facil.io/archive/master.zip)
+  endif()
 endif()
 
-set(CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-               -DCMAKE_C_FLAGS=-fPIC -fvisibility=hidden)
+message("FACIL_URL: ${FACIL_URL}")
 
-foreach(extra CMAKE_TOOLCHAIN_FILE
+set(CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+               -DCMAKE_C_FLAGS=-fPIC)
+
+foreach(extra
+              CMAKE_C_COMPILER
+              CMAKE_TOOLCHAIN_FILE
               ANDROID_PLATFORM
               ANDROID_ABI
-              TEST_TOOL_CMD)
+              TEST_TOOL_CMD
+              PLATFORM
+              ENABLE_BITCODE
+              ENABLE_ARC
+              ENABLE_VISIBILITY
+              ENABLE_STRICT_TRY_COMPILE
+              ARCHS)
   if(DEFINED ${extra})
     list(APPEND CMAKE_ARGS "-D${extra}=${${extra}}")
   endif()
@@ -59,6 +71,12 @@ set_target_properties(
    IMPORTED_LOCATION "${FACIL_LIBRARY_DIR}/libfacil.io.a"
 )
 add_dependencies(facil_s extern_facil)
+
+if (DO_INSTALL_CORE)
+  install(FILES "${FACIL_LIBRARY_DIR}/libfacil.io.a"
+          RENAME "libfacilio-1.a"
+          DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 list(APPEND PROJECT_LLIBRARIES facil_s)
 list(APPEND PROJECT_INCLUDE_DIRS "${FACIL_INCLUDE_DIR}"

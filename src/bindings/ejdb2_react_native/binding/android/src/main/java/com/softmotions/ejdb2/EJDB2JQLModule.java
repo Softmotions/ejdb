@@ -62,7 +62,7 @@ public class EJDB2JQLModule extends ReactContextBaseJavaModule {
   public void withExplain(Integer jqlid) {
     jql(jqlid).withExplain();
   }
-  
+
   @ReactMethod(isBlockingSynchronousMethod = true)
   public String getExplainLog(Integer jqlid) {
     try {
@@ -165,8 +165,8 @@ public class EJDB2JQLModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void execute(Integer jqlid, String eventId, Promise promise) {
     final ReactContext ctx = getReactApplicationContext();
-    final DeviceEventManagerModule.RCTDeviceEventEmitter module
-      = ctx.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
+    final DeviceEventManagerModule.RCTDeviceEventEmitter module = ctx
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
 
     AtomicReference<WritableArray> holder = new AtomicReference<>(Arguments.createArray());
 
@@ -195,22 +195,20 @@ public class EJDB2JQLModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void list(Integer jqlid, ReadableMap opts, Promise promise) {
     thread(jqlid, promise, jql -> {
-      AtomicInteger sk = new AtomicInteger(opts.hasKey("skip") ? opts.getInt("skip") : 0);
-      AtomicInteger lim = new AtomicInteger(opts.hasKey("limit") ? opts.getInt("limit") : -1);
-
+      if (opts.hasKey("skip")) {
+        jql.setSkip(Long.parseLong(opts.getString("skip")));
+      }
+      if (opts.hasKey("limit")) {
+        jql.setLimit(Long.parseLong(opts.getString("limit")));
+      }
       WritableArray ret = Arguments.createArray();
       jql.execute((id, json) -> {
-        if (sk.get() > 0) {
-          return sk.getAndSet(0);
-        }
         WritableMap map = Arguments.createMap();
         map.putString("id", String.valueOf(id));
         map.putString("raw", json);
         ret.pushMap(map);
-
-        return lim.decrementAndGet() == 0 ? 0 : 1;
+        return 1;
       });
-
       promise.resolve(ret);
     });
   }

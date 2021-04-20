@@ -1,21 +1,23 @@
 # EJDB 2.0
 
-[The Story of the IT-depression, birds and EJDB 2.0](https://medium.com/@adamansky/ejdb2-41670e80897c)
-
-[![Join ejdb2 telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://t.me/ejdb2)
+[![Join Telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://tlg.name/ejdb2)
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
-![maintained](https://img.shields.io/maintenance/yes/2019.svg)
-
+![maintained](https://img.shields.io/maintenance/yes/2021.svg)
 
 EJDB2 is an embeddable JSON database engine published under MIT license.
+
+[The Story of the IT-depression, birds and EJDB 2.0](https://medium.com/@adamansky/ejdb2-41670e80897c)
 
 * C11 API
 * Single file database
 * Online backups support
+* 500K library size for Android
+* [iOS](https://github.com/Softmotions/EJDB2Swift) / [Android](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_android/test) / [React Native](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native) / [Flutter](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter) integration
 * Simple but powerful query language (JQL) as well as support of the following standards:
   * [rfc6902](https://tools.ietf.org/html/rfc6902) JSON Patch
   * [rfc7386](https://tools.ietf.org/html/rfc7386) JSON Merge patch
   * [rfc6901](https://tools.ietf.org/html/rfc6901) JSON Path
+* [Support of collection joins](#jql-collection-joins)
 * Powered by [iowow.io](http://iowow.io) - The persistent key/value storage engine
 * Provides HTTP REST/Websockets network endpoints with help of [facil.io](http://facil.io)
 * JSON documents are stored in using fast and compact [binn](https://github.com/liteserver/binn) binary format
@@ -24,14 +26,16 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [Native language bindings](#native-language-bindings)
 * Supported platforms
   * [OSX](#osx)
+  * [iOS](https://github.com/Softmotions/EJDB2Swift)
   * [Linux](#linux)
   * [Android](#android)
   * [Windows](#windows)
-* [JQL query language](#jql)
+* **[JQL query language](#jql)**
   * [Grammar](#jql-grammar)
   * [Quick into](#jql-quick-introduction)
   * [Data modification](#jql-data-modification)
   * [Projections](#jql-projections)
+  * [Collection joins](#jql-collection-joins)
   * [Sorting](#jql-sorting)
   * [Query options](#jql-options)
 * [Indexes and performance](#jql-indexes-and-performance-tips)
@@ -42,17 +46,50 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [License](#license)
 ---
 
+## EJDB2 platforms matrix
+
+|              | Linux              | macOS               | iOS                | Android            | Windows            |
+| ---          | ---                | ---                 | ---                | ---                | ---                |
+| C library    | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:<sup>1</sup> |
+| NodeJS       | :heavy_check_mark: | :heavy_check_mark:  |                    |                    | :x:<sup>3</sup>    |
+| DartVM       | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |         |                    | :x:<sup>3</sup>    |
+| Flutter      |                    |                     | :heavy_check_mark: | :heavy_check_mark: |                    |
+| React Native |                    |                     | :x:<sup>4</sup>    | :heavy_check_mark: |                    |
+| Swift        | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: |                    |                    |
+| Java         | :heavy_check_mark: | :heavy_check_mark:  |                    | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |
+
+
+<br> `[1]` No HTTP/Websocket support [#257](https://github.com/Softmotions/ejdb/issues/257)
+<br> `[2]` Binaries are not distributed with dart `pub.` You can build it [manually](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node#how-build-it-manually)
+<br> `[3]` Can be build, but needed a linkage with windows node/dart `libs`.
+<br> `[4]` Porting in progress [#273](https://github.com/Softmotions/ejdb/issues/273)
+
+
 ## Native language bindings
 
-* Node.js https://www.npmjs.com/package/ejdb2_node
-* Dart https://pub.dartlang.org/packages/ejdb2_dart
-* Java [ejdb2_jni/README.md](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/README.md)
-* Android support (see below)
+* [NodeJS](https://www.npmjs.com/package/ejdb2_node)
+* [Dart](https://pub.dartlang.org/packages/ejdb2_dart)
+* [Java](https://github.com/Softmotions/ejdb/blob/master/src/bindings/ejdb2_jni/README.md)
+* [Android support](#android)
+* [Swift | iOS](https://github.com/Softmotions/EJDB2Swift)
 * [React Native](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native)
+* [Flutter](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter)
+
+### Unofficial EJDB2 language bindings
+
+* .Net
+  * https://github.com/kmvi/ejdb2-csharp
+* Haskell
+  * https://github.com/cescobaz/ejdb2haskell
+  * https://hackage.haskell.org/package/ejdb2-binding
+* [Pharo](https://pharo.org)
+  * https://github.com/pharo-nosql/pharo-ejdb
+* Lua
+  * https://github.com/chriku/ejdb-lua
 
 ## Status
 
-* **Now EJDB 2.0 is well tested and used in various heavily loaded deployments**
+* **EJDB 2.0 core engine is well tested and used in various heavily loaded deployments**
 * Tested on `Linux` and `OSX` platforms. [Limited Windows support](./WINDOWS.md)
 * Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
   We are not maintaining ejdb 1.x.
@@ -60,17 +97,26 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ## Use cases
 
 * Softmotions trading robots platform
+* [Gimme - a social toy tokens exchange mobile application.](https://play.google.com/store/apps/details?id=com.softmotions.gimme) EJDB2 is used both on mobile and server sides.
 
-# Supported platforms
+Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
-## OSX
+## macOS / OSX
 
-EJDB2 code ported and tested on `High Sierra`, `Mojave`
+EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
+
+See also [EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for OSX, iOS and Linux
+
+```
+brew install ejdb
+```
+
+or
 
 ```
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make
+make install
 ```
 
 ## Linux
@@ -84,6 +130,8 @@ sudo apt-get install ejdb2
 ```
 
 #### Building debian packages
+
+cmake v3.15 or higher required
 
 ```sh
 mkdir build && cd build
@@ -112,36 +160,14 @@ Nodejs/Dart bindings not yet ported to Windows.
 
 # Android
 
+* [Flutter binding](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter)
 * [React Native binding](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_react_native)
 
 ## Sample Android application
 
-https://github.com/Softmotions/ejdb_android_todo_app
+* https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_android/test
 
-## Android binding showcase and unit tests
-
-```bash
-cd ./src/bindings/ejdb2_android
-```
-
-Set local android SDK/NDK path and target `arch` in `local.properties`
-
-```properties
-# Path to Android SDK dir
-sdk.dir=/Android-sdk
-
-# Path to Android NDK dir
-ndk.dir=/Android-sdk/ndk-bundle
-
-# Target abi name: armeabi-v7a, arm64-v8a, x86, x86_64
-abi.name=arm64-v8a
-```
-
-Run Android emulator for the same abi version then:
-
-```bash
-./gradlew connectedAndroidTest
-```
+* https://github.com/Softmotions/ejdb_android_todo_app
 
 
 # JQL
@@ -185,7 +211,7 @@ FILTERS = FILTER [{ and | or } [ not ] FILTER];
   NODE_EXPRESSION = '[' NODE_EXPR_LEFT OP NODE_EXPR_RIGHT ']'
                         [{ and | or } [ not ] NODE_EXPRESSION]...;
 
-  OP =   [ '!' ] { '=' | '>=' | '<=' | '>' | '<' }
+  OP =   [ '!' ] { '=' | '>=' | '<=' | '>' | '<' | ~ }
       | [ '!' ] { 'eq' | 'gte' | 'lte' | 'gt' | 'lt' }
       | [ not ] { 'in' | 'ni' | 're' };
 
@@ -195,7 +221,7 @@ FILTERS = FILTER [{ and | or } [ not ] FILTER];
 
   NODE_EXPR_RIGHT =  JSONVAL | STR | PLACEHOLDER
 
-APPLY = 'apply' { PLACEHOLDER | json_object | json_array  } | 'del'
+APPLY = { 'apply' | 'upsert' } { PLACEHOLDER | json_object | json_array  } | 'del'
 
 OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 
@@ -249,7 +275,7 @@ curl -d '@sample.json' -H'X-Access-Token:myaccess01' -X POST http://localhost:91
 We can play around using interactive [wscat](https://www.npmjs.com/package/@softmotions/wscat) websocket client.
 
 ```sh
-wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
+wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
 connected (press CTRL+C to quit)
 > k info
 < k     {
@@ -294,7 +320,9 @@ connected (press CTRL+C to quit)
 }
 ```
 
-Note about the `k` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
+Note about the `k` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular
+websocket request, this key will be returned with response to request and allows client to
+identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
 
 Query command over websocket has the following format:
 
@@ -319,7 +347,7 @@ k @family/*
 
 We can execute query by HTTP `POST` request
 ```
-curl --data-raw '@family/[firstName=John]' -H'X-Access-Token:myaccess01' -X POST http://localhost:9191
+curl --data-raw '@family/[firstName = John]' -H'X-Access-Token:myaccess01' -X POST http://localhost:9191
 
 1	{"firstName":"John","lastName":"Doe","age":28,"pets":[{"name":"Rexy rex","kind":"dog","likes":["bones","jumping","toys"]},{"name":"Grenny","kind":"parrot","likes":["green color","night","toys"]}]}
 ```
@@ -346,6 +374,40 @@ Element at index `1` exists in `likes` array at any `likes` nesting level
 
 **From this point and below I will omit websocket specific prefix `k query family` and
 consider only JQL queries.**
+
+
+### Get documents by primary key
+
+In order to get documents by primary key the following options are available:
+
+1. Use API call `ejdb_get()`
+    ```ts
+     const doc = await db.get('users', 112);
+    ```
+
+1. Use the special query construction: `/=:?` or `@collection/=:?`
+
+Get document from `users` collection with primary key `112`
+```
+> k @users/=112
+```
+
+Update tags array for document in `jobs` collection (TypeScript):
+```ts
+ await db.createQuery('@jobs/ = :? | apply :? | count')
+    .setNumber(0, id)
+    .setJSON(1, { tags })
+    .completionPromise();
+```
+
+Array of primary keys can also be used for matching:
+
+```ts
+ await db.createQuery('@jobs/ = :?| apply :? | count')
+    .setJSON(0, [23, 1, 2])
+    .setJSON(1, { tags })
+    .completionPromise();
+```
 
 ### Matching JSON entry values
 
@@ -379,6 +441,14 @@ We can create more complicated filters
 ```
 Note about grouping parentheses and regular expression matching using `re` operator.
 
+`~` is a prefix matching operator (Since ejdb `v2.0.53`).
+Prefix matching can benefit from using indexes.
+
+Get documents where `/lastName` starts with `"Do"`.
+```
+/[lastName ~ Do]
+```
+
 ### Arrays and maps can be matched as is
 
 Filter documents with `likes` array exactly matched to `["bones","jumping","toys"]`
@@ -387,7 +457,7 @@ Filter documents with `likes` array exactly matched to `["bones","jumping","toys
 ```
 Matching algorithms for arrays and maps are different:
 
-* Array elements are fully matched from start to end. In equal arrays
+* Array elements are matched from start to end. In equal arrays
   all values at the same index should be equal.
 * Object maps matching consists of the following steps:
   * Lexicographically sort object keys in both maps.
@@ -424,30 +494,95 @@ It may be useful in queries with dynamic placeholders (C API):
 `APPLY` section responsible for modification of documents content.
 
 ```
-APPLY = ('apply' { PLACEHOLDER | json_object | json_array  }) | 'del'
+APPLY = ({'apply' | `upsert`} { PLACEHOLDER | json_object | json_array  }) | 'del'
 ```
 
 JSON patch specs conformed to `rfc7386` or `rfc6902` specifications followed after `apply` keyword.
 
 Let's add `address` object to all matched document
 ```
-/[firstName=John] | apply {"address":{"city":"New York", "street":""}}
+/[firstName = John] | apply {"address":{"city":"New York", "street":""}}
 ```
 
-If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise it should be array which denotes `rfc6902` JSON patch. Placegolders also supported by `apply` section.
+If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise
+it should be array which denotes `rfc6902` JSON patch. Placeholders also supported by `apply` section.
 ```
 /* | apply :?
 ```
 
 Set the street name in `address`
 ```
-/[firstName=John] | apply [{"op":"replace", "path":"/address/street", "value":"Fifth Avenue"}]
+/[firstName = John] | apply [{"op":"replace", "path":"/address/street", "value":"Fifth Avenue"}]
 ```
 
 Add `Neo` fish to the set of John's `pets`
 ```
-/[firstName=John]
+/[firstName = John]
 | apply [{"op":"add", "path":"/pets/-", "value": {"name":"Neo", "kind":"fish"}}]
+```
+
+`upsert` updates existing document by given json argument used as merge patch
+         or inserts provided json argument as new document instance.
+
+```
+/[firstName = John] | upsert {"firstName": "John", "address":{"city":"New York"}}
+```
+
+### Non standard JSON patch extensions
+
+#### increment
+
+Increments numeric value identified by JSON path by specified value.
+
+Example:
+```
+ Document:  {"foo": 1}
+ Patch:     [{"op": "increment", "path": "/foo", "value": 2}]
+ Result:    {"foo": 3}
+```
+#### add_create
+
+Same as JSON patch `add` but creates intermediate object nodes for missing JSON path segments.
+
+Example:
+```
+Document: {"foo": {"bar": 1}}
+Patch:    [{"op": "add_create", "path": "/foo/zaz/gaz", "value": 22}]
+Result:   {"foo":{"bar":1,"zaz":{"gaz":22}}}
+```
+
+Example:
+```
+Document: {"foo": {"bar": 1}}
+Patch:    [{"op": "add_create", "path": "/foo/bar/gaz", "value": 22}]
+Result:   Error since element pointed by /foo/bar is not an object
+```
+
+#### swap
+
+Swaps two values of JSON document starting from `from` path.
+
+Swapping rules
+
+1. If value pointed by `from` not exists error will be raised.
+1. If value pointed by `path` not exists it will be set by value from `from` path,
+  then object pointed by `from` path will be removed.
+1. If both values pointed by `from` and `path` are presented they will be swapped.
+
+Example:
+
+```
+Document: {"foo": ["bar"], "baz": {"gaz": 11}}
+Patch:    [{"op": "swap", "from": "/foo/0", "path": "/baz/gaz"}]
+Result:   {"foo": [11], "baz": {"gaz": "bar"}}
+```
+
+Example (Demo of rule 2):
+
+```
+Document: {"foo": ["bar"], "baz": {"gaz": 11}}
+Patch:    [{"op": "swap", "from": "/foo/0", "path": "/baz/zaz"}]
+Result:   {"foo":[],"baz":{"gaz":11,"zaz":"bar"}}
 ```
 
 ### Removing documents
@@ -474,7 +609,7 @@ Example:
 ```
 PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 
-  PROJECTION = 'all' | json_path
+  PROJECTION = 'all' | json_path | join_clause
 ```
 
 Projection allows to get only subset of JSON document excluding not needed data.
@@ -528,13 +663,93 @@ Get `age` and the first pet in `pets` array.
 < k
 ```
 
-## JQL sorting
+## JQL collection joins
+
+Join materializes reference to document to a real document objects which will replace reference inplace.
+
+Documents are joined by their primary keys only.
+
+Reference keys should be stored in referrer document as number or string field.
+
+Joins can be specified as part of projection expression
+in the following form:
+
+```
+/.../field<collection
+```
+Where
+
+* `field` &dash; JSON field contains primary key of joined document.
+* `<` &dash; The special mark symbol which instructs EJDB engine to replace `field` key by body of joined document.
+* `collection` &dash; name of DB collection where joined documents located.
+
+A referrer document will be untouched if associated document is not found.
+
+Here is the simple demonstration of collection joins in our interactive websocket shell:
+
+```
+> k add artists {"name":"Leonardo Da Vinci", "years":[1452,1519]}
+< k     1
+> k add paintings {"name":"Mona Lisa", "year":1490, "origin":"Italy", "artist": 1}
+< k     1
+> k add paintings {"name":"Madonna Litta - Madonna And The Child", "year":1490, "origin":"Italy", "artist": 1}
+< k     2
+
+# Lists paintings documents
+
+> k @paintings/*
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"origin":"Italy","artist":1}
+< k     1       {"name":"Mona Lisa","year":1490,"origin":"Italy","artist":1}
+< k
+>
+
+# Do simple join with artists collection
+
+> k @paintings/* | /artist<artists
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"origin":"Italy",
+                  "artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+
+< k     1       {"name":"Mona Lisa","year":1490,"origin":"Italy",
+                  "artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k
+
+
+# Strip all document fields except `name` and `artist` join
+
+> k @paintings/* | /artist<artists + /name + /artist/*
+< k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k
+>
+
+# Same results as above:
+
+> k @paintings/* | /{name, artist<artists} + /artist/*
+< k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k
+
+```
+
+Invalid references:
+
+```
+>  k add paintings {"name":"Mona Lisa2", "year":1490, "origin":"Italy", "artist": 9999}
+< k     3
+> k @paintings/* |  /artist<artists
+< k     3       {"name":"Mona Lisa2","year":1490,"origin":"Italy","artist":9999}
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"origin":"Italy","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k     1       {"name":"Mona Lisa","year":1490,"origin":"Italy","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+
+```
+
+## JQL results ordering
 
 ```
   ORDERBY = ({ 'asc' | 'desc' } PLACEHOLDER | json_path)...
 ```
 
-Lets add one more document then sort documents in collection by `firstName` ascending and `age` descending.
+Lets add one more document then sort documents in collection according to `firstName` ascending and `age` descending order.
 
 ```
 > k add family {"firstName":"John", "lastName":"Ryan", "age":39}
@@ -572,8 +787,8 @@ OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 
 ## JQL Indexes and performance tips
 
-Database index can be build for any JSON field path of number or string type.
-Index can be an `unique` &dash; not allowing indexed values duplication and `non unique`.
+Database index can be build for any JSON field path containing values of number or string type.
+Index can be an `unique` &dash; not allowing value duplication and `non unique`.
 The following index mode bit mask flags are used (defined in `ejdb2.h`):
 
 Index mode | Description
@@ -583,7 +798,8 @@ Index mode | Description
 <code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
 <code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
 
-For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation defines index of only one type.
+For example unique index of string type will be specified by `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`.
+Index can be defined for only one value type located under specific path in json document.
 
 Lets define non unique string index for `/lastName` path:
 ```
@@ -601,31 +817,37 @@ You can always check index usage by issuing `explain` command in WS API:
 ```
 
 The following statements are taken into account when using EJDB2 indexes:
-* Only one index can be used for particular query
-* If query consist of `or` joined parts or contains `negated` at top level indexes will not be used.
-  No indexes below:
+* Only one index can be used for particular query execution
+* If query consist of `or` joined part at top level or contains `negated` expressions at the top level
+  of query expression - indexes will not be in use at all.
+  So no indexes below:
   ```
   /[lastName != Andy]
 
   /[lastName = "John"] or /[lastName = Peter]
+
   ```
-  Will use `/lastName` index defined above
+  But will be used `/lastName` index defined above
   ```
   /[lastName = Doe]
 
   /[lastName = Doe] and /[age = 28]
 
+  /[lastName = Doe] and not /[age = 28]
+
   /[lastName = Doe] and /[age != 28]
   ```
-* The ony following operators are supported by indexes (ejdb 2.0.x):
+* The following operators are supported by indexes (ejdb 2.0.x):
   * `eq, =`
   * `gt, >`
   * `gte, >=`
   * `lt, <`
   * `lte, <=`
   * `in`
-* `ORDERBY` clauses may use indexes to avoid result set sorting
-* Array fields can also be indexed. Let's outline a typical use case: indexing of some  entity tags:
+  * `~` (Prefix matching since ejdb 2.0.53)
+
+* `ORDERBY` clauses may use indexes to avoid result set sorting.
+* Array fields can also be indexed. Let's outline typical use case: indexing of some entity tags:
   ```
   > k add books {"name":"Mastering Ultra", "tags":["ultra", "language", "bestseller"]}
   < k     1
@@ -653,11 +875,28 @@ The following statements are taken into account when using EJDB2 indexes:
   < k
   ```
 
-**Performance tip:** All documents in collection are sorted by their primary key in `descending` order. So if you use auto generated keys (`ejdb_put_new`) you may
-be sure what documents fetched as result of full scan query will be ordered
-by time of its insertion in descendant order, unless you don't use query sorting, indexes or `inverse` keyword.
+### Performance tip: Physical ordering of documents
 
-**Performance tip:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any case.
+All documents in collection are sorted by their primary key in `descending` order.
+So if you use auto generated keys (`ejdb_put_new`) you may be sure what documents fetched as result of
+full scan query will be ordered according to the time of insertion in descendant order,
+unless you don't use query sorting, indexes or `inverse` keyword.
+
+### Performance tip: Brute force scan vs indexed access
+
+In many cases, using index may drop down the overall query performance.
+Because index collection contains only document references (`id`) and engine may perform
+an addition document fetching by its primary key to finish query matching.
+So for not so large collections a brute scan may perform better than scan using indexes.
+However, exact matching operations: `eq`, `in` and `sorting` by natural index order
+will benefit from index in most cases.
+
+
+### Performance tip: Get rid of unnecessary document data
+
+If you'd like update some set of documents with `apply` or `del` operations
+but don't want fetching all of them as result of query - just add `count`
+modifier to the query to get rid of unnecessary data transferring and json data conversion.
 
 
 
@@ -701,7 +940,8 @@ Use the -h, -help or -? to get this information again.
 ## HTTP API
 
 Access to HTTP endpoint can be protected by a token specified with `--access`
-command flag or by C API `EJDB_HTTP` options. If access token specified on server, a client should provide `X-Access-Token` HTTP header value. If token is required and not provided by client `401` HTTP code will be returned. If access token is required and not matched to the token provided by client `403` HTTP code will returned. In any error case `500` error will be returned.
+command flag or by C API `EJDB_HTTP` options. If access token specified on server, client must provide `X-Access-Token` HTTP header value. If token is required and not provided by client the `401` HTTP code will be reported. If access token is not matched to the token provided the `403` HTTP code will be returned.
+For any other errors server will respond with `500` error code.
 
 ## REST API
 
@@ -821,7 +1061,7 @@ You can use interactive websocket CLI tool [wscat](https://www.npmjs.com/package
 #### ?
 Will respond with the following help text message:
 ```
-wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
+wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
 > ?
 <
 <key> info
@@ -839,7 +1079,7 @@ wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
 >
 ```
 
-Note about `<key>` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request.
+Note about `<key>` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request.
 
 Errors are returned in the following format:
 ```
@@ -931,7 +1171,7 @@ Example:
 ```
 
 #### <key> <query>
-Execute query text. Body of query should contains collection name in use in the first filter element: `@collection_name/...`. Behaviour is the same as for: `<key> query   <collection> <query>`
+Execute query text. Body of query should contains collection name in use in the first filter element: `@collection_name/...`. Behavior is the same as for: `<key> query   <collection> <query>`
 
 #### `<key> idx     <collection> <mode> <path>`
 Ensure index with specified `mode` (bitmask flag) for given json `path` and `collection`.
@@ -944,7 +1184,8 @@ Index mode | Description
 <code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
 <code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
 
-Example:
+##### Example
+Set unique string index `(0x01 & 0x04) = 5` on `/name` JSON field:
 ```
 k idx mycollection 5 /name
 ```
@@ -990,7 +1231,7 @@ Example application:
 ```c
 #include <ejdb2/ejdb2.h>
 
-#define RCHECK(rc_)          \
+#define CHECK(rc_)          \
   if (rc_) {                 \
     iwlog_ecode_error3(rc_); \
     return 1;                \
@@ -1015,10 +1256,10 @@ int main() {
   JBL jbl = 0; // Json document
 
   iwrc rc = ejdb_init();
-  RCHECK(rc);
+  CHECK(rc);
 
   rc = ejdb_open(&opts, &db);
-  RCHECK(rc);
+  CHECK(rc);
 
   // First record
   rc = jbl_from_json(&jbl, "{\"name\":\"Bianca\", \"age\":4}");
@@ -1053,10 +1294,10 @@ int main() {
   rc = ejdb_exec(&ux);
 
 finish:
-  if (q) jql_destroy(&q);
-  if (jbl) jbl_destroy(&jbl);
+  jql_destroy(&q);
+  jbl_destroy(&jbl);
   ejdb_close(&db);
-  RCHECK(rc);
+  CHECK(rc);
   return 0;
 }
 ```
@@ -1081,7 +1322,7 @@ gcc -o example1 example1.o -lejdb2
 
 MIT License
 
-Copyright (c) 2012-2019 Softmotions Ltd <info@softmotions.com>
+Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

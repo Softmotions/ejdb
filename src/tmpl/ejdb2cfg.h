@@ -7,7 +7,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2019 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,8 +32,8 @@
 #error Unknown CPU bits
 #endif
 
-#define EJDB2_GIT_REVISION "@GIT_REVISION@"
-#define EJDB2_VERSION "@ejdb2_VERSION@"
+#define EJDB2_GIT_REVISION  "@GIT_REVISION@"
+#define EJDB2_VERSION       "@ejdb2_VERSION@"
 #define EJDB2_VERSION_MAJOR @ejdb2_VERSION_MAJOR@
 #define EJDB2_VERSION_MINOR @ejdb2_VERSION_MINOR@
 #define EJDB2_VERSION_PATCH @ejdb2_VERSION_PATCH@

@@ -1,0 +1,65 @@
+apply plugin: 'com.android.library'
+
+def props = rootProject.ext
+
+android {
+  compileSdkVersion 21
+  defaultConfig {
+    minSdkVersion 21
+    targetSdkVersion 21
+    versionCode 1
+    versionName "1.0"
+    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    externalNativeBuild {
+      cmake {
+        abiFilters props.abiName
+        targets "ejdb2jni"
+        arguments "-DCMAKE_BUILD_TYPE=Release",
+                  "-DBUILD_JNI_BINDING=ON",
+                  "-DENABLE_HTTP=OFF",
+                  "-DBUILD_EXAMPLES=OFF",
+                  "-DCMAKE_TOOLCHAIN_FILE=$ndkDirectory/build/cmake/android.toolchain.cmake",
+                  "-DANDROID_ABI=$props.abiName",
+                  "-DANDROID_PLATFORM=android-21",
+                  "-DANDROID_NATIVE_API_LEVEL=21"
+      }
+    }
+  }
+  externalNativeBuild {
+    cmake {
+      path file("../../../../CMakeLists.txt")
+    }
+  }
+}
+
+project.afterEvaluate {
+  if (tasks.findByName("externalNativeBuildDebug")) {
+    javaPreCompileDebug.dependsOn externalNativeBuildDebug
+    externalNativeBuildDebug.doLast {
+      copy {
+        from(".externalNativeBuild/cmake/debug/$props.abiName/src/bindings/ejdb2_jni/src") {
+          include "ejdb2.jar"
+        }
+        into "libs"
+      }
+    }
+  }
+  if (tasks.findByName("externalNativeBuildRelease")) {
+    javaPreCompileRelease.dependsOn externalNativeBuildRelease
+    externalNativeBuildRelease.doLast {
+      copy {
+        from(".externalNativeBuild/cmake/release/$props.abiName/src/bindings/ejdb2_jni/src") {
+          include "ejdb2.jar"
+        }
+        into "libs"
+      }
+    }
+  }
+}
+
+dependencies {
+  implementation fileTree(dir: "libs", include: ["*.jar"])
+  testImplementation "junit:junit:4.12"
+  androidTestImplementation "com.android.support.test:runner:1.0.2"
+  androidTestImplementation "com.android.support.test.espresso:espresso-core:3.0.2"
+}

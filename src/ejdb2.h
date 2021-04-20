@@ -7,7 +7,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2019 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,48 +56,50 @@ typedef enum {
   EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED,    /**< Unique index constraint violated */
   EJDB_ERROR_COLLECTION_NOT_FOUND,                /**< Collection not found */
   EJDB_ERROR_TARGET_COLLECTION_EXISTS,            /**< Target collection exists */
-  _EJDB_ERROR_END
+  EJDB_ERROR_PATCH_JSON_NOT_OBJECT,               /**< Patch JSON must be an object (map) */
+  _EJDB_ERROR_END,
 } ejdb_ecode_t;
 
 /** Index creation mode */
 typedef uint8_t ejdb_idx_mode_t;
 
 /** Marks index is unique, no duplicated values allowed. */
-#define EJDB_IDX_UNIQUE     ((ejdb_idx_mode_t) 0x01U)
+#define EJDB_IDX_UNIQUE ((ejdb_idx_mode_t) 0x01U)
 
 /** Index values have string type.
  *  Type conversion will be performed on atempt to save value with other type */
-#define EJDB_IDX_STR        ((ejdb_idx_mode_t) 0x04U)
+#define EJDB_IDX_STR ((ejdb_idx_mode_t) 0x04U)
 
 /** Index values have signed integer 64 bit wide type.
  *  Type conversion will be performed on atempt to save value with other type */
-#define EJDB_IDX_I64        ((ejdb_idx_mode_t) 0x08U)
+#define EJDB_IDX_I64 ((ejdb_idx_mode_t) 0x08U)
 
 /** Index value have floating point type.
  *  @note Internally floating point numbers are converted to string
  *        with precision of 6 digits after decimal point.
  */
-#define EJDB_IDX_F64        ((ejdb_idx_mode_t) 0x10U)
+#define EJDB_IDX_F64 ((ejdb_idx_mode_t) 0x10U)
 
 /**
  * @brief Database handler.
  */
 struct _EJDB;
-typedef struct _EJDB *EJDB;
+typedef struct _EJDB*EJDB;
 
 /**
  * @brief EJDB HTTP/Websocket Server options.
  */
 typedef struct _EJDB_HTTP {
-  bool enabled;               /**< If HTTP/Websocket endpoint enabled. Default: false */
-  int port;                   /**< Listen port number, required */
-  const char *bind;           /**< Listen IP/host. Default: `localhost` */
-  const char *access_token;   /**< Server access token passed in `X-Access-Token` header. Default: zero */
-  size_t access_token_len;    /**< Length of access token string. Default: zero */
-  bool blocking;              /**< Block `ejdb_open()` thread until http service finished.
-                                   Otherwise HTTP server will be started in background. */
-  bool read_anon;             /**< Allow anonymous read-only database access */
-  size_t max_body_size;       /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
+  bool enabled;                 /**< If HTTP/Websocket endpoint enabled. Default: false */
+  int  port;                    /**< Listen port number, required */
+  const char *bind;             /**< Listen IP/host. Default: `localhost` */
+  const char *access_token;     /**< Server access token passed in `X-Access-Token` header. Default: zero */
+  size_t      access_token_len; /**< Length of access token string. Default: zero */
+  bool blocking;                /**< Block `ejdb_open()` thread until http service finished.
+                                     Otherwise HTTP server will be started in background. */
+  bool   read_anon;             /**< Allow anonymous read-only database access */
+  size_t max_body_size;         /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
+  bool cors;                    /**< Allow CORS */
 } EJDB_HTTP;
 
 /**
@@ -106,10 +108,12 @@ typedef struct _EJDB_HTTP {
 typedef struct _EJDB_OPTS {
   IWKV_OPTS kv;                 /**< IWKV storage options. @see iwkv.h */
   EJDB_HTTP http;               /**< HTTP/Websocket server options */
-  bool no_wal;                  /**< Do not use write-ahead-log. Default: false */
-  uint32_t sort_buffer_sz;      /**< Max sorting buffer size. If exceeded an overflow temp file for sorted data will created.
+  bool      no_wal;             /**< Do not use write-ahead-log. Default: false */
+  uint32_t  sort_buffer_sz;     /**< Max sorting buffer size. If exceeded an overflow temp file for sorted data will
+                                   created.
                                      Default 16Mb, min: 1Mb */
-  uint32_t document_buffer_sz;  /**< Initial size of buffer to process/store document during select.
+  uint32_t document_buffer_sz;  /**< Initial size of buffer in bytes used to process/store document during query
+                                   execution.
                                      Default 64Kb, min: 16Kb */
 } EJDB_OPTS;
 
@@ -119,12 +123,14 @@ typedef struct _EJDB_OPTS {
  */
 typedef struct _EJDB_DOC {
   int64_t id;                 /**< Document ID. Not zero. */
-  JBL raw;                    /**< JSON document in compact binary form.
+  JBL     raw;                /**< JSON document in compact binary form.
                                    Based on [Binn](https://github.com/liteserver/binn) format.
                                    Not zero. */
-  JBL_NODE node;              /**< JSON document as in-memory tree. Not zero only if query has `apply` or `projection` parts.
+  JBL_NODE node;              /**< JSON document as in-memory tree. Not zero only if query has `apply` or `projection`
+                                 parts.
 
-                                   @warning The lifespan of @ref EJDB_DOC.node will be valid only during the call of @ref EJDB_EXEC_VISITOR
+                                   @warning The lifespan of @ref EJDB_DOC.node will be valid only during the call of
+                                      @ref EJDB_EXEC_VISITOR
                                             It is true in all cases EXCEPT:
                                             - @ref EJDB_EXEC.pool is not set by `ejdb_exec()` caller
                                             - One of `ejdb_list()` methods used */
@@ -143,10 +149,10 @@ typedef struct _EJDB_DOC {
  *          Consider use of `ejdb_exec()` with visitor or set `limit` for query.
  */
 typedef struct _EJDB_LIST {
-  EJDB db;              /**< EJDB storage used for query execution. Not zero. */
-  JQL q;                /**< Query executed. Not zero. */
+  EJDB     db;          /**< EJDB storage used for query execution. Not zero. */
+  JQL      q;           /**< Query executed. Not zero. */
   EJDB_DOC first;       /**< First document in result list. Zero if result set is empty. */
-  IWPOOL *pool;         /**< Memory pool used to store list of documents */
+  IWPOOL  *pool;        /**< Memory pool used to store list of documents */
 } *EJDB_LIST;
 
 struct _EJDB_EXEC;
@@ -159,7 +165,7 @@ struct _EJDB_EXEC;
  *        processing you need to copy it.
  * @param step [out] Move forward cursor to given number of steps, `1` by default.
  */
-typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step);
+typedef iwrc (*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step);
 
 /**
  * @brief Query execution context.
@@ -167,13 +173,15 @@ typedef iwrc(*EJDB_EXEC_VISITOR)(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *
  */
 typedef struct _EJDB_EXEC {
   EJDB db;                    /**< EJDB database object. Required. */
-  JQL q;                      /**< Query object to be executed. Created by `jql_create()` Required. */
+  JQL  q;                     /**< Query object to be executed. Created by `jql_create()` Required. */
   EJDB_EXEC_VISITOR visitor;  /**< Optional visitor to handle documents in result set. */
-  void *opaque;               /**< Optional user data passed to visitor functions. */
+  void   *opaque;             /**< Optional user data passed to visitor functions. */
   int64_t skip;               /**< Number of records to skip. Takes precedence over `skip` encoded in query. */
-  int64_t limit;              /**< Result set size limitation. Zero means no limitations. Takes precedence over `limit` encoded in query. */
+  int64_t limit;              /**< Result set size limitation. Zero means no limitations. Takes precedence over `limit`
+                                 encoded in query. */
   int64_t cnt;                /**< Number of result documents processed by `visitor` */
-  IWXSTR *log;                /**< Optional query execution log buffer. If set major query execution/index selection steps will be logged into */
+  IWXSTR *log;                /**< Optional query execution log buffer. If set major query execution/index selection
+                                 steps will be logged into */
   IWPOOL *pool;               /**< Optional pool which can be used in query apply  */
 } EJDB_EXEC;
 
@@ -254,6 +262,50 @@ IW_EXPORT WUR iwrc ejdb_exec(EJDB_EXEC *ux);
 IW_EXPORT WUR iwrc ejdb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWPOOL *pool);
 
 /**
+ * @brief Executes a given query `q` then returns `count` of matched documents.
+ *
+ * @param db           Database handle. Not zero.
+ * @param q            Query object. Not zero.
+ * @param [out] count  Placeholder for number of matched documents. Not zero.
+ * @param limit        Limit of matched rows. Makes sense for update queries.
+ *
+ */
+IW_EXPORT WUR iwrc ejdb_count(EJDB db, JQL q, int64_t *count, int64_t limit);
+
+/**
+ * @brief Executes a given query `q` then returns `count` of matched documents.
+ *
+ * @param db           Database handle. Not zero.
+ * @param coll         Name of document collection.
+ *                     Can be zero, in what collection name should be encoded in query.
+ * @param q            Query text. Not zero.
+ * @param [out] count  Placeholder for number of matched documents. Not zero.
+ * @param limit        Limit of matched rows. Makes sense for update queries.
+ *
+ */
+IW_EXPORT WUR iwrc ejdb_count2(EJDB db, const char *coll, const char *q, int64_t *count, int64_t limit);
+
+/**
+ * @brief Executes update query assuming that query object contains `apply` clause.
+ *        Similar to `ejdb_count`.
+ *
+ * @param db          Database handle. Not zero.
+ * @param q           Query object. Not zero.
+ */
+IW_EXPORT WUR iwrc ejdb_update(EJDB db, JQL q);
+
+/**
+ * @brief Executes update query assuming that query object contains `apply` clause.
+ *        Similar to `ejdb_count`.
+ *
+ * @param db        Database handle. Not zero.
+ * @param coll         Name of document collection.
+ *                     Can be zero, in what collection name should be encoded in query.
+ * @param q         Query text. Not zero.
+ */
+IW_EXPORT WUR iwrc ejdb_update2(EJDB db, const char *coll, const char *q);
+
+/**
  * @brief Executes a given `query` and builds a result as linked list of documents.
  *
  * @note Returned `listp` must be disposed by `ejdb_list_destroy()`
@@ -291,8 +343,9 @@ IW_EXPORT WUR iwrc ejdb_list2(EJDB db, const char *coll, const char *query, int6
  * @return `0` on success.
  *          Any non zero error codes.
  */
-IW_EXPORT WUR iwrc ejdb_list3(EJDB db, const char *coll, const char *query, int64_t limit,
-                              IWXSTR *log, EJDB_LIST *listp);
+IW_EXPORT WUR iwrc ejdb_list3(
+  EJDB db, const char *coll, const char *query, int64_t limit,
+  IWXSTR *log, EJDB_LIST *listp);
 
 /**
  * @brief Executes a given query `q` and builds a result as linked list of documents (`listp`).
@@ -320,11 +373,11 @@ IW_EXPORT WUR iwrc ejdb_list4(EJDB db, JQL q, int64_t limit, IWXSTR *log, EJDB_L
 IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
 
 /**
- * @brief Apply rfc6902/rfc6901 JSON patch to the document identified by `id`.
+ * @brief Apply rfc6902/rfc7396 JSON patch to the document identified by `id`.
  *
  * @param db          Database handle. Not zero.
  * @param coll        Collection name. Not zero.
- * @param patchjson   JSON patch conformed to rfc6902 or rfc6901 specification.
+ * @param patchjson   JSON patch conformed to rfc6902 or rfc7396 specification.
  * @param id          Document id. Not zero.
  *
  * @return `0` on success.
@@ -332,6 +385,74 @@ IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
  *          Any non zero error codes.
  */
 IW_EXPORT WUR iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, int64_t id);
+
+/**
+ * @brief Apply rfc6902/rfc7396 JSON patch to the document identified by `id`.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patch       JSON patch conformed to rfc6902 or rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ * @return `0` on success.
+ *         `IWKV_ERROR_NOTFOUND` if document not found.
+ *          Any non zero error codes.
+ */
+IW_EXPORT WUR iwrc ejdb_patch_jbn(EJDB db, const char *coll, JBL_NODE patch, int64_t id);
+
+
+/**
+ * @brief Apply rfc6902/rfc7396 JSON patch to the document identified by `id`.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patch       JSON patch conformed to rfc6902 or rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ * @return `0` on success.
+ *         `IWKV_ERROR_NOTFOUND` if document not found.
+ *          Any non zero error codes.
+ */
+IW_EXPORT WUR iwrc ejdb_patch_jbl(EJDB db, const char *coll, JBL patch, int64_t id);
+
+/**
+ * @brief Apply JSON merge patch (rfc7396) to the document identified by `id` or
+ *        insert new document under specified `id`.
+ * @note This is an atomic operation.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patchjson   JSON merge patch conformed to rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ */
+IW_EXPORT WUR iwrc ejdb_merge_or_put(EJDB db, const char *coll, const char *patchjson, int64_t id);
+
+/**
+ * @brief Apply JSON merge patch (rfc7396) to the document identified by `id` or
+ *        insert new document under specified `id`.
+ * @note This is an atomic operation.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patch       JSON merge patch conformed to rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ */
+IW_EXPORT WUR iwrc ejdb_merge_or_put_jbn(EJDB db, const char *coll, JBL_NODE patch, int64_t id);
+
+/**
+ * @brief Apply JSON merge patch (rfc7396) to the document identified by `id` or
+ *        insert new document under specified `id`.
+ * @note This is an atomic operation.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param patch       JSON merge patch conformed to rfc7396 specification.
+ * @param id          Document id. Not zero.
+ *
+ */
+IW_EXPORT WUR iwrc ejdb_merge_or_put_jbl(EJDB db, const char *coll, JBL patch, int64_t id);
 
 /**
  * @brief Save a given `jbl` document under specified `id`.
@@ -347,7 +468,7 @@ IW_EXPORT WUR iwrc ejdb_patch(EJDB db, const char *coll, const char *patchjson, 
 IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id);
 
 /**
- * @brief Save new document into `coll` under new generated identifier.
+ * @brief Save a document into `coll` under new identifier.
  *
  * @param db          Database handle. Not zero.
  * @param coll        Collection name. Not zero.
@@ -360,6 +481,19 @@ IW_EXPORT WUR iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id);
 IW_EXPORT WUR iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *oid);
 
 /**
+ * @brief Save a document into `coll` under new identifier.
+ *
+ * @param db          Database handle. Not zero.
+ * @param coll        Collection name. Not zero.
+ * @param jbn         JSON document. Not zero.
+ * @param [out] oid   Placeholder for new document id. Not zero.
+ *
+ * @return `0` on success.
+ *          Any non zero error codes.
+ */
+IW_EXPORT iwrc ejdb_put_new_jbn(EJDB db, const char *coll, JBL_NODE jbn, int64_t *id);
+
+/**
  * @brief Retrieve document identified by given `id` from collection `coll`.
  *
  * @param db          Database handle. Not zero.
@@ -370,6 +504,7 @@ IW_EXPORT WUR iwrc ejdb_put_new(EJDB db, const char *coll, JBL jbl, int64_t *oid
  *
  * @return `0` on success.
  *         `IWKV_ERROR_NOTFOUND` if document not found.
+ *         `IW_ERROR_NOT_EXISTS` if collection `coll` is not exists in db.
  *          Any non zero error codes.
  */
 IW_EXPORT WUR iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp);
@@ -410,7 +545,7 @@ IW_EXPORT iwrc ejdb_remove_collection(EJDB db, const char *coll);
  *          - `EJDB_ERROR_TARGET_COLLECTION_EXISTS` - if `new_coll` is exists already.
  *          -  Any other non zero error codes.
  */
-iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll);
+IW_EXPORT iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll);
 
 /**
  * @brief Create collection with given name if it has not existed before
@@ -453,7 +588,8 @@ IW_EXPORT iwrc ejdb_ensure_collection(EJDB db, const char *coll);
  *
  * @return `0` on success.
  *         `EJDB_ERROR_INVALID_INDEX_MODE` Invalid `mode` specified
- *         `EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE` trying to create non unique index over existing unique or vice versa.
+ *         `EJDB_ERROR_MISMATCHED_INDEX_UNIQUENESS_MODE` trying to create non unique index over existing unique or vice
+ * versa.
  *          Any non zero error codes.
  *
  */
@@ -527,6 +663,15 @@ IW_EXPORT iwrc ejdb_get_meta(EJDB db, JBL *jblp);
  * @param target_file backup file path
  */
 IW_EXPORT iwrc ejdb_online_backup(EJDB db, uint64_t *ts, const char *target_file);
+
+/**
+ * @brief Get access to underlying IWKV storage.
+ *        Use it with caution.
+ *
+ * @param db Database handle. Not zero.
+ * @param [out] kvp Placeholder for IWKV storage.
+ */
+IW_EXPORT iwrc ejdb_get_iwkv(EJDB db, IWKV *kvp);
 
 /**
  * @brief  Return `\0` terminated ejdb2 source GIT revision hash.

@@ -1,0 +1,12 @@
+local.properties
+!*.iml
+.classpath
+!.project
+.DS_Store
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins-dependencies
+Podfile.lock
+

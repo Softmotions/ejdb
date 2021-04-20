@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2019 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -451,7 +451,7 @@ class JQL {
 class EJDB2 {
 
   /**
-   * Open databse instance.
+   * Open database instance.
    *
    * @param {String} path Path to database
    * @param {Object} [opts]
@@ -520,7 +520,7 @@ class EJDB2 {
   }
 
   /**
-   * Apply rfc6902/rfc6901 JSON [patch] to the document identified by [id].
+   * Apply rfc6902/rfc7386 JSON [patch] to the document identified by [id].
    *
    * @param {String} collection
    * @param {Object|string} json
@@ -532,6 +532,19 @@ class EJDB2 {
   }
 
   /**
+   * Apply JSON merge patch (rfc7396) to the document identified by `id` or
+   * insert new document under specified `id`.
+   *
+   * @param {String} collection
+   * @param {Object|string} json
+   * @param {number} id
+   * @return {Promise<void>}
+   */
+  patchOrPut(collection, json, id) {
+    return this._impl.patch_or_put(collection, json, id);
+  }
+
+  /**
    * Get json body of document identified by [id] and stored in [collection].
    *
    * @param {String} collection
@@ -540,6 +553,24 @@ class EJDB2 {
    */
   get(collection, id) {
     return this._impl.get(collection, id).then((raw) => JSON.parse(raw));
+  }
+
+  /**
+   * Get json body of document identified by [id] and stored in [collection].
+   * If document with given `id` is not found then `null` will be resoved.
+   *
+   * @param {string} collection
+   * @param {number} id
+   * @return {Promise<object|null>} JSON object
+   */
+  getOrNull(collection, id) {
+    return this.get(collection, id).catch((err) => {
+      if (JBE.isNotFound(err)) {
+        return null;
+      } else {
+        return Promise.reject(err);
+      }
+    });
   }
 
   /**

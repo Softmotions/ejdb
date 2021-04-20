@@ -11,7 +11,8 @@ iwrc jbi_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *ste
   EJDB_EXEC *ux = ctx->ux;
   IWPOOL *pool = ux->pool;
 
-start: {
+start:
+  {
     if (cur) {
       rc = iwkv_cursor_copy_val(cur, ctx->jblbuf, ctx->jblbufsz, &vsz);
     } else {
@@ -23,6 +24,17 @@ start: {
     }
     if (rc == IWKV_ERROR_NOTFOUND) {
       rc = 0;
+      if (ctx->midx.idx) {
+        iwlog_error("Orphaned index entry."
+                    "\n\tCollection db: %" PRIu32
+                    "\n\tIndex db: %" PRIu32
+                    "\n\tEntry id: %" PRId64, ctx->jbc->dbid, ctx->midx.idx->dbid, id);
+      } else {
+        iwlog_error("Orphaned index entry."
+                    "\n\tCollection db: %" PRIu32
+                    "\n\tEntry id: %" PRId64, ctx->jbc->dbid, id);
+      }
+      goto finish;
     }
     RCGO(rc, finish);
     if (vsz > ctx->jblbufsz) {
@@ -42,7 +54,7 @@ start: {
   RCGO(rc, finish);
 
   rc = jql_matched(ux->q, &jbl, matched);
-  if (rc || !*matched || (ux->skip && ux->skip-- > 0)) {
+  if (rc || !*matched || (ux->skip && (ux->skip-- > 0))) {
     goto finish;
   }
   if (ctx->istep > 0) {
@@ -55,10 +67,10 @@ start: {
     ctx->istep = 1;
     struct JQP_AUX *aux = q->aux;
     struct _EJDB_DOC doc = {
-      .id = id,
+      .id  = id,
       .raw = &jbl
     };
-    if (aux->apply || aux->projection) {
+    if (aux->apply || aux->apply_placeholder || aux->projection) {
       JBL_NODE root;
       if (!pool) {
         pool = iwpool_create(jbl.bn.size * 2);
@@ -67,7 +79,7 @@ start: {
           goto finish;
         }
       }
-      rc = jbl_to_node(&jbl, &root, pool);
+      rc = jbl_to_node(&jbl, &root, true, pool);
       RCGO(rc, finish);
       doc.node = root;
       if (aux->qmode & JQP_QRY_APPLY_DEL) {
@@ -76,8 +88,8 @@ start: {
         } else {
           rc = jb_del(ctx->jbc, &jbl, id);
         }
-      } else if (aux->apply) {
-        struct _JBL sn = {0};
+      } else if (aux->apply || aux->apply_placeholder) {
+        struct _JBL sn = { 0 };
         rc = jql_apply(q, root, pool);
         RCGO(rc, finish);
         rc = _jbl_from_node(&sn, root);
@@ -91,7 +103,7 @@ start: {
       }
       RCGO(rc, finish);
       if (aux->projection) {
-        rc = jql_project(q, root);
+        rc = jql_project(q, root, pool, ctx);
         RCGO(rc, finish);
       }
     } else if (aux->qmode & JQP_QRY_APPLY_DEL) {
@@ -100,7 +112,7 @@ start: {
       } else {
         rc = jb_del(ctx->jbc, &jbl, id);
       }
-       RCGO(rc, finish);
+      RCGO(rc, finish);
     }
     if (!(aux->qmode & JQP_QRY_AGGREGATE)) {
       do {
@@ -111,13 +123,15 @@ start: {
     }
     ++ux->cnt;
     *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
-    if (--ux->limit < 1) *step = 0;
+    if (--ux->limit < 1) {
+      *step = 0;
+    }
   } else {
-    *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0;
+    *step = ctx->istep > 0 ? 1 : ctx->istep < 0 ? -1 : 0; // -V547
   }
 
 finish:
-  if (pool && pool != ctx->ux->pool) {
+  if (pool && (pool != ctx->ux->pool)) {
     iwpool_destroy(pool);
   }
   return rc;

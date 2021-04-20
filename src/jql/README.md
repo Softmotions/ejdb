@@ -39,7 +39,7 @@ FILTERS = FILTER [{ and | or } [ not ] FILTER];
   NODE_EXPRESSION = '[' NODE_EXPR_LEFT OP NODE_EXPR_RIGHT ']'
                         [{ and | or } [ not ] NODE_EXPRESSION]...;
 
-  OP =   [ '!' ] { '=' | '>=' | '<=' | '>' | '<' }
+  OP =   [ '!' ] { '=' | '>=' | '<=' | '>' | '<' | ~ }
       | [ '!' ] { 'eq' | 'gte' | 'lte' | 'gt' | 'lt' }
       | [ not ] { 'in' | 'ni' | 're' };
 
@@ -49,7 +49,7 @@ FILTERS = FILTER [{ and | or } [ not ] FILTER];
 
   NODE_EXPR_RIGHT =  JSONVAL | STR | PLACEHOLDER
 
-APPLY = 'apply' { PLACEHOLDER | json_object | json_array  } | 'del'
+APPLY = { 'apply' | 'upsert' } { PLACEHOLDER | json_object | json_array  } | 'del'
 
 OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 
@@ -103,7 +103,7 @@ curl -d '@sample.json' -H'X-Access-Token:myaccess01' -X POST http://localhost:91
 We can play around using interactive [wscat](https://www.npmjs.com/package/@softmotions/wscat) websocket client.
 
 ```sh
-wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
+wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
 connected (press CTRL+C to quit)
 > k info
 < k     {
@@ -148,7 +148,9 @@ connected (press CTRL+C to quit)
 }
 ```
 
-Note about the `k` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
+Note about the `k` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular
+websocket request, this key will be returned with response to request and allows client to
+identify that response for his particular request. [More info](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md)
 
 Query command over websocket has the following format:
 
@@ -173,7 +175,7 @@ k @family/*
 
 We can execute query by HTTP `POST` request
 ```
-curl --data-raw '@family/[firstName=John]' -H'X-Access-Token:myaccess01' -X POST http://localhost:9191
+curl --data-raw '@family/[firstName = John]' -H'X-Access-Token:myaccess01' -X POST http://localhost:9191
 
 1	{"firstName":"John","lastName":"Doe","age":28,"pets":[{"name":"Rexy rex","kind":"dog","likes":["bones","jumping","toys"]},{"name":"Grenny","kind":"parrot","likes":["green color","night","toys"]}]}
 ```
@@ -200,6 +202,40 @@ Element at index `1` exists in `likes` array at any `likes` nesting level
 
 **From this point and below I will omit websocket specific prefix `k query family` and
 consider only JQL queries.**
+
+
+### Get documents by primary key
+
+In order to get documents by primary key the following options are available:
+
+1. Use API call `ejdb_get()`
+    ```ts
+     const doc = await db.get('users', 112);
+    ```
+
+1. Use the special query construction: `/=:?` or `@collection/=:?`
+
+Get document from `users` collection with primary key `112`
+```
+> k @users/=112
+```
+
+Update tags array for document in `jobs` collection (TypeScript):
+```ts
+ await db.createQuery('@jobs/ = :? | apply :? | count')
+    .setNumber(0, id)
+    .setJSON(1, { tags })
+    .completionPromise();
+```
+
+Array of primary keys can also be used for matching:
+
+```ts
+ await db.createQuery('@jobs/ = :?| apply :? | count')
+    .setJSON(0, [23, 1, 2])
+    .setJSON(1, { tags })
+    .completionPromise();
+```
 
 ### Matching JSON entry values
 
@@ -233,6 +269,14 @@ We can create more complicated filters
 ```
 Note about grouping parentheses and regular expression matching using `re` operator.
 
+`~` is a prefix matching operator (Since ejdb `v2.0.53`).
+Prefix matching can benefit from using indexes.
+
+Get documents where `/lastName` starts with `"Do"`.
+```
+/[lastName ~ Do]
+```
+
 ### Arrays and maps can be matched as is
 
 Filter documents with `likes` array exactly matched to `["bones","jumping","toys"]`
@@ -241,7 +285,7 @@ Filter documents with `likes` array exactly matched to `["bones","jumping","toys
 ```
 Matching algorithms for arrays and maps are different:
 
-* Array elements are fully matched from start to end. In equal arrays
+* Array elements are matched from start to end. In equal arrays
   all values at the same index should be equal.
 * Object maps matching consists of the following steps:
   * Lexicographically sort object keys in both maps.
@@ -278,30 +322,95 @@ It may be useful in queries with dynamic placeholders (C API):
 `APPLY` section responsible for modification of documents content.
 
 ```
-APPLY = ('apply' { PLACEHOLDER | json_object | json_array  }) | 'del'
+APPLY = ({'apply' | `upsert`} { PLACEHOLDER | json_object | json_array  }) | 'del'
 ```
 
 JSON patch specs conformed to `rfc7386` or `rfc6902` specifications followed after `apply` keyword.
 
 Let's add `address` object to all matched document
 ```
-/[firstName=John] | apply {"address":{"city":"New York", "street":""}}
+/[firstName = John] | apply {"address":{"city":"New York", "street":""}}
 ```
 
-If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise it should be array which denotes `rfc6902` JSON patch. Placegolders also supported by `apply` section.
+If JSON object is an argument of `apply` section it will be treated as merge match (`rfc7386`) otherwise
+it should be array which denotes `rfc6902` JSON patch. Placeholders also supported by `apply` section.
 ```
 /* | apply :?
 ```
 
 Set the street name in `address`
 ```
-/[firstName=John] | apply [{"op":"replace", "path":"/address/street", "value":"Fifth Avenue"}]
+/[firstName = John] | apply [{"op":"replace", "path":"/address/street", "value":"Fifth Avenue"}]
 ```
 
 Add `Neo` fish to the set of John's `pets`
 ```
-/[firstName=John]
+/[firstName = John]
 | apply [{"op":"add", "path":"/pets/-", "value": {"name":"Neo", "kind":"fish"}}]
+```
+
+`upsert` updates existing document by given json argument used as merge patch
+         or inserts provided json argument as new document instance.
+
+```
+/[firstName = John] | upsert {"firstName": "John", "address":{"city":"New York"}}
+```
+
+### Non standard JSON patch extensions
+
+#### increment
+
+Increments numeric value identified by JSON path by specified value.
+
+Example:
+```
+ Document:  {"foo": 1}
+ Patch:     [{"op": "increment", "path": "/foo", "value": 2}]
+ Result:    {"foo": 3}
+```
+#### add_create
+
+Same as JSON patch `add` but creates intermediate object nodes for missing JSON path segments.
+
+Example:
+```
+Document: {"foo": {"bar": 1}}
+Patch:    [{"op": "add_create", "path": "/foo/zaz/gaz", "value": 22}]
+Result:   {"foo":{"bar":1,"zaz":{"gaz":22}}}
+```
+
+Example:
+```
+Document: {"foo": {"bar": 1}}
+Patch:    [{"op": "add_create", "path": "/foo/bar/gaz", "value": 22}]
+Result:   Error since element pointed by /foo/bar is not an object
+```
+
+#### swap
+
+Swaps two values of JSON document starting from `from` path.
+
+Swapping rules
+
+1. If value pointed by `from` not exists error will be raised.
+1. If value pointed by `path` not exists it will be set by value from `from` path,
+  then object pointed by `from` path will be removed.
+1. If both values pointed by `from` and `path` are presented they will be swapped.
+
+Example:
+
+```
+Document: {"foo": ["bar"], "baz": {"gaz": 11}}
+Patch:    [{"op": "swap", "from": "/foo/0", "path": "/baz/gaz"}]
+Result:   {"foo": [11], "baz": {"gaz": "bar"}}
+```
+
+Example (Demo of rule 2):
+
+```
+Document: {"foo": ["bar"], "baz": {"gaz": 11}}
+Patch:    [{"op": "swap", "from": "/foo/0", "path": "/baz/zaz"}]
+Result:   {"foo":[],"baz":{"gaz":11,"zaz":"bar"}}
 ```
 
 ### Removing documents
@@ -328,7 +437,7 @@ Example:
 ```
 PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 
-  PROJECTION = 'all' | json_path
+  PROJECTION = 'all' | json_path | join_clause
 ```
 
 Projection allows to get only subset of JSON document excluding not needed data.
@@ -382,13 +491,93 @@ Get `age` and the first pet in `pets` array.
 < k
 ```
 
-## JQL sorting
+## JQL collection joins
+
+Join materializes reference to document to a real document objects which will replace reference inplace.
+
+Documents are joined by their primary keys only.
+
+Reference keys should be stored in referrer document as number or string field.
+
+Joins can be specified as part of projection expression
+in the following form:
+
+```
+/.../field<collection
+```
+Where
+
+* `field` &dash; JSON field contains primary key of joined document.
+* `<` &dash; The special mark symbol which instructs EJDB engine to replace `field` key by body of joined document.
+* `collection` &dash; name of DB collection where joined documents located.
+
+A referrer document will be untouched if associated document is not found.
+
+Here is the simple demonstration of collection joins in our interactive websocket shell:
+
+```
+> k add artists {"name":"Leonardo Da Vinci", "years":[1452,1519]}
+< k     1
+> k add paintings {"name":"Mona Lisa", "year":1490, "origin":"Italy", "artist": 1}
+< k     1
+> k add paintings {"name":"Madonna Litta - Madonna And The Child", "year":1490, "origin":"Italy", "artist": 1}
+< k     2
+
+# Lists paintings documents
+
+> k @paintings/*
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"origin":"Italy","artist":1}
+< k     1       {"name":"Mona Lisa","year":1490,"origin":"Italy","artist":1}
+< k
+>
+
+# Do simple join with artists collection
+
+> k @paintings/* | /artist<artists
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"origin":"Italy",
+                  "artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+
+< k     1       {"name":"Mona Lisa","year":1490,"origin":"Italy",
+                  "artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k
+
+
+# Strip all document fields except `name` and `artist` join
+
+> k @paintings/* | /artist<artists + /name + /artist/*
+< k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k
+>
+
+# Same results as above:
+
+> k @paintings/* | /{name, artist<artists} + /artist/*
+< k     2       {"name":"Madonna Litta - Madonna And The Child","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k     1       {"name":"Mona Lisa","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k
+
+```
+
+Invalid references:
+
+```
+>  k add paintings {"name":"Mona Lisa2", "year":1490, "origin":"Italy", "artist": 9999}
+< k     3
+> k @paintings/* |  /artist<artists
+< k     3       {"name":"Mona Lisa2","year":1490,"origin":"Italy","artist":9999}
+< k     2       {"name":"Madonna Litta - Madonna And The Child","year":1490,"origin":"Italy","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+< k     1       {"name":"Mona Lisa","year":1490,"origin":"Italy","artist":{"name":"Leonardo Da Vinci","years":[1452,1519]}}
+
+```
+
+## JQL results ordering
 
 ```
   ORDERBY = ({ 'asc' | 'desc' } PLACEHOLDER | json_path)...
 ```
 
-Lets add one more document then sort documents in collection by `firstName` ascending and `age` descending.
+Lets add one more document then sort documents in collection according to `firstName` ascending and `age` descending order.
 
 ```
 > k add family {"firstName":"John", "lastName":"Ryan", "age":39}
@@ -426,8 +615,8 @@ OPTS = { 'skip' n | 'limit' n | 'count' | 'noidx' | 'inverse' | ORDERBY }...
 
 ## JQL Indexes and performance tips
 
-Database index can be build for any JSON field path of number or string type.
-Index can be an `unique` &dash; not allowing indexed values duplication and `non unique`.
+Database index can be build for any JSON field path containing values of number or string type.
+Index can be an `unique` &dash; not allowing value duplication and `non unique`.
 The following index mode bit mask flags are used (defined in `ejdb2.h`):
 
 Index mode | Description
@@ -437,7 +626,8 @@ Index mode | Description
 <code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
 <code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
 
-For example mode specifies unique index of string type will be `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`. Index creation operation defines index of only one type.
+For example unique index of string type will be specified by `EJDB_IDX_UNIQUE | EJDB_IDX_STR` = `0x05`.
+Index can be defined for only one value type located under specific path in json document.
 
 Lets define non unique string index for `/lastName` path:
 ```
@@ -455,31 +645,37 @@ You can always check index usage by issuing `explain` command in WS API:
 ```
 
 The following statements are taken into account when using EJDB2 indexes:
-* Only one index can be used for particular query
-* If query consist of `or` joined parts or contains `negated` at top level indexes will not be used.
-  No indexes below:
+* Only one index can be used for particular query execution
+* If query consist of `or` joined part at top level or contains `negated` expressions at the top level
+  of query expression - indexes will not be in use at all.
+  So no indexes below:
   ```
   /[lastName != Andy]
 
   /[lastName = "John"] or /[lastName = Peter]
+
   ```
-  Will use `/lastName` index defined above
+  But will be used `/lastName` index defined above
   ```
   /[lastName = Doe]
 
   /[lastName = Doe] and /[age = 28]
 
+  /[lastName = Doe] and not /[age = 28]
+
   /[lastName = Doe] and /[age != 28]
   ```
-* The ony following operators are supported by indexes (ejdb 2.0.x):
+* The following operators are supported by indexes (ejdb 2.0.x):
   * `eq, =`
   * `gt, >`
   * `gte, >=`
   * `lt, <`
   * `lte, <=`
   * `in`
-* `ORDERBY` clauses may use indexes to avoid result set sorting
-* Array fields can also be indexed. Let's outline a typical use case: indexing of some  entity tags:
+  * `~` (Prefix matching since ejdb 2.0.53)
+
+* `ORDERBY` clauses may use indexes to avoid result set sorting.
+* Array fields can also be indexed. Let's outline typical use case: indexing of some entity tags:
   ```
   > k add books {"name":"Mastering Ultra", "tags":["ultra", "language", "bestseller"]}
   < k     1
@@ -507,8 +703,25 @@ The following statements are taken into account when using EJDB2 indexes:
   < k
   ```
 
-**Performance tip:** All documents in collection are sorted by their primary key in `descending` order. So if you use auto generated keys (`ejdb_put_new`) you may
-be sure what documents fetched as result of full scan query will be ordered
-by time of its insertion in descendant order, unless you don't use query sorting, indexes or `inverse` keyword.
+### Performance tip: Physical ordering of documents
 
-**Performance tip:** In many cases, using index may drop down the overall query performance. Because index collection contains only document references (`id`) and engine may perform an addition document fetching by its primary key to finish query matching. So for not so large collections a brute scan may perform better than scan using indexes. However, exact matching operations: `eq`, `in` and `sorting` by natural index order will always benefit from index in any case.
+All documents in collection are sorted by their primary key in `descending` order.
+So if you use auto generated keys (`ejdb_put_new`) you may be sure what documents fetched as result of
+full scan query will be ordered according to the time of insertion in descendant order,
+unless you don't use query sorting, indexes or `inverse` keyword.
+
+### Performance tip: Brute force scan vs indexed access
+
+In many cases, using index may drop down the overall query performance.
+Because index collection contains only document references (`id`) and engine may perform
+an addition document fetching by its primary key to finish query matching.
+So for not so large collections a brute scan may perform better than scan using indexes.
+However, exact matching operations: `eq`, `in` and `sorting` by natural index order
+will benefit from index in most cases.
+
+
+### Performance tip: Get rid of unnecessary document data
+
+If you'd like update some set of documents with `apply` or `del` operations
+but don't want fetching all of them as result of query - just add `count`
+modifier to the query to get rid of unnecessary data transferring and json data conversion.

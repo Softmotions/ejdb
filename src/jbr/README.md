@@ -38,7 +38,8 @@ Use the -h, -help or -? to get this information again.
 ## HTTP API
 
 Access to HTTP endpoint can be protected by a token specified with `--access`
-command flag or by C API `EJDB_HTTP` options. If access token specified on server, a client should provide `X-Access-Token` HTTP header value. If token is required and not provided by client `401` HTTP code will be returned. If access token is required and not matched to the token provided by client `403` HTTP code will returned. In any error case `500` error will be returned.
+command flag or by C API `EJDB_HTTP` options. If access token specified on server, client must provide `X-Access-Token` HTTP header value. If token is required and not provided by client the `401` HTTP code will be reported. If access token is not matched to the token provided the `403` HTTP code will be returned.
+For any other errors server will respond with `500` error code.
 
 ## REST API
 
@@ -158,7 +159,7 @@ You can use interactive websocket CLI tool [wscat](https://www.npmjs.com/package
 #### ?
 Will respond with the following help text message:
 ```
-wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
+wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
 > ?
 <
 <key> info
@@ -176,7 +177,7 @@ wscat  -H 'X-Access-Token:myaccess01' -q -c http://localhost:9191
 >
 ```
 
-Note about `<key>` prefix before every command; It is an arbitrary key choosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request.
+Note about `<key>` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request.
 
 Errors are returned in the following format:
 ```
@@ -268,7 +269,7 @@ Example:
 ```
 
 #### <key> <query>
-Execute query text. Body of query should contains collection name in use in the first filter element: `@collection_name/...`. Behaviour is the same as for: `<key> query   <collection> <query>`
+Execute query text. Body of query should contains collection name in use in the first filter element: `@collection_name/...`. Behavior is the same as for: `<key> query   <collection> <query>`
 
 #### `<key> idx     <collection> <mode> <path>`
 Ensure index with specified `mode` (bitmask flag) for given json `path` and `collection`.
@@ -281,7 +282,8 @@ Index mode | Description
 <code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
 <code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
 
-Example:
+##### Example
+Set unique string index `(0x01 & 0x04) = 5` on `/name` JSON field:
 ```
 k idx mycollection 5 /name
 ```

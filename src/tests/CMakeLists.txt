@@ -6,7 +6,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_DATA_DIR})
 
 set(TESTS ejdb_test1
   ejdb_test2
-  ejdb_test3)
+  ejdb_test3
+  ejdb_test4
+  )
 
 foreach (TN IN ITEMS ${TESTS})
   add_executable(${TN} ${TN}.c)

@@ -6,7 +6,7 @@
 
 // fixme: code duplication below
 void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
-  int64_t *llv = (void *) numbuf;
+  int64_t *llv = (void*) numbuf;
   jbl_type_t jbvt = jbl_type(jbv);
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
   ikey->size = 0;
@@ -17,7 +17,7 @@ void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JB
       switch (jbvt) {
         case JBV_STR:
           ikey->size = jbl_size(jbv);
-          ikey->data = jbl_get_str(jbv);
+          ikey->data = (void*) jbl_get_str(jbv);
           break;
         case JBV_I64:
           ikey->size = (size_t) iwitoa(jbl_get_i64(jbv), numbuf, JBNUMBUF_SIZE);
@@ -70,7 +70,7 @@ void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JB
           jbi_ftoa(iwatof(jbl_get_str(jbv)), numbuf, &ikey->size);
           break;
         default:
-          ikey->size = 0;
+          ikey->size = 0; // -V1048
           ikey->data = 0;
           break;
       }
@@ -81,7 +81,7 @@ void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JB
 }
 
 void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
-  int64_t *llv = (void *) numbuf;
+  int64_t *llv = (void*) numbuf;
   ikey->size = 0;
   ikey->data = numbuf;
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
@@ -92,11 +92,10 @@ void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char num
       switch (jqvt) {
         case JQVAL_STR:
           ikey->size = strlen(jqval->vstr);
-          ikey->data = (void *) jqval->vstr;
+          ikey->data = (void*) jqval->vstr;
           break;
         case JQVAL_I64:
           ikey->size = (size_t) iwitoa(jqval->vi64, numbuf, JBNUMBUF_SIZE);
-          ikey->data = numbuf;
           break;
         case JQVAL_BOOL:
           if (jqval->vbool) {
@@ -109,7 +108,6 @@ void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char num
           break;
         case JQVAL_F64:
           jbi_ftoa(jqval->vf64, numbuf, &ikey->size);
-          ikey->data = numbuf;
           break;
         default:
           break;
@@ -117,7 +115,6 @@ void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char num
       break;
     case EJDB_IDX_I64:
       ikey->size = sizeof(*llv);
-      ikey->data = llv;
       switch (jqvt) {
         case JQVAL_I64:
           *llv = jqval->vi64;
@@ -132,13 +129,11 @@ void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char num
           *llv = iwatoi(jqval->vstr);
           break;
         default:
-          ikey->size = 0;
           ikey->data = 0;
           break;
       }
       break;
     case EJDB_IDX_F64:
-      ikey->data = numbuf;
       switch (jqvt) {
         case JQVAL_F64:
           jbi_ftoa(jqval->vf64, numbuf, &ikey->size);
@@ -153,7 +148,6 @@ void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char num
           jbi_ftoa(iwatof(jqval->vstr), numbuf, &ikey->size);
           break;
         default:
-          ikey->size = 0;
           ikey->data = 0;
           break;
       }
@@ -164,7 +158,7 @@ void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char num
 }
 
 void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]) {
-  int64_t *llv = (void *) numbuf;
+  int64_t *llv = (void*) numbuf;
   ikey->size = 0;
   ikey->data = numbuf;
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
@@ -175,11 +169,10 @@ void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[st
       switch (jbvt) {
         case JBV_STR:
           ikey->size = (size_t) node->vsize;
-          ikey->data = (void *) node->vptr;
+          ikey->data = (void*) node->vptr;
           break;
         case JBV_I64:
           ikey->size = (size_t) iwitoa(node->vi64, numbuf, JBNUMBUF_SIZE);
-          ikey->data = numbuf;
           break;
         case JBV_BOOL:
           if (node->vbool) {
@@ -192,7 +185,6 @@ void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[st
           break;
         case JBV_F64:
           jbi_ftoa(node->vf64, numbuf, &ikey->size);
-          ikey->data = numbuf;
           break;
         default:
           break;
@@ -200,7 +192,6 @@ void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[st
       break;
     case EJDB_IDX_I64:
       ikey->size = sizeof(*llv);
-      ikey->data = llv;
       switch (jbvt) {
         case JBV_I64:
           *llv = node->vi64;
@@ -221,7 +212,6 @@ void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[st
       }
       break;
     case EJDB_IDX_F64:
-      ikey->data = numbuf;
       switch (jbvt) {
         case JBV_F64:
           jbi_ftoa(node->vf64, numbuf, &ikey->size);
@@ -236,7 +226,6 @@ void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[st
           jbi_ftoa(iwatof(node->vptr), numbuf, &ikey->size);
           break;
         default:
-          ikey->size = 0;
           ikey->data = 0;
           break;
       }

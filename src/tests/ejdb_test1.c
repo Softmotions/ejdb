@@ -14,11 +14,11 @@ int clean_suite() {
 
 void ejdb_test1_3() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test1_3.db",
+    .kv       = {
+      .path   = "ejdb_test1_3.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
   EJDB db;
   JBL jbl;
@@ -56,11 +56,11 @@ void ejdb_test1_3() {
 
 void ejdb_test1_2() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test1_2.db",
+    .kv       = {
+      .path   = "ejdb_test1_2.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
   EJDB db;
   JBL jbl, at, meta;
@@ -233,11 +233,11 @@ void ejdb_test1_2() {
 
 void ejdb_test1_1() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test1_1.db",
+    .kv       = {
+      .path   = "ejdb_test1_1.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
   EJDB db;
   JBL meta, jbl;
@@ -274,7 +274,7 @@ void ejdb_test1_1() {
   rc = ejdb_close(&db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  // Now reopen databse then load collection
+  // Now reopen database then load collection
   opts.kv.oflags &= ~IWKV_TRUNC;
   rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -294,17 +294,17 @@ void ejdb_test1_1() {
 
 int main() {
   CU_pSuite pSuite = NULL;
-  if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
+  if (CUE_SUCCESS != CU_initialize_registry()) {
+    return CU_get_error();
+  }
   pSuite = CU_add_suite("ejdb_test1", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (
-    (NULL == CU_add_test(pSuite, "ejdb_test1_1", ejdb_test1_1)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test1_2", ejdb_test1_2)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test1_3", ejdb_test1_3))
-  ) {
+  if (  (NULL == CU_add_test(pSuite, "ejdb_test1_1", ejdb_test1_1))
+     || (NULL == CU_add_test(pSuite, "ejdb_test1_2", ejdb_test1_2))
+     || (NULL == CU_add_test(pSuite, "ejdb_test1_3", ejdb_test1_3))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

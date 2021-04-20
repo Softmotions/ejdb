@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015 Steven G. Johnson, Jiahao Chen, Peter Colberg, Tony Kelman, Scott P. Jones, and other contributors.
+ * Copyright (c) 2015 Steven G. Johnson, Jiahao Chen, Peter Colberg, Tony Kelman, Scott P. Jones, and other
+ * contributors.
  * Copyright (c) 2009 Public Software Group e. V., Berlin, Germany
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -37,9 +38,11 @@
  * The features of utf8proc include:
  *
  * - Transformation of strings (@ref utf8proc_map) to:
- *    - decompose (@ref UTF8PROC_DECOMPOSE) or compose (@ref UTF8PROC_COMPOSE) Unicode combining characters (http://en.wikipedia.org/wiki/Combining_character)
+ *    - decompose (@ref UTF8PROC_DECOMPOSE) or compose (@ref UTF8PROC_COMPOSE) Unicode combining characters
+ *(http://en.wikipedia.org/wiki/Combining_character)
  *    - canonicalize Unicode compatibility characters (@ref UTF8PROC_COMPAT)
- *    - strip "ignorable" (@ref UTF8PROC_IGNORE) characters, control characters (@ref UTF8PROC_STRIPCC), or combining characters such as accents (@ref UTF8PROC_STRIPMARK)
+ *    - strip "ignorable" (@ref UTF8PROC_IGNORE) characters, control characters (@ref UTF8PROC_STRIPCC), or combining
+ * characters such as accents (@ref UTF8PROC_STRIPMARK)
  *    - case-folding (@ref UTF8PROC_CASEFOLD)
  * - Unicode normalization: @ref utf8proc_NFD, @ref utf8proc_NFC, @ref utf8proc_NFKD, @ref utf8proc_NFKC
  * - Detecting grapheme boundaries (@ref utf8proc_grapheme_break and @ref UTF8PROC_CHARBOUND)
@@ -80,25 +83,25 @@
 
 #if defined(_MSC_VER) && _MSC_VER < 1800
 // MSVC prior to 2013 lacked stdbool.h and inttypes.h
-typedef signed char utf8proc_int8_t;
-typedef unsigned char utf8proc_uint8_t;
-typedef short utf8proc_int16_t;
+typedef signed char    utf8proc_int8_t;
+typedef unsigned char  utf8proc_uint8_t;
+typedef short          utf8proc_int16_t;
 typedef unsigned short utf8proc_uint16_t;
-typedef int utf8proc_int32_t;
-typedef unsigned int utf8proc_uint32_t;
+typedef int            utf8proc_int32_t;
+typedef unsigned int   utf8proc_uint32_t;
 #  ifdef _WIN64
-typedef __int64 utf8proc_ssize_t;
+typedef __int64          utf8proc_ssize_t;
 typedef unsigned __int64 utf8proc_size_t;
 #  else
-typedef int utf8proc_ssize_t;
+typedef int          utf8proc_ssize_t;
 typedef unsigned int utf8proc_size_t;
 #  endif
 #  ifndef __cplusplus
 // emulate C99 bool
 typedef unsigned char utf8proc_bool;
 #    ifndef __bool_true_false_are_defined
-#      define false 0
-#      define true 1
+#      define false                         0
+#      define true                          1
 #      define __bool_true_false_are_defined 1
 #    endif
 #  else
@@ -108,15 +111,15 @@ typedef bool utf8proc_bool;
 #  include <stddef.h>
 #  include <stdbool.h>
 #  include <inttypes.h>
-typedef int8_t utf8proc_int8_t;
-typedef uint8_t utf8proc_uint8_t;
-typedef int16_t utf8proc_int16_t;
-typedef uint16_t utf8proc_uint16_t;
-typedef int32_t utf8proc_int32_t;
-typedef uint32_t utf8proc_uint32_t;
-typedef size_t utf8proc_size_t;
+typedef int8_t    utf8proc_int8_t;
+typedef uint8_t   utf8proc_uint8_t;
+typedef int16_t   utf8proc_int16_t;
+typedef uint16_t  utf8proc_uint16_t;
+typedef int32_t   utf8proc_int32_t;
+typedef uint32_t  utf8proc_uint32_t;
+typedef size_t    utf8proc_size_t;
 typedef ptrdiff_t utf8proc_ssize_t;
-typedef bool utf8proc_bool;
+typedef bool      utf8proc_bool;
 #endif
 #include <limits.h>
 
@@ -132,7 +135,7 @@ typedef bool utf8proc_bool;
 #      define UTF8PROC_DLLEXPORT __declspec(dllimport)
 #    endif
 #  elif __GNUC__ >= 4
-#    define UTF8PROC_DLLEXPORT __attribute__ ((visibility("default")))
+#    define UTF8PROC_DLLEXPORT __attribute__((visibility("default")))
 #  else
 #    define UTF8PROC_DLLEXPORT
 #  endif
@@ -143,7 +146,7 @@ extern "C" {
 #endif
 
 #ifndef SSIZE_MAX
-#define SSIZE_MAX ((size_t)SIZE_MAX/2)
+#define SSIZE_MAX ((size_t) SIZE_MAX / 2)
 #endif
 
 #ifndef UINT16_MAX
@@ -155,33 +158,33 @@ extern "C" {
  */
 typedef enum {
   /** The given UTF-8 input is NULL terminated. */
-  UTF8PROC_NULLTERM  = (1<<0),
+  UTF8PROC_NULLTERM = (1 << 0),
   /** Unicode Versioning Stability has to be respected. */
-  UTF8PROC_STABLE    = (1<<1),
+  UTF8PROC_STABLE = (1 << 1),
   /** Compatibility decomposition (i.e. formatting information is lost). */
-  UTF8PROC_COMPAT    = (1<<2),
+  UTF8PROC_COMPAT = (1 << 2),
   /** Return a result with decomposed characters. */
-  UTF8PROC_COMPOSE   = (1<<3),
+  UTF8PROC_COMPOSE = (1 << 3),
   /** Return a result with decomposed characters. */
-  UTF8PROC_DECOMPOSE = (1<<4),
+  UTF8PROC_DECOMPOSE = (1 << 4),
   /** Strip "default ignorable characters" such as SOFT-HYPHEN or ZERO-WIDTH-SPACE. */
-  UTF8PROC_IGNORE    = (1<<5),
+  UTF8PROC_IGNORE = (1 << 5),
   /** Return an error, if the input contains unassigned codepoints. */
-  UTF8PROC_REJECTNA  = (1<<6),
+  UTF8PROC_REJECTNA = (1 << 6),
   /**
    * Indicating that NLF-sequences (LF, CRLF, CR, NEL) are representing a
    * line break, and should be converted to the codepoint for line
    * separation (LS).
    */
-  UTF8PROC_NLF2LS    = (1<<7),
+  UTF8PROC_NLF2LS = (1 << 7),
   /**
    * Indicating that NLF-sequences are representing a paragraph break, and
    * should be converted to the codepoint for paragraph separation
    * (PS).
    */
-  UTF8PROC_NLF2PS    = (1<<8),
+  UTF8PROC_NLF2PS = (1 << 8),
   /** Indicating that the meaning of NLF-sequences is unknown. */
-  UTF8PROC_NLF2LF    = (UTF8PROC_NLF2LS | UTF8PROC_NLF2PS),
+  UTF8PROC_NLF2LF = (UTF8PROC_NLF2LS | UTF8PROC_NLF2PS),
   /** Strips and/or convers control characters.
    *
    * NLF-sequences are transformed into space, except if one of the
@@ -189,17 +192,17 @@ typedef enum {
    * are treated as a NLF-sequence in this case.  All other control
    * characters are simply removed.
    */
-  UTF8PROC_STRIPCC   = (1<<9),
+  UTF8PROC_STRIPCC = (1 << 9),
   /**
    * Performs unicode case folding, to be able to do a case-insensitive
    * string comparison.
    */
-  UTF8PROC_CASEFOLD  = (1<<10),
+  UTF8PROC_CASEFOLD = (1 << 10),
   /**
    * Inserts 0xFF bytes at the beginning of each sequence which is
    * representing a single grapheme cluster (see UAX#29).
    */
-  UTF8PROC_CHARBOUND = (1<<11),
+  UTF8PROC_CHARBOUND = (1 << 11),
   /** Lumps certain characters together.
    *
    * E.g. HYPHEN U+2010 and MINUS U+2212 to ASCII "-". See lump.md for details.
@@ -207,18 +210,18 @@ typedef enum {
    * If NLF2LF is set, this includes a transformation of paragraph and
    * line separators to ASCII line-feed (LF).
    */
-  UTF8PROC_LUMP      = (1<<12),
+  UTF8PROC_LUMP = (1 << 12),
   /** Strips all character markings.
    *
    * This includes non-spacing, spacing and enclosing (i.e. accents).
    * @note This option works only with @ref UTF8PROC_COMPOSE or
    *       @ref UTF8PROC_DECOMPOSE
    */
-  UTF8PROC_STRIPMARK = (1<<13),
+  UTF8PROC_STRIPMARK = (1 << 13),
   /**
    * Strip unassigned codepoints.
    */
-  UTF8PROC_STRIPNA    = (1<<14),
+  UTF8PROC_STRIPNA = (1 << 14),
 } utf8proc_option_t;
 
 /** @name Error codes
@@ -260,44 +263,44 @@ typedef struct utf8proc_property_struct {
    * @see utf8proc_decomp_type_t.
    */
   utf8proc_propval_t decomp_type;
-  utf8proc_uint16_t decomp_seqindex;
-  utf8proc_uint16_t casefold_seqindex;
-  utf8proc_uint16_t uppercase_seqindex;
-  utf8proc_uint16_t lowercase_seqindex;
-  utf8proc_uint16_t titlecase_seqindex;
-  utf8proc_uint16_t comb_index;
-  unsigned bidi_mirrored:1;
-  unsigned comp_exclusion:1;
+  utf8proc_uint16_t  decomp_seqindex;
+  utf8proc_uint16_t  casefold_seqindex;
+  utf8proc_uint16_t  uppercase_seqindex;
+  utf8proc_uint16_t  lowercase_seqindex;
+  utf8proc_uint16_t  titlecase_seqindex;
+  utf8proc_uint16_t  comb_index;
+  unsigned bidi_mirrored : 1;
+  unsigned comp_exclusion : 1;
   /**
    * Can this codepoint be ignored?
    *
    * Used by @ref utf8proc_decompose_char when @ref UTF8PROC_IGNORE is
    * passed as an option.
    */
-  unsigned ignorable:1;
-  unsigned control_boundary:1;
+  unsigned ignorable : 1;
+  unsigned control_boundary : 1;
   /** The width of the codepoint. */
-  unsigned charwidth:2;
-  unsigned pad:2;
+  unsigned charwidth : 2;
+  unsigned pad : 2;
   /**
    * Boundclass.
    * @see utf8proc_boundclass_t.
    */
-  unsigned boundclass:8;
+  unsigned boundclass : 8;
 } utf8proc_property_t;
 
 /** Unicode categories. */
 typedef enum {
-  UTF8PROC_CATEGORY_CN  = 0, /**< Other, not assigned */
-  UTF8PROC_CATEGORY_LU  = 1, /**< Letter, uppercase */
-  UTF8PROC_CATEGORY_LL  = 2, /**< Letter, lowercase */
-  UTF8PROC_CATEGORY_LT  = 3, /**< Letter, titlecase */
-  UTF8PROC_CATEGORY_LM  = 4, /**< Letter, modifier */
-  UTF8PROC_CATEGORY_LO  = 5, /**< Letter, other */
-  UTF8PROC_CATEGORY_MN  = 6, /**< Mark, nonspacing */
-  UTF8PROC_CATEGORY_MC  = 7, /**< Mark, spacing combining */
-  UTF8PROC_CATEGORY_ME  = 8, /**< Mark, enclosing */
-  UTF8PROC_CATEGORY_ND  = 9, /**< Number, decimal digit */
+  UTF8PROC_CATEGORY_CN = 0,  /**< Other, not assigned */
+  UTF8PROC_CATEGORY_LU = 1,  /**< Letter, uppercase */
+  UTF8PROC_CATEGORY_LL = 2,  /**< Letter, lowercase */
+  UTF8PROC_CATEGORY_LT = 3,  /**< Letter, titlecase */
+  UTF8PROC_CATEGORY_LM = 4,  /**< Letter, modifier */
+  UTF8PROC_CATEGORY_LO = 5,  /**< Letter, other */
+  UTF8PROC_CATEGORY_MN = 6,  /**< Mark, nonspacing */
+  UTF8PROC_CATEGORY_MC = 7,  /**< Mark, spacing combining */
+  UTF8PROC_CATEGORY_ME = 8,  /**< Mark, enclosing */
+  UTF8PROC_CATEGORY_ND = 9,  /**< Number, decimal digit */
   UTF8PROC_CATEGORY_NL = 10, /**< Number, letter */
   UTF8PROC_CATEGORY_NO = 11, /**< Number, other */
   UTF8PROC_CATEGORY_PC = 12, /**< Punctuation, connector */
@@ -322,42 +325,42 @@ typedef enum {
 
 /** Bidirectional character classes. */
 typedef enum {
-  UTF8PROC_BIDI_CLASS_L     = 1, /**< Left-to-Right */
-  UTF8PROC_BIDI_CLASS_LRE   = 2, /**< Left-to-Right Embedding */
-  UTF8PROC_BIDI_CLASS_LRO   = 3, /**< Left-to-Right Override */
-  UTF8PROC_BIDI_CLASS_R     = 4, /**< Right-to-Left */
-  UTF8PROC_BIDI_CLASS_AL    = 5, /**< Right-to-Left Arabic */
-  UTF8PROC_BIDI_CLASS_RLE   = 6, /**< Right-to-Left Embedding */
-  UTF8PROC_BIDI_CLASS_RLO   = 7, /**< Right-to-Left Override */
-  UTF8PROC_BIDI_CLASS_PDF   = 8, /**< Pop Directional Format */
-  UTF8PROC_BIDI_CLASS_EN    = 9, /**< European Number */
-  UTF8PROC_BIDI_CLASS_ES   = 10, /**< European Separator */
-  UTF8PROC_BIDI_CLASS_ET   = 11, /**< European Number Terminator */
-  UTF8PROC_BIDI_CLASS_AN   = 12, /**< Arabic Number */
-  UTF8PROC_BIDI_CLASS_CS   = 13, /**< Common Number Separator */
-  UTF8PROC_BIDI_CLASS_NSM  = 14, /**< Nonspacing Mark */
-  UTF8PROC_BIDI_CLASS_BN   = 15, /**< Boundary Neutral */
-  UTF8PROC_BIDI_CLASS_B    = 16, /**< Paragraph Separator */
-  UTF8PROC_BIDI_CLASS_S    = 17, /**< Segment Separator */
-  UTF8PROC_BIDI_CLASS_WS   = 18, /**< Whitespace */
-  UTF8PROC_BIDI_CLASS_ON   = 19, /**< Other Neutrals */
-  UTF8PROC_BIDI_CLASS_LRI  = 20, /**< Left-to-Right Isolate */
-  UTF8PROC_BIDI_CLASS_RLI  = 21, /**< Right-to-Left Isolate */
-  UTF8PROC_BIDI_CLASS_FSI  = 22, /**< First Strong Isolate */
-  UTF8PROC_BIDI_CLASS_PDI  = 23, /**< Pop Directional Isolate */
+  UTF8PROC_BIDI_CLASS_L   = 1,   /**< Left-to-Right */
+  UTF8PROC_BIDI_CLASS_LRE = 2,   /**< Left-to-Right Embedding */
+  UTF8PROC_BIDI_CLASS_LRO = 3,   /**< Left-to-Right Override */
+  UTF8PROC_BIDI_CLASS_R   = 4,   /**< Right-to-Left */
+  UTF8PROC_BIDI_CLASS_AL  = 5,   /**< Right-to-Left Arabic */
+  UTF8PROC_BIDI_CLASS_RLE = 6,   /**< Right-to-Left Embedding */
+  UTF8PROC_BIDI_CLASS_RLO = 7,   /**< Right-to-Left Override */
+  UTF8PROC_BIDI_CLASS_PDF = 8,   /**< Pop Directional Format */
+  UTF8PROC_BIDI_CLASS_EN  = 9,   /**< European Number */
+  UTF8PROC_BIDI_CLASS_ES  = 10,  /**< European Separator */
+  UTF8PROC_BIDI_CLASS_ET  = 11,  /**< European Number Terminator */
+  UTF8PROC_BIDI_CLASS_AN  = 12,  /**< Arabic Number */
+  UTF8PROC_BIDI_CLASS_CS  = 13,  /**< Common Number Separator */
+  UTF8PROC_BIDI_CLASS_NSM = 14,  /**< Nonspacing Mark */
+  UTF8PROC_BIDI_CLASS_BN  = 15,  /**< Boundary Neutral */
+  UTF8PROC_BIDI_CLASS_B   = 16,  /**< Paragraph Separator */
+  UTF8PROC_BIDI_CLASS_S   = 17,  /**< Segment Separator */
+  UTF8PROC_BIDI_CLASS_WS  = 18,  /**< Whitespace */
+  UTF8PROC_BIDI_CLASS_ON  = 19,  /**< Other Neutrals */
+  UTF8PROC_BIDI_CLASS_LRI = 20,  /**< Left-to-Right Isolate */
+  UTF8PROC_BIDI_CLASS_RLI = 21,  /**< Right-to-Left Isolate */
+  UTF8PROC_BIDI_CLASS_FSI = 22,  /**< First Strong Isolate */
+  UTF8PROC_BIDI_CLASS_PDI = 23,  /**< Pop Directional Isolate */
 } utf8proc_bidi_class_t;
 
 /** Decomposition type. */
 typedef enum {
-  UTF8PROC_DECOMP_TYPE_FONT      = 1, /**< Font */
-  UTF8PROC_DECOMP_TYPE_NOBREAK   = 2, /**< Nobreak */
-  UTF8PROC_DECOMP_TYPE_INITIAL   = 3, /**< Initial */
-  UTF8PROC_DECOMP_TYPE_MEDIAL    = 4, /**< Medial */
-  UTF8PROC_DECOMP_TYPE_FINAL     = 5, /**< Final */
-  UTF8PROC_DECOMP_TYPE_ISOLATED  = 6, /**< Isolated */
-  UTF8PROC_DECOMP_TYPE_CIRCLE    = 7, /**< Circle */
-  UTF8PROC_DECOMP_TYPE_SUPER     = 8, /**< Super */
-  UTF8PROC_DECOMP_TYPE_SUB       = 9, /**< Sub */
+  UTF8PROC_DECOMP_TYPE_FONT     = 1,  /**< Font */
+  UTF8PROC_DECOMP_TYPE_NOBREAK  = 2,  /**< Nobreak */
+  UTF8PROC_DECOMP_TYPE_INITIAL  = 3,  /**< Initial */
+  UTF8PROC_DECOMP_TYPE_MEDIAL   = 4,  /**< Medial */
+  UTF8PROC_DECOMP_TYPE_FINAL    = 5,  /**< Final */
+  UTF8PROC_DECOMP_TYPE_ISOLATED = 6,  /**< Isolated */
+  UTF8PROC_DECOMP_TYPE_CIRCLE   = 7,  /**< Circle */
+  UTF8PROC_DECOMP_TYPE_SUPER    = 8,  /**< Super */
+  UTF8PROC_DECOMP_TYPE_SUB      = 9,  /**< Sub */
   UTF8PROC_DECOMP_TYPE_VERTICAL = 10, /**< Vertical */
   UTF8PROC_DECOMP_TYPE_WIDE     = 11, /**< Wide */
   UTF8PROC_DECOMP_TYPE_NARROW   = 12, /**< Narrow */
@@ -426,7 +429,10 @@ UTF8PROC_DLLEXPORT const char *utf8proc_errmsg(utf8proc_ssize_t errcode);
  * In case of success, the number of bytes read is returned; otherwise, a
  * negative error code is returned.
  */
-UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_iterate(const utf8proc_uint8_t *str, utf8proc_ssize_t strlen, utf8proc_int32_t *codepoint_ref);
+UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_iterate(
+  const utf8proc_uint8_t *str,
+  utf8proc_ssize_t        strlen,
+  utf8proc_int32_t       *codepoint_ref);
 
 /**
  * Check if a codepoint is valid (regardless of whether it has been
@@ -492,7 +498,7 @@ UTF8PROC_DLLEXPORT const utf8proc_property_t *utf8proc_get_property(utf8proc_int
 UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_decompose_char(
   utf8proc_int32_t codepoint, utf8proc_int32_t *dst, utf8proc_ssize_t bufsize,
   utf8proc_option_t options, int *last_boundclass
-);
+  );
 
 /**
  * The same as @ref utf8proc_decompose_char, but acts on a whole UTF-8
@@ -514,7 +520,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_decompose_char(
 UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_decompose(
   const utf8proc_uint8_t *str, utf8proc_ssize_t strlen,
   utf8proc_int32_t *buffer, utf8proc_ssize_t bufsize, utf8proc_option_t options
-);
+  );
 
 /**
  * The same as @ref utf8proc_decompose, but also takes a `custom_func` mapping function
@@ -526,7 +532,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_decompose_custom(
   const utf8proc_uint8_t *str, utf8proc_ssize_t strlen,
   utf8proc_int32_t *buffer, utf8proc_ssize_t bufsize, utf8proc_option_t options,
   utf8proc_custom_func custom_func, void *custom_data
-);
+  );
 
 /**
  * Normalizes the sequence of `length` codepoints pointed to by `buffer`
@@ -551,7 +557,10 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_decompose_custom(
  * @warning The entries of the array pointed to by `str` have to be in the
  *          range `0x0000` to `0x10FFFF`. Otherwise, the program might crash!
  */
-UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_normalize_utf32(utf8proc_int32_t *buffer, utf8proc_ssize_t length, utf8proc_option_t options);
+UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_normalize_utf32(
+  utf8proc_int32_t *buffer,
+  utf8proc_ssize_t  length,
+  utf8proc_option_t options);
 
 /**
  * Reencodes the sequence of `length` codepoints pointed to by `buffer`
@@ -581,7 +590,10 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_normalize_utf32(utf8proc_int32_t *b
  *          entries of the array pointed to by `str` have to be in the
  *          range `0x0000` to `0x10FFFF`. Otherwise, the program might crash!
  */
-UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_reencode(utf8proc_int32_t *buffer, utf8proc_ssize_t length, utf8proc_option_t options);
+UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_reencode(
+  utf8proc_int32_t *buffer,
+  utf8proc_ssize_t  length,
+  utf8proc_option_t options);
 
 /**
  * Given a pair of consecutive codepoints, return whether a grapheme break is
@@ -598,14 +610,15 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_reencode(utf8proc_int32_t *buffer, 
  *          be called IN ORDER on ALL potential breaks in a string.
  */
 UTF8PROC_DLLEXPORT utf8proc_bool utf8proc_grapheme_break_stateful(
-    utf8proc_int32_t codepoint1, utf8proc_int32_t codepoint2, utf8proc_int32_t *state);
+  utf8proc_int32_t  codepoint1,
+  utf8proc_int32_t  codepoint2,
+  utf8proc_int32_t *state);
 
 /**
  * Same as @ref utf8proc_grapheme_break_stateful, except without support for the
  * Unicode 9 additions to the algorithm. Supported for legacy reasons.
  */
-UTF8PROC_DLLEXPORT utf8proc_bool utf8proc_grapheme_break(
-    utf8proc_int32_t codepoint1, utf8proc_int32_t codepoint2);
+UTF8PROC_DLLEXPORT utf8proc_bool utf8proc_grapheme_break(utf8proc_int32_t codepoint1, utf8proc_int32_t codepoint2);
 
 
 /**
@@ -672,7 +685,7 @@ UTF8PROC_DLLEXPORT const char *utf8proc_category_string(utf8proc_int32_t codepoi
  */
 UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_map(
   const utf8proc_uint8_t *str, utf8proc_ssize_t strlen, utf8proc_uint8_t **dstptr, utf8proc_option_t options
-);
+  );
 
 /**
  * Like @ref utf8proc_map, but also takes a `custom_func` mapping function
@@ -683,7 +696,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_map(
 UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_map_custom(
   const utf8proc_uint8_t *str, utf8proc_ssize_t strlen, utf8proc_uint8_t **dstptr, utf8proc_option_t options,
   utf8proc_custom_func custom_func, void *custom_data
-);
+  );
 
 /** @name Unicode normalization
  *
@@ -695,17 +708,22 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_map_custom(
 /** @{ */
 /** NFD normalization (@ref UTF8PROC_DECOMPOSE). */
 UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFD(const utf8proc_uint8_t *str);
+
 /** NFC normalization (@ref UTF8PROC_COMPOSE). */
 UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFC(const utf8proc_uint8_t *str);
+
 /** NFKD normalization (@ref UTF8PROC_DECOMPOSE and @ref UTF8PROC_COMPAT). */
 UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFKD(const utf8proc_uint8_t *str);
+
 /** NFKC normalization (@ref UTF8PROC_COMPOSE and @ref UTF8PROC_COMPAT). */
 UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFKC(const utf8proc_uint8_t *str);
+
 /**
  * NFKC_Casefold normalization (@ref UTF8PROC_COMPOSE and @ref UTF8PROC_COMPAT
  * and @ref UTF8PROC_CASEFOLD and @ref UTF8PROC_IGNORE).
  **/
 UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFKC_Casefold(const utf8proc_uint8_t *str);
+
 /** @} */
 
 #ifdef __cplusplus

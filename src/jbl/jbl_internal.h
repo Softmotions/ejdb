@@ -7,7 +7,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2019 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,8 +35,10 @@
 #include <ejdb2/iowow/iwconv.h>
 #include "ejdb2cfg.h"
 
+#define JBL_MAX_NESTING_LEVEL 999
+
 struct _JBL {
-  binn bn;
+  binn     bn;
   JBL_NODE node;
 };
 
@@ -44,13 +46,13 @@ struct _JBL {
  * @brief JBL visitor context
  */
 typedef struct _JBL_VCTX {
-  int pos;          /**< Aux position, not actually used by visitor core */
-  binn *bn;         /**< Root node from which started visitor */
-  void *op;         /**< Arbitrary opaque data */
-  void *result;
-  bool terminate;
+  binn   *bn;       /**< Root node from which started visitor */
+  void   *op;       /**< Arbitrary opaque data */
+  void   *result;
   IWPOOL *pool;     /**< Pool placeholder, initialization is responsibility of `JBL_VCTX` creator */
-  bool found;       /**< Used in _jbl_at() */
+  int     pos;      /**< Aux position, not actually used by visitor core */
+  bool    terminate;
+  bool    found;    /**< Used in _jbl_at() */
 } JBL_VCTX;
 
 typedef jbn_visitor_cmd_t jbl_visitor_cmd_t;
@@ -62,7 +64,7 @@ typedef struct _JBL_PATCHEXT {
 } JBL_PATCHEXT;
 
 typedef struct _JBLDRCTX {
-  IWPOOL *pool;
+  IWPOOL  *pool;
   JBL_NODE root;
 } JBLDRCTX;
 
@@ -72,7 +74,7 @@ iwrc jbl_from_buf_keep_onstack2(JBL jbl, void *buf);
 iwrc _jbl_write_double(double num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_int(int64_t num, jbl_json_printer pt, void *op);
 iwrc _jbl_write_string(const char *str, int len, jbl_json_printer pt, void *op, jbl_print_flags_t pf);
-iwrc _jbl_node_from_binn(const binn *bn, JBL_NODE *node, IWPOOL *pool);
+iwrc _jbl_node_from_binn(const binn *bn, JBL_NODE *node, bool clone_strings, IWPOOL *pool);
 iwrc _jbl_binn_from_node(binn *res, JBL_NODE node);
 iwrc _jbl_from_node(JBL jbl, JBL_NODE node);
 bool _jbl_at(JBL jbl, JBL_PTR jp, JBL res);
@@ -83,5 +85,7 @@ iwrc _jbl_visit(binn_iter *iter, int lvl, JBL_VCTX *vctx, JBL_VISITOR visitor);
 
 bool _jbl_is_eq_atomic_values(JBL v1, JBL v2);
 int _jbl_cmp_atomic_values(JBL v1, JBL v2);
+
+BOOL binn_read_next_pair2(int expected_type, binn_iter *iter, int *klidx, char **pkey, binn *value);
 
 #endif

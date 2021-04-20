@@ -12,11 +12,11 @@ int clean_suite() {
 
 static void ejdb_test3_1() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test3_1.db",
+    .kv       = {
+      .path   = "ejdb_test3_1.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
 
   EJDB db;
@@ -340,11 +340,11 @@ static void ejdb_test3_1() {
 
 static void ejdb_test3_2() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test3_2.db",
+    .kv       = {
+      .path   = "ejdb_test3_2.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
 
   EJDB db;
@@ -520,11 +520,11 @@ static void ejdb_test3_2() {
 
 static void ejdb_test3_3() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test3_3.db",
+    .kv       = {
+      .path   = "ejdb_test3_3.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
   EJDB db;
   char dbuf[1024];
@@ -578,7 +578,7 @@ static void ejdb_test3_3() {
   rc = put_json(db, "a2", dbuf);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":\"%s\"},\"n\":%"PRId64"}", data[1], INT64_MAX - 1);
+  snprintf(dbuf, sizeof(dbuf), "{\"f\":{\"b\":\"%s\"},\"n\":%" PRId64 "}", data[1], INT64_MAX - 1);
   rc = put_json(db, "a2", dbuf);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -615,7 +615,7 @@ static void ejdb_test3_3() {
     rc = jbl_at(doc->raw, "/n", &jbl2);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     int64_t llv = jbl_get_i64(jbl2);
-    char *str = jbl_get_str(jbl1);
+    const char *str = jbl_get_str(jbl1);
     switch (i) {
       case 1:
         CU_ASSERT_EQUAL(llv, 1);
@@ -667,7 +667,7 @@ static void ejdb_test3_3() {
     rc = jbl_at(doc->raw, "/n", &jbl2);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     int64_t llv = jbl_get_i64(jbl2);
-    char *str = jbl_get_str(jbl1);
+    const char *str = jbl_get_str(jbl1);
     CU_ASSERT_EQUAL(llv, 5);
     CU_ASSERT_STRING_EQUAL(str, data[3]);
     jbl_destroy(&jbl1);
@@ -691,11 +691,11 @@ static void ejdb_test3_3() {
 // Test array index
 static void ejdb_test3_4() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test3_4.db",
+    .kv       = {
+      .path   = "ejdb_test3_4.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
   EJDB db;
   char dbuf[1024];
@@ -731,7 +731,7 @@ static void ejdb_test3_4() {
 
   // Q:
   JBL_NODE qtags;
-  rc = jbl_node_from_json("[\"zaz\",\"gaz\"]", &qtags, pool);
+  rc = jbn_from_json("[\"zaz\",\"gaz\"]", &qtags, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = jql_set_json(q, "tags", 0, qtags);
@@ -750,7 +750,7 @@ static void ejdb_test3_4() {
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     if (i == 1) {
       CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"tags\":[\"foo\",\"bar\",\"gaz\"],\"n\":1}");
-    } else if (i == 2 || i == 3) {
+    } else if ((i == 2) || (i == 3)) {
       CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"tags\":[\"gaz\",\"zaz\"],\"n\":2}");
     }
   }
@@ -777,7 +777,7 @@ static void ejdb_test3_4() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   // Q:
-  rc = jbl_node_from_json("[\"zaz\",\"boo\"]", &qtags, pool);
+  rc = jbn_from_json("[\"zaz\",\"boo\"]", &qtags, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jql_set_json(q, "tags", 0, qtags);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -799,11 +799,11 @@ static void ejdb_test3_4() {
   iwxstr_clear(log);
 
   // Remove last
-  rc =  ejdb_del(db, "a3", docId);
+  rc = ejdb_del(db, "a3", docId);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   // G2
-  rc = jbl_node_from_json("[\"gaz\"]", &qtags, pool);
+  rc = jbn_from_json("[\"gaz\"]", &qtags, pool);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jql_set_json(q, "tags", 0, qtags);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -837,11 +837,11 @@ static void ejdb_test3_4() {
 
 void ejdb_test3_5() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test3_5.db",
+    .kv       = {
+      .path   = "ejdb_test3_5.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
   EJDB db;
   EJDB_LIST list = 0;
@@ -925,13 +925,15 @@ void ejdb_test3_5() {
 }
 
 static void jql_free_str(void *ptr, void *op) {
-  if (ptr) free(ptr);
+  if (ptr) {
+    free(ptr);
+  }
 }
 
 void ejdb_test3_6() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test3_6.db",
+    .kv       = {
+      .path   = "ejdb_test3_6.db",
       .oflags = IWKV_TRUNC
     }
   };
@@ -986,8 +988,8 @@ void ejdb_test3_6() {
 
 void ejdb_test3_7() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test3_7.db",
+    .kv       = {
+      .path   = "ejdb_test3_7.db",
       .oflags = IWKV_TRUNC
     }
   };
@@ -1028,23 +1030,113 @@ void ejdb_test3_7() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 }
 
+void ejdb_test3_8(void) {
+  EJDB_OPTS opts = {
+    .kv       = {
+      .path   = "ejdb_test3_8.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal   = true
+  };
+
+  EJDB db;
+  JQL q;
+  char buf[64];
+  JBL_NODE n;
+
+  int64_t id1 = 0, id2 = 0;
+  EJDB_LIST list = 0;
+
+  IWPOOL *pool = iwpool_create(255);
+  IWXSTR *log = iwxstr_new();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(log);
+
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = put_json2(db, "users", "{'name':'Andy'}", &id1);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = put_json2(db, "users", "{'name':'John'}", &id2);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_create(&q, "users", "/=:?");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_set_i64(q, 0, 0, id1);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] PK [COLLECTOR] PLAIN"));
+  CU_ASSERT_PTR_NOT_NULL(list->first);
+  CU_ASSERT_PTR_NULL(list->first->next);
+
+  jql_destroy(&q);
+  ejdb_list_destroy(&list);
+  iwxstr_clear(log);
+
+  rc = jql_create(&q, 0, "@users/=:id");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_set_str(q, "id", 0, "1");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(list->first);
+  CU_ASSERT_PTR_NULL(list->first->next);
+  jql_destroy(&q);
+  ejdb_list_destroy(&list);
+
+  // matching against PK array
+  snprintf(buf, sizeof(buf), "@users/=[%" PRId64 ",%" PRId64 "]", id1, id2);
+  rc = jql_create(&q, 0, buf);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(list->first);
+  CU_ASSERT_PTR_NOT_NULL(list->first->next);
+  jql_destroy(&q);
+  ejdb_list_destroy(&list);
+
+  // matching against PK array as JSON query paramater
+  snprintf(buf, sizeof(buf), "[%" PRId64 ",%" PRId64 "]", id1, id2);
+  rc = jbn_from_json(buf, &n, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_create(&q, 0, "@users/=:?");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = jql_set_json(q, 0, 0, n);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = ejdb_list4(db, q, 0, log, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_PTR_NOT_NULL(list->first);
+  CU_ASSERT_PTR_NOT_NULL(list->first->next);
+  jql_destroy(&q);
+  ejdb_list_destroy(&list);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwxstr_destroy(log);
+  iwpool_destroy(pool);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
-  if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
+  if (CUE_SUCCESS != CU_initialize_registry()) {
+    return CU_get_error();
+  }
   pSuite = CU_add_suite("ejdb_test3", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (
-    (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_6", ejdb_test3_6)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test3_7", ejdb_test3_7))
-  ) {
+  if (  (NULL == CU_add_test(pSuite, "ejdb_test3_1", ejdb_test3_1))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_2", ejdb_test3_2))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_3", ejdb_test3_3))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_4", ejdb_test3_4))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_6", ejdb_test3_6))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_7", ejdb_test3_7))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_8", ejdb_test3_8))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

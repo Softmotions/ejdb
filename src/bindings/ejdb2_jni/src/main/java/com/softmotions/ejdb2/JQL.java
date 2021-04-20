@@ -2,9 +2,11 @@ package com.softmotions.ejdb2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,7 +120,11 @@ public final class JQL implements AutoCloseable {
   }
 
   public String getExplainLog() {
-    return explain != null ? explain.toString(StandardCharsets.UTF_8) : null;
+    try {
+      return explain != null ? explain.toString("UTF-8") : null;
+    } catch (UnsupportedEncodingException ignored) {
+      return null;
+    }
   }
 
   /**
@@ -160,8 +166,8 @@ public final class JQL implements AutoCloseable {
    * }
    * </pre>
    *
-   * @param pos Zero based positional index
-   * @param val Value to set
+   * @param  pos            Zero based positional index
+   * @param  val            Value to set
    * @return
    * @throws EJDB2Exception
    */
@@ -181,8 +187,8 @@ public final class JQL implements AutoCloseable {
    * }
    * </pre>
    *
-   * @param placeholder Placeholder name
-   * @param val         Value to set
+   * @param  placeholder    Placeholder name
+   * @param  val            Value to set
    * @return
    * @throws EJDB2Exception
    */
@@ -206,8 +212,18 @@ public final class JQL implements AutoCloseable {
     return this;
   }
 
+  public JQL setJSON(int pos, JSON json) throws EJDB2Exception {
+    _set_string(pos, null, json.toString(), 1);
+    return this;
+  }
+
   public JQL setJSON(String placeholder, String json) throws EJDB2Exception {
     _set_string(0, placeholder, json, 1);
+    return this;
+  }
+
+  public JQL setJSON(String placeholder, JSON json) throws EJDB2Exception {
+    _set_string(0, placeholder, json.toString(), 1);
     return this;
   }
 
@@ -252,60 +268,92 @@ public final class JQL implements AutoCloseable {
   }
 
   /**
+   * Execute query and handle record {@link EJDB2Document} values by provided
+   * {@code cb}
+   *
+   * @param  cb             Optional callback
+   * @throws EJDB2Exception
+   */
+  public void execute(EJDB2DocumentCallback cb) throws EJDB2Exception {
+    if (explain != null) {
+      explain.reset();
+    }
+    if (cb != null) {
+      _execute(db, (id, sv) -> cb.onDocument(new EJDB2Document(id, sv)), explain);
+    } else {
+      _execute(db, null, explain);
+    }
+  }
+
+  /**
    * Execute query without result set callback.
    *
    * @throws EJDB2Exception
    */
   public void execute() throws EJDB2Exception {
+    execute(null);
+  }
+
+  public void executeRaw(JQLCallback cb) throws EJDB2Exception {
     if (explain != null) {
       explain.reset();
     }
-    _execute(db, null, explain);
-  }
-
-  /**
-   * Execute query and handle records by provided {@code cb}
-   *
-   * @param cb Optional callback SAM
-   * @throws EJDB2Exception
-   */
-  public void execute(JQLCallback cb) throws EJDB2Exception {
-    if (explain != null) {
-      explain.reset();
+    if (cb != null) {
+      _execute(db, (id, sv) -> cb.onRecord(id, sv), explain);
+    } else {
+      _execute(db, null, explain);
     }
-    _execute(db, cb, explain);
   }
 
-  /**
-   * Get first record entry: {@code [documentId, json]} in results set. Entry will
-   * contain nulls if no records found.
-   */
-  public Map.Entry<Long, String> first() {
-    final Long[] idh = { null };
-    final String[] jsonh = { null };
+  public List<EJDB2Document> list() throws EJDB2Exception {
+    List<EJDB2Document> list = new ArrayList<>();
+    execute((doc) -> {
+      list.add(doc);
+      return 1;
+    });
+    return list;
+  }
+
+  public EJDB2Document first() {
+    final EJDB2Document[] v = { null };
     if (explain != null) {
       explain.reset();
     }
     _execute(db, (id, json) -> {
-      idh[0] = id;
-      jsonh[0] = json;
+      v[0] = new EJDB2Document(id, json);
       return 0;
     }, explain);
-    return Map.entry(idh[0], jsonh[0]);
+    return v[0];
   }
 
   /**
    * Get first document body as JSON string or null.
    */
-  public String firstJson() {
-    return first().getValue();
+  public String firstValue() {
+    final String[] v = { null };
+    if (explain != null) {
+      explain.reset();
+    }
+    _execute(db, (id, json) -> {
+      v[0] = json;
+      return 0;
+    }, explain);
+    return v[0];
   }
 
   /**
    * Get first document id ot null
    */
   public Long firstId() {
-    return first().getKey();
+    final Long[] v = { null };
+    if (explain != null) {
+      explain.reset();
+    }
+    _execute(db, (id, json) -> {
+      v[0] = id;
+      return 0;
+    }, explain);
+    return v[0];
   }
 
   /**
@@ -361,8 +409,10 @@ public final class JQL implements AutoCloseable {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", JQL.class.getSimpleName() + "[", "]").add("query=" + query)
-        .add("collection=" + collection).toString();
+    return new StringJoiner(", ", JQL.class.getSimpleName() + "[", "]")
+      .add("query=" + query)
+      .add("collection=" + collection)
+      .toString();
   }
 
   private static class Reference extends WeakReference<JQL> {

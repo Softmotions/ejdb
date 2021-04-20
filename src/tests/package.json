@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "@react-native-community/eslint-config": "^0.0.5",
+    "eslint": "^6.6.0"
+  }
+}

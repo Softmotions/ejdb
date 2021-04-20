@@ -14,13 +14,13 @@ int clean_suite() {
 // Test document sorting overflow on disk
 static void ejdb_test2_2() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test2_2.db",
-      .oflags = IWKV_TRUNC
+    .kv                 = {
+      .path             = "ejdb_test2_2.db",
+      .oflags           = IWKV_TRUNC
     },
-    .document_buffer_sz = 16 * 1024, // 16K
-    .sort_buffer_sz = 1024 * 1024,   // 1M
-    .no_wal = true
+    .document_buffer_sz = 16 * 1024,   // 16K
+    .sort_buffer_sz     = 1024 * 1024, // 1M
+    .no_wal             = true
   };
   EJDB db;
   EJDB_LIST list = 0;
@@ -62,8 +62,8 @@ static void ejdb_test2_2() {
 }
 
 struct TEST21_1 {
-  int stage;
-  int cnt;
+  int     stage;
+  int     cnt;
   IWXSTR *xstr;
 };
 
@@ -73,7 +73,7 @@ static iwrc ejdb_test2_1_exec_visitor1(struct _EJDB_EXEC *ctx, const EJDB_DOC do
   iwrc rc = jbl_at(doc->raw, "/f", &jbl);
   RCRET(rc);
   int64_t llv = jbl_get_i64(jbl);
-  if (tc->cnt && tc->stage == 0) {
+  if (tc->cnt && (tc->stage == 0)) {
     tc->stage = 1;
     *step = 2;
   } else if (tc->stage == 1) {
@@ -88,11 +88,11 @@ static iwrc ejdb_test2_1_exec_visitor1(struct _EJDB_EXEC *ctx, const EJDB_DOC do
 
 static void ejdb_test2_1() {
   EJDB_OPTS opts = {
-    .kv = {
-      .path = "ejdb_test2_1.db",
+    .kv       = {
+      .path   = "ejdb_test2_1.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal = true
+    .no_wal   = true
   };
 
   EJDB db;
@@ -120,7 +120,8 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "not_exists", "/*", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {}
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  }
   CU_ASSERT_EQUAL(i, 0);
   ejdb_list_destroy(&list);
 
@@ -132,13 +133,17 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"bar\"}");
+      case 0:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"bar\"}");
         break;
-      case 1: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"gaz\"}");
+      case 1:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"gaz\"}");
         break;
-      case 2: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"foo\"}");
+      case 2:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"foo\"}");
         break;
-      case 5: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
+      case 5:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
         break;
     }
   }
@@ -148,14 +153,16 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "a", "/*", 1, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {}
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  }
   CU_ASSERT_EQUAL(i, 1);
   ejdb_list_destroy(&list);
 
   rc = ejdb_list2(db, "a", "/f", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {}
+  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  }
   CU_ASSERT_EQUAL(i, 3);
   ejdb_list_destroy(&list);
 
@@ -167,7 +174,8 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"gaz\"}");
+      case 0:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"gaz\"}");
         break;
     }
   }
@@ -182,7 +190,8 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"foo\"}");
+      case 0:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"a\":\"foo\"}");
         break;
     }
   }
@@ -204,15 +213,20 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":1}");
+      case 0:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":1}");
         break;
-      case 1: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
+      case 1:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
         break;
-      case 2: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":3}");
+      case 2:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":3}");
         break;
-      case 3: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":5}");
+      case 3:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":5}");
         break;
-      case 4: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":6}");
+      case 4:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":6}");
         break;
     }
   }
@@ -227,15 +241,20 @@ static void ejdb_test2_1() {
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
     switch (i) {
-      case 0: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":6}");
+      case 0:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":6}");
         break;
-      case 1: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":5}");
+      case 1:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":5}");
         break;
-      case 2: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":3}");
+      case 2:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":3}");
         break;
-      case 3: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
+      case 3:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":2}");
         break;
-      case 4: CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":1}");
+      case 4:
+        CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"f\":1}");
         break;
     }
   }
@@ -246,14 +265,14 @@ static void ejdb_test2_1() {
   // Now test basic back/forward skips
   //
   JQL q;
-  struct TEST21_1 tc = {0};
+  struct TEST21_1 tc = { 0 };
   tc.xstr = iwxstr_new();
   rc = jql_create(&q, "a", "/f");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   EJDB_EXEC ux = {
-    .db = db,
-    .q = q,
-    .opaque = &tc,
+    .db      = db,
+    .q       = q,
+    .opaque  = &tc,
     .visitor = ejdb_test2_1_exec_visitor1
   };
   rc = ejdb_exec(&ux);
@@ -281,16 +300,16 @@ static void ejdb_test2_1() {
 
 int main() {
   CU_pSuite pSuite = NULL;
-  if (CUE_SUCCESS != CU_initialize_registry()) return CU_get_error();
+  if (CUE_SUCCESS != CU_initialize_registry()) {
+    return CU_get_error();
+  }
   pSuite = CU_add_suite("ejdb_test1", init_suite, clean_suite);
   if (NULL == pSuite) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (
-    (NULL == CU_add_test(pSuite, "ejdb_test2_1", ejdb_test2_1)) ||
-    (NULL == CU_add_test(pSuite, "ejdb_test2_2", ejdb_test2_2))
-    ) {
+  if (  (NULL == CU_add_test(pSuite, "ejdb_test2_1", ejdb_test2_1))
+     || (NULL == CU_add_test(pSuite, "ejdb_test2_2", ejdb_test2_2))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

@@ -4,9 +4,7 @@ void main() async {
   final db = await EJDB2.open('hello.db', truncate: true);
 
   var q = db.createQuery('@mycoll/*');
-  assert(q != null);
   assert(q.collection == 'mycoll');
-  assert(q.db != null);
 
   var id = await db.put('mycoll', {'foo': 'bar'});
   assert(id == 1);
@@ -30,22 +28,18 @@ void main() async {
   assert(list.length == 1);
 
   var first = await db.createQuery('@mycoll/*').first();
-  assert(first != null);
   assert(first.isPresent);
   assert(first.value.json == '{"foo":"baz"}');
 
   first = await db.createQuery('@mycoll/[zzz=bbb]').first();
-  assert(first != null);
   assert(first.isEmpty);
 
   var firstN = await db.createQuery('@mycoll/*').firstN(5);
-  assert(firstN != null);
   assert(firstN.length == 2);
   assert(firstN[0].json == '{"foo":"baz"}');
   assert(firstN[1].json == '{"foo":"bar"}');
 
   firstN = await db.createQuery('@mycoll/*').firstN(1);
-  assert(firstN != null);
   assert(firstN.length == 1);
 
   // Query 1
@@ -116,7 +110,7 @@ void main() async {
   assert(json.contains('"indexes":[{"ptr":"/foo","mode":5,"idbf":0,"dbid":4,"rnum":1}]'));
 
   // Test JQL set
-  var doc = await db.createQuery('@mycoll/[foo=:?]').setString(0, 'baz').execute().first;
+  JBDOC? doc = await db.createQuery('@mycoll/[foo=:?]').setString(0, 'baz').execute().first;
   assert(doc.json == '{"foo":"baz","baz":"qux"}');
 
   // Test explain log
@@ -154,6 +148,15 @@ void main() async {
   await db.removeCollection('mycoll');
   json = await db.info();
   assert(json.contains('"collections":[]'));
+
+  // Check apply
+  await db.put(
+      'apply1', {'tx_hash': 'ed36cfd14a4fe29b16c511d68a8be89e42dcc6e4ced69d04f318448a2b8fafa0'});
+  doc = await db
+      .createQuery('/[tx_hash = :?] | apply :?', 'apply1')
+      .setString(0, 'ed36cfd14a4fe29b16c511d68a8be89e42dcc6e4ced69d04f318448a2b8fafa0')
+      .setJson(1, {'status': 'completed'}).firstRequired();
+  assert(doc.object['status'] == 'completed');
 
   /// Test get limit
   q = db.createQuery('@c1/* | limit 1');

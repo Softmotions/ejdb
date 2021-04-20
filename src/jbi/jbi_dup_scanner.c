@@ -21,11 +21,16 @@ static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER 
   rc = iwkv_cursor_open(idx->idb, &cur, IWKV_CURSOR_GE, &key);
   if (rc == IWKV_ERROR_NOTFOUND) {
     return consumer(ctx, 0, 0, 0, 0, 0);
-  } else RCRET(rc);
+  } else {
+    RCRET(rc);
+  }
 
   do {
-    if (step > 0) --step;
-    else if (step < 0) ++step;
+    if (step > 0) {
+      --step;
+    } else if (step < 0) {
+      ++step;
+    }
     if (!step) {
       int64_t id;
       rc = iwkv_cursor_is_matched_key(cur, &key, &matched, &id);
@@ -40,7 +45,9 @@ static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER 
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
 
 finish:
-  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    rc = 0;
+  }
   if (cur) {
     iwkv_cursor_close(&cur);
   }
@@ -66,11 +73,13 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
   IWKV_cursor cur = 0;
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
-  IWKV_val key = {.compound = INT64_MIN};
+  IWKV_val key = { .compound = INT64_MIN };
   JBL_NODE nv = jqval->vnode->child;
 
   for (i = 0; nv; nv = nv->next) {
-    if (nv->type >= JBV_BOOL && nv->type <= JBV_STR) ++i;
+    if ((nv->type >= JBV_BOOL) && (nv->type <= JBV_STR)) {
+      ++i;
+    }
   }
   if (i == 0) {
     return consumer(ctx, 0, 0, 0, 0, 0);
@@ -82,7 +91,7 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   for (i = 0, nv = jqval->vnode->child; nv; nv = nv->next) {
-    if (nv->type >= JBV_BOOL && nv->type <= JBV_STR) {
+    if ((nv->type >= JBV_BOOL) && (nv->type <= JBV_STR)) {
       JQVAL jqv;
       jql_node_to_jqval(nv, &jqv);
       memcpy(&jqvarr[i++], &jqv, sizeof(jqv));
@@ -100,8 +109,11 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
     rc = iwkv_cursor_open(idx->idb, &cur, IWKV_CURSOR_GE, &key);
     RCGO(rc, finish);
     do {
-      if (step > 0) --step;
-      else if (step < 0) ++step;
+      if (step > 0) {
+        --step;
+      } else if (step < 0) {
+        ++step;
+      }
       if (!step) {
         rc = iwkv_cursor_is_matched_key(cur, &key, &matched, &id);
         RCGO(rc, finish);
@@ -116,11 +128,13 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
   }
 
 finish:
-  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    rc = 0;
+  }
   if (cur) {
     iwkv_cursor_close(&cur);
   }
-  if ((char *) jqvarr != jqvarrbuf) {
+  if ((char*) jqvarr != jqvarrbuf) {
     free(jqvarr);
   }
   return consumer(ctx, 0, 0, 0, 0, rc);
@@ -131,9 +145,10 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
   IWKV_cursor cur;
   char numbuf[JBNUMBUF_SIZE];
 
-  int64_t step = 1;
+  int64_t step = 1, prev_id = 0;
   struct _JBMIDX *midx = &ctx->midx;
   JBIDX idx = midx->idx;
+  jqp_op_t expr1_op = midx->expr1->op->value;
 
   IWKV_val key;
   jbi_jqval_fill_ikey(idx, jqval, &key, numbuf);
@@ -143,7 +158,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
   key.compound = (midx->cursor_step == IWKV_CURSOR_PREV) ? INT64_MIN : INT64_MAX;
 
   iwrc rc = iwkv_cursor_open(idx->idb, &cur, midx->cursor_init, &key);
-  if (rc == IWKV_ERROR_NOTFOUND && (midx->expr1->op->value == JQP_OP_LT || midx->expr1->op->value == JQP_OP_LTE)) {
+  if ((rc == IWKV_ERROR_NOTFOUND) && ((expr1_op == JQP_OP_LT) || (expr1_op == JQP_OP_LTE))) {
     iwkv_cursor_close(&cur);
     key.compound = INT64_MAX;
     midx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
@@ -165,31 +180,43 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
   IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_PREV)
                                        ? IWKV_CURSOR_NEXT : IWKV_CURSOR_PREV;
   do {
-    if (step > 0) --step;
-    else if (step < 0) ++step;
+    if (step > 0) {
+      --step;
+    } else if (step < 0) {
+      ++step;
+    }
     if (!step) {
       int64_t id;
       bool matched = false;
       rc = iwkv_cursor_copy_key(cur, 0, 0, &sz, &id);
       RCGO(rc, finish);
-      if (midx->expr2
-          && !midx->expr2->prematched
-          && !jbi_node_expr_matched(ctx->ux->q->aux, midx->idx, cur, midx->expr2, &rc)) {
+      if (  midx->expr2
+         && !midx->expr2->prematched
+         && !jbi_node_expr_matched(ctx->ux->q->aux, midx->idx, cur, midx->expr2, &rc)) {
+        break;
+      }
+      if (  (expr1_op == JQP_OP_PREFIX)
+         && !jbi_node_expr_matched(ctx->ux->q->aux, midx->idx, cur, midx->expr1, &rc)) {
         break;
       }
       RCGO(rc, finish);
       step = 1;
-      rc = consumer(ctx, 0, id, &step, &matched, 0);
-      RCGO(rc, finish);
-      if (!midx->expr1->prematched && matched) {
-        // Further scan will always match main index expression
-        midx->expr1->prematched = true;
+      if (id != prev_id) {
+        rc = consumer(ctx, 0, id, &step, &matched, 0);
+        RCGO(rc, finish);
+        if (!midx->expr1->prematched && matched && (expr1_op != JQP_OP_PREFIX)) {
+          // Further scan will always match main index expression
+          midx->expr1->prematched = true;
+        }
+        prev_id = step < 1 ? 0 : id;
       }
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
 
 finish:
-  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    rc = 0;
+  }
   if (cur) {
     iwkv_cursor_close(&cur);
   }
@@ -199,7 +226,7 @@ finish:
 static iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   size_t sz;
   IWKV_cursor cur;
-  int64_t step = 1;
+  int64_t step = 1, prev_id = 0;
   struct _JBMIDX *midx = &ctx->midx;
   IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_PREV)
                                        ? IWKV_CURSOR_NEXT : IWKV_CURSOR_PREV;
@@ -211,21 +238,29 @@ static iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consum
     RCGO(rc, finish);
   }
   do {
-    if (step > 0) --step;
-    else if (step < 0) ++step;
+    if (step > 0) {
+      --step;
+    } else if (step < 0) {
+      ++step;
+    }
     if (!step) {
       int64_t id;
       bool matched;
       rc = iwkv_cursor_copy_key(cur, 0, 0, &sz, &id);
       RCGO(rc, finish);
       step = 1;
-      rc = consumer(ctx, 0, id, &step, &matched, 0);
-      RCGO(rc, finish);
+      if (id != prev_id) {
+        rc = consumer(ctx, 0, id, &step, &matched, 0);
+        RCGO(rc, finish);
+        prev_id = step < 1 ? 0 : id;
+      }
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
 
 finish:
-  if (rc == IWKV_ERROR_NOTFOUND) rc = 0;
+  if (rc == IWKV_ERROR_NOTFOUND) {
+    rc = 0;
+  }
   if (cur) {
     iwkv_cursor_close(&cur);
   }
@@ -256,7 +291,7 @@ iwrc jbi_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
       break;
   }
 
-  if (midx->expr1->op->value == JQP_OP_GT && jqval->type == JQVAL_I64) {
+  if ((midx->expr1->op->value == JQP_OP_GT) && (jqval->type == JQVAL_I64)) {
     JQVAL mjqv;
     memcpy(&mjqv, jqval, sizeof(*jqval));
     mjqv.vi64 = mjqv.vi64 + 1; // Because for index scan we use `IWKV_CURSOR_GE`

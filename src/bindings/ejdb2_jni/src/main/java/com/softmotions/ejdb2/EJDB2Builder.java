@@ -75,37 +75,37 @@ public class EJDB2Builder implements Serializable {
     return this;
   }
 
-  EJDB2Builder fileLockFailFast(boolean v) {
+  public EJDB2Builder fileLockFailFast(boolean v) {
     iwkv.fileLockFailFast(v);
     return this;
   }
 
-  EJDB2Builder randomSeed(long seed) {
+  public EJDB2Builder randomSeed(long seed) {
     iwkv.randomSeed(seed);
     return this;
   }
 
-  EJDB2Builder walCRCOnCheckpoint(boolean v) {
+  public EJDB2Builder walCRCOnCheckpoint(boolean v) {
     iwkv.walCRCOnCheckpoint(v);
     return this;
   }
 
-  EJDB2Builder walSavepointTimeoutSec(int v) {
+  public EJDB2Builder walSavepointTimeoutSec(int v) {
     iwkv.walSavepointTimeoutSec(v);
     return this;
   }
 
-  EJDB2Builder walCheckpointTimeoutSec(int v) {
+  public EJDB2Builder walCheckpointTimeoutSec(int v) {
     iwkv.walCheckpointTimeoutSec(v);
     return this;
   }
 
-  EJDB2Builder walBufferSize(long v) {
+  public EJDB2Builder walBufferSize(long v) {
     iwkv.walBufferSize(v);
     return this;
   }
 
-  EJDB2Builder walCheckpointBufferSize(long v) {
+  public EJDB2Builder walCheckpointBufferSize(long v) {
     iwkv.walCheckpointBufferSize(v);
     return this;
   }

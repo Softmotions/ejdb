@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2019 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -122,12 +122,12 @@ declare namespace ejdb2_react_native {
     /**
      * Overrides `limit` encoded in query
      */
-    limit?: number;
+    limit?: number | string;
 
     /**
      *  Overrides `skip` encoded in query
      */
-    skip?: number;
+    skip?: number | string;
   }
 
   /**
@@ -277,9 +277,15 @@ declare namespace ejdb2_react_native {
     put(collection: String, json: object | string, id?: number): Promise<number>;
 
     /**
-     * Apply rfc6902/rfc6901 JSON [patch] to the document identified by [id].
+     * Apply rfc6902/rfc7386 JSON [patch] to the document identified by [id].
      */
     patch(collection: string, json: object | string, id: number): Promise<void>;
+
+    /**
+     * Apply JSON merge patch (rfc7396) to the document identified by `id` or
+     * insert new document under specified `id`.
+     */
+    patchOrPut(collection: string, json: object | string, id: number): Promise<void>;
 
     /**
      * Get json body of document identified by [id] and stored in [collection].
@@ -288,6 +294,13 @@ declare namespace ejdb2_react_native {
      * Not found error can be detected by {@link JBE.isNotFound}
      */
     get(collection: string, id: number): Promise<object>;
+
+    /**
+     * Get json body of document identified by [id] and stored in [collection].
+     *
+     * If document with given `id` is not found then `null` will be resoved.
+     */
+    getOrNull(collection: string, id: number): Promise<object|null>;
 
     /**
      * Removes document idenfied by [id] from [collection].

@@ -8,7 +8,7 @@ public interface JQLCallback {
   /**
    * Called on every JSON record in result set.
    *
-   * Implementor can control iteration behaviour by returning a step getting next
+   * Implementor can control iteration behavior by returning a step getting next
    * record:
    *
    * <ul>
@@ -21,7 +21,7 @@ public interface JQLCallback {
    *
    * @param id   Current document identifier
    * @param json Document JSOn body as string
-   * @return Number of records to move
+   * @return Number of records to skip
    */
   long onRecord(long id, String json);
 }

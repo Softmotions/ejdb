@@ -11,7 +11,7 @@ static void jbi_ftoa(long double val, char buf[static 64], size_t *osz) {
   // todo: review
   int sz = snprintf(buf, 64, "%.8Lf", val);
   if (sz <= 0) {
-    buf[0]  = '\0';
+    buf[0] = '\0';
     *osz = 0;
     return;
   }
@@ -19,7 +19,7 @@ static void jbi_ftoa(long double val, char buf[static 64], size_t *osz) {
     buf[sz - 1] = '\0';
     sz--;
   }
-  if (sz > 0 && buf[sz - 1] == '.') {
+  if ((sz > 0) && (buf[sz - 1] == '.')) {
     buf[sz - 1] = '\0';
     sz--;
   }

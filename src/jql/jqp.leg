@@ -26,7 +26,7 @@ static JQPUNIT *_jqp_unit_op(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_unit_join(struct _yycontext *yy, const char *text);
 static JQPUNIT *_jqp_expr(struct _yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *right);
 static JQPUNIT *_jqp_node(struct _yycontext *yy, JQPUNIT *value);
-static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value);
+static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value, uint8_t flags);
 static void _jqp_set_skip(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_set_limit(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_add_orderby(struct _yycontext *yy, JQPUNIT *unit);
@@ -50,14 +50,16 @@ static JQPUNIT *_jqp_pop_filter_factor_chain(struct _yycontext *yy, JQPUNIT *unt
 static JQPUNIT *_jqp_pop_expr_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_node_chain(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_projfields_chain(struct _yycontext *yy, JQPUNIT *until);
-static JQPUNIT *_jqp_pop_projections(struct _yycontext *yy, JQPUNIT *until);
+static JQPUNIT *_jqp_pop_projection_nodes(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_pop_ordernodes(struct _yycontext *yy, JQPUNIT *until);
 static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p);
 static JQPUNIT *_jqp_pop_joined_projections(struct _yycontext *yy, JQPUNIT *until);
 
 static void _jqp_set_filters_expr(struct _yycontext *yy, JQPUNIT *expr);
+static JQPUNIT *_jqp_create_filterexpr_pk(struct _yycontext *yy, JQPUNIT *argument);
 static void _jqp_set_apply(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_set_apply_delete(struct _yycontext *yy);
+static void _jqp_set_apply_upsert(struct _yycontext *yy, JQPUNIT *unit);
 static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
 
 #define YYSTYPE JQPUNIT*
@@ -77,15 +79,23 @@ static void _jqp_set_projection(struct _yycontext *yy, JQPUNIT *unit);
   }
 %}
 
-QUERY = (e:FILTEREXPR { _jqp_set_filters_expr(yy, e); })
-        (_ '|' _ (a:APPLY { _jqp_set_apply(yy, a); } | "del" { _jqp_set_apply_delete(yy); }) )?
+QUERY = s:QEXPR { _jqp_set_filters_expr(yy, s); }
+        (_ '|' _ (a:APPLY { _jqp_set_apply(yy, a); } | "del" { _jqp_set_apply_delete(yy); } | u:UPSERT { _jqp_set_apply_upsert(yy, u); } ) )?
         (_ p:PROJECTION { _jqp_set_projection(yy, p); } )?
         (_ OPTS )?
         _ EOF { _jqp_finish(yy); }
 
+QEXPR = FILTEREXPR_PK | FILTEREXPR
+
+FILTEREXPR_PK = (a:FILTERANCHOR { _jqp_unit_push(yy, a); })?
+                '/' _ '=' _ ( p:PLACEHOLDER | p:NUMPK | p:NUMPK_ARR )
+                { $$ = _jqp_create_filterexpr_pk(yy, p) }
+
 FILTERJOIN = (<("and" | "or")> (__ "not" { _jqp_op_negate(yy); })?)   { $$ = _jqp_unit_join(yy, yytext); }
 
 APPLY      =  "apply" __ ( PLACEHOLDER | OBJJ | ARRJ )
+
+UPSERT =  "upsert" __ ( PLACEHOLDER | OBJJ | ARRJ )
 
 PROJECTION  = '|' _ (sn:PROJNODES { _jqp_unit_push(yy, sn); }
                     (_ <PROJOIN> { _jqp_string_push(yy, yytext, true); } _ n:PROJNODES { _jqp_push_joined_projection(yy, n); } )*)
@@ -113,8 +123,8 @@ ORDERNODES = sn:ORDERNODE { _jqp_unit_push(yy, sn); } (n:ORDERNODE { _jqp_unit_p
 
 ORDERNODE = '/' PROJPROP
 
-PROJNODES = (a:PROJALL { $$ = _jqp_projection(yy, a); }
-            | (sn:PROJNODE { _jqp_unit_push(yy, sn); } (n:PROJNODE { _jqp_unit_push(yy, n);})*) { $$ = _jqp_pop_projections(yy, sn); })
+PROJNODES = (a:PROJALL { $$ = _jqp_projection(yy, a, 0); }
+            | (sn:PROJNODE { _jqp_unit_push(yy, sn); } (n:PROJNODE { _jqp_unit_push(yy, n);})*) { $$ = _jqp_pop_projection_nodes(yy, sn); })
 
 PROJALL = "all" { $$ = _jqp_string(yy, JQP_STR_PROJALIAS, "all"); }
 
@@ -166,9 +176,10 @@ PLACEHOLDER = ':' <([a-zA-Z0-9]+ | '?')>                                { $$ = _
 NEXOP = ("not" __ { _jqp_op_negate(yy); })? <("in" | "ni" | "re")>      { $$ = _jqp_unit_op(yy, yytext); }
         | <(">=" | "gte")>                                              { $$ = _jqp_unit_op(yy, yytext); }
         | <("<=" | "lte")>                                              { $$ = _jqp_unit_op(yy, yytext); }
-        | ('!' _  { _jqp_op_negate(yy); })? <('=' | "eq")>              { $$ = _jqp_unit_op(yy, yytext); }
+        | ('!' _  { _jqp_op_negate(yy); })? <('=' | "eq" | '~')>        { $$ = _jqp_unit_op(yy, yytext); }
         | <('>' | "gt")>                                                { $$ = _jqp_unit_op(yy, yytext); }
         | <('<' | "lt")>                                                { $$ = _jqp_unit_op(yy, yytext); }
+        | <('~')>                                                       { $$ = _jqp_unit_op(yy, yytext); }
 
 STRP = <CHP+> { $$ = _jqp_unescaped_string(yy, 0, yytext); }
 
@@ -216,6 +227,12 @@ CHP = '\\' '\\'
       | ![/"[\]=><!\t\n\r() ] .
 
 NUMJ = <('-'? NUMI NUMF? NUME?)> { $$ = _jqp_json_number(yy, yytext); }
+
+NUMPK = <(NUMI)> { $$ = _jqp_json_number(yy, yytext); }
+
+NUMPK_ARR =  (s:SARRJ { _jqp_unit_push(yy, s); }
+            _ (fv:NUMPK { _jqp_unit_push(yy, fv); } (_ ',' _ v:NUMPK { _jqp_unit_push(yy, v); })* )? _ ']')
+            { $$ = _jqp_json_collect(yy, JBV_ARRAY, s); }
 
 NUMI = '0' | [1-9] [0-9]*
 

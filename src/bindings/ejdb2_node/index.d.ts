@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2019 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,7 @@ declare namespace ejdb2_node {
   /**
    * EJDB document.
    */
-  interface JBDOC {
+  interface JBDOC<T extends object = { [key: string]: any }> {
     /**
      * Document identifier
      */
@@ -59,7 +59,7 @@ declare namespace ejdb2_node {
     /**
      * Document JSON object
      */
-    json: any;
+    json: T;
 
     /**
      * String represen
@@ -67,7 +67,9 @@ declare namespace ejdb2_node {
     toString(): string;
   }
 
-  interface JBDOCStream extends NodeJS.ReadableStream {}
+  interface JBDOCStream<T extends object = { [key: string]: any }>  {
+    [Symbol.asyncIterator](): AsyncIterableIterator<JBDOC<T>>;
+  }
 
   /**
    * Query execution options.
@@ -103,7 +105,7 @@ declare namespace ejdb2_node {
      * readable stream of matched documents.
      *
      */
-    stream(opts?: QueryOptions): JBDOCStream;
+    stream<T extends object = { [key: string]: any }>(opts?: QueryOptions): JBDOCStream<T>;
 
     /**
      * Executes this query and waits its completion.
@@ -120,18 +122,18 @@ declare namespace ejdb2_node {
      * Returns result set as a list.
      * Use it with caution on large data sets.
      */
-    list(opts?: QueryOptions): Promise<Array<JBDOC>>;
+    list<T extends object = { [key: string]: any }>(opts?: QueryOptions): Promise<Array<JBDOC<T>>>;
 
     /**
      * Collects up to [n] documents from result set into array.
      */
-    firstN(n: number, opts?: QueryOptions): Promise<Array<JBDOC>>;
+    firstN<T extends object = { [key: string]: any }>(n: number, opts?: QueryOptions): Promise<Array<JBDOC<T>>>;
 
     /**
      * Returns a first record in result set.
      * If record is not found promise with `undefined` will be returned.
      */
-    first(opts?: QueryOptions): Promise<JBDOC | undefined>;
+    first<T extends object = { [key: string]: any }>(opts?: QueryOptions): Promise<JBDOC<T> | undefined>;
 
     /**
      * Set [json] at the specified [placeholder].
@@ -348,7 +350,7 @@ declare namespace ejdb2_node {
      * @param path Database file path
      * @param opts Options
      */
-    static open(path: String, opts?: OpenOptions): EJDB2;
+    static open(path: String, opts?: OpenOptions): Promise<EJDB2>;
 
     /**
      * Closes this database instance.
@@ -362,9 +364,15 @@ declare namespace ejdb2_node {
     put(collection: String, json: object | string, id?: number): Promise<number>;
 
     /**
-     * Apply rfc6902/rfc6901 JSON [patch] to the document identified by [id].
+     * Apply rfc6902/rfc7386 JSON [patch] to the document identified by [id].
      */
     patch(collection: string, json: object | string, id: number): Promise<void>;
+
+    /**
+     * Apply JSON merge patch (rfc7396) to the document identified by `id` or
+     * insert new document under specified `id`.
+     */
+    patchOrPut(collection: string, json: object | string, id: number): Promise<void>;
 
     /**
      * Get json body of document identified by [id] and stored in [collection].
@@ -372,7 +380,14 @@ declare namespace ejdb2_node {
      * If document with given `id` is not found then `Error` will be thrown.
      * Not found error can be detected by {@link JBE.isNotFound}
      */
-    get(collection: string, id: number): Promise<object>;
+    get<T extends object = { [key: string]: any }>(collection: string, id: number): Promise<T>;
+
+    /**
+     * Get json body of document identified by [id] and stored in [collection].
+     *
+     * If document with given `id` is not found then `null` will be resoved.
+     */
+    getOrNull<T extends object = { [key: string]: any }>(collection: string, id: number): Promise<T|null>;
 
     /**
      * Get json body with database metadata.

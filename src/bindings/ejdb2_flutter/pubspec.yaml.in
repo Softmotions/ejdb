@@ -1,0 +1,30 @@
+name: ejdb2_flutter
+description: Embeddable JSON Database engine EJDB http://ejdb.org Flutter binding.
+version: @EJDB2_FLUTTER_VERSION@
+homepage: https://ejdb.org
+
+environment:
+  sdk: '>=2.5.0 <3.0.0'
+  flutter: ">=1.10.0 <2.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  json_at: ^1.0.4
+  quiver: ^2.0.5
+  pedantic: ^1.8.0+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.softmotions.ejdb2
+        pluginClass: Ejdb2FlutterPlugin
+      ios:
+        pluginClass: Ejdb2FlutterPlugin
+
+

@@ -1,6 +1,7 @@
 file(
   COPY .
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+  REGEX "(/\\.gradle)|(/node_modules)|(/build$)|(/libs)|(/jniLibs)" EXCLUDE
 )
 
 add_subdirectory(binding)

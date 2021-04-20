@@ -1,0 +1,97 @@
+import org.gradle.plugins.ide.eclipse.model.Library
+
+group 'com.softmotions.ejdb2'
+version '1.0'
+
+apply plugin: 'com.android.library'
+//apply plugin: "com.greensopinion.gradle-android-eclipse"
+//apply plugin: 'eclipse'
+
+sourceCompatibility = 1.8
+
+ext {
+
+  flutterRoot = {
+    def flutterProperties = new Properties()
+    def flutterPropertiesFile = rootProject.file('local.properties')
+    if (!flutterPropertiesFile.exists()) {
+        throw new GradleException("Flutter properties file not found. Define a flutter.properties file in your project root.")
+    }
+    flutterPropertiesFile.withInputStream { stream ->
+        flutterProperties.load(stream)
+    }
+    def flutterRoot = flutterProperties.getProperty('flutter.sdk')
+    if (flutterRoot == null) {
+        throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the flutter.properties file.")
+    }
+    return flutterRoot
+  }()
+
+  androidHome = {
+    if (System.env.ANDROID_HOME == null) {
+      throw new GradleException("Missing required ANDROID_HOME env variable");
+    }
+    return System.env.ANDROID_HOME;
+  }()
+}
+
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        maven {
+          url "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.2.1'
+        //classpath "gradle.plugin.com.greensopinion.gradle-android-eclipse:gradle-android-eclipse:1.1"
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        minSdkVersion 16
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    compileOptions {
+      sourceCompatibility JavaVersion.VERSION_1_8
+      targetCompatibility JavaVersion.VERSION_1_8
+    }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+}
+
+dependencies {
+  compile fileTree(dir: 'src/main/jniLibs', include: ['*.jar'])
+}
+
+// eclipse {
+//   classpath {
+//     plusConfigurations += [ configurations.compile, configurations.testCompile ]
+//     downloadSources = true
+//     file {
+//       whenMerged {
+//         def androidHome = project.ext.get('androidHome')
+//         def libAndroid = new Library(fileReference(file("$System.env.ANDROID_HOME/platforms/$project.android.compileSdkVersion/android.jar")));
+//         libAndroid.setSourcePath(fileReference(file("$System.env.ANDROID_HOME/sources/$project.android.compileSdkVersion")));
+//         // def flutterRoot = project.ext.get('flutterRoot')
+//         // def flutterLib = new Library(fileReference(file("$flutterRoot/bin/cache/artifacts/engine/android-x86/flutter.jar")))
+//         // flutterLib.setSourcePath(fileReference(file('/home/adam/Projects/tmp/engine/shell/platform/android')))
+//         // entries += [ libAndroid, flutterLib ]
+//         entries += [ libAndroid ]
+//       }
+//     }
+//   }
+// }
