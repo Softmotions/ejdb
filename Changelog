@@ -1,9 +1,11 @@
-ejdb2 (2.0.60) UNRELEASED; urgency=medium
+ejdb2 (2.0.60) testing; urgency=medium
 
+  * Upgraded to iowow v1.4.11
+  * Fixed Macos build error (#313)
   * Added typescript generic to JBDOC in node binding (#311) 
   * Removed -fvisibility=hidden compiler flag from facil.io lib
 
- -- Anton Adamansky <adamansky@gmail.com>  Sun, 21 Mar 2021 22:18:45 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 10 May 2021 16:50:12 +0700
 
 ejdb2 (2.0.59) testing; urgency=medium
 
