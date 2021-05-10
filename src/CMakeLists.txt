@@ -22,6 +22,12 @@ if(APPLE)
       CACHE STRING "Directory to install frameworks to.")
 endif()
 
+if(APPLE)
+  set(STRIP_CMD strip -x)
+else()
+  set(STRIP_CMD strip -s)
+endif()
+
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
@@ -286,7 +292,7 @@ if(BUILD_SHARED_LIBS)
     add_custom_command(
       TARGET ejdb2
       POST_BUILD
-      COMMAND strip -s $<TARGET_FILE:ejdb2>)
+      COMMAND ${STRIP_CMD} $<TARGET_FILE:ejdb2>)
   endif()
 
   set_target_properties(
