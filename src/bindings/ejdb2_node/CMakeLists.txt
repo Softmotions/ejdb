@@ -61,7 +61,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_custom_command(
     TARGET ejdb2_node
     POST_BUILD
-    COMMAND strip -s $<TARGET_FILE:ejdb2_node>)
+    COMMAND ${STRIP_CMD} $<TARGET_FILE:ejdb2_node>)
 endif()
 
 configure_file(package.json ${NODE_PUB_DIR}/package.json @ONLY)

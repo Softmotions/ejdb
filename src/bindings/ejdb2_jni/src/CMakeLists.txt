@@ -123,7 +123,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_custom_command(
     TARGET ejdb2jni
     POST_BUILD
-    COMMAND strip -s $<TARGET_FILE:ejdb2jni>)
+    COMMAND ${STRIP_CMD} $<TARGET_FILE:ejdb2jni>)
 endif()
 
 install(
