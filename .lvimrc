@@ -6,6 +6,9 @@ let g:cc = 'clang'
 let g:cxx = 'clang++'
 
 let g:root_dir = g:localvimrc_script_dir_unresolved
+let $ROOT_DIR = g:root_dir
+let $UNCRUSTIFY_CONFIG = g:root_dir.'/uncrustify.cfg'
+
 let g:build_dir = g:root_dir.'/build'
 let &l:makeprg = 'cd '.g:build_dir.' && make -j4'
 
