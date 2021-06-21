@@ -1,3 +1,9 @@
+ejdb2 (2.0.61) UNRELEASED; urgency=medium
+
+  * Fixed incorrect arguments check in `jbn_merge_patch`
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 21 Jun 2021 16:42:44 +0700
+
 ejdb2 (2.0.60) testing; urgency=medium
 
   * Upgraded to iowow v1.4.11

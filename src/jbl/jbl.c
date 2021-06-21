@@ -2883,7 +2883,7 @@ iwrc jbn_patch_auto(JBL_NODE root, JBL_NODE patch, IWPOOL *pool) {
 }
 
 iwrc jbn_merge_patch(JBL_NODE root, JBL_NODE patch, IWPOOL *pool) {
-  if (!root || !patch || pool || (root->type != JBV_OBJECT)) {
+  if (!root || !patch || !pool || (root->type != JBV_OBJECT)) {
     return IW_ERROR_INVALID_ARGS;
   }
   iwrc rc = 0;
