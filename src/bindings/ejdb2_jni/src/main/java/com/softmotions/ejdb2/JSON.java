@@ -41,6 +41,10 @@ public final class JSON {
     return new JSON(bytes);
   }
 
+  public static JSON fromBytes(byte[] bytes, int off, int len) {
+    return new JSON(bytes, off, len);
+  }
+
   public static JSON fromMap(Map<String, Object> map) {
     return new JSON(ValueType.OBJECT, map);
   }
@@ -102,6 +106,22 @@ public final class JSON {
   JSON(byte[] buf) {
     this.buf = buf;
     tail = buf.length;
+    type = whatIsNext();
+    value = read(type);
+    reset();
+  }
+
+  JSON(byte[] buf, int off, int len) {
+    if (buf.length < off + len) {
+      throw new ArrayIndexOutOfBoundsException();
+    }
+    if (off == 0) {
+      this.buf = buf;
+    } else {
+      this.buf = new byte[len - off];
+      System.arraycopy(buf, off, this.buf, 0, len);
+    }
+    tail = len;
     type = whatIsNext();
     value = read(type);
     reset();
