@@ -1,3 +1,3 @@
 ejdb2_react_native (@EJDB2_RN_VERSION@)
 
-- Upgraded to ejdb v2.0.60
+- Upgraded to ejdb2 v@PROJECT_VERSION@

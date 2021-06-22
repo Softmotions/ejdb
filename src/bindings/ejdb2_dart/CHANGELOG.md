@@ -1,3 +1,3 @@
 ejdb_dart (@EJDB2_DART_VERSION@)
 
-- Upgraded to ejdb v2.0.60
+- Upgraded to ejdb2 v@PROJECT_VERSION@

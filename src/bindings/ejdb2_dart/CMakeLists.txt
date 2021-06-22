@@ -2,8 +2,8 @@
 
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt _VERSION)
 set_property(GLOBAL PROPERTY EJDB2_DART_VERSION_PROPERTY
-                             "${PROJECT_VERSION}${_VERSION}")
-set(EJDB2_DART_VERSION "${PROJECT_VERSION}${_VERSION}")
+                             "${PROJECT_VERSION}.${_VERSION}")
+set(EJDB2_DART_VERSION "${PROJECT_VERSION}.${_VERSION}")
 
 add_library(ejdb2_dart SHARED lib/ejdb2_dart.c)
 target_link_libraries(ejdb2_dart ejdb2_s ${PROJECT_LLIBRARIES})
