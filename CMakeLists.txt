@@ -33,6 +33,7 @@ set(PROJECT_VERSION
 set(${PROJECT_NAME}_VERSION ${PROJECT_VERSION})
 set(${PROJECT_NAME}_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(${PROJECT_NAME}_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(${PROJECT_NAME}_VERSION_PATCH 0)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(ENABLE_HTTP "Enable HTTP endpoint and standalone server (jbs)" ON)
@@ -59,7 +60,7 @@ set(PPA_DEBIAN_VERSION
     CACHE STRING "PPA version suffix for debian packages")
 
 set(PROJECT_PPA_DISTRIB_TARGET
-    "focal;bionic;xenial"
+    "focal;bionic"
     CACHE STRING "Ubuntu PPA distribution names")
 
 set(ANDROID_ABIS
