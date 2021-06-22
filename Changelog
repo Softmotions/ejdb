@@ -2,7 +2,7 @@ ejdb2 (2.61) testing; urgency=medium
 
   * Fixed incorrect arguments check in `jbn_merge_patch`
 
- -- Anton Adamansky <adamansky@gmail.com>  Tue, 22 Jun 2021 09:58:54 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 22 Jun 2021 10:51:46 +0700
 
 ejdb2 (2.0.60) testing; urgency=medium
 
