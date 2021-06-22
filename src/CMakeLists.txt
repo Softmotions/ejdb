@@ -25,7 +25,7 @@ endif()
 if(APPLE)
   set(STRIP_CMD strip -x)
 else()
-  set(STRIP_CMD strip -s)
+  set(STRIP_CMD ${CMAKE_STRIP} -s)
 endif()
 
 include(CheckIncludeFile)
