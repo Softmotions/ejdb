@@ -18,5 +18,10 @@ let g:termdebug_wide=1
 tnoremap <A-Esc> <C-\><C-n>
 nnoremap <leader>c :call asyncrun#run('',
         \ {'mode':'bang','cwd':g:build_dir,'save':2},
-        \ 'cmake .. -DCMAKE_BUILD_TYPE='.g:build_type.' -DBUILD_TESTS='.g:build_tests.' -DCMAKE_CXX_COMPILER='.g:cxx.' -DCMAKE_C_COMPILER='.g:cc.' -DCMAKE_EXPORT_COMPILE_COMMANDS=ON')
+        \ 'cmake .. -DCMAKE_BUILD_TYPE='.g:build_type.' -DBUILD_TESTS='.g:build_tests
+        \ .' -DCMAKE_CXX_COMPILER='.g:cxx.' -DCMAKE_C_COMPILER='.g:cc
+        \ .' -DCMAKE_EXPORT_COMPILE_COMMANDS=ON'
+        \ .' -DBUILD_JNI_BINDING=ON'
+        \ .' -DBUILD_NODEJS_BINDING=ON'
+        \ .' -DBUILD_DART_BINDING=ON')
         \<CR>

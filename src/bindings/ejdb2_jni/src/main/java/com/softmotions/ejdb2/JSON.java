@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -23,7 +24,7 @@ import java.util.Objects;
  *
  * - https://github.com/ralfstx/minimal-json (MIT)
  */
-public final class JSON {
+public final class JSON implements Comparable<JSON> {
 
   public static ObjectBuilder buildObject() {
     return new ObjectBuilder();
@@ -782,7 +783,7 @@ public final class JSON {
   }
 
   public static enum ValueType {
-    UNKNOWN, STRING, NUMBER, NULL, BOOLEAN, ARRAY, OBJECT;
+    UNKNOWN, NULL, BOOLEAN, NUMBER, STRING, OBJECT, ARRAY;
 
     static ValueType getTypeOf(Object v) {
       if (v == null) {
@@ -1250,5 +1251,99 @@ public final class JSON {
       writeTo(sw, value);
       return sw.toString();
     }
+  }
+
+  private int compareRaw(Object v1, Object v2) {
+    ValueType t1 = ValueType.getTypeOf(v1);
+    ValueType t2 = ValueType.getTypeOf(v2);
+    if (t1 != t2) {
+      return t1.ordinal() - t2.ordinal();
+    }
+    switch (type) {
+      case STRING:
+        return ((String) v1).compareTo((String) v2);
+      case OBJECT:
+        return compareRawObjects((Map<String, ?>) v1, (Map<String, ?>) v2);
+      case NUMBER:
+        return ((Comparable<Number>) v1).compareTo((Number) v2);
+      case BOOLEAN:
+        return ((Boolean) v1).compareTo((Boolean) v2);
+      case ARRAY: {
+        return compareRawLists((List<Object>) v1, (List<Object>) v2);
+      }
+      case NULL:
+      case UNKNOWN:
+        break;
+    }
+    return 0;
+  }
+
+  private int compareRawLists(List<Object> l1, List<Object> l2) {
+    for (int i = 0, l = Math.min(l1.size(), l2.size()); i < l; ++i) {
+      int res = compareRaw(l1.get(i), l2.get(i));
+      if (res != 0) {
+        return res;
+      }
+    }
+    if (l1.size() > l2.size()) {
+      return 1;
+    } else if (l2.size() < l2.size()) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
+  private int compareRawObjects(Map<String, ?> m1, Map<String, ?> m2) {
+    int cnt = m1.size();
+    int i = m2.size();
+    if (cnt > i) {
+      return 1;
+    } else if (cnt < i) {
+      return -1;
+    } else if (cnt == 0) {
+      return 0;
+    }
+    String[] k1 = m1.keySet().toArray(new String[0]);
+    String[] k2 = m2.keySet().toArray(new String[0]);
+    Arrays.sort(k1);
+    Arrays.sort(k2);
+    for (i = 0; i < cnt; ++i) {
+      int res = k1[i].compareTo(k2[i]);
+      if (res != 0) {
+        return res;
+      }
+      res = compareRaw(m1.get(k1[i]), m2.get(k2[i]));
+      if (res != 0) {
+        return res;
+      }
+    }
+    return 0;
+  }
+
+  @Override
+  public int compareTo(JSON o) {
+    if (o == null) {
+      return 1;
+    }
+    if (type != o.type) {
+      return type.ordinal() - o.type.ordinal();
+    }
+    switch (type) {
+      case OBJECT:
+        return compareRawObjects((Map<String, ?>) value, (Map<String, ?>) o.value);
+      case ARRAY:
+        return compareRawLists((List<Object>) value, (List<Object>) value);
+      case STRING:
+        return ((String) value).compareTo(o.cast());
+      case NUMBER:
+        return ((Comparable<Number>) value).compareTo(o.cast());
+      case BOOLEAN:
+        return ((Boolean) value).compareTo(o.cast());
+      case NULL:
+      case UNKNOWN:
+        break;
+    }
+    return 0;
   }
 }
