@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * JSON parser/container.
@@ -180,6 +181,13 @@ public final class JSON implements Comparable<JSON> {
 
   public Builder modify() {
     return new Builder(this);
+  }
+
+  public Set<String> keys() {
+    if (type != ValueType.OBJECT) {
+      return Collections.EMPTY_SET;
+    }
+    return ((Map<String,Object>) value).keySet();
   }
 
   public JSON get(String key) {

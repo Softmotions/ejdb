@@ -1,3 +1,10 @@
+ejdb2 (2.62) UNRELEASED; urgency=medium
+
+  * Java: com.softmotions.ejdb2.JSON added Comparable support
+  * Java: com.softmotions.ejdb2.JSON added better JSON.equals() implementation
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 23 Jun 2021 17:17:45 +0700
+
 ejdb2 (2.61) testing; urgency=medium
 
   * Fixed incorrect arguments check in `jbn_merge_patch`
