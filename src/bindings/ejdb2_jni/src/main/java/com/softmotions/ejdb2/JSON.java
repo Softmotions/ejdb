@@ -778,8 +778,7 @@ public final class JSON implements Comparable<JSON> {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    JSON other = (JSON) obj;
-    return type == other.type && Objects.equals(value, other.value);
+    return this.compareTo((JSON) obj) == 0;
   }
 
   public static enum ValueType {
