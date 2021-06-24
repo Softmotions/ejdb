@@ -1266,7 +1266,7 @@ public final class JSON implements Comparable<JSON> {
     if (t1 != t2) {
       return t1.ordinal() - t2.ordinal();
     }
-    switch (type) {
+    switch (t1) {
       case STRING:
         return ((String) v1).compareTo((String) v2);
       case OBJECT:

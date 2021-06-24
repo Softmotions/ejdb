@@ -1,5 +1,6 @@
 ejdb2 (2.62) UNRELEASED; urgency=medium
 
+  * Java: com.softmotions.ejdb2.JSON typo fixed
   * Java: com.softmotions.ejdb2.JSON added Comparable support
   * Java: com.softmotions.ejdb2.JSON added better JSON.equals() implementation
 
