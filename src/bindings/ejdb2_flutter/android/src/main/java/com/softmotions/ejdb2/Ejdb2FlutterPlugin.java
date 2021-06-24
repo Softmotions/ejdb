@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,7 +38,7 @@ public final class Ejdb2FlutterPlugin implements MethodCallHandler, StreamHandle
   static final Map<String, DbMethod> methods = new ConcurrentHashMap<>();
 
   static final Executor executor = new ThreadPoolExecutor(0, 5, 60L, TimeUnit.SECONDS,
-      new SynchronousQueue<Runnable>());
+                                                          new LinkedBlockingQueue<Runnable>());
 
   static {
     methods.put("executeFirst", thread(Ejdb2FlutterPlugin::executeFirst));
@@ -199,12 +199,12 @@ public final class Ejdb2FlutterPlugin implements MethodCallHandler, StreamHandle
       for (Map.Entry<String, Object> entry : qspec.entrySet()) {
         String key = entry.getKey();
         switch (key) {
-        case "l": // limit
-          q.setLimit(asLong(entry.getValue(), 0));
-          break;
-        case "s": // skip
-          q.setSkip(asLong(entry.getValue(), 0));
-          break;
+          case "l": // limit
+            q.setLimit(asLong(entry.getValue(), 0));
+            break;
+          case "s": // skip
+            q.setSkip(asLong(entry.getValue(), 0));
+            break;
         }
       }
       for (List<Object> pslot : params) {
@@ -219,48 +219,48 @@ public final class Ejdb2FlutterPlugin implements MethodCallHandler, StreamHandle
           }
         } else {
           switch (type) {
-          case 1: // String
-            if (plh instanceof Number) {
-              q.setString(((Number) plh).intValue(), asString(val, null));
-            } else {
-              q.setString((String) plh, asString(val, null));
-            }
-            break;
-          case 2: // Long
-            if (plh instanceof Number) {
-              q.setLong(((Number) plh).intValue(), asLong(val, 0));
-            } else {
-              q.setLong((String) plh, asLong(val, 0));
-            }
-            break;
-          case 3: // Double
-            if (plh instanceof Number) {
-              q.setDouble(((Number) plh).intValue(), asDouble(val, 0));
-            } else {
-              q.setDouble((String) plh, asDouble(val, 0));
-            }
-            break;
-          case 4: // Boolean
-            if (plh instanceof Number) {
-              q.setBoolean(((Number) plh).intValue(), asBoolean(val, false));
-            } else {
-              q.setBoolean((String) plh, asBoolean(val, false));
-            }
-            break;
-          case 5: // Regexp
-            if (plh instanceof Number) {
-              q.setRegexp(((Number) plh).intValue(), asString(val, null));
-            } else {
-              q.setRegexp((String) plh, asString(val, null));
-            }
-            break;
-          case 6: // JSON
-            if (plh instanceof Number) {
-              q.setJSON(((Number) plh).intValue(), asString(val, null));
-            } else {
-              q.setJSON((String) plh, asString(val, null));
-            }
-            break;
+            case 1: // String
+              if (plh instanceof Number) {
+                q.setString(((Number) plh).intValue(), asString(val, null));
+              } else {
+                q.setString((String) plh, asString(val, null));
+              }
+              break;
+            case 2: // Long
+              if (plh instanceof Number) {
+                q.setLong(((Number) plh).intValue(), asLong(val, 0));
+              } else {
+                q.setLong((String) plh, asLong(val, 0));
+              }
+              break;
+            case 3: // Double
+              if (plh instanceof Number) {
+                q.setDouble(((Number) plh).intValue(), asDouble(val, 0));
+              } else {
+                q.setDouble((String) plh, asDouble(val, 0));
+              }
+              break;
+            case 4: // Boolean
+              if (plh instanceof Number) {
+                q.setBoolean(((Number) plh).intValue(), asBoolean(val, false));
+              } else {
+                q.setBoolean((String) plh, asBoolean(val, false));
+              }
+              break;
+            case 5: // Regexp
+              if (plh instanceof Number) {
+                q.setRegexp(((Number) plh).intValue(), asString(val, null));
+              } else {
+                q.setRegexp((String) plh, asString(val, null));
+              }
+              break;
+            case 6: // JSON
+              if (plh instanceof Number) {
+                q.setJSON(((Number) plh).intValue(), asString(val, null));
+              } else {
+                q.setJSON((String) plh, asString(val, null));
+              }
+              break;
           }
         }
       }
