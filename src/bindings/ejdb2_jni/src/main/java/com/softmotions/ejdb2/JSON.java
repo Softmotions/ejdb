@@ -792,7 +792,7 @@ public final class JSON implements Comparable<JSON> {
   public static enum ValueType {
     UNKNOWN, NULL, BOOLEAN, NUMBER, STRING, OBJECT, ARRAY;
 
-    static ValueType getTypeOf(Object v) {
+    public static ValueType getTypeOf(Object v) {
       if (v == null) {
         return NULL;
       }
