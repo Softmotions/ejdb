@@ -1711,7 +1711,9 @@ iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, JBL_NODE *nod
   n->type = JBV_BOOL;
   n->vbool = val;
   jbn_add_item(parent, n);
-
+  if (node_out) {
+    *node_out = n;
+  }
 finish:
   return rc;
 }
