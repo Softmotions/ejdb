@@ -8,7 +8,7 @@
  * sizeof `buf` must be at least 64 bytes
  */
 static void jbi_ftoa(long double val, char buf[static 64], size_t *osz) {
-  // todo: review
+  // TODO: review
   int sz = snprintf(buf, 64, "%.8Lf", val);
   if (sz <= 0) {
     buf[0] = '\0';

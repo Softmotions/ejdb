@@ -198,7 +198,7 @@ typedef iwrc (*jbl_json_printer)(const char *data, int size, char ch, int count,
  * @see `jbl_fill_from_node()`
  * @param [out] jblp Pointer to be initialized by new object.
  */
-IW_EXPORT iwrc jbl_create_empty_object(JBL *jblp);
+IW_EXPORT WUR iwrc jbl_create_empty_object(JBL *jblp);
 
 /**
  * @brief Create empty binary JSON array.
@@ -207,7 +207,7 @@ IW_EXPORT iwrc jbl_create_empty_object(JBL *jblp);
  * @see `jbl_fill_from_node()`
  * @param [out] jblp Pointer to be initialized by new object.
  */
-IW_EXPORT iwrc jbl_create_empty_array(JBL *jblp);
+IW_EXPORT WUR iwrc jbl_create_empty_array(JBL *jblp);
 
 /**
  * @brief Sets arbitrary user data associated with JBL object.
