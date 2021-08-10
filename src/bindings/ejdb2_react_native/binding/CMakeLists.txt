@@ -24,7 +24,7 @@ add_custom_target(
   DEPENDS ${ANDROID_ABIS_LIBS}
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/../../ejdb2_android/libs ${ANDROID_LIBS_DIR}
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../README.md ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND ${YARN_EXEC} pack --filename ${REACT_NATIVE_PUB_DIR}/ejdb2_react_native.tgz
+  COMMAND ${YARN_EXEC} --non-interactive --no-progress pack --filename ${REACT_NATIVE_PUB_DIR}/ejdb2_react_native.tgz
   WORKING_DIRECTORY ${REACT_NATIVE_PUB_DIR}
 )
 

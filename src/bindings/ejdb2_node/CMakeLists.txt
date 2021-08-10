@@ -42,8 +42,11 @@ add_library(ejdb2_node MODULE ejdb2_node.c)
 target_link_libraries(ejdb2_node ejdb2_s ${PROJECT_LLIBRARIES})
 
 set_target_properties(
-  ejdb2_node PROPERTIES OUTPUT_NAME ejdb2_node PREFIX "" SUFFIX ".node"
-                        LIBRARY_OUTPUT_DIRECTORY ${NODE_BIN_DIR})
+  ejdb2_node
+  PROPERTIES OUTPUT_NAME ejdb2_node
+             PREFIX ""
+             SUFFIX ".node"
+             LIBRARY_OUTPUT_DIRECTORY ${NODE_BIN_DIR})
 
 target_compile_options(ejdb2_node PRIVATE -DIW_API_EXPORTS
                                           -DNODE_ADDON_API_DISABLE_DEPRECATED)
@@ -76,7 +79,7 @@ configure_file(install.js ${NODE_PUB_DIR}/install.js COPYONLY)
 configure_file(test.js ${NODE_PUB_DIR}/test.js COPYONLY)
 
 add_custom_command(
-  COMMAND yarn install
+  COMMAND yarn --non-interactive --no-progress install
   OUTPUT ${NODE_PUB_DIR}/node_modules
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/yarn.lock
           ${CMAKE_CURRENT_SOURCE_DIR}/package.json
@@ -87,6 +90,6 @@ add_custom_target(yarn ALL DEPENDS ${NODE_PUB_DIR}/node_modules)
 if(BUILD_TESTS)
   add_test(
     NAME ejdb2node
-    COMMAND ${YARN_EXEC} run test
+    COMMAND ${YARN_EXEC} --non-interactive --no-progress run test
     WORKING_DIRECTORY ${NODE_PUB_DIR})
 endif()
