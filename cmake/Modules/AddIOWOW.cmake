@@ -70,9 +70,6 @@ set_target_properties(iowow_s PROPERTIES IMPORTED_LOCATION ${BYPRODUCT})
 add_dependencies(iowow_s extern_iowow)
 
 if(DO_INSTALL_CORE)
-  install(
-    FILES ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/pkgconfig/libiowow.pc
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
   install(FILES "${BYPRODUCT}" DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
