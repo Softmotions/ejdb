@@ -18,7 +18,7 @@ endif()
 
 message("IOWOW_URL: ${IOWOW_URL}")
 
-if(IOS)
+if(APPLE)
   set(BYPRODUCT "${CMAKE_BINARY_DIR}/lib/libiowow-1.a")
 else()
   set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a")
@@ -29,8 +29,15 @@ set(CMAKE_ARGS
     -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DASAN=${ASAN}
     -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF)
 
+# In order to properly pass owner project CMAKE variables than contains semicolons,
+# we used a specific separator for 'ExternalProject_Add', using the LIST_SEPARATOR parameter.
+# This allows building fat binaries on macOS, etc. (ie: -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64")
+# Otherwise, semicolons get replaced with spaces and CMake isn't aware of a multi-arch setup.
+set(semicolon_sub "^^")
+
 foreach(
   extra
+  CMAKE_OSX_ARCHITECTURES
   CMAKE_C_COMPILER
   CMAKE_TOOLCHAIN_FILE
   ANDROID_PLATFORM
@@ -43,9 +50,12 @@ foreach(
   ENABLE_STRICT_TRY_COMPILE
   ARCHS)
   if(DEFINED ${extra})
-    list(APPEND CMAKE_ARGS "-D${extra}=${${extra}}")
+    # Replace occurences of ";" with our custom separator and append to CMAKE_ARGS
+    string(REPLACE ";" "${semicolon_sub}" extra_sub "${${extra}}") 
+    list(APPEND CMAKE_ARGS "-D${extra}=${extra_sub}")
   endif()
 endforeach()
+
 message("IOWOW CMAKE_ARGS: ${CMAKE_ARGS}")
 
 ExternalProject_Add(
@@ -62,6 +72,7 @@ ExternalProject_Add(
   LOG_BUILD OFF
   LOG_CONFIGURE OFF
   LOG_INSTALL OFF
+  LIST_SEPARATOR "${semicolon_sub}"
   CMAKE_ARGS ${CMAKE_ARGS}
   BUILD_BYPRODUCTS ${BYPRODUCT})
 
