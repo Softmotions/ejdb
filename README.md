@@ -1,6 +1,6 @@
 # EJDB 2.0
 
-[![Join Telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://tlg.name/ejdb2)
+[![Join Telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://t.me/ejdb2)
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
 ![maintained](https://img.shields.io/maintenance/yes/2021.svg)
 
