@@ -1,6 +1,7 @@
 ejdb2 (2.62) UNRELEASED; urgency=medium
 
-  * Java: com.softmotions.ejdb2.JSON.ValueType.getTypeOf set to be public 
+  * Fixed error in parsing FP JSON value (#333)
+  * Java: com.softmotions.ejdb2.JSON.ValueType.getTypeOf set to be public   
   * Flutter: Fixed #305
   * Java: com.softmotions.ejdb2.JSON typo fixed  
   * Java: com.softmotions.ejdb2.JSON added Comparable support

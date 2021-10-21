@@ -164,6 +164,9 @@ public class TestEJDB2 {
       assert (q.getLimit() == 2);
       assert (q.getSkip() == 3);
 
+      // Test #333 
+      db.put("test333", "{\"foo\":1.1}");
+
       long ts0 = System.currentTimeMillis();
       long ts = db.onlineBackup("test-bkp.db");
       assert (ts > ts0);

@@ -866,6 +866,11 @@ void jbl_test1_11(void) {
 }
 
 void jbl_test1_12(void) {
+  IWPOOL *pool = iwpool_create_empty();
+  JBL_NODE n;
+  iwrc rc = jbn_from_json("{\"foo\":1.1}", &n, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  iwpool_destroy(pool);
 }
 
 int main() {
@@ -888,7 +893,9 @@ int main() {
      || (NULL == CU_add_test(pSuite, "jbl_test1_8", jbl_test1_8))
      || (NULL == CU_add_test(pSuite, "jbl_test1_9", jbl_test1_9))
      || (NULL == CU_add_test(pSuite, "jbl_test1_10", jbl_test1_10))
-     || (NULL == CU_add_test(pSuite, "jbl_test1_11", jbl_test1_11))) {
+     || (NULL == CU_add_test(pSuite, "jbl_test1_11", jbl_test1_11))
+     || (NULL == CU_add_test(pSuite, "jbl_test1_12", jbl_test1_12))
+     ) {
     CU_cleanup_registry();
     return CU_get_error();
   }

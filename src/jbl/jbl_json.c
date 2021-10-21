@@ -1,7 +1,11 @@
 #include "jbl.h"
 #include "utf8proc.h"
 #include "jbl_internal.h"
+#include <ejdb2/iowow/iwconv.h>
+
 #include <errno.h>
+#include <stdlib.h>
+#include <locale.h>
 
 #define IS_WHITESPACE(c_) ((unsigned char) (c_) <= (unsigned char) ' ')
 
@@ -183,7 +187,7 @@ static int _jbl_unescape_json_string(const char *p, char *d, int dlen, const cha
   return 0;
 }
 
-static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
+static const char* _jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
   char c;
   *key = "";
   while ((c = *p++)) {
@@ -226,7 +230,7 @@ static const char *_jbl_parse_key(const char **key, const char *p, JCTX *ctx) {
   return 0;
 }
 
-static const char *_jbl_parse_value(
+static const char* _jbl_parse_value(
   int lvl,
   JBL_NODE parent,
   const char *key, int klidx,
@@ -330,7 +334,7 @@ static const char *_jbl_parse_value(
           if (*p == '}') {
             return p + 1;              // -V522
           }
-          p = _jbl_parse_value(lvl + 1, node, nkey, strlen(nkey), p, ctx);
+          p = _jbl_parse_value(lvl + 1, node, nkey, (int) strlen(nkey), p, ctx);
           if (ctx->rc) {
             return 0;
           }
@@ -378,7 +382,7 @@ static const char *_jbl_parse_value(
         }
         if ((*pe == '.') || (*pe == 'e') || (*pe == 'E')) {
           node->type = JBV_F64;
-          node->vf64 = strtod(p, &pe);
+          node->vf64 = iwstrtod(p, &pe);
           if ((pe == p) || (errno == ERANGE)) {
             ctx->rc = JBL_ERROR_PARSE_JSON;
             return 0;
