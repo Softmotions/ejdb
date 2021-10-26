@@ -62,7 +62,8 @@ else()
       com/softmotions/ejdb2/JQL.java
       com/softmotions/ejdb2/JQLCallback.java
       com/softmotions/ejdb2/JSON.java
-      com/softmotions/ejdb2/JSONException.java)
+      com/softmotions/ejdb2/JSONException.java
+      com/softmotions/ejdb2/JSONMissingException.java)
 
   utils_list_prepend(EJDB2_JAVA_SOURCES_JAR "main/java/" ${EJDB2_JAVA_SOURCES})
 

@@ -187,7 +187,7 @@ public final class JSON implements Comparable<JSON> {
     if (type != ValueType.OBJECT) {
       return Collections.EMPTY_SET;
     }
-    return ((Map<String,Object>) value).keySet();
+    return ((Map<String, Object>) value).keySet();
   }
 
   public JSON get(String key) {
@@ -218,6 +218,22 @@ public final class JSON implements Comparable<JSON> {
     }
     Object v = list.get(index);
     return new JSON(ValueType.getTypeOf(v), v);
+  }
+
+  public JSON getOrThrow(String key) {
+    JSON json = get(key);
+    if (json.isUnknown()) {
+      throw new JSONMissingException(key);
+    }
+    return json;
+  }
+
+  public JSON getOrThrow(int index) {
+    JSON json = get(index); 
+    if (json.isUnknown()) {
+      throw new JSONMissingException(index);
+    }
+    return json;
   }
 
   public <T> T cast() {
@@ -309,6 +325,14 @@ public final class JSON implements Comparable<JSON> {
       return this;
     }
     return traverse(this, createPointer(pointer));
+  }
+
+  public JSON atOrThrow(String pointer) {
+    JSON json = at(pointer);
+    if (json.isUnknown()) {
+      throw new JSONMissingException(pointer);
+    }
+    return json;
   }
 
   private JSON traverse(JSON obj, List<String> pp) {
