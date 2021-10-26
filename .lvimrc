@@ -15,7 +15,6 @@ let &l:makeprg = 'cd '.g:build_dir.' && make -j4'
 packadd termdebug
 let g:termdebug_wide=1
 
-tnoremap <A-Esc> <C-\><C-n>
 nnoremap <leader>c :call asyncrun#run('',
         \ {'mode':'terminal','cwd':g:build_dir,'save':2},
         \ 'cmake .. -DCMAKE_BUILD_TYPE='.g:build_type.' -DBUILD_TESTS='.g:build_tests
