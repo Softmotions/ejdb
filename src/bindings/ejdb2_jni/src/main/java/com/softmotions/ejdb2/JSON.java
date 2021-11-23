@@ -28,7 +28,7 @@ import java.util.Set;
 public final class JSON implements Comparable<JSON>, Cloneable {
 
   @Override
-  public Object clone() throws CloneNotSupportedException {
+  public Object clone() {
     if (isContainer()) {
       return JSON.fromString(toString());
     } else {
@@ -1081,6 +1081,10 @@ public final class JSON implements Comparable<JSON>, Cloneable {
 
     public ObjectBuilder delete(String key) {
       return getO().delete(key);
+    }
+
+    public ObjectBuilder move(String oldKey, String newKey) {
+      return getO().move(oldKey, newKey);
     }
 
     public Iterable<String> keys() {
