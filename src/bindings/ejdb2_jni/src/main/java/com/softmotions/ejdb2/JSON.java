@@ -1260,6 +1260,14 @@ public final class JSON implements Comparable<JSON> {
       return this;
     }
 
+    public ObjectBuilder move(String oldKey, String newKey) {
+      if (value.containsKey(oldKey)) {
+        value.put(newKey, value.get(oldKey));
+        value.remove(oldKey);
+      }
+      return this;
+    }
+
     public ObjectBuilder delete(String key) {
       value.remove(key);
       return this;
