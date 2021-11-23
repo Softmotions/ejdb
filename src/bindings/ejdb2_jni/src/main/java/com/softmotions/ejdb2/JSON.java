@@ -28,7 +28,7 @@ import java.util.Set;
 public final class JSON implements Comparable<JSON>, Cloneable {
 
   @Override
-  protected Object clone() throws CloneNotSupportedException {
+  public Object clone() throws CloneNotSupportedException {
     if (isContainer()) {
       return JSON.fromString(toString());
     } else {
