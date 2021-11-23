@@ -25,7 +25,16 @@ import java.util.Set;
  *
  * - https://github.com/ralfstx/minimal-json (MIT)
  */
-public final class JSON implements Comparable<JSON> {
+public final class JSON implements Comparable<JSON>, Cloneable {
+
+  @Override
+  protected Object clone() throws CloneNotSupportedException {
+    if (isContainer()) {
+      return JSON.fromString(toString());
+    } else {
+      return new JSON(type, value);
+    }
+  }
 
   public static ObjectBuilder buildObject() {
     return new ObjectBuilder();
@@ -179,6 +188,10 @@ public final class JSON implements Comparable<JSON> {
     return type == ValueType.ARRAY;
   }
 
+  public boolean isContainer() {
+    return type == ValueType.OBJECT || type == ValueType.ARRAY;
+  }
+
   public Builder modify() {
     return new Builder(this);
   }
@@ -229,7 +242,7 @@ public final class JSON implements Comparable<JSON> {
   }
 
   public JSON getOrThrow(int index) {
-    JSON json = get(index); 
+    JSON json = get(index);
     if (json.isUnknown()) {
       throw new JSONMissingException(index);
     }
