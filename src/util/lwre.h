@@ -38,7 +38,7 @@ struct re {
 #define RE_ERROR_SUBMATCH -5
 #define RE_ERROR_ENGINE   -6
 
-IW_EXPORT struct re *lwre_new(const char *expression);
+IW_EXPORT IW_ALLOC struct re *lwre_new(const char *expression);
 IW_EXPORT int lwre_match(struct re *re, char *input);
 IW_EXPORT void lwre_release(struct re *re);
 IW_EXPORT void lwre_reset(struct re *re, const char *expression);

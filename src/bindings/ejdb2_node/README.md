@@ -6,14 +6,6 @@ See https://github.com/Softmotions/ejdb/blob/master/README.md
 
 For API usage examples take a look into [/example](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node/example) and [test.js](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node/test.js)
 
-## Note on versioning
-
-Since `2020-12-22` a new version scheme is used and the major version
-of node package has been incremented. Now package version is the concatenation
-of ejdb2 core engine version and version serial number of this binding.
-For example: given ejdb2 version `2.0.52` and binding serial `2`
-the actual package version will be `2.0.522`.
-
 ## Sample code
 
 ```ts

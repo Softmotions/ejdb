@@ -62,7 +62,8 @@ else()
       com/softmotions/ejdb2/JQL.java
       com/softmotions/ejdb2/JQLCallback.java
       com/softmotions/ejdb2/JSON.java
-      com/softmotions/ejdb2/JSONException.java)
+      com/softmotions/ejdb2/JSONException.java
+      com/softmotions/ejdb2/JSONMissingException.java)
 
   utils_list_prepend(EJDB2_JAVA_SOURCES_JAR "main/java/" ${EJDB2_JAVA_SOURCES})
 
@@ -123,7 +124,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_custom_command(
     TARGET ejdb2jni
     POST_BUILD
-    COMMAND strip -s $<TARGET_FILE:ejdb2jni>)
+    COMMAND ${STRIP_CMD} $<TARGET_FILE:ejdb2jni>)
 endif()
 
 install(

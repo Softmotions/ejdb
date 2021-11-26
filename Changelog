@@ -1,9 +1,36 @@
-ejdb2 (2.0.60) UNRELEASED; urgency=medium
+ejdb2 (2.63) UNRELEASED; urgency=medium
 
+  * Java: Added JSON.clone() method
+  * Java: Added JSON ObjectBuilder.move() method  
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 23 Nov 2021 18:51:34 +0700
+
+ejdb2 (2.62) testing; urgency=medium
+
+  * Fixed incorrect query results on array values (#331)
+  * Fixed error in parsing FP JSON value (#333)
+  * Java: com.softmotions.ejdb2.JSON.ValueType.getTypeOf set to be public   
+  * Flutter: Fixed #305
+  * Java: com.softmotions.ejdb2.JSON typo fixed  
+  * Java: com.softmotions.ejdb2.JSON added Comparable support
+  * Java: com.softmotions.ejdb2.JSON added better JSON.equals() implementation
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 26 Oct 2021 19:34:01 +0700
+
+ejdb2 (2.61) testing; urgency=medium
+
+  * Fixed incorrect arguments check in `jbn_merge_patch`
+
+ -- Anton Adamansky <adamansky@gmail.com>  Tue, 22 Jun 2021 10:51:46 +0700
+
+ejdb2 (2.0.60) testing; urgency=medium
+
+  * Upgraded to iowow v1.4.11
+  * Fixed Macos build error (#313)
   * Added typescript generic to JBDOC in node binding (#311) 
   * Removed -fvisibility=hidden compiler flag from facil.io lib
 
- -- Anton Adamansky <adamansky@gmail.com>  Sun, 21 Mar 2021 22:18:45 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 10 May 2021 16:50:12 +0700
 
 ejdb2 (2.0.59) testing; urgency=medium
 

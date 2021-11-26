@@ -1119,6 +1119,37 @@ void ejdb_test3_8(void) {
   iwpool_destroy(pool);
 }
 
+static void ejdb_test3_9(void) {
+  EJDB_OPTS opts = {
+    .kv       = {
+      .path   = "ejdb_test3_9",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal   = true
+  };
+  EJDB db;
+  EJDB_LIST list = 0;
+  iwrc rc = ejdb_open(&opts, &db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0)
+
+  rc = put_json(db, "zzz", "[[\"one\",\"two\"]]");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = put_json(db, "zzz", "[[\"red\",\"brown\"],[false]]");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_list3(db, "zzz", "/*/[** = one]", 0, 0, &list);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  CU_ASSERT_PTR_NOT_NULL(list->first);
+  CU_ASSERT_PTR_NULL(list->first->next);
+
+  ejdb_list_destroy(&list);
+
+  rc = ejdb_close(&db);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) {
@@ -1136,7 +1167,8 @@ int main() {
      || (NULL == CU_add_test(pSuite, "ejdb_test3_5", ejdb_test3_5))
      || (NULL == CU_add_test(pSuite, "ejdb_test3_6", ejdb_test3_6))
      || (NULL == CU_add_test(pSuite, "ejdb_test3_7", ejdb_test3_7))
-     || (NULL == CU_add_test(pSuite, "ejdb_test3_8", ejdb_test3_8))) {
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_8", ejdb_test3_8))
+     || (NULL == CU_add_test(pSuite, "ejdb_test3_9", ejdb_test3_9))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

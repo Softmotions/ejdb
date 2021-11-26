@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * JSON parser/container.
@@ -23,7 +25,16 @@ import java.util.Objects;
  *
  * - https://github.com/ralfstx/minimal-json (MIT)
  */
-public final class JSON {
+public final class JSON implements Comparable<JSON>, Cloneable {
+
+  @Override
+  public Object clone() {
+    if (isContainer()) {
+      return JSON.fromString(toString());
+    } else {
+      return new JSON(type, value);
+    }
+  }
 
   public static ObjectBuilder buildObject() {
     return new ObjectBuilder();
@@ -39,6 +50,10 @@ public final class JSON {
 
   public static JSON fromBytes(byte[] bytes) {
     return new JSON(bytes);
+  }
+
+  public static JSON fromBytes(byte[] bytes, int off, int len) {
+    return new JSON(bytes, off, len);
   }
 
   public static JSON fromMap(Map<String, Object> map) {
@@ -107,6 +122,22 @@ public final class JSON {
     reset();
   }
 
+  JSON(byte[] buf, int off, int len) {
+    if (buf.length < off + len) {
+      throw new ArrayIndexOutOfBoundsException();
+    }
+    if (off == 0) {
+      this.buf = buf;
+    } else {
+      this.buf = new byte[len - off];
+      System.arraycopy(buf, off, this.buf, 0, len);
+    }
+    tail = len;
+    type = whatIsNext();
+    value = read(type);
+    reset();
+  }
+
   JSON(String data) {
     this(data.getBytes());
   }
@@ -157,8 +188,19 @@ public final class JSON {
     return type == ValueType.ARRAY;
   }
 
+  public boolean isContainer() {
+    return type == ValueType.OBJECT || type == ValueType.ARRAY;
+  }
+
   public Builder modify() {
     return new Builder(this);
+  }
+
+  public Set<String> keys() {
+    if (type != ValueType.OBJECT) {
+      return Collections.EMPTY_SET;
+    }
+    return ((Map<String, Object>) value).keySet();
   }
 
   public JSON get(String key) {
@@ -189,6 +231,22 @@ public final class JSON {
     }
     Object v = list.get(index);
     return new JSON(ValueType.getTypeOf(v), v);
+  }
+
+  public JSON getOrThrow(String key) {
+    JSON json = get(key);
+    if (json.isUnknown()) {
+      throw new JSONMissingException(key);
+    }
+    return json;
+  }
+
+  public JSON getOrThrow(int index) {
+    JSON json = get(index);
+    if (json.isUnknown()) {
+      throw new JSONMissingException(index);
+    }
+    return json;
   }
 
   public <T> T cast() {
@@ -280,6 +338,14 @@ public final class JSON {
       return this;
     }
     return traverse(this, createPointer(pointer));
+  }
+
+  public JSON atOrThrow(String pointer) {
+    JSON json = at(pointer);
+    if (json.isUnknown()) {
+      throw new JSONMissingException(pointer);
+    }
+    return json;
   }
 
   private JSON traverse(JSON obj, List<String> pp) {
@@ -757,14 +823,13 @@ public final class JSON {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    JSON other = (JSON) obj;
-    return type == other.type && Objects.equals(value, other.value);
+    return this.compareTo((JSON) obj) == 0;
   }
 
   public static enum ValueType {
-    UNKNOWN, STRING, NUMBER, NULL, BOOLEAN, ARRAY, OBJECT;
+    UNKNOWN, NULL, BOOLEAN, NUMBER, STRING, OBJECT, ARRAY;
 
-    static ValueType getTypeOf(Object v) {
+    public static ValueType getTypeOf(Object v) {
       if (v == null) {
         return NULL;
       }
@@ -1018,6 +1083,10 @@ public final class JSON {
       return getO().delete(key);
     }
 
+    public ObjectBuilder move(String oldKey, String newKey) {
+      return getO().move(oldKey, newKey);
+    }
+
     public Iterable<String> keys() {
       return getO().keys();
     }
@@ -1208,6 +1277,14 @@ public final class JSON {
       return this;
     }
 
+    public ObjectBuilder move(String oldKey, String newKey) {
+      if (value.containsKey(oldKey)) {
+        value.put(newKey, value.get(oldKey));
+        value.remove(oldKey);
+      }
+      return this;
+    }
+
     public ObjectBuilder delete(String key) {
       value.remove(key);
       return this;
@@ -1230,5 +1307,99 @@ public final class JSON {
       writeTo(sw, value);
       return sw.toString();
     }
+  }
+
+  private int compareRaw(Object v1, Object v2) {
+    ValueType t1 = ValueType.getTypeOf(v1);
+    ValueType t2 = ValueType.getTypeOf(v2);
+    if (t1 != t2) {
+      return t1.ordinal() - t2.ordinal();
+    }
+    switch (t1) {
+      case STRING:
+        return ((String) v1).compareTo((String) v2);
+      case OBJECT:
+        return compareRawObjects((Map<String, ?>) v1, (Map<String, ?>) v2);
+      case NUMBER:
+        return ((Comparable<Number>) v1).compareTo((Number) v2);
+      case BOOLEAN:
+        return ((Boolean) v1).compareTo((Boolean) v2);
+      case ARRAY: {
+        return compareRawLists((List<Object>) v1, (List<Object>) v2);
+      }
+      case NULL:
+      case UNKNOWN:
+        break;
+    }
+    return 0;
+  }
+
+  private int compareRawLists(List<Object> l1, List<Object> l2) {
+    for (int i = 0, l = Math.min(l1.size(), l2.size()); i < l; ++i) {
+      int res = compareRaw(l1.get(i), l2.get(i));
+      if (res != 0) {
+        return res;
+      }
+    }
+    if (l1.size() > l2.size()) {
+      return 1;
+    } else if (l2.size() < l2.size()) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
+  private int compareRawObjects(Map<String, ?> m1, Map<String, ?> m2) {
+    int cnt = m1.size();
+    int i = m2.size();
+    if (cnt > i) {
+      return 1;
+    } else if (cnt < i) {
+      return -1;
+    } else if (cnt == 0) {
+      return 0;
+    }
+    String[] k1 = m1.keySet().toArray(new String[0]);
+    String[] k2 = m2.keySet().toArray(new String[0]);
+    Arrays.sort(k1);
+    Arrays.sort(k2);
+    for (i = 0; i < cnt; ++i) {
+      int res = k1[i].compareTo(k2[i]);
+      if (res != 0) {
+        return res;
+      }
+      res = compareRaw(m1.get(k1[i]), m2.get(k2[i]));
+      if (res != 0) {
+        return res;
+      }
+    }
+    return 0;
+  }
+
+  @Override
+  public int compareTo(JSON o) {
+    if (o == null) {
+      return 1;
+    }
+    if (type != o.type) {
+      return type.ordinal() - o.type.ordinal();
+    }
+    switch (type) {
+      case OBJECT:
+        return compareRawObjects((Map<String, ?>) value, (Map<String, ?>) o.value);
+      case ARRAY:
+        return compareRawLists((List<Object>) value, (List<Object>) value);
+      case STRING:
+        return ((String) value).compareTo(o.cast());
+      case NUMBER:
+        return ((Comparable<Number>) value).compareTo(o.cast());
+      case BOOLEAN:
+        return ((Boolean) value).compareTo(o.cast());
+      case NULL:
+      case UNKNOWN:
+        break;
+    }
+    return 0;
   }
 }

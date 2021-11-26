@@ -81,7 +81,7 @@ void binn_set_alloc_functions(
   free_fn = new_free;
 }
 
-ALWAYS_INLINE void *binn_malloc(int size) {
+IW_INLINE void *binn_malloc(int size) {
   return malloc_fn(size);
 }
 

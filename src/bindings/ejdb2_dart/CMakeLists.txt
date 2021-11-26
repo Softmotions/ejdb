@@ -2,8 +2,8 @@
 
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt _VERSION)
 set_property(GLOBAL PROPERTY EJDB2_DART_VERSION_PROPERTY
-                             "${PROJECT_VERSION}${_VERSION}")
-set(EJDB2_DART_VERSION "${PROJECT_VERSION}${_VERSION}")
+                             "${PROJECT_VERSION}.${_VERSION}")
+set(EJDB2_DART_VERSION "${PROJECT_VERSION}.${_VERSION}")
 
 add_library(ejdb2_dart SHARED lib/ejdb2_dart.c)
 target_link_libraries(ejdb2_dart ejdb2_s ${PROJECT_LLIBRARIES})
@@ -43,7 +43,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_custom_command(
     TARGET ejdb2_dart
     POST_BUILD
-    COMMAND strip -s $<TARGET_FILE:ejdb2_dart>)
+    COMMAND ${STRIP_CMD} $<TARGET_FILE:ejdb2_dart>)
 endif()
 
 set_target_properties(

@@ -41,6 +41,8 @@ The following cache variables are also available to set or use:
   the include path to jni.h
 ``JAVA_INCLUDE_PATH2``
   the include path to jni_md.h and jniport.h
+``JAVA_AWT_INCLUDE_PATH``
+  the include path to jawt.h
 #]=======================================================================]
 
 # Expand {libarch} occurrences to java_libarch subdirectory(-ies) and set ${_var}
@@ -57,6 +59,8 @@ macro(java_append_library_directories _var)
       endif()
     elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
         set(_java_libarch "i386")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^aarch64")
+        set(_java_libarch "arm64" "aarch64")
     elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^alpha")
         set(_java_libarch "alpha")
     elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
@@ -115,7 +119,7 @@ macro(java_append_library_directories _var)
     endforeach()
 endmacro()
 
-include(CMakeFindJavaCommon)
+include(${CMAKE_CURRENT_LIST_DIR}/CMakeFindJavaCommon.cmake)
 
 # Save CMAKE_FIND_FRAMEWORK
 if(DEFINED CMAKE_FIND_FRAMEWORK)
@@ -141,7 +145,7 @@ endif()
 
 if (WIN32)
   set (_JNI_HINTS)
-  execute_process(COMMAND REG QUERY HKLM\\SOFTWARE\\JavaSoft\\JDK /f "." /k
+  execute_process(COMMAND REG QUERY HKLM\\SOFTWARE\\JavaSoft\\JDK
     RESULT_VARIABLE _JNI_RESULT
     OUTPUT_VARIABLE _JNI_VERSIONS
     ERROR_QUIET)
@@ -172,8 +176,6 @@ if (WIN32)
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit;CurrentVersion]" NAME)
 
   list(APPEND JAVA_AWT_LIBRARY_DIRECTORIES
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\11;JavaHome]/lib"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\10;JavaHome]/lib"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\1.9;JavaHome]/lib"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\1.8;JavaHome]/lib"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\1.7;JavaHome]/lib"
@@ -185,46 +187,67 @@ if (WIN32)
     )
 endif()
 
-JAVA_APPEND_LIBRARY_DIRECTORIES(JAVA_AWT_LIBRARY_DIRECTORIES
-  /usr/lib/jvm/java/lib
-  /usr/lib/java/jre/lib/{libarch}
-  /usr/lib/jvm/jre/lib/{libarch}
-  /usr/local/lib/java/jre/lib/{libarch}
-  /usr/local/share/java/jre/lib/{libarch}
+set(_JNI_JAVA_DIRECTORIES_BASE
+  /usr/lib/jvm/java
+  /usr/lib/java
+  /usr/lib/jvm
+  /usr/local/lib/java
+  /usr/local/share/java
+  /usr/lib/j2sdk1.4-sun
+  /usr/lib/j2sdk1.5-sun
+  /opt/sun-jdk-1.5.0.04
+  /usr/lib/jvm/java-6-sun
+  /usr/lib/jvm/java-1.5.0-sun
+  /usr/lib/jvm/java-6-sun-1.6.0.00       # can this one be removed according to #8821 ? Alex
+  /usr/lib/jvm/java-6-openjdk
+  /usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0        # fedora
   # Debian specific paths for default JVM
-  /usr/lib/jvm/default-java/jre/lib/{libarch}
-  /usr/lib/jvm/default-java/jre/lib
-  /usr/lib/jvm/default-java/lib
+  /usr/lib/jvm/default-java
   # Arch Linux specific paths for default JVM
-  /usr/lib/jvm/default/jre/lib/{libarch}
-  /usr/lib/jvm/default/lib/{libarch}
-  # SuSE specific paths for default JVM
-  /usr/lib64/jvm/java/jre/lib/{libarch}
-  /usr/lib64/jvm/jre/lib/{libarch}
-  /usr/lib/jvm/java-11-openjdk-{libarch}/jre/lib/{libarch}    # Ubuntu 18.04 LTS
-  /usr/lib/jvm/java-11-oracle/lib/{libarch}
-  /usr/lib/jvm/java-10-openjdk-{libarch}/jre/lib/{libarch}
-  /usr/lib/jvm/java-10-oracle/lib/{libarch}
-  /usr/lib/jvm/java-9-openjdk-{libarch}/jre/lib/{libarch}
-  /usr/lib/jvm/java-9-oracle/lib/{libarch}
-  /usr/lib/jvm/java-8-openjdk-{libarch}/jre/lib/{libarch}     # Ubuntu 15.10
-  /usr/lib/jvm/java-8-oracle/lib/{libarch}
+  /usr/lib/jvm/default
   # Ubuntu specific paths for default JVM
-  /usr/lib/jvm/java-7-openjdk-{libarch}/jre/lib/{libarch}     # Ubuntu 15.10
-  /usr/lib/jvm/java-7-oracle/lib/{libarch}
-  /usr/lib/jvm/java-6-openjdk-{libarch}/jre/lib/{libarch}     # Ubuntu 15.10
-  /usr/lib/jvm/java-6-oracle/lib/{libarch}
-  /usr/lib/jvm/java-6-sun/jre/lib/{libarch}
-  /usr/lib/jvm/java-6-sun-1.6.0.00/jre/lib/{libarch}       # can this one be removed according to #8821 ? Alex
-  /usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0/jre/lib/{libarch}        # fedora
-  /usr/lib/jvm/java-6-openjdk/jre/lib/{libarch}
+  /usr/lib/jvm/java-16-openjdk-{libarch}
+  /usr/lib/jvm/java-11-openjdk-{libarch}    # Ubuntu 18.04 LTS
+  /usr/lib/jvm/java-8-openjdk-{libarch}     # Ubuntu 15.10
+  /usr/lib/jvm/java-7-openjdk-{libarch}     # Ubuntu 15.10
+  /usr/lib/jvm/java-6-openjdk-{libarch}     # Ubuntu 15.10
   # OpenBSD specific paths for default JVM
-  /usr/local/jdk-1.8.0/jre/lib/{libarch}
-  /usr/local/jre-1.8.0/lib/{libarch}
-  /usr/local/jdk-1.7.0/jre/lib/{libarch}
-  /usr/local/jre-1.7.0/lib/{libarch}
-  /usr/local/jdk-1.6.0/jre/lib/{libarch}
-  /usr/local/jre-1.6.0/lib/{libarch}
+  /usr/local/jdk-1.7.0
+  /usr/local/jre-1.7.0
+  /usr/local/jdk-1.6.0
+  /usr/local/jre-1.6.0
+  # FreeBSD specific paths for default JVM
+  /usr/local/openjdk16
+  /usr/local/openjdk15
+  /usr/local/openjdk14
+  /usr/local/openjdk13
+  /usr/local/openjdk12
+  /usr/local/openjdk11
+  /usr/local/openjdk8
+  /usr/local/openjdk7
+  # SuSE specific paths for default JVM
+  /usr/lib64/jvm/java
+  /usr/lib64/jvm/jre
+  )
+
+set(_JNI_JAVA_AWT_LIBRARY_TRIES)
+set(_JNI_JAVA_INCLUDE_TRIES)
+
+foreach(_java_dir IN LISTS _JNI_JAVA_DIRECTORIES_BASE)
+  list(APPEND _JNI_JAVA_AWT_LIBRARY_TRIES
+    ${_java_dir}/jre/lib/{libarch}
+    ${_java_dir}/jre/lib
+    ${_java_dir}/lib/{libarch}
+    ${_java_dir}/lib
+    ${_java_dir}
+  )
+  list(APPEND _JNI_JAVA_INCLUDE_TRIES
+    ${_java_dir}/include
+  )
+endforeach()
+
+JAVA_APPEND_LIBRARY_DIRECTORIES(JAVA_AWT_LIBRARY_DIRECTORIES
+    ${_JNI_JAVA_AWT_LIBRARY_TRIES}
   )
 
 set(JAVA_JVM_LIBRARY_DIRECTORIES)
@@ -248,8 +271,6 @@ if (WIN32)
     list(APPEND JAVA_AWT_INCLUDE_DIRECTORIES "${_JNI_HINT}/include")
   endforeach()
   list(APPEND JAVA_AWT_INCLUDE_DIRECTORIES
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\11;JavaHome]/include"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\10;JavaHome]/include"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\1.9;JavaHome]/include"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\1.8;JavaHome]/include"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\JavaSoft\\Java Development Kit\\1.7;JavaHome]/include"
@@ -262,34 +283,7 @@ if (WIN32)
 endif()
 
 JAVA_APPEND_LIBRARY_DIRECTORIES(JAVA_AWT_INCLUDE_DIRECTORIES
-  /usr/lib/java/include
-  /usr/local/lib/java/include
-  /usr/lib/jvm/java/include
-  /usr/lib/jvm/java-11-openjdk-{libarch}/include
-  /usr/lib/jvm/java-11-oracle/include
-  /usr/lib/jvm/java-10-openjdk-{libarch}/include
-  /usr/lib/jvm/java-10-oracle/include
-  /usr/lib/jvm/java-9-openjdk-{libarch}/include
-  /usr/lib/jvm/java-9-oracle/include
-  /usr/lib/jvm/java-8-openjdk-{libarch}/include
-  /usr/lib/jvm/java-8-oracle/include
-  /usr/lib/jvm/java-7-openjdk-{libarch}/include
-  /usr/lib/jvm/java-7-oracle/include
-  /usr/lib/jvm/java-6-openjdk-{libarch}/include
-  /usr/lib/jvm/java-6-openjdk/include
-  /usr/lib/jvm/java-6-oracle/include
-  /usr/lib/jvm/java-6-sun/include
-  /usr/local/share/java/include
-  # Debian specific path for default JVM
-  /usr/lib/jvm/default-java/include
-  # Arch specific path for default JVM
-  /usr/lib/jvm/default/include
-  # OpenBSD specific path for default JVM
-  /usr/local/jdk-1.8.0/include
-  /usr/local/jdk-1.7.0/include
-  /usr/local/jdk-1.6.0/include
-  # SuSE specific paths for default JVM
-  /usr/lib64/jvm/java/include
+  ${_JNI_JAVA_INCLUDE_TRIES}
   )
 
 foreach(JAVA_PROG "${JAVA_RUNTIME}" "${JAVA_COMPILE}" "${JAVA_ARCHIVE}")
@@ -374,6 +368,10 @@ find_path(JAVA_INCLUDE_PATH2 NAMES jni_md.h jniport.h
   ${JAVA_INCLUDE_PATH}/aix
 )
 
+find_path(JAVA_AWT_INCLUDE_PATH jawt.h
+  ${JAVA_INCLUDE_PATH}
+)
+
 # Restore CMAKE_FIND_FRAMEWORK
 if(DEFINED _JNI_CMAKE_FIND_FRAMEWORK)
   set(CMAKE_FIND_FRAMEWORK ${_JNI_CMAKE_FIND_FRAMEWORK})
@@ -386,11 +384,13 @@ include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(JNI  DEFAULT_MSG  JAVA_AWT_LIBRARY
                                                     JAVA_JVM_LIBRARY
                                                     JAVA_INCLUDE_PATH
-                                                    JAVA_INCLUDE_PATH2)
+                                                    JAVA_INCLUDE_PATH2
+                                                    JAVA_AWT_INCLUDE_PATH)
 
 mark_as_advanced(
   JAVA_AWT_LIBRARY
   JAVA_JVM_LIBRARY
+  JAVA_AWT_INCLUDE_PATH
   JAVA_INCLUDE_PATH
   JAVA_INCLUDE_PATH2
 )
@@ -403,4 +403,5 @@ set(JNI_LIBRARIES
 set(JNI_INCLUDE_DIRS
   ${JAVA_INCLUDE_PATH}
   ${JAVA_INCLUDE_PATH2}
+  ${JAVA_AWT_INCLUDE_PATH}
 )

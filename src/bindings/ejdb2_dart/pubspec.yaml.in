@@ -6,10 +6,10 @@ issue_tracker: https://github.com/Softmotions/ejdb/issues?q=is%3Aissue+label%3AD
 license: MIT
 
 environment:
-  sdk: ">=2.12.0-0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
-  json_at: ^2.0.0-nullsafety.1
-  path: ^1.8.0-nullsafety.3
-  quiver: ^3.0.0-nullsafety.2
-  test: ^1.16.0-nullsafety.13
+  json_at: ^2.1.0
+  path: ^1.8.0
+  quiver: ^3.0.1
+  test: ^1.17.8

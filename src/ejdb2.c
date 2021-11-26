@@ -1408,6 +1408,15 @@ iwrc ejdb_put(EJDB db, const char *coll, JBL jbl, int64_t id) {
   return rc;
 }
 
+iwrc ejdb_put_jbn(EJDB db, const char *coll, JBL_NODE jbn, int64_t id) {
+  JBL jbl = 0;
+  iwrc rc = jbl_from_node(&jbl, jbn);
+  RCRET(rc);
+  rc = ejdb_put(db, coll, jbl, id);
+  jbl_destroy(&jbl);
+  return rc;
+}
+
 static iwrc _jb_put_new_lw(JBCOLL jbc, JBL jbl, int64_t *id) {
   iwrc rc = 0;
   int64_t oid = jbc->id_seq + 1;

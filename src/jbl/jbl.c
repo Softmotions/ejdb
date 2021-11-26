@@ -1711,7 +1711,9 @@ iwrc jbn_add_item_bool(JBL_NODE parent, const char *key, bool val, JBL_NODE *nod
   n->type = JBV_BOOL;
   n->vbool = val;
   jbn_add_item(parent, n);
-
+  if (node_out) {
+    *node_out = n;
+  }
 finish:
   return rc;
 }
@@ -2883,7 +2885,7 @@ iwrc jbn_patch_auto(JBL_NODE root, JBL_NODE patch, IWPOOL *pool) {
 }
 
 iwrc jbn_merge_patch(JBL_NODE root, JBL_NODE patch, IWPOOL *pool) {
-  if (!root || !patch || pool || (root->type != JBV_OBJECT)) {
+  if (!root || !patch || !pool || (root->type != JBV_OBJECT)) {
     return IW_ERROR_INVALID_ARGS;
   }
   iwrc rc = 0;

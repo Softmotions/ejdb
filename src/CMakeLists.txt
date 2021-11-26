@@ -22,6 +22,12 @@ if(APPLE)
       CACHE STRING "Directory to install frameworks to.")
 endif()
 
+if(APPLE)
+  set(STRIP_CMD strip -x)
+else()
+  set(STRIP_CMD ${CMAKE_STRIP} -s)
+endif()
+
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
@@ -139,8 +145,11 @@ list(
 set(CMAKE_C_FLAGS
     "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -pedantic -Wfatal-errors -Wall -Wextra \
                   -Wno-sign-compare -Wno-unused-parameter -Wno-unknown-pragmas -Wno-unused-function \
-                  -Wno-missing-field-initializers -Wno-missing-braces \
-                  -Wno-shorten-64-to-32")
+                  -Wno-missing-field-initializers -Wno-missing-braces")
+
+if(APPLE)
+  set("${CMAKE_C_FLAGS} -Wno-shorten-64-to-32")
+endif()
 
 if(NOT WIN32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-implicit-fallthrough -fPIC")
@@ -286,7 +295,7 @@ if(BUILD_SHARED_LIBS)
     add_custom_command(
       TARGET ejdb2
       POST_BUILD
-      COMMAND strip -s $<TARGET_FILE:ejdb2>)
+      COMMAND ${STRIP_CMD} $<TARGET_FILE:ejdb2>)
   endif()
 
   set_target_properties(
