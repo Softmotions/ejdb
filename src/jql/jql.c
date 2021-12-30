@@ -99,7 +99,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
 
 iwrc jql_set_json2(
   JQL q, const char *placeholder, int index, JBL_NODE val,
-  void (*freefn) (void*, void*), void *op) {
+  void (*freefn)(void*, void*), void *op) {
   JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -161,7 +161,7 @@ iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val) {
 
 iwrc jql_set_str2(
   JQL q, const char *placeholder, int index, const char *val,
-  void (*freefn) (void*, void*), void *op) {
+  void (*freefn)(void*, void*), void *op) {
   JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -191,7 +191,7 @@ iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
 
 iwrc jql_set_regexp2(
   JQL q, const char *placeholder, int index, const char *expr,
-  void (*freefn) (void*, void*), void *op) {
+  void (*freefn)(void*, void*), void *op) {
   struct re *rx = lwre_new(expr);
   if (!rx) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -600,7 +600,7 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
           return lv->vbool - (rv->vf64 != 0.0); // -V550
         case JQVAL_STR: {
           if (strcmp(rv->vstr, "true") == 0) {
-            return  lv->vbool - 1;
+            return lv->vbool - 1;
           } else if (strcmp(rv->vstr, "false") == 0) {
             return lv->vbool;
           } else {

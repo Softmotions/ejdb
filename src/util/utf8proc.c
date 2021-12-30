@@ -89,12 +89,12 @@ UTF8PROC_DLLEXPORT const utf8proc_int8_t utf8proc_utf8class[256] = {
 #define STRINGIZEx(x) #x
 #define STRINGIZE(x)  STRINGIZEx(x)
 
-UTF8PROC_DLLEXPORT const char *utf8proc_version(void) {
+UTF8PROC_DLLEXPORT const char* utf8proc_version(void) {
   return STRINGIZE(UTF8PROC_VERSION_MAJOR) "." STRINGIZE(UTF8PROC_VERSION_MINOR) "." STRINGIZE(UTF8PROC_VERSION_PATCH)
          "";
 }
 
-UTF8PROC_DLLEXPORT const char *utf8proc_errmsg(utf8proc_ssize_t errcode) {
+UTF8PROC_DLLEXPORT const char* utf8proc_errmsg(utf8proc_ssize_t errcode) {
   switch (errcode) {
     case UTF8PROC_ERROR_NOMEM:
       return "Memory for processing UTF-8 data could not be allocated.";
@@ -146,7 +146,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_iterate(
       return UTF8PROC_ERROR_INVALIDUTF8;
     }
     // Check for surrogate chars
-    if ((uc == 0xed) && (*str > 0x9f) ) {
+    if ((uc == 0xed) && (*str > 0x9f)) {
       return UTF8PROC_ERROR_INVALIDUTF8;
     }
     uc = ((uc & 0xf) << 12) | ((*str & 0x3f) << 6) | (str[1] & 0x3f);
@@ -306,8 +306,8 @@ static utf8proc_bool grapheme_break_extended(int lbc, int tbc, utf8proc_int32_t 
     // Special support for GB10. Fold any EXTEND codepoints into the previous
     // boundclass if we're dealing with an emoji base boundclass.
     else if (  (  (*state == UTF8PROC_BOUNDCLASS_E_BASE)
-               || (*state == UTF8PROC_BOUNDCLASS_E_BASE_GAZ) )
-            && (tbc == UTF8PROC_BOUNDCLASS_EXTEND) ) {
+               || (*state == UTF8PROC_BOUNDCLASS_E_BASE_GAZ))
+            && (tbc == UTF8PROC_BOUNDCLASS_EXTEND)) {
       *state = UTF8PROC_BOUNDCLASS_E_BASE;
     } else {
       *state = tbc;

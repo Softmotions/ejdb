@@ -411,13 +411,13 @@ UTF8PROC_DLLEXPORT extern const utf8proc_int8_t utf8proc_utf8class[256];
  * (http://semver.org format), possibly with a "-dev" suffix for
  * development versions.
  */
-UTF8PROC_DLLEXPORT const char *utf8proc_version(void);
+UTF8PROC_DLLEXPORT const char* utf8proc_version(void);
 
 /**
  * Returns an informative error string for the given utf8proc error code
  * (e.g. the error codes returned by @ref utf8proc_map).
  */
-UTF8PROC_DLLEXPORT const char *utf8proc_errmsg(utf8proc_ssize_t errcode);
+UTF8PROC_DLLEXPORT const char* utf8proc_errmsg(utf8proc_ssize_t errcode);
 
 /**
  * Reads a single codepoint from the UTF-8 sequence being pointed to by `str`.
@@ -465,7 +465,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_encode_char(utf8proc_int32_t codepo
  * If the codepoint is unassigned or invalid, a pointer to a special struct is
  * returned in which `category` is 0 (@ref UTF8PROC_CATEGORY_CN).
  */
-UTF8PROC_DLLEXPORT const utf8proc_property_t *utf8proc_get_property(utf8proc_int32_t codepoint);
+UTF8PROC_DLLEXPORT const utf8proc_property_t* utf8proc_get_property(utf8proc_int32_t codepoint);
 
 /** Decompose a codepoint into an array of codepoints.
  *
@@ -662,7 +662,7 @@ UTF8PROC_DLLEXPORT utf8proc_category_t utf8proc_category(utf8proc_int32_t codepo
  * Return the two-letter (nul-terminated) Unicode category string for
  * the codepoint (e.g. `"Lu"` or `"Co"`).
  */
-UTF8PROC_DLLEXPORT const char *utf8proc_category_string(utf8proc_int32_t codepoint);
+UTF8PROC_DLLEXPORT const char* utf8proc_category_string(utf8proc_int32_t codepoint);
 
 /**
  * Maps the given UTF-8 string pointed to by `str` to a new UTF-8
@@ -707,22 +707,22 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_map_custom(
  */
 /** @{ */
 /** NFD normalization (@ref UTF8PROC_DECOMPOSE). */
-UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFD(const utf8proc_uint8_t *str);
+UTF8PROC_DLLEXPORT utf8proc_uint8_t* utf8proc_NFD(const utf8proc_uint8_t *str);
 
 /** NFC normalization (@ref UTF8PROC_COMPOSE). */
-UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFC(const utf8proc_uint8_t *str);
+UTF8PROC_DLLEXPORT utf8proc_uint8_t* utf8proc_NFC(const utf8proc_uint8_t *str);
 
 /** NFKD normalization (@ref UTF8PROC_DECOMPOSE and @ref UTF8PROC_COMPAT). */
-UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFKD(const utf8proc_uint8_t *str);
+UTF8PROC_DLLEXPORT utf8proc_uint8_t* utf8proc_NFKD(const utf8proc_uint8_t *str);
 
 /** NFKC normalization (@ref UTF8PROC_COMPOSE and @ref UTF8PROC_COMPAT). */
-UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFKC(const utf8proc_uint8_t *str);
+UTF8PROC_DLLEXPORT utf8proc_uint8_t* utf8proc_NFKC(const utf8proc_uint8_t *str);
 
 /**
  * NFKC_Casefold normalization (@ref UTF8PROC_COMPOSE and @ref UTF8PROC_COMPAT
  * and @ref UTF8PROC_CASEFOLD and @ref UTF8PROC_IGNORE).
  **/
-UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFKC_Casefold(const utf8proc_uint8_t *str);
+UTF8PROC_DLLEXPORT utf8proc_uint8_t* utf8proc_NFKC_Casefold(const utf8proc_uint8_t *str);
 
 /** @} */
 

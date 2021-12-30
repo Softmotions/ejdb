@@ -268,10 +268,10 @@ void binn_set_user_data(binn *item, void *user_data, binn_user_data_free freefn)
 BOOL binn_save_header(binn *item);
 
 // create a new binn allocating memory for the structure
-IW_ALLOC binn *binn_new(int type, int size, void *buffer);
-IW_ALLOC binn *binn_list();
-IW_ALLOC binn *binn_map();
-IW_ALLOC binn *binn_object();
+IW_ALLOC binn* binn_new(int type, int size, void *buffer);
+IW_ALLOC binn* binn_list();
+IW_ALLOC binn* binn_map();
+IW_ALLOC binn* binn_object();
 
 // create a new binn storing the structure on the stack
 BOOL binn_create(binn *item, int type, int size, void *buffer);
@@ -280,7 +280,7 @@ BOOL binn_create_map(binn *map);
 BOOL binn_create_object(binn *object);
 
 // create a new binn as a copy from another
-IW_ALLOC binn *binn_copy(void *old);
+IW_ALLOC binn* binn_copy(void *old);
 
 BOOL binn_list_add_new(binn *list, binn *value);
 BOOL binn_map_set_new(binn *map, int id, binn *value);
@@ -298,77 +298,77 @@ void binn_free(binn *item);
 
 // free the binn structure but keeps the binn buffer allocated, returning a pointer to it.
 // use the free function to release the buffer later
-void *binn_release(binn *item);
+void* binn_release(binn *item);
 
 // --- CREATING VALUES ---------------------------------------------------
 
-IW_ALLOC binn *binn_value(int type, void *pvalue, int size, binn_mem_free freefn);
+IW_ALLOC binn* binn_value(int type, void *pvalue, int size, binn_mem_free freefn);
 
 IW_INLINE void binn_init_item(binn *item) {
   memset(item, 0, sizeof(binn));
   item->header = BINN_MAGIC;
 }
 
-IW_ALLOC IW_INLINE binn *binn_int8(signed char value) {
+IW_ALLOC IW_INLINE binn* binn_int8(signed char value) {
   return binn_value(BINN_INT8, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_int16(short value) {
+IW_ALLOC IW_INLINE binn* binn_int16(short value) {
   return binn_value(BINN_INT16, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_int32(int value) {
+IW_ALLOC IW_INLINE binn* binn_int32(int value) {
   return binn_value(BINN_INT32, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_int64(int64 value) {
+IW_ALLOC IW_INLINE binn* binn_int64(int64 value) {
   return binn_value(BINN_INT64, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_uint8(unsigned char value) {
+IW_ALLOC IW_INLINE binn* binn_uint8(unsigned char value) {
   return binn_value(BINN_UINT8, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_uint16(unsigned short value) {
+IW_ALLOC IW_INLINE binn* binn_uint16(unsigned short value) {
   return binn_value(BINN_UINT16, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_uint32(unsigned int value) {
+IW_ALLOC IW_INLINE binn* binn_uint32(unsigned int value) {
   return binn_value(BINN_UINT32, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_uint64(uint64 value) {
+IW_ALLOC IW_INLINE binn* binn_uint64(uint64 value) {
   return binn_value(BINN_UINT64, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_float(float value) {
+IW_ALLOC IW_INLINE binn* binn_float(float value) {
   return binn_value(BINN_FLOAT, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_double(double value) {
+IW_ALLOC IW_INLINE binn* binn_double(double value) {
   return binn_value(BINN_DOUBLE, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_bool(BOOL value) {
+IW_ALLOC IW_INLINE binn* binn_bool(BOOL value) {
   return binn_value(BINN_BOOL, &value, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_null() {
+IW_ALLOC IW_INLINE binn* binn_null() {
   return binn_value(BINN_NULL, NULL, 0, NULL);
 }
 
-IW_ALLOC IW_INLINE binn *binn_string(const char *str, binn_mem_free freefn) {
+IW_ALLOC IW_INLINE binn* binn_string(const char *str, binn_mem_free freefn) {
   return binn_value(BINN_STRING, (void*) str, 0, freefn);
 }
 
-IW_ALLOC IW_INLINE binn *binn_blob(void *ptr, int size, binn_mem_free freefn) {
+IW_ALLOC IW_INLINE binn* binn_blob(void *ptr, int size, binn_mem_free freefn) {
   return binn_value(BINN_BLOB, ptr, size, freefn);
 }
 
 // --- READ FUNCTIONS  -------------------------------------------------------------
 
 // these functions accept pointer to the binn structure and pointer to the binn buffer
-void *binn_ptr(void *ptr);
+void* binn_ptr(void *ptr);
 int binn_size(void *ptr);
 int binn_buf_size(const void *ptr);
 int binn_type(void *ptr);
@@ -400,7 +400,7 @@ BOOL binn_is_struct(void *ptr);
 // Loading a binn buffer into a binn value - this is optional
 
 BOOL binn_load(void *data, binn *item);      // on stack
-binn *binn_open(void *data);                 // allocated
+binn* binn_open(void *data);                 // allocated
 
 // easiest interface to use, but don't check if the value is there
 
@@ -416,11 +416,11 @@ float binn_list_float(void *list, int pos);
 double binn_list_double(void *list, int pos);
 BOOL binn_list_bool(void *list, int pos);
 BOOL binn_list_null(void *list, int pos);
-char *binn_list_str(void *list, int pos);
-void *binn_list_blob(void *list, int pos, int *psize);
-void *binn_list_list(void *list, int pos);
-void *binn_list_map(void *list, int pos);
-void *binn_list_object(void *list, int pos);
+char* binn_list_str(void *list, int pos);
+void* binn_list_blob(void *list, int pos, int *psize);
+void* binn_list_list(void *list, int pos);
+void* binn_list_map(void *list, int pos);
+void* binn_list_object(void *list, int pos);
 
 signed char binn_map_int8(void *map, int id);
 short binn_map_int16(void *map, int id);
@@ -434,11 +434,11 @@ float binn_map_float(void *map, int id);
 double binn_map_double(void *map, int id);
 BOOL binn_map_bool(void *map, int id);
 BOOL binn_map_null(void *map, int id);
-char *binn_map_str(void *map, int id);
-void *binn_map_blob(void *map, int id, int *psize);
-void *binn_map_list(void *map, int id);
-void *binn_map_map(void *map, int id);
-void *binn_map_object(void *map, int id);
+char* binn_map_str(void *map, int id);
+void* binn_map_blob(void *map, int id, int *psize);
+void* binn_map_list(void *map, int id);
+void* binn_map_map(void *map, int id);
+void* binn_map_object(void *map, int id);
 
 signed char binn_object_int8(void *obj, const char *key);
 short binn_object_int16(void *obj, const char *key);
@@ -452,18 +452,18 @@ float binn_object_float(void *obj, const char *key);
 double binn_object_double(void *obj, const char *key);
 BOOL binn_object_bool(void *obj, const char *key);
 BOOL binn_object_null(void *obj, const char *key);
-char *binn_object_str(void *obj, const char *key);
-void *binn_object_blob(void *obj, const char *key, int *psize);
-void *binn_object_list(void *obj, const char *key);
-void *binn_object_map(void *obj, const char *key);
-void *binn_object_object(void *obj, const char *key);
+char* binn_object_str(void *obj, const char *key);
+void* binn_object_blob(void *obj, const char *key, int *psize);
+void* binn_object_list(void *obj, const char *key);
+void* binn_object_map(void *obj, const char *key);
+void* binn_object_object(void *obj, const char *key);
 
 
 // return a pointer to an allocated binn structure - must be released with the free() function or equivalent set in
 // binn_set_alloc_functions()
-binn *binn_list_value(void *list, int pos);
-binn *binn_map_value(void *map, int id);
-binn *binn_object_value(void *obj, const char *key);
+binn* binn_list_value(void *list, int pos);
+binn* binn_map_value(void *map, int id);
+binn* binn_object_value(void *obj, const char *key);
 
 // read the value to a binn structure on the stack
 BOOL binn_list_get_value(void *list, int pos, binn *value);
@@ -479,9 +479,9 @@ BOOL binn_object_get(void *obj, const char *key, int type, void *pvalue, int *ps
 // they are thread-safe on big-endian devices
 // on little-endian devices they are thread-safe only to return pointers to list, map, object, blob and strings
 // the returned pointer to 16, 32 and 64 bits values must be used only by single-threaded applications
-void *binn_list_read(void *list, int pos, int *ptype, int *psize);
-void *binn_map_read(void *map, int id, int *ptype, int *psize);
-void *binn_object_read(void *obj, const char *key, int *ptype, int *psize);
+void* binn_list_read(void *list, int pos, int *ptype, int *psize);
+void* binn_map_read(void *map, int id, int *ptype, int *psize);
+void* binn_object_read(void *obj, const char *key, int *ptype, int *psize);
 
 // READ PAIR FUNCTIONS
 
@@ -494,15 +494,15 @@ BOOL binn_object_get_pair(
   binn *value);                                   // must free the memory returned in the pkey
 
 // allocated
-IW_ALLOC binn *binn_map_pair(void *map, int pos, int *pid);
-IW_ALLOC binn *binn_object_pair(void *obj, int pos, char *pkey);     // must free the memory returned in the pkey
+IW_ALLOC binn* binn_map_pair(void *map, int pos, int *pid);
+IW_ALLOC binn* binn_object_pair(void *obj, int pos, char *pkey);     // must free the memory returned in the pkey
 
 // these 2 functions return a pointer to the value and the data type
 // they are thread-safe on big-endian devices
 // on little-endian devices they are thread-safe only to return pointers to list, map, object, blob and strings
 // the returned pointer to 16, 32 and 64 bits values must be used only by single-threaded applications
-void *binn_map_read_pair(void *ptr, int pos, int *pid, int *ptype, int *psize);
-void *binn_object_read_pair(void *ptr, int pos, char *pkey, int *ptype, int *psize);
+void* binn_map_read_pair(void *ptr, int pos, int *pid, int *ptype, int *psize);
+void* binn_object_read_pair(void *ptr, int pos, char *pkey, int *ptype, int *psize);
 
 // SEQUENTIAL READ FUNCTIONS
 
@@ -517,9 +517,9 @@ typedef struct binn_iter_struct {
 BOOL binn_iter_init(binn_iter *iter, void *pbuf, int type);
 
 // allocated
-IW_ALLOC binn *binn_list_next_value(binn_iter *iter);
-IW_ALLOC binn *binn_map_next_value(binn_iter *iter, int *pid);
-IW_ALLOC binn *binn_object_next_value(binn_iter *iter, char *pkey);     // the key must be declared as: char key[256];
+IW_ALLOC binn* binn_list_next_value(binn_iter *iter);
+IW_ALLOC binn* binn_map_next_value(binn_iter *iter, int *pid);
+IW_ALLOC binn* binn_object_next_value(binn_iter *iter, char *pkey);     // the key must be declared as: char key[256];
 
 // on stack
 BOOL binn_list_next(binn_iter *iter, binn *value);
@@ -533,9 +533,9 @@ BOOL binn_object_next2(binn_iter *iter, char **pkey, int *klen, binn *value);
 // they are thread-safe on big-endian devices
 // on little-endian devices they are thread-safe only to return pointers to list, map, object, blob and strings
 // the returned pointer to 16, 32 and 64 bits values must be used only by single-threaded applications
-void *binn_list_read_next(binn_iter *iter, int *ptype, int *psize);
-void *binn_map_read_next(binn_iter *iter, int *pid, int *ptype, int *psize);
-void *binn_object_read_next(
+void* binn_list_read_next(binn_iter *iter, int *ptype, int *psize);
+void* binn_map_read_next(binn_iter *iter, int *pid, int *ptype, int *psize);
+void* binn_object_read_next(
   binn_iter *iter, char *pkey, int *ptype,
   int *psize);                                      // the key must be declared as: char key[256];
 
@@ -1035,7 +1035,7 @@ BOOL binn_get_int32(binn *value, int *pint);
 BOOL binn_get_int64(binn *value, int64 *pint);
 BOOL binn_get_double(binn *value, double *pfloat);
 BOOL binn_get_bool(binn *value, BOOL *pbool);
-char *binn_get_str(binn *value);
+char* binn_get_str(binn *value);
 
 // boolean string values:
 // 1, true, yes, on

@@ -32,7 +32,7 @@
 #ifndef RE_MALLOC
 # define RE_MALLOC(RE, SIZE) re__malloc((RE), (SIZE))
 
-static void *re__malloc(struct re *re, size_t size) {
+static void* re__malloc(struct re *re, size_t size) {
   void *p = malloc(size);
   if (!p) {
     RE_ERROR(re, NOMEM, "out of memory");
@@ -45,7 +45,7 @@ static void *re__malloc(struct re *re, size_t size) {
 #ifndef RE_CALLOC
 # define RE_CALLOC(RE, NMEMB, SIZE) re__calloc((RE), (NMEMB), (SIZE))
 
-static void *re__calloc(struct re *re, size_t nmemb, size_t size) {
+static void* re__calloc(struct re *re, size_t nmemb, size_t size) {
   void *p = calloc(nmemb, size);
   if (p) {
     return p;
@@ -61,7 +61,7 @@ static void *re__calloc(struct re *re, size_t nmemb, size_t size) {
 #ifndef RE_REALLOC
 # define RE_REALLOC(RE, PTR, SIZE) re__realloc((RE), (PTR), (SIZE))
 
-static inline void *re__realloc(struct re *re, void *ptr, size_t size) {
+static inline void* re__realloc(struct re *re, void *ptr, size_t size) {
   void *p = realloc(ptr, size);
   if (!p) {
     RE_ERROR(re, NOMEM, "out of memory");
@@ -157,7 +157,7 @@ static int re_make_char(struct re *re) {
   return c;
 }
 
-static RE_BitSet *re_make_class(struct re *re) {
+static RE_BitSet* re_make_class(struct re *re) {
   RE_BitSet *c = RE_CALLOC(re, 1, sizeof(RE_BitSet));
   int last = -1;
   c->inverted = ('^' == *re->position); // -V522
@@ -560,7 +560,7 @@ struct RE_Submatches {
   re_array_of_charp endings;
 };
 
-static RE_Submatches *re_submatches_copy(struct re *re, RE_Submatches *orig) {
+static RE_Submatches* re_submatches_copy(struct re *re, RE_Submatches *orig) {
   RE_Submatches *subs = RE_CALLOC(re, 1, sizeof(RE_Submatches));
   if (orig) {
     subs->beginnings = (re_array_of_charp) re_array_copy(re, orig->beginnings); // -V522
@@ -577,7 +577,7 @@ static void re_submatches_free(struct re *re, RE_Submatches *subs) {
   RE_FREE(re, subs);
 }
 
-static inline RE_Submatches *re_submatches_link(RE_Submatches *subs) {
+static inline RE_Submatches* re_submatches_link(RE_Submatches *subs) {
   if (subs) {
     subs->refs++;
   }
@@ -768,7 +768,7 @@ bailout:
 
 /* public interface */
 
-struct re *lwre_new(const char *expr) {
+struct re* lwre_new(const char *expr) {
   struct re *re = RE_CALLOC(0, 1, sizeof(struct re));
   if (re) {
     re->expression = expr;
@@ -882,7 +882,7 @@ static void re_escape_utf8(char **sp, unsigned int c) {
   *sp = s;
 }
 
-char *lwre_escape(char *s, int liberal) {
+char* lwre_escape(char *s, int liberal) {
   char *in = s, *out = s;
   int c;
   while ((c = *in++)) {

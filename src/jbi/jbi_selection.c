@@ -115,8 +115,8 @@ static bool _jbi_is_solid_node_expression(const JQP_NODE *n) {
   JQPUNIT *unit = n->value;
   for (const JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
     if (  expr->op->negate
-       || (expr->join && (expr->join->negate || (expr->join->value == JQP_JOIN_OR) ))
-       || (expr->op->value == JQP_OP_RE) ) {
+       || (expr->join && (expr->join->negate || (expr->join->value == JQP_JOIN_OR)))
+       || (expr->op->value == JQP_OP_RE)) {
       // No negate conditions, No OR, No regexp
       return false;
     }
@@ -154,10 +154,10 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
           continue;
         }
         int vcnt = 0;
-        for (JBL_NODE n = rv->vnode->child; n; n = n->next, ++vcnt) ;
+        for (JBL_NODE n = rv->vnode->child; n; n = n->next, ++vcnt);
         if (  (vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE)
            && (  (vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE)
-              || (mctx->idx->rnum < rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO) )) {
+              || (mctx->idx->rnum < rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO))) {
           // No index for large IN array | small collection size
           continue;
         }
@@ -388,7 +388,7 @@ static int _jbi_idx_cmp(const void *o1, const void *o2) {
   return (d1->idx->ptr->cnt - d2->idx->ptr->cnt);
 }
 
-static struct _JBIDX *_jbi_select_index_for_orderby(JBEXEC *ctx) {
+static struct _JBIDX* _jbi_select_index_for_orderby(JBEXEC *ctx) {
   struct JQP_AUX *aux = ctx->ux->q->aux;
   struct _JBL_PTR *obp = aux->orderby_ptrs[0];
   assert(obp);
@@ -398,7 +398,7 @@ static struct _JBIDX *_jbi_select_index_for_orderby(JBEXEC *ctx) {
       continue;
     }
     int i = 0;
-    for ( ; i < obp->cnt && !strcmp(ptr->n[i], obp->n[i]); ++i) ;
+    for ( ; i < obp->cnt && !strcmp(ptr->n[i], obp->n[i]); ++i);
     if (i == obp->cnt) {
       memset(&ctx->midx, 0, sizeof(ctx->midx));
       if (!(obp->op & 1)) { // Asc sort

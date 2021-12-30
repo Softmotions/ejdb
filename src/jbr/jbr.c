@@ -471,7 +471,11 @@ static void _jbr_on_options(JBRCTX *rctx) {
 
   if (http->cors) {
     _jbr_http_set_header(req, "Access-Control-Allow-Origin", 27, "*", 1);
-    _jbr_http_set_header(req, "Access-Control-Allow-Headers", 28, "X-Requested-With, Content-Type, Accept, Origin, Authorization", 61);
+    _jbr_http_set_header(req,
+                         "Access-Control-Allow-Headers",
+                         28,
+                         "X-Requested-With, Content-Type, Accept, Origin, Authorization",
+                         61);
 
     if (http->read_anon) {
       _jbr_http_set_header(req, "Access-Control-Allow-Methods", 28, "GET, HEAD, POST, OPTIONS", 24);
@@ -1067,10 +1071,10 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   int len = msg.len, pos;
 
   // Trim right
-  for (pos = len; pos > 0 && isspace(data[pos - 1]); --pos) ;
+  for (pos = len; pos > 0 && isspace(data[pos - 1]); --pos);
   len = pos;
   // Trim left
-  for (pos = 0; pos < len && isspace(data[pos]); ++pos) ;
+  for (pos = 0; pos < len && isspace(data[pos]); ++pos);
   len -= pos;
   data += pos;
   if (len < 1) {
@@ -1096,7 +1100,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   }
 
   // Fetch key, after we can do good errors reporting
-  for (pos = 0; pos < len && !isspace(data[pos]); ++pos) ;
+  for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
   if (pos > JBR_MAX_KEY_LEN) {
     iwlog_warn("The key length: %d exceeded limit: %d", pos, JBR_MAX_KEY_LEN);
     return;
@@ -1110,7 +1114,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   }
 
   // Space
-  for ( ; pos < len && isspace(data[pos]); ++pos) ;
+  for ( ; pos < len && isspace(data[pos]); ++pos);
   len -= pos;
   data += pos;
   if (len < 1) {
@@ -1119,7 +1123,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
   }
 
   // Fetch command
-  for (pos = 0; pos < len && !isspace(data[pos]); ++pos) ;
+  for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
 
   if (pos <= len) {
     if (!strncmp("get", data, pos)) {
@@ -1152,12 +1156,12 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       _jbr_ws_info(wctx, key);
       return;
     }
-    for ( ; pos < len && isspace(data[pos]); ++pos) ;
+    for ( ; pos < len && isspace(data[pos]); ++pos);
     len -= pos;
     data += pos;
 
     char *coll = data;
-    for (pos = 0; pos < len && !isspace(data[pos]); ++pos) ;
+    for (pos = 0; pos < len && !isspace(data[pos]); ++pos);
     len -= pos;
     data += pos;
 
@@ -1181,7 +1185,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
       return;
     }
 
-    for (pos = 0; pos < len && isspace(data[pos]); ++pos) ;
+    for (pos = 0; pos < len && isspace(data[pos]); ++pos);
     len -= pos;
     data += pos;
     if (len < 1) {
@@ -1205,7 +1209,7 @@ static void _jbr_ws_on_message(ws_s *ws, fio_str_info_s msg, uint8_t is_text) {
           nbuf[pos] = data[pos];
         }
         nbuf[pos] = '\0';
-        for ( ; pos < len && isspace(data[pos]); ++pos) ;
+        for ( ; pos < len && isspace(data[pos]); ++pos);
         len -= pos;
         data += pos;
 
@@ -1302,7 +1306,7 @@ static void _jbr_on_http_upgrade(http_s *req, char *requested_protocol, size_t l
 
 //---------------- Main ---------------------
 
-static void *_jbr_start_thread(void *op) {
+static void* _jbr_start_thread(void *op) {
   JBR jbr = op;
   char nbuf[JBNUMBUF_SIZE];
   const EJDB_HTTP *http = jbr->http;
@@ -1407,7 +1411,7 @@ iwrc jbr_shutdown(JBR *pjbr) {
   return 0;
 }
 
-static const char *_jbr_ecodefn(locale_t locale, uint32_t ecode) {
+static const char* _jbr_ecodefn(locale_t locale, uint32_t ecode) {
   if (!((ecode > _JBR_ERROR_START) && (ecode < _JBR_ERROR_END))) {
     return 0;
   }

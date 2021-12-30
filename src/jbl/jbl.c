@@ -39,7 +39,7 @@ void jbl_set_user_data(JBL jbl, void *user_data, void (*user_data_free_fn)(void*
   binn_set_user_data(&jbl->bn, user_data, user_data_free_fn);
 }
 
-void *jbl_get_user_data(JBL jbl) {
+void* jbl_get_user_data(JBL jbl) {
   return jbl->bn.user_data;
 }
 
@@ -910,7 +910,7 @@ double jbl_get_f64(JBL jbl) {
   }
 }
 
-const char *jbl_get_str(JBL jbl) {
+const char* jbl_get_str(JBL jbl) {
   assert(jbl && jbl->bn.type == BINN_STRING);
   if (jbl->bn.type != BINN_STRING) {
     return 0;
@@ -1281,7 +1281,7 @@ IW_INLINE bool _jbn_visitor_update_jptr_cursor(JBN_VCTX *vctx, int lvl, const ch
       }
       int jplen = (int) strlen(jp->n[lvl]);
       if ((  (idx == jplen)
-          && !strncmp(keyptr, jp->n[lvl], idx)) || ((jp->n[lvl][0] == '*') && (jp->n[lvl][1] == '\0') )) {
+          && !strncmp(keyptr, jp->n[lvl], idx)) || ((jp->n[lvl][0] == '*') && (jp->n[lvl][1] == '\0'))) {
         vctx->pos = lvl;
         return (jp->cnt == lvl + 1);
       }
@@ -2893,7 +2893,7 @@ iwrc jbn_merge_patch(JBL_NODE root, JBL_NODE patch, IWPOOL *pool) {
   return rc;
 }
 
-static const char *_jbl_ecodefn(locale_t locale, uint32_t ecode) {
+static const char* _jbl_ecodefn(locale_t locale, uint32_t ecode) {
   if (!((ecode > _JBL_ERROR_START) && (ecode < _JBL_ERROR_END))) {
     return 0;
   }

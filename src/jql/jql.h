@@ -95,7 +95,7 @@ IW_EXPORT WUR iwrc jql_create(JQL *qptr, const char *coll, const char *query);
 
 IW_EXPORT WUR iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode_t mode);
 
-IW_EXPORT const char *jql_collection(JQL q);
+IW_EXPORT const char* jql_collection(JQL q);
 
 /**
  * @brief Bind JSON node data to query placeholder.
@@ -146,9 +146,9 @@ IW_EXPORT WUR iwrc jql_set_null(JQL q, const char *placeholder, int index);
 
 IW_EXPORT WUR iwrc jql_matched(JQL q, JBL jbl, bool *out);
 
-IW_EXPORT const char *jql_first_anchor(JQL q);
+IW_EXPORT const char* jql_first_anchor(JQL q);
 
-IW_EXPORT const char *jql_error(JQL q);
+IW_EXPORT const char* jql_error(JQL q);
 
 IW_EXPORT bool jql_has_apply(JQL q);
 

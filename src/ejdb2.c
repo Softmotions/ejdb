@@ -1898,11 +1898,11 @@ iwrc ejdb_close(EJDB *ejdbp) {
   return rc;
 }
 
-const char *ejdb_git_revision(void) {
+const char* ejdb_git_revision(void) {
   return EJDB2_GIT_REVISION;
 }
 
-const char *ejdb_version_full(void) {
+const char* ejdb_version_full(void) {
   return EJDB2_VERSION;
 }
 
@@ -1918,7 +1918,7 @@ unsigned int ejdb_version_patch(void) {
   return EJDB2_VERSION_PATCH;
 }
 
-static const char *_ejdb_ecodefn(locale_t locale, uint32_t ecode) {
+static const char* _ejdb_ecodefn(locale_t locale, uint32_t ecode) {
   if (!((ecode > _EJDB_ERROR_START) && (ecode < _EJDB_ERROR_END))) {
     return 0;
   }
