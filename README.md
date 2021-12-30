@@ -36,7 +36,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
   * [Data modification](#jql-data-modification)
   * [Projections](#jql-projections)
   * [Collection joins](#jql-collection-joins)
-  * [Sorting](#jql-sorting)
+  * [Sorting](#jql-results-ordering)
   * [Query options](#jql-options)
 * [Indexes and performance](#jql-indexes-and-performance-tips)
 * [Network API](#http-restwebsocket-api-endpoint)
