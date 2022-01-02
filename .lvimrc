@@ -1,5 +1,9 @@
 " Local vim rc
 
+if g:localvimrc_sourced_once
+  finish
+endif
+
 let g:build_type = 'Debug'
 let g:build_tests = 'ON'
 let g:cc = 'clang'
