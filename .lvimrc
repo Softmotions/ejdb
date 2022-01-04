@@ -14,7 +14,7 @@ let $ROOT_DIR = g:root_dir
 let $UNCRUSTIFY_CONFIG = g:root_dir.'/uncrustify.cfg'
 
 let g:build_dir = g:root_dir.'/build'
-let &l:makeprg = 'cd '.g:build_dir.' && make -j4'
+let &g:makeprg = 'cd '.g:build_dir.' && make -j4'
 
 packadd termdebug
 let g:termdebug_wide=1
