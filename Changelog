@@ -1,6 +1,7 @@
 ejdb2 (2.63) UNRELEASED; urgency=medium
 
-  * Java: Added JSON.clone() method
+  * Moved `lwre` regexp library into `iowow` project.
+  * Java: Added JSON.clone() method  
   * Java: Added JSON ObjectBuilder.move() method  
 
  -- Anton Adamansky <adamansky@gmail.com>  Tue, 23 Nov 2021 18:51:34 +0700

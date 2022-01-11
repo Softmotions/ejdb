@@ -3,7 +3,9 @@
 #include "jbl_internal.h"
 #include "jql_internal.h"
 #include "jqp.h"
-#include "lwre.h"
+
+#include <ejdb2/iowow/iwre.h>
+
 #include <errno.h>
 
 /** Query matching context */
@@ -42,7 +44,7 @@ IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
         break;
       case JQVAL_RE:
         ptr = (void*) qv->vre->expression;
-        lwre_free(qv->vre);
+        iwre_free(qv->vre);
         break;
       case JQVAL_JBLNODE:
         ptr = qv->vnode;
@@ -192,14 +194,14 @@ iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
 iwrc jql_set_regexp2(
   JQL q, const char *placeholder, int index, const char *expr,
   void (*freefn)(void*, void*), void *op) {
-  struct re *rx = lwre_new(expr);
+  struct re *rx = iwre_new(expr);
   if (!rx) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) {
     iwrc rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    lwre_free(rx);
+    iwre_free(rx);
     return rc;
   }
   qv->freefn = freefn;
@@ -388,7 +390,7 @@ void jql_destroy(JQL *qptr) {
     for (JQP_OP *op = aux->start_op; op; op = op->next) {
       if (op->opaque) {
         if (op->value == JQP_OP_RE) {
-          lwre_free(op->opaque);
+          iwre_free(op->opaque);
         }
       }
     }
@@ -738,7 +740,7 @@ static bool _jql_match_regexp(
       aexpr[rci - 1] = '\0';
       expr = aexpr;
     }
-    rx = lwre_new(expr);
+    rx = iwre_new(expr);
     if (!rx) {
       *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
       return false;
@@ -770,7 +772,7 @@ static bool _jql_match_regexp(
   }
 
   assert(input);
-  int mret = lwre_match(rx, input);
+  int mret = iwre_match(rx, input);
   switch (mret) {
     case RE_ERROR_NOMATCH:
       return false;
