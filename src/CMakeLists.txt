@@ -139,8 +139,7 @@ list(
   ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
   ${CMAKE_CURRENT_SOURCE_DIR}/jbl/jbl.h
   ${CMAKE_CURRENT_SOURCE_DIR}/jbr/jbr.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/jql/jql.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/util/lwre.h)
+  ${CMAKE_CURRENT_SOURCE_DIR}/jql/jql.h)
 
 set(CMAKE_C_FLAGS
     "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -pedantic -Wfatal-errors -Wall -Wextra \
