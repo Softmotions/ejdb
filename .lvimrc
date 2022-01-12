@@ -1,13 +1,13 @@
 " Local vim rc
 
-if g:localvimrc_sourced_once
+if exists('g:build_dir')
   finish
 endif
 
-let g:build_type = 'Debug'
-let g:build_tests = 'ON'
-let g:cc = 'clang'
-let g:cxx = 'clang++'
+let g:build_type = get(g:, 'build_type', 'Debug')
+let g:build_tests = get(g:, 'build_tests', 'ON')
+let g:cc = get(g:, 'cc', 'clang')
+let g:cxx = get(g:, 'cxx', 'clang++')
 
 let g:root_dir = g:localvimrc_script_dir_unresolved
 let $ROOT_DIR = g:root_dir
