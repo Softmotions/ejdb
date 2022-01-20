@@ -1,5 +1,6 @@
 ejdb2 (2.63) UNRELEASED; urgency=medium
 
+  * Correct handling of `vsnprintf` return value. (jbl.c)
   * Moved `lwre` regexp library into `iowow` project.
   * Java: Added JSON.clone() method  
   * Java: Added JSON ObjectBuilder.move() method  
