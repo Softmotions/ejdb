@@ -34,15 +34,21 @@ include(CheckLibraryExists)
 include(TestBigEndian)
 
 include(AddIOWOW)
+list(APPEND PROJECT_LLIBRARIES IOWOW::static)
 
 if(ENABLE_HTTP)
   if(WIN32)
     message(FATAL_ERROR "ENABLE_HTTP option cannot be used in Windows build")
   endif()
+  include(AddWslay)
+  include(AddBearSSL)
+  include(AddIWNET)
   include(AddFacil)
   add_definitions(-DJB_HTTP)
   list(APPEND MODULES jbr)
 endif()
+
+list(APPEND PROJECT_LLIBRARIES IOWOW::static) 
 
 if((CMAKE_BUILD_TYPE EQUAL Release) OR (CMAKE_BUILD_TYPE EQUAL RelWithDebInfo))
   add_definition(-DJB_RELEASE=1)

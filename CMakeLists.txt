@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
                       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
@@ -160,20 +160,13 @@ if(CPACK_GENERATORS)
       "/Makefile$"
       "hints\\\\.txt$"
       "/\\\\.clang/"
-      "/\\\\.codelite/"
+      "/\\\\.cache/"
       "/\\\\.git/"
-      "/\\\\.idea/"
       "/\\\\.settings/"
-      "/\\\\.vscode/"
       "\\\\.classpath$"
       "\\\\.editorconfig$"
-      "\\\\.iml$"
-      "\\\\.ipr$"
       "\\\\.log$"
       "\\\\.mk$"
-      "\\\\.project$"
-      "\\\\.workspace$"
-      "\\\\.astylerc$"
       "uncrustify\\\\.cfg")
   set(PROJECT_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
   add_subdirectory(installer)

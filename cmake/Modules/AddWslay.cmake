@@ -6,29 +6,24 @@ else()
   set(_UPDATE_DISCONNECTED 1)
 endif()
 
-set(IOWOW_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
-file(MAKE_DIRECTORY ${IOWOW_INCLUDE_DIR})
+set(WSLAY_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
+file(MAKE_DIRECTORY ${WSLAY_INCLUDE_DIR})
 
-if("${IOWOW_URL}" STREQUAL "")
-  if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
-    set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
+if("${WSLAY_URL}" STREQUAL "")
+  if(EXISTS ${CMAKE_SOURCE_DIR}/wslay.zip)
+    set(WSLAY_URL ${CMAKE_SOURCE_DIR}/wslay.zip)
   else()
-    set(IOWOW_URL ${CMAKE_SOURCE_DIR}/extra/iowow)
+    set(WSLAY_URL ${CMAKE_SOURCE_DIR}/extra/wslay)
   endif()
 endif()
 
-message("IOWOW_URL: ${IOWOW_URL}")
+message("WSLAY_URL: ${WSLAY_URL}")
 
 if(APPLE)
-  set(BYPRODUCT "${CMAKE_BINARY_DIR}/lib/libiowow-1.a")
+  set(BYPRODUCT "${CMAKE_BINARY_DIR}/lib/libwslay.a")
 else()
-  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a")
+  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_wslay-build/src/libwslay.a")
 endif()
-
-set(CMAKE_ARGS
-    -DOWNER_PROJECT_NAME=${PROJECT_NAME} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DASAN=${ASAN}
-    -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF)
 
 # In order to properly pass owner project CMAKE variables than contains
 # semicolons, we used a specific separator for 'ExternalProject_Add', using the
@@ -59,12 +54,12 @@ foreach(
   endif()
 endforeach()
 
-message("IOWOW CMAKE_ARGS: ${CMAKE_ARGS}")
+message("WSLAY CMAKE_ARGS: ${CMAKE_ARGS}")
 
 ExternalProject_Add(
-  extern_iowow
-  URL ${IOWOW_URL}
-  DOWNLOAD_NAME iowow.zip
+  extern_wslay
+  URL ${WSLAY_URL}
+  DOWNLOAD_NAME wslay.zip
   TIMEOUT 360
   PREFIX ${CMAKE_BINARY_DIR}
   BUILD_IN_SOURCE OFF
@@ -76,16 +71,14 @@ ExternalProject_Add(
 
 if(DO_INSTALL_CORE)
   install(FILES "${BYPRODUCT}" DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+  add_library(WSLAY::static STATIC IMPORTED GLOBAL)
+  set_target_properties(
+    WSLAY::static
+    PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+               IMPORTED_LOCATION ${BYPRODUCT}
+               INTERFACE_INCLUDE_DIRECTORIES "${WSLAY_INCLUDE_DIR}"
+               INTERFACE_LINK_LIBRARIES "WSLAY::static")
+
+  add_dependencies(WSLAY::static extern_wslay)
 endif()
-
-add_library(IOWOW::static STATIC IMPORTED GLOBAL)
-set_target_properties(
-  IOWOW::static
-  PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-             IMPORTED_LOCATION ${BYPRODUCT}
-             INTERFACE_INCLUDE_DIRECTORIES "${IOWOW_INCLUDE_DIR}"
-             INTERFACE_LINK_LIBRARIES "m")
-             
-
-add_dependencies(IOWOW::static extern_iowow)
-
