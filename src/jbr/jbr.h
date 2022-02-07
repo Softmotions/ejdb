@@ -32,8 +32,8 @@
 
 IW_EXTERN_C_START
 
-struct _JBR;
-typedef struct _JBR*JBR;
+struct jbr;
+typedef struct jbr*JBR;
 
 iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, JBR *out_jbr);
 

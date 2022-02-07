@@ -54,6 +54,7 @@ foreach(
   endif()
 endforeach()
 
+list(APPEND CMAKE_ARGS "-DCMAKE_C_FLAGS=-fPIC")
 message("WSLAY CMAKE_ARGS: ${CMAKE_ARGS}")
 
 ExternalProject_Add(
