@@ -3,8 +3,6 @@
 
 #include <iwnet/ws_server.h>
 
-#include <stdlib.h>
-
 struct jbr {
   struct iwn_poller *poller;
   pthread_t poller_thread;
@@ -16,10 +14,20 @@ struct jbr {
 
 struct rctx {
   IWXSTR *wbuf;
-  int64_t id;
-  bool    read_anon;
-  char    cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
+  struct iwn_wf_req *req;
+  struct jbr *jbr;
+  int64_t     id;
+  bool read_anon;
+  char cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
 };
+
+#define JBR_RC_REPORT(code_, r_, rc_)                            \
+  do {                                                           \
+    if ((code_) >= 500) iwlog_ecode_error3(rc_);                 \
+    const char *err = iwlog_ecode_explained(rc_);                \
+    iwn_http_response_write(r_, code_, "text/plain", err, -1);   \
+    ret = 1;                                                     \
+  } while (0)
 
 void _destroy(struct jbr *jbr) {
   if (jbr) {
@@ -47,44 +55,120 @@ static void* _poller_worker(void *op) {
   return 0;
 }
 
-static void _handle_request_dispose(struct iwn_http_req *req) {
+static void _on_http_request_dispose(struct iwn_http_req *req) {
   struct rctx *rctx = req->request_user_data;
   if (rctx) {
     free(rctx);
   }
 }
 
-static int _handle_request(struct iwn_wf_req *req, void *op) {
-  int ret = 0;
-  iwrc rc = 0;
+static int _on_get(struct rctx *ctx) {
+  JBL jbl = 0;
+  IWXSTR *xstr = 0;
+  int nbytes = 0, ret = 1;
+
+  iwrc rc = ejdb_get(ctx->jbr->db, ctx->cname, ctx->id, &jbl);
+  if ((rc == IWKV_ERROR_NOTFOUND) || (rc == IW_ERROR_NOT_EXISTS)) {
+    return 404;
+  } else {
+    goto finish;
+  }
+  if (ctx->req->flags & IWN_WF_HEAD) {
+    rc = jbl_as_json(jbl, jbl_count_json_printer, &nbytes, JBL_PRINT_PRETTY);
+  } else {
+    xstr = iwxstr_new2(jbl->bn.size * 2);
+    if (!xstr) {
+      ret = 500;
+      goto finish;
+    }
+    RCC(rc, finish, jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY));
+    nbytes = iwxstr_size(xstr);
+  }
+
+  iwn_http_response_header_i64_set(ctx->req->http, "content-length", nbytes);
+  iwn_http_response_write(ctx->req->http, 200, "application/json", xstr ? iwxstr_ptr(xstr) : 0, xstr ? nbytes : 0);
+
+finish:
+  if (rc) {
+    JBR_RC_REPORT(500, ctx->req->http, rc);
+  }
+  jbl_destroy(&jbl);
+  iwxstr_destroy(xstr);
+  return ret;
+}
+
+static int _on_post(struct rctx *ctx) {
+  if (ctx->read_anon) {
+    return 403;
+  }
+  if (ctx->req->body_len < 1) {
+    return 400;
+  }
+
+  JBL jbl;
+  int64_t id;
+  int ret = 1;
+  iwrc rc = jbl_from_json(&jbl, ctx->req->body);
+
+
+
+  if (rc) {
+    JBR_RC_REPORT(500, ctx->req->http, rc);
+  }
+  return ret;
+}
+
+static int _on_put(struct rctx *ctx) {
+  return 0;
+}
+
+static int _on_patch(struct rctx *ctx) {
+  return 0;
+}
+
+static int _on_delete(struct rctx *ctx) {
+  return 0;
+}
+
+static int _on_query(struct rctx *ctx) {
+  return 0;
+}
+
+static int _on_options(struct rctx *ctx) {
+  return 0;
+}
+
+static int _on_http_request(struct iwn_wf_req *req, void *op) {
   struct jbr *jbr = op;
 
   struct rctx *rctx = calloc(1, sizeof(*rctx));
   if (!rctx) {
     return 500;
   }
+  rctx->req = req;
+  rctx->jbr = jbr;
+
   uint32_t method = req->flags & (IWN_WF_METHODS_ALL);
   req->http->request_user_data = rctx;
-  req->http->on_request_dispose = _handle_request_dispose;
+  req->http->on_request_dispose = _on_http_request_dispose;
 
   if ((req->flags & IWN_WF_OPTIONS) && req->path_unmatched[0] != '\0') {
     return 400;
   }
 
   {
-    // Parse colletion {name}/{id}
-    size_t len = strlen(req->path_unmatched), clen = 0;
+    // Parse {collection name}/{id}
     const char *cname = req->path_unmatched;
+    size_t len = strlen(cname);
     char *c = strchr(req->path_unmatched, '/');
     if (!c) {
       if (  len > EJDB_COLLECTION_NAME_MAX_LEN
          || (method & (IWN_WF_GET | IWN_WF_HEAD | IWN_WF_PUT | IWN_WF_DELETE | IWN_WF_PATCH))) {
         return 400;
       }
-      clen = len;
     } else {
-      clen = c - cname;
-      if (  clen > EJDB_COLLECTION_NAME_MAX_LEN
+      len = c - cname;
+      if (  len > EJDB_COLLECTION_NAME_MAX_LEN
          || method == IWN_WF_POST) {
         return 400;
       }
@@ -94,8 +178,8 @@ static int _handle_request(struct iwn_wf_req *req, void *op) {
         return 400;
       }
     }
-    memcpy(rctx->cname, cname, clen);
-    rctx->cname[clen] = '\0';
+    memcpy(rctx->cname, cname, len);
+    rctx->cname[len] = '\0';
   }
 
   if (jbr->http->access_token) {
@@ -118,23 +202,32 @@ static int _handle_request(struct iwn_wf_req *req, void *op) {
   }
 
 process:
-  if (jbr->http->cors) {
-    RCC(rc, finish, iwn_http_response_header_set(req->http, "access-control-allow-origin", "*", 1));
+  if (jbr->http->cors && iwn_http_response_header_set(req->http, "access-control-allow-origin", "*", 1)) {
+    return 500;
   }
   if (rctx->cname[0] != '\0') {
-
-    
+    switch (method) {
+      case IWN_WF_GET:
+      case IWN_WF_HEAD:
+        return _on_get(rctx);
+      case IWN_WF_POST:
+        return _on_post(rctx);
+      case IWN_WF_PUT:
+        return _on_put(rctx);
+      case IWN_WF_PATCH:
+        return _on_patch(rctx);
+      case IWN_WF_DELETE:
+        return _on_delete(rctx);
+      default:
+        return 400;
+    }
   } else if (method == IWN_WF_POST) {
+    return _on_query(rctx);
   } else if (method == IWN_WF_OPTIONS) {
+    return _on_options(rctx);
   } else {
     return 400;
   }
-
-finish:
-  if (rc) {
-    ret = 500;
-  }
-  return ret;
 }
 
 static bool _on_ws_session_init(struct iwn_ws_sess *sess) {
@@ -170,7 +263,7 @@ static iwrc _configure(struct jbr *jbr) {
     .ctx = jbr->ctx,
     .pattern = "/",
     .flags = IWN_WF_MATCH_PREFIX | IWN_WF_METHODS_ALL,
-    .handler = _handle_request,
+    .handler = _on_http_request,
     .user_data = jbr
   }, 0));
 

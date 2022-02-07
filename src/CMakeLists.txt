@@ -12,6 +12,7 @@ set(ALL_SRC)
 set(ALL_HDRS)
 set(PUB_HDRS)
 set(PROJECT_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
+
 list(APPEND PROJECT_INCLUDE_DIRS "${PROJECT_GENERATED_DIR}"
      "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/include")
 
@@ -109,15 +110,11 @@ else()
   add_definitions(-D_POSIX_THREAD_SAFE_FUNCTIONS)
 endif()
 
-foreach(HF IN ITEMS stdlib stddef stdint stdbool)
-  string(TOUPPER "${HF}" UHF)
-  check_include_file(${HF}.h "JB_HAVE_${UHF}")
-  if(NOT JB_HAVE_${UHF})
-    message(FATAL_ERROR "Include file '${HF}.h' not FOUND")
-  endif()
-endforeach()
-
-add_definitions(-D_XOPEN_SOURCE=600)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  # Needed by Linux in order to use nftw() but fail to build on FreeBSD due to
+  # __BSD_VISIBLE define state.
+  add_definitions(-D_XOPEN_SOURCE=700)
+endif()
 add_definitions(-D_DEFAULT_SOURCE)
 add_definitions(-D_LARGEFILE_SOURCE)
 add_definitions(-D_FILE_OFFSET_BITS=64)
@@ -285,10 +282,8 @@ if(BUILD_SHARED_LIBS)
   endif()
   set_target_properties(
     ejdb2
-    PROPERTIES VERSION ${PROJECT_VERSION}
-               SOVERSION ${PROJECT_VERSION_MAJOR}
-               PUBLIC_HEADER "${PUB_HDRS}"
-               DEFINE_SYMBOL IW_API_EXPORTS)
+    PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR}
+               PUBLIC_HEADER "${PUB_HDRS}" DEFINE_SYMBOL IW_API_EXPORTS)
 
   if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_custom_command(
@@ -298,10 +293,8 @@ if(BUILD_SHARED_LIBS)
   endif()
 
   set_target_properties(
-    ejdb2_s
-    PROPERTIES VERSION ${PROJECT_VERSION}
-               COMPILE_FLAGS "-DIW_NODLL"
-               OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
+    ejdb2_s PROPERTIES VERSION ${PROJECT_VERSION} COMPILE_FLAGS "-DIW_NODLL"
+                       OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 else()
   set_target_properties(
     ejdb2

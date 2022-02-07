@@ -262,7 +262,7 @@ finish:
       default:
         if (rctx->data_sent) {
           // We cannot report error over HTTP
-          // because already sent some data to client
+          // because already sent some data to clien<F11>t
           iwlog_ecode_error3(rc);
           http_complete(req);
         } else {
