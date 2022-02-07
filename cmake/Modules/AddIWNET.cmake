@@ -71,14 +71,17 @@ ExternalProject_Add(
 
 if(DO_INSTALL_CORE)
   install(FILES "${BYPRODUCT}" DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-  add_library(IWNET::static STATIC IMPORTED GLOBAL)
-  set_target_properties(
-    IWNET::static
-    PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-               IMPORTED_LOCATION ${BYPRODUCT}
-               INTERFACE_INCLUDE_DIRECTORIES "${IWNET_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "IOWOW::static")
-
-             add_dependencies(IWNET::static BEARSSL::static WSLAY::static IOWOW:static extern_iwnet)
 endif()
+
+add_library(IWNET::static STATIC IMPORTED GLOBAL)
+set_target_properties(
+  IWNET::static
+  PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+             IMPORTED_LOCATION ${BYPRODUCT})
+
+add_dependencies(IWNET::static BEARSSL::static WSLAY::static IOWOW:static extern_iwnet)
+
+list(PREPEND PROJECT_LLIBRARIES IWNET::static)
+list(APPEND PROJECT_INCLUDE_DIRS ${IWNET_INCLUDE_DIR})
+
+

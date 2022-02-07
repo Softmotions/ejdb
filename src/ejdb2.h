@@ -100,6 +100,8 @@ typedef struct _EJDB_HTTP {
   bool   read_anon;             /**< Allow anonymous read-only database access */
   size_t max_body_size;         /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
   bool   cors;                  /**< Allow CORS */
+  const char *ssl_private_key;  /**< Path to TLS 1.2 private key PEM */
+  const char *ssl_certs;        /**< Path to TLS 1.2 certificates  */
 } EJDB_HTTP;
 
 /**

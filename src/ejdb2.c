@@ -348,7 +348,7 @@ static iwrc _jb_db_release(EJDB *dbp) {
   *dbp = 0;
 #ifdef JB_HTTP
   if (db->jbr) {
-    IWRC(jbr_shutdown(&db->jbr), rc);
+    jbr_shutdown(db->jbr);
   }
 #endif
   if (db->mcolls) {

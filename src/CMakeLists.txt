@@ -13,7 +13,7 @@ set(ALL_HDRS)
 set(PUB_HDRS)
 set(PROJECT_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 list(APPEND PROJECT_INCLUDE_DIRS "${PROJECT_GENERATED_DIR}"
-     "${CMAKE_CURRENT_SOURCE_DIR}")
+     "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/include")
 
 if(APPLE)
   option(BUILD_FRAMEWORK "Build an OS X framework" OFF)
@@ -34,7 +34,6 @@ include(CheckLibraryExists)
 include(TestBigEndian)
 
 include(AddIOWOW)
-list(APPEND PROJECT_LLIBRARIES IOWOW::static)
 
 if(ENABLE_HTTP)
   if(WIN32)
@@ -47,8 +46,6 @@ if(ENABLE_HTTP)
   add_definitions(-DJB_HTTP)
   list(APPEND MODULES jbr)
 endif()
-
-list(APPEND PROJECT_LLIBRARIES IOWOW::static) 
 
 if((CMAKE_BUILD_TYPE EQUAL Release) OR (CMAKE_BUILD_TYPE EQUAL RelWithDebInfo))
   add_definition(-DJB_RELEASE=1)
@@ -140,11 +137,8 @@ foreach(MODULE IN LISTS MODULES)
 endforeach(MODULE)
 
 list(
-  APPEND
-  PUB_HDRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/jbl/jbl.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/jbr/jbr.h
+  APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/jbl/jbl.h ${CMAKE_CURRENT_SOURCE_DIR}/jbr/jbr.h
   ${CMAKE_CURRENT_SOURCE_DIR}/jql/jql.h)
 
 set(CMAKE_C_FLAGS
@@ -268,9 +262,9 @@ else()
   add_library(ejdb2_s STATIC ${ALL_SRC})
 endif()
 
-target_link_libraries(ejdb2 ${PROJECT_LLIBRARIES})
+target_link_libraries(ejdb2 INTERFACE ${PROJECT_LLIBRARIES})
 if(BUILD_SHARED_LIBS)
-  target_link_libraries(ejdb2_s ${PROJECT_LLIBRARIES})
+  target_link_libraries(ejdb2_s INTERFACE ${PROJECT_LLIBRARIES})
 endif()
 
 if(BUILD_SHARED_LIBS)
@@ -304,8 +298,10 @@ if(BUILD_SHARED_LIBS)
   endif()
 
   set_target_properties(
-    ejdb2_s PROPERTIES VERSION ${PROJECT_VERSION} COMPILE_FLAGS "-DIW_NODLL"
-                       OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
+    ejdb2_s
+    PROPERTIES VERSION ${PROJECT_VERSION}
+               COMPILE_FLAGS "-DIW_NODLL"
+               OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 else()
   set_target_properties(
     ejdb2

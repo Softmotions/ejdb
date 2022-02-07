@@ -78,7 +78,7 @@ if (DO_INSTALL_CORE)
           DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
-list(APPEND PROJECT_LLIBRARIES facil_s)
+list(PREPEND PROJECT_LLIBRARIES facil_s)
 list(APPEND PROJECT_INCLUDE_DIRS "${FACIL_INCLUDE_DIR}"
                                  "${FACIL_INCLUDE_DIR}/fiobj"
                                  "${FACIL_INCLUDE_DIR}/http"

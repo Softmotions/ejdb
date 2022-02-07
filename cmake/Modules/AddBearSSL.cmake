@@ -22,7 +22,7 @@ message("BEARSSL_URL: ${BEARSSL_URL}")
 if(APPLE)
   set(BYPRODUCT "${CMAKE_BINARY_DIR}/lib/libbearssl.a")
 else()
-  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_bearssl-build/src/libbearssl.a")
+  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_bearssl-build/libbearssl.a")
 endif()
 
 # In order to properly pass owner project CMAKE variables than contains
@@ -71,14 +71,14 @@ ExternalProject_Add(
 
 if(DO_INSTALL_CORE)
   install(FILES "${BYPRODUCT}" DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-  add_library(BEARSSL::static STATIC IMPORTED GLOBAL)
-  set_target_properties(
-    BEARSSL::static
-    PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-               IMPORTED_LOCATION ${BYPRODUCT}
-               INTERFACE_INCLUDE_DIRECTORIES "${BEARSSL_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "BEARSSL::static")
-
-  add_dependencies(BEARSSL::static extern_bearssl)
 endif()
+
+add_library(BEARSSL::static STATIC IMPORTED GLOBAL)
+set_target_properties(
+  BEARSSL::static PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                             IMPORTED_LOCATION ${BYPRODUCT})
+
+add_dependencies(BEARSSL::static extern_bearssl)
+
+list(PREPEND PROJECT_LLIBRARIES BEARSSL::static)
+list(APPEND PROJECT_INCLUDE_DIRS ${BEARSSL_INCLUDE_DIR})

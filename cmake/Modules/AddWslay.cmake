@@ -22,7 +22,7 @@ message("WSLAY_URL: ${WSLAY_URL}")
 if(APPLE)
   set(BYPRODUCT "${CMAKE_BINARY_DIR}/lib/libwslay.a")
 else()
-  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_wslay-build/src/libwslay.a")
+  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_wslay-build/lib/libwslay.a")
 endif()
 
 # In order to properly pass owner project CMAKE variables than contains
@@ -71,14 +71,14 @@ ExternalProject_Add(
 
 if(DO_INSTALL_CORE)
   install(FILES "${BYPRODUCT}" DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-  add_library(WSLAY::static STATIC IMPORTED GLOBAL)
-  set_target_properties(
-    WSLAY::static
-    PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-               IMPORTED_LOCATION ${BYPRODUCT}
-               INTERFACE_INCLUDE_DIRECTORIES "${WSLAY_INCLUDE_DIR}"
-               INTERFACE_LINK_LIBRARIES "WSLAY::static")
-
-  add_dependencies(WSLAY::static extern_wslay)
 endif()
+
+add_library(WSLAY::static STATIC IMPORTED GLOBAL)
+set_target_properties(
+  WSLAY::static PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                           IMPORTED_LOCATION ${BYPRODUCT})
+
+add_dependencies(WSLAY::static extern_wslay)
+
+list(PREPEND PROJECT_LLIBRARIES WSLAY::static)
+list(APPEND PROJECT_INCLUDE_DIRS ${WSLAY_INCLUDE_DIR})
