@@ -2,6 +2,9 @@
 #include "ejdb2_internal.h"
 
 #include <iwnet/ws_server.h>
+#include <iwnet/pairs.h>
+
+#include <pthread.h>
 
 struct jbr {
   struct iwn_poller *poller;
@@ -13,13 +16,14 @@ struct jbr {
 };
 
 struct rctx {
-  IWXSTR *wbuf;
   struct iwn_wf_req *req;
-  struct jbr *jbr;
-  int64_t     id;
-  EJDB_EXEC   ux;
-  bool read_anon;
-  char cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
+  struct jbr     *jbr;
+  struct iwn_vals vals;
+  pthread_mutex_t mtx;
+  EJDB_EXEC       ux;
+  int64_t id;
+  bool    read_anon;
+  char    cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
 };
 
 #define JBR_RC_REPORT(ret_, r_, rc_)                                 \
@@ -62,6 +66,12 @@ static void* _poller_worker(void *op) {
 static void _on_http_request_dispose(struct iwn_http_req *req) {
   struct rctx *rctx = req->request_user_data;
   if (rctx) {
+    for (struct iwn_val *v = rctx->vals.first; v; ) {
+      struct iwn_val *n = v->next;
+      free(v->buf);
+      v = n;
+    }
+    pthread_mutex_destroy(&rctx->mtx);
     free(rctx);
   }
 }
@@ -230,7 +240,7 @@ static int _on_options(struct rctx *ctx) {
 
   if (ctx->jbr->http->cors) {
     RCC(rc, finish, iwn_http_response_header_add(ctx->req->http, "Access-Control-Allow-Origin", "*", 1));
-    RCC(rc, finish, iwn_http_response_header_add(ctx->req->http, "Access-Control-Allow-Heasers",
+    RCC(rc, finish, iwn_http_response_header_add(ctx->req->http, "Access-Control-Allow-Headers",
                                                  "X-Requested-With, Content-Type, Accept, Origin, Authorization", 61));
 
     if (ctx->jbr->http->read_anon) {
@@ -255,6 +265,19 @@ finish:
 
 static iwrc _query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   iwrc rc = 0;
+  struct rctx *ctx = ux->opaque;
+  IWXSTR *xstr = iwxstr_new();
+  RCA(xstr, finish);
+
+  if (ux->log) {
+    iwxstr_cat(xstr, iwxstr_ptr(ux->log), iwxstr_size(ux->log));
+  }
+
+
+  //iwn_http_response_chunk_write
+
+
+finish:
   return rc;
 }
 
@@ -269,7 +292,7 @@ static int _on_query(struct rctx *ctx) {
   ctx->ux.db = ctx->jbr->db;
   ctx->ux.visitor = _query_visitor;
 
-  //ejdb_exec 
+  //ejdb_exec
 
   if (rc) {
     JBR_RC_REPORT(ret, ctx->req->http, rc);
@@ -285,6 +308,7 @@ static int _on_http_request(struct iwn_wf_req *req, void *op) {
   if (!rctx) {
     return 500;
   }
+  pthread_mutex_init(&rctx->mtx, 0);
   rctx->req = req;
   rctx->jbr = jbr;
 

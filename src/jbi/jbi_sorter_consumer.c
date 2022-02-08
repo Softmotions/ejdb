@@ -14,6 +14,7 @@ static void _jbi_scan_sorter_release(struct _JBEXEC *ctx) {
 
 static int _jbi_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   int rv = 0;
+  iwrc rc;
   uint32_t r1, r2;
   struct _JBL d1, d2;
   struct _JBEXEC *ctx = op;
@@ -28,10 +29,8 @@ static int _jbi_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   p1 = ssc->docs + r1 + sizeof(uint64_t) /*id*/;
   p2 = ssc->docs + r2 + sizeof(uint64_t) /*id*/;
 
-  iwrc rc = jbl_from_buf_keep_onstack2(&d1, p1);
-  RCGO(rc, finish);
-  rc = jbl_from_buf_keep_onstack2(&d2, p2);
-  RCGO(rc, finish);
+  RCC(rc, finish, jbl_from_buf_keep_onstack2(&d1, p1));
+  RCC(rc, finish, jbl_from_buf_keep_onstack2(&d2, p2));
 
   for (int i = 0; i < aux->orderby_num; ++i) {
     struct _JBL v1 = { 0 };
@@ -61,7 +60,7 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
   iwrc rc = jbl_to_node(jbl, &root, true, pool);
   RCRET(rc);
   doc->node = root;
-  if (aux->qmode & JQP_QRY_APPLY_DEL) {
+  if (aux->qmode & JQP_QRY_APPLY_DEL) {  
     rc = jb_del(ctx->jbc, jbl, doc->id);
     RCRET(rc);
   } else if (aux->apply || aux->apply_placeholder) {
@@ -97,8 +96,7 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
     }
     if (!ssc->docs) {
       size_t sp;
-      rc = ssc->sof.probe_mmap(&ssc->sof, 0, &ssc->docs, &sp);
-      RCGO(rc, finish);
+      RCC(rc, finish, ssc->sof.probe_mmap(&ssc->sof, 0, &ssc->docs, &sp));
     }
 
     sort_r(ssc->refs, rnum, sizeof(ssc->refs[0]), _jbi_scan_sorter_cmp, ctx);
@@ -108,12 +106,13 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
     uint8_t *rp = ssc->docs + ssc->refs[i];
     memcpy(&id, rp, sizeof(id));
     rp += sizeof(id);
-    rc = jbl_from_buf_keep_onstack2(&jbl, rp);
-    RCGO(rc, finish);
+    RCC(rc, finish, jbl_from_buf_keep_onstack2(&jbl, rp));
+
     struct _EJDB_DOC doc = {
       .id  = id,
       .raw = &jbl
     };
+
     if (aux->apply || aux->projection) {
       if (!pool) {
         pool = iwpool_create(jbl.bn.size * 2);
@@ -122,19 +121,18 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
           goto finish;
         }
       }
-      rc = _jbi_scan_sorter_apply(pool, ctx, ux->q, &doc);
-      RCGO(rc, finish);
+      RCC(rc, finish, _jbi_scan_sorter_apply(pool, ctx, ux->q, &doc));
     } else if (aux->qmode & JQP_QRY_APPLY_DEL) {
-      rc = jb_del(ctx->jbc, &jbl, id);
-      RCGO(rc, finish);
+      RCC(rc, finish, jb_del(ctx->jbc, &jbl, id));
     }
+
     if (!(aux->qmode & JQP_QRY_AGGREGATE)) {
       do {
         step = 1;
-        rc = ux->visitor(ux, &doc, &step);
-        RCGO(rc, finish);
+        RCC(rc, finish, ux->visitor(ux, &doc, &step));
       } while (step == -1);
     }
+
     ++ux->cnt;
     i += step;
     if (pool != ux->pool) {
@@ -174,7 +172,8 @@ static iwrc _jbi_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
 
 iwrc jbi_sorter_consumer(
   struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id,
-  int64_t *step, bool *matched, iwrc err) {
+  int64_t *step, bool *matched, iwrc err
+  ) {
   if (!id) {
     // End of scan
     if (err) {

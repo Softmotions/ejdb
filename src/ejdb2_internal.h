@@ -150,7 +150,7 @@ typedef iwrc (*JB_SCAN_CONSUMER)(
   int64_t *step, bool *matched, iwrc err);
 
 /**
- * @brief Index can sorter consumer context
+ * @brief Index scan sorter consumer context
  */
 struct _JBSSC {
   iwrc      rc;               /**< RC code used for in `_jb_do_sorting` */

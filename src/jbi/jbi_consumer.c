@@ -37,6 +37,7 @@ start:
       goto finish;
     }
     RCGO(rc, finish);
+
     if (vsz > ctx->jblbufsz) {
       size_t nsize = MAX(vsz, ctx->jblbufsz * 2);
       void *nbuf = realloc(ctx->jblbuf, nsize);
@@ -50,8 +51,7 @@ start:
     }
   }
 
-  rc = jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf, vsz);
-  RCGO(rc, finish);
+  RCC(rc, finish, jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf, vsz));
 
   rc = jql_matched(ux->q, &jbl, matched);
   if (rc || !*matched || (ux->skip && (ux->skip-- > 0))) {
@@ -79,8 +79,7 @@ start:
           goto finish;
         }
       }
-      rc = jbl_to_node(&jbl, &root, true, pool);
-      RCGO(rc, finish);
+      RCC(rc, finish, jbl_to_node(&jbl, &root, true, pool));
       doc.node = root;
       if (aux->qmode & JQP_QRY_APPLY_DEL) {
         if (cur) {
@@ -90,10 +89,8 @@ start:
         }
       } else if (aux->apply || aux->apply_placeholder) {
         struct _JBL sn = { 0 };
-        rc = jql_apply(q, root, pool);
-        RCGO(rc, finish);
-        rc = _jbl_from_node(&sn, root);
-        RCGO(rc, finish);
+        RCC(rc, finish, jql_apply(q, root, pool));
+        RCC(rc, finish, _jbl_from_node(&sn, root));
         if (cur) {
           rc = jb_cursor_set(ctx->jbc, cur, id, &sn);
         } else {
@@ -103,8 +100,7 @@ start:
       }
       RCGO(rc, finish);
       if (aux->projection) {
-        rc = jql_project(q, root, pool, ctx);
-        RCGO(rc, finish);
+        RCC(rc, finish, jql_project(q, root, pool, ctx));
       }
     } else if (aux->qmode & JQP_QRY_APPLY_DEL) {
       if (cur) {
@@ -117,8 +113,7 @@ start:
     if (!(aux->qmode & JQP_QRY_AGGREGATE)) {
       do {
         ctx->istep = 1;
-        rc = ux->visitor(ux, &doc, &ctx->istep);
-        RCGO(rc, finish);
+        RCC(rc, finish, ux->visitor(ux, &doc, &ctx->istep));
       } while (ctx->istep == -1);
     }
     ++ux->cnt;
