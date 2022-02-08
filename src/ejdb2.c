@@ -1,7 +1,5 @@
 #include "ejdb2_internal.h"
 
-// ---------------------------------------------------------------------------
-
 static iwrc _jb_put_new_lw(JBCOLL jbc, JBL jbl, int64_t *id);
 
 static const IWKV_val EMPTY_VAL = { 0 };
