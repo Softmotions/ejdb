@@ -17,16 +17,20 @@ struct rctx {
   struct iwn_wf_req *req;
   struct jbr *jbr;
   int64_t     id;
+  EJDB_EXEC   ux;
   bool read_anon;
   char cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
 };
 
-#define JBR_RC_REPORT(code_, r_, rc_)                            \
-  do {                                                           \
-    if ((code_) >= 500) iwlog_ecode_error3(rc_);                 \
-    const char *err = iwlog_ecode_explained(rc_);                \
-    iwn_http_response_write(r_, code_, "text/plain", err, -1);   \
-    ret = 1;                                                     \
+#define JBR_RC_REPORT(ret_, r_, rc_)                                 \
+  do {                                                                \
+    if ((ret_) >= 500) iwlog_ecode_error3(rc_);                      \
+    const char *err = iwlog_ecode_explained(rc_);                     \
+    if (!iwn_http_response_write(r_, ret_, "text/plain", err, -1)) { \
+      ret_ = -1;                                                     \
+    } else {                                                          \
+      ret_ = 1;                                                      \
+    }                                                                 \
   } while (0)
 
 void _destroy(struct jbr *jbr) {
@@ -65,7 +69,7 @@ static void _on_http_request_dispose(struct iwn_http_req *req) {
 static int _on_get(struct rctx *ctx) {
   JBL jbl = 0;
   IWXSTR *xstr = 0;
-  int nbytes = 0, ret = 1;
+  int nbytes = 0, ret = 500;
 
   iwrc rc = ejdb_get(ctx->jbr->db, ctx->cname, ctx->id, &jbl);
   if ((rc == IWKV_ERROR_NOTFOUND) || (rc == IW_ERROR_NOT_EXISTS)) {
@@ -78,7 +82,6 @@ static int _on_get(struct rctx *ctx) {
   } else {
     xstr = iwxstr_new2(jbl->bn.size * 2);
     if (!xstr) {
-      ret = 500;
       goto finish;
     }
     RCC(rc, finish, jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY));
@@ -86,11 +89,12 @@ static int _on_get(struct rctx *ctx) {
   }
 
   iwn_http_response_header_i64_set(ctx->req->http, "content-length", nbytes);
-  iwn_http_response_write(ctx->req->http, 200, "application/json", xstr ? iwxstr_ptr(xstr) : 0, xstr ? nbytes : 0);
+  ret = iwn_http_response_write(ctx->req->http, 200, "application/json",
+                                xstr ? iwxstr_ptr(xstr) : 0, xstr ? nbytes : 0) ? 1 : -1;
 
 finish:
   if (rc) {
-    JBR_RC_REPORT(500, ctx->req->http, rc);
+    JBR_RC_REPORT(ret, ctx->req->http, rc);
   }
   jbl_destroy(&jbl);
   iwxstr_destroy(xstr);
@@ -107,34 +111,170 @@ static int _on_post(struct rctx *ctx) {
 
   JBL jbl;
   int64_t id;
-  int ret = 1;
+  int ret = 500;
   iwrc rc = jbl_from_json(&jbl, ctx->req->body);
-
-
-
   if (rc) {
-    JBR_RC_REPORT(500, ctx->req->http, rc);
+    ret = 400;
+    goto finish;
   }
+  RCC(rc, finish, ejdb_put_new(ctx->jbr->db, ctx->cname, jbl, &id));
+  ret = iwn_http_response_printf(ctx->req->http, 200, "text/plain", "%" PRId64, id) ? 1 : -1;
+
+finish:
+  if (rc) {
+    JBR_RC_REPORT(ret, ctx->req->http, rc);
+  }
+  jbl_destroy(&jbl);
   return ret;
 }
 
 static int _on_put(struct rctx *ctx) {
-  return 0;
+  if (ctx->read_anon) {
+    return 403;
+  }
+  if (ctx->req->body_len < 1) {
+    return 400;
+  }
+
+  JBL jbl;
+  int ret = 500;
+  iwrc rc = jbl_from_json(&jbl, ctx->req->body);
+  if (rc) {
+    ret = 400;
+    goto finish;
+  }
+  RCC(rc, finish, ejdb_put(ctx->jbr->db, ctx->cname, jbl, ctx->id));
+  ret = 200;
+
+finish:
+  if (rc) {
+    JBR_RC_REPORT(ret, ctx->req->http, rc);
+  }
+  jbl_destroy(&jbl);
+  return ret;
 }
 
 static int _on_patch(struct rctx *ctx) {
-  return 0;
+  if (ctx->read_anon) {
+    return 403;
+  }
+  if (ctx->req->body_len < 1) {
+    return 400;
+  }
+  int ret = 200;
+  iwrc rc = ejdb_patch(ctx->jbr->db, ctx->cname, ctx->req->body, ctx->id);
+  if (rc) {
+    iwrc_strip_code(&rc);
+    switch (rc) {
+      case IWKV_ERROR_NOTFOUND:
+      case IW_ERROR_NOT_EXISTS:
+        rc = 0;
+        ret = 404;
+        break;
+      case JBL_ERROR_PARSE_JSON:
+      case JBL_ERROR_PARSE_INVALID_CODEPOINT:
+      case JBL_ERROR_PARSE_INVALID_UTF8:
+      case JBL_ERROR_PARSE_UNQUOTED_STRING:
+      case JBL_ERROR_PATCH_TARGET_INVALID:
+      case JBL_ERROR_PATCH_NOVALUE:
+      case JBL_ERROR_PATCH_INVALID_OP:
+      case JBL_ERROR_PATCH_TEST_FAILED:
+      case JBL_ERROR_PATCH_INVALID_ARRAY_INDEX:
+      case JBL_ERROR_JSON_POINTER:
+        ret = 400;
+        break;
+      default:
+        ret = 500;
+        break;
+    }
+  }
+  if (rc) {
+    JBR_RC_REPORT(ret, ctx->req->http, rc);
+  }
+  return ret;
 }
 
 static int _on_delete(struct rctx *ctx) {
-  return 0;
-}
-
-static int _on_query(struct rctx *ctx) {
-  return 0;
+  if (ctx->read_anon) {
+    return 403;
+  }
+  iwrc rc = ejdb_del(ctx->jbr->db, ctx->cname, ctx->id);
+  if (rc) {
+    if (rc == IWKV_ERROR_NOTFOUND || rc == IW_ERROR_NOT_EXISTS) {
+      return 404;
+    } else {
+      int ret = 500;
+      JBR_RC_REPORT(ret, ctx->req->http, rc);
+      return ret;
+    }
+  }
+  return 200;
 }
 
 static int _on_options(struct rctx *ctx) {
+  iwrc rc;
+  JBL jbl = 0;
+  IWXSTR *xstr = 0;
+  int ret = 500;
+
+  RCC(rc, finish, ejdb_get_meta(ctx->jbr->db, &jbl));
+  RCA(xstr = iwxstr_new2(jbl->bn.size * 2), finish);
+  RCC(rc, finish, jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY));
+
+  if (ctx->jbr->http->read_anon) {
+    RCC(rc, finish, iwn_http_response_header_add(ctx->req->http, "Allow", "GET, HEAD, POST, OPTIONS", 24));
+  } else {
+    RCC(rc, finish, iwn_http_response_header_add(ctx->req->http, "Allow",
+                                                 "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS", 44));
+  }
+
+  if (ctx->jbr->http->cors) {
+    RCC(rc, finish, iwn_http_response_header_add(ctx->req->http, "Access-Control-Allow-Origin", "*", 1));
+    RCC(rc, finish, iwn_http_response_header_add(ctx->req->http, "Access-Control-Allow-Heasers",
+                                                 "X-Requested-With, Content-Type, Accept, Origin, Authorization", 61));
+
+    if (ctx->jbr->http->read_anon) {
+      RCC(rc, finish, iwn_http_response_header_add(ctx->req->http, "Access-Control-Allow-Methods",
+                                                   "GET, HEAD, POST, OPTIONS", 24));
+    } else {
+      RCC(rc, finish, iwn_http_response_header_add(ctx->req->http, "Access-Control-Allow-Methods",
+                                                   "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS", 44));
+    }
+  }
+
+  ret = iwn_http_response_write(ctx->req->http, 200, "application/json", iwxstr_ptr(xstr), iwxstr_size(xstr)) ? 1 : -1;
+
+finish:
+  if (rc) {
+    JBR_RC_REPORT(ret, ctx->req->http, rc);
+  }
+  jbl_destroy(&jbl);
+  iwxstr_destroy(xstr);
+  return ret;
+}
+
+static iwrc _query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
+  iwrc rc = 0;
+  return rc;
+}
+
+static int _on_query(struct rctx *ctx) {
+  if (ctx->req->body_len < 1) {
+    return 400;
+  }
+  iwrc rc = 0;
+  int ret = 500;
+
+  ctx->ux.opaque = ctx;
+  ctx->ux.db = ctx->jbr->db;
+  ctx->ux.visitor = _query_visitor;
+
+  //ejdb_exec 
+
+  if (rc) {
+    JBR_RC_REPORT(ret, ctx->req->http, rc);
+  }
+
   return 0;
 }
 
