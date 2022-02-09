@@ -1,7 +1,6 @@
 #include "ejdb2.h"
 #include "ejdb2cfg.h"
 
-#include <fio_cli.h>
 #include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
@@ -9,6 +8,11 @@
 EJDB db;  // -V707
 EJDB_OPTS opts;
 
+int main(int argc, char const *argv[]) {
+  return 0;
+}
+
+/*
 int main(int argc, char const *argv[]) {
   iwrc rc = 0;
   fio_cli_start(argc, argv, 0, 0,
@@ -103,3 +107,4 @@ finish:
   }
   return rc ? 1 : 0;
 }
+*/
