@@ -1395,7 +1395,7 @@ iwrc jbr_start_old(EJDB db, const EJDB_OPTS *opts, JBR *pjbr) {
     jbr->terminated = false;
     rc = jbr->rc;
     if (rc) {
-      jbr_shutdown(jbr);
+      jbr_shutdown_wait(jbr);
       return rc;
     }
     *pjbr = jbr;
@@ -1405,7 +1405,7 @@ iwrc jbr_start_old(EJDB db, const EJDB_OPTS *opts, JBR *pjbr) {
     _jbr_start_thread(jbr); // Will block here
     rc = jbr->rc;
     jbr->terminated = true;
-    jbr_shutdown(jbr);
+    jbr_shutdown_wait(jbr);
   }
   return rc;
 }

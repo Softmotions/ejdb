@@ -338,9 +338,7 @@ static iwrc _jb_db_release(EJDB *dbp) {
   EJDB db = *dbp;
   *dbp = 0;
 #ifdef JB_HTTP
-  if (db->jbr) {
-    jbr_shutdown(db->jbr);
-  }
+  jbr_shutdown_wait(db->jbr);
 #endif
   if (db->mcolls) {
     for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
@@ -1448,7 +1446,7 @@ iwrc jb_get(EJDB db, const char *coll, int64_t id, jb_coll_acquire_t acm, JBL *j
   JBL jbl = 0;
   IWKV_val val = { 0 };
   IWKV_val key = { .data = &id, .size = sizeof(id) };
-  
+
   RCC(rc, finish, _jb_coll_acquire_keeplock2(db, coll, acm, &jbc));
   RCC(rc, finish, iwkv_get(jbc->cdb, &key, &val));
   RCC(rc, finish, jbl_from_buf_keep(&jbl, val.data, val.size, false));
@@ -1549,7 +1547,7 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
     jbc = kh_value(db->mcolls, k);
     key.data = keybuf;
     key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_COLLMETA "%u", jbc->dbid);
-    
+
     RCC(rc, finish, iwkv_del(jbc->db->metadb, &key, IWKV_SYNC));
 
     _jb_meta_nrecs_removedb(db, jbc->dbid);

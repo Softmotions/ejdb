@@ -23,7 +23,6 @@ struct jbr {
   pthread_t poller_thread;
   const EJDB_HTTP   *http;
   struct iwn_wf_ctx *ctx;
-  JBR *jbrp;
   EJDB db;
 };
 
@@ -55,29 +54,23 @@ struct rctx {
     }                                                                 \
   } while (0)
 
-void _destroy(struct jbr *jbr) {
-  if (jbr) {
-    if (jbr->jbrp) {
-      *jbr->jbrp = 0;
-    }
-    iwn_poller_destroy(&jbr->poller);
-    if (jbr->poller_thread) {
-      pthread_join(jbr->poller_thread, 0);
+
+void jbr_shutdown_wait(struct jbr *jbr) {
+  if (jbr) {  
+    pthread_t t = jbr->poller_thread;
+    iwn_poller_shutdown_request(jbr->poller);
+    if (t && t != pthread_self()) {
+      jbr->poller_thread = 0;
+      pthread_join(t, 0);
     }
     free(jbr);
-  }
-}
-
-void jbr_shutdown(struct jbr *jbr) {
-  if (jbr && jbr->poller) {
-    iwn_poller_shutdown_request(jbr->poller);
   }
 }
 
 static void* _poller_worker(void *op) {
   JBR jbr = op;
   iwn_poller_poll(jbr->poller);
-  _destroy(jbr);
+  iwn_poller_destroy(&jbr->poller);
   return 0;
 }
 
@@ -329,7 +322,7 @@ static iwrc _query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
     iwxstr_destroy(ux->log);
     ux->log = 0;
   }
-  RCC(rc, finish, iwxstr_printf(xstr, "\r\n%" PRId64, doc->id));
+  RCC(rc, finish, iwxstr_printf(xstr, "\r\n%" PRId64 "\t", doc->id));
   if (doc->node) {
     RCC(rc, finish, jbn_as_json(doc->node, jbl_xstr_json_printer, xstr, 0));
   } else {
@@ -338,10 +331,9 @@ static iwrc _query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
 
   if (ctx->visitor_started) {
     pthread_mutex_lock(&ctx->mtx);
-    rc = iwn_val_add_new(&ctx->vals, iwxstr_ptr(xstr), iwxstr_size(xstr));
+    iwn_val_add_new(&ctx->vals, iwxstr_ptr(xstr), iwxstr_size(xstr));
     pthread_cond_broadcast(&ctx->cond);
     pthread_mutex_unlock(&ctx->mtx);
-    RCGO(rc, finish);
     iwxstr_destroy_keep_ptr(xstr);
   } else {
     ctx->visitor_started = true;
@@ -589,7 +581,7 @@ static bool _ws_error_send(struct iwn_ws_sess *ws, const char *key, const char *
 
 static bool _ws_rc_send(struct iwn_ws_sess *ws, const char *key, iwrc rc, const char *extra) {
   const char *error = iwlog_ecode_explained(rc);
-  return _ws_error_send(ws, key, error ? error : "unknown error", extra);
+  return _ws_error_send(ws, key, error ? error : "unknown", extra);
 }
 
 static bool _ws_info(struct iwn_ws_sess *ws) {
@@ -671,6 +663,7 @@ static bool _ws_document_get(struct iwn_ws_sess *ws, int64_t id) {
   ret = iwn_ws_server_write(ws, iwxstr_ptr(xstr), iwxstr_size(xstr));
 
 finish:
+  iwxstr_destroy(xstr);
   jbl_destroy(&jbl);
   if (rc && !_ws_rc_send(ws, ctx->key, rc, 0)) {
     ret = false;
@@ -782,7 +775,6 @@ static iwrc _ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   if (ux->log) {
     iwn_ws_server_printf(ctx->ws, "%s\texplain\t%s", ctx->key, iwxstr_ptr(ux->log));
     ux->log = 0;
-    RCGO(rc, finish);
   }
   RCC(rc, finish, iwxstr_printf(ctx->wbuf, "%s\t%" PRId64 "\t", ctx->key, doc->id));
   if (doc->node) {
@@ -803,23 +795,22 @@ static bool _ws_query(struct iwn_ws_sess *ws, const char *query, bool explain) {
   bool ret = false;
   struct rctx *ctx = ws->req->http->user_data;
 
-  EJDB_EXEC ux = {
-    .db      = ctx->jbr->db,
-    .opaque  = ctx,
-    .visitor = _ws_query_visitor,
-  };
+  ctx->ux.db = ctx->jbr->db;
+  ctx->ux.opaque = ctx;
+  ctx->ux.visitor = _ws_query_visitor;
 
-  RCC(rc, finish, jql_create2(&ux.q, ctx->cname, query, JQL_SILENT_ON_PARSE_ERROR | JQL_KEEP_QUERY_ON_PARSE_ERROR));
-  if (ctx->read_anon && jql_has_apply(ux.q)) {
+  RCC(rc, finish,
+      jql_create2(&ctx->ux.q, ctx->cname, query, JQL_SILENT_ON_PARSE_ERROR | JQL_KEEP_QUERY_ON_PARSE_ERROR));
+  if (ctx->read_anon && jql_has_apply(ctx->ux.q)) {
     rc = JBR_ERROR_WS_ACCESS_DENIED;
     goto finish;
   }
   if (explain) {
-    RCA(ux.log = iwxstr_new(), finish);
+    RCA(ctx->ux.log = iwxstr_new(), finish);
   }
-  RCC(rc, finish, ejdb_exec(&ux));
-  if (ux.log) {
-    ret = iwn_ws_server_printf(ws, "%s\texplain\t%s", ctx->key, ux.log);
+  RCC(rc, finish, ejdb_exec(&ctx->ux));
+  if (ctx->ux.log) {
+    ret = iwn_ws_server_printf(ws, "%s\texplain\t%s", ctx->key, ctx->ux.log);
   } else {
     ret = true;
   }
@@ -830,21 +821,21 @@ finish:
     iwrc_strip_code(&rcs);
     switch (rcs) {
       case JQL_ERROR_QUERY_PARSE:
-        ret = _ws_error_send(ws, ctx->key, jql_error(ux.q), 0);
+        ret = _ws_error_send(ws, ctx->key, jql_error(ctx->ux.q), 0);
         break;
       default:
         ret = _ws_rc_send(ws, ctx->key, rc, 0);
         break;
     }
   } else {
-    if (jql_has_aggregate_count(ux.q)) {
-      ret = iwn_ws_server_printf(ws, "%s\t%" PRId64, ctx->key, ux.cnt);
+    if (jql_has_aggregate_count(ctx->ux.q)) {
+      ret = iwn_ws_server_printf(ws, "%s\t%" PRId64, ctx->key, ctx->ux.cnt);
     } else {
       ret = iwn_ws_server_write(ws, ctx->key, -1);
     }
   }
-  jql_destroy(&ux.q);
-  iwxstr_destroy(ux.log);
+  jql_destroy(&ctx->ux.q);
+  iwxstr_destroy(ctx->ux.log);
   return ret;
 }
 
@@ -853,9 +844,9 @@ static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len) {
   if (len < 1) {
     return true;
   }
-  jbws_e wsop = JBWS_NONE;
 
   int pos;
+  jbws_e wsop = JBWS_NONE;
   const char *key = 0;
 
   // Trim left/right
@@ -863,12 +854,12 @@ static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len) {
   for (pos = 0; pos < len && isspace(msg[pos]); ++pos);
   len -= pos;
   msg += pos;
-  if (len == 0) {
+  if (len < 1) {
     return true;
   }
 
-  if ((len == 1) && (msg[0] == '?')) {
-    static const char *help
+  if (len == 1 && msg[0] == '?') {
+    static const char help[]
       = "\n<key> info"
         "\n<key> get     <collection> <id>"
         "\n<key> set     <collection> <id> <document json>"
@@ -882,13 +873,12 @@ static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len) {
         "\n<key> explain <collection> <query>"
         "\n<key> <query>"
         "\n";
-    return iwn_ws_server_write(ws, help, -1);
+    return iwn_ws_server_write(ws, help, sizeof(help) - 1);
   }
 
   // Fetch key, after we can do good errors reporting
   for (pos = 0; pos < len && !isspace(msg[pos]); ++pos);
   if (pos > JBR_MAX_KEY_LEN) {
-    iwlog_warn("The key length: %d exceeded limit: %d", pos, JBR_MAX_KEY_LEN);
     return false;
   }
   memcpy(ctx->key, msg, pos);
@@ -941,7 +931,7 @@ static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len) {
     len -= pos;
     msg += pos;
 
-    const char *coll = msg;
+    const char *rp = msg;
     for (pos = 0; pos < len && !isspace(msg[pos]); ++pos);
     len -= pos;
     msg += pos;
@@ -955,9 +945,8 @@ static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len) {
                          "Collection name exceeds maximum length allowed: "
                          "EJDB_COLLECTION_NAME_MAX_LEN");
     }
-    memcpy(ctx->cname, coll, pos);
+    memcpy(ctx->cname, rp, pos);
     ctx->cname[pos] = '\0';
-    coll = ctx->cname;
 
     if (wsop == JBWS_REMOVE_COLL) {
       return _ws_coll_remove(ws);
@@ -1074,7 +1063,6 @@ iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, struct jbr **jbrp) {
   }
   jbr->db = db;
   jbr->http = &opts->http;
-  jbr->jbrp = jbrp;
   *jbrp = jbr;
 
   RCC(rc, finish, _configure(jbr));
@@ -1085,13 +1073,16 @@ iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, struct jbr **jbrp) {
     pthread_create(&jbr->poller_thread, 0, _poller_worker, jbr);
   } else {
     iwn_poller_poll(jbr->poller);
-    _destroy(jbr);
-    jbr = 0;
+    iwn_poller_destroy(&jbr->poller);
+    *jbrp = 0;
+    free(jbr);
   }
 
 finish:
   if (rc) {
-    _destroy(jbr);
+    *jbrp = 0;
+    iwn_poller_destroy(&jbr->poller);
+    free(jbr);
   }
   return rc;
 }

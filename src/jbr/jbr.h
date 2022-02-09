@@ -37,7 +37,7 @@ typedef struct jbr*JBR;
 
 iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, JBR *out_jbr);
 
-void jbr_shutdown(JBR jbr);
+void jbr_shutdown_wait(JBR jbr);
 
 iwrc jbr_init(void);
 
