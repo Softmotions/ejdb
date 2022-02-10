@@ -23,7 +23,7 @@ static int _usage(const char *err) {
   if (err) {
     fprintf(stderr, "\n%s\n", err);
   }
-  fprintf(stderr, "EJDB" EJDB2_VERSION " standalone HTTP REST/Websocket server. http://ejdb.org\n");
+  fprintf(stderr, "\n\tEJDB" EJDB2_VERSION " standalone HTTP REST/Websocket server. http://ejdb.org\n");
   fprintf(stderr, "\nUsage\n\n\t %s [options]\n\n", env.program);
   fprintf(stderr, "\t-v, --version\t\tPrint program version.\n");
   fprintf(stderr, "\t-f, --file=<>\t\tDatabase file path. Default: ejdb2.db\n");
@@ -37,13 +37,13 @@ static int _usage(const char *err) {
   fprintf(stderr, "\t-w, --wal\t\tuse the write ahead log (WAL). Used to provide data durability.\n");
   fprintf(stderr, "\nAdvanced options:\n");
   fprintf(stderr,
-          "\t-S, --sbz=NUM\t\tMax sorting buffer size. If exceeded, an overflow temp file for data will be created.\n"
-          "Default: 16777216, min: 1048576");
+          "\t-S, --sbz=NUM\t\tMax sorting buffer size. If exceeded, an overflow temp file for data will be created."
+          "Default: 16777216, min: 1048576\n");
   fprintf(stderr, "\t-D, --dsz=NUM\t\tInitial size of buffer to process/store document on queries."
           " Preferable average size of document. Default: 65536, min: 16384\n");
   fprintf(stderr, "\t-T, --trylock Exit with error if database is locked by another process."
           " If not set, current process will wait for lock release.");
-  fprintf(stderr, "\t\n");
+  fprintf(stderr, "\n\n");
   return 1;
 }
 
