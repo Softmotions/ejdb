@@ -286,14 +286,13 @@ finish:
   return ret;
 }
 
-static int _query_chunk_write_next(struct iwn_http_req *req) {
+static bool _query_chunk_write_next(struct iwn_http_req *req) {
   iwrc rc = 0;
   struct iwn_val *val;
   struct rctx *ctx = req->user_data;
 
   if (ctx->request_thread == pthread_self()) {
-    // Ream write io event
-    return -1;
+    return iwn_poller_arm_events(req->poller_adapter->poller, req->poller_adapter->fd, IWN_POLLOUT) == 0;
   }
 
   pthread_mutex_lock(&ctx->mtx);
