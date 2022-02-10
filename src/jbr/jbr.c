@@ -54,6 +54,11 @@ struct rctx {
     }                                                                 \
   } while (0)
 
+void jbr_shutdown_request(EJDB db) {
+  if (db->jbr) {
+    iwn_poller_shutdown_request(db->jbr->poller);
+  }
+}
 
 void jbr_shutdown_wait(struct jbr *jbr) {
   if (jbr) {  

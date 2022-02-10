@@ -1,7 +1,6 @@
 # Windows cross compilation
 
-**Note:** HTTP/Websocket network API is disabled and not supported
-on Windows until porting of http://facil.io library
+**Note:** HTTP/Websocket network API is disabled and not yet supported.
 
 Nodejs/Dart bindings not yet ported to Windows.
 

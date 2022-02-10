@@ -149,14 +149,9 @@ make package
 ## Windows
 EJDB2 can be cross-compiled for windows
 
-**Note:** HTTP/Websocket network API is disabled and not supported
-on Windows until port of http://facil.io library (#257)
-
-Nodejs/Dart bindings not yet ported to Windows.
-
 **[Cross-compilation Guide for Windows](./WINDOWS.md)**
 
-
+**Note:** HTTP/Websocket network API and Nodejs/Dart biding are not ported on Windows.
 
 # Android
 
