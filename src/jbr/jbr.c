@@ -35,12 +35,13 @@ struct rctx {
   pthread_mutex_t mtx;
   pthread_cond_t  cond;
   EJDB_EXEC       ux;
-  int64_t id;
-  bool    read_anon;
-  bool    visitor_started;
-  bool    visitor_finished;
-  char    cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
-  char    key[JBR_MAX_KEY_LEN + 1];
+  int64_t   id;
+  pthread_t request_thread;
+  bool      read_anon;
+  bool      visitor_started;
+  bool      visitor_finished;
+  char      cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
+  char      key[JBR_MAX_KEY_LEN + 1];
 };
 
 #define JBR_RC_REPORT(ret_, r_, rc_)                                 \
@@ -61,7 +62,7 @@ void jbr_shutdown_request(EJDB db) {
 }
 
 void jbr_shutdown_wait(struct jbr *jbr) {
-  if (jbr) {  
+  if (jbr) {
     pthread_t t = jbr->poller_thread;
     iwn_poller_shutdown_request(jbr->poller);
     if (t && t != pthread_self()) {
@@ -285,10 +286,15 @@ finish:
   return ret;
 }
 
-static bool _query_chunk_write_next(struct iwn_http_req *req) {
+static int _query_chunk_write_next(struct iwn_http_req *req) {
   iwrc rc = 0;
   struct iwn_val *val;
   struct rctx *ctx = req->user_data;
+
+  if (ctx->request_thread == pthread_self()) {
+    // Ream write io event
+    return -1;
+  }
 
   pthread_mutex_lock(&ctx->mtx);
 start:
@@ -445,6 +451,7 @@ static int _on_http_request(struct iwn_wf_req *req, void *op) {
 
   ctx->req = req;
   ctx->jbr = jbr;
+  ctx->request_thread = pthread_self();
 
   uint32_t method = req->flags & IWN_WF_METHODS_ALL;
   req->http->user_data = ctx;
