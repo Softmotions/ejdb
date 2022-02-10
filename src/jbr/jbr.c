@@ -561,19 +561,26 @@ static int _on_ws_session_http(struct iwn_wf_req *req, struct iwn_ws_handler_spe
   ctx->jbr = jbr;
   req->http->user_data = ctx;
 
-  struct iwn_val val = iwn_http_request_header_get(req->http, "x-access-token", IW_LLEN("x-access-token"));
-  if (val.len) {
-    if (val.len != jbr->http->access_token_len || strncmp(val.buf, jbr->http->access_token, val.len) != 0) {
-      return 403;
-    }
-  } else {
-    if (jbr->http->read_anon) {
-      ctx->read_anon = true;
+  if (jbr->http->access_token) {
+    struct iwn_val val = iwn_http_request_header_get(req->http, "x-access-token", IW_LLEN("x-access-token"));
+    if (val.len) {
+      if (val.len != jbr->http->access_token_len || strncmp(val.buf, jbr->http->access_token, val.len) != 0) {
+        return 403;
+      }
     } else {
-      return 401;
+      if (jbr->http->read_anon) {
+        ctx->read_anon = true;
+      } else {
+        return 401;
+      }
     }
   }
+
   return 0;
+}
+
+static void _on_ws_session_dispose(struct iwn_ws_sess *ws) {
+  _on_http_request_dispose(ws->req->http);
 }
 
 static bool _on_ws_session_init(struct iwn_ws_sess *ws) {
@@ -583,6 +590,9 @@ static bool _on_ws_session_init(struct iwn_ws_sess *ws) {
 }
 
 static bool _ws_error_send(struct iwn_ws_sess *ws, const char *key, const char *error, const char *extra) {
+  if (key == 0) {
+    return false;
+  }
   if (extra) {
     return iwn_ws_server_printf(ws, "%s ERROR: %s %s", key, error, extra);
   } else {
@@ -860,6 +870,12 @@ static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len) {
   jbws_e wsop = JBWS_NONE;
   const char *key = 0;
 
+  // TODO: Review
+
+  ctx->key[0] = '\0';
+  ctx->cname[0] = '\0';
+  ctx->id = 0;
+
   // Trim left/right
   for ( ; len > 0 && isspace(msg[len - 1]); --len);
   for (pos = 0; pos < len && isspace(msg[pos]); ++pos);
@@ -871,7 +887,7 @@ static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len) {
 
   if (len == 1 && msg[0] == '?') {
     static const char help[]
-      = "\n<key> info"
+      = "<key> info"
         "\n<key> get     <collection> <id>"
         "\n<key> set     <collection> <id> <document json>"
         "\n<key> add     <collection> <document json>"
@@ -882,8 +898,7 @@ static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len) {
         "\n<key> rmc     <collection>"
         "\n<key> query   <collection> <query>"
         "\n<key> explain <collection> <query>"
-        "\n<key> <query>"
-        "\n";
+        "\n<key> <query>";
     return iwn_ws_server_write(ws, help, sizeof(help) - 1);
   }
 
@@ -1028,6 +1043,7 @@ static iwrc _configure(struct jbr *jbr) {
     .handler = _on_ws_msg,
     .on_http_init = _on_ws_session_http,
     .on_session_init = _on_ws_session_init,
+    .on_session_dispose = _on_ws_session_dispose,
     .user_data = jbr
   }), 0));
 

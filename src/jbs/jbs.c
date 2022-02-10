@@ -32,6 +32,7 @@ static int _usage(const char *err) {
   fprintf(stderr, "\t-k, --key=<>\t\tPEM private key file for TLS 1.2 HTTP server.\n");
   fprintf(stderr, "\t-c, --certs=<>\t\tPEM certificates file for TLS 1.2 HTTP server.\n");
   fprintf(stderr, "\t-a, --access=TOKEN|@FILE\t\tAccess token to match 'X-Access-Token' HTTP header value.\n");
+  fprintf(stderr, "\t-r, --access-read\t\tAllows unrestricted read-only data access.\n");  
   fprintf(stderr, "\t-C, --cors\t\tEnable COSR response headers for HTTP server\n");
   fprintf(stderr, "\t-t, --trunc\t\tCleanup/reset database file on open.\n");
   fprintf(stderr, "\t-w, --wal\t\tuse the write ahead log (WAL). Used to provide data durability.\n");
@@ -87,24 +88,25 @@ int main(int argc, char *argv[]) {
   RCA(pool = env.pool = iwpool_create_empty(), finish);
 
   static const struct option long_options[] = {
-    { "help",    0, 0, 'h' },
-    { "version", 0, 0, 'v' },
-    { "file",    1, 0, 'f' },
-    { "port",    1, 0, 'p' },
-    { "bind",    1, 0, 'b' }, // for backward compatibility
-    { "listen",  1, 0, 'l' },
-    { "key",     1, 0, 'k' },
-    { "certs",   1, 0, 'c' },
-    { "access",  1, 0, 'a' },
-    { "cors",    0, 0, 'C' },
-    { "trunc",   0, 0, 't' },
-    { "wal",     0, 0, 'w' },
-    { "sbz",     1, 0, 'S' },
-    { "dsz",     1, 0, 'D' },
-    { "trylock", 0, 0, 'T' }
+    { "help",        0, 0, 'h' },
+    { "version",     0, 0, 'v' },
+    { "file",        1, 0, 'f' },
+    { "port",        1, 0, 'p' },
+    { "bind",        1, 0, 'b' }, // for backward compatibility
+    { "listen",      1, 0, 'l' },
+    { "key",         1, 0, 'k' },
+    { "certs",       1, 0, 'c' },
+    { "access",      1, 0, 'a' },
+    { "access-read", 0, 0, 'r' },
+    { "cors",        0, 0, 'C' },
+    { "trunc",       0, 0, 't' },
+    { "wal",         0, 0, 'w' },
+    { "sbz",         1, 0, 'S' },
+    { "dsz",         1, 0, 'D' },
+    { "trylock",     0, 0, 'T' }
   };
 
-  while ((ch = getopt_long(argc, argv, "f:p:b:l:k:c:a:S:D:CtwThv", long_options, 0)) != -1) {
+  while ((ch = getopt_long(argc, argv, "f:p:b:l:k:c:a:S:D:rCtwThv", long_options, 0)) != -1) {
     switch (ch) {
       case 'h':
         ec = _usage(0);
@@ -149,6 +151,9 @@ int main(int argc, char *argv[]) {
         break;
       case 'T':
         env.opts.kv.file_lock_fail_fast = true;
+        break;
+      case 'r':
+        env.opts.http.read_anon = true;
         break;
       default:
         ec = _usage(0);
