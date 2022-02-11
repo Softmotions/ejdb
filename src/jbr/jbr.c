@@ -291,7 +291,7 @@ finish:
   return ret;
 }
 
-static bool _query_chunk_write_next(struct iwn_http_req *req) {
+static bool _query_chunk_write_next(struct iwn_http_req *req, bool *again) {
   iwrc rc = 0;
   struct iwn_val *val;
   struct rctx *ctx = req->user_data;
@@ -315,7 +315,7 @@ start:
   pthread_mutex_unlock(&ctx->mtx);
 
   if (val) {
-    rc = iwn_http_response_chunk_write(req, val->buf, val->len, _query_chunk_write_next);
+    rc = iwn_http_response_chunk_write(req, val->buf, val->len, _query_chunk_write_next, again);
     free(val->buf);
     free(val);
   } else {
@@ -353,7 +353,7 @@ static iwrc _query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
   } else {
     ctx->visitor_started = true;
     RCC(rc, finish, iwn_http_response_chunk_write(
-          ctx->req->http, iwxstr_ptr(xstr), iwxstr_size(xstr), _query_chunk_write_next));
+          ctx->req->http, iwxstr_ptr(xstr), iwxstr_size(xstr), _query_chunk_write_next, 0));
     iwxstr_destroy(xstr);
   }
 

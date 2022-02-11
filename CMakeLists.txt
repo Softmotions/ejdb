@@ -16,9 +16,9 @@ set(PROJECT_VENDOR "Softmotions (https://softmotions.com)")
 set(PROJECT_WEBSITE "http://ejdb.org")
 set(PROJECT_MAINTAINER "Anton Adamansky <adamansky@gmail.com>")
 set(PROJECT_DESCRIPTION_SUMMARY
-    "Embeddable JSON database engine with network support (EJDB2).")
+    "Embeddable JSON database engine (EJDB2).")
 set(PROJECT_DESCRIPTION
-    "Embeddable JSON database engine with network support (EJDB2).")
+    "Embeddable JSON database engine (EJDB2).")
 set(CHANGELOG_MESSAGE ${CHANGELOG_LAST_MESSAGE})
 set(PROJECT_PPA "ppa:adamansky/ejdb2")
 set(PROJECT_PPA_USER "adamansky")

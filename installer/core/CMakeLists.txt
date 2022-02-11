@@ -53,7 +53,7 @@ endif (PACKAGE_TGZ)
 include(CPack)
 
 if (ENABLE_PPA)
-  set(CPACK_SOURCE_INSTALL_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/../fetch_libs.cmake")
+  #set(CPACK_SOURCE_INSTALL_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/../fetch_libs.cmake")
   if (NOT PROJECT_PPA_DISTRIB_TARGET)
     set(PROJECT_PPA_DISTRIB_TARGET focal)
   endif ()
