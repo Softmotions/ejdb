@@ -2,7 +2,7 @@
 
 [![Join Telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://tlg.name/ejdb2)
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
-![maintained](https://img.shields.io/maintenance/yes/2021.svg)
+![maintained](https://img.shields.io/maintenance/yes/2022.svg)
 
 EJDB2 is an embeddable JSON database engine published under MIT license.
 
@@ -19,14 +19,14 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
   * [rfc6901](https://tools.ietf.org/html/rfc6901) JSON Path
 * [Support of collection joins](#jql-collection-joins)
 * Powered by [iowow.io](http://iowow.io) - The persistent key/value storage engine
-* Provides HTTP REST/Websockets network endpoints with help of [facil.io](http://facil.io)
+* HTTP REST/Websockets endpoints powered by [IWNET](https://github.com/Softmotions/iwnet) and [BearSSL](https://github.com/Softmotions/BearSSL).
 * JSON documents are stored in using fast and compact [binn](https://github.com/liteserver/binn) binary format
 
 ---
 * [Native language bindings](#native-language-bindings)
 * Supported platforms
-  * [OSX](#osx)
-  * [iOS](https://github.com/Softmotions/EJDB2Swift)
+  * [macOS](#osx)
+  * [iOS](https://github.com/Softmotions/EJDB2Swift) (outdated)
   * [Linux](#linux)
   * [Android](#android)
   * [Windows](#windows)
@@ -64,7 +64,6 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 <br> `[3]` Can be build, but needed a linkage with windows node/dart `libs`.
 <br> `[4]` Porting in progress [#273](https://github.com/Softmotions/ejdb/issues/273)
 
-
 ## Native language bindings
 
 * [NodeJS](https://www.npmjs.com/package/ejdb2_node)
@@ -90,14 +89,15 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ## Status
 
 * **EJDB 2.0 core engine is well tested and used in various heavily loaded deployments**
-* Tested on `Linux` and `OSX` platforms. [Limited Windows support](./WINDOWS.md)
+* Tested on `Linux`, `macOS` and `FreeBSD`. [Has limited Windows support](./WINDOWS.md)
 * Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
   We are not maintaining ejdb 1.x.
 
 ## Use cases
 
-* Softmotions trading robots platform
-* [Gimme - a social toy tokens exchange mobile application.](https://play.google.com/store/apps/details?id=com.softmotions.gimme) EJDB2 is used both on mobile and server sides.
+* Wirow video conferencing platform https://wirow.io
+* Softmotions trading robots
+* [Gimme - social toy tokens exchange mobile application.](https://play.google.com/store/apps/details?id=com.softmotions.gimme) EJDB2 is used both on mobile and server sides.
 
 Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
@@ -105,7 +105,8 @@ Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
 EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 
-See also [EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for OSX, iOS and Linux
+[EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for MacOS, iOS and Linux. 
+Swift binding is outdated at now. Looking for contributors.
 
 ```
 brew install ejdb
@@ -131,7 +132,7 @@ sudo apt-get install ejdb2
 
 #### Building debian packages
 
-cmake v3.15 or higher required
+cmake v3.10 or higher required
 
 ```sh
 mkdir build && cd build

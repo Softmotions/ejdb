@@ -1,45 +1,45 @@
 # HTTP REST/Websocket API endpoint
 
 EJDB engine provides the ability to start a separate HTTP/Websocket endpoint worker exposing network API for quering and data modifications.
+SSL (TLS 1.2) is supported by `jbs` server.
 
-The easiest way to expose database over the network is using the standalone `jbs` server. (Of course if you plan to avoid `C API` integration).
+The easiest way to expose database over the network is use the standalone `jbs` server. (Of course if you want to avoid `C API` integration).
 
 ## jbs server
 
 ```
-jbs -h
+Usage:
 
-EJDB 2.0.0 standalone REST/Websocket server. http://ejdb.org
+	 ./jbs [options]
 
- --file <>	Database file path. Default: db.jb
- -f <>    	(same as --file)
- --port ##	HTTP port number listen to. Default: 9191
- -p ##    	(same as --port)
- --bind <>	Address server listen. Default: localhost
- -b <>    	(same as --bind)
- --access <>	Server access token matched to 'X-Access-Token' HTTP header value
- -a <>      	(same as --access)
- --trunc   	Cleanup existing database file on open
- -t        	(same as --trunc)
- --wal   	Use write ahead logging (WAL). Must be set for data durability.
- -w      	(same as --wal)
+	-v, --version		Print program version.
+	-f, --file=<>		Database file path. Default: ejdb2.db
+	-p, --port=NUM		HTTP server port numer. Default: 9191
+	-l, --listen=<>		Network address server will listen. Default: localhost
+	-k, --key=<>		PEM private key file for TLS 1.2 HTTP server.
+	-c, --certs=<>		PEM certificates file for TLS 1.2 HTTP server.
+	-a, --access=TOKEN|@FILE		Access token to match 'X-Access-Token' HTTP header value.
+	-r, --access-read		Allows unrestricted read-only data access.
+	-C, --cors		Enable COSR response headers for HTTP server
+	-t, --trunc		Cleanup/reset database file on open.
+	-w, --wal		use the write ahead log (WAL). Used to provide data durability.
 
-Advanced options
- --sbz ##	Max sorting buffer size. If exceeded, an overflow temp file for data will be created. Default: 16777216, min: 1048576
- --dsz ##	Initial size of buffer to process/store document on queries. Preferable average size of document. Default: 65536, min: 16384
- --bsz ##	Max HTTP/WS API document body size. Default: 67108864, min: 524288
+Advanced options:
+	-S, --sbz=NUM		Max sorting buffer size. If exceeded, an overflow temp file for data will be created.
+                  Default: 16777216, min: 1048576
+	-D, --dsz=NUM		Initial size of buffer to process/store document on queries. Preferable average size of document. 
+                  Default: 65536, min: 16384
+	-T, --trylock Exit with error if database is locked by another process. 
+                If not set, current process will wait for lock release.
 
-Use any of the following input formats:
-	-arg <value>	-arg=<value>	-arg<value>
-
-Use the -h, -help or -? to get this information again.
 ```
 
 ## HTTP API
 
-Access to HTTP endpoint can be protected by a token specified with `--access`
-command flag or by C API `EJDB_HTTP` options. If access token specified on server, client must provide `X-Access-Token` HTTP header value. If token is required and not provided by client the `401` HTTP code will be reported. If access token is not matched to the token provided the `403` HTTP code will be returned.
-For any other errors server will respond with `500` error code.
+HTTP endpoint may be protected by a token specified with `--access` flag or C API `EJDB_HTTP` struct. 
+If access token was set, client should provide `X-Access-Token` HTTP header.
+If token is required but not provided by client `401` HTTP code will be reported. 
+If access token is not matched to the token provided by client server will respond with `403` HTTP code.
 
 ## REST API
 
@@ -54,7 +54,7 @@ Replaces/store document under specific numeric `id`
 ### DELETE /{collection}/{id}
 Removes document identified by `id` from a `collection`
 * `200` on success. Empty body
-* `404` if document not found
+* `404` document not found
 
 ### PATCH /{collection}/{id}
 Patch a document identified by `id` by [rfc7396](https://tools.ietf.org/html/rfc7396),
@@ -66,7 +66,7 @@ Retrieve document identified by `id` from a `collection`.
 * `200` on success. Body: JSON document text.
   * `content-type:application/json`
   * `content-length:`
-* `404` if document not found
+* `404` document not found
 
 ### POST /
 Query a collection by provided query as POST body.

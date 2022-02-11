@@ -1,5 +1,6 @@
-ejdb2 (2.63) UNRELEASED; urgency=medium
+ejdb2 (2.70) UNRELEASED; urgency=medium
 
+  * Network API is now powered by IWNET https://github.com/Softmotions/iwnet
   * Correct handling of `vsnprintf` return value. (jbl.c)
   * Moved `lwre` regexp library into `iowow` project.
   * Java: Added JSON.clone() method  
