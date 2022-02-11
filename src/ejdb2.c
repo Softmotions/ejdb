@@ -368,7 +368,7 @@ static iwrc _jb_db_release(EJDB *dbp) {
 }
 
 static iwrc _jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquire_t acm, JBCOLL *jbcp) {
-  if (strlen(coll) > EJDB_COLLECTION_NAME_MAX_LEN) {
+  if (!coll || *coll == '\0' || strlen(coll) > EJDB_COLLECTION_NAME_MAX_LEN) {
     return EJDB_ERROR_INVALID_COLLECTION_NAME;
   }
   int rci;

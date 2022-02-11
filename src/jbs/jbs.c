@@ -23,8 +23,8 @@ static int _usage(const char *err) {
   if (err) {
     fprintf(stderr, "\n%s\n", err);
   }
-  fprintf(stderr, "\n\tEJDB" EJDB2_VERSION " standalone HTTP REST/Websocket server. http://ejdb.org\n");
-  fprintf(stderr, "\nUsage\n\n\t %s [options]\n\n", env.program);
+  fprintf(stderr, "\n\tEJDB " EJDB2_VERSION " HTTP REST/Websocket server. http://ejdb.org\n");
+  fprintf(stderr, "\nUsage:\n\n\t %s [options]\n\n", env.program);
   fprintf(stderr, "\t-v, --version\t\tPrint program version.\n");
   fprintf(stderr, "\t-f, --file=<>\t\tDatabase file path. Default: ejdb2.db\n");
   fprintf(stderr, "\t-p, --port=NUM\t\tHTTP server port numer. Default: 9191\n");
