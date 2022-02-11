@@ -1085,14 +1085,15 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   if (!db || !coll || !path) {
     return IW_ERROR_INVALID_ARGS;
   }
-  iwrc rc;
   int rci;
   JBCOLL jbc;
   IWKV_val key;
   JBL_PTR ptr = 0;
   char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
 
-  RCC(rc, finish, _jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE | JB_COLL_ACQUIRE_EXISTING, &jbc));
+  iwrc rc = _jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE | JB_COLL_ACQUIRE_EXISTING, &jbc);
+  RCRET(rc);
+
   RCC(rc, finish, jbl_ptr_alloc(path, &ptr));
 
   for (JBIDX idx = jbc->idx, prev = 0; idx; idx = idx->next) {
@@ -1233,7 +1234,6 @@ static iwrc _jb_patch(
   EJDB db, const char *coll, int64_t id, bool upsert,
   const char *patchjson, JBL_NODE patchjbn, JBL patchjbl
   ) {
-  iwrc rc;
   int rci;
   JBCOLL jbc;
   struct _JBL sjbl;
@@ -1246,7 +1246,8 @@ static iwrc _jb_patch(
     .size = sizeof(id)
   };
 
-  RCC(rc, finish, _jb_coll_acquire_keeplock(db, coll, true, &jbc));
+  iwrc rc = _jb_coll_acquire_keeplock(db, coll, true, &jbc);
+  RCRET(rc);
 
   rc = iwkv_get(jbc->cdb, &key, &val);
   if (upsert && (rc == IWKV_ERROR_NOTFOUND)) {
@@ -1440,14 +1441,15 @@ iwrc jb_get(EJDB db, const char *coll, int64_t id, jb_coll_acquire_t acm, JBL *j
   }
   *jblp = 0;
 
-  iwrc rc;
   int rci;
   JBCOLL jbc;
   JBL jbl = 0;
   IWKV_val val = { 0 };
   IWKV_val key = { .data = &id, .size = sizeof(id) };
 
-  RCC(rc, finish, _jb_coll_acquire_keeplock2(db, coll, acm, &jbc));
+  iwrc rc = _jb_coll_acquire_keeplock2(db, coll, acm, &jbc);
+  RCRET(rc);
+
   RCC(rc, finish, iwkv_get(jbc->cdb, &key, &val));
   RCC(rc, finish, jbl_from_buf_keep(&jbl, val.data, val.size, false));
 
@@ -1475,6 +1477,7 @@ iwrc ejdb_del(EJDB db, const char *coll, int64_t id) {
   struct _JBL jbl;
   IWKV_val val = { 0 };
   IWKV_val key = { .data = &id, .size = sizeof(id) };
+
   iwrc rc = _jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE | JB_COLL_ACQUIRE_EXISTING, &jbc);
   RCRET(rc);
 

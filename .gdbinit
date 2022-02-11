@@ -1,6 +1,6 @@
 
-cd ./build/src/jbs
-file ./jbs
+cd ./build/src/jbr/tests
+file ./jbr_test1
 #set args --ssl
 
 set confirm off
