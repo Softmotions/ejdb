@@ -6,7 +6,7 @@ else()
   set(_UPDATE_DISCONNECTED 1)
 endif()
 
-set(IWNET_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
+set(IWNET_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include/${PROJECT_NAME}")
 file(MAKE_DIRECTORY ${IWNET_INCLUDE_DIR})
 
 if("${IWNET_URL}" STREQUAL "")
@@ -24,6 +24,11 @@ if(APPLE)
 else()
   set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_iwnet-build/src/libiwnet-1.a")
 endif()
+
+set(CMAKE_ARGS
+    -DOWNER_PROJECT_NAME=${PROJECT_NAME} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DASAN=${ASAN}
+    -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF)
 
 # In order to properly pass owner project CMAKE variables than contains
 # semicolons, we used a specific separator for 'ExternalProject_Add', using the

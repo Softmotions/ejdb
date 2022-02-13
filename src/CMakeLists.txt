@@ -176,6 +176,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tmpl/ejdb2cfg.h
 file(GLOB PROJECT_GENERATED_HDRS ${PROJECT_GENERATED_DIR}/*.h)
 list(APPEND ALL_HDRS ${PROJECT_GENERATED_HDRS})
 
+set(PCLIBS "-liowow -lm")
+if(DEFINED IWNET_INCLUDE_DIR)
+  set(PCLIBS "-liwnet -lbearssl -lwslay ${PCLIBS}")
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tmpl/libejdb2.pc.in
                ${PROJECT_GENERATED_DIR}/libejdb2.pc @ONLY)
 
@@ -277,8 +282,8 @@ if(BUILD_SHARED_LIBS)
               ${CMAKE_CURRENT_BINARY_DIR}/libejdb2.exp
         DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
-
   endif()
+
   set_target_properties(
     ejdb2
     PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR}
@@ -292,19 +297,21 @@ if(BUILD_SHARED_LIBS)
   endif()
 
   set_target_properties(
-    ejdb2_s PROPERTIES VERSION ${PROJECT_VERSION} COMPILE_FLAGS "-DIW_NODLL"
+    ejdb2_s PROPERTIES VERSION ${PROJECT_VERSION} COMPILE_FLAGS "-DIW_STATIC"
                        OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 else()
+
   set_target_properties(
     ejdb2
     PROPERTIES VERSION ${PROJECT_VERSION}
                PUBLIC_HEADER "${PUB_HDRS}"
-               COMPILE_FLAGS "-DIW_NODLL"
+               COMPILE_FLAGS "-DIW_STATIC"
                LINK_FLAGS_RELEASE "${LINK_FLAGS_RELEASE} -s"
                OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 endif()
 
 if(DO_INSTALL_CORE)
+  include(InstallRequiredSystemLibraries)
   install(
     TARGETS ejdb2
     EXPORT ejdb2-exports
@@ -331,13 +338,23 @@ if(BUILD_SHARED_LIBS AND DO_INSTALL_CORE)
 endif()
 
 if(DO_INSTALL_CORE)
-  # Install iowow headers included into ejdb2
+
+  if(DEFINED IWNET_INCLUDE_DIR)
+    install(
+      DIRECTORY ${IWNET_INCLUDE_DIR}/iwnet
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+      COMPONENT headers
+      FILES_MATCHING
+      PATTERN "*.h")
+  endif()
+
   install(
-    DIRECTORY ${IOWOW_INCLUDE_DIR}/${PROJECT_NAME}/iowow
+    DIRECTORY ${IOWOW_INCLUDE_DIR}/iowow
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
     COMPONENT headers
     FILES_MATCHING
     PATTERN "*.h")
+
   install(FILES ${CMAKE_SOURCE_DIR}/LICENSE ${CMAKE_SOURCE_DIR}/Changelog
           DESTINATION ${CMAKE_INSTALL_DOCDIR})
   install(
@@ -351,8 +368,6 @@ if(DO_INSTALL_CORE)
   endif(BUILD_SHARED_LIBS)
 
 endif()
-
-include(InstallRequiredSystemLibraries)
 
 set(${PROJECT_NAME}_PUB_HDRS
     ${PUB_HDRS}

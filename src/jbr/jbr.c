@@ -869,7 +869,6 @@ finish:
 }
 
 static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const char *msg_, size_t len) {
-  struct rctx *ctx = ws->req->http->user_data;
   if (len < 1) {
     return true;
   }

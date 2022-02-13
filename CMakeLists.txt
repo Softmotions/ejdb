@@ -15,10 +15,8 @@ project(${PROJECT_NAME} C)
 set(PROJECT_VENDOR "Softmotions (https://softmotions.com)")
 set(PROJECT_WEBSITE "http://ejdb.org")
 set(PROJECT_MAINTAINER "Anton Adamansky <adamansky@gmail.com>")
-set(PROJECT_DESCRIPTION_SUMMARY
-    "Embeddable JSON database engine (EJDB2).")
-set(PROJECT_DESCRIPTION
-    "Embeddable JSON database engine (EJDB2).")
+set(PROJECT_DESCRIPTION_SUMMARY "Embeddable JSON database engine (EJDB2).")
+set(PROJECT_DESCRIPTION "Embeddable JSON database engine (EJDB2).")
 set(CHANGELOG_MESSAGE ${CHANGELOG_LAST_MESSAGE})
 set(PROJECT_PPA "ppa:adamansky/ejdb2")
 set(PROJECT_PPA_USER "adamansky")
@@ -127,13 +125,7 @@ if(PACKAGE_RPM)
   list(APPEND CPACK_GENERATORS "RPM")
 endif()
 
-if(NOT
-   (CPACK_GENERATORS
-    AND (BUILD_JNI_BINDING
-         OR BUILD_DART_BINDING
-         OR BUILD_NODEJS_BINDING)))
-  set(DO_INSTALL_CORE ON)
-endif()
+set(DO_INSTALL_CORE ON)
 
 add_subdirectory(man)
 

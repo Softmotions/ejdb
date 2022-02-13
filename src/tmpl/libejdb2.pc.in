@@ -9,5 +9,5 @@ URL: @PROJECT_WEBSITE@
 Version: @PROJECT_VERSION@
 Libs: -L${libdir} -l@PROJECT_NAME@
 Cflags: -I${includedir}
-Libs.private: -liowow -lm
+Libs.private: @PCLIBS@
 
