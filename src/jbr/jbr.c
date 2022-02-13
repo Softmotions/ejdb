@@ -1108,8 +1108,11 @@ iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, struct jbr **jbrp) {
   jbr->http = &opts->http;
   *jbrp = jbr;
 
+  uint16_t cores = iwp_num_cpu_cores();
+  cores = MAX(2, cores == 0 ? 1 : cores - 1);
+
   RCC(rc, finish, _configure(jbr));
-  RCC(rc, finish, iwn_poller_create(2, 2, &jbr->poller));
+  RCC(rc, finish, iwn_poller_create(cores, cores / 2, &jbr->poller));
   RCC(rc, finish, _start(jbr));
 
   if (!jbr->http->blocking) {
