@@ -145,7 +145,6 @@ if(CPACK_GENERATORS)
       "/mxe/"
       "/build/"
       "/target/"
-      "/tools/"
       "/docker/"
       "/node_modules/"
       "/cmake-.*/"
