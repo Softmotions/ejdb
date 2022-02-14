@@ -76,6 +76,8 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 ### Unofficial EJDB2 language bindings
 
+* Rust 
+  * https://crates.io/crates/ejdb2
 * .Net
   * https://github.com/kmvi/ejdb2-csharp
 * Haskell
