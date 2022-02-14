@@ -146,6 +146,7 @@ if(CPACK_GENERATORS)
       "/build/"
       "/target/"
       "/docker/"
+      "/benchmark/"
       "/node_modules/"
       "/cmake-.*/"
       "/Makefile$"
