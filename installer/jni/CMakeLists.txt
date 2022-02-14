@@ -44,7 +44,7 @@ if(PACKAGE_DEB)
   set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
   # set(CPACK_DEBIAN_PACKAGE_DEPENDS zlib1g)
   set(CPACK_DEBIAN_PACKAGE_BUILD_DEPENDS pkg-config git devscripts dh-make
-                                         openjdk-11-jdk)
+                                         openjdk-11-jdk libcurl4-openssl-dev)
   if(NOT PPA_DEBIAN_VERSION)
     set(PPA_DEBIAN_VERSION ppa1)
   endif()
