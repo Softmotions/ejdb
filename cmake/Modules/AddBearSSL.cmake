@@ -6,7 +6,7 @@ else()
   set(_UPDATE_DISCONNECTED 1)
 endif()
 
-set(BEARSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
+set(BEARSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include/${PROJECT_NAME}")
 file(MAKE_DIRECTORY ${BEARSSL_INCLUDE_DIR})
 
 if("${BEARSSL_URL}" STREQUAL "")
@@ -24,6 +24,10 @@ if(APPLE)
 else()
   set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_bearssl-build/libbearssl.a")
 endif()
+
+set(CMAKE_ARGS
+    -DOWNER_PROJECT_NAME=${PROJECT_NAME} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR})
 
 # In order to properly pass owner project CMAKE variables than contains
 # semicolons, we used a specific separator for 'ExternalProject_Add', using the

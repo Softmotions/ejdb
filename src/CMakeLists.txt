@@ -286,8 +286,10 @@ if(BUILD_SHARED_LIBS)
 
   set_target_properties(
     ejdb2
-    PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR}
-               PUBLIC_HEADER "${PUB_HDRS}" DEFINE_SYMBOL IW_API_EXPORTS)
+    PROPERTIES VERSION ${PROJECT_VERSION}
+               SOVERSION ${PROJECT_VERSION_MAJOR}
+               PUBLIC_HEADER "${PUB_HDRS}"
+               DEFINE_SYMBOL IW_API_EXPORTS)
 
   if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_custom_command(
@@ -297,8 +299,10 @@ if(BUILD_SHARED_LIBS)
   endif()
 
   set_target_properties(
-    ejdb2_s PROPERTIES VERSION ${PROJECT_VERSION} COMPILE_FLAGS "-DIW_STATIC"
-                       OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
+    ejdb2_s
+    PROPERTIES VERSION ${PROJECT_VERSION}
+               COMPILE_FLAGS "-DIW_STATIC"
+               OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 else()
 
   set_target_properties(
@@ -342,6 +346,15 @@ if(DO_INSTALL_CORE)
   if(DEFINED IWNET_INCLUDE_DIR)
     install(
       DIRECTORY ${IWNET_INCLUDE_DIR}/iwnet
+      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+      COMPONENT headers
+      FILES_MATCHING
+      PATTERN "*.h")
+  endif()
+
+  if(DEFINED BEARSSL_INCLUDE_DIR)
+    install(
+      DIRECTORY ${IWNET_INCLUDE_DIR}/bearssl
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
       COMPONENT headers
       FILES_MATCHING
