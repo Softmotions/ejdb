@@ -1,5 +1,17 @@
 include(ExternalProject)
 
+find_package(BearSSL)
+
+if(BearSSL_FOUND)
+  add_library(BEARSSL::static STATIC IMPORTED GLOBAL)
+  set_target_properties(
+    BEARSSL::static PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                               IMPORTED_LOCATION ${BEARSSL_STATIC_LIB})
+  list(PREPEND PROJECT_LLIBRARIES BEARSSL::static)
+  list(APPEND PROJECT_INCLUDE_DIRS ${BEARSSL_INCLUDE_DIRS})
+  return()
+endif()
+
 if(${CMAKE_VERSION} VERSION_LESS "3.8.0")
   set(_UPDATE_DISCONNECTED 0)
 else()
