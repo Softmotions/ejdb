@@ -98,12 +98,22 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
       if (!strcmp(pv->value, placeholder)) {
         if ((pv->flavour & (JQP_STR_PROJFIELD | JQP_STR_PROJPATH)) && val->type != JQVAL_STR) {
-          return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
+          rc = JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
+          goto finish;
         }
         _jql_jqval_destroy(pv);
         pv->opaque = val;
         val->refs++;
         rc = 0;
+      }
+    }
+  }
+finish:
+  if (rc) {
+    val->refs = 0;
+    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
+      if (pv->opaque == val) {
+        pv->opaque = 0;
       }
     }
   }
