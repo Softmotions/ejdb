@@ -1,5 +1,6 @@
 ejdb2 (2.71) UNRELEASED; urgency=medium
 
+  * Query placeholders with the same name can be specified multiply times. 
   * Query placeholders API is supported in projections.
   * Removed potential memory leaks in `jql_set_xx` query API (jql.h) 
   * Added BearSSL include files as part of ejdb2 distribution   

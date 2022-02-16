@@ -34,6 +34,7 @@ typedef struct {
   jqval_type_t type;
   void (*freefn)(void*, void*);
   void *freefn_op;
+  int   refs;
   union {
     JBL_NODE    vnode;
     binn       *vbinn;

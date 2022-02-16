@@ -53,11 +53,13 @@ IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
         ptr = 0;
         break;
     }
-    if (ptr && qv->freefn) {
-      qv->freefn(ptr, qv->freefn_op);
+    if (--qv->refs <= 0) {
+      if (ptr && qv->freefn) {
+        qv->freefn(ptr, qv->freefn_op);
+      }
+      free(qv);
     }
     pv->opaque = 0;
-    free(qv);
   }
 }
 
@@ -77,6 +79,7 @@ JQVAL* jql_find_placeholder(JQL q, const char *name) {
 
 static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVAL *val) {
   JQP_AUX *aux = q->aux;
+  iwrc rc = JQL_ERROR_INVALID_PLACEHOLDER;
   if (!placeholder) { // Index
     char nbuf[JBNUMBUF_SIZE];
     iwitoa(index, nbuf, JBNUMBUF_SIZE);
@@ -87,6 +90,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
         }
         _jql_jqval_destroy(pv);
         pv->opaque = val;
+        val->refs++;
         return 0;
       }
     }
@@ -98,11 +102,12 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
         }
         _jql_jqval_destroy(pv);
         pv->opaque = val;
-        return 0;
+        val->refs++;
+        rc = 0;
       }
     }
   }
-  return JQL_ERROR_INVALID_PLACEHOLDER;
+  return rc;
 }
 
 iwrc jql_set_json2(
@@ -113,6 +118,7 @@ iwrc jql_set_json2(
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+  qv->refs = 0;
   qv->freefn = freefn;
   qv->freefn_op = op;
   qv->type = JQVAL_JBLNODE;
@@ -157,6 +163,7 @@ iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val) {
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+  qv->refs = 0;
   qv->freefn = 0;
   qv->freefn_op = 0;
   qv->type = JQVAL_I64;
@@ -173,6 +180,7 @@ iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val) {
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+  qv->refs = 0;
   qv->freefn = 0;
   qv->freefn_op = 0;
   qv->type = JQVAL_F64;
@@ -192,6 +200,7 @@ iwrc jql_set_str2(
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+  qv->refs = 0;
   qv->freefn = freefn;
   qv->freefn_op = op;
   qv->type = JQVAL_STR;
@@ -215,6 +224,7 @@ iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+  qv->refs = 0;
   qv->freefn = 0;
   qv->freefn_op = 0;
   qv->type = JQVAL_BOOL;
@@ -236,6 +246,7 @@ iwrc jql_set_regexp2(
 
   RCA(rx = iwre_new(expr), finish);
   RCA(qv = malloc(sizeof(*qv)), finish);
+  qv->refs = 0;
   qv->freefn = freefn;
   qv->freefn_op = op;
   qv->type = JQVAL_RE;
@@ -262,6 +273,7 @@ iwrc jql_set_null(JQL q, const char *placeholder, int index) {
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
+  qv->refs = 0;
   qv->freefn = 0;
   qv->freefn_op = 0;
   qv->type = JQVAL_NULL;
