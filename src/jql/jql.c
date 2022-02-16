@@ -81,10 +81,10 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
     char nbuf[JBNUMBUF_SIZE];
     iwitoa(index, nbuf, JBNUMBUF_SIZE);
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
-      if ((pv->flavour & (JQP_STR_PROJFIELD | JQP_STR_PROJPATH)) && val->type != JQVAL_STR) {
-        return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
-      }
       if ((pv->value[0] == '?') && !strcmp(pv->value + 1, nbuf)) {
+        if ((pv->flavour & (JQP_STR_PROJFIELD | JQP_STR_PROJPATH)) && val->type != JQVAL_STR) {
+          return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
+        }
         _jql_jqval_destroy(pv);
         pv->opaque = val;
         return 0;
@@ -93,6 +93,9 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
   } else {
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
       if (!strcmp(pv->value, placeholder)) {
+        if ((pv->flavour & (JQP_STR_PROJFIELD | JQP_STR_PROJPATH)) && val->type != JQVAL_STR) {
+          return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
+        }
         _jql_jqval_destroy(pv);
         pv->opaque = val;
         return 0;
@@ -239,7 +242,7 @@ iwrc jql_set_regexp2(
   qv->vre = rx;
   rc = _jql_set_placeholder(q, placeholder, index, qv);
 
-finish:  
+finish:
   if (rc) {
     if (freefn) {
       freefn((void*) expr, op);
