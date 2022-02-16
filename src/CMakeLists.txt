@@ -138,7 +138,7 @@ list(
   ${CMAKE_CURRENT_SOURCE_DIR}/jql/jql.h)
 
 set(CMAKE_C_FLAGS
-    "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -pedantic -Wfatal-errors -Wall -Wextra \
+    "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -Wfatal-errors -Wall -Wextra \
                   -Wno-sign-compare -Wno-unused-parameter -Wno-unknown-pragmas -Wno-unused-function \
                   -Wno-missing-field-initializers -Wno-missing-braces")
 

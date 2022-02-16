@@ -586,6 +586,8 @@ static JQPUNIT* _jqp_pop_projection_nodes(yycontext *yy, JQPUNIT *until) {
     } else if (strchr(unit->string.value, '<')) { // JOIN Projection?
       unit->string.flavour |= JQP_STR_PROJOIN;
       flags |= JQP_PROJECTION_FLAG_JOINS;
+    } else {
+      unit->string.flavour |= JQP_STR_PROJPATH;
     }
     first = unit;
     _jqp_pop(yy);
@@ -1062,6 +1064,8 @@ finish:
     RCRET(rc); \
 } while (0)
 
+IW_INLINE iwrc _print_placeholder(const char *value, jbl_json_printer pt, void *op);
+
 static iwrc _jqp_print_projection_nodes(const JQP_STRING *p, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
   for (const JQP_STRING *s = p; s; s = s->next) {
@@ -1071,14 +1075,22 @@ static iwrc _jqp_print_projection_nodes(const JQP_STRING *p, jbl_json_printer pt
     if (s->flavour & JQP_STR_PROJFIELD) {
       PT(0, 0, '{', 1);
       for (const JQP_STRING *pf = s; pf; pf = pf->subnext) {
-        PT(pf->value, -1, 0, 0);
+        if (pf->flavour & JQP_STR_PLACEHOLDER) {
+          RCR(_print_placeholder(pf->value, pt, op));
+        } else {
+          PT(pf->value, -1, 0, 0);
+        }
         if (pf->subnext) {
           PT(0, 0, ',', 1);
         }
       }
       PT(0, 0, '}', 1);
     } else {
-      PT(s->value, -1, 0, 0);
+      if (s->flavour & JQP_STR_PLACEHOLDER) {
+        RCR(_print_placeholder(s->value, pt, op));
+      } else {
+        PT(s->value, -1, 0, 0);
+      }
     }
   }
   return rc;
@@ -1258,7 +1270,8 @@ static iwrc _jqp_print_filter(
   const JQP_QUERY  *q,
   const JQP_FILTER *f,
   jbl_json_printer  pt,
-  void             *op) {
+  void             *op
+  ) {
   iwrc rc = 0;
   if (f->anchor) {
     PT(0, 0, '@', 1);
@@ -1275,7 +1288,8 @@ static iwrc _jqp_print_expression_node(
   const JQP_QUERY     *q,
   const JQP_EXPR_NODE *en,
   jbl_json_printer     pt,
-  void                *op) {
+  void                *op
+  ) {
   iwrc rc = 0;
   bool inbraces = (en != q->aux->expr && en->type == JQP_EXPR_NODE_TYPE);
   if (inbraces) {

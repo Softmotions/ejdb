@@ -66,8 +66,7 @@ finish:
   jqp_aux_destroy(&aux);
 }
 
-void jql_test1_1() {
-
+static void jql_test1_1(void) {
   _jql_test1_1(22, 0);
 
   for (int i = 0; i <= 10; ++i) {
@@ -100,7 +99,7 @@ static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
   free(json);
 }
 
-void jql_test1_2() {
+static void jql_test1_2(void) {
   _jql_test1_2("{}", "/*", true);
   _jql_test1_2("{}", "/**", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/*", true);
@@ -249,8 +248,7 @@ finish:
   iwpool_destroy(pool);
 }
 
-void jql_test1_3() {
-
+static void jql_test1_3(void) {
   _jql_test1_3(true, "{'foo':{'bar':22}}",
                "/foo/bar | apply [{'op':'add', 'path':'/baz', 'value':'qux'}]",
                "{'foo':{'bar':22},'baz':'qux'}");
@@ -261,8 +259,7 @@ void jql_test1_3() {
 }
 
 // Test projections
-void jql_test_1_4() {
-
+static void jql_test_1_4(void) {
   _jql_test1_3(false, "{'foo':{'bar':22}}", "/** | all", "{'foo':{'bar':22}}");
   _jql_test1_3(false, "{'foo':{'bar':22}}", "/** | all+all + all", "{'foo':{'bar':22}}");
   _jql_test1_3(true, "{'foo':{'bar':22}}", "/** | all - all", "{}");
@@ -281,6 +278,45 @@ void jql_test_1_4() {
   _jql_test1_3(true, "{'foo':{'bar':22},'name':'test'}", "/** | all - /name", "{'foo':{'bar':22}}");
 }
 
+// Test placeholder projecttion
+static void jql_test_1_5(void) {
+  JQL q = 0;
+  JBL jbl = 0;
+  JBL_NODE n = 0, n2 = 0;
+  IWXSTR *xstr = iwxstr_new();
+  IWPOOL *pool = iwpool_create_empty();
+  CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
+  iwrc rc = jql_create(&q, "c1", "/* | /:name+/:?");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_set_i64(q, 0, 0, 1);
+  CU_ASSERT_EQUAL(rc, JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE);
+
+  rc = jql_set_str(q, "name", 0, "foo");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jql_set_str(q, 0, 0, "baz");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = jbl_from_json(&jbl, "{\"foo\":1,\"bar\":2,\"baz\":3}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  bool m = false;
+  rc = jql_matched(q, jbl, &m);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  CU_ASSERT_TRUE(m && jql_has_projection(q));
+
+  rc = jql_apply_and_project(q, jbl, &n, 0, pool);
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+
+  jbn_as_json(n, jbl_xstr_json_printer, xstr, 0);
+  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"foo\":1,\"baz\":3}");
+
+  jql_destroy(&q);
+  jbl_destroy(&jbl);
+  iwpool_destroy(pool);
+  iwxstr_destroy(xstr);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) {
@@ -294,7 +330,8 @@ int main() {
   if (  (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1))
      || (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
      || (NULL == CU_add_test(pSuite, "jql_test1_3", jql_test1_3))
-     || (NULL == CU_add_test(pSuite, "jql_test1_4", jql_test_1_4))) {
+     || (NULL == CU_add_test(pSuite, "jql_test1_4", jql_test_1_4))
+     || (NULL == CU_add_test(pSuite, "jql_test1_5", jql_test_1_5))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

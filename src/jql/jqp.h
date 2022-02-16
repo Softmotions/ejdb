@@ -56,6 +56,8 @@ typedef uint16_t jqp_string_flavours_t;
 #define JQP_STR_DBL_STAR ((jqp_string_flavours_t) 0x80U)
 /** Projection JOIN */
 #define JQP_STR_PROJOIN ((jqp_string_flavours_t) 0x100U)
+/** Projection path */
+#define JQP_STR_PROJPATH ((jqp_string_flavours_t) 0x200U)
 
 
 typedef uint8_t jqp_int_flavours_t;

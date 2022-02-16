@@ -133,7 +133,7 @@ PROJNODE = '/' (PROJFIELDS | PROJPROP)
 PROJFIELDS = ('{' _ sp:PROJPROP { _jqp_unit_push(yy, sp); } (_ ',' _ p:PROJPROP { _jqp_unit_push(yy, p); } )* _ '}')
              { $$ = _jqp_pop_projfields_chain(yy, sp); }
 
-PROJPROP = STRN | PSTRP
+PROJPROP = STRN | PLACEHOLDER | PSTRP
 
 PROJOIN = ('+' | '-')
 
