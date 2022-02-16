@@ -1082,12 +1082,12 @@ static iwrc _start(struct jbr *jbr) {
     .port   = http->port > 0 ? http->port : 9292,
   };
   if (http->ssl_private_key) {
-    spec.private_key = http->ssl_private_key;
-    spec.private_key_len = -1;
+    spec.ssl.private_key = http->ssl_private_key;
+    spec.ssl.private_key_len = -1;
   }
   if (http->ssl_certs) {
-    spec.certs = http->ssl_certs;
-    spec.certs_len = -1;
+    spec.ssl.certs = http->ssl_certs;
+    spec.ssl.certs_len = -1;
   }
 
   return iwn_wf_server(&spec, jbr->ctx);
