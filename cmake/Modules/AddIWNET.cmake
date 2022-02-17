@@ -25,11 +25,6 @@ else()
   set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_iwnet-build/src/libiwnet-1.a")
 endif()
 
-set(CMAKE_ARGS
-    -DOWNER_PROJECT_NAME=${PROJECT_NAME} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DASAN=${ASAN}
-    -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF)
-
 # In order to properly pass owner project CMAKE variables than contains
 # semicolons, we used a specific separator for 'ExternalProject_Add', using the
 # LIST_SEPARATOR parameter. This allows building fat binaries on macOS, etc.
@@ -37,10 +32,18 @@ set(CMAKE_ARGS
 # replaced with spaces and CMake isn't aware of a multi-arch setup.
 set(SSUB "^^")
 
+set(CMAKE_ARGS
+    -DOWNER_PROJECT_NAME=${PROJECT_NAME} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DASAN=${ASAN}
+    -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF)
+
+set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${CMAKE_INSTALL_PREFIX})
+
 foreach(
   extra
   BearSSL_ROOT
   CURL_ROOT
+  CMAKE_FIND_ROOT_PATH 
   CMAKE_OSX_ARCHITECTURES
   CMAKE_C_COMPILER
   CMAKE_TOOLCHAIN_FILE
@@ -82,13 +85,11 @@ endif()
 
 add_library(IWNET::static STATIC IMPORTED GLOBAL)
 set_target_properties(
-  IWNET::static
-  PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-             IMPORTED_LOCATION ${BYPRODUCT})
+  IWNET::static PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                           IMPORTED_LOCATION ${BYPRODUCT})
 
-add_dependencies(IWNET::static BEARSSL::static WSLAY::static IOWOW:static extern_iwnet)
+add_dependencies(IWNET::static BEARSSL::static WSLAY::static IOWOW:static
+                 extern_iwnet)
 
 list(PREPEND PROJECT_LLIBRARIES IWNET::static)
 list(APPEND PROJECT_INCLUDE_DIRS ${IWNET_INCLUDE_DIR})
-
-
