@@ -30,7 +30,7 @@ static void _jbi_print_index(struct _JBIDX *idx, IWXSTR *xstr) {
   if (cnt++) {
     iwxstr_cat2(xstr, "|");
   }
-  iwxstr_printf(xstr, "%lld ", idx->rnum);
+  iwxstr_printf(xstr, "%" PRId64 " ", idx->rnum);
   jbl_ptr_serialize(idx->ptr, xstr);
 }
 
@@ -267,8 +267,8 @@ static iwrc _jbi_collect_indexes(
   JBEXEC                     *ctx,
   const struct JQP_EXPR_NODE *en,
   struct _JBMIDX              marr[static JB_SOLID_EXPRNUM],
-  size_t                     *snp) {
-
+  size_t                     *snp
+  ) {
   iwrc rc = 0;
   if (*snp >= JB_SOLID_EXPRNUM - 1) {
     return 0;
