@@ -1,4 +1,4 @@
-ejdb2 (2.71) UNRELEASED; urgency=medium
+ejdb2 (2.71) testing; urgency=medium
 
   * Fixed wrong format of printf like function calls.
   * Query placeholders with the same name can be specified multiply times.   
@@ -6,7 +6,7 @@ ejdb2 (2.71) UNRELEASED; urgency=medium
   * Removed potential memory leaks in `jql_set_xx` query API (jql.h) 
   * Added BearSSL include files as part of ejdb2 distribution   
 
- -- Anton Adamansky <adamansky@gmail.com>  Mon, 14 Feb 2022 20:14:28 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 18 Feb 2022 21:57:08 +0700
 
 ejdb2 (2.70) testing; urgency=medium
 
