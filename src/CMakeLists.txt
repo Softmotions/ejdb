@@ -40,8 +40,6 @@ if(ENABLE_HTTP)
   if(WIN32)
     message(FATAL_ERROR "ENABLE_HTTP option cannot be used in Windows build")
   endif()
-  include(AddWslay)
-  include(AddBearSSL)
   include(AddIWNET)
   add_definitions(-DJB_HTTP)
   list(APPEND MODULES jbr)
@@ -178,7 +176,7 @@ list(APPEND ALL_HDRS ${PROJECT_GENERATED_HDRS})
 
 set(PCLIBS "-liowow -lm")
 if(DEFINED IWNET_INCLUDE_DIR)
-  set(PCLIBS "-liwnet -lbearssl -lwslay ${PCLIBS}")
+  set(PCLIBS "-liwnet ${PCLIBS}")
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tmpl/libejdb2.pc.in
@@ -346,15 +344,6 @@ if(DO_INSTALL_CORE)
   if(DEFINED IWNET_INCLUDE_DIR)
     install(
       DIRECTORY ${IWNET_INCLUDE_DIR}/iwnet
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
-      COMPONENT headers
-      FILES_MATCHING
-      PATTERN "*.h")
-  endif()
-
-  if(DEFINED BEARSSL_INCLUDE_DIR)
-    install(
-      DIRECTORY ${IWNET_INCLUDE_DIR}/bearssl
       DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
       COMPONENT headers
       FILES_MATCHING

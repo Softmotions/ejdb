@@ -41,9 +41,8 @@ set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${CMAKE_INSTALL_PREFIX})
 
 foreach(
   extra
-  BearSSL_ROOT
   CURL_ROOT
-  CMAKE_FIND_ROOT_PATH 
+  CMAKE_FIND_ROOT_PATH
   CMAKE_OSX_ARCHITECTURES
   CMAKE_C_COMPILER
   CMAKE_TOOLCHAIN_FILE
@@ -88,8 +87,7 @@ set_target_properties(
   IWNET::static PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                            IMPORTED_LOCATION ${BYPRODUCT})
 
-add_dependencies(IWNET::static BEARSSL::static WSLAY::static IOWOW:static
-                 extern_iwnet)
+add_dependencies(IWNET::static IOWOW:static extern_iwnet)
 
 list(PREPEND PROJECT_LLIBRARIES IWNET::static)
 list(APPEND PROJECT_INCLUDE_DIRS ${IWNET_INCLUDE_DIR})

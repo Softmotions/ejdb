@@ -1,15 +1,9 @@
 [submodule "src/bindings/ejdb2_swift/EJDB2Swift"]
 	path = src/bindings/ejdb2_swift/EJDB2Swift
 	url = https://github.com/Softmotions/EJDB2Swift.git
-[submodule "extra/BearSSL"]
-	path = extra/BearSSL
-	url = https://github.com/Softmotions/BearSSL
 [submodule "extra/iowow"]
 	path = extra/iowow
 	url = https://github.com/Softmotions/iowow
 [submodule "extra/iwnet"]
 	path = extra/iwnet
 	url = https://github.com/Softmotions/iwnet
-[submodule "extra/wslay"]
-	path = extra/wslay
-	url = https://github.com/tatsuhiro-t/wslay
