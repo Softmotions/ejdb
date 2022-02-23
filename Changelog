@@ -1,3 +1,9 @@
+ejdb2 (2.72) testing; urgency=medium
+
+  * Upgraded to the stable verion of iwnet lib.
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 23 Feb 2022 17:00:23 +0700
+
 ejdb2 (2.71) testing; urgency=medium
 
   * Fixed wrong format of printf like function calls.
