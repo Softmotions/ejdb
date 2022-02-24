@@ -1,8 +1,8 @@
 #include "jbr.h"
 #include "ejdb2_internal.h"
 
-#include <iwnet/ws_server.h>
-#include <iwnet/pairs.h>
+#include <iwnet/iwn_ws_server.h>
+#include <iwnet/iwn_pairs.h>
 #include <iowow/iwconv.h>
 
 #include <pthread.h>

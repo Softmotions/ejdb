@@ -3,7 +3,7 @@
 
 #include <iowow/iwpool.h>
 #include <iowow/iwconv.h>
-#include <iwnet/utils.h>
+#include <iwnet/iwn_utils.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -32,7 +32,7 @@ static int _usage(const char *err) {
   fprintf(stderr, "\t-k, --key=<>\t\tPEM private key file for TLS 1.2 HTTP server.\n");
   fprintf(stderr, "\t-c, --certs=<>\t\tPEM certificates file for TLS 1.2 HTTP server.\n");
   fprintf(stderr, "\t-a, --access=TOKEN|@FILE\t\tAccess token to match 'X-Access-Token' HTTP header value.\n");
-  fprintf(stderr, "\t-r, --access-read\t\tAllows unrestricted read-only data access.\n");  
+  fprintf(stderr, "\t-r, --access-read\t\tAllows unrestricted read-only data access.\n");
   fprintf(stderr, "\t-C, --cors\t\tEnable COSR response headers for HTTP server\n");
   fprintf(stderr, "\t-t, --trunc\t\tCleanup/reset database file on open.\n");
   fprintf(stderr, "\t-w, --wal\t\tuse the write ahead log (WAL). Used to provide data durability.\n");
