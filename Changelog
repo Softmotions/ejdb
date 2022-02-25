@@ -1,3 +1,9 @@
+ejdb2 (2.73) UNRELEASED; urgency=medium
+
+  * Replaced old iowow regexp engine with new (iwre.h) based on https://github.com/jserv/cregex
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 25 Feb 2022 13:12:16 +0700
+
 ejdb2 (2.72) testing; urgency=medium
 
   * Upgraded to the stable verion of iwnet lib.

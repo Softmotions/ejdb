@@ -43,8 +43,8 @@ IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
         ptr = (void*) qv->vstr;
         break;
       case JQVAL_RE:
-        ptr = (void*) qv->vre->expression;
-        iwre_free(qv->vre);
+        ptr = (void*) iwre_pattern_get(qv->vre);
+        iwre_destroy(qv->vre);
         break;
       case JQVAL_JBLNODE:
         ptr = qv->vnode;
@@ -252,9 +252,11 @@ iwrc jql_set_regexp2(
   ) {
   iwrc rc = 0;
   JQVAL *qv = 0;
-  struct re *rx = 0;
-
-  RCA(rx = iwre_new(expr), finish);
+  struct iwre *rx = iwre_create(expr);
+  if (!rx) {
+    rc = JQL_ERROR_REGEXP_INVALID;
+    goto finish;
+  }
   RCA(qv = malloc(sizeof(*qv)), finish);
   qv->refs = 0;
   qv->freefn = freefn;
@@ -268,7 +270,7 @@ finish:
     if (freefn) {
       freefn((void*) expr, op);
     }
-    iwre_free(rx);
+    iwre_destroy(rx);
     free(qv);
   }
   return rc;
@@ -455,7 +457,7 @@ void jql_destroy(JQL *qptr) {
     for (JQP_OP *op = aux->start_op; op; op = op->next) {
       if (op->opaque) {
         if (op->value == JQP_OP_RE) {
-          iwre_free(op->opaque);
+          iwre_destroy(op->opaque);
         }
       }
     }
@@ -729,15 +731,14 @@ static bool _jql_match_regexp(
   JQVAL *left, JQP_OP *jqop, JQVAL *right,
   iwrc *rcp
   ) {
-  struct re *rx;
+  size_t rci;
+  struct iwre *rx;
   char nbuf[JBNUMBUF_SIZE];
   static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
   JQVAL sleft, sright; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   char *input = 0;
-  size_t rci, match_end = 0;
   const char *expr = 0;
-  bool match_start = false;
 
   if (lv->type == JQVAL_JBLNODE) {
     _jql_node_to_jqval(lv->vnode, &sleft);
@@ -790,30 +791,13 @@ static bool _jql_match_regexp(
     }
 
     assert(expr);
-    if (expr[0] == '^') {
-      expr += 1;
-      match_start = true;
-    }
-    rci = strlen(expr);
-    if (rci && (expr[rci - 1] == '$')) {
-      char *aexpr = iwpool_alloc(rci, aux->pool);
-      if (!aexpr) {
-        *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-        return false;
-      }
-      match_end = rci - 1;
-      memcpy(aexpr, expr, match_end);
-      aexpr[rci - 1] = '\0';
-      expr = aexpr;
-    }
-    rx = iwre_new(expr);
+    rx = iwre_create(expr);
     if (!rx) {
-      *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
+      *rcp = JQL_ERROR_REGEXP_INVALID;
       return false;
     }
     jqop->opaque = rx;
   }
-  assert(rx);
 
   switch (lv->type) {
     case JQVAL_STR:
@@ -836,39 +820,9 @@ static bool _jql_match_regexp(
       *rcp = _JQL_ERROR_UNMATCHED;
       return false;
   }
-
-  assert(input);
-  int mret = iwre_match(rx, input);
-  switch (mret) {
-    case RE_ERROR_NOMATCH:
-      return false;
-    case RE_ERROR_NOMEM:
-      *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-      return false;
-    case RE_ERROR_CHARSET:
-      *rcp = JQL_ERROR_REGEXP_CHARSET;
-      return false;
-    case RE_ERROR_SUBEXP:
-      *rcp = JQL_ERROR_REGEXP_SUBEXP;
-      return false;
-    case RE_ERROR_SUBMATCH:
-      *rcp = JQL_ERROR_REGEXP_SUBMATCH;
-      return false;
-    case RE_ERROR_ENGINE:
-      *rcp = JQL_ERROR_REGEXP_ENGINE;
-      iwlog_ecode_error3(JQL_ERROR_REGEXP_ENGINE);
-      return false;
-  }
-  if (mret > 0) {
-    if (match_start && (rx->position - mret != input)) {
-      return false;
-    }
-    if (match_end && (rx->position != input + match_end)) {
-      return false;
-    }
-    return true;
-  }
-  return false;
+  const char *mpairs[IWRE_MAX_MATCHES];
+  int mret = iwre_match(rx, input, mpairs, IWRE_MAX_MATCHES);
+  return mret > 0;
 }
 
 static bool _jql_match_in(
@@ -1881,14 +1835,6 @@ static const char* _ecodefn(locale_t locale, uint32_t ecode) {
       return "Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER)";
     case JQL_ERROR_REGEXP_INVALID:
       return "Invalid regular expression (JQL_ERROR_REGEXP_INVALID)";
-    case JQL_ERROR_REGEXP_CHARSET:
-      return "Invalid regular expression: expected ']' at end of character set (JQL_ERROR_REGEXP_CHARSET)";
-    case JQL_ERROR_REGEXP_SUBEXP:
-      return "Invalid regular expression: expected ')' at end of subexpression (JQL_ERROR_REGEXP_SUBEXP)";
-    case JQL_ERROR_REGEXP_SUBMATCH:
-      return "Invalid regular expression: expected '}' at end of submatch (JQL_ERROR_REGEXP_SUBMATCH)";
-    case JQL_ERROR_REGEXP_ENGINE:
-      return "Illegal instruction in compiled regular expression (please report this bug) (JQL_ERROR_REGEXP_ENGINE)";
     case JQL_ERROR_SKIP_ALREADY_SET:
       return "Skip clause already specified (JQL_ERROR_SKIP_ALREADY_SET)";
     case JQL_ERROR_LIMIT_ALREADY_SET:
