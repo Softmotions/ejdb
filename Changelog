@@ -1,5 +1,6 @@
 ejdb2 (2.73) UNRELEASED; urgency=medium
 
+  * Updated EJDB2Swift submodule
   * Replaced old iowow regexp engine with new (iwre.h) based on https://github.com/jserv/cregex
 
  -- Anton Adamansky <adamansky@gmail.com>  Fri, 25 Feb 2022 13:12:16 +0700
