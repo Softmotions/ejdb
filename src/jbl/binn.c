@@ -75,7 +75,8 @@ void (*free_fn)(void *ptr) = free;
 
 void binn_set_alloc_functions(
   void*(*new_malloc)(size_t), void*(*new_realloc)(void*, size_t),
-  void (*new_free)(void*)) {
+  void (*new_free)(void*)
+  ) {
   malloc_fn = new_malloc;
   realloc_fn = new_realloc;
   free_fn = new_free;
@@ -453,7 +454,8 @@ BINN_PRIVATE unsigned char* SearchForID(unsigned char *p, int header_size, int s
 
 BINN_PRIVATE unsigned char* SearchForKey(
   unsigned char *p, int header_size, int size, int numitems, const char *key,
-  int keylen) {
+  int keylen
+  ) {
   unsigned char len, *plimit, *base;
   int i;
 
@@ -2799,20 +2801,15 @@ binn* binn_value(int type, void *pvalue, int size, binn_mem_free freefn) {
   return item;
 }
 
-BOOL binn_set_string(binn *item, char *str, binn_mem_free pfree) {
+BOOL binn_set_string(binn *item, const char *str, size_t len) {
   if ((item == NULL) || (str == NULL)) {
     return FALSE;
   }
-  if (pfree == BINN_TRANSIENT) {
-    item->ptr = binn_memdup(str, strlen(str) + 1);
-    if (item->ptr == NULL) {
-      return FALSE;
-    }
-    item->freefn = free_fn;
-  } else {
-    item->ptr = str;
-    item->freefn = pfree;
+  item->ptr = strndup(str, len);
+  if (item->ptr == NULL) {
+    return FALSE;
   }
+  item->freefn = free_fn;
   item->type = BINN_STRING;
   return TRUE;
 }

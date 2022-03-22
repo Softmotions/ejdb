@@ -569,7 +569,7 @@ void* binn_object_read_next(
 // } while (0)
 //#define binn_set_blob(item,ptr,size,pfree) do { (item)->type = BINN_BLOB;   (item)->ptr = ptr; (item)->freefn = pfree;
 // (item)->size = size; } while (0)
-BOOL binn_set_string(binn *item, char *str, binn_mem_free pfree);
+BOOL binn_set_string(binn *item, const char *str, size_t len);
 BOOL binn_set_blob(binn *item, void *ptr, int size, binn_mem_free pfree);
 
 //#define binn_double(value) {       (item)->type = BINN_DOUBLE; (item)->vdouble = value; (item)->ptr =

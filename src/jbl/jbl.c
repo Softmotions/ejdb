@@ -2459,7 +2459,7 @@ static iwrc _jbl_from_node_impl(binn *res, JBL_NODE node) {
       break;
     case JBV_STR:
       binn_init_item(res);
-      binn_set_string(res, (void*) node->vptr, 0);
+      binn_set_string(res, node->vptr, node->vsize);
       break;
     case JBV_I64:
       binn_init_item(res);
