@@ -115,6 +115,8 @@ IW_EXPORT WUR iwrc jql_set_str2(
   JQL q, const char *placeholder, int index, const char *val,
   void (*freefn)(void*, void*), void *op);
 
+IW_EXPORT WUR iwrc jql_set_str3(JQL q, const char *placeholder, int index, const char *val, size_t val_len);
+
 IW_EXPORT WUR iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val);
 
 

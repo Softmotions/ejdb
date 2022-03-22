@@ -229,6 +229,18 @@ iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val) {
   return jql_set_str2(q, placeholder, index, val, 0, 0);
 }
 
+static void _freefn_str(void *v, void *op) {
+  free(v);
+}
+
+iwrc jql_set_str3(JQL q, const char *placeholder, int index, const char *val_, size_t val_len) {
+  char *val = strndup(val_, val_len);
+  if (!val) {
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+  }
+  return jql_set_str2(q, placeholder, index, val, _freefn_str, 0);
+}
+
 iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
   JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) {
