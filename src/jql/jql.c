@@ -750,7 +750,6 @@ static bool _jql_match_regexp(
   JQVAL *left, JQP_OP *jqop, JQVAL *right,
   iwrc *rcp
   ) {
-  size_t rci;
   struct iwre *rx;
   char nbuf[JBNUMBUF_SIZE];
   static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
