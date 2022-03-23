@@ -206,6 +206,13 @@ iwrc jql_set_str2(
   JQL q, const char *placeholder, int index, const char *val,
   void (*freefn)(void*, void*), void *op
   ) {
+  if (val == 0) {
+    if (freefn) {
+      freefn((void*) val, op);
+    }
+    return jql_set_null(q, placeholder, index);
+  }
+
   JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
