@@ -103,7 +103,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
-## macOS / OSX
+## macOS
 
 EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 
@@ -114,9 +114,14 @@ Swift binding is outdated at now. Looking for contributors.
 brew install ejdb
 ```
 
-or
+## Building from sources 
+
+cmake v3.12 or higher required
 
 ```
+git clone git@github.com:Softmotions/ejdb.git
+git submodule update --init --recursive
+
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make install
@@ -133,8 +138,6 @@ sudo apt-get install ejdb2
 ```
 
 #### Building debian packages
-
-cmake v3.10 or higher required
 
 ```sh
 mkdir build && cd build
