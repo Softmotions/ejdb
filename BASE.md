@@ -26,7 +26,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [Native language bindings](#native-language-bindings)
 * Supported platforms
   * [macOS](#osx)
-  * [iOS](https://github.com/Softmotions/EJDB2Swift) (outdated)
+  * [iOS](https://github.com/Softmotions/EJDB2Swift)
   * [Linux](#linux)
   * [Android](#android)
   * [Windows](#windows)
