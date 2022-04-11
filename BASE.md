@@ -119,8 +119,7 @@ brew install ejdb
 cmake v3.12 or higher required
 
 ```
-git clone git@github.com:Softmotions/ejdb.git
-git submodule update --init --recursive
+git clone --recurse-submodules git@github.com:Softmotions/ejdb.git
 
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
