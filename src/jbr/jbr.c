@@ -1034,7 +1034,7 @@ static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const cha
   }
 }
 
-static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len) {
+static bool _on_ws_msg(struct iwn_ws_sess *ws, const char *msg, size_t len, uint8_t frame) {
   struct mctx mctx = {
     .ctx = ws->req->http->user_data,
   };
