@@ -130,10 +130,9 @@ foreach(MODULE IN LISTS MODULES)
   list(APPEND PROJECT_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE})
 endforeach(MODULE)
 
-list(
-  APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/jbl/jbl.h ${CMAKE_CURRENT_SOURCE_DIR}/jbr/jbr.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/jql/jql.h)
+list(APPEND PUB_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h
+     ${CMAKE_CURRENT_SOURCE_DIR}/jbr/jbr.h
+     ${CMAKE_CURRENT_SOURCE_DIR}/jql/jql.h)
 
 set(CMAKE_C_FLAGS
     "${CMAKE_C_FLAGS} -std=gnu11 -fsigned-char -Wfatal-errors -Wall -Wextra \
@@ -284,10 +283,8 @@ if(BUILD_SHARED_LIBS)
 
   set_target_properties(
     ejdb2
-    PROPERTIES VERSION ${PROJECT_VERSION}
-               SOVERSION ${PROJECT_VERSION_MAJOR}
-               PUBLIC_HEADER "${PUB_HDRS}"
-               DEFINE_SYMBOL IW_API_EXPORTS)
+    PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR}
+               PUBLIC_HEADER "${PUB_HDRS}" DEFINE_SYMBOL IW_API_EXPORTS)
 
   if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_custom_command(
@@ -297,10 +294,8 @@ if(BUILD_SHARED_LIBS)
   endif()
 
   set_target_properties(
-    ejdb2_s
-    PROPERTIES VERSION ${PROJECT_VERSION}
-               COMPILE_FLAGS "-DIW_STATIC"
-               OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
+    ejdb2_s PROPERTIES VERSION ${PROJECT_VERSION} COMPILE_FLAGS "-DIW_STATIC"
+                       OUTPUT_NAME ejdb2-${PROJECT_VERSION_MAJOR})
 else()
 
   set_target_properties(
