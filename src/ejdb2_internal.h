@@ -34,20 +34,21 @@
 #include "jbr.h"
 #endif
 #include "jql_internal.h"
-#include "jbl_internal.h"
-#include <ejdb2/iowow/iwkv.h>
-#include <ejdb2/iowow/iwxstr.h>
-#include <ejdb2/iowow/iwexfile.h>
-#include <ejdb2/iowow/iwutils.h>
-#include <ejdb2/iowow/iwstree.h>
+
+#include <iowow/iwkv.h>
+#include <iowow/iwxstr.h>
+#include <iowow/iwexfile.h>
+#include <iowow/iwutils.h>
+#include <iowow/iwstree.h>
+#include <iowow/iwjson_internal.h>
+
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
 #include <setjmp.h>
+
 #include "khash.h"
 #include "ejdb2cfg.h"
-
-static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
 
 #define METADB_ID           1
 #define NUMRECSDB_ID        2    // DB for number of records per index/collection

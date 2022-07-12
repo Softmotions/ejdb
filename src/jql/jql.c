@@ -1,10 +1,8 @@
-#include "convert.h"
 #include "ejdb2_internal.h"
-#include "jbl_internal.h"
 #include "jql_internal.h"
 #include "jqp.h"
 
-#include <ejdb2/iowow/iwre.h>
+#include <iowow/iwre.h>
 
 #include <errno.h>
 
@@ -631,8 +629,8 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
         }
         case JQVAL_F64: {
           size_t osz;
-          char nbuf[JBNUMBUF_SIZE];
-          jbi_ftoa(rv->vf64, nbuf, &osz);
+          char nbuf[IWNUMBUF_SIZE];
+          iwjson_ftoa(rv->vf64, nbuf, &osz);
           return strcmp(lv->vstr, nbuf);
         }
         case JQVAL_NULL:
@@ -752,7 +750,6 @@ static bool _jql_match_regexp(
   ) {
   struct iwre *rx;
   char nbuf[JBNUMBUF_SIZE];
-  static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
   JQVAL sleft, sright; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   char *input = 0;
@@ -793,7 +790,7 @@ static bool _jql_match_regexp(
       }
       case JQVAL_F64: {
         size_t osz;
-        jbi_ftoa(rv->vf64, nbuf, &osz);
+        iwjson_ftoa(rv->vf64, nbuf, &osz);
         expr = iwpool_strdup(aux->pool, nbuf, rcp);
         if (*rcp) {
           return false;
@@ -827,7 +824,7 @@ static bool _jql_match_regexp(
       break;
     case JQVAL_F64: {
       size_t osz;
-      jbi_ftoa(lv->vf64, nbuf, &osz);
+      iwjson_ftoa(lv->vf64, nbuf, &osz);
       input = nbuf;
     }
     break;
@@ -949,7 +946,7 @@ static bool _jql_match_starts(
       break;
     case JQVAL_F64: {
       size_t osz;
-      jbi_ftoa(lv->vf64, nbuf, &osz);
+      iwjson_ftoa(lv->vf64, nbuf, &osz);
       input = nbuf;
       break;
     }
@@ -970,7 +967,7 @@ static bool _jql_match_starts(
       break;
     case JQVAL_F64: {
       size_t osz;
-      jbi_ftoa(rv->vf64, nbuf2, &osz);
+      iwjson_ftoa(rv->vf64, nbuf2, &osz);
       prefix = nbuf2;
       break;
     }

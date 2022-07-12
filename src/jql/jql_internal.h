@@ -3,9 +3,10 @@
 #define JQL_INTERNAL_H
 
 #include "jqp.h"
-#include "binn.h"
 
+#include <iowow/iwbinn.h>
 #include <iowow/iwre.h>
+
 #include <math.h>
 
 

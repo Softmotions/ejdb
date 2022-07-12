@@ -37,8 +37,8 @@
  *
  */
 
-#include "jbl.h"
-#include <ejdb2/iowow/iwlog.h>
+#include <iowow/iwjson.h>
+#include <iowow/iwlog.h>
 
 IW_EXTERN_C_START
 

@@ -5,7 +5,7 @@ if(NOT CMAKE_BUILD_TYPE)
   )
 endif()
 
-set(MODULES util jbl jql jbi)
+set(MODULES util jql jbi)
 set(PROJECT_LLIBRARIES)
 set(PROJECT_INCLUDE_DIRS)
 set(ALL_SRC)

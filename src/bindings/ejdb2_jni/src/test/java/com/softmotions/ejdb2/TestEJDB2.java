@@ -77,7 +77,7 @@ public class TestEJDB2 {
         exception = e;
       }
       assert (exception != null && exception.getMessage() != null);
-      assert (exception.getCode() == 86005);
+      assert (exception.getCode() == 76005);
       assert (exception.getMessage().contains("JBL_ERROR_PARSE_UNQUOTED_STRING"));
 
       db.put("mycoll", "{'foo':'baz'}".replace('\'', '"'));

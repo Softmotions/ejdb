@@ -40,8 +40,8 @@ export default class App extends Component {
     t.is(id, 1);
 
     await t.throwsAsync(db.put('mycoll', '{"'), {
-      code: '86005',
-      message: 'com.softmotions.ejdb2.EJDB2Exception: @ejdb IWRC:86005 errno:0 Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)'
+      code: '76005',
+      message: 'com.softmotions.ejdb2.EJDB2Exception: @ejdb IWRC:76005 errno:0 Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)'
     });
 
     let doc = await db.get('mycoll', 1);

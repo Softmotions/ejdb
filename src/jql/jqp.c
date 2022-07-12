@@ -7,7 +7,7 @@
 #line 1 "./jqp.leg"
 
 #include "jqp.h"
-#include "jbl.h"
+#include <iowow/iwjson.h>
 
 
 #define YY_CTX_LOCAL 1

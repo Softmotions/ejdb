@@ -1,6 +1,7 @@
 #include "jqp.h"
-#include "utf8proc.h"
-#include "jbl_internal.h"
+
+#include <iowow/iwconv.h>
+#include <iowow/utf8proc.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -213,9 +214,9 @@ static JQPUNIT* _jqp_placeholder(yycontext *yy, const char *text) {
   unit->type = JQP_STRING_TYPE;
   unit->string.flavour |= JQP_STR_PLACEHOLDER;
   if (text[0] == '?') {
-    char nbuf[JBNUMBUF_SIZE + 1];
+    char nbuf[IWNUMBUF_SIZE + 1];
     nbuf[0] = '?';
-    int len = iwitoa(aux->num_placeholders++, nbuf + 1, JBNUMBUF_SIZE);
+    int len = iwitoa(aux->num_placeholders++, nbuf + 1, IWNUMBUF_SIZE);
     nbuf[len + 1] = '\0';
     unit->string.value = _jqp_strdup(yy, nbuf);
   } else {
@@ -1389,8 +1390,8 @@ static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
         PT(aux->skip->string.value, -1, 0, 0);
       }
     } else if (aux->skip->type == JQP_INTEGER_TYPE) {
-      char nbuf[JBNUMBUF_SIZE];
-      iwitoa(aux->skip->intval.value, nbuf, JBNUMBUF_SIZE);
+      char nbuf[IWNUMBUF_SIZE];
+      iwitoa(aux->skip->intval.value, nbuf, IWNUMBUF_SIZE);
       PT(nbuf, -1, 0, 0);
     }
   }
@@ -1404,8 +1405,8 @@ static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
         PT(aux->limit->string.value, -1, 0, 0);
       }
     } else if (aux->limit->type == JQP_INTEGER_TYPE) {
-      char nbuf[JBNUMBUF_SIZE];
-      iwitoa(aux->limit->intval.value, nbuf, JBNUMBUF_SIZE);
+      char nbuf[IWNUMBUF_SIZE];
+      iwitoa(aux->limit->intval.value, nbuf, IWNUMBUF_SIZE);
       PT(nbuf, -1, 0, 0);
     }
   }

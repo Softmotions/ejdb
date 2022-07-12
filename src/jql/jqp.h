@@ -30,12 +30,13 @@
  *************************************************************************************************/
 
 #include "jql.h"
-#include "jbl.h"
+
+#include <iowow/iwpool.h>
+#include <iowow/iwxstr.h>
+
 #include <errno.h>
 #include <stdbool.h>
 #include <setjmp.h>
-#include <ejdb2/iowow/iwpool.h>
-#include <ejdb2/iowow/iwxstr.h>
 
 typedef uint16_t jqp_string_flavours_t;
 /** Query string parameter placeholder */

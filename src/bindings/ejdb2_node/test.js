@@ -39,7 +39,7 @@ test('Main', async (t) => {
   let id = await db.put('mycoll', { 'foo': 'bar' });
   t.is(id, 1);
   t.throwsAsync(db.put('mycoll', '{"'), {
-    code: '@ejdb IWRC:86005 put',
+    code: '@ejdb IWRC:76005 put',
     message: 'Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)'
   });
 

@@ -1,5 +1,6 @@
 ejdb2 (2.73) UNRELEASED; urgency=medium
 
+  * ejdb2 json module migrated to iowow
   * Upgraded to the stable verion of iwnet lib.
   * Updated EJDB2Swift submodule
   * Replaced old iowow regexp engine with new (iwre.h) based on https://github.com/jserv/cregex

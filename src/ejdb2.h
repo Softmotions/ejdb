@@ -28,9 +28,8 @@
  * SOFTWARE.
  *************************************************************************************************/
 
-#include <ejdb2/iowow/iwkv.h>
 #include "jql.h"
-#include "jbl.h"
+#include <iowow/iwkv.h>
 
 IW_EXTERN_C_START
 
