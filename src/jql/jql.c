@@ -1641,7 +1641,7 @@ static bool _jql_proj_join_matched(
       // Unable to convert current node value as int number
       return false;
     }
-    IWSTREE *cache = exec_ctx->proj_joined_nodes_cache;
+    IWHMAP *cache = exec_ctx->proj_joined_nodes_cache;
     IWPOOL *pool = exec_ctx->ux->pool;
     if (!pool) {
       pool = exec_ctx->proj_joined_nodes_pool;
@@ -1651,7 +1651,7 @@ static bool _jql_proj_join_matched(
         exec_ctx->proj_joined_nodes_pool = pool;
       } else if (cache && (iwpool_used_size(pool) > 10 * 1024 * 1024)) { // 10Mb
         exec_ctx->proj_joined_nodes_cache = 0;
-        iwstree_destroy(cache);
+        iwhmap_destroy(exec_ctx->proj_joined_nodes_cache);
         cache = 0;
         iwpool_destroy(pool);
         pool = iwpool_create(1024 * 1024); // 1Mb
@@ -1659,15 +1659,14 @@ static bool _jql_proj_join_matched(
       }
     }
     if (!cache) {
-      cache = iwstree_create(jb_proj_node_cache_cmp, jb_proj_node_kvfree);
-      RCGA(cache, finish);
+      RCB(finish, cache = iwhmap_create(jb_proj_node_cache_cmp, jb_proj_node_hash, jb_proj_node_kvfree));
       exec_ctx->proj_joined_nodes_cache = cache;
     }
     struct _JBDOCREF ref = {
       .id   = id,
       .coll = coll
     };
-    nn = iwstree_get(cache, &ref);
+    nn = iwhmap_get(cache, &ref);
     if (!nn) {
       rc = jb_collection_join_resolver(id, coll, &jbl, exec_ctx);
       if (rc) {
@@ -1679,11 +1678,11 @@ static bool _jql_proj_join_matched(
         }
         goto finish;
       }
-      RCHECK(rc, finish, jbl_to_node(jbl, &nn, true, pool));
+      RCC(rc, finish, jbl_to_node(jbl, &nn, true, pool));
       struct _JBDOCREF *refkey = malloc(sizeof(*refkey));
       RCGA(refkey, finish);
       *refkey = ref;
-      RCHECK(rc, finish, iwstree_put(cache, refkey, nn));
+      RCC(rc, finish, iwhmap_put(cache, refkey, nn));
     }
     jbn_apply_from(n, nn);
     proj->pos = lvl;

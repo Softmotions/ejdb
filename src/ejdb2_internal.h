@@ -39,7 +39,7 @@
 #include <iowow/iwxstr.h>
 #include <iowow/iwexfile.h>
 #include <iowow/iwutils.h>
-#include <iowow/iwstree.h>
+#include <iowow/iwhmap.h>
 #include <iowow/iwjson_internal.h>
 
 #include <pthread.h>
@@ -192,8 +192,8 @@ typedef struct _JBEXEC {
   struct _JBSSC  ssc;         /**< Result set sorting context */
 
   // JQL joned nodes cache
-  IWSTREE *proj_joined_nodes_cache;
-  IWPOOL  *proj_joined_nodes_pool;
+  IWHMAP *proj_joined_nodes_cache;
+  IWPOOL *proj_joined_nodes_pool;
 } JBEXEC;
 
 
@@ -228,5 +228,6 @@ iwrc jb_cursor_del(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
 iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, JBEXEC *ctx);
 int jb_proj_node_cache_cmp(const void *v1, const void *v2);
 void jb_proj_node_kvfree(void *key, void *val);
+uint32_t jb_proj_node_hash(const void *key);
 
 #endif

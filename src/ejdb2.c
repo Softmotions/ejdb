@@ -1,4 +1,5 @@
 #include "ejdb2_internal.h"
+#include <iowow/murmur3.h>
 
 static iwrc _jb_put_new_lw(JBCOLL jbc, JBL jbl, int64_t *id);
 
@@ -754,7 +755,8 @@ static iwrc _jb_exec_scan_init(JBEXEC *ctx) {
 static void _jb_exec_scan_release(JBEXEC *ctx) {
   if (ctx->proj_joined_nodes_cache) {
     // Destroy projected nodes key
-    iwstree_destroy(ctx->proj_joined_nodes_cache);
+    iwhmap_destroy(ctx->proj_joined_nodes_cache);
+    ctx->proj_joined_nodes_cache = 0;
   }
   if (ctx->proj_joined_nodes_pool) {
     iwpool_destroy(ctx->proj_joined_nodes_pool);
@@ -1590,13 +1592,17 @@ int jb_proj_node_cache_cmp(const void *v1, const void *v2) {
   int ret = r1->id > r2->id ? 1 : r1->id < r2->id ? -1 : 0;
   if (!ret) {
     return strcmp(r1->coll, r2->coll);
-    ;
   }
   return ret;
 }
 
 void jb_proj_node_kvfree(void *key, void *val) {
   free(key);
+}
+
+uint32_t jb_proj_node_hash(const void *key) {
+  const struct _JBDOCREF *ref = key;
+  return murmur3(key, sizeof(*ref));
 }
 
 iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
