@@ -44,17 +44,11 @@ static int64_t _jb_meta_nrecs_get(EJDB db, uint32_t dbid) {
 }
 
 static void _jb_idx_release(JBIDX idx) {
-  if (idx->idb) {
-    iwkv_db_cache_release(idx->idb);
-  }
   free(idx->ptr);
   free(idx);
 }
 
 static void _jb_coll_release(JBCOLL jbc) {
-  if (jbc->cdb) {
-    iwkv_db_cache_release(jbc->cdb);
-  }
   if (jbc->meta) {
     jbl_destroy(&jbc->meta);
   }
