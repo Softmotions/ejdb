@@ -47,7 +47,6 @@
 #include <assert.h>
 #include <setjmp.h>
 
-#include "khash.h"
 #include "ejdb2cfg.h"
 
 #define METADB_ID           1
@@ -120,9 +119,6 @@ struct _JBDOCREF {
   const char *coll;
 };
 
-// -V:KHASH_MAP_INIT_STR:522
-KHASH_MAP_INIT_STR(JBCOLLM, JBCOLL)
-
 struct _EJDB {
   IWKV iwkv;
   IWDB metadb;
@@ -130,7 +126,7 @@ struct _EJDB {
 #ifdef JB_HTTP
   JBR jbr;
 #endif
-  khash_t(JBCOLLM) * mcolls;
+  IWHMAP *mcolls;
   iwkv_openflags    oflags;
   pthread_rwlock_t  rwl;      /**< Main RWL */
   struct _EJDB_OPTS opts;

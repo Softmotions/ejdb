@@ -203,12 +203,9 @@ static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
   rc = _jb_coll_load_meta_lr(jbc);
   RCRET(rc);
 
-  khiter_t k = kh_put(JBCOLLM, jbc->db->mcolls, jbc->name, &rci);
-  if (rci != -1) {
-    kh_value(jbc->db->mcolls, k) = jbc;
-  } else {
-    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
-  }
+  rc = iwhmap_put(jbc->db->mcolls, (void*) jbc->name, jbc);
+  RCRET(rc);
+
   return rc;
 }
 
@@ -336,14 +333,7 @@ static iwrc _jb_db_release(EJDB *dbp) {
   jbr_shutdown_wait(db->jbr);
 #endif
   if (db->mcolls) {
-    for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
-      if (!kh_exist(db->mcolls, k)) {
-        continue;
-      }
-      JBCOLL jbc = kh_val(db->mcolls, k);
-      _jb_coll_release(jbc);
-    }
-    kh_destroy(JBCOLLM, db->mcolls);
+    iwhmap_destroy(db->mcolls);
     db->mcolls = 0;
   }
   if (db->iwkv) {
@@ -372,15 +362,10 @@ static iwrc _jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquir
   JBCOLL jbc = 0;
   bool wl = acm & JB_COLL_ACQUIRE_WRITE;
   API_RLOCK(db, rci);
-  khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
-  if (k != kh_end(db->mcolls)) {
-    jbc = kh_value(db->mcolls, k);
-    assert(jbc);
-    rci = wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl);
-    if (rci) {
-      rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
-      goto finish;
-    }
+
+  jbc = iwhmap_get(db->mcolls, coll);
+  if (jbc) {
+    wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl);
     *jbcp = jbc;
   } else {
     pthread_rwlock_unlock(&db->rwl); // relock
@@ -388,15 +373,9 @@ static iwrc _jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquir
       return IW_ERROR_NOT_EXISTS;
     }
     API_WLOCK(db, rci);
-    k = kh_get(JBCOLLM, db->mcolls, coll);
-    if (k != kh_end(db->mcolls)) {
-      jbc = kh_value(db->mcolls, k);
-      assert(jbc);
-      rci = pthread_rwlock_rdlock(&jbc->rwl);
-      if (rci) {
-        rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
-        goto finish;
-      }
+    jbc = iwhmap_get(db->mcolls, coll);
+    if (jbc) {
+      pthread_rwlock_rdlock(&jbc->rwl);
       *jbcp = jbc;
     } else {
       JBL meta = 0;
@@ -1540,10 +1519,9 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   JBCOLL jbc;
   IWKV_val key;
   char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
-  khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
-
-  if (k != kh_end(db->mcolls)) {
-    jbc = kh_value(db->mcolls, k);
+  
+  jbc = iwhmap_get(db->mcolls, coll);
+  if (jbc) {
     key.data = keybuf;
     key.size = snprintf(keybuf, sizeof(keybuf), KEY_PREFIX_COLLMETA "%u", jbc->dbid);
 
@@ -1565,8 +1543,7 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
     }
     jbc->idx = 0;
     IWRC(iwkv_db_destroy(&jbc->cdb), rc);
-    kh_del(JBCOLLM, db->mcolls, k);
-    _jb_coll_release(jbc);
+    iwhmap_remove(db->mcolls, coll);
   }
 
 finish:
@@ -1614,24 +1591,23 @@ iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
 
   API_WLOCK(db, rci);
 
-  khiter_t k = kh_get(JBCOLLM, db->mcolls, coll);
-  if (k == kh_end(db->mcolls)) {
+  JBCOLL jbc = iwhmap_get(db->mcolls, coll);
+  if (!jbc) {
     rc = EJDB_ERROR_COLLECTION_NOT_FOUND;
     goto finish;
   }
-  khiter_t k2 = kh_get(JBCOLLM, db->mcolls, new_coll);
-  if (k2 != kh_end(db->mcolls)) {
+
+  if (iwhmap_get(db->mcolls, new_coll)) {
     rc = EJDB_ERROR_TARGET_COLLECTION_EXISTS;
     goto finish;
   }
 
-  JBCOLL jbc = kh_value(db->mcolls, k);
   RCC(rc, finish, jbl_create_empty_object(&nmeta));
-
   if (!binn_object_set_str(&nmeta->bn, "name", new_coll)) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }
+
   if (!binn_object_set_uint32(&nmeta->bn, "id", jbc->dbid)) {
     rc = JBL_ERROR_CREATION;
     goto finish;
@@ -1740,6 +1716,12 @@ iwrc ejdb_get_iwkv(EJDB db, IWKV *kvp) {
   return 0;
 }
 
+static void _mcolls_map_entry_free(void *key, void *val) {
+  if (val) {
+    _jb_coll_release(val);
+  }
+}
+
 iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   *ejdbp = 0;
   int rci;
@@ -1790,11 +1772,7 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
     free(db);
     return rc;
   }
-  db->mcolls = kh_init(JBCOLLM);
-  if (!db->mcolls) {
-    rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
-    goto finish;
-  }
+  RCB(finish, db->mcolls = iwhmap_create_str(_mcolls_map_entry_free));
 
   IWKV_OPTS kvopts;
   memcpy(&kvopts, &db->opts.kv, sizeof(db->opts.kv));
