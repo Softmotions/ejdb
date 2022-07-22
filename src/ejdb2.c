@@ -183,9 +183,7 @@ finish:
 }
 
 static iwrc _jb_coll_init(JBCOLL jbc, IWKV_val *meta) {
-  int rci;
   iwrc rc = 0;
-
   pthread_rwlockattr_t attr;
   pthread_rwlockattr_init(&attr);
 #if defined __linux__ && (defined __USE_UNIX98 || defined __USE_XOPEN2K)
@@ -1519,7 +1517,7 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   JBCOLL jbc;
   IWKV_val key;
   char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
-  
+
   jbc = iwhmap_get(db->mcolls, coll);
   if (jbc) {
     key.data = keybuf;
@@ -1624,15 +1622,7 @@ iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
   RCC(rc, finish, jbl_at(nmeta, "/name", &jbv));
   const char *new_name = jbl_get_str(jbv);
   RCC(rc, finish, iwkv_put(db->metadb, &key, &val, IWKV_SYNC));
-
-  kh_del(JBCOLLM, db->mcolls, k);
-  k2 = kh_put(JBCOLLM, db->mcolls, new_name, &rci);
-  if (rci != -1) {
-    kh_value(db->mcolls, k2) = jbc;
-  } else {
-    rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
-    goto finish;
-  }
+  RCC(rc, finish, iwhmap_rename(db->mcolls, coll, (void*) new_name));
 
   jbc->name = new_name;
   jbl_destroy(&jbc->meta);
@@ -1676,13 +1666,14 @@ iwrc ejdb_get_meta(EJDB db, JBL *jblp) {
     rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
     goto finish;
   }
-  for (khiter_t k = kh_begin(db->mcolls); k != kh_end(db->mcolls); ++k) {
-    if (!kh_exist(db->mcolls, k)) {
-      continue;
-    }
-    JBCOLL jbc = kh_val(db->mcolls, k);
+
+  IWHMAP_ITER iter;
+  iwhmap_iter_init(db->mcolls, &iter);
+  while (iwhmap_iter_next(&iter)) {
+    JBCOLL jbc = (void*) iter.val;
     RCC(rc, finish, _jb_coll_add_meta_lr(jbc, clist));
   }
+
   if (!binn_object_set_list(&jbl->bn, "collections", clist)) {
     rc = JBL_ERROR_CREATION;
     goto finish;
