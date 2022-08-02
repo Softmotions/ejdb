@@ -997,8 +997,8 @@ static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const cha
         msg[len] = '\0';
         return _ws_query(ws, mctx, msg, (wsop == JBWS_EXPLAIN));
       default: {
-        char nbuf[JBNUMBUF_SIZE];
-        for (pos = 0; pos < len && pos < JBNUMBUF_SIZE - 1 && isdigit(msg[pos]); ++pos) {
+        char nbuf[IWNUMBUF_SIZE];
+        for (pos = 0; pos < len && pos < IWNUMBUF_SIZE - 1 && isdigit(msg[pos]); ++pos) {
           nbuf[pos] = msg[pos];
         }
         nbuf[pos] = '\0';

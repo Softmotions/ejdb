@@ -102,7 +102,7 @@ static iwrc _jb_coll_load_indexes_lr(JBCOLL jbc) {
   iwrc rc = 0;
   IWKV_cursor cur;
   IWKV_val kval;
-  char buf[sizeof(KEY_PREFIX_IDXMETA) + JBNUMBUF_SIZE];
+  char buf[sizeof(KEY_PREFIX_IDXMETA) + IWNUMBUF_SIZE];
   // Full key format: i.<coldbid>.<idxdbid>
   int sz = snprintf(buf, sizeof(buf), KEY_PREFIX_IDXMETA "%u.", jbc->dbid);
   if (sz >= sizeof(buf)) {
@@ -379,7 +379,7 @@ static iwrc _jb_coll_acquire_keeplock2(EJDB db, const char *coll, jb_coll_acquir
       JBL meta = 0;
       IWDB cdb = 0;
       uint32_t dbid = 0;
-      char keybuf[JBNUMBUF_SIZE + sizeof(KEY_PREFIX_COLLMETA)];
+      char keybuf[IWNUMBUF_SIZE + sizeof(KEY_PREFIX_COLLMETA)];
       IWKV_val key, val;
 
       RCC(rc, create_finish, iwkv_new_db(db->iwkv, IWDB_VNUM64_KEYS, &dbid, &cdb));
@@ -453,7 +453,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   IWKV_val key;
   uint8_t step;
   char vnbuf[IW_VNUMBUFSZ];
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
 
   bool jbv_found, jbvprev_found;
   struct _JBL jbv = { 0 }, jbvprev = { 0 };
@@ -1062,7 +1062,7 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   JBCOLL jbc;
   IWKV_val key;
   JBL_PTR ptr = 0;
-  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
+  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * IWNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
 
   iwrc rc = _jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE | JB_COLL_ACQUIRE_EXISTING, &jbc);
   RCRET(rc);
@@ -1106,7 +1106,7 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   int rci;
   JBCOLL jbc;
   IWKV_val key, val;
-  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
+  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * IWNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
 
   JBIDX idx = 0;
   JBL_PTR ptr = 0;
@@ -1516,7 +1516,7 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   API_WLOCK(db, rci);
   JBCOLL jbc;
   IWKV_val key;
-  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * JBNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
+  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * IWNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
 
   jbc = iwhmap_get(db->mcolls, coll);
   if (jbc) {
@@ -1585,7 +1585,7 @@ iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
   }
   IWKV_val key, val;
   JBL nmeta = 0, jbv = 0;
-  char keybuf[JBNUMBUF_SIZE + sizeof(KEY_PREFIX_COLLMETA)];
+  char keybuf[IWNUMBUF_SIZE + sizeof(KEY_PREFIX_COLLMETA)];
 
   API_WLOCK(db, rci);
 

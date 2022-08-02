@@ -48,8 +48,6 @@
 #include <errno.h>
 #include <limits.h>
 
-#define JBNUMBUF_SIZE 64
-
 #ifndef static_assert
 #define static_assert _Static_assert
 #endif

@@ -4,7 +4,7 @@ static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER 
   iwrc rc;
   bool matched;
   IWKV_cursor cur;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1;
   struct _JBMIDX *midx = &ctx->midx;
@@ -64,7 +64,7 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
   int64_t id;
   bool matched;
   char jqvarrbuf[512];
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
 
   iwrc rc = 0;
   int64_t step = 1;
@@ -138,7 +138,7 @@ finish:
 static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
   IWKV_cursor cur;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1, prev_id = 0;
   struct _JBMIDX *midx = &ctx->midx;

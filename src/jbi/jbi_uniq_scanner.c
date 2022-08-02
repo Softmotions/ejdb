@@ -1,6 +1,6 @@
 #include "ejdb2_internal.h"
 
-static_assert(IW_VNUMBUFSZ <= JBNUMBUF_SIZE, "IW_VNUMBUFSZ <= JBNUMBUF_SIZE");
+static_assert(IW_VNUMBUFSZ <= IWNUMBUF_SIZE, "IW_VNUMBUFSZ <= JBNUMBUF_SIZE");
 
 static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
@@ -8,7 +8,7 @@ static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER 
   int64_t step;
   bool matched;
   struct _JBMIDX *midx = &ctx->midx;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
   IWKV_val key;
 
   jbi_jqval_fill_ikey(midx->idx, jqval, &key, numbuf);
@@ -33,7 +33,7 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
   size_t sz;
   uint64_t id;
   bool matched;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
 
   iwrc rc = 0;
   int64_t step = 1;
@@ -78,7 +78,7 @@ finish:
 static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
   IWKV_cursor cur;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1;
   struct _JBMIDX *midx = &ctx->midx;
@@ -157,7 +157,7 @@ iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc;
   size_t sz;
   IWKV_cursor cur;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
   int64_t step = 1;
   struct _JBMIDX *midx = &ctx->midx;
   IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_NEXT)

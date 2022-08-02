@@ -79,8 +79,8 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
   JQP_AUX *aux = q->aux;
   iwrc rc = JQL_ERROR_INVALID_PLACEHOLDER;
   if (!placeholder) { // Index
-    char nbuf[JBNUMBUF_SIZE];
-    iwitoa(index, nbuf, JBNUMBUF_SIZE);
+    char nbuf[IWNUMBUF_SIZE];
+    iwitoa(index, nbuf, IWNUMBUF_SIZE);
     for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
       if ((pv->value[0] == '?') && !strcmp(pv->value + 1, nbuf)) {
         if ((pv->flavour & (JQP_STR_PROJFIELD | JQP_STR_PROJPATH)) && val->type != JQVAL_STR) {
@@ -623,8 +623,8 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
         case JQVAL_BOOL:
           return !strcmp(lv->vstr, "true") - rv->vbool;
         case JQVAL_I64: {
-          char nbuf[JBNUMBUF_SIZE];
-          iwitoa(rv->vi64, nbuf, JBNUMBUF_SIZE);
+          char nbuf[IWNUMBUF_SIZE];
+          iwitoa(rv->vi64, nbuf, IWNUMBUF_SIZE);
           return strcmp(lv->vstr, nbuf);
         }
         case JQVAL_F64: {
@@ -749,7 +749,7 @@ static bool _jql_match_regexp(
   iwrc *rcp
   ) {
   struct iwre *rx;
-  char nbuf[JBNUMBUF_SIZE];
+  char nbuf[IWNUMBUF_SIZE];
   JQVAL sleft, sright; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   char *input = 0;
@@ -781,7 +781,7 @@ static bool _jql_match_regexp(
         expr = rv->vstr;
         break;
       case JQVAL_I64: {
-        iwitoa(rv->vi64, nbuf, JBNUMBUF_SIZE);
+        iwitoa(rv->vi64, nbuf, IWNUMBUF_SIZE);
         expr = iwpool_strdup(aux->pool, nbuf, rcp);
         if (*rcp) {
           return false;
@@ -819,7 +819,7 @@ static bool _jql_match_regexp(
       input = (char*) lv->vstr;
       break;
     case JQVAL_I64:
-      iwitoa(lv->vi64, nbuf, JBNUMBUF_SIZE);
+      iwitoa(lv->vi64, nbuf, IWNUMBUF_SIZE);
       input = nbuf;
       break;
     case JQVAL_F64: {
@@ -925,8 +925,8 @@ static bool _jql_match_starts(
   ) {
   JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
-  char nbuf[JBNUMBUF_SIZE];
-  char nbuf2[JBNUMBUF_SIZE];
+  char nbuf[IWNUMBUF_SIZE];
+  char nbuf2[IWNUMBUF_SIZE];
   char *input = 0, *prefix = 0;
 
   if (lv->type == JQVAL_JBLNODE) {
@@ -941,7 +941,7 @@ static bool _jql_match_starts(
       input = (char*) lv->vstr;
       break;
     case JQVAL_I64:
-      iwitoa(lv->vi64, nbuf, JBNUMBUF_SIZE);
+      iwitoa(lv->vi64, nbuf, IWNUMBUF_SIZE);
       input = nbuf;
       break;
     case JQVAL_F64: {
@@ -962,7 +962,7 @@ static bool _jql_match_starts(
       prefix = (char*) rv->vstr;
       break;
     case JQVAL_I64:
-      iwitoa(rv->vi64, nbuf2, JBNUMBUF_SIZE);
+      iwitoa(rv->vi64, nbuf2, IWNUMBUF_SIZE);
       prefix = nbuf2;
       break;
     case JQVAL_F64: {
@@ -1395,7 +1395,7 @@ static bool _jql_match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp)
 }
 
 static jbl_visitor_cmd_t _jql_match_visitor(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
-  char nbuf[JBNUMBUF_SIZE];
+  char nbuf[IWNUMBUF_SIZE];
   const char *nkey = key;
   JQL q = vctx->op;
   if (!nkey) {
@@ -1697,13 +1697,13 @@ finish:
 static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc) {
   PROJ_CTX *pctx = vctx->op;
   const char *keyptr;
-  char buf[JBNUMBUF_SIZE];
+  char buf[IWNUMBUF_SIZE];
   if (key) {
     keyptr = key;
   } else if (lvl < 0) {
     return 0;
   } else {
-    iwitoa(klidx, buf, JBNUMBUF_SIZE);
+    iwitoa(klidx, buf, IWNUMBUF_SIZE);
     keyptr = buf;
     klidx = (int) strlen(keyptr);
   }
