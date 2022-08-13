@@ -82,12 +82,10 @@ add_library(IOWOW::static STATIC IMPORTED GLOBAL)
 set_target_properties(
   IOWOW::static
   PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-             IMPORTED_LOCATION ${BYPRODUCT})
-             
+             IMPORTED_LOCATION ${BYPRODUCT}
+             IMPORTED_LINK_INTERFACE_LIBRARIES "Threads::Threads;m")
+
 add_dependencies(IOWOW::static extern_iowow)
 
-list(PREPEND PROJECT_LLIBRARIES m)
 list(PREPEND PROJECT_LLIBRARIES IOWOW::static)
 list(APPEND PROJECT_INCLUDE_DIRS ${IOWOW_INCLUDE_DIR})
-
-

@@ -83,10 +83,12 @@ endif()
 
 add_library(IWNET::static STATIC IMPORTED GLOBAL)
 set_target_properties(
-  IWNET::static PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                           IMPORTED_LOCATION ${BYPRODUCT})
+  IWNET::static
+  PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+             IMPORTED_LOCATION ${BYPRODUCT}
+             IMPORTED_LINK_INTERFACE_LIBRARIES "IOWOW::static")
 
-add_dependencies(IWNET::static IOWOW:static extern_iwnet)
+add_dependencies(IWNET::static IOWOW::static extern_iwnet)
 
 list(PREPEND PROJECT_LLIBRARIES IWNET::static)
 list(APPEND PROJECT_INCLUDE_DIRS ${IWNET_INCLUDE_DIR})
