@@ -12,7 +12,7 @@ file(MAKE_DIRECTORY ${IOWOW_INCLUDE_DIR})
 if("${IOWOW_URL}" STREQUAL "")
   if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
     set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
-  elseif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/extra/iowow)
+  elseif(EXISTS ${CMAKE_SOURCE_DIR}/extra/iowow/CMakeLists.txt)
     set(IOWOW_URL ${CMAKE_SOURCE_DIR}/extra/iowow)
   else()
     set(IOWOW_URL

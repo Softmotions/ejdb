@@ -12,7 +12,7 @@ file(MAKE_DIRECTORY ${IWNET_INCLUDE_DIR})
 if("${IWNET_URL}" STREQUAL "")
   if(EXISTS ${CMAKE_SOURCE_DIR}/iwnet.zip)
     set(IWNET_URL ${CMAKE_SOURCE_DIR}/iwnet.zip)
-  elseif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/extra/iwnet)
+  elseif(EXISTS ${CMAKE_SOURCE_DIR}/extra/iwnet/CMakeLists.txt)
     set(IWNET_URL ${CMAKE_SOURCE_DIR}/extra/iwnet)
   else()
     set(IWNET_URL
