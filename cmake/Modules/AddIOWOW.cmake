@@ -12,8 +12,11 @@ file(MAKE_DIRECTORY ${IOWOW_INCLUDE_DIR})
 if("${IOWOW_URL}" STREQUAL "")
   if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
     set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
-  else()
+  elseif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/extra/iowow)
     set(IOWOW_URL ${CMAKE_SOURCE_DIR}/extra/iowow)
+  else()
+    set(IOWOW_URL
+        https://github.com/Softmotions/iowow/archive/refs/heads/master.zip)
   endif()
 endif()
 

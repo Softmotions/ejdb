@@ -12,8 +12,11 @@ file(MAKE_DIRECTORY ${IWNET_INCLUDE_DIR})
 if("${IWNET_URL}" STREQUAL "")
   if(EXISTS ${CMAKE_SOURCE_DIR}/iwnet.zip)
     set(IWNET_URL ${CMAKE_SOURCE_DIR}/iwnet.zip)
-  else()
+  elseif(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/extra/iwnet)
     set(IWNET_URL ${CMAKE_SOURCE_DIR}/extra/iwnet)
+  else()
+    set(IWNET_URL
+        https://github.com/Softmotions/iwnet/archive/refs/heads/master.zip)
   endif()
 endif()
 
