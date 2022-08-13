@@ -220,6 +220,7 @@ function addStreamResult(stream, id, jsondoc, log) {
     if (!stream._aborted && stream._paused) {
       stream.pending.push([]);
     } else {
+      stream.push(null);
       stream.destroy();
     }
   }

@@ -1,5 +1,7 @@
 ejdb2 (2.73) UNRELEASED; urgency=medium
 
+  * Fixed ERR_STREAM_PREMATURE_CLOSE on Node 18 (#346)
+  * Resolved security issuies with nodejs packages
   * ejdb2 json module migrated to iowow
   * Upgraded to the stable verion of iwnet lib.
   * Updated EJDB2Swift submodule
