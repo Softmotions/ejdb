@@ -125,14 +125,6 @@ make install
 ```
 
 ## Linux
-### Ubuntu/Debian
-#### PPA repository
-
-```sh
-sudo add-apt-repository ppa:adamansky/ejdb2
-sudo apt-get update
-sudo apt-get install ejdb2
-```
 
 #### Building debian packages
 
@@ -157,3 +149,10 @@ EJDB2 can be cross-compiled for windows
 Nodejs/Dart bindings not yet ported to Windows.
 
 **[Cross-compilation Guide for Windows](./WINDOWS.md)**
+
+
+## IWSTART
+
+IWSTART is an automatic CMake initial project generator for C projects based on [iowow](https://github.com/Softmotions/iowow) / [iwnet](https://github.com/Softmotions/iwnet) / [ejdb2](https://github.com/Softmotions/ejdb) libs.
+
+https://github.com/Softmotions/iwstart
