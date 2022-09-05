@@ -46,6 +46,8 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [License](#license)
 ---
 
+[![EJDB2 Presentation](https://iowow.softmotions.com/articles/ejdb-presentation-cover.png)](https://iowow.softmotions.com/articles/ejdb/)
+
 ## EJDB2 platforms matrix
 
 |              | Linux              | macOS               | iOS                | Android            | Windows            |
