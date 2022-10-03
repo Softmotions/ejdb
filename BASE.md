@@ -78,6 +78,8 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 ### Unofficial EJDB2 language bindings
 
+* Go
+  * https://github.com/memmaker/go-ejdb2
 * Rust 
   * https://crates.io/crates/ejdb2
 * .Net
