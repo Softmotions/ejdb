@@ -24,7 +24,7 @@ public class TestEJDB2 {
     Map<String, Object> map = (Map<String, Object>) json.value;
     assert map.get("foo").equals("bar");
 
-    ObjectBuilder b = JSON.buildObject();
+    ObjectBuilder b = JSON.object();
     b.put("foo", "bar").putArray("baz").add(1).add("one").toJSON();
 
     json = b.toJSON().at("/baz/1");

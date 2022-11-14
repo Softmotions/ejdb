@@ -1,4 +1,4 @@
-ejdb2 (2.73) UNRELEASED; urgency=medium
+ejdb2 (2.73) testing; urgency=medium
 
   * Fixed ERR_STREAM_PREMATURE_CLOSE on Node 18 (#346)
   * Resolved security issuies with nodejs packages
@@ -7,7 +7,7 @@ ejdb2 (2.73) UNRELEASED; urgency=medium
   * Updated EJDB2Swift submodule
   * Replaced old iowow regexp engine with new (iwre.h) based on https://github.com/jserv/cregex
 
- -- Anton Adamansky <adamansky@gmail.com>  Fri, 25 Feb 2022 13:12:16 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 14 Nov 2022 18:42:52 +0200
 
 ejdb2 (2.72) testing; urgency=medium
 
