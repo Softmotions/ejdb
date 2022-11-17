@@ -113,7 +113,7 @@ typedef struct _EJDB_OPTS {
   uint32_t  sort_buffer_sz;     /**< Max sorting buffer size. If exceeded an overflow temp file for sorted data will
                                    created.
                                      Default 16Mb, min: 1Mb */
-  uint32_t document_buffer_sz;  /**< Initial size of buffer in bytes used to process/store document during query
+  uint32_t document_buffer_sz;  /**< Initial size of sort buffer in bytes used to process/store document during query
                                    execution.
                                      Default 64Kb, min: 16Kb */
 } EJDB_OPTS;

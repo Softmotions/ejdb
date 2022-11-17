@@ -229,7 +229,7 @@ start:
   }
 
   if (!ssc->refs) {
-    ssc->refs_asz = 64 * 1024; // 64K
+    ssc->refs_asz = db->opts.document_buffer_sz;
     ssc->refs = malloc(db->opts.document_buffer_sz);
     if (!ssc->refs) {
       return iwrc_set_errno(IW_ERROR_ALLOC, errno);

@@ -1,3 +1,9 @@
+ejdb2 (2.74) UNRELEASED; urgency=medium
+
+  * Fix: Delete ejdb crash as realloc(): invalid next size #366 
+
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 17 Nov 2022 19:42:23 +0200
+
 ejdb2 (2.73) testing; urgency=medium
 
   * Fixed ERR_STREAM_PREMATURE_CLOSE on Node 18 (#346)
