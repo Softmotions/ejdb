@@ -198,8 +198,10 @@ IW_EXPORT WUR iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp);
 
 /**
  * @brief Closes storage and frees up all resources.
- * @param [in,out] ejdbp Pointer to storage handle, will set to zero oncompletion.
+ * @warning Please ensure what all of application threads stopped
+ *          calling ejdb.h and iowow API before ejdb_close().
  *
+ * @param [in,out] ejdbp Pointer to storage handle, will set to zero oncompletion.
  * @return `0` on success.
  *          Any non zero error codes.
  */
