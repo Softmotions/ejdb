@@ -60,7 +60,7 @@ set(PPA_DEBIAN_VERSION
     CACHE STRING "PPA version suffix for debian packages")
 
 set(PROJECT_PPA_DISTRIB_TARGET
-    "focal"
+    "jammy"
     CACHE STRING "Ubuntu PPA distribution names")
 
 set(ANDROID_ABIS
