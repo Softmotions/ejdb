@@ -125,12 +125,8 @@ class JBDOCStream extends Readable {
       .catch((err) => this.destroy(err));
   }
 
-  destroy(error) {
-    if (!this.closed) {
-      this.push(null);
-    }
-    super.destroy(error);
-    return this;
+  finish() {
+    this.push(null);
   }
 
   abort() {
@@ -168,7 +164,7 @@ class JBDOCStream extends Readable {
         if (pv.length == 0) {
           // Got pending EOF
           this._pending.length = 0;
-          this.destroy();
+          this.finish();
           break;
         }
         addStreamResult(this, pv[0], pv[1]);
@@ -208,7 +204,7 @@ function addStreamResult(stream, id, jsondoc, log) {
       if (stream._paused) {
         // Maintaining pending list since `napi_threadsafe_function` queue
         // may be not empty at the time of `jql_stream_pause` call
-        stream.pending.push([id, jsondoc]);
+        stream._pending.push([id, jsondoc]);
         return;
       }
       let doc;
@@ -227,9 +223,9 @@ function addStreamResult(stream, id, jsondoc, log) {
   if (id < 0) {
     // last record
     if (!stream._aborted && stream._paused) {
-      stream.pending.push([]);
+      stream._pending.push([]);
     } else {
-      stream.destroy();
+      stream.finish();
     }
   }
 }
@@ -280,7 +276,7 @@ class JQL {
   completionPromise(opts) {
     const stream = this.stream(opts || {});
     return new Promise((resolve, reject) => {
-      stream.on("data", () => stream.destroy());
+      stream.on("data", () => stream.finish());
       stream.on("close", () => resolve());
       stream.on("error", (err) => reject(err));
     });
@@ -297,7 +293,7 @@ class JQL {
     return new Promise((resolve, reject) => {
       stream.on("data", (doc) => {
         resolve(doc.id);
-        stream.destroy();
+        stream.finish();
       });
       stream.on("error", (err) => reject(err));
     });
@@ -335,7 +331,7 @@ class JQL {
       stream.on("data", (doc) => {
         ret.push(doc);
         if (ret.length >= n) {
-          stream.destroy();
+          stream.finish();
         }
       });
       stream.on("close", () => resolve(ret));
