@@ -24,8 +24,8 @@
  * SOFTWARE.
  *************************************************************************************************/
 
-const semver = require('semver');
-const {engines} = require('./package');
+const semver = require("semver");
+const { engines } = require("./package");
 
 if (!semver.satisfies(process.version, engines.node)) {
   console.log(`Required node version ${engines.node} not satisfied with current version ${process.version}.`);
@@ -33,23 +33,22 @@ if (!semver.satisfies(process.version, engines.node)) {
 }
 
 global.__ejdb_add_stream_result__ = addStreamResult; // Passing it to ejdb2_node init
-const {EJDB2Impl} = require('./binary')('ejdb2_node');
-const {Readable} = require('stream');
+const { EJDB2Impl } = require("./binary")("ejdb2_node");
+const { Readable } = require("stream");
 delete global.__ejdb_add_stream_result__;
 
 /**
  * EJDB2 Error helpers.
  */
 class JBE {
-
   /**
    * Returns `true` if given error [err] is `IWKV_ERROR_NOTFOUND`
    * @param {Error} err
    * @returns {boolean}
    */
   static isNotFound(err) {
-    const code = (err.code || '').toString();
-    return code.indexOf('@ejdb IWRC:75001') == 0;
+    const code = (err.code || "").toString();
+    return code.indexOf("@ejdb IWRC:75001") == 0;
   }
 
   /**
@@ -58,8 +57,8 @@ class JBE {
    * @return {boolean}
    */
   static isInvalidQuery(err) {
-    const code = (err.code || '').toString();
-    return code.indexOf('@ejdb IWRC:87001') == 0;
+    const code = (err.code || "").toString();
+    return code.indexOf("@ejdb IWRC:87001") == 0;
   }
 }
 
@@ -67,7 +66,6 @@ class JBE {
  * EJDB document.
  */
 class JBDOC {
-
   /**
    * Get document JSON object
    */
@@ -99,7 +97,6 @@ class JBDOC {
  * EJDB Query resultset stream.
  */
 class JBDOCStream extends Readable {
-
   get _impl() {
     return this.jql._impl;
   }
@@ -115,7 +112,7 @@ class JBDOCStream extends Readable {
   constructor(jql, opts) {
     super({
       objectMode: true,
-      highWaterMark: 64
+      highWaterMark: 64,
     });
     this._pending = [];
     this._paused = true;
@@ -123,8 +120,17 @@ class JBDOCStream extends Readable {
     this._aborted = false;
     this.jql = jql;
     this.opts = opts;
-    this.promise = this._impl.jql_stream_attach(jql, this, [opts.limit, opts.explainCallback])
-                       .catch((err) => this.destroy(err));
+    this.promise = this._impl
+      .jql_stream_attach(jql, this, [opts.limit, opts.explainCallback])
+      .catch((err) => this.destroy(err));
+  }
+
+  destroy(error) {
+    if (!this.closed) {
+      this.push(null);
+    }
+    super.destroy(error);
+    return this;
   }
 
   abort() {
@@ -159,7 +165,8 @@ class JBDOCStream extends Readable {
       // may be not empty at the time of `jql_stream_pause` call
       let pv = this._pending.shift();
       while (this.writable && pv) {
-        if (pv.length == 0) { // Got pending EOF
+        if (pv.length == 0) {
+          // Got pending EOF
           this._pending.length = 0;
           this.destroy();
           break;
@@ -195,7 +202,7 @@ function addStreamResult(stream, id, jsondoc, log) {
     delete stream.opts.explainCallback;
   }
 
-  const count = (typeof jsondoc === 'number');
+  const count = typeof jsondoc === "number";
   if (id >= 0 || count) {
     if (!stream._aborted) {
       if (stream._paused) {
@@ -205,7 +212,8 @@ function addStreamResult(stream, id, jsondoc, log) {
         return;
       }
       let doc;
-      if (count) { // count int response
+      if (count) {
+        // count int response
         doc = new JBDOC(jsondoc, jsondoc);
       } else if (jsondoc != null) {
         doc = new JBDOC(id, jsondoc);
@@ -216,11 +224,11 @@ function addStreamResult(stream, id, jsondoc, log) {
     }
   }
 
-  if (id < 0) { // last record
+  if (id < 0) {
+    // last record
     if (!stream._aborted && stream._paused) {
       stream.pending.push([]);
     } else {
-      stream.push(null);
       stream.destroy();
     }
   }
@@ -230,7 +238,6 @@ function addStreamResult(stream, id, jsondoc, log) {
  * EJDB Query.
  */
 class JQL {
-
   get _impl() {
     return this.db._impl;
   }
@@ -273,9 +280,9 @@ class JQL {
   completionPromise(opts) {
     const stream = this.stream(opts || {});
     return new Promise((resolve, reject) => {
-      stream.on('data', () => stream.destroy());
-      stream.on('close', () => resolve());
-      stream.on('error', (err) => reject(err));
+      stream.on("data", () => stream.destroy());
+      stream.on("close", () => resolve());
+      stream.on("error", (err) => reject(err));
     });
   }
 
@@ -288,11 +295,11 @@ class JQL {
   scalarInt(opts) {
     const stream = this.stream(opts);
     return new Promise((resolve, reject) => {
-      stream.on('data', (doc) => {
+      stream.on("data", (doc) => {
         resolve(doc.id);
         stream.destroy();
       });
-      stream.on('error', (err) => reject(err));
+      stream.on("error", (err) => reject(err));
     });
   }
 
@@ -307,9 +314,9 @@ class JQL {
     const ret = [];
     const stream = this.stream(opts);
     return new Promise((resolve, reject) => {
-      stream.on('data', (doc) => ret.push(doc));
-      stream.on('close', () => resolve(ret));
-      stream.on('error', (err) => reject(err));
+      stream.on("data", (doc) => ret.push(doc));
+      stream.on("close", () => resolve(ret));
+      stream.on("error", (err) => reject(err));
     });
   }
 
@@ -325,14 +332,14 @@ class JQL {
     const ret = [];
     const stream = this.stream(opts);
     return new Promise((resolve, reject) => {
-      stream.on('data', (doc) => {
+      stream.on("data", (doc) => {
         ret.push(doc);
         if (ret.length >= n) {
           stream.destroy();
         }
       });
-      stream.on('close', () => resolve(ret));
-      stream.on('error', (err) => reject(err));
+      stream.on("close", () => resolve(ret));
+      stream.on("error", (err) => reject(err));
     });
   }
 
@@ -356,7 +363,7 @@ class JQL {
    */
   setJSON(placeholder, val) {
     this._checkPlaceholder(placeholder);
-    if (typeof val !== 'string') {
+    if (typeof val !== "string") {
       val = JSON.stringify(val);
     }
     this._impl.jql_set(this, placeholder, val, 1);
@@ -373,9 +380,9 @@ class JQL {
     this._checkPlaceholder(placeholder);
     if (val instanceof RegExp) {
       const sval = val.toString();
-      val = sval.substring(1, sval.lastIndexOf('/'));
-    } else if (typeof val !== 'string') {
-      throw new Error('Regexp argument must be a string or RegExp object');
+      val = sval.substring(1, sval.lastIndexOf("/"));
+    } else if (typeof val !== "string") {
+      throw new Error("Regexp argument must be a string or RegExp object");
     }
     this._impl.jql_set(this, placeholder, val, 2);
     return this;
@@ -389,8 +396,8 @@ class JQL {
    */
   setNumber(placeholder, val) {
     this._checkPlaceholder(placeholder);
-    if (typeof val !== 'number') {
-      throw new Error('Value must be a number');
+    if (typeof val !== "number") {
+      throw new Error("Value must be a number");
     }
     this._impl.jql_set(this, placeholder, val, this._isInteger(val) ? 3 : 4);
     return this;
@@ -416,7 +423,7 @@ class JQL {
    */
   setString(placeholder, val) {
     this._checkPlaceholder(placeholder);
-    if (val != null && typeof val !== 'string') {
+    if (val != null && typeof val !== "string") {
       val = val.toString();
     }
     this._impl.jql_set(this, placeholder, val, 6);
@@ -440,8 +447,8 @@ class JQL {
 
   _checkPlaceholder(placeholder) {
     const t = typeof placeholder;
-    if (t !== 'number' && t !== 'string') {
-      throw new Error('Invalid placeholder specified, must be either string or number');
+    if (t !== "number" && t !== "string") {
+      throw new Error("Invalid placeholder specified, must be either string or number");
     }
   }
 }
@@ -450,7 +457,6 @@ class JQL {
  * EJDB2 Nodejs wrapper.
  */
 class EJDB2 {
-
   /**
    * Open database instance.
    *
@@ -464,27 +470,27 @@ class EJDB2 {
     function toArgs() {
       let oflags = 0;
       const ret = [path];
-      if (opts['readonly']) {
+      if (opts["readonly"]) {
         oflags |= 0x02;
       }
-      if (opts['truncate']) {
+      if (opts["truncate"]) {
         oflags |= 0x04;
       }
       ret.push(oflags);
-      ret.push(opts['wal_enabled'] != null ? !!opts['wal_enabled'] : true);
-      ret.push(opts['wal_check_crc_on_checkpoint']);
-      ret.push(opts['wal_checkpoint_buffer_sz']);
-      ret.push(opts['wal_checkpoint_timeout_sec']);
-      ret.push(opts['wal_savepoint_timeout_sec']);
-      ret.push(opts['wal_wal_buffer_sz']);
-      ret.push(opts['document_buffer_sz']);
-      ret.push(opts['sort_buffer_sz']);
-      ret.push(opts['http_enabled']);
-      ret.push(opts['http_access_token']);
-      ret.push(opts['http_bind']);
-      ret.push(opts['http_max_body_size']);
-      ret.push(opts['http_port']);
-      ret.push(opts['http_read_anon']);
+      ret.push(opts["wal_enabled"] != null ? !!opts["wal_enabled"] : true);
+      ret.push(opts["wal_check_crc_on_checkpoint"]);
+      ret.push(opts["wal_checkpoint_buffer_sz"]);
+      ret.push(opts["wal_checkpoint_timeout_sec"]);
+      ret.push(opts["wal_savepoint_timeout_sec"]);
+      ret.push(opts["wal_wal_buffer_sz"]);
+      ret.push(opts["document_buffer_sz"]);
+      ret.push(opts["sort_buffer_sz"]);
+      ret.push(opts["http_enabled"]);
+      ret.push(opts["http_access_token"]);
+      ret.push(opts["http_bind"]);
+      ret.push(opts["http_max_body_size"]);
+      ret.push(opts["http_port"]);
+      ret.push(opts["http_read_anon"]);
       return ret;
     }
 
@@ -514,7 +520,7 @@ class EJDB2 {
    * @returns {Promise<number>}
    */
   put(collection, json, id) {
-    if (typeof json !== 'string') {
+    if (typeof json !== "string") {
       json = JSON.stringify(json);
     }
     return this._impl.put(collection, json, id);
@@ -716,7 +722,5 @@ class EJDB2 {
 
 module.exports = {
   EJDB2,
-  JBE
+  JBE,
 };
-
-
