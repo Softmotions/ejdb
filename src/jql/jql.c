@@ -42,9 +42,11 @@ IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
         ptr = (void*) qv->vstr;
         break;
       case JQVAL_RE:
-        ptr = (void*) iwre_pattern_get(qv->vre);
         if (qv->vre != IWRE_UNUSED_PTR) {
+          ptr = (void*) iwre_pattern_get(qv->vre);
           iwre_destroy(qv->vre);
+        } else {
+          ptr = 0;
         }
         break;
       case JQVAL_JBLNODE:
