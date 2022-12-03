@@ -3,8 +3,9 @@
 #include "jqp.h"
 
 #include <iowow/iwre.h>
-
 #include <errno.h>
+
+#define IWRE_UNUSED_PTR ((void*) (intptr_t) -1)
 
 /** Query matching context */
 typedef struct MCTX {
@@ -42,7 +43,9 @@ IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
         break;
       case JQVAL_RE:
         ptr = (void*) iwre_pattern_get(qv->vre);
-        iwre_destroy(qv->vre);
+        if (qv->vre != IWRE_UNUSED_PTR) {
+          iwre_destroy(qv->vre);
+        }
         break;
       case JQVAL_JBLNODE:
         ptr = qv->vnode;
@@ -269,7 +272,7 @@ iwrc jql_set_regexp2(
   ) {
   iwrc rc = 0;
   JQVAL *qv = 0;
-  struct iwre *rx = iwre_create(expr);
+  struct iwre *rx = (expr && *expr != '\0') ? iwre_create(expr) : IWRE_UNUSED_PTR;
   if (!rx) {
     rc = JQL_ERROR_REGEXP_INVALID;
     goto finish;
@@ -287,7 +290,9 @@ finish:
     if (freefn) {
       freefn((void*) expr, op);
     }
-    iwre_destroy(rx);
+    if (rx != IWRE_UNUSED_PTR) {
+      iwre_destroy(rx);
+    }
     free(qv);
   }
   return rc;
@@ -473,7 +478,7 @@ void jql_destroy(JQL *qptr) {
     }
     for (JQP_OP *op = aux->start_op; op; op = op->next) {
       if (op->opaque) {
-        if (op->value == JQP_OP_RE) {
+        if (op->value == JQP_OP_RE && op->opaque != IWRE_UNUSED_PTR) {
           iwre_destroy(op->opaque);
         }
       }
@@ -805,11 +810,14 @@ static bool _jql_match_regexp(
         return false;
     }
 
-    assert(expr);
-    rx = iwre_create(expr);
-    if (!rx) {
-      *rcp = JQL_ERROR_REGEXP_INVALID;
-      return false;
+    if (IW_UNLIKELY(*expr == '\0')) {
+      rx = IWRE_UNUSED_PTR;
+    } else {
+      rx = iwre_create(expr);
+      if (!rx) {
+        *rcp = JQL_ERROR_REGEXP_INVALID;
+        return false;
+      }
     }
     jqop->opaque = rx;
   }
@@ -835,9 +843,14 @@ static bool _jql_match_regexp(
       *rcp = _JQL_ERROR_UNMATCHED;
       return false;
   }
-  const char *mpairs[IWRE_MAX_MATCHES];
-  int mret = iwre_match(rx, input, mpairs, IWRE_MAX_MATCHES);
-  return mret > 0;
+
+  if (IW_UNLIKELY(rx == IWRE_UNUSED_PTR)) {
+    return *input == '\0';
+  } else {
+    const char *mpairs[IWRE_MAX_MATCHES];
+    int mret = iwre_match(rx, input, mpairs, IWRE_MAX_MATCHES);
+    return mret > 0;
+  }
 }
 
 static bool _jql_match_in(
