@@ -281,8 +281,10 @@ iwrc jql_set_regexp2(
   }
   RCA(qv = malloc(sizeof(*qv)), finish);
   qv->refs = 0;
-  qv->freefn = freefn;
-  qv->freefn_op = op;
+  if (rx != IWRE_UNUSED_PTR) {
+    qv->freefn = freefn;
+    qv->freefn_op = op;
+  }
   qv->type = JQVAL_RE;
   qv->vre = rx;
   rc = _jql_set_placeholder(q, placeholder, index, qv);
@@ -296,6 +298,8 @@ finish:
       iwre_destroy(rx);
     }
     free(qv);
+  } else if (rx == IWRE_UNUSED_PTR && freefn) {
+    freefn((void*) expr, op);
   }
   return rc;
 }
