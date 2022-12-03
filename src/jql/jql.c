@@ -299,7 +299,7 @@ finish:
     }
     free(qv);
   } else if (rx == IWRE_UNUSED_PTR && freefn) {
-    freefn((void*) expr, op);
+      freefn((void*) expr, op);
   }
   return rc;
 }
