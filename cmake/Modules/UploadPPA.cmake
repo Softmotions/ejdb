@@ -207,7 +207,7 @@ execute_process(COMMAND chmod +x ${debian_rules})
 
 ##############################################################################
 # debian/compat
-file(WRITE ${DEBIAN_SOURCE_DIR}/debian/compat "7")
+file(WRITE ${DEBIAN_SOURCE_DIR}/debian/compat "13")
 
 ##############################################################################
 # debian/source/format
