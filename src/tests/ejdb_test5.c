@@ -102,7 +102,7 @@ iwrc delete_record_large(EJDB db, char *collection, int64_t to, int limit) {
 
   char deleteSql[128];
   memset(deleteSql, 0, sizeof(deleteSql));
-  sprintf(deleteSql, "(/[time_ <= %ld ]) | del | asc /time_ limit %d count", to, limit);
+  sprintf(deleteSql, "(/[time_ <= %lld ]) | del | asc /time_ limit %d count", (long long) to, limit);
   print_message("sql=%s\n", deleteSql);
   iwrc rc = jql_create(&q, collection, deleteSql);
   RCGO(rc, finish);

@@ -1,6 +1,8 @@
 ejdb2 (2.74) UNRELEASED; urgency=medium
 
+  * Fix: windows build errors
   * Fix: Updated iwnet fixed wrong handling of fs error events (iwn_poller)
+  * Chore: BearSSL updated to the latest version.
   * Fix: Delete ejdb crash as realloc(): invalid next size #366 
 
  -- Anton Adamansky <adamansky@gmail.com>  Thu, 17 Nov 2022 19:42:23 +0200

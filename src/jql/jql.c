@@ -2,6 +2,11 @@
 #include "jql_internal.h"
 #include "jqp.h"
 
+#ifdef _WIN32
+#include <libiberty/libiberty.h>
+#define strndup(c__, s__) xstrndup(c__, s__)
+#endif
+
 #include <iowow/iwre.h>
 #include <errno.h>
 
