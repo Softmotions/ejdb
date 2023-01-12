@@ -73,7 +73,7 @@ start:
     if (aux->apply || aux->apply_placeholder || aux->projection) {
       JBL_NODE root;
       if (!pool) {
-        pool = iwpool_create(jbl.bn.size * 2);
+        pool = iwpool_create((size_t) jbl.bn.size * 2);
         if (!pool) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
           goto finish;

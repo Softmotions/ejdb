@@ -122,7 +122,7 @@ static int _on_get(struct rctx *ctx) {
     RCC(rc, finish, jbl_as_json(jbl, jbl_count_json_printer, &nbytes, JBL_PRINT_PRETTY));
     RCC(rc, finish, iwn_http_response_header_i64_set(ctx->req->http, "content-length", nbytes));
   } else {
-    RCA(xstr = iwxstr_new2(jbl->bn.size * 2), finish);
+    RCA(xstr = iwxstr_new2((size_t) jbl->bn.size * 2), finish);
     RCC(rc, finish, jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY));
     nbytes = iwxstr_size(xstr);
   }
@@ -256,7 +256,7 @@ static int _on_options(struct rctx *ctx) {
   int ret = 500;
 
   RCC(rc, finish, ejdb_get_meta(ctx->jbr->db, &jbl));
-  RCA(xstr = iwxstr_new2(jbl->bn.size * 2), finish);
+  RCA(xstr = iwxstr_new2((size_t) jbl->bn.size * 2), finish);
   RCC(rc, finish, jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY));
 
   if (ctx->jbr->http->read_anon) {
@@ -622,7 +622,7 @@ static bool _ws_info(struct iwn_ws_sess *ws, struct mctx *mctx) {
     goto finish;
   }
   RCC(rc, finish, ejdb_get_meta(ctx->jbr->db, &jbl));
-  RCA(xstr = iwxstr_new2(jbl->bn.size * 2), finish);
+  RCA(xstr = iwxstr_new2((size_t) jbl->bn.size * 2), finish);
   RCC(rc, finish, iwxstr_printf(xstr, "%s\t", mctx->key));
   RCC(rc, finish, jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY));
   ret = iwn_ws_server_write(ws, iwxstr_ptr(xstr), iwxstr_size(xstr));
@@ -684,7 +684,7 @@ static bool _ws_document_get(struct iwn_ws_sess *ws, struct mctx *mctx, int64_t 
   struct rctx *ctx = ws->req->http->user_data;
 
   RCC(rc, finish, ejdb_get(ctx->jbr->db, mctx->cname, id, &jbl));
-  RCA(xstr = iwxstr_new2(jbl->bn.size * 2), finish);
+  RCA(xstr = iwxstr_new2((size_t) jbl->bn.size * 2), finish);
   RCC(rc, finish, iwxstr_printf(xstr, "%s\t%" PRId64 "\t", mctx->key, id));
   RCC(rc, finish, jbl_as_json(jbl, jbl_xstr_json_printer, xstr, JBL_PRINT_PRETTY));
   ret = iwn_ws_server_write(ws, iwxstr_ptr(xstr), iwxstr_size(xstr));

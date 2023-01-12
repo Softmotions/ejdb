@@ -9,6 +9,7 @@
 
 #include <iowow/iwre.h>
 #include <errno.h>
+#include <stddef.h>
 
 #define IWRE_UNUSED_PTR ((void*) (intptr_t) -1)
 
@@ -304,7 +305,7 @@ finish:
     }
     free(qv);
   } else if (rx == IWRE_UNUSED_PTR && freefn) {
-      freefn((void*) expr, op);
+    freefn((void*) expr, op);
   }
   return rc;
 }
@@ -329,6 +330,7 @@ iwrc jql_set_null(JQL q, const char *placeholder, int index) {
   return rc;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 static bool _jql_need_deeper_match(JQP_EXPR_NODE *en, int lvl) {
   for (en = en->chain; en; en = en->next) {
     if (en->type == JQP_EXPR_NODE_TYPE) {
@@ -345,6 +347,7 @@ static bool _jql_need_deeper_match(JQP_EXPR_NODE *en, int lvl) {
   return false;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 static void _jql_reset_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux, bool reset_match_cache) {
   MENCTX *ectx = en->opaque;
   ectx->matched = false;
@@ -367,6 +370,7 @@ static void _jql_reset_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux, bool res
   }
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 static iwrc _jql_init_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
   en->opaque = iwpool_calloc(sizeof(MENCTX), aux->pool);
   if (!en->opaque) {
@@ -734,7 +738,7 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
         return 0;
       }
       JBL_NODE lnode;
-      IWPOOL *pool = iwpool_create(rv->vbinn->size * 2);
+      IWPOOL *pool = iwpool_create((size_t) (rv->vbinn->size) * 2);
       if (!pool) {
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
@@ -1308,6 +1312,7 @@ IW_INLINE bool _jql_match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   return (strcmp(n->value->string.value, mctx->key) == 0);
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 IW_INLINE JQP_NODE* _jql_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
   if (n->start < 0) {
     n->start = mctx->lvl;
@@ -1327,6 +1332,7 @@ IW_INLINE JQP_NODE* _jql_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwr
   return n;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 static JQP_NODE* _jql_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
   switch (n->ntype) {
     case JQP_NODE_FIELD:
@@ -1384,6 +1390,7 @@ static bool _jql_match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
   return fctx->matched;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 static bool _jql_match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp) {
   MENCTX *enctx = en->opaque;
   if (enctx->matched) {
@@ -1673,12 +1680,12 @@ static bool _jql_proj_join_matched(
         pool = iwpool_create(512);
         RCGA(pool, finish);
         exec_ctx->proj_joined_nodes_pool = pool;
-      } else if (cache && (iwpool_used_size(pool) > 10 * 1024 * 1024)) { // 10Mb
+      } else if (cache && (iwpool_used_size(pool) > 10UL * 1024 * 1024)) { // 10Mb
         exec_ctx->proj_joined_nodes_cache = 0;
         iwhmap_destroy(exec_ctx->proj_joined_nodes_cache);
         cache = 0;
         iwpool_destroy(pool);
-        pool = iwpool_create(1024 * 1024); // 1Mb
+        pool = iwpool_create(1024UL * 1024); // 1Mb
         RCGA(pool, finish);
       }
     }

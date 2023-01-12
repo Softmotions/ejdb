@@ -1062,7 +1062,7 @@ iwrc ejdb_remove_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   JBCOLL jbc;
   IWKV_val key;
   JBL_PTR ptr = 0;
-  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * IWNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
+  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2UL * IWNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
 
   iwrc rc = _jb_coll_acquire_keeplock2(db, coll, JB_COLL_ACQUIRE_WRITE | JB_COLL_ACQUIRE_EXISTING, &jbc);
   RCRET(rc);
@@ -1106,7 +1106,7 @@ iwrc ejdb_ensure_index(EJDB db, const char *coll, const char *path, ejdb_idx_mod
   int rci;
   JBCOLL jbc;
   IWKV_val key, val;
-  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * IWNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
+  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2UL * IWNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
 
   JBIDX idx = 0;
   JBL_PTR ptr = 0;
@@ -1516,7 +1516,7 @@ iwrc ejdb_remove_collection(EJDB db, const char *coll) {
   API_WLOCK(db, rci);
   JBCOLL jbc;
   IWKV_val key;
-  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2 * IWNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
+  char keybuf[sizeof(KEY_PREFIX_IDXMETA) + 1 + 2UL * IWNUMBUF_SIZE]; // Full key format: i.<coldbid>.<idxdbid>
 
   jbc = iwhmap_get(db->mcolls, coll);
   if (jbc) {
@@ -1779,9 +1779,9 @@ iwrc ejdb_open(const EJDB_OPTS *_opts, EJDB *ejdbp) {
   if (db->opts.http.enabled) {
     // Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K
     if (!db->opts.http.max_body_size) {
-      db->opts.http.max_body_size = 64 * 1024 * 1024;
-    } else if (db->opts.http.max_body_size < 512 * 1024) {
-      db->opts.http.max_body_size = 512 * 1024;
+      db->opts.http.max_body_size = 64UL * 1024 * 1024;
+    } else if (db->opts.http.max_body_size < 512UL * 1024) {
+      db->opts.http.max_body_size = 512UL * 1024;
     }
   }
 

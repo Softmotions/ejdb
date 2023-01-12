@@ -50,6 +50,7 @@ static int _usage(const char *err) {
 
 static void _on_signal(int signo) {
   if (env.db) {
+    // NOLINTNEXTLINE\w\w
     jbr_shutdown_request(env.db);
   }
 }

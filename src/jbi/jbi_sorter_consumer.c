@@ -60,7 +60,7 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
   iwrc rc = jbl_to_node(jbl, &root, true, pool);
   RCRET(rc);
   doc->node = root;
-  if (aux->qmode & JQP_QRY_APPLY_DEL) {  
+  if (aux->qmode & JQP_QRY_APPLY_DEL) {
     rc = jb_del(ctx->jbc, jbl, doc->id);
     RCRET(rc);
   } else if (aux->apply || aux->apply_placeholder) {
@@ -115,7 +115,7 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
 
     if (aux->apply || aux->projection) {
       if (!pool) {
-        pool = iwpool_create(jbl.bn.size * 2);
+        pool = iwpool_create((size_t) jbl.bn.size * 2);
         if (!pool) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
           goto finish;

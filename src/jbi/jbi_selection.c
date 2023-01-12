@@ -157,7 +157,7 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
         for (JBL_NODE n = rv->vnode->child; n; n = n->next, ++vcnt);
         if (  (vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE)
            && (  (vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE)
-              || (mctx->idx->rnum < rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO))) {
+              || (mctx->idx->rnum < (int64_t) rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO))) {
           // No index for large IN array | small collection size
           continue;
         }
@@ -263,6 +263,7 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
   return 0;
 }
 
+// NOLINTNEXTLINE
 static iwrc _jbi_collect_indexes(
   JBEXEC                     *ctx,
   const struct JQP_EXPR_NODE *en,
