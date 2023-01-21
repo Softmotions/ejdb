@@ -1,37 +1,27 @@
+find_package(IOWOW)
+
+if(TARGET IOWOW::static) 
+  return()
+endif()
+
+set(IOWOW_INCLUDE_DIRS "")
+
 include(ExternalProject)
 
-if(${CMAKE_VERSION} VERSION_LESS "3.8.0")
-  set(_UPDATE_DISCONNECTED 0)
-else()
-  set(_UPDATE_DISCONNECTED 1)
+if(NOT DEFINED IOWOW_URL)
+  set(IOWOW_URL
+      https://github.com/Softmotions/iowow/archive/refs/heads/master.zip)
 endif()
 
-set(IOWOW_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include/${PROJECT_NAME}")
-file(MAKE_DIRECTORY ${IOWOW_INCLUDE_DIR})
-
-if("${IOWOW_URL}" STREQUAL "")
-  if(EXISTS ${CMAKE_SOURCE_DIR}/iowow.zip)
-    set(IOWOW_URL ${CMAKE_SOURCE_DIR}/iowow.zip)
-  elseif(EXISTS ${CMAKE_SOURCE_DIR}/extra/iowow/CMakeLists.txt)
-    set(IOWOW_URL ${CMAKE_SOURCE_DIR}/extra/iowow)
-  else()
-    set(IOWOW_URL
-        https://github.com/Softmotions/iowow/archive/refs/heads/master.zip)
-  endif()
-endif()
-
-message("IOWOW_URL: ${IOWOW_URL}")
-
-if(APPLE)
-  set(BYPRODUCT "${CMAKE_BINARY_DIR}/lib/libiowow-1.a")
-else()
-  set(BYPRODUCT "${CMAKE_BINARY_DIR}/src/extern_iowow-build/src/libiowow-1.a")
-endif()
+set(BYPRODUCT "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libiowow-1.a")
 
 set(CMAKE_ARGS
-    -DOWNER_PROJECT_NAME=${PROJECT_NAME} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DASAN=${ASAN}
-    -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF)
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} 
+    -DBUILD_SHARED_LIBS=OFF
+    -DBUILD_EXAMPLES=OFF)
+
+set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${CMAKE_INSTALL_PREFIX})
 
 # In order to properly pass owner project CMAKE variables than contains
 # semicolons, we used a specific separator for 'ExternalProject_Add', using the
@@ -42,18 +32,19 @@ set(SSUB "^^")
 
 foreach(
   extra
-  CMAKE_OSX_ARCHITECTURES
-  CMAKE_C_COMPILER
-  CMAKE_TOOLCHAIN_FILE
-  ANDROID_PLATFORM
   ANDROID_ABI
-  TEST_TOOL_CMD
-  PLATFORM
-  ENABLE_BITCODE
+  ANDROID_PLATFORM
+  ARCHS
+  CMAKE_C_COMPILER
+  CMAKE_FIND_ROOT_PATH
+  CMAKE_OSX_ARCHITECTURES
+  CMAKE_TOOLCHAIN_FILE
   ENABLE_ARC
-  ENABLE_VISIBILITY
+  ENABLE_BITCODE
   ENABLE_STRICT_TRY_COMPILE
-  ARCHS)
+  ENABLE_VISIBILITY
+  PLATFORM
+  TEST_TOOL_CMD)
   if(DEFINED ${extra})
     # Replace occurences of ";" with our custom separator and append to
     # CMAKE_ARGS
@@ -71,24 +62,18 @@ ExternalProject_Add(
   TIMEOUT 360
   PREFIX ${CMAKE_BINARY_DIR}
   BUILD_IN_SOURCE OFF
+  #DOWNLOAD_EXTRACT_TIMESTAMP ON
   UPDATE_COMMAND ""
-  UPDATE_DISCONNECTED ${_UPDATE_DISCONNECTED}
   LIST_SEPARATOR "${SSUB}"
   CMAKE_ARGS ${CMAKE_ARGS}
   BUILD_BYPRODUCTS ${BYPRODUCT})
-
-if(DO_INSTALL_CORE)
-  install(FILES "${BYPRODUCT}" DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif()
 
 add_library(IOWOW::static STATIC IMPORTED GLOBAL)
 set_target_properties(
   IOWOW::static
   PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-             IMPORTED_LOCATION ${BYPRODUCT}
+             IMPORTED_LOCATION
+             "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libiowow-1.a"
              IMPORTED_LINK_INTERFACE_LIBRARIES "Threads::Threads;m")
 
 add_dependencies(IOWOW::static extern_iowow)
-
-list(PREPEND PROJECT_LLIBRARIES IOWOW::static)
-list(APPEND PROJECT_INCLUDE_DIRS ${IOWOW_INCLUDE_DIR})
