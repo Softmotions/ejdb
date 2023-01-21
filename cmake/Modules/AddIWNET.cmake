@@ -4,7 +4,7 @@ if(TARGET IWNET::static)
   return()
 endif()
 
-set(IWNET_INCLUDE_DIRS "")
+set(IWNET_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/include)
 
 include(ExternalProject)
 include(AddIOWOW)
@@ -23,13 +23,6 @@ set(CMAKE_ARGS
 
 set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${CMAKE_INSTALL_PREFIX})
 
-# In order to properly pass owner project CMAKE variables than contains
-# semicolons, we used a specific separator for 'ExternalProject_Add', using the
-# LIST_SEPARATOR parameter. This allows building fat binaries on macOS, etc.
-# (ie: -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64") Otherwise, semicolons get
-# replaced with spaces and CMake isn't aware of a multi-arch setup.
-set(SSUB "^^")
-
 foreach(
   extra
   ANDROID_ABI
@@ -46,10 +39,7 @@ foreach(
   PLATFORM
   TEST_TOOL_CMD)
   if(DEFINED ${extra})
-    # Replace occurences of ";" with our custom separator and append to
-    # CMAKE_ARGS
-    string(REPLACE ";" "${SSUB}" extra_sub "${${extra}}")
-    list(APPEND CMAKE_ARGS "-D${extra}=${extra_sub}")
+    list(APPEND CMAKE_ARGS "-D${extra}=${${extra}}")
   endif()
 endforeach()
 
@@ -62,9 +52,7 @@ ExternalProject_Add(
   TIMEOUT 360
   PREFIX ${CMAKE_BINARY_DIR}
   BUILD_IN_SOURCE OFF
-  # DOWNLOAD_EXTRACT_TIMESTAMP ON
   UPDATE_COMMAND ""
-  LIST_SEPARATOR "${SSUB}"
   CMAKE_ARGS ${CMAKE_ARGS}
   BUILD_BYPRODUCTS ${BYPRODUCT})
 
