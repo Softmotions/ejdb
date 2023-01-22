@@ -15,7 +15,6 @@ if(IWNET_FOUND)
   set_target_properties(
     IWNET::static
     PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-               IMPORTED_LOCATION
-               "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/libiwnet-1.a"
+               IMPORTED_LOCATION ${IWNET_STATIC_LIB}
                IMPORTED_LINK_INTERFACE_LIBRARIES "IOWOW::static")
 endif()
