@@ -1,3 +1,8 @@
+if(TARGET IWNET::static)
+  return()
+endif()
+
+include(AddIOWOW)
 find_package(IWNET)
 
 if(TARGET IWNET::static)
@@ -7,8 +12,6 @@ endif()
 set(IWNET_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/include)
 
 include(ExternalProject)
-include(AddIOWOW)
-
 if(NOT DEFINED IWNET_URL)
   set(IWNET_URL
       https://github.com/Softmotions/iwnet/archive/refs/heads/master.zip)

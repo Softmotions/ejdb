@@ -14,5 +14,10 @@ else()
   message(STATUS "GIT not found")
 endif()
 
+if(NOT GIT_REVISION AND EXISTS ${CMAKE_SOURCE_DIR}/.revision)
+  file(READ ${CMAKE_SOURCE_DIR}/.revision _GIT_REVISION)
+  string(STRIP "${_GIT_REVISION}" GIT_REVISION)
+endif()
+
 
 
