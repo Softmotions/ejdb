@@ -19,5 +19,6 @@ Checks:    >
   -google-readability-todo,
   -misc-unused-parameters,
   -performance-no-int-to-ptr,
+  -bugprone-assignment-in-if-condition,
 
 ...
