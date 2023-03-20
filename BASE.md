@@ -118,7 +118,7 @@ brew install ejdb
 
 ## Building from sources 
 
-cmake v3.12 or higher required
+cmake v3.24 or higher required
 
 ```
 git clone --recurse-submodules git@github.com:Softmotions/ejdb.git
