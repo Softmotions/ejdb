@@ -317,6 +317,14 @@ static void jql_test_1_5(void) {
   iwxstr_destroy(xstr);
 }
 
+// https://github.com/Softmotions/ejdb/issues/378
+static void jql_test_1_6(void) {
+  JQL q = 0;
+  iwrc rc = jql_create(&q, "c1", "/* | apply {\"pr\":2.2E1,\"b\":1}");
+  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  jql_destroy(&q);
+}
+
 int main() {
   CU_pSuite pSuite = NULL;
   if (CUE_SUCCESS != CU_initialize_registry()) {
@@ -327,11 +335,14 @@ int main() {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (  (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1))
+  if ( 
+      (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1))
      || (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
      || (NULL == CU_add_test(pSuite, "jql_test1_3", jql_test1_3))
      || (NULL == CU_add_test(pSuite, "jql_test1_4", jql_test_1_4))
-     || (NULL == CU_add_test(pSuite, "jql_test1_5", jql_test_1_5))) {
+     || (NULL == CU_add_test(pSuite, "jql_test1_5", jql_test_1_5))
+     || (NULL == CU_add_test(pSuite, "jql_test1_6", jql_test_1_6))
+     ) {
     CU_cleanup_registry();
     return CU_get_error();
   }
