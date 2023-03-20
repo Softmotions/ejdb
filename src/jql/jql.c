@@ -683,7 +683,7 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
         case JQVAL_F64:
           return lv->vf64 > rv->vf64 ? 1 : lv->vf64 < rv->vf64 ? -1 : 0;
         case JQVAL_I64:
-          return lv->vf64 > (double) rv->vi64 ? 1 : lv->vf64 < rv->vf64 ? -1 : 0;
+          return lv->vf64 > (double) rv->vi64 ? 1 : lv->vf64 < (double) rv->vi64 ? -1 : 0;
         case JQVAL_STR: {
           double rval = (double) iwatof(rv->vstr);
           return lv->vf64 > rval ? 1 : lv->vf64 < rval ? -1 : 0;

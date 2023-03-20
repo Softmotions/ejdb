@@ -1,5 +1,6 @@
 ejdb2 (2.74) UNRELEASED; urgency=medium
 
+  * Fix:JQL Incorrect floating point match against integers (#380) 
   * Fix: Incorrect parsing of JQL JSON with floats in scientific format (#378)
   * Fix: windows build errors
   * Fix: Updated iwnet fixed wrong handling of fs error events (iwn_poller)
