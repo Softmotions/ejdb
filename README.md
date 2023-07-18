@@ -25,7 +25,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ---
 * [Native language bindings](#native-language-bindings)
 * Supported platforms
-  * [macOS](#osx)
+  * [macOS](#macos)
   * [iOS](https://github.com/Softmotions/EJDB2Swift)
   * [Linux](#linux)
   * [Android](#android)
@@ -109,7 +109,7 @@ Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
 EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 
-[EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for MacOS, iOS and Linux. 
+[EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for macOS, iOS and Linux. 
 Swift binding is outdated at now. Looking for contributors.
 
 ```
