@@ -1,9 +1,50 @@
-ejdb2 (2.63) UNRELEASED; urgency=medium
+ejdb2 (2.74) UNRELEASED; urgency=medium
 
-  * Java: Added JSON.clone() method
-  * Java: Added JSON ObjectBuilder.move() method  
+  * Fix:JQL Incorrect floating point match against integers (#380) 
+  * Fix: Incorrect parsing of JQL JSON with floats in scientific format (#378)
+  * Fix: windows build errors
+  * Fix: Updated iwnet fixed wrong handling of fs error events (iwn_poller)
+  * Chore: BearSSL updated to the latest version.
+  * Fix: Delete ejdb crash as realloc(): invalid next size #366 
 
- -- Anton Adamansky <adamansky@gmail.com>  Tue, 23 Nov 2021 18:51:34 +0700
+ -- Anton Adamansky <adamansky@gmail.com>  Thu, 17 Nov 2022 19:42:23 +0200
+
+ejdb2 (2.73) testing; urgency=medium
+
+  * Fixed ERR_STREAM_PREMATURE_CLOSE on Node 18 (#346)
+  * Resolved security issuies with nodejs packages
+  * ejdb2 json module migrated to iowow
+  * Upgraded to the stable verion of iwnet lib.
+  * Updated EJDB2Swift submodule
+  * Replaced old iowow regexp engine with new (iwre.h) based on https://github.com/jserv/cregex
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 14 Nov 2022 18:42:52 +0200
+
+ejdb2 (2.72) testing; urgency=medium
+
+  * Upgraded to the stable verion of iwnet lib.
+
+ -- Anton Adamansky <adamansky@gmail.com>  Wed, 23 Feb 2022 17:00:23 +0700
+
+ejdb2 (2.71) testing; urgency=medium
+
+  * Fixed wrong format of printf like function calls.
+  * Query placeholders with the same name can be specified multiply times.   
+  * Query placeholders API is supported in projections.
+  * Removed potential memory leaks in `jql_set_xx` query API (jql.h) 
+  * Added BearSSL include files as part of ejdb2 distribution   
+
+ -- Anton Adamansky <adamansky@gmail.com>  Fri, 18 Feb 2022 21:57:08 +0700
+
+ejdb2 (2.70) testing; urgency=medium
+
+  * Network API is now powered by IWNET https://github.com/Softmotions/iwnet
+  * Correct handling of `vsnprintf` return value. (jbl.c)
+  * Moved `lwre` regexp library into `iowow` project.
+  * Java: Added JSON.clone() method.  
+  * Java: Added JSON ObjectBuilder.move() method.
+
+ -- Anton Adamansky <adamansky@gmail.com>  Mon, 14 Feb 2022 18:18:10 +0700
 
 ejdb2 (2.62) testing; urgency=medium
 

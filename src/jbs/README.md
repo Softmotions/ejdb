@@ -1,31 +1,32 @@
-# Standalone REST/Websocket HTTP server
+# REST/Websocket HTTP server.
+
+SSL (TLS 1.2) provided by fork of BearSSL library https://github.com/Softmotions/BearSSL
 
 ## jbs server
+
 ```
-jbs -h
+Usage:
 
-EJDB 2.0.0 standalone REST/Websocket server. http://ejdb.org
+	 ./jbs [options]
 
- --file <>	Database file path. Default: db.jb
- -f <>    	(same as --file)
- --port ##	HTTP port number listen to. Default: 9191
- -p ##    	(same as --port)
- --bind <>	Address server listen. Default: localhost
- -b <>    	(same as --bind)
- --access <>	Server access token matched to 'X-Access-Token' HTTP header value
- -a <>      	(same as --access)
- --trunc   	Cleanup existing database file on open
- -t        	(same as --trunc)
- --wal   	Use write ahead logging (WAL). Must be set for data durability.
- -w      	(same as --wal)
+	-v, --version		Print program version.
+	-f, --file=<>		Database file path. Default: ejdb2.db
+	-p, --port=NUM		HTTP server port numer. Default: 9191
+	-l, --listen=<>		Network address server will listen. Default: localhost
+	-k, --key=<>		PEM private key file for TLS 1.2 HTTP server.
+	-c, --certs=<>		PEM certificates file for TLS 1.2 HTTP server.
+	-a, --access=TOKEN|@FILE		Access token to match 'X-Access-Token' HTTP header value.
+	-r, --access-read		Allows unrestricted read-only data access.
+	-C, --cors		Enable COSR response headers for HTTP server
+	-t, --trunc		Cleanup/reset database file on open.
+	-w, --wal		use the write ahead log (WAL). Used to provide data durability.
 
-Advanced options
- --sbz ##	Max sorting buffer size. If exceeded, an overflow temp file for data will be created. Default: 16777216, min: 1048576
- --dsz ##	Initial size of buffer to process/store document on queries. Preferable average size of document. Default: 65536, min: 16384
- --bsz ##	Max HTTP/WS API document body size. Default: 67108864, min: 524288
+Advanced options:
+	-S, --sbz=NUM		Max sorting buffer size. If exceeded, an overflow temp file for data will be created.
+                  Default: 16777216, min: 1048576
+	-D, --dsz=NUM		Initial size of buffer to process/store document on queries. Preferable average size of document. 
+                  Default: 65536, min: 16384
+	-T, --trylock Exit with error if database is locked by another process. 
+                If not set, current process will wait for lock release.
 
-Use any of the following input formats:
-	-arg <value>	-arg=<value>	-arg<value>
-
-Use the -h, -help or -? to get this information again.
 ```

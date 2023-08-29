@@ -2,7 +2,7 @@
 
 [![Join Telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://tlg.name/ejdb2)
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
-![maintained](https://img.shields.io/maintenance/yes/2021.svg)
+![maintained](https://img.shields.io/maintenance/yes/2023.svg)
 
 EJDB2 is an embeddable JSON database engine published under MIT license.
 
@@ -19,13 +19,13 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
   * [rfc6901](https://tools.ietf.org/html/rfc6901) JSON Path
 * [Support of collection joins](#jql-collection-joins)
 * Powered by [iowow.io](http://iowow.io) - The persistent key/value storage engine
-* Provides HTTP REST/Websockets network endpoints with help of [facil.io](http://facil.io)
+* HTTP REST/Websockets endpoints powered by [IWNET](https://github.com/Softmotions/iwnet) and [BearSSL](https://github.com/Softmotions/BearSSL).
 * JSON documents are stored in using fast and compact [binn](https://github.com/liteserver/binn) binary format
 
 ---
 * [Native language bindings](#native-language-bindings)
 * Supported platforms
-  * [OSX](#osx)
+  * [macOS](#osx)
   * [iOS](https://github.com/Softmotions/EJDB2Swift)
   * [Linux](#linux)
   * [Android](#android)
@@ -46,6 +46,8 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [License](#license)
 ---
 
+[![EJDB2 Presentation](https://iowow.softmotions.com/articles/ejdb-presentation-cover.png)](https://iowow.softmotions.com/articles/ejdb/)
+
 ## EJDB2 platforms matrix
 
 |              | Linux              | macOS               | iOS                | Android            | Windows            |
@@ -64,7 +66,6 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 <br> `[3]` Can be build, but needed a linkage with windows node/dart `libs`.
 <br> `[4]` Porting in progress [#273](https://github.com/Softmotions/ejdb/issues/273)
 
-
 ## Native language bindings
 
 * [NodeJS](https://www.npmjs.com/package/ejdb2_node)
@@ -77,6 +78,10 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 ### Unofficial EJDB2 language bindings
 
+* Go
+  * https://github.com/memmaker/go-ejdb2
+* Rust 
+  * https://crates.io/crates/ejdb2
 * .Net
   * https://github.com/kmvi/ejdb2-csharp
 * Haskell
@@ -90,48 +95,42 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ## Status
 
 * **EJDB 2.0 core engine is well tested and used in various heavily loaded deployments**
-* Tested on `Linux` and `OSX` platforms. [Limited Windows support](./WINDOWS.md)
+* Tested on `Linux`, `macOS` and `FreeBSD`. [Has limited Windows support](./WINDOWS.md)
 * Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
   We are not maintaining ejdb 1.x.
 
-## Use cases
+## Used by
 
-* Softmotions trading robots platform
-* [Gimme - a social toy tokens exchange mobile application.](https://play.google.com/store/apps/details?id=com.softmotions.gimme) EJDB2 is used both on mobile and server sides.
+* [Wirow video conferencing platform](https://github.com/wirow-io/wirow-server/)
 
 Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
-## macOS / OSX
+## macOS
 
 EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 
-See also [EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for OSX, iOS and Linux
+[EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for MacOS, iOS and Linux. 
+Swift binding is outdated at now. Looking for contributors.
 
 ```
 brew install ejdb
 ```
 
-or
+## Building from sources 
+
+cmake v3.24 or higher required
 
 ```
+git clone --recurse-submodules git@github.com:Softmotions/ejdb.git
+
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make install
 ```
 
 ## Linux
-### Ubuntu/Debian
-#### PPA repository
-
-```sh
-sudo add-apt-repository ppa:adamansky/ejdb2
-sudo apt-get update
-sudo apt-get install ejdb2
-```
 
 #### Building debian packages
-
-cmake v3.15 or higher required
 
 ```sh
 mkdir build && cd build
@@ -149,9 +148,15 @@ make package
 ## Windows
 EJDB2 can be cross-compiled for windows
 
-**Note:** HTTP/Websocket network API is disabled and not supported
-on Windows until port of http://facil.io library (#257)
+**Note:** HTTP/Websocket network API is disabled and not yet supported
 
 Nodejs/Dart bindings not yet ported to Windows.
 
 **[Cross-compilation Guide for Windows](./WINDOWS.md)**
+
+
+## IWSTART
+
+IWSTART is an automatic CMake initial project generator for C projects based on [iowow](https://github.com/Softmotions/iowow) / [iwnet](https://github.com/Softmotions/iwnet) / [ejdb2](https://github.com/Softmotions/ejdb) libs.
+
+https://github.com/Softmotions/iwstart

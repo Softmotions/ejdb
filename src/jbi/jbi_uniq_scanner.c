@@ -1,6 +1,6 @@
 #include "ejdb2_internal.h"
 
-static_assert(IW_VNUMBUFSZ <= JBNUMBUF_SIZE, "IW_VNUMBUFSZ <= JBNUMBUF_SIZE");
+static_assert(IW_VNUMBUFSZ <= IWNUMBUF_SIZE, "IW_VNUMBUFSZ <= JBNUMBUF_SIZE");
 
 static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
@@ -8,7 +8,7 @@ static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER 
   int64_t step;
   bool matched;
   struct _JBMIDX *midx = &ctx->midx;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
   IWKV_val key;
 
   jbi_jqval_fill_ikey(midx->idx, jqval, &key, numbuf);
@@ -33,7 +33,7 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
   size_t sz;
   uint64_t id;
   bool matched;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
 
   iwrc rc = 0;
   int64_t step = 1;
@@ -67,8 +67,7 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
     if (!step) {
       IW_READVNUMBUF64_2(numbuf, id);
       step = 1;
-      rc = consumer(ctx, 0, id, &step, &matched, 0);
-      RCGO(rc, finish);
+      RCC(rc, finish, consumer(ctx, 0, id, &step, &matched, 0));
     }
   } while (step && (step > 0 ? (nv = nv->next) : (nv = nv->prev)));
 
@@ -79,7 +78,7 @@ finish:
 static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
   size_t sz;
   IWKV_cursor cur;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1;
   struct _JBMIDX *midx = &ctx->midx;
@@ -94,8 +93,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
     iwkv_cursor_close(&cur);
     midx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;
     midx->cursor_step = IWKV_CURSOR_NEXT;
-    rc = iwkv_cursor_open(idx->idb, &cur, midx->cursor_init, 0);
-    RCGO(rc, finish);
+    RCC(rc, finish, iwkv_cursor_open(idx->idb, &cur, midx->cursor_init, 0));
     if (!midx->expr2) { // Fail fast
       midx->expr2 = midx->expr1;
     }
@@ -107,8 +105,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
                                        ? IWKV_CURSOR_PREV : IWKV_CURSOR_NEXT;
 
   if (midx->cursor_init < IWKV_CURSOR_NEXT) { // IWKV_CURSOR_BEFORE_FIRST || IWKV_CURSOR_AFTER_LAST
-    rc = iwkv_cursor_to(cur, midx->cursor_step);
-    RCGO(rc, finish);
+    RCC(rc, finish, iwkv_cursor_to(cur, midx->cursor_step));
   }
   do {
     if (step > 0) {
@@ -119,8 +116,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
     if (!step) {
       int64_t id;
       bool matched = false;
-      rc = iwkv_cursor_copy_val(cur, &numbuf, IW_VNUMBUFSZ, &sz);
-      RCGO(rc, finish);
+      RCC(rc, finish, iwkv_cursor_copy_val(cur, &numbuf, IW_VNUMBUFSZ, &sz));
       if (sz > IW_VNUMBUFSZ) {
         rc = IWKV_ERROR_CORRUPTED;
         iwlog_ecode_error3(rc);
@@ -139,8 +135,7 @@ static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUME
       RCGO(rc, finish);
 
       step = 1;
-      rc = consumer(ctx, 0, id, &step, &matched, 0);
-      RCGO(rc, finish);
+      RCC(rc, finish, consumer(ctx, 0, id, &step, &matched, 0));
       if (!midx->expr1->prematched && matched && (expr1_op != JQP_OP_PREFIX)) {
         // Further scan will always match the main index expression
         midx->expr1->prematched = true;
@@ -159,19 +154,18 @@ finish:
 }
 
 iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+  iwrc rc;
   size_t sz;
   IWKV_cursor cur;
-  char numbuf[JBNUMBUF_SIZE];
+  char numbuf[IWNUMBUF_SIZE];
   int64_t step = 1;
   struct _JBMIDX *midx = &ctx->midx;
   IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_NEXT)
                                        ? IWKV_CURSOR_PREV : IWKV_CURSOR_NEXT;
 
-  iwrc rc = iwkv_cursor_open(midx->idx->idb, &cur, midx->cursor_init, 0);
-  RCGO(rc, finish);
+  RCC(rc, finish, iwkv_cursor_open(midx->idx->idb, &cur, midx->cursor_init, 0));
   if (midx->cursor_init < IWKV_CURSOR_NEXT) { // IWKV_CURSOR_BEFORE_FIRST || IWKV_CURSOR_AFTER_LAST
-    rc = iwkv_cursor_to(cur, midx->cursor_step);
-    RCGO(rc, finish);
+    RCC(rc, finish, iwkv_cursor_to(cur, midx->cursor_step));
   }
   do {
     if (step > 0) {
@@ -182,8 +176,7 @@ iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
     if (!step) {
       int64_t id;
       bool matched;
-      rc = iwkv_cursor_copy_val(cur, &numbuf, IW_VNUMBUFSZ, &sz);
-      RCGO(rc, finish);
+      RCC(rc, finish, iwkv_cursor_copy_val(cur, &numbuf, IW_VNUMBUFSZ, &sz));
       if (sz > IW_VNUMBUFSZ) {
         rc = IWKV_ERROR_CORRUPTED;
         iwlog_ecode_error3(rc);
@@ -192,8 +185,7 @@ iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
       IW_READVNUMBUF64_2(numbuf, id);
       RCGO(rc, finish);
       step = 1;
-      rc = consumer(ctx, 0, id, &step, &matched, 0);
-      RCGO(rc, finish);
+      RCC(rc, finish, consumer(ctx, 0, id, &step, &matched, 0));
     }
   } while (step && !(rc = iwkv_cursor_to(cur, step > 0 ? midx->cursor_step : cursor_reverse_step)));
 

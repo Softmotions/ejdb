@@ -1,7 +1,7 @@
 #include "ejdb_test.h"
 #include <CUnit/Basic.h>
 
-#include <ejdb2/iowow/iwuuid.h>
+#include <iowow/iwuuid.h>
 
 int init_suite(void) {
   iwrc rc = ejdb_init();

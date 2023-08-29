@@ -1,16 +1,20 @@
 " Local vim rc
 
-let g:build_type = 'Debug'
-let g:build_tests = 'ON'
-let g:cc = 'clang'
-let g:cxx = 'clang++'
+if exists('g:build_dir')
+  finish
+endif
+
+let g:build_type = get(g:, 'build_type', 'Debug')
+let g:build_tests = get(g:, 'build_tests', 'ON')
+let g:cc = get(g:, 'cc', 'clang')
+let g:cxx = get(g:, 'cxx', 'clang++')
 
 let g:root_dir = g:localvimrc_script_dir_unresolved
 let $ROOT_DIR = g:root_dir
 let $UNCRUSTIFY_CONFIG = g:root_dir.'/uncrustify.cfg'
 
 let g:build_dir = g:root_dir.'/build'
-let &l:makeprg = 'cd '.g:build_dir.' && make -j4'
+let &g:makeprg = 'cd '.g:build_dir.' && make -j1'
 
 packadd termdebug
 let g:termdebug_wide=1

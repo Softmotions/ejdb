@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2022 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ test('Main', async (t) => {
   let id = await db.put('mycoll', { 'foo': 'bar' });
   t.is(id, 1);
   t.throwsAsync(db.put('mycoll', '{"'), {
-    code: '@ejdb IWRC:86005 put',
+    code: '@ejdb IWRC:76005 put',
     message: 'Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)'
   });
 

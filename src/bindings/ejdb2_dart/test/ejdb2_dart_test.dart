@@ -14,7 +14,7 @@ void main() async {
     await db.put('mycoll', '{"');
   } on EJDB2Error catch (e) {
     error = e;
-    assert(e.code == 86005);
+    assert(e.code == 76005);
     assert(e.message == 'Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)');
   }
   assert(error != null);

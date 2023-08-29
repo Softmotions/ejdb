@@ -1,14 +1,14 @@
 # Windows cross compilation
 
-**Note:** HTTP/Websocket network API is disabled and not supported
-on Windows until porting of http://facil.io library
+**Note:** HTTP/Websocket network API is disabled and not yet supported.
 
 Nodejs/Dart bindings not yet ported to Windows.
 
 ## Prerequisites
 
 ```sh
-sudo apt-get install bison flex libtool ruby scons intltool libtool-bin p7zip-full wine
+sudo apt-get install bison flex libtool ruby scons intltool libtool-bin p7zip-full wine wine32 \
+                     python-is-python3 python3-mako gperf
 ```
 
 ## Build
@@ -16,7 +16,7 @@ sudo apt-get install bison flex libtool ruby scons intltool libtool-bin p7zip-fu
 ### Prepare MXE
 
 ```sh
-git submodule update --init
+git clone https://github.com/mxe/mxe.git
 ```
 
 `nano ./mxe/settings.mk`:

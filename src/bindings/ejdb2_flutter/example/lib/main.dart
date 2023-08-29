@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
       }
       assertNotNull(error);
       assertTrue(error is EJDB2Error);
-      assertEqual(error.code, '@ejdb IWRC:86005');
+      assertEqual(error.code, '@ejdb IWRC:76005');
 
       assertTrue('${error.message}'.contains('Unquoted JSON string (JBL_ERROR_PARSE_UNQUOTED_STRING)'));
 

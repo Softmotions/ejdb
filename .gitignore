@@ -16,7 +16,6 @@ cmake-build*
 .cmake_dirty
 Makefile
 Testing/
-compile_commands.json
 *.dat
 *.db
 *-wal

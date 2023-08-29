@@ -8,7 +8,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2022 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,12 +30,13 @@
  *************************************************************************************************/
 
 #include "jql.h"
-#include "jbl.h"
+
+#include <iowow/iwpool.h>
+#include <iowow/iwxstr.h>
+
 #include <errno.h>
 #include <stdbool.h>
 #include <setjmp.h>
-#include <ejdb2/iowow/iwpool.h>
-#include <ejdb2/iowow/iwxstr.h>
 
 typedef uint16_t jqp_string_flavours_t;
 /** Query string parameter placeholder */
@@ -56,6 +57,8 @@ typedef uint16_t jqp_string_flavours_t;
 #define JQP_STR_DBL_STAR ((jqp_string_flavours_t) 0x80U)
 /** Projection JOIN */
 #define JQP_STR_PROJOIN ((jqp_string_flavours_t) 0x100U)
+/** Projection path */
+#define JQP_STR_PROJPATH ((jqp_string_flavours_t) 0x200U)
 
 
 typedef uint8_t jqp_int_flavours_t;

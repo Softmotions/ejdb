@@ -81,7 +81,7 @@ static iwrc ejdb_test2_1_exec_visitor1(struct _EJDB_EXEC *ctx, const EJDB_DOC do
     *step = -1;
   }
   jbl_destroy(&jbl);
-  iwxstr_printf(tc->xstr, "%lld", llv);
+  iwxstr_printf(tc->xstr, "%" PRId64, llv);
   tc->cnt++;
   return rc;
 }

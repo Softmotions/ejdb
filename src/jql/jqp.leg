@@ -1,6 +1,6 @@
 %{
 #include "jqp.h"
-#include "jbl.h"
+#include <iowow/iwjson.h>
 
 
 #define YY_CTX_LOCAL 1
@@ -133,7 +133,7 @@ PROJNODE = '/' (PROJFIELDS | PROJPROP)
 PROJFIELDS = ('{' _ sp:PROJPROP { _jqp_unit_push(yy, sp); } (_ ',' _ p:PROJPROP { _jqp_unit_push(yy, p); } )* _ '}')
              { $$ = _jqp_pop_projfields_chain(yy, sp); }
 
-PROJPROP = STRN | PSTRP
+PROJPROP = STRN | PLACEHOLDER | PSTRP
 
 PROJOIN = ('+' | '-')
 
@@ -238,7 +238,7 @@ NUMI = '0' | [1-9] [0-9]*
 
 NUMF = '.' [0-9]+
 
-NUME = [eE] [+-]? [0-9]+
+NUME = [eE] [+\-]? [0-9]+
 
 _ = SPACE*
 

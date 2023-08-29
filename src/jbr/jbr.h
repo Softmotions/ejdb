@@ -7,7 +7,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2022 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,23 +32,14 @@
 
 IW_EXTERN_C_START
 
-typedef enum {
-  _JBR_ERROR_START = (IW_ERROR_START + 15000UL + 3000),
-  JBR_ERROR_HTTP_LISTEN,        /**< Failed to start HTTP network listener (JBR_ERROR_HTTP_LISTEN) */
-  JBR_ERROR_PORT_INVALID,       /**< Invalid port specified (JBR_ERROR_PORT_INVALID) */
-  JBR_ERROR_SEND_RESPONSE,      /**< Error sending response (JBR_ERROR_SEND_RESPONSE) */
-  JBR_ERROR_WS_UPGRADE,         /**< Failed upgrading to websocket connection (JBR_ERROR_WS_UPGRADE) */
-  JBR_ERROR_WS_INVALID_MESSAGE, /**< Invalid message recieved (JBR_ERROR_WS_INVALID_MESSAGE) */
-  JBR_ERROR_WS_ACCESS_DENIED,   /**< Access denied (JBR_ERROR_WS_ACCESS_DENIED) */
-  _JBR_ERROR_END,
-} jbr_ecode_t;
+struct jbr;
+typedef struct jbr*JBR;
 
-struct _JBR;
-typedef struct _JBR*JBR;
+iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, JBR *out_jbr);
 
-iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, JBR *pjbr);
+void jbr_shutdown_request(EJDB db);
 
-iwrc jbr_shutdown(JBR *pjbr);
+void jbr_shutdown_wait(JBR jbr);
 
 iwrc jbr_init(void);
 

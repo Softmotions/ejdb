@@ -1,6 +1,6 @@
 #include "ejdb2.h"
 #include "ejdb_test.h"
-#include <ejdb2/iowow/iwxstr.h>
+#include <iowow/iwxstr.h>
 #include <CUnit/Basic.h>
 
 int init_suite() {

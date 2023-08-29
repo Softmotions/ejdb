@@ -83,7 +83,7 @@ public class Ejdb2AndroidTest {
         exception = e;
       }
       assertTrue(exception != null && exception.getMessage() != null);
-      assertEquals(86005, exception.getCode());
+      assertEquals(76005, exception.getCode());
       assertTrue(exception.getMessage().contains("JBL_ERROR_PARSE_UNQUOTED_STRING"));
 
       db.put("mycoll", "{'foo':'baz'}".replace('\'', '"'));

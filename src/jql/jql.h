@@ -7,7 +7,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2022 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,8 +37,8 @@
  *
  */
 
-#include "jbl.h"
-#include <ejdb2/iowow/iwlog.h>
+#include <iowow/iwjson.h>
+#include <iowow/iwlog.h>
 
 IW_EXTERN_C_START
 
@@ -51,18 +51,6 @@ typedef enum {
   JQL_ERROR_INVALID_PLACEHOLDER,            /**< Invalid placeholder position (JQL_ERROR_INVALID_PLACEHOLDER) */
   JQL_ERROR_UNSET_PLACEHOLDER,              /**< Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER) */
   JQL_ERROR_REGEXP_INVALID,                 /**< Invalid regular expression (JQL_ERROR_REGEXP_INVALID) */
-  JQL_ERROR_REGEXP_CHARSET,
-  /**< Invalid regular expression: expected ']' at end of character set
-     (JQL_ERROR_REGEXP_CHARSET) */
-  JQL_ERROR_REGEXP_SUBEXP,
-  /**< Invalid regular expression: expected ')' at end of subexpression
-     (JQL_ERROR_REGEXP_SUBEXP) */
-  JQL_ERROR_REGEXP_SUBMATCH,
-  /**< Invalid regular expression: expected '}' at end of submatch
-     (JQL_ERROR_REGEXP_SUBMATCH) */
-  JQL_ERROR_REGEXP_ENGINE,
-  /**< Illegal instruction in compiled regular expression (please report this
-     bug) (JQL_ERROR_REGEXP_ENGINE) */
   JQL_ERROR_SKIP_ALREADY_SET,               /**< Skip clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
   JQL_ERROR_LIMIT_ALREADY_SET,              /**< Limit clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
   JQL_ERROR_ORDERBY_MAX_LIMIT,
@@ -95,7 +83,7 @@ IW_EXPORT WUR iwrc jql_create(JQL *qptr, const char *coll, const char *query);
 
 IW_EXPORT WUR iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode_t mode);
 
-IW_EXPORT const char *jql_collection(JQL q);
+IW_EXPORT const char* jql_collection(JQL q);
 
 /**
  * @brief Bind JSON node data to query placeholder.
@@ -127,6 +115,8 @@ IW_EXPORT WUR iwrc jql_set_str2(
   JQL q, const char *placeholder, int index, const char *val,
   void (*freefn)(void*, void*), void *op);
 
+IW_EXPORT WUR iwrc jql_set_str3(JQL q, const char *placeholder, int index, const char *val, size_t val_len);
+
 IW_EXPORT WUR iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val);
 
 
@@ -146,9 +136,9 @@ IW_EXPORT WUR iwrc jql_set_null(JQL q, const char *placeholder, int index);
 
 IW_EXPORT WUR iwrc jql_matched(JQL q, JBL jbl, bool *out);
 
-IW_EXPORT const char *jql_first_anchor(JQL q);
+IW_EXPORT const char* jql_first_anchor(JQL q);
 
-IW_EXPORT const char *jql_error(JQL q);
+IW_EXPORT const char* jql_error(JQL q);
 
 IW_EXPORT bool jql_has_apply(JQL q);
 

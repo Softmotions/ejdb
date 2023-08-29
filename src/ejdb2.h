@@ -7,7 +7,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2022 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,9 +28,8 @@
  * SOFTWARE.
  *************************************************************************************************/
 
-#include <ejdb2/iowow/iwkv.h>
 #include "jql.h"
-#include "jbl.h"
+#include <iowow/iwkv.h>
 
 IW_EXTERN_C_START
 
@@ -99,7 +98,9 @@ typedef struct _EJDB_HTTP {
                                      Otherwise HTTP server will be started in background. */
   bool   read_anon;             /**< Allow anonymous read-only database access */
   size_t max_body_size;         /**< Maximum WS/HTTP API body size. Default: 64Mb, Min: 512K */
-  bool cors;                    /**< Allow CORS */
+  bool   cors;                  /**< Allow CORS */
+  const char *ssl_private_key;  /**< Path to TLS 1.2 private key PEM */
+  const char *ssl_certs;        /**< Path to TLS 1.2 certificates  */
 } EJDB_HTTP;
 
 /**
@@ -112,7 +113,7 @@ typedef struct _EJDB_OPTS {
   uint32_t  sort_buffer_sz;     /**< Max sorting buffer size. If exceeded an overflow temp file for sorted data will
                                    created.
                                      Default 16Mb, min: 1Mb */
-  uint32_t document_buffer_sz;  /**< Initial size of buffer in bytes used to process/store document during query
+  uint32_t document_buffer_sz;  /**< Initial size of sort buffer in bytes used to process/store document during query
                                    execution.
                                      Default 64Kb, min: 16Kb */
 } EJDB_OPTS;
@@ -197,8 +198,10 @@ IW_EXPORT WUR iwrc ejdb_open(const EJDB_OPTS *opts, EJDB *ejdbp);
 
 /**
  * @brief Closes storage and frees up all resources.
- * @param [in,out] ejdbp Pointer to storage handle, will set to zero oncompletion.
+ * @warning Please ensure what all of application threads stopped
+ *          calling ejdb.h and iowow API before ejdb_close().
  *
+ * @param [in,out] ejdbp Pointer to storage handle, will set to zero oncompletion.
  * @return `0` on success.
  *          Any non zero error codes.
  */
@@ -689,12 +692,12 @@ IW_EXPORT iwrc ejdb_get_iwkv(EJDB db, IWKV *kvp);
 /**
  * @brief  Return `\0` terminated ejdb2 source GIT revision hash.
  */
-IW_EXPORT const char *ejdb_git_revision(void);
+IW_EXPORT const char* ejdb_git_revision(void);
 
 /**
  * @brief Return `\0` terminated EJDB version string.
  */
-IW_EXPORT const char *ejdb_version_full(void);
+IW_EXPORT const char* ejdb_version_full(void);
 
 /**
  * @brief Return major library version.

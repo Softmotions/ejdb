@@ -442,6 +442,8 @@ PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 
 Projection allows to get only subset of JSON document excluding not needed data.
 
+**Query placeholders API is supported in projections.**
+
 Lets add one more document to our collection:
 
 ```sh

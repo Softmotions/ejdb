@@ -2,7 +2,7 @@
 
 [![Join Telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://tlg.name/ejdb2)
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
-![maintained](https://img.shields.io/maintenance/yes/2021.svg)
+![maintained](https://img.shields.io/maintenance/yes/2023.svg)
 
 EJDB2 is an embeddable JSON database engine published under MIT license.
 
@@ -18,14 +18,14 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
   * [rfc7386](https://tools.ietf.org/html/rfc7386) JSON Merge patch
   * [rfc6901](https://tools.ietf.org/html/rfc6901) JSON Path
 * [Support of collection joins](#jql-collection-joins)
-* Powered by [iowow.io](http://iowow.io) - The persistent key/value storage engine
-* Provides HTTP REST/Websockets network endpoints with help of [facil.io](http://facil.io)
+* Powered by [iowow](https://iowow.softmotions.com/) - The persistent key/value storage engine ([repository](https://github.com/Softmotions/iowow))
+* HTTP REST/Websockets endpoints powered by [IWNET](https://github.com/Softmotions/iwnet) and [BearSSL](https://github.com/Softmotions/BearSSL).
 * JSON documents are stored in using fast and compact [binn](https://github.com/liteserver/binn) binary format
 
 ---
 * [Native language bindings](#native-language-bindings)
 * Supported platforms
-  * [OSX](#osx)
+  * [macOS](#macos)
   * [iOS](https://github.com/Softmotions/EJDB2Swift)
   * [Linux](#linux)
   * [Android](#android)
@@ -46,6 +46,8 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * [License](#license)
 ---
 
+[![EJDB2 Presentation](https://iowow.softmotions.com/articles/ejdb-presentation-cover.png)](https://iowow.softmotions.com/articles/ejdb/)
+
 ## EJDB2 platforms matrix
 
 |              | Linux              | macOS               | iOS                | Android            | Windows            |
@@ -64,7 +66,6 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 <br> `[3]` Can be build, but needed a linkage with windows node/dart `libs`.
 <br> `[4]` Porting in progress [#273](https://github.com/Softmotions/ejdb/issues/273)
 
-
 ## Native language bindings
 
 * [NodeJS](https://www.npmjs.com/package/ejdb2_node)
@@ -77,6 +78,10 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 ### Unofficial EJDB2 language bindings
 
+* Go
+  * https://github.com/memmaker/go-ejdb2
+* Rust 
+  * https://crates.io/crates/ejdb2
 * .Net
   * https://github.com/kmvi/ejdb2-csharp
 * Haskell
@@ -90,48 +95,42 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ## Status
 
 * **EJDB 2.0 core engine is well tested and used in various heavily loaded deployments**
-* Tested on `Linux` and `OSX` platforms. [Limited Windows support](./WINDOWS.md)
+* Tested on `Linux`, `macOS` and `FreeBSD`. [Has limited Windows support](./WINDOWS.md)
 * Old EJDB 1.x version can be found in separate [ejdb_1.x](https://github.com/Softmotions/ejdb/tree/ejdb_1.x) branch.
   We are not maintaining ejdb 1.x.
 
-## Use cases
+## Used by
 
-* Softmotions trading robots platform
-* [Gimme - a social toy tokens exchange mobile application.](https://play.google.com/store/apps/details?id=com.softmotions.gimme) EJDB2 is used both on mobile and server sides.
+* [Wirow video conferencing platform](https://github.com/wirow-io/wirow-server/)
 
 Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
-## macOS / OSX
+## macOS
 
 EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 
-See also [EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for OSX, iOS and Linux
+[EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for macOS, iOS and Linux. 
+Swift binding is outdated at now. Looking for contributors.
 
 ```
 brew install ejdb
 ```
 
-or
+## Building from sources 
+
+cmake v3.24 or higher required
 
 ```
+git clone --recurse-submodules git@github.com:Softmotions/ejdb.git
+
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make install
 ```
 
 ## Linux
-### Ubuntu/Debian
-#### PPA repository
-
-```sh
-sudo add-apt-repository ppa:adamansky/ejdb2
-sudo apt-get update
-sudo apt-get install ejdb2
-```
 
 #### Building debian packages
-
-cmake v3.15 or higher required
 
 ```sh
 mkdir build && cd build
@@ -149,12 +148,18 @@ make package
 ## Windows
 EJDB2 can be cross-compiled for windows
 
-**Note:** HTTP/Websocket network API is disabled and not supported
-on Windows until port of http://facil.io library (#257)
+**Note:** HTTP/Websocket network API is disabled and not yet supported
 
 Nodejs/Dart bindings not yet ported to Windows.
 
 **[Cross-compilation Guide for Windows](./WINDOWS.md)**
+
+
+## IWSTART
+
+IWSTART is an automatic CMake initial project generator for C projects based on [iowow](https://github.com/Softmotions/iowow) / [iwnet](https://github.com/Softmotions/iwnet) / [ejdb2](https://github.com/Softmotions/ejdb) libs.
+
+https://github.com/Softmotions/iwstart
 
 
 
@@ -614,6 +619,8 @@ PROJECTIONS = PROJECTION [ {'+' | '-'} PROJECTION ]
 
 Projection allows to get only subset of JSON document excluding not needed data.
 
+**Query placeholders API is supported in projections.**
+
 Lets add one more document to our collection:
 
 ```sh
@@ -903,45 +910,45 @@ modifier to the query to get rid of unnecessary data transferring and json data 
 # HTTP REST/Websocket API endpoint
 
 EJDB engine provides the ability to start a separate HTTP/Websocket endpoint worker exposing network API for quering and data modifications.
+SSL (TLS 1.2) is supported by `jbs` server.
 
-The easiest way to expose database over the network is using the standalone `jbs` server. (Of course if you plan to avoid `C API` integration).
+The easiest way to expose database over the network is use the standalone `jbs` server. (Of course if you want to avoid `C API` integration).
 
 ## jbs server
 
 ```
-jbs -h
+Usage:
 
-EJDB 2.0.0 standalone REST/Websocket server. http://ejdb.org
+	 ./jbs [options]
 
- --file <>	Database file path. Default: db.jb
- -f <>    	(same as --file)
- --port ##	HTTP port number listen to. Default: 9191
- -p ##    	(same as --port)
- --bind <>	Address server listen. Default: localhost
- -b <>    	(same as --bind)
- --access <>	Server access token matched to 'X-Access-Token' HTTP header value
- -a <>      	(same as --access)
- --trunc   	Cleanup existing database file on open
- -t        	(same as --trunc)
- --wal   	Use write ahead logging (WAL). Must be set for data durability.
- -w      	(same as --wal)
+	-v, --version		Print program version.
+	-f, --file=<>		Database file path. Default: ejdb2.db
+	-p, --port=NUM		HTTP server port numer. Default: 9191
+	-l, --listen=<>		Network address server will listen. Default: localhost
+	-k, --key=<>		PEM private key file for TLS 1.2 HTTP server.
+	-c, --certs=<>		PEM certificates file for TLS 1.2 HTTP server.
+	-a, --access=TOKEN|@FILE		Access token to match 'X-Access-Token' HTTP header value.
+	-r, --access-read		Allows unrestricted read-only data access.
+	-C, --cors		Enable COSR response headers for HTTP server
+	-t, --trunc		Cleanup/reset database file on open.
+	-w, --wal		use the write ahead log (WAL). Used to provide data durability.
 
-Advanced options
- --sbz ##	Max sorting buffer size. If exceeded, an overflow temp file for data will be created. Default: 16777216, min: 1048576
- --dsz ##	Initial size of buffer to process/store document on queries. Preferable average size of document. Default: 65536, min: 16384
- --bsz ##	Max HTTP/WS API document body size. Default: 67108864, min: 524288
+Advanced options:
+	-S, --sbz=NUM		Max sorting buffer size. If exceeded, an overflow temp file for data will be created.
+                  Default: 16777216, min: 1048576
+	-D, --dsz=NUM		Initial size of buffer to process/store document on queries. Preferable average size of document. 
+                  Default: 65536, min: 16384
+	-T, --trylock Exit with error if database is locked by another process. 
+                If not set, current process will wait for lock release.
 
-Use any of the following input formats:
-	-arg <value>	-arg=<value>	-arg<value>
-
-Use the -h, -help or -? to get this information again.
 ```
 
 ## HTTP API
 
-Access to HTTP endpoint can be protected by a token specified with `--access`
-command flag or by C API `EJDB_HTTP` options. If access token specified on server, client must provide `X-Access-Token` HTTP header value. If token is required and not provided by client the `401` HTTP code will be reported. If access token is not matched to the token provided the `403` HTTP code will be returned.
-For any other errors server will respond with `500` error code.
+HTTP endpoint may be protected by a token specified with `--access` flag or C API `EJDB_HTTP` struct. 
+If access token was set, client should provide `X-Access-Token` HTTP header.
+If token is required but not provided by client `401` HTTP code will be reported. 
+If access token is not matched to the token provided by client server will respond with `403` HTTP code.
 
 ## REST API
 
@@ -956,7 +963,7 @@ Replaces/store document under specific numeric `id`
 ### DELETE /{collection}/{id}
 Removes document identified by `id` from a `collection`
 * `200` on success. Empty body
-* `404` if document not found
+* `404` document not found
 
 ### PATCH /{collection}/{id}
 Patch a document identified by `id` by [rfc7396](https://tools.ietf.org/html/rfc7396),
@@ -968,7 +975,7 @@ Retrieve document identified by `id` from a `collection`.
 * `200` on success. Body: JSON document text.
   * `content-type:application/json`
   * `content-length:`
-* `404` if document not found
+* `404` document not found
 
 ### POST /
 Query a collection by provided query as POST body.
@@ -1322,7 +1329,7 @@ gcc -o example1 example1.o -lejdb2
 
 MIT License
 
-Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
+Copyright (c) 2012-2022 Softmotions Ltd <info@softmotions.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1341,5 +1348,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
 ```
 

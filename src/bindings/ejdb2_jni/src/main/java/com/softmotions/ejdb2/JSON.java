@@ -13,8 +13,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * JSON parser/container.
@@ -27,6 +29,8 @@ import java.util.Set;
  */
 public final class JSON implements Comparable<JSON>, Cloneable {
 
+  private static final Object UNIQ = new Object();
+
   @Override
   public Object clone() {
     if (isContainer()) {
@@ -36,11 +40,11 @@ public final class JSON implements Comparable<JSON>, Cloneable {
     }
   }
 
-  public static ObjectBuilder buildObject() {
-    return new ObjectBuilder();
+  public static ObjectBuilder object(Object... props) {
+    return new ObjectBuilder().put(props);
   }
 
-  public static ArrayBuilder buildArray() {
+  public static ArrayBuilder array() {
     return new ArrayBuilder();
   }
 
@@ -64,9 +68,17 @@ public final class JSON implements Comparable<JSON>, Cloneable {
     return new JSON(ValueType.ARRAY, list);
   }
 
+  public static JSON fromObject(Object obj) {
+    if (obj instanceof JSON) {
+      return (JSON) obj;
+    } else {
+      return new JSON(ValueType.getTypeOf(obj), obj);
+    }
+  }
+
   private static final ValueType[] valueTypes = new ValueType[256];
-  private static final int[] hexDigits = new int['f' + 1];
-  private static JSON UNKNOWN = new JSON(ValueType.UNKNOWN, null);
+  private static final int[]       hexDigits  = new int['f' + 1];
+  private static JSON              UNKNOWN    = new JSON(ValueType.UNKNOWN, null);
 
   static {
     for (int i = 0; i < valueTypes.length; ++i) {
@@ -106,13 +118,13 @@ public final class JSON implements Comparable<JSON>, Cloneable {
     }
   }
 
-  public final Object value;
+  public final Object    value;
   public final ValueType type;
 
   private char[] reusableChars = new char[32];
-  private byte[] buf = new byte[0];
-  private int head;
-  private int tail;
+  private byte[] buf           = new byte[0];
+  private int    head;
+  private int    tail;
 
   JSON(byte[] buf) {
     this.buf = buf;
@@ -164,6 +176,10 @@ public final class JSON implements Comparable<JSON>, Cloneable {
     return type == ValueType.UNKNOWN;
   }
 
+  public boolean isNullOrUnknown() {
+    return type == ValueType.NULL || type == ValueType.UNKNOWN;
+  }
+
   public boolean isNull() {
     return type == ValueType.NULL;
   }
@@ -192,6 +208,16 @@ public final class JSON implements Comparable<JSON>, Cloneable {
     return type == ValueType.OBJECT || type == ValueType.ARRAY;
   }
 
+  public int length() {
+    if (type == ValueType.ARRAY) {
+      return ((List<Object>) value).size();
+    } else if (type == ValueType.OBJECT) {
+      return ((Map<String, Object>) value).size();
+    } else {
+      return 0;
+    }
+  }
+
   public Builder modify() {
     return new Builder(this);
   }
@@ -201,6 +227,14 @@ public final class JSON implements Comparable<JSON>, Cloneable {
       return Collections.EMPTY_SET;
     }
     return ((Map<String, Object>) value).keySet();
+  }
+
+  public String gets(String key) {
+    return get(key).asString();
+  }
+
+  public String gets(int index) {
+    return get(index).asString();
   }
 
   public JSON get(String key) {
@@ -269,6 +303,20 @@ public final class JSON implements Comparable<JSON>, Cloneable {
     return asStringOr(null);
   }
 
+  public String[] asStringArray() {
+    if (type != ValueType.ARRAY) {
+      return new String[0];
+    } else {
+      List<Object> list = (List<Object>) value;
+      String[] res = new String[list.size()];
+      for (int i = 0; i < list.size(); ++i) {
+        var v = list.get(i);
+        res[i] = v != null ? String.valueOf(v) : null;
+      }
+      return res;
+    }
+  }
+
   public String asTextOr(String fallbackValue) {
     if (type == ValueType.UNKNOWN) {
       return fallbackValue;
@@ -278,7 +326,7 @@ public final class JSON implements Comparable<JSON>, Cloneable {
   }
 
   public String asText() {
-    return asTextOr(null);
+    return asTextOr("");
   }
 
   public Boolean asBooleanOr(Boolean fallbackValue) {
@@ -854,25 +902,25 @@ public final class JSON implements Comparable<JSON>, Cloneable {
   }
 
   private static final class NumberChars {
-    char[] chars;
-    int charsLength;
+    char[]  chars;
+    int     charsLength;
     boolean dotFound;
   }
 
   private static final class JsonWriter {
     private static final char[] QUOT_CHARS = { '\\', '"' };
-    private static final char[] BS_CHARS = { '\\', '\\' };
-    private static final char[] LF_CHARS = { '\\', 'n' };
-    private static final char[] CR_CHARS = { '\\', 'r' };
-    private static final char[] TAB_CHARS = { '\\', 't' };
+    private static final char[] BS_CHARS   = { '\\', '\\' };
+    private static final char[] LF_CHARS   = { '\\', 'n' };
+    private static final char[] CR_CHARS   = { '\\', 'r' };
+    private static final char[] TAB_CHARS  = { '\\', 't' };
 
     // In JavaScript, U+2028 and U+2029 characters count as line endings and must be
     // encoded.
     // http://stackoverflow.com/questions/2965293/javascript-parse-error-on-u2028-unicode-character
     private static final char[] UNICODE_2028_CHARS = { '\\', 'u', '2', '0', '2', '8' };
     private static final char[] UNICODE_2029_CHARS = { '\\', 'u', '2', '0', '2', '9' };
-    private static final char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
-        'e', 'f' };
+    private static final char[] HEX_DIGITS         = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',
+        'd', 'e', 'f' };
 
     private final Writer writer;
 
@@ -986,9 +1034,9 @@ public final class JSON implements Comparable<JSON>, Cloneable {
   }
 
   public static final class Builder {
-    final JSON json;
+    final JSON          json;
     final ObjectBuilder o;
-    final ArrayBuilder a;
+    final ArrayBuilder  a;
 
     Builder(JSON json) {
       this.json = json;
@@ -1067,6 +1115,10 @@ public final class JSON implements Comparable<JSON>, Cloneable {
       return getO().put(key, val);
     }
 
+    public ObjectBuilder put(String key, JSON val) {
+      return getO().put(key, val);
+    }
+
     public ObjectBuilder put(String key, Number val) {
       return getO().put(key, val);
     }
@@ -1129,6 +1181,33 @@ public final class JSON implements Comparable<JSON>, Cloneable {
       this(new ArrayList<>());
     }
 
+    public ArrayBuilder addAll(String[] all) {
+      if (all != null) {
+        for (var v : all) {
+          add(v);
+        }
+      }
+      return this;
+    }
+
+    public ArrayBuilder addAll(Number[] all) {
+      if (all != null) {
+        for (var v : all) {
+          add(v);
+        }
+      }
+      return this;
+    }
+
+    public ArrayBuilder addAll(Boolean[] all) {
+      if (all != null) {
+        for (var v : all) {
+          add(v);
+        }
+      }
+      return this;
+    }
+
     public ObjectBuilder addObject() {
       ObjectBuilder b = new ObjectBuilder();
       value.add(b.value);
@@ -1158,6 +1237,15 @@ public final class JSON implements Comparable<JSON>, Cloneable {
         throw new JSONException("Value must be an Array");
       }
       value.add(val.value);
+      return this;
+    }
+
+    public ArrayBuilder add(JSON val) {
+      if (val != null) {
+        value.add(val.value);
+      } else {
+        addNull();
+      }
       return this;
     }
 
@@ -1230,7 +1318,7 @@ public final class JSON implements Comparable<JSON>, Cloneable {
     }
 
     public ObjectBuilder putObject(String key, JSON val) {
-      if (val.type == ValueType.NULL) {
+      if (val == null || val.type == ValueType.NULL) {
         return putNull(key);
       }
       if (val.type != ValueType.OBJECT) {
@@ -1246,6 +1334,12 @@ public final class JSON implements Comparable<JSON>, Cloneable {
       return b;
     }
 
+    public ObjectBuilder putArray(String key, Consumer<ArrayBuilder> c) {
+      ArrayBuilder b = new ArrayBuilder();
+      c.accept(b);
+      return this;
+    }
+
     public ObjectBuilder putArray(String key, JSON val) {
       if (val.type == ValueType.NULL) {
         return putNull(key);
@@ -1254,6 +1348,15 @@ public final class JSON implements Comparable<JSON>, Cloneable {
         throw new JSONException("Value must be an Array");
       }
       value.put(key, val.value);
+      return this;
+    }
+
+    public ObjectBuilder put(String key, JSON val) {
+      if (val != null) {
+        value.put(key, val.value);
+      } else {
+        value.put(key, null);
+      }
       return this;
     }
 
@@ -1269,6 +1372,39 @@ public final class JSON implements Comparable<JSON>, Cloneable {
 
     public ObjectBuilder put(String key, Boolean val) {
       value.put(key, val);
+      return this;
+    }
+
+    public ObjectBuilder put(String key, UUID val) {
+      if (val == null) {
+        putNull(key);
+      } else {
+        put(key, val.toString());
+      }
+      return this;
+    }
+
+    public ObjectBuilder put(String key, Object o) {
+      if (o instanceof JSON) {
+        put(key, (JSON) o);
+      } else if (o instanceof UUID) {
+        value.put(key, o.toString());
+      } else {
+        value.put(key, o);
+      }
+      return this;
+    }
+
+    public ObjectBuilder put(Object... a) {
+      Object key = UNIQ;
+      for (var v : a) {
+        if (key != UNIQ) {
+          put(String.valueOf(key), v);
+          key = UNIQ;
+        } else {
+          key = v;
+        }
+      }
       return this;
     }
 

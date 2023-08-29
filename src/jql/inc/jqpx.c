@@ -1,6 +1,7 @@
 #include "jqp.h"
-#include "utf8proc.h"
-#include "jbl_internal.h"
+
+#include <iowow/iwconv.h>
+#include <iowow/utf8proc.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +23,7 @@ static void _jqp_fatal(yycontext *yy, iwrc rc) {
   longjmp(aux->fatal_jmp, 1);
 }
 
-static void *_jqp_malloc(struct _yycontext *yy, size_t size) {
+static void* _jqp_malloc(struct _yycontext *yy, size_t size) {
   void *ret = malloc(size);
   if (!ret) {
     JQP_AUX *aux = yy->aux;
@@ -32,7 +33,7 @@ static void *_jqp_malloc(struct _yycontext *yy, size_t size) {
   return ret;
 }
 
-static void *_jqp_realloc(struct _yycontext *yy, void *ptr, size_t size) {
+static void* _jqp_realloc(struct _yycontext *yy, void *ptr, size_t size) {
   void *ret = realloc(ptr, size);
   if (!ret) {
     JQP_AUX *aux = yy->aux;
@@ -55,14 +56,14 @@ static iwrc _jqp_aux_set_input(JQP_AUX *aux, const char *input) {
 
 //-----------------
 
-IW_INLINE char *_jqp_strdup(struct _yycontext *yy, const char *text) {
+IW_INLINE char* _jqp_strdup(struct _yycontext *yy, const char *text) {
   iwrc rc = 0;
   char *ret = iwpool_strdup(yy->aux->pool, text, &rc);
   JQRC(yy, rc);
   return ret;
 }
 
-static JQPUNIT *_jqp_unit(yycontext *yy) {
+static JQPUNIT* _jqp_unit(yycontext *yy) {
   JQPUNIT *ret = iwpool_calloc(sizeof(JQPUNIT), yy->aux->pool);
   if (!ret) {
     JQRC(yy, iwrc_set_errno(IW_ERROR_ALLOC, errno));
@@ -70,7 +71,7 @@ static JQPUNIT *_jqp_unit(yycontext *yy) {
   return ret;
 }
 
-static JQP_STACK *_jqp_push(yycontext *yy) {
+static JQP_STACK* _jqp_push(yycontext *yy) {
   JQP_AUX *aux = yy->aux;
   JQP_STACK *stack;
   if (aux->stackn < (sizeof(aux->stackpool) / sizeof(aux->stackpool[0]))) {
@@ -120,7 +121,7 @@ static void _jqp_unit_push(yycontext *yy, JQPUNIT *unit) {
   stack->unit = unit;
 }
 
-static JQPUNIT *_jqp_unit_pop(yycontext *yy) {
+static JQPUNIT* _jqp_unit_pop(yycontext *yy) {
   JQP_STACK stack = _jqp_pop(yy);
   if (stack.type != STACK_UNIT) {
     iwlog_error("Unexpected type: %d", stack.type);
@@ -143,7 +144,7 @@ static void _jqp_string_push(yycontext *yy, char *str, bool dup) {
   }
 }
 
-static char *_jqp_string_pop(yycontext *yy) {
+static char* _jqp_string_pop(yycontext *yy) {
   JQP_STACK stack = _jqp_pop(yy);
   if (stack.type != STACK_STRING) {
     iwlog_error("Unexpected type: %d", stack.type);
@@ -152,7 +153,7 @@ static char *_jqp_string_pop(yycontext *yy) {
   return stack.str;
 }
 
-static JQPUNIT *_jqp_string(yycontext *yy, jqp_string_flavours_t flavour, const char *text) {
+static JQPUNIT* _jqp_string(yycontext *yy, jqp_string_flavours_t flavour, const char *text) {
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_STRING_TYPE;
   unit->string.flavour |= flavour;
@@ -160,7 +161,7 @@ static JQPUNIT *_jqp_string(yycontext *yy, jqp_string_flavours_t flavour, const 
   return unit;
 }
 
-static JQPUNIT *_jqp_number(yycontext *yy, jqp_int_flavours_t flavour, const char *text) {
+static JQPUNIT* _jqp_number(yycontext *yy, jqp_int_flavours_t flavour, const char *text) {
   JQPUNIT *unit = _jqp_unit(yy);
   char *eptr;
   int64_t ival = strtoll(text, &eptr, 0);
@@ -184,7 +185,7 @@ static JQPUNIT *_jqp_number(yycontext *yy, jqp_int_flavours_t flavour, const cha
   return unit;
 }
 
-static JQPUNIT *_jqp_json_number(yycontext *yy, const char *text) {
+static JQPUNIT* _jqp_json_number(yycontext *yy, const char *text) {
   JQPUNIT *unit = _jqp_unit(yy);
   char *eptr;
   unit->type = JQP_JSON_TYPE;
@@ -207,15 +208,15 @@ static JQPUNIT *_jqp_json_number(yycontext *yy, const char *text) {
   return unit;
 }
 
-static JQPUNIT *_jqp_placeholder(yycontext *yy, const char *text) {
+static JQPUNIT* _jqp_placeholder(yycontext *yy, const char *text) {
   JQP_AUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_STRING_TYPE;
   unit->string.flavour |= JQP_STR_PLACEHOLDER;
   if (text[0] == '?') {
-    char nbuf[JBNUMBUF_SIZE + 1];
+    char nbuf[IWNUMBUF_SIZE + 1];
     nbuf[0] = '?';
-    int len = iwitoa(aux->num_placeholders++, nbuf + 1, JBNUMBUF_SIZE);
+    int len = iwitoa(aux->num_placeholders++, nbuf + 1, IWNUMBUF_SIZE);
     nbuf[len + 1] = '\0';
     unit->string.value = _jqp_strdup(yy, nbuf);
   } else {
@@ -345,7 +346,7 @@ static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp
   return 0;
 }
 
-static JQPUNIT *_jqp_unescaped_string(struct _yycontext *yy, jqp_string_flavours_t flv, const char *text) {
+static JQPUNIT* _jqp_unescaped_string(struct _yycontext *yy, jqp_string_flavours_t flv, const char *text) {
   JQP_AUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_STRING_TYPE;
@@ -367,7 +368,7 @@ static JQPUNIT *_jqp_unescaped_string(struct _yycontext *yy, jqp_string_flavours
   return unit;
 }
 
-static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text) {
+static JQPUNIT* _jqp_json_string(struct _yycontext *yy, const char *text) {
   JQP_AUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_JSON_TYPE;
@@ -390,7 +391,7 @@ static JQPUNIT *_jqp_json_string(struct _yycontext *yy, const char *text) {
   return unit;
 }
 
-static JQPUNIT *_jqp_json_pair(yycontext *yy, JQPUNIT *key, JQPUNIT *val) {
+static JQPUNIT* _jqp_json_pair(yycontext *yy, JQPUNIT *key, JQPUNIT *val) {
   if ((key->type != JQP_JSON_TYPE) || (val->type != JQP_JSON_TYPE) || (key->json.jn.type != JBV_STR)) {
     iwlog_error2("Invalid arguments");
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -400,7 +401,7 @@ static JQPUNIT *_jqp_json_pair(yycontext *yy, JQPUNIT *key, JQPUNIT *val) {
   return val;
 }
 
-static JQPUNIT *_jqp_json_collect(yycontext *yy, jbl_type_t type, JQPUNIT *until) {
+static JQPUNIT* _jqp_json_collect(yycontext *yy, jbl_type_t type, JQPUNIT *until) {
   JQP_AUX *aux = yy->aux;
   JQPUNIT *ret = _jqp_unit(yy);
   ret->type = JQP_JSON_TYPE;
@@ -430,7 +431,7 @@ static JQPUNIT *_jqp_json_collect(yycontext *yy, jbl_type_t type, JQPUNIT *until
   return ret;
 }
 
-static JQPUNIT *_jqp_json_true_false_null(yycontext *yy, const char *text) {
+static JQPUNIT* _jqp_json_true_false_null(yycontext *yy, const char *text) {
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_JSON_TYPE;
   int len = strlen(text);
@@ -457,7 +458,7 @@ static void _jqp_op_negate_reset(yycontext *yy) {
   yy->aux->negate = false;
 }
 
-static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
+static JQPUNIT* _jqp_unit_op(yycontext *yy, const char *text) {
   JQP_AUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_OP_TYPE;
@@ -495,7 +496,7 @@ static JQPUNIT *_jqp_unit_op(yycontext *yy, const char *text) {
   return unit;
 }
 
-static JQPUNIT *_jqp_unit_join(yycontext *yy, const char *text) {
+static JQPUNIT* _jqp_unit_join(yycontext *yy, const char *text) {
   JQP_AUX *aux = yy->aux;
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_JOIN_TYPE;
@@ -509,7 +510,7 @@ static JQPUNIT *_jqp_unit_join(yycontext *yy, const char *text) {
   return unit;
 }
 
-static JQPUNIT *_jqp_expr(yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *right) {
+static JQPUNIT* _jqp_expr(yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *right) {
   if (!left || !op || !right) {
     iwlog_error2("Invalid arguments");
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -526,7 +527,7 @@ static JQPUNIT *_jqp_expr(yycontext *yy, JQPUNIT *left, JQPUNIT *op, JQPUNIT *ri
   return unit;
 }
 
-static JQPUNIT *_jqp_pop_expr_chain(yycontext *yy, JQPUNIT *until) {
+static JQPUNIT* _jqp_pop_expr_chain(yycontext *yy, JQPUNIT *until) {
   JQPUNIT *expr = 0;
   JQP_AUX *aux = yy->aux;
   while (aux->stack && aux->stack->type == STACK_UNIT) {
@@ -550,7 +551,7 @@ static JQPUNIT *_jqp_pop_expr_chain(yycontext *yy, JQPUNIT *until) {
   return expr;
 }
 
-static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value, uint8_t flags) {
+static JQPUNIT* _jqp_projection(struct _yycontext *yy, JQPUNIT *value, uint8_t flags) {
   if (value->type != JQP_STRING_TYPE) {
     iwlog_error("Unexpected type: %d", value->type);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
@@ -562,7 +563,7 @@ static JQPUNIT *_jqp_projection(struct _yycontext *yy, JQPUNIT *value, uint8_t f
   return unit;
 }
 
-static JQPUNIT *_jqp_pop_projection_nodes(yycontext *yy, JQPUNIT *until) {
+static JQPUNIT* _jqp_pop_projection_nodes(yycontext *yy, JQPUNIT *until) {
   JQPUNIT *first = 0;
   JQP_AUX *aux = yy->aux;
   uint8_t flags = 0;
@@ -586,6 +587,8 @@ static JQPUNIT *_jqp_pop_projection_nodes(yycontext *yy, JQPUNIT *until) {
     } else if (strchr(unit->string.value, '<')) { // JOIN Projection?
       unit->string.flavour |= JQP_STR_PROJOIN;
       flags |= JQP_PROJECTION_FLAG_JOINS;
+    } else {
+      unit->string.flavour |= JQP_STR_PROJPATH;
     }
     first = unit;
     _jqp_pop(yy);
@@ -599,7 +602,7 @@ static JQPUNIT *_jqp_pop_projection_nodes(yycontext *yy, JQPUNIT *until) {
   return _jqp_projection(yy, first, flags);
 }
 
-static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p) {
+static JQPUNIT* _jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p) {
   JQP_AUX *aux = yy->aux;
   if (!aux->stack || (aux->stack->type != STACK_STRING)) {
     iwlog_error2("Invalid stack state");
@@ -614,7 +617,7 @@ static JQPUNIT *_jqp_push_joined_projection(struct _yycontext *yy, JQPUNIT *p) {
   return p;
 }
 
-static JQPUNIT *_jqp_pop_joined_projections(yycontext *yy, JQPUNIT *until) {
+static JQPUNIT* _jqp_pop_joined_projections(yycontext *yy, JQPUNIT *until) {
   JQPUNIT *first = 0;
   JQP_AUX *aux = yy->aux;
   while (aux->stack && aux->stack->type == STACK_UNIT) {
@@ -635,7 +638,7 @@ static JQPUNIT *_jqp_pop_joined_projections(yycontext *yy, JQPUNIT *until) {
   return first;
 }
 
-static JQPUNIT *_jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
+static JQPUNIT* _jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
   JQPUNIT *field = 0;
   JQP_AUX *aux = yy->aux;
   while (aux->stack && aux->stack->type == STACK_UNIT) {
@@ -660,7 +663,7 @@ static JQPUNIT *_jqp_pop_projfields_chain(yycontext *yy, JQPUNIT *until) {
   return field;
 }
 
-static JQPUNIT *_jqp_pop_ordernodes(yycontext *yy, JQPUNIT *until) {
+static JQPUNIT* _jqp_pop_ordernodes(yycontext *yy, JQPUNIT *until) {
   JQPUNIT *first = 0;
   JQP_AUX *aux = yy->aux;
   while (aux->stack && aux->stack->type == STACK_UNIT) {
@@ -681,7 +684,7 @@ static JQPUNIT *_jqp_pop_ordernodes(yycontext *yy, JQPUNIT *until) {
   return until;
 }
 
-static JQPUNIT *_jqp_node(yycontext *yy, JQPUNIT *value) {
+static JQPUNIT* _jqp_node(yycontext *yy, JQPUNIT *value) {
   JQPUNIT *unit = _jqp_unit(yy);
   unit->type = JQP_NODE_TYPE;
   unit->node.value = value;
@@ -704,7 +707,7 @@ static JQPUNIT *_jqp_node(yycontext *yy, JQPUNIT *value) {
   return unit;
 }
 
-static JQPUNIT *_jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
+static JQPUNIT* _jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
   JQPUNIT *filter, *first = 0;
   JQP_AUX *aux = yy->aux;
   while (aux->stack && aux->stack->type == STACK_UNIT) {
@@ -741,7 +744,7 @@ static JQPUNIT *_jqp_pop_node_chain(yycontext *yy, JQPUNIT *until) {
   return filter;
 }
 
-static JQPUNIT *_jqp_pop_filter_factor_chain(yycontext *yy, JQPUNIT *until) {
+static JQPUNIT* _jqp_pop_filter_factor_chain(yycontext *yy, JQPUNIT *until) {
   JQP_EXPR_NODE *factor = 0;
   JQP_AUX *aux = yy->aux;
   JQPUNIT *exprnode = _jqp_unit(yy);
@@ -782,7 +785,7 @@ static void _jqp_set_filters_expr(yycontext *yy, JQPUNIT *expr) {
   aux->query = &query->query;
 }
 
-static JQPUNIT *_jqp_create_filterexpr_pk(yycontext *yy, JQPUNIT *argument) {
+static JQPUNIT* _jqp_create_filterexpr_pk(yycontext *yy, JQPUNIT *argument) {
   JQP_AUX *aux = yy->aux;
   const char *anchor = 0;
   // Looking for optional
@@ -1062,6 +1065,8 @@ finish:
     RCRET(rc); \
 } while (0)
 
+IW_INLINE iwrc _print_placeholder(const char *value, jbl_json_printer pt, void *op);
+
 static iwrc _jqp_print_projection_nodes(const JQP_STRING *p, jbl_json_printer pt, void *op) {
   iwrc rc = 0;
   for (const JQP_STRING *s = p; s; s = s->next) {
@@ -1071,14 +1076,22 @@ static iwrc _jqp_print_projection_nodes(const JQP_STRING *p, jbl_json_printer pt
     if (s->flavour & JQP_STR_PROJFIELD) {
       PT(0, 0, '{', 1);
       for (const JQP_STRING *pf = s; pf; pf = pf->subnext) {
-        PT(pf->value, -1, 0, 0);
+        if (pf->flavour & JQP_STR_PLACEHOLDER) {
+          RCR(_print_placeholder(pf->value, pt, op));
+        } else {
+          PT(pf->value, -1, 0, 0);
+        }
         if (pf->subnext) {
           PT(0, 0, ',', 1);
         }
       }
       PT(0, 0, '}', 1);
     } else {
-      PT(s->value, -1, 0, 0);
+      if (s->flavour & JQP_STR_PLACEHOLDER) {
+        RCR(_print_placeholder(s->value, pt, op));
+      } else {
+        PT(s->value, -1, 0, 0);
+      }
     }
   }
   return rc;
@@ -1258,7 +1271,8 @@ static iwrc _jqp_print_filter(
   const JQP_QUERY  *q,
   const JQP_FILTER *f,
   jbl_json_printer  pt,
-  void             *op) {
+  void             *op
+  ) {
   iwrc rc = 0;
   if (f->anchor) {
     PT(0, 0, '@', 1);
@@ -1275,7 +1289,8 @@ static iwrc _jqp_print_expression_node(
   const JQP_QUERY     *q,
   const JQP_EXPR_NODE *en,
   jbl_json_printer     pt,
-  void                *op) {
+  void                *op
+  ) {
   iwrc rc = 0;
   bool inbraces = (en != q->aux->expr && en->type == JQP_EXPR_NODE_TYPE);
   if (inbraces) {
@@ -1375,8 +1390,8 @@ static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
         PT(aux->skip->string.value, -1, 0, 0);
       }
     } else if (aux->skip->type == JQP_INTEGER_TYPE) {
-      char nbuf[JBNUMBUF_SIZE];
-      iwitoa(aux->skip->intval.value, nbuf, JBNUMBUF_SIZE);
+      char nbuf[IWNUMBUF_SIZE];
+      iwitoa(aux->skip->intval.value, nbuf, IWNUMBUF_SIZE);
       PT(nbuf, -1, 0, 0);
     }
   }
@@ -1390,8 +1405,8 @@ static iwrc _jqp_print_opts(const JQP_QUERY *q, jbl_json_printer pt, void *op) {
         PT(aux->limit->string.value, -1, 0, 0);
       }
     } else if (aux->limit->type == JQP_INTEGER_TYPE) {
-      char nbuf[JBNUMBUF_SIZE];
-      iwitoa(aux->limit->intval.value, nbuf, JBNUMBUF_SIZE);
+      char nbuf[IWNUMBUF_SIZE];
+      iwitoa(aux->limit->intval.value, nbuf, IWNUMBUF_SIZE);
       PT(nbuf, -1, 0, 0);
     }
   }

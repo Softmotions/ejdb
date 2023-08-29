@@ -7,7 +7,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2012-2021 Softmotions Ltd <info@softmotions.com>
+ * Copyright (c) 2012-2022 Softmotions Ltd <info@softmotions.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,20 +34,20 @@
 #include "jbr.h"
 #endif
 #include "jql_internal.h"
-#include "jbl_internal.h"
-#include <ejdb2/iowow/iwkv.h>
-#include <ejdb2/iowow/iwxstr.h>
-#include <ejdb2/iowow/iwexfile.h>
-#include <ejdb2/iowow/iwutils.h>
-#include <ejdb2/iowow/iwstree.h>
+
+#include <iowow/iwkv.h>
+#include <iowow/iwxstr.h>
+#include <iowow/iwexfile.h>
+#include <iowow/iwutils.h>
+#include <iowow/iwhmap.h>
+#include <iowow/iwjson_internal.h>
+
 #include <pthread.h>
 #include <unistd.h>
 #include <assert.h>
 #include <setjmp.h>
-#include "khash.h"
-#include "ejdb2cfg.h"
 
-static_assert(JBNUMBUF_SIZE >= IWFTOA_BUFSIZE, "JBNUMBUF_SIZE >= IWFTOA_BUFSIZE");
+#include "ejdb2cfg.h"
 
 #define METADB_ID           1
 #define NUMRECSDB_ID        2    // DB for number of records per index/collection
@@ -119,9 +119,6 @@ struct _JBDOCREF {
   const char *coll;
 };
 
-// -V:KHASH_MAP_INIT_STR:522
-KHASH_MAP_INIT_STR(JBCOLLM, JBCOLL)
-
 struct _EJDB {
   IWKV iwkv;
   IWDB metadb;
@@ -129,7 +126,7 @@ struct _EJDB {
 #ifdef JB_HTTP
   JBR jbr;
 #endif
-  khash_t(JBCOLLM) * mcolls;
+  IWHMAP *mcolls;
   iwkv_openflags    oflags;
   pthread_rwlock_t  rwl;      /**< Main RWL */
   struct _EJDB_OPTS opts;
@@ -150,7 +147,7 @@ typedef iwrc (*JB_SCAN_CONSUMER)(
   int64_t *step, bool *matched, iwrc err);
 
 /**
- * @brief Index can sorter consumer context
+ * @brief Index scan sorter consumer context
  */
 struct _JBSSC {
   iwrc      rc;               /**< RC code used for in `_jb_do_sorting` */
@@ -191,8 +188,8 @@ typedef struct _JBEXEC {
   struct _JBSSC  ssc;         /**< Result set sorting context */
 
   // JQL joned nodes cache
-  IWSTREE *proj_joined_nodes_cache;
-  IWPOOL  *proj_joined_nodes_pool;
+  IWHMAP *proj_joined_nodes_cache;
+  IWPOOL *proj_joined_nodes_pool;
 } JBEXEC;
 
 
@@ -205,9 +202,9 @@ typedef uint8_t jb_coll_acquire_t;
 #define JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE  10
 #define JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO 200
 
-void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
-void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
-void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static JBNUMBUF_SIZE]);
+void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]);
+void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]);
+void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]);
 
 iwrc jbi_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
 iwrc jbi_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
@@ -227,5 +224,6 @@ iwrc jb_cursor_del(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
 iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, JBEXEC *ctx);
 int jb_proj_node_cache_cmp(const void *v1, const void *v2);
 void jb_proj_node_kvfree(void *key, void *val);
+uint32_t jb_proj_node_hash(const void *key);
 
 #endif

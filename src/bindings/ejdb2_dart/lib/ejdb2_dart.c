@@ -2,7 +2,7 @@
 #include "dart_api.h"
 #include "dart_native_api.h"
 #include <ejdb2.h>
-#include <ejdb2/iowow/iwconv.h>
+#include <iowow/iwconv.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>

@@ -106,8 +106,8 @@ static void jbr_test1_1() {
                          " \"foo\": \"bar\"\n"
                          "}"
                          );
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-type:application/json"));
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-length:17"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-type: application/json"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-length: 17"));
   CU_ASSERT_EQUAL(iwxstr_size(xstr), 17);
 
   // PUT document under specific ID
@@ -147,8 +147,8 @@ static void jbr_test1_1() {
                          " \"foo\": \"b\\nar\"\n"
                          "}"
                          );
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-type:application/json"));
-  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-length:19"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-type: application/json"));
+  CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(hstr), "content-length: 19"));
   CU_ASSERT_EQUAL(iwxstr_size(xstr), 19);
 
   // Perform a query

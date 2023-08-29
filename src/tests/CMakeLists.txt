@@ -8,6 +8,7 @@ set(TESTS ejdb_test1
   ejdb_test2
   ejdb_test3
   ejdb_test4
+  ejdb_test5
   )
 
 foreach (TN IN ITEMS ${TESTS})
