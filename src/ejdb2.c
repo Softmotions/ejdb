@@ -1,5 +1,5 @@
 #include "ejdb2_internal.h"
-#include <iowow/murmur3.h>
+#include <iowow/wyhash32.h>
 
 static iwrc _jb_put_new_lw(JBCOLL jbc, JBL jbl, int64_t *id);
 
@@ -1571,7 +1571,7 @@ void jb_proj_node_kvfree(void *key, void *val) {
 
 uint32_t jb_proj_node_hash(const void *key) {
   const struct _JBDOCREF *ref = key;
-  return murmur3(key, sizeof(*ref));
+  return wyhash32(key, sizeof(ref), 0xd31c3939);
 }
 
 iwrc ejdb_rename_collection(EJDB db, const char *coll, const char *new_coll) {
