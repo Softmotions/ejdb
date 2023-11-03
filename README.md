@@ -1,5 +1,7 @@
 # EJDB 2.0
 
+**NOTE: Issues tracker is disabled. You are welcome to contribute, pull requests accepted.**
+
 [![Join Telegram](https://img.shields.io/badge/join-ejdb2%20telegram-0088cc.svg)](https://tlg.name/ejdb2)
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
 ![maintained](https://img.shields.io/maintenance/yes/2023.svg)
@@ -18,14 +20,14 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
   * [rfc7386](https://tools.ietf.org/html/rfc7386) JSON Merge patch
   * [rfc6901](https://tools.ietf.org/html/rfc6901) JSON Path
 * [Support of collection joins](#jql-collection-joins)
-* Powered by [iowow](https://iowow.softmotions.com/) - The persistent key/value storage engine ([repository](https://github.com/Softmotions/iowow))
+* Powered by [iowow.io](http://iowow.io) - The persistent key/value storage engine
 * HTTP REST/Websockets endpoints powered by [IWNET](https://github.com/Softmotions/iwnet) and [BearSSL](https://github.com/Softmotions/BearSSL).
 * JSON documents are stored in using fast and compact [binn](https://github.com/liteserver/binn) binary format
 
 ---
 * [Native language bindings](#native-language-bindings)
 * Supported platforms
-  * [macOS](#macos)
+  * [macOS](#osx)
   * [iOS](https://github.com/Softmotions/EJDB2Swift)
   * [Linux](#linux)
   * [Android](#android)
@@ -109,7 +111,7 @@ Are you using EJDB? [Let me know!](mailto:info@softmotions.com)
 
 EJDB2 code ported and tested on `High Sierra` / `Mojave` / `Catalina`
 
-[EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for macOS, iOS and Linux. 
+[EJDB2 Swift binding](https://github.com/Softmotions/EJDB2Swift) for MacOS, iOS and Linux. 
 Swift binding is outdated at now. Looking for contributors.
 
 ```
@@ -160,7 +162,6 @@ Nodejs/Dart bindings not yet ported to Windows.
 IWSTART is an automatic CMake initial project generator for C projects based on [iowow](https://github.com/Softmotions/iowow) / [iwnet](https://github.com/Softmotions/iwnet) / [ejdb2](https://github.com/Softmotions/ejdb) libs.
 
 https://github.com/Softmotions/iwstart
-
 
 
 # Android
