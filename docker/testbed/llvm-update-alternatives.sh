@@ -64,6 +64,7 @@ function register_clang_version {
         --slave   /usr/bin/clangd                clangd                /usr/bin/clangd-${version}  \
         --slave   /usr/bin/lld                   lld                   /usr/bin/lld-${version}  \
         --slave   /usr/bin/lld-link              lld-link              /usr/bin/lld-link-${version} \
+        --slave   /usr/bin/llc                   llc                   /usr/bin/llc-${version}  \
         --slave   /usr/bin/lldb                  lldb                  /usr/bin/lldb-${version} \
         --slave   /usr/bin/lldb-argdumper        lldb-argdumper        /usr/bin/lldb-argdumper-${version} \
         --slave   /usr/bin/lldb-instr            lldb-instr            /usr/bin/lldb-instr-${version} \
