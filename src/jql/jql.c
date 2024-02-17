@@ -887,7 +887,7 @@ static bool _jql_match_in(
   }
   for (JBL_NODE n = rv->vnode->child; n; n = n->next) {
     JQVAL qv = {
-      .type  = JQVAL_JBLNODE,
+      .type = JQVAL_JBLNODE,
       .vnode = n
     };
     if (!_jql_cmp_jqval_pair(lv, &qv, rcp)) {
@@ -932,7 +932,7 @@ static bool _jql_match_ni(
   }
   while (binn_list_next(&iter, &bv)) {
     JQVAL qv = {
-      .type  = JQVAL_BINN,
+      .type = JQVAL_BINN,
       .vbinn = &bv
     };
     if (!_jql_cmp_jqval_pair(&qv, lv, rcp)) {
@@ -1116,7 +1116,7 @@ static JQVAL* _jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
         return 0;
       }
       unit->json.opaque = qv;
-      struct _JBL_NODE *jn = &unit->json.jn;
+      struct jbl_node *jn = &unit->json.jn;
       switch (jn->type) {
         case JBV_BOOL:
           qv->type = JQVAL_BOOL;
@@ -1434,12 +1434,12 @@ static jbl_visitor_cmd_t _jql_match_visitor(int lvl, binn *bv, const char *key, 
     nkey = nbuf;
   }
   MCTX mctx = {
-    .lvl  = lvl,
-    .bv   = bv,
-    .key  = nkey,
+    .lvl = lvl,
+    .bv = bv,
+    .key = nkey,
     .vctx = vctx,
-    .q    = q,
-    .aux  = q->aux
+    .q = q,
+    .aux = q->aux
   };
   q->matched = _jql_match_expression_node(mctx.aux->expr, &mctx, rcp);
   if (*rcp || q->matched) {
@@ -1694,7 +1694,7 @@ static bool _jql_proj_join_matched(
       exec_ctx->proj_joined_nodes_cache = cache;
     }
     struct _JBDOCREF ref = {
-      .id   = id,
+      .id = id,
       .coll = coll
     };
     nn = iwhmap_get(cache, &ref);
@@ -1783,9 +1783,9 @@ static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool, JBEXEC *exec_ctx) {
   }
   JQP_PROJECTION *proj = aux->projection;
   PROJ_CTX pctx = {
-    .q        = q,
-    .proj     = proj,
-    .pool     = pool,
+    .q = q,
+    .proj = proj,
+    .pool = pool,
     .exec_ctx = exec_ctx,
   };
   if (!pool) {
@@ -1806,7 +1806,7 @@ static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool, JBEXEC *exec_ctx) {
   }
   JBN_VCTX vctx = {
     .root = root,
-    .op   = &pctx
+    .op = &pctx
   };
 
   RCC(rc, finish, jbn_visit(root, 0, &vctx, _jql_proj_visitor));

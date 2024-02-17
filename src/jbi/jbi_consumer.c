@@ -6,7 +6,7 @@ iwrc jbi_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *ste
   }
 
   iwrc rc;
-  struct _JBL jbl;
+  struct jbl jbl;
   size_t vsz = 0;
   EJDB_EXEC *ux = ctx->ux;
   IWPOOL *pool = ux->pool;
@@ -67,7 +67,7 @@ start:
     ctx->istep = 1;
     struct JQP_AUX *aux = q->aux;
     struct _EJDB_DOC doc = {
-      .id  = id,
+      .id = id,
       .raw = &jbl
     };
     if (aux->apply || aux->apply_placeholder || aux->projection) {
@@ -88,7 +88,7 @@ start:
           rc = jb_del(ctx->jbc, &jbl, id);
         }
       } else if (aux->apply || aux->apply_placeholder) {
-        struct _JBL sn = { 0 };
+        struct jbl sn = { 0 };
         RCC(rc, finish, jql_apply(q, root, pool));
         RCC(rc, finish, _jbl_from_node(&sn, root));
         if (cur) {

@@ -16,7 +16,7 @@ static int _jbi_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   int rv = 0;
   iwrc rc;
   uint32_t r1, r2;
-  struct _JBL d1, d2;
+  struct jbl d1, d2;
   struct _JBEXEC *ctx = op;
   struct _JBSSC *ssc = &ctx->ssc;
   struct JQP_AUX *aux = ctx->ux->q->aux;
@@ -33,8 +33,8 @@ static int _jbi_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   RCC(rc, finish, jbl_from_buf_keep_onstack2(&d2, p2));
 
   for (int i = 0; i < aux->orderby_num; ++i) {
-    struct _JBL v1 = { 0 };
-    struct _JBL v2 = { 0 };
+    struct jbl v1 = { 0 };
+    struct jbl v2 = { 0 };
     JBL_PTR ptr = aux->orderby_ptrs[i];
     int desc = (ptr->op & 1) ? -1 : 1; // If `-1` do desc sorting
     _jbl_at(&d1, ptr, &v1);
@@ -64,7 +64,7 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
     rc = jb_del(ctx->jbc, jbl, doc->id);
     RCRET(rc);
   } else if (aux->apply || aux->apply_placeholder) {
-    struct _JBL sn = { 0 };
+    struct jbl sn = { 0 };
     rc = jql_apply(q, root, pool);
     RCRET(rc);
     rc = _jbl_from_node(&sn, root);
@@ -82,7 +82,7 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
 static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
   iwrc rc = 0;
   int64_t step = 1, id;
-  struct _JBL jbl;
+  struct jbl jbl;
   EJDB_EXEC *ux = ctx->ux;
   struct _JBSSC *ssc = &ctx->ssc;
   uint32_t rnum = ssc->refs_num;
@@ -109,7 +109,7 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
     RCC(rc, finish, jbl_from_buf_keep_onstack2(&jbl, rp));
 
     struct _EJDB_DOC doc = {
-      .id  = id,
+      .id = id,
       .raw = &jbl
     };
 
@@ -155,10 +155,10 @@ finish:
 static iwrc _jbi_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
   IWFS_EXT_OPTS opts = {
     .initial_size = initial_size,
-    .rspolicy     = iw_exfile_szpolicy_fibo,
-    .file         = {
-      .path       = "jb-",
-      .omode      = IWFS_OTMP | IWFS_OUNLINK
+    .rspolicy = iw_exfile_szpolicy_fibo,
+    .file = {
+      .path = "jb-",
+      .omode = IWFS_OTMP | IWFS_OUNLINK
     }
   };
   iwrc rc = iwfs_exfile_open(&ssc->sof, &opts);
@@ -187,7 +187,7 @@ iwrc jbi_sorter_consumer(
 
   iwrc rc;
   size_t vsz = 0;
-  struct _JBL jbl;
+  struct jbl jbl;
   struct _JBSSC *ssc = &ctx->ssc;
   EJDB db = ctx->jbc->db;
   IWFS_EXT *sof = &ssc->sof;

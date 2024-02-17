@@ -108,12 +108,12 @@ typedef union _JQP_UNIT JQPUNIT;
 
 #define JQP_EXPR_NODE_FLAG_PK 0x01U
 
-#define JQP_EXPR_NODE_HEAD    \
-  jqp_unit_t type;            \
-  struct JQP_EXPR_NODE *next; \
-  struct JQP_JOIN *join;      \
-  void *opaque;               \
-  uint8_t flags;
+#define JQP_EXPR_NODE_HEAD          \
+        jqp_unit_t type;            \
+        struct JQP_EXPR_NODE *next; \
+        struct JQP_JOIN *join;      \
+        void *opaque;               \
+        uint8_t flags;
 
 typedef struct JQP_EXPR_NODE { // Base for JQP_FILTER
   JQP_EXPR_NODE_HEAD
@@ -134,8 +134,8 @@ typedef struct JQP_FILTER {
 } JQP_FILTER;
 
 typedef struct JQP_JSON {
-  jqp_unit_t       type;
-  struct _JBL_NODE jn;
+  jqp_unit_t      type;
+  struct jbl_node jn;
   void *opaque;
 } JQP_JSON;
 

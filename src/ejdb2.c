@@ -66,7 +66,7 @@ static iwrc _jb_coll_load_index_lr(JBCOLL jbc, IWKV_val *mval) {
   iwrc rc;
   binn *bn;
   char *ptr;
-  struct _JBL imeta;
+  struct jbl imeta;
   JBIDX idx = calloc(1, sizeof(*idx));
   if (!idx) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -456,7 +456,7 @@ static iwrc _jb_idx_record_add(JBIDX idx, int64_t id, JBL jbl, JBL jblprev) {
   char numbuf[IWNUMBUF_SIZE];
 
   bool jbv_found, jbvprev_found;
-  struct _JBL jbv = { 0 }, jbvprev = { 0 };
+  struct jbl jbv = { 0 }, jbvprev = { 0 };
   jbl_type_t jbv_type, jbvprev_type;
 
   iwrc rc = 0;
@@ -610,7 +610,7 @@ IW_INLINE iwrc _jb_idx_record_remove(JBIDX idx, int64_t id, JBL jbl) {
 static iwrc _jb_idx_fill(JBIDX idx) {
   IWKV_cursor cur;
   IWKV_val key, val;
-  struct _JBL jbs;
+  struct jbl jbs;
   int64_t llv;
   JBL jbl = &jbs;
 
@@ -645,7 +645,7 @@ static iwrc _jb_put_handler_after(iwrc rc, struct _JBPHCTX *ctx) {
     return rc;
   }
   JBL prev;
-  struct _JBL jblprev;
+  struct jbl jblprev;
   JBCOLL jbc = ctx->jbc;
   if (oldval->size) {
     rc = jbl_from_buf_keep_onstack(&jblprev, oldval->data, oldval->size);
@@ -745,7 +745,7 @@ IW_INLINE iwrc _jb_put_impl(JBCOLL jbc, JBL jbl, int64_t id) {
     .size = sizeof(id)
   };
   struct _JBPHCTX pctx = {
-    .id  = id,
+    .id = id,
     .jbc = jbc,
     .jbl = jbl
   };
@@ -761,7 +761,7 @@ iwrc jb_put(JBCOLL jbc, JBL jbl, int64_t id) {
 iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl) {
   IWKV_val val;
   struct _JBPHCTX pctx = {
-    .id  = id,
+    .id = id,
     .jbc = jbc,
     .jbl = jbl
   };
@@ -796,8 +796,8 @@ static iwrc _jb_exec_upsert_lw(JBEXEC *ctx) {
 
   if (!(q->aux->qmode & JQP_QRY_AGGREGATE)) {
     struct _EJDB_DOC doc = {
-      .id   = id,
-      .raw  = jbl,
+      .id = id,
+      .raw = jbl,
       .node = n
     };
     do {
@@ -916,13 +916,13 @@ static iwrc _jb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWXSTR *log
   iwrc rc = 0;
   struct JB_LIST_VISITOR_CTX lvc = { 0 };
   struct _EJDB_EXEC ux = {
-    .db      = db,
-    .q       = q,
+    .db = db,
+    .q = q,
     .visitor = _jb_exec_list_visitor,
-    .pool    = pool,
-    .limit   = limit,
-    .log     = log,
-    .opaque  = &lvc
+    .pool = pool,
+    .limit = limit,
+    .log = log,
+    .opaque = &lvc
   };
   rc = ejdb_exec(&ux);
   if (rc) {
@@ -938,10 +938,10 @@ static iwrc _jb_count(EJDB db, JQL q, int64_t *count, int64_t limit, IWXSTR *log
     return IW_ERROR_INVALID_ARGS;
   }
   struct _EJDB_EXEC ux = {
-    .db    = db,
-    .q     = q,
+    .db = db,
+    .q = q,
     .limit = limit,
-    .log   = log
+    .log = log
   };
   iwrc rc = ejdb_exec(&ux);
   *count = ux.cnt;
@@ -1209,7 +1209,7 @@ static iwrc _jb_patch(
   ) {
   int rci;
   JBCOLL jbc;
-  struct _JBL sjbl;
+  struct jbl sjbl;
   JBL_NODE root, patch;
   JBL ujbl = 0;
   IWPOOL *pool = 0;
@@ -1364,7 +1364,7 @@ static iwrc _jb_put_new_lw(JBCOLL jbc, JBL jbl, int64_t *id) {
     .size = sizeof(oid)
   };
   struct _JBPHCTX pctx = {
-    .id  = oid,
+    .id = oid,
     .jbc = jbc,
     .jbl = jbl
   };
@@ -1447,7 +1447,7 @@ iwrc ejdb_get(EJDB db, const char *coll, int64_t id, JBL *jblp) {
 iwrc ejdb_del(EJDB db, const char *coll, int64_t id) {
   int rci;
   JBCOLL jbc;
-  struct _JBL jbl;
+  struct jbl jbl;
   IWKV_val val = { 0 };
   IWKV_val key = { .data = &id, .size = sizeof(id) };
 
