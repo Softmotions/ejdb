@@ -266,7 +266,7 @@ static iwrc _jbi_compute_index_rules(JBEXEC *ctx, struct _JBMIDX *mctx) {
 // NOLINTNEXTLINE
 static iwrc _jbi_collect_indexes(
   JBEXEC                     *ctx,
-  const struct JQP_EXPR_NODE *en,
+  const struct jqp_expr_node *en,
   struct _JBMIDX              marr[static JB_SOLID_EXPRNUM],
   size_t                     *snp
   ) {
@@ -275,7 +275,7 @@ static iwrc _jbi_collect_indexes(
     return 0;
   }
   if (en->type == JQP_EXPR_NODE_TYPE) {
-    struct JQP_EXPR_NODE *cn = en->chain;
+    struct jqp_expr_node *cn = en->chain;
     for ( ; cn; cn = cn->next) {
       if (cn->join && (cn->join->value == JQP_JOIN_OR)) {
         return 0;
@@ -305,12 +305,12 @@ static iwrc _jbi_collect_indexes(
       }
     }
 
-    struct JQP_AUX *aux = ctx->ux->q->aux;
-    struct _JBL_PTR *obp = aux->orderby_num ? aux->orderby_ptrs[0] : 0;
+    struct jqp_aux *aux = ctx->ux->q->aux;
+    struct jbl_ptr *obp = aux->orderby_num ? aux->orderby_ptrs[0] : 0;
 
     for (struct _JBIDX *idx = ctx->jbc->idx; idx && *snp < JB_SOLID_EXPRNUM; idx = idx->next) {
       struct _JBMIDX mctx = { .filter = f };
-      struct _JBL_PTR *ptr = idx->ptr;
+      struct jbl_ptr *ptr = idx->ptr;
       if (ptr->cnt > fnc) {
         continue;
       }
@@ -390,11 +390,11 @@ static int _jbi_idx_cmp(const void *o1, const void *o2) {
 }
 
 static struct _JBIDX* _jbi_select_index_for_orderby(JBEXEC *ctx) {
-  struct JQP_AUX *aux = ctx->ux->q->aux;
-  struct _JBL_PTR *obp = aux->orderby_ptrs[0];
+  struct jqp_aux *aux = ctx->ux->q->aux;
+  struct jbl_ptr *obp = aux->orderby_ptrs[0];
   assert(obp);
   for (struct _JBIDX *idx = ctx->jbc->idx; idx; idx = idx->next) {
-    struct _JBL_PTR *ptr = idx->ptr;
+    struct jbl_ptr *ptr = idx->ptr;
     if (obp->cnt != ptr->cnt) {
       continue;
     }
@@ -420,7 +420,7 @@ static struct _JBIDX* _jbi_select_index_for_orderby(JBEXEC *ctx) {
 iwrc jbi_selection(JBEXEC *ctx) {
   iwrc rc = 0;
   size_t snp = 0;
-  struct JQP_AUX *aux = ctx->ux->q->aux;
+  struct jqp_aux *aux = ctx->ux->q->aux;
   struct _JBMIDX fctx[JB_SOLID_EXPRNUM] = { 0 };
 
   ctx->cursor_init = IWKV_CURSOR_BEFORE_FIRST;

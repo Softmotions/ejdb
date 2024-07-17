@@ -19,7 +19,7 @@ static int _jbi_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   struct jbl d1, d2;
   struct _JBEXEC *ctx = op;
   struct _JBSSC *ssc = &ctx->ssc;
-  struct JQP_AUX *aux = ctx->ux->q->aux;
+  struct jqp_aux *aux = ctx->ux->q->aux;
   uint8_t *p1, *p2;
   assert(aux->orderby_num > 0);
 
@@ -56,7 +56,7 @@ finish:
 static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struct _EJDB_DOC *doc) {
   JBL_NODE root;
   JBL jbl = doc->raw;
-  struct JQP_AUX *aux = q->aux;
+  struct jqp_aux *aux = q->aux;
   iwrc rc = jbl_to_node(jbl, &root, true, pool);
   RCRET(rc);
   doc->node = root;
@@ -86,7 +86,7 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
   EJDB_EXEC *ux = ctx->ux;
   struct _JBSSC *ssc = &ctx->ssc;
   uint32_t rnum = ssc->refs_num;
-  struct JQP_AUX *aux = ux->q->aux;
+  struct jqp_aux *aux = ux->q->aux;
   IWPOOL *pool = ux->pool;
 
   if (rnum) {

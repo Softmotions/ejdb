@@ -1529,7 +1529,7 @@ bool jql_has_aggregate_count(JQL q) {
 iwrc jql_get_skip(JQL q, int64_t *out) {
   iwrc rc = 0;
   *out = 0;
-  struct JQP_AUX *aux = q->aux;
+  struct jqp_aux *aux = q->aux;
   JQPUNIT *skip = aux->skip;
   if (!skip) {
     return 0;
@@ -1546,7 +1546,7 @@ iwrc jql_get_skip(JQL q, int64_t *out) {
 iwrc jql_get_limit(JQL q, int64_t *out) {
   iwrc rc = 0;
   *out = 0;
-  struct JQP_AUX *aux = q->aux;
+  struct jqp_aux *aux = q->aux;
   JQPUNIT *limit = aux->limit;
   if (!limit) {
     return 0;

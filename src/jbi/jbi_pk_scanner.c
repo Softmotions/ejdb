@@ -5,7 +5,7 @@ iwrc jbi_pk_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
   iwrc rc = 0;
   int64_t id, step;
   bool matched;
-  struct JQP_AUX *aux = ctx->ux->q->aux;
+  struct jqp_aux *aux = ctx->ux->q->aux;
   assert(aux->expr->flags & JQP_EXPR_NODE_FLAG_PK);
   JQP_EXPR_NODE_PK *pk = (void*) aux->expr;
   assert(pk->argument);

@@ -34,7 +34,6 @@
 #include <iowow/iwpool.h>
 #include <iowow/iwxstr.h>
 
-#include <errno.h>
 #include <stdbool.h>
 #include <setjmp.h>
 
@@ -102,104 +101,104 @@ typedef enum {
   JQP_OP_PREFIX,
 } jqp_op_t;
 
-struct JQP_AUX;
+struct jqp_aux;
 
-typedef union _JQP_UNIT JQPUNIT;
+typedef union jqp_unit JQPUNIT;
 
 #define JQP_EXPR_NODE_FLAG_PK 0x01U
 
 #define JQP_EXPR_NODE_HEAD          \
         jqp_unit_t type;            \
-        struct JQP_EXPR_NODE *next; \
-        struct JQP_JOIN *join;      \
+        struct jqp_expr_node *next; \
+        struct jqp_join *join;      \
         void *opaque;               \
         uint8_t flags;
 
-typedef struct JQP_EXPR_NODE { // Base for JQP_FILTER
+typedef struct jqp_expr_node { // Base for JQP_FILTER
   JQP_EXPR_NODE_HEAD
-  struct JQP_EXPR_NODE *chain;
+  struct jqp_expr_node *chain;
 } JQP_EXPR_NODE;
 
-typedef struct JQP_EXPR_NODE_PK {
+typedef struct jqp_expr_node_pk {
   JQP_EXPR_NODE_HEAD
-  struct JQP_EXPR_NODE *chain; // Not used, plased for JQP_EXPR_NODE compatibility
+  struct jqp_expr_node *chain; // Not used, plased for JQP_EXPR_NODE compatibility
   const char *anchor;
   JQPUNIT    *argument;
 } JQP_EXPR_NODE_PK;
 
-typedef struct JQP_FILTER {
+typedef struct jqp_filter {
   JQP_EXPR_NODE_HEAD
   const char      *anchor;
-  struct JQP_NODE *node;
+  struct jqp_node *node;
 } JQP_FILTER;
 
-typedef struct JQP_JSON {
+typedef struct jqp_json {
   jqp_unit_t      type;
   struct jbl_node jn;
   void *opaque;
 } JQP_JSON;
 
-typedef struct JQP_NODE {
+typedef struct jqp_node {
   jqp_unit_t       type;
   jqp_node_type_t  ntype;
-  struct JQP_NODE *next;
+  struct jqp_node *next;
   JQPUNIT *value;
   int      start; // Used in query matching
   int      end;   // Used in query matching
 } JQP_NODE;
 
-typedef struct JQP_STRING {
+typedef struct jqp_string {
   jqp_unit_t type;
   jqp_string_flavours_t flavour;
   const char *value;
-  struct JQP_STRING *next;
-  struct JQP_STRING *subnext;
-  struct JQP_STRING *placeholder_next;
+  struct jqp_string *next;
+  struct jqp_string *subnext;
+  struct jqp_string *placeholder_next;
   void *opaque;
 } JQP_STRING;
 
-typedef struct JQP_INTEGER {
+typedef struct jqp_integer {
   jqp_unit_t type;
   jqp_int_flavours_t flavour;
   int64_t value;
   void   *opaque;
 } JQP_INTEGER;
 
-typedef struct JQP_DOUBLE {
+typedef struct jqp_double {
   jqp_unit_t type;
   jqp_int_flavours_t flavour;
   double value;
   void  *opaque;
 } JQP_DOUBLE;
 
-typedef struct JQP_OP {
+typedef struct jqp_op {
   jqp_unit_t type;
   bool       negate;
   jqp_op_t   value;
-  struct JQP_OP *next;
+  struct jqp_op *next;
   void *opaque;
 } JQP_OP;
 
-typedef struct JQP_JOIN {
+typedef struct jqp_join {
   jqp_unit_t type;
   bool       negate;
   jqp_op_t   value;
 } JQP_JOIN;
 
-typedef struct JQP_EXPR {
+typedef struct jqp_expr {
   jqp_unit_t       type;
-  struct JQP_JOIN *join;
-  struct JQP_OP   *op;
+  struct jqp_join *join;
+  struct jqp_op   *op;
   JQPUNIT *left;
   JQPUNIT *right;
-  struct JQP_EXPR *next;
+  struct jqp_expr *next;
   bool prematched;
 } JQP_EXPR;
 
-typedef struct JQP_PROJECTION {
+typedef struct jqp_projection {
   jqp_unit_t type;
-  struct JQP_STRING     *value;
-  struct JQP_PROJECTION *next;
+  struct jqp_string     *value;
+  struct jqp_projection *next;
   int16_t pos;          // Current matching position, used in jql.c#_jql_project
   int16_t cnt;          // Number of projection sections, used in jql.c#_jql_project
 
@@ -209,28 +208,28 @@ typedef struct JQP_PROJECTION {
   uint8_t flags;
 } JQP_PROJECTION;
 
-typedef struct JQP_QUERY {
+typedef struct jqp_query {
   jqp_unit_t      type;
-  struct JQP_AUX *aux;
+  struct jqp_aux *aux;
 } JQP_QUERY;
 
 //--
 
-union _JQP_UNIT {
+union jqp_unit {
   jqp_unit_t       type;
-  struct JQP_QUERY query;
-  struct JQP_EXPR_NODE    exprnode;
-  struct JQP_EXPR_NODE_PK exprnode_pk;
-  struct JQP_FILTER       filter;
-  struct JQP_NODE    node;
-  struct JQP_EXPR    expr;
-  struct JQP_JOIN    join;
-  struct JQP_OP      op;
-  struct JQP_STRING  string;
-  struct JQP_INTEGER intval;
-  struct JQP_DOUBLE  dblval;
-  struct JQP_JSON    json;
-  struct JQP_PROJECTION projection;
+  struct jqp_query query;
+  struct jqp_expr_node    exprnode;
+  struct jqp_expr_node_pk exprnode_pk;
+  struct jqp_filter       filter;
+  struct jqp_node    node;
+  struct jqp_expr    expr;
+  struct jqp_join    join;
+  struct jqp_op      op;
+  struct jqp_string  string;
+  struct jqp_integer intval;
+  struct jqp_double  dblval;
+  struct jqp_json    json;
+  struct jqp_projection projection;
 };
 
 typedef enum {
@@ -240,15 +239,15 @@ typedef enum {
   STACK_FLOAT,
 } jqp_stack_t;
 
-typedef struct JQP_STACK {
+typedef struct jqp_stack {
   jqp_stack_t       type;
-  struct JQP_STACK *next;
-  struct JQP_STACK *prev;
+  struct jqp_stack *next;
+  struct jqp_stack *prev;
   union {
-    JQPUNIT *unit;
-    char    *str;
-    int64_t  i64;
-    double   f64;
+    union jqp_unit *unit;
+    char   *str;
+    int64_t i64;
+    double  f64;
   };
 } JQP_STACK;
 
@@ -264,50 +263,50 @@ typedef uint8_t jqp_query_mode_t;
 
 #define JQP_QRY_AGGREGATE (JQP_QRY_COUNT)
 
-typedef struct JQP_AUX {
+typedef struct jqp_aux {
   int     pos;
   int     stackn;
   int     num_placeholders;
   int     orderby_num;                  /**< Number of order-by blocks */
   iwrc    rc;
   jmp_buf fatal_jmp;
-  const char *buf;
-  IWXSTR     *xerr;
-  IWPOOL     *pool;
-  struct JQP_QUERY *query;
-  JQP_STACK *stack;
+  const char       *buf;
+  struct iwxstr    *xerr;
+  struct iwpool    *pool;
+  struct jqp_query *query;
+  struct jqp_stack *stack;
   jql_create_mode_t mode;
   //
-  struct JQP_EXPR_NODE  *expr;
-  struct JQP_PROJECTION *projection;
-  JQP_STRING *start_placeholder;
-  JQP_STRING *end_placeholder;
-  JQP_STRING *orderby;
-  JBL_PTR    *orderby_ptrs;           /**< Order-by pointers, orderby_num - number of pointers allocated */
-  JQP_OP     *start_op;
-  JQP_OP     *end_op;
-  JQPUNIT    *skip;
-  JQPUNIT    *limit;
-  JBL_NODE    apply;
-  const char *apply_placeholder;
-  const char *first_anchor;
+  struct jqp_expr_node  *expr;
+  struct jqp_projection *projection;
+  struct jqp_string     *start_placeholder;
+  struct jqp_string     *end_placeholder;
+  struct jqp_string     *orderby;
+  struct jbl_ptr       **orderby_ptrs;        /**< Order-by pointers, orderby_num - number of pointers allocated */
+  struct jqp_op   *start_op;
+  struct jqp_op   *end_op;
+  union jqp_unit  *skip;
+  union jqp_unit  *limit;
+  struct jbl_node *apply;
+  const char      *apply_placeholder;
+  const char      *first_anchor;
   jqp_query_mode_t qmode;
-  bool      negate;
-  bool      has_keep_projections;
-  bool      has_exclude_all_projection;
-  JQP_STACK stackpool[JQP_AUX_STACKPOOL_NUM];
+  bool negate;
+  bool has_keep_projections;
+  bool has_exclude_all_projection;
+  struct jqp_stack stackpool[JQP_AUX_STACKPOOL_NUM];
 } JQP_AUX;
 
-iwrc jqp_aux_create(JQP_AUX **auxp, const char *input);
+iwrc jqp_aux_create(struct jqp_aux **auxp, const char *input);
 
-void jqp_aux_destroy(JQP_AUX **auxp);
+void jqp_aux_destroy(struct jqp_aux **auxp);
 
-iwrc jqp_parse(JQP_AUX *aux);
+iwrc jqp_parse(struct jqp_aux *aux);
 
-iwrc jqp_print_query(const JQP_QUERY *q, jbl_json_printer pt, void *op);
+iwrc jqp_print_query(const struct jqp_query *q, jbl_json_printer pt, void *op);
 
-iwrc jqp_alloc_orderby_pointers(const JQP_QUERY *q, JBL_PTR *optr, size_t *nptr);
+iwrc jqp_alloc_orderby_pointers(const struct jqp_query *q, struct jbl_ptr **optr, size_t *nptr);
 
-iwrc jqp_print_filter_node_expr(const JQP_EXPR *e, jbl_json_printer pt, void *op);
+iwrc jqp_print_filter_node_expr(const struct jqp_expr *e, jbl_json_printer pt, void *op);
 
 #endif

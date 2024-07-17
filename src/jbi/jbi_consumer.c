@@ -65,7 +65,7 @@ start:
   if (!ctx->istep) {
     JQL q = ux->q;
     ctx->istep = 1;
-    struct JQP_AUX *aux = q->aux;
+    struct jqp_aux *aux = q->aux;
     struct _EJDB_DOC doc = {
       .id = id,
       .raw = &jbl
