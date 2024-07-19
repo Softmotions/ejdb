@@ -3,7 +3,7 @@
 **NOTE: Issues tracker is disabled. You are welcome to contribute, pull requests accepted.**
 
 [![license](https://img.shields.io/github/license/Softmotions/ejdb.svg)](https://github.com/Softmotions/ejdb/blob/master/LICENSE)
-![maintained](https://img.shields.io/maintenance/yes/2023.svg)
+![maintained](https://img.shields.io/maintenance/yes/2024.svg)
 
 EJDB2 is an embeddable JSON database engine published under MIT license.
 
