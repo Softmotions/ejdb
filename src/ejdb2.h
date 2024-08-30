@@ -31,7 +31,7 @@
 #include "jql.h"
 #include <iowow/iwkv.h>
 
-IW_EXTERN_C_START
+IW_EXTERN_C_START;
 
 /**
  * @brief ejdb2 initialization routine.
@@ -714,5 +714,5 @@ IW_EXPORT unsigned int ejdb_version_minor(void);
  */
 IW_EXPORT unsigned int ejdb_version_patch(void);
 
-IW_EXTERN_C_END
+IW_EXTERN_C_END;
 #endif

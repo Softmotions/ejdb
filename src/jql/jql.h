@@ -40,7 +40,7 @@
 #include <iowow/iwjson.h>
 #include <iowow/iwlog.h>
 
-IW_EXTERN_C_START
+IW_EXTERN_C_START;
 
 struct _JQL;
 typedef struct _JQL*JQL;
@@ -170,5 +170,5 @@ IW_EXPORT size_t jql_estimate_allocated_size(JQL q);
 
 IW_EXPORT WUR iwrc jql_init(void);
 
-IW_EXTERN_C_END
+IW_EXTERN_C_END;
 #endif

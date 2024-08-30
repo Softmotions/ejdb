@@ -30,7 +30,7 @@
 
 #include "ejdb2.h"
 
-IW_EXTERN_C_START
+IW_EXTERN_C_START;
 
 struct jbr;
 typedef struct jbr*JBR;
@@ -43,5 +43,5 @@ void jbr_shutdown_wait(JBR jbr);
 
 iwrc jbr_init(void);
 
-IW_EXTERN_C_END
+IW_EXTERN_C_END;
 #endif
