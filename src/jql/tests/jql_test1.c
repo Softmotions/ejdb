@@ -335,14 +335,12 @@ int main() {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if ( 
-      (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1))
+  if (  (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1))
      || (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
      || (NULL == CU_add_test(pSuite, "jql_test1_3", jql_test1_3))
      || (NULL == CU_add_test(pSuite, "jql_test1_4", jql_test_1_4))
      || (NULL == CU_add_test(pSuite, "jql_test1_5", jql_test_1_5))
-     || (NULL == CU_add_test(pSuite, "jql_test1_6", jql_test_1_6))
-     ) {
+     || (NULL == CU_add_test(pSuite, "jql_test1_6", jql_test_1_6))) {
     CU_cleanup_registry();
     return CU_get_error();
   }

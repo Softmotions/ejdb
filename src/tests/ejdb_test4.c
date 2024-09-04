@@ -29,11 +29,11 @@ static void set_apply_int(JQL q, int idx, const char *key, int64_t id) {
 
 static void ejdb_test4_1(void) {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test4_1.db",
+    .kv = {
+      .path = "ejdb_test4_1.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
 
   EJDB db;
@@ -133,11 +133,11 @@ static void ejdb_test4_1(void) {
 
 static void ejdb_test4_2(void) {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test4_2.db",
+    .kv = {
+      .path = "ejdb_test4_2.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
 
   EJDB db;

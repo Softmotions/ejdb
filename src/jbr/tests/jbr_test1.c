@@ -32,16 +32,16 @@ static void jbr_test1_1() {
   uint32_t port = iwu_rand_range(20000) + 20000;
 
   EJDB_OPTS opts = {
-    .kv         = {
-      .path     = "jbr_test1_1.db",
-      .oflags   = IWKV_TRUNC
+    .kv = {
+      .path = "jbr_test1_1.db",
+      .oflags = IWKV_TRUNC
     },
-    .no_wal     = true,
-    .http       = {
-      .bind     = "127.0.0.1",
+    .no_wal = true,
+    .http = {
+      .bind = "127.0.0.1",
       .blocking = false,
-      .enabled  = true,
-      .port     = port
+      .enabled = true,
+      .port = port
     }
   };
 

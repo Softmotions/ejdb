@@ -10,36 +10,36 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #undef CHECK
-#define CHECK(rc_)               \
-  if (rc_)                     \
-  {                            \
-    iwlog_ecode_error3(rc_); \
-    return 1;                \
-  }
+#define CHECK(rc_)                 \
+        if (rc_)                   \
+        {                          \
+          iwlog_ecode_error3(rc_); \
+          return 1;                \
+        }
 
 #undef print_message
-#define print_message(fmt, ...)                                          \
-  {                                                                    \
-    iwlog_info("Thread[%u] | " fmt, (unsigned int) 0, ## __VA_ARGS__); \
-  }
+#define print_message(fmt, ...)                                              \
+        {                                                                    \
+          iwlog_info("Thread[%u] | " fmt, (unsigned int) 0, ## __VA_ARGS__); \
+        }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IWKV_NO_TRIM_ON_CLOSE
 iwrc get_ejdb(EJDB *db) {
   EJDB_OPTS opts = {
-    .kv                         = {
-      .path                     = "ejdb_test5.db",
-      .oflags                   = IWKV_NO_TRIM_ON_CLOSE | IWKV_TRUNC,
-      .wal                      = {
-        .savepoint_timeout_sec  = 5,
+    .kv = {
+      .path = "ejdb_test5.db",
+      .oflags = IWKV_NO_TRIM_ON_CLOSE | IWKV_TRUNC,
+      .wal = {
+        .savepoint_timeout_sec = 5,
         .checkpoint_timeout_sec = 10,
-        .wal_buffer_sz          = 4096,
-        .checkpoint_buffer_sz   = 1024 * 1024
+        .wal_buffer_sz = 4096,
+        .checkpoint_buffer_sz = 1024 * 1024
       },
     },
-    .no_wal                     = 0,
-    .sort_buffer_sz             = 1024 * 1024, // 1M
-    .document_buffer_sz         = 16 * 1024    // 16K
+    .no_wal = 0,
+    .sort_buffer_sz = 1024 * 1024,             // 1M
+    .document_buffer_sz = 16 * 1024            // 16K
   };
 
   print_message("step-1 ejdb_init");
@@ -109,7 +109,7 @@ iwrc delete_record_large(EJDB db, char *collection, int64_t to, int limit) {
 
   EJDB_EXEC ux = {
     .db = db,
-    .q  = q,
+    .q = q,
   };
 
   rc = ejdb_exec(&ux);

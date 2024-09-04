@@ -14,11 +14,11 @@ int clean_suite() {
 
 void ejdb_test1_3() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test1_3.db",
+    .kv = {
+      .path = "ejdb_test1_3.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
   EJDB db;
   JBL jbl;
@@ -56,11 +56,11 @@ void ejdb_test1_3() {
 
 void ejdb_test1_2() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test1_2.db",
+    .kv = {
+      .path = "ejdb_test1_2.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
   EJDB db;
   JBL jbl, at, meta;
@@ -233,11 +233,11 @@ void ejdb_test1_2() {
 
 void ejdb_test1_1() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test1_1.db",
+    .kv = {
+      .path = "ejdb_test1_1.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
   EJDB db;
   JBL meta, jbl;

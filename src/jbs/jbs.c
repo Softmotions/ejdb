@@ -89,22 +89,22 @@ int main(int argc, char *argv[]) {
   RCA(pool = env.pool = iwpool_create_empty(), finish);
 
   static const struct option long_options[] = {
-    { "help",        0, 0, 'h' },
-    { "version",     0, 0, 'v' },
-    { "file",        1, 0, 'f' },
-    { "port",        1, 0, 'p' },
-    { "bind",        1, 0, 'b' }, // for backward compatibility
-    { "listen",      1, 0, 'l' },
-    { "key",         1, 0, 'k' },
-    { "certs",       1, 0, 'c' },
-    { "access",      1, 0, 'a' },
+    { "help", 0, 0, 'h' },
+    { "version", 0, 0, 'v' },
+    { "file", 1, 0, 'f' },
+    { "port", 1, 0, 'p' },
+    { "bind", 1, 0, 'b' },        // for backward compatibility
+    { "listen", 1, 0, 'l' },
+    { "key", 1, 0, 'k' },
+    { "certs", 1, 0, 'c' },
+    { "access", 1, 0, 'a' },
     { "access-read", 0, 0, 'r' },
-    { "cors",        0, 0, 'C' },
-    { "trunc",       0, 0, 't' },
-    { "wal",         0, 0, 'w' },
-    { "sbz",         1, 0, 'S' },
-    { "dsz",         1, 0, 'D' },
-    { "trylock",     0, 0, 'T' }
+    { "cors", 0, 0, 'C' },
+    { "trunc", 0, 0, 't' },
+    { "wal", 0, 0, 'w' },
+    { "sbz", 1, 0, 'S' },
+    { "dsz", 1, 0, 'D' },
+    { "trylock", 0, 0, 'T' }
   };
 
   while ((ch = getopt_long(argc, argv, "f:p:b:l:k:c:a:S:D:rCtwThv", long_options, 0)) != -1) {

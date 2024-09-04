@@ -14,13 +14,13 @@ int clean_suite() {
 // Test document sorting overflow on disk
 static void ejdb_test2_2() {
   EJDB_OPTS opts = {
-    .kv                 = {
-      .path             = "ejdb_test2_2.db",
-      .oflags           = IWKV_TRUNC
+    .kv = {
+      .path = "ejdb_test2_2.db",
+      .oflags = IWKV_TRUNC
     },
     .document_buffer_sz = 16 * 1024,   // 16K
-    .sort_buffer_sz     = 1024 * 1024, // 1M
-    .no_wal             = true
+    .sort_buffer_sz = 1024 * 1024,     // 1M
+    .no_wal = true
   };
   EJDB db;
   EJDB_LIST list = 0;
@@ -88,11 +88,11 @@ static iwrc ejdb_test2_1_exec_visitor1(struct _EJDB_EXEC *ctx, const EJDB_DOC do
 
 static void ejdb_test2_1() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test2_1.db",
+    .kv = {
+      .path = "ejdb_test2_1.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
 
   EJDB db;
@@ -270,9 +270,9 @@ static void ejdb_test2_1() {
   rc = jql_create(&q, "a", "/f");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   EJDB_EXEC ux = {
-    .db      = db,
-    .q       = q,
-    .opaque  = &tc,
+    .db = db,
+    .q = q,
+    .opaque = &tc,
     .visitor = ejdb_test2_1_exec_visitor1
   };
   rc = ejdb_exec(&ux);

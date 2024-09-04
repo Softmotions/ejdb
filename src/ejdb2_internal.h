@@ -54,36 +54,36 @@
 #define KEY_PREFIX_COLLMETA "c." // Full key format: c.<coldbid>
 #define KEY_PREFIX_IDXMETA  "i." // Full key format: i.<coldbid>.<idxdbid>
 
-#define ENSURE_OPEN(db_)                  \
-  if (!(db_) || !((db_)->open)) {         \
-    iwlog_error2("Database is not open");  \
-    return IW_ERROR_INVALID_STATE;        \
-  }
+#define ENSURE_OPEN(db_)                        \
+        if (!(db_) || !((db_)->open)) {         \
+          iwlog_error2("Database is not open"); \
+          return IW_ERROR_INVALID_STATE;        \
+        }
 
-#define API_RLOCK(db_, rci_) \
-  ENSURE_OPEN(db_);  \
-  rci_ = pthread_rwlock_rdlock(&(db_)->rwl); \
-  if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
+#define API_RLOCK(db_, rci_)                       \
+        ENSURE_OPEN(db_);                          \
+        rci_ = pthread_rwlock_rdlock(&(db_)->rwl); \
+        if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
 
-#define API_WLOCK(db_, rci_) \
-  ENSURE_OPEN(db_);  \
-  rci_ = pthread_rwlock_wrlock(&(db_)->rwl); \
-  if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
+#define API_WLOCK(db_, rci_)                       \
+        ENSURE_OPEN(db_);                          \
+        rci_ = pthread_rwlock_wrlock(&(db_)->rwl); \
+        if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
 
-#define API_WLOCK2(db_, rci_) \
-  rci_ = pthread_rwlock_wrlock(&(db_)->rwl); \
-  if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
+#define API_WLOCK2(db_, rci_)                      \
+        rci_ = pthread_rwlock_wrlock(&(db_)->rwl); \
+        if (rci_) return iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_)
 
-#define API_UNLOCK(db_, rci_, rc_)  \
-  rci_ = pthread_rwlock_unlock(&(db_)->rwl); \
-  if (rci_) IWRC(iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_), rc_)
+#define API_UNLOCK(db_, rci_, rc_)                 \
+        rci_ = pthread_rwlock_unlock(&(db_)->rwl); \
+        if (rci_) IWRC(iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_), rc_)
 
-#define API_COLL_UNLOCK(jbc_, rci_, rc_)                                     \
-  do {                                                                    \
-    rci_ = pthread_rwlock_unlock(&(jbc_)->rwl);                            \
-    if (rci_) IWRC(iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_), rc_);  \
-    API_UNLOCK((jbc_)->db, rci_, rc_);                                   \
-  } while (0)
+#define API_COLL_UNLOCK(jbc_, rci_, rc_)                                       \
+        do {                                                                   \
+          rci_ = pthread_rwlock_unlock(&(jbc_)->rwl);                          \
+          if (rci_) IWRC(iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci_), rc_); \
+          API_UNLOCK((jbc_)->db, rci_, rc_);                                   \
+        } while (0)
 
 struct _JBIDX;
 typedef struct _JBIDX*JBIDX;

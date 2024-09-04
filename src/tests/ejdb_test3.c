@@ -12,11 +12,11 @@ int clean_suite() {
 
 static void ejdb_test3_1() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test3_1.db",
+    .kv = {
+      .path = "ejdb_test3_1.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
 
   EJDB db;
@@ -340,11 +340,11 @@ static void ejdb_test3_1() {
 
 static void ejdb_test3_2() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test3_2.db",
+    .kv = {
+      .path = "ejdb_test3_2.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
 
   EJDB db;
@@ -520,11 +520,11 @@ static void ejdb_test3_2() {
 
 static void ejdb_test3_3() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test3_3.db",
+    .kv = {
+      .path = "ejdb_test3_3.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
   EJDB db;
   char dbuf[1024];
@@ -543,7 +543,6 @@ static void ejdb_test3_3() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   char *data[] = {
-
     // len: 200
     "Ar4prlJssa2ckf0IpmDuRBZ2b0Q6PtPdTacjWFFuO23CiCjdyfHaliz9JaqK1HFEeaneiMO"
     "7sNh87oDLVkvz7TnOV22v0njqmmd6b8DSfzaCwxFxcqrF7MinjUvJvct1Fr07MJWeG7C6SP"
@@ -691,11 +690,11 @@ static void ejdb_test3_3() {
 // Test array index
 static void ejdb_test3_4() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test3_4.db",
+    .kv = {
+      .path = "ejdb_test3_4.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
   EJDB db;
   char dbuf[1024];
@@ -837,11 +836,11 @@ static void ejdb_test3_4() {
 
 void ejdb_test3_5() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test3_5.db",
+    .kv = {
+      .path = "ejdb_test3_5.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
   EJDB db;
   EJDB_LIST list = 0;
@@ -932,8 +931,8 @@ static void jql_free_str(void *ptr, void *op) {
 
 void ejdb_test3_6() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test3_6.db",
+    .kv = {
+      .path = "ejdb_test3_6.db",
       .oflags = IWKV_TRUNC
     }
   };
@@ -988,8 +987,8 @@ void ejdb_test3_6() {
 
 void ejdb_test3_7() {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test3_7.db",
+    .kv = {
+      .path = "ejdb_test3_7.db",
       .oflags = IWKV_TRUNC
     }
   };
@@ -1032,11 +1031,11 @@ void ejdb_test3_7() {
 
 void ejdb_test3_8(void) {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test3_8.db",
+    .kv = {
+      .path = "ejdb_test3_8.db",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
 
   EJDB db;
@@ -1121,11 +1120,11 @@ void ejdb_test3_8(void) {
 
 static void ejdb_test3_9(void) {
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "ejdb_test3_9",
+    .kv = {
+      .path = "ejdb_test3_9",
       .oflags = IWKV_TRUNC
     },
-    .no_wal   = true
+    .no_wal = true
   };
   EJDB db;
   EJDB_LIST list = 0;

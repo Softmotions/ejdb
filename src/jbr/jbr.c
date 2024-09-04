@@ -50,16 +50,16 @@ struct mctx {
   char key[JBR_MAX_KEY_LEN + 1];
 };
 
-#define JBR_RC_REPORT(ret_, r_, rc_)                                 \
-  do {                                                                \
-    if ((ret_) >= 500) iwlog_ecode_error3(rc_);                      \
-    const char *err = iwlog_ecode_explained(rc_);                     \
-    if (!iwn_http_response_write(r_, ret_, "text/plain", err, -1)) { \
-      ret_ = -1;                                                     \
-    } else {                                                          \
-      ret_ = 1;                                                      \
-    }                                                                 \
-  } while (0)
+#define JBR_RC_REPORT(ret_, r_, rc_)                                       \
+        do {                                                               \
+          if ((ret_) >= 500) iwlog_ecode_error3(rc_);                      \
+          const char *err = iwlog_ecode_explained(rc_);                    \
+          if (!iwn_http_response_write(r_, ret_, "text/plain", err, -1)) { \
+            ret_ = -1;                                                     \
+          } else {                                                         \
+            ret_ = 1;                                                      \
+          }                                                                \
+        } while (0)
 
 void jbr_shutdown_request(EJDB db) {
   if (db->jbr) {
@@ -824,8 +824,8 @@ static bool _ws_query(struct iwn_ws_sess *ws, struct mctx *mctx, const char *que
   struct rctx *ctx = mctx->ctx;
 
   EJDB_EXEC ux = {
-    .db      = ctx->jbr->db,
-    .opaque  = mctx,
+    .db = ctx->jbr->db,
+    .opaque = mctx,
     .visitor = _ws_query_visitor,
   };
 
@@ -1080,7 +1080,7 @@ static iwrc _start(struct jbr *jbr) {
   struct iwn_wf_server_spec spec = {
     .poller = jbr->poller,
     .listen = http->bind ? http->bind : "localhost",
-    .port   = http->port > 0 ? http->port : 9292,
+    .port = http->port > 0 ? http->port : 9292,
   };
   if (http->ssl_private_key) {
     spec.ssl.private_key = http->ssl_private_key;
