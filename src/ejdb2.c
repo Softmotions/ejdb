@@ -1205,8 +1205,7 @@ finish:
 
 static iwrc _jb_patch(
   EJDB db, const char *coll, int64_t id, bool upsert,
-  const char *patchjson, JBL_NODE patchjbn, JBL patchjbl
-  ) {
+  const char *patchjson, JBL_NODE patchjbn, JBL patchjbl) {
   int rci;
   JBCOLL jbc;
   struct jbl sjbl;

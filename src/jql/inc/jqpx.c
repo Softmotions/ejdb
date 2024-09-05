@@ -1272,8 +1272,7 @@ static iwrc _jqp_print_filter(
   const struct jqp_query  *q,
   const struct jqp_filter *f,
   jbl_json_printer         pt,
-  void                    *op
-  ) {
+  void                    *op) {
   iwrc rc = 0;
   if (f->anchor) {
     PT(0, 0, '@', 1);
@@ -1290,8 +1289,7 @@ static iwrc _jqp_print_expression_node(
   const struct jqp_query     *q,
   const struct jqp_expr_node *en,
   jbl_json_printer            pt,
-  void                       *op
-  ) {
+  void                       *op) {
   iwrc rc = 0;
   bool inbraces = (en != q->aux->expr && en->type == JQP_EXPR_NODE_TYPE);
   if (inbraces) {

@@ -41,12 +41,12 @@ static jfieldID k_JQL_collection_fid;
 static jfieldID k_JQL_skip_fid;
 static jfieldID k_JQL_limit_fid;
 
-#define JBNFIELD(fid_, env_, clazz_, name_, type_)           \
-  fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_);
+#define JBNFIELD(fid_, env_, clazz_, name_, type_) \
+        fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_);
 
-#define JBNFIELD2(fid_, env_, clazz_, name_, type_, label_)  \
-  fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_);  \
-  if (!fid_) goto label_;
+#define JBNFIELD2(fid_, env_, clazz_, name_, type_, label_)       \
+        fid_ = (*(env_))->GetFieldID(env_, clazz_, name_, type_); \
+        if (!fid_) goto label_;
 
 typedef struct JBN_JSPRINT_CTX {
   int     flush_buffer_sz;
@@ -582,7 +582,6 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1ensure_1index(
   jstring coll_,
   jstring path_,
   jint    mode) {
-
   iwrc rc;
   EJDB db;
   const char *coll = (*env)->GetStringUTFChars(env, coll_, 0);
@@ -782,7 +781,7 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(
   RCGO(rc, finish);
 
   JBN_EXEC_CTX ectx = {
-    .env   = env,
+    .env = env,
     .cbObj = cbObj
   };
 
@@ -805,13 +804,13 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1execute(
   }
 
   EJDB_EXEC ux = {
-    .db      = db,
-    .q       = q,
-    .skip    = skip > 0 ? skip : 0,
-    .limit   = limit > 0 ? limit : 0,
-    .opaque  = &ectx,
+    .db = db,
+    .q = q,
+    .skip = skip > 0 ? skip : 0,
+    .limit = limit > 0 ? limit : 0,
+    .opaque = &ectx,
     .visitor = cbObj ? jbn_exec_visitor : 0,
-    .log     = log
+    .log = log
   };
 
   rc = ejdb_exec(&ux);
@@ -875,11 +874,11 @@ JNIEXPORT jlong JNICALL Java_com_softmotions_ejdb2_JQL__1execute_1scalar_1long(
   }
 
   EJDB_EXEC ux = {
-    .db    = db,
-    .q     = q,
-    .skip  = skip > 0 ? skip : 0,
+    .db = db,
+    .q = q,
+    .skip = skip > 0 ? skip : 0,
     .limit = limit > 0 ? limit : 0,
-    .log   = log
+    .log = log
   };
 
   rc = ejdb_exec(&ux);
@@ -1005,7 +1004,6 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_JQL__1set_1long(
   jint    pos,
   jstring placeholder_,
   jlong   val) {
-
   JQL q;
   iwrc rc;
   const char *placeholder = 0;
@@ -1139,7 +1137,7 @@ finish:
   return (jlong) skip;
 }
 
-static const char *jbn_ecodefn(locale_t locale, uint32_t ecode) {
+static const char* jbn_ecodefn(locale_t locale, uint32_t ecode) {
   if (!((ecode > _JBN_ERROR_START) && (ecode < _JBN_ERROR_END))) {
     return 0;
   }

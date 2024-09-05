@@ -85,51 +85,51 @@ static void ejd_rename_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_P
 static void ejd_bkp_wrapped(Dart_Port receive_port, Dart_CObject *msg, Dart_Port reply_port);
 
 static struct NativeFunctionLookup k_scoped_functions[] = {
-  { "port",          ejd_port          },
-  { "exec",          ejd_exec          },
-  { "check_exec",    ejd_exec_check    },
-  { "jql_set",       ejd_jql_set       },
+  { "port", ejd_port },
+  { "exec", ejd_exec },
+  { "check_exec", ejd_exec_check },
+  { "jql_set", ejd_jql_set },
   { "jql_get_limit", ejd_jql_get_limit },
-  { "create_query",  ejd_create_query  },
-  { "set_handle",    ejd_set_handle    },
-  { "get_handle",    ejd_get_handle    },
-  { "explain_rc",    ejd_explain_rc    },
-  { 0,               0                 }
+  { "create_query", ejd_create_query },
+  { "set_handle", ejd_set_handle },
+  { "get_handle", ejd_get_handle },
+  { "explain_rc", ejd_explain_rc },
+  { 0, 0 }
 };
 
 static struct WrapperFunctionLookup k_wrapped_functions[] = {
-  { "get",    ejd_get_wrapped    },
-  { "put",    ejd_put_wrapped    },
-  { "del",    ejd_del_wrapped    },
+  { "get", ejd_get_wrapped },
+  { "put", ejd_put_wrapped },
+  { "del", ejd_del_wrapped },
   { "rename", ejd_rename_wrapped },
-  { "patch",  ejd_patch_wrapped  },
-  { "idx",    ejd_idx_wrapped    },
-  { "rmi",    ejd_rmi_wrapped    },
-  { "rmc",    ejd_rmc_wrapped    },
-  { "info",   ejd_info_wrapped   },
-  { "open",   ejd_open_wrapped   },
-  { "close",  ejd_close_wrapped  },
-  { "bkp",    ejd_bkp_wrapped    },
-  { 0,        0                  }
+  { "patch", ejd_patch_wrapped },
+  { "idx", ejd_idx_wrapped },
+  { "rmi", ejd_rmi_wrapped },
+  { "rmc", ejd_rmc_wrapped },
+  { "info", ejd_info_wrapped },
+  { "open", ejd_open_wrapped },
+  { "close", ejd_close_wrapped },
+  { "bkp", ejd_bkp_wrapped },
+  { 0, 0 }
 };
 
 #define EJTH(h_) ejd_error_check_propagate(h_)
 
-#define EJGO(h_, rh_, label_) \
-  if (Dart_IsError(h_)) {   \
-    rh_ = (h_);             \
-    goto label_;            \
-  }
+#define EJGO(h_, rh_, label_)   \
+        if (Dart_IsError(h_)) { \
+          rh_ = (h_);           \
+          goto label_;          \
+        }
 
 #define EJLIB() EJTH(Dart_LookupLibrary(Dart_NewStringFromCString("package:ejdb2_dart/ejdb2_dart.dart")))
 
-#define EJPORT_RC(co_, rc_)               \
-  if (rc_) {                              \
-    (co_)->type = Dart_CObject_kInt64;    \
-    (co_)->value.as_int64 = (rc_);        \
-  }
+#define EJPORT_RC(co_, rc_)                  \
+        if (rc_) {                           \
+          (co_)->type = Dart_CObject_kInt64; \
+          (co_)->value.as_int64 = (rc_);     \
+        }
 
-IW_INLINE char *cobject_str(Dart_CObject *co, bool nulls, iwrc *rcp) {
+IW_INLINE char* cobject_str(Dart_CObject *co, bool nulls, iwrc *rcp) {
   *rcp = 0;
   if (co) {
     if (co->type == Dart_CObject_kString) {
@@ -1452,7 +1452,7 @@ finish:
 //
 ///////////////////////////////////////////////////////////////////////////
 
-static const char *ejd_ecodefn(locale_t locale, uint32_t ecode) {
+static const char* ejd_ecodefn(locale_t locale, uint32_t ecode) {
   if (!((ecode > _EJD_ERROR_START) && (ecode < _EJD_ERROR_END))) {
     return 0;
   }

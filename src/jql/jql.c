@@ -131,8 +131,7 @@ finish:
 
 iwrc jql_set_json2(
   JQL q, const char *placeholder, int index, JBL_NODE val,
-  void (*freefn)(void*, void*), void *op
-  ) {
+  void (*freefn)(void*, void*), void *op) {
   JQVAL *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -213,8 +212,7 @@ iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val) {
 
 iwrc jql_set_str2(
   JQL q, const char *placeholder, int index, const char *val,
-  void (*freefn)(void*, void*), void *op
-  ) {
+  void (*freefn)(void*, void*), void *op) {
   if (val == 0) {
     if (freefn) {
       freefn((void*) val, op);
@@ -276,8 +274,7 @@ iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
 
 iwrc jql_set_regexp2(
   JQL q, const char *placeholder, int index, const char *expr,
-  void (*freefn)(void*, void*), void *op
-  ) {
+  void (*freefn)(void*, void*), void *op) {
   iwrc rc = 0;
   JQVAL *qv = 0;
   struct iwre *rx = (expr && *expr != '\0') ? iwre_create(expr) : IWRE_UNUSED_PTR;
@@ -766,8 +763,7 @@ int jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp) {
 static bool _jql_match_regexp(
   JQP_AUX *aux,
   JQVAL *left, JQP_OP *jqop, JQVAL *right,
-  iwrc *rcp
-  ) {
+  iwrc *rcp) {
   struct iwre *rx;
   char nbuf[IWNUMBUF_SIZE];
   JQVAL sleft, sright; // Stack allocated left/right converted values
@@ -870,8 +866,7 @@ static bool _jql_match_regexp(
 
 static bool _jql_match_in(
   JQVAL *left, JQP_OP *jqop, JQVAL *right,
-  iwrc *rcp
-  ) {
+  iwrc *rcp) {
   JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   if ((rv->type != JQVAL_JBLNODE) && (rv->vnode->type != JBV_ARRAY)) {
@@ -905,8 +900,7 @@ static bool _jql_match_in(
 
 static bool _jql_match_ni(
   JQVAL *left, JQP_OP *jqop, JQVAL *right,
-  iwrc *rcp
-  ) {
+  iwrc *rcp) {
   JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   binn bv;
@@ -949,8 +943,7 @@ static bool _jql_match_ni(
 
 static bool _jql_match_starts(
   JQVAL *left, JQP_OP *jqop, JQVAL *right,
-  iwrc *rcp
-  ) {
+  iwrc *rcp) {
   JQVAL sleft; // Stack allocated left/right converted values
   JQVAL *lv = left, *rv = right;
   char nbuf[IWNUMBUF_SIZE];
@@ -1017,8 +1010,7 @@ static bool _jql_match_starts(
 static bool _jql_match_jqval_pair(
   JQP_AUX *aux,
   JQVAL *left, JQP_OP *jqop, JQVAL *right,
-  iwrc *rcp
-  ) {
+  iwrc *rcp) {
   bool match = false;
   jqp_op_t op = jqop->value;
   if ((op >= JQP_OP_EQ) && (op <= JQP_OP_LTE)) {
@@ -1079,8 +1071,7 @@ finish:
 bool jql_match_jqval_pair(
   JQP_AUX *aux,
   JQVAL *left, JQP_OP *jqop, JQVAL *right,
-  iwrc *rcp
-  ) {
+  iwrc *rcp) {
   return _jql_match_jqval_pair(aux, left, jqop, right, rcp);
 }
 
@@ -1584,8 +1575,7 @@ static bool _jql_proj_matched(
   int16_t lvl, JBL_NODE n,
   const char *key, int keylen,
   JBN_VCTX *vctx, JQP_PROJECTION *proj,
-  iwrc *rc
-  ) {
+  iwrc *rc) {
   if (proj->cnt <= lvl) {
     return false;
   }
@@ -1594,7 +1584,7 @@ static bool _jql_proj_matched(
   }
   if (proj->pos + 1 == lvl) {
     JQP_STRING *ps = proj->value;
-    for (int i = 0; i < lvl; ps = ps->next, ++i);  // -V529
+    for (int i = 0; i < lvl; ps = ps->next, ++i); // -V529
     assert(ps);
     if (ps->flavour & JQP_STR_PROJFIELD) {
       for (JQP_STRING *sn = ps; sn; sn = sn->subnext) {
@@ -1622,8 +1612,7 @@ static bool _jql_proj_join_matched(
   const char *key, int keylen,
   JBN_VCTX *vctx, JQP_PROJECTION *proj,
   JBL *out,
-  iwrc *rcp
-  ) {
+  iwrc *rcp) {
   PROJ_CTX *pctx = vctx->op;
   if (proj->cnt != lvl + 1) {
     return _jql_proj_matched(lvl, n, key, keylen, vctx, proj, rcp);
@@ -1634,7 +1623,7 @@ static bool _jql_proj_join_matched(
   const char *pv, *spos;
   bool ret = false;
   JQP_STRING *ps = proj->value;
-  for (int i = 0; i < lvl; ps = ps->next, ++i);  // -V529
+  for (int i = 0; i < lvl; ps = ps->next, ++i); // -V529
   assert(ps);
 
   if (ps->flavour & JQP_STR_PROJFIELD) {
@@ -1763,8 +1752,7 @@ static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key,
 
 static jbn_visitor_cmd_t _jql_proj_keep_visitor(
   int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx,
-  iwrc *rc
-  ) {
+  iwrc *rc) {
   if ((lvl < 0) || (n->flags & PROJ_MARK_PATH)) {
     return 0;
   }

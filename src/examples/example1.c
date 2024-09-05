@@ -1,11 +1,11 @@
 /// Sample records put/query example
 #include <ejdb2.h>
 
-#define CHECK(rc_)          \
-  if (rc_) {                 \
-    iwlog_ecode_error3(rc_); \
-    return 1;                \
-  }
+#define CHECK(rc_)                 \
+        if (rc_) {                 \
+          iwlog_ecode_error3(rc_); \
+          return 1;                \
+        }
 
 static iwrc documents_visitor(EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
   // Print document to stderr
@@ -13,10 +13,9 @@ static iwrc documents_visitor(EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step)
 }
 
 int main() {
-
   EJDB_OPTS opts = {
-    .kv       = {
-      .path   = "example.db",
+    .kv = {
+      .path = "example.db",
       .oflags = IWKV_TRUNC
     }
   };
@@ -50,8 +49,8 @@ int main() {
   RCGO(rc, finish);
 
   EJDB_EXEC ux = {
-    .db      = db,
-    .q       = q,
+    .db = db,
+    .q = q,
     .visitor = documents_visitor
   };
 

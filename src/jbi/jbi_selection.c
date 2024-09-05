@@ -268,8 +268,7 @@ static iwrc _jbi_collect_indexes(
   JBEXEC                     *ctx,
   const struct jqp_expr_node *en,
   struct _JBMIDX              marr[static JB_SOLID_EXPRNUM],
-  size_t                     *snp
-  ) {
+  size_t                     *snp) {
   iwrc rc = 0;
   if (*snp >= JB_SOLID_EXPRNUM - 1) {
     return 0;

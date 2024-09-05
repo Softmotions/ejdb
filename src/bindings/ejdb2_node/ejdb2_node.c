@@ -26,44 +26,44 @@ IW_INLINE bool jn_is_exception_pending(napi_env env) {
 }
 
 #define JNTHROW(env, rc, message) \
-  jn_throw_error(env, rc, "ejdb2_node.c" ":" STR(__LINE__), message)
+        jn_throw_error(env, rc, "ejdb2_node.c" ":" STR(__LINE__), message)
 
-#define JNTHROW_LAST(env) do {                         \
-    const napi_extended_error_info *info = 0;          \
-    napi_get_last_error_info((env), &info);            \
-    if (info) JNTHROW((env), 0, info->error_message);  \
+#define JNTHROW_LAST(env) do {                              \
+          const napi_extended_error_info *info = 0;         \
+          napi_get_last_error_info((env), &info);           \
+          if (info) JNTHROW((env), 0, info->error_message); \
 } while (0)
 
-#define JNCHECK(ns, env) do {                   \
-    if (ns && ns != napi_pending_exception) {   \
-      JNTHROW_LAST(env);                        \
-    }                                           \
+#define JNCHECK(ns, env) do {                       \
+          if (ns && ns != napi_pending_exception) { \
+            JNTHROW_LAST(env);                      \
+          }                                         \
 } while (0)
 
-#define JNRC(env, rc) do {                      \
-    if (rc && !jn_is_exception_pending(env)) {  \
-      JNTHROW(env, rc, 0);                      \
-    }                                           \
+#define JNRC(env, rc) do {                           \
+          if (rc && !jn_is_exception_pending(env)) { \
+            JNTHROW(env, rc, 0);                     \
+          }                                          \
 } while (0)
 
 #define JNRET(ns, env, call, res) do {          \
-    ns = (call);                                \
-    if (ns) {                                   \
-      if (ns != napi_pending_exception) {       \
-        JNTHROW_LAST(env);                      \
-      }                                         \
-      return (res);                             \
-    }                                           \
+          ns = (call);                          \
+          if (ns) {                             \
+            if (ns != napi_pending_exception) { \
+              JNTHROW_LAST(env);                \
+            }                                   \
+            return (res);                       \
+          }                                     \
 } while (0)
 
 #define JNGO(ns, env, call, label) do {         \
-    ns = (call);                                \
-    if (ns) {                                   \
-      if (ns != napi_pending_exception) {       \
-        JNTHROW_LAST(env);                      \
-      }                                         \
-      goto label;                               \
-    }                                           \
+          ns = (call);                          \
+          if (ns) {                             \
+            if (ns != napi_pending_exception) { \
+              JNTHROW_LAST(env);                \
+            }                                   \
+            goto label;                         \
+          }                                     \
 } while (0)
 
 static napi_value jn_create_error(napi_env env, iwrc rc, const char *location, const char *msg) {
@@ -203,7 +203,7 @@ IW_INLINE napi_value jn_create_int64(napi_env env, int64_t val) {
   return ret;
 }
 
-static char *jn_string(napi_env env, napi_value val_, IWPOOL *pool, bool nulls, bool coerce, iwrc *rcp) {
+static char* jn_string(napi_env env, napi_value val_, IWPOOL *pool, bool nulls, bool coerce, iwrc *rcp) {
   *rcp = 0;
   size_t len = 0;
   napi_status ns = 0;
@@ -242,7 +242,7 @@ static char *jn_string(napi_env env, napi_value val_, IWPOOL *pool, bool nulls, 
   return buf;
 }
 
-static char *jn_string_at(
+static char* jn_string_at(
   napi_env env, IWPOOL *pool, napi_value arr,
   bool nulls, bool coerce, uint32_t idx, iwrc *rcp) {
   *rcp = 0;
@@ -410,7 +410,7 @@ static JNWORK jn_work_create(iwrc *rcp) {
   return w;
 }
 
-static void *jn_work_alloc_data(size_t siz, JNWORK work, iwrc *rcp) {
+static void* jn_work_alloc_data(size_t siz, JNWORK work, iwrc *rcp) {
   *rcp = 0;
   work->data = iwpool_calloc(siz, work->pool);
   if (!work->data) {
@@ -1445,7 +1445,6 @@ static void jn_resultset_tsf(
   napi_value js_add_stream,
   void      *context,
   void      *data) {
-
   if (!env) { // shutdown pending
     JNCS cs = data;
     jn_cs_destroy(&cs);
@@ -2008,7 +2007,7 @@ finish:
 
 // ----------------
 
-static const char *jn_ecodefn(locale_t locale, uint32_t ecode) {
+static const char* jn_ecodefn(locale_t locale, uint32_t ecode) {
   if (!((ecode > _JN_ERROR_START) && (ecode < _JN_ERROR_END))) {
     return 0;
   }

@@ -49,8 +49,7 @@
 /* a and b must not be equal! */
 static _SORT_R_INLINE void sort_r_swap(
   char* __restrict a, char* __restrict b,
-  size_t w
-  ) {
+  size_t w) {
   char tmp, *end = a + w;
   for ( ; a < end; a++, b++) {
     SORT_R_SWAP(*a, *b, tmp);
@@ -68,8 +67,7 @@ static _SORT_R_INLINE int sort_r_cmpswap(
   int (*compar)(const void *_a,
                 const void *_b,
                 void *_arg),
-  void *arg
-  ) {
+  void *arg) {
   if (compar(a, b, arg) > 0) {
     sort_r_swap(a, b, w);
     return 1;
@@ -104,8 +102,7 @@ static _SORT_R_INLINE void sort_r_simple(
   int (*compar)(const void *_a,
                 const void *_b,
                 void *_arg),
-  void *arg
-  ) {
+  void *arg) {
   char *b = (char*) base, *end = b + nel * w;
 
   /* for(size_t i=0; i<nel; i++) {printf("%4i", *(int*)(b + i*sizeof(int)));}
@@ -242,8 +239,7 @@ static _SORT_R_INLINE void sort_r(
   int (*compar)(const void *_a,
                 const void *_b,
                 void *aarg),
-  void *arg
-  ) {
+  void *arg) {
   int nested_cmp(const void *a, const void *b) {
     return compar(a, b, arg);
   }
@@ -277,8 +273,7 @@ struct sort_r_data {
 
 static _SORT_R_INLINE int sort_r_arg_swap(
   void *s,
-  const void *a, const void *b
-  ) {
+  const void *a, const void *b) {
   struct sort_r_data *ss = (struct sort_r_data*) s;
   return (ss->compar)(a, b, ss->arg);
 }
@@ -301,8 +296,7 @@ static _SORT_R_INLINE void sort_r(
   void *base, size_t nel, size_t width,
   int (*compar)(const void *_a,
                 const void *_b, void *_arg),
-  void *arg
-  ) {
+  void *arg) {
     #if defined _SORT_R_LINUX
 
       #if defined __GLIBC__ && ((__GLIBC__ < 2) || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 8))
