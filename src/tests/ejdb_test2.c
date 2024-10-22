@@ -67,7 +67,7 @@ struct TEST21_1 {
   IWXSTR *xstr;
 };
 
-static iwrc ejdb_test2_1_exec_visitor1(struct _EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
+static iwrc ejdb_test2_1_exec_visitor1(struct ejdb_exec *ctx, const EJDB_DOC doc, int64_t *step) {
   struct TEST21_1 *tc = ctx->opaque;
   JBL jbl;
   iwrc rc = jbl_at(doc->raw, "/f", &jbl);

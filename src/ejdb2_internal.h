@@ -29,7 +29,6 @@
  *************************************************************************************************/
 
 #include "ejdb2.h"
-#include "jql.h"
 #ifdef JB_HTTP
 #include "jbr.h"
 #endif
@@ -85,71 +84,71 @@
           API_UNLOCK((jbc_)->db, rci_, rc_);                                   \
         } while (0)
 
-struct _JBIDX;
-typedef struct _JBIDX*JBIDX;
+struct jbidx;
+typedef struct jbidx*JBIDX;
 
 /** Database collection */
-typedef struct _JBCOLL {
-  uint32_t    dbid;         /**< IWKV collection database ID */
-  const char *name;         /**< Collection name */
-  IWDB    cdb;              /**< IWKV collection database */
-  EJDB    db;               /**< Main database reference */
-  JBL     meta;             /**< Collection meta object */
-  JBIDX   idx;              /**< First index in chain */
-  int64_t rnum;             /**< Number of records stored in collection */
+typedef struct jbcoll {
+  uint32_t      dbid;       /**< IWKV collection database ID */
+  const char   *name;       /**< Collection name */
+  struct iwdb  *cdb;        /**< IWKV collection database */
+  struct ejdb  *db;         /**< Main database reference */
+  struct jbl   *meta;       /**< Collection meta object */
+  struct jbidx *idx;        /**< First index in chain */
+  int64_t       rnum;       /**< Number of records stored in collection */
   pthread_rwlock_t rwl;
   int64_t id_seq;
 } *JBCOLL;
 
 /** Database collection index */
-struct _JBIDX {
-  struct _JBIDX *next;      /**< Next index in chain */
-  int64_t  rnum;            /**< Number of records stored in index */
-  JBCOLL   jbc;             /**< Owner document collection */
-  JBL_PTR  ptr;             /**< Indexed JSON path poiner 0*/
-  IWDB     idb;             /**< KV database for this index */
-  uint32_t dbid;            /**< IWKV collection database ID */
-  ejdb_idx_mode_t mode;     /**< Index mode/type mask */
-  iwdb_flags_t    idbf;     /**< Index database flags */
+struct jbidx {
+  struct jbidx *next;      /**< Next index in chain */
+  int64_t       rnum;      /**< Number of records stored in index */
+  struct jbcoll *jbc;      /**< Owner document collection */
+  JBL_PTR      ptr;        /**< Indexed JSON path poiner 0*/
+  struct iwdb *idb;        /**< KV database for this index */
+  uint32_t     dbid;       /**< IWKV collection database ID */
+  ejdb_idx_mode_t mode;    /**< Index mode/type mask */
+  iwdb_flags_t    idbf;    /**< Index database flags */
 };
 
 /** Pair: collection name, document id */
-struct _JBDOCREF {
+struct jbdocref {
   int64_t     id;
   const char *coll;
 };
 
-struct _EJDB {
-  IWKV iwkv;
-  IWDB metadb;
-  IWDB nrecdb;
+struct ejdb {
+  struct iwkv *iwkv;
+  struct iwdb *metadb;
+  struct iwdb *nrecdb;
 #ifdef JB_HTTP
-  JBR jbr;
+  struct jbr *jbr;
 #endif
-  IWHMAP *mcolls;
-  iwkv_openflags    oflags;
-  pthread_rwlock_t  rwl;      /**< Main RWL */
-  struct _EJDB_OPTS opts;
-  volatile bool     open;
+  struct iwhmap   *mcolls;
+  iwkv_openflags   oflags;
+  pthread_rwlock_t rwl;      /**< Main RWL */
+  struct ejdb_opts opts;
+  volatile bool    open;
 };
 
 struct _JBPHCTX {
-  int64_t  id;
-  JBCOLL   jbc;
-  JBL      jbl;
-  IWKV_val oldval;
+  int64_t id;
+  struct jbcoll  *jbc;
+  struct jbl     *jbl;
+  struct iwkv_val oldval;
 };
 
-struct _JBEXEC;
+struct jbexec;
 
-typedef iwrc (*JB_SCAN_CONSUMER)(
-  struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id,
+typedef iwrc (*jb_scan_consumer)(
+  struct jbexec *ctx, struct iwkv_cursor *cur, int64_t id,
   int64_t *step, bool *matched, iwrc err);
 
 /**
  * @brief Index scan sorter consumer context
  */
-struct _JBSSC {
+struct jbssc {
   iwrc      rc;               /**< RC code used for in `_jb_do_sorting` */
   uint32_t *refs;             /**< Document references array */
   uint32_t  refs_asz;         /**< Document references array allocated size */
@@ -162,34 +161,36 @@ struct _JBSSC {
   bool      sof_active;
 };
 
-struct _JBMIDX {
-  JBIDX       idx;                    /**< Index matched this filter */
-  JQP_FILTER *filter;                 /**< Query filter */
-  JQP_EXPR   *nexpr;                  /**< Filter node expression */
-  JQP_EXPR   *expr1;                  /**< Start index expression (optional) */
-  JQP_EXPR   *expr2;                  /**< End index expression (optional) */
-  IWKV_cursor_op cursor_init;         /**< Initial index cursor position (optional) */
-  IWKV_cursor_op cursor_step;         /**< Next index cursor step */
+struct jbmidx {
+  struct jbidx      *idx;             /**< Index matched this filter */
+  struct jqp_filter *filter;          /**< Query filter */
+  struct jqp_expr   *nexpr;           /**< Filter node expression */
+  struct jqp_expr   *expr1;           /**< Start index expression (optional) */
+  struct jqp_expr   *expr2;           /**< End index expression (optional) */
+  enum iwkv_cursor_op cursor_init;    /**< Initial index cursor position (optional) */
+  enum iwkv_cursor_op cursor_step;    /**< Next index cursor step */
   bool orderby_support;               /**< Index supported first order-by clause */
 };
 
-typedef struct _JBEXEC {
-  EJDB_EXEC *ux;           /**< User defined context */
-  JBCOLL     jbc;          /**< Collection */
+typedef struct jbexec {
+  struct ejdb_exec *ux;           /**< User defined context */
+  struct jbcoll    *jbc;          /**< Collection */
 
   int64_t istep;
-  iwrc (*scanner)(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-  uint8_t *jblbuf;            /**< Buffer used to keep currently processed document */
-  size_t   jblbufsz;          /**< Size of jblbuf allocated memory */
-  bool     sorting;           /**< Resultset sorting needed */
-  IWKV_cursor_op cursor_init; /**< Initial index cursor position (optional) */
-  IWKV_cursor_op cursor_step; /**< Next index cursor step */
-  struct _JBMIDX midx;        /**< Index matching context */
-  struct _JBSSC  ssc;         /**< Result set sorting context */
+  iwrc (*scanner)(
+    struct jbexec   *ctx,
+    jb_scan_consumer consumer);
+  uint8_t *jblbuf;                 /**< Buffer used to keep currently processed document */
+  size_t   jblbufsz;               /**< Size of jblbuf allocated memory */
+  bool     sorting;                /**< Resultset sorting needed */
+  enum iwkv_cursor_op cursor_init; /**< Initial index cursor position (optional) */
+  enum iwkv_cursor_op cursor_step; /**< Next index cursor step */
+  struct jbmidx midx;              /**< Index matching context */
+  struct jbssc  ssc;               /**< Result set sorting context */
 
   // JQL joned nodes cache
-  IWHMAP *proj_joined_nodes_cache;
-  IWPOOL *proj_joined_nodes_pool;
+  struct iwhmap *proj_joined_nodes_cache;
+  struct iwpool *proj_joined_nodes_pool;
 } JBEXEC;
 
 
@@ -202,26 +203,37 @@ typedef uint8_t jb_coll_acquire_t;
 #define JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE  10
 #define JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO 200
 
-void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]);
-void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]);
-void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]);
+void jbi_jbl_fill_ikey(struct jbidx *idx, struct jbl *jbv, struct iwkv_val *ikey, char numbuf[static IWNUMBUF_SIZE]);
+void jbi_jqval_fill_ikey(
+  struct jbidx *idx, const struct jqval *jqval, struct iwkv_val *ikey,
+  char numbuf[static IWNUMBUF_SIZE]);
+void jbi_node_fill_ikey(
+  struct jbidx *idx, struct jbl_node *node, struct iwkv_val *ikey,
+  char numbuf[static IWNUMBUF_SIZE]);
 
-iwrc jbi_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
-iwrc jbi_sorter_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err);
-iwrc jbi_full_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-iwrc jbi_selection(JBEXEC *ctx);
-iwrc jbi_pk_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-iwrc jbi_uniq_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-iwrc jbi_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer);
-bool jbi_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR *expr, iwrc *rcp);
+iwrc jbi_consumer(struct jbexec *ctx, struct iwkv_cursor *cur, int64_t id, int64_t *step, bool *matched, iwrc err);
+iwrc jbi_sorter_consumer(
+  struct jbexec *ctx, struct iwkv_cursor *cur, int64_t id, int64_t *step, bool *matched,
+  iwrc err);
+iwrc jbi_full_scanner(struct jbexec *ctx, jb_scan_consumer consumer);
+iwrc jbi_selection(struct jbexec *ctx);
+iwrc jbi_pk_scanner(struct jbexec *ctx, jb_scan_consumer consumer);
+iwrc jbi_uniq_scanner(struct jbexec *ctx, jb_scan_consumer consumer);
+iwrc jbi_dup_scanner(struct jbexec *ctx, jb_scan_consumer consumer);
+bool jbi_node_expr_matched(
+  struct jqp_aux     *aux,
+  struct jbidx       *idx,
+  struct iwkv_cursor *cur,
+  struct jqp_expr    *expr,
+  iwrc               *rcp);
 
-iwrc jb_get(EJDB db, const char *coll, int64_t id, jb_coll_acquire_t acm, JBL *jblp);
-iwrc jb_put(JBCOLL jbc, JBL jbl, int64_t id);
-iwrc jb_del(JBCOLL jbc, JBL jbl, int64_t id);
-iwrc jb_cursor_set(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
-iwrc jb_cursor_del(JBCOLL jbc, IWKV_cursor cur, int64_t id, JBL jbl);
+iwrc jb_get(struct ejdb *db, const char *coll, int64_t id, jb_coll_acquire_t acm, struct jbl **jblp);
+iwrc jb_put(struct jbcoll *jbc, struct jbl *jbl, int64_t id);
+iwrc jb_del(struct jbcoll *jbc, struct jbl *jbl, int64_t id);
+iwrc jb_cursor_set(struct jbcoll *jbc, struct iwkv_cursor *cur, int64_t id, JBL jbl);
+iwrc jb_cursor_del(struct jbcoll *jbc, struct iwkv_cursor *cur, int64_t id, JBL jbl);
 
-iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, JBEXEC *ctx);
+iwrc jb_collection_join_resolver(int64_t id, const char *coll, struct jbl **out, struct jbexec *ctx);
 int jb_proj_node_cache_cmp(const void *v1, const void *v2);
 void jb_proj_node_kvfree(void *key, void *val);
 uint32_t jb_proj_node_hash(const void *key);

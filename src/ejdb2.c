@@ -735,7 +735,7 @@ static void _jb_exec_scan_release(JBEXEC *ctx) {
   free(ctx->jblbuf);
 }
 
-static iwrc _jb_noop_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
+static iwrc _jb_noop_visitor(struct ejdb_exec *ctx, EJDB_DOC doc, int64_t *step) {
   return 0;
 }
 
@@ -795,7 +795,7 @@ static iwrc _jb_exec_upsert_lw(JBEXEC *ctx) {
   RCC(rc, finish, _jb_put_new_lw(ctx->jbc, jbl, &id));
 
   if (!(q->aux->qmode & JQP_QRY_AGGREGATE)) {
-    struct _EJDB_DOC doc = {
+    struct ejdb_doc doc = {
       .id = id,
       .raw = jbl,
       .node = n
@@ -881,10 +881,10 @@ struct JB_LIST_VISITOR_CTX {
   EJDB_DOC tail;
 };
 
-static iwrc _jb_exec_list_visitor(struct _EJDB_EXEC *ctx, EJDB_DOC doc, int64_t *step) {
+static iwrc _jb_exec_list_visitor(struct ejdb_exec *ctx, EJDB_DOC doc, int64_t *step) {
   struct JB_LIST_VISITOR_CTX *lvc = ctx->opaque;
   IWPOOL *pool = ctx->pool;
-  struct _EJDB_DOC *ndoc = iwpool_alloc(sizeof(*ndoc) + sizeof(*doc->raw) + doc->raw->bn.size, pool);
+  struct ejdb_doc *ndoc = iwpool_alloc(sizeof(*ndoc) + sizeof(*doc->raw) + doc->raw->bn.size, pool);
   if (!ndoc) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -915,7 +915,7 @@ static iwrc _jb_list(EJDB db, JQL q, EJDB_DOC *first, int64_t limit, IWXSTR *log
   }
   iwrc rc = 0;
   struct JB_LIST_VISITOR_CTX lvc = { 0 };
-  struct _EJDB_EXEC ux = {
+  struct ejdb_exec ux = {
     .db = db,
     .q = q,
     .visitor = _jb_exec_list_visitor,
@@ -937,7 +937,7 @@ static iwrc _jb_count(EJDB db, JQL q, int64_t *count, int64_t limit, IWXSTR *log
   if (!db || !q || !count) {
     return IW_ERROR_INVALID_ARGS;
   }
-  struct _EJDB_EXEC ux = {
+  struct ejdb_exec ux = {
     .db = db,
     .q = q,
     .limit = limit,
@@ -1555,8 +1555,8 @@ iwrc jb_collection_join_resolver(int64_t id, const char *coll, JBL *out, JBEXEC 
 }
 
 int jb_proj_node_cache_cmp(const void *v1, const void *v2) {
-  const struct _JBDOCREF *r1 = v1;
-  const struct _JBDOCREF *r2 = v2;
+  const struct jbdocref *r1 = v1;
+  const struct jbdocref *r2 = v2;
   int ret = r1->id > r2->id ? 1 : r1->id < r2->id ? -1 : 0;
   if (!ret) {
     return strcmp(r1->coll, r2->coll);
@@ -1569,7 +1569,7 @@ void jb_proj_node_kvfree(void *key, void *val) {
 }
 
 uint32_t jb_proj_node_hash(const void *key) {
-  const struct _JBDOCREF *ref = key;
+  const struct jbdocref *ref = key;
   return wyhash32(key, sizeof(ref), 0xd31c3939);
 }
 

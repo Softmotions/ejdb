@@ -35,11 +35,11 @@ IW_EXTERN_C_START;
 struct jbr;
 typedef struct jbr*JBR;
 
-iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, JBR *out_jbr);
+iwrc jbr_start(struct ejdb *db, const struct ejdb_opts *opts, struct jbr **out_jbr);
 
-void jbr_shutdown_request(EJDB db);
+void jbr_shutdown_request(struct ejdb *db);
 
-void jbr_shutdown_wait(JBR jbr);
+void jbr_shutdown_wait(struct jbr *jbr);
 
 iwrc jbr_init(void);
 

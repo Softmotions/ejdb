@@ -1,3 +1,5 @@
+# WARNING: Unsupported now. Maintainer needed.
+
 # EJDB2 Dart VM native binding
 
 Embeddable JSON Database engine http://ejdb.org Dart binding.
@@ -46,4 +48,3 @@ make
 cd src/bindings/ejdb2_dart/ejdb2_dart
 pub get
 ```
-

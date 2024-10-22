@@ -51,17 +51,17 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 
 ## EJDB2 platforms matrix
 
-|              | Linux              | macOS               | iOS                | Android            | Windows            |
-| ---          | ---                | ---                 | ---                | ---                | ---                |
-| C library    | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:<sup>1</sup> |
-| NodeJS       | :heavy_check_mark: | :heavy_check_mark:  |                    |                    | :x:<sup>3</sup>    |
-| DartVM       | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |         |                    | :x:<sup>3</sup>    |
-| Flutter      |                    |                     | :heavy_check_mark: | :heavy_check_mark: |                    |
-| React Native |                    |                     | :x:<sup>4</sup>    | :heavy_check_mark: |                    |
-| Swift        | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: |                    |                    |
-| Java         | :heavy_check_mark: | :heavy_check_mark:  |                    | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |
+|                          | Linux              | macOS               | iOS                | Android            | Windows            |
+| ---                      | ---                | ---                 | ---                | ---                | ---                |
+| C library                | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:<sup>1</sup> |
+| NodeJS                   | :heavy_check_mark: | :heavy_check_mark:  |                    |                    | :x:<sup>3</sup>    |
+| Java                     | :heavy_check_mark: | :heavy_check_mark:  |                    | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |
+| DartVM<sup>5</sup>       | :heavy_check_mark: | :heavy_check_mark:<sup>2</sup> |         |                    | :x:<sup>3</sup>    |
+| Flutter<sup>5</sup>      |                    |                     | :heavy_check_mark: | :heavy_check_mark: |                    |
+| React Native<sup>5</sup> |                    |                     | :x:<sup>4</sup>    | :heavy_check_mark: |                    |
+| Swift<sup>5</sup>        | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: |                    |                    |
 
-
+<br> `[5]` **Bindings are unmaintained** Contributors needed.
 <br> `[1]` No HTTP/Websocket support [#257](https://github.com/Softmotions/ejdb/issues/257)
 <br> `[2]` Binaries are not distributed with dart `pub.` You can build it [manually](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_node#how-build-it-manually)
 <br> `[3]` Can be build, but needed a linkage with windows node/dart `libs`.

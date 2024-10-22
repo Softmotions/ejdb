@@ -1,13 +1,13 @@
 #include "ejdb2_internal.h"
 
-static iwrc _jbi_consume_eq(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_eq(struct jbexec *ctx, JQVAL *jqval, jb_scan_consumer consumer) {
   iwrc rc;
   bool matched;
   IWKV_cursor cur;
   char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1;
-  struct _JBMIDX *midx = &ctx->midx;
+  struct jbmidx *midx = &ctx->midx;
   JBIDX idx = midx->idx;
   IWKV_cursor_op cursor_reverse_step = IWKV_CURSOR_NEXT;
   midx->cursor_step = IWKV_CURSOR_PREV;
@@ -59,7 +59,7 @@ static int _jbi_cmp_jqval(const void *v1, const void *v2) {
   return jql_cmp_jqval_pair(jqv1, jqv2, &rc);
 }
 
-static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_in_node(struct jbexec *ctx, JQVAL *jqval, jb_scan_consumer consumer) {
   int i;
   int64_t id;
   bool matched;
@@ -69,7 +69,7 @@ static iwrc _jbi_consume_in_node(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONS
   iwrc rc = 0;
   int64_t step = 1;
   IWKV_cursor cur = 0;
-  struct _JBMIDX *midx = &ctx->midx;
+  struct jbmidx *midx = &ctx->midx;
   JBIDX idx = midx->idx;
   IWKV_val key = { .compound = INT64_MIN };
   JBL_NODE nv = jqval->vnode->child;
@@ -135,13 +135,13 @@ finish:
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
-static iwrc _jbi_consume_scan(struct _JBEXEC *ctx, JQVAL *jqval, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_scan(struct jbexec *ctx, JQVAL *jqval, jb_scan_consumer consumer) {
   size_t sz;
   IWKV_cursor cur;
   char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1, prev_id = 0;
-  struct _JBMIDX *midx = &ctx->midx;
+  struct jbmidx *midx = &ctx->midx;
   JBIDX idx = midx->idx;
   jqp_op_t expr1_op = midx->expr1->op->value;
 
@@ -214,12 +214,12 @@ finish:
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
-static iwrc _jbi_consume_noxpr_scan(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+static iwrc _jbi_consume_noxpr_scan(struct jbexec *ctx, jb_scan_consumer consumer) {
   iwrc rc;
   size_t sz;
   IWKV_cursor cur;
   int64_t step = 1, prev_id = 0;
-  struct _JBMIDX *midx = &ctx->midx;
+  struct jbmidx *midx = &ctx->midx;
   IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_PREV)
                                        ? IWKV_CURSOR_NEXT : IWKV_CURSOR_PREV;
 
@@ -255,9 +255,9 @@ finish:
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
-iwrc jbi_dup_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+iwrc jbi_dup_scanner(struct jbexec *ctx, jb_scan_consumer consumer) {
   iwrc rc;
-  struct _JBMIDX *midx = &ctx->midx;
+  struct jbmidx *midx = &ctx->midx;
   if (!midx->expr1) {
     return _jbi_consume_noxpr_scan(ctx, consumer);
   }

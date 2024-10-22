@@ -719,7 +719,7 @@ typedef struct JBN_EXEC_CTX {
   jmethodID cbMid;
 } JBN_EXEC_CTX;
 
-static iwrc jbn_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
+static iwrc jbn_exec_visitor(struct ejdb_exec *ux, EJDB_DOC doc, int64_t *step) {
   iwrc rc = 0;
   jstring json = 0;
   JBN_EXEC_CTX *ectx = ux->opaque;

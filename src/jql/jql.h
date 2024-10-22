@@ -42,8 +42,8 @@
 
 IW_EXTERN_C_START;
 
-struct _JQL;
-typedef struct _JQL*JQL;
+struct jql;
+typedef struct jql*JQL;
 
 typedef enum {
   _JQL_ERROR_START = (IW_ERROR_START + 15000UL + 2000),
@@ -79,11 +79,11 @@ typedef uint8_t jql_create_mode_t;
  * @param coll Optional collection name used to execute query
  * @param query Query text
  */
-IW_EXPORT WUR iwrc jql_create(JQL *qptr, const char *coll, const char *query);
+IW_EXPORT WUR iwrc jql_create(struct jql * *qptr, const char *coll, const char *query);
 
-IW_EXPORT WUR iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode_t mode);
+IW_EXPORT WUR iwrc jql_create2(struct jql * *qptr, const char *coll, const char *query, jql_create_mode_t mode);
 
-IW_EXPORT const char* jql_collection(JQL q);
+IW_EXPORT const char* jql_collection(struct jql *q);
 
 /**
  * @brief Bind JSON node data to query placeholder.
@@ -91,17 +91,17 @@ IW_EXPORT const char* jql_collection(JQL q);
  *          Caller is responsible to maintain `val` availability during execution of query.
  * @see jql_set_json2()
  */
-IW_EXPORT WUR iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val);
+IW_EXPORT WUR iwrc jql_set_json(struct jql *q, const char *placeholder, int index, struct jbl_node *val);
 
 IW_EXPORT WUR iwrc jql_set_json2(
-  JQL q, const char *placeholder, int index, JBL_NODE val,
+  struct jql *q, const char *placeholder, int index, struct jbl_node *val,
   void (*freefn)(void*, void*), void *op);
 
-IW_EXPORT WUR iwrc jql_set_json_jbl(JQL q, const char *placeholder, int index, JBL jbl);
+IW_EXPORT WUR iwrc jql_set_json_jbl(struct jql *q, const char *placeholder, int index, JBL jbl);
 
-IW_EXPORT WUR iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val);
+IW_EXPORT WUR iwrc jql_set_i64(struct jql *q, const char *placeholder, int index, int64_t val);
 
-IW_EXPORT WUR iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val);
+IW_EXPORT WUR iwrc jql_set_f64(struct jql *q, const char *placeholder, int index, double val);
 
 /**
  * @brief Bind string data to query placeholder.
@@ -109,15 +109,15 @@ IW_EXPORT WUR iwrc jql_set_f64(JQL q, const char *placeholder, int index, double
  *          Caller is responsible to maintain `val` availability during execution of query.
  * @see jql_set_str2()
  */
-IW_EXPORT WUR iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val);
+IW_EXPORT WUR iwrc jql_set_str(struct jql *q, const char *placeholder, int index, const char *val);
 
 IW_EXPORT WUR iwrc jql_set_str2(
-  JQL q, const char *placeholder, int index, const char *val,
+  struct jql *q, const char *placeholder, int index, const char *val,
   void (*freefn)(void*, void*), void *op);
 
-IW_EXPORT WUR iwrc jql_set_str3(JQL q, const char *placeholder, int index, const char *val, size_t val_len);
+IW_EXPORT WUR iwrc jql_set_str3(struct jql *q, const char *placeholder, int index, const char *val, size_t val_len);
 
-IW_EXPORT WUR iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val);
+IW_EXPORT WUR iwrc jql_set_bool(struct jql *q, const char *placeholder, int index, bool val);
 
 
 /**
@@ -126,47 +126,52 @@ IW_EXPORT WUR iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool 
  *          Caller is responsible to maintain `val` availability during execution of query.
  * @see jql_set_regexp2()
  */
-IW_EXPORT WUR iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char *expr);
+IW_EXPORT WUR iwrc jql_set_regexp(struct jql *q, const char *placeholder, int index, const char *expr);
 
 IW_EXPORT WUR iwrc jql_set_regexp2(
-  JQL q, const char *placeholder, int index, const char *expr,
+  struct jql *q, const char *placeholder, int index, const char *expr,
   void (*freefn)(void*, void*), void *op);
 
-IW_EXPORT WUR iwrc jql_set_null(JQL q, const char *placeholder, int index);
+IW_EXPORT WUR iwrc jql_set_null(struct jql *q, const char *placeholder, int index);
 
-IW_EXPORT WUR iwrc jql_matched(JQL q, JBL jbl, bool *out);
+IW_EXPORT WUR iwrc jql_matched(struct jql *q, JBL jbl, bool *out);
 
-IW_EXPORT const char* jql_first_anchor(JQL q);
+IW_EXPORT const char* jql_first_anchor(struct jql *q);
 
-IW_EXPORT const char* jql_error(JQL q);
+IW_EXPORT const char* jql_error(struct jql *q);
 
-IW_EXPORT bool jql_has_apply(JQL q);
+IW_EXPORT bool jql_has_apply(struct jql *q);
 
-IW_EXPORT bool jql_has_apply_upsert(JQL q);
+IW_EXPORT bool jql_has_apply_upsert(struct jql *q);
 
-IW_EXPORT bool jql_has_apply_delete(JQL q);
+IW_EXPORT bool jql_has_apply_delete(struct jql *q);
 
-IW_EXPORT bool jql_has_projection(JQL q);
+IW_EXPORT bool jql_has_projection(struct jql *q);
 
-IW_EXPORT bool jql_has_orderby(JQL q);
+IW_EXPORT bool jql_has_orderby(struct jql *q);
 
-IW_EXPORT bool jql_has_aggregate_count(JQL q);
+IW_EXPORT bool jql_has_aggregate_count(struct jql *q);
 
-IW_EXPORT iwrc jql_get_skip(JQL q, int64_t *out);
+IW_EXPORT iwrc jql_get_skip(struct jql *q, int64_t *out);
 
-IW_EXPORT iwrc jql_get_limit(JQL q, int64_t *out);
+IW_EXPORT iwrc jql_get_limit(struct jql *q, int64_t *out);
 
-IW_EXPORT WUR iwrc jql_apply(JQL q, JBL_NODE root, IWPOOL *pool);
+IW_EXPORT WUR iwrc jql_apply(struct jql *q, struct jbl_node *root, struct iwpool *pool);
 
-IW_EXPORT WUR iwrc jql_project(JQL q, JBL_NODE root, IWPOOL *pool, void *exec_ctx);
+IW_EXPORT WUR iwrc jql_project(struct jql *q, struct jbl_node *root, struct iwpool *pool, void *exec_ctx);
 
-IW_EXPORT WUR iwrc jql_apply_and_project(JQL q, JBL jbl, JBL_NODE *out, void *exec_ctx, IWPOOL *pool);
+IW_EXPORT WUR iwrc jql_apply_and_project(
+  struct jql       *q,
+  struct jbl       *jbl,
+  struct jbl_node **out,
+  void             *exec_ctx,
+  struct iwpool    *pool);
 
-IW_EXPORT void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders);
+IW_EXPORT void jql_reset(struct jql *q, bool reset_match_cache, bool reset_placeholders);
 
-IW_EXPORT void jql_destroy(JQL *qptr);
+IW_EXPORT void jql_destroy(struct jql * *qptr);
 
-IW_EXPORT size_t jql_estimate_allocated_size(JQL q);
+IW_EXPORT size_t jql_estimate_allocated_size(struct jql *q);
 
 IW_EXPORT WUR iwrc jql_init(void);
 

@@ -1,8 +1,8 @@
 #include "ejdb2_internal.h"
 #include "sort_r.h"
 
-static void _jbi_scan_sorter_release(struct _JBEXEC *ctx) {
-  struct _JBSSC *ssc = &ctx->ssc;
+static void _jbi_scan_sorter_release(struct jbexec *ctx) {
+  struct jbssc *ssc = &ctx->ssc;
   free(ssc->refs);
   if (ssc->sof_active) {
     ssc->sof.close(&ssc->sof);
@@ -17,8 +17,8 @@ static int _jbi_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   iwrc rc;
   uint32_t r1, r2;
   struct jbl d1, d2;
-  struct _JBEXEC *ctx = op;
-  struct _JBSSC *ssc = &ctx->ssc;
+  struct jbexec *ctx = op;
+  struct jbssc *ssc = &ctx->ssc;
   struct jqp_aux *aux = ctx->ux->q->aux;
   uint8_t *p1, *p2;
   assert(aux->orderby_num > 0);
@@ -53,7 +53,7 @@ finish:
   return rv;
 }
 
-static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, struct _EJDB_DOC *doc) {
+static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct jbexec *ctx, JQL q, struct ejdb_doc *doc) {
   JBL_NODE root;
   JBL jbl = doc->raw;
   struct jqp_aux *aux = q->aux;
@@ -79,12 +79,12 @@ static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct _JBEXEC *ctx, JQL q, str
   return rc;
 }
 
-static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
+static iwrc _jbi_scan_sorter_do(struct jbexec *ctx) {
   iwrc rc = 0;
   int64_t step = 1, id;
   struct jbl jbl;
   EJDB_EXEC *ux = ctx->ux;
-  struct _JBSSC *ssc = &ctx->ssc;
+  struct jbssc *ssc = &ctx->ssc;
   uint32_t rnum = ssc->refs_num;
   struct jqp_aux *aux = ux->q->aux;
   IWPOOL *pool = ux->pool;
@@ -108,7 +108,7 @@ static iwrc _jbi_scan_sorter_do(struct _JBEXEC *ctx) {
     rp += sizeof(id);
     RCC(rc, finish, jbl_from_buf_keep_onstack2(&jbl, rp));
 
-    struct _EJDB_DOC doc = {
+    struct ejdb_doc doc = {
       .id = id,
       .raw = &jbl
     };
@@ -152,7 +152,7 @@ finish:
   return rc;
 }
 
-static iwrc _jbi_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
+static iwrc _jbi_scan_sorter_init(struct jbssc *ssc, off_t initial_size) {
   IWFS_EXT_OPTS opts = {
     .initial_size = initial_size,
     .rspolicy = iw_exfile_szpolicy_fibo,
@@ -171,7 +171,7 @@ static iwrc _jbi_scan_sorter_init(struct _JBSSC *ssc, off_t initial_size) {
 }
 
 iwrc jbi_sorter_consumer(
-  struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id,
+  struct jbexec *ctx, IWKV_cursor cur, int64_t id,
   int64_t *step, bool *matched, iwrc err) {
   if (!id) {
     // End of scan
@@ -187,7 +187,7 @@ iwrc jbi_sorter_consumer(
   iwrc rc;
   size_t vsz = 0;
   struct jbl jbl;
-  struct _JBSSC *ssc = &ctx->ssc;
+  struct jbssc *ssc = &ctx->ssc;
   EJDB db = ctx->jbc->db;
   IWFS_EXT *sof = &ssc->sof;
 

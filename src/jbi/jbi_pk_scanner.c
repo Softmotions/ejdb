@@ -1,7 +1,7 @@
 #include "ejdb2_internal.h"
 
 // Primary key scanner
-iwrc jbi_pk_scanner(struct _JBEXEC *ctx, JB_SCAN_CONSUMER consumer) {
+iwrc jbi_pk_scanner(struct jbexec *ctx, jb_scan_consumer consumer) {
   iwrc rc = 0;
   int64_t id, step;
   bool matched;

@@ -1,3 +1,5 @@
+# WARNING: Unsupported now. Maintainer needed.
+
 # Android
 
 * [Flutter binding](https://github.com/Softmotions/ejdb/tree/master/src/bindings/ejdb2_flutter)

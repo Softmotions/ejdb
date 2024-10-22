@@ -418,7 +418,7 @@ static iwrc ejd_exec_pause_guard(QCTX qctx) {
   return rc;
 }
 
-static iwrc ejd_exec_visitor(struct _EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
+static iwrc ejd_exec_visitor(struct ejdb_exec *ux, EJDB_DOC doc, int64_t *step) {
   iwrc rc = 0;
   QCTX qctx = ux->opaque;
 

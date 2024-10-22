@@ -18,7 +18,7 @@ typedef struct MCTX {
   int   lvl;
   binn *bv;
   const char  *key;
-  struct _JQL *q;
+  struct jql *q;
   JQP_AUX     *aux;
   JBL_VCTX    *vctx;
 } MCTX;
@@ -455,7 +455,7 @@ iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
 }
 
 size_t jql_estimate_allocated_size(JQL q) {
-  size_t ret = sizeof(struct _JQL);
+  size_t ret = sizeof(struct jql);
   if (q->aux && q->aux->pool) {
     ret += iwpool_allocated_size(q->aux->pool);
   }
@@ -1682,7 +1682,7 @@ static bool _jql_proj_join_matched(
       RCB(finish, cache = iwhmap_create(jb_proj_node_cache_cmp, jb_proj_node_hash, jb_proj_node_kvfree));
       exec_ctx->proj_joined_nodes_cache = cache;
     }
-    struct _JBDOCREF ref = {
+    struct jbdocref ref = {
       .id = id,
       .coll = coll
     };
@@ -1699,7 +1699,7 @@ static bool _jql_proj_join_matched(
         goto finish;
       }
       RCC(rc, finish, jbl_to_node(jbl, &nn, true, pool));
-      struct _JBDOCREF *refkey = malloc(sizeof(*refkey));
+      struct jbdocref *refkey = malloc(sizeof(*refkey));
       RCGA(refkey, finish);
       *refkey = ref;
       RCC(rc, finish, iwhmap_put(cache, refkey, nn));

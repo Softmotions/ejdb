@@ -1,5 +1,8 @@
 ejdb2 (2.74) UNRELEASED; urgency=medium
 
+  * Naming refactoring.
+  * ejdb_swift, ejdb_react_native, ejdb_android, ejdb_dart, ejdb_flutter 
+    marked as unmaintained.
   * Updated to the current iowow API. Naming refactoring.
   * Fix:JQL Incorrect floating point match against integers (#380) 
   * Fix: Incorrect parsing of JQL JSON with floats in scientific format (#378)

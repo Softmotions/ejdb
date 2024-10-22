@@ -1,6 +1,6 @@
 #include "ejdb2_internal.h"
 
-iwrc jbi_consumer(struct _JBEXEC *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err) {
+iwrc jbi_consumer(struct jbexec *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err) {
   if (!id) { // EOF scan
     return err;
   }
@@ -66,7 +66,7 @@ start:
     JQL q = ux->q;
     ctx->istep = 1;
     struct jqp_aux *aux = q->aux;
-    struct _EJDB_DOC doc = {
+    struct ejdb_doc doc = {
       .id = id,
       .raw = &jbl
     };

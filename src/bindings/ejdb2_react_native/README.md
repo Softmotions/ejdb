@@ -1,3 +1,5 @@
+# WARNING: Unsupported now. Maintainer needed.
+
 # EJDB2 React Native binding
 
 Embeddable JSON Database engine http://ejdb.org Node.js binding.
