@@ -43,6 +43,13 @@ else()
   mesage(FATAL_ERROR "Unable to find suitable threading library")
 endif(CMAKE_USE_WIN32_THREADS_INIT)
 
+check_include_file("Block.h" HAVE_BLOCK_H)
+if(NOT NOBLOCKS AND CMAKE_C_COMPILER_ID MATCHES "Clang" AND HAVE_BLOCK_H)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fblocks")
+  list(PREPEND PROJECT_LLIBRARIES "-lBlocksRuntime")
+  add_definitions(-DIW_BLOCKS)
+endif()
+
 include(AddIOWOW)
 list(APPEND PROJECT_LLIBRARIES "IOWOW::static")
 list(APPEND PROJECT_INCLUDE_DIRS ${IOWOW_INCLUDE_DIRS})

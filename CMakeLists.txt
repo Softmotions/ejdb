@@ -40,6 +40,7 @@ option(INSTALL_FLAT_SUBPROJECT_INCLUDES
        "Install iowow/iwnet headers into CMAKE_INSTALL_PREFIX/{iowow,iwnet} dir"
        OFF)
 option(BUILD_TESTS "Build test cases" OFF)
+option(NOBLOCKS "Turn off Clang Blocks support" OFF)
 option(ASAN "Turn on address sanitizer" OFF)
 option(BUILD_EXAMPLES "Build example projects" ON)
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
