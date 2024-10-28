@@ -1,6 +1,6 @@
 #include "ejdb2_internal.h"
 
-iwrc jbi_consumer(struct jbexec *ctx, IWKV_cursor cur, int64_t id, int64_t *step, bool *matched, iwrc err) {
+iwrc jbi_consumer(struct jbexec *ctx, struct iwkv_cursor *cur, int64_t id, int64_t *step, bool *matched, iwrc err) {
   if (!id) { // EOF scan
     return err;
   }
@@ -8,15 +8,15 @@ iwrc jbi_consumer(struct jbexec *ctx, IWKV_cursor cur, int64_t id, int64_t *step
   iwrc rc;
   struct jbl jbl;
   size_t vsz = 0;
-  EJDB_EXEC *ux = ctx->ux;
-  IWPOOL *pool = ux->pool;
+  struct ejdb_exec *ux = ctx->ux;
+  struct iwpool *pool = ux->pool;
 
 start:
   {
     if (cur) {
       rc = iwkv_cursor_copy_val(cur, ctx->jblbuf, ctx->jblbufsz, &vsz);
     } else {
-      IWKV_val key = {
+      struct iwkv_val key = {
         .data = &id,
         .size = sizeof(id)
       };
@@ -63,7 +63,7 @@ start:
     ++ctx->istep;
   }
   if (!ctx->istep) {
-    JQL q = ux->q;
+    struct jql *q = ux->q;
     ctx->istep = 1;
     struct jqp_aux *aux = q->aux;
     struct ejdb_doc doc = {
@@ -71,7 +71,7 @@ start:
       .raw = &jbl
     };
     if (aux->apply || aux->apply_placeholder || aux->projection) {
-      JBL_NODE root;
+      struct jbl_node *root;
       if (!pool) {
         pool = iwpool_create((size_t) jbl.bn.size * 2);
         if (!pool) {

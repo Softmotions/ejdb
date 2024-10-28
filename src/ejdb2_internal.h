@@ -132,7 +132,7 @@ struct ejdb {
   volatile bool    open;
 };
 
-struct _JBPHCTX {
+struct _jb_put_handler_ctx {
   int64_t id;
   struct jbcoll  *jbc;
   struct jbl     *jbl;

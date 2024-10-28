@@ -243,6 +243,12 @@ IW_EXPORT iwrc ejdb_close(struct ejdb **ejdbp);
  */
 IW_EXPORT WUR iwrc ejdb_exec(struct ejdb_exec *ux);
 
+#ifdef IW_BLOCKS
+
+iwrc ejdb_exec_visit_block(struct ejdb *db, struct jql *q, bool (^visitor)(struct ejdb_doc*));
+
+#endif
+
 /**
  * @brief Executes a given query and builds a query result as linked list of documents.
  *
