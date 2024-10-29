@@ -24,25 +24,25 @@ static int _usage(const char *err) {
     fprintf(stderr, "\n%s\n", err);
   }
   fprintf(stderr, "\n\tEJDB " EJDB2_VERSION " HTTP REST/Websocket server. http://ejdb.org\n");
-  fprintf(stderr, "\nUsage:\n\n\t %s [options]\n\n", env.program);
-  fprintf(stderr, "\t-v, --version\t\tPrint program version.\n");
-  fprintf(stderr, "\t-f, --file=<>\t\tDatabase file path. Default: ejdb2.db\n");
-  fprintf(stderr, "\t-p, --port=NUM\t\tHTTP server port numer. Default: 9191\n");
-  fprintf(stderr, "\t-l, --listen=<>\t\tNetwork address server will listen. Default: localhost\n");
-  fprintf(stderr, "\t-k, --key=<>\t\tPEM private key file for TLS 1.2 HTTP server.\n");
-  fprintf(stderr, "\t-c, --certs=<>\t\tPEM certificates file for TLS 1.2 HTTP server.\n");
-  fprintf(stderr, "\t-a, --access=TOKEN|@FILE\t\tAccess token to match 'X-Access-Token' HTTP header value.\n");
-  fprintf(stderr, "\t-r, --access-read\t\tAllows unrestricted read-only data access.\n");
-  fprintf(stderr, "\t-C, --cors\t\tEnable COSR response headers for HTTP server\n");
-  fprintf(stderr, "\t-t, --trunc\t\tCleanup/reset database file on open.\n");
-  fprintf(stderr, "\t-w, --wal\t\tuse the write ahead log (WAL). Used to provide data durability.\n");
+  fprintf(stderr, "\nUsage:\n\n  %s [options]\n\n", env.program);
+  fprintf(stderr, "\t-v, --version            Print program version.\n");
+  fprintf(stderr, "\t-f, --file=<>            Database file path. Default: ejdb2.db\n");
+  fprintf(stderr, "\t-p, --port=NUM           HTTP server port numer. Default: 9191\n");
+  fprintf(stderr, "\t-l, --listen=<>          Network address server will listen. Default: localhost\n");
+  fprintf(stderr, "\t-k, --key=<>             PEM private key file for TLS 1.2 HTTP server.\n");
+  fprintf(stderr, "\t-c, --certs=<>           PEM certificates file for TLS 1.2 HTTP server.\n");
+  fprintf(stderr, "\t-a, --access=TOKEN|@FILE Access token to match 'X-Access-Token' HTTP header value.\n");
+  fprintf(stderr, "\t-r, --access-read        Allows unrestricted read-only data access.\n");
+  fprintf(stderr, "\t-C, --cors               Enable COSR response headers for HTTP server\n");
+  fprintf(stderr, "\t-t, --trunc              Cleanup/reset database file on open.\n");
+  fprintf(stderr, "\t-w, --wal                Write ahead log (WAL) in use. Used to provide data durability.\n");
   fprintf(stderr, "\nAdvanced options:\n");
   fprintf(stderr,
-          "\t-S, --sbz=NUM\t\tMax sorting buffer size. If exceeded, an overflow temp file for data will be created."
+          "\t-S, --sbz=NUM            Max sort buffer size. If exceeded, an overflow temp file for data will be created."
           "Default: 16777216, min: 1048576\n");
-  fprintf(stderr, "\t-D, --dsz=NUM\t\tInitial size of buffer to process/store document on queries."
+  fprintf(stderr, "\t-D, --dsz=NUM            Initial size of buffer to process/store document on queries."
           " Preferable average size of document. Default: 65536, min: 16384\n");
-  fprintf(stderr, "\t-T, --trylock Exit with error if database is locked by another process."
+  fprintf(stderr, "\t-T, --trylock            Exit with error if database is locked by another process."
           " If not set, current process will wait for lock release.");
   fprintf(stderr, "\n\n");
   return 1;
