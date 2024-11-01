@@ -250,12 +250,11 @@ iwrc ejdb_visit_block(struct ejdb *db, struct jql *q, bool (^visitor)(struct ejd
 struct ejdb_visit_block {
   struct ejdb *db;
   struct jql  *q;
-  bool     (^visitor)(struct ejdb_doc*);
   void    *user_data;
   unsigned num_visits;
 };
 
-iwrc ejdb_visit_block2(struct ejdb_visit_block *ctx);
+iwrc ejdb_visit_block2(struct ejdb_visit_block *ctx, bool (^visitor)(struct ejdb_doc*));
 
 #endif
 
