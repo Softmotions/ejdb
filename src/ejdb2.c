@@ -886,11 +886,13 @@ finish:
 #ifdef IW_BLOCKS
 
 struct _block_visitor_ctx {
+  struct ejdb_visit_block *bctx;
   bool (^visitor)(struct ejdb_doc*);
 };
 
 static iwrc _block_visitor(struct ejdb_exec *ux, struct ejdb_doc *doc, int64_t *step) {
   struct _block_visitor_ctx *ctx = ux->opaque;
+  ++ctx->bctx->num_visits;
   bool ret = ctx->visitor(doc);
   if (!ret) {
     *step = 0;
@@ -898,17 +900,25 @@ static iwrc _block_visitor(struct ejdb_exec *ux, struct ejdb_doc *doc, int64_t *
   return 0;
 }
 
-iwrc ejdb_exec_visit_block(struct ejdb *db, struct jql *q, bool (^visitor)(struct ejdb_doc*)) {
+iwrc ejdb_exec_visit_block_ctx(struct ejdb_visit_block *bctx) {
+  bctx->num_visits = 0;
   struct _block_visitor_ctx ctx = {
-    .visitor = visitor,
+    .visitor = bctx->visitor,
   };
   struct ejdb_exec ux = {
-    .db = db,
-    .q = q,
+    .db = bctx->db,
+    .q = bctx->q,
     .visitor = _block_visitor,
     .opaque = &ctx,
   };
   return ejdb_exec(&ux);
+}
+
+iwrc ejdb_exec_visit_block(struct ejdb *db, struct jql *q, bool (^visitor)(struct ejdb_doc*)) {
+  return ejdb_exec_visit_block_ctx(&(struct ejdb_visit_block) {
+    .db = db,
+    .q = q,
+  });
 }
 
 #endif

@@ -247,6 +247,15 @@ IW_EXPORT WUR iwrc ejdb_exec(struct ejdb_exec *ux);
 
 iwrc ejdb_exec_visit_block(struct ejdb *db, struct jql *q, bool (^visitor)(struct ejdb_doc*));
 
+struct ejdb_visit_block {
+  struct ejdb *db;
+  struct jql  *q;
+  unsigned     num_visits;
+  bool (^visitor)(struct ejdb_doc*);
+};
+
+iwrc ejdb_exec_visit_block_ctx(struct ejdb_visit_block *ctx);
+
 #endif
 
 /**
