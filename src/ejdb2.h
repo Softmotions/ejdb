@@ -255,7 +255,7 @@ struct ejdb_visit_block {
   unsigned num_visits;
 };
 
-iwrc ejdb_visit_block_ctx(struct ejdb_visit_block *ctx);
+iwrc ejdb_visit_block2(struct ejdb_visit_block *ctx);
 
 #endif
 
