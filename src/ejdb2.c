@@ -900,7 +900,7 @@ static iwrc _block_visitor(struct ejdb_exec *ux, struct ejdb_doc *doc, int64_t *
   return 0;
 }
 
-iwrc ejdb_exec_visit_block_ctx(struct ejdb_visit_block *bctx) {
+iwrc ejdb_visit_block_ctx(struct ejdb_visit_block *bctx) {
   bctx->num_visits = 0;
   struct _block_visitor_ctx ctx = {
     .visitor = bctx->visitor,
@@ -914,8 +914,8 @@ iwrc ejdb_exec_visit_block_ctx(struct ejdb_visit_block *bctx) {
   return ejdb_exec(&ux);
 }
 
-iwrc ejdb_exec_visit_block(struct ejdb *db, struct jql *q, bool (^visitor)(struct ejdb_doc*)) {
-  return ejdb_exec_visit_block_ctx(&(struct ejdb_visit_block) {
+iwrc ejdb_visit_block(struct ejdb *db, struct jql *q, bool (^visitor)(struct ejdb_doc*)) {
+  return ejdb_visit_block_ctx(&(struct ejdb_visit_block) {
     .db = db,
     .q = q,
   });
