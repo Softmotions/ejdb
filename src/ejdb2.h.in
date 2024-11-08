@@ -28,6 +28,10 @@
  * SOFTWARE.
  *************************************************************************************************/
 
+#ifndef IW_BLOCKS 
+#cmakedefine IW_BLOCKS 
+#endif
+
 #include "jql.h"
 #include <iowow/iwkv.h>
 

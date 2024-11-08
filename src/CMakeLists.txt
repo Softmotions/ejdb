@@ -45,6 +45,7 @@ endif(CMAKE_USE_WIN32_THREADS_INIT)
 
 check_include_file("Block.h" HAVE_BLOCK_H)
 if(NOT NOBLOCKS AND CMAKE_C_COMPILER_ID MATCHES "Clang" AND HAVE_BLOCK_H)
+  set(IW_BLOCKS ON)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fblocks")
   list(PREPEND PROJECT_LLIBRARIES "-lBlocksRuntime")
   add_definitions(-DIW_BLOCKS)
@@ -181,6 +182,11 @@ endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tmpl/ejdb2cfg.h
                ${PROJECT_GENERATED_DIR}/ejdb2cfg.h)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ejdb2.h.in
+               ${PROJECT_GENERATED_DIR}/ejdb2.h @ONLY)
+
+
 file(GLOB PROJECT_GENERATED_HDRS ${PROJECT_GENERATED_DIR}/*.h)
 list(APPEND ALL_HDRS ${PROJECT_GENERATED_HDRS})
 
