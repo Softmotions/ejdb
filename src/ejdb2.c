@@ -911,6 +911,7 @@ iwrc ejdb_visit_block2(struct ejdb_visit_block *bctx, bool (^visitor)(struct ejd
     .q = bctx->q,
     .visitor = _block_visitor,
     .opaque = &ctx,
+    .pool = bctx->pool,
   };
   return ejdb_exec(&ux);
 }
