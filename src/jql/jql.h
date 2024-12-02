@@ -117,8 +117,11 @@ IW_EXPORT WUR iwrc jql_set_str2(
 
 IW_EXPORT WUR iwrc jql_set_str3(struct jql *q, const char *placeholder, int index, const char *val, size_t val_len);
 
+/*
+ * @brief Bind string data to query placeholder.
+ * @note Unlike `jql_set_str()` data is copied into query context.
+ */
 IW_EXPORT WUR iwrc jql_set_bool(struct jql *q, const char *placeholder, int index, bool val);
-
 
 /**
  * @brief Bind regexp data string to query placeholder.
