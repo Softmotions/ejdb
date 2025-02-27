@@ -192,7 +192,7 @@ static iwrc _jb_coll_init(struct jbcoll *jbc, struct iwkv_val *meta) {
   pthread_rwlockattr_t attr;
   pthread_rwlockattr_init(&attr);
 #if defined __linux__ && (defined __USE_UNIX98 || defined __USE_XOPEN2K)
-  pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+  pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_READER_NP);
 #endif
   pthread_rwlock_init(&jbc->rwl, &attr);
   if (meta) {
@@ -1815,7 +1815,7 @@ iwrc ejdb_open(const struct ejdb_opts *_opts, struct ejdb **ejdbp) {
   pthread_rwlockattr_t attr;
   pthread_rwlockattr_init(&attr);
 #if defined __linux__ && (defined __USE_UNIX98 || defined __USE_XOPEN2K)
-  pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+  pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_READER_NP);
 #endif
   rci = pthread_rwlock_init(&db->rwl, &attr);
   if (rci) {
