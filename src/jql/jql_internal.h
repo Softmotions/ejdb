@@ -6,9 +6,7 @@
 
 #include <iowow/iwbinn.h>
 #include <iowow/iwre.h>
-
 #include <math.h>
-
 
 /** Query object */
 struct jql {

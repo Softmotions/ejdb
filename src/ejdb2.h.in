@@ -29,7 +29,7 @@
  *************************************************************************************************/
 
 #ifndef IW_BLOCKS
-#cmakedefine IW_BLOCKS
+//autarkdef IW_BLOCKS 
 #endif
 
 #include "jql.h"

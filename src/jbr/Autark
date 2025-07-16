@@ -1,0 +1,27 @@
+set {
+  parent {
+    SOURCES
+  }
+  ..${SOURCES}
+  jbr/jbr.c
+}
+
+set {
+  parent {
+    PUB_HDRS
+  }
+  ..${PUB_HDRS}
+  jbr/jbr.h
+}
+
+set {
+  root {
+    CFLAGS
+  }
+  ..${CFLAGS}
+  -I SS{}
+}
+
+if { ${EJDB_BUILD_TESTS} 
+  include { tests/Autark }
+}

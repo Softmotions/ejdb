@@ -1,0 +1,32 @@
+cc {
+  jbr_test1.c
+  set { _ ..${CFLAGS} -DIW_STATIC -DIW_TESTS -I S{src/tests} }
+}
+
+set {
+  LDFLAGS_TEST
+  ..${LDFLAGS_TEST}
+  ..@{${PKGCONF} --libs libcurl}
+}
+
+foreach {
+  OBJ
+  ${CC_OBJS}
+  run {
+    exec { ${CC} ${OBJ} ${LDFLAGS_TEST} -o %{${OBJ}} }
+    consumes { ${LIBEJDB_A} ${OBJ} }
+    produces { %{${OBJ}} }
+  }
+}
+
+if { ${EJDB_RUN_TESTS}
+ foreach {
+    OBJ
+    ${CC_OBJS}
+    run {
+      always
+      shell { %{${OBJ}} }
+      consumes { %{${OBJ}} }
+    }
+  }
+}

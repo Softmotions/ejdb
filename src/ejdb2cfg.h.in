@@ -28,15 +28,18 @@
  * SOFTWARE.
  *************************************************************************************************/
 
-#if !defined(IW_32) && !defined(IW_64)
-#error Unknown CPU bits
+//autarkdef HAVE_QSORT_R
+
+#ifndef JB_HTTP
+#define JB_HTTP
 #endif
 
-#define EJDB2_GIT_REVISION  "@GIT_REVISION@"
-#define EJDB2_VERSION       "@ejdb2_VERSION@"
-#define EJDB2_VERSION_MAJOR @ejdb2_VERSION_MAJOR@
-#define EJDB2_VERSION_MINOR @ejdb2_VERSION_MINOR@
+#define EJDB2_GIT_REVISION  "@META_REVISION@"
+#define EJDB2_VERSION       "@META_VERSION@"
+#define EJDB2_VERSION_MAJOR @META_VERSION_MAJOR@
+#define EJDB2_VERSION_MINOR @META_VERSION_MINOR@
 #define EJDB2_VERSION_PATCH 0
+
 
 #include <stddef.h>
 #include <stdint.h>
@@ -48,8 +51,10 @@
 #include <errno.h>
 #include <limits.h>
 
+
 #ifndef static_assert
 #define static_assert _Static_assert
 #endif
+
 
 #endif

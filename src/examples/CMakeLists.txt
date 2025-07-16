@@ -1,5 +1,0 @@
-link_libraries(ejdb2_s)
-foreach (EX IN ITEMS example1)
-  add_executable(${EX} ${EX}.c)
-  set_target_properties(${EX} PROPERTIES COMPILE_FLAGS "-DIW_STATIC")
-endforeach ()

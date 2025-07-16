@@ -1,2 +1,3 @@
-mxe/
-build/
+/autark-cache*
+/mxe
+/build

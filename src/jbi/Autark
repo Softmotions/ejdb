@@ -1,0 +1,22 @@
+set {
+  parent {
+    SOURCES
+  }
+  ..${SOURCES}
+  jbi/jbi_consumer.c
+  jbi/jbi_dup_scanner.c
+  jbi/jbi_full_scanner.c
+  jbi/jbi_pk_scanner.c
+  jbi/jbi_selection.c
+  jbi/jbi_sorter_consumer.c
+  jbi/jbi_uniq_scanner.c
+  jbi/jbi_util.c
+}
+
+set {
+  root {
+    CFLAGS
+  }
+  ..${CFLAGS}
+  -I SS{}
+}

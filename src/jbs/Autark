@@ -1,0 +1,12 @@
+cc {
+  jbs.c
+  set { _ ..${CFLAGS} -DIW_STATIC }
+}
+
+run {
+  exec { ${CC} ${CC_OBJS} set { _ ${LIBEJDB_A} ..${LDFLAGS} } -o jbs }
+  consumes { ${CC_OBJS} ${LIBEJDB_A} }
+  produces { jbs }
+}
+
+install { ${INSTALL_BIN_DIR} jbs }

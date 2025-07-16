@@ -14,17 +14,6 @@ let $ROOT_DIR = g:root_dir
 let $UNCRUSTIFY_CONFIG = g:root_dir.'/uncrustify.cfg'
 
 let g:build_dir = g:root_dir.'/build'
-let &g:makeprg = 'cd '.g:build_dir.' && make -j1'
+let &g:makeprg = 'BUILD_TYPE=Debug EJDB_BUILD_TESTS=1 CC=clang ./build.sh'
 
-packadd termdebug
 let g:termdebug_wide=1
-
-nnoremap <leader>c :call asyncrun#run('',
-        \ {'mode':'terminal','save':2},
-        \ 'cmake -B '.g:build_dir.' -DCMAKE_BUILD_TYPE='.g:build_type.' -DBUILD_TESTS='.g:build_tests
-        \ .' -DCMAKE_CXX_COMPILER='.g:cxx.' -DCMAKE_C_COMPILER='.g:cc
-        \ .' -DCMAKE_EXPORT_COMPILE_COMMANDS=ON'
-        \ .' -DBUILD_JNI_BINDING=ON'
-        \ .' -DBUILD_NODEJS_BINDING=ON'
-        \ .' -DBUILD_DART_BINDING=OFF')
-        \<CR>

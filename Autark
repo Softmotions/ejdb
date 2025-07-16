@@ -1,0 +1,179 @@
+meta {
+  name { ejdb2 }
+
+  version_major { 2 }
+  version_minor { 80 }
+
+  description {  Embeddable JSON database engine (EJDB2) }
+  website { https://github.com/Softmotions/ejdb }
+  vendor { Softmotions (https://softmotions.com) }
+  maintainer { Anton Adamansky <adamansky@gmail.com> }
+  license { MIT }
+}
+
+option { IWNET_URL                IWNET external project sources URL }
+option { EJDB_BUILD_SHARED_LIBS   Build shared libraries }
+option { EJDB_BUILD_TESTS         Build test cases }
+option { EJDB_RUN_TESTS           Build and run test cases }
+option { ENABLE_ASAN              Turn on address sanitizer }
+option { ENABLE_UBSAN             Turn on UB sanitizer }
+option { ENABLE_DEBINFO           Generate debuginfo even in release mode }
+
+set {
+  META_VERSION
+  ^{ ${META_VERSION_MAJOR} . ${META_VERSION_MINOR} }
+}
+
+set {
+  META_REVISION
+  @{ git rev-parse --short HEAD }
+}
+
+if { ${EJDB_RUN_TESTS}
+  set {
+    EJDB_BUILD_TESTS 1
+  }
+}
+
+if { !defined { IWNET_URL } 
+  set {
+    IWNET_URL
+    file:///home/adam/Projects/softmotions/iwnet
+  }
+}
+
+check {
+  system.sh
+  test_blocks.sh { IW_BLOCKS }
+  test_pthread.sh
+  test_qsort_r.sh
+}
+
+if { !defined { PTHREAD_LFLAG} 
+  error { No pthreads found! }
+}
+
+check {
+  fetch_resource.sh { ${IWNET_URL} C{extern_iwnet} IWNET_SRC_DIR }
+}
+
+run {
+  shell { autark --prefix C{} ${IWNET_SRC_DIR} }
+  consumes {
+    ${IWNET_SRC_DIR}
+  }
+  produces {
+    C{include/iwnet/iwnet.h}
+  }
+}
+
+run-on-install {
+  shell {
+    autark --prefix ${INSTALL_PREFIX} 
+    set { _ 
+      if { ${EJDB_BUILD_SHARED_LIBS}
+        -DIWNET_BUILD_SHARED_LIBS=1
+      }
+    }
+    ${IWNET_SRC_DIR} 
+  }
+}
+
+set {
+  LDFLAGS_PKGCONF
+}
+
+set {
+  LDFLAGS
+  ..${LDFLAGS}
+  ..@{${PKGCONF} --with-path C{${INSTALL_PKGCONFIG_DIR}} --libs --static libiwnet}
+  ..${LDFLAGS_PKGCONF}
+}
+
+set {
+  CFLAGS
+  -std=gnu11
+  -fsigned-char
+  -Wall
+  -Wextra
+  -Wfatal-errors
+  -Wno-implicit-fallthrough
+  -Wno-missing-braces
+  -Wno-missing-field-initializers
+  -Wno-sign-compare
+  -Wno-unknown-pragmas
+  -Wno-unused-function
+  -Wno-unused-parameter
+  -Wno-overlength-strings
+
+  ..@{${PKGCONF} --with-path C{${INSTALL_PKGCONFIG_DIR}} --cflags libiwnet}
+
+  if { !eq { ${SYSTEM_NAME} Windows }
+    if { ${EJDB_BUILD_SHARED_LIBS}
+      -fPIC
+    }
+  }
+  if { ${ENABLE_ASAN}
+    -fsanitize=address
+    -fno-omit-frame-pointer
+  } else {
+    if { ${ENABLE_UBSAN}
+      -fsanitize=undefined
+      -fno-omit-frame-pointer
+    }
+  }
+  if { prefix { ${BUILD_TYPE} Debug }
+    -O0
+    -g -ggdb
+    -Werror
+    -Wno-unused-variable
+    -DDEBUG -D_DEBUG -UNDEBUG
+  } else {
+    -O3
+    if { ${ENABLE_DEBINFO}
+      -g -ggdb
+    }
+    -DNDEBUG
+    -DIW_RELEASE
+  }
+  if { defined { SYSTEM_BIGENDIAN }
+    -DIW_BIGENDIAN
+    -DWORDS_BIGENDIAN
+  }
+  if { defined { SYSTEM_BITNESS_64 }
+    -DIW_64
+  }
+  if { defined { SYSTEM_BITNESS_32 }
+    -DIW_32
+  }
+  if { defined { SYSTEM_LINUX }
+    -D_XOPEN_SOURCE=700
+  }
+  if { defined { SYSTEM_APPLE }
+    -D_DARWIN_C_SOURCE
+  }
+  if { defined { SYSTEM_WINDOWS } 
+    -D__USE_MINGW_ANSI_STDIO
+    -Wno-pedantic-ms-format"
+  }
+  if { defined { IW_BLOCKS } 
+    -fblocks
+    -DIW_BLOCKS
+  }
+  if { !defined { EJDB_BUILD_SHARED_LIBS }
+    -DIW_NODLL
+  }
+  if { ${EJDB_BUILD_TESTS}
+    -DIW_TESTS
+  }
+
+  -D_DEFAULT_SOURCE
+  -D_LARGEFILE_SOURCE
+  -D_FILE_OFFSET_BITS=64
+
+  -I C{src}
+  -I S{src}
+}
+
+include { man/Autark }
+include { src/Autark }

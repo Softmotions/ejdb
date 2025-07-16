@@ -1,0 +1,2 @@
+install { ^{${INSTALL_MAN_DIR} /man3}  ./ejdb2.3 }
+install { ^{${INSTALL_MAN_DIR} /man1}  ./jbs.1 }

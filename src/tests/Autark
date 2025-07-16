@@ -1,0 +1,32 @@
+cc {
+  set { _
+    ejdb_test1.c
+    ejdb_test2.c
+    ejdb_test3.c
+    ejdb_test4.c
+    ejdb_test5.c
+  }
+  set { _ ..${CFLAGS} -DIW_STATIC -DIW_TESTS }
+}
+
+foreach {
+  OBJ
+  ${CC_OBJS}
+  run {
+    exec { ${CC} ${OBJ} ${LDFLAGS_TEST} -o %{${OBJ}} }
+    consumes { ${LIBEJDB_A} ${OBJ} }
+    produces { %{${OBJ}} }
+  }
+}
+
+if { ${EJDB_RUN_TESTS} 
+  foreach {
+    OBJ
+    ${CC_OBJS}
+    run {
+      always
+      shell { %{${OBJ}} }
+      consumes { %{${OBJ}} }
+    }
+  }
+}

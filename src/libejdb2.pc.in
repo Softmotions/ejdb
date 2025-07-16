@@ -1,0 +1,14 @@
+exec_prefix=@INSTALL_PREFIX@/@INSTALL_BIN_DIR@
+libdir=@INSTALL_PREFIX@/@INSTALL_LIB_DIR@
+includedir=@INSTALL_PREFIX@/@EJDB_PUBLIC_HEADERS_DESTINATION@
+artifact=@META_NAME@
+
+Name: @META_NAME@
+Description: @META_DESCRIPTION@
+URL: @META_WEBSITE@
+Version: @META_VERSION@
+Libs: -L${libdir} -l${artifact}
+Requires: libiwnet
+Libs.private: @LDFLAGS_PKGCONF@
+Cflags: -I@INSTALL_PREFIX@/@INSTALL_INCLUDE_DIR@ -I${includedir} 
+Cflags.private: -DIW_STATIC

@@ -1,5 +1,0 @@
-if (BUILD_JNI_BINDING)
-  add_subdirectory(jni)
-else()
-  add_subdirectory(core)
-endif()

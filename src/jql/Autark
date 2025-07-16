@@ -1,0 +1,24 @@
+set {
+  parent {
+    SOURCES
+  }
+  ..${SOURCES}
+  jql/jql.c
+  jql/jqp.c
+}
+
+set {
+  parent {
+    PUB_HDRS
+  }
+  ..${PUB_HDRS}
+  jql/jql.h
+}
+
+set {
+  root {
+    CFLAGS
+  }
+  ..${CFLAGS}
+  -I SS{}
+}

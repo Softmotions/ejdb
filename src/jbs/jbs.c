@@ -6,8 +6,6 @@
 #include <iwnet/iwn_utils.h>
 
 #include <stdio.h>
-#include <errno.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <getopt.h>
 #include <signal.h>

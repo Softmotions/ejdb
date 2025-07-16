@@ -1,0 +1,109 @@
+configure {
+  ejdb2.h.in
+  ejdb2cfg.h.in
+}
+
+configure {
+  libejdb2.pc.in
+}
+
+option { EJDB_PUBLIC_HEADERS_DESTINATION  Installation path relative to INSTALL_PREFIX for ejdb2 public header files. }
+if { !defined { EJDB_PUBLIC_HEADERS_DESTINATION }
+  set {
+    EJDB_PUBLIC_HEADERS_DESTINATION ^{ ${INSTALL_INCLUDE_DIR} / ${META_NAME} }
+  }
+}
+
+set {
+  SOURCES
+  ejdb2.c
+}
+
+set {
+  PUB_HDRS
+  ejdb2.h
+}
+
+include { jql/Autark }
+include { jbi/Autark }
+include { jbr/Autark }
+include { jbs/Autark }
+
+cc {
+  ${SOURCES}
+  ${CFLAGS}
+  ${CC}
+  consumes {
+    ejdb2.h
+    ejdb2cfg.h
+    C{include/iwnet/iwnet.h}
+  }
+}
+
+set {
+  LIBEJDB_A
+  CC { libejdb2.a }
+}
+
+set {
+  LDFLAGS_TEST
+  ${LIBEJDB_A}
+  @{ ${PKGCONF} --libs cunit }
+  ..${LDFLAGS}
+}
+
+run {
+  exec { ${AR} rcs ${LIBEJDB_A} ${CC_OBJS} }
+  consumes {
+    ${CC_OBJS}
+  }
+  produces {
+    ${LIBEJDB_A}
+  }
+}
+
+install { ${INSTALL_LIB_DIR} ${LIBEJDB_A} }
+
+if { ${EJDB_BUILD_SHARED_LIBS}
+  set {
+    LIBEJDB_SO_BASE
+    libejdb2.so
+  }
+
+  set {
+    LIBEJDB_SO_BIN
+    ^{${LIBEJDB_SO_BASE} . ${META_VERSION}}
+  }
+
+  set {
+    LIBEJDB_SO_NAME
+    ^{${LIBEJDB_SO_BASE} . ${META_VERSION_MAJOR}}
+  }
+
+  run {
+    exec { ${CC} --shared -o ${LIBEJDB_SO_BIN}  ${CC_OBJS} }
+    consumes {
+      ${CC_OBJS}
+    }
+    produces {
+      ${LIBEJDB_SO_BIN}
+    }
+  }
+
+  run {
+    exec { ln -sf ${LIBEJDB_SO_BIN} ${LIBEJDB_SO_NAME} }
+    exec { ln -sf ${LIBEJDB_SO_BIN} ${LIBEJDB_SO_BASE} }
+    consumes {
+      ${LIBEJDB_SO_BIN}
+    }
+  }
+  
+  install { ${INSTALL_LIB_DIR} ${LIBEJDB_SO_BIN} ${LIBEJDB_SO_BASE} ${LIBEJDB_SO_NAME} }
+}
+
+install { ${INSTALL_PKGCONFIG_DIR} libejdb2.pc }
+install { ${EJDB_PUBLIC_HEADERS_DESTINATION} ${PUB_HDRS} }
+
+if { ${EJDB_BUILD_TESTS} 
+  include { tests/Autark }
+}
