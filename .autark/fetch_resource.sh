@@ -92,7 +92,7 @@ case "$PROJECT_URL" in
 
   *)
     echo "Cloning Git repository..."
-    git clone "$PROJECT_URL" "$TARGET_DIR"
+    git clone --depth=1 "$PROJECT_URL" "$TARGET_DIR"
     ;;
 esac
 
@@ -103,4 +103,3 @@ fi
 rm -rf $TARGET_DIR/autark-cache
 touch $TARGET_DIR/.autark-fetch-dep
 autark dep $TARGET_DIR/.autark-fetch-dep
-
