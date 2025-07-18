@@ -16,33 +16,51 @@ fi
 case "$ARCH_RAW" in
   i386|i486|i586|i686)
     SYSTEM_ARCH="x86"
+    SYSTEM_ARCH_ALT="ia32"
     ;;
   x86_64|amd64)
     SYSTEM_ARCH="x86_64"
+    SYSTEM_ARCH_ALT="x64"
     ;;
-  armv6l|armv7l|armv7hl)
+  armv6l|armv7l|armv7hl|arm)
     SYSTEM_ARCH="armv7"
+    SYSTEM_ARCH_ALT="arm"
     ;;
   aarch64|arm64)
     SYSTEM_ARCH="aarch64"
+    SYSTEM_ARCH_ALT="arm64"
     ;;
   riscv32)
     SYSTEM_ARCH="riscv32"
+    SYSTEM_ARCH_ALT="riscv32"
     ;;
   riscv64)
     SYSTEM_ARCH="riscv64"
+    SYSTEM_ARCH_ALT="riscv64"
     ;;
   mips|mipsel|mips64|mips64el)
     SYSTEM_ARCH="mips"
+    SYSTEM_ARCH_ALT="mips"
     ;;
-  ppc|ppc64|ppc64le)
+  ppc)
     SYSTEM_ARCH="powerpc"
+    SYSTEM_ARCH_ALT="ppc"
     ;;
-  s390|s390x)
+  ppc64|ppc64le)
+    SYSTEM_ARCH="powerpc"
+    SYSTEM_ARCH_ALT="ppc64"
+    ;;
+  s390)
     SYSTEM_ARCH="s390"
+    SYSTEM_ARCH_ALT="s390"
+    ;;
+  s390x)
+    SYSTEM_ARCH="s390"
+    SYSTEM_ARCH_ALT="s390x"
     ;;
   *)
     SYSTEM_ARCH="unknown"
+    SYSTEM_ARCH_ALT="unknown"
     ;;
 esac
 
@@ -105,4 +123,4 @@ autark env CFLAGS
 autark set "SYSTEM_NAME=$SYSTEM_NAME"
 autark set "SYSTEM_$(echo -n "$SYSTEM_NAME" | tr '[:lower:]' '[:upper:]')=1"
 autark set "SYSTEM_ARCH=$SYSTEM_ARCH"
-
+autark set "SYSTEM_ARCH_ALT=$SYSTEM_ARCH_ALT"

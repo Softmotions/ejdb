@@ -1,0 +1,7 @@
+if { ${BUILD_BINDING_JNI} 
+  include { ejdb2_jni/Autark }
+}
+
+if { ${BUILD_BINDING_NODEJS} 
+  include { ejdb2_node/Autark }
+}

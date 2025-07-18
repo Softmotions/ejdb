@@ -1,0 +1,12 @@
+*.db
+*.db-wal
+.DS_Store
+/include
+/lib
+/.build
+/build-xcode
+/.idea
+/Packages
+#/*.xcodeproj
+#xcuserdata/
+*.xcuserstate

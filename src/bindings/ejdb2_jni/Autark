@@ -1,0 +1,181 @@
+check {
+  find_jdk.sh
+}
+
+if { !defined{JNI_CFLAGS}
+  error { Failed to find JDK JNI libraries! }
+}
+
+env {
+  JAVA_HOME
+  ${JDK_HOME}
+}
+
+set {
+  EJDB_JNI_VERSION
+  @{cat SS{version.txt}}
+}
+
+set {
+  EJDB_JAR_VERSION
+  ^{${META_VERSION} . ${EJDB_JNI_VERSION}}
+}
+
+set {
+  EJDB_JAR
+  ^{ejdb2- ${EJDB_JAR_VERSION} .jar} 
+}
+
+set {
+  EJDB_SOURCES_JAR
+  ^{ejdb2- ${EJDB_JAR_VERSION} -sources.jar} 
+}
+
+set {
+  JAVA_SOURCES
+  in-sources {
+    ..@{ find src/main/java -name '*.java' -exec realpath '{}' ; }
+  }
+}
+
+run {
+  exec {
+    ${JAVAC_EXEC} -source 11 -target 11 -d ./classes -h ./headers
+    ${JAVA_SOURCES}
+  }
+  exec {
+    ${JAR_EXEC} -cf ${EJDB_JAR}  -C ./classes .
+  }
+  exec {
+    ${JAR_EXEC} -cf ${EJDB_SOURCES_JAR} -C SS{src/main/java} .
+  }
+  consumes {
+    ${JAVA_SOURCES}
+  }
+  provides {
+    ${EJDB_JAR}
+    ${EJDB_SOURCES_JAR}
+  }
+}
+
+cc {
+  src/ejdb2jni.c
+  set { _ ..${CFLAGS} ..${JNI_CFLAGS} -fPIC -I ./headers -DIW_STATIC }
+  ${CC}
+  consumes {
+    ${EJDB_JAR}
+  }
+}
+
+if {!defined {SYSTEM_DARWIN}
+  set {
+    LIBEJDB_SO_BASE
+    libejdb2jni.so
+  }
+  set {
+    LIBEJDB_SO_BIN
+    ^{${LIBEJDB_SO_BASE} . ${META_VERSION} . ${EJDB_JNI_VERSION} }
+  }
+  set {
+    LIBEJDB_SO_NAME
+    ^{${LIBEJDB_SO_BASE} . ${META_VERSION_MAJOR}}
+  }
+
+  run {
+    exec { 
+      ${CC} --shared -o ${LIBEJDB_SO_BIN} ${CC_OBJS}
+      ${LIBEJDB_A} ${LDFLAGS} ${JNI_LDFLAGS}
+    }
+    if { ${STRIP_CMD} 
+      exec { ${STRIP_CMD} ${LIBEJDB_SO_BIN} }
+    }
+    consumes {
+      ${LIBEJDB_A}
+      ${CC_OBJS}
+    }
+    produces {
+      ${LIBEJDB_SO_BIN}
+    }
+  }
+} else {
+  set {
+    LIBEJDB_SO_BASE
+    libejdb2jni.dylib
+  }
+  set {
+    LIBEJDB_SO_BIN
+    ^{libejdb2jni. ${META_VERSION} . ${EJDB_JNI_VERSION} .dylib}
+  }
+  set {
+    LIBEJDB_SO_NAME
+    ^{libejdb2jni. ${META_VERSION_MAJOR} .dylib}
+  }
+  run {
+    exec { 
+      ${CC} -dynamiclib
+      -install_name ^{@rpath/ ${LIBEJDB_SO_BASE}} 
+      -compatibility_version ${META_VERSION_MAJOR}
+      -current_version ^{${META_VERSION} . ${EJDB_JNI_VERSION}}
+      -o ${LIBEJDB_SO_BIN} ${CC_OBJS} ${LIBEJDB_A} ${LDFLAGS} ${JNI_LDFLAGS}
+    }
+    if { ${STRIP_CMD} 
+      exec { ${STRIP_CMD} ${LIBEJDB_SO_BIN} }
+    }
+    consumes {
+      ${LIBEJDB_A}
+      ${CC_OBJS}
+    }
+    produces {
+      ${LIBEJDB_SO_BIN}
+    }
+  }
+}
+
+run {
+  exec { ln -sf ${LIBEJDB_SO_BIN} ${LIBEJDB_SO_NAME} }
+  exec { ln -sf ${LIBEJDB_SO_BIN} ${LIBEJDB_SO_BASE} }
+  consumes {
+    ${LIBEJDB_SO_BIN}
+  }
+}
+
+install { ${INSTALL_LIB_DIR} ${LIBEJDB_SO_BIN} ${LIBEJDB_SO_BASE} ${LIBEJDB_SO_NAME} }
+
+configure {
+  maven-deploy.sh.in
+}
+
+install {
+  ^{${INSTALL_DATA_DIR} /java}
+  ${EJDB_JAR}
+}
+
+if { ${EJDB_BUILD_TESTS}
+  set {
+    JAVA_TEST_SOURCES
+    SS{src/test/java/com/softmotions/ejdb2/TestEJDB2.java}  
+  }
+  run {
+    exec {
+      ${JAVAC_EXEC} -source 11 -target 11 -d ./test-classes -cp ${EJDB_JAR} ${JAVA_TEST_SOURCES}
+    }
+    consumes {
+      ${JAVA_TEST_SOURCES}
+      ${EJDB_JAR}
+    }
+  }
+  if { ${EJDB_RUN_TESTS} 
+    run {
+      always
+      exec {
+        ${JAVA_EXEC} -ea -Djava.library.path=. -cp ^{${EJDB_JAR} : ./test-classes}
+        com.softmotions.ejdb2.TestEJDB2
+      }
+      consumes {
+        test-classes/com/softmotions/ejdb2/TestEJDB2.class
+        ${EJDB_JAR}
+      }
+    }
+  }
+}
+

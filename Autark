@@ -35,6 +35,12 @@ if { ${EJDB_RUN_TESTS}
   }
 }
 
+if { eq { ${BUILD_TYPE} Release }
+  set {
+    STRIP_CMD strip --strip-debug
+  }
+}
+
 if { !defined { IWNET_URL } 
   set {
     IWNET_URL
@@ -94,6 +100,8 @@ set {
   CFLAGS
   -std=gnu11
   -fsigned-char
+  -fPIC
+
   -Wall
   -Wextra
   -Wfatal-errors
@@ -108,11 +116,6 @@ set {
 
   ..@{${PKGCONF} --with-path C{${INSTALL_PKGCONFIG_DIR}} --cflags libiwnet}
 
-  if { !eq { ${SYSTEM_NAME} Windows }
-    if { ${EJDB_BUILD_SHARED_LIBS}
-      -fPIC
-    }
-  }
   if { ${ENABLE_ASAN}
     -fsanitize=address
     -fno-omit-frame-pointer
@@ -149,7 +152,7 @@ set {
   if { defined { SYSTEM_LINUX }
     -D_XOPEN_SOURCE=700
   }
-  if { defined { SYSTEM_APPLE }
+  if { defined { SYSTEM_DARWIN }
     -D_DARWIN_C_SOURCE
   }
   if { defined { SYSTEM_WINDOWS } 
@@ -162,6 +165,8 @@ set {
   }
   if { !defined { EJDB_BUILD_SHARED_LIBS }
     -DIW_NODLL
+  } else {
+    -DIW_API_EXPORTS
   }
   if { ${EJDB_BUILD_TESTS}
     -DIW_TESTS

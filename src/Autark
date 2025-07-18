@@ -65,31 +65,63 @@ run {
 install { ${INSTALL_LIB_DIR} ${LIBEJDB_A} }
 
 if { ${EJDB_BUILD_SHARED_LIBS}
-  set {
-    LIBEJDB_SO_BASE
-    libejdb2.so
-  }
-
-  set {
-    LIBEJDB_SO_BIN
-    ^{${LIBEJDB_SO_BASE} . ${META_VERSION}}
-  }
-
-  set {
-    LIBEJDB_SO_NAME
-    ^{${LIBEJDB_SO_BASE} . ${META_VERSION_MAJOR}}
-  }
-
-  run {
-    exec { ${CC} --shared -o ${LIBEJDB_SO_BIN}  ${CC_OBJS} }
-    consumes {
-      ${CC_OBJS}
+  if {!defined {SYSTEM_DARWIN}
+    set {
+      LIBEJDB_SO_BASE
+      libejdb2.so
     }
-    produces {
-      ${LIBEJDB_SO_BIN}
+    set {
+      LIBEJDB_SO_BIN
+      ^{${LIBEJDB_SO_BASE} . ${META_VERSION}}
+    }
+    set {
+      LIBEJDB_SO_NAME
+      ^{${LIBEJDB_SO_BASE} . ${META_VERSION_MAJOR}}
+    }
+    run {
+      exec { ${CC} --shared -o ${LIBEJDB_SO_BIN}  ${CC_OBJS} }
+      if { ${STRIP_CMD} 
+        exec { ${STRIP_CMD} ${LIBEJDB_SO_BIN} }
+      }
+      consumes {
+        ${CC_OBJS}
+      }
+      produces {
+        ${LIBEJDB_SO_BIN}
+      }
+    }
+  } else {
+    set {
+      LIBEJDB_SO_BASE
+      libejdb2.dylib
+    }
+    set {
+      LIBEJDB_SO_BIN
+      ^{libejdb2. ${META_VERSION} .dylib}
+    }
+    set {
+      LIBEJDB_SO_NAME
+      ^{libejdb2. ${META_VERSION_MAJOR} .dylib}
+    }
+    run {
+      exec { ${CC} -dynamiclib  
+        -install_name ^{@rpath/ ${LIBEJDB_SO_BASE}} 
+        -compatibility_version ${META_VERSION_MAJOR}
+        -current_version ${META_VERSION}
+        -o ${LIBEJDB_SO_BIN} 
+        ${CC_OBJS} 
+      }
+      if { ${STRIP_CMD} 
+        exec { ${STRIP_CMD} ${LIBEJDB_SO_BIN} }
+      }
+      consumes {
+        ${CC_OBJS}
+      }
+      produces {
+        ${LIBEJDB_SO_BIN}
+      }
     }
   }
-
   run {
     exec { ln -sf ${LIBEJDB_SO_BIN} ${LIBEJDB_SO_NAME} }
     exec { ln -sf ${LIBEJDB_SO_BIN} ${LIBEJDB_SO_BASE} }
@@ -97,7 +129,6 @@ if { ${EJDB_BUILD_SHARED_LIBS}
       ${LIBEJDB_SO_BIN}
     }
   }
-  
   install { ${INSTALL_LIB_DIR} ${LIBEJDB_SO_BIN} ${LIBEJDB_SO_BASE} ${LIBEJDB_SO_NAME} }
 }
 
@@ -106,4 +137,11 @@ install { ${EJDB_PUBLIC_HEADERS_DESTINATION} ${PUB_HDRS} }
 
 if { ${EJDB_BUILD_TESTS} 
   include { tests/Autark }
+}
+
+option { BUILD_BINDING_JNI Build ejdb Java binding }
+option { BUILD_BINDING_NODEJS Build ejdb Nodejs binding }
+
+if { or { ${BUILD_BINDING_JNI} ${BUILD_BINDING_NODEJS} } 
+  include { bindings/Autark }
 }
