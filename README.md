@@ -43,7 +43,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ## Status
 
 * **EJDB 2.0 core engine is well tested and used in various heavily loaded deployments**
-* Tested on `Linux`, `macOS` and `FreeBSD`. [Has limited Windows support](./WINDOWS.md)
+* Tested on `Linux`, `macOS` and `FreeBSD`.
 
 
 ## Building from sources 
@@ -65,7 +65,6 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ```sh
 ./build.sh --prefix=$HOME/.local
 ```
-
 
 
 # JQL
