@@ -440,9 +440,9 @@ void jn_work_destroy(napi_env env, JNWORK *wp) {
   *wp = 0;
 }
 
-static void jn_ejdb2impl_finalize(napi_env env, void *data, void *hint) {
+static void jn_ejdb2impl_finalize(node_api_nogc_env env, void *data, void *hint) {
   JBN jbn = data;
-  jn_jbn_destroy(env, &jbn);
+  jn_jbn_destroy((void*) env, &jbn);
 }
 
 // string array opts
@@ -1334,7 +1334,7 @@ static void jn_jnql_destroy_mt(JNQL *qlp) {
   free(ql);
 }
 
-static void jn_jql_finalize(napi_env env, void *data, void *hint) {
+static void jn_jql_finalize(node_api_basic_env env, void *data, void *hint) {
   JNQL jnql = data;
   if (jnql) {
     jn_jnql_destroy_mt(&jnql);

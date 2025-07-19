@@ -1,0 +1,90 @@
+
+set {
+  EJDB_NODE_VERSION
+  ^{${META_VERSION} . @{cat SS{version.txt}}}
+}
+
+if { !defined { EJDB_NODE_PUB_DIR }
+  set {
+    EJDB_NODE_PUB_DIR
+    CC{ejdb2_node}
+  }
+}
+
+if { !defined { EJDB_NODE_BIN_ROOT }
+  set {
+    EJDB_NODE_BIN_ROOT
+    ${EJDB_NODE_PUB_DIR}
+  }
+}
+
+set {
+  EJDB_NODE_BIN_DIR
+  ^{${EJDB_NODE_BIN_ROOT} / ^{${SYSTEM_NAME} - ${SYSTEM_ARCH_ALT}}}
+}
+
+set {
+  EJDB_NODE_BIN
+  ^{${EJDB_NODE_BIN_DIR} /ejdb2_node.node} 
+}
+
+
+cc {
+  ejdb2_node.c
+  set { _ ..${CFLAGS} -DIW_API_EXPORTS -DNODE_ADDON_API_DISABLE_DEPRECATED }
+}
+
+if { !defined { SYSTEM_DARWIN }
+  set { NODE_LDFLAGS -rdynamic -Wl,--unresolved-symbols=ignore-all }
+} else {
+  set { NODE_LDFLAGS -rdynamic -undefined dynamic_lookup }
+}
+
+run {
+  exec { mkdir -p ${EJDB_NODE_BIN_DIR} }
+  exec {
+    ${CC} -shared -o ${EJDB_NODE_BIN} ${CC_OBJS}
+    ${LIBEJDB_A} ${LDFLAGS}
+    ${NODE_LDFLAGS}
+  }
+  if { ${STRIP_CMD} 
+    exec { ${STRIP_CMD} ${EJDB_NODE_BIN} }
+  }
+  consumes {
+    ${LIBEJDB_A}
+    ${CC_OBJS}
+  }
+}
+
+configure {
+  package.json
+  CHANGELOG.md
+}
+
+run {
+  exec { cp ./package.json ${EJDB_NODE_PUB_DIR} }
+  exec { cp ./CHANGELOG.md ${EJDB_NODE_PUB_DIR} }
+  consumes {
+    CC{package.json}
+    CC{CHANGELOG.md}
+  }
+}
+
+in-sources {
+  run {
+    shell { cp *.js *.ts ${EJDB_NODE_PUB_DIR} }
+    consumes {
+      set { _ ..@{autark glob *.js *.ts}}
+    }
+  }
+}
+
+if { ${EJDB_RUN_TESTS} 
+  run {
+    always
+    shell { cd ${EJDB_NODE_PUB_DIR} && npm i && npm run test }
+    consumes {
+      ${EJDB_NODE_BIN} 
+    }
+  } 
+}

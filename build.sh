@@ -4,7 +4,7 @@
 # Copyright (c) 2012-2025 Softmotions Ltd <info@softmotions.com>
 
 META_VERSION=0.9.0
-META_REVISION=dfc9bc0
+META_REVISION=1bd04c5
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -60,7 +60,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "dfc9bc0"
+#define META_REVISION "1bd04c5"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 600
@@ -5999,22 +5999,24 @@ static void _on_command_glob(int argc, const char **argv, const char *cdir) {
   if (cdir) {
     akcheck(chdir(cdir));
   }
-  const char *pattern = "*";
-  if (optind < argc) {
-    pattern = argv[optind];
-  }
-  glob_t g;
-  int rc = glob(pattern, 0, 0, &g);
-  if (rc == 0) {
-    for (int i = 0; i < g.gl_pathc; ++i) {
-      puts(g.gl_pathv[i]);
+  do {
+    const char *pattern = "*";
+    if (optind < argc) {
+      pattern = argv[optind];
     }
-  }
-  ;
-  globfree(&g);
-  if (rc && rc != GLOB_NOMATCH) {
-    exit(1);
-  }
+    glob_t g;
+    int rc = glob(pattern, 0, 0, &g);
+    if (rc == 0) {
+      for (int i = 0; i < g.gl_pathc; ++i) {
+        puts(g.gl_pathv[i]);
+      }
+    }
+    ;
+    globfree(&g);
+    if (rc && rc != GLOB_NOMATCH) {
+      exit(1);
+    }
+  } while (++optind < argc);
 }
 #ifdef TESTS
 void on_command_set(int argc, const char **argv) {

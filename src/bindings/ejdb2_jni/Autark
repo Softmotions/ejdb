@@ -60,14 +60,14 @@ run {
 
 cc {
   src/ejdb2jni.c
-  set { _ ..${CFLAGS} ..${JNI_CFLAGS} -fPIC -I ./headers -DIW_STATIC }
+  set { _ ..${CFLAGS} ..${JNI_CFLAGS} -I ./headers }
   ${CC}
   consumes {
     ${EJDB_JAR}
   }
 }
 
-if {!defined {SYSTEM_DARWIN}
+if { !defined { SYSTEM_DARWIN }
   set {
     LIBEJDB_SO_BASE
     libejdb2jni.so
@@ -83,7 +83,7 @@ if {!defined {SYSTEM_DARWIN}
 
   run {
     exec { 
-      ${CC} --shared -o ${LIBEJDB_SO_BIN} ${CC_OBJS}
+      ${CC} -shared -o ${LIBEJDB_SO_BIN} ${CC_OBJS}
       ${LIBEJDB_A} ${LDFLAGS} ${JNI_LDFLAGS}
     }
     if { ${STRIP_CMD} 

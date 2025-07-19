@@ -1,6 +1,6 @@
 {
   "name": "ejdb2_node",
-  "version": "@EJDB2_NODE_VERSION@",
+  "version": "@EJDB_NODE_VERSION@",
   "repository": "https://github.com/Softmotions/ejdb.git",
   "author": "Anton Adamansky <adamansky@gmail.com>",
   "description": "EJDB2 Node.js native binding",
@@ -32,7 +32,7 @@
     "Changelog",
     "README.md"
   ],
-  "revision": "@GIT_REVISION@",
+  "revision": "@META_REVISION@",
   "dependencies": {
     "extract-zip": "^2.0.1",
     "gauge": "^4.0.4",

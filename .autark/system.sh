@@ -120,7 +120,7 @@ eval "$(./test_system)"
 
 autark env CC
 autark env CFLAGS
-autark set "SYSTEM_NAME=$SYSTEM_NAME"
+autark set "SYSTEM_NAME=$(echo -n "$SYSTEM_NAME" | tr '[:upper:]' '[:lower:]')"
 autark set "SYSTEM_$(echo -n "$SYSTEM_NAME" | tr '[:lower:]' '[:upper:]')=1"
 autark set "SYSTEM_ARCH=$SYSTEM_ARCH"
 autark set "SYSTEM_ARCH_ALT=$SYSTEM_ARCH_ALT"

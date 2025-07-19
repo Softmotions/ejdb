@@ -1,3 +1,3 @@
-ejdb_node (@EJDB2_NODE_VERSION@)
+ejdb_node (@EJDB_NODE_VERSION@)
 
-- Upgraded to ejdb2 v@PROJECT_VERSION@
+- Upgraded to ejdb2 v@META_VERSION@

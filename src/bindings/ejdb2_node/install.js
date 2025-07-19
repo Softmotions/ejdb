@@ -36,22 +36,10 @@ const utils = require("./utils");
 const REVISION = require("./package.json")["revision"];
 
 function hasRevision() {
-  return REVISION && REVISION.length && REVISION != "@GIT_REVISION@";
+  return REVISION && REVISION.length && REVISION != "@META_REVISION@";
 }
 
 async function install() {
-  let out = await utils.runProcessAndGetOutput("cmake", ["--version"]).catch(() => {
-    console.error("Unable to find executable");
-    process.exit(1);
-  });
-  console.log(out);
-
-  out = await utils.runProcessAndGetOutput("make", ["--version"]).catch(() => {
-    console.error("Unable to find executable");
-    process.exit(1);
-  });
-  console.log(out);
-
   console.log("Building EJDB2 native binding...");
   const wdir = await promisify(fs.mkdtemp)(path.join(os.tmpdir(), "ejdb2-node"));
   console.log(`Git revision: ${REVISION}`);
@@ -65,15 +53,11 @@ async function install() {
   if (dist == null) throw Error(`Invalid distrib dir ${wdir}`);
   dist = path.join(wdir, dist);
 
-  const buildDir = path.join(dist, "build");
-  fs.mkdirSync(buildDir);
-
   await utils.runProcess(
-    "cmake",
-    ["..", "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_NODEJS_BINDING=ON", `-DNODE_BIN_ROOT=${__dirname}`],
-    buildDir
+    "build.sh",
+    ["-DBUILD_TYPE=Release", "-DBUILD_BINDING_NODEJS=1", `-DEJDB_NODE_BIN_ROOT=${__dirname}`],
+    dist
   );
-  await utils.runProcess("make", [], buildDir);
   await rimraf(wdir);
 }
 
@@ -82,6 +66,7 @@ if (process.platform.toLowerCase().indexOf("win") == 0) {
   console.error("Building for windows is currently not supported");
   process.exit(1);
 }
+
 if (hasRevision() && !fs.existsSync(path.join(utils.binariesDir, "ejdb2_node.node"))) {
   install().catch((err) => {
     console.error(err);
