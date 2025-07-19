@@ -44,7 +44,7 @@ if { eq { ${BUILD_TYPE} Release }
 if { !defined { IWNET_URL } 
   set {
     IWNET_URL
-    file:///home/adam/Projects/softmotions/iwnet
+    https://github.com/Softmotions/iwnet/archive/refs/heads/master.zip
   }
 }
 

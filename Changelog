@@ -1,6 +1,6 @@
-2025-07-15  Anton Adamansky  <adamansky@gmail.com>  [v2.80]
-  * Migration to Autark
-  * Project cleanup 
+2025-07-19  Anton Adamansky  <adamansky@gmail.com>  [v2.80]
+  * Migration to Autark build system.
+  * Project cleanup. Only java and nodejs bindings are maintained.
 
 2022-11-17  Anton Adamansky  <adamansky@gmail.com>  [v2.74]
   * Naming refactoring.
