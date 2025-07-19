@@ -1,6 +1,7 @@
 /autark-cache*
 /hints.txt
 /t.*
+/compile_commands.json
 
 .DS_Store
 .codelite/
