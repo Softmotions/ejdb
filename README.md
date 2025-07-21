@@ -54,7 +54,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * gcc or clang compiler
 * pkgconf or pkg-config
 
-**Building**
+## Build by [Autark](https://github.com/Softmotions/autark)
 
 ```sh
 ./build.sh
