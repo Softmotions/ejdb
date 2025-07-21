@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=4eb4326
+META_REVISION=4db68cc
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "4eb4326"
+#define META_REVISION "4db68cc"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 600
@@ -3740,7 +3740,18 @@ static void _meta_on_let(struct node *n, struct node *e) {
       xstr_cat2(xstr, " ", 1);
     }
     const char *nv = node_value(nn);
-    xstr_cat(xstr, nv);
+    if (is_vlist(nv)) {
+      struct vlist_iter iter;
+      vlist_iter_init(nv, &iter);
+      for (int i = 0; vlist_iter_next(&iter); ++i) {
+        if (i) {
+          xstr_cat2(xstr, " ", 1);
+        }
+        xstr_cat2(xstr, iter.item, iter.len);
+      }
+    } else {
+      xstr_cat(xstr, nv);
+    }
   }
   node_env_set(n, name, xstr_ptr(xstr));
   xstr_destroy(xstr);
@@ -5807,7 +5818,7 @@ static int _usage_va(const char *err, va_list ap) {
   fprintf(stderr,
           "        --libdir=<>             Path to 'lib' dir relative to a `prefix` dir. Default: lib\n");
   fprintf(stderr,
-          "        --datadir=<>             Path to 'data' dir relative to a `prefix` dir. Default: share\n");
+          "        --datadir=<>            Path to 'data' dir relative to a `prefix` dir. Default: share\n");
   fprintf(stderr,
           "        --includedir=<>         Path to 'include' dir relative to `prefix` dir. Default: include\n");
   fprintf(stderr,
