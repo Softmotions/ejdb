@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=9593c87
+META_REVISION=08a80fa
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,10 +62,10 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "9593c87"
+#define META_REVISION "08a80fa"
 #endif
 #define _AMALGAMATE_
-#define _XOPEN_SOURCE 600
+#define _XOPEN_SOURCE 700
 #define _POSIX_C_SOURCE 200809L
 #define _DEFAULT_SOURCE
 #include <assert.h>
@@ -105,6 +105,9 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #endif
 #define AK_CONSTRUCTOR __attribute__((constructor))
 #define AK_DESTRUCTOR  __attribute__((destructor))
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
 #define LLEN(l__) (sizeof(l__) - 1)
 /* Align x_ with v_. v_ must be simple power for 2 value. */
 #define ROUNDUP(x_, v_) (((x_) + (v_) - 1) & ~((v_) - 1))
@@ -387,6 +390,7 @@ int map_iter_next(struct map_iter*);
 #include "xstr.h"
 #include <limits.h>
 #include <string.h>
+#include <sys/types.h>
 #endif
 static inline bool utils_char_is_space(char c) {
   return c == 32 || (c >= 9 && c <= 13);
@@ -417,9 +421,14 @@ static inline int utils_toupper_ascii(int c) {
   }
   return c;
 }
+static inline size_t utils_strnlen(const char *s, size_t maxlen) {
+  size_t i;
+  for (i = 0; i < maxlen && s[i]; ++i) ;
+  return i;
+}
 static inline char* utils_strncpy(char *dst, const char *src, size_t dst_sz) {
   if (dst_sz > 1) {
-    size_t len = strnlen(src, dst_sz - 1);
+    size_t len = utils_strnlen(src, dst_sz - 1);
     memcpy(dst, src, len);
     dst[len] = '\0';
   } else if (dst_sz) {
@@ -1361,7 +1370,7 @@ char* pool_strdup(struct pool *pool, const char *str) {
 }
 char* pool_strndup(struct pool *pool, const char *str, size_t len) {
   if (str) {
-    len = strnlen(str, len);
+    len = utils_strnlen(str, len);
     char *ret = pool_alloc(pool, len + 1);
     memcpy(ret, str, len);
     ret[len] = '\0';
