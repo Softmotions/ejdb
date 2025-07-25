@@ -48,7 +48,7 @@ set {
 set {
   LDFLAGS_TEST
   ${LIBEJDB_A}
-  @{ ${PKGCONF} --libs cunit }
+  ..@{ ${PKGCONF} --libs cunit }
   ..${LDFLAGS}
 }
 
