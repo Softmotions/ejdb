@@ -2,7 +2,7 @@
 set -e
 
 usage() {
-  echo "Usage: $0 <project_url> <target_dir> [target_dir_var] [mode: nostrip]" >&2
+  echo "Usage: $0 <project_url> <target_dir> [target_dir_var] [n_strip_dirs]" >&2
   exit 1
 }
 
@@ -13,7 +13,7 @@ usage() {
 PROJECT_URL="$1"
 TARGET_DIR="$2"
 TARGET_VAR="$3"
-MODE="$4"
+NSTRIP="$4"
 
 rm -rf $TARGET_DIR
 mkdir -p "$TARGET_DIR"
@@ -60,8 +60,7 @@ case "$PROJECT_URL" in
 
     download_file "$PROJECT_URL" "$ARCHIVE.$EXT"
 
-    NSTRIP=1
-    [ "$MODE" = "nostrip" ] && NSTRIP=0
+    [ -z "$NSTRIP" ] && NSTRIP=1
 
     case "$EXT" in
       tar.gz)
