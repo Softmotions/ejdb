@@ -2,16 +2,18 @@
 set -e
 
 usage() {
-  echo "Usage: $0 <project_url> <target_dir> [target_dir_var]" >&2
+  echo "Usage: $0 <project_url> <target_dir> [target_dir_var] [mode: nostrip]" >&2
   exit 1
 }
 
 [ -z "$1" ] && usage
 [ -z "$2" ] && usage
 
+
 PROJECT_URL="$1"
 TARGET_DIR="$2"
 TARGET_VAR="$3"
+MODE="$4"
 
 rm -rf $TARGET_DIR
 mkdir -p "$TARGET_DIR"
@@ -19,11 +21,14 @@ mkdir -p "$TARGET_DIR"
 download_file() {
   URL="$1"
   DEST="$2"
+  FILE=${URL#file://}
 
-  if command -v wget >/dev/null 2>&1; then
-    wget -O "$DEST" "$URL"
+  if [ "$FILE" != "$URL" ]; then
+    cp -f $FILE $DEST
   elif command -v curl >/dev/null 2>&1; then
     curl -L "$URL" -o "$DEST"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -O "$DEST" "$URL"
   else
     echo "Error: neither wget nor curl is available on the system" >&2
     exit 1
@@ -31,7 +36,7 @@ download_file() {
 }
 
 case "$PROJECT_URL" in
-  https://* | http://*)
+  https://* | http://* | file://*)
     echo "Downloading an archive..."
     TMP_DIR="$(mktemp -d)"
     ARCHIVE="$TMP_DIR/archive"
@@ -55,21 +60,26 @@ case "$PROJECT_URL" in
 
     download_file "$PROJECT_URL" "$ARCHIVE.$EXT"
 
+    NSTRIP=1
+    [ "$MODE" = "nostrip" ] && NSTRIP=0
+
     case "$EXT" in
       tar.gz)
-        tar -xzf "$ARCHIVE.$EXT" -C "$TARGET_DIR" --strip-components=1
+        tar -xzf "$ARCHIVE.$EXT" -C "$TARGET_DIR" --strip-components=$NSTRIP
         ;;
       tar.xz)
-        tar -xJf "$ARCHIVE.$EXT" -C "$TARGET_DIR" --strip-components=1
+        tar -xJf "$ARCHIVE.$EXT" -C "$TARGET_DIR" --strip-components=$NSTRIP
         ;;
       zip)
         unzip -q "$ARCHIVE.$EXT" -d "$TMP_DIR/unzipped"
-        # Flatten if single top-level directory
-        SRC_DIR="$TMP_DIR/unzipped"
-        if [ "$(find "$SRC_DIR" -mindepth 1 -maxdepth 1 | wc -l)" -eq 1 ]; then
-          FIRST_CHILD="$(find "$SRC_DIR" -mindepth 1 -maxdepth 1)"
-          if [ -d "$FIRST_CHILD" ]; then
-            SRC_DIR="$FIRST_CHILD"
+        if [ "$NSTRIP" != "0" ]; then
+          # Flatten if single top-level directory
+          SRC_DIR="$TMP_DIR/unzipped"
+          if [ "$(find "$SRC_DIR" -mindepth 1 -maxdepth 1 | wc -l)" -eq 1 ]; then
+            FIRST_CHILD="$(find "$SRC_DIR" -mindepth 1 -maxdepth 1)"
+            if [ -d "$FIRST_CHILD" ]; then
+              SRC_DIR="$FIRST_CHILD"
+            fi
           fi
         fi
         cp -a "$SRC_DIR"/. "$TARGET_DIR"/
@@ -79,8 +89,8 @@ case "$PROJECT_URL" in
     rm -rf "$TMP_DIR"
     ;;
 
-  file://*)
-    SRC_DIR="${PROJECT_URL#file://}"
+  dir://*)
+    SRC_DIR="${PROJECT_URL#dir://}"
     if [ ! -d "$SRC_DIR" ]; then
       echo "Error: Source directory does not exist: $SRC_DIR" >&2
       exit 1
