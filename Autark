@@ -64,7 +64,7 @@ check {
 }
 
 run {
-  shell { autark --prefix C{} ${IWNET_SRC_DIR} }
+  shell { ^{BUILD_TYPE= ${BUILD_TYPE}} autark --prefix C{} ${IWNET_SRC_DIR} }
   consumes {
     ${IWNET_SRC_DIR}
   }
