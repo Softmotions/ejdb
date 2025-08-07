@@ -80,7 +80,7 @@ run {
 
 run-on-install {
   shell {
-    autark --prefix ${INSTALL_PREFIX} 
+    autark -J1 --prefix ${INSTALL_PREFIX} 
     set { _ 
       if { ${EJDB_BUILD_SHARED_LIBS}
         -DIWNET_BUILD_SHARED_LIBS=1
