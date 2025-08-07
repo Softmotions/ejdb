@@ -48,6 +48,11 @@ if { !defined { IWNET_URL }
   }
 }
 
+env {
+  PKG_CONFIG_PATH
+  C{${INSTALL_PKGCONFIG_DIR}}
+}
+
 check {
   system.sh
   test_blocks.sh { IW_BLOCKS }
@@ -92,7 +97,7 @@ set {
 set {
   LDFLAGS
   ..${LDFLAGS}
-  ..@{${PKGCONF} --with-path C{${INSTALL_PKGCONFIG_DIR}} --libs --static libiwnet}
+  ..@{${PKGCONF} --libs --static libiwnet}
   ..${LDFLAGS_PKGCONF}
 }
 
@@ -114,7 +119,7 @@ set {
   -Wno-unused-parameter
   -Wno-overlength-strings
 
-  ..@{${PKGCONF} --with-path C{${INSTALL_PKGCONFIG_DIR}} --cflags libiwnet}
+  ..@{${PKGCONF} --cflags libiwnet}
 
   if { ${ENABLE_ASAN}
     -fsanitize=address
