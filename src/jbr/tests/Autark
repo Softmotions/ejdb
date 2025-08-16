@@ -6,7 +6,7 @@ cc {
 set {
   LDFLAGS_TEST
   ..${LDFLAGS_TEST}
-  ..@{${PKGCONF} --libs libcurl}
+  ..@@{${PKGCONF} --libs libcurl}
 }
 
 foreach {

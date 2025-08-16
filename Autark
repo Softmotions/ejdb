@@ -97,7 +97,7 @@ set {
 set {
   LDFLAGS
   ..${LDFLAGS}
-  ..@{${PKGCONF} --libs --static libiwnet}
+  ..@@{${PKGCONF} --libs --static libiwnet}
   ..${LDFLAGS_PKGCONF}
 }
 
@@ -119,7 +119,7 @@ set {
   -Wno-unused-parameter
   -Wno-overlength-strings
 
-  ..@{${PKGCONF} --cflags libiwnet}
+  ..@@{${PKGCONF} --cflags libiwnet}
 
   if { ${ENABLE_ASAN}
     -fsanitize=address
