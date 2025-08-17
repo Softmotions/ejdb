@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=11d365d
+META_REVISION=85d4187
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "11d365d"
+#define META_REVISION "85d4187"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
@@ -5578,7 +5578,9 @@ static const char* _find_value_get(struct node *n) {
     }
   }
   n->impl = (void*) (intptr_t) -1;
-  if (strcmp("library", n->value) == 0) {
+  const char *nv = n->value;
+  while(*nv == '!') ++nv;
+  if (strcmp("library", nv) == 0) {
     _library_find(n);
   }
   if (!n->impl) {
