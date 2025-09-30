@@ -14,7 +14,7 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 * Online backups support
 * [Simple but powerful query language](#jql)
 * [Support of collection joins](#jql-collection-joins)
-* Powered by [IOWOW](http://iowow.softmotions.com) - The persistent key/value storage engine
+* Powered by [IOWOW](https://github.com/Softmotions/iowow) - The persistent key/value storage engine
 * HTTP REST/Websockets endpoints powered by [IWNET](https://github.com/Softmotions/iwnet)
 
 ---
