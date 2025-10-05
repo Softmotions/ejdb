@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=85d4187
+META_REVISION=da411bd
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "85d4187"
+#define META_REVISION "da411bd"
 #endif
 #define _AMALGAMATE_
 #define _XOPEN_SOURCE 700
@@ -8170,7 +8170,7 @@ if grep -E '^ID(_LIKE)?=.*debian' /etc/os-release >/dev/null; then
 fi
 
 (set -x; ${COMPILER} ${AUTARK_HOME}/autark.c --std=c99 -O1 -march=native ${CFLAGS} -o ${AUTARK_HOME}/autark)
-cp $0 ${AUTARK_HOME}/build.sh
+cp $(basename $0) ${AUTARK_HOME}/build.sh
 echo "Done"
 
 set +e
