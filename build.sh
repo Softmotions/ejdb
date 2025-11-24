@@ -6,7 +6,7 @@
 # https://github.com/Softmotions/autark
 
 META_VERSION=0.9.0
-META_REVISION=e6bb7fe
+META_REVISION=947a8ae
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -62,7 +62,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
 #define META_VERSION "0.9.0"
-#define META_REVISION "e6bb7fe"
+#define META_REVISION "947a8ae"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -604,6 +604,9 @@ char* path_basename(char *path);
 #include "ulist.h"
 #include <stdbool.h>
 #endif
+#define TAG_INIT  1
+#define TAG_SETUP 2
+#define TAG_BUILD 3
 #define AUTARK_CACHE  "autark-cache"
 #define AUTARK_SCRIPT "Autark"
 #define AUTARK_ROOT_DIR  "AUTARK_ROOT_DIR"  // Project root directory
@@ -617,6 +620,7 @@ char* path_basename(char *path);
 struct unit_env_item {
   const char  *val;
   struct node *n;
+  unsigned     tag;
 };
 /// Current execution unit.
 struct unit {
@@ -654,7 +658,7 @@ struct env {
     const char *prefix_dir;  // Absolute path to install prefix dir.
     const char *bin_dir;     // Path to the bin dir relative to prefix.
     const char *lib_dir;     // Path to lib dir relative to prefix.
-    const char *data_dir; // Path to lib data dir relative to prefix.
+    const char *data_dir;    // Path to lib data dir relative to prefix.
     const char *include_dir; // Path to include headers dir relative to prefix.
     const char *pkgconf_dir; // Path to pkgconfig dir.
     const char *man_dir;     // Path to man pages dir.
@@ -684,8 +688,8 @@ void unit_ch_dir(struct unit_ctx*, char *prevcwd);
 void unit_ch_cache_dir(struct unit*, char *prevcwd);
 void unit_ch_src_dir(struct unit*, char *prevcwd);
 void unit_env_set_val(struct unit*, const char *key, const char *val);
-void unit_env_set_node(struct unit*, const char *key, struct node *n);
-struct node* unit_env_get_node(struct unit *u, const char *key);
+void unit_env_set_node(struct unit*, const char *key, struct node *n, unsigned tag);
+struct node* unit_env_get_node(struct unit *u, const char *key, unsigned *out_tag);
 const char* unit_env_get(struct node *n, const char *key);
 const char* unit_env_get_raw(struct unit *u, const char *key);
 void unit_env_remove(struct unit*, const char *key);
@@ -872,7 +876,7 @@ void script_close(struct sctx**);
 void script_dump(struct sctx*, struct xstr *out);
 const char* node_env_get(struct node*, const char *key);
 void node_env_set(struct node*, const char *key, const char *val);
-void node_env_set_node(struct node*, const char *key);
+void node_env_set_node(struct node*, const char *key, unsigned tag);
 struct node* node_by_product(struct node*, const char *prod, char pathbuf[PATH_MAX]);
 struct node* node_by_product_raw(struct node*, const char *prod);
 void node_product_add(struct node*, const char *prod, char pathbuf[PATH_MAX]);
@@ -3292,6 +3296,15 @@ int node_check_setup(struct node *n) {
 #include "env.h"
 #endif
 static const char* _set_value_get(struct node *n);
+static void _set_dispose(struct node *n) {
+  if ((uintptr_t) n->impl != (uintptr_t) -1) {
+    free(n->impl);
+  }
+  n->impl = 0;
+}
+static bool _set_is_let(struct node *n) {
+  return strcmp(n->value, "let") == 0;
+}
 static struct unit* _unit_for_set(struct node *n, struct node *nn, const char **keyp) {
   if (nn->type == NODE_TYPE_BAG) {
     if (strcmp(nn->value, "root") == 0) {
@@ -3306,9 +3319,27 @@ static struct unit* _unit_for_set(struct node *n, struct node *nn, const char **
   }
   return unit_peek();
 }
-static void _set_init(struct node *n);
+static void _set_init_impl(struct node *n) {
+  const char *key = 0;
+  struct unit *unit = n->child ? _unit_for_set(n, n->child, &key) : 0;
+  if (!key) {
+    node_warn(n, "No name specified for 'set' directive");
+    return;
+  }
+  unsigned tag = 0;
+  struct node *nn = unit_env_get_node(unit, key, &tag);
+  if (nn && nn != n) {
+    n->recur_next.n = nn;
+  }
+  unit_env_set_node(unit, key, n, 0);
+}
+static void _set_init(struct node *n) {
+  _set_init_impl(n);
+}
 static void _set_setup(struct node *n) {
-  _set_init(n);
+  if (_set_is_let(n)) {
+    _set_init_impl(n);
+  }
   if (n->child && strcmp(n->value, "env") == 0) {
     const char *v = _set_value_get(n);
     if (v) {
@@ -3323,18 +3354,10 @@ static void _set_setup(struct node *n) {
     }
   }
 }
-static void _set_init(struct node *n) {
-  const char *key = 0;
-  struct unit *unit = n->child ? _unit_for_set(n, n->child, &key) : 0;
-  if (!key) {
-    node_warn(n, "No name specified for 'set' directive");
-    return;
+static void _set_build(struct node *n) {
+  if (_set_is_let(n)) {
+    _set_init_impl(n);
   }
-  struct node *nn = unit_env_get_node(unit, key);
-  if (nn && nn != n) {
-    n->recur_next.n = nn;
-  }
-  unit_env_set_node(unit, key, n);
 }
 static const char* _set_value_get(struct node *n) {
   if (n->recur_next.active && n->recur_next.n) {
@@ -3342,7 +3365,7 @@ static const char* _set_value_get(struct node *n) {
   }
   n->recur_next.active = true;
   struct node_foreach *fe = node_find_parent_foreach(n);
-  if (fe) {
+  if (fe || _set_is_let(n)) {
     if ((uintptr_t) n->impl != (uintptr_t) -1) {
       free(n->impl);
     }
@@ -3387,22 +3410,13 @@ static const char* _set_value_get(struct node *n) {
   n->recur_next.active = false;
   return n->impl;
 }
-static void _set_dispose(struct node *n) {
-  if ((uintptr_t) n->impl != (uintptr_t) -1) {
-    free(n->impl);
-  }
-  n->impl = 0;
-}
-static void _set_build(struct node *n) {
-  _set_init(n);
-}
 int node_set_setup(struct node *n) {
   n->flags |= NODE_FLG_NO_CWD;
   n->init = _set_init;
   n->setup = _set_setup;
+  n->build = _set_build;
   n->value_get = _set_value_get;
   n->dispose = _set_dispose;
-  n->build = _set_build;
   return 0;
 }
 #ifndef _AMALGAMATE_
@@ -5645,7 +5659,7 @@ static void _find_init(struct node *n) {
     node_fatal(AK_ERROR_SCRIPT_SYNTAX, n, "No name specified for '%s' directive", n->value);
     return;
   }
-  unit_env_set_node(unit, key, n);
+  unit_env_set_node(unit, key, n, TAG_INIT);
 }
 static void _find_dispose(struct node *n) {
   if ((uintptr_t) n->impl != (uintptr_t) -1) {
@@ -5705,7 +5719,7 @@ static void _macro_init(struct node *n) {
     return;
   }
   _macro_remove(n);
-  unit_env_set_node(unit, key, n);
+  unit_env_set_node(unit, key, n, TAG_INIT);
 }
 static void _macro_dispose(struct node *n) {
   struct _macro_state *s = n->impl;
@@ -5821,7 +5835,7 @@ static void _call_init(struct node *n) {
     node_warn(n, "No name specified for 'call' directive");
     return;
   }
-  struct node *mn = unit_env_get_node(unit, key);
+  struct node *mn = unit_env_get_node(unit, key, 0);
   if (!mn) {
     node_fatal(0, n, "Unknown script macro: %s", key);
     return;
@@ -5913,16 +5927,22 @@ void unit_env_set_val(struct unit *u, const char *key, const char *val) {
   }
   map_put_str(u->env, key, item);
 }
-void unit_env_set_node(struct unit *u, const char *key, struct node *n) {
+void unit_env_set_node(struct unit *u, const char *key, struct node *n, unsigned tag) {
   struct unit_env_item *item = xmalloc(sizeof(*item));
   item->val = 0;
   item->n = n;
+  item->tag = tag;
   map_put_str(u->env, key, item);
 }
-struct node* unit_env_get_node(struct unit *u, const char *key) {
+struct node* unit_env_get_node(struct unit *u, const char *key, unsigned *out_tag) {
   struct unit_env_item *item = map_get(u->env, key);
   if (item) {
+    if (out_tag) {
+      *out_tag = item->tag;
+    }
     return item->n;
+  } else if (out_tag)  {
+    *out_tag = 0;
   }
   return 0;
 }
@@ -7388,7 +7408,7 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_SUBST;
   } else if (strcmp(key, "^") == 0) {
     return NODE_TYPE_JOIN;
-  } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0) {
+  } else if (strcmp(key, "set") == 0 || strcmp(key, "env") == 0 || strcmp(key, "let") == 0) {
     return NODE_TYPE_SET;
   } else if (strcmp(key, "check") == 0) {
     return NODE_TYPE_CHECK;
@@ -8141,14 +8161,14 @@ void node_env_set(struct node *n, const char *key, const char *val) {
     }
   }
 }
-void node_env_set_node(struct node *n_, const char *key) {
+void node_env_set_node(struct node *n_, const char *key, unsigned tag) {
   if (key[0] == '_' && key[1] == '\0') {
     // Skip on special '_' key
     return;
   }
   for (struct node *n = n_; n; n = n->parent) {
     if (n->unit) {
-      unit_env_set_node(n->unit, key, n_);
+      unit_env_set_node(n->unit, key, n_, tag);
       return;
     }
   }
