@@ -132,14 +132,18 @@ set {
   }
   if { prefix { ${BUILD_TYPE} Debug }
     -O0
-    -g -ggdb
+    -ggdb
+    -fno-omit-frame-pointer
     -Werror
     -Wno-unused-variable
     -DDEBUG -D_DEBUG -UNDEBUG
   } else {
-    -O3
     if { ${ENABLE_DEBINFO}
-      -g -ggdb
+      -O2
+      -ggdb
+      -fno-omit-frame-pointer
+    } else {
+      -O3
     }
     -DNDEBUG
     -DIW_RELEASE
