@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.0
-META_REVISION=607c002
+META_VERSION=0.9.1
+META_REVISION=01e8dd1
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -61,8 +61,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.0"
-#define META_REVISION "607c002"
+#define META_VERSION "0.9.1"
+#define META_REVISION "01e8dd1"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -3251,11 +3251,11 @@ static void _check_on_resolve(struct node_resolve *r) {
   }
   int rc = spawn_do(s);
   if (rc) {
-    node_fatal(rc, n, "%s", unit->source_path);
+    node_fatal(rc, n, "%s", path);
   } else {
     int code = spawn_exit_code(s);
     if (code != 0) {
-      node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", unit->source_path, code);
+      node_fatal(AK_ERROR_EXTERNAL_COMMAND, n, "%s: %d", path, code);
     }
   }
   spawn_destroy(s);
@@ -3265,6 +3265,7 @@ static void _check_on_resolve(struct node_resolve *r) {
   if (rc) {
     node_fatal(rc, unit->n, "Failed to open depencency file: %s", r->deps_path_tmp);
   }
+  deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
   node_add_unit_deps(n, &deps);
   deps_close(&deps);
 }
