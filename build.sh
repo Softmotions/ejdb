@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.3
-META_REVISION=6b84394
+META_VERSION=0.9.4
+META_REVISION=ed72a54
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -61,8 +61,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.3"
-#define META_REVISION "6b84394"
+#define META_VERSION "0.9.4"
+#define META_REVISION "ed72a54"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -3871,7 +3871,16 @@ static const char* _join_value(struct node *n) {
     if (list) {
       xstr_cat(xstr, "\1");
     }
-    xstr_cat(xstr, node_value(nn));
+    const char *val = node_value(nn);
+    if (is_vlist(val)) {
+      struct vlist_iter iter;
+      vlist_iter_init(val, &iter);
+      while (vlist_iter_next(&iter)) {
+        xstr_cat2(xstr, iter.item, iter.len);
+      }
+    } else {
+      xstr_cat(xstr, val);
+    }
   }
   n->impl = xstr_destroy_keep_ptr(xstr);
   return n->impl;
