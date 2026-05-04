@@ -164,9 +164,13 @@ static union jqp_unit* _jqp_string(yycontext *yy, jqp_string_flavours_t flavour,
 static union jqp_unit* _jqp_number(yycontext *yy, jqp_int_flavours_t flavour, const char *text) {
   union jqp_unit *unit = _jqp_unit(yy);
   char *eptr;
+
+  // strtoll does not set errno=0 on success, so reset it before calling
+  errno = 0;
+
   int64_t ival = strtoll(text, &eptr, 0);
   if ((eptr == text) || (errno == ERANGE)) {
-    iwlog_error("Invalid number: %s", text);
+    iwlog_error("Invalid number: %s = %lld", text,ival);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   if ((*eptr == '.') || (*eptr == 'e') || (*eptr == 'E')) {
@@ -189,6 +193,8 @@ static union jqp_unit* _jqp_json_number(yycontext *yy, const char *text) {
   union jqp_unit *unit = _jqp_unit(yy);
   char *eptr;
   unit->type = JQP_JSON_TYPE;
+  // strtoll does not set errno=0 on success, so reset it before calling
+  errno = 0;
   int64_t ival = strtoll(text, &eptr, 0);
   if ((eptr == text) || (errno == ERANGE)) {
     iwlog_error("Invalid number: %s", text);
