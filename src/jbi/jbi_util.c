@@ -1,4 +1,5 @@
 #include "ejdb2_internal.h"
+#include <iowow/iwconv.h>
 #include <iowow/iwutils.h>
 
 // ---------------------------------------------------------------------------

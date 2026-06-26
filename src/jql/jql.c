@@ -1,6 +1,7 @@
 #include "ejdb2_internal.h"
 #include "jql_internal.h"
 #include "jqp.h"
+#include <iowow/iwconv.h>
 
 #ifdef _WIN32
 #include <libiberty/libiberty.h>
