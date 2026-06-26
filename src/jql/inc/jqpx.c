@@ -170,7 +170,7 @@ static union jqp_unit* _jqp_number(yycontext *yy, jqp_int_flavours_t flavour, co
 
   int64_t ival = strtoll(text, &eptr, 0);
   if ((eptr == text) || (errno == ERANGE)) {
-    iwlog_error("Invalid number: %s = %lld", text,ival);
+    iwlog_error("Invalid number: %s = %ld", text, ival);
     JQRC(yy, JQL_ERROR_QUERY_PARSE);
   }
   if ((*eptr == '.') || (*eptr == 'e') || (*eptr == 'E')) {
