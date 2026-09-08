@@ -3219,7 +3219,7 @@ static char* _file_resolve_in_path(struct spawn *s, const char *file, char pathb
       } else {
         snprintf(pathbuf, PATH_MAX, "%s%s", buf, file);
       }
-      if (!access(pathbuf, F_OK)) {
+      if (!access(pathbuf, X_OK)) {
         return pathbuf;
       }
     }
