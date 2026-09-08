@@ -2,7 +2,7 @@ meta {
   name { ejdb2 }
 
   version_major { 2 }
-  version_minor { 80 }
+  version_minor { 92 }
 
   description {  Embeddable JSON database engine (EJDB2) }
   website { https://github.com/Softmotions/ejdb }
