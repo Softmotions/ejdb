@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.11
-META_REVISION=4d375c3
+META_VERSION=0.9.12
+META_REVISION=62885dd
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -67,8 +67,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.11"
-#define META_REVISION "4d375c3"
+#define META_VERSION "0.9.12"
+#define META_REVISION "62885dd"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -9503,7 +9503,7 @@ void node_resolve(struct node_resolve *r) {
     }
   }
   if (r->on_env_value && (r->mode & NODE_RESOLVE_ENV_ALWAYS) && (env_created || !access(env_path, R_OK))) {
-    char buf[4096];
+    char buf[16384];
     FILE *f = fopen(env_path, "r");
     if (f) {
       while (fgets(buf, sizeof(buf), f)) {

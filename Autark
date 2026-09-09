@@ -1,8 +1,17 @@
+check {
+  changelog_gnu.sh { S{Changelog} }
+  system.sh
+  test_blocks.sh { IW_BLOCKS }
+  test_pthread.sh
+  test_qsort_r.sh
+}
+
 meta {
   name { ejdb2 }
 
-  version_major { 2 }
-  version_minor { 92 }
+  version { ${CHANGELOG_VERSION} }
+  version_major { ${CHANGELOG_VERSION_MAJOR} }
+  version_minor { ${CHANGELOG_VERSION_MINOR} }
 
   description {  Embeddable JSON database engine (EJDB2) }
   website { https://github.com/Softmotions/ejdb }
@@ -18,11 +27,6 @@ option { EJDB_RUN_TESTS           Build and run test cases }
 option { ENABLE_ASAN              Turn on address sanitizer }
 option { ENABLE_UBSAN             Turn on UB sanitizer }
 option { ENABLE_DEBINFO           Generate debuginfo even in release mode }
-
-set {
-  META_VERSION
-  ^{ ${META_VERSION_MAJOR} . ${META_VERSION_MINOR} }
-}
 
 set {
   META_REVISION
@@ -53,12 +57,6 @@ env {
   C{${INSTALL_PKGCONFIG_DIR}}
 }
 
-check {
-  system.sh
-  test_blocks.sh { IW_BLOCKS }
-  test_pthread.sh
-  test_qsort_r.sh
-}
 
 if { !defined { PTHREAD_LFLAG} 
   error { No pthreads found! }

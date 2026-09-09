@@ -1,8 +1,9 @@
 2026-09-08 Anton Adamansky  <adamansky@gmail.com>  [v2.92-dev]
-  * Fix Autark shared builds on macOS - #395
+  * Autark: Project versions now track Changelog.
+  * src/Autark: Autark shared builds on macOS - #395
 
 2026-09-08 Anton Adamansky  <adamansky@gmail.com>  [v2.91]
-  * build.sh updated (critical fixes) 
+  * build.sh: updated (critical fixes) 
 
 2026-08-30 Anton Adamansky  <adamansky@gmail.com>  [v2.90]
   * Adapted to iwnet v1.3.0
