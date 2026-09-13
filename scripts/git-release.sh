@@ -3,12 +3,7 @@
 set -e
 # set -x
 
-SCRIPTPATH="$(
-  cd "$(dirname "$0")"
-  pwd -P
-)"
-cd $SCRIPTPATH
-
+cd "$(dirname "$(readlink -f "$0")")/.."
 
 readme() {
   echo "Generating README.md";
