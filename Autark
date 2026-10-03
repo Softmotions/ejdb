@@ -45,6 +45,18 @@ if { eq { ${BUILD_TYPE} Release }
   }
 }
 
+set {
+  SANITIZER_FLAGS
+  if { ${ENABLE_ASAN}
+    -fsanitize=address
+    -fno-omit-frame-pointer
+  }
+  if { ${ENABLE_UBSAN}
+    -fsanitize=undefined
+    -fno-omit-frame-pointer
+  }
+}
+
 if { !defined { IWNET_URL } 
   set {
     IWNET_URL
@@ -97,6 +109,7 @@ set {
   ..${LDFLAGS}
   ..@@{${PKGCONF} --libs --static libiwnet}
   ..${LDFLAGS_PKGCONF}
+  ..${SANITIZER_FLAGS}
 }
 
 set {
@@ -119,15 +132,8 @@ set {
 
   ..@@{${PKGCONF} --cflags libiwnet}
 
-  if { ${ENABLE_ASAN}
-    -fsanitize=address
-    -fno-omit-frame-pointer
-  } else {
-    if { ${ENABLE_UBSAN}
-      -fsanitize=undefined
-      -fno-omit-frame-pointer
-    }
-  }
+  ..${SANITIZER_FLAGS}
+
   if { prefix { ${BUILD_TYPE} Debug }
     -O0
     -ggdb

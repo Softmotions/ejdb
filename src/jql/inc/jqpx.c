@@ -254,47 +254,46 @@ IW_INLINE int _jql_hex(char c) {
 static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp) {
   *rcp = 0;
   char c;
-  char *ds = d;
-  char *de = d + dlen;
+  int di = 0;
 
   while (1) {
     c = *p++;
     if (c == '\0') {
-      return d - ds;
+      return di;
     } else if (c == '\\') {
       switch (*p) {
         case '\\':
         case '/':
         case '"':
-          if (d < de) {
-            *d = *p;
+          if (di < dlen) {
+            d[di] = *p;
           }
-          ++p, ++d;
+          ++p, ++di;
           break;
         case 'b':
-          if (d < de) {
-            *d = '\b';
+          if (di < dlen) {
+            d[di] = '\b';
           }
-          ++p, ++d;
+          ++p, ++di;
           break;
         case 'f':
-          if (d < de) {
-            *d = '\f';
+          if (di < dlen) {
+            d[di] = '\f';
           }
-          ++p, ++d;
+          ++p, ++di;
           break;
         case 'n':
         case 'r':
-          if (d < de) {
-            *d = '\n';
+          if (di < dlen) {
+            d[di] = '\n';
           }
-          ++p, ++d;
+          ++p, ++di;
           break;
         case 't':
-          if (d < de) {
-            *d = '\t';
+          if (di < dlen) {
+            d[di] = '\t';
           }
-          ++p, ++d;
+          ++p, ++di;
           break;
         case 'u': {
           uint32_t cp, cp2;
@@ -327,25 +326,25 @@ static int _jqp_unescape_json_string(const char *p, char *d, int dlen, iwrc *rcp
           uint8_t uchars[4];
           utf8proc_ssize_t ulen = utf8proc_encode_char(cp, uchars);
           for (int i = 0; i < ulen; ++i) {
-            if (d < de) {
-              *d = uchars[i];
+            if (di < dlen) {
+              d[di] = uchars[i];
             }
-            ++d;
+            ++di;
           }
           p += 5;
           break;
         }
         default:
-          if (d < de) {
-            *d = c;
+          if (di < dlen) {
+            d[di] = c;
           }
-          ++d;
+          ++di;
       }
     } else {
-      if (d < de) {
-        *d = c;
+      if (di < dlen) {
+        d[di] = c;
       }
-      ++d;
+      ++di;
     }
   }
   *rcp = JQL_ERROR_QUERY_PARSE;

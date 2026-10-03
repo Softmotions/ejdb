@@ -60,6 +60,19 @@ EJDB2 is an embeddable JSON database engine published under MIT license.
 ./build.sh
 ```
 
+**Testing and sanitizers**
+
+```sh
+# Build and run the test cases
+./build.sh -DEJDB_RUN_TESTS=1
+
+# Address sanitizer / undefined behavior sanitizer builds
+./build.sh -DENABLE_ASAN=1 -DEJDB_RUN_TESTS=1
+./build.sh -DENABLE_UBSAN=1 -DEJDB_RUN_TESTS=1
+```
+
+`ENABLE_ASAN` and `ENABLE_UBSAN` can be enabled together.
+
 **Installation**
 
 ```sh
