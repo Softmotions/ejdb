@@ -1,10 +1,20 @@
+run {
+  exec { ${LEG_EXEC} -o CC{jqp.c} SS{jqp.leg} }
+  consumes {
+    jqp.leg
+  }
+  produces {
+    CC{jqp.c}
+  }
+}
+
 set {
   parent {
     SOURCES
   }
   ..${SOURCES}
   jql/jql.c
-  jql/jqp.c
+  CC{jqp.c}
 }
 
 set {

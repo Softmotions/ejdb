@@ -1,0 +1,41 @@
+option { PEG_URL  URL of Ian Piumarta's PEG parser. Default: file://<project_root>/extra/peg-0.1.19.tar.gz }
+
+if { !defined {PEG_URL}
+  set {
+    PEG_URL ^{file:// S{./extra/peg-0.1.19.tar.gz}}
+  }
+}
+
+check {
+  fetch_resource.sh { ${PEG_URL} C{extern_peg} PEG_SRC_DIR }
+}
+
+set {
+  root {
+    LEG_EXEC
+  }
+  C{bin/leg}
+}
+
+set {
+  root {
+    PEG_EXEC
+  }
+  C{bin/peg}
+}
+
+run {
+  shell {
+    cd ${PEG_SRC_DIR}
+    &&
+    ^{PREFIX = C{}}
+    make install
+  }
+  produces {
+    ${PEG_EXEC}
+    ${LEG_EXEC}
+  }
+  consumes {
+    ${PEG_SRC_DIR}
+  }
+}
