@@ -1,0 +1,57 @@
+set {
+  TEST_RESOURCES
+  000.expected.jql
+  000.jql
+  001.expected.jql
+  001.jql
+  002.expected.jql
+  002.jql
+  003.expected.jql
+  003.jql
+  004.expected.jql
+  004.jql
+  005.expected.jql
+  005.jql
+  006.expected.jql
+  006.jql
+  007.expected.jql
+  007.jql
+  008.expected.jql
+  008.jql
+  009.expected.jql
+  009.jql
+  010.expected.jql
+  010.jql
+  011.jql
+  012.jql
+  013.jql
+  014.expected.jql
+  014.jql
+  015.expected.jql
+  015.jql
+  016.expected.jql
+  016.jql
+  017.expected.jql
+  017.jql
+  018.expected.jql
+  018.jql
+  019.expected.jql
+  019.jql
+  020.expected.jql
+  020.jql
+  021.expected.jql
+  021.jql
+  022.expected.jql
+  022.jql
+}
+
+run {
+  shell {
+    cp
+    SS{${TEST_RESOURCES}}
+    CC{}
+  }
+  consumes {
+    SS{${TEST_RESOURCES}}
+  }
+}
