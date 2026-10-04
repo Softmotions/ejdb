@@ -398,6 +398,19 @@ static iwrc _jql_init_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
   return 0;
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
+static bool _jql_expr_has_negation(JQP_EXPR_NODE *en) {
+  for (en = en->chain; en; en = en->next) {
+    if (en->join && en->join->negate) {
+      return true;
+    }
+    if ((en->type == JQP_EXPR_NODE_TYPE) && _jql_expr_has_negation(en)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode_t mode) {
   if (!qptr || !query) {
     return IW_ERROR_INVALID_ARGS;
@@ -436,6 +449,12 @@ iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode
   }
 
   rc = _jql_init_expression_node(aux->expr, aux);
+
+  // Negated filter factors cannot be short-circuited on the first match:
+  // the negated filter may match later at the same query level.
+  // In such case the full document must be traversed and the final
+  // expression state must be used to decide the match.
+  q->has_negation = _jql_expr_has_negation(aux->expr);
 
 finish:
   if (rc) {
@@ -1434,7 +1453,10 @@ static jbl_visitor_cmd_t _jql_match_visitor(int lvl, binn *bv, const char *key, 
     .aux = q->aux
   };
   q->matched = _jql_match_expression_node(mctx.aux->expr, &mctx, rcp);
-  if (*rcp || q->matched) {
+  if (*rcp) {
+    return JBL_VCMD_TERMINATE;
+  }
+  if (q->matched && !q->has_negation) {
     return JBL_VCMD_TERMINATE;
   }
   if (q->dirty) {

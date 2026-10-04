@@ -112,6 +112,14 @@ static void jql_test1_2(void) {
   _jql_test1_2("{'foo':{'bar':22}}", "(/boo or /foo) and (/foo/daz or /foo/bar)", true);
   _jql_test1_2("{'foo':{'bar':22, 'bar2':'vvv2'}}", "/foo/bar2", true);
 
+  // Negated top level filter must be evaluated against the whole document
+  _jql_test1_2("{'name':'Anton','age':20}", "/name and not /age", false);
+  _jql_test1_2("{'age':20,'name':'Anton'}", "/name and not /age", false);
+  _jql_test1_2("{'name':'Anton','other':10}", "/name and not /age", true);
+  _jql_test1_2("{'name':'Anton'}", "/name and not /age", true);
+  _jql_test1_2("{'age':20}", "/name or not /age", false);
+  _jql_test1_2("{'other':10}", "/name or not /age", true);
+
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar = 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar eq 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar !eq 22]", false);

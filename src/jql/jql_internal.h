@@ -12,6 +12,7 @@
 struct jql {
   bool       dirty;
   bool       matched;
+  bool       has_negation; /**< Query expression contains negated (`not`) parts */
   JQP_QUERY *qp;
   JQP_AUX   *aux;
   const char *coll;
