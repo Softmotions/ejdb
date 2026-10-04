@@ -1,0 +1,87 @@
+cc {
+  jql_test1.c
+  set { _ ..${CFLAGS} -DIW_STATIC -DIW_TESTS -I S{src/tests} }
+}
+
+foreach {
+  OBJ
+  ${CC_OBJS}
+  run {
+    exec { ${CC} ${OBJ} ${LDFLAGS_TEST} -o %{${OBJ}} }
+    consumes { ${LIBEJDB_A} ${OBJ} }
+    produces { %{${OBJ}} }
+  }
+}
+
+set {
+  TEST_RESOURCES
+  data/000.expected.jql
+  data/000.jql
+  data/001.expected.jql
+  data/001.jql
+  data/002.expected.jql
+  data/002.jql
+  data/003.expected.jql
+  data/003.jql
+  data/004.expected.jql
+  data/004.jql
+  data/005.expected.jql
+  data/005.jql
+  data/006.expected.jql
+  data/006.jql
+  data/007.expected.jql
+  data/007.jql
+  data/008.expected.jql
+  data/008.jql
+  data/009.expected.jql
+  data/009.jql
+  data/010.expected.jql
+  data/010.jql
+  data/011.jql
+  data/012.jql
+  data/013.jql
+  data/014.expected.jql
+  data/014.jql
+  data/015.expected.jql
+  data/015.jql
+  data/016.expected.jql
+  data/016.jql
+  data/017.expected.jql
+  data/017.jql
+  data/018.expected.jql
+  data/018.jql
+  data/019.expected.jql
+  data/019.jql
+  data/020.expected.jql
+  data/020.jql
+  data/021.expected.jql
+  data/021.jql
+  data/022.expected.jql
+  data/022.jql
+}
+
+run {
+  shell {
+    mkdir -p CC{data}
+  }
+  shell {
+    cp
+    SS{${TEST_RESOURCES}}
+    CC{data}
+  }
+  consumes {
+    SS{${TEST_RESOURCES}}
+  }
+}
+
+if { ${EJDB_RUN_TESTS}
+ foreach {
+    OBJ
+    ${CC_OBJS}
+    run {
+      always
+      shell { %{${OBJ}} }
+      consumes { %{${OBJ}} }
+    }
+  }
+}
