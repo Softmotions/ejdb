@@ -1,4 +1,5 @@
 2026-09-08 Anton Adamansky  <adamansky@gmail.com>  [v2.92-dev]
+  * jql.c: Queries like `/[name = Anton and not age = 20]` where different object fields are in brackets are properly matched.
   * jql.c: Fixed incorrect query result when negation expressions are used in queries like: `/name and not /age`
   * Autark: peg-0.1.19 is now included in source tree
   * src/jql/inc/jqpx.c: Fixed UB in _jqp_unescape_json_string()

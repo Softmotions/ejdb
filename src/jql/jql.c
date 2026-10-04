@@ -22,6 +22,9 @@ typedef struct MCTX {
   struct jql *q;
   JQP_AUX     *aux;
   JBL_VCTX    *vctx;
+  bool expr_evaluated; /**< A node expression was evaluated during the current step */
+  bool expr_matched;   /**< Result of the evaluated node expression */
+  bool provisional;    /**< Node expression matched only because of a pending negated condition */
 } MCTX;
 
 /** Expression node matching context */
@@ -32,6 +35,7 @@ typedef struct MENCTX {
 /** Filter matching context */
 typedef struct MFCTX {
   bool      matched;
+  bool      provisional;  /**< The expression matched but a negated condition is still pending */
   int       last_lvl;     /**< Last matched level */
   JQP_NODE *nodes;
   JQP_NODE *last_node;
@@ -355,13 +359,19 @@ static void _jql_reset_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux, bool res
     } else if (en->type == JQP_FILTER_TYPE) {
       MFCTX *fctx = ((JQP_FILTER*) en)->opaque;
       fctx->matched = false;
+      fctx->provisional = false;
       fctx->last_lvl = -1;
       for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
         n->start = -1;
         n->end = -1;
         JQPUNIT *unit = n->value;
-        if (reset_match_cache && (unit->type == JQP_EXPR_TYPE)) {
-          for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) expr->prematched = false;
+        if (unit->type == JQP_EXPR_TYPE) {
+          for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
+            expr->state = 0;
+            if (reset_match_cache) {
+              expr->prematched = false;
+            }
+          }
         }
       }
     }
@@ -398,13 +408,30 @@ static iwrc _jql_init_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
   return 0;
 }
 
+static bool _jql_filter_has_negation(JQP_FILTER *f) {
+  for (JQP_NODE *n = f->node; n; n = n->next) {
+    if ((n->ntype == JQP_NODE_EXPR) && (n->value->type == JQP_EXPR_TYPE)) {
+      for (JQP_EXPR *expr = &n->value->expr; expr; expr = expr->next) {
+        if (expr->join && expr->join->negate) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 // NOLINTNEXTLINE(misc-no-recursion)
 static bool _jql_expr_has_negation(JQP_EXPR_NODE *en) {
   for (en = en->chain; en; en = en->next) {
     if (en->join && en->join->negate) {
       return true;
     }
-    if ((en->type == JQP_EXPR_NODE_TYPE) && _jql_expr_has_negation(en)) {
+    if (en->type == JQP_EXPR_NODE_TYPE) {
+      if (_jql_expr_has_negation(en)) {
+        return true;
+      }
+    } else if ((en->type == JQP_FILTER_TYPE) && _jql_filter_has_negation((JQP_FILTER*) en)) {
       return true;
     }
   }
@@ -1235,7 +1262,11 @@ bool jql_jqval_as_int(JQVAL *jqval, int64_t *out) {
 }
 
 static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
-  if (expr->prematched) {
+  // A condition already evaluated against some key of the current object/array
+  // remains evaluated while other keys of the same object are visited.
+  // This allows expressions like `[name = Anton and age = 20]` to be
+  // evaluated across different fields of the same object.
+  if (expr->prematched || expr->state > 0) {
     return true;
   }
   const bool negate = (expr->join && expr->join->negate);
@@ -1251,10 +1282,13 @@ static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
       lv.type = JQVAL_STR;
       lv.vstr = mctx->key;
       bool ret = _jql_match_jqval_pair(mctx->aux, &lv, op, rv, rcp);
-      return negate != (0 == !ret);
+      ret = negate != (0 == !ret);
+      expr->state = ret ? 1 : -1;
+      return ret;
     } else if (  !(left->string.flavour & JQP_STR_DBL_STAR)
               && (strcmp(mctx->key, left->string.value) != 0)) {
-      return negate;
+      // The condition refers to another field which is not visited yet
+      return (expr->state < 0) ? false : negate;
     }
   } else if (left->type == JQP_EXPR_TYPE) {
     if ((left->expr.left->type != JQP_STRING_TYPE) || !(left->expr.left->string.flavour & JQP_STR_STAR)) {
@@ -1269,7 +1303,7 @@ static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
     lv.type = JQVAL_STR;
     lv.vstr = mctx->key;
     if (!_jql_match_jqval_pair(mctx->aux, &lv, left->expr.op, rv, rcp)) {
-      return negate;
+      return (expr->state < 0) ? false : negate;
     }
   }
   JQVAL lv, *rv = _jql_unit_to_jqval(mctx->aux, right, rcp);
@@ -1279,7 +1313,9 @@ static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
   lv.type = JQVAL_BINN;
   lv.vbinn = mctx->bv;
   bool ret = _jql_match_jqval_pair(mctx->aux, &lv, expr->op, rv, rcp);
-  return negate != (0 == !ret);
+  ret = negate != (0 == !ret);
+  expr->state = ret ? 1 : -1;
+  return ret;
 }
 
 static bool _jql_match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
@@ -1305,6 +1341,20 @@ static bool _jql_match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
         prev = prev && matched;
       } else if (prev || matched) {      // OR
         prev = true;
+        break;
+      }
+    }
+  }
+  // The expression may be satisfied only because a negated condition
+  // refers to a field which has not been visited yet. Such a match is
+  // not final: a later key of the same object may invalidate it.
+  mctx->expr_evaluated = true;
+  mctx->expr_matched = prev;
+  mctx->provisional = false;
+  if (prev) {
+    for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
+      if ((expr->state == 0) && expr->join && expr->join->negate) {
+        mctx->provisional = true;
         break;
       }
     }
@@ -1365,21 +1415,46 @@ static JQP_NODE* _jql_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) 
 
 static bool _jql_match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
   MFCTX *fctx = f->opaque;
+  mctx->expr_evaluated = false;
+  mctx->expr_matched = false;
+  mctx->provisional = false;
   if (fctx->matched) {
     return true;
   }
   bool matched = false;
   const int lvl = mctx->lvl;
   if (fctx->last_lvl + 1 < lvl) {
-    return false;
+    // Too deep for this filter path. A provisional match still holds
+    // while the object scope is not left.
+    return fctx->provisional;
   }
   if (fctx->last_lvl >= lvl) {
     fctx->last_lvl = lvl - 1;
     for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
       if ((n->start >= lvl) || (-n->end >= lvl)) {
+        JQPUNIT *unit = n->value;
+        if ((n->ntype == JQP_NODE_EXPR) && (n->start != lvl)) {
+          // The current object/array scope is left. A provisionally
+          // satisfied expression cannot be invalidated anymore.
+          if (fctx->provisional) {
+            fctx->matched = true;
+            fctx->provisional = false;
+            mctx->q->dirty = true;
+          }
+          // Reset accumulated expression state when moving to a new
+          // object/array at the same or upper level.
+          if (unit->type == JQP_EXPR_TYPE) {
+            for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
+              expr->state = 0;
+            }
+          }
+        }
         n->start = -1;
         n->end = -1;
       }
+    }
+    if (fctx->matched) {
+      return true;
     }
   }
   for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
@@ -1388,17 +1463,24 @@ static bool _jql_match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
       if (*rcp) {
         return false;
       }
+      if (mctx->expr_evaluated) {
+        // A match of the terminal node expression is allowed to be
+        // finalized only when no negated condition is pending.
+        fctx->provisional = mctx->expr_matched && mctx->provisional;
+      }
       if (matched) {
         if (n == fctx->last_node) {
-          fctx->matched = true;
-          mctx->q->dirty = true;
+          if (!mctx->provisional) {
+            fctx->matched = true;
+            mctx->q->dirty = true;
+          }
         }
         fctx->last_lvl = lvl;
       }
       break;
     }
   }
-  return fctx->matched;
+  return fctx->matched || fctx->provisional;
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)

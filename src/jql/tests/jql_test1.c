@@ -120,6 +120,55 @@ static void jql_test1_2(void) {
   _jql_test1_2("{'age':20}", "/name or not /age", false);
   _jql_test1_2("{'other':10}", "/name or not /age", true);
 
+  // Node expressions combining conditions on different fields
+  _jql_test1_2("{'name':'Anton','age':20}", "/[name = Anton and age = 20]", true);
+  _jql_test1_2("{'age':20,'name':'Anton'}", "/[name = Anton and age = 20]", true);
+  _jql_test1_2("{'name':'Anton','age':21}", "/[name = Anton and age = 20]", false);
+  _jql_test1_2("{'name':'Anton'}", "/[name = Anton and age = 20]", false);
+  _jql_test1_2("{'name':'Anton','age':20}", "/[name = Anton and name = Anton]", true);
+  _jql_test1_2("{'age':25}", "/[age > 20 and age < 30]", true);
+  _jql_test1_2("{'age':20}", "/[age > 20 and age < 30]", false);
+  _jql_test1_2("{'name':'Anton','age':20}", "/[name = Anton or age = 30]", true);
+  _jql_test1_2("{'name':'Bob','age':30}", "/[name = Anton or age = 20]", false);
+  _jql_test1_2("{'p':{'name':'Anton','age':20}}", "/p/[name = Anton and age = 20]", true);
+  _jql_test1_2("{'a':1,'b':2,'c':3}", "/[a = 1 and b = 2 and c = 3]", true);
+  _jql_test1_2("{'a':1,'b':2}", "/[a = 1 and b = 2 and c = 3]", false);
+  // Conditions of the same node expression must not leak between objects
+  _jql_test1_2("{'a':{'x':1},'b':{'y':2}}", "/**/[x = 1 and y = 2]", false);
+  _jql_test1_2("{'a':{'x':1,'y':2}}", "/**/[x = 1 and y = 2]", true);
+  // Already evaluated conditions must keep their state while other fields are visited
+  _jql_test1_2("{'a':1,'b':2,'c':3}", "/[a = 1 and not b = 2 and c = 3]", false);
+  _jql_test1_2("{'a':1,'b':3,'c':3}", "/[a = 1 and not b = 2 and c = 3]", true);
+  _jql_test1_2("{'a':1,'c':3}", "/[a = 1 and not b = 2 and c = 3]", true);
+
+  // Negated conditions must be evaluated at the end of the object scope
+  _jql_test1_2("{'name':'Anton','age':20}", "/[name = Anton and not age = 20]", false);
+  _jql_test1_2("{'age':20,'name':'Anton'}", "/[name = Anton and not age = 20]", false);
+  _jql_test1_2("{'name':'Anton','age':30}", "/[name = Anton and not age = 20]", true);
+  _jql_test1_2("{'name':'Anton'}", "/[name = Anton and not age = 20]", true);
+  _jql_test1_2("{'a':1,'c':{'d':9}}", "/[a = 1 and not b = 2]", true);
+  _jql_test1_2("{'a':1,'c':{'d':9},'b':2}", "/[a = 1 and not b = 2]", false);
+  _jql_test1_2("{'foo':{'a':1}}", "/foo/[a = 1 and not b = 2]", true);
+  _jql_test1_2("{'foo':{'a':1,'b':2}}", "/foo/[a = 1 and not b = 2]", false);
+  _jql_test1_2("{'foo':{'a':1},'bar':1}", "/foo/[a = 1 and not b = 2]", true);
+  _jql_test1_2("{'p':{'a':1},'q':{'a':1,'b':2}}", "/*/[a = 1 and not b = 2]", true);
+  _jql_test1_2("{'p':{'a':1,'b':2},'q':{'a':1}}", "/*/[a = 1 and not b = 2]", true);
+  _jql_test1_2("{'p':{'a':1,'b':2}}", "/*/[a = 1 and not b = 2]", false);
+  _jql_test1_2("{'a':{'x':1}}", "/**/[x = 1 and not y = 2]", true);
+  _jql_test1_2("{'a':{'x':1,'y':2}}", "/**/[x = 1 and not y = 2]", false);
+  _jql_test1_2("{'a':{'y':2},'b':{'x':1}}", "/**/[x = 1 and not y = 2]", true);
+  // Nested objects visited between the conditions
+  _jql_test1_2("{'a':1,'n':{'deep':{'x':1}}}", "/[a = 1 and not b = 2]", true);
+  _jql_test1_2("{'a':1,'n':{'deep':{'x':1}},'b':2}", "/[a = 1 and not b = 2]", false);
+  _jql_test1_2("{'a':1,'n':{'deep':{'x':1}}}", "/**/[a = 1 and not b = 2]", true);
+  // Multiple pending negations
+  _jql_test1_2("{'a':1,'b':2,'c':4}", "/[a = 1 and not b = 2 and not c = 3]", false);
+  _jql_test1_2("{'a':1,'c':4}", "/[a = 1 and not b = 2 and not c = 3]", true);
+  // OR with a negated condition
+  _jql_test1_2("{'a':1,'b':2}", "/[a = 1 or not b = 2]", true);
+  _jql_test1_2("{'a':0,'b':3}", "/[a = 1 or not b = 2]", true);
+  _jql_test1_2("{'a':0,'b':2}", "/[a = 1 or not b = 2]", false);
+
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar = 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar eq 22]", true);
   _jql_test1_2("{'foo':{'bar':22}}", "/foo/[bar !eq 22]", false);

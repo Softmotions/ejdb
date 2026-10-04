@@ -193,6 +193,7 @@ typedef struct jqp_expr {
   JQPUNIT *right;
   struct jqp_expr *next;
   bool prematched;
+  int8_t state; /**< Expression state: 0 - not evaluated, 1 - matched, -1 - not matched */
 } JQP_EXPR;
 
 typedef struct jqp_projection {
