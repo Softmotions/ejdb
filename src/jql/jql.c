@@ -18,10 +18,10 @@
 typedef struct MCTX {
   int   lvl;
   binn *bv;
-  const char  *key;
-  struct jql *q;
-  JQP_AUX     *aux;
-  JBL_VCTX    *vctx;
+  const char     *key;
+  struct jql     *q;
+  struct jqp_aux *aux;
+  JBL_VCTX       *vctx;
   bool expr_evaluated; /**< A node expression was evaluated during the current step */
   bool expr_matched;   /**< Result of the evaluated node expression */
   bool provisional;    /**< Node expression matched only because of a pending negated condition */
@@ -34,18 +34,18 @@ typedef struct MENCTX {
 
 /** Filter matching context */
 typedef struct MFCTX {
-  bool      matched;
-  bool      provisional;  /**< The expression matched but a negated condition is still pending */
-  int       last_lvl;     /**< Last matched level */
-  JQP_NODE *nodes;
-  JQP_NODE *last_node;
-  JQP_FILTER *qpf;
+  bool matched;
+  bool provisional;  /**< The expression matched but a negated condition is still pending */
+  int  last_lvl;     /**< Last matched level */
+  struct jqp_node   *nodes;
+  struct jqp_node   *last_node;
+  struct jqp_filter *qpf;
 } MFCTX;
 
-static JQP_NODE* _jql_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp);
+static struct jqp_node* _jql_match_node(struct MCTX *mctx, struct jqp_node *n, bool *res, iwrc *rcp);
 
-IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
-  JQVAL *qv = pv->opaque;
+IW_INLINE void _jql_jqval_destroy(struct jqp_string *pv) {
+  struct jqval *qv = pv->opaque;
   if (qv) {
     void *ptr;
     switch (qv->type) {
@@ -77,9 +77,9 @@ IW_INLINE void _jql_jqval_destroy(JQP_STRING *pv) {
   }
 }
 
-static JQVAL* _jql_find_placeholder(JQL q, const char *name) {
-  JQP_AUX *aux = q->aux;
-  for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
+static struct jqval* _jql_find_placeholder(struct jql *q, const char *name) {
+  struct jqp_aux *aux = q->aux;
+  for (struct jqp_string *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
     if (!strcmp(pv->value, name)) {
       return pv->opaque;
     }
@@ -87,17 +87,17 @@ static JQVAL* _jql_find_placeholder(JQL q, const char *name) {
   return 0;
 }
 
-JQVAL* jql_find_placeholder(JQL q, const char *name) {
+struct jqval* jql_find_placeholder(struct jql *q, const char *name) {
   return _jql_find_placeholder(q, name);
 }
 
-static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVAL *val) {
-  JQP_AUX *aux = q->aux;
+static iwrc _jql_set_placeholder(struct jql *q, const char *placeholder, int index, struct jqval *val) {
+  struct jqp_aux *aux = q->aux;
   iwrc rc = JQL_ERROR_INVALID_PLACEHOLDER;
   if (!placeholder) { // Index
     char nbuf[IWNUMBUF_SIZE];
     iwitoa(index, nbuf, IWNUMBUF_SIZE);
-    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
+    for (struct jqp_string *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
       if ((pv->value[0] == '?') && !strcmp(pv->value + 1, nbuf)) {
         if ((pv->flavour & (JQP_STR_PROJFIELD | JQP_STR_PROJPATH)) && val->type != JQVAL_STR) {
           return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
@@ -109,7 +109,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
       }
     }
   } else {
-    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
+    for (struct jqp_string *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
       if (!strcmp(pv->value, placeholder)) {
         if ((pv->flavour & (JQP_STR_PROJFIELD | JQP_STR_PROJPATH)) && val->type != JQVAL_STR) {
           rc = JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
@@ -125,7 +125,7 @@ static iwrc _jql_set_placeholder(JQL q, const char *placeholder, int index, JQVA
 finish:
   if (rc) {
     val->refs = 0;
-    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
+    for (struct jqp_string *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) {
       if (pv->opaque == val) {
         pv->opaque = 0;
       }
@@ -135,9 +135,9 @@ finish:
 }
 
 iwrc jql_set_json2(
-  JQL q, const char *placeholder, int index, JBL_NODE val,
+  struct jql *q, const char *placeholder, int index, JBL_NODE val,
   void (*freefn)(void*, void*), void *op) {
-  JQVAL *qv = malloc(sizeof(*qv));
+  struct jqval *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -156,7 +156,7 @@ iwrc jql_set_json2(
   return rc;
 }
 
-iwrc jql_set_json(JQL q, const char *placeholder, int index, JBL_NODE val) {
+iwrc jql_set_json(struct jql *q, const char *placeholder, int index, JBL_NODE val) {
   return jql_set_json2(q, placeholder, index, val, 0, 0);
 }
 
@@ -164,7 +164,7 @@ static void _jql_free_iwpool(void *ptr, void *op) {
   iwpool_destroy((IWPOOL*) op);
 }
 
-iwrc jql_set_json_jbl(JQL q, const char *placeholder, int index, JBL jbl) {
+iwrc jql_set_json_jbl(struct jql *q, const char *placeholder, int index, JBL jbl) {
   IWPOOL *pool = iwpool_create(jbl_size(jbl));
   if (!pool) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -181,8 +181,8 @@ finish:
   return rc;
 }
 
-iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val) {
-  JQVAL *qv = malloc(sizeof(*qv));
+iwrc jql_set_i64(struct jql *q, const char *placeholder, int index, int64_t val) {
+  struct jqval *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -198,8 +198,8 @@ iwrc jql_set_i64(JQL q, const char *placeholder, int index, int64_t val) {
   return rc;
 }
 
-iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val) {
-  JQVAL *qv = malloc(sizeof(*qv));
+iwrc jql_set_f64(struct jql *q, const char *placeholder, int index, double val) {
+  struct jqval *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -216,7 +216,7 @@ iwrc jql_set_f64(JQL q, const char *placeholder, int index, double val) {
 }
 
 iwrc jql_set_str2(
-  JQL q, const char *placeholder, int index, const char *val,
+  struct jql *q, const char *placeholder, int index, const char *val,
   void (*freefn)(void*, void*), void *op) {
   if (val == 0) {
     if (freefn) {
@@ -225,7 +225,7 @@ iwrc jql_set_str2(
     return jql_set_null(q, placeholder, index);
   }
 
-  JQVAL *qv = malloc(sizeof(*qv));
+  struct jqval *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -244,7 +244,7 @@ iwrc jql_set_str2(
   return rc;
 }
 
-iwrc jql_set_str(JQL q, const char *placeholder, int index, const char *val) {
+iwrc jql_set_str(struct jql *q, const char *placeholder, int index, const char *val) {
   return jql_set_str2(q, placeholder, index, val, 0, 0);
 }
 
@@ -252,7 +252,7 @@ static void _freefn_str(void *v, void *op) {
   free(v);
 }
 
-iwrc jql_set_str3(JQL q, const char *placeholder, int index, const char *val_, size_t val_len) {
+iwrc jql_set_str3(struct jql *q, const char *placeholder, int index, const char *val_, size_t val_len) {
   char *val = strndup(val_, val_len);
   if (!val) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
@@ -260,8 +260,8 @@ iwrc jql_set_str3(JQL q, const char *placeholder, int index, const char *val_, s
   return jql_set_str2(q, placeholder, index, val, _freefn_str, 0);
 }
 
-iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
-  JQVAL *qv = malloc(sizeof(*qv));
+iwrc jql_set_bool(struct jql *q, const char *placeholder, int index, bool val) {
+  struct jqval *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -278,10 +278,10 @@ iwrc jql_set_bool(JQL q, const char *placeholder, int index, bool val) {
 }
 
 iwrc jql_set_regexp2(
-  JQL q, const char *placeholder, int index, const char *expr,
+  struct jql *q, const char *placeholder, int index, const char *expr,
   void (*freefn)(void*, void*), void *op) {
   iwrc rc = 0;
-  JQVAL *qv = 0;
+  struct jqval *qv = 0;
   struct iwre *rx = (expr && *expr != '\0') ? iwre_create(expr) : IWRE_UNUSED_PTR;
   if (!rx) {
     rc = JQL_ERROR_REGEXP_INVALID;
@@ -312,12 +312,12 @@ finish:
   return rc;
 }
 
-iwrc jql_set_regexp(JQL q, const char *placeholder, int index, const char *expr) {
+iwrc jql_set_regexp(struct jql *q, const char *placeholder, int index, const char *expr) {
   return jql_set_regexp2(q, placeholder, index, expr, 0, 0);
 }
 
-iwrc jql_set_null(JQL q, const char *placeholder, int index) {
-  JQVAL *qv = malloc(sizeof(*qv));
+iwrc jql_set_null(struct jql *q, const char *placeholder, int index) {
+  struct jqval *qv = malloc(sizeof(*qv));
   if (!qv) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -333,14 +333,14 @@ iwrc jql_set_null(JQL q, const char *placeholder, int index) {
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-static bool _jql_need_deeper_match(JQP_EXPR_NODE *en, int lvl) {
+static bool _jql_need_deeper_match(struct jqp_expr_node *en, int lvl) {
   for (en = en->chain; en; en = en->next) {
     if (en->type == JQP_EXPR_NODE_TYPE) {
       if (_jql_need_deeper_match(en, lvl)) {
         return true;
       }
     } else if (en->type == JQP_FILTER_TYPE) {
-      MFCTX *fctx = ((JQP_FILTER*) en)->opaque;
+      struct MFCTX *fctx = ((struct jqp_filter*) en)->opaque;
       if (!fctx->matched && (fctx->last_lvl == lvl)) {
         return true;
       }
@@ -350,23 +350,23 @@ static bool _jql_need_deeper_match(JQP_EXPR_NODE *en, int lvl) {
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-static void _jql_reset_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux, bool reset_match_cache) {
-  MENCTX *ectx = en->opaque;
+static void _jql_reset_expression_node(struct jqp_expr_node *en, struct jqp_aux *aux, bool reset_match_cache) {
+  struct MENCTX *ectx = en->opaque;
   ectx->matched = false;
   for (en = en->chain; en; en = en->next) {
     if (en->type == JQP_EXPR_NODE_TYPE) {
       _jql_reset_expression_node(en, aux, reset_match_cache);
     } else if (en->type == JQP_FILTER_TYPE) {
-      MFCTX *fctx = ((JQP_FILTER*) en)->opaque;
+      struct MFCTX *fctx = ((struct jqp_filter*) en)->opaque;
       fctx->matched = false;
       fctx->provisional = false;
       fctx->last_lvl = -1;
-      for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
+      for (struct jqp_node *n = fctx->nodes; n; n = n->next) {
         n->start = -1;
         n->end = -1;
-        JQPUNIT *unit = n->value;
+        union jqp_unit *unit = n->value;
         if (unit->type == JQP_EXPR_TYPE) {
-          for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
+          for (struct jqp_expr *expr = &unit->expr; expr; expr = expr->next) {
             expr->state = 0;
             if (reset_match_cache) {
               expr->prematched = false;
@@ -379,8 +379,8 @@ static void _jql_reset_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux, bool res
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-static iwrc _jql_init_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
-  en->opaque = iwpool_calloc(sizeof(MENCTX), aux->pool);
+static iwrc _jql_init_expression_node(struct jqp_expr_node *en, struct jqp_aux *aux) {
+  en->opaque = iwpool_calloc(sizeof(struct MENCTX), aux->pool);
   if (!en->opaque) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
@@ -389,8 +389,8 @@ static iwrc _jql_init_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
       iwrc rc = _jql_init_expression_node(en, aux);
       RCRET(rc);
     } else if (en->type == JQP_FILTER_TYPE) {
-      MFCTX *fctx = iwpool_calloc(sizeof(*fctx), aux->pool);
-      JQP_FILTER *f = (JQP_FILTER*) en;
+      struct MFCTX *fctx = iwpool_calloc(sizeof(*fctx), aux->pool);
+      struct jqp_filter *f = (struct jqp_filter*) en;
       if (!fctx) {
         return iwrc_set_errno(IW_ERROR_ALLOC, errno);
       }
@@ -398,7 +398,7 @@ static iwrc _jql_init_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
       fctx->last_lvl = -1;
       fctx->qpf = f;
       fctx->nodes = f->node;
-      for (JQP_NODE *n = f->node; n; n = n->next) {
+      for (struct jqp_node *n = f->node; n; n = n->next) {
         fctx->last_node = n;
         n->start = -1;
         n->end = -1;
@@ -408,10 +408,10 @@ static iwrc _jql_init_expression_node(JQP_EXPR_NODE *en, JQP_AUX *aux) {
   return 0;
 }
 
-static bool _jql_filter_has_negation(JQP_FILTER *f) {
-  for (JQP_NODE *n = f->node; n; n = n->next) {
+static bool _jql_filter_has_negation(struct jqp_filter *f) {
+  for (struct jqp_node *n = f->node; n; n = n->next) {
     if ((n->ntype == JQP_NODE_EXPR) && (n->value->type == JQP_EXPR_TYPE)) {
-      for (JQP_EXPR *expr = &n->value->expr; expr; expr = expr->next) {
+      for (struct jqp_expr *expr = &n->value->expr; expr; expr = expr->next) {
         if (expr->join && expr->join->negate) {
           return true;
         }
@@ -422,7 +422,7 @@ static bool _jql_filter_has_negation(JQP_FILTER *f) {
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-static bool _jql_expr_has_negation(JQP_EXPR_NODE *en) {
+static bool _jql_expr_has_negation(struct jqp_expr_node *en) {
   for (en = en->chain; en; en = en->next) {
     if (en->join && en->join->negate) {
       return true;
@@ -431,21 +431,21 @@ static bool _jql_expr_has_negation(JQP_EXPR_NODE *en) {
       if (_jql_expr_has_negation(en)) {
         return true;
       }
-    } else if ((en->type == JQP_FILTER_TYPE) && _jql_filter_has_negation((JQP_FILTER*) en)) {
+    } else if ((en->type == JQP_FILTER_TYPE) && _jql_filter_has_negation((struct jqp_filter*) en)) {
       return true;
     }
   }
   return false;
 }
 
-iwrc jql_create2(JQL *qptr, const char *coll, const char *query, jql_create_mode_t mode) {
+iwrc jql_create2(struct jql **qptr, const char *coll, const char *query, jql_create_mode_t mode) {
   if (!qptr || !query) {
     return IW_ERROR_INVALID_ARGS;
   }
   *qptr = 0;
 
-  JQL q;
-  JQP_AUX *aux;
+  struct jql *q;
+  struct jqp_aux *aux;
   iwrc rc = jqp_aux_create(&aux, query);
   RCRET(rc);
 
@@ -497,11 +497,11 @@ finish:
   return rc;
 }
 
-iwrc jql_create(JQL *qptr, const char *coll, const char *query) {
+iwrc jql_create(struct jql **qptr, const char *coll, const char *query) {
   return jql_create2(qptr, coll, query, 0);
 }
 
-size_t jql_estimate_allocated_size(JQL q) {
+size_t jql_estimate_allocated_size(struct jql *q) {
   size_t ret = sizeof(struct jql);
   if (q->aux && q->aux->pool) {
     ret += iwpool_allocated_size(q->aux->pool);
@@ -509,33 +509,33 @@ size_t jql_estimate_allocated_size(JQL q) {
   return ret;
 }
 
-const char* jql_collection(JQL q) {
+const char* jql_collection(struct jql *q) {
   return q->coll;
 }
 
-void jql_reset(JQL q, bool reset_match_cache, bool reset_placeholders) {
+void jql_reset(struct jql *q, bool reset_match_cache, bool reset_placeholders) {
   q->matched = false;
   q->dirty = false;
-  JQP_AUX *aux = q->aux;
+  struct jqp_aux *aux = q->aux;
   _jql_reset_expression_node(aux->expr, aux, reset_match_cache);
   if (reset_placeholders) {
-    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
+    for (struct jqp_string *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
       _jql_jqval_destroy(pv);
     }
   }
 }
 
-void jql_destroy(JQL *qptr) {
+void jql_destroy(struct jql **qptr) {
   if (!qptr) {
     return;
   }
-  JQL q = *qptr;
+  struct jql *q = *qptr;
   if (q) {
-    JQP_AUX *aux = q->aux;
-    for (JQP_STRING *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
+    struct jqp_aux *aux = q->aux;
+    for (struct jqp_string *pv = aux->start_placeholder; pv; pv = pv->placeholder_next) { // Cleanup placeholders
       _jql_jqval_destroy(pv);
     }
-    for (JQP_OP *op = aux->start_op; op; op = op->next) {
+    for (struct jqp_op *op = aux->start_op; op; op = op->next) {
       if (op->opaque) {
         if (op->value == JQP_OP_RE && op->opaque != IWRE_UNUSED_PTR) {
           iwre_destroy(op->opaque);
@@ -547,7 +547,7 @@ void jql_destroy(JQL *qptr) {
   *qptr = 0;
 }
 
-IW_INLINE jqval_type_t _jql_binn_to_jqval(binn *vbinn, JQVAL *qval) {
+IW_INLINE jqval_type_t _jql_binn_to_jqval(binn *vbinn, struct jqval *qval) {
   switch (vbinn->type) {
     case BINN_OBJECT:
     case BINN_MAP:
@@ -615,11 +615,11 @@ IW_INLINE jqval_type_t _jql_binn_to_jqval(binn *vbinn, JQVAL *qval) {
   return JQVAL_NULL;
 }
 
-jqval_type_t jql_binn_to_jqval(binn *vbinn, JQVAL *qval) {
+jqval_type_t jql_binn_to_jqval(binn *vbinn, struct jqval *qval) {
   return _jql_binn_to_jqval(vbinn, qval);
 }
 
-IW_INLINE void _jql_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
+IW_INLINE void _jql_node_to_jqval(JBL_NODE jn, struct jqval *qv) {
   switch (jn->type) {
     case JBV_STR:
       qv->type = JQVAL_STR;
@@ -652,7 +652,7 @@ IW_INLINE void _jql_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
   }
 }
 
-void jql_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
+void jql_node_to_jqval(JBL_NODE jn, struct jqval *qv) {
   _jql_node_to_jqval(jn, qv);
 }
 
@@ -660,9 +660,9 @@ void jql_node_to_jqval(JBL_NODE jn, JQVAL *qv) {
  * Allowed on left:   JQVAL_STR|JQVAL_I64|JQVAL_F64|JQVAL_BOOL|JQVAL_NULL|JQVAL_BINN
  * Allowed on right:  JQVAL_STR|JQVAL_I64|JQVAL_F64|JQVAL_BOOL|JQVAL_NULL|JQVAL_JBLNODE
  */
-static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp) {
-  JQVAL sleft, sright;   // Stack allocated left/right converted values
-  const JQVAL *lv = left, *rv = right;
+static int _jql_cmp_jqval_pair(const struct jqval *left, const struct jqval *right, iwrc *rcp) {
+  struct jqval sleft, sright;   // Stack allocated left/right converted values
+  const struct jqval *lv = left, *rv = right;
 
   if (lv->type == JQVAL_BINN) {
     _jql_binn_to_jqval(lv->vbinn, &sleft);
@@ -803,18 +803,18 @@ static int _jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp)
   return 0;
 }
 
-int jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp) {
+int jql_cmp_jqval_pair(const struct jqval *left, const struct jqval *right, iwrc *rcp) {
   return _jql_cmp_jqval_pair(left, right, rcp);
 }
 
 static bool _jql_match_regexp(
-  JQP_AUX *aux,
-  JQVAL *left, JQP_OP *jqop, JQVAL *right,
+  struct jqp_aux *aux,
+  struct jqval *left, struct jqp_op *jqop, struct jqval *right,
   iwrc *rcp) {
   struct iwre *rx;
   char nbuf[IWNUMBUF_SIZE];
-  JQVAL sleft, sright; // Stack allocated left/right converted values
-  JQVAL *lv = left, *rv = right;
+  struct jqval sleft, sright; // Stack allocated left/right converted values
+  struct jqval *lv = left, *rv = right;
   char *input = 0;
   const char *expr = 0;
 
@@ -912,10 +912,10 @@ static bool _jql_match_regexp(
 }
 
 static bool _jql_match_in(
-  JQVAL *left, JQP_OP *jqop, JQVAL *right,
+  struct jqval *left, struct jqp_op *jqop, struct jqval *right,
   iwrc *rcp) {
-  JQVAL sleft; // Stack allocated left/right converted values
-  JQVAL *lv = left, *rv = right;
+  struct jqval sleft; // Stack allocated left/right converted values
+  struct jqval *lv = left, *rv = right;
   if ((rv->type != JQVAL_JBLNODE) && (rv->vnode->type != JBV_ARRAY)) {
     *rcp = _JQL_ERROR_UNMATCHED;
     return false;
@@ -928,7 +928,7 @@ static bool _jql_match_in(
     lv = &sleft;
   }
   for (JBL_NODE n = rv->vnode->child; n; n = n->next) {
-    JQVAL qv = {
+    struct jqval qv = {
       .type = JQVAL_JBLNODE,
       .vnode = n
     };
@@ -946,10 +946,10 @@ static bool _jql_match_in(
 }
 
 static bool _jql_match_ni(
-  JQVAL *left, JQP_OP *jqop, JQVAL *right,
+  struct jqval *left, struct jqp_op *jqop, struct jqval *right,
   iwrc *rcp) {
-  JQVAL sleft; // Stack allocated left/right converted values
-  JQVAL *lv = left, *rv = right;
+  struct jqval sleft; // Stack allocated left/right converted values
+  struct jqval *lv = left, *rv = right;
   binn bv;
   binn_iter iter;
   if ((rv->type != JQVAL_BINN) || (rv->vbinn->type != BINN_LIST)) {
@@ -972,7 +972,7 @@ static bool _jql_match_ni(
     return false;
   }
   while (binn_list_next(&iter, &bv)) {
-    JQVAL qv = {
+    struct jqval qv = {
       .type = JQVAL_BINN,
       .vbinn = &bv
     };
@@ -989,10 +989,10 @@ static bool _jql_match_ni(
 }
 
 static bool _jql_match_starts(
-  JQVAL *left, JQP_OP *jqop, JQVAL *right,
+  struct jqval *left, struct jqp_op *jqop, struct jqval *right,
   iwrc *rcp) {
-  JQVAL sleft; // Stack allocated left/right converted values
-  JQVAL *lv = left, *rv = right;
+  struct jqval sleft; // Stack allocated left/right converted values
+  struct jqval *lv = left, *rv = right;
   char nbuf[IWNUMBUF_SIZE];
   char nbuf2[IWNUMBUF_SIZE];
   char *input = 0, *prefix = 0;
@@ -1055,8 +1055,8 @@ static bool _jql_match_starts(
 }
 
 static bool _jql_match_jqval_pair(
-  JQP_AUX *aux,
-  JQVAL *left, JQP_OP *jqop, JQVAL *right,
+  struct jqp_aux *aux,
+  struct jqval *left, struct jqp_op *jqop, struct jqval *right,
   iwrc *rcp) {
   bool match = false;
   jqp_op_t op = jqop->value;
@@ -1116,24 +1116,24 @@ finish:
 }
 
 bool jql_match_jqval_pair(
-  JQP_AUX *aux,
-  JQVAL *left, JQP_OP *jqop, JQVAL *right,
+  struct jqp_aux *aux,
+  struct jqval *left, struct jqp_op *jqop, struct jqval *right,
   iwrc *rcp) {
   return _jql_match_jqval_pair(aux, left, jqop, right, rcp);
 }
 
-static JQVAL* _jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
+static struct jqval* _jql_unit_to_jqval(struct jqp_aux *aux, union jqp_unit *unit, iwrc *rcp) {
   *rcp = 0;
   switch (unit->type) {
     case JQP_STRING_TYPE: {
       if (unit->string.opaque) {
-        return (JQVAL*) unit->string.opaque;
+        return (struct jqval*) unit->string.opaque;
       }
       if (unit->string.flavour & JQP_STR_PLACEHOLDER) {
         *rcp = JQL_ERROR_INVALID_PLACEHOLDER;
         return 0;
       } else {
-        JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
+        struct jqval *qv = iwpool_calloc(sizeof(*qv), aux->pool);
         if (!qv) {
           *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
           return 0;
@@ -1146,9 +1146,9 @@ static JQVAL* _jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
     }
     case JQP_JSON_TYPE: {
       if (unit->json.opaque) {
-        return (JQVAL*) unit->json.opaque;
+        return (struct jqval*) unit->json.opaque;
       }
-      JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
+      struct jqval *qv = iwpool_calloc(sizeof(*qv), aux->pool);
       if (!qv) {
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
@@ -1184,9 +1184,9 @@ static JQVAL* _jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
     }
     case JQP_INTEGER_TYPE: {
       if (unit->intval.opaque) {
-        return (JQVAL*) unit->intval.opaque;
+        return (struct jqval*) unit->intval.opaque;
       }
-      JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
+      struct jqval *qv = iwpool_calloc(sizeof(*qv), aux->pool);
       if (!qv) {
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
@@ -1198,9 +1198,9 @@ static JQVAL* _jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
     }
     case JQP_DOUBLE_TYPE: {
       if (unit->dblval.opaque) {
-        return (JQVAL*) unit->dblval.opaque;
+        return (struct jqval*) unit->dblval.opaque;
       }
-      JQVAL *qv = iwpool_calloc(sizeof(*qv), aux->pool);
+      struct jqval *qv = iwpool_calloc(sizeof(*qv), aux->pool);
       if (!qv) {
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
@@ -1217,11 +1217,11 @@ static JQVAL* _jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
   }
 }
 
-JQVAL* jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp) {
+struct jqval* jql_unit_to_jqval(struct jqp_aux *aux, union jqp_unit *unit, iwrc *rcp) {
   return _jql_unit_to_jqval(aux, unit, rcp);
 }
 
-bool jql_jqval_as_int(JQVAL *jqval, int64_t *out) {
+bool jql_jqval_as_int(struct jqval *jqval, int64_t *out) {
   switch (jqval->type) {
     case JQVAL_I64:
       *out = jqval->vi64;
@@ -1261,7 +1261,7 @@ bool jql_jqval_as_int(JQVAL *jqval, int64_t *out) {
   }
 }
 
-static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
+static bool _jql_match_node_expr_impl(struct MCTX *mctx, struct jqp_expr *expr, iwrc *rcp) {
   // A condition already evaluated against some key of the current object/array
   // remains evaluated while other keys of the same object are visited.
   // This allows expressions like `[name = Anton and age = 20]` to be
@@ -1270,12 +1270,12 @@ static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
     return true;
   }
   const bool negate = (expr->join && expr->join->negate);
-  JQPUNIT *left = expr->left;
-  JQP_OP *op = expr->op;
-  JQPUNIT *right = expr->right;
+  union jqp_unit *left = expr->left;
+  struct jqp_op *op = expr->op;
+  union jqp_unit *right = expr->right;
   if (left->type == JQP_STRING_TYPE) {
     if (left->string.flavour & JQP_STR_STAR) {
-      JQVAL lv, *rv = _jql_unit_to_jqval(mctx->aux, right, rcp);
+      struct jqval lv, *rv = _jql_unit_to_jqval(mctx->aux, right, rcp);
       if (*rcp) {
         return false;
       }
@@ -1296,7 +1296,7 @@ static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
       *rcp = IW_ERROR_ASSERTION;
       return false;
     }
-    JQVAL lv, *rv = _jql_unit_to_jqval(mctx->aux, left->expr.right, rcp);
+    struct jqval lv, *rv = _jql_unit_to_jqval(mctx->aux, left->expr.right, rcp);
     if (*rcp) {
       return false;
     }
@@ -1306,7 +1306,7 @@ static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
       return (expr->state < 0) ? false : negate;
     }
   }
-  JQVAL lv, *rv = _jql_unit_to_jqval(mctx->aux, right, rcp);
+  struct jqval lv, *rv = _jql_unit_to_jqval(mctx->aux, right, rcp);
   if (*rcp) {
     return false;
   }
@@ -1318,22 +1318,22 @@ static bool _jql_match_node_expr_impl(MCTX *mctx, JQP_EXPR *expr, iwrc *rcp) {
   return ret;
 }
 
-static bool _jql_match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
+static bool _jql_match_node_expr(struct MCTX *mctx, struct jqp_node *n, iwrc *rcp) {
   n->start = mctx->lvl;
   n->end = n->start;
-  JQPUNIT *unit = n->value;
+  union jqp_unit *unit = n->value;
   if (unit->type != JQP_EXPR_TYPE) {
     iwlog_ecode_error3(IW_ERROR_ASSERTION);
     *rcp = IW_ERROR_ASSERTION;
     return false;
   }
   bool prev = false;
-  for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
+  for (struct jqp_expr *expr = &unit->expr; expr; expr = expr->next) {
     bool matched = _jql_match_node_expr_impl(mctx, expr, rcp);
     if (*rcp) {
       return false;
     }
-    const JQP_JOIN *join = expr->join;
+    const struct jqp_join *join = expr->join;
     if (!join) {
       prev = matched;
     } else {
@@ -1352,7 +1352,7 @@ static bool _jql_match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   mctx->expr_matched = prev;
   mctx->provisional = false;
   if (prev) {
-    for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
+    for (struct jqp_expr *expr = &unit->expr; expr; expr = expr->next) {
       if ((expr->state == 0) && expr->join && expr->join->negate) {
         mctx->provisional = true;
         break;
@@ -1362,7 +1362,7 @@ static bool _jql_match_node_expr(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
   return prev;
 }
 
-IW_INLINE bool _jql_match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
+IW_INLINE bool _jql_match_node_field(struct MCTX *mctx, struct jqp_node *n, iwrc *rcp) {
   n->start = mctx->lvl;
   n->end = n->start;
   if (n->value->type != JQP_STRING_TYPE) {
@@ -1374,12 +1374,12 @@ IW_INLINE bool _jql_match_node_field(MCTX *mctx, JQP_NODE *n, iwrc *rcp) {
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-IW_INLINE JQP_NODE* _jql_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
+IW_INLINE struct jqp_node* _jql_match_node_anys(struct MCTX *mctx, struct jqp_node *n, bool *res, iwrc *rcp) {
   if (n->start < 0) {
     n->start = mctx->lvl;
   }
   if (n->next) {
-    JQP_NODE *nn = _jql_match_node(mctx, n->next, res, rcp);
+    struct jqp_node *nn = _jql_match_node(mctx, n->next, res, rcp);
     if (*res) {
       n->end = -mctx->lvl; // Exclude node from matching
       n = nn;
@@ -1394,7 +1394,7 @@ IW_INLINE JQP_NODE* _jql_match_node_anys(MCTX *mctx, JQP_NODE *n, bool *res, iwr
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-static JQP_NODE* _jql_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) {
+static struct jqp_node* _jql_match_node(struct MCTX *mctx, struct jqp_node *n, bool *res, iwrc *rcp) {
   switch (n->ntype) {
     case JQP_NODE_FIELD:
       *res = _jql_match_node_field(mctx, n, rcp);
@@ -1413,8 +1413,8 @@ static JQP_NODE* _jql_match_node(MCTX *mctx, JQP_NODE *n, bool *res, iwrc *rcp) 
   return n;
 }
 
-static bool _jql_match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
-  MFCTX *fctx = f->opaque;
+static bool _jql_match_filter(struct jqp_filter *f, struct MCTX *mctx, iwrc *rcp) {
+  struct MFCTX *fctx = f->opaque;
   mctx->expr_evaluated = false;
   mctx->expr_matched = false;
   mctx->provisional = false;
@@ -1430,9 +1430,9 @@ static bool _jql_match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
   }
   if (fctx->last_lvl >= lvl) {
     fctx->last_lvl = lvl - 1;
-    for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
+    for (struct jqp_node *n = fctx->nodes; n; n = n->next) {
       if ((n->start >= lvl) || (-n->end >= lvl)) {
-        JQPUNIT *unit = n->value;
+        union jqp_unit *unit = n->value;
         if ((n->ntype == JQP_NODE_EXPR) && (n->start != lvl)) {
           // The current object/array scope is left. A provisionally
           // satisfied expression cannot be invalidated anymore.
@@ -1444,7 +1444,7 @@ static bool _jql_match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
           // Reset accumulated expression state when moving to a new
           // object/array at the same or upper level.
           if (unit->type == JQP_EXPR_TYPE) {
-            for (JQP_EXPR *expr = &unit->expr; expr; expr = expr->next) {
+            for (struct jqp_expr *expr = &unit->expr; expr; expr = expr->next) {
               expr->state = 0;
             }
           }
@@ -1457,7 +1457,7 @@ static bool _jql_match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
       return true;
     }
   }
-  for (JQP_NODE *n = fctx->nodes; n; n = n->next) {
+  for (struct jqp_node *n = fctx->nodes; n; n = n->next) {
     if ((n->start < 0) || ((lvl >= n->start) && (lvl <= n->end))) {
       n = _jql_match_node(mctx, n, &matched, rcp);
       if (*rcp) {
@@ -1484,8 +1484,8 @@ static bool _jql_match_filter(JQP_FILTER *f, MCTX *mctx, iwrc *rcp) {
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-static bool _jql_match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp) {
-  MENCTX *enctx = en->opaque;
+static bool _jql_match_expression_node(struct jqp_expr_node *en, struct MCTX *mctx, iwrc *rcp) {
+  struct MENCTX *enctx = en->opaque;
   if (enctx->matched) {
     return true;
   }
@@ -1495,12 +1495,12 @@ static bool _jql_match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp)
     if (en->type == JQP_EXPR_NODE_TYPE) {
       matched = _jql_match_expression_node(en, mctx, rcp);
     } else if (en->type == JQP_FILTER_TYPE) {
-      matched = _jql_match_filter((JQP_FILTER*) en, mctx, rcp);
+      matched = _jql_match_filter((struct jqp_filter*) en, mctx, rcp);
     }
     if (*rcp) {
       return JBL_VCMD_TERMINATE;
     }
-    const JQP_JOIN *join = en->join;
+    const struct jqp_join *join = en->join;
     if (!join) {
       prev = matched;
     } else {
@@ -1521,12 +1521,12 @@ static bool _jql_match_expression_node(JQP_EXPR_NODE *en, MCTX *mctx, iwrc *rcp)
 static jbl_visitor_cmd_t _jql_match_visitor(int lvl, binn *bv, const char *key, int idx, JBL_VCTX *vctx, iwrc *rcp) {
   char nbuf[IWNUMBUF_SIZE];
   const char *nkey = key;
-  JQL q = vctx->op;
+  struct jql *q = vctx->op;
   if (!nkey) {
     iwitoa(idx, nbuf, sizeof(nbuf));
     nkey = nbuf;
   }
-  MCTX mctx = {
+  struct MCTX mctx = {
     .lvl = lvl,
     .bv = bv,
     .key = nkey,
@@ -1550,12 +1550,12 @@ static jbl_visitor_cmd_t _jql_match_visitor(int lvl, binn *bv, const char *key, 
   return 0;
 }
 
-iwrc jql_matched(JQL q, JBL jbl, bool *out) {
+iwrc jql_matched(struct jql *q, JBL jbl, bool *out) {
   JBL_VCTX vctx = {
     .bn = &jbl->bn,
     .op = q
   };
-  JQP_EXPR_NODE *en = q->aux->expr;
+  struct jqp_expr_node *en = q->aux->expr;
   if (en->flags & JQP_EXPR_NODE_FLAG_PK) {
     q->matched = true;
     *out = true;
@@ -1566,7 +1566,7 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
   if (en->chain && !en->chain->next && !en->next) {
     en = en->chain;
     if (en->type == JQP_FILTER_TYPE) {
-      JQP_NODE *n = ((JQP_FILTER*) en)->node;
+      struct jqp_node *n = ((struct jqp_filter*) en)->node;
       if (n && ((n->ntype == JQP_NODE_ANYS) || (n->ntype == JQP_NODE_ANY)) && !n->next) {
         // Single /* | /** matches anything
         q->matched = true;
@@ -1586,7 +1586,7 @@ iwrc jql_matched(JQL q, JBL jbl, bool *out) {
   return rc;
 }
 
-const char* jql_error(JQL q) {
+const char* jql_error(struct jql *q) {
   if (q && q->aux) {
     return iwxstr_ptr(q->aux->xerr);
   } else {
@@ -1594,43 +1594,43 @@ const char* jql_error(JQL q) {
   }
 }
 
-const char* jql_first_anchor(JQL q) {
+const char* jql_first_anchor(struct jql *q) {
   return q->aux->first_anchor;
 }
 
-bool jql_has_apply(JQL q) {
+bool jql_has_apply(struct jql *q) {
   return q->aux->apply || q->aux->apply_placeholder || (q->aux->qmode & (JQP_QRY_APPLY_DEL | JQP_QRY_APPLY_UPSERT));
 }
 
-bool jql_has_apply_upsert(JQL q) {
+bool jql_has_apply_upsert(struct jql *q) {
   return (q->aux->qmode & JQP_QRY_APPLY_UPSERT);
 }
 
-bool jql_has_apply_delete(JQL q) {
+bool jql_has_apply_delete(struct jql *q) {
   return (q->aux->qmode & JQP_QRY_APPLY_DEL);
 }
 
-bool jql_has_projection(JQL q) {
+bool jql_has_projection(struct jql *q) {
   return q->aux->projection;
 }
 
-bool jql_has_orderby(JQL q) {
+bool jql_has_orderby(struct jql *q) {
   return q->aux->orderby_num > 0;
 }
 
-bool jql_has_aggregate_count(JQL q) {
+bool jql_has_aggregate_count(struct jql *q) {
   return (q->aux->qmode & JQP_QRY_AGGREGATE);
 }
 
-iwrc jql_get_skip(JQL q, int64_t *out) {
+iwrc jql_get_skip(struct jql *q, int64_t *out) {
   iwrc rc = 0;
   *out = 0;
   struct jqp_aux *aux = q->aux;
-  JQPUNIT *skip = aux->skip;
+  union jqp_unit *skip = aux->skip;
   if (!skip) {
     return 0;
   }
-  JQVAL *val = _jql_unit_to_jqval(aux, skip, &rc);
+  struct jqval *val = _jql_unit_to_jqval(aux, skip, &rc);
   RCRET(rc);
   if ((val->type != JQVAL_I64) || (val->vi64 < 0)) { // -V522
     return JQL_ERROR_INVALID_PLACEHOLDER;
@@ -1639,15 +1639,15 @@ iwrc jql_get_skip(JQL q, int64_t *out) {
   return 0;
 }
 
-iwrc jql_get_limit(JQL q, int64_t *out) {
+iwrc jql_get_limit(struct jql *q, int64_t *out) {
   iwrc rc = 0;
   *out = 0;
   struct jqp_aux *aux = q->aux;
-  JQPUNIT *limit = aux->limit;
+  union jqp_unit *limit = aux->limit;
   if (!limit) {
     return 0;
   }
-  JQVAL *val = _jql_unit_to_jqval(aux, limit, &rc);
+  struct jqval *val = _jql_unit_to_jqval(aux, limit, &rc);
   RCRET(rc);
   if ((val->type != JQVAL_I64) || (val->vi64 < 0)) { // -V522
     return JQL_ERROR_INVALID_PLACEHOLDER;
@@ -1663,10 +1663,10 @@ iwrc jql_get_limit(JQL q, int64_t *out) {
 #define PROJ_MARK_FROM_JOIN 0x04
 
 typedef struct _PROJ_CTX {
-  JQL q;
-  JQP_PROJECTION *proj;
+  struct jql *q;
+  struct jqp_projection *proj;
   IWPOOL *pool;
-  JBEXEC *exec_ctx; // Optional!
+  struct jbexec *exec_ctx; // Optional!
 } PROJ_CTX;
 
 static void _jql_proj_mark_up(JBL_NODE n, int amask) {
@@ -1679,7 +1679,7 @@ static void _jql_proj_mark_up(JBL_NODE n, int amask) {
 static bool _jql_proj_matched(
   int16_t lvl, JBL_NODE n,
   const char *key, int keylen,
-  JBN_VCTX *vctx, JQP_PROJECTION *proj,
+  JBN_VCTX *vctx, struct jqp_projection *proj,
   iwrc *rc) {
   if (proj->cnt <= lvl) {
     return false;
@@ -1688,12 +1688,13 @@ static bool _jql_proj_matched(
     proj->pos = lvl - 1;
   }
   if (proj->pos + 1 == lvl) {
-    JQP_STRING *ps = proj->value;
+    struct jqp_string *ps = proj->value;
     for (int i = 0; i < lvl; ps = ps->next, ++i); // -V529
     assert(ps);
     if (ps->flavour & JQP_STR_PROJFIELD) {
-      for (JQP_STRING *sn = ps; sn; sn = sn->subnext) {
-        const char *pv = IW_UNLIKELY(sn->flavour & JQP_STR_PLACEHOLDER) ? ((JQVAL*) sn->opaque)->vstr : sn->value;
+      for (struct jqp_string *sn = ps; sn; sn = sn->subnext) {
+        const char *pv = IW_UNLIKELY(sn->flavour
+                                     & JQP_STR_PLACEHOLDER) ? ((struct jqval*) sn->opaque)->vstr : sn->value;
         int pvlen = (int) strlen(pv);
         if ((pvlen == keylen) && !strncmp(key, pv, keylen)) {
           proj->pos = lvl;
@@ -1701,7 +1702,7 @@ static bool _jql_proj_matched(
         }
       }
     } else {
-      const char *pv = IW_UNLIKELY(ps->flavour & JQP_STR_PLACEHOLDER) ? ((JQVAL*) ps->opaque)->vstr : ps->value;
+      const char *pv = IW_UNLIKELY(ps->flavour & JQP_STR_PLACEHOLDER) ? ((struct jqval*) ps->opaque)->vstr : ps->value;
       int pvlen = (int) strlen(pv);
       if (((pvlen == keylen) && !strncmp(key, pv, keylen)) || ((pv[0] == '*') && (pv[1] == '\0'))) {
         proj->pos = lvl;
@@ -1715,10 +1716,10 @@ static bool _jql_proj_matched(
 static bool _jql_proj_join_matched(
   int16_t lvl, JBL_NODE n,
   const char *key, int keylen,
-  JBN_VCTX *vctx, JQP_PROJECTION *proj,
+  JBN_VCTX *vctx, struct jqp_projection *proj,
   JBL *out,
   iwrc *rcp) {
-  PROJ_CTX *pctx = vctx->op;
+  struct _PROJ_CTX *pctx = vctx->op;
   if (proj->cnt != lvl + 1) {
     return _jql_proj_matched(lvl, n, key, keylen, vctx, proj, rcp);
   }
@@ -1727,13 +1728,13 @@ static bool _jql_proj_join_matched(
   JBL jbl = 0;
   const char *pv, *spos;
   bool ret = false;
-  JQP_STRING *ps = proj->value;
+  struct jqp_string *ps = proj->value;
   for (int i = 0; i < lvl; ps = ps->next, ++i); // -V529
   assert(ps);
 
   if (ps->flavour & JQP_STR_PROJFIELD) {
-    for (JQP_STRING *sn = ps; sn; sn = sn->subnext) {
-      pv = IW_UNLIKELY(sn->flavour & JQP_STR_PLACEHOLDER) ? ((JQVAL*) sn->opaque)->vstr : sn->value;
+    for (struct jqp_string *sn = ps; sn; sn = sn->subnext) {
+      pv = IW_UNLIKELY(sn->flavour & JQP_STR_PLACEHOLDER) ? ((struct jqval*) sn->opaque)->vstr : sn->value;
       spos = strchr(pv, '<');
       if (!spos) {
         if ((strlen(pv) == keylen) && !strncmp(key, pv, keylen)) {
@@ -1747,16 +1748,16 @@ static bool _jql_proj_join_matched(
       }
     }
   } else {
-    pv = IW_UNLIKELY(ps->flavour & JQP_STR_PLACEHOLDER) ? ((JQVAL*) ps->opaque)->vstr : ps->value;
+    pv = IW_UNLIKELY(ps->flavour & JQP_STR_PLACEHOLDER) ? ((struct jqval*) ps->opaque)->vstr : ps->value;
     spos = strchr(pv, '<');
     assert(spos);
     ret = !strncmp(key, pv, spos - pv);
   }
   if (ret) {
     JBL_NODE nn;
-    JQVAL jqval;
+    struct jqval jqval;
     int64_t id;
-    JBEXEC *exec_ctx = pctx->exec_ctx;
+    struct jbexec *exec_ctx = pctx->exec_ctx;
     const char *coll = spos + 1;
     if (*coll == '\0') {
       return false;
@@ -1820,7 +1821,7 @@ finish:
 }
 
 static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key, int klidx, JBN_VCTX *vctx, iwrc *rc) {
-  PROJ_CTX *pctx = vctx->op;
+  struct _PROJ_CTX *pctx = vctx->op;
   const char *keyptr;
   char buf[IWNUMBUF_SIZE];
   if (key) {
@@ -1832,7 +1833,7 @@ static jbn_visitor_cmd_t _jql_proj_visitor(int lvl, JBL_NODE n, const char *key,
     keyptr = buf;
     klidx = (int) strlen(keyptr);
   }
-  for (JQP_PROJECTION *p = pctx->proj; p; p = p->next) {
+  for (struct jqp_projection *p = pctx->proj; p; p = p->next) {
     uint8_t flags = p->flags;
     JBL jbl = 0;
     bool matched;
@@ -1867,15 +1868,15 @@ static jbn_visitor_cmd_t _jql_proj_keep_visitor(
   return JBN_VCMD_DELETE;
 }
 
-static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool, JBEXEC *exec_ctx) {
+static iwrc _jql_project(JBL_NODE root, struct jql *q, IWPOOL *pool, struct jbexec *exec_ctx) {
   iwrc rc;
-  JQP_AUX *aux = q->aux;
+  struct jqp_aux *aux = q->aux;
   if (aux->has_exclude_all_projection) {
     jbn_data(root);
     return 0;
   }
-  JQP_PROJECTION *proj = aux->projection;
-  PROJ_CTX pctx = {
+  struct jqp_projection *proj = aux->projection;
+  struct _PROJ_CTX pctx = {
     .q = q,
     .proj = proj,
     .pool = pool,
@@ -1885,12 +1886,12 @@ static iwrc _jql_project(JBL_NODE root, JQL q, IWPOOL *pool, JBEXEC *exec_ctx) {
     // No pool no exec_ctx
     pctx.exec_ctx = 0;
   }
-  for (JQP_PROJECTION *p = proj; p; p = p->next) {
+  for (struct jqp_projection *p = proj; p; p = p->next) {
     p->pos = -1;
     p->cnt = 0;
-    for (JQP_STRING *s = p->value; s; s = s->next) {
+    for (struct jqp_string *s = p->value; s; s = s->next) {
       if (s->flavour & JQP_STR_PLACEHOLDER) {
-        if (s->opaque == 0 || ((JQVAL*) s->opaque)->type != JQVAL_STR) {
+        if (s->opaque == 0 || ((struct jqval*) s->opaque)->type != JQVAL_STR) {
           return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
         }
       }
@@ -1916,9 +1917,9 @@ finish:
 
 //----------------------------------
 
-iwrc jql_apply(JQL q, JBL_NODE root, IWPOOL *pool) {
+iwrc jql_apply(struct jql *q, JBL_NODE root, IWPOOL *pool) {
   if (q->aux->apply_placeholder) {
-    JQVAL *pv = _jql_find_placeholder(q, q->aux->apply_placeholder);
+    struct jqval *pv = _jql_find_placeholder(q, q->aux->apply_placeholder);
     if (!pv || (pv->type != JQVAL_JBLNODE) || !pv->vnode) {
       return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
     }
@@ -1930,7 +1931,7 @@ iwrc jql_apply(JQL q, JBL_NODE root, IWPOOL *pool) {
   }
 }
 
-iwrc jql_project(JQL q, JBL_NODE root, IWPOOL *pool, void *exec_ctx) {
+iwrc jql_project(struct jql *q, JBL_NODE root, IWPOOL *pool, void *exec_ctx) {
   if (q->aux->projection) {
     return _jql_project(root, q, pool, exec_ctx);
   } else {
@@ -1938,9 +1939,9 @@ iwrc jql_project(JQL q, JBL_NODE root, IWPOOL *pool, void *exec_ctx) {
   }
 }
 
-iwrc jql_apply_and_project(JQL q, JBL jbl, JBL_NODE *out, void *exec_ctx, IWPOOL *pool) {
+iwrc jql_apply_and_project(struct jql *q, JBL jbl, JBL_NODE *out, void *exec_ctx, IWPOOL *pool) {
   *out = 0;
-  JQP_AUX *aux = q->aux;
+  struct jqp_aux *aux = q->aux;
   if (!(aux->apply || aux->apply_placeholder || aux->projection)) {
     return 0;
   }

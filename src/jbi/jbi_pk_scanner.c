@@ -7,13 +7,13 @@ iwrc jbi_pk_scanner(struct jbexec *ctx, jb_scan_consumer consumer) {
   bool matched;
   struct jqp_aux *aux = ctx->ux->q->aux;
   assert(aux->expr->flags & JQP_EXPR_NODE_FLAG_PK);
-  JQP_EXPR_NODE_PK *pk = (void*) aux->expr;
+  struct jqp_expr_node_pk *pk = (void*) aux->expr;
   assert(pk->argument);
-  JQVAL *jqvp = jql_unit_to_jqval(aux, pk->argument, &rc);
+  struct jqval *jqvp = jql_unit_to_jqval(aux, pk->argument, &rc);
   RCGO(rc, finish);
 
   if ((jqvp->type == JQVAL_JBLNODE) && (jqvp->vnode->type == JBV_ARRAY)) {
-    JQVAL jqv;
+    struct jqval jqv;
     JBL_NODE nv = jqvp->vnode->child;
     if (!nv) {
       goto finish;

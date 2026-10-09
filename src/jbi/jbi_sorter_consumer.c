@@ -53,7 +53,7 @@ finish:
   return rv;
 }
 
-static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct jbexec *ctx, JQL q, struct ejdb_doc *doc) {
+static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct jbexec *ctx, struct jql *q, struct ejdb_doc *doc) {
   JBL_NODE root;
   JBL jbl = doc->raw;
   struct jqp_aux *aux = q->aux;
@@ -83,7 +83,7 @@ static iwrc _jbi_scan_sorter_do(struct jbexec *ctx) {
   iwrc rc = 0;
   int64_t step = 1, id;
   struct jbl jbl;
-  EJDB_EXEC *ux = ctx->ux;
+  struct ejdb_exec *ux = ctx->ux;
   struct jbssc *ssc = &ctx->ssc;
   uint32_t rnum = ssc->refs_num;
   struct jqp_aux *aux = ux->q->aux;
@@ -188,7 +188,7 @@ iwrc jbi_sorter_consumer(
   size_t vsz = 0;
   struct jbl jbl;
   struct jbssc *ssc = &ctx->ssc;
-  EJDB db = ctx->jbc->db;
+  struct ejdb *db = ctx->jbc->db;
   IWFS_EXT *sof = &ssc->sof;
 
 start:

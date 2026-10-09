@@ -79,9 +79,9 @@ typedef uint8_t jql_create_mode_t;
  * @param coll Optional collection name used to execute query
  * @param query Query text
  */
-IW_EXPORT WUR iwrc jql_create(struct jql * *qptr, const char *coll, const char *query);
+IW_EXPORT WUR iwrc jql_create(struct jql **qptr, const char *coll, const char *query);
 
-IW_EXPORT WUR iwrc jql_create2(struct jql * *qptr, const char *coll, const char *query, jql_create_mode_t mode);
+IW_EXPORT WUR iwrc jql_create2(struct jql **qptr, const char *coll, const char *query, jql_create_mode_t mode);
 
 IW_EXPORT const char* jql_collection(struct jql *q);
 

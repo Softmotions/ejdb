@@ -13,14 +13,14 @@ int clean_suite() {
 }
 
 void ejdb_test1_3() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test1_3.db",
       .oflags = IWKV_TRUNC
     },
     .no_wal = true
   };
-  EJDB db;
+  struct ejdb *db;
   JBL jbl;
   int64_t id = 0;
 
@@ -55,14 +55,14 @@ void ejdb_test1_3() {
 }
 
 void ejdb_test1_2() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test1_2.db",
       .oflags = IWKV_TRUNC
     },
     .no_wal = true
   };
-  EJDB db;
+  struct ejdb *db;
   JBL jbl, at, meta;
   int64_t llv = 0, llv2;
   iwrc rc = ejdb_open(&opts, &db);
@@ -232,14 +232,14 @@ void ejdb_test1_2() {
 }
 
 void ejdb_test1_1() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test1_1.db",
       .oflags = IWKV_TRUNC
     },
     .no_wal = true
   };
-  EJDB db;
+  struct ejdb *db;
   JBL meta, jbl;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);

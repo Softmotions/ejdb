@@ -5,7 +5,7 @@
 // ---------------------------------------------------------------------------
 
 // fixme: code duplication below
-void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]) {
+void jbi_jbl_fill_ikey(struct jbidx *idx, JBL jbv, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]) {
   int64_t *llv = (void*) numbuf;
   jbl_type_t jbvt = jbl_type(jbv);
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
@@ -80,7 +80,9 @@ void jbi_jbl_fill_ikey(JBIDX idx, JBL jbv, IWKV_val *ikey, char numbuf[static IW
   }
 }
 
-void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]) {
+void jbi_jqval_fill_ikey(
+  struct jbidx *idx, const struct jqval *jqval, IWKV_val *ikey,
+  char numbuf[static IWNUMBUF_SIZE]) {
   int64_t *llv = (void*) numbuf;
   ikey->size = 0;
   ikey->data = numbuf;
@@ -157,7 +159,7 @@ void jbi_jqval_fill_ikey(JBIDX idx, const JQVAL *jqval, IWKV_val *ikey, char num
   }
 }
 
-void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]) {
+void jbi_node_fill_ikey(struct jbidx *idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]) {
   int64_t *llv = (void*) numbuf;
   ikey->size = 0;
   ikey->data = numbuf;
@@ -235,7 +237,7 @@ void jbi_node_fill_ikey(JBIDX idx, JBL_NODE node, IWKV_val *ikey, char numbuf[st
   }
 }
 
-bool jbi_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR *expr, iwrc *rcp) {
+bool jbi_node_expr_matched(struct jqp_aux *aux, struct jbidx *idx, IWKV_cursor cur, struct jqp_expr *expr, iwrc *rcp) {
   size_t sz;
   char skey[1024];
   char *kbuf = skey;
@@ -245,7 +247,7 @@ bool jbi_node_expr_matched(JQP_AUX *aux, JBIDX idx, IWKV_cursor cur, JQP_EXPR *e
   if (!(idx->mode & (EJDB_IDX_STR | EJDB_IDX_I64 | EJDB_IDX_F64))) {
     return false;
   }
-  JQVAL lv, *rv = jql_unit_to_jqval(aux, expr->right, &rc);
+  struct jqval lv, *rv = jql_unit_to_jqval(aux, expr->right, &rc);
   RCGO(rc, finish);
 
   rc = iwkv_cursor_copy_key(cur, kbuf, sizeof(skey) - 1, &sz, 0);

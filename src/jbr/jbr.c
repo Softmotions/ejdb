@@ -21,19 +21,19 @@ typedef enum {
 struct jbr {
   struct iwn_poller *poller;
   pthread_t poller_thread;
-  const EJDB_HTTP   *http;
-  struct iwn_wf_ctx *ctx;
-  EJDB db;
+  const struct ejdb_http *http;
+  struct iwn_wf_ctx      *ctx;
+  struct ejdb *db;
 };
 
 struct rctx {
   struct iwn_wf_req  *req;
   struct iwn_ws_sess *ws;
-  struct jbr     *jbr;
-  struct iwn_vals vals;
-  pthread_mutex_t mtx;
-  pthread_cond_t  cond;
-  EJDB_EXEC       ux;
+  struct jbr      *jbr;
+  struct iwn_vals  vals;
+  pthread_mutex_t  mtx;
+  pthread_cond_t   cond;
+  struct ejdb_exec ux;
   int64_t   id;
   pthread_t request_thread;
   bool      read_anon;
@@ -61,7 +61,7 @@ struct mctx {
           }                                                                \
         } while (0)
 
-void jbr_shutdown_request(EJDB db) {
+void jbr_shutdown_request(struct ejdb *db) {
   if (db->jbr) {
     iwn_poller_shutdown_request(db->jbr->poller);
   }
@@ -80,7 +80,7 @@ void jbr_shutdown_wait(struct jbr *jbr) {
 }
 
 static void* _poller_worker(void *op) {
-  JBR jbr = op;
+  struct jbr *jbr = op;
   iwn_poller_poll(jbr->poller);
   iwn_poller_destroy(&jbr->poller);
   return 0;
@@ -325,7 +325,7 @@ start:
   return rc == 0;
 }
 
-static iwrc _query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
+static iwrc _query_visitor(struct ejdb_exec *ux, struct ejdb_doc *doc, int64_t *step) {
   iwrc rc = 0;
   struct rctx *ctx = ux->opaque;
   IWXSTR *xstr = iwxstr_new();
@@ -791,7 +791,7 @@ finish:
   return ret;
 }
 
-static iwrc _ws_query_visitor(EJDB_EXEC *ux, EJDB_DOC doc, int64_t *step) {
+static iwrc _ws_query_visitor(struct ejdb_exec *ux, struct ejdb_doc *doc, int64_t *step) {
   iwrc rc = 0;
   struct mctx *mctx = ux->opaque;
   if (!mctx->wbuf) {
@@ -823,7 +823,7 @@ static bool _ws_query(struct iwn_ws_sess *ws, struct mctx *mctx, const char *que
   bool ret = false;
   struct rctx *ctx = mctx->ctx;
 
-  EJDB_EXEC ux = {
+  struct ejdb_exec ux = {
     .db = ctx->jbr->db,
     .opaque = mctx,
     .visitor = _ws_query_visitor,
@@ -1076,7 +1076,7 @@ finish:
 }
 
 static iwrc _start(struct jbr *jbr) {
-  const EJDB_HTTP *http = jbr->http;
+  const struct ejdb_http *http = jbr->http;
   struct iwn_wf_server_spec spec = {
     .poller = jbr->poller,
     .listen = http->bind ? http->bind : "localhost",
@@ -1094,13 +1094,13 @@ static iwrc _start(struct jbr *jbr) {
   return iwn_wf_server(&spec, jbr->ctx);
 }
 
-iwrc jbr_start(EJDB db, const EJDB_OPTS *opts, struct jbr **jbrp) {
+iwrc jbr_start(struct ejdb *db, const struct ejdb_opts *opts, struct jbr **jbrp) {
   iwrc rc = 0;
   *jbrp = 0;
   if (!opts->http.enabled) {
     return 0;
   }
-  JBR jbr = calloc(1, sizeof(*jbr));
+  struct jbr *jbr = calloc(1, sizeof(*jbr));
   if (!jbr) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }

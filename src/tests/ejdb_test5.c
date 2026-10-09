@@ -25,8 +25,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IWKV_NO_TRIM_ON_CLOSE
-iwrc get_ejdb(EJDB *db) {
-  EJDB_OPTS opts = {
+iwrc get_ejdb(struct ejdb **db) {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test5.db",
       .oflags = IWKV_NO_TRIM_ON_CLOSE | IWKV_TRUNC,
@@ -53,7 +53,7 @@ iwrc get_ejdb(EJDB *db) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-iwrc show_db_meta(EJDB db) {
+iwrc show_db_meta(struct ejdb *db) {
   JBL jbl = 0;   // Json document
   iwrc rc = ejdb_get_meta(db, &jbl);
   RCGO(rc, finish);
@@ -70,7 +70,7 @@ finish:
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-iwrc add_record_large(EJDB db, char *collection, int total) {
+iwrc add_record_large(struct ejdb *db, char *collection, int total) {
   JBL jbl = 0;   // Json document
   int64_t id;    // Document id placeholder
   char json[1024];
@@ -97,8 +97,8 @@ finish:
 }
 
 // delete function /////////////////////////////////////////////////////////////////////////////////////////////////////
-iwrc delete_record_large(EJDB db, char *collection, int64_t to, int limit) {
-  JQL q = 0;
+iwrc delete_record_large(struct ejdb *db, char *collection, int64_t to, int limit) {
+  struct jql *q = 0;
 
   char deleteSql[128];
   memset(deleteSql, 0, sizeof(deleteSql));
@@ -107,7 +107,7 @@ iwrc delete_record_large(EJDB db, char *collection, int64_t to, int limit) {
   iwrc rc = jql_create(&q, collection, deleteSql);
   RCGO(rc, finish);
 
-  EJDB_EXEC ux = {
+  struct ejdb_exec ux = {
     .db = db,
     .q = q,
   };
@@ -124,7 +124,7 @@ finish:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[]) {
-  EJDB db = 0;
+  struct ejdb *db = 0;
   iwrc rc = get_ejdb(&db);
   CHECK(rc);
 

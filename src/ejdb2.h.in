@@ -402,7 +402,7 @@ IW_EXPORT WUR iwrc ejdb_list4(
  * @brief Destroy query result set and set `listp` to zero.
  * @param [in,out] listp Can be zero.
  */
-IW_EXPORT void ejdb_list_destroy(EJDB_LIST *listp);
+IW_EXPORT void ejdb_list_destroy(struct ejdb_list **listp);
 
 /**
  * @brief Apply rfc6902/rfc7396 JSON patch to the document identified by `id`.

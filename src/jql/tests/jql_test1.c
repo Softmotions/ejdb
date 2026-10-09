@@ -20,7 +20,7 @@ void _jql_test1_1(int num, iwrc expected) {
   iwrc rc;
   char path[64];
   char path_expected[64];
-  JQP_AUX *aux;
+  struct jqp_aux *aux;
   char *data, *edata = 0;
   IWXSTR *res = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(res);
@@ -82,7 +82,7 @@ static void jql_test1_1(void) {
 
 static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
   JBL jbl;
-  JQL jql;
+  struct jql *jql;
   char *json = iwu_replace_char(strdup(jsondata), '\'', '"');
   CU_ASSERT_PTR_NOT_NULL_FATAL(json);
   iwrc rc = jql_create(&jql, "c1", q);
@@ -258,7 +258,7 @@ static void jql_test1_2(void) {
 
 static void _jql_test1_3(bool has_apply_or_project, const char *jsondata, const char *q, const char *eq) {
   JBL jbl;
-  JQL jql;
+  struct jql *jql;
   JBL_NODE out = 0, eqn = 0;
   IWPOOL *pool = iwpool_create(512);
 
@@ -337,7 +337,7 @@ static void jql_test_1_4(void) {
 
 // Test placeholder projecttion
 static void jql_test_1_5(void) {
-  JQL q = 0;
+  struct jql *q = 0;
   JBL jbl = 0;
   JBL_NODE n = 0, n2 = 0;
   IWXSTR *xstr = iwxstr_new();
@@ -376,7 +376,7 @@ static void jql_test_1_5(void) {
 
 // https://github.com/Softmotions/ejdb/issues/378
 static void jql_test_1_6(void) {
-  JQL q = 0;
+  struct jql *q = 0;
   iwrc rc = jql_create(&q, "c1", "/* | apply {\"pr\":2.2E1,\"b\":1}");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   jql_destroy(&q);

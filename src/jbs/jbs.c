@@ -11,10 +11,10 @@
 #include <signal.h>
 
 struct env {
-  const char *program;
-  EJDB      db;
-  EJDB_OPTS opts;
-  IWPOOL   *pool;
+  const char      *program;
+  struct ejdb     *db;
+  struct ejdb_opts opts;
+  IWPOOL *pool;
 } env;
 
 static int _usage(const char *err) {

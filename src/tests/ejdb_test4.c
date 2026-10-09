@@ -16,7 +16,7 @@ static void free_iwpool(void *ptr, void *op) {
   iwpool_destroy((IWPOOL*) op);
 }
 
-static void set_apply_int(JQL q, int idx, const char *key, int64_t id) {
+static void set_apply_int(struct jql *q, int idx, const char *key, int64_t id) {
   JBL_NODE n;
   IWPOOL *pool = iwpool_create(64);
   iwrc rc = jbn_from_json("{}", &n, pool);
@@ -28,7 +28,7 @@ static void set_apply_int(JQL q, int idx, const char *key, int64_t id) {
 }
 
 static void ejdb_test4_1(void) {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test4_1.db",
       .oflags = IWKV_TRUNC
@@ -36,10 +36,10 @@ static void ejdb_test4_1(void) {
     .no_wal = true
   };
 
-  EJDB db;
-  JQL q;
+  struct ejdb *db;
+  struct jql *q;
   int64_t id = 0;
-  EJDB_LIST list = 0;
+  struct ejdb_list *list = 0;
   IWXSTR *xstr = iwxstr_new();
 
   iwrc rc = ejdb_open(&opts, &db);
@@ -76,7 +76,7 @@ static void ejdb_test4_1(void) {
   rc = ejdb_list4(db, q, 0, 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next) {
     JBL_NODE n;
     iwxstr_clear(xstr);
     rc = jbn_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
@@ -102,7 +102,7 @@ static void ejdb_test4_1(void) {
   rc = ejdb_list4(db, q, 0, 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next) {
     JBL_NODE n;
     iwxstr_clear(xstr);
     rc = jbn_as_json(doc->node, jbl_xstr_json_printer, xstr, 0);
@@ -132,7 +132,7 @@ static void ejdb_test4_1(void) {
 }
 
 static void ejdb_test4_2(void) {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test4_2.db",
       .oflags = IWKV_TRUNC
@@ -140,11 +140,11 @@ static void ejdb_test4_2(void) {
     .no_wal = true
   };
 
-  EJDB db;
-  JQL q;
+  struct ejdb *db;
+  struct jql *q;
   JBL_NODE n, n2;
   int i = 0;
-  EJDB_LIST list = 0;
+  struct ejdb_list *list = 0;
   IWPOOL *pool = iwpool_create_empty();
 
   char uuid[IW_UUID_STR_LEN + 1] = { 0 };
@@ -194,7 +194,7 @@ static void ejdb_test4_2(void) {
   rc = ejdb_list4(db, q, 0, 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     CU_ASSERT_PTR_NOT_NULL_FATAL(doc->node);
     rc = jbn_at(doc->node, "/name", &n2);
     CU_ASSERT_EQUAL_FATAL(rc, 0);

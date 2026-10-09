@@ -2,7 +2,7 @@
 
 static_assert(IW_VNUMBUFSZ <= IWNUMBUF_SIZE, "IW_VNUMBUFSZ <= JBNUMBUF_SIZE");
 
-static iwrc _jbi_consume_eq(struct jbexec *ctx, JQVAL *jqval, jb_scan_consumer consumer) {
+static iwrc _jbi_consume_eq(struct jbexec *ctx, struct jqval *jqval, jb_scan_consumer consumer) {
   size_t sz;
   uint64_t id;
   int64_t step;
@@ -28,8 +28,8 @@ static iwrc _jbi_consume_eq(struct jbexec *ctx, JQVAL *jqval, jb_scan_consumer c
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
-static iwrc _jbi_consume_in_node(struct jbexec *ctx, JQVAL *jqval, jb_scan_consumer consumer) {
-  JQVAL jqv;
+static iwrc _jbi_consume_in_node(struct jbexec *ctx, struct jqval *jqval, jb_scan_consumer consumer) {
+  struct jqval jqv;
   size_t sz;
   uint64_t id;
   bool matched;
@@ -75,14 +75,14 @@ finish:
   return consumer(ctx, 0, 0, 0, 0, rc);
 }
 
-static iwrc _jbi_consume_scan(struct jbexec *ctx, JQVAL *jqval, jb_scan_consumer consumer) {
+static iwrc _jbi_consume_scan(struct jbexec *ctx, struct jqval *jqval, jb_scan_consumer consumer) {
   size_t sz;
   IWKV_cursor cur;
   char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1;
   struct jbmidx *midx = &ctx->midx;
-  JBIDX idx = midx->idx;
+  struct jbidx *idx = midx->idx;
   jqp_op_t expr1_op = midx->expr1->op->value;
 
   IWKV_val key;
@@ -205,8 +205,8 @@ iwrc jbi_uniq_scanner(struct jbexec *ctx, jb_scan_consumer consumer) {
   if (!midx->expr1) {
     return _jbi_consume_noxpr_scan(ctx, consumer);
   }
-  JQP_QUERY *qp = ctx->ux->q->qp;
-  JQVAL *jqval = jql_unit_to_jqval(qp->aux, midx->expr1->right, &rc);
+  struct jqp_query *qp = ctx->ux->q->qp;
+  struct jqval *jqval = jql_unit_to_jqval(qp->aux, midx->expr1->right, &rc);
   RCRET(rc);
   switch (midx->expr1->op->value) {
     case JQP_OP_EQ:
@@ -223,7 +223,7 @@ iwrc jbi_uniq_scanner(struct jbexec *ctx, jb_scan_consumer consumer) {
       break;
   }
   if ((midx->expr1->op->value == JQP_OP_GT) && (jqval->type == JQVAL_I64)) {
-    JQVAL mjqv;
+    struct jqval mjqv;
     memcpy(&mjqv, jqval, sizeof(*jqval));
     mjqv.vi64 = mjqv.vi64 + 1; // Because for index scan we use `IWKV_CURSOR_GE`
     return _jbi_consume_scan(ctx, &mjqv, consumer);

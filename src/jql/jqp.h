@@ -122,8 +122,8 @@ typedef struct jqp_expr_node { // Base for JQP_FILTER
 typedef struct jqp_expr_node_pk {
   JQP_EXPR_NODE_HEAD
   struct jqp_expr_node *chain; // Not used, plased for JQP_EXPR_NODE compatibility
-  const char *anchor;
-  JQPUNIT    *argument;
+  const char     *anchor;
+  union jqp_unit *argument;
 } JQP_EXPR_NODE_PK;
 
 typedef struct jqp_filter {
@@ -142,9 +142,9 @@ typedef struct jqp_node {
   jqp_unit_t       type;
   jqp_node_type_t  ntype;
   struct jqp_node *next;
-  JQPUNIT *value;
-  int      start; // Used in query matching
-  int      end;   // Used in query matching
+  union jqp_unit  *value;
+  int start; // Used in query matching
+  int end;   // Used in query matching
 } JQP_NODE;
 
 typedef struct jqp_string {
@@ -189,10 +189,10 @@ typedef struct jqp_expr {
   jqp_unit_t       type;
   struct jqp_join *join;
   struct jqp_op   *op;
-  JQPUNIT *left;
-  JQPUNIT *right;
+  union jqp_unit  *left;
+  union jqp_unit  *right;
   struct jqp_expr *next;
-  bool prematched;
+  bool   prematched;
   int8_t state; /**< Expression state: 0 - not evaluated, 1 - matched, -1 - not matched */
 } JQP_EXPR;
 

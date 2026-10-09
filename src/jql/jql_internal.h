@@ -10,13 +10,13 @@
 
 /** Query object */
 struct jql {
-  bool       dirty;
-  bool       matched;
-  bool       has_negation; /**< Query expression contains negated (`not`) parts */
-  JQP_QUERY *qp;
-  JQP_AUX   *aux;
-  const char *coll;
-  void       *opaque;
+  bool dirty;
+  bool matched;
+  bool has_negation; /**< Query expression contains negated (`not`) parts */
+  struct jqp_query *qp;
+  struct jqp_aux   *aux;
+  const char       *coll;
+  void *opaque;
 };
 
 /** Placeholder value type */
@@ -48,18 +48,18 @@ typedef struct jqval {
   };
 } JQVAL;
 
-JQVAL* jql_find_placeholder(JQL q, const char *name);
+struct jqval* jql_find_placeholder(struct jql *q, const char *name);
 
-JQVAL* jql_unit_to_jqval(JQP_AUX *aux, JQPUNIT *unit, iwrc *rcp);
+struct jqval* jql_unit_to_jqval(struct jqp_aux *aux, union jqp_unit *unit, iwrc *rcp);
 
-bool jql_jqval_as_int(JQVAL *jqval, int64_t *out);
+bool jql_jqval_as_int(struct jqval *jqval, int64_t *out);
 
-jqval_type_t jql_binn_to_jqval(binn *vbinn, JQVAL *qval);
+jqval_type_t jql_binn_to_jqval(binn *vbinn, struct jqval *qval);
 
-void jql_node_to_jqval(JBL_NODE jn, JQVAL *qv);
+void jql_node_to_jqval(JBL_NODE jn, struct jqval *qv);
 
-int jql_cmp_jqval_pair(const JQVAL *left, const JQVAL *right, iwrc *rcp);
+int jql_cmp_jqval_pair(const struct jqval *left, const struct jqval *right, iwrc *rcp);
 
-bool jql_match_jqval_pair(JQP_AUX *aux, JQVAL *left, JQP_OP *jqop, JQVAL *right, iwrc *rcp);
+bool jql_match_jqval_pair(struct jqp_aux *aux, struct jqval *left, struct jqp_op *jqop, struct jqval *right, iwrc *rcp);
 
 #endif

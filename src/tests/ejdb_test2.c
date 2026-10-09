@@ -13,7 +13,7 @@ int clean_suite() {
 
 // Test document sorting overflow on disk
 static void ejdb_test2_2() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test2_2.db",
       .oflags = IWKV_TRUNC
@@ -22,8 +22,8 @@ static void ejdb_test2_2() {
     .sort_buffer_sz = 1024 * 1024,     // 1M
     .no_wal = true
   };
-  EJDB db;
-  EJDB_LIST list = 0;
+  struct ejdb *db;
+  struct ejdb_list *list = 0;
   const int vbufsz = 512 * 1024;
   const int dbufsz = vbufsz + 128;
   char *vbuf = malloc(vbufsz);
@@ -45,7 +45,7 @@ static void ejdb_test2_2() {
   rc = ejdb_list2(db, "c1", "/f | asc /f", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   int i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     JBL jbl;
     rc = jbl_at(doc->raw, "/f", &jbl);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -67,7 +67,7 @@ struct TEST21_1 {
   IWXSTR *xstr;
 };
 
-static iwrc ejdb_test2_1_exec_visitor1(struct ejdb_exec *ctx, const EJDB_DOC doc, int64_t *step) {
+static iwrc ejdb_test2_1_exec_visitor1(struct ejdb_exec *ctx, struct ejdb_doc* const doc, int64_t *step) {
   struct TEST21_1 *tc = ctx->opaque;
   JBL jbl;
   iwrc rc = jbl_at(doc->raw, "/f", &jbl);
@@ -87,7 +87,7 @@ static iwrc ejdb_test2_1_exec_visitor1(struct ejdb_exec *ctx, const EJDB_DOC doc
 }
 
 static void ejdb_test2_1() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test2_1.db",
       .oflags = IWKV_TRUNC
@@ -95,8 +95,8 @@ static void ejdb_test2_1() {
     .no_wal = true
   };
 
-  EJDB db;
-  EJDB_LIST list = 0;
+  struct ejdb *db;
+  struct ejdb_list *list = 0;
   IWXSTR *xstr = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
   int i = 0;
@@ -120,7 +120,7 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "not_exists", "/*", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
   }
   CU_ASSERT_EQUAL(i, 0);
   ejdb_list_destroy(&list);
@@ -128,7 +128,7 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "a", "/*", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -153,7 +153,7 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "a", "/*", 1, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
   }
   CU_ASSERT_EQUAL(i, 1);
   ejdb_list_destroy(&list);
@@ -161,7 +161,7 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "a", "/f", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
   }
   CU_ASSERT_EQUAL(i, 3);
   ejdb_list_destroy(&list);
@@ -169,7 +169,7 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "a", "/* | skip 1", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -185,7 +185,7 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "a", "/* | skip 2 limit 3", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -208,7 +208,7 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "a", "/f | asc /f", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -236,7 +236,7 @@ static void ejdb_test2_1() {
   rc = ejdb_list2(db, "a", "/f | desc /f", 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -264,12 +264,12 @@ static void ejdb_test2_1() {
   //
   // Now test basic back/forward skips
   //
-  JQL q;
+  struct jql *q;
   struct TEST21_1 tc = { 0 };
   tc.xstr = iwxstr_new();
   rc = jql_create(&q, "a", "/f");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
-  EJDB_EXEC ux = {
+  struct ejdb_exec ux = {
     .db = db,
     .q = q,
     .opaque = &tc,

@@ -32,7 +32,7 @@
 #include "ejdb2_internal.h"
 #include <string.h>
 
-static iwrc put_json(EJDB db, const char *coll, const char *json) {
+static iwrc put_json(struct ejdb *db, const char *coll, const char *json) {
   const size_t len = strlen(json);
   char buf[len + 1];
   memcpy(buf, json, len);
@@ -51,7 +51,7 @@ static iwrc put_json(EJDB db, const char *coll, const char *json) {
   return rc;
 }
 
-static iwrc put_json2(EJDB db, const char *coll, const char *json, int64_t *id) {
+static iwrc put_json2(struct ejdb *db, const char *coll, const char *json, int64_t *id) {
   const size_t len = strlen(json);
   char buf[len + 1];
   memcpy(buf, json, len);
@@ -74,7 +74,7 @@ static iwrc put_json2(EJDB db, const char *coll, const char *json, int64_t *id) 
   return rc;
 }
 
-static iwrc patch_json(EJDB db, const char *coll, const char *patchjson, int64_t id) {
+static iwrc patch_json(struct ejdb *db, const char *coll, const char *patchjson, int64_t id) {
   const size_t len = strlen(patchjson);
   char buf[len + 1];
   memcpy(buf, patchjson, len);

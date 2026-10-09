@@ -11,7 +11,7 @@ int clean_suite() {
 }
 
 static void ejdb_test3_1() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test3_1.db",
       .oflags = IWKV_TRUNC
@@ -19,9 +19,9 @@ static void ejdb_test3_1() {
     .no_wal = true
   };
 
-  EJDB db;
+  struct ejdb *db;
   char dbuf[1024];
-  EJDB_LIST list = 0;
+  struct ejdb_list *list = 0;
   IWXSTR *log = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(log);
   IWXSTR *xstr = iwxstr_new();
@@ -56,7 +56,7 @@ static void ejdb_test3_1() {
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b = 1' "
                                 "INIT: IWKV_CURSOR_EQ"));
   int i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -75,7 +75,7 @@ static void ejdb_test3_1() {
                                 "INIT: IWKV_CURSOR_GE"));
 
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -93,7 +93,7 @@ static void ejdb_test3_1() {
   rc = ejdb_list3(db, "c1", "/f/[b >= 3]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -111,7 +111,7 @@ static void ejdb_test3_1() {
   rc = ejdb_list3(db, "c1", "/f/[b < 9]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -128,7 +128,7 @@ static void ejdb_test3_1() {
   rc = ejdb_list3(db, "c1", "/f/[b < 11]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -147,7 +147,7 @@ static void ejdb_test3_1() {
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b >= 4' EXPR2: 'b < 11' "
                                 "INIT: IWKV_CURSOR_GE"));
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -182,7 +182,7 @@ static void ejdb_test3_1() {
                                 "[INDEX] SELECTED UNIQUE|I64|10 /f/b EXPR1: 'b > 1' EXPR2: 'b < 3' "
                                 "INIT: IWKV_CURSOR_GE"));
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -212,7 +212,7 @@ static void ejdb_test3_1() {
                                 "INIT: IWKV_CURSOR_GE"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[COLLECTOR] PLAIN"));
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -229,7 +229,7 @@ static void ejdb_test3_1() {
                                 "INIT: IWKV_CURSOR_EQ"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[COLLECTOR] PLAIN"));
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -253,7 +253,7 @@ static void ejdb_test3_1() {
                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV ORDERBY"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[COLLECTOR] PLAIN"));
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -275,7 +275,7 @@ static void ejdb_test3_1() {
                                 "INIT: IWKV_CURSOR_GE"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[COLLECTOR] SORTER"));
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -297,7 +297,7 @@ static void ejdb_test3_1() {
                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV ORDERBY"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[COLLECTOR] PLAIN"));
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -318,7 +318,7 @@ static void ejdb_test3_1() {
                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_NEXT ORDERBY"));
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[COLLECTOR] PLAIN"));
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -339,7 +339,7 @@ static void ejdb_test3_1() {
 }
 
 static void ejdb_test3_2() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test3_2.db",
       .oflags = IWKV_TRUNC
@@ -347,9 +347,9 @@ static void ejdb_test3_2() {
     .no_wal = true
   };
 
-  EJDB db;
+  struct ejdb *db;
   char dbuf[1024];
-  EJDB_LIST list = 0;
+  struct ejdb_list *list = 0;
   int i = 0;
   IWXSTR *log = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(log);
@@ -400,7 +400,7 @@ static void ejdb_test3_2() {
                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
 
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     if (i == 1) {
       rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
@@ -423,7 +423,7 @@ static void ejdb_test3_2() {
                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_NEXT"));
 
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -441,7 +441,7 @@ static void ejdb_test3_2() {
   rc = ejdb_list3(db, "a1", "/f/[b < 16777216]", 0, log, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     if (i == 1) {
       rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
@@ -464,7 +464,7 @@ static void ejdb_test3_2() {
                                 "INIT: IWKV_CURSOR_EQ"));
 
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     if (i == 1) {
       rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
@@ -487,7 +487,7 @@ static void ejdb_test3_2() {
                                 "EXPR1: 'b in [333,16777215,127,16777216]' "
                                 "INIT: IWKV_CURSOR_EQ"));
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     if (i == 1) {
       rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
@@ -519,18 +519,18 @@ static void ejdb_test3_2() {
 }
 
 static void ejdb_test3_3() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test3_3.db",
       .oflags = IWKV_TRUNC
     },
     .no_wal = true
   };
-  EJDB db;
+  struct ejdb *db;
   char dbuf[1024];
 
   int i = 0;
-  EJDB_LIST list = 0;
+  struct ejdb_list *list = 0;
   IWXSTR *log = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(log);
   IWXSTR *xstr = iwxstr_new();
@@ -595,7 +595,7 @@ static void ejdb_test3_3() {
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
   // Q: /f/[b >= data[0]]
-  JQL q;
+  struct jql *q;
   rc = jql_create(&q, "a2", "/f/[b >= :?]");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -607,7 +607,7 @@ static void ejdb_test3_3() {
   CU_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(log), "[INDEX] SELECTED STR|6 /f/b EXPR1: 'b >= :?' "
                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     JBL jbl1, jbl2;
     rc = jbl_at(doc->raw, "/f/b", &jbl1);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -659,7 +659,7 @@ static void ejdb_test3_3() {
                                 "INIT: IWKV_CURSOR_GE STEP: IWKV_CURSOR_PREV"));
 
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     JBL jbl1, jbl2;
     rc = jbl_at(doc->raw, "/f/b", &jbl1);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -689,18 +689,18 @@ static void ejdb_test3_3() {
 
 // Test array index
 static void ejdb_test3_4() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test3_4.db",
       .oflags = IWKV_TRUNC
     },
     .no_wal = true
   };
-  EJDB db;
+  struct ejdb *db;
   char dbuf[1024];
 
   int i = 0;
-  EJDB_LIST list = 0;
+  struct ejdb_list *list = 0;
   int64_t docId = 0;
 
   IWPOOL *pool = iwpool_create(1024);
@@ -724,7 +724,7 @@ static void ejdb_test3_4() {
   rc = put_json2(db, "a3", dbuf, &docId);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
-  JQL q;
+  struct jql *q;
   rc = jql_create(&q, "a3", "/tags/[** in :tags]");
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -743,7 +743,7 @@ static void ejdb_test3_4() {
                                 "[INDEX] SELECTED STR|5 /tags EXPR1: '** in :tags' "
                                 "INIT: IWKV_CURSOR_EQ"));
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -787,7 +787,7 @@ static void ejdb_test3_4() {
                                 "[INDEX] SELECTED STR|6 /tags EXPR1: '** in :tags' "
                                 "INIT: IWKV_CURSOR_EQ"));
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -813,7 +813,7 @@ static void ejdb_test3_4() {
                                 "[INDEX] SELECTED STR|3 /tags EXPR1: '** in :tags' "
                                 "INIT: IWKV_CURSOR_EQ"));
   i = 1;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -835,15 +835,15 @@ static void ejdb_test3_4() {
 }
 
 void ejdb_test3_5() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test3_5.db",
       .oflags = IWKV_TRUNC
     },
     .no_wal = true
   };
-  EJDB db;
-  EJDB_LIST list = 0;
+  struct ejdb *db;
+  struct ejdb_list *list = 0;
   char dbuf[1024];
   IWXSTR *xstr = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
@@ -860,7 +860,7 @@ void ejdb_test3_5() {
   rc = ejdb_list3(db, "c1", "/f/[b = 2] | del", 0, 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   int i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -892,7 +892,7 @@ void ejdb_test3_5() {
   rc = ejdb_list3(db, "c1", "/* | asc /f/b", 0, 0, &list);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
   i = 0;
-  for (EJDB_DOC doc = list->first; doc; doc = doc->next, ++i) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next, ++i) {
     iwxstr_clear(xstr);
     rc = jbl_as_json(doc->raw, jbl_xstr_json_printer, xstr, 0);
     CU_ASSERT_EQUAL_FATAL(rc, 0);
@@ -930,16 +930,16 @@ static void jql_free_str(void *ptr, void *op) {
 }
 
 void ejdb_test3_6() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test3_6.db",
       .oflags = IWKV_TRUNC
     }
   };
 
-  JQL q;
-  EJDB db;
-  EJDB_LIST list = 0;
+  struct jql *q;
+  struct ejdb *db;
+  struct ejdb_list *list = 0;
   IWXSTR *xstr = iwxstr_new();
   CU_ASSERT_PTR_NOT_NULL_FATAL(xstr);
 
@@ -986,13 +986,13 @@ void ejdb_test3_6() {
 }
 
 void ejdb_test3_7() {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test3_7.db",
       .oflags = IWKV_TRUNC
     }
   };
-  EJDB db;
+  struct ejdb *db;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0);
 
@@ -1030,7 +1030,7 @@ void ejdb_test3_7() {
 }
 
 void ejdb_test3_8(void) {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test3_8.db",
       .oflags = IWKV_TRUNC
@@ -1038,13 +1038,13 @@ void ejdb_test3_8(void) {
     .no_wal = true
   };
 
-  EJDB db;
-  JQL q;
+  struct ejdb *db;
+  struct jql *q;
   char buf[64];
   JBL_NODE n;
 
   int64_t id1 = 0, id2 = 0;
-  EJDB_LIST list = 0;
+  struct ejdb_list *list = 0;
 
   IWPOOL *pool = iwpool_create(255);
   IWXSTR *log = iwxstr_new();
@@ -1119,15 +1119,15 @@ void ejdb_test3_8(void) {
 }
 
 static void ejdb_test3_9(void) {
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test3_9",
       .oflags = IWKV_TRUNC
     },
     .no_wal = true
   };
-  EJDB db;
-  EJDB_LIST list = 0;
+  struct ejdb *db;
+  struct ejdb_list *list = 0;
   iwrc rc = ejdb_open(&opts, &db);
   CU_ASSERT_EQUAL_FATAL(rc, 0)
 

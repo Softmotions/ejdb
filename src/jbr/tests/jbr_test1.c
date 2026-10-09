@@ -31,7 +31,7 @@ static void jbr_test1_1() {
   char url[64];
   uint32_t port = iwu_rand_range(20000) + 20000;
 
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "jbr_test1_1.db",
       .oflags = IWKV_TRUNC
@@ -46,7 +46,7 @@ static void jbr_test1_1() {
   };
 
   long code;
-  EJDB db;
+  struct ejdb *db;
   iwrc rc = ejdb_open(&opts, &db);
   if (rc) {
     iwlog_ecode_error3(rc);
