@@ -1,4 +1,4 @@
-2026-09-08 Anton Adamansky  <adamansky@gmail.com>  [v2.92-dev]
+2026-09-08 Anton Adamansky  <adamansky@gmail.com>  [v2.92]
   * tests: Added basic fuzzing tests. 
   * Refacroring: Struct type aliases are replaced by unaliased `struct` type clauses.
   * jql.c: Queries like `/[name = Anton and not age = 20]` where different object fields are in brackets are properly matched.
