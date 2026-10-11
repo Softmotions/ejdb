@@ -5,6 +5,7 @@ cc {
     ejdb_test3.c
     ejdb_test4.c
     ejdb_test5.c
+    ejdb_test6.c
   }
   set { _ ..${CFLAGS} -DIW_STATIC -DIW_TESTS }
 }
