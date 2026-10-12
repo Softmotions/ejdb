@@ -1688,7 +1688,7 @@ static bool _jql_proj_matched(
   }
   if (proj->pos + 1 == lvl) {
     struct jqp_string *ps = proj->value;
-    for (int i = 0; i < lvl; ps = ps->next, ++i); // -V529
+    for (int i = 0; i < lvl; ps = ps->next, ++i) ; // -V529
     assert(ps);
     if (ps->flavour & JQP_STR_PROJFIELD) {
       for (struct jqp_string *sn = ps; sn; sn = sn->subnext) {
@@ -1728,7 +1728,7 @@ static bool _jql_proj_join_matched(
   const char *pv, *spos;
   bool ret = false;
   struct jqp_string *ps = proj->value;
-  for (int i = 0; i < lvl; ps = ps->next, ++i); // -V529
+  for (int i = 0; i < lvl; ps = ps->next, ++i) ; // -V529
   assert(ps);
 
   if (ps->flavour & JQP_STR_PROJFIELD) {
@@ -1775,8 +1775,8 @@ static bool _jql_proj_join_matched(
         RCGA(pool, finish);
         exec_ctx->proj_joined_nodes_pool = pool;
       } else if (cache && (iwpool_used_size(pool) > 10UL * 1024 * 1024)) { // 10Mb
+        iwhmap_destroy(cache);
         exec_ctx->proj_joined_nodes_cache = 0;
-        iwhmap_destroy(exec_ctx->proj_joined_nodes_cache);
         cache = 0;
         iwpool_destroy(pool);
         pool = iwpool_create(1024UL * 1024); // 1Mb

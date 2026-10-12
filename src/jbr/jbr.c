@@ -849,9 +849,7 @@ static bool _ws_query(struct iwn_ws_sess *ws, struct mctx *mctx, const char *que
   }
   RCC(rc, finish, ejdb_exec(&ux));
   if (ux.log) {
-    ret = iwn_ws_server_printf(mctx->ctx->ws, "%s\texplain\t%s", mctx->key, iwxstr_ptr(ux.log));
-  } else {
-    ret = true;
+    iwn_ws_server_printf(mctx->ctx->ws, "%s\texplain\t%s", mctx->key, iwxstr_ptr(ux.log));
   }
 
 finish:
