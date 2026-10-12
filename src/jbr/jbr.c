@@ -7,6 +7,7 @@
 
 #include <pthread.h>
 #include <ctype.h>
+#include <strings.h>
 
 #define JBR_MAX_KEY_LEN          36
 #define JBR_WS_STR_PREMATURE_END "Premature end of message"
@@ -102,7 +103,10 @@ static void _rctx_dispose(struct rctx *ctx) {
 
 static void _on_http_request_dispose(struct iwn_http_req *req) {
   struct rctx *ctx = req->user_data;
-  _rctx_dispose(ctx);
+  if (ctx) {
+    req->user_data = 0;
+    _rctx_dispose(ctx);
+  }
 }
 
 static int _on_get(struct rctx *ctx) {
@@ -557,16 +561,7 @@ typedef enum {
 
 static int _on_ws_session_http(struct iwn_wf_req *req, struct iwn_ws_handler_spec *spec) {
   struct jbr *jbr = spec->user_data;
-  struct rctx *ctx = calloc(1, sizeof(*ctx));
-  if (!ctx) {
-    return 500;
-  }
-  pthread_mutex_init(&ctx->mtx, 0);
-  pthread_cond_init(&ctx->cond, 0);
-  ctx->req = req;
-  ctx->jbr = jbr;
-  req->http->user_data = ctx;
-
+  bool read_anon = false;
   if (jbr->http->access_token) {
     struct iwn_val val = iwn_http_request_header_get(req->http, "x-access-token", IW_LLEN("x-access-token"));
     if (val.len) {
@@ -575,13 +570,27 @@ static int _on_ws_session_http(struct iwn_wf_req *req, struct iwn_ws_handler_spe
       }
     } else {
       if (jbr->http->read_anon) {
-        ctx->read_anon = true;
+        read_anon = true;
       } else {
         return 401;
       }
     }
   }
-
+  struct iwn_val upg = iwn_http_request_header_get(req->http, "upgrade", IW_LLEN("upgrade"));
+  if (upg.len != IW_LLEN("websocket") || strncasecmp(upg.buf, "websocket", upg.len) != 0) {
+    return 0;
+  }
+  struct rctx *ctx = calloc(1, sizeof(*ctx));
+  if (!ctx) {
+    return 500;
+  }
+  pthread_mutex_init(&ctx->mtx, 0);
+  pthread_cond_init(&ctx->cond, 0);
+  ctx->req = req;
+  ctx->jbr = jbr;
+  ctx->read_anon = read_anon;
+  req->http->user_data = ctx;
+  req->http->on_request_dispose = _on_http_request_dispose;
   return 0;
 }
 
@@ -880,8 +889,8 @@ static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const cha
   char *msg = (char*) msg_; // Discard const
 
   // Trim left/right
-  for ( ; len > 0 && isspace(msg[len - 1]); --len);
-  for (pos = 0; pos < len && isspace(msg[pos]); ++pos);
+  for ( ; len > 0 && isspace(msg[len - 1]); --len) ;
+  for (pos = 0; pos < len && isspace(msg[pos]); ++pos) ;
   len -= pos;
   msg += pos;
   if (len < 1) {
@@ -906,7 +915,7 @@ static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const cha
   }
 
   // Fetch key, after we can do good errors reporting
-  for (pos = 0; pos < len && !isspace(msg[pos]); ++pos);
+  for (pos = 0; pos < len && !isspace(msg[pos]); ++pos) ;
   if (pos > JBR_MAX_KEY_LEN) {
     return false;
   }
@@ -916,7 +925,7 @@ static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const cha
     return _ws_rc_send(ws, key, JBR_ERROR_WS_INVALID_MESSAGE, JBR_WS_STR_PREMATURE_END);
   }
 
-  for ( ; pos < len && isspace(msg[pos]); ++pos);
+  for ( ; pos < len && isspace(msg[pos]); ++pos) ;
   len -= pos;
   msg += pos;
   if (len < 1) {
@@ -924,7 +933,7 @@ static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const cha
   }
 
   // Fetch command
-  for (pos = 0; pos < len && !isspace(msg[pos]); ++pos);
+  for (pos = 0; pos < len && !isspace(msg[pos]); ++pos) ;
 
   if (pos <= len) {
     if (!strncmp("get", msg, pos)) {
@@ -956,12 +965,12 @@ static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const cha
     if (wsop == JBWS_INFO) {
       return _ws_info(ws, mctx);
     }
-    for ( ; pos < len && isspace(msg[pos]); ++pos);
+    for ( ; pos < len && isspace(msg[pos]); ++pos) ;
     len -= pos;
     msg += pos;
 
     const char *rp = msg;
-    for (pos = 0; pos < len && !isspace(msg[pos]); ++pos);
+    for (pos = 0; pos < len && !isspace(msg[pos]); ++pos) ;
     len -= pos;
     msg += pos;
 
@@ -981,7 +990,7 @@ static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const cha
       return _ws_coll_remove(ws, mctx);
     }
 
-    for (pos = 0; pos < len && isspace(msg[pos]); ++pos);
+    for (pos = 0; pos < len && isspace(msg[pos]); ++pos) ;
     len -= pos;
     msg += pos;
     if (len < 1) {
@@ -1002,7 +1011,7 @@ static bool _on_ws_msg_impl(struct iwn_ws_sess *ws, struct mctx *mctx, const cha
           nbuf[pos] = msg[pos];
         }
         nbuf[pos] = '\0';
-        for ( ; pos < len && isspace(msg[pos]); ++pos);
+        for ( ; pos < len && isspace(msg[pos]); ++pos) ;
         len -= pos;
         msg += pos;
 

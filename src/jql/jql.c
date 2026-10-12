@@ -148,9 +148,6 @@ iwrc jql_set_json2(
   qv->vnode = val;
   iwrc rc = _jql_set_placeholder(q, placeholder, index, qv);
   if (rc) {
-    if (freefn) {
-      freefn(val, op);
-    }
     free(qv);
   }
   return rc;
@@ -219,10 +216,13 @@ iwrc jql_set_str2(
   struct jql *q, const char *placeholder, int index, const char *val,
   void (*freefn)(void*, void*), void *op) {
   if (val == 0) {
-    if (freefn) {
+    // Nothing is retained by the query for a NULL value, so the payload is
+    // released only when the placeholder was bound successfully.
+    iwrc rc = jql_set_null(q, placeholder, index);
+    if (!rc && freefn) {
       freefn((void*) val, op);
     }
-    return jql_set_null(q, placeholder, index);
+    return rc;
   }
 
   struct jqval *qv = malloc(sizeof(*qv));
@@ -236,9 +236,6 @@ iwrc jql_set_str2(
   qv->vstr = val;
   iwrc rc = _jql_set_placeholder(q, placeholder, index, qv);
   if (rc) {
-    if (freefn) {
-      freefn((void*) val, op);
-    }
     free(qv);
   }
   return rc;
@@ -257,7 +254,12 @@ iwrc jql_set_str3(struct jql *q, const char *placeholder, int index, const char 
   if (!val) {
     return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
-  return jql_set_str2(q, placeholder, index, val, _freefn_str, 0);
+  iwrc rc = jql_set_str2(q, placeholder, index, val, _freefn_str, 0);
+  if (rc) {
+    // The query did not take ownership of `val` on failure.
+    free(val);
+  }
+  return rc;
 }
 
 iwrc jql_set_bool(struct jql *q, const char *placeholder, int index, bool val) {
@@ -299,9 +301,7 @@ iwrc jql_set_regexp2(
 
 finish:
   if (rc) {
-    if (freefn) {
-      freefn((void*) expr, op);
-    }
+    // The query did not take ownership of `expr` on failure.
     if (rx != IWRE_UNUSED_PTR) {
       iwre_destroy(rx);
     }

@@ -1533,6 +1533,8 @@ static void jn_jnqs_destroy_mt(napi_env env, JNQS *qsp) {
       napi_delete_reference(env, ref);
     }
   }
+  pthread_mutex_destroy(&qs->mtx);
+  pthread_cond_destroy(&qs->cond);
   free(qs);
 }
 

@@ -195,6 +195,7 @@ static iwrc _jb_coll_init(struct jbcoll *jbc, struct iwkv_val *meta) {
   pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_READER_NP);
 #endif
   pthread_rwlock_init(&jbc->rwl, &attr);
+  pthread_rwlockattr_destroy(&attr);
   if (meta) {
     rc = jbl_from_buf_keep(&jbc->meta, meta->data, meta->size, false);
     RCRET(rc);
@@ -310,6 +311,9 @@ static iwrc _jb_db_meta_load(struct ejdb *db) {
       jbc->db = db;
       rc = _jb_coll_init(jbc, &val);
       if (rc) {
+        if (!jbc->meta) {
+          iwkv_val_dispose(&val);
+        }
         _jb_coll_release(jbc);
         iwkv_val_dispose(&key);
         goto finish;
@@ -370,7 +374,11 @@ static iwrc _jb_coll_acquire_keeplock2(
 
   jbc = iwhmap_get(db->mcolls, coll);
   if (jbc) {
-    wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl);
+    rci = wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl);
+    if (rci) {
+      rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+      goto finish;
+    }
     *jbcp = jbc;
   } else {
     pthread_rwlock_unlock(&db->rwl); // relock
@@ -380,7 +388,11 @@ static iwrc _jb_coll_acquire_keeplock2(
     API_WLOCK(db, rci);
     jbc = iwhmap_get(db->mcolls, coll);
     if (jbc) {
-      pthread_rwlock_rdlock(&jbc->rwl);
+      rci = wl ? pthread_rwlock_wrlock(&jbc->rwl) : pthread_rwlock_rdlock(&jbc->rwl);
+      if (rci) {
+        rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
+        goto finish;
+      }
       *jbcp = jbc;
     } else {
       struct jbl *meta = 0;
@@ -656,7 +668,7 @@ static iwrc _jb_put_handler_after(iwrc rc, struct _jb_put_handler_ctx *ctx) {
   struct jbcoll *jbc = ctx->jbc;
   if (oldval->size) {
     rc = jbl_from_buf_keep_onstack(&jblprev, oldval->data, oldval->size);
-    RCRET(rc);
+    RCGO(rc, finish);
     prev = &jblprev;
   } else {
     prev = 0;
@@ -1715,7 +1727,7 @@ iwrc ejdb_get_meta(struct ejdb *db, struct jbl **jblp) {
   }
   IWFS_FSM_STATE sfsm;
   rc = iwkv_state(db->iwkv, &sfsm);
-  RCRET(rc);
+  RCGO(rc, finish);
   if (  !binn_object_set_str(&jbl->bn, "file", sfsm.exfile.file.opts.path)
      || !binn_object_set_int64(&jbl->bn, "size", sfsm.exfile.fsize)) {
     rc = JBL_ERROR_CREATION;
@@ -1803,10 +1815,15 @@ iwrc ejdb_open(const struct ejdb_opts *_opts, struct ejdb **ejdbp) {
   struct ejdb_http *http = &db->opts.http;
   if (http->bind) {
     http->bind = strdup(http->bind);
+    if (!http->bind) {
+      free(db);
+      return iwrc_set_errno(IW_ERROR_ALLOC, errno);
+    }
   }
   if (http->access_token) {
     http->access_token = strdup(http->access_token);
     if (!http->access_token) {
+      free((void*) http->bind), free(db);
       return iwrc_set_errno(IW_ERROR_ALLOC, errno);
     }
     http->access_token_len = strlen(http->access_token);
@@ -1818,9 +1835,10 @@ iwrc ejdb_open(const struct ejdb_opts *_opts, struct ejdb **ejdbp) {
   pthread_rwlockattr_setkind_np(&attr, PTHREAD_RWLOCK_PREFER_READER_NP);
 #endif
   rci = pthread_rwlock_init(&db->rwl, &attr);
+  pthread_rwlockattr_destroy(&attr);
   if (rci) {
     rc = iwrc_set_errno(IW_ERROR_THREADING_ERRNO, rci);
-    free(db);
+    free((void*) http->bind), free((void*) http->access_token), free(db);
     return rc;
   }
   RCB(finish, db->mcolls = iwhmap_create_str(_mcolls_map_entry_free));

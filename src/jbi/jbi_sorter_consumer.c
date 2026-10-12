@@ -261,7 +261,10 @@ start2:
           rc = _jbi_scan_sorter_init(ssc, (ssc->docs_npos + vsz) * 2);
           RCRET(rc);
           rc = sof->write(sof, 0, ssc->docs, ssc->docs_npos, &sz);
-          RCRET(rc);
+          if (rc) {
+            ssc->sof.close(&ssc->sof);
+            return rc;
+          }
           free(ssc->docs);
           ssc->docs = 0;
           ssc->sof_active = true;
