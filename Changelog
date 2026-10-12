@@ -1,4 +1,5 @@
 2026-10-12 Anton Adamansky  <adamansky@gmail.com>  [v2.93-dev]
+  * jql: Added a regression test for order-by paths ending in '~' (companion to the iowow JSON-pointer OOB-read fix).
   * Fixed several memory leaks and resources leaks in failed execution paths.  
 
 2026-10-11 Anton Adamansky  <adamansky@gmail.com>  [v2.92]
