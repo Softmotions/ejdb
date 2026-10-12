@@ -93,6 +93,16 @@ IW_EXPORT const char* jql_collection(struct jql *q);
  */
 IW_EXPORT WUR iwrc jql_set_json(struct jql *q, const char *placeholder, int index, struct jbl_node *val);
 
+/**
+ * @brief Bind JSON node data to query placeholder.
+ * @param freefn Optional callback used to release `val`/`op` when no longer needed.
+ *
+ * @par Ownership
+ * On success the query takes ownership of `val` and `op`; `freefn` (if provided) is invoked when the
+ * query releases the value (`jql_reset()`/`jql_destroy()`), or immediately if the value is not stored.
+ * On failure the caller keeps ownership and `freefn` is NOT invoked, so the caller must release
+ * `val`/`op` itself.
+ */
 IW_EXPORT WUR iwrc jql_set_json2(
   struct jql *q, const char *placeholder, int index, struct jbl_node *val,
   void (*freefn)(void*, void*), void *op);
@@ -111,6 +121,16 @@ IW_EXPORT WUR iwrc jql_set_f64(struct jql *q, const char *placeholder, int index
  */
 IW_EXPORT WUR iwrc jql_set_str(struct jql *q, const char *placeholder, int index, const char *val);
 
+/**
+ * @brief Bind string data to query placeholder.
+ * @param freefn Optional callback used to release `val`/`op` when no longer needed.
+ *
+ * @par Ownership
+ * On success the query takes ownership of `val` and `op`; `freefn` (if provided) is invoked when the
+ * query releases the value (`jql_reset()`/`jql_destroy()`), or immediately if the value is not stored
+ * (for example a `NULL` value). On failure the caller keeps ownership and `freefn` is NOT invoked,
+ * so the caller must release `val`/`op` itself.
+ */
 IW_EXPORT WUR iwrc jql_set_str2(
   struct jql *q, const char *placeholder, int index, const char *val,
   void (*freefn)(void*, void*), void *op);
@@ -131,6 +151,16 @@ IW_EXPORT WUR iwrc jql_set_bool(struct jql *q, const char *placeholder, int inde
  */
 IW_EXPORT WUR iwrc jql_set_regexp(struct jql *q, const char *placeholder, int index, const char *expr);
 
+/**
+ * @brief Bind regexp data string to query placeholder.
+ * @param freefn Optional callback used to release `expr`/`op` when no longer needed.
+ *
+ * @par Ownership
+ * On success the query takes ownership of `expr` and `op`; `freefn` (if provided) is invoked when the
+ * query releases the value (`jql_reset()`/`jql_destroy()`), or immediately if the value is not stored.
+ * On failure the caller keeps ownership and `freefn` is NOT invoked, so the caller must release
+ * `expr`/`op` itself.
+ */
 IW_EXPORT WUR iwrc jql_set_regexp2(
   struct jql *q, const char *placeholder, int index, const char *expr,
   void (*freefn)(void*, void*), void *op);
