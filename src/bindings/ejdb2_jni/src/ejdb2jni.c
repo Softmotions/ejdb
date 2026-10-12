@@ -131,7 +131,7 @@ static iwrc jbn_init_pctx(JNIEnv *env, JBN_JSPRINT_CTX *pctx, jobject thisObj, j
   jmethodID writeMid = (*env)->GetMethodID(env, osClazz, "write", "([B)V");
   IWXSTR *xstr = iwxstr_new();
   if (!xstr) {
-    return iwrc_set_errno(rc, IW_ERROR_ALLOC);
+    return iwrc_set_errno(IW_ERROR_ALLOC, errno);
   }
   pctx->xstr = xstr;
   pctx->flush_buffer_sz = JBN_JSON_FLUSH_BUFFER_SZ;

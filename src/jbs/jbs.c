@@ -114,23 +114,23 @@ int main(int argc, char *argv[]) {
         _version();
         goto finish;
       case 'f':
-        env.opts.kv.path = iwpool_strdup2(pool, optarg);
+        RCB(finish, env.opts.kv.path = iwpool_strdup2(pool, optarg));
         break;
       case 'p':
         env.opts.http.port = iwatoi(optarg);
         break;
       case 'b':
       case 'l':
-        env.opts.http.bind = iwpool_strdup2(pool, optarg);
+        RCB(finish, env.opts.http.bind = iwpool_strdup2(pool, optarg));
         break;
       case 'k':
-        env.opts.http.ssl_private_key = iwpool_strdup2(pool, optarg);
+        RCB(finish, env.opts.http.ssl_private_key = iwpool_strdup2(pool, optarg));
         break;
       case 'c':
-        env.opts.http.ssl_certs = iwpool_strdup2(pool, optarg);
+        RCB(finish, env.opts.http.ssl_certs = iwpool_strdup2(pool, optarg));
         break;
       case 'a':
-        env.opts.http.access_token = iwpool_strdup2(pool, optarg);
+        RCB(finish, env.opts.http.access_token = iwpool_strdup2(pool, optarg));
         env.opts.http.access_token_len = env.opts.http.access_token ? strlen(env.opts.http.access_token) : 0;
         break;
       case 'C':
