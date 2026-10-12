@@ -104,14 +104,14 @@ typedef struct jbcoll {
 
 /** Database collection index */
 struct jbidx {
-  struct jbidx *next;      /**< Next index in chain */
-  int64_t       rnum;      /**< Number of records stored in index */
-  struct jbcoll *jbc;      /**< Owner document collection */
-  JBL_PTR      ptr;        /**< Indexed JSON path poiner 0*/
-  struct iwdb *idb;        /**< KV database for this index */
-  uint32_t     dbid;       /**< IWKV collection database ID */
-  ejdb_idx_mode_t mode;    /**< Index mode/type mask */
-  iwdb_flags_t    idbf;    /**< Index database flags */
+  struct jbidx *next;   /**< Next index in chain */
+  int64_t       rnum;   /**< Number of records stored in index */
+  struct jbcoll  *jbc;  /**< Owner document collection */
+  struct jbl_ptr *ptr;  /**< Indexed JSON path poiner 0*/
+  struct iwdb    *idb;  /**< KV database for this index */
+  uint32_t dbid;        /**< IWKV collection database ID */
+  ejdb_idx_mode_t mode; /**< Index mode/type mask */
+  iwdb_flags_t    idbf; /**< Index database flags */
 };
 
 /** Pair: collection name, document id */
@@ -159,8 +159,8 @@ struct jbssc {
   uint8_t  *docs;             /**< Documents byte array */
   uint32_t  docs_npos;        /**< Next document offset */
   jmp_buf   fatal_jmp;
-  IWFS_EXT  sof;              /**< Sort overflow file */
-  bool      sof_active;
+  struct iwfs_ext sof;              /**< Sort overflow file */
+  bool sof_active;
 };
 
 struct jbmidx {
@@ -232,8 +232,8 @@ bool jbi_node_expr_matched(
 iwrc jb_get(struct ejdb *db, const char *coll, int64_t id, jb_coll_acquire_t acm, struct jbl **jblp);
 iwrc jb_put(struct jbcoll *jbc, struct jbl *jbl, int64_t id);
 iwrc jb_del(struct jbcoll *jbc, struct jbl *jbl, int64_t id);
-iwrc jb_cursor_set(struct jbcoll *jbc, struct iwkv_cursor *cur, int64_t id, JBL jbl);
-iwrc jb_cursor_del(struct jbcoll *jbc, struct iwkv_cursor *cur, int64_t id, JBL jbl);
+iwrc jb_cursor_set(struct jbcoll *jbc, struct iwkv_cursor *cur, int64_t id, struct jbl *jbl);
+iwrc jb_cursor_del(struct jbcoll *jbc, struct iwkv_cursor *cur, int64_t id, struct jbl *jbl);
 
 iwrc jb_collection_join_resolver(int64_t id, const char *coll, struct jbl **out, struct jbexec *ctx);
 int jb_proj_node_cache_cmp(const void *v1, const void *v2);

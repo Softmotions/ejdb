@@ -9,7 +9,7 @@ static iwrc _jbi_consume_eq(struct jbexec *ctx, struct jqval *jqval, jb_scan_con
   bool matched;
   struct jbmidx *midx = &ctx->midx;
   char numbuf[IWNUMBUF_SIZE];
-  IWKV_val key;
+  struct iwkv_val key;
 
   jbi_jqval_fill_ikey(midx->idx, jqval, &key, numbuf);
   if (!key.size) {
@@ -37,9 +37,9 @@ static iwrc _jbi_consume_in_node(struct jbexec *ctx, struct jqval *jqval, jb_sca
 
   iwrc rc = 0;
   int64_t step = 1;
-  IWKV_val key;
+  struct iwkv_val key;
   struct jbmidx *midx = &ctx->midx;
-  JBL_NODE nv = jqval->vnode->child;
+  struct jbl_node *nv = jqval->vnode->child;
 
   if (!nv) {
     return consumer(ctx, 0, 0, 0, 0, 0);
@@ -77,7 +77,7 @@ finish:
 
 static iwrc _jbi_consume_scan(struct jbexec *ctx, struct jqval *jqval, jb_scan_consumer consumer) {
   size_t sz;
-  IWKV_cursor cur;
+  struct iwkv_cursor *cur;
   char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1;
@@ -85,7 +85,7 @@ static iwrc _jbi_consume_scan(struct jbexec *ctx, struct jqval *jqval, jb_scan_c
   struct jbidx *idx = midx->idx;
   jqp_op_t expr1_op = midx->expr1->op->value;
 
-  IWKV_val key;
+  struct iwkv_val key;
   jbi_jqval_fill_ikey(idx, jqval, &key, numbuf);
 
   iwrc rc = iwkv_cursor_open(idx->idb, &cur, midx->cursor_init, &key);
@@ -156,7 +156,7 @@ finish:
 iwrc _jbi_consume_noxpr_scan(struct jbexec *ctx, jb_scan_consumer consumer) {
   iwrc rc;
   size_t sz;
-  IWKV_cursor cur;
+  struct iwkv_cursor *cur;
   char numbuf[IWNUMBUF_SIZE];
   int64_t step = 1;
   struct jbmidx *midx = &ctx->midx;

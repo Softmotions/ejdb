@@ -36,7 +36,7 @@ Advanced options:
 
 ## HTTP API
 
-HTTP endpoint may be protected by a token specified with `--access` flag or C API `EJDB_HTTP` struct. 
+HTTP endpoint may be protected by a token specified with `--access` flag or C API `struct ejdb_http`.
 If access token was set, client should provide `X-Access-Token` HTTP header.
 If token is required but not provided by client `401` HTTP code will be reported. 
 If access token is not matched to the token provided by client server will respond with `403` HTTP code.

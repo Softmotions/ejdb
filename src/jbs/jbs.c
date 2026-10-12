@@ -14,7 +14,7 @@ struct env {
   const char      *program;
   struct ejdb     *db;
   struct ejdb_opts opts;
-  IWPOOL *pool;
+  struct iwpool   *pool;
 } env;
 
 static int _usage(const char *err) {
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  IWPOOL *pool;
+  struct iwpool *pool;
   int ec = 0, ch;
 
   env.program = argc ? argv[0] : "";

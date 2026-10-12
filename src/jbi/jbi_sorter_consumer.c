@@ -35,7 +35,7 @@ static int _jbi_scan_sorter_cmp(const void *o1, const void *o2, void *op) {
   for (int i = 0; i < aux->orderby_num; ++i) {
     struct jbl v1 = { 0 };
     struct jbl v2 = { 0 };
-    JBL_PTR ptr = aux->orderby_ptrs[i];
+    struct jbl_ptr *ptr = aux->orderby_ptrs[i];
     int desc = (ptr->op & 1) ? -1 : 1; // If `-1` do desc sorting
     _jbl_at(&d1, ptr, &v1);
     _jbl_at(&d2, ptr, &v2);
@@ -53,9 +53,9 @@ finish:
   return rv;
 }
 
-static iwrc _jbi_scan_sorter_apply(IWPOOL *pool, struct jbexec *ctx, struct jql *q, struct ejdb_doc *doc) {
-  JBL_NODE root;
-  JBL jbl = doc->raw;
+static iwrc _jbi_scan_sorter_apply(struct iwpool *pool, struct jbexec *ctx, struct jql *q, struct ejdb_doc *doc) {
+  struct jbl_node *root;
+  struct jbl *jbl = doc->raw;
   struct jqp_aux *aux = q->aux;
   iwrc rc = jbl_to_node(jbl, &root, true, pool);
   RCRET(rc);
@@ -87,7 +87,7 @@ static iwrc _jbi_scan_sorter_do(struct jbexec *ctx) {
   struct jbssc *ssc = &ctx->ssc;
   uint32_t rnum = ssc->refs_num;
   struct jqp_aux *aux = ux->q->aux;
-  IWPOOL *pool = ux->pool;
+  struct iwpool *pool = ux->pool;
 
   if (rnum) {
     if (setjmp(ssc->fatal_jmp)) { // Init error jump
@@ -153,7 +153,7 @@ finish:
 }
 
 static iwrc _jbi_scan_sorter_init(struct jbssc *ssc, off_t initial_size) {
-  IWFS_EXT_OPTS opts = {
+  struct iwfs_ext_opts opts = {
     .initial_size = initial_size,
     .rspolicy = iw_exfile_szpolicy_fibo,
     .file = {
@@ -171,7 +171,7 @@ static iwrc _jbi_scan_sorter_init(struct jbssc *ssc, off_t initial_size) {
 }
 
 iwrc jbi_sorter_consumer(
-  struct jbexec *ctx, IWKV_cursor cur, int64_t id,
+  struct jbexec *ctx, struct iwkv_cursor *cur, int64_t id,
   int64_t *step, bool *matched, iwrc err) {
   if (!id) {
     // End of scan
@@ -189,14 +189,14 @@ iwrc jbi_sorter_consumer(
   struct jbl jbl;
   struct jbssc *ssc = &ctx->ssc;
   struct ejdb *db = ctx->jbc->db;
-  IWFS_EXT *sof = &ssc->sof;
+  struct iwfs_ext *sof = &ssc->sof;
 
 start:
   {
     if (cur) {
       rc = iwkv_cursor_copy_val(cur, ctx->jblbuf + sizeof(id), ctx->jblbufsz - sizeof(id), &vsz);
     } else {
-      IWKV_val key = {
+      struct iwkv_val key = {
         .data = &id,
         .size = sizeof(id)
       };

@@ -14,7 +14,7 @@ iwrc jbi_pk_scanner(struct jbexec *ctx, jb_scan_consumer consumer) {
 
   if ((jqvp->type == JQVAL_JBLNODE) && (jqvp->vnode->type == JBV_ARRAY)) {
     struct jqval jqv;
-    JBL_NODE nv = jqvp->vnode->child;
+    struct jbl_node *nv = jqvp->vnode->child;
     if (!nv) {
       goto finish;
     }

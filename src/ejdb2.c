@@ -1725,7 +1725,7 @@ iwrc ejdb_get_meta(struct ejdb *db, struct jbl **jblp) {
     rc = JBL_ERROR_CREATION;
     goto finish;
   }
-  IWFS_FSM_STATE sfsm;
+  struct iwfs_fsm_state sfsm;
   rc = iwkv_state(db->iwkv, &sfsm);
   RCGO(rc, finish);
   if (  !binn_object_set_str(&jbl->bn, "file", sfsm.exfile.file.opts.path)
@@ -1771,7 +1771,7 @@ iwrc ejdb_online_backup(struct ejdb *db, uint64_t *ts, const char *target_file) 
   return iwkv_online_backup(db->iwkv, ts, target_file);
 }
 
-iwrc ejdb_get_iwkv(struct ejdb *db, IWKV *kvp) {
+iwrc ejdb_get_iwkv(struct ejdb *db, struct iwkv **kvp) {
   if (!db || !kvp) {
     return IW_ERROR_INVALID_ARGS;
   }

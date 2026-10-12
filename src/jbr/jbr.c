@@ -44,11 +44,11 @@ struct rctx {
 };
 
 struct mctx {
-  struct rctx *ctx;
-  IWXSTR      *wbuf;
-  int64_t      id;
-  char cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
-  char key[JBR_MAX_KEY_LEN + 1];
+  struct rctx   *ctx;
+  struct iwxstr *wbuf;
+  int64_t id;
+  char    cname[EJDB_COLLECTION_NAME_MAX_LEN + 1];
+  char    key[JBR_MAX_KEY_LEN + 1];
 };
 
 #define JBR_RC_REPORT(ret_, r_, rc_)                                       \
@@ -110,8 +110,8 @@ static void _on_http_request_dispose(struct iwn_http_req *req) {
 }
 
 static int _on_get(struct rctx *ctx) {
-  JBL jbl = 0;
-  IWXSTR *xstr = 0;
+  struct jbl *jbl = 0;
+  struct iwxstr *xstr = 0;
   int nbytes = 0, ret = 500;
 
   iwrc rc = ejdb_get(ctx->jbr->db, ctx->cname, ctx->id, &jbl);
@@ -151,7 +151,7 @@ static int _on_post(struct rctx *ctx) {
     return 400;
   }
 
-  JBL jbl;
+  struct jbl *jbl;
   int64_t id;
   int ret = 500;
   iwrc rc = jbl_from_json(&jbl, ctx->req->body);
@@ -178,7 +178,7 @@ static int _on_put(struct rctx *ctx) {
     return 400;
   }
 
-  JBL jbl;
+  struct jbl *jbl;
   int ret = 500;
   iwrc rc = jbl_from_json(&jbl, ctx->req->body);
   if (rc) {
@@ -255,8 +255,8 @@ static int _on_delete(struct rctx *ctx) {
 
 static int _on_options(struct rctx *ctx) {
   iwrc rc;
-  JBL jbl = 0;
-  IWXSTR *xstr = 0;
+  struct jbl *jbl = 0;
+  struct iwxstr *xstr = 0;
   int ret = 500;
 
   RCC(rc, finish, ejdb_get_meta(ctx->jbr->db, &jbl));
@@ -332,7 +332,7 @@ start:
 static iwrc _query_visitor(struct ejdb_exec *ux, struct ejdb_doc *doc, int64_t *step) {
   iwrc rc = 0;
   struct rctx *ctx = ux->opaque;
-  IWXSTR *xstr = iwxstr_new();
+  struct iwxstr *xstr = iwxstr_new();
   RCA(xstr, finish);
 
   if (ux->log) {
@@ -622,8 +622,8 @@ static bool _ws_rc_send(struct iwn_ws_sess *ws, const char *key, iwrc rc, const 
 
 static bool _ws_info(struct iwn_ws_sess *ws, struct mctx *mctx) {
   iwrc rc;
-  JBL jbl = 0;
-  IWXSTR *xstr = 0;
+  struct jbl *jbl = 0;
+  struct iwxstr *xstr = 0;
   bool ret = true;
   struct rctx *ctx = mctx->ctx;
   if (ctx->read_anon) {
@@ -665,7 +665,7 @@ finish:
 
 static bool _ws_document_add(struct iwn_ws_sess *ws, struct mctx *mctx, const char *json) {
   iwrc rc;
-  JBL jbl = 0;
+  struct jbl *jbl = 0;
   int64_t id;
   bool ret = true;
   struct rctx *ctx = ws->req->http->user_data;
@@ -687,8 +687,8 @@ finish:
 
 static bool _ws_document_get(struct iwn_ws_sess *ws, struct mctx *mctx, int64_t id) {
   iwrc rc;
-  JBL jbl = 0;
-  IWXSTR *xstr = 0;
+  struct jbl *jbl = 0;
+  struct iwxstr *xstr = 0;
   bool ret = true;
   struct rctx *ctx = ws->req->http->user_data;
 
@@ -709,7 +709,7 @@ finish:
 
 static bool _ws_document_set(struct iwn_ws_sess *ws, struct mctx *mctx, int64_t id, const char *json) {
   iwrc rc;
-  JBL jbl = 0;
+  struct jbl *jbl = 0;
   bool ret = true;
   struct rctx *ctx = ws->req->http->user_data;
   if (ctx->read_anon) {

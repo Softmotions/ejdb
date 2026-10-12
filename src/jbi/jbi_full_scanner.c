@@ -2,7 +2,7 @@
 
 iwrc jbi_full_scanner(struct jbexec *ctx, jb_scan_consumer consumer) {
   bool matched;
-  IWKV_cursor cur;
+  struct iwkv_cursor *cur;
   int64_t step = 1;
   iwrc rc = iwkv_cursor_open(ctx->jbc->cdb, &cur, ctx->cursor_init, 0);
   RCRET(rc);

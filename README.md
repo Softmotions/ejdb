@@ -850,7 +850,7 @@ Advanced options:
 
 ## HTTP API
 
-HTTP endpoint may be protected by a token specified with `--access` flag or C API `EJDB_HTTP` struct. 
+HTTP endpoint may be protected by a token specified with `--access` flag or C API `struct ejdb_http`.
 If access token was set, client should provide `X-Access-Token` HTTP header.
 If token is required but not provided by client `401` HTTP code will be reported. 
 If access token is not matched to the token provided by client server will respond with `403` HTTP code.
@@ -1132,23 +1132,23 @@ Example application:
     return 1;                \
   }
 
-static iwrc documents_visitor(EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step) {
+static iwrc documents_visitor(struct ejdb_exec *ctx, struct ejdb_doc* const doc, int64_t *step) {
   // Print document to stderr
   return jbl_as_json(doc->raw, jbl_fstream_json_printer, stderr, JBL_PRINT_PRETTY);
 }
 
 int main() {
 
-  EJDB_OPTS opts = {
+  struct ejdb_opts opts = {
     .kv = {
       .path = "example.db",
       .oflags = IWKV_TRUNC
     }
   };
-  EJDB db;     // EJDB2 storage handle
-  int64_t id;  // Document id placeholder
-  JQL q = 0;   // Query instance
-  JBL jbl = 0; // Json document
+  struct ejdb *db;   // EJDB2 storage handle
+  int64_t id;        // Document id placeholder
+  struct jql *q = 0; // Query instance
+  JBL jbl = 0;       // Json document
 
   iwrc rc = ejdb_init();
   CHECK(rc);
@@ -1174,7 +1174,7 @@ int main() {
   rc =  jql_create(&q, "parrots", "/[age > :age]");
   RCGO(rc, finish);
 
-  EJDB_EXEC ux = {
+  struct ejdb_exec ux = {
     .db = db,
     .q = q,
     .visitor = documents_visitor

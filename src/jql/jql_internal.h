@@ -6,7 +6,6 @@
 
 #include <iowow/iwbinn.h>
 #include <iowow/iwre.h>
-#include <math.h>
 
 /** Query object */
 struct jql {
@@ -38,7 +37,7 @@ typedef struct jqval {
   void *freefn_op;
   int   refs;
   union {
-    JBL_NODE    vnode;
+    struct jbl_node *vnode;
     binn       *vbinn;
     int64_t     vi64;
     double      vf64;
@@ -56,7 +55,7 @@ bool jql_jqval_as_int(struct jqval *jqval, int64_t *out);
 
 jqval_type_t jql_binn_to_jqval(binn *vbinn, struct jqval *qval);
 
-void jql_node_to_jqval(JBL_NODE jn, struct jqval *qv);
+void jql_node_to_jqval(struct jbl_node *jn, struct jqval *qv);
 
 int jql_cmp_jqval_pair(const struct jqval *left, const struct jqval *right, iwrc *rcp);
 

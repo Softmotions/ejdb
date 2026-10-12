@@ -107,7 +107,7 @@ IW_EXPORT WUR iwrc jql_set_json2(
   struct jql *q, const char *placeholder, int index, struct jbl_node *val,
   void (*freefn)(void*, void*), void *op);
 
-IW_EXPORT WUR iwrc jql_set_json_jbl(struct jql *q, const char *placeholder, int index, JBL jbl);
+IW_EXPORT WUR iwrc jql_set_json_jbl(struct jql *q, const char *placeholder, int index, struct jbl *jbl);
 
 IW_EXPORT WUR iwrc jql_set_i64(struct jql *q, const char *placeholder, int index, int64_t val);
 
@@ -167,7 +167,7 @@ IW_EXPORT WUR iwrc jql_set_regexp2(
 
 IW_EXPORT WUR iwrc jql_set_null(struct jql *q, const char *placeholder, int index);
 
-IW_EXPORT WUR iwrc jql_matched(struct jql *q, JBL jbl, bool *out);
+IW_EXPORT WUR iwrc jql_matched(struct jql *q, struct jbl *jbl, bool *out);
 
 IW_EXPORT const char* jql_first_anchor(struct jql *q);
 
@@ -202,7 +202,7 @@ IW_EXPORT WUR iwrc jql_apply_and_project(
 
 IW_EXPORT void jql_reset(struct jql *q, bool reset_match_cache, bool reset_placeholders);
 
-IW_EXPORT void jql_destroy(struct jql * *qptr);
+IW_EXPORT void jql_destroy(struct jql **qptr);
 
 IW_EXPORT size_t jql_estimate_allocated_size(struct jql *q);
 

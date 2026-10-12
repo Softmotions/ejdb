@@ -2,7 +2,7 @@
 
 #define JB_SOLID_EXPRNUM 127
 
-static void _jbi_print_index(struct jbidx *idx, IWXSTR *xstr) {
+static void _jbi_print_index(struct jbidx *idx, struct iwxstr *xstr) {
   int cnt = 0;
   ejdb_idx_mode_t m = idx->mode;
   if (m & EJDB_IDX_UNIQUE) {
@@ -34,7 +34,7 @@ static void _jbi_print_index(struct jbidx *idx, IWXSTR *xstr) {
   jbl_ptr_serialize(idx->ptr, xstr);
 }
 
-static void _jbi_log_cursor_op(IWXSTR *xstr, IWKV_cursor_op op) {
+static void _jbi_log_cursor_op(struct iwxstr *xstr, IWKV_cursor_op op) {
   switch (op) {
     case IWKV_CURSOR_EQ:
       iwxstr_cat2(xstr, "IWKV_CURSOR_EQ");
@@ -57,7 +57,7 @@ static void _jbi_log_cursor_op(IWXSTR *xstr, IWKV_cursor_op op) {
   }
 }
 
-static void _jbi_log_index_rules(IWXSTR *xstr, struct jbmidx *mctx) {
+static void _jbi_log_index_rules(struct iwxstr *xstr, struct jbmidx *mctx) {
   _jbi_print_index(mctx->idx, xstr);
   if (mctx->expr1) {
     iwxstr_cat2(xstr, " EXPR1: \'");
@@ -154,7 +154,7 @@ static iwrc _jbi_compute_index_rules(struct jbexec *ctx, struct jbmidx *mctx) {
           continue;
         }
         int vcnt = 0;
-        for (JBL_NODE n = rv->vnode->child; n; n = n->next, ++vcnt);
+        for (struct jbl_node *n = rv->vnode->child; n; n = n->next, ++vcnt) ;
         if (  (vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE)
            && (  (vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE)
               || (mctx->idx->rnum < (int64_t) rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO))) {
@@ -398,7 +398,7 @@ static struct jbidx* _jbi_select_index_for_orderby(struct jbexec *ctx) {
       continue;
     }
     int i = 0;
-    for ( ; i < obp->cnt && !strcmp(ptr->n[i], obp->n[i]); ++i);
+    for ( ; i < obp->cnt && !strcmp(ptr->n[i], obp->n[i]); ++i) ;
     if (i == obp->cnt) {
       memset(&ctx->midx, 0, sizeof(ctx->midx));
       if (!(obp->op & 1)) { // Asc sort

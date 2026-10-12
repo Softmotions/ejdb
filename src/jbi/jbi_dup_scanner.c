@@ -3,7 +3,7 @@
 static iwrc _jbi_consume_eq(struct jbexec *ctx, struct jqval *jqval, jb_scan_consumer consumer) {
   iwrc rc;
   bool matched;
-  IWKV_cursor cur;
+  struct iwkv_cursor *cur;
   char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1;
@@ -12,7 +12,7 @@ static iwrc _jbi_consume_eq(struct jbexec *ctx, struct jqval *jqval, jb_scan_con
   IWKV_cursor_op cursor_reverse_step = IWKV_CURSOR_NEXT;
   midx->cursor_step = IWKV_CURSOR_PREV;
 
-  IWKV_val key;
+  struct iwkv_val key;
   jbi_jqval_fill_ikey(idx, jqval, &key, numbuf);
   key.compound = INT64_MIN;
   if (!key.size) {
@@ -68,11 +68,11 @@ static iwrc _jbi_consume_in_node(struct jbexec *ctx, struct jqval *jqval, jb_sca
 
   iwrc rc = 0;
   int64_t step = 1;
-  IWKV_cursor cur = 0;
+  struct iwkv_cursor *cur = 0;
   struct jbmidx *midx = &ctx->midx;
   struct jbidx *idx = midx->idx;
-  IWKV_val key = { .compound = INT64_MIN };
-  JBL_NODE nv = jqval->vnode->child;
+  struct iwkv_val key = { .compound = INT64_MIN };
+  struct jbl_node *nv = jqval->vnode->child;
 
   for (i = 0; nv; nv = nv->next) {
     if ((nv->type >= JBV_BOOL) && (nv->type <= JBV_STR)) {
@@ -137,7 +137,7 @@ finish:
 
 static iwrc _jbi_consume_scan(struct jbexec *ctx, struct jqval *jqval, jb_scan_consumer consumer) {
   size_t sz;
-  IWKV_cursor cur;
+  struct iwkv_cursor *cur;
   char numbuf[IWNUMBUF_SIZE];
 
   int64_t step = 1, prev_id = 0;
@@ -145,7 +145,7 @@ static iwrc _jbi_consume_scan(struct jbexec *ctx, struct jqval *jqval, jb_scan_c
   struct jbidx *idx = midx->idx;
   jqp_op_t expr1_op = midx->expr1->op->value;
 
-  IWKV_val key;
+  struct iwkv_val key;
   jbi_jqval_fill_ikey(idx, jqval, &key, numbuf);
   if (!key.size) {
     return consumer(ctx, 0, 0, 0, 0, 0);
@@ -217,7 +217,7 @@ finish:
 static iwrc _jbi_consume_noxpr_scan(struct jbexec *ctx, jb_scan_consumer consumer) {
   iwrc rc;
   size_t sz;
-  IWKV_cursor cur;
+  struct iwkv_cursor *cur;
   int64_t step = 1, prev_id = 0;
   struct jbmidx *midx = &ctx->midx;
   IWKV_cursor_op cursor_reverse_step = (midx->cursor_step == IWKV_CURSOR_PREV)

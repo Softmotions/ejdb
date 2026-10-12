@@ -5,7 +5,7 @@
 // ---------------------------------------------------------------------------
 
 // fixme: code duplication below
-void jbi_jbl_fill_ikey(struct jbidx *idx, JBL jbv, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]) {
+void jbi_jbl_fill_ikey(struct jbidx *idx, struct jbl *jbv, struct iwkv_val *ikey, char numbuf[static IWNUMBUF_SIZE]) {
   int64_t *llv = (void*) numbuf;
   jbl_type_t jbvt = jbl_type(jbv);
   ejdb_idx_mode_t itype = (idx->mode & ~(EJDB_IDX_UNIQUE));
@@ -81,7 +81,7 @@ void jbi_jbl_fill_ikey(struct jbidx *idx, JBL jbv, IWKV_val *ikey, char numbuf[s
 }
 
 void jbi_jqval_fill_ikey(
-  struct jbidx *idx, const struct jqval *jqval, IWKV_val *ikey,
+  struct jbidx *idx, const struct jqval *jqval, struct iwkv_val *ikey,
   char numbuf[static IWNUMBUF_SIZE]) {
   int64_t *llv = (void*) numbuf;
   ikey->size = 0;
@@ -159,7 +159,9 @@ void jbi_jqval_fill_ikey(
   }
 }
 
-void jbi_node_fill_ikey(struct jbidx *idx, JBL_NODE node, IWKV_val *ikey, char numbuf[static IWNUMBUF_SIZE]) {
+void jbi_node_fill_ikey(
+  struct jbidx *idx, struct jbl_node *node, struct iwkv_val *ikey,
+  char numbuf[static IWNUMBUF_SIZE]) {
   int64_t *llv = (void*) numbuf;
   ikey->size = 0;
   ikey->data = numbuf;
@@ -237,7 +239,12 @@ void jbi_node_fill_ikey(struct jbidx *idx, JBL_NODE node, IWKV_val *ikey, char n
   }
 }
 
-bool jbi_node_expr_matched(struct jqp_aux *aux, struct jbidx *idx, IWKV_cursor cur, struct jqp_expr *expr, iwrc *rcp) {
+bool jbi_node_expr_matched(
+  struct jqp_aux     *aux,
+  struct jbidx       *idx,
+  struct iwkv_cursor *cur,
+  struct jqp_expr    *expr,
+  iwrc               *rcp) {
   size_t sz;
   char skey[1024];
   char *kbuf = skey;

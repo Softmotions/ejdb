@@ -19,10 +19,10 @@ int main() {
       .oflags = IWKV_TRUNC
     }
   };
-  struct ejdb *db;   // EJDB2 storage handle
-  int64_t id;        // Document id placeholder
-  struct jql *q = 0; // Query instance
-  JBL jbl = 0;       // Json document
+  struct ejdb *db;     // EJDB2 storage handle
+  int64_t id;          // Document id placeholder
+  struct jql *q = 0;   // Query instance
+  struct jbl *jbl = 0; // Json document
 
   iwrc rc = ejdb_init();
   CHECK(rc);

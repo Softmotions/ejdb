@@ -29,7 +29,7 @@
  *************************************************************************************************/
 
 #ifndef IW_BLOCKS
-//autarkdef IW_BLOCKS 
+//autarkdef IW_BLOCKS
 #endif
 
 #include "jql.h"
@@ -471,7 +471,7 @@ IW_EXPORT WUR iwrc ejdb_merge_or_put(struct ejdb *db, const char *coll, const ch
  * @param id          Document id. Not zero.
  *
  */
-IW_EXPORT WUR iwrc ejdb_merge_or_put_jbn(struct ejdb *db, const char *coll, JBL_NODE patch, int64_t id);
+IW_EXPORT WUR iwrc ejdb_merge_or_put_jbn(struct ejdb *db, const char *coll, struct jbl_node *patch, int64_t id);
 
 /**
  * @brief Apply JSON merge patch (rfc7396) to the document identified by `id` or
@@ -484,7 +484,7 @@ IW_EXPORT WUR iwrc ejdb_merge_or_put_jbn(struct ejdb *db, const char *coll, JBL_
  * @param id          Document id. Not zero.
  *
  */
-IW_EXPORT WUR iwrc ejdb_merge_or_put_jbl(struct ejdb *db, const char *coll, JBL patch, int64_t id);
+IW_EXPORT WUR iwrc ejdb_merge_or_put_jbl(struct ejdb *db, const char *coll, struct jbl *patch, int64_t id);
 
 /**
  * @brief Save a given `jbl` document under specified `id`.
@@ -497,7 +497,7 @@ IW_EXPORT WUR iwrc ejdb_merge_or_put_jbl(struct ejdb *db, const char *coll, JBL 
  * @return `0` on success.
  *          Any non zero error codes.
  */
-IW_EXPORT WUR iwrc ejdb_put(struct ejdb *db, const char *coll, JBL jbl, int64_t id);
+IW_EXPORT WUR iwrc ejdb_put(struct ejdb *db, const char *coll, struct jbl *jbl, int64_t id);
 
 /**
  * @brief Save a given `jbn` document under specified `id`.
@@ -510,7 +510,7 @@ IW_EXPORT WUR iwrc ejdb_put(struct ejdb *db, const char *coll, JBL jbl, int64_t 
  * @return `0` on success.
  *          Any non zero error codes.
  */
-IW_EXPORT WUR iwrc ejdb_put_jbn(struct ejdb *db, const char *coll, JBL_NODE jbn, int64_t id);
+IW_EXPORT WUR iwrc ejdb_put_jbn(struct ejdb *db, const char *coll, struct jbl_node *jbn, int64_t id);
 
 /**
  * @brief Save a document into `coll` under new identifier.
@@ -523,7 +523,7 @@ IW_EXPORT WUR iwrc ejdb_put_jbn(struct ejdb *db, const char *coll, JBL_NODE jbn,
  * @return `0` on success.
  *          Any non zero error codes.
  */
-IW_EXPORT WUR iwrc ejdb_put_new(struct ejdb *db, const char *coll, JBL jbl, int64_t *oid);
+IW_EXPORT WUR iwrc ejdb_put_new(struct ejdb *db, const char *coll, struct jbl *jbl, int64_t *oid);
 
 /**
  * @brief Save a document into `coll` under new identifier.
@@ -536,7 +536,7 @@ IW_EXPORT WUR iwrc ejdb_put_new(struct ejdb *db, const char *coll, JBL jbl, int6
  * @return `0` on success.
  *          Any non zero error codes.
  */
-IW_EXPORT iwrc ejdb_put_new_jbn(struct ejdb *db, const char *coll, JBL_NODE jbn, int64_t *id);
+IW_EXPORT iwrc ejdb_put_new_jbn(struct ejdb *db, const char *coll, struct jbl_node *jbn, int64_t *id);
 
 /**
  * @brief Retrieve document identified by given `id` from collection `coll`.
@@ -552,7 +552,7 @@ IW_EXPORT iwrc ejdb_put_new_jbn(struct ejdb *db, const char *coll, JBL_NODE jbn,
  *         `IW_ERROR_NOT_EXISTS` if collection `coll` is not exists in db.
  *          Any non zero error codes.
  */
-IW_EXPORT WUR iwrc ejdb_get(struct ejdb *db, const char *coll, int64_t id, JBL *jblp);
+IW_EXPORT WUR iwrc ejdb_get(struct ejdb *db, const char *coll, int64_t id, struct jbl **jblp);
 
 /**
  * @brief  Remove document identified by given `id` from collection `coll`.
