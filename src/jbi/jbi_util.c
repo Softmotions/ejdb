@@ -15,16 +15,19 @@ void jbi_jbl_fill_ikey(struct jbidx *idx, struct jbl *jbv, struct iwkv_val *ikey
   switch (itype) {
     case EJDB_IDX_STR:
       switch (jbvt) {
-        case JBV_STR:
-          ikey->size = jbl_size(jbv);
-          ikey->data = (void*) jbl_get_str(jbv);
+        case JBV_STR: {
+          size_t slen = 0;
+          const char *sptr = jbl_get_str2(jbv, &slen);
+          ikey->size = sptr ? slen : 0;
+          ikey->data = (void*) sptr;
           break;
+        }
         case JBV_I64:
           ikey->size = (size_t) iwitoa(jbl_get_i64(jbv), numbuf, IWNUMBUF_SIZE);
           ikey->data = numbuf;
           break;
         case JBV_BOOL:
-          if (jbl_get_i32(jbv)) {
+          if (binn_bool_get(&jbv->bn)) {
             ikey->size = sizeof("true");
             ikey->data = "true";
           } else {
@@ -46,8 +49,10 @@ void jbi_jbl_fill_ikey(struct jbidx *idx, struct jbl *jbv, struct iwkv_val *ikey
       switch (jbvt) {
         case JBV_I64:
         case JBV_F64:
-        case JBV_BOOL:
           *llv = jbl_get_i64(jbv);
+          break;
+        case JBV_BOOL:
+          *llv = binn_bool_get(&jbv->bn);
           break;
         case JBV_STR:
           *llv = iwatoi(jbl_get_str(jbv));
@@ -63,8 +68,10 @@ void jbi_jbl_fill_ikey(struct jbidx *idx, struct jbl *jbv, struct iwkv_val *ikey
       switch (jbvt) {
         case JBV_F64:
         case JBV_I64:
-        case JBV_BOOL:
           iwjson_ftoa(jbl_get_f64(jbv), numbuf, &ikey->size);
+          break;
+        case JBV_BOOL:
+          iwjson_ftoa(binn_bool_get(&jbv->bn), numbuf, &ikey->size);
           break;
         case JBV_STR:
           iwjson_ftoa(iwatof(jbl_get_str(jbv)), numbuf, &ikey->size);

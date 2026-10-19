@@ -16,12 +16,11 @@
 
 /** Query matching context */
 typedef struct MCTX {
-  int   lvl;
-  binn *bv;
-  const char      *key;
-  struct jql      *q;
-  struct jqp_aux  *aux;
-  struct jbl_vctx *vctx;
+  int lvl;
+  struct binn    *bv;
+  const char     *key;
+  struct jql     *q;
+  struct jqp_aux *aux;
   bool expr_evaluated; /**< A node expression was evaluated during the current step */
   bool expr_matched;   /**< Result of the evaluated node expression */
   bool provisional;    /**< Node expression matched only because of a pending negated condition */
@@ -546,75 +545,56 @@ void jql_destroy(struct jql **qptr) {
   *qptr = 0;
 }
 
-IW_INLINE jqval_type_t _jql_binn_to_jqval(binn *vbinn, struct jqval *qval) {
+IW_INLINE jqval_type_t _jql_binn_to_jqval(struct binn *vbinn, struct jqval *qval) {
+  memset(qval, 0, sizeof(*qval));
   switch (vbinn->type) {
-    case BINN_OBJECT:
-    case BINN_MAP:
-    case BINN_LIST:
+    case BINN_TYPE_TEXT:
+    case BINN_TYPE_DECIMAL:
+    case BINN_TYPE_DATETIME:
+    case BINN_TYPE_DATE:
+    case BINN_TYPE_TIME: {
+      const char *vstr = binn_text_get(vbinn).buf;
+      qval->type = JQVAL_STR;
+      qval->vstr = vstr ? vstr : "";
+      break;
+    }
+    case BINN_TYPE_OBJECT:
+    case BINN_TYPE_MAP:
+    case BINN_TYPE_LIST:
       qval->type = JQVAL_BINN;
       qval->vbinn = vbinn;
-      return qval->type;
-    case BINN_NULL:
-      qval->type = JQVAL_NULL;
-      return qval->type;
-    case BINN_STRING:
-      qval->type = JQVAL_STR;
-      qval->vstr = vbinn->ptr;
-      return qval->type;
-    case BINN_BOOL:
-    case BINN_TRUE:
-    case BINN_FALSE:
-      qval->type = JQVAL_BOOL;
-      qval->vbool = vbinn->vbool != 0;
-      return qval->type;
-    case BINN_UINT8:
-      qval->type = JQVAL_I64;
-      qval->vi64 = vbinn->vuint8;
-      return qval->type;
-    case BINN_UINT16:
-      qval->type = JQVAL_I64;
-      qval->vi64 = vbinn->vuint16;
-      return qval->type;
-    case BINN_UINT32:
-      qval->type = JQVAL_I64;
-      qval->vi64 = vbinn->vuint32;
-      return qval->type;
-    case BINN_UINT64:
-      qval->type = JQVAL_I64;
-      qval->vi64 = (int64_t) vbinn->vuint64;
-      return qval->type;
-    case BINN_INT8:
-      qval->type = JQVAL_I64;
-      qval->vi64 = vbinn->vint8; // NOLINT(bugprone-signed-char-misuse)
-      return qval->type;
-    case BINN_INT16:
-      qval->type = JQVAL_I64;
-      qval->vi64 = vbinn->vint16;
-      return qval->type;
-    case BINN_INT32:
-      qval->type = JQVAL_I64;
-      qval->vi64 = vbinn->vint32;
-      return qval->type;
-    case BINN_INT64:
-      qval->type = JQVAL_I64;
-      qval->vi64 = vbinn->vint64;
-      return qval->type;
-    case BINN_FLOAT32:
-      qval->type = JQVAL_F64;
-      qval->vf64 = vbinn->vfloat;
-      return qval->type;
-    case BINN_FLOAT64:
-      qval->type = JQVAL_F64;
-      qval->vf64 = vbinn->vdouble;
-      return qval->type;
-    default:
-      memset(qval, 0, sizeof(*qval));
       break;
+    case BINN_TYPE_NULL:
+      qval->type = JQVAL_NULL;
+      break;
+    case BINN_TYPE_TRUE:
+    case BINN_TYPE_FALSE:
+      qval->type = JQVAL_BOOL;
+      qval->vbool = binn_bool_get(vbinn);
+      break;
+    case BINN_TYPE_UINT8:
+    case BINN_TYPE_UINT16:
+    case BINN_TYPE_UINT32:
+    case BINN_TYPE_UINT64:
+    case BINN_TYPE_INT8:
+    case BINN_TYPE_INT16:
+    case BINN_TYPE_INT32:
+    case BINN_TYPE_INT64:
+      qval->type = JQVAL_I64;
+      qval->vi64 = binn_i64_get(vbinn);
+      break;
+    case BINN_TYPE_FLOAT:
+    case BINN_TYPE_DOUBLE:
+      qval->type = JQVAL_F64;
+      qval->vf64 = binn_f64_get(vbinn);
+      break;
+    default:
+      return JQVAL_NULL;
   }
-  return JQVAL_NULL;
+  return qval->type;
 }
 
-jqval_type_t jql_binn_to_jqval(binn *vbinn, struct jqval *qval) {
+jqval_type_t jql_binn_to_jqval(struct binn *vbinn, struct jqval *qval) {
   return _jql_binn_to_jqval(vbinn, qval);
 }
 
@@ -773,20 +753,28 @@ static int _jql_cmp_jqval_pair(const struct jqval *left, const struct jqval *rig
       }
       break;
     case JQVAL_BINN: {
+      struct binn *lbn = lv->vbinn;
       if (  (rv->type != JQVAL_JBLNODE)
-         || ((rv->vnode->type == JBV_ARRAY) && (lv->vbinn->type != BINN_LIST))
-         || ((rv->vnode->type == JBV_OBJECT) && ((lv->vbinn->type != BINN_OBJECT) && (lv->vbinn->type != BINN_MAP)))) {
+         || ((rv->vnode->type == JBV_ARRAY) && !binn_is_list(lbn))
+         || ((rv->vnode->type == JBV_OBJECT) && !binn_is_object(lbn) && !binn_is_map(lbn))) {
         // Incompatible types
         *rcp = _JQL_ERROR_UNMATCHED;
         return 0;
       }
       struct jbl_node *lnode;
-      struct iwpool *pool = iwpool_create((size_t) (rv->vbinn->size) * 2);
+      struct jbl ljbl = JBL_INITIALIZER;
+      struct iwpool *pool = iwpool_create(MAX((size_t) lbn->size, 1024));
       if (!pool) {
         *rcp = iwrc_set_errno(IW_ERROR_ALLOC, errno);
         return 0;
       }
-      *rcp = _jbl_node_from_binn(lv->vbinn, &lnode, false, pool);
+      ljbl.node = 0;
+      if (!binn_create_view_from(&ljbl.bn, lbn)) {
+        iwpool_destroy(pool);
+        *rcp = JBL_ERROR_INVALID;
+        return 0;
+      }
+      *rcp = jbl_to_node(&ljbl, &lnode, false, pool);
       if (*rcp) {
         iwpool_destroy(pool);
         return 0;
@@ -949,9 +937,8 @@ static bool _jql_match_ni(
   iwrc *rcp) {
   struct jqval sleft; // Stack allocated left/right converted values
   struct jqval *lv = left, *rv = right;
-  binn bv;
-  binn_iter iter;
-  if ((rv->type != JQVAL_BINN) || (rv->vbinn->type != BINN_LIST)) {
+  struct binn_iter iter;
+  if ((rv->type != JQVAL_BINN) || !binn_is_list(rv->vbinn)) {
     *rcp = _JQL_ERROR_UNMATCHED;
     return false;
   }
@@ -966,11 +953,12 @@ static bool _jql_match_ni(
     *rcp = _JQL_ERROR_UNMATCHED;
     return false;
   }
-  if (!binn_iter_init(&iter, rv->vbinn, rv->vbinn->type)) {
+  if (!binn_iter_init(*binnv(rv->vbinn), &iter)) {
     *rcp = JBL_ERROR_INVALID;
     return false;
   }
-  while (binn_list_next(&iter, &bv)) {
+  while (binn_iter_next(&iter)) {
+    struct binn bv = iter.binn;
     struct jqval qv = {
       .type = JQVAL_BINN,
       .vbinn = &bv
@@ -1517,16 +1505,46 @@ static bool _jql_match_expression_node(struct jqp_expr_node *en, struct MCTX *mc
   return prev;
 }
 
-static jbl_visitor_cmd_t _jql_match_visitor(
-  int              lvl,
-  binn            *bv,
-  const char      *key,
-  int              idx,
-  struct jbl_vctx *vctx,
-  iwrc            *rcp) {
+typedef jbn_visitor_cmd_t (*_jql_binn_visitor)(int lvl, struct binn *bv, const char *key, int idx, void *op, iwrc *rcp);
+
+// Depth-first traversal of the `binn` backed JSON document.
+// The traversal is aborted when `terminate` is set to `true` by the visitor.
+// NOLINTNEXTLINE(misc-no-recursion)
+static iwrc _jql_binn_visit(struct binn *bn, int lvl, void *op, _jql_binn_visitor visitor, bool *terminate) {
+  struct binn_iter iter;
+  if (!binn_is_container(bn)) {
+    return JBL_ERROR_INVALID;
+  }
+  if (!binn_iter_init(*binnv(bn), &iter)) {
+    return JBL_ERROR_INVALID;
+  }
+  while (!*terminate && binn_iter_next(&iter)) {
+    struct binn bv = iter.binn;
+    iwrc rc = 0;
+    jbn_visitor_cmd_t cmd = visitor(lvl, &bv, iter.key, iter.idx, op, &rc);
+    RCRET(rc);
+    if (cmd & JBL_VCMD_TERMINATE) {
+      *terminate = true;
+      break;
+    }
+    if (!(cmd & JBL_VCMD_SKIP_NESTED) && binn_is_container(&bv)) {
+      rc = _jql_binn_visit(&bv, lvl + 1, op, visitor, terminate);
+      RCRET(rc);
+    }
+  }
+  return 0;
+}
+
+static jbn_visitor_cmd_t _jql_match_visitor(
+  int          lvl,
+  struct binn *bv,
+  const char  *key,
+  int          idx,
+  void        *op,
+  iwrc        *rcp) {
   char nbuf[IWNUMBUF_SIZE];
   const char *nkey = key;
-  struct jql *q = vctx->op;
+  struct jql *q = op;
   if (!nkey) {
     iwitoa(idx, nbuf, sizeof(nbuf));
     nkey = nbuf;
@@ -1535,7 +1553,6 @@ static jbl_visitor_cmd_t _jql_match_visitor(
     .lvl = lvl,
     .bv = bv,
     .key = nkey,
-    .vctx = vctx,
     .q = q,
     .aux = q->aux
   };
@@ -1556,10 +1573,6 @@ static jbl_visitor_cmd_t _jql_match_visitor(
 }
 
 iwrc jql_matched(struct jql *q, struct jbl *jbl, bool *out) {
-  struct jbl_vctx vctx = {
-    .bn = &jbl->bn,
-    .op = q
-  };
   struct jqp_expr_node *en = q->aux->expr;
   if (en->flags & JQP_EXPR_NODE_FLAG_PK) {
     q->matched = true;
@@ -1581,10 +1594,8 @@ iwrc jql_matched(struct jql *q, struct jbl *jbl, bool *out) {
     }
   }
 
-  iwrc rc = _jbl_visit(0, 0, &vctx, _jql_match_visitor);
-  if (vctx.pool) {
-    iwpool_destroy(vctx.pool);
-  }
+  bool terminate = false;
+  iwrc rc = _jql_binn_visit(&jbl->bn, 0, q, _jql_match_visitor, &terminate);
   if (!rc) {
     *out = q->matched;
   }
@@ -1883,7 +1894,11 @@ static iwrc _jql_project(struct jbl_node *root, struct jql *q, struct iwpool *po
   iwrc rc;
   struct jqp_aux *aux = q->aux;
   if (aux->has_exclude_all_projection) {
+    // All document fields are excluded, but the document container type
+    // should be preserved, so the result is `{}` or `[]`.
+    jbl_type_t type = root->type;
     jbn_data(root);
+    root->type = type;
     return 0;
   }
   struct jqp_projection *proj = aux->projection;

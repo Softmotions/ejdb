@@ -20,5 +20,4 @@ Checks:    >
   -misc-unused-parameters,
   -performance-no-int-to-ptr,
   -bugprone-assignment-in-if-condition,
-
-...
+  -bugprone-inc-dec-in-conditions,

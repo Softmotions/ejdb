@@ -4,7 +4,7 @@
 
 #include "jqp.h"
 
-#include <iowow/iwbinn.h>
+#include <iowow/iwjson.h>
 #include <iowow/iwre.h>
 
 /** Query object */
@@ -38,7 +38,7 @@ typedef struct jqval {
   int   refs;
   union {
     struct jbl_node *vnode;
-    binn       *vbinn;
+    struct binn *vbinn;
     int64_t     vi64;
     double      vf64;
     const char *vstr;
@@ -53,7 +53,7 @@ struct jqval* jql_unit_to_jqval(struct jqp_aux *aux, union jqp_unit *unit, iwrc 
 
 bool jql_jqval_as_int(struct jqval *jqval, int64_t *out);
 
-jqval_type_t jql_binn_to_jqval(binn *vbinn, struct jqval *qval);
+jqval_type_t jql_binn_to_jqval(struct binn *vbinn, struct jqval *qval);
 
 void jql_node_to_jqval(struct jbl_node *jn, struct jqval *qv);
 

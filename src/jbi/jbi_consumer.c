@@ -6,7 +6,7 @@ iwrc jbi_consumer(struct jbexec *ctx, struct iwkv_cursor *cur, int64_t id, int64
   }
 
   iwrc rc;
-  struct jbl jbl;
+  struct jbl jbl = JBL_INITIALIZER;
   size_t vsz = 0;
   struct ejdb_exec *ux = ctx->ux;
   struct iwpool *pool = ux->pool;
@@ -51,7 +51,7 @@ start:
     }
   }
 
-  RCC(rc, finish, jbl_from_buf_keep_onstack(&jbl, ctx->jblbuf, vsz));
+  RCC(rc, finish, jbl_init_from_buf(&jbl, ctx->jblbuf, vsz, true));
 
   rc = jql_matched(ux->q, &jbl, matched);
   if (rc || !*matched || (ux->skip && (ux->skip-- > 0))) {
@@ -73,7 +73,7 @@ start:
     if (aux->apply || aux->apply_placeholder || aux->projection) {
       struct jbl_node *root;
       if (!pool) {
-        pool = iwpool_create((size_t) jbl.bn.size * 2);
+        pool = iwpool_create(jbl.bn.size * 2);
         if (!pool) {
           rc = iwrc_set_errno(IW_ERROR_ALLOC, errno);
           goto finish;
@@ -88,15 +88,15 @@ start:
           rc = jb_del(ctx->jbc, &jbl, id);
         }
       } else if (aux->apply || aux->apply_placeholder) {
-        struct jbl sn = { 0 };
+        struct jbl sn = JBL_INITIALIZER;
         RCC(rc, finish, jql_apply(q, root, pool));
-        RCC(rc, finish, _jbl_from_node(&sn, root));
+        RCC(rc, finish, jbl_fill_from_node(&sn, root));
         if (cur) {
           rc = jb_cursor_set(ctx->jbc, cur, id, &sn);
         } else {
           rc = jb_put(ctx->jbc, &sn, id);
         }
-        binn_free(&sn.bn);
+        binn_destroy(&sn.bn);
       }
       RCGO(rc, finish);
       if (aux->projection) {

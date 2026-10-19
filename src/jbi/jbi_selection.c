@@ -157,7 +157,7 @@ static iwrc _jbi_compute_index_rules(struct jbexec *ctx, struct jbmidx *mctx) {
         for (struct jbl_node *n = rv->vnode->child; n; n = n->next, ++vcnt) ;
         if (  (vcnt > JB_IDX_EMPIRIC_MIN_INOP_ARRAY_SIZE)
            && (  (vcnt > JB_IDX_EMPIRIC_MAX_INOP_ARRAY_SIZE)
-              || (mctx->idx->rnum < (int64_t) rv->vbinn->count * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO))) {
+              || (mctx->idx->rnum < (int64_t) vcnt * JB_IDX_EMPIRIC_MAX_INOP_ARRAY_RATIO))) {
           // No index for large IN array | small collection size
           continue;
         }

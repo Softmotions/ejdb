@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.14-dev
-META_REVISION=2ef1296
+META_VERSION=0.9.15
+META_REVISION=4451db2
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -67,8 +67,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.14-dev"
-#define META_REVISION "2ef1296"
+#define META_VERSION "0.9.15"
+#define META_REVISION "4451db2"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -633,6 +633,7 @@ const char* path_join_path_pool(struct pool *pool, const char *dir, const char *
 #define AUTARK_CACHE_OVERLAY_DIR_ENV "AUTARK_CACHE_OVERLAY_DIR" // Project cache overlay directory
 #define AUTARK_UNIT_ENV              "AUTARK_UNIT"              // Path relative to AUTARK_ROOT_DIR of build process
                                                                 // unit executed
+#define AUTARK_INTERACTIVE_ENV       "AUTARK_INTERACTIVE"      // Autark is launched in interactive terminal
 #define AUTARK_INSTALL_SRC_DEPS_ENV "AUTARK_INSTALL_SRC_DEPS"   // Install src with deps.
 #define AUTARK_COMPILE_COMMANDS_ENV "AUTARK_COMPILE_COMMANDS"   // Path to compile commands file.
 #define AUTARK_VERBOSE_ENV "AUTARK_VERBOSE"                     // Autark verbose env key
@@ -2849,6 +2850,9 @@ int path_rm_cache(const char *path) {
   for (struct dirent *entry; (entry = readdir(dir)) != 0; ) {
     const char *name = entry->d_name;
     if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+      continue;
+    }
+    if (strcmp(name, "compile_commands.json") == 0) { // Keep compile commands.
       continue;
     }
     snprintf(child, sizeof(child), "%s/%s", path, name);
@@ -7206,6 +7210,9 @@ void autark_build_prepare(const char *script_path) {
   }
   setenv(AUTARK_ROOT_DIR_ENV, g_env.project.root_dir, 1);
   setenv(AUTARK_CACHE_DIR_ENV, g_env.project.cache_dir, 1);
+  if (isatty(STDIN_FILENO)) {
+    setenv(AUTARK_INTERACTIVE_ENV, "1", 1);
+  }
   if ((g_env.install.flags & INSTALL_FLG_SRC_WITH_DEPS) || getenv(AUTARK_INSTALL_SRC_DEPS_ENV)) {
     g_env.install.enabled = true;
     g_env.install.flags |= INSTALL_FLG_SRC_WITH_DEPS;
