@@ -2,19 +2,18 @@
 #include "ejdb2_internal.h"
 #include <iowow/iwxstr.h>
 #include <iowow/iwutils.h>
-#include <CUnit/Basic.h>
+#include "iwtests.h"
 #include <stdlib.h>
 
-int init_suite(void) {
-  int rc = ejdb_init();
+static int init_suite(void) {
+  iwrc rc = ejdb_init();
   return rc;
 }
 
-int clean_suite(void) {
-  return 0;
+static void clean_suite(void) {
 }
 
-void _jql_test1_1(int num, iwrc expected) {
+static void _jql_test1_1(int num, iwrc expected) {
   fprintf(stderr, "%03d.jql\n", num);
 
   iwrc rc;
@@ -23,28 +22,28 @@ void _jql_test1_1(int num, iwrc expected) {
   struct jqp_aux *aux;
   char *data, *edata = 0;
   IWXSTR *res = iwxstr_new();
-  CU_ASSERT_PTR_NOT_NULL_FATAL(res);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(res);
 
   snprintf(path, sizeof(path), "data%c%03d.jql", IW_PATH_CHR, num);
   snprintf(path_expected, sizeof(path_expected), "data%c%03d.expected.jql", IW_PATH_CHR, num);
   data = iwu_file_read_as_buf(path);
-  CU_ASSERT_PTR_NOT_NULL_FATAL(data);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(data);
 
   rc = jqp_aux_create(&aux, data);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = jqp_parse(aux);
-  CU_ASSERT_EQUAL_FATAL(rc, expected);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, expected);
   if (expected) {
     goto finish;
   }
 
-  CU_ASSERT_PTR_NOT_NULL_FATAL(aux->query);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(aux->query);
 
   edata = iwu_file_read_as_buf(path_expected);
-  CU_ASSERT_PTR_NOT_NULL_FATAL(edata);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(edata);
   rc = jqp_print_query(aux->query, jbl_xstr_json_printer, res);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 
   // fprintf(stderr, "%s\n", iwxstr_ptr(res));
   // fprintf(stderr, "%s\n", path_expected);
@@ -55,7 +54,7 @@ void _jql_test1_1(int num, iwrc expected) {
   //  fprintf(out, "%s", iwxstr_ptr(res));
   //  fclose(out);
 
-  CU_ASSERT_EQUAL_FATAL(strcmp(edata, iwxstr_ptr(res)), 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(strcmp(edata, iwxstr_ptr(res)), 0);
 
 finish:
   if (edata) {
@@ -84,15 +83,15 @@ static void _jql_test1_2(const char *jsondata, const char *q, bool match) {
   JBL jbl;
   struct jql *jql;
   char *json = iwu_replace_char(strdup(jsondata), '\'', '"');
-  CU_ASSERT_PTR_NOT_NULL_FATAL(json);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(json);
   iwrc rc = jql_create(&jql, "c1", q);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jbl_from_json(&jbl, json);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   bool m = false;
   rc = jql_matched(jql, jbl, &m);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_EQUAL_FATAL(m, match);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(m, match);
 
   jql_destroy(&jql);
   jbl_destroy(&jbl);
@@ -263,38 +262,38 @@ static void _jql_test1_3(bool has_apply_or_project, const char *jsondata, const 
   IWPOOL *pool = iwpool_create(512);
 
   char *json = iwu_replace_char(strdup(jsondata), '\'', '"');
-  CU_ASSERT_PTR_NOT_NULL_FATAL(json);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(json);
   char *eqjson = iwu_replace_char(strdup(eq), '\'', '"');
-  CU_ASSERT_PTR_NOT_NULL_FATAL(eqjson);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(eqjson);
   char *qstr = iwu_replace_char(strdup(q), '\'', '"');
-  CU_ASSERT_PTR_NOT_NULL_FATAL(qstr);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(qstr);
 
   iwrc rc = jql_create(&jql, "c1", qstr);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   rc = jbl_from_json(&jbl, json);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   bool m = false;
   rc = jql_matched(jql, jbl, &m);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_EQUAL_FATAL(m, true);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(m, true);
 
   bool hapl = jql_has_apply(jql) || jql_has_projection(jql);
-  CU_ASSERT_EQUAL_FATAL(hapl, has_apply_or_project);
+  IW_TEST_ASSERT_EQUAL_FATAL(hapl, has_apply_or_project);
   if (!hapl) {
     goto finish;
   }
 
-  CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(pool);
   rc = jql_apply_and_project(jql, jbl, &out, 0, pool);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_PTR_NOT_NULL_FATAL(out);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(out);
 
   rc = jbn_from_json(eqjson, &eqn, pool);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 
   int cmp = jbn_compare_nodes(out, eqn, &rc);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_EQUAL_FATAL(cmp, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(cmp, 0);
 
 finish:
   jql_destroy(&jql);
@@ -342,31 +341,31 @@ static void jql_test_1_5(void) {
   JBL_NODE n = 0, n2 = 0;
   IWXSTR *xstr = iwxstr_new();
   IWPOOL *pool = iwpool_create_empty();
-  CU_ASSERT_PTR_NOT_NULL_FATAL(pool);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(pool);
   iwrc rc = jql_create(&q, "c1", "/* | /:name+/:?");
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = jql_set_i64(q, 0, 0, 1);
-  CU_ASSERT_EQUAL(rc, JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE);
+  IW_TEST_ASSERT_EQUAL(rc, JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE);
 
   rc = jql_set_str(q, "name", 0, "foo");
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = jql_set_str(q, 0, 0, "baz");
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 
   rc = jbl_from_json(&jbl, "{\"foo\":1,\"bar\":2,\"baz\":3}");
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   bool m = false;
   rc = jql_matched(q, jbl, &m);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
-  CU_ASSERT_TRUE(m && jql_has_projection(q));
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_TRUE(m && jql_has_projection(q));
 
   rc = jql_apply_and_project(q, jbl, &n, 0, pool);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 
   jbn_as_json(n, jbl_xstr_json_printer, xstr, 0);
-  CU_ASSERT_STRING_EQUAL(iwxstr_ptr(xstr), "{\"foo\":1,\"baz\":3}");
+  IW_TEST_ASSERT_STR_EQUAL(iwxstr_ptr(xstr), "{\"foo\":1,\"baz\":3}");
 
   jql_destroy(&q);
   jbl_destroy(&jbl);
@@ -378,32 +377,18 @@ static void jql_test_1_5(void) {
 static void jql_test_1_6(void) {
   struct jql *q = 0;
   iwrc rc = jql_create(&q, "c1", "/* | apply {\"pr\":2.2E1,\"b\":1}");
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   jql_destroy(&q);
 }
 
-int main() {
-  CU_pSuite pSuite = NULL;
-  if (CUE_SUCCESS != CU_initialize_registry()) {
-    return CU_get_error();
-  }
-  pSuite = CU_add_suite("jql_test1", init_suite, clean_suite);
-  if (NULL == pSuite) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  if (  (NULL == CU_add_test(pSuite, "jql_test1_1", jql_test1_1))
-     || (NULL == CU_add_test(pSuite, "jql_test1_2", jql_test1_2))
-     || (NULL == CU_add_test(pSuite, "jql_test1_3", jql_test1_3))
-     || (NULL == CU_add_test(pSuite, "jql_test1_4", jql_test_1_4))
-     || (NULL == CU_add_test(pSuite, "jql_test1_5", jql_test_1_5))
-     || (NULL == CU_add_test(pSuite, "jql_test1_6", jql_test_1_6))) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  CU_basic_set_mode(CU_BRM_VERBOSE);
-  CU_basic_run_tests();
-  int ret = CU_get_error() || CU_get_number_of_failures();
-  CU_cleanup_registry();
-  return ret;
+int main(int argc, char *argv[]) {
+  static const struct iw_test_case cases[] = {
+    IW_TEST_CASE(jql_test1_1),
+    IW_TEST_CASE(jql_test1_2),
+    IW_TEST_CASE(jql_test1_3),
+    IW_TEST_CASE(jql_test_1_4),
+    IW_TEST_CASE(jql_test_1_5),
+    IW_TEST_CASE(jql_test_1_6),
+  };
+  return iw_test_run(argc, argv, IW_TEST_SUITE("jql_test1", cases, init_suite, clean_suite));
 }

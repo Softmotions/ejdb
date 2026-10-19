@@ -1,5 +1,7 @@
-2026-10-12 Anton Adamansky  <adamansky@gmail.com>  [v2.93-dev]
-  * Fixed several memory leaks and resources leaks in failed execution paths.  
+2026-10-20 Anton Adamansky  <adamansky@gmail.com>  [v2.93-dev]
+  * Migrated to iowow v1.7.0, iwnet v1.4.0
+  * iwtests.h: Migrated to iowow test framework.
+  * Fixed a lot of memory/resources leaks in failed execution paths.  
 
 2026-10-11 Anton Adamansky  <adamansky@gmail.com>  [v2.92]
   * tests: Added basic fuzzing tests. 

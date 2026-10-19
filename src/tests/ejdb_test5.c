@@ -1,5 +1,5 @@
 #include "ejdb_test.h"
-#include <CUnit/Basic.h>
+#include "iwtests.h"
 
 #include <sys/types.h>
 #include <pthread.h>
@@ -14,7 +14,7 @@
         if (rc_)                   \
         {                          \
           iwlog_ecode_error3(rc_); \
-          return 1;                \
+          return rc_;              \
         }
 
 #undef print_message
@@ -25,7 +25,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IWKV_NO_TRIM_ON_CLOSE
-iwrc get_ejdb(struct ejdb **db) {
+static iwrc get_ejdb(struct ejdb **db) {
   struct ejdb_opts opts = {
     .kv = {
       .path = "ejdb_test5.db",
@@ -53,7 +53,7 @@ iwrc get_ejdb(struct ejdb **db) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-iwrc show_db_meta(struct ejdb *db) {
+static iwrc show_db_meta(struct ejdb *db) {
   JBL jbl = 0;   // Json document
   iwrc rc = ejdb_get_meta(db, &jbl);
   RCGO(rc, finish);
@@ -66,20 +66,21 @@ finish:
   if (jbl) {
     jbl_destroy(&jbl);
   }
-  return 0;
+  return rc;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-iwrc add_record_large(struct ejdb *db, char *collection, int total) {
+static iwrc add_record_large(struct ejdb *db, char *collection, int total) {
   JBL jbl = 0;   // Json document
   int64_t id;    // Document id placeholder
   char json[1024];
+  iwrc rc = 0;
   for (int ii = 0; ii < total; ii++) {
     memset(json, 0, sizeof(json));
     sprintf(json,
             "{\"name\":\"Darko\", \"time_\":%d, \"largeValue\": \"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\"}",
             ii);
-    iwrc rc = jbl_from_json(&jbl, json);
+    rc = jbl_from_json(&jbl, json);
     RCGO(rc, finish);
     rc = ejdb_put_new(db, collection, jbl, &id);
     RCGO(rc, finish);
@@ -93,11 +94,11 @@ finish:
   if (jbl) {
     jbl_destroy(&jbl);
   }
-  return 0;
+  return rc;
 }
 
 // delete function /////////////////////////////////////////////////////////////////////////////////////////////////////
-iwrc delete_record_large(struct ejdb *db, char *collection, int64_t to, int limit) {
+static iwrc delete_record_large(struct ejdb *db, char *collection, int64_t to, int limit) {
   struct jql *q = 0;
 
   char deleteSql[128];
@@ -119,25 +120,38 @@ finish:
   if (q) {
     jql_destroy(&q);
   }
-  return 0;
+  return rc;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int main(int argc, char *argv[]) {
+static void ejdb_test5_1(void) {
   struct ejdb *db = 0;
   iwrc rc = get_ejdb(&db);
-  CHECK(rc);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(db);
 
   char *collection = "collection";
 
   int addTotal = 20000;
-  add_record_large(db, collection, addTotal);
+  rc = add_record_large(db, collection, addTotal);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 
   int64_t time = addTotal - 10000;
   int limit = 10000;
-  show_db_meta(db);
-  delete_record_large(db, collection, time, limit);
-  show_db_meta(db);
-  ejdb_close(&db);
-  return 0;
+  rc = show_db_meta(db);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = delete_record_large(db, collection, time, limit);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = show_db_meta(db);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = ejdb_close(&db);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+}
+
+int main(int argc, char *argv[]) {
+  static const struct iw_test_case cases[] = {
+    IW_TEST_CASE(ejdb_test5_1),
+  };
+  return iw_test_run(argc, argv, IW_TEST_SUITE("ejdb_test5", cases, 0, 0));
 }

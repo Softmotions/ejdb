@@ -1,6 +1,6 @@
 cc {
   jql_test1.c
-  set { _ ..${CFLAGS} -DIW_STATIC -DIW_TESTS -I S{src/tests} }
+  set { _ ..${CFLAGS} -DIW_STATIC -DIW_TESTS -DIW_TEST_HARNESS="ejdb2" -I S{src/tests} }
 }
 
 foreach {

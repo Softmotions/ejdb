@@ -34,7 +34,7 @@
 
 #include <iowow/iwutils.h>
 
-#include <CUnit/Basic.h>
+#include "iwtests.h"
 
 #include <signal.h>
 #include <stddef.h>
@@ -63,8 +63,7 @@ int init_suite(void) {
   return ejdb_init();
 }
 
-int clean_suite(void) {
-  return 0;
+void clean_suite(void) {
 }
 
 static uint32_t ejdb6_env_u32(const char *name, uint32_t def) {
@@ -132,7 +131,7 @@ static void ejdb6_fill_db(struct ejdb *db, int from, int to) {
   for (int i = from; i < to; ++i) {
     int64_t id = 0;
     iwrc rc = ejdb6_put_doc(db, i, &id);
-    CU_ASSERT_EQUAL_FATAL(rc, 0);
+    IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   }
 }
 
@@ -148,12 +147,12 @@ static void ejdb6_build_db(const char *path, bool wal, int ndocs) {
   ejdb6_opts(&opts, path, wal, true);
   struct ejdb *db = 0;
   iwrc rc = ejdb_open(&opts, &db);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   rc = ejdb_ensure_index(db, EJDB6_COLL, "/age", EJDB_IDX_I64);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   ejdb6_fill_db(db, 0, ndocs);
   rc = ejdb_close(&db);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 }
 
 /// Builds a database with a non-empty WAL by killing a forked writer before it
@@ -196,9 +195,9 @@ static bool ejdb6_build_crash_image(const char *path, int ndocs) {
 //------------------------------------------------------------------ probing
 
 /// Opens the database, walks all expected data and closes it again. Used
-/// inside forked children; it must not contain CUnit assertions. Any error is
-/// simply ignored - the only failure mode the parent cares about is a crash or
-/// a hang.
+/// inside forked children; it must not contain test framework assertions. Any
+/// error is simply ignored - the only failure mode the parent cares about is a
+/// crash or a hang.
 static void ejdb6_probe(const char *path, bool wal) {
   struct ejdb_opts opts;
   ejdb6_opts(&opts, path, wal, false);
@@ -397,7 +396,7 @@ static void ejdb6_corruption_fuzz(
   size_t dbsz = 0, walsz = 0;
   uint8_t *dbbuf = ejdb6_file_read(dbpath, &dbsz);
   uint8_t *walbuf = wal ? ejdb6_file_read(walpath, &walsz) : 0;
-  CU_ASSERT_PTR_NOT_NULL_FATAL(dbbuf);
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(dbbuf);
 
   uint32_t ncrash = 0, nhang = 0, nerr = 0;
   for (uint32_t r = 0; r < rounds; ++r) {
@@ -424,16 +423,16 @@ static void ejdb6_corruption_fuzz(
       break;
     }
     // Restore the pristine image for the next round.
-    CU_ASSERT_EQUAL_FATAL(ejdb6_file_write(dbpath, dbbuf, dbsz), 0);
+    IW_TEST_ASSERT_EQUAL_FATAL(ejdb6_file_write(dbpath, dbbuf, dbsz), 0);
     if (wal && walbuf) {
-      CU_ASSERT_EQUAL_FATAL(ejdb6_file_write(walpath, walbuf, walsz), 0);
+      IW_TEST_ASSERT_EQUAL_FATAL(ejdb6_file_write(walpath, walbuf, walsz), 0);
     }
   }
   fprintf(stderr,
           "[ejdb_test6] corruption fuzz path=%s wal=%d rounds=%u crashes=%u hangs=%u errors=%u\n",
           dbpath, (int) wal, rounds, ncrash, nhang, nerr);
   if (ncrash || nhang) {
-    CU_FAIL("corruption fuzzing detected engine crashes/hangs");
+    IW_TEST_FAIL("corruption fuzzing detected engine crashes/hangs");
   }
   free(dbbuf);
   free(walbuf);
@@ -456,7 +455,7 @@ static void ejdb_test6_1_wal_crash_recovery_stress(void) {
   for (uint32_t it = 0; it < iters; ++it) {
     bool clean = iwu_rand_range(100) < 30;
     pid_t pid = fork();
-    CU_ASSERT_NOT_EQUAL_FATAL(pid, -1);
+    IW_TEST_ASSERT_NOT_EQUAL_FATAL(pid, -1);
     if (pid == 0) {
       struct ejdb_opts opts;
       ejdb6_opts(&opts, path, true, (it == 0));
@@ -485,9 +484,9 @@ static void ejdb_test6_1_wal_crash_recovery_stress(void) {
       _exit(0);
     }
     int status = 0;
-    CU_ASSERT_EQUAL_FATAL(waitpid(pid, &status, 0), pid);
-    CU_ASSERT_TRUE_FATAL(WIFEXITED(status));
-    CU_ASSERT_TRUE_FATAL(WEXITSTATUS(status) == 0 || WEXITSTATUS(status) == 1);
+    IW_TEST_ASSERT_EQUAL_FATAL(waitpid(pid, &status, 0), pid);
+    IW_TEST_ASSERT_TRUE_FATAL(WIFEXITED(status));
+    IW_TEST_ASSERT_TRUE_FATAL(WEXITSTATUS(status) == 0 || WEXITSTATUS(status) == 1);
     // The database must still reopen and survive a full traversal.
     ejdb6_probe(path, true);
   }
@@ -497,16 +496,16 @@ static void ejdb_test6_1_wal_crash_recovery_stress(void) {
   ejdb6_opts(&opts, path, true, false);
   struct ejdb *db = 0;
   iwrc rc = ejdb_open(&opts, &db);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   struct jql *q = 0;
   rc = jql_create(&q, EJDB6_COLL, "/*");
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   struct ejdb_exec ux = { .db = db, .q = q };
   rc = ejdb_exec(&ux);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
   jql_destroy(&q);
   rc = ejdb_close(&db);
-  CU_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 }
 
 static void ejdb_test6_2_db_wal_corruption_fuzz(void) {
@@ -521,7 +520,7 @@ static void ejdb_test6_2_db_wal_corruption_fuzz(void) {
 
   // WAL enabled, simulated crash: both the main file and the WAL are present.
   const char *p2 = "ejdb_test6_2b.db";
-  CU_ASSERT_TRUE_FATAL(ejdb6_build_crash_image(p2, EJDB6_NDOCS));
+  IW_TEST_ASSERT_TRUE_FATAL(ejdb6_build_crash_image(p2, EJDB6_NDOCS));
   ejdb6_corruption_fuzz(p2, true, base, base ^ 0x9e3779b9u, rounds);
 
   // WAL disabled: corrupt the main file only.
@@ -530,26 +529,10 @@ static void ejdb_test6_2_db_wal_corruption_fuzz(void) {
   ejdb6_corruption_fuzz(p3, false, base, base ^ 0x85ebca6bu, rounds);
 }
 
-int main(void) {
-  CU_pSuite pSuite = NULL;
-
-  if (CUE_SUCCESS != CU_initialize_registry()) {
-    return CU_get_error();
-  }
-  pSuite = CU_add_suite("ejdb_test6", init_suite, clean_suite);
-  if (NULL == pSuite) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  if (  (NULL == CU_add_test(pSuite, "ejdb_test6_1_wal_crash_recovery_stress",
-                             ejdb_test6_1_wal_crash_recovery_stress))
-     || (NULL == CU_add_test(pSuite, "ejdb_test6_2_db_wal_corruption_fuzz", ejdb_test6_2_db_wal_corruption_fuzz))) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  CU_basic_set_mode(CU_BRM_VERBOSE);
-  CU_basic_run_tests();
-  int ret = CU_get_error() || CU_get_number_of_failures();
-  CU_cleanup_registry();
-  return ret;
+int main(int argc, char *argv[]) {
+  static const struct iw_test_case cases[] = {
+    IW_TEST_CASE(ejdb_test6_1_wal_crash_recovery_stress),
+    IW_TEST_CASE(ejdb_test6_2_db_wal_corruption_fuzz),
+  };
+  return iw_test_run(argc, argv, IW_TEST_SUITE("ejdb_test6", cases, init_suite, clean_suite));
 }

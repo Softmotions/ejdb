@@ -7,7 +7,7 @@ cc {
     ejdb_test5.c
     ejdb_test6.c
   }
-  set { _ ..${CFLAGS} -DIW_STATIC -DIW_TESTS }
+  set { _ ..${CFLAGS} -DIW_STATIC -DIW_TESTS -DIW_TEST_HARNESS="ejdb2" }
 }
 
 foreach {
