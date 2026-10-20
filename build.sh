@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.15
-META_REVISION=4451db2
+META_VERSION=0.9.16
+META_REVISION=06dfe70
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -52,6 +52,8 @@ elif command -v clang >/dev/null 2>&1; then
   COMPILER=clang
 elif command -v gcc >/dev/null 2>&1; then
   COMPILER=gcc
+elif command -v cc >/dev/null 2>&1; then
+  COMPILER=cc
 else
   echo "No suitable C compiler found" >&2
   exit 1
@@ -67,8 +69,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.15"
-#define META_REVISION "4451db2"
+#define META_VERSION "0.9.16"
+#define META_REVISION "06dfe70"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
