@@ -1,4 +1,4 @@
-2026-10-20 Anton Adamansky  <adamansky@gmail.com>  [v2.93-dev]
+2026-10-20 Anton Adamansky  <adamansky@gmail.com>  [v2.93]
   * ejdb2_node,ejdb2_jni: Modernized and tested. 
   * Migrated to iowow v1.7.0, iwnet v1.4.0
   * iwtests.h: Migrated to iowow test framework.
