@@ -24,8 +24,13 @@
  * SOFTWARE.
  *************************************************************************************************/
 
-const semver = require("semver");
-const { engines } = require("./package");
+import { once } from "node:events";
+import { createRequire } from "node:module";
+import { Readable } from "node:stream";
+import semver from "semver";
+import binary from "./binary.js";
+
+const { engines } = createRequire(import.meta.url)("./package.json");
 
 if (!semver.satisfies(process.version, engines.node)) {
   console.log(`Required node version ${engines.node} not satisfied with current version ${process.version}.`);
@@ -33,8 +38,7 @@ if (!semver.satisfies(process.version, engines.node)) {
 }
 
 global.__ejdb_add_stream_result__ = addStreamResult; // Passing it to ejdb2_node init
-const { EJDB2Impl } = require("./binary")("ejdb2_node");
-const { Readable } = require("stream");
+const { EJDB2Impl } = binary("ejdb2_node");
 delete global.__ejdb_add_stream_result__;
 
 /**
@@ -273,13 +277,10 @@ class JQL {
    *
    * @param {Promise} opts
    */
-  completionPromise(opts) {
+  async completionPromise(opts) {
     const stream = this.stream(opts || {});
-    return new Promise((resolve, reject) => {
-      stream.on("data", () => stream.finish());
-      stream.on("close", () => resolve());
-      stream.on("error", (err) => reject(err));
-    });
+    stream.once("data", () => stream.finish());
+    await once(stream, "close");
   }
 
   /**
@@ -288,15 +289,10 @@ class JQL {
    * @param {Object} [opts]
    * @return {Promise<number>}
    */
-  scalarInt(opts) {
-    const stream = this.stream(opts);
-    return new Promise((resolve, reject) => {
-      stream.on("data", (doc) => {
-        resolve(doc.id);
-        stream.finish();
-      });
-      stream.on("error", (err) => reject(err));
-    });
+  async scalarInt(opts) {
+    for await (const doc of this.stream(opts)) {
+      return doc.id;
+    }
   }
 
   /**
@@ -306,14 +302,12 @@ class JQL {
    * @param {Object} [opts]
    * @return {Promise<Array<JBDOC>>}
    */
-  list(opts) {
+  async list(opts) {
     const ret = [];
-    const stream = this.stream(opts);
-    return new Promise((resolve, reject) => {
-      stream.on("data", (doc) => ret.push(doc));
-      stream.on("close", () => resolve(ret));
-      stream.on("error", (err) => reject(err));
-    });
+    for await (const doc of this.stream(opts)) {
+      ret.push(doc);
+    }
+    return ret;
   }
 
   /**
@@ -322,21 +316,17 @@ class JQL {
    * @param {Object} [opts]
    * @return {Promise<Array<JBDOC>>}
    */
-  firstN(n, opts) {
+  async firstN(n, opts) {
     opts = opts || {};
     opts.limit = n;
     const ret = [];
-    const stream = this.stream(opts);
-    return new Promise((resolve, reject) => {
-      stream.on("data", (doc) => {
-        ret.push(doc);
-        if (ret.length >= n) {
-          stream.finish();
-        }
-      });
-      stream.on("close", () => resolve(ret));
-      stream.on("error", (err) => reject(err));
-    });
+    for await (const doc of this.stream(opts)) {
+      ret.push(doc);
+      if (ret.length >= n) {
+        break;
+      }
+    }
+    return ret;
   }
 
   /**
@@ -460,7 +450,7 @@ class EJDB2 {
    * @param {Object} [opts]
    * @returns {Promise<EJDB2>} EJDB2 instance promise
    */
-  static open(path, opts) {
+  static async open(path, opts) {
     opts = opts || {};
 
     function toArgs() {
@@ -491,7 +481,8 @@ class EJDB2 {
     }
 
     const inst = new EJDB2(toArgs());
-    return inst._impl.open().then(() => inst);
+    await inst._impl.open();
+    return inst;
   }
 
   constructor(args) {
@@ -502,8 +493,8 @@ class EJDB2 {
    * Closes database instance.
    * @return {Promise<void>}
    */
-  close() {
-    return this._impl.close();
+  async close() {
+    return await this._impl.close();
   }
 
   /**
@@ -515,11 +506,11 @@ class EJDB2 {
    * @param {number} [id]
    * @returns {Promise<number>}
    */
-  put(collection, json, id) {
+  async put(collection, json, id) {
     if (typeof json !== "string") {
       json = JSON.stringify(json);
     }
-    return this._impl.put(collection, json, id);
+    return await this._impl.put(collection, json, id);
   }
 
   /**
@@ -530,8 +521,8 @@ class EJDB2 {
    * @param {number} id
    * @return {Promise<void>}
    */
-  patch(collection, json, id) {
-    return this._impl.patch(collection, json, id);
+  async patch(collection, json, id) {
+    return await this._impl.patch(collection, json, id);
   }
 
   /**
@@ -543,8 +534,8 @@ class EJDB2 {
    * @param {number} id
    * @return {Promise<void>}
    */
-  patchOrPut(collection, json, id) {
-    return this._impl.patch_or_put(collection, json, id);
+  async patchOrPut(collection, json, id) {
+    return await this._impl.patch_or_put(collection, json, id);
   }
 
   /**
@@ -554,8 +545,8 @@ class EJDB2 {
    * @param {number} id
    * @return {Promise<object>} JSON object
    */
-  get(collection, id) {
-    return this._impl.get(collection, id).then((raw) => JSON.parse(raw));
+  async get(collection, id) {
+    return JSON.parse(await this._impl.get(collection, id));
   }
 
   /**
@@ -566,14 +557,15 @@ class EJDB2 {
    * @param {number} id
    * @return {Promise<object|null>} JSON object
    */
-  getOrNull(collection, id) {
-    return this.get(collection, id).catch((err) => {
+  async getOrNull(collection, id) {
+    try {
+      return await this.get(collection, id);
+    } catch (err) {
       if (JBE.isNotFound(err)) {
         return null;
-      } else {
-        return Promise.reject(err);
       }
-    });
+      throw err;
+    }
   }
 
   /**
@@ -581,8 +573,8 @@ class EJDB2 {
    *
    * @return {Promise<object>}
    */
-  info() {
-    return this._impl.info().then((raw) => JSON.parse(raw));
+  async info() {
+    return JSON.parse(await this._impl.info());
   }
 
   /**
@@ -592,8 +584,8 @@ class EJDB2 {
    * @param {number} id
    * @return {Promise<void>}
    */
-  del(collection, id) {
-    return this._impl.del(collection, id);
+  async del(collection, id) {
+    return await this._impl.del(collection, id);
   }
 
   /**
@@ -603,8 +595,8 @@ class EJDB2 {
    * @param {String} newCollectionName New name of collection
    * @return {Promise<void>}
    */
-  renameCollection(oldCollectionName, newCollectionName) {
-    return this._impl.rename_collection(oldCollectionName, newCollectionName);
+  async renameCollection(oldCollectionName, newCollectionName) {
+    return await this._impl.rename_collection(oldCollectionName, newCollectionName);
   }
 
   /**
@@ -615,8 +607,8 @@ class EJDB2 {
    * @param {boolean} [unique=false]
    * @return {Promise<void>}
    */
-  ensureStringIndex(collection, path, unique) {
-    return this._impl.index(collection, path, 0x04 | (unique ? 0x01 : 0), false);
+  async ensureStringIndex(collection, path, unique) {
+    return await this._impl.index(collection, path, 0x04 | (unique ? 0x01 : 0), false);
   }
 
   /**
@@ -627,8 +619,8 @@ class EJDB2 {
    * @param {boolean} [unique=false]
    * @return {Promise<void>}
    */
-  removeStringIndex(collection, path, unique) {
-    return this._impl.index(collection, path, 0x04 | (unique ? 0x01 : 0), true);
+  async removeStringIndex(collection, path, unique) {
+    return await this._impl.index(collection, path, 0x04 | (unique ? 0x01 : 0), true);
   }
 
   /**
@@ -639,8 +631,8 @@ class EJDB2 {
    * @param {boolean} [unique=false]
    * @return {Promise<void>}
    */
-  ensureIntIndex(collection, path, unique) {
-    return this._impl.index(collection, path, 0x08 | (unique ? 0x01 : 0), false);
+  async ensureIntIndex(collection, path, unique) {
+    return await this._impl.index(collection, path, 0x08 | (unique ? 0x01 : 0), false);
   }
 
   /**
@@ -651,8 +643,8 @@ class EJDB2 {
    * @param {boolean} [unique=false]
    * @return {Promise<void>}
    */
-  removeIntIndex(collection, path, unique) {
-    return this._impl.index(collection, path, 0x08 | (unique ? 0x01 : 0), true);
+  async removeIntIndex(collection, path, unique) {
+    return await this._impl.index(collection, path, 0x08 | (unique ? 0x01 : 0), true);
   }
 
   /**
@@ -663,8 +655,8 @@ class EJDB2 {
    * @param {boolean} [unique=false]
    * @return {Promise<void>}
    */
-  ensureFloatIndex(collection, path, unique) {
-    return this._impl.index(collection, path, 0x10 | (unique ? 0x01 : 0), false);
+  async ensureFloatIndex(collection, path, unique) {
+    return await this._impl.index(collection, path, 0x10 | (unique ? 0x01 : 0), false);
   }
 
   /**
@@ -675,8 +667,8 @@ class EJDB2 {
    * @param {boolean} [unique=false]
    * @return {Promise<void>}
    */
-  removeFloatIndex(collection, path, unique) {
-    return this._impl.index(collection, path, 0x10 | (unique ? 0x01 : 0), true);
+  async removeFloatIndex(collection, path, unique) {
+    return await this._impl.index(collection, path, 0x10 | (unique ? 0x01 : 0), true);
   }
 
   /**
@@ -685,8 +677,8 @@ class EJDB2 {
    * @param {String} collection
    * @return {Promise<void>}
    */
-  removeCollection(collection) {
-    return this._impl.rmcoll(collection);
+  async removeCollection(collection) {
+    return await this._impl.rmcoll(collection);
   }
 
   /**
@@ -711,12 +703,12 @@ class EJDB2 {
    * @param {String} fileName Backup image file path.
    * @returns {Promise<number>}
    */
-  onlineBackup(fileName) {
-    return this._impl.online_backup(fileName);
+  async onlineBackup(fileName) {
+    return await this._impl.online_backup(fileName);
   }
 }
 
-module.exports = {
+export {
   EJDB2,
   JBE,
 };

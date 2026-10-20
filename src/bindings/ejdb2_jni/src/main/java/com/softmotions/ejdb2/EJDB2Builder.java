@@ -85,6 +85,11 @@ public class EJDB2Builder implements Serializable {
     return this;
   }
 
+  /**
+   * Enable CRC-32C checksums of WAL records.
+   *
+   * @param v `true` to enable WAL record checksums
+   */
   public EJDB2Builder walCRCOnCheckpoint(boolean v) {
     iwkv.walCRCOnCheckpoint(v);
     return this;

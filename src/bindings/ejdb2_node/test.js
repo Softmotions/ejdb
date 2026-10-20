@@ -24,9 +24,9 @@
  * SOFTWARE.
  *************************************************************************************************/
 
-const test = require('ava');
-const { assert } = require('chai');
-const { EJDB2, JBE } = require('./index');
+import test from 'ava';
+import { assert } from 'chai';
+import { EJDB2, JBE } from './index.js';
 
 test('Main', async (t) => {
   const db = await EJDB2.open('hello.db', { truncate: true });

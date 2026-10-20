@@ -30,27 +30,49 @@ public static void main(String[] args) {
 - Linux x64
 - MacOS
 
-## Install from Ubuntu PPA
+## Prerequisites
 
-```sh
-sudo add-apt-repository ppa:adamansky/ejdb2
-sudo apt-get update
-sudo apt-get install ejdb2-java
-```
+- JDK 11 or newer (`JAVA_HOME`/`JDK_HOME` is auto-detected)
+- C compiler (gcc or clang), make, pkgconf
+- git (used by Autark to fetch dependencies on the first build)
 
-Note: Yoy may need to specify `LD_LIBRARY_PATH` env for `java` in order to help JVM find where
-the `libejdb2jni.so` library is located. For Linux systems `ejdb2-java` PPA debian package installs
-shared library symlink to `/usr/java/packages/lib` folder listed as default library search
-path for JVM so you can skip specifying `LD_LIBRARY_PATH` in that case.
+The project is built by [Autark](https://github.com/Softmotions/autark), which is
+vendored as `./build.sh`; no separate build system installation is required.
 
 ## How to build it manually
 
 ```sh
 git clone https://github.com/Softmotions/ejdb.git
 cd ./ejdb
-mkdir ./build && cd build
-cmake .. -DBUILD_JNI_BINDING=ON -DCMAKE_BUILD_TYPE=Release
-make
+
+# Build the JNI library and the Java jar (Release build by default)
+./build.sh -DBUILD_BINDING_JNI=1
+
+# Debug build
+CC=clang BUILD_TYPE=Debug ./build.sh -DBUILD_BINDING_JNI=1
+
+# Build and run the test suites (Java test plus the C test suites)
+./build.sh -DBUILD_BINDING_JNI=1 -DEJDB_RUN_TESTS=1
 ```
+
+If the JDK is not detected automatically, point Autark to it explicitly:
+
+```sh
+JAVA_HOME=/path/to/jdk ./build.sh -DBUILD_BINDING_JNI=1
+```
+
+The build artifacts are placed into `autark-cache/src/bindings/ejdb2_jni/`:
+`ejdb2-<version>.jar`, `ejdb2-<version>-sources.jar` and the native
+`libejdb2jni.so.<version>` (`.dylib` on macOS).
+
+To run the JNI test manually:
+
+```sh
+cd autark-cache/src/bindings/ejdb2_jni
+java -ea -Djava.library.path=. \
+  -cp ejdb2-<version>.jar:./test-classes com.softmotions.ejdb2.TestEJDB2
+```
+
+Use `./build.sh -c` for a clean build and `./build.sh --help` to list all options.
 
 [Sample EJDB2 java project](./example)

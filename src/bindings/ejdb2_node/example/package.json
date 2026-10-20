@@ -4,14 +4,15 @@
   "main": "index.js",
   "description": "EJDB2 TypeScript example project",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "tsc && node index.js"
   },
   "dependencies": {
-    "ejdb2_node": "^1.0.23",
-    "typescript": "^3.5.2"
+    "ejdb2_node": "^2.74.11",
+    "typescript": "^7.0.2"
   },
   "devDependencies": {
-    "@types/node": "^12.12.5"
+    "@types/node": "^26.6.5"
   }
 }

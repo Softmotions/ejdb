@@ -24,13 +24,18 @@
  * SOFTWARE.
  *************************************************************************************************/
 
-const path = require('path');
-const utils = require('./utils');
+import { createRequire } from "node:module";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { binariesDir } from "./utils.js";
+
+const require = createRequire(import.meta.url);
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /*
  * Load native library with specified name.
  */
-module.exports = function (name) {
-  const file = path.join(__dirname, utils.binariesDir, name);
+export default function (name) {
+  const file = path.join(dirname, binariesDir, name);
   return require(file);
-};
+}

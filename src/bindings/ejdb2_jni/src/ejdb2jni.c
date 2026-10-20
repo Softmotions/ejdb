@@ -232,7 +232,9 @@ JNIEXPORT void JNICALL Java_com_softmotions_ejdb2_EJDB2__1open(
   walClazz = e->GetObjectClass(env, wal);
 
   JBNFIELD2(fid, env, walClazz, "check_crc_on_checkpoint", "Z", finish);
-  opts.kv.wal.check_crc_on_checkpoint = e->GetBooleanField(env, wal, fid);
+  // iowow v1.7 replaced `check_crc_on_checkpoint` with `no_crc`:
+  // CRC-32C checksums of WAL records are enabled by default.
+  opts.kv.wal.no_crc = !e->GetBooleanField(env, wal, fid);
 
   JBNFIELD2(fid, env, walClazz, "savepoint_timeout_sec", "I", finish);
   opts.kv.wal.savepoint_timeout_sec = (uint32_t) e->GetIntField(env, wal, fid);

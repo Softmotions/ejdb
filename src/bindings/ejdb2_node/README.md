@@ -1,6 +1,6 @@
 # EJDB2 Node.js native binding
 
-Embeddable JSON Database engine http://ejdb.org Node.js binding.
+Embeddable JSON Database engine Node.js binding.
 
 See https://github.com/Softmotions/ejdb/blob/master/README.md
 
@@ -39,20 +39,39 @@ run();
 
 ## Prerequisites
 
-- node >= v10.0.0
-- yarn
-- CMake >= v3.10
-- Make
-- gcc or clang compiler
+- Node.js >= v16.0.0 (the package is ESM-only)
+- npm
+- C compiler (gcc or clang), make, pkgconf
+- git (used by Autark to fetch dependencies on the first build)
 
-## How build it manually
+The project is built by [Autark](https://github.com/Softmotions/autark), which is
+vendored as `./build.sh`; no separate build system installation is required.
+
+## Building from source
 
 ```sh
 git clone https://github.com/Softmotions/ejdb.git
 cd ./ejdb
-mkdir ./build && cd build
-cmake .. -DBUILD_NODEJS_BINDING=ON -DCMAKE_BUILD_TYPE=Release
-make
-cd src/bindings/ejdb2_node/ejdb2_node
-yarn pack
+
+# Build the native addon (Release build by default)
+./build.sh -DBUILD_BINDING_NODEJS=1
+
+# Debug build
+CC=clang BUILD_TYPE=Debug ./build.sh -DBUILD_BINDING_NODEJS=1
+
+# Build and run the Node.js test suite (also runs the C test suites)
+./build.sh -DBUILD_BINDING_NODEJS=1 -DEJDB_RUN_TESTS=1
 ```
+
+The build artifacts are placed into
+`autark-cache/src/bindings/ejdb2_node/ejdb2_node/`. The native addon is located at
+`autark-cache/src/bindings/ejdb2_node/ejdb2_node/<platform>-<arch>/ejdb2_node.node`.
+
+To create a redistributable npm package:
+
+```sh
+cd autark-cache/src/bindings/ejdb2_node/ejdb2_node
+npm pack
+```
+
+Use `./build.sh -c` for a clean build and `./build.sh --help` to list all options.

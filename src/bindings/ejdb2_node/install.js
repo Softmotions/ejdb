@@ -24,16 +24,16 @@
  * SOFTWARE.
  *************************************************************************************************/
 
-const { promisify } = require("util");
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const rimraf = promisify(require("rimraf"));
-const extract = require("extract-zip");
-const readdir = promisify(fs.readdir);
+import { access, mkdtemp, readdir, rm } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import extract from "extract-zip";
+import { binariesDir, download, runProcess } from "./utils.js";
 
-const utils = require("./utils");
-const REVISION = require("./package.json")["revision"];
+const REVISION = createRequire(import.meta.url)("./package.json").revision;
+const moduleDir = dirname(fileURLToPath(import.meta.url));
 
 function hasRevision() {
   return REVISION && REVISION.length && REVISION != "@META_REVISION@";
@@ -41,24 +41,35 @@ function hasRevision() {
 
 async function install() {
   console.log("Building EJDB2 native binding...");
-  const wdir = await promisify(fs.mkdtemp)(path.join(os.tmpdir(), "ejdb2-node"));
+  const wdir = await mkdtemp(join(tmpdir(), "ejdb2-node"));
   console.log(`Git revision: ${REVISION}`);
   console.log(`Build temp dir: ${wdir}`);
 
-  let dist = path.join(wdir, "dist.zip");
-  await utils.download(`https://github.com/Softmotions/ejdb/archive/${REVISION}.zip`, dist);
+  let dist = join(wdir, "dist.zip");
+  await download(`https://github.com/Softmotions/ejdb/archive/${REVISION}.zip`, dist);
   await extract(dist, { dir: wdir });
 
   dist = (await readdir(wdir)).find((fn) => fn.startsWith(`ejdb-${REVISION}`));
   if (dist == null) throw Error(`Invalid distrib dir ${wdir}`);
-  dist = path.join(wdir, dist);
+  dist = join(wdir, dist);
 
-  await utils.runProcess(
+  await runProcess(
     "build.sh",
-    ["-DBUILD_TYPE=Release", "-DBUILD_BINDING_NODEJS=1", `-DEJDB_NODE_BIN_ROOT=${__dirname}`],
+    ["-DBUILD_TYPE=Release", "-DBUILD_BINDING_NODEJS=1", `-DEJDB_NODE_BIN_ROOT=${moduleDir}`],
     dist
   );
-  await rimraf(wdir);
+  await rm(wdir, { recursive: true, force: true });
+}
+
+async function main() {
+  if (!hasRevision()) {
+    return;
+  }
+  try {
+    await access(join(binariesDir, "ejdb2_node.node"));
+  } catch {
+    await install();
+  }
 }
 
 if (process.platform.toLowerCase().indexOf("win") == 0) {
@@ -67,9 +78,7 @@ if (process.platform.toLowerCase().indexOf("win") == 0) {
   process.exit(1);
 }
 
-if (hasRevision() && !fs.existsSync(path.join(utils.binariesDir, "ejdb2_node.node"))) {
-  install().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
-}
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

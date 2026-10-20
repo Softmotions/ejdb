@@ -35,7 +35,10 @@ cc {
 }
 
 if { !defined { SYSTEM_DARWIN }
-  set { NODE_LDFLAGS -rdynamic -Wl,--unresolved-symbols=ignore-all }
+# `-z nodelete` keeps the addon mapped until the process exits.
+# iowow registers a pthread TSD destructor used by libuv worker threads;
+# unmapping the addon at exit makes those destructors dangle.
+  set { NODE_LDFLAGS -rdynamic -Wl,--unresolved-symbols=ignore-all -Wl,-z,nodelete }
 } else {
   set { NODE_LDFLAGS -rdynamic -undefined dynamic_lookup }
 }

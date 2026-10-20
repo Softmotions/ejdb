@@ -485,6 +485,8 @@ static napi_value jn_ejdb2impl_ctor(napi_env env, napi_callback_info info) {
   // opts.kv.oflags                       // non null
   // opts.kv.wal.enabled                  // non null
   // opts.kv.wal.check_crc_on_checkpoint
+  // iowow v1.7 replaced `check_crc_on_checkpoint` with `no_crc`:
+  // CRC-32C checksums of WAL records are enabled by default.
   // opts.kv.wal.checkpoint_buffer_sz
   // opts.kv.wal.checkpoint_timeout_sec
   // opts.kv.wal.savepoint_timeout_sec
@@ -505,7 +507,7 @@ static napi_value jn_ejdb2impl_ctor(napi_env env, napi_callback_info info) {
   RCGO(rc, finish);
   jbn->opts.kv.wal.enabled = jn_bool_at(env, varr, false, false, argc++, &rc);
   RCGO(rc, finish);
-  jbn->opts.kv.wal.check_crc_on_checkpoint = jn_bool_at(env, varr, true, true, argc++, &rc);
+  jbn->opts.kv.wal.no_crc = !jn_bool_at(env, varr, true, true, argc++, &rc);
   RCGO(rc, finish);
   jbn->opts.kv.wal.checkpoint_buffer_sz = jn_int_at(env, varr, true, false, argc++, &rc);
   RCGO(rc, finish);

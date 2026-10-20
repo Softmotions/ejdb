@@ -1,4 +1,4 @@
-# `iwtests.h` — a minimal C11 test harness
+# `iwtests.h` a minimal C11 test harness
 
 `iwtests.h` is a single header test harness for `C11` projects. It provides
 assertions, a test case runner, case selection from the command line and a

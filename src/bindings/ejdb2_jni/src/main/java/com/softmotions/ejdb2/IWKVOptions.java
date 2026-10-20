@@ -104,6 +104,10 @@ public final class IWKVOptions implements Serializable {
 
     private static final long serialVersionUID = 2406233154956721582L;
 
+    /**
+     * Enable CRC-32C checksums of WAL records.
+     * Backed by `iwkv_wal_opts::no_crc` (inverted) in iowow v1.7+.
+     */
     private boolean check_crc_on_checkpoint;
     private int savepoint_timeout_sec;
     private int checkpoint_timeout_sec;

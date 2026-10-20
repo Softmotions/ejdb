@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "moduleResolution": "node",
-    "module": "commonjs",
+    "target": "es2022",
+    "moduleResolution": "nodenext",
+    "module": "nodenext",
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
@@ -14,9 +14,8 @@
     "declaration": false,
     "pretty": true,
     "lib": [
-      "es6"
-    ],
-    "baseUrl": "."
+      "es2022"
+    ]
   },
   "exclude": [
     "node_modules/**",
