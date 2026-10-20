@@ -21,7 +21,7 @@ static int _usage(const char *err) {
   if (err) {
     fprintf(stderr, "\n%s\n", err);
   }
-  fprintf(stderr, "\n\tEJDB " EJDB2_VERSION " HTTP REST/Websocket server. http://ejdb.org\n");
+  fprintf(stderr, "\n\tEJDB " EJDB2_VERSION " HTTP REST/Websocket server. https://github.com/Softmotions/ejdb\n");
   fprintf(stderr, "\nUsage:\n\n  %s [options]\n\n", env.program);
   fprintf(stderr, "\t-v, --version            Print program version.\n");
   fprintf(stderr, "\t-f, --file=<>            Database file path. Default: ejdb2.db\n");

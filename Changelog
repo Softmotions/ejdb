@@ -1,3 +1,6 @@
+2026-10-20 Anton Adamansky  <adamansky@gmail.com>  [v2.94-dev]
+  * Fixed broken ejdb.org link in project sources
+
 2026-10-20 Anton Adamansky  <adamansky@gmail.com>  [v2.93]
   * ejdb2_node,ejdb2_jni: Modernized and tested. 
   * Migrated to iowow v1.7.0, iwnet v1.4.0
