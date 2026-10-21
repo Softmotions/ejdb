@@ -2,10 +2,12 @@
 # ABI with the Android NDK toolchain.
 #
 # This script is included by src/bindings/Autark when BUILD_BINDING_ANDROID is
-# enabled; it is not a standalone Autark project.  Each ABI is built in its own
-# cache directory (see scripts/build-abi.sh) and the resulting
-# libejdb2jni.so is staged into the `jniLibs` directory of the Gradle test
-# project.  See README.md for the details.
+# enabled; it is not a standalone Autark project.  Each ABI is built as a cross
+# build of the regular ejdb2 build in its own cache directory, with the NDK
+# toolchain descriptor `toolchains/android-<abi>.autark` of this directory (see
+# scripts/build-abi.sh).  The resulting libejdb2jni.so is staged into the
+# `jniLibs` directory of the Gradle test project.  See README.md for the
+# details.
 
 if { !defined { ANDROID_ABIS }
   error { ejdb2_android/Autark is included by the ejdb2 build, use: ./build.sh -DBUILD_BINDING_ANDROID=1 }

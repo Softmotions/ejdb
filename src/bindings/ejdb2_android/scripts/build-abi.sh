@@ -1,10 +1,13 @@
 #!/bin/sh
 # Cross builds the ejdb2 JNI binding for a single Android ABI.
 #
-# The build itself is the regular ejdb2 Autark build executed with a separate
-# cache directory and with CC pointing at scripts/ndk-cc.sh, which forwards
-# compilation to the NDK toolchain of the target ABI.  HTTP/WebSocket server
-# support is disabled for the Android build (src/jbr is not built).
+# The build itself is the regular ejdb2 Autark build, executed as a cross build
+# in a per-ABI cache directory with the NDK toolchain descriptor
+# `toolchains/android-<abi>.autark` (Autark `--toolchain` option).  Target facts
+# (SYSTEM_*, CC, AR, sysroot) are declared by that descriptor instead of being
+# probed on the build host, and build tools (the PEG `leg` generator) are built
+# by the build host toolchain.  HTTP/WebSocket server support is disabled for the
+# Android build (src/jbr is not built).
 #
 # Usage: build-abi.sh <abi> <api-level>
 #
@@ -44,29 +47,31 @@ EJDB_CACHE="${AUTARK_CACHE_DIR:-$EJDB_ROOT/autark-cache}"
 AUTARK="${AUTARK:-autark}"
 BUILD_TYPE="${ANDROID_BUILD_TYPE:-Release}"
 JNILIBS_DIR="${EJDB_ANDROID_JNILIBS_DIR:-$EJDB_ROOT/src/bindings/ejdb2_android/test/ejdb2/src/main/jniLibs}"
+TOOLCHAIN="$SCRIPT_DIR/../toolchains/android-$ABI.autark"
 
 case "$ABI" in
   armeabi-v7a)
     TRIPLE=armv7a-linux-androideabi
-    BITS=32
     ;;
   arm64-v8a)
     TRIPLE=aarch64-linux-android
-    BITS=64
     ;;
   x86)
     TRIPLE=i686-linux-android
-    BITS=32
     ;;
   x86_64)
     TRIPLE=x86_64-linux-android
-    BITS=64
     ;;
   *)
     echo "build-abi.sh: unsupported Android ABI '$ABI'" >&2
     usage
     ;;
 esac
+
+if [ ! -f "$TOOLCHAIN" ]; then
+  echo "build-abi.sh: toolchain descriptor not found: $TOOLCHAIN" >&2
+  exit 1
+fi
 
 case "$API" in
   ''|*[!0-9]*)
@@ -75,9 +80,7 @@ case "$API" in
     ;;
 esac
 
-# iowow relies on bionic pthread spinlocks and its own fallback shim conflicts
-# with the `pthread_spinlock_t` declaration of modern bionic, so API >= 24 is
-# required.
+# iowow relies on bionic pthread spinlocks, they are available since API 24.
 if [ "$API" -lt 24 ]; then
   echo "build-abi.sh: Android API level must be >= 24, got '$API'" >&2
   exit 1
@@ -112,8 +115,10 @@ case "$(uname -s)-$(uname -m)" in
     ;;
 esac
 
-NDK_BIN="$NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin"
-NDK_CC="$NDK_BIN/$TRIPLE$API-clang"
+NDK_PREBUILT="$NDK/toolchains/llvm/prebuilt/$HOST_TAG"
+ANDROID_NDK_BIN="$NDK_PREBUILT/bin"
+ANDROID_NDK_SYSROOT="$NDK_PREBUILT/sysroot"
+NDK_CC="$ANDROID_NDK_BIN/$TRIPLE$API-clang"
 
 if [ ! -x "$NDK_CC" ]; then
   echo "build-abi.sh: target compiler not found: $NDK_CC" >&2
@@ -124,24 +129,18 @@ fi
 CACHE="$EJDB_CACHE/android-$ABI"
 
 echo "Android $ABI (API $API), build type: $BUILD_TYPE"
-echo "  NDK:   $NDK"
-echo "  cache: $CACHE"
+echo "  NDK:       $NDK"
+echo "  toolchain: $TOOLCHAIN"
+echo "  cache:     $CACHE"
 
-# Cross compilation environment for the whole Autark build, including the
-# nested builds of the dependencies (binnc, iowow, peg).
-CC="$SCRIPT_DIR/ndk-cc.sh"
-ANDROID_NDK_CC="$NDK_CC"
-ANDROID_TARGET_BITS="$BITS"
-ANDROID_HOST_DIRS="$CACHE/extern_peg"
-ANDROID_EXTRA_CFLAGS="-DPTHREAD_SPIN_LOCK_SHIM"
-AR="$NDK_BIN/llvm-ar"
-RANLIB="$NDK_BIN/llvm-ranlib"
-# iowow links against liblog on Android, see its build rules.
-SYSTEM_ANDROID=1
-export CC ANDROID_NDK_CC ANDROID_TARGET_BITS ANDROID_HOST_DIRS \
-  ANDROID_EXTRA_CFLAGS AR RANLIB SYSTEM_ANDROID
+# NDK layout facts for the toolchain descriptor.  Autark variables are not
+# exported to check scripts, the descriptor reads them from the environment.
+export ANDROID_NDK_BIN ANDROID_NDK_SYSROOT
+ANDROID_NDK_API_LEVEL="$API"
+export ANDROID_NDK_API_LEVEL
 
 "$AUTARK" -H "$CACHE" \
+  --toolchain "$TOOLCHAIN" \
   -DBUILD_TYPE="$BUILD_TYPE" \
   -DEJDB_ENABLE_HTTP=0 \
   -DEJDB_BUILD_TESTS=0 \

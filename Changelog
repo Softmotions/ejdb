@@ -1,4 +1,5 @@
-2026-10-20 Anton Adamansky  <adamansky@gmail.com>  [v2.94-dev]
+2026-10-20 Anton Adamansky  <adamansky@gmail.com>  [v2.94]
+  * ejdb2_android: Modernized and tested.
   * Fixed broken ejdb.org link in project sources
 
 2026-10-20 Anton Adamansky  <adamansky@gmail.com>  [v2.93]

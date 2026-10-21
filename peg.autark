@@ -24,7 +24,11 @@ set {
   C{bin/peg}
 }
 
+# `leg`/`peg` are build tools: they are executed by the build to generate the
+# JQL parser, so they must be compiled by the build host compiler even when the
+# project itself is cross compiled (see `--toolchain`).
 run {
+  host
   shell {
     cd ${PEG_SRC_DIR}
     &&
