@@ -1,0 +1,10 @@
+# Gradle/Android build outputs
+.gradle/
+build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Native libraries produced by `./build.sh -DBUILD_BINDING_ANDROID=1`
+ejdb2/src/main/jniLibs/

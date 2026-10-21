@@ -1,0 +1,2 @@
+# Native libraries and build outputs of the Autark cross build
+/test/ejdb2/src/main/jniLibs/

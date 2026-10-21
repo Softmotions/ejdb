@@ -1,0 +1,40 @@
+# iowow dependency of the ejdb2 core.
+#
+# iowow is normally built as a dependency of iwnet (which ejdb2 links against
+# when the HTTP/WebSocket server is enabled).  This include is used for builds
+# without HTTP support, where ejdb2 depends on iowow directly.
+
+option { IOWOW_URL  iowow external project sources URL }
+
+if { !defined { IOWOW_URL }
+  set {
+    IOWOW_URL
+    https://github.com/Softmotions/iowow/archive/refs/tags/v1.7.0.zip
+  }
+}
+
+check {
+  fetch_resource.sh { fetch-url{${IOWOW_URL}} C{extern_iowow} IOWOW_SRC_DIR }
+}
+
+run {
+  shell { ^{BUILD_TYPE= ${BUILD_TYPE}} autark --prefix C{} ${IOWOW_SRC_DIR} }
+  consumes {
+    ${IOWOW_SRC_DIR}
+  }
+  produces {
+    C{include/iowow/iowow.h}
+  }
+}
+
+run-on-install {
+  shell {
+    autark -J1 --prefix ${INSTALL_PREFIX}
+    set { _
+      if { ${EJDB_BUILD_SHARED_LIBS}
+        -DIOWOW_BUILD_SHARED_LIBS=1
+      }
+    }
+    ${IOWOW_SRC_DIR}
+  }
+}

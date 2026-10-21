@@ -1,6 +1,0 @@
-!/gradle/wrapper/gradle-wrapper.jar
-.gradle
-.DS_Store
-/build
-/captures
-.externalNativeBuild

@@ -1,0 +1,52 @@
+plugins {
+  id 'com.android.library'
+}
+
+// The public API of the Android binding is the API of the JNI binding, compiled
+// from the same sources.
+def ejdb2JniJavaDir = file("$projectDir/../../../ejdb2_jni/src/main/java")
+
+android {
+  namespace = 'com.softmotions.ejdb2_android'
+  compileSdk = 36
+
+  defaultConfig {
+    minSdk = 24
+    targetSdk = 36
+    versionCode = 1
+    versionName = "1.0"
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+  }
+
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+  }
+
+  sourceSets {
+    main {
+      java.srcDirs += [ejdb2JniJavaDir]
+    }
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled = false
+    }
+  }
+
+  // libejdb2jni.so for every built ABI is staged into src/main/jniLibs by
+  // `./build.sh -DBUILD_BINDING_ANDROID=1` and packaged from there.
+  packaging {
+    jniLibs {
+      useLegacyPackaging = false
+    }
+  }
+}
+
+dependencies {
+  androidTestImplementation "junit:junit:4.13.2"
+  androidTestImplementation "androidx.test:runner:1.6.2"
+  androidTestImplementation "androidx.test:rules:1.6.1"
+  androidTestImplementation "androidx.test.ext:junit:1.2.1"
+}

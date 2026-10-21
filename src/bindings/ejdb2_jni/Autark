@@ -67,6 +67,16 @@ cc {
   }
 }
 
+# JNI entry points are resolved by the JNI runtime when the library is loaded.
+# A desktop JVM provides them from libjvm, Android from the runtime itself (no
+# libjvm exists there).
+if { !defined { SYSTEM_ANDROID }
+  set {
+    JNI_LINK_FLAGS
+    ${JNI_LDFLAGS}
+  }
+}
+
 if { !defined { SYSTEM_DARWIN }
   set {
     LIBEJDB_SO_BASE
@@ -84,7 +94,7 @@ if { !defined { SYSTEM_DARWIN }
   run {
     exec { 
       ${CC} -shared -o ${LIBEJDB_SO_BIN} ${CC_OBJS}
-      ${LIBEJDB_A} ${LDFLAGS} ${JNI_LDFLAGS}
+      ${LIBEJDB_A} ${LDFLAGS} ${JNI_LINK_FLAGS}
     }
     if { ${STRIP_CMD} 
       exec { ${STRIP_CMD} ${LIBEJDB_SO_BIN} }
@@ -116,7 +126,7 @@ if { !defined { SYSTEM_DARWIN }
       -install_name ^{@rpath/ ${LIBEJDB_SO_BASE}} 
       -compatibility_version ${META_VERSION_MAJOR}
       -current_version ^{${META_VERSION} . ${EJDB_JNI_VERSION}}
-      -o ${LIBEJDB_SO_BIN} ${CC_OBJS} ${LIBEJDB_A} ${LDFLAGS} ${JNI_LDFLAGS}
+      -o ${LIBEJDB_SO_BIN} ${CC_OBJS} ${LIBEJDB_A} ${LDFLAGS} ${JNI_LINK_FLAGS}
     }
     if { ${STRIP_CMD} 
       exec { ${STRIP_CMD} ${LIBEJDB_SO_BIN} }

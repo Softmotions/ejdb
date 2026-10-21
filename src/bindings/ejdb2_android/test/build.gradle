@@ -1,0 +1,16 @@
+// Root build file of the ejdb2 Android binding test project.
+//
+// The native library (jniLibs/<abi>/libejdb2jni.so) is cross compiled by the
+// ejdb2 Autark build from the repository root:
+//
+//   ./build.sh -DBUILD_BINDING_ANDROID=1
+//
+// See ../README.md.
+
+plugins {
+  id 'com.android.library' version '9.4.1' apply false
+}
+
+tasks.register("clean", Delete) {
+  delete(rootProject.layout.buildDirectory)
+}

@@ -1,7 +1,37 @@
-if { ${BUILD_BINDING_JNI} 
+if { ${BUILD_BINDING_JNI}
   include { ejdb2_jni/Autark }
 }
 
-if { ${BUILD_BINDING_NODEJS} 
+if { ${BUILD_BINDING_NODEJS}
   include { ejdb2_node/Autark }
+}
+
+# The Android binding cross compiles the JNI binding for every requested ABI
+# with the NDK toolchain.  Each ABI is built in its own cache directory, see
+# ejdb2_android/README.md.
+if { ${BUILD_BINDING_ANDROID}
+  foreach { ANDROID_ABI ${ANDROID_ABIS}
+    run {
+      # The cross build of an ABI runs in its own cache and is incremental
+      # there, so it is requested unconditionally: changes of the ejdb2 sources
+      # are not visible as dependencies of this rule.
+      always
+      shell {
+        SS{ejdb2_android/scripts/build-abi.sh}
+        ${ANDROID_ABI}
+        ${ANDROID_API_LEVEL}
+      }
+    }
+  }
+
+  if { ${ANDROID_RUN_TESTS}
+    run {
+      always
+      shell {
+        cd SS{ejdb2_android/test}
+        &&
+        ./gradlew connectedAndroidTest
+      }
+    }
+  }
 }

@@ -26,8 +26,11 @@ set {
 
 include { jql/Autark }
 include { jbi/Autark }
-include { jbr/Autark }
-include { jbs/Autark }
+
+if { ${EJDB_ENABLE_HTTP}
+  include { jbr/Autark }
+  include { jbs/Autark }
+}
 
 cc {
   ${SOURCES}
@@ -36,7 +39,9 @@ cc {
   consumes {
     ejdb2.h
     ejdb2cfg.h
-    C{include/iwnet/iwnet.h}
+    if { ${EJDB_ENABLE_HTTP}
+      C{include/iwnet/iwnet.h}
+    }
   }
 }
 
@@ -138,9 +143,26 @@ if { ${EJDB_BUILD_TESTS}
   include { tests/Autark }
 }
 
-option { BUILD_BINDING_JNI Build ejdb Java binding }
-option { BUILD_BINDING_NODEJS Build ejdb Nodejs binding }
+option { BUILD_BINDING_JNI      Build ejdb Java binding }
+option { BUILD_BINDING_NODEJS   Build ejdb Nodejs binding }
+option { BUILD_BINDING_ANDROID  Build the Android (NDK) native libraries of the Java binding }
+option { ANDROID_ABIS           Android ABIs to build. Default: arm64-v8a x86_64 }
+option { ANDROID_API_LEVEL      Android API level of the Android binding. Default: 24 }
+option { ANDROID_BUILD_TYPE     Build type of the Android native code. Default: Release }
+option { ANDROID_RUN_TESTS      Run the Android instrumentation tests (requires a device/emulator) }
 
-if { or { ${BUILD_BINDING_JNI} ${BUILD_BINDING_NODEJS} } 
+if { ${BUILD_BINDING_ANDROID}
+  if { !defined { ANDROID_ABIS}
+    set { ANDROID_ABIS arm64-v8a x86_64 }
+  }
+  if { !defined { ANDROID_API_LEVEL}
+    set { ANDROID_API_LEVEL 24 }
+  }
+  if { !defined { ANDROID_BUILD_TYPE}
+    set { ANDROID_BUILD_TYPE Release }
+  }
+}
+
+if { or { ${BUILD_BINDING_JNI} ${BUILD_BINDING_NODEJS} ${BUILD_BINDING_ANDROID} }
   include { bindings/Autark }
 }

@@ -30,9 +30,9 @@
 
 //autarkdef HAVE_QSORT_R
 
-#ifndef JB_HTTP
-#define JB_HTTP
-#endif
+// HTTP/WebSocket server support (src/jbr). Enabled by the build when
+// EJDB_ENABLE_HTTP is set, see the root Autark file.
+//autarkdef JB_HTTP
 
 #define EJDB2_GIT_REVISION  "@META_REVISION@"
 #define EJDB2_VERSION       "@META_VERSION@"

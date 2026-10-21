@@ -29,6 +29,7 @@ public static void main(String[] args) {
 
 - Linux x64
 - MacOS
+- Android (see the [Android binding](../ejdb2_android/README.md))
 
 ## Prerequisites
 

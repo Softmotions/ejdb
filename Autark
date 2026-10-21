@@ -24,6 +24,7 @@ option { IWNET_URL                IWNET external project sources URL }
 option { EJDB_BUILD_SHARED_LIBS   Build shared libraries }
 option { EJDB_BUILD_TESTS         Build test cases }
 option { EJDB_RUN_TESTS           Build and run test cases }
+option { EJDB_ENABLE_HTTP         Build the HTTP/WebSocket server (src/jbr, requires iwnet). Default: 1 }
 option { ENABLE_ASAN              Turn on address sanitizer }
 option { ENABLE_UBSAN             Turn on UB sanitizer }
 option { ENABLE_DEBINFO           Generate debuginfo even in release mode }
@@ -34,6 +35,20 @@ set {
 }
 
 include { peg.autark }
+
+if { !defined { EJDB_ENABLE_HTTP }
+  set {
+    EJDB_ENABLE_HTTP 1
+  }
+}
+
+# Guards the HTTP/WebSocket server in the ejdb2 core (see src/ejdb2cfg.h.in and
+# src/Autark).  Disabled for the Android build, where iwnet is not available.
+if { ${EJDB_ENABLE_HTTP}
+  set {
+    JB_HTTP 1
+  }
+}
 
 if { ${EJDB_RUN_TESTS}
   set {
@@ -76,30 +91,10 @@ if { !defined { PTHREAD_LFLAG}
   error { No pthreads found! }
 }
 
-check {
-  fetch_resource.sh { ${IWNET_URL} C{extern_iwnet} IWNET_SRC_DIR }
-}
-
-run {
-  shell { ^{BUILD_TYPE= ${BUILD_TYPE}} autark --prefix C{} ${IWNET_SRC_DIR} }
-  consumes {
-    ${IWNET_SRC_DIR}
-  }
-  produces {
-    C{include/iwnet/iwnet.h}
-  }
-}
-
-run-on-install {
-  shell {
-    autark -J1 --prefix ${INSTALL_PREFIX} 
-    set { _ 
-      if { ${EJDB_BUILD_SHARED_LIBS}
-        -DIWNET_BUILD_SHARED_LIBS=1
-      }
-    }
-    ${IWNET_SRC_DIR} 
-  }
+if { ${EJDB_ENABLE_HTTP}
+  include { iwnet.autark }
+} else {
+  include { iowow.autark }
 }
 
 set {
@@ -109,7 +104,11 @@ set {
 set {
   LDFLAGS
   ..${LDFLAGS}
-  ..@@{${PKGCONF} --libs --static libiwnet}
+  if { ${EJDB_ENABLE_HTTP}
+    ..@@{${PKGCONF} --libs --static libiwnet}
+  } else {
+    ..@@{${PKGCONF} --libs --static libiowow}
+  }
   ..${LDFLAGS_PKGCONF}
   ..${SANITIZER_FLAGS}
 }
@@ -132,7 +131,11 @@ set {
   -Wno-unused-parameter
   -Wno-overlength-strings
 
-  ..@@{${PKGCONF} --cflags libiwnet}
+  if { ${EJDB_ENABLE_HTTP}
+    ..@@{${PKGCONF} --cflags libiwnet}
+  } else {
+    ..@@{${PKGCONF} --cflags libiowow}
+  }
 
   ..${SANITIZER_FLAGS}
 
