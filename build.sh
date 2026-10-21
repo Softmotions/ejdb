@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.16
-META_REVISION=06dfe70
+META_VERSION=0.9.17
+META_REVISION=0c36cf3
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -69,8 +69,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.16"
-#define META_REVISION "06dfe70"
+#define META_VERSION "0.9.17"
+#define META_REVISION "0c36cf3"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -80,6 +80,7 @@ cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #define _DEFAULT_SOURCE
 #endif
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <dirent.h>
@@ -638,7 +639,9 @@ const char* path_join_path_pool(struct pool *pool, const char *dir, const char *
 #define AUTARK_INTERACTIVE_ENV       "AUTARK_INTERACTIVE"      // Autark is launched in interactive terminal
 #define AUTARK_INSTALL_SRC_DEPS_ENV "AUTARK_INSTALL_SRC_DEPS"   // Install src with deps.
 #define AUTARK_COMPILE_COMMANDS_ENV "AUTARK_COMPILE_COMMANDS"   // Path to compile commands file.
-#define AUTARK_VERBOSE_ENV "AUTARK_VERBOSE"                     // Autark verbose env key
+#define AUTARK_VERBOSE_ENV    "AUTARK_VERBOSE"                // Autark verbose env key
+#define AUTARK_TARGET_ENV     "AUTARK_TARGET"                 // Target toolchain id of cross build
+#define AUTARK_TOOLCHAIN_ENV  "AUTARK_TOOLCHAIN"              // Path to target toolchain descriptor
 #define UNIT_FLG_ROOT    0x01U // Project root unit
 #define UNIT_FLG_SRC_CWD 0x02U // Set project source dir as unit CWD
 #define UNIT_FLG_NO_CWD  0x04U // Do not change CWD for unit
@@ -668,6 +671,7 @@ struct unit_ctx {
   struct unit *unit;
   unsigned     flags;
 };
+struct toolchain;
 /// Global env
 struct env {
   const char  *cwd;
@@ -682,6 +686,8 @@ struct env {
     bool compile_commands;          // Generate compile_commands.json database.
     bool compile_commands_own;      // We own compile commands file.
     bool prepared;                  // Autark build prepared
+    const char *toolchain_path;     // Path to target toolchain descriptor. Can be zero.
+    struct toolchain *toolchain;    // Resolved target toolchain. Can be zero.
     struct xstr *options;           // Ask option values
   } project;
   struct {
@@ -782,6 +788,86 @@ bool fetchreg_find(struct fetchreg*, const char *url, void *user_data, void (*cb
 int fetchreg_register(struct fetchreg*, const struct fetcherg_entry*);
 void fetchreg_close(struct fetchreg*);
 #endif
+#ifndef TOOLCHAIN_H
+#define TOOLCHAIN_H
+#ifndef _AMALGAMATE_
+#include "pool.h"
+#include "ulist.h"
+#include <stdbool.h>
+#endif
+/// A single key/value pair declared by a toolchain descriptor.
+struct toolchain_var {
+  const char *key; // Normalized key name (lowercase, `-` and `.` replaced by `_`)
+  const char *var; // Published build script variable name (e.g. TOOLCHAIN_SYSROOT)
+  const char *val; // Resolved value
+};
+/// Cross compilation toolchain descriptor.
+///
+/// Descriptors are ordinary Autark DSL fragments declared as a single
+/// `toolchain { }` rule. Descriptor keys are not limited to a fixed set:
+/// every declared key is published as `TOOLCHAIN_<KEY>` (and as a process
+/// environment variable of the same name), while well known keys are also
+/// exposed under the canonical Autark names (`SYSTEM_*`, `CC`, `AR`, ...).
+struct toolchain {
+  const char *path;        // Absolute path to the descriptor file
+  const char *id;          // Target id (SYSTEM_TARGET). Defaults to the descriptor basename
+  const char *system;      // Target OS name, lowercase (SYSTEM_NAME). e.g. `linux`, `android`
+  const char *arch;        // Target CPU architecture (SYSTEM_ARCH)
+  const char *arch_alt;    // Alternative architecture name (SYSTEM_ARCH_ALT). Defaults to `arch`
+  const char *bits;        // Target bitness (SYSTEM_BITNESS_<bits>). e.g. `32`, `64`
+  const char *endian;      // Target endianness: `little` or `big`
+  const char *cc;          // Target C compiler (CC)
+  const char *cxx;         // Target C++ compiler (CXX)
+  const char *ar;          // Target archiver (AR)
+  const char *ranlib;      // Target ranlib (RANLIB)
+  const char *strip;       // Target strip (STRIP)
+  const char *pkgconf;     // Target pkg-config tool (PKGCONF)
+  const char *cflags;      // Target compiler flags (CFLAGS_TARGET)
+  const char *ldflags;     // Target linker flags (LDFLAGS_TARGET)
+  const char *host_cc;     // Host C compiler used to build build tools (HOST_CC)
+  const char *host_cxx;    // Host C++ compiler used to build build tools (HOST_CXX)
+  const char *host_ar;     // Host archiver used to build build tools (HOST_AR)
+  const char *host_cflags; // Host C compiler flags (HOST_CFLAGS)
+  const char *host_cxxflags; // Host C++ compiler flags (HOST_CXXFLAGS)
+  const char *host_ldflags; // Host linker flags (HOST_LDFLAGS)
+  const char *runner;      // Command prefix used to run target executables (emulator/adb)
+  struct ulist vars;       // All declared key/value pairs (struct toolchain_var*)
+};
+/// Object tag of build tools compiled by host-cc/host-cxx
+#define TOOLCHAIN_TAG_HOST "host"
+/// Loads and resolves the given toolchain descriptor.
+///
+/// @param pool Pool used to allocate the toolchain and its values
+/// @param path Path to the descriptor file
+///
+/// @return Resolved toolchain
+struct toolchain* toolchain_load(struct pool *pool, const char *path);
+/// Loads the toolchain descriptor selected by `--toolchain`/`AUTARK_TOOLCHAIN` (if any)
+/// and publishes its facts into the root build unit.
+void toolchain_activate(void);
+/// Publishes resolved toolchain facts into the root build unit environment
+/// and into the process environment, so check scripts and nested builds see them.
+void toolchain_apply(struct toolchain *tc);
+/// Looks up a raw descriptor value by key.
+///
+/// Key lookup is case insensitive and treats `-`, `.` and `_` as the same
+/// separator, so `host-cc`, `host_cc` and `HOST.CC` are equivalent.
+///
+/// @return Declared value or zero if the key is not declared
+const char* toolchain_var_get(struct toolchain *tc, const char *key);
+/// @return Id of the active target toolchain or zero for a native build.
+const char* toolchain_id(void);
+/// @return Tag of objects compiled in the given scope.
+///         0 for native target scope (no tagging is performed).
+const char* toolchain_object_tag(bool host_scope);
+/// Writes (or removes when `tag` is zero) the toolchain tag sidecar of an object file.
+int toolchain_object_tag_write(const char *obj_path, const char *tag);
+/// Checks that the object file belongs to the given compilation scope.
+///
+/// @return Pointer to `buf` holding the object tag on mismatch, zero if the
+///         object is compatible with the scope or carries no tag.
+const char* toolchain_object_check(const char *obj_path, bool host_scope, char *buf, size_t buflen);
+#endif
 #ifndef NODES_H
 #define NODES_H
 #ifndef _AMALGAMATE_
@@ -863,6 +949,7 @@ void autark_build_prepare(const char *script_path);
 #define NODE_TYPE_MACRO           0x800000U
 #define NODE_TYPE_CALL            0x1000000U
 #define NODE_TYPE_INSTALL_SOURCES 0x2000000U
+struct unit;
 #define NODE_FLG_BOUND 0x01U
 #define NODE_FLG_INIT  0x02U
 #define NODE_FLG_SETUP 0x04U
@@ -925,6 +1012,19 @@ struct sctx {
 };
 int script_open(const char *file, struct sctx **out);
 int script_include(struct node *parent, const char *file, struct node **out);
+/// Parses an arbitrary Autark DSL fragment (e.g. a toolchain descriptor) into a
+/// standalone script tree.
+///
+/// The tree gets its own unit created under `unit_path` in the project cache,
+/// whose source directory (`SS{}`) is the directory of the fragment file.
+/// The unit is owned by `unit_pool` (g_env.pool is used when it is zero), so
+/// destroying that pool unregisters the unit.
+int script_open_fragment(
+  const char *file,
+  const char *unit_path,
+  struct pool *unit_pool,
+  struct unit **out_unit,
+  struct sctx **out);
 void script_build(struct sctx*);
 void script_close(struct sctx**);
 void script_dump(struct sctx*, struct xstr *out);
@@ -3840,6 +3940,435 @@ void fetchreg_close(struct fetchreg *r) {
   _fetchreg_destroy(r);
 }
 #ifndef _AMALGAMATE_
+#include "toolchain.h"
+#include "script.h"
+#include "env.h"
+#include "utils.h"
+#include "xstr.h"
+#include "paths.h"
+#include "log.h"
+#include "alloc.h"
+#include <ctype.h>
+#include <errno.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#endif
+#define TOOLCHAIN_VAR_PREFIX "TOOLCHAIN_"
+/// Well known descriptor keys and the toolchain field they define.
+///
+/// Descriptor keys are not limited to this list: any other key declared by a
+/// descriptor is still published as `TOOLCHAIN_<KEY>`.
+struct _toolchain_key {
+  const char *key;   // Normalized key name
+  size_t     offset; // Offset of the target field in struct toolchain
+};
+#define TK(key__, field__) { key__, offsetof(struct toolchain, field__) }
+static const struct _toolchain_key _toolchain_keys[] = {
+  TK("id", id),
+  TK("system", system),
+  TK("os", system),
+  TK("arch", arch),
+  TK("arch_alt", arch_alt),
+  TK("archalt", arch_alt),
+  TK("bits", bits),
+  TK("bitness", bits),
+  TK("endian", endian),
+  TK("endianness", endian),
+  TK("cc", cc),
+  TK("cxx", cxx),
+  TK("ar", ar),
+  TK("ranlib", ranlib),
+  TK("strip", strip),
+  TK("pkgconf", pkgconf),
+  TK("cflags", cflags),
+  TK("ldflags", ldflags),
+  TK("host_cc", host_cc),
+  TK("host_cxx", host_cxx),
+  TK("host_ar", host_ar),
+  TK("host_cflags", host_cflags),
+  TK("host_cxxflags", host_cxxflags),
+  TK("host_ldflags", host_ldflags),
+  TK("runner", runner),
+};
+/// Normalizes a descriptor key: lowercase, `-` and `.` are treated as `_`.
+static char* _key_normalize(char *wp, size_t wp_size, const char *rp) {
+  char *ret = wp;
+  char *ep = wp + wp_size - 1;
+  for ( ; *rp && wp < ep; ++rp) {
+    char ch = (char) tolower((unsigned char) *rp);
+    if (ch == '-' || ch == '.') {
+      ch = '_';
+    }
+    *wp++ = ch;
+  }
+  *wp = '\0';
+  return ret;
+}
+const char* toolchain_var_get(struct toolchain *tc, const char *key) {
+  if (!tc || !key) {
+    return 0;
+  }
+  char normalized[256];
+  _key_normalize(normalized, sizeof(normalized), key);
+  for (int i = tc->vars.num - 1; i >= 0; --i) { // The last declaration wins
+    struct toolchain_var *v = *(struct toolchain_var**) ulist_get(&tc->vars, i);
+    if (strcmp(v->key, normalized) == 0) {
+      return v->val;
+    }
+  }
+  return 0;
+}
+static const struct _toolchain_key* _key_lookup(const char *normalized) {
+  for (size_t i = 0; i < sizeof(_toolchain_keys) / sizeof(_toolchain_keys[0]); ++i) {
+    if (strcmp(_toolchain_keys[i].key, normalized) == 0) {
+      return &_toolchain_keys[i];
+    }
+  }
+  return 0;
+}
+static const char* _endian_normalize(const char *v) {
+  if (!v) {
+    return 0;
+  }
+  char buf[32];
+  size_t len = strlen(v);
+  if (len >= sizeof(buf)) {
+    return 0;
+  }
+  for (size_t i = 0; i <= len; ++i) {
+    buf[i] = (char) tolower((unsigned char) v[i]);
+  }
+  if (!strcmp(buf, "little") || !strcmp(buf, "little-endian") || !strcmp(buf, "le") || !strcmp(buf, "lsb")) {
+    return "little";
+  }
+  if (!strcmp(buf, "big") || !strcmp(buf, "big-endian") || !strcmp(buf, "be") || !strcmp(buf, "msb")) {
+    return "big";
+  }
+  return 0;
+}
+/// Collects all values of a descriptor field into a single whitespace separated string.
+static char* _field_value(struct node *bag, struct xstr *xstr) {
+  for (struct node *nn = bag->child; nn; nn = nn->next) {
+    const char *v = node_value(nn);
+    if (!v || *v == '\0') {
+      continue;
+    }
+    if (is_vlist(v)) {
+      struct vlist_iter iter;
+      vlist_iter_init(v, &iter);
+      while (vlist_iter_next(&iter)) {
+        if (iter.len) {
+          if (xstr_size(xstr)) {
+            xstr_cat2(xstr, " ", 1);
+          }
+          xstr_cat2(xstr, iter.item, iter.len);
+        }
+      }
+    } else {
+      if (xstr_size(xstr)) {
+        xstr_cat2(xstr, " ", 1);
+      }
+      xstr_cat(xstr, v);
+    }
+  }
+  if (xstr_size(xstr)) {
+    return xstr_destroy_keep_ptr(xstr);
+  }
+  xstr_destroy(xstr);
+  return 0;
+}
+static struct node* _toolchain_rule_find(struct node *root) {
+  for (struct node *nn = root->child; nn; nn = nn->next) {
+    if (nn->type == NODE_TYPE_BAG && strcmp(nn->value, "toolchain") == 0) {
+      return nn;
+    }
+  }
+  return 0;
+}
+/// Resolves the structural parts of a descriptor fragment.
+///
+/// Only `set`/`let` and `if` rules are interpreted; any other rule is plain
+/// key/value data. This keeps arbitrary keys usable even when they collide
+/// with build rule names (`cc`, `check`, `run`, ...): descriptors are data,
+/// not build scripts.
+static void _fragment_resolve(struct node *n, int depth) {
+  struct node *nn = n->child;
+  while (nn) {
+    if (nn->type == NODE_TYPE_IF) {
+      node_init(nn);
+      // The rule is spliced into its parent, so restart the sibling scan
+      nn = n->child;
+      continue;
+    }
+    struct node *next = nn->next;
+    if (nn->type == NODE_TYPE_SET) {
+      node_init(nn);
+    } else if (nn->type == NODE_TYPE_BAG && depth < 3) {
+      _fragment_resolve(nn, depth + 1);
+    }
+    nn = next;
+  }
+}
+static char* _id_from_path(const char *path) {
+  char buf[PATH_MAX];
+  utils_strncpy(buf, path, sizeof(buf));
+  char *base = path_basename(buf);
+  char *dot = strrchr(base, '.');
+  if (dot && dot != base) {
+    *dot = '\0';
+  }
+  return xstrdup(base);
+}
+/// Registers a single descriptor key/value pair.
+static void _var_add(struct pool *pool, struct toolchain *tc, struct node *n, const char *key, const char *val) {
+  const struct _toolchain_key *k = _key_lookup(key);
+  if (k) {
+    *(const char**) ((char*) tc + k->offset) = val;
+  } else if (g_env.verbose) {
+    node_info(n, "Toolchain key: %s", key);
+  }
+  size_t vlen = strlen(TOOLCHAIN_VAR_PREFIX) + strlen(key) + 1;
+  char *var = pool_alloc(pool, vlen);
+  utils_strncpy(var, TOOLCHAIN_VAR_PREFIX, vlen);
+  char *wp = var + strlen(TOOLCHAIN_VAR_PREFIX);
+  for (const char *rp = key; *rp; ++rp) {
+    *wp++ = (char) toupper((unsigned char) *rp);
+  }
+  *wp = '\0';
+  struct toolchain_var *tv = pool_calloc(pool, sizeof(*tv));
+  *tv = (struct toolchain_var) {
+    .key = key,
+    .var = var,
+    .val = val,
+  };
+  ulist_push(&tc->vars, &tv);
+}
+struct toolchain* toolchain_load(struct pool *pool, const char *path) {
+  char abs[PATH_MAX];
+  if (!path_normalize_cwd(path, g_env.cwd, abs)) {
+    akfatal(AK_ERROR_FAIL, "Failed to resolve toolchain descriptor path: %s", path);
+  }
+  if (!path_is_file(abs)) {
+    akfatal(AK_ERROR_FAIL, "Toolchain descriptor not found: %s", abs);
+  }
+  char buf[PATH_MAX];
+  utils_strncpy(buf, abs, sizeof(buf));
+  const char *base = path_basename(buf);
+  struct pool *fpool = pool_create(on_unit_pool_destroy);
+  const char *unit_path = pool_printf(fpool, ".autark-toolchain/%s", base);
+  struct sctx *sctx = 0;
+  int rc = script_open_fragment(abs, unit_path, fpool, 0, &sctx);
+  if (rc) {
+    pool_destroy(fpool);
+    akfatal(rc, "Failed to parse toolchain descriptor: %s", abs);
+  }
+  struct node *root = sctx->root;
+  _fragment_resolve(root, 0); // Resolves `set` variables and `if` conditions
+  struct node *tn = _toolchain_rule_find(root);
+  if (!tn) {
+    script_close(&sctx);
+    pool_destroy(fpool);
+    akfatal(AK_ERROR_FAIL, "Toolchain descriptor has no `toolchain { }` rule: %s", abs);
+  }
+  struct toolchain *tc = pool_calloc(pool, sizeof(*tc));
+  ulist_init(&tc->vars, 32, sizeof(struct toolchain_var*));
+  tc->path = pool_strdup(pool, abs);
+  for (struct node *nn = tn->child; nn; nn = nn->next) {
+    if (node_is_can_be_value(nn)) {
+      node_warn(nn, "Toolchain descriptor expects `key { value }` declarations, ignored: %s", nn->value);
+      continue;
+    }
+    char key[256];
+    _key_normalize(key, sizeof(key), nn->value);
+    struct xstr *xstr = xstr_create_empty();
+    char *val = _field_value(nn, xstr);
+    _var_add(pool, tc, nn, pool_strdup(pool, key), pool_strdup(pool, val ? val : ""));
+    free(val);
+  }
+  if (!tc->id) {
+    char *id = _id_from_path(abs);
+    tc->id = pool_strdup(pool, id);
+    free(id);
+  }
+  if (!tc->arch_alt) {
+    tc->arch_alt = tc->arch;
+  }
+  if (tc->system) {
+    char *system = xstrdup(tc->system);
+    for (char *p = system; *p; ++p) {
+      *p = (char) tolower((unsigned char) *p);
+    }
+    tc->system = pool_strdup(pool, system);
+    free(system);
+  }
+  if (tc->endian) {
+    const char *endian = _endian_normalize(tc->endian);
+    if (!endian) {
+      script_close(&sctx);
+      pool_destroy(fpool);
+      akfatal(AK_ERROR_FAIL, "Toolchain descriptor: unknown endianness: %s", tc->endian);
+    }
+    tc->endian = endian;
+  }
+  if (!tc->cc) {
+    akwarn("Toolchain descriptor: %s declares no target C compiler (cc { ... })", abs);
+  }
+  script_close(&sctx);
+  pool_destroy(fpool);
+  return tc;
+}
+/// Publishes a value as a build script variable and as a process environment variable.
+static void _publish(struct unit *root, const char *key, const char *val) {
+  if (!val || *val == '\0') {
+    return;
+  }
+  unit_env_set_val(root, key, val);
+  setenv(key, val, 1);
+}
+static void _publish_upper(struct unit *root, const char *prefix, const char *val) {
+  if (!val || *val == '\0') {
+    return;
+  }
+  struct xstr *xstr = xstr_create_empty();
+  xstr_cat(xstr, prefix);
+  for (const char *p = val; *p; ++p) {
+    char ch = (char) toupper((unsigned char) *p);
+    if (ch == '-' || ch == '.') {
+      ch = '_';
+    }
+    xstr_cat2(xstr, &ch, 1);
+  }
+  _publish(root, xstr_ptr(xstr), "1");
+  xstr_destroy(xstr);
+}
+void toolchain_activate(void) {
+  if (g_env.project.toolchain || !g_env.project.toolchain_path) {
+    return;
+  }
+  struct toolchain *tc = toolchain_load(g_env.pool, g_env.project.toolchain_path);
+  toolchain_apply(tc);
+}
+const char* toolchain_id(void) {
+  return g_env.project.toolchain ? g_env.project.toolchain->id : 0;
+}
+void toolchain_apply(struct toolchain *tc) {
+  if (!tc) {
+    return;
+  }
+  g_env.project.toolchain = tc;
+  struct unit *root = unit_root();
+  // Every declared key is exposed as TOOLCHAIN_<KEY>
+  for (int i = 0; i < tc->vars.num; ++i) {
+    struct toolchain_var *v = *(struct toolchain_var**) ulist_get(&tc->vars, i);
+    _publish(root, v->var, v->val);
+  }
+  _publish(root, AUTARK_TARGET_ENV, tc->id);
+  _publish(root, AUTARK_TOOLCHAIN_ENV, tc->path);
+  _publish(root, "SYSTEM_CROSS", "1");
+  _publish(root, "SYSTEM_TARGET", tc->id);
+  _publish(root, "SYSTEM_TOOLCHAIN", tc->path);
+  _publish(root, "SYSTEM_ARCH", tc->arch);
+  _publish(root, "SYSTEM_ARCH_ALT", tc->arch_alt);
+  if (tc->system) {
+    _publish(root, "SYSTEM_NAME", tc->system);
+    _publish_upper(root, "SYSTEM_", tc->system);
+  }
+  // Declared bitness/endianness are the fallback values for check scripts.
+  // When a runner is declared the target probe is executed, so the measured
+  // facts must not be shadowed by stale declared ones.
+  bool declared_facts = (tc->runner == 0 || *tc->runner == '\0');
+  if (tc->bits) {
+    struct xstr *xstr = xstr_create_empty();
+    xstr_printf(xstr, "SYSTEM_BITNESS_%s", tc->bits);
+    _publish(root, "SYSTEM_BITNESS", tc->bits);
+    if (declared_facts) {
+      _publish(root, xstr_ptr(xstr), "1");
+    }
+    xstr_destroy(xstr);
+  }
+  if (tc->endian) {
+    _publish(root, "SYSTEM_ENDIAN", tc->endian);
+    if (declared_facts) {
+      if (strcmp(tc->endian, "big") == 0) {
+        _publish(root, "SYSTEM_BIGENDIAN", "1");
+      } else {
+        _publish(root, "SYSTEM_LITTLE_ENDIAN", "1");
+      }
+    }
+  }
+  _publish(root, "RUNNER", tc->runner);
+  _publish(root, "SYSTEM_RUNNER", tc->runner);
+  _publish(root, "CC", tc->cc);
+  _publish(root, "CXX", tc->cxx);
+  _publish(root, "AR", tc->ar);
+  _publish(root, "RANLIB", tc->ranlib);
+  _publish(root, "STRIP", tc->strip);
+  _publish(root, "PKGCONF", tc->pkgconf);
+  _publish(root, "CFLAGS_TARGET", tc->cflags);
+  _publish(root, "LDFLAGS_TARGET", tc->ldflags);
+  _publish(root, "HOST_CC", tc->host_cc);
+  _publish(root, "HOST_CXX", tc->host_cxx);
+  _publish(root, "HOST_AR", tc->host_ar);
+  _publish(root, "HOST_CFLAGS", tc->host_cflags);
+  _publish(root, "HOST_CXXFLAGS", tc->host_cxxflags);
+  _publish(root, "HOST_LDFLAGS", tc->host_ldflags);
+}
+const char* toolchain_object_tag(bool host_scope) {
+  if (host_scope) {
+    return TOOLCHAIN_TAG_HOST;
+  }
+  return toolchain_id();
+}
+static int _tag_path(const char *obj_path, char buf[PATH_MAX]) {
+  int rc = snprintf(buf, PATH_MAX, "%s.autark-tag", obj_path);
+  if (rc < 0 || rc >= PATH_MAX) {
+    return ENAMETOOLONG;
+  }
+  return 0;
+}
+int toolchain_object_tag_write(const char *obj_path, const char *tag) {
+  char path[PATH_MAX];
+  int rc = _tag_path(obj_path, path);
+  if (rc) {
+    return rc;
+  }
+  if (!tag || *tag == '\0') {
+    unlink(path);
+    return 0;
+  }
+  return utils_file_write_buf(path, tag, strlen(tag), false);
+}
+const char* toolchain_object_check(const char *obj_path, bool host_scope, char *buf, size_t buflen) {
+  char path[PATH_MAX];
+  if (_tag_path(obj_path, path)) {
+    return 0;
+  }
+  FILE *f = fopen(path, "r");
+  if (!f) {
+    return 0;
+  }
+  char *rp = fgets(buf, (int) buflen, f);
+  fclose(f);
+  if (!rp) {
+    return 0;
+  }
+  size_t len = strlen(buf);
+  while (len && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) {
+    buf[--len] = '\0';
+  }
+  if (len == 0) {
+    return 0;
+  }
+  const char *expect = toolchain_object_tag(host_scope);
+  if (expect && strcmp(expect, buf) == 0) {
+    return 0;
+  }
+  return buf;
+}
+#ifndef _AMALGAMATE_
 #include "script.h"
 #endif
 int node_script_setup(struct node *n) {
@@ -4693,6 +5222,7 @@ int node_include_setup(struct node *n) {
 #include "utils.h"
 #include "log.h"
 #include "paths.h"
+#include "toolchain.h"
 #include <unistd.h>
 #include <string.h>
 #endif
@@ -4712,7 +5242,91 @@ struct _run_on_resolve_ctx {
   struct ulist consumes;         // sizeof(char*)
   struct ulist consumes_foreach; // sizeof(char*)
   bool fe_consumed;              // Foreach variable is consumed
+  bool is_host;                  // Rule builds a build tool running on the build host
 };
+static bool _run_is_host(struct node *n) {
+  return node_find_direct_child(n, NODE_TYPE_VALUE, "host") != 0;
+}
+/// Resolves a host build tool variable.
+///
+/// Host tools fall back to the native toolchain variables unless a target
+/// toolchain is active: in that case the target compiler must never be used to
+/// build host tools.
+static const char* _run_host_var(struct node *n, const char *key, const char *native_key, const char *fallback) {
+  const char *v = node_env_get(n, key);
+  if (v && *v != '\0') {
+    return v;
+  }
+  if (!toolchain_id()) {
+    v = node_env_get(n, native_key);
+    if (v && *v != '\0') {
+      return v;
+    }
+  }
+  return fallback;
+}
+/// Exposes the host toolchain to a spawned build tool and detaches it from the
+/// target build context, so nested Autark invocations are built natively.
+static void _run_host_env(struct node *n, struct spawn *s) {
+  spawn_env_set(s, "CC", _run_host_var(n, "HOST_CC", "CC", "cc"));
+  spawn_env_set(s, "CXX", _run_host_var(n, "HOST_CXX", "CXX", "c++"));
+  spawn_env_set(s, "AR", _run_host_var(n, "HOST_AR", "AR", "ar"));
+  const char *cflags = _run_host_var(n, "HOST_CFLAGS", "CFLAGS", 0);
+  if (cflags) {
+    spawn_env_set(s, "CFLAGS", cflags);
+  }
+  const char *cxxflags = _run_host_var(n, "HOST_CXXFLAGS", "CXXFLAGS", 0);
+  if (!cxxflags && toolchain_id()) {
+    // In a cross build HOST_CFLAGS are host flags declared for build tools,
+    // so they apply to C++ sources as well.
+    cxxflags = cflags;
+  }
+  if (cxxflags) {
+    spawn_env_set(s, "CXXFLAGS", cxxflags);
+  }
+  const char *ldflags = _run_host_var(n, "HOST_LDFLAGS", "LDFLAGS", 0);
+  if (ldflags) {
+    spawn_env_set(s, "LDFLAGS", ldflags);
+  }
+  spawn_env_set(s, AUTARK_TOOLCHAIN_ENV, "");
+  spawn_env_set(s, AUTARK_TARGET_ENV, "");
+}
+static void _run_check_obj_tag_one(struct node *n, bool host, const char *obj) {
+  if (!obj || *obj == '\0' || !utils_endswith(obj, ".o") || !path_is_file(obj)) {
+    return;
+  }
+  char tag[128];
+  const char *actual = toolchain_object_check(obj, host, tag, sizeof(tag));
+  if (!actual) {
+    return;
+  }
+  if (host) {
+    node_fatal(AK_ERROR_FAIL, n,
+               "Refusing to link object '%s' of toolchain '%s' into a host build tool", obj, actual);
+  } else {
+    node_fatal(AK_ERROR_FAIL, n,
+               "Refusing to link object '%s' compiled for toolchain '%s' into a target artifact. "
+               "Build tools must be compiled by host-cc/host-cxx and linked by a `run { host ... }` rule",
+               obj, actual);
+  }
+}
+/// Verifies that objects linked by a rule belong to its compilation scope.
+static void _run_check_obj_tags(struct node *n, bool host, const char *val) {
+  char buf[PATH_MAX];
+  if (!val) {
+    return;
+  }
+  if (is_vlist(val)) {
+    struct vlist_iter iter;
+    vlist_iter_init(val, &iter);
+    while (vlist_iter_next(&iter)) {
+      utils_strnncpy(buf, iter.item, iter.len, sizeof(buf));
+      _run_check_obj_tag_one(n, host, buf);
+    }
+  } else {
+    _run_check_obj_tag_one(n, host, val);
+  }
+}
 static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
   struct node *n = r->n;
   struct xstr *xstr = xstr_create_empty();
@@ -4746,6 +5360,9 @@ static void _run_on_resolve_shell(struct node_resolve *r, struct node *nn_) {
   spawn_env_path_prepend(s, unit->cache_dir);
   spawn_set_stdout_handler(s, _run_stdout_handler);
   spawn_set_stderr_handler(s, _run_stderr_handler);
+  if (r->user_data && ((struct _run_on_resolve_ctx*) r->user_data)->is_host) {
+    _run_host_env(n, s);
+  }
   spawn_arg_add(s, "-c");
   spawn_arg_add(s, xstr_ptr(xstr));
   if (g_env.check.log) {
@@ -4778,15 +5395,22 @@ static void _run_on_resolve_exec(struct node_resolve *r, struct node *ncmd) {
   spawn_env_path_prepend(s, unit->cache_dir);
   spawn_set_stdout_handler(s, _run_stdout_handler);
   spawn_set_stderr_handler(s, _run_stderr_handler);
+  struct _run_on_resolve_ctx *ctx = r->user_data;
+  bool host = ctx && ctx->is_host;
+  if (host) {
+    _run_host_env(n, s);
+  }
   for (struct node *nn = ncmd->next; nn; nn = nn->next) {
     if (node_is_can_be_value(nn)) {
+      const char *val = node_value(nn);
+      _run_check_obj_tags(n, host, val);
       if (node_is_spread(nn)) {
         struct xstr *xstr = xstr_create_empty();
-        utils_split_values_add(node_value(nn), xstr);
+        utils_split_values_add(val, xstr);
         spawn_arg_add(s, xstr_ptr(xstr));
         xstr_destroy(xstr);
       } else {
-        spawn_arg_add(s, node_value(nn));
+        spawn_arg_add(s, val);
       }
     }
   }
@@ -4975,6 +5599,7 @@ static void _run_build(struct node *n) {
     .consumes = { .usize = sizeof(char*) },
     .consumes_foreach = { .usize = sizeof(char*) },
     .fe = node_find_parent_foreach(n),
+    .is_host = _run_is_host(n),
   };
   struct node_resolve r = {
     .n = n,
@@ -5312,6 +5937,7 @@ int node_configure_setup(struct node *n) {
 #include "spawn.h"
 #include "alloc.h"
 #include "map.h"
+#include "toolchain.h"
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
@@ -5335,10 +5961,44 @@ struct _cc_ctx {
   struct node *n_objects;
   const char  *cc;
   const char  *objskey;
-  struct ulist consumes;    // sizeof(char*)
+  const char  *cflags_default; // Used when no explicit flags expression is given (host-cc/host-cxx)
+  const char  *tag;            // Toolchain object tag. Zero if objects are not tagged.
+  bool is_host;                // Compiles build tools running on the build host
+  struct ulist consumes;       // sizeof(char*)
   int num_failed;
 };
 static void _cc_cdb_entry_add(struct node *n, struct spawn *s, const char *src, const char *tgt);
+/// Directory (relative to the unit cache dir) holding objects of build tools.
+#define CC_HOST_OBJS_DIR "host-tools"
+/// Computes the object file path (relative to the unit cache dir) for a given source.
+/// The result is allocated and should be freed by the caller.
+static char* _cc_obj_path(struct _cc_ctx *ctx, const char *src, struct unit *unit) {
+  char buf[PATH_MAX];
+  const char *nsrc = path_normalize_cwd(src, unit->cache_dir, buf);
+  bool incache = path_is_prefix_for(g_env.project.cache_dir, nsrc, unit->cache_dir);
+  char *obj = incache ? path_relativize_cwd(unit->cache_dir, nsrc, unit->cache_dir)
+              : path_relativize_cwd(unit->dir, nsrc, unit->dir);
+  char *p = strrchr(obj, '.');
+  akassert(p && p[1] != '\0');
+  p[1] = 'o';
+  p[2] = '\0';
+  if (ctx->is_host) {
+    size_t len = strlen(obj) + sizeof(CC_HOST_OBJS_DIR) + 2;
+    char *prefixed = xmalloc(len);
+    snprintf(prefixed, len, "%s/%s", CC_HOST_OBJS_DIR, obj);
+    free(obj);
+    obj = prefixed;
+  }
+  return obj;
+}
+/// Writes the toolchain tag sidecar of a compiled object file.
+static void _cc_obj_tag_write(struct _cc_ctx *ctx, const char *obj) {
+  // A zero tag removes a stale tag of a previously built (cross) target
+  int rc = toolchain_object_tag_write(obj, ctx->tag);
+  if (rc) {
+    node_fatal(rc, ctx->n, "Failed to write toolchain tag of object file: %s", obj);
+  }
+}
 static void _cc_deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
   deps_add_alias(deps, 's', src, item);
 }
@@ -5415,9 +6075,9 @@ static void _cc_on_build_source(
   struct spawn *s = spawn_create(ctx->cc, ctx);
   task->s = s;
   spawn_set_nowait(s, true);
-  if (ctx->n_cflags) {
+  const char *cflags = ctx->n_cflags ? node_value(ctx->n_cflags) : ctx->cflags_default;
+  if (cflags && *cflags != '\0') {
     struct xstr *xstr = 0;
-    const char *cflags = node_value(ctx->n_cflags);
     if (!is_vlist(cflags)) {
       xstr = xstr_create_empty();
       utils_split_values_add(cflags, xstr);
@@ -5489,19 +6149,9 @@ static void _cc_on_resolve(struct node_resolve *r) {
     while (tasks.num < max_jobs && i < slist->num) {
       char buf[PATH_MAX];
       char *obj, *src = *(char**) ulist_get(slist, i);
+      obj = _cc_obj_path(ctx, src, unit);
       src = path_normalize_cwd(src, unit->cache_dir, buf);
-      bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
-      if (!incache) {
-        obj = path_relativize_cwd(unit->dir, src, unit->dir);
-        src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-      } else {
-        obj = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-        src = xstrdup(obj);
-      }
-      char *p = strrchr(obj, '.');
-      akassert(p && p[1] != '\0');
-      p[1] = 'o';
-      p[2] = '\0';
+      src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
       struct _cc_task task = { .src = src, .obj = obj, .pid = -1 };
       _cc_on_build_source(ctx->n, &deps, src, obj, &task);
       if (task.pid == -1) {
@@ -5532,6 +6182,8 @@ static void _cc_on_resolve(struct node_resolve *r) {
         if (code != 0) {
           ++ctx->num_failed;
           map_put_str(fmap, t->src, (void*) (intptr_t) 1);
+        } else {
+          _cc_obj_tag_write(ctx, t->obj);
         }
         if (slist == &ctx->sources) {
           deps_add(&deps, code != 0 ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', t->src, 0);
@@ -5549,19 +6201,9 @@ static void _cc_on_resolve(struct node_resolve *r) {
     for (int i = 0; i < ctx->sources.num; ++i) {
       char buf[PATH_MAX];
       char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
+      obj = _cc_obj_path(ctx, src, unit);
       src = path_normalize_cwd(src, unit->cache_dir, buf);
-      bool incache = path_is_prefix_for(g_env.project.cache_dir, src, unit->cache_dir);
-      if (!incache) {
-        obj = path_relativize_cwd(unit->dir, src, unit->dir);
-        src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-      } else {
-        obj = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-        src = xstrdup(obj);
-      }
-      char *p = strrchr(obj, '.');
-      akassert(p && p[1] != '\0');
-      p[1] = 'o';
-      p[2] = '\0';
+      src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
       bool failed = map_get(fmap, src) != 0;
       deps_add(&deps, failed ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', src, 0);
       if (!failed) {
@@ -5738,19 +6380,16 @@ static void _cc_source_add(struct node *n, const char *src) {
   }
   p = pool_strdup(ctx->pool, npath);
   ulist_push(&ctx->sources, &p);
-  bool incache = path_is_prefix_for(g_env.project.cache_dir, p, unit->dir);
-  const char *dir = incache ? unit->cache_dir : unit->dir;
-  char *obj = path_relativize_cwd(dir, p, dir);
-  p = strrchr(obj, '.');
-  akassert(p && p[1] != '\0');
-  p[1] = 'o';
-  p[2] = '\0';
+  char *obj = _cc_obj_path(ctx, npath, unit);
   ulist_push(&ctx->objects, &obj);
   node_product_add(n, obj, 0);
 }
 static void _cc_setup(struct node *n) {
   _cc_cdb_init(n);
   struct _cc_ctx *ctx = n->impl;
+  bool is_cxx = strcmp(n->value, "cxx") == 0 || strcmp(n->value, "host-cxx") == 0;
+  ctx->is_host = utils_startswith(n->value, "host-");
+  ctx->tag = toolchain_object_tag(ctx->is_host);
   const char *val = node_value(ctx->n_sources);
   if (is_vlist(val)) {
     struct vlist_iter iter;
@@ -5770,33 +6409,50 @@ static void _cc_setup(struct node *n) {
     }
   }
   if (!ctx->cc) {
-    const char *key = strcmp(n->value, "cc") == 0 ? "CC" : "CXX";
-    if (key) {
-      ctx->cc = pool_strdup(ctx->pool, node_env_get(n, key));
-      if (g_env.verbose && ctx->cc) {
-        node_info(n, "Found '%s' compiler in ${%s}", ctx->cc, key);
-      }
+    const char *key = ctx->is_host
+                      ? (is_cxx ? "HOST_CXX" : "HOST_CC")
+                      : (is_cxx ? "CXX" : "CC");
+    ctx->cc = pool_strdup(ctx->pool, node_env_get(n, key));
+    if ((!ctx->cc || *ctx->cc == '\0') && ctx->is_host && !toolchain_id()) {
+      // Native builds compile build tools with the native compiler
+      ctx->cc = pool_strdup(ctx->pool, node_env_get(n, is_cxx ? "CXX" : "CC"));
+    }
+    if (g_env.verbose && ctx->cc) {
+      node_info(n, "Found '%s' compiler in ${%s}", ctx->cc, key);
     }
   }
   if (!ctx->cc) {
-    if (strcmp(n->value, "cc") == 0) {
-      ctx->cc = "cc";
-    } else {
-      ctx->cc = "c++";
-    }
+    ctx->cc = is_cxx ? "c++" : "cc";
     node_warn(n, "Fallback compiler: %s", ctx->cc);
   } else if (g_env.verbose) {
     node_info(n, "Compiler: %s", ctx->cc);
+  }
+  if (ctx->is_host && !ctx->n_cflags) {
+    // Build tools are compiled with host compiler flags unless the rule
+    // provides its own flags expression. Native builds fall back to the
+    // detected compiler flags of the corresponding language.
+    if (is_cxx) {
+      ctx->cflags_default = node_env_get(n, "HOST_CXXFLAGS");
+      if ((!ctx->cflags_default || *ctx->cflags_default == '\0')) {
+        ctx->cflags_default = toolchain_id() ? node_env_get(n, "HOST_CFLAGS")
+                                            : node_env_get(n, "CXXFLAGS");
+      }
+    } else {
+      ctx->cflags_default = node_env_get(n, "HOST_CFLAGS");
+      if ((!ctx->cflags_default || *ctx->cflags_default == '\0') && !toolchain_id()) {
+        ctx->cflags_default = node_env_get(n, "CFLAGS");
+      }
+    }
   }
   const char *objskey = 0;
   if (ctx->n_objects && ctx->n_objects->child) {
     objskey = node_value(ctx->n_objects->child);
   }
   if (!objskey) {
-    if (strcmp(n->value, "cc") == 0) {
-      objskey = "CC_OBJS";
+    if (ctx->is_host) {
+      objskey = is_cxx ? "HOST_CXX_OBJS" : "HOST_CC_OBJS";
     } else {
-      objskey = "CXX_OBJS";
+      objskey = is_cxx ? "CXX_OBJS" : "CC_OBJS";
     }
   }
   if (g_env.verbose) {
@@ -6870,6 +7526,7 @@ int node_fetch_url_setup(struct node *n) {
 #include "alloc.h"
 #include "deps.h"
 #include "fetchreg.h"
+#include "toolchain.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -7129,6 +7786,9 @@ static int _usage_va(
   fprintf(stderr,
           "    -S, --install-source-deps   Builds autonomous source distribution package dir with all external project dependencies packed.\n"
           "                                Sets -c option implicitly.\n");
+  fprintf(stderr,
+          "        --toolchain=<>          Cross compilation toolchain descriptor file.\n"
+          "                                Can also be provided by the " AUTARK_TOOLCHAIN_ENV " env variable.\n");
   fprintf(stderr,
           "        --bindir=<>             Path to 'bin' dir relative to a `prefix` dir. Default: bin\n");
   fprintf(stderr,
@@ -7554,6 +8214,7 @@ void autark_run(int argc, const char **argv) {
     { "install", 0, 0, 'I' },
     { "install-source-deps", 0, 0, 'S' },
     { "prefix", 1, 0, 'R' },
+    { "toolchain", 1, 0, -7 },
     { "dir", 1, 0, 'C' },
     { "jobs", 1, 0, 'J' },
     { "bindir", 1, 0, -1 },
@@ -7626,6 +8287,9 @@ void autark_run(int argc, const char **argv) {
         break;
       case -6:
         g_env.install.data_dir = pool_strdup(g_env.pool, optarg);
+        break;
+      case -7:
+        g_env.project.toolchain_path = path_normalize_cwd_pool(optarg, g_env.cwd, g_env.pool);
         break;
       case 'J': {
         int rc = 0;
@@ -7727,6 +8391,13 @@ void autark_run(int argc, const char **argv) {
     }
   }
   autark_build_prepare(AUTARK_SCRIPT);
+  if (!g_env.project.toolchain_path) {
+    const char *toolchain = getenv(AUTARK_TOOLCHAIN_ENV);
+    if (toolchain && *toolchain != '\0') {
+      g_env.project.toolchain_path = path_normalize_cwd_pool(toolchain, g_env.cwd, g_env.pool);
+    }
+  }
+  toolchain_activate();
   if (g_env.project.options) {
     _options();
   } else {
@@ -7754,6 +8425,7 @@ int main(int argc, const char **argv) {
 #include "nodes.h"
 #include "autark.h"
 #include "paths.h"
+#include "toolchain.h"
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -8504,7 +9176,8 @@ static unsigned _rule_type(const char *key, unsigned *flags) {
     return NODE_TYPE_RUN;
   } else if (strcmp(key, "meta") == 0) {
     return NODE_TYPE_META;
-  } else if (strcmp(key, "cc") == 0 || strcmp(key, "cxx") == 0) {
+  } else if (  strcmp(key, "cc") == 0 || strcmp(key, "cxx") == 0
+            || strcmp(key, "host-cc") == 0 || strcmp(key, "host-cxx") == 0) {
     return NODE_TYPE_CC;
   } else if (strcmp(key, "configure") == 0) {
     return NODE_TYPE_CONFIGURE;
@@ -9175,6 +9848,89 @@ int script_open(const char *file, struct sctx **out) {
 int script_include(struct node *parent, const char *file, struct node **out) {
   return _script_open(parent, file, out);
 }
+static int _script_parse_impl(struct xnode *x, struct value *val) {
+  int rc = 0;
+  x->xp = xmalloc(sizeof(*x->xp));
+  *x->xp = (struct xparse) {
+    .stack = { .usize = sizeof(struct xnode*) },
+    .xerr = xstr_create_empty(),
+    .val = *val,
+  };
+  yycontext *yy = x->xp->yy = xmalloc(sizeof(yycontext));
+  *yy = (yycontext) {
+    .x = x
+  };
+  if (!yyparse(yy)) {
+    rc = AK_ERROR_SCRIPT_SYNTAX;
+    _yyerror(yy);
+    if (x->xp->xerr->size) {
+      akerror(rc, "%s\n", x->xp->xerr->ptr);
+    } else {
+      akerror(rc, 0, 0);
+    }
+  }
+  _xparse_destroy(x->xp);
+  x->xp = 0;
+  return rc;
+}
+int script_open_fragment(
+  const char *file,
+  const char *unit_path,
+  struct pool *unit_pool,
+  struct unit **out_unit,
+  struct sctx **out) {
+  int rc = 0;
+  struct pool *pool = g_env.pool;
+  if (out_unit) {
+    *out_unit = 0;
+  }
+  if (out) {
+    *out = 0;
+  }
+  struct value buf = utils_file_as_buf(file, (1024 * 1024));
+  if (buf.error) {
+    return value_destroy(&buf);
+  }
+  _preprocess_script(&buf);
+  struct sctx *ctx = pool_calloc(pool, sizeof(*ctx));
+  ulist_init(&ctx->nodes, 64, sizeof(struct node*));
+  ctx->products = map_create_str(map_k_free);
+  struct xnode *x = pool_calloc(pool, sizeof(*x));
+  x->base.ctx = ctx;
+  ctx->root = (struct node*) x;
+  x->base.value = pool_strdup(pool, file);
+  x->base.type = NODE_TYPE_SCRIPT;
+  struct unit *unit = unit_create(unit_path, UNIT_FLG_NO_CWD, unit_pool ? unit_pool : pool);
+  char dirbuf[PATH_MAX];
+  utils_strncpy(dirbuf, file, sizeof(dirbuf));
+  char *dir = path_dirname(dirbuf);
+  unit->dir = pool_strdup(pool, dir ? dir : ".");
+  unit->n = &x->base;
+  x->base.unit = unit;
+  _node_register(ctx, x);
+  rc = _node_bind(&x->base);
+  if (rc) {
+    _xnode_destroy(x);
+    value_destroy(&buf);
+    return rc;
+  }
+  rc = _script_parse_impl(x, &buf);
+  if (!rc) {
+    rc = _script_bind(ctx);
+  }
+  if (rc) {
+    _xnode_destroy(x);
+  } else {
+    if (out_unit) {
+      *out_unit = unit;
+    }
+    if (out) {
+      *out = ctx;
+    }
+  }
+  value_destroy(&buf);
+  return rc;
+}
 void script_build(struct sctx *s) {
   akassert(s->root);
   node_init(s->root);
@@ -9466,6 +10222,26 @@ void node_add_unit_deps(struct node *n, struct deps *deps) {
     }
   }
 }
+/// Registers the active target toolchain as a dependency of a resolved node.
+///
+/// This makes switching the target (or switching between native and cross builds)
+/// invalidate all artifacts produced by the node.
+static void node_resolve_toolchain_deps(struct node_resolve *r) {
+  const char *target = toolchain_id();
+  if (!target) {
+    return;
+  }
+  struct deps deps;
+  if (deps_open(r->deps_path_tmp, 0, &deps)) {
+    return;
+  }
+  deps_add_sys_env(&deps, 0, AUTARK_TARGET_ENV, target);
+  if (g_env.project.toolchain && g_env.project.toolchain->path) {
+    deps_add_sys_env(&deps, 0, AUTARK_TOOLCHAIN_ENV, g_env.project.toolchain->path);
+    deps_add(&deps, DEPS_TYPE_FILE, 0, g_env.project.toolchain->path, 0);
+  }
+  deps_close(&deps);
+}
 void node_resolve(struct node_resolve *r) {
   akassert(r && r->path && r->n);
   int rc = 0;
@@ -9486,10 +10262,14 @@ void node_resolve(struct node_resolve *r) {
   if (r->on_init) {
     r->on_init(r);
   }
+  bool target_dep_seen = false;
   if (!r->force_outdated && !deps_open(deps_path, DEPS_OPEN_READONLY, &deps)) {
     char *prev_outdated = 0;
     while (deps_cur_next(&deps)) {
       ++r->num_deps;
+      if (deps.type == DEPS_TYPE_SYS_ENV && !target_dep_seen && deps.alias && strcmp(deps.alias, AUTARK_TARGET_ENV) == 0) {
+        target_dep_seen = true;
+      }
       bool outdated = false;
       if (prev_outdated && strcmp(prev_outdated, deps.resource) == 0) {
         outdated = false;
@@ -9524,11 +10304,20 @@ void node_resolve(struct node_resolve *r) {
     deps_close(&deps);
   }
   bool env_created = false;
-  if (r->on_resolve && (r->num_deps == 0 || r->resolve_outdated.num)) {
+  bool target_changed = false;
+  if (toolchain_id() && !target_dep_seen) {
+    // A cross build cache must not be reused by an older (or native) build
+    if (g_env.verbose) {
+      node_info(r->n, "Target toolchain changed: %s", toolchain_id());
+    }
+    target_changed = true;
+  }
+  if (r->on_resolve && (r->num_deps == 0 || r->resolve_outdated.num || target_changed)) {
     if (g_env.check.log && r->n) {
       xstr_printf(g_env.check.log, "%s: resolved outdated outdated=%u\n", r->n->name, r->resolve_outdated.num);
     }
     r->on_resolve(r);
+    node_resolve_toolchain_deps(r);
     if (access(deps_path_tmp, F_OK) == 0) {
       rc = utils_rename_file(deps_path_tmp, deps_path);
       if (rc) {
