@@ -1,0 +1,40 @@
+# Android (NDK) binding: cross compiles the JNI binding for every requested
+# ABI with the Android NDK toolchain.
+#
+# This script is included by src/bindings/Autark when BUILD_BINDING_ANDROID is
+# enabled; it is not a standalone Autark project.  Each ABI is built in its own
+# cache directory (see scripts/build-abi.sh) and the resulting
+# libejdb2jni.so is staged into the `jniLibs` directory of the Gradle test
+# project.  See README.md for the details.
+
+if { !defined { ANDROID_ABIS }
+  error { ejdb2_android/Autark is included by the ejdb2 build, use: ./build.sh -DBUILD_BINDING_ANDROID=1 }
+}
+
+foreach { ANDROID_ABI ${ANDROID_ABIS}
+  run {
+    # The cross build of an ABI runs in its own cache and is incremental there,
+    # so it is requested unconditionally: changes of the ejdb2 sources are not
+    # visible as dependencies of this rule.
+    always
+    shell {
+      # Autark variables are not exported to subprocesses, pass the build type
+      # explicitly (see the ANDROID_BUILD_TYPE option in src/Autark).
+      ^{ANDROID_BUILD_TYPE= ${ANDROID_BUILD_TYPE}}
+      SS{scripts/build-abi.sh}
+      ${ANDROID_ABI}
+      ${ANDROID_API_LEVEL}
+    }
+  }
+}
+
+if { ${ANDROID_RUN_TESTS}
+  run {
+    always
+    shell {
+      cd SS{test}
+      &&
+      ./gradlew connectedAndroidTest
+    }
+  }
+}
