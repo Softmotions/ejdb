@@ -19,6 +19,13 @@
 #   ANDROID_HOST_DIRS       Space separated list of host tool build directories
 #   ANDROID_HOST_CC         Build host C compiler (default: cc)
 #   ANDROID_EXTRA_CFLAGS    Extra flags for target invocations (optional)
+#
+# Only the `system.sh` probe is answered; every other check probe of Autark
+# (test_qsort_r.sh, test_blocks.sh, test_pthread.sh, ...) is cross compiled and
+# must report *target* capabilities - bionic for example has no qsort_r and no
+# BlocksRuntime, so answering those from the build host would produce a broken
+# library.  This is why the probe is matched by name instead of treating every
+# executable producing invocation as a host build.
 
 set -e
 
