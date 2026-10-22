@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.17
-META_REVISION=0c36cf3
+META_VERSION=0.9.18
+META_REVISION=cd929a7
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -69,8 +69,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.17"
-#define META_REVISION "0c36cf3"
+#define META_VERSION "0.9.18"
+#define META_REVISION "cd929a7"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -5682,10 +5682,6 @@ static char* _line_replace_def(struct node *n, struct deps *deps, char *line) {
     if (val) {
       struct xstr *xstr = xstr_create_empty();
       xstr_printf(xstr, "#define %s %s", key, np);
-      return xstr_destroy_keep_ptr(xstr);
-    } else {
-      struct xstr *xstr = xstr_create_empty();
-      xstr_printf(xstr, "#define %s 0\n", key);
       return xstr_destroy_keep_ptr(xstr);
     }
   } else {
