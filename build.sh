@@ -5,8 +5,8 @@
 # Autark: aec5320de2e44ef5a0338f9ea990ed2a
 # https://github.com/Softmotions/autark
 
-META_VERSION=0.9.18
-META_REVISION=cd929a7
+META_VERSION=0.9.19
+META_REVISION=c50a660
 cd "$(cd "$(dirname "$0")"; pwd -P)"
 
 prev_arg=""
@@ -69,8 +69,8 @@ mkdir -p ${AUTARK_HOME}
 cat <<'a292effa503b' > ${AUTARK_HOME}/autark.c
 #ifndef CONFIG_H
 #define CONFIG_H
-#define META_VERSION "0.9.18"
-#define META_REVISION "cd929a7"
+#define META_VERSION "0.9.19"
+#define META_REVISION "c50a660"
 #define MACRO_MAX_RECURSIVE_CALLS 128
 #endif
 #define _AMALGAMATE_
@@ -363,30 +363,33 @@ struct map_iter {
   uint32_t    bucket;
   int32_t     entry;
 };
+/// Key/Value free callback which uses standard `free()` deallocation.
+/// @param key Pointer to key or zero.
+/// @param val Pointer to value or zero.
 void map_kv_free(void *key, void *val);
+/// Key free callback which uses standard `free()` deallocation.
+/// @param key Pointer to key or zero.
+/// @param val Value, ignored.
 void map_k_free(void *key, void *val);
-struct map* map_create(
-  int (*cmp_fn)(const void*, const void*),
-  uint32_t (*hash_fn)(const void*),
-  void (*kv_free_fn)(void*, void*));
-void map_destroy(struct map*);
-struct map* map_create_u64(void (*kv_free_fn)(void*, void*));
-struct map* map_create_u32(void (*kv_free_fn)(void*, void*));
+/// Creates a map with `strcmp()` keys.
+/// @param kv_free_fn Callback used to release keys and values on removal,
+///        zero means that the map does not own stored keys and values.
 struct map* map_create_str(void (*kv_free_fn)(void*, void*));
-void map_put(struct map*, void *key, void *val);
-void map_put_u32(struct map*, uint32_t key, void *val);
-void map_put_u64(struct map*, uint64_t key, void *val);
+void map_destroy(struct map*);
+/// Makes a copy of key (`strdup()`) then puts key/value pair into the map.
+/// @note Key memory is expected to be released by `kv_free_fn` given to `map_create_str()`.
 void map_put_str(struct map*, const char *key, void *val);
+/// Puts key/value pair into the map without copying the key.
+/// @note Key memory is expected to be released by `kv_free_fn` given to `map_create_str()`.
 void map_put_str_no_copy(struct map*, const char *key, void *val);
-int map_remove(struct map*, const void *key);
-int map_remove_u64(struct map*, uint64_t key);
-int map_remove_u32(struct map*, uint32_t key);
-void* map_get(struct map*, const void *key);
-void* map_get_u64(struct map*, uint64_t key);
-void* map_get_u32(struct map*, uint32_t key);
-uint32_t map_count(const struct map*);
-void map_clear(struct map*);
+/// Removes the given key from the map.
+/// @return `1` if the key has been found and removed, `0` otherwise.
+int map_remove(struct map*, const char *key);
+/// @return Value associated with the given key or zero.
+void* map_get(struct map*, const char *key);
 void map_iter_init(struct map*, struct map_iter*);
+/// Advances the iterator to the next entry.
+/// @return `1` if the iterator points to an entry, `0` at the end of the map.
 int map_iter_next(struct map_iter*);
 #endif
 #ifndef UTILS_H
@@ -837,11 +840,18 @@ struct toolchain {
 #define TOOLCHAIN_TAG_HOST "host"
 /// Loads and resolves the given toolchain descriptor.
 ///
+/// The toolchain struct and its values are allocated in the given pool.
+/// A toolchain which is not passed to `toolchain_apply()` should be released with
+/// `toolchain_destroy()` before the pool is destroyed.
+///
 /// @param pool Pool used to allocate the toolchain and its values
 /// @param path Path to the descriptor file
 ///
 /// @return Resolved toolchain
 struct toolchain* toolchain_load(struct pool *pool, const char *path);
+/// Releases heap resources of the toolchain which are not owned by its pool.
+/// The toolchain struct itself is released together with the pool given to `toolchain_load()`.
+void toolchain_destroy(struct toolchain *tc);
 /// Loads the toolchain descriptor selected by `--toolchain`/`AUTARK_TOOLCHAIN` (if any)
 /// and publishes its facts into the root build unit.
 void toolchain_activate(void);
@@ -867,6 +877,63 @@ int toolchain_object_tag_write(const char *obj_path, const char *tag);
 /// @return Pointer to `buf` holding the object tag on mismatch, zero if the
 ///         object is compatible with the scope or carries no tag.
 const char* toolchain_object_check(const char *obj_path, bool host_scope, char *buf, size_t buflen);
+#endif
+#ifndef CXX_MODULES_H
+#define CXX_MODULES_H
+#ifndef _AMALGAMATE_
+#include "script.h"
+#include "spawn.h"
+#include "deps.h"
+#include <stdbool.h>
+#endif
+/// C++20 modules compilation support of `cxx`/`host-cxx` rules.
+///
+/// Module interface units are compiled before all other sources of the rule (in
+/// their declaration order) and produce a Binary Module Interface (BMI) in the
+/// project cache. BMI lookup of importers is compiler specific:
+///
+///  - clang: `-fprebuilt-module-path=<dir>`, BMI files are named after the
+///    module name (`<name>.pcm`).
+///  - gcc: a single module map file (`-fmodule-mapper`) mapping module names to
+///    BMI files (`<name>.gcm`).
+///
+/// Module partitions are not supported.
+struct cxx_modules;
+/// @return true if `path` has an extension of a C++20 module unit
+bool cxx_modules_is_module_path(const char *path);
+/// Creates module compilation state of a C++ rule.
+///
+/// @param n Rule node
+/// @param compiler C++ compiler command
+/// @param tag Toolchain object tag of the compilation scope. Zero for the native target
+struct cxx_modules* cxx_modules_create(struct node *n, const char *compiler, const char *tag);
+/// Destroys module compilation state. Registered modules remain in the project
+/// wide module registry, which is released by `cxx_modules_dispose()`.
+void cxx_modules_destroy(struct cxx_modules*);
+/// Releases the project wide module registry.
+///
+/// The registry refers to rule nodes of the current build environment, so it is
+/// released together with that environment (`autark_dispose()`) and is recreated
+/// on demand. Safe to call multiple times.
+void cxx_modules_dispose(void);
+/// Scans the source and registers it as a module unit if it declares a module.
+///
+/// @param required Source is explicitly declared as module unit, so the
+///                 declaration is mandatory (regardless of the extension)
+///
+/// @return true if the source is a module interface unit (produces a BMI)
+bool cxx_modules_add_source(struct cxx_modules*, const char *src, bool required);
+/// @return true if the absolute source path is a module interface unit
+bool cxx_modules_is_interface(struct cxx_modules*, const char *src);
+/// Writes the module map file (gcc only) before compilation.
+void cxx_modules_prepare(struct cxx_modules*);
+/// Appends module related compiler arguments. Must be called before the
+/// `-c <source>` arguments are added to the spawn.
+///
+/// @param src Absolute source path
+void cxx_modules_args_add(struct cxx_modules*, struct spawn*, const char *src);
+/// Registers BMIs and the module map file as node dependencies.
+void cxx_modules_deps_add(struct cxx_modules*, struct deps *deps);
 #endif
 #ifndef NODES_H
 #define NODES_H
@@ -1761,88 +1828,60 @@ void _akfatal_va(const char *file, int line, int code, const char *fmt, va_list 
 #include "alloc.h"
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stddef.h>
 #endif
-#define MIN_BUCKETS 64
-#define STEPS       4
+/// Initial number of entry slots.
+#define INITIAL_CAPACITY 64u
+/// Maximal number of entry slots: keeps slot indices within the `int32_t` range
+/// of `struct map_iter::entry` and prevents capacity arithmetic overflows.
+#define MAX_CAPACITY (1u << 30)
+/// The entries table is grown once the number of entries reaches `capacity * 3 / 4`.
+#define LOAD_PERCENT 3u
+/// The entries table is shrunk once the number of entries falls below `capacity / 8`.
+#define SHRINK_DIVISOR 8u
+/// Hash map entry, also used as an entries table slot: an empty slot is
+/// marked by `hash == 0` and terminates the probe sequence.
+///
+/// `hash` keeps a normalized key hash (see `_map_nhash()`), which allows to
+/// reject most candidates without calling `strcmp()`.
 struct _map_entry {
   void    *key;
   void    *val;
   uint32_t hash;
 };
-struct _map_bucket {
-  struct _map_entry *entries;
-  uint32_t used;
-  uint32_t total;
-};
+/// Entries are stored in a single flat, power of two sized table and are
+/// resolved with linear probing. Removals shift the rest of the probe cluster
+/// backwards, so the table holds no tombstones and any empty slot is a valid
+/// probe terminator.
 struct map {
-  uint32_t count;
-  uint32_t buckets_mask;
-  struct _map_bucket *buckets;
-  int      (*cmp_fn)(const void*, const void*);
-  uint32_t (*hash_key_fn)(const void*);
-  void     (*kv_free_fn)(void*, void*);
-  int int_key_as_pointer_value;
+  struct _map_entry *entries;
+  uint32_t capacity;       ///< Number of slots: a power of two.
+  uint32_t capacity_mask;  ///< `capacity - 1`
+  uint32_t count;          ///< Number of entries stored.
+  void (*kv_free_fn)(void*, void*);
 };
 static void _map_noop_kv_free(void *key, void *val) {
 }
-static void _map_noop_uint64_kv_free(void *key, void *val) {
-  if (key) {
-    free(key);
-  }
+void map_kv_free(void *key, void *val) {
+  free(key);
+  free(val);
 }
-static inline uint32_t _map_n_buckets(struct map *hm) {
-  return hm->buckets_mask + 1;
+void map_k_free(void *key, void *val) {
+  free(key);
 }
-static int _map_ptr_cmp(const void *v1, const void *v2) {
-  return v1 > v2 ? 1 : v1 < v2 ? -1 : 0;
+/// Maximal number of entries the table of given capacity can hold.
+static inline uint32_t _map_max_load(uint32_t capacity) {
+  return capacity - capacity / (LOAD_PERCENT + 1);
 }
-static int _map_uint32_cmp(const void *v1, const void *v2) {
-  intptr_t p1 = (intptr_t) v1;
-  intptr_t p2 = (intptr_t) v2;
-  return p1 > p2 ? 1 : p1 < p2 ? -1 : 0;
+/// Normalizes the key hash so that `0` is reserved to mark an empty slot.
+static inline uint32_t _map_nhash(uint32_t hash) {
+  hash += 1;
+  return hash ? hash : 1;
 }
-static int _map_uint64_cmp(const void *v1, const void *v2) {
-  if (sizeof(uintptr_t) >= sizeof(uint64_t)) {
-    intptr_t p1 = (intptr_t) v1;
-    intptr_t p2 = (intptr_t) v2;
-    return p1 > p2 ? 1 : p1 < p2 ? -1 : 0;
-  } else {
-    uint64_t l1, l2;
-    memcpy(&l1, v1, sizeof(l1));
-    memcpy(&l2, v2, sizeof(l2));
-    return l1 > l2 ? 1 : l1 < l2 ? -1 : 0;
-  }
-}
-static inline uint32_t _map_hash_uint32(uint32_t x) {
-  x ^= x >> 16;
-  x *= 0x85ebca6bU;
-  x ^= x >> 13;
-  x *= 0xc2b2ae35U;
-  x ^= x >> 16;
-  return x;
-}
-static inline uint32_t _map_hash_uint64(uint64_t x) {
-  x ^= x >> 33;
-  x *= 0xff51afd7ed558ccdULL;
-  x ^= x >> 33;
-  x *= 0xc4ceb9fe1a85ec53ULL;
-  x ^= x >> 33;
-  return x;
-}
-static inline uint32_t _map_hash_uint64_key(const void *key) {
-  return _map_hash_uint64((uintptr_t) key);
-}
-static inline uint32_t _map_hash_uint64_key_read(const void *key) {
-  uint64_t lv = 0;
-  memcpy(&lv, key, sizeof(key));
-  return _map_hash_uint64(lv);
-}
-static inline uint32_t _map_hash_uint32_key(const void *key) {
-  return _map_hash_uint32((uintptr_t) key);
-}
-static inline uint32_t _map_hash_buf_key(const void *key) {
+/// Hash of a zero terminated string key (FNV-1a).
+static inline uint32_t _map_hash_buf_key(const char *key) {
   const char *str = key;
   uint32_t hash = 2166136261U;
   while (*str) {
@@ -1852,259 +1891,170 @@ static inline uint32_t _map_hash_buf_key(const void *key) {
   }
   return hash;
 }
-static struct _map_entry* _map_entry_add(struct map *hm, void *key, uint32_t hash) {
-  struct _map_entry *entry;
-  struct _map_bucket *bucket = hm->buckets + (hash & hm->buckets_mask);
-  if (bucket->used + 1 >= bucket->total) {
-    if (UINT32_MAX - bucket->total < STEPS) {
-      akfatal(AK_ERROR_OVERFLOW, 0, 0, 0);
+static struct _map_entry* _map_entries_alloc(uint32_t capacity) {
+  return xcalloc(capacity, sizeof(struct _map_entry));
+}
+/// Looks up the entry with the given key.
+/// @param nhash Normalized key hash, see `_map_nhash()`.
+/// @return Entry pointer or zero if there is no such key.
+static struct _map_entry* _map_entry_find(struct map *hm, const char *key, uint32_t nhash) {
+  struct _map_entry *entries = hm->entries;
+  uint32_t mask = hm->capacity_mask;
+  for (uint32_t i = nhash & mask; ; i = (i + 1) & mask) {
+    struct _map_entry *entry = entries + i;
+    // An empty slot terminates the probe sequence: removals never leave holes.
+    if (!entry->hash) {
+      return 0;
     }
-    uint32_t new_total = bucket->total + STEPS;
-    struct _map_entry *new_entries = xrealloc(bucket->entries, new_total * sizeof(new_entries[0]));
-    bucket->entries = new_entries;
-    bucket->total = new_total;
-  }
-  entry = bucket->entries;
-  for (struct _map_entry *end = entry + bucket->used; entry < end; ++entry) {
-    if ((hash == entry->hash) && (hm->cmp_fn(key, entry->key) == 0)) {
+    if ((entry->hash == nhash) && (strcmp(key, entry->key) == 0)) {
       return entry;
     }
   }
-  ++bucket->used;
-  ++hm->count;
-  entry->hash = hash;
+}
+/// Returns an entry for the given key: either an existing one, or a newly
+/// claimed (zeroed) slot. Increments `hm->count` when a new slot is claimed.
+///
+/// The caller is responsible for keeping at least one empty slot in the table.
+/// @param nhash Normalized key hash, see `_map_nhash()`.
+/// @param created Set to `true` if a new slot has been claimed.
+static struct _map_entry* _map_entry_put(struct map *hm, const char *key, uint32_t nhash, bool *created) {
+  struct _map_entry *entries = hm->entries;
+  uint32_t mask = hm->capacity_mask;
+  for (uint32_t i = nhash & mask; ; i = (i + 1) & mask) {
+    struct _map_entry *entry = entries + i;
+    if (!entry->hash) {
+      entry->hash = nhash;
+      entry->key = 0;
+      entry->val = 0;
+      ++hm->count;
+      *created = true;
+      return entry;
+    }
+    if ((entry->hash == nhash) && (strcmp(key, entry->key) == 0)) {
+      *created = false;
+      return entry;
+    }
+  }
+}
+/// Reallocates the entries table to the given capacity and re-places all entries.
+/// Existing entries are moved as is: `kv_free_fn` is not called.
+static void _map_resize(struct map *hm, uint32_t capacity) {
+  akassert(!(capacity & (capacity - 1)));
+  akassert(capacity != hm->capacity);
+  akassert((capacity >= INITIAL_CAPACITY) && (capacity <= MAX_CAPACITY));
+  struct _map_entry *entries_new = _map_entries_alloc(capacity);
+  struct _map_entry *entries_old = hm->entries;
+  uint32_t mask_new = capacity - 1;
+  uint32_t count = 0;
+  for (struct _map_entry *entry = entries_old, *end = entries_old + hm->capacity; entry < end; ++entry) {
+    if (!entry->hash) {
+      continue;
+    }
+    uint32_t i = entry->hash & mask_new;
+    while (entries_new[i].hash) {
+      i = (i + 1) & mask_new;
+    }
+    entries_new[i] = *entry;
+    ++count;
+  }
+  akassert(count == hm->count);
+  (void) count;
+  hm->entries = entries_new;
+  hm->capacity = capacity;
+  hm->capacity_mask = mask_new;
+  free(entries_old);
+}
+/// Makes sure the table can hold one more entry.
+static void _map_reserve_entry(struct map *hm) {
+  if (hm->count + 1 <= _map_max_load(hm->capacity)) {
+    return;
+  }
+  if (hm->capacity >= MAX_CAPACITY) {
+    akfatal(AK_ERROR_OVERFLOW, 0, 0);
+  }
+  _map_resize(hm, hm->capacity * 2);
+}
+/// Removes the entry from the table and shifts the rest of its probe cluster
+/// backwards, so the table keeps no tombstones.
+/// @note Invalidates all entry pointers, including the given one.
+static void _map_entry_remove(struct map *hm, struct _map_entry *entry) {
+  hm->kv_free_fn(entry->key, entry->val);
+  --hm->count;
+  struct _map_entry *entries = hm->entries;
+  uint32_t mask = hm->capacity_mask;
+  uint32_t hole = (uint32_t) (entry - entries);
+  for (uint32_t i = (hole + 1) & mask; entries[i].hash; i = (i + 1) & mask) {
+    uint32_t home = entries[i].hash & mask;
+    // The entry can be moved back only if the hole is located on its probe path,
+    // otherwise moving it would make the entry unreachable for lookups.
+    if (((hole - home) & mask) <= ((i - home) & mask)) {
+      entries[hole] = entries[i];
+      hole = i;
+    }
+  }
+  entry = entries + hole;
+  entry->hash = 0;
   entry->key = 0;
   entry->val = 0;
-  return entry;
-}
-static struct _map_entry* _map_entry_find(struct map *hm, const void *key, uint32_t hash) {
-  struct _map_bucket *bucket = hm->buckets + (hash & hm->buckets_mask);
-  struct _map_entry *entry = bucket->entries;
-  for (struct _map_entry *end = entry + bucket->used; entry < end; ++entry) {
-    if (hash == entry->hash && hm->cmp_fn(key, entry->key) == 0) {
-      return entry;
-    }
-  }
-  return 0;
-}
-static void _map_rehash(struct map *hm, uint32_t num_buckets) {
-  struct _map_bucket *buckets = xcalloc(num_buckets, sizeof(*buckets));
-  struct _map_bucket *bucket,
-                     *bucket_end = hm->buckets + _map_n_buckets(hm);
-  struct map hm_copy = *hm;
-  hm_copy.count = 0;
-  hm_copy.buckets_mask = num_buckets - 1;
-  hm_copy.buckets = buckets;
-  for (bucket = hm->buckets; bucket < bucket_end; ++bucket) {
-    struct _map_entry *entry_old = bucket->entries;
-    if (entry_old) {
-      struct _map_entry *entry_old_end = entry_old + bucket->used;
-      for ( ; entry_old < entry_old_end; ++entry_old) {
-        struct _map_entry *entry_new = _map_entry_add(&hm_copy,
-                                                      entry_old->key,
-                                                      entry_old->hash);
-        entry_new->key = entry_old->key;
-        entry_new->val = entry_old->val;
-      }
-    }
-  }
-  for (bucket = hm->buckets; bucket < bucket_end; ++bucket) {
-    free(bucket->entries);
-  }
-  free(hm->buckets);
-  hm->buckets = buckets;
-  hm->buckets_mask = num_buckets - 1;
-  return;
-}
-static void _map_entry_remove(struct map *hm, struct _map_bucket *bucket, struct _map_entry *entry) {
-  hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : entry->key, entry->val);
-  if (bucket->used > 1) {
-    struct _map_entry *entry_last = bucket->entries + bucket->used - 1;
-    if (entry != entry_last) {
-      memcpy(entry, entry_last, sizeof(*entry));
-    }
-  }
-  --bucket->used;
-  --hm->count;
-  if ((hm->buckets_mask > MIN_BUCKETS - 1) && (hm->count < hm->buckets_mask / 2)) {
-    _map_rehash(hm, _map_n_buckets(hm) / 2);
-  } else {
-    uint32_t steps_used = bucket->used / STEPS;
-    uint32_t steps_total = bucket->total / STEPS;
-    if (steps_used + 1 < steps_total) {
-      struct _map_entry *entries_new = realloc(bucket->entries,
-                                               ((size_t) steps_used + 1) * STEPS * sizeof(entries_new[0]));
-      if (entries_new) {
-        bucket->entries = entries_new;
-        bucket->total = (steps_used + 1) * STEPS;
-      }
-    }
+  if ((hm->capacity > INITIAL_CAPACITY) && (hm->count < hm->capacity / SHRINK_DIVISOR)) {
+    _map_resize(hm, hm->capacity / 2);
   }
 }
-void map_kv_free(void *key, void *val) {
-  free(key);
-  free(val);
-}
-void map_k_free(void *key, void *val) {
-  free(key);
-}
-struct map* map_create(
-  int (*cmp_fn)(const void*, const void*),
-  uint32_t (*hash_key_fn)(const void*),
-  void (*kv_free_fn)(void*, void*)) {
-  if (!hash_key_fn) {
-    return 0;
+static void _map_put(struct map *hm, const char *key, void *val) {
+  uint32_t nhash = _map_nhash(_map_hash_buf_key(key));
+  // Reserve space before the lookup: a `put` of an already existing key may grow
+  // the table one step earlier than strictly needed, but it keeps the insertion
+  // path to a single probe sequence.
+  _map_reserve_entry(hm);
+  bool created;
+  struct _map_entry *entry = _map_entry_put(hm, key, nhash, &created);
+  if (!created) {
+    hm->kv_free_fn(entry->key, entry->val);
   }
-  if (!cmp_fn) {
-    cmp_fn = _map_ptr_cmp;
-  }
+  entry->key = (void*) key;
+  entry->val = val;
+}
+struct map* map_create_str(void (*kv_free_fn)(void*, void*)) {
   if (!kv_free_fn) {
     kv_free_fn = _map_noop_kv_free;
   }
   struct map *hm = xmalloc(sizeof(*hm));
-  hm->buckets = xcalloc(MIN_BUCKETS, sizeof(hm->buckets[0]));
-  hm->cmp_fn = cmp_fn;
-  hm->hash_key_fn = hash_key_fn;
-  hm->kv_free_fn = kv_free_fn;
-  hm->buckets_mask = MIN_BUCKETS - 1;
+  hm->entries = _map_entries_alloc(INITIAL_CAPACITY);
+  hm->capacity = INITIAL_CAPACITY;
+  hm->capacity_mask = INITIAL_CAPACITY - 1;
   hm->count = 0;
-  hm->int_key_as_pointer_value = 0;
+  hm->kv_free_fn = kv_free_fn;
   return hm;
 }
 void map_destroy(struct map *hm) {
-  if (hm) {
-    for (struct _map_bucket *b = hm->buckets, *be = hm->buckets + _map_n_buckets(hm); b < be; ++b) {
-      if (b->entries) {
-        for (struct _map_entry *e = b->entries, *ee = b->entries + b->used; e < ee; ++e) {
-          hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : e->key, e->val);
-        }
-        free(b->entries);
-      }
-    }
-    free(hm->buckets);
-    free(hm);
-  }
-}
-struct map* map_create_u64(void (*kv_free_fn)(void*, void*)) {
-  if (!kv_free_fn) {
-    kv_free_fn = _map_noop_uint64_kv_free;
-  }
-  int key_as_pointer = 0;
-  if (sizeof(uintptr_t) >= sizeof(uint64_t)) {
-    key_as_pointer = 1;
-  }
-  struct map *hm = map_create(_map_uint64_cmp,
-                              key_as_pointer ? _map_hash_uint64_key : _map_hash_uint64_key_read,
-                              kv_free_fn);
-  if (hm) {
-    hm->int_key_as_pointer_value = key_as_pointer;
-  }
-  return hm;
-}
-struct map* map_create_u32(void (*kv_free_fn)(void*, void*)) {
-  struct map *hm = map_create(_map_uint32_cmp, _map_hash_uint32_key, kv_free_fn);
-  if (hm) {
-    hm->int_key_as_pointer_value = 1;
-  }
-  return hm;
-}
-struct map* map_create_str(void (*kv_free_fn)(void*, void*)) {
-  return map_create((int (*)(const void*, const void*)) strcmp, _map_hash_buf_key, kv_free_fn);
-}
-void map_put(struct map *hm, void *key, void *val) {
-  uint32_t hash = hm->hash_key_fn(key);
-  struct _map_entry *entry = _map_entry_add(hm, key, hash);
-  hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : entry->key, entry->val);
-  entry->key = key;
-  entry->val = val;
-  if (hm->count > hm->buckets_mask) {
-    _map_rehash(hm, _map_n_buckets(hm) * 2);
-  }
-}
-void map_put_u32(struct map *hm, uint32_t key, void *val) {
-  map_put(hm, (void*) (uintptr_t) key, val);
-}
-void map_put_u64(struct map *hm, uint64_t key, void *val) {
-  if (hm->int_key_as_pointer_value) {
-    map_put(hm, (void*) (uintptr_t) key, val);
-  } else {
-    uint64_t *kv = xmalloc(sizeof(*kv));
-    memcpy(kv, &key, sizeof(*kv));
-    map_put(hm, kv, val);
-  }
-}
-void map_put_str(struct map *hm, const char *key_, void *val) {
-  char *key = xstrdup(key_);
-  map_put(hm, key, val);
-}
-void map_put_str_no_copy(struct map *hm, const char *key, void *val) {
-  map_put(hm, (void*) key, val);
-}
-int map_remove(struct map *hm, const void *key) {
-  uint32_t hash = hm->hash_key_fn(key);
-  struct _map_bucket *bucket = hm->buckets + (hash & hm->buckets_mask);
-  struct _map_entry *entry = _map_entry_find(hm, key, hash);
-  if (entry) {
-    _map_entry_remove(hm, bucket, entry);
-    return 1;
-  } else {
-    return 0;
-  }
-}
-int map_remove_u64(struct map *hm, uint64_t key) {
-  if (hm->int_key_as_pointer_value) {
-    return map_remove(hm, (void*) (uintptr_t) key);
-  } else {
-    return map_remove(hm, &key);
-  }
-}
-int map_remove_u32(struct map *hm, uint32_t key) {
-  return map_remove(hm, (void*) (uintptr_t) key);
-}
-void* map_get(struct map *hm, const void *key) {
-  uint32_t hash = hm->hash_key_fn(key);
-  struct _map_entry *entry = _map_entry_find(hm, key, hash);
-  if (entry) {
-    return entry->val;
-  } else {
-    return 0;
-  }
-}
-void* map_get_u64(struct map *hm, uint64_t key) {
-  if (hm->int_key_as_pointer_value) {
-    return map_get(hm, (void*) (intptr_t) key);
-  } else {
-    return map_get(hm, &key);
-  }
-}
-void* map_get_u32(struct map *hm, uint32_t key) {
-  return map_get(hm, (void*) (intptr_t) key);
-}
-uint32_t map_count(const struct map *hm) {
-  return hm->count;
-}
-void map_clear(struct map *hm) {
   if (!hm) {
     return;
   }
-  for (struct _map_bucket *b = hm->buckets, *be = hm->buckets + _map_n_buckets(hm); b < be; ++b) {
-    for (struct _map_entry *e = b->entries, *ee = b->entries + b->used; e < ee; ++e) {
-      hm->kv_free_fn(hm->int_key_as_pointer_value ? 0 : e->key, e->val);
-    }
-    free(b->entries);
-    b->used = 0;
-    b->total = 0;
-    b->entries = 0;
-  }
-  if (_map_n_buckets(hm) > MIN_BUCKETS) {
-    struct _map_bucket *buckets_new = realloc(hm->buckets, sizeof(buckets_new[0]) * MIN_BUCKETS);
-    if (buckets_new) {
-      memset(buckets_new, 0, sizeof(buckets_new[0]) * MIN_BUCKETS);
-      hm->buckets = buckets_new;
-      hm->buckets_mask = MIN_BUCKETS - 1;
+  for (struct _map_entry *entry = hm->entries, *end = hm->entries + hm->capacity; entry < end; ++entry) {
+    if (entry->hash) {
+      hm->kv_free_fn(entry->key, entry->val);
     }
   }
-  hm->count = 0;
+  free(hm->entries);
+  free(hm);
+}
+void map_put_str(struct map *hm, const char *key, void *val) {
+  _map_put(hm, xstrdup(key), val);
+}
+void map_put_str_no_copy(struct map *hm, const char *key, void *val) {
+  _map_put(hm, key, val);
+}
+int map_remove(struct map *hm, const char *key) {
+  struct _map_entry *entry = _map_entry_find(hm, key, _map_nhash(_map_hash_buf_key(key)));
+  if (!entry) {
+    return 0;
+  }
+  _map_entry_remove(hm, entry);
+  return 1;
+}
+void* map_get(struct map *hm, const char *key) {
+  struct _map_entry *entry = _map_entry_find(hm, key, _map_nhash(_map_hash_buf_key(key)));
+  return entry ? entry->val : 0;
 }
 void map_iter_init(struct map *hm, struct map_iter *iter) {
   iter->hm = hm;
@@ -2114,26 +2064,34 @@ void map_iter_init(struct map *hm, struct map_iter *iter) {
   iter->val = 0;
 }
 int map_iter_next(struct map_iter *iter) {
-  if (!iter->hm) {
+  struct map *hm = iter->hm;
+  if (!hm) {
     return 0;
   }
-  struct _map_entry *entry;
-  struct _map_bucket *bucket = iter->hm->buckets + iter->bucket;
-  ++iter->entry;
-  if ((uint32_t) iter->entry >= bucket->used) {
-    uint32_t n = _map_n_buckets(iter->hm);
-    iter->entry = 0;
-    for (++iter->bucket; iter->bucket < n; ++iter->bucket) {
-      bucket = iter->hm->buckets + iter->bucket;
-      if (bucket->used > 0) {
-        break;
-      }
-    }
-    if (iter->bucket >= n) {
-      return 0;
+  struct _map_entry *entries = hm->entries;
+  uint32_t capacity = hm->capacity;
+  if ((iter->entry >= 0) && ((uint32_t) iter->entry < capacity)) {
+    // Removals shift the rest of the probe cluster backwards, so the slot
+    // returned by the previous call may hold another entry now (this is the case
+    // when the caller removes the entry it has just received). Return that entry
+    // as well, otherwise it would be silently skipped by the iteration.
+    struct _map_entry *entry = entries + iter->entry;
+    if (entry->hash && ((entry->hash != iter->bucket) || (entry->key != iter->key))) {
+      iter->bucket = entry->hash;
+      iter->key = entry->key;
+      iter->val = entry->val;
+      return 1;
     }
   }
-  entry = bucket->entries + iter->entry;
+  uint32_t i = (iter->entry < 0) ? 0 : (uint32_t) iter->entry + 1;
+  for ( ; (i < capacity) && !entries[i].hash; ++i) {}
+  if (i >= capacity) {
+    iter->entry = (int32_t) capacity;
+    return 0;
+  }
+  struct _map_entry *entry = entries + i;
+  iter->entry = (int32_t) i;
+  iter->bucket = entry->hash;
   iter->key = entry->key;
   iter->val = entry->val;
   return 1;
@@ -4220,6 +4178,11 @@ struct toolchain* toolchain_load(struct pool *pool, const char *path) {
   pool_destroy(fpool);
   return tc;
 }
+void toolchain_destroy(struct toolchain *tc) {
+  if (tc) {
+    ulist_destroy_keep(&tc->vars);
+  }
+}
 /// Publishes a value as a build script variable and as a process environment variable.
 static void _publish(struct unit *root, const char *key, const char *val) {
   if (!val || *val == '\0') {
@@ -4367,6 +4330,449 @@ const char* toolchain_object_check(const char *obj_path, bool host_scope, char *
     return 0;
   }
   return buf;
+}
+#ifndef _AMALGAMATE_
+#include "cxx_modules.h"
+#include "env.h"
+#include "utils.h"
+#include "xstr.h"
+#include "log.h"
+#include "paths.h"
+#include <ctype.h>
+#include <string.h>
+#endif
+/// Directory (relative to the project cache dir) holding compiled module interfaces.
+#define CXX_MODULES_DIR ".cxx-modules"
+/// Module map file name (gcc only) inside the BMI directory.
+#define CXX_MODULES_MAP "modules.map"
+/// Compiler specific module compilation style.
+enum cxx_modules_style {
+  CXX_MODULES_CLANG,
+  CXX_MODULES_GCC,
+};
+/// C++20 module interface unit file extensions.
+static const char* _cxx_modules_exts[] = {
+  ".cppm",
+  ".ixx",
+  ".mpp",
+  ".ccm",
+  ".cxxm",
+  0
+};
+/// Module unit declared by a source file of a cxx rule.
+struct cxx_modules_src {
+  const char *path;         // Absolute source path
+  const char *name;         // Module name
+  bool        is_interface; // Source is a module interface unit
+};
+/// Module interface unit registered in the project wide module registry.
+struct cxx_module {
+  const char  *name;   // Module name
+  const char  *bmi;    // Absolute path to the compiled module interface
+  const char  *tag;    // Toolchain tag of the compilation scope, zero for the native target
+  struct node *owner;  // Rule providing the module
+};
+/// Project wide module registry.
+///
+/// It is populated while scripts are set up (all setups finish before any build
+/// starts), so the module map of a build unit lists interfaces of all units.
+/// Registry entries refer to rule nodes of the current build environment,
+/// so the registry is released by `cxx_modules_dispose()` together with that
+/// environment and is recreated on demand.
+static struct {
+  struct pool *pool;
+  struct ulist list; // struct cxx_module*
+} _reg;
+struct cxx_modules {
+  struct node *n;
+  struct pool *pool;
+  struct ulist units;  // struct cxx_modules_src* in declaration order
+  enum cxx_modules_style style;
+  const char *tag;     // Toolchain tag of the compilation scope, can be zero
+  const char *dir;     // Absolute BMI directory
+  const char *map;     // Absolute path to the gcc module map file
+};
+static void _reg_init(void) {
+  if (!_reg.pool) {
+    _reg.pool = pool_create_empty();
+    ulist_init(&_reg.list, 0, sizeof(struct cxx_module*));
+  }
+}
+static inline bool _tag_eq(const char *a, const char *b) {
+  return strcmp(a ? a : "", b ? b : "") == 0;
+}
+static struct cxx_module* _reg_find(const char *tag, const char *name) {
+  _reg_init();
+  for (int i = 0; i < _reg.list.num; ++i) {
+    struct cxx_module *m = *(struct cxx_module**) ulist_get(&_reg.list, i);
+    if (_tag_eq(m->tag, tag) && strcmp(m->name, name) == 0) {
+      return m;
+    }
+  }
+  return 0;
+}
+static bool _reg_has_tag(const char *tag) {
+  _reg_init();
+  for (int i = 0; i < _reg.list.num; ++i) {
+    struct cxx_module *m = *(struct cxx_module**) ulist_get(&_reg.list, i);
+    if (_tag_eq(m->tag, tag)) {
+      return true;
+    }
+  }
+  return false;
+}
+static void _reg_add(struct node *n, const char *tag, const char *name, const char *bmi) {
+  struct cxx_module *prev = _reg_find(tag, name);
+  if (prev) {
+    node_fatal(AK_ERROR_FAIL, n, "C++ module '%s' is already provided by rule '%s': %s",
+               name, prev->owner->name, prev->bmi);
+  }
+  _reg_init();
+  struct cxx_module *m = pool_alloc(_reg.pool, sizeof(*m));
+  *m = (struct cxx_module) {
+    .name = pool_strdup(_reg.pool, name),
+    .bmi = pool_strdup(_reg.pool, bmi),
+    .tag = tag ? pool_strdup(_reg.pool, tag) : 0,
+    .owner = n,
+  };
+  ulist_push(&_reg.list, &m);
+}
+void cxx_modules_dispose(void) {
+  if (_reg.pool) {
+    ulist_destroy_keep(&_reg.list);
+    pool_destroy(_reg.pool);
+    memset(&_reg, 0, sizeof(_reg));
+  }
+}
+static bool _is_module_ext(const char *path) {
+  for (int i = 0; _cxx_modules_exts[i]; ++i) {
+    if (utils_endswith(path, _cxx_modules_exts[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+bool cxx_modules_is_module_path(const char *path) {
+  return _is_module_ext(path);
+}
+static bool _is_ident_start(char c) {
+  return isalpha((unsigned char) c) || c == '_';
+}
+static bool _is_ident(char c) {
+  return isalnum((unsigned char) c) || c == '_';
+}
+struct _mod_scan {
+  const char *p;
+  const char *end;
+};
+/// Skips whitespace and comments.
+static void _scan_skip(struct _mod_scan *s);
+static void _scan_skip_line(struct _mod_scan *s) {
+  while (s->p < s->end && *s->p != '\n') {
+    ++s->p;
+  }
+}
+static void _scan_skip_block_comment(struct _mod_scan *s) {
+  s->p += 2;
+  while (s->p + 1 < s->end && !(s->p[0] == '*' && s->p[1] == '/')) {
+    ++s->p;
+  }
+  s->p = (s->p + 1 < s->end) ? s->p + 2 : s->end;
+}
+static void _scan_skip_quoted(struct _mod_scan *s) {
+  char quote = *s->p++;
+  while (s->p < s->end && *s->p != quote) {
+    if (*s->p == '\\' && s->p + 1 < s->end) {
+      ++s->p;
+    }
+    ++s->p;
+  }
+  if (s->p < s->end) {
+    ++s->p;
+  }
+}
+static void _scan_skip(struct _mod_scan *s) {
+  for ( ;; ) {
+    while (s->p < s->end && utils_char_is_space(*s->p)) {
+      ++s->p;
+    }
+    if (s->p + 1 < s->end && s->p[0] == '/' && s->p[1] == '/') {
+      _scan_skip_line(s);
+      continue;
+    }
+    if (s->p + 1 < s->end && s->p[0] == '/' && s->p[1] == '*') {
+      _scan_skip_block_comment(s);
+      continue;
+    }
+    break;
+  }
+}
+/// Scans a module declaration of a module unit.
+///
+/// Module names are not subject to macro replacement, so a lexical scan is
+/// sufficient to extract them. Only the first module declaration is reported.
+///
+/// @param partition Set to true if the declaration names a module partition
+/// @param is_interface Set to true if the declaration exports the module
+///
+/// @return Module name allocated from the pool or zero if the source does not
+///         declare a module
+static const char* _scan_module_name(
+  struct node *n,
+  const char *path,
+  struct pool *pool,
+  bool *partition,
+  bool *is_interface) {
+  struct value v = utils_file_as_buf(path, -1);
+  if (v.error) {
+    value_destroy(&v);
+    node_fatal(AK_ERROR_IO, n, "Failed to read C++ module unit: %s", path);
+  }
+  if (!v.buf || v.len == 0) {
+    value_destroy(&v);
+    return 0;
+  }
+  const char *ret = 0;
+  bool exported = false;
+  bool line_start = true;
+  struct _mod_scan s = { .p = v.buf, .end = (char*) v.buf + v.len };
+  while (s.p < s.end) {
+    char c = *s.p;
+    if (c == '\n') {
+      line_start = true;
+      ++s.p;
+      continue;
+    }
+    if (utils_char_is_space(c)) {
+      ++s.p;
+      continue;
+    }
+    if (line_start && c == '#') { // Skip preprocessor directives
+      while (s.p < s.end && *s.p != '\n') {
+        if (*s.p == '\\' && s.p + 1 < s.end && s.p[1] == '\n') {
+          s.p += 2;
+          continue;
+        }
+        ++s.p;
+      }
+      continue;
+    }
+    line_start = false;
+    if (c == '/' && s.p + 1 < s.end && s.p[1] == '/') {
+      _scan_skip_line(&s);
+      continue;
+    }
+    if (c == '/' && s.p + 1 < s.end && s.p[1] == '*') {
+      _scan_skip_block_comment(&s);
+      continue;
+    }
+    if (c == '"' || c == '\'') {
+      _scan_skip_quoted(&s);
+      continue;
+    }
+    if (!_is_ident_start(c)) {
+      exported = false;
+      ++s.p;
+      continue;
+    }
+    const char *tok = s.p;
+    while (s.p < s.end && _is_ident(*s.p)) {
+      ++s.p;
+    }
+    size_t tok_len = s.p - tok;
+    if (tok_len == 6 && strncmp(tok, "export", 6) == 0) {
+      exported = true;
+      continue;
+    }
+    if (tok_len != 6 || strncmp(tok, "module", 6) != 0) {
+      exported = false;
+      continue;
+    }
+    _scan_skip(&s);
+    if (s.p < s.end && *s.p == ';') { // Global module fragment: `module;`
+      exported = false;
+      continue;
+    }
+    if (s.p >= s.end || !_is_ident_start(*s.p)) {
+      exported = false;
+      continue;
+    }
+    const char *name = s.p;
+    while (s.p < s.end && (_is_ident(*s.p) || *s.p == '.')) {
+      ++s.p;
+    }
+    size_t name_len = s.p - name;
+    _scan_skip(&s);
+    if (s.p < s.end && *s.p == ':') {
+      *partition = true;
+    }
+    ret = pool_strndup(pool, name, name_len);
+    *is_interface = exported;
+    break;
+  }
+  value_destroy(&v);
+  return ret;
+}
+static struct cxx_modules_src* _find_src(struct cxx_modules *m, const char *path) {
+  for (int i = 0; i < m->units.num; ++i) {
+    struct cxx_modules_src *u = *(struct cxx_modules_src**) ulist_get(&m->units, i);
+    if (strcmp(u->path, path) == 0) {
+      return u;
+    }
+  }
+  return 0;
+}
+static enum cxx_modules_style _detect_style(struct node *n, const char *compiler) {
+  const char *style = node_env_get(n, "CXX_MODULE_STYLE");
+  if (style && *style != '\0') {
+    if (strcmp(style, "clang") == 0) {
+      return CXX_MODULES_CLANG;
+    }
+    if (strcmp(style, "gcc") == 0) {
+      return CXX_MODULES_GCC;
+    }
+    node_fatal(AK_ERROR_SCRIPT, n, "Unsupported CXX_MODULE_STYLE value: %s (expected `clang` or `gcc`)", style);
+  }
+  char buf[PATH_MAX];
+  utils_strncpy(buf, compiler, sizeof(buf));
+  return strstr(path_basename(buf), "clang") ? CXX_MODULES_CLANG : CXX_MODULES_GCC;
+}
+struct cxx_modules* cxx_modules_create(struct node *n, const char *compiler, const char *tag) {
+  struct pool *pool = pool_create_empty();
+  struct cxx_modules *m = pool_alloc(pool, sizeof(*m));
+  const char *dir = pool_printf(pool, "%s/%s", g_env.project.cache_dir, CXX_MODULES_DIR);
+  if (tag && *tag != '\0') {
+    dir = pool_printf(pool, "%s/%s", dir, tag);
+  }
+  *m = (struct cxx_modules) {
+    .n = n,
+    .pool = pool,
+    .style = _detect_style(n, compiler),
+    .tag = tag ? pool_strdup(pool, tag) : 0,
+    .dir = dir,
+    .map = pool_printf(pool, "%s/%s", dir, CXX_MODULES_MAP),
+  };
+  ulist_init(&m->units, 0, sizeof(struct cxx_modules_src*));
+  return m;
+}
+void cxx_modules_destroy(struct cxx_modules *m) {
+  if (m) {
+    ulist_destroy_keep(&m->units);
+    pool_destroy(m->pool);
+  }
+}
+bool cxx_modules_add_source(struct cxx_modules *m, const char *src, bool required) {
+  if (!required && !_is_module_ext(src)) {
+    return false;
+  }
+  if (_find_src(m, src)) {
+    return false;
+  }
+  bool partition = false;
+  bool is_interface = false;
+  const char *name = _scan_module_name(m->n, src, m->pool, &partition, &is_interface);
+  if (!name) {
+    if (required) {
+      node_fatal(AK_ERROR_SCRIPT, m->n,
+                 "No C++ module declaration found in the source listed in `modules { }`: %s", src);
+    }
+    return false;
+  }
+  if (partition) {
+    node_fatal(AK_ERROR_NOT_IMPLEMENTED, m->n,
+               "Module partition units are not supported: %s (module '%s')", src, name);
+  }
+  struct cxx_modules_src *u = pool_alloc(m->pool, sizeof(*u));
+  *u = (struct cxx_modules_src) { .path = pool_strdup(m->pool, src), .name = name, .is_interface = is_interface };
+  ulist_push(&m->units, &u);
+  if (!is_interface) {
+    return false;
+  }
+  const char *ext = m->style == CXX_MODULES_CLANG ? "pcm" : "gcm";
+  const char *bmi = pool_printf(m->pool, "%s/%s.%s", m->dir, name, ext);
+  _reg_add(m->n, m->tag, name, bmi);
+  node_product_add(m->n, bmi, 0);
+  if (g_env.verbose) {
+    node_info(m->n, "C++ module interface unit: %s (module '%s')", src, name);
+  }
+  return true;
+}
+bool cxx_modules_is_interface(struct cxx_modules *m, const char *src) {
+  struct cxx_modules_src *u = _find_src(m, src);
+  return u && u->is_interface;
+}
+void cxx_modules_prepare(struct cxx_modules *m) {
+  if (!m || m->style != CXX_MODULES_GCC || !_reg_has_tag(m->tag)) {
+    return;
+  }
+  struct xstr *xstr = xstr_create_empty();
+  for (int i = 0; i < _reg.list.num; ++i) {
+    struct cxx_module *mod = *(struct cxx_module**) ulist_get(&_reg.list, i);
+    if (_tag_eq(mod->tag, m->tag)) {
+      xstr_printf(xstr, "%s %s\n", mod->name, mod->bmi);
+    }
+  }
+  if (xstr_size(xstr) > 0) {
+    struct value prev = utils_file_as_buf(m->map, -1);
+    bool same = !prev.error && prev.buf
+                && prev.len == xstr_size(xstr)
+                && memcmp(prev.buf, xstr_ptr(xstr), prev.len) == 0;
+    value_destroy(&prev);
+    if (!same) {
+      int rc = path_mkdirs(m->dir);
+      if (rc == 0) {
+        rc = utils_file_write_buf(m->map, xstr_ptr(xstr), xstr_size(xstr), false);
+      }
+      if (rc) {
+        node_fatal(rc, m->n, "Failed to write C++ module map file: %s", m->map);
+      }
+    }
+  }
+  xstr_destroy(xstr);
+}
+void cxx_modules_args_add(struct cxx_modules *m, struct spawn *s, const char *src) {
+  if (!m) {
+    return;
+  }
+  struct cxx_modules_src *u = _find_src(m, src);
+  if (m->style == CXX_MODULES_CLANG) {
+    if (u && u->is_interface) {
+      struct cxx_module *mod = _reg_find(m->tag, u->name);
+      akassert(mod);
+      spawn_arg_add(s, "-x");
+      spawn_arg_add(s, "c++-module");
+      spawn_arg_add(s, pool_printf(m->pool, "-fmodule-output=%s", mod->bmi));
+    } else if (u) { // Module implementation unit
+      spawn_arg_add(s, "-x");
+      spawn_arg_add(s, "c++");
+    }
+    if (_reg_has_tag(m->tag)) {
+      spawn_arg_add(s, pool_printf(m->pool, "-fprebuilt-module-path=%s", m->dir));
+    }
+  } else {
+    if (u) {
+      spawn_arg_add(s, "-x");
+      spawn_arg_add(s, "c++");
+    }
+    if (_reg_has_tag(m->tag)) {
+      spawn_arg_add(s, "-fmodules-ts");
+      spawn_arg_add(s, pool_printf(m->pool, "-fmodule-mapper=%s", m->map));
+    }
+  }
+}
+void cxx_modules_deps_add(struct cxx_modules *m, struct deps *deps) {
+  if (!m || !_reg_has_tag(m->tag)) {
+    return;
+  }
+  for (int i = 0; i < _reg.list.num; ++i) {
+    struct cxx_module *mod = *(struct cxx_module**) ulist_get(&_reg.list, i);
+    if (_tag_eq(mod->tag, m->tag) && path_is_file(mod->bmi)) {
+      deps_add(deps, DEPS_TYPE_FILE, 0, mod->bmi, 0);
+    }
+  }
+  if (m->style == CXX_MODULES_GCC && path_is_file(m->map)) {
+    deps_add(deps, DEPS_TYPE_FILE, 0, m->map, 0);
+  }
 }
 #ifndef _AMALGAMATE_
 #include "script.h"
@@ -5934,6 +6340,7 @@ int node_configure_setup(struct node *n) {
 #include "alloc.h"
 #include "map.h"
 #include "toolchain.h"
+#include "cxx_modules.h"
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
@@ -5955,6 +6362,8 @@ struct _cc_ctx {
   struct node *n_cc;
   struct node *n_consumes;
   struct node *n_objects;
+  struct node *n_modules;
+  struct cxx_modules *modules;  // C++20 modules compilation state (cxx rules only)
   const char  *cc;
   const char  *objskey;
   const char  *cflags_default; // Used when no explicit flags expression is given (host-cc/host-cxx)
@@ -5995,10 +6404,7 @@ static void _cc_obj_tag_write(struct _cc_ctx *ctx, const char *obj) {
     node_fatal(rc, ctx->n, "Failed to write toolchain tag of object file: %s", obj);
   }
 }
-static void _cc_deps_MMD_item_add(const char *item, struct node *n, struct deps *deps, const char *src) {
-  deps_add_alias(deps, 's', src, item);
-}
-static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src, const char *obj) {
+static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src, const char *obj, char flags) {
   char buf[MAX(2 * PATH_MAX, 8192)];
   size_t len = strlen(obj);
   utils_strncpy(buf, obj, sizeof(buf));
@@ -6008,7 +6414,9 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
   p[2] = '\0';
   FILE *f = fopen(buf, "r");
   if (!f) {
-    node_warn(n, "Failed to open compiler generated (-MMD) dependency file: %s", buf);
+    if (g_env.verbose) {
+      node_info(n, "No compiler generated (-MMD) dependency file: %s", buf);
+    }
     return;
   }
   bool nl = false;
@@ -6018,9 +6426,12 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
         continue;
       }
       p += len;
-      if (*p++ != ':') {
+      // The first target may be followed by module specific targets (gcc)
+      char *colon = strchr(p, ':');
+      if (colon == 0) {
         continue;
       }
+      p = colon + 1;
     } else {
       nl = false;
     }
@@ -6041,7 +6452,11 @@ static void _cc_deps_MMD_add(struct node *n, struct deps *deps, const char *src,
           *p = '\0';
           ++p;
         }
-        _cc_deps_MMD_item_add(sp, n, deps, src);
+        // Skip logical module references emitted by gcc (`.c++m`)
+        if (utils_endswith(sp, ".c++m")) {
+          continue;
+        }
+        deps_add_alias(deps, flags, src, sp);
       }
     }
   }
@@ -6060,7 +6475,6 @@ static void _cc_task_destroy(struct _cc_task *t) {
 }
 static void _cc_on_build_source(
   struct node     *n,
-  struct deps     *deps,
   const char      *src,
   const char      *obj,
   struct _cc_task *task) {
@@ -6068,6 +6482,7 @@ static void _cc_on_build_source(
     xstr_printf(g_env.check.log, "%s: build src=%s obj=%s\n", n->name, src, obj);
   }
   struct _cc_ctx *ctx = n->impl;
+  struct unit *unit = unit_peek();
   struct spawn *s = spawn_create(ctx->cc, ctx);
   task->s = s;
   spawn_set_nowait(s, true);
@@ -6081,6 +6496,10 @@ static void _cc_on_build_source(
     }
     spawn_arg_add(s, cflags);
     xstr_destroy(xstr);
+  }
+  if (ctx->modules) {
+    char buf[PATH_MAX];
+    cxx_modules_args_add(ctx->modules, s, path_normalize_cwd(src, unit->cache_dir, buf));
   }
   if (!spawn_arg_starts_with(s, "-M")) {
     spawn_arg_add(s, "-MMD");
@@ -6100,47 +6519,17 @@ static void _cc_on_build_source(
   }
   task->pid = spawn_pid(s);
 }
-static void _cc_on_resolve(struct node_resolve *r) {
-  struct deps deps;
-  struct _cc_ctx *ctx = r->user_data;
+/// Compiles the given sources (up to `max_jobs` in parallel).
+///
+/// Failed sources are registered in `fmap` (cache relative source path -> failure).
+/// Dependencies of compiled sources are recorded by the caller.
+static void _cc_compile_sources(
+  struct _cc_ctx *ctx,
+  struct ulist   *slist,
+  int             max_jobs,
+  struct map     *fmap) {
   struct unit *unit = unit_peek();
-  struct ulist *slist = &ctx->sources;
-  struct ulist rlist = { .usize = sizeof(char*) };
   struct ulist tasks = { .usize = sizeof(struct _cc_task) };
-  struct map *fmap = map_create_str(map_k_free);
-  int max_jobs = g_env.max_parallel_jobs;
-  if (max_jobs <= 0) {
-    max_jobs = 1;
-  }
-  if (r->resolve_outdated.num) {
-    for (int i = 0; i < r->resolve_outdated.num; ++i) {
-      struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
-      if (u->flags != 's') { // Rebuild all on any outdated non source dependency
-        slist = &ctx->sources;
-        break;
-      } else {
-        char *path = pool_strdup(r->pool, u->path);
-        ulist_push(&rlist, &path);
-        slist = &rlist;
-      }
-    }
-  }
-  int rc = deps_open(r->deps_path_tmp, 0, &deps);
-  if (rc) {
-    node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
-  }
-  node_add_unit_deps(ctx->n, &deps);
-  for (int i = 0; i < r->node_val_deps.num; ++i) {
-    struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
-    const char *val = node_value(nv);
-    if (val) {
-      deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
-    }
-  }
-  for (int i = 0; i < ctx->consumes.num; ++i) {
-    const char *path = *(const char**) ulist_get(&ctx->consumes, i);
-    deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
-  }
   for (int i = 0; i < slist->num || tasks.num > 0; ) {
     while (tasks.num < max_jobs && i < slist->num) {
       char buf[PATH_MAX];
@@ -6149,13 +6538,10 @@ static void _cc_on_resolve(struct node_resolve *r) {
       src = path_normalize_cwd(src, unit->cache_dir, buf);
       src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
       struct _cc_task task = { .src = src, .obj = obj, .pid = -1 };
-      _cc_on_build_source(ctx->n, &deps, src, obj, &task);
+      _cc_on_build_source(ctx->n, src, obj, &task);
       if (task.pid == -1) {
         ++ctx->num_failed;
         map_put_str(fmap, src, (void*) (intptr_t) 1);
-        if (slist == &ctx->sources) {
-          deps_add(&deps, DEPS_TYPE_FILE_OUTDATED, 's', src, 0);
-        }
         _cc_task_destroy(&task);
       } else {
         ulist_push(&tasks, &task);
@@ -6181,37 +6567,106 @@ static void _cc_on_resolve(struct node_resolve *r) {
         } else {
           _cc_obj_tag_write(ctx, t->obj);
         }
-        if (slist == &ctx->sources) {
-          deps_add(&deps, code != 0 ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', t->src, 0);
-          if (code == 0) {
-            _cc_deps_MMD_add(ctx->n, &deps, t->src, t->obj);
-          }
-        }
         _cc_task_destroy(t);
         ulist_remove(&tasks, j);
         break;
       }
     }
   }
-  if (slist != &ctx->sources) {
-    for (int i = 0; i < ctx->sources.num; ++i) {
-      char buf[PATH_MAX];
-      char *obj, *src = *(char**) ulist_get(&ctx->sources, i);
-      obj = _cc_obj_path(ctx, src, unit);
-      src = path_normalize_cwd(src, unit->cache_dir, buf);
-      src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
-      bool failed = map_get(fmap, src) != 0;
-      deps_add(&deps, failed ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, 's', src, 0);
-      if (!failed) {
-        _cc_deps_MMD_add(ctx->n, &deps, src, obj);
-      }
-      free(obj);
-      free(src);
+  ulist_destroy_keep(&tasks);
+}
+/// Splits outdated sources into module interface units and regular sources.
+static void _cc_sources_split(
+  struct _cc_ctx *ctx,
+  struct node_resolve *r,
+  struct ulist *ifaces,
+  struct ulist *sources) {
+  struct map *outdated = 0;
+  bool all = r->resolve_outdated.num == 0;
+  for (int i = 0; !all && i < r->resolve_outdated.num; ++i) {
+    struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
+    if (u->flags != 's') { // Rebuild all on any outdated non source dependency
+      all = true;
     }
   }
+  if (!all) {
+    outdated = map_create_str(map_k_free);
+    for (int i = 0; i < r->resolve_outdated.num; ++i) {
+      struct resolve_outdated *u = ulist_get(&r->resolve_outdated, i);
+      map_put_str(outdated, u->path, (void*) (intptr_t) 1);
+    }
+  }
+  for (int i = 0; i < ctx->sources.num; ++i) {
+    const char *src = *(char**) ulist_get(&ctx->sources, i);
+    if (!all && !map_get(outdated, src)) {
+      continue;
+    }
+    if (ctx->modules && cxx_modules_is_interface(ctx->modules, src)) {
+      ulist_push(ifaces, &src);
+    } else {
+      ulist_push(sources, &src);
+    }
+  }
+  map_destroy(outdated);
+}
+static void _cc_on_resolve(struct node_resolve *r) {
+  struct deps deps;
+  struct _cc_ctx *ctx = r->user_data;
+  struct unit *unit = unit_peek();
+  struct ulist ifaces = { .usize = sizeof(char*) };
+  struct ulist slist = { .usize = sizeof(char*) };
+  struct map *fmap = map_create_str(map_k_free);
+  int max_jobs = g_env.max_parallel_jobs;
+  if (max_jobs <= 0) {
+    max_jobs = 1;
+  }
+  _cc_sources_split(ctx, r, &ifaces, &slist);
+  int rc = deps_open(r->deps_path_tmp, 0, &deps);
+  if (rc) {
+    node_fatal(rc, ctx->n, "Failed to open dependency file: %s", r->deps_path_tmp);
+  }
+  node_add_unit_deps(ctx->n, &deps);
+  for (int i = 0; i < r->node_val_deps.num; ++i) {
+    struct node *nv = *(struct node**) ulist_get(&r->node_val_deps, i);
+    const char *val = node_value(nv);
+    if (val) {
+      deps_add(&deps, DEPS_TYPE_NODE_VALUE, 0, val, i);
+    }
+  }
+  for (int i = 0; i < ctx->consumes.num; ++i) {
+    const char *path = *(const char**) ulist_get(&ctx->consumes, i);
+    deps_add(&deps, DEPS_TYPE_FILE, 0, path, 0);
+  }
+  // Module interface units must be compiled before all importers.
+  // They are compiled in their declaration order.
+  _cc_compile_sources(ctx, &ifaces, 1, fmap);
+  if (ctx->num_failed) {
+    if (g_env.verbose && slist.num) {
+      node_info(ctx->n, "Skipping %u source(s) due to C++ module compilation errors", slist.num);
+    }
+  } else {
+    _cc_compile_sources(ctx, &slist, max_jobs, fmap);
+  }
+  for (int i = 0; i < ctx->sources.num; ++i) {
+    char buf[PATH_MAX];
+    char *obj, *abs = *(char**) ulist_get(&ctx->sources, i);
+    bool iface = ctx->modules && cxx_modules_is_interface(ctx->modules, abs);
+    char flags = iface ? 0 : 's'; // Interface units rebuild the whole group
+    obj = _cc_obj_path(ctx, abs, unit);
+    char *src = path_normalize_cwd(abs, unit->cache_dir, buf);
+    src = path_relativize_cwd(unit->cache_dir, src, unit->cache_dir);
+    bool failed = map_get(fmap, src) != 0;
+    deps_add(&deps, failed ? DEPS_TYPE_FILE_OUTDATED : DEPS_TYPE_FILE, flags, src, 0);
+    if (!failed) {
+      _cc_deps_MMD_add(ctx->n, &deps, src, obj, flags);
+    }
+    free(obj);
+    free(src);
+  }
+  cxx_modules_deps_add(ctx->modules, &deps);
   deps_close(&deps);
-  ulist_destroy_keep(&rlist);
-  ulist_destroy_keep(&tasks);
+  ulist_destroy_keep(&ifaces);
+  ulist_destroy_keep(&slist);
   map_destroy(fmap);
 }
 static void _cc_on_consumed_resolved(const char *path_, void *d) {
@@ -6337,6 +6792,7 @@ static void _cc_build(struct node *n) {
       }
     }
   }
+  cxx_modules_prepare(ctx->modules);
   struct node_resolve r = {
     .n = n,
     .path = n->vfile,
@@ -6379,6 +6835,63 @@ static void _cc_source_add(struct node *n, const char *src) {
   char *obj = _cc_obj_path(ctx, npath, unit);
   ulist_push(&ctx->objects, &obj);
   node_product_add(n, obj, 0);
+}
+/// Initializes C++20 modules compilation of the rule.
+///
+/// Sources listed in the optional `modules { }` bag are treated as module units
+/// unconditionally, other sources are detected by their file extension.
+static void _cc_modules_setup(struct _cc_ctx *ctx, bool is_cxx) {
+  struct node *n = ctx->n;
+  struct unit *unit = unit_peek();
+  if (ctx->n_modules && !is_cxx) {
+    node_fatal(AK_ERROR_SCRIPT, n, "`modules { }` is supported only by cxx rules");
+  }
+  if (!is_cxx) {
+    for (int i = 0; i < ctx->sources.num; ++i) {
+      const char *src = *(char**) ulist_get(&ctx->sources, i);
+      if (cxx_modules_is_module_path(src)) {
+        node_fatal(AK_ERROR_SCRIPT, n, "C++ module units require a cxx rule: %s", src);
+      }
+    }
+    return;
+  }
+  ctx->modules = cxx_modules_create(n, ctx->cc, ctx->tag);
+  struct map *explicit = ctx->n_modules ? map_create_str(map_k_free) : 0;
+  if (explicit) {
+    for (struct node *nn = ctx->n_modules->child; nn; nn = nn->next) {
+      const char *val = node_value(nn);
+      if (!val || *val == '\0') {
+        continue;
+      }
+      struct vlist_iter iter;
+      vlist_iter_init(val, &iter);
+      while (vlist_iter_next(&iter)) {
+        char buf[PATH_MAX], path[PATH_MAX];
+        utils_strnncpy(buf, iter.item, iter.len, sizeof(buf));
+        const char *abs = path_is_absolute(buf)
+                          ? utils_strncpy(path, buf, sizeof(path))
+                          : path_normalize_cwd(buf, unit->dir, path);
+        map_put_str(explicit, abs, (void*) (intptr_t) 1);
+      }
+    }
+  }
+  for (int i = 0; i < ctx->sources.num; ++i) {
+    const char *src = *(char**) ulist_get(&ctx->sources, i);
+    bool required = explicit && map_get(explicit, src) != 0;
+    cxx_modules_add_source(ctx->modules, src, required);
+    if (required) {
+      map_remove(explicit, src);
+    }
+  }
+  if (explicit) {
+    struct map_iter it;
+    map_iter_init(explicit, &it);
+    if (map_iter_next(&it)) {
+      node_fatal(AK_ERROR_SCRIPT, n,
+                 "Source listed in `modules { }` is not a part of the cxx sources: %s", (const char*) it.key);
+    }
+    map_destroy(explicit);
+  }
 }
 static void _cc_setup(struct node *n) {
   _cc_cdb_init(n);
@@ -6458,6 +6971,7 @@ static void _cc_setup(struct node *n) {
   char *objs = ulist_to_vlist(&ctx->objects);
   node_env_set(n, ctx->objskey, objs);
   free(objs);
+  _cc_modules_setup(ctx, is_cxx);
 }
 static void _cc_init(struct node *n) {
   struct _cc_ctx *ctx = n->impl;
@@ -6467,6 +6981,9 @@ static void _cc_init(struct node *n) {
       continue;
     } else if (strcmp(nn->value, "objects") == 0) {
       ctx->n_objects = nn;
+      continue;
+    } else if (strcmp(nn->value, "modules") == 0) {
+      ctx->n_modules = nn;
       continue;
     }
     if (!ctx->n_sources) {
@@ -6492,6 +7009,7 @@ static void _cc_dispose(struct node *n) {
       char *p = *(char**) ulist_get(&ctx->objects, i);
       free(p);
     }
+    cxx_modules_destroy(ctx->modules);
     ulist_destroy_keep(&ctx->sources);
     ulist_destroy_keep(&ctx->objects);
     ulist_destroy_keep(&ctx->consumes);
@@ -6935,6 +7453,9 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
   char dst_buf[PATH_MAX];
   struct stat st;
   struct node *n = ctx->n;
+  if (lstat(src, &st) || (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))) {
+    node_fatal(AK_ERROR_FAIL, n, "Cannot install unsupported or non accessible file. File: %s", src);
+  }
   if (ctx->install_overlays) {
     if (utils_endswith(src, "/" AUTARK_FETCH_DEP)) {
       // autark-cache/.overlay/myproj/.autark-fetch-dep = autark-cache/.overlay/myproj
@@ -6955,9 +7476,6 @@ static void _install_do(struct _install_on_resolve_ctx *ctx, char *src, const ch
       _install_file(n, src, dst_buf, &st);
       return;
     }
-  }
-  if (lstat(src, &st) || (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))) {
-    node_fatal(AK_ERROR_FAIL, n, "Cannot install unsupported or non accessible file. File: %s", src);
   }
   utils_strncpy(src_buf, src, sizeof(src_buf));
   snprintf(dst_buf, sizeof(dst_buf), "%s/%s", target, path_basename(src_buf));
@@ -7523,6 +8041,7 @@ int node_fetch_url_setup(struct node *n) {
 #include "deps.h"
 #include "fetchreg.h"
 #include "toolchain.h"
+#include "cxx_modules.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -8160,6 +8679,8 @@ AK_DESTRUCTOR void autark_dispose(void) {
     ulist_destroy_keep(&g_env.units);
     ulist_destroy_keep(&g_env.stack_units);
     map_destroy(g_env.map_path_to_unit);
+    toolchain_destroy(g_env.project.toolchain);
+    cxx_modules_dispose();
     pool_destroy(pool);
     memset(&g_env, 0, sizeof(g_env));
   }
