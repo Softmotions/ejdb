@@ -21,7 +21,6 @@ int main(void) {
 }
 EOF
 
-set -x
 CC=${CC:-cc}
 
 if ${CC} ./test_pthread.c -pthread; then
