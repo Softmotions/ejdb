@@ -75,7 +75,7 @@ set {
 if { !defined { IWNET_URL } 
   set {
     IWNET_URL
-    https://github.com/Softmotions/iwnet/archive/refs/tags/v1.4.1.zip
+    https://github.com/Softmotions/iwnet/archive/refs/tags/v1.4.2.zip
   }
 }
 
