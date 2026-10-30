@@ -1,3 +1,6 @@
+2026-10-30 Anton Adamansky  <adamansky@gmail.com>  [v2.96]
+  * Updated to iwnet v1.4.2   
+
 2026-10-22 Anton Adamansky  <adamansky@gmail.com>  [v2.95]
  * Updated to iwnet v1.4.1: Fix of bad pthread spinlock detection
 
