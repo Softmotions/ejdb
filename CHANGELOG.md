@@ -1,4 +1,4 @@
-# [v2.98-dev] - 2026-11-07
+# [v2.98] - 2026-11-07
 
 - Updated to iwnet v1.6.0
 - `Changelog` migrated to the Markdown `CHANGELOG.md` format used by autark.dev projects.
@@ -453,4 +453,3 @@
 # [v2.0.0] - 2019-04-01
 
 - Initial beta release
-
