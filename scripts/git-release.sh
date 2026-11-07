@@ -23,14 +23,34 @@ release_tag() {
   echo "Creating EJDB2 release"
   readme
 
-  CHANGELOG=./Changelog
+  CHANGELOG=./CHANGELOG.md
   VERSION=$(grep -m1 -o '\[v[0-9][^]]*\]' "$CHANGELOG" | sed 's/\[v//;s/\]//')
   TAG="v${VERSION}"
 
+  # Release notes: body of the Markdown section started by the "[${TAG}]" header
   CHANGESET=$(awk -v tag="$TAG" '
-  $0 ~ tag { skip = 1; next }
-  skip && NF == 0 { exit }
-  skip { print }
+  /^[[:space:]]*#[#]?[[:space:]]+/ && index($0, "[" tag "]") {
+    inside = 1
+    next
+  }
+  inside && /^[[:space:]]*#[#]?[[:space:]]+/ {
+    exit
+  }
+  inside {
+    lines[++n] = $0
+  }
+  END {
+    while (n > 0 && lines[n] ~ /^[[:space:]]*$/) {
+      n--
+    }
+    i = 1
+    while (i <= n && lines[i] ~ /^[[:space:]]*$/) {
+      i++
+    }
+    for (; i <= n; i++) {
+      print lines[i]
+    }
+  }
   ' "$CHANGELOG" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' )
 
   git add "$CHANGELOG"

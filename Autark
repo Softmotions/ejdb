@@ -1,5 +1,5 @@
 check {
-  changelog_gnu.sh { S{Changelog} }
+  changelog_md.sh { S{CHANGELOG.md} }
   system.sh
   test_blocks.sh { IW_BLOCKS }
   test_pthread.sh
@@ -75,7 +75,7 @@ set {
 if { !defined { IWNET_URL } 
   set {
     IWNET_URL
-    https://github.com/Softmotions/iwnet/archive/refs/tags/v1.5.0.zip
+    https://github.com/Softmotions/iwnet/archive/refs/tags/v1.6.0.zip
   }
 }
 
