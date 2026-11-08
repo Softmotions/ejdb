@@ -14,7 +14,38 @@ TARGET_DIR="$2"
 TARGET_VAR="$3"
 NSTRIP="$4"
 
-rm -rf $TARGET_DIR
+# Resolves the actual fetch dir. Autark keeps a build wide registry of already
+# fetched resources, so a resource requested by several parts of the build is
+# fetched exactly once. The registry dir is also shared by nested builds.
+FETCH_PENDING=3
+FETCH_REJECTED=4
+PLAN_RC=0
+PLAN_DIR="$(autark fetch-plan "$PROJECT_URL" "$TARGET_DIR")" || PLAN_RC=$?
+case "$PLAN_RC" in
+  0)
+    # Same resource was fetched by another part of the build: just reuse it.
+    TARGET_DIR="$PLAN_DIR"
+    echo "Using already fetched $PROJECT_URL at $TARGET_DIR" >&2
+    if [ -n "$TARGET_VAR" ]; then
+      autark set "$TARGET_VAR=$TARGET_DIR"
+    fi
+    autark fetched "$PROJECT_URL" "$TARGET_DIR"
+    exit 0
+    ;;
+  $FETCH_PENDING)
+    TARGET_DIR="$PLAN_DIR"
+    ;;
+  $FETCH_REJECTED)
+    exit "$PLAN_RC"
+    ;;
+  *)
+    # Autark binary does not support 'fetch-plan': use the legacy behavior
+    echo "Warning: autark fetch-plan is not supported, fetching $PROJECT_URL as is" >&2
+    TARGET_DIR="$2"
+    ;;
+esac
+
+rm -rf "$TARGET_DIR"
 mkdir -p "$TARGET_DIR"
 
 download_file() {
@@ -108,4 +139,7 @@ if [ -n "$TARGET_VAR" ]; then
   autark set "$TARGET_VAR=$TARGET_DIR"
 fi
 
-autark fetched ${PROJECT_URL} ${TARGET_DIR}
+# A fresh fetch owns the dir: drop the marker of the sources it was made from
+rm -f "$TARGET_DIR/.autark-fetch-dep"
+
+autark fetched "$PROJECT_URL" "$TARGET_DIR"
