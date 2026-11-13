@@ -1228,170 +1228,307 @@ The parser and matching behavior are covered by the tests in
 
 
 
-# HTTP REST/Websocket API endpoint
+# HTTP REST/WebSocket API
 
-EJDB engine provides the ability to start a separate HTTP/Websocket endpoint worker exposing network API for quering and data modifications.
-SSL (TLS 1.2) is supported by `jbs` server.
+EJDB2 can expose its data over the network:
 
-The easiest way to expose database over the network is use the standalone `jbs` server. (Of course if you want to avoid `C API` integration).
+* **REST API** over HTTP.
+* **WebSocket API** for interactive/persistent sessions.
+* **TLS** (HTTP and WebSocket) with a PEM key and certificate.
 
-## jbs server
+The endpoint can be started either by the standalone `jbs` server or embedded into
+an application through `struct ejdb_http` / `jbr.h` (see
+[Embedded HTTP server](#embedded-http-server)).
+
+All document payloads are JSON; queries are written in
+[JQL](https://github.com/Softmotions/ejdb/blob/master/src/jql/README.md).
+
+## `jbs` server
 
 ```
-Usage:
+Usage: jbs [options]
 
-	 ./jbs [options]
-
-	-v, --version		Print program version.
-	-f, --file=<>		Database file path. Default: ejdb2.db
-	-p, --port=NUM		HTTP server port numer. Default: 9191
-	-l, --listen=<>		Network address server will listen. Default: localhost
-	-k, --key=<>		PEM private key file for TLS 1.2 HTTP server.
-	-c, --certs=<>		PEM certificates file for TLS 1.2 HTTP server.
-	-a, --access=TOKEN|@FILE		Access token to match 'X-Access-Token' HTTP header value.
-	-r, --access-read		Allows unrestricted read-only data access.
-	-C, --cors		Enable COSR response headers for HTTP server
-	-t, --trunc		Cleanup/reset database file on open.
-	-w, --wal		use the write ahead log (WAL). Used to provide data durability.
+  -f, --file=<>        Database file path. Default: ejdb2.db
+  -p, --port=NUM       HTTP server port number. Default: 9191
+  -l, --listen=<>      Network address to listen on. Default: localhost
+  -k, --key=<>         PEM private key file for TLS 1.2
+  -c, --certs=<>       PEM certificates file for TLS 1.2
+  -a, --access=TOKEN   Access token expected in the X-Access-Token header
+  -r, --access-read    Allow anonymous read-only access
+  -C, --cors           Enable CORS response headers
+  -t, --trunc          Cleanup/reset the database file on open
+  -w, --wal            Enable the write-ahead log (WAL)
 
 Advanced options:
-	-S, --sbz=NUM		Max sorting buffer size. If exceeded, an overflow temp file for data will be created.
-                  Default: 16777216, min: 1048576
-	-D, --dsz=NUM		Initial size of buffer to process/store document on queries. Preferable average size of document. 
-                  Default: 65536, min: 16384
-	-T, --trylock Exit with error if database is locked by another process. 
-                If not set, current process will wait for lock release.
-
+  -S, --sbz=NUM        Max sorting buffer size, default: 16777216, min: 1048576
+  -D, --dsz=NUM        Initial buffer size for documents processed during queries,
+                       default: 65536, min: 16384
+  -T, --trylock        Exit with an error if the database is locked by another
+                       process instead of waiting for the lock
 ```
 
-## HTTP API
+Notes:
 
-HTTP endpoint may be protected by a token specified with `--access` flag or C API `struct ejdb_http`.
-If access token was set, client should provide `X-Access-Token` HTTP header.
-If token is required but not provided by client `401` HTTP code will be reported. 
-If access token is not matched to the token provided by client server will respond with `403` HTTP code.
+* `-b, --bind` is accepted as an alias of `-l, --listen` for backward compatibility.
+* `jbs` disables the write-ahead log by default; `-w` turns it on. The embedded C API
+  keeps WAL enabled unless `struct ejdb_opts.no_wal` is set.
+* The access token is used as is; it is not read from a file.
 
-## REST API
+Examples:
 
-### POST /{collection}
-Add a new document to the `collection`.
-* `200` success. Body: a new document identifier as `int64` number
+```sh
+# Local server protected by an access token
+./jbs -a 'myaccess01'
 
-### PUT /{collection}/{id}
-Replaces/store document under specific numeric `id`
-* `200` on success. Empty body
+# Listen on all interfaces, allow anonymous reads, enable CORS
+./jbs -l 0.0.0.0 -a 'myaccess01' -r -C
 
-### DELETE /{collection}/{id}
-Removes document identified by `id` from a `collection`
-* `200` on success. Empty body
-* `404` document not found
-
-### PATCH /{collection}/{id}
-Patch a document identified by `id` by [rfc7396](https://tools.ietf.org/html/rfc7396),
-[rfc6902](https://tools.ietf.org/html/rfc6902) data.
-* `200` on success. Empty body
-
-### GET | HEAD /{collections}/{id}
-Retrieve document identified by `id` from a `collection`.
-* `200` on success. Body: JSON document text.
-  * `content-type:application/json`
-  * `content-length:`
-* `404` document not found
-
-### POST /
-Query a collection by provided query as POST body.
-Body of query should contains collection name in use in the first filter element: `@collection_name/...`
-Request headers:
-* `X-Hints` comma separated extra hints to ejdb2 database engine.
-  * `explain` Show query execution plan before first element in result set separated by `--------------------` line.
-Response:
-* Response data transfered using [HTTP chunked transfer encoding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding)
-* `200` on success.
-* JSON documents separated by `\n` in the following format:
-  ```
-  \r\n<document id>\t<document JSON body>
-  ...
-  ```
-
-Example:
-
-```
-curl -v --data-raw '@family/[age > 18]' -H 'X-Access-Token:myaccess01' http://localhost:9191
-* Rebuilt URL to: http://localhost:9191/
-*   Trying 127.0.0.1...
-* TCP_NODELAY set
-* Connected to localhost (127.0.0.1) port 9191 (#0)
-> POST / HTTP/1.1
-> Host: localhost:9191
-> User-Agent: curl/7.58.0
-> Accept: */*
-> X-Access-Token:myaccess01
-> Content-Length: 18
-> Content-Type: application/x-www-form-urlencoded
->
-* upload completely sent off: 18 out of 18 bytes
-< HTTP/1.1 200 OK
-< connection:keep-alive
-< content-type:application/json
-< transfer-encoding:chunked
-<
-
-4	{"firstName":"John","lastName":"Ryan","age":39}
-3	{"firstName":"Jack","lastName":"Parker","age":35,"pets":[{"name":"Sonic","kind":"mouse","likes":[]}]}
-1	{"firstName":"John","lastName":"Doe","age":28,"pets":[{"name":"Rexy rex","kind":"dog","likes":["bones","jumping","toys"]},{"name":"Grenny","kind":"parrot","likes":["green color","night","toys"]}],"address":{"city":"New York","street":"Fifth Avenue"}}
-* Connection #0 to host localhost left intact
+# TLS endpoint
+./jbs -a 'myaccess01' -k server.key -c server.crt
 ```
 
-```
-curl --data-raw '@family/[lastName = "Ryan"]' -H 'X-Access-Token:myaccess01' -H 'X-Hints:explain' http://localhost:9191
-[INDEX] MATCHED  STR|3 /lastName EXPR1: 'lastName = "Ryan"' INIT: IWKV_CURSOR_EQ
-[INDEX] SELECTED STR|3 /lastName EXPR1: 'lastName = "Ryan"' INIT: IWKV_CURSOR_EQ
- [COLLECTOR] PLAIN
---------------------
-4	{"firstName":"John","lastName":"Ryan","age":39}
+## Access control
+
+When an access token is configured (`-a` or `struct ejdb_http.access_token`), every
+HTTP request and every WebSocket handshake must provide it in the `X-Access-Token`
+header.
+
+Request | Result
+--- | ---
+Token missing, token required | `401 Unauthorized`
+Token provided but does not match | `403 Forbidden`
+Token valid | Request is processed
+
+With `-r` (`--access-read`, `read_anon = true`) an **anonymous** client (no token) may
+perform read requests only:
+
+* `GET`/`HEAD /{collection}/{id}` and `POST /` (query) are allowed.
+* A query that contains an `apply`/`upsert`/`del` section is rejected with `403`.
+* Any mutating request (`POST /{collection}`, `PUT`, `PATCH`, `DELETE`) is rejected
+  with `401`.
+* Over WebSocket, `info` and all mutating commands are rejected with
+  `Access denied (JBR_ERROR_WS_ACCESS_DENIED)`.
+* `OPTIONS /` is not available anonymously (`401`).
+
+A caller that provides a **valid** token is not limited by `-r`; the flag affects only
+anonymous requests.
+
+## Embedded HTTP server
+
+The same endpoint can be started by the `ejdb2` library. Fill
+`struct ejdb_opts.http` and set `enabled = true`:
+
+```c
+struct ejdb_opts opts = {
+  .kv = { .path = "example.db" },
+  .http = {
+    .enabled = true,
+    .port = 9191,
+    .bind = "localhost",           // Default: "localhost"
+    .access_token = "myaccess01",  // Default: zero (no token required)
+    .access_token_len = 10,
+    .read_anon = true,             // Allow anonymous read-only access
+    .cors = true,                  // Send CORS headers
+    .blocking = false,             // false: serve in a background thread
+    .ssl_private_key = "server.key",
+    .ssl_certs = "server.crt",
+    .max_body_size = 0             // Default: 64Mb, minimum: 512K
+  }
+};
+struct ejdb *db;
+iwrc rc = ejdb_open(&opts, &db);
 ```
 
-### OPTIONS /
-Fetch ejdb JSON metadata and available HTTP methods in `Allow` response header.
-Example:
+Behaviour:
+
+* With `blocking = false` the server runs in a background thread and `ejdb_open()`
+  returns immediately.
+* With `blocking = true` `ejdb_open()` enters the server loop and returns only after
+  the server is stopped (this is what `jbs` does).
+* `ejdb_close()` stops the embedded server and waits for it to finish.
+* `jbr.h` exposes the server lifecycle directly for applications that need it:
+  `jbr_start()`, `jbr_shutdown_request()`, `jbr_shutdown_wait()`, `jbr_init()`.
+
+## HTTP REST API
+
+### Common rules
+
+* A collection name is a non-empty string of at most `EJDB_COLLECTION_NAME_MAX_LEN`
+  (255) bytes.
+* A document identifier is a positive `int64` (`>= 1`).
+* Request paths are `/{collection}` or `/{collection}/{id}`.
+  `{id}` must be a decimal integer; `0`, a negative value, or a non-numeric value is
+  rejected with `400`.
+* Missing or unparsable JSON bodies, invalid queries, and malformed paths produce
+  `400 Bad Request`.
+* Unknown documents produce `404 Not Found`.
+* Internal failures produce `500`.
+* Error responses have a `text/plain` body with a human readable description
+  (for example `Not Found` or `Failed to parse JSON string (JBL_ERROR_PARSE_JSON)`).
+
+Responses to authorized requests include `Access-Control-Allow-Origin: *` when CORS
+is enabled. Authentication failures (`401`/`403`) are produced before the request is
+routed and do not carry CORS headers.
+
+### POST `/{collection}`
+
+Add a new document to `{collection}`. The collection is created if it does not exist.
+
+* Request body: JSON document.
+* `200 OK`, `text/plain` body: the new document identifier as an `int64` number.
+
+```sh
+curl -s -X POST --data-raw '{"firstName":"John","age":28}' \
+     -H 'X-Access-Token: myaccess01' http://localhost:9191/family
+1
 ```
-curl -X OPTIONS -H 'X-Access-Token:myaccess01'  http://localhost:9191/
+
+### GET | HEAD `/{collection}/{id}`
+
+Retrieve a document.
+
+* `200 OK`, `application/json` body: the document, pretty printed.
+* `404 Not Found` if the document (or the collection) does not exist.
+* `HEAD` returns the same status and headers, including `Content-Length`, without a body.
+* `400` when the identifier is missing (`GET /{collection}`).
+
+```sh
+curl -s -H 'X-Access-Token: myaccess01' http://localhost:9191/family/1
 {
- "version": "2.0.0",
- "file": "db.jb",
- "size": 16384,
+ "firstName": "John",
+ "age": 28
+}
+```
+
+### PUT `/{collection}/{id}`
+
+Store a document under the given numeric identifier, replacing an existing document.
+The collection is created if it does not exist.
+
+* Request body: JSON document.
+* `200 OK`, `text/plain` body: `OK`.
+* `400` for an invalid body or identifier.
+
+### PATCH `/{collection}/{id}`
+
+Patch a document with an [RFC 7396](https://tools.ietf.org/html/rfc7396) merge patch
+(a JSON object) or an [RFC 6902](https://tools.ietf.org/html/rfc6902) JSON patch
+(a JSON array).
+
+* `200 OK`, `text/plain` body: `OK`.
+* `400` for an invalid patch.
+* `404` if the document is not found.
+
+### DELETE `/{collection}/{id}`
+
+Remove a document.
+
+* `200 OK`, `text/plain` body: `OK`.
+* `404` if the document is not found.
+* Requires a writable (token-authenticated) client when `-r` is used.
+
+### POST `/`
+
+Execute a [JQL](https://github.com/Softmotions/ejdb/blob/master/src/jql/README.md)
+query. The request body is the query text; the collection must be encoded in the
+query with an `@collection` anchor.
+
+* Request header `X-Hints` — comma separated hints:
+  * `explain` — print the query execution plan before the results, separated by a
+    `--------------------` line.
+* Response is streamed with
+  [HTTP chunked transfer encoding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding).
+* `200 OK`; each matched document is sent as:
+
+  ```
+  \r\n<document id>\t<document JSON>
+  ```
+
+  There is no trailing newline after the last document. A query that matches nothing
+  returns an empty body.
+* A query with the `count` option returns the number of matched documents as
+  `text/plain` instead of documents.
+* `400` for an empty body, a query without a collection anchor
+  (`No collection specified in query (JQL_ERROR_NO_COLLECTION)`), or a query parse
+  error (the parse error text is returned).
+* `403` for an `apply`/`upsert`/`del` query sent by an anonymous client in read-only
+  mode.
+
+```sh
+curl -s -X POST --data-raw '@family/[age > 18]' \
+     -H 'X-Access-Token: myaccess01' http://localhost:9191/
+
+2	{"firstName":"Jack","age":35}
+1	{"firstName":"John","age":28}
+```
+
+With the `explain` hint:
+
+```sh
+curl -s -X POST --data-raw '@family/[age > 18]' \
+     -H 'X-Access-Token: myaccess01' -H 'X-Hints: explain' http://localhost:9191/
+[INDEX] NO [COLLECTOR] PLAIN
+--------------------
+2	{"firstName":"Jack","age":35}
+1	{"firstName":"John","age":28}
+```
+
+Counting without transferring documents:
+
+```sh
+curl -s -X POST --data-raw '@family/* | count' \
+     -H 'X-Access-Token: myaccess01' http://localhost:9191/
+2
+```
+
+### OPTIONS `/`
+
+Fetch database metadata as a JSON document. The response also contains the `Allow`
+header with the methods accepted by the endpoint, and CORS headers when CORS is enabled.
+
+```sh
+curl -s -X OPTIONS -H 'X-Access-Token: myaccess01' http://localhost:9191/
+{
+ "version": "2.100",
+ "file": "/var/lib/ejdb2/example.db",
+ "size": 32768,
  "collections": [
   {
    "name": "family",
    "dbid": 3,
-   "rnum": 3,
-   "indexes": [
-    {
-     "ptr": "/lastName",
-     "mode": 4,
-     "idbf": 64,
-     "dbid": 4,
-     "rnum": 3
-    }
-   ]
+   "rnum": 2,
+   "indexes": []
   }
  ]
 }
 ```
 
-## Websocket API
+The `Allow` header lists `GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS` for a writable
+endpoint, and `GET, HEAD, POST, OPTIONS` when the server runs in read-only mode
+(`-r`).
 
-EJDB supports simple text based protocol over HTTP websocket protocol.
-You can use interactive websocket CLI tool [wscat](https://www.npmjs.com/package/@softmotions/wscat) to communicate with server by hands.
+`OPTIONS /{collection}` is not supported (`400`).
 
-### Commands
+## WebSocket API
 
-#### ?
-Will respond with the following help text message:
+The WebSocket endpoint is the server root (`GET /` with `Upgrade: websocket` on the
+same port). If an access token is configured it must be sent in the
+`X-Access-Token` header of the handshake.
+
+The protocol is text based: every WebSocket text message contains one command, and a
+command may produce one or more response messages. Messages are tab separated.
+
+### Command format
+
 ```
-wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
-> ?
-<
+<key> <command> [arguments]
+```
+
+`<key>` is an arbitrary client-chosen token of at most 36 bytes (not containing
+whitespace). It is echoed back as the first field of every response message, so a
+client can match responses to requests.
+
+```
 <key> info
 <key> get     <collection> <id>
 <key> set     <collection> <id> <document json>
@@ -1404,141 +1541,222 @@ wscat  -H 'X-Access-Token:myaccess01' -c http://localhost:9191
 <key> query   <collection> <query>
 <key> explain <collection> <query>
 <key> <query>
->
 ```
 
-Note about `<key>` prefix before every command; It is an arbitrary key chosen by client and designated to identify particular websocket request, this key will be returned with response to request and allows client to identify that response for his particular request.
+Send `?` (a message consisting of a single question mark) to receive this help text.
 
-Errors are returned in the following format:
+### Response format
+
+Response | Meaning
+--- | ---
+`<key>\t<metadata json>` | `info` result
+`<key>\t<id>` | `add`, `set`, `del`, `patch` result
+`<key>\t<id>\t<document json>` | `get` result, or one query result document
+`<key>\t<explain>\t<plan>` | query execution plan (`explain`)
+`<key>\t<count>` | `count` query result
+`<key>` | End of a query result set. Also the successful reply of `idx`, `rmi`, `rmc`
+`<key> ERROR: <description>` | Error
+
+Examples below are shown as rendered by
+[wscat](https://www.npmjs.com/package/@softmotions/wscat); response fields are
+separated by horizontal tabs.
+
+### `?`
+
+Request the list of supported commands:
+
+```sh
+wscat -H 'X-Access-Token: myaccess01' -c http://localhost:9191
+> ?
+< <key> info
+< <key> get     <collection> <id>
+...
 ```
-<key> ERROR: <error description>
-```
 
-#### `<key> info`
-Get database metadatas as JSON document.
+### `<key> info`
 
-#### `<key> get     <collection> <id>`
-Retrieve document identified by `id` from a `collection`.
-If document is not found `IWKV_ERROR_NOTFOUND` will be returned.
+Return database metadata as a pretty printed JSON document.
 
-Example:
-```
-> k get family 3
-< k     3       {
- "firstName": "Jack",
- "lastName": "Parker",
- "age": 35,
- "pets": [
-  {
-   "name": "Sonic",
-   "kind": "mouse",
-   "likes": []
-  }
- ]
+```sh
+> k info
+< k	{
+ "version": "2.100",
+ "file": "/tmp/ejdb2.db",
+ "size": 32768,
+ "collections": [ ... ]
 }
 ```
-If document not found we will get error:
+
+Anonymous clients are not allowed to call `info` in read-only mode.
+
+### `<key> add <collection> <document json>`
+
+Add a new document and return its generated identifier. The collection is created if
+it does not exist.
+
+```sh
+> k add mycollection {"foo":"bar"}
+< k	1
+> k add mycollection {"foo":"bar"}
+< k	2
 ```
-> k get family 55
+
+### `<key> set <collection> <id> <document json>`
+
+Store a document under the given numeric identifier, replacing an existing document.
+
+```sh
+> k set mycollection 3 {"foo":"baz"}
+< k	3
+```
+
+### `<key> get <collection> <id>`
+
+Return a document. The document is pretty printed.
+
+```sh
+> k get mycollection 1
+< k	1	{
+ "foo": "bar"
+}
+```
+
+If the document is not found:
+
+```sh
+> k get mycollection 55
 < k ERROR: Key not found. (IWKV_ERROR_NOTFOUND)
->
 ```
 
-#### `<key> set     <collection> <id> <document json>`
-Replaces/add document under specific numeric `id`.
-`Collection` will be created automatically if not exists.
+### `<key> del <collection> <id>`
 
-#### `<key> add     <collection> <document json>`
-Add new document to `<collection>` New `id` of document will be generated
-and returned as response. `Collection> will be created automatically if not exists.
+Remove a document. Returns its identifier, or an error if the document is not found.
 
-Example:
-```
-> k add mycollection {"foo":"bar"}
-< k     1
-> k add mycollection {"foo":"bar"}
-< k     2
->
-```
+### `<key> patch <collection> <id> <patch json>`
 
-#### `<key> del     <collection> <id>`
-Remove document identified by `id` from the `collection`.
-If document is not found `IWKV_ERROR_NOTFOUND` will be returned.
+Apply an RFC 7396 merge patch (JSON object) or an RFC 6902 JSON patch (JSON array) to
+the document. Returns the document identifier.
 
-#### `<key> patch   <collection> <id> <patch json>`
-Apply [rfc7396](https://tools.ietf.org/html/rfc7396) or
-[rfc6902](https://tools.ietf.org/html/rfc6902) patch to the document identified by `id`.
-If document is not found `IWKV_ERROR_NOTFOUND` will be returned.
+### `<key> query <collection> <query>`
 
-#### `<key> query   <collection> <query>`
-Execute query on documents in specified `collection`.
-**Response:** A set of WS messages with document boidies terminated by the last
-message with empty body.
-```
+Execute a JQL query. Each matched document is sent as a separate message, and the
+result set is terminated by a message containing only the key:
+
+```sh
 > k query family /* | /firstName
-< k     4       {"firstName":"John"}
-< k     3       {"firstName":"Jack"}
-< k     1       {"firstName":"John"}
+< k	3	{"firstName":"John"}
+< k	2	{"firstName":"Jack"}
+< k	1	{"firstName":"John"}
 < k
 ```
-Note about last message: `<key>` with no body.
 
-#### `<key> explain <collection> <query>`
-Same as `<key> query   <collection> <query>` but the first response message will
-be prefixed by `<key> explain` and contains query execution plan.
+A query with the `count` option returns a single message with the number of matched
+documents and no termination message:
 
-Example:
+```sh
+> k query family /* | count
+< k	3
 ```
+
+### `<key> explain <collection> <query>`
+
+Same as `query`, but sends the execution plan first:
+
+```sh
 > k explain family /* | /firstName
-< k     explain [INDEX] NO [COLLECTOR] PLAIN
-
-< k     4       {"firstName":"John"}
-< k     3       {"firstName":"Jack"}
-< k     1       {"firstName":"John"}
+< k	explain	[INDEX] NO [COLLECTOR] PLAIN
+< k	3	{"firstName":"John"}
+< k	2	{"firstName":"Jack"}
+< k	1	{"firstName":"John"}
 < k
 ```
 
-#### <key> <query>
-Execute query text. Body of query should contains collection name in use in the first filter element: `@collection_name/...`. Behavior is the same as for: `<key> query   <collection> <query>`
+### `<key> <query>`
 
-#### `<key> idx     <collection> <mode> <path>`
-Ensure index with specified `mode` (bitmask flag) for given json `path` and `collection`.
-Collection will be created if not exists.
+Execute the query text given in the message. The collection must be encoded in the
+query with an `@collection` anchor:
+
+```sh
+> k @family/[age > 30]
+< k	2	{"firstName":"Jack","age":35}
+< k
+```
+
+### `<key> idx <collection> <mode> <path>`
+
+Create an index for the given JSON path. Returns an empty message on success. The
+collection is created if it does not exist.
 
 Index mode | Description
 --- | ---
 <code>0x01 EJDB_IDX_UNIQUE</code> | Index is unique
-<code>0x04 EJDB_IDX_STR</code> | Index for JSON `string` field value type
-<code>0x08 EJDB_IDX_I64</code> | Index for `8 bytes width` signed integer field values
-<code>0x10 EJDB_IDX_F64</code> | Index for `8 bytes width` signed floating point field values.
+<code>0x04 EJDB_IDX_STR</code> | Index for JSON `string` values
+<code>0x08 EJDB_IDX_I64</code> | Index for 64 bit signed integer values
+<code>0x10 EJDB_IDX_F64</code> | Index for floating point values
 
-##### Example
-Set unique string index `(0x01 & 0x04) = 5` on `/name` JSON field:
+For example a unique string index over `/name` uses mode `0x01 | 0x04 = 5`:
+
+```sh
+> k idx mycollection 5 /name
+< k
 ```
-k idx mycollection 5 /name
+
+### `<key> rmi <collection> <mode> <path>`
+
+Remove an index. Returns an empty message on success, including the case when the
+index does not exist. A missing collection is reported as
+`Resource is not exists. (IW_ERROR_NOT_EXISTS)`.
+
+### `<key> rmc <collection>`
+
+Remove a collection with all its documents and indexes. Removing a missing collection
+is not an error.
+
+### Errors and malformed messages
+
+Errors are returned as:
+
+```
+<key> ERROR: <description>
 ```
 
-#### `<key> rmi     <collection> <mode> <path>`
-Remove index with specified `mode` (bitmask flag) for given json `path` and `collection`.
-Return error if given index not found.
+For example:
 
-#### `<key> rmc     <collection>`
-Remove collection and all of its data.
-Note: If `collection` is not found no errors will be reported.
+```sh
+> k get mycollection 55
+< k ERROR: Key not found. (IWKV_ERROR_NOTFOUND)
+```
 
+A message that cannot be parsed far enough to read the key (for example a lone `<key>`
+without a command) terminates the WebSocket session.
+
+## See also
+
+* [JQL query language](https://github.com/Softmotions/ejdb/blob/master/src/jql/README.md)
+* [C API](https://github.com/Softmotions/ejdb/blob/master/CAPI.md)
+* [Test suite and tools](https://github.com/Softmotions/ejdb/blob/master/TESTS.md)
 
 
 
 # C API
 
-EJDB can be embedded into any `C/C++` application.
-`C API` documented in the following headers:
+EJDB2 can be embedded into any `C` or `C++` application. The public API is documented
+in the following installed headers:
 
-* [ejdb.h](https://github.com/Softmotions/ejdb/blob/master/src/ejdb2.h) Main API functions
-* [jbl.h](https://github.com/Softmotions/ejdb/blob/master/src/jbl/jbl.h) JSON documents management API
-* [jql.h](https://github.com/Softmotions/ejdb/blob/master/src/jql/jql.h) Query building API
+* [ejdb2.h](https://github.com/Softmotions/ejdb/blob/master/src/ejdb2.h.in) — storage,
+  documents, collections, indexes, queries and query execution.
+* [jql.h](https://github.com/Softmotions/ejdb/blob/master/src/jql/jql.h) — JQL query
+  objects and placeholder binding.
+* [jbr.h](https://github.com/Softmotions/ejdb/blob/master/src/jbr/jbr.h) — embedded
+  HTTP/WebSocket server (requires a build with `EJDB_ENABLE_HTTP`).
+* `iowow/iwjson.h` — JSON documents (`JBL`/`JBL_NODE`), provided by the
+  [iowow](https://github.com/Softmotions/iowow) dependency.
 
-Example application:
+The library is also available through language bindings (`src/bindings`: Node.js, JNI
+and Android wrappers).
+
+## Example
+
 ```c
 #include <ejdb2/ejdb2.h>
 
@@ -1549,11 +1767,13 @@ Example application:
   }
 
 static iwrc documents_visitor(struct ejdb_exec *ctx, struct ejdb_doc* const doc, int64_t *step) {
+  (void) ctx;
+  (void) step;
   // Print document to stderr
   return jbl_as_json(doc->raw, jbl_fstream_json_printer, stderr, JBL_PRINT_PRETTY);
 }
 
-int main() {
+int main(void) {
 
   struct ejdb_opts opts = {
     .kv = {
@@ -1613,10 +1833,16 @@ finish:
 }
 ```
 
-Compile and run:
-```
-gcc -std=gnu11 -Wall -pedantic -c -o example1.o example1.c
-gcc -o example1 example1.o -lejdb2
+Build and run. If the installed header enables the block-based API (`IW_BLOCKS`, which
+is the case for libraries built with blocks support), a blocks-capable compiler is
+required:
+
+```sh
+# Blocks enabled header (default for clang builds):
+clang -std=gnu11 -fblocks -o example1 example1.c $(pkg-config --cflags --libs libejdb2)
+
+# Otherwise:
+cc -std=gnu11 -o example1 example1.c $(pkg-config --cflags --libs libejdb2)
 
 ./example1
 {
@@ -1627,6 +1853,249 @@ gcc -o example1 example1.o -lejdb2
  "age": 4
 }
 ```
+
+For static linking add `--static` to `pkg-config --libs`; the query pulls in the
+`libiwnet`/`libiowow`/`libbinnc` (and, with blocks, `BlocksRuntime`) dependencies.
+Without `pkg-config` link with `-lejdb2`.
+
+## Lifecycle
+
+```c
+iwrc rc = ejdb_init();                 // Once per process, before any other call
+rc = ejdb_open(&opts, &db);            // Open (and optionally start the HTTP server)
+...
+rc = ejdb_close(&db);                  // Close and release everything
+```
+
+* `ejdb_init()` must be called once before using any EJDB2 API function.
+* A storage file can be opened by one process at a time.
+* A database handle can be used from multiple threads; conflicting operations are
+  serialized internally per collection. All application threads must stop using the
+  handle (and the `iowow` API) before `ejdb_close()` is called.
+* `ejdb_open()` with `opts->http.enabled` starts the HTTP/WebSocket endpoint; see the
+  [network API](https://github.com/Softmotions/ejdb/blob/master/src/jbr/README.md).
+
+### Open options
+
+`struct ejdb_opts`:
+
+Field | Description
+--- | ---
+`kv` | `struct iwkv_opts` storage options: `path` (database file), `oflags` (for example `IWKV_TRUNC` to reset the file), `file_lock_fail_fast`, etc.
+`http` | HTTP/WebSocket server options (`struct ejdb_http`), disabled by default.
+`no_wal` | Do not use the write-ahead log. Default: `false`.
+`sort_buffer_sz` | Max sorting buffer size; overflow is spilled to a temporary file. Default: 16 MiB, min: 1 MiB.
+`document_buffer_sz` | Initial buffer size for documents processed during queries. Default: 64 KiB, min: 16 KiB.
+
+The `struct ejdb_opts` object may be stack allocated and released after `ejdb_open()`.
+
+## Errors
+
+All functions return `iwrc` (`0` on success, a non-zero error code otherwise) or a
+`void`/value result. Errors are structured codes from several namespaces:
+`IW_ERROR_*`, `IWKV_ERROR_*`, `JBL_ERROR_*`, `EJDB_ERROR_*`, `JQL_ERROR_*`, `JBR_ERROR_*`.
+
+```c
+iwrc rc = ejdb_get(db, "parrots", 1, &jbl);
+if (rc) {
+  iwlog_ecode_error3(rc);        // Log the error with its symbolic name
+}
+```
+
+Helpers from `iowow` simplify error propagation: `RCC` (assign and jump on error),
+`RCGO` (jump on error), `RCRET` (return on error), `RCB`/`RCA` (jump with
+`IW_ERROR_ALLOC` when an allocation returns zero). `iwrc_strip_code()` removes the
+embedded `errno` part of a code when a specific error constant has to be compared.
+
+Frequent errors:
+
+Constant | Meaning
+--- | ---
+`IWKV_ERROR_NOTFOUND` | Document or key not found
+`IW_ERROR_NOT_EXISTS` | Collection does not exist
+`EJDB_ERROR_UNIQUE_INDEX_CONSTRAINT_VIOLATED` | Unique index would be violated
+`EJDB_ERROR_COLLECTION_NOT_FOUND` | Collection not found (`ejdb_rename_collection`)
+`EJDB_ERROR_TARGET_COLLECTION_EXISTS` | Target collection already exists
+`JQL_ERROR_QUERY_PARSE` | JQL query syntax error
+`JQL_ERROR_NO_COLLECTION` | Query has no `@collection` anchor and no collection was given
+`JQL_ERROR_UNSET_PLACEHOLDER` | A query placeholder was not bound
+
+## Documents
+
+Documents are represented by `JBL` (a compact binary JSON document) or `JBL_NODE`
+(an in-memory tree of JSON values). Both are created from JSON text and serialized
+back to JSON; helpers come from `iowow/iwjson.h`.
+
+```c
+JBL jbl = 0;
+iwrc rc = jbl_from_json(&jbl, "{\"name\":\"Bianca\",\"age\":4}");
+...
+jbl_destroy(&jbl);      // No-op when the handle is zero
+```
+
+Function | Description
+--- | ---
+`jbl_from_json(&jbl, json)` | Parse a JSON text into `JBL`
+`jbl_as_json(jbl, printer, op, flags)` | Serialize; printers: `jbl_xstr_json_printer`, `jbl_fstream_json_printer`, `jbl_count_json_printer`; flags: `JBL_PRINT_PRETTY`
+`jbl_destroy(&jbl)` | Release a document
+`jbn_*` | In-memory tree manipulation, see `iwjson.h`
+
+### Persisting documents
+
+Function | Description
+--- | ---
+`ejdb_put(db, coll, jbl, id)` | Store a document under the given identifier (replaces an existing one)
+`ejdb_put_jbn(db, coll, jbn, id)` | Same for `JBL_NODE`
+`ejdb_put_new(db, coll, jbl, &id)` | Store a document under a new auto-generated identifier
+`ejdb_put_new_jbn(db, coll, jbn, &id)` | Same for `JBL_NODE`
+`ejdb_get(db, coll, id, &jbl)` | Fetch a document; the result must be released with `jbl_destroy()`
+`ejdb_del(db, coll, id)` | Remove a document
+`ejdb_patch(db, coll, patchjson, id)` | Apply an RFC 7396/6902 patch to a stored document
+`ejdb_patch_jbl`, `ejdb_patch_jbn` | Same with a `JBL`/`JBL_NODE` patch
+`ejdb_merge_or_put(db, coll, patchjson, id)` | Atomically merge-patch an existing document or insert a new one
+`ejdb_merge_or_put_jbl`, `ejdb_merge_or_put_jbn` | Same with a `JBL`/`JBL_NODE` patch
+
+Collections are created implicitly by the first write operation.
+
+## Collections and indexes
+
+Function | Description
+--- | ---
+`ejdb_ensure_collection(db, coll)` | Create a collection if it does not exist
+`ejdb_remove_collection(db, coll)` | Remove a collection; no error if it is missing
+`ejdb_rename_collection(db, coll, new_coll)` | Rename a collection
+`ejdb_ensure_index(db, coll, path, mode)` | Create an index if it does not exist
+`ejdb_remove_index(db, coll, path, mode)` | Remove an index; `0` if the index does not exist, `IW_ERROR_NOT_EXISTS` if the collection does not exist
+`ejdb_get_meta(db, &jbl)` | Database metadata as a JSON document
+
+Index mode bits (`ejdb_idx_mode_t`):
+
+Mode | Description
+--- | ---
+`EJDB_IDX_UNIQUE` (`0x01`) | Values must be unique
+`EJDB_IDX_STR` (`0x04`) | Index for string values
+`EJDB_IDX_I64` (`0x08`) | Index for 64 bit signed integer values
+`EJDB_IDX_F64` (`0x10`) | Index for floating point values
+
+An index path is an RFC 6901 JSON pointer to a concrete field, for example
+`/address/street`; wildcards in the middle of a path are not allowed. A path can
+point to an array field to index its elements.
+
+```c
+// Unique string index over nested field
+rc = ejdb_ensure_index(db, "users", "/address/street", EJDB_IDX_UNIQUE | EJDB_IDX_STR);
+```
+
+## Queries
+
+Queries are created with the JQL API (`jql.h`), optionally bound to placeholder values,
+and executed with `ejdb_exec()`.
+
+```c
+struct jql *q = 0;
+iwrc rc = jql_create(&q, "parrots", "/[age > :age]");
+if (!rc) {
+  rc = jql_set_i64(q, "age", 0, 3);      // Bind the `:age` placeholder
+}
+...
+jql_destroy(&q);
+```
+
+Function | Description
+--- | ---
+`jql_create(&q, coll, query)` | Parse a query; `coll` may be zero if the query has an `@collection` anchor
+`jql_create2(&q, coll, query, mode)` | Same with `JQL_KEEP_QUERY_ON_PARSE_ERROR`/`JQL_SILENT_ON_PARSE_ERROR`
+`jql_error(q)` | Parse error text (with a `<---` marker) for a kept query
+`jql_set_i64/f64/str/bool/null/json/regexp(...)` | Bind a placeholder value
+`jql_set_*2(...)` | Variants with an ownership callback for the bound value
+`jql_reset(q, reset_cache, reset_placeholders)` | Reuse a query object for the next invocation
+`jql_destroy(&q)` | Release the query object
+
+Placeholders are written `:name` or `:?`. `:?` placeholders are bound by index
+(`jql_set_*(q, 0, index, value)`), named placeholders by name.
+
+### Executing a query
+
+`ejdb_exec()` streams matched documents to a visitor:
+
+```c
+typedef iwrc (*ejdb_exec_visitor)(struct ejdb_exec *ctx, struct ejdb_doc *doc, int64_t *step);
+
+struct ejdb_exec ux = {
+  .db = db,           // Database handle
+  .q = q,             // Query object
+  .visitor = visitor, // Called for each matched document
+  .opaque = my_ctx,   // Optional visitor context
+  .skip = 0,          // Overrides `skip` encoded in the query
+  .limit = 0,         // Overrides `limit` encoded in the query; 0 means no limit
+  .log = 0,           // Optional `IWXSTR` that receives the execution plan/index usage
+  .cnt = 0            // Out: number of documents passed to the visitor
+};
+iwrc rc = ejdb_exec(&ux);
+```
+
+Visitor contract:
+
+* `doc->raw` is the stored document; `doc->node` is set only when the query has an
+  `apply` or projection section.
+* `doc` and its data are valid only during the callback; copy what must outlive it.
+* Set `*step` to `1` (default) to advance to the next document, `0` to stop iteration,
+  or another value to move the cursor by that number of documents (used for advanced
+  iteration over sorted results).
+* `ejdb_exec()` applies modifications (`apply`/`upsert`/`del`) to the storage.
+
+Collecting results into a list instead of streaming:
+
+Function | Description
+--- | ---
+`ejdb_list(db, q, &first, limit, pool)` | Fill a linked list of documents using a caller-provided `iwpool` (not zero); the caller owns and destroys the pool
+`ejdb_list2(db, coll, query, limit, &list)` | Same from a query text
+`ejdb_list3(db, coll, query, limit, log, &list)` | Same with an execution plan buffer
+`ejdb_list4(db, q, limit, log, &list)` | Same from a query object
+`ejdb_list_destroy(&list)` | Release a result list
+
+```c
+struct ejdb_list *list = 0;
+iwrc rc = ejdb_list3(db, "parrots", "/[age > 3]", 0 /* limit */, 0 /* optional IWXSTR log */, &list);
+if (!rc) {
+  for (struct ejdb_doc *doc = list->first; doc; doc = doc->next) {
+    jbl_as_json(doc->raw, jbl_fstream_json_printer, stderr, JBL_PRINT_PRETTY);
+  }
+  ejdb_list_destroy(&list);
+}
+```
+
+Collecting a whole result set can be memory consuming for large collections; prefer
+`ejdb_exec()` with a visitor, or set a limit.
+
+### Count and update helpers
+
+Function | Description
+--- | ---
+`ejdb_count(db, q, &count, limit)` | Execute a query and return the number of matched documents
+`ejdb_count2(db, coll, query, &count, limit)` | Same from a query text
+`ejdb_update(db, q)` | Execute an update query (with an `apply` section)
+`ejdb_update2(db, coll, query)` | Same from a query text
+
+## Storage maintenance
+
+Function | Description
+--- | ---
+`ejdb_online_backup(db, &ts, target_file)` | Consistent online backup; all records written before `ts` are included. Close open cursors or run it in a separate thread to avoid deadlocks
+`ejdb_get_iwkv(db, &kv)` | Access the underlying IWKV storage (advanced use)
+`ejdb_version_full()`, `ejdb_version_major()`, `ejdb_version_minor()`, `ejdb_version_patch()` | Library version
+`ejdb_git_revision()` | Source revision the library was built from
+
+## Thread safety and lifetime summary
+
+Object | Ownership
+--- | ---
+`struct ejdb *` | Owned by the caller; released by `ejdb_close()`; shareable between threads
+`JBL` | Owned by the caller; released by `jbl_destroy()`; returned by `ejdb_get()`/`ejdb_get_meta()`
+`struct jql *` | Owned by the caller; released by `jql_destroy()`
+`struct ejdb_list *` | Owned by the caller; released by `ejdb_list_destroy()`
+`struct ejdb_doc` (visitor) | Valid only during the visitor callback
+`struct ejdb_exec.pool` | Optional memory pool for apply/projection nodes owned by the caller
 
 # License
 ```

@@ -52,7 +52,7 @@ typedef enum {
   JQL_ERROR_UNSET_PLACEHOLDER,              /**< Found unset placeholder (JQL_ERROR_UNSET_PLACEHOLDER) */
   JQL_ERROR_REGEXP_INVALID,                 /**< Invalid regular expression (JQL_ERROR_REGEXP_INVALID) */
   JQL_ERROR_SKIP_ALREADY_SET,               /**< Skip clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
-  JQL_ERROR_LIMIT_ALREADY_SET,              /**< Limit clause already specified (JQL_ERROR_SKIP_ALREADY_SET) */
+  JQL_ERROR_LIMIT_ALREADY_SET,              /**< Limit clause already specified (JQL_ERROR_LIMIT_ALREADY_SET) */
   JQL_ERROR_ORDERBY_MAX_LIMIT,
   /**< Reached max number of asc/desc order clauses: 64
      (JQL_ERROR_ORDERBY_MAX_LIMIT) */

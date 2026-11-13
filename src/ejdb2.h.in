@@ -202,7 +202,7 @@ IW_EXPORT WUR iwrc ejdb_open(const struct ejdb_opts *opts, struct ejdb **ejdbp);
  * @warning Please ensure what all of application threads stopped
  *          calling ejdb.h and iowow API before ejdb_close().
  *
- * @param [in,out] ejdbp Pointer to storage handle, will set to zero oncompletion.
+ * @param [in,out] ejdbp Pointer to storage handle, will set to zero on completion.
  * @return `0` on success.
  *          Any non zero error codes.
  */
@@ -221,7 +221,7 @@ IW_EXPORT iwrc ejdb_close(struct ejdb **ejdbp);
  * @code {.c}
  *
  *  struct jql *q;
- *  iwrc rc = jql_create(&q, "mycollection", "/[firstName=?]");
+ *  iwrc rc = jql_create(&q, "mycollection", "/[firstName=:?]");
  *  RCRET(rc);
  *
  *  jql_set_str(q, 0, 0, "Andy"); // Set positional string query parameter
@@ -648,22 +648,22 @@ IW_EXPORT iwrc ejdb_ensure_index(struct ejdb *db, const char *coll, const char *
  * @param path  rfc6901 JSON pointer to indexed field.
  * @param mode  Index mode.
  *
- * @return `0` on success.
- *          Will return `0` if collection is not found.
+ * @return `0` on success, including the case when the index does not exist.
+ *         `IW_ERROR_NOT_EXISTS` if the collection does not exist.
  *          Any non zero error codes.
  */
 IW_EXPORT iwrc ejdb_remove_index(struct ejdb *db, const char *coll, const char *path, ejdb_idx_mode_t mode);
 
 /**
- * @brief Returns JSON document describind database structure.
+ * @brief Returns JSON document describing database structure.
  * @note Returned `jblp` must be disposed by `jbl_destroy()`
  *
  * Example database metadata:
  * @code {.json}
  *
  *   {
- *    "version": "2.0.0", // EJDB engine version
- *    "file": "db.jb",    // Path to storage file
+ *    "version": "2.100", // EJDB engine version
+ *    "file": "example.db", // Path to storage file
  *    "size": 16384,      // Storage file size in bytes
  *    "collections": [    // List of collections
  *     {
