@@ -1,3 +1,13 @@
+# [v2.99] - 2026-11-13
+
+- Updated to iwnet v1.6.2
+- Autark: Updated to Autark 0.10.0.
+- Autark: External projects used by the build are kept in a build wide store shared by the whole build tree,
+  so a resource requested by several build units is fetched only once.
+- Autark: Added the `autark fetch-plan` command, `.autark/fetch_resource.sh` resolves the actual fetch dir with it.
+- Autark: Installed files and directories are made readable by everyone and installed executables are made
+  executable by everyone. The `install exact` mode preserves source permissions as is.
+
 # [v2.98] - 2026-11-07
 
 - Updated to iwnet v1.6.0
