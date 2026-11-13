@@ -1518,10 +1518,13 @@ static iwrc _jql_binn_visit(struct binn *bn, int lvl, void *op, _jql_binn_visito
   if (!binn_iter_init(*binnv(bn), &iter)) {
     return JBL_ERROR_INVALID;
   }
+  int idx = 0;
   while (!*terminate && binn_iter_next(&iter)) {
     struct binn bv = iter.binn;
     iwrc rc = 0;
-    jbn_visitor_cmd_t cmd = visitor(lvl, &bv, iter.key, iter.idx, op, &rc);
+    // Elements of JSON arrays have no key. Their position within the array
+    // is passed to the visitor as a key substitute.
+    jbn_visitor_cmd_t cmd = visitor(lvl, &bv, iter.key, iter.key ? iter.idx : idx, op, &rc);
     RCRET(rc);
     if (cmd & JBL_VCMD_TERMINATE) {
       *terminate = true;
@@ -1531,6 +1534,7 @@ static iwrc _jql_binn_visit(struct binn *bn, int lvl, void *op, _jql_binn_visito
       rc = _jql_binn_visit(&bv, lvl + 1, op, visitor, terminate);
       RCRET(rc);
     }
+    ++idx;
   }
   return 0;
 }
@@ -1944,17 +1948,25 @@ finish:
 //----------------------------------
 
 iwrc jql_apply(struct jql *q, struct jbl_node *root, struct iwpool *pool) {
+  struct jbl_node *patch = 0;
   if (q->aux->apply_placeholder) {
     struct jqval *pv = _jql_find_placeholder(q, q->aux->apply_placeholder);
     if (!pv || (pv->type != JQVAL_JBLNODE) || !pv->vnode) {
       return JQL_ERROR_INVALID_PLACEHOLDER_VALUE_TYPE;
     }
-    return jbn_patch_auto(root, pv->vnode, pool);
+    patch = pv->vnode;
   } else if (q->aux->apply) {
-    return jbn_patch_auto(root, q->aux->apply, pool);
+    patch = q->aux->apply;
   } else {
     return 0;
   }
+  // The patch tree is shared by all documents of the query, while patch
+  // application links its nodes into the patched document. So every document
+  // must be patched by its own copy of the patch.
+  struct jbl_node *pcopy;
+  iwrc rc = jbn_clone(patch, &pcopy, pool);
+  RCRET(rc);
+  return jbn_patch_auto(root, pcopy, pool);
 }
 
 iwrc jql_project(struct jql *q, struct jbl_node *root, struct iwpool *pool, void *exec_ctx) {

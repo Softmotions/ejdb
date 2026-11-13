@@ -1148,6 +1148,124 @@ static void ejdb_test3_9(void) {
   IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
 }
 
+// Regression: JSON paths addressing array elements by their position.
+//
+// The query document traversal used to pass `iter.idx` as the key of an array
+// element, but `binn_iter_next()` reports `idx == -1` for list elements. So a
+// position node like `/arr/1` never matched anything, while `/arr/-1` matched
+// any element. The traversal must pass the element position instead.
+static void ejdb_test3_10(void) {
+  struct ejdb_opts opts = {
+    .kv = {
+      .path = "ejdb_test3_10.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+  struct ejdb *db;
+  struct ejdb_list *list = 0;
+  iwrc rc = ejdb_open(&opts, &db);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = put_json(db, "pos", "{'arr':['a','b','c'],'nest':{'tags':[{'v':1},{'v':2}]}}");
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = put_json(db, "pos", "{'arr':['x']}");
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+
+  static const struct {
+    const char *query;
+    int expected; // Number of matched documents
+  } cases[] = {
+    { "/arr/1", 1 },         // Second element exists
+    { "/arr/2", 1 },         // Third element exists
+    { "/arr/3", 0 },         // Out of bounds
+    { "/arr/-1", 0 },        // Negative position is not a wildcard
+    { "/nest/tags/1/v", 1 }, // Position of an object inside a nested array
+    { "/arr/*", 2 },         // Any element
+  };
+  for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+    int num = 0;
+    rc = ejdb_list3(db, "pos", cases[i].query, 0, 0, &list);
+    IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+    for (struct ejdb_doc *doc = list->first; doc; doc = doc->next) {
+      ++num;
+    }
+    ejdb_list_destroy(&list);
+    IW_TEST_ASSERT_EQUAL(num, cases[i].expected);
+  }
+
+  rc = ejdb_close(&db);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+}
+
+// Regression: the same patch applied to several documents of one query.
+//
+// The query owns a single patch tree, and `jbn_patch_auto()` links patch nodes
+// into the patched document. Without a per-document copy of the patch, the next
+// document relinks nodes from the already released document pool, which
+// corrupts the previously patched documents (keys may be lost or renamed).
+static void ejdb_test3_11(void) {
+  struct ejdb_opts opts = {
+    .kv = {
+      .path = "ejdb_test3_11.db",
+      .oflags = IWKV_TRUNC
+    },
+    .no_wal = true
+  };
+  struct ejdb *db;
+  iwrc rc = ejdb_open(&opts, &db);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+
+  rc = put_json(db,
+                "ap",
+                "{'firstName':'John','lastName':'Ryan','age':39,'tags':['a','bestseller'],'meta':{'x':{'y':7}},'active':true,'score':1.5,'nil':null}");
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  rc = put_json(db, "ap", "{'firstName':'John','lastName':'Ryan2','age':39}");
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+
+  // The same merge patch is applied to every document of the collection.
+  // Stream execution without a caller provided pool is used here, since the
+  // per-document patch pool is released right after a document is patched.
+  struct jql *q;
+  rc = jql_create(&q, 0, "@ap/* | apply {\"adult\": true}");
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  struct ejdb_exec ux = {
+    .db = db,
+    .q = q,
+  };
+  rc = ejdb_exec(&ux);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+  IW_TEST_ASSERT_EQUAL(ux.cnt, 2);
+  jql_destroy(&q);
+
+  // Both documents must keep all of their keys
+  IWXSTR *xstr = iwxstr_new();
+  IW_TEST_ASSERT_PTR_NOT_NULL_FATAL(xstr);
+  static const struct {
+    int64_t     id;
+    const char *expect[4];
+  } docs[] = {
+    { 1, { "\"firstName\":\"John\"", "\"lastName\":\"Ryan\"", "\"age\":39", "\"adult\":true" } },
+    { 2, { "\"firstName\":\"John\"", "\"lastName\":\"Ryan2\"", "\"age\":39", "\"adult\":true" } },
+  };
+  for (size_t i = 0; i < sizeof(docs) / sizeof(docs[0]); ++i) {
+    JBL jbl;
+    rc = ejdb_get(db, "ap", docs[i].id, &jbl);
+    IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+    iwxstr_clear(xstr);
+    rc = jbl_as_json(jbl, jbl_xstr_json_printer, xstr, 0);
+    IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+    jbl_destroy(&jbl);
+    for (size_t j = 0; j < sizeof(docs[i].expect) / sizeof(docs[i].expect[0]); ++j) {
+      IW_TEST_ASSERT_PTR_NOT_NULL(strstr(iwxstr_ptr(xstr), docs[i].expect[j]));
+    }
+  }
+  iwxstr_destroy(xstr);
+
+  rc = ejdb_close(&db);
+  IW_TEST_ASSERT_EQUAL_FATAL(rc, 0);
+}
+
 int main(int argc, char *argv[]) {
   static const struct iw_test_case cases[] = {
     IW_TEST_CASE(ejdb_test3_1),
@@ -1159,6 +1277,8 @@ int main(int argc, char *argv[]) {
     IW_TEST_CASE(ejdb_test3_7),
     IW_TEST_CASE(ejdb_test3_8),
     IW_TEST_CASE(ejdb_test3_9),
+    IW_TEST_CASE(ejdb_test3_10),
+    IW_TEST_CASE(ejdb_test3_11),
   };
   return iw_test_run(argc, argv, IW_TEST_SUITE("ejdb_test3", cases, init_suite, clean_suite));
 }
