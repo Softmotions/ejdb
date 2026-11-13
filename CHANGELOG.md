@@ -1,3 +1,14 @@
+# [v2.100] - 2026-11-13
+
+- JQL: JSON paths can address array elements by position, e.g. `/tags/1` or `/pets/0/name`.
+  Previously such paths never matched and `/arr/-1` matched any array element.
+- JQL: Fixed corruption of stored documents when the same `apply` patch matched several documents.
+  The query patch tree was linked into the patched document and then relinked from an already
+  released pool by the next document.
+- JQL: Reworked the JQL documentation: grammar overview aligned with `jqp.leg`, query structure,
+  operators, type comparison rules, projections, joins, options, indexes, common pitfalls and a
+  non-trivial query cookbook.
+
 # [v2.99] - 2026-11-13
 
 - Updated to iwnet v1.6.2
