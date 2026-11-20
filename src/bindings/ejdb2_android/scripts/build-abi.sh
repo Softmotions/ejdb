@@ -42,7 +42,7 @@ usage() {
 [ -n "$API" ] || usage
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
-EJDB_ROOT="${AUTARK_ROOT_DIR:-$(cd "$SCRIPT_DIR/../../.." && pwd -P)}"
+EJDB_ROOT="${AUTARK_ROOT_DIR:-$(cd "$SCRIPT_DIR/../../../.." && pwd -P)}"
 EJDB_CACHE="${AUTARK_CACHE_DIR:-$EJDB_ROOT/autark-cache}"
 AUTARK="${AUTARK:-autark}"
 BUILD_TYPE="${ANDROID_BUILD_TYPE:-Release}"
