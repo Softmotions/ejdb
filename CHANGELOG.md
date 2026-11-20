@@ -1,13 +1,21 @@
 # [v2.101] - 2026-11-20
 
-- Updated to iwnet v1.7.0
-- HTTP: iwnet v1.7.0 hardens the HTTP/1.1 request parser. Integer overflows of
+- Updated to iwnet v1.7.2. Besides the HTTP parser fixes below, iwnet compiles its
+  `strliteral`/`mimegen` code generators with the host toolchain (cross builds work again)
+  and installs iowow before its own build flags are resolved with pkg-config (builds from a
+  clean cache work again).
+- HTTP: iwnet hardens the HTTP/1.1 request parser. Integer overflows of
   `Content-Length` and chunk size values, duplicated `Content-Length` headers and requests
   carrying both `Content-Length` and `Transfer-Encoding` are rejected with `400 Bad Request`,
   unsupported transfer codings with `501 Not Implemented` (RFC 9112). A connection left
   desynchronized by an unconsumed streamed request body is closed after the response.
 - HTTP: Added the iwnet HTTP request parser fuzzing harness (`IWNET_BUILD_FUZZ`/`IWNET_RUN_FUZZ`)
   and the `http_parser1` parser regression test.
+- Autark: Removed the separate `iowow.autark` dependency. iowow is now always provided by
+  iwnet, so the HTTP-enabled build and the plain core build (`EJDB_ENABLE_HTTP=0`) use the
+  same iowow version. The `IOWOW_URL` option is gone, use `IWNET_URL` to override the sources.
+- Android: Fixed `src/bindings/ejdb2_android/scripts/build-abi.sh` resolving the project root
+  to `src/` instead of the repository root, which made the script build `src/Autark` directly.
 
 # [v2.100] - 2026-11-13
 
