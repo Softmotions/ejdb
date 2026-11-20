@@ -1,3 +1,14 @@
+# [v2.101] - 2026-11-20
+
+- Updated to iwnet v1.7.0
+- HTTP: iwnet v1.7.0 hardens the HTTP/1.1 request parser. Integer overflows of
+  `Content-Length` and chunk size values, duplicated `Content-Length` headers and requests
+  carrying both `Content-Length` and `Transfer-Encoding` are rejected with `400 Bad Request`,
+  unsupported transfer codings with `501 Not Implemented` (RFC 9112). A connection left
+  desynchronized by an unconsumed streamed request body is closed after the response.
+- HTTP: Added the iwnet HTTP request parser fuzzing harness (`IWNET_BUILD_FUZZ`/`IWNET_RUN_FUZZ`)
+  and the `http_parser1` parser regression test.
+
 # [v2.100] - 2026-11-13
 
 - JQL: JSON paths can address array elements by position, e.g. `/tags/1` or `/pets/0/name`.
