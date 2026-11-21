@@ -1,3 +1,19 @@
+# [v2.102] - 2026-11-21
+
+- Updated to iwnet v1.8.0. iwnet creates TLS settings (certificate chain, private key,
+  CA bundle, ALPN protocols) once and shares them between all connections of a server or
+  a client instead of re-creating them for every accepted connection or reconnect.
+  Certificate and key errors are reported when a server or a client is configured.
+- HTTP: iwnet TLS poller adapters honour `arm()` requests made from their own event
+  callback; a thread-local guard dropped them, which could stall a connection in the
+  poll loop until an unrelated event arrived.
+- Poller: Added `iwn_poller_join()`; joining a poll thread started by
+  `iwn_poller_poll_in_thread()` is recorded, so a following `iwn_poller_destroy()` does
+  not join it a second time (undefined behaviour, aborted under AddressSanitizer).
+- Build: iwnet compiles its `mimegen`/`strliteral` code generators with sanitizer-free
+  flags, so `ENABLE_ASAN`/`ENABLE_UBSAN` builds no longer fail with undefined
+  `__asan_*`/`__ubsan_*` references.
+
 # [v2.101] - 2026-11-20
 
 - Updated to iwnet v1.7.2. Besides the HTTP parser fixes below, iwnet compiles its
